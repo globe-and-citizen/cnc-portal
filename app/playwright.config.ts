@@ -1,5 +1,8 @@
 import { defineConfig, devices } from '@playwright/test'
 
+// A developer-local Chromium can replace the Playwright download.
+const E2E_BROWSER_EXECUTABLE = process.env.PLAYWRIGHT_BROWSER_EXECUTABLE
+
 /**
  * See https://playwright.dev/docs/test-configuration.
  */
@@ -16,8 +19,9 @@ export default defineConfig({
   // Retry on CI only.
   retries: process.env.CI ? 2 : 0,
 
-  // Use half of the number of logical CPU cores for running tests in parallel.
-  workers: process.env.CI ? 1 : undefined,
+  // E2E fixtures deploy into one dedicated Hardhat node. A single worker keeps
+  // their deterministic token addresses stable across every account journey.
+  workers: 1,
 
   // Reporter to use
   reporter: [['html'], ['list']],
@@ -28,6 +32,7 @@ export default defineConfig({
   timeout: 60_000,
 
   use: {
+    // Use the same origin allowed by the developer-run backend CORS policy.
     baseURL: process.env.BASE_URL || 'http://localhost:5173',
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
@@ -36,23 +41,23 @@ export default defineConfig({
     headless: process.env.HEADLESS !== 'false'
   },
 
-  // Web3 e2e runs on Chromium.
+  // Web3 e2e runs on Chromium. PLAYWRIGHT_FIREFOX=true adds a Firefox pass of
+  // the same journeys; the developer-local executable only applies to Chromium.
   projects: [
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'] }
-    }
-  ],
-
-  // Only start webServer if SKIP_SERVER is not set
-  webServer: process.env.SKIP_SERVER
-    ? undefined
-    : {
-        command: 'VITE_E2E=true VITE_APP_NETWORK_ALIAS=hardhat npm run dev',
-        port: 5173,
-        reuseExistingServer: true,
-        timeout: 120000,
-        stdout: 'pipe',
-        stderr: 'pipe'
+      use: {
+        ...devices['Desktop Chrome'],
+        ...(E2E_BROWSER_EXECUTABLE
+          ? { launchOptions: { executablePath: E2E_BROWSER_EXECUTABLE } }
+          : {})
       }
+    },
+    ...(process.env.PLAYWRIGHT_FIREFOX === 'true'
+      ? [{ name: 'firefox', use: { ...devices['Desktop Firefox'] } }]
+      : [])
+  ]
+
+  // Playwright never provisions infrastructure or starts application services.
+  // Developers and CI prepare the selected profile before invoking a suite.
 })

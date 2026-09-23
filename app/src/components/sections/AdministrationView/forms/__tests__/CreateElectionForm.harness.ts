@@ -22,9 +22,6 @@ export interface CreateElectionFormVm {
   endDateOpen: boolean
   openingHelp: string
   pickStartDay: (day: Date) => void
-  formRef: { contains: (node: Node) => boolean } | null
-  showDropdown: boolean
-  handleClickOutside: (event: MouseEvent) => void
   submitForm: () => void
   schema: {
     safeParse: (data: unknown) => { success: boolean }

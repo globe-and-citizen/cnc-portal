@@ -23,7 +23,6 @@ const { store } = vi.hoisted(() => {
     isLoading: false,
     isError: false,
     isOwner: true,
-    isLender: false,
     rounds: [] as CreditRound[],
     activeRounds: [] as CreditRound[],
     historyRounds: [] as CreditRound[],
@@ -58,7 +57,6 @@ function resetStore() {
     isLoading: false,
     isError: false,
     isOwner: true,
-    isLender: false,
     rounds: [],
     activeRounds: [],
     historyRounds: [],
@@ -211,7 +209,7 @@ describe('Community Credit views', () => {
       )
     })
 
-    it('lets the owner push refunds to every lender on a stalled round in one step', async () => {
+    it('[AC-US-CC-004-01] refunds every lender on a stalled round in one step', async () => {
       store.isOwner = true
       const wrapper = mountRound(sampleRound({ status: 'stalled' }), offerStruct({ state: 0 }))
       await flushPromises()
@@ -222,7 +220,7 @@ describe('Community Credit views', () => {
       })
     })
 
-    it('lets the owner accept partial funding on a stalled round instead of refunding', async () => {
+    it('[AC-US-CC-004-02] accepts a positive partial raise on a stalled round', async () => {
       store.isOwner = true
       const wrapper = mountRound(
         sampleRound({ status: 'stalled', raised: 23400 }),

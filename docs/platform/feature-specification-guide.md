@@ -96,6 +96,44 @@ Acceptance criteria are the centre of feature review. Their checkboxes record ve
   again.
 - The review date changes only after the affected behaviour has been reviewed again.
 
+### Acceptance-Criterion Traceability
+
+Give every acceptance criterion a stable ID using `AC-<user-story-id>-<two-digit-sequence>`. Keep the sequence local to the story, allocate
+each number exactly once, and never renumber or reuse an ID after it has been assigned. The ID remains attached to the criterion when the
+criterion moves between categories or changes position within its story.
+
+```markdown
+- [x] `AC-US-FEATURE-001-01` A matching operation retains all of its journal lines.
+```
+
+Keep representative test titles focused on observable behaviour. Put the user-story ID in the enclosing suite title or equivalent test
+metadata, then declare directly proven acceptance criteria in a structured `Covers` comment immediately above the smallest representative
+test. One coherent path may cover multiple criteria. One criterion may also have more than one representative test when distinct success and
+failure paths are necessary, but do not tag every low-level test that happens to exercise the same code.
+
+```typescript
+describe('[US-FEATURE-001] Matching entries', () => {
+  /**
+   * Covers:
+   * - [AC-US-FEATURE-001-01]
+   */
+  it('retains every line of a matching JournalEntry', () => {
+    // Test the observable criterion.
+  })
+})
+```
+
+The `Covers` block is traceability metadata, not evidence by itself. Keep it adjacent to the test whose assertions prove the criteria, and
+remove or update it whenever that test stops proving an outcome. Do not place acceptance-criterion IDs in test titles merely to make the
+coverage report discover them.
+
+Every criterion has an ID even when no representative automated test exists. A test reference records evidence, not comprehensive coverage,
+and it does not replace the criterion's observable outcome, checkbox state, implementation evidence, or required human validation.
+
+Run `npm run report:acceptance-coverage -- --feature <feature-slug>` to write a local Markdown report under `reports/acceptance-coverage/`.
+The Git-ignored report groups representative `AC-US-*` references by frontend, backend, contract, and E2E test layer. It derives evidence
+from tracked test files; it does not infer whether an unreferenced criterion needs automation or whether the latest test run passed.
+
 ### Story Statuses
 
 | Status           | Meaning                                                    |
@@ -165,6 +203,29 @@ journey and its branches, but it must not change that documentation order.
 
 The status overview is the sole delivery-state record for each story. It records implementation and human-validation progress, not planning
 priority or estimation. Detailed stories do not repeat their status after the acceptance criteria.
+
+#### Test Coverage Overview
+
+When a feature is part of an active test-coverage review, add a separate table immediately after the status overview. Do not add test state
+to the product `Status` column: delivery, representative automated evidence, E2E scope, and the latest execution result are different facts.
+
+```markdown
+| User Story     | Representative AC Coverage | E2E Status | E2E Boundary                    |
+| -------------- | -------------------------- | ---------- | ------------------------------- |
+| US-FEATURE-001 | Backend 2/5 · E2E 2/5      | 🚧 Partial | Browser + API; contract stubbed |
+```
+
+- `Representative AC Coverage` summarizes acceptance criteria carrying direct test references; it is evidence, not a coverage percentage or
+  a requirement that every criterion be automated at every layer.
+- `E2E Status` uses `⚪ Unassessed`, `📋 Planned`, `🚧 Partial`, `⚠️ Blocked`, `✅ Covered`, or `➖ Not required`. `✅ Covered` is valid
+  only against an explicitly defined path and integration boundary.
+- `E2E Boundary` names which browser, backend, database, chain, or external-service boundaries are real and which are simulated. A seeded,
+  stubbed, or snapshot-provided dependency is not a validated user action.
+- Store the owning `E2E-PATH-*`, detailed test-file mapping, latest pass/fail result, and run artifacts in the generated coverage report,
+  CI, or a test-run record rather than duplicating them in this durable summary.
+
+The table is optional while this model is being piloted. When present, keep one row per story in the same stable-ID order as the status
+overview and refresh it when representative test references or E2E boundaries change.
 
 ### 5. User Stories
 
@@ -376,6 +437,7 @@ This rule applies to every committed documentation file, not only feature README
 - [ ] Every criterion is a functional, observable, independently reviewable outcome that remains valid after a visual redesign.
 - [ ] UI and UX requirements are kept outside feature acceptance criteria.
 - [ ] Statuses, checkboxes, and the human-validation statement agree.
+- [ ] Any test coverage overview remains separate from product status and states the actual E2E integration boundary.
 - [ ] Known gaps are visible and not hidden under `✅ Done`.
 - [ ] Evidence links resolve to current code or tests.
 - [ ] Related feature and contract documentation is linked without duplication.

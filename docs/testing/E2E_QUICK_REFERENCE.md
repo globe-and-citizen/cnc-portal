@@ -128,12 +128,26 @@ rm -rf playwright-report/
 
 ## 📊 Test File Quick Reference
 
-| Test File           | Description            | Status                  |
-| ------------------- | ---------------------- | ----------------------- |
-| `dashboard.spec.ts` | Dashboard page tests   | Simple ✓                |
-| `login.spec.ts`     | SIWE authentication    | Needs MetaMask flow     |
-| `navbar.spec.ts`    | Navigation and profile | Multiple tests          |
-| `teams.spec.ts`     | Team management        | Complex, many commented |
+All suites live in `app/test/e2e/` and run against the in-browser backend stub (`e2e-page.ts`) plus a dedicated Hardhat node when a journey
+needs real contracts.
+
+| Test File                            | Description                                                            | Chain writes |
+| ------------------------------------ | ---------------------------------------------------------------------- | ------------ |
+| `login.spec.ts`                      | SIWE sign-in with the mock wallet                                      | No           |
+| `company/company-creation.spec.ts`   | Company wizard: details, members, failure and retry                    | No           |
+| `company/company-onboarding.spec.ts` | Officer suite deployment and registration                              | Yes          |
+| `company/company-safe.spec.ts`       | Safe deployment and import during company creation                     | Yes          |
+| `company/company-recovery.spec.ts`   | Deployment recovery: delayed, reverted, replaced, reorg, reload        | Yes          |
+| `company/company-update.spec.ts`     | Owner updates name and description; validation, 500, 409 when archived | No           |
+| `company/company-archive.spec.ts`    | Owner archives and restores; frozen settings; member view              | No           |
+| `company/company-visibility.spec.ts` | Owner and member hide/show the company in their own list               | No           |
+| `company/company-delete.spec.ts`     | Owner deletes the company; cancel, failure, member has no access       | No           |
+| `bank/bank-account.spec.ts`          | Bank funding, transfers, Board action, cash-out                        | Yes          |
+| `expense/expense-account.spec.ts`    | Expense approvals and spending                                         | Yes          |
+| `safe/safe-account.spec.ts`          | Safe inspection, deposits, transfers, signers, threshold               | Yes          |
+
+The four lifecycle suites (update, archive, visibility, delete) share `company/company-lifecycle-page.ts`: a stateful stub that applies the
+backend's owner/member and archived rules to `PUT` and `DELETE /api/teams/:id`, and signs in as either role.
 
 ## 🔧 Configuration Files
 
@@ -150,7 +164,6 @@ rm -rf playwright-report/
 ```bash
 # .env.e2e
 BASE_URL=http://localhost:5173
-SKIP_SERVER=false
 HEADLESS=true
 VITE_APP_BACKEND_URL=http://localhost:3000
 VITE_APP_NETWORK_ALIAS=hardhat

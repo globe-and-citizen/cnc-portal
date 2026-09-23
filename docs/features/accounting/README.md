@@ -52,6 +52,17 @@ flowchart LR
 | US-ACCT-005 | Review historical contract activity    | Company member | 🚧 In Progress |
 | US-ACCT-006 | Classify an external withdrawal        | Company owner  | 🧪 Validation  |
 
+## Test Coverage Overview
+
+| User Story  | E2E Status | Owning Path |
+| ----------- | ---------- | ----------- |
+| US-ACCT-001 | 📋 Planned | E2E-PATH-15 |
+| US-ACCT-002 | 📋 Planned | E2E-PATH-15 |
+| US-ACCT-003 | 📋 Planned | E2E-PATH-15 |
+| US-ACCT-004 | 📋 Planned | E2E-PATH-16 |
+| US-ACCT-005 | 📋 Planned | E2E-PATH-15 |
+| US-ACCT-006 | 📋 Planned | E2E-PATH-16 |
+
 ## US-ACCT-001: View the Accounting Overview
 
 **As a** company member\
@@ -62,25 +73,27 @@ flowchart LR
 
 #### Happy Path
 
-- [x] The overview reports revenue, expenses, net income, assets, liabilities, equity, and debt from one `JournalEntry` collection.
-- [x] The overview shows whether total debits equal total credits and whether assets equal liabilities plus equity.
-- [x] Refreshing Accounting reloads the source evidence and recalculates every report from the same journal snapshot.
+- [x] `AC-US-ACCT-001-01` The overview reports revenue, expenses, net income, assets, liabilities, equity, and debt from one `JournalEntry`
+      collection.
+- [x] `AC-US-ACCT-001-02` The overview shows whether total debits equal total credits and whether assets equal liabilities plus equity.
+- [x] `AC-US-ACCT-001-03` Refreshing Accounting reloads the source evidence and recalculates every report from the same journal snapshot.
 
 #### Business Rules
 
-- [x] Every posted journal entry balances.
-- [x] USD-pegged tokens use a one-dollar rate, native tokens use their immutable transaction-date snapshot, and SHER uses its compensation
-      valuation policy.
-- [x] Payroll obligations are recognized when an eligible work week ends, before settlement.
-- [x] Transfers between known company accounts do not change revenue or expenses.
-- [ ] Closing cash balances are reconciled with the corresponding on-chain balances.
+- [x] `AC-US-ACCT-001-04` Every posted journal entry balances.
+- [x] `AC-US-ACCT-001-05` USD-pegged tokens use a one-dollar rate, native tokens use their immutable transaction-date snapshot, and SHER
+      uses its compensation valuation policy.
+- [x] `AC-US-ACCT-001-06` Payroll obligations are recognized when an eligible work week ends, before settlement.
+- [x] `AC-US-ACCT-001-07` Transfers between known company accounts do not change revenue or expenses.
+- [ ] `AC-US-ACCT-001-08` Closing cash balances are reconciled with the corresponding on-chain balances.
 
 #### Edge & Error Cases
 
-- [x] A company with no activity produces balanced zero-value books.
-- [x] Reports remain withheld while an applicable source is loading, partial, or failed.
-- [x] A missing block timestamp withholds the affected event instead of creating a zero-date entry.
-- [x] A missing rate retains the non-zero movement and reports `rate-unavailable` instead of substituting a current price.
+- [x] `AC-US-ACCT-001-09` A company with no activity produces balanced zero-value books.
+- [x] `AC-US-ACCT-001-10` Reports remain withheld while an applicable source is loading, partial, or failed.
+- [x] `AC-US-ACCT-001-11` A missing block timestamp withholds the affected event instead of creating a zero-date entry.
+- [x] `AC-US-ACCT-001-12` A missing rate retains the non-zero movement and reports `rate-unavailable` instead of substituting a current
+      price.
 
 **Dependencies:** Current company, accounting source providers, and valuation sources
 
@@ -94,25 +107,26 @@ flowchart LR
 
 #### Happy Path
 
-- [x] Each ledger operation exposes its date, activity, accounts, currency, quantity, rate, debit, credit, and transaction hash when one
-      exists.
-- [x] A transaction hash opens the configured network explorer; a synthetic operation has no explorer link.
-- [x] A member can filter by period, currency, and concrete account, then open the relevant product journey or account drill-down.
+- [x] `AC-US-ACCT-002-04` Each ledger operation exposes its date, activity, accounts, currency, quantity, rate, debit, credit, and
+      transaction hash when one exists.
+- [x] `AC-US-ACCT-002-05` A transaction hash opens the configured network explorer; a synthetic operation has no explorer link.
+- [x] `AC-US-ACCT-002-06` A member can filter by period, currency, and concrete account, then open the relevant product journey or account
+      drill-down.
 
 #### Business Rules
 
-- [x] Account and currency filters retain every line of each matching `JournalEntry`.
-- [x] One source operation produces at most one ledger entry, even when several events or recipient payments support it.
-- [x] A Bank fee appears as `Transaction Fee Expense` inside its matched Bank outflow, never as an orphan fee entry.
-- [x] Internal transfers identify both concrete deployment accounts without creating revenue or expense.
-- [x] Pagination changes visible rows, not filtered totals.
-- [x] Labels and accounts follow the canonical [Accounting rule catalogue](./journal-entry-catalogue.md).
+- [x] `AC-US-ACCT-002-01` One source operation produces at most one ledger entry, even when several events or recipient payments support it.
+- [x] `AC-US-ACCT-002-02` Account and currency filters retain every line of each matching `JournalEntry`.
+- [x] `AC-US-ACCT-002-03` A Bank fee appears as `Transaction Fee Expense` inside its matched Bank outflow, never as an orphan fee entry.
+- [x] `AC-US-ACCT-002-07` Internal transfers identify both concrete deployment accounts without creating revenue or expense.
+- [x] `AC-US-ACCT-002-08` Pagination changes visible rows, not filtered totals.
+- [x] `AC-US-ACCT-002-09` Labels and accounts follow the canonical [Accounting rule catalogue](./journal-entry-catalogue.md).
 
 #### Edge & Error Cases
 
-- [x] A filter with no matching entries returns an empty ledger with zero totals.
-- [x] Changing a filter resets pagination to a valid page.
-- [x] An account drill-down carries its opening balance from activity before the selected period.
+- [x] `AC-US-ACCT-002-10` A filter with no matching entries returns an empty ledger with zero totals.
+- [x] `AC-US-ACCT-002-11` Changing a filter resets pagination to a valid page.
+- [x] `AC-US-ACCT-002-12` An account drill-down carries its opening balance from activity before the selected period.
 
 **Dependencies:** US-ACCT-001
 
@@ -126,23 +140,25 @@ flowchart LR
 
 #### Happy Path
 
-- [x] The income statement reports revenue, expenses, and net income for the selected period.
-- [x] The balance sheet reports assets, liabilities, and equity as of the selected date.
-- [x] The trial balance reports each concrete account on its normal debit or credit side as of the selected date.
-- [x] A member can inspect the complete journal entries behind a statement line.
+- [x] `AC-US-ACCT-003-01` The income statement reports revenue, expenses, and net income for the selected period.
+- [x] `AC-US-ACCT-003-02` The balance sheet reports assets, liabilities, and equity as of the selected date.
+- [x] `AC-US-ACCT-003-03` The trial balance reports each concrete account on its normal debit or credit side as of the selected date.
+- [x] `AC-US-ACCT-003-04` A member can inspect the complete journal entries behind a statement line.
 
 #### Business Rules
 
-- [x] Every statement uses the same exact journal amounts as the General Ledger.
-- [x] Trial-balance debits equal credits, and the balance sheet preserves `Assets = Liabilities + Equity` for balanced books.
-- [x] `Earnings to date` equals income less expenses through the selected date and remains distinct from posted equity accounts.
-- [x] Redeployed and unresolved accounts remain separate rows and preserve their own drill-down scope.
+- [x] `AC-US-ACCT-003-05` Every statement uses the same exact journal amounts as the General Ledger.
+- [x] `AC-US-ACCT-003-06` Trial-balance debits equal credits, and the balance sheet preserves `Assets = Liabilities + Equity` for balanced
+      books.
+- [x] `AC-US-ACCT-003-07` `Earnings to date` equals income less expenses through the selected date and remains distinct from posted equity
+      accounts.
+- [x] `AC-US-ACCT-003-08` Redeployed and unresolved accounts remain separate rows and preserve their own drill-down scope.
 
 #### Edge & Error Cases
 
-- [x] A period without activity reports zero totals without inventing entries.
-- [x] Point-in-time statements exclude later entries.
-- [x] A statement line without evidence does not expose an empty drill-down as supporting detail.
+- [x] `AC-US-ACCT-003-09` A period without activity reports zero totals without inventing entries.
+- [x] `AC-US-ACCT-003-10` Point-in-time statements exclude later entries.
+- [x] `AC-US-ACCT-003-11` A statement line without evidence does not expose an empty drill-down as supporting detail.
 
 **Dependencies:** US-ACCT-001 and US-ACCT-002
 
@@ -156,21 +172,21 @@ flowchart LR
 
 #### Happy Path
 
-- [x] A member can export the General Ledger and each financial statement to Excel or PDF.
-- [x] A summary export can include several selected sections.
-- [x] A statement or account drill-down can be exported independently.
+- [x] `AC-US-ACCT-004-01` A member can export the General Ledger and each financial statement to Excel or PDF.
+- [x] `AC-US-ACCT-004-02` A summary export can include several selected sections.
+- [x] `AC-US-ACCT-004-03` A statement or account drill-down can be exported independently.
 
 #### Business Rules
 
-- [x] An export uses one snapshot of the current `JournalEntry` collection and the same filters as the reviewed report.
-- [x] Ledger and drill-down exports retain complete matching entries and full transaction hashes.
-- [x] Balance Sheet exports retain concrete account rows and the account contributions behind `Earnings to date`.
-- [x] Monetary display conversion and rounding happen after exact journal and report totals are calculated.
+- [x] `AC-US-ACCT-004-04` An export uses one snapshot of the current `JournalEntry` collection and the same filters as the reviewed report.
+- [x] `AC-US-ACCT-004-05` Ledger and drill-down exports retain complete matching entries and full transaction hashes.
+- [x] `AC-US-ACCT-004-06` Balance Sheet exports retain concrete account rows and the account contributions behind `Earnings to date`.
+- [x] `AC-US-ACCT-004-07` Monetary display conversion and rounding happen after exact journal and report totals are calculated.
 
 #### Edge & Error Cases
 
-- [x] An export failure is reported without changing the books.
-- [x] An empty export keeps the selected report structure without inventing entries.
+- [x] `AC-US-ACCT-004-08` An export failure is reported without changing the books.
+- [x] `AC-US-ACCT-004-09` An empty export keeps the selected report structure without inventing entries.
 
 **Dependencies:** US-ACCT-002 or US-ACCT-003
 
@@ -184,26 +200,26 @@ flowchart LR
 
 #### Happy Path
 
-- [x] Accounting scans every known generation from its own deployment boundary and consolidates the resulting entries.
-- [x] Pre- and post-migration operations contribute to the same reports.
-- [x] Legacy and current Bank fees remain attached to the generation and outflow that paid them.
-- [x] Treasury sweeps between old and replacement company contracts remain internal transfers.
-- [x] Each redeployed cash account has its own Trial Balance row, General Ledger label, and drill-down.
+- [x] `AC-US-ACCT-005-01` Accounting scans every known generation from its own deployment boundary and consolidates the resulting entries.
+- [x] `AC-US-ACCT-005-02` Pre- and post-migration operations contribute to the same reports.
+- [x] `AC-US-ACCT-005-03` Legacy and current Bank fees remain attached to the generation and outflow that paid them.
+- [x] `AC-US-ACCT-005-04` Treasury sweeps between old and replacement company contracts remain internal transfers.
+- [x] `AC-US-ACCT-005-05` Each redeployed cash account has its own Trial Balance row, General Ledger label, and drill-down.
 
 #### Business Rules
 
-- [x] Event cache identity includes normalized deployment address and effective boundary.
-- [x] Known contracts from every generation participate in internal-transfer classification.
-- [x] Current Investor identity takes precedence over `InvestorV1`; the legacy contract remains the fallback when no current Investor
-      exists.
-- [x] Duplicate generation events are removed by their on-chain identity.
-- [ ] Historical Community Credit terms and SHER valuation inputs resolve from their owning generation.
+- [x] `AC-US-ACCT-005-06` Event cache identity includes normalized deployment address and effective boundary.
+- [x] `AC-US-ACCT-005-07` Known contracts from every generation participate in internal-transfer classification.
+- [x] `AC-US-ACCT-005-08` Current Investor identity takes precedence over `InvestorV1`; the legacy contract remains the fallback when no
+      current Investor exists.
+- [x] `AC-US-ACCT-005-09` Duplicate generation events are removed by their on-chain identity.
+- [ ] `AC-US-ACCT-005-10` Historical Community Credit terms and SHER valuation inputs resolve from their owning generation.
 
 #### Edge & Error Cases
 
-- [x] When deployment history is unavailable, Accounting falls back to the current contract set.
-- [x] One empty or failed generation does not remove available activity from other generations.
-- [x] An unproven deployment leg remains a separate unresolved account instead of being assigned to an older deployment.
+- [x] `AC-US-ACCT-005-11` When deployment history is unavailable, Accounting falls back to the current contract set.
+- [x] `AC-US-ACCT-005-12` One empty or failed generation does not remove available activity from other generations.
+- [x] `AC-US-ACCT-005-13` An unproven deployment leg remains a separate unresolved account instead of being assigned to an older deployment.
 
 **Dependencies:** Contract deployment history and US-ACCT-001
 
@@ -217,23 +233,26 @@ flowchart LR
 
 #### Happy Path
 
-- [x] The owner can assign one supported account family and an optional memo to an eligible single-source external withdrawal.
-- [x] Saving replaces only the inferred counter-account and remains visible after refresh.
-- [x] Removing an assignment restores the account inferred from source evidence.
-- [x] Account Assignments shows the same complete entry as the General Ledger, including transaction fees.
+- [x] `AC-US-ACCT-006-01` The owner can assign one supported account family and an optional memo to an eligible single-source external
+      withdrawal.
+- [x] `AC-US-ACCT-006-02` Saving replaces only the inferred counter-account and remains visible after refresh.
+- [x] `AC-US-ACCT-006-03` Removing an assignment restores the account inferred from source evidence.
+- [x] `AC-US-ACCT-006-04` Account Assignments shows the same complete entry as the General Ledger, including transaction fees.
 
 #### Business Rules
 
-- [x] An assignment is keyed by company and lowercase transaction hash.
-- [x] Supported accounts are `Operating Expense`, `Owner Capital`, `Payroll Expense`, `Interest Expense`, and `Dividend Expense`.
-- [x] An assignment changes neither the cash line nor a `Transaction Fee Expense` line.
-- [x] Direct deposits, internal transfers, system-owned payouts, and compound entries are read-only.
-- [x] Members may inspect assignments, but only the company owner may create, replace, or remove them.
+- [x] `AC-US-ACCT-006-05` An assignment is keyed by company and lowercase transaction hash.
+- [x] `AC-US-ACCT-006-06` Supported accounts are `Operating Expense`, `Owner Capital`, `Payroll Expense`, `Interest Expense`, and
+      `Dividend Expense`.
+- [x] `AC-US-ACCT-006-07` An assignment changes neither the cash line nor a `Transaction Fee Expense` line.
+- [x] `AC-US-ACCT-006-08` Direct deposits, internal transfers, system-owned payouts, and compound entries are read-only.
+- [x] `AC-US-ACCT-006-09` Members may inspect assignments, but only the company owner may create, replace, or remove them.
 
 #### Edge & Error Cases
 
-- [x] A malformed hash, unsupported account, or ineligible persisted record is rejected or ignored without changing the journal.
-- [x] A failed save or removal leaves the previous entry visible and reports that the change was not applied.
+- [x] `AC-US-ACCT-006-10` A malformed hash, unsupported account, or ineligible persisted record is rejected or ignored without changing the
+      journal.
+- [x] `AC-US-ACCT-006-11` A failed save or removal leaves the previous entry visible and reports that the change was not applied.
 
 **Dependencies:** US-ACCT-002 and the journal account-assignment API
 
@@ -247,7 +266,7 @@ flowchart LR
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `0d5e32409b5fe192d18abe9ae9be8a7833bc3e64`
+**Implementation evidence reviewed against:** `006685cb46c8408101e785b258482092a1e63f70`
 
 - [Accounting page](../../../app/src/components/sections/AccountingView/AccountingPage.vue),
   [team routes](../../../app/src/router/index.ts), and [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts)

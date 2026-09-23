@@ -1,6 +1,8 @@
 import { test, expect } from './fixtures'
 
 /**
+ * Covers US-AUTH-001: Sign in to the Client (happy path).
+ *
  * SIWE login flow, driven by the in-browser e2e mock connector.
  *
  * No MetaMask extension and no running chain are involved: the mock
@@ -19,35 +21,40 @@ const json = (body: unknown) => ({
   body: JSON.stringify(body)
 })
 
-test.describe('Sign in', () => {
-  test('signs in with the mock wallet and redirects to the teams page', async ({ page }) => {
-    // Catch-all: any backend call we don't explicitly stub returns an empty
-    // 200. This prevents the global axios 401 interceptor (which logs the
-    // user out and redirects to /login) from kicking in on background calls
-    // the post-login screens make (e.g. /api/notification). Scoped to the
-    // backend origin via regex so Vite source imports under
-    // `/src/api/index.ts` aren't intercepted.
-    await page.route(/\/\/[^/]+:4000\/api\//, (route) => route.fulfill(json({})))
-    await page.route('**/api/user/nonce/**', (route) => route.fulfill(json({ nonce: NONCE })))
-    await page.route('**/api/auth/siwe', (route) =>
-      route.fulfill(json({ accessToken: 'e2e.test.token' }))
-    )
-    await page.route('**/api/user/0x*', (route) =>
-      route.fulfill(
-        json({ address: TEST_ADDRESS, name: 'E2E Tester', nonce: NONCE, imageUrl: null })
+test.describe('US-AUTH-001: Sign in to the Client', { tag: '@browser' }, () => {
+  test(
+    'a portal user signs in with the mock wallet and accesses their companies',
+    { tag: '@US-AUTH-001' },
+    async ({ page }) => {
+      // Catch-all: any backend call we don't explicitly stub returns an empty
+      // 200. This prevents the global axios 401 interceptor (which logs the
+      // user out and redirects to /login) from kicking in on background calls
+      // the post-login screens make (e.g. /api/notification). Scoped to the
+      // backend origin via regex so Vite source imports under
+      // `/src/api/index.ts` aren't intercepted.
+      await page.route(/\/\/[^/]+(?::\d+)?\/api\//, (route) => route.fulfill(json({})))
+      await page.route('**/api/user/nonce/**', (route) => route.fulfill(json({ nonce: NONCE })))
+      await page.route('**/api/auth/siwe', (route) =>
+        route.fulfill(json({ accessToken: 'e2e.test.token' }))
       )
-    )
-    await page.route('**/api/teams**', (route) => route.fulfill(json({ teams: [] })))
+      await page.route('**/api/user/0x*', (route) =>
+        route.fulfill(
+          json({ address: TEST_ADDRESS, name: 'E2E Tester', nonce: NONCE, imageUrl: null })
+        )
+      )
+      await page.route('**/api/teams**', (route) => route.fulfill(json([])))
 
-    await page.goto('/')
+      await page.goto('/')
 
-    // One click: connect (mock wallet) -> sign SIWE message -> authenticate.
-    await page.getByTestId('sign-in').click()
+      // One click: connect (mock wallet) -> sign SIWE message -> authenticate.
+      await page.getByTestId('sign-in').click()
 
-    // Successful login pushes the router to the teams page. We poll the URL
-    // with `toHaveURL` rather than `waitForURL` because Vue Router's SPA
-    // navigation uses pushState and never fires a `load` event, which would
-    // otherwise hang `waitForURL`'s default `waitUntil: 'load'`.
-    await expect(page).toHaveURL(/\/teams$/, { timeout: 15000 })
-  })
+      // Successful login pushes the router to the companies page. We poll the URL
+      // with `toHaveURL` rather than `waitForURL` because Vue Router's SPA
+      // navigation uses pushState and never fires a `load` event, which would
+      // otherwise hang `waitForURL`'s default `waitUntil: 'load'`.
+      await expect(page).toHaveURL(/\/teams$/, { timeout: 15000 })
+      await expect(page.locator('[data-test="team-list"]')).toBeVisible()
+    }
+  )
 })

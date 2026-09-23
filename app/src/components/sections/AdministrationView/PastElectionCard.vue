@@ -3,7 +3,7 @@
     <!-- Status and Date -->
     <div class="mb-3 flex items-start justify-between">
       <UBadge color="neutral" variant="soft"> Completed </UBadge>
-      <span class="text-gray-600">
+      <span class="text-muted">
         {{ formatDate(election.endDate) }}
       </span>
     </div>
@@ -11,90 +11,83 @@
     <!-- Election Title -->
     <h3 class="mb-4 text-left text-xl font-bold">{{ election.title }}</h3>
 
-    <!-- Candidates Count -->
-    <div class="mb-2 flex items-center justify-between">
-      <span class="text-gray-600">Candidates:</span>
-      <span class="text-2xl font-semibold text-gray-600">{{ election.seatCount }}</span>
-    </div>
-
-    <!-- Votes Count -->
-    <div class="mb-4 flex items-center justify-between">
-      <span class="text-gray-600">Total Votes:</span>
-      <span class="text-2xl font-semibold text-gray-600">{{ voteCount }}</span>
+    <!-- Seats, candidates and turnout: three figures, each saying what it counts -->
+    <div
+      v-for="figure in figures"
+      :key="figure.label"
+      class="mb-2 flex items-center justify-between"
+      :data-test="figure.test"
+    >
+      <span class="text-muted">{{ figure.label }}:</span>
+      <span class="text-highlighted text-2xl font-semibold">{{ figure.value }}</span>
     </div>
 
     <div class="grow"></div>
     <!-- Spacer -->
-    <div class="my-4 border-t border-gray-300"></div>
+    <div class="border-default my-4 border-t"></div>
     <!-- Elected Members -->
     <div class="mb-5">
-      <p class="mb-2 text-gray-600">Elected Members:</p>
+      <p class="text-muted mb-2">Elected Members:</p>
       <div class="flex flex-wrap gap-2">
-        <UBadge v-for="(member, i) in electionResults" :key="i" color="info" variant="subtle">
-          {{ teamStore.currentTeam?.members.find((m) => m.address === member)?.name || 'Unknown' }}
+        <UBadge v-for="member in winners" :key="member" color="info" variant="subtle">
+          {{ memberName(member) }}
         </UBadge>
       </div>
     </div>
 
     <!-- View Results Button -->
-    <UButton
-      color="success"
-      variant="outline"
-      @click="
-        () => {
-          void router.push(
-            `/teams/${teamStore.currentTeamId}/administration/bod-elections-details?electionId=${election.id}`
-          )
-        }
-      "
-      label="View Results"
-    />
+    <UButton color="success" variant="outline" label="View Results" @click="viewResults" />
   </UCard>
 </template>
 
 <script setup lang="ts">
-import { electionsAbi } from '@/artifacts/abi/generated'
 import { useTeamStore } from '@/stores'
 import type { Election } from '@/types'
 import { log } from '@/lib/logging'
 import { formatDate } from '@/utils/format'
-import { useReadContract } from '@wagmi/vue'
+import { isSameAddress } from '@/utils/elections/election'
+import {
+  useElectionsGetCandidates,
+  useElectionsGetVoteCount,
+  useElectionsGetWinners
+} from '@/composables/elections'
 import { useRouter } from 'vue-router'
-import { computed, watch } from 'vue'
+import { computed, watch, type Ref } from 'vue'
 
-const { election } = defineProps<{
+const props = defineProps<{
   election: Election
 }>()
 const teamStore = useTeamStore()
 const router = useRouter()
-const electionsAddress = computed(() => teamStore.getContractAddressByType('Elections'))
+const electionId = computed(() => BigInt(props.election.id))
 
-const {
-  data: voteCount,
-  // isLoading: isLoadingVoteCount,
-  error: errorGetVoteCount
-} = useReadContract({
-  functionName: 'getVoteCount',
-  address: electionsAddress,
-  abi: electionsAbi,
-  args: [BigInt(election.id)] // Supply currentElectionId as an argument
-})
+const { data: voteCount, error: errorGetVoteCount } = useElectionsGetVoteCount(electionId)
+const { data: candidates, error: errorGetCandidates } = useElectionsGetCandidates(electionId)
+// A card only exists for a published election, so the recorded winners are
+// always there to read — never the provisional standings.
+const { data: winners, error: errorGetWinners } = useElectionsGetWinners(electionId)
 
-const { data: electionResults, error: errorGetElectionResults } = useReadContract({
-  functionName: 'getElectionResults',
-  address: electionsAddress,
-  abi: electionsAbi,
-  args: [BigInt(election.id)] // Supply currentElectionId as an argument
-})
+const figures = computed(() => [
+  { test: 'seats', label: 'Seats', value: props.election.seatCount },
+  { test: 'candidates', label: 'Candidates', value: candidates.value?.length ?? 0 },
+  { test: 'votes-cast', label: 'Votes cast', value: voteCount.value ?? 0 }
+])
 
-watch(errorGetVoteCount, (newError) => {
-  if (newError) {
-    log.error('Error fetching vote count:', newError)
-  }
-})
-watch(errorGetElectionResults, (newError) => {
-  if (newError) {
-    log.error('Error fetching election results:', newError)
-  }
-})
+const memberName = (address: string) =>
+  teamStore.currentTeam?.members.find((m) => isSameAddress(m.address, address))?.name || 'Unknown'
+
+const viewResults = () => {
+  void router.push(
+    `/teams/${teamStore.currentTeamId}/administration/bod-elections-details?electionId=${props.election.id}`
+  )
+}
+
+const logOnError = (error: Ref<Error | null>, message: string) =>
+  watch(error, (value) => {
+    if (value) log.error(message, value)
+  })
+
+logOnError(errorGetVoteCount, 'Error fetching vote count:')
+logOnError(errorGetCandidates, 'Error fetching election candidates:')
+logOnError(errorGetWinners, 'Error fetching election winners:')
 </script>

@@ -58,28 +58,30 @@ flowchart LR
 
 #### Happy Path
 
-- [x] An authenticated administrator or super administrator can open Companies operations and load the active platform company list.
-- [x] The overview reports the number of listed companies, their combined membership count, the number with a current Officer, and the
-      average members per listed company.
-- [x] An administrator can inspect the supported on-chain value held by listed companies and the current versus legacy Officer-beacon
-      summary.
-- [x] An administrator can filter the list by company name, sort the available operational columns, paginate the filtered result, and open a
-      selected company.
+- [x] `AC-US-TEAM-OPS-001-01` An authenticated administrator or super administrator can open Companies operations and load the active
+      platform company list.
+- [x] `AC-US-TEAM-OPS-001-02` The overview reports the number of listed companies, their combined membership count, the number with a
+      current Officer, and the average members per listed company.
+- [x] `AC-US-TEAM-OPS-001-03` An administrator can inspect the supported on-chain value held by listed companies and the current versus
+      legacy Officer-beacon summary.
+- [x] `AC-US-TEAM-OPS-001-04` An administrator can filter the list by company name, sort the available operational columns, paginate the
+      filtered result, and open a selected company.
 
 #### Business Rules
 
-- [x] A visitor without a session is redirected to sign in, and an authenticated user without an administrator role is sent to access denied
-      before using the dashboard journey.
-- [x] The default platform list excludes archived companies.
-- [x] The list exposes each company's membership count rather than individual member identities.
-- [x] The platform-wide company-list API, implemented by the technical `/teams` endpoint, independently restricts unfiltered results to
-      administrator roles. _(API)_
+- [x] `AC-US-TEAM-OPS-001-05` A visitor without a session is redirected to sign in, and an authenticated user without an administrator role
+      is sent to access denied before using the dashboard journey.
+- [x] `AC-US-TEAM-OPS-001-06` The default platform list excludes archived companies.
+- [x] `AC-US-TEAM-OPS-001-07` The list exposes each company's membership count rather than individual member identities.
+- [x] `AC-US-TEAM-OPS-001-08` The platform-wide company-list API, implemented by the technical `/teams` endpoint, independently restricts
+      unfiltered results to administrator roles. _(API)_
 
 #### Edge & Error Cases
 
-- [x] A failed company-list request is reported as a loading error instead of being presented as a successful refresh.
-- [x] A platform with no active companies produces an empty list and zero-valued company summary.
-- [x] An administrator can request a fresh platform company list after an earlier load.
+- [x] `AC-US-TEAM-OPS-001-09` A failed company-list request is reported as a loading error instead of being presented as a successful
+      refresh.
+- [x] `AC-US-TEAM-OPS-001-10` A platform with no active companies produces an empty list and zero-valued company summary.
+- [x] `AC-US-TEAM-OPS-001-11` An administrator can request a fresh platform company list after an earlier load.
 
 **Dependencies:** Dashboard authentication and administrator roles
 
@@ -93,19 +95,21 @@ flowchart LR
 
 #### Happy Path
 
-- [x] An administrator can open a listed company and inspect its name, identifier, description when present, owner, creation date, and
-      current Officer version when one exists.
-- [x] An administrator can return from the company profile to the platform company list.
+- [x] `AC-US-TEAM-OPS-002-01` An administrator can open a listed company and inspect its name, identifier, description when present, owner,
+      creation date, and current Officer version when one exists.
+- [x] `AC-US-TEAM-OPS-002-02` An administrator can return from the company profile to the platform company list.
 
 #### Business Rules
 
-- [x] The company-detail API permits an administrator to inspect a company even when the administrator is not a member of that company.
-- [x] The dashboard exposes no administrator controls for creating, editing, archiving, deleting, or changing a company's membership.
+- [x] `AC-US-TEAM-OPS-002-03` The company-detail API permits an administrator to inspect a company even when the administrator is not a
+      member of that company.
+- [x] `AC-US-TEAM-OPS-002-04` The dashboard exposes no administrator controls for creating, editing, archiving, deleting, or changing a
+      company's membership.
 
 #### Edge & Error Cases
 
-- [x] Loading a company profile displays a pending state until its details are available.
-- [x] An unavailable or failed company-detail request reports that the company could not be loaded.
+- [x] `AC-US-TEAM-OPS-002-05` Loading a company profile displays a pending state until its details are available.
+- [x] `AC-US-TEAM-OPS-002-06` An unavailable or failed company-detail request reports that the company could not be loaded.
 
 **Dependencies:** US-TEAM-OPS-001
 
@@ -119,24 +123,27 @@ flowchart LR
 
 #### Happy Path
 
-- [x] An administrator can inspect the current and legacy Officer generations associated with a listed company.
-- [x] An administrator can inspect contracts grouped by their Officer generation and separately identify shared, version-independent
-      contracts.
-- [x] Each displayed contract exposes its type, address, deployer, and event-log history.
-- [x] Supported value-holding contracts expose their current native-token and supported-stablecoin balances, including an explicit zero when
-      no supported balance is held.
+- [x] `AC-US-TEAM-OPS-003-01` An administrator can inspect the current and legacy Officer generations associated with a listed company.
+- [x] `AC-US-TEAM-OPS-003-02` An administrator can inspect contracts grouped by their Officer generation and separately identify shared,
+      version-independent contracts.
+- [x] `AC-US-TEAM-OPS-003-03` Each displayed contract exposes its type, address, deployer, and event-log history.
+- [x] `AC-US-TEAM-OPS-003-04` Supported value-holding contracts expose their current native-token and supported-stablecoin balances,
+      including an explicit zero when no supported balance is held.
 
 #### Business Rules
 
-- [x] A generation is identified as current only when it has no successor in that company's Officer sequence.
-- [x] Contracts that do not hold supported value are not assigned a balance in the contract detail view.
-- [x] Stablecoin totals remain an approximate dollar value, while native-token balances remain outside that dollar total.
+- [x] `AC-US-TEAM-OPS-003-05` A generation is identified as current only when it has no successor in that company's Officer sequence.
+- [x] `AC-US-TEAM-OPS-003-06` Contracts that do not hold supported value are not assigned a balance in the contract detail view.
+- [x] `AC-US-TEAM-OPS-003-07` Stablecoin totals remain an approximate dollar value, while native-token balances remain outside that dollar
+      total.
 
 #### Edge & Error Cases
 
-- [x] A company with no deployed Officer contracts reports that no contracts are available rather than implying a deployment.
-- [x] A failed Officer-generation request reports that contract versions could not be loaded.
-- [x] A failed event-log request reports the retrieval failure instead of presenting an empty event history as successful.
+- [x] `AC-US-TEAM-OPS-003-08` A company with no deployed Officer contracts reports that no contracts are available rather than implying a
+      deployment.
+- [x] `AC-US-TEAM-OPS-003-09` A failed Officer-generation request reports that contract versions could not be loaded.
+- [x] `AC-US-TEAM-OPS-003-10` A failed event-log request reports the retrieval failure instead of presenting an empty event history as
+      successful.
 
 **Dependencies:** US-TEAM-OPS-002 and available backend and chain data
 

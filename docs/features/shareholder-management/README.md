@@ -66,6 +66,19 @@ flowchart LR
 | US-SHER-007 | Settle and close a shareholder migration | Investor owner                  | 🚧 In Progress |
 | US-SHER-008 | Start a shareholder migration            | Company owner                   | 🔗 Reference   |
 
+## Test Coverage Overview
+
+| User Story  | E2E Status | Owning Path |
+| ----------- | ---------- | ----------- |
+| US-SHER-001 | 📋 Planned | E2E-PATH-06 |
+| US-SHER-002 | 📋 Planned | E2E-PATH-07 |
+| US-SHER-003 | 📋 Planned | E2E-PATH-06 |
+| US-SHER-004 | 📋 Planned | E2E-PATH-07 |
+| US-SHER-005 | 📋 Planned | E2E-PATH-06 |
+| US-SHER-006 | 📋 Planned | E2E-PATH-08 |
+| US-SHER-007 | 📋 Planned | E2E-PATH-08 |
+| US-SHER-008 | 📋 Planned | E2E-PATH-08 |
+
 ## US-SHER-001: Invest in the Safe and Receive SHER
 
 **As a** company member\
@@ -76,23 +89,28 @@ flowchart LR
 
 #### Happy Path
 
-- [x] A company member can open the investment form when the company has a registered Safe and router deposits are enabled.
-- [x] The investment form accepts USDC and calculates the corresponding SHER amount from the current router multiplier.
-- [x] A successful investment approves USDC only when the allowance is insufficient, then deposits the selected amount through the router.
-- [x] A successful investment transfers the deposited USDC to the company Safe and mints the calculated SHER to the investor.
+- [x] `AC-US-SHER-001-01` A company member can open the investment form when the company has a registered Safe and router deposits are
+      enabled.
+- [x] `AC-US-SHER-001-02` The investment form accepts USDC and calculates the corresponding SHER amount from the current router multiplier.
+- [x] `AC-US-SHER-001-03` A successful investment approves USDC only when the allowance is insufficient, then deposits the selected amount
+      through the router.
+- [x] `AC-US-SHER-001-04` A successful investment transfers the deposited USDC to the company Safe and mints the calculated SHER to the
+      investor.
 
 #### Business Rules
 
-- [x] The investment action is unavailable while the router is paused, deposits are disabled, the Safe is missing, or the company is
-      archived.
-- [x] The deposit amount must be positive, valid for USDC precision, and no greater than the connected wallet's displayed USDC balance.
-- [x] The form blocks the deposit when the router address, selected token, or router multiplier needed to calculate SHER is unavailable.
+- [x] `AC-US-SHER-001-05` The investment action is unavailable while the router is paused, deposits are disabled, the Safe is missing, or
+      the company is archived.
+- [x] `AC-US-SHER-001-06` The deposit amount must be positive, valid for USDC precision, and no greater than the connected wallet's
+      displayed USDC balance.
+- [x] `AC-US-SHER-001-07` The form blocks the deposit when the router address, selected token, or router multiplier needed to calculate SHER
+      is unavailable.
 
 #### Edge & Error Cases
 
-- [x] Rejecting or failing the approval stops the flow before any deposit is submitted.
-- [x] A failed deposit resets the form to the amount step and shows an error without reporting a successful investment.
-- [x] Cancelling the form resets its amount and closes the investment modal.
+- [x] `AC-US-SHER-001-08` Rejecting or failing the approval stops the flow before any deposit is submitted.
+- [x] `AC-US-SHER-001-09` A failed deposit resets the form to the amount step and shows an error without reporting a successful investment.
+- [x] `AC-US-SHER-001-10` Cancelling the form resets its amount and closes the investment modal.
 
 **Accounting:** The complete router operation is booked once by
 [`UC-SDR-01`](../accounting/journal-entry-catalogue.md#uc-sdr-01--investor-contribution); the matching Safe receipt and Investor mint are
@@ -110,24 +128,25 @@ supporting evidence, not separate entries.
 
 #### Happy Path
 
-- [x] The Bank owner can choose a held native or supported ERC-20 asset and a positive dividend amount within the available Bank balance.
-- [x] A direct owner action calls the matching native-token or ERC-20 dividend distribution on Bank.
-- [x] An eligible Board member creates the matching Bank action instead of executing the dividend directly.
+- [x] `AC-US-SHER-002-01` The Bank owner can choose a held native or supported ERC-20 asset and a positive dividend amount within the
+      available Bank balance.
+- [x] `AC-US-SHER-002-02` A direct owner action calls the matching native-token or ERC-20 dividend distribution on Bank.
+- [x] `AC-US-SHER-002-03` An eligible Board member creates the matching Bank action instead of executing the dividend directly.
 
 #### Business Rules
 
-- [x] The action is available only when a SHER token symbol and at least one shareholder are available.
-- [x] A user who is neither the Bank owner nor eligible for the Board action cannot open the dividend form.
-- [x] A Board-submitted dividend identifies its approval requirement before submission.
-- [x] The dividend token list excludes SHER.
-- [x] The Investor contract rejects dividends while a shareholder migration remains open. _(contract)_
-- [x] An archived company cannot start a dividend action.
+- [x] `AC-US-SHER-002-04` The action is available only when a SHER token symbol and at least one shareholder are available.
+- [x] `AC-US-SHER-002-05` A user who is neither the Bank owner nor eligible for the Board action cannot open the dividend form.
+- [x] `AC-US-SHER-002-06` A Board-submitted dividend identifies its approval requirement before submission.
+- [x] `AC-US-SHER-002-07` The dividend token list excludes SHER.
+- [x] `AC-US-SHER-002-08` The Investor contract rejects dividends while a shareholder migration remains open. _(contract)_
+- [x] `AC-US-SHER-002-09` An archived company cannot start a dividend action.
 
 #### Edge & Error Cases
 
-- [x] A zero, non-numeric, or over-balance amount does not submit a dividend action.
-- [x] A Board-action attempt without a Bank address does not create an action.
-- [x] A failure while reading the Bank owner is reported without enabling an unauthorized dividend action.
+- [x] `AC-US-SHER-002-10` A zero, non-numeric, or over-balance amount does not submit a dividend action.
+- [x] `AC-US-SHER-002-11` A Board-action attempt without a Bank address does not create an action.
+- [x] `AC-US-SHER-002-12` A failure while reading the Bank owner is reported without enabling an unauthorized dividend action.
 
 **Accounting:** Per-shareholder payments are grouped into [`UC-INV-01`](../accounting/journal-entry-catalogue.md#uc-inv-01--dividend-paid).
 Bank's distribution trigger is not booked again.
@@ -144,19 +163,21 @@ Bank's distribution trigger is not booked again.
 
 #### Happy Path
 
-- [x] A company member can review the Investor token symbol, their SHER balance, total supply, and current shareholder count.
-- [x] A company member can review every current shareholder's address, SHER balance, and ownership percentage.
-- [x] A company member can review Investor and Safe Deposit Router activity, filter it by date and type, and open a transaction's details.
+- [x] `AC-US-SHER-003-01` A company member can review the Investor token symbol, their SHER balance, total supply, and current shareholder
+      count.
+- [x] `AC-US-SHER-003-02` A company member can review every current shareholder's address, SHER balance, and ownership percentage.
+- [x] `AC-US-SHER-003-03` A company member can review Investor and Safe Deposit Router activity, filter it by date and type, and open a
+      transaction's details.
 
 #### Business Rules
 
-- [x] A shareholder's displayed ownership percentage is calculated from its current Investor balance and total supply.
-- [x] A shareholder list with no issued SHER remains distinguishable from a list with holders.
+- [x] `AC-US-SHER-003-04` A shareholder's displayed ownership percentage is calculated from its current Investor balance and total supply.
+- [x] `AC-US-SHER-003-05` A shareholder list with no issued SHER remains distinguishable from a list with holders.
 
 #### Edge & Error Cases
 
-- [x] Missing token data is presented as unavailable rather than as a fabricated balance or supply.
-- [x] A failed shareholder or activity read is reported without replacing known values with successful-looking data.
+- [x] `AC-US-SHER-003-06` Missing token data is presented as unavailable rather than as a fabricated balance or supply.
+- [x] `AC-US-SHER-003-07` A failed shareholder or activity read is reported without replacing known values with successful-looking data.
 
 **Dependencies:** Current Investor contract and company access
 
@@ -170,22 +191,23 @@ Bank's distribution trigger is not booked again.
 
 #### Happy Path
 
-- [x] An authorized portal user can choose a company member or supported contract recipient and calculate an additive or ending ownership
-      stake.
-- [x] A successful individual issuance mints the computed incremental SHER amount and refreshes the relevant Investor reads.
+- [x] `AC-US-SHER-004-01` An authorized portal user can choose a company member or supported contract recipient and calculate an additive or
+      ending ownership stake.
+- [x] `AC-US-SHER-004-02` A successful individual issuance mints the computed incremental SHER amount and refreshes the relevant Investor
+      reads.
 
 #### Business Rules
 
-- [x] The Investor contract requires `MINTER_ROLE` for an individual issuance. _(contract)_
-- [x] The recipient address and incremental issuance amount must be valid and greater than zero.
-- [x] An archived company cannot start an issuance write.
-- [ ] The portal verifies that the connected user has `MINTER_ROLE` and applies that same authorization rule to both individual-issuance
-      entry points.
+- [x] `AC-US-SHER-004-03` The Investor contract requires `MINTER_ROLE` for an individual issuance. _(contract)_
+- [x] `AC-US-SHER-004-04` The recipient address and incremental issuance amount must be valid and greater than zero.
+- [x] `AC-US-SHER-004-05` An archived company cannot start an issuance write.
+- [ ] `AC-US-SHER-004-06` The portal verifies that the connected user has `MINTER_ROLE` and applies that same authorization rule to both
+      individual-issuance entry points.
 
 #### Edge & Error Cases
 
-- [x] An invalid recipient or invalid stake does not submit an individual issuance.
-- [x] A rejected or failed individual issuance does not report SHER as issued.
+- [x] `AC-US-SHER-004-07` An invalid recipient or invalid stake does not submit an individual issuance.
+- [x] `AC-US-SHER-004-08` A rejected or failed individual issuance does not report SHER as issued.
 
 **Accounting:** A direct mint not backed by Router, Payroll, or Vesting evidence uses
 [`DEFAULT-D`](../accounting/journal-entry-catalogue.md#default-d--direct-sher-issuance).
@@ -202,21 +224,21 @@ Bank's distribution trigger is not booked again.
 
 #### Happy Path
 
-- [x] The router owner can set the company's registered Safe as the router's Safe when it is not already synchronized.
-- [x] The router owner can enable or disable deposits after the router points to the company Safe.
-- [x] The router owner can set the SHER multiplier used to calculate investment issuance.
+- [x] `AC-US-SHER-005-01` The router owner can set the company's registered Safe as the router's Safe when it is not already synchronized.
+- [x] `AC-US-SHER-005-02` The router owner can enable or disable deposits after the router points to the company Safe.
+- [x] `AC-US-SHER-005-03` The router owner can set the SHER multiplier used to calculate investment issuance.
 
 #### Business Rules
 
-- [x] Only the Safe Deposit Router owner can change its Safe address, deposit state, or multiplier.
-- [x] Deposits cannot be enabled while the router Safe does not match the company's registered Safe.
-- [x] A multiplier must be a valid number within the configured range and at least one.
-- [x] An archived company cannot start a router configuration write.
+- [x] `AC-US-SHER-005-04` Only the Safe Deposit Router owner can change its Safe address, deposit state, or multiplier.
+- [x] `AC-US-SHER-005-05` Deposits cannot be enabled while the router Safe does not match the company's registered Safe.
+- [x] `AC-US-SHER-005-06` A multiplier must be a valid number within the configured range and at least one.
+- [x] `AC-US-SHER-005-07` An archived company cannot start a router configuration write.
 
 #### Edge & Error Cases
 
-- [x] A missing router or company Safe prevents the corresponding configuration write.
-- [x] A rejected or failed router write does not report the configuration as updated.
+- [x] `AC-US-SHER-005-08` A missing router or company Safe prevents the corresponding configuration write.
+- [x] `AC-US-SHER-005-09` A rejected or failed router write does not report the configuration as updated.
 
 **Dependencies:** US-SAFE-001, an active Safe Deposit Router, and a connected router owner
 
@@ -230,20 +252,21 @@ Bank's distribution trigger is not booked again.
 
 #### Happy Path
 
-- [x] A shareholder with a migration proof can review their frozen allocation and submit a self-claim to the new Investor contract.
-- [x] A successful claim mints the snapshot amount to the claiming shareholder.
+- [x] `AC-US-SHER-006-01` A shareholder with a migration proof can review their frozen allocation and submit a self-claim to the new
+      Investor contract.
+- [x] `AC-US-SHER-006-02` A successful claim mints the snapshot amount to the claiming shareholder.
 
 #### Business Rules
 
-- [x] A claim is available only after a migration root and the matching persisted snapshot are available.
-- [x] The Investor contract accepts one claim per shareholder and rejects an invalid Merkle proof. _(contract)_
-- [x] The migration snapshot, rather than the current old-contract balance, determines the claim amount.
+- [x] `AC-US-SHER-006-03` A claim is available only after a migration root and the matching persisted snapshot are available.
+- [x] `AC-US-SHER-006-04` The Investor contract accepts one claim per shareholder and rejects an invalid Merkle proof. _(contract)_
+- [x] `AC-US-SHER-006-05` The migration snapshot, rather than the current old-contract balance, determines the claim amount.
 
 #### Edge & Error Cases
 
-- [x] A connected address not present in the snapshot cannot submit a claim.
-- [x] A failed claim remains visible as a failure and does not report migrated shares as received.
-- [x] A completed migration no longer accepts an additional self-claim. _(contract)_
+- [x] `AC-US-SHER-006-06` A connected address not present in the snapshot cannot submit a claim.
+- [x] `AC-US-SHER-006-07` A failed claim remains visible as a failure and does not report migrated shares as received.
+- [x] `AC-US-SHER-006-08` A completed migration no longer accepts an additional self-claim. _(contract)_
 
 **Accounting:** A migration claim preserves an existing ownership allocation. It is not a new economic issuance and creates no journal
 entry.
@@ -260,20 +283,22 @@ entry.
 
 #### Happy Path
 
-- [x] The Investor owner can dispatch the remaining snapshot allocations in one operation; addresses that already self-claimed are skipped.
-- [x] The Investor owner can close the migration after deciding no further claims are expected.
-- [x] Closing the migration rejects further claims and removes the Investor contract's dividend freeze. _(contract)_
+- [x] `AC-US-SHER-007-01` The Investor owner can dispatch the remaining snapshot allocations in one operation; addresses that already
+      self-claimed are skipped.
+- [x] `AC-US-SHER-007-02` The Investor owner can close the migration after deciding no further claims are expected.
+- [x] `AC-US-SHER-007-03` Closing the migration rejects further claims and removes the Investor contract's dividend freeze. _(contract)_
 
 #### Business Rules
 
-- [x] Dispatch uses the persisted snapshot's holder addresses, amounts, and Merkle proofs.
-- [x] The Investor contract restricts dispatch and closure to its owner. _(contract)_
-- [ ] The portal verifies that the connected company owner is also the Investor owner before enabling dispatch or closure.
+- [x] `AC-US-SHER-007-04` Dispatch uses the persisted snapshot's holder addresses, amounts, and Merkle proofs.
+- [x] `AC-US-SHER-007-05` The Investor contract restricts dispatch and closure to its owner. _(contract)_
+- [ ] `AC-US-SHER-007-06` The portal verifies that the connected company owner is also the Investor owner before enabling dispatch or
+      closure.
 
 #### Edge & Error Cases
 
-- [x] A migration with no usable proof does not dispatch a partial allocation.
-- [x] A failed dispatch or closure is reported without marking the migration complete.
+- [x] `AC-US-SHER-007-07` A migration with no usable proof does not dispatch a partial allocation.
+- [x] `AC-US-SHER-007-08` A failed dispatch or closure is reported without marking the migration complete.
 
 **Accounting:** Dispatch and closure complete an existing ownership migration. They do not create a new economic issuance or journal entry.
 
@@ -302,7 +327,7 @@ the redeployment and migration-root commit. Shareholder Management exposes the m
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `0d5e32409b5fe192d18abe9ae9be8a7833bc3e64`
+**Implementation evidence reviewed against:** `006685cb46c8408101e785b258482092a1e63f70`
 
 - [Shareholder and investor components](../../../app/src/components/sections/SherTokenView/)
 - [Shareholder Management route](../../../app/src/views/team/%5Bid%5D/SherTokenView.vue) and

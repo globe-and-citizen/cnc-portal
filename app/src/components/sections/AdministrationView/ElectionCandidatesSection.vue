@@ -16,23 +16,19 @@
 <script lang="ts" setup>
 import ElectionCandidateCard from './ElectionCandidateCard.vue'
 import { computed, watch } from 'vue'
-import { electionsAbi } from '@/artifacts/abi/generated'
 import { useTeamStore, useUserDataStore } from '@/stores'
 import type { Address } from 'viem'
 import {
-  useElectionsAddress,
   useElectionsCastVote,
   useElectionsGetCandidateVoteCounts,
-  useElectionsGetResults,
   useElectionsGetVoterChoice,
   useElectionsHasVoted,
   useBoDElections
 } from '@/composables/elections'
-import { simulateContract } from '@wagmi/core'
 import type { User } from '@/types'
-import { config } from '@/wagmi.config'
 import { classifyError } from '@/utils/errors/classifyContractError'
 import { log } from '@/lib/logging'
+import { includesAddress, isSameAddress } from '@/utils/elections/election'
 import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
 
 const props = defineProps<{ electionId: bigint }>()
@@ -40,15 +36,13 @@ const teamStore = useTeamStore()
 const toast = useToast()
 const electionId = computed(() => props.electionId)
 
-const electionsAddress = useElectionsAddress()
 const userDataStore = useUserDataStore()
-const { candidateList, voteCount, electionStatus } = useBoDElections(electionId)
+const { candidateList, voteCount, electionStatus, winners } = useBoDElections(electionId)
 const voter = computed(() => userDataStore.address as Address | undefined)
 const { data: candidateVoteCounts, error: errorCandidateVoteCounts } =
   useElectionsGetCandidateVoteCounts(electionId, candidateList)
 const { data: hasVoted, error: errorHasVoted } = useElectionsHasVoted(electionId, voter)
 const { data: voterChoice } = useElectionsGetVoterChoice(electionId, voter)
-const { data: electionResults } = useElectionsGetResults(electionId)
 const { mutate: executeCastVote, isPending: isLoadingCastVote } = useElectionsCastVote()
 const { isWriteDisabled, archivedTooltip } = useTeamWriteGuard()
 
@@ -83,12 +77,8 @@ const candidates = computed(() =>
       imageUrl: member?.imageUrl,
       currentVotes: Number(candidateVoteCounts.value?.[address] ?? 0n),
       totalVotes: totalVotes.value,
-      isSelected:
-        hasVoted.value === true && voterChoice.value?.toLowerCase() === address.toLowerCase(),
-      isElectionWinner:
-        electionStatus.value?.text === 'Completed' &&
-        (electionResults.value?.some((winner) => winner.toLowerCase() === address.toLowerCase()) ??
-          false),
+      isSelected: hasVoted.value === true && isSameAddress(voterChoice.value, address),
+      isElectionWinner: includesAddress(winners.value, address),
       isVoteDisabled: isVoteDisabled.value,
       voteTooltip: voteTooltip.value
     }
@@ -103,38 +93,17 @@ watch(errorHasVoted, (error) => {
   if (error) log.error('Error checking vote status:', error)
 })
 
-const castVote = async (candidateAddress: Address) => {
-  if (!electionsAddress.value) {
-    toast.add({ title: 'Elections contract address not found', color: 'error' })
-    return
-  }
-  const args: readonly [bigint, Address] = [electionId.value, candidateAddress]
-
-  // Simulated through the ABI, not as raw call data: a raw gas estimate leaves
-  // viem nothing to decode the revert with, and every refusal the contract has
-  // a name for — closed ballot, voter not registered, already voted — reaches
-  // the user as the same shrug of an "Election action failed".
-  try {
-    await simulateContract(config, {
-      address: electionsAddress.value,
-      abi: electionsAbi,
-      functionName: 'castVote',
-      args
-    })
-  } catch (error) {
-    log.error('Error simulating vote:', error)
-    toast.add({
-      title: classifyError(error, { contract: 'Elections' }).userMessage,
-      color: 'error'
-    })
-    return
-  }
-
-  // The write layer refreshes the ballot as one bounded set: the total, grouped
-  // candidate counts and this voter's choice settle without re-fetching the
-  // immutable election record that owns the page.
+/**
+ * No pre-flight here: the write layer already simulates through the ABI before
+ * sending, so a refusal the contract has a name for — closed ballot, voter not
+ * registered, already voted — reaches the user once, from one place. It also
+ * refreshes the ballot as one bounded set: the total, grouped candidate counts
+ * and this voter's choice settle without re-fetching the immutable election
+ * record that owns the page.
+ */
+const castVote = (candidateAddress: Address) => {
   executeCastVote(
-    { args },
+    { args: [electionId.value, candidateAddress] },
     {
       onSuccess: () => {
         toast.add({ title: 'Vote Casted successfully!', color: 'success' })

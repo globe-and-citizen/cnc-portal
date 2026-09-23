@@ -232,24 +232,6 @@ export function useElectionsGetWinners(electionId: MaybeRef<bigint>) {
 }
 
 /**
- * Provisional standings computed from the votes cast so far. These are not a
- * result: only `useElectionsGetWinners` reports one the team has published.
- */
-export function useElectionsGetResults(electionId: MaybeRef<bigint>) {
-  const { address, id, enabled } = useElectionTarget(electionId)
-
-  const query = useReadContract({
-    address,
-    abi: electionsAbi,
-    functionName: 'getElectionResults',
-    args: [id],
-    query: { enabled }
-  })
-
-  return { ...query, data: query.data as Ref<readonly Address[] | undefined> }
-}
-
-/**
  * Whether a voter has already cast their vote in an election.
  */
 export function useElectionsHasVoted(

@@ -394,7 +394,7 @@ describe('ExpenseAccountEIP712V2', function () {
       ).to.be.revertedWithCustomError(expenseAccount, 'ExpenseAccountEIP712__SpenderNotApproved')
     })
 
-    it('Should reject transfer with invalid signature', async function () {
+    it('[AC-US-EXP-002-11] Should reject transfer with invalid signature', async function () {
       const { expenseAccount, approvedAddress, recipient, other } = await loadFixture(
         deployExpenseAccountFixture
       )
@@ -500,7 +500,7 @@ describe('ExpenseAccountEIP712V2', function () {
       )
     })
 
-    it('Should reject one-time transfer if already withdrawn', async function () {
+    it('[AC-US-EXP-002-06] Should reject a second one-time transfer', async function () {
       const { expenseAccount, owner, approvedAddress, recipient } = await loadFixture(
         deployExpenseAccountFixture
       )

@@ -1,6 +1,12 @@
 import { describe, it, expect } from 'vitest'
 import type { Address } from 'viem'
-import { parseElectionId, toElection, type RawElection } from '../election'
+import {
+  includesAddress,
+  isSameAddress,
+  parseElectionId,
+  toElection,
+  type RawElection
+} from '../election'
 
 const CREATOR = '0x742d35Cc6bF8C55C6C2e013e5492D2b6637e0886' as Address
 
@@ -49,5 +55,26 @@ describe('parseElectionId', () => {
     ['id zero, which no election has', '0']
   ])('treats %s as absent', (_case, value) => {
     expect(parseElectionId(value)).toBeNull()
+  })
+})
+
+describe('address helpers', () => {
+  const checksummed = '0x742d35Cc6bF8C55C6C2e013e5492D2b6637e0886'
+  const lowercased = checksummed.toLowerCase()
+
+  it('matches an address regardless of its casing', () => {
+    expect(isSameAddress(checksummed, lowercased)).toBe(true)
+    expect(isSameAddress(checksummed, '0xA0b86a33E6441bB7bE6d0B9EB5Bbf26b2d60C1cd')).toBe(false)
+  })
+
+  it('never matches an absent address', () => {
+    expect(isSameAddress(undefined, lowercased)).toBe(false)
+    expect(isSameAddress(checksummed, undefined)).toBe(false)
+  })
+
+  it('finds an address in a list that has not landed yet or is empty', () => {
+    expect(includesAddress(undefined, checksummed)).toBe(false)
+    expect(includesAddress([], checksummed)).toBe(false)
+    expect(includesAddress([lowercased], checksummed)).toBe(true)
   })
 })

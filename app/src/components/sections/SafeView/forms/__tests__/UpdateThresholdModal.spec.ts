@@ -101,7 +101,7 @@ describe('UpdateThresholdModal', () => {
     vi.spyOn(console, 'error').mockImplementation(() => undefined)
   })
 
-  it('calls update owner mutation with chain id and threshold payload', async () => {
+  it('[AC-US-SAFE-004-03] submits the threshold change payload', async () => {
     const wrapper = mountComponent()
     ;(wrapper.vm as unknown as UpdateThresholdModalVm).formState.threshold = 2
     await nextTick()

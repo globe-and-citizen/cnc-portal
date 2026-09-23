@@ -58,3 +58,15 @@ export function parseElectionId(value: unknown): bigint | null {
   const id = BigInt(value)
   return id > 0n ? id : null
 }
+
+/**
+ * Case-insensitive address equality: the chain returns checksummed addresses
+ * while the team roster and the wallet may not.
+ */
+export function isSameAddress(a: string | undefined, b: string | undefined): boolean {
+  return !!a && !!b && a.toLowerCase() === b.toLowerCase()
+}
+
+export function includesAddress(list: readonly string[] | undefined, address: string): boolean {
+  return list?.some((candidate) => isSameAddress(candidate, address)) ?? false
+}

@@ -170,7 +170,7 @@ describe('AddSignerModal', () => {
       expect(mockUpdateOwnersMutate).not.toHaveBeenCalled()
     })
 
-    it('should show success toast and emit event after successful execution', async () => {
+    it('[AC-US-SAFE-004-01] adds a signer after successful execution', async () => {
       mockUpdateOwnersMutate.mockImplementation((_params, callbacks) => callbacks?.onSuccess?.())
       wrapper = createWrapper({ currentThreshold: 1 })
       wrapper.vm.newSigners = [MOCK_USERS[0]!]

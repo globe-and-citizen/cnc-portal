@@ -10,6 +10,7 @@
 - [Community Credit](../../features/community-credit/README.md) uses the Credit Account transaction history.
 - [Shareholder Management](../../features/shareholder-management/README.md) uses investor transaction history.
 - [Payment Gate](../../features/payment-gate/README.md) reuses the transaction-detail slide-over for payment history.
+- [Elections](../../features/elections/README.md) reuses the route-bound pagination and pager for the past-election archive.
 
 ## Runtime Model
 
@@ -19,6 +20,7 @@ flowchart LR
   histories --> dateFilter[DatePicker range filter]
   histories --> tableState[useTransactionTable]
   tableState --> pagination[Route-bound pagination]
+  pagination --> pager[TablePagination]
   tableState --> rows[Filtered grouped rows]
   rows --> detail[TransactionDetailSlideover]
 ```
@@ -29,15 +31,22 @@ flowchart LR
 - Contract activity reaches history sections through the shared RPC-log feeds; table filtering does not choose or replace that source.
 - History sections bind the shared `DatePicker` directly to a `{ start, end } | undefined` range. Their stable storage keys and date-filter
   test selectors are retained.
+- Page and page size live in the route query, so a paginated view is shareable and survives a reload; several paginated lists can share one
+  route under distinct query keys.
+- The pager offers only the page sizes its owner allows; a list held in memory that shrinks below the page the URL names falls back to its
+  last remaining page rather than showing an empty one.
 - A date or type-filter change resets the page and collapses expanded rows without reacting to query refreshes.
 - A selected row opens its detail in `TransactionDetailSlideover`; closing it does not alter the applied filters.
 - Date-range selection is documented by the [Date Picker capability](../date-picker/README.md).
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `0d5e32409b5fe192d18abe9ae9be8a7833bc3e64`
+**Implementation evidence reviewed against:** `7acc3be8ba3462eca7dcbc464357611acc5b3a46`
 
 - [Shared table state](../../../app/src/composables/transactions/useTransactionTable.ts)
+- [Route-bound pagination state](../../../app/src/composables/usePagination.ts) and its
+  [tests](../../../app/src/composables/__tests__/usePagination.spec.ts)
+- [Shared pager control](../../../app/src/components/ui/TablePagination.vue)
 - [Bank history](../../../app/src/components/sections/BankView/BankTransactions.vue),
   [Expense Account history](../../../app/src/components/sections/ExpenseAccountView/ExpenseTransactions.vue), and
   [Cash Remuneration history](../../../app/src/components/sections/CashRemunerationView/CashRemunerationTransactions.vue)

@@ -73,7 +73,6 @@ describe('electionVoteReadsOfAddress', () => {
     expect(matches({ queryKey: readKey('getVoteCount') })).toBe(true)
     expect(matches({ queryKey: readKey('hasVoted') })).toBe(true)
     expect(matches({ queryKey: readKey('getVoterChoice') })).toBe(true)
-    expect(matches({ queryKey: readKey('getElectionResults') })).toBe(true)
     expect(matches({ queryKey: groupedCountKey })).toBe(true)
   })
 

@@ -14,6 +14,8 @@ import {
   useQueryClientFn
 } from '@/tests/mocks'
 import { buildCashOutPlan } from '../plan'
+import { SUPPORTED_TOKENS } from '@/constant'
+import { contractBalanceKeys } from '@/composables/useContractBalance'
 
 const BANK_ADDRESS = '0x1111111111111111111111111111111111111111'
 const RECIPIENT = '0x00000000000000000000000000000000000000aa'
@@ -51,7 +53,14 @@ describe('useCashOutAll', () => {
     mockBankWrites.transfer.mutateAsync.mockResolvedValue(undefined)
     mockBankWrites.transferToken.mutateAsync.mockResolvedValue(undefined)
     mockWagmiCore.getBalance.mockResolvedValue(nativeBalance(5n))
-    mockWagmiCore.readContract.mockResolvedValue(1000n)
+    mockWagmiCore.readContract.mockImplementation(
+      async (_config: unknown, parameters: { functionName?: string }) =>
+        parameters.functionName === 'getSupportedTokens'
+          ? SUPPORTED_TOKENS.filter((token) => token.id !== 'native')
+              .slice(0, 2)
+              .map((token) => token.address)
+          : 1000n
+    )
   })
 
   it('runs the three accounts in order and ends complete', async () => {
@@ -70,6 +79,19 @@ describe('useCashOutAll', () => {
     expect(invalidateQueries).toHaveBeenCalledTimes(1)
   })
 
+  it('refreshes only contract balance and contract-read queries after a successful run', async () => {
+    const flow = useCashOutAll()
+    await flow.start(fullPlan())
+
+    const filter = invalidateQueries.mock.calls[0]?.[0] as {
+      predicate: (query: { queryKey: readonly unknown[] }) => boolean
+    }
+
+    expect(filter.predicate({ queryKey: contractBalanceKeys.all })).toBe(true)
+    expect(filter.predicate({ queryKey: ['readContract', BANK_ADDRESS] })).toBe(true)
+    expect(filter.predicate({ queryKey: ['unrelated-query'] })).toBe(false)
+  })
+
   it('forwards the Bank native balance then every held ERC-20 to the owner', async () => {
     const flow = useCashOutAll()
     await flow.start(fullPlan())
@@ -84,7 +106,14 @@ describe('useCashOutAll', () => {
 
   it('skips Bank assets that have a zero balance', async () => {
     mockWagmiCore.getBalance.mockResolvedValue(nativeBalance(0n))
-    mockWagmiCore.readContract.mockResolvedValue(0n)
+    mockWagmiCore.readContract.mockImplementation(
+      async (_config: unknown, parameters: { functionName?: string }) =>
+        parameters.functionName === 'getSupportedTokens'
+          ? SUPPORTED_TOKENS.filter((token) => token.id !== 'native')
+              .slice(0, 2)
+              .map((token) => token.address)
+          : 0n
+    )
 
     const flow = useCashOutAll()
     await flow.start(fullPlan())

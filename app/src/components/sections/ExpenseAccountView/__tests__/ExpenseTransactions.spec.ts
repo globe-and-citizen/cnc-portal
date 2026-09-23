@@ -161,7 +161,7 @@ describe('ExpenseTransactions', () => {
     expect(childRow.text()).toContain('—')
   })
 
-  it('filters displayed rows by date range', async () => {
+  it('[AC-US-EXP-004-05] filters displayed rows by date range', async () => {
     wrapper = createWrapper()
 
     expect(wrapper.get('[data-test="expense-transaction-history-date-select"]').exists()).toBe(true)
@@ -272,7 +272,7 @@ describe('ExpenseTransactions', () => {
     expect(logErrorSpy).toHaveBeenCalledTimes(2)
   })
 
-  it('shows an empty state when there are no transactions', () => {
+  it('[AC-US-EXP-004-09] shows an empty state when there are no transactions', () => {
     mockExpenseQuery.data.value = undefined
     incomingTransfersQuery.data.value = undefined
     wrapper = createWrapper()
@@ -280,7 +280,7 @@ describe('ExpenseTransactions', () => {
     expect(wrapper.find('[data-test="expense-transactions-error"]').exists()).toBe(false)
   })
 
-  it('shows an error state when a transactions query fails', () => {
+  it('[AC-US-EXP-004-11] shows an error state when a transaction query fails', () => {
     mockExpenseQuery.data.value = undefined
     incomingTransfersQuery.data.value = undefined
     mockExpenseQuery.error.value = new Error('expense query failed')
