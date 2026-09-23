@@ -16,7 +16,7 @@ vi.mock('@/composables/useSiwe', async () => {
 import LoginView from '@/views/LoginView.vue'
 import { useSiweMutation } from '@/composables/useSiwe'
 
-describe('LoginView.vue', () => {
+describe('[US-AUTH-001] LoginView.vue', () => {
   describe('Render', () => {
     it('renders the login logo and sign-in action', () => {
       const wrapper = mount(LoginView)
