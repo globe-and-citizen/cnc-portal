@@ -71,7 +71,8 @@ files across frontend, backend, contract, dashboard, and E2E layers. A test file
 `AC-US-*` marker or by a test path linked from that feature's canonical Implementation Evidence. The report labels those mapping sources:
 canonical evidence establishes feature support only, while a direct marker establishes story traceability and, for an AC, representative
 criterion evidence. Links from canonical contract or implementation documentation classify technical-only support separately. Files with
-none of these mappings remain visible in the unmapped checklist until reviewed.
+none of these mappings remain visible in the unmapped checklist until reviewed. The feature overview separates feature-only support, direct
+story links, and representative AC evidence, with counts for each repository layer and both E2E integration modes.
 
 ## Mocking conventions
 

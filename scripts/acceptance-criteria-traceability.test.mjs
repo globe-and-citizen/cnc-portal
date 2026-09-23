@@ -243,6 +243,7 @@ test('inventories every test file and maps explicit IDs plus canonical feature e
     {
       path: 'app/src/example/__tests__/example.spec.ts',
       layer: 'frontend',
+      e2eMode: null,
       declarations: 1,
       acceptanceIds: ['AC-US-EXAMPLE-001-01'],
       storyIds: ['US-EXAMPLE-001'],
@@ -253,6 +254,7 @@ test('inventories every test file and maps explicit IDs plus canonical feature e
     {
       path: 'contract/test/Helper.spec.ts',
       layer: 'contract',
+      e2eMode: null,
       declarations: 1,
       acceptanceIds: [],
       storyIds: [],
@@ -263,6 +265,7 @@ test('inventories every test file and maps explicit IDs plus canonical feature e
     {
       path: 'app/src/example/__tests__/linked.spec.ts',
       layer: 'frontend',
+      e2eMode: null,
       declarations: 1,
       acceptanceIds: [],
       storyIds: [],

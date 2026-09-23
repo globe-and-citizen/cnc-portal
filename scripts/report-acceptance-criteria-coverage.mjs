@@ -44,6 +44,10 @@ function coverageMark(paths) {
   return paths.length === 0 ? '—' : `✅ ${paths.length}`
 }
 
+function featureTitle(document) {
+  return document.content.match(/^# (.+?) — User Stories/m)?.[1] ?? document.path
+}
+
 function renderStoryCoverage(storyId, rows) {
   const lines = [
     `### ${storyId}`,
@@ -62,7 +66,7 @@ function renderStoryCoverage(storyId, rows) {
 }
 
 function renderFeatureCoverage(document, coverage, inventory) {
-  const title = document.content.match(/^# (.+?) — User Stories/m)?.[1] ?? document.path
+  const title = featureTitle(document)
   const rows = coverage.filter((criterion) => criterion.documentPath === document.path)
   const rowsByStory = new Map()
   for (const criterion of rows) {
@@ -95,6 +99,40 @@ function renderFeatureCoverage(document, coverage, inventory) {
         (testFile) =>
           `| ${testFile.layer} | \`${testFile.path}\` | ${testFile.declarations} | ${testFile.mappingSources.join(' + ')} | ${testFile.storyIds.join(', ') || 'Feature support only'} | ${testFile.acceptanceIds.length} |`
       )
+    )
+  }
+
+  return lines.join('\n')
+}
+
+function renderFeatureOverview(featureDocuments, criteria, inventory) {
+  const lines = [
+    '## Feature Test Coverage Overview',
+    '',
+    'A file may support more than one feature. Story-linked and AC-evidence counts require direct identifiers in the test; feature-only',
+    'support comes from canonical Implementation Evidence and is not presented as story or criterion proof.',
+    '',
+    '| Feature | US | AC | Files | Story Linked | AC Evidence | Feature Only | Integrated E2E | Mocked E2E | Frontend | Backend | Contract | Dashboard | Other |',
+    '| ------- | -- | -- | ----- | ------------ | ----------- | ------------ | -------------- | ---------- | -------- | ------- | -------- | --------- | ----- |'
+  ]
+
+  for (const document of featureDocuments) {
+    const featureCriteria = criteria.filter((criterion) => criterion.documentPath === document.path)
+    const featureStoryIds = new Set(featureCriteria.map((criterion) => criterion.storyId))
+    const featureAcceptanceIds = new Set(featureCriteria.map((criterion) => criterion.id))
+    const files = inventory.filter((testFile) => testFile.featureDocuments.includes(document.path))
+    const storyLinked = files.filter((testFile) =>
+      testFile.storyIds.some((storyId) => featureStoryIds.has(storyId))
+    )
+    const acceptanceLinked = files.filter((testFile) =>
+      testFile.acceptanceIds.some((acceptanceId) => featureAcceptanceIds.has(acceptanceId))
+    )
+    const directlyMapped = new Set([...storyLinked, ...acceptanceLinked].map((testFile) => testFile.path))
+    const layerCount = (layer) => files.filter((testFile) => testFile.layer === layer).length
+    const e2eModeCount = (mode) => files.filter((testFile) => testFile.e2eMode === mode).length
+
+    lines.push(
+      `| ${featureTitle(document)} | ${featureStoryIds.size} | ${featureCriteria.length} | ${files.length} | ${storyLinked.length} | ${acceptanceLinked.length} | ${files.length - directlyMapped.size} | ${e2eModeCount('integrated')} | ${e2eModeCount('mocked')} | ${layerCount('frontend')} | ${layerCount('backend')} | ${layerCount('contract')} | ${layerCount('dashboard')} | ${layerCount('other')} |`
     )
   }
 
@@ -147,9 +185,13 @@ function renderRepositoryInventory(inventory) {
     '',
     '### Unmapped Test Files',
     '',
-    'These files remain part of the audit checklist. They need either an explicit US/AC mapping or a documented classification as shared',
-    'technical coverage; they are not silently counted as product acceptance evidence.',
-    ''
+    ...(unmapped.length === 0
+      ? ['No tracked test file is currently unmapped.', '']
+      : [
+          'These files remain part of the audit checklist. They need either an explicit US/AC mapping or a documented classification as shared',
+          'technical coverage; they are not silently counted as product acceptance evidence.',
+          ''
+        ])
   )
 
   for (const layer of TEST_COVERAGE_LAYERS) {
@@ -219,6 +261,8 @@ const report = [
   'Generated from tracked test declarations plus representative `US-*` and `AC-US-*` references. The inventory keeps unmapped tests visible, while acceptance counts distinguish repository layers, integrated E2E journeys, and mocked browser tests. References do not prove exhaustive coverage or a passing latest run.',
   '',
   renderRepositoryInventory(inventory),
+  '',
+  renderFeatureOverview(requestedDocuments, result.criteria, inventory),
   '',
   requestedDocuments.map((document) => renderFeatureCoverage(document, coverage, inventory)).join('\n\n'),
   ''

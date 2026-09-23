@@ -149,7 +149,8 @@ US/AC marker provides story or representative criterion traceability. A test pat
 feature-level support only, and the report labels that weaker mapping explicitly. Tests linked only from canonical contract or shared
 implementation documentation remain visible as technical-only support instead of being attributed to a product feature. The report derives
 evidence from tracked test files; it does not infer whether an unreferenced criterion needs automation or whether the latest test run
-passed.
+passed. Use the generated feature overview for breadth across layers; use the per-story tables below it when deciding whether a specific
+criterion has the expected kind of representative evidence.
 
 ### Story Statuses
 

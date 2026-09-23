@@ -226,6 +226,7 @@ export function summarizeTestFileInventory(
       {
         path: document.path,
         layer: classifyTestCoverageLayer(document.path),
+        e2eMode: classifyE2eCoverageMode(document),
         declarations,
         acceptanceIds,
         storyIds: [...storyIds].sort(),
