@@ -26,7 +26,7 @@ const buildQueryReturn = (overrides: Partial<Record<string, unknown>> = {}): Que
     ...overrides
   }) as unknown as QueryReturn
 
-describe('Team Store', () => {
+describe('[US-COMPANIES-003] Team Store', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
     vi.clearAllMocks()

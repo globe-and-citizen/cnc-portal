@@ -43,7 +43,7 @@ const SELECTORS = {
   step3: '[data-test="step-3"]'
 } as const
 
-describe('AddTeamForm.vue', () => {
+describe('[US-COMPANIES-001] AddTeamForm.vue', () => {
   let wrapper: ReturnType<typeof mount>
 
   const mountComponent = () => {

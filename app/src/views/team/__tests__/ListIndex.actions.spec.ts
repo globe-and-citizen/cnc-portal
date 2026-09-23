@@ -12,6 +12,7 @@ import { useGetTeamsQuery } from '@/queries/team.queries'
 // The card only announces which action was chosen; the list owns the modals.
 // These cover that hand-off — that the right modal opens, against the right
 // team, and that nothing else on the page reacts.
+// Supports US-COMPANIES-004, US-COMPANIES-006, US-COMPANIES-007, and US-COMPANIES-008.
 describe('ListIndex - card actions', () => {
   beforeEach(() => {
     vi.clearAllMocks()

@@ -36,7 +36,7 @@ async function openModal(wrapper: ReturnType<typeof mountModal>) {
   await wrapper.vm.$nextTick()
 }
 
-describe('TeamMetaDeleteModal.vue', () => {
+describe('[US-COMPANIES-008] TeamMetaDeleteModal.vue', () => {
   beforeEach(() => {
     mutateSpy.mockClear()
     mockRouterPush.mockClear()

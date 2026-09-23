@@ -24,7 +24,7 @@ const makeWrapper = () =>
     }
   })
 
-describe('DeleteMemberModal.vue', () => {
+describe('[US-COMPANIES-005] DeleteMemberModal.vue', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.mocked(useDeleteMemberMutation).mockReturnValue({

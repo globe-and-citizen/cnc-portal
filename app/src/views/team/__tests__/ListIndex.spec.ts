@@ -10,7 +10,7 @@ import { useRoute } from 'vue-router'
 // Import after mocks are defined
 import { useGetTeamsQuery } from '@/queries/team.queries'
 
-describe('ListIndex - Team List View', () => {
+describe('[US-COMPANIES-003] ListIndex - Team List View', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.mocked(useRoute).mockReturnValue({

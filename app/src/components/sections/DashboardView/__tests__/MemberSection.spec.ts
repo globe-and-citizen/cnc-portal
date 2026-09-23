@@ -103,7 +103,7 @@ const makeWrapper = () =>
     }
   })
 
-describe('MemberSection.vue', () => {
+describe('[US-COMPANIES-005] MemberSection.vue', () => {
   beforeEach(() => {
     vi.clearAllMocks()
 

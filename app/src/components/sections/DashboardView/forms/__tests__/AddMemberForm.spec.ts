@@ -44,7 +44,7 @@ const clickAdd = async (wrapper: ReturnType<typeof mountComponent>) => {
   await wrapper.vm.$nextTick()
 }
 
-describe('AddMemberForm.vue', () => {
+describe('[US-COMPANIES-005] AddMemberForm.vue', () => {
   beforeEach(() => {
     vi.clearAllMocks()
 
