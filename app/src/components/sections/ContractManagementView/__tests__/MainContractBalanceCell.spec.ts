@@ -41,7 +41,7 @@ describe('MainContractBalanceCell', () => {
     mockUseContractBalance.hasData.value = true
   })
 
-  it('renders a loading state without claiming the balance is zero', () => {
+  it('[AC-US-CONTRACT-001-09] presents balance loading without claiming zero', () => {
     mockUseContractBalance.isLoading.value = true
     mockUseContractBalance.hasData.value = false
 
@@ -51,7 +51,7 @@ describe('MainContractBalanceCell', () => {
     expect(wrapper.text()).not.toContain('$0')
   })
 
-  it('renders an empty state when no balance payload is available', () => {
+  it('[AC-US-CONTRACT-001-09] presents an unavailable balance separately from zero', () => {
     mockUseContractBalance.hasData.value = false
 
     const wrapper = mountComponent()
@@ -60,7 +60,7 @@ describe('MainContractBalanceCell', () => {
     expect(wrapper.text()).toContain('No balance data is available')
   })
 
-  it('renders a distinct zero state when supported assets are loaded but empty', () => {
+  it('[AC-US-CONTRACT-001-09] presents a confirmed zero balance', () => {
     mockUseContractBalance.balances.value = [makeTokenBalance({ amount: 0 })]
     mockUseContractBalance.total.value = {
       usd: { value: 0, formatted: '$0' },
@@ -73,7 +73,7 @@ describe('MainContractBalanceCell', () => {
     expect(wrapper.text()).toContain('$0')
   })
 
-  it('renders an error state instead of a zero fallback', () => {
+  it('[AC-US-CONTRACT-001-09] presents a failed balance read instead of zero', () => {
     mockUseContractBalance.error.value = new Error('RPC unavailable')
     mockUseContractBalance.hasData.value = false
 
@@ -84,7 +84,7 @@ describe('MainContractBalanceCell', () => {
     expect(wrapper.text()).not.toContain('$0')
   })
 
-  it('shows the aggregate value and token breakdown in a hover popover', () => {
+  it('[AC-US-CONTRACT-001-09] presents aggregate value and supported-asset balances', () => {
     mockUseContractBalance.balances.value = [
       makeTokenBalance({
         amount: 12.5,

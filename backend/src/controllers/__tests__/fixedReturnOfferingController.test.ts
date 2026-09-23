@@ -116,7 +116,7 @@ describe('FixedReturnOffering Controller', () => {
       expect(response.body.message).toBe('FixedReturn contract not found for this team');
     });
 
-    it('returns 403 if the caller is not the on-chain owner', async () => {
+    it('[AC-US-CC-002-18] rejects metadata writes from a non-owner', async () => {
       vi.spyOn(prisma.teamContract, 'findFirst').mockResolvedValueOnce(mockTeamContract);
       mockReadContract({ owner: '0x0000000000000000000000000000000000000000' });
 
@@ -128,7 +128,7 @@ describe('FixedReturnOffering Controller', () => {
       expect(response.body.message).toBe('Caller is not the owner of the FixedReturn contract');
     });
 
-    it('rejects an offerId that does not exist on-chain yet, before any DB write', async () => {
+    it('[AC-US-CC-002-17] rejects metadata for an offer that does not exist on-chain', async () => {
       vi.spyOn(prisma.teamContract, 'findFirst').mockResolvedValueOnce(mockTeamContract);
       mockReadContract({ totalOfferings: 2n });
 
@@ -169,7 +169,7 @@ describe('FixedReturnOffering Controller', () => {
       });
     });
 
-    it('succeeds identically when retried with the same payload (simulated response loss)', async () => {
+    it('[AC-US-CC-002-16] preserves metadata on an identical retry', async () => {
       vi.spyOn(prisma.teamContract, 'findFirst').mockResolvedValue(mockTeamContract);
       mockReadContract({ totalOfferings: 5n });
       vi.spyOn(prisma.fixedReturnOffering, 'upsert').mockResolvedValue(mockOffering);
@@ -194,7 +194,7 @@ describe('FixedReturnOffering Controller', () => {
       );
     });
 
-    it('overwrites with edited title/purpose on retry', async () => {
+    it('[AC-US-CC-002-16] overwrites metadata with the current values on retry', async () => {
       vi.spyOn(prisma.teamContract, 'findFirst').mockResolvedValueOnce(mockTeamContract);
       mockReadContract({ totalOfferings: 5n });
       const updated = {

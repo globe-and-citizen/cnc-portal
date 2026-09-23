@@ -127,7 +127,7 @@ describe('CreditRepayPanel', () => {
     expect(wrapper.text()).toContain('1,000 USDC')
   })
 
-  it('grays out and disables Repay once nothing is left outstanding', async () => {
+  it('[AC-US-CC-005-06] disables repayment once nothing remains outstanding', async () => {
     const wrapper = mount(CreditRepayPanel, {
       props: panelProps({
         repayment: repaymentState({ outstanding: 0n }),
@@ -155,7 +155,7 @@ describe('CreditRepayPanel', () => {
     expect(wrapper.find('[data-test="repay-error"]').text()).toContain('Transaction failed')
   })
 
-  it('disables Repay and explains why when the connected wallet is not the Bank owner', async () => {
+  it('[AC-US-CC-005-13] blocks repayment for a wallet that is not the Bank owner', async () => {
     const wrapper = mount(CreditRepayPanel, {
       props: panelProps({ repayment: repaymentState({ canRepayViaBank: false }) })
     })
@@ -168,7 +168,7 @@ describe('CreditRepayPanel', () => {
     expect(wrapper.emitted('repay')).toBeUndefined()
   })
 
-  it('disables Repay and explains why on a round still open for funding', async () => {
+  it('[AC-US-CC-005-15] blocks repayment while a round is still raising', async () => {
     const wrapper = mount(CreditRepayPanel, {
       props: panelProps({
         round: sampleRound({ status: 'open' }),
@@ -197,7 +197,7 @@ describe('CreditRepayPanel', () => {
     }
   )
 
-  it('keeps repayment disabled while the exact treasury balance is loading', async () => {
+  it('[AC-US-CC-005-10] blocks repayment until the Bank balance is available', async () => {
     const wrapper = mount(CreditRepayPanel, {
       props: panelProps({
         repayment: repaymentState({

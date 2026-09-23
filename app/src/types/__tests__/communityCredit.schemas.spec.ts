@@ -71,7 +71,7 @@ describe('createCreditCallAccessSchema — whitelist sum vs. target (bigint, at-
     expect(result.success).toBe(true)
   })
 
-  it('rejects a sum that is a genuine smallest-unit short of the target, even when float arithmetic makes it look close enough', () => {
+  it('[AC-US-CC-002-10] rejects capped allocations one smallest unit below the target', () => {
     // 3 lenders at 3.3333333 (7 decimal places) sum to 9.9999999 in float terms — within
     // the old 1e-6 tolerance of a 10 target. But FixedReturn.sol scales *each* amount to
     // its 6-decimal smallest unit independently (parseUnits rounds 3.3333333 -> 3333333)
@@ -158,7 +158,7 @@ describe('createCreditCallAccessSchema — per-lender amount must be positive', 
     }
   })
 
-  it('rejects a zero lender amount', () => {
+  it('[AC-US-CC-002-09] rejects a zero capped lender allocation', () => {
     const schema = createCreditCallAccessSchema({ target: 10, decimals: 6 })
     const result = schema.safeParse(
       baseAccessData({
@@ -183,7 +183,7 @@ describe('createCreditCallAccessSchema — per-lender amount must be positive', 
 })
 
 describe('createCreditCallAccessSchema — whitelist addresses must be unique', () => {
-  it('rejects a whitelist with the same address twice', () => {
+  it('[AC-US-CC-002-08] rejects a duplicate restricted-lender address', () => {
     // Mirrors FixedReturn.sol's DuplicateWhitelistAddress — a repeated address would
     // silently overwrite its earlier allocation on-chain while the exact-sum check
     // above still counts both amounts, so this must be caught before submission.
@@ -289,7 +289,12 @@ describe('validateRepaymentAmount', () => {
     })
   })
 
-  it('rejects amounts above the outstanding obligation or exact Bank balance', () => {
+  /**
+   * Covers:
+   * - [AC-US-CC-005-08]
+   * - [AC-US-CC-005-09]
+   */
+  it('rejects repayment above the outstanding obligation or exact Bank balance', () => {
     expect(validateRepaymentAmount({ ...baseContext, amount: '50.500001' })).toEqual({
       valid: false,
       errorMessage: 'Cannot exceed the outstanding balance.'
@@ -307,7 +312,7 @@ describe('validateRepaymentAmount', () => {
     })
   })
 
-  it('blocks repayment until the Bank balance is known', () => {
+  it('[AC-US-CC-005-10] blocks repayment until the Bank balance is known', () => {
     expect(validateRepaymentAmount({ ...baseContext, amount: '1', treasuryBalance: null })).toEqual(
       {
         valid: false,

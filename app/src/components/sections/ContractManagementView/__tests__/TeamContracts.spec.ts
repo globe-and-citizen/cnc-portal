@@ -59,13 +59,13 @@ describe('TeamContracts.vue', () => {
     })
   }
 
-  it('separates the Campaign Manager from the funded campaign workspace', () => {
+  it('[AC-US-CONTRACT-003-01] identifies the configured Campaign Manager separately', () => {
     const wrapper = mountComponent()
     expect(wrapper.text()).toContain('Campaign Manager')
     expect(wrapper.find('[data-test="campaign-workspace"]').text()).toContain(CAMPAIGN_ADDR)
   })
 
-  it('shows the manager setup state when no Campaign Manager exists', () => {
+  it('[AC-US-CONTRACT-003-05] shows manager setup when no Campaign Manager exists', () => {
     vi.mocked(useTeamStore).mockReturnValue({
       ...mockTeamStore,
       currentTeam: { ...mockTeamStore.currentTeam, teamContracts: [] }

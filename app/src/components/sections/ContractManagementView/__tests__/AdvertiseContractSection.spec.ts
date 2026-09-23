@@ -13,7 +13,7 @@ vi.mock('@/components/sections/ContractManagementView/forms/CreateAddCampaign.vu
 
 const mountSection = () => renderWithProviders(AdvertiseContractSection)
 
-describe('AdvertiseContractSection.vue', () => {
+describe('[US-CONTRACT-003] AdvertiseContractSection.vue', () => {
   beforeEach(() => {
     vi.clearAllMocks()
   })

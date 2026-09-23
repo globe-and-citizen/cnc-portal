@@ -42,7 +42,7 @@ describe('CreditRoundCard', () => {
     mockFixedReturnReads.myLenderPositions.data.value = new Map()
   })
 
-  it('hides the Lend action on a restricted round when the viewer has no whitelist allocation, owner included', () => {
+  it('[AC-US-CC-003-06] hides lending on a restricted round without an allocation', () => {
     store.isOwner = true
     const wrapper = mount(CreditRoundCard, {
       props: { round: makeRound({ restricted: true }) }
@@ -62,7 +62,7 @@ describe('CreditRoundCard', () => {
     expect(wrapper.find('[data-test="round-cta-lend"]').exists()).toBe(true)
   })
 
-  it('offers a retry instead of hiding Lend when the position read failed, not confirmed zero', () => {
+  it('[AC-US-CC-003-12] offers retry when lender-position eligibility is unavailable', () => {
     mockFixedReturnReads.myLenderPositions.data.value = new Map([
       [1, { status: 'error', error: new Error('RPC timeout') }]
     ])

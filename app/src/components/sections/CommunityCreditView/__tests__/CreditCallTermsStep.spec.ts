@@ -5,6 +5,7 @@ import { Time } from '@internationalized/date'
 import CreditCallTermsStep from '../CreditCallTermsStep.vue'
 import type { CreditCallForm } from '@/types'
 import { MINUTES_PER_DAY } from '@/utils/communityCredit/model'
+import { addCreditTerm } from '@/utils/communityCredit/offer'
 
 function makeForm(overrides: Partial<CreditCallForm> = {}): CreditCallForm {
   return reactive({
@@ -176,8 +177,16 @@ describe('CreditCallTermsStep', () => {
   })
 
   describe('validate', () => {
-    it('passes for a valid form', () => {
-      const wrapper = mountStep(makeForm())
+    it('[AC-US-CC-002-05] accepts a future deadline and a positive term through 30 years', () => {
+      const form = makeForm()
+      const wrapper = mountStep(form)
+      expect(wrapper.vm.validate()).toBe(true)
+
+      form.period = Math.round(
+        (addCreditTerm(form.deadline, form.deadlineTime, 30, 'years') -
+          addCreditTerm(form.deadline, form.deadlineTime, 0, 'years')) /
+          60
+      )
       expect(wrapper.vm.validate()).toBe(true)
     })
 
@@ -200,16 +209,19 @@ describe('CreditCallTermsStep', () => {
       )
     })
 
-    it('passes with a zero rate — an interest-free round is a valid use case', () => {
-      const wrapper = mountStep(makeForm({ rate: '0' }))
-      expect(wrapper.vm.validate()).toBe(true)
-    })
+    it('[AC-US-CC-002-04] accepts inclusive 0%-to-100% rates and rejects values outside the range', async () => {
+      expect(mountStep(makeForm({ rate: '0' })).vm.validate()).toBe(true)
+      expect(mountStep(makeForm({ rate: '100' })).vm.validate()).toBe(true)
 
-    it('fails and shows an error when the rate is negative', async () => {
-      const wrapper = mountStep(makeForm({ rate: '-1' }))
-      expect(wrapper.vm.validate()).toBe(false)
-      await wrapper.vm.$nextTick()
-      expect(wrapper.find('[data-test="cc-rate-error"]').text()).toContain('cannot be negative')
+      const belowRange = mountStep(makeForm({ rate: '-1' }))
+      expect(belowRange.vm.validate()).toBe(false)
+      await belowRange.vm.$nextTick()
+      expect(belowRange.find('[data-test="cc-rate-error"]').text()).toContain('cannot be negative')
+
+      const aboveRange = mountStep(makeForm({ rate: '101' }))
+      expect(aboveRange.vm.validate()).toBe(false)
+      await aboveRange.vm.$nextTick()
+      expect(aboveRange.find('[data-test="cc-rate-error"]').text()).toContain('100% or less')
     })
 
     it('fails and shows a calendar-breakdown error when the term exceeds the 30-year maximum', async () => {
