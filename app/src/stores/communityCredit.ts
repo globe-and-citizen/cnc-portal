@@ -79,14 +79,13 @@ export const useCommunityCreditStore = defineStore('communityCredit', () => {
     )
   )
 
-  // ───────── role (derived from on-chain ownership, not a manual toggle) ─────────
+  // ───────── ownership (derived from on-chain state, not a manual toggle) ─────────
   const isOwner = computed(
     () =>
       !!userStore.address &&
       !!ownerQuery.data.value &&
       userStore.address.toLowerCase() === ownerQuery.data.value.toLowerCase()
   )
-  const isLender = computed(() => !isOwner.value)
 
   // ───────── derived round buckets ─────────
   // "Open & active rounds" — only rounds a lender could still fund right now. Everything
@@ -171,9 +170,8 @@ export const useCommunityCreditStore = defineStore('communityCredit', () => {
     hasContract,
     isLoading,
     isError,
-    // role
+    // ownership
     isOwner,
-    isLender,
     // rounds
     rounds,
     activeRounds,
