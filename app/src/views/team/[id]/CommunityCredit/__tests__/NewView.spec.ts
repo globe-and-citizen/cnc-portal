@@ -62,6 +62,7 @@ describe('NewView', () => {
     mockFixedReturnReads.getSupportedTokens.data.value = []
     useQueryClientFn.mockReturnValue({
       invalidateQueries: mockInvalidateQueries,
+      refetchQueries: vi.fn(),
       getQueryData: vi.fn(),
       setQueryData: vi.fn(),
       removeQueries: vi.fn()
