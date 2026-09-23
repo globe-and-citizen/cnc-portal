@@ -212,15 +212,20 @@ test('summarizes unique representative files for every acceptance criterion', ()
   })
 })
 
-test('inventories every test file and maps explicit story and acceptance references', () => {
+test('inventories every test file and maps explicit IDs plus canonical feature evidence', () => {
   const criteria = parseAcceptanceCriteria(validFeature)
-  const inventory = summarizeTestFileInventory(criteria, [
-    testDocument(`describe('[US-EXAMPLE-001] Example', () => {
+  const inventory = summarizeTestFileInventory(
+    criteria,
+    [
+      testDocument(`describe('[US-EXAMPLE-001] Example', () => {
   it('[AC-US-EXAMPLE-001-01] proves the primary outcome', () => {})
 })`),
-    testDocument("test('covers a technical helper', () => {})", 'contract/test/Helper.spec.ts'),
-    testDocument('export const fixture = true', 'app/src/example/__tests__/fixture.ts')
-  ])
+      testDocument("test('covers a technical helper', () => {})", 'contract/test/Helper.spec.ts'),
+      testDocument("test('supports the feature', () => {})", 'app/src/example/__tests__/linked.spec.ts'),
+      testDocument('export const fixture = true', 'app/src/example/__tests__/fixture.ts')
+    ],
+    [feature(`- [Feature tests](../../../app/src/example/__tests__/linked.spec.ts)`, validFeature.path)]
+  )
 
   assert.equal(
     countStaticTestDeclarations({
@@ -235,7 +240,8 @@ test('inventories every test file and maps explicit story and acceptance referen
       declarations: 1,
       acceptanceIds: ['AC-US-EXAMPLE-001-01'],
       storyIds: ['US-EXAMPLE-001'],
-      featureDocuments: ['docs/features/example/README.md']
+      featureDocuments: ['docs/features/example/README.md'],
+      mappingSources: ['US/AC marker']
     },
     {
       path: 'contract/test/Helper.spec.ts',
@@ -243,7 +249,17 @@ test('inventories every test file and maps explicit story and acceptance referen
       declarations: 1,
       acceptanceIds: [],
       storyIds: [],
-      featureDocuments: []
+      featureDocuments: [],
+      mappingSources: []
+    },
+    {
+      path: 'app/src/example/__tests__/linked.spec.ts',
+      layer: 'frontend',
+      declarations: 1,
+      acceptanceIds: [],
+      storyIds: [],
+      featureDocuments: ['docs/features/example/README.md'],
+      mappingSources: ['canonical evidence']
     }
   ])
 })

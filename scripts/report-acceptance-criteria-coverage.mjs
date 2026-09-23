@@ -89,11 +89,11 @@ function renderFeatureCoverage(document, coverage, inventory) {
       '',
       '### Mapped test files',
       '',
-      '| Layer | Test File | Static Tests | User Stories | Acceptance Criteria |',
-      '| ----- | --------- | ------------ | ------------ | ------------------- |',
+      '| Layer | Test File | Static Tests | Mapping | User Stories | Acceptance Criteria |',
+      '| ----- | --------- | ------------ | ------- | ------------ | ------------------- |',
       ...mappedFiles.map(
         (testFile) =>
-          `| ${testFile.layer} | \`${testFile.path}\` | ${testFile.declarations} | ${testFile.storyIds.join(', ')} | ${testFile.acceptanceIds.length} |`
+          `| ${testFile.layer} | \`${testFile.path}\` | ${testFile.declarations} | ${testFile.mappingSources.join(' + ')} | ${testFile.storyIds.join(', ') || 'Feature support only'} | ${testFile.acceptanceIds.length} |`
       )
     )
   }
@@ -173,7 +173,7 @@ if (result.errors.length > 0) {
 }
 
 const coverage = summarizeAcceptanceCriterionCoverage(result.criteria, result.references)
-const inventory = summarizeTestFileInventory(result.criteria, testDocuments)
+const inventory = summarizeTestFileInventory(result.criteria, testDocuments, featureDocuments)
 const requestedDocuments = featureDocuments.filter((document) => featurePaths.includes(document.path))
 const report = [
   '# Acceptance-Criterion Test Coverage',

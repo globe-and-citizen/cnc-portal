@@ -67,8 +67,10 @@ contract in the [Feature Documentation Guide](../../docs/platform/feature-specif
 - An identifier records traceability; the assertions remain the evidence. Do not tag incidental tests merely to increase reported coverage.
 
 Run `npm run report:acceptance-coverage` from the repository root for the complete local audit. The Git-ignored report inventories test
-files across frontend, backend, contract, dashboard, and E2E layers. Files without an explicit US or AC reference remain visible in the
-unmapped checklist until they receive a product mapping or are deliberately classified as shared technical coverage.
+files across frontend, backend, contract, dashboard, and E2E layers. A test file is attached to a feature either by a direct `US-*` or
+`AC-US-*` marker or by a test path linked from that feature's canonical Implementation Evidence. The report labels those mapping sources:
+canonical evidence establishes feature support only, while a direct marker establishes story traceability and, for an AC, representative
+criterion evidence. Files with neither mapping remain visible in the unmapped checklist until reviewed.
 
 ## Mocking conventions
 

@@ -1,3 +1,5 @@
+import { posix } from 'node:path'
+
 const STORY_HEADING = /^## (US-[A-Z0-9-]+):\s+/
 const SECTION_HEADING = /^### (.+)$/
 const CRITERION = /^- \[([ xX])\] (?:`(AC-US-[A-Z0-9-]+-\d{2,})`\s+)?(.+)$/
@@ -143,7 +145,46 @@ export function countStaticTestDeclarations(document) {
   return directTests.length + parameterizedTests.length
 }
 
-export function summarizeTestFileInventory(criteria, testDocuments) {
+function repositoryLinks(document) {
+  const links = new Set()
+
+  for (const match of document.content.matchAll(/!?\[[^\]]*]\(([^)]+)\)/g)) {
+    let reference = match[1].trim()
+    if (!reference || /^(?:[A-Za-z][A-Za-z0-9+.-]*:|#)/.test(reference)) continue
+
+    if (reference.startsWith('<') && reference.endsWith('>')) {
+      reference = reference.slice(1, -1)
+    } else {
+      reference = reference.split(/\s+['"]/)[0]
+    }
+
+    reference = reference.split('#', 1)[0]
+    if (!reference) continue
+
+    try {
+      const target = posix.normalize(posix.join(posix.dirname(document.path), decodeURIComponent(reference)))
+      if (target && !target.startsWith('../') && !target.startsWith('/')) {
+        links.add(target.replace(/\/$/, ''))
+      }
+    } catch {
+      // Other documentation checks report malformed Markdown references.
+    }
+  }
+
+  return [...links]
+}
+
+function canonicalFeatureOwners(documentPath, featureDocuments) {
+  return featureDocuments
+    .filter((document) =>
+      repositoryLinks(document).some(
+        (evidencePath) => documentPath === evidencePath || documentPath.startsWith(`${evidencePath}/`)
+      )
+    )
+    .map((document) => document.path)
+}
+
+export function summarizeTestFileInventory(criteria, testDocuments, featureDocuments = []) {
   const criterionIds = new Set(criteria.map((criterion) => criterion.id))
   const criterionOwnerById = new Map(
     criteria.map((criterion) => [criterion.id, { documentPath: criterion.documentPath, storyId: criterion.storyId }])
@@ -167,7 +208,12 @@ export function summarizeTestFileInventory(criteria, testDocuments) {
       if (document.content.includes(storyId)) storyIds.add(storyId)
     }
 
-    const featureDocuments = [...new Set([...storyIds].map((storyId) => storyOwnerById.get(storyId)).filter(Boolean))]
+    const markerFeatureDocuments = [...storyIds].map((storyId) => storyOwnerById.get(storyId)).filter(Boolean)
+    const evidenceFeatureDocuments = canonicalFeatureOwners(document.path, featureDocuments)
+    const ownedFeatureDocuments = [...new Set([...markerFeatureDocuments, ...evidenceFeatureDocuments])].sort()
+    const mappingSources = []
+    if (markerFeatureDocuments.length > 0) mappingSources.push('US/AC marker')
+    if (evidenceFeatureDocuments.length > 0) mappingSources.push('canonical evidence')
 
     return [
       {
@@ -176,7 +222,8 @@ export function summarizeTestFileInventory(criteria, testDocuments) {
         declarations,
         acceptanceIds,
         storyIds: [...storyIds].sort(),
-        featureDocuments: featureDocuments.sort()
+        featureDocuments: ownedFeatureDocuments,
+        mappingSources
       }
     ]
   })
