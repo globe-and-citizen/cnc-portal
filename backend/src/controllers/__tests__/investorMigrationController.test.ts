@@ -85,13 +85,13 @@ describe('InvestorMigration Controller', () => {
       shareholders: [{ shareholder: PREVIOUS_INVESTOR_ADDRESS, amount: '100' }],
     };
 
-    it('should return 400 if required fields are missing', async () => {
+    it('returns 400 if required fields are missing', async () => {
       const response = await request(app).post('/').send({ teamId: 1 });
 
       expect(response.status).toBe(400);
     });
 
-    it('should return 403 if the caller is not the on-chain owner', async () => {
+    it('returns 403 if the caller is not the on-chain owner', async () => {
       vi.spyOn(publicClient, 'readContract').mockResolvedValueOnce(
         '0x0000000000000000000000000000000000000000'
       );
@@ -102,7 +102,7 @@ describe('InvestorMigration Controller', () => {
       expect(response.body.message).toBe('Caller is not the owner of the new Investor contract');
     });
 
-    it('should create a migration record', async () => {
+    it('creates a migration record', async () => {
       vi.spyOn(publicClient, 'readContract').mockResolvedValueOnce(CALLER_ADDRESS);
       vi.mocked(prisma.investorMigration.findUnique).mockResolvedValueOnce(null);
       vi.mocked(prisma.investorMigration.create).mockResolvedValueOnce(mockMigration as never);
@@ -123,7 +123,7 @@ describe('InvestorMigration Controller', () => {
       });
     });
 
-    it('should return the existing record when the same snapshot is resubmitted (idempotent retry)', async () => {
+    it('returns the existing record when the same snapshot is resubmitted (idempotent retry)', async () => {
       vi.spyOn(publicClient, 'readContract').mockResolvedValueOnce(CALLER_ADDRESS);
       vi.mocked(prisma.investorMigration.findUnique).mockResolvedValueOnce(mockMigration as never);
 
@@ -134,7 +134,7 @@ describe('InvestorMigration Controller', () => {
       expect(prisma.investorMigration.create).not.toHaveBeenCalled();
     });
 
-    it('should return 409 when a different migration already exists for this Investor contract', async () => {
+    it('returns 409 when a different migration already exists for this Investor contract', async () => {
       vi.spyOn(publicClient, 'readContract').mockResolvedValueOnce(CALLER_ADDRESS);
       vi.mocked(prisma.investorMigration.findUnique).mockResolvedValueOnce({
         ...mockMigration,
@@ -150,7 +150,7 @@ describe('InvestorMigration Controller', () => {
       expect(prisma.investorMigration.create).not.toHaveBeenCalled();
     });
 
-    it('should return 500 if there is a server error', async () => {
+    it('returns 500 if there is a server error', async () => {
       vi.spyOn(publicClient, 'readContract').mockResolvedValueOnce(CALLER_ADDRESS);
       vi.mocked(prisma.investorMigration.findUnique).mockRejectedValueOnce('Server error');
 
@@ -161,13 +161,13 @@ describe('InvestorMigration Controller', () => {
   });
 
   describe('GET: /', () => {
-    it('should return 400 if teamId is missing', async () => {
+    it('returns 400 if teamId is missing', async () => {
       const response = await request(app).get('/').query({});
 
       expect(response.status).toBe(400);
     });
 
-    it('should return 403 if the caller is not a team member', async () => {
+    it('returns 403 if the caller is not a team member', async () => {
       vi.mocked(prisma.team.findFirst).mockResolvedValueOnce(null);
 
       const response = await request(app).get('/').query({ teamId: 1 });
@@ -176,7 +176,7 @@ describe('InvestorMigration Controller', () => {
       expect(response.body.message).toBe('Caller is not a member of the team');
     });
 
-    it('should return all migrations for a team with computed proofs', async () => {
+    it('returns all migrations for a team with computed proofs', async () => {
       vi.mocked(prisma.investorMigration.findMany).mockResolvedValueOnce([mockMigration] as never);
       vi.mocked(buildMerkleProofSet).mockReturnValueOnce({
         root: SOME_ROOT,
@@ -195,7 +195,7 @@ describe('InvestorMigration Controller', () => {
       });
     });
 
-    it('should return 500 when the persisted root does not match its recomputed snapshot', async () => {
+    it('returns 500 when the persisted root does not match its recomputed snapshot', async () => {
       vi.mocked(prisma.investorMigration.findMany).mockResolvedValueOnce([mockMigration] as never);
       vi.mocked(buildMerkleProofSet).mockReturnValueOnce({
         root: '0x9999999999999999999999999999999999999999999999999999999999999999',
@@ -207,7 +207,7 @@ describe('InvestorMigration Controller', () => {
       expect(response.status).toBe(500);
     });
 
-    it('should return 500 if there is a server error', async () => {
+    it('returns 500 if there is a server error', async () => {
       vi.mocked(prisma.investorMigration.findMany).mockRejectedValueOnce('Server error');
 
       const response = await request(app).get('/').query({ teamId: 1 });
@@ -217,14 +217,14 @@ describe('InvestorMigration Controller', () => {
   });
 
   describe('POST: /generate', () => {
-    it('should return 400 if previousInvestorAddress is missing', async () => {
+    it('returns 400 if previousInvestorAddress is missing', async () => {
       const response = await request(app).post('/generate').send({});
 
       expect(response.status).toBe(400);
       expect(response.body.message).toBe('previousInvestorAddress is required');
     });
 
-    it('should return the generated snapshot', async () => {
+    it('returns the generated snapshot', async () => {
       const snapshot = {
         root: SOME_ROOT,
         shareholders: [{ address: PREVIOUS_INVESTOR_ADDRESS, amount: '100' }],
@@ -243,7 +243,7 @@ describe('InvestorMigration Controller', () => {
       expect(generateMerkleSnapshot).toHaveBeenCalledWith(PREVIOUS_INVESTOR_ADDRESS);
     });
 
-    it('should return 500 if snapshot generation fails (e.g. sum/totalSupply mismatch)', async () => {
+    it('returns 500 if snapshot generation fails (e.g. sum/totalSupply mismatch)', async () => {
       vi.mocked(generateMerkleSnapshot).mockRejectedValueOnce(
         new Error('Shareholder sum does not match totalSupply')
       );

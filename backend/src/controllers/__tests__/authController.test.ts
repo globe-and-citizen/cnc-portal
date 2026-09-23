@@ -119,7 +119,7 @@ describe('authController', () => {
   describe('POST: /siwe', () => {
     // Parameterized tests for invalid scenarios
     invalidSiweScenarios.forEach(({ body, description, expectedStatus, expectedMessage }) => {
-      it(`should return ${expectedStatus} if ${description}`, async () => {
+      it(`returns ${expectedStatus} if ${description}`, async () => {
         mockPrisma.user.findUnique.mockResolvedValue(null);
 
         const response = await request(app).post('/siwe').send(body);
@@ -135,7 +135,7 @@ describe('authController', () => {
       });
     });
 
-    it('should return 200 if authentication successful with existing user', async () => {
+    it('authenticates an existing user', async () => {
       const mockUser = createMockUser();
       mockPrisma.user.findUnique.mockResolvedValue(mockUser);
       mockPrisma.user.update.mockResolvedValue({
@@ -153,7 +153,7 @@ describe('authController', () => {
       expect(typeof response.body.accessToken).toBe('string');
     });
 
-    it('[AC-US-AUTH-001-02] should return 200 if authentication successful with new user', async () => {
+    it('[AC-US-AUTH-001-02] authenticates and creates a new user', async () => {
       mockPrisma.user.findUnique.mockResolvedValue(null);
       mockPrisma.user.create.mockResolvedValue({
         ...createMockUser(),
@@ -170,7 +170,7 @@ describe('authController', () => {
       expect(typeof response.body.accessToken).toBe('string');
     });
 
-    it('should create new user without avatar when PROFILE_AVATAR_MODE is none', async () => {
+    it('creates new user without avatar when PROFILE_AVATAR_MODE is none', async () => {
       process.env.PROFILE_AVATAR_MODE = 'none';
       mockPrisma.user.findUnique.mockResolvedValue(null);
       mockPrisma.user.create.mockResolvedValue({
@@ -191,7 +191,7 @@ describe('authController', () => {
       );
     });
 
-    it('should return 500 when unexpected error happens in authenticateSiwe', async () => {
+    it('reports an unexpected authentication persistence failure', async () => {
       mockPrisma.user.findUnique.mockRejectedValue(new Error('db crash'));
 
       const response = await request(app).post('/siwe').send({
@@ -203,7 +203,7 @@ describe('authController', () => {
       expect(response.body.message).toBe('Internal server error has occured');
     });
 
-    it('should return 400 if internal server error occurs', async () => {
+    it('rejects malformed authentication input', async () => {
       const response = await request(app).post('/siwe').send({
         message: 'Test message',
         signature: '0xSignature',
@@ -217,7 +217,7 @@ describe('authController', () => {
   describe('GET: /token', () => {
     // Parameterized tests for invalid token scenarios
     invalidTokenScenarios.forEach(({ headers, description, expectedMessage }) => {
-      it.skip(`should return 401 if ${description}`, async () => {
+      it.skip(`returns 401 if ${description}`, async () => {
         const response = await request(app).get('/token').set(headers);
 
         expect(response.status).toBe(401);
@@ -227,7 +227,7 @@ describe('authController', () => {
       });
     });
 
-    it.skip('should return 200 if authorization successful', async () => {
+    it.skip('returns 200 if authorization successful', async () => {
       // Create a valid JWT token for testing
       const testToken = jwt.sign(
         { address: TEST_ADDRESS },

@@ -243,7 +243,7 @@ describe('Claim Controller', () => {
   describe('POST: /', () => {
     // Parameterized tests for invalid body scenarios
     invalidBodyScenarios.forEach(({ body, description }) => {
-      it(`should return 400 if ${description}`, async () => {
+      it(`returns 400 if ${description}`, async () => {
         const response = await request(app).post('/').send(body);
         expect(response.status).toBe(400);
         expect(response.body.message).toContain('Invalid request body');
@@ -251,7 +251,7 @@ describe('Claim Controller', () => {
     });
 
     it.each([1, DAILY_CLAIM_MEMO_MAX_LENGTH])(
-      'should create a claim with a trimmed %i-character memo',
+      'creates a claim with a trimmed %i-character memo',
       async (length) => {
         const memo = ` ${'m'.repeat(length)} `;
         const mockWage = createMockWage();
@@ -270,7 +270,7 @@ describe('Claim Controller', () => {
       }
     );
 
-    it('should reject a memo over the character limit', async () => {
+    it('rejects a memo over the character limit', async () => {
       const response = await request(app)
         .post('/')
         .send({
@@ -285,7 +285,7 @@ describe('Claim Controller', () => {
       );
     });
 
-    it("should return 400 if user doesn't have wage", async () => {
+    it("returns 400 if user doesn't have wage", async () => {
       mockResolveWageForWeek.mockResolvedValue(null);
       const response = await request(app)
         .post('/')
@@ -294,7 +294,7 @@ describe('Claim Controller', () => {
       expect(response.body.message).toBe('No wage found for the user');
     });
 
-    it('should price a week that already holds hours with their own wage', async () => {
+    it('prices a week that already holds hours with their own wage', async () => {
       // The owner raised the cap mid-week. Hours are already priced against the
       // old wage, so the week keeps it: repricing would mean a second
       // WeeklyClaim for the same week, hour counters restarting from zero.
@@ -349,7 +349,7 @@ describe('Claim Controller', () => {
       expect(mockResolveWageForWeek).not.toHaveBeenCalled();
     });
 
-    it('should move a goals-only week onto the wage in force when hours arrive', async () => {
+    it('moves a goals-only week onto the wage in force when hours arrive', async () => {
       // Goals commit nothing: the member had not submitted their hours when the
       // wage changed, so the first hours are priced at the new wage and the
       // week's row follows them instead of pointing at the superseded one.
@@ -383,7 +383,7 @@ describe('Claim Controller', () => {
       );
     });
 
-    it('should return 409 if the day total exceeds the wage daily cap', async () => {
+    it('returns 409 if the day total exceeds the wage daily cap', async () => {
       const testDate = dayjs.utc().startOf('day').toDate();
       const modifiedWeeklyClaims = createMockWeeklyClaim({
         wage: createMockWage({ maximumHoursPerDay: 6 }),
@@ -407,7 +407,7 @@ describe('Claim Controller', () => {
       expect(response.body.message).toContain('Remaining to submit: 1h');
     });
 
-    it('should fall back to the 8h default when the wage has no daily cap', async () => {
+    it('falls back to the 8h default when the wage has no daily cap', async () => {
       const testDate = dayjs.utc().startOf('day').toDate();
       const modifiedWeeklyClaims = createMockWeeklyClaim();
       (modifiedWeeklyClaims as any).claims = [
@@ -427,7 +427,7 @@ describe('Claim Controller', () => {
       expect(response.body.message).toContain('Daily allowance: 8h');
     });
 
-    it('should allow a claim that stays within the daily cap', async () => {
+    it('allows a claim that stays within the daily cap', async () => {
       const testDate = dayjs.utc().startOf('day').toDate();
       const modifiedWeeklyClaims = createMockWeeklyClaim({
         wage: createMockWage({ maximumHoursPerDay: 8 }),
@@ -449,7 +449,7 @@ describe('Claim Controller', () => {
       expect(response.status).toBe(201);
     });
 
-    it('should return 400 when SUBMIT_RESTRICTION is active and dayWorked is outside the allowed window', async () => {
+    it('returns 400 when SUBMIT_RESTRICTION is active and dayWorked is outside the allowed window', async () => {
       vi.mocked(getEffectiveStatus).mockResolvedValueOnce('enabled');
       mockResolveWageForWeek.mockResolvedValue(createMockWage());
 
@@ -462,7 +462,7 @@ describe('Claim Controller', () => {
       expect(response.body.message).toContain('current week');
     });
 
-    it('should allow submission outside the window when SUBMIT_RESTRICTION is disabled', async () => {
+    it('allows submission outside the window when SUBMIT_RESTRICTION is disabled', async () => {
       vi.mocked(getEffectiveStatus).mockResolvedValueOnce('disabled');
       mockResolveWageForWeek.mockResolvedValue(createMockWage());
       vi.spyOn(prisma.weeklyClaim, 'findFirst').mockResolvedValue(null);
@@ -477,7 +477,7 @@ describe('Claim Controller', () => {
       expect(response.status).toBe(201);
     });
 
-    it('should return 201 when creating a new weekly claim', async () => {
+    it('returns 201 when creating a new weekly claim', async () => {
       const mockWage = createMockWage();
       const mockWeeklyClaims = createMockWeeklyClaim();
       const mockClaim = createMockClaim();
@@ -514,7 +514,7 @@ describe('Claim Controller', () => {
       );
     });
 
-    it('should create new claims with legacy hoursWorked set to 0', async () => {
+    it('creates new claims with legacy hoursWorked set to 0', async () => {
       const mockWage = createMockWage();
       const mockWeeklyClaims = createMockWeeklyClaim();
       const mockClaim = createMockClaim();
@@ -538,7 +538,7 @@ describe('Claim Controller', () => {
       );
     });
 
-    it('should return 409 if the claim is already signed', async () => {
+    it('returns 409 if the claim is already signed', async () => {
       const mockWage = createMockWage();
       const mockWeeklyClaims = createMockWeeklyClaim({ status: 'signed', signature: '0xabc' });
       mockResolveWageForWeek.mockResolvedValue(mockWage);
@@ -550,7 +550,7 @@ describe('Claim Controller', () => {
       expect(response.body.message).toBe('Week already signed. Submission not allowed.');
     });
 
-    it('should return 409 if the claim is already disabled', async () => {
+    it('returns 409 if the claim is already disabled', async () => {
       const mockWage = createMockWage();
       const mockWeeklyClaims = createMockWeeklyClaim({ status: 'disabled' });
       mockResolveWageForWeek.mockResolvedValue(mockWage);
@@ -562,7 +562,7 @@ describe('Claim Controller', () => {
       expect(response.body.message).toBe('Week is disabled. Submission not allowed.');
     });
 
-    it('should return 409 if the claim is already withdrawn', async () => {
+    it('returns 409 if the claim is already withdrawn', async () => {
       const mockWage = createMockWage();
       const mockWeeklyClaims = createMockWeeklyClaim({ status: 'withdrawn' });
       mockResolveWageForWeek.mockResolvedValue(mockWage);
@@ -574,7 +574,7 @@ describe('Claim Controller', () => {
       expect(response.body.message).toBe('Week already withdrawn. Submission not allowed.');
     });
 
-    it('should return 201 when adding claim to existing weekly claim', async () => {
+    it('returns 201 when adding claim to existing weekly claim', async () => {
       const mockWage = createMockWage();
       const mockWeeklyClaims = createMockWeeklyClaim();
       const mockClaim = createMockClaim();
@@ -597,7 +597,7 @@ describe('Claim Controller', () => {
       });
     });
 
-    it('should return 500 if internal server error occurs', async () => {
+    it('reports a wage-resolution failure while adding a claim', async () => {
       // An untouched week, so the wage is resolved — and that is what fails.
       vi.spyOn(prisma.weeklyClaim, 'findFirst').mockResolvedValue(null);
       mockResolveWageForWeek.mockRejectedValue(new Error('DB error'));
@@ -612,7 +612,7 @@ describe('Claim Controller', () => {
 
     // File attachment tests for addClaim
     describe('File Attachments', () => {
-      it('should create claim with file attachments', async () => {
+      it('creates claim with file attachments', async () => {
         const mockWage = createMockWage();
         const mockWeeklyClaim = createMockWeeklyClaim();
         const mockClaim = createMockClaim({
@@ -669,13 +669,13 @@ describe('Claim Controller', () => {
       vi.spyOn(prisma.team, 'findFirst').mockResolvedValue({ id: 1 } as any);
     });
 
-    it('should return 400 if teamId is invalid', async () => {
+    it('returns 400 if teamId is invalid', async () => {
       const response = await request(app).get('/').query({ teamId: 'abc' });
       expect(response.status).toBe(400);
       expect(response.body.message).toContain('Invalid query parameters');
     });
 
-    it('should return 403 if caller is not a member of the team', async () => {
+    it('returns 403 if caller is not a member of the team', async () => {
       vi.spyOn(prisma.team, 'findFirst').mockResolvedValue(null);
       const response = await request(app).get('/').query({ teamId: 1 });
       expect(response.status).toBe(403);
@@ -698,7 +698,7 @@ describe('Claim Controller', () => {
     ];
 
     successScenarios.forEach(({ description, query }) => {
-      it(`should return 200 and ${description}`, async () => {
+      it(`${description}`, async () => {
         const mockClaimWithWage = createMockClaimWithWage();
 
         vi.spyOn(prisma.claim, 'findMany').mockResolvedValue(mockClaimWithWage as any);
@@ -711,7 +711,7 @@ describe('Claim Controller', () => {
       });
     });
 
-    it('should return 500 if an error occurs', async () => {
+    it('reports a company-membership lookup failure while listing claims', async () => {
       vi.spyOn(prisma.team, 'findFirst').mockRejectedValue(new Error('Test error'));
       const response = await request(app).get('/').query({ teamId: 1 });
       expect(response.status).toBe(500);
@@ -740,7 +740,7 @@ describe('Claim Controller', () => {
     };
 
     it.each([1, DAILY_CLAIM_MEMO_MAX_LENGTH])(
-      'should update a claim with a trimmed %i-character memo',
+      'updates a claim with a trimmed %i-character memo',
       async (length) => {
         const memo = ` ${'m'.repeat(length)} `;
         setupMockClaim();
@@ -763,7 +763,7 @@ describe('Claim Controller', () => {
         `Memo must not exceed ${DAILY_CLAIM_MEMO_MAX_LENGTH} characters`,
         'm'.repeat(DAILY_CLAIM_MEMO_MAX_LENGTH + 1),
       ],
-    ])('should reject a %s memo on update', async (_description, message, memo) => {
+    ])('rejects a %s memo on update', async (_description, message, memo) => {
       const response = await request(app).put('/1').send({ memo });
 
       expect(response.status).toBe(400);
@@ -786,7 +786,7 @@ describe('Claim Controller', () => {
       }
     };
 
-    it('should return 404 if claim is not found', async () => {
+    it('returns 404 if claim is not found', async () => {
       vi.spyOn(prisma.claim, 'findFirst').mockResolvedValue(null);
       const response = await request(app)
         .put('/1')
@@ -809,7 +809,7 @@ describe('Claim Controller', () => {
         description: 'is not the owner of the claim for withdraw action',
       },
     ].forEach(({ action, authType, description }) => {
-      it(`should return 403 if caller ${description}`, async () => {
+      it(`returns 403 if caller ${description}`, async () => {
         await testAuthorization(action, authType, false);
 
         const requestBuilder = request(app).put('/1').query({ action });
@@ -822,7 +822,7 @@ describe('Claim Controller', () => {
       });
     });
 
-    it('should return 409 if updating claim exceeds maximum weekly hours', async () => {
+    it('returns 409 if updating claim exceeds maximum weekly hours', async () => {
       const mockClaim = {
         id: 1,
         wage: { userAddress: TEST_ADDRESS, maximumHoursPerWeek: 40 },
@@ -853,7 +853,7 @@ describe('Claim Controller', () => {
       );
     });
 
-    it('should return 409 if updating claim exceeds the daily cap', async () => {
+    it('returns 409 if updating claim exceeds the daily cap', async () => {
       const testDate = dayjs.utc().startOf('day').toDate();
       const mockClaim = {
         id: 1,
@@ -880,7 +880,7 @@ describe('Claim Controller', () => {
       expect(response.body.message).toContain('Already submitted for that day: 6h');
     });
 
-    it('should update claim successfully with valid data', async () => {
+    it('updates a claim with valid data', async () => {
       const mockClaim = {
         id: 1,
         wage: { userAddress: TEST_ADDRESS },
@@ -910,7 +910,7 @@ describe('Claim Controller', () => {
       });
     });
 
-    it('should update only provided fields', async () => {
+    it('updates only provided fields', async () => {
       const mockClaim = {
         id: 1,
         wage: { userAddress: TEST_ADDRESS },
@@ -935,7 +935,7 @@ describe('Claim Controller', () => {
       });
     });
 
-    it('should handle internal server error during update', async () => {
+    it('reports a persistence failure while updating a claim', async () => {
       const mockClaim = {
         id: 1,
         wage: { userAddress: TEST_ADDRESS },
@@ -954,7 +954,7 @@ describe('Claim Controller', () => {
       expect(response.body.message).toBe('Internal server error has occured');
     });
 
-    it('should handle null weeklyClaim status', async () => {
+    it('handles null weeklyClaim status', async () => {
       const mockClaim = {
         id: 1,
         wage: { userAddress: TEST_ADDRESS },
@@ -974,7 +974,7 @@ describe('Claim Controller', () => {
 
     // File attachment tests
     describe('File Attachments', () => {
-      it('should delete files and add new files in the same request', async () => {
+      it('deletes and adds files in the same request', async () => {
         const existingAttachments = [
           {
             fileType: 'application/pdf',
@@ -1041,7 +1041,7 @@ describe('Claim Controller', () => {
         );
       });
 
-      it('should handle out of bounds file indexes gracefully', async () => {
+      it('ignores out-of-bounds file indexes', async () => {
         const existingAttachments = [
           {
             fileType: 'application/pdf',
@@ -1107,7 +1107,7 @@ describe('Claim Controller', () => {
       } as any);
     };
 
-    it('should return 404 if claim is not found', async () => {
+    it('returns 404 if claim is not found', async () => {
       vi.spyOn(prisma.claim, 'findFirst').mockResolvedValue(null);
 
       const response = await request(app).delete('/1');
@@ -1116,7 +1116,7 @@ describe('Claim Controller', () => {
       expect(response.body.message).toBe('Claim not found');
     });
 
-    it('should return 403 if claim status is not pending or disabled', async () => {
+    it('returns 403 if claim status is not pending or disabled', async () => {
       setupMockClaim('signed', TEST_ADDRESS);
 
       const response = await request(app).delete('/1');
@@ -1125,7 +1125,7 @@ describe('Claim Controller', () => {
       expect(response.body.message).toBe("Can't delete: Claim is not pending or disabled");
     });
 
-    it('should return 403 if caller is not claim owner', async () => {
+    it('returns 403 if caller is not claim owner', async () => {
       setupMockClaim('pending', OTHER_ADDRESS);
 
       const response = await request(app).delete('/1');
@@ -1134,7 +1134,7 @@ describe('Claim Controller', () => {
       expect(response.body.message).toBe('Caller is not the owner of the claim');
     });
 
-    it('should delete claim and weekly claim when no other claims exist', async () => {
+    it('deletes claim and weekly claim when no other claims exist', async () => {
       setupMockClaim('pending', TEST_ADDRESS, false);
       const mockClaimDelete = vi.spyOn(prisma.claim, 'delete').mockResolvedValue({} as any);
       const mockWeeklyClaimDelete = vi
@@ -1149,7 +1149,7 @@ describe('Claim Controller', () => {
       expect(mockWeeklyClaimDelete).toHaveBeenCalledWith({ where: { id: 1 } });
     });
 
-    it('should keep the weekly claim when it is the last claim but goals are set', async () => {
+    it('keeps the weekly claim when it is the last claim but goals are set', async () => {
       // A goals-only week: deleting the last daily claim must not wipe the memo.
       vi.spyOn(prisma.claim, 'findFirst').mockResolvedValue({
         id: 1,
@@ -1172,7 +1172,7 @@ describe('Claim Controller', () => {
       expect(mockWeeklyClaimDelete).not.toHaveBeenCalled();
     });
 
-    it('should only delete claim when other claims exist in weekly claim', async () => {
+    it('only deletes claim when other claims exist in weekly claim', async () => {
       setupMockClaim('pending', TEST_ADDRESS, true);
       const mockClaimDelete = vi.spyOn(prisma.claim, 'delete').mockResolvedValue({} as any);
       const mockWeeklyClaimDelete = vi.spyOn(prisma.weeklyClaim, 'delete');
@@ -1185,7 +1185,7 @@ describe('Claim Controller', () => {
       expect(mockWeeklyClaimDelete).not.toHaveBeenCalled();
     });
 
-    it('should allow deletion of disabled claims', async () => {
+    it('allows deletion of disabled claims', async () => {
       setupMockClaim('disabled');
       vi.spyOn(prisma.claim, 'delete').mockResolvedValue({} as any);
 
@@ -1195,7 +1195,7 @@ describe('Claim Controller', () => {
       expect(response.body.message).toBe('Claim deleted successfully');
     });
 
-    it('should return 500 if an error occurs', async () => {
+    it('reports a persistence failure while deleting a claim', async () => {
       vi.spyOn(prisma.claim, 'findFirst').mockRejectedValue(new Error('DB error'));
 
       const response = await request(app).delete('/1');
