@@ -27,7 +27,8 @@ const E2E_SAFE_INFRA: SafeInfraAddresses = {
   fallbackHandler: '0xdc64a140aa3e981100a9beca4e685f962f0cf6c9'
 }
 
-const isE2E = import.meta.env.VITE_E2E === 'true'
+const usesDeterministicPlaywrightInfra =
+  import.meta.env.VITE_E2E === 'true' && import.meta.env.VITE_E2E_SAFE_INFRA_SOURCE !== 'manifest'
 
 const POLYGON_SAFE_INFRA: SafeInfraAddresses = {
   singleton: '0x29fcB43b46531BcA003ddC8FCB67FFE91900C762', // SafeL2 v1.4.1 canonical
@@ -49,7 +50,7 @@ export function getSafeInfraAddresses(): SafeInfraAddresses {
   const chainId = parseInt(getNetwork().chainId, 16)
 
   if (chainId === 31337) {
-    if (isE2E) return E2E_SAFE_INFRA
+    if (usesDeterministicPlaywrightInfra) return E2E_SAFE_INFRA
 
     return {
       singleton: resolveHardhatSafeAddress('SafeInfraModule#SafeL2'),

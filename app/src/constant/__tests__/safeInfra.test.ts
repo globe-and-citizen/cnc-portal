@@ -54,6 +54,19 @@ describe('getSafeInfraAddresses', () => {
     expect(getSafeInfraAddresses()).toEqual(E2E_SAFE_INFRA)
   })
 
+  it('returns the deployed manifest addresses for integrated E2E', async () => {
+    vi.stubEnv('VITE_E2E', 'true')
+    vi.stubEnv('VITE_E2E_SAFE_INFRA_SOURCE', 'manifest')
+    mockGetNetwork.mockReturnValue({ chainId: '0x7A69' })
+    const { getSafeInfraAddresses } = await import('../safeInfra')
+
+    expect(getSafeInfraAddresses()).toEqual({
+      singleton: '0x1111111111111111111111111111111111111111',
+      proxyFactory: '0x2222222222222222222222222222222222222222',
+      fallbackHandler: '0x3333333333333333333333333333333333333333'
+    })
+  })
+
   it('returns the canonical Polygon addresses on chain 137', async () => {
     mockGetNetwork.mockReturnValue({ chainId: '0x89' })
     const { getSafeInfraAddresses } = await import('../safeInfra')

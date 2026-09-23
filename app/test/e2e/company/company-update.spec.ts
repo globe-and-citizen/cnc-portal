@@ -1,6 +1,5 @@
 import type { Locator } from '@playwright/test'
 import { expect, test } from '../fixtures'
-import { gate } from './company-page'
 import {
   cardDescription,
   cardName,
@@ -8,6 +7,7 @@ import {
   COMPANY_DESCRIPTION,
   COMPANY_NAME,
   dialog,
+  gate,
   LOAD_TIMEOUT,
   openCardMenu,
   openCompanyActions,
@@ -33,7 +33,7 @@ async function fillDetails(form: Locator, name: string, description: string) {
 
 // Browser coverage of US-COMPANIES-004. The API is simulated, so the server-side
 // owner check and the archived-company rejection need backend coverage.
-test.describe('Company details update', { tag: '@US-COMPANIES-004' }, () => {
+test.describe('Company details update', { tag: ['@US-COMPANIES-004', '@browser'] }, () => {
   test('lets the owner update the details from the dashboard and reflects them on the list', async ({
     page
   }) => {

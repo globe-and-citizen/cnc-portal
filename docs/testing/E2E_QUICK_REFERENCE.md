@@ -164,7 +164,6 @@ backend's owner/member and archived rules to `PUT` and `DELETE /api/teams/:id`, 
 ```bash
 # .env.e2e
 BASE_URL=http://localhost:5173
-SKIP_SERVER=false
 HEADLESS=true
 VITE_APP_BACKEND_URL=http://localhost:3000
 VITE_APP_NETWORK_ALIAS=hardhat

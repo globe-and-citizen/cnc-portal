@@ -3,6 +3,8 @@ const SECTION_HEADING = /^### (.+)$/
 const CRITERION = /^- \[([ xX])\] (?:`(AC-US-[A-Z0-9-]+-\d{2,})`\s+)?(.+)$/
 const ACCEPTANCE_ID_REFERENCE = /\[(AC-US-[A-Z0-9-]+-\d{2,})\]/g
 
+export const TEST_COVERAGE_LAYERS = ['frontend', 'backend', 'contract', 'e2e', 'other']
+
 export function parseAcceptanceCriteria(document) {
   const criteria = []
   let storyId = null
@@ -51,6 +53,36 @@ export function acceptanceCriterionReferences(document) {
     documentPath: document.path,
     id: match[1]
   }))
+}
+
+export function classifyTestCoverageLayer(documentPath) {
+  if (/^app\/test\/e2e\//.test(documentPath)) return 'e2e'
+  if (/^app\//.test(documentPath)) return 'frontend'
+  if (/^backend\//.test(documentPath)) return 'backend'
+  if (/^contract\/test\//.test(documentPath)) return 'contract'
+  return 'other'
+}
+
+export function summarizeAcceptanceCriterionCoverage(criteria, references) {
+  const referencesById = new Map()
+
+  for (const reference of references) {
+    const layer = classifyTestCoverageLayer(reference.documentPath)
+    const layers = referencesById.get(reference.id) ?? new Map()
+    const paths = layers.get(layer) ?? new Set()
+    paths.add(reference.documentPath)
+    layers.set(layer, paths)
+    referencesById.set(reference.id, layers)
+  }
+
+  return criteria.map((criterion) => {
+    const referencesForCriterion = referencesById.get(criterion.id) ?? new Map()
+    const layers = Object.fromEntries(
+      TEST_COVERAGE_LAYERS.map((layer) => [layer, [...(referencesForCriterion.get(layer) ?? [])]])
+    )
+
+    return { ...criterion, layers }
+  })
 }
 
 export function validateAcceptanceCriteriaTraceability({ featureDocuments, testDocuments }) {
