@@ -109,7 +109,9 @@ criterion moves between categories or changes position within its story.
 Keep representative test titles focused on observable behaviour and write them as concise declarative present-tense phrases. Do not prefix
 them with `should`: the test API already supplies that meaning.
 
-For a backend, unit, or focused integration test that directly represents exactly one criterion, prefix the title with the acceptance ID:
+When one test directly represents exactly one canonical identifier, put that identifier in the title instead of a coverage comment. Use the
+most specific identifier available: prefix the test title with the acceptance ID when it represents one criterion, or prefix the enclosing
+suite title with the user-story ID when the suite represents one story:
 
 ```typescript
 it("[AC-US-FEATURE-001-01] retains every line of a matching JournalEntry", () => {
@@ -117,9 +119,10 @@ it("[AC-US-FEATURE-001-01] retains every line of a matching JournalEntry", () =>
 });
 ```
 
-When one coherent test proves multiple criteria, keep the title readable and declare the IDs in a structured `Covers` comment immediately
-above the smallest representative test. For E2E journeys, put the user-story ID in the enclosing suite title or equivalent metadata and use
-this `Covers` form for the criteria proven by each path:
+When one coherent test proves two or more canonical identifiers, keep the title readable and declare the IDs in a structured `Covers`
+comment immediately above the smallest representative test. Do not use a `Covers` block for a single ID. For E2E journeys, put a single
+user-story ID in the enclosing suite title or equivalent metadata; prefix a path title with its single acceptance ID, and use this `Covers`
+form only when the path proves multiple criteria:
 
 ```typescript
 describe("[US-FEATURE-001] Matching entries", () => {

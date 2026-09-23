@@ -111,11 +111,9 @@ test.describe('Company archiving', { tag: ['@US-COMPANIES-006', '@browser', '@mo
     expect(api.updates).toHaveLength(0)
   })
 
-  /**
-   * Covers:
-   * - [AC-US-COMPANIES-006-04]
-   */
-  test('shows the archived banner to a member without offering to restore', async ({ page }) => {
+  test('[AC-US-COMPANIES-006-04] shows the archived banner to a member without offering to restore', async ({
+    page
+  }) => {
     const api = await signInToCompanies(page, { user: 'member', archived: true })
     await expect(teamCard(page)).toContainText('Archived')
     const items = await openCardMenu(page)

@@ -55,11 +55,9 @@ test.describe('Company list visibility', { tag: TAGS }, () => {
     expect(api.hiddenBy.size).toBe(0)
   })
 
-  /**
-   * Covers:
-   * - [AC-US-COMPANIES-007-03]
-   */
-  test('lets a member hide and show the company from the card menu', async ({ page }) => {
+  test('[AC-US-COMPANIES-007-03] lets a member hide and show the company from the card menu', async ({
+    page
+  }) => {
     const api = await signInToCompanies(page, { user: 'member' })
     let items = await openCardMenu(page)
     await expect(items).toHaveText(['Hide'])

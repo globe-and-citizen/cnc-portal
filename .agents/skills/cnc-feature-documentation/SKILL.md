@@ -78,8 +78,9 @@ requested or required by the active GitHub workflow.
 - Review feature-only and technical-only tests for documentation discovery. If a test proves an existing outcome, link only the
   representative evidence. Add an AC only for verified stable user-visible behavior or a business rule, and add a US only for a distinct
   actor goal. Keep implementation details technical, and never document stale or accidental test behavior as product intent.
-- Keep representative test titles declarative and omit `should`. Prefix a backend, unit, or focused integration title with the AC ID only
-  when that test directly represents one criterion. Use the guide's structured `Covers` block for multi-criterion tests and E2E paths.
+- Keep representative test titles declarative and omit `should`. When a test represents one canonical ID, put the most specific ID in the
+  title instead of a comment: prefix the test title for one AC, or the enclosing suite title for one US. Reserve the guide's structured
+  `Covers` block for tests and E2E paths that represent two or more IDs.
 - Use Mermaid for every diagram. Add a diagram only when it makes a meaningful state, sequence, branch, hierarchy, or boundary easier to
   review.
 - Link focused rules, architecture, contract behaviour, and evidence to their canonical owners instead of copying them into the journey.

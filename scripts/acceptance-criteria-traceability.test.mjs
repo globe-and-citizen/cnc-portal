@@ -7,6 +7,7 @@ import {
   extractStaticTestTitles,
   parseAcceptanceCoverageRows,
   parseAcceptanceCriteria,
+  singleIdCoverageComments,
   summarizeAcceptanceCriterionCoverage,
   summarizeTestFileInventory,
   validateAcceptanceCriteriaTraceability
@@ -57,7 +58,7 @@ test('parses acceptance criteria only inside a user story acceptance section', (
   ])
 })
 
-test('accepts structured coverage comments for representative test references', () => {
+test('rejects a single-ID Covers block in favor of the representative test title', () => {
   const result = validateAcceptanceCriteriaTraceability({
     featureDocuments: [validFeature],
     testDocuments: [
@@ -71,9 +72,47 @@ test('accepts structured coverage comments for representative test references', 
     ]
   })
 
-  assert.deepEqual(result.errors, [])
+  assert.deepEqual(result.errors, [
+    'app/src/example/__tests__/example.spec.ts:2 uses a Covers block for only AC-US-EXAMPLE-001-01; put the ID in the representative test or suite title instead.'
+  ])
   assert.equal(result.criteria.length, 2)
   assert.equal(result.references.length, 1)
+})
+
+test('accepts a single acceptance ID in the representative test title', () => {
+  const document = testDocument(`describe('[US-EXAMPLE-001] Example', () => {
+  it('[AC-US-EXAMPLE-001-01] proves the primary outcome', () => {})
+})`)
+  const result = validateAcceptanceCriteriaTraceability({
+    featureDocuments: [validFeature],
+    testDocuments: [document]
+  })
+
+  assert.deepEqual(singleIdCoverageComments(document), [])
+  assert.deepEqual(result.errors, [])
+  assert.equal(result.references.length, 1)
+})
+
+test('accepts a Covers block containing multiple canonical IDs', () => {
+  const featureWithTwoImplementedCriteria = feature(
+    validFeature.content.replace('- [ ] `AC-US-EXAMPLE-001-02`', '- [x] `AC-US-EXAMPLE-001-02`')
+  )
+  const result = validateAcceptanceCriteriaTraceability({
+    featureDocuments: [featureWithTwoImplementedCriteria],
+    testDocuments: [
+      testDocument(`describe('[US-EXAMPLE-001] Example', () => {
+  /**
+   * Covers:
+   * - [AC-US-EXAMPLE-001-01]
+   * - [AC-US-EXAMPLE-001-02]
+   */
+  it('proves the complete outcome', () => {})
+})`)
+    ]
+  })
+
+  assert.deepEqual(result.errors, [])
+  assert.equal(result.references.length, 2)
 })
 
 test('validates optional per-story coverage targets against representative evidence', () => {
@@ -87,12 +126,8 @@ test('validates optional per-story coverage targets against representative evide
 | \`AC-US-EXAMPLE-001-02\` | Mocked browser | None linked | ❌ Missing |
 `)
   const integratedTest = testDocument(
-    `test.describe('journey', { tag: '@integrated' }, () => {
-  /**
-   * Covers:
-   * - [AC-US-EXAMPLE-001-01]
-   */
-  test('proves the primary outcome', () => {})
+    `test.describe('[US-EXAMPLE-001] journey', { tag: '@integrated' }, () => {
+  test('[AC-US-EXAMPLE-001-01] proves the primary outcome', () => {})
 })`,
     'app/test/e2e/example.integrated.spec.ts'
   )
@@ -118,9 +153,8 @@ test('rejects stale current coverage and derived status cells', () => {
 | \`AC-US-EXAMPLE-001-02\` | Backend | None linked | ✅ Met |
 `)
   const integratedTest = testDocument(
-    `test.describe('journey', { tag: '@integrated' }, () => {
-  /** Covers: [AC-US-EXAMPLE-001-01] */
-  test('proves the primary outcome', () => {})
+    `test.describe('[US-EXAMPLE-001] journey', { tag: '@integrated' }, () => {
+  test('[AC-US-EXAMPLE-001-01] proves the primary outcome', () => {})
 })`,
     'app/test/e2e/example.integrated.spec.ts'
   )

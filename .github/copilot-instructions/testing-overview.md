@@ -59,11 +59,13 @@ Naming:
 Use acceptance identifiers only on representative tests whose assertions directly prove the criterion. Follow the complete traceability
 contract in the [Feature Documentation Guide](../../docs/platform/feature-specification-guide.md#acceptance-criteria-and-traceability).
 
-- For a backend, unit, or focused integration test that represents exactly one acceptance criterion, prefix the declarative title with its
-  ID: `it('[AC-US-COMPANIES-004-02] rejects metadata updates from a non-owner', ...)`.
-- When one coherent test proves multiple criteria, keep the title readable and list the IDs in a structured `Covers` block immediately above
-  the test.
-- For E2E journeys, put the user-story ID in the enclosing suite and use `Covers` blocks for the criteria proven by each path.
+- When a test represents exactly one canonical ID, put it in the title rather than a comment. Prefer the most specific ID: prefix the test
+  title with its single AC, or the enclosing suite title with its single US. Example:
+  `it('[AC-US-COMPANIES-004-02] rejects metadata updates from a non-owner', ...)`.
+- When one coherent test proves two or more canonical IDs, keep the title readable and list the IDs in a structured `Covers` block
+  immediately above the test. A single-ID `Covers` block is invalid.
+- For E2E journeys, put a single user-story ID in the enclosing suite, prefix a path title when it proves one AC, and use a `Covers` block
+  only when the path proves multiple criteria.
 - An identifier records traceability; the assertions remain the evidence. Do not tag incidental tests merely to increase reported coverage.
 
 Run `npm run report:acceptance-coverage` from the repository root for the complete local audit. The Git-ignored report inventories test

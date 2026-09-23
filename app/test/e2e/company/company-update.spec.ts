@@ -98,11 +98,9 @@ test.describe('Company details update', { tag: TAGS }, () => {
     expect(api.team?.name).toBe(COMPANY_NAME)
   })
 
-  /**
-   * Covers:
-   * - [AC-US-COMPANIES-004-05]
-   */
-  test('reports a rejected update, keeps the edits, and retries successfully', async ({ page }) => {
+  test('[AC-US-COMPANIES-004-05] reports a rejected update, keeps the edits, and retries successfully', async ({
+    page
+  }) => {
     const api = await openCompanyActions(page)
     api.failUpdate = true
     await updateAction(page).click()

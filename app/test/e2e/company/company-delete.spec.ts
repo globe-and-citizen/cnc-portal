@@ -97,11 +97,7 @@ test.describe('Company deletion', { tag: ['@US-COMPANIES-008', '@browser', '@moc
     expect(api.team).not.toBeNull()
   })
 
-  /**
-   * Covers:
-   * - [AC-US-COMPANIES-008-06]
-   */
-  test('reports a rejected deletion, keeps the company open, and retries successfully', async ({
+  test('[AC-US-COMPANIES-008-06] reports a rejected deletion, keeps the company open, and retries successfully', async ({
     page
   }) => {
     const api = await openCompanyActions(page)
@@ -163,11 +159,9 @@ test.describe('Company deletion', { tag: ['@US-COMPANIES-008', '@browser', '@moc
     await expect(companyHeader(page)).toHaveCount(0)
   })
 
-  /**
-   * Covers:
-   * - [AC-US-COMPANIES-008-03]
-   */
-  test('does not offer deletion to a non-owner member', async ({ page }) => {
+  test('[AC-US-COMPANIES-008-03] does not offer deletion to a non-owner member', async ({
+    page
+  }) => {
     const api = await signInToCompanies(page, { user: 'member' })
     await expect(teamCard(page)).toContainText('Employee')
     const items = await openCardMenu(page)

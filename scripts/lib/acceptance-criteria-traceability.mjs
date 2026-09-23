@@ -5,6 +5,7 @@ const STORY_HEADING = /^## (US-[A-Z0-9-]+):\s+/
 const SECTION_HEADING = /^### (.+)$/
 const CRITERION = /^- \[([ xX])\] (?:`(AC-US-[A-Z0-9-]+-\d{2,})`\s+)?(.+)$/
 const ACCEPTANCE_ID_REFERENCE = /\[(AC-US-[A-Z0-9-]+-\d{2,})\]/g
+const TRACEABILITY_ID_REFERENCE = /\[((?:AC-)?US-[A-Z0-9-]+)\]/g
 
 export const TEST_COVERAGE_LAYERS = ['frontend', 'backend', 'contract', 'dashboard', 'e2e', 'other']
 export const E2E_COVERAGE_MODES = ['integrated', 'mocked', 'unclassified']
@@ -129,6 +130,25 @@ export function acceptanceCriterionReferences(document) {
     id: match[1],
     e2eMode
   }))
+}
+
+export function singleIdCoverageComments(document) {
+  const comments = []
+
+  for (const match of document.content.matchAll(/\/\*\*[\s\S]*?\*\//g)) {
+    if (!/\bCovers\s*:/.test(match[0])) continue
+
+    const ids = [...new Set([...match[0].matchAll(TRACEABILITY_ID_REFERENCE)].map((reference) => reference[1]))]
+    if (ids.length !== 1) continue
+
+    comments.push({
+      documentPath: document.path,
+      line: document.content.slice(0, match.index).split('\n').length,
+      id: ids[0]
+    })
+  }
+
+  return comments
 }
 
 export function classifyTestCoverageLayer(documentPath) {
@@ -461,6 +481,13 @@ export function validateAcceptanceCriteriaTraceability({ featureDocuments, testD
   }
 
   const references = testDocuments.flatMap(acceptanceCriterionReferences)
+
+  for (const comment of testDocuments.flatMap(singleIdCoverageComments)) {
+    errors.push(
+      `${comment.documentPath}:${comment.line} uses a Covers block for only ${comment.id}; put the ID in the representative test or suite title instead.`
+    )
+  }
+
   for (const reference of references) {
     const criterion = criteriaById.get(reference.id)
     if (!criterion) {
