@@ -67,19 +67,19 @@ flowchart LR
 
 ## Test Coverage Overview
 
-Representative counts below come from direct `AC-US-*` references in tracked tests. They show evidence by layer, not exhaustive coverage or
-the result of the latest test run. E2E status is assessed against the stated integration boundary.
+Coverage targets describe the required proof for each criterion. Current coverage comes from direct `AC-US-*` references in tracked tests;
+it does not represent the latest pass/fail result, which belongs to CI or the generated local report.
 
-| User Story       | Representative AC Coverage              | E2E Status | E2E Boundary                                                   |
-| ---------------- | --------------------------------------- | ---------- | -------------------------------------------------------------- |
-| US-COMPANIES-001 | integrated E2E 3/8 · mocked browser 4/8 | 🚧 Partial | Real backend and PostgreSQL on the main path; mocked variants  |
-| US-COMPANIES-002 | integrated E2E 3/8 · mocked browser 2/8 | 🚧 Partial | Real local-chain deployment on the main path; mocked variants  |
-| US-COMPANIES-003 | integrated E2E 2/9 · backend 2/9        | 🚧 Partial | Real browser, backend, and PostgreSQL                          |
-| US-COMPANIES-004 | integrated E2E 1/6 · mocked browser 1/6 | 🚧 Partial | Real persistence on the main path; mocked validation variant   |
-| US-COMPANIES-005 | integrated E2E 3/10                     | 🚧 Partial | Two real browser identities, backend, and PostgreSQL           |
-| US-COMPANIES-006 | integrated E2E 3/7 · backend 1/7        | 🚧 Partial | Real browser, backend, and PostgreSQL                          |
-| US-COMPANIES-007 | integrated E2E 2/6 · backend 1/6        | 🚧 Partial | Real browser, member-scoped backend state, and PostgreSQL      |
-| US-COMPANIES-008 | integrated E2E 3/6                      | 🚧 Partial | Real browser, backend, and permanent PostgreSQL record removal |
+| User Story       | Main Journey  | Coverage Target | Current Coverage Profile                                           | Gaps                                               |
+| ---------------- | ------------- | --------------- | ------------------------------------------------------------------ | -------------------------------------------------- |
+| US-COMPANIES-001 | ✅ Integrated | ✅ 8/8 met      | 3 integrated · 4 mocked-only · 1 backend-only                      | —                                                  |
+| US-COMPANIES-002 | ✅ Integrated | 🚧 6/8 met      | 3 integrated · 2 mocked-only · 1 backend-only                      | `AC-US-COMPANIES-002-06`, `AC-US-COMPANIES-002-08` |
+| US-COMPANIES-003 | ✅ Integrated | ✅ 9/9 met      | 2 integrated · 2 mocked-only · 5 backend-only                      | —                                                  |
+| US-COMPANIES-004 | ✅ Integrated | ✅ 6/6 met      | 1 integrated · 2 mocked-only · 2 backend-only · 1 mocked + backend | —                                                  |
+| US-COMPANIES-005 | ✅ Integrated | ✅ 10/10 met    | 3 integrated · 7 backend-only                                      | —                                                  |
+| US-COMPANIES-006 | ✅ Integrated | ✅ 7/7 met      | 3 integrated · 1 mocked-only · 1 backend-only · 2 mocked + backend | —                                                  |
+| US-COMPANIES-007 | ✅ Integrated | 🚧 4/6 met      | 2 integrated · 1 mocked-only · 1 mocked + backend                  | `AC-US-COMPANIES-007-05`, `AC-US-COMPANIES-007-06` |
+| US-COMPANIES-008 | ✅ Integrated | ✅ 6/6 met      | 3 integrated · 2 mocked-only · 1 backend-only                      | —                                                  |
 
 ## US-COMPANIES-001: Create a Company Workspace
 
@@ -107,6 +107,19 @@ the result of the latest test run. E2E status is assessed against the stated int
 - [x] `AC-US-COMPANIES-001-07` Returning to the previous setup step preserves the entered company details.
 - [x] `AC-US-COMPANIES-001-08` A failed create request leaves the setup form available and reports that the company was not created.
 
+### Test Coverage
+
+| Acceptance Criterion     | Expected Coverage | Current Coverage         | Status |
+| ------------------------ | ----------------- | ------------------------ | ------ |
+| `AC-US-COMPANIES-001-01` | Integrated E2E    | Integrated E2E           | ✅ Met |
+| `AC-US-COMPANIES-001-02` | Integrated E2E    | Integrated E2E           | ✅ Met |
+| `AC-US-COMPANIES-001-03` | Integrated E2E    | Integrated E2E + Backend | ✅ Met |
+| `AC-US-COMPANIES-001-04` | Mocked browser    | Mocked browser           | ✅ Met |
+| `AC-US-COMPANIES-001-05` | Mocked browser    | Mocked browser           | ✅ Met |
+| `AC-US-COMPANIES-001-06` | Backend           | Backend                  | ✅ Met |
+| `AC-US-COMPANIES-001-07` | Mocked browser    | Mocked browser           | ✅ Met |
+| `AC-US-COMPANIES-001-08` | Mocked browser    | Mocked browser           | ✅ Met |
+
 **Dependencies:** Connected user with a portal account
 
 ## US-COMPANIES-002: Deploy the Initial Officer Contract Suite
@@ -133,6 +146,19 @@ the result of the latest test run. E2E status is assessed against the stated int
 
 - [x] `AC-US-COMPANIES-002-07` A failed on-chain deployment is shown in the deployment step without advancing the setup flow.
 - [x] `AC-US-COMPANIES-002-08` A failed Officer registration is shown separately from a failed deployment and does not report setup success.
+
+### Test Coverage
+
+| Acceptance Criterion     | Expected Coverage | Current Coverage | Status     |
+| ------------------------ | ----------------- | ---------------- | ---------- |
+| `AC-US-COMPANIES-002-01` | Integrated E2E    | Integrated E2E   | ✅ Met     |
+| `AC-US-COMPANIES-002-02` | Integrated E2E    | Integrated E2E   | ✅ Met     |
+| `AC-US-COMPANIES-002-03` | Integrated E2E    | Integrated E2E   | ✅ Met     |
+| `AC-US-COMPANIES-002-04` | Mocked browser    | Mocked browser   | ✅ Met     |
+| `AC-US-COMPANIES-002-05` | Backend           | Backend          | ✅ Met     |
+| `AC-US-COMPANIES-002-06` | Mocked browser    | None linked      | ❌ Missing |
+| `AC-US-COMPANIES-002-07` | Mocked browser    | Mocked browser   | ✅ Met     |
+| `AC-US-COMPANIES-002-08` | Mocked browser    | None linked      | ❌ Missing |
 
 **Dependencies:** US-COMPANIES-001, a connected wallet, and the active network
 
@@ -165,6 +191,20 @@ the result of the latest test run. E2E status is assessed against the stated int
 - [x] `AC-US-COMPANIES-003-08` A failed company-list request reports that the list could not be retrieved.
 - [x] `AC-US-COMPANIES-003-09` An unavailable workspace distinguishes a removed or unknown company from another loading failure.
 
+### Test Coverage
+
+| Acceptance Criterion     | Expected Coverage | Current Coverage | Status |
+| ------------------------ | ----------------- | ---------------- | ------ |
+| `AC-US-COMPANIES-003-01` | Integrated E2E    | Integrated E2E   | ✅ Met |
+| `AC-US-COMPANIES-003-02` | Integrated E2E    | Integrated E2E   | ✅ Met |
+| `AC-US-COMPANIES-003-03` | Mocked browser    | Mocked browser   | ✅ Met |
+| `AC-US-COMPANIES-003-04` | Backend           | Backend          | ✅ Met |
+| `AC-US-COMPANIES-003-05` | Backend           | Backend          | ✅ Met |
+| `AC-US-COMPANIES-003-06` | Mocked browser    | Mocked browser   | ✅ Met |
+| `AC-US-COMPANIES-003-07` | Backend           | Backend          | ✅ Met |
+| `AC-US-COMPANIES-003-08` | Backend           | Backend          | ✅ Met |
+| `AC-US-COMPANIES-003-09` | Backend           | Backend          | ✅ Met |
+
 **Dependencies:** Connected user with a portal account
 
 ## US-COMPANIES-004: Update Company Details
@@ -189,6 +229,17 @@ the result of the latest test run. E2E status is assessed against the stated int
 
 - [x] `AC-US-COMPANIES-004-05` A rejected metadata update leaves the company unchanged and keeps the update action available with an error.
 - [x] `AC-US-COMPANIES-004-06` An update against an unavailable company is rejected without creating a replacement workspace.
+
+### Test Coverage
+
+| Acceptance Criterion     | Expected Coverage        | Current Coverage         | Status |
+| ------------------------ | ------------------------ | ------------------------ | ------ |
+| `AC-US-COMPANIES-004-01` | Integrated E2E           | Integrated E2E           | ✅ Met |
+| `AC-US-COMPANIES-004-02` | Backend                  | Backend                  | ✅ Met |
+| `AC-US-COMPANIES-004-03` | Mocked browser           | Mocked browser           | ✅ Met |
+| `AC-US-COMPANIES-004-04` | Mocked browser + Backend | Mocked browser + Backend | ✅ Met |
+| `AC-US-COMPANIES-004-05` | Mocked browser           | Mocked browser           | ✅ Met |
+| `AC-US-COMPANIES-004-06` | Backend                  | Backend                  | ✅ Met |
 
 **Dependencies:** US-COMPANIES-003
 
@@ -219,6 +270,21 @@ the result of the latest test run. E2E status is assessed against the stated int
 - [x] `AC-US-COMPANIES-005-09` A request to remove a missing member or the company owner is rejected without changing membership.
 - [x] `AC-US-COMPANIES-005-10` A rejected membership change preserves the current membership list and reports the failure.
 
+### Test Coverage
+
+| Acceptance Criterion     | Expected Coverage | Current Coverage         | Status |
+| ------------------------ | ----------------- | ------------------------ | ------ |
+| `AC-US-COMPANIES-005-01` | Integrated E2E    | Integrated E2E           | ✅ Met |
+| `AC-US-COMPANIES-005-02` | Integrated E2E    | Integrated E2E + Backend | ✅ Met |
+| `AC-US-COMPANIES-005-03` | Integrated E2E    | Integrated E2E + Backend | ✅ Met |
+| `AC-US-COMPANIES-005-04` | Backend           | Backend                  | ✅ Met |
+| `AC-US-COMPANIES-005-05` | Backend           | Backend                  | ✅ Met |
+| `AC-US-COMPANIES-005-06` | Backend           | Backend                  | ✅ Met |
+| `AC-US-COMPANIES-005-07` | Backend           | Backend                  | ✅ Met |
+| `AC-US-COMPANIES-005-08` | Backend           | Backend                  | ✅ Met |
+| `AC-US-COMPANIES-005-09` | Backend           | Backend                  | ✅ Met |
+| `AC-US-COMPANIES-005-10` | Backend           | Backend                  | ✅ Met |
+
 **Dependencies:** US-COMPANIES-003
 
 ## US-COMPANIES-006: Archive or Restore a Company
@@ -248,6 +314,18 @@ the result of the latest test run. E2E status is assessed against the stated int
       state.
 - [x] `AC-US-COMPANIES-006-07` A request to change other company data while archived is rejected without applying that change.
 
+### Test Coverage
+
+| Acceptance Criterion     | Expected Coverage        | Current Coverage         | Status |
+| ------------------------ | ------------------------ | ------------------------ | ------ |
+| `AC-US-COMPANIES-006-01` | Integrated E2E           | Integrated E2E + Backend | ✅ Met |
+| `AC-US-COMPANIES-006-02` | Integrated E2E           | Integrated E2E           | ✅ Met |
+| `AC-US-COMPANIES-006-03` | Integrated E2E           | Integrated E2E           | ✅ Met |
+| `AC-US-COMPANIES-006-04` | Mocked browser           | Mocked browser           | ✅ Met |
+| `AC-US-COMPANIES-006-05` | Backend                  | Backend                  | ✅ Met |
+| `AC-US-COMPANIES-006-06` | Mocked browser + Backend | Mocked browser + Backend | ✅ Met |
+| `AC-US-COMPANIES-006-07` | Mocked browser + Backend | Mocked browser + Backend | ✅ Met |
+
 **Dependencies:** US-COMPANIES-003
 
 ## US-COMPANIES-007: Control My Company-List Visibility
@@ -272,6 +350,17 @@ the result of the latest test run. E2E status is assessed against the stated int
 
 - [x] `AC-US-COMPANIES-007-05` A request from someone who is not a member is rejected without changing company visibility.
 - [x] `AC-US-COMPANIES-007-06` A visibility change for an unavailable company is rejected without creating a new list preference.
+
+### Test Coverage
+
+| Acceptance Criterion     | Expected Coverage        | Current Coverage         | Status     |
+| ------------------------ | ------------------------ | ------------------------ | ---------- |
+| `AC-US-COMPANIES-007-01` | Integrated E2E           | Integrated E2E           | ✅ Met     |
+| `AC-US-COMPANIES-007-02` | Integrated E2E           | Integrated E2E + Backend | ✅ Met     |
+| `AC-US-COMPANIES-007-03` | Mocked browser           | Mocked browser           | ✅ Met     |
+| `AC-US-COMPANIES-007-04` | Mocked browser + Backend | Mocked browser + Backend | ✅ Met     |
+| `AC-US-COMPANIES-007-05` | Backend                  | None linked              | ❌ Missing |
+| `AC-US-COMPANIES-007-06` | Backend                  | None linked              | ❌ Missing |
 
 **Dependencies:** US-COMPANIES-003
 
@@ -298,6 +387,17 @@ the result of the latest test run. E2E status is assessed against the stated int
 
 - [x] `AC-US-COMPANIES-008-05` Cancelling the confirmation leaves the company unchanged.
 - [x] `AC-US-COMPANIES-008-06` A rejected deletion leaves the company available and reports the failure.
+
+### Test Coverage
+
+| Acceptance Criterion     | Expected Coverage | Current Coverage | Status |
+| ------------------------ | ----------------- | ---------------- | ------ |
+| `AC-US-COMPANIES-008-01` | Integrated E2E    | Integrated E2E   | ✅ Met |
+| `AC-US-COMPANIES-008-02` | Backend           | Backend          | ✅ Met |
+| `AC-US-COMPANIES-008-03` | Mocked browser    | Mocked browser   | ✅ Met |
+| `AC-US-COMPANIES-008-04` | Integrated E2E    | Integrated E2E   | ✅ Met |
+| `AC-US-COMPANIES-008-05` | Integrated E2E    | Integrated E2E   | ✅ Met |
+| `AC-US-COMPANIES-008-06` | Mocked browser    | Mocked browser   | ✅ Met |
 
 **Dependencies:** US-COMPANIES-003
 
@@ -343,7 +443,7 @@ This validation does not attest to a live on-chain Officer deployment.
   against externally prepared backend, database, and chain infrastructure
 - [Mocked company browser variants](../../../app/test/e2e/company/company.mocked.spec.ts), which cover validation and injected failures
   without being counted as integrated E2E evidence
-- Additional stub-driven browser variants: [details update](../../../app/test/e2e/company/company-update.spec.ts),
+- Mocked lifecycle browser variants: [details update](../../../app/test/e2e/company/company-update.spec.ts),
   [archive and restore](../../../app/test/e2e/company/company-archive.spec.ts),
   [list visibility](../../../app/test/e2e/company/company-visibility.spec.ts), and
   [deletion](../../../app/test/e2e/company/company-delete.spec.ts), driven by the
