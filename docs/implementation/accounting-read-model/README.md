@@ -696,6 +696,11 @@ because deposits and company-pocket transfers are not manual assignment targets.
   [exact-precision regression tests](../../../app/src/utils/accounting/__tests__/exactPrecision.spec.ts)
 - [Summary journal-count tests](../../../app/src/views/team/%5Bid%5D/Accounting/__tests__/SummaryView.spec.ts) and
   [cross-report journal projections](../../../app/src/utils/accounting/__tests__/transactionFirst.spec.ts)
+- [Accounting component test suite](../../../app/src/components/sections/AccountingView/__tests__/),
+  [accounting composable test suite](../../../app/src/composables/accounting/__tests__/),
+  [accounting export-projection test suite](../../../app/src/lib/accounting/__tests__/),
+  [accounting domain test suite](../../../app/src/utils/accounting/__tests__/), and
+  [accounting route-view test suite](../../../app/src/views/team/%5Bid%5D/Accounting/__tests__/)
 
 ## Related Documentation
 

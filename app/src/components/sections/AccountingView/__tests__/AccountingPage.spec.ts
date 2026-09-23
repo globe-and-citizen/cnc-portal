@@ -47,7 +47,7 @@ describe('AccountingPage', () => {
     expect(wrapper.find('[data-test="accounting-error"]').exists()).toBe(false)
   })
 
-  it('withholds reports while material sources are loading', () => {
+  it('[AC-US-ACCT-001-10] withholds reports while material sources are loading', () => {
     setAccountingState('loading')
 
     const wrapper = renderWithProviders(AccountingPage)
@@ -56,7 +56,7 @@ describe('AccountingPage', () => {
     expect(wrapper.find('[data-test="router-view"]').exists()).toBe(false)
   })
 
-  it('withholds partial reports and explains every typed diagnostic', () => {
+  it('[AC-US-ACCT-001-10] withholds partial reports and explains every diagnostic', () => {
     setAccountingState('partial', [
       { kind: 'source-unavailable', source: 'company' },
       {
@@ -88,7 +88,7 @@ describe('AccountingPage', () => {
     expect(wrapper.text()).toContain('NATIVE movements were withheld')
   })
 
-  it('withholds reports after a fatal company-source failure', () => {
+  it('[AC-US-ACCT-001-10] withholds reports after a fatal company-source failure', () => {
     setAccountingState('failed', [{ kind: 'source-unavailable', source: 'company' }])
 
     const wrapper = renderWithProviders(AccountingPage)

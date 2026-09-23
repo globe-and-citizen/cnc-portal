@@ -73,7 +73,7 @@ const setOfficers = (officers: unknown[]) =>
   } as unknown as ReturnType<typeof useGetTeamOfficersQuery>)
 
 describe('useCNCAccounting — contract migration', () => {
-  it('scans every Bank generation from its own deploy block', () => {
+  it('[AC-US-ACCT-005-01] scans every Bank generation from its own deploy block', () => {
     setTeam([contract(NEW_BANK), contract(SAFE, 'Safe')])
     setOfficers([
       { deployBlockNumber: '100', contracts: [contract(OLD_BANK)] },
@@ -88,7 +88,7 @@ describe('useCNCAccounting — contract migration', () => {
     ])
   })
 
-  it('falls back to the current contracts with no boundary when there is no Officer history', () => {
+  it('[AC-US-ACCT-005-11] falls back to current contracts when Officer history is absent', () => {
     setTeam([contract(NEW_BANK)])
     setOfficers([])
 
@@ -97,7 +97,7 @@ describe('useCNCAccounting — contract migration', () => {
     expect(toValue(captured.bank)).toEqual([{ address: NEW_BANK, fromBlock: undefined }])
   })
 
-  it('scans both Investor generations from their own deploy blocks', () => {
+  it('[AC-US-ACCT-005-01] scans both Investor generations from their own deploy blocks', () => {
     setTeam([contract(INVESTOR_V2, 'Investor')])
     setOfficers([
       {

@@ -47,6 +47,11 @@ beforeEach(() => {
 })
 
 describe('GeneralLedgerView export', () => {
+  /**
+   * Covers:
+   * - [AC-US-ACCT-004-01]
+   * - [AC-US-ACCT-004-04]
+   */
   it('exports the current scope to Excel and PDF from the export bar', async () => {
     const wrapper = renderWithProviders(GeneralLedgerView)
     await flushPromises()
@@ -70,7 +75,7 @@ describe('GeneralLedgerView export', () => {
 })
 
 describe('GeneralLedgerView account filter', () => {
-  it('narrows the journal to a chosen account and reconciles when the book changes', async () => {
+  it('[AC-US-ACCT-002-02] narrows the journal to a chosen account without splitting entries', async () => {
     const wrapper = renderWithProviders(GeneralLedgerView)
     await flushPromises()
 
@@ -94,7 +99,7 @@ describe('GeneralLedgerView account filter', () => {
 })
 
 describe('GeneralLedgerView currency filter', () => {
-  it('narrows by a currency subset, carries it into the export, and reconciles', async () => {
+  it('[AC-US-ACCT-002-06] narrows by currency and carries the scope into export', async () => {
     const wrapper = renderWithProviders(GeneralLedgerView)
     await flushPromises()
 
