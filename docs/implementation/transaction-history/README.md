@@ -52,6 +52,8 @@ flowchart LR
   [Cash Remuneration history](../../../app/src/components/sections/CashRemunerationView/CashRemunerationTransactions.vue)
 - [Credit Account history](../../../app/src/components/sections/CommunityCreditView/CreditAccountTransactions.vue) and
   [investor history](../../../app/src/components/sections/SherTokenView/InvestorsTransactions.vue)
+- [Investor history integration tests](../../../app/src/components/sections/SherTokenView/__tests__/InvestorsTransaction.spec.ts) and
+  [investor history fallback tests](../../../app/src/components/sections/SherTokenView/__tests__/InvestorsTransaction.advanced.spec.ts)
 - [Shared transaction detail slide-over](../../../app/src/components/ui/TransactionDetailSlideover.vue)
 - [Inline transaction-state tests](../../../app/src/composables/transactions/__tests__/useTransactionInline.spec.ts)
 

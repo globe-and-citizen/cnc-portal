@@ -34,25 +34,33 @@ flowchart LR
   utilities[Client Utilities] --> client
   utilities --> reports
   dataAccess[Client Data Access] --> client
+  creditReadModel[Community Credit Read Model] --> client
+  contractInteractions[Contract Interactions] --> client
+  campaignData[Campaign Data Access] --> client
+  officerLifecycle[Officer Generation Lifecycle] --> client
 ```
 
-| Capability                                                         | System guarantee                                                | Main consumers                   | Last verified |
-| ------------------------------------------------------------------ | --------------------------------------------------------------- | -------------------------------- | ------------- |
-| [Authentication](./authentication/README.md)                       | SIWE verification and JWT session issuance                      | Client, dashboard, protected API | 2026-08-21    |
-| [Client Navigation](./client-navigation/README.md)                 | Client routes, guards, and sidebar navigation                   | Client feature entry points      | 2026-08-26    |
-| [Date Picker](./date-picker/README.md)                             | Shared as-of-date and period selection                          | Accounting, histories, dashboard | 2026-08-31    |
-| [Contract Event Feeds](./contract-event-feeds/README.md)           | Reconstructs client contract activity from RPC logs             | Accounts, Accounting, histories  | 2026-09-05    |
-| [Transaction History](./transaction-history/README.md)             | Shared transaction filtering and detail display                 | Accounts, Credit, Shareholders   | 2026-08-30    |
-| [Feature Flag Evaluation](./feature-flags/README.md)               | Global and team status resolution                               | Feature Restrictions, Payroll    | 2026-08-21    |
-| [RBAC](./rbac/README.md)                                           | Role-based backend and dashboard authorization                  | Backoffice, administrator APIs   | 2026-08-21    |
-| [Runtime Wake-Up](./runtime-wake-up/README.md)                     | Non-blocking process wake and database readiness                | Client, dashboard, deployment    | 2026-08-21    |
-| [Member Selection](./member-selection/README.md)                   | Scoped user selection and exclusions                            | Team, Safe, elections, Vesting   | 2026-08-24    |
-| [Contract Owner Resolution](./contract-owner-resolution/README.md) | Resolves and presents a contract owner                          | Accounts, shareholder management | 2026-08-30    |
-| [Client Utilities](./client-utilities/README.md)                   | Pure, explicit client data-shaping boundaries                   | All client product surfaces      | 2026-09-01    |
-| [Client Data Access](./client-data-access/README.md)               | Focused client HTTP query and mutation boundaries               | Client product features          | 2026-09-01    |
-| [Accounting Read Model](./accounting-read-model/README.md)         | Consolidated postings, canonical journal, and report boundaries | Accounting feature               | 2026-09-04    |
-| [Request Validation](./request-validation/README.md)               | Parses and normalizes backend request sections                  | Backend API routes               | 2026-09-09    |
-| [File Storage](./file-storage/README.md)                           | Validated uploads and time-limited attachment access            | User Profile, Payroll            | 2026-09-09    |
+| Capability                                                               | System guarantee                                                | Main consumers                   | Last verified |
+| ------------------------------------------------------------------------ | --------------------------------------------------------------- | -------------------------------- | ------------- |
+| [Authentication](./authentication/README.md)                             | SIWE verification and JWT session issuance                      | Client, dashboard, protected API | 2026-08-21    |
+| [Client Navigation](./client-navigation/README.md)                       | Client routes, guards, and sidebar navigation                   | Client feature entry points      | 2026-08-26    |
+| [Date Picker](./date-picker/README.md)                                   | Shared as-of-date and period selection                          | Accounting, histories, dashboard | 2026-08-31    |
+| [Contract Event Feeds](./contract-event-feeds/README.md)                 | Reconstructs client contract activity from RPC logs             | Accounts, Accounting, histories  | 2026-09-05    |
+| [Transaction History](./transaction-history/README.md)                   | Shared transaction filtering and detail display                 | Accounts, Credit, Shareholders   | 2026-08-30    |
+| [Feature Flag Evaluation](./feature-flags/README.md)                     | Global and team status resolution                               | Feature Restrictions, Payroll    | 2026-08-21    |
+| [RBAC](./rbac/README.md)                                                 | Role-based backend and dashboard authorization                  | Backoffice, administrator APIs   | 2026-08-21    |
+| [Runtime Wake-Up](./runtime-wake-up/README.md)                           | Non-blocking process wake and database readiness                | Client, dashboard, deployment    | 2026-08-21    |
+| [Member Selection](./member-selection/README.md)                         | Scoped user selection and exclusions                            | Team, Safe, elections, Vesting   | 2026-08-24    |
+| [Contract Owner Resolution](./contract-owner-resolution/README.md)       | Resolves and presents a contract owner                          | Accounts, shareholder management | 2026-08-30    |
+| [Client Utilities](./client-utilities/README.md)                         | Pure, explicit client data-shaping boundaries                   | All client product surfaces      | 2026-09-01    |
+| [Client Data Access](./client-data-access/README.md)                     | Focused client HTTP query and mutation boundaries               | Client product features          | 2026-09-01    |
+| [Accounting Read Model](./accounting-read-model/README.md)               | Consolidated postings, canonical journal, and report boundaries | Accounting feature               | 2026-09-04    |
+| [Request Validation](./request-validation/README.md)                     | Parses and normalizes backend request sections                  | Backend API routes               | 2026-09-09    |
+| [File Storage](./file-storage/README.md)                                 | Validated uploads and time-limited attachment access            | User Profile, Payroll            | 2026-09-09    |
+| [Community Credit Read Model](./community-credit-read-model/README.md)   | Consolidated offer, metadata, and position state                | Community Credit                 | 2026-09-23    |
+| [Contract Interactions](./contract-interactions/README.md)               | Shared contract read, write, and invalidation boundaries        | Client contract journeys         | 2026-09-23    |
+| [Campaign Data Access](./campaign-data-access/README.md)                 | Campaign settings, activity, and mutation boundaries            | Contract Management              | 2026-09-23    |
+| [Officer Generation Lifecycle](./officer-generation-lifecycle/README.md) | Versioned Officer deployment and recovery                       | Contract Management              | 2026-09-23    |
 
 ## Updating This Index
 

@@ -76,6 +76,10 @@ sequenceDiagram
 - [Client upload API](../../../app/src/api/upload.api.ts), [upload API tests](../../../app/src/api/__tests__/upload.api.spec.ts),
   [storage API tests](../../../app/src/api/__tests__/storage.api.spec.ts), and
   [file-query tests](../../../app/src/queries/__tests__/file.queries.spec.ts)
+- [Shared client upload validation](../../../app/src/types/upload.ts) and
+  [client upload validation tests](../../../app/src/types/__tests__/upload.spec.ts)
+- [Expandable attachment-gallery tests](../../../app/src/components/sections/CashRemunerationView/Form/__tests__/ExpandableFileGallery.spec.ts)
+  and [file-preview gallery tests](../../../app/src/components/sections/CashRemunerationView/Form/__tests__/FilePreviewGallery.spec.ts)
 - [Presigned file URL composable](../../../app/src/composables/useFileUrl.ts),
   [file URL tests](../../../app/src/composables/__tests__/useFileUrl.spec.ts), and
   [profile-image URL utility tests](../../../backend/src/utils/__tests__/profileImage.util.test.ts)
