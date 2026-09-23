@@ -1,5 +1,4 @@
 import { expect, test } from '../fixtures'
-import { gate } from './company-page'
 import {
   archiveAction,
   archivedBanner,
@@ -14,6 +13,7 @@ import {
   dialog,
   emptyState,
   errorState,
+  gate,
   LOAD_TIMEOUT,
   openCardMenu,
   openCompanyActions,
@@ -30,7 +30,7 @@ const DELETED = 'Company deleted successfully'
 
 // Browser coverage of US-COMPANIES-008. The API is simulated, so cascading
 // deletion of related records needs backend coverage.
-test.describe('Company deletion', { tag: '@US-COMPANIES-008' }, () => {
+test.describe('Company deletion', { tag: ['@US-COMPANIES-008', '@browser'] }, () => {
   test('lets the owner delete the company from the dashboard and returns to the list', async ({
     page
   }) => {

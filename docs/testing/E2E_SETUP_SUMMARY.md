@@ -33,10 +33,10 @@
 
 - **File**: `app/playwright.config.ts`
 - **Improvements**:
-  - Added environment variable support (BASE_URL, HEADLESS, SKIP_SERVER)
+  - Added environment variable support (BASE_URL, HEADLESS)
   - Enhanced reporter (HTML + list format)
   - Added failure artifacts (screenshots, videos, traces)
-  - Made webServer optional for flexible testing
+  - Removed Playwright-managed servers; developers and CI prepare the stack explicitly
   - Better timeout and worker configuration for CI
 
 ### 5. Created Environment Configuration

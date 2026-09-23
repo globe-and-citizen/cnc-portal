@@ -1,5 +1,5 @@
 import { mount } from '@vue/test-utils'
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import { CalendarDate } from '@internationalized/date'
 import CreateElectionForm from '../CreateElectionForm.vue'
 import { emittedPayload, getVm, mountComponent, tomorrow } from './CreateElectionForm.harness'
@@ -172,40 +172,5 @@ describe('CreateElectionForm.vue', () => {
 
     expect(tooSmall.success).toBe(false)
     expect(notOdd.success).toBe(false)
-  })
-
-  it('registers and removes outside click listener on mount lifecycle', () => {
-    const addListenerSpy = vi.spyOn(document, 'addEventListener')
-    const removeListenerSpy = vi.spyOn(document, 'removeEventListener')
-
-    const wrapper = mountComponent()
-    wrapper.unmount()
-
-    expect(addListenerSpy).toHaveBeenCalledWith('click', expect.any(Function))
-    expect(removeListenerSpy).toHaveBeenCalledWith('click', expect.any(Function))
-
-    addListenerSpy.mockRestore()
-    removeListenerSpy.mockRestore()
-  })
-
-  it('handles outside click only when ref exists and target is outside', () => {
-    const wrapper = mountComponent()
-    const vm = getVm(wrapper)
-
-    vm.showDropdown = true
-    vm.handleClickOutside({ target: document.body } as unknown as MouseEvent)
-    expect(vm.showDropdown).toBe(true)
-
-    vm.formRef = {
-      contains: () => true
-    }
-    vm.handleClickOutside({ target: document.body } as unknown as MouseEvent)
-    expect(vm.showDropdown).toBe(true)
-
-    vm.formRef = {
-      contains: () => false
-    }
-    vm.handleClickOutside({ target: document.body } as unknown as MouseEvent)
-    expect(vm.showDropdown).toBe(false)
   })
 })

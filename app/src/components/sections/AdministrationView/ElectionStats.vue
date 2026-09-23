@@ -1,44 +1,28 @@
 <template>
-  <!-- Stats Row -->
-  <div class="flex items-stretch justify-between gap-4">
-    <!-- Candidates Stat -->
+  <div class="flex flex-col items-stretch justify-between gap-4 md:flex-row">
     <ElectionStatsCard
       :data="`${formattedElection?.seatCount ?? 0} / ${formattedElection?.candidates ?? 0}`"
       icon="users"
-      bg-color="bg-purple-200"
-      text-color="text-purple-600"
+      color="primary"
       title="Seat/Candidates"
-      color="purple"
     />
-
-    <!-- Start Date Stat -->
     <ElectionStatsCard
       :data="formatDate(formattedElection?.startDate ?? new Date())"
       icon="calendar-date-range"
-      bg-color="bg-green-200"
-      text-color="text-green-600"
-      color="green"
+      color="success"
       title="Start Date"
     />
-
-    <!-- End Date Stat -->
     <ElectionStatsCard
       :data="formatDate(formattedElection?.endDate ?? new Date())"
       icon="stop"
-      bg-color="bg-red-200"
-      text-color="text-red-600"
+      color="error"
       title="End Date"
-      color="red"
     />
-
-    <!-- Votes Stat -->
     <ElectionStatsCard
       :data="`${formattedElection?.votesCast ?? 0} / ${formattedElection?.voters ?? 0}`"
       icon="archive-box"
-      bg-color="bg-blue-200"
-      text-color="text-blue-600"
+      color="info"
       title="Votes Cast/Voters"
-      color="'blue'"
     />
   </div>
 </template>
@@ -64,13 +48,3 @@ const { formattedElection } = defineProps<{
 
 const formatDate = (date: Date) => formatDateTime(date)
 </script>
-
-<style scoped>
-/* Add slight spacing between stats on smaller screens */
-@media (max-width: 768px) {
-  .flex.justify-between {
-    flex-direction: column;
-    gap: 1rem;
-  }
-}
-</style>
