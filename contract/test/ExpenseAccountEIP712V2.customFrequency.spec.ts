@@ -119,7 +119,7 @@ describe('ExpenseAccountEIP712V2 - Custom Frequency', function () {
   }
 
   describe('Custom and Invalid Frequency Types', function () {
-    it('Should handle custom frequency correctly', async function () {
+    it('calculates a custom frequency period', async function () {
       const { expenseAccount, owner, approvedAddress, recipient } = await loadFixture(
         deployExpenseAccountFixture
       )
@@ -153,7 +153,7 @@ describe('ExpenseAccountEIP712V2 - Custom Frequency', function () {
       expect(expenseBalance.totalWithdrawn).to.equal(ethers.parseEther('0.8'))
     })
 
-    it('Should reject custom frequency with zero value', async function () {
+    it('rejects custom frequency with zero value', async function () {
       const { expenseAccount } = await loadFixture(deployExpenseAccountFixture)
 
       const budgetLimit = createBudgetLimit({
@@ -170,7 +170,7 @@ describe('ExpenseAccountEIP712V2 - Custom Frequency', function () {
       )
     })
 
-    it('Should handle custom frequency period boundaries correctly', async function () {
+    it('calculates custom frequency period boundaries', async function () {
       const { expenseAccount, approvedAddress } = await loadFixture(deployExpenseAccountFixture)
 
       const customFrequency = 1800 // 30 minutes
@@ -196,7 +196,7 @@ describe('ExpenseAccountEIP712V2 - Custom Frequency', function () {
       expect(period4).to.equal(2) // Third period starts
     })
 
-    it('Should reset budget for new custom frequency period', async function () {
+    it('resets budget for new custom frequency period', async function () {
       const { expenseAccount, owner, approvedAddress, recipient } = await loadFixture(
         deployExpenseAccountFixture
       )
@@ -236,7 +236,7 @@ describe('ExpenseAccountEIP712V2 - Custom Frequency', function () {
     })
 
     // Test edge cases for the enum validation in the contract
-    it('Should handle all valid frequency types without reverting', async function () {
+    it('handles all valid frequency types without reverting', async function () {
       const { expenseAccount } = await loadFixture(deployExpenseAccountFixture)
 
       // Test all valid frequency types (0-4)
@@ -258,7 +258,7 @@ describe('ExpenseAccountEIP712V2 - Custom Frequency', function () {
 
     // Since we can't test invalid enum values directly due to ABI validation,
     // we can test that our contract properly handles the default case in the switch statement
-    it('Should have proper default case handling in period calculation', async function () {
+    it('has proper default case handling in period calculation', async function () {
       const { expenseAccount } = await loadFixture(deployExpenseAccountFixture)
 
       // This test is more about ensuring our contract has the safety net

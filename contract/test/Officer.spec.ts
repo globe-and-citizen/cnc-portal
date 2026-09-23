@@ -134,7 +134,7 @@ describe('Officer Contract', function () {
   })
 
   describe('Contract Deployment', () => {
-    it('Should deploy contracts via BeaconProxy', async function () {
+    it('deploys contracts via BeaconProxy', async function () {
       const electionsInitData = electionsContract.interface.encodeFunctionData('initialize', [
         owner.address
       ])
@@ -195,7 +195,7 @@ describe('Officer Contract', function () {
       ).to.emit(officer, 'SafeDepositRouterDeployed')
     })
 
-    it('Should restrict deployment to owners and founders', async function () {
+    it('restricts deployment to owners and founders', async function () {
       const initData = bankAccount.interface.encodeFunctionData('initialize', [[], owner.address])
 
       // Test unauthorized access
@@ -210,7 +210,7 @@ describe('Officer Contract', function () {
       )
     })
 
-    it('Should fail when deploying proxy for unknown contract type', async function () {
+    it('fails when deploying proxy for unknown contract type', async function () {
       const initData = bankAccount.interface.encodeFunctionData('initialize', [[], owner.address])
 
       // Using a new contract type that hasn't been configured
@@ -227,7 +227,7 @@ describe('Officer Contract', function () {
   })
 
   describe('Access Control', () => {
-    it('Should transfer ownership', async function () {
+    it('transfers ownership', async function () {
       await expect(officer.connect(owner).transferOwnership(addr1.address))
         .to.emit(officer, 'OwnershipTransferred')
         .withArgs(owner.address, addr1.address)
@@ -235,7 +235,7 @@ describe('Officer Contract', function () {
       expect(await officer.owner()).to.equal(addr1.address)
     })
 
-    it('Should pause and unpause', async function () {
+    it('pauses and unpause', async function () {
       await officer.connect(owner).pause()
       expect(await officer.paused()).to.be.true
 
@@ -243,7 +243,7 @@ describe('Officer Contract', function () {
       expect(await officer.paused()).to.be.false
     })
 
-    it('Should restrict pause/unpause to owners', async function () {
+    it('restricts pause/unpause to owners', async function () {
       await expect(officer.connect(addr3).pause()).to.be.revertedWithCustomError(
         officer,
         'Officer__Unauthorized'
@@ -257,7 +257,7 @@ describe('Officer Contract', function () {
   })
 
   describe('FeeCollector Integration', () => {
-    it('Should report supported fee collector tokens', async function () {
+    it('reports supported fee collector tokens', async function () {
       const MockToken = await ethers.getContractFactory('MockERC20')
       const unsupportedToken = await MockToken.deploy('DAI', 'DAI')
 
@@ -269,7 +269,7 @@ describe('Officer Contract', function () {
   })
 
   describe('Initialization and Beacon Configuration', () => {
-    it('Should reject beacon configs with zero address', async function () {
+    it('rejects beacon configs with zero address', async function () {
       const invalidConfig = [
         {
           beaconType: 'TestBeacon',
@@ -283,7 +283,7 @@ describe('Officer Contract', function () {
       )
     })
 
-    it('Should reject beacon configs with empty type', async function () {
+    it('rejects beacon configs with empty type', async function () {
       const invalidConfig = [
         {
           beaconType: '',
@@ -297,7 +297,7 @@ describe('Officer Contract', function () {
       )
     })
 
-    it('Should reject duplicate beacon types in config', async function () {
+    it('rejects duplicate beacon types in config', async function () {
       const duplicateConfigs = [
         {
           beaconType: 'TestBeacon',
@@ -314,7 +314,7 @@ describe('Officer Contract', function () {
         .withArgs('TestBeacon')
     })
 
-    it('Should successfully initialize with valid beacon configs', async function () {
+    it('initializes with valid beacon configs', async function () {
       const validConfigs = [
         {
           beaconType: 'TestBeacon1',
@@ -332,7 +332,7 @@ describe('Officer Contract', function () {
       expect(await officerContract.getContractBeacon('TestBeacon2')).to.equal(addr2.address)
     })
 
-    it('Should initialize and deploy contracts in one transaction when isDeployAllContracts is true', async function () {
+    it('initializes and deploy contracts in one transaction when isDeployAllContracts is true', async function () {
       const bankBeaconAddr = await bankAccountBeacon.getAddress()
       const electionsBeaconAddr = await electionsBeacon.getAddress()
       const bodBeaconAddr = await bodBeacon.getAddress()
@@ -466,7 +466,7 @@ describe('Officer Contract', function () {
       expect(hasMinterRole).to.be.true
     })
 
-    it('Should not deploy contracts during initialization when isDeployAllContracts is false', async function () {
+    it('does not deploy contracts during initialization when isDeployAllContracts is false', async function () {
       const validConfigs = [
         {
           beaconType: 'Bank',
@@ -506,7 +506,7 @@ describe('Officer Contract', function () {
   })
 
   describe('Batch Contract Deployment', () => {
-    it('Should deploy multiple contracts in a single transaction', async function () {
+    it('deploys multiple contracts in a single transaction', async function () {
       const electionsInitData = electionsContract.interface.encodeFunctionData('initialize', [
         owner.address
       ])
@@ -574,7 +574,7 @@ describe('Officer Contract', function () {
       expect(await electionsInstance.getOfficerAddress()).to.equal(await officer.getAddress())
     })
 
-    it('Should fail when deploying with empty contract type', async function () {
+    it('fails when deploying with empty contract type', async function () {
       const deployments = [
         {
           contractType: '',
@@ -587,7 +587,7 @@ describe('Officer Contract', function () {
       ).to.be.revertedWithCustomError(officer, 'Officer__EmptyContractType')
     })
 
-    it('Should fail when deploying with empty initializer data', async function () {
+    it('fails when deploying with empty initializer data', async function () {
       const deployments = [
         {
           contractType: 'Bank',
@@ -600,7 +600,7 @@ describe('Officer Contract', function () {
         .withArgs('Bank')
     })
 
-    it('Should fail when deploying unconfigured contract type', async function () {
+    it('fails when deploying unconfigured contract type', async function () {
       const deployments = [
         {
           contractType: 'NonExistentContract',
@@ -613,7 +613,7 @@ describe('Officer Contract', function () {
         .withArgs('NonExistentContract')
     })
 
-    it('Should restrict batch deployment to owners and founders', async function () {
+    it('restricts batch deployment to owners and founders', async function () {
       const electionsInitData = electionsContract.interface.encodeFunctionData('initialize', [
         owner.address
       ])
@@ -631,7 +631,7 @@ describe('Officer Contract', function () {
   })
 
   describe('Contract Type Management', () => {
-    it('Should track configured contract types', async function () {
+    it('tracks configured contract types', async function () {
       const types = await officer.getConfiguredContractTypes()
       // ✅ UPDATE: Now should include SafeDepositRouter (6 types total)
       expect(types).to.have.lengthOf(6)
@@ -643,7 +643,7 @@ describe('Officer Contract', function () {
       expect(types).to.include('SafeDepositRouter')
     })
 
-    it('Should add new contract type only when configuring new beacon', async function () {
+    it('adds new contract type only when configuring new beacon', async function () {
       const initialTypes = await officer.getConfiguredContractTypes()
       const initialLength = initialTypes.length
 
@@ -661,12 +661,12 @@ describe('Officer Contract', function () {
   })
 
   describe('Deployed Contracts Management', () => {
-    it('Should return empty array when no contracts are deployed', async function () {
+    it('returns empty array when no contracts are deployed', async function () {
       const deployedContracts = await officer.getDeployedContracts()
       expect(deployedContracts).to.be.empty
     })
 
-    it('Should return all deployed contracts with their types', async function () {
+    it('returns all deployed contracts with their types', async function () {
       const electionsInitData = electionsContract.interface.encodeFunctionData('initialize', [
         owner.address
       ])
@@ -695,7 +695,7 @@ describe('Officer Contract', function () {
       expect(deployedContracts[2].contractAddress).to.not.equal(ethers.ZeroAddress)
     })
 
-    it('Should maintain contract order as they are deployed', async function () {
+    it('maintains contract order as they are deployed', async function () {
       const initData = bankAccount.interface.encodeFunctionData('initialize', [[], owner.address])
 
       // Deploy three Bank contracts
@@ -722,7 +722,7 @@ describe('Officer Contract', function () {
       )
     })
 
-    it('Should return same data as getTeam for deployed contracts', async function () {
+    it('returns same data as getTeam for deployed contracts', async function () {
       const electionsInitData = electionsContract.interface.encodeFunctionData('initialize', [
         owner.address
       ])
@@ -741,7 +741,7 @@ describe('Officer Contract', function () {
 
   //  ADD: SafeDepositRouter-specific tests
   describe('SafeDepositRouter Integration', () => {
-    it('Should deploy SafeDepositRouter with correct initial state', async function () {
+    it('deploys SafeDepositRouter with correct initial state', async function () {
       const investorInitData = investor.interface.encodeFunctionData('initialize', [
         'Bitcoin',
         'BTC',
@@ -783,7 +783,7 @@ describe('Officer Contract', function () {
       expect(await safeDepositRouterInstance.getDepositsEnabled()).to.equal(false) // Disabled by default
     })
 
-    it('Should not auto-grant MINTER_ROLE when using deployAllContracts directly', async function () {
+    it('does not auto-grant MINTER_ROLE when using deployAllContracts directly', async function () {
       const investorInitData = investor.interface.encodeFunctionData('initialize', [
         'Bitcoin',
         'BTC',
@@ -829,7 +829,7 @@ describe('Officer Contract', function () {
       expect(hasMinterRole).to.be.false
     })
 
-    it('Should keep SafeDepositRouter ownership on Officer when deployed via deployBeaconProxy', async function () {
+    it('keeps SafeDepositRouter ownership on Officer when deployed via deployBeaconProxy', async function () {
       const investorInitData = investor.interface.encodeFunctionData('initialize', [
         'Bitcoin',
         'BTC',
@@ -862,7 +862,7 @@ describe('Officer Contract', function () {
       expect(await safeDepositRouterInstance.owner()).to.equal(await officer.getAddress())
     })
 
-    it('Should set officer address on SafeDepositRouter during deployment', async function () {
+    it('sets officer address on SafeDepositRouter during deployment', async function () {
       const investorInitData = investor.interface.encodeFunctionData('initialize', [
         'Bitcoin',
         'BTC',
@@ -896,7 +896,7 @@ describe('Officer Contract', function () {
       )
     })
 
-    it('Should handle SafeDepositRouter deployment order correctly', async function () {
+    it('preserves the SafeDepositRouter deployment order', async function () {
       const investorInitData = investor.interface.encodeFunctionData('initialize', [
         'Bitcoin',
         'BTC',

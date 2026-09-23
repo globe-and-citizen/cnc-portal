@@ -105,7 +105,7 @@ describe('Bank', () => {
   })
 
   describe('Initial Setup', () => {
-    it('should set the correct owner and initial values', async () => {
+    it('sets the correct owner and initial values', async () => {
       const officerAddress = await officer.getAddress()
       expect(await bankProxy.owner()).to.eq(owner.address)
       expect(await bankProxy.getOfficerAddress()).to.eq(officerAddress)
@@ -113,11 +113,11 @@ describe('Bank', () => {
       expect(await bankProxy.isTokenSupported(await mockUSDC.getAddress())).to.be.true
     })
 
-    it('should not allow to initialize the contract again', async () => {
+    it('rejects contract reinitialization', async () => {
       await expect(bankProxy.initialize([], await officer.getAddress())).to.be.revert(ethers)
     })
 
-    it('should reject zero address in initialization', async () => {
+    it('rejects zero address in initialization', async () => {
       const BankImplementation = await ethers.getContractFactory('Bank')
       await expect(
         upgrades.deployProxy(BankImplementation, [[], ethers.ZeroAddress], {
@@ -127,7 +127,7 @@ describe('Bank', () => {
       ).to.be.revertedWithCustomError(BankImplementation, ERRORS.ZERO_ADDRESS)
     })
 
-    it('should reject zero token address in initialization', async () => {
+    it('rejects zero token address in initialization', async () => {
       const BankImplementation = await ethers.getContractFactory('Bank')
       await expect(
         upgrades.deployProxy(BankImplementation, [[ethers.ZeroAddress], owner.address], {
@@ -139,7 +139,7 @@ describe('Bank', () => {
   })
 
   describe('Token Support Management', () => {
-    it('should allow owner to add token support', async () => {
+    it('allows owner to add token support', async () => {
       const MockToken = await ethers.getContractFactory('MockERC20')
       const newToken = (await MockToken.deploy('DAI', 'DAI')) as unknown as MockERC20
 
@@ -150,20 +150,20 @@ describe('Bank', () => {
       expect(await bankProxy.isTokenSupported(await newToken.getAddress())).to.be.true
     })
 
-    it('should not allow adding already supported token', async () => {
+    it('does not allow adding already supported token', async () => {
       await expect(bank.addTokenSupport(await mockUSDT.getAddress()))
         .to.be.revertedWithCustomError(bankProxy, ERRORS.TOKEN_SUPPORT_ALREADY_ADDED)
         .withArgs(await mockUSDT.getAddress())
     })
 
-    it('should not allow adding zero address token', async () => {
+    it('does not allow adding zero address token', async () => {
       await expect(bank.addTokenSupport(ethers.ZeroAddress)).to.be.revertedWithCustomError(
         bankProxy,
         ERRORS.TOKEN_SUPPORT_ZERO_ADDRESS
       )
     })
 
-    it('should allow owner to remove token support', async () => {
+    it('allows owner to remove token support', async () => {
       await expect(bank.removeTokenSupport(await mockUSDT.getAddress()))
         .to.emit(bankProxy, 'TokenSupportRemoved')
         .withArgs(await mockUSDT.getAddress())
@@ -171,7 +171,7 @@ describe('Bank', () => {
       expect(await bankProxy.isTokenSupported(await mockUSDT.getAddress())).to.be.false
     })
 
-    it('should not allow removing unsupported token', async () => {
+    it('does not allow removing unsupported token', async () => {
       const MockToken = await ethers.getContractFactory('MockERC20')
       const newToken = (await MockToken.deploy('DAI', 'DAI')) as unknown as MockERC20
 
@@ -180,7 +180,7 @@ describe('Bank', () => {
         .withArgs(await newToken.getAddress())
     })
 
-    it('should not allow non-owner to add/remove token support', async () => {
+    it('does not allow non-owner to add/remove token support', async () => {
       const MockToken = await ethers.getContractFactory('MockERC20')
       const newToken = (await MockToken.deploy('DAI', 'DAI')) as unknown as MockERC20
 
@@ -195,7 +195,7 @@ describe('Bank', () => {
 
   describe('Core Functions', () => {
     describe('Deposits and Transfers', () => {
-      it('should allow the owner to deposit and transfer ETH with fee', async () => {
+      it('allows the owner to deposit and transfer ETH with fee', async () => {
         const depositAmount = ethers.parseEther('10')
         const transferAmount = ethers.parseEther('1')
         const fee = (transferAmount * BANK_FEE_BPS) / 10_000n
@@ -220,7 +220,7 @@ describe('Bank', () => {
           .withArgs('BANK', await bankProxy.getAddress(), ethers.ZeroAddress, fee)
       })
 
-      it('should fail for invalid transfer params and insufficient balance', async () => {
+      it('fails for invalid transfer params and insufficient balance', async () => {
         const transferAmount = ethers.parseEther('1')
         await owner.sendTransaction({
           to: await bankProxy.getAddress(),
@@ -241,7 +241,7 @@ describe('Bank', () => {
           .withArgs(ethers.parseEther('100'), ethers.parseEther('2'))
       })
 
-      it('should allow any address to deposit but not transfer funds', async () => {
+      it('allows any address to deposit but not transfer funds', async () => {
         const depositAmount = ethers.parseEther('5')
         const transferAmount = ethers.parseEther('1')
 
@@ -263,7 +263,7 @@ describe('Bank', () => {
         })
       })
 
-      it('should allow owner to pause and unpause', async () => {
+      it('allows owner to pause and unpause', async () => {
         await bank.pause()
         expect(await bankProxy.paused()).to.be.true
         await expect(bank.transfer(contractor.address, ethers.parseEther('1'))).to.be.revert(ethers)
@@ -275,7 +275,7 @@ describe('Bank', () => {
         )
       })
 
-      it('should not allow non-owner to pause or unpause', async () => {
+      it('does not allow non-owner to pause or unpause', async () => {
         await expect(bankProxy.connect(member1).pause())
           .to.be.revertedWithCustomError(bankProxy, 'OwnableUnauthorizedAccount')
           .withArgs(member1.address)
@@ -287,7 +287,7 @@ describe('Bank', () => {
           .withArgs(member1.address)
       })
 
-      it('[AC-US-BANK-002-12] should reject transfers while paused', async () => {
+      it('[AC-US-BANK-002-12] rejects transfers while paused', async () => {
         await bank.pause()
         await expect(
           bank.transfer(contractor.address, ethers.parseEther('1'))
@@ -297,7 +297,7 @@ describe('Bank', () => {
   })
 
   describe('Token Operations', () => {
-    it('should allow depositing supported tokens', async () => {
+    it('allows depositing supported tokens', async () => {
       const amount = ethers.parseUnits('100', 6)
       await mockUSDT.approve(await bankProxy.getAddress(), amount)
 
@@ -306,7 +306,7 @@ describe('Bank', () => {
         .withArgs(owner.address, await mockUSDT.getAddress(), amount)
     })
 
-    it('should not allow depositing unsupported tokens', async () => {
+    it('does not allow depositing unsupported tokens', async () => {
       const MockToken = await ethers.getContractFactory('MockERC20')
       const unsupportedToken = (await MockToken.deploy(
         'UNSUPPORTED',
@@ -318,13 +318,13 @@ describe('Bank', () => {
         .withArgs(await unsupportedToken.getAddress())
     })
 
-    it('should not allow depositing zero amount', async () => {
+    it('does not allow depositing zero amount', async () => {
       await expect(
         bankProxy.connect(owner).depositToken(await mockUSDT.getAddress(), 0)
       ).to.be.revertedWithCustomError(bankProxy, ERRORS.ZERO_AMOUNT)
     })
 
-    it('should allow owner to transfer tokens with fee', async () => {
+    it('allows owner to transfer tokens with fee', async () => {
       const amount = ethers.parseUnits('10', 6)
       await mockUSDT.approve(await bankProxy.getAddress(), amount)
       await bankProxy.connect(owner).depositToken(await mockUSDT.getAddress(), amount)
@@ -350,7 +350,7 @@ describe('Bank', () => {
         .withArgs('BANK', await bankProxy.getAddress(), await mockUSDT.getAddress(), fee)
     })
 
-    it('should reject invalid token transfer requests', async () => {
+    it('rejects invalid token transfer requests', async () => {
       const MockToken = await ethers.getContractFactory('MockERC20')
       const unsupportedToken = (await MockToken.deploy(
         'UNSUPPORTED',
@@ -370,7 +370,7 @@ describe('Bank', () => {
       ).to.be.revertedWithCustomError(bankProxy, ERRORS.ZERO_AMOUNT)
     })
 
-    it('should not allow transferring more than token balance', async () => {
+    it('does not allow transferring more than token balance', async () => {
       const amount = ethers.parseUnits('10', 6)
       await mockUSDT.approve(await bankProxy.getAddress(), amount)
       await bankProxy.connect(owner).depositToken(await mockUSDT.getAddress(), amount)
@@ -383,7 +383,7 @@ describe('Bank', () => {
         .withArgs(excessAmount, amount)
     })
 
-    it('should return token balance for supported tokens', async () => {
+    it('returns token balance for supported tokens', async () => {
       const amount = ethers.parseUnits('100', 6)
       await mockUSDT.approve(await bankProxy.getAddress(), amount)
       await bankProxy.connect(owner).depositToken(await mockUSDT.getAddress(), amount)
@@ -391,7 +391,7 @@ describe('Bank', () => {
       expect(await bankProxy.getTokenBalance(await mockUSDT.getAddress())).to.equal(amount)
     })
 
-    it('should reject unsupported token in token balance getters', async () => {
+    it('rejects unsupported token in token balance getters', async () => {
       const MockToken = await ethers.getContractFactory('MockERC20')
       const unsupportedToken = (await MockToken.deploy(
         'UNSUPPORTED',

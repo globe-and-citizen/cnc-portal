@@ -113,7 +113,7 @@ describe('ExpenseAccountEIP712V2', function () {
   }
 
   describe('isNewPeriod Helper', function () {
-    it('Should return false for one-time frequency budgets', async function () {
+    it('returns false for one-time frequency budgets', async function () {
       const { expenseAccount } = await loadFixture(deployExpenseAccountFixture)
 
       const budgetLimit = createBudgetLimit({
@@ -128,7 +128,7 @@ describe('ExpenseAccountEIP712V2', function () {
       expect(isNewPeriod).to.equal(false)
     })
 
-    it('Should return true for periodic budgets never withdrawn before', async function () {
+    it('returns true for periodic budgets never withdrawn before', async function () {
       const { expenseAccount, owner, approvedAddress } = await loadFixture(
         deployExpenseAccountFixture
       )
@@ -145,7 +145,7 @@ describe('ExpenseAccountEIP712V2', function () {
       expect(isNewPeriod).to.equal(true)
     })
 
-    it('Should return true when entering a new weekly period', async function () {
+    it('returns true when entering a new weekly period', async function () {
       const { expenseAccount, owner, approvedAddress, recipient } = await loadFixture(
         deployExpenseAccountFixture
       )
@@ -182,7 +182,7 @@ describe('ExpenseAccountEIP712V2', function () {
       expect(isNewPeriod).to.equal(true)
     })
 
-    it('Should return true when entering a new monthly period', async function () {
+    it('returns true when entering a new monthly period', async function () {
       const { expenseAccount, owner, approvedAddress, recipient } = await loadFixture(
         deployExpenseAccountFixture
       )
@@ -221,7 +221,7 @@ describe('ExpenseAccountEIP712V2', function () {
       expect(isNewPeriod).to.equal(true)
     })
 
-    it('Should handle daily frequency periods', async function () {
+    it('handles daily frequency periods', async function () {
       const { expenseAccount, owner, approvedAddress, recipient } = await loadFixture(
         deployExpenseAccountFixture
       )
@@ -254,7 +254,7 @@ describe('ExpenseAccountEIP712V2', function () {
       expect(isNewPeriod).to.equal(true)
     })
 
-    it('Should handle custom frequency periods', async function () {
+    it('handles custom frequency periods', async function () {
       const { expenseAccount, owner, approvedAddress, recipient } = await loadFixture(
         deployExpenseAccountFixture
       )
@@ -290,7 +290,7 @@ describe('ExpenseAccountEIP712V2', function () {
       expect(isNewPeriod).to.equal(true)
     })
 
-    it('Should return false when still in same period after time passes but before period boundary', async function () {
+    it('returns false when still in same period after time passes but before period boundary', async function () {
       const { expenseAccount, owner, approvedAddress, recipient } = await loadFixture(
         deployExpenseAccountFixture
       )
@@ -321,7 +321,7 @@ describe('ExpenseAccountEIP712V2', function () {
       expect(isNewPeriod).to.equal(false)
     })
 
-    it('Should work correctly with multiple withdrawals in same period', async function () {
+    it('keeps multiple withdrawals in the same period', async function () {
       const { expenseAccount, owner, approvedAddress, recipient } = await loadFixture(
         deployExpenseAccountFixture
       )

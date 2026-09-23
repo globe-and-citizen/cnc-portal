@@ -32,16 +32,16 @@ describe('CashRemuneration*** (EIP712)', () => {
       await deployContract(employer)
     })
 
-    it('should initialize with correct owner', async () => {
+    it('initializes with correct owner', async () => {
       expect(await cashRemunerationProxy.owner()).to.equal(employer.address)
     })
 
-    it('should initialize with USDC as supported token', async () => {
+    it('initializes with USDC as supported token', async () => {
       const usdcAddress = await mockUSDC.getAddress()
       expect(await cashRemunerationProxy.isTokenSupported(usdcAddress)).to.be.true
     })
 
-    it('should reject zero address for USDC', async () => {
+    it('rejects zero address for USDC', async () => {
       const CashRemunerationImplementation =
         await ethers.getContractFactory('CashRemunerationEIP712')
       await expect(
@@ -53,7 +53,7 @@ describe('CashRemuneration*** (EIP712)', () => {
       ).to.be.revertedWithCustomError(cashRemunerationProxy, 'CashRemunerationEIP712__ZeroAddress')
     })
 
-    it('should prevent reinitialization', async () => {
+    it('prevents reinitialization', async () => {
       await expect(
         cashRemunerationProxy.initialize(employer.address, [await mockUSDC.getAddress()])
       ).to.be.revertedWithCustomError(cashRemunerationProxy, 'InvalidInitialization')
@@ -401,7 +401,7 @@ describe('CashRemuneration*** (EIP712)', () => {
       })
     })
 
-    it('should prevent replay of a valid signature (same wage claim used twice)', async () => {
+    it('prevents replay of a valid signature (same wage claim used twice)', async () => {
       const wageClaim = {
         employeeAddress: employee.address,
         minutesWorked: 30,
@@ -430,7 +430,7 @@ describe('CashRemuneration*** (EIP712)', () => {
         .withArgs(sigHash)
     })
 
-    it('should prevent replay even across intermediate valid calls', async () => {
+    it('prevents replay even across intermediate valid calls', async () => {
       // First claim
       const wageClaimA = {
         employeeAddress: employee.address,
