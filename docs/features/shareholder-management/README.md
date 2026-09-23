@@ -356,6 +356,16 @@ the redeployment and migration-root commit. Shareholder Management exposes the m
   [issuance-form tests](../../../app/src/components/sections/SherTokenView/forms/__tests__/MintForm.spec.ts), and
   [migration-banner tests](../../../app/src/components/sections/SherTokenView/__tests__/ShareholderMigrationBanner.spec.ts)
 
+### Test-suite ownership
+
+- [Investor composable tests](../../../app/src/composables/investor/__tests__/),
+  [Investor view tests](../../../app/src/views/team/%5Bid%5D/__tests__/SherTokenView.spec.ts), and
+  [Safe Deposit Router model tests](../../../app/src/utils/safeDepositRouter/__tests__/)
+- [Migration API tests](../../../backend/src/controllers/__tests__/investorMigrationController.test.ts),
+  [Merkle parity tests](../../../backend/src/services/__tests__/merkleParity.test.ts), and
+  [Merkle snapshot tests](../../../backend/src/services/__tests__/merkleSnapshotService.test.ts)
+- [Investor contract tests](../../../contract/test/Investor.spec.ts)
+
 ## Related Documentation
 
 - [Accounts](../accounts/README.md)

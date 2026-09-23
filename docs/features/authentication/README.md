@@ -149,6 +149,14 @@ acceptance coverage, not E2E proof.
 - [Backend authentication middleware](../../../backend/src/middleware/authMiddleware.ts)
 - [Backend authentication tests](../../../backend/src/controllers/__tests__/authController.test.ts)
 
+### Test-suite ownership
+
+- [Authentication API tests](../../../app/src/api/__tests__/auth.api.spec.ts),
+  [login view tests](../../../app/src/views/__tests__/LoginView.spec.ts),
+  [authenticated home tests](../../../app/src/views/__tests__/HomeView.spec.ts),
+  [lock-screen tests](../../../app/src/components/layout/__tests__/LockScreen.spec.ts), and
+  [user-session store tests](../../../app/src/stores/__tests__/user.spec.ts)
+
 ## Related Documentation
 
 - [Client Navigation implementation](../../implementation/client-navigation/README.md)

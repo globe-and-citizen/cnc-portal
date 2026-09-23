@@ -72,6 +72,7 @@ sequenceDiagram
   [storage tests](../../../backend/src/services/__tests__/storageService.test.ts)
 - [Attachment service](../../../backend/src/services/attachmentService.ts) and
   [attachment tests](../../../backend/src/services/__tests__/attachmentService.test.ts)
+- [Upload route tests](../../../backend/src/routes/__tests__/uploadRoute.test.ts)
 
 ## Related Documentation
 

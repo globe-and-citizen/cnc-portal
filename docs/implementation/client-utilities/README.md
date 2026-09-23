@@ -85,6 +85,12 @@ flowchart LR
 - [Safe browser effects](../../../app/src/lib/safe/browser.ts), [Safe transaction effects](../../../app/src/lib/safe/transactions.ts),
   [logging](../../../app/src/lib/logging.ts), [accounting exports](../../../app/src/lib/accounting/), and
   [file exports](../../../app/src/lib/files/)
+- [Overview-card tests](../../../app/src/components/ui/__tests__/OverviewCard.spec.ts),
+  [step-indicator tests](../../../app/src/components/ui/__tests__/StepIndicator.spec.ts),
+  [timeline-icon tests](../../../app/src/components/ui/__tests__/TimelineIcon.spec.ts),
+  [shared constant tests](../../../app/src/constant/__tests__/index.test.ts),
+  [logging tests](../../../app/src/lib/__tests__/logging.spec.ts), and
+  [currency-store tests](../../../app/src/stores/__tests__/currencyStore.spec.ts)
 
 ## Related Documentation
 

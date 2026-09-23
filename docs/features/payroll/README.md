@@ -557,6 +557,24 @@ Functional gaps map to unchecked acceptance criteria.
 - [Weekly claim API tests](../../../backend/src/controllers/__tests__/weeklyClaimController.test.ts)
 - [Cash Remuneration contract tests](../../../contract/test/CashRemunerationEIP712.spec.ts)
 
+### Test-suite ownership
+
+- [Payroll member tests](../../../app/src/components/sections/DashboardView/__tests__/MemberSection.spec.ts),
+  [wage-modal tests](../../../app/src/components/sections/DashboardView/__tests__/SetMemberWageModal.spec.ts),
+  [standard-wage tests](../../../app/src/components/sections/DashboardView/__tests__/SetMemberWageStandardStep.spec.ts),
+  [overtime-wage tests](../../../app/src/components/sections/DashboardView/__tests__/SetMemberWageOvertimeStep.spec.ts),
+  [weekly-claim query tests](../../../app/src/queries/__tests__/weeklyClaim.queries.spec.ts),
+  [weekly-goal query tests](../../../app/src/queries/__tests__/weeklyClaimGoals.queries.spec.ts), and
+  [payroll view tests](../../../app/src/views/team/%5Bid%5D/__tests__/CashRemunerationView.spec.ts)
+- [Rate presentation tests](../../../app/src/components/ui/__tests__/RateDotList.spec.ts) and
+  [upload-model tests](../../../app/src/types/__tests__/upload.spec.ts)
+- [Cash-remuneration ownership tests](../../../backend/src/utils/__tests__/cashRemunerationUtil.test.ts),
+  [week-boundary tests](../../../backend/src/utils/__tests__/dayUtils.test.ts),
+  [wage-resolution tests](../../../backend/src/utils/__tests__/wageResolution.test.ts), and
+  [wage-format tests](../../../backend/src/utils/__tests__/wageUtil.test.ts)
+- [Cash Remuneration withdrawal tests](../../../contract/test/CashRemunerationEIP712.withdrawSher.spec.ts) and
+  [Cash Remuneration upgrade tests](../../../contract/test/CashRemunerationEIP712UpgradeModule.spec.ts)
+
 ## Related Documentation
 
 - [File Storage implementation](../../implementation/file-storage/README.md)

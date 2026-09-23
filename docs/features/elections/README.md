@@ -347,6 +347,14 @@ Only one unpublished election can exist at a time. An ended election still block
 - [Election notification API controller](../../../backend/src/controllers/electionsController.ts)
 - [Election notification API tests](../../../backend/src/controllers/__tests__/electionsController.test.ts)
 
+### Test-suite ownership
+
+- [Board composable tests](../../../app/src/composables/bod/__tests__/),
+  [election overview tests](../../../app/src/views/team/%5Bid%5D/__tests__/BodElectionView.spec.ts), and
+  [election detail tests](../../../app/src/views/team/%5Bid%5D/__tests__/BodElectionDetailsView.spec.ts)
+- [Board contract tests](../../../contract/test/BoardOfDirectors.spec.ts) and
+  [Board upgrade tests](../../../contract/test/BoardOfDirectorsUpgradeModule.spec.ts)
+
 ## Related Documentation
 
 - [Client Navigation implementation](../../implementation/client-navigation/README.md)

@@ -325,6 +325,17 @@ overview's `1 + 4N` a second time on top of its own `1 + 2L`.
 - [Metadata controller tests](../../../backend/src/controllers/__tests__/fixedReturnOfferingController.test.ts)
 - [Frontend feature tests](../../../app/src/views/team/[id]/CommunityCredit/__tests__/communityCreditViews.spec.ts)
 
+### Test-suite ownership
+
+- [FixedReturn composable tests](../../../app/src/composables/fixedReturn/__tests__/),
+  [Community Credit model tests](../../../app/src/utils/communityCredit/__tests__/),
+  [Community Credit store tests](../../../app/src/stores/__tests__/communityCredit.spec.ts), and
+  [Community Credit schema tests](../../../app/src/types/__tests__/communityCredit.schemas.spec.ts)
+- [FixedReturn metadata-query tests](../../../app/src/queries/__tests__/fixedReturnOffering.queries.spec.ts)
+- [FixedReturn validation tests](../../../backend/src/validation/schemas/__tests__/fixedReturnOffering.test.ts),
+  [FixedReturn beacon tests](../../../contract/test/FixedReturnBeacon.spec.ts), and
+  [FixedReturn payout benchmark](../../../contract/test/FixedReturnPayoutGasBenchmark.spec.ts)
+
 ## Related Documentation
 
 - [Async UI State Framework](../../platform/async-ui-state-framework.md)

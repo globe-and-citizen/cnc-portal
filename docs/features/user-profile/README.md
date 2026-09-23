@@ -67,6 +67,19 @@ The display name and profile image can be changed from the client navigation and
 - [Profile-image component tests](../../../app/src/components/forms/__tests__/ProfileImageUpload.spec.ts) and
   [file-query tests](../../../app/src/queries/__tests__/file.queries.spec.ts)
 
+### Test-suite ownership
+
+- [Profile form tests](../../../app/src/components/forms/__tests__/EditUserForm.spec.ts),
+  [profile API tests](../../../app/src/api/__tests__/user.api.spec.ts),
+  [upload API tests](../../../app/src/api/__tests__/upload.api.spec.ts),
+  [storage API tests](../../../app/src/api/__tests__/storage.api.spec.ts), and
+  [file URL tests](../../../app/src/composables/__tests__/useFileUrl.spec.ts)
+- [Profile navigation tests](../../../app/src/components/layout/__tests__/NavBar.spec.ts),
+  [sidebar tests](../../../app/src/components/ui/__tests__/SidebarLayout.spec.ts), and
+  [user-identity tests](../../../app/src/components/ui/__tests__/UserIdentity.spec.ts)
+- [User API controller tests](../../../backend/src/controllers/__tests__/userController.test.ts) and
+  [profile-image utility tests](../../../backend/src/utils/__tests__/profileImage.util.test.ts)
+
 ## Related Documentation
 
 - [File Storage implementation](../../implementation/file-storage/README.md)

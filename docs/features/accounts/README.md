@@ -597,6 +597,30 @@ a transfer to another known company pocket is
   [Expense contract tests](../../../contract/test/ExpenseAccountEIP712.spec.ts)
 - [Cash Remuneration account page](../../../app/src/views/team/%5Bid%5D/Accounts/CashRemunerationView.vue)
 
+### Test-suite ownership
+
+- [Bank composable tests](../../../app/src/composables/bank/__tests__/), [cash-out tests](../../../app/src/composables/cashOut/__tests__/),
+  and [ERC-20 composable tests](../../../app/src/composables/erc20/__tests__/)
+- [Transfer-form tests](../../../app/src/components/forms/__tests__/TransferForm.spec.ts),
+  [owner-withdrawal tests](../../../app/src/components/sections/__tests__/OwnerTreasuryWithdrawAction.spec.ts),
+  [Safe account view tests](../../../app/src/views/team/%5Bid%5D/Accounts/__tests__/), and
+  [Bank view tests](../../../app/src/views/team/%5Bid%5D/__tests__/BankView.spec.ts)
+- [Safe type tests](../../../app/src/types/__tests__/safe.spec.ts),
+  [Safe schema tests](../../../app/src/types/__tests__/safe.schemas.spec.ts), and
+  [Safe infrastructure constants](../../../app/src/constant/__tests__/safeInfra.test.ts)
+- [Address presentation tests](../../../app/src/components/ui/__tests__/AddressTooltip.spec.ts),
+  [token holdings tests](../../../app/src/components/ui/__tests__/TokenHoldingsSection.spec.ts),
+  [member-token selector tests](../../../app/src/components/ui/inputs/__tests__/SelectMemberWithTokenInput.spec.ts), and
+  [token amount tests](../../../app/src/components/ui/inputs/__tests__/TokenAmountInput.spec.ts)
+- [Contract-balance tests](../../../app/src/composables/__tests__/useContractBalance.spec.ts),
+  [token-balance tests](../../../app/src/lib/balances/__tests__/tokenBalances.spec.ts), and
+  [Safe browser-boundary tests](../../../app/src/lib/safe/__tests__/browser.spec.ts)
+- [Expense validation tests](../../../backend/src/validation/schemas/__tests__/expense.test.ts)
+- [Bank beacon tests](../../../contract/test/BankBeacon.spec.ts), [Bank upgrade tests](../../../contract/test/BankUpgradeModule.spec.ts),
+  [Expense calendar-period tests](../../../contract/test/ExpenseAccountEIP712V2.calendarBasedPeriods.spec.ts),
+  [Expense custom-frequency tests](../../../contract/test/ExpenseAccountEIP712V2.customFrequency.spec.ts), and
+  [Expense period-boundary tests](../../../contract/test/ExpenseAccountEIP712V2.isNewPeriod.spec.ts)
+
 ## Related Documentation
 
 - [Client Navigation implementation](../../implementation/client-navigation/README.md)

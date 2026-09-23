@@ -256,6 +256,12 @@ reference to the Accounting-owned acceptance contract and has no independent val
 - [Current Vesting contract](../../../contract/contracts/Vesting.sol)
 - [Contract behaviour tests](../../../contract/test/Vesting.spec.ts)
 
+### Test-suite ownership
+
+- [Vesting composable tests](../../../app/src/composables/vesting/__tests__/),
+  [vesting model tests](../../../app/src/utils/vesting/__tests__/), and
+  [vesting view tests](../../../app/src/views/team/%5Bid%5D/__tests__/VestingView.spec.ts)
+
 ## Related Documentation
 
 - [Vesting V2 contract behaviour](../../contracts/features/vesting/README.md)

@@ -53,6 +53,7 @@ flowchart LR
 - [Credit Account history](../../../app/src/components/sections/CommunityCreditView/CreditAccountTransactions.vue) and
   [investor history](../../../app/src/components/sections/SherTokenView/InvestorsTransactions.vue)
 - [Shared transaction detail slide-over](../../../app/src/components/ui/TransactionDetailSlideover.vue)
+- [Inline transaction-state tests](../../../app/src/composables/transactions/__tests__/useTransactionInline.spec.ts)
 
 ## Related Documentation
 

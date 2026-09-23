@@ -233,6 +233,11 @@ These acceptance criteria follow the
   [error-message decoding tests](../../../app/src/widget/__tests__/errorMessage.spec.ts), and
   [Setup page integration-card tests](../../../app/src/components/sections/PaymentGateView/__tests__/IntegrationCard.spec.ts).
 
+### Test-suite ownership
+
+- [Token configuration card tests](../../../app/src/components/sections/PaymentGateView/__tests__/TokenConfigCard.spec.ts) and
+  [transaction detail tests](../../../app/src/components/ui/__tests__/TransactionDetailSlideover.spec.ts)
+
 ## Related Documentation
 
 - [Bank contract behaviour](../../contracts/features/bank/README.md)

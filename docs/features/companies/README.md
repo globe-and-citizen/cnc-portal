@@ -449,6 +449,24 @@ This validation does not attest to a live on-chain Officer deployment.
   [deletion](../../../app/test/e2e/company/company-delete.spec.ts), driven by the
   [lifecycle backend stub](../../../app/test/e2e/company/company-lifecycle-page.ts) for the owner and member roles
 
+### Test-suite ownership
+
+- [Company-card tests](../../../app/src/components/__tests__/),
+  [company form tests](../../../app/src/components/sections/TeamView/forms/__tests__/), and
+  [company-list tests](../../../app/src/views/team/__tests__/)
+- [Company header tests](../../../app/src/components/sections/DashboardView/__tests__/TeamMetaSection.spec.ts),
+  [company update tests](../../../app/src/components/sections/DashboardView/__tests__/TeamMetaUpdateModal.spec.ts),
+  [company archive tests](../../../app/src/components/sections/DashboardView/__tests__/TeamMetaArchiveModal.spec.ts),
+  [company visibility tests](../../../app/src/components/sections/DashboardView/__tests__/TeamMetaVisibilityModal.spec.ts),
+  [company deletion tests](../../../app/src/components/sections/DashboardView/__tests__/TeamMetaDeleteModal.spec.ts),
+  [member deletion tests](../../../app/src/components/sections/DashboardView/__tests__/DeleteMemberModal.spec.ts),
+  [member-list tests](../../../app/src/components/sections/DashboardView/__tests__/MemberSection.spec.ts),
+  [member form tests](../../../app/src/components/sections/DashboardView/forms/__tests__/AddMemberForm.spec.ts),
+  [company treasury-list tests](../../../app/src/composables/__tests__/useTeamListTreasuryBalances.spec.ts), and
+  [company store tests](../../../app/src/stores/__tests__/teamStore.spec.ts)
+- [Company authorization tests](../../../backend/src/middleware/__tests__/teamAuthzMiddleware.test.ts) and
+  [team membership utility tests](../../../backend/src/utils/__tests__/teamUtils.test.ts)
+
 ## Related Documentation
 
 - [Accounts](../accounts/README.md)

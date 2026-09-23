@@ -226,6 +226,28 @@ flowchart LR
 - [Officer redeploy workflow tests](../../../app/src/composables/contracts/__tests__/useOfficerRedeploy.spec.ts)
 - [Officer redeploy migration recovery tests](../../../app/src/composables/contracts/__tests__/useOfficerRedeploy.retry.spec.ts)
 
+### Test-suite ownership
+
+- [Shared contract composable tests](../../../app/src/composables/contracts/__tests__/),
+  [campaign composable tests](../../../app/src/composables/campaign/__tests__/),
+  [campaign event tests](../../../app/src/lib/campaign/__tests__/), and
+  [contract-query tests](../../../app/src/queries/__tests__/contract.queries.spec.ts)
+- [Contract result-selector tests](../../../app/src/components/ui/inputs/__tests__/SelectContractResults.spec.ts),
+  [member-contract selector tests](../../../app/src/components/ui/inputs/__tests__/SelectMemberContractsInput.spec.ts), and
+  [contract-management view tests](../../../app/src/views/team/%5Bid%5D/__tests__/ContractManagementView.spec.ts)
+- [Contract registry tests](../../../app/src/artifacts/__tests__/registry.spec.ts),
+  [contract-function tests](../../../app/src/composables/__tests__/useContractFunction.spec.ts), and
+  [Officer read tests](../../../app/src/composables/officer/__tests__/reads.spec.ts)
+- [Action API tests](../../../backend/src/controllers/__tests__/actionController.test.ts) and
+  [contract API tests](../../../backend/src/controllers/__tests__/contractController.test.ts)
+- [Advertising contract tests](../../../contract/test/AdCampaignManager.spec.ts),
+  [Factory beacon tests](../../../contract/test/FactoryBeacon.spec.ts),
+  [Officer deployment tests](../../../contract/test/Officer.deployments.spec.ts),
+  [Officer behavior tests](../../../contract/test/Officer.spec.ts),
+  [Officer upgrade tests](../../../contract/test/OfficerUpgradeModule.spec.ts), [proposal tests](../../../contract/test/Proposals.spec.ts),
+  and [Safe infrastructure deployment tests](../../../contract/test/SafeInfraDeployment.spec.ts)
+- [Officer subgraph tests](../../../the-graph/tests/officer.test.ts)
+
 ## Related Documentation
 
 - [Contract feature documentation](../../contracts/features/README.md)

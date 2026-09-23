@@ -59,6 +59,8 @@ flowchart LR
 - [Vesting beneficiary consumer](../../../app/src/components/sections/VestingView/forms/VestingGrantDetails.vue)
 - [Selection scope behaviour tests](../../../app/src/components/ui/inputs/__tests__/SelectMemberInput.spec.ts)
 - [Multi-selection behaviour tests](../../../app/src/components/ui/inputs/__tests__/MultiSelectMemberInput.spec.ts)
+- [Member-result tests](../../../app/src/components/ui/inputs/__tests__/SelectMemberResults.spec.ts) and
+  [member-token result tests](../../../app/src/components/ui/inputs/__tests__/SelectMemberWithTokenInput.spec.ts)
 
 ## Related Documentation
 

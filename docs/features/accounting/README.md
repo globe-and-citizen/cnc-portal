@@ -288,6 +288,13 @@ flowchart LR
   [report tests](../../../app/src/views/team/%5Bid%5D/Accounting/__tests__/AccountingReports.spec.ts), and
   [migration tests](../../../app/src/composables/accounting/__tests__/useCNCAccounting.migration.spec.ts)
 
+### Test-suite ownership
+
+- [Accounting component tests](../../../app/src/components/sections/AccountingView/__tests__/),
+  [accounting composable tests](../../../app/src/composables/accounting/__tests__/),
+  [accounting export tests](../../../app/src/lib/accounting/__tests__/), and
+  [accounting view tests](../../../app/src/views/team/%5Bid%5D/Accounting/__tests__/)
+
 ## Related Documentation
 
 - [Understanding Accounting through six questions](./accounting-model.md)
