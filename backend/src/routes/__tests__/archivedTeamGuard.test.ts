@@ -93,6 +93,11 @@ describe('archived team guard on write routes', () => {
   describe('POST /teams/:id/member', () => {
     const app = mount(teamRoutes);
 
+    /**
+     * Covers:
+     * - [AC-US-COMPANIES-005-07]
+     * - [AC-US-COMPANIES-006-05]
+     */
     it('returns 409 for archived team', async () => {
       mockTeamArchiveLookups(true);
 
@@ -122,6 +127,11 @@ describe('archived team guard on write routes', () => {
   describe('DELETE /teams/:id/member/:memberAddress', () => {
     const app = mount(teamRoutes);
 
+    /**
+     * Covers:
+     * - [AC-US-COMPANIES-005-07]
+     * - [AC-US-COMPANIES-006-05]
+     */
     it('returns 409 for archived team', async () => {
       mockTeamArchiveLookups(true);
 
@@ -134,6 +144,10 @@ describe('archived team guard on write routes', () => {
   describe('POST /contract', () => {
     const app = mount(contractRoutes);
 
+    /**
+     * Covers:
+     * - [AC-US-COMPANIES-006-05]
+     */
     it('returns 409 for archived team', async () => {
       mockTeamArchiveLookups(true);
 
@@ -203,6 +217,10 @@ describe('archived team guard on write routes', () => {
   describe('POST /claim', () => {
     const app = mount(claimRoutes);
 
+    /**
+     * Covers:
+     * - [AC-US-COMPANIES-006-05]
+     */
     it('returns 409 for archived team', async () => {
       mockTeamArchiveLookups(true);
 
@@ -318,6 +336,11 @@ describe('archived team guard on write routes', () => {
   describe('POST /contract/officer', () => {
     const app = mount(contractRoutes);
 
+    /**
+     * Covers:
+     * - [AC-US-COMPANIES-002-05]
+     * - [AC-US-COMPANIES-006-05]
+     */
     it('returns 409 for archived team', async () => {
       mockTeamArchiveLookups(true);
 

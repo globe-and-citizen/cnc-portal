@@ -370,6 +370,10 @@ describe('Team Controller', () => {
       }
     );
 
+    /**
+     * Covers:
+     * - [AC-US-COMPANIES-003-09]
+     */
     it('should return 404 if team is not found', async () => {
       vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(null);
 
@@ -687,6 +691,10 @@ describe('Team Controller', () => {
       });
     });
 
+    /**
+     * Covers:
+     * - [AC-US-COMPANIES-003-07]
+     */
     it('skips the wage lookup entirely when the caller has no teams', async () => {
       vi.spyOn(prisma.team, 'findMany').mockResolvedValue([] as never);
       vi.spyOn(prisma.memberTeamsData, 'findMany').mockResolvedValue([] as never);
@@ -774,6 +782,10 @@ describe('Team Controller', () => {
       expect(response.body.message).toBe('Unauthorized');
     });
 
+    /**
+     * Covers:
+     * - [AC-US-COMPANIES-003-08]
+     */
     it('should return 500 if an error occurs', async () => {
       mockCaller.roles = ['ROLE_ADMIN'];
       vi.spyOn(prisma.team, 'findMany').mockRejectedValue(new Error('Database failure'));
@@ -800,6 +812,10 @@ describe('Team Controller', () => {
       vi.clearAllMocks();
     });
 
+    /**
+     * Covers:
+     * - [AC-US-COMPANIES-004-06]
+     */
     it('should return 404 if team not found', async () => {
       vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(null);
 
@@ -813,6 +829,10 @@ describe('Team Controller', () => {
       expect(response.body.message).toBe('Team not found');
     });
 
+    /**
+     * Covers:
+     * - [AC-US-COMPANIES-004-02]
+     */
     it('should return 403 if user is not the team owner', async () => {
       const mockTeam = {
         id: 1,
@@ -862,6 +882,11 @@ describe('Team Controller', () => {
       expect(response.body.isArchived).toBe(false);
     });
 
+    /**
+     * Covers:
+     * - [AC-US-COMPANIES-006-06]
+     * - [AC-US-COMPANIES-007-04]
+     */
     it('allows visibility toggle on archived team as member', async () => {
       const mockTeam = {
         id: 1,
@@ -887,6 +912,11 @@ describe('Team Controller', () => {
       expect(response.body.isHidden).toBe(true);
     });
 
+    /**
+     * Covers:
+     * - [AC-US-COMPANIES-004-04]
+     * - [AC-US-COMPANIES-006-07]
+     */
     it('returns 409 when renaming archived team', async () => {
       vi.spyOn(prisma.team, 'findUnique').mockResolvedValue({
         id: 1,
@@ -1001,6 +1031,10 @@ describe('Team Controller', () => {
       expect(response.status).toBe(204);
     });
 
+    /**
+     * Covers:
+     * - [AC-US-COMPANIES-008-02]
+     */
     it('should return 200 and delete the team successfully', async () => {
       vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(teamMockResolve);
       vi.spyOn(prisma.team, 'delete').mockResolvedValue(teamMockResolve);

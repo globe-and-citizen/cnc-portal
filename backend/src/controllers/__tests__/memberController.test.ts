@@ -110,6 +110,10 @@ describe('Member Controller', () => {
   });
 
   describe('POST: /team/:id/member', () => {
+    /**
+     * Covers:
+     * - [AC-US-COMPANIES-005-02]
+     */
     it('should add members', async () => {
       vi.mocked(prisma.team.findUnique).mockResolvedValue(mockResolvedTeam);
       vi.mocked(prisma.team.update).mockResolvedValueOnce(mockResolvedTeam);
@@ -120,6 +124,10 @@ describe('Member Controller', () => {
       expect(response.body).toEqual({ members: mockResolvedTeam.members });
     });
 
+    /**
+     * Covers:
+     * - [AC-US-COMPANIES-005-05]
+     */
     it('should return 400 when Member is not well formatted', async () => {
       const response = await request(app)
         .post('/team/1/member')
@@ -141,6 +149,10 @@ describe('Member Controller', () => {
       expect(response.body).toEqual({ message: 'Team not found' });
     });
 
+    /**
+     * Covers:
+     * - [AC-US-COMPANIES-005-08]
+     */
     it('Should return 400 when members already exist in the team', async () => {
       const teamWithExistingMembers = {
         ...mockResolvedTeam,
@@ -157,6 +169,10 @@ describe('Member Controller', () => {
       });
     });
 
+    /**
+     * Covers:
+     * - [AC-US-COMPANIES-005-04]
+     */
     it('Should return 403 when the caller is not the owner', async () => {
       const teamWithDifferentOwner = {
         ...mockResolvedTeam,
@@ -190,6 +206,10 @@ describe('Member Controller', () => {
   });
 
   describe('DELETE: /team/:id/member/:memberAddress', () => {
+    /**
+     * Covers:
+     * - [AC-US-COMPANIES-005-03]
+     */
     it('should delete member', async () => {
       vi.mocked(prisma.team.findUnique).mockResolvedValue(mockResolvedTeam);
       vi.mocked(prisma.team.update).mockResolvedValue(mockResolvedTeam);
@@ -213,6 +233,10 @@ describe('Member Controller', () => {
       expect(response.body).toEqual({ message: 'Team not found' });
     });
 
+    /**
+     * Covers:
+     * - [AC-US-COMPANIES-005-09]
+     */
     it('should return 404 when member is not found in the team', async () => {
       vi.mocked(prisma.team.findUnique).mockResolvedValue(mockResolvedTeam);
 
@@ -244,6 +268,11 @@ describe('Member Controller', () => {
       });
     });
 
+    /**
+     * Covers:
+     * - [AC-US-COMPANIES-005-06]
+     * - [AC-US-COMPANIES-005-09]
+     */
     it('should return 403 when the owner is trying to delete himself', async () => {
       vi.mocked(prisma.team.findUnique).mockResolvedValue(mockResolvedTeam);
       vi.mocked(prisma.team.update).mockResolvedValue(mockResolvedTeam);
@@ -256,6 +285,10 @@ describe('Member Controller', () => {
       });
     });
 
+    /**
+     * Covers:
+     * - [AC-US-COMPANIES-005-10]
+     */
     it('should return 500 when an error occurs', async () => {
       const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
       vi.mocked(prisma.team.findUnique).mockRejectedValue('Server error');

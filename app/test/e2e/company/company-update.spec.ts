@@ -21,6 +21,7 @@ import {
 const NEW_NAME = 'E2E Renamed Company'
 const NEW_DESCRIPTION = 'Updated through the lifecycle E2E suite.'
 const UPDATED = 'Company updated successfully'
+const TAGS = ['@US-COMPANIES-004', '@browser', '@mocked']
 
 const nameInput = (form: Locator) => form.getByPlaceholder('Acme Corp')
 const descriptionInput = (form: Locator) => form.getByPlaceholder('Enter a short description')
@@ -31,9 +32,9 @@ async function fillDetails(form: Locator, name: string, description: string) {
   await descriptionInput(form).fill(description)
 }
 
-// Browser coverage of US-COMPANIES-004. The API is simulated, so the server-side
+// Mocked browser coverage of US-COMPANIES-004. The API is simulated, so the server-side
 // owner check and the archived-company rejection need backend coverage.
-test.describe('Company details update', { tag: ['@US-COMPANIES-004', '@browser'] }, () => {
+test.describe('Company details update', { tag: TAGS }, () => {
   test('lets the owner update the details from the dashboard and reflects them on the list', async ({
     page
   }) => {
@@ -97,6 +98,10 @@ test.describe('Company details update', { tag: ['@US-COMPANIES-004', '@browser']
     expect(api.team?.name).toBe(COMPANY_NAME)
   })
 
+  /**
+   * Covers:
+   * - [AC-US-COMPANIES-004-05]
+   */
   test('reports a rejected update, keeps the edits, and retries successfully', async ({ page }) => {
     const api = await openCompanyActions(page)
     api.failUpdate = true
@@ -130,22 +135,31 @@ test.describe('Company details update', { tag: ['@US-COMPANIES-004', '@browser']
     expect(api.updates).toHaveLength(0)
   })
 
-  test('rejects an update submitted after the company was archived elsewhere', async ({ page }) => {
-    const api = await openCompanyActions(page)
-    await updateAction(page).click()
-    const form = dialog(page)
-    await fillDetails(form, NEW_NAME, NEW_DESCRIPTION)
-    api.team!.isArchived = true
-    await saveButton(form).click()
-    await expect(form).toContainText('Team is archived — unarchive to modify', {
-      timeout: RETRY_TIMEOUT
-    })
-    await expect(toast(page, UPDATED)).toHaveCount(0)
-    expect(api.team).toMatchObject({ name: COMPANY_NAME, isArchived: true })
-    for (const update of api.updates) {
-      expect(update).toEqual({ name: NEW_NAME, description: NEW_DESCRIPTION })
+  /**
+   * Covers:
+   * - [AC-US-COMPANIES-004-04]
+   * - [AC-US-COMPANIES-006-07]
+   */
+  test(
+    'rejects an update submitted after the company was archived elsewhere',
+    { tag: '@US-COMPANIES-006' },
+    async ({ page }) => {
+      const api = await openCompanyActions(page)
+      await updateAction(page).click()
+      const form = dialog(page)
+      await fillDetails(form, NEW_NAME, NEW_DESCRIPTION)
+      api.team!.isArchived = true
+      await saveButton(form).click()
+      await expect(form).toContainText('Team is archived — unarchive to modify', {
+        timeout: RETRY_TIMEOUT
+      })
+      await expect(toast(page, UPDATED)).toHaveCount(0)
+      expect(api.team).toMatchObject({ name: COMPANY_NAME, isArchived: true })
+      for (const update of api.updates) {
+        expect(update).toEqual({ name: NEW_NAME, description: NEW_DESCRIPTION })
+      }
     }
-  })
+  )
 
   test('disables submission while the update is pending', async ({ page }) => {
     const api = await openCompanyActions(page)
