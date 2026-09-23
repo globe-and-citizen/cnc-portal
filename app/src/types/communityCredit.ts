@@ -1,14 +1,11 @@
-// Types for the Community Credit demo feature.
-// Community Credit lets a company raise working capital from its members:
-// each round is repaid in full with fixed interest at maturity, signed on-chain
-// from a dedicated Credit Account. This module is fake-data only (no API yet).
-// FixedReturn.sol is Community Credit's own contract — every on-chain shape below
-// mirrors it directly.
+// Types for Community Credit. Community Credit lets a company raise working capital
+// from its members: each round is repaid in full with fixed interest at maturity,
+// signed on-chain from a dedicated Credit Account. FixedReturn.sol is Community
+// Credit's own contract — every on-chain shape below mirrors it directly. Shapes here
+// are read from real chain state and the fixed-return-offering API, not fake data.
 
 import type { Address } from 'viem'
 import type { UBadgeColor } from './ui'
-
-export type CreditRole = 'owner' | 'lender'
 
 /** Units offered for the Terms step's Term length picker (CreditOfferForm.termUnit) —
  *  the on-chain call no longer has an enum for this (FixedReturn.sol now stores an

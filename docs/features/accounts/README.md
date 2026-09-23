@@ -68,6 +68,28 @@ flowchart LR
 | US-SAFE-005 | Review Safe transactions                   | Company member             | 🧪 Validation  |
 | US-SAFE-006 | Approve and execute a Safe transaction     | Safe owner                 | 🧪 Validation  |
 
+## Test Coverage Overview
+
+The main treasury and Expense Account journeys use the real frontend, backend, PostgreSQL database, local chain, deployed contracts, and
+browser wallet. Fixture-backed account suites remain browser acceptance coverage until their owning actions are migrated.
+
+| User Story  | Representative AC Coverage | E2E Status | E2E Boundary                                             |
+| ----------- | -------------------------- | ---------- | -------------------------------------------------------- |
+| US-BANK-001 | integrated E2E 3/10        | 🚧 Partial | UI deposits, real transactions, balances, and receipts   |
+| US-BANK-002 | none                       | 📋 Planned | Direct and Board-authorized transfer path                |
+| US-BANK-003 | integrated E2E 1/8         | 🚧 Partial | Persisted company and chain event history                |
+| US-BANK-004 | none                       | 📋 Planned | Complete cash-out orchestration                          |
+| US-EXP-001  | integrated E2E 3/10        | 🚧 Partial | Owner signature and backend-persisted approval           |
+| US-EXP-002  | integrated E2E 2/12        | 🚧 Partial | Member wallet and real Expense Account transaction       |
+| US-EXP-003  | integrated E2E 2/9         | 🚧 Partial | Persisted deactivate/reactivate lifecycle                |
+| US-EXP-004  | integrated E2E 2/11        | 🚧 Partial | Live balance, approval state, and chain history          |
+| US-SAFE-001 | integrated E2E 2/11        | 🚧 Partial | UI deployment, real Safe proxy, and backend registration |
+| US-SAFE-002 | none                       | 📋 Planned | Member inspection on a backend-registered Safe           |
+| US-SAFE-003 | none                       | 📋 Planned | Safe funding and transfer proposal lifecycle             |
+| US-SAFE-004 | none                       | 📋 Planned | Signer and threshold lifecycle                           |
+| US-SAFE-005 | none                       | 📋 Planned | External Transaction Service boundary and UI history     |
+| US-SAFE-006 | none                       | 📋 Planned | Multisignature approval and execution                    |
+
 ## US-BANK-001: Fund the Bank
 
 **As a** company member\
@@ -522,7 +544,7 @@ a transfer to another known company pocket is
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `006685cb46c8408101e785b258482092a1e63f70`
+**Implementation evidence reviewed against:** `80b1215080fa2310037d90492cfb4bd06f53e23f`
 
 - [Bank components](../../../app/src/components/sections/BankView/),
   [Expense Account components](../../../app/src/components/sections/ExpenseAccountView/),

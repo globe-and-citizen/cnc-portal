@@ -41,10 +41,10 @@ const fixedReturnOfferingRoutes = express.Router();
  *               type: string
  *               description: The offering purpose/description
  *   responses:
- *     201:
- *       description: Offering metadata created successfully
+ *     200:
+ *       description: Offering metadata saved. Idempotent by (teamId, offerId) — safe to retry with the same or edited values.
  *     400:
- *       description: Bad request
+ *       description: Bad request, or offerId does not yet exist on the FixedReturn contract
  *     403:
  *       description: Caller is not the owner of the FixedReturn contract
  *     404:

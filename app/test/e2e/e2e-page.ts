@@ -99,13 +99,25 @@ export async function signInAndOpenFirstTeam(page: Page): Promise<void> {
  * the locked-session screen instead of the account journey.
  */
 export async function openAccountFromSidebar(page: Page, href: string): Promise<void> {
-  const accountsMenu = page.locator('a[href="/teams/1/accounts/bank-account"]').filter({
-    hasText: 'Accounts'
+  const teamRoot = href.match(/^\/teams\/[^/]+/)?.[0]
+  if (!teamRoot) throw new Error(`Account route does not contain a company ID: ${href}`)
+  const isPayroll = href.includes('/accounts/payroll-account')
+  const parentHref = isPayroll
+    ? `${teamRoot}/accounts/payroll-account`
+    : `${teamRoot}/accounts/bank-account`
+  const parentLabel = isPayroll ? 'Payroll' : 'Accounts'
+  const accountsMenu = page.locator(`a[href="${parentHref}"]`).filter({
+    hasText: parentLabel
   })
   const accountsToggle = accountsMenu.locator('[aria-controls]')
-  await accountsToggle.click()
+  if ((await accountsToggle.getAttribute('aria-expanded')) !== 'true') {
+    await accountsToggle.click()
+  }
   await expect(accountsToggle).toHaveAttribute('aria-expanded', 'true')
-  await page.locator(`[data-slot="content"] a[href="${href}"]`).click()
+  const accountLink = href.includes('/accounts/safe-account/')
+    ? page.locator('[data-slot="content"] a').filter({ hasText: 'Safe Account' })
+    : page.locator(`[data-slot="content"] a[href="${href}"]`)
+  await accountLink.click()
   await expect(page).toHaveURL(new RegExp(`${href}$`, 'i'), { timeout: 30_000 })
 }
 

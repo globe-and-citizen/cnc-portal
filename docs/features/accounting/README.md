@@ -52,6 +52,17 @@ flowchart LR
 | US-ACCT-005 | Review historical contract activity    | Company member | 🚧 In Progress |
 | US-ACCT-006 | Classify an external withdrawal        | Company owner  | 🧪 Validation  |
 
+## Test Coverage Overview
+
+| User Story  | E2E Status | Owning Path |
+| ----------- | ---------- | ----------- |
+| US-ACCT-001 | 📋 Planned | E2E-PATH-15 |
+| US-ACCT-002 | 📋 Planned | E2E-PATH-15 |
+| US-ACCT-003 | 📋 Planned | E2E-PATH-15 |
+| US-ACCT-004 | 📋 Planned | E2E-PATH-16 |
+| US-ACCT-005 | 📋 Planned | E2E-PATH-15 |
+| US-ACCT-006 | 📋 Planned | E2E-PATH-16 |
+
 ## US-ACCT-001: View the Accounting Overview
 
 **As a** company member\

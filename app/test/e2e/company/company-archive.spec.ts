@@ -1,5 +1,4 @@
 import { expect, test } from '../fixtures'
-import { gate } from './company-page'
 import {
   archiveAction,
   archivedBanner,
@@ -10,6 +9,7 @@ import {
   deleteAction,
   dialog,
   emptyState,
+  gate,
   LOAD_TIMEOUT,
   openCardMenu,
   openCompanyActions,
@@ -29,7 +29,7 @@ const UNARCHIVED = 'Company unarchived successfully'
 
 // Browser coverage of US-COMPANIES-006. The API is simulated, so the server-side
 // rejection of writes against an archived company needs backend coverage.
-test.describe('Company archiving', { tag: '@US-COMPANIES-006' }, () => {
+test.describe('Company archiving', { tag: ['@US-COMPANIES-006', '@browser'] }, () => {
   test('lets the owner archive the company from the dashboard and restore it from the banner', async ({
     page
   }) => {

@@ -20,6 +20,24 @@ Deposits remain in the Credit Account while a round is raising. Reaching the tar
 the principal to the company Bank. Refunds and repayments are pushed to every lender by an issuer transaction; lenders do not claim them
 individually. The round name and purpose are stored off-chain, while its financial terms and settlement state remain on-chain.
 
+## Architecture
+
+Terminology mapping (FixedReturn instance ↔ Credit Account, lending offer ↔ round) is documented once, above, in
+[Product Model](#product-model) — nothing below restates it. Contract terminology (`FixedReturn`) stays at the gateway layer (contracts,
+composables, cache keys); product terminology (`Community Credit`, round, Credit Account) is used above that boundary (routes, views,
+product-facing copy).
+
+| Layer                    | Owner                                                                                                    | Key files                                                                                                    |
+| ------------------------ | -------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| FixedReturn contract     | On-chain offer lifecycle, deposits, whitelist/caps, refunds, repayment fan-out                           | `contract/contracts/FixedReturn.sol`                                                                         |
+| Bank contract            | Resolves the offer token, funds FixedReturn, triggers repayment                                          | `contract/contracts/Bank.sol`                                                                                |
+| Metadata API             | Off-chain `title`/`purpose` by `(teamId, offerId)`                                                       | `backend/src/controllers/fixedReturnOfferingController.ts`, `app/src/queries/fixedReturnOffering.queries.ts` |
+| FixedReturn reads/writes | Raw typed contract gateway — no product naming                                                           | `app/src/composables/fixedReturn/reads.ts`, `app/src/composables/fixedReturn/writes.ts`                      |
+| Cache policy             | Per-component `queryClient.invalidateQueries` calls, raw string-literal keys — no shared key factory yet | inline in views/modals                                                                                       |
+| Community Credit store   | Product read model — offer list + metadata + owner mapped to `CreditRound`; derives `isOwner`            | `app/src/stores/communityCredit.ts`                                                                          |
+| Views (route owners)     | Route/navigation, user intent, mutations, toasts                                                         | `app/src/views/team/[id]/CommunityCredit/{IndexView,NewView,RoundView}.vue`                                  |
+| Presentation components  | Props in, events out — no direct reads/writes                                                            | `app/src/components/sections/CommunityCreditView/*.vue`                                                      |
+
 ## Lifecycle
 
 ```mermaid
@@ -49,6 +67,16 @@ automatically when a deadline or maturity date passes.
 | US-CC-003  | Lend to an open round      | Company member | 🚧 In Progress |
 | US-CC-004  | Resolve a stalled round    | Company issuer | 🧪 Validation  |
 | US-CC-005  | Repay lenders              | Company issuer | 🚧 In Progress |
+
+## Test Coverage Overview
+
+| User Story | E2E Status | Owning Path |
+| ---------- | ---------- | ----------- |
+| US-CC-001  | 📋 Planned | E2E-PATH-09 |
+| US-CC-002  | 📋 Planned | E2E-PATH-09 |
+| US-CC-003  | 📋 Planned | E2E-PATH-09 |
+| US-CC-004  | 📋 Planned | E2E-PATH-10 |
+| US-CC-005  | 📋 Planned | E2E-PATH-09 |
 
 ## US-CC-001: Inspect the Credit Account
 
@@ -102,12 +130,17 @@ automatically when a deadline or maturity date passes.
 - [x] `AC-US-CC-002-10` Fully capped restricted allocations must total at least the funding target.
 - [x] `AC-US-CC-002-11` The subscription deadline is validated again immediately before publication.
 - [x] `AC-US-CC-002-12` Off-chain metadata is associated with the exact offer identifier emitted by the on-chain creation transaction.
+- [x] `AC-US-CC-002-16` Saving metadata is idempotent on (team, offer identifier): retrying with the same title and purpose leaves the
+      stored record unchanged, and retrying with edited values overwrites it with whatever is currently in the form — there is no separate
+      conflict check against the original save.
+- [x] `AC-US-CC-002-17` Metadata cannot be saved for an offer identifier that does not yet exist on the connected Credit Account.
 
 #### Edge & Error Cases
 
 - [x] `AC-US-CC-002-13` Invalid round terms are rejected before an on-chain transaction is requested.
 - [x] `AC-US-CC-002-14` Rejecting or failing the on-chain creation leaves the Credit Account unchanged and returns a failure outcome.
-- [x] `AC-US-CC-002-15` Once the on-chain round exists, a metadata failure can be retried without creating a second round.
+- [x] `AC-US-CC-002-15` Once the on-chain round exists, a metadata save failure can be retried any number of times with identical or edited
+      values without creating a duplicate round or a conflict error.
 
 **Accounting:** Publishing terms moves no company funds and creates no journal entry.
 
@@ -257,7 +290,7 @@ overview's `1 + 4N` a second time on top of its own `1 + 2L`.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `f2ec9ce8092153e1b7950eac1e3d8e73eaee0cbe`
+**Implementation evidence reviewed against:** `7ea3a75b76c16733fb6924c701d91b2540b2676c`
 
 - [Community Credit components](../../../app/src/components/sections/CommunityCreditView/)
 - [Credit Account page](../../../app/src/views/team/[id]/CommunityCredit/IndexView.vue)
@@ -287,6 +320,8 @@ overview's `1 + 4N` a second time on top of its own `1 + 2L`.
 - [Whitelist allocation editor](../../../app/src/components/sections/CommunityCreditView/CreditWhitelistEditor.vue)
 - [FixedReturn contract](../../../contract/contracts/FixedReturn.sol)
 - [Contract behaviour tests](../../../contract/test/FixedReturn.spec.ts)
+- [Metadata controller](../../../backend/src/controllers/fixedReturnOfferingController.ts)
+- [Metadata route](../../../backend/src/routes/fixedReturnOfferingRoute.ts)
 - [Metadata controller tests](../../../backend/src/controllers/__tests__/fixedReturnOfferingController.test.ts)
 - [Frontend feature tests](../../../app/src/views/team/[id]/CommunityCredit/__tests__/communityCreditViews.spec.ts)
 

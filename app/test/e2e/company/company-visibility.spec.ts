@@ -23,7 +23,7 @@ const VISIBLE = 'Company is visible again'
 
 // Browser coverage of US-COMPANIES-007. The API is simulated, so the per-member
 // persistence of the visibility flag needs backend coverage.
-test.describe('Company list visibility', { tag: '@US-COMPANIES-007' }, () => {
+test.describe('Company list visibility', { tag: ['@US-COMPANIES-007', '@browser'] }, () => {
   test('lets the owner hide the company from the dashboard and show it again from the list', async ({
     page
   }) => {

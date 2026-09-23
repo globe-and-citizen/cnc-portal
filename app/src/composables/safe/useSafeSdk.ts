@@ -10,7 +10,7 @@ const safeInstanceCache = new Map<string, Promise<Safe>>()
 
 /**
  * Protocol Kit only knows Safe's canonical deployments. The E2E Hardhat node
- * carries its own copies, seeded by the Playwright global setup.
+ * carries its own copies, seeded before the browser-acceptance suite starts.
  */
 const e2eContractNetworks =
   import.meta.env.VITE_E2E === 'true'

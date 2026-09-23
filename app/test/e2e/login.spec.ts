@@ -21,7 +21,7 @@ const json = (body: unknown) => ({
   body: JSON.stringify(body)
 })
 
-test.describe('US-AUTH-001: Sign in to the Client', () => {
+test.describe('US-AUTH-001: Sign in to the Client', { tag: '@browser' }, () => {
   test(
     'a portal user signs in with the mock wallet and accesses their companies',
     { tag: '@US-AUTH-001' },

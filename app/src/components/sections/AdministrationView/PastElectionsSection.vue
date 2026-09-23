@@ -1,10 +1,10 @@
 <template>
   <UCard>
     <template #header>Past Elections</template>
-    <div v-if="isLoading" class="flex h-96 w-full items-center justify-center">
-      <div class="text-gray-500">Loading past elections...</div>
+    <div v-if="isLoading" class="text-muted flex h-96 w-full items-center justify-center">
+      Loading past elections...
     </div>
-    <PastElectionsEmptyState v-else-if="total === 0" :is-loading="isLoading" />
+    <PastElectionsEmptyState v-else-if="total === 0" />
     <div v-else class="mt-4 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
       <PastElectionCard v-for="election in pageItems" :key="election.id" :election="election" />
     </div>
