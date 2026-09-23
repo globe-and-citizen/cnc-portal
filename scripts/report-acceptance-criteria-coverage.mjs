@@ -5,7 +5,9 @@ import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import {
+  TEST_COVERAGE_LAYERS,
   summarizeAcceptanceCriterionCoverage,
+  summarizeTestFileInventory,
   validateAcceptanceCriteriaTraceability
 } from './lib/acceptance-criteria-traceability.mjs'
 
@@ -46,20 +48,20 @@ function renderStoryCoverage(storyId, rows) {
   const lines = [
     `### ${storyId}`,
     '',
-    '| Acceptance Criterion | Implemented | Integrated E2E | Mocked Browser | Frontend | Backend | Contract |',
-    '| -------------------- | ----------- | -------------- | -------------- | -------- | ------- | -------- |'
+    '| Acceptance Criterion | Implemented | Integrated E2E | Mocked Browser | Frontend | Backend | Contract | Dashboard |',
+    '| -------------------- | ----------- | -------------- | -------------- | -------- | ------- | -------- | --------- |'
   ]
 
   for (const criterion of rows) {
     lines.push(
-      `| ${criterion.id} | ${criterion.checked ? '✅' : '❌'} | ${coverageMark(criterion.e2eModes.integrated)} | ${coverageMark(criterion.e2eModes.mocked)} | ${coverageMark(criterion.layers.frontend)} | ${coverageMark(criterion.layers.backend)} | ${coverageMark(criterion.layers.contract)} |`
+      `| ${criterion.id} | ${criterion.checked ? '✅' : '❌'} | ${coverageMark(criterion.e2eModes.integrated)} | ${coverageMark(criterion.e2eModes.mocked)} | ${coverageMark(criterion.layers.frontend)} | ${coverageMark(criterion.layers.backend)} | ${coverageMark(criterion.layers.contract)} | ${coverageMark(criterion.layers.dashboard)} |`
     )
   }
 
   return lines.join('\n')
 }
 
-function renderFeatureCoverage(document, coverage) {
+function renderFeatureCoverage(document, coverage, inventory) {
   const title = document.content.match(/^# (.+?) — User Stories/m)?.[1] ?? document.path
   const rows = coverage.filter((criterion) => criterion.documentPath === document.path)
   const rowsByStory = new Map()
@@ -80,6 +82,61 @@ function renderFeatureCoverage(document, coverage) {
     )
   )
   if (evidence.length > 0) lines.push('### Representative evidence', '', ...evidence)
+
+  const mappedFiles = inventory.filter((testFile) => testFile.featureDocuments.includes(document.path))
+  if (mappedFiles.length > 0) {
+    lines.push(
+      '',
+      '### Mapped test files',
+      '',
+      '| Layer | Test File | Static Tests | User Stories | Acceptance Criteria |',
+      '| ----- | --------- | ------------ | ------------ | ------------------- |',
+      ...mappedFiles.map(
+        (testFile) =>
+          `| ${testFile.layer} | \`${testFile.path}\` | ${testFile.declarations} | ${testFile.storyIds.join(', ')} | ${testFile.acceptanceIds.length} |`
+      )
+    )
+  }
+
+  return lines.join('\n')
+}
+
+function renderRepositoryInventory(inventory) {
+  const lines = [
+    '## Repository Test Inventory',
+    '',
+    '| Layer | Test Files | Static Tests | Mapped Files | Unmapped Files |',
+    '| ----- | ---------- | ------------ | ------------ | -------------- |'
+  ]
+
+  for (const layer of TEST_COVERAGE_LAYERS) {
+    const files = inventory.filter((testFile) => testFile.layer === layer)
+    const mapped = files.filter((testFile) => testFile.featureDocuments.length > 0)
+    lines.push(
+      `| ${layer} | ${files.length} | ${files.reduce((sum, testFile) => sum + testFile.declarations, 0)} | ${mapped.length} | ${files.length - mapped.length} |`
+    )
+  }
+
+  const unmapped = inventory.filter((testFile) => testFile.featureDocuments.length === 0)
+  lines.push(
+    '',
+    '### Unmapped Test Files',
+    '',
+    'These files remain part of the audit checklist. They need either an explicit US/AC mapping or a documented classification as shared',
+    'technical coverage; they are not silently counted as product acceptance evidence.',
+    ''
+  )
+
+  for (const layer of TEST_COVERAGE_LAYERS) {
+    const files = unmapped.filter((testFile) => testFile.layer === layer)
+    if (files.length === 0) continue
+    lines.push(
+      `#### ${layer}`,
+      '',
+      ...files.map((testFile) => `- [ ] \`${testFile.path}\` — ${testFile.declarations} static test declarations`),
+      ''
+    )
+  }
 
   return lines.join('\n')
 }
@@ -105,9 +162,10 @@ const testPaths = paths.filter(
     /(?:^|\/)(?:__tests__\/.*|[^/]+\.(?:spec|test))\.[cm]?[jt]sx?$/.test(path)
 )
 const featureDocuments = readDocuments(allFeaturePaths)
+const testDocuments = readDocuments(testPaths)
 const result = validateAcceptanceCriteriaTraceability({
   featureDocuments,
-  testDocuments: readDocuments(testPaths)
+  testDocuments
 })
 
 if (result.errors.length > 0) {
@@ -115,15 +173,18 @@ if (result.errors.length > 0) {
 }
 
 const coverage = summarizeAcceptanceCriterionCoverage(result.criteria, result.references)
+const inventory = summarizeTestFileInventory(result.criteria, testDocuments)
 const requestedDocuments = featureDocuments.filter((document) => featurePaths.includes(document.path))
 const report = [
   '# Acceptance-Criterion Test Coverage',
   '',
   `**Generated:** ${new Date().toISOString()}`,
   '',
-  'Generated from representative `AC-US-*` references. Counts identify evidence by repository layer and distinguish integrated E2E journeys from mocked browser acceptance tests. They do not prove exhaustive coverage or a passing latest run.',
+  'Generated from tracked test declarations plus representative `US-*` and `AC-US-*` references. The inventory keeps unmapped tests visible, while acceptance counts distinguish repository layers, integrated E2E journeys, and mocked browser tests. References do not prove exhaustive coverage or a passing latest run.',
   '',
-  requestedDocuments.map((document) => renderFeatureCoverage(document, coverage)).join('\n\n'),
+  renderRepositoryInventory(inventory),
+  '',
+  requestedDocuments.map((document) => renderFeatureCoverage(document, coverage, inventory)).join('\n\n'),
   ''
 ].join('\n')
 const reportName = requestedFeature ? `${requestedFeature.replaceAll('/', '-')}.md` : 'all-features.md'

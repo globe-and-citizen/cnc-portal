@@ -3,9 +3,16 @@ const SECTION_HEADING = /^### (.+)$/
 const CRITERION = /^- \[([ xX])\] (?:`(AC-US-[A-Z0-9-]+-\d{2,})`\s+)?(.+)$/
 const ACCEPTANCE_ID_REFERENCE = /\[(AC-US-[A-Z0-9-]+-\d{2,})\]/g
 
-export const TEST_COVERAGE_LAYERS = ['frontend', 'backend', 'contract', 'e2e', 'other']
+export const TEST_COVERAGE_LAYERS = ['frontend', 'backend', 'contract', 'dashboard', 'e2e', 'other']
 export const E2E_COVERAGE_MODES = ['integrated', 'mocked', 'unclassified']
-export const ACCEPTANCE_COVERAGE_LABELS = ['Integrated E2E', 'Mocked browser', 'Frontend', 'Backend', 'Contract']
+export const ACCEPTANCE_COVERAGE_LABELS = [
+  'Integrated E2E',
+  'Mocked browser',
+  'Frontend',
+  'Backend',
+  'Contract',
+  'Dashboard'
+]
 
 export function classifyE2eCoverageMode(document) {
   if (!/^app\/test\/e2e\//.test(document.path)) return null
@@ -125,8 +132,54 @@ export function classifyTestCoverageLayer(documentPath) {
   if (/^app\/test\/e2e\//.test(documentPath)) return 'e2e'
   if (/^app\//.test(documentPath)) return 'frontend'
   if (/^backend\//.test(documentPath)) return 'backend'
-  if (/^contract\/test\//.test(documentPath)) return 'contract'
+  if (/^contract\//.test(documentPath)) return 'contract'
+  if (/^dashboard\//.test(documentPath)) return 'dashboard'
   return 'other'
+}
+
+export function countStaticTestDeclarations(document) {
+  const directTests = document.content.match(/\b(?:it|test)(?:\.(?:only|skip|todo|fixme))?\s*\(/g) ?? []
+  const parameterizedTests = document.content.match(/\b(?:it|test)\.each\s*\(/g) ?? []
+  return directTests.length + parameterizedTests.length
+}
+
+export function summarizeTestFileInventory(criteria, testDocuments) {
+  const criterionIds = new Set(criteria.map((criterion) => criterion.id))
+  const criterionOwnerById = new Map(
+    criteria.map((criterion) => [criterion.id, { documentPath: criterion.documentPath, storyId: criterion.storyId }])
+  )
+  const storyOwnerById = new Map(criteria.map((criterion) => [criterion.storyId, criterion.documentPath]))
+
+  return testDocuments.flatMap((document) => {
+    const declarations = countStaticTestDeclarations(document)
+    if (declarations === 0) return []
+
+    const acceptanceIds = [
+      ...new Set(
+        acceptanceCriterionReferences(document)
+          .map((reference) => reference.id)
+          .filter((id) => criterionIds.has(id))
+      )
+    ]
+    const storyIds = new Set(acceptanceIds.map((id) => criterionOwnerById.get(id).storyId))
+
+    for (const storyId of storyOwnerById.keys()) {
+      if (document.content.includes(storyId)) storyIds.add(storyId)
+    }
+
+    const featureDocuments = [...new Set([...storyIds].map((storyId) => storyOwnerById.get(storyId)).filter(Boolean))]
+
+    return [
+      {
+        path: document.path,
+        layer: classifyTestCoverageLayer(document.path),
+        declarations,
+        acceptanceIds,
+        storyIds: [...storyIds].sort(),
+        featureDocuments: featureDocuments.sort()
+      }
+    ]
+  })
 }
 
 export function summarizeAcceptanceCriterionCoverage(criteria, references) {
@@ -172,6 +225,7 @@ export function acceptanceCoverageLabels(criterion) {
   if (criterion.layers.frontend.length > 0) labels.push('Frontend')
   if (criterion.layers.backend.length > 0) labels.push('Backend')
   if (criterion.layers.contract.length > 0) labels.push('Contract')
+  if (criterion.layers.dashboard.length > 0) labels.push('Dashboard')
   if (criterion.e2eModes.unclassified.length > 0) labels.push('Unclassified E2E')
   if (criterion.layers.other.length > 0) labels.push('Other')
   return labels

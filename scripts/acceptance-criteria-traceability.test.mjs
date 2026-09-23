@@ -3,9 +3,11 @@ import test from 'node:test'
 import {
   classifyE2eCoverageMode,
   classifyTestCoverageLayer,
+  countStaticTestDeclarations,
   parseAcceptanceCoverageRows,
   parseAcceptanceCriteria,
   summarizeAcceptanceCriterionCoverage,
+  summarizeTestFileInventory,
   validateAcceptanceCriteriaTraceability
 } from './lib/acceptance-criteria-traceability.mjs'
 
@@ -138,6 +140,8 @@ test('classifies representative evidence by repository layer', () => {
   assert.equal(classifyTestCoverageLayer('app/src/example/__tests__/example.spec.ts'), 'frontend')
   assert.equal(classifyTestCoverageLayer('backend/src/example/__tests__/example.test.ts'), 'backend')
   assert.equal(classifyTestCoverageLayer('contract/test/Example.spec.ts'), 'contract')
+  assert.equal(classifyTestCoverageLayer('contract/scripts/__tests__/deployment.node.mjs'), 'contract')
+  assert.equal(classifyTestCoverageLayer('dashboard/app/example.test.ts'), 'dashboard')
   assert.equal(classifyTestCoverageLayer('app/test/e2e/example.spec.ts'), 'e2e')
   assert.equal(classifyTestCoverageLayer('scripts/example.test.mjs'), 'other')
 })
@@ -184,6 +188,7 @@ test('summarizes unique representative files for every acceptance criterion', ()
     frontend: ['app/src/example/__tests__/example.spec.ts'],
     backend: [],
     contract: [],
+    dashboard: [],
     e2e: ['app/test/e2e/example.spec.ts'],
     other: []
   })
@@ -196,6 +201,7 @@ test('summarizes unique representative files for every acceptance criterion', ()
     frontend: [],
     backend: [],
     contract: [],
+    dashboard: [],
     e2e: [],
     other: []
   })
@@ -204,6 +210,42 @@ test('summarizes unique representative files for every acceptance criterion', ()
     mocked: [],
     unclassified: []
   })
+})
+
+test('inventories every test file and maps explicit story and acceptance references', () => {
+  const criteria = parseAcceptanceCriteria(validFeature)
+  const inventory = summarizeTestFileInventory(criteria, [
+    testDocument(`describe('[US-EXAMPLE-001] Example', () => {
+  it('[AC-US-EXAMPLE-001-01] proves the primary outcome', () => {})
+})`),
+    testDocument("test('covers a technical helper', () => {})", 'contract/test/Helper.spec.ts'),
+    testDocument('export const fixture = true', 'app/src/example/__tests__/fixture.ts')
+  ])
+
+  assert.equal(
+    countStaticTestDeclarations({
+      content: "it('one', () => {}); test.each([])('two', () => {})"
+    }),
+    2
+  )
+  assert.deepEqual(inventory, [
+    {
+      path: 'app/src/example/__tests__/example.spec.ts',
+      layer: 'frontend',
+      declarations: 1,
+      acceptanceIds: ['AC-US-EXAMPLE-001-01'],
+      storyIds: ['US-EXAMPLE-001'],
+      featureDocuments: ['docs/features/example/README.md']
+    },
+    {
+      path: 'contract/test/Helper.spec.ts',
+      layer: 'contract',
+      declarations: 1,
+      acceptanceIds: [],
+      storyIds: [],
+      featureDocuments: []
+    }
+  ])
 })
 
 test('rejects a criterion without an ID', () => {

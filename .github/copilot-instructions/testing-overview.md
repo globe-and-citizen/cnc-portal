@@ -66,6 +66,10 @@ contract in the [Feature Documentation Guide](../../docs/platform/feature-specif
 - For E2E journeys, put the user-story ID in the enclosing suite and use `Covers` blocks for the criteria proven by each path.
 - An identifier records traceability; the assertions remain the evidence. Do not tag incidental tests merely to increase reported coverage.
 
+Run `npm run report:acceptance-coverage` from the repository root for the complete local audit. The Git-ignored report inventories test
+files across frontend, backend, contract, dashboard, and E2E layers. Files without an explicit US or AC reference remain visible in the
+unmapped checklist until they receive a product mapping or are deliberately classified as shared technical coverage.
+
 ## Mocking conventions
 
 **Reuse the global mocks. Do not re-mock them locally.** `app/vitest.config.ts` loads setup files from `app/src/tests/setup/` that

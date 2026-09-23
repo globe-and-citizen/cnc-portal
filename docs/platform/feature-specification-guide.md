@@ -143,8 +143,10 @@ Every criterion has an ID even when no representative automated test exists. A t
 and it does not replace the criterion's observable outcome, checkbox state, implementation evidence, or required human validation.
 
 Run `npm run report:acceptance-coverage -- --feature <feature-slug>` to write a local Markdown report under `reports/acceptance-coverage/`.
-The Git-ignored report groups representative `AC-US-*` references by frontend, backend, contract, and E2E test layer. It derives evidence
-from tracked test files; it does not infer whether an unreferenced criterion needs automation or whether the latest test run passed.
+Omit `--feature` for the complete repository audit. The Git-ignored report inventories every statically declared test, separates mapped and
+unmapped test files, and groups representative `AC-US-*` references by frontend, backend, contract, dashboard, and E2E test layer. It
+derives evidence from tracked test files; it does not infer whether an unreferenced criterion needs automation or whether the latest test
+run passed.
 
 ### Story Statuses
 
@@ -252,8 +254,8 @@ For a coverage-reviewed story, add a compact table after its acceptance criteria
 | `AC-US-FEATURE-001-03` | Backend                  | None linked      | ❌ Missing      |
 ```
 
-- `Expected Coverage` is the deliberately chosen proof boundary: `Integrated E2E`, `Mocked browser`, `Frontend`, `Backend`, or `Contract`.
-  Join independently required boundaries with `+`.
+- `Expected Coverage` is the deliberately chosen proof boundary: `Integrated E2E`, `Mocked browser`, `Frontend`, `Backend`, `Contract`, or
+  `Dashboard`. Join independently required boundaries with `+`.
 - `Current Coverage` is derived from direct representative `AC-US-*` references. `Integrated E2E` and `Mocked browser` come from the
   Playwright suite's `@integrated` or `@mocked` classification; `None linked` means no representative reference is currently registered.
 - `Status` is `✅ Met` when every expected boundary is present, `⚠️ Insufficient` when some proof exists but a required boundary is absent,
