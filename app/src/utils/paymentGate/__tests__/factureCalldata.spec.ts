@@ -12,7 +12,7 @@ import { decodeFactureIdFromCalldata, encodeDepositTokenWithFactureId } from '..
 const TOKEN_ADDRESS = '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48'
 const AMOUNT = 128_000_000n // 128 USDC (6 decimals)
 
-describe('factureCalldata', () => {
+describe('[US-PAYGATE-003] factureCalldata', () => {
   it('round-trips a facture ID through encode and decode', () => {
     const calldata = encodeDepositTokenWithFactureId({
       token: TOKEN_ADDRESS,
@@ -68,7 +68,7 @@ describe('factureCalldata', () => {
     ).toThrow(/too long/)
   })
 
-  it('returns undefined for a plain depositToken call with no appended facture ID', () => {
+  it('[AC-US-PAYGATE-004-04] excludes a plain depositToken call without a facture ID', () => {
     const baseCalldata = encodeFunctionData({
       abi: bankAbi,
       functionName: 'depositToken',
