@@ -66,6 +66,19 @@ flowchart LR
 | US-SHER-007 | Settle and close a shareholder migration | Investor owner                  | 🚧 In Progress |
 | US-SHER-008 | Start a shareholder migration            | Company owner                   | 🔗 Reference   |
 
+## Test Coverage Overview
+
+| User Story  | E2E Status | Owning Path |
+| ----------- | ---------- | ----------- |
+| US-SHER-001 | 📋 Planned | E2E-PATH-06 |
+| US-SHER-002 | 📋 Planned | E2E-PATH-07 |
+| US-SHER-003 | 📋 Planned | E2E-PATH-06 |
+| US-SHER-004 | 📋 Planned | E2E-PATH-07 |
+| US-SHER-005 | 📋 Planned | E2E-PATH-06 |
+| US-SHER-006 | 📋 Planned | E2E-PATH-08 |
+| US-SHER-007 | 📋 Planned | E2E-PATH-08 |
+| US-SHER-008 | 📋 Planned | E2E-PATH-08 |
+
 ## US-SHER-001: Invest in the Safe and Receive SHER
 
 **As a** company member\

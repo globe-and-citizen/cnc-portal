@@ -59,6 +59,23 @@ its complete journey belongs to the Accounts feature.
 | US-PAYROLL-011 | Reconcile weekly claims with the chain     | System                 | 🧪 Validation  |
 | US-PAYROLL-012 | Review payroll history                     | Company member / owner | 🧪 Validation  |
 
+## Test Coverage Overview
+
+| User Story     | E2E Status      | Owning Path              |
+| -------------- | --------------- | ------------------------ |
+| US-PAYROLL-001 | 📋 Planned      | E2E-PATH-11              |
+| US-PAYROLL-002 | 📋 Planned      | E2E-PATH-11              |
+| US-PAYROLL-003 | ➖ Not required | E2E-PATH-02 owns funding |
+| US-PAYROLL-004 | 📋 Planned      | E2E-PATH-12              |
+| US-PAYROLL-005 | 📋 Planned      | E2E-PATH-12              |
+| US-PAYROLL-006 | 📋 Planned      | E2E-PATH-12              |
+| US-PAYROLL-007 | 📋 Planned      | E2E-PATH-12              |
+| US-PAYROLL-008 | 📋 Planned      | E2E-PATH-13              |
+| US-PAYROLL-009 | 📋 Planned      | E2E-PATH-13              |
+| US-PAYROLL-010 | 📋 Planned      | E2E-PATH-13              |
+| US-PAYROLL-011 | 📋 Planned      | E2E-PATH-13              |
+| US-PAYROLL-012 | 📋 Planned      | E2E-PATH-13              |
+
 Criteria tagged _(API)_ or _(contract)_ describe outcomes that cannot be confirmed from the portal alone.
 
 ## US-PAYROLL-001: Set a Member's Wage

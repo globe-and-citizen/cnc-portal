@@ -129,7 +129,13 @@ export default defineConfig(async ({ mode }) => {
     },
     server: {
       host: true,
-      port: 5173
+      port: 5173,
+      watch: {
+        // Playwright writes raw Istanbul coverage after each page closes. Those
+        // artifacts are not application inputs and must not reload active E2E
+        // pages while a suite is running against this externally managed server.
+        ignored: ['**/coverage/**']
+      }
     },
     optimizeDeps: {
       // Pre-bundle in the initial pass so Vite never re-optimizes mid-session.

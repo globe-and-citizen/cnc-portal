@@ -2,7 +2,7 @@ import { mount } from '@vue/test-utils'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { nextTick } from 'vue'
 import PublishResult from '../PublishResult.vue'
-import { mockElectionsWrites, mockWagmiCore } from '@/tests/mocks'
+import { mockElectionsWrites } from '@/tests/mocks'
 import { mockLog } from '@/tests/mocks/utils.mock'
 import { useTeamStore } from '@/stores'
 
@@ -38,17 +38,14 @@ describe('PublishResult.vue', () => {
             type === 'Elections' ? '0xELECTIONSADDRESS000000000000000000000' : undefined
         }) as ReturnType<typeof useTeamStore>
     )
-
-    mockWagmiCore.estimateGas.mockImplementation(async () => ({ gas: 21000n }))
   })
 
-  it('calls estimateGas and publishResults when button clicked', async () => {
+  it('hands the write straight to the shared layer when the button is clicked', async () => {
     const wrapper = mount(PublishResult, { props: { electionId: 42 } })
 
     await wrapper.find('[data-test="publish-results-button"]').trigger('click')
     await nextTick()
 
-    expect(mockWagmiCore.estimateGas).toHaveBeenCalled()
     expect(publish.mutate).toHaveBeenCalledWith(
       { args: [BigInt(42)] },
       expect.objectContaining({ onSuccess: expect.any(Function), onError: expect.any(Function) })
@@ -64,15 +61,6 @@ describe('PublishResult.vue', () => {
     await wrapper.find('[data-test="publish-results-button"]').trigger('click')
     await nextTick()
     expect(mockLog.error).toHaveBeenCalled()
-  })
-
-  it('short-circuits before mutation when estimateGas rejects', async () => {
-    mockWagmiCore.estimateGas.mockRejectedValueOnce(new Error('insufficient funds'))
-    const wrapper = mount(PublishResult, { props: { electionId: 11 } })
-
-    await wrapper.find('[data-test="publish-results-button"]').trigger('click')
-    await nextTick()
-    expect(publish.mutate).not.toHaveBeenCalled()
   })
 
   it('reflects mutation isPending on the button loading state', async () => {
@@ -94,7 +82,6 @@ describe('PublishResult.vue', () => {
     await wrapper.find('[data-test="publish-results-button"]').trigger('click')
     await nextTick()
 
-    expect(mockWagmiCore.estimateGas).not.toHaveBeenCalled()
     expect(publish.mutate).not.toHaveBeenCalled()
   })
 })

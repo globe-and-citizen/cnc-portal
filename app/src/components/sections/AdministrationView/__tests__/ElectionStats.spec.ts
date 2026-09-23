@@ -6,7 +6,7 @@ import { formatDateTime } from '@/utils/format'
 // Lightweight stub to capture props passed to the child cards
 const CardStub = {
   name: 'ElectionStatsCard',
-  props: ['data', 'icon', 'bgColor', 'textColor', 'title', 'color'],
+  props: ['data', 'icon', 'title', 'color'],
   template: '<div data-test="card" :data-title="title" :data-data="String(data)"></div>'
 }
 

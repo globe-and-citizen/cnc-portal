@@ -41,6 +41,17 @@ flowchart TB
 | US-AUTH-002 | Sign in to the backoffice         | Platform administrator | 🧪 Validation  |
 | US-AUTH-003 | Recover from an interrupted login | Portal user            | 🚧 In Progress |
 
+## Test Coverage Overview
+
+The status below assesses integrated E2E coverage. Browser tests with replaced backend or wallet failure boundaries are complementary
+acceptance coverage, not E2E proof.
+
+| User Story  | Representative AC Coverage       | E2E Status | E2E Boundary                                       |
+| ----------- | -------------------------------- | ---------- | -------------------------------------------------- |
+| US-AUTH-001 | integrated E2E 2/9 · browser 1/9 | 🚧 Partial | Real SIWE, backend, PostgreSQL, and browser wallet |
+| US-AUTH-002 | none                             | 📋 Planned | Backoffice stack and persisted administrator role  |
+| US-AUTH-003 | none                             | 📋 Planned | Recovery variants across real owned boundaries     |
+
 ## US-AUTH-001: Sign in to the Client
 
 **As a** portal user\

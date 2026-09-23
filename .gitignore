@@ -53,6 +53,10 @@ app/.env.production
 # Local review / architecture notes (not for public repo)
 /reviews/
 /archi-update.md
+
+# Generated acceptance-criterion coverage reports (local only)
+/reports/acceptance-coverage/
+
 # Keep .claude local (settings, worktrees, …) but share committed agent skills
 .claude/*
 !.claude/skills/
