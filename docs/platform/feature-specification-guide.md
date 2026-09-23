@@ -146,8 +146,10 @@ Run `npm run report:acceptance-coverage -- --feature <feature-slug>` to write a 
 Omit `--feature` for the complete repository audit. The Git-ignored report inventories every statically declared test, separates mapped and
 unmapped test files, and groups representative `AC-US-*` references by frontend, backend, contract, dashboard, and E2E test layer. A direct
 US/AC marker provides story or representative criterion traceability. A test path linked from canonical Implementation Evidence provides
-feature-level support only, and the report labels that weaker mapping explicitly. It derives evidence from tracked test files; it does not
-infer whether an unreferenced criterion needs automation or whether the latest test run passed.
+feature-level support only, and the report labels that weaker mapping explicitly. Tests linked only from canonical contract or shared
+implementation documentation remain visible as technical-only support instead of being attributed to a product feature. The report derives
+evidence from tracked test files; it does not infer whether an unreferenced criterion needs automation or whether the latest test run
+passed.
 
 ### Story Statuses
 

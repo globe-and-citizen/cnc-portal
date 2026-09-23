@@ -224,7 +224,13 @@ test('inventories every test file and maps explicit IDs plus canonical feature e
       testDocument("test('supports the feature', () => {})", 'app/src/example/__tests__/linked.spec.ts'),
       testDocument('export const fixture = true', 'app/src/example/__tests__/fixture.ts')
     ],
-    [feature(`- [Feature tests](../../../app/src/example/__tests__/linked.spec.ts)`, validFeature.path)]
+    [feature(`- [Feature tests](../../../app/src/example/__tests__/linked.spec.ts)`, validFeature.path)],
+    [
+      feature(
+        `- [Contract helper tests](../../../../contract/test/Helper.spec.ts)`,
+        'docs/contracts/features/example/README.md'
+      )
+    ]
   )
 
   assert.equal(
@@ -241,6 +247,7 @@ test('inventories every test file and maps explicit IDs plus canonical feature e
       acceptanceIds: ['AC-US-EXAMPLE-001-01'],
       storyIds: ['US-EXAMPLE-001'],
       featureDocuments: ['docs/features/example/README.md'],
+      technicalDocuments: [],
       mappingSources: ['US/AC marker']
     },
     {
@@ -250,7 +257,8 @@ test('inventories every test file and maps explicit IDs plus canonical feature e
       acceptanceIds: [],
       storyIds: [],
       featureDocuments: [],
-      mappingSources: []
+      technicalDocuments: ['docs/contracts/features/example/README.md'],
+      mappingSources: ['technical evidence']
     },
     {
       path: 'app/src/example/__tests__/linked.spec.ts',
@@ -259,6 +267,7 @@ test('inventories every test file and maps explicit IDs plus canonical feature e
       acceptanceIds: [],
       storyIds: [],
       featureDocuments: ['docs/features/example/README.md'],
+      technicalDocuments: [],
       mappingSources: ['canonical evidence']
     }
   ])

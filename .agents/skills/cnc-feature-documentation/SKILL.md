@@ -72,8 +72,9 @@ requested or required by the active GitHub workflow.
   direct `AC-US-*` references, list insufficient boundaries as gaps, and never classify a story as partial solely because a criterion is
   intentionally covered by a mock or a lower test layer.
 - Use the generated repository inventory to keep frontend, backend, contract, dashboard, and E2E test files visible. Distinguish direct
-  US/AC markers from canonical Implementation Evidence links: the latter maps feature support but does not prove a story or criterion. Treat
-  an unmapped file as an audit item, not as acceptance evidence, until its role is reviewed.
+  US/AC markers from canonical Implementation Evidence links: the latter maps feature support but does not prove a story or criterion. Keep
+  contract- or implementation-owned tests in the technical-only category. Treat an unmapped file as an audit item, not as acceptance
+  evidence, until its role is reviewed.
 - Keep representative test titles declarative and omit `should`. Prefix a backend, unit, or focused integration title with the AC ID only
   when that test directly represents one criterion. Use the guide's structured `Covers` block for multi-criterion tests and E2E paths.
 - Use Mermaid for every diagram. Add a diagram only when it makes a meaningful state, sequence, branch, hierarchy, or boundary easier to

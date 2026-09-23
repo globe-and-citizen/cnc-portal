@@ -184,7 +184,12 @@ function canonicalFeatureOwners(documentPath, featureDocuments) {
     .map((document) => document.path)
 }
 
-export function summarizeTestFileInventory(criteria, testDocuments, featureDocuments = []) {
+export function summarizeTestFileInventory(
+  criteria,
+  testDocuments,
+  featureDocuments = [],
+  technicalDocuments = []
+) {
   const criterionIds = new Set(criteria.map((criterion) => criterion.id))
   const criterionOwnerById = new Map(
     criteria.map((criterion) => [criterion.id, { documentPath: criterion.documentPath, storyId: criterion.storyId }])
@@ -210,10 +215,12 @@ export function summarizeTestFileInventory(criteria, testDocuments, featureDocum
 
     const markerFeatureDocuments = [...storyIds].map((storyId) => storyOwnerById.get(storyId)).filter(Boolean)
     const evidenceFeatureDocuments = canonicalFeatureOwners(document.path, featureDocuments)
+    const technicalOwners = canonicalFeatureOwners(document.path, technicalDocuments)
     const ownedFeatureDocuments = [...new Set([...markerFeatureDocuments, ...evidenceFeatureDocuments])].sort()
     const mappingSources = []
     if (markerFeatureDocuments.length > 0) mappingSources.push('US/AC marker')
     if (evidenceFeatureDocuments.length > 0) mappingSources.push('canonical evidence')
+    if (technicalOwners.length > 0) mappingSources.push('technical evidence')
 
     return [
       {
@@ -223,6 +230,7 @@ export function summarizeTestFileInventory(criteria, testDocuments, featureDocum
         acceptanceIds,
         storyIds: [...storyIds].sort(),
         featureDocuments: ownedFeatureDocuments,
+        technicalDocuments: technicalOwners.sort(),
         mappingSources
       }
     ]

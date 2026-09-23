@@ -70,7 +70,8 @@ Run `npm run report:acceptance-coverage` from the repository root for the comple
 files across frontend, backend, contract, dashboard, and E2E layers. A test file is attached to a feature either by a direct `US-*` or
 `AC-US-*` marker or by a test path linked from that feature's canonical Implementation Evidence. The report labels those mapping sources:
 canonical evidence establishes feature support only, while a direct marker establishes story traceability and, for an AC, representative
-criterion evidence. Files with neither mapping remain visible in the unmapped checklist until reviewed.
+criterion evidence. Links from canonical contract or implementation documentation classify technical-only support separately. Files with
+none of these mappings remain visible in the unmapped checklist until reviewed.
 
 ## Mocking conventions
 

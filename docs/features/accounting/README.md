@@ -284,7 +284,7 @@ flowchart LR
   [assignment API](../../../backend/src/controllers/journalAccountAssignmentController.ts)
 - [Accounting exports](../../../app/src/composables/accounting/useAccountingExport.ts) and
   [journal export snapshot](../../../app/src/utils/accounting/exportSpec.ts)
-- [Accounting rule tests](../../../app/src/utils/accounting/__tests/),
+- [Accounting rule tests](../../../app/src/utils/accounting/__tests__/),
   [report tests](../../../app/src/views/team/%5Bid%5D/Accounting/__tests__/AccountingReports.spec.ts), and
   [migration tests](../../../app/src/composables/accounting/__tests__/useCNCAccounting.migration.spec.ts)
 

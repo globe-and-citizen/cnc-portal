@@ -105,19 +105,44 @@ function renderRepositoryInventory(inventory) {
   const lines = [
     '## Repository Test Inventory',
     '',
-    '| Layer | Test Files | Static Tests | Mapped Files | Unmapped Files |',
-    '| ----- | ---------- | ------------ | ------------ | -------------- |'
+    '| Layer | Test Files | Static Tests | Feature Mapped | Technical Only | Unmapped Files |',
+    '| ----- | ---------- | ------------ | -------------- | -------------- | -------------- |'
   ]
 
   for (const layer of TEST_COVERAGE_LAYERS) {
     const files = inventory.filter((testFile) => testFile.layer === layer)
-    const mapped = files.filter((testFile) => testFile.featureDocuments.length > 0)
+    const featureMapped = files.filter((testFile) => testFile.featureDocuments.length > 0)
+    const technicalOnly = files.filter(
+      (testFile) => testFile.featureDocuments.length === 0 && testFile.technicalDocuments.length > 0
+    )
+    const unmapped = files.filter(
+      (testFile) => testFile.featureDocuments.length === 0 && testFile.technicalDocuments.length === 0
+    )
     lines.push(
-      `| ${layer} | ${files.length} | ${files.reduce((sum, testFile) => sum + testFile.declarations, 0)} | ${mapped.length} | ${files.length - mapped.length} |`
+      `| ${layer} | ${files.length} | ${files.reduce((sum, testFile) => sum + testFile.declarations, 0)} | ${featureMapped.length} | ${technicalOnly.length} | ${unmapped.length} |`
     )
   }
 
-  const unmapped = inventory.filter((testFile) => testFile.featureDocuments.length === 0)
+  const technicalOnly = inventory.filter(
+    (testFile) => testFile.featureDocuments.length === 0 && testFile.technicalDocuments.length > 0
+  )
+  if (technicalOnly.length > 0) {
+    lines.push(
+      '',
+      '### Technical-Only Test Files',
+      '',
+      'These files are linked from canonical contract or implementation documentation but have no product-feature or US/AC mapping.',
+      '',
+      ...technicalOnly.map(
+        (testFile) =>
+          `- \`${testFile.path}\` — ${testFile.declarations} static test declarations; owners: ${testFile.technicalDocuments.map((path) => `\`${path}\``).join(', ')}`
+      )
+    )
+  }
+
+  const unmapped = inventory.filter(
+    (testFile) => testFile.featureDocuments.length === 0 && testFile.technicalDocuments.length === 0
+  )
   lines.push(
     '',
     '### Unmapped Test Files',
@@ -148,6 +173,11 @@ const allFeaturePaths = paths.filter(
     /^docs\/features\/(?:.+\/)?README\.md$/.test(path) &&
     !['docs/features/README.md', 'docs/features/backoffice/README.md'].includes(path)
 )
+const technicalDocumentPaths = paths.filter(
+  (path) =>
+    /^(?:docs\/contracts\/features|docs\/implementation)\/(?:.+\/)?README\.md$/.test(path) &&
+    path !== 'docs/contracts/features/README.md'
+)
 const featurePaths = requestedFeature
   ? allFeaturePaths.filter((path) => path === `docs/features/${requestedFeature}/README.md`)
   : allFeaturePaths
@@ -162,6 +192,7 @@ const testPaths = paths.filter(
     /(?:^|\/)(?:__tests__\/.*|[^/]+\.(?:spec|test))\.[cm]?[jt]sx?$/.test(path)
 )
 const featureDocuments = readDocuments(allFeaturePaths)
+const technicalDocuments = readDocuments(technicalDocumentPaths)
 const testDocuments = readDocuments(testPaths)
 const result = validateAcceptanceCriteriaTraceability({
   featureDocuments,
@@ -173,7 +204,12 @@ if (result.errors.length > 0) {
 }
 
 const coverage = summarizeAcceptanceCriterionCoverage(result.criteria, result.references)
-const inventory = summarizeTestFileInventory(result.criteria, testDocuments, featureDocuments)
+const inventory = summarizeTestFileInventory(
+  result.criteria,
+  testDocuments,
+  featureDocuments,
+  technicalDocuments
+)
 const requestedDocuments = featureDocuments.filter((document) => featurePaths.includes(document.path))
 const report = [
   '# Acceptance-Criterion Test Coverage',
