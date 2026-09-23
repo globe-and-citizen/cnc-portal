@@ -74,7 +74,7 @@ it does not represent the latest pass/fail result, which belongs to CI or the ge
 | ---------------- | ------------- | --------------- | ------------------------------------------------------------------ | -------------------------------------------------- |
 | US-COMPANIES-001 | ✅ Integrated | ✅ 8/8 met      | 3 integrated · 4 mocked-only · 1 backend-only                      | —                                                  |
 | US-COMPANIES-002 | ✅ Integrated | 🚧 6/8 met      | 3 integrated · 2 mocked-only · 1 backend-only                      | `AC-US-COMPANIES-002-06`, `AC-US-COMPANIES-002-08` |
-| US-COMPANIES-003 | ✅ Integrated | ✅ 9/9 met      | 2 integrated · 2 mocked-only · 5 backend-only                      | —                                                  |
+| US-COMPANIES-003 | ✅ Integrated | ✅ 12/12 met    | 2 integrated · 2 mocked-only · 5 backend-only · 3 frontend-only    | —                                                  |
 | US-COMPANIES-004 | ✅ Integrated | ✅ 6/6 met      | 1 integrated · 2 mocked-only · 2 backend-only · 1 mocked + backend | —                                                  |
 | US-COMPANIES-005 | ✅ Integrated | ✅ 10/10 met    | 3 integrated · 7 backend-only                                      | —                                                  |
 | US-COMPANIES-006 | ✅ Integrated | ✅ 7/7 met      | 3 integrated · 1 mocked-only · 1 backend-only · 2 mocked + backend | —                                                  |
@@ -176,6 +176,8 @@ it does not represent the latest pass/fail result, which belongs to CI or the ge
 - [x] `AC-US-COMPANIES-003-02` An opened workspace exposes the company metadata, members, lifecycle state, and the feature-specific
       workspace routes available to that company.
 - [x] `AC-US-COMPANIES-003-03` A member can include hidden and archived companies when browsing their list.
+- [x] `AC-US-COMPANIES-003-10` The Companies list presents each company's combined available treasury balance from its registered Bank,
+      Safe, Expense Account, and Cash Remuneration accounts, together with the contribution of each funded account.
 
 #### Business Rules
 
@@ -190,6 +192,8 @@ it does not represent the latest pass/fail result, which belongs to CI or the ge
 - [x] `AC-US-COMPANIES-003-07` A member with no matching companies receives an empty result instead of a stale workspace entry.
 - [x] `AC-US-COMPANIES-003-08` A failed company-list request reports that the list could not be retrieved.
 - [x] `AC-US-COMPANIES-003-09` An unavailable workspace distinguishes a removed or unknown company from another loading failure.
+- [x] `AC-US-COMPANIES-003-11` A company's treasury summary distinguishes loading, unavailable, and confirmed-zero results.
+- [x] `AC-US-COMPANIES-003-12` A failed treasury-account read does not discard balances successfully read from the company's other accounts.
 
 ### Test Coverage
 
@@ -204,6 +208,9 @@ it does not represent the latest pass/fail result, which belongs to CI or the ge
 | `AC-US-COMPANIES-003-07` | Backend           | Backend          | ✅ Met |
 | `AC-US-COMPANIES-003-08` | Backend           | Backend          | ✅ Met |
 | `AC-US-COMPANIES-003-09` | Backend           | Backend          | ✅ Met |
+| `AC-US-COMPANIES-003-10` | Frontend          | Frontend         | ✅ Met |
+| `AC-US-COMPANIES-003-11` | Frontend          | Frontend         | ✅ Met |
+| `AC-US-COMPANIES-003-12` | Frontend          | Frontend         | ✅ Met |
 
 **Dependencies:** Connected user with a portal account
 
@@ -452,7 +459,8 @@ This validation does not attest to a live on-chain Officer deployment.
 ### Test-suite ownership
 
 - [Company-card tests](../../../app/src/components/__tests__/),
-  [company form tests](../../../app/src/components/sections/TeamView/forms/__tests__/), and
+  [company-creation form tests](../../../app/src/components/sections/TeamView/forms/__tests__/AddTeamForm.spec.ts),
+  [Officer setup tests](../../../app/src/components/sections/TeamView/forms/__tests__/InvestorContractStep.spec.ts), and
   [company-list tests](../../../app/src/views/team/__tests__/)
 - [Company header tests](../../../app/src/components/sections/DashboardView/__tests__/TeamMetaSection.spec.ts),
   [company update tests](../../../app/src/components/sections/DashboardView/__tests__/TeamMetaUpdateModal.spec.ts),
@@ -464,8 +472,7 @@ This validation does not attest to a live on-chain Officer deployment.
   [member form tests](../../../app/src/components/sections/DashboardView/forms/__tests__/AddMemberForm.spec.ts),
   [company treasury-list tests](../../../app/src/composables/__tests__/useTeamListTreasuryBalances.spec.ts), and
   [company store tests](../../../app/src/stores/__tests__/teamStore.spec.ts)
-- [Company authorization tests](../../../backend/src/middleware/__tests__/teamAuthzMiddleware.test.ts) and
-  [team membership utility tests](../../../backend/src/utils/__tests__/teamUtils.test.ts)
+- [Company authorization tests](../../../backend/src/middleware/__tests__/teamAuthzMiddleware.test.ts)
 
 ## Related Documentation
 

@@ -602,6 +602,7 @@ a transfer to another known company pocket is
 - [Bank composable tests](../../../app/src/composables/bank/__tests__/), [cash-out tests](../../../app/src/composables/cashOut/__tests__/),
   and [ERC-20 composable tests](../../../app/src/composables/erc20/__tests__/)
 - [Transfer-form tests](../../../app/src/components/forms/__tests__/TransferForm.spec.ts),
+  [company-creation Safe setup tests](../../../app/src/components/sections/TeamView/forms/__tests__/AddTeamForm.safe-setup.spec.ts),
   [owner-withdrawal tests](../../../app/src/components/sections/__tests__/OwnerTreasuryWithdrawAction.spec.ts),
   [Safe account view tests](../../../app/src/views/team/%5Bid%5D/Accounts/__tests__/), and
   [Bank view tests](../../../app/src/views/team/%5Bid%5D/__tests__/BankView.spec.ts)
