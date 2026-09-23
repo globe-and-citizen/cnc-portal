@@ -12,7 +12,7 @@ describe('UserIdentity.vue', () => {
   }
 
   describe('Component Rendering', () => {
-    it('renders with user data', () => {
+    it('[AC-US-PROFILE-001-08] renders the available profile identity', () => {
       const wrapper = mount(UserIdentity, {
         props: { user: mockUser }
       })
@@ -25,7 +25,7 @@ describe('UserIdentity.vue', () => {
       expect(userName.text()).toBe(mockUser.name || 'User')
     })
 
-    it('displays defaults when user data is missing', () => {
+    it('[AC-US-PROFILE-001-08] displays a fallback when profile identity is missing', () => {
       const wrapper = mount(UserIdentity, {
         props: {
           user: { address: undefined, name: undefined, imageUrl: undefined }

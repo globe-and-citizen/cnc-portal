@@ -135,7 +135,7 @@ describe('SidebarLayout.vue', () => {
     vi.clearAllMocks()
   })
 
-  it('toggles modal when clicking user card', async () => {
+  it('[AC-US-PROFILE-001-01] opens the profile form from the sidebar identity', async () => {
     await router.push('/teams/1')
     await router.isReady()
 

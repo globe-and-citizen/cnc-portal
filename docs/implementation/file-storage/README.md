@@ -73,6 +73,12 @@ sequenceDiagram
 - [Attachment service](../../../backend/src/services/attachmentService.ts) and
   [attachment tests](../../../backend/src/services/__tests__/attachmentService.test.ts)
 - [Upload route tests](../../../backend/src/routes/__tests__/uploadRoute.test.ts)
+- [Client upload API](../../../app/src/api/upload.api.ts), [upload API tests](../../../app/src/api/__tests__/upload.api.spec.ts),
+  [storage API tests](../../../app/src/api/__tests__/storage.api.spec.ts), and
+  [file-query tests](../../../app/src/queries/__tests__/file.queries.spec.ts)
+- [Presigned file URL composable](../../../app/src/composables/useFileUrl.ts),
+  [file URL tests](../../../app/src/composables/__tests__/useFileUrl.spec.ts), and
+  [profile-image URL utility tests](../../../backend/src/utils/__tests__/profileImage.util.test.ts)
 
 ## Related Documentation
 

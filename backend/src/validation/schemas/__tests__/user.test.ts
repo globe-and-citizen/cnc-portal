@@ -29,7 +29,7 @@ describe('user schemas', () => {
       );
     });
 
-    it('throws error for name exceeding 100 characters', () => {
+    it('[AC-US-PROFILE-001-04] rejects a name exceeding 100 characters', () => {
       const body = { name: 'a'.repeat(101) };
       expect(() => updateUserBodySchema.parse(body)).toThrow('Name cannot exceed 100 characters');
     });

@@ -89,7 +89,7 @@ describe('EditUserForm', () => {
   })
 
   describe('User Interactions', () => {
-    it('handles wallet address actions (view explorer, copy, show feedback)', async () => {
+    it('[AC-US-PROFILE-001-03] presents the wallet address as read-only actions', async () => {
       const wrapper = createWrapper()
 
       // Click address to open explorer
@@ -113,7 +113,7 @@ describe('EditUserForm', () => {
   })
 
   describe('Form Validation', () => {
-    it('prevents submission with invalid name length', async () => {
+    it('[AC-US-PROFILE-001-04] prevents submission with invalid name length', async () => {
       const mockMutation = createMockMutation()
       mockMutation.mutateAsync = vi.fn() as typeof mockMutation.mutateAsync
       vi.mocked(useUpdateUserMutation).mockReturnValue(mockMutation as MockMutation)
@@ -138,7 +138,7 @@ describe('EditUserForm', () => {
   })
 
   describe('Form Submission', () => {
-    it('submits the updated profile and provides feedback', async () => {
+    it('[AC-US-PROFILE-001-01] submits the updated profile and provides feedback', async () => {
       const updatedUser = { ...mockUserData, name: 'Jane Doe' }
       const mockMutation = createMockMutation()
       mockMutation.mutateAsync = vi.fn().mockResolvedValue(updatedUser)
@@ -161,7 +161,7 @@ describe('EditUserForm', () => {
       )
     })
 
-    it('reports errors and disables the button during submission', async () => {
+    it('[AC-US-PROFILE-001-07] reports profile submission errors', async () => {
       // Test error handling
       const mockMutation = createMockMutation()
       mockMutation.mutateAsync = vi.fn().mockRejectedValue(new Error('Update failed'))
