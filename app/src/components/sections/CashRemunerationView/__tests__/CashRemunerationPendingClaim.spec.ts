@@ -50,7 +50,7 @@ describe('CashRemunerationPendingClaim', () => {
     })
   }
 
-  it('renders correctly', () => {
+  it('renders the pending claim summary', () => {
     const wrapper = createComponent()
     expect(wrapper.exists()).toBeTruthy()
   })
@@ -72,13 +72,13 @@ describe('CashRemunerationPendingClaim', () => {
     expect(card.props('title')).toBe('')
   })
 
-  it('should pass subtitle to OverviewCard', () => {
+  it('passes subtitle to OverviewCard', () => {
     const wrapper = createComponent()
     const card = wrapper.findComponent(OverviewCard)
     expect(card.props('subtitle')).toBe('Pending Claim')
   })
 
-  it('should pass signed status to weekly-claims query', () => {
+  it('passes signed status to weekly-claims query', () => {
     createComponent()
 
     expect(queries.useGetTeamWeeklyClaimsQuery).toHaveBeenCalledWith(
@@ -88,7 +88,7 @@ describe('CashRemunerationPendingClaim', () => {
     )
   })
 
-  it('should handle query error state changes without crashing', async () => {
+  it('logs query errors while keeping the summary rendered', async () => {
     const wrapper = createComponent()
 
     mockError.value = new Error('pending failed')

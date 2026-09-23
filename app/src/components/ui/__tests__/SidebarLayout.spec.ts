@@ -135,7 +135,7 @@ describe('SidebarLayout.vue', () => {
     vi.clearAllMocks()
   })
 
-  it('should toggle modal when clicking user card', async () => {
+  it('toggles modal when clicking user card', async () => {
     await router.push('/teams/1')
     await router.isReady()
 

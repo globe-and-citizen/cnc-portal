@@ -30,7 +30,7 @@ describe('NavBar', () => {
   })
 
   describe('Render', () => {
-    it('Should Render the component', () => {
+    it('Renders the component', () => {
       const wrapper = createWrapper()
       expect(wrapper.exists()).toBe(true)
     })

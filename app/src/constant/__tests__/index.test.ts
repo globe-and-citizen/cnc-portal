@@ -14,7 +14,7 @@ describe('Contract Address Resolution', () => {
     vi.resetModules()
   })
 
-  it('should use the configured Polygon token addresses', async () => {
+  it('uses the configured Polygon token addresses', async () => {
     mockGetNetwork.mockReturnValue({
       chainId: '0x89',
       networkName: 'Polygon',

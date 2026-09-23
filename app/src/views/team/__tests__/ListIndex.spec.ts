@@ -53,26 +53,26 @@ describe('ListIndex - Team List View', () => {
   }
 
   describe('Component Rendering', () => {
-    it('should render the page heading when teams are visible', () => {
+    it('renders the page heading when teams are visible', () => {
       const wrapper = createWrapper()
       expect(wrapper.find('h2').text()).toContain('Team List View')
     })
 
-    it('should hide the page heading when no teams are visible', async () => {
+    it('hides the page heading when no teams are visible', async () => {
       const wrapper = createWrapper([])
       await wrapper.vm.$nextTick()
 
       expect(wrapper.find('h2').exists()).toBe(false)
     })
 
-    it('should render component structure correctly', () => {
+    it('renders the team list layout', () => {
       const wrapper = createWrapper()
       expect(wrapper.find('.flex.flex-col.gap-6').exists()).toBe(true)
     })
   })
 
   describe('Loading State', () => {
-    it('should display loader when teams are being fetched', async () => {
+    it('displays loader when teams are being fetched', async () => {
       const wrapper = createWrapper([], true) // Loading state with empty teams
       await wrapper.vm.$nextTick()
 
@@ -80,21 +80,21 @@ describe('ListIndex - Team List View', () => {
       expect(wrapper.findAll('[data-test="loader"] [aria-busy="true"]')).toHaveLength(16) // 4 skeletons × 4 items
     })
 
-    it('should hide team list during loading', async () => {
+    it('hides team list during loading', async () => {
       const wrapper = createWrapper([], true)
       await wrapper.vm.$nextTick()
 
       expect(wrapper.find('[data-test="team-list"]').exists()).toBe(false)
     })
 
-    it('should hide add team button during loading', async () => {
+    it('hides add team button during loading', async () => {
       const wrapper = createWrapper([], true)
       await wrapper.vm.$nextTick()
 
       expect(wrapper.find('[data-test="add-team-button"]').exists()).toBe(false)
     })
 
-    it('should hide the page heading during loading', async () => {
+    it('hides the page heading during loading', async () => {
       const wrapper = createWrapper([], true)
       await wrapper.vm.$nextTick()
 
@@ -103,14 +103,14 @@ describe('ListIndex - Team List View', () => {
   })
 
   describe('Empty State', () => {
-    it('should display empty state when no teams exist', async () => {
+    it('displays empty state when no teams exist', async () => {
       const wrapper = createWrapper([]) // Empty teams array
       await wrapper.vm.$nextTick()
 
       expect(wrapper.find('[data-test="empty-state"]').exists()).toBe(true)
     })
 
-    it('should display appropriate message in empty state', async () => {
+    it('displays appropriate message in empty state', async () => {
       const wrapper = createWrapper([])
       await wrapper.vm.$nextTick()
 
@@ -119,7 +119,7 @@ describe('ListIndex - Team List View', () => {
       expect(emptyState.text()).toContain('Create a new team now!')
     })
 
-    it('should display illustration in empty state', async () => {
+    it('displays illustration in empty state', async () => {
       const wrapper = createWrapper([])
       await wrapper.vm.$nextTick()
 
@@ -130,14 +130,14 @@ describe('ListIndex - Team List View', () => {
 
     // The grid itself still renders — it is what holds the create tile — but it
     // holds no team cards.
-    it('should not display any team card when teams array is empty', async () => {
+    it('does not display any team card when teams array is empty', async () => {
       const wrapper = createWrapper([])
       await wrapper.vm.$nextTick()
 
       expect(wrapper.findAll('[data-test^="team-card-"]')).toHaveLength(0)
     })
 
-    it('should display add team button when no teams and not loading', async () => {
+    it('displays add team button when no teams and not loading', async () => {
       const wrapper = createWrapper([], false)
       await wrapper.vm.$nextTick()
 
@@ -146,7 +146,7 @@ describe('ListIndex - Team List View', () => {
   })
 
   describe('Error State', () => {
-    it('should display error message when teams fetch fails', async () => {
+    it('displays error message when teams fetch fails', async () => {
       const error = new Error('Failed to fetch teams')
       const wrapper = createWrapper([], false, error)
       await wrapper.vm.$nextTick()
@@ -154,7 +154,7 @@ describe('ListIndex - Team List View', () => {
       expect(wrapper.find('[data-test="error-state"]').exists()).toBe(true)
     })
 
-    it('should display error alert with appropriate message', async () => {
+    it('displays error alert with appropriate message', async () => {
       const error = new Error('Network error')
       const wrapper = createWrapper([], false, error)
       await wrapper.vm.$nextTick()
@@ -164,7 +164,7 @@ describe('ListIndex - Team List View', () => {
       expect(errorAlert.text()).toContain('We are unable to retrieve your teams')
     })
 
-    it('should hide team list on error', async () => {
+    it('hides team list on error', async () => {
       const error = new Error('Failed to fetch')
       const wrapper = createWrapper([], false, error)
       await wrapper.vm.$nextTick()
@@ -172,7 +172,7 @@ describe('ListIndex - Team List View', () => {
       expect(wrapper.find('[data-test="team-list"]').exists()).toBe(false)
     })
 
-    it('should hide add team button on error', async () => {
+    it('hides add team button on error', async () => {
       const error = new Error('Failed to fetch')
       const wrapper = createWrapper([], false, error)
       await wrapper.vm.$nextTick()
@@ -180,7 +180,7 @@ describe('ListIndex - Team List View', () => {
       expect(wrapper.find('[data-test="add-team-button"]').exists()).toBe(false)
     })
 
-    it('should hide the page heading on error', async () => {
+    it('hides the page heading on error', async () => {
       const error = new Error('Failed to fetch')
       const wrapper = createWrapper([], false, error)
       await wrapper.vm.$nextTick()
@@ -190,14 +190,14 @@ describe('ListIndex - Team List View', () => {
   })
 
   describe('Teams List Display', () => {
-    it('should display teams when data is loaded', async () => {
+    it('displays teams when data is loaded', async () => {
       const wrapper = createWrapper(mockTeamsData)
       await wrapper.vm.$nextTick()
 
       expect(wrapper.find('[data-test="team-list"]').exists()).toBe(true)
     })
 
-    it('should render team cards for each team', async () => {
+    it('renders team cards for each team', async () => {
       const wrapper = createWrapper(mockTeamsData)
       await wrapper.vm.$nextTick()
 
@@ -205,7 +205,7 @@ describe('ListIndex - Team List View', () => {
       expect(teamCards).toHaveLength(mockTeamsData.length)
     })
 
-    it('should render team card with correct team data', async () => {
+    it('renders team card with correct team data', async () => {
       const wrapper = createWrapper(mockTeamsData)
       await wrapper.vm.$nextTick()
 
@@ -214,7 +214,7 @@ describe('ListIndex - Team List View', () => {
       expect(teamCard.text()).toContain(mockTeamData.name)
     })
 
-    it('should display add team button even when teams exist and not loading', async () => {
+    it('displays add team button even when teams exist and not loading', async () => {
       const wrapper = createWrapper(mockTeamsData, false)
       await wrapper.vm.$nextTick()
 
@@ -237,7 +237,7 @@ describe('ListIndex - Team List View', () => {
       })
     })
 
-    it('should give each team card a route to its company overview', async () => {
+    it('gives each team card a route to its company overview', async () => {
       const wrapper = createWrapper(mockTeamsData)
       await wrapper.vm.$nextTick()
 
@@ -251,7 +251,7 @@ describe('ListIndex - Team List View', () => {
       })
     })
 
-    it('should create a distinct destination for every company', async () => {
+    it('creates a distinct destination for every company', async () => {
       const teams = [
         { ...mockTeamData, id: '1' },
         { ...mockTeamData, id: '2', name: 'Team 2' },
@@ -267,7 +267,7 @@ describe('ListIndex - Team List View', () => {
   })
 
   describe('User Interactions', () => {
-    it('should open add team modal when add team button is clicked', async () => {
+    it('opens add team modal when add team button is clicked', async () => {
       const wrapper = createWrapper([], false)
       await wrapper.vm.$nextTick()
 
@@ -277,7 +277,7 @@ describe('ListIndex - Team List View', () => {
   })
 
   describe('Add Team Button', () => {
-    it('should display add team button when empty and not loading', async () => {
+    it('displays add team button when empty and not loading', async () => {
       const wrapper = createWrapper([], false)
       await wrapper.vm.$nextTick()
 
@@ -286,7 +286,7 @@ describe('ListIndex - Team List View', () => {
   })
 
   describe('Empty State with User Data', () => {
-    it('should display user name in empty state message', async () => {
+    it('displays user name in empty state message', async () => {
       const wrapper = createWrapper([], false)
       await wrapper.vm.$nextTick()
 
@@ -297,7 +297,7 @@ describe('ListIndex - Team List View', () => {
   })
 
   describe('Edge Cases', () => {
-    it('should handle loading state that transitions to success', async () => {
+    it('handles loading state that transitions to success', async () => {
       const wrapper = createWrapper([], true)
       await wrapper.vm.$nextTick()
 
@@ -309,7 +309,7 @@ describe('ListIndex - Team List View', () => {
       await wrapper.vm.$nextTick()
     })
 
-    it('should handle null/undefined team data gracefully', async () => {
+    it('remains rendered when team data is null', async () => {
       const useTeamsMock = vi.fn()
       useTeamsMock.mockReturnValue(createMockQueryResponse(null, false))
       vi.mocked(useGetTeamsQuery).mockImplementation(useTeamsMock)
@@ -329,7 +329,7 @@ describe('ListIndex - Team List View', () => {
       expect(wrapper.exists()).toBe(true)
     })
 
-    it('should render correctly when teams array contains single item', async () => {
+    it('renders one card for a single team', async () => {
       const singleTeam = [mockTeamData]
       const wrapper = createWrapper(singleTeam)
       await wrapper.vm.$nextTick()

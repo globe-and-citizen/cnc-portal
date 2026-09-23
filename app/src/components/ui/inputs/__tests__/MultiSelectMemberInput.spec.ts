@@ -56,7 +56,7 @@ describe('MultiSelectMemberInput', () => {
   })
 
   describe('addMember function', () => {
-    it('should not add member if member is null', async () => {
+    it('does not add member if member is null', async () => {
       const initialMembers: Member[] = [{ name: 'Existing Member', address: '0x123' }]
       let currentMembers = [...initialMembers]
 
@@ -93,7 +93,7 @@ describe('MultiSelectMemberInput', () => {
       expect(currentMembers).toHaveLength(1) // Should remain unchanged
     })
 
-    it('should toggle member - add then remove same member', async () => {
+    it('toggles member - add then remove same member', async () => {
       let currentMembers: Member[] = []
 
       wrapper = mount(MultiSelectMemberInput, {

@@ -182,7 +182,7 @@ describe('SafeBalanceSection', () => {
   })
 
   describe('Transfer Functionality', () => {
-    it('should call transferFromSafe when transfer is initiated', async () => {
+    it('calls transferFromSafe when transfer is initiated', async () => {
       wrapper = createWrapper()
 
       await wrapper.find('[data-test="transfer-button"]').trigger('click')
@@ -206,7 +206,7 @@ describe('SafeBalanceSection', () => {
       )
     })
 
-    it('should handle transfer loading state', async () => {
+    it('handles transfer loading state', async () => {
       mockTransferPending.value = true
       wrapper = createWrapper()
       await wrapper.find('[data-test="transfer-button"]').trigger('click')
@@ -215,7 +215,7 @@ describe('SafeBalanceSection', () => {
       expect(wrapper.findComponent(TransferFormStub).props('loading').value).toBe(true)
     })
 
-    it('should handle transfer validation errors', async () => {
+    it('handles transfer validation errors', async () => {
       wrapper = createWrapper()
       await wrapper.find('[data-test="transfer-button"]').trigger('click')
       await nextTick()
@@ -236,7 +236,7 @@ describe('SafeBalanceSection', () => {
       )
     })
 
-    it('should handle transfer success callback', async () => {
+    it('handles transfer success callback', async () => {
       wrapper = createWrapper()
       await wrapper.find('[data-test="transfer-button"]').trigger('click')
       await nextTick()
@@ -251,7 +251,7 @@ describe('SafeBalanceSection', () => {
       expect(wrapper.find('[data-test="transfer-modal"]').exists()).toBe(false)
     })
 
-    it('should map rejected transfer error to approval message', async () => {
+    it('maps rejected transfer error to approval message', async () => {
       wrapper = createWrapper()
       await wrapper.find('[data-test="transfer-button"]').trigger('click')
       await nextTick()
@@ -266,7 +266,7 @@ describe('SafeBalanceSection', () => {
       expect(wrapper.find('[data-test="transfer-modal"]').exists()).toBe(true)
     })
 
-    it('should surface generic transfer error message', async () => {
+    it('surfaces generic transfer error message', async () => {
       wrapper = createWrapper()
       await wrapper.find('[data-test="transfer-button"]').trigger('click')
       await nextTick()

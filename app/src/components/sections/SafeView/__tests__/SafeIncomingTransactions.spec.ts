@@ -155,7 +155,7 @@ describe('SafeIncomingTransactions', () => {
       })
     })
 
-    it('should show token symbol for ERC20 transfers only', () => {
+    it('shows token symbol for ERC20 transfers only', () => {
       mockUseGetSafeIncomingTransfersQuery.mockReturnValue({
         data: ref([MOCK_DATA.mockTransfers[1]]),
         isLoading: ref(false),
@@ -169,7 +169,7 @@ describe('SafeIncomingTransactions', () => {
   })
 
   describe('Query Integration', () => {
-    it('should call query with correct parameters', () => {
+    it('calls query with correct parameters', () => {
       wrapper = createWrapper()
       expect(mockUseGetSafeIncomingTransfersQuery).toHaveBeenCalledWith({
         pathParams: { safeAddress: expect.any(Object) },
@@ -177,7 +177,7 @@ describe('SafeIncomingTransactions', () => {
       })
     })
 
-    it('should update when safe address prop changes', async () => {
+    it('updates when safe address prop changes', async () => {
       wrapper = createWrapper()
       const newAddress = '0x9999999999999999999999999999999999999999' as Address
       await wrapper.setProps({ address: newAddress })
@@ -188,7 +188,7 @@ describe('SafeIncomingTransactions', () => {
   })
 
   describe('Edge Cases', () => {
-    it('should handle transfers with missing tokenInfo', () => {
+    it('handles transfers with missing tokenInfo', () => {
       mockUseGetSafeIncomingTransfersQuery.mockReturnValue({
         data: ref([{ ...MOCK_DATA.mockTransfers[0], tokenInfo: null }]),
         isLoading: ref(false),
@@ -200,7 +200,7 @@ describe('SafeIncomingTransactions', () => {
   })
 
   describe('Component Stability', () => {
-    it('should handle component destruction gracefully', () => {
+    it('unmounts without throwing', () => {
       wrapper = createWrapper()
       expect(() => wrapper.unmount()).not.toThrow()
     })

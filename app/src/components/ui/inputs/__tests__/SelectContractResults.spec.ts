@@ -56,14 +56,14 @@ describe('SelectContractResults', () => {
     if (wrapper) wrapper.unmount()
   })
 
-  it('should render nothing when contracts array is empty', () => {
+  it('renders nothing when contracts array is empty', () => {
     wrapper = createWrapper({ contracts: [] })
 
     expect(wrapper.find(SELECTORS.contractSearchResults).exists()).toBe(false)
     expect(wrapper.text()).not.toContain('Contracts')
   })
 
-  it('should render title and contracts when contracts array has items', async () => {
+  it('renders title and contracts when contracts array has items', async () => {
     wrapper = createWrapper({ contracts: MOCK_CONTRACTS })
     await nextTick()
 
@@ -74,7 +74,7 @@ describe('SelectContractResults', () => {
     expect(rows.length).toBe(3)
   })
 
-  it('should render UserIdentity for each contract', async () => {
+  it('renders UserIdentity for each contract', async () => {
     wrapper = createWrapper({ contracts: MOCK_CONTRACTS })
     await nextTick()
 
@@ -83,7 +83,7 @@ describe('SelectContractResults', () => {
     })
   })
 
-  it('should emit select event when a contract row is clicked', async () => {
+  it('emits select event when a contract row is clicked', async () => {
     wrapper = createWrapper({ contracts: MOCK_CONTRACTS })
     await nextTick()
 
@@ -96,7 +96,7 @@ describe('SelectContractResults', () => {
     expect(wrapper.emitted('select')?.[0]).toEqual([MOCK_CONTRACTS[0]])
   })
 
-  it('should emit select event with correct contract for each row', async () => {
+  it('emits select event with correct contract for each row', async () => {
     wrapper = createWrapper({ contracts: MOCK_CONTRACTS })
     await nextTick()
 
@@ -114,7 +114,7 @@ describe('SelectContractResults', () => {
     })
   })
 
-  it('should render single contract correctly', async () => {
+  it('renders a single contract result', async () => {
     const singleContract = [MOCK_CONTRACTS[0]!]
     wrapper = createWrapper({ contracts: singleContract })
     await nextTick()
@@ -126,7 +126,7 @@ describe('SelectContractResults', () => {
     )
   })
 
-  it('should update when contracts prop changes', async () => {
+  it('updates when contracts prop changes', async () => {
     wrapper = createWrapper({ contracts: [] })
     await nextTick()
 
@@ -139,7 +139,7 @@ describe('SelectContractResults', () => {
     expect(wrapper.findAll(SELECTORS.contractRow).length).toBe(3)
   })
 
-  it('should pass correct props to UserIdentity', async () => {
+  it('passes correct props to UserIdentity', async () => {
     wrapper = createWrapper({ contracts: MOCK_CONTRACTS })
     await nextTick()
 

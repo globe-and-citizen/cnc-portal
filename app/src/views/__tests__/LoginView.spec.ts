@@ -18,7 +18,7 @@ import { useSiweMutation } from '@/composables/useSiwe'
 
 describe('LoginView.vue', () => {
   describe('Render', () => {
-    it('should render the component correctly', () => {
+    it('renders the login logo and sign-in action', () => {
       const wrapper = mount(LoginView)
 
       const logo = wrapper.find('img[alt="Logo"]')
@@ -39,7 +39,7 @@ describe('LoginView.vue', () => {
   })
 
   describe('Actions', () => {
-    it('should call mutate when sign-in button is clicked', async () => {
+    it('calls mutate when sign-in button is clicked', async () => {
       const wrapper = mount(LoginView)
       const { mutate } = useSiweMutation()
 
@@ -49,7 +49,7 @@ describe('LoginView.vue', () => {
       expect(mutate).toHaveBeenCalled()
     })
 
-    it('should display "Processing..." when isPending is true', () => {
+    it('displays "Processing..." when isPending is true', () => {
       vi.mocked(useSiweMutation).mockReturnValueOnce({
         mutate: vi.fn(),
         isPending: ref(true)

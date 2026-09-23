@@ -12,7 +12,7 @@ describe('UserIdentity.vue', () => {
   }
 
   describe('Component Rendering', () => {
-    it('should render with user data', () => {
+    it('renders with user data', () => {
       const wrapper = mount(UserIdentity, {
         props: { user: mockUser }
       })
@@ -25,7 +25,7 @@ describe('UserIdentity.vue', () => {
       expect(userName.text()).toBe(mockUser.name || 'User')
     })
 
-    it('should display defaults when user data is missing', () => {
+    it('displays defaults when user data is missing', () => {
       const wrapper = mount(UserIdentity, {
         props: {
           user: { address: undefined, name: undefined, imageUrl: undefined }
@@ -43,7 +43,7 @@ describe('UserIdentity.vue', () => {
   })
 
   describe('isCollapsed prop', () => {
-    it('should hide user info when collapsed', () => {
+    it('hides user info when collapsed', () => {
       const wrapper = mount(UserIdentity, {
         props: { user: mockUser, isCollapsed: true }
       })
@@ -52,7 +52,7 @@ describe('UserIdentity.vue', () => {
       expect(userInfoContainer.exists()).toBe(false)
     })
 
-    it('should show user info when not collapsed', () => {
+    it('shows user info when not collapsed', () => {
       const wrapper = mount(UserIdentity, {
         props: { user: mockUser, isCollapsed: false }
       })
@@ -63,7 +63,7 @@ describe('UserIdentity.vue', () => {
   })
 
   describe('isDetailedView prop', () => {
-    it('should show larger avatar and role in detailed view', () => {
+    it('shows larger avatar and role in detailed view', () => {
       const wrapper = mount(UserIdentity, {
         props: { user: mockUser, isDetailedView: true }
       })
@@ -76,7 +76,7 @@ describe('UserIdentity.vue', () => {
       expect(userRole.text()).toBe('Developer')
     })
 
-    it('should show smaller avatar and no role when not in detailed view', () => {
+    it('shows smaller avatar and no role when not in detailed view', () => {
       const wrapper = mount(UserIdentity, {
         props: { user: mockUser, isDetailedView: false }
       })
@@ -90,7 +90,7 @@ describe('UserIdentity.vue', () => {
   })
 
   describe('Accessibility', () => {
-    it('should have proper aria attributes', () => {
+    it('has proper aria attributes', () => {
       const wrapper = mount(UserIdentity, {
         props: { user: mockUser }
       })

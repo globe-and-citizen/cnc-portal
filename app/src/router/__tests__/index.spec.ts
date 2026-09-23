@@ -132,7 +132,7 @@ describe('Router Configuration', () => {
   })
 
   describe('Route Definitions', () => {
-    it('should have team detail route with nested children', () => {
+    it('has team detail route with nested children', () => {
       const routes = router.getRoutes()
       const teamRoute = routes.find((route) => route.name === 'show-team')
 
@@ -145,7 +145,7 @@ describe('Router Configuration', () => {
       expect(nestedRoutes.length).toBeGreaterThan(0)
     })
 
-    it('should have all nested team routes defined', () => {
+    it('has all nested team routes defined', () => {
       const routes = router.getRoutes()
 
       const expectedNestedRoutes = [
@@ -178,7 +178,7 @@ describe('Router Configuration', () => {
       })
     })
 
-    it('should have correct route meta information', () => {
+    it('has correct route meta information', () => {
       const routes = router.getRoutes()
 
       const routesWithMeta = [
@@ -208,7 +208,7 @@ describe('Router Configuration', () => {
   })
 
   describe('Dynamic Imports', () => {
-    it('should use dynamic imports for all components', () => {
+    it('uses dynamic imports for all components', () => {
       const routes = router.getRoutes()
 
       routes.forEach((route) => {
@@ -222,7 +222,7 @@ describe('Router Configuration', () => {
       })
     })
 
-    it('should load components dynamically when routes are accessed', async () => {
+    it('loads components dynamically when routes are accessed', async () => {
       mockIsAuth.value = true // Set authenticated for this test
 
       // Test home route component loading
@@ -280,7 +280,7 @@ describe('Router Configuration', () => {
 
   describe('Navigation Guards', () => {
     describe('Authentication Guard', () => {
-      it('should redirect to login when not authenticated and accessing protected routes', async () => {
+      it('redirects to login when not authenticated and accessing protected routes', async () => {
         mockIsAuth.value = false
 
         // Test accessing home when not authenticated
@@ -288,21 +288,21 @@ describe('Router Configuration', () => {
         expect(router.currentRoute.value.name).toBe('login')
       })
 
-      it('should redirect to login when accessing teams without authentication', async () => {
+      it('redirects to login when accessing teams without authentication', async () => {
         mockIsAuth.value = false
 
         await router.push('/teams')
         expect(router.currentRoute.value.name).toBe('login')
       })
 
-      it('should redirect to login when accessing team detail without authentication', async () => {
+      it('redirects to login when accessing team detail without authentication', async () => {
         mockIsAuth.value = false
 
         await router.push('/teams/123')
         expect(router.currentRoute.value.name).toBe('login')
       })
 
-      it('should redirect to login when accessing nested team routes without authentication', async () => {
+      it('redirects to login when accessing nested team routes without authentication', async () => {
         mockIsAuth.value = false
 
         await router.push('/teams/123/cash-remunerations')
@@ -315,7 +315,7 @@ describe('Router Configuration', () => {
         expect(router.currentRoute.value.name).toBe('login')
       })
 
-      it('should allow access to protected routes when authenticated', async () => {
+      it('allows access to protected routes when authenticated', async () => {
         mockIsAuth.value = true
 
         await router.push('/')
@@ -328,7 +328,7 @@ describe('Router Configuration', () => {
         expect(router.currentRoute.value.name).toBe('show-team')
       })
 
-      it('should redirect to home when accessing login while authenticated', async () => {
+      it('redirects to home when accessing login while authenticated', async () => {
         mockIsAuth.value = true
 
         // Navigate to home first, then try to go to login
@@ -340,14 +340,14 @@ describe('Router Configuration', () => {
         expect(router.currentRoute.value.name).toBe('teams')
       })
 
-      it('should allow access to login when not authenticated', async () => {
+      it('allows access to login when not authenticated', async () => {
         mockIsAuth.value = false
 
         await router.push('/login')
         expect(router.currentRoute.value.name).toBe('login')
       })
 
-      it('should handle route navigation with parameters', async () => {
+      it('handles route navigation with parameters', async () => {
         mockIsAuth.value = true
 
         // Test with team ID
@@ -369,7 +369,7 @@ describe('Router Configuration', () => {
     })
 
     describe('useStorage Integration', () => {
-      it('should react to authentication state changes', async () => {
+      it('reacts to authentication state changes', async () => {
         // Start unauthenticated
         mockIsAuth.value = false
         await router.push('/')

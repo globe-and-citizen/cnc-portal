@@ -160,7 +160,7 @@ describe('SafeOwnersCard', () => {
   })
 
   describe('Component Rendering', () => {
-    it('should render action buttons in card header', () => {
+    it('renders action buttons in card header', () => {
       wrapper = createWrapper()
 
       expect(wrapper.find(SELECTORS.addSignerBtn).exists()).toBe(true)
@@ -169,14 +169,14 @@ describe('SafeOwnersCard', () => {
   })
 
   describe('Loading States', () => {
-    it('should show loading spinner when data is fetching', () => {
+    it('shows loading spinner when data is fetching', () => {
       mockIsLoading.value = true
       wrapper = createWrapper()
 
       expect(wrapper.find(SELECTORS.loadingSpinner).exists()).toBe(true)
     })
 
-    it('should hide content during loading', () => {
+    it('hides content during loading', () => {
       mockIsLoading.value = true
       wrapper = createWrapper()
 
@@ -185,7 +185,7 @@ describe('SafeOwnersCard', () => {
   })
 
   describe('Owners Display', () => {
-    it('should display all owners correctly', async () => {
+    it('displays every Safe owner', async () => {
       mockSafeInfoData.value = MOCK_DATA.safeInfo
       wrapper = createWrapper()
       await nextTick()
@@ -194,7 +194,7 @@ describe('SafeOwnersCard', () => {
       expect(ownerItems).toHaveLength(MOCK_DATA.safeInfo.owners.length)
     })
 
-    it('should show total owners count in footer', async () => {
+    it('shows total owners count in footer', async () => {
       mockSafeInfoData.value = MOCK_DATA.safeInfo
       wrapper = createWrapper()
       await nextTick()
@@ -206,7 +206,7 @@ describe('SafeOwnersCard', () => {
       }
     })
 
-    it('should render RemoveOwnerButton for each owner', async () => {
+    it('renders RemoveOwnerButton for each owner', async () => {
       mockSafeInfoData.value = MOCK_DATA.safeInfo
       wrapper = createWrapper()
       await nextTick()
@@ -217,7 +217,7 @@ describe('SafeOwnersCard', () => {
   })
 
   describe('User Permissions', () => {
-    it('should disable add signer button when user is not an owner', async () => {
+    it('disables add signer button when user is not an owner', async () => {
       vi.mocked(useUserDataStore).mockReturnValue({
         address: '0x9999999999999999999999999999999999999999' as Address
       } as ReturnType<typeof useUserDataStore>)

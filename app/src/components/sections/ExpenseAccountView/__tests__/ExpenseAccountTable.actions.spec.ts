@@ -206,7 +206,7 @@ describe('ExpenseAccountTable - Actions and Loading', () => {
       expect(logErrorSpy).toHaveBeenCalled()
     })
 
-    it('should notify error if error getting owner', async () => {
+    it('notifies error if error getting owner', async () => {
       mockUseReadContract.error.value = new Error('Error getting owner')
       const wrapper = createComponent()
       const logErrorSpy = vi.spyOn(log, 'error')

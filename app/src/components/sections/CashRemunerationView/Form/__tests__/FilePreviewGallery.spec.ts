@@ -93,7 +93,7 @@ describe('FilePreviewGallery', () => {
   })
 
   describe('Remove Functionality', () => {
-    it('should prevent event propagation when remove is clicked', async () => {
+    it('prevents event propagation when remove is clicked', async () => {
       wrapper = createWrapper({ previews: [IMAGE_PREVIEW] })
 
       const removeButton = wrapper.find(SELECTORS.removeButton)
@@ -107,7 +107,7 @@ describe('FilePreviewGallery', () => {
   })
 
   describe('S3 Presigned URLs', () => {
-    it('should cache presigned URLs and not refetch', async () => {
+    it('caches presigned URLs without refetching them', async () => {
       const mockUrl = 'https://cdn.example.com/image.jpg'
       ;(getPresignedUrl as unknown as Mock).mockResolvedValue(mockUrl)
 
@@ -126,7 +126,7 @@ describe('FilePreviewGallery', () => {
   })
 
   describe('Image Lightbox Modal', () => {
-    it('should display correct image in lightbox', async () => {
+    it('displays correct image in lightbox', async () => {
       wrapper = createWrapper()
 
       await wrapper.find(SELECTORS.imagePreview).trigger('click')
@@ -140,7 +140,7 @@ describe('FilePreviewGallery', () => {
   })
 
   describe('Document Preview Modal', () => {
-    it('should close document modal when backdrop is clicked', async () => {
+    it('closes document modal when backdrop is clicked', async () => {
       wrapper = createWrapper({ previews: [PDF_PREVIEW] })
 
       await wrapper.find(SELECTORS.documentPreview).trigger('click')
@@ -153,7 +153,7 @@ describe('FilePreviewGallery', () => {
   })
 
   describe('Content Type Detection', () => {
-    it('should detect text content type correctly', async () => {
+    it('opens the document preview for text files', async () => {
       wrapper = createWrapper({ previews: [TXT_PREVIEW] })
 
       await wrapper.find(SELECTORS.documentPreview).trigger('click')
@@ -162,7 +162,7 @@ describe('FilePreviewGallery', () => {
       expect(wrapper.find(SELECTORS.docModal).exists()).toBe(true)
     })
 
-    it('should detect other file types correctly', async () => {
+    it('opens the document preview for archive files', async () => {
       const otherPreview = {
         previewUrl: 'blob:http://localhost/file',
         fileName: 'archive.zip',
@@ -180,7 +180,7 @@ describe('FilePreviewGallery', () => {
   })
 
   describe('Download Functionality', () => {
-    it('should download file when download button is clicked in lightbox', async () => {
+    it('downloads file when download button is clicked in lightbox', async () => {
       const windowOpenSpy = vi.spyOn(window, 'open').mockImplementation(() => null)
 
       wrapper = createWrapper({ previews: [IMAGE_PREVIEW] })
@@ -199,7 +199,7 @@ describe('FilePreviewGallery', () => {
       windowOpenSpy.mockRestore()
     })
 
-    it('should download file when download button is clicked in document modal', async () => {
+    it('downloads file when download button is clicked in document modal', async () => {
       const windowOpenSpy = vi.spyOn(window, 'open').mockImplementation(() => null)
 
       wrapper = createWrapper({ previews: [PDF_PREVIEW] })
@@ -220,7 +220,7 @@ describe('FilePreviewGallery', () => {
   })
 
   describe('Modal Auto-close on Preview Removal', () => {
-    it('should auto-close modal when preview is removed', async () => {
+    it('automatically closes modal when preview is removed', async () => {
       wrapper = createWrapper({ previews: [IMAGE_PREVIEW, PDF_PREVIEW] })
 
       await wrapper.find(SELECTORS.imagePreview).trigger('click')

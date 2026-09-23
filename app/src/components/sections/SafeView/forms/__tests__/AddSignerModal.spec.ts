@@ -81,7 +81,7 @@ describe('AddSignerModal', () => {
   })
 
   describe('Modal v-model (isOpen)', () => {
-    it('should emit update:modelValue when isOpen changes', async () => {
+    it('emits update:modelValue when isOpen changes', async () => {
       wrapper = createWrapper({ modelValue: true })
       await nextTick()
 
@@ -92,7 +92,7 @@ describe('AddSignerModal', () => {
       expect(wrapper.emitted('update:modelValue')?.[0]).toEqual([false])
     })
 
-    it('should update isOpen when modelValue prop changes', async () => {
+    it('updates isOpen when modelValue prop changes', async () => {
       wrapper = createWrapper({ modelValue: false })
       await nextTick()
       expect(wrapper.vm.isOpen).toBe(false)
@@ -104,7 +104,7 @@ describe('AddSignerModal', () => {
   })
 
   describe('Validation', () => {
-    it('should reject invalid signer addresses in form schema', async () => {
+    it('rejects invalid signer addresses in form schema', async () => {
       wrapper = createWrapper()
 
       const result = wrapper.vm.formSchema.safeParse({
@@ -118,7 +118,7 @@ describe('AddSignerModal', () => {
       )
     })
 
-    it('should reject schema payloads without any valid new signer', async () => {
+    it('rejects schema payloads without any valid new signer', async () => {
       wrapper = createWrapper()
 
       const result = wrapper.vm.formSchema.safeParse({
@@ -134,7 +134,7 @@ describe('AddSignerModal', () => {
       ).toBe(true)
     })
 
-    it('should filter out signers with invalid addresses', async () => {
+    it('filters out signers with invalid addresses', async () => {
       wrapper = createWrapper()
       wrapper.vm.newSigners = [
         { id: 'x', address: 'invalid', name: 'Invalid' } as User,
@@ -146,7 +146,7 @@ describe('AddSignerModal', () => {
       expect(wrapper.vm.validNewSigners[0]?.address).toBe(MOCK_USERS[0]!.address)
     })
 
-    it('should filter out existing owners from valid signers', async () => {
+    it('filters out existing owners from valid signers', async () => {
       wrapper = createWrapper()
       wrapper.vm.newSigners = [
         { id: 'x', address: MOCK_CURRENT_OWNERS[0], name: 'Existing' } as User,
@@ -160,7 +160,7 @@ describe('AddSignerModal', () => {
   })
 
   describe('Actions', () => {
-    it('should show error when submitting without valid signers', async () => {
+    it('shows error when submitting without valid signers', async () => {
       wrapper = createWrapper()
 
       await wrapper.vm.handleAddSigners()
@@ -201,7 +201,7 @@ describe('AddSignerModal', () => {
       )
     })
 
-    it('should show success toast for proposal when threshold >= 2', async () => {
+    it('shows success toast for proposal when threshold >= 2', async () => {
       mockUpdateOwnersMutate.mockImplementation((_params, callbacks) => callbacks?.onSuccess?.())
       wrapper = createWrapper({ currentThreshold: 2 })
       wrapper.vm.newSigners = [MOCK_USERS[0]!]
@@ -229,7 +229,7 @@ describe('AddSignerModal', () => {
       )
     })
 
-    it('should handle updateOwners error with generic message', async () => {
+    it('handles updateOwners error with generic message', async () => {
       mockUpdateOwnersMutate.mockImplementation((_params, callbacks) =>
         callbacks?.onError?.(new Error())
       )
@@ -243,7 +243,7 @@ describe('AddSignerModal', () => {
       expect(wrapper.vm.errorMessage).toBe('Failed to add signers')
     })
 
-    it('should handle updateOwners error with specific message', async () => {
+    it('handles updateOwners error with specific message', async () => {
       mockUpdateOwnersMutate.mockImplementation((_params, callbacks) =>
         callbacks?.onError?.(new Error('Network error'))
       )
@@ -257,7 +257,7 @@ describe('AddSignerModal', () => {
       expect(wrapper.vm.errorMessage).toBe('Failed to add signers: Network error')
     })
 
-    it('should not close modal or emit when mutation callbacks are not invoked', async () => {
+    it('does not close modal or emit when mutation callbacks are not invoked', async () => {
       mockUpdateOwnersMutate.mockImplementation(() => undefined)
       wrapper = createWrapper()
       wrapper.vm.newSigners = [MOCK_USERS[0]!]

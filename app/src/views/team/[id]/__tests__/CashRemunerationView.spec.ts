@@ -19,7 +19,7 @@ describe('CashRemunerationView.vue', () => {
     mockTeamStore.currentTeamMeta = originalTeamMeta
   })
 
-  it('should pass correct props to TokenHoldingsSection', () => {
+  it('passes correct props to TokenHoldingsSection', () => {
     const wrapper = createComponent()
     const genericTokenHoldingSection = wrapper.findComponent({
       name: 'TokenHoldingsSection'
@@ -31,7 +31,7 @@ describe('CashRemunerationView.vue', () => {
     )
   })
 
-  it('should render CashRemunerationOverview component', () => {
+  it('renders CashRemunerationOverview component', () => {
     const wrapper = createComponent()
     const overview = wrapper.findComponent({ name: 'CashRemunerationOverview' })
 

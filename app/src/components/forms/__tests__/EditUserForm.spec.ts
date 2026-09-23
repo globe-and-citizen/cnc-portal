@@ -56,7 +56,7 @@ beforeEach(() => {
 
 describe('EditUserForm', () => {
   describe('Rendering & State', () => {
-    it('should render form elements and show submit button only when changes are made', async () => {
+    it('renders form elements and shows the submit button only after changes', async () => {
       const wrapper = createWrapper()
 
       // Verify initial rendering
@@ -89,7 +89,7 @@ describe('EditUserForm', () => {
   })
 
   describe('User Interactions', () => {
-    it('should handle wallet address actions (view explorer, copy, show feedback)', async () => {
+    it('handles wallet address actions (view explorer, copy, show feedback)', async () => {
       const wrapper = createWrapper()
 
       // Click address to open explorer
@@ -113,7 +113,7 @@ describe('EditUserForm', () => {
   })
 
   describe('Form Validation', () => {
-    it('should prevent submission with invalid name length', async () => {
+    it('prevents submission with invalid name length', async () => {
       const mockMutation = createMockMutation()
       mockMutation.mutateAsync = vi.fn() as typeof mockMutation.mutateAsync
       vi.mocked(useUpdateUserMutation).mockReturnValue(mockMutation as MockMutation)
@@ -138,7 +138,7 @@ describe('EditUserForm', () => {
   })
 
   describe('Form Submission', () => {
-    it('should submit successfully and provide feedback', async () => {
+    it('submits the updated profile and provides feedback', async () => {
       const updatedUser = { ...mockUserData, name: 'Jane Doe' }
       const mockMutation = createMockMutation()
       mockMutation.mutateAsync = vi.fn().mockResolvedValue(updatedUser)
@@ -161,7 +161,7 @@ describe('EditUserForm', () => {
       )
     })
 
-    it('should handle errors and disable button during submission', async () => {
+    it('reports errors and disables the button during submission', async () => {
       // Test error handling
       const mockMutation = createMockMutation()
       mockMutation.mutateAsync = vi.fn().mockRejectedValue(new Error('Update failed'))
@@ -180,7 +180,7 @@ describe('EditUserForm', () => {
       expect(wrapper.find('div[data-test="error-alert"]').exists()).toBe(true)
     })
 
-    it('should disable submit button while pending and reload after success', async () => {
+    it('disables the submit button while pending and reloads after success', async () => {
       vi.useFakeTimers()
 
       const reloadMock = vi.fn()

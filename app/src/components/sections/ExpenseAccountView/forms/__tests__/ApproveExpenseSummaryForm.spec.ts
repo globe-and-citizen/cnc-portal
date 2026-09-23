@@ -23,13 +23,13 @@ describe('ApproveExpenseSummaryForm', () => {
     })
   }
 
-  it('should emit submit event on button click', async () => {
+  it('emits submit event on button click', async () => {
     const wrapper = createComponent()
     await wrapper.find('[data-test="approve-button"]').trigger('click')
     expect(wrapper.emitted()).toHaveProperty('submit')
   })
 
-  it('should emit close event on close button click', async () => {
+  it('emits close event on close button click', async () => {
     const wrapper = createComponent()
     await wrapper.find('[data-test="cancel-button"]').trigger('click')
     expect(wrapper.emitted()).toHaveProperty('close')

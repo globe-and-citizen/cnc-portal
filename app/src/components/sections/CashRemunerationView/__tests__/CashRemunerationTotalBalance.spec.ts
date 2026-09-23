@@ -22,18 +22,18 @@ describe('CashRemunerationTotalBalance', () => {
     })
   }
 
-  it('renders correctly', () => {
+  it('renders the total balance summary', () => {
     const wrapper = createComponent()
     expect(wrapper.exists()).toBeTruthy()
   })
 
-  it('should pass formatted total balance to OverviewCard title', () => {
+  it('passes formatted total balance to OverviewCard title', () => {
     const wrapper = createComponent()
     const card = wrapper.findComponent({ name: 'OverviewCard' })
     expect(card.props('title')).toBe('$50.5K')
   })
 
-  it('should fall back to 0 before the first balance read lands', () => {
+  it('falls back to 0 before the first balance read lands', () => {
     mockUseContractBalance.hasData.value = false
 
     const wrapper = createComponent()

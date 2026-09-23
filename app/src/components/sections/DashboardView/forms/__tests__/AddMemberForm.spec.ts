@@ -56,7 +56,7 @@ describe('AddMemberForm.vue', () => {
     } as unknown as ReturnType<typeof useAddMembersMutation>)
   })
 
-  it('should render component with title and form inputs', () => {
+  it('renders component with title and form inputs', () => {
     const wrapper = mountComponent({ stubMultiSelect: true })
 
     // Verify the form renders with the member input + Add Members button
@@ -69,12 +69,12 @@ describe('AddMemberForm.vue', () => {
     expect(addBtn?.exists()).toBe(true)
   })
 
-  it('should show no error when component is initialized', () => {
+  it('shows no error when component is initialized', () => {
     const wrapper = mountComponent({ stubMultiSelect: true })
     expect(wrapper.findAll('.alert').length).toBe(0)
   })
 
-  it('should show warning alert when mutation error status is 401', () => {
+  it('shows warning alert when mutation error status is 401', () => {
     vi.mocked(useAddMembersMutation).mockReturnValueOnce({
       mutate: mockMutate,
       isPending: ref(false),
@@ -86,7 +86,7 @@ describe('AddMemberForm.vue', () => {
     expect(wrapper.text()).toContain("You don't have permission to add members.")
   })
 
-  it('should show generic error alert for non-401 errors', () => {
+  it('shows generic error alert for non-401 errors', () => {
     vi.mocked(useAddMembersMutation).mockReturnValueOnce({
       mutate: mockMutate,
       isPending: ref(false),
@@ -98,7 +98,7 @@ describe('AddMemberForm.vue', () => {
     expect(wrapper.text()).toContain('Something went wrong. Unable to add members.')
   })
 
-  it('should handle member addition successfully', async () => {
+  it('submits selected members and clears the form on success', async () => {
     mockMutate.mockImplementationOnce((_payload, options) => options?.onSuccess?.())
     const wrapper = mountComponent({ stubMultiSelect: true })
 
@@ -159,7 +159,7 @@ describe('AddMemberForm.vue', () => {
     ])
   })
 
-  it('should log errors when member addition mutation fails', async () => {
+  it('logs errors when member addition mutation fails', async () => {
     const logSpy = vi.spyOn(log, 'error').mockImplementation(() => undefined)
     mockMutate.mockImplementationOnce((_payload, options) =>
       options?.onError?.(new Error('network'))

@@ -83,7 +83,7 @@ describe('MonthSelector', () => {
   })
 
   describe('Month Navigation - Previous', () => {
-    it('should go to previous month when prev button is clicked', async () => {
+    it('goes to previous month when prev button is clicked', async () => {
       const initialModel = {
         month: 5, // June
         year: 2024,
@@ -106,7 +106,7 @@ describe('MonthSelector', () => {
       expect(newValue.year).toBe(2024)
     })
 
-    it('should handle year change from January to December', async () => {
+    it('handles year change from January to December', async () => {
       const initialModel = {
         month: 0, // January
         year: 2024,
@@ -128,7 +128,7 @@ describe('MonthSelector', () => {
   })
 
   describe('Month Navigation - Next', () => {
-    it('should handle year change from December to January', async () => {
+    it('handles year change from December to January', async () => {
       const initialModel = {
         month: 11, // December
         year: 2024,
@@ -192,7 +192,7 @@ describe('MonthSelector', () => {
   })
 
   describe('Model Updates Structure', () => {
-    it('should emit correct model structure when month changes', async () => {
+    it('emits correct model structure when month changes', async () => {
       const initialModel = {
         month: 5,
         year: 2024,

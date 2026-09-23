@@ -80,7 +80,7 @@ describe('AddTeamForm.vue', () => {
   })
 
   describe('Step Navigation', () => {
-    it('should preserve form data when navigating back', async () => {
+    it('preserves form data when navigating back', async () => {
       wrapper = mountComponent()
 
       await fillStep1(wrapper, 'Preserved Name', 'Preserved Desc')
@@ -100,7 +100,7 @@ describe('AddTeamForm.vue', () => {
       ).toBe('Preserved Desc')
     })
 
-    it('should render member input on step 2', async () => {
+    it('renders member input on step 2', async () => {
       wrapper = mountComponent()
       await goToStep2(wrapper)
 
@@ -108,7 +108,7 @@ describe('AddTeamForm.vue', () => {
       expect(multiSelect.exists()).toBe(true)
     })
 
-    it('should update members via MultiSelectMemberInput', async () => {
+    it('updates members via MultiSelectMemberInput', async () => {
       wrapper = mountComponent()
       await goToStep2(wrapper)
 
@@ -125,7 +125,7 @@ describe('AddTeamForm.vue', () => {
   })
 
   describe('Team Creation', () => {
-    it('should create the team successfully and advance to the next step', async () => {
+    it('creates the team and advances to the next step', async () => {
       const mutation = createMockMutationResponse(mockTeamData)
       vi.mocked(useCreateTeamMutation).mockReturnValue(
         mutation as ReturnType<typeof useCreateTeamMutation>
@@ -141,7 +141,7 @@ describe('AddTeamForm.vue', () => {
       expect(wrapper.find(SELECTORS.step3).exists()).toBe(true)
     })
 
-    it('should show error message when creation fails', async () => {
+    it('shows error message when creation fails', async () => {
       vi.mocked(useCreateTeamMutation).mockReturnValue(
         createMockMutationResponse(null, false, new Error('Failed')) as ReturnType<
           typeof useCreateTeamMutation
@@ -157,7 +157,7 @@ describe('AddTeamForm.vue', () => {
       expect(wrapper.find(SELECTORS.createTeamError).text()).toContain('Failed to create company')
     })
 
-    it('should not submit when company name is empty', async () => {
+    it('does not submit when company name is empty', async () => {
       const mutation = createMockMutationResponse(mockTeamData)
       vi.mocked(useCreateTeamMutation).mockReturnValue(
         mutation as ReturnType<typeof useCreateTeamMutation>
@@ -195,7 +195,7 @@ describe('AddTeamForm.vue', () => {
   })
 
   describe('Validation Edge Cases', () => {
-    it('should block navigation from step 1 when name is empty', async () => {
+    it('blocks navigation from step 1 when name is empty', async () => {
       wrapper = mountComponent()
 
       // Submitting the empty form does not advance — step 1 stays visible
@@ -206,7 +206,7 @@ describe('AddTeamForm.vue', () => {
       expect(wrapper.find(SELECTORS.step2).exists()).toBe(false)
     })
 
-    it('should reject invalid member addresses', async () => {
+    it('rejects invalid member addresses', async () => {
       wrapper = mountComponent()
       await goToStep2(wrapper)
 
