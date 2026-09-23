@@ -119,7 +119,7 @@ describe('ExpenseAccountEIP712V2', function () {
   }
 
   describe('Calendar Period Calculations', function () {
-    it('resets weekly budget on Monday', async function () {
+    it('[AC-US-EXP-002-03] resets weekly budget on Monday', async function () {
       const { expenseAccount, owner, approvedAddress, recipient } = await loadFixture(
         deployExpenseAccountFixture
       )

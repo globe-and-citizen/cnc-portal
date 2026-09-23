@@ -121,7 +121,7 @@ const setupDefaultMocks = () => {
   })
 }
 
-describe('SafeIncomingTransactions', () => {
+describe('[US-SAFE-005] SafeIncomingTransactions', () => {
   let wrapper: VueWrapper
 
   beforeEach(() => {

@@ -294,7 +294,7 @@ describe('Claim Controller', () => {
       expect(response.body.message).toBe('No wage found for the user');
     });
 
-    it('prices a week that already holds hours with their own wage', async () => {
+    it('[AC-US-PAYROLL-001-16] prices a week that already holds hours with their own wage', async () => {
       // The owner raised the cap mid-week. Hours are already priced against the
       // old wage, so the week keeps it: repricing would mean a second
       // WeeklyClaim for the same week, hour counters restarting from zero.
@@ -349,7 +349,7 @@ describe('Claim Controller', () => {
       expect(mockResolveWageForWeek).not.toHaveBeenCalled();
     });
 
-    it('moves a goals-only week onto the wage in force when hours arrive', async () => {
+    it('[AC-US-PAYROLL-001-17] moves a goals-only week onto the wage in force when hours arrive', async () => {
       // Goals commit nothing: the member had not submitted their hours when the
       // wage changed, so the first hours are priced at the new wage and the
       // week's row follows them instead of pointing at the superseded one.
@@ -407,7 +407,7 @@ describe('Claim Controller', () => {
       expect(response.body.message).toContain('Remaining to submit: 1h');
     });
 
-    it('falls back to the 8h default when the wage has no daily cap', async () => {
+    it('[AC-US-PAYROLL-005-12] falls back to the 8h default when the wage has no daily cap', async () => {
       const testDate = dayjs.utc().startOf('day').toDate();
       const modifiedWeeklyClaims = createMockWeeklyClaim();
       (modifiedWeeklyClaims as any).claims = [
@@ -538,7 +538,7 @@ describe('Claim Controller', () => {
       );
     });
 
-    it('returns 409 if the claim is already signed', async () => {
+    it('[AC-US-PAYROLL-005-19] returns 409 if the claim is already signed', async () => {
       const mockWage = createMockWage();
       const mockWeeklyClaims = createMockWeeklyClaim({ status: 'signed', signature: '0xabc' });
       mockResolveWageForWeek.mockResolvedValue(mockWage);
@@ -550,7 +550,7 @@ describe('Claim Controller', () => {
       expect(response.body.message).toBe('Week already signed. Submission not allowed.');
     });
 
-    it('returns 409 if the claim is already disabled', async () => {
+    it('[AC-US-PAYROLL-005-21] returns 409 if the claim is already disabled', async () => {
       const mockWage = createMockWage();
       const mockWeeklyClaims = createMockWeeklyClaim({ status: 'disabled' });
       mockResolveWageForWeek.mockResolvedValue(mockWage);
@@ -562,7 +562,7 @@ describe('Claim Controller', () => {
       expect(response.body.message).toBe('Week is disabled. Submission not allowed.');
     });
 
-    it('returns 409 if the claim is already withdrawn', async () => {
+    it('[AC-US-PAYROLL-005-20] returns 409 if the claim is already withdrawn', async () => {
       const mockWage = createMockWage();
       const mockWeeklyClaims = createMockWeeklyClaim({ status: 'withdrawn' });
       mockResolveWageForWeek.mockResolvedValue(mockWage);
@@ -853,7 +853,7 @@ describe('Claim Controller', () => {
       );
     });
 
-    it('returns 409 if updating claim exceeds the daily cap', async () => {
+    it('[AC-US-PAYROLL-006-08] returns 409 if updating claim exceeds the daily cap', async () => {
       const testDate = dayjs.utc().startOf('day').toDate();
       const mockClaim = {
         id: 1,
@@ -1134,6 +1134,7 @@ describe('Claim Controller', () => {
       expect(response.body.message).toBe('Caller is not the owner of the claim');
     });
 
+    // Covers: AC-US-PAYROLL-007-03
     it('deletes claim and weekly claim when no other claims exist', async () => {
       setupMockClaim('pending', TEST_ADDRESS, false);
       const mockClaimDelete = vi.spyOn(prisma.claim, 'delete').mockResolvedValue({} as any);
@@ -1149,6 +1150,7 @@ describe('Claim Controller', () => {
       expect(mockWeeklyClaimDelete).toHaveBeenCalledWith({ where: { id: 1 } });
     });
 
+    // Covers: AC-US-PAYROLL-007-03
     it('keeps the weekly claim when it is the last claim but goals are set', async () => {
       // A goals-only week: deleting the last daily claim must not wipe the memo.
       vi.spyOn(prisma.claim, 'findFirst').mockResolvedValue({

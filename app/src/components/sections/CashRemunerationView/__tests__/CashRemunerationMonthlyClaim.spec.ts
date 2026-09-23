@@ -57,7 +57,7 @@ describe('CashRemunerationMonthlyClaim.vue', () => {
     expect(wrapper.exists()).toBe(true)
   })
 
-  it('computes and passes total monthly claim to OverviewCard', () => {
+  it('[US-PAYROLL-013] computes and passes the withdrawn claim total to OverviewCard', () => {
     const wrapper = createComponent()
     const card = wrapper.findComponent({ name: 'OverviewCard' })
 

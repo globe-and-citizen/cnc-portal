@@ -108,7 +108,7 @@ describe('CashRemunerationTransactions', () => {
     if (wrapper) wrapper.unmount()
   })
 
-  it('maps query data and passes rows/columns to UTable', () => {
+  it('[AC-US-PAYROLL-013-03] maps native deposits, token deposits, and withdrawals to table rows', () => {
     wrapper = createWrapper()
 
     const data = tableData(wrapper)
@@ -128,6 +128,7 @@ describe('CashRemunerationTransactions', () => {
     expect(tableLoading(wrapper)).toBe(true)
   })
 
+  // Covers: AC-US-PAYROLL-013-04
   it('filters displayed rows by selected type', async () => {
     wrapper = createWrapper()
 
@@ -139,6 +140,7 @@ describe('CashRemunerationTransactions', () => {
     expect(data[0]?.type).toBe('deposit')
   })
 
+  // Covers: AC-US-PAYROLL-013-04
   it('filters displayed rows by date range', async () => {
     wrapper = createWrapper()
 

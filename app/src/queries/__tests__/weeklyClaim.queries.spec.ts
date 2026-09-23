@@ -75,7 +75,7 @@ const mockUploadedFile = (fileKey: string, fileUrl: string, fileType: string, fi
     files: [{ fileKey, fileUrl, metadata: { fileType, fileSize } }]
   })
 
-describe('weeklyClaim.queries', () => {
+describe('[US-PAYROLL-005] [US-PAYROLL-006] [US-PAYROLL-012] weeklyClaim queries', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     useMutationFn.mockImplementation(smartUseMutation)

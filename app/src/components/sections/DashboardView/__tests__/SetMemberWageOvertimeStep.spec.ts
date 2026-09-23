@@ -48,7 +48,7 @@ const createWrapperWithProps = (
     }
   })
 
-describe('SetMemberWageOvertimeStep.vue', () => {
+describe('[US-PAYROLL-001] SetMemberWageOvertimeStep.vue', () => {
   it('renders overtime banner and recap sections', () => {
     const wrapper = createWrapper()
 

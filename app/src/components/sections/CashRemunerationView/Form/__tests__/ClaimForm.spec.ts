@@ -98,7 +98,7 @@ describe('ClaimForm.vue', () => {
     expect(wrapper.find('[data-test="date-input"]').text()).toBe('2024-01-15 UTC')
   })
 
-  it('allows an edit that stays within the remaining daily allowance', async () => {
+  it('[US-PAYROLL-006] allows an edit that stays within the remaining daily allowance', async () => {
     const wrapper = createWrapper({
       mode: 'edit',
       initialData: {
@@ -121,7 +121,7 @@ describe('ClaimForm.vue', () => {
     )
   })
 
-  it('blocks an edit that exceeds the remaining daily allowance', async () => {
+  it('[US-PAYROLL-006] blocks an edit that exceeds the remaining daily allowance', async () => {
     const wrapper = createWrapper({
       mode: 'edit',
       initialData: {
@@ -165,7 +165,7 @@ describe('ClaimForm.vue', () => {
     expect(popover().props('open')).toBe(false)
   })
 
-  it('blocks submit when total files exceed the limit', async () => {
+  it('[AC-US-PAYROLL-006-06] blocks submit when total files exceed the limit', async () => {
     const wrapper = createWrapper({
       mode: 'edit',
       existingFiles: Array.from({ length: 8 }, (_, index) => makeExistingFile(index + 1))

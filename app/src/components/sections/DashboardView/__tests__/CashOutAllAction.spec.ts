@@ -42,7 +42,7 @@ const step = (over: Partial<CashOutRunStep>): CashOutRunStep => ({
   ...over
 })
 
-describe('CashOutAllAction', () => {
+describe('[US-BANK-004] CashOutAllAction', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
     vi.clearAllMocks()

@@ -214,7 +214,7 @@ describe('SetMemberWageModal', () => {
     })
   })
 
-  it('submits the daily cap, defaulting it for wages saved before the cap existed', async () => {
+  it('[US-PAYROLL-001] submits the daily cap, defaulting it for wages saved before the cap existed', async () => {
     const wrapper = createWrapper()
     await openModal(wrapper)
 

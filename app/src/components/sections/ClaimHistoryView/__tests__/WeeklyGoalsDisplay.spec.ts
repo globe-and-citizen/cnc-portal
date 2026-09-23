@@ -35,7 +35,7 @@ const factory = (props: Record<string, unknown> = {}) =>
     }
   })
 
-describe('WeeklyGoalsDisplay', () => {
+describe('[US-PAYROLL-004] WeeklyGoalsDisplay', () => {
   it('renders the memo read-only when goals are set', () => {
     const wrapper = factory({
       weeklyClaim: makeWeeklyClaim({ weeklyGoals: '## Ship it' })

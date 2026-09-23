@@ -106,7 +106,7 @@ const TransferFormStub = defineComponent({
     "<div><button data-test=\"emit-transfer\" @click=\"$emit('transfer', { address: { name: 'Recipient', address: '0x3333333333333333333333333333333333333333' }, token: modelValue.token, amount: '1' })\">Transfer</button><button data-test=\"emit-invalid-transfer\" @click=\"$emit('transfer', { address: { name: '', address: '' }, token: modelValue.token, amount: '0' })\">Invalid</button></div>"
 })
 
-describe('SafeBalanceSection', () => {
+describe('[US-SAFE-003] SafeBalanceSection transfers', () => {
   let wrapper: VueWrapper
   const mockCurrency = ref(MOCK_DATA.defaultCurrency)
   const mockSafeInfo = ref<typeof MOCK_DATA.safeInfo | null>(MOCK_DATA.safeInfo)

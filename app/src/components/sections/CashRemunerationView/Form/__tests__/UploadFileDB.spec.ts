@@ -102,7 +102,7 @@ describe('UploadFileDB', () => {
       expect(wrapper.emitted('update:files')?.[0]?.[0]).toHaveLength(2)
     })
 
-    it('rejects invalid file types', async () => {
+    it('[AC-US-PAYROLL-005-24] rejects invalid file types', async () => {
       wrapper = createWrapper()
 
       const invalidFiles = [
@@ -117,7 +117,7 @@ describe('UploadFileDB', () => {
   })
 
   describe('File Size Validation', () => {
-    it('rejects files over 10 MB', async () => {
+    it('[AC-US-PAYROLL-005-25] rejects files over 10 MB', async () => {
       wrapper = createWrapper()
 
       const oversizedFile = new File(['x'.repeat(11 * 1024 * 1024)], 'test.png', {

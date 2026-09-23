@@ -5,7 +5,7 @@ import { nextTick } from 'vue'
 
 import type { Claim, SupportedTokens } from '@/types'
 
-describe('ClaimActions', () => {
+describe('[US-PAYROLL-006] [US-PAYROLL-007] ClaimActions', () => {
   const mockClaim: Claim = {
     id: 1,
     hoursWorked: 480,

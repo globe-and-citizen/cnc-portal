@@ -128,7 +128,7 @@ describe('EditClaims', () => {
     })
   })
 
-  it('passes only sibling claims to the daily allowance validation', () => {
+  it('[US-PAYROLL-006] passes only sibling claims to the daily allowance validation', () => {
     const siblingClaim: Claim = {
       ...defaultClaim,
       id: 2,

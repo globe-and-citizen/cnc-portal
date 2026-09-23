@@ -106,7 +106,7 @@ describe('ExpenseAccount (EIP712) - Administrative Tests', () => {
       signatureHash = ethers.keccak256(signature)
     })
 
-    it('allows owner to deactivate approval', async () => {
+    it('[AC-US-EXP-003-01] allows owner to deactivate approval', async () => {
       await expect(expenseAccount.deactivateApproval(signatureHash))
         .to.emit(expenseAccount, 'ApprovalDeactivated')
         .withArgs(signatureHash)
@@ -115,7 +115,7 @@ describe('ExpenseAccount (EIP712) - Administrative Tests', () => {
       expect(expenseBalance.state).to.equal(2) // Inactive state
     })
 
-    it('allows owner to activate approval', async () => {
+    it('[AC-US-EXP-003-02] allows owner to activate approval', async () => {
       // First deactivate
       await expenseAccount.deactivateApproval(signatureHash)
 
@@ -128,7 +128,7 @@ describe('ExpenseAccount (EIP712) - Administrative Tests', () => {
       expect(expenseBalance.state).to.equal(1) // Active state
     })
 
-    it('does not allow non-owners to manage approvals', async () => {
+    it('[AC-US-EXP-003-04] does not allow non-owners to manage approvals', async () => {
       await expect(
         expenseAccount.connect(imposter).deactivateApproval(signatureHash)
       ).to.be.revertedWithCustomError(expenseAccount, 'OwnableUnauthorizedAccount')

@@ -6,7 +6,7 @@ import type { AddressLike } from 'ethers'
 
 before(initializeHardhat)
 
-describe('ExpenseAccountEIP712V2', function () {
+describe('[US-EXP-002] ExpenseAccountEIP712V2 period detection', function () {
   let owner: SignerWithAddress
   let approvedAddress: SignerWithAddress
   let recipient: SignerWithAddress

@@ -320,7 +320,7 @@ describe('Expense Controller', () => {
       expect(response.body.message).toContain('Invalid request body');
     });
 
-    it('rejects disabling an expense when the caller is not the company owner', async () => {
+    it('[US-EXP-003] rejects disabling an expense when the caller is not the company owner', async () => {
       // First call resolves the teamId for the rejectIfArchived middleware,
       // second call is the controller owner check which fails (not owner).
       vi.spyOn(prisma.expense, 'findUnique')

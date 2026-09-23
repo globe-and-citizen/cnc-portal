@@ -28,7 +28,7 @@ type ChartOption = {
   ]
 }
 
-describe('ClaimHistoryWeekNavigator', () => {
+describe('[US-PAYROLL-012] ClaimHistoryWeekNavigator', () => {
   const baseWeeklyClaims = structuredClone(mockWeeklyClaimData)
   const baseWeeklyClaim = baseWeeklyClaims[0]
   if (!baseWeeklyClaim) throw new Error('Expected weekly claim mock data')

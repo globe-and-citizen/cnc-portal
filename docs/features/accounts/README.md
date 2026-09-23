@@ -258,6 +258,9 @@ The final wallet payment is [`CASH-OUT`](../accounting/journal-entry-catalogue.m
 - [x] `AC-US-EXP-001-08` An archived company cannot grant a spending approval.
 - [x] `AC-US-EXP-001-09` An invalid or mismatched signature is rejected without creating an approval.
 - [x] `AC-US-EXP-001-10` Cancelling or rejecting the signature leaves the recipient's approvals unchanged.
+- [x] `AC-US-EXP-001-11` An approval start date cannot be earlier than the current date.
+- [x] `AC-US-EXP-001-12` An approval end date must be later than its start date.
+- [x] `AC-US-EXP-001-13` A custom-frequency approval requires a positive period length.
 
 **Accounting:** Creating an approval moves no money and creates no journal entry. A later spend owns the accounting operation.
 
@@ -355,6 +358,8 @@ a transfer to another known company pocket is
 - [x] `AC-US-EXP-004-09` A scope with no approvals or transactions returns an empty result.
 - [x] `AC-US-EXP-004-10` A failed approval read is distinguishable from a successfully loaded empty approval scope.
 - [x] `AC-US-EXP-004-11` A failed transaction read is distinguishable from a successfully loaded empty history.
+- [x] `AC-US-EXP-004-12` When a previous-month baseline exists, the Expense Account summary reports the direction and percentage change in
+      monthly spending without inventing a comparison when no baseline exists.
 
 **Dependencies:** Current Expense Account contract and available API and chain providers
 
@@ -541,6 +546,9 @@ a transfer to another known company pocket is
 - A one-time Expense approval can spend an unsupported ERC-20 token held by the contract (`US-EXP-002`).
 - Pausing the Expense Account does not prevent spending (`US-EXP-002`).
 - Deactivating an Expense approval changes its recorded state but does not prevent that signature from authorizing a spend (`US-EXP-003`).
+- The shared owner-treasury withdrawal action supports both a direct owner write and a Board proposal, but its owning Accounts story and
+  authorization boundary have not yet been agreed. Its test suite remains in the documentation review queue rather than being assigned a
+  misleading US or AC.
 
 ## Implementation Evidence
 
@@ -566,11 +574,15 @@ a transfer to another known company pocket is
   [historic-generation withdrawal action](../../../app/src/components/sections/ContractManagementView/LegacyGenerationWithdrawAction.vue),
   and [cash-out orchestration](../../../app/src/composables/cashOut/useCashOutAll.ts)
 - [Cash-out composable tests](../../../app/src/composables/cashOut/__tests__/useCashOutAll.spec.ts),
-  [current-treasury action tests](../../../app/src/components/sections/DashboardView/__tests__/CashOutAllAction.spec.ts), and
-  [historic-generation action tests](../../../app/src/components/sections/ContractManagementView/__tests__/LegacyGenerationWithdrawAction.spec.ts)
+  [cash-out planning tests](../../../app/src/composables/cashOut/__tests__/plan.spec.ts), and
+  [current-treasury action tests](../../../app/src/components/sections/DashboardView/__tests__/CashOutAllAction.spec.ts)
 - [Safe page](../../../app/src/views/team/%5Bid%5D/Accounts/SafeView.vue),
   [Safe deposit form](../../../app/src/components/sections/SafeView/forms/DepositSafeForm.vue),
-  [Safe composables](../../../app/src/composables/safe/), [Safe address normalization](../../../app/src/utils/safe/address.ts),
+  [Safe deployment](../../../app/src/composables/safe/useSafeDeployment.ts),
+  [Safe import](../../../app/src/composables/safe/useSafeImport.ts),
+  [Safe signer role](../../../app/src/composables/safe/useSafeSignerRole.ts),
+  [Safe SDK boundary](../../../app/src/composables/safe/useSafeSdk.ts),
+  [Safe address normalization](../../../app/src/utils/safe/address.ts),
   [Safe transaction helpers](../../../app/src/lib/safe/transactions.ts), and
   [Safe transaction state](../../../app/src/utils/safe/transactionState.ts)
 - [Safe transaction queue](../../../app/src/components/sections/SafeView/SafeTransactions.vue),
@@ -580,11 +592,12 @@ a transfer to another known company pocket is
   [Safe transaction mutations](../../../app/src/queries/safe.mutations.ts),
   [Safe transaction state and conflict rules](../../../app/src/utils/safe/transactionState.ts), and
   [Safe conflict warning](../../../app/src/components/sections/SafeView/SafeTransactionsWarning.vue)
-- [Safe component tests](../../../app/src/components/sections/SafeView/__tests__) and
-  [Safe composable tests](../../../app/src/composables/safe/__tests__)
+- [Safe component tests](../../../app/src/components/sections/SafeView/__tests__),
+  [Safe deployment tests](../../../app/src/composables/safe/__tests__/useSafeDeployment.spec.ts),
+  [Safe import tests](../../../app/src/composables/safe/__tests__/useSafeImport.spec.ts), and
+  [Safe signer-role tests](../../../app/src/composables/safe/__tests__/useSafeSignerRole.spec.ts)
 - [Safe transaction queue tests](../../../app/src/components/sections/SafeView/__tests__/SafeTransactions.spec.ts),
   [Safe address normalization tests](../../../app/src/utils/safe/__tests__/address.spec.ts),
-  [Safe proposal tests](../../../app/src/lib/safe/__tests__/transactions.spec.ts),
   [Safe transaction state tests](../../../app/src/utils/safe/__tests__/transactionState.spec.ts), and
   [Safe conflict warning tests](../../../app/src/components/sections/SafeView/__tests__/SafeTransactionsWarning.spec.ts)
 - [Expense Account page](../../../app/src/views/team/%5Bid%5D/Accounts/ExpenseAccountView.vue),
@@ -599,26 +612,16 @@ a transfer to another known company pocket is
 
 ### Test-suite ownership
 
-- [Bank composable tests](../../../app/src/composables/bank/__tests__/), [cash-out tests](../../../app/src/composables/cashOut/__tests__/),
-  and [ERC-20 composable tests](../../../app/src/composables/erc20/__tests__/)
+- [Bank write tests](../../../app/src/composables/bank/__tests__/bankWrites.spec.ts),
+  [cash-out orchestration tests](../../../app/src/composables/cashOut/__tests__/useCashOutAll.spec.ts), and
+  [cash-out planning tests](../../../app/src/composables/cashOut/__tests__/plan.spec.ts)
 - [Transfer-form tests](../../../app/src/components/forms/__tests__/TransferForm.spec.ts),
   [company-creation Safe setup tests](../../../app/src/components/sections/TeamView/forms/__tests__/AddTeamForm.safe-setup.spec.ts),
   [owner-withdrawal tests](../../../app/src/components/sections/__tests__/OwnerTreasuryWithdrawAction.spec.ts),
   [Safe account view tests](../../../app/src/views/team/%5Bid%5D/Accounts/__tests__/), and
   [Bank view tests](../../../app/src/views/team/%5Bid%5D/__tests__/BankView.spec.ts)
-- [Safe type tests](../../../app/src/types/__tests__/safe.spec.ts),
-  [Safe schema tests](../../../app/src/types/__tests__/safe.schemas.spec.ts), and
-  [Safe infrastructure constants](../../../app/src/constant/__tests__/safeInfra.test.ts)
-- [Address presentation tests](../../../app/src/components/ui/__tests__/AddressTooltip.spec.ts),
-  [token holdings tests](../../../app/src/components/ui/__tests__/TokenHoldingsSection.spec.ts),
-  [member-token selector tests](../../../app/src/components/ui/inputs/__tests__/SelectMemberWithTokenInput.spec.ts), and
-  [token amount tests](../../../app/src/components/ui/inputs/__tests__/TokenAmountInput.spec.ts)
-- [Contract-balance tests](../../../app/src/composables/__tests__/useContractBalance.spec.ts),
-  [token-balance tests](../../../app/src/lib/balances/__tests__/tokenBalances.spec.ts), and
-  [Safe browser-boundary tests](../../../app/src/lib/safe/__tests__/browser.spec.ts)
-- [Expense validation tests](../../../backend/src/validation/schemas/__tests__/expense.test.ts)
-- [Bank beacon tests](../../../contract/test/BankBeacon.spec.ts), [Bank upgrade tests](../../../contract/test/BankUpgradeModule.spec.ts),
-  [Expense calendar-period tests](../../../contract/test/ExpenseAccountEIP712V2.calendarBasedPeriods.spec.ts),
+- [Safe schema tests](../../../app/src/types/__tests__/safe.schemas.spec.ts)
+- [Expense calendar-period tests](../../../contract/test/ExpenseAccountEIP712V2.calendarBasedPeriods.spec.ts),
   [Expense custom-frequency tests](../../../contract/test/ExpenseAccountEIP712V2.customFrequency.spec.ts), and
   [Expense period-boundary tests](../../../contract/test/ExpenseAccountEIP712V2.isNewPeriod.spec.ts)
 

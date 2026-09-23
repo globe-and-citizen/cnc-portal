@@ -4,7 +4,7 @@ import CashRemunerationView from '../Accounts/CashRemunerationView.vue'
 import { createTestingPinia } from '@pinia/testing'
 import { mockTeamStore } from '@/tests/mocks'
 
-describe('CashRemunerationView.vue', () => {
+describe('[US-PAYROLL-008] [US-PAYROLL-013] CashRemunerationView.vue', () => {
   const createComponent = () => {
     return shallowMount(CashRemunerationView, {
       global: {

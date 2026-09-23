@@ -243,14 +243,6 @@ describe('Weekly Claim Controller', () => {
         message: 'Weekly claim already withdrawn',
       },
       {
-        title: 'sign when the team owner is not the current Cash Remuneration owner',
-        action: 'sign',
-        claim: weeklyClaimFactory({ status: 'pending', wage: ownerWage(CALLER) }),
-        ownerOk: false,
-        expectedStatus: 403,
-        message: 'Caller is not the current Cash Remuneration owner',
-      },
-      {
         title: 'sign week not completed',
         action: 'sign',
         claim: weeklyClaimFactory({ status: 'pending', weekStart: new Date() }),
@@ -299,6 +291,22 @@ describe('Weekly Claim Controller', () => {
         }
       }
     );
+
+    it('[AC-US-PAYROLL-008-03] rejects signing by a team owner who is not the current Cash Remuneration owner', async () => {
+      vi.mocked(isCashRemunerationOwner).mockResolvedValue(false);
+      vi.spyOn(prisma.weeklyClaim, 'findUnique').mockResolvedValue(
+        weeklyClaimFactory({ status: 'pending', wage: ownerWage(CALLER) }) as never
+      );
+
+      const response = await putAction('sign');
+
+      expect(response.status).toBe(403);
+      expect(response.body).toEqual({
+        message: 'Caller is not the current Cash Remuneration owner',
+      });
+      expect(prisma.$transaction).not.toHaveBeenCalled();
+      expect(recoverTypedDataAddress).not.toHaveBeenCalled();
+    });
 
     // Authorization on `withdraw` (issue #2471). Before the fix any
     // authenticated user could flip any team's signed claim to `withdrawn`,
@@ -1116,7 +1124,7 @@ describe('Weekly Claim Controller', () => {
       expect(prisma.weeklyClaim.upsert).not.toHaveBeenCalled();
     });
 
-    it('[AC-US-PAYROLL-005-19] rejects a new daily claim when the week is signed', async () => {
+    it('[AC-US-PAYROLL-004-07] rejects a goals update when the week is signed', async () => {
       mockResolveWageForWeek.mockResolvedValue(currentWage);
       vi.mocked(prisma.weeklyClaim.findFirst).mockResolvedValue(
         weeklyClaimFactory({ id: 5, status: 'signed', signature: '0xabc' }) as never

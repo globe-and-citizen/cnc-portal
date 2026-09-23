@@ -266,7 +266,7 @@ describe('CRSigne', () => {
       await clickApprove()
     })
 
-    it('handles resign flow when claim is disabled', async () => {
+    it('[AC-US-PAYROLL-008-08] handles resign flow when claim is disabled', async () => {
       mockWagmiCore.readContract.mockResolvedValue(true)
       mockCashRemunerationWrites.enableClaim.mutateAsync = vi.fn().mockResolvedValue('0xhash')
 

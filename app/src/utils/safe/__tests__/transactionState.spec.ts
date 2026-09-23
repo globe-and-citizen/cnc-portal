@@ -166,7 +166,7 @@ describe('getSafeTransactionPermissions', () => {
     expect(permissions.approveHint).toBe('Only a Safe signer can perform this action.')
   })
 
-  it('prevents the connected signer from approving twice', () => {
+  it('[AC-US-SAFE-006-05] prevents the connected signer from approving twice', () => {
     const transaction = makeTransaction({ confirmations: [makeConfirmation(signer)] })
     const permissions = getSafeTransactionPermissions(transaction, {
       state: 'pending',

@@ -91,7 +91,7 @@ const mockApprovals = [
   }
 ]
 
-describe('ExpenseAccountTable - Actions and Loading', () => {
+describe('[US-EXP-003] [US-EXP-004] ExpenseAccountTable - Actions and Loading', () => {
   setActivePinia(createPinia())
 
   interface ComponentOptions {

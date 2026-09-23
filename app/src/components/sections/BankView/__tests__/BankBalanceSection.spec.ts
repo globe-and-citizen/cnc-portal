@@ -23,7 +23,7 @@ const baseTotal = {
   local: { value: 50500, formatted: '$50.5K' }
 }
 
-describe('BankBalanceSection', () => {
+describe('[US-BANK-003] BankBalanceSection', () => {
   const defaultProps = {
     bankAddress: '0x1234567890123456789012345678901234567890' as Address
   }

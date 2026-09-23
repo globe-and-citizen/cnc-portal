@@ -12,7 +12,7 @@ import {
   useQueryClientFn
 } from '@/tests/mocks'
 
-describe('DepositSafeForm.vue', () => {
+describe('[US-SAFE-003] DepositSafeForm.vue', () => {
   const defaultProps = {
     safeAddress: '0xsafeaddress000000000000000000000000' as Address
   }

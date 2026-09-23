@@ -92,6 +92,7 @@ describe('BankTransactions', () => {
     expect(tableLoading(wrapper)).toBe(true)
   })
 
+  // Covers: AC-US-BANK-003-03
   it('filters displayed rows by selected type', async () => {
     wrapper = createWrapper()
 
@@ -103,6 +104,7 @@ describe('BankTransactions', () => {
     expect(data[0]?.type).toBe('deposit')
   })
 
+  // Covers: AC-US-BANK-003-03
   it('filters displayed rows by date range', async () => {
     wrapper = createWrapper()
 

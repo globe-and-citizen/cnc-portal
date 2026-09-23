@@ -132,7 +132,7 @@ const TransferFormStub = defineComponent({
   template: '<div data-test="transfer-form"><slot name="header" /></div>'
 })
 
-describe('SafeBalanceSection', () => {
+describe('[US-SAFE-002] SafeBalanceSection rendering', () => {
   let wrapper: VueWrapper
   const mockCurrency = ref(MOCK_DATA.defaultCurrency)
   const mockSafeInfo = ref<typeof MOCK_DATA.safeInfo | null>(MOCK_DATA.safeInfo)

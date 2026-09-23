@@ -27,7 +27,7 @@ describe('CashRemunerationTotalBalance', () => {
     expect(wrapper.exists()).toBeTruthy()
   })
 
-  it('passes formatted total balance to OverviewCard title', () => {
+  it('[AC-US-PAYROLL-013-01] passes formatted total balance to OverviewCard title', () => {
     const wrapper = createComponent()
     const card = wrapper.findComponent({ name: 'OverviewCard' })
     expect(card.props('title')).toBe('$50.5K')

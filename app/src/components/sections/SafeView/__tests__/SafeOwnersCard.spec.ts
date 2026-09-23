@@ -109,7 +109,7 @@ const UpdateThresholdModalStub = defineComponent({
   template: '<div data-test="update-threshold-modal"></div>'
 })
 
-describe('SafeOwnersCard', () => {
+describe('[US-SAFE-004] SafeOwnersCard', () => {
   let wrapper: VueWrapper<InstanceType<typeof SafeOwnersCard>>
 
   const defaultProps = { address: MOCK_DATA.safeAddress }

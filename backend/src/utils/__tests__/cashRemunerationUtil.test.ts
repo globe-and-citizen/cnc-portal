@@ -22,7 +22,7 @@ vi.mock('../viem.config', () => ({
   },
 }));
 
-describe('cashRemunerationUtil', () => {
+describe('[US-PAYROLL-008] Cash Remuneration ownership', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });

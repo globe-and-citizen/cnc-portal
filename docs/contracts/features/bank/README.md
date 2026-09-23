@@ -164,5 +164,7 @@
   successful write so history reflects the receipt immediately.
 - [Chain-backed Bank Account E2E test](../../../../app/test/e2e/bank/bank-account.spec.ts) and
   [its deployment fixture](../../../../app/test/e2e/bank/bank-chain.ts)
+- [Bank beacon tests](../../../../contract/test/BankBeacon.spec.ts) and
+  [Bank upgrade-module tests](../../../../contract/test/BankUpgradeModule.spec.ts)
 
 _[← Back to index](../README.md)_

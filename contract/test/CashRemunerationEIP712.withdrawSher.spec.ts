@@ -172,7 +172,7 @@ describe('Cash Remuneration - Withdraw SHER', function () {
     ).to.be.equal(true)
   })
 
-  it('mints SHER to user if they earned SHER', async () => {
+  it('[AC-US-PAYROLL-003-05] mints SHER to user if they earned SHER', async () => {
     const wageClaim = {
       employeeAddress: addr1.address,
       minutesWorked: 300,
@@ -205,7 +205,7 @@ describe('Cash Remuneration - Withdraw SHER', function () {
     ).to.be.revertedWithCustomError(investorProxy, 'AccessControlUnauthorizedAccount')
   })
 
-  it('disables claims so the user cannot withdraw SHER', async () => {
+  it('[AC-US-PAYROLL-010-13] disables claims so the user cannot withdraw SHER', async () => {
     const wageClaim = {
       employeeAddress: addr1.address,
       minutesWorked: 300,

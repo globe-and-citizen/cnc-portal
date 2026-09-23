@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { getMondayStart } from '../dayUtils';
 
-describe('dayUtils', () => {
+describe('[US-PAYROLL-005] Payroll week boundaries', () => {
   describe('getMondayStart', () => {
     it('returns the Monday of the current week for a Tuesday', () => {
       // Tuesday, January 9, 2024

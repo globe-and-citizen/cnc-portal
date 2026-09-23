@@ -17,7 +17,7 @@ const safeInfo = (owners: string[]): SafeInfo => ({
   version: '1.4.1'
 })
 
-describe('useSafeSignerRole', () => {
+describe('[US-SAFE-006] useSafeSignerRole', () => {
   it('recognises the connected wallet as a signer regardless of address casing', () => {
     mockUserStore.address = OWNER.toUpperCase().replace('0X', '0x')
     const { isConnectedUserOwner } = useSafeSignerRole(ref(safeInfo([OWNER])))

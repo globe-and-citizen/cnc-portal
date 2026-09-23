@@ -112,7 +112,7 @@ describe('CashRemuneration*** (EIP712)', () => {
         expect(await cashRemunerationProxy.owner()).to.eq(await employer.getAddress())
       })
 
-      it('Then I can deposit into the cash remuneration contract', async () => {
+      it('[AC-US-PAYROLL-003-03] Then I can deposit into the cash remuneration contract', async () => {
         const amount = ethers.parseEther('5000')
         const tx = await employer.sendTransaction({
           to: await cashRemunerationProxy.getAddress(),
@@ -232,7 +232,7 @@ describe('CashRemuneration*** (EIP712)', () => {
             'CashRemunerationEIP712__UnauthorizedAccess'
           )
         })
-        it('the withdrawer is not the approved user', async () => {
+        it('[AC-US-PAYROLL-010-08] the withdrawer is not the approved user', async () => {
           const wageClaim = {
             employeeAddress: employee.address,
             minutesWorked: 300,
@@ -258,7 +258,7 @@ describe('CashRemuneration*** (EIP712)', () => {
             'CashRemunerationEIP712__NotClaimOwner'
           )
         })
-        it('the wage has already been paid', async () => {
+        it('[AC-US-PAYROLL-010-12] the wage has already been paid', async () => {
           const wageClaim = {
             employeeAddress: employee.address,
             minutesWorked: 100,
@@ -294,7 +294,7 @@ describe('CashRemuneration*** (EIP712)', () => {
             'CashRemunerationEIP712__WageAlreadyPaid'
           )
         })
-        it('the wage amount exceeds the contract balance', async () => {
+        it('[AC-US-PAYROLL-010-15] the wage amount exceeds the contract balance', async () => {
           const wageClaim = {
             employeeAddress: employee.address,
             minutesWorked: 300,
@@ -317,7 +317,7 @@ describe('CashRemuneration*** (EIP712)', () => {
             cashRemunerationProxy.connect(employee).withdraw(wageClaim, signature)
           ).to.be.revert(ethers)
         })
-        it('the contract is paused', async () => {
+        it('[AC-US-PAYROLL-010-16] the contract is paused', async () => {
           await expect(cashRemunerationProxy.pause())
             .to.emit(cashRemunerationProxy, 'Paused')
             .withArgs(employer.address)

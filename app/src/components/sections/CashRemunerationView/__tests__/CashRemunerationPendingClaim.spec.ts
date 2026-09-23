@@ -55,7 +55,7 @@ describe('CashRemunerationPendingClaim', () => {
     expect(wrapper.exists()).toBeTruthy()
   })
 
-  it('computes and passes total pending amount to OverviewCard', () => {
+  it('[AC-US-PAYROLL-013-02] computes and passes total pending amount to OverviewCard', () => {
     const wrapper = createComponent()
     const card = wrapper.findComponent(OverviewCard)
 

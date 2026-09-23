@@ -77,13 +77,14 @@ describe('SubmitWeeklyGoals', () => {
     expect(wrapper.get('[data-test="submit-weekly-goals-button"]').text()).toBe('Edit Weekly Goals')
   })
 
-  it('disables the button once the week is signed', () => {
+  it('[US-PAYROLL-004] disables the button once the week is signed', () => {
     const wrapper = createComponent({ weeklyClaim: makeWeeklyClaim({ status: 'signed' }) })
     expect(
       wrapper.get('[data-test="submit-weekly-goals-button"]').attributes('disabled')
     ).toBeDefined()
   })
 
+  // Covers: AC-US-PAYROLL-004-03
   it('submits the memo with the team id and selected week, then toasts success', async () => {
     const wrapper = createComponent({
       weeklyClaim: makeWeeklyClaim({ weeklyGoals: '# Existing goals' })
@@ -99,6 +100,7 @@ describe('SubmitWeeklyGoals', () => {
     expect(mockToast.add).toHaveBeenCalledWith(expect.objectContaining({ color: 'success' }))
   })
 
+  // Covers: AC-US-PAYROLL-004-03
   it('sends the edited memo content from the editor', async () => {
     const wrapper = createComponent({ weeklyClaim: makeWeeklyClaim() })
 

@@ -4,7 +4,7 @@ import ApproveExpenseSummaryForm from '../ApproveExpenseSummaryForm.vue'
 const START_DATE = Math.floor(new Date().getTime() / 1000)
 const END_DATE = START_DATE + 86400 * 30 // 30 days later
 
-describe('ApproveExpenseSummaryForm', () => {
+describe('[US-EXP-001] ApproveExpenseSummaryForm', () => {
   const createComponent = (overrides = {}) => {
     return mount(ApproveExpenseSummaryForm, {
       props: {
