@@ -42,28 +42,44 @@ function coverageMark(paths) {
   return paths.length === 0 ? '—' : `✅ ${paths.length}`
 }
 
-function renderFeatureCoverage(document, coverage) {
-  const title = document.content.match(/^# (.+?) — User Stories/m)?.[1] ?? document.path
-  const rows = coverage.filter((criterion) => criterion.documentPath === document.path)
+function renderStoryCoverage(storyId, rows) {
   const lines = [
-    `## ${title}`,
+    `### ${storyId}`,
     '',
-    '| Acceptance Criterion | Implemented | Frontend | Backend | Contract | E2E |',
-    '| -------------------- | ----------- | -------- | ------- | -------- | --- |'
+    '| Acceptance Criterion | Implemented | Integrated E2E | Mocked Browser | Frontend | Backend | Contract |',
+    '| -------------------- | ----------- | -------------- | -------------- | -------- | ------- | -------- |'
   ]
 
   for (const criterion of rows) {
     lines.push(
-      `| ${criterion.id} | ${criterion.checked ? '✅' : '❌'} | ${coverageMark(criterion.layers.frontend)} | ${coverageMark(criterion.layers.backend)} | ${coverageMark(criterion.layers.contract)} | ${coverageMark(criterion.layers.e2e)} |`
+      `| ${criterion.id} | ${criterion.checked ? '✅' : '❌'} | ${coverageMark(criterion.e2eModes.integrated)} | ${coverageMark(criterion.e2eModes.mocked)} | ${coverageMark(criterion.layers.frontend)} | ${coverageMark(criterion.layers.backend)} | ${coverageMark(criterion.layers.contract)} |`
     )
   }
+
+  return lines.join('\n')
+}
+
+function renderFeatureCoverage(document, coverage) {
+  const title = document.content.match(/^# (.+?) — User Stories/m)?.[1] ?? document.path
+  const rows = coverage.filter((criterion) => criterion.documentPath === document.path)
+  const rowsByStory = new Map()
+  for (const criterion of rows) {
+    const storyRows = rowsByStory.get(criterion.storyId) ?? []
+    storyRows.push(criterion)
+    rowsByStory.set(criterion.storyId, storyRows)
+  }
+  const lines = [
+    `## ${title}`,
+    '',
+    ...[...rowsByStory].flatMap(([storyId, storyRows]) => [renderStoryCoverage(storyId, storyRows), ''])
+  ]
 
   const evidence = rows.flatMap((criterion) =>
     Object.entries(criterion.layers).flatMap(([layer, paths]) =>
       paths.map((path) => `- \`${criterion.id}\` — ${layer}: \`${path}\``)
     )
   )
-  if (evidence.length > 0) lines.push('', '### Representative evidence', '', ...evidence)
+  if (evidence.length > 0) lines.push('### Representative evidence', '', ...evidence)
 
   return lines.join('\n')
 }
@@ -99,22 +115,18 @@ if (result.errors.length > 0) {
 }
 
 const coverage = summarizeAcceptanceCriterionCoverage(result.criteria, result.references)
-const requestedDocuments = featureDocuments.filter((document) =>
-  featurePaths.includes(document.path)
-)
+const requestedDocuments = featureDocuments.filter((document) => featurePaths.includes(document.path))
 const report = [
   '# Acceptance-Criterion Test Coverage',
   '',
   `**Generated:** ${new Date().toISOString()}`,
   '',
-  'Generated from representative `AC-US-*` references. Counts identify evidence by repository layer; they do not prove exhaustive coverage or a passing latest run.',
+  'Generated from representative `AC-US-*` references. Counts identify evidence by repository layer and distinguish integrated E2E journeys from mocked browser acceptance tests. They do not prove exhaustive coverage or a passing latest run.',
   '',
   requestedDocuments.map((document) => renderFeatureCoverage(document, coverage)).join('\n\n'),
   ''
 ].join('\n')
-const reportName = requestedFeature
-  ? `${requestedFeature.replaceAll('/', '-')}.md`
-  : 'all-features.md'
+const reportName = requestedFeature ? `${requestedFeature.replaceAll('/', '-')}.md` : 'all-features.md'
 const reportDirectory = resolve(repositoryRoot, 'reports/acceptance-coverage')
 const reportPath = resolve(reportDirectory, reportName)
 

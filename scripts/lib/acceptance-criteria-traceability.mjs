@@ -4,6 +4,19 @@ const CRITERION = /^- \[([ xX])\] (?:`(AC-US-[A-Z0-9-]+-\d{2,})`\s+)?(.+)$/
 const ACCEPTANCE_ID_REFERENCE = /\[(AC-US-[A-Z0-9-]+-\d{2,})\]/g
 
 export const TEST_COVERAGE_LAYERS = ['frontend', 'backend', 'contract', 'e2e', 'other']
+export const E2E_COVERAGE_MODES = ['integrated', 'mocked', 'unclassified']
+export const ACCEPTANCE_COVERAGE_LABELS = ['Integrated E2E', 'Mocked browser', 'Frontend', 'Backend', 'Contract']
+
+export function classifyE2eCoverageMode(document) {
+  if (!/^app\/test\/e2e\//.test(document.path)) return null
+
+  const integrated = document.content.includes('@integrated')
+  const mocked = document.content.includes('@mocked')
+
+  if (integrated && !mocked) return 'integrated'
+  if (mocked && !integrated) return 'mocked'
+  return 'unclassified'
+}
 
 export function parseAcceptanceCriteria(document) {
   const criteria = []
@@ -48,10 +61,63 @@ export function parseAcceptanceCriteria(document) {
   return criteria
 }
 
+export function parseAcceptanceCoverageRows(document) {
+  const rows = []
+  let storyId = null
+  let inTestCoverage = false
+
+  for (const [index, line] of document.content.split('\n').entries()) {
+    const story = line.match(STORY_HEADING)
+    if (story) {
+      storyId = story[1]
+      inTestCoverage = false
+      continue
+    }
+
+    if (line.startsWith('## ')) {
+      storyId = null
+      inTestCoverage = false
+      continue
+    }
+
+    const section = line.match(SECTION_HEADING)
+    if (section) {
+      inTestCoverage = storyId !== null && section[1] === 'Test Coverage'
+      continue
+    }
+
+    if (!storyId || !inTestCoverage || !line.startsWith('|')) continue
+
+    const cells = line
+      .split('|')
+      .slice(1, -1)
+      .map((cell) => cell.trim())
+    if (cells.length !== 4) continue
+
+    const id = cells[0].replaceAll('`', '')
+    if (!/^AC-US-[A-Z0-9-]+-\d{2,}$/.test(id)) continue
+
+    rows.push({
+      documentPath: document.path,
+      line: index + 1,
+      storyId,
+      id,
+      expected: cells[1],
+      current: cells[2],
+      status: cells[3]
+    })
+  }
+
+  return rows
+}
+
 export function acceptanceCriterionReferences(document) {
+  const e2eMode = classifyE2eCoverageMode(document)
+
   return [...document.content.matchAll(ACCEPTANCE_ID_REFERENCE)].map((match) => ({
     documentPath: document.path,
-    id: match[1]
+    id: match[1],
+    e2eMode
   }))
 }
 
@@ -65,6 +131,7 @@ export function classifyTestCoverageLayer(documentPath) {
 
 export function summarizeAcceptanceCriterionCoverage(criteria, references) {
   const referencesById = new Map()
+  const e2eReferencesById = new Map()
 
   for (const reference of references) {
     const layer = classifyTestCoverageLayer(reference.documentPath)
@@ -73,6 +140,15 @@ export function summarizeAcceptanceCriterionCoverage(criteria, references) {
     paths.add(reference.documentPath)
     layers.set(layer, paths)
     referencesById.set(reference.id, layers)
+
+    if (layer === 'e2e') {
+      const modes = e2eReferencesById.get(reference.id) ?? new Map()
+      const mode = E2E_COVERAGE_MODES.includes(reference.e2eMode) ? reference.e2eMode : 'unclassified'
+      const modePaths = modes.get(mode) ?? new Set()
+      modePaths.add(reference.documentPath)
+      modes.set(mode, modePaths)
+      e2eReferencesById.set(reference.id, modes)
+    }
   }
 
   return criteria.map((criterion) => {
@@ -80,9 +156,91 @@ export function summarizeAcceptanceCriterionCoverage(criteria, references) {
     const layers = Object.fromEntries(
       TEST_COVERAGE_LAYERS.map((layer) => [layer, [...(referencesForCriterion.get(layer) ?? [])]])
     )
+    const e2eReferencesForCriterion = e2eReferencesById.get(criterion.id) ?? new Map()
+    const e2eModes = Object.fromEntries(
+      E2E_COVERAGE_MODES.map((mode) => [mode, [...(e2eReferencesForCriterion.get(mode) ?? [])]])
+    )
 
-    return { ...criterion, layers }
+    return { ...criterion, layers, e2eModes }
   })
+}
+
+export function acceptanceCoverageLabels(criterion) {
+  const labels = []
+  if (criterion.e2eModes.integrated.length > 0) labels.push('Integrated E2E')
+  if (criterion.e2eModes.mocked.length > 0) labels.push('Mocked browser')
+  if (criterion.layers.frontend.length > 0) labels.push('Frontend')
+  if (criterion.layers.backend.length > 0) labels.push('Backend')
+  if (criterion.layers.contract.length > 0) labels.push('Contract')
+  if (criterion.e2eModes.unclassified.length > 0) labels.push('Unclassified E2E')
+  if (criterion.layers.other.length > 0) labels.push('Other')
+  return labels
+}
+
+function validateAcceptanceCoverageRows({ featureDocuments, criteria, references }) {
+  const errors = []
+  const criteriaById = new Map(criteria.map((criterion) => [criterion.id, criterion]))
+  const coverageById = new Map(
+    summarizeAcceptanceCriterionCoverage(criteria, references).map((criterion) => [criterion.id, criterion])
+  )
+
+  for (const document of featureDocuments) {
+    const rows = parseAcceptanceCoverageRows(document)
+    const coveredStories = new Set(rows.map((row) => row.storyId))
+    const rowsById = new Map()
+
+    for (const row of rows) {
+      const location = `${row.documentPath}:${row.line}`
+      const criterion = criteriaById.get(row.id)
+      if (!criterion) {
+        errors.push(`${location} declares coverage for unknown acceptance criterion ${row.id}.`)
+        continue
+      }
+      if (criterion.storyId !== row.storyId) {
+        errors.push(`${location} declares ${row.id} under ${row.storyId}, but it belongs to ${criterion.storyId}.`)
+      }
+      if (rowsById.has(row.id)) {
+        errors.push(`${location} duplicates the test-coverage row for ${row.id}.`)
+        continue
+      }
+      rowsById.set(row.id, row)
+
+      const expectedLabels = row.expected.split(' + ').map((label) => label.trim())
+      const invalidExpected = expectedLabels.filter((label) => !ACCEPTANCE_COVERAGE_LABELS.includes(label))
+      if (invalidExpected.length > 0) {
+        errors.push(`${location} uses unsupported expected coverage ${invalidExpected.join(', ')} for ${row.id}.`)
+        continue
+      }
+
+      const currentLabels = acceptanceCoverageLabels(coverageById.get(row.id))
+      const expectedCurrent = currentLabels.length > 0 ? currentLabels.join(' + ') : 'None linked'
+      if (row.current !== expectedCurrent) {
+        errors.push(
+          `${location} reports ${row.current} for ${row.id}; current representative coverage is ${expectedCurrent}.`
+        )
+      }
+
+      const hasExpectedCoverage = expectedLabels.every((label) => currentLabels.includes(label))
+      const expectedStatus = hasExpectedCoverage
+        ? '✅ Met'
+        : currentLabels.length > 0
+          ? '⚠️ Insufficient'
+          : '❌ Missing'
+      if (row.status !== expectedStatus) {
+        errors.push(`${location} reports ${row.status} for ${row.id}; expected ${expectedStatus}.`)
+      }
+    }
+
+    for (const criterion of criteria.filter(
+      (candidate) => candidate.documentPath === document.path && coveredStories.has(candidate.storyId)
+    )) {
+      if (!rowsById.has(criterion.id)) {
+        errors.push(`${document.path} is missing a test-coverage row for ${criterion.id} under ${criterion.storyId}.`)
+      }
+    }
+  }
+
+  return errors
 }
 
 export function validateAcceptanceCriteriaTraceability({ featureDocuments, testDocuments }) {
@@ -106,9 +264,7 @@ export function validateAcceptanceCriteriaTraceability({ featureDocuments, testD
 
     const known = criteriaById.get(criterion.id)
     if (known) {
-      errors.push(
-        `${location} duplicates ${criterion.id}, already used at ${known.documentPath}:${known.line}.`
-      )
+      errors.push(`${location} duplicates ${criterion.id}, already used at ${known.documentPath}:${known.line}.`)
       continue
     }
 
@@ -141,6 +297,14 @@ export function validateAcceptanceCriteriaTraceability({ featureDocuments, testD
       )
     }
   }
+
+  errors.push(
+    ...validateAcceptanceCoverageRows({
+      featureDocuments,
+      criteria,
+      references
+    })
+  )
 
   return { errors, criteria, references }
 }

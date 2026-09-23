@@ -1,13 +1,18 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import {
+  classifyE2eCoverageMode,
   classifyTestCoverageLayer,
+  parseAcceptanceCoverageRows,
   parseAcceptanceCriteria,
   summarizeAcceptanceCriterionCoverage,
   validateAcceptanceCriteriaTraceability
 } from './lib/acceptance-criteria-traceability.mjs'
 
-const feature = (content, path = 'docs/features/example/README.md') => ({ path, content })
+const feature = (content, path = 'docs/features/example/README.md') => ({
+  path,
+  content
+})
 const testDocument = (content, path = 'app/src/example/__tests__/example.spec.ts') => ({
   path,
   content
@@ -68,15 +73,93 @@ test('accepts structured coverage comments for representative test references', 
   assert.equal(result.references.length, 1)
 })
 
+test('validates optional per-story coverage targets against representative evidence', () => {
+  const documentedCoverage = feature(`${validFeature.content}
+
+### Test Coverage
+
+| Acceptance Criterion | Expected Coverage | Current Coverage | Status |
+| -------------------- | ----------------- | ---------------- | ------ |
+| \`AC-US-EXAMPLE-001-01\` | Integrated E2E | Integrated E2E | ✅ Met |
+| \`AC-US-EXAMPLE-001-02\` | Mocked browser | None linked | ❌ Missing |
+`)
+  const integratedTest = testDocument(
+    `test.describe('journey', { tag: '@integrated' }, () => {
+  /**
+   * Covers:
+   * - [AC-US-EXAMPLE-001-01]
+   */
+  test('proves the primary outcome', () => {})
+})`,
+    'app/test/e2e/example.integrated.spec.ts'
+  )
+
+  assert.equal(parseAcceptanceCoverageRows(documentedCoverage).length, 2)
+  assert.deepEqual(
+    validateAcceptanceCriteriaTraceability({
+      featureDocuments: [documentedCoverage],
+      testDocuments: [integratedTest]
+    }).errors,
+    []
+  )
+})
+
+test('rejects stale current coverage and derived status cells', () => {
+  const documentedCoverage = feature(`${validFeature.content}
+
+### Test Coverage
+
+| Acceptance Criterion | Expected Coverage | Current Coverage | Status |
+| -------------------- | ----------------- | ---------------- | ------ |
+| \`AC-US-EXAMPLE-001-01\` | Integrated E2E | Mocked browser | ✅ Met |
+| \`AC-US-EXAMPLE-001-02\` | Backend | None linked | ✅ Met |
+`)
+  const integratedTest = testDocument(
+    `test.describe('journey', { tag: '@integrated' }, () => {
+  /** Covers: [AC-US-EXAMPLE-001-01] */
+  test('proves the primary outcome', () => {})
+})`,
+    'app/test/e2e/example.integrated.spec.ts'
+  )
+
+  assert.deepEqual(
+    validateAcceptanceCriteriaTraceability({
+      featureDocuments: [documentedCoverage],
+      testDocuments: [integratedTest]
+    }).errors,
+    [
+      'docs/features/example/README.md:20 reports Mocked browser for AC-US-EXAMPLE-001-01; current representative coverage is Integrated E2E.',
+      'docs/features/example/README.md:21 reports ✅ Met for AC-US-EXAMPLE-001-02; expected ❌ Missing.'
+    ]
+  )
+})
+
 test('classifies representative evidence by repository layer', () => {
   assert.equal(classifyTestCoverageLayer('app/src/example/__tests__/example.spec.ts'), 'frontend')
-  assert.equal(
-    classifyTestCoverageLayer('backend/src/example/__tests__/example.test.ts'),
-    'backend'
-  )
+  assert.equal(classifyTestCoverageLayer('backend/src/example/__tests__/example.test.ts'), 'backend')
   assert.equal(classifyTestCoverageLayer('contract/test/Example.spec.ts'), 'contract')
   assert.equal(classifyTestCoverageLayer('app/test/e2e/example.spec.ts'), 'e2e')
   assert.equal(classifyTestCoverageLayer('scripts/example.test.mjs'), 'other')
+})
+
+test('classifies E2E evidence by its declared integration mode', () => {
+  assert.equal(
+    classifyE2eCoverageMode(
+      testDocument("test.describe('journey', { tag: '@integrated' }, () => {})", 'app/test/e2e/integrated.spec.ts')
+    ),
+    'integrated'
+  )
+  assert.equal(
+    classifyE2eCoverageMode(
+      testDocument("test.describe('variant', { tag: '@mocked' }, () => {})", 'app/test/e2e/mocked.spec.ts')
+    ),
+    'mocked'
+  )
+  assert.equal(
+    classifyE2eCoverageMode(testDocument("test('ambiguous', () => {})", 'app/test/e2e/ambiguous.spec.ts')),
+    'unclassified'
+  )
+  assert.equal(classifyE2eCoverageMode(testDocument("test('unit', () => {})")), null)
 })
 
 test('summarizes unique representative files for every acceptance criterion', () => {
@@ -92,7 +175,8 @@ test('summarizes unique representative files for every acceptance criterion', ()
     },
     {
       id: 'AC-US-EXAMPLE-001-01',
-      documentPath: 'app/test/e2e/example.spec.ts'
+      documentPath: 'app/test/e2e/example.spec.ts',
+      e2eMode: 'integrated'
     }
   ])
 
@@ -103,12 +187,22 @@ test('summarizes unique representative files for every acceptance criterion', ()
     e2e: ['app/test/e2e/example.spec.ts'],
     other: []
   })
+  assert.deepEqual(coverage[0].e2eModes, {
+    integrated: ['app/test/e2e/example.spec.ts'],
+    mocked: [],
+    unclassified: []
+  })
   assert.deepEqual(coverage[1].layers, {
     frontend: [],
     backend: [],
     contract: [],
     e2e: [],
     other: []
+  })
+  assert.deepEqual(coverage[1].e2eModes, {
+    integrated: [],
+    mocked: [],
+    unclassified: []
   })
 })
 
@@ -171,9 +265,7 @@ test('rejects duplicate and incomplete story-local sequences', () => {
 test('rejects a test reference to an unknown criterion', () => {
   const result = validateAcceptanceCriteriaTraceability({
     featureDocuments: [validFeature],
-    testDocuments: [
-      testDocument("it('[AC-US-EXAMPLE-001-03] proves an unknown outcome', () => {})")
-    ]
+    testDocuments: [testDocument("it('[AC-US-EXAMPLE-001-03] proves an unknown outcome', () => {})")]
   })
 
   assert.deepEqual(result.errors, [
@@ -184,9 +276,7 @@ test('rejects a test reference to an unknown criterion', () => {
 test('rejects a test reference to an unchecked criterion', () => {
   const result = validateAcceptanceCriteriaTraceability({
     featureDocuments: [validFeature],
-    testDocuments: [
-      testDocument("it('[AC-US-EXAMPLE-001-02] claims an unfinished outcome', () => {})")
-    ]
+    testDocuments: [testDocument("it('[AC-US-EXAMPLE-001-02] claims an unfinished outcome', () => {})")]
   })
 
   assert.deepEqual(result.errors, [
