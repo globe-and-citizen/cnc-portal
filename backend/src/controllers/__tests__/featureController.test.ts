@@ -27,7 +27,7 @@ describe('Feature Controller', () => {
   });
 
   describe('listFeatures', () => {
-    it('returns all features with status 200', async () => {
+    it('[AC-US-FLAG-001-01] returns all features with status 200', async () => {
       const mockFeatures = [
         { functionName: 'SUBMIT_RESTRICTION', status: 'enabled' },
         { functionName: 'APPROVAL_FLOW', status: 'disabled' },
@@ -96,7 +96,7 @@ describe('Feature Controller', () => {
   });
 
   describe('createNewFeature', () => {
-    it('returns 409 if feature already exists', async () => {
+    it('[AC-US-FLAG-001-08] returns 409 if feature already exists', async () => {
       vi.mocked(featureUtils.featureExists).mockResolvedValue(true);
       vi.mocked(errorResponse).mockReturnValue(undefined);
 
@@ -110,7 +110,7 @@ describe('Feature Controller', () => {
       expect(errorResponse).toHaveBeenCalledWith(409, 'Feature "EXISTING" already exists', res);
     });
 
-    it('creates a new feature with status 201', async () => {
+    it('[AC-US-FLAG-001-02] creates a new feature with status 201', async () => {
       const mockFeature = { functionName: 'NEW_FEATURE', status: 'enabled' };
       vi.mocked(featureUtils.featureExists).mockResolvedValue(false);
       vi.mocked(featureUtils.insertFeature).mockResolvedValue(mockFeature as any);
@@ -140,7 +140,7 @@ describe('Feature Controller', () => {
   });
 
   describe('updateFeatureByName', () => {
-    it('returns 404 when feature not found', async () => {
+    it('[AC-US-FLAG-001-09] returns 404 when feature not found', async () => {
       vi.mocked(featureUtils.featureExists).mockResolvedValue(false);
       vi.mocked(errorResponse).mockReturnValue(undefined);
 
@@ -155,7 +155,7 @@ describe('Feature Controller', () => {
       expect(errorResponse).toHaveBeenCalledWith(404, 'Feature "NONEXISTENT" not found', res);
     });
 
-    it('updates feature status with status 200', async () => {
+    it('[AC-US-FLAG-001-03] updates feature status with status 200', async () => {
       const mockFeature = { functionName: 'SUBMIT_RESTRICTION', status: 'disabled' };
       vi.mocked(featureUtils.featureExists).mockResolvedValue(true);
       vi.mocked(featureUtils.patchFeature).mockResolvedValue(mockFeature as any);
@@ -187,7 +187,7 @@ describe('Feature Controller', () => {
   });
 
   describe('deleteFeatureByName', () => {
-    it('returns 404 when feature not found', async () => {
+    it('[AC-US-FLAG-003-05] returns 404 when feature not found', async () => {
       vi.mocked(featureUtils.featureExists).mockResolvedValue(false);
       vi.mocked(errorResponse).mockReturnValue(undefined);
 
@@ -199,7 +199,7 @@ describe('Feature Controller', () => {
       expect(errorResponse).toHaveBeenCalledWith(404, 'Feature "NONEXISTENT" not found', res);
     });
 
-    it('returns 500 if deletion fails', async () => {
+    it('[AC-US-FLAG-003-06] returns 500 if deletion fails', async () => {
       vi.mocked(featureUtils.featureExists).mockResolvedValue(true);
       vi.mocked(featureUtils.removeFeature).mockResolvedValue(false);
       vi.mocked(errorResponse).mockReturnValue(undefined);
@@ -216,7 +216,7 @@ describe('Feature Controller', () => {
       );
     });
 
-    it('deletes feature with status 204', async () => {
+    it('[AC-US-FLAG-003-01] deletes feature with status 204', async () => {
       vi.mocked(featureUtils.featureExists).mockResolvedValue(true);
       vi.mocked(featureUtils.removeFeature).mockResolvedValue(true);
 
@@ -242,7 +242,7 @@ describe('Feature Controller', () => {
   });
 
   describe('createOverride', () => {
-    it('returns 404 if feature not found', async () => {
+    it('[AC-US-FLAG-002-08] returns 404 if feature not found', async () => {
       vi.mocked(featureUtils.featureExists).mockResolvedValue(false);
       vi.mocked(errorResponse).mockReturnValue(undefined);
 
@@ -257,7 +257,7 @@ describe('Feature Controller', () => {
       expect(errorResponse).toHaveBeenCalledWith(404, 'Feature "NONEXISTENT" not found', res);
     });
 
-    it('returns 404 if team not found', async () => {
+    it('[AC-US-FLAG-002-08] returns 404 if team not found', async () => {
       vi.mocked(featureUtils.featureExists).mockResolvedValue(true);
       vi.mocked(featureUtils.teamExists).mockResolvedValue(false);
       vi.mocked(errorResponse).mockReturnValue(undefined);
@@ -273,7 +273,7 @@ describe('Feature Controller', () => {
       expect(errorResponse).toHaveBeenCalledWith(404, 'Team with ID 999 not found', res);
     });
 
-    it('returns 409 if override already exists', async () => {
+    it('[AC-US-FLAG-002-09] returns 409 if override already exists', async () => {
       vi.mocked(featureUtils.featureExists).mockResolvedValue(true);
       vi.mocked(featureUtils.teamExists).mockResolvedValue(true);
       vi.mocked(featureUtils.overrideExists).mockResolvedValue(true);
@@ -294,7 +294,7 @@ describe('Feature Controller', () => {
       );
     });
 
-    it('creates a team override with status 201', async () => {
+    it('[AC-US-FLAG-002-02] creates a team override with status 201', async () => {
       const mockOverride = {
         id: 1,
         functionName: 'SUBMIT_RESTRICTION',
@@ -360,7 +360,7 @@ describe('Feature Controller', () => {
       expect(errorResponse).toHaveBeenCalledWith(404, 'Team with ID 999 not found', res);
     });
 
-    it('returns 404 if override does not exist', async () => {
+    it('[AC-US-FLAG-002-10] returns 404 if override does not exist', async () => {
       vi.mocked(featureUtils.featureExists).mockResolvedValue(true);
       vi.mocked(featureUtils.teamExists).mockResolvedValue(true);
       vi.mocked(featureUtils.overrideExists).mockResolvedValue(false);
@@ -381,7 +381,7 @@ describe('Feature Controller', () => {
       );
     });
 
-    it('updates a team override with status 200', async () => {
+    it('[AC-US-FLAG-002-03] updates a team override with status 200', async () => {
       const mockOverride = {
         id: 1,
         functionName: 'SUBMIT_RESTRICTION',
@@ -433,7 +433,7 @@ describe('Feature Controller', () => {
       expect(errorResponse).toHaveBeenCalledWith(404, 'Feature "NONEXISTENT" not found', res);
     });
 
-    it('returns 404 if override not found', async () => {
+    it('[AC-US-FLAG-002-11] returns 404 if override not found', async () => {
       vi.mocked(featureUtils.featureExists).mockResolvedValue(true);
       vi.mocked(featureUtils.overrideExists).mockResolvedValue(false);
       vi.mocked(errorResponse).mockReturnValue(undefined);
@@ -468,7 +468,7 @@ describe('Feature Controller', () => {
       expect(errorResponse).toHaveBeenCalledWith(500, 'Failed to delete override', res);
     });
 
-    it('removes a team override with status 204', async () => {
+    it('[AC-US-FLAG-002-04] removes a team override with status 204', async () => {
       vi.mocked(featureUtils.featureExists).mockResolvedValue(true);
       vi.mocked(featureUtils.overrideExists).mockResolvedValue(true);
       vi.mocked(featureUtils.removeOverrideRecord).mockResolvedValue(true);
