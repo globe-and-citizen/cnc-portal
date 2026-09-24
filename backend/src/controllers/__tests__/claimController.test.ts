@@ -972,6 +972,23 @@ describe('Claim Controller', () => {
       expect(response.body.message).toBe("Can't edit: Claim is not pending");
     });
 
+    it('should return 403 if a disabled weekly claim is edited', async () => {
+      const mockClaim = {
+        id: 1,
+        wage: { userAddress: TEST_ADDRESS },
+        weeklyClaim: { status: 'disabled' },
+        fileAttachments: null,
+      };
+      const updateSpy = vi.spyOn(prisma.claim, 'update');
+      vi.spyOn(prisma.claim, 'findFirst').mockResolvedValue(mockClaim as any);
+
+      const response = await request(app).put('/1').send({ memo: 'Frozen claim' });
+
+      expect(response.status).toBe(403);
+      expect(response.body.message).toBe("Can't edit: Claim is not pending");
+      expect(updateSpy).not.toHaveBeenCalled();
+    });
+
     // File attachment tests
     describe('File Attachments', () => {
       it('deletes and adds files in the same request', async () => {
@@ -1116,13 +1133,13 @@ describe('Claim Controller', () => {
       expect(response.body.message).toBe('Claim not found');
     });
 
-    it('returns 403 if claim status is not pending or disabled', async () => {
+    it('returns 403 if claim status is not pending', async () => {
       setupMockClaim('signed', TEST_ADDRESS);
 
       const response = await request(app).delete('/1');
 
       expect(response.status).toBe(403);
-      expect(response.body.message).toBe("Can't delete: Claim is not pending or disabled");
+      expect(response.body.message).toBe("Can't delete: Claim is not pending");
     });
 
     it('returns 403 if caller is not claim owner', async () => {
@@ -1187,14 +1204,15 @@ describe('Claim Controller', () => {
       expect(mockWeeklyClaimDelete).not.toHaveBeenCalled();
     });
 
-    it('allows deletion of disabled claims', async () => {
+    it('returns 403 if a disabled weekly claim is deleted', async () => {
       setupMockClaim('disabled');
-      vi.spyOn(prisma.claim, 'delete').mockResolvedValue({} as any);
+      const deleteSpy = vi.spyOn(prisma.claim, 'delete');
 
       const response = await request(app).delete('/1');
 
-      expect(response.status).toBe(200);
-      expect(response.body.message).toBe('Claim deleted successfully');
+      expect(response.status).toBe(403);
+      expect(response.body.message).toBe("Can't delete: Claim is not pending");
+      expect(deleteSpy).not.toHaveBeenCalled();
     });
 
     it('reports a persistence failure while deleting a claim', async () => {

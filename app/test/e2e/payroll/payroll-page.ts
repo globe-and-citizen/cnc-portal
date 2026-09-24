@@ -112,6 +112,11 @@ export async function fundCashRemuneration(
     timeout: 30_000
   })
 
+  return getCashRemunerationAddress(page, teamId)
+}
+
+/** Read the Payroll contract address through the visible account page. */
+export async function getCashRemunerationAddress(page: Page, teamId: string): Promise<Address> {
   await openAccountFromSidebar(page, `/teams/${teamId}/accounts/payroll-account`)
   return addressFrom(page.locator('[data-test="cash-remuneration-contract-address"]'))
 }

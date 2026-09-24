@@ -270,10 +270,11 @@ coverage; the latest execution result and artifacts belong in Playwright and CI 
   - Main path:
     - [x] Create and then replace the member wage.
     - [x] Pause and resume it.
+    - [x] Block a member without a wage and reject a claim while the wage is paused.
     - [x] Verify the persisted active wage and visible status after reload.
   - Expected result: exactly one current wage controls the member's eligibility.
-  - Status: partial; the owner journey runs against the real frontend, backend, PostgreSQL database, and local chain. Wage validation,
-    authorization, and rejection variants remain lower-level or browser-acceptance coverage.
+  - Status: partial; the owner and member journeys run against the real frontend, backend, PostgreSQL database, and local chain. A member
+    without a wage is blocked and a paused wage is rejected by the backend; broader wage-form validation remains lower-level coverage.
   - Evidence: [integrated Payroll tests](../../app/test/e2e/payroll/payroll.integrated.spec.ts).
 
 - `E2E-PATH-12` — Prepare a weekly claim
@@ -287,9 +288,10 @@ coverage; the latest execution result and artifacts belong in Playwright and CI 
     - [x] Save weekly goals.
     - [x] Create, edit, and delete eligible daily work entries.
     - [x] Recreate the final entry set and verify weekly totals.
+    - [x] Preserve the valid entry while rejecting daily and weekly cap overages.
   - Expected result: the member reaches a deterministic claim-ready week.
-  - Status: partial; one real member identity saves goals and prepares a persisted claim through the product UI. Submission boundaries,
-    attachments, and rejected edits or deletions remain separately covered.
+  - Status: partial; one real member identity saves goals and prepares a persisted claim through the product UI. Daily form validation and
+    the server-side weekly cap preserve the valid entry; attachments and other rejected edits remain separately covered.
   - Evidence: [integrated Payroll tests](../../app/test/e2e/payroll/payroll.integrated.spec.ts).
 
 - `E2E-PATH-13` — Approve, reconcile, withdraw, and review payroll
@@ -307,11 +309,14 @@ coverage; the latest execution result and artifacts belong in Playwright and CI 
     - [x] Withdraw through a real chain transaction.
     - [x] Reconcile backend and chain state.
     - [x] Verify member and owner histories after reload.
+    - [x] Keep signed, disabled, and withdrawn claims read-only for the member.
+    - [x] Block non-owner signing and withdrawal controls, and retain a signed claim when Payroll has insufficient USDC.
   - Expected result: one claim remains traceable from approval through payment and history.
   - Status: partial; the browser funds Payroll through Bank, signs a completed-week claim, verifies the disabled and paid chain flags,
-    withdraws as the paid member, and reloads both perspectives. Invalid signatures, insufficient funding, and unauthorized actions remain
-    separate variants.
-  - Evidence: [integrated Payroll tests](../../app/test/e2e/payroll/payroll.integrated.spec.ts).
+    withdraws as the paid member, and reloads both perspectives. It also verifies the role-gated controls, frozen lifecycle states, and the
+    contract's insufficient-funds rejection. Invalid EIP-712 signatures are rejected by the backend signature-validator test rather than an
+    integrated browser journey, because a true integrated wallet produces valid signatures.
+  - Evidence: [integrated Payroll payment tests](../../app/test/e2e/payroll/payroll-payment.integrated.spec.ts).
 
 ## G6 — Expense Account Lifecycle
 

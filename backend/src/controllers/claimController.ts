@@ -358,8 +358,9 @@ export const updateClaim = async (req: Request, res: Response) => {
       return errorResponse(403, 'Cannot update claim: the wage is disabled', res);
     }
 
-    // Can only edit pending claims
-    if (claim.weeklyClaim?.status !== 'pending' && claim.weeklyClaim?.status !== 'disabled') {
+    // A disabled week has already been frozen by its owner. Daily claims stay
+    // mutable only until their weekly claim is explicitly pending.
+    if (claim.weeklyClaim?.status !== 'pending') {
       return errorResponse(403, "Can't edit: Claim is not pending", res);
     }
 
@@ -490,12 +491,8 @@ export const deleteClaim = async (req: Request, res: Response) => {
 
     const weeklyClaim = claim.weeklyClaim;
 
-    if (
-      weeklyClaim?.status &&
-      weeklyClaim.status !== 'pending' &&
-      weeklyClaim.status !== 'disabled'
-    ) {
-      return errorResponse(403, "Can't delete: Claim is not pending or disabled", res);
+    if (weeklyClaim?.status && weeklyClaim.status !== 'pending') {
+      return errorResponse(403, "Can't delete: Claim is not pending", res);
     }
 
     // Delete attached files from S3 if any exist

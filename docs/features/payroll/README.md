@@ -536,8 +536,6 @@ Functional gaps map to unchecked acceptance criteria.
 
 ### Functional Gaps
 
-- The update and delete APIs allow claims from a disabled week to change even though the functional lifecycle permits changes only while the
-  week is pending.
 - The legacy enable and disable API actions can update the stored status without performing the matching on-chain action.
 - The withdrawn-compensation summary labelled for the current month aggregates every withdrawn claim returned by the API instead of applying
   a current-month boundary (`US-PAYROLL-013`).
@@ -547,7 +545,9 @@ Functional gaps map to unchecked acceptance criteria.
 **Implementation evidence reviewed against:** `a6fa691863eadd41c14ae6bf7a2ff13c1324fd13`
 
 - [Cash Remuneration overview](../../../app/src/components/sections/CashRemunerationView/CashRemunerationOverview.vue),
-  [claim history](../../../app/src/components/sections/ClaimHistoryView/ClaimHistory.vue), and
+  [claim history](../../../app/src/components/sections/ClaimHistoryView/ClaimHistory.vue),
+  [claim-week navigation](../../../app/src/components/sections/ClaimHistoryView/ClaimHistoryWeekNavigator.vue),
+  [weekly-claim screen](../../../app/src/components/sections/WeeklyClaimView/WeeklyClaim.vue), and
   [weekly-claim actions](../../../app/src/components/sections/WeeklyClaimView/WeeklyClaimActionDropdown.vue)
 - [Wage standard step](../../../app/src/components/sections/DashboardView/SetMemberWageStandardStep.vue) and
   [rate-dot presentation](../../../app/src/components/ui/RateDotList.vue)
@@ -586,7 +586,8 @@ Functional gaps map to unchecked acceptance criteria.
 - [Claim API tests](../../../backend/src/controllers/__tests__/claimController.test.ts)
 - [Weekly claim API tests](../../../backend/src/controllers/__tests__/weeklyClaimController.test.ts)
 - [Cash Remuneration contract tests](../../../contract/test/CashRemunerationEIP712.spec.ts)
-- [Integrated Payroll E2E journeys](../../../app/test/e2e/payroll/payroll.integrated.spec.ts)
+- [Integrated Payroll compensation and claim E2E journeys](../../../app/test/e2e/payroll/payroll.integrated.spec.ts)
+- [Integrated Payroll payment E2E journeys](../../../app/test/e2e/payroll/payroll-payment.integrated.spec.ts)
 
 ### Test-suite ownership
 
