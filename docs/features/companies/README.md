@@ -68,18 +68,21 @@ flowchart LR
 ## Test Coverage Overview
 
 Coverage targets describe the required proof for each criterion. Current coverage comes from direct `AC-US-*` references in tracked tests;
-it does not represent the latest pass/fail result, which belongs to CI or the generated local report.
+it does not represent the latest pass/fail result, which belongs to CI or the generated local report. The evidence columns classify every
+criterion whose target is met exactly once: integrated evidence takes precedence, mocked-only has no lower-layer evidence, layer-only has no
+browser evidence, and combined joins mocked-browser and lower-layer evidence. Gaps identify criteria whose expected proof is missing or
+insufficient.
 
-| User Story       | Main Journey  | Coverage Target | Current Coverage Profile                                           | Gaps                                               |
-| ---------------- | ------------- | --------------- | ------------------------------------------------------------------ | -------------------------------------------------- |
-| US-COMPANIES-001 | ✅ Integrated | ✅ 8/8 met      | 3 integrated · 4 mocked-only · 1 backend-only                      | —                                                  |
-| US-COMPANIES-002 | ✅ Integrated | 🚧 6/8 met      | 3 integrated · 2 mocked-only · 1 backend-only                      | `AC-US-COMPANIES-002-06`, `AC-US-COMPANIES-002-08` |
-| US-COMPANIES-003 | ✅ Integrated | ✅ 12/12 met    | 2 integrated · 2 mocked-only · 5 backend-only · 3 frontend-only    | —                                                  |
-| US-COMPANIES-004 | ✅ Integrated | ✅ 6/6 met      | 1 integrated · 2 mocked-only · 2 backend-only · 1 mocked + backend | —                                                  |
-| US-COMPANIES-005 | ✅ Integrated | ✅ 10/10 met    | 3 integrated · 7 backend-only                                      | —                                                  |
-| US-COMPANIES-006 | ✅ Integrated | ✅ 7/7 met      | 3 integrated · 1 mocked-only · 1 backend-only · 2 mocked + backend | —                                                  |
-| US-COMPANIES-007 | ✅ Integrated | 🚧 4/6 met      | 2 integrated · 1 mocked-only · 1 mocked + backend                  | `AC-US-COMPANIES-007-05`, `AC-US-COMPANIES-007-06` |
-| US-COMPANIES-008 | ✅ Integrated | ✅ 6/6 met      | 3 integrated · 2 mocked-only · 1 backend-only                      | —                                                  |
+| User Story       | Main Journey  | Coverage Target | Integrated AC | Mocked-only AC | Layer-only AC | Combined AC | Gaps                                                   |
+| ---------------- | ------------- | --------------- | ------------: | -------------: | ------------: | ----------: | ------------------------------------------------------ |
+| US-COMPANIES-001 | ✅ Integrated | ✅ 8/8          |             3 |              4 |             1 |           0 | —                                                      |
+| US-COMPANIES-002 | ✅ Integrated | ⚠️ 6/8          |             3 |              2 |             1 |           0 | 2 — `AC-US-COMPANIES-002-06`, `AC-US-COMPANIES-002-08` |
+| US-COMPANIES-003 | ✅ Integrated | ✅ 12/12        |             2 |              2 |             8 |           0 | —                                                      |
+| US-COMPANIES-004 | ✅ Integrated | ✅ 6/6          |             1 |              2 |             2 |           1 | —                                                      |
+| US-COMPANIES-005 | ✅ Integrated | ✅ 10/10        |             3 |              0 |             7 |           0 | —                                                      |
+| US-COMPANIES-006 | ✅ Integrated | ✅ 7/7          |             3 |              1 |             1 |           2 | —                                                      |
+| US-COMPANIES-007 | ✅ Integrated | ⚠️ 4/6          |             2 |              1 |             0 |           1 | 2 — `AC-US-COMPANIES-007-05`, `AC-US-COMPANIES-007-06` |
+| US-COMPANIES-008 | ✅ Integrated | ✅ 6/6          |             3 |              2 |             1 |           0 | —                                                      |
 
 ## US-COMPANIES-001: Create a Company Workspace
 
