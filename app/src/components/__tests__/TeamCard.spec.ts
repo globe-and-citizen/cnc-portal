@@ -116,13 +116,13 @@ describe('TeamCard', () => {
   })
 
   describe('Treasury', () => {
-    it('totals the balance across the four team accounts', () => {
+    it('[AC-US-COMPANIES-003-10] totals the balance across the four team accounts', () => {
       const wrapper = mountCard()
 
       expect(wrapper.find('[data-test="total-balance"]').text()).toBe('$202,000.00')
     })
 
-    it('breaks the balance down into one legend entry per funded account', () => {
+    it('[AC-US-COMPANIES-003-10] breaks the balance down into one legend entry per funded account', () => {
       const text = mountCard().text()
 
       expect(text).toContain('Bank 25%')

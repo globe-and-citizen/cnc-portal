@@ -46,7 +46,7 @@ describe('MyApprovedExpenseSection', () => {
     vi.mocked(useGetExpensesQuery).mockReturnValue(createMockQueryResponse([]))
   })
 
-  it('renders a row only for the current user approvals', () => {
+  it('[AC-US-EXP-004-07] renders a row only for the current user approvals', () => {
     vi.mocked(useGetExpensesQuery).mockReturnValue(
       createMockQueryResponse([
         expense({ signature: '0xa' }, { frequencyType: 0 }),

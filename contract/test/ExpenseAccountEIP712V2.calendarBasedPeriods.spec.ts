@@ -119,7 +119,7 @@ describe('ExpenseAccountEIP712V2', function () {
   }
 
   describe('Calendar Period Calculations', function () {
-    it('Should reset weekly budget on Monday', async function () {
+    it('[AC-US-EXP-002-03] resets weekly budget on Monday', async function () {
       const { expenseAccount, owner, approvedAddress, recipient } = await loadFixture(
         deployExpenseAccountFixture
       )
@@ -175,7 +175,7 @@ describe('ExpenseAccountEIP712V2', function () {
       expect(newPeriod).to.equal(1)
     })
 
-    it('Should reset monthly budget on 1st of month', async function () {
+    it('resets monthly budget on 1st of month', async function () {
       const { expenseAccount, owner, approvedAddress, recipient } = await loadFixture(
         deployExpenseAccountFixture
       )
@@ -235,7 +235,7 @@ describe('ExpenseAccountEIP712V2', function () {
       expect(newPeriod).to.equal(1)
     })
 
-    it('Should handle partial month at start correctly', async function () {
+    it('calculates a partial first month from the start date', async function () {
       const { expenseAccount } = await loadFixture(deployExpenseAccountFixture)
 
       // Use Date.UTC() for all timestamps
@@ -272,7 +272,7 @@ describe('ExpenseAccountEIP712V2', function () {
       expect(mar1Period).to.equal(2)
     })
 
-    it('Should handle week boundaries correctly with Monday-based weeks', async function () {
+    it('calculates Monday-based weekly boundaries', async function () {
       const { expenseAccount } = await loadFixture(deployExpenseAccountFixture)
 
       // Use specific known Monday dates with Date.UTC()
@@ -314,7 +314,7 @@ describe('ExpenseAccountEIP712V2', function () {
       expect(thirdMondayPeriod).to.equal(2)
     })
 
-    it('Should handle weekly budget starting mid-week with partial first week', async function () {
+    it('handles weekly budget starting mid-week with partial first week', async function () {
       const { expenseAccount, owner, approvedAddress, recipient } = await loadFixture(
         deployExpenseAccountFixture
       )
@@ -398,7 +398,7 @@ describe('ExpenseAccountEIP712V2', function () {
       expect(expenseBalance.totalWithdrawn).to.equal(ethers.parseEther('0.8'))
     })
 
-    it('Should handle year boundaries for monthly periods', async function () {
+    it('handles year boundaries for monthly periods', async function () {
       const { expenseAccount } = await loadFixture(deployExpenseAccountFixture)
 
       // Use correct UTC timestamps
@@ -435,7 +435,7 @@ describe('ExpenseAccountEIP712V2', function () {
       expect(feb1Period).to.equal(2)
     })
 
-    it('Should handle exact start of month for monthly periods', async function () {
+    it('handles exact start of month for monthly periods', async function () {
       const { expenseAccount } = await loadFixture(deployExpenseAccountFixture)
 
       // Use correct UTC timestamps

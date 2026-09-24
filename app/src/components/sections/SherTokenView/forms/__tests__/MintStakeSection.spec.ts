@@ -47,7 +47,7 @@ const mountSection = (recipientAddress = VALID_ADDRESS) =>
     }
   })
 
-describe('MintStakeSection.vue', () => {
+describe('[US-SHER-004] MintStakeSection.vue', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockInvestorReads.totalSupply.data.value = 100_000_000n

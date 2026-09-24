@@ -148,7 +148,8 @@ coverage; the latest execution result and artifacts belong in Playwright and CI 
   - Separate variants: invalid metadata, existing members, owner removal, non-owner writes, archived-company writes, and rejected requests.
   - Expected result: company identity and membership remain consistent for both actors.
   - Status: partial; metadata and membership mutations now share one integrated path, while second-user access remains planned.
-  - Evidence: [integrated company tests](../../app/test/e2e/company/company.integrated.spec.ts).
+  - Evidence: [integrated company tests](../../app/test/e2e/company/company.integrated.spec.ts) and
+    [mocked update variants](../../app/test/e2e/company/company-update.spec.ts).
 
 - `E2E-PATH-04` — Suspend and recover company access
   - Stories validated:
@@ -166,7 +167,9 @@ coverage; the latest execution result and artifacts belong in Playwright and CI 
   - Separate variants: non-member visibility changes, non-owner lifecycle changes, and rejected archived writes.
   - Expected result: personal visibility and company lifecycle remain distinct and recoverable.
   - Status: partial; archive/restore and hide/show now share one integrated path, while cross-wallet isolation remains planned.
-  - Evidence: [integrated company tests](../../app/test/e2e/company/company.integrated.spec.ts).
+  - Evidence: [integrated company tests](../../app/test/e2e/company/company.integrated.spec.ts),
+    [mocked lifecycle variants](../../app/test/e2e/company/company-archive.spec.ts), and
+    [mocked visibility variants](../../app/test/e2e/company/company-visibility.spec.ts).
 
 - `E2E-PATH-05` — Permanently retire a company
   - Story validated: `US-COMPANIES-008` — permanently delete a company.
@@ -180,7 +183,8 @@ coverage; the latest execution result and artifacts belong in Playwright and CI 
   - Separate variants: non-owner and rejected deletion.
   - Expected result: the deleted workspace cannot be reopened or restored.
   - Status: partial; cancellation and permanent removal pass, while cascade evidence remains to be added.
-  - Evidence: [integrated company tests](../../app/test/e2e/company/company.integrated.spec.ts).
+  - Evidence: [integrated company tests](../../app/test/e2e/company/company.integrated.spec.ts) and
+    [mocked deletion variants](../../app/test/e2e/company/company-delete.spec.ts).
 
 ## G3 — Shareholder Lifecycle and SHER
 

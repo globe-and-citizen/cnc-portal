@@ -9,6 +9,7 @@ vi.mock('../viem.config', () => ({
   },
 }));
 
+// US-CONTRACT-OPS-002: the audit classifies stored Officer versions against the active registry generation.
 describe('officerVersion', () => {
   describe('isActiveOfficerVersion', () => {
     it('accepts the floor of the active generation', () => {

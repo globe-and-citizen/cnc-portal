@@ -44,7 +44,7 @@ describe('authMiddleware', () => {
   });
 
   describe('authorizeUser', () => {
-    it('should return 401 if authorization header is missing', async () => {
+    it('returns 401 if authorization header is missing', async () => {
       mockRequest.headers = {};
 
       await authorizeUser(mockRequest as Request, mockResponse as Response, mockNext);
@@ -56,7 +56,7 @@ describe('authMiddleware', () => {
       expect(mockNext).not.toHaveBeenCalled();
     });
 
-    it('should return 401 if authorization format is invalid (no Bearer)', async () => {
+    it('returns 401 if authorization format is invalid (no Bearer)', async () => {
       mockRequest.headers = {
         authorization: 'InvalidFormat token123',
       };
@@ -70,7 +70,7 @@ describe('authMiddleware', () => {
       expect(mockNext).not.toHaveBeenCalled();
     });
 
-    it('should return 401 if authorization format has wrong number of parts', async () => {
+    it('returns 401 if authorization format has wrong number of parts', async () => {
       mockRequest.headers = {
         authorization: 'BearerTokenWithoutSpace',
       };
@@ -84,7 +84,7 @@ describe('authMiddleware', () => {
       expect(mockNext).not.toHaveBeenCalled();
     });
 
-    it('should return 401 if token verification fails', async () => {
+    it('returns 401 if token verification fails', async () => {
       mockRequest.headers = {
         authorization: 'Bearer invalid-token',
       };
@@ -103,7 +103,7 @@ describe('authMiddleware', () => {
       expect(mockNext).not.toHaveBeenCalled();
     });
 
-    it('should return 401 if payload is empty', async () => {
+    it('returns 401 if payload is empty', async () => {
       mockRequest.headers = {
         authorization: 'Bearer valid-token',
       };
@@ -119,7 +119,7 @@ describe('authMiddleware', () => {
       expect(mockNext).not.toHaveBeenCalled();
     });
 
-    it('should return 401 if user does not exist', async () => {
+    it('returns 401 if user does not exist', async () => {
       const testAddress = '0x1234567890123456789012345678901234567890';
       mockRequest.headers = {
         authorization: 'Bearer valid-token',
@@ -139,7 +139,7 @@ describe('authMiddleware', () => {
       expect(mockNext).not.toHaveBeenCalled();
     });
 
-    it('should set address and user then call next if token is valid', async () => {
+    it('sets the authenticated user and calls the next middleware', async () => {
       const testAddress = '0x1234567890123456789012345678901234567890';
       const testUser = {
         address: testAddress,
@@ -163,7 +163,7 @@ describe('authMiddleware', () => {
       expect(mockResponse.status).not.toHaveBeenCalled();
     });
 
-    it('should handle unexpected errors and return 500', async () => {
+    it('returns 500 for an unexpected authentication error', async () => {
       mockRequest.headers = {
         authorization: 'Bearer valid-token',
       };
@@ -179,7 +179,7 @@ describe('authMiddleware', () => {
       expect(mockNext).not.toHaveBeenCalled();
     });
 
-    it('should verify token with correct secret key', async () => {
+    it('verifies token with correct secret key', async () => {
       const testAddress = '0x1234567890123456789012345678901234567890';
       const testToken = 'test-token';
       mockRequest.headers = {

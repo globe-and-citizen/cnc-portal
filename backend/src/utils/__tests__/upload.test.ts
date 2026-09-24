@@ -48,7 +48,7 @@ describe('upload', () => {
   });
 
   describe('upload middleware', () => {
-    it('should export upload middleware', async () => {
+    it('exports upload middleware', async () => {
       const { upload } = await import('../upload');
 
       expect(upload).toBeDefined();
@@ -56,7 +56,7 @@ describe('upload', () => {
       expect(typeof upload.single).toBe('function');
     });
 
-    it('should accept allowed mimetypes in fileFilter', async () => {
+    it('accepts allowed mimetypes in fileFilter', async () => {
       await import('../upload');
 
       const callback = vi.fn();
@@ -65,7 +65,7 @@ describe('upload', () => {
       expect(callback).toHaveBeenCalledWith(null, true);
     });
 
-    it('should reject unsupported mimetypes in fileFilter', async () => {
+    it('rejects unsupported mimetypes in fileFilter', async () => {
       await import('../upload');
 
       const callback = vi.fn();

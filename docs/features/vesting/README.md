@@ -52,14 +52,14 @@ stateDiagram-v2
 
 ## Status Overview
 
-| User Story     | Title                                    | Actor          | Status       |
-| -------------- | ---------------------------------------- | -------------- | ------------ |
-| US-VESTING-001 | Create a minute-precise vesting schedule | Team owner     | ✅ Done      |
-| US-VESTING-002 | View schedules and aggregate totals      | Member / Owner | ✅ Done      |
-| US-VESTING-003 | Release accrued shares                   | Beneficiary    | ✅ Done      |
-| US-VESTING-004 | Stop an active vesting schedule          | Team owner     | ✅ Done      |
-| US-VESTING-005 | Understand vested and claimable progress | Member / Owner | ✅ Done      |
-| US-VESTING-006 | See vesting in the company books         | Member / Owner | 🔗 Reference |
+| User Story     | Title                                    | Actor          | Status         |
+| -------------- | ---------------------------------------- | -------------- | -------------- |
+| US-VESTING-001 | Create a minute-precise vesting schedule | Team owner     | ✅ Done        |
+| US-VESTING-002 | View schedules and aggregate totals      | Member / Owner | 🚧 In Progress |
+| US-VESTING-003 | Release accrued shares                   | Beneficiary    | ✅ Done        |
+| US-VESTING-004 | Stop an active vesting schedule          | Team owner     | ✅ Done        |
+| US-VESTING-005 | Understand vested and claimable progress | Member / Owner | ✅ Done        |
+| US-VESTING-006 | See vesting in the company books         | Member / Owner | 🔗 Reference   |
 
 ## US-VESTING-001: Create a Minute-Precise Vesting Schedule
 
@@ -121,7 +121,9 @@ stateDiagram-v2
 #### Edge & Error Cases
 
 - [x] `AC-US-VESTING-002-08` An empty schedule scope returns zero aggregate totals and no schedule entries.
-- [x] `AC-US-VESTING-002-09` A failed schedule read is reported without being treated as successfully loaded data.
+- [x] `AC-US-VESTING-002-09` A failed active- or archived-schedule contract read is reported without being treated as successfully loaded
+      data.
+- [ ] `AC-US-VESTING-002-10` A malformed successful schedule payload is reported instead of being treated as an empty schedule scope.
 
 **Dependencies:** US-VESTING-001
 
@@ -151,6 +153,8 @@ stateDiagram-v2
 
 - [x] `AC-US-VESTING-003-09` Cancelling a release does not change the schedule or mint shares.
 - [x] `AC-US-VESTING-003-10` A failed release does not change the schedule or mint shares.
+- [x] `AC-US-VESTING-003-11` An open release review stays synchronized with the selected schedule's latest claimable and released amounts
+      before confirmation.
 
 **Accounting:** A successful release moves promised shares into Investor Equity through
 [`UC-VEST-02`](../accounting/journal-entry-catalogue.md#uc-vest-02--vested-sher-released). Its matching Investor mint is not booked again.
@@ -212,6 +216,7 @@ stateDiagram-v2
 
 - [x] `AC-US-VESTING-005-06` Accrued shares remain locked before the cliff boundary.
 - [x] `AC-US-VESTING-005-07` A Cancelled schedule exposes both its released amount and its cancelled amount.
+- [x] `AC-US-VESTING-005-08` A positive base-unit share amount remains visibly positive instead of being rounded to zero.
 
 **Dependencies:** US-VESTING-002, US-VESTING-003, US-VESTING-004
 
@@ -234,27 +239,27 @@ evidence becomes `UC-VEST-01`, `UC-VEST-02`, and `UC-VEST-03` in the General Led
 ## Human Validation
 
 Validated on 2026-08-21 against the current contract behaviour, automated evidence, and product review, for `US-VESTING-001` through
-`US-VESTING-005`. Checked criteria record the verified implementation; this validation records the product review. `US-VESTING-006` is a
-reference to the Accounting-owned acceptance contract and has no independent validation status.
+`US-VESTING-005`. Subsequent implementation review returned `US-VESTING-002` to In Progress because malformed successful payloads are still
+treated as an empty schedule scope. The other checked criteria retain their prior product review. `US-VESTING-006` is a reference to the
+Accounting-owned acceptance contract and has no independent validation status.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `fa7a1732154709f65a459eb1122ead83fcf05ecf`
+**Implementation evidence reviewed against:** `272d6bd8d455cf09e681192f3b9c6c284b63b4fa`
 
-- [Vesting components](../../../app/src/components/sections/VestingView/)
+- [Vesting actions](../../../app/src/components/sections/VestingView/VestingActions.vue) and
+  [schedule totals](../../../app/src/components/sections/VestingView/VestingStats.vue)
 - [Vesting page and read orchestration](../../../app/src/views/team/%5Bid%5D/VestingView.vue)
 - [Schedule overview and actions](../../../app/src/components/sections/VestingView/VestingFlow.vue)
 - [V2 schedule calculations](../../../app/src/utils/vesting/schedule.ts)
 - [Release and Stop review](../../../app/src/components/sections/VestingView/VestingActionReviewModal.vue)
-- [Schedule creation, validation, and submission](../../../app/src/components/sections/VestingView/forms/)
+- [Schedule creation, validation, and submission](../../../app/src/components/sections/VestingView/forms/CreateVesting.vue)
 - [Vesting beneficiary selection](../../../app/src/components/sections/VestingView/forms/VestingGrantDetails.vue)
 - [Frontend vesting reads](../../../app/src/composables/vesting/reads.ts)
 - [Frontend vesting writes](../../../app/src/composables/vesting/writes.ts)
 - [Vesting event feed for accounting (getLogs)](../../../app/src/composables/vesting/useVestingEventsViaLogs.ts)
-- [Vesting accounting entries](../../../app/src/utils/accounting/mappers/vesting.ts) and
-  [vesting accounting tests](../../../app/src/utils/accounting/__tests__/vesting.spec.ts)
+- [Vesting accounting entries](../../../app/src/utils/accounting/mappers/vesting.ts)
 - [Current Vesting contract](../../../contract/contracts/Vesting.sol)
-- [Contract behaviour tests](../../../contract/test/Vesting.spec.ts)
 
 ## Related Documentation
 
@@ -263,3 +268,8 @@ reference to the Accounting-owned acceptance contract and has no independent val
 - [Accounting — User Stories](../accounting/README.md)
 - [Shared member-selection implementation](../../implementation/member-selection/README.md)
 - [Contract features index](../../contracts/features/README.md)
+
+## Known Gaps
+
+- A successfully decoded Vesting response whose member, index, and schedule arrays have inconsistent lengths is currently reduced to an
+  empty schedule list, making malformed data indistinguishable from a company with no schedules (`US-VESTING-002`).

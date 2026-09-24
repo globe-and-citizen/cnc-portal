@@ -35,7 +35,7 @@ const specs = [{ key: 'ledger' }] as SectionSpec[]
 describe('useAccountingExport', () => {
   beforeEach(() => vi.clearAllMocks())
 
-  it('exports a PDF from a snapshot of the live books', async () => {
+  it('[AC-US-ACCT-004-04] exports a PDF from a snapshot of the live books', async () => {
     await useAccountingExport().exportPdf(specs, { filename: 'ledger.pdf' })
     expect(buildTables).toHaveBeenCalledWith({ journal }, specs, expect.any(Function))
     expect(exportTablesPdf).toHaveBeenCalledWith(['pdf-table'], { filename: 'ledger.pdf' })
@@ -49,14 +49,14 @@ describe('useAccountingExport', () => {
     expect(resolveUser).toHaveBeenCalledWith('0xabc')
   })
 
-  it('exports an Excel workbook and confirms with a custom message', async () => {
+  it('[AC-US-ACCT-004-01] exports an Excel workbook and confirms completion', async () => {
     await useAccountingExport().exportExcel(specs, 'ledger.xlsx', 'Ledger saved')
     expect(buildSheets).toHaveBeenCalledWith({ journal }, specs, expect.any(Function))
     expect(exportSheetsExcel).toHaveBeenCalledWith(['excel-sheet'], 'ledger.xlsx')
     expect(mockToast.add).toHaveBeenCalledWith({ title: 'Ledger saved', color: 'success' })
   })
 
-  it('tells the user when a file cannot be produced', async () => {
+  it('[AC-US-ACCT-004-08] reports when an export file cannot be produced', async () => {
     exportTablesPdf.mockRejectedValueOnce(new Error('jspdf blew up'))
     exportSheetsExcel.mockRejectedValueOnce(new Error('exceljs blew up'))
     await useAccountingExport().exportPdf(specs, { filename: 'ledger.pdf' })

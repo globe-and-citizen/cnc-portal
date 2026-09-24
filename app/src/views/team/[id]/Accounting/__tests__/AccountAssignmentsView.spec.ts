@@ -111,7 +111,7 @@ afterEach(() => {
 })
 
 describe('Journal account assignment owner workflow', () => {
-  it('renders all transaction lines with one editor and one explorer link', () => {
+  it('[AC-US-ACCT-006-04] renders the complete entry with one editor and explorer link', () => {
     const view = render()
     expect(view.get('[data-test="assignment-count"]').text()).toContain('1 journal')
     expect(view.findAll('[data-test="assignment-account"]').map((node) => node.text())).toEqual([
@@ -128,7 +128,7 @@ describe('Journal account assignment owner workflow', () => {
     expect(link.attributes('target')).toBe('_blank')
   })
 
-  it('saves the account ID against the complete JournalEntry hash', async () => {
+  it('[AC-US-ACCT-006-02] saves the account ID against the complete JournalEntry hash', async () => {
     const view = render()
     await view.get('[data-test="ledger-account-assignment-trigger"]').trigger('click')
     await view.get('[data-test="ledger-account-assignment-save"]').trigger('click')
@@ -150,7 +150,7 @@ describe('Journal account assignment owner workflow', () => {
     )
   })
 
-  it('reverts the same JournalEntry assignment', async () => {
+  it('[AC-US-ACCT-006-03] reverts the same JournalEntry assignment', async () => {
     const view = render()
     await view.get('[data-test="ledger-account-assignment-clear"]').trigger('click')
     expect(state.remove).toHaveBeenCalledWith(
@@ -164,7 +164,7 @@ describe('Journal account assignment owner workflow', () => {
     )
   })
 
-  it('keeps the previous decision and reports a failed save', async () => {
+  it('[AC-US-ACCT-006-11] keeps the previous decision and reports a failed save', async () => {
     const view = render()
     await view.get('[data-test="ledger-account-assignment-trigger"]').trigger('click')
     await view.get('[data-test="ledger-account-assignment-memo"]').setValue('Draft note')
@@ -193,14 +193,14 @@ describe('Journal account assignment owner workflow', () => {
     expect(view.find('[data-test="ledger-account-assignment-clear"]').exists()).toBe(false)
   })
 
-  it('shows saved decisions without editing controls to a non-owner', () => {
+  it('[AC-US-ACCT-006-09] shows saved decisions without editing controls to a non-owner', () => {
     mockUserStore.address = '0x2222222222222222222222222222222222222222'
     const view = render()
     expect(view.find('[data-test="ledger-account-assignment-trigger"]').exists()).toBe(false)
     expect(view.text()).toContain('Interest Expense — Pay loan interest')
   })
 
-  it('keeps a compound JournalEntry visible once but read-only', () => {
+  it('[AC-US-ACCT-006-08] keeps a compound JournalEntry visible once but read-only', () => {
     const first = withdrawal()
     state.journal!.value = finalizeJournal([
       first,

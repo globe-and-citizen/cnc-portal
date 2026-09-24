@@ -91,7 +91,7 @@ const mockApprovals = [
   }
 ]
 
-describe('ExpenseAccountTable - Actions and Loading', () => {
+describe('[US-EXP-003] [US-EXP-004] ExpenseAccountTable - Actions and Loading', () => {
   setActivePinia(createPinia())
 
   interface ComponentOptions {
@@ -206,7 +206,7 @@ describe('ExpenseAccountTable - Actions and Loading', () => {
       expect(logErrorSpy).toHaveBeenCalled()
     })
 
-    it('should notify error if error getting owner', async () => {
+    it('notifies error if error getting owner', async () => {
       mockUseReadContract.error.value = new Error('Error getting owner')
       const wrapper = createComponent()
       const logErrorSpy = vi.spyOn(log, 'error')

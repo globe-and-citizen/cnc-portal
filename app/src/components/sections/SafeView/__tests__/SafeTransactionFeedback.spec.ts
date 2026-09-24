@@ -10,7 +10,7 @@ const defaultProps = {
   emptyDescription: 'Everything is complete for now.'
 }
 
-describe('SafeTransactionFeedback', () => {
+describe('[US-SAFE-005] SafeTransactionFeedback', () => {
   it('renders a compact retryable queue error', async () => {
     const wrapper = mount(SafeTransactionFeedback, {
       props: { ...defaultProps, hasError: true }

@@ -144,7 +144,7 @@ describe('Cash Remuneration - Withdraw SHER', function () {
     }
   })
 
-  it('Should initialize contracts properly', async () => {
+  it('initializes contract ownership, token support, and roles', async () => {
     expect((await cashRemunerationEIP712Proxy.getOfficerAddress()).toLocaleLowerCase()).to.be.equal(
       (await officer.getAddress()).toLocaleLowerCase()
     )
@@ -172,7 +172,7 @@ describe('Cash Remuneration - Withdraw SHER', function () {
     ).to.be.equal(true)
   })
 
-  it('Should mint SHER to user if they earned SHER', async () => {
+  it('[AC-US-PAYROLL-003-05] mints SHER to user if they earned SHER', async () => {
     const wageClaim = {
       employeeAddress: addr1.address,
       minutesWorked: 300,
@@ -199,13 +199,13 @@ describe('Cash Remuneration - Withdraw SHER', function () {
     expect(await investorProxy.balanceOf(addr1.address)).to.be.equal(amountSher)
   })
 
-  it("Should revert if address trying to mint doesn't have minter role", async () => {
+  it("reverts if address trying to mint doesn't have minter role", async () => {
     await expect(
       investorProxy.connect(addr1).individualMint(owner.address, 20 * 1e6)
     ).to.be.revertedWithCustomError(investorProxy, 'AccessControlUnauthorizedAccount')
   })
 
-  it('Should disable claims so the user cannot withdraw SHER', async () => {
+  it('[AC-US-PAYROLL-010-13] disables claims so the user cannot withdraw SHER', async () => {
     const wageClaim = {
       employeeAddress: addr1.address,
       minutesWorked: 300,
@@ -234,7 +234,7 @@ describe('Cash Remuneration - Withdraw SHER', function () {
     )
   })
 
-  it('Should enable claims so the user can withdraw SHER again', async () => {
+  it('enables claims so the user can withdraw SHER again', async () => {
     const wageClaim = {
       employeeAddress: addr1.address,
       minutesWorked: 300,
@@ -268,13 +268,13 @@ describe('Cash Remuneration - Withdraw SHER', function () {
     expect(await investorProxy.balanceOf(addr1.address)).to.be.equal(amountSher)
   })
 
-  it('Should set officer address during deployment', async () => {
+  it('sets officer address during deployment', async () => {
     expect((await cashRemunerationEIP712Proxy.getOfficerAddress()).toLocaleLowerCase()).to.be.equal(
       (await officer.getAddress()).toLocaleLowerCase()
     )
   })
 
-  it('Should prevent replay of the same SHER mint signature (EIP-712 replay protection)', async () => {
+  it('prevents replay of the same SHER mint signature (EIP-712 replay protection)', async () => {
     const wageClaim = {
       employeeAddress: addr1.address,
       minutesWorked: 300,
@@ -309,7 +309,7 @@ describe('Cash Remuneration - Withdraw SHER', function () {
     expect(await investorProxy.balanceOf(addr1.address)).to.equal(amountSher)
   })
 
-  it('Should prevent replay once a claim has been disabled after use', async () => {
+  it('prevents replay once a claim has been disabled after use', async () => {
     const wageClaim = {
       employeeAddress: addr1.address,
       minutesWorked: 120,

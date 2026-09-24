@@ -24,7 +24,7 @@ describe('useSubmitWeeklyGoalsMutation', () => {
     mockQueryClient()
   })
 
-  it('PUTs the goals memo to weeklyClaim/goals and invalidates team queries', async () => {
+  it('[AC-US-PAYROLL-004-03] PUTs the goals memo to weeklyClaim/goals and invalidates team queries', async () => {
     const invalidateQueries = mockQueryClient()
     vi.mocked(apiClient.put).mockResolvedValue({ data: undefined })
     const body = { teamId: 7, weekStart: '2024-01-01T00:00:00.000Z', weeklyGoals: '# Goals' }

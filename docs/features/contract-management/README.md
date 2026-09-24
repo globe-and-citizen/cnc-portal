@@ -46,7 +46,7 @@ flowchart LR
 | US-CONTRACT-001 | Review the current contract suite  | Company member            | 🧪 Validation  |
 | US-CONTRACT-002 | Manage current contract operations | Owner / Board member      | 🧪 Validation  |
 | US-CONTRACT-003 | Manage advertising campaigns       | Authorized company member | 🚧 In Progress |
-| US-CONTRACT-004 | Review deployment history          | Company member            | 🚧 In Progress |
+| US-CONTRACT-004 | Review deployment history          | Company member            | 🧪 Validation  |
 | US-CONTRACT-005 | Redeploy an Officer generation     | Company owner             | 🧪 Validation  |
 
 ## US-CONTRACT-001: Review the Current Contract Suite
@@ -74,6 +74,10 @@ flowchart LR
 - [x] `AC-US-CONTRACT-001-06` A company without an active Officer generation receives an unavailable-state message instead of a contract
       table.
 - [x] `AC-US-CONTRACT-001-07` A failed Officer-generation history read is reported without hiding the current company contracts.
+- [x] `AC-US-CONTRACT-001-08` Contract read data distinguishes loading, no eligible reads, partial failure, and total failure, and a failed
+      read can be retried.
+- [x] `AC-US-CONTRACT-001-09` For contracts that hold value, the current suite distinguishes loading, unavailable, zero, and populated
+      balances and exposes the supported-asset breakdown.
 
 **Dependencies:** Current company and its active Officer generation
 
@@ -117,9 +121,9 @@ flowchart LR
 
 #### Happy Path
 
-- [ ] `AC-US-CONTRACT-003-01` A user can identify the Campaign Manager configured for the company.
-- [ ] `AC-US-CONTRACT-003-02` An authorized user can manage Campaign Manager administrators and settings.
-- [ ] `AC-US-CONTRACT-003-03` An authorized user can create, review, and close advertising campaigns.
+- [x] `AC-US-CONTRACT-003-01` A user can identify the Campaign Manager configured for the company.
+- [x] `AC-US-CONTRACT-003-02` An authorized user can manage Campaign Manager administrators and settings.
+- [x] `AC-US-CONTRACT-003-03` An authorized user can create, review, and close advertising campaigns.
 
 #### Business Rules
 
@@ -127,7 +131,9 @@ flowchart LR
 
 #### Edge & Error Cases
 
-- [ ] `AC-US-CONTRACT-003-05` A company without a Campaign Manager receives an actionable unavailable-state message.
+- [x] `AC-US-CONTRACT-003-05` A company without a Campaign Manager receives an actionable unavailable-state message.
+- [x] `AC-US-CONTRACT-003-06` The campaign workspace distinguishes loading, a failed read with recovery, a confirmed empty result, and
+      populated campaigns.
 
 **Dependencies:** Current company and a configured Campaign Manager
 
@@ -141,15 +147,24 @@ flowchart LR
 
 #### Happy Path
 
-- [ ] `AC-US-CONTRACT-004-01` A company member can view previous Officer generations separately from the active suite.
+- [x] `AC-US-CONTRACT-004-01` A company member can view previous Officer generations separately from the active suite.
+- [x] `AC-US-CONTRACT-004-04` An eligible legacy-contract owner can review funded source accounts and move recoverable balances through the
+      legacy Officer into the current company Bank.
 
 #### Business Rules
 
-- [ ] `AC-US-CONTRACT-004-02` Previous generations are not presented as contracts currently used for company operations.
+- [x] `AC-US-CONTRACT-004-02` Previous generations are not presented as contracts currently used for company operations.
+- [x] `AC-US-CONTRACT-004-05` An archived company cannot start legacy balance recovery.
+- [x] `AC-US-CONTRACT-004-06` A wallet that does not own the legacy contracts cannot start balance recovery.
+- [x] `AC-US-CONTRACT-004-07` Recovery remains unavailable while the generation is unresolved or unreadable, has no legacy Bank, points to
+      the current Bank, or has no recoverable balance.
+- [x] `AC-US-CONTRACT-004-08` A generation without full-sweep support offers Bank-only recovery and identifies any funded accounts that the
+      operation will leave behind.
 
 #### Edge & Error Cases
 
-- [ ] `AC-US-CONTRACT-004-03` An empty deployment history remains distinguishable from a failed history read.
+- [x] `AC-US-CONTRACT-004-03` An empty deployment history remains distinguishable from a failed history read.
+- [x] `AC-US-CONTRACT-004-09` A failed recovery step identifies the failure and can be retried without rebuilding the completed sequence.
 
 **Dependencies:** Current company and the Officer-generation history read
 
@@ -193,8 +208,7 @@ flowchart LR
 
 **Implementation evidence reviewed against:** `027a59e8c6a540a461c5f686284c92651f143c9f`
 
-- [Contract Management components](../../../app/src/components/sections/ContractManagementView/),
-  [Board reads](../../../app/src/composables/bod/reads.ts), [Board writes](../../../app/src/composables/bod/writes.ts),
+- [Board reads](../../../app/src/composables/bod/reads.ts), [Board writes](../../../app/src/composables/bod/writes.ts),
   [shared contract reads](../../../app/src/composables/contracts/useContractReadData.ts), and
   [shared contract writes](../../../app/src/composables/contracts/useContractWritesV3.ts)
 - [Proposal creation](../../../app/src/components/sections/ProposalsView/forms/CreateProposalForm.vue)
@@ -223,11 +237,20 @@ flowchart LR
 - [Current contract table tests](../../../app/src/components/sections/ContractManagementView/__tests__/MainContractTable.spec.ts)
 - [Current contract action-menu tests](../../../app/src/components/sections/ContractManagementView/__tests__/MainContractActionMenu.spec.ts)
 - [Officer redeploy form tests](../../../app/src/components/sections/ContractManagementView/__tests__/RedeployOfficerModal.spec.ts)
-- [Officer redeploy workflow tests](../../../app/src/composables/contracts/__tests__/useOfficerRedeploy.spec.ts)
-- [Officer redeploy migration recovery tests](../../../app/src/composables/contracts/__tests__/useOfficerRedeploy.retry.spec.ts)
+
+## Known Gaps
+
+- Campaign Manager click and impression rates are configurable and readable, but the current portal and contract accept cumulative spend as
+  an input; they do not derive validated spend from those rates. `AC-US-CONTRACT-003-04` therefore remains incomplete.
+- The legacy TeamContractDetailExtend suite duplicates the current manager-settings coverage with obsolete mocks and assertion-free cases,
+  while TeamContractEventList exercises a component that no current product surface imports. Both suites remain intentionally unmapped
+  pending cleanup or restoration of a reachable journey.
 
 ## Related Documentation
 
 - [Contract feature documentation](../../contracts/features/README.md)
+- [Campaign data-access implementation](../../implementation/campaign-data-access/README.md)
+- [Contract interaction implementation](../../implementation/contract-interactions/README.md)
+- [Officer generation lifecycle implementation](../../implementation/officer-generation-lifecycle/README.md)
 - [Shared member-selection implementation](../../implementation/member-selection/README.md)
 - [Product feature inventory](../README.md)

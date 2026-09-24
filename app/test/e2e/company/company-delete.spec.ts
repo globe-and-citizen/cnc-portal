@@ -28,9 +28,9 @@ import {
 
 const DELETED = 'Company deleted successfully'
 
-// Browser coverage of US-COMPANIES-008. The API is simulated, so cascading
+// Mocked browser coverage of US-COMPANIES-008. The API is simulated, so cascading
 // deletion of related records needs backend coverage.
-test.describe('Company deletion', { tag: ['@US-COMPANIES-008', '@browser'] }, () => {
+test.describe('Company deletion', { tag: ['@US-COMPANIES-008', '@browser', '@mocked'] }, () => {
   test('lets the owner delete the company from the dashboard and returns to the list', async ({
     page
   }) => {
@@ -97,7 +97,7 @@ test.describe('Company deletion', { tag: ['@US-COMPANIES-008', '@browser'] }, ()
     expect(api.team).not.toBeNull()
   })
 
-  test('reports a rejected deletion, keeps the company open, and retries successfully', async ({
+  test('[AC-US-COMPANIES-008-06] reports a rejected deletion, keeps the company open, and retries successfully', async ({
     page
   }) => {
     const api = await openCompanyActions(page)
@@ -159,7 +159,9 @@ test.describe('Company deletion', { tag: ['@US-COMPANIES-008', '@browser'] }, ()
     await expect(companyHeader(page)).toHaveCount(0)
   })
 
-  test('does not offer deletion to a non-owner member', async ({ page }) => {
+  test('[AC-US-COMPANIES-008-03] does not offer deletion to a non-owner member', async ({
+    page
+  }) => {
     const api = await signInToCompanies(page, { user: 'member' })
     await expect(teamCard(page)).toContainText('Employee')
     const items = await openCardMenu(page)

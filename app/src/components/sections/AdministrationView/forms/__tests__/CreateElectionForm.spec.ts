@@ -5,7 +5,7 @@ import CreateElectionForm from '../CreateElectionForm.vue'
 import { emittedPayload, getVm, mountComponent, tomorrow } from './CreateElectionForm.harness'
 
 describe('CreateElectionForm.vue', () => {
-  it('renders form defaults and submit button disabled state', () => {
+  it('[US-EL-01] renders form defaults and submit button disabled state', () => {
     const wrapper = mountComponent(true)
     const vm = getVm(wrapper)
 
@@ -20,7 +20,7 @@ describe('CreateElectionForm.vue', () => {
     expect(wrapper.text()).toContain('An odd number')
   })
 
-  it('renders error alert when errorMessage prop is set', async () => {
+  it('[US-EL-01] renders error alert when errorMessage prop is set', async () => {
     const wrapper = mount(CreateElectionForm, {
       props: { isLoading: false, errorMessage: 'Contract reverted' }
     })
@@ -33,7 +33,7 @@ describe('CreateElectionForm.vue', () => {
     expect(wrapper.find('[data-test="error-alert"]').exists()).toBe(false)
   })
 
-  it('syncs input and popover v-model bindings with component state', async () => {
+  it('[US-EL-01] syncs input and popover v-model bindings with component state', async () => {
     const wrapper = mountComponent()
     const vm = getVm(wrapper)
 
@@ -54,7 +54,7 @@ describe('CreateElectionForm.vue', () => {
     expect(vm.endDateOpen).toBe(true)
   })
 
-  it('requires at least one candidate', () => {
+  it('[US-EL-01] requires at least one candidate', () => {
     const wrapper = mountComponent()
     const vm = getVm(wrapper)
 
@@ -67,7 +67,7 @@ describe('CreateElectionForm.vue', () => {
     expect(wrapper.emitted('createProposal')).toBeFalsy()
   })
 
-  it('requires enough candidates based on winnerCount', () => {
+  it('[US-EL-01] requires enough candidates based on winnerCount', () => {
     const wrapper = mountComponent()
     const vm = getVm(wrapper)
 
@@ -84,7 +84,7 @@ describe('CreateElectionForm.vue', () => {
     expect(wrapper.emitted('createProposal')).toBeFalsy()
   })
 
-  it('rejects duplicate candidates', () => {
+  it('[US-EL-01] rejects duplicate candidates', () => {
     const wrapper = mountComponent()
     const vm = getVm(wrapper)
 
@@ -117,7 +117,7 @@ describe('CreateElectionForm.vue', () => {
     expect(emittedPayload(wrapper).candidates).toEqual([{ name: '', candidateAddress: '' }])
   })
 
-  it('updates both days from the calendar handlers declared in popover content', () => {
+  it('[US-EL-01] updates both days from the calendar handlers declared in popover content', () => {
     const wrapper = mountComponent()
     const vm = getVm(wrapper)
     const popovers = wrapper.findAllComponents({ name: 'UPopover' })
@@ -143,7 +143,7 @@ describe('CreateElectionForm.vue', () => {
     expect(vm.state.endDay?.getFullYear()).toBe(2030)
   })
 
-  it('updates formData through MultiSelectMemberInput v-model binding', async () => {
+  it('[US-EL-01] updates formData through MultiSelectMemberInput v-model binding', async () => {
     const wrapper = mountComponent()
     const vm = getVm(wrapper)
     const multiSelect = wrapper.findComponent({ name: 'MultiSelectMemberInput' })
@@ -155,7 +155,7 @@ describe('CreateElectionForm.vue', () => {
     expect(vm.formData).toEqual([{ address: '0xabc', name: 'Alice' }])
   })
 
-  it('applies winnerCount zod constraints for minimum and odd values', () => {
+  it('[US-EL-01] applies winnerCount zod constraints for minimum and odd values', () => {
     const wrapper = mountComponent()
     const vm = getVm(wrapper)
 

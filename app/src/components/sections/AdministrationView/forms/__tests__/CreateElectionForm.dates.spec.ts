@@ -116,7 +116,7 @@ describe('CreateElectionForm — closing', () => {
     expect(wrapper.emitted('createProposal')).toBeFalsy()
   })
 
-  it('refuses a ballot closing before it opens or too soon after, naming the minimum', () => {
+  it('[AC-US-EL-01-10] rejects a voting window shorter than five minutes', () => {
     const wrapper = mountComponent()
     const vm = getVm(wrapper)
     vm.formData = [{ address: '0x1', name: 'Alice' }]

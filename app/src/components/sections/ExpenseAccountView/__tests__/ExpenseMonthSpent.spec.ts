@@ -88,11 +88,13 @@ describe('ExpenseMonthSpent', () => {
     expect(delta(createWrapper()).exists()).toBe(false)
   })
 
+  // Covers: AC-US-EXP-004-12
   it('shows an upward delta when spending increased', () => {
     setSpend([200], [100])
     expect(delta(createWrapper()).text()).toContain('+ 100.0%')
   })
 
+  // Covers: AC-US-EXP-004-12
   it('shows a downward delta when spending decreased', () => {
     setSpend([60], [120])
     expect(delta(createWrapper()).text()).toContain('- 50.0%')

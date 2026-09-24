@@ -5,7 +5,7 @@ const LOWERCASE_SAFE_ADDRESS = '0x0557f280d9da274254e85ee70c2936694e494275'
 const CHECKSUM_SAFE_ADDRESS = '0x0557F280D9DA274254e85Ee70c2936694e494275'
 
 describe('normalizeSafeAddress', () => {
-  it('converts a lowercase Safe address to EIP-55 checksum form', () => {
+  it('[AC-US-SAFE-001-08] converts a lowercase Safe address to EIP-55 checksum form', () => {
     expect(normalizeSafeAddress(LOWERCASE_SAFE_ADDRESS)).toBe(CHECKSUM_SAFE_ADDRESS)
   })
 

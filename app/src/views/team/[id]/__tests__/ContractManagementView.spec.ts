@@ -69,7 +69,7 @@ describe('ContractManagementView.vue', () => {
     expect(mockRouterReplace).toHaveBeenLastCalledWith({ query: { tab: 'history' } })
   })
 
-  it('passes Officer history to the deployment history tab', () => {
+  it('[AC-US-CONTRACT-004-01] passes previous Officer generations to deployment history', () => {
     const wrapper = renderWithProviders(ContractManagementView, {
       pinia: false,
       route: { query: { tab: 'history' } }

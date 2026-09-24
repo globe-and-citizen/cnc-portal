@@ -89,7 +89,7 @@ function mountStep(props: Partial<{ showAlert: boolean; showSkip: boolean }> = {
   })
 }
 
-describe('InvestorContractStep', () => {
+describe('[US-COMPANIES-002] InvestorContractStep', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockDeployMutation.isPending.value = false

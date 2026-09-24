@@ -96,6 +96,8 @@ source revision inspected. It does not communicate a release version or replace 
 - Keep historical explanations in Git, issues, pull requests, or explicitly labelled historical references.
 - Do not infer runtime correctness from an old completion status, branch name, or test count.
 - Link exact payloads and function signatures to OpenAPI, ABIs, or source instead of copying them.
+- Periodically review technical-only tests for product-visible outcomes. Move the product facet to an existing feature US/AC, or create a
+  new criterion only after verifying the current journey and intended behavior; keep purely architectural guarantees here.
 
 ## Diagrams
 

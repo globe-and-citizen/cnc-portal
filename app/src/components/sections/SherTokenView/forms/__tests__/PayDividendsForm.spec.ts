@@ -165,7 +165,7 @@ describe('PayDividendsForm.vue', () => {
     expect(submitEvents?.[0]).toEqual([2500000n, 'usdc'])
   })
 
-  it('passes non-sher tokens to TokenAmountInput', () => {
+  it('[AC-US-SHER-002-07] excludes SHER from dividend token choices', () => {
     mockUseContractBalance.balances.value = defaultBalances()
 
     const wrapper = createComponent()

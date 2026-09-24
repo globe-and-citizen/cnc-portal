@@ -4,7 +4,7 @@ import { buildCashOutPlan } from '../plan'
 const keys = (balances: Parameters<typeof buildCashOutPlan>[0]) =>
   buildCashOutPlan(balances).map((s) => s.key)
 
-describe('buildCashOutPlan', () => {
+describe('[US-BANK-004] buildCashOutPlan', () => {
   it('returns no steps when every account is empty', () => {
     expect(buildCashOutPlan({ cashRemuneration: 0, expense: 0, bank: 0 })).toEqual([])
   })

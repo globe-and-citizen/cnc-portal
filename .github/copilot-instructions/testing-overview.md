@@ -48,9 +48,39 @@ Naming:
 - **Use `data-test` attributes**, never CSS classes or DOM structure, to query elements. The component standard requires `data-test` on
   every interactive element.
 - **Test what users see**, not `wrapper.vm.someInternalRef`.
-- **One responsibility per test**, descriptive name (`should emit update:modelValue when option is selected`, not `works correctly`).
+- **One responsibility per test**, with a concise declarative title in the present tense
+  (`emits update:modelValue when an option is selected`, not `should emit ...` or `works correctly`). The title completes the implicit
+  phrase `it ...`, so `should` only repeats what the test API already expresses.
 - **Cover, for each component**: rendering with different props, user interactions, prop/state changes, event emissions, error states,
   loading states, accessibility, edge cases.
+
+## Acceptance traceability in test names
+
+Use acceptance identifiers only on representative tests whose assertions directly prove the criterion. Follow the complete traceability
+contract in the [Feature Documentation Guide](../../docs/platform/feature-specification-guide.md#acceptance-criteria-and-traceability).
+
+- When a test represents exactly one canonical ID, put it in the title rather than a comment. Prefer the most specific ID: prefix the test
+  title with its single AC, or the enclosing suite title with its single US. Example:
+  `it('[AC-US-COMPANIES-004-02] rejects metadata updates from a non-owner', ...)`.
+- When one coherent test proves two or more canonical IDs, keep the title readable and list the IDs in a structured `Covers` block
+  immediately above the test. A single-ID `Covers` block is invalid.
+- For E2E journeys, put a single user-story ID in the enclosing suite, prefix a path title when it proves one AC, and use a `Covers` block
+  only when the path proves multiple criteria.
+- An identifier records traceability; the assertions remain the evidence. Do not tag incidental tests merely to increase reported coverage.
+
+Run `npm run report:acceptance-coverage` from the repository root for the complete local audit. The Git-ignored report inventories test
+files across frontend, backend, contract, dashboard, and E2E layers. A test file is attached to a feature either by a direct `US-*` or
+`AC-US-*` marker or by a test path linked from that feature's canonical Implementation Evidence. The report labels those mapping sources:
+canonical evidence establishes feature support only, while a direct marker establishes story traceability and, for an AC, representative
+criterion evidence. Links from canonical contract or implementation documentation classify technical-only support separately. Files with
+none of these mappings remain visible in the unmapped checklist until reviewed. The feature overview separates feature-only support, direct
+story links, and representative AC evidence, with counts for each repository layer and both E2E integration modes.
+
+Review feature-only and technical-only tests as a documentation discovery surface. A test may reveal an existing US/AC whose representative
+evidence is not linked, or a stable user-visible outcome absent from the feature contract. Verify the assertions, implementation, current
+journey, and intended product boundary before changing documentation. Add a new AC only for an observable product outcome or business rule;
+add a new US only for a distinct actor goal. Keep implementation details under technical ownership, and do not turn stale or accidental test
+behavior into a product promise.
 
 ## Mocking conventions
 

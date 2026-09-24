@@ -36,7 +36,7 @@ function makeRound(overrides: Partial<CreditRound> = {}): CreditRound {
   }
 }
 
-describe('CreditHistoryTable', () => {
+describe('[US-CC-001] CreditHistoryTable', () => {
   it('renders one row per history round with its status and outcome', () => {
     store.historyRounds = [makeRound()]
     const wrapper = mount(CreditHistoryTable)

@@ -116,7 +116,7 @@ describe('Expense Controller', () => {
   });
 
   describe('POST: /', () => {
-    it('should return 400 if required parameters are missing', async () => {
+    it('returns 400 if required parameters are missing', async () => {
       vi.spyOn(publicClient, 'readContract').mockResolvedValue('0x123');
       const response = await request(app).post('/').send({ teamId: 1 });
 
@@ -125,7 +125,7 @@ describe('Expense Controller', () => {
       expect(response.body.message).toContain('Invalid request body');
     });
 
-    it('Should return 403 if the caller is not the owner of the team', async () => {
+    it('rejects a status change from a non-owner', async () => {
       vi.spyOn(prisma.team, 'findFirst').mockResolvedValueOnce(null);
       vi.spyOn(prisma.teamContract, 'findFirst').mockResolvedValueOnce({
         id: 1,
@@ -148,7 +148,7 @@ describe('Expense Controller', () => {
       expect(response.status).toBe(403);
       expect(response.body.message).toBe('Caller is not the owner of the team');
     });
-    it('should create a new expense', async () => {
+    it('creates a new expense', async () => {
       vi.spyOn(prisma.team, 'findFirst').mockResolvedValueOnce(mockTeam);
       vi.spyOn(prisma.teamContract, 'findFirst').mockResolvedValueOnce({
         id: 1,
@@ -177,7 +177,7 @@ describe('Expense Controller', () => {
       expect(response.body).toEqual(mockExpense);
     });
 
-    it('should return 500 if there is a server error', async () => {
+    it('returns 500 if there is a server error', async () => {
       vi.spyOn(prisma.team, 'findFirst').mockResolvedValueOnce(mockTeam);
       vi.spyOn(prisma.teamContract, 'findFirst').mockResolvedValueOnce({
         id: 1,
@@ -205,14 +205,14 @@ describe('Expense Controller', () => {
   });
 
   describe('GET: /', () => {
-    it('should return 400 if teamId is invalid', async () => {
+    it('returns 400 if teamId is invalid', async () => {
       const response = await request(app).get('/').query({ teamId: 'abc' });
 
       expect(response.status).toBe(400);
       expect(response.body.message).toBe('Invalid query parameters - teamId: Must be a number');
     });
 
-    it('should return 403 if caller is not a team member', async () => {
+    it('returns 403 if caller is not a team member', async () => {
       vi.spyOn(prisma.team, 'findFirst').mockResolvedValue(null);
 
       const response = await request(app).get('/').query({ teamId: 1 });
@@ -221,7 +221,7 @@ describe('Expense Controller', () => {
       expect(response.body.message).toBe('Caller is not a member of the team');
     });
 
-    it('should return expenses for a valid team', async () => {
+    it('returns expenses for a valid team', async () => {
       // Replace the method directly
       publicClient.getBlock = vi.fn().mockResolvedValue({
         timestamp: BigInt(Math.floor(Date.now() / 1000)),
@@ -257,7 +257,7 @@ describe('Expense Controller', () => {
       expect(response.status).toBe(200);
     });
 
-    it('should filter expenses by status when status is provided', async () => {
+    it('filters expenses by status when status is provided', async () => {
       vi.spyOn(prisma.team, 'findFirst').mockResolvedValue(mockTeam);
       vi.spyOn(prisma.expense, 'findMany').mockResolvedValue([
         {
@@ -288,7 +288,7 @@ describe('Expense Controller', () => {
       });
     });
 
-    it('should return 500 if there is a server error', async () => {
+    it('returns 500 if there is a server error', async () => {
       vi.spyOn(prisma.team, 'findFirst').mockRejectedValue('Server error');
 
       const response = await request(app).get('/').query({ teamId: 1 });
@@ -299,28 +299,28 @@ describe('Expense Controller', () => {
   });
 
   describe('PUT: /expense/:id', () => {
-    it('should return 400 if expense ID is invalid', async () => {
+    it('returns 400 if expense ID is invalid', async () => {
       const response = await request(app).patch('/abc').send({ status: 'disable' });
 
       expect(response.status).toBe(400);
       expect(response.body.message).toBe('Invalid path parameters - id: Must be a number');
     });
 
-    it('should return 400 if status is missing', async () => {
+    it('returns 400 if status is missing', async () => {
       const response = await request(app).patch('/1').send({});
 
       expect(response.status).toBe(400);
       expect(response.body.message).toContain('Invalid request body');
     });
 
-    it('should return 400 if status is invalid', async () => {
+    it('returns 400 if status is invalid', async () => {
       const response = await request(app).patch('/1').send({ status: 'invalidStatus' });
 
       expect(response.status).toBe(400);
       expect(response.body.message).toContain('Invalid request body');
     });
 
-    it('should return 403 if caller is not the owner of the team and the status is disable', async () => {
+    it('[US-EXP-003] rejects disabling an expense when the caller is not the company owner', async () => {
       // First call resolves the teamId for the rejectIfArchived middleware,
       // second call is the controller owner check which fails (not owner).
       vi.spyOn(prisma.expense, 'findUnique')
@@ -333,7 +333,7 @@ describe('Expense Controller', () => {
       expect(response.body.message).toBe('Caller is not the owner of the team');
     });
 
-    it('should update the expense status', async () => {
+    it('updates the expense status', async () => {
       // rejectIfArchived middleware resolves the teamId from the expense.
       vi.spyOn(prisma.expense, 'findUnique').mockResolvedValue(mockExpense);
       vi.spyOn(prisma.expense, 'update').mockResolvedValue({
@@ -347,7 +347,7 @@ describe('Expense Controller', () => {
       expect(response.body.status).toBe('expired');
     });
 
-    it('should return 500 if there is a server error', async () => {
+    it('returns 500 if there is a server error', async () => {
       // rejectIfArchived middleware resolves the teamId from the expense.
       vi.spyOn(prisma.expense, 'findUnique').mockResolvedValue(mockExpense);
       vi.spyOn(prisma.expense, 'update').mockRejectedValue('Server error');

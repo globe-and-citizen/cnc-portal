@@ -58,7 +58,7 @@ describe('MainContractActionMenu.vue', () => {
     )
   })
 
-  it('keeps privileged actions disabled without the selected contract permission', () => {
+  it('[AC-US-CONTRACT-002-05] disables privileged actions without contract permission', () => {
     const wrapper = mountComponent()
 
     expect(

@@ -33,8 +33,10 @@
               </div>
             </div>
             <div class="bg-muted flex-1 rounded-xl px-3.5 py-3">
-              <div class="text-muted text-[11px] font-semibold">{{ capLabel }}</div>
-              <div class="mt-0.5 text-base font-bold" data-test="lend-cap">{{ capValue }}</div>
+              <div class="text-muted text-[11px] font-semibold">{{ capDisplay.label }}</div>
+              <div class="mt-0.5 text-base font-bold" data-test="lend-cap">
+                {{ capDisplay.value }}
+              </div>
             </div>
           </div>
 
@@ -106,6 +108,28 @@
           </div>
         </div>
 
+        <!-- Position unavailable -->
+        <div v-if="positionUnavailable" class="px-6">
+          <UAlert
+            color="warning"
+            variant="soft"
+            icon="i-lucide-triangle-alert"
+            title="Couldn't verify your lending position"
+            description="The cap and remaining amounts above may be inaccurate until this is retried."
+            data-test="lend-position-unavailable"
+          >
+            <template #actions>
+              <UButton
+                color="warning"
+                variant="outline"
+                size="xs"
+                label="Try again"
+                @click="retryPosition"
+              />
+            </template>
+          </UAlert>
+        </div>
+
         <!-- Error -->
         <div v-if="submitError" class="px-6">
           <UAlert
@@ -131,7 +155,7 @@
             icon="heroicons:hand-raised"
             :label="isSubmitting ? 'Signing…' : confirmLabel"
             :loading="isSubmitting"
-            :disabled="numericAmount <= 0 || isSubmitting"
+            :disabled="numericAmount <= 0 || isSubmitting || positionUnavailable"
             data-test="lend-confirm"
             @click="confirm"
           />
@@ -142,6 +166,8 @@
 </template>
 
 <script setup lang="ts">
+/* eslint-disable max-lines -- The modal owns its reactive state; extracting a controller would
+   recreate the removed one-consumer composable (see CreateVesting.vue for the same call). */
 import { computed, nextTick, reactive, ref, watch } from 'vue'
 import { useQueryClient } from '@tanstack/vue-query'
 import { parseUnits, zeroAddress, type Address } from 'viem'
@@ -150,8 +176,9 @@ import { useUserDataStore } from '@/stores'
 import {
   useFixedReturnAddress,
   useFixedReturnGetLendingOffer,
-  useFixedReturnMyLenderPositions
+  useFixedReturnMyLenderPosition
 } from '@/composables/fixedReturn/reads'
+import { invalidateAfterLend } from '@/composables/fixedReturn/invalidation'
 import { useFixedReturnLendFunds } from '@/composables/fixedReturn/writes'
 import { useErc20Allowance } from '@/composables/erc20/reads'
 import { useERC20Approve } from '@/composables/erc20/writes'
@@ -162,8 +189,17 @@ import {
   UNCAPPED_ALLOCATION
 } from '@/utils/communityCredit/model'
 import { classifyError } from '@/utils/errors/classifyContractError'
-import { findCreditToken, toLenderOffering } from '@/utils/communityCredit/offer'
-import { createLendAmountSchema, type CreditRound, type LendingOfferStruct } from '@/types'
+import {
+  creditLenderCapDisplay,
+  findCreditToken,
+  toLenderOffering
+} from '@/utils/communityCredit/offer'
+import {
+  createLendAmountSchema,
+  type CreditLenderOffering,
+  type CreditRound,
+  type LendingOfferStruct
+} from '@/types'
 
 const props = defineProps<{ round: CreditRound | null }>()
 const emit = defineEmits<{ close: []; lent: [] }>()
@@ -201,35 +237,41 @@ const isSubmitting = computed(() => approveResult.isPending.value || lendResult.
 // ever reflects the General-mode lenderCap (FixedReturn.sol docs it as "General mode only"),
 // never a whitelist allocation, and `lenders` is empty when opened from the Index list (see
 // lendingOfferToCreditRound's comment — lenders are "resolved lazily by the detail view").
-// Read the live per-lender position the same way the Lender Marketplace does instead.
+// Read the live per-lender position directly (one offer, not the full list) — same
+// approach RoundView.vue's own canLend check uses, and cheaper than the plural
+// useFixedReturnMyLenderPositions this modal previously went through for one round.
 const offerId = computed(() => (props.round ? BigInt(props.round.id) : 0n))
 const { data: rawOffer } = useFixedReturnGetLendingOffer(offerId)
-const { data: myLenderPositions } = useFixedReturnMyLenderPositions()
+const { allocation: myAllocation, deposited: myDeposited } = useFixedReturnMyLenderPosition(offerId)
 
-const lenderOffering = computed(() => {
+// A failed read isn't a confirmed zero position — treating it as one could understate
+// a whitelist cap or overstate what's already deposited. Surface it and block
+// submission instead of silently guessing (see lend-position-unavailable below).
+const positionUnavailable = computed(() => myAllocation.isError.value || myDeposited.isError.value)
+
+const lenderOffering = computed<CreditLenderOffering | null>(() => {
   if (!props.round || !rawOffer.value) return null
-  const position = myLenderPositions.value?.get(Number(props.round.id)) ?? {
-    allocation: 0n,
-    deposited: 0n
-  }
+  const allocationValue = typeof myAllocation.data.value === 'bigint' ? myAllocation.data.value : 0n
+  const depositedValue = typeof myDeposited.data.value === 'bigint' ? myDeposited.data.value : 0n
   const offering = toLenderOffering(
     Number(props.round.id),
     rawOffer.value as LendingOfferStruct,
     decimals.value,
-    position.allocation,
-    position.deposited
+    allocationValue,
+    depositedValue
   )
-  // toLenderOffering formatUnits-es the raw allocation as-is — for an uncapped whitelist
-  // lender that's UNCAPPED_ALLOCATION (near-max uint256), which would otherwise render
-  // as a nonsensical giant "cap" figure. Treat it exactly like no personal cap.
-  return position.allocation === UNCAPPED_ALLOCATION ? { ...offering, cap: null } : offering
+  // toLenderOffering formatUnits-es the raw allocation as-is — for an uncapped
+  // whitelist lender that's UNCAPPED_ALLOCATION (near-max uint256), which would
+  // otherwise render as a nonsensical giant "cap" figure. Treat it like no cap.
+  return allocationValue === UNCAPPED_ALLOCATION ? { ...offering, cap: null } : offering
 })
 
-/** Personal ceiling left — whitelist allocation or general cap, whichever the offer uses. */
-const capLeft = computed(() => {
-  const offering = lenderOffering.value
-  return offering?.cap != null ? Math.max(0, offering.cap - offering.myDeposited) : null
-})
+function retryPosition() {
+  void myAllocation.refetch()
+  void myDeposited.refetch()
+}
+
+const capDisplay = computed(() => creditLenderCapDisplay(lenderOffering.value))
 
 // The "Remaining" tile mirrors the Lender Marketplace's single "remaining" figure — the
 // tighter of the round's funding gap and the lender's own cap/allocation left — not just
@@ -252,15 +294,6 @@ const subtitle = computed(() =>
     ? `${props.round.rate}% interest · repaid ${props.round.maturity || 'at maturity'}`
     : ''
 )
-const capLabel = computed(() =>
-  lenderOffering.value?.cap != null ? 'Your cap left' : 'Per-lender cap'
-)
-const capValue = computed(() =>
-  lenderOffering.value?.cap != null
-    ? formatAmount(capLeft.value ?? 0, props.round?.token)
-    : 'No cap'
-)
-
 const interest = computed(() => (props.round ? (numericAmount.value * props.round.rate) / 100 : 0))
 const total = computed(() => numericAmount.value + interest.value)
 
@@ -305,6 +338,11 @@ async function confirm() {
     submitError.value = `Unsupported token: ${round.token}`
     return
   }
+  if (positionUnavailable.value) {
+    submitError.value = "Couldn't verify your lending position — retry before continuing."
+    return
+  }
+  const tokenAddress = token.value.address as Address
 
   try {
     await refetchAllowance()
@@ -316,12 +354,7 @@ async function confirm() {
       title: `Credit signed — ${formatAmount(numericAmount.value, round.token)} sent`,
       color: 'success'
     })
-    await Promise.all([
-      queryClient.invalidateQueries({ queryKey: ['fixedReturnAllOffers'] }),
-      queryClient.invalidateQueries({ queryKey: ['fixedReturnMyLenderPositions'] }),
-      queryClient.invalidateQueries({ queryKey: ['fixedReturnOfferLenders'] }),
-      queryClient.invalidateQueries({ queryKey: ['fixed-return-events-logs'] })
-    ])
+    await invalidateAfterLend(queryClient, tokenAddress)
     emit('lent')
   } catch (error) {
     submitError.value = classifyError(error, { contract: 'FixedReturn' }).userMessage

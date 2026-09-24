@@ -149,7 +149,7 @@ describe('getContractData', () => {
     mockWagmiCore.getWalletClient.mockResolvedValue(mockWalletClient)
   })
 
-  it('should return readable data for view functions without params', async () => {
+  it('returns readable data for view functions without params', async () => {
     mockWagmiCore.readContract.mockImplementationOnce(() => 'Project X')
     mockWagmiCore.readContract.mockImplementationOnce(() => BigInt('1000000000000000000'))
 
@@ -161,13 +161,13 @@ describe('getContractData', () => {
     ])
   })
 
-  it('should skip functions with inputs', async () => {
+  it('skips functions with inputs', async () => {
     const data = await getContractData(address, [mockAbi[2]])
     expect(data).toEqual([])
     expect(mockWagmiCore.readContract).not.toHaveBeenCalled()
   })
 
-  it('should handle errors gracefully', async () => {
+  it('returns the fallback result when the contract read throws', async () => {
     mockWagmiCore.readContract.mockImplementation(() => {
       throw new Error('Read failed')
     })

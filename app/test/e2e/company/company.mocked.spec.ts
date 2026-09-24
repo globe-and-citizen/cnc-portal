@@ -145,11 +145,9 @@ test.describe(
       expect(api.attempts).toHaveLength(0)
     })
 
-    /**
-     * Covers:
-     * - [AC-US-COMPANIES-001-05]
-     */
-    test('blocks submission for an invalid member supplied by the directory', async ({ page }) => {
+    test('[AC-US-COMPANIES-001-05] blocks submission for an invalid member supplied by the directory', async ({
+      page
+    }) => {
       const api = await openMockedCompanyCreation(page)
       await page.route(/\/api\/user(?:\?.*)?$/, (route) =>
         route.fulfill(
@@ -166,11 +164,9 @@ test.describe(
       expect(api.attempts).toHaveLength(0)
     })
 
-    /**
-     * Covers:
-     * - [AC-US-COMPANIES-001-08]
-     */
-    test('keeps a failed creation recoverable and retries the same details', async ({ page }) => {
+    test('[AC-US-COMPANIES-001-08] keeps a failed creation recoverable and retries the same details', async ({
+      page
+    }) => {
       const api = await openMockedCompanyCreation(page)
       api.failCreation = true
       await enterCompanyDetails(page, 'Preserved after an API failure.')
@@ -222,11 +218,9 @@ test.describe(
   '[US-COMPANIES-004] Mocked company update variants',
   { tag: ['@US-COMPANIES-004', '@mocked', '@browser'] },
   () => {
-    /**
-     * Covers:
-     * - [AC-US-COMPANIES-004-03]
-     */
-    test('rejects invalid metadata before making an API request', async ({ page }) => {
+    test('[AC-US-COMPANIES-004-03] rejects invalid metadata before making an API request', async ({
+      page
+    }) => {
       const api = await createMockedCompanyUntilOfficer(page)
       await finishMockedCompanyWithoutContracts(page)
       await openCompanyMetadataActions(page, 'E2E Company')

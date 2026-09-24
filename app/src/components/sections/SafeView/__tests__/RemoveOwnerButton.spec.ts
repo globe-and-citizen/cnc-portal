@@ -49,7 +49,7 @@ const mountComponent = (props = {}) =>
     }
   })
 
-describe('RemoveOwnerButton', () => {
+describe('[US-SAFE-004] RemoveOwnerButton', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockUseChainId.value = 137

@@ -14,7 +14,7 @@ describe('utils', () => {
   });
 
   describe('errorResponse', () => {
-    it('should return error message for non-500 string error', () => {
+    it('returns error message for non-500 string error', () => {
       errorResponse(400, 'Bad request', mockResponse as Response);
 
       expect(mockResponse.status).toHaveBeenCalledWith(400);
@@ -23,7 +23,7 @@ describe('utils', () => {
       });
     });
 
-    it('should return error message for non-500 Error instance', () => {
+    it('returns error message for non-500 Error instance', () => {
       const error = new Error('Validation failed');
       errorResponse(403, error, mockResponse as Response);
 
@@ -33,7 +33,7 @@ describe('utils', () => {
       });
     });
 
-    it('should return generic message for 500 error with string', () => {
+    it('returns generic message for 500 error with string', () => {
       errorResponse(500, 'Database error', mockResponse as Response);
 
       expect(mockResponse.status).toHaveBeenCalledWith(500);
@@ -43,7 +43,7 @@ describe('utils', () => {
       });
     });
 
-    it('should return generic message for 500 error with Error instance', () => {
+    it('returns generic message for 500 error with Error instance', () => {
       const error = new Error('Database connection failed');
       errorResponse(500, error, mockResponse as Response);
 
@@ -54,7 +54,7 @@ describe('utils', () => {
       });
     });
 
-    it('should log error stack in non-test environment', () => {
+    it('logs error stack in non-test environment', () => {
       const originalEnv = process.env.NODE_ENV;
       process.env.NODE_ENV = 'development';
       const consoleLogSpy = vi.spyOn(console, 'log');
@@ -69,7 +69,7 @@ describe('utils', () => {
       consoleLogSpy.mockRestore();
     });
 
-    it('should log non-Error objects in non-test environment', () => {
+    it('logs non-Error objects in non-test environment', () => {
       const originalEnv = process.env.NODE_ENV;
       process.env.NODE_ENV = 'development';
       const consoleLogSpy = vi.spyOn(console, 'log');
@@ -83,7 +83,7 @@ describe('utils', () => {
       consoleLogSpy.mockRestore();
     });
 
-    it('should handle error without message property for 500', () => {
+    it('handles error without message property for 500', () => {
       const error = { customProperty: 'value' };
       errorResponse(500, error, mockResponse as Response);
 
@@ -96,7 +96,7 @@ describe('utils', () => {
   });
 
   describe('extractAddressAndNonce', () => {
-    it('should extract address and nonce from valid message', () => {
+    it('extracts address and nonce from valid message', () => {
       const message = `Welcome to our platform!
 0x1234567890123456789012345678901234567890
 Please sign this message
@@ -110,7 +110,7 @@ Nonce: abc123`;
       });
     });
 
-    it('should extract address and nonce with extra whitespace', () => {
+    it('extracts address and nonce with extra whitespace', () => {
       const message = `Welcome
   0x1234567890123456789012345678901234567890  
 Sign this
@@ -124,7 +124,7 @@ Nonce:   xyz789  `;
       });
     });
 
-    it('should throw error if address is missing', () => {
+    it('throws error if address is missing', () => {
       const message = `Welcome to our platform!
 Please sign this message
 Nonce: abc123`;
@@ -134,7 +134,7 @@ Nonce: abc123`;
       );
     });
 
-    it('should throw error if nonce is missing', () => {
+    it('throws error if nonce is missing', () => {
       const message = `Welcome to our platform!
 0x1234567890123456789012345678901234567890
 Please sign this message`;
@@ -142,7 +142,7 @@ Please sign this message`;
       expect(() => extractAddressAndNonce(message)).toThrow('Extract nonce error: Nonce missing');
     });
 
-    it('should handle address on first line', () => {
+    it('handles address on first line', () => {
       const message = `0x1234567890123456789012345678901234567890
 Welcome to our platform!
 Nonce: test123`;
@@ -155,7 +155,7 @@ Nonce: test123`;
       });
     });
 
-    it('should handle nonce on first occurrence', () => {
+    it('handles nonce on first occurrence', () => {
       const message = `Welcome
 Nonce: first-nonce
 0x1234567890123456789012345678901234567890
@@ -169,7 +169,7 @@ Nonce: second-nonce`;
       });
     });
 
-    it('should reject invalid address length', () => {
+    it('rejects invalid address length', () => {
       const message = `Welcome
 0x12345
 Nonce: test123`;
@@ -179,7 +179,7 @@ Nonce: test123`;
       );
     });
 
-    it('should handle nonce with special characters', () => {
+    it('handles nonce with special characters', () => {
       const message = `Welcome
 0x1234567890123456789012345678901234567890
 Nonce: value_with-special.chars`;

@@ -48,13 +48,13 @@ describe('AdvertisingCampaignWorkspace.vue', () => {
     return mount(AdvertisingCampaignWorkspace, { props: { managerAddress: MANAGER } })
   }
 
-  it('renders a purpose-built empty state for funded campaigns', () => {
+  it('[AC-US-CONTRACT-003-06] presents a confirmed empty campaign workspace', () => {
     const wrapper = mountComponent()
     expect(wrapper.find('[data-test="campaigns-empty"]').exists()).toBe(true)
     expect(wrapper.text()).toContain('No funded campaigns yet')
   })
 
-  it('renders the loading and error states independently', async () => {
+  it('[AC-US-CONTRACT-003-06] distinguishes campaign loading from a failed read', async () => {
     isPending.value = true
     const wrapper = mountComponent()
     expect(wrapper.find('[data-test="campaigns-loading"]').exists()).toBe(true)
@@ -64,7 +64,7 @@ describe('AdvertisingCampaignWorkspace.vue', () => {
     expect(wrapper.find('[data-test="campaigns-error"]').exists()).toBe(true)
   })
 
-  it('shows campaign status, funding and remaining budget', () => {
+  it('[AC-US-CONTRACT-003-06] presents populated campaign status and balances', () => {
     campaigns.value = [
       {
         id: 1,

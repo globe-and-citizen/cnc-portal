@@ -5,7 +5,7 @@ import { createPinia, setActivePinia } from 'pinia'
 import ElectionSummarySection from '@/components/sections/AdministrationView/ElectionSummarySection.vue'
 import { mockElectionsReads, mockElectionsWrites } from '@/tests/mocks'
 
-describe('ElectionSummarySection', () => {
+describe('[US-EL-01] ElectionSummarySection', () => {
   let wrapper: ReturnType<typeof mount> | undefined
 
   beforeEach(() => {

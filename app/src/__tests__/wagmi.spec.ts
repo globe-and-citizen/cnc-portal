@@ -6,12 +6,12 @@ import { mainnet, sepolia, polygon, hardhat, polygonAmoy } from '@wagmi/vue/chai
 import { config } from '@/wagmi.config'
 
 describe('wagmi.config.ts', () => {
-  it('should create a config with the correct chains', () => {
+  it('creates a config with the correct chains', () => {
     // Verify the config has all expected chains
     expect(config.chains).toEqual([mainnet, sepolia, polygon, hardhat, polygonAmoy])
   })
 
-  it('should have transports configured for each chain', () => {
+  it('has transports configured for each chain', () => {
     // Verify transports exist for all chains
     expect(config._internal.transports[mainnet.id]).toBeDefined()
     expect(config._internal.transports[sepolia.id]).toBeDefined()

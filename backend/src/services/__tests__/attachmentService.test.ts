@@ -21,11 +21,11 @@ describe('attachmentService', () => {
   });
 
   describe('refreshAttachmentUrls', () => {
-    it('should return empty array as-is', async () => {
+    it('returns empty array as-is', async () => {
       expect(await refreshAttachmentUrls([])).toEqual([]);
     });
 
-    it('should refresh presigned URLs for attachments with fileKey', async () => {
+    it('refreshes presigned URLs for attachments with fileKey', async () => {
       mockGetPresignedDownloadUrl.mockResolvedValue('https://fresh-url.example.com/file');
 
       const attachments: FileAttachmentData[] = [
@@ -50,7 +50,7 @@ describe('attachmentService', () => {
       ]);
     });
 
-    it('should handle multiple attachments', async () => {
+    it('handles multiple attachments', async () => {
       mockGetPresignedDownloadUrl
         .mockResolvedValueOnce('https://fresh1.com')
         .mockResolvedValueOnce('https://fresh2.com');
@@ -77,7 +77,7 @@ describe('attachmentService', () => {
       expect(result[1].fileUrl).toBe('https://fresh2.com');
     });
 
-    it('should skip attachments without fileKey', async () => {
+    it('skips attachments without fileKey', async () => {
       const attachments = [
         { fileUrl: 'https://some-url.com', fileType: 'image/png', fileSize: 100 },
       ];
@@ -88,7 +88,7 @@ describe('attachmentService', () => {
       expect(result).toEqual(attachments);
     });
 
-    it('should skip null/non-object attachments', async () => {
+    it('skips null/non-object attachments', async () => {
       const attachments = [null, 'string', 42];
 
       const result = await refreshAttachmentUrls(attachments);
@@ -97,7 +97,7 @@ describe('attachmentService', () => {
       expect(result).toEqual([null, 'string', 42]);
     });
 
-    it('should return original attachment on presigned URL failure', async () => {
+    it('returns original attachment on presigned URL failure', async () => {
       mockGetPresignedDownloadUrl.mockRejectedValue(new Error('S3 error'));
 
       const attachments: FileAttachmentData[] = [
@@ -114,7 +114,7 @@ describe('attachmentService', () => {
       expect(result).toEqual(attachments);
     });
 
-    it('should preserve unknown extra keys on the refreshed entry', async () => {
+    it('preserves unknown extra keys on the refreshed entry', async () => {
       mockGetPresignedDownloadUrl.mockResolvedValue('https://fresh.example.com');
 
       const stored = [
@@ -137,19 +137,19 @@ describe('attachmentService', () => {
   });
 
   describe('deleteAttachments', () => {
-    it('should do nothing for non-array input', async () => {
+    it('does nothing for non-array input', async () => {
       await deleteAttachments(null);
       await deleteAttachments(undefined);
       await deleteAttachments('string');
       expect(mockDeleteFile).not.toHaveBeenCalled();
     });
 
-    it('should do nothing for empty array', async () => {
+    it('does nothing for empty array', async () => {
       await deleteAttachments([]);
       expect(mockDeleteFile).not.toHaveBeenCalled();
     });
 
-    it('should delete files for each attachment with fileKey', async () => {
+    it('deletes files for each attachment with fileKey', async () => {
       mockDeleteFile.mockResolvedValue(true);
 
       const attachments: FileAttachmentData[] = [
@@ -174,7 +174,7 @@ describe('attachmentService', () => {
       expect(mockDeleteFile).toHaveBeenCalledWith('uploads/b.png');
     });
 
-    it('should skip attachments with empty or missing fileKey', async () => {
+    it('skips attachments with empty or missing fileKey', async () => {
       const attachments = [
         {
           fileKey: '',
@@ -192,7 +192,7 @@ describe('attachmentService', () => {
       expect(mockDeleteFile).not.toHaveBeenCalled();
     });
 
-    it('should still delete legacy entries that have only a fileKey', async () => {
+    it('still deletes legacy entries that have only a fileKey', async () => {
       mockDeleteFile.mockResolvedValue(true);
 
       // Legacy rows predate the full schema and only contain fileKey.
@@ -209,7 +209,7 @@ describe('attachmentService', () => {
       expect(mockDeleteFile).toHaveBeenCalledWith('uploads/legacy-2.png');
     });
 
-    it('should log warning but not throw on delete failure', async () => {
+    it('logs a warning without throwing when deletion fails', async () => {
       const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
       mockDeleteFile.mockRejectedValue(new Error('delete failed'));
 
@@ -230,7 +230,7 @@ describe('attachmentService', () => {
   });
 
   describe('deleteFileByKey', () => {
-    it('should delegate to storageService.deleteFile', async () => {
+    it('delegates to storageService.deleteFile', async () => {
       mockDeleteFile.mockResolvedValue(true);
 
       const result = await deleteFileByKey('uploads/test.pdf');
@@ -239,7 +239,7 @@ describe('attachmentService', () => {
       expect(result).toBe(true);
     });
 
-    it('should return false and log warning on failure', async () => {
+    it('returns false and logs a warning when delegation fails', async () => {
       const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
       mockDeleteFile.mockRejectedValue(new Error('S3 error'));
 

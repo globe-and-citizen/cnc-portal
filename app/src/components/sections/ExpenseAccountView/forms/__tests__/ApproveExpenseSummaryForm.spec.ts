@@ -4,7 +4,7 @@ import ApproveExpenseSummaryForm from '../ApproveExpenseSummaryForm.vue'
 const START_DATE = Math.floor(new Date().getTime() / 1000)
 const END_DATE = START_DATE + 86400 * 30 // 30 days later
 
-describe('ApproveExpenseSummaryForm', () => {
+describe('[US-EXP-001] ApproveExpenseSummaryForm', () => {
   const createComponent = (overrides = {}) => {
     return mount(ApproveExpenseSummaryForm, {
       props: {
@@ -23,13 +23,13 @@ describe('ApproveExpenseSummaryForm', () => {
     })
   }
 
-  it('should emit submit event on button click', async () => {
+  it('emits submit event on button click', async () => {
     const wrapper = createComponent()
     await wrapper.find('[data-test="approve-button"]').trigger('click')
     expect(wrapper.emitted()).toHaveProperty('submit')
   })
 
-  it('should emit close event on close button click', async () => {
+  it('emits close event on close button click', async () => {
     const wrapper = createComponent()
     await wrapper.find('[data-test="cancel-button"]').trigger('click')
     expect(wrapper.emitted()).toHaveProperty('close')

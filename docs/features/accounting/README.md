@@ -284,9 +284,17 @@ flowchart LR
   [assignment API](../../../backend/src/controllers/journalAccountAssignmentController.ts)
 - [Accounting exports](../../../app/src/composables/accounting/useAccountingExport.ts) and
   [journal export snapshot](../../../app/src/utils/accounting/exportSpec.ts)
-- [Accounting rule tests](../../../app/src/utils/accounting/__tests/),
-  [report tests](../../../app/src/views/team/%5Bid%5D/Accounting/__tests__/AccountingReports.spec.ts), and
-  [migration tests](../../../app/src/composables/accounting/__tests__/useCNCAccounting.migration.spec.ts)
+- [Report interaction tests](../../../app/src/views/team/%5Bid%5D/Accounting/__tests__/AccountingReports.spec.ts),
+  [General Ledger filter tests](../../../app/src/views/team/%5Bid%5D/Accounting/__tests__/GeneralLedgerFilters.spec.ts),
+  [account-assignment journey tests](../../../app/src/views/team/%5Bid%5D/Accounting/__tests__/AccountAssignmentsView.spec.ts), and
+  [multi-generation journey tests](../../../app/src/composables/accounting/__tests__/useCNCAccounting.migration.spec.ts)
+
+### Test-suite ownership
+
+- [Accounting availability tests](../../../app/src/components/sections/AccountingView/__tests__/AccountingPage.spec.ts),
+  [redeployed-ledger presentation tests](../../../app/src/components/sections/AccountingView/__tests__/LedgerRedeployLabel.spec.ts),
+  [accounting export journey tests](../../../app/src/composables/accounting/__tests__/useAccountingExport.spec.ts), and
+  [General Ledger interaction tests](../../../app/src/views/team/%5Bid%5D/Accounting/__tests__/GeneralLedgerInteractions.spec.ts)
 
 ## Related Documentation
 

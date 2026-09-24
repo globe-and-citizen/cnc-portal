@@ -15,7 +15,7 @@ import {
 import { mockLog } from '@/tests/mocks/utils.mock'
 import * as contractErrors from '@/utils/errors/classifyContractError'
 
-describe('WeeklyClaimActionDropdown', () => {
+describe('[US-PAYROLL-008] [US-PAYROLL-009] [US-PAYROLL-010] WeeklyClaimActionDropdown', () => {
   const weeklyClaim: WeeklyClaim = {
     id: 1,
     status: 'pending',

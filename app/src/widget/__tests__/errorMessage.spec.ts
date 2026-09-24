@@ -26,12 +26,12 @@ describe('describeWidgetError', () => {
     )
   })
 
-  it('reports a cancelled wallet prompt clearly', () => {
+  it('[AC-US-PAYGATE-003-10] reports a cancelled wallet prompt clearly', () => {
     const err = new BaseError('rejected', { cause: new UserRejectedRequestError(new Error('x')) })
     expect(describeWidgetError(err)).toBe('Transaction was cancelled.')
   })
 
-  it('decodes an ERC20InsufficientBalance revert from a raw call() with no ABI context', () => {
+  it('[AC-US-PAYGATE-003-11] decodes an ERC20InsufficientBalance revert from a raw call', () => {
     const data = encodeErrorResult({
       abi: IERC20_ERRORS_ABI,
       errorName: 'ERC20InsufficientBalance',

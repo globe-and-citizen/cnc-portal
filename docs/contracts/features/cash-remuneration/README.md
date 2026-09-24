@@ -112,6 +112,12 @@
 - [x] `withdraw` reverts with `ClaimDisabled` if the claim's hash is in the disabled set
 - [x] Disabling is immediate — the employee cannot submit the claim after this point
 
+## Implementation Evidence
+
+- [Cash Remuneration contract tests](../../../../contract/test/CashRemunerationEIP712.spec.ts),
+  [SHER withdrawal tests](../../../../contract/test/CashRemunerationEIP712.withdrawSher.spec.ts), and
+  [upgrade-module tests](../../../../contract/test/CashRemunerationEIP712UpgradeModule.spec.ts)
+
 ---
 
 _[← Back to index](../README.md)_

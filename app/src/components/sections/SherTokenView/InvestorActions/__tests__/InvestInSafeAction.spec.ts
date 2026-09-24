@@ -85,7 +85,7 @@ describe('InvestInSafeAction', () => {
     expect(wrapper.find('[data-test="invest-in-safe-button"]').attributes('disabled')).toBeDefined()
   })
 
-  it('clicking enabled button opens the modal', async () => {
+  it('[AC-US-SHER-001-01] opens the investment form when deposits are available', async () => {
     const wrapper = createWrapper()
 
     await wrapper.find('[data-test="invest-in-safe-button"]').trigger('click')

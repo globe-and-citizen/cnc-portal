@@ -41,7 +41,7 @@ describe('AddressTooltip.vue', () => {
 
   describe('methods', () => {
     // TODO: Find a way to watch on the copy function
-    it("should copy the member's address to the clipboard", async () => {
+    it("copies the member's address to the clipboard", async () => {
       mockUseClipboard.isSupported.value = true
       mockUseClipboard.copied.value = false
       await wrapper.vm.$nextTick()
@@ -60,7 +60,7 @@ describe('AddressTooltip.vue', () => {
       // expect(mockCopy).toHaveBeenCalledWith(props.member.address)
       // expect(copyAddressTooltip).toBe(true)
     })
-    it('should open the address in a new tab', async () => {
+    it('opens the address in a new tab', async () => {
       const open = vi.fn()
       window.open = open
       await wrapper.find('[data-test="address-tooltip"]').trigger('click')
@@ -69,7 +69,7 @@ describe('AddressTooltip.vue', () => {
         '_blank'
       )
     })
-    it('should open the transaction with correct url', async () => {
+    it('opens the transaction with correct url', async () => {
       wrapper = mount(AddressTooltip, {
         props: { ...props, type: 'transaction' }
       })

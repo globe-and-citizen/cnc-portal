@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { getUser, getUserNonce } from '../user.api'
 import apiClient from '@/lib/axios'
 
-describe('user.api', () => {
+describe('[US-PROFILE-001] user.api', () => {
   beforeEach(() => {
     vi.clearAllMocks()
   })

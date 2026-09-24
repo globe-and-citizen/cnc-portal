@@ -127,7 +127,7 @@ describe('Investor — Merkle-pull migration', () => {
   })
 
   describe('claim', () => {
-    it('mints the caller their snapshot balance against a valid proof', async () => {
+    it('[AC-US-SHER-006-02] mints the caller snapshot balance against a valid proof', async () => {
       await investor.setMigrationRoot(tree.root)
       await expect(investor.connect(addr1).claim(100n, tree.proof(0)))
         .to.emit(investor, 'MigrationClaimed')
@@ -136,13 +136,13 @@ describe('Investor — Merkle-pull migration', () => {
       expect(await investor.getMigrationClaimed(addr1.address)).to.equal(true)
     })
 
-    it('reverts when the root is not set', async () => {
+    it('[AC-US-SHER-006-03] rejects a claim when the migration root is unavailable', async () => {
       await expect(
         investor.connect(addr1).claim(100n, tree.proof(0))
       ).to.be.revertedWithCustomError(investor, 'Investor__MigrationRootNotSet')
     })
 
-    it('reverts on an invalid proof', async () => {
+    it('[AC-US-SHER-006-04] rejects an invalid Merkle proof', async () => {
       await investor.setMigrationRoot(tree.root)
       await expect(
         investor.connect(addr1).claim(100n, tree.proof(1))
@@ -156,7 +156,7 @@ describe('Investor — Merkle-pull migration', () => {
       ).to.be.revertedWithCustomError(investor, 'Investor__InvalidProof')
     })
 
-    it('reverts on a double claim', async () => {
+    it('[AC-US-SHER-006-04] rejects a repeated claim', async () => {
       await investor.setMigrationRoot(tree.root)
       await investor.connect(addr1).claim(100n, tree.proof(0))
       await expect(
@@ -166,7 +166,7 @@ describe('Investor — Merkle-pull migration', () => {
   })
 
   describe('bulkClaim (owner sweep)', () => {
-    it('mints unclaimed holders and skips already-claimed ones', async () => {
+    it('[AC-US-SHER-007-01] mints unclaimed holders and skips already-claimed ones', async () => {
       await investor.setMigrationRoot(tree.root)
       await investor.connect(addr1).claim(100n, tree.proof(0))
 
@@ -189,7 +189,7 @@ describe('Investor — Merkle-pull migration', () => {
       ).to.be.revertedWithCustomError(investor, 'Investor__LengthMismatch')
     })
 
-    it('reverts for a non-owner', async () => {
+    it('[AC-US-SHER-007-05] rejects bulk dispatch by a non-owner', async () => {
       await investor.setMigrationRoot(tree.root)
       await expect(
         investor.connect(addr1).bulkClaim([addr2.address], [50n], [tree.proof(1)])
@@ -198,7 +198,7 @@ describe('Investor — Merkle-pull migration', () => {
   })
 
   describe('completeMigration', () => {
-    it('closes claims once complete', async () => {
+    it('[AC-US-SHER-007-03] closes claims once migration completes', async () => {
       await investor.setMigrationRoot(tree.root)
       await investor.connect(addr1).claim(100n, tree.proof(0))
       await expect(investor.completeMigration()).to.emit(investor, 'MigrationCompleted')
@@ -211,7 +211,7 @@ describe('Investor — Merkle-pull migration', () => {
   })
 
   describe('dividend freeze during migration', () => {
-    it('freezes distribution while a migration is in progress and unfreezes on completion', async () => {
+    it('[AC-US-SHER-002-08] freezes dividends during migration and restores them on completion', async () => {
       await investor.setMigrationRoot(tree.root)
       await investor.connect(addr1).claim(100n, tree.proof(0))
 

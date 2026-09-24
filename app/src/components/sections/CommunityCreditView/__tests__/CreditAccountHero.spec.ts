@@ -48,7 +48,7 @@ describe('CreditAccountHero', () => {
     expect(wrapper.text()).not.toContain('(USDC)')
   })
 
-  it('splits the headline and stat lines per token instead of summing across them', () => {
+  it('[AC-US-CC-001-05] splits account statistics per token instead of summing them', () => {
     resetStore()
     store.outstandingPrincipalByToken = new Map([
       ['USDC', 10000],

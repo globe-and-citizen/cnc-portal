@@ -67,7 +67,7 @@ describe('electionVoteReadsOfAddress', () => {
     { address: ELECTIONS, electionId: '4', candidates: [BOARD] }
   ] as const
 
-  it('refreshes the ballot reads a vote changes', () => {
+  it('[AC-US-EL-02-07] refreshes the recorded choice and vote counts after a vote', () => {
     const matches = electionVoteReadsOfAddress(ELECTIONS)
 
     expect(matches({ queryKey: readKey('getVoteCount') })).toBe(true)

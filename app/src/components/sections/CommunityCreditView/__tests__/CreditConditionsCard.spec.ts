@@ -28,7 +28,7 @@ function makeRound(overrides: Partial<CreditRound> = {}): CreditRound {
   }
 }
 
-describe('CreditConditionsCard', () => {
+describe('[US-CC-001] CreditConditionsCard', () => {
   it('renders restricted access, cap and date values', () => {
     const wrapper = mount(CreditConditionsCard, { props: { round: makeRound() } })
 

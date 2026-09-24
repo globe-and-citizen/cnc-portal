@@ -14,6 +14,7 @@ Feature-specific field rules remain with their feature schemas and feature docum
 - [User Profile](../../features/user-profile/README.md)
 - [Payroll](../../features/payroll/README.md)
 - [Accounting](../../features/accounting/README.md)
+- [Accounts](../../features/accounts/README.md)
 
 ## Runtime Model
 
@@ -63,6 +64,8 @@ flowchart LR
   [user-schema tests](../../../backend/src/validation/schemas/__tests__/user.test.ts)
 - [Representative claim schema](../../../backend/src/validation/schemas/claim.ts) and
   [claim-schema tests](../../../backend/src/validation/__tests__/claim.test.ts)
+- [Expense schemas](../../../backend/src/validation/schemas/expense.ts) and
+  [expense-schema tests](../../../backend/src/validation/schemas/__tests__/expense.test.ts)
 
 ## Related Documentation
 

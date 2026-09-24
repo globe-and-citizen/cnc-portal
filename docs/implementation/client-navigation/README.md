@@ -68,6 +68,9 @@ flowchart LR
 - [Team route-owner tests](../../../app/src/views/team/%5Bid%5D/__tests__/ShowIndex.spec.ts)
 - [Sidebar navigation behaviour tests](../../../app/src/composables/__tests__/useSidebarNavItems.spec.ts)
 - [Sidebar layout tests](../../../app/src/components/ui/__tests__/SidebarLayout.spec.ts)
+- [Breadcrumb tests](../../../app/src/components/layout/__tests__/NavBreadcrumb.spec.ts),
+  [notification navigation tests](../../../app/src/components/layout/__tests__/NotificationDropdown.spec.ts), and
+  [team-selection navigation tests](../../../app/src/components/layout/__tests__/TeamSelectMenu.spec.ts)
 
 ## Related Documentation
 

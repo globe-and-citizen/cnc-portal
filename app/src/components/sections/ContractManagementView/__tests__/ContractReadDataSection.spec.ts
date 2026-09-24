@@ -67,13 +67,13 @@ describe('ContractReadDataSection.vue', () => {
     vi.clearAllMocks()
   })
 
-  it('renders skeletons while contract reads are loading', () => {
+  it('[AC-US-CONTRACT-001-08] presents contract reads as loading', () => {
     const { wrapper } = mountComponent({ isPending: ref(true), isFetching: ref(true) })
 
     expect(wrapper.find('[data-test="contract-data-loading"]').exists()).toBe(true)
   })
 
-  it('renders successful values and reports partial failures', () => {
+  it('[AC-US-CONTRACT-001-08] retains successful contract reads when others fail', () => {
     const { wrapper } = mountComponent({
       data: ref({
         fields: [
@@ -105,7 +105,7 @@ describe('ContractReadDataSection.vue', () => {
     )
   })
 
-  it('renders an empty state when the contract has no parameterless reads', () => {
+  it('[AC-US-CONTRACT-001-08] presents an empty state when no contract reads are eligible', () => {
     const { wrapper } = mountComponent({
       data: ref({ fields: [], failedCount: 0, totalCount: 0 })
     })
@@ -113,7 +113,7 @@ describe('ContractReadDataSection.vue', () => {
     expect(wrapper.get('[data-test="contract-data-empty"]').text()).toContain('No readable data')
   })
 
-  it('renders an error state and retries the reads', async () => {
+  it('[AC-US-CONTRACT-001-08] presents a failed contract read and retries it', async () => {
     const refetch = vi.fn()
     const { wrapper } = mountComponent({ isError: ref(true), refetch })
 

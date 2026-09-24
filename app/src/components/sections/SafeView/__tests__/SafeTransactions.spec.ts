@@ -89,7 +89,7 @@ const WarningStub = defineComponent({
   </div>`
 })
 
-describe('SafeTransactions', () => {
+describe('[US-SAFE-005] [US-SAFE-006] SafeTransactions', () => {
   let wrapper: VueWrapper | undefined
   const transactions = ref<SafeTransaction[]>([])
 

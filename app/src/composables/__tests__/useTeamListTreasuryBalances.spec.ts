@@ -75,7 +75,7 @@ describe('useTeamListTreasuryBalances', () => {
     )
   })
 
-  it('keeps loading, unavailable, and read-zero states distinct for each card', () => {
+  it('[AC-US-COMPANIES-003-11] keeps loading, unavailable, and read-zero states distinct for each card', () => {
     const { treasuryByTeamId } = useTeamListTreasuryBalances(ref([makeTeam('1', [BANK])]))
 
     expect(treasuryByTeamId.value['1']?.state).toBe('unavailable')
@@ -93,7 +93,7 @@ describe('useTeamListTreasuryBalances', () => {
     })
   })
 
-  it('keeps a failed account out of the grouped result without discarding successful peers', async () => {
+  it('[AC-US-COMPANIES-003-12] keeps a failed account out without discarding successful peers', async () => {
     useTeamListTreasuryBalances(ref([makeTeam('1', [BANK, SAFE])]))
     mockWagmiCore.getBalance.mockImplementation(async (_, { address }) => {
       if (address === SAFE) throw new Error('read failed')

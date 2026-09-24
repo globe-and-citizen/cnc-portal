@@ -77,7 +77,7 @@ const SELECTORS = {
   skipSafeSetupButton: '[data-test="skip-safe-setup-button"]'
 } as const
 
-describe('AddTeamForm Safe setup', () => {
+describe('[US-SAFE-001] AddTeamForm Safe setup', () => {
   let wrapper: VueWrapper | undefined
 
   const mountComponent = () =>

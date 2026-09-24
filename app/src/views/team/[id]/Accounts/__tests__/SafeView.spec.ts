@@ -3,7 +3,7 @@ import { shallowMount } from '@vue/test-utils'
 import SafeView from '../SafeView.vue'
 import { mockTeamData, mockTeamStore } from '@/tests/mocks'
 
-describe('SafeView.vue', () => {
+describe('[US-SAFE-001] [US-SAFE-002] SafeView.vue', () => {
   it('keeps the loading state visible while the team Safe is being resolved', () => {
     mockTeamStore.currentTeamId = mockTeamData.id
     mockTeamStore.currentTeamMeta = {

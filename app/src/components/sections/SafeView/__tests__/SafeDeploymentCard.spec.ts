@@ -125,7 +125,7 @@ describe('SafeDeploymentCard', () => {
     expect(wrapper.emitted('safeDeployed')).toEqual([[SAFE_ADDRESS]])
   })
 
-  it('keeps the Safe registration pending and allows retrying when registration fails', async () => {
+  it('[AC-US-SAFE-001-10] keeps the Safe registration pending and allows retrying when registration fails', async () => {
     mockUserStore.address = mockTeamData.ownerAddress
     mockTeamStore.currentTeam = mockTeamData
     mockCreateContractMutation.mutate.mockImplementation(
