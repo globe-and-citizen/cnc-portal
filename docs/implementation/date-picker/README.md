@@ -8,6 +8,7 @@ accounting picker.
 ## Consumers
 
 - [Accounting](../../features/accounting/README.md) uses direct date and range selection for its reports.
+- [Payroll](../../features/payroll/README.md) uses month navigation for claim-history review.
 - [Accounts](../../features/accounts/README.md), [Community Credit](../../features/community-credit/README.md), and
   [Shareholder Management](../../features/shareholder-management/README.md) use the shared range picker directly in their transaction
   histories.
@@ -52,6 +53,7 @@ flowchart LR
 - [Client picker behaviour tests](../../../app/src/components/ui/__tests__/DatePicker.spec.ts),
   [transaction-history filter tests](../../../app/src/composables/transactions/__tests__/useTransactionTable.spec.ts), and
   [date utility tests](../../../app/src/utils/dates/__tests__/picker.spec.ts)
+- [Payroll month-selector tests](../../../app/src/components/sections/ClaimHistoryView/__tests__/MonthSelector.spec.ts)
 
 ## Related Documentation
 

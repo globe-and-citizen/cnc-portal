@@ -61,12 +61,12 @@ describe('storageService', () => {
   });
 
   describe('isStorageConfigured', () => {
-    it('should return true when all required env vars are set', async () => {
+    it('returns true when all required env vars are set', async () => {
       const { isStorageConfigured } = await import('../storageService');
       expect(isStorageConfigured()).toBe(true);
     });
 
-    it('should return false when BUCKET is missing', async () => {
+    it('returns false when BUCKET is missing', async () => {
       delete process.env.AWS_S3_BUCKET_NAME;
       // Force reimport to get fresh module state
       vi.resetModules();
@@ -137,7 +137,7 @@ describe('storageService', () => {
       mockSend.mockResolvedValue({});
     });
 
-    it('should reject files exceeding max size', async () => {
+    it('rejects files exceeding max size', async () => {
       vi.resetModules();
       const { uploadFiles, MAX_FILE_SIZE } = await import('../storageService');
 
@@ -156,7 +156,7 @@ describe('storageService', () => {
       }
     });
 
-    it('should handle S3 upload errors', async () => {
+    it('reports object-storage upload errors', async () => {
       mockSend.mockRejectedValue(new Error('S3 connection failed'));
       vi.resetModules();
       const { uploadFiles } = await import('../storageService');
@@ -176,7 +176,7 @@ describe('storageService', () => {
       }
     });
 
-    it('should use Unknown error fallback when upload throws non-Error value', async () => {
+    it('uses Unknown error fallback when upload throws non-Error value', async () => {
       mockSend.mockRejectedValue('boom');
       vi.resetModules();
       const { uploadFiles } = await import('../storageService');
@@ -203,7 +203,7 @@ describe('storageService', () => {
       mockSend.mockResolvedValue({});
     });
 
-    it('should upload multiple files', async () => {
+    it('uploads multiple files', async () => {
       vi.resetModules();
       const { uploadFiles } = await import('../storageService');
 
@@ -229,7 +229,7 @@ describe('storageService', () => {
       expect(results[1].success).toBe(true);
     });
 
-    it('should reject when exceeding MAX_FILES_UPLOAD', async () => {
+    it('rejects when exceeding MAX_FILES_UPLOAD', async () => {
       vi.resetModules();
       const { uploadFiles, MAX_FILES_UPLOAD } = await import('../storageService');
 
@@ -257,7 +257,7 @@ describe('storageService', () => {
       process.env = { ...originalEnv, ...mockEnv };
     });
 
-    it('should delete file successfully', async () => {
+    it('deletes a stored file', async () => {
       mockSend.mockResolvedValue({});
       vi.resetModules();
       const { deleteFile } = await import('../storageService');
@@ -267,7 +267,7 @@ describe('storageService', () => {
       expect(result).toBe(true);
     });
 
-    it('should return false on delete error', async () => {
+    it('returns false on delete error', async () => {
       mockSend.mockRejectedValue(new Error('Delete failed'));
       vi.resetModules();
       const { deleteFile } = await import('../storageService');
@@ -287,7 +287,7 @@ describe('storageService', () => {
       mockSend.mockResolvedValue({});
     });
 
-    it('should generate a presigned URL', async () => {
+    it('generates a presigned URL', async () => {
       vi.resetModules();
       const { getPresignedDownloadUrl } = await import('../storageService');
 
@@ -297,7 +297,7 @@ describe('storageService', () => {
       expect(mockGetSignedUrl).toHaveBeenCalled();
     });
 
-    it('should still generate URL when head object check fails', async () => {
+    it('still generates URL when head object check fails', async () => {
       mockSend.mockRejectedValueOnce(new Error('not found'));
 
       vi.resetModules();

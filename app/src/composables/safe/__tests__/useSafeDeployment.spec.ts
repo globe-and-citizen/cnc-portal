@@ -51,7 +51,7 @@ const setConnectedUser = (address: Address | null) => {
   mockGetConnections.mockReturnValue(address ? ([{ accounts: [address] }] as never) : [])
 }
 
-describe('deploySafe (pure)', () => {
+describe('[US-SAFE-001] deploySafe', () => {
   beforeEach(async () => {
     vi.clearAllMocks()
     setConnectedUser(OWNER)

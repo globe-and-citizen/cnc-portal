@@ -63,7 +63,7 @@ describe('Elections Controller', () => {
   });
 
   describe('POST /elections/:teamId', () => {
-    it('notifies every team member when the owner calls', async () => {
+    it('[AC-US-EL-04-01] notifies every team member when the owner calls', async () => {
       vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(mockTeam as never);
 
       const response = await request(app).post('/elections/1').send({});
@@ -77,7 +77,7 @@ describe('Elections Controller', () => {
       });
     });
 
-    it('refuses a teammate who is not the owner without reading the chain', async () => {
+    it('[AC-US-EL-04-04] refuses a teammate who is not the owner without reading the chain', async () => {
       callerAddress = TEAMMATE;
       vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(mockTeam as never);
 

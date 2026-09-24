@@ -129,6 +129,8 @@ acceptance coverage, not E2E proof.
 
 - [x] `AC-US-AUTH-003-07` A missing wallet provider leaves the user unauthenticated.
 - [x] `AC-US-AUTH-003-08` An unsuccessful login attempt does not provide access to a protected product surface.
+- [x] `AC-US-AUTH-003-09` If the connected wallet differs from the authenticated address, the client locks the protected surface and lets
+      the user disconnect to restart authentication.
 
 ## Known Gaps
 
@@ -148,6 +150,13 @@ acceptance coverage, not E2E proof.
 - [Backend SIWE controller](../../../backend/src/controllers/authController.ts)
 - [Backend authentication middleware](../../../backend/src/middleware/authMiddleware.ts)
 - [Backend authentication tests](../../../backend/src/controllers/__tests__/authController.test.ts)
+
+### Test-suite ownership
+
+- [Authentication API tests](../../../app/src/api/__tests__/auth.api.spec.ts),
+  [login view tests](../../../app/src/views/__tests__/LoginView.spec.ts),
+  [lock-screen tests](../../../app/src/components/layout/__tests__/LockScreen.spec.ts), and
+  [application session-boundary tests](../../../app/src/__tests__/App.spec.ts)
 
 ## Related Documentation
 

@@ -72,14 +72,14 @@ describe('FixedReturnBeacon', () => {
   }
 
   context('deployment', () => {
-    it('should deploy correctly', async () => {
+    it('deploys with the configured owner and implementation', async () => {
       const { superAdmin, beacon, fixedReturnImplementation } = await loadFixture(deployFixture)
 
       expect(await beacon.owner()).to.eq(superAdmin.address)
       expect(await beacon.implementation()).to.eq(await fixedReturnImplementation.getAddress())
     })
 
-    it('should deploy beacon proxy correctly', async () => {
+    it('initializes a beacon proxy for its owner', async () => {
       const { beacon, user3, encodedInitializeUser3 } = await loadFixture(deployFixture)
 
       const FixedReturnBeaconProxy = await ethers.getContractFactory('UserBeaconProxy')
@@ -99,14 +99,14 @@ describe('FixedReturnBeacon', () => {
       expect(owner).to.eq(user3.address)
     })
 
-    it('should set superAdmin correctly', async () => {
+    it('assigns the super administrator as beacon owner', async () => {
       const { superAdmin, beacon } = await loadFixture(deployFixture)
       expect(await beacon.owner()).to.eq(superAdmin.address)
     })
   })
 
   describe('upgrade', () => {
-    it('should upgrade correctly', async () => {
+    it('upgrades to a new implementation', async () => {
       const { superAdmin, beacon } = await loadFixture(deployFixture)
 
       // upgrade to new address
@@ -119,7 +119,7 @@ describe('FixedReturnBeacon', () => {
       expect(await beacon.implementation()).to.eq(await newImpl.getAddress())
     })
 
-    it('should not upgrade if not admin', async () => {
+    it('does not upgrade if not admin', async () => {
       const { user1, beacon } = await loadFixture(deployFixture)
 
       const FixedReturnImplementationFactory = await ethers.getContractFactory('FixedReturn')
@@ -132,7 +132,7 @@ describe('FixedReturnBeacon', () => {
   })
 
   describe('fixedReturn functions', () => {
-    it('should read correctly', async () => {
+    it('reads state through the proxy', async () => {
       const { fixedReturnBeaconProxy1 } = await loadFixture(deployFixture)
 
       const fixedReturnBeacon = await ethers.getContractAt(
@@ -142,7 +142,7 @@ describe('FixedReturnBeacon', () => {
       expect(await fixedReturnBeacon.getTotalOfferings()).to.eq(0)
     })
 
-    it('should write correctly', async () => {
+    it('writes state through the proxy', async () => {
       const { user1, fixedReturnBeaconProxy1 } = await loadFixture(deployFixture)
       const fixedReturnBeaconProxy = await ethers.getContractAt(
         'FixedReturn',
@@ -159,7 +159,7 @@ describe('FixedReturnBeacon', () => {
       expect(await fixedReturnBeaconProxy.isTokenSupported(await token.getAddress())).to.be.true
     })
 
-    it('should not be able to write if not owner', async () => {
+    it('rejects writes from a non-owner', async () => {
       const { user2, fixedReturnBeaconProxy1, fixedReturnImplementation } =
         await loadFixture(deployFixture)
 

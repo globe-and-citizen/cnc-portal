@@ -97,7 +97,7 @@ describe('LegacyGenerationWithdrawAction', () => {
     mockCashOut.hasFailed.value = false
   })
 
-  it('drives the sequence over the legacy generation, into the current Bank', () => {
+  it('[AC-US-CONTRACT-004-04] plans legacy balance recovery into the current Bank', () => {
     createWrapper()
 
     expect(vi.mocked(useCashOutAll)).toHaveBeenCalledWith({
@@ -117,7 +117,7 @@ describe('LegacyGenerationWithdrawAction', () => {
     expect(blockedReason(wrapper)).toBeUndefined()
   })
 
-  it('offers a Bank-only withdrawal on generations that predate ownerWithdrawAllToBank', async () => {
+  it('[AC-US-CONTRACT-004-08] limits non-sweeping generations to Bank-only recovery', async () => {
     mockBeaconFolder.folder.value = 'V0.1'
     const wrapper = createWrapper()
 
@@ -142,7 +142,7 @@ describe('LegacyGenerationWithdrawAction', () => {
     expect(sources.cashRemuneration.value).toBeUndefined()
   })
 
-  it('warns which accounts a non-sweeping generation leaves behind', async () => {
+  it('[AC-US-CONTRACT-004-08] discloses balances left by Bank-only recovery', async () => {
     mockBeaconFolder.folder.value = 'V0'
     const wrapper = createWrapper()
     await wrapper.get(BUTTON).trigger('click')
@@ -186,7 +186,7 @@ describe('LegacyGenerationWithdrawAction', () => {
     expect(blockedReason(wrapper)).toContain('Could not read this generation')
   })
 
-  it('blocks anyone who does not own the legacy contracts', () => {
+  it('[AC-US-CONTRACT-004-06] blocks legacy recovery for a non-owner', () => {
     mockUserStore.address = NON_OWNER
     const wrapper = createWrapper()
 
@@ -219,7 +219,7 @@ describe('LegacyGenerationWithdrawAction', () => {
     expect(blockedReason(wrapper)).toContain('hold no funds')
   })
 
-  it('blocks writes on an archived team', () => {
+  it('[AC-US-CONTRACT-004-05] blocks legacy recovery for an archived company', () => {
     mockTeamStore.currentTeamMeta = {
       isPending: false,
       data: { ...mockTeamStore.currentTeam, isArchived: true }
@@ -255,7 +255,7 @@ describe('LegacyGenerationWithdrawAction', () => {
     expect(wrapper.find('[data-test="legacy-withdraw-progress"]').exists()).toBe(true)
   })
 
-  it('surfaces a failed step and offers a retry', async () => {
+  it('[AC-US-CONTRACT-004-09] identifies a failed recovery step and offers retry', async () => {
     const wrapper = createWrapper()
     await wrapper.get(BUTTON).trigger('click')
     await wrapper.get(CONFIRM).trigger('click')

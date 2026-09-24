@@ -4,7 +4,7 @@ import ExpenseAccountTotalApproved from '../ExpenseAccountTotalApproved.vue'
 import { createMockQueryResponse } from '@/tests/mocks'
 import { useGetExpensesQuery } from '@/queries/expense.queries'
 
-describe('ExpenseAccountTotalApproved', () => {
+describe('[US-EXP-004] ExpenseAccountTotalApproved', () => {
   beforeEach(() => {
     vi.mocked(useGetExpensesQuery).mockReturnValue(createMockQueryResponse([]))
   })

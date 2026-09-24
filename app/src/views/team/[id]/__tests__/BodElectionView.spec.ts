@@ -10,7 +10,7 @@ import { mockElectionsReads, mockLog, resetContractMocks } from '@/tests/mocks'
 
 const MOCK_ELECTIONS_ADDRESS = '0x1234567890123456789012345678901234567890'
 
-describe('BodElectionView.vue', () => {
+describe('[US-EL-05][US-EL-07][US-EL-08] BodElectionView.vue', () => {
   let wrapper: VueWrapper
 
   const mountComponent = () =>
@@ -38,28 +38,28 @@ describe('BodElectionView.vue', () => {
   })
 
   describe('Component Rendering', () => {
-    it('should render the sections that do not depend on an election', () => {
+    it('renders the sections that do not depend on an election', () => {
       wrapper = mountComponent()
 
       expect(wrapper.findComponent(BodMembersSection).exists()).toBe(true)
       expect(wrapper.findComponent(PastElectionsSection).exists()).toBe(true)
     })
 
-    it('should render ElectionSummarySection when nextElectionId exists', () => {
+    it('renders ElectionSummarySection when nextElectionId exists', () => {
       mockElectionsReads.nextElectionId.data.value = 5n
       wrapper = mountComponent()
 
       expect(summarySection().exists()).toBe(true)
     })
 
-    it('should not render ElectionSummarySection before nextElectionId arrives', () => {
+    it('does not render ElectionSummarySection before nextElectionId arrives', () => {
       mockElectionsReads.nextElectionId.data.value = null
       wrapper = mountComponent()
 
       expect(summarySection().exists()).toBe(false)
     })
 
-    it('should not render ElectionSummarySection when nextElectionId is 0', () => {
+    it('does not render ElectionSummarySection when nextElectionId is 0', () => {
       mockElectionsReads.nextElectionId.data.value = 0n
       wrapper = mountComponent()
 
@@ -68,7 +68,7 @@ describe('BodElectionView.vue', () => {
   })
 
   describe('Elections Address Handling', () => {
-    it('should pass the elections address to ContractOwnerCard', () => {
+    it('passes the elections address to ContractOwnerCard', () => {
       wrapper = mountComponent()
 
       const contractOwnerCard = wrapper.findComponent(ContractOwnerCard)
@@ -76,14 +76,14 @@ describe('BodElectionView.vue', () => {
       expect(contractOwnerCard.props('contractAddress')).toBe(MOCK_ELECTIONS_ADDRESS)
     })
 
-    it('should not render ContractOwnerCard while the elections address is unknown', () => {
+    it('does not render ContractOwnerCard while the elections address is unknown', () => {
       mockElectionsReads.address.data.value = undefined
       wrapper = mountComponent()
 
       expect(wrapper.findComponent(ContractOwnerCard).exists()).toBe(false)
     })
 
-    it('should render ContractOwnerCard once the team contracts land', async () => {
+    it('renders ContractOwnerCard once the team contracts land', async () => {
       mockElectionsReads.address.data.value = undefined
       wrapper = mountComponent()
 
@@ -102,7 +102,7 @@ describe('BodElectionView.vue', () => {
       ['number', 10, 9n],
       ['the first election', 1n, 0n],
       ['a large id', 1000000n, 999999n]
-    ])('should compute the current election id from %s', (_case, nextId, expected) => {
+    ])('computes the current election id from %s', (_case, nextId, expected) => {
       mockElectionsReads.nextElectionId.data.value = nextId
       wrapper = mountComponent()
 
@@ -111,14 +111,14 @@ describe('BodElectionView.vue', () => {
   })
 
   describe('Error Handling', () => {
-    it('should not log when the read succeeds', async () => {
+    it('does not log when the read succeeds', async () => {
       wrapper = mountComponent()
       await wrapper.vm.$nextTick()
 
       expect(mockLog.error).not.toHaveBeenCalled()
     })
 
-    it('should log a failed next-election-id read', async () => {
+    it('logs a failed next-election-id read', async () => {
       wrapper = mountComponent()
 
       mockElectionsReads.nextElectionId.error.value = new Error('Contract not found')
@@ -130,7 +130,7 @@ describe('BodElectionView.vue', () => {
       )
     })
 
-    it('should keep rendering the rest of the page when the read fails', () => {
+    it('keeps rendering the rest of the page when the read fails', () => {
       mockElectionsReads.nextElectionId.error.value = new Error('Contract not found')
       wrapper = mountComponent()
 
@@ -140,7 +140,7 @@ describe('BodElectionView.vue', () => {
   })
 
   describe('Reactive Updates', () => {
-    it('should follow nextElectionId as it changes', async () => {
+    it('follows nextElectionId as it changes', async () => {
       mockElectionsReads.nextElectionId.data.value = 5n
       wrapper = mountComponent()
 
@@ -152,7 +152,7 @@ describe('BodElectionView.vue', () => {
       expect(summarySection().props('electionId')).toBe(9n)
     })
 
-    it('should show the summary once an election id arrives', async () => {
+    it('shows the summary once an election id arrives', async () => {
       mockElectionsReads.nextElectionId.data.value = null
       wrapper = mountComponent()
 
@@ -167,7 +167,7 @@ describe('BodElectionView.vue', () => {
   })
 
   describe('Component Lifecycle', () => {
-    it('should unmount without throwing', () => {
+    it('unmounts without throwing', () => {
       mockElectionsReads.nextElectionId.data.value = 5n
       wrapper = mountComponent()
 

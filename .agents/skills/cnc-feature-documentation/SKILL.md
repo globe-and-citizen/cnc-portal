@@ -32,6 +32,8 @@ Do not duplicate that guide in a feature README.
    source, test evidence, and known gap.
 5. Classify each acceptance criterion as implemented, missing, partial, or unverified. An issue, pull request, old document, or plausible
    code path is not proof of current behaviour.
+6. When the feature is under an active test-coverage review, assign each criterion the proof boundary it actually requires, then compare it
+   with direct representative test references. Keep integrated E2E, mocked browser, frontend, backend, and contract evidence distinct.
 
 Do not implement a discovered product gap unless the user also asks for that change. Report it and create a tracking issue only when
 requested or required by the active GitHub workflow.
@@ -66,6 +68,19 @@ requested or required by the active GitHub workflow.
   missing outcomes remain visible.
 - Apply the guide's status and human-review contract exactly. Fully implemented criteria without a completed product review belong in
   `🧪 Validation`, not `✅ Done`.
+- For an active coverage review, use the guide's per-story coverage summary and per-criterion target table. Derive current coverage from
+  direct `AC-US-*` references, list insufficient boundaries as gaps, and never classify a story as partial solely because a criterion is
+  intentionally covered by a mock or a lower test layer.
+- Use the generated repository inventory to keep frontend, backend, contract, dashboard, and E2E test files visible. Distinguish direct
+  US/AC markers from canonical Implementation Evidence links: the latter maps feature support but does not prove a story or criterion. Keep
+  contract- or implementation-owned tests in the technical-only category. Treat an unmapped file as an audit item, not as acceptance
+  evidence, until its role is reviewed.
+- Review feature-only and technical-only tests for documentation discovery. If a test proves an existing outcome, link only the
+  representative evidence. Add an AC only for verified stable user-visible behavior or a business rule, and add a US only for a distinct
+  actor goal. Keep implementation details technical, and never document stale or accidental test behavior as product intent.
+- Keep representative test titles declarative and omit `should`. When a test represents one canonical ID, put the most specific ID in the
+  title instead of a comment: prefix the test title for one AC, or the enclosing suite title for one US. Reserve the guide's structured
+  `Covers` block for tests and E2E paths that represent two or more IDs.
 - Use Mermaid for every diagram. Add a diagram only when it makes a meaningful state, sequence, branch, hierarchy, or boundary easier to
   review.
 - Link focused rules, architecture, contract behaviour, and evidence to their canonical owners instead of copying them into the journey.

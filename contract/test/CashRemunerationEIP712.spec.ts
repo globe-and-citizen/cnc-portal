@@ -32,16 +32,16 @@ describe('CashRemuneration*** (EIP712)', () => {
       await deployContract(employer)
     })
 
-    it('should initialize with correct owner', async () => {
+    it('initializes with correct owner', async () => {
       expect(await cashRemunerationProxy.owner()).to.equal(employer.address)
     })
 
-    it('should initialize with USDC as supported token', async () => {
+    it('initializes with USDC as supported token', async () => {
       const usdcAddress = await mockUSDC.getAddress()
       expect(await cashRemunerationProxy.isTokenSupported(usdcAddress)).to.be.true
     })
 
-    it('should reject zero address for USDC', async () => {
+    it('rejects zero address for USDC', async () => {
       const CashRemunerationImplementation =
         await ethers.getContractFactory('CashRemunerationEIP712')
       await expect(
@@ -53,7 +53,7 @@ describe('CashRemuneration*** (EIP712)', () => {
       ).to.be.revertedWithCustomError(cashRemunerationProxy, 'CashRemunerationEIP712__ZeroAddress')
     })
 
-    it('should prevent reinitialization', async () => {
+    it('prevents reinitialization', async () => {
       await expect(
         cashRemunerationProxy.initialize(employer.address, [await mockUSDC.getAddress()])
       ).to.be.revertedWithCustomError(cashRemunerationProxy, 'InvalidInitialization')
@@ -112,7 +112,7 @@ describe('CashRemuneration*** (EIP712)', () => {
         expect(await cashRemunerationProxy.owner()).to.eq(await employer.getAddress())
       })
 
-      it('Then I can deposit into the cash remuneration contract', async () => {
+      it('[AC-US-PAYROLL-003-03] Then I can deposit into the cash remuneration contract', async () => {
         const amount = ethers.parseEther('5000')
         const tx = await employer.sendTransaction({
           to: await cashRemunerationProxy.getAddress(),
@@ -232,7 +232,7 @@ describe('CashRemuneration*** (EIP712)', () => {
             'CashRemunerationEIP712__UnauthorizedAccess'
           )
         })
-        it('the withdrawer is not the approved user', async () => {
+        it('[AC-US-PAYROLL-010-08] the withdrawer is not the approved user', async () => {
           const wageClaim = {
             employeeAddress: employee.address,
             minutesWorked: 300,
@@ -258,7 +258,7 @@ describe('CashRemuneration*** (EIP712)', () => {
             'CashRemunerationEIP712__NotClaimOwner'
           )
         })
-        it('the wage has already been paid', async () => {
+        it('[AC-US-PAYROLL-010-12] the wage has already been paid', async () => {
           const wageClaim = {
             employeeAddress: employee.address,
             minutesWorked: 100,
@@ -294,7 +294,7 @@ describe('CashRemuneration*** (EIP712)', () => {
             'CashRemunerationEIP712__WageAlreadyPaid'
           )
         })
-        it('the wage amount exceeds the contract balance', async () => {
+        it('[AC-US-PAYROLL-010-15] the wage amount exceeds the contract balance', async () => {
           const wageClaim = {
             employeeAddress: employee.address,
             minutesWorked: 300,
@@ -317,7 +317,7 @@ describe('CashRemuneration*** (EIP712)', () => {
             cashRemunerationProxy.connect(employee).withdraw(wageClaim, signature)
           ).to.be.revert(ethers)
         })
-        it('the contract is paused', async () => {
+        it('[AC-US-PAYROLL-010-16] the contract is paused', async () => {
           await expect(cashRemunerationProxy.pause())
             .to.emit(cashRemunerationProxy, 'Paused')
             .withArgs(employer.address)
@@ -401,7 +401,7 @@ describe('CashRemuneration*** (EIP712)', () => {
       })
     })
 
-    it('should prevent replay of a valid signature (same wage claim used twice)', async () => {
+    it('prevents replay of a valid signature (same wage claim used twice)', async () => {
       const wageClaim = {
         employeeAddress: employee.address,
         minutesWorked: 30,
@@ -430,7 +430,7 @@ describe('CashRemuneration*** (EIP712)', () => {
         .withArgs(sigHash)
     })
 
-    it('should prevent replay even across intermediate valid calls', async () => {
+    it('prevents replay even across intermediate valid calls', async () => {
       // First claim
       const wageClaimA = {
         employeeAddress: employee.address,

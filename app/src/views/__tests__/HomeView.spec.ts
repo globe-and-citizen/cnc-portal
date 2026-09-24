@@ -12,7 +12,7 @@ describe('HomeView.vue', () => {
   }
 
   describe('Render', () => {
-    it('should render the welcome message', () => {
+    it('renders the welcome message', () => {
       const wrapper = mount(HomeView, globalStubs)
 
       const welcomeMessage = wrapper.find('h1')

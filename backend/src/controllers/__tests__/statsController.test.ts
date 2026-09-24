@@ -196,7 +196,7 @@ describe('Statistics Controller', () => {
   });
 
   describe('GET /stats/teams', () => {
-    it('should return team statistics with pagination', async () => {
+    it('returns team statistics with pagination', async () => {
       const mockTeams = [
         {
           id: 1,
@@ -243,7 +243,7 @@ describe('Statistics Controller', () => {
   });
 
   describe('GET /stats/users', () => {
-    it('should return user statistics', async () => {
+    it('returns user statistics', async () => {
       const mockMemberTeamsData = [
         { userAddress: '0x1', teamId: 1 },
         { userAddress: '0x1', teamId: 2 },
@@ -268,7 +268,7 @@ describe('Statistics Controller', () => {
   });
 
   describe('GET /stats/claims', () => {
-    it('should return claims statistics', async () => {
+    it('returns claims statistics', async () => {
       const mockClaims = [
         {
           id: 1,
@@ -322,7 +322,7 @@ describe('Statistics Controller', () => {
   });
 
   // describe('GET /stats/wages', () => {
-  //   it('should return wage statistics', async () => {
+  //   it('returns wage statistics', async () => {
   //     // TODO: thoses rate a deprecate
   //     const mockWages = [
   //       { cashRatePerHour: 20, tokenRatePerHour: 0, usdcRatePerHour: 0 },
@@ -375,7 +375,7 @@ describe('Statistics Controller', () => {
   // });
 
   describe('GET /stats/expenses', () => {
-    it('should return expense statistics', async () => {
+    it('returns expense statistics', async () => {
       const mockExpenses = [
         {
           id: 1,
@@ -414,7 +414,7 @@ describe('Statistics Controller', () => {
   });
 
   describe('GET /stats/contracts', () => {
-    it('should return contract statistics', async () => {
+    it('returns contract statistics', async () => {
       vi.mocked(prisma.teamContract.count).mockResolvedValue(15);
       vi.mocked(prisma.teamContract.groupBy)
         .mockResolvedValueOnce([
@@ -440,7 +440,7 @@ describe('Statistics Controller', () => {
   });
 
   describe('GET /stats/actions', () => {
-    it('should return actions statistics', async () => {
+    it('returns actions statistics', async () => {
       const mockActions = [
         {
           id: 1,
@@ -538,7 +538,7 @@ describe('Statistics Controller', () => {
   });
 
   describe('Error Handling', () => {
-    it('should handle database errors gracefully', async () => {
+    it('reports a database failure while loading the overview', async () => {
       vi.mocked(prisma.team.count).mockRejectedValue(new Error('Database error'));
 
       const response = await request(app).get('/stats/overview');
@@ -547,7 +547,7 @@ describe('Statistics Controller', () => {
       expect(response.body).toHaveProperty('message');
     });
 
-    it('should validate query parameters', async () => {
+    it('validates query parameters', async () => {
       const response = await request(app).get('/stats/overview?period=invalid');
 
       expect(response.status).toBe(400);

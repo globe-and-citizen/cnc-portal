@@ -53,7 +53,7 @@ describe('FeeCollector', () => {
       ;[owner, user1, user2] = await ethers.getSigners()
     })
 
-    it('should initialize correctly with valid configs', async () => {
+    it('initializes the owner, balance, and fee configurations', async () => {
       feeCollector = await deployFeeCollector()
 
       expect(await feeCollector.owner()).to.equal(owner.address)
@@ -69,7 +69,7 @@ describe('FeeCollector', () => {
       expect(configs[2].feeBps).to.equal(75)
     })
 
-    it('should initialize with supported tokens', async () => {
+    it('initializes with supported tokens', async () => {
       const tokenAddresses = await deployMockTokens()
       feeCollector = await deployFeeCollector(INITIAL_CONFIGS, tokenAddresses)
 
@@ -77,7 +77,7 @@ describe('FeeCollector', () => {
       expect(await feeCollector.isTokenSupported(tokenAddresses[1])).to.be.true
     })
 
-    it('should reject zero address as owner', async () => {
+    it('rejects zero address as owner', async () => {
       const FeeCollectorFactory = await ethers.getContractFactory('FeeCollector')
       const tempProxy = (await upgrades.deployProxy(FeeCollectorFactory, [owner.address, [], []], {
         initializer: 'initialize',
@@ -92,7 +92,7 @@ describe('FeeCollector', () => {
       ).to.be.revertedWithCustomError(tempProxy, ERRORS.ZERO_ADDRESS)
     })
 
-    it('should reject empty contract type', async () => {
+    it('rejects empty contract type', async () => {
       const invalidConfigs = [
         { contractType: '', feeBps: 50 },
         { contractType: 'BANK', feeBps: 100 }
@@ -112,7 +112,7 @@ describe('FeeCollector', () => {
       ).to.be.revertedWithCustomError(tempProxy, ERRORS.EMPTY_TYPE)
     })
 
-    it('should reject invalid BPS (> 10000)', async () => {
+    it('rejects invalid BPS (> 10000)', async () => {
       const invalidConfigs = [
         { contractType: 'BANK', feeBps: 50 },
         { contractType: 'INVALID', feeBps: 10001 } // Invalid: > 100%
@@ -132,7 +132,7 @@ describe('FeeCollector', () => {
       ).to.be.revertedWithCustomError(tempProxy, ERRORS.INVALID_BPS)
     })
 
-    it('should reject duplicate contract types', async () => {
+    it('rejects duplicate contract types', async () => {
       const duplicateConfigs = [
         { contractType: 'BANK', feeBps: 50 },
         { contractType: 'BANK', feeBps: 100 } // Duplicate
@@ -152,7 +152,7 @@ describe('FeeCollector', () => {
       ).to.be.revertedWithCustomError(tempProxy, ERRORS.DUPLICATE_TYPE)
     })
 
-    it('should reject zero token address in initialization', async () => {
+    it('rejects zero token address in initialization', async () => {
       const FeeCollectorFactory = await ethers.getContractFactory('FeeCollector')
       const tempProxy = (await upgrades.deployProxy(FeeCollectorFactory, [owner.address, [], []], {
         initializer: 'initialize',
@@ -171,7 +171,7 @@ describe('FeeCollector', () => {
       ).to.be.revertedWithCustomError(tempProxy, ERRORS.ZERO_ADDRESS)
     })
 
-    it('should allow initialization with empty configs array', async () => {
+    it('allows initialization with empty configs array', async () => {
       feeCollector = await deployFeeCollector([])
 
       expect(await feeCollector.owner()).to.equal(owner.address)
@@ -179,13 +179,13 @@ describe('FeeCollector', () => {
       expect(configs.length).to.equal(0)
     })
 
-    it('should not allow reinitialization', async () => {
+    it('does not allow reinitialization', async () => {
       feeCollector = await deployFeeCollector()
 
       await expect(feeCollector.initialize(owner.address, [], [])).to.be.revert(ethers)
     })
 
-    it('should accept maximum valid BPS (10000 = 100%)', async () => {
+    it('accepts maximum valid BPS (10000 = 100%)', async () => {
       const maxBpsConfigs = [{ contractType: 'MAX_FEE', feeBps: 10000 }]
 
       feeCollector = await deployFeeCollector(maxBpsConfigs)
@@ -193,7 +193,7 @@ describe('FeeCollector', () => {
       expect(await feeCollector.getFeeFor('MAX_FEE')).to.equal(10000)
     })
 
-    it('should accept zero BPS', async () => {
+    it('accepts zero BPS', async () => {
       const zeroBpsConfigs = [{ contractType: 'NO_FEE', feeBps: 0 }]
 
       feeCollector = await deployFeeCollector(zeroBpsConfigs)
@@ -208,18 +208,18 @@ describe('FeeCollector', () => {
       feeCollector = await deployFeeCollector()
     })
 
-    it('should return correct fee for configured contract types', async () => {
+    it('returns correct fee for configured contract types', async () => {
       expect(await feeCollector.getFeeFor('BANK')).to.equal(50)
       expect(await feeCollector.getFeeFor('CASH_REMUNERATION')).to.equal(100)
       expect(await feeCollector.getFeeFor('EXPENSE_ACCOUNT')).to.equal(75)
     })
 
-    it('should return zero for unconfigured contract types', async () => {
+    it('returns zero for unconfigured contract types', async () => {
       expect(await feeCollector.getFeeFor('UNKNOWN_TYPE')).to.equal(0)
       expect(await feeCollector.getFeeFor('NON_EXISTENT')).to.equal(0)
     })
 
-    it('should return all fee configs correctly', async () => {
+    it('returns every configured fee', async () => {
       const configs = await feeCollector.getAllFeeConfigs()
 
       expect(configs.length).to.equal(3)
@@ -231,13 +231,13 @@ describe('FeeCollector', () => {
       expect(configs[2].feeBps).to.equal(75)
     })
 
-    it('should handle case-sensitive contract type lookups', async () => {
+    it('handles case-sensitive contract type lookups', async () => {
       expect(await feeCollector.getFeeFor('BANK')).to.equal(50)
       expect(await feeCollector.getFeeFor('bank')).to.equal(0) // Different case
       expect(await feeCollector.getFeeFor('Bank')).to.equal(0) // Different case
     })
 
-    it('should return empty array when no configs are set', async () => {
+    it('returns empty array when no configs are set', async () => {
       const emptyFeeCollector = await deployFeeCollector([])
       const configs = await emptyFeeCollector.getAllFeeConfigs()
 
@@ -251,7 +251,7 @@ describe('FeeCollector', () => {
       feeCollector = await deployFeeCollector()
     })
 
-    it('should accept native token deposits via receive function', async () => {
+    it('accepts native token deposits via receive function', async () => {
       const depositAmount = ethers.parseEther('10')
 
       await expect(async () =>
@@ -264,7 +264,7 @@ describe('FeeCollector', () => {
       expect(await feeCollector.getBalance()).to.equal(depositAmount)
     })
 
-    it('should accept multiple deposits from different addresses', async () => {
+    it('accepts multiple deposits from different addresses', async () => {
       const amount1 = ethers.parseEther('5')
       const amount2 = ethers.parseEther('3')
       const amount3 = ethers.parseEther('2')
@@ -288,7 +288,7 @@ describe('FeeCollector', () => {
       expect(await feeCollector.getBalance()).to.equal(totalAmount)
     })
 
-    it('should accept zero value deposits', async () => {
+    it('accepts zero value deposits', async () => {
       await owner.sendTransaction({
         to: await feeCollector.getAddress(),
         value: 0
@@ -297,7 +297,7 @@ describe('FeeCollector', () => {
       expect(await feeCollector.getBalance()).to.equal(0)
     })
 
-    it('should correctly track balance after multiple deposits', async () => {
+    it('tracks balance after multiple deposits', async () => {
       const deposits = [
         ethers.parseEther('1'),
         ethers.parseEther('2.5'),
@@ -326,7 +326,7 @@ describe('FeeCollector', () => {
       feeCollector = await deployFeeCollector(INITIAL_CONFIGS, supportedTokens)
     })
 
-    it('should allow owner to add token support', async () => {
+    it('allows owner to add token support', async () => {
       const MockToken = await ethers.getContractFactory('MockERC20')
       const newToken = (await MockToken.deploy('DAI', 'DAI')) as unknown as MockERC20
 
@@ -337,20 +337,20 @@ describe('FeeCollector', () => {
       expect(await feeCollector.isTokenSupported(await newToken.getAddress())).to.be.true
     })
 
-    it('[AC-US-MICROPAYMENTS-003-05] should reject an already supported token', async () => {
+    it('[AC-US-MICROPAYMENTS-003-05] rejects an already supported token', async () => {
       await expect(
         feeCollector.addTokenSupport(await mockUSDT.getAddress())
       ).to.be.revertedWithCustomError(feeCollector, ERRORS.TOKEN_ALREADY_SUPPORTED)
     })
 
-    it('should not allow adding zero address token', async () => {
+    it('does not allow adding zero address token', async () => {
       await expect(feeCollector.addTokenSupport(ethers.ZeroAddress)).to.be.revertedWithCustomError(
         feeCollector,
         ERRORS.TOKEN_SUPPORT_ZERO_ADDRESS
       )
     })
 
-    it('should allow owner to remove token support', async () => {
+    it('allows owner to remove token support', async () => {
       await expect(feeCollector.removeTokenSupport(await mockUSDT.getAddress()))
         .to.emit(feeCollector, 'TokenSupportRemoved')
         .withArgs(await mockUSDT.getAddress())
@@ -358,7 +358,7 @@ describe('FeeCollector', () => {
       expect(await feeCollector.isTokenSupported(await mockUSDT.getAddress())).to.be.false
     })
 
-    it('[AC-US-MICROPAYMENTS-003-05] should reject removal of an unsupported token', async () => {
+    it('[AC-US-MICROPAYMENTS-003-05] rejects removal of an unsupported token', async () => {
       const MockToken = await ethers.getContractFactory('MockERC20')
       const newToken = (await MockToken.deploy('DAI', 'DAI')) as unknown as MockERC20
 
@@ -367,7 +367,7 @@ describe('FeeCollector', () => {
       ).to.be.revertedWithCustomError(feeCollector, ERRORS.TOKEN_SUPPORT_NOT_FOUND)
     })
 
-    it('should not allow non-owner to manage token support', async () => {
+    it('does not allow non-owner to manage token support', async () => {
       await expect(feeCollector.connect(user1).addTokenSupport(await mockUSDC.getAddress()))
         .to.be.revertedWithCustomError(feeCollector, ERRORS.UNAUTHORIZED)
         .withArgs(user1.address)
@@ -385,14 +385,14 @@ describe('FeeCollector', () => {
       feeCollector = await deployFeeCollector(INITIAL_CONFIGS, supportedTokens)
     })
 
-    it('should return ERC20 balance for supported token', async () => {
+    it('returns ERC20 balance for supported token', async () => {
       const amount = ethers.parseUnits('250', 6)
       await mockUSDT.mint(await feeCollector.getAddress(), amount)
 
       expect(await feeCollector.getTokenBalance(await mockUSDT.getAddress())).to.equal(amount)
     })
 
-    it('should revert balance query for unsupported token', async () => {
+    it('reverts balance query for unsupported token', async () => {
       const MockToken = await ethers.getContractFactory('MockERC20')
       const unsupportedToken = (await MockToken.deploy(
         'UNSUPPORTED',
@@ -404,7 +404,7 @@ describe('FeeCollector', () => {
       ).to.be.revertedWithCustomError(feeCollector, ERRORS.TOKEN_NOT_SUPPORTED)
     })
 
-    it('[AC-US-MICROPAYMENTS-006-02] should sweep every supported ERC20 balance', async () => {
+    it('[AC-US-MICROPAYMENTS-006-02] sweeps every supported ERC20 balance', async () => {
       const usdtAmount = ethers.parseUnits('100', 6)
       const usdcAmount = ethers.parseUnits('250', 6)
       await mockUSDT.mint(await feeCollector.getAddress(), usdtAmount)
@@ -423,7 +423,7 @@ describe('FeeCollector', () => {
       expect(await mockUSDC.balanceOf(await feeCollector.getAddress())).to.equal(0)
     })
 
-    it('should skip supported tokens with zero balance', async () => {
+    it('skips supported tokens with zero balance', async () => {
       const amount = ethers.parseUnits('10', 6)
       await mockUSDT.mint(await feeCollector.getAddress(), amount)
       // mockUSDC is supported but has zero balance — sweep should not move it
@@ -437,7 +437,7 @@ describe('FeeCollector', () => {
       await expect(tx).to.changeTokenBalances(ethers, mockUSDC, [feeCollector, owner], [0n, 0n])
     })
 
-    it('should not allow non-owner to trigger token sweep', async () => {
+    it('does not allow non-owner to trigger token sweep', async () => {
       const amount = ethers.parseUnits('10', 6)
       await mockUSDT.mint(await feeCollector.getAddress(), amount)
 
@@ -460,14 +460,14 @@ describe('FeeCollector', () => {
       })
     })
 
-    it('should sweep full native balance to owner when no beneficiary is set', async () => {
+    it('sweeps full native balance to owner when no beneficiary is set', async () => {
       const fullBalance = await feeCollector.getBalance()
 
       await expect(() => feeCollector.withdraw()).to.changeEtherBalance(ethers, owner, fullBalance)
       expect(await feeCollector.getBalance()).to.equal(0)
     })
 
-    it('[AC-US-MICROPAYMENTS-006-02] should sweep native and token balances in one call', async () => {
+    it('[AC-US-MICROPAYMENTS-006-02] sweeps native and token balances in one call', async () => {
       const usdtAmount = ethers.parseUnits('500', 6)
       const usdcAmount = ethers.parseUnits('750', 6)
       await mockUSDT.mint(await feeCollector.getAddress(), usdtAmount)
@@ -495,7 +495,7 @@ describe('FeeCollector', () => {
       expect(await mockUSDC.balanceOf(await feeCollector.getAddress())).to.equal(0)
     })
 
-    it('should route the sweep to the fee beneficiary when set', async () => {
+    it('routes the sweep to the fee beneficiary when set', async () => {
       await expect(feeCollector.setFeeBeneficiary(user2.address))
         .to.emit(feeCollector, 'FeeBeneficiaryUpdated')
         .withArgs(ethers.ZeroAddress, user2.address)
@@ -506,7 +506,7 @@ describe('FeeCollector', () => {
       await expect(tx).to.emit(feeCollector, 'Withdrawn').withArgs(user2.address, fullNative)
     })
 
-    it('[AC-US-MICROPAYMENTS-004-02] should fall back to owner when beneficiary is cleared', async () => {
+    it('[AC-US-MICROPAYMENTS-004-02] falls back to owner when beneficiary is cleared', async () => {
       await feeCollector.setFeeBeneficiary(user2.address)
       await feeCollector.setFeeBeneficiary(ethers.ZeroAddress)
 
@@ -514,19 +514,19 @@ describe('FeeCollector', () => {
       await expect(() => feeCollector.withdraw()).to.changeEtherBalance(ethers, owner, fullNative)
     })
 
-    it('[AC-US-MICROPAYMENTS-006-04] should reject a non-owner withdrawal', async () => {
+    it('[AC-US-MICROPAYMENTS-006-04] rejects a non-owner withdrawal', async () => {
       await expect(feeCollector.connect(user1).withdraw())
         .to.be.revertedWithCustomError(feeCollector, ERRORS.UNAUTHORIZED)
         .withArgs(user1.address)
     })
 
-    it('[AC-US-MICROPAYMENTS-004-04] should reject a non-owner beneficiary change', async () => {
+    it('[AC-US-MICROPAYMENTS-004-04] rejects a non-owner beneficiary change', async () => {
       await expect(feeCollector.connect(user1).setFeeBeneficiary(user2.address))
         .to.be.revertedWithCustomError(feeCollector, ERRORS.UNAUTHORIZED)
         .withArgs(user1.address)
     })
 
-    it('[AC-US-MICROPAYMENTS-006-06] should be a no-op when every balance is zero', async () => {
+    it('[AC-US-MICROPAYMENTS-006-06] is a no-op when every balance is zero', async () => {
       const emptyFeeCollector = await deployFeeCollector()
       await expect(emptyFeeCollector.withdraw()).to.not.be.revert(ethers)
       expect(await emptyFeeCollector.getBalance()).to.equal(0)
@@ -539,7 +539,7 @@ describe('FeeCollector', () => {
       feeCollector = await deployFeeCollector()
     })
 
-    it('should correctly report balance after deposits and a full sweep', async () => {
+    it('reports a zero balance after a full sweep', async () => {
       // Initial deposit
       await owner.sendTransaction({
         to: await feeCollector.getAddress(),
@@ -562,7 +562,7 @@ describe('FeeCollector', () => {
       expect(await feeCollector.getBalance()).to.equal(0)
     })
 
-    it('should match contract balance with getBalance()', async () => {
+    it('matches contract balance with getBalance()', async () => {
       const depositAmount = ethers.parseEther('25')
 
       await owner.sendTransaction({
@@ -584,7 +584,7 @@ describe('FeeCollector', () => {
       feeCollector = await deployFeeCollector()
     })
 
-    it('should prevent reentrancy attacks on withdraw', async () => {
+    it('prevents reentrancy attacks on withdraw', async () => {
       // Deploy a malicious contract that attempts reentrancy
       const MaliciousContract = await ethers.getContractFactory('MaliciousReentrancy')
       const malicious = await MaliciousContract.deploy()
@@ -614,7 +614,7 @@ describe('FeeCollector', () => {
       ;[owner, user1, user2] = await ethers.getSigners()
     })
 
-    it('should handle large number of fee configurations', async () => {
+    it('handles large number of fee configurations', async () => {
       const largeConfigs = Array.from({ length: 50 }, (_, i) => ({
         contractType: `TYPE_${i}`,
         feeBps: (i * 10) % 10000
@@ -630,7 +630,7 @@ describe('FeeCollector', () => {
       expect(await feeCollector.getFeeFor('TYPE_49')).to.equal(490)
     })
 
-    it('should handle very small wei amounts', async () => {
+    it('handles very small wei amounts', async () => {
       feeCollector = await deployFeeCollector()
 
       const smallAmount = 1n // 1 wei
@@ -646,7 +646,7 @@ describe('FeeCollector', () => {
       expect(await feeCollector.getBalance()).to.equal(0)
     })
 
-    it('should handle contract type with special characters', async () => {
+    it('handles contract type with special characters', async () => {
       const specialConfigs = [
         { contractType: 'TYPE-WITH-DASH', feeBps: 50 },
         { contractType: 'TYPE_WITH_UNDERSCORE', feeBps: 100 },
@@ -660,7 +660,7 @@ describe('FeeCollector', () => {
       expect(await feeCollector.getFeeFor('TYPE.WITH.DOT')).to.equal(150)
     })
 
-    it('should handle very long contract type names', async () => {
+    it('handles very long contract type names', async () => {
       const longTypeName = 'A'.repeat(100)
       const longTypeConfigs = [{ contractType: longTypeName, feeBps: 200 }]
 
@@ -682,7 +682,7 @@ describe('FeeCollector', () => {
       })
     })
 
-    it('should allow new owner to withdraw after ownership transfer', async () => {
+    it('allows new owner to withdraw after ownership transfer', async () => {
       await feeCollector.transferOwnership(user1.address)
 
       const fullBalance = await feeCollector.getBalance()
@@ -694,7 +694,7 @@ describe('FeeCollector', () => {
       )
     })
 
-    it('should not allow previous owner to withdraw after transfer', async () => {
+    it('does not allow previous owner to withdraw after transfer', async () => {
       await feeCollector.transferOwnership(user1.address)
 
       await expect(feeCollector.connect(owner).withdraw())
@@ -709,7 +709,7 @@ describe('FeeCollector', () => {
       feeCollector = await deployFeeCollector()
     })
 
-    it('should allow owner to add a new fee config', async () => {
+    it('allows owner to add a new fee config', async () => {
       await expect(feeCollector.setFee('NEW_TYPE', 123))
         .to.emit(feeCollector, 'FeeConfigUpdated')
         .withArgs('NEW_TYPE', 123)
@@ -719,7 +719,7 @@ describe('FeeCollector', () => {
       expect(configs.length).to.equal(4)
     })
 
-    it('should allow owner to update an existing fee config', async () => {
+    it('allows owner to update an existing fee config', async () => {
       await expect(feeCollector.setFee('BANK', 999))
         .to.emit(feeCollector, 'FeeConfigUpdated')
         .withArgs('BANK', 999)
@@ -729,20 +729,20 @@ describe('FeeCollector', () => {
       expect(configs.length).to.equal(3)
     })
 
-    it('should not allow non-owner to set fee', async () => {
+    it('does not allow non-owner to set fee', async () => {
       await expect(feeCollector.connect(user1).setFee('BANK', 100))
         .to.be.revertedWithCustomError(feeCollector, ERRORS.UNAUTHORIZED)
         .withArgs(user1.address)
     })
 
-    it('should reject empty contract type', async () => {
+    it('rejects empty contract type', async () => {
       await expect(feeCollector.setFee('', 100)).to.be.revertedWithCustomError(
         feeCollector,
         ERRORS.EMPTY_TYPE
       )
     })
 
-    it('should reject invalid BPS (> 10000)', async () => {
+    it('rejects invalid BPS (> 10000)', async () => {
       await expect(feeCollector.setFee('BANK', 10001)).to.be.revertedWithCustomError(
         feeCollector,
         ERRORS.INVALID_BPS

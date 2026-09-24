@@ -52,7 +52,7 @@ describe('Notification Controller', () => {
   });
 
   describe('GET /', () => {
-    it('should return notifications for authorized user', async () => {
+    it('returns notifications for authorized user', async () => {
       vi.spyOn(prisma.notification, 'findMany').mockResolvedValue([mockNotification]);
 
       const response = await request(app).get('/');
@@ -71,7 +71,7 @@ describe('Notification Controller', () => {
       });
     });
 
-    it('should return empty array when no notifications found', async () => {
+    it('returns empty array when no notifications found', async () => {
       vi.spyOn(prisma.notification, 'findMany').mockResolvedValue([]);
 
       const response = await request(app).get('/');
@@ -81,7 +81,7 @@ describe('Notification Controller', () => {
       expect(response.body).toEqual([]);
     });
 
-    it('should return 403 if user is not authorized', async () => {
+    it('returns 403 if user is not authorized', async () => {
       const unauthorizedNotification = {
         ...mockNotification,
         userAddress: '0x9999999999999999999999999999999999999999',
@@ -95,7 +95,7 @@ describe('Notification Controller', () => {
       expect(response.body.message).toBe('Unauthorized access');
     });
 
-    it('should return 500 on server error', async () => {
+    it('returns 500 on server error', async () => {
       vi.spyOn(prisma.notification, 'findMany').mockRejectedValue(new Error('Database error'));
 
       const response = await request(app).get('/');
@@ -106,7 +106,7 @@ describe('Notification Controller', () => {
   });
 
   describe('PUT /:id', () => {
-    it('should update notification successfully', async () => {
+    it('updates an existing notification', async () => {
       vi.spyOn(prisma.notification, 'findUnique').mockResolvedValue(mockNotification);
       vi.spyOn(prisma.notification, 'update').mockResolvedValue({
         ...mockNotification,
@@ -123,14 +123,14 @@ describe('Notification Controller', () => {
       });
     });
 
-    it('should return 400 for invalid notification ID', async () => {
+    it('returns 400 for invalid notification ID', async () => {
       const response = await request(app).put('/invalid');
 
       expect(response.status).toBe(400);
       expect(response.body.message).toBe('Invalid path parameters - id: Must be a number');
     });
 
-    it('should return 403 if user is not authorized', async () => {
+    it('returns 403 if user is not authorized', async () => {
       const unauthorizedNotification = {
         ...mockNotification,
         userAddress: '0x9999999999999999999999999999999999999999',
@@ -144,7 +144,7 @@ describe('Notification Controller', () => {
       expect(response.body.message).toBe('Unauthorized access');
     });
 
-    it('should return 404 if notification does not exist', async () => {
+    it('returns 404 if notification does not exist', async () => {
       vi.spyOn(prisma.notification, 'findUnique').mockResolvedValue(null);
 
       const response = await request(app).put('/1');
@@ -153,7 +153,7 @@ describe('Notification Controller', () => {
       expect(response.body.message).toBe('Notification not found');
     });
 
-    it('should return 500 on server error', async () => {
+    it('returns 500 on server error', async () => {
       vi.spyOn(prisma.notification, 'findUnique').mockRejectedValue(new Error('Database error'));
 
       const response = await request(app).put('/1');
@@ -164,7 +164,7 @@ describe('Notification Controller', () => {
   });
 
   describe('POST /bulk', () => {
-    it('should create bulk notifications successfully', async () => {
+    it('creates notifications for multiple users', async () => {
       const mockUserIds = [
         '0x1234567890123456789012345678901234567890',
         '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd',
@@ -197,7 +197,7 @@ describe('Notification Controller', () => {
       });
     });
 
-    it('should create bulk notifications without optional fields', async () => {
+    it('creates bulk notifications without optional fields', async () => {
       const mockUserIds = ['0x1234567890123456789012345678901234567890'];
       const mockMessage = 'Test message';
 
@@ -219,7 +219,7 @@ describe('Notification Controller', () => {
       });
     });
 
-    it('should return 400 if userIds is not an array', async () => {
+    it('returns 400 if userIds is not an array', async () => {
       const response = await request(app).post('/bulk').send({
         userIds: 'not-an-array',
         message: 'Test message',
@@ -229,7 +229,7 @@ describe('Notification Controller', () => {
       expect(response.body.message).toContain('userIds');
     });
 
-    it('should return 400 if userIds is empty array', async () => {
+    it('returns 400 if userIds is empty array', async () => {
       const response = await request(app).post('/bulk').send({
         userIds: [],
         message: 'Test message',
@@ -239,7 +239,7 @@ describe('Notification Controller', () => {
       expect(response.body.message).toContain('userIds must be a non-empty array');
     });
 
-    it('should return 400 if message is missing', async () => {
+    it('returns 400 if message is missing', async () => {
       const response = await request(app)
         .post('/bulk')
         .send({
@@ -250,7 +250,7 @@ describe('Notification Controller', () => {
       expect(response.body.message).toContain('message');
     });
 
-    it('should return 400 if message is not a string', async () => {
+    it('returns 400 if message is not a string', async () => {
       const response = await request(app)
         .post('/bulk')
         .send({
@@ -262,7 +262,7 @@ describe('Notification Controller', () => {
       expect(response.body.message).toContain('message');
     });
 
-    it('should return 500 if addNotification throws error', async () => {
+    it('returns 500 if addNotification throws error', async () => {
       const { addNotification } = await import('../../utils');
       vi.mocked(addNotification).mockRejectedValue(new Error('Database error'));
 

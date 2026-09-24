@@ -16,7 +16,7 @@ describe('CreditRoundReadState', () => {
     return mount(CreditRoundReadState, { props })
   }
 
-  it('announces initial loading without presenting the round as absent', () => {
+  it('[AC-US-CC-001-07] presents initial loading without claiming the round is missing', () => {
     const wrapper = mountState({ hasRound: false, isLoading: true, isError: false })
 
     expect(wrapper.find('[data-test="round-loading"]').attributes('role')).toBe('status')
@@ -24,7 +24,7 @@ describe('CreditRoundReadState', () => {
     expect(wrapper.find('[data-test="round-not-found"]').exists()).toBe(false)
   })
 
-  it('offers a scoped retry when the round read fails', async () => {
+  it('[AC-US-CC-001-07] offers a scoped retry when the round read fails', async () => {
     const wrapper = mountState({ hasRound: false, isLoading: false, isError: true })
 
     expect(wrapper.find('[data-test="round-error"]').exists()).toBe(true)
@@ -32,14 +32,14 @@ describe('CreditRoundReadState', () => {
     expect(mockInvalidateQueries).toHaveBeenCalledWith({ queryKey: fixedReturnKeys.all })
   })
 
-  it('marks cached details as outdated without hiding them', () => {
+  it('[AC-US-CC-001-07] marks cached round details as outdated without hiding them', () => {
     const wrapper = mountState({ hasRound: true, isLoading: false, isError: true })
 
     expect(wrapper.find('[data-test="round-refresh-error"]').exists()).toBe(true)
     expect(wrapper.find('[data-test="round-error"]').exists()).toBe(false)
   })
 
-  it('offers an explicit route recovery only after a confirmed missing round', async () => {
+  it('[AC-US-CC-001-07] offers route recovery after a confirmed missing round', async () => {
     const wrapper = mountState({ hasRound: false, isLoading: false, isError: false })
 
     expect(wrapper.find('[data-test="round-not-found"]').exists()).toBe(true)

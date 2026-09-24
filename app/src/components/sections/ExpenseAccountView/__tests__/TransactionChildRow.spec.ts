@@ -32,7 +32,7 @@ const mountComponent = (
     }
   })
 
-describe('TransactionChildRow', () => {
+describe('[US-EXP-004] TransactionChildRow', () => {
   it('renders friendly label instead of raw type key', () => {
     const wrapper = mountComponent('10', 'USDC')
 

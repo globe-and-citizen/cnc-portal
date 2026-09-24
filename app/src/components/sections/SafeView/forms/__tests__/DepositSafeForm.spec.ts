@@ -12,7 +12,7 @@ import {
   useQueryClientFn
 } from '@/tests/mocks'
 
-describe('DepositSafeForm.vue', () => {
+describe('[US-SAFE-003] DepositSafeForm.vue', () => {
   const defaultProps = {
     safeAddress: '0xsafeaddress000000000000000000000000' as Address
   }
@@ -67,7 +67,7 @@ describe('DepositSafeForm.vue', () => {
   })
 
   describe('User Interactions', () => {
-    it('should emit closeModal and reset form when cancel button is clicked', async () => {
+    it('emits closeModal and reset form when cancel button is clicked', async () => {
       const wrapper = createWrapper()
       await setTokenAmount(wrapper, '1', 'usdc', true)
 
@@ -76,7 +76,7 @@ describe('DepositSafeForm.vue', () => {
       expect(wrapper.emitted('closeModal')).toBeTruthy()
     })
 
-    it('should not submit when form is invalid', async () => {
+    it('does not submit when form is invalid', async () => {
       const wrapper = createWrapper()
       await setTokenAmount(wrapper, '0.1', 'native', false)
 
@@ -98,7 +98,7 @@ describe('DepositSafeForm.vue', () => {
   })
 
   describe('Native Token Deposit', () => {
-    it('should show success toast and close modal after native deposit confirmation', async () => {
+    it('shows a success toast and closes the modal after native deposit confirmation', async () => {
       mockTransactionFunctions.mockMutateAsync.mockResolvedValueOnce({
         hash: '0xnativetx',
         receipt: { status: 'success' }
@@ -113,7 +113,7 @@ describe('DepositSafeForm.vue', () => {
       expect(wrapper.emitted('closeModal')).toBeTruthy()
     })
 
-    it('should prevent multiple submissions while loading', async () => {
+    it('prevents multiple submissions while loading', async () => {
       mockUseSafeSendTransaction.isPending.value = true
       const wrapper = createWrapper()
 
@@ -124,7 +124,7 @@ describe('DepositSafeForm.vue', () => {
       expect(mockTransactionFunctions.mockMutateAsync).not.toHaveBeenCalled()
     })
 
-    it('handles native deposit failures gracefully', async () => {
+    it('reports native deposit failures', async () => {
       mockTransactionFunctions.mockMutateAsync.mockRejectedValueOnce(new Error('Native failed'))
       const wrapper = createWrapper()
 
@@ -139,7 +139,7 @@ describe('DepositSafeForm.vue', () => {
   })
 
   describe('ERC20 Token Deposit - With Sufficient Allowance', () => {
-    it('should show success toast and close modal after ERC20 deposit', async () => {
+    it('shows a success toast and closes the modal after an ERC20 deposit', async () => {
       mockERC20Reads.allowance.data.value = 1000000n
       mockERC20Writes.transfer.mutateAsync.mockResolvedValueOnce({ hash: '0xtransfertx' })
 
@@ -174,7 +174,7 @@ describe('DepositSafeForm.vue', () => {
   })
 
   describe('ERC20 Token Deposit - With Insufficient Allowance', () => {
-    it('should handle approval errors gracefully', async () => {
+    it('reports ERC20 approval errors', async () => {
       mockERC20Reads.allowance.data.value = 0n
       mockERC20Writes.approve.mutateAsync.mockRejectedValueOnce(new Error('Approval failed'))
 
@@ -191,7 +191,7 @@ describe('DepositSafeForm.vue', () => {
   })
 
   describe('Edge Cases', () => {
-    it('should handle NaN amount gracefully', async () => {
+    it('rejects a non-numeric deposit amount before contract calls', async () => {
       const wrapper = createWrapper()
       await setTokenAmount(wrapper, 'invalid', 'usdc', false)
 
@@ -203,7 +203,7 @@ describe('DepositSafeForm.vue', () => {
       expect(mockERC20Writes.approve.mutateAsync).not.toHaveBeenCalled()
     })
 
-    it('should handle zero allowance correctly', async () => {
+    it('requests ERC20 approval when the allowance is zero', async () => {
       mockERC20Reads.allowance.data.value = 0n
 
       const wrapper = createWrapper()

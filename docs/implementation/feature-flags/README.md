@@ -68,6 +68,8 @@ only decides whether a submitted work date falls inside the claim-submission win
 - [Backoffice feature list](../../../dashboard/app/pages/features/index.vue)
 - [Canonical dashboard formatter](../../../dashboard/app/utils/format/) for the feature lifecycle timestamps
 - [Claim enforcement](../../../backend/src/controllers/claimController.ts)
+- [Client feature-filter tests](../../../app/src/composables/__tests__/useFacetFilter.spec.ts) and
+  [restricted-submission tests](../../../app/src/composables/__tests__/useSubmitRestriction.spec.ts)
 
 ## Related Documentation
 

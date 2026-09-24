@@ -2,7 +2,7 @@
 
 **Status:** Current — applied to every canonical product feature user story
 
-**Last updated:** 2026-08-30
+**Last updated:** 2026-09-23
 
 **Purpose:** Define the canonical, reviewable documentation contract for CNC Portal features
 
@@ -106,33 +106,72 @@ criterion moves between categories or changes position within its story.
 - [x] `AC-US-FEATURE-001-01` A matching operation retains all of its journal lines.
 ```
 
-Keep representative test titles focused on observable behaviour. Put the user-story ID in the enclosing suite title or equivalent test
-metadata, then declare directly proven acceptance criteria in a structured `Covers` comment immediately above the smallest representative
-test. One coherent path may cover multiple criteria. One criterion may also have more than one representative test when distinct success and
-failure paths are necessary, but do not tag every low-level test that happens to exercise the same code.
+Keep representative test titles focused on observable behaviour and write them as concise declarative present-tense phrases. Do not prefix
+them with `should`: the test API already supplies that meaning.
+
+When one test directly represents exactly one canonical identifier, put that identifier in the title instead of a coverage comment. Use the
+most specific identifier available: prefix the test title with the acceptance ID when it represents one criterion, or prefix the enclosing
+suite title with the user-story ID when the suite represents one story:
 
 ```typescript
-describe('[US-FEATURE-001] Matching entries', () => {
+it("[AC-US-FEATURE-001-01] retains every line of a matching JournalEntry", () => {
+  // Test the observable criterion.
+});
+```
+
+When one coherent test proves two or more canonical identifiers, keep the title readable and declare the IDs in a structured `Covers`
+comment immediately above the smallest representative test. Do not use a `Covers` block for a single ID. For E2E journeys, put a single
+user-story ID in the enclosing suite title or equivalent metadata; prefix a path title with its single acceptance ID, and use this `Covers`
+form only when the path proves multiple criteria:
+
+```typescript
+describe("[US-FEATURE-001] Matching entries", () => {
   /**
    * Covers:
    * - [AC-US-FEATURE-001-01]
+   * - [AC-US-FEATURE-001-02]
    */
-  it('retains every line of a matching JournalEntry', () => {
+  it("retains every line of a matching JournalEntry", () => {
     // Test the observable criterion.
-  })
-})
+  });
+});
 ```
 
-The `Covers` block is traceability metadata, not evidence by itself. Keep it adjacent to the test whose assertions prove the criteria, and
-remove or update it whenever that test stops proving an outcome. Do not place acceptance-criterion IDs in test titles merely to make the
-coverage report discover them.
+One criterion may have more than one representative test when distinct success and failure paths are necessary, but do not tag every
+low-level test that happens to exercise the same code. An ID prefix or `Covers` block is traceability metadata, not evidence by itself. Keep
+it adjacent to the assertions that prove the outcome, and remove or update it whenever that test stops proving the criterion. Never add an
+acceptance ID merely to make the coverage report discover it.
 
 Every criterion has an ID even when no representative automated test exists. A test reference records evidence, not comprehensive coverage,
 and it does not replace the criterion's observable outcome, checkbox state, implementation evidence, or required human validation.
 
 Run `npm run report:acceptance-coverage -- --feature <feature-slug>` to write a local Markdown report under `reports/acceptance-coverage/`.
-The Git-ignored report groups representative `AC-US-*` references by frontend, backend, contract, and E2E test layer. It derives evidence
-from tracked test files; it does not infer whether an unreferenced criterion needs automation or whether the latest test run passed.
+Omit `--feature` for the complete repository audit. The Git-ignored report inventories every statically declared test, separates mapped and
+unmapped test files, and groups representative `AC-US-*` references by frontend, backend, contract, dashboard, and E2E test layer. A direct
+US/AC marker provides story or representative criterion traceability. A test path linked from canonical Implementation Evidence provides
+feature-level support only, and the report labels that weaker mapping explicitly. Tests linked only from canonical contract or shared
+implementation documentation remain visible as technical-only support instead of being attributed to a product feature. The report derives
+evidence from tracked test files; it does not infer whether an unreferenced criterion needs automation or whether the latest test run
+passed. Use the generated feature overview for breadth across layers; use the per-story tables below it when deciding whether a specific
+criterion has the expected kind of representative evidence.
+
+#### Discovering Undocumented Behaviour from Tests
+
+Feature-only and technical-only tests are a review queue, not proof that documentation is complete or incomplete. For each test without a
+direct product identifier, inspect its assertions, the exercised implementation, the reachable journey, and the existing criteria:
+
+1. If it proves an existing criterion, attach the ID only to the smallest representative test; do not tag every incidental regression test.
+2. If it exposes a stable user-visible outcome or independently verifiable business rule that is absent from the feature contract, revise
+   the owning criterion or add a new criterion with the next unused stable ID.
+3. Create a new user story only when the behavior represents a distinct actor goal and user-visible benefit, not merely another test case,
+   endpoint, component state, or contract branch.
+4. If the test protects shared runtime or implementation detail, keep it under implementation or contract documentation without creating a
+   product promise.
+5. If the expectation is stale, accidental, unreachable, or inconsistent with the intended journey, investigate the test or implementation
+   instead of documenting it as required behavior.
+
+The generated documentation-review queue includes behavior samples to support this audit. Test titles are discovery hints; only verified
+current behavior and product intent justify changing a canonical US or AC.
 
 ### Story Statuses
 
@@ -210,22 +249,44 @@ When a feature is part of an active test-coverage review, add a separate table i
 to the product `Status` column: delivery, representative automated evidence, E2E scope, and the latest execution result are different facts.
 
 ```markdown
-| User Story     | Representative AC Coverage | E2E Status | E2E Boundary                    |
-| -------------- | -------------------------- | ---------- | ------------------------------- |
-| US-FEATURE-001 | Backend 2/5 · E2E 2/5      | 🚧 Partial | Browser + API; contract stubbed |
+| User Story     | Main Journey  | Coverage Target | Current Coverage Profile            | Gaps |
+| -------------- | ------------- | --------------- | ----------------------------------- | ---- |
+| US-FEATURE-001 | ✅ Integrated | ✅ 5/5 met      | 2 integrated · 2 mocked · 1 backend | —    |
 ```
 
-- `Representative AC Coverage` summarizes acceptance criteria carrying direct test references; it is evidence, not a coverage percentage or
-  a requirement that every criterion be automated at every layer.
-- `E2E Status` uses `⚪ Unassessed`, `📋 Planned`, `🚧 Partial`, `⚠️ Blocked`, `✅ Covered`, or `➖ Not required`. `✅ Covered` is valid
-  only against an explicitly defined path and integration boundary.
-- `E2E Boundary` names which browser, backend, database, chain, or external-service boundaries are real and which are simulated. A seeded,
-  stubbed, or snapshot-provided dependency is not a validated user action.
+- `Main Journey` states whether the primary user path is integrated, mocked, planned, blocked, or not required. `✅ Integrated` means the
+  browser crosses every boundary required by that path; a seeded, stubbed, or snapshot-provided dependency is not a validated user action.
+- `Coverage Target` compares criteria whose required proof is present with the story's complete criterion count. Do not mark a story partial
+  merely because intentionally mocked or layer-specific criteria are not integrated.
+- `Current Coverage Profile` summarizes the kind of representative proof attached to each criterion. Keep integrated, mocked-only,
+  layer-only, and combined proof distinguishable rather than collapsing them into one E2E percentage.
+- `Gaps` lists criteria whose required proof is absent or insufficient. Use `—` when every target is met.
 - Store the owning `E2E-PATH-*`, detailed test-file mapping, latest pass/fail result, and run artifacts in the generated coverage report,
   CI, or a test-run record rather than duplicating them in this durable summary.
 
 The table is optional while this model is being piloted. When present, keep one row per story in the same stable-ID order as the status
 overview and refresh it when representative test references or E2E boundaries change.
+
+For a coverage-reviewed story, add a compact table after its acceptance criteria and before its dependencies:
+
+```markdown
+### Test Coverage
+
+| Acceptance Criterion   | Expected Coverage        | Current Coverage | Status          |
+| ---------------------- | ------------------------ | ---------------- | --------------- |
+| `AC-US-FEATURE-001-01` | Integrated E2E           | Integrated E2E   | ✅ Met          |
+| `AC-US-FEATURE-001-02` | Mocked browser + Backend | Mocked browser   | ⚠️ Insufficient |
+| `AC-US-FEATURE-001-03` | Backend                  | None linked      | ❌ Missing      |
+```
+
+- `Expected Coverage` is the deliberately chosen proof boundary: `Integrated E2E`, `Mocked browser`, `Frontend`, `Backend`, `Contract`, or
+  `Dashboard`. Join independently required boundaries with `+`.
+- `Current Coverage` is derived from direct representative `AC-US-*` references. `Integrated E2E` and `Mocked browser` come from the
+  Playwright suite's `@integrated` or `@mocked` classification; `None linked` means no representative reference is currently registered.
+- `Status` is `✅ Met` when every expected boundary is present, `⚠️ Insufficient` when some proof exists but a required boundary is absent,
+  or `❌ Missing` when no representative proof is linked.
+- Coverage status records traceability against the planned test boundary, not whether the latest run passed. Keep current execution results
+  in CI or the generated local report.
 
 ### 5. User Stories
 

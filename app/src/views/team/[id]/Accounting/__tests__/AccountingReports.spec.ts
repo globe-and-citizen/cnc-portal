@@ -44,7 +44,7 @@ beforeEach(() => {
 // by the pure presenter specs.
 
 describe('SummaryView', () => {
-  it('shows the balance banner and live metric cards', () => {
+  it('[AC-US-ACCT-001-01] shows the balance banner and live metric cards', () => {
     const wrapper = renderWithProviders(SummaryView)
     expect(wrapper.find('[data-test="balance-banner"]').exists()).toBe(true)
     expect(wrapper.find('[data-test="summary-Net income"]').text()).toContain('$')
@@ -53,6 +53,12 @@ describe('SummaryView', () => {
 })
 
 describe('TrialBalanceView', () => {
+  /**
+   * Covers:
+   * - [AC-US-ACCT-001-09]
+   * - [AC-US-ACCT-003-03]
+   * - [AC-US-ACCT-003-09]
+   */
   it('renders the trial-balance table, balanced for an empty book', () => {
     const wrapper = renderWithProviders(TrialBalanceView)
     const text = wrapper.text()
@@ -60,7 +66,7 @@ describe('TrialBalanceView', () => {
     expect(text).toContain('In balance')
   })
 
-  it('opens a per-account drill-down when a row is clicked', async () => {
+  it('[AC-US-ACCT-003-04] opens a per-account drill-down when a row is clicked', async () => {
     const wrapper = renderWithProviders(TrialBalanceView)
     const row = wrapper.find('[data-test^="drilldown-"]')
     // Empty books show no account rows; only exercise the drill-down when present.
@@ -84,7 +90,7 @@ describe('TrialBalanceView', () => {
     wrapper.unmount()
   })
 
-  it('exports and prints the trial balance from the export bar', async () => {
+  it('[AC-US-ACCT-004-01] exports and prints the trial balance from the export bar', async () => {
     const wrapper = renderWithProviders(TrialBalanceView)
     await wrapper.find('[data-test="export-excel"]').trigger('click')
     await wrapper.find('[data-test="export-pdf"]').trigger('click')
@@ -98,7 +104,7 @@ describe('TrialBalanceView', () => {
 })
 
 describe('IncomeStatementView', () => {
-  it('renders the income statement with its per-line drill-down rows', () => {
+  it('[AC-US-ACCT-003-01] renders the income statement with per-line drill-down rows', () => {
     const wrapper = renderWithProviders(IncomeStatementView)
     const text = wrapper.text()
     expect(text).toContain('Income statement')
@@ -129,7 +135,7 @@ describe('IncomeStatementView', () => {
 })
 
 describe('BalanceSheetView', () => {
-  it('renders the three account tables and the earnings calculation', () => {
+  it('[AC-US-ACCT-003-02] renders balance-sheet accounts and earnings calculation', () => {
     const wrapper = renderWithProviders(BalanceSheetView)
     const text = wrapper.text()
     expect(text).toContain('Balance sheet')
@@ -240,7 +246,7 @@ describe('LedgerDrilldownModal (issue #2249)', () => {
     wrapper.unmount()
   })
 
-  it('carries an opening balance into the ledger and closes on the remainder', async () => {
+  it('[AC-US-ACCT-002-12] carries an opening balance and closes on the remainder', async () => {
     const opening = {
       debits: usd(100),
       credits: usd(0),
@@ -327,7 +333,7 @@ describe('StatementLine', () => {
     expect(wrapper.emitted('drilldown')?.[0]).toEqual([aggregate])
   })
 
-  it('renders an inert plain label when the line has nothing to drill', async () => {
+  it('[AC-US-ACCT-003-11] renders an inert label when the line has no evidence', async () => {
     const wrapper = renderWithProviders(StatementLine, {
       props: { line: { label: 'None (no debt)', value: '$0.00' } }
     })

@@ -1243,7 +1243,7 @@ describe('FixedReturn', () => {
       )
     })
 
-    it('accumulates correctly across multiple installments', async () => {
+    it('accumulates repayments across multiple installments', async () => {
       const {
         fixedReturn,
         bankSigner,

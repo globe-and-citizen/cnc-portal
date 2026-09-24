@@ -95,7 +95,7 @@ function mountLedger(round: CreditRound) {
   })
 }
 
-describe('CreditRoundLedger', () => {
+describe('[US-CC-001] CreditRoundLedger', () => {
   it('renders funding progress, lender table values and child cards', () => {
     const wrapper = mountLedger(makeRound())
 

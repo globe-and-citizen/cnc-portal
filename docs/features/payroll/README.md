@@ -48,16 +48,17 @@ its complete journey belongs to the Accounts feature.
 | -------------- | ------------------------------------------ | ---------------------- | -------------- |
 | US-PAYROLL-001 | Set a member's wage                        | Company owner          | 🧪 Validation  |
 | US-PAYROLL-002 | Pause or resume a member's wage            | Company owner          | 🧪 Validation  |
-| US-PAYROLL-003 | Fund the Payroll contract                  | Company owner          | 🔗 Reference   |
+| US-PAYROLL-003 | Fund the Payroll contract                  | Bank owner / Board     | 🔗 Reference   |
 | US-PAYROLL-004 | Set weekly goals                           | Company member         | 🧪 Validation  |
 | US-PAYROLL-005 | Submit a daily claim                       | Company member         | 🧪 Validation  |
 | US-PAYROLL-006 | Edit a daily claim                         | Company member         | 🚧 In Progress |
 | US-PAYROLL-007 | Delete a daily claim                       | Company member         | 🚧 In Progress |
-| US-PAYROLL-008 | Sign a completed weekly claim              | Contract owner         | 🚧 In Progress |
+| US-PAYROLL-008 | Sign a completed weekly claim              | Contract owner         | 🧪 Validation  |
 | US-PAYROLL-009 | Disable or re-enable a signed weekly claim | Contract owner         | 🚧 In Progress |
 | US-PAYROLL-010 | Withdraw an approved weekly claim          | Paid member            | 🧪 Validation  |
 | US-PAYROLL-011 | Reconcile weekly claims with the chain     | System                 | 🧪 Validation  |
 | US-PAYROLL-012 | Review payroll history                     | Company member / owner | 🧪 Validation  |
+| US-PAYROLL-013 | Review the Payroll account position        | Company member         | 🚧 In Progress |
 
 ## Test Coverage Overview
 
@@ -75,6 +76,7 @@ its complete journey belongs to the Accounts feature.
 | US-PAYROLL-010 | 📋 Planned      | E2E-PATH-13              |
 | US-PAYROLL-011 | 📋 Planned      | E2E-PATH-13              |
 | US-PAYROLL-012 | 📋 Planned      | E2E-PATH-13              |
+| US-PAYROLL-013 | 📋 Planned      | Not yet assigned         |
 
 Criteria tagged _(API)_ or _(contract)_ describe outcomes that cannot be confirmed from the portal alone.
 
@@ -159,7 +161,7 @@ Criteria tagged _(API)_ or _(contract)_ describe outcomes that cannot be confirm
 
 ## US-PAYROLL-003: Fund the Payroll Contract
 
-**As a** company owner\
+**As a** Bank owner or Board member\
 **I want to** transfer treasury assets to the Cash Remuneration contract\
 **So that** members can withdraw compensation paid in non-mintable assets
 
@@ -259,6 +261,8 @@ This is a reference story. The Accounts feature owns the complete Bank transfer 
 - [x] `AC-US-PAYROLL-005-21` A disabled week rejects new daily claims.
 - [x] `AC-US-PAYROLL-005-22` A paused wage rejects new claims.
 - [x] `AC-US-PAYROLL-005-23` A rejected submission leaves the daily-claim state unchanged and returns its rejection reason.
+- [x] `AC-US-PAYROLL-005-24` An attachment with an unsupported file type is rejected before the daily claim is submitted.
+- [x] `AC-US-PAYROLL-005-25` An attachment larger than 10 MB is rejected before the daily claim is submitted.
 
 **Accounting:** The daily claim changes the source amount for
 [`UC-CASH-02`](../accounting/journal-entry-catalogue.md#uc-cash-02--weekly-wage-accrual). The journal entry is created only after the
@@ -342,7 +346,7 @@ containing work week ends and remains eligible.
 
 #### Business Rules
 
-- [ ] `AC-US-PAYROLL-008-03` The API authorizes only the current Cash Remuneration contract owner.
+- [x] `AC-US-PAYROLL-008-03` The API authorizes only the current Cash Remuneration contract owner.
 - [x] `AC-US-PAYROLL-008-04` The product journey permits signing only when the weekly claim contains at least one daily claim.
 - [x] `AC-US-PAYROLL-008-05` _(API)_ The backend rejects signing a goals-only weekly claim before storing a signature or changing its
       status.
@@ -502,6 +506,31 @@ into Investor Equity.
 
 **Dependencies:** US-PAYROLL-005
 
+## US-PAYROLL-013: Review the Payroll Account Position
+
+**As a** company member\
+**I want to** inspect the Cash Remuneration account position and activity\
+**So that** I can understand payroll liquidity, pending obligations, and account movements
+
+### Acceptance Criteria
+
+#### Happy Path
+
+- [x] `AC-US-PAYROLL-013-01` A company member can inspect the Cash Remuneration address, total balance, and token holdings.
+- [x] `AC-US-PAYROLL-013-02` The account summary reports the value of signed claims that remain pending for withdrawal.
+- [x] `AC-US-PAYROLL-013-03` Account activity lists native deposits, token deposits, and withdrawals with their monetary values.
+- [x] `AC-US-PAYROLL-013-04` A company member can filter Cash Remuneration activity by date and transaction type.
+
+#### Business Rules
+
+- [x] `AC-US-PAYROLL-013-05` Inspecting the Payroll account position does not require signing or withdrawal permission.
+
+#### Edge & Error Cases
+
+- [ ] `AC-US-PAYROLL-013-06` The withdrawn-compensation summary includes only claims withdrawn during the current calendar month.
+
+**Dependencies:** US-PAYROLL-003, Accounts
+
 ## Known Gaps
 
 Functional gaps map to unchecked acceptance criteria.
@@ -511,14 +540,16 @@ Functional gaps map to unchecked acceptance criteria.
 - The update and delete APIs allow claims from a disabled week to change even though the functional lifecycle permits changes only while the
   week is pending.
 - The legacy enable and disable API actions can update the stored status without performing the matching on-chain action.
+- The withdrawn-compensation summary labelled for the current month aggregates every withdrawn claim returned by the API instead of applying
+  a current-month boundary (`US-PAYROLL-013`).
 
 ## Implementation Evidence
 
 **Implementation evidence reviewed against:** `006685cb46c8408101e785b258482092a1e63f70`
 
-- [Cash Remuneration components](../../../app/src/components/sections/CashRemunerationView/),
-  [claim-history components](../../../app/src/components/sections/ClaimHistoryView/), and
-  [weekly-claim components](../../../app/src/components/sections/WeeklyClaimView/)
+- [Cash Remuneration overview](../../../app/src/components/sections/CashRemunerationView/CashRemunerationOverview.vue),
+  [claim history](../../../app/src/components/sections/ClaimHistoryView/ClaimHistory.vue), and
+  [weekly-claim actions](../../../app/src/components/sections/WeeklyClaimView/WeeklyClaimActionDropdown.vue)
 - [Wage standard step](../../../app/src/components/sections/DashboardView/SetMemberWageStandardStep.vue) and
   [rate-dot presentation](../../../app/src/components/ui/RateDotList.vue)
 - [Wage configuration](../../../app/src/components/sections/DashboardView/SetMemberWageModal.vue)
@@ -556,6 +587,21 @@ Functional gaps map to unchecked acceptance criteria.
 - [Claim API tests](../../../backend/src/controllers/__tests__/claimController.test.ts)
 - [Weekly claim API tests](../../../backend/src/controllers/__tests__/weeklyClaimController.test.ts)
 - [Cash Remuneration contract tests](../../../contract/test/CashRemunerationEIP712.spec.ts)
+
+### Test-suite ownership
+
+- [Payroll member tests](../../../app/src/components/sections/DashboardView/__tests__/MemberSection.spec.ts),
+  [wage-modal tests](../../../app/src/components/sections/DashboardView/__tests__/SetMemberWageModal.spec.ts),
+  [standard-wage tests](../../../app/src/components/sections/DashboardView/__tests__/SetMemberWageStandardStep.spec.ts),
+  [overtime-wage tests](../../../app/src/components/sections/DashboardView/__tests__/SetMemberWageOvertimeStep.spec.ts),
+  [weekly-claim query tests](../../../app/src/queries/__tests__/weeklyClaim.queries.spec.ts),
+  [weekly-goal query tests](../../../app/src/queries/__tests__/weeklyClaimGoals.queries.spec.ts), and
+  [payroll view tests](../../../app/src/views/team/%5Bid%5D/__tests__/CashRemunerationView.spec.ts)
+- [Cash-remuneration ownership tests](../../../backend/src/utils/__tests__/cashRemunerationUtil.test.ts),
+  [week-boundary tests](../../../backend/src/utils/__tests__/dayUtils.test.ts),
+  [wage-resolution tests](../../../backend/src/utils/__tests__/wageResolution.test.ts), and
+  [wage-format tests](../../../backend/src/utils/__tests__/wageUtil.test.ts)
+- [Cash Remuneration withdrawal tests](../../../contract/test/CashRemunerationEIP712.withdrawSher.spec.ts)
 
 ## Related Documentation
 

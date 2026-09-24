@@ -39,7 +39,7 @@ vi.mock('@/composables/elections', () => ({
   }))
 }))
 
-describe('archived team write guard (TeamMetaActions)', () => {
+describe('[US-COMPANIES-006] archived team write guard (TeamMetaActions)', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     // Caller is the team owner so the archive guard is the only thing that can

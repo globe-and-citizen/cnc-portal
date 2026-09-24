@@ -122,7 +122,7 @@ describe('SafeDepositRouterForm.vue', () => {
     expect(wrapper.exists()).toBe(true)
   })
 
-  it('approve onError resets the step and surfaces a user-rejection toast', async () => {
+  it('[AC-US-SHER-001-08] stops before deposit when approval fails', async () => {
     const wrapper = createWrapper()
     const vm = getVm(wrapper)
 
@@ -136,7 +136,7 @@ describe('SafeDepositRouterForm.vue', () => {
     expect(mockSafeDepositRouterWrites.deposit.mutate).not.toHaveBeenCalled()
   })
 
-  it('deposit onError resets the step', async () => {
+  it('[AC-US-SHER-001-09] resets after a failed deposit without reporting success', async () => {
     const wrapper = createWrapper()
     const vm = getVm(wrapper)
 
@@ -150,7 +150,7 @@ describe('SafeDepositRouterForm.vue', () => {
     expect(vm.currentStep).toBe(0)
   })
 
-  it('runs approval then deposit sequentially and closes on success', async () => {
+  it('[AC-US-SHER-001-03] approves insufficient allowance before depositing', async () => {
     const wrapper = createWrapper()
     const vm = getVm(wrapper)
 

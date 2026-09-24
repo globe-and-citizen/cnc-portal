@@ -53,7 +53,7 @@ const createWrapperWithProps = (
     }
   })
 
-describe('SetMemberWageStandardStep.vue', () => {
+describe('[US-PAYROLL-001] SetMemberWageStandardStep.vue', () => {
   it('renders step with hourly rates and currency badges', () => {
     const wrapper = createWrapper(
       createWageData({

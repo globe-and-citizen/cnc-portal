@@ -97,7 +97,7 @@ vi.mock('@/composables/investor/useSafeDepositRouterEventsViaLogs', async () => 
   }
 })
 
-describe('InvestorsTransactions', () => {
+describe('[US-SHER-003] InvestorsTransactions', () => {
   let wrapper: VueWrapper
 
   beforeEach(() => {

@@ -69,7 +69,7 @@ function renderLedger(entries: JournalEntryDraft[]) {
 }
 
 describe('General ledger — redeployed pocket', () => {
-  it('names the later deployment while leaving the original plain', async () => {
+  it('[AC-US-ACCT-005-05] names the later deployment while leaving the original plain', async () => {
     const wrapper = renderLedger(REDEPLOYED)
     await flushPromises()
 
@@ -102,7 +102,7 @@ describe('General ledger — redeployed pocket', () => {
     expect(wrapper.text()).not.toContain('Cash — Bank 2')
   })
 
-  it('links each transaction hash once to the configured explorer, while leaving synthetic entries plain', async () => {
+  it('[AC-US-ACCT-002-05] links transaction hashes but leaves synthetic entries plain', async () => {
     const wrapper = renderLedger([
       deposit('a', BANK_1, 1_700_000_000, TX_HASH),
       deposit('synthetic', BANK_1, 1_700_086_400)

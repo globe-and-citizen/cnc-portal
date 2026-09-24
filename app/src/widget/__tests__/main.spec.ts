@@ -17,7 +17,7 @@ async function loadWidget(scriptAttrs: Record<string, string>) {
   return { mount }
 }
 
-describe('widget main', () => {
+describe('[US-PAYGATE-003] widget main', () => {
   let consoleErrorSpy: ReturnType<typeof vi.spyOn>
 
   beforeEach(() => {
@@ -28,7 +28,7 @@ describe('widget main', () => {
     consoleErrorSpy.mockRestore()
   })
 
-  it('logs a console error and renders a fallback card when data-bank/data-token are missing', async () => {
+  it('[AC-US-PAYGATE-003-13] renders a fallback when bank and token attributes are missing', async () => {
     const { mount } = await loadWidget({})
 
     expect(consoleErrorSpy).toHaveBeenCalledWith(
@@ -58,7 +58,7 @@ describe('widget main', () => {
     )
   })
 
-  it('logs a console error and renders a fallback card when data-bank is not a valid address', async () => {
+  it('[AC-US-PAYGATE-003-13] renders a fallback when the bank attribute is invalid', async () => {
     const { mount } = await loadWidget({ bank: '0x…', token: 'USDC' })
 
     expect(consoleErrorSpy).toHaveBeenCalledWith(
@@ -91,7 +91,7 @@ describe('widget main', () => {
   })
 
   it.each(['abc', '-5', '', '1.2.3', 'NaN'])(
-    'throws synchronously from setAmount for an invalid amount %s',
+    '[AC-US-PAYGATE-003-07] rejects an invalid amount %s synchronously',
     async (amount) => {
       await loadWidget({
         bank: '0x1111111111111111111111111111111111111111',

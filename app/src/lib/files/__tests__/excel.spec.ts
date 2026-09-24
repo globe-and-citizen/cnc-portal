@@ -25,7 +25,7 @@
 import { describe, expect, it } from 'vitest'
 
 describe('placeholder', () => {
-  it('should pass a placeholder test', () => {
+  it('keeps the spreadsheet test harness active', () => {
     expect(true).toBe(true)
   })
 })
@@ -46,7 +46,7 @@ describe('placeholder', () => {
 //   })
 
 //   describe('exportToExcel', () => {
-//     it('should successfully export data to Excel', () => {
+//     it('exports data to Excel', () => {
 //       const data = [
 //         ['Header1', 'Header2'],
 //         ['Value1', 'Value2']
@@ -74,7 +74,7 @@ describe('placeholder', () => {
 //       expect(mockRevokeObjectURL).toHaveBeenCalled()
 //     })
 
-//     it('should use default sheet name when not provided', () => {
+//     it('uses default sheet name when not provided', () => {
 //       const data = [['Header1', 'Header2']]
 //       const options = {
 //         filename: 'test.xlsx'
@@ -91,7 +91,7 @@ describe('placeholder', () => {
 //       ])
 //     })
 
-//     it('should handle errors gracefully', () => {
+//     it('handles errors gracefully', () => {
 //       const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
 //       vi.mocked(xlsx.build).mockImplementationOnce(() => {
 //         throw new Error('Test error')
@@ -104,7 +104,7 @@ describe('placeholder', () => {
 //       consoleSpy.mockRestore()
 //     })
 
-//     it('should properly set the download filename', () => {
+//     it('sets the download filename', () => {
 //       const data = [['Header1']]
 //       const options = {
 //         filename: 'custom-filename.xlsx'
@@ -118,7 +118,7 @@ describe('placeholder', () => {
 //   })
 
 //   describe('exportReceiptToExcel', () => {
-//     it('should export receipt data with correct format', () => {
+//     it('exports receipt data with correct format', () => {
 //       const receiptData = {
 //         txHash: '0x1234567890abcdef',
 //         date: '2024-03-20',
@@ -152,7 +152,7 @@ describe('placeholder', () => {
 //       ])
 //     })
 
-//     it('should include additional currency amounts in the export', () => {
+//     it('includes additional currency amounts in the export', () => {
 //       const receiptData = {
 //         txHash: '0x1234567890abcdef',
 //         date: '2024-03-20',
@@ -190,7 +190,7 @@ describe('placeholder', () => {
 //       ])
 //     })
 
-//     it('should generate correct filename with truncated txHash', () => {
+//     it('generates correct filename with truncated txHash', () => {
 //       const receiptData = {
 //         txHash: '0x1234567890abcdef',
 //         date: '2024-03-20',
@@ -210,7 +210,7 @@ describe('placeholder', () => {
 //   })
 
 //   describe('exportTransactionsToExcel', () => {
-//     it('should export transactions with correct format', () => {
+//     it('exports transactions with correct format', () => {
 //       const headers = ['Date', 'Amount', 'Type']
 //       const rows = [
 //         ['2024-03-20', '1.5', 'Transfer'],
@@ -230,7 +230,7 @@ describe('placeholder', () => {
 //       ])
 //     })
 
-//     it('should handle empty transaction data', () => {
+//     it('handles empty transaction data', () => {
 //       const headers = ['Date', 'Amount', 'Type']
 //       const rows: (string | number)[][] = []
 //       const date = '2024-03-20'
@@ -247,7 +247,7 @@ describe('placeholder', () => {
 //       ])
 //     })
 
-//     it('should generate correct filename with date', () => {
+//     it('generates correct filename with date', () => {
 //       const headers = ['Date', 'Amount', 'Type']
 //       const rows = [['2024-03-20', '1.5', 'Transfer']]
 //       const date = '2024-03-20'

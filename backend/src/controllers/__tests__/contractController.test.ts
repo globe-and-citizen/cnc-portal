@@ -98,7 +98,7 @@ describe('contractController', () => {
   });
 
   describe('PUT: /sync', () => {
-    it('should return 400 if required fields are missing or invalid', async () => {
+    it('returns 400 if required fields are missing or invalid', async () => {
       const response = await request(app).put('/sync');
       expect(response.status).toBe(400);
       expect(response.body.message).toContain('Invalid request body');
@@ -109,14 +109,14 @@ describe('contractController', () => {
       expect(response.body.message).toContain('Invalid request body');
     });
 
-    it('should return 404 if team not found', async () => {
+    it('returns 404 if team not found', async () => {
       vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(null);
       const response = await request(app).put('/sync').send({ teamId: 1 });
       expect(response.status).toBe(404);
       expect(response.body.message).toContain('Team not found');
     });
 
-    it('should return 200 with count 0 if officer contract is not configured', async () => {
+    it('returns 200 with count 0 if officer contract is not configured', async () => {
       vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(mockTeam);
       vi.spyOn(publicClient, 'readContract').mockResolvedValue([]);
       vi.spyOn(prisma.teamContract, 'createMany').mockResolvedValue({ count: 0 });
@@ -126,7 +126,7 @@ describe('contractController', () => {
       expect(response.body.message).toContain('No new contracts Created');
     });
 
-    it('should resolve officer from persisted officer contract and sync', async () => {
+    it('resolves officer from persisted officer contract and sync', async () => {
       vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(mockTeam);
       vi.spyOn(publicClient, 'readContract').mockResolvedValue([
         {
@@ -143,7 +143,7 @@ describe('contractController', () => {
       expect(response.body).toEqual({ count: 1 });
     });
 
-    it('should return 403 if caller is not the owner of the team', async () => {
+    it('returns 403 if caller is not the owner of the team', async () => {
       vi.spyOn(prisma.team, 'findUnique').mockResolvedValue({
         ...mockTeam,
         ownerAddress: '0x456',
@@ -154,7 +154,7 @@ describe('contractController', () => {
       expect(response.body.message).toContain('Unauthorized: Caller is not the owner of the team');
     });
 
-    it.skip('should return 400 if no contracts are created', async () => {
+    it.skip('returns 400 if no contracts are created', async () => {
       vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(mockTeam);
       // mock readContract
       vi.spyOn(publicClient, 'readContract').mockResolvedValue([]);
@@ -168,7 +168,7 @@ describe('contractController', () => {
       expect(response.body.message).toContain('No new contracts Created');
     });
 
-    it('should return 200 if no new contracts are created (all duplicates)', async () => {
+    it('returns 200 if no new contracts are created (all duplicates)', async () => {
       vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(mockTeam);
       // mock readContract to return contracts from blockchain
       vi.spyOn(publicClient, 'readContract').mockResolvedValue([
@@ -203,7 +203,7 @@ describe('contractController', () => {
       expect(response.body.message).toContain('No new contracts Created');
     });
 
-    it('should return 200 when new contracts are successfully created', async () => {
+    it('creates and returns new company contracts', async () => {
       vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(mockTeam);
       // mock readContract to return contracts from blockchain
       vi.spyOn(publicClient, 'readContract').mockResolvedValue([
@@ -240,7 +240,7 @@ describe('contractController', () => {
       expect(response.body).toEqual({ count: 2 });
     });
 
-    it.skip('should return 200 if contracts are found', async () => {
+    it.skip('returns 200 if contracts are found', async () => {
       vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(mockTeam);
       // mock readContract
       vi.spyOn(publicClient, 'readContract').mockResolvedValue([
@@ -256,7 +256,7 @@ describe('contractController', () => {
       expect(response.body).toEqual({ count: 1 });
     });
 
-    it('should return 500 if internal server error', async () => {
+    it('reports a contract synchronization failure', async () => {
       vi.spyOn(prisma.team, 'findUnique').mockRejectedValue('Server error');
       const response = await request(app).put('/sync').send({ teamId: 1 });
       expect(response.status).toBe(500);
@@ -265,20 +265,20 @@ describe('contractController', () => {
   });
 
   describe('GET: /', () => {
-    it.skip('should return 400 if teamId is invalid', async () => {
+    it.skip('returns 400 if teamId is invalid', async () => {
       const response = await request(app).get('/').query({ teamId: 'abc' });
       expect(response.status).toBe(400);
       expect(response.body.message).toBe('Invalid or missing teamId');
     });
 
-    it('should return 404 if no contracts are found', async () => {
+    it('returns 404 if no contracts are found', async () => {
       vi.spyOn(prisma.teamContract, 'findMany').mockResolvedValue([]);
       const response = await request(app).get('/').query({ teamId: 1 });
       expect(response.status).toBe(404);
       expect(response.body.message).toBe('Team or contracts not found');
     });
 
-    it('should return 200 and list contracts for a team', async () => {
+    it('lists contracts for a company', async () => {
       vi.spyOn(prisma.teamContract, 'findMany').mockResolvedValue([
         {
           id: 1,
@@ -297,7 +297,7 @@ describe('contractController', () => {
       expect(response.body[0]).toHaveProperty('id');
     });
 
-    it('should return 500 if an error occurs', async () => {
+    it('reports a persistence failure while listing contracts', async () => {
       vi.spyOn(prisma.teamContract, 'findMany').mockRejectedValue('Error');
       const response = await request(app).get('/').query({ teamId: 1 });
       expect(response.status).toBe(500);
@@ -306,13 +306,13 @@ describe('contractController', () => {
   });
 
   describe('POST: /', () => {
-    it('should return 400 if required fields are missing', async () => {
+    it('returns 400 if required fields are missing', async () => {
       const response = await request(app).post('/').send({});
       expect(response.status).toBe(400);
       expect(response.body.message).toContain('Invalid request body');
     });
 
-    it('should return 400 if contract address is invalid', async () => {
+    it('returns 400 if contract address is invalid', async () => {
       const response = await request(app).post('/').send({
         teamId: 1,
         contractAddress: 'invalid',
@@ -322,7 +322,7 @@ describe('contractController', () => {
       expect(response.body.message).toContain('Invalid request body');
     });
 
-    it('should return 400 if contract type is invalid', async () => {
+    it('returns 400 if contract type is invalid', async () => {
       // mock isAddress
       // vi.spyOn()
       const response = await request(app).post('/').send({
@@ -334,7 +334,7 @@ describe('contractController', () => {
       expect(response.body.message).toContain('Invalid request body');
     });
 
-    it('should return 404 if team is not found', async () => {
+    it('returns 404 if team is not found', async () => {
       vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(null);
       const response = await request(app).post('/').send({
         teamId: 1,
@@ -345,7 +345,7 @@ describe('contractController', () => {
       expect(response.body.message).toContain('Team not found');
     });
 
-    it('should return 403 if caller is not the owner of the team', async () => {
+    it('returns 403 if caller is not the owner of the team', async () => {
       vi.spyOn(prisma.team, 'findUnique').mockResolvedValue({
         ...mockTeam,
         ownerAddress: '0x456',
@@ -359,7 +359,7 @@ describe('contractController', () => {
       expect(response.body.message).toContain('Unauthorized: Caller is not the owner of the team');
     });
 
-    it('should return 200 and create a contract successfully', async () => {
+    it('creates and returns a company contract', async () => {
       vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(mockTeam);
       vi.spyOn(prisma.teamContract, 'create').mockResolvedValue({
         id: 1,
@@ -379,7 +379,7 @@ describe('contractController', () => {
       expect(response.body).toHaveProperty('id');
     });
 
-    it('should return 500 if an error occurs', async () => {
+    it('reports a persistence failure while registering a contract', async () => {
       vi.spyOn(prisma.team, 'findUnique').mockRejectedValue('Test');
       const response = await request(app).post('/').send({
         teamId: 1,
@@ -390,7 +390,7 @@ describe('contractController', () => {
       expect(response.body.message).toBe('Internal server error has occured');
     });
 
-    it('should return 200 and register a Safe deployed through the ABI-based deployment path', async () => {
+    it('registers a Safe deployed through the ABI-based deployment path', async () => {
       vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(mockTeam);
       vi.spyOn(prisma.teamContract, 'create').mockResolvedValue({
         id: 1,
@@ -411,7 +411,7 @@ describe('contractController', () => {
       expect(response.body).toMatchObject({ type: 'Safe', officerId: null });
     });
 
-    it('should normalize and register a Safe when the team has no existing Safe', async () => {
+    it('normalizes and registers a Safe when the company has no existing Safe', async () => {
       const address = getAddress('0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa');
       vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(mockTeam);
       vi.mocked(prisma.teamContract.create).mockResolvedValue({
@@ -437,7 +437,7 @@ describe('contractController', () => {
       });
     });
 
-    it('should return the existing Safe when a registration is retried for the same team', async () => {
+    it('returns the existing Safe when a registration is retried for the same team', async () => {
       const existingSafe = {
         id: 1,
         teamId: mockTeam.id,
@@ -463,7 +463,7 @@ describe('contractController', () => {
       expect(prisma.teamContract.create).not.toHaveBeenCalled();
     });
 
-    it('should reject a second Safe for the same team', async () => {
+    it('rejects a second Safe for the same team', async () => {
       vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(mockTeam);
       vi.mocked(prisma.teamContract.findFirst).mockResolvedValueOnce({
         id: 1,
@@ -485,7 +485,7 @@ describe('contractController', () => {
       expect(response.body.message).toContain('Team already has a Safe account');
     });
 
-    it('should reject a Safe address assigned to another team', async () => {
+    it('rejects a Safe address assigned to another team', async () => {
       vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(mockTeam);
       vi.mocked(prisma.teamContract.findFirst)
         .mockResolvedValueOnce(null)
@@ -511,7 +511,7 @@ describe('contractController', () => {
       expect(response.body.message).toContain('Safe address is already assigned to another team');
     });
 
-    it('should return the registered Safe when concurrent registration retries after a conflict', async () => {
+    it('returns the registered Safe when concurrent registration retries after a conflict', async () => {
       const address = '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
       const concurrentSafe = {
         id: 1,
@@ -550,13 +550,13 @@ describe('contractController', () => {
   describe('POST: /officer', () => {
     const newOfficerAddress = '0x2222222222222222222222222222222222222222';
 
-    it('should return 400 if required fields are missing', async () => {
+    it('returns 400 if required fields are missing', async () => {
       const response = await request(app).post('/officer').send({ teamId: 1 });
       expect(response.status).toBe(400);
       expect(response.body.message).toContain('Invalid request body');
     });
 
-    it('should return 404 if team is not found', async () => {
+    it('returns 404 if team is not found', async () => {
       vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(null);
       const response = await request(app)
         .post('/officer')
@@ -565,7 +565,7 @@ describe('contractController', () => {
       expect(response.body.message).toContain('Team not found');
     });
 
-    it('should return 403 if caller is not the team owner', async () => {
+    it('returns 403 if caller is not the team owner', async () => {
       vi.spyOn(prisma.team, 'findUnique').mockResolvedValue({
         ...mockTeam,
         ownerAddress: '0x9999999999999999999999999999999999999999',
@@ -577,7 +577,7 @@ describe('contractController', () => {
       expect(response.body.message).toContain('Unauthorized: Caller is not the owner of the team');
     });
 
-    it('should return 409 if address is already registered to another team', async () => {
+    it('returns 409 if address is already registered to another team', async () => {
       vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(mockTeam);
       vi.mocked(prisma.teamOfficer.findUnique).mockResolvedValue(
         buildMockTeamOfficer({ address: newOfficerAddress, teamId: 99 })
@@ -590,7 +590,7 @@ describe('contractController', () => {
       expect(prisma.teamOfficer.upsert).not.toHaveBeenCalled();
     });
 
-    it('should return 409 if address is already registered to the same team', async () => {
+    it('returns 409 if address is already registered to the same team', async () => {
       vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(mockTeam);
       vi.mocked(prisma.teamOfficer.findUnique).mockResolvedValue(
         buildMockTeamOfficer({ address: newOfficerAddress, teamId: mockTeam.id })
@@ -603,7 +603,7 @@ describe('contractController', () => {
       expect(prisma.teamOfficer.upsert).not.toHaveBeenCalled();
     });
 
-    it('should link to previous officer, upsert and sync contracts', async () => {
+    it('links to previous officer, upsert and sync contracts', async () => {
       vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(mockTeam);
       // The previous head of the linked list — the new Officer points back at it.
       vi.mocked(prisma.teamOfficer.findFirst).mockResolvedValue(
@@ -672,7 +672,7 @@ describe('contractController', () => {
       });
     });
 
-    it('should set previousOfficerId to null when the team has no prior Officer', async () => {
+    it('sets previousOfficerId to null when the team has no prior Officer', async () => {
       vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(mockTeam);
       vi.mocked(prisma.teamOfficer.findFirst).mockResolvedValue(null);
       vi.spyOn(publicClient, 'readContract').mockResolvedValue([
@@ -697,7 +697,7 @@ describe('contractController', () => {
       expect(response.body.previousOfficer).toBeNull();
     });
 
-    it('should return 500 on internal error', async () => {
+    it('returns 500 on internal error', async () => {
       vi.spyOn(prisma.team, 'findUnique').mockRejectedValue('Error');
       const response = await request(app)
         .post('/officer')
@@ -710,7 +710,7 @@ describe('contractController', () => {
     // DB-level partial unique indexes turn the loser's insert into a P2002.
     // The controller must surface that as a retryable 409 rather than an
     // opaque 500 so the client doesn't redeploy an already-replaced Officer.
-    it('should return 409 when the upsert races into a P2002 unique-constraint violation', async () => {
+    it('returns 409 when the upsert races into a P2002 unique-constraint violation', async () => {
       vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(mockTeam);
       vi.spyOn(publicClient, 'readContract').mockResolvedValue([
         { contractType: 'Voting', contractAddress: '0xABCDEF1234567890123456789012345678901234' },
@@ -729,7 +729,7 @@ describe('contractController', () => {
       expect(response.body.message).toContain('Officer registration conflict');
     });
 
-    it('should let non-P2002 prisma errors fall through to the 500 handler', async () => {
+    it('lets non-P2002 prisma errors fall through to the 500 handler', async () => {
       vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(mockTeam);
       vi.spyOn(publicClient, 'readContract').mockResolvedValue([
         { contractType: 'Voting', contractAddress: '0xABCDEF1234567890123456789012345678901234' },

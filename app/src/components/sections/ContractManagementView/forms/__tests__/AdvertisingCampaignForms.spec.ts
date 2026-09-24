@@ -19,7 +19,7 @@ const ADVERTISER = '0x2222222222222222222222222222222222222222' as Address
 const createMutate = vi.fn()
 const withdrawMutate = vi.fn()
 
-describe('advertising campaign transaction forms', () => {
+describe('[US-CONTRACT-003] advertising campaign transaction forms', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.mocked(useCreateAdvertisingCampaign).mockReturnValue({

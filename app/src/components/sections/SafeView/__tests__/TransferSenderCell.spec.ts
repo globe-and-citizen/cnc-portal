@@ -44,7 +44,7 @@ beforeEach(() => {
   mockedUseGetUserQuery.mockReturnValue(buildUserQueryReturn(PRIMARY_USER))
 })
 
-describe('TransferSenderCell', () => {
+describe('[US-SAFE-005] TransferSenderCell', () => {
   it('renders a skeleton while the user query is loading', () => {
     mockedUseGetUserQuery.mockReturnValue(buildUserQueryReturn(null, true))
 

@@ -27,16 +27,16 @@ Terminology mapping (FixedReturn instance ↔ Credit Account, lending offer ↔ 
 composables, cache keys); product terminology (`Community Credit`, round, Credit Account) is used above that boundary (routes, views,
 product-facing copy).
 
-| Layer                    | Owner                                                                                                    | Key files                                                                                                    |
-| ------------------------ | -------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| FixedReturn contract     | On-chain offer lifecycle, deposits, whitelist/caps, refunds, repayment fan-out                           | `contract/contracts/FixedReturn.sol`                                                                         |
-| Bank contract            | Resolves the offer token, funds FixedReturn, triggers repayment                                          | `contract/contracts/Bank.sol`                                                                                |
-| Metadata API             | Off-chain `title`/`purpose` by `(teamId, offerId)`                                                       | `backend/src/controllers/fixedReturnOfferingController.ts`, `app/src/queries/fixedReturnOffering.queries.ts` |
-| FixedReturn reads/writes | Raw typed contract gateway — no product naming                                                           | `app/src/composables/fixedReturn/reads.ts`, `app/src/composables/fixedReturn/writes.ts`                      |
-| Cache policy             | Per-component `queryClient.invalidateQueries` calls, raw string-literal keys — no shared key factory yet | inline in views/modals                                                                                       |
-| Community Credit store   | Product read model — offer list + metadata + owner mapped to `CreditRound`; derives `isOwner`            | `app/src/stores/communityCredit.ts`                                                                          |
-| Views (route owners)     | Route/navigation, user intent, mutations, toasts                                                         | `app/src/views/team/[id]/CommunityCredit/{IndexView,NewView,RoundView}.vue`                                  |
-| Presentation components  | Props in, events out — no direct reads/writes                                                            | `app/src/components/sections/CommunityCreditView/*.vue`                                                      |
+| Layer                    | Owner                                                                                         | Key files                                                                                                    |
+| ------------------------ | --------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| FixedReturn contract     | On-chain offer lifecycle, deposits, whitelist/caps, refunds, repayment fan-out                | `contract/contracts/FixedReturn.sol`                                                                         |
+| Bank contract            | Resolves the offer token, funds FixedReturn, triggers repayment                               | `contract/contracts/Bank.sol`                                                                                |
+| Metadata API             | Off-chain `title`/`purpose` by `(teamId, offerId)`                                            | `backend/src/controllers/fixedReturnOfferingController.ts`, `app/src/queries/fixedReturnOffering.queries.ts` |
+| FixedReturn reads/writes | Raw typed contract gateway — no product naming                                                | `app/src/composables/fixedReturn/reads.ts`, `app/src/composables/fixedReturn/writes.ts`                      |
+| Cache policy             | Shared `fixedReturnKeys` query-key factory and mutation-specific invalidation helpers         | `app/src/composables/fixedReturn/{reads,invalidation}.ts`                                                    |
+| Community Credit store   | Product read model — offer list + metadata + owner mapped to `CreditRound`; derives `isOwner` | `app/src/stores/communityCredit.ts`                                                                          |
+| Views (route owners)     | Route/navigation, user intent, mutations, toasts                                              | `app/src/views/team/[id]/CommunityCredit/{IndexView,NewView,RoundView}.vue`                                  |
+| Presentation components  | Props in, events out — no direct reads/writes                                                 | `app/src/components/sections/CommunityCreditView/*.vue`                                                      |
 
 ## Lifecycle
 
@@ -60,13 +60,13 @@ automatically when a deadline or maturity date passes.
 
 ## Status Overview
 
-| User Story | Title                      | Actor          | Status         |
-| ---------- | -------------------------- | -------------- | -------------- |
-| US-CC-001  | Inspect the Credit Account | Company member | 🚧 In Progress |
-| US-CC-002  | Publish a credit call      | Company issuer | 🚧 In Progress |
-| US-CC-003  | Lend to an open round      | Company member | 🚧 In Progress |
-| US-CC-004  | Resolve a stalled round    | Company issuer | 🧪 Validation  |
-| US-CC-005  | Repay lenders              | Company issuer | 🚧 In Progress |
+| User Story | Title                      | Actor              | Status         |
+| ---------- | -------------------------- | ------------------ | -------------- |
+| US-CC-001  | Inspect the Credit Account | Company member     | 🚧 In Progress |
+| US-CC-002  | Publish a credit call      | Company issuer     | 🚧 In Progress |
+| US-CC-003  | Lend to an open round      | Company member     | 🚧 In Progress |
+| US-CC-004  | Resolve a stalled round    | Company issuer     | 🧪 Validation  |
+| US-CC-005  | Repay lenders              | Current Bank owner | 🚧 In Progress |
 
 ## Test Coverage Overview
 
@@ -134,6 +134,7 @@ automatically when a deadline or maturity date passes.
       stored record unchanged, and retrying with edited values overwrites it with whatever is currently in the form — there is no separate
       conflict check against the original save.
 - [x] `AC-US-CC-002-17` Metadata cannot be saved for an offer identifier that does not yet exist on the connected Credit Account.
+- [x] `AC-US-CC-002-18` Only the current Credit Account owner can save metadata for a round.
 
 #### Edge & Error Cases
 
@@ -209,23 +210,23 @@ the company's books and creates no journal entry.
 
 ## US-CC-005: Repay Lenders
 
-**As a** company issuer\
+**As a** current company Bank owner\
 **I want to** repay principal and fixed interest from the company treasury\
 **So that** every lender receives their proportional entitlement
 
 ### How It Works
 
-1. The selected round exposes its current obligation, Bank balance, and each lender's settlement progress before the issuer submits an
-   installment.
+1. The selected round exposes its current obligation, Bank balance, and each lender's settlement progress before the current Bank owner
+   submits an installment.
 2. The portal validates the requested amount in token base units and waits for the Bank balance before submitting an installment.
-3. A full repayment returns to that round's default detail after the settlement data refreshes; a partial repayment keeps the issuer in the
-   repayment view with refreshed figures.
+3. A full repayment returns to that round's default detail after the settlement data refreshes; a partial repayment keeps the Bank owner in
+   the repayment view with refreshed figures.
 
 ### Acceptance Criteria
 
 #### Happy Path
 
-- [x] `AC-US-CC-005-01` The issuer can repay a funded, partially repaid, or overdue round from the company Bank.
+- [x] `AC-US-CC-005-01` The current Bank owner can repay a funded, partially repaid, or overdue round from the company Bank.
 - [x] `AC-US-CC-005-02` An installment distributes each lender's cumulative proportional entitlement without overpaying the round or leaving
       rounding dust.
 - [x] `AC-US-CC-005-03` A successful installment refreshes repayment progress and lender settlement data.
@@ -292,7 +293,6 @@ overview's `1 + 4N` a second time on top of its own `1 + 2L`.
 
 **Implementation evidence reviewed against:** `fa73696c40d1636ccd4bc769310c28b4b8f66adf`
 
-- [Community Credit components](../../../app/src/components/sections/CommunityCreditView/)
 - [Credit Account page](../../../app/src/views/team/[id]/CommunityCredit/IndexView.vue)
 - [Credit-call wizard](../../../app/src/views/team/[id]/CommunityCredit/NewView.vue)
 - [Round detail](../../../app/src/views/team/[id]/CommunityCredit/RoundView.vue)
@@ -319,7 +319,6 @@ overview's `1 + 4N` a second time on top of its own `1 + 2L`.
 - [Credit round ledger](../../../app/src/components/sections/CommunityCreditView/CreditRoundLedger.vue)
 - [Whitelist allocation editor](../../../app/src/components/sections/CommunityCreditView/CreditWhitelistEditor.vue)
 - [FixedReturn contract](../../../contract/contracts/FixedReturn.sol)
-- [Contract behaviour tests](../../../contract/test/FixedReturn.spec.ts)
 - [Metadata controller](../../../backend/src/controllers/fixedReturnOfferingController.ts)
 - [Metadata route](../../../backend/src/routes/fixedReturnOfferingRoute.ts)
 - [Metadata controller tests](../../../backend/src/controllers/__tests__/fixedReturnOfferingController.test.ts)
@@ -327,6 +326,8 @@ overview's `1 + 4N` a second time on top of its own `1 + 2L`.
 
 ## Related Documentation
 
+- [Community Credit read-model implementation](../../implementation/community-credit-read-model/README.md)
+- [FixedReturn contract behaviour](../../contracts/features/fixed-return/README.md)
 - [Async UI State Framework](../../platform/async-ui-state-framework.md)
 - [Client Navigation implementation](../../implementation/client-navigation/README.md)
 - [Date Picker implementation](../../implementation/date-picker/README.md)

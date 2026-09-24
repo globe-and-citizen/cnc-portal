@@ -113,12 +113,12 @@ describe('ExpenseAccountEIP712V2', function () {
   }
 
   describe('Deployment', function () {
-    it('Should set the right owner', async function () {
+    it('sets the right owner', async function () {
       const { expenseAccount, owner } = await loadFixture(deployExpenseAccountFixture)
       expect(await expenseAccount.owner()).to.equal(owner.address)
     })
 
-    it('Should initialize supported tokens', async function () {
+    it('initializes supported tokens', async function () {
       const { expenseAccount, usdt, usdc } = await loadFixture(deployExpenseAccountFixture)
       expect(await expenseAccount.isTokenSupported(await usdt.getAddress())).to.equal(true)
       expect(await expenseAccount.isTokenSupported(await usdc.getAddress())).to.equal(true)
@@ -126,7 +126,7 @@ describe('ExpenseAccountEIP712V2', function () {
   })
 
   describe('Native Token Transfers', function () {
-    it('Should transfer native tokens with valid signature', async function () {
+    it('transfers native tokens with valid signature', async function () {
       const { expenseAccount, owner, approvedAddress, recipient } = await loadFixture(
         deployExpenseAccountFixture
       )
@@ -150,7 +150,7 @@ describe('ExpenseAccountEIP712V2', function () {
       expect(finalBalance - initialBalance).to.equal(ethers.parseEther('0.5'))
     })
 
-    it('Should allow multiple transfers within monthly budget', async function () {
+    it('allows multiple transfers within monthly budget', async function () {
       const { expenseAccount, owner, approvedAddress, recipient } = await loadFixture(
         deployExpenseAccountFixture
       )
@@ -178,7 +178,7 @@ describe('ExpenseAccountEIP712V2', function () {
       expect(expenseBalance.totalWithdrawn).to.equal(ethers.parseEther('0.6'))
     })
 
-    it('Should reset monthly budget for new period', async function () {
+    it('resets monthly budget for new period', async function () {
       const { expenseAccount, owner, approvedAddress, recipient } = await loadFixture(
         deployExpenseAccountFixture
       )
@@ -221,7 +221,7 @@ describe('ExpenseAccountEIP712V2', function () {
       expect(expenseBalance.lastWithdrawnPeriod).to.equal(currentPeriod)
     })
 
-    it('Should enforce cumulative weekly budget limit', async function () {
+    it('enforces cumulative weekly budget limit', async function () {
       const { expenseAccount, owner, approvedAddress, recipient } = await loadFixture(
         deployExpenseAccountFixture
       )
@@ -275,7 +275,7 @@ describe('ExpenseAccountEIP712V2', function () {
   })
 
   describe('ERC20 Token Transfers', function () {
-    it('Should transfer USDT with valid signature', async function () {
+    it('transfers USDT with valid signature', async function () {
       const { expenseAccount, owner, approvedAddress, recipient, usdt } = await loadFixture(
         deployExpenseAccountFixture
       )
@@ -300,7 +300,7 @@ describe('ExpenseAccountEIP712V2', function () {
       expect(finalBalance - initialBalance).to.equal(ethers.parseEther('100'))
     })
 
-    it('Should transfer USDC with valid signature', async function () {
+    it('transfers USDC with valid signature', async function () {
       const { expenseAccount, owner, approvedAddress, recipient, usdc } = await loadFixture(
         deployExpenseAccountFixture
       )
@@ -320,7 +320,7 @@ describe('ExpenseAccountEIP712V2', function () {
       ).to.emit(expenseAccount, 'TokenTransfer')
     })
 
-    it('Should transfer tokens that do not return a boolean', async function () {
+    it('transfers tokens that do not return a boolean', async function () {
       const { expenseAccount, owner, approvedAddress, recipient } = await loadFixture(
         deployExpenseAccountFixture
       )
@@ -348,7 +348,7 @@ describe('ExpenseAccountEIP712V2', function () {
   })
 
   describe('Validation', function () {
-    it('Should reject transfer with unsupported token', async function () {
+    it('rejects transfer with unsupported token', async function () {
       const { expenseAccount, owner, approvedAddress, recipient } = await loadFixture(
         deployExpenseAccountFixture
       )
@@ -376,7 +376,7 @@ describe('ExpenseAccountEIP712V2', function () {
       ).to.be.revertedWithCustomError(expenseAccount, 'ExpenseAccountEIP712__TokenNotSupported')
     })
 
-    it('Should reject transfer from unauthorized spender', async function () {
+    it('rejects transfer from unauthorized spender', async function () {
       const { expenseAccount, owner, approvedAddress, recipient, other } = await loadFixture(
         deployExpenseAccountFixture
       )
@@ -394,7 +394,7 @@ describe('ExpenseAccountEIP712V2', function () {
       ).to.be.revertedWithCustomError(expenseAccount, 'ExpenseAccountEIP712__SpenderNotApproved')
     })
 
-    it('[AC-US-EXP-002-11] Should reject transfer with invalid signature', async function () {
+    it('[AC-US-EXP-002-11] rejects transfer with invalid signature', async function () {
       const { expenseAccount, approvedAddress, recipient, other } = await loadFixture(
         deployExpenseAccountFixture
       )
@@ -412,7 +412,7 @@ describe('ExpenseAccountEIP712V2', function () {
       ).to.be.revertedWithCustomError(expenseAccount, 'ExpenseAccountEIP712__SignerNotAuthorized')
     })
 
-    it('Should reject transfer outside date range', async function () {
+    it('rejects transfer outside date range', async function () {
       const { expenseAccount, owner, approvedAddress, recipient } = await loadFixture(
         deployExpenseAccountFixture
       )
@@ -454,7 +454,7 @@ describe('ExpenseAccountEIP712V2', function () {
       ).to.be.revertedWithCustomError(expenseAccount, 'ExpenseAccountEIP712__ApprovalExpired')
     })
 
-    it('Should reject transfer exceeding single withdrawal limit', async function () {
+    it('rejects transfer exceeding single withdrawal limit', async function () {
       const { expenseAccount, owner, approvedAddress, recipient } = await loadFixture(
         deployExpenseAccountFixture
       )
@@ -476,7 +476,7 @@ describe('ExpenseAccountEIP712V2', function () {
       )
     })
 
-    it('Should reject one-time transfer exceeding total budget', async function () {
+    it('rejects one-time transfer exceeding total budget', async function () {
       const { expenseAccount, owner, approvedAddress, recipient } = await loadFixture(
         deployExpenseAccountFixture
       )
@@ -500,7 +500,7 @@ describe('ExpenseAccountEIP712V2', function () {
       )
     })
 
-    it('[AC-US-EXP-002-06] Should reject a second one-time transfer', async function () {
+    it('[AC-US-EXP-002-06] rejects a second one-time transfer', async function () {
       const { expenseAccount, owner, approvedAddress, recipient } = await loadFixture(
         deployExpenseAccountFixture
       )
@@ -531,7 +531,7 @@ describe('ExpenseAccountEIP712V2', function () {
   })
 
   describe('Period Calculations', function () {
-    it('Should calculate daily periods correctly', async function () {
+    it('calculates daily periods', async function () {
       const { expenseAccount } = await loadFixture(deployExpenseAccountFixture)
 
       // Use future date to avoid epoch issues
@@ -548,7 +548,7 @@ describe('ExpenseAccountEIP712V2', function () {
       expect(period).to.equal(1)
     })
 
-    it('Should calculate weekly periods correctly', async function () {
+    it('calculates weekly periods', async function () {
       const { expenseAccount } = await loadFixture(deployExpenseAccountFixture)
 
       // Use a known Monday in the future
@@ -565,7 +565,7 @@ describe('ExpenseAccountEIP712V2', function () {
       expect(period).to.equal(1)
     })
 
-    it('Should calculate monthly periods correctly', async function () {
+    it('calculates monthly periods', async function () {
       const { expenseAccount } = await loadFixture(deployExpenseAccountFixture)
 
       // Use future dates
@@ -585,7 +585,7 @@ describe('ExpenseAccountEIP712V2', function () {
   })
 
   describe('EIP-712 Replay Protection', function () {
-    it('Should reject replay of a one-time signed budget after it has been fully consumed', async function () {
+    it('rejects replay of a one-time signed budget after it has been fully consumed', async function () {
       const { expenseAccount, owner, approvedAddress, recipient } = await loadFixture(
         deployExpenseAccountFixture
       )
@@ -620,7 +620,7 @@ describe('ExpenseAccountEIP712V2', function () {
       )
     })
 
-    it('Should reject replay of a consumed one-time budget even for a tiny amount', async function () {
+    it('rejects replay of a consumed one-time budget even for a tiny amount', async function () {
       const { expenseAccount, owner, approvedAddress, recipient } = await loadFixture(
         deployExpenseAccountFixture
       )

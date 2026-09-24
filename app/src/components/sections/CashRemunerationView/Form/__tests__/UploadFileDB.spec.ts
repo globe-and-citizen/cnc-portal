@@ -68,7 +68,7 @@ describe('UploadFileDB', () => {
   })
 
   describe('File Type Validation', () => {
-    it('should accept document files (pdf, txt, zip, docx, xls, xlsx)', async () => {
+    it('accepts document files (pdf, txt, zip, docx, xls, xlsx)', async () => {
       wrapper = createWrapper()
 
       const validDocs = [
@@ -89,7 +89,7 @@ describe('UploadFileDB', () => {
       expect(wrapper.emitted('update:files')?.[0]?.[0]).toHaveLength(6)
     })
 
-    it('should accept excel files by extension when MIME type is missing', async () => {
+    it('accepts excel files by extension when MIME type is missing', async () => {
       wrapper = createWrapper()
 
       const validDocs = [
@@ -102,7 +102,7 @@ describe('UploadFileDB', () => {
       expect(wrapper.emitted('update:files')?.[0]?.[0]).toHaveLength(2)
     })
 
-    it('should reject invalid file types', async () => {
+    it('[AC-US-PAYROLL-005-24] rejects invalid file types', async () => {
       wrapper = createWrapper()
 
       const invalidFiles = [
@@ -117,7 +117,7 @@ describe('UploadFileDB', () => {
   })
 
   describe('File Size Validation', () => {
-    it('should reject files over 10 MB', async () => {
+    it('[AC-US-PAYROLL-005-25] rejects files over 10 MB', async () => {
       wrapper = createWrapper()
 
       const oversizedFile = new File(['x'.repeat(11 * 1024 * 1024)], 'test.png', {
@@ -131,7 +131,7 @@ describe('UploadFileDB', () => {
   })
 
   describe('File Count Limits', () => {
-    it('should reject more than 10 files', async () => {
+    it('rejects more than 10 files', async () => {
       wrapper = createWrapper()
 
       const files = Array.from(
@@ -146,7 +146,7 @@ describe('UploadFileDB', () => {
   })
 
   describe('Drag and Drop', () => {
-    it('should handle file drop', async () => {
+    it('handles file drop', async () => {
       wrapper = createWrapper()
 
       const file = new File(['content'], 'test.png', { type: 'image/png' })
@@ -156,7 +156,7 @@ describe('UploadFileDB', () => {
       expect(wrapper.emitted('update:files')?.[0]?.[0]).toHaveLength(1)
     })
 
-    it('should ignore drop when no files are provided', async () => {
+    it('ignores drop when no files are provided', async () => {
       wrapper = createWrapper()
       const zone = wrapper.find(SELECTORS.uploadZone)
 
@@ -166,7 +166,7 @@ describe('UploadFileDB', () => {
       expect(wrapper.emitted('update:files')).toBeFalsy()
     })
 
-    it('should handle dragover event without side effects', async () => {
+    it('handles dragover event without side effects', async () => {
       wrapper = createWrapper()
       const zone = wrapper.find(SELECTORS.uploadZone)
 
@@ -178,7 +178,7 @@ describe('UploadFileDB', () => {
   })
 
   describe('Open File Dialog', () => {
-    it('should be enabled when disabled prop is false', async () => {
+    it('is enabled when disabled prop is false', async () => {
       wrapper = createWrapper({ disabled: false })
       const zone = wrapper.find(SELECTORS.uploadZone)
 
@@ -187,7 +187,7 @@ describe('UploadFileDB', () => {
       expect(zone.attributes('data-disabled')).toBeUndefined()
     })
 
-    it('should be disabled when disabled prop is true', async () => {
+    it('is disabled when disabled prop is true', async () => {
       wrapper = createWrapper({ disabled: true })
       const zone = wrapper.find(SELECTORS.uploadZone)
 
@@ -196,7 +196,7 @@ describe('UploadFileDB', () => {
       expect(zone.attributes('data-disabled')).toBe('true')
     })
 
-    it('should ignore file input change when files is null', async () => {
+    it('ignores file input change when files is null', async () => {
       wrapper = createWrapper({ disabled: false })
 
       await emitFilesUpdate(null)
@@ -204,7 +204,7 @@ describe('UploadFileDB', () => {
       expect(wrapper.emitted('update:files')?.[0]?.[0]).toEqual([])
     })
 
-    it('should disable select button when max file count is reached', async () => {
+    it('disables select button when max file count is reached', async () => {
       wrapper = createWrapper({ existingFileCount: MAX_FILES })
 
       const button = wrapper.find('button')
@@ -213,7 +213,7 @@ describe('UploadFileDB', () => {
   })
 
   describe('File removal', () => {
-    it('should remove a file when gallery emits remove', async () => {
+    it('removes a file when gallery emits remove', async () => {
       const revokeObjectURLSpy = vi
         .spyOn(URL, 'revokeObjectURL')
         .mockImplementation(() => undefined)
@@ -237,7 +237,7 @@ describe('UploadFileDB', () => {
       expect(revokeObjectURLSpy).toHaveBeenCalledTimes(1)
     })
 
-    it('should remove file without revoking when previewUrl is empty', async () => {
+    it('removes file without revoking when previewUrl is empty', async () => {
       const createObjectURLSpy = vi.spyOn(URL, 'createObjectURL').mockReturnValue('')
       const revokeObjectURLSpy = vi
         .spyOn(URL, 'revokeObjectURL')

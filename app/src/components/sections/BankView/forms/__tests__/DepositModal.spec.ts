@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { mount, VueWrapper } from '@vue/test-utils'
 import DepositModal from '../DepositModal.vue'
 
-describe('DepositModal', () => {
+describe('[US-BANK-001] DepositModal', () => {
   let wrapper: VueWrapper
   const mockBankAddress = '0x1234567890123456789012345678901234567890' as const
 

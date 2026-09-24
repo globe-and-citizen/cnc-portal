@@ -57,7 +57,7 @@ describe('PastElectionCard', () => {
     expect(figure('votes-cast')).toBe('12')
   })
 
-  it('names the elected members from the published winners, never a running count', () => {
+  it('[AC-US-EL-06-04] names published winners instead of provisional vote counts', () => {
     mount(PastElectionCard, { props: { election } })
 
     const [voteCountId] = vi.mocked(useElectionsGetVoteCount).mock.calls[0] ?? []

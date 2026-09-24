@@ -116,7 +116,7 @@ describe('RedeployOfficerModal', () => {
     expect(confirm.props('disabled')).toBe(false)
   })
 
-  it('rejects whitespace-only names and symbols at the form boundary', async () => {
+  it('[AC-US-CONTRACT-005-05] rejects whitespace-only share names and symbols', async () => {
     const wrapper = mountModal({ open: true })
     await flushPromises()
 
@@ -132,7 +132,7 @@ describe('RedeployOfficerModal', () => {
     expect(mockRedeployState.redeploy).not.toHaveBeenCalled()
   })
 
-  it('calls redeploy with the current form values on confirm', async () => {
+  it('[AC-US-CONTRACT-005-01] redeploys with the selected share name and symbol', async () => {
     const wrapper = mountModal({ open: true })
     await flushPromises()
 

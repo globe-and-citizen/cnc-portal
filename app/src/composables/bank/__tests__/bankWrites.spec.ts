@@ -7,7 +7,7 @@ import {
 } from '../writes'
 import { mockBankWrites } from '@/tests/mocks'
 
-describe('Bank Contract Writes', () => {
+describe('[US-BANK-001] [US-BANK-002] Bank Contract Writes', () => {
   beforeEach(() => {
     vi.clearAllMocks()
   })

@@ -27,9 +27,9 @@ import {
 const ARCHIVED = 'Company archived successfully'
 const UNARCHIVED = 'Company unarchived successfully'
 
-// Browser coverage of US-COMPANIES-006. The API is simulated, so the server-side
+// Mocked browser coverage of US-COMPANIES-006. The API is simulated, so the server-side
 // rejection of writes against an archived company needs backend coverage.
-test.describe('Company archiving', { tag: ['@US-COMPANIES-006', '@browser'] }, () => {
+test.describe('Company archiving', { tag: ['@US-COMPANIES-006', '@browser', '@mocked'] }, () => {
   test('lets the owner archive the company from the dashboard and restore it from the banner', async ({
     page
   }) => {
@@ -111,7 +111,9 @@ test.describe('Company archiving', { tag: ['@US-COMPANIES-006', '@browser'] }, (
     expect(api.updates).toHaveLength(0)
   })
 
-  test('shows the archived banner to a member without offering to restore', async ({ page }) => {
+  test('[AC-US-COMPANIES-006-04] shows the archived banner to a member without offering to restore', async ({
+    page
+  }) => {
     const api = await signInToCompanies(page, { user: 'member', archived: true })
     await expect(teamCard(page)).toContainText('Archived')
     const items = await openCardMenu(page)

@@ -34,13 +34,13 @@ These acceptance criteria follow the
 
 ## Status Overview
 
-| User Story     | Title                                   | Actor           | Status        |
-| -------------- | --------------------------------------- | --------------- | ------------- |
-| US-PAYGATE-001 | Configure the Widget's Accepted Token   | Merchant        | 🧪 Validation |
-| US-PAYGATE-002 | Embed the Widget on the Merchant's Page | Merchant        | 🧪 Validation |
-| US-PAYGATE-003 | Pay Through the Widget                  | Layer8 customer | 🧪 Validation |
-| US-PAYGATE-004 | Review Payment History                  | Merchant        | 🧪 Validation |
-| US-PAYGATE-005 | Recall a Payment's Status by Facture ID | Merchant        | 📝 Draft      |
+| User Story     | Title                                   | Actor           | Status         |
+| -------------- | --------------------------------------- | --------------- | -------------- |
+| US-PAYGATE-001 | Configure the Widget's Accepted Token   | Merchant        | 🧪 Validation  |
+| US-PAYGATE-002 | Embed the Widget on the Merchant's Page | Merchant        | 🧪 Validation  |
+| US-PAYGATE-003 | Pay Through the Widget                  | Layer8 customer | 🚧 In Progress |
+| US-PAYGATE-004 | Review Payment History                  | Merchant        | 🧪 Validation  |
+| US-PAYGATE-005 | Recall a Payment's Status by Facture ID | Merchant        | 📝 Draft       |
 
 ## US-PAYGATE-001: Configure the Widget's Accepted Token
 
@@ -58,7 +58,7 @@ These acceptance criteria follow the
 #### Business Rules
 
 - [x] `AC-US-PAYGATE-001-02` No product element other than the accepted token is configurable in this version — style and layout are fixed.
-- [ ] `AC-US-PAYGATE-001-03` Only tokens the widget can actually accept payment in are offered as selectable options.
+- [x] `AC-US-PAYGATE-001-03` Only tokens the widget can actually accept payment in are offered as selectable options.
 
 **Dependencies:** none — this is the capability's entry point
 
@@ -131,10 +131,10 @@ These acceptance criteria follow the
 - [ ] `AC-US-PAYGATE-003-08` A transaction confirmed on-chain is only reported as a successful payment when the Bank's deposit event for
       that payment is present in the receipt. _(contract)_
 - [x] `AC-US-PAYGATE-003-09` A transaction that reverts on-chain after broadcast is reported to the customer as failed, not successful.
-- [ ] `AC-US-PAYGATE-003-10` A wallet-rejected payment shows a clear cancellation message, not the raw wallet/SDK error.
-- [ ] `AC-US-PAYGATE-003-11` An on-chain revert (e.g. insufficient balance) shows a decoded, readable reason, not the raw contract/SDK
+- [x] `AC-US-PAYGATE-003-10` A wallet-rejected payment shows a clear cancellation message, not the raw wallet/SDK error.
+- [x] `AC-US-PAYGATE-003-11` An on-chain revert (e.g. insufficient balance) shows a decoded, readable reason, not the raw contract/SDK
       error.
-- [ ] `AC-US-PAYGATE-003-12` After a failed payment, the customer can retry without leaving the widget or the merchant reloading their page.
+- [x] `AC-US-PAYGATE-003-12` After a failed payment, the customer can retry without leaving the widget or the merchant reloading their page.
 - [x] `AC-US-PAYGATE-003-13` If the merchant's page embeds the widget with a missing or invalid-format `data-bank`/`data-token` script
       attribute, the customer sees an explicit "payment unavailable" message instead of a payment form built around bad data, and the
       merchant gets a console diagnostic naming exactly what's wrong.
@@ -190,16 +190,9 @@ These acceptance criteria follow the
 
 ## Known Gaps
 
-- The Setup page's token selector still offers POL even though the widget always refuses it — any token whose ID resolves to the native
-  asset is treated as unsupported. A merchant who configures POL gets a working-looking embed snippet that shows every customer an
-  "Unsupported payment token" message instead of a payment form (`US-PAYGATE-001`).
 - A payment is reported to the customer as successful whenever the transaction receipt's status is `success`, without confirming the Bank's
   deposit event actually appears in that receipt. A transaction sent to an address with no contract code — a stale or misconfigured Bank
   address — is treated by the EVM as a no-op value transfer and can report a false success (`US-PAYGATE-003`).
-- Wallet-rejection and on-chain-revert errors are shown to the customer as the raw wallet/SDK error text, not a decoded, readable message
-  (`US-PAYGATE-003`).
-- A failed payment is a dead end inside the widget: there is no way to retry without the merchant's own page re-invoking `CncPay.show()`
-  from scratch (`US-PAYGATE-003`).
 - Payment history offers no filtering or pagination; a company with a long payment history sees every confirmed payment in one unbounded
   table (`US-PAYGATE-004`).
 - Recall/recheck by facture ID (`US-PAYGATE-005`) has no implementation and no decided mechanism. The Reference page is a static
@@ -207,7 +200,7 @@ These acceptance criteria follow the
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `006685cb46c8408101e785b258482092a1e63f70`
+**Implementation evidence reviewed against:** `4a800adbddfaa88e4f8223b0f5e4f3f1371a0e88`
 
 - [Setup page](../../../app/src/views/team/[id]/PaymentGate/IntegrationView.vue), combining
   [Bank address + embed snippet, with explicit no-Bank/no-widget-URL states](../../../app/src/components/sections/PaymentGateView/IntegrationCard.vue),
@@ -232,6 +225,11 @@ These acceptance criteria follow the
   [widget entry-point tests](../../../app/src/widget/__tests__/main.spec.ts),
   [error-message decoding tests](../../../app/src/widget/__tests__/errorMessage.spec.ts), and
   [Setup page integration-card tests](../../../app/src/components/sections/PaymentGateView/__tests__/IntegrationCard.spec.ts).
+
+### Test-suite ownership
+
+- [Token configuration card tests](../../../app/src/components/sections/PaymentGateView/__tests__/TokenConfigCard.spec.ts) and
+  [transaction detail tests](../../../app/src/components/ui/__tests__/TransactionDetailSlideover.spec.ts)
 
 ## Related Documentation
 

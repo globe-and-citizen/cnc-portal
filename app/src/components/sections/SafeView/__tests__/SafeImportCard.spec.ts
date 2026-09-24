@@ -37,7 +37,7 @@ function mountCard(props: Partial<{ teamId: number; teamOwnerAddress: string }> 
   })
 }
 
-describe('SafeImportCard', () => {
+describe('[US-SAFE-001] SafeImportCard', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockInspection.data.value = undefined

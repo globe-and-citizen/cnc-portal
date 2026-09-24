@@ -39,6 +39,7 @@ flowchart LR
   [single-file upload query](../../../app/src/queries/file.queries.ts)
 - [Profile image consumer](../../../app/src/components/forms/ProfileImageUpload.vue) and
   [pure upload/query tests](../../../app/src/queries/__tests__/file.queries.spec.ts)
+- [HTTP client tests](../../../app/src/lib/__tests__/axios.spec.ts)
 
 ## Related Documentation
 

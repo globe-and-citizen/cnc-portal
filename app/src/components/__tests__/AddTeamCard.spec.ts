@@ -3,7 +3,7 @@ import { mount } from '@vue/test-utils'
 import AddTeamCard from '@/components/sections/TeamView/AddTeamCard.vue'
 import { Icon as IconifyIcon } from '@iconify/vue'
 
-describe('AddTeamCard.vue', () => {
+describe('[US-COMPANIES-001] AddTeamCard.vue', () => {
   const wrapper = mount(AddTeamCard, {
     global: {
       components: {

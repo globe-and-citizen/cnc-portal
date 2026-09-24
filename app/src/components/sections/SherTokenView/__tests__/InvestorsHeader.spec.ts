@@ -3,7 +3,7 @@ import InvestorsHeader from '../InvestorsHeader.vue'
 import { parseUnits } from 'viem'
 import { mockInvestorReads, mockTeamStore, mockUserStore, renderWithProviders } from '@/tests/mocks'
 
-describe('InvestorsHeader', () => {
+describe('[US-SHER-003] InvestorsHeader', () => {
   let wrapper: ReturnType<typeof createComponent>
 
   // Test data constants
@@ -63,14 +63,14 @@ describe('InvestorsHeader', () => {
   }
 
   describe('Component Rendering', () => {
-    it('should render the component with all required elements', () => {
+    it('renders the component with all required elements', () => {
       wrapper = createComponent()
 
       const overviewCards = wrapper.findAll(SELECTORS.overviewCards)
       expect(overviewCards).toHaveLength(3)
     })
 
-    it('should render investors count card with correct data', () => {
+    it('renders investors count card with correct data', () => {
       wrapper = createComponent()
       const cards = wrapper.findAll(SELECTORS.overviewCards)
       const investorsCard = cards[0]
@@ -79,7 +79,7 @@ describe('InvestorsHeader', () => {
       expect(investorsCard.find(SELECTORS.subtitle).text()).toBe('Investors')
     })
 
-    it('should render balance card with formatted token amount', () => {
+    it('renders balance card with formatted token amount', () => {
       wrapper = createComponent()
       const cards = wrapper.findAll(SELECTORS.overviewCards)
       const balanceCard = cards[1]
@@ -88,7 +88,7 @@ describe('InvestorsHeader', () => {
       expect(balanceCard.find(SELECTORS.subtitle).text()).toBe('Your Balance')
     })
 
-    it('should render total supply card with formatted token amount', () => {
+    it('renders total supply card with formatted token amount', () => {
       wrapper = createComponent()
       const cards = wrapper.findAll(SELECTORS.overviewCards)
       const supplyCard = cards[2]
@@ -99,7 +99,7 @@ describe('InvestorsHeader', () => {
   })
 
   describe('Loading States', () => {
-    it('should show loading state when team is not available', () => {
+    it('shows loading state when team is not available', () => {
       mockTeamStore.currentTeam = null
       wrapper = createComponent()
 
@@ -107,7 +107,7 @@ describe('InvestorsHeader', () => {
       expect(overviewCards).toHaveLength(3)
     })
 
-    it('should show dots when token symbol is not available', () => {
+    it('shows dots when token symbol is not available', () => {
       mockInvestorReads.symbol.data.value = null
 
       wrapper = createComponent()
@@ -117,7 +117,7 @@ describe('InvestorsHeader', () => {
       expect(cards[2].find(SELECTORS.amount).text()).toBe('...')
     })
 
-    it('should show dots when balance is null', () => {
+    it('shows dots when balance is null', () => {
       mockInvestorReads.balanceOf.data.value = null
 
       wrapper = createComponent()
@@ -128,7 +128,7 @@ describe('InvestorsHeader', () => {
   })
 
   describe('Edge Cases and Data Validation', () => {
-    it('should handle empty shareholders array', () => {
+    it('handles empty shareholders array', () => {
       mockInvestorReads.shareholders.data.value = []
 
       wrapper = createComponent()
@@ -138,7 +138,7 @@ describe('InvestorsHeader', () => {
       expect(investorsCard.find(SELECTORS.amount).text()).toBe('0 Investors')
     })
 
-    it('should handle null shareholders data', () => {
+    it('handles null shareholders data', () => {
       mockInvestorReads.shareholders.data.value = null
 
       wrapper = createComponent()
@@ -148,7 +148,7 @@ describe('InvestorsHeader', () => {
       expect(investorsCard.find(SELECTORS.amount).text()).toBe('0 Investors')
     })
 
-    it('should handle zero balance gracefully', () => {
+    it('displays zero investors for a zero token balance', () => {
       mockInvestorReads.balanceOf.data.value = parseUnits('0', 6)
 
       wrapper = createComponent()

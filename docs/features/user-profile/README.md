@@ -44,6 +44,9 @@ The display name and profile image can be changed from the client navigation and
 - [x] `AC-US-PROFILE-001-03` The wallet address is displayed but is not editable in the profile form.
 - [x] `AC-US-PROFILE-001-04` A display name must contain between 3 and 100 characters.
 - [x] `AC-US-PROFILE-001-05` A profile image must use a supported image type and be no larger than 10 MB.
+- [x] `AC-US-PROFILE-001-08` Profile identity surfaces show the user's current name and image when available and use a fallback identity
+      when either value is absent.
+- [x] `AC-US-PROFILE-001-09` A user can update only their own profile; a missing or different authenticated wallet is rejected.
 
 #### Edge & Error Cases
 
@@ -54,7 +57,7 @@ The display name and profile image can be changed from the client navigation and
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `d00841d56e8b39d35226b80fb7cac3839aa6c058`
+**Implementation evidence reviewed against:** `f801239c22cef84ba985937c2ac8194efb7dd9dd`
 
 - [Navigation profile entry](../../../app/src/components/layout/NavBar.vue) and
   [sidebar profile entry](../../../app/src/components/ui/SidebarLayout.vue)
@@ -65,7 +68,18 @@ The display name and profile image can be changed from the client navigation and
 - [User request schema](../../../backend/src/validation/schemas/user.ts) and
   [user-schema tests](../../../backend/src/validation/schemas/__tests__/user.test.ts)
 - [Profile-image component tests](../../../app/src/components/forms/__tests__/ProfileImageUpload.spec.ts) and
-  [file-query tests](../../../app/src/queries/__tests__/file.queries.spec.ts)
+  [profile form tests](../../../app/src/components/forms/__tests__/EditUserForm.spec.ts)
+
+### Test-suite ownership
+
+- [Profile form tests](../../../app/src/components/forms/__tests__/EditUserForm.spec.ts),
+  [profile API tests](../../../app/src/api/__tests__/user.api.spec.ts), and
+  [profile-image upload tests](../../../app/src/components/forms/__tests__/ProfileImageUpload.spec.ts)
+- [Profile navigation tests](../../../app/src/components/layout/__tests__/NavBar.spec.ts),
+  [sidebar tests](../../../app/src/components/ui/__tests__/SidebarLayout.spec.ts), and
+  [user-identity tests](../../../app/src/components/ui/__tests__/UserIdentity.spec.ts)
+- [User API controller tests](../../../backend/src/controllers/__tests__/userController.test.ts) and
+  [user request-schema tests](../../../backend/src/validation/schemas/__tests__/user.test.ts)
 
 ## Related Documentation
 

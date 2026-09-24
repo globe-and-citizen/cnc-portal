@@ -61,7 +61,7 @@ describe('ElectionActions', () => {
     expect(wrapper.text()).toContain('Vote Now')
   })
 
-  it('offers Publish Results on the elections page when the election is over', () => {
+  it('[AC-US-EL-03-03] offers Publish Results for a completed unpublished election', () => {
     mockElections({ election: { id: 2, resultsPublished: false }, status: { text: 'Completed' } })
 
     const wrapper = mountActions()
@@ -103,7 +103,7 @@ describe('ElectionActions', () => {
     expect(wrapper.emitted()).toHaveProperty('showCreateElectionModal')
   })
 
-  it('shows Create Election disabled while the previous results are unpublished', async () => {
+  it('[AC-US-EL-01-07] keeps creation unavailable while previous results are unpublished', async () => {
     mockElections({ election: { id: 2, resultsPublished: false }, status: { text: 'Completed' } })
 
     const wrapper = mountActions()

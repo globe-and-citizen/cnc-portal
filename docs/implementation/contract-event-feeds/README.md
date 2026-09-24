@@ -83,6 +83,8 @@ flowchart LR
   [Safe Deposit Router event feed](../../../app/src/composables/investor/useSafeDepositRouterEventsViaLogs.ts)
 - [Vesting event feed](../../../app/src/composables/vesting/useVestingEventsViaLogs.ts)
 - [Bank-generation target tests](../../../app/src/composables/bank/__tests__/useIncomingBankTokenTransfersViaLogs.spec.ts) and
+  [Bank event-feed tests](../../../app/src/composables/bank/__tests__/useBankEventsViaLogs.spec.ts),
+  [Bank event-query tests](../../../app/src/composables/bank/__tests__/useBankEventsViaLogs.query.spec.ts), and
   [shared scanner tests](../../../app/src/composables/__tests__/eventsViaLogs.spec.ts)
 
 ## Related Documentation

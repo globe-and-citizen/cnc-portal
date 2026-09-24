@@ -68,7 +68,7 @@ function mountGauge(round: CreditRound) {
   })
 }
 
-describe('CreditRoundGauge', () => {
+describe('[US-CC-001] CreditRoundGauge', () => {
   it('renders funding, repayment, access and lender details for an open restricted round', () => {
     const wrapper = mountGauge(makeRound())
 

@@ -104,7 +104,7 @@ describe('useCashOutAll', () => {
     })
   })
 
-  it('skips Bank assets that have a zero balance', async () => {
+  it('[AC-US-BANK-004-04] skips Bank assets that have a zero balance', async () => {
     mockWagmiCore.getBalance.mockResolvedValue(nativeBalance(0n))
     mockWagmiCore.readContract.mockImplementation(
       async (_config: unknown, parameters: { functionName?: string }) =>
@@ -123,7 +123,7 @@ describe('useCashOutAll', () => {
     expect(flow.isComplete.value).toBe(true)
   })
 
-  it('stops on a failing step, marks it failed and leaves the rest pending', async () => {
+  it('[AC-US-BANK-004-06] stops on a failing step, marks it failed and leaves the rest pending', async () => {
     mockExpenseAccountWrites.ownerWithdrawAllToBank.mutateAsync.mockRejectedValueOnce(
       new Error('RPC node unavailable')
     )
@@ -137,7 +137,7 @@ describe('useCashOutAll', () => {
     expect(invalidateQueries).not.toHaveBeenCalled()
   })
 
-  it('shows a friendly message when the wallet rejects the request', async () => {
+  it('[AC-US-BANK-004-07] shows a friendly message when the wallet rejects the request', async () => {
     mockCashRemunerationWrites.ownerWithdrawAllToBank.mutateAsync.mockRejectedValueOnce(
       new BaseError('rejected', { cause: new UserRejectedRequestError(new Error('rejected')) })
     )
@@ -167,7 +167,7 @@ describe('useCashOutAll', () => {
     expect(mockExpenseAccountWrites.ownerWithdrawAllToBank.mutateAsync).toHaveBeenCalledTimes(2)
   })
 
-  it('does nothing for an empty plan', async () => {
+  it('[AC-US-BANK-004-08] does nothing for an empty plan', async () => {
     const flow = useCashOutAll()
     await flow.start([])
 

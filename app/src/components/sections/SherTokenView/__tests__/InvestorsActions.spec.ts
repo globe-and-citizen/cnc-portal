@@ -32,7 +32,7 @@ const SetCompensationMultiplierButtonStub = {
   template: '<div data-test="set-compensation-multiplier-button" />'
 }
 
-describe('InvestorsActions.vue', () => {
+describe('[US-SHER-001][US-SHER-002][US-SHER-004][US-SHER-005] InvestorsActions.vue', () => {
   beforeEach(() => {
     vi.clearAllMocks()
 

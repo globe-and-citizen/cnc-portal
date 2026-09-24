@@ -8,7 +8,7 @@ describe('main.ts', () => {
     vi.clearAllMocks()
   })
 
-  it('should create and return a Vue app instance', () => {
+  it('creates and returns a Vue app instance', () => {
     const app = setupApp()
 
     // Verify that setupApp returns something (the app instance)
@@ -22,7 +22,7 @@ describe('main.ts', () => {
     expect(typeof app.mount).toBe('function')
   })
 
-  it('should call necessary setup functions during app initialization', () => {
+  it('calls necessary setup functions during app initialization', () => {
     // Test that the function runs without throwing errors
     expect(() => setupApp()).not.toThrow()
   })

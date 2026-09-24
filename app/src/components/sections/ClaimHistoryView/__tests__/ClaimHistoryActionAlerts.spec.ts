@@ -169,6 +169,7 @@ describe('ClaimHistoryActionAlerts', () => {
     expect(wrapper.find('[data-test="submit-claims"]').text()).toBe('0')
   })
 
+  // Covers: AC-US-PAYROLL-008-11, AC-US-PAYROLL-008-12
   it('shows approve alert and disables CRSigne for current and next week', () => {
     const currentWeekStart = dayjs().utc().startOf('isoWeek').toISOString()
     const nextWeekStart = dayjs().utc().add(1, 'week').startOf('isoWeek').toISOString()
@@ -201,7 +202,7 @@ describe('ClaimHistoryActionAlerts', () => {
     expect(wrapper.find('[data-test="cr-signe"]').text()).toContain('false')
   })
 
-  it('hides CRSigne when weekly claim has no claim lines', () => {
+  it('[AC-US-PAYROLL-008-04] hides CRSigne when weekly claim has no claim lines', () => {
     const wrapper = createWrapper({
       weeklyClaim: createWeeklyClaim({ claims: [] })
     })

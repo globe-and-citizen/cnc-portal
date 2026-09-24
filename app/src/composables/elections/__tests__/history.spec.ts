@@ -70,7 +70,7 @@ describe('useElectionsPastElections', () => {
     expect(mockWagmiCore.readContract).toHaveBeenCalledTimes(1)
   })
 
-  it('keeps only the published elections, newest first, however many there are', async () => {
+  it('[AC-US-EL-08-03] keeps only published elections in the history', async () => {
     const ids = [1n, 2n, 3n, 4n, 5n, 6n, 7n]
     mockWagmiCore.readContract.mockResolvedValueOnce(ids)
     ids.forEach((id) =>

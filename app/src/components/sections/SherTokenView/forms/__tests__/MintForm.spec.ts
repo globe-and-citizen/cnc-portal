@@ -273,7 +273,7 @@ describe('MintForm.vue', () => {
     expect(mintMutation.mutate).toHaveBeenCalled()
   })
 
-  it('submits issued delta when ending-mode amount is final balance', async () => {
+  it('[AC-US-SHER-004-01] computes incremental issuance for an ending balance', async () => {
     setSupplyAndBalance(100_000_000n, 20_000_000n) // 100 tokens, recipient 20
     const wrapper = mountForm({ memberInput: { name: 'Bob', address: VALID_ADDRESS } })
     await wrapper.find('[data-test="amount-input"]').setValue('30') // ending balance target
@@ -287,7 +287,7 @@ describe('MintForm.vue', () => {
     })
   })
 
-  it('shows mint error message using shortMessage/message/fallback', async () => {
+  it('[AC-US-SHER-004-08] reports a failed individual issuance', async () => {
     const wrapper = mountForm()
     await wrapper.find('[data-test="emit-member-input"]').trigger('click')
     await wrapper.find('[data-test="add-mode-button"]').trigger('click')

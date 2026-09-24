@@ -8,7 +8,7 @@ describe('TimelineIcon.vue', () => {
   })
 
   describe('Props validation', () => {
-    it('should accept all valid status values', () => {
+    it('accepts all valid status values', () => {
       const validStatuses = ['pending', 'active', 'completed', 'error'] as const
 
       validStatuses.forEach((status) => {

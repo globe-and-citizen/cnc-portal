@@ -21,7 +21,7 @@ describe('notificationUtil', () => {
   });
 
   describe('addNotification', () => {
-    it('should create notifications for valid user addresses', async () => {
+    it('creates notifications for valid user addresses', async () => {
       const userIds = [
         '0x1234567890123456789012345678901234567890',
         '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd',
@@ -61,7 +61,7 @@ describe('notificationUtil', () => {
       });
     });
 
-    it('should create notifications without optional fields', async () => {
+    it('creates notifications without optional fields', async () => {
       const userIds = ['0x1234567890123456789012345678901234567890'];
       const notification = {
         message: 'Test notification without optional fields',
@@ -94,7 +94,7 @@ describe('notificationUtil', () => {
       });
     });
 
-    it('should throw error for invalid user address', async () => {
+    it('throws error for invalid user address', async () => {
       const userIds = ['invalid-address'];
       const notification = {
         message: 'Test notification',
@@ -105,7 +105,7 @@ describe('notificationUtil', () => {
       );
     });
 
-    it('should handle multiple invalid addresses', async () => {
+    it('handles multiple invalid addresses', async () => {
       const userIds = ['0x1234567890123456789012345678901234567890', 'invalid-address'];
       const notification = {
         message: 'Test notification',
@@ -129,7 +129,7 @@ describe('notificationUtil', () => {
       );
     });
 
-    it('should create notifications with only subject', async () => {
+    it('creates notifications with only subject', async () => {
       const userIds = ['0x1234567890123456789012345678901234567890'];
       const notification = {
         message: 'Test notification',
@@ -163,7 +163,7 @@ describe('notificationUtil', () => {
       });
     });
 
-    it('should handle empty userIds array', async () => {
+    it('handles empty userIds array', async () => {
       const userIds: string[] = [];
       const notification = {
         message: 'Test notification',

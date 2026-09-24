@@ -69,7 +69,7 @@ function mountComponent() {
   })
 }
 
-describe('MainContractTable.vue', () => {
+describe('[US-CONTRACT-001][US-CONTRACT-002] MainContractTable.vue', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.spyOn(contractReads, 'getTeamContracts').mockResolvedValue(ENRICHED_CONTRACTS as never)

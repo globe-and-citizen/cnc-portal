@@ -26,7 +26,7 @@ describe('generateUniqueSlug', () => {
     expect(exists).toHaveBeenCalledTimes(1);
   });
 
-  it('appends -2 on the first collision', async () => {
+  it('[AC-US-COMPANIES-001-06] appends -2 on the first collision', async () => {
     const exists = vi.fn(async (slug: string) => slug === 'acme-corp');
     await expect(generateUniqueSlug('Acme Corp', exists)).resolves.toBe('acme-corp-2');
   });

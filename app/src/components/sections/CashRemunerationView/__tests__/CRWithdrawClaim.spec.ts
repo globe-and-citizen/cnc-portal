@@ -353,6 +353,7 @@ describe('CRWithdrawClaim', () => {
     expect(mockLog.error).toHaveBeenCalledWith('Withdraw error', expect.any(Error))
   })
 
+  // Covers: AC-US-PAYROLL-010-06
   it('blocks withdraw when claim was signed for a different contract', async () => {
     const claimOnOtherContract: WeeklyClaim = {
       ...mockClaim,
@@ -369,6 +370,7 @@ describe('CRWithdrawClaim', () => {
     expect(mockCashRemunerationWrites.withdraw.mutate).not.toHaveBeenCalled()
   })
 
+  // Covers: AC-US-PAYROLL-010-06
   it('blocks withdraw when claim was signed on a different chain', async () => {
     const claimOnOtherChain: WeeklyClaim = {
       ...mockClaim,
@@ -385,7 +387,7 @@ describe('CRWithdrawClaim', () => {
     expect(mockCashRemunerationWrites.withdraw.mutate).not.toHaveBeenCalled()
   })
 
-  it('blocks withdraw when recovered signer does not match contract owner', async () => {
+  it('[AC-US-PAYROLL-010-07] blocks withdraw when recovered signer does not match contract owner', async () => {
     vi.spyOn(viem, 'recoverTypedDataAddress').mockResolvedValueOnce(
       '0x3333333333333333333333333333333333333333' as Address
     )

@@ -28,7 +28,7 @@ const MOCK_DATA = {
   highRate: '2.5'
 } as const
 
-describe('CompensationAmountInput', () => {
+describe('[US-SHER-001] CompensationAmountInput', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockInvestorReads.symbol.data.value = MOCK_DATA.tokenSymbol
@@ -46,7 +46,7 @@ describe('CompensationAmountInput', () => {
   }
 
   describe('Component Rendering', () => {
-    it('should render the component with all required elements', () => {
+    it('renders the component with all required elements', () => {
       const wrapper = createWrapper()
 
       expect(wrapper.find(SELECTORS.compensationAmount).exists()).toBe(true)
@@ -54,14 +54,14 @@ describe('CompensationAmountInput', () => {
       expect(wrapper.find(SELECTORS.tokenSymbolBadge).exists()).toBe(true)
     })
 
-    it('should display correct label text with token symbol', () => {
+    it('displays correct label text with token symbol', () => {
       const wrapper = createWrapper()
 
       const labelText = wrapper.find(SELECTORS.labelText)
       expect(labelText.text()).toContain(`${MOCK_DATA.tokenSymbol} to Receive`)
     })
 
-    it('should display rate information in label alt text', () => {
+    it('displays rate information in label alt text', () => {
       const wrapper = createWrapper()
 
       const labelAltText = wrapper.find(SELECTORS.labelTextAlt)
@@ -70,7 +70,7 @@ describe('CompensationAmountInput', () => {
       expect(labelAltText.text()).toContain(MOCK_DATA.tokenSymbol)
     })
 
-    it('should display token symbol in badge', () => {
+    it('displays token symbol in badge', () => {
       const wrapper = createWrapper()
 
       const badge = wrapper.find(SELECTORS.tokenSymbolBadge)
@@ -79,7 +79,7 @@ describe('CompensationAmountInput', () => {
   })
 
   describe('Input Value Display', () => {
-    it('should display formatted value for valid amount', () => {
+    it('displays formatted value for valid amount', () => {
       const wrapper = createWrapper({
         modelValue: MOCK_DATA.validAmount
       })
@@ -88,7 +88,7 @@ describe('CompensationAmountInput', () => {
       expect(input.element.value).toBe('100.5')
     })
 
-    it('should display zero for empty or zero value', () => {
+    it('displays zero for empty or zero value', () => {
       const wrapper = createWrapper({
         modelValue: MOCK_DATA.zeroValue
       })
@@ -97,7 +97,7 @@ describe('CompensationAmountInput', () => {
       expect(input.element.value).toBe('0')
     })
 
-    it('should format large amounts correctly', () => {
+    it('formats large amounts with separators and token precision', () => {
       const wrapper = createWrapper({
         modelValue: MOCK_DATA.largeAmount,
         decimals: 6
@@ -107,7 +107,7 @@ describe('CompensationAmountInput', () => {
       expect(input.element.value).toContain('1,000,000.123456')
     })
 
-    it('should format small amounts with proper decimals', () => {
+    it('formats small amounts with proper decimals', () => {
       const wrapper = createWrapper({
         modelValue: MOCK_DATA.smallAmount,
         decimals: 6
@@ -117,7 +117,7 @@ describe('CompensationAmountInput', () => {
       expect(input.element.value).toBe('0.000001')
     })
 
-    it('should update display value when modelValue prop changes', async () => {
+    it('updates display value when modelValue prop changes', async () => {
       const wrapper = createWrapper({
         modelValue: '50'
       })
@@ -131,7 +131,7 @@ describe('CompensationAmountInput', () => {
   })
 
   describe('Rate Formatting', () => {
-    it('should format rate as string correctly', () => {
+    it('displays a string rate in the alternate label', () => {
       const wrapper = createWrapper({
         rate: MOCK_DATA.defaultRate
       })
@@ -140,7 +140,7 @@ describe('CompensationAmountInput', () => {
       expect(labelAltText.text()).toContain('1.5')
     })
 
-    it('should format rate as number correctly', () => {
+    it('displays a numeric rate in the alternate label', () => {
       const wrapper = createWrapper({
         rate: 2.5
       })
@@ -149,7 +149,7 @@ describe('CompensationAmountInput', () => {
       expect(labelAltText.text()).toContain('2.5')
     })
 
-    it('should handle zero rate', () => {
+    it('handles zero rate', () => {
       const wrapper = createWrapper({
         rate: MOCK_DATA.zeroRate
       })
@@ -158,7 +158,7 @@ describe('CompensationAmountInput', () => {
       expect(labelAltText.text()).toContain('0')
     })
 
-    it('should respect decimals prop for rate formatting', () => {
+    it('respects decimals prop for rate formatting', () => {
       const wrapper = createWrapper({
         rate: '1.123456789',
         decimals: 4
@@ -170,7 +170,7 @@ describe('CompensationAmountInput', () => {
   })
 
   describe('User Input Handling', () => {
-    it('should emit update:modelValue when user types valid amount', async () => {
+    it('emits update:modelValue when user types valid amount', async () => {
       const wrapper = createWrapper()
       const input = wrapper.find(SELECTORS.compensationInput)
 
@@ -181,7 +181,7 @@ describe('CompensationAmountInput', () => {
       expect(wrapper.emitted('update:modelValue')?.[0]).toEqual(['150'])
     })
 
-    it('should emit zero when input is cleared', async () => {
+    it('emits zero when input is cleared', async () => {
       const wrapper = createWrapper({
         modelValue: '100'
       })
@@ -194,7 +194,7 @@ describe('CompensationAmountInput', () => {
       expect(wrapper.emitted('update:modelValue')?.[0]).toEqual(['0'])
     })
 
-    it('should handle decimal input', async () => {
+    it('handles decimal input', async () => {
       const wrapper = createWrapper()
       const input = wrapper.find(SELECTORS.compensationInput)
 
@@ -205,7 +205,7 @@ describe('CompensationAmountInput', () => {
       expect(wrapper.emitted('update:modelValue')?.[0]).toEqual(['123.456'])
     })
 
-    it('should not emit for negative values', async () => {
+    it('does not emit for negative values', async () => {
       const wrapper = createWrapper()
       const input = wrapper.find(SELECTORS.compensationInput)
 
@@ -215,7 +215,7 @@ describe('CompensationAmountInput', () => {
       expect(wrapper.emitted('update:modelValue')).toBeFalsy()
     })
 
-    it('should not emit for non-numeric values', async () => {
+    it('does not emit for non-numeric values', async () => {
       const wrapper = createWrapper()
       const input = wrapper.find(SELECTORS.compensationInput)
 
@@ -227,7 +227,7 @@ describe('CompensationAmountInput', () => {
   })
 
   describe('Disabled State', () => {
-    it('should disable input when disabled prop is true', () => {
+    it('disables input when disabled prop is true', () => {
       const wrapper = createWrapper({
         disabled: true
       })
@@ -236,7 +236,7 @@ describe('CompensationAmountInput', () => {
       expect(input.attributes('disabled')).toBeDefined()
     })
 
-    it('should enable input when disabled prop changes to false', async () => {
+    it('enables input when disabled prop changes to false', async () => {
       const wrapper = createWrapper({
         disabled: true
       })
@@ -250,7 +250,7 @@ describe('CompensationAmountInput', () => {
   })
 
   describe('Custom Decimals', () => {
-    it('should use custom decimals for formatting', () => {
+    it('uses custom decimals for formatting', () => {
       const wrapper = createWrapper({
         modelValue: '100.123456789',
         decimals: 2
@@ -260,7 +260,7 @@ describe('CompensationAmountInput', () => {
       expect(input.element.value).toContain('100.12')
     })
 
-    it('should handle decimals prop change', async () => {
+    it('handles decimals prop change', async () => {
       const wrapper = createWrapper({
         modelValue: '100.123456',
         decimals: 2
@@ -273,7 +273,7 @@ describe('CompensationAmountInput', () => {
       expect(input.element.value).toContain('100.1235')
     })
 
-    it('should use default decimals when not specified', () => {
+    it('uses default decimals when not specified', () => {
       const wrapper = createWrapper({
         modelValue: '100.123456789'
       })
@@ -284,7 +284,7 @@ describe('CompensationAmountInput', () => {
   })
 
   describe('Accessibility', () => {
-    it('should have proper aria-label for input', () => {
+    it('has proper aria-label for input', () => {
       const wrapper = createWrapper()
 
       const input = wrapper.find(SELECTORS.compensationInput)
@@ -292,7 +292,7 @@ describe('CompensationAmountInput', () => {
       expect(input.attributes('aria-label')).toContain('amount to receive')
     })
 
-    it('should have proper aria-label for token badge', () => {
+    it('has proper aria-label for token badge', () => {
       const wrapper = createWrapper()
 
       const badge = wrapper.find(SELECTORS.tokenSymbolBadge)

@@ -88,7 +88,7 @@ describe('Action Controller', () => {
   });
 
   describe('GET /actions', () => {
-    it('should return actions for a valid team', async () => {
+    it('returns actions for a valid team', async () => {
       vi.mocked(prisma.boardOfDirectorActions.findMany).mockResolvedValueOnce(mockActions);
       vi.mocked(prisma.boardOfDirectorActions.count).mockResolvedValueOnce(2);
 
@@ -125,7 +125,7 @@ describe('Action Controller', () => {
       });
     });
 
-    it('should filter by isExecuted when provided', async () => {
+    it('filters by isExecuted when provided', async () => {
       const executedActions = [mockActions[1]];
       vi.mocked(prisma.boardOfDirectorActions.findMany).mockResolvedValueOnce(executedActions);
       vi.mocked(prisma.boardOfDirectorActions.count).mockResolvedValueOnce(1);
@@ -155,7 +155,7 @@ describe('Action Controller', () => {
       });
     });
 
-    it('should handle pagination correctly', async () => {
+    it('applies the requested pagination', async () => {
       vi.mocked(prisma.boardOfDirectorActions.findMany).mockResolvedValueOnce([mockAction]);
       vi.mocked(prisma.boardOfDirectorActions.count).mockResolvedValueOnce(15);
 
@@ -172,7 +172,7 @@ describe('Action Controller', () => {
       });
     });
 
-    it('should return 400 when teamId is missing', async () => {
+    it('returns 400 when teamId is missing', async () => {
       const response = await request(app).get('/actions');
 
       expect(response.status).toBe(400);
@@ -181,7 +181,7 @@ describe('Action Controller', () => {
       });
     });
 
-    it('should return 500 on database error', async () => {
+    it('returns 500 on database error', async () => {
       const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
       vi.mocked(prisma.boardOfDirectorActions.findMany).mockRejectedValue('Database error');
 
@@ -206,7 +206,7 @@ describe('Action Controller', () => {
       data: '0x123456789abcdef',
     };
 
-    it('should create a new action successfully', async () => {
+    it('creates a new action', async () => {
       vi.mocked(prisma.boardOfDirectorActions.create).mockResolvedValueOnce(mockAction);
       const response = await request(app).post('/actions').send(validActionData);
 
@@ -236,7 +236,7 @@ describe('Action Controller', () => {
       });
     });
 
-    it('should return 500 on database error', async () => {
+    it('returns 500 on database error', async () => {
       const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
       vi.mocked(prisma.boardOfDirectorActions.create).mockRejectedValue('Database error');
 
@@ -253,7 +253,7 @@ describe('Action Controller', () => {
   });
 
   describe('PATCH /actions/:id', () => {
-    it('should execute action successfully', async () => {
+    it('executes an action', async () => {
       vi.mocked(prisma.boardOfDirectorActions.findUnique).mockResolvedValueOnce(mockAction);
       vi.mocked(prisma.boardOfDirectorActions.update).mockResolvedValueOnce({
         ...mockAction,
@@ -274,13 +274,13 @@ describe('Action Controller', () => {
       });
     });
 
-    it('should return 400 when action ID is missing', async () => {
+    it('returns 400 when action ID is missing', async () => {
       const response = await request(app).patch('/actions/');
 
       expect(response.status).toBe(404); // Express returns 404 for missing route params
     });
 
-    it('should return 400 when action ID is empty string', async () => {
+    it('returns 400 when action ID is empty string', async () => {
       const { executeAction } = await import('../actionController');
 
       const mockReq = {
@@ -300,7 +300,7 @@ describe('Action Controller', () => {
       });
     });
 
-    it('should return 404 when action is not found', async () => {
+    it('returns 404 when action is not found', async () => {
       vi.mocked(prisma.boardOfDirectorActions.findUnique)
         .mockResolvedValueOnce({ teamId: 1 } as never)
         .mockResolvedValueOnce(null);
@@ -318,7 +318,7 @@ describe('Action Controller', () => {
       expect(prisma.boardOfDirectorActions.update).not.toHaveBeenCalled();
     });
 
-    it('should return 500 on database error during findUnique', async () => {
+    it('returns 500 on database error during findUnique', async () => {
       const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
       vi.mocked(prisma.boardOfDirectorActions.findUnique)
         .mockResolvedValueOnce({ teamId: 1 } as never)
@@ -335,7 +335,7 @@ describe('Action Controller', () => {
       consoleErrorSpy.mockRestore();
     });
 
-    it('should return 500 on database error during update', async () => {
+    it('returns 500 on database error during update', async () => {
       const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
       vi.mocked(prisma.boardOfDirectorActions.findUnique).mockResolvedValueOnce(mockAction);
       vi.mocked(prisma.boardOfDirectorActions.update).mockRejectedValue('Database error');
@@ -353,7 +353,7 @@ describe('Action Controller', () => {
   });
 
   describe('Authorization', () => {
-    it('should include user address from middleware in created actions', async () => {
+    it('includes user address from middleware in created actions', async () => {
       const customUserAddress = '0x9999999999999999999999999999999999999999';
 
       mockAuthorizeUser.mockImplementation((req: Request, res: Response, next: NextFunction) => {
@@ -391,7 +391,7 @@ describe('Action Controller', () => {
   });
 
   describe('Edge Cases', () => {
-    it('should handle string numbers correctly in pagination', async () => {
+    it('parses string pagination values', async () => {
       vi.mocked(prisma.boardOfDirectorActions.findMany).mockResolvedValueOnce([mockAction]);
       vi.mocked(prisma.boardOfDirectorActions.count).mockResolvedValueOnce(1);
 
@@ -408,7 +408,7 @@ describe('Action Controller', () => {
       });
     });
 
-    it('should handle isExecuted false filter', async () => {
+    it('handles isExecuted false filter', async () => {
       const unexecutedActions = [mockActions[0]];
       vi.mocked(prisma.boardOfDirectorActions.findMany).mockResolvedValueOnce(unexecutedActions);
       vi.mocked(prisma.boardOfDirectorActions.count).mockResolvedValueOnce(1);
@@ -426,7 +426,7 @@ describe('Action Controller', () => {
       });
     });
 
-    it('should default to page 1 and take 10 when pagination params are missing', async () => {
+    it('defaults to page 1 and take 10 when pagination params are missing', async () => {
       vi.mocked(prisma.boardOfDirectorActions.findMany).mockResolvedValueOnce([mockAction]);
       vi.mocked(prisma.boardOfDirectorActions.count).mockResolvedValueOnce(1);
 

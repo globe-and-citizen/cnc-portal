@@ -4,7 +4,7 @@ import CashRemunerationView from '../Accounts/CashRemunerationView.vue'
 import { createTestingPinia } from '@pinia/testing'
 import { mockTeamStore } from '@/tests/mocks'
 
-describe('CashRemunerationView.vue', () => {
+describe('[US-PAYROLL-008] [US-PAYROLL-013] CashRemunerationView.vue', () => {
   const createComponent = () => {
     return shallowMount(CashRemunerationView, {
       global: {
@@ -19,7 +19,7 @@ describe('CashRemunerationView.vue', () => {
     mockTeamStore.currentTeamMeta = originalTeamMeta
   })
 
-  it('should pass correct props to TokenHoldingsSection', () => {
+  it('passes correct props to TokenHoldingsSection', () => {
     const wrapper = createComponent()
     const genericTokenHoldingSection = wrapper.findComponent({
       name: 'TokenHoldingsSection'
@@ -31,7 +31,7 @@ describe('CashRemunerationView.vue', () => {
     )
   })
 
-  it('should render CashRemunerationOverview component', () => {
+  it('renders CashRemunerationOverview component', () => {
     const wrapper = createComponent()
     const overview = wrapper.findComponent({ name: 'CashRemunerationOverview' })
 

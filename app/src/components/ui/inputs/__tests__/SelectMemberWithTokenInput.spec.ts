@@ -45,7 +45,7 @@ describe('SelectMemberWithTokenInput.vue', () => {
     if (wrapper) wrapper.unmount()
   })
 
-  it('should filter members by address', async () => {
+  it('filters members by address', async () => {
     const addressInput = wrapper.find('[data-test="member-address-input"]')
 
     await addressInput.trigger('focus')
@@ -59,7 +59,7 @@ describe('SelectMemberWithTokenInput.vue', () => {
     expect(wrapper.text()).toContain('John Doe')
   })
 
-  it('should hide dropdown when input loses focus', async () => {
+  it('hides dropdown when input loses focus', async () => {
     const nameInput = wrapper.find('[data-test="member-name-input"]')
 
     await nameInput.trigger('focus')
@@ -79,7 +79,7 @@ describe('SelectMemberWithTokenInput.vue', () => {
     expect(wrapper.find('[data-test="user-dropdown"]').exists()).toBe(false)
   })
 
-  it('should hide dropdown after selecting a member', async () => {
+  it('hides dropdown after selecting a member', async () => {
     const nameInput = wrapper.find('[data-test="member-name-input"]')
 
     await nameInput.trigger('focus')

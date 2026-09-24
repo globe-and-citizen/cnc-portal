@@ -213,7 +213,7 @@ describe('ClaimHistoryDailyBreakdown', () => {
     expect(emitted[1]?.[0]).toBe(day1)
   })
 
-  it('hides quick-submit on out-of-window days when restriction is active', () => {
+  it('[AC-US-PAYROLL-005-15] hides quick-submit on out-of-window days when restriction is active', () => {
     // selectedWeek is in 2024 → every day is outside the current submit window
     const wrapper = createWrapper({
       weeklyClaim: { ...createWeeklyClaim(), claims: [] },

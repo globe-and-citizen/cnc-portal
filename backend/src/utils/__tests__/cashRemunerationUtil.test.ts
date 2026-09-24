@@ -22,13 +22,13 @@ vi.mock('../viem.config', () => ({
   },
 }));
 
-describe('cashRemunerationUtil', () => {
+describe('[US-PAYROLL-008] Cash Remuneration ownership', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
   describe('isCashRemunerationOwner', () => {
-    it('should return true if user is the owner', async () => {
+    it('returns true if user is the owner', async () => {
       const userAddress = '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd' as `0x${string}`;
       const teamId = 1;
 
@@ -61,7 +61,7 @@ describe('cashRemunerationUtil', () => {
       });
     });
 
-    it('should return false if user is not the owner', async () => {
+    it('returns false if user is not the owner', async () => {
       const userAddress = '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd' as `0x${string}`;
       const ownerAddress = '0x9999999999999999999999999999999999999999';
       const teamId = 1;
@@ -83,7 +83,7 @@ describe('cashRemunerationUtil', () => {
       expect(result).toBe(false);
     });
 
-    it('should return false for an invalid contract address', async () => {
+    it('returns false for an invalid contract address', async () => {
       const userAddress = '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd' as `0x${string}`;
       const teamId = 1;
 
@@ -101,7 +101,7 @@ describe('cashRemunerationUtil', () => {
       expect(publicClient.readContract).not.toHaveBeenCalled();
     });
 
-    it('should return false if owner cannot be retrieved', async () => {
+    it('returns false if owner cannot be retrieved', async () => {
       const userAddress = '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd' as `0x${string}`;
       const teamId = 1;
 
@@ -113,7 +113,7 @@ describe('cashRemunerationUtil', () => {
       expect(publicClient.readContract).not.toHaveBeenCalled();
     });
 
-    it('should return false and log error if an exception occurs', async () => {
+    it('returns false and logs an error when owner lookup fails', async () => {
       const userAddress = '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd' as `0x${string}`;
       const teamId = 1;
       const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});

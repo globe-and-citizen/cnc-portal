@@ -20,10 +20,11 @@ import {
 
 const HIDDEN = 'Company hidden successfully'
 const VISIBLE = 'Company is visible again'
+const TAGS = ['@US-COMPANIES-007', '@browser', '@mocked']
 
-// Browser coverage of US-COMPANIES-007. The API is simulated, so the per-member
+// Mocked browser coverage of US-COMPANIES-007. The API is simulated, so the per-member
 // persistence of the visibility flag needs backend coverage.
-test.describe('Company list visibility', { tag: ['@US-COMPANIES-007', '@browser'] }, () => {
+test.describe('Company list visibility', { tag: TAGS }, () => {
   test('lets the owner hide the company from the dashboard and show it again from the list', async ({
     page
   }) => {
@@ -54,7 +55,9 @@ test.describe('Company list visibility', { tag: ['@US-COMPANIES-007', '@browser'
     expect(api.hiddenBy.size).toBe(0)
   })
 
-  test('lets a member hide and show the company from the card menu', async ({ page }) => {
+  test('[AC-US-COMPANIES-007-03] lets a member hide and show the company from the card menu', async ({
+    page
+  }) => {
     const api = await signInToCompanies(page, { user: 'member' })
     let items = await openCardMenu(page)
     await expect(items).toHaveText(['Hide'])
@@ -85,38 +88,54 @@ test.describe('Company list visibility', { tag: ['@US-COMPANIES-007', '@browser'
     expect(api.updates).toHaveLength(0)
   })
 
-  test('lets a member hide an archived company without changing its archived state', async ({
-    page
-  }) => {
-    const api = await signInToCompanies(page, { user: 'member', archived: true })
-    await expect(teamCard(page)).toContainText('Archived')
-    const items = await openCardMenu(page)
-    await expect(items).toHaveText(['Hide'])
-    await items.click()
-    await confirmVisibility(page).click()
-    await expect(toast(page, HIDDEN)).toBeVisible()
-    await expect(teamCard(page)).toHaveCount(0)
-    await showHidden(page).click()
-    await expect(teamCard(page)).toContainText('Hidden')
-    await expect(teamCard(page)).toContainText('Archived')
-    expect(api.updates).toEqual([{ isHidden: true }])
-    expect(api.team?.isArchived).toBe(true)
-    expect([...api.hiddenBy]).toEqual([E2E_MEMBER])
-  })
+  /**
+   * Covers:
+   * - [AC-US-COMPANIES-006-06]
+   * - [AC-US-COMPANIES-007-04]
+   */
+  test(
+    'lets a member hide an archived company without changing its archived state',
+    { tag: '@US-COMPANIES-006' },
+    async ({ page }) => {
+      const api = await signInToCompanies(page, { user: 'member', archived: true })
+      await expect(teamCard(page)).toContainText('Archived')
+      const items = await openCardMenu(page)
+      await expect(items).toHaveText(['Hide'])
+      await items.click()
+      await confirmVisibility(page).click()
+      await expect(toast(page, HIDDEN)).toBeVisible()
+      await expect(teamCard(page)).toHaveCount(0)
+      await showHidden(page).click()
+      await expect(teamCard(page)).toContainText('Hidden')
+      await expect(teamCard(page)).toContainText('Archived')
+      expect(api.updates).toEqual([{ isHidden: true }])
+      expect(api.team?.isArchived).toBe(true)
+      expect([...api.hiddenBy]).toEqual([E2E_MEMBER])
+    }
+  )
 
-  test('lists a hidden and archived company only when both filters are on', async ({ page }) => {
-    await signInToCompanies(page, { archived: true, hiddenBy: ['owner'] })
-    await expect(teamCard(page)).toContainText('Hidden')
-    await expect(teamCard(page)).toContainText('Archived')
-    await showHidden(page).click()
-    await expect(teamCard(page)).toHaveCount(0)
-    await showHidden(page).click()
-    await expect(teamCard(page)).toBeVisible()
-    await showArchived(page).click()
-    await expect(teamCard(page)).toHaveCount(0)
-    await showArchived(page).click()
-    await expect(teamCard(page)).toBeVisible()
-  })
+  /**
+   * Covers:
+   * - [AC-US-COMPANIES-003-03]
+   * - [AC-US-COMPANIES-003-06]
+   */
+  test(
+    'lists a hidden and archived company only when both filters are on',
+    { tag: '@US-COMPANIES-003' },
+    async ({ page }) => {
+      await signInToCompanies(page, { archived: true, hiddenBy: ['owner'] })
+      await expect(teamCard(page)).toContainText('Hidden')
+      await expect(teamCard(page)).toContainText('Archived')
+      await showHidden(page).click()
+      await expect(teamCard(page)).toHaveCount(0)
+      await showHidden(page).click()
+      await expect(teamCard(page)).toBeVisible()
+      await showArchived(page).click()
+      await expect(teamCard(page)).toHaveCount(0)
+      await showArchived(page).click()
+      await expect(teamCard(page)).toBeVisible()
+    }
+  )
 
   test('cancelling the confirmation leaves the visibility unchanged', async ({ page }) => {
     const api = await openCompanyActions(page)

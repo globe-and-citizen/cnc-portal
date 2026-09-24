@@ -87,7 +87,7 @@ describe('featureUtils', () => {
       expect(result).toEqual(mockFeatures);
     });
 
-    it('should return empty array when no features exist', async () => {
+    it('returns empty array when no features exist', async () => {
       vi.mocked(prisma.globalSetting.findMany).mockResolvedValue([]);
 
       const result = await findAllFeatures();
@@ -97,7 +97,7 @@ describe('featureUtils', () => {
   });
 
   describe('findFeatureByName', () => {
-    it('should return feature with team overrides when feature exists', async () => {
+    it('returns feature with team overrides when feature exists', async () => {
       const mockFeature = {
         id: 1,
         functionName: 'SUBMIT_RESTRICTION',
@@ -139,7 +139,7 @@ describe('featureUtils', () => {
       expect(result).toEqual(mockFeature);
     });
 
-    it('should return null when feature does not exist', async () => {
+    it('returns null when feature does not exist', async () => {
       vi.mocked(prisma.globalSetting.findUnique).mockResolvedValue(null);
 
       const result = await findFeatureByName('NON_EXISTENT_FEATURE');
@@ -171,7 +171,7 @@ describe('featureUtils', () => {
       expect(result).toEqual(mockFeature);
     });
 
-    it('should create a disabled feature', async () => {
+    it('creates a disabled feature', async () => {
       const mockFeature = {
         id: 2,
         functionName: 'DISABLED_FEATURE',
@@ -209,7 +209,7 @@ describe('featureUtils', () => {
       expect(result).toEqual(mockUpdatedFeature);
     });
 
-    it('should handle status change from DISABLED to ENABLED', async () => {
+    it('handles status change from DISABLED to ENABLED', async () => {
       const mockUpdatedFeature = {
         id: 2,
         functionName: 'WITHDRAW_FEE',
@@ -248,7 +248,7 @@ describe('featureUtils', () => {
       expect(result).toBe(true);
     });
 
-    it('should return false when deletion fails', async () => {
+    it('returns false when deletion fails', async () => {
       vi.mocked(prisma.teamFunctionOverride.deleteMany).mockRejectedValue(
         new Error('Database error')
       );
@@ -258,7 +258,7 @@ describe('featureUtils', () => {
       expect(result).toBe(false);
     });
 
-    it('should delete overrides even if there are none', async () => {
+    it('deletes overrides even if there are none', async () => {
       vi.mocked(prisma.teamFunctionOverride.deleteMany).mockResolvedValue({ count: 0 });
       vi.mocked(prisma.globalSetting.delete).mockResolvedValue({
         id: 1,
@@ -275,7 +275,7 @@ describe('featureUtils', () => {
   });
 
   describe('featureExists', () => {
-    it('should return true when feature exists', async () => {
+    it('returns true when feature exists', async () => {
       vi.mocked(prisma.globalSetting.findUnique).mockResolvedValue({
         functionName: 'SUBMIT_RESTRICTION',
       });
@@ -289,7 +289,7 @@ describe('featureUtils', () => {
       expect(result).toBe(true);
     });
 
-    it('should return false when feature does not exist', async () => {
+    it('returns false when feature does not exist', async () => {
       vi.mocked(prisma.globalSetting.findUnique).mockResolvedValue(null);
 
       const result = await featureExists('NON_EXISTENT_FEATURE');
@@ -299,7 +299,7 @@ describe('featureUtils', () => {
   });
 
   describe('teamExists', () => {
-    it('should return true when team exists', async () => {
+    it('returns true when team exists', async () => {
       vi.mocked(prisma.team.findUnique).mockResolvedValue({ id: 100 });
 
       const result = await teamExists(100);
@@ -311,7 +311,7 @@ describe('featureUtils', () => {
       expect(result).toBe(true);
     });
 
-    it('should return false when team does not exist', async () => {
+    it('returns false when team does not exist', async () => {
       vi.mocked(prisma.team.findUnique).mockResolvedValue(null);
 
       const result = await teamExists(999);
@@ -321,7 +321,7 @@ describe('featureUtils', () => {
   });
 
   describe('overrideExists', () => {
-    it('should return true when override exists for team and function', async () => {
+    it('returns true when override exists for team and function', async () => {
       vi.mocked(prisma.teamFunctionOverride.findUnique).mockResolvedValue({ id: 1 });
 
       const result = await overrideExists('SUBMIT_RESTRICTION', 100);
@@ -333,7 +333,7 @@ describe('featureUtils', () => {
       expect(result).toBe(true);
     });
 
-    it('should return false when override does not exist', async () => {
+    it('returns false when override does not exist', async () => {
       vi.mocked(prisma.teamFunctionOverride.findUnique).mockResolvedValue(null);
 
       const result = await overrideExists('SUBMIT_RESTRICTION', 999);
@@ -365,7 +365,7 @@ describe('featureUtils', () => {
       expect(result).toEqual(mockOverride);
     });
 
-    it('should create an enabled override', async () => {
+    it('creates an enabled override', async () => {
       const mockOverride = {
         id: 2,
         teamId: 200,
@@ -409,7 +409,7 @@ describe('featureUtils', () => {
       expect(result).toEqual(mockUpdatedOverride);
     });
 
-    it('should handle status change from ENABLED to DISABLED', async () => {
+    it('handles status change from ENABLED to DISABLED', async () => {
       const mockUpdatedOverride = {
         id: 2,
         teamId: 200,
@@ -429,7 +429,7 @@ describe('featureUtils', () => {
   });
 
   describe('removeOverrideRecord', () => {
-    it('should delete override and return true on success', async () => {
+    it('deletes an override and returns true', async () => {
       vi.mocked(prisma.teamFunctionOverride.delete).mockResolvedValue({
         id: 1,
         teamId: 100,
@@ -447,7 +447,7 @@ describe('featureUtils', () => {
       expect(result).toBe(true);
     });
 
-    it('should return false when deletion fails', async () => {
+    it('returns false when deletion fails', async () => {
       vi.mocked(prisma.teamFunctionOverride.delete).mockRejectedValue(new Error('Not found'));
 
       const result = await removeOverrideRecord('NON_EXISTENT', 999);
@@ -457,7 +457,7 @@ describe('featureUtils', () => {
   });
 
   describe('getEffectiveStatus', () => {
-    it('should return override status when override exists', async () => {
+    it('returns override status when override exists', async () => {
       vi.mocked(prisma.teamFunctionOverride.findUnique).mockResolvedValue({
         status: 'DISABLED' as FeatureStatus,
       });
@@ -487,7 +487,7 @@ describe('featureUtils', () => {
       expect(result).toBe('ENABLED');
     });
 
-    it('should return null when neither override nor global setting exists', async () => {
+    it('returns null when neither override nor global setting exists', async () => {
       vi.mocked(prisma.teamFunctionOverride.findUnique).mockResolvedValue(null);
       vi.mocked(prisma.globalSetting.findUnique).mockResolvedValue(null);
 

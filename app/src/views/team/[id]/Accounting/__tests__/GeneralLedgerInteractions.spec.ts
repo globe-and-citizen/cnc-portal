@@ -20,7 +20,7 @@ accountingContext.journal.value = finalizeJournal(catalogueLedger)
 // These specs exercise the ledger's interactions against the shared journal.
 
 describe('General Ledger → Trial Balance jump', () => {
-  it('routes a clicked account to its Trial Balance drill-down', async () => {
+  it('[AC-US-ACCT-002-06] routes a clicked account to its Trial Balance drill-down', async () => {
     mockRouterPush.mockClear()
     const wrapper = renderWithProviders(GeneralLedgerView)
     const link = wrapper.find('[data-test^="ledger-account-link-"]')
@@ -101,7 +101,7 @@ describe('General Ledger account filter', () => {
 })
 
 describe('General Ledger table controls', () => {
-  it('flows page and page-size changes through the pagination footer', async () => {
+  it('[AC-US-ACCT-002-08] flows page changes through the pagination footer', async () => {
     const wrapper = renderWithProviders(GeneralLedgerView)
     const pagination = wrapper.findComponent(TablePagination)
     if (!pagination.exists()) return wrapper.unmount()

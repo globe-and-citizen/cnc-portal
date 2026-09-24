@@ -64,7 +64,7 @@ describe('ElectionStatus.vue', () => {
   })
 
   describe('Component Rendering', () => {
-    it('should render the component with election status', () => {
+    it('renders the component with election status', () => {
       mockElectionData.electionStatus.value = { text: 'Active', color: 'success' }
       wrapper = createComponent()
 
@@ -72,14 +72,14 @@ describe('ElectionStatus.vue', () => {
       expect(wrapper.text()).toContain('Active')
     })
 
-    it('should not render when election status is null', () => {
+    it('does not render when election status is null', () => {
       mockElectionData.electionStatus.value = null
       wrapper = createComponent()
 
       expect(wrapper.find('[data-test="election-status-badge"]').exists()).toBe(false)
     })
 
-    it('[AC-US-EL-05-01] should display the current election status', () => {
+    it('[AC-US-EL-05-01] displays the current election status', () => {
       mockElectionData.electionStatus.value = { text: 'Upcoming', color: 'warning' }
       wrapper = createComponent()
 
@@ -93,49 +93,49 @@ describe('ElectionStatus.vue', () => {
       mockElectionData.electionStatus.value = { text: 'Upcoming', color: 'warning' }
     })
 
-    it('should display time in days when more than 1 day remaining', () => {
+    it('displays time in days when more than 1 day remaining', () => {
       mockElectionData.leftToStart.value = 2 * 24 * 60 * 60 // 2 days
       wrapper = createComponent()
 
       expect(wrapper.text()).toContain('2 days left')
     })
 
-    it('should display "day" singular when exactly 1 day remaining', () => {
+    it('displays "day" singular when exactly 1 day remaining', () => {
       mockElectionData.leftToStart.value = 24 * 60 * 60 // 1 day
       wrapper = createComponent()
 
       expect(wrapper.text()).toContain('1 day left')
     })
 
-    it('should display time in hours when less than 1 day but more than 1 hour', () => {
+    it('displays time in hours when less than 1 day but more than 1 hour', () => {
       mockElectionData.leftToStart.value = 3 * 60 * 60 // 3 hours
       wrapper = createComponent()
 
       expect(wrapper.text()).toContain('3 hours left')
     })
 
-    it('should display "hour" singular when exactly 1 hour remaining', () => {
+    it('displays "hour" singular when exactly 1 hour remaining', () => {
       mockElectionData.leftToStart.value = 60 * 60 // 1 hour
       wrapper = createComponent()
 
       expect(wrapper.text()).toContain('1 hour left')
     })
 
-    it('should display time in minutes when less than 1 hour', () => {
+    it('displays time in minutes when less than 1 hour', () => {
       mockElectionData.leftToStart.value = 30 * 60 // 30 minutes
       wrapper = createComponent()
 
       expect(wrapper.text()).toContain('30 minutes left')
     })
 
-    it('should display "minute" singular when exactly 1 minute remaining', () => {
+    it('displays "minute" singular when exactly 1 minute remaining', () => {
       mockElectionData.leftToStart.value = 60 // 1 minute
       wrapper = createComponent()
 
       expect(wrapper.text()).toContain('1 minute left')
     })
 
-    it('should display time in seconds when less than 1 minute', () => {
+    it('displays time in seconds when less than 1 minute', () => {
       mockElectionData.leftToStart.value = 45 // 45 seconds
       wrapper = createComponent()
 
@@ -148,28 +148,28 @@ describe('ElectionStatus.vue', () => {
       mockElectionData.electionStatus.value = { text: 'Active', color: 'success' }
     })
 
-    it('should display time in days when more than 1 day until end', () => {
+    it('displays time in days when more than 1 day until end', () => {
       mockElectionData.leftToEnd.value = 5 * 24 * 60 * 60 // 5 days
       wrapper = createComponent()
 
       expect(wrapper.text()).toContain('5 days left')
     })
 
-    it('should display time in hours when less than 1 day until end', () => {
+    it('displays time in hours when less than 1 day until end', () => {
       mockElectionData.leftToEnd.value = 12 * 60 * 60 // 12 hours
       wrapper = createComponent()
 
       expect(wrapper.text()).toContain('12 hours left')
     })
 
-    it('should display time in minutes when less than 1 hour until end', () => {
+    it('displays time in minutes when less than 1 hour until end', () => {
       mockElectionData.leftToEnd.value = 15 * 60 // 15 minutes
       wrapper = createComponent()
 
       expect(wrapper.text()).toContain('15 minutes left')
     })
 
-    it('should display time in seconds when less than 1 minute until end', () => {
+    it('displays time in seconds when less than 1 minute until end', () => {
       mockElectionData.leftToEnd.value = 30 // 30 seconds
       wrapper = createComponent()
 
@@ -178,7 +178,7 @@ describe('ElectionStatus.vue', () => {
   })
 
   describe('Completed Election Status', () => {
-    it('should not display time remaining for completed election', () => {
+    it('does not display time remaining for completed election', () => {
       mockElectionData.electionStatus.value = { text: 'Completed', color: 'neutral' }
       wrapper = createComponent()
 
@@ -186,7 +186,7 @@ describe('ElectionStatus.vue', () => {
       expect(wrapper.text()).toContain('Completed')
     })
 
-    it('should not show countdown separator for completed election', () => {
+    it('does not show countdown separator for completed election', () => {
       mockElectionData.electionStatus.value = { text: 'Completed', color: 'neutral' }
       wrapper = createComponent()
 
@@ -215,7 +215,7 @@ describe('ElectionStatus.vue', () => {
   })
 
   describe('Edge Cases', () => {
-    it('should handle zero time remaining', () => {
+    it('handles zero time remaining', () => {
       mockElectionData.electionStatus.value = { text: 'Active', color: 'success' }
       mockElectionData.leftToEnd.value = 0
       wrapper = createComponent()
@@ -223,7 +223,7 @@ describe('ElectionStatus.vue', () => {
       expect(wrapper.text()).toContain('0 seconds left')
     })
 
-    it('should handle very large time values', () => {
+    it('handles very large time values', () => {
       mockElectionData.electionStatus.value = { text: 'Upcoming', color: 'warning' }
       mockElectionData.leftToStart.value = 365 * 24 * 60 * 60 // 1 year
       wrapper = createComponent()
@@ -231,7 +231,7 @@ describe('ElectionStatus.vue', () => {
       expect(wrapper.text()).toContain('365 days left')
     })
 
-    it('should display fallback message when election data is null', () => {
+    it('displays fallback message when election data is null', () => {
       mockElectionData.formattedElection.value = null
       mockElectionData.electionStatus.value = { text: 'Active', color: 'success' }
       wrapper = createComponent()
@@ -240,7 +240,7 @@ describe('ElectionStatus.vue', () => {
       expect(wrapper.find('[data-test="election-status-badge"]').exists()).toBe(true)
     })
 
-    it('should handle negative time values gracefully', () => {
+    it('remains rendered when the remaining time is negative', () => {
       mockElectionData.electionStatus.value = { text: 'Active', color: 'success' }
       mockElectionData.leftToEnd.value = -100
       wrapper = createComponent()
@@ -251,7 +251,7 @@ describe('ElectionStatus.vue', () => {
   })
 
   describe('Props Handling', () => {
-    it('should accept and use electionId prop', () => {
+    it('accepts and uses the electionId prop', () => {
       const electionId = 42n
       wrapper = createComponent(electionId)
 
@@ -259,7 +259,7 @@ describe('ElectionStatus.vue', () => {
       expect(wrapper.exists()).toBe(true)
     })
 
-    it('should work with different election IDs', () => {
+    it('displays each supplied election ID', () => {
       mockElectionData.electionStatus.value = { text: 'Active', color: 'success' }
 
       wrapper = createComponent(1n)
@@ -275,21 +275,21 @@ describe('ElectionStatus.vue', () => {
       mockElectionData.electionStatus.value = { text: 'Active', color: 'success' }
     })
 
-    it('should include "left" suffix for all non-completed states', () => {
+    it('includes "left" suffix for all non-completed states', () => {
       mockElectionData.leftToEnd.value = 3600
       wrapper = createComponent()
 
       expect(wrapper.text()).toContain('left')
     })
 
-    it('should include countdown separator bullet', () => {
+    it('includes countdown separator bullet', () => {
       mockElectionData.leftToEnd.value = 3600
       wrapper = createComponent()
 
       expect(wrapper.text()).toContain('•')
     })
 
-    it('[AC-US-EL-05-03] should format the election countdown', () => {
+    it('[AC-US-EL-05-03] formats the election countdown', () => {
       mockElectionData.leftToEnd.value = 7200 // 2 hours
       wrapper = createComponent()
 
@@ -299,7 +299,7 @@ describe('ElectionStatus.vue', () => {
   })
 
   describe('Reactive Updates', () => {
-    it('should update when election status changes', async () => {
+    it('updates when election status changes', async () => {
       mockElectionData.electionStatus.value = { text: 'Upcoming', color: 'warning' }
       wrapper = createComponent()
 
@@ -311,7 +311,7 @@ describe('ElectionStatus.vue', () => {
       expect(wrapper.text()).toContain('Active')
     })
 
-    it('should update countdown when time changes', async () => {
+    it('updates countdown when time changes', async () => {
       mockElectionData.electionStatus.value = { text: 'Active', color: 'success' }
       mockElectionData.leftToEnd.value = 3600
       wrapper = createComponent()
@@ -324,7 +324,7 @@ describe('ElectionStatus.vue', () => {
       expect(wrapper.text()).toContain('30 minutes left')
     })
 
-    // it('should hide countdown when status changes to completed', async () => {
+    // it('hides countdown when status changes to completed', async () => {
     //   mockElectionData.electionStatus.value = { text: 'Active', color: 'success' }
     //   mockElectionData.leftToEnd.value = 3600
     //   wrapper = createComponent()

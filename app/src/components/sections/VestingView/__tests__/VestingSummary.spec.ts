@@ -3,7 +3,7 @@ import { mount, type VueWrapper } from '@vue/test-utils'
 import VestingSummary from '@/components/sections/VestingView/VestingSummary.vue'
 import type { VestingCreation } from '@/types/vesting'
 
-describe('VestingSummary.vue', () => {
+describe('[US-VESTING-001] VestingSummary.vue', () => {
   let wrapper: VueWrapper
   const vesting: VestingCreation = {
     member: {
