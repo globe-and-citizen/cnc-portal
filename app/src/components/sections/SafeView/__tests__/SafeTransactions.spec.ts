@@ -141,7 +141,7 @@ describe('[US-SAFE-005] [US-SAFE-006] SafeTransactions', () => {
     expect(mobileListProps).not.toHaveProperty('isTransactionLoading')
   })
 
-  it('requires confirmation before approving when another valid transaction is pending', async () => {
+  it('[AC-US-SAFE-006-08] requires confirmation before a threshold-reaching approval', async () => {
     transactions.value = [
       makeTransaction({
         confirmations: [

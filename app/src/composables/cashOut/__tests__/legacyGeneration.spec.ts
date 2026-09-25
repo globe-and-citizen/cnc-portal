@@ -35,7 +35,7 @@ describe('buildLegacyWithdrawPlan', () => {
     ])
   })
 
-  it('drains only the Bank for a generation that cannot', () => {
+  it('[AC-US-BANK-004-05] drains only the Bank when a historic generation cannot sweep sources', () => {
     expect(keys({ cashRemuneration: 5, expense: 5, bank: 5 }, false)).toEqual(['bank'])
   })
 

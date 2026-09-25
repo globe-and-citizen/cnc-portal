@@ -221,7 +221,7 @@ describe('ExpenseAccountEIP712V2', function () {
       expect(expenseBalance.lastWithdrawnPeriod).to.equal(currentPeriod)
     })
 
-    it('enforces cumulative weekly budget limit', async function () {
+    it('[AC-US-EXP-002-04] enforces the remaining recurring budget', async function () {
       const { expenseAccount, owner, approvedAddress, recipient } = await loadFixture(
         deployExpenseAccountFixture
       )
@@ -376,7 +376,7 @@ describe('ExpenseAccountEIP712V2', function () {
       ).to.be.revertedWithCustomError(expenseAccount, 'ExpenseAccountEIP712__TokenNotSupported')
     })
 
-    it('rejects transfer from unauthorized spender', async function () {
+    it('[AC-US-EXP-002-05] rejects a transfer from a recipient outside the approval', async function () {
       const { expenseAccount, owner, approvedAddress, recipient, other } = await loadFixture(
         deployExpenseAccountFixture
       )
@@ -412,7 +412,7 @@ describe('ExpenseAccountEIP712V2', function () {
       ).to.be.revertedWithCustomError(expenseAccount, 'ExpenseAccountEIP712__SignerNotAuthorized')
     })
 
-    it('rejects transfer outside date range', async function () {
+    it('[AC-US-EXP-002-10] rejects a transfer outside the approval date range', async function () {
       const { expenseAccount, owner, approvedAddress, recipient } = await loadFixture(
         deployExpenseAccountFixture
       )
@@ -500,7 +500,12 @@ describe('ExpenseAccountEIP712V2', function () {
       )
     })
 
-    it('[AC-US-EXP-002-06] rejects a second one-time transfer', async function () {
+    /**
+     * Covers:
+     * - [AC-US-EXP-002-06]
+     * - [AC-US-EXP-002-10]
+     */
+    it('rejects a second transfer from an exhausted one-time approval', async function () {
       const { expenseAccount, owner, approvedAddress, recipient } = await loadFixture(
         deployExpenseAccountFixture
       )

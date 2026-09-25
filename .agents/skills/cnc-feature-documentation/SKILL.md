@@ -32,8 +32,9 @@ Do not duplicate that guide in a feature README.
    source, test evidence, and known gap.
 5. Classify each acceptance criterion as implemented, missing, partial, or unverified. An issue, pull request, old document, or plausible
    code path is not proof of current behaviour.
-6. When the feature is under an active test-coverage review, assign each criterion the proof boundary it actually requires, then compare it
-   with direct representative test references. Keep integrated E2E, mocked browser, frontend, backend, and contract evidence distinct.
+6. When the feature is under an active test-coverage review, identify the code layers that own each criterion, assign the smallest proof set
+   that covers those responsibilities and any material boundary risk, and record why that proof is necessary. Then compare it with direct
+   representative test references. Keep integrated E2E, mocked browser, frontend, backend, and contract evidence distinct.
 
 Do not implement a discovered product gap unless the user also asks for that change. Report it and create a tracking issue only when
 requested or required by the active GitHub workflow.
@@ -68,9 +69,9 @@ requested or required by the active GitHub workflow.
   missing outcomes remain visible.
 - Apply the guide's status and human-review contract exactly. Fully implemented criteria without a completed product review belong in
   `🧪 Validation`, not `✅ Done`.
-- For an active coverage review, use the guide's per-story coverage summary and per-criterion target table. Derive current coverage from
-  direct `AC-US-*` references, list insufficient boundaries as gaps, and never classify a story as partial solely because a criterion is
-  intentionally covered by a mock or a lower test layer.
+- For an active coverage review, use the guide's per-story coverage summary and per-criterion table for responsibility, required evidence,
+  and proof rationale. Derive current evidence from direct `AC-US-*` references, list insufficient boundaries as gaps, and never classify a
+  story as partial solely because a criterion is intentionally covered by a mock or a lower test layer.
 - Use the generated repository inventory to keep frontend, backend, contract, dashboard, and E2E test files visible. Distinguish direct
   US/AC markers from canonical Implementation Evidence links: the latter maps feature support but does not prove a story or criterion. Keep
   contract- or implementation-owned tests in the technical-only category. Treat an unmapped file as an audit item, not as acceptance

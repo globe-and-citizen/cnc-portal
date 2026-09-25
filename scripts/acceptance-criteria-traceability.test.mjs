@@ -120,10 +120,10 @@ test('validates optional per-story coverage targets against representative evide
 
 ### Test Coverage
 
-| Acceptance Criterion | Expected Coverage | Current Coverage | Status |
-| -------------------- | ----------------- | ---------------- | ------ |
-| \`AC-US-EXAMPLE-001-01\` | Integrated E2E | Integrated E2E | ✅ Met |
-| \`AC-US-EXAMPLE-001-02\` | Mocked browser | None linked | ❌ Missing |
+| Acceptance Criterion | Responsibilities | Required Evidence | Proof Rationale | Current Evidence | Status |
+| -------------------- | ---------------- | ----------------- | --------------- | ---------------- | ------ |
+| \`AC-US-EXAMPLE-001-01\` | Frontend + Backend | Integrated E2E | The API boundary must work. | Integrated E2E | ✅ Met |
+| \`AC-US-EXAMPLE-001-02\` | Frontend | Mocked browser | The browser branch needs a controlled response. | None linked | ❌ Missing |
 `)
   const integratedTest = testDocument(
     `test.describe('[US-EXAMPLE-001] journey', { tag: '@integrated' }, () => {
@@ -133,12 +133,53 @@ test('validates optional per-story coverage targets against representative evide
   )
 
   assert.equal(parseAcceptanceCoverageRows(documentedCoverage).length, 2)
+  assert.deepEqual(parseAcceptanceCoverageRows(documentedCoverage)[0], {
+    documentPath: 'docs/features/example/README.md',
+    line: 20,
+    storyId: 'US-EXAMPLE-001',
+    id: 'AC-US-EXAMPLE-001-01',
+    responsibilities: 'Frontend + Backend',
+    expected: 'Integrated E2E',
+    rationale: 'The API boundary must work.',
+    current: 'Integrated E2E',
+    status: '✅ Met'
+  })
   assert.deepEqual(
     validateAcceptanceCriteriaTraceability({
       featureDocuments: [documentedCoverage],
       testDocuments: [integratedTest]
     }).errors,
     []
+  )
+})
+
+test('rejects unsupported responsibilities and missing proof rationales', () => {
+  const documentedCoverage = feature(`${validFeature.content}
+
+### Test Coverage
+
+| Acceptance Criterion | Responsibilities | Required Evidence | Proof Rationale | Current Evidence | Status |
+| -------------------- | ---------------- | ----------------- | --------------- | ---------------- | ------ |
+| \`AC-US-EXAMPLE-001-01\` | Frontend + Database | Integrated E2E | | Integrated E2E | ✅ Met |
+| \`AC-US-EXAMPLE-001-02\` | Frontend | Mocked browser | | None linked | ❌ Missing |
+`)
+  const integratedTest = testDocument(
+    `test.describe('[US-EXAMPLE-001] journey', { tag: '@integrated' }, () => {
+  test('[AC-US-EXAMPLE-001-01] proves the primary outcome', () => {})
+})`,
+    'app/test/e2e/example.integrated.spec.ts'
+  )
+
+  assert.deepEqual(
+    validateAcceptanceCriteriaTraceability({
+      featureDocuments: [documentedCoverage],
+      testDocuments: [integratedTest]
+    }).errors,
+    [
+      'docs/features/example/README.md:20 uses unsupported responsibilities Database for AC-US-EXAMPLE-001-01.',
+      'docs/features/example/README.md:20 is missing a proof rationale for AC-US-EXAMPLE-001-01.',
+      'docs/features/example/README.md:21 is missing a proof rationale for AC-US-EXAMPLE-001-02.'
+    ]
   )
 })
 

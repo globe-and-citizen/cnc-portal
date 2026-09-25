@@ -103,7 +103,7 @@ describe('ExpenseTransactions', () => {
     if (wrapper) wrapper.unmount()
   })
 
-  it('maps query data and passes rows/columns to UTable', () => {
+  it('[AC-US-EXP-004-04] maps Expense activity into the transaction table', () => {
     wrapper = createWrapper()
 
     const rows = getTableRows(wrapper)
@@ -161,7 +161,7 @@ describe('ExpenseTransactions', () => {
     expect(childRow.text()).toContain('—')
   })
 
-  it('[AC-US-EXP-004-05] filters displayed rows by date range', async () => {
+  it('filters displayed rows by date range', async () => {
     wrapper = createWrapper()
 
     expect(wrapper.get('[data-test="expense-transaction-history-date-select"]').exists()).toBe(true)

@@ -63,7 +63,7 @@ describe('useCashOutAll', () => {
     )
   })
 
-  it('runs the three accounts in order and ends complete', async () => {
+  it('[AC-US-BANK-004-01] consolidates the source accounts before draining the Bank', async () => {
     const flow = useCashOutAll()
     await flow.start(fullPlan())
 
@@ -92,7 +92,7 @@ describe('useCashOutAll', () => {
     expect(filter.predicate({ queryKey: ['unrelated-query'] })).toBe(false)
   })
 
-  it('forwards the Bank native balance then every held ERC-20 to the owner', async () => {
+  it('[AC-US-BANK-004-01] forwards every held Bank asset to the connected owner', async () => {
     const flow = useCashOutAll()
     await flow.start(fullPlan())
 
@@ -211,7 +211,7 @@ describe('useCashOutAll', () => {
       expect(vi.mocked(useTransferToken).mock.calls[0][0]).toHaveProperty('value', LEGACY_BANK)
     })
 
-    it('reads the supplied Bank balances and forwards them to the recipient', async () => {
+    it('[AC-US-BANK-004-02] forwards a historic Bank generation to the current Bank', async () => {
       await legacyFlow().start(fullPlan())
 
       expect(mockWagmiCore.getBalance).toHaveBeenCalledWith(expect.anything(), {
