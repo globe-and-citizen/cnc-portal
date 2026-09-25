@@ -69,9 +69,10 @@ requested or required by the active GitHub workflow.
   missing outcomes remain visible.
 - Apply the guide's status and human-review contract exactly. Fully implemented criteria without a completed product review belong in
   `🧪 Validation`, not `✅ Done`.
-- For an active coverage review, use the guide's per-story coverage summary and per-criterion table for responsibility, required evidence,
-  and proof rationale. Derive current evidence from direct `AC-US-*` references, list insufficient boundaries as gaps, and never classify a
-  story as partial solely because a criterion is intentionally covered by a mock or a lower test layer.
+- For an active coverage review, use the guide's per-story coverage summary, feature-level proof-strategy reference, and compact
+  per-criterion strategy table. Define each responsibility, required-evidence, and proof-rationale combination once, then reference its
+  stable `PS-*` ID from every matching criterion. Derive current evidence from direct `AC-US-*` references, list insufficient boundaries as
+  gaps, and never classify a story as partial solely because a criterion is intentionally covered by a mock or a lower test layer.
 - Use the generated repository inventory to keep frontend, backend, contract, dashboard, and E2E test files visible. Distinguish direct
   US/AC markers from canonical Implementation Evidence links: the latter maps feature support but does not prove a story or criterion. Keep
   contract- or implementation-owned tests in the technical-only category. Treat an unmapped file as an audit item, not as acceptance

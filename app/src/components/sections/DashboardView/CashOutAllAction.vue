@@ -146,6 +146,8 @@ const fiat = (balance: ReturnType<typeof useContractBalance>) =>
   balance.data.value?.total.local.value ?? 0
 const fiatFormatted = (balance: ReturnType<typeof useContractBalance>) =>
   balance.data.value?.total.local.formatted ?? '—'
+const hasFunds = (balance: ReturnType<typeof useContractBalance>) =>
+  balance.data.value?.balances.some((tokenBalance) => tokenBalance.raw > 0n) ?? false
 
 const isOwner = computed(() => {
   if (!bankOwner.value || !userStore.address) return false
@@ -158,7 +160,19 @@ const balancesFiat = computed(() => ({
   bank: fiat(bankBalance)
 }))
 
-const plan = computed(() => buildCashOutPlan(balancesFiat.value))
+const fundedAccounts = computed(() => ({
+  cashRemuneration: hasFunds(cashRemBalance),
+  expense: hasFunds(expenseBalance),
+  bank: hasFunds(bankBalance)
+}))
+
+const plan = computed(() =>
+  buildCashOutPlan({
+    cashRemuneration: fundedAccounts.value.cashRemuneration ? 1 : 0,
+    expense: fundedAccounts.value.expense ? 1 : 0,
+    bank: fundedAccounts.value.bank ? 1 : 0
+  })
+)
 const hasAnyBalance = computed(() => plan.value.length > 0)
 
 const projectedBankFormatted = computed(() =>
@@ -170,13 +184,13 @@ const projectedBankFormatted = computed(() =>
 
 const reviewRows = computed(() => {
   const rows: { key: string; label: string; value: string }[] = []
-  if (balancesFiat.value.cashRemuneration > 0)
+  if (fundedAccounts.value.cashRemuneration)
     rows.push({
       key: 'cashRemuneration',
       label: 'Cash Remuneration',
       value: fiatFormatted(cashRemBalance)
     })
-  if (balancesFiat.value.expense > 0)
+  if (fundedAccounts.value.expense)
     rows.push({ key: 'expense', label: 'Expense Account', value: fiatFormatted(expenseBalance) })
   return rows
 })
