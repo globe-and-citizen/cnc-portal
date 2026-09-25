@@ -4,11 +4,12 @@
     <!-- Transfer Button with Tooltip -->
     <UTooltip
       :text="
-        !hasTheRight
+        archivedTooltip ??
+        (!hasTheRight
           ? 'Only the bank owner can transfer funds'
           : !isBalanceGreaterThanZero
             ? 'Bank balance is 0'
-            : undefined
+            : undefined)
       "
     >
       <UButton
@@ -16,7 +17,7 @@
         leading-icon="heroicons-outline:arrows-right-left"
         label="Transfer"
         @click="openModal"
-        :disabled="!hasTheRight || !isBalanceGreaterThanZero"
+        :disabled="isWriteDisabled || !hasTheRight || !isBalanceGreaterThanZero"
         data-test="transfer-button"
       />
     </UTooltip>
@@ -64,6 +65,7 @@ import { classifyError } from '@/utils/errors/classifyContractError'
 import { log } from '@/lib/logging'
 import type { TokenOption } from '@/types'
 import { useContractBalance, contractBalanceKeys } from '@/composables'
+import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
 
 interface Props {
   bankAddress: Address
@@ -74,6 +76,7 @@ const props = withDefaults(defineProps<Props>(), {})
 const chainId = useChainId()
 const queryClient = useQueryClient()
 const toast = useToast()
+const { archivedTooltip, isWriteDisabled } = useTeamWriteGuard()
 
 const { data: balance } = useContractBalance(props.bankAddress)
 const balances = computed(() => balance.value?.balances ?? [])
@@ -165,6 +168,7 @@ const resetTransferValues = () => {
 
 // Open modal
 const openModal = () => {
+  if (isWriteDisabled.value) return
   modal.value = { mount: true, show: true }
 }
 

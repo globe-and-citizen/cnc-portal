@@ -7,6 +7,7 @@ import {
   mockUseReadContract,
   mockBodIsBodAction,
   mockBodAddAction,
+  mockTeamStore,
   mockUserStore,
   mockUseContractBalance,
   mockBankWrites,
@@ -176,6 +177,19 @@ describe('TransferModal', () => {
     wrapper = mountComponent()
 
     expect(wrapper.find('[data-test="transfer-button"]').attributes('disabled')).toBeUndefined()
+  })
+
+  it('[AC-US-BANK-002-11] blocks transfers for an archived company', async () => {
+    mockTeamStore.currentTeamMeta = {
+      isPending: false,
+      data: { ...mockTeamStore.currentTeam, isArchived: true }
+    }
+    wrapper = mountComponent()
+
+    const trigger = wrapper.find('[data-test="transfer-button"]')
+    expect(trigger.attributes('disabled')).toBeDefined()
+    await trigger.trigger('click')
+    expect(wrapper.find('[data-test="transfer-modal"]').exists()).toBe(false)
   })
 
   it('exposes isLoading true while a transfer mutation is pending', async () => {

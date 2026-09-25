@@ -34,6 +34,7 @@ import { transaction } from './safe-transaction'
 
 export interface SafePageOptions {
   archived?: boolean
+  failConfirmationRequests?: number
   failSafeInfoRequests?: number
   user?: 'owner' | 'member'
   /** Omit for the one-of-one fixture Safe; pass null for the setup journey. */
@@ -89,6 +90,7 @@ export async function openSafeAccount(
     stubBackend(page, { user, users, team: safeTeam(fixture, options) }),
     stubSafeTransactionService(page, fixture, {
       failSafeInfoRequests: options.failSafeInfoRequests,
+      failConfirmationRequests: options.failConfirmationRequests,
       incomingTransfers: options.incomingTransfers,
       transactions: options.transactions,
       user
@@ -176,16 +178,16 @@ export async function exerciseSafeApprovalAndExecution(page: Page, fixture: Safe
   })
   await openSafeAccount(page, fixture, {
     safeAddress: fixture.multisigSafe,
-    transactions: [pending]
+    transactions: [pending],
+    failConfirmationRequests: 1
   })
 
   const transactionTable = page.locator('[data-test="safe-transactions-table"]')
   const approvalProgress = transactionTable.locator(
     '[data-test="safe-transaction-approval-progress"]'
   )
-  await rejectNextWalletRequest(page)
   await transactionTable.locator('[data-test="approve-button"]').click()
-  await expect(page.getByText('Transaction rejected', { exact: true })).toBeVisible()
+  await expect(page.getByText('Error', { exact: true })).toBeVisible()
   await expect(approvalProgress).toContainText('1 of 2')
 
   await transactionTable.locator('[data-test="approve-button"]').click()
