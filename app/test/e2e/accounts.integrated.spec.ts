@@ -119,6 +119,7 @@ test.describe(
      * - [AC-US-EXP-002-02]
      * - [AC-US-EXP-003-01]
      * - [AC-US-EXP-003-02]
+     * - [AC-US-EXP-003-03]
      * - [AC-US-EXP-004-02]
      * - [AC-US-EXP-004-04]
      */
