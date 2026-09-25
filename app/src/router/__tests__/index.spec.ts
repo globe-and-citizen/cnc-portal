@@ -48,8 +48,8 @@ vi.mock('@/views/team/[id]/Accounts/ClaimHistoryView.vue', () => ({
   default: { name: 'ClaimHistoryView', template: '<div>Claim History</div>' }
 }))
 
-vi.mock('@/views/team/[id]/Accounts/CashRemunerationView.vue', () => ({
-  default: { name: 'CashRemunerationView', template: '<div>Cash Remuneration</div>' }
+vi.mock('@/views/team/[id]/Accounts/PayrollView.vue', () => ({
+  default: { name: 'PayrollView', template: '<div>Payroll</div>' }
 }))
 
 vi.mock('@/views/team/[id]/Accounts/ExpenseAccountView.vue', () => ({

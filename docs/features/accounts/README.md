@@ -823,7 +823,7 @@ a transfer to another known company pocket is
 - [Expense component tests](../../../app/src/components/sections/ExpenseAccountView/__tests__),
   [Expense API tests](../../../backend/src/controllers/__tests__/expenseController.test.ts), and
   [Expense contract tests](../../../contract/test/ExpenseAccountEIP712.spec.ts)
-- [Cash Remuneration account page](../../../app/src/views/team/%5Bid%5D/Accounts/CashRemunerationView.vue)
+- [Payroll account page](../../../app/src/views/team/%5Bid%5D/Accounts/PayrollView.vue)
 
 ### Test-suite ownership
 

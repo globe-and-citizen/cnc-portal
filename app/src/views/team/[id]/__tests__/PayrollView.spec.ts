@@ -1,12 +1,12 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { shallowMount } from '@vue/test-utils'
-import CashRemunerationView from '../Accounts/CashRemunerationView.vue'
+import PayrollView from '../Accounts/PayrollView.vue'
 import { createTestingPinia } from '@pinia/testing'
 import { mockTeamStore } from '@/tests/mocks'
 
-describe('[US-PAYROLL-008] [US-PAYROLL-013] CashRemunerationView.vue', () => {
+describe('[US-PAYROLL-008] [US-PAYROLL-013] PayrollView.vue', () => {
   const createComponent = () => {
-    return shallowMount(CashRemunerationView, {
+    return shallowMount(PayrollView, {
       global: {
         plugins: [createTestingPinia({ createSpy: vi.fn })]
       }

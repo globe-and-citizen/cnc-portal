@@ -597,7 +597,7 @@ Functional gaps map to unchecked acceptance criteria.
   [overtime-wage tests](../../../app/src/components/sections/DashboardView/__tests__/SetMemberWageOvertimeStep.spec.ts),
   [weekly-claim query tests](../../../app/src/queries/__tests__/weeklyClaim.queries.spec.ts),
   [weekly-goal query tests](../../../app/src/queries/__tests__/weeklyClaimGoals.queries.spec.ts), and
-  [payroll view tests](../../../app/src/views/team/%5Bid%5D/__tests__/CashRemunerationView.spec.ts)
+  [payroll view tests](../../../app/src/views/team/%5Bid%5D/__tests__/PayrollView.spec.ts)
 - [Cash-remuneration ownership tests](../../../backend/src/utils/__tests__/cashRemunerationUtil.test.ts),
   [week-boundary tests](../../../backend/src/utils/__tests__/dayUtils.test.ts),
   [wage-resolution tests](../../../backend/src/utils/__tests__/wageResolution.test.ts), and
