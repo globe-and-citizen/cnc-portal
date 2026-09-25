@@ -64,6 +64,11 @@ describe('ExpenseAccountEIP712V2', function () {
     approvedAddress: AddressLike
   }
 
+  interface SignatureDomainOverrides {
+    chainId?: bigint
+    verifyingContract?: string
+  }
+
   function createBudgetLimit({
     amount = ethers.parseEther('1000'),
     frequencyType = 3, // Monthly
@@ -87,13 +92,14 @@ describe('ExpenseAccountEIP712V2', function () {
   async function createSignature(
     owner: SignerWithAddress,
     budgetLimit: Record<string, unknown>,
-    expenseAccount: ExpenseAccountEIP712
+    expenseAccount: ExpenseAccountEIP712,
+    domainOverrides: SignatureDomainOverrides = {}
   ) {
     const domain = {
       name: 'CNCExpenseAccount',
       version: '1',
-      chainId: (await ethers.provider.getNetwork()).chainId,
-      verifyingContract: await expenseAccount.getAddress()
+      chainId: domainOverrides.chainId ?? (await ethers.provider.getNetwork()).chainId,
+      verifyingContract: domainOverrides.verifyingContract ?? (await expenseAccount.getAddress())
     }
 
     const types = {
@@ -348,7 +354,30 @@ describe('ExpenseAccountEIP712V2', function () {
   })
 
   describe('Validation', function () {
-    it('rejects transfer with unsupported token', async function () {
+    it('[AC-US-EXP-001-05] rejects an approval signed for another contract or network', async function () {
+      const { expenseAccount, owner, approvedAddress, recipient, other } = await loadFixture(
+        deployExpenseAccountFixture
+      )
+      const budgetLimit = createBudgetLimit({ approvedAddress: approvedAddress.address })
+      const { chainId } = await ethers.provider.getNetwork()
+
+      const wrongContractSignature = await createSignature(owner, budgetLimit, expenseAccount, {
+        verifyingContract: other.address
+      })
+      const wrongNetworkSignature = await createSignature(owner, budgetLimit, expenseAccount, {
+        chainId: chainId + 1n
+      })
+
+      for (const signature of [wrongContractSignature, wrongNetworkSignature]) {
+        await expect(
+          expenseAccount
+            .connect(approvedAddress)
+            .transfer(recipient.address, ethers.parseEther('0.5'), budgetLimit, signature)
+        ).to.be.revertedWithCustomError(expenseAccount, 'ExpenseAccountEIP712__SignerNotAuthorized')
+      }
+    })
+
+    it('[AC-US-EXP-002-07] rejects transfer with unsupported token', async function () {
       const { expenseAccount, owner, approvedAddress, recipient } = await loadFixture(
         deployExpenseAccountFixture
       )
@@ -374,6 +403,48 @@ describe('ExpenseAccountEIP712V2', function () {
           .connect(approvedAddress)
           .transfer(recipient.address, ethers.parseEther('50'), budgetLimit, signature)
       ).to.be.revertedWithCustomError(expenseAccount, 'ExpenseAccountEIP712__TokenNotSupported')
+    })
+
+    it('[AC-US-EXP-003-06] preserves signed limits and expiry after reactivation', async function () {
+      const { expenseAccount, owner, approvedAddress, recipient } = await loadFixture(
+        deployExpenseAccountFixture
+      )
+      const currentTime = await time.latest()
+      const budgetLimit = createBudgetLimit({
+        amount: ethers.parseEther('1'),
+        frequencyType: 1,
+        startDate: currentTime - 60,
+        endDate: currentTime + 3600,
+        approvedAddress: approvedAddress.address
+      })
+      const signature = await createSignature(owner, budgetLimit, expenseAccount)
+      const signatureHash = ethers.keccak256(signature)
+
+      await expenseAccount
+        .connect(approvedAddress)
+        .transfer(recipient.address, ethers.parseEther('0.4'), budgetLimit, signature)
+      await expenseAccount.deactivateApproval(signatureHash)
+      await expenseAccount.activateApproval(signatureHash)
+
+      await expenseAccount
+        .connect(approvedAddress)
+        .transfer(recipient.address, ethers.parseEther('0.6'), budgetLimit, signature)
+
+      await expect(
+        expenseAccount
+          .connect(approvedAddress)
+          .transfer(recipient.address, 1n, budgetLimit, signature)
+      ).to.be.revertedWithCustomError(
+        expenseAccount,
+        'ExpenseAccountEIP712__AmountExceedsPeriodBudget'
+      )
+
+      await time.increaseTo(budgetLimit.endDate + 1)
+      await expect(
+        expenseAccount
+          .connect(approvedAddress)
+          .transfer(recipient.address, 1n, budgetLimit, signature)
+      ).to.be.revertedWithCustomError(expenseAccount, 'ExpenseAccountEIP712__ApprovalExpired')
     })
 
     it('[AC-US-EXP-002-05] rejects a transfer from a recipient outside the approval', async function () {
