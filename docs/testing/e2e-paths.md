@@ -268,11 +268,14 @@ coverage; the latest execution result and artifacts belong in Playwright and CI 
     - `US-PAYROLL-002` — pause or resume the wage.
   - Dependencies: an operational company with owner and member.
   - Main path:
-    - [ ] Create and then replace the member wage.
-    - [ ] Pause and resume it.
-    - [ ] Verify the persisted active wage and visible status after reload.
+    - [x] Create and then replace the member wage.
+    - [x] Pause and resume it.
+    - [x] Block a member without a wage and reject a claim while the wage is paused.
+    - [x] Verify the persisted active wage and visible status after reload.
   - Expected result: exactly one current wage controls the member's eligibility.
-  - Status: planned.
+  - Status: partial; the owner and member journeys run against the real frontend, backend, PostgreSQL database, and local chain. A member
+    without a wage is blocked and a paused wage is rejected by the backend; broader wage-form validation remains lower-level coverage.
+  - Evidence: [integrated Payroll tests](../../app/test/e2e/payroll/payroll.integrated.spec.ts).
 
 - `E2E-PATH-12` — Prepare a weekly claim
   - Stories validated:
@@ -282,11 +285,14 @@ coverage; the latest execution result and artifacts belong in Playwright and CI 
     - `US-PAYROLL-007` — delete a daily claim.
   - Dependencies: an active wage from `E2E-PATH-11`.
   - Main path:
-    - [ ] Save weekly goals.
-    - [ ] Create, edit, and delete eligible daily work entries.
-    - [ ] Recreate the final entry set and verify weekly totals.
+    - [x] Save weekly goals.
+    - [x] Create, edit, and delete eligible daily work entries.
+    - [x] Recreate the final entry set and verify weekly totals.
+    - [x] Preserve the valid entry while rejecting daily and weekly cap overages.
   - Expected result: the member reaches a deterministic claim-ready week.
-  - Status: planned.
+  - Status: partial; one real member identity saves goals and prepares a persisted claim through the product UI. Daily form validation and
+    the server-side weekly cap preserve the valid entry; attachments and other rejected edits remain separately covered.
+  - Evidence: [integrated Payroll tests](../../app/test/e2e/payroll/payroll.integrated.spec.ts).
 
 - `E2E-PATH-13` — Approve, reconcile, withdraw, and review payroll
   - Stories validated:
@@ -298,13 +304,19 @@ coverage; the latest execution result and artifacts belong in Playwright and CI 
   - Reused dependency: `US-PAYROLL-003` references the Accounts-owned funding journey and is not revalidated here.
   - Dependencies: a claim-ready week, current contract owner, and funded Payroll contract.
   - Main path:
-    - [ ] Sign the completed weekly claim.
-    - [ ] Disable and re-enable it without creating a second claim.
-    - [ ] Withdraw through a real chain transaction.
-    - [ ] Reconcile backend and chain state.
-    - [ ] Verify member and owner histories after reload.
+    - [x] Sign the completed weekly claim.
+    - [x] Disable and re-enable it without creating a second claim.
+    - [x] Withdraw through a real chain transaction.
+    - [x] Reconcile backend and chain state.
+    - [x] Verify member and owner histories after reload.
+    - [x] Keep signed, disabled, and withdrawn claims read-only for the member.
+    - [x] Block non-owner signing and withdrawal controls, and retain a signed claim when Payroll has insufficient USDC.
   - Expected result: one claim remains traceable from approval through payment and history.
-  - Status: planned.
+  - Status: partial; the browser funds Payroll through Bank, signs a completed-week claim, verifies the disabled and paid chain flags,
+    withdraws as the paid member, and reloads both perspectives. It also verifies the role-gated controls, frozen lifecycle states, and the
+    contract's insufficient-funds rejection. Invalid EIP-712 signatures are rejected by the backend signature-validator test rather than an
+    integrated browser journey, because a true integrated wallet produces valid signatures.
+  - Evidence: [integrated Payroll payment tests](../../app/test/e2e/payroll/payroll-payment.integrated.spec.ts).
 
 ## G6 — Expense Account Lifecycle
 

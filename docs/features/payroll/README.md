@@ -62,21 +62,20 @@ its complete journey belongs to the Accounts feature.
 
 ## Test Coverage Overview
 
-| User Story     | E2E Status      | Owning Path              |
-| -------------- | --------------- | ------------------------ |
-| US-PAYROLL-001 | 📋 Planned      | E2E-PATH-11              |
-| US-PAYROLL-002 | 📋 Planned      | E2E-PATH-11              |
-| US-PAYROLL-003 | ➖ Not required | E2E-PATH-02 owns funding |
-| US-PAYROLL-004 | 📋 Planned      | E2E-PATH-12              |
-| US-PAYROLL-005 | 📋 Planned      | E2E-PATH-12              |
-| US-PAYROLL-006 | 📋 Planned      | E2E-PATH-12              |
-| US-PAYROLL-007 | 📋 Planned      | E2E-PATH-12              |
-| US-PAYROLL-008 | 📋 Planned      | E2E-PATH-13              |
-| US-PAYROLL-009 | 📋 Planned      | E2E-PATH-13              |
-| US-PAYROLL-010 | 📋 Planned      | E2E-PATH-13              |
-| US-PAYROLL-011 | 📋 Planned      | E2E-PATH-13              |
-| US-PAYROLL-012 | 📋 Planned      | E2E-PATH-13              |
-| US-PAYROLL-013 | 📋 Planned      | Not yet assigned         |
+| User Story     | Representative AC Coverage | E2E Status      | Owning Path              |
+| -------------- | -------------------------- | --------------- | ------------------------ |
+| US-PAYROLL-001 | integrated E2E main path   | 🚧 Partial      | E2E-PATH-11              |
+| US-PAYROLL-002 | integrated E2E main path   | 🚧 Partial      | E2E-PATH-11              |
+| US-PAYROLL-003 | Accounts-owned dependency  | ➖ Not required | E2E-PATH-02 owns funding |
+| US-PAYROLL-004 | integrated E2E main path   | 🚧 Partial      | E2E-PATH-12              |
+| US-PAYROLL-005 | integrated E2E main path   | 🚧 Partial      | E2E-PATH-12              |
+| US-PAYROLL-006 | integrated E2E main path   | 🚧 Partial      | E2E-PATH-12              |
+| US-PAYROLL-007 | integrated E2E main path   | 🚧 Partial      | E2E-PATH-12              |
+| US-PAYROLL-008 | integrated E2E main path   | 🚧 Partial      | E2E-PATH-13              |
+| US-PAYROLL-009 | integrated E2E main path   | 🚧 Partial      | E2E-PATH-13              |
+| US-PAYROLL-010 | integrated E2E main path   | 🚧 Partial      | E2E-PATH-13              |
+| US-PAYROLL-011 | integrated E2E main path   | 🚧 Partial      | E2E-PATH-13              |
+| US-PAYROLL-012 | integrated E2E main path   | 🚧 Partial      | E2E-PATH-13              |
 
 Criteria tagged _(API)_ or _(contract)_ describe outcomes that cannot be confirmed from the portal alone.
 
@@ -537,18 +536,18 @@ Functional gaps map to unchecked acceptance criteria.
 
 ### Functional Gaps
 
-- The update and delete APIs allow claims from a disabled week to change even though the functional lifecycle permits changes only while the
-  week is pending.
 - The legacy enable and disable API actions can update the stored status without performing the matching on-chain action.
 - The withdrawn-compensation summary labelled for the current month aggregates every withdrawn claim returned by the API instead of applying
   a current-month boundary (`US-PAYROLL-013`).
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `006685cb46c8408101e785b258482092a1e63f70`
+**Implementation evidence reviewed against:** `ec8b46717ab3737ad4644aa693774d048f696d71`
 
 - [Cash Remuneration overview](../../../app/src/components/sections/CashRemunerationView/CashRemunerationOverview.vue),
-  [claim history](../../../app/src/components/sections/ClaimHistoryView/ClaimHistory.vue), and
+  [claim history](../../../app/src/components/sections/ClaimHistoryView/ClaimHistory.vue),
+  [claim-week navigation](../../../app/src/components/sections/ClaimHistoryView/ClaimHistoryWeekNavigator.vue),
+  [weekly-claim screen](../../../app/src/components/sections/WeeklyClaimView/WeeklyClaim.vue), and
   [weekly-claim actions](../../../app/src/components/sections/WeeklyClaimView/WeeklyClaimActionDropdown.vue)
 - [Wage standard step](../../../app/src/components/sections/DashboardView/SetMemberWageStandardStep.vue) and
   [rate-dot presentation](../../../app/src/components/ui/RateDotList.vue)
@@ -587,6 +586,8 @@ Functional gaps map to unchecked acceptance criteria.
 - [Claim API tests](../../../backend/src/controllers/__tests__/claimController.test.ts)
 - [Weekly claim API tests](../../../backend/src/controllers/__tests__/weeklyClaimController.test.ts)
 - [Cash Remuneration contract tests](../../../contract/test/CashRemunerationEIP712.spec.ts)
+- [Integrated Payroll compensation and claim E2E journeys](../../../app/test/e2e/payroll/payroll.integrated.spec.ts)
+- [Integrated Payroll payment E2E journeys](../../../app/test/e2e/payroll/payroll-payment.integrated.spec.ts)
 
 ### Test-suite ownership
 
@@ -596,7 +597,7 @@ Functional gaps map to unchecked acceptance criteria.
   [overtime-wage tests](../../../app/src/components/sections/DashboardView/__tests__/SetMemberWageOvertimeStep.spec.ts),
   [weekly-claim query tests](../../../app/src/queries/__tests__/weeklyClaim.queries.spec.ts),
   [weekly-goal query tests](../../../app/src/queries/__tests__/weeklyClaimGoals.queries.spec.ts), and
-  [payroll view tests](../../../app/src/views/team/%5Bid%5D/__tests__/CashRemunerationView.spec.ts)
+  [payroll view tests](../../../app/src/views/team/%5Bid%5D/__tests__/PayrollView.spec.ts)
 - [Cash-remuneration ownership tests](../../../backend/src/utils/__tests__/cashRemunerationUtil.test.ts),
   [week-boundary tests](../../../backend/src/utils/__tests__/dayUtils.test.ts),
   [wage-resolution tests](../../../backend/src/utils/__tests__/wageResolution.test.ts), and

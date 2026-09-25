@@ -49,7 +49,9 @@ BASE_URL=http://127.0.0.1:5173 npm run test:browser:acceptance # terminal 3
 
 `npm run setup:e2e:browser` is idempotent for an already prepared browser-acceptance node. It fails on a partially provisioned or unexpected
 chain instead of silently changing that state. The integrated profile has its own externally provisioned contracts, database, backend, and
-frontend; it does not run this browser-fixture command.
+frontend; it does not run this browser-fixture command. Its provisioning command is deliberately guarded by `E2E_INTEGRATED_SETUP=true` and
+configures only its disposable database. In particular, it disables `SUBMIT_RESTRICTION` so Payroll can create a completed-week claim for
+the real signature and withdrawal journey; it must never target a shared database.
 
 ## Layout
 
