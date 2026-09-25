@@ -1,6 +1,9 @@
 import { Request, Response } from 'express';
+import type { Address } from 'viem';
 import { prisma } from '../utils';
 import { errorResponse } from '../utils/utils';
+import publicClient from '../utils/viem.config';
+import { getTvlTokens, readBankBalances, fetchPonderTransferVolume } from '../utils/tvl';
 
 /**
  * Statistics Controller
@@ -1014,6 +1017,141 @@ export const getRecentActivity = async (req: Request, res: Response) => {
     });
   } catch (error: unknown) {
     console.error('Error fetching recent activity:', error);
+    const message = error instanceof Error ? error.message : 'Internal Server Error';
+    return errorResponse(500, message, res);
+  }
+};
+
+// Reading every team's Bank balances on-chain is the expensive part of TVL;
+// cache the assembled snapshot briefly so rapid dashboard refreshes (and the
+// per-tab refetches on the stats page) don't hammer the RPC on every request.
+const TVL_CACHE_TTL_MS = 60_000;
+let tvlCache: { expiresAt: number; payload: unknown } | null = null;
+
+/**
+ * GET /api/stats/tvl
+ * Total Value Locked across all team treasuries plus platform-wide transfer
+ * volume. TVL is read on-chain from each team's Bank contracts; transfer volume
+ * comes from ponder's indexed Bank transfer events. Both are returned as RAW
+ * on-chain amounts (strings) keyed by token — the dashboard values them in USD.
+ */
+export const getTvlStats = async (req: Request, res: Response) => {
+  /*
+  #swagger.tags = ['Statistics']
+  #swagger.description = 'Get Total Value Locked (global + per team) and platform-wide transfer volume'
+  */
+  try {
+    if (tvlCache && tvlCache.expiresAt > Date.now()) {
+      return res.status(200).json(tvlCache.payload);
+    }
+
+    const chainId = publicClient.chain?.id ?? 0;
+    const tokens = getTvlTokens(chainId);
+
+    // Active teams with their Bank (treasury) contract addresses.
+    const teams = await prisma.team.findMany({
+      where: { isArchived: false },
+      select: {
+        id: true,
+        name: true,
+        teamContracts: { where: { type: 'Bank' }, select: { address: true } },
+      },
+      orderBy: { id: 'asc' },
+    });
+
+    // Map every Bank address (lowercased) → its team, and collect the unique set.
+    const bankToTeam = new Map<string, number>();
+    const teamBanks = new Map<number, string[]>();
+    for (const team of teams) {
+      const banks = team.teamContracts.map((contract) => contract.address.toLowerCase());
+      teamBanks.set(team.id, banks);
+      banks.forEach((bank) => bankToTeam.set(bank, team.id));
+    }
+    const uniqueBanks = [...bankToTeam.keys()] as Address[];
+
+    // On-chain balances (TVL) and ponder transfer volume, in parallel.
+    const [balances, ponderVolume] = await Promise.all([
+      readBankBalances(uniqueBanks, tokens),
+      fetchPonderTransferVolume(),
+    ]);
+
+    // token address (lowercased) → token.key, for mapping ponder token volumes.
+    const tokenKeyByAddress = new Map<string, string>();
+    tokens.forEach((token) => {
+      if (token.address) tokenKeyByAddress.set(token.address.toLowerCase(), token.key);
+    });
+
+    const zeroRaw = (): Record<string, bigint> =>
+      Object.fromEntries(tokens.map((token) => [token.key, 0n]));
+
+    const globalTvl = zeroRaw();
+    const globalTransferred = zeroRaw();
+    const perTeamTvl = new Map<number, Record<string, bigint>>();
+    const perTeamTransferred = new Map<number, Record<string, bigint>>();
+    teams.forEach((team) => {
+      perTeamTvl.set(team.id, zeroRaw());
+      perTeamTransferred.set(team.id, zeroRaw());
+    });
+
+    // Aggregate on-chain balances per team + global.
+    for (const [bank, byToken] of balances) {
+      const teamId = bankToTeam.get(bank);
+      if (teamId === undefined) continue;
+      const teamTvl = perTeamTvl.get(teamId)!;
+      for (const token of tokens) {
+        const amount = byToken[token.key] ?? 0n;
+        teamTvl[token.key] += amount;
+        globalTvl[token.key] += amount;
+      }
+    }
+
+    // Aggregate ponder transfer volume per team + global. Token volumes for
+    // addresses outside the valued set are skipped (the dashboard can't price
+    // them); native always counts.
+    if (ponderVolume) {
+      for (const bank of ponderVolume.byContract) {
+        const teamId = bankToTeam.get(bank.contractAddress.toLowerCase());
+        if (teamId === undefined) continue;
+        const teamTransferred = perTeamTransferred.get(teamId)!;
+        const native = BigInt(bank.native ?? '0');
+        teamTransferred.native += native;
+        globalTransferred.native += native;
+        for (const [address, raw] of Object.entries(bank.tokens)) {
+          const key = tokenKeyByAddress.get(address.toLowerCase());
+          if (!key) continue;
+          const amount = BigInt(raw);
+          teamTransferred[key] += amount;
+          globalTransferred[key] += amount;
+        }
+      }
+    }
+
+    const toStrings = (record: Record<string, bigint>): Record<string, string> =>
+      Object.fromEntries(Object.entries(record).map(([key, value]) => [key, value.toString()]));
+
+    const payload = {
+      chainId,
+      tokens,
+      totals: {
+        tvlRaw: toStrings(globalTvl),
+        transferredRaw: toStrings(globalTransferred),
+      },
+      // false when ponder is unreachable, so the UI can show "—" instead of $0.
+      transferredAvailable: ponderVolume !== null,
+      teams: teams.map((team) => ({
+        teamId: team.id,
+        name: team.name,
+        bankAddresses: teamBanks.get(team.id) ?? [],
+        tvlRaw: toStrings(perTeamTvl.get(team.id)!),
+        transferredRaw: toStrings(perTeamTransferred.get(team.id)!),
+      })),
+      generatedAt: new Date().toISOString(),
+    };
+
+    tvlCache = { expiresAt: Date.now() + TVL_CACHE_TTL_MS, payload };
+    return res.status(200).json(payload);
+  } catch (error: unknown) {
+    console.error('Error fetching TVL stats:', error);
     const message = error instanceof Error ? error.message : 'Internal Server Error';
     return errorResponse(500, message, res);
   }
