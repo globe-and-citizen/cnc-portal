@@ -50,7 +50,7 @@ describe('getSafeTransactionState', () => {
     [{ nonce: 2 }, 'invalid'],
     [{ confirmations: [makeConfirmation(signer)] }, 'pending'],
     [{ confirmations: [makeConfirmation(signer), makeConfirmation('0xother')] }, 'ready']
-  ])('classifies the transaction state', (overrides, expectedState) => {
+  ])('[AC-US-SAFE-005-05] classifies the transaction state', (overrides, expectedState) => {
     const transaction = makeTransaction(overrides as Partial<SafeTransaction>)
 
     expect(getSafeTransactionState(transaction, { currentNonce: 3 }).state).toBe(expectedState)
@@ -155,7 +155,7 @@ describe('buildSafeTransactionQueueRows', () => {
 })
 
 describe('getSafeTransactionPermissions', () => {
-  it('explains that a connected non-signer cannot act', () => {
+  it('[AC-US-SAFE-006-04] prevents a connected non-signer from acting', () => {
     const permissions = getSafeTransactionPermissions(makeTransaction(), {
       state: 'pending',
       isSigner: false,

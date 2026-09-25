@@ -91,7 +91,7 @@ describe('Safe infra deployment (SafeProxyFactory + manual setup() initializer)'
     return event.args.proxy as string
   }
 
-  it('deploys a 1-of-1 Safe whose owner/threshold match the manually encoded setup() call', async () => {
+  it('[AC-US-SAFE-001-05] deploys a Safe with its initial owner and threshold of one', async () => {
     const { owner1, singleton, proxyFactory, fallbackHandler } = await deployInfraFixture()
     const singletonAddress = await singleton.getAddress()
     const initializer = encodeSetup(

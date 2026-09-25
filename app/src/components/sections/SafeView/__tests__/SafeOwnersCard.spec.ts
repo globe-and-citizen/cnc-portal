@@ -185,7 +185,7 @@ describe('[US-SAFE-004] SafeOwnersCard', () => {
   })
 
   describe('Owners Display', () => {
-    it('displays every Safe owner', async () => {
+    it('[AC-US-SAFE-002-01] displays every Safe owner', async () => {
       mockSafeInfoData.value = MOCK_DATA.safeInfo
       wrapper = createWrapper()
       await nextTick()
@@ -217,7 +217,12 @@ describe('[US-SAFE-004] SafeOwnersCard', () => {
   })
 
   describe('User Permissions', () => {
-    it('disables add signer button when user is not an owner', async () => {
+    /**
+     * Covers:
+     * - [AC-US-SAFE-004-05]
+     * - [AC-US-SAFE-004-08]
+     */
+    it('disables signer management when the connected wallet is not a Safe owner', async () => {
       vi.mocked(useUserDataStore).mockReturnValue({
         address: '0x9999999999999999999999999999999999999999' as Address
       } as ReturnType<typeof useUserDataStore>)

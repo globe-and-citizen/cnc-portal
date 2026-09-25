@@ -98,7 +98,7 @@ describe('[US-SAFE-003] DepositSafeForm.vue', () => {
   })
 
   describe('Native Token Deposit', () => {
-    it('shows a success toast and closes the modal after native deposit confirmation', async () => {
+    it('[AC-US-SAFE-003-01] confirms a native-token deposit into the Safe', async () => {
       mockTransactionFunctions.mockMutateAsync.mockResolvedValueOnce({
         hash: '0xnativetx',
         receipt: { status: 'success' }
@@ -139,7 +139,7 @@ describe('[US-SAFE-003] DepositSafeForm.vue', () => {
   })
 
   describe('ERC20 Token Deposit - With Sufficient Allowance', () => {
-    it('shows a success toast and closes the modal after an ERC20 deposit', async () => {
+    it('[AC-US-SAFE-003-01] confirms an ERC-20 deposit into the Safe', async () => {
       mockERC20Reads.allowance.data.value = 1000000n
       mockERC20Writes.transfer.mutateAsync.mockResolvedValueOnce({ hash: '0xtransfertx' })
 
