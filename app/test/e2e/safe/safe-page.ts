@@ -16,6 +16,7 @@ import {
   dialogAmount,
   openAccountFromSidebar,
   rejectNextWalletRequest,
+  selectToken,
   signInAndOpenFirstTeam,
   stubBackend,
   useWallet,
@@ -127,6 +128,7 @@ export async function exercisePendingSafeTransfer(page: Page, fixture: SafeE2EFi
   const transfer = page.getByRole('dialog', { name: 'Create a Safe transfer' })
   await transfer.getByPlaceholder('Name').fill('E2E Member')
   await transfer.locator('[data-test="user-row"]').filter({ hasText: 'E2E Member' }).click()
+  await selectToken(page, transfer, 'GO')
   await dialogAmount(transfer).fill('0.25')
   await transfer.locator('[data-test="transferButton"]').click()
   await expect(page.getByText('Transfer proposed', { exact: true })).toBeVisible()

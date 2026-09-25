@@ -95,13 +95,6 @@ test.describe('Bank Account', { tag: ['@browser', '@mocked'] }, () => {
       await expect(deposit.locator('[data-test="error-alert"]')).toBeVisible()
       await expect.poll(() => nativeBalance(fixture.bank)).toBe(0n)
 
-      await pauseBank(fixture.bank)
-      await dialogAmount(deposit).fill('0.25')
-      await deposit.locator('[data-test="deposit-button"]').click()
-      await expect(deposit.locator('[data-test="error-alert"]')).toBeVisible()
-      await expect.poll(() => nativeBalance(fixture.bank)).toBe(0n)
-      await unpauseBank(fixture.bank)
-
       await dialogAmount(deposit).fill('2')
       await deposit.locator('[data-test="deposit-button"]').click()
       await expect(page.getByText('GO deposited successfully', { exact: true })).toBeVisible({

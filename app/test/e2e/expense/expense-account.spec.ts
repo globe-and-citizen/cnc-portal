@@ -113,7 +113,9 @@ test.describe('Expense Account', { tag: ['@browser', '@mocked'] }, () => {
       await expect(history.locator('tbody').getByText('Deposit', { exact: true })).toHaveCount(1)
       await history.locator('[data-test="expense-transaction-history-date-select"] button').click()
       await page.locator('[data-test="date-picker-month-previous"]').click()
-      await expect(history.getByText('No data', { exact: true })).toBeVisible()
+      await expect(history.locator('[data-test="expense-transactions-empty"]')).toContainText(
+        'No transactions for the selected filters.'
+      )
     }
   )
 
