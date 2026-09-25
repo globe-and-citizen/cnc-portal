@@ -71,16 +71,16 @@ Coverage targets compare each criterion's required evidence with direct `AC-US-*
 latest pass/fail result, which belongs to CI or the generated local report. Gaps identify criteria whose required evidence is missing or
 insufficient; the detailed evidence distribution remains available in the generated report instead of being repeated here.
 
-| User Story       | Main Journey  | Coverage Target | Gaps                                                   |
-| ---------------- | ------------- | --------------- | ------------------------------------------------------ |
-| US-COMPANIES-001 | ✅ Integrated | ✅ 8/8          | —                                                      |
-| US-COMPANIES-002 | ✅ Integrated | ⚠️ 6/8          | 2 — `AC-US-COMPANIES-002-06`, `AC-US-COMPANIES-002-08` |
-| US-COMPANIES-003 | ✅ Integrated | ✅ 12/12        | —                                                      |
-| US-COMPANIES-004 | ✅ Integrated | ✅ 6/6          | —                                                      |
-| US-COMPANIES-005 | ✅ Integrated | ✅ 10/10        | —                                                      |
-| US-COMPANIES-006 | ✅ Integrated | ✅ 7/7          | —                                                      |
-| US-COMPANIES-007 | ✅ Integrated | ✅ 6/6          | —                                                      |
-| US-COMPANIES-008 | ✅ Integrated | ✅ 6/6          | —                                                      |
+| User Story       | Main Journey  | Coverage Target | Gaps |
+| ---------------- | ------------- | --------------- | ---- |
+| US-COMPANIES-001 | ✅ Integrated | ✅ 8/8          | —    |
+| US-COMPANIES-002 | ✅ Integrated | ✅ 8/8          | —    |
+| US-COMPANIES-003 | ✅ Integrated | ✅ 12/12        | —    |
+| US-COMPANIES-004 | ✅ Integrated | ✅ 6/6          | —    |
+| US-COMPANIES-005 | ✅ Integrated | ✅ 10/10        | —    |
+| US-COMPANIES-006 | ✅ Integrated | ✅ 7/7          | —    |
+| US-COMPANIES-007 | ✅ Integrated | ✅ 6/6          | —    |
+| US-COMPANIES-008 | ✅ Integrated | ✅ 6/6          | —    |
 
 ## Proof Strategy Reference
 
@@ -164,16 +164,16 @@ Each acceptance criterion references one reusable strategy instead of repeating 
 
 ### Test Coverage
 
-| Acceptance Criterion     | Proof Strategy           | Current Evidence | Status     |
-| ------------------------ | ------------------------ | ---------------- | ---------- |
-| `AC-US-COMPANIES-002-01` | `PS-FRONTEND-INTEGRATED` | Integrated E2E   | ✅ Met     |
-| `AC-US-COMPANIES-002-02` | `PS-FULL-STACK`          | Integrated E2E   | ✅ Met     |
-| `AC-US-COMPANIES-002-03` | `PS-FULL-STACK`          | Integrated E2E   | ✅ Met     |
-| `AC-US-COMPANIES-002-04` | `PS-BROWSER`             | Mocked browser   | ✅ Met     |
-| `AC-US-COMPANIES-002-05` | `PS-BACKEND`             | Backend          | ✅ Met     |
-| `AC-US-COMPANIES-002-06` | `PS-BROWSER`             | None linked      | ❌ Missing |
-| `AC-US-COMPANIES-002-07` | `PS-BROWSER`             | Mocked browser   | ✅ Met     |
-| `AC-US-COMPANIES-002-08` | `PS-BROWSER`             | None linked      | ❌ Missing |
+| Acceptance Criterion     | Proof Strategy           | Current Evidence | Status |
+| ------------------------ | ------------------------ | ---------------- | ------ |
+| `AC-US-COMPANIES-002-01` | `PS-FRONTEND-INTEGRATED` | Integrated E2E   | ✅ Met |
+| `AC-US-COMPANIES-002-02` | `PS-FULL-STACK`          | Integrated E2E   | ✅ Met |
+| `AC-US-COMPANIES-002-03` | `PS-FULL-STACK`          | Integrated E2E   | ✅ Met |
+| `AC-US-COMPANIES-002-04` | `PS-BROWSER`             | Mocked browser   | ✅ Met |
+| `AC-US-COMPANIES-002-05` | `PS-BACKEND`             | Backend          | ✅ Met |
+| `AC-US-COMPANIES-002-06` | `PS-BROWSER`             | Mocked browser   | ✅ Met |
+| `AC-US-COMPANIES-002-07` | `PS-BROWSER`             | Mocked browser   | ✅ Met |
+| `AC-US-COMPANIES-002-08` | `PS-BROWSER`             | Mocked browser   | ✅ Met |
 
 **Dependencies:** US-COMPANIES-001, a connected wallet, and the active network
 
@@ -430,7 +430,7 @@ This validation does not attest to a live on-chain Officer deployment.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `633d2ce1f8dec6d0451ef97d82e701599e9f8b7e`
+**Implementation evidence reviewed against:** `cb18df0b58ba03a6ba84bb8d40877bfd0a785157`
 
 - [Member deletion](../../../app/src/components/sections/DashboardView/DeleteMemberModal.vue),
   [team state](../../../app/src/stores/teamStore.ts), and
@@ -449,6 +449,7 @@ This validation does not attest to a live on-chain Officer deployment.
 - [Company slug generation](../../../backend/src/utils/slug.util.ts) and
   [slug-generation tests](../../../backend/src/utils/__tests__/slug.util.test.ts)
 - [Initial Officer setup](../../../app/src/components/sections/TeamView/forms/InvestorContractStep.vue),
+  [deferred Officer setup](../../../app/src/components/sections/TeamView/forms/ContinueAddTeamForm.vue),
   [Officer deployment composable](../../../app/src/composables/contracts/useOfficerDeployment.ts), and
   [initial Officer setup tests](../../../app/src/components/sections/TeamView/forms/__tests__/InvestorContractStep.spec.ts)
 - [Company header and its lifecycle actions](../../../app/src/components/sections/DashboardView/TeamMetaSection.vue),
