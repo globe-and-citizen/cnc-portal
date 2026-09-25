@@ -77,22 +77,22 @@ insufficient; the detailed evidence distribution remains available in the genera
 The main-journey column distinguishes a complete integrated path, a partial integrated path, a planned integrated path, and a deliberately
 mocked browser path for the external Safe Transaction Service boundary.
 
-| User Story  | Main Journey  | Coverage Target | Gaps                                                                                                                                                  |
-| ----------- | ------------- | --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| US-BANK-001 | ✅ Integrated | ⚠️ 8/10         | 2 — `AC-US-BANK-001-08`, `AC-US-BANK-001-10`                                                                                                          |
-| US-BANK-002 | 📋 Planned    | ⚠️ 6/13         | 7 — `AC-US-BANK-002-01`, `AC-US-BANK-002-02`, `AC-US-BANK-002-03`, `AC-US-BANK-002-08`, `AC-US-BANK-002-09`, `AC-US-BANK-002-10`, `AC-US-BANK-002-11` |
-| US-BANK-003 | 🚧 Partial    | ⚠️ 6/8          | 2 — `AC-US-BANK-003-01`, `AC-US-BANK-003-08`                                                                                                          |
-| US-BANK-004 | 📋 Planned    | ⚠️ 6/8          | 2 — `AC-US-BANK-004-01`, `AC-US-BANK-004-02`                                                                                                          |
-| US-EXP-001  | ✅ Integrated | ⚠️ 12/13        | 1 — `AC-US-EXP-001-10`                                                                                                                                |
-| US-EXP-002  | 🚧 Partial    | ⚠️ 11/12        | 1 — `AC-US-EXP-002-09`                                                                                                                                |
-| US-EXP-003  | ✅ Integrated | ⚠️ 5/9          | 4 — `AC-US-EXP-003-05`, `AC-US-EXP-003-07`, `AC-US-EXP-003-08`, `AC-US-EXP-003-09`                                                                    |
-| US-EXP-004  | 🚧 Partial    | ⚠️ 10/12        | 2 — `AC-US-EXP-004-01`, `AC-US-EXP-004-05`                                                                                                            |
-| US-SAFE-001 | 🚧 Partial    | ⚠️ 8/11         | 3 — `AC-US-SAFE-001-02`, `AC-US-SAFE-001-06`, `AC-US-SAFE-001-11`                                                                                     |
-| US-SAFE-002 | 📋 Planned    | ⚠️ 1/8          | 7 — `AC-US-SAFE-002-01`, `AC-US-SAFE-002-02`, `AC-US-SAFE-002-03`, `AC-US-SAFE-002-05`, `AC-US-SAFE-002-06`, `AC-US-SAFE-002-07`, `AC-US-SAFE-002-08` |
-| US-SAFE-003 | 📋 Planned    | ⚠️ 3/9          | 6 — `AC-US-SAFE-003-01`, `AC-US-SAFE-003-02`, `AC-US-SAFE-003-03`, `AC-US-SAFE-003-06`, `AC-US-SAFE-003-07`, `AC-US-SAFE-003-08`                      |
-| US-SAFE-004 | 📋 Planned    | ⚠️ 3/9          | 6 — `AC-US-SAFE-004-01`, `AC-US-SAFE-004-02`, `AC-US-SAFE-004-03`, `AC-US-SAFE-004-04`, `AC-US-SAFE-004-07`, `AC-US-SAFE-004-09`                      |
-| US-SAFE-005 | 🧪 Mocked     | ✅ 9/9          | —                                                                                                                                                     |
-| US-SAFE-006 | 🧪 Mocked     | ⚠️ 7/10         | 3 — `AC-US-SAFE-006-07`, `AC-US-SAFE-006-09`, `AC-US-SAFE-006-10`                                                                                     |
+| User Story  | Main Journey  | Coverage Target | Gaps                                                                                                                             |
+| ----------- | ------------- | --------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| US-BANK-001 | ✅ Integrated | ⚠️ 8/10         | 2 — `AC-US-BANK-001-08`, `AC-US-BANK-001-10`                                                                                     |
+| US-BANK-002 | 📋 Planned    | ⚠️ 7/13         | 6 — `AC-US-BANK-002-01`, `AC-US-BANK-002-02`, `AC-US-BANK-002-03`, `AC-US-BANK-002-09`, `AC-US-BANK-002-10`, `AC-US-BANK-002-11` |
+| US-BANK-003 | 🚧 Partial    | ⚠️ 6/8          | 2 — `AC-US-BANK-003-01`, `AC-US-BANK-003-08`                                                                                     |
+| US-BANK-004 | 📋 Planned    | ⚠️ 6/8          | 2 — `AC-US-BANK-004-01`, `AC-US-BANK-004-02`                                                                                     |
+| US-EXP-001  | ✅ Integrated | ⚠️ 12/13        | 1 — `AC-US-EXP-001-10`                                                                                                           |
+| US-EXP-002  | 🚧 Partial    | ⚠️ 11/12        | 1 — `AC-US-EXP-002-09`                                                                                                           |
+| US-EXP-003  | ✅ Integrated | ⚠️ 6/9          | 3 — `AC-US-EXP-003-05`, `AC-US-EXP-003-07`, `AC-US-EXP-003-08`                                                                   |
+| US-EXP-004  | 🚧 Partial    | ⚠️ 10/12        | 2 — `AC-US-EXP-004-01`, `AC-US-EXP-004-05`                                                                                       |
+| US-SAFE-001 | 🚧 Partial    | ⚠️ 8/11         | 3 — `AC-US-SAFE-001-02`, `AC-US-SAFE-001-06`, `AC-US-SAFE-001-11`                                                                |
+| US-SAFE-002 | 📋 Planned    | ⚠️ 2/8          | 6 — `AC-US-SAFE-002-01`, `AC-US-SAFE-002-02`, `AC-US-SAFE-002-03`, `AC-US-SAFE-002-06`, `AC-US-SAFE-002-07`, `AC-US-SAFE-002-08` |
+| US-SAFE-003 | 📋 Planned    | ⚠️ 3/9          | 6 — `AC-US-SAFE-003-01`, `AC-US-SAFE-003-02`, `AC-US-SAFE-003-03`, `AC-US-SAFE-003-06`, `AC-US-SAFE-003-07`, `AC-US-SAFE-003-08` |
+| US-SAFE-004 | 📋 Planned    | ⚠️ 3/9          | 6 — `AC-US-SAFE-004-01`, `AC-US-SAFE-004-02`, `AC-US-SAFE-004-03`, `AC-US-SAFE-004-04`, `AC-US-SAFE-004-07`, `AC-US-SAFE-004-09` |
+| US-SAFE-005 | 🧪 Mocked     | ✅ 9/9          | —                                                                                                                                |
+| US-SAFE-006 | 🧪 Mocked     | ⚠️ 8/10         | 2 — `AC-US-SAFE-006-09`, `AC-US-SAFE-006-10`                                                                                     |
 
 ## Proof Strategy Reference
 
@@ -203,7 +203,7 @@ A receipt from another known company pocket is an internal transfer instead.
 | `AC-US-BANK-002-05`  | `PS-BROWSER`           | Mocked browser + Frontend | ✅ Met          |
 | `AC-US-BANK-002-06`  | `PS-FRONTEND-CONTRACT` | Frontend + Contract       | ✅ Met          |
 | `AC-US-BANK-002-07`  | `PS-CONTRACT`          | Contract                  | ✅ Met          |
-| `AC-US-BANK-002-08`  | `PS-FRONTEND`          | None linked               | ❌ Missing      |
+| `AC-US-BANK-002-08`  | `PS-FRONTEND`          | Frontend                  | ✅ Met          |
 | `AC-US-BANK-002-09`  | `PS-CHAIN-CONTRACT`    | Mocked browser + Contract | ⚠️ Insufficient |
 | `AC-US-BANK-002-10`  | `PS-CHAIN-CONTRACT`    | Mocked browser + Contract | ⚠️ Insufficient |
 | `AC-US-BANK-002-11`  | `PS-BROWSER`           | None linked               | ❌ Missing      |
@@ -456,7 +456,7 @@ a transfer to another known company pocket is
 | `AC-US-EXP-003-06`   | `PS-CONTRACT`         | Contract                             | ✅ Met     |
 | `AC-US-EXP-003-07`   | `PS-BROWSER`          | None linked                          | ❌ Missing |
 | `AC-US-EXP-003-08`   | `PS-BROWSER`          | None linked                          | ❌ Missing |
-| `AC-US-EXP-003-09`   | `PS-FRONTEND`         | None linked                          | ❌ Missing |
+| `AC-US-EXP-003-09`   | `PS-FRONTEND`         | Frontend                             | ✅ Met     |
 
 **Accounting:** Changing an approval's active state moves no money and creates no journal entry.
 
@@ -591,7 +591,7 @@ a transfer to another known company pocket is
 | `AC-US-SAFE-002-02`  | `PS-CHAIN`     | Mocked browser + Frontend | ⚠️ Insufficient |
 | `AC-US-SAFE-002-03`  | `PS-BROWSER`   | None linked               | ❌ Missing      |
 | `AC-US-SAFE-002-04`  | `PS-BROWSER`   | Mocked browser            | ✅ Met          |
-| `AC-US-SAFE-002-05`  | `PS-FRONTEND`  | None linked               | ❌ Missing      |
+| `AC-US-SAFE-002-05`  | `PS-FRONTEND`  | Frontend                  | ✅ Met          |
 | `AC-US-SAFE-002-06`  | `PS-BROWSER`   | None linked               | ❌ Missing      |
 | `AC-US-SAFE-002-07`  | `PS-BROWSER`   | None linked               | ❌ Missing      |
 | `AC-US-SAFE-002-08`  | `PS-BROWSER`   | None linked               | ❌ Missing      |
@@ -767,7 +767,7 @@ a transfer to another known company pocket is
 | `AC-US-SAFE-006-04`  | `PS-FRONTEND`  | Frontend         | ✅ Met     |
 | `AC-US-SAFE-006-05`  | `PS-FRONTEND`  | Frontend         | ✅ Met     |
 | `AC-US-SAFE-006-06`  | `PS-BROWSER`   | Mocked browser   | ✅ Met     |
-| `AC-US-SAFE-006-07`  | `PS-FRONTEND`  | None linked      | ❌ Missing |
+| `AC-US-SAFE-006-07`  | `PS-FRONTEND`  | Frontend         | ✅ Met     |
 | `AC-US-SAFE-006-08`  | `PS-FRONTEND`  | Frontend         | ✅ Met     |
 | `AC-US-SAFE-006-09`  | `PS-BROWSER`   | None linked      | ❌ Missing |
 | `AC-US-SAFE-006-10`  | `PS-BROWSER`   | None linked      | ❌ Missing |
