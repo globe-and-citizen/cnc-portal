@@ -118,7 +118,7 @@ test.describe(
         await expect(transactionDetail.getByText('Tx hash', { exact: true })).toBeVisible()
         await expect(transactionDetail.getByText('Timestamp', { exact: true })).toBeVisible()
         await expect(transactionDetail.getByText('Amount', { exact: true })).toBeVisible()
-        await transactionDetail.getByRole('button', { name: 'Close', exact: true }).click()
+        await transactionDetail.getByRole('button', { name: 'Close', exact: true }).last().click()
 
         await openAccountFromSidebar(page, `/teams/${company.teamId}/accounts/expense-account`)
         const expense = await addressFrom(page.locator('[data-test="expense-account-address"]'))
