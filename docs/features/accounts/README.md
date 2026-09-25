@@ -80,9 +80,9 @@ mocked browser path for the external Safe Transaction Service boundary.
 | User Story  | Main Journey  | Coverage Target | Gaps                                                                                                                             |
 | ----------- | ------------- | --------------- | -------------------------------------------------------------------------------------------------------------------------------- |
 | US-BANK-001 | ✅ Integrated | ⚠️ 8/10         | 2 — `AC-US-BANK-001-08`, `AC-US-BANK-001-10`                                                                                     |
-| US-BANK-002 | 📋 Planned    | ⚠️ 7/13         | 6 — `AC-US-BANK-002-01`, `AC-US-BANK-002-02`, `AC-US-BANK-002-03`, `AC-US-BANK-002-09`, `AC-US-BANK-002-10`, `AC-US-BANK-002-11` |
+| US-BANK-002 | ✅ Integrated | ⚠️ 11/13        | 2 — `AC-US-BANK-002-02`, `AC-US-BANK-002-11`                                                                                     |
 | US-BANK-003 | 🚧 Partial    | ⚠️ 6/8          | 2 — `AC-US-BANK-003-01`, `AC-US-BANK-003-08`                                                                                     |
-| US-BANK-004 | 📋 Planned    | ⚠️ 6/8          | 2 — `AC-US-BANK-004-01`, `AC-US-BANK-004-02`                                                                                     |
+| US-BANK-004 | 🚧 Partial    | ⚠️ 7/8          | 1 — `AC-US-BANK-004-02`                                                                                                          |
 | US-EXP-001  | ✅ Integrated | ⚠️ 12/13        | 1 — `AC-US-EXP-001-10`                                                                                                           |
 | US-EXP-002  | 🚧 Partial    | ⚠️ 11/12        | 1 — `AC-US-EXP-002-09`                                                                                                           |
 | US-EXP-003  | ✅ Integrated | ⚠️ 6/9          | 3 — `AC-US-EXP-003-05`, `AC-US-EXP-003-07`, `AC-US-EXP-003-08`                                                                   |
@@ -194,21 +194,21 @@ A receipt from another known company pocket is an internal transfer instead.
 
 ### Test Coverage
 
-| Acceptance Criterion | Proof Strategy         | Current Evidence          | Status          |
-| -------------------- | ---------------------- | ------------------------- | --------------- |
-| `AC-US-BANK-002-01`  | `PS-CHAIN`             | Mocked browser + Frontend | ⚠️ Insufficient |
-| `AC-US-BANK-002-02`  | `PS-CHAIN`             | Mocked browser + Frontend | ⚠️ Insufficient |
-| `AC-US-BANK-002-03`  | `PS-CHAIN`             | Mocked browser + Contract | ⚠️ Insufficient |
-| `AC-US-BANK-002-04`  | `PS-CONTRACT`          | Contract                  | ✅ Met          |
-| `AC-US-BANK-002-05`  | `PS-BROWSER`           | Mocked browser + Frontend | ✅ Met          |
-| `AC-US-BANK-002-06`  | `PS-FRONTEND-CONTRACT` | Frontend + Contract       | ✅ Met          |
-| `AC-US-BANK-002-07`  | `PS-CONTRACT`          | Contract                  | ✅ Met          |
-| `AC-US-BANK-002-08`  | `PS-FRONTEND`          | Frontend                  | ✅ Met          |
-| `AC-US-BANK-002-09`  | `PS-CHAIN-CONTRACT`    | Mocked browser + Contract | ⚠️ Insufficient |
-| `AC-US-BANK-002-10`  | `PS-CHAIN-CONTRACT`    | Mocked browser + Contract | ⚠️ Insufficient |
-| `AC-US-BANK-002-11`  | `PS-BROWSER`           | None linked               | ❌ Missing      |
-| `AC-US-BANK-002-12`  | `PS-CONTRACT`          | Mocked browser + Contract | ✅ Met          |
-| `AC-US-BANK-002-13`  | `PS-BROWSER`           | Mocked browser            | ✅ Met          |
+| Acceptance Criterion | Proof Strategy         | Current Evidence                           | Status          |
+| -------------------- | ---------------------- | ------------------------------------------ | --------------- |
+| `AC-US-BANK-002-01`  | `PS-CHAIN`             | Integrated E2E + Mocked browser + Frontend | ✅ Met          |
+| `AC-US-BANK-002-02`  | `PS-CHAIN`             | Mocked browser + Frontend                  | ⚠️ Insufficient |
+| `AC-US-BANK-002-03`  | `PS-CHAIN`             | Integrated E2E + Mocked browser + Contract | ✅ Met          |
+| `AC-US-BANK-002-04`  | `PS-CONTRACT`          | Contract                                   | ✅ Met          |
+| `AC-US-BANK-002-05`  | `PS-BROWSER`           | Mocked browser + Frontend                  | ✅ Met          |
+| `AC-US-BANK-002-06`  | `PS-FRONTEND-CONTRACT` | Frontend + Contract                        | ✅ Met          |
+| `AC-US-BANK-002-07`  | `PS-CONTRACT`          | Contract                                   | ✅ Met          |
+| `AC-US-BANK-002-08`  | `PS-FRONTEND`          | Frontend                                   | ✅ Met          |
+| `AC-US-BANK-002-09`  | `PS-CHAIN-CONTRACT`    | Integrated E2E + Mocked browser + Contract | ✅ Met          |
+| `AC-US-BANK-002-10`  | `PS-CHAIN-CONTRACT`    | Integrated E2E + Mocked browser + Contract | ✅ Met          |
+| `AC-US-BANK-002-11`  | `PS-BROWSER`           | None linked                                | ❌ Missing      |
+| `AC-US-BANK-002-12`  | `PS-CONTRACT`          | Mocked browser + Contract                  | ✅ Met          |
+| `AC-US-BANK-002-13`  | `PS-BROWSER`           | Mocked browser                             | ✅ Met          |
 
 **Accounting:** The destination determines the rule: company-pocket funding uses
 [`UC-BANK-03`](../accounting/journal-entry-catalogue.md#uc-bank-03--bank-funds-a-company-pocket), an external payment uses
@@ -297,16 +297,16 @@ through [`FEE`](../accounting/journal-entry-catalogue.md#fee--transaction-fee-co
 
 ### Test Coverage
 
-| Acceptance Criterion | Proof Strategy        | Current Evidence          | Status          |
-| -------------------- | --------------------- | ------------------------- | --------------- |
-| `AC-US-BANK-004-01`  | `PS-CHAIN`            | Mocked browser + Frontend | ⚠️ Insufficient |
-| `AC-US-BANK-004-02`  | `PS-CHAIN`            | Frontend                  | ⚠️ Insufficient |
-| `AC-US-BANK-004-03`  | `PS-BROWSER`          | Mocked browser + Frontend | ✅ Met          |
-| `AC-US-BANK-004-04`  | `PS-FRONTEND`         | Frontend                  | ✅ Met          |
-| `AC-US-BANK-004-05`  | `PS-FRONTEND`         | Frontend                  | ✅ Met          |
-| `AC-US-BANK-004-06`  | `PS-BROWSER-FRONTEND` | Mocked browser + Frontend | ✅ Met          |
-| `AC-US-BANK-004-07`  | `PS-BROWSER-FRONTEND` | Mocked browser + Frontend | ✅ Met          |
-| `AC-US-BANK-004-08`  | `PS-BROWSER-FRONTEND` | Mocked browser + Frontend | ✅ Met          |
+| Acceptance Criterion | Proof Strategy        | Current Evidence                           | Status          |
+| -------------------- | --------------------- | ------------------------------------------ | --------------- |
+| `AC-US-BANK-004-01`  | `PS-CHAIN`            | Integrated E2E + Mocked browser + Frontend | ✅ Met          |
+| `AC-US-BANK-004-02`  | `PS-CHAIN`            | Frontend                                   | ⚠️ Insufficient |
+| `AC-US-BANK-004-03`  | `PS-BROWSER`          | Mocked browser + Frontend                  | ✅ Met          |
+| `AC-US-BANK-004-04`  | `PS-FRONTEND`         | Frontend                                   | ✅ Met          |
+| `AC-US-BANK-004-05`  | `PS-FRONTEND`         | Frontend                                   | ✅ Met          |
+| `AC-US-BANK-004-06`  | `PS-BROWSER-FRONTEND` | Mocked browser + Frontend                  | ✅ Met          |
+| `AC-US-BANK-004-07`  | `PS-BROWSER-FRONTEND` | Mocked browser + Frontend                  | ✅ Met          |
+| `AC-US-BANK-004-08`  | `PS-BROWSER-FRONTEND` | Mocked browser + Frontend                  | ✅ Met          |
 
 **Accounting:** Source-account sweeps are [`INTERNAL`](../accounting/journal-entry-catalogue.md#internal--other-company-pocket-transfer).
 The final wallet payment is [`CASH-OUT`](../accounting/journal-entry-catalogue.md#cash-out--external-bank-or-safe-payment) with any matched

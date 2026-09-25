@@ -4,8 +4,16 @@ import type { Locator, Page } from '@playwright/test'
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { expect, test } from './fixtures'
-import { E2E_MEMBER, E2E_MEMBER_PRIVATE_KEY, nativeBalance, tokenBalance } from './e2e-chain'
+import {
+  E2E_MEMBER,
+  E2E_MEMBER_PRIVATE_KEY,
+  E2E_OWNER,
+  nativeBalance,
+  tokenBalance
+} from './e2e-chain'
 import { dialogAmount, openAccountFromSidebar, selectToken, useWallet } from './e2e-page'
+import { grossForNet } from './bank/bank-chain'
+import { completeCashOut, transferBankToContract } from './bank/bank-page'
 import {
   addRealCompanyMember,
   createOperationalCompany,
@@ -24,6 +32,8 @@ const deploymentManifest = JSON.parse(
   )
 ) as Record<string, string>
 const usdc = deploymentManifest['MockTokens#USDC'] as Address
+const feeCollector = deploymentManifest['FeeCollectorModule#FeeCollector'] as Address
+const bankFeeBps = 50n
 
 const addressFrom = async (selector: Locator) => {
   const text = await selector.textContent()
@@ -44,8 +54,10 @@ async function depositUsdc(page: Page, amount: string) {
 }
 
 test.describe(
-  '[US-SAFE-001/US-BANK-001/US-BANK-003] Integrated treasury readiness',
-  { tag: ['@US-SAFE-001', '@US-BANK-001', '@US-BANK-003', '@integrated'] },
+  '[US-SAFE-001/US-BANK-001/002/003] Integrated treasury readiness',
+  {
+    tag: ['@US-SAFE-001', '@US-BANK-001', '@US-BANK-002', '@US-BANK-003', '@integrated']
+  },
   () => {
     test.setTimeout(240_000)
 
@@ -57,6 +69,9 @@ test.describe(
      * - [AC-US-BANK-001-01]
      * - [AC-US-BANK-001-02]
      * - [AC-US-BANK-001-03]
+     * - [AC-US-BANK-002-01]
+     * - [AC-US-BANK-002-03]
+     * - [AC-US-BANK-002-09]
      * - [AC-US-BANK-003-02]
      */
     test('deploys the company Safe and funds the Bank through the product UI', async ({ page }) => {
@@ -103,6 +118,20 @@ test.describe(
         await expect(transactionDetail.getByText('Timestamp', { exact: true })).toBeVisible()
         await expect(transactionDetail.getByText('Amount', { exact: true })).toBeVisible()
         await transactionDetail.getByRole('button', { name: 'Close', exact: true }).click()
+
+        await openAccountFromSidebar(page, `/teams/${company.teamId}/accounts/expense-account`)
+        const expense = await addressFrom(page.locator('[data-test="expense-account-address"]'))
+        const expenseBefore = await nativeBalance(expense)
+        await openAccountFromSidebar(page, `/teams/${company.teamId}/accounts/bank-account`)
+        const collectorBefore = await nativeBalance(feeCollector)
+        const requestedNet = parseEther('0.25')
+        const transferGross = grossForNet(requestedNet, bankFeeBps)
+        await transferBankToContract(page, 'ExpenseAccountEIP712', '0.25')
+        await expect.poll(() => nativeBalance(expense)).toBe(expenseBefore + requestedNet)
+        await expect.poll(() => nativeBalance(bank)).toBe(parseEther('1') - transferGross)
+        await expect
+          .poll(() => nativeBalance(feeCollector))
+          .toBe(collectorBefore + transferGross - requestedNet)
       } finally {
         if (!page.isClosed()) {
           await deleteCompanyThroughUi(page, company.teamId, company.team.name)
@@ -113,9 +142,17 @@ test.describe(
 )
 
 test.describe(
-  '[US-EXP-001/002/003/004] Integrated expense allowance',
+  '[US-BANK-002/004/US-EXP-001/002/003/004] Integrated expense allowance',
   {
-    tag: ['@US-EXP-001', '@US-EXP-002', '@US-EXP-003', '@US-EXP-004', '@integrated']
+    tag: [
+      '@US-BANK-002',
+      '@US-BANK-004',
+      '@US-EXP-001',
+      '@US-EXP-002',
+      '@US-EXP-003',
+      '@US-EXP-004',
+      '@integrated'
+    ]
   },
   () => {
     test.setTimeout(300_000)
@@ -132,6 +169,8 @@ test.describe(
      * - [AC-US-EXP-003-03]
      * - [AC-US-EXP-004-02]
      * - [AC-US-EXP-004-04]
+     * - [AC-US-BANK-002-10]
+     * - [AC-US-BANK-004-01]
      */
     test('grants, spends and controls one persisted allowance', async ({ browser, page }) => {
       const memberContext = await browser.newContext()
@@ -146,25 +185,21 @@ test.describe(
         await page.locator('[data-test="skip-safe-setup-button"]').click()
         await addRealCompanyMember(page, company.teamId, E2E_MEMBER)
         await openAccountFromSidebar(page, `/teams/${company.teamId}/accounts/bank-account`)
+        const bank = await addressFrom(page.locator('[data-test="bank-contract-address"]'))
         await depositUsdc(page, '10')
 
-        await page.locator('[data-test="transfer-button"]').click()
-        const bankTransfer = page.getByRole('dialog', { name: 'Transfer from Bank Contract' })
-        await bankTransfer.getByPlaceholder('Name').fill('ExpenseAccountEIP712')
-        await bankTransfer
-          .locator('[data-test="contract-row"]')
-          .filter({ hasText: 'ExpenseAccountEIP712' })
-          .click()
-        await selectToken(page, bankTransfer, 'USDC')
-        await dialogAmount(bankTransfer).fill('8')
-        await bankTransfer.locator('[data-test="transferButton"]').click()
-        await expect(page.getByText('Transferred successfully', { exact: true })).toBeVisible({
-          timeout: 30_000
-        })
+        const collectorBefore = await tokenBalance(usdc, feeCollector)
+        const requestedNet = parseUnits('8', 6)
+        const transferGross = grossForNet(requestedNet, bankFeeBps)
+        await transferBankToContract(page, 'ExpenseAccountEIP712', '8', 'USDC')
 
         await openAccountFromSidebar(page, `/teams/${company.teamId}/accounts/expense-account`)
         const expense = await addressFrom(page.locator('[data-test="expense-account-address"]'))
-        await expect.poll(() => tokenBalance(usdc, expense)).toBe(parseUnits('8', 6))
+        await expect.poll(() => tokenBalance(usdc, expense)).toBe(requestedNet)
+        await expect.poll(() => tokenBalance(usdc, bank)).toBe(parseUnits('10', 6) - transferGross)
+        await expect
+          .poll(() => tokenBalance(usdc, feeCollector))
+          .toBe(collectorBefore + transferGross - requestedNet)
         await page.locator('[data-test="approve-users-button"]').click()
         const approval = page.getByRole('dialog', { name: 'Grant Spending Approval' })
         await approval.locator('[data-test="member-address-input"]').fill(E2E_MEMBER)
@@ -281,6 +316,13 @@ test.describe(
         } finally {
           await reviewContext.close()
         }
+
+        const ownerBeforeCashOut = await tokenBalance(usdc, E2E_OWNER)
+        await page.goto(`/teams/${company.teamId}`)
+        await completeCashOut(page)
+        await expect.poll(() => tokenBalance(usdc, expense)).toBe(0n)
+        await expect.poll(() => tokenBalance(usdc, bank)).toBe(0n)
+        await expect.poll(() => tokenBalance(usdc, E2E_OWNER)).toBeGreaterThan(ownerBeforeCashOut)
       } finally {
         if (!page.isClosed()) {
           await deleteCompanyThroughUi(page, company.teamId, company.team.name)

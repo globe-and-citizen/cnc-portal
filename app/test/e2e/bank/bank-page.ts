@@ -90,6 +90,32 @@ export async function selectRecipient(dialog: Locator): Promise<void> {
   await dialog.getByText('E2E Recipient', { exact: true }).click()
 }
 
+export async function transferBankToContract(
+  page: Page,
+  contractName: string,
+  amount: string,
+  tokenSymbol?: string
+): Promise<void> {
+  await page.locator('[data-test="transfer-button"]').click()
+  const transfer = page.getByRole('dialog', { name: 'Transfer from Bank Contract' })
+  await transfer.getByPlaceholder('Name').fill(contractName)
+  await transfer.locator('[data-test="contract-row"]').filter({ hasText: contractName }).click()
+  if (tokenSymbol) await selectToken(page, transfer, tokenSymbol)
+  await dialogAmount(transfer).fill(amount)
+  await transfer.locator('[data-test="transferButton"]').click()
+  await expect(page.getByText('Transferred successfully', { exact: true })).toBeVisible({
+    timeout: 30_000
+  })
+}
+
+export async function completeCashOut(page: Page): Promise<void> {
+  const cashOutButton = page.locator('[data-test="cash-out-all-button"]')
+  await expect(cashOutButton).toBeEnabled({ timeout: 30_000 })
+  await cashOutButton.click()
+  await page.locator('[data-test="cash-out-all-confirm"]').click()
+  await expect(page.locator('[data-test="cash-out-complete"]')).toBeVisible({ timeout: 60_000 })
+}
+
 export async function exerciseCashOutRecovery(page: Page, fixture: BankE2EFixture): Promise<void> {
   await sendNative(fixture.cashRemuneration, '1')
   await sendToken(fixture.usdc, fixture.cashRemuneration, '2')
