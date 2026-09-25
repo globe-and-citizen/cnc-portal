@@ -127,7 +127,7 @@ test.describe(
         const collectorBefore = await nativeBalance(feeCollector)
         const requestedNet = parseEther('0.25')
         const transferGross = grossForNet(requestedNet, bankFeeBps)
-        await transferBankToContract(page, 'ExpenseAccountEIP712', '0.25')
+        await transferBankToContract(page, 'ExpenseAccountEIP712', '0.25', 'GO')
         await expect.poll(() => nativeBalance(expense)).toBe(expenseBefore + requestedNet)
         await expect.poll(() => nativeBalance(bank)).toBe(parseEther('1') - transferGross)
         await expect

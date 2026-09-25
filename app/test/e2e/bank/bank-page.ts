@@ -94,13 +94,13 @@ export async function transferBankToContract(
   page: Page,
   contractName: string,
   amount: string,
-  tokenSymbol?: string
+  tokenSymbol: string
 ): Promise<void> {
   await page.locator('[data-test="transfer-button"]').click()
   const transfer = page.getByRole('dialog', { name: 'Transfer from Bank Contract' })
   await transfer.getByPlaceholder('Name').fill(contractName)
   await transfer.locator('[data-test="contract-row"]').filter({ hasText: contractName }).click()
-  if (tokenSymbol) await selectToken(page, transfer, tokenSymbol)
+  await selectToken(page, transfer, tokenSymbol)
   await dialogAmount(transfer).fill(amount)
   await transfer.locator('[data-test="transferButton"]').click()
   await expect(page.getByText('Transferred successfully', { exact: true })).toBeVisible({
