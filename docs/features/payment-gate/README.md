@@ -24,8 +24,8 @@ These acceptance criteria follow the
 
 ## Lifecycle
 
-1. The merchant selects the token the widget will accept on the Setup page and gets a copyable embed snippet built around their company's
-   Bank address.
+1. The merchant selects the token the widget will accept on the Setup page and gets a copyable HTML/JavaScript, Vue 3, or React embed
+   snippet built around their company's Bank address.
 2. The merchant pastes that snippet onto their own page. Whatever triggers checkout for a specific order calls
    `CncPay.setFactureId`/`setAmount`/`show()` with that order's real ID and amount.
 3. The widget shows a payment recap (amount and facture ID), then the customer pays.
@@ -65,7 +65,8 @@ These acceptance criteria follow the
 ## US-PAYGATE-002: Embed the Widget on the Merchant's Page
 
 **As a** merchant (Layer8)\
-**I want to** copy a ready-to-use script snippet carrying my company's Bank address and configured token\
+**I want to** copy a ready-to-use embed snippet, in the format my site is built with, carrying my company's Bank address and configured
+token\
 **So that** I can accept payments on my own page without creating or managing a separate account or key
 
 ### Acceptance Criteria
@@ -75,6 +76,8 @@ These acceptance criteria follow the
 - [x] `AC-US-PAYGATE-002-01` The merchant can view and copy their company's Bank address.
 - [x] `AC-US-PAYGATE-002-02` The merchant can view and copy a complete embed snippet — script tag, mount point, and example checkout wiring
       — reflecting the current Bank address and selected token.
+- [x] `AC-US-PAYGATE-002-06` The merchant can choose between HTML / JavaScript (the default), Vue 3, and React embed snippets; every format
+      carries the same Bank address and token, and copying copies the snippet for the selected format.
 
 #### Business Rules
 
@@ -200,10 +203,11 @@ These acceptance criteria follow the
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `4a800adbddfaa88e4f8223b0f5e4f3f1371a0e88`
+**Implementation evidence reviewed against:** `c2af359d523e8b173a5b61c10e1b28c3fb26d547`
 
 - [Setup page](../../../app/src/views/team/[id]/PaymentGate/IntegrationView.vue), combining
-  [Bank address + embed snippet, with explicit no-Bank/no-widget-URL states](../../../app/src/components/sections/PaymentGateView/IntegrationCard.vue),
+  [Bank address + embed snippet, with a snippet format selector and explicit no-Bank/no-widget-URL states](../../../app/src/components/sections/PaymentGateView/IntegrationCard.vue),
+  [HTML / Vue 3 / React snippet builders](../../../app/src/utils/paymentGate/widgetSnippet.ts),
   [accepted-token configuration](../../../app/src/components/sections/PaymentGateView/TokenConfigCard.vue), a
   [live widget preview](../../../app/src/components/sections/PaymentGateView/WidgetPreviewCard.vue), and their shared
   [pane markup](../../../app/src/components/sections/PaymentGateView/PaymentGateWidgetView.vue) (`US-PAYGATE-001`, `002`).
@@ -223,7 +227,8 @@ These acceptance criteria follow the
 - [Facture-ID calldata encoding tests](../../../app/src/utils/paymentGate/__tests__/factureCalldata.spec.ts),
   [widget payment-flow tests](../../../app/src/widget/__tests__/payment.spec.ts),
   [widget entry-point tests](../../../app/src/widget/__tests__/main.spec.ts),
-  [error-message decoding tests](../../../app/src/widget/__tests__/errorMessage.spec.ts), and
+  [error-message decoding tests](../../../app/src/widget/__tests__/errorMessage.spec.ts),
+  [embed snippet builder tests](../../../app/src/utils/paymentGate/__tests__/widgetSnippet.spec.ts), and
   [Setup page integration-card tests](../../../app/src/components/sections/PaymentGateView/__tests__/IntegrationCard.spec.ts).
 
 ### Test-suite ownership
