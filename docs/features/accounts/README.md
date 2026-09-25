@@ -267,7 +267,8 @@ through [`FEE`](../accounting/journal-entry-catalogue.md#fee--transaction-fee-co
 
 ### How It Works
 
-1. The owner reviews the funded accounts and the destination before confirming the run.
+1. The owner reviews the funded accounts and the destination before confirming the run. Funded-account eligibility comes from raw on-chain
+   balances, so a temporarily unavailable fiat valuation does not block withdrawal.
 2. When available, Cash Remuneration and Expense Account funds move into their generation's Bank first.
 3. The Bank then forwards its native and supported token balances to the destination. A historic generation forwards its available funds to
    the company's current Bank.
@@ -786,7 +787,7 @@ a transfer to another known company pocket is
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `4860003064c58076a27bed45d99472af5cab3733`
+**Implementation evidence reviewed against:** `d4ba68f9f1b668102608b4a15c7908719f3dfcb5`
 
 - [Bank deposit modal](../../../app/src/components/sections/BankView/forms/DepositModal.vue),
   [Bank transfer modal](../../../app/src/components/sections/BankView/forms/TransferModal.vue),
