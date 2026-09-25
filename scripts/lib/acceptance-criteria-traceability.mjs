@@ -17,6 +17,7 @@ export const ACCEPTANCE_COVERAGE_LABELS = [
   'Contract',
   'Dashboard'
 ]
+export const ACCEPTANCE_RESPONSIBILITY_LABELS = ['Frontend', 'Backend', 'Contract', 'Dashboard']
 
 export function classifyE2eCoverageMode(document) {
   if (!/^app\/test\/e2e\//.test(document.path)) return null
@@ -103,19 +104,23 @@ export function parseAcceptanceCoverageRows(document) {
       .split('|')
       .slice(1, -1)
       .map((cell) => cell.trim())
-    if (cells.length !== 4) continue
+    if (cells.length !== 4 && cells.length !== 6) continue
 
     const id = cells[0].replaceAll('`', '')
     if (!/^AC-US-[A-Z0-9-]+-\d{2,}$/.test(id)) continue
+
+    const responsibilityBased = cells.length === 6
 
     rows.push({
       documentPath: document.path,
       line: index + 1,
       storyId,
       id,
-      expected: cells[1],
-      current: cells[2],
-      status: cells[3]
+      responsibilities: responsibilityBased ? cells[1] : null,
+      expected: cells[responsibilityBased ? 2 : 1],
+      rationale: responsibilityBased ? cells[3] : null,
+      current: cells[responsibilityBased ? 4 : 2],
+      status: cells[responsibilityBased ? 5 : 3]
     })
   }
 
@@ -267,12 +272,7 @@ function canonicalFeatureOwners(documentPath, featureDocuments) {
     .map((document) => document.path)
 }
 
-export function summarizeTestFileInventory(
-  criteria,
-  testDocuments,
-  featureDocuments = [],
-  technicalDocuments = []
-) {
+export function summarizeTestFileInventory(criteria, testDocuments, featureDocuments = [], technicalDocuments = []) {
   const criterionIds = new Set(criteria.map((criterion) => criterion.id))
   const criterionOwnerById = new Map(
     criteria.map((criterion) => [criterion.id, { documentPath: criterion.documentPath, storyId: criterion.storyId }])
@@ -398,6 +398,21 @@ function validateAcceptanceCoverageRows({ featureDocuments, criteria, references
         continue
       }
       rowsById.set(row.id, row)
+
+      if (row.responsibilities !== null) {
+        const responsibilityLabels = row.responsibilities.split(' + ').map((label) => label.trim())
+        const invalidResponsibilities = responsibilityLabels.filter(
+          (label) => !ACCEPTANCE_RESPONSIBILITY_LABELS.includes(label)
+        )
+        if (invalidResponsibilities.length > 0) {
+          errors.push(
+            `${location} uses unsupported responsibilities ${invalidResponsibilities.join(', ')} for ${row.id}.`
+          )
+        }
+        if (!row.rationale) {
+          errors.push(`${location} is missing a proof rationale for ${row.id}.`)
+        }
+      }
 
       const expectedLabels = row.expected.split(' + ').map((label) => label.trim())
       const invalidExpected = expectedLabels.filter((label) => !ACCEPTANCE_COVERAGE_LABELS.includes(label))
