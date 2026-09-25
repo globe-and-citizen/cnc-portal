@@ -62,20 +62,61 @@ its complete journey belongs to the Accounts feature.
 
 ## Test Coverage Overview
 
-| User Story     | Representative AC Coverage | E2E Status      | Owning Path              |
-| -------------- | -------------------------- | --------------- | ------------------------ |
-| US-PAYROLL-001 | integrated E2E main path   | 🚧 Partial      | E2E-PATH-11              |
-| US-PAYROLL-002 | integrated E2E main path   | 🚧 Partial      | E2E-PATH-11              |
-| US-PAYROLL-003 | Accounts-owned dependency  | ➖ Not required | E2E-PATH-02 owns funding |
-| US-PAYROLL-004 | integrated E2E main path   | 🚧 Partial      | E2E-PATH-12              |
-| US-PAYROLL-005 | integrated E2E main path   | 🚧 Partial      | E2E-PATH-12              |
-| US-PAYROLL-006 | integrated E2E main path   | 🚧 Partial      | E2E-PATH-12              |
-| US-PAYROLL-007 | integrated E2E main path   | 🚧 Partial      | E2E-PATH-12              |
-| US-PAYROLL-008 | integrated E2E main path   | 🚧 Partial      | E2E-PATH-13              |
-| US-PAYROLL-009 | integrated E2E main path   | 🚧 Partial      | E2E-PATH-13              |
-| US-PAYROLL-010 | integrated E2E main path   | 🚧 Partial      | E2E-PATH-13              |
-| US-PAYROLL-011 | integrated E2E main path   | 🚧 Partial      | E2E-PATH-13              |
-| US-PAYROLL-012 | integrated E2E main path   | 🚧 Partial      | E2E-PATH-13              |
+This overview records whether each story has evidence in the three requested layers; it does not mean every criterion is covered or that the
+latest run passed. Contract-only criteria remain owned by the linked Cash Remuneration contract tests and are not reclassified as backend,
+frontend, or integrated portal tests. The plan below describes the target checks and known gaps.
+
+| User Story     | Backend tests         | Frontend tests        | Integrated E2E       | Owning Path              |
+| -------------- | --------------------- | --------------------- | -------------------- | ------------------------ |
+| US-PAYROLL-001 | Existing; extend gaps | Existing; extend gaps | 🚧 Partial           | E2E-PATH-11              |
+| US-PAYROLL-002 | Existing; extend gaps | Existing; extend gaps | 🚧 Partial           | E2E-PATH-11              |
+| US-PAYROLL-003 | Accounts-owned        | Accounts-owned        | ➖ Reference         | E2E-PATH-02 owns funding |
+| US-PAYROLL-004 | Existing; extend gaps | Existing; extend gaps | 🚧 Partial           | E2E-PATH-12              |
+| US-PAYROLL-005 | Existing; extend gaps | Existing; extend gaps | 🚧 Partial           | E2E-PATH-12              |
+| US-PAYROLL-006 | 🚧 Add AC-10 test     | Existing; extend gaps | 🚧 Partial           | E2E-PATH-12              |
+| US-PAYROLL-007 | 🚧 Add AC-05 test     | Existing; extend gaps | 🚧 Partial           | E2E-PATH-12              |
+| US-PAYROLL-008 | Existing; extend gaps | Existing; extend gaps | 🚧 Partial           | E2E-PATH-13              |
+| US-PAYROLL-009 | 🚧 Add AC-06 test     | Existing; extend gaps | 🚧 Partial           | E2E-PATH-13              |
+| US-PAYROLL-010 | Existing; extend gaps | Existing; extend gaps | 🚧 Partial           | E2E-PATH-13              |
+| US-PAYROLL-011 | Existing; extend gaps | Existing; extend gaps | 🚧 Partial           | E2E-PATH-13              |
+| US-PAYROLL-012 | Existing; extend gaps | Existing; extend gaps | 🚧 Partial           | E2E-PATH-13              |
+| US-PAYROLL-013 | No Payroll API rule   | Existing; extend gaps | 🚧 Planned extension | E2E-PATH-13              |
+
+## Proof Strategy Reference
+
+| Strategy        | Responsibilities           | Required Evidence | Test purpose                                                                |
+| --------------- | -------------------------- | ----------------- | --------------------------------------------------------------------------- |
+| `PS-FRONTEND`   | Frontend                   | Frontend          | Prove component, composable, validation, and displayed-state behavior.      |
+| `PS-BACKEND`    | Backend                    | Backend           | Prove API authorization, validation, persistence, and reconciliation rules. |
+| `PS-INTEGRATED` | Frontend + Backend + Chain | Integrated E2E    | Prove the user journey and persisted/on-chain result across the real stack. |
+
+## Test Plan by User Story
+
+Run the linked layer-specific suites for the listed responsibilities, then use the integrated path for the cross-layer result. The
+integrated journeys run against the freshly provisioned disposable G5 stack. A mocked browser test or a lower-layer test does not replace
+integrated evidence where the path is marked partial.
+
+| User Story     | Backend tests to perform                                                                       | Frontend tests to perform                                                                             | Integrated test to perform                                                                                 |
+| -------------- | ---------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| US-PAYROLL-001 | Exercise wage authorization, version/current-wage resolution, defaults, and input bounds.      | Exercise standard/overtime rate entry, daily/weekly limits, disabled tokens, and defaults.            | E2E-PATH-11: create and replace a wage, then verify the saved current wage after reload.                   |
+| US-PAYROLL-002 | Exercise pause/resume authorization and claim rejection while paused.                          | Exercise owner controls, archived/missing/historical wage states, and refreshed status.               | E2E-PATH-11: pause and resume a wage; verify a paused wage blocks a member claim.                          |
+| US-PAYROLL-003 | Use Accounts-owned funding API/contract evidence; do not duplicate it in Payroll.              | Use Accounts-owned Bank transfer UI evidence.                                                         | Reuse E2E-PATH-02 for native/ERC-20 funding of the Payroll contract.                                       |
+| US-PAYROLL-004 | Exercise goals persistence, one-row-per-member/week, wage eligibility, and locked states.      | Exercise Markdown goals create, update, clear, and read-only states.                                  | E2E-PATH-12: save goals and verify they remain with the pending weekly claim.                              |
+| US-PAYROLL-005 | Exercise date, duration, daily/weekly caps, attachment limits, permissions, and state rules.   | Exercise form validation, date-window restrictions, uploads, and rejection feedback.                  | E2E-PATH-12: submit a valid claim, reject daily/weekly overages, and confirm valid data remains unchanged. |
+| US-PAYROLL-006 | Exercise partial updates, ownership, cap rechecks, paused/archived states, and disabled weeks. | Exercise edit form values, immutable work date, attachment limits, and failure feedback.              | E2E-PATH-12: edit a pending claim and verify the persisted values; add disabled-week coverage after AC-10. |
+| US-PAYROLL-007 | Exercise ownership, final-claim/goals cleanup, paused/archived states, and disabled weeks.     | Exercise confirmation, cancellation, and visible deletion outcome.                                    | E2E-PATH-12: delete a claim and verify the subsequent weekly read; add disabled-week coverage after AC-05. |
+| US-PAYROLL-008 | Exercise contract-owner authorization, signing eligibility, EIP-712 validation, and errors.    | Exercise wallet signing, cancellation, migration gating, and re-sign controls.                        | E2E-PATH-13: owner signs a completed claim; member controls remain unavailable; verify stored status.      |
+| US-PAYROLL-009 | Add regression coverage for AC-06: the legacy API cannot change status without chain action.   | Exercise owner-only disable/enable controls and reconciled status display.                            | E2E-PATH-13: disable and re-enable the signed claim on-chain, then verify state after reload.              |
+| US-PAYROLL-010 | Exercise withdrawal authorization, API status changes, archived state, and failure handling.   | Exercise member wallet withdrawal, cancellation, and error states.                                    | E2E-PATH-13: withdraw successfully and verify balances/status; retain the insufficient-funds scenario.     |
+| US-PAYROLL-011 | Exercise reconciliation of paid/disabled/stale claims and isolated read/signature failures.    | Exercise refresh after company load and after withdrawal/disable/enable actions.                      | E2E-PATH-13: compare chain state and portal status after lifecycle actions and reload.                     |
+| US-PAYROLL-012 | Exercise status/member filters, pagination, response shape, and member authorization.          | Exercise member history, company-wide table, week navigation, and status details.                     | E2E-PATH-13: verify owner and member histories reflect the final claim state after reload.                 |
+| US-PAYROLL-013 | No Payroll API rule is currently documented for the account position.                          | Exercise balance/pending summaries, month boundary, holdings, activity filters, and read-only access. | Extend E2E-PATH-13: open Payroll Account and verify funded balance/activity after funding and withdrawal.  |
+
+The existing unit/API and integrated suites are linked under [Implementation Evidence](#implementation-evidence). The three unchecked API
+criteria (`AC-US-PAYROLL-006-10`, `AC-US-PAYROLL-007-05`, and `AC-US-PAYROLL-009-06`) remain backend test gaps. The Payroll account month
+summary gap is `AC-US-PAYROLL-013-06`; correct the current-month behavior, add a frontend boundary test, then assert it in the planned
+E2E-PATH-13 account check. Invalid EIP-712 signatures remain backend-validator evidence because an integrated real-wallet journey produces
+valid signatures.
 
 Criteria tagged _(API)_ or _(contract)_ describe outcomes that cannot be confirmed from the portal alone.
 

@@ -300,7 +300,8 @@ coverage; the latest execution result and artifacts belong in Playwright and CI 
     - `US-PAYROLL-009` — disable or re-enable a signed claim;
     - `US-PAYROLL-010` — withdraw an approved claim;
     - `US-PAYROLL-011` — reconcile claims with the chain;
-    - `US-PAYROLL-012` — review payroll history.
+    - `US-PAYROLL-012` — review payroll history;
+  - Planned extension: `US-PAYROLL-013` — review the Payroll account position.
   - Reused dependency: `US-PAYROLL-003` references the Accounts-owned funding journey and is not revalidated here.
   - Dependencies: a claim-ready week, current contract owner, and funded Payroll contract.
   - Main path:
@@ -311,10 +312,13 @@ coverage; the latest execution result and artifacts belong in Playwright and CI 
     - [x] Verify member and owner histories after reload.
     - [x] Keep signed, disabled, and withdrawn claims read-only for the member.
     - [x] Block non-owner signing and withdrawal controls, and retain a signed claim when Payroll has insufficient USDC.
-  - Expected result: one claim remains traceable from approval through payment and history.
+    - [ ] Open Payroll Account after funding and withdrawal; verify the balance, account summaries, token activity, and read-only member
+          access.
+  - Expected result: one claim remains traceable from approval through payment, account position, and history.
   - Status: partial; the browser funds Payroll through Bank, signs a completed-week claim, verifies the disabled and paid chain flags,
     withdraws as the paid member, and reloads both perspectives. It also verifies the role-gated controls, frozen lifecycle states, and the
-    contract's insufficient-funds rejection. Invalid EIP-712 signatures are rejected by the backend signature-validator test rather than an
+    contract's insufficient-funds rejection. Payroll Account balance/activity coverage remains planned; the current-month summary boundary
+    needs frontend boundary coverage. Invalid EIP-712 signatures are rejected by the backend signature-validator test rather than an
     integrated browser journey, because a true integrated wallet produces valid signatures.
   - Evidence: [integrated Payroll payment tests](../../app/test/e2e/payroll/payroll-payment.integrated.spec.ts).
 
