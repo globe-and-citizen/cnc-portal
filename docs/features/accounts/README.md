@@ -70,31 +70,29 @@ flowchart LR
 
 ## Test Coverage Overview
 
-Coverage targets describe the required proof for each criterion. Current coverage comes from direct `AC-US-*` references in tracked tests;
-it does not represent the latest pass/fail result, which belongs to CI or the generated local report. The evidence columns classify every
-criterion whose target is met exactly once: integrated evidence takes precedence, mocked-only has no lower-layer evidence, layer-only has no
-browser evidence, and combined joins mocked-browser and lower-layer evidence. Gaps identify criteria whose expected proof is missing or
-insufficient.
+Coverage targets compare each criterion's required evidence with direct `AC-US-*` references in tracked tests. They do not represent the
+latest pass/fail result, which belongs to CI or the generated local report. Gaps identify criteria whose required evidence is missing or
+insufficient; the detailed evidence distribution remains available in the generated report instead of being repeated here.
 
 The main-journey column distinguishes a complete integrated path, a partial integrated path, a planned integrated path, and a deliberately
 mocked browser path for the external Safe Transaction Service boundary.
 
-| User Story  | Main Journey  | Coverage Target | Integrated AC | Mocked-only AC | Layer-only AC | Combined AC | Gaps                                                                                                                                                  |
-| ----------- | ------------- | --------------- | ------------: | -------------: | ------------: | ----------: | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| US-BANK-001 | ✅ Integrated | ⚠️ 8/10         |             3 |              2 |             2 |           1 | 2 — `AC-US-BANK-001-08`, `AC-US-BANK-001-10`                                                                                                          |
-| US-BANK-002 | 📋 Planned    | ⚠️ 6/13         |             0 |              1 |             3 |           2 | 7 — `AC-US-BANK-002-01`, `AC-US-BANK-002-02`, `AC-US-BANK-002-03`, `AC-US-BANK-002-08`, `AC-US-BANK-002-09`, `AC-US-BANK-002-10`, `AC-US-BANK-002-11` |
-| US-BANK-003 | 🚧 Partial    | ⚠️ 6/8          |             1 |              2 |             1 |           2 | 2 — `AC-US-BANK-003-01`, `AC-US-BANK-003-08`                                                                                                          |
-| US-BANK-004 | 📋 Planned    | ⚠️ 6/8          |             0 |              0 |             2 |           4 | 2 — `AC-US-BANK-004-01`, `AC-US-BANK-004-02`                                                                                                          |
-| US-EXP-001  | ✅ Integrated | ⚠️ 8/13         |             3 |              1 |             4 |           0 | 5 — `AC-US-EXP-001-05`, `AC-US-EXP-001-06`, `AC-US-EXP-001-07`, `AC-US-EXP-001-09`, `AC-US-EXP-001-10`                                                |
-| US-EXP-002  | 🚧 Partial    | ⚠️ 10/12        |             2 |              1 |             5 |           2 | 2 — `AC-US-EXP-002-07`, `AC-US-EXP-002-09`                                                                                                            |
-| US-EXP-003  | ✅ Integrated | ⚠️ 4/9          |             3 |              0 |             1 |           0 | 5 — `AC-US-EXP-003-05`, `AC-US-EXP-003-06`, `AC-US-EXP-003-07`, `AC-US-EXP-003-08`, `AC-US-EXP-003-09`                                                |
-| US-EXP-004  | 🚧 Partial    | ⚠️ 10/12        |             2 |              2 |             5 |           1 | 2 — `AC-US-EXP-004-01`, `AC-US-EXP-004-05`                                                                                                            |
-| US-SAFE-001 | 🚧 Partial    | ⚠️ 8/11         |             3 |              0 |             5 |           0 | 3 — `AC-US-SAFE-001-02`, `AC-US-SAFE-001-06`, `AC-US-SAFE-001-11`                                                                                     |
-| US-SAFE-002 | 📋 Planned    | ⚠️ 1/8          |             0 |              1 |             0 |           0 | 7 — `AC-US-SAFE-002-01`, `AC-US-SAFE-002-02`, `AC-US-SAFE-002-03`, `AC-US-SAFE-002-05`, `AC-US-SAFE-002-06`, `AC-US-SAFE-002-07`, `AC-US-SAFE-002-08` |
-| US-SAFE-003 | 📋 Planned    | ⚠️ 3/9          |             0 |              2 |             0 |           1 | 6 — `AC-US-SAFE-003-01`, `AC-US-SAFE-003-02`, `AC-US-SAFE-003-03`, `AC-US-SAFE-003-06`, `AC-US-SAFE-003-07`, `AC-US-SAFE-003-08`                      |
-| US-SAFE-004 | 📋 Planned    | ⚠️ 3/9          |             0 |              0 |             3 |           0 | 6 — `AC-US-SAFE-004-01`, `AC-US-SAFE-004-02`, `AC-US-SAFE-004-03`, `AC-US-SAFE-004-04`, `AC-US-SAFE-004-07`, `AC-US-SAFE-004-09`                      |
-| US-SAFE-005 | 🧪 Mocked     | ✅ 9/9          |             0 |              4 |             5 |           0 | —                                                                                                                                                     |
-| US-SAFE-006 | 🧪 Mocked     | ⚠️ 7/10         |             0 |              4 |             3 |           0 | 3 — `AC-US-SAFE-006-07`, `AC-US-SAFE-006-09`, `AC-US-SAFE-006-10`                                                                                     |
+| User Story  | Main Journey  | Coverage Target | Gaps                                                                                                                                                  |
+| ----------- | ------------- | --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| US-BANK-001 | ✅ Integrated | ⚠️ 8/10         | 2 — `AC-US-BANK-001-08`, `AC-US-BANK-001-10`                                                                                                          |
+| US-BANK-002 | 📋 Planned    | ⚠️ 6/13         | 7 — `AC-US-BANK-002-01`, `AC-US-BANK-002-02`, `AC-US-BANK-002-03`, `AC-US-BANK-002-08`, `AC-US-BANK-002-09`, `AC-US-BANK-002-10`, `AC-US-BANK-002-11` |
+| US-BANK-003 | 🚧 Partial    | ⚠️ 6/8          | 2 — `AC-US-BANK-003-01`, `AC-US-BANK-003-08`                                                                                                          |
+| US-BANK-004 | 📋 Planned    | ⚠️ 6/8          | 2 — `AC-US-BANK-004-01`, `AC-US-BANK-004-02`                                                                                                          |
+| US-EXP-001  | ✅ Integrated | ⚠️ 8/13         | 5 — `AC-US-EXP-001-05`, `AC-US-EXP-001-06`, `AC-US-EXP-001-07`, `AC-US-EXP-001-09`, `AC-US-EXP-001-10`                                                |
+| US-EXP-002  | 🚧 Partial    | ⚠️ 10/12        | 2 — `AC-US-EXP-002-07`, `AC-US-EXP-002-09`                                                                                                            |
+| US-EXP-003  | ✅ Integrated | ⚠️ 4/9          | 5 — `AC-US-EXP-003-05`, `AC-US-EXP-003-06`, `AC-US-EXP-003-07`, `AC-US-EXP-003-08`, `AC-US-EXP-003-09`                                                |
+| US-EXP-004  | 🚧 Partial    | ⚠️ 10/12        | 2 — `AC-US-EXP-004-01`, `AC-US-EXP-004-05`                                                                                                            |
+| US-SAFE-001 | 🚧 Partial    | ⚠️ 8/11         | 3 — `AC-US-SAFE-001-02`, `AC-US-SAFE-001-06`, `AC-US-SAFE-001-11`                                                                                     |
+| US-SAFE-002 | 📋 Planned    | ⚠️ 1/8          | 7 — `AC-US-SAFE-002-01`, `AC-US-SAFE-002-02`, `AC-US-SAFE-002-03`, `AC-US-SAFE-002-05`, `AC-US-SAFE-002-06`, `AC-US-SAFE-002-07`, `AC-US-SAFE-002-08` |
+| US-SAFE-003 | 📋 Planned    | ⚠️ 3/9          | 6 — `AC-US-SAFE-003-01`, `AC-US-SAFE-003-02`, `AC-US-SAFE-003-03`, `AC-US-SAFE-003-06`, `AC-US-SAFE-003-07`, `AC-US-SAFE-003-08`                      |
+| US-SAFE-004 | 📋 Planned    | ⚠️ 3/9          | 6 — `AC-US-SAFE-004-01`, `AC-US-SAFE-004-02`, `AC-US-SAFE-004-03`, `AC-US-SAFE-004-04`, `AC-US-SAFE-004-07`, `AC-US-SAFE-004-09`                      |
+| US-SAFE-005 | 🧪 Mocked     | ✅ 9/9          | —                                                                                                                                                     |
+| US-SAFE-006 | 🧪 Mocked     | ⚠️ 7/10         | 3 — `AC-US-SAFE-006-07`, `AC-US-SAFE-006-09`, `AC-US-SAFE-006-10`                                                                                     |
 
 ## US-BANK-001: Fund the Bank
 
@@ -125,18 +123,18 @@ mocked browser path for the external Safe Transaction Service boundary.
 
 ### Test Coverage
 
-| Acceptance Criterion | Expected Coverage         | Current Coverage                                      | Status     |
-| -------------------- | ------------------------- | ----------------------------------------------------- | ---------- |
-| `AC-US-BANK-001-01`  | Integrated E2E            | Integrated E2E + Mocked browser + Frontend + Contract | ✅ Met     |
-| `AC-US-BANK-001-02`  | Integrated E2E            | Integrated E2E + Mocked browser + Contract            | ✅ Met     |
-| `AC-US-BANK-001-03`  | Integrated E2E            | Integrated E2E + Mocked browser                       | ✅ Met     |
-| `AC-US-BANK-001-04`  | Mocked browser + Contract | Mocked browser + Contract                             | ✅ Met     |
-| `AC-US-BANK-001-05`  | Mocked browser            | Mocked browser                                        | ✅ Met     |
-| `AC-US-BANK-001-06`  | Contract                  | Contract                                              | ✅ Met     |
-| `AC-US-BANK-001-07`  | Frontend                  | Frontend                                              | ✅ Met     |
-| `AC-US-BANK-001-08`  | Mocked browser            | None linked                                           | ❌ Missing |
-| `AC-US-BANK-001-09`  | Mocked browser            | Mocked browser                                        | ✅ Met     |
-| `AC-US-BANK-001-10`  | Mocked browser            | None linked                                           | ❌ Missing |
+| Acceptance Criterion | Responsibilities    | Required Evidence         | Proof Rationale                                                                     | Current Evidence                                      | Status     |
+| -------------------- | ------------------- | ------------------------- | ----------------------------------------------------------------------------------- | ----------------------------------------------------- | ---------- |
+| `AC-US-BANK-001-01`  | Frontend + Contract | Integrated E2E            | The wallet/chain hand-off and resulting user-visible state must work together.      | Integrated E2E + Mocked browser + Frontend + Contract | ✅ Met     |
+| `AC-US-BANK-001-02`  | Frontend + Contract | Integrated E2E            | The wallet/chain hand-off and resulting user-visible state must work together.      | Integrated E2E + Mocked browser + Contract            | ✅ Met     |
+| `AC-US-BANK-001-03`  | Frontend + Contract | Integrated E2E            | The wallet/chain hand-off and resulting user-visible state must work together.      | Integrated E2E + Mocked browser                       | ✅ Met     |
+| `AC-US-BANK-001-04`  | Frontend + Contract | Mocked browser + Contract | The controlled browser branch and on-chain rule can fail independently.             | Mocked browser + Contract                             | ✅ Met     |
+| `AC-US-BANK-001-05`  | Frontend            | Mocked browser            | The user interaction needs browser-level proof with controlled dependency outcomes. | Mocked browser                                        | ✅ Met     |
+| `AC-US-BANK-001-06`  | Contract            | Contract                  | The contract owns this on-chain authorization, invariant, or state transition.      | Contract                                              | ✅ Met     |
+| `AC-US-BANK-001-07`  | Frontend            | Frontend                  | The frontend owns this deterministic validation, derivation, or interaction state.  | Frontend                                              | ✅ Met     |
+| `AC-US-BANK-001-08`  | Frontend            | Mocked browser            | The user interaction needs browser-level proof with controlled dependency outcomes. | None linked                                           | ❌ Missing |
+| `AC-US-BANK-001-09`  | Frontend            | Mocked browser            | The user interaction needs browser-level proof with controlled dependency outcomes. | Mocked browser                                        | ✅ Met     |
+| `AC-US-BANK-001-10`  | Frontend            | Mocked browser            | The user interaction needs browser-level proof with controlled dependency outcomes. | None linked                                           | ❌ Missing |
 
 **Accounting:** An external receipt is booked by [`UC-BANK-02`](../accounting/journal-entry-catalogue.md#uc-bank-02--external-cash-receipt).
 A receipt from another known company pocket is an internal transfer instead.
@@ -177,21 +175,21 @@ A receipt from another known company pocket is an internal transfer instead.
 
 ### Test Coverage
 
-| Acceptance Criterion | Expected Coverage         | Current Coverage          | Status          |
-| -------------------- | ------------------------- | ------------------------- | --------------- |
-| `AC-US-BANK-002-01`  | Integrated E2E            | Mocked browser + Frontend | ⚠️ Insufficient |
-| `AC-US-BANK-002-02`  | Integrated E2E            | Mocked browser + Frontend | ⚠️ Insufficient |
-| `AC-US-BANK-002-03`  | Integrated E2E            | Mocked browser + Contract | ⚠️ Insufficient |
-| `AC-US-BANK-002-04`  | Contract                  | Contract                  | ✅ Met          |
-| `AC-US-BANK-002-05`  | Mocked browser            | Mocked browser + Frontend | ✅ Met          |
-| `AC-US-BANK-002-06`  | Frontend + Contract       | Frontend + Contract       | ✅ Met          |
-| `AC-US-BANK-002-07`  | Contract                  | Contract                  | ✅ Met          |
-| `AC-US-BANK-002-08`  | Frontend                  | None linked               | ❌ Missing      |
-| `AC-US-BANK-002-09`  | Integrated E2E + Contract | Mocked browser + Contract | ⚠️ Insufficient |
-| `AC-US-BANK-002-10`  | Integrated E2E + Contract | Mocked browser + Contract | ⚠️ Insufficient |
-| `AC-US-BANK-002-11`  | Mocked browser            | None linked               | ❌ Missing      |
-| `AC-US-BANK-002-12`  | Contract                  | Mocked browser + Contract | ✅ Met          |
-| `AC-US-BANK-002-13`  | Mocked browser            | Mocked browser            | ✅ Met          |
+| Acceptance Criterion | Responsibilities    | Required Evidence         | Proof Rationale                                                                          | Current Evidence          | Status          |
+| -------------------- | ------------------- | ------------------------- | ---------------------------------------------------------------------------------------- | ------------------------- | --------------- |
+| `AC-US-BANK-002-01`  | Frontend + Contract | Integrated E2E            | The wallet/chain hand-off and resulting user-visible state must work together.           | Mocked browser + Frontend | ⚠️ Insufficient |
+| `AC-US-BANK-002-02`  | Frontend + Contract | Integrated E2E            | The wallet/chain hand-off and resulting user-visible state must work together.           | Mocked browser + Frontend | ⚠️ Insufficient |
+| `AC-US-BANK-002-03`  | Frontend + Contract | Integrated E2E            | The wallet/chain hand-off and resulting user-visible state must work together.           | Mocked browser + Contract | ⚠️ Insufficient |
+| `AC-US-BANK-002-04`  | Contract            | Contract                  | The contract owns this on-chain authorization, invariant, or state transition.           | Contract                  | ✅ Met          |
+| `AC-US-BANK-002-05`  | Frontend            | Mocked browser            | The user interaction needs browser-level proof with controlled dependency outcomes.      | Mocked browser + Frontend | ✅ Met          |
+| `AC-US-BANK-002-06`  | Frontend + Contract | Frontend + Contract       | Frontend prevention and contract enforcement can fail independently.                     | Frontend + Contract       | ✅ Met          |
+| `AC-US-BANK-002-07`  | Contract            | Contract                  | The contract owns this on-chain authorization, invariant, or state transition.           | Contract                  | ✅ Met          |
+| `AC-US-BANK-002-08`  | Frontend            | Frontend                  | The frontend owns this deterministic validation, derivation, or interaction state.       | None linked               | ❌ Missing      |
+| `AC-US-BANK-002-09`  | Frontend + Contract | Integrated E2E + Contract | The real wallet/chain journey and its focused on-chain invariant need independent proof. | Mocked browser + Contract | ⚠️ Insufficient |
+| `AC-US-BANK-002-10`  | Frontend + Contract | Integrated E2E + Contract | The real wallet/chain journey and its focused on-chain invariant need independent proof. | Mocked browser + Contract | ⚠️ Insufficient |
+| `AC-US-BANK-002-11`  | Frontend            | Mocked browser            | The user interaction needs browser-level proof with controlled dependency outcomes.      | None linked               | ❌ Missing      |
+| `AC-US-BANK-002-12`  | Contract            | Contract                  | The contract owns this on-chain authorization, invariant, or state transition.           | Mocked browser + Contract | ✅ Met          |
+| `AC-US-BANK-002-13`  | Frontend            | Mocked browser            | The user interaction needs browser-level proof with controlled dependency outcomes.      | Mocked browser            | ✅ Met          |
 
 **Accounting:** The destination determines the rule: company-pocket funding uses
 [`UC-BANK-03`](../accounting/journal-entry-catalogue.md#uc-bank-03--bank-funds-a-company-pocket), an external payment uses
@@ -229,16 +227,16 @@ through [`FEE`](../accounting/journal-entry-catalogue.md#fee--transaction-fee-co
 
 ### Test Coverage
 
-| Acceptance Criterion | Expected Coverage | Current Coverage                           | Status          |
-| -------------------- | ----------------- | ------------------------------------------ | --------------- |
-| `AC-US-BANK-003-01`  | Integrated E2E    | Mocked browser + Frontend                  | ⚠️ Insufficient |
-| `AC-US-BANK-003-02`  | Integrated E2E    | Integrated E2E + Mocked browser + Frontend | ✅ Met          |
-| `AC-US-BANK-003-03`  | Mocked browser    | Mocked browser + Frontend                  | ✅ Met          |
-| `AC-US-BANK-003-04`  | Mocked browser    | Mocked browser                             | ✅ Met          |
-| `AC-US-BANK-003-05`  | Frontend          | Frontend                                   | ✅ Met          |
-| `AC-US-BANK-003-06`  | Frontend          | Mocked browser + Frontend                  | ✅ Met          |
-| `AC-US-BANK-003-07`  | Mocked browser    | Mocked browser                             | ✅ Met          |
-| `AC-US-BANK-003-08`  | Mocked browser    | None linked                                | ❌ Missing      |
+| Acceptance Criterion | Responsibilities    | Required Evidence | Proof Rationale                                                                     | Current Evidence                           | Status          |
+| -------------------- | ------------------- | ----------------- | ----------------------------------------------------------------------------------- | ------------------------------------------ | --------------- |
+| `AC-US-BANK-003-01`  | Frontend + Contract | Integrated E2E    | The wallet/chain hand-off and resulting user-visible state must work together.      | Mocked browser + Frontend                  | ⚠️ Insufficient |
+| `AC-US-BANK-003-02`  | Frontend + Contract | Integrated E2E    | The wallet/chain hand-off and resulting user-visible state must work together.      | Integrated E2E + Mocked browser + Frontend | ✅ Met          |
+| `AC-US-BANK-003-03`  | Frontend            | Mocked browser    | The user interaction needs browser-level proof with controlled dependency outcomes. | Mocked browser + Frontend                  | ✅ Met          |
+| `AC-US-BANK-003-04`  | Frontend            | Mocked browser    | The user interaction needs browser-level proof with controlled dependency outcomes. | Mocked browser                             | ✅ Met          |
+| `AC-US-BANK-003-05`  | Frontend            | Frontend          | The frontend owns this deterministic validation, derivation, or interaction state.  | Frontend                                   | ✅ Met          |
+| `AC-US-BANK-003-06`  | Frontend            | Frontend          | The frontend owns this deterministic validation, derivation, or interaction state.  | Mocked browser + Frontend                  | ✅ Met          |
+| `AC-US-BANK-003-07`  | Frontend            | Mocked browser    | The user interaction needs browser-level proof with controlled dependency outcomes. | Mocked browser                             | ✅ Met          |
+| `AC-US-BANK-003-08`  | Frontend            | Mocked browser    | The user interaction needs browser-level proof with controlled dependency outcomes. | None linked                                | ❌ Missing      |
 
 **Dependencies:** Current Bank contract and an available chain event provider
 
@@ -280,16 +278,16 @@ through [`FEE`](../accounting/journal-entry-catalogue.md#fee--transaction-fee-co
 
 ### Test Coverage
 
-| Acceptance Criterion | Expected Coverage         | Current Coverage          | Status          |
-| -------------------- | ------------------------- | ------------------------- | --------------- |
-| `AC-US-BANK-004-01`  | Integrated E2E            | Mocked browser + Frontend | ⚠️ Insufficient |
-| `AC-US-BANK-004-02`  | Integrated E2E            | Frontend                  | ⚠️ Insufficient |
-| `AC-US-BANK-004-03`  | Mocked browser            | Mocked browser + Frontend | ✅ Met          |
-| `AC-US-BANK-004-04`  | Frontend                  | Frontend                  | ✅ Met          |
-| `AC-US-BANK-004-05`  | Frontend                  | Frontend                  | ✅ Met          |
-| `AC-US-BANK-004-06`  | Mocked browser + Frontend | Mocked browser + Frontend | ✅ Met          |
-| `AC-US-BANK-004-07`  | Mocked browser + Frontend | Mocked browser + Frontend | ✅ Met          |
-| `AC-US-BANK-004-08`  | Mocked browser + Frontend | Mocked browser + Frontend | ✅ Met          |
+| Acceptance Criterion | Responsibilities    | Required Evidence         | Proof Rationale                                                                     | Current Evidence          | Status          |
+| -------------------- | ------------------- | ------------------------- | ----------------------------------------------------------------------------------- | ------------------------- | --------------- |
+| `AC-US-BANK-004-01`  | Frontend + Contract | Integrated E2E            | The wallet/chain hand-off and resulting user-visible state must work together.      | Mocked browser + Frontend | ⚠️ Insufficient |
+| `AC-US-BANK-004-02`  | Frontend + Contract | Integrated E2E            | The wallet/chain hand-off and resulting user-visible state must work together.      | Frontend                  | ⚠️ Insufficient |
+| `AC-US-BANK-004-03`  | Frontend            | Mocked browser            | The user interaction needs browser-level proof with controlled dependency outcomes. | Mocked browser + Frontend | ✅ Met          |
+| `AC-US-BANK-004-04`  | Frontend            | Frontend                  | The frontend owns this deterministic validation, derivation, or interaction state.  | Frontend                  | ✅ Met          |
+| `AC-US-BANK-004-05`  | Frontend            | Frontend                  | The frontend owns this deterministic validation, derivation, or interaction state.  | Frontend                  | ✅ Met          |
+| `AC-US-BANK-004-06`  | Frontend            | Mocked browser + Frontend | The controlled browser branch and frontend orchestration need focused proof.        | Mocked browser + Frontend | ✅ Met          |
+| `AC-US-BANK-004-07`  | Frontend            | Mocked browser + Frontend | The controlled browser branch and frontend orchestration need focused proof.        | Mocked browser + Frontend | ✅ Met          |
+| `AC-US-BANK-004-08`  | Frontend            | Mocked browser + Frontend | The controlled browser branch and frontend orchestration need focused proof.        | Mocked browser + Frontend | ✅ Met          |
 
 **Accounting:** Source-account sweeps are [`INTERNAL`](../accounting/journal-entry-catalogue.md#internal--other-company-pocket-transfer).
 The final wallet payment is [`CASH-OUT`](../accounting/journal-entry-catalogue.md#cash-out--external-bank-or-safe-payment) with any matched
@@ -329,21 +327,21 @@ The final wallet payment is [`CASH-OUT`](../accounting/journal-entry-catalogue.m
 
 ### Test Coverage
 
-| Acceptance Criterion | Expected Coverage        | Current Coverage                          | Status     |
-| -------------------- | ------------------------ | ----------------------------------------- | ---------- |
-| `AC-US-EXP-001-01`   | Integrated E2E           | Integrated E2E + Mocked browser           | ✅ Met     |
-| `AC-US-EXP-001-02`   | Integrated E2E           | Integrated E2E + Mocked browser           | ✅ Met     |
-| `AC-US-EXP-001-03`   | Integrated E2E + Backend | Integrated E2E + Mocked browser + Backend | ✅ Met     |
-| `AC-US-EXP-001-04`   | Backend                  | Backend                                   | ✅ Met     |
-| `AC-US-EXP-001-05`   | Contract                 | None linked                               | ❌ Missing |
-| `AC-US-EXP-001-06`   | Backend                  | None linked                               | ❌ Missing |
-| `AC-US-EXP-001-07`   | Backend                  | None linked                               | ❌ Missing |
-| `AC-US-EXP-001-08`   | Mocked browser           | Mocked browser                            | ✅ Met     |
-| `AC-US-EXP-001-09`   | Backend                  | None linked                               | ❌ Missing |
-| `AC-US-EXP-001-10`   | Mocked browser           | None linked                               | ❌ Missing |
-| `AC-US-EXP-001-11`   | Frontend                 | Frontend                                  | ✅ Met     |
-| `AC-US-EXP-001-12`   | Frontend                 | Frontend                                  | ✅ Met     |
-| `AC-US-EXP-001-13`   | Frontend                 | Frontend                                  | ✅ Met     |
+| Acceptance Criterion | Responsibilities   | Required Evidence        | Proof Rationale                                                                       | Current Evidence                          | Status     |
+| -------------------- | ------------------ | ------------------------ | ------------------------------------------------------------------------------------- | ----------------------------------------- | ---------- |
+| `AC-US-EXP-001-01`   | Frontend + Backend | Integrated E2E           | The browser/API hand-off and persisted user-visible state must work together.         | Integrated E2E + Mocked browser           | ✅ Met     |
+| `AC-US-EXP-001-02`   | Frontend + Backend | Integrated E2E           | The browser/API hand-off and persisted user-visible state must work together.         | Integrated E2E + Mocked browser           | ✅ Met     |
+| `AC-US-EXP-001-03`   | Frontend + Backend | Integrated E2E + Backend | The real browser/API journey and its focused persistence rule need independent proof. | Integrated E2E + Mocked browser + Backend | ✅ Met     |
+| `AC-US-EXP-001-04`   | Backend            | Backend                  | The backend owns this API authorization, validation, or persistence rule.             | Backend                                   | ✅ Met     |
+| `AC-US-EXP-001-05`   | Contract           | Contract                 | The contract owns this on-chain authorization, invariant, or state transition.        | None linked                               | ❌ Missing |
+| `AC-US-EXP-001-06`   | Backend            | Backend                  | The backend owns this API authorization, validation, or persistence rule.             | None linked                               | ❌ Missing |
+| `AC-US-EXP-001-07`   | Backend            | Backend                  | The backend owns this API authorization, validation, or persistence rule.             | None linked                               | ❌ Missing |
+| `AC-US-EXP-001-08`   | Frontend           | Mocked browser           | The user interaction needs browser-level proof with controlled dependency outcomes.   | Mocked browser                            | ✅ Met     |
+| `AC-US-EXP-001-09`   | Backend            | Backend                  | The backend owns this API authorization, validation, or persistence rule.             | None linked                               | ❌ Missing |
+| `AC-US-EXP-001-10`   | Frontend           | Mocked browser           | The user interaction needs browser-level proof with controlled dependency outcomes.   | None linked                               | ❌ Missing |
+| `AC-US-EXP-001-11`   | Frontend           | Frontend                 | The frontend owns this deterministic validation, derivation, or interaction state.    | Frontend                                  | ✅ Met     |
+| `AC-US-EXP-001-12`   | Frontend           | Frontend                 | The frontend owns this deterministic validation, derivation, or interaction state.    | Frontend                                  | ✅ Met     |
+| `AC-US-EXP-001-13`   | Frontend           | Frontend                 | The frontend owns this deterministic validation, derivation, or interaction state.    | Frontend                                  | ✅ Met     |
 
 **Accounting:** Creating an approval moves no money and creates no journal entry. A later spend owns the accounting operation.
 
@@ -380,20 +378,20 @@ The final wallet payment is [`CASH-OUT`](../accounting/journal-entry-catalogue.m
 
 ### Test Coverage
 
-| Acceptance Criterion | Expected Coverage   | Current Coverage                | Status     |
-| -------------------- | ------------------- | ------------------------------- | ---------- |
-| `AC-US-EXP-002-01`   | Integrated E2E      | Integrated E2E + Mocked browser | ✅ Met     |
-| `AC-US-EXP-002-02`   | Integrated E2E      | Integrated E2E + Mocked browser | ✅ Met     |
-| `AC-US-EXP-002-03`   | Contract            | Contract                        | ✅ Met     |
-| `AC-US-EXP-002-04`   | Frontend + Contract | Frontend + Contract             | ✅ Met     |
-| `AC-US-EXP-002-05`   | Frontend + Contract | Frontend + Contract             | ✅ Met     |
-| `AC-US-EXP-002-06`   | Contract            | Mocked browser + Contract       | ✅ Met     |
-| `AC-US-EXP-002-07`   | Contract            | None linked                     | ❌ Missing |
-| `AC-US-EXP-002-08`   | Mocked browser      | Mocked browser                  | ✅ Met     |
-| `AC-US-EXP-002-09`   | Contract            | None linked                     | ❌ Missing |
-| `AC-US-EXP-002-10`   | Contract            | Mocked browser + Contract       | ✅ Met     |
-| `AC-US-EXP-002-11`   | Contract            | Contract                        | ✅ Met     |
-| `AC-US-EXP-002-12`   | Frontend            | Frontend                        | ✅ Met     |
+| Acceptance Criterion | Responsibilities    | Required Evidence   | Proof Rationale                                                                     | Current Evidence                | Status     |
+| -------------------- | ------------------- | ------------------- | ----------------------------------------------------------------------------------- | ------------------------------- | ---------- |
+| `AC-US-EXP-002-01`   | Frontend + Contract | Integrated E2E      | The wallet/chain hand-off and resulting user-visible state must work together.      | Integrated E2E + Mocked browser | ✅ Met     |
+| `AC-US-EXP-002-02`   | Frontend + Contract | Integrated E2E      | The wallet/chain hand-off and resulting user-visible state must work together.      | Integrated E2E + Mocked browser | ✅ Met     |
+| `AC-US-EXP-002-03`   | Contract            | Contract            | The contract owns this on-chain authorization, invariant, or state transition.      | Contract                        | ✅ Met     |
+| `AC-US-EXP-002-04`   | Frontend + Contract | Frontend + Contract | Frontend prevention and contract enforcement can fail independently.                | Frontend + Contract             | ✅ Met     |
+| `AC-US-EXP-002-05`   | Frontend + Contract | Frontend + Contract | Frontend prevention and contract enforcement can fail independently.                | Frontend + Contract             | ✅ Met     |
+| `AC-US-EXP-002-06`   | Contract            | Contract            | The contract owns this on-chain authorization, invariant, or state transition.      | Mocked browser + Contract       | ✅ Met     |
+| `AC-US-EXP-002-07`   | Contract            | Contract            | The contract owns this on-chain authorization, invariant, or state transition.      | None linked                     | ❌ Missing |
+| `AC-US-EXP-002-08`   | Frontend            | Mocked browser      | The user interaction needs browser-level proof with controlled dependency outcomes. | Mocked browser                  | ✅ Met     |
+| `AC-US-EXP-002-09`   | Contract            | Contract            | The contract owns this on-chain authorization, invariant, or state transition.      | None linked                     | ❌ Missing |
+| `AC-US-EXP-002-10`   | Contract            | Contract            | The contract owns this on-chain authorization, invariant, or state transition.      | Mocked browser + Contract       | ✅ Met     |
+| `AC-US-EXP-002-11`   | Contract            | Contract            | The contract owns this on-chain authorization, invariant, or state transition.      | Contract                        | ✅ Met     |
+| `AC-US-EXP-002-12`   | Frontend            | Frontend            | The frontend owns this deterministic validation, derivation, or interaction state.  | Frontend                        | ✅ Met     |
 
 **Accounting:** An external payout is booked by [`UC-EXP-01`](../accounting/journal-entry-catalogue.md#uc-exp-01--approved-expense-payout);
 a transfer to another known company pocket is
@@ -429,17 +427,17 @@ a transfer to another known company pocket is
 
 ### Test Coverage
 
-| Acceptance Criterion | Expected Coverage         | Current Coverage                                      | Status     |
-| -------------------- | ------------------------- | ----------------------------------------------------- | ---------- |
-| `AC-US-EXP-003-01`   | Integrated E2E + Contract | Integrated E2E + Mocked browser + Frontend + Contract | ✅ Met     |
-| `AC-US-EXP-003-02`   | Integrated E2E + Contract | Integrated E2E + Mocked browser + Frontend + Contract | ✅ Met     |
-| `AC-US-EXP-003-03`   | Integrated E2E + Backend  | Integrated E2E + Mocked browser + Frontend + Backend  | ✅ Met     |
-| `AC-US-EXP-003-04`   | Backend + Contract        | Backend + Contract                                    | ✅ Met     |
-| `AC-US-EXP-003-05`   | Contract                  | None linked                                           | ❌ Missing |
-| `AC-US-EXP-003-06`   | Contract                  | None linked                                           | ❌ Missing |
-| `AC-US-EXP-003-07`   | Mocked browser            | None linked                                           | ❌ Missing |
-| `AC-US-EXP-003-08`   | Mocked browser            | None linked                                           | ❌ Missing |
-| `AC-US-EXP-003-09`   | Frontend                  | None linked                                           | ❌ Missing |
+| Acceptance Criterion | Responsibilities    | Required Evidence         | Proof Rationale                                                                          | Current Evidence                                      | Status     |
+| -------------------- | ------------------- | ------------------------- | ---------------------------------------------------------------------------------------- | ----------------------------------------------------- | ---------- |
+| `AC-US-EXP-003-01`   | Frontend + Contract | Integrated E2E + Contract | The real wallet/chain journey and its focused on-chain invariant need independent proof. | Integrated E2E + Mocked browser + Frontend + Contract | ✅ Met     |
+| `AC-US-EXP-003-02`   | Frontend + Contract | Integrated E2E + Contract | The real wallet/chain journey and its focused on-chain invariant need independent proof. | Integrated E2E + Mocked browser + Frontend + Contract | ✅ Met     |
+| `AC-US-EXP-003-03`   | Frontend + Backend  | Integrated E2E + Backend  | The real browser/API journey and its focused persistence rule need independent proof.    | Integrated E2E + Mocked browser + Frontend + Backend  | ✅ Met     |
+| `AC-US-EXP-003-04`   | Backend + Contract  | Backend + Contract        | API authorization and contract enforcement can fail independently.                       | Backend + Contract                                    | ✅ Met     |
+| `AC-US-EXP-003-05`   | Contract            | Contract                  | The contract owns this on-chain authorization, invariant, or state transition.           | None linked                                           | ❌ Missing |
+| `AC-US-EXP-003-06`   | Contract            | Contract                  | The contract owns this on-chain authorization, invariant, or state transition.           | None linked                                           | ❌ Missing |
+| `AC-US-EXP-003-07`   | Frontend            | Mocked browser            | The user interaction needs browser-level proof with controlled dependency outcomes.      | None linked                                           | ❌ Missing |
+| `AC-US-EXP-003-08`   | Frontend            | Mocked browser            | The user interaction needs browser-level proof with controlled dependency outcomes.      | None linked                                           | ❌ Missing |
+| `AC-US-EXP-003-09`   | Frontend            | Frontend                  | The frontend owns this deterministic validation, derivation, or interaction state.       | None linked                                           | ❌ Missing |
 
 **Accounting:** Changing an approval's active state moves no money and creates no journal entry.
 
@@ -477,20 +475,20 @@ a transfer to another known company pocket is
 
 ### Test Coverage
 
-| Acceptance Criterion | Expected Coverage         | Current Coverage                | Status          |
-| -------------------- | ------------------------- | ------------------------------- | --------------- |
-| `AC-US-EXP-004-01`   | Integrated E2E            | Mocked browser + Frontend       | ⚠️ Insufficient |
-| `AC-US-EXP-004-02`   | Integrated E2E            | Integrated E2E + Mocked browser | ✅ Met          |
-| `AC-US-EXP-004-03`   | Mocked browser + Frontend | Mocked browser + Frontend       | ✅ Met          |
-| `AC-US-EXP-004-04`   | Integrated E2E            | Integrated E2E + Frontend       | ✅ Met          |
-| `AC-US-EXP-004-05`   | Mocked browser            | None linked                     | ❌ Missing      |
-| `AC-US-EXP-004-06`   | Mocked browser            | Mocked browser                  | ✅ Met          |
-| `AC-US-EXP-004-07`   | Frontend                  | Frontend                        | ✅ Met          |
-| `AC-US-EXP-004-08`   | Mocked browser            | Mocked browser                  | ✅ Met          |
-| `AC-US-EXP-004-09`   | Frontend                  | Frontend                        | ✅ Met          |
-| `AC-US-EXP-004-10`   | Frontend                  | Frontend                        | ✅ Met          |
-| `AC-US-EXP-004-11`   | Frontend                  | Frontend                        | ✅ Met          |
-| `AC-US-EXP-004-12`   | Frontend                  | Frontend                        | ✅ Met          |
+| Acceptance Criterion | Responsibilities    | Required Evidence         | Proof Rationale                                                                     | Current Evidence                | Status          |
+| -------------------- | ------------------- | ------------------------- | ----------------------------------------------------------------------------------- | ------------------------------- | --------------- |
+| `AC-US-EXP-004-01`   | Frontend + Contract | Integrated E2E            | The wallet/chain hand-off and resulting user-visible state must work together.      | Mocked browser + Frontend       | ⚠️ Insufficient |
+| `AC-US-EXP-004-02`   | Frontend + Contract | Integrated E2E            | The wallet/chain hand-off and resulting user-visible state must work together.      | Integrated E2E + Mocked browser | ✅ Met          |
+| `AC-US-EXP-004-03`   | Frontend            | Mocked browser + Frontend | The controlled browser branch and frontend orchestration need focused proof.        | Mocked browser + Frontend       | ✅ Met          |
+| `AC-US-EXP-004-04`   | Frontend + Contract | Integrated E2E            | The wallet/chain hand-off and resulting user-visible state must work together.      | Integrated E2E + Frontend       | ✅ Met          |
+| `AC-US-EXP-004-05`   | Frontend            | Mocked browser            | The user interaction needs browser-level proof with controlled dependency outcomes. | None linked                     | ❌ Missing      |
+| `AC-US-EXP-004-06`   | Frontend            | Mocked browser            | The user interaction needs browser-level proof with controlled dependency outcomes. | Mocked browser                  | ✅ Met          |
+| `AC-US-EXP-004-07`   | Frontend            | Frontend                  | The frontend owns this deterministic validation, derivation, or interaction state.  | Frontend                        | ✅ Met          |
+| `AC-US-EXP-004-08`   | Frontend            | Mocked browser            | The user interaction needs browser-level proof with controlled dependency outcomes. | Mocked browser                  | ✅ Met          |
+| `AC-US-EXP-004-09`   | Frontend            | Frontend                  | The frontend owns this deterministic validation, derivation, or interaction state.  | Frontend                        | ✅ Met          |
+| `AC-US-EXP-004-10`   | Frontend            | Frontend                  | The frontend owns this deterministic validation, derivation, or interaction state.  | Frontend                        | ✅ Met          |
+| `AC-US-EXP-004-11`   | Frontend            | Frontend                  | The frontend owns this deterministic validation, derivation, or interaction state.  | Frontend                        | ✅ Met          |
+| `AC-US-EXP-004-12`   | Frontend            | Frontend                  | The frontend owns this deterministic validation, derivation, or interaction state.  | Frontend                        | ✅ Met          |
 
 **Dependencies:** Current Expense Account contract and available API and chain providers
 
@@ -525,19 +523,19 @@ a transfer to another known company pocket is
 
 ### Test Coverage
 
-| Acceptance Criterion | Expected Coverage         | Current Coverage                           | Status          |
-| -------------------- | ------------------------- | ------------------------------------------ | --------------- |
-| `AC-US-SAFE-001-01`  | Integrated E2E            | Integrated E2E + Mocked browser            | ✅ Met          |
-| `AC-US-SAFE-001-02`  | Integrated E2E            | Mocked browser                             | ⚠️ Insufficient |
-| `AC-US-SAFE-001-03`  | Integrated E2E            | Integrated E2E + Mocked browser + Frontend | ✅ Met          |
-| `AC-US-SAFE-001-04`  | Frontend                  | Frontend                                   | ✅ Met          |
-| `AC-US-SAFE-001-05`  | Integrated E2E + Contract | Integrated E2E + Mocked browser + Contract | ✅ Met          |
-| `AC-US-SAFE-001-06`  | Integrated E2E            | None linked                                | ❌ Missing      |
-| `AC-US-SAFE-001-07`  | Frontend                  | Frontend                                   | ✅ Met          |
-| `AC-US-SAFE-001-08`  | Frontend                  | Frontend                                   | ✅ Met          |
-| `AC-US-SAFE-001-09`  | Frontend                  | Frontend                                   | ✅ Met          |
-| `AC-US-SAFE-001-10`  | Frontend                  | Frontend                                   | ✅ Met          |
-| `AC-US-SAFE-001-11`  | Mocked browser            | None linked                                | ❌ Missing      |
+| Acceptance Criterion | Responsibilities    | Required Evidence         | Proof Rationale                                                                          | Current Evidence                           | Status          |
+| -------------------- | ------------------- | ------------------------- | ---------------------------------------------------------------------------------------- | ------------------------------------------ | --------------- |
+| `AC-US-SAFE-001-01`  | Frontend + Contract | Integrated E2E            | The wallet/chain hand-off and resulting user-visible state must work together.           | Integrated E2E + Mocked browser            | ✅ Met          |
+| `AC-US-SAFE-001-02`  | Frontend + Contract | Integrated E2E            | The wallet/chain hand-off and resulting user-visible state must work together.           | Mocked browser                             | ⚠️ Insufficient |
+| `AC-US-SAFE-001-03`  | Frontend + Backend  | Integrated E2E            | The browser/API hand-off and persisted user-visible state must work together.            | Integrated E2E + Mocked browser + Frontend | ✅ Met          |
+| `AC-US-SAFE-001-04`  | Frontend            | Frontend                  | The frontend owns this deterministic validation, derivation, or interaction state.       | Frontend                                   | ✅ Met          |
+| `AC-US-SAFE-001-05`  | Frontend + Contract | Integrated E2E + Contract | The real wallet/chain journey and its focused on-chain invariant need independent proof. | Integrated E2E + Mocked browser + Contract | ✅ Met          |
+| `AC-US-SAFE-001-06`  | Frontend + Contract | Integrated E2E            | The wallet/chain hand-off and resulting user-visible state must work together.           | None linked                                | ❌ Missing      |
+| `AC-US-SAFE-001-07`  | Frontend            | Frontend                  | The frontend owns this deterministic validation, derivation, or interaction state.       | Frontend                                   | ✅ Met          |
+| `AC-US-SAFE-001-08`  | Frontend            | Frontend                  | The frontend owns this deterministic validation, derivation, or interaction state.       | Frontend                                   | ✅ Met          |
+| `AC-US-SAFE-001-09`  | Frontend            | Frontend                  | The frontend owns this deterministic validation, derivation, or interaction state.       | Frontend                                   | ✅ Met          |
+| `AC-US-SAFE-001-10`  | Frontend            | Frontend                  | The frontend owns this deterministic validation, derivation, or interaction state.       | Frontend                                   | ✅ Met          |
+| `AC-US-SAFE-001-11`  | Frontend            | Mocked browser            | The user interaction needs browser-level proof with controlled dependency outcomes.      | None linked                                | ❌ Missing      |
 
 **Dependencies:** Current company and active network
 
@@ -568,16 +566,16 @@ a transfer to another known company pocket is
 
 ### Test Coverage
 
-| Acceptance Criterion | Expected Coverage | Current Coverage          | Status          |
-| -------------------- | ----------------- | ------------------------- | --------------- |
-| `AC-US-SAFE-002-01`  | Integrated E2E    | Mocked browser + Frontend | ⚠️ Insufficient |
-| `AC-US-SAFE-002-02`  | Integrated E2E    | Mocked browser + Frontend | ⚠️ Insufficient |
-| `AC-US-SAFE-002-03`  | Mocked browser    | None linked               | ❌ Missing      |
-| `AC-US-SAFE-002-04`  | Mocked browser    | Mocked browser            | ✅ Met          |
-| `AC-US-SAFE-002-05`  | Frontend          | None linked               | ❌ Missing      |
-| `AC-US-SAFE-002-06`  | Mocked browser    | None linked               | ❌ Missing      |
-| `AC-US-SAFE-002-07`  | Mocked browser    | None linked               | ❌ Missing      |
-| `AC-US-SAFE-002-08`  | Mocked browser    | None linked               | ❌ Missing      |
+| Acceptance Criterion | Responsibilities    | Required Evidence | Proof Rationale                                                                     | Current Evidence          | Status          |
+| -------------------- | ------------------- | ----------------- | ----------------------------------------------------------------------------------- | ------------------------- | --------------- |
+| `AC-US-SAFE-002-01`  | Frontend + Contract | Integrated E2E    | The wallet/chain hand-off and resulting user-visible state must work together.      | Mocked browser + Frontend | ⚠️ Insufficient |
+| `AC-US-SAFE-002-02`  | Frontend + Contract | Integrated E2E    | The wallet/chain hand-off and resulting user-visible state must work together.      | Mocked browser + Frontend | ⚠️ Insufficient |
+| `AC-US-SAFE-002-03`  | Frontend            | Mocked browser    | The user interaction needs browser-level proof with controlled dependency outcomes. | None linked               | ❌ Missing      |
+| `AC-US-SAFE-002-04`  | Frontend            | Mocked browser    | The user interaction needs browser-level proof with controlled dependency outcomes. | Mocked browser            | ✅ Met          |
+| `AC-US-SAFE-002-05`  | Frontend            | Frontend          | The frontend owns this deterministic validation, derivation, or interaction state.  | None linked               | ❌ Missing      |
+| `AC-US-SAFE-002-06`  | Frontend            | Mocked browser    | The user interaction needs browser-level proof with controlled dependency outcomes. | None linked               | ❌ Missing      |
+| `AC-US-SAFE-002-07`  | Frontend            | Mocked browser    | The user interaction needs browser-level proof with controlled dependency outcomes. | None linked               | ❌ Missing      |
+| `AC-US-SAFE-002-08`  | Frontend            | Mocked browser    | The user interaction needs browser-level proof with controlled dependency outcomes. | None linked               | ❌ Missing      |
 
 **Dependencies:** US-SAFE-001
 
@@ -609,17 +607,17 @@ a transfer to another known company pocket is
 
 ### Test Coverage
 
-| Acceptance Criterion | Expected Coverage         | Current Coverage          | Status          |
-| -------------------- | ------------------------- | ------------------------- | --------------- |
-| `AC-US-SAFE-003-01`  | Integrated E2E            | Mocked browser + Frontend | ⚠️ Insufficient |
-| `AC-US-SAFE-003-02`  | Integrated E2E            | Mocked browser + Frontend | ⚠️ Insufficient |
-| `AC-US-SAFE-003-03`  | Integrated E2E            | Mocked browser + Frontend | ⚠️ Insufficient |
-| `AC-US-SAFE-003-04`  | Mocked browser + Frontend | Mocked browser + Frontend | ✅ Met          |
-| `AC-US-SAFE-003-05`  | Mocked browser            | Mocked browser            | ✅ Met          |
-| `AC-US-SAFE-003-06`  | Integrated E2E            | Mocked browser            | ⚠️ Insufficient |
-| `AC-US-SAFE-003-07`  | Integrated E2E            | None linked               | ❌ Missing      |
-| `AC-US-SAFE-003-08`  | Mocked browser            | None linked               | ❌ Missing      |
-| `AC-US-SAFE-003-09`  | Mocked browser            | Mocked browser            | ✅ Met          |
+| Acceptance Criterion | Responsibilities    | Required Evidence         | Proof Rationale                                                                     | Current Evidence          | Status          |
+| -------------------- | ------------------- | ------------------------- | ----------------------------------------------------------------------------------- | ------------------------- | --------------- |
+| `AC-US-SAFE-003-01`  | Frontend + Contract | Integrated E2E            | The wallet/chain hand-off and resulting user-visible state must work together.      | Mocked browser + Frontend | ⚠️ Insufficient |
+| `AC-US-SAFE-003-02`  | Frontend + Contract | Integrated E2E            | The wallet/chain hand-off and resulting user-visible state must work together.      | Mocked browser + Frontend | ⚠️ Insufficient |
+| `AC-US-SAFE-003-03`  | Frontend + Contract | Integrated E2E            | The wallet/chain hand-off and resulting user-visible state must work together.      | Mocked browser + Frontend | ⚠️ Insufficient |
+| `AC-US-SAFE-003-04`  | Frontend            | Mocked browser + Frontend | The controlled browser branch and frontend orchestration need focused proof.        | Mocked browser + Frontend | ✅ Met          |
+| `AC-US-SAFE-003-05`  | Frontend            | Mocked browser            | The user interaction needs browser-level proof with controlled dependency outcomes. | Mocked browser            | ✅ Met          |
+| `AC-US-SAFE-003-06`  | Frontend + Contract | Integrated E2E            | The wallet/chain hand-off and resulting user-visible state must work together.      | Mocked browser            | ⚠️ Insufficient |
+| `AC-US-SAFE-003-07`  | Frontend + Contract | Integrated E2E            | The wallet/chain hand-off and resulting user-visible state must work together.      | None linked               | ❌ Missing      |
+| `AC-US-SAFE-003-08`  | Frontend            | Mocked browser            | The user interaction needs browser-level proof with controlled dependency outcomes. | None linked               | ❌ Missing      |
+| `AC-US-SAFE-003-09`  | Frontend            | Mocked browser            | The user interaction needs browser-level proof with controlled dependency outcomes. | Mocked browser            | ✅ Met          |
 
 **Accounting:** A confirmed transfer is classified as
 [`UC-BANK-02`](../accounting/journal-entry-catalogue.md#uc-bank-02--external-cash-receipt),
@@ -656,17 +654,17 @@ a transfer to another known company pocket is
 
 ### Test Coverage
 
-| Acceptance Criterion | Expected Coverage | Current Coverage          | Status          |
-| -------------------- | ----------------- | ------------------------- | --------------- |
-| `AC-US-SAFE-004-01`  | Integrated E2E    | Mocked browser + Frontend | ⚠️ Insufficient |
-| `AC-US-SAFE-004-02`  | Integrated E2E    | Mocked browser + Frontend | ⚠️ Insufficient |
-| `AC-US-SAFE-004-03`  | Integrated E2E    | Mocked browser + Frontend | ⚠️ Insufficient |
-| `AC-US-SAFE-004-04`  | Integrated E2E    | Mocked browser            | ⚠️ Insufficient |
-| `AC-US-SAFE-004-05`  | Frontend          | Frontend                  | ✅ Met          |
-| `AC-US-SAFE-004-06`  | Frontend          | Frontend                  | ✅ Met          |
-| `AC-US-SAFE-004-07`  | Contract          | None linked               | ❌ Missing      |
-| `AC-US-SAFE-004-08`  | Frontend          | Frontend                  | ✅ Met          |
-| `AC-US-SAFE-004-09`  | Mocked browser    | None linked               | ❌ Missing      |
+| Acceptance Criterion | Responsibilities    | Required Evidence | Proof Rationale                                                                     | Current Evidence          | Status          |
+| -------------------- | ------------------- | ----------------- | ----------------------------------------------------------------------------------- | ------------------------- | --------------- |
+| `AC-US-SAFE-004-01`  | Frontend + Contract | Integrated E2E    | The wallet/chain hand-off and resulting user-visible state must work together.      | Mocked browser + Frontend | ⚠️ Insufficient |
+| `AC-US-SAFE-004-02`  | Frontend + Contract | Integrated E2E    | The wallet/chain hand-off and resulting user-visible state must work together.      | Mocked browser + Frontend | ⚠️ Insufficient |
+| `AC-US-SAFE-004-03`  | Frontend + Contract | Integrated E2E    | The wallet/chain hand-off and resulting user-visible state must work together.      | Mocked browser + Frontend | ⚠️ Insufficient |
+| `AC-US-SAFE-004-04`  | Frontend + Contract | Integrated E2E    | The wallet/chain hand-off and resulting user-visible state must work together.      | Mocked browser            | ⚠️ Insufficient |
+| `AC-US-SAFE-004-05`  | Frontend            | Frontend          | The frontend owns this deterministic validation, derivation, or interaction state.  | Frontend                  | ✅ Met          |
+| `AC-US-SAFE-004-06`  | Frontend            | Frontend          | The frontend owns this deterministic validation, derivation, or interaction state.  | Frontend                  | ✅ Met          |
+| `AC-US-SAFE-004-07`  | Contract            | Contract          | The contract owns this on-chain authorization, invariant, or state transition.      | None linked               | ❌ Missing      |
+| `AC-US-SAFE-004-08`  | Frontend            | Frontend          | The frontend owns this deterministic validation, derivation, or interaction state.  | Frontend                  | ✅ Met          |
+| `AC-US-SAFE-004-09`  | Frontend            | Mocked browser    | The user interaction needs browser-level proof with controlled dependency outcomes. | None linked               | ❌ Missing      |
 
 **Dependencies:** US-SAFE-006
 
@@ -698,17 +696,17 @@ a transfer to another known company pocket is
 
 ### Test Coverage
 
-| Acceptance Criterion | Expected Coverage | Current Coverage | Status |
-| -------------------- | ----------------- | ---------------- | ------ |
-| `AC-US-SAFE-005-01`  | Mocked browser    | Mocked browser   | ✅ Met |
-| `AC-US-SAFE-005-02`  | Mocked browser    | Mocked browser   | ✅ Met |
-| `AC-US-SAFE-005-03`  | Mocked browser    | Mocked browser   | ✅ Met |
-| `AC-US-SAFE-005-04`  | Mocked browser    | Mocked browser   | ✅ Met |
-| `AC-US-SAFE-005-05`  | Frontend          | Frontend         | ✅ Met |
-| `AC-US-SAFE-005-06`  | Frontend          | Frontend         | ✅ Met |
-| `AC-US-SAFE-005-07`  | Frontend          | Frontend         | ✅ Met |
-| `AC-US-SAFE-005-08`  | Frontend          | Frontend         | ✅ Met |
-| `AC-US-SAFE-005-09`  | Frontend          | Frontend         | ✅ Met |
+| Acceptance Criterion | Responsibilities | Required Evidence | Proof Rationale                                                                     | Current Evidence | Status |
+| -------------------- | ---------------- | ----------------- | ----------------------------------------------------------------------------------- | ---------------- | ------ |
+| `AC-US-SAFE-005-01`  | Frontend         | Mocked browser    | The user interaction needs browser-level proof with controlled dependency outcomes. | Mocked browser   | ✅ Met |
+| `AC-US-SAFE-005-02`  | Frontend         | Mocked browser    | The user interaction needs browser-level proof with controlled dependency outcomes. | Mocked browser   | ✅ Met |
+| `AC-US-SAFE-005-03`  | Frontend         | Mocked browser    | The user interaction needs browser-level proof with controlled dependency outcomes. | Mocked browser   | ✅ Met |
+| `AC-US-SAFE-005-04`  | Frontend         | Mocked browser    | The user interaction needs browser-level proof with controlled dependency outcomes. | Mocked browser   | ✅ Met |
+| `AC-US-SAFE-005-05`  | Frontend         | Frontend          | The frontend owns this deterministic validation, derivation, or interaction state.  | Frontend         | ✅ Met |
+| `AC-US-SAFE-005-06`  | Frontend         | Frontend          | The frontend owns this deterministic validation, derivation, or interaction state.  | Frontend         | ✅ Met |
+| `AC-US-SAFE-005-07`  | Frontend         | Frontend          | The frontend owns this deterministic validation, derivation, or interaction state.  | Frontend         | ✅ Met |
+| `AC-US-SAFE-005-08`  | Frontend         | Frontend          | The frontend owns this deterministic validation, derivation, or interaction state.  | Frontend         | ✅ Met |
+| `AC-US-SAFE-005-09`  | Frontend         | Frontend          | The frontend owns this deterministic validation, derivation, or interaction state.  | Frontend         | ✅ Met |
 
 **Dependencies:** US-SAFE-001
 
@@ -742,18 +740,18 @@ a transfer to another known company pocket is
 
 ### Test Coverage
 
-| Acceptance Criterion | Expected Coverage | Current Coverage | Status     |
-| -------------------- | ----------------- | ---------------- | ---------- |
-| `AC-US-SAFE-006-01`  | Mocked browser    | Mocked browser   | ✅ Met     |
-| `AC-US-SAFE-006-02`  | Mocked browser    | Mocked browser   | ✅ Met     |
-| `AC-US-SAFE-006-03`  | Mocked browser    | Mocked browser   | ✅ Met     |
-| `AC-US-SAFE-006-04`  | Frontend          | Frontend         | ✅ Met     |
-| `AC-US-SAFE-006-05`  | Frontend          | Frontend         | ✅ Met     |
-| `AC-US-SAFE-006-06`  | Mocked browser    | Mocked browser   | ✅ Met     |
-| `AC-US-SAFE-006-07`  | Frontend          | None linked      | ❌ Missing |
-| `AC-US-SAFE-006-08`  | Frontend          | Frontend         | ✅ Met     |
-| `AC-US-SAFE-006-09`  | Mocked browser    | None linked      | ❌ Missing |
-| `AC-US-SAFE-006-10`  | Mocked browser    | None linked      | ❌ Missing |
+| Acceptance Criterion | Responsibilities | Required Evidence | Proof Rationale                                                                     | Current Evidence | Status     |
+| -------------------- | ---------------- | ----------------- | ----------------------------------------------------------------------------------- | ---------------- | ---------- |
+| `AC-US-SAFE-006-01`  | Frontend         | Mocked browser    | The user interaction needs browser-level proof with controlled dependency outcomes. | Mocked browser   | ✅ Met     |
+| `AC-US-SAFE-006-02`  | Frontend         | Mocked browser    | The user interaction needs browser-level proof with controlled dependency outcomes. | Mocked browser   | ✅ Met     |
+| `AC-US-SAFE-006-03`  | Frontend         | Mocked browser    | The user interaction needs browser-level proof with controlled dependency outcomes. | Mocked browser   | ✅ Met     |
+| `AC-US-SAFE-006-04`  | Frontend         | Frontend          | The frontend owns this deterministic validation, derivation, or interaction state.  | Frontend         | ✅ Met     |
+| `AC-US-SAFE-006-05`  | Frontend         | Frontend          | The frontend owns this deterministic validation, derivation, or interaction state.  | Frontend         | ✅ Met     |
+| `AC-US-SAFE-006-06`  | Frontend         | Mocked browser    | The user interaction needs browser-level proof with controlled dependency outcomes. | Mocked browser   | ✅ Met     |
+| `AC-US-SAFE-006-07`  | Frontend         | Frontend          | The frontend owns this deterministic validation, derivation, or interaction state.  | None linked      | ❌ Missing |
+| `AC-US-SAFE-006-08`  | Frontend         | Frontend          | The frontend owns this deterministic validation, derivation, or interaction state.  | Frontend         | ✅ Met     |
+| `AC-US-SAFE-006-09`  | Frontend         | Mocked browser    | The user interaction needs browser-level proof with controlled dependency outcomes. | None linked      | ❌ Missing |
+| `AC-US-SAFE-006-10`  | Frontend         | Mocked browser    | The user interaction needs browser-level proof with controlled dependency outcomes. | None linked      | ❌ Missing |
 
 **Dependencies:** US-SAFE-001
 
