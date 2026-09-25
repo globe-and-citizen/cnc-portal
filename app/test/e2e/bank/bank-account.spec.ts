@@ -49,10 +49,24 @@ test.afterEach(async () => {
   await revertChain(snapshotId)
 })
 
-test.describe('Bank Account', { tag: '@browser' }, () => {
+test.describe('Bank Account', { tag: ['@browser', '@mocked'] }, () => {
   test.describe.configure({ mode: 'serial' })
   test.setTimeout(180_000)
 
+  /**
+   * Covers:
+   * - [AC-US-BANK-001-01]
+   * - [AC-US-BANK-001-02]
+   * - [AC-US-BANK-001-03]
+   * - [AC-US-BANK-001-04]
+   * - [AC-US-BANK-001-05]
+   * - [AC-US-BANK-001-09]
+   * - [AC-US-BANK-003-01]
+   * - [AC-US-BANK-003-02]
+   * - [AC-US-BANK-003-03]
+   * - [AC-US-BANK-003-06]
+   * - [AC-US-BANK-003-07]
+   */
   test(
     'funds native and ERC-20 balances, enforces deposit rules, and exposes complete history controls',
     { tag: ['@US-BANK-001', '@US-BANK-003'] },
@@ -145,6 +159,15 @@ test.describe('Bank Account', { tag: '@browser' }, () => {
     }
   )
 
+  /**
+   * Covers:
+   * - [AC-US-BANK-002-01]
+   * - [AC-US-BANK-002-03]
+   * - [AC-US-BANK-002-09]
+   * - [AC-US-BANK-002-10]
+   * - [AC-US-BANK-002-12]
+   * - [AC-US-BANK-002-13]
+   */
   test(
     'transfers native and ERC-20 funds with exact fees and preserves balances on failure or rejection',
     { tag: '@US-BANK-002' },
@@ -217,6 +240,11 @@ test.describe('Bank Account', { tag: '@browser' }, () => {
     }
   )
 
+  /**
+   * Covers:
+   * - [AC-US-BANK-002-02]
+   * - [AC-US-BANK-002-05]
+   */
   test(
     'submits a Bank transfer as a Board action without moving funds immediately',
     { tag: '@US-BANK-002' },
@@ -243,6 +271,17 @@ test.describe('Bank Account', { tag: '@browser' }, () => {
     }
   )
 
+  /**
+   * Covers:
+   * - [AC-US-BANK-001-01]
+   * - [AC-US-BANK-001-02]
+   * - [AC-US-BANK-001-03]
+   * - [AC-US-BANK-003-01]
+   * - [AC-US-BANK-003-02]
+   * - [AC-US-BANK-003-03]
+   * - [AC-US-BANK-003-04]
+   * - [AC-US-BANK-003-07]
+   */
   test(
     'lets a non-owner member fund and inspect the Bank but not transfer or cash out',
     { tag: ['@US-BANK-001', '@US-BANK-003'] },
@@ -251,6 +290,12 @@ test.describe('Bank Account', { tag: '@browser' }, () => {
     }
   )
 
+  /**
+   * Covers:
+   * - [AC-US-BANK-004-01]
+   * - [AC-US-BANK-004-06]
+   * - [AC-US-BANK-004-07]
+   */
   test(
     'keeps the Bank history usable when RPC log reads fail',
     { tag: '@US-BANK-003' },
@@ -273,15 +318,19 @@ test.describe('Bank Account', { tag: '@browser' }, () => {
     }
   )
 
-  test('disables an unfunded cash-out run', { tag: '@US-BANK-004' }, async ({ page }) => {
-    await signInAndOpenTeam(page, fixture)
-    await expect(page.locator('[data-test="cash-out-all-button"]')).toBeDisabled({
-      timeout: 30_000
-    })
-  })
+  test(
+    '[AC-US-BANK-004-08] disables an unfunded cash-out run',
+    { tag: '@US-BANK-004' },
+    async ({ page }) => {
+      await signInAndOpenTeam(page, fixture)
+      await expect(page.locator('[data-test="cash-out-all-button"]')).toBeDisabled({
+        timeout: 30_000
+      })
+    }
+  )
 
   test(
-    'blocks cash-out for an archived team even when the Bank is funded',
+    '[AC-US-BANK-004-03] blocks cash-out for an archived team even when the Bank is funded',
     { tag: '@US-BANK-004' },
     async ({ page }) => {
       await sendToken(fixture.usdc, fixture.bank, '1')

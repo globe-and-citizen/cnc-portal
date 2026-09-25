@@ -195,6 +195,12 @@ describe('Bank', () => {
 
   describe('Core Functions', () => {
     describe('Deposits and Transfers', () => {
+      /**
+       * Covers:
+       * - [AC-US-BANK-002-03]
+       * - [AC-US-BANK-002-04]
+       * - [AC-US-BANK-002-09]
+       */
       it('allows the owner to deposit and transfer ETH with fee', async () => {
         const depositAmount = ethers.parseEther('10')
         const transferAmount = ethers.parseEther('1')
@@ -220,6 +226,11 @@ describe('Bank', () => {
           .withArgs('BANK', await bankProxy.getAddress(), ethers.ZeroAddress, fee)
       })
 
+      /**
+       * Covers:
+       * - [AC-US-BANK-002-06]
+       * - [AC-US-BANK-002-07]
+       */
       it('fails for invalid transfer params and insufficient balance', async () => {
         const transferAmount = ethers.parseEther('1')
         await owner.sendTransaction({
@@ -241,6 +252,11 @@ describe('Bank', () => {
           .withArgs(ethers.parseEther('100'), ethers.parseEther('2'))
       })
 
+      /**
+       * Covers:
+       * - [AC-US-BANK-001-01]
+       * - [AC-US-BANK-002-04]
+       */
       it('allows any address to deposit but not transfer funds', async () => {
         const depositAmount = ethers.parseEther('5')
         const transferAmount = ethers.parseEther('1')
@@ -297,7 +313,7 @@ describe('Bank', () => {
   })
 
   describe('Token Operations', () => {
-    it('allows depositing supported tokens', async () => {
+    it('[AC-US-BANK-001-02] allows depositing supported tokens', async () => {
       const amount = ethers.parseUnits('100', 6)
       await mockUSDT.approve(await bankProxy.getAddress(), amount)
 
@@ -306,7 +322,7 @@ describe('Bank', () => {
         .withArgs(owner.address, await mockUSDT.getAddress(), amount)
     })
 
-    it('does not allow depositing unsupported tokens', async () => {
+    it('[AC-US-BANK-001-06] rejects deposits of unsupported tokens', async () => {
       const MockToken = await ethers.getContractFactory('MockERC20')
       const unsupportedToken = (await MockToken.deploy(
         'UNSUPPORTED',
@@ -318,13 +334,19 @@ describe('Bank', () => {
         .withArgs(await unsupportedToken.getAddress())
     })
 
-    it('does not allow depositing zero amount', async () => {
+    it('[AC-US-BANK-001-04] rejects a zero token deposit', async () => {
       await expect(
         bankProxy.connect(owner).depositToken(await mockUSDT.getAddress(), 0)
       ).to.be.revertedWithCustomError(bankProxy, ERRORS.ZERO_AMOUNT)
     })
 
-    it('allows owner to transfer tokens with fee', async () => {
+    /**
+     * Covers:
+     * - [AC-US-BANK-002-03]
+     * - [AC-US-BANK-002-04]
+     * - [AC-US-BANK-002-10]
+     */
+    it('allows the owner to transfer supported tokens with a fee', async () => {
       const amount = ethers.parseUnits('10', 6)
       await mockUSDT.approve(await bankProxy.getAddress(), amount)
       await bankProxy.connect(owner).depositToken(await mockUSDT.getAddress(), amount)
@@ -350,6 +372,11 @@ describe('Bank', () => {
         .withArgs('BANK', await bankProxy.getAddress(), await mockUSDT.getAddress(), fee)
     })
 
+    /**
+     * Covers:
+     * - [AC-US-BANK-002-06]
+     * - [AC-US-BANK-002-07]
+     */
     it('rejects invalid token transfer requests', async () => {
       const MockToken = await ethers.getContractFactory('MockERC20')
       const unsupportedToken = (await MockToken.deploy(
@@ -370,7 +397,7 @@ describe('Bank', () => {
       ).to.be.revertedWithCustomError(bankProxy, ERRORS.ZERO_AMOUNT)
     })
 
-    it('does not allow transferring more than token balance', async () => {
+    it('[AC-US-BANK-002-06] rejects a token transfer above the available balance', async () => {
       const amount = ethers.parseUnits('10', 6)
       await mockUSDT.approve(await bankProxy.getAddress(), amount)
       await bankProxy.connect(owner).depositToken(await mockUSDT.getAddress(), amount)

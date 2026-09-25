@@ -20,7 +20,7 @@ type TransactionFixture = {
 }
 
 describe('transactionHistoryUtil', () => {
-  it('groups rows by tx hash and keeps first-seen parent order', () => {
+  it('[AC-US-BANK-003-05] groups rows by tx hash and keeps first-seen parent order', () => {
     const grouped = groupTransactionsByTxHash<TransactionFixture>([
       { txHash: '0xaaa', type: 'deposit', timestamp: 300 },
       { txHash: '0xbbb', type: 'transfer', timestamp: 200 },

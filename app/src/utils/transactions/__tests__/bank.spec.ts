@@ -206,7 +206,7 @@ describe('bankTransactionUtil', () => {
     })
   })
 
-  it('drops raw token transfers already accounted for by a Bank event', () => {
+  it('[AC-US-BANK-003-06] keeps direct transfers once and removes event-backed duplicates', () => {
     const events = buildBankEvents()
     // A raw incoming transfer sharing a tx + token with the tokenDeposit above
     // is the same movement — it must not surface a second time.
