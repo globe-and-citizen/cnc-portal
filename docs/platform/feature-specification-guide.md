@@ -265,26 +265,46 @@ to the product `Status` column: delivery, representative automated evidence, E2E
 The table is optional while this model is being piloted. When present, keep one row per story in the same stable-ID order as the status
 overview and refresh it when representative test references or E2E boundaries change.
 
-For a coverage-reviewed story, add a compact table after its acceptance criteria and before its dependencies:
+Before the detailed stories, define each proof strategy used by the feature once. A strategy combines the responsible code layers, the
+smallest required evidence set, and the reason that boundary must be tested:
+
+```markdown
+## Proof Strategy Reference
+
+| Strategy      | Responsibilities   | Required Evidence        | Proof Rationale                                           |
+| ------------- | ------------------ | ------------------------ | --------------------------------------------------------- |
+| `PS-API`      | Frontend + Backend | Integrated E2E           | The persisted API outcome must be visible.                |
+| `PS-API-RULE` | Frontend + Backend | Mocked browser + Backend | The browser handling and API rule can fail independently. |
+| `PS-BROWSER`  | Frontend           | Mocked browser           | A controlled browser branch must be proven.               |
+| `PS-BACKEND`  | Backend            | Backend                  | The backend owns the rule or persistence.                 |
+```
+
+Use stable, descriptive `PS-*` identifiers. Define only strategies used by that feature, and create a separate strategy whenever the
+responsibilities, required evidence, or boundary rationale differs. The reference table is part of the feature's coverage plan; it does not
+describe the latest test execution result.
+
+For a coverage-reviewed story, add a compact table after its acceptance criteria and before its dependencies. Refer to the strategy instead
+of repeating its three defining fields on every criterion:
 
 ```markdown
 ### Test Coverage
 
-| Acceptance Criterion   | Responsibilities   | Required Evidence        | Proof Rationale                                          | Current Evidence | Status          |
-| ---------------------- | ------------------ | ------------------------ | -------------------------------------------------------- | ---------------- | --------------- |
-| `AC-US-FEATURE-001-01` | Frontend + Backend | Integrated E2E           | The user outcome crosses the API boundary.               | Integrated E2E   | ✅ Met          |
-| `AC-US-FEATURE-001-02` | Frontend + Backend | Mocked browser + Backend | UI handling and the backend rule can fail independently. | Mocked browser   | ⚠️ Insufficient |
-| `AC-US-FEATURE-001-03` | Backend            | Backend                  | The backend owns the authorization rule.                 | None linked      | ❌ Missing      |
+| Acceptance Criterion   | Proof Strategy | Current Evidence | Status          |
+| ---------------------- | -------------- | ---------------- | --------------- |
+| `AC-US-FEATURE-001-01` | `PS-API`       | Integrated E2E   | ✅ Met          |
+| `AC-US-FEATURE-001-02` | `PS-API-RULE`  | Mocked browser   | ⚠️ Insufficient |
+| `AC-US-FEATURE-001-03` | `PS-BACKEND`   | None linked      | ❌ Missing      |
 ```
 
-- `Responsibilities` identifies the code layers that make a decision, enforce a rule, or own a state transition required by the criterion:
-  `Frontend`, `Backend`, `Contract`, or `Dashboard`. Join independent owners with `+`. A layer that only transports data is a participant,
-  not automatically a responsibility; represent a risky hand-off through the required integration evidence instead.
-- `Required Evidence` states the smallest deliberate proof set that covers those responsibilities and any material boundary risk:
-  `Integrated E2E`, `Mocked browser`, `Frontend`, `Backend`, `Contract`, or `Dashboard`. Join independently required proofs with `+`. A real
-  integrated path can prove more than one responsibility when it exercises the relevant decisions and resulting state.
-- `Proof Rationale` names the rule or boundary failure that the required evidence must detect. It explains why that proof level is necessary
-  instead of restating the criterion or merely listing the implementation stack.
+- A strategy's `Responsibilities` identifies the code layers that make a decision, enforce a rule, or own a state transition required by the
+  criterion: `Frontend`, `Backend`, `Contract`, or `Dashboard`. Join independent owners with `+`. A layer that only transports data is a
+  participant, not automatically a responsibility; represent a risky hand-off through the required integration evidence instead.
+- A strategy's `Required Evidence` states the smallest deliberate proof set that covers those responsibilities and any material boundary
+  risk: `Integrated E2E`, `Mocked browser`, `Frontend`, `Backend`, `Contract`, or `Dashboard`. Join independently required proofs with `+`.
+  A real integrated path can prove more than one responsibility when it exercises the relevant decisions and resulting state.
+- A strategy's `Proof Rationale` names the rule or boundary failure that the required evidence must detect. It explains why that proof level
+  is necessary instead of restating the criterion or merely listing the implementation stack.
+- `Proof Strategy` references one definition from the feature's `Proof Strategy Reference`. An undefined strategy ID is invalid.
 - `Current Evidence` is derived from direct representative `AC-US-*` references. `Integrated E2E` and `Mocked browser` come from the
   Playwright suite's `@integrated` or `@mocked` classification; `None linked` means no representative reference is currently registered.
 - `Status` is `✅ Met` when every required proof is present, `⚠️ Insufficient` when some proof exists but a required boundary is absent, or
