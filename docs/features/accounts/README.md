@@ -206,7 +206,7 @@ A receipt from another known company pocket is an internal transfer instead.
 | `AC-US-BANK-002-08`  | `PS-FRONTEND`          | Frontend                  | ✅ Met          |
 | `AC-US-BANK-002-09`  | `PS-CHAIN-CONTRACT`    | Integrated E2E + Contract | ✅ Met          |
 | `AC-US-BANK-002-10`  | `PS-CHAIN-CONTRACT`    | Integrated E2E + Contract | ✅ Met          |
-| `AC-US-BANK-002-11`  | `PS-BROWSER`           | Mocked browser            | ✅ Met          |
+| `AC-US-BANK-002-11`  | `PS-BROWSER`           | Mocked browser + Frontend | ✅ Met          |
 | `AC-US-BANK-002-12`  | `PS-CONTRACT`          | Mocked browser + Contract | ✅ Met          |
 | `AC-US-BANK-002-13`  | `PS-BROWSER`           | Mocked browser            | ✅ Met          |
 
@@ -786,9 +786,11 @@ a transfer to another known company pocket is
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `80b1215080fa2310037d90492cfb4bd06f53e23f`
+**Implementation evidence reviewed against:** `4860003064c58076a27bed45d99472af5cab3733`
 
-- [Bank components](../../../app/src/components/sections/BankView/),
+- [Bank deposit modal](../../../app/src/components/sections/BankView/forms/DepositModal.vue),
+  [Bank transfer modal](../../../app/src/components/sections/BankView/forms/TransferModal.vue),
+  [remaining Bank components](../../../app/src/components/sections/BankView/),
   [Expense Account components](../../../app/src/components/sections/ExpenseAccountView/),
   [Safe components](../../../app/src/components/sections/SafeView/), and
   [owner treasury withdrawal](../../../app/src/components/sections/OwnerTreasuryWithdrawAction.vue)
