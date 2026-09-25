@@ -9,7 +9,7 @@ import {
   snapshotChain,
   tokenBalance
 } from '../e2e-chain'
-import { dialogAmount, E2E_RPC_ROUTE, failLogReads } from '../e2e-page'
+import { dialogAmount, E2E_RPC_ROUTE, failLogReads, rejectNextWalletRequest } from '../e2e-page'
 import { deployBankE2EFixture, type BankE2EFixture } from '../bank/bank-chain'
 import { selectRecipient } from '../bank/bank-page'
 import { signExpenseApproval } from './expense-chain'
@@ -41,8 +41,10 @@ test.describe('Expense Account', { tag: ['@browser', '@mocked'] }, () => {
 
   /**
    * Covers:
+   * - [AC-US-EXP-001-10]
    * - [AC-US-EXP-004-01]
    * - [AC-US-EXP-004-03]
+   * - [AC-US-EXP-004-05]
    */
   test(
     'lets the owner sign a USDC approval and exposes the funded account, approval, and history',
@@ -78,6 +80,11 @@ test.describe('Expense Account', { tag: ['@browser', '@mocked'] }, () => {
 
       const reviewDialog = page.getByRole('dialog', { name: 'Review & Sign' })
       await expect(reviewDialog).toContainText('5 USDC')
+      await reviewDialog.locator('[data-test="cancel-button"]').click()
+      await expect(reviewDialog).not.toBeVisible()
+      expect(api.expenses).toHaveLength(0)
+
+      await approvalDialog.locator('[data-test="approve-button"]').click()
       await reviewDialog.locator('[data-test="approve-button"]').click()
       await expect(page.getByText('User approved successfully', { exact: true })).toBeVisible({
         timeout: 30_000
@@ -105,6 +112,9 @@ test.describe('Expense Account', { tag: ['@browser', '@mocked'] }, () => {
       await history.locator('[data-test="expense-transaction-history-type-filter"]').click()
       await page.getByRole('option', { name: 'Deposit', exact: true }).click()
       await expect(history.locator('tbody').getByText('Deposit', { exact: true })).toHaveCount(1)
+      await history.locator('[data-test="expense-transaction-history-date-select"] button').click()
+      await page.locator('[data-test="date-picker-month-previous"]').click()
+      await expect(history.getByText('No data', { exact: true })).toBeVisible()
     }
   )
 
@@ -188,6 +198,41 @@ test.describe('Expense Account', { tag: ['@browser', '@mocked'] }, () => {
       await expect(page.locator('[data-test="approve-users-button"]')).toBeDisabled()
       await expect(page.locator('[data-test="transfer-button"]')).toBeDisabled()
       await expect.poll(() => nativeBalance(fixture.expenseAccount)).toBe(0n)
+    }
+  )
+
+  /**
+   * Covers:
+   * - [AC-US-EXP-001-08]
+   * - [AC-US-EXP-003-07]
+   */
+  test(
+    'prevents an archived owner from granting or changing approvals',
+    { tag: ['@US-EXP-001', '@US-EXP-003'] },
+    async ({ page }) => {
+      const api = createExpenseApi()
+      addExpenseApproval(api, await signExpenseApproval(fixture))
+      await openExpenseAccount(page, fixture, api, { archived: true })
+
+      await expect(page.locator('[data-test="approve-users-button"]')).toBeDisabled()
+      await expect(page.locator('[data-test="disable-button"]')).toBeDisabled()
+    }
+  )
+
+  test(
+    '[AC-US-EXP-003-08] preserves the approval state when deactivation is rejected',
+    { tag: '@US-EXP-003' },
+    async ({ page }) => {
+      const api = createExpenseApi()
+      addExpenseApproval(api, await signExpenseApproval(fixture))
+      await openExpenseAccount(page, fixture, api)
+
+      await rejectNextWalletRequest(page)
+      await page.locator('[data-test="disable-button"]').click()
+      await expect(page.locator('[data-test="disable-button"]')).toBeVisible({
+        timeout: 30_000
+      })
+      await expect(page.locator('[data-test="enable-button"]')).toHaveCount(0)
     }
   )
 })

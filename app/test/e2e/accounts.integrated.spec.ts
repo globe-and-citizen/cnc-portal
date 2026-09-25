@@ -72,6 +72,7 @@ test.describe(
      * - [AC-US-BANK-002-01]
      * - [AC-US-BANK-002-03]
      * - [AC-US-BANK-002-09]
+     * - [AC-US-BANK-003-01]
      * - [AC-US-BANK-003-02]
      */
     test('deploys the company Safe and funds the Bank through the product UI', async ({ page }) => {
@@ -132,6 +133,9 @@ test.describe(
         await expect
           .poll(() => nativeBalance(feeCollector))
           .toBe(collectorBefore + transferGross - requestedNet)
+        await expect(history.getByText('Transfer', { exact: true })).toBeVisible({
+          timeout: 30_000
+        })
       } finally {
         if (!page.isClosed()) {
           await deleteCompanyThroughUi(page, company.teamId, company.team.name)
@@ -167,6 +171,7 @@ test.describe(
      * - [AC-US-EXP-003-01]
      * - [AC-US-EXP-003-02]
      * - [AC-US-EXP-003-03]
+     * - [AC-US-EXP-004-01]
      * - [AC-US-EXP-004-02]
      * - [AC-US-EXP-004-04]
      * - [AC-US-BANK-002-10]
@@ -195,7 +200,11 @@ test.describe(
 
         await openAccountFromSidebar(page, `/teams/${company.teamId}/accounts/expense-account`)
         const expense = await addressFrom(page.locator('[data-test="expense-account-address"]'))
+        await expect(page.locator('[data-test="expense-account-address"]')).toContainText(expense)
         await expect.poll(() => tokenBalance(usdc, expense)).toBe(requestedNet)
+        await expect(page.locator('[data-test="expense-account-balance"]')).toContainText('$8.00')
+        await expect(page.getByText('Month Spent', { exact: true })).toBeVisible()
+        await expect(page.getByText('Total Approved', { exact: true })).toBeVisible()
         await expect.poll(() => tokenBalance(usdc, bank)).toBe(parseUnits('10', 6) - transferGross)
         await expect
           .poll(() => tokenBalance(usdc, feeCollector))
@@ -254,6 +263,12 @@ test.describe(
         await expect(page.getByText('User approved successfully', { exact: true })).toBeVisible({
           timeout: 30_000
         })
+        await expect(
+          page
+            .locator('[data-variant="info"]')
+            .filter({ hasText: 'Total Approved' })
+            .locator('[data-test="amount"]')
+        ).toHaveText('1')
 
         const spendingContext = await browser.newContext()
         const spendingPage = await spendingContext.newPage()

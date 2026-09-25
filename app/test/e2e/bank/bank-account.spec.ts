@@ -13,6 +13,7 @@ import {
   dialogAmount,
   E2E_RPC_ROUTE,
   failLogReads,
+  openAccountFromSidebar,
   rejectNextWalletRequest,
   selectToken
 } from '../e2e-page'
@@ -58,6 +59,7 @@ test.describe('Bank Account', { tag: ['@browser', '@mocked'] }, () => {
    * - [AC-US-BANK-001-04]
    * - [AC-US-BANK-001-05]
    * - [AC-US-BANK-001-09]
+   * - [AC-US-BANK-001-10]
    * - [AC-US-BANK-003-01]
    * - [AC-US-BANK-003-03]
    * - [AC-US-BANK-003-06]
@@ -96,6 +98,13 @@ test.describe('Bank Account', { tag: ['@browser', '@mocked'] }, () => {
       await deposit.locator('[data-test="deposit-button"]').click()
       await expect(deposit.locator('[data-test="error-alert"]')).toBeVisible()
       await expect.poll(() => nativeBalance(fixture.bank)).toBe(0n)
+
+      await pauseBank(fixture.bank)
+      await dialogAmount(deposit).fill('0.25')
+      await deposit.locator('[data-test="deposit-button"]').click()
+      await expect(deposit.locator('[data-test="error-alert"]')).toBeVisible()
+      await expect.poll(() => nativeBalance(fixture.bank)).toBe(0n)
+      await unpauseBank(fixture.bank)
 
       await dialogAmount(deposit).fill('2')
       await deposit.locator('[data-test="deposit-button"]').click()
@@ -321,15 +330,24 @@ test.describe('Bank Account', { tag: ['@browser', '@mocked'] }, () => {
     }
   )
 
+  /**
+   * Covers:
+   * - [AC-US-BANK-001-08]
+   * - [AC-US-BANK-002-11]
+   * - [AC-US-BANK-004-03]
+   */
   test(
-    '[AC-US-BANK-004-03] blocks cash-out for an archived team even when the Bank is funded',
-    { tag: '@US-BANK-004' },
+    'blocks funding, transfers, and cash-out for an archived team',
+    { tag: ['@US-BANK-001', '@US-BANK-002', '@US-BANK-004'] },
     async ({ page }) => {
       await sendToken(fixture.usdc, fixture.bank, '1')
       await signInAndOpenTeam(page, fixture, { archived: true })
       await expect(page.locator('[data-test="cash-out-all-button"]')).toBeDisabled({
         timeout: 30_000
       })
+      await openAccountFromSidebar(page, '/teams/1/accounts/bank-account')
+      await expect(page.locator('[data-test="deposit-button"]')).toBeDisabled()
+      await expect(page.locator('[data-test="transfer-button"]')).toBeDisabled()
     }
   )
 })
