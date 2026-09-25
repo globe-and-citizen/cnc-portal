@@ -249,20 +249,18 @@ When a feature is part of an active test-coverage review, add a separate table i
 to the product `Status` column: delivery, representative automated evidence, E2E scope, and the latest execution result are different facts.
 
 ```markdown
-| User Story     | Main Journey  | Coverage Target | Current Coverage Profile            | Gaps |
-| -------------- | ------------- | --------------- | ----------------------------------- | ---- |
-| US-FEATURE-001 | ✅ Integrated | ✅ 5/5 met      | 2 integrated · 2 mocked · 1 backend | —    |
+| User Story     | Main Journey  | Coverage Target | Gaps |
+| -------------- | ------------- | --------------- | ---- |
+| US-FEATURE-001 | ✅ Integrated | ✅ 5/5 met      | —    |
 ```
 
 - `Main Journey` states whether the primary user path is integrated, mocked, planned, blocked, or not required. `✅ Integrated` means the
   browser crosses every boundary required by that path; a seeded, stubbed, or snapshot-provided dependency is not a validated user action.
 - `Coverage Target` compares criteria whose required proof is present with the story's complete criterion count. Do not mark a story partial
   merely because intentionally mocked or layer-specific criteria are not integrated.
-- `Current Coverage Profile` summarizes the kind of representative proof attached to each criterion. Keep integrated, mocked-only,
-  layer-only, and combined proof distinguishable rather than collapsing them into one E2E percentage.
 - `Gaps` lists criteria whose required proof is absent or insufficient. Use `—` when every target is met.
-- Store the owning `E2E-PATH-*`, detailed test-file mapping, latest pass/fail result, and run artifacts in the generated coverage report,
-  CI, or a test-run record rather than duplicating them in this durable summary.
+- Store the evidence distribution, owning `E2E-PATH-*`, detailed test-file mapping, latest pass/fail result, and run artifacts in the
+  generated coverage report, CI, or a test-run record rather than duplicating them in this durable summary.
 
 The table is optional while this model is being piloted. When present, keep one row per story in the same stable-ID order as the status
 overview and refresh it when representative test references or E2E boundaries change.
@@ -272,21 +270,31 @@ For a coverage-reviewed story, add a compact table after its acceptance criteria
 ```markdown
 ### Test Coverage
 
-| Acceptance Criterion   | Expected Coverage        | Current Coverage | Status          |
-| ---------------------- | ------------------------ | ---------------- | --------------- |
-| `AC-US-FEATURE-001-01` | Integrated E2E           | Integrated E2E   | ✅ Met          |
-| `AC-US-FEATURE-001-02` | Mocked browser + Backend | Mocked browser   | ⚠️ Insufficient |
-| `AC-US-FEATURE-001-03` | Backend                  | None linked      | ❌ Missing      |
+| Acceptance Criterion   | Responsibilities   | Required Evidence        | Proof Rationale                                          | Current Evidence | Status          |
+| ---------------------- | ------------------ | ------------------------ | -------------------------------------------------------- | ---------------- | --------------- |
+| `AC-US-FEATURE-001-01` | Frontend + Backend | Integrated E2E           | The user outcome crosses the API boundary.               | Integrated E2E   | ✅ Met          |
+| `AC-US-FEATURE-001-02` | Frontend + Backend | Mocked browser + Backend | UI handling and the backend rule can fail independently. | Mocked browser   | ⚠️ Insufficient |
+| `AC-US-FEATURE-001-03` | Backend            | Backend                  | The backend owns the authorization rule.                 | None linked      | ❌ Missing      |
 ```
 
-- `Expected Coverage` is the deliberately chosen proof boundary: `Integrated E2E`, `Mocked browser`, `Frontend`, `Backend`, `Contract`, or
-  `Dashboard`. Join independently required boundaries with `+`.
-- `Current Coverage` is derived from direct representative `AC-US-*` references. `Integrated E2E` and `Mocked browser` come from the
+- `Responsibilities` identifies the code layers that make a decision, enforce a rule, or own a state transition required by the criterion:
+  `Frontend`, `Backend`, `Contract`, or `Dashboard`. Join independent owners with `+`. A layer that only transports data is a participant,
+  not automatically a responsibility; represent a risky hand-off through the required integration evidence instead.
+- `Required Evidence` states the smallest deliberate proof set that covers those responsibilities and any material boundary risk:
+  `Integrated E2E`, `Mocked browser`, `Frontend`, `Backend`, `Contract`, or `Dashboard`. Join independently required proofs with `+`. A real
+  integrated path can prove more than one responsibility when it exercises the relevant decisions and resulting state.
+- `Proof Rationale` names the rule or boundary failure that the required evidence must detect. It explains why that proof level is necessary
+  instead of restating the criterion or merely listing the implementation stack.
+- `Current Evidence` is derived from direct representative `AC-US-*` references. `Integrated E2E` and `Mocked browser` come from the
   Playwright suite's `@integrated` or `@mocked` classification; `None linked` means no representative reference is currently registered.
-- `Status` is `✅ Met` when every expected boundary is present, `⚠️ Insufficient` when some proof exists but a required boundary is absent,
-  or `❌ Missing` when no representative proof is linked.
+- `Status` is `✅ Met` when every required proof is present, `⚠️ Insufficient` when some proof exists but a required boundary is absent, or
+  `❌ Missing` when no representative proof is linked.
 - Coverage status records traceability against the planned test boundary, not whether the latest run passed. Keep current execution results
   in CI or the generated local report.
+
+If a criterion contains outcomes that can pass or fail independently, need different responsibility owners, or require different evidence,
+split it before assigning the proof strategy. Keep a transversal criterion intact when its layers jointly produce one cohesive observable
+outcome, then name every owning layer and the boundary risk explicitly.
 
 ### 5. User Stories
 
