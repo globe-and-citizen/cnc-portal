@@ -11,7 +11,7 @@ describe('[US-EXP-004] ExpenseAccountTotalApproved', () => {
 
   const amountText = () => mount(ExpenseAccountTotalApproved).find('[data-test="amount"]').text()
 
-  it('counts distinct approved members, ignoring address casing', () => {
+  it('[AC-US-EXP-004-01] counts distinct approved members for the account summary', () => {
     vi.mocked(useGetExpensesQuery).mockReturnValue(
       createMockQueryResponse([
         { userAddress: '0xAAA' },

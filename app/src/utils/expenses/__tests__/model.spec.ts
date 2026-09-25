@@ -48,7 +48,7 @@ describe('getTokens', () => {
     expect(spendableOf(expenseRow({ balances: { 0: '0', 1: '1.5' } }), [heldUsdc(10)])).toBe(0.5)
   })
 
-  it('caps the spendable amount at what the contract actually holds', () => {
+  it('[AC-US-EXP-002-04] caps the spendable amount at what the contract actually holds', () => {
     // An ERC-20 transfer pays out of the contract's own balance, so an approved
     // budget the contract cannot cover is not spendable.
     expect(spendableOf(expenseRow(), [heldUsdc(0.5)])).toBe(0.5)
