@@ -30,6 +30,7 @@ import { ref } from 'vue'
 import IntegrationCard from '@/components/sections/PaymentGateView/IntegrationCard.vue'
 import TokenConfigCard from '@/components/sections/PaymentGateView/TokenConfigCard.vue'
 import WidgetPreviewCard from '@/components/sections/PaymentGateView/WidgetPreviewCard.vue'
+import type { PaymentGateToken } from '@/utils/paymentGate/widgetSnippet'
 
-const selectedToken = ref<'USDC' | 'USDCe' | 'POL'>('USDC')
+const selectedToken = ref<PaymentGateToken>('USDC')
 </script>

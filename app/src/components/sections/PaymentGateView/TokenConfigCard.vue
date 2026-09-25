@@ -24,10 +24,12 @@
 </template>
 
 <script setup lang="ts">
+import type { PaymentGateToken } from '@/utils/paymentGate/widgetSnippet'
+
 // POL isn't offered: native transfers can't carry a facture ID — Bank.sol's
 // receive() reverts on non-empty calldata and has no fallback() — so v0
 // payments only support depositToken() targets (see src/widget/main.ts).
-const tokenOptions = ['USDC', 'USDCe'] as const
+const tokenOptions: readonly PaymentGateToken[] = ['USDC', 'USDCe']
 
-const selectedToken = defineModel<'USDC' | 'USDCe' | 'POL'>('selectedToken', { required: true })
+const selectedToken = defineModel<PaymentGateToken>('selectedToken', { required: true })
 </script>

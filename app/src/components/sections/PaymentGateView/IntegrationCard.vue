@@ -61,20 +61,20 @@
             <code>CncPay.setFactureId</code>/<code>setAmount</code> then <code>show()</code> with
             that order's real ID and amount. Nothing to store, nothing to recreate per order.
           </p>
+          <UFieldGroup size="sm" class="mb-2" data-test="payment-gate-snippet-languages">
+            <UButton
+              v-for="option in PAYMENT_GATE_SNIPPET_LANGUAGES"
+              :key="option.value"
+              :color="selectedLanguage === option.value ? 'primary' : 'neutral'"
+              :variant="selectedLanguage === option.value ? 'solid' : 'outline'"
+              :label="option.label"
+              @click="selectedLanguage = option.value"
+            />
+          </UFieldGroup>
           <pre
             class="bg-elevated border-default overflow-x-auto rounded-md border p-3 text-xs"
-          ><code>&lt;script src="{{ WIDGET_SCRIPT_URL }}" data-bank="{{ bankAddress }}" data-token="{{ selectedToken }}" async&gt;&lt;/script&gt;
-&lt;div id="cnc-pay"&gt;&lt;/div&gt;
-&lt;button id="checkout-button"&gt;Pay 128.00 {{ selectedToken }}&lt;/button&gt;
-
-&lt;script&gt;
-  document.getElementById('checkout-button').addEventListener('click', () => {
-    CncPay.setFactureId('order_8842') // this order's ID in your system
-    CncPay.setAmount('128.00')        // this order's amount
-    CncPay.setOnStatus((status) => console.log('payment status', status))
-    CncPay.show('#cnc-pay')
-  })
-&lt;/script&gt;</code></pre>
+            data-test="payment-gate-snippet"
+          ><code>{{ snippet }}</code></pre>
           <div class="mt-2 flex justify-end">
             <UButton
               color="neutral"
@@ -95,16 +95,27 @@
 import { ref, computed } from 'vue'
 import { useTeamStore } from '@/stores'
 import { WIDGET_SCRIPT_URL } from '@/constant'
+import {
+  PAYMENT_GATE_SNIPPET_LANGUAGES,
+  buildPaymentGateSnippet,
+  type PaymentGateSnippetLanguage,
+  type PaymentGateToken
+} from '@/utils/paymentGate/widgetSnippet'
 
-const { selectedToken } = defineProps<{ selectedToken: 'USDC' | 'USDCe' | 'POL' }>()
+const { selectedToken } = defineProps<{ selectedToken: PaymentGateToken }>()
 
 const toast = useToast()
 const teamStore = useTeamStore()
 
 const bankAddress = computed(() => teamStore.getContractAddressByType('Bank'))
-const snippet = computed(
-  () =>
-    `<script src="${WIDGET_SCRIPT_URL}" data-bank="${bankAddress.value}" data-token="${selectedToken}" async><\/script>\n<div id="cnc-pay"><\/div>\n<button id="checkout-button">Pay 128.00 ${selectedToken}</button>\n\n<script>\n  document.getElementById('checkout-button').addEventListener('click', () => {\n    CncPay.setFactureId('order_8842') // this order's ID in your system\n    CncPay.setAmount('128.00')        // this order's amount\n    CncPay.setOnStatus((status) => console.log('payment status', status))\n    CncPay.show('#cnc-pay')\n  })\n<\/script>`
+const selectedLanguage = ref<PaymentGateSnippetLanguage>('html')
+const snippet = computed(() =>
+  buildPaymentGateSnippet({
+    language: selectedLanguage.value,
+    widgetScriptUrl: WIDGET_SCRIPT_URL,
+    bankAddress: bankAddress.value ?? '',
+    token: selectedToken
+  })
 )
 
 const copiedAddress = ref(false)
