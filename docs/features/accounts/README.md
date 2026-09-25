@@ -84,7 +84,7 @@ mocked browser path for the external Safe Transaction Service boundary.
 | US-BANK-003 | ✅ Integrated | ⚠️ 7/8          | 1 — `AC-US-BANK-003-08`                                                                                                          |
 | US-BANK-004 | 🚧 Partial    | ⚠️ 7/8          | 1 — `AC-US-BANK-004-02`                                                                                                          |
 | US-EXP-001  | ✅ Integrated | ✅ 13/13        | —                                                                                                                                |
-| US-EXP-002  | 🚧 Partial    | ⚠️ 11/12        | 1 — `AC-US-EXP-002-09`                                                                                                           |
+| US-EXP-002  | 🚧 Partial    | ⚠️ 10/12        | 2 — `AC-US-EXP-002-07`, `AC-US-EXP-002-09`                                                                                       |
 | US-EXP-003  | ✅ Integrated | ⚠️ 8/9          | 1 — `AC-US-EXP-003-05`                                                                                                           |
 | US-EXP-004  | ✅ Integrated | ✅ 12/12        | —                                                                                                                                |
 | US-SAFE-001 | 🚧 Partial    | ⚠️ 8/11         | 3 — `AC-US-SAFE-001-02`, `AC-US-SAFE-001-06`, `AC-US-SAFE-001-11`                                                                |
@@ -385,7 +385,7 @@ The final wallet payment is [`CASH-OUT`](../accounting/journal-entry-catalogue.m
 - [x] `AC-US-EXP-002-04` A spend cannot exceed the lower of the approval remainder and the Expense Account balance.
 - [x] `AC-US-EXP-002-05` A spend must use the approval's recipient, token, contract, network, and recovered owner signature.
 - [x] `AC-US-EXP-002-06` A one-time approval cannot be spent more than once. _(contract)_
-- [x] `AC-US-EXP-002-07` Every ERC-20 spend, including a one-time approval, requires a supported token. _(contract)_
+- [ ] `AC-US-EXP-002-07` Every ERC-20 spend, including a one-time approval, requires a supported token. _(contract)_
 
 #### Edge & Error Cases
 
@@ -405,7 +405,7 @@ The final wallet payment is [`CASH-OUT`](../accounting/journal-entry-catalogue.m
 | `AC-US-EXP-002-04`   | `PS-FRONTEND-CONTRACT` | Frontend + Contract       | ✅ Met     |
 | `AC-US-EXP-002-05`   | `PS-FRONTEND-CONTRACT` | Frontend + Contract       | ✅ Met     |
 | `AC-US-EXP-002-06`   | `PS-CONTRACT`          | Mocked browser + Contract | ✅ Met     |
-| `AC-US-EXP-002-07`   | `PS-CONTRACT`          | Contract                  | ✅ Met     |
+| `AC-US-EXP-002-07`   | `PS-CONTRACT`          | None linked               | ❌ Missing |
 | `AC-US-EXP-002-08`   | `PS-BROWSER`           | Mocked browser            | ✅ Met     |
 | `AC-US-EXP-002-09`   | `PS-CONTRACT`          | None linked               | ❌ Missing |
 | `AC-US-EXP-002-10`   | `PS-CONTRACT`          | Mocked browser + Contract | ✅ Met     |

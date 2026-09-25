@@ -377,7 +377,7 @@ describe('ExpenseAccountEIP712V2', function () {
       }
     })
 
-    it('[AC-US-EXP-002-07] rejects transfer with unsupported token', async function () {
+    it('rejects transfer with unsupported token', async function () {
       const { expenseAccount, owner, approvedAddress, recipient } = await loadFixture(
         deployExpenseAccountFixture
       )
