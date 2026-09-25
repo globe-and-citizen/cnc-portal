@@ -79,7 +79,7 @@ insufficient; the detailed evidence distribution remains available in the genera
 | US-COMPANIES-004 | ✅ Integrated | ✅ 6/6          | —                                                      |
 | US-COMPANIES-005 | ✅ Integrated | ✅ 10/10        | —                                                      |
 | US-COMPANIES-006 | ✅ Integrated | ✅ 7/7          | —                                                      |
-| US-COMPANIES-007 | ✅ Integrated | ⚠️ 4/6          | 2 — `AC-US-COMPANIES-007-05`, `AC-US-COMPANIES-007-06` |
+| US-COMPANIES-007 | ✅ Integrated | ✅ 6/6          | —                                                      |
 | US-COMPANIES-008 | ✅ Integrated | ✅ 6/6          | —                                                      |
 
 ## Proof Strategy Reference
@@ -375,14 +375,14 @@ Each acceptance criterion references one reusable strategy instead of repeating 
 
 ### Test Coverage
 
-| Acceptance Criterion     | Proof Strategy       | Current Evidence         | Status     |
-| ------------------------ | -------------------- | ------------------------ | ---------- |
-| `AC-US-COMPANIES-007-01` | `PS-API`             | Integrated E2E           | ✅ Met     |
-| `AC-US-COMPANIES-007-02` | `PS-API`             | Integrated E2E + Backend | ✅ Met     |
-| `AC-US-COMPANIES-007-03` | `PS-BROWSER`         | Mocked browser           | ✅ Met     |
-| `AC-US-COMPANIES-007-04` | `PS-BROWSER-BACKEND` | Mocked browser + Backend | ✅ Met     |
-| `AC-US-COMPANIES-007-05` | `PS-BACKEND`         | None linked              | ❌ Missing |
-| `AC-US-COMPANIES-007-06` | `PS-BACKEND`         | None linked              | ❌ Missing |
+| Acceptance Criterion     | Proof Strategy       | Current Evidence         | Status |
+| ------------------------ | -------------------- | ------------------------ | ------ |
+| `AC-US-COMPANIES-007-01` | `PS-API`             | Integrated E2E           | ✅ Met |
+| `AC-US-COMPANIES-007-02` | `PS-API`             | Integrated E2E + Backend | ✅ Met |
+| `AC-US-COMPANIES-007-03` | `PS-BROWSER`         | Mocked browser           | ✅ Met |
+| `AC-US-COMPANIES-007-04` | `PS-BROWSER-BACKEND` | Mocked browser + Backend | ✅ Met |
+| `AC-US-COMPANIES-007-05` | `PS-BACKEND`         | Backend                  | ✅ Met |
+| `AC-US-COMPANIES-007-06` | `PS-BACKEND`         | Backend                  | ✅ Met |
 
 **Dependencies:** US-COMPANIES-003
 
