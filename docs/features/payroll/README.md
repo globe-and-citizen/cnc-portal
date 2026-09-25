@@ -62,63 +62,63 @@ its complete journey belongs to the Accounts feature.
 
 ## Test Coverage Overview
 
-This overview records whether each story has evidence in the three requested layers; it does not mean every criterion is covered or that the
-latest run passed. Contract-only criteria remain owned by the linked Cash Remuneration contract tests and are not reclassified as backend,
-frontend, or integrated portal tests. The plan below describes the target checks and known gaps.
+Coverage targets compare each criterion's required proof with direct `AC-US-*` references in tracked tests. They do not represent the latest
+pass/fail result, which belongs to CI or the generated local report. The per-story tables show the required layer, linked evidence, and any
+missing or insufficient proof.
 
-| User Story     | Backend tests         | Frontend tests        | Integrated E2E       | Owning Path              |
-| -------------- | --------------------- | --------------------- | -------------------- | ------------------------ |
-| US-PAYROLL-001 | Existing; extend gaps | Existing; extend gaps | 🚧 Partial           | E2E-PATH-11              |
-| US-PAYROLL-002 | Existing; extend gaps | Existing; extend gaps | 🚧 Partial           | E2E-PATH-11              |
-| US-PAYROLL-003 | Accounts-owned        | Accounts-owned        | ➖ Reference         | E2E-PATH-02 owns funding |
-| US-PAYROLL-004 | Existing; extend gaps | Existing; extend gaps | 🚧 Partial           | E2E-PATH-12              |
-| US-PAYROLL-005 | Existing; extend gaps | Existing; extend gaps | 🚧 Partial           | E2E-PATH-12              |
-| US-PAYROLL-006 | 🚧 Add AC-10 test     | Existing; extend gaps | 🚧 Partial           | E2E-PATH-12              |
-| US-PAYROLL-007 | 🚧 Add AC-05 test     | Existing; extend gaps | 🚧 Partial           | E2E-PATH-12              |
-| US-PAYROLL-008 | Existing; extend gaps | Existing; extend gaps | 🚧 Partial           | E2E-PATH-13              |
-| US-PAYROLL-009 | 🚧 Add AC-06 test     | Existing; extend gaps | 🚧 Partial           | E2E-PATH-13              |
-| US-PAYROLL-010 | Existing; extend gaps | Existing; extend gaps | 🚧 Partial           | E2E-PATH-13              |
-| US-PAYROLL-011 | Existing; extend gaps | Existing; extend gaps | 🚧 Partial           | E2E-PATH-13              |
-| US-PAYROLL-012 | Existing; extend gaps | Existing; extend gaps | 🚧 Partial           | E2E-PATH-13              |
-| US-PAYROLL-013 | No Payroll API rule   | Existing; extend gaps | 🚧 Planned extension | E2E-PATH-13              |
+| User Story     | Main Journey    | Coverage Target   | Gaps                     |
+| -------------- | --------------- | ----------------- | ------------------------ |
+| US-PAYROLL-001 | ⚠️ Partial      | ⚠️ 8/27           | 19 criteria; see matrix  |
+| US-PAYROLL-002 | ⚠️ Partial      | ⚠️ 2/12           | 10 criteria; see matrix  |
+| US-PAYROLL-003 | ➖ Not required | ➖ Accounts-owned | E2E-PATH-02 owns funding |
+| US-PAYROLL-004 | ⚠️ Partial      | ⚠️ 3/11           | 8 criteria; see matrix   |
+| US-PAYROLL-005 | ⚠️ Partial      | ⚠️ 9/25           | 16 criteria; see matrix  |
+| US-PAYROLL-006 | ⚠️ Partial      | ⚠️ 4/13           | 9 criteria; see matrix   |
+| US-PAYROLL-007 | ⚠️ Partial      | ⚠️ 1/8            | 7 criteria; see matrix   |
+| US-PAYROLL-008 | ⚠️ Partial      | ⚠️ 6/16           | 10 criteria; see matrix  |
+| US-PAYROLL-009 | ⚠️ Partial      | ⚠️ 2/8            | 6 criteria; see matrix   |
+| US-PAYROLL-010 | ⚠️ Partial      | ⚠️ 7/17           | 10 criteria; see matrix  |
+| US-PAYROLL-011 | ⚠️ Partial      | ⚠️ 2/12           | 10 criteria; see matrix  |
+| US-PAYROLL-012 | ⚠️ Partial      | ⚠️ 2/13           | 11 criteria; see matrix  |
+| US-PAYROLL-013 | ⚠️ Planned      | ⚠️ 3/6            | 3 criteria; see matrix   |
 
 ## Proof Strategy Reference
 
-| Strategy        | Responsibilities           | Required Evidence | Test purpose                                                                |
-| --------------- | -------------------------- | ----------------- | --------------------------------------------------------------------------- |
-| `PS-FRONTEND`   | Frontend                   | Frontend          | Prove component, composable, validation, and displayed-state behavior.      |
-| `PS-BACKEND`    | Backend                    | Backend           | Prove API authorization, validation, persistence, and reconciliation rules. |
-| `PS-INTEGRATED` | Frontend + Backend + Chain | Integrated E2E    | Prove the user journey and persisted/on-chain result across the real stack. |
+| Strategy                | Responsibilities              | Required Evidence | Proof Rationale                                                                                    |
+| ----------------------- | ----------------------------- | ----------------- | -------------------------------------------------------------------------------------------------- |
+| `PS-FRONTEND`           | Frontend                      | Frontend          | The client owns this validation, display, or interaction state.                                    |
+| `PS-BACKEND`            | Backend                       | Backend           | The server owns this authorization, validation, persistence, or reconciliation rule.               |
+| `PS-INTEGRATED`         | Frontend + Backend + Contract | Integrated E2E    | The browser, persisted API state, and chain outcome must work together in the real journey.        |
+| `PS-CONTRACT-REFERENCE` | Contract                      | Contract          | Contract-owned criteria retain their contract proof without counting it as portal or API coverage. |
+
+The Accounts feature owns `US-PAYROLL-003` and its Bank funding journey. Contract-only criteria use `PS-CONTRACT-REFERENCE`; the test plan
+for the other stories focuses on backend, frontend, and integrated evidence. Current evidence is derived only from direct criterion
+references. A test that lacks an `AC-US-*` reference remains a discovery item until its representative role is reviewed.
+
+Criteria tagged _(API)_ require backend evidence; integrated E2E evidence is recorded separately when a real user journey crosses the API or
+chain boundary.
 
 ## Test Plan by User Story
 
-Run the linked layer-specific suites for the listed responsibilities, then use the integrated path for the cross-layer result. The
-integrated journeys run against the freshly provisioned disposable G5 stack. A mocked browser test or a lower-layer test does not replace
-integrated evidence where the path is marked partial.
+Run the linked backend and frontend suites for their owned rules and interactions. Run the integrated paths against the freshly provisioned
+disposable G5 stack for cross-layer journeys. The per-story matrices below identify the criterion-level proof still missing; contract checks
+remain a separate technical responsibility.
 
-| User Story     | Backend tests to perform                                                                       | Frontend tests to perform                                                                             | Integrated test to perform                                                                                 |
-| -------------- | ---------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| US-PAYROLL-001 | Exercise wage authorization, version/current-wage resolution, defaults, and input bounds.      | Exercise standard/overtime rate entry, daily/weekly limits, disabled tokens, and defaults.            | E2E-PATH-11: create and replace a wage, then verify the saved current wage after reload.                   |
-| US-PAYROLL-002 | Exercise pause/resume authorization and claim rejection while paused.                          | Exercise owner controls, archived/missing/historical wage states, and refreshed status.               | E2E-PATH-11: pause and resume a wage; verify a paused wage blocks a member claim.                          |
-| US-PAYROLL-003 | Use Accounts-owned funding API/contract evidence; do not duplicate it in Payroll.              | Use Accounts-owned Bank transfer UI evidence.                                                         | Reuse E2E-PATH-02 for native/ERC-20 funding of the Payroll contract.                                       |
-| US-PAYROLL-004 | Exercise goals persistence, one-row-per-member/week, wage eligibility, and locked states.      | Exercise Markdown goals create, update, clear, and read-only states.                                  | E2E-PATH-12: save goals and verify they remain with the pending weekly claim.                              |
-| US-PAYROLL-005 | Exercise date, duration, daily/weekly caps, attachment limits, permissions, and state rules.   | Exercise form validation, date-window restrictions, uploads, and rejection feedback.                  | E2E-PATH-12: submit a valid claim, reject daily/weekly overages, and confirm valid data remains unchanged. |
-| US-PAYROLL-006 | Exercise partial updates, ownership, cap rechecks, paused/archived states, and disabled weeks. | Exercise edit form values, immutable work date, attachment limits, and failure feedback.              | E2E-PATH-12: edit a pending claim and verify the persisted values; add disabled-week coverage after AC-10. |
-| US-PAYROLL-007 | Exercise ownership, final-claim/goals cleanup, paused/archived states, and disabled weeks.     | Exercise confirmation, cancellation, and visible deletion outcome.                                    | E2E-PATH-12: delete a claim and verify the subsequent weekly read; add disabled-week coverage after AC-05. |
-| US-PAYROLL-008 | Exercise contract-owner authorization, signing eligibility, EIP-712 validation, and errors.    | Exercise wallet signing, cancellation, migration gating, and re-sign controls.                        | E2E-PATH-13: owner signs a completed claim; member controls remain unavailable; verify stored status.      |
-| US-PAYROLL-009 | Add regression coverage for AC-06: the legacy API cannot change status without chain action.   | Exercise owner-only disable/enable controls and reconciled status display.                            | E2E-PATH-13: disable and re-enable the signed claim on-chain, then verify state after reload.              |
-| US-PAYROLL-010 | Exercise withdrawal authorization, API status changes, archived state, and failure handling.   | Exercise member wallet withdrawal, cancellation, and error states.                                    | E2E-PATH-13: withdraw successfully and verify balances/status; retain the insufficient-funds scenario.     |
-| US-PAYROLL-011 | Exercise reconciliation of paid/disabled/stale claims and isolated read/signature failures.    | Exercise refresh after company load and after withdrawal/disable/enable actions.                      | E2E-PATH-13: compare chain state and portal status after lifecycle actions and reload.                     |
-| US-PAYROLL-012 | Exercise status/member filters, pagination, response shape, and member authorization.          | Exercise member history, company-wide table, week navigation, and status details.                     | E2E-PATH-13: verify owner and member histories reflect the final claim state after reload.                 |
-| US-PAYROLL-013 | No Payroll API rule is currently documented for the account position.                          | Exercise balance/pending summaries, month boundary, holdings, activity filters, and read-only access. | Extend E2E-PATH-13: open Payroll Account and verify funded balance/activity after funding and withdrawal.  |
-
-The existing unit/API and integrated suites are linked under [Implementation Evidence](#implementation-evidence). The three unchecked API
-criteria (`AC-US-PAYROLL-006-10`, `AC-US-PAYROLL-007-05`, and `AC-US-PAYROLL-009-06`) remain backend test gaps. The Payroll account month
-summary gap is `AC-US-PAYROLL-013-06`; correct the current-month behavior, add a frontend boundary test, then assert it in the planned
-E2E-PATH-13 account check. Invalid EIP-712 signatures remain backend-validator evidence because an integrated real-wallet journey produces
-valid signatures.
-
-Criteria tagged _(API)_ or _(contract)_ describe outcomes that cannot be confirmed from the portal alone.
+| User Story     | Backend tests to perform                                                                                             | Frontend tests to perform                                                                                   | Integrated test to perform                                                                                                         |
+| -------------- | -------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| US-PAYROLL-001 | Verify wage authorization, version persistence, wage resolution, defaults, and rate/limit bounds.                    | Verify standard and overtime inputs, daily/weekly limits, token selection, and validation feedback.         | E2E-PATH-11: create and replace a wage, then verify the current wage after reload.                                                 |
+| US-PAYROLL-002 | Verify owner authorization, pause/resume persistence, and claim rejection while a wage is paused.                    | Verify pause/resume controls, status refresh, and historical or archived wage states.                       | E2E-PATH-11: pause and resume a wage and confirm paused wages block member claims.                                                 |
+| US-PAYROLL-003 | Use the Accounts-owned Bank transfer API and contract checks; do not duplicate their ownership here.                 | Use the Accounts-owned Bank transfer UI checks.                                                             | E2E-PATH-02: reuse the Accounts journey for native/ERC-20 Payroll funding.                                                         |
+| US-PAYROLL-004 | Verify goals persistence, member/week uniqueness, wage eligibility, and locked states.                               | Verify goals create, update, clear, and read-only states.                                                   | E2E-PATH-12: save goals and confirm they remain on the pending weekly claim.                                                       |
+| US-PAYROLL-005 | Verify date and duration validation, daily/weekly caps, attachment rules, permissions, and claim-state constraints.  | Verify claim form boundaries, date window, uploads, and rejected-submission feedback.                       | E2E-PATH-12: submit valid work, reject daily/weekly overages, and confirm valid data remains.                                      |
+| US-PAYROLL-006 | Verify partial updates, claim ownership, cap rechecks, paused/archived states, and disabled-week rejection.          | Verify edit values, immutable work date, attachment limits, and failure feedback.                           | E2E-PATH-12: edit an eligible claim and confirm rejected edits preserve the stored claim.                                          |
+| US-PAYROLL-007 | Verify deletion authorization, pending-week restrictions, archived-company rejection, and failure atomicity.         | Verify delete confirmation/cancellation and refreshed claim totals.                                         | E2E-PATH-12: delete a pending claim, then confirm the remaining weekly total.                                                      |
+| US-PAYROLL-008 | Verify signing eligibility, contract-owner authorization, signature validation, and persisted signature state.       | Verify completed-week signing controls, wallet cancellation, and signature error feedback.                  | E2E-PATH-13: sign a completed claim and verify it remains traceable through reload.                                                |
+| US-PAYROLL-009 | Verify enable/disable authorization and legal state transitions, including terminal withdrawn claims.                | Verify status actions and that terminal claims expose no invalid transition.                                | E2E-PATH-13: disable and re-enable one signed claim without creating another claim.                                                |
+| US-PAYROLL-010 | Verify withdrawal authorization, replay/state guards, and stored withdrawal reconciliation.                          | Verify supported assets, wallet cancellation, and paid-state refresh.                                       | E2E-PATH-13: withdraw on-chain and verify chain/backend state; retain the insufficient-funds rejection.                            |
+| US-PAYROLL-011 | Verify idempotent reconciliation, stale contract state, invalid/missing signatures, and per-claim failure isolation. | Verify refreshed statuses and safe handling of unavailable chain reads.                                     | E2E-PATH-13: compare the signed, disabled, and withdrawn claim states after chain reconciliation.                                  |
+| US-PAYROLL-012 | Verify member/owner scoping, query filters, pagination, limits, and invalid-filter rejection.                        | Verify history loading, role-appropriate records, filters, and page navigation.                             | E2E-PATH-13: verify owner and member histories after withdrawal and reload.                                                        |
+| US-PAYROLL-013 | No Payroll API rule is currently specified; add backend proof only if implementation introduces a server-owned rule. | Verify account balance, summaries, token activity, read-only member access, and the current-month boundary. | Planned E2E-PATH-13 extension: open Payroll Account after funding and withdrawal and verify balance/activity for owner and member. |
 
 ## US-PAYROLL-001: Set a Member's Wage
 
@@ -166,6 +166,38 @@ Criteria tagged _(API)_ or _(contract)_ describe outcomes that cannot be confirm
 - [x] `AC-US-PAYROLL-001-26` Archived companies cannot create wages.
 - [x] `AC-US-PAYROLL-001-27` Archived companies cannot replace wages.
 
+### Test Coverage
+
+| Acceptance Criterion   | Proof Strategy  | Current Evidence | Status     |
+| ---------------------- | --------------- | ---------------- | ---------- |
+| `AC-US-PAYROLL-001-01` | `PS-INTEGRATED` | Integrated E2E   | ✅ Met     |
+| `AC-US-PAYROLL-001-02` | `PS-INTEGRATED` | Integrated E2E   | ✅ Met     |
+| `AC-US-PAYROLL-001-03` | `PS-BACKEND`    | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-001-04` | `PS-FRONTEND`   | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-001-05` | `PS-FRONTEND`   | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-001-06` | `PS-FRONTEND`   | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-001-07` | `PS-FRONTEND`   | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-001-08` | `PS-FRONTEND`   | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-001-09` | `PS-FRONTEND`   | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-001-10` | `PS-BACKEND`    | Backend          | ✅ Met     |
+| `AC-US-PAYROLL-001-11` | `PS-FRONTEND`   | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-001-12` | `PS-FRONTEND`   | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-001-13` | `PS-FRONTEND`   | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-001-14` | `PS-BACKEND`    | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-001-15` | `PS-BACKEND`    | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-001-16` | `PS-BACKEND`    | Backend          | ✅ Met     |
+| `AC-US-PAYROLL-001-17` | `PS-BACKEND`    | Backend          | ✅ Met     |
+| `AC-US-PAYROLL-001-18` | `PS-BACKEND`    | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-001-19` | `PS-BACKEND`    | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-001-20` | `PS-BACKEND`    | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-001-21` | `PS-BACKEND`    | Backend          | ✅ Met     |
+| `AC-US-PAYROLL-001-22` | `PS-BACKEND`    | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-001-23` | `PS-BACKEND`    | Backend          | ✅ Met     |
+| `AC-US-PAYROLL-001-24` | `PS-BACKEND`    | Backend          | ✅ Met     |
+| `AC-US-PAYROLL-001-25` | `PS-BACKEND`    | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-001-26` | `PS-BACKEND`    | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-001-27` | `PS-BACKEND`    | None linked      | ❌ Missing |
+
 **Dependencies:** Companies and Workspace
 
 ## US-PAYROLL-002: Pause or Resume a Member's Wage
@@ -196,6 +228,23 @@ Criteria tagged _(API)_ or _(contract)_ describe outcomes that cannot be confirm
 - [x] `AC-US-PAYROLL-002-10` The status of a missing wage cannot be changed.
 - [x] `AC-US-PAYROLL-002-11` The status of a historical wage cannot be changed.
 - [x] `AC-US-PAYROLL-002-12` The wage status of an archived company cannot be changed.
+
+### Test Coverage
+
+| Acceptance Criterion   | Proof Strategy  | Current Evidence | Status     |
+| ---------------------- | --------------- | ---------------- | ---------- |
+| `AC-US-PAYROLL-002-01` | `PS-INTEGRATED` | Integrated E2E   | ✅ Met     |
+| `AC-US-PAYROLL-002-02` | `PS-INTEGRATED` | Integrated E2E   | ✅ Met     |
+| `AC-US-PAYROLL-002-03` | `PS-FRONTEND`   | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-002-04` | `PS-FRONTEND`   | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-002-05` | `PS-BACKEND`    | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-002-06` | `PS-BACKEND`    | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-002-07` | `PS-BACKEND`    | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-002-08` | `PS-BACKEND`    | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-002-09` | `PS-BACKEND`    | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-002-10` | `PS-BACKEND`    | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-002-11` | `PS-BACKEND`    | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-002-12` | `PS-BACKEND`    | None linked      | ❌ Missing |
 
 **Dependencies:** US-PAYROLL-001
 
@@ -260,6 +309,22 @@ This is a reference story. The Accounts feature owns the complete Bank transfer 
 - [x] `AC-US-PAYROLL-004-10` Archived companies cannot create weekly goals.
 - [x] `AC-US-PAYROLL-004-11` Archived companies cannot update weekly goals.
 
+### Test Coverage
+
+| Acceptance Criterion   | Proof Strategy  | Current Evidence | Status     |
+| ---------------------- | --------------- | ---------------- | ---------- |
+| `AC-US-PAYROLL-004-01` | `PS-INTEGRATED` | Integrated E2E   | ✅ Met     |
+| `AC-US-PAYROLL-004-02` | `PS-BACKEND`    | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-004-03` | `PS-FRONTEND`   | Frontend         | ✅ Met     |
+| `AC-US-PAYROLL-004-04` | `PS-FRONTEND`   | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-004-05` | `PS-BACKEND`    | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-004-06` | `PS-BACKEND`    | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-004-07` | `PS-BACKEND`    | Backend          | ✅ Met     |
+| `AC-US-PAYROLL-004-08` | `PS-BACKEND`    | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-004-09` | `PS-BACKEND`    | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-004-10` | `PS-BACKEND`    | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-004-11` | `PS-BACKEND`    | None linked      | ❌ Missing |
+
 **Dependencies:** US-PAYROLL-001
 
 ## US-PAYROLL-005: Submit a Daily Claim
@@ -304,6 +369,36 @@ This is a reference story. The Accounts feature owns the complete Bank transfer 
 - [x] `AC-US-PAYROLL-005-24` An attachment with an unsupported file type is rejected before the daily claim is submitted.
 - [x] `AC-US-PAYROLL-005-25` An attachment larger than 10 MB is rejected before the daily claim is submitted.
 
+### Test Coverage
+
+| Acceptance Criterion   | Proof Strategy  | Current Evidence | Status     |
+| ---------------------- | --------------- | ---------------- | ---------- |
+| `AC-US-PAYROLL-005-01` | `PS-INTEGRATED` | Integrated E2E   | ✅ Met     |
+| `AC-US-PAYROLL-005-02` | `PS-BACKEND`    | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-005-03` | `PS-BACKEND`    | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-005-04` | `PS-FRONTEND`   | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-005-05` | `PS-FRONTEND`   | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-005-06` | `PS-FRONTEND`   | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-005-07` | `PS-FRONTEND`   | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-005-08` | `PS-FRONTEND`   | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-005-09` | `PS-FRONTEND`   | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-005-10` | `PS-FRONTEND`   | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-005-11` | `PS-BACKEND`    | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-005-12` | `PS-BACKEND`    | Backend          | ✅ Met     |
+| `AC-US-PAYROLL-005-13` | `PS-FRONTEND`   | Frontend         | ✅ Met     |
+| `AC-US-PAYROLL-005-14` | `PS-BACKEND`    | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-005-15` | `PS-FRONTEND`   | Frontend         | ✅ Met     |
+| `AC-US-PAYROLL-005-16` | `PS-BACKEND`    | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-005-17` | `PS-BACKEND`    | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-005-18` | `PS-BACKEND`    | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-005-19` | `PS-BACKEND`    | Backend          | ✅ Met     |
+| `AC-US-PAYROLL-005-20` | `PS-BACKEND`    | Backend          | ✅ Met     |
+| `AC-US-PAYROLL-005-21` | `PS-BACKEND`    | Backend          | ✅ Met     |
+| `AC-US-PAYROLL-005-22` | `PS-BACKEND`    | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-005-23` | `PS-BACKEND`    | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-005-24` | `PS-FRONTEND`   | Frontend         | ✅ Met     |
+| `AC-US-PAYROLL-005-25` | `PS-FRONTEND`   | Frontend         | ✅ Met     |
+
 **Accounting:** The daily claim changes the source amount for
 [`UC-CASH-02`](../accounting/journal-entry-catalogue.md#uc-cash-02--weekly-wage-accrual). The journal entry is created only after the
 containing work week ends and remains eligible.
@@ -340,6 +435,24 @@ containing work week ends and remains eligible.
 - [x] `AC-US-PAYROLL-006-12` A rejected edit leaves the stored claim unchanged and returns its rejection reason.
 - [x] `AC-US-PAYROLL-006-13` Archived companies cannot edit claims.
 
+### Test Coverage
+
+| Acceptance Criterion   | Proof Strategy  | Current Evidence | Status     |
+| ---------------------- | --------------- | ---------------- | ---------- |
+| `AC-US-PAYROLL-006-01` | `PS-INTEGRATED` | Integrated E2E   | ✅ Met     |
+| `AC-US-PAYROLL-006-02` | `PS-BACKEND`    | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-006-03` | `PS-FRONTEND`   | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-006-04` | `PS-BACKEND`    | Backend          | ✅ Met     |
+| `AC-US-PAYROLL-006-05` | `PS-BACKEND`    | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-006-06` | `PS-FRONTEND`   | Frontend         | ✅ Met     |
+| `AC-US-PAYROLL-006-07` | `PS-BACKEND`    | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-006-08` | `PS-BACKEND`    | Backend          | ✅ Met     |
+| `AC-US-PAYROLL-006-09` | `PS-BACKEND`    | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-006-10` | `PS-BACKEND`    | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-006-11` | `PS-BACKEND`    | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-006-12` | `PS-BACKEND`    | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-006-13` | `PS-BACKEND`    | None linked      | ❌ Missing |
+
 **Dependencies:** US-PAYROLL-005
 
 ## US-PAYROLL-007: Delete a Daily Claim
@@ -367,6 +480,19 @@ containing work week ends and remains eligible.
 - [x] `AC-US-PAYROLL-007-06` A paused wage blocks claim deletion.
 - [x] `AC-US-PAYROLL-007-07` Archived companies cannot delete claims.
 - [x] `AC-US-PAYROLL-007-08` A failed deletion leaves the stored claim unchanged and returns a failure outcome.
+
+### Test Coverage
+
+| Acceptance Criterion   | Proof Strategy  | Current Evidence | Status     |
+| ---------------------- | --------------- | ---------------- | ---------- |
+| `AC-US-PAYROLL-007-01` | `PS-INTEGRATED` | Integrated E2E   | ✅ Met     |
+| `AC-US-PAYROLL-007-02` | `PS-FRONTEND`   | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-007-03` | `PS-BACKEND`    | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-007-04` | `PS-BACKEND`    | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-007-05` | `PS-BACKEND`    | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-007-06` | `PS-BACKEND`    | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-007-07` | `PS-BACKEND`    | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-007-08` | `PS-BACKEND`    | None linked      | ❌ Missing |
 
 **Dependencies:** US-PAYROLL-005
 
@@ -405,6 +531,27 @@ containing work week ends and remains eligible.
 - [x] `AC-US-PAYROLL-008-15` Rejecting the wallet signature leaves the weekly claim's stored status and signature unchanged.
 - [x] `AC-US-PAYROLL-008-16` Reconciliation clears a previous-contract signature and returns its weekly claim to pending.
 
+### Test Coverage
+
+| Acceptance Criterion   | Proof Strategy  | Current Evidence | Status     |
+| ---------------------- | --------------- | ---------------- | ---------- |
+| `AC-US-PAYROLL-008-01` | `PS-INTEGRATED` | Integrated E2E   | ✅ Met     |
+| `AC-US-PAYROLL-008-02` | `PS-FRONTEND`   | Frontend         | ✅ Met     |
+| `AC-US-PAYROLL-008-03` | `PS-BACKEND`    | Backend          | ✅ Met     |
+| `AC-US-PAYROLL-008-04` | `PS-FRONTEND`   | Frontend         | ✅ Met     |
+| `AC-US-PAYROLL-008-05` | `PS-BACKEND`    | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-008-06` | `PS-BACKEND`    | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-008-07` | `PS-BACKEND`    | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-008-08` | `PS-FRONTEND`   | Frontend         | ✅ Met     |
+| `AC-US-PAYROLL-008-09` | `PS-BACKEND`    | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-008-10` | `PS-BACKEND`    | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-008-11` | `PS-BACKEND`    | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-008-12` | `PS-BACKEND`    | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-008-13` | `PS-BACKEND`    | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-008-14` | `PS-FRONTEND`   | Frontend         | ✅ Met     |
+| `AC-US-PAYROLL-008-15` | `PS-FRONTEND`   | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-008-16` | `PS-BACKEND`    | None linked      | ❌ Missing |
+
 **Accounting:** Signing authorizes settlement but does not trigger the wage accrual; `UC-CASH-02` is dated at the end of the eligible work
 week.
 
@@ -434,6 +581,19 @@ week.
 
 - [x] `AC-US-PAYROLL-009-07` A withdrawn claim cannot transition to disabled.
 - [x] `AC-US-PAYROLL-009-08` A withdrawn claim cannot transition to enabled.
+
+### Test Coverage
+
+| Acceptance Criterion   | Proof Strategy          | Current Evidence | Status     |
+| ---------------------- | ----------------------- | ---------------- | ---------- |
+| `AC-US-PAYROLL-009-01` | `PS-INTEGRATED`         | Integrated E2E   | ✅ Met     |
+| `AC-US-PAYROLL-009-02` | `PS-BACKEND`            | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-009-03` | `PS-BACKEND`            | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-009-04` | `PS-BACKEND`            | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-009-05` | `PS-FRONTEND`           | Frontend         | ✅ Met     |
+| `AC-US-PAYROLL-009-06` | `PS-BACKEND`            | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-009-07` | `PS-CONTRACT-REFERENCE` | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-009-08` | `PS-CONTRACT-REFERENCE` | None linked      | ❌ Missing |
 
 **Accounting:** A disabled weekly claim is excluded from
 [`UC-CASH-02`](../accounting/journal-entry-catalogue.md#uc-cash-02--weekly-wage-accrual); re-enabling it restores eligibility.
@@ -474,6 +634,28 @@ week.
 - [x] `AC-US-PAYROLL-010-16` _(contract)_ A withdrawal reverts while the Cash Remuneration contract is paused.
 - [x] `AC-US-PAYROLL-010-17` Cancelling the wallet transaction leaves the claim unpaid and its stored status unchanged.
 
+### Test Coverage
+
+| Acceptance Criterion   | Proof Strategy          | Current Evidence | Status     |
+| ---------------------- | ----------------------- | ---------------- | ---------- |
+| `AC-US-PAYROLL-010-01` | `PS-INTEGRATED`         | Integrated E2E   | ✅ Met     |
+| `AC-US-PAYROLL-010-02` | `PS-INTEGRATED`         | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-010-03` | `PS-INTEGRATED`         | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-010-04` | `PS-INTEGRATED`         | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-010-05` | `PS-BACKEND`            | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-010-06` | `PS-FRONTEND`           | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-010-07` | `PS-FRONTEND`           | Frontend         | ✅ Met     |
+| `AC-US-PAYROLL-010-08` | `PS-CONTRACT-REFERENCE` | Contract         | ✅ Met     |
+| `AC-US-PAYROLL-010-09` | `PS-FRONTEND`           | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-010-10` | `PS-BACKEND`            | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-010-11` | `PS-FRONTEND`           | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-010-12` | `PS-CONTRACT-REFERENCE` | Contract         | ✅ Met     |
+| `AC-US-PAYROLL-010-13` | `PS-CONTRACT-REFERENCE` | Contract         | ✅ Met     |
+| `AC-US-PAYROLL-010-14` | `PS-CONTRACT-REFERENCE` | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-010-15` | `PS-CONTRACT-REFERENCE` | Contract         | ✅ Met     |
+| `AC-US-PAYROLL-010-16` | `PS-CONTRACT-REFERENCE` | Contract         | ✅ Met     |
+| `AC-US-PAYROLL-010-17` | `PS-FRONTEND`           | None linked      | ❌ Missing |
+
 **Accounting:** A successful withdrawal settles the obligation through
 [`UC-CASH-03`](../accounting/journal-entry-catalogue.md#uc-cash-03--wage-settlement). Cash credits Payroll cash; SHER moves promised shares
 into Investor Equity.
@@ -508,6 +690,23 @@ into Investor Equity.
 
 - [x] `AC-US-PAYROLL-011-11` A missing or invalid signature skips only the affected weekly claim.
 - [x] `AC-US-PAYROLL-011-12` A failed contract read skips only the affected weekly claim.
+
+### Test Coverage
+
+| Acceptance Criterion   | Proof Strategy  | Current Evidence | Status     |
+| ---------------------- | --------------- | ---------------- | ---------- |
+| `AC-US-PAYROLL-011-01` | `PS-INTEGRATED` | Integrated E2E   | ✅ Met     |
+| `AC-US-PAYROLL-011-02` | `PS-BACKEND`    | Backend          | ✅ Met     |
+| `AC-US-PAYROLL-011-03` | `PS-BACKEND`    | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-011-04` | `PS-FRONTEND`   | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-011-05` | `PS-FRONTEND`   | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-011-06` | `PS-FRONTEND`   | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-011-07` | `PS-FRONTEND`   | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-011-08` | `PS-BACKEND`    | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-011-09` | `PS-BACKEND`    | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-011-10` | `PS-BACKEND`    | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-011-11` | `PS-BACKEND`    | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-011-12` | `PS-BACKEND`    | None linked      | ❌ Missing |
 
 **Dependencies:** US-PAYROLL-008
 
@@ -544,6 +743,24 @@ into Investor Equity.
 - [x] `AC-US-PAYROLL-012-12` An invalid page filter is rejected.
 - [x] `AC-US-PAYROLL-012-13` An invalid limit filter is rejected.
 
+### Test Coverage
+
+| Acceptance Criterion   | Proof Strategy  | Current Evidence | Status     |
+| ---------------------- | --------------- | ---------------- | ---------- |
+| `AC-US-PAYROLL-012-01` | `PS-INTEGRATED` | Integrated E2E   | ✅ Met     |
+| `AC-US-PAYROLL-012-02` | `PS-FRONTEND`   | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-012-03` | `PS-FRONTEND`   | Frontend         | ✅ Met     |
+| `AC-US-PAYROLL-012-04` | `PS-BACKEND`    | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-012-05` | `PS-BACKEND`    | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-012-06` | `PS-BACKEND`    | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-012-07` | `PS-BACKEND`    | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-012-08` | `PS-BACKEND`    | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-012-09` | `PS-BACKEND`    | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-012-10` | `PS-BACKEND`    | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-012-11` | `PS-BACKEND`    | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-012-12` | `PS-BACKEND`    | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-012-13` | `PS-BACKEND`    | None linked      | ❌ Missing |
+
 **Dependencies:** US-PAYROLL-005
 
 ## US-PAYROLL-013: Review the Payroll Account Position
@@ -569,7 +786,24 @@ into Investor Equity.
 
 - [ ] `AC-US-PAYROLL-013-06` The withdrawn-compensation summary includes only claims withdrawn during the current calendar month.
 
+### Test Coverage
+
+| Acceptance Criterion   | Proof Strategy | Current Evidence | Status     |
+| ---------------------- | -------------- | ---------------- | ---------- |
+| `AC-US-PAYROLL-013-01` | `PS-FRONTEND`  | Frontend         | ✅ Met     |
+| `AC-US-PAYROLL-013-02` | `PS-FRONTEND`  | Frontend         | ✅ Met     |
+| `AC-US-PAYROLL-013-03` | `PS-FRONTEND`  | Frontend         | ✅ Met     |
+| `AC-US-PAYROLL-013-04` | `PS-FRONTEND`  | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-013-05` | `PS-FRONTEND`  | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-013-06` | `PS-FRONTEND`  | None linked      | ❌ Missing |
+
 **Dependencies:** US-PAYROLL-003, Accounts
+
+## Human Validation
+
+Not yet completed. Review the owner wage-management journey, member claim preparation, approval and on-chain withdrawal, reconciliation, and
+Payroll account position in the portal before marking the applicable stories `Done`. The Payroll Account monthly boundary remains an
+identified gap.
 
 ## Known Gaps
 
