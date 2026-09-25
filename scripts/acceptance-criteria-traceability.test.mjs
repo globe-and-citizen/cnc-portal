@@ -7,6 +7,7 @@ import {
   extractStaticTestTitles,
   parseAcceptanceCoverageRows,
   parseAcceptanceCriteria,
+  parseProofStrategies,
   singleIdCoverageComments,
   summarizeAcceptanceCriterionCoverage,
   summarizeTestFileInventory,
@@ -116,14 +117,24 @@ test('accepts a Covers block containing multiple canonical IDs', () => {
 })
 
 test('validates optional per-story coverage targets against representative evidence', () => {
-  const documentedCoverage = feature(`${validFeature.content}
+  const documentedCoverage = feature(`${validFeature.content.replace(
+    '## US-EXAMPLE-001: Do Something',
+    `## Proof Strategy Reference
+
+| Strategy | Responsibilities | Required Evidence | Proof Rationale |
+| -------- | ---------------- | ----------------- | --------------- |
+| \`PS-API\` | Frontend + Backend | Integrated E2E | The API boundary must work. |
+| \`PS-BROWSER\` | Frontend | Mocked browser | The browser branch needs a controlled response. |
+
+## US-EXAMPLE-001: Do Something`
+  )}
 
 ### Test Coverage
 
-| Acceptance Criterion | Responsibilities | Required Evidence | Proof Rationale | Current Evidence | Status |
-| -------------------- | ---------------- | ----------------- | --------------- | ---------------- | ------ |
-| \`AC-US-EXAMPLE-001-01\` | Frontend + Backend | Integrated E2E | The API boundary must work. | Integrated E2E | ✅ Met |
-| \`AC-US-EXAMPLE-001-02\` | Frontend | Mocked browser | The browser branch needs a controlled response. | None linked | ❌ Missing |
+| Acceptance Criterion | Proof Strategy | Current Evidence | Status |
+| -------------------- | -------------- | ---------------- | ------ |
+| \`AC-US-EXAMPLE-001-01\` | \`PS-API\` | Integrated E2E | ✅ Met |
+| \`AC-US-EXAMPLE-001-02\` | \`PS-BROWSER\` | None linked | ❌ Missing |
 `)
   const integratedTest = testDocument(
     `test.describe('[US-EXAMPLE-001] journey', { tag: '@integrated' }, () => {
@@ -133,14 +144,33 @@ test('validates optional per-story coverage targets against representative evide
   )
 
   assert.equal(parseAcceptanceCoverageRows(documentedCoverage).length, 2)
+  assert.deepEqual(parseProofStrategies(documentedCoverage), [
+    {
+      documentPath: 'docs/features/example/README.md',
+      line: 7,
+      id: 'PS-API',
+      responsibilities: 'Frontend + Backend',
+      expected: 'Integrated E2E',
+      rationale: 'The API boundary must work.'
+    },
+    {
+      documentPath: 'docs/features/example/README.md',
+      line: 8,
+      id: 'PS-BROWSER',
+      responsibilities: 'Frontend',
+      expected: 'Mocked browser',
+      rationale: 'The browser branch needs a controlled response.'
+    }
+  ])
   assert.deepEqual(parseAcceptanceCoverageRows(documentedCoverage)[0], {
     documentPath: 'docs/features/example/README.md',
-    line: 20,
+    line: 27,
     storyId: 'US-EXAMPLE-001',
     id: 'AC-US-EXAMPLE-001-01',
-    responsibilities: 'Frontend + Backend',
-    expected: 'Integrated E2E',
-    rationale: 'The API boundary must work.',
+    strategyId: 'PS-API',
+    responsibilities: null,
+    expected: null,
+    rationale: null,
     current: 'Integrated E2E',
     status: '✅ Met'
   })
@@ -153,15 +183,25 @@ test('validates optional per-story coverage targets against representative evide
   )
 })
 
-test('rejects unsupported responsibilities and missing proof rationales', () => {
-  const documentedCoverage = feature(`${validFeature.content}
+test('rejects invalid proof strategies and unknown strategy references', () => {
+  const documentedCoverage = feature(`${validFeature.content.replace(
+    '## US-EXAMPLE-001: Do Something',
+    `## Proof Strategy Reference
+
+| Strategy | Responsibilities | Required Evidence | Proof Rationale |
+| -------- | ---------------- | ----------------- | --------------- |
+| \`PS-API\` | Frontend + Database | Integrated E2E | |
+| \`PS-BROWSER\` | Frontend | Browser snapshot | The browser branch needs controlled data. |
+
+## US-EXAMPLE-001: Do Something`
+  )}
 
 ### Test Coverage
 
-| Acceptance Criterion | Responsibilities | Required Evidence | Proof Rationale | Current Evidence | Status |
-| -------------------- | ---------------- | ----------------- | --------------- | ---------------- | ------ |
-| \`AC-US-EXAMPLE-001-01\` | Frontend + Database | Integrated E2E | | Integrated E2E | ✅ Met |
-| \`AC-US-EXAMPLE-001-02\` | Frontend | Mocked browser | | None linked | ❌ Missing |
+| Acceptance Criterion | Proof Strategy | Current Evidence | Status |
+| -------------------- | -------------- | ---------------- | ------ |
+| \`AC-US-EXAMPLE-001-01\` | \`PS-API\` | Integrated E2E | ✅ Met |
+| \`AC-US-EXAMPLE-001-02\` | \`PS-UNKNOWN\` | None linked | ❌ Missing |
 `)
   const integratedTest = testDocument(
     `test.describe('[US-EXAMPLE-001] journey', { tag: '@integrated' }, () => {
@@ -176,9 +216,10 @@ test('rejects unsupported responsibilities and missing proof rationales', () => 
       testDocuments: [integratedTest]
     }).errors,
     [
-      'docs/features/example/README.md:20 uses unsupported responsibilities Database for AC-US-EXAMPLE-001-01.',
-      'docs/features/example/README.md:20 is missing a proof rationale for AC-US-EXAMPLE-001-01.',
-      'docs/features/example/README.md:21 is missing a proof rationale for AC-US-EXAMPLE-001-02.'
+      'docs/features/example/README.md:7 uses unsupported responsibilities Database for PS-API.',
+      'docs/features/example/README.md:7 is missing a proof rationale for PS-API.',
+      'docs/features/example/README.md:8 uses unsupported required evidence Browser snapshot for PS-BROWSER.',
+      'docs/features/example/README.md:28 references unknown proof strategy PS-UNKNOWN for AC-US-EXAMPLE-001-02.'
     ]
   )
 })
@@ -214,9 +255,15 @@ test('rejects stale current coverage and derived status cells', () => {
 
 test('classifies representative evidence by repository layer', () => {
   assert.equal(classifyTestCoverageLayer('app/src/example/__tests__/example.spec.ts'), 'frontend')
-  assert.equal(classifyTestCoverageLayer('backend/src/example/__tests__/example.test.ts'), 'backend')
+  assert.equal(
+    classifyTestCoverageLayer('backend/src/example/__tests__/example.test.ts'),
+    'backend'
+  )
   assert.equal(classifyTestCoverageLayer('contract/test/Example.spec.ts'), 'contract')
-  assert.equal(classifyTestCoverageLayer('contract/scripts/__tests__/deployment.node.mjs'), 'contract')
+  assert.equal(
+    classifyTestCoverageLayer('contract/scripts/__tests__/deployment.node.mjs'),
+    'contract'
+  )
   assert.equal(classifyTestCoverageLayer('dashboard/app/example.test.ts'), 'dashboard')
   assert.equal(classifyTestCoverageLayer('app/test/e2e/example.spec.ts'), 'e2e')
   assert.equal(classifyTestCoverageLayer('scripts/example.test.mjs'), 'other')
@@ -225,18 +272,26 @@ test('classifies representative evidence by repository layer', () => {
 test('classifies E2E evidence by its declared integration mode', () => {
   assert.equal(
     classifyE2eCoverageMode(
-      testDocument("test.describe('journey', { tag: '@integrated' }, () => {})", 'app/test/e2e/integrated.spec.ts')
+      testDocument(
+        "test.describe('journey', { tag: '@integrated' }, () => {})",
+        'app/test/e2e/integrated.spec.ts'
+      )
     ),
     'integrated'
   )
   assert.equal(
     classifyE2eCoverageMode(
-      testDocument("test.describe('variant', { tag: '@mocked' }, () => {})", 'app/test/e2e/mocked.spec.ts')
+      testDocument(
+        "test.describe('variant', { tag: '@mocked' }, () => {})",
+        'app/test/e2e/mocked.spec.ts'
+      )
     ),
     'mocked'
   )
   assert.equal(
-    classifyE2eCoverageMode(testDocument("test('ambiguous', () => {})", 'app/test/e2e/ambiguous.spec.ts')),
+    classifyE2eCoverageMode(
+      testDocument("test('ambiguous', () => {})", 'app/test/e2e/ambiguous.spec.ts')
+    ),
     'unclassified'
   )
   assert.equal(classifyE2eCoverageMode(testDocument("test('unit', () => {})")), null)
@@ -297,10 +352,18 @@ test('inventories every test file and maps explicit IDs plus canonical feature e
   it('[AC-US-EXAMPLE-001-01] proves the primary outcome', () => {})
 })`),
       testDocument("test('covers a technical helper', () => {})", 'contract/test/Helper.spec.ts'),
-      testDocument("test('supports the feature', () => {})", 'app/src/example/__tests__/linked.spec.ts'),
+      testDocument(
+        "test('supports the feature', () => {})",
+        'app/src/example/__tests__/linked.spec.ts'
+      ),
       testDocument('export const fixture = true', 'app/src/example/__tests__/fixture.ts')
     ],
-    [feature(`- [Feature tests](../../../app/src/example/__tests__/linked.spec.ts)`, validFeature.path)],
+    [
+      feature(
+        `- [Feature tests](../../../app/src/example/__tests__/linked.spec.ts)`,
+        validFeature.path
+      )
+    ],
     [
       feature(
         `- [Contract helper tests](../../../../contract/test/Helper.spec.ts)`,
@@ -429,7 +492,9 @@ test('rejects duplicate and incomplete story-local sequences', () => {
 test('rejects a test reference to an unknown criterion', () => {
   const result = validateAcceptanceCriteriaTraceability({
     featureDocuments: [validFeature],
-    testDocuments: [testDocument("it('[AC-US-EXAMPLE-001-03] proves an unknown outcome', () => {})")]
+    testDocuments: [
+      testDocument("it('[AC-US-EXAMPLE-001-03] proves an unknown outcome', () => {})")
+    ]
   })
 
   assert.deepEqual(result.errors, [
@@ -440,7 +505,9 @@ test('rejects a test reference to an unknown criterion', () => {
 test('rejects a test reference to an unchecked criterion', () => {
   const result = validateAcceptanceCriteriaTraceability({
     featureDocuments: [validFeature],
-    testDocuments: [testDocument("it('[AC-US-EXAMPLE-001-02] claims an unfinished outcome', () => {})")]
+    testDocuments: [
+      testDocument("it('[AC-US-EXAMPLE-001-02] claims an unfinished outcome', () => {})")
+    ]
   })
 
   assert.deepEqual(result.errors, [

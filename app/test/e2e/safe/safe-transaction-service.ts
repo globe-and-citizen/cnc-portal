@@ -13,6 +13,8 @@ import { json, type E2EUser, type StubResponse } from '../e2e-page'
 import { safeNonce, safeOwners, safeThreshold, type SafeE2EFixture } from './safe-chain'
 
 export interface SafeTransactionServiceOptions {
+  failConfirmationRequests?: number
+  failSafeInfoRequests?: number
   incomingTransfers?: SafeIncomingTransfer[]
   transactions?: SafeTransaction[]
   user: E2EUser
@@ -151,6 +153,8 @@ export async function stubSafeTransactionService(
   const transactions = structuredClone(options.transactions ?? [])
   const incomingTransfers =
     options.incomingTransfers ?? (fixture ? initialIncomingTransfers(fixture) : [])
+  let safeInfoFailuresRemaining = options.failSafeInfoRequests ?? 0
+  let confirmationFailuresRemaining = options.failConfirmationRequests ?? 0
 
   const respond = async (request: Request): Promise<StubResponse> => {
     const { pathname } = new URL(request.url())
@@ -159,6 +163,10 @@ export async function stubSafeTransactionService(
 
     // Confirmations are keyed by Safe transaction hash, not by Safe address.
     if (method === 'POST' && pathname.endsWith('/confirmations/')) {
+      if (confirmationFailuresRemaining > 0) {
+        confirmationFailuresRemaining -= 1
+        return { status: 503, contentType: 'text/plain', body: 'Safe confirmation unavailable' }
+      }
       const safeTxHash = pathname.split('/').filter(Boolean).at(-2)
       const transaction = transactions.find((item) => item.safeTxHash === safeTxHash)
       const { signature } = request.postDataJSON() as { signature?: string }
@@ -178,6 +186,10 @@ export async function stubSafeTransactionService(
     if (!safeAddress) return notFound('Safe address missing')
 
     if (method === 'GET' && pathname.endsWith(`/safes/${safeAddress}/`)) {
+      if (safeInfoFailuresRemaining > 0) {
+        safeInfoFailuresRemaining -= 1
+        return { status: 503, contentType: 'text/plain', body: 'Safe information unavailable' }
+      }
       return json(await currentSafeInfo(safeAddress))
     }
     if (method === 'GET' && pathname.endsWith('/incoming-transfers/')) {

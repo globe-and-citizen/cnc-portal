@@ -178,6 +178,20 @@ describe('getSafeTransactionPermissions', () => {
     expect(permissions.approveHint).toContain('already approved')
   })
 
+  it.each(['executed', 'invalid'] as const)(
+    '[AC-US-SAFE-006-07] prevents actions on %s transactions',
+    (state) => {
+      const permissions = getSafeTransactionPermissions(makeTransaction(), {
+        state,
+        isSigner: true,
+        connectedAddress: signer
+      })
+
+      expect(permissions.canApprove).toBe(false)
+      expect(permissions.canExecute).toBe(false)
+    }
+  )
+
   it('allows a signer to execute ready and conflicting transactions', () => {
     const transaction = makeTransaction({
       confirmations: [makeConfirmation(signer), makeConfirmation('0xother')]

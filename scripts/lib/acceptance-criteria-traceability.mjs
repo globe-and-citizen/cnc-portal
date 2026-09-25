@@ -73,6 +73,40 @@ export function parseAcceptanceCriteria(document) {
   return criteria
 }
 
+export function parseProofStrategies(document) {
+  const strategies = []
+  let inProofStrategyReference = false
+
+  for (const [index, line] of document.content.split('\n').entries()) {
+    if (line.startsWith('## ')) {
+      inProofStrategyReference = line === '## Proof Strategy Reference'
+      continue
+    }
+
+    if (!inProofStrategyReference || !line.startsWith('|')) continue
+
+    const cells = line
+      .split('|')
+      .slice(1, -1)
+      .map((cell) => cell.trim())
+    if (cells.length !== 4) continue
+
+    const id = cells[0].replaceAll('`', '')
+    if (!/^PS-[A-Z0-9-]+$/.test(id)) continue
+
+    strategies.push({
+      documentPath: document.path,
+      line: index + 1,
+      id,
+      responsibilities: cells[1],
+      expected: cells[2],
+      rationale: cells[3]
+    })
+  }
+
+  return strategies
+}
+
 export function parseAcceptanceCoverageRows(document) {
   const rows = []
   let storyId = null
@@ -110,17 +144,22 @@ export function parseAcceptanceCoverageRows(document) {
     if (!/^AC-US-[A-Z0-9-]+-\d{2,}$/.test(id)) continue
 
     const responsibilityBased = cells.length === 6
+    const strategyId =
+      cells.length === 4 && /^PS-[A-Z0-9-]+$/.test(cells[1].replaceAll('`', ''))
+        ? cells[1].replaceAll('`', '')
+        : null
 
     rows.push({
       documentPath: document.path,
       line: index + 1,
       storyId,
       id,
+      strategyId,
       responsibilities: responsibilityBased ? cells[1] : null,
-      expected: cells[responsibilityBased ? 2 : 1],
+      expected: strategyId ? null : cells[responsibilityBased ? 2 : 1],
       rationale: responsibilityBased ? cells[3] : null,
-      current: cells[responsibilityBased ? 4 : 2],
-      status: cells[responsibilityBased ? 5 : 3]
+      current: cells[strategyId ? 2 : responsibilityBased ? 4 : 2],
+      status: cells[strategyId ? 3 : responsibilityBased ? 5 : 3]
     })
   }
 
@@ -143,7 +182,9 @@ export function singleIdCoverageComments(document) {
   for (const match of document.content.matchAll(/\/\*\*[\s\S]*?\*\//g)) {
     if (!/\bCovers\s*:/.test(match[0])) continue
 
-    const ids = [...new Set([...match[0].matchAll(TRACEABILITY_ID_REFERENCE)].map((reference) => reference[1]))]
+    const ids = [
+      ...new Set([...match[0].matchAll(TRACEABILITY_ID_REFERENCE)].map((reference) => reference[1]))
+    ]
     if (ids.length !== 1) continue
 
     comments.push({
@@ -166,13 +207,15 @@ export function classifyTestCoverageLayer(documentPath) {
 }
 
 export function countStaticTestDeclarations(document) {
-  const directTests = document.content.match(/\b(?:it|test)(?:\.(?:only|skip|todo|fixme))?\s*\(/g) ?? []
+  const directTests =
+    document.content.match(/\b(?:it|test)(?:\.(?:only|skip|todo|fixme))?\s*\(/g) ?? []
   const parameterizedTests = document.content.match(/\b(?:it|test)\.each\s*\(/g) ?? []
   return directTests.length + parameterizedTests.length
 }
 
 function baseTestCallName(expression) {
-  if (ts.isIdentifier(expression) && ['it', 'test'].includes(expression.text)) return expression.text
+  if (ts.isIdentifier(expression) && ['it', 'test'].includes(expression.text))
+    return expression.text
   if (
     ts.isPropertyAccessExpression(expression) &&
     ts.isIdentifier(expression.expression) &&
@@ -199,7 +242,8 @@ function isParameterizedTestFactory(expression) {
 }
 
 function staticTitle(argument) {
-  if (ts.isStringLiteral(argument) || ts.isNoSubstitutionTemplateLiteral(argument)) return argument.text
+  if (ts.isStringLiteral(argument) || ts.isNoSubstitutionTemplateLiteral(argument))
+    return argument.text
   return null
 }
 
@@ -209,7 +253,9 @@ export function extractStaticTestTitles(document) {
     document.content,
     ts.ScriptTarget.Latest,
     true,
-    document.path.endsWith('.tsx') || document.path.endsWith('.jsx') ? ts.ScriptKind.TSX : ts.ScriptKind.TS
+    document.path.endsWith('.tsx') || document.path.endsWith('.jsx')
+      ? ts.ScriptKind.TSX
+      : ts.ScriptKind.TS
   )
   const titles = []
 
@@ -250,7 +296,9 @@ function repositoryLinks(document) {
     if (!reference) continue
 
     try {
-      const target = posix.normalize(posix.join(posix.dirname(document.path), decodeURIComponent(reference)))
+      const target = posix.normalize(
+        posix.join(posix.dirname(document.path), decodeURIComponent(reference))
+      )
       if (target && !target.startsWith('../') && !target.startsWith('/')) {
         links.add(target.replace(/\/$/, ''))
       }
@@ -266,18 +314,29 @@ function canonicalFeatureOwners(documentPath, featureDocuments) {
   return featureDocuments
     .filter((document) =>
       repositoryLinks(document).some(
-        (evidencePath) => documentPath === evidencePath || documentPath.startsWith(`${evidencePath}/`)
+        (evidencePath) =>
+          documentPath === evidencePath || documentPath.startsWith(`${evidencePath}/`)
       )
     )
     .map((document) => document.path)
 }
 
-export function summarizeTestFileInventory(criteria, testDocuments, featureDocuments = [], technicalDocuments = []) {
+export function summarizeTestFileInventory(
+  criteria,
+  testDocuments,
+  featureDocuments = [],
+  technicalDocuments = []
+) {
   const criterionIds = new Set(criteria.map((criterion) => criterion.id))
   const criterionOwnerById = new Map(
-    criteria.map((criterion) => [criterion.id, { documentPath: criterion.documentPath, storyId: criterion.storyId }])
+    criteria.map((criterion) => [
+      criterion.id,
+      { documentPath: criterion.documentPath, storyId: criterion.storyId }
+    ])
   )
-  const storyOwnerById = new Map(criteria.map((criterion) => [criterion.storyId, criterion.documentPath]))
+  const storyOwnerById = new Map(
+    criteria.map((criterion) => [criterion.storyId, criterion.documentPath])
+  )
 
   return testDocuments.flatMap((document) => {
     const declarations = countStaticTestDeclarations(document)
@@ -296,10 +355,14 @@ export function summarizeTestFileInventory(criteria, testDocuments, featureDocum
       if (document.content.includes(storyId)) storyIds.add(storyId)
     }
 
-    const markerFeatureDocuments = [...storyIds].map((storyId) => storyOwnerById.get(storyId)).filter(Boolean)
+    const markerFeatureDocuments = [...storyIds]
+      .map((storyId) => storyOwnerById.get(storyId))
+      .filter(Boolean)
     const evidenceFeatureDocuments = canonicalFeatureOwners(document.path, featureDocuments)
     const technicalOwners = canonicalFeatureOwners(document.path, technicalDocuments)
-    const ownedFeatureDocuments = [...new Set([...markerFeatureDocuments, ...evidenceFeatureDocuments])].sort()
+    const ownedFeatureDocuments = [
+      ...new Set([...markerFeatureDocuments, ...evidenceFeatureDocuments])
+    ].sort()
     const mappingSources = []
     if (markerFeatureDocuments.length > 0) mappingSources.push('US/AC marker')
     if (evidenceFeatureDocuments.length > 0) mappingSources.push('canonical evidence')
@@ -336,7 +399,9 @@ export function summarizeAcceptanceCriterionCoverage(criteria, references) {
 
     if (layer === 'e2e') {
       const modes = e2eReferencesById.get(reference.id) ?? new Map()
-      const mode = E2E_COVERAGE_MODES.includes(reference.e2eMode) ? reference.e2eMode : 'unclassified'
+      const mode = E2E_COVERAGE_MODES.includes(reference.e2eMode)
+        ? reference.e2eMode
+        : 'unclassified'
       const modePaths = modes.get(mode) ?? new Set()
       modePaths.add(reference.documentPath)
       modes.set(mode, modePaths)
@@ -375,10 +440,51 @@ function validateAcceptanceCoverageRows({ featureDocuments, criteria, references
   const errors = []
   const criteriaById = new Map(criteria.map((criterion) => [criterion.id, criterion]))
   const coverageById = new Map(
-    summarizeAcceptanceCriterionCoverage(criteria, references).map((criterion) => [criterion.id, criterion])
+    summarizeAcceptanceCriterionCoverage(criteria, references).map((criterion) => [
+      criterion.id,
+      criterion
+    ])
   )
 
   for (const document of featureDocuments) {
+    const strategies = parseProofStrategies(document)
+    const strategiesById = new Map()
+
+    for (const strategy of strategies) {
+      const location = `${strategy.documentPath}:${strategy.line}`
+      if (strategiesById.has(strategy.id)) {
+        errors.push(`${location} duplicates proof strategy ${strategy.id}.`)
+        continue
+      }
+      strategiesById.set(strategy.id, strategy)
+
+      const responsibilityLabels = strategy.responsibilities
+        .split(' + ')
+        .map((label) => label.trim())
+      const invalidResponsibilities = responsibilityLabels.filter(
+        (label) => !ACCEPTANCE_RESPONSIBILITY_LABELS.includes(label)
+      )
+      if (invalidResponsibilities.length > 0) {
+        errors.push(
+          `${location} uses unsupported responsibilities ${invalidResponsibilities.join(', ')} for ${strategy.id}.`
+        )
+      }
+
+      const expectedLabels = strategy.expected.split(' + ').map((label) => label.trim())
+      const invalidExpected = expectedLabels.filter(
+        (label) => !ACCEPTANCE_COVERAGE_LABELS.includes(label)
+      )
+      if (invalidExpected.length > 0) {
+        errors.push(
+          `${location} uses unsupported required evidence ${invalidExpected.join(', ')} for ${strategy.id}.`
+        )
+      }
+
+      if (!strategy.rationale) {
+        errors.push(`${location} is missing a proof rationale for ${strategy.id}.`)
+      }
+    }
+
     const rows = parseAcceptanceCoverageRows(document)
     const coveredStories = new Set(rows.map((row) => row.storyId))
     const rowsById = new Map()
@@ -391,13 +497,23 @@ function validateAcceptanceCoverageRows({ featureDocuments, criteria, references
         continue
       }
       if (criterion.storyId !== row.storyId) {
-        errors.push(`${location} declares ${row.id} under ${row.storyId}, but it belongs to ${criterion.storyId}.`)
+        errors.push(
+          `${location} declares ${row.id} under ${row.storyId}, but it belongs to ${criterion.storyId}.`
+        )
       }
       if (rowsById.has(row.id)) {
         errors.push(`${location} duplicates the test-coverage row for ${row.id}.`)
         continue
       }
       rowsById.set(row.id, row)
+
+      const strategy = row.strategyId ? strategiesById.get(row.strategyId) : null
+      if (row.strategyId && !strategy) {
+        errors.push(
+          `${location} references unknown proof strategy ${row.strategyId} for ${row.id}.`
+        )
+        continue
+      }
 
       if (row.responsibilities !== null) {
         const responsibilityLabels = row.responsibilities.split(' + ').map((label) => label.trim())
@@ -414,10 +530,15 @@ function validateAcceptanceCoverageRows({ featureDocuments, criteria, references
         }
       }
 
-      const expectedLabels = row.expected.split(' + ').map((label) => label.trim())
-      const invalidExpected = expectedLabels.filter((label) => !ACCEPTANCE_COVERAGE_LABELS.includes(label))
+      const expected = strategy?.expected ?? row.expected
+      const expectedLabels = expected.split(' + ').map((label) => label.trim())
+      const invalidExpected = expectedLabels.filter(
+        (label) => !ACCEPTANCE_COVERAGE_LABELS.includes(label)
+      )
       if (invalidExpected.length > 0) {
-        errors.push(`${location} uses unsupported expected coverage ${invalidExpected.join(', ')} for ${row.id}.`)
+        errors.push(
+          `${location} uses unsupported expected coverage ${invalidExpected.join(', ')} for ${row.id}.`
+        )
         continue
       }
 
@@ -441,10 +562,13 @@ function validateAcceptanceCoverageRows({ featureDocuments, criteria, references
     }
 
     for (const criterion of criteria.filter(
-      (candidate) => candidate.documentPath === document.path && coveredStories.has(candidate.storyId)
+      (candidate) =>
+        candidate.documentPath === document.path && coveredStories.has(candidate.storyId)
     )) {
       if (!rowsById.has(criterion.id)) {
-        errors.push(`${document.path} is missing a test-coverage row for ${criterion.id} under ${criterion.storyId}.`)
+        errors.push(
+          `${document.path} is missing a test-coverage row for ${criterion.id} under ${criterion.storyId}.`
+        )
       }
     }
   }
@@ -467,13 +591,17 @@ export function validateAcceptanceCriteriaTraceability({ featureDocuments, testD
 
     const prefix = `AC-${criterion.storyId}-`
     if (!criterion.id.startsWith(prefix)) {
-      errors.push(`${location} uses ${criterion.id}, which does not belong to ${criterion.storyId}.`)
+      errors.push(
+        `${location} uses ${criterion.id}, which does not belong to ${criterion.storyId}.`
+      )
       continue
     }
 
     const known = criteriaById.get(criterion.id)
     if (known) {
-      errors.push(`${location} duplicates ${criterion.id}, already used at ${known.documentPath}:${known.line}.`)
+      errors.push(
+        `${location} duplicates ${criterion.id}, already used at ${known.documentPath}:${known.line}.`
+      )
       continue
     }
 
@@ -506,7 +634,9 @@ export function validateAcceptanceCriteriaTraceability({ featureDocuments, testD
   for (const reference of references) {
     const criterion = criteriaById.get(reference.id)
     if (!criterion) {
-      errors.push(`${reference.documentPath} references unknown acceptance criterion ${reference.id}.`)
+      errors.push(
+        `${reference.documentPath} references unknown acceptance criterion ${reference.id}.`
+      )
     } else if (!criterion.checked) {
       errors.push(
         `${reference.documentPath} references unchecked acceptance criterion ${reference.id} at ${criterion.documentPath}:${criterion.line}.`

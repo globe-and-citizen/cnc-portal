@@ -247,5 +247,21 @@ describe('[US-EXP-003] [US-EXP-004] ExpenseAccountTable - Actions and Loading', 
       const wrapper = createComponent()
       expect(wrapper.text()).toContain('expired')
     })
+
+    it('[AC-US-EXP-003-09] keeps expired and exhausted approvals unavailable after synchronization', () => {
+      vi.mocked(useGetExpensesQuery).mockReturnValue(
+        createMockQueryResponse([
+          { ...mockApprovals[0], status: 'expired' },
+          { ...mockApprovals[1], status: 'exhausted' }
+        ]) as ReturnType<typeof useGetExpensesQuery>
+      )
+
+      const wrapper = createComponent()
+
+      expect(wrapper.text()).toContain('expired')
+      expect(wrapper.text()).toContain('exhausted')
+      expect(wrapper.find('[data-test="enable-button"]').exists()).toBe(false)
+      expect(wrapper.find('[data-test="disable-button"]').exists()).toBe(false)
+    })
   })
 })
