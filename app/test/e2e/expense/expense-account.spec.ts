@@ -41,9 +41,6 @@ test.describe('Expense Account', { tag: ['@browser', '@mocked'] }, () => {
 
   /**
    * Covers:
-   * - [AC-US-EXP-001-01]
-   * - [AC-US-EXP-001-02]
-   * - [AC-US-EXP-001-03]
    * - [AC-US-EXP-004-01]
    * - [AC-US-EXP-004-03]
    */
@@ -113,11 +110,8 @@ test.describe('Expense Account', { tag: ['@browser', '@mocked'] }, () => {
 
   /**
    * Covers:
-   * - [AC-US-EXP-002-01]
-   * - [AC-US-EXP-002-02]
    * - [AC-US-EXP-002-06]
    * - [AC-US-EXP-002-10]
-   * - [AC-US-EXP-004-02]
    * - [AC-US-EXP-004-06]
    */
   test(
@@ -151,43 +145,6 @@ test.describe('Expense Account', { tag: ['@browser', '@mocked'] }, () => {
         .toBe(recipientBefore + parseUnits('3', 6))
 
       await expect(page.locator('[data-test="transfer-button"]')).toBeDisabled({ timeout: 30_000 })
-    }
-  )
-
-  /**
-   * Covers:
-   * - [AC-US-EXP-003-01]
-   * - [AC-US-EXP-003-02]
-   * - [AC-US-EXP-003-03]
-   */
-  test(
-    'deactivates and reactivates a recurring approval as the contract owner',
-    { tag: '@US-EXP-003' },
-    async ({ page }) => {
-      const api = createExpenseApi()
-      addExpenseApproval(api, await signExpenseApproval(fixture, { frequencyType: 2, amount: 5 }))
-      await openExpenseAccount(page, fixture, api)
-
-      await page.locator('[data-test="disable-button"]').click()
-      await expect(page.getByText('Approval deactivated', { exact: true })).toBeVisible({
-        timeout: 30_000
-      })
-      await expect(
-        page
-          .locator('[data-test="claims-table"]')
-          .getByRole('table')
-          .getByText('disabled', { exact: true })
-      ).toBeVisible({ timeout: 30_000 })
-      await page.locator('[data-test="enable-button"]').click()
-      await expect(page.getByText('Approval activated', { exact: true })).toBeVisible({
-        timeout: 30_000
-      })
-      await expect(
-        page
-          .locator('[data-test="claims-table"]')
-          .getByRole('table')
-          .getByText('enabled', { exact: true })
-      ).toBeVisible({ timeout: 30_000 })
     }
   )
 

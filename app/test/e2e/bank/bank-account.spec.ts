@@ -55,14 +55,10 @@ test.describe('Bank Account', { tag: ['@browser', '@mocked'] }, () => {
 
   /**
    * Covers:
-   * - [AC-US-BANK-001-01]
-   * - [AC-US-BANK-001-02]
-   * - [AC-US-BANK-001-03]
    * - [AC-US-BANK-001-04]
    * - [AC-US-BANK-001-05]
    * - [AC-US-BANK-001-09]
    * - [AC-US-BANK-003-01]
-   * - [AC-US-BANK-003-02]
    * - [AC-US-BANK-003-03]
    * - [AC-US-BANK-003-06]
    * - [AC-US-BANK-003-07]
@@ -273,11 +269,7 @@ test.describe('Bank Account', { tag: ['@browser', '@mocked'] }, () => {
 
   /**
    * Covers:
-   * - [AC-US-BANK-001-01]
-   * - [AC-US-BANK-001-02]
-   * - [AC-US-BANK-001-03]
    * - [AC-US-BANK-003-01]
-   * - [AC-US-BANK-003-02]
    * - [AC-US-BANK-003-03]
    * - [AC-US-BANK-003-04]
    * - [AC-US-BANK-003-07]

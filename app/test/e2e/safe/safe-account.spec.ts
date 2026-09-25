@@ -73,33 +73,6 @@ test.describe('Safe Account', { tag: ['@browser', '@mocked'] }, () => {
 
   /**
    * Covers:
-   * - [AC-US-SAFE-001-01]
-   * - [AC-US-SAFE-001-03]
-   * - [AC-US-SAFE-001-05]
-   */
-  test(
-    'lets the company owner deploy and register a new Safe from the setup journey',
-    { tag: '@US-SAFE-001' },
-    async ({ page }) => {
-      await openSafeAccount(page, fixture, { safeAddress: null })
-
-      await expect(page.getByRole('heading', { name: 'Set up your team Safe' })).toBeVisible()
-      await page.locator('[data-test="deploy-safe-button"]').click()
-
-      await expect(
-        page.getByText('Safe wallet deployed successfully', { exact: true })
-      ).toBeVisible({
-        timeout: 60_000
-      })
-      await expect(page.locator('[data-test="safe-wallet-view"]')).toBeVisible()
-      await expect(page.locator('[data-test="safe-threshold-summary"]')).toHaveText(
-        '1 of 1 signers'
-      )
-    }
-  )
-
-  /**
-   * Covers:
    * - [AC-US-SAFE-001-02]
    * - [AC-US-SAFE-001-03]
    */

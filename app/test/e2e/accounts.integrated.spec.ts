@@ -93,6 +93,16 @@ test.describe(
           timeout: 30_000
         })
         await expect(history.getByText('Token deposit', { exact: true })).toBeVisible()
+        await expect(history.getByText('Date', { exact: true })).toBeVisible()
+        await expect(history.getByText('Counterparty', { exact: true })).toBeVisible()
+        await expect(history.getByText('Value (USD)', { exact: true })).toBeVisible()
+        await expect(history.getByText('Tx Hash', { exact: true })).toBeVisible()
+        await history.locator('[data-test="bank-transaction-detail-button"]').first().click()
+        const transactionDetail = page.getByRole('dialog', { name: 'Transaction detail' })
+        await expect(transactionDetail.getByText('Tx hash', { exact: true })).toBeVisible()
+        await expect(transactionDetail.getByText('Timestamp', { exact: true })).toBeVisible()
+        await expect(transactionDetail.getByText('Amount', { exact: true })).toBeVisible()
+        await transactionDetail.getByRole('button', { name: 'Close', exact: true }).click()
       } finally {
         if (!page.isClosed()) {
           await deleteCompanyThroughUi(page, company.teamId, company.team.name)
@@ -171,10 +181,41 @@ test.describe(
         await chooseApprovalDate(page, '[data-test="start-date-picker"]', today)
         await chooseApprovalDate(page, '[data-test="end-date-picker"]', tomorrow)
         await approval.locator('[data-test="approve-button"]').click()
+        const persistedApproval = page.waitForResponse(
+          (response) =>
+            response.request().method() === 'POST' &&
+            new URL(response.url()).pathname === '/api/expense'
+        )
         await page
           .getByRole('dialog', { name: 'Review & Sign' })
           .locator('[data-test="approve-button"]')
           .click()
+        const approvalResponse = await persistedApproval
+        expect(approvalResponse.ok()).toBe(true)
+        const approvalRecord = (await approvalResponse.json()) as {
+          userAddress: string
+          data: {
+            amount: number
+            frequencyType: number
+            startDate: number
+            endDate: number
+            tokenAddress: string
+            approvedAddress: string
+            signedAgainstContractAddress: string
+            chainId: number
+          }
+        }
+        expect(approvalRecord.userAddress.toLowerCase()).toBe(E2E_MEMBER.toLowerCase())
+        expect(approvalRecord.data).toMatchObject({
+          amount: 5,
+          frequencyType: 2,
+          tokenAddress: usdc,
+          approvedAddress: E2E_MEMBER,
+          signedAgainstContractAddress: expense,
+          chainId: 31337
+        })
+        expect(approvalRecord.data.startDate).toBeGreaterThan(0)
+        expect(approvalRecord.data.endDate).toBeGreaterThan(approvalRecord.data.startDate)
         await expect(page.getByText('User approved successfully', { exact: true })).toBeVisible({
           timeout: 30_000
         })
@@ -212,10 +253,16 @@ test.describe(
         await expect(page.getByText('Approval deactivated', { exact: true })).toBeVisible({
           timeout: 30_000
         })
+        await openAccountFromSidebar(page, `/teams/${company.teamId}/accounts/bank-account`)
+        await openAccountFromSidebar(page, `/teams/${company.teamId}/accounts/expense-account`)
+        await expect(page.locator('[data-test="enable-button"]')).toBeVisible()
         await page.locator('[data-test="enable-button"]').click()
         await expect(page.getByText('Approval activated', { exact: true })).toBeVisible({
           timeout: 30_000
         })
+        await openAccountFromSidebar(page, `/teams/${company.teamId}/accounts/bank-account`)
+        await openAccountFromSidebar(page, `/teams/${company.teamId}/accounts/expense-account`)
+        await expect(page.locator('[data-test="disable-button"]')).toBeVisible()
 
         const reviewContext = await browser.newContext()
         const reviewPage = await reviewContext.newPage()
