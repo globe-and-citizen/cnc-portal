@@ -57,6 +57,9 @@ app/.env.production
 # Generated acceptance-criterion coverage reports (local only)
 /reports/acceptance-coverage/
 
+# Generated autonomous-agent audit reports (published as workflow artifacts or GitHub issues)
+/reports/agent-audits/
+
 # Keep .claude local (settings, worktrees, …) but share committed agent skills
 .claude/*
 !.claude/skills/

@@ -24,6 +24,10 @@ Task-specific workflows are versioned under `.agents/skills/`. Use only the one 
 
 `AGENTS.md` remains the universal contract. Skills contain procedures; detailed standards remain in their specialised guides.
 
+Recurring AI-agent audits follow the [Autonomous Semantic Audit Contracts](./docs/development-guide/autonomous-audits/README.md). These
+audits require contextual reasoning beyond deterministic CI output and may create tracked draft remediation PRs only within their documented
+confidence and safety boundaries.
+
 ## Repository map
 
 - `app/` — Vue 3 SPA, the main product.
