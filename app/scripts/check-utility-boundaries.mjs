@@ -29,6 +29,15 @@ const isProductionSource = (path) =>
 
 const stripComments = (source) => source.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '')
 
+// Template-literal text is data (e.g. a code sample a utility renders), but its
+// `${…}` interpolations still execute, so only those are kept.
+const stripStringLiterals = (source) =>
+  source
+    .replace(/`(?:\\[\s\S]|\$\{[^}]*\}|[^`\\])*`/g, (literal) =>
+      (literal.match(/\$\{[^}]*\}/g) ?? []).join(' ')
+    )
+    .replace(/(['"])(?:\\.|(?!\1).)*\1/g, '')
+
 const extractImportRecords = (source) =>
   [...stripComments(source).matchAll(IMPORT_PATTERN)]
     .map((match) => ({
@@ -127,7 +136,7 @@ export const validateUtilityBoundaries = (files) => {
       }
     }
 
-    const executableSource = stripComments(source).replace(/(['"])(?:\\.|(?!\1).)*\1/g, '')
+    const executableSource = stripStringLiterals(stripComments(source))
     if (
       /\b(?:window|document|navigator|localStorage|sessionStorage)\s*(?:\.|\[)/.test(
         executableSource
