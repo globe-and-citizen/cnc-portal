@@ -52,7 +52,8 @@ test.describe(
     /**
      * Covers:
      * - [AC-US-SAFE-001-01]
-     * - [AC-US-SAFE-001-02]
+     * - [AC-US-SAFE-001-03]
+     * - [AC-US-SAFE-001-05]
      * - [AC-US-BANK-001-01]
      * - [AC-US-BANK-001-02]
      * - [AC-US-BANK-001-03]
@@ -118,6 +119,7 @@ test.describe(
      * - [AC-US-EXP-002-02]
      * - [AC-US-EXP-003-01]
      * - [AC-US-EXP-003-02]
+     * - [AC-US-EXP-003-03]
      * - [AC-US-EXP-004-02]
      * - [AC-US-EXP-004-04]
      */

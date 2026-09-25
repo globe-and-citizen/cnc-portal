@@ -59,7 +59,7 @@ describe('[US-BANK-004] CashOutAllAction', () => {
     mockCashOut.hasFailed.value = false
   })
 
-  it('hides the button when the connected user is not the Bank owner', () => {
+  it('[AC-US-BANK-004-03] hides the button when the connected user is not the Bank owner', () => {
     mockUserStore.address = NON_OWNER
     expect(createWrapper().find(BUTTON).exists()).toBe(false)
   })
@@ -69,7 +69,7 @@ describe('[US-BANK-004] CashOutAllAction', () => {
     expect(wrapper.get(BUTTON).attributes('disabled')).toBeUndefined()
   })
 
-  it('disables the button when every account is empty', () => {
+  it('[AC-US-BANK-004-08] disables the button when every account is empty', () => {
     mockUseContractBalance.total.value = {
       usd: { value: 0, formatted: '$0' },
       local: { value: 0, formatted: '$0' }

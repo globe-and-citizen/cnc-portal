@@ -35,10 +35,18 @@ test.afterEach(async () => {
   await revertChain(snapshotId)
 })
 
-test.describe('Expense Account', { tag: '@browser' }, () => {
+test.describe('Expense Account', { tag: ['@browser', '@mocked'] }, () => {
   test.describe.configure({ mode: 'serial' })
   test.setTimeout(180_000)
 
+  /**
+   * Covers:
+   * - [AC-US-EXP-001-01]
+   * - [AC-US-EXP-001-02]
+   * - [AC-US-EXP-001-03]
+   * - [AC-US-EXP-004-01]
+   * - [AC-US-EXP-004-03]
+   */
   test(
     'lets the owner sign a USDC approval and exposes the funded account, approval, and history',
     { tag: ['@US-EXP-001', '@US-EXP-004'] },
@@ -103,6 +111,15 @@ test.describe('Expense Account', { tag: '@browser' }, () => {
     }
   )
 
+  /**
+   * Covers:
+   * - [AC-US-EXP-002-01]
+   * - [AC-US-EXP-002-02]
+   * - [AC-US-EXP-002-06]
+   * - [AC-US-EXP-002-10]
+   * - [AC-US-EXP-004-02]
+   * - [AC-US-EXP-004-06]
+   */
   test(
     'lets an approved recipient spend a signed ERC-20 budget exactly once and reflects its exhaustion',
     { tag: '@US-EXP-002' },
@@ -137,6 +154,12 @@ test.describe('Expense Account', { tag: '@browser' }, () => {
     }
   )
 
+  /**
+   * Covers:
+   * - [AC-US-EXP-003-01]
+   * - [AC-US-EXP-003-02]
+   * - [AC-US-EXP-003-03]
+   */
   test(
     'deactivates and reactivates a recurring approval as the contract owner',
     { tag: '@US-EXP-003' },
@@ -168,6 +191,11 @@ test.describe('Expense Account', { tag: '@browser' }, () => {
     }
   )
 
+  /**
+   * Covers:
+   * - [AC-US-EXP-004-01]
+   * - [AC-US-EXP-004-08]
+   */
   test(
     'keeps the read-only account available to a member when history reads fail',
     { tag: '@US-EXP-004' },
@@ -187,6 +215,11 @@ test.describe('Expense Account', { tag: '@browser' }, () => {
     }
   )
 
+  /**
+   * Covers:
+   * - [AC-US-EXP-001-08]
+   * - [AC-US-EXP-002-08]
+   */
   test(
     'prevents an archived company from granting or spending an approval',
     { tag: ['@US-EXP-001', '@US-EXP-002', '@US-EXP-003'] },

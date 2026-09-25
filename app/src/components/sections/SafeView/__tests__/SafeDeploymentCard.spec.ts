@@ -59,7 +59,7 @@ describe('SafeDeploymentCard', () => {
     )
   })
 
-  it('disables the deploy button when the connected address is not the team owner', () => {
+  it('[AC-US-SAFE-001-04] disables deployment for a non-owner', () => {
     mockUserStore.address = '0x0000000000000000000000000000000000000099'
     mockTeamStore.currentTeam = { ...mockTeamData, ownerAddress: mockTeamData.ownerAddress }
 
@@ -96,7 +96,7 @@ describe('SafeDeploymentCard', () => {
     expect(wrapper.text()).toContain(mockTeamData.ownerAddress)
   })
 
-  it('deploys and registers the Safe, then emits safeDeployed on success', async () => {
+  it('[AC-US-SAFE-001-03] registers the deployed Safe and exposes it to the parent flow', async () => {
     mockUserStore.address = mockTeamData.ownerAddress
     mockTeamStore.currentTeam = mockTeamData
 

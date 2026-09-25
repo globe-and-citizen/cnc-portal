@@ -37,13 +37,21 @@ test.afterEach(async () => {
   await revertChain(snapshotId)
 })
 
-test.describe('Safe Account', { tag: '@browser' }, () => {
+test.describe('Safe Account', { tag: ['@browser', '@mocked'] }, () => {
   test.describe.configure({ mode: 'serial' })
   test.setTimeout(180_000)
 
+  /**
+   * Covers:
+   * - [AC-US-SAFE-002-01]
+   * - [AC-US-SAFE-002-02]
+   * - [AC-US-SAFE-002-04]
+   * - [AC-US-SAFE-003-04]
+   * - [AC-US-SAFE-003-05]
+   */
   test(
     'lets a company member inspect a real Safe and its incoming transfers without signer permission',
-    { tag: '@US-SAFE-002' },
+    { tag: ['@US-SAFE-002', '@US-SAFE-003'] },
     async ({ page }) => {
       await sendNative(fixture.safe, '1')
       await sendToken(fixture.usdc, fixture.safe, '2')
@@ -63,6 +71,12 @@ test.describe('Safe Account', { tag: '@browser' }, () => {
     }
   )
 
+  /**
+   * Covers:
+   * - [AC-US-SAFE-001-01]
+   * - [AC-US-SAFE-001-03]
+   * - [AC-US-SAFE-001-05]
+   */
   test(
     'lets the company owner deploy and register a new Safe from the setup journey',
     { tag: '@US-SAFE-001' },
@@ -84,6 +98,11 @@ test.describe('Safe Account', { tag: '@browser' }, () => {
     }
   )
 
+  /**
+   * Covers:
+   * - [AC-US-SAFE-001-02]
+   * - [AC-US-SAFE-001-03]
+   */
   test(
     'lets the company owner inspect and import an existing Safe without changing it',
     { tag: '@US-SAFE-001' },
@@ -101,6 +120,11 @@ test.describe('Safe Account', { tag: '@browser' }, () => {
     }
   )
 
+  /**
+   * Covers:
+   * - [AC-US-SAFE-003-01]
+   * - [AC-US-SAFE-003-03]
+   */
   test(
     'lets the Safe owner deposit native and ERC-20 assets and refreshes its holdings',
     { tag: '@US-SAFE-003' },
@@ -133,7 +157,7 @@ test.describe('Safe Account', { tag: '@browser' }, () => {
   )
 
   test(
-    'blocks Safe deposits and transfer proposals when the team is archived',
+    '[AC-US-SAFE-003-09] blocks Safe deposits and transfer proposals when the team is archived',
     { tag: '@US-SAFE-003' },
     async ({ page }) => {
       await openSafeAccount(page, fixture, { archived: true })
@@ -143,6 +167,12 @@ test.describe('Safe Account', { tag: '@browser' }, () => {
     }
   )
 
+  /**
+   * Covers:
+   * - [AC-US-SAFE-003-02]
+   * - [AC-US-SAFE-003-03]
+   * - [AC-US-SAFE-003-06]
+   */
   test(
     'lets a sole Safe owner execute an outgoing transfer and refresh the balance',
     { tag: '@US-SAFE-003' },
@@ -167,6 +197,13 @@ test.describe('Safe Account', { tag: '@browser' }, () => {
     }
   )
 
+  /**
+   * Covers:
+   * - [AC-US-SAFE-004-01]
+   * - [AC-US-SAFE-004-02]
+   * - [AC-US-SAFE-004-03]
+   * - [AC-US-SAFE-004-04]
+   */
   test(
     'lets a Safe owner add and remove a signer, then change the threshold on-chain',
     { tag: '@US-SAFE-004' },
@@ -208,6 +245,13 @@ test.describe('Safe Account', { tag: '@browser' }, () => {
     }
   )
 
+  /**
+   * Covers:
+   * - [AC-US-SAFE-005-01]
+   * - [AC-US-SAFE-005-02]
+   * - [AC-US-SAFE-005-03]
+   * - [AC-US-SAFE-005-04]
+   */
   test(
     'lets a company member review, filter, and inspect every Safe transaction state',
     { tag: '@US-SAFE-005' },
@@ -257,6 +301,13 @@ test.describe('Safe Account', { tag: '@browser' }, () => {
     }
   )
 
+  /**
+   * Covers:
+   * - [AC-US-SAFE-006-01]
+   * - [AC-US-SAFE-006-02]
+   * - [AC-US-SAFE-006-03]
+   * - [AC-US-SAFE-006-06]
+   */
   test(
     'collects a second signer approval and executes the real Safe transaction',
     { tag: '@US-SAFE-006' },

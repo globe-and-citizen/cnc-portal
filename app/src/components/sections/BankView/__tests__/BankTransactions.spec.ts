@@ -74,7 +74,7 @@ describe('BankTransactions', () => {
     if (wrapper) wrapper.unmount()
   })
 
-  it('maps query data and passes rows/columns to UTable', () => {
+  it('[AC-US-BANK-003-02] maps Bank activity into the transaction table', () => {
     wrapper = createWrapper()
 
     const data = tableData(wrapper)
@@ -93,7 +93,7 @@ describe('BankTransactions', () => {
   })
 
   // Covers: AC-US-BANK-003-03
-  it('filters displayed rows by selected type', async () => {
+  it('[AC-US-BANK-003-03] filters displayed rows by selected type', async () => {
     wrapper = createWrapper()
 
     wrapper.getComponent({ name: 'USelect' }).vm.$emit('update:modelValue', 'deposit')
@@ -105,7 +105,7 @@ describe('BankTransactions', () => {
   })
 
   // Covers: AC-US-BANK-003-03
-  it('filters displayed rows by date range', async () => {
+  it('[AC-US-BANK-003-03] filters displayed rows by date range', async () => {
     wrapper = createWrapper()
 
     expect(wrapper.get('[data-test="bank-transaction-history-date-select"]').exists()).toBe(true)

@@ -50,7 +50,7 @@ describe('[US-BANK-003] BankBalanceSection', () => {
     mockUseContractBalance.isLoading.value = false
   })
 
-  it('renders total balances with fixed currency decimals', () => {
+  it('[AC-US-BANK-003-01] renders Bank holdings and their local-currency value', () => {
     const wrapper = createWrapper()
 
     expect(wrapper.get('[data-test="bank-total-usd"]').text()).toBe('$50,500.00')
