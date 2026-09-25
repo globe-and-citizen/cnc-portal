@@ -225,7 +225,7 @@ test.describe(
       const api = await createMockedCompanyUntilOfficer(page)
 
       await finishMockedCompanyWithoutContracts(page)
-      await page.locator('[data-test="continue-officer-setup-button"]').click()
+      await page.getByRole('button', { name: 'Click here', exact: true }).click()
 
       await expect(page.locator('[data-test="share-name-input"]')).toBeVisible()
       await expect(page.locator('[data-test="deploy-contracts-button"]')).toBeDisabled()

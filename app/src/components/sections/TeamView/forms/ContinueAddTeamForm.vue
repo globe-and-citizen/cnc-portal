@@ -4,13 +4,7 @@
       You have created your team, but the necessary smart contracts for its management haven't been
       deployed yet.
       <TeamArchivedTooltip v-slot="{ disabled: archivedDisabled }">
-        <UButton
-          size="sm"
-          variant="outline"
-          :disabled="archivedDisabled"
-          data-test="continue-officer-setup-button"
-          @click="open = true"
-        >
+        <UButton size="sm" variant="outline" :disabled="archivedDisabled" @click="open = true">
           Click here
         </UButton>
       </TeamArchivedTooltip>
