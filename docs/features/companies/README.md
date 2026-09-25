@@ -173,7 +173,7 @@ Each acceptance criterion references one reusable strategy instead of repeating 
 | `AC-US-COMPANIES-002-05` | `PS-BACKEND`             | Backend          | ✅ Met |
 | `AC-US-COMPANIES-002-06` | `PS-BROWSER`             | Mocked browser   | ✅ Met |
 | `AC-US-COMPANIES-002-07` | `PS-BROWSER`             | Mocked browser   | ✅ Met |
-| `AC-US-COMPANIES-002-08` | `PS-BROWSER`             | Mocked browser   | ✅ Met |
+| `AC-US-COMPANIES-002-08` | `PS-FRONTEND`            | Frontend         | ✅ Met |
 
 **Dependencies:** US-COMPANIES-001, a connected wallet, and the active network
 

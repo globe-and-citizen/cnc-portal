@@ -25,7 +25,6 @@ interface MockedCompanyApi {
   attempts: CompanyInput[]
   companies: Team[]
   failCreation: boolean
-  failOfficerRegistration: boolean
   officerRegistrations: unknown[]
   updateAttempts: unknown[]
 }
@@ -69,10 +68,7 @@ function respond(api: MockedCompanyApi, pathname: string, request: Request) {
   }
   if (pathname === '/api/contract/officer' && request.method() === 'POST') {
     api.officerRegistrations.push(request.postDataJSON())
-    if (api.failOfficerRegistration) {
-      return json({ message: 'Officer registration temporarily unavailable' }, 500)
-    }
-    return json({ officer: request.postDataJSON() }, 201)
+    return json({ message: 'Unexpected Officer registration in a rejected-wallet scenario' }, 500)
   }
   if (pathname === '/api/contract/officers') return json([])
   return undefined
@@ -83,7 +79,6 @@ async function openMockedCompanyCreation(page: Page): Promise<MockedCompanyApi> 
     attempts: [],
     companies: [],
     failCreation: false,
-    failOfficerRegistration: false,
     officerRegistrations: [],
     updateAttempts: []
   }
@@ -196,8 +191,6 @@ test.describe(
   '[US-COMPANIES-002] Mocked Officer deployment variants',
   { tag: ['@US-COMPANIES-002', '@mocked', '@browser'] },
   () => {
-    test.setTimeout(180_000)
-
     /**
      * Covers:
      * - [AC-US-COMPANIES-002-04]
@@ -230,28 +223,6 @@ test.describe(
       await expect(page.locator('[data-test="share-name-input"]')).toBeVisible()
       await expect(page.locator('[data-test="deploy-contracts-button"]')).toBeDisabled()
       expect(api.officerRegistrations).toHaveLength(0)
-    })
-
-    test('[AC-US-COMPANIES-002-08] distinguishes a registration failure from a deployment failure', async ({
-      page
-    }) => {
-      const api = await createMockedCompanyUntilOfficer(page)
-      api.failOfficerRegistration = true
-      await enterShareDetails(page)
-
-      await page.locator('[data-test="deploy-contracts-button"]').click()
-
-      const registrationError = page.locator('[data-test="register-error-alert"]')
-      await expect(registrationError).toBeVisible({ timeout: 120_000 })
-      await expect(registrationError).toContainText('Failed to complete deployment setup')
-      await expect(registrationError).toContainText('Officer registration temporarily unavailable')
-      await expect(page.locator('[data-test="deploy-error-alert"]')).toHaveCount(0)
-      await expect(page.locator('[data-test="step-3"]')).toBeVisible()
-      await expect(page.locator('[data-test="step-4"]')).toHaveCount(0)
-      await expect(
-        page.getByText('Officer contracts deployed and synced successfully', { exact: true })
-      ).toHaveCount(0)
-      expect(api.officerRegistrations).toHaveLength(1)
     })
   }
 )
