@@ -42,7 +42,6 @@ test.describe('Expense Account', { tag: ['@browser', '@mocked'] }, () => {
   /**
    * Covers:
    * - [AC-US-EXP-001-10]
-   * - [AC-US-EXP-004-01]
    * - [AC-US-EXP-004-03]
    * - [AC-US-EXP-004-05]
    */
@@ -158,13 +157,8 @@ test.describe('Expense Account', { tag: ['@browser', '@mocked'] }, () => {
     }
   )
 
-  /**
-   * Covers:
-   * - [AC-US-EXP-004-01]
-   * - [AC-US-EXP-004-08]
-   */
   test(
-    'keeps the read-only account available to a member when history reads fail',
+    '[AC-US-EXP-004-08] keeps the read-only account available to a member when history reads fail',
     { tag: '@US-EXP-004' },
     async ({ page }) => {
       const api = createExpenseApi()

@@ -4,7 +4,6 @@ import {
   E2E_MEMBER,
   nativeBalance,
   revertChain,
-  sendNative,
   sendToken,
   snapshotChain,
   tokenBalance
@@ -20,9 +19,7 @@ import {
 import {
   boardActionCount,
   deployBankE2EFixture,
-  grossForNet,
   pauseBank,
-  setBankFee,
   transferBankOwnership,
   unpauseBank,
   type BankE2EFixture
@@ -60,7 +57,6 @@ test.describe('Bank Account', { tag: ['@browser', '@mocked'] }, () => {
    * - [AC-US-BANK-001-05]
    * - [AC-US-BANK-001-09]
    * - [AC-US-BANK-001-10]
-   * - [AC-US-BANK-003-01]
    * - [AC-US-BANK-003-03]
    * - [AC-US-BANK-003-06]
    * - [AC-US-BANK-003-07]
@@ -166,68 +162,20 @@ test.describe('Bank Account', { tag: ['@browser', '@mocked'] }, () => {
 
   /**
    * Covers:
-   * - [AC-US-BANK-002-01]
-   * - [AC-US-BANK-002-03]
-   * - [AC-US-BANK-002-09]
-   * - [AC-US-BANK-002-10]
    * - [AC-US-BANK-002-12]
    * - [AC-US-BANK-002-13]
    */
   test(
-    'transfers native and ERC-20 funds with exact fees and preserves balances on failure or rejection',
+    'preserves Bank balances on a failed or rejected transfer',
     { tag: '@US-BANK-002' },
     async ({ page }) => {
-      await sendNative(fixture.bank, '5')
-      await sendToken(fixture.usdc, fixture.bank, '20')
-      await setBankFee(fixture.feeCollector, 100)
+      await sendToken(fixture.usdc, fixture.bank, '5')
       await openBankAccount(page, fixture)
-
-      const recipientNativeBefore = await nativeBalance(E2E_MEMBER)
-      const collectorNativeBefore = await nativeBalance(fixture.feeCollector)
-      await page.getByRole('button', { name: 'Transfer', exact: true }).click()
-      let transfer = page.getByRole('dialog', { name: 'Transfer from Bank Contract' })
-      await selectRecipient(transfer)
-      await selectToken(page, transfer, 'GO')
-      await dialogAmount(transfer).fill('1')
-      await expect(transfer.getByText('Recipient receives')).toBeVisible()
-      await transfer.locator('[data-test="transferButton"]').click()
-      await expect(page.getByText('Transferred successfully', { exact: true })).toBeVisible({
-        timeout: 30_000
-      })
-
-      const nativeGross = grossForNet(parseEther('1'), 100n)
-      await expect
-        .poll(() => nativeBalance(E2E_MEMBER))
-        .toBe(recipientNativeBefore + parseEther('1'))
-      await expect.poll(() => nativeBalance(fixture.bank)).toBe(parseEther('5') - nativeGross)
-      await expect
-        .poll(() => nativeBalance(fixture.feeCollector))
-        .toBe(collectorNativeBefore + nativeGross - parseEther('1'))
-
-      const recipientTokenBefore = await tokenBalance(fixture.usdc, E2E_MEMBER)
-      const collectorTokenBefore = await tokenBalance(fixture.usdc, fixture.feeCollector)
-      await page.getByRole('button', { name: 'Transfer', exact: true }).click()
-      transfer = page.getByRole('dialog', { name: 'Transfer from Bank Contract' })
-      await selectRecipient(transfer)
-      await selectToken(page, transfer, 'USDC')
-      await dialogAmount(transfer).fill('4')
-      await transfer.locator('[data-test="transferButton"]').click()
-      await expect(page.getByText('Transferred successfully', { exact: true })).toBeVisible({
-        timeout: 30_000
-      })
-
-      const tokenGross = grossForNet(parseUnits('4', 6), 100n)
-      await expect
-        .poll(() => tokenBalance(fixture.usdc, E2E_MEMBER))
-        .toBe(recipientTokenBefore + parseUnits('4', 6))
-      await expect
-        .poll(() => tokenBalance(fixture.usdc, fixture.feeCollector))
-        .toBe(collectorTokenBefore + tokenGross - parseUnits('4', 6))
 
       await pauseBank(fixture.bank)
       const beforeFailure = await tokenBalance(fixture.usdc, fixture.bank)
       await page.getByRole('button', { name: 'Transfer', exact: true }).click()
-      transfer = page.getByRole('dialog', { name: 'Transfer from Bank Contract' })
+      const transfer = page.getByRole('dialog', { name: 'Transfer from Bank Contract' })
       await selectRecipient(transfer)
       await selectToken(page, transfer, 'USDC')
       await dialogAmount(transfer).fill('1')
@@ -278,7 +226,6 @@ test.describe('Bank Account', { tag: ['@browser', '@mocked'] }, () => {
 
   /**
    * Covers:
-   * - [AC-US-BANK-003-01]
    * - [AC-US-BANK-003-03]
    * - [AC-US-BANK-003-04]
    * - [AC-US-BANK-003-07]
@@ -291,12 +238,6 @@ test.describe('Bank Account', { tag: ['@browser', '@mocked'] }, () => {
     }
   )
 
-  /**
-   * Covers:
-   * - [AC-US-BANK-004-01]
-   * - [AC-US-BANK-004-06]
-   * - [AC-US-BANK-004-07]
-   */
   test(
     'keeps the Bank history usable when RPC log reads fail',
     { tag: '@US-BANK-003' },
@@ -311,6 +252,11 @@ test.describe('Bank Account', { tag: ['@browser', '@mocked'] }, () => {
     }
   )
 
+  /**
+   * Covers:
+   * - [AC-US-BANK-004-06]
+   * - [AC-US-BANK-004-07]
+   */
   test(
     'stops a rejected cash-out, resumes it, and drains source accounts through the Bank',
     { tag: '@US-BANK-004' },
