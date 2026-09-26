@@ -1,4 +1,5 @@
 import type { Address } from 'viem'
+import type { Team } from '../../../src/types/team'
 import {
   artifact,
   deploy,
@@ -26,6 +27,12 @@ interface ElectionInput {
 }
 
 const contractArtifact = (path: string) => artifact(`artifacts/contracts/${path}`)
+
+const teamContractAddress = (team: Team, type: string): Address => {
+  const contract = team.teamContracts.find((candidate) => candidate.type === type)
+  if (!contract) throw new Error(`Integrated company is missing its ${type} contract`)
+  return contract.address
+}
 
 export async function currentE2ETime(): Promise<number> {
   const chainTime = Number((await publicClient.getBlock()).timestamp)
@@ -63,6 +70,23 @@ export async function deployElectionsE2EFixture(): Promise<ElectionsE2EFixture> 
   return { board, elections, officer, electionsArtifact, boardArtifact }
 }
 
+export async function electionsFixtureFromTeam(team: Team): Promise<ElectionsE2EFixture> {
+  if (!team.currentOfficer) throw new Error('Integrated company is missing its current Officer')
+
+  const [electionsArtifact, boardArtifact] = await Promise.all([
+    contractArtifact('Elections/Elections.sol/Elections.json'),
+    contractArtifact('BoardOfDirectors.sol/BoardOfDirectors.json')
+  ])
+
+  return {
+    officer: team.currentOfficer.address,
+    elections: teamContractAddress(team, 'Elections'),
+    board: teamContractAddress(team, 'BoardOfDirectors'),
+    electionsArtifact,
+    boardArtifact
+  }
+}
+
 export async function createElectionFixture(
   fixture: ElectionsE2EFixture,
   input: ElectionInput
@@ -86,6 +110,16 @@ export async function createElectionFixture(
 
 export async function makeElectionActive(seconds = 61): Promise<void> {
   await publicClient.request({ method: 'evm_increaseTime', params: [seconds] } as never)
+  await publicClient.request({ method: 'evm_mine' } as never)
+}
+
+export async function advanceE2ETimeTo(timestamp: bigint): Promise<void> {
+  const currentTimestamp = (await publicClient.getBlock()).timestamp
+  if (timestamp <= currentTimestamp) return
+  await publicClient.request({
+    method: 'evm_setNextBlockTimestamp',
+    params: [Number(timestamp)]
+  } as never)
   await publicClient.request({ method: 'evm_mine' } as never)
 }
 
@@ -130,6 +164,17 @@ export async function eligibleVoters(fixture: ElectionsE2EFixture): Promise<read
     address: fixture.elections,
     abi: fixture.electionsArtifact.abi,
     functionName: 'getElectionEligibleVoters',
+    args: [1n]
+  }) as Promise<readonly Address[]>
+}
+
+export async function electionCandidates(
+  fixture: ElectionsE2EFixture
+): Promise<readonly Address[]> {
+  return publicClient.readContract({
+    address: fixture.elections,
+    abi: fixture.electionsArtifact.abi,
+    functionName: 'getElectionCandidates',
     args: [1n]
   }) as Promise<readonly Address[]>
 }
