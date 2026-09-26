@@ -60,6 +60,7 @@ describe('Elections Controller', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     callerAddress = OWNER;
+    vi.mocked(addNotification).mockResolvedValue([]);
   });
 
   describe('POST /elections/:teamId', () => {
@@ -75,6 +76,32 @@ describe('Elections Controller', () => {
         author: OWNER,
         resource: 'elections/1',
       });
+    });
+
+    it('acknowledges notification creation only after persistence completes', async () => {
+      vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(mockTeam as never);
+      let persistNotifications!: () => void;
+      vi.mocked(addNotification).mockReturnValue(
+        new Promise((resolve) => {
+          persistNotifications = () => resolve([]);
+        })
+      );
+
+      let responseStatus: number | undefined;
+      const responsePromise = request(app)
+        .post('/elections/1')
+        .send({})
+        .then((response) => {
+          responseStatus = response.status;
+          return response;
+        });
+
+      await vi.waitFor(() => expect(addNotification).toHaveBeenCalledOnce());
+      expect(responseStatus).toBeUndefined();
+      persistNotifications();
+
+      const response = await responsePromise;
+      expect(response.status).toBe(201);
     });
 
     it('[AC-US-EL-04-04] refuses a teammate who is not the owner without reading the chain', async () => {
