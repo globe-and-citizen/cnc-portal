@@ -47,37 +47,39 @@ Only one unpublished election can exist at a time. An ended election still block
 ## Test Coverage Overview
 
 Coverage targets compare each criterion's required evidence with direct `AC-US-*` references in tracked tests. They do not represent the
-latest pass/fail result, which belongs to CI or the generated local report. Mocked browser tests exercise the production frontend and a real
-local chain while replacing the portal backend; they are acceptance evidence, not integrated E2E proof.
+latest pass/fail result, which belongs to CI or the generated local report. The integrated main path exercises the production frontend,
+owned backend, and local chain together. Mocked browser tests retain controlled rejection, failure, and archived-company variants.
 
-| User Story | Main Journey | Coverage Target | Gaps                               |
-| ---------- | ------------ | --------------- | ---------------------------------- |
-| US-EL-01   | 🧪 Mocked    | ✅ 14/14        | —                                  |
-| US-EL-02   | 🧪 Mocked    | ⚠️ 8/9          | `AC-US-EL-02-08`                   |
-| US-EL-03   | 🧪 Mocked    | ⚠️ 9/10         | `AC-US-EL-03-09`                   |
-| US-EL-04   | 🧪 Mocked    | ⚠️ 6/7          | `AC-US-EL-04-06`                   |
-| US-EL-05   | ✅ Frontend  | ✅ 6/6          | —                                  |
-| US-EL-06   | ✅ Frontend  | ✅ 5/5          | —                                  |
-| US-EL-07   | 🧪 Mocked    | ✅ 5/5          | —                                  |
-| US-EL-08   | 🧪 Mocked    | ⚠️ 4/6          | `AC-US-EL-08-04`, `AC-US-EL-08-05` |
-| US-EL-09   | 📋 Planned   | ❌ 0/4          | `AC-US-EL-09-01` through `-04`     |
-| US-EL-10   | 📋 Planned   | ⚠️ 2/5          | `AC-US-EL-10-03` through `-05`     |
-| US-EL-11   | 📋 Planned   | ❌ 0/5          | `AC-US-EL-11-01` through `-05`     |
+| User Story | Main Journey  | Coverage Target | Gaps                               |
+| ---------- | ------------- | --------------- | ---------------------------------- |
+| US-EL-01   | ✅ Integrated | ✅ 14/14        | —                                  |
+| US-EL-02   | ✅ Integrated | ⚠️ 8/9          | `AC-US-EL-02-08`                   |
+| US-EL-03   | ✅ Integrated | ⚠️ 9/10         | `AC-US-EL-03-09`                   |
+| US-EL-04   | ✅ Integrated | ⚠️ 6/7          | `AC-US-EL-04-06`                   |
+| US-EL-05   | ✅ Frontend   | ✅ 6/6          | —                                  |
+| US-EL-06   | ✅ Frontend   | ✅ 5/5          | —                                  |
+| US-EL-07   | ✅ Integrated | ✅ 5/5          | —                                  |
+| US-EL-08   | ✅ Integrated | ⚠️ 4/6          | `AC-US-EL-08-04`, `AC-US-EL-08-05` |
+| US-EL-09   | 📋 Planned    | ❌ 0/4          | `AC-US-EL-09-01` through `-04`     |
+| US-EL-10   | 📋 Planned    | ⚠️ 2/5          | `AC-US-EL-10-03` through `-05`     |
+| US-EL-11   | 📋 Planned    | ❌ 0/5          | `AC-US-EL-11-01` through `-05`     |
 
 ## Proof Strategy Reference
 
 Each acceptance criterion references one reusable strategy instead of repeating the same responsibility, evidence, and rationale text.
 
-| Strategy               | Responsibilities              | Required Evidence         | Proof Rationale                                                                     |
-| ---------------------- | ----------------------------- | ------------------------- | ----------------------------------------------------------------------------------- |
-| `PS-FRONTEND`          | Frontend                      | Frontend                  | The frontend owns this deterministic validation, derivation, or interaction state.  |
-| `PS-BROWSER`           | Frontend                      | Mocked browser            | The user interaction needs browser-level proof with controlled dependency outcomes. |
-| `PS-CONTRACT`          | Contract                      | Contract                  | The contract owns this authorization, lifecycle, or immutable-state rule.           |
-| `PS-FRONTEND-CONTRACT` | Frontend + Contract           | Frontend + Contract       | Portal and contract rules can fail independently and both require direct proof.     |
-| `PS-BROWSER-CONTRACT`  | Frontend + Contract           | Mocked browser + Contract | A wallet journey and its resulting chain state must be observed together.           |
-| `PS-BACKEND`           | Backend                       | Backend                   | The backend owns this API authorization or notification rule.                       |
-| `PS-BROWSER-BACKEND`   | Frontend + Backend            | Mocked browser + Backend  | The portal hand-off and backend rule can fail independently.                        |
-| `PS-FULL-JOURNEY`      | Frontend + Backend + Contract | Integrated E2E            | The portal, owned API, and chain result must work without replacing a CNC boundary. |
+| Strategy               | Responsibilities              | Required Evidence         | Proof Rationale                                                                      |
+| ---------------------- | ----------------------------- | ------------------------- | ------------------------------------------------------------------------------------ |
+| `PS-FRONTEND`          | Frontend                      | Frontend                  | The frontend owns this deterministic validation, derivation, or interaction state.   |
+| `PS-BROWSER`           | Frontend                      | Mocked browser            | The user interaction needs browser-level proof with controlled dependency outcomes.  |
+| `PS-CHAIN`             | Frontend + Contract           | Integrated E2E            | The real wallet/chain hand-off and resulting user-visible state must work together.  |
+| `PS-CONTRACT`          | Contract                      | Contract                  | The contract owns this authorization, lifecycle, or immutable-state rule.            |
+| `PS-FRONTEND-CONTRACT` | Frontend + Contract           | Frontend + Contract       | Portal and contract rules can fail independently and both require direct proof.      |
+| `PS-CHAIN-CONTRACT`    | Frontend + Contract           | Integrated E2E + Contract | The integrated wallet journey and focused on-chain invariant need independent proof. |
+| `PS-BROWSER-CONTRACT`  | Frontend + Contract           | Mocked browser + Contract | A wallet journey and its resulting chain state must be observed together.            |
+| `PS-BACKEND`           | Backend                       | Backend                   | The backend owns this API authorization or notification rule.                        |
+| `PS-BROWSER-BACKEND`   | Frontend + Backend            | Mocked browser + Backend  | The portal hand-off and backend rule can fail independently.                         |
+| `PS-FULL-JOURNEY`      | Frontend + Backend + Contract | Integrated E2E            | The portal, owned API, and chain result must work without replacing a CNC boundary.  |
 
 ## US-EL-01: Create a Board Election
 
@@ -113,22 +115,22 @@ Each acceptance criterion references one reusable strategy instead of repeating 
 
 ### Test Coverage
 
-| Acceptance Criterion | Proof Strategy         | Current Evidence                     | Status |
-| -------------------- | ---------------------- | ------------------------------------ | ------ |
-| `AC-US-EL-01-01`     | `PS-BROWSER-CONTRACT`  | Mocked browser + Frontend + Contract | ✅ Met |
-| `AC-US-EL-01-02`     | `PS-BROWSER-CONTRACT`  | Mocked browser + Contract            | ✅ Met |
-| `AC-US-EL-01-03`     | `PS-BROWSER-CONTRACT`  | Mocked browser + Frontend + Contract | ✅ Met |
-| `AC-US-EL-01-04`     | `PS-CONTRACT`          | Contract                             | ✅ Met |
-| `AC-US-EL-01-05`     | `PS-FRONTEND`          | Frontend                             | ✅ Met |
-| `AC-US-EL-01-06`     | `PS-FRONTEND-CONTRACT` | Frontend + Contract                  | ✅ Met |
-| `AC-US-EL-01-07`     | `PS-FRONTEND-CONTRACT` | Frontend + Contract                  | ✅ Met |
-| `AC-US-EL-01-08`     | `PS-BROWSER`           | Mocked browser + Frontend            | ✅ Met |
-| `AC-US-EL-01-09`     | `PS-FRONTEND`          | Frontend                             | ✅ Met |
-| `AC-US-EL-01-10`     | `PS-FRONTEND`          | Frontend                             | ✅ Met |
-| `AC-US-EL-01-11`     | `PS-CONTRACT`          | Contract                             | ✅ Met |
-| `AC-US-EL-01-12`     | `PS-BROWSER`           | Mocked browser + Frontend            | ✅ Met |
-| `AC-US-EL-01-13`     | `PS-FRONTEND`          | Frontend                             | ✅ Met |
-| `AC-US-EL-01-14`     | `PS-FRONTEND`          | Frontend                             | ✅ Met |
+| Acceptance Criterion | Proof Strategy         | Current Evidence                                      | Status |
+| -------------------- | ---------------------- | ----------------------------------------------------- | ------ |
+| `AC-US-EL-01-01`     | `PS-CHAIN`             | Integrated E2E + Mocked browser + Frontend + Contract | ✅ Met |
+| `AC-US-EL-01-02`     | `PS-CHAIN`             | Integrated E2E + Mocked browser + Contract            | ✅ Met |
+| `AC-US-EL-01-03`     | `PS-CHAIN`             | Integrated E2E + Mocked browser + Frontend + Contract | ✅ Met |
+| `AC-US-EL-01-04`     | `PS-CONTRACT`          | Contract                                              | ✅ Met |
+| `AC-US-EL-01-05`     | `PS-FRONTEND`          | Frontend                                              | ✅ Met |
+| `AC-US-EL-01-06`     | `PS-FRONTEND-CONTRACT` | Frontend + Contract                                   | ✅ Met |
+| `AC-US-EL-01-07`     | `PS-FRONTEND-CONTRACT` | Frontend + Contract                                   | ✅ Met |
+| `AC-US-EL-01-08`     | `PS-BROWSER`           | Mocked browser + Frontend                             | ✅ Met |
+| `AC-US-EL-01-09`     | `PS-FRONTEND`          | Frontend                                              | ✅ Met |
+| `AC-US-EL-01-10`     | `PS-FRONTEND`          | Frontend                                              | ✅ Met |
+| `AC-US-EL-01-11`     | `PS-CONTRACT`          | Contract                                              | ✅ Met |
+| `AC-US-EL-01-12`     | `PS-BROWSER`           | Mocked browser + Frontend                             | ✅ Met |
+| `AC-US-EL-01-13`     | `PS-FRONTEND`          | Frontend                                              | ✅ Met |
+| `AC-US-EL-01-14`     | `PS-FRONTEND`          | Frontend                                              | ✅ Met |
 
 **Dependencies:** Current company, Elections contract, and connected company-owner wallet
 
@@ -161,17 +163,17 @@ Each acceptance criterion references one reusable strategy instead of repeating 
 
 ### Test Coverage
 
-| Acceptance Criterion | Proof Strategy        | Current Evidence          | Status     |
-| -------------------- | --------------------- | ------------------------- | ---------- |
-| `AC-US-EL-02-01`     | `PS-BROWSER`          | Mocked browser            | ✅ Met     |
-| `AC-US-EL-02-02`     | `PS-BROWSER-CONTRACT` | Mocked browser + Contract | ✅ Met     |
-| `AC-US-EL-02-03`     | `PS-CONTRACT`         | Contract                  | ✅ Met     |
-| `AC-US-EL-02-04`     | `PS-CONTRACT`         | Contract                  | ✅ Met     |
-| `AC-US-EL-02-05`     | `PS-CONTRACT`         | Contract                  | ✅ Met     |
-| `AC-US-EL-02-06`     | `PS-BROWSER`          | Mocked browser            | ✅ Met     |
-| `AC-US-EL-02-07`     | `PS-BROWSER`          | Mocked browser + Frontend | ✅ Met     |
-| `AC-US-EL-02-08`     | `PS-BROWSER`          | None linked               | ❌ Missing |
-| `AC-US-EL-02-09`     | `PS-BROWSER`          | Mocked browser            | ✅ Met     |
+| Acceptance Criterion | Proof Strategy      | Current Evidence                           | Status     |
+| -------------------- | ------------------- | ------------------------------------------ | ---------- |
+| `AC-US-EL-02-01`     | `PS-CHAIN`          | Integrated E2E + Mocked browser            | ✅ Met     |
+| `AC-US-EL-02-02`     | `PS-CHAIN-CONTRACT` | Integrated E2E + Mocked browser + Contract | ✅ Met     |
+| `AC-US-EL-02-03`     | `PS-CONTRACT`       | Contract                                   | ✅ Met     |
+| `AC-US-EL-02-04`     | `PS-CONTRACT`       | Contract                                   | ✅ Met     |
+| `AC-US-EL-02-05`     | `PS-CONTRACT`       | Contract                                   | ✅ Met     |
+| `AC-US-EL-02-06`     | `PS-BROWSER`        | Mocked browser                             | ✅ Met     |
+| `AC-US-EL-02-07`     | `PS-CHAIN`          | Integrated E2E + Mocked browser + Frontend | ✅ Met     |
+| `AC-US-EL-02-08`     | `PS-BROWSER`        | None linked                                | ❌ Missing |
+| `AC-US-EL-02-09`     | `PS-BROWSER`        | Mocked browser                             | ✅ Met     |
 
 **Dependencies:** US-EL-01
 
@@ -205,18 +207,18 @@ Each acceptance criterion references one reusable strategy instead of repeating 
 
 ### Test Coverage
 
-| Acceptance Criterion | Proof Strategy         | Current Evidence          | Status     |
-| -------------------- | ---------------------- | ------------------------- | ---------- |
-| `AC-US-EL-03-01`     | `PS-CONTRACT`          | Contract                  | ✅ Met     |
-| `AC-US-EL-03-02`     | `PS-BROWSER-CONTRACT`  | Mocked browser + Contract | ✅ Met     |
-| `AC-US-EL-03-03`     | `PS-FRONTEND`          | Frontend                  | ✅ Met     |
-| `AC-US-EL-03-04`     | `PS-CONTRACT`          | Contract                  | ✅ Met     |
-| `AC-US-EL-03-05`     | `PS-FRONTEND-CONTRACT` | Frontend + Contract       | ✅ Met     |
-| `AC-US-EL-03-06`     | `PS-BROWSER-CONTRACT`  | Mocked browser + Contract | ✅ Met     |
-| `AC-US-EL-03-07`     | `PS-CONTRACT`          | Contract                  | ✅ Met     |
-| `AC-US-EL-03-08`     | `PS-BROWSER`           | Mocked browser            | ✅ Met     |
-| `AC-US-EL-03-09`     | `PS-BROWSER-CONTRACT`  | None linked               | ❌ Missing |
-| `AC-US-EL-03-10`     | `PS-BROWSER`           | Mocked browser            | ✅ Met     |
+| Acceptance Criterion | Proof Strategy         | Current Evidence                           | Status     |
+| -------------------- | ---------------------- | ------------------------------------------ | ---------- |
+| `AC-US-EL-03-01`     | `PS-CHAIN-CONTRACT`    | Integrated E2E + Contract                  | ✅ Met     |
+| `AC-US-EL-03-02`     | `PS-CHAIN-CONTRACT`    | Integrated E2E + Mocked browser + Contract | ✅ Met     |
+| `AC-US-EL-03-03`     | `PS-CHAIN`             | Integrated E2E + Frontend                  | ✅ Met     |
+| `AC-US-EL-03-04`     | `PS-CONTRACT`          | Contract                                   | ✅ Met     |
+| `AC-US-EL-03-05`     | `PS-FRONTEND-CONTRACT` | Frontend + Contract                        | ✅ Met     |
+| `AC-US-EL-03-06`     | `PS-CHAIN-CONTRACT`    | Integrated E2E + Mocked browser + Contract | ✅ Met     |
+| `AC-US-EL-03-07`     | `PS-CONTRACT`          | Contract                                   | ✅ Met     |
+| `AC-US-EL-03-08`     | `PS-BROWSER`           | Mocked browser                             | ✅ Met     |
+| `AC-US-EL-03-09`     | `PS-BROWSER-CONTRACT`  | None linked                                | ❌ Missing |
+| `AC-US-EL-03-10`     | `PS-BROWSER`           | Mocked browser                             | ✅ Met     |
 
 **Dependencies:** US-EL-02
 
@@ -230,7 +232,7 @@ Each acceptance criterion references one reusable strategy instead of repeating 
 
 #### Happy Path
 
-- [x] `AC-US-EL-04-01` After an election is created, the portal requests notifications for the company's current members.
+- [x] `AC-US-EL-04-01` After an election is created, every current company member receives a persisted election notification.
 - [x] `AC-US-EL-04-02` An election notification routes a recipient to the company's board-election page.
 
 #### Business Rules
@@ -248,15 +250,15 @@ Each acceptance criterion references one reusable strategy instead of repeating 
 
 ### Test Coverage
 
-| Acceptance Criterion | Proof Strategy       | Current Evidence                    | Status     |
-| -------------------- | -------------------- | ----------------------------------- | ---------- |
-| `AC-US-EL-04-01`     | `PS-BROWSER-BACKEND` | Mocked browser + Frontend + Backend | ✅ Met     |
-| `AC-US-EL-04-02`     | `PS-FRONTEND`        | Frontend                            | ✅ Met     |
-| `AC-US-EL-04-03`     | `PS-BROWSER`         | Mocked browser + Frontend           | ✅ Met     |
-| `AC-US-EL-04-04`     | `PS-BACKEND`         | Backend                             | ✅ Met     |
-| `AC-US-EL-04-05`     | `PS-FRONTEND`        | Frontend                            | ✅ Met     |
-| `AC-US-EL-04-06`     | `PS-BROWSER-BACKEND` | None linked                         | ❌ Missing |
-| `AC-US-EL-04-07`     | `PS-BACKEND`         | Backend                             | ✅ Met     |
+| Acceptance Criterion | Proof Strategy       | Current Evidence                                     | Status     |
+| -------------------- | -------------------- | ---------------------------------------------------- | ---------- |
+| `AC-US-EL-04-01`     | `PS-FULL-JOURNEY`    | Integrated E2E + Mocked browser + Frontend + Backend | ✅ Met     |
+| `AC-US-EL-04-02`     | `PS-FULL-JOURNEY`    | Integrated E2E + Frontend                            | ✅ Met     |
+| `AC-US-EL-04-03`     | `PS-BROWSER`         | Mocked browser + Frontend                            | ✅ Met     |
+| `AC-US-EL-04-04`     | `PS-BACKEND`         | Backend                                              | ✅ Met     |
+| `AC-US-EL-04-05`     | `PS-FRONTEND`        | Frontend                                             | ✅ Met     |
+| `AC-US-EL-04-06`     | `PS-BROWSER-BACKEND` | None linked                                          | ❌ Missing |
+| `AC-US-EL-04-07`     | `PS-BACKEND`         | Backend                                              | ✅ Met     |
 
 **Dependencies:** US-EL-01 and the notification service
 
@@ -356,11 +358,11 @@ Each acceptance criterion references one reusable strategy instead of repeating 
 
 | Acceptance Criterion | Proof Strategy | Current Evidence          | Status |
 | -------------------- | -------------- | ------------------------- | ------ |
-| `AC-US-EL-07-01`     | `PS-FRONTEND`  | Frontend                  | ✅ Met |
+| `AC-US-EL-07-01`     | `PS-CHAIN`     | Integrated E2E + Frontend | ✅ Met |
 | `AC-US-EL-07-02`     | `PS-BROWSER`   | Mocked browser + Frontend | ✅ Met |
-| `AC-US-EL-07-03`     | `PS-FRONTEND`  | Frontend                  | ✅ Met |
+| `AC-US-EL-07-03`     | `PS-CHAIN`     | Integrated E2E + Frontend | ✅ Met |
 | `AC-US-EL-07-04`     | `PS-FRONTEND`  | Frontend                  | ✅ Met |
-| `AC-US-EL-07-05`     | `PS-FRONTEND`  | Frontend                  | ✅ Met |
+| `AC-US-EL-07-05`     | `PS-CHAIN`     | Integrated E2E + Frontend | ✅ Met |
 
 **Dependencies:** US-EL-03 and the Board of Directors contract
 
@@ -389,14 +391,14 @@ Each acceptance criterion references one reusable strategy instead of repeating 
 
 ### Test Coverage
 
-| Acceptance Criterion | Proof Strategy | Current Evidence          | Status     |
-| -------------------- | -------------- | ------------------------- | ---------- |
-| `AC-US-EL-08-01`     | `PS-BROWSER`   | Mocked browser + Frontend | ✅ Met     |
-| `AC-US-EL-08-02`     | `PS-BROWSER`   | Mocked browser + Frontend | ✅ Met     |
-| `AC-US-EL-08-03`     | `PS-FRONTEND`  | Frontend                  | ✅ Met     |
-| `AC-US-EL-08-04`     | `PS-FRONTEND`  | None linked               | ❌ Missing |
-| `AC-US-EL-08-05`     | `PS-FRONTEND`  | None linked               | ❌ Missing |
-| `AC-US-EL-08-06`     | `PS-FRONTEND`  | Frontend                  | ✅ Met     |
+| Acceptance Criterion | Proof Strategy | Current Evidence                           | Status     |
+| -------------------- | -------------- | ------------------------------------------ | ---------- |
+| `AC-US-EL-08-01`     | `PS-CHAIN`     | Integrated E2E + Mocked browser + Frontend | ✅ Met     |
+| `AC-US-EL-08-02`     | `PS-CHAIN`     | Integrated E2E + Mocked browser + Frontend | ✅ Met     |
+| `AC-US-EL-08-03`     | `PS-FRONTEND`  | Frontend                                   | ✅ Met     |
+| `AC-US-EL-08-04`     | `PS-FRONTEND`  | None linked                                | ❌ Missing |
+| `AC-US-EL-08-05`     | `PS-FRONTEND`  | None linked                                | ❌ Missing |
+| `AC-US-EL-08-06`     | `PS-CHAIN`     | Integrated E2E + Frontend                  | ✅ Met     |
 
 **Dependencies:** US-EL-03
 
@@ -502,13 +504,14 @@ Each acceptance criterion references one reusable strategy instead of repeating 
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `113f65e661ca131468fb807d70a77490bb7a87a6`
+**Implementation evidence reviewed against:** `fc3781480088ae9fb06a36a67ebb4a8f0db3b8f7`
 
 - [Election overview page](../../../app/src/views/team/%5Bid%5D/BodElectionView.vue)
 - [Election detail page](../../../app/src/views/team/%5Bid%5D/BodElectionDetailsView.vue)
 - [Election creation workflow](../../../app/src/components/sections/AdministrationView/ElectionSummarySection.vue)
 - [Election creation form](../../../app/src/components/sections/AdministrationView/forms/CreateElectionForm.vue)
 - [Election action guards](../../../app/src/components/sections/AdministrationView/ElectionActions.vue)
+- [Election result publication action](../../../app/src/components/sections/AdministrationView/PublishResult.vue)
 - [Election reads](../../../app/src/composables/elections/reads.ts), [writes](../../../app/src/composables/elections/writes.ts), and
   [history assembly](../../../app/src/composables/elections/history.ts)
 - [Election decoding helpers](../../../app/src/utils/elections/election.ts)
@@ -521,6 +524,7 @@ Each acceptance criterion references one reusable strategy instead of repeating 
   [statistics-card presentation tests](../../../app/src/components/sections/AdministrationView/__tests__/ElectionStatsCard.spec.ts)
 - [Current Elections contract](../../../contract/contracts/Elections/Elections.sol)
 - [Elections contract tests](../../../contract/test/Elections.spec.ts)
+- [Board Elections integrated lifecycle test](../../../app/test/e2e/elections/elections.integrated.spec.ts)
 - [Board Elections browser acceptance tests](../../../app/test/e2e/elections/elections.spec.ts)
 - [Election notification API route](../../../backend/src/routes/electionsRoute.ts)
 - [Election notification API controller](../../../backend/src/controllers/electionsController.ts)

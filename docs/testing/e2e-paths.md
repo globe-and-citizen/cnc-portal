@@ -374,16 +374,20 @@ coverage; the latest execution result and artifacts belong in Playwright and CI 
   - Actors: company owner and eligible voter.
   - Dependencies: a company with Elections and Board of Directors contracts and funded local wallets.
   - Main path:
-    - [x] Create an election through the portal and verify its configuration and eligible voters on-chain.
-    - [x] Verify the portal requests member notifications after the successful transaction.
-    - [x] Reject and then accept a ballot, verifying the recorded choice, vote count, and refreshed portal state.
-    - [x] Reject and then publish the results, verifying the published state and Board membership on-chain.
-    - [x] Open the published election from history and review its elected Board.
-  - Separate variants: archived-company write guards for creation, voting, and publication.
+    - [x] Register the actors, create an operational company, deploy its contracts, and add its members through the real stack.
+    - [x] Create an election through the portal and verify its configuration and fixed eligible-voter snapshot on-chain.
+    - [x] Verify the backend persists member notifications before acknowledging the hand-off.
+    - [x] Open the persisted notification as an eligible member, mark it read, and follow it to the election.
+    - [x] Cast a ballot and verify the recorded choice, vote count, and refreshed portal state.
+    - [x] Publish the results and verify the published state, Board membership, and next-election availability on-chain and in the portal.
+    - [x] Reload, open the published election from history, and review its elected Board.
+  - Separate variants: rejected wallet requests for creation, voting, and publication; notification failures; and archived-company write
+    guards remain controlled mocked-browser acceptance tests.
   - Expected result: the election remains traceable from creation through the elected Board and published history.
-  - Status: browser acceptance; the production frontend and local chain are real, while the CNC backend is stubbed. A fully integrated
-    notification hand-off remains planned.
-  - Evidence: [mocked browser election tests](../../app/test/e2e/elections/elections.spec.ts).
+  - Status: integrated main path; the production frontend, owned backend, database, and local chain run together. Controlled recovery and
+    guard variants remain browser acceptance.
+  - Evidence: [integrated election lifecycle](../../app/test/e2e/elections/elections.integrated.spec.ts) and
+    [mocked browser election variants](../../app/test/e2e/elections/elections.spec.ts).
 
 ## Cross-Group Execution Rules
 
