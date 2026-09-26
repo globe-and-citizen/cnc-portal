@@ -54,7 +54,8 @@ test.describe('Board Elections lifecycle', { tag: ['@browser', '@mocked'] }, () 
   test('recovers from a rejected creation, then creates and notifies through the portal', async ({
     page
   }) => {
-    await page.clock.setFixedTime(new Date((await currentE2ETime()) * 1_000))
+    const creationTime = await currentE2ETime()
+    await page.clock.setFixedTime(new Date(creationTime * 1_000))
     const api = await openBoardElections(page, fixture)
     await page.getByRole('button', { name: 'Create Election' }).click()
     const dialog = page.getByRole('dialog', { name: 'Create election' })
@@ -62,7 +63,7 @@ test.describe('Board Elections lifecycle', { tag: ['@browser', '@mocked'] }, () 
     await dialog.getByPlaceholder('Description').fill('Elect the next Board of Directors.')
     await dialog.getByPlaceholder('Number of Directors').fill('3')
     await selectElectionCandidates(page)
-    const tomorrow = new Date()
+    const tomorrow = new Date(creationTime * 1_000)
     tomorrow.setDate(tomorrow.getDate() + 1)
     await chooseElectionEndDay(page, tomorrow)
     const create = dialog.getByRole('button', { name: 'Create Election', exact: true })
