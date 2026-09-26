@@ -317,6 +317,26 @@ describe('CashRemuneration*** (EIP712)', () => {
             cashRemunerationProxy.connect(employee).withdraw(wageClaim, signature)
           ).to.be.revert(ethers)
         })
+        it('[AC-US-PAYROLL-010-14] rejects a claim that contains an unsupported token', async () => {
+          const unsupportedTokenAddress = await mockUSDT.getAddress()
+          const wageClaim = {
+            employeeAddress: employee.address,
+            minutesWorked: 60,
+            wages: [
+              { hourlyRate: ethers.parseUnits('5', 6), tokenAddress: unsupportedTokenAddress }
+            ],
+            date: Math.floor(Date.now() / 1000) + 4
+          }
+          const signature = await employer.signTypedData(domain, types, wageClaim)
+
+          await expect(cashRemunerationProxy.connect(employee).withdraw(wageClaim, signature))
+            .to.be.revertedWithCustomError(
+              cashRemunerationProxy,
+              'CashRemunerationEIP712__TokenNotSupported'
+            )
+            .withArgs(unsupportedTokenAddress)
+        })
+
         it('[AC-US-PAYROLL-010-16] the contract is paused', async () => {
           await expect(cashRemunerationProxy.pause())
             .to.emit(cashRemunerationProxy, 'Paused')
@@ -344,6 +364,7 @@ describe('CashRemuneration*** (EIP712)', () => {
             cashRemunerationProxy.connect(employee).withdraw(wageClaim, signature)
           ).to.be.revertedWithCustomError(cashRemunerationProxy, 'EnforcedPause')
         })
+
         it('Then I can unpause the account', async () => {
           await expect(cashRemunerationProxy.unpause())
             .to.emit(cashRemunerationProxy, 'Unpaused')

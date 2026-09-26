@@ -116,7 +116,7 @@ describe('[US-PAYROLL-008] [US-PAYROLL-009] [US-PAYROLL-010] WeeklyClaimActionDr
     vi.useRealTimers()
   })
 
-  it('does not render dropdown actions for withdrawn status', () => {
+  it('[AC-US-PAYROLL-009-07] [AC-US-PAYROLL-009-08] hides all actions for withdrawn status', () => {
     const wrapper = createWrapper('withdrawn')
     expect(wrapper.find('button').exists()).toBe(false)
     expect(wrapper.find('ul').exists()).toBe(false)
@@ -225,7 +225,7 @@ describe('[US-PAYROLL-008] [US-PAYROLL-009] [US-PAYROLL-010] WeeklyClaimActionDr
     expect(mockCashRemunerationWrites.disableClaim.mutate).toHaveBeenCalledOnce()
   })
 
-  it('disables claim successfully and syncs weekly claims', async () => {
+  it('[AC-US-PAYROLL-009-03] disables claim successfully and syncs weekly claims', async () => {
     const mutateAsync = setupSyncMutation(vi.fn().mockResolvedValue(undefined))
 
     const wrapper = createWrapper('signed')

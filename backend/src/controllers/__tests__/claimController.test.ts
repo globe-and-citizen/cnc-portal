@@ -285,7 +285,7 @@ describe('Claim Controller', () => {
       );
     });
 
-    it("returns 400 if user doesn't have wage", async () => {
+    it('[AC-US-PAYROLL-005-18] returns 400 if the member has no applicable wage', async () => {
       mockResolveWageForWeek.mockResolvedValue(null);
       const response = await request(app)
         .post('/')
@@ -322,7 +322,7 @@ describe('Claim Controller', () => {
       expect(mockResolveWageForWeek).not.toHaveBeenCalled();
     });
 
-    it('keeps the first submitted wage weekly cap after a mid-week wage change', async () => {
+    it('[AC-US-PAYROLL-005-11] keeps the first submitted wage weekly cap after a mid-week wage change', async () => {
       const workedDay = dayjs.utc().subtract(1, 'day').startOf('day').toDate();
       const submittedWeek = createMockWeeklyClaim({
         wageId: 1,
@@ -383,7 +383,7 @@ describe('Claim Controller', () => {
       );
     });
 
-    it('returns 409 if the day total exceeds the wage daily cap', async () => {
+    it('[AC-US-PAYROLL-005-23] rejects an over-cap claim without creating stored claim data', async () => {
       const testDate = dayjs.utc().startOf('day').toDate();
       const modifiedWeeklyClaims = createMockWeeklyClaim({
         wage: createMockWage({ maximumHoursPerDay: 6 }),
@@ -405,6 +405,8 @@ describe('Claim Controller', () => {
       expect(response.body.message).toContain('daily hours limit would be exceeded');
       expect(response.body.message).toContain('Daily allowance: 6h');
       expect(response.body.message).toContain('Remaining to submit: 1h');
+      expect(prisma.claim.create).not.toHaveBeenCalled();
+      expect(prisma.weeklyClaim.create).not.toHaveBeenCalled();
     });
 
     it('[AC-US-PAYROLL-005-12] falls back to the 8h default when the wage has no daily cap', async () => {
@@ -449,7 +451,7 @@ describe('Claim Controller', () => {
       expect(response.status).toBe(201);
     });
 
-    it('returns 400 when SUBMIT_RESTRICTION is active and dayWorked is outside the allowed window', async () => {
+    it('[AC-US-PAYROLL-005-14] returns 400 when SUBMIT_RESTRICTION is active and dayWorked is outside the allowed window', async () => {
       vi.mocked(getEffectiveStatus).mockResolvedValueOnce('enabled');
       mockResolveWageForWeek.mockResolvedValue(createMockWage());
 
@@ -477,7 +479,7 @@ describe('Claim Controller', () => {
       expect(response.status).toBe(201);
     });
 
-    it('returns 201 when creating a new weekly claim', async () => {
+    it('[AC-US-PAYROLL-005-02] returns 201 when creating a new weekly claim', async () => {
       const mockWage = createMockWage();
       const mockWeeklyClaims = createMockWeeklyClaim();
       const mockClaim = createMockClaim();
@@ -574,7 +576,7 @@ describe('Claim Controller', () => {
       expect(response.body.message).toBe('Week already withdrawn. Submission not allowed.');
     });
 
-    it('returns 201 when adding claim to existing weekly claim', async () => {
+    it('[AC-US-PAYROLL-005-02] returns 201 when adding claim to existing weekly claim', async () => {
       const mockWage = createMockWage();
       const mockWeeklyClaims = createMockWeeklyClaim();
       const mockClaim = createMockClaim();
@@ -740,7 +742,7 @@ describe('Claim Controller', () => {
     };
 
     it.each([1, DAILY_CLAIM_MEMO_MAX_LENGTH])(
-      'updates a claim with a trimmed %i-character memo',
+      '[AC-US-PAYROLL-006-05] accepts a trimmed %i-character edit memo',
       async (length) => {
         const memo = ` ${'m'.repeat(length)} `;
         setupMockClaim();
@@ -822,7 +824,7 @@ describe('Claim Controller', () => {
       });
     });
 
-    it('returns 409 if updating claim exceeds maximum weekly hours', async () => {
+    it('[AC-US-PAYROLL-006-07] returns 409 if updating claim exceeds maximum weekly hours', async () => {
       const mockClaim = {
         id: 1,
         wage: { userAddress: TEST_ADDRESS, maximumHoursPerWeek: 40 },
@@ -880,7 +882,7 @@ describe('Claim Controller', () => {
       expect(response.body.message).toContain('Already submitted for that day: 6h');
     });
 
-    it('updates a claim with valid data', async () => {
+    it('[AC-US-PAYROLL-006-02] persists an edit with valid claim values', async () => {
       const mockClaim = {
         id: 1,
         wage: { userAddress: TEST_ADDRESS },
@@ -972,7 +974,7 @@ describe('Claim Controller', () => {
       expect(response.body.message).toBe("Can't edit: Claim is not pending");
     });
 
-    it('should return 403 if a disabled weekly claim is edited', async () => {
+    it('[AC-US-PAYROLL-006-10] should return 403 if a disabled weekly claim is edited', async () => {
       const mockClaim = {
         id: 1,
         wage: { userAddress: TEST_ADDRESS },
@@ -1142,7 +1144,7 @@ describe('Claim Controller', () => {
       expect(response.body.message).toBe("Can't delete: Claim is not pending");
     });
 
-    it('returns 403 if caller is not claim owner', async () => {
+    it('[AC-US-PAYROLL-007-04] returns 403 when another member tries to delete the claim', async () => {
       setupMockClaim('pending', OTHER_ADDRESS);
 
       const response = await request(app).delete('/1');
@@ -1152,7 +1154,7 @@ describe('Claim Controller', () => {
     });
 
     // Covers: AC-US-PAYROLL-007-03
-    it('deletes claim and weekly claim when no other claims exist', async () => {
+    it('[AC-US-PAYROLL-007-03] deletes claim and weekly claim when no other claims exist', async () => {
       setupMockClaim('pending', TEST_ADDRESS, false);
       const mockClaimDelete = vi.spyOn(prisma.claim, 'delete').mockResolvedValue({} as any);
       const mockWeeklyClaimDelete = vi
@@ -1168,7 +1170,7 @@ describe('Claim Controller', () => {
     });
 
     // Covers: AC-US-PAYROLL-007-03
-    it('keeps the weekly claim when it is the last claim but goals are set', async () => {
+    it('[AC-US-PAYROLL-007-03] keeps the weekly claim when it is the last claim but goals are set', async () => {
       // A goals-only week: deleting the last daily claim must not wipe the memo.
       vi.spyOn(prisma.claim, 'findFirst').mockResolvedValue({
         id: 1,
@@ -1215,13 +1217,15 @@ describe('Claim Controller', () => {
       expect(deleteSpy).not.toHaveBeenCalled();
     });
 
-    it('reports a persistence failure while deleting a claim', async () => {
+    it('[AC-US-PAYROLL-007-08] leaves a claim untouched when deletion lookup fails', async () => {
+      const deleteSpy = vi.spyOn(prisma.claim, 'delete');
       vi.spyOn(prisma.claim, 'findFirst').mockRejectedValue(new Error('DB error'));
 
       const response = await request(app).delete('/1');
 
       expect(response.status).toBe(500);
       expect(response.body.message).toBe('Internal server error has occured');
+      expect(deleteSpy).not.toHaveBeenCalled();
     });
   });
 });

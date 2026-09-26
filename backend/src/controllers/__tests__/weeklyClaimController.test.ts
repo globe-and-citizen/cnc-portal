@@ -186,63 +186,6 @@ describe('Weekly Claim Controller', () => {
   describe('PUT /:id', () => {
     it.each([
       {
-        title: 'enable unauthorized',
-        action: 'enable',
-        claim: weeklyClaimFactory({
-          status: 'disabled',
-          signature: '0xabc',
-          wage: ownerWage('0x456'),
-        }),
-        ownerOk: false,
-        message: 'Caller is not the Cash Remuneration owner or the team owner',
-      },
-      {
-        title: 'enable no signature',
-        action: 'enable',
-        claim: weeklyClaimFactory({ status: 'pending', signature: null, wage: ownerWage('0x456') }),
-        ownerOk: true,
-        message: 'No claim existing signature: You need to sign claim first',
-      },
-      {
-        title: 'enable already active',
-        action: 'enable',
-        claim: weeklyClaimFactory({
-          status: 'signed',
-          signature: '0xabc',
-          data: { ownerAddress: CALLER },
-        }),
-        ownerOk: true,
-        message: 'Weekly claim already active',
-      },
-      {
-        title: 'enable already withdrawn',
-        action: 'enable',
-        claim: weeklyClaimFactory({ status: 'withdrawn', signature: '0xabc' }),
-        ownerOk: true,
-        message: 'Weekly claim already withdrawn',
-      },
-      {
-        title: 'disable unauthorized',
-        action: 'disable',
-        claim: weeklyClaimFactory({ status: 'signed', wage: ownerWage('0x456') }),
-        ownerOk: false,
-        message: 'Caller is not the Cash Remuneration owner or the team owner',
-      },
-      {
-        title: 'disable already disabled',
-        action: 'disable',
-        claim: weeklyClaimFactory({ status: 'disabled', data: { ownerAddress: CALLER } }),
-        ownerOk: true,
-        message: 'Weekly claim already disabled',
-      },
-      {
-        title: 'disable already withdrawn',
-        action: 'disable',
-        claim: weeklyClaimFactory({ status: 'withdrawn' }),
-        ownerOk: true,
-        message: 'Weekly claim already withdrawn',
-      },
-      {
         title: 'sign week not completed',
         action: 'sign',
         claim: weeklyClaimFactory({ status: 'pending', weekStart: new Date() }),
@@ -334,7 +277,7 @@ describe('Weekly Claim Controller', () => {
         expect(prisma.$transaction).not.toHaveBeenCalled();
       });
 
-      it('returns 403 when a team member withdraws a claim that is not theirs', async () => {
+      it('[AC-US-PAYROLL-010-05] returns 403 when a team member withdraws another member claim', async () => {
         vi.spyOn(prisma.weeklyClaim, 'findUnique').mockResolvedValue(
           signedClaimOfSomeoneElse() as never
         );
@@ -391,6 +334,18 @@ describe('Weekly Claim Controller', () => {
       expect(response.body.message).toContain('Invalid');
     });
 
+    it.each(['enable', 'disable'])(
+      '[AC-US-PAYROLL-009-06] rejects legacy %s actions without changing stored status',
+      async (action) => {
+        const response = await putAction(action);
+
+        expect(response.status).toBe(400);
+        expect(response.body.message).toContain('Invalid action');
+        expect(prisma.weeklyClaim.update).not.toHaveBeenCalled();
+        expect(prisma.$transaction).not.toHaveBeenCalled();
+      }
+    );
+
     it('returns 400 for invalid id on sign', async () => {
       const response = await putAction('sign', 'invalidId');
       expect(response.status).toBe(400);
@@ -425,7 +380,7 @@ describe('Weekly Claim Controller', () => {
       expect(response.body.message).toContain(message);
     });
 
-    it('returns 400 on sign when signedAgainstContractAddress does not match team current', async () => {
+    it('[AC-US-PAYROLL-008-09] rejects signing against a non-current contract', async () => {
       vi.spyOn(prisma.weeklyClaim, 'findUnique').mockResolvedValue(
         weeklyClaimFactory({ status: 'pending' }) as any
       );
@@ -455,7 +410,7 @@ describe('Weekly Claim Controller', () => {
       );
     });
 
-    it('returns 400 on sign when recovered signer does not match caller', async () => {
+    it('[AC-US-PAYROLL-008-10] rejects a signature from a different wallet', async () => {
       vi.spyOn(prisma.weeklyClaim, 'findUnique').mockResolvedValue(
         weeklyClaimFactory({ status: 'pending' }) as any
       );
@@ -477,7 +432,7 @@ describe('Weekly Claim Controller', () => {
       expect(response.body.message).toContain('Failed to verify signature');
     });
 
-    it('rejects a goals-only weekly claim before verifying or persisting a signature', async () => {
+    it('[AC-US-PAYROLL-008-05] rejects goals-only signing before verifying or persisting a signature', async () => {
       vi.spyOn(prisma.weeklyClaim, 'findUnique').mockResolvedValue(
         weeklyClaimFactory({ status: 'pending' }) as any
       );
@@ -535,20 +490,6 @@ describe('Weekly Claim Controller', () => {
 
     it.each([
       {
-        title: 'enable success',
-        action: 'enable',
-        claim: weeklyClaimFactory({ status: 'disabled', signature: '0xabc' }),
-        txResult: weeklyClaimFactory({ status: 'signed', signature: '0xabc' }),
-        expected: 'signed',
-      },
-      {
-        title: 'disable success',
-        action: 'disable',
-        claim: weeklyClaimFactory({ status: 'signed', signature: '0xabc', data: 'not-an-object' }),
-        txResult: weeklyClaimFactory({ status: 'disabled', signature: '0xabc' }),
-        expected: 'disabled',
-      },
-      {
         title: 'sign success',
         action: 'sign',
         claim: weeklyClaimFactory({ status: 'pending' }),
@@ -575,16 +516,6 @@ describe('Weekly Claim Controller', () => {
     });
 
     it.each([
-      {
-        title: 'enable with signed status and non-object data',
-        action: 'enable',
-        claim: weeklyClaimFactory({ status: 'signed', signature: '0xabc', data: 'not-object' }),
-      },
-      {
-        title: 'disable with disabled status and non-object data',
-        action: 'disable',
-        claim: weeklyClaimFactory({ status: 'disabled', signature: '0xabc', data: 'not-object' }),
-      },
       {
         title: 'sign with signed status and non-object data',
         action: 'sign',
@@ -632,19 +563,19 @@ describe('Weekly Claim Controller', () => {
       expect(response.body.message).toContain('teamId');
     });
 
-    it('returns 400 if status is invalid', async () => {
+    it('[AC-US-PAYROLL-012-10] returns 400 if status is invalid', async () => {
       const response = await request(app).get('/?teamId=1&status=invalid');
       expect(response.status).toBe(400);
       expect(response.body.message).toContain('Invalid status');
     });
 
-    it('returns 400 if memberAddress is invalid', async () => {
+    it('[AC-US-PAYROLL-012-11] returns 400 if memberAddress is invalid', async () => {
       const response = await request(app).get('/?teamId=1&memberAddress=invalid-address');
       expect(response.status).toBe(400);
       expect(response.body.message).toContain('Invalid');
     });
 
-    it('returns filtered claims and refresh attachment URLs', async () => {
+    it('[AC-US-PAYROLL-012-04] [AC-US-PAYROLL-012-05] [AC-US-PAYROLL-012-06] returns filtered claims, derived minutes, and refreshed attachment URLs', async () => {
       const memberAddress = '0x000000000000000000000000000000000000dEaD';
 
       mockGetPresignedDownloadUrl
@@ -788,7 +719,7 @@ describe('Weekly Claim Controller', () => {
       expect(response.body).toEqual({ data: [], total: 0 });
     });
 
-    it('paginates when page and limit are provided', async () => {
+    it('[AC-US-PAYROLL-012-07] paginates when page and limit are provided', async () => {
       vi.spyOn(prisma.weeklyClaim, 'findMany').mockResolvedValue([
         { ...weeklyClaimFactory({ id: 11 }), claims: [], member: null },
       ] as any);
@@ -808,7 +739,7 @@ describe('Weekly Claim Controller', () => {
       );
     });
 
-    it('skips pagination when neither page nor limit is provided', async () => {
+    it('[AC-US-PAYROLL-012-08] skips pagination when neither page nor limit is provided', async () => {
       vi.spyOn(prisma.weeklyClaim, 'findMany').mockResolvedValue([
         { ...weeklyClaimFactory({ id: 12 }), claims: [], member: null },
       ] as any);
@@ -822,10 +753,24 @@ describe('Weekly Claim Controller', () => {
       expect(findManyCall).not.toHaveProperty('take');
     });
 
-    it('rejects invalid pagination params', async () => {
+    it('[AC-US-PAYROLL-012-12] rejects invalid pagination params', async () => {
       const response = await request(app).get('/?teamId=1&page=0');
       expect(response.status).toBe(400);
       expect(response.body.message).toContain('Page');
+    });
+
+    it('[AC-US-PAYROLL-012-13] rejects a non-positive page size', async () => {
+      const response = await request(app).get('/?teamId=1&limit=0');
+      expect(response.status).toBe(400);
+      expect(response.body.message).toContain('Limit must be at least 1');
+      expect(prisma.weeklyClaim.findMany).not.toHaveBeenCalled();
+    });
+
+    it('[AC-US-PAYROLL-012-07] rejects page sizes above the 100-row maximum', async () => {
+      const response = await request(app).get('/?teamId=1&page=1&limit=101');
+      expect(response.status).toBe(400);
+      expect(response.body.message).toContain('Limit cannot exceed 100');
+      expect(prisma.weeklyClaim.findMany).not.toHaveBeenCalled();
     });
 
     it('returns 500 when list query fails', async () => {
@@ -887,7 +832,7 @@ describe('Weekly Claim Controller', () => {
       expect(response.body).toEqual({ teamId: 1, totalProcessed: 0, updated: [], skipped: [] });
     });
 
-    it('[AC-US-PAYROLL-011-02] reconciles a paid signed claim to withdrawn', async () => {
+    it('[AC-US-PAYROLL-011-02] [AC-US-PAYROLL-011-08] [AC-US-PAYROLL-011-11] reconciles paid claims and skips invalid signatures', async () => {
       vi.mocked(getCurrentCashRemunerationContract).mockResolvedValue(validContract as any);
 
       vi.spyOn(prisma.weeklyClaim, 'findMany').mockResolvedValue([
@@ -914,6 +859,7 @@ describe('Weekly Claim Controller', () => {
 
       const response = await request(app).post('/sync?teamId=1');
       expect(response.status).toBe(200);
+      expect(response.body.totalProcessed).toBe(2);
       expect(response.body.skipped).toEqual([{ id: 1, reason: 'Missing or invalid signature' }]);
       expect(response.body.updated).toEqual([
         { id: 2, previousStatus: 'signed', newStatus: 'withdrawn' },
@@ -941,7 +887,7 @@ describe('Weekly Claim Controller', () => {
       expect(prisma.weeklyClaim.update).not.toHaveBeenCalled();
     });
 
-    it('updates with unknown previous status when claim.status is null', async () => {
+    it('[AC-US-PAYROLL-011-03] updates with unknown previous status when claim.status is null', async () => {
       vi.mocked(getCurrentCashRemunerationContract).mockResolvedValue(validContract as any);
       vi.spyOn(prisma.weeklyClaim, 'findMany').mockResolvedValue([
         {
@@ -966,7 +912,7 @@ describe('Weekly Claim Controller', () => {
       ]);
     });
 
-    it('skips claim on readContract error', async () => {
+    it('[AC-US-PAYROLL-011-12] skips claim on readContract error', async () => {
       vi.mocked(getCurrentCashRemunerationContract).mockResolvedValue(validContract as any);
       vi.spyOn(prisma.weeklyClaim, 'findMany').mockResolvedValue([
         {
@@ -986,7 +932,7 @@ describe('Weekly Claim Controller', () => {
       expect(response.body.skipped).toEqual([{ id: 5, reason: 'Failed to read contract state' }]);
     });
 
-    it('resets to pending when claim was signed against a previous contract', async () => {
+    it('[AC-US-PAYROLL-008-16] [AC-US-PAYROLL-011-10] resets an old-contract signature to pending', async () => {
       vi.mocked(getCurrentCashRemunerationContract).mockResolvedValue(validContract as any);
       vi.spyOn(prisma.weeklyClaim, 'findMany').mockResolvedValue([
         {
@@ -1075,7 +1021,7 @@ describe('Weekly Claim Controller', () => {
     };
     const currentWage = { id: 7, teamId: 1, userAddress: CALLER, nextWageId: null };
 
-    it('creates a claim-less weekly claim when none exists yet', async () => {
+    it('[AC-US-PAYROLL-004-02] creates a claim-less weekly claim when none exists yet', async () => {
       mockResolveWageForWeek.mockResolvedValue(currentWage);
       vi.mocked(prisma.weeklyClaim.findFirst).mockResolvedValue(null as never);
       vi.mocked(prisma.weeklyClaim.upsert).mockResolvedValue(
@@ -1105,7 +1051,7 @@ describe('Weekly Claim Controller', () => {
       expect(prisma.weeklyClaim.update).not.toHaveBeenCalled();
     });
 
-    it('updates the memo on an existing pending weekly claim', async () => {
+    it('[AC-US-PAYROLL-004-03] [AC-US-PAYROLL-004-05] updates one existing weekly memo without creating a duplicate', async () => {
       mockResolveWageForWeek.mockResolvedValue(currentWage);
       vi.mocked(prisma.weeklyClaim.findFirst).mockResolvedValue(
         weeklyClaimFactory({ id: 5, status: 'pending', signature: null }) as never
@@ -1124,6 +1070,24 @@ describe('Weekly Claim Controller', () => {
       expect(prisma.weeklyClaim.upsert).not.toHaveBeenCalled();
     });
 
+    const rejectsLockedGoalsEdit = async (status: 'withdrawn' | 'disabled') => {
+      vi.mocked(prisma.weeklyClaim.findFirst).mockResolvedValue(
+        weeklyClaimFactory({ id: 5, status }) as never
+      );
+
+      const response = await request(app).put('/goals').send(GOALS_BODY);
+
+      expect(response.status).toBe(409);
+      expect(prisma.weeklyClaim.update).not.toHaveBeenCalled();
+      expect(prisma.weeklyClaim.upsert).not.toHaveBeenCalled();
+    };
+
+    it('[AC-US-PAYROLL-004-08] rejects goals changes after a week is withdrawn', () =>
+      rejectsLockedGoalsEdit('withdrawn'));
+
+    it('[AC-US-PAYROLL-004-09] rejects goals changes after a week is disabled', () =>
+      rejectsLockedGoalsEdit('disabled'));
+
     it('[AC-US-PAYROLL-004-07] rejects a goals update when the week is signed', async () => {
       mockResolveWageForWeek.mockResolvedValue(currentWage);
       vi.mocked(prisma.weeklyClaim.findFirst).mockResolvedValue(
@@ -1137,7 +1101,7 @@ describe('Weekly Claim Controller', () => {
       expect(prisma.weeklyClaim.upsert).not.toHaveBeenCalled();
     });
 
-    it('returns 400 when the caller has no current wage', async () => {
+    it('[AC-US-PAYROLL-004-06] returns 400 when the caller has no current wage', async () => {
       // Only reachable on a week nobody has opened: an open week already
       // carries the wage that prices it, so no resolution is needed.
       vi.mocked(prisma.weeklyClaim.findFirst).mockResolvedValue(null);

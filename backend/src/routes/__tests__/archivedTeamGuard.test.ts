@@ -229,7 +229,7 @@ describe('archived team guard on write routes', () => {
   describe('PUT /claim/:claimId', () => {
     const app = mount(claimRoutes);
 
-    it('rejects claim updates for an archived company', async () => {
+    it('[AC-US-PAYROLL-006-13] rejects claim edits for an archived company', async () => {
       vi.mocked(prisma.claim.findUnique).mockResolvedValue({
         wage: { teamId: 1 },
       } as never);
@@ -244,7 +244,7 @@ describe('archived team guard on write routes', () => {
   describe('DELETE /claim/:claimId', () => {
     const app = mount(claimRoutes);
 
-    it('rejects claim removal for an archived company', async () => {
+    it('[AC-US-PAYROLL-007-07] rejects claim deletion for an archived company', async () => {
       vi.mocked(prisma.claim.findUnique).mockResolvedValue({
         wage: { teamId: 1 },
       } as never);
@@ -259,7 +259,7 @@ describe('archived team guard on write routes', () => {
   describe('PUT /wage/setWage', () => {
     const app = mount(wageRoutes);
 
-    it('rejects wage creation for an archived company', async () => {
+    it('[AC-US-PAYROLL-001-26] rejects wage creation for an archived company', async () => {
       mockTeamArchiveLookups(true);
 
       const response = await request(app)
@@ -278,13 +278,30 @@ describe('archived team guard on write routes', () => {
   describe('PUT /wage/:wageId', () => {
     const app = mount(wageRoutes);
 
-    it('rejects wage updates for an archived company', async () => {
+    it('[AC-US-PAYROLL-002-12] rejects wage status updates for an archived company', async () => {
       vi.mocked(prisma.wage.findUnique).mockResolvedValue({ teamId: 1 } as never);
       mockTeamArchiveLookups(true);
 
       const response = await request(app).put('/1').query({ action: 'disable' });
 
       expect(response.status).toBe(409);
+    });
+  });
+
+  describe('PUT /weekly-claim/goals', () => {
+    const app = mount(weeklyClaimRoutes);
+
+    it('[AC-US-PAYROLL-004-10] [AC-US-PAYROLL-004-11] rejects weekly-goal writes for an archived company', async () => {
+      mockTeamArchiveLookups(true);
+
+      const response = await request(app).put('/goals').send({
+        teamId: 1,
+        weekStart: new Date().toISOString(),
+        weeklyGoals: 'Updated goals',
+      });
+
+      expect(response.status).toBe(409);
+      expect(response.body.message).toBe('Team is archived and cannot be modified');
     });
   });
 
@@ -303,7 +320,7 @@ describe('archived team guard on write routes', () => {
   describe('PUT /weekly-claim/:id', () => {
     const app = mount(weeklyClaimRoutes);
 
-    it('rejects weekly-claim updates for an archived company', async () => {
+    it('[AC-US-PAYROLL-010-11] rejects weekly-claim withdrawal for an archived company', async () => {
       vi.mocked(prisma.weeklyClaim.findUnique).mockResolvedValue({ teamId: 1 } as never);
       mockTeamArchiveLookups(true);
 

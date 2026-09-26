@@ -97,8 +97,7 @@ describe('WeeklyClaimActionEnable', () => {
     expect(mockCashRemunerationWrites.enableClaim.mutate).not.toHaveBeenCalled()
   })
 
-  // Covers: AC-US-PAYROLL-009-02, AC-US-PAYROLL-009-04
-  it('enables claim successfully and syncs backend state', async () => {
+  it('[AC-US-PAYROLL-009-02] [AC-US-PAYROLL-009-04] enables claim and syncs backend state', async () => {
     const mutateAsync = setupSyncMutation(vi.fn().mockResolvedValue(undefined))
 
     const wrapper = createWrapper(true)

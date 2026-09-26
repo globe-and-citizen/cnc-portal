@@ -2,7 +2,12 @@ import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { parseUnits, type Address, type Hex } from 'viem'
 import { expect, test } from '../fixtures'
-import { E2E_MEMBER, E2E_MEMBER_PRIVATE_KEY, tokenBalance } from '../e2e-chain'
+import {
+  E2E_MEMBER,
+  E2E_MEMBER_PRIVATE_KEY,
+  E2E_OWNER_PRIVATE_KEY,
+  tokenBalance
+} from '../e2e-chain'
 import { useWallet } from '../e2e-page'
 import {
   addRealCompanyMember,
@@ -60,6 +65,9 @@ test.describe(
      * Covers:
      * - [AC-US-PAYROLL-008-01]
      * - [AC-US-PAYROLL-009-01]
+     * - [AC-US-PAYROLL-009-02]
+     * - [AC-US-PAYROLL-009-03]
+     * - [AC-US-PAYROLL-009-04]
      * - [AC-US-PAYROLL-010-01]
      * - [AC-US-PAYROLL-011-01]
      * - [AC-US-PAYROLL-012-01]
@@ -68,6 +76,7 @@ test.describe(
       browser,
       page
     }) => {
+      await useWallet(page, E2E_OWNER_PRIVATE_KEY)
       const memberBootstrap = await browser.newContext()
       const bootstrapPage = await memberBootstrap.newPage()
       await useWallet(bootstrapPage, E2E_MEMBER_PRIVATE_KEY)
@@ -123,6 +132,7 @@ test.describe(
         await expect(page.getByText('Claim approved', { exact: true })).toBeVisible({
           timeout: 30_000
         })
+        await expect(weeklyClaims).toContainText('Signed')
         await expect
           .poll(() => wageClaimState(cashRemuneration, signedClaim.signature))
           .toEqual({
@@ -158,6 +168,7 @@ test.describe(
             disabled: true,
             paid: false
           })
+        await expect(weeklyClaims).toContainText('Disabled')
         await expectMemberClaimReadOnly()
 
         await weeklyClaims.locator('[data-test="weekly-claim-actions-button"]').click()
@@ -171,6 +182,7 @@ test.describe(
             disabled: false,
             paid: false
           })
+        await expect(weeklyClaims).toContainText('Signed')
 
         await openMemberPayrollHistory(memberPage, company.teamId, E2E_MEMBER)
         await selectHistoryWeek(memberPage, paidWeek)
@@ -215,6 +227,7 @@ test.describe(
       browser,
       page
     }) => {
+      await useWallet(page, E2E_OWNER_PRIVATE_KEY)
       const memberBootstrap = await browser.newContext()
       const bootstrapPage = await memberBootstrap.newPage()
       await useWallet(bootstrapPage, E2E_MEMBER_PRIVATE_KEY)
@@ -265,9 +278,11 @@ test.describe(
         await selectHistoryWeek(memberPage, paidWeek)
         const memberUsdcBefore = await tokenBalance(usdc, E2E_MEMBER)
         await memberPage.locator('[data-test="withdraw-button"]').click()
-        await expect(memberPage.getByText(/Insufficient token balance — needs/)).toBeVisible({
-          timeout: 30_000
-        })
+        await expect(
+          memberPage.getByText('Insufficient token balance — needs 2000000, only 0 available', {
+            exact: true
+          })
+        ).toBeVisible({ timeout: 30_000 })
         await expect.poll(() => tokenBalance(usdc, E2E_MEMBER)).toBe(memberUsdcBefore)
         await expect
           .poll(() => wageClaimState(cashRemuneration, signedClaim.signature))
