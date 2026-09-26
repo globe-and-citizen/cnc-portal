@@ -504,7 +504,7 @@ Each acceptance criterion references one reusable strategy instead of repeating 
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `fc3781480088ae9fb06a36a67ebb4a8f0db3b8f7`
+**Implementation evidence reviewed against:** `3b281c49e016affa8af91143bfcc22b1fb624e36`
 
 - [Election overview page](../../../app/src/views/team/%5Bid%5D/BodElectionView.vue)
 - [Election detail page](../../../app/src/views/team/%5Bid%5D/BodElectionDetailsView.vue)
