@@ -22,7 +22,7 @@ const election = (resultsPublished: boolean): RawElection => [
   resultsPublished
 ]
 
-describe('[US-EL-05][US-EL-06][US-EL-07][US-EL-08] BodElectionDetailsView.vue', () => {
+describe('BodElectionDetailsView.vue', () => {
   let wrapper: VueWrapper
 
   const mountComponent = () =>
@@ -50,12 +50,14 @@ describe('[US-EL-05][US-EL-06][US-EL-07][US-EL-08] BodElectionDetailsView.vue', 
   })
 
   describe('Election selection', () => {
-    it('opens the election named in the URL', () => {
+    it('[AC-US-EL-08-02] opens the election named in the URL', () => {
       setMockRoute({ query: { electionId: '2' } })
       mockElectionsReads.nextElectionId.data.value = 9n
+      mockElectionsReads.getElection.data.value = election(true)
       wrapper = mountComponent()
 
       expect(summarySection().props('electionId')).toBe(2n)
+      expect(wrapper.findComponent(ElectionCandidatesSection).props('electionId')).toBe(2n)
     })
 
     it('falls back to the election in progress when the URL names none', () => {
@@ -106,7 +108,7 @@ describe('[US-EL-05][US-EL-06][US-EL-07][US-EL-08] BodElectionDetailsView.vue', 
       expect(summarySection().props('isDetails')).toBe(false)
     })
 
-    it('shows the elected board once the results are published', async () => {
+    it('[AC-US-EL-07-02] shows the elected board separately once results are published', async () => {
       mockElectionsReads.nextElectionId.data.value = 9n
       wrapper = mountComponent()
 

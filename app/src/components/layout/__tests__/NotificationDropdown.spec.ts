@@ -67,7 +67,7 @@ describe('NotificationDropdown.vue', () => {
     expect(mockRouterPush).toHaveBeenCalledWith('/teams/42')
   })
 
-  it('redirects elections resource to administration path', async () => {
+  it('[AC-US-EL-04-02] opens the company election page from its notification', async () => {
     mockNotificationsRef.value = [buildNotification({ id: 77, resource: 'elections/15' })]
     await nextTick()
 

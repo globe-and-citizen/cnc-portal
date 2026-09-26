@@ -53,12 +53,22 @@ describe('ElectionCandidatesSection', () => {
     wrapper?.unmount()
   })
 
-  it('[AC-US-EL-06-02] reads and displays every candidate vote count', () => {
+  /**
+   * Covers:
+   * - [AC-US-EL-06-02]
+   * - [AC-US-EL-06-03]
+   * - [AC-US-EL-06-05]
+   */
+  it('reads one election-scoped count set and displays every candidate result', () => {
     wrapper = mountComponent()
 
     const cards = wrapper.findAllComponents(ElectionCandidateCard)
     expect(cards).toHaveLength(2)
     expect(useElectionsGetCandidateVoteCounts).toHaveBeenCalledTimes(1)
+    const [readElectionId, readCandidates] = vi.mocked(useElectionsGetCandidateVoteCounts).mock
+      .calls[0]!
+    expect(unref(readElectionId)).toBe(4n)
+    expect(unref(readCandidates)).toEqual([ALEX, BLAIR])
     expect(cards[0]?.props('candidate')).toMatchObject({
       address: ALEX,
       currentVotes: 2,
