@@ -169,7 +169,7 @@ export const useGetWeeklyClaimByIdQuery = createQueryHook<WeeklyClaim, GetWeekly
 /**
  * Weekly claim action types for PUT /weeklyClaim/{claimId}
  */
-export type WeeklyClaimAction = 'sign' | 'enable' | 'disable' | 'withdraw'
+export type WeeklyClaimAction = 'sign' | 'withdraw'
 
 /**
  * Combined parameters for useUpdateWeeklyClaimMutation
@@ -205,7 +205,7 @@ export interface UpdateWeeklyClaimParams {
 }
 
 /**
- * Update a weekly claim (sign, enable, disable, or withdraw)
+ * Update a weekly claim (sign or withdraw)
  *
  * @endpoint PUT /weeklyClaim/{claimId}
  * @pathParams { claimId: number | string }
