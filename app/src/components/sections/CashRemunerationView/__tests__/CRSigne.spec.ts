@@ -228,12 +228,22 @@ describe('CRSigne', () => {
   })
 
   describe('Error Handling', () => {
-    it('shows error toast when user rejects signature', async () => {
+    it('[AC-US-PAYROLL-008-15] keeps claim state unchanged when the signer rejects the wallet request', async () => {
       mockUseSignTypedData.data.value = ''
       mockUseSignTypedData.mutateAsync.mockRejectedValue(new Error('User rejected the request'))
+      const mutation = createMockMutationResponse()
+      const mutateAsync = mutation.mutateAsync as ReturnType<typeof vi.fn>
+      vi.mocked(useUpdateWeeklyClaimMutation).mockReturnValueOnce(
+        mutation as unknown as ReturnType<typeof useUpdateWeeklyClaimMutation>
+      )
+      const claimBefore = { ...mockClaim }
 
-      createWrapper()
+      createWrapper({ weeklyClaim: claimBefore })
       await clickApprove()
+
+      expect(mutateAsync).not.toHaveBeenCalled()
+      expect(claimBefore.status).toBe('pending')
+      expect(claimBefore.signature).toBeNull()
     })
 
     it('shows error toast when signature is missing', async () => {

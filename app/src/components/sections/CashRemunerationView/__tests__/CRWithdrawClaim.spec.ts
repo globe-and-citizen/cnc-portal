@@ -13,7 +13,8 @@ import {
   mockCashRemunerationWrites,
   mockTeamStore,
   mockGetBalance,
-  mockWagmiCore
+  mockWagmiCore,
+  mockSyncWeeklyClaimsMutation
 } from '@/tests/mocks'
 import { mockLog } from '@/tests/mocks/utils.mock'
 import * as contractErrors from '@/utils/errors/classifyContractError'
@@ -315,7 +316,7 @@ describe('CRWithdrawClaim', () => {
     // expect(mockToast.add).toHaveBeenCalledWith({ title: 'Unknown failure', color: 'error' })
   })
 
-  it('handles withdraw mutation onError with user_rejected silently', async () => {
+  it('[AC-US-PAYROLL-010-17] leaves the claim unpaid and unsynced when the wallet request is rejected', async () => {
     vi.spyOn(contractErrors, 'classifyError').mockReturnValue({
       category: 'user_rejected',
       userMessage: 'User rejected',
@@ -332,6 +333,7 @@ describe('CRWithdrawClaim', () => {
     await clickWithdrawButton()
 
     expect(mockLog.error).toHaveBeenCalledWith('Withdraw error', expect.any(Error))
+    expect(mockSyncWeeklyClaimsMutation.mutateAsync).not.toHaveBeenCalled()
   })
 
   it('handles withdraw mutation onError with regular error', async () => {
@@ -353,8 +355,7 @@ describe('CRWithdrawClaim', () => {
     expect(mockLog.error).toHaveBeenCalledWith('Withdraw error', expect.any(Error))
   })
 
-  // Covers: AC-US-PAYROLL-010-06
-  it('blocks withdraw when claim was signed for a different contract', async () => {
+  it('[AC-US-PAYROLL-010-06] blocks withdraw when claim was signed for a different contract', async () => {
     const claimOnOtherContract: WeeklyClaim = {
       ...mockClaim,
       data: {
@@ -370,8 +371,7 @@ describe('CRWithdrawClaim', () => {
     expect(mockCashRemunerationWrites.withdraw.mutate).not.toHaveBeenCalled()
   })
 
-  // Covers: AC-US-PAYROLL-010-06
-  it('blocks withdraw when claim was signed on a different chain', async () => {
+  it('[AC-US-PAYROLL-010-06] blocks withdraw when claim was signed on a different chain', async () => {
     const claimOnOtherChain: WeeklyClaim = {
       ...mockClaim,
       data: {

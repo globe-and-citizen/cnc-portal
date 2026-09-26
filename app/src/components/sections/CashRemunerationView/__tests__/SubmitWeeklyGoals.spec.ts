@@ -84,8 +84,7 @@ describe('SubmitWeeklyGoals', () => {
     ).toBeDefined()
   })
 
-  // Covers: AC-US-PAYROLL-004-03
-  it('submits the memo with the team id and selected week, then toasts success', async () => {
+  it('[AC-US-PAYROLL-004-03] submits the memo with the team id and selected week, then toasts success', async () => {
     const wrapper = createComponent({
       weeklyClaim: makeWeeklyClaim({ weeklyGoals: '# Existing goals' })
     })
@@ -100,8 +99,7 @@ describe('SubmitWeeklyGoals', () => {
     expect(mockToast.add).toHaveBeenCalledWith(expect.objectContaining({ color: 'success' }))
   })
 
-  // Covers: AC-US-PAYROLL-004-03
-  it('sends the edited memo content from the editor', async () => {
+  it('[AC-US-PAYROLL-004-03] sends the edited memo content from the editor', async () => {
     const wrapper = createComponent({ weeklyClaim: makeWeeklyClaim() })
 
     await wrapper.get('[data-test="submit-weekly-goals-button"]').trigger('click')
@@ -111,6 +109,21 @@ describe('SubmitWeeklyGoals', () => {
 
     expect(submitGoalsMock).toHaveBeenCalledWith({
       body: { teamId: '1', weekStart: WEEK_START, weeklyGoals: '## Rewritten plan' }
+    })
+  })
+
+  it('[AC-US-PAYROLL-004-04] clears saved goals when an empty memo is submitted', async () => {
+    const wrapper = createComponent({
+      weeklyClaim: makeWeeklyClaim({ weeklyGoals: 'Goals to clear' })
+    })
+
+    await wrapper.get('[data-test="submit-weekly-goals-button"]').trigger('click')
+    await wrapper.get('[data-test="md-editor-stub"]').setValue('')
+    await wrapper.get('[data-test="submit-weekly-goals-confirm"]').trigger('click')
+    await flushPromises()
+
+    expect(submitGoalsMock).toHaveBeenCalledWith({
+      body: { teamId: '1', weekStart: WEEK_START, weeklyGoals: '' }
     })
   })
 })
