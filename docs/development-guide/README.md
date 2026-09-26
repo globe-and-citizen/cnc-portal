@@ -12,6 +12,11 @@ Comprehensive guides for developing features in the CNC Portal project.
 
 - **[Knip unused-export analysis](./static-analysis.md)** - Read-only TypeScript export audit and triage process
 
+### Autonomous Agent Audits
+
+- **[Autonomous semantic audit contracts](./autonomous-audits/README.md)** - Shared evidence, reporting, issue, and remediation contract for
+  recurring AI-agent audits
+
 ### Testing
 
 - **[Testing Overview](../testing/)** - Main testing guide
