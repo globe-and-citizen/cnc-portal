@@ -259,7 +259,8 @@ describe('archived team guard on write routes', () => {
   describe('PUT /wage/setWage', () => {
     const app = mount(wageRoutes);
 
-    it('[AC-US-PAYROLL-001-26] rejects wage creation for an archived company', async () => {
+    /** Covers: [AC-US-PAYROLL-001-26], [AC-US-PAYROLL-001-27] */
+    it('rejects setting or replacing a wage for an archived company', async () => {
       mockTeamArchiveLookups(true);
 
       const response = await request(app)
@@ -319,6 +320,27 @@ describe('archived team guard on write routes', () => {
 
   describe('PUT /weekly-claim/:id', () => {
     const app = mount(weeklyClaimRoutes);
+
+    it('[AC-US-PAYROLL-008-13] rejects signing for an archived company', async () => {
+      vi.mocked(prisma.weeklyClaim.findUnique).mockResolvedValue({ teamId: 1 } as never);
+      mockTeamArchiveLookups(true);
+      const response = await request(app)
+        .put('/1')
+        .query({ action: 'sign' })
+        .send({
+          signature: '0xabcd',
+          signedAgainstContractAddress: OWNER_ADDRESS,
+          chainId: 31337,
+          typedDataMessage: {
+            employeeAddress: MEMBER_ADDRESS,
+            minutesWorked: 60,
+            date: '1700000000',
+            wages: [{ hourlyRate: '1', tokenAddress: OWNER_ADDRESS }],
+          },
+        });
+      expect(response.status).toBe(409);
+      expect(response.body.message).toBe('Team is archived and cannot be modified');
+    });
 
     it('[AC-US-PAYROLL-010-11] rejects weekly-claim withdrawal for an archived company', async () => {
       vi.mocked(prisma.weeklyClaim.findUnique).mockResolvedValue({ teamId: 1 } as never);

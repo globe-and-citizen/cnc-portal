@@ -39,7 +39,8 @@
     "seed:test": "NODE_ENV=test ts-node prisma/seed.ts",
     "seed:staging": "NODE_ENV=staging ts-node prisma/seed.ts",
     "seed:reset": "npx prisma migrate reset --force && npm run seed",
-    "sentry:sourcemaps": "sentry-cli sourcemaps inject --org $SENTRY_ORG --project $SENTRY_PROJECT ./dist && sentry-cli sourcemaps upload --org $SENTRY_ORG --project $SENTRY_PROJECT ./dist"
+    "sentry:sourcemaps": "sentry-cli sourcemaps inject --org $SENTRY_ORG --project $SENTRY_PROJECT ./dist && sentry-cli sourcemaps upload --org $SENTRY_ORG --project $SENTRY_PROJECT ./dist",
+    "test:payroll:database": "vitest run -c vitest.payroll-integration.config.ts"
   },
   "keywords": [],
   "author": "",

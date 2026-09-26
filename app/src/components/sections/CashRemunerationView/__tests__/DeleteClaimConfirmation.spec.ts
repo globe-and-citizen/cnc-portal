@@ -84,6 +84,23 @@ describe('[US-PAYROLL-007] DeleteClaimConfirmation', () => {
   })
 
   describe('Delete Functionality', () => {
+    it('[AC-US-PAYROLL-007-02] deletes only after confirmation and preserves the claim on cancel', async () => {
+      const mutateAsync = vi.fn().mockResolvedValue(undefined)
+      const cancelled = createWrapper({}, { mutateAsync })
+      expect(mutateAsync).not.toHaveBeenCalled()
+      await cancelled.find('[data-test="cancel-delete-claim-button"]').trigger('click')
+      await flushPromises()
+      expect(mutateAsync).not.toHaveBeenCalled()
+      expect(cancelled.emitted('close')).toBeTruthy()
+      cancelled.unmount()
+
+      const confirmed = createWrapper({}, { mutateAsync })
+      expect(mutateAsync).not.toHaveBeenCalled()
+      await confirmed.find('[data-test="confirm-delete-claim-button"]').trigger('click')
+      await flushPromises()
+      expect(mutateAsync).toHaveBeenCalledExactlyOnceWith({ pathParams: { claimId: 1 } })
+      confirmed.unmount()
+    })
     it('calls the delete mutation and emits close on success', async () => {
       const mockMutateAsync = vi.fn().mockResolvedValue(undefined)
       const wrapper = createWrapper({}, { mutateAsync: mockMutateAsync })

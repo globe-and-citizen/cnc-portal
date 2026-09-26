@@ -74,6 +74,13 @@ const mockWage = {
 } as unknown as Wage;
 
 describe('Wage Controller', () => {
+  it('[AC-US-PAYROLL-001-20] exposes no wage cancellation route', async () => {
+    vi.clearAllMocks();
+    const response = await request(app).delete('/1');
+    expect(response.status).toBe(404);
+    expect(prisma.wage.delete).not.toHaveBeenCalled();
+    expect(prisma.wage.update).not.toHaveBeenCalled();
+  });
   describe('PUT: /setWage', () => {
     beforeEach(() => {
       vi.clearAllMocks();
@@ -722,6 +729,25 @@ describe('Wage Controller', () => {
       expect(prisma.wage.update).toHaveBeenCalledWith(
         expect.objectContaining({ data: { disabled: false } })
       );
+    });
+
+    it('[AC-US-PAYROLL-002-11] excludes historical versions from wage status changes', async () => {
+      vi.mocked(prisma.wage.findUnique).mockResolvedValue({
+        ...mockWage,
+        teamId: 1,
+        nextWageId: 2,
+      } as never);
+      vi.mocked(prisma.wage.findFirst).mockResolvedValue(null);
+      const updateSpy = vi.spyOn(prisma.wage, 'update');
+      const response = await request(app).put('/1').query({ action: 'disable' });
+      expect(response.status).toBe(404);
+      expect(response.body.message).toBe('Wage not found');
+      expect(prisma.wage.findFirst).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 1, nextWageId: null },
+        })
+      );
+      expect(updateSpy).not.toHaveBeenCalled();
     });
 
     it('returns 500 on internal server error', async () => {

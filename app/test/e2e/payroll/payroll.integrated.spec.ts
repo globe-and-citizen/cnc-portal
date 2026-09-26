@@ -26,6 +26,7 @@ test.describe(
      * - [AC-US-PAYROLL-001-02]
      * - [AC-US-PAYROLL-002-01]
      * - [AC-US-PAYROLL-002-02]
+     * - [AC-US-PAYROLL-002-03]
      */
     test('replaces, pauses and resumes one member wage through the Payroll UI', async ({
       browser,
@@ -40,6 +41,7 @@ test.describe(
 
       try {
         await page.locator('[data-test="skip-safe-setup-button"]').click()
+        await expect(page).toHaveURL(new RegExp(`/teams/${company.teamId}$`))
         await addRealCompanyMember(page, company.teamId, E2E_MEMBER)
         await openMemberPayrollHistory(memberPage, company.teamId, E2E_MEMBER)
         await expect(
@@ -81,6 +83,11 @@ test.describe(
           .locator(`[data-test="member-actions-${E2E_MEMBER}"] [data-test="resume-wage-button"]`)
           .click()
         await expect(page.getByText('Wage enabled successfully', { exact: true })).toBeVisible()
+        await openMemberPayrollHistory(memberPage, company.teamId, E2E_MEMBER)
+        await submitDailyClaim(memberPage, { hours: '1', memo: 'Resumed wage claim' })
+        await expect(memberPage.locator('[data-test="daily-breakdown"]')).toContainText(
+          'Resumed wage claim'
+        )
       } finally {
         await memberContext.close()
         if (!page.isClosed()) {
@@ -114,9 +121,11 @@ test.describe(
       await memberContext.close()
 
       const company = await createOperationalCompany(page)
+      let claimsContext: Awaited<ReturnType<typeof browser.newContext>> | undefined
 
       try {
         await page.locator('[data-test="skip-safe-setup-button"]').click()
+        await expect(page).toHaveURL(new RegExp(`/teams/${company.teamId}$`))
         await addRealCompanyMember(page, company.teamId, E2E_MEMBER)
         await setMemberUsdcWage(page, E2E_MEMBER, {
           weeklyCap: '16',
@@ -124,7 +133,7 @@ test.describe(
           hourlyRate: '1'
         })
 
-        const claimsContext = await browser.newContext()
+        claimsContext = await browser.newContext()
         const claimsPage = await claimsContext.newPage()
         await useWallet(claimsPage, E2E_MEMBER_PRIVATE_KEY)
         await signInToRealStack(claimsPage)
@@ -155,8 +164,8 @@ test.describe(
         await submitDailyClaim(claimsPage, { hours: '3', memo: 'Final Payroll claim' })
         await expect(dailyBreakdown.getByText('Final Payroll claim', { exact: true })).toBeVisible()
         await expect(dailyBreakdown).toContainText('3h')
-        await claimsContext.close()
       } finally {
+        await claimsContext?.close()
         if (!page.isClosed()) {
           await deleteCompanyThroughUi(page, company.teamId, company.team.name)
         }
@@ -174,9 +183,11 @@ test.describe(
       await memberBootstrap.close()
 
       const company = await createOperationalCompany(page)
+      let claimsContext: Awaited<ReturnType<typeof browser.newContext>> | undefined
 
       try {
         await page.locator('[data-test="skip-safe-setup-button"]').click()
+        await expect(page).toHaveURL(new RegExp(`/teams/${company.teamId}$`))
         await addRealCompanyMember(page, company.teamId, E2E_MEMBER)
         await setMemberUsdcWage(page, E2E_MEMBER, {
           weeklyCap: '3',
@@ -184,7 +195,7 @@ test.describe(
           hourlyRate: '1'
         })
 
-        const claimsContext = await browser.newContext()
+        claimsContext = await browser.newContext()
         const claimsPage = await claimsContext.newPage()
         await useWallet(claimsPage, E2E_MEMBER_PRIVATE_KEY)
         await signInToRealStack(claimsPage)
@@ -206,8 +217,8 @@ test.describe(
           'weekly hours limit would be exceeded'
         )
         await expect(claimsPage.locator('[data-test="daily-breakdown"]')).toContainText('2h')
-        await claimsContext.close()
       } finally {
+        await claimsContext?.close()
         if (!page.isClosed()) {
           await deleteCompanyThroughUi(page, company.teamId, company.team.name)
         }

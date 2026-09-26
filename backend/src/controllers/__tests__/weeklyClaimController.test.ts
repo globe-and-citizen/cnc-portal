@@ -193,7 +193,7 @@ describe('Weekly Claim Controller', () => {
         message: 'Week not yet completed',
       },
       {
-        title: 'sign already signed',
+        title: '[AC-US-PAYROLL-008-06] sign already signed',
         action: 'sign',
         claim: weeklyClaimFactory({ status: 'signed', data: { ownerAddress: CALLER } }),
         ownerOk: true,
@@ -214,7 +214,7 @@ describe('Weekly Claim Controller', () => {
         message: 'Weekly claim must be signed before it can be withdrawn',
       },
       {
-        title: 'withdraw already withdrawn',
+        title: '[AC-US-PAYROLL-010-10] withdraw already withdrawn',
         action: 'withdraw',
         claim: weeklyClaimFactory({ status: 'withdrawn', memberAddress: CALLER }),
         ownerOk: true,
@@ -522,7 +522,7 @@ describe('Weekly Claim Controller', () => {
         claim: weeklyClaimFactory({ status: 'signed', signature: '0xabc', data: 'not-object' }),
       },
       {
-        title: 'sign with disabled status to skip withdrawn branch',
+        title: '[AC-US-PAYROLL-008-07] re-sign a disabled claim',
         action: 'sign',
         claim: weeklyClaimFactory({ status: 'disabled', signature: '0xabc', data: {} }),
       },
@@ -549,6 +549,27 @@ describe('Weekly Claim Controller', () => {
   });
 
   describe('GET /', () => {
+    it('[AC-US-PAYROLL-012-09] lets a regular company member retrieve other members payroll records', async () => {
+      vi.mocked(prisma.team.findFirst).mockResolvedValue({
+        id: 1,
+        ownerAddress: '0x2222222222222222222222222222222222222222',
+      } as never);
+      vi.mocked(prisma.weeklyClaim.findMany).mockResolvedValue([
+        weeklyClaimFactory({
+          memberAddress: '0x1111111111111111111111111111111111111111',
+          claims: [],
+        }),
+      ] as never);
+      vi.mocked(prisma.weeklyClaim.count).mockResolvedValue(1);
+      const response = await request(app).get('/?teamId=1');
+      expect(response.status).toBe(200);
+      expect(response.body.data[0].memberAddress).not.toBe(CALLER);
+      expect(prisma.weeklyClaim.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ teamId: 1 }),
+        })
+      );
+    });
     it('returns 403 if caller is not team member', async () => {
       vi.mocked(prisma.team.findFirst).mockResolvedValueOnce(null);
 
@@ -830,6 +851,31 @@ describe('Weekly Claim Controller', () => {
       const response = await request(app).post('/sync?teamId=1');
       expect(response.status).toBe(200);
       expect(response.body).toEqual({ teamId: 1, totalProcessed: 0, updated: [], skipped: [] });
+    });
+
+    it('[AC-US-PAYROLL-011-09] returns the persisted reconciled status on subsequent reads', async () => {
+      vi.mocked(getCurrentCashRemunerationContract).mockResolvedValue(validContract as never);
+      const stored = weeklyClaimFactory({
+        status: 'signed',
+        signature: '0xabcdef',
+        signedAgainstContractAddress: validContract.address,
+        claims: [],
+      });
+      vi.mocked(prisma.weeklyClaim.findMany).mockImplementation(async () => [stored] as never);
+      vi.mocked(prisma.weeklyClaim.update).mockImplementation(async (args) => {
+        stored.status = args.data.status as string;
+        return stored as never;
+      });
+      readContractMock.mockReset();
+      readContractMock.mockResolvedValueOnce(true).mockResolvedValueOnce(false);
+      expect((await request(app).post('/sync?teamId=1')).status).toBe(200);
+      expect(prisma.weeklyClaim.update).toHaveBeenCalledWith({
+        where: { id: 1 },
+        data: { status: 'withdrawn' },
+      });
+      const response = await request(app).get('/?teamId=1');
+      expect(response.status).toBe(200);
+      expect(response.body.data[0].status).toBe('withdrawn');
     });
 
     it('[AC-US-PAYROLL-011-02] [AC-US-PAYROLL-011-08] [AC-US-PAYROLL-011-11] reconciles paid claims and skips invalid signatures', async () => {

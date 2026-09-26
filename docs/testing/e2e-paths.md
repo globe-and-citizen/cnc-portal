@@ -271,6 +271,7 @@ coverage; the latest execution result and artifacts belong in Playwright and CI 
     - [x] Create and then replace the member wage.
     - [x] Pause and resume it.
     - [x] Block a member without a wage and reject a claim while the wage is paused.
+    - [x] Submit a persisted claim after resuming the wage.
     - [x] Verify the persisted active wage and visible status after reload.
   - Expected result: exactly one current wage controls the member's eligibility.
   - Status: partial; the owner and member journeys run against the real frontend, backend, PostgreSQL database, and local chain. A member
@@ -301,26 +302,28 @@ coverage; the latest execution result and artifacts belong in Playwright and CI 
     - `US-PAYROLL-010` — withdraw an approved claim;
     - `US-PAYROLL-011` — reconcile claims with the chain;
     - `US-PAYROLL-012` — review payroll history;
-  - Planned extension: `US-PAYROLL-013` — review the Payroll account position.
+    - `US-PAYROLL-013` — review the Payroll account position.
   - Reused dependency: `US-PAYROLL-003` references the Accounts-owned funding journey and is not revalidated here.
   - Dependencies: a claim-ready week, current contract owner, and funded Payroll contract.
   - Main path:
     - [x] Sign the completed weekly claim.
     - [x] Disable and re-enable it without creating a second claim.
-    - [x] Withdraw through a real chain transaction.
+    - [x] Withdraw native and USDC compensation and mint SHER through a real chain transaction; verify the decoded payload and token
+          decimals.
     - [x] Reconcile backend and chain state.
     - [x] Verify member and owner histories after reload.
     - [x] Keep signed, disabled, and withdrawn claims read-only for the member.
     - [x] Block non-owner signing and withdrawal controls, and retain a signed claim when Payroll has insufficient USDC.
-    - [ ] Open Payroll Account after funding and withdrawal; verify the balance, account summaries, token activity, and read-only member
-          access.
+    - [x] Open Payroll Account after funding and withdrawal; verify exact token holdings and read-only member access.
+    - [ ] Verify account summaries, activity and filters in the integrated browser journey.
   - Expected result: one claim remains traceable from approval through payment, account position, and history.
   - Status: partial; the browser funds Payroll through Bank, signs a completed-week claim, verifies the disabled and paid chain flags,
     withdraws as the paid member, and reloads both perspectives. It also verifies the role-gated controls, frozen lifecycle states, and the
-    contract's insufficient-funds rejection. Payroll Account balance/activity coverage remains planned; the current-month summary boundary
-    needs frontend boundary coverage. Invalid EIP-712 signatures are rejected by the backend signature-validator test rather than an
-    integrated browser journey, because a true integrated wallet produces valid signatures.
-  - Evidence: [integrated Payroll payment tests](../../app/test/e2e/payroll/payroll-payment.integrated.spec.ts).
+    contract's insufficient-funds rejection. Payroll Account holdings and member access are included; integrated activity and summary checks
+    remain planned. The current-month summary boundary is covered by frontend tests. Invalid EIP-712 signatures are rejected by the backend
+    signature-validator test rather than an integrated browser journey, because a true integrated wallet produces valid signatures.
+  - Evidence: [integrated Payroll payment test](../../app/test/e2e/payroll/payroll-payment.integrated.spec.ts) and
+    [insufficient-funding test](../../app/test/e2e/payroll/payroll-insufficient-funds.integrated.spec.ts).
 
 ## G6 — Expense Account Lifecycle
 

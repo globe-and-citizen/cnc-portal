@@ -8,6 +8,20 @@ import { grossForNet } from '../bank/bank-chain'
 
 const BANK_FEE_BPS = 50n
 
+/** A status refresh can keep the existing dropdown open after an action. */
+export async function openWeeklyClaimActions(
+  page: Page,
+  table: Locator,
+  action: string
+): Promise<Locator> {
+  const menuAction = page.locator(`[data-test="${action}"]`)
+  if (!(await menuAction.isVisible())) {
+    await table.locator('[data-test="weekly-claim-actions-button"]').click()
+  }
+  await expect(menuAction).toBeVisible()
+  return menuAction
+}
+
 const addressFrom = async (selector: Locator): Promise<Address> => {
   const text = await selector.textContent()
   const [address] = text?.match(/0x[a-fA-F0-9]{40}/) ?? []
@@ -24,10 +38,26 @@ const isEnabled = async (control: Locator): Promise<boolean> => {
   return ariaChecked === 'true' || dataState === 'checked'
 }
 
+async function selectFundingAsset(page: Page, dialog: Locator, asset: 'USDC' | 'native') {
+  if (asset === 'USDC') return selectToken(page, dialog, 'USDC')
+  await dialog.locator('[data-test="tokenSelect"]').click()
+  // Bank offers USDC, USDCe and the configured native token. Select its visible
+  // option without assuming an ETH label or retaining a previous USDC choice.
+  const nativeOption = page.getByRole('option').filter({ hasNotText: /USDC/ })
+  await expect(nativeOption).toHaveCount(1)
+  await nativeOption.click()
+}
+
 export async function setMemberUsdcWage(
   page: Page,
   memberAddress: Address,
-  options: { dailyCap: string; hourlyRate: string; weeklyCap: string }
+  options: {
+    dailyCap: string
+    hourlyRate: string
+    weeklyCap: string
+    nativeRate?: string
+    sherRate?: string
+  }
 ): Promise<void> {
   const actions = page.locator(`[data-test="member-actions-${memberAddress}"]`)
   await actions.locator('[data-test="set-wage-button"]').click()
@@ -40,6 +70,15 @@ export async function setMemberUsdcWage(
   const usdcEnabled = dialog.locator('[data-test="rate-usdc-enabled"]')
   if (!(await isEnabled(usdcEnabled))) await usdcEnabled.click()
   await dialog.locator('[data-test="rate-usdc-amount"]').fill(options.hourlyRate)
+  for (const [token, rate] of [
+    ['native', options.nativeRate],
+    ['sher', options.sherRate]
+  ]) {
+    if (!rate) continue
+    const enabled = dialog.locator(`[data-test="rate-${token}-enabled"]`)
+    if (!(await isEnabled(enabled))) await enabled.click()
+    await dialog.locator(`[data-test="rate-${token}-amount"]`).fill(rate)
+  }
   await dialog.locator('[data-test="add-wage-button"]').click()
   await expect(page.getByText('Wage updated successfully', { exact: true })).toBeVisible()
 }
@@ -90,18 +129,24 @@ export async function submitDailyClaim(
 export async function fundCashRemuneration(
   page: Page,
   teamId: string,
-  amount: string
+  amount: string,
+  asset: 'USDC' | 'native' = 'USDC'
 ): Promise<Address> {
   await openAccountFromSidebar(page, `/teams/${teamId}/accounts/bank-account`)
   await page.getByRole('button', { name: 'Deposit', exact: true }).click()
   const deposit = page.getByRole('dialog', { name: 'Deposit to Bank Contract' })
-  await selectToken(page, deposit, 'USDC')
-  const grossAmount = formatUnits(grossForNet(parseUnits(amount, 6), BANK_FEE_BPS) + 1n, 6)
+  await selectFundingAsset(page, deposit, asset)
+  const decimals = asset === 'USDC' ? 6 : 18
+  const reserve = asset === 'native' ? parseUnits('0.000001', 18) : 1n
+  const grossAmount = formatUnits(
+    grossForNet(parseUnits(amount, decimals), BANK_FEE_BPS) + reserve,
+    decimals
+  )
   await dialogAmount(deposit).fill(grossAmount)
   const depositButton = deposit.locator('[data-test="deposit-button"]')
   await expect(depositButton).toBeEnabled()
   await depositButton.click()
-  await expect(page.getByText('USDC deposited successfully', { exact: true })).toBeVisible({
+  await expect(page.getByText(/deposited successfully$/)).toBeVisible({
     timeout: 30_000
   })
 
@@ -112,7 +157,7 @@ export async function fundCashRemuneration(
     .locator('[data-test="contract-row"]')
     .filter({ hasText: 'CashRemunerationEIP' })
     .click()
-  await selectToken(page, transfer, 'USDC')
+  await selectFundingAsset(page, transfer, asset)
   await dialogAmount(transfer).fill(amount)
   await transfer.locator('[data-test="transferButton"]').click()
   const transferSuccess = page.getByText('Transferred successfully', { exact: true })
@@ -135,4 +180,38 @@ export async function fundCashRemuneration(
 export async function getCashRemunerationAddress(page: Page, teamId: string): Promise<Address> {
   await openAccountFromSidebar(page, `/teams/${teamId}/accounts/payroll-account`)
   return addressFrom(page.locator('[data-test="cash-remuneration-contract-address"]'))
+}
+
+export async function assertPayrollAccountHoldings(
+  page: Page,
+  teamId: string,
+  amounts: { native: string; usdc: string; memberReadOnly?: boolean }
+): Promise<void> {
+  await getCashRemunerationAddress(page, teamId)
+  const holdings = page
+    .getByRole('table')
+    .filter({ has: page.getByRole('columnheader', { name: 'RANK', exact: true }) })
+  await expect(
+    holdings.getByRole('cell', { name: `${amounts.usdc} USDC`, exact: true })
+  ).toBeVisible({ timeout: 30_000 })
+  const nativeAmount = amounts.native.replace('.', '\\.')
+  await expect(
+    holdings.getByRole('cell', { name: new RegExp(`^${nativeAmount}\\s+`) })
+  ).toBeVisible({ timeout: 30_000 })
+  await expect(page.locator('[data-variant="success"] [data-test="amount"]')).toBeVisible()
+  await expect(page.getByText('Total Balance', { exact: true })).toBeVisible()
+  if (amounts.memberReadOnly) {
+    await expect(page.locator('[data-test="owner-withdraw-button"]')).toHaveCount(0)
+  }
+}
+
+export const completedWeekStart = (): Date => {
+  const now = new Date()
+  const utcDay = now.getUTCDay() || 7
+  const currentMonday = new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
+  )
+  currentMonday.setUTCDate(currentMonday.getUTCDate() - utcDay + 1)
+  currentMonday.setUTCDate(currentMonday.getUTCDate() - 7)
+  return currentMonday
 }

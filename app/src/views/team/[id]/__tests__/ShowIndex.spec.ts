@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import ShowIndex from '@/views/team/[id]/ShowIndex.vue'
 import { mount } from '@vue/test-utils'
 import { mockRoute, setMockRoute } from '@/tests/mocks/router.mock'
+import { mockTeamStore, mockSyncWeeklyClaimsMutation } from '@/tests/mocks'
 import { defineComponent, h, markRaw, nextTick, onMounted, type Component } from 'vue'
 
 describe('ShowIndex', () => {
@@ -30,6 +31,17 @@ describe('ShowIndex', () => {
 
     expect(wrapper.html()).toContain('team-meta-stub')
     expect(wrapper.html()).toContain('company-overview-stub')
+  })
+
+  it('[AC-US-PAYROLL-011-04] synchronizes payroll when the company contracts are loaded', () => {
+    setMockRoute({ name: 'show-team', params: { id: '1' }, meta: { name: 'Overview' } })
+    mockTeamStore.currentTeamId = '1'
+    expect(mockTeamStore.currentTeamMeta.data.teamContracts.length).toBeGreaterThan(0)
+    const wrapper = mountShowIndex()
+    expect(mockSyncWeeklyClaimsMutation.mutate).toHaveBeenCalledWith({
+      queryParams: { teamId: '1' }
+    })
+    wrapper.unmount()
   })
 
   it('no longer renders an in-page breadcrumb (it now lives in the navbar)', () => {

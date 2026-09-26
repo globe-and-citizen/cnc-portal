@@ -109,6 +109,11 @@ export async function openAccountFromSidebar(page: Page, href: string): Promise<
   const accountsMenu = page.locator(`a[href="${parentHref}"]`).filter({
     hasText: parentLabel
   })
+  if (href === parentHref) {
+    await accountsMenu.click()
+    await expect(page).toHaveURL(new RegExp(`${href}$`, 'i'), { timeout: 30_000 })
+    return
+  }
   const accountsToggle = accountsMenu.locator('[aria-controls]')
   if ((await accountsToggle.getAttribute('aria-expanded')) !== 'true') {
     await accountsToggle.click()
