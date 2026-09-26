@@ -2,7 +2,11 @@
 // is made through the browser; helpers only sequence the visible product UI.
 import { expect, type Locator, type Page } from '@playwright/test'
 import type { Address } from 'viem'
+import { formatUnits, parseUnits } from 'viem'
 import { dialogAmount, openAccountFromSidebar, selectToken } from '../e2e-page'
+import { grossForNet } from '../bank/bank-chain'
+
+const BANK_FEE_BPS = 50n
 
 const addressFrom = async (selector: Locator): Promise<Address> => {
   const text = await selector.textContent()
@@ -46,7 +50,7 @@ export async function openMemberPayrollHistory(
   memberAddress: Address
 ): Promise<void> {
   await page.goto(`/teams/${teamId}/accounts/members/${memberAddress}/payroll-history`)
-  await expect(page.locator('[data-test="week-navigator"]')).toBeVisible()
+  await expect(page.locator('[data-test="week-navigator"]')).toBeVisible({ timeout: 30_000 })
 }
 
 /** Select a completed ISO week without mutating time or product data. */
@@ -92,8 +96,11 @@ export async function fundCashRemuneration(
   await page.getByRole('button', { name: 'Deposit', exact: true }).click()
   const deposit = page.getByRole('dialog', { name: 'Deposit to Bank Contract' })
   await selectToken(page, deposit, 'USDC')
-  await dialogAmount(deposit).fill(amount)
-  await deposit.locator('[data-test="deposit-button"]').click()
+  const grossAmount = formatUnits(grossForNet(parseUnits(amount, 6), BANK_FEE_BPS) + 1n, 6)
+  await dialogAmount(deposit).fill(grossAmount)
+  const depositButton = deposit.locator('[data-test="deposit-button"]')
+  await expect(depositButton).toBeEnabled()
+  await depositButton.click()
   await expect(page.getByText('USDC deposited successfully', { exact: true })).toBeVisible({
     timeout: 30_000
   })
@@ -103,14 +110,23 @@ export async function fundCashRemuneration(
   await transfer.getByPlaceholder('Name').fill('CashRemunerationEIP712')
   await transfer
     .locator('[data-test="contract-row"]')
-    .filter({ hasText: 'CashRemunerationEIP712' })
+    .filter({ hasText: 'CashRemunerationEIP' })
     .click()
   await selectToken(page, transfer, 'USDC')
   await dialogAmount(transfer).fill(amount)
   await transfer.locator('[data-test="transferButton"]').click()
-  await expect(page.getByText('Transferred successfully', { exact: true })).toBeVisible({
-    timeout: 30_000
-  })
+  const transferSuccess = page.getByText('Transferred successfully', { exact: true })
+  const transferError = transfer.locator('[data-test="error-alert"], [data-slot="error"]')
+  await expect
+    .poll(
+      async () =>
+        (await transferSuccess.isVisible()) || (await transferError.isVisible().catch(() => false)),
+      { timeout: 30_000 }
+    )
+    .toBe(true)
+  if (!(await transferSuccess.isVisible())) {
+    throw new Error(`Bank transfer failed: ${(await transferError.textContent())?.trim()}`)
+  }
 
   return getCashRemunerationAddress(page, teamId)
 }
