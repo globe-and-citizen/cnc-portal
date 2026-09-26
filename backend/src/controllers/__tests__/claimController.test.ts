@@ -612,6 +612,92 @@ describe('Claim Controller', () => {
       expect(response.body.message).toBe('Internal server error has occured');
     });
 
+    it('[AC-US-PAYROLL-005-17] rejects caller-supplied member identity before claim lookup or creation', async () => {
+      const lookupSpy = vi.spyOn(prisma.weeklyClaim, 'findFirst');
+      const createSpy = vi.spyOn(prisma.claim, 'create');
+      const response = await request(app).post('/').send({
+        teamId: 1,
+        minutesWorked: 60,
+        memo: 'Other member',
+        memberAddress: '0x1111111111111111111111111111111111111111',
+      });
+      expect(response.status).toBe(400);
+      expect(lookupSpy).not.toHaveBeenCalled();
+      expect(createSpy).not.toHaveBeenCalled();
+    });
+
+    it('[AC-US-PAYROLL-005-03] persists the submitted work day at UTC midnight', async () => {
+      vi.mocked(getEffectiveStatus).mockResolvedValueOnce('disabled');
+      vi.mocked(prisma.weeklyClaim.findFirst).mockResolvedValue(null);
+      mockResolveWageForWeek.mockResolvedValue(createMockWage());
+      vi.mocked(prisma.weeklyClaim.upsert).mockResolvedValue(createMockWeeklyClaim({ claims: [] }));
+      const createSpy = vi.spyOn(prisma.claim, 'create').mockResolvedValue(createMockClaim());
+      const response = await request(app).post('/').send({
+        teamId: 1,
+        minutesWorked: 60,
+        memo: 'UTC day',
+        dayWorked: '2026-09-22T23:59:00.000Z',
+      });
+      expect(response.status).toBe(201);
+      expect(createSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ dayWorked: new Date('2026-09-22T00:00:00.000Z') }),
+        })
+      );
+    });
+
+    it('[AC-US-PAYROLL-005-16] accepts the four-day boundary and rejects five days without saving', async () => {
+      vi.useFakeTimers({ toFake: ['Date'] });
+      vi.setSystemTime(new Date('2026-09-26T12:00:00.000Z'));
+      try {
+        vi.mocked(getEffectiveStatus).mockResolvedValue('enabled');
+        vi.mocked(prisma.weeklyClaim.findFirst).mockResolvedValue(
+          createMockWeeklyClaim({ claims: [] })
+        );
+        mockResolveWageForWeek.mockResolvedValue(createMockWage());
+        const createSpy = vi.spyOn(prisma.claim, 'create').mockResolvedValue(createMockClaim());
+        const accepted = await request(app).post('/').send({
+          teamId: 1,
+          minutesWorked: 60,
+          memo: 'Four days',
+          dayWorked: '2026-09-22T00:00:00.000Z',
+        });
+        expect(accepted.status).toBe(201);
+        createSpy.mockClear();
+        const rejected = await request(app).post('/').send({
+          teamId: 1,
+          minutesWorked: 60,
+          memo: 'Five days',
+          dayWorked: '2026-09-21T00:00:00.000Z',
+        });
+        expect(rejected.status).toBe(400);
+        expect(rejected.body.message).toContain('current week');
+        expect(createSpy).not.toHaveBeenCalled();
+      } finally {
+        vi.useRealTimers();
+        vi.mocked(getEffectiveStatus).mockResolvedValue(null);
+      }
+    });
+
+    /**
+     * Covers:
+     * - [AC-US-PAYROLL-002-05]
+     * - [AC-US-PAYROLL-005-22]
+     */
+    it('rejects new claims against a paused wage without creating claim data', async () => {
+      vi.mocked(prisma.weeklyClaim.findFirst).mockResolvedValue(null);
+      mockResolveWageForWeek.mockResolvedValue(createMockWage({ disabled: true }));
+      const createSpy = vi.spyOn(prisma.claim, 'create');
+      const weeklySpy = vi.spyOn(prisma.weeklyClaim, 'upsert');
+      const response = await request(app)
+        .post('/')
+        .send({ teamId: 1, minutesWorked: 60, memo: 'Paused' });
+      expect(response.status).toBe(400);
+      expect(response.body.message).toBe('Cannot add claim: the wage is disabled');
+      expect(createSpy).not.toHaveBeenCalled();
+      expect(weeklySpy).not.toHaveBeenCalled();
+    });
+
     // File attachment tests for addClaim
     describe('File Attachments', () => {
       it('creates claim with file attachments', async () => {
@@ -1105,6 +1191,61 @@ describe('Claim Controller', () => {
     });
   });
 
+  describe('Payroll edit boundaries', () => {
+    it('[AC-US-PAYROLL-006-09] rejects editing another member claim without writing', async () => {
+      vi.mocked(prisma.claim.findFirst).mockResolvedValue({
+        id: 1,
+        wage: { userAddress: OTHER_ADDRESS, disabled: false },
+        weeklyClaim: { status: 'pending' },
+        fileAttachments: null,
+      } as never);
+      const updateSpy = vi.spyOn(prisma.claim, 'update');
+      const response = await request(app)
+        .put('/1')
+        .send({ minutesWorked: 60, memo: 'Unauthorized' });
+      expect(response.status).toBe(403);
+      expect(response.body.message).toBe('Caller is not the owner of the claim');
+      expect(updateSpy).not.toHaveBeenCalled();
+    });
+
+    /**
+     * Covers:
+     * - [AC-US-PAYROLL-002-06]
+     * - [AC-US-PAYROLL-006-11]
+     */
+    it('rejects editing a pending claim whose wage is paused', async () => {
+      vi.mocked(prisma.claim.findFirst).mockResolvedValue({
+        id: 1,
+        wage: { userAddress: TEST_ADDRESS, disabled: true },
+        weeklyClaim: { status: 'pending' },
+        fileAttachments: null,
+      } as never);
+      const updateSpy = vi.spyOn(prisma.claim, 'update');
+      const response = await request(app).put('/1').send({ minutesWorked: 60, memo: 'Paused' });
+      expect(response.status).toBe(403);
+      expect(response.body.message).toBe('Cannot update claim: the wage is disabled');
+      expect(updateSpy).not.toHaveBeenCalled();
+    });
+
+    it('[AC-US-PAYROLL-006-12] returns the rejection reason and preserves the original claim', async () => {
+      const storedClaim = {
+        id: 1,
+        minutesWorked: 60,
+        memo: 'Original',
+        wage: { userAddress: TEST_ADDRESS, disabled: false, maximumHoursPerWeek: 1 },
+        weeklyClaim: { status: 'pending', claims: [] },
+        fileAttachments: null,
+      };
+      vi.mocked(prisma.claim.findFirst).mockResolvedValue(storedClaim as never);
+      const updateSpy = vi.spyOn(prisma.claim, 'update');
+      const response = await request(app).put('/1').send({ minutesWorked: 120, memo: 'Rejected' });
+      expect(response.status).toBe(409);
+      expect(response.body.message).toContain('weekly hours limit would be exceeded');
+      expect(updateSpy).not.toHaveBeenCalled();
+      expect(storedClaim).toMatchObject({ minutesWorked: 60, memo: 'Original' });
+    });
+  });
+
   describe('DELETE: /:claimId', () => {
     beforeEach(() => {
       vi.clearAllMocks();
@@ -1206,7 +1347,7 @@ describe('Claim Controller', () => {
       expect(mockWeeklyClaimDelete).not.toHaveBeenCalled();
     });
 
-    it('returns 403 if a disabled weekly claim is deleted', async () => {
+    it('[AC-US-PAYROLL-007-05] rejects deleting a disabled weekly claim without changing stored data', async () => {
       setupMockClaim('disabled');
       const deleteSpy = vi.spyOn(prisma.claim, 'delete');
 
@@ -1215,6 +1356,26 @@ describe('Claim Controller', () => {
       expect(response.status).toBe(403);
       expect(response.body.message).toBe("Can't delete: Claim is not pending");
       expect(deleteSpy).not.toHaveBeenCalled();
+    });
+
+    /**
+     * Covers:
+     * - [AC-US-PAYROLL-002-07]
+     * - [AC-US-PAYROLL-007-06]
+     */
+    it('rejects deleting a pending claim whose wage is paused', async () => {
+      vi.mocked(prisma.claim.findFirst).mockResolvedValue({
+        id: 1,
+        wage: { userAddress: TEST_ADDRESS, disabled: true },
+        weeklyClaim: { id: 1, status: 'pending', claims: [{ id: 1 }] },
+      } as never);
+      const deleteSpy = vi.spyOn(prisma.claim, 'delete');
+      const weeklyDeleteSpy = vi.spyOn(prisma.weeklyClaim, 'delete');
+      const response = await request(app).delete('/1');
+      expect(response.status).toBe(403);
+      expect(response.body.message).toBe('Cannot delete claim: the wage is disabled');
+      expect(deleteSpy).not.toHaveBeenCalled();
+      expect(weeklyDeleteSpy).not.toHaveBeenCalled();
     });
 
     it('[AC-US-PAYROLL-007-08] leaves a claim untouched when deletion lookup fails', async () => {

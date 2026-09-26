@@ -127,6 +127,42 @@ describe('CRWithdrawClaim', () => {
     expect(mockCashRemunerationWrites.withdraw.mutate).toHaveBeenCalled()
   })
 
+  it.each(['pending', 'disabled', 'withdrawn'] as const)(
+    '[AC-US-PAYROLL-010-09] blocks a %s claim before contacting the wallet',
+    async (status) => {
+      createWrapper({ weeklyClaim: { ...mockClaim, status } })
+      await clickWithdrawButton()
+      expect(mockCashRemunerationWrites.withdraw.mutate).not.toHaveBeenCalled()
+      expect(mockWagmiCore.readContract).not.toHaveBeenCalled()
+    }
+  )
+
+  it('[AC-US-PAYROLL-010-09] blocks a signed claim without a stored signature', async () => {
+    createWrapper({ weeklyClaim: { ...mockClaim, signature: null } })
+    await clickWithdrawButton()
+    expect(mockCashRemunerationWrites.withdraw.mutate).not.toHaveBeenCalled()
+    expect(mockWagmiCore.readContract).not.toHaveBeenCalled()
+  })
+
+  it('[AC-US-PAYROLL-010-11] prevents withdrawal for an archived company', async () => {
+    mockTeamStore.currentTeamMeta.data = { ...mockTeamStore.currentTeamMeta.data, isArchived: true }
+    createWrapper()
+    expect(wrapper.find('[data-test="withdraw-button"]').attributes('disabled')).toBeDefined()
+    await clickWithdrawButton()
+    expect(mockCashRemunerationWrites.withdraw.mutate).not.toHaveBeenCalled()
+    expect(mockSyncWeeklyClaimsMutation.mutateAsync).not.toHaveBeenCalled()
+  })
+
+  it('[AC-US-PAYROLL-011-05] synchronizes the company after a successful withdrawal', async () => {
+    createWrapper()
+    await clickWithdrawButton()
+    expect(mockCashRemunerationWrites.withdraw.mutate).toHaveBeenCalledTimes(1)
+    expect(mockSyncWeeklyClaimsMutation.mutateAsync).toHaveBeenCalledWith({
+      queryParams: { teamId: '1' }
+    })
+    expect(wrapper.emitted('claim-withdrawn')).toBeTruthy()
+  })
+
   it('withdraws and emits from dropdown when owner', async () => {
     createWrapper({ isDropDown: true, isClaimOwner: true })
 
