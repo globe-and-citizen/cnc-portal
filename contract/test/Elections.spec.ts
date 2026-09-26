@@ -673,8 +673,6 @@ describe('Elections', function () {
       voter2.address
     ])
 
-    await time.increase(24 * 60 * 60)
-
     expect(await elections.getElectionEligibleVoters(1)).to.deep.equal([
       voter1.address,
       voter2.address
