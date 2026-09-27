@@ -3,7 +3,12 @@ import { describe, expect, it, vi, beforeEach } from 'vitest'
 import ShareholderList from '../../SherTokenView/ShareholderList.vue'
 import { parseEther, parseUnits } from 'viem'
 import { createTestingPinia } from '@pinia/testing'
-import { mockInvestorReads, mockTeamStore, mockUserStore } from '@/tests/mocks'
+import {
+  mockInvestorPermissions,
+  mockInvestorReads,
+  mockTeamStore,
+  mockUserStore
+} from '@/tests/mocks'
 
 const TableComponentStub = {
   props: ['rows', 'columns', 'loading'],
@@ -51,6 +56,8 @@ describe('ShareholderList', () => {
       { shareholder: '0x123', amount: parseEther('100') },
       { shareholder: '0x456', amount: parseEther('200') }
     ]
+    mockInvestorPermissions.hasRole.data.value = true
+    mockInvestorPermissions.hasRole.isLoading.value = false
   })
 
   const createComponent = () =>

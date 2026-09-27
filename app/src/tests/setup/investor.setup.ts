@@ -1,7 +1,11 @@
 import { vi } from 'vitest'
 import { computed } from 'vue'
 import type { Address } from 'viem'
-import { mockInvestorReads, mockInvestorWrites } from '../mocks/contract.mock'
+import {
+  mockInvestorPermissions,
+  mockInvestorReads,
+  mockInvestorWrites
+} from '../mocks/contract.mock'
 
 const MOCK_INVESTOR_ADDRESS = '0x4234567890123456789012345678901234567890' as Address
 
@@ -23,5 +27,13 @@ vi.mock('@/composables/investor/reads', () => ({
 
 vi.mock('@/composables/investor/writes', () => ({
   useIndividualMint: vi.fn(() => mockInvestorWrites.individualMint),
-  useDistributeMint: vi.fn(() => mockInvestorWrites.distributeMint)
+  useDistributeMint: vi.fn(() => mockInvestorWrites.distributeMint),
+  useGrantInvestorRole: vi.fn(() => mockInvestorWrites.grantRole),
+  useRevokeInvestorRole: vi.fn(() => mockInvestorWrites.revokeRole)
+}))
+
+vi.mock('@/composables/investor/permissions', () => ({
+  INVESTOR_PERMISSIONS_QUERY_KEY: 'investor-permissions',
+  useInvestorPermissions: vi.fn(() => mockInvestorPermissions.list),
+  useInvestorHasRole: vi.fn(() => mockInvestorPermissions.hasRole)
 }))
