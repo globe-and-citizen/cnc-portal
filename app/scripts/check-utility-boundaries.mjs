@@ -33,7 +33,7 @@ const stripComments = (source) => source.replace(/\/\*[\s\S]*?\*\//g, '').replac
 // `${…}` interpolations still execute, so only those are kept.
 const stripStringLiterals = (source) =>
   source
-    .replace(/`(?:\\[\s\S]|\$\{[^}]*\}|[^`\\])*`/g, (literal) =>
+    .replace(/`(?:\\[\s\S]|\$\{[^}]*\}|\$(?!\{)|[^`\\$])*`/g, (literal) =>
       (literal.match(/\$\{[^}]*\}/g) ?? []).join(' ')
     )
     .replace(/(['"])(?:\\.|(?!\1).)*\1/g, '')
