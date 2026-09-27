@@ -119,8 +119,9 @@ separately with the rule enabled in the API suite.
 
 From `app/`, run `npm run test:e2e:integrated -- --ui test/e2e/payroll`. Unit and API suites run independently of the manual browser review.
 
-CI runs API unit coverage. Integrated browser assertions verify actual token holdings independently of external fiat-price quotes and wait
-for successful wage API responses or a completed Bank deposit rather than transient toast messages.
+Run API unit coverage from `backend/` with `npm run test:unit:coverage`. Integrated browser assertions verify actual token holdings
+independently of external fiat-price quotes and wait for successful wage API responses or a completed Bank deposit rather than transient
+toast messages.
 
 The API enforces paused-wage claim restrictions, so restoration of claim submission is proven by the real browser/API journey
 (`AC-US-PAYROLL-002-03`). Normal signing versus explicit re-signing is a client interaction (`AC-US-PAYROLL-008-06/07`); the backend

@@ -6,7 +6,7 @@ This checklist organizes integrated E2E coverage around business paths rather th
 stories when the same actors, persisted state, and UX sequence connect them naturally.
 
 The canonical product outcomes remain in the linked feature documentation. Story and acceptance-criterion references below define intended
-coverage; the latest execution result and artifacts belong in Playwright and CI reports.
+coverage; the latest execution result and artifacts belong in Playwright reports.
 
 ## Path Model
 
@@ -41,30 +41,22 @@ coverage; the latest execution result and artifacts belong in Playwright and CI 
   - external services not owned by CNC Portal, such as token-price providers.
 - Runtime ownership:
   - locally, the developer starts and controls the frontend, backend, database, and node;
-  - in CI, the workflow prepares those services before Playwright starts;
   - browser-acceptance fixtures are provisioned explicitly with `npm run setup:e2e:browser`, outside Playwright;
-  - integrated infrastructure is deployed by the developer or CI stack, also before Playwright starts;
+  - integrated infrastructure is deployed by the developer before Playwright starts;
   - the E2E test checks readiness and exercises product behaviour, but does not own service startup.
 - Browser-action rule:
   - Playwright may submit a contract transaction only through a user-accessible product action;
   - Playwright must not deploy fixture infrastructure, alter contract code or balances, control mining, or mutate chain state directly
     through RPC methods.
 - Execution profiles:
-  - `@integrated` paths use the developer- or CI-managed frontend, backend, database, and local chain without intercepting CNC Portal
-    boundaries;
+  - `@integrated` paths use the developer-managed frontend, backend, database, and local chain without intercepting CNC Portal boundaries;
   - `@browser` scenarios may inject backend state, direct fixture setup, wallet failures, or network outcomes and do not count as integrated
     E2E evidence;
   - `@mocked` is the narrower marker for browser scenarios that explicitly replace a product boundary;
   - run every migrated integrated path with `npm run test:e2e` from `app/`;
   - run browser acceptance with `npm run test:browser:acceptance` from `app/`;
   - both commands only select Playwright tests; neither provisions services, contracts, or fixtures;
-  - the developer or CI prepares the selected profile before invoking either command.
-- CI ownership:
-  - one `Full-stack E2E` job owns both phases and publishes separate browser-acceptance and integrated reports;
-  - the job starts one local node, provisions browser fixtures outside Playwright, and starts the browser frontend before the first phase;
-  - it then resets that node, provisions a disposable PostgreSQL database, applies migrations, deploys integrated infrastructure, and starts
-    the backend and integrated frontend before the second phase;
-  - Playwright still performs only user-accessible product actions, and CI retains reports plus failure traces and stack logs as evidence.
+  - the developer prepares the selected profile before invoking either command.
 
 ## G0 — Integrated Technical Readiness
 

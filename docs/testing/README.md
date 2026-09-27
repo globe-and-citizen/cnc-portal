@@ -40,10 +40,8 @@ npm run setup:e2e:browser
 npm run test:browser:acceptance
 ```
 
-CI exposes one `Full-stack E2E` job. The workflow starts the shared local node, explicitly provisions browser-acceptance contracts, and
-starts the browser frontend before the first Playwright invocation. It then resets the same node and provisions the disposable database,
-backend, integrated deployment manifest, and frontend before the `@integrated` invocation. The two phases keep separate logical state and
-publish separate reports because only the integrated phase is E2E evidence.
+Prepare each profile's services and fixtures before invoking Playwright. Run browser acceptance and integrated E2E separately so their
+reports remain distinct; only the integrated profile supplies E2E evidence.
 
 The integrated database setup is guarded by `E2E_INTEGRATED_SETUP=true`. It disables the Payroll submission restriction only in that
 disposable database so a completed-week claim can exercise the real approval and withdrawal lifecycle; it must not be run against shared

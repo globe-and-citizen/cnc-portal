@@ -73,17 +73,6 @@
   - Known issues and limitations
   - Security notes
 
-### 8. Created/Updated CI/CD Workflow
-
-- **File**: `.github/workflows/app-e2e.yml`
-- **Features**:
-  - Installs Playwright browsers with dependencies
-  - Sets up Foundry/Anvil for local blockchain
-  - Builds Synpress cache
-  - Starts dev server
-  - Runs E2E tests
-  - Uploads test results and traces
-
 ## ⚠️ Known Issues
 
 ### 1. Synpress Cache Build Warnings
