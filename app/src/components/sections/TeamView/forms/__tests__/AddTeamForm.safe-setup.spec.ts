@@ -165,7 +165,7 @@ describe('[US-SAFE-001] AddTeamForm Safe setup', () => {
     expect(mockRouterPush).toHaveBeenCalledWith(`/teams/${mockTeamData.id}`)
   })
 
-  it('navigates to the team when Safe setup is skipped', async () => {
+  it('[AC-US-SAFE-001-09] continues company creation when Safe setup is skipped', async () => {
     await goToSafeSetup()
     await wrapper!.get(SELECTORS.skipSafeSetupButton).trigger('click')
 

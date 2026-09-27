@@ -206,6 +206,11 @@ describe('ApproveUsersEIP712Form.vue', () => {
   })
 
   // Covers: AC-US-EXP-001-11, AC-US-EXP-001-12
+  /**
+   * Covers:
+   * - [AC-US-EXP-001-11]
+   * - [AC-US-EXP-001-12]
+   */
   it('rejects past start dates and end dates that do not come after the start date', () => {
     const wrapper = createWrapper()
     const vm = getVm(wrapper)

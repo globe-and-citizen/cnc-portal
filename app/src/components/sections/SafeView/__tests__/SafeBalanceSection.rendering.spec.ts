@@ -204,7 +204,7 @@ describe('[US-SAFE-002] SafeBalanceSection rendering', () => {
   })
 
   describe('Component Rendering', () => {
-    it('renders wallet totals with fixed currency decimals', () => {
+    it('[AC-US-SAFE-002-01] renders Safe holdings and their local-currency value', () => {
       wrapper = createWrapper()
 
       expect(wrapper.get('[data-test="safe-total-usd"]').text()).toBe('$4,500.00')
@@ -249,7 +249,7 @@ describe('[US-SAFE-002] SafeBalanceSection rendering', () => {
   })
 
   describe('Transfer Modal', () => {
-    it('disables transfer button for non-owner', async () => {
+    it('[AC-US-SAFE-003-04] disables outgoing transfers for a non-signer', async () => {
       mockUserStore.address = '0x9999999999999999999999999999999999999999'
       wrapper = createWrapper()
 

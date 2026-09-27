@@ -59,17 +59,29 @@ describe('[US-BANK-004] CashOutAllAction', () => {
     mockCashOut.hasFailed.value = false
   })
 
-  it('hides the button when the connected user is not the Bank owner', () => {
+  it('[AC-US-BANK-004-03] hides the button when the connected user is not the Bank owner', () => {
     mockUserStore.address = NON_OWNER
     expect(createWrapper().find(BUTTON).exists()).toBe(false)
   })
 
-  it('shows an enabled button for the owner when an account holds funds', () => {
+  it('[AC-US-BANK-004-01] enables cash-out when an account holds funds', () => {
     const wrapper = createWrapper()
     expect(wrapper.get(BUTTON).attributes('disabled')).toBeUndefined()
   })
 
-  it('disables the button when every account is empty', () => {
+  it('[AC-US-BANK-004-01] uses on-chain amounts when fiat valuation is unavailable', () => {
+    mockUseContractBalance.total.value = {
+      usd: { value: 0, formatted: '$0' },
+      local: { value: 0, formatted: '$0' }
+    }
+
+    expect(createWrapper().get(BUTTON).attributes('disabled')).toBeUndefined()
+  })
+
+  it('[AC-US-BANK-004-08] disables the button when every account is empty', () => {
+    mockUseContractBalance.balances.value = mockUseContractBalance.balances.value.map(
+      (balance) => ({ ...balance, amount: 0, raw: 0n })
+    )
     mockUseContractBalance.total.value = {
       usd: { value: 0, formatted: '$0' },
       local: { value: 0, formatted: '$0' }

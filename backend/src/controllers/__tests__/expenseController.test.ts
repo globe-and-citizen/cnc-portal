@@ -125,7 +125,7 @@ describe('Expense Controller', () => {
       expect(response.body.message).toContain('Invalid request body');
     });
 
-    it('rejects a status change from a non-owner', async () => {
+    it('[AC-US-EXP-001-04] rejects approval creation from a non-owner', async () => {
       vi.spyOn(prisma.team, 'findFirst').mockResolvedValueOnce(null);
       vi.spyOn(prisma.teamContract, 'findFirst').mockResolvedValueOnce({
         id: 1,
@@ -148,7 +148,66 @@ describe('Expense Controller', () => {
       expect(response.status).toBe(403);
       expect(response.body.message).toBe('Caller is not the owner of the team');
     });
-    it('creates a new expense', async () => {
+
+    it('[AC-US-EXP-001-07] rejects an approval signed for a different Expense Account', async () => {
+      vi.spyOn(prisma.teamContract, 'findFirst').mockResolvedValueOnce({
+        id: 1,
+        teamId: 1,
+        address: mockExpenseContractAddress,
+        type: 'ExpenseAccountEIP712',
+        deployer: '0x1234567890123456789012345678901234567890',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+
+      const response = await request(app)
+        .post('/')
+        .send({
+          ...validCreateExpenseBody,
+          signedAgainstContractAddress: '0x3333333333333333333333333333333333333333',
+        });
+
+      expect(response.status).toBe(400);
+      expect(response.body.message).toBe(
+        'signedAgainstContractAddress does not match the team current ExpenseAccountEIP712'
+      );
+      expect(prisma.expense.create).not.toHaveBeenCalled();
+    });
+
+    /**
+     * Covers:
+     * - [AC-US-EXP-001-06]
+     * - [AC-US-EXP-001-09]
+     */
+    it('rejects an approval whose recovered signer differs from the connected owner', async () => {
+      vi.spyOn(prisma.teamContract, 'findFirst').mockResolvedValueOnce({
+        id: 1,
+        teamId: 1,
+        address: mockExpenseContractAddress,
+        type: 'ExpenseAccountEIP712',
+        deployer: '0x1234567890123456789012345678901234567890',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+      vi.spyOn(publicClient, 'readContract').mockResolvedValue(
+        '0x1234567890123456789012345678901234567890'
+      );
+      vi.mocked(viem.recoverTypedDataAddress).mockResolvedValueOnce(
+        '0x3333333333333333333333333333333333333333'
+      );
+
+      const response = await request(app)
+        .post('/')
+        .send({
+          ...validCreateExpenseBody,
+        });
+
+      expect(response.status).toBe(400);
+      expect(response.body.message).toBe('Recovered signer does not match the caller');
+      expect(prisma.expense.create).not.toHaveBeenCalled();
+    });
+
+    it('[AC-US-EXP-001-03] persists a new spending approval', async () => {
       vi.spyOn(prisma.team, 'findFirst').mockResolvedValueOnce(mockTeam);
       vi.spyOn(prisma.teamContract, 'findFirst').mockResolvedValueOnce({
         id: 1,
@@ -320,7 +379,7 @@ describe('Expense Controller', () => {
       expect(response.body.message).toContain('Invalid request body');
     });
 
-    it('[US-EXP-003] rejects disabling an expense when the caller is not the company owner', async () => {
+    it('[AC-US-EXP-003-04] rejects a status change from a non-owner', async () => {
       // First call resolves the teamId for the rejectIfArchived middleware,
       // second call is the controller owner check which fails (not owner).
       vi.spyOn(prisma.expense, 'findUnique')
@@ -333,7 +392,7 @@ describe('Expense Controller', () => {
       expect(response.body.message).toBe('Caller is not the owner of the team');
     });
 
-    it('updates the expense status', async () => {
+    it('[AC-US-EXP-003-03] persists the updated approval status', async () => {
       // rejectIfArchived middleware resolves the teamId from the expense.
       vi.spyOn(prisma.expense, 'findUnique').mockResolvedValue(mockExpense);
       vi.spyOn(prisma.expense, 'update').mockResolvedValue({

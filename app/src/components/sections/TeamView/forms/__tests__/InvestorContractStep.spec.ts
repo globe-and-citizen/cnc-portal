@@ -195,10 +195,32 @@ describe('[US-COMPANIES-002] InvestorContractStep', () => {
     expect(wrapper.find('[data-test="deploy-error-alert"]').exists()).toBe(true)
   })
 
-  it('renders the register-error alert when registerMutation.error is set', () => {
-    mockRegisterMutation.error.value = new Error('register boom')
+  it('[AC-US-COMPANIES-002-08] distinguishes a registration failure from a deployment failure', async () => {
+    mockRegisterMutation.mutate.mockImplementation(() => {
+      mockRegisterMutation.isError.value = true
+      mockRegisterMutation.error.value = Object.assign(
+        new Error('Officer registration temporarily unavailable'),
+        {
+          response: { data: { message: 'Officer registration temporarily unavailable' } }
+        }
+      )
+    })
     const wrapper = mountStep()
-    expect(wrapper.find('[data-test="register-error-alert"]').exists()).toBe(true)
+    await wrapper.find('[data-test="share-name-input"]').setValue('Co SHER')
+    await wrapper.find('[data-test="share-symbol-input"]').setValue('CSHR')
+
+    await wrapper.find('form').trigger('submit')
+    await flushPromises()
+
+    expect(mockDeployMutation.mutate).toHaveBeenCalledTimes(1)
+    expect(mockRegisterMutation.mutate).toHaveBeenCalledTimes(1)
+    const registrationError = wrapper.findComponent('[data-test="register-error-alert"]')
+    expect(registrationError.exists()).toBe(true)
+    expect(registrationError.props('title')).toBe('Failed to complete deployment setup')
+    expect(registrationError.text()).toContain('Officer registration temporarily unavailable')
+    expect(wrapper.find('[data-test="deploy-error-alert"]').exists()).toBe(false)
+    expect(mockInvalidateOfficerQueries).not.toHaveBeenCalled()
+    expect(wrapper.emitted('contractDeployed')).toBeFalsy()
   })
 
   it('renders the success-prompt alert when showAlert is true', () => {
@@ -210,19 +232,5 @@ describe('[US-COMPANIES-002] InvestorContractStep', () => {
   it('hides the success-prompt alert when showAlert is false', () => {
     const wrapper = mountStep({ showAlert: false })
     expect(wrapper.text()).not.toContain('created')
-  })
-
-  it('does not emit contractDeployed if register mutation does not fire onSuccess', async () => {
-    mockRegisterMutation.mutate.mockImplementation(() => {
-      // no-op — simulate pending / failed register
-    })
-    const wrapper = mountStep()
-    await wrapper.find('[data-test="share-name-input"]').setValue('Co')
-    await wrapper.find('[data-test="share-symbol-input"]').setValue('C')
-    await wrapper.find('form').trigger('submit')
-    await flushPromises()
-
-    expect(mockRegisterMutation.mutate).toHaveBeenCalled()
-    expect(wrapper.emitted('contractDeployed')).toBeFalsy()
   })
 })

@@ -211,6 +211,19 @@ test.describe(
       await expect(page.locator('[data-test="step-4"]')).toHaveCount(0)
       expect(api.officerRegistrations).toHaveLength(0)
     })
+
+    test('[AC-US-COMPANIES-002-06] defers Officer setup and reopens it from the workspace', async ({
+      page
+    }) => {
+      const api = await createMockedCompanyUntilOfficer(page)
+
+      await finishMockedCompanyWithoutContracts(page)
+      await page.getByRole('button', { name: 'Click here', exact: true }).click()
+
+      await expect(page.locator('[data-test="share-name-input"]')).toBeVisible()
+      await expect(page.locator('[data-test="deploy-contracts-button"]')).toBeDisabled()
+      expect(api.officerRegistrations).toHaveLength(0)
+    })
   }
 )
 

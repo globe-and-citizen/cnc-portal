@@ -70,25 +70,48 @@ flowchart LR
 
 ## Test Coverage Overview
 
-The main treasury and Expense Account journeys use the real frontend, backend, PostgreSQL database, local chain, deployed contracts, and
-browser wallet. Fixture-backed account suites remain browser acceptance coverage until their owning actions are migrated.
+Coverage targets compare each criterion's required evidence with direct `AC-US-*` references in tracked tests. They do not represent the
+latest pass/fail result, which belongs to CI or the generated local report. Gaps identify criteria whose required evidence is missing or
+insufficient; the detailed evidence distribution remains available in the generated report instead of being repeated here.
 
-| User Story  | Representative AC Coverage | E2E Status | E2E Boundary                                             |
-| ----------- | -------------------------- | ---------- | -------------------------------------------------------- |
-| US-BANK-001 | integrated E2E 3/10        | 🚧 Partial | UI deposits, real transactions, balances, and receipts   |
-| US-BANK-002 | none                       | 📋 Planned | Direct and Board-authorized transfer path                |
-| US-BANK-003 | integrated E2E 1/8         | 🚧 Partial | Persisted company and chain event history                |
-| US-BANK-004 | none                       | 📋 Planned | Complete cash-out orchestration                          |
-| US-EXP-001  | integrated E2E 3/10        | 🚧 Partial | Owner signature and backend-persisted approval           |
-| US-EXP-002  | integrated E2E 2/12        | 🚧 Partial | Member wallet and real Expense Account transaction       |
-| US-EXP-003  | integrated E2E 2/9         | 🚧 Partial | Persisted deactivate/reactivate lifecycle                |
-| US-EXP-004  | integrated E2E 2/11        | 🚧 Partial | Live balance, approval state, and chain history          |
-| US-SAFE-001 | integrated E2E 2/11        | 🚧 Partial | UI deployment, real Safe proxy, and backend registration |
-| US-SAFE-002 | none                       | 📋 Planned | Member inspection on a backend-registered Safe           |
-| US-SAFE-003 | none                       | 📋 Planned | Safe funding and transfer proposal lifecycle             |
-| US-SAFE-004 | none                       | 📋 Planned | Signer and threshold lifecycle                           |
-| US-SAFE-005 | none                       | 📋 Planned | External Transaction Service boundary and UI history     |
-| US-SAFE-006 | none                       | 📋 Planned | Multisignature approval and execution                    |
+The main-journey column distinguishes a complete integrated path, a partial integrated path, a planned integrated path, and a deliberately
+mocked browser path for the external Safe Transaction Service boundary.
+
+| User Story  | Main Journey  | Coverage Target | Gaps                                                                                                        |
+| ----------- | ------------- | --------------- | ----------------------------------------------------------------------------------------------------------- |
+| US-BANK-001 | ✅ Integrated | ✅ 10/10        | —                                                                                                           |
+| US-BANK-002 | ✅ Integrated | ⚠️ 12/13        | 1 — `AC-US-BANK-002-02`                                                                                     |
+| US-BANK-003 | ✅ Integrated | ⚠️ 7/8          | 1 — `AC-US-BANK-003-08`                                                                                     |
+| US-BANK-004 | 🚧 Partial    | ⚠️ 7/8          | 1 — `AC-US-BANK-004-02`                                                                                     |
+| US-EXP-001  | ✅ Integrated | ✅ 13/13        | —                                                                                                           |
+| US-EXP-002  | 🚧 Partial    | ⚠️ 10/12        | 2 — `AC-US-EXP-002-07`, `AC-US-EXP-002-09`                                                                  |
+| US-EXP-003  | ✅ Integrated | ⚠️ 8/9          | 1 — `AC-US-EXP-003-05`                                                                                      |
+| US-EXP-004  | ✅ Integrated | ✅ 12/12        | —                                                                                                           |
+| US-SAFE-001 | 🚧 Partial    | ⚠️ 9/11         | 2 — `AC-US-SAFE-001-02`, `AC-US-SAFE-001-06`                                                                |
+| US-SAFE-002 | 🧪 Mocked     | ⚠️ 6/8          | 2 — `AC-US-SAFE-002-01`, `AC-US-SAFE-002-02`                                                                |
+| US-SAFE-003 | 📋 Planned    | ⚠️ 4/9          | 5 — `AC-US-SAFE-003-01`, `AC-US-SAFE-003-02`, `AC-US-SAFE-003-03`, `AC-US-SAFE-003-06`, `AC-US-SAFE-003-07` |
+| US-SAFE-004 | 📋 Planned    | ⚠️ 4/9          | 5 — `AC-US-SAFE-004-01`, `AC-US-SAFE-004-02`, `AC-US-SAFE-004-03`, `AC-US-SAFE-004-04`, `AC-US-SAFE-004-07` |
+| US-SAFE-005 | 🧪 Mocked     | ✅ 9/9          | —                                                                                                           |
+| US-SAFE-006 | 🧪 Mocked     | ✅ 10/10        | —                                                                                                           |
+
+## Proof Strategy Reference
+
+Each acceptance criterion references one reusable strategy instead of repeating the same responsibility, evidence, and rationale text.
+
+| Strategy               | Responsibilities    | Required Evidence         | Proof Rationale                                                                          |
+| ---------------------- | ------------------- | ------------------------- | ---------------------------------------------------------------------------------------- |
+| `PS-FRONTEND`          | Frontend            | Frontend                  | The frontend owns this deterministic validation, derivation, or interaction state.       |
+| `PS-BROWSER`           | Frontend            | Mocked browser            | The user interaction needs browser-level proof with controlled dependency outcomes.      |
+| `PS-CHAIN`             | Frontend + Contract | Integrated E2E            | The wallet/chain hand-off and resulting user-visible state must work together.           |
+| `PS-CONTRACT`          | Contract            | Contract                  | The contract owns this on-chain authorization, invariant, or state transition.           |
+| `PS-BROWSER-FRONTEND`  | Frontend            | Mocked browser + Frontend | The controlled browser branch and frontend orchestration need focused proof.             |
+| `PS-CHAIN-CONTRACT`    | Frontend + Contract | Integrated E2E + Contract | The real wallet/chain journey and its focused on-chain invariant need independent proof. |
+| `PS-BACKEND`           | Backend             | Backend                   | The backend owns this API authorization, validation, or persistence rule.                |
+| `PS-FRONTEND-CONTRACT` | Frontend + Contract | Frontend + Contract       | Frontend prevention and contract enforcement can fail independently.                     |
+| `PS-API`               | Frontend + Backend  | Integrated E2E            | The browser/API hand-off and persisted user-visible state must work together.            |
+| `PS-API-BACKEND`       | Frontend + Backend  | Integrated E2E + Backend  | The real browser/API journey and its focused persistence rule need independent proof.    |
+| `PS-BROWSER-CONTRACT`  | Frontend + Contract | Mocked browser + Contract | The controlled browser branch and on-chain rule can fail independently.                  |
+| `PS-BACKEND-CONTRACT`  | Backend + Contract  | Backend + Contract        | API authorization and contract enforcement can fail independently.                       |
 
 ## US-BANK-001: Fund the Bank
 
@@ -116,6 +139,21 @@ browser wallet. Fixture-backed account suites remain browser acceptance coverage
 - [x] `AC-US-BANK-001-08` An archived company cannot initiate a deposit.
 - [x] `AC-US-BANK-001-09` Cancelling or rejecting a deposit leaves the Bank balance unchanged.
 - [x] `AC-US-BANK-001-10` A failed deposit leaves the Bank balance unchanged.
+
+### Test Coverage
+
+| Acceptance Criterion | Proof Strategy        | Current Evidence                     | Status |
+| -------------------- | --------------------- | ------------------------------------ | ------ |
+| `AC-US-BANK-001-01`  | `PS-CHAIN`            | Integrated E2E + Frontend + Contract | ✅ Met |
+| `AC-US-BANK-001-02`  | `PS-CHAIN`            | Integrated E2E + Contract            | ✅ Met |
+| `AC-US-BANK-001-03`  | `PS-CHAIN`            | Integrated E2E                       | ✅ Met |
+| `AC-US-BANK-001-04`  | `PS-BROWSER-CONTRACT` | Mocked browser + Contract            | ✅ Met |
+| `AC-US-BANK-001-05`  | `PS-BROWSER`          | Mocked browser                       | ✅ Met |
+| `AC-US-BANK-001-06`  | `PS-CONTRACT`         | Contract                             | ✅ Met |
+| `AC-US-BANK-001-07`  | `PS-FRONTEND`         | Frontend                             | ✅ Met |
+| `AC-US-BANK-001-08`  | `PS-BROWSER`          | Mocked browser                       | ✅ Met |
+| `AC-US-BANK-001-09`  | `PS-BROWSER`          | Mocked browser                       | ✅ Met |
+| `AC-US-BANK-001-10`  | `PS-BROWSER`          | Mocked browser                       | ✅ Met |
 
 **Accounting:** An external receipt is booked by [`UC-BANK-02`](../accounting/journal-entry-catalogue.md#uc-bank-02--external-cash-receipt).
 A receipt from another known company pocket is an internal transfer instead.
@@ -154,6 +192,24 @@ A receipt from another known company pocket is an internal transfer instead.
 - [x] `AC-US-BANK-002-12` A paused Bank rejects outgoing transfers. _(contract)_
 - [x] `AC-US-BANK-002-13` Cancelling, rejecting, or failing a transfer leaves the Bank balance unchanged.
 
+### Test Coverage
+
+| Acceptance Criterion | Proof Strategy         | Current Evidence          | Status          |
+| -------------------- | ---------------------- | ------------------------- | --------------- |
+| `AC-US-BANK-002-01`  | `PS-CHAIN`             | Integrated E2E + Frontend | ✅ Met          |
+| `AC-US-BANK-002-02`  | `PS-CHAIN`             | Mocked browser + Frontend | ⚠️ Insufficient |
+| `AC-US-BANK-002-03`  | `PS-CHAIN`             | Integrated E2E + Contract | ✅ Met          |
+| `AC-US-BANK-002-04`  | `PS-CONTRACT`          | Contract                  | ✅ Met          |
+| `AC-US-BANK-002-05`  | `PS-BROWSER`           | Mocked browser + Frontend | ✅ Met          |
+| `AC-US-BANK-002-06`  | `PS-FRONTEND-CONTRACT` | Frontend + Contract       | ✅ Met          |
+| `AC-US-BANK-002-07`  | `PS-CONTRACT`          | Contract                  | ✅ Met          |
+| `AC-US-BANK-002-08`  | `PS-FRONTEND`          | Frontend                  | ✅ Met          |
+| `AC-US-BANK-002-09`  | `PS-CHAIN-CONTRACT`    | Integrated E2E + Contract | ✅ Met          |
+| `AC-US-BANK-002-10`  | `PS-CHAIN-CONTRACT`    | Integrated E2E + Contract | ✅ Met          |
+| `AC-US-BANK-002-11`  | `PS-BROWSER`           | Mocked browser + Frontend | ✅ Met          |
+| `AC-US-BANK-002-12`  | `PS-CONTRACT`          | Mocked browser + Contract | ✅ Met          |
+| `AC-US-BANK-002-13`  | `PS-BROWSER`           | Mocked browser            | ✅ Met          |
+
 **Accounting:** The destination determines the rule: company-pocket funding uses
 [`UC-BANK-03`](../accounting/journal-entry-catalogue.md#uc-bank-03--bank-funds-a-company-pocket), an external payment uses
 [`CASH-OUT`](../accounting/journal-entry-catalogue.md#cash-out--external-bank-or-safe-payment), and any matched protocol fee is attached
@@ -188,6 +244,19 @@ through [`FEE`](../accounting/journal-entry-catalogue.md#fee--transaction-fee-co
 - [x] `AC-US-BANK-003-07` A history filter with no matching events returns an empty result.
 - [ ] `AC-US-BANK-003-08` A failed history read is distinguishable from a successfully loaded empty history.
 
+### Test Coverage
+
+| Acceptance Criterion | Proof Strategy | Current Evidence          | Status     |
+| -------------------- | -------------- | ------------------------- | ---------- |
+| `AC-US-BANK-003-01`  | `PS-CHAIN`     | Integrated E2E + Frontend | ✅ Met     |
+| `AC-US-BANK-003-02`  | `PS-CHAIN`     | Integrated E2E + Frontend | ✅ Met     |
+| `AC-US-BANK-003-03`  | `PS-BROWSER`   | Mocked browser + Frontend | ✅ Met     |
+| `AC-US-BANK-003-04`  | `PS-BROWSER`   | Mocked browser            | ✅ Met     |
+| `AC-US-BANK-003-05`  | `PS-FRONTEND`  | Frontend                  | ✅ Met     |
+| `AC-US-BANK-003-06`  | `PS-FRONTEND`  | Mocked browser + Frontend | ✅ Met     |
+| `AC-US-BANK-003-07`  | `PS-BROWSER`   | Mocked browser            | ✅ Met     |
+| `AC-US-BANK-003-08`  | `PS-BROWSER`   | None linked               | ❌ Missing |
+
 **Dependencies:** Current Bank contract and an available chain event provider
 
 ## US-BANK-004: Cash Out Available Treasury Funds
@@ -198,7 +267,8 @@ through [`FEE`](../accounting/journal-entry-catalogue.md#fee--transaction-fee-co
 
 ### How It Works
 
-1. The owner reviews the funded accounts and the destination before confirming the run.
+1. The owner reviews the funded accounts and the destination before confirming the run. Funded-account eligibility comes from raw on-chain
+   balances, so a temporarily unavailable fiat valuation does not block withdrawal.
 2. When available, Cash Remuneration and Expense Account funds move into their generation's Bank first.
 3. The Bank then forwards its native and supported token balances to the destination. A historic generation forwards its available funds to
    the company's current Bank.
@@ -225,6 +295,19 @@ through [`FEE`](../accounting/journal-entry-catalogue.md#fee--transaction-fee-co
 - [x] `AC-US-BANK-004-06` A failed step stops the sequence, leaves later steps pending, and lets the owner retry from the failed step.
 - [x] `AC-US-BANK-004-07` Rejecting a wallet request leaves the remaining steps unrun and identifies the rejected step to the owner.
 - [x] `AC-US-BANK-004-08` A cash-out run does not start when no eligible funded account is available.
+
+### Test Coverage
+
+| Acceptance Criterion | Proof Strategy        | Current Evidence          | Status          |
+| -------------------- | --------------------- | ------------------------- | --------------- |
+| `AC-US-BANK-004-01`  | `PS-CHAIN`            | Integrated E2E + Frontend | ✅ Met          |
+| `AC-US-BANK-004-02`  | `PS-CHAIN`            | Frontend                  | ⚠️ Insufficient |
+| `AC-US-BANK-004-03`  | `PS-BROWSER`          | Mocked browser + Frontend | ✅ Met          |
+| `AC-US-BANK-004-04`  | `PS-FRONTEND`         | Frontend                  | ✅ Met          |
+| `AC-US-BANK-004-05`  | `PS-FRONTEND`         | Frontend                  | ✅ Met          |
+| `AC-US-BANK-004-06`  | `PS-BROWSER-FRONTEND` | Mocked browser + Frontend | ✅ Met          |
+| `AC-US-BANK-004-07`  | `PS-BROWSER-FRONTEND` | Mocked browser + Frontend | ✅ Met          |
+| `AC-US-BANK-004-08`  | `PS-BROWSER-FRONTEND` | Mocked browser + Frontend | ✅ Met          |
 
 **Accounting:** Source-account sweeps are [`INTERNAL`](../accounting/journal-entry-catalogue.md#internal--other-company-pocket-transfer).
 The final wallet payment is [`CASH-OUT`](../accounting/journal-entry-catalogue.md#cash-out--external-bank-or-safe-payment) with any matched
@@ -262,6 +345,24 @@ The final wallet payment is [`CASH-OUT`](../accounting/journal-entry-catalogue.m
 - [x] `AC-US-EXP-001-12` An approval end date must be later than its start date.
 - [x] `AC-US-EXP-001-13` A custom-frequency approval requires a positive period length.
 
+### Test Coverage
+
+| Acceptance Criterion | Proof Strategy   | Current Evidence         | Status |
+| -------------------- | ---------------- | ------------------------ | ------ |
+| `AC-US-EXP-001-01`   | `PS-API`         | Integrated E2E           | ✅ Met |
+| `AC-US-EXP-001-02`   | `PS-API`         | Integrated E2E           | ✅ Met |
+| `AC-US-EXP-001-03`   | `PS-API-BACKEND` | Integrated E2E + Backend | ✅ Met |
+| `AC-US-EXP-001-04`   | `PS-BACKEND`     | Backend                  | ✅ Met |
+| `AC-US-EXP-001-05`   | `PS-CONTRACT`    | Contract                 | ✅ Met |
+| `AC-US-EXP-001-06`   | `PS-BACKEND`     | Backend                  | ✅ Met |
+| `AC-US-EXP-001-07`   | `PS-BACKEND`     | Backend                  | ✅ Met |
+| `AC-US-EXP-001-08`   | `PS-BROWSER`     | Mocked browser           | ✅ Met |
+| `AC-US-EXP-001-09`   | `PS-BACKEND`     | Backend                  | ✅ Met |
+| `AC-US-EXP-001-10`   | `PS-BROWSER`     | Mocked browser           | ✅ Met |
+| `AC-US-EXP-001-11`   | `PS-FRONTEND`    | Frontend                 | ✅ Met |
+| `AC-US-EXP-001-12`   | `PS-FRONTEND`    | Frontend                 | ✅ Met |
+| `AC-US-EXP-001-13`   | `PS-FRONTEND`    | Frontend                 | ✅ Met |
+
 **Accounting:** Creating an approval moves no money and creates no journal entry. A later spend owns the accounting operation.
 
 **Dependencies:** Current Expense Account contract and connected contract owner
@@ -295,6 +396,23 @@ The final wallet payment is [`CASH-OUT`](../accounting/journal-entry-catalogue.m
 - [x] `AC-US-EXP-002-11` A mismatched or unverifiable approval rejects spending without changing balances.
 - [x] `AC-US-EXP-002-12` A failed balance read prevents spending until the available amount can be verified.
 
+### Test Coverage
+
+| Acceptance Criterion | Proof Strategy         | Current Evidence          | Status     |
+| -------------------- | ---------------------- | ------------------------- | ---------- |
+| `AC-US-EXP-002-01`   | `PS-CHAIN`             | Integrated E2E            | ✅ Met     |
+| `AC-US-EXP-002-02`   | `PS-CHAIN`             | Integrated E2E            | ✅ Met     |
+| `AC-US-EXP-002-03`   | `PS-CONTRACT`          | Contract                  | ✅ Met     |
+| `AC-US-EXP-002-04`   | `PS-FRONTEND-CONTRACT` | Frontend + Contract       | ✅ Met     |
+| `AC-US-EXP-002-05`   | `PS-FRONTEND-CONTRACT` | Frontend + Contract       | ✅ Met     |
+| `AC-US-EXP-002-06`   | `PS-CONTRACT`          | Mocked browser + Contract | ✅ Met     |
+| `AC-US-EXP-002-07`   | `PS-CONTRACT`          | None linked               | ❌ Missing |
+| `AC-US-EXP-002-08`   | `PS-BROWSER`           | Mocked browser            | ✅ Met     |
+| `AC-US-EXP-002-09`   | `PS-CONTRACT`          | None linked               | ❌ Missing |
+| `AC-US-EXP-002-10`   | `PS-CONTRACT`          | Mocked browser + Contract | ✅ Met     |
+| `AC-US-EXP-002-11`   | `PS-CONTRACT`          | Contract                  | ✅ Met     |
+| `AC-US-EXP-002-12`   | `PS-FRONTEND`          | Frontend                  | ✅ Met     |
+
 **Accounting:** An external payout is booked by [`UC-EXP-01`](../accounting/journal-entry-catalogue.md#uc-exp-01--approved-expense-payout);
 a transfer to another known company pocket is
 [`INTERNAL`](../accounting/journal-entry-catalogue.md#internal--other-company-pocket-transfer).
@@ -326,6 +444,20 @@ a transfer to another known company pocket is
 - [x] `AC-US-EXP-003-07` An archived company cannot deactivate or reactivate an approval.
 - [x] `AC-US-EXP-003-08` A failed state change preserves the approval's prior reported state.
 - [x] `AC-US-EXP-003-09` Expired and exhausted approvals remain unavailable after state synchronization.
+
+### Test Coverage
+
+| Acceptance Criterion | Proof Strategy        | Current Evidence                     | Status     |
+| -------------------- | --------------------- | ------------------------------------ | ---------- |
+| `AC-US-EXP-003-01`   | `PS-CHAIN-CONTRACT`   | Integrated E2E + Frontend + Contract | ✅ Met     |
+| `AC-US-EXP-003-02`   | `PS-CHAIN-CONTRACT`   | Integrated E2E + Frontend + Contract | ✅ Met     |
+| `AC-US-EXP-003-03`   | `PS-API-BACKEND`      | Integrated E2E + Frontend + Backend  | ✅ Met     |
+| `AC-US-EXP-003-04`   | `PS-BACKEND-CONTRACT` | Backend + Contract                   | ✅ Met     |
+| `AC-US-EXP-003-05`   | `PS-CONTRACT`         | None linked                          | ❌ Missing |
+| `AC-US-EXP-003-06`   | `PS-CONTRACT`         | Contract                             | ✅ Met     |
+| `AC-US-EXP-003-07`   | `PS-BROWSER`          | Mocked browser                       | ✅ Met     |
+| `AC-US-EXP-003-08`   | `PS-BROWSER`          | Mocked browser                       | ✅ Met     |
+| `AC-US-EXP-003-09`   | `PS-FRONTEND`         | Frontend                             | ✅ Met     |
 
 **Accounting:** Changing an approval's active state moves no money and creates no journal entry.
 
@@ -361,6 +493,23 @@ a transfer to another known company pocket is
 - [x] `AC-US-EXP-004-12` When a previous-month baseline exists, the Expense Account summary reports the direction and percentage change in
       monthly spending without inventing a comparison when no baseline exists.
 
+### Test Coverage
+
+| Acceptance Criterion | Proof Strategy        | Current Evidence          | Status |
+| -------------------- | --------------------- | ------------------------- | ------ |
+| `AC-US-EXP-004-01`   | `PS-CHAIN`            | Integrated E2E + Frontend | ✅ Met |
+| `AC-US-EXP-004-02`   | `PS-CHAIN`            | Integrated E2E            | ✅ Met |
+| `AC-US-EXP-004-03`   | `PS-BROWSER-FRONTEND` | Mocked browser + Frontend | ✅ Met |
+| `AC-US-EXP-004-04`   | `PS-CHAIN`            | Integrated E2E + Frontend | ✅ Met |
+| `AC-US-EXP-004-05`   | `PS-BROWSER`          | Mocked browser            | ✅ Met |
+| `AC-US-EXP-004-06`   | `PS-BROWSER`          | Mocked browser            | ✅ Met |
+| `AC-US-EXP-004-07`   | `PS-FRONTEND`         | Frontend                  | ✅ Met |
+| `AC-US-EXP-004-08`   | `PS-BROWSER`          | Mocked browser            | ✅ Met |
+| `AC-US-EXP-004-09`   | `PS-FRONTEND`         | Frontend                  | ✅ Met |
+| `AC-US-EXP-004-10`   | `PS-FRONTEND`         | Frontend                  | ✅ Met |
+| `AC-US-EXP-004-11`   | `PS-FRONTEND`         | Frontend                  | ✅ Met |
+| `AC-US-EXP-004-12`   | `PS-FRONTEND`         | Frontend                  | ✅ Met |
+
 **Dependencies:** Current Expense Account contract and available API and chain providers
 
 ## US-SAFE-001: Set Up a Safe
@@ -392,6 +541,22 @@ a transfer to another known company pocket is
 - [x] `AC-US-SAFE-001-10` If registration fails after deployment, the deployed Safe remains available for a registration retry.
 - [x] `AC-US-SAFE-001-11` An archived company cannot deploy, import, or retry Safe registration.
 
+### Test Coverage
+
+| Acceptance Criterion | Proof Strategy      | Current Evidence                           | Status          |
+| -------------------- | ------------------- | ------------------------------------------ | --------------- |
+| `AC-US-SAFE-001-01`  | `PS-CHAIN`          | Integrated E2E                             | ✅ Met          |
+| `AC-US-SAFE-001-02`  | `PS-CHAIN`          | Mocked browser                             | ⚠️ Insufficient |
+| `AC-US-SAFE-001-03`  | `PS-API`            | Integrated E2E + Mocked browser + Frontend | ✅ Met          |
+| `AC-US-SAFE-001-04`  | `PS-FRONTEND`       | Frontend                                   | ✅ Met          |
+| `AC-US-SAFE-001-05`  | `PS-CHAIN-CONTRACT` | Integrated E2E + Contract                  | ✅ Met          |
+| `AC-US-SAFE-001-06`  | `PS-CHAIN`          | Mocked browser                             | ⚠️ Insufficient |
+| `AC-US-SAFE-001-07`  | `PS-FRONTEND`       | Frontend                                   | ✅ Met          |
+| `AC-US-SAFE-001-08`  | `PS-FRONTEND`       | Frontend                                   | ✅ Met          |
+| `AC-US-SAFE-001-09`  | `PS-FRONTEND`       | Frontend                                   | ✅ Met          |
+| `AC-US-SAFE-001-10`  | `PS-FRONTEND`       | Frontend                                   | ✅ Met          |
+| `AC-US-SAFE-001-11`  | `PS-BROWSER`        | Mocked browser                             | ✅ Met          |
+
 **Dependencies:** Current company and active network
 
 ## US-SAFE-002: Inspect Safe Details
@@ -418,6 +583,19 @@ a transfer to another known company pocket is
 - [x] `AC-US-SAFE-002-06` A Safe with no incoming transfers returns an empty deposit history.
 - [x] `AC-US-SAFE-002-07` A failed Safe information read is reported without hiding unaffected Safe information.
 - [x] `AC-US-SAFE-002-08` A failed Safe information read can be retried without registering another Safe.
+
+### Test Coverage
+
+| Acceptance Criterion | Proof Strategy | Current Evidence          | Status          |
+| -------------------- | -------------- | ------------------------- | --------------- |
+| `AC-US-SAFE-002-01`  | `PS-CHAIN`     | Mocked browser + Frontend | ⚠️ Insufficient |
+| `AC-US-SAFE-002-02`  | `PS-CHAIN`     | Mocked browser + Frontend | ⚠️ Insufficient |
+| `AC-US-SAFE-002-03`  | `PS-BROWSER`   | Mocked browser            | ✅ Met          |
+| `AC-US-SAFE-002-04`  | `PS-BROWSER`   | Mocked browser            | ✅ Met          |
+| `AC-US-SAFE-002-05`  | `PS-FRONTEND`  | Frontend                  | ✅ Met          |
+| `AC-US-SAFE-002-06`  | `PS-BROWSER`   | Mocked browser            | ✅ Met          |
+| `AC-US-SAFE-002-07`  | `PS-BROWSER`   | Mocked browser            | ✅ Met          |
+| `AC-US-SAFE-002-08`  | `PS-BROWSER`   | Mocked browser            | ✅ Met          |
 
 **Dependencies:** US-SAFE-001
 
@@ -446,6 +624,20 @@ a transfer to another known company pocket is
 - [x] `AC-US-SAFE-003-07` A proposal below the approval threshold remains pending without moving funds.
 - [x] `AC-US-SAFE-003-08` A rejected or failed proposal leaves Safe balances unchanged.
 - [x] `AC-US-SAFE-003-09` An archived company cannot initiate a Safe deposit or transfer.
+
+### Test Coverage
+
+| Acceptance Criterion | Proof Strategy        | Current Evidence          | Status          |
+| -------------------- | --------------------- | ------------------------- | --------------- |
+| `AC-US-SAFE-003-01`  | `PS-CHAIN`            | Mocked browser + Frontend | ⚠️ Insufficient |
+| `AC-US-SAFE-003-02`  | `PS-CHAIN`            | Mocked browser + Frontend | ⚠️ Insufficient |
+| `AC-US-SAFE-003-03`  | `PS-CHAIN`            | Mocked browser + Frontend | ⚠️ Insufficient |
+| `AC-US-SAFE-003-04`  | `PS-BROWSER-FRONTEND` | Mocked browser + Frontend | ✅ Met          |
+| `AC-US-SAFE-003-05`  | `PS-BROWSER`          | Mocked browser            | ✅ Met          |
+| `AC-US-SAFE-003-06`  | `PS-CHAIN`            | Mocked browser            | ⚠️ Insufficient |
+| `AC-US-SAFE-003-07`  | `PS-CHAIN`            | Mocked browser            | ⚠️ Insufficient |
+| `AC-US-SAFE-003-08`  | `PS-BROWSER`          | Mocked browser            | ✅ Met          |
+| `AC-US-SAFE-003-09`  | `PS-BROWSER`          | Mocked browser            | ✅ Met          |
 
 **Accounting:** A confirmed transfer is classified as
 [`UC-BANK-02`](../accounting/journal-entry-catalogue.md#uc-bank-02--external-cash-receipt),
@@ -480,6 +672,20 @@ a transfer to another known company pocket is
 - [x] `AC-US-SAFE-004-08` A user without Safe signer permission cannot propose a control change.
 - [x] `AC-US-SAFE-004-09` A rejected or failed change preserves the current signers and threshold.
 
+### Test Coverage
+
+| Acceptance Criterion | Proof Strategy | Current Evidence          | Status          |
+| -------------------- | -------------- | ------------------------- | --------------- |
+| `AC-US-SAFE-004-01`  | `PS-CHAIN`     | Mocked browser + Frontend | ⚠️ Insufficient |
+| `AC-US-SAFE-004-02`  | `PS-CHAIN`     | Mocked browser + Frontend | ⚠️ Insufficient |
+| `AC-US-SAFE-004-03`  | `PS-CHAIN`     | Mocked browser + Frontend | ⚠️ Insufficient |
+| `AC-US-SAFE-004-04`  | `PS-CHAIN`     | Mocked browser            | ⚠️ Insufficient |
+| `AC-US-SAFE-004-05`  | `PS-FRONTEND`  | Frontend                  | ✅ Met          |
+| `AC-US-SAFE-004-06`  | `PS-FRONTEND`  | Frontend                  | ✅ Met          |
+| `AC-US-SAFE-004-07`  | `PS-CONTRACT`  | None linked               | ❌ Missing      |
+| `AC-US-SAFE-004-08`  | `PS-FRONTEND`  | Frontend                  | ✅ Met          |
+| `AC-US-SAFE-004-09`  | `PS-BROWSER`   | Mocked browser            | ✅ Met          |
+
 **Dependencies:** US-SAFE-006
 
 ## US-SAFE-005: Review Safe Transactions
@@ -507,6 +713,20 @@ a transfer to another known company pocket is
 - [x] `AC-US-SAFE-005-07` A Safe with no matching transactions returns an empty result.
 - [x] `AC-US-SAFE-005-08` A failed transaction read is distinguishable from a successfully loaded empty result.
 - [x] `AC-US-SAFE-005-09` A failed transaction read can be retried without hiding unaffected Safe information.
+
+### Test Coverage
+
+| Acceptance Criterion | Proof Strategy | Current Evidence | Status |
+| -------------------- | -------------- | ---------------- | ------ |
+| `AC-US-SAFE-005-01`  | `PS-BROWSER`   | Mocked browser   | ✅ Met |
+| `AC-US-SAFE-005-02`  | `PS-BROWSER`   | Mocked browser   | ✅ Met |
+| `AC-US-SAFE-005-03`  | `PS-BROWSER`   | Mocked browser   | ✅ Met |
+| `AC-US-SAFE-005-04`  | `PS-BROWSER`   | Mocked browser   | ✅ Met |
+| `AC-US-SAFE-005-05`  | `PS-FRONTEND`  | Frontend         | ✅ Met |
+| `AC-US-SAFE-005-06`  | `PS-FRONTEND`  | Frontend         | ✅ Met |
+| `AC-US-SAFE-005-07`  | `PS-FRONTEND`  | Frontend         | ✅ Met |
+| `AC-US-SAFE-005-08`  | `PS-FRONTEND`  | Frontend         | ✅ Met |
+| `AC-US-SAFE-005-09`  | `PS-FRONTEND`  | Frontend         | ✅ Met |
 
 **Dependencies:** US-SAFE-001
 
@@ -538,6 +758,21 @@ a transfer to another known company pocket is
 - [x] `AC-US-SAFE-006-09` A rejected or failed approval does not increase the approval count.
 - [x] `AC-US-SAFE-006-10` A rejected or failed execution leaves the transaction unexecuted.
 
+### Test Coverage
+
+| Acceptance Criterion | Proof Strategy | Current Evidence | Status |
+| -------------------- | -------------- | ---------------- | ------ |
+| `AC-US-SAFE-006-01`  | `PS-BROWSER`   | Mocked browser   | ✅ Met |
+| `AC-US-SAFE-006-02`  | `PS-BROWSER`   | Mocked browser   | ✅ Met |
+| `AC-US-SAFE-006-03`  | `PS-BROWSER`   | Mocked browser   | ✅ Met |
+| `AC-US-SAFE-006-04`  | `PS-FRONTEND`  | Frontend         | ✅ Met |
+| `AC-US-SAFE-006-05`  | `PS-FRONTEND`  | Frontend         | ✅ Met |
+| `AC-US-SAFE-006-06`  | `PS-BROWSER`   | Mocked browser   | ✅ Met |
+| `AC-US-SAFE-006-07`  | `PS-FRONTEND`  | Frontend         | ✅ Met |
+| `AC-US-SAFE-006-08`  | `PS-FRONTEND`  | Frontend         | ✅ Met |
+| `AC-US-SAFE-006-09`  | `PS-BROWSER`   | Mocked browser   | ✅ Met |
+| `AC-US-SAFE-006-10`  | `PS-BROWSER`   | Mocked browser   | ✅ Met |
+
 **Dependencies:** US-SAFE-001
 
 ## Known Gaps
@@ -552,9 +787,11 @@ a transfer to another known company pocket is
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `80b1215080fa2310037d90492cfb4bd06f53e23f`
+**Implementation evidence reviewed against:** `d4ba68f9f1b668102608b4a15c7908719f3dfcb5`
 
-- [Bank components](../../../app/src/components/sections/BankView/),
+- [Bank deposit modal](../../../app/src/components/sections/BankView/forms/DepositModal.vue),
+  [Bank transfer modal](../../../app/src/components/sections/BankView/forms/TransferModal.vue),
+  [remaining Bank components](../../../app/src/components/sections/BankView/),
   [Expense Account components](../../../app/src/components/sections/ExpenseAccountView/),
   [Safe components](../../../app/src/components/sections/SafeView/), and
   [owner treasury withdrawal](../../../app/src/components/sections/OwnerTreasuryWithdrawAction.vue)

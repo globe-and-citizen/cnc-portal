@@ -1,5 +1,5 @@
 <template>
-  <UCard>
+  <UCard data-test="board-members-section">
     <template #header>{{ electionId ? `Elected` : `Current` }} Board of Directors</template>
     <div
       v-if="members.length > 0"

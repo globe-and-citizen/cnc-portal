@@ -134,7 +134,7 @@ describe('[US-SAFE-005] SafeIncomingTransactions', () => {
   })
 
   describe('Transfer Type Display', () => {
-    it('exposes the transfer type via data-transfer-type', () => {
+    it('[AC-US-SAFE-002-02] exposes native, ERC-20, and ERC-721 incoming transfers', () => {
       const testCases = [
         { data: [MOCK_DATA.mockTransfers[0]], expectedType: 'ETHER_TRANSFER' },
         { data: [MOCK_DATA.mockTransfers[1]], expectedType: 'ERC20_TRANSFER' },

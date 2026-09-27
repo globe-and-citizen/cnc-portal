@@ -89,13 +89,13 @@ describe('ExpenseMonthSpent', () => {
   })
 
   // Covers: AC-US-EXP-004-12
-  it('shows an upward delta when spending increased', () => {
+  it('[AC-US-EXP-004-12] shows the percentage increase from the previous month', () => {
     setSpend([200], [100])
     expect(delta(createWrapper()).text()).toContain('+ 100.0%')
   })
 
   // Covers: AC-US-EXP-004-12
-  it('shows a downward delta when spending decreased', () => {
+  it('[AC-US-EXP-004-12] shows the percentage decrease from the previous month', () => {
     setSpend([60], [120])
     expect(delta(createWrapper()).text()).toContain('- 50.0%')
   })

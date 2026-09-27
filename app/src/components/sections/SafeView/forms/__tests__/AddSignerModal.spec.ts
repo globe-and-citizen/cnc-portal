@@ -201,7 +201,7 @@ describe('AddSignerModal', () => {
       )
     })
 
-    it('shows success toast for proposal when threshold >= 2', async () => {
+    it('[AC-US-SAFE-004-06] submits a signer change through the current threshold flow', async () => {
       mockUpdateOwnersMutate.mockImplementation((_params, callbacks) => callbacks?.onSuccess?.())
       wrapper = createWrapper({ currentThreshold: 2 })
       wrapper.vm.newSigners = [MOCK_USERS[0]!]

@@ -58,7 +58,7 @@ describe('[US-SAFE-004] RemoveOwnerButton', () => {
     mockUpdateOwnersMutate.mockImplementation(() => undefined)
   })
 
-  it('calls owner update mutation with expected payload', async () => {
+  it('[AC-US-SAFE-004-02] submits removal of the selected signer', async () => {
     const wrapper = mountComponent()
     await wrapper.find('[data-test="remove-owner-button"]').trigger('click')
     await nextTick()

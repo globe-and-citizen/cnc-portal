@@ -182,7 +182,7 @@ describe('[US-SAFE-003] SafeBalanceSection transfers', () => {
   })
 
   describe('Transfer Functionality', () => {
-    it('calls transferFromSafe when transfer is initiated', async () => {
+    it('[AC-US-SAFE-003-02] proposes an outgoing Safe transfer', async () => {
       wrapper = createWrapper()
 
       await wrapper.find('[data-test="transfer-button"]').trigger('click')
@@ -236,7 +236,7 @@ describe('[US-SAFE-003] SafeBalanceSection transfers', () => {
       )
     })
 
-    it('handles transfer success callback', async () => {
+    it('[AC-US-SAFE-003-03] refreshes Safe data after a transfer succeeds', async () => {
       wrapper = createWrapper()
       await wrapper.find('[data-test="transfer-button"]').trigger('click')
       await nextTick()

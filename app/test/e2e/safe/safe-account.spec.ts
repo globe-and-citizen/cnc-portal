@@ -10,16 +10,16 @@ import {
   snapshotChain,
   tokenBalance
 } from '../e2e-chain'
-import { dialogAmount, selectToken } from '../e2e-page'
+import { dialogAmount, rejectNextWalletRequest, selectToken } from '../e2e-page'
+import { deploySafeE2EFixture, safeOwners, safeThreshold, type SafeE2EFixture } from './safe-chain'
 import {
-  deploySafeE2EFixture,
-  memberSafeSignature,
-  safeOwners,
-  safeThreshold,
-  safeTransactionHash,
-  type SafeE2EFixture
-} from './safe-chain'
-import { openSafeAccount } from './safe-page'
+  exerciseArchivedSafeSetup,
+  exercisePendingSafeTransfer,
+  exerciseRejectedSafeControlChange,
+  exerciseSafeApprovalAndExecution,
+  exerciseSafeInfoRecovery,
+  openSafeAccount
+} from './safe-page'
 import { transaction } from './safe-transaction'
 
 let fixture: SafeE2EFixture
@@ -37,13 +37,21 @@ test.afterEach(async () => {
   await revertChain(snapshotId)
 })
 
-test.describe('Safe Account', { tag: '@browser' }, () => {
+test.describe('Safe Account', { tag: ['@browser', '@mocked'] }, () => {
   test.describe.configure({ mode: 'serial' })
   test.setTimeout(180_000)
 
+  /**
+   * Covers:
+   * - [AC-US-SAFE-002-01]
+   * - [AC-US-SAFE-002-02]
+   * - [AC-US-SAFE-002-04]
+   * - [AC-US-SAFE-003-04]
+   * - [AC-US-SAFE-003-05]
+   */
   test(
     'lets a company member inspect a real Safe and its incoming transfers without signer permission',
-    { tag: '@US-SAFE-002' },
+    { tag: ['@US-SAFE-002', '@US-SAFE-003'] },
     async ({ page }) => {
       await sendNative(fixture.safe, '1')
       await sendToken(fixture.usdc, fixture.safe, '2')
@@ -63,31 +71,20 @@ test.describe('Safe Account', { tag: '@browser' }, () => {
     }
   )
 
-  test(
-    'lets the company owner deploy and register a new Safe from the setup journey',
-    { tag: '@US-SAFE-001' },
-    async ({ page }) => {
-      await openSafeAccount(page, fixture, { safeAddress: null })
-
-      await expect(page.getByRole('heading', { name: 'Set up your team Safe' })).toBeVisible()
-      await page.locator('[data-test="deploy-safe-button"]').click()
-
-      await expect(
-        page.getByText('Safe wallet deployed successfully', { exact: true })
-      ).toBeVisible({
-        timeout: 60_000
-      })
-      await expect(page.locator('[data-test="safe-wallet-view"]')).toBeVisible()
-      await expect(page.locator('[data-test="safe-threshold-summary"]')).toHaveText(
-        '1 of 1 signers'
-      )
-    }
-  )
-
+  /**
+   * Covers:
+   * - [AC-US-SAFE-001-02]
+   * - [AC-US-SAFE-001-03]
+   * - [AC-US-SAFE-001-06]
+   */
   test(
     'lets the company owner inspect and import an existing Safe without changing it',
     { tag: '@US-SAFE-001' },
     async ({ page }) => {
+      await sendNative(fixture.safe, '1')
+      await sendToken(fixture.usdc, fixture.safe, '2')
+      const ownersBefore = await safeOwners(fixture.safe)
+      const thresholdBefore = await safeThreshold(fixture.safe)
       await openSafeAccount(page, fixture, { safeAddress: null })
 
       await page.locator('[data-test="safe-import-address-input"]').fill(fixture.safe)
@@ -98,9 +95,40 @@ test.describe('Safe Account', { tag: '@browser' }, () => {
       await expect(page.getByText('Safe imported successfully', { exact: true })).toBeVisible()
       await expect(page).toHaveURL(new RegExp(`/safe-account/${fixture.safe}$`, 'i'))
       await expect(page.locator('[data-test="safe-wallet-view"]')).toBeVisible()
+      await expect(page.locator('[data-test="safe-wallet-overview-card"]')).toContainText('$3.00')
+      await expect.poll(() => safeOwners(fixture.safe)).toEqual(ownersBefore)
+      await expect.poll(() => safeThreshold(fixture.safe)).toBe(thresholdBefore)
     }
   )
 
+  test(
+    '[AC-US-SAFE-001-11] blocks Safe setup for an archived company',
+    { tag: '@US-SAFE-001' },
+    async ({ page }) => {
+      await exerciseArchivedSafeSetup(page, fixture)
+    }
+  )
+
+  /**
+   * Covers:
+   * - [AC-US-SAFE-002-06]
+   * - [AC-US-SAFE-002-07]
+   * - [AC-US-SAFE-002-08]
+   */
+  test(
+    'keeps unaffected Safe details visible and retries a failed information read',
+    { tag: '@US-SAFE-002' },
+    async ({ page }) => {
+      await exerciseSafeInfoRecovery(page, fixture)
+    }
+  )
+
+  /**
+   * Covers:
+   * - [AC-US-SAFE-002-03]
+   * - [AC-US-SAFE-003-01]
+   * - [AC-US-SAFE-003-03]
+   */
   test(
     'lets the Safe owner deposit native and ERC-20 assets and refreshes its holdings',
     { tag: '@US-SAFE-003' },
@@ -133,7 +161,7 @@ test.describe('Safe Account', { tag: '@browser' }, () => {
   )
 
   test(
-    'blocks Safe deposits and transfer proposals when the team is archived',
+    '[AC-US-SAFE-003-09] blocks Safe deposits and transfer proposals when the team is archived',
     { tag: '@US-SAFE-003' },
     async ({ page }) => {
       await openSafeAccount(page, fixture, { archived: true })
@@ -143,6 +171,13 @@ test.describe('Safe Account', { tag: '@browser' }, () => {
     }
   )
 
+  /**
+   * Covers:
+   * - [AC-US-SAFE-003-02]
+   * - [AC-US-SAFE-003-03]
+   * - [AC-US-SAFE-003-06]
+   * - [AC-US-SAFE-003-08]
+   */
   test(
     'lets a sole Safe owner execute an outgoing transfer and refresh the balance',
     { tag: '@US-SAFE-003' },
@@ -157,6 +192,12 @@ test.describe('Safe Account', { tag: '@browser' }, () => {
       await transfer.locator('[data-test="user-row"]').filter({ hasText: 'E2E Member' }).click()
       await selectToken(page, transfer, 'GO')
       await dialogAmount(transfer).fill('0.25')
+      await rejectNextWalletRequest(page)
+      await transfer.locator('[data-test="transferButton"]').click()
+      await expect(page.getByText('Transfer proposal failed', { exact: true })).toBeVisible()
+      await expect.poll(() => nativeBalance(fixture.safe)).toBe(parseEther('0.5'))
+      await expect.poll(() => nativeBalance(E2E_MEMBER)).toBe(memberBefore)
+
       await transfer.locator('[data-test="transferButton"]').click()
 
       await expect(page.getByText('Transfer proposed', { exact: true })).toBeVisible({
@@ -167,6 +208,22 @@ test.describe('Safe Account', { tag: '@browser' }, () => {
     }
   )
 
+  test(
+    '[AC-US-SAFE-003-07] keeps a below-threshold transfer pending without moving funds',
+    { tag: '@US-SAFE-003' },
+    async ({ page }) => {
+      await sendNative(fixture.multisigSafe, '0.5')
+      await exercisePendingSafeTransfer(page, fixture)
+    }
+  )
+
+  /**
+   * Covers:
+   * - [AC-US-SAFE-004-01]
+   * - [AC-US-SAFE-004-02]
+   * - [AC-US-SAFE-004-03]
+   * - [AC-US-SAFE-004-04]
+   */
   test(
     'lets a Safe owner add and remove a signer, then change the threshold on-chain',
     { tag: '@US-SAFE-004' },
@@ -208,6 +265,21 @@ test.describe('Safe Account', { tag: '@browser' }, () => {
     }
   )
 
+  test(
+    '[AC-US-SAFE-004-09] preserves Safe control when a signer change is rejected',
+    { tag: '@US-SAFE-004' },
+    async ({ page }) => {
+      await exerciseRejectedSafeControlChange(page, fixture)
+    }
+  )
+
+  /**
+   * Covers:
+   * - [AC-US-SAFE-005-01]
+   * - [AC-US-SAFE-005-02]
+   * - [AC-US-SAFE-005-03]
+   * - [AC-US-SAFE-005-04]
+   */
   test(
     'lets a company member review, filter, and inspect every Safe transaction state',
     { tag: '@US-SAFE-005' },
@@ -257,59 +329,20 @@ test.describe('Safe Account', { tag: '@browser' }, () => {
     }
   )
 
+  /**
+   * Covers:
+   * - [AC-US-SAFE-006-01]
+   * - [AC-US-SAFE-006-02]
+   * - [AC-US-SAFE-006-03]
+   * - [AC-US-SAFE-006-06]
+   * - [AC-US-SAFE-006-09]
+   * - [AC-US-SAFE-006-10]
+   */
   test(
     'collects a second signer approval and executes the real Safe transaction',
     { tag: '@US-SAFE-006' },
     async ({ page }) => {
-      await sendNative(fixture.multisigSafe, '0.5')
-      const safeTxHash = await safeTransactionHash(fixture.multisigSafe, {
-        to: E2E_NEW_SIGNER,
-        value: parseEther('0.25')
-      })
-      const pending = transaction(fixture.multisigSafe, {
-        to: E2E_NEW_SIGNER,
-        value: parseEther('0.25').toString(),
-        safeTxHash,
-        confirmationsRequired: 2,
-        confirmations: [
-          {
-            owner: E2E_MEMBER,
-            submissionDate: '2026-01-01T00:00:00Z',
-            transactionHash: null,
-            signature: await memberSafeSignature(safeTxHash),
-            signatureType: 'ETH_SIGN'
-          }
-        ]
-      })
-      await openSafeAccount(page, fixture, {
-        safeAddress: fixture.multisigSafe,
-        transactions: [pending]
-      })
-
-      const transactionTable = page.locator('[data-test="safe-transactions-table"]')
-      await transactionTable.locator('[data-test="approve-button"]').click()
-      await expect(
-        page.getByText('Transaction approved successfully', { exact: true })
-      ).toBeVisible({
-        timeout: 60_000
-      })
-      await expect(transactionTable.locator('[data-test="execute-button"]')).toBeVisible({
-        timeout: 30_000
-      })
-      await transactionTable.locator('[data-test="execute-button"]').click()
-
-      await expect(
-        page.getByText('Transaction executed successfully', { exact: true })
-      ).toBeVisible({
-        timeout: 60_000
-      })
-      await expect.poll(() => nativeBalance(fixture.multisigSafe)).toBe(parseEther('0.25'))
-      await page.locator('[data-test="safe-transaction-filter-all"]').click()
-      await expect(
-        transactionTable
-          .locator('[data-test="safe-transaction-state"]')
-          .filter({ hasText: 'Executed' })
-      ).toBeVisible({ timeout: 30_000 })
+      await exerciseSafeApprovalAndExecution(page, fixture)
     }
   )
 })

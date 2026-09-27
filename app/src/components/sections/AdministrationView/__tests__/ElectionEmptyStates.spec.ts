@@ -26,7 +26,7 @@ describe('Election empty states', () => {
     expect(wrapper.text()).toContain('No current election')
   })
 
-  it('[US-EL-08] shows an empty history as empty, not as loading', () => {
+  it('shows an empty history as empty, not as loading', () => {
     const wrapper = mount(PastElectionsEmptyState)
 
     expect(wrapper.find('[data-test="past-elections-empty"]').exists()).toBe(true)

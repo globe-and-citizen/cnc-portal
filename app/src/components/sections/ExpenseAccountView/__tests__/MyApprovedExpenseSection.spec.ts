@@ -59,7 +59,7 @@ describe('MyApprovedExpenseSection', () => {
     expect(wrapper.find('[data-test="my-expenses-empty"]').exists()).toBe(false)
   })
 
-  it('shows an empty state when the user has no approvals', () => {
+  it('[AC-US-EXP-004-09] shows an empty state when the user has no approvals', () => {
     expect(createWrapper().find('[data-test="my-expenses-empty"]').exists()).toBe(true)
   })
 })

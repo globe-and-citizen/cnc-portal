@@ -11,7 +11,12 @@ const defaultProps = {
 }
 
 describe('[US-SAFE-005] SafeTransactionFeedback', () => {
-  it('renders a compact retryable queue error', async () => {
+  /**
+   * Covers:
+   * - [AC-US-SAFE-005-08]
+   * - [AC-US-SAFE-005-09]
+   */
+  it('distinguishes a transaction read failure and offers a retry', async () => {
     const wrapper = mount(SafeTransactionFeedback, {
       props: { ...defaultProps, hasError: true }
     })
@@ -24,7 +29,7 @@ describe('[US-SAFE-005] SafeTransactionFeedback', () => {
     expect(wrapper.emitted('retry')).toHaveLength(1)
   })
 
-  it('offers the full history when no transaction needs action', async () => {
+  it('[AC-US-SAFE-005-07] shows an empty result for the selected transaction scope', async () => {
     const wrapper = mount(SafeTransactionFeedback, {
       props: { ...defaultProps, isEmpty: true }
     })

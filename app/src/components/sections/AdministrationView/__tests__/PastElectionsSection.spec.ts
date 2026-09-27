@@ -58,7 +58,7 @@ describe('PastElectionsSection', () => {
     wrapper?.unmount()
   })
 
-  it('[US-EL-08] shows a loading notice, not the empty state, while the history is read', () => {
+  it('shows a loading notice, not the empty state, while the history is read', () => {
     mockElectionsReads.pastElections.isLoading.value = true
     wrapper = mountSection()
 
@@ -84,7 +84,7 @@ describe('PastElectionsSection', () => {
     expect(wrapper.find('[data-test="past-elections-pagination"]').exists()).toBe(false)
   })
 
-  it('lists a short history on one page without a pager', () => {
+  it('[AC-US-EL-08-01] lists published elections in the history', () => {
     mockElectionsReads.pastElections.data.value = [3, 2, 1].map(election)
     wrapper = mountSection()
 
@@ -92,7 +92,7 @@ describe('PastElectionsSection', () => {
     expect(wrapper.find('[data-test="past-elections-pagination"]').exists()).toBe(false)
   })
 
-  it('[US-EL-08] keeps every successfully loaded election reachable through the pager', async () => {
+  it('keeps every successfully loaded election reachable through the pager', async () => {
     mockElectionsReads.pastElections.data.value = [8, 7, 6, 5, 4, 3, 2, 1].map(election)
     wrapper = mountSection()
 

@@ -819,6 +819,33 @@ describe('Team Controller', () => {
       expect(response.body.message).toBe('Team not found');
     });
 
+    it('[AC-US-COMPANIES-007-05] rejects visibility updates from a non-member', async () => {
+      vi.spyOn(prisma.team, 'findUnique').mockResolvedValue({
+        id: 1,
+        ownerAddress: faker.finance.ethereumAddress(),
+        isArchived: false,
+        members: [],
+        name: 'Test Team',
+        description: 'Test Description',
+      });
+
+      const response = await request(app).put('/1').send({ isHidden: true });
+
+      expect(response.status).toBe(403);
+      expect(response.body.message).toBe('Unauthorized: Caller is not a member of the team');
+      expect(prisma.team.update).not.toHaveBeenCalled();
+    });
+
+    it('[AC-US-COMPANIES-007-06] rejects visibility updates for an unavailable company', async () => {
+      vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(null);
+
+      const response = await request(app).put('/1').send({ isHidden: true });
+
+      expect(response.status).toBe(404);
+      expect(response.body.message).toBe('Team not found');
+      expect(prisma.team.update).not.toHaveBeenCalled();
+    });
+
     it('[AC-US-COMPANIES-004-02] rejects metadata updates from a non-owner', async () => {
       const mockTeam = {
         id: 1,

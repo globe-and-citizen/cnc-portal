@@ -6,6 +6,7 @@ import PastElectionCard from '@/components/sections/AdministrationView/PastElect
 import { mockTeamStore, mockElectionsReads } from '@/tests/mocks'
 import { useElectionsGetVoteCount, useElectionsGetWinners } from '@/composables/elections'
 import type { Election } from '@/types'
+import { mockRouterPush } from '@/tests/mocks/router.mock'
 
 const memberA = '0x000000000000000000000000000000000000aaaa'
 const memberB = '0x000000000000000000000000000000000000bbbb'
@@ -37,6 +38,7 @@ describe('PastElectionCard', () => {
     mockElectionsReads.getVoteCount.data.value = 12n
     mockElectionsReads.getCandidates.data.value = [memberA, memberB, memberC]
     mockElectionsReads.getWinners.data.value = [memberA, memberB]
+    mockRouterPush.mockReset()
   })
 
   it('renders the title, vote count and elected members', () => {
@@ -64,5 +66,15 @@ describe('PastElectionCard', () => {
     const [winnersId] = vi.mocked(useElectionsGetWinners).mock.calls[0] ?? []
     expect(unref(voteCountId)).toBe(7n)
     expect(unref(winnersId)).toBe(7n)
+  })
+
+  it('[AC-US-EL-08-01] opens the selected published election result', async () => {
+    const wrapper = mount(PastElectionCard, { props: { election } })
+
+    await wrapper.get('button').trigger('click')
+
+    expect(mockRouterPush).toHaveBeenCalledWith(
+      '/teams/1/administration/bod-elections-details?electionId=7'
+    )
   })
 })
