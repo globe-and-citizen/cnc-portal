@@ -8,45 +8,62 @@ const config = {
 } as const
 
 describe('buildPaymentGateSnippet', () => {
-  it('builds the HTML snippet with the script tag, mount point, and checkout wiring', () => {
-    const snippet = buildPaymentGateSnippet({ language: 'html', ...config })
+  it('splits the HTML snippet into adding the widget and starting a payment', () => {
+    const { setup, usage } = buildPaymentGateSnippet({ language: 'html', ...config })
 
-    expect(snippet).toContain(
-      `<script src="${config.widgetScriptUrl}" data-bank="${config.bankAddress}" data-token="USDCe" async></script>`
+    expect(setup.title).toBe('Add the widget to your page')
+    expect(usage.title).toBe('Start a payment')
+    expect(setup.filename).toBeUndefined()
+    expect(setup.code).toBe(
+      `<script src="${config.widgetScriptUrl}" data-bank="${config.bankAddress}" data-token="USDCe" async></script>
+<div id="cnc-pay"></div>`
     )
-    expect(snippet).toContain('<div id="cnc-pay"></div>')
-    expect(snippet).toContain("CncPay.show('#cnc-pay')")
+    expect(usage.code).toContain("onclick=\"payWithCncPay('order_8842', '128.00')\"")
+    expect(usage.code).toContain('function payWithCncPay(factureId, amount)')
+    expect(usage.code).toContain('CncPay.setFactureId(factureId)')
+    expect(usage.code).toContain('CncPay.setAmount(amount)')
+    expect(usage.code).toContain("CncPay.show('#cnc-pay')")
   })
 
-  it('builds a Vue 3 component that loads the widget with the Bank address and token', () => {
-    const snippet = buildPaymentGateSnippet({ language: 'vue', ...config })
+  it('builds a Vue 3 component file and a usage example passing factureId and amount', () => {
+    const { setup, usage } = buildPaymentGateSnippet({ language: 'vue', ...config })
 
-    expect(snippet).toContain('<script setup lang="ts">')
-    expect(snippet).toContain('onMounted(')
-    expect(snippet).toContain(`script.src = '${config.widgetScriptUrl}'`)
-    expect(snippet).toContain(`script.setAttribute('data-bank', '${config.bankAddress}')`)
-    expect(snippet).toContain("script.setAttribute('data-token', 'USDCe')")
-    expect(snippet).toContain('const props = defineProps<{')
-    expect(snippet).toContain('cncPay().setFactureId(props.factureId)')
-    expect(snippet).toContain('cncPay().setAmount(props.amount)')
-    expect(snippet).toContain('Pay {{ amount }} USDCe')
-    expect(snippet).toContain("cncPay().show('#cnc-pay')")
+    expect(setup.title).toBe('Create the component')
+    expect(usage.title).toBe('Use it in your checkout')
+    expect(setup.filename).toBe('CncPayCheckout.vue')
+    expect(setup.code).toContain('<script setup lang="ts">')
+    expect(setup.code).toContain('const props = defineProps<{')
+    expect(setup.code).toContain(`script.src = '${config.widgetScriptUrl}'`)
+    expect(setup.code).toContain(`script.setAttribute('data-bank', '${config.bankAddress}')`)
+    expect(setup.code).toContain("script.setAttribute('data-token', 'USDCe')")
+    expect(setup.code).toContain('cncPay().setFactureId(props.factureId)')
+    expect(setup.code).toContain('cncPay().setAmount(props.amount)')
+    expect(setup.code).toContain('Pay {{ amount }} USDCe')
+    expect(setup.code).not.toContain('Usage:')
+
+    expect(usage.code).toContain("import CncPayCheckout from './CncPayCheckout.vue'")
+    expect(usage.code).toContain("const factureId = 'order_8842'")
+    expect(usage.code).toContain('<CncPayCheckout :facture-id="factureId" :amount="amount" />')
   })
 
-  it('builds a React component that loads the widget once in useEffect', () => {
-    const snippet = buildPaymentGateSnippet({ language: 'react', ...config })
+  it('builds a React component file and a usage example passing factureId and amount', () => {
+    const { setup, usage } = buildPaymentGateSnippet({ language: 'react', ...config })
 
-    expect(snippet).toContain("import { useEffect, useState } from 'react'")
-    expect(snippet).toContain('useEffect(')
-    expect(snippet).toContain("document.getElementById('cnc-pay-widget')")
-    expect(snippet).toContain(`script.setAttribute('data-bank', '${config.bankAddress}')`)
-    expect(snippet).toContain("script.setAttribute('data-token', 'USDCe')")
-    expect(snippet).toContain(
+    expect(setup.title).toBe('Create the component')
+    expect(usage.title).toBe('Use it in your checkout')
+    expect(setup.filename).toBe('CncPayCheckout.tsx')
+    expect(setup.code).toContain("import { useEffect, useState } from 'react'")
+    expect(setup.code).toContain("document.getElementById('cnc-pay-widget')")
+    expect(setup.code).toContain(`script.setAttribute('data-bank', '${config.bankAddress}')`)
+    expect(setup.code).toContain("script.setAttribute('data-token', 'USDCe')")
+    expect(setup.code).toContain(
       'export function CncPayCheckout({ factureId, amount }: CncPayCheckoutProps)'
     )
-    expect(snippet).toContain('cncPay().setFactureId(factureId)')
-    expect(snippet).toContain('cncPay().setAmount(amount)')
-    expect(snippet).toContain('Pay {amount} USDCe')
-    expect(snippet).toContain("cncPay().show('#cnc-pay')")
+    expect(setup.code).toContain('Pay {amount} USDCe')
+    expect(setup.code).not.toContain('Usage:')
+
+    expect(usage.code).toContain("import { CncPayCheckout } from './CncPayCheckout'")
+    expect(usage.code).toContain("const amount = '128.00'")
+    expect(usage.code).toContain('<CncPayCheckout factureId={factureId} amount={amount} />')
   })
 })

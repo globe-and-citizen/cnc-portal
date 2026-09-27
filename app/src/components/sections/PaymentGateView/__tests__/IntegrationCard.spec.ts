@@ -55,7 +55,9 @@ describe('IntegrationCard', () => {
     mockTeamStore.getContractAddressByType = vi.fn(() => BANK_ADDRESS)
     const IntegrationCard = await loadIntegrationCard('https://widget.example/widget.js')
     const wrapper = mount(IntegrationCard, { props: { selectedToken: 'USDCe' } })
-    const snippet = () => wrapper.find('[data-test="payment-gate-snippet"]').text()
+    const part = (key: 'setup' | 'usage') =>
+      wrapper.find(`[data-test="payment-gate-snippet-${key}"]`).text()
+    const filename = () => wrapper.find('[data-test="payment-gate-snippet-setup-filename"]')
     const languageButtons = wrapper.findAll('[data-test="payment-gate-snippet-languages"] button')
 
     expect(languageButtons.map((button) => button.text())).toEqual([
@@ -63,18 +65,26 @@ describe('IntegrationCard', () => {
       'Vue 3',
       'React'
     ])
-    expect(snippet()).toContain(`data-bank="${BANK_ADDRESS}" data-token="USDCe"`)
+    expect(part('setup')).toContain(`data-bank="${BANK_ADDRESS}" data-token="USDCe"`)
+    expect(part('usage')).toContain('CncPay.setFactureId(factureId)')
+    expect(filename().exists()).toBe(false)
+    expect(wrapper.text()).toContain('Step 1 · Add the widget to your page')
+    expect(wrapper.text()).toContain('Step 2 · Start a payment')
 
     await languageButtons[1].trigger('click')
-    expect(snippet()).toContain('<script setup lang="ts">')
-    expect(snippet()).toContain(`script.setAttribute('data-bank', '${BANK_ADDRESS}')`)
+    expect(filename().text()).toBe('CncPayCheckout.vue')
+    expect(wrapper.text()).toContain('Step 1 · Create the component')
+    expect(wrapper.text()).toContain('Step 2 · Use it in your checkout')
+    expect(part('setup')).toContain(`script.setAttribute('data-bank', '${BANK_ADDRESS}')`)
+    expect(part('usage')).toContain(':facture-id="factureId"')
 
     await languageButtons[2].trigger('click')
-    expect(snippet()).toContain('useEffect(')
-    expect(snippet()).toContain("script.setAttribute('data-token', 'USDCe')")
+    expect(filename().text()).toBe('CncPayCheckout.tsx')
+    expect(part('setup')).toContain("script.setAttribute('data-token', 'USDCe')")
+    expect(part('usage')).toContain('factureId={factureId}')
   })
 
-  it('[AC-US-PAYGATE-002-06] copies the snippet for the currently selected framework', async () => {
+  it('[AC-US-PAYGATE-002-06] copies each part of the selected framework separately', async () => {
     const writeText = vi.fn().mockResolvedValue(undefined)
     vi.stubGlobal('navigator', { clipboard: { writeText } })
     mockTeamStore.getContractAddressByType = vi.fn(() => BANK_ADDRESS)
@@ -82,12 +92,18 @@ describe('IntegrationCard', () => {
     const wrapper = mount(IntegrationCard, { props: { selectedToken: 'USDC' } })
 
     await wrapper.findAll('[data-test="payment-gate-snippet-languages"] button')[2].trigger('click')
-    const copyButton = wrapper.findAll('button').find((button) => button.text() === 'Copy snippet')
-    await copyButton!.trigger('click')
+    await wrapper.find('[data-test="payment-gate-snippet-setup-copy"]').trigger('click')
+    await wrapper.find('[data-test="payment-gate-snippet-usage-copy"]').trigger('click')
 
-    expect(writeText).toHaveBeenCalledWith(
-      wrapper.find('[data-test="payment-gate-snippet"]').text()
+    expect(writeText).toHaveBeenNthCalledWith(
+      1,
+      wrapper.find('[data-test="payment-gate-snippet-setup"]').text()
+    )
+    expect(writeText).toHaveBeenNthCalledWith(
+      2,
+      wrapper.find('[data-test="payment-gate-snippet-usage"]').text()
     )
     expect(writeText.mock.calls[0][0]).toContain('useEffect(')
+    expect(writeText.mock.calls[1][0]).toContain('<CncPayCheckout factureId={factureId}')
   })
 })
