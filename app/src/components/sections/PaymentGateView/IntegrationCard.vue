@@ -47,7 +47,7 @@
               color="neutral"
               variant="outline"
               icon="i-lucide-copy"
-              :label="copiedAddress ? 'Copied' : 'Copy'"
+              :label="copied === 'address' ? 'Copied' : 'Copy'"
               @click="copy(bankAddress, 'address')"
             />
           </div>
@@ -56,34 +56,47 @@
         <div>
           <label class="text-muted mb-1 block text-xs font-medium uppercase">Embed snippet</label>
           <p class="text-muted mb-2 text-xs">
-            The script tag and the mount <code>&lt;div&gt;</code> go on the page once. Whatever
-            triggers checkout for an order — a Buy button, here — is where you call
-            <code>CncPay.setFactureId</code>/<code>setAmount</code> then <code>show()</code> with
-            that order's real ID and amount. Nothing to store, nothing to recreate per order.
+            Two steps: set the widget up once, then start a payment with each order's real
+            <code>factureId</code> and <code>amount</code>. Nothing to store, nothing to recreate
+            per order.
           </p>
-          <pre
-            class="bg-elevated border-default overflow-x-auto rounded-md border p-3 text-xs"
-          ><code>&lt;script src="{{ WIDGET_SCRIPT_URL }}" data-bank="{{ bankAddress }}" data-token="{{ selectedToken }}" async&gt;&lt;/script&gt;
-&lt;div id="cnc-pay"&gt;&lt;/div&gt;
-&lt;button id="checkout-button"&gt;Pay 128.00 {{ selectedToken }}&lt;/button&gt;
-
-&lt;script&gt;
-  document.getElementById('checkout-button').addEventListener('click', () => {
-    CncPay.setFactureId('order_8842') // this order's ID in your system
-    CncPay.setAmount('128.00')        // this order's amount
-    CncPay.setOnStatus((status) => console.log('payment status', status))
-    CncPay.show('#cnc-pay')
-  })
-&lt;/script&gt;</code></pre>
-          <div class="mt-2 flex justify-end">
+          <UFieldGroup size="sm" class="mb-3" data-test="payment-gate-snippet-languages">
             <UButton
-              color="neutral"
-              variant="outline"
-              size="sm"
-              icon="i-lucide-copy"
-              :label="copiedSnippet ? 'Copied' : 'Copy snippet'"
-              @click="copy(snippet, 'snippet')"
+              v-for="option in PAYMENT_GATE_SNIPPET_LANGUAGES"
+              :key="option.value"
+              :color="selectedLanguage === option.value ? 'primary' : 'neutral'"
+              :variant="selectedLanguage === option.value ? 'solid' : 'outline'"
+              :label="option.label"
+              @click="selectedLanguage = option.value"
             />
+          </UFieldGroup>
+          <div class="space-y-4">
+            <div v-for="part in snippetParts" :key="part.key">
+              <div class="mb-1 flex items-center justify-between gap-2">
+                <p class="text-sm font-medium">
+                  Step {{ part.step }} · {{ part.title }}
+                  <code
+                    v-if="part.filename"
+                    class="text-muted ml-1 text-xs"
+                    :data-test="`payment-gate-snippet-${part.key}-filename`"
+                    >{{ part.filename }}</code
+                  >
+                </p>
+                <UButton
+                  color="neutral"
+                  variant="outline"
+                  size="sm"
+                  icon="i-lucide-copy"
+                  :label="copied === part.key ? 'Copied' : 'Copy'"
+                  :data-test="`payment-gate-snippet-${part.key}-copy`"
+                  @click="copy(part.code, part.key)"
+                />
+              </div>
+              <pre
+                class="bg-elevated border-default overflow-x-auto rounded-md border p-3 text-xs"
+                :data-test="`payment-gate-snippet-${part.key}`"
+              ><code>{{ part.code }}</code></pre>
+            </div>
           </div>
         </div>
       </div>
@@ -95,30 +108,42 @@
 import { ref, computed } from 'vue'
 import { useTeamStore } from '@/stores'
 import { WIDGET_SCRIPT_URL } from '@/constant'
+import {
+  PAYMENT_GATE_SNIPPET_LANGUAGES,
+  buildPaymentGateSnippet,
+  type PaymentGateSnippetLanguage,
+  type PaymentGateToken
+} from '@/utils/paymentGate/widgetSnippet'
 
-const { selectedToken } = defineProps<{ selectedToken: 'USDC' | 'USDCe' | 'POL' }>()
+const { selectedToken } = defineProps<{ selectedToken: PaymentGateToken }>()
 
 const toast = useToast()
 const teamStore = useTeamStore()
 
 const bankAddress = computed(() => teamStore.getContractAddressByType('Bank'))
-const snippet = computed(
-  () =>
-    `<script src="${WIDGET_SCRIPT_URL}" data-bank="${bankAddress.value}" data-token="${selectedToken}" async><\/script>\n<div id="cnc-pay"><\/div>\n<button id="checkout-button">Pay 128.00 ${selectedToken}</button>\n\n<script>\n  document.getElementById('checkout-button').addEventListener('click', () => {\n    CncPay.setFactureId('order_8842') // this order's ID in your system\n    CncPay.setAmount('128.00')        // this order's amount\n    CncPay.setOnStatus((status) => console.log('payment status', status))\n    CncPay.show('#cnc-pay')\n  })\n<\/script>`
-)
+const selectedLanguage = ref<PaymentGateSnippetLanguage>('html')
+const snippetParts = computed(() => {
+  const { setup, usage } = buildPaymentGateSnippet({
+    language: selectedLanguage.value,
+    widgetScriptUrl: WIDGET_SCRIPT_URL,
+    bankAddress: bankAddress.value ?? '',
+    token: selectedToken
+  })
+  return [
+    { key: 'setup', step: 1, ...setup },
+    { key: 'usage', step: 2, ...usage }
+  ] as const
+})
 
-const copiedAddress = ref(false)
-const copiedSnippet = ref(false)
+type CopyTarget = 'address' | 'setup' | 'usage'
+const copied = ref<CopyTarget | null>(null)
 
-async function copy(text: string, which: 'address' | 'snippet') {
+async function copy(text: string, target: CopyTarget) {
   await navigator.clipboard.writeText(text)
-  if (which === 'address') {
-    copiedAddress.value = true
-    setTimeout(() => (copiedAddress.value = false), 1200)
-  } else {
-    copiedSnippet.value = true
-    setTimeout(() => (copiedSnippet.value = false), 1200)
-  }
+  copied.value = target
+  setTimeout(() => {
+    if (copied.value === target) copied.value = null
+  }, 1200)
   toast.add({ title: 'Copied to clipboard', color: 'success' })
 }
 </script>

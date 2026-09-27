@@ -33,6 +33,18 @@ describe('utility boundary guard', () => {
     assert.ok(violations.some((violation) => violation.includes('global @/utils barrel')))
   })
 
+  it('ignores browser globals inside template-literal text but not inside its interpolations', () => {
+    const sample = 'export const sample = () => `document.body.appendChild(script)`'
+    const interpolated = 'export const href = () => `${window.location.href}`'
+
+    assert.deepEqual(validateUtilityBoundaries(new Map([['src/utils/docs/sample.ts', sample]])), [])
+    assert.ok(
+      validateUtilityBoundaries(new Map([['src/utils/docs/href.ts', interpolated]])).some(
+        (violation) => violation.includes('browser and HTTP I/O')
+      )
+    )
+  })
+
   it('rejects utility import cycles', () => {
     const violations = validateUtilityBoundaries(
       new Map([
