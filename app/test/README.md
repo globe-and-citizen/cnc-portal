@@ -53,6 +53,9 @@ frontend; it does not run this browser-fixture command. Its provisioning command
 configures only its disposable database. In particular, it disables `SUBMIT_RESTRICTION` so Payroll can create a completed-week claim for
 the real signature and withdrawal journey; it must never target a shared database.
 
+After pointing `backend/.env` at the disposable integrated database, run `E2E_INTEGRATED_SETUP=true npm run setup:e2e:integrated` from
+`backend/`. This explicit setup command is separate from the Playwright runner and refuses to change the setting unless the guard is set.
+
 ## Layout
 
 ```text
