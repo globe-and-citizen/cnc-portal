@@ -141,7 +141,8 @@ automatically when a deadline or maturity date passes.
 - [x] `AC-US-CC-002-13` Invalid round terms are rejected before an on-chain transaction is requested.
 - [x] `AC-US-CC-002-14` Rejecting or failing the on-chain creation leaves the Credit Account unchanged and returns a failure outcome.
 - [x] `AC-US-CC-002-15` Once the on-chain round exists, a metadata save failure can be retried any number of times with identical or edited
-      values without creating a duplicate round or a conflict error.
+      values without creating a duplicate round or a conflict error; going back only reaches the name and purpose, since target, token,
+      terms and access are fixed on-chain.
 
 **Accounting:** Publishing terms moves no company funds and creates no journal entry.
 
@@ -291,7 +292,7 @@ overview's `1 + 4N` a second time on top of its own `1 + 2L`.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `fa73696c40d1636ccd4bc769310c28b4b8f66adf`
+**Implementation evidence reviewed against:** `7542f8c0aa6ef435f3171f0a7850ec3387133591`
 
 - [Credit Account page](../../../app/src/views/team/[id]/CommunityCredit/IndexView.vue)
 - [Credit-call wizard](../../../app/src/views/team/[id]/CommunityCredit/NewView.vue)
