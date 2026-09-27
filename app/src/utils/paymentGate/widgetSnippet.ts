@@ -72,13 +72,19 @@ function loadWidgetScript(): HTMLScriptElement {
 }
 
 function buildVueSnippet(config: SnippetConfig): string {
-  return `<template>
+  return `<!-- Usage: <CncPayCheckout facture-id="order_8842" amount="128.00" /> -->
+<template>
   <div id="cnc-pay"></div>
-  <button :disabled="!widgetReady" @click="checkout">Pay 128.00 ${config.token}</button>
+  <button :disabled="!widgetReady" @click="checkout">Pay {{ amount }} ${config.token}</button>
 </template>
 
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref } from 'vue'
+
+const props = defineProps<{
+  factureId: string // this order's ID in your system
+  amount: string // this order's amount, e.g. '128.00'
+}>()
 
 ${buildComponentHelpers(config)}
 
@@ -96,8 +102,8 @@ onMounted(() => {
 onUnmounted(() => widgetScript?.removeEventListener('load', onWidgetLoad))
 
 function checkout() {
-  cncPay().setFactureId('order_8842') // this order's ID in your system
-  cncPay().setAmount('128.00')        // this order's amount
+  cncPay().setFactureId(props.factureId)
+  cncPay().setAmount(props.amount)
   cncPay().setOnStatus((status) => console.log('payment status', status))
   cncPay().show('#cnc-pay')
 }
@@ -109,7 +115,13 @@ function buildReactSnippet(config: SnippetConfig): string {
 
 ${buildComponentHelpers(config)}
 
-export function CncPayCheckout() {
+type CncPayCheckoutProps = {
+  factureId: string // this order's ID in your system
+  amount: string // this order's amount, e.g. '128.00'
+}
+
+// Usage: <CncPayCheckout factureId="order_8842" amount="128.00" />
+export function CncPayCheckout({ factureId, amount }: CncPayCheckoutProps) {
   const [widgetReady, setWidgetReady] = useState(false)
 
   useEffect(() => {
@@ -121,8 +133,8 @@ export function CncPayCheckout() {
   }, [])
 
   function checkout() {
-    cncPay().setFactureId('order_8842') // this order's ID in your system
-    cncPay().setAmount('128.00')        // this order's amount
+    cncPay().setFactureId(factureId)
+    cncPay().setAmount(amount)
     cncPay().setOnStatus((status) => console.log('payment status', status))
     cncPay().show('#cnc-pay')
   }
@@ -131,7 +143,7 @@ export function CncPayCheckout() {
     <>
       <div id="cnc-pay"></div>
       <button disabled={!widgetReady} onClick={checkout}>
-        Pay 128.00 ${config.token}
+        Pay {amount} ${config.token}
       </button>
     </>
   )

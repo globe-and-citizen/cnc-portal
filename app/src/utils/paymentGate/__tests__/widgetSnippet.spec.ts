@@ -26,8 +26,10 @@ describe('buildPaymentGateSnippet', () => {
     expect(snippet).toContain(`script.src = '${config.widgetScriptUrl}'`)
     expect(snippet).toContain(`script.setAttribute('data-bank', '${config.bankAddress}')`)
     expect(snippet).toContain("script.setAttribute('data-token', 'USDCe')")
-    expect(snippet).toContain("cncPay().setFactureId('order_8842')")
-    expect(snippet).toContain("cncPay().setAmount('128.00')")
+    expect(snippet).toContain('const props = defineProps<{')
+    expect(snippet).toContain('cncPay().setFactureId(props.factureId)')
+    expect(snippet).toContain('cncPay().setAmount(props.amount)')
+    expect(snippet).toContain('Pay {{ amount }} USDCe')
     expect(snippet).toContain("cncPay().show('#cnc-pay')")
   })
 
@@ -39,6 +41,12 @@ describe('buildPaymentGateSnippet', () => {
     expect(snippet).toContain("document.getElementById('cnc-pay-widget')")
     expect(snippet).toContain(`script.setAttribute('data-bank', '${config.bankAddress}')`)
     expect(snippet).toContain("script.setAttribute('data-token', 'USDCe')")
+    expect(snippet).toContain(
+      'export function CncPayCheckout({ factureId, amount }: CncPayCheckoutProps)'
+    )
+    expect(snippet).toContain('cncPay().setFactureId(factureId)')
+    expect(snippet).toContain('cncPay().setAmount(amount)')
+    expect(snippet).toContain('Pay {amount} USDCe')
     expect(snippet).toContain("cncPay().show('#cnc-pay')")
   })
 })
