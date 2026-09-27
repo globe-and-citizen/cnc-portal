@@ -109,7 +109,7 @@ test.describe(
           timeout: 30_000
         })
         await expect(page.getByText('20 E2E', { exact: true })).toHaveCount(3)
-        await expect(page.getByText('100%', { exact: true })).toBeVisible()
+        await expect(page.getByText('100.00%', { exact: true })).toBeVisible()
         await expect(page.getByText('0xf39F...2266', { exact: true })).toBeVisible()
 
         const history = page.locator('[data-test="investor-transactions"]')
