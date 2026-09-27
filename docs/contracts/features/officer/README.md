@@ -1,7 +1,8 @@
 # Contract: Officer
 
-**Epic Goal:** Deploy and orchestrate all team contracts from a single on-chain hub. **Contract File:** `contracts/Officer.sol`
-**Upgradeable:** Yes (Beacon) **Last updated:** 2026-03-16
+**Epic Goal:** Deploy and orchestrate all team contracts from a single on-chain hub. **Contract:**
+[`Officer.sol`](../../../../contract/contracts/Officer.sol) **Upgradeable:** Yes (Beacon) **Current implementation version:** `2.0.1` **Last
+verified:** 2026-09-27
 
 ---
 
@@ -21,14 +22,14 @@
 
 ## Implementation Notes
 
-- **Contract:** `contracts/Officer.sol`
+- **Contract:** [`Officer.sol`](../../../../contract/contracts/Officer.sol)
 - **Key functions:** `deployAllContracts`, `deployBeaconProxy`, `findDeployedContract`, `configureBeacon`, `getFeeFor`,
   `isFeeCollectorToken`
 - **Access roles:** `onlyOwner` for configuration and deployment
 - **Dependencies:** FeeCollector (fee queries), FactoryBeacon (creates Officer instances), Beacon (per-contract-type implementation
   pointers)
-- **Pattern:** Stores `DeployedContract[]` array; also auto-links contracts (Bank↔InvestorV1, Elections→BoardOfDirectors,
-  CashRemuneration→InvestorV1) after deployment
+- **Pattern:** Stores `DeployedContract[]` and configures sibling relationships after deployment. Investor technical minters are granted
+  before its ownership transfer removes Officer's temporary human-control roles.
 
 ---
 
@@ -44,9 +45,11 @@
 - [x] `deployAllContracts(deployments[])` accepts an array of `{ contractType, initializerData }` entries
 - [x] Each entry creates a `UserBeaconProxy` pointing to the configured beacon for that type
 - [x] Proxies are registered in the internal `_deployedContracts` array
-- [x] Auto-linking runs after deployment: Bank receives InvestorV1 address via Officer lookup; CashRemuneration receives MINTER_ROLE on
-      InvestorV1; Elections receives BoardOfDirectors address
+- [x] Auto-linking runs after deployment: sibling contracts resolve through Officer, and Investor grants the configured Cash Remuneration,
+      Safe Deposit Router, and Vesting contracts `MINTER_ROLE`
 - [x] Ownership of each deployed contract is transferred to the team owner
+- [x] Investor ownership transfer grants the team owner administrator and minter authority, removes Officer's temporary roles, and preserves
+      the configured technical minters
 - [x] Returns array of deployed addresses in the same order as inputs
 - [x] Reverts if a required beacon is not configured
 
@@ -115,6 +118,20 @@
 - [x] `pause()` / `unpause()` restricted to `onlyOwner`
 - [x] `deployBeaconProxy` and `deployAllContracts` blocked when paused
 - [x] State variable changes (e.g. `configureBeacon`) blocked when paused
+
+## Implementation Evidence
+
+**Implementation evidence reviewed against:** `90b8aa77b592db8175e328d59c7d711c614f66f2`
+
+- [Officer implementation](../../../../contract/contracts/Officer.sol)
+- [Investor authority handoff](../../../../contract/contracts/Investor/Investor.sol)
+- [Officer deployment tests](../../../../contract/test/Officer.spec.ts)
+- [Investor authority tests](../../../../contract/test/Investor.spec.ts)
+
+## Related Documentation
+
+- [Current Investor contract behaviour](../investor/README.md)
+- [Contract Management](../../../features/contract-management/README.md)
 
 ---
 

@@ -18,8 +18,10 @@ SHER token.
   holder balances, shareholder set, share issuance, dividend distribution, and migration state.
 - A **shareholder** is an address with a non-zero Investor balance. Its ownership percentage is its balance divided by the current total
   supply.
-- The Investor owner controls migration completion and bulk issuance. Its `MINTER_ROLE` controls individual issuance. The initial owner
-  receives that role, but the portal currently uses ownership checks rather than preflighting the role before offering individual issuance.
+- The Investor owner controls migration completion and bulk issuance. Investor ownership always moves together with `DEFAULT_ADMIN_ROLE` and
+  `MINTER_ROLE`; the current owner cannot renounce ownership or remove either authority role from itself.
+- Investor administrators can review current role holders and grant or revoke `MINTER_ROLE`. The portal reconstructs candidates from role
+  events, verifies their current state with `hasRole`, and labels incomplete RPC evidence instead of presenting it as an empty role set.
 - The **Safe Deposit Router** is the investment integration: it accepts supported deposits into the registered Safe and calls the Investor
   contract to issue SHER at its configured multiplier.
 - The **Bank** is the dividend integration: the Bank owner executes a payout directly, or an eligible Board member creates the Bank action.
@@ -36,6 +38,7 @@ SHER token.
 | Safe Deposit Router → Investor issuance | `US-SHER-005`, `US-SHER-001`                |
 | Bank → Investor dividend distribution   | `US-SHER-002`                               |
 | Investor migration root and claims      | `US-SHER-008`, `US-SHER-006`, `US-SHER-007` |
+| Investor ownership and role authority   | `US-SHER-009`, `US-SHER-004`                |
 
 ## Lifecycle
 
@@ -44,7 +47,8 @@ flowchart LR
     Member[Company member] --> Review[Review holdings, cap table, and activity]
     RouterOwner[Router owner] --> Configure[Configure Safe and investment terms]
     Investor[Investor] --> Invest[Invest through the Safe Deposit Router]
-    InvestorOwner[Investor owner with minter role] --> Issue[Issue SHER]
+    InvestorAdmin[Investor administrator] --> Permissions[Review and manage minter authority]
+    Permissions --> Issue[Authorized minter issues SHER]
     BankOwner[Bank owner or Board member] --> Dividend[Distribute dividends]
 
     Redeploy[Officer redeployment] --> Snapshot[Commit shareholder snapshot]
@@ -65,6 +69,7 @@ flowchart LR
 | US-SHER-006 | Claim a migrated shareholding            | Shareholder                     | 🧪 Validation  |
 | US-SHER-007 | Settle and close a shareholder migration | Investor owner                  | 🚧 In Progress |
 | US-SHER-008 | Start a shareholder migration            | Company owner                   | 🔗 Reference   |
+| US-SHER-009 | Manage Investor permissions              | Investor administrator          | 🧪 Validation  |
 
 ## Test Coverage Overview
 
@@ -78,6 +83,7 @@ flowchart LR
 | US-SHER-006 | 📋 Planned | E2E-PATH-08 |
 | US-SHER-007 | 📋 Planned | E2E-PATH-08 |
 | US-SHER-008 | 📋 Planned | E2E-PATH-08 |
+| US-SHER-009 | 🧪 Partial | Integrated  |
 
 ## US-SHER-001: Invest in the Safe and Receive SHER
 
@@ -203,7 +209,7 @@ Bank's distribution trigger is not booked again.
 - [x] `AC-US-SHER-004-03` The Investor contract requires `MINTER_ROLE` for an individual issuance. _(contract)_
 - [x] `AC-US-SHER-004-04` The recipient address and incremental issuance amount must be valid and greater than zero.
 - [x] `AC-US-SHER-004-05` An archived company cannot start an issuance write.
-- [ ] `AC-US-SHER-004-06` The portal verifies that the connected user has `MINTER_ROLE` and applies that same authorization rule to both
+- [x] `AC-US-SHER-004-06` The portal verifies that the connected user has `MINTER_ROLE` and applies that same authorization rule to both
       individual-issuance entry points.
 
 #### Edge & Error Cases
@@ -318,12 +324,45 @@ the redeployment and migration-root commit. Shareholder Management exposes the m
 
 **Dependencies:** US-CONTRACT-005 and a previous Investor generation
 
+## US-SHER-009: Manage Investor Permissions
+
+**As an** Investor administrator\
+**I want to** review and manage Investor token-minter authority\
+**So that** human and automated issuance uses explicit, current on-chain permissions
+
+### Acceptance Criteria
+
+#### Happy Path
+
+- [x] `AC-US-SHER-009-01` A company member can review the verified Investor owner, administrators, and minters with known member or contract
+      identities where available.
+- [x] `AC-US-SHER-009-03` A connected Investor administrator can grant `MINTER_ROLE` to a valid team member or contract address, and the
+      refreshed permission list reflects the confirmed on-chain state.
+- [x] `AC-US-SHER-009-04` A connected Investor administrator can revoke `MINTER_ROLE` from a delegated minter, and the refreshed permission
+      list reflects the confirmed on-chain state.
+
+#### Business Rules
+
+- [x] `AC-US-SHER-009-05` Only a connected account with `DEFAULT_ADMIN_ROLE` can initiate minter-role changes, and an archived company
+      cannot initiate those writes.
+- [x] `AC-US-SHER-009-06` The current Investor owner retains `DEFAULT_ADMIN_ROLE` and `MINTER_ROLE`; ownership transfer grants both roles to
+      the successor and removes them from the previous owner without removing unrelated technical minters. _(contract)_
+- [x] `AC-US-SHER-009-07` Revoking a known Cash Remuneration, Safe Deposit Router, or Vesting minter requires explicit acknowledgement of
+      the affected automated issuance flow.
+
+#### Edge & Error Cases
+
+- [x] `AC-US-SHER-009-02` A failed or partial historical role scan is labelled unavailable or incomplete and does not masquerade as an
+      authoritative empty permission list.
+- [x] `AC-US-SHER-009-08` A rejected or failed role transaction remains visible as a failure and does not report a successful permission
+      change.
+
+**Dependencies:** Current Investor contract, a connected Investor administrator, and a connected wallet
+
 ## Known Gaps
 
 - Bulk initial issuance through `distributeMint` is a disabled, coming-soon portal control. The Investor contract implements it, but no
   current portal story claims that a user can complete it.
-- The main issuance action is exposed to the Investor owner and the shareholder-list entry point to the company owner, while the contract
-  requires `MINTER_ROLE`. Neither control preflights that role, so the portal needs one contract-aligned authorization rule (`US-SHER-004`).
 - Migration dispatch and closure are surfaced to the company owner, while the contract restricts them to the Investor owner. The portal does
   not yet verify that both roles resolve to the connected user (`US-SHER-007`).
 - Investor activity falls back to the literal `SHER` symbol when the symbol read is missing or invalid, so the activity history can present
@@ -331,15 +370,19 @@ the redeployment and migration-root commit. Shareholder Management exposes the m
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `272d6bd8d455cf09e681192f3b9c6c284b63b4fa`
+**Implementation evidence reviewed against:** `90b8aa77b592db8175e328d59c7d711c614f66f2`
 
 - [Shareholder Management route](../../../app/src/views/team/%5Bid%5D/SherTokenView.vue) and
   [Investor overview](../../../app/src/components/sections/SherTokenView/InvestorsHeader.vue)
+- [Investor action panel](../../../app/src/components/sections/SherTokenView/InvestorsActions.vue)
 - [Shareholder list](../../../app/src/components/sections/SherTokenView/ShareholderList.vue) and
   [Investor and router transaction history](../../../app/src/components/sections/SherTokenView/InvestorsTransactions.vue)
 - [Individual issuance action](../../../app/src/components/sections/SherTokenView/InvestorActions/MintTokenAction.vue),
   [issuance form](../../../app/src/components/sections/SherTokenView/forms/MintForm.vue), and
   [Investor writes](../../../app/src/composables/investor/writes.ts)
+- [Investor permission surface](../../../app/src/components/sections/SherTokenView/InvestorPermissionsSection.vue),
+  [permission reads](../../../app/src/composables/investor/permissions.ts), and
+  [role evidence query](../../../app/src/queries/investorPermissions.queries.ts)
 - [Router configuration actions](../../../app/src/components/sections/SherTokenView/InvestorActions/SetSafeAddressAction.vue),
   [deposit control](../../../app/src/components/sections/SherTokenView/InvestorActions/ToggleSherCompensationAction.vue), and
   [multiplier action](../../../app/src/components/sections/SherTokenView/InvestorActions/SetCompensationMultiplierAction.vue)
@@ -355,7 +398,9 @@ the redeployment and migration-root commit. Shareholder Management exposes the m
   [migration orchestration](../../../app/src/composables/investor/useShareholderMigration.ts), and
   [claim and settlement writes](../../../app/src/composables/investor/useClaimMigration.ts)
 - [Investor overview tests](../../../app/src/components/sections/SherTokenView/__tests__/InvestorsHeader.spec.ts),
-  [issuance-form tests](../../../app/src/components/sections/SherTokenView/forms/__tests__/MintForm.spec.ts)
+  [issuance-form tests](../../../app/src/components/sections/SherTokenView/forms/__tests__/MintForm.spec.ts),
+  [permission component tests](../../../app/src/components/sections/SherTokenView/__tests__/InvestorPermissionsSection.spec.ts), and
+  [integrated permission lifecycle](../../../app/test/e2e/investor-permissions.integrated.spec.ts)
 
 ## Related Documentation
 
@@ -366,6 +411,7 @@ the redeployment and migration-root commit. Shareholder Management exposes the m
 - [Contract Management](../contract-management/README.md)
 - [Shareholder migration flow](../../contracts/features/shareholder-migration-flow.md)
 - [Safe Deposit Router contract behaviour](../../contracts/features/safe-deposit-router/README.md)
+- [Current Investor contract behaviour](../../contracts/features/investor/README.md)
 - [Product feature inventory](../README.md)
 
 _[← Back to feature inventory](../README.md)_
