@@ -168,6 +168,29 @@ describe('CreditCallTermsStep', () => {
       expect(form.deadlineTime).toBe(`${pad(local.getUTCHours())}:${pad(local.getUTCMinutes())}`)
     })
 
+    it('starts with no deadline date and keeps the pre-filled end-of-day time when one is picked', async () => {
+      const form = makeForm({ deadline: '', deadlineTime: '23:59' })
+      const wrapper = mountStep(form)
+      expect(wrapper.find('[data-test="cc-deadline"]').text()).toBe('Select a date')
+      const timeInput = wrapper.findComponent({ name: 'UInputTime' })
+      expect((timeInput.props('modelValue') as Time).hour).toBe(23)
+
+      wrapper.findComponent({ name: 'UCalendar' }).vm.$emit('update:modelValue', {
+        year: 2026,
+        month: 8,
+        day: 15
+      })
+      await wrapper.vm.$nextTick()
+
+      // The picked local day at 23:59 local, stored as UTC — not midnight.
+      const local = new Date(2026, 7, 15, 23, 59)
+      const pad = (n: number) => String(n).padStart(2, '0')
+      expect(form.deadline).toBe(
+        `${local.getUTCFullYear()}-${pad(local.getUTCMonth() + 1)}-${pad(local.getUTCDate())}`
+      )
+      expect(form.deadlineTime).toBe(`${pad(local.getUTCHours())}:${pad(local.getUTCMinutes())}`)
+    })
+
     it('shows the real UTC value as a live readout next to the local fields', () => {
       const wrapper = mountStep(makeForm({ deadline: '2026-07-31', deadlineTime: '12:00' }))
       expect(wrapper.find('[data-test="cc-deadline-utc-readout"]').text()).toContain(
