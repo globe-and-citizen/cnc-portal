@@ -293,7 +293,7 @@ overview's `1 + 4N` a second time on top of its own `1 + 2L`.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `7542f8c0aa6ef435f3171f0a7850ec3387133591`
+**Implementation evidence reviewed against:** `81ea764c11b24df295de4242056f6b69255a49cc`
 
 - [Credit Account page](../../../app/src/views/team/[id]/CommunityCredit/IndexView.vue)
 - [Credit-call wizard](../../../app/src/views/team/[id]/CommunityCredit/NewView.vue)
