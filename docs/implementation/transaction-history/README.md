@@ -2,7 +2,7 @@
 
 **Scope:** Shared client-side filtering, pagination, and transaction-detail presentation for account, credit, and shareholder histories.
 
-**Last verified:** 2026-08-30
+**Last verified:** 2026-09-27
 
 ## Consumers
 
@@ -31,6 +31,8 @@ flowchart LR
 - Contract activity reaches history sections through the shared RPC-log feeds; table filtering does not choose or replace that source.
 - History sections bind the shared `DatePicker` directly to a `{ start, end } | undefined` range. Their stable storage keys and date-filter
   test selectors are retained.
+- The `All time` preset bypasses date filtering instead of imposing an end-of-browser-day cutoff. This keeps the full ledger visible when a
+  chain timestamp is ahead of the client clock.
 - Page and page size live in the route query, so a paginated view is shareable and survives a reload; several paginated lists can share one
   route under distinct query keys.
 - The pager offers only the page sizes its owner allows; a list held in memory that shrinks below the page the URL names falls back to its
@@ -41,9 +43,10 @@ flowchart LR
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `7acc3be8ba3462eca7dcbc464357611acc5b3a46`
+**Implementation evidence reviewed against:** `c4adbc20714d30fd7089ee5e1a362b3e300508d7`
 
 - [Shared table state](../../../app/src/composables/transactions/useTransactionTable.ts)
+- [Shared table-state tests](../../../app/src/composables/transactions/__tests__/useTransactionTable.spec.ts)
 - [Route-bound pagination state](../../../app/src/composables/usePagination.ts) and its
   [tests](../../../app/src/composables/__tests__/usePagination.spec.ts)
 - [Shared pager control](../../../app/src/components/ui/TablePagination.vue)
