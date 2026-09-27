@@ -68,12 +68,15 @@ test.describe(
         await expect(page.locator('[data-test="invest-in-safe-button"]')).toBeDisabled()
         await configureShareholderInvestment(page)
         await expect
-          .poll(() => routerState(fixture))
+          .poll(async () => {
+            const state = await routerState(fixture)
+            return { ...state, safeAddress: state.safeAddress.toLowerCase() }
+          })
           .toEqual({
             depositsEnabled: true,
             multiplier: 2_000_000n,
             owner: E2E_OWNER,
-            safeAddress: fixture.safe
+            safeAddress: fixture.safe.toLowerCase()
           })
 
         const safeBalanceBefore = await safeUsdcBalance(fixture)
