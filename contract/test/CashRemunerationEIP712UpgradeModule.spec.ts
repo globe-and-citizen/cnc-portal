@@ -5,14 +5,14 @@ import { ZeroAddress } from 'ethers'
 before(initializeHardhat)
 
 /**
- * Exercises the semantics of ignition/modules/CashRemunerationUpgradeModule.ts:
+ * Exercises the semantics of ignition/modules/CashRemunerationV201UpgradeModule.ts:
  *   1. Deploy a new CashRemunerationEIP712 implementation.
  *   2. Point the existing FactoryBeacon at it via upgradeTo.
  *   3. Verify that a proxy deployed against the factory beacon observes the new
  *      code while preserving its storage (owner, supported tokens).
  *   4. Verify access control: only the factory beacon owner can upgrade.
  */
-describe('CashRemunerationEIP712UpgradeModule', function () {
+describe('CashRemunerationV201UpgradeModule', function () {
   async function deployFixture() {
     const [beaconOwner, proxyOwner, attacker] = await ethers.getSigners()
 

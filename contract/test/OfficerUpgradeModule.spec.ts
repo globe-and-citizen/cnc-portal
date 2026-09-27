@@ -6,14 +6,14 @@ import type { FeeCollector } from '../typechain-types/index.js'
 before(initializeHardhat)
 
 /**
- * Exercises the semantics of ignition/modules/OfficerUpgradeModule.ts:
+ * Exercises the semantics of ignition/modules/OfficerV201UpgradeModule.ts:
  *   1. Deploy a new Officer implementation.
  *   2. Point the existing FactoryBeacon at it via upgradeTo.
  *   3. Verify that a proxy deployed against the factory beacon observes the new
  *      code while preserving its storage (owner).
  *   4. Verify access control: only the factory beacon owner can upgrade.
  */
-describe('OfficerUpgradeModule', function () {
+describe('OfficerV201UpgradeModule', function () {
   async function deployFixture() {
     const [beaconOwner, officerOwner, attacker] = await ethers.getSigners()
 
@@ -27,8 +27,8 @@ describe('OfficerUpgradeModule', function () {
     )) as unknown as FeeCollector
     await feeCollectorImpl.waitForDeployment()
 
-    // Deploy the initial Officer implementation (module uses m.contract('Officer', [])
-    // in practice this is pointed at a deployed implementation — we mimic with a real one).
+    // Deploy the initial Officer implementation with the canonical FeeCollector constructor
+    // argument used by the versioned release module.
     const OfficerFactory = await ethers.getContractFactory('Officer')
     const officerImplV1 = await OfficerFactory.connect(beaconOwner).deploy(
       await feeCollectorImpl.getAddress()
