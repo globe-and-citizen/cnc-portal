@@ -352,7 +352,7 @@ contract Officer is OwnableUpgradeable, ReentrancyGuard, PausableUpgradeable {
 
   /// @notice Current contract version, per semver.
   function version() public pure returns (string memory) {
-    return "2.0.0";
+    return "2.0.1";
   }
 
   function _configureBeacons(BeaconConfig[] memory beaconConfigs) internal {
@@ -398,8 +398,6 @@ contract Officer is OwnableUpgradeable, ReentrancyGuard, PausableUpgradeable {
     // Cast to AccessControlUpgradeable-compatible interface for role management
     AccessControlUpgradeable investor = AccessControlUpgradeable(investorAddress);
     bytes32 minterRole = keccak256("MINTER_ROLE");
-    bytes32 adminRole = investor.DEFAULT_ADMIN_ROLE();
-
     // Setup CashRemuneration permissions if deployed
     if (cashRemunerationAddress != address(0)) {
       ICashRemuneration cashRemuneration = ICashRemuneration(cashRemunerationAddress);
@@ -429,9 +427,8 @@ contract Officer is OwnableUpgradeable, ReentrancyGuard, PausableUpgradeable {
       IVesting(vestingAddress).transferOwnership(ownerAddress);
     }
 
-    // Setup owner permissions on Investor V2
-    investor.grantRole(minterRole, ownerAddress);
-    investor.grantRole(adminRole, ownerAddress);
+    // Investor's ownership override grants the final owner its human-control roles and revokes
+    // Officer's temporary deployment roles while preserving the technical minters granted above.
     OwnableUpgradeable(investorAddress).transferOwnership(ownerAddress);
   }
 
