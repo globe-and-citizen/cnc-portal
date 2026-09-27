@@ -79,8 +79,14 @@ export async function setMemberUsdcWage(
     if (!(await isEnabled(enabled))) await enabled.click()
     await dialog.locator(`[data-test="rate-${token}-amount"]`).fill(rate)
   }
+  const savedWage = page.waitForResponse(
+    (response) =>
+      response.request().method() === 'PUT' &&
+      new URL(response.url()).pathname === '/api/wage/setWage'
+  )
   await dialog.locator('[data-test="add-wage-button"]').click()
-  await expect(page.getByText('Wage updated successfully', { exact: true })).toBeVisible()
+  expect((await savedWage).ok()).toBe(true)
+  await expect(dialog).toBeHidden({ timeout: 30_000 })
 }
 
 export async function openMemberPayrollHistory(

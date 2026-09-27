@@ -5,6 +5,7 @@ export default mergeConfig(
   vitestConfig,
   defineConfig({
     test: {
+      include: ['src/**/*.test.ts'],
       exclude: [...configDefaults.exclude, '**/*.e2e-{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
     },
   })

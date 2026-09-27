@@ -12,6 +12,7 @@ import {
   tokenBalance
 } from './e2e-chain'
 import { dialogAmount, openAccountFromSidebar, selectToken, useWallet } from './e2e-page'
+import { expectTokenHolding } from './e2e-page'
 import { grossForNet } from './bank/bank-chain'
 import { completeCashOut, transferBankToContract } from './bank/bank-page'
 import {
@@ -202,7 +203,8 @@ test.describe(
         const expense = await addressFrom(page.locator('[data-test="expense-account-address"]'))
         await expect(page.locator('[data-test="expense-account-address"]')).toContainText(expense)
         await expect.poll(() => tokenBalance(usdc, expense)).toBe(requestedNet)
-        await expect(page.locator('[data-test="expense-account-balance"]')).toContainText('$8.00')
+        await expect(page.locator('[data-test="expense-account-balance"]')).toBeVisible()
+        await expectTokenHolding(page, '8', 'USDC')
         await expect(page.getByText('Month Spent', { exact: true })).toBeVisible()
         await expect(page.getByText('Total Approved', { exact: true })).toBeVisible()
         await expect.poll(() => tokenBalance(usdc, bank)).toBe(parseUnits('10', 6) - transferGross)
