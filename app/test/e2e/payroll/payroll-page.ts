@@ -152,9 +152,7 @@ export async function fundCashRemuneration(
   const depositButton = deposit.locator('[data-test="deposit-button"]')
   await expect(depositButton).toBeEnabled()
   await depositButton.click()
-  await expect(page.getByText(/deposited successfully$/)).toBeVisible({
-    timeout: 30_000
-  })
+  await expect(deposit).toBeHidden({ timeout: 30_000 })
 
   await page.locator('[data-test="transfer-button"]').click()
   const transfer = page.getByRole('dialog', { name: 'Transfer from Bank Contract' })

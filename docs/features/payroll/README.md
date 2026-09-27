@@ -124,7 +124,7 @@ Run it from `backend/` with `npm run test:payroll:database`. It requires a local
 
 CI runs API unit coverage separately from the real PostgreSQL migration suite. The latter has its own disposable local PostgreSQL service;
 unit coverage discovers only `backend/src/**/*.test.ts`. Integrated browser assertions verify actual token holdings independently of
-external fiat-price quotes and wait for successful wage API responses rather than transient toast messages.
+external fiat-price quotes and wait for successful wage API responses or a completed Bank deposit rather than transient toast messages.
 
 The API enforces paused-wage claim restrictions, so restoration of claim submission is proven by the real browser/API journey
 (`AC-US-PAYROLL-002-03`). Normal signing versus explicit re-signing is a client interaction (`AC-US-PAYROLL-008-06/07`); the backend
