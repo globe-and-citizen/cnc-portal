@@ -140,6 +140,23 @@ git commit -m "chore(contracts): bake polygon/InvestorV1 baseline after 1.3.0 de
 
 Do the same on `localhost` after a local deploy.sh run, if you maintain local baselines.
 
+### Guarded multi-contract releases
+
+When one release upgrades multiple beacons, use a fail-fast script that validates and reads back every target independently. Save the
+pre-upgrade implementation addresses to a local ignored manifest before broadcasting the first transaction. Do not place live deployment
+addresses in a second committed configuration file; resolve them from the canonical Ignition deployment registry.
+
+The Polygon 2.0.1 release uses [`deploy-upgrade-v2.0.1.sh`](./deploy-upgrade-v2.0.1.sh) and the
+[`Polygon 2.0.1 runbook`](./releases/polygon-v2.0.1.md). Investor must be upgraded before Officer because the new Officer permission setup
+depends on the new Investor ownership override.
+
+Every production release must have new versioned Ignition modules. Never change a versioned release module after it has been used: the same
+module file must be rehearsed locally and then deployed to production, with Ignition state isolated by chain ID. Unversioned modules may be
+kept for historical compatibility, but a release script must not depend on them.
+
+A release rehearsal may set `CNC_STORAGE_BASELINE_NETWORK` to the production network so local and production runs compare the candidate
+against the same committed production layout. This override is validation-only and is rejected while baking baselines.
+
 ### Validating a single contract
 
 ```bash

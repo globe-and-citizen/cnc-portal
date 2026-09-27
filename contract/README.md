@@ -110,6 +110,11 @@ See [`UPGRADE_STRATEGY.md`](./UPGRADE_STRATEGY.md) for:
 
 Track every deployed change in [`CHANGELOG.md`](./CHANGELOG.md).
 
+The prepared four-contract Polygon 2.0.1 release is documented in [`releases/polygon-v2.0.1.md`](./releases/polygon-v2.0.1.md). Its guarded
+script validates and upgrades CashRemunerationEIP712, ExpenseAccountEIP712, Investor, and Officer sequentially; it never deploys replacement
+proxies or beacons. The release-specific `V201` Ignition modules are shared unchanged by local rehearsal and Polygon deployment; only the
+canonical address registry selected by chain ID differs.
+
 ## Security review
 
 Every PR touching `contract/` runs [Slither](https://github.com/crytic/slither) in CI (`.github/workflows/contract-slither.yml`), which

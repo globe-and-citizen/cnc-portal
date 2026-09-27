@@ -28,7 +28,23 @@ Each entry should answer:
 
 <!-- Add entries above this line, newest first -->
 
+## Investor
+
+### Investor 2.0.1 — unreleased
+
+- What: transfer ownership together with the required administrator and minter roles while preserving technical minters.
+- Storage: none.
+- Shipped via: pending upgrade in place.
+- Networks: not deployed.
+
 ## Officer
+
+### Officer 2.0.1 — unreleased
+
+- What: delegate final Investor owner-role setup to Investor's atomic ownership transfer.
+- Storage: none.
+- Shipped via: pending upgrade in place.
+- Networks: not deployed.
 
 <!-- Add entries above this line, newest first -->
 
