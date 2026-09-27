@@ -121,8 +121,11 @@ test.describe(
         })
         await expect(history.getByText('Multiplier updated', { exact: true })).toBeVisible()
         await expect(history.getByText('Safe deposits enabled', { exact: true })).toBeVisible()
-        await expect(history.getByText('Safe deposit', { exact: true })).toBeVisible()
         await expect(history.getByText('Shares minted', { exact: true })).toBeVisible()
+        const investmentRow = history.getByRole('row').filter({ hasText: 'Shares minted' })
+        await expect(investmentRow).toContainText('2 events')
+        await investmentRow.locator('[data-test="investor-transaction-expand-button"]').click()
+        await expect(history.getByText('Safe deposit', { exact: true })).toBeVisible()
         await history.locator('[data-test="investor-transaction-detail-button"]').last().click()
         await expect(page.getByText('Transaction detail', { exact: true })).toBeVisible()
         await page
