@@ -207,9 +207,7 @@ export const CONTRACT_ERRORS: ContractErrorCatalog = {
           : 'These migrated shares have already been claimed'
       },
       LengthMismatch: 'Shareholders, amounts and proofs must have the same length',
-      DividendsFrozenDuringMigration: 'Dividends are frozen until the migration is marked complete',
-      OwnershipRenunciationDisabled: 'Investor ownership cannot be renounced',
-      OwnerRoleRequired: 'The Investor owner must retain administrator and minter authority'
+      DividendsFrozenDuringMigration: 'Dividends are frozen until the migration is marked complete'
     },
     FeeCollector: {
       EmptyContractType: 'Contract type cannot be empty',

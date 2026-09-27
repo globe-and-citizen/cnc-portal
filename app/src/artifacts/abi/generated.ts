@@ -4301,7 +4301,7 @@ export const investorAbi = [
     inputs: [],
     name: 'renounceOwnership',
     outputs: [],
-    stateMutability: 'pure'
+    stateMutability: 'nonpayable'
   },
   {
     type: 'function',
