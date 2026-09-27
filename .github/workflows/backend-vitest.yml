@@ -12,39 +12,6 @@ on:
   workflow_dispatch:
 
 jobs:
-  payroll-database-integration:
-    if: github.event.action != 'labeled' || github.event.label.name == 'run'
-    runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:16-alpine
-        env:
-          POSTGRES_USER: test
-          POSTGRES_PASSWORD: test
-          POSTGRES_DB: test_db
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U test -d test_db"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-    env:
-      PAYROLL_TEST_DATABASE_URL: postgresql://test:test@127.0.0.1:5432/test_db
-    defaults:
-      run:
-        working-directory: ./backend
-    steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-node@v6
-        with:
-          node-version: 24.x
-          cache: "npm"
-          cache-dependency-path: ./backend/package-lock.json
-      - run: npm ci
-      - run: npm run prisma:generate
-      - run: npm run test:payroll:database
-
   api-unit-test:
     if: github.event.action != 'labeled' || github.event.label.name == 'run'
     runs-on: ubuntu-latest

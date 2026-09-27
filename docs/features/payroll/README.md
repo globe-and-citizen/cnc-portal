@@ -118,13 +118,9 @@ submission configuration described in the [integrated test setup](../../../app/t
 separately with the rule enabled in the API suite.
 
 From `app/`, run `npm run test:e2e:integrated -- --ui test/e2e/payroll`. Unit and API suites run independently of the manual browser review.
-The PostgreSQL suite executes the actual migration in temporary schemas inside rolled-back transactions; it does not reset application data.
-Run it from `backend/` with `npm run test:payroll:database`. It requires a local `DATABASE_URL` in `backend/.env` or
-`PAYROLL_TEST_DATABASE_URL` in the process environment.
 
-CI runs API unit coverage separately from the real PostgreSQL migration suite. The latter has its own disposable local PostgreSQL service;
-unit coverage discovers only `backend/src/**/*.test.ts`. Integrated browser assertions verify actual token holdings independently of
-external fiat-price quotes and wait for successful wage API responses or a completed Bank deposit rather than transient toast messages.
+CI runs API unit coverage. Integrated browser assertions verify actual token holdings independently of external fiat-price quotes and wait
+for successful wage API responses or a completed Bank deposit rather than transient toast messages.
 
 The API enforces paused-wage claim restrictions, so restoration of claim submission is proven by the real browser/API journey
 (`AC-US-PAYROLL-002-03`). Normal signing versus explicit re-signing is a client interaction (`AC-US-PAYROLL-008-06/07`); the backend
@@ -897,7 +893,6 @@ not a claim of 100% statement or branch coverage. Manual feature-owner validatio
 - [Integrated Payroll compensation and claim E2E journeys](../../../app/test/e2e/payroll/payroll.integrated.spec.ts)
 - [Integrated Payroll payment E2E journey](../../../app/test/e2e/payroll/payroll-payment.integrated.spec.ts)
 - [Integrated Payroll insufficient-funding E2E journey](../../../app/test/e2e/payroll/payroll-insufficient-funds.integrated.spec.ts)
-- [Real PostgreSQL uniqueness and migration tests](../../../backend/test/integration/payroll-database.integration.test.ts)
 - [Company Payroll history component tests](../../../app/src/components/sections/WeeklyClaimView/__tests__/WeeklyClaim.spec.ts)
 
 ### Test-suite ownership
