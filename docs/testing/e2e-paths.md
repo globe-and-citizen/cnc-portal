@@ -1,6 +1,6 @@
 # Integrated E2E Checklist
 
-**Scope:** G0 technical readiness through G7 cross-feature Accounting verification
+**Scope:** G0 technical readiness through G8 Board Election verification
 
 This checklist organizes integrated E2E coverage around business paths rather than one path per user story. A path may validate several
 stories when the same actors, persisted state, and UX sequence connect them naturally.
@@ -27,6 +27,7 @@ coverage; the latest execution result and artifacts belong in Playwright and CI 
 - G5 — Payroll lifecycle.
 - G6 — Expense Account lifecycle.
 - G7 — Cross-feature Accounting verification.
+- G8 — Board Election lifecycle.
 
 ## Integration Boundary
 
@@ -379,6 +380,34 @@ coverage; the latest execution result and artifacts belong in Playwright and CI 
   - Expected result: the reviewed classification and exported books preserve the same accounting snapshot.
   - Status: planned.
 
+## G8 — Board Election Lifecycle
+
+- `E2E-PATH-17` — Create, vote, publish, and review a Board election
+  - Stories validated:
+    - `US-EL-01` — create a Board election;
+    - `US-EL-02` — cast a vote;
+    - `US-EL-03` — publish election results;
+    - `US-EL-04` — request election-created notifications;
+    - `US-EL-07` — view the current Board of Directors;
+    - `US-EL-08` — review a published election.
+  - Actors: company owner and eligible voter.
+  - Dependencies: a company with Elections and Board of Directors contracts and funded local wallets.
+  - Main path:
+    - [x] Register the actors, create an operational company, deploy its contracts, and add its members through the real stack.
+    - [x] Create an election through the portal and verify its configuration and fixed eligible-voter snapshot on-chain.
+    - [x] Verify the backend persists member notifications before acknowledging the hand-off.
+    - [x] Open the persisted notification as an eligible member, mark it read, and follow it to the election.
+    - [x] Cast a ballot and verify the recorded choice, vote count, and refreshed portal state.
+    - [x] Publish the results and verify the published state, Board membership, and next-election availability on-chain and in the portal.
+    - [x] Reload, open the published election from history, and review its elected Board.
+  - Separate variants: rejected wallet requests for creation, voting, and publication; notification failures; and archived-company write
+    guards remain controlled mocked-browser acceptance tests.
+  - Expected result: the election remains traceable from creation through the elected Board and published history.
+  - Status: integrated main path; the production frontend, owned backend, database, and local chain run together. Controlled recovery and
+    guard variants remain browser acceptance.
+  - Evidence: [integrated election lifecycle](../../app/test/e2e/elections/elections.integrated.spec.ts) and
+    [mocked browser election variants](../../app/test/e2e/elections/elections.spec.ts).
+
 ## Cross-Group Execution Rules
 
 - Run `E2E-PATH-00` before functional paths, but keep environment preparation outside Playwright.
@@ -396,3 +425,4 @@ coverage; the latest execution result and artifacts belong in Playwright and CI 
 - [Community Credit user stories](../features/community-credit/README.md)
 - [Payroll user stories](../features/payroll/README.md)
 - [Accounting user stories](../features/accounting/README.md)
+- [Board Elections user stories](../features/elections/README.md)

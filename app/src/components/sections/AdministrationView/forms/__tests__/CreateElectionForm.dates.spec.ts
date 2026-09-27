@@ -37,7 +37,7 @@ describe('CreateElectionForm — opening', () => {
     expect(vm.openingHelp).toContain('exactly')
   })
 
-  it('refuses an opening that has already gone by, without rewriting it', () => {
+  it('[AC-US-EL-01-06] refuses an opening that has already gone by without rewriting it', () => {
     const wrapper = mountComponent()
     const vm = getVm(wrapper)
 
@@ -52,7 +52,7 @@ describe('CreateElectionForm — opening', () => {
     expect(wrapper.emitted('createProposal')).toBeFalsy()
   })
 
-  it('refuses an opening time it cannot read', () => {
+  it('[AC-US-EL-01-06] refuses an unreadable opening time', () => {
     const wrapper = mountComponent()
     const vm = getVm(wrapper)
 
@@ -89,7 +89,7 @@ describe('CreateElectionForm — opening', () => {
 })
 
 describe('CreateElectionForm — closing', () => {
-  it('sets endDate required error when no closing day is picked', () => {
+  it('[AC-US-EL-01-06] requires a closing day', () => {
     const wrapper = mountComponent()
     const vm = getVm(wrapper)
 
@@ -102,7 +102,7 @@ describe('CreateElectionForm — closing', () => {
     expect(wrapper.emitted('createProposal')).toBeFalsy()
   })
 
-  it('refuses a closing time that cannot be read', () => {
+  it('[AC-US-EL-01-06] refuses an unreadable closing time', () => {
     const wrapper = mountComponent()
     const vm = getVm(wrapper)
 
@@ -153,7 +153,7 @@ describe('CreateElectionForm — closing', () => {
 })
 
 describe('CreateElectionForm — what is emitted', () => {
-  it('emits the exact moments the owner picked, days ahead', () => {
+  it('[AC-US-EL-01-01] emits the exact future voting window the owner picked', () => {
     const wrapper = mountComponent()
     const vm = getVm(wrapper)
     const openingDay = inDays(10)

@@ -6,6 +6,7 @@ import BodMembersSection from '../BodMembersSection.vue'
 import { useTeamStore } from '@/stores'
 import { log } from '@/lib/logging'
 import { mockBODReads, mockElectionsReads } from '@/tests/mocks'
+import { useBodGetBoardOfDirectors } from '@/composables/bod/reads'
 
 const NotFoundStub = { template: '<div data-test="not-found">no-members</div>' }
 
@@ -91,11 +92,17 @@ describe('BodMembersSection', () => {
     expect(wrapper.find('[data-test="not-found"]').exists()).toBe(true)
   })
 
-  it('[AC-US-EL-07-01] renders current board members when data is available', async () => {
+  /**
+   * Covers:
+   * - [AC-US-EL-07-01]
+   * - [AC-US-EL-07-03]
+   */
+  it('renders current board members from the Board contract read', async () => {
     seedBoard(['0x1', '0x2'])
 
     const wrapper = mountSection()
 
+    expect(useBodGetBoardOfDirectors).toHaveBeenCalledTimes(1)
     const users = wrapper.findAll('[data-test="user-col"]')
     expect(users.length).toBe(2)
     expect(users[0]?.attributes('data-name')).toBe('Alice')
@@ -132,7 +139,7 @@ describe('BodMembersSection', () => {
     expect(wrapper.find('[data-test="not-found"]').exists()).toBe(true)
   })
 
-  it('follows the board as the shared read settles', async () => {
+  it('[AC-US-EL-07-05] follows the board as the shared read settles after mount', async () => {
     const wrapper = mountSection()
     expect(wrapper.find('[data-test="not-found"]').exists()).toBe(true)
 

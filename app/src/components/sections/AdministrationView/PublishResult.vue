@@ -15,13 +15,14 @@
 import { classifyError } from '@/utils/errors/classifyContractError'
 import { log } from '@/lib/logging'
 import { useElectionsPublishResults } from '@/composables/elections'
+import { useToast } from '@nuxt/ui/composables'
 import { computed } from 'vue'
 import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
 
 const { isWriteDisabled, archivedTooltip } = useTeamWriteGuard()
 
 const toast = useToast()
-const { mutate: publishResults, isPending } = useElectionsPublishResults()
+const { mutateAsync: publishResults, isPending } = useElectionsPublishResults()
 const {
   electionId,
   disabled = false,
@@ -46,22 +47,17 @@ const tooltip = computed(() => {
  * No gas pre-flight here: the write layer simulates before sending, so a
  * refusal is reported once, classified, from one place.
  */
-const handlePublishResults = (electionId: number) => {
+const handlePublishResults = async (electionId: number) => {
   if (isPublishDisabled.value) return
 
-  publishResults(
-    { args: [BigInt(electionId)] },
-    {
-      onSuccess: () => {
-        toast.add({ title: 'Election results published successfully!', color: 'success' })
-      },
-      onError: (error) => {
-        log.error('Error publishing results:', error)
-        const classified = classifyError(error, { contract: 'Elections' })
-        if (classified.category === 'user_rejected') return
-        toast.add({ title: classified.userMessage, color: 'error' })
-      }
-    }
-  )
+  try {
+    await publishResults({ args: [BigInt(electionId)] })
+    toast.add({ title: 'Election results published successfully!', color: 'success' })
+  } catch (error) {
+    log.error('Error publishing results:', error)
+    const classified = classifyError(error, { contract: 'Elections' })
+    if (classified.category === 'user_rejected') return
+    toast.add({ title: classified.userMessage, color: 'error' })
+  }
 }
 </script>

@@ -21,8 +21,9 @@ import PaymentGateWidgetView, {
   type WidgetPane,
   type WidgetPaymentStep
 } from './PaymentGateWidgetView.vue'
+import type { PaymentGateToken } from '@/utils/paymentGate/widgetSnippet'
 
-const { selectedToken } = defineProps<{ selectedToken: 'USDC' | 'USDCe' | 'POL' }>()
+const { selectedToken } = defineProps<{ selectedToken: PaymentGateToken }>()
 
 const pane = ref<WidgetPane>('review')
 const paymentStep = ref<WidgetPaymentStep>('connecting')

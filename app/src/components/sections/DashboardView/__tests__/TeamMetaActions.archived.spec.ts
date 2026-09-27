@@ -159,7 +159,7 @@ describe('[US-COMPANIES-006] archived team write guard (TeamMetaActions)', () =>
   })
 
   describe('ElectionActions', () => {
-    it('disables create election when team is archived', () => {
+    it('[AC-US-EL-01-12] disables election creation when the company is archived', () => {
       vi.mocked(useTeamStore).mockReturnValue({
         currentTeamId: '1',
         currentTeamMeta: archivedTeamMeta

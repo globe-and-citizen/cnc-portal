@@ -32,7 +32,7 @@ export const addElectionNotifications = async (req: Request, res: Response) => {
     if (callerAddress !== team.ownerAddress)
       return errorResponse(403, 'Only the team owner can send election notifications', res);
 
-    addNotification(
+    await addNotification(
       team.members.map((member) => member.address),
       {
         message: `New election created you are invited to participate`,

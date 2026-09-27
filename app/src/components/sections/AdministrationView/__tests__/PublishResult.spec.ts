@@ -1,8 +1,8 @@
-import { mount } from '@vue/test-utils'
+import { flushPromises, mount } from '@vue/test-utils'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { nextTick } from 'vue'
 import PublishResult from '../PublishResult.vue'
-import { mockElectionsWrites } from '@/tests/mocks'
+import { mockElectionsWrites, mockToast } from '@/tests/mocks'
 import { mockLog } from '@/tests/mocks/utils.mock'
 import { useTeamStore } from '@/stores'
 
@@ -15,11 +15,6 @@ vi.mock('@/constant', async (importOriginal) => ({
   ELECTIONS_BEACON_ADDRESS: '0x0000000000000000000000000000000000000003',
   ELECTIONS_IMPL_ADDRESS: '0x0000000000000000000000000000000000000004'
 }))
-type PublishOptions = {
-  onSuccess?: () => void
-  onError?: (e: unknown) => void
-}
-
 describe('PublishResult.vue', () => {
   const publish = mockElectionsWrites.publishResults
 
@@ -44,22 +39,21 @@ describe('PublishResult.vue', () => {
     const wrapper = mount(PublishResult, { props: { electionId: 42 } })
 
     await wrapper.find('[data-test="publish-results-button"]').trigger('click')
-    await nextTick()
+    await flushPromises()
 
-    expect(publish.mutate).toHaveBeenCalledWith(
-      { args: [BigInt(42)] },
-      expect.objectContaining({ onSuccess: expect.any(Function), onError: expect.any(Function) })
-    )
+    expect(publish.mutateAsync).toHaveBeenCalledWith({ args: [BigInt(42)] })
+    expect(mockToast.add).toHaveBeenCalledWith({
+      title: 'Election results published successfully!',
+      color: 'success'
+    })
   })
 
   it('runs the onError path without scheduling a mutation re-run', async () => {
-    publish.mutate.mockImplementationOnce((_v: unknown, opts?: PublishOptions) => {
-      opts?.onError?.(new Error('mutation failed'))
-    })
+    publish.mutateAsync.mockRejectedValueOnce(new Error('mutation failed'))
     const wrapper = mount(PublishResult, { props: { electionId: 3 } })
 
     await wrapper.find('[data-test="publish-results-button"]').trigger('click')
-    await nextTick()
+    await flushPromises()
     expect(mockLog.error).toHaveBeenCalled()
   })
 
@@ -82,6 +76,6 @@ describe('PublishResult.vue', () => {
     await wrapper.find('[data-test="publish-results-button"]').trigger('click')
     await nextTick()
 
-    expect(publish.mutate).not.toHaveBeenCalled()
+    expect(publish.mutateAsync).not.toHaveBeenCalled()
   })
 })

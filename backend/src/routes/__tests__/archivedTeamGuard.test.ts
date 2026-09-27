@@ -387,7 +387,7 @@ describe('archived team guard on write routes', () => {
   describe('POST /elections/:teamId', () => {
     const app = mount(electionRoutes);
 
-    it('rejects election creation for an archived company', async () => {
+    it('[AC-US-EL-04-07] rejects election notifications for an archived company', async () => {
       vi.mocked(prisma.team.findUnique).mockResolvedValue({ isArchived: true } as never);
 
       const response = await request(app).post('/1').send({});

@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { mount } from '@vue/test-utils'
 import ElectionCandidateIdentity from '@/components/sections/AdministrationView/ElectionCandidateIdentity.vue'
 
-describe('[US-EL-02][US-EL-07] ElectionCandidateIdentity', () => {
+describe('ElectionCandidateIdentity', () => {
   const baseUser = {
     address: '0x1234567890abcdef1234567890abcdef12345678',
     name: 'Alice Example',
