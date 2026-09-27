@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { mount, flushPromises } from '@vue/test-utils'
+import { mount, flushPromises, type VueWrapper } from '@vue/test-utils'
 import { computed } from 'vue'
 import { Time } from '@internationalized/date'
 import { parseEventLogs, type Address } from 'viem'
@@ -48,6 +48,15 @@ vi.mock('@/queries/fixedReturnOffering.queries', async (importOriginal) => ({
 }))
 
 import NewView from '../NewView.vue'
+
+/** The subscription deadline date starts empty, so every full run through the wizard
+ *  has to pick one on the Terms step, the way an issuer does. */
+async function pickFutureDeadline(wrapper: VueWrapper) {
+  const nextYear = new Date().getFullYear() + 1
+  await wrapper
+    .findComponent({ name: 'UCalendar' })
+    .vm.$emit('update:modelValue', { year: nextYear, month: 1, day: 15 })
+}
 
 const FIXED_RETURN_ADDRESS = '0x5234567890123456789012345678901234567890' as Address
 const mockParseEventLogs = vi.mocked(parseEventLogs)
@@ -152,6 +161,22 @@ describe('NewView', () => {
     expect(wrapper.find('[data-test="cc-term-30"]').exists()).toBe(true) // still on Terms
   })
 
+  it('[AC-US-CC-002-05] requires a subscription deadline to be picked before leaving Terms', async () => {
+    const wrapper = mount(NewView)
+    await wrapper.find('[data-test="cc-name"]').setValue('Q3 runway bridge')
+    await wrapper.find('[data-test="cc-next"]').trigger('click') // Basics → Terms
+    await wrapper.find('[data-test="cc-next"]').trigger('click') // no date picked
+
+    expect(wrapper.find('[data-test="cc-deadline-error"]').text()).toBe(
+      'Subscription deadline is required'
+    )
+    expect(wrapper.find('[data-test="cc-deadline"]').exists()).toBe(true) // still on Terms
+
+    // Picking a date clears the error straight away, without another Continue.
+    await pickFutureDeadline(wrapper)
+    expect(wrapper.find('[data-test="cc-deadline-error"]').exists()).toBe(false)
+  })
+
   it('[AC-US-CC-002-06] creates the round on-chain and returns to the list', async () => {
     mockFixedReturnWrites.createLendingOffer.mutateAsync.mockResolvedValueOnce({
       hash: '0xhash',
@@ -163,7 +188,8 @@ describe('NewView', () => {
 
     // Basics → Terms → Access → Publish
     await wrapper.find('[data-test="cc-name"]').setValue('Q3 runway bridge')
-    await wrapper.find('[data-test="cc-next"]').trigger('click')
+    await wrapper.find('[data-test="cc-next"]').trigger('click') // Basics → Terms
+    await pickFutureDeadline(wrapper)
     await wrapper.find('[data-test="cc-next"]').trigger('click')
     await wrapper.find('[data-test="cc-next"]').trigger('click')
     await flushPromises()
@@ -179,7 +205,8 @@ describe('NewView', () => {
     const wrapper = mount(NewView)
 
     await wrapper.find('[data-test="cc-name"]').setValue('Q3 runway bridge')
-    await wrapper.find('[data-test="cc-next"]').trigger('click')
+    await wrapper.find('[data-test="cc-next"]').trigger('click') // Basics → Terms
+    await pickFutureDeadline(wrapper)
     await wrapper.find('[data-test="cc-next"]').trigger('click')
     await wrapper.find('[data-test="cc-next"]').trigger('click')
     await flushPromises()
@@ -198,7 +225,8 @@ describe('NewView', () => {
 
     const wrapper = mount(NewView)
     await wrapper.find('[data-test="cc-name"]').setValue('Q3 runway bridge')
-    await wrapper.find('[data-test="cc-next"]').trigger('click')
+    await wrapper.find('[data-test="cc-next"]').trigger('click') // Basics → Terms
+    await pickFutureDeadline(wrapper)
     await wrapper.find('[data-test="cc-next"]').trigger('click')
     await wrapper.find('[data-test="cc-next"]').trigger('click')
     await flushPromises()
@@ -231,7 +259,8 @@ describe('NewView', () => {
 
     const wrapper = mount(NewView)
     await wrapper.find('[data-test="cc-name"]').setValue('Q3 runway bridge')
-    await wrapper.find('[data-test="cc-next"]').trigger('click')
+    await wrapper.find('[data-test="cc-next"]').trigger('click') // Basics → Terms
+    await pickFutureDeadline(wrapper)
     await wrapper.find('[data-test="cc-next"]').trigger('click')
     await wrapper.find('[data-test="cc-next"]').trigger('click')
     await flushPromises()
@@ -265,7 +294,8 @@ describe('NewView', () => {
     const wrapper = mount(NewView)
 
     await wrapper.find('[data-test="cc-name"]').setValue('Q3 runway bridge')
-    await wrapper.find('[data-test="cc-next"]').trigger('click')
+    await wrapper.find('[data-test="cc-next"]').trigger('click') // Basics → Terms
+    await pickFutureDeadline(wrapper)
     await wrapper.find('[data-test="cc-next"]').trigger('click')
     await wrapper.find('[data-test="cc-next"]').trigger('click')
     await flushPromises()

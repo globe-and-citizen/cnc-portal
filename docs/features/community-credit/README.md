@@ -118,7 +118,8 @@ automatically when a deadline or maturity date passes.
 - [x] `AC-US-CC-002-02` The issuer can select an ERC-20 token supported by the company's Credit Account.
 - [x] `AC-US-CC-002-03` The issuer can define a positive funding target.
 - [x] `AC-US-CC-002-04` The issuer can define a flat interest rate from 0% to 100% for the complete term.
-- [x] `AC-US-CC-002-05` The issuer can define a future subscription deadline and a positive term of at most 30 years.
+- [x] `AC-US-CC-002-05` The issuer can define a future subscription deadline and a positive term of at most 30 years. The deadline date
+      starts empty and must be picked explicitly; only the time is pre-filled (end of day, local time).
 - [x] `AC-US-CC-002-06` Successful publication creates one on-chain round, persists its metadata, and exposes the round through subsequent
       Credit Account reads.
 
