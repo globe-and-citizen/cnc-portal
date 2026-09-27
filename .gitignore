@@ -13,6 +13,9 @@ lerna-debug.log*
 # Bulk transfer recipients (not versioned)
 /contract/scripts/recipients.json
 
+# Local contract-upgrade rollback manifests (contain live deployment addresses)
+/contract/.upgrade-state/
+
 node_modules
 .DS_Store
 dist
