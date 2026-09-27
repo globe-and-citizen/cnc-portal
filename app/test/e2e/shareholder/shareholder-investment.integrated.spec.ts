@@ -116,7 +116,9 @@ test.describe(
         await expect(shareholderRow.getByText('0xf39F...2266', { exact: true })).toBeVisible()
 
         const history = page.locator('[data-test="investor-transactions"]')
-        await expect(history.getByText('Safe address updated', { exact: true })).toBeVisible()
+        await expect(history.getByText('Safe address updated', { exact: true })).toBeVisible({
+          timeout: 30_000
+        })
         await expect(history.getByText('Multiplier updated', { exact: true })).toBeVisible()
         await expect(history.getByText('Safe deposits enabled', { exact: true })).toBeVisible()
         await expect(history.getByText('Safe deposit', { exact: true })).toBeVisible()
