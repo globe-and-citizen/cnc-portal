@@ -110,7 +110,10 @@ test.describe(
         })
         await expect(page.getByText('20 E2E', { exact: true })).toHaveCount(3)
         await expect(page.getByText('100.00%', { exact: true })).toBeVisible()
-        await expect(page.getByText('0xf39F...2266', { exact: true })).toBeVisible()
+        const shareholderRow = page.getByRole('row').filter({ hasText: '100.00%' })
+        await expect(shareholderRow).toHaveCount(1)
+        await expect(shareholderRow.getByText('20 E2E', { exact: true })).toBeVisible()
+        await expect(shareholderRow.getByText('0xf39F...2266', { exact: true })).toBeVisible()
 
         const history = page.locator('[data-test="investor-transactions"]')
         await expect(history.getByText('Safe address updated', { exact: true })).toBeVisible()
