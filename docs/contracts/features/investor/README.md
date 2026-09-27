@@ -58,7 +58,7 @@ an implementation upgrade is proposed. This change does not update upgrade basel
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `90b8aa77b592db8175e328d59c7d711c614f66f2`
+**Implementation evidence reviewed against:** `bb49842f8f2b363271f29e9dc2ff1238b2310319`
 
 - [Current Investor implementation](../../../../contract/contracts/Investor/Investor.sol)
 - [Officer permission setup](../../../../contract/contracts/Officer.sol)

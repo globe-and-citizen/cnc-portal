@@ -121,7 +121,7 @@ verified:** 2026-09-27
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `90b8aa77b592db8175e328d59c7d711c614f66f2`
+**Implementation evidence reviewed against:** `bb49842f8f2b363271f29e9dc2ff1238b2310319`
 
 - [Officer implementation](../../../../contract/contracts/Officer.sol)
 - [Investor authority handoff](../../../../contract/contracts/Investor/Investor.sol)
