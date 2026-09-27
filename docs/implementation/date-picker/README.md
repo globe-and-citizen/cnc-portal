@@ -3,7 +3,7 @@
 **Scope:** Shared period and as-of-date selection for client accounting reports, transaction histories, and the matching dashboard
 accounting picker.
 
-**Last verified:** 2026-09-01
+**Last verified:** 2026-09-27
 
 ## Consumers
 
@@ -36,13 +36,15 @@ flowchart LR
   date-picker utility owns pure resolution and formatting rules.
 - Transaction histories bind their `Range | undefined` filter model directly to `DatePicker` in `range` mode. Their existing storage keys
   and `data-test` selectors remain stable.
+- The range picker represents `All time` with an epoch-start range. Transaction-history consumers recognize that sentinel as an unbounded
+  ledger view, so a client clock behind the chain does not hide future-stamped entries.
 - A custom range is committed only when both boundaries exist and the start is not after the end.
 - When persistence is configured, malformed, incomplete, stale, mode-incompatible, or unordered stored snapshots are ignored and the picker
   uses its default state.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `f023d87829325129989cf6dd573814a8f01858c9`
+**Implementation evidence reviewed against:** `c4adbc20714d30fd7089ee5e1a362b3e300508d7`
 
 - [Client DatePicker](../../../app/src/components/ui/DatePicker.vue),
   [dashboard DatePicker](../../../dashboard/app/components/DatePicker.vue),

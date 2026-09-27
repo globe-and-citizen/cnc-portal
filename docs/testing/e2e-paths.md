@@ -194,14 +194,25 @@ coverage; the latest execution result and artifacts belong in Playwright and CI 
     - `US-SHER-005` — configure shareholder investment;
     - `US-SHER-001` — invest in the Safe and receive SHER;
     - `US-SHER-003` — review shareholder position and activity.
-  - Dependencies: G1 treasury readiness, current Investor and Safe Deposit Router contracts, and a funded member wallet.
+  - Actors: company owner as router owner and investor.
+  - Dependencies: an operational company, a Safe deployed through the portal, current Investor and Safe Deposit Router contracts, and a
+    funded local wallet.
   - Main path:
-    - [ ] Configure supported investment terms.
-    - [ ] Invest supported funds through a real transaction.
-    - [ ] Verify the Safe receipt and SHER issuance.
-    - [ ] Reload and verify balance, ownership percentage, and activity.
+    - [x] Create an operational company and deploy its Safe through the real portal and backend.
+    - [x] Synchronize the router with the registered Safe, set a `2x` multiplier, and enable deposits through owner browser writes.
+    - [x] Verify the configuration on-chain and confirm investment stays unavailable before the Safe synchronization is complete.
+    - [x] Invest USDC through the browser, including the required ERC-20 approval and router deposit transactions.
+    - [x] Verify the Safe receipt, router deposit event, SHER issuance, total supply, and shareholder register on-chain.
+    - [x] Reload and verify the Investor symbol, wallet balance, total supply, shareholder count, address, balance, ownership percentage,
+          and configuration and investment activity.
+    - [x] Filter the activity by type and date and open a concrete transaction detail.
+  - Separate variants: disabled or paused deposits, amount and dependency validation, rejected approval, failed deposit, cancellation,
+    unauthorized configuration, archived-company writes, and failed reads remain focused frontend or contract tests where representative
+    evidence is linked.
   - Expected result: the investment configuration produces a durable shareholder position.
-  - Status: planned.
+  - Status: integrated main path; the production frontend, owned backend, disposable database, and local chain run together. Controlled
+    validation, permission, and recovery variants remain focused layer tests.
+  - Evidence: [integrated shareholder investment lifecycle](../../app/test/e2e/shareholder/shareholder-investment.integrated.spec.ts).
 
 - `E2E-PATH-07` — Issue SHER, distribute dividends, and review the result
   - Stories validated:
