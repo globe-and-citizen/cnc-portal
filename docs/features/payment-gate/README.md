@@ -77,7 +77,8 @@ token\
 - [x] `AC-US-PAYGATE-002-02` The merchant can view and copy a complete embed snippet — script tag, mount point, and example checkout wiring
       — reflecting the current Bank address and selected token.
 - [x] `AC-US-PAYGATE-002-06` The merchant can choose between HTML / JavaScript (the default), Vue 3, and React embed snippets; every format
-      carries the same Bank address and token, and copying copies the snippet for the selected format.
+      carries the same Bank address and token, and is shown as two separately copied steps: step 1 adds the widget (the script tag, or a
+      named component file), and step 2 is a usage sample passing the order's `factureId` and `amount`.
 
 #### Business Rules
 
@@ -203,7 +204,7 @@ token\
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `c2af359d523e8b173a5b61c10e1b28c3fb26d547`
+**Implementation evidence reviewed against:** `1daa77697140c8a60b30053f3d40f5ef29e9f7f5`
 
 - [Setup page](../../../app/src/views/team/[id]/PaymentGate/IntegrationView.vue), combining
   [Bank address + embed snippet, with a snippet format selector and explicit no-Bank/no-widget-URL states](../../../app/src/components/sections/PaymentGateView/IntegrationCard.vue),
