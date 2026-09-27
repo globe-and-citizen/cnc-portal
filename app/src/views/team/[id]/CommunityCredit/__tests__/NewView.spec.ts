@@ -220,6 +220,46 @@ describe('NewView', () => {
     )
   })
 
+  it('[AC-US-CC-002-15] going back after a failed metadata save only edits the name, never re-creates the round', async () => {
+    mockFixedReturnWrites.createLendingOffer.mutateAsync.mockResolvedValueOnce({
+      hash: '0xhash',
+      receipt: { logs: [] },
+      simulation: {}
+    } as never)
+    mockParseEventLogs.mockReturnValueOnce([{ args: { offerId: 3n } }] as never)
+    mockCreateMetadata.mockRejectedValueOnce(new Error('metadata down'))
+
+    const wrapper = mount(NewView)
+    await wrapper.find('[data-test="cc-name"]').setValue('Q3 runway bridge')
+    await wrapper.find('[data-test="cc-next"]').trigger('click')
+    await wrapper.find('[data-test="cc-next"]').trigger('click')
+    await wrapper.find('[data-test="cc-next"]').trigger('click')
+    await flushPromises()
+    expect(mockFixedReturnWrites.createLendingOffer.mutateAsync).toHaveBeenCalledTimes(1)
+
+    // Back skips the on-chain Terms/Access steps and lands on Basics, where the
+    // target and token are locked but the name is still editable.
+    await wrapper.find('[data-test="cc-back"]').trigger('click')
+    expect(wrapper.find('[data-test="cc-name"]').exists()).toBe(true)
+    expect(wrapper.find('#cc-target').attributes('disabled')).toBeDefined()
+    expect(wrapper.find('[data-test="cc-next"]').text()).toBe('Retry saving details')
+
+    await wrapper.find('[data-test="cc-name"]').setValue('Q3 runway bridge (fixed)')
+    mockCreateMetadata.mockResolvedValueOnce(undefined)
+    await wrapper.find('[data-test="cc-next"]').trigger('click')
+    await flushPromises()
+
+    expect(mockFixedReturnWrites.createLendingOffer.mutateAsync).toHaveBeenCalledTimes(1)
+    expect(mockCreateMetadata).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        body: expect.objectContaining({ offerId: 3, title: 'Q3 runway bridge (fixed)' })
+      })
+    )
+    expect(mockRouterPush).toHaveBeenLastCalledWith(
+      expect.objectContaining({ name: 'community-credit' })
+    )
+  })
+
   it('blocks publishing when the team has no deployed Credit Account', async () => {
     vi.mocked(useFixedReturnAddress).mockReturnValue(computed(() => undefined))
     const wrapper = mount(NewView)
