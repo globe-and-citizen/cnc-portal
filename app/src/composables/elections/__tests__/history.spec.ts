@@ -53,12 +53,14 @@ describe('useElectionsPastElections', () => {
     expect(name).toBe('pastElections')
   })
 
-  it('waits for the Elections contract before reading', () => {
+  it('[AC-US-EL-08-06] starts the history read when the company contracts arrive', () => {
     mockElectionsReads.address.data.value = undefined
 
     useElectionsPastElections()
 
     expect(getQuery().enabled.value).toBe(false)
+    mockElectionsReads.address.data.value = ELECTIONS
+    expect(getQuery().enabled.value).toBe(true)
   })
 
   it('returns an empty list when the team has never run an election', async () => {

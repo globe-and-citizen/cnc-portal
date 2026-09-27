@@ -5,7 +5,7 @@ import CreateElectionForm from '../CreateElectionForm.vue'
 import { emittedPayload, getVm, mountComponent, tomorrow } from './CreateElectionForm.harness'
 
 describe('CreateElectionForm.vue', () => {
-  it('[US-EL-01] renders form defaults and submit button disabled state', () => {
+  it('renders form defaults and submit button disabled state', () => {
     const wrapper = mountComponent(true)
     const vm = getVm(wrapper)
 
@@ -20,7 +20,7 @@ describe('CreateElectionForm.vue', () => {
     expect(wrapper.text()).toContain('An odd number')
   })
 
-  it('[US-EL-01] renders error alert when errorMessage prop is set', async () => {
+  it('[AC-US-EL-01-09] renders and clears a recoverable creation error', async () => {
     const wrapper = mount(CreateElectionForm, {
       props: { isLoading: false, errorMessage: 'Contract reverted' }
     })
@@ -33,7 +33,7 @@ describe('CreateElectionForm.vue', () => {
     expect(wrapper.find('[data-test="error-alert"]').exists()).toBe(false)
   })
 
-  it('[US-EL-01] syncs input and popover v-model bindings with component state', async () => {
+  it('syncs input and popover bindings with component state', async () => {
     const wrapper = mountComponent()
     const vm = getVm(wrapper)
 
@@ -54,7 +54,7 @@ describe('CreateElectionForm.vue', () => {
     expect(vm.endDateOpen).toBe(true)
   })
 
-  it('[US-EL-01] requires at least one candidate', () => {
+  it('[AC-US-EL-01-05] requires at least one candidate', () => {
     const wrapper = mountComponent()
     const vm = getVm(wrapper)
 
@@ -67,7 +67,7 @@ describe('CreateElectionForm.vue', () => {
     expect(wrapper.emitted('createProposal')).toBeFalsy()
   })
 
-  it('[US-EL-01] requires enough candidates based on winnerCount', () => {
+  it('[AC-US-EL-01-05] requires at least as many candidates as seats', () => {
     const wrapper = mountComponent()
     const vm = getVm(wrapper)
 
@@ -84,7 +84,7 @@ describe('CreateElectionForm.vue', () => {
     expect(wrapper.emitted('createProposal')).toBeFalsy()
   })
 
-  it('[US-EL-01] rejects duplicate candidates', () => {
+  it('[AC-US-EL-01-05] rejects duplicate candidates', () => {
     const wrapper = mountComponent()
     const vm = getVm(wrapper)
 
@@ -117,7 +117,7 @@ describe('CreateElectionForm.vue', () => {
     expect(emittedPayload(wrapper).candidates).toEqual([{ name: '', candidateAddress: '' }])
   })
 
-  it('[US-EL-01] updates both days from the calendar handlers declared in popover content', () => {
+  it('updates both days from the calendar selections', () => {
     const wrapper = mountComponent()
     const vm = getVm(wrapper)
     const popovers = wrapper.findAllComponents({ name: 'UPopover' })
@@ -143,7 +143,7 @@ describe('CreateElectionForm.vue', () => {
     expect(vm.state.endDay?.getFullYear()).toBe(2030)
   })
 
-  it('[US-EL-01] updates formData through MultiSelectMemberInput v-model binding', async () => {
+  it('updates the selected candidates from the member picker', async () => {
     const wrapper = mountComponent()
     const vm = getVm(wrapper)
     const multiSelect = wrapper.findComponent({ name: 'MultiSelectMemberInput' })
@@ -155,7 +155,7 @@ describe('CreateElectionForm.vue', () => {
     expect(vm.formData).toEqual([{ address: '0xabc', name: 'Alice' }])
   })
 
-  it('[US-EL-01] applies winnerCount zod constraints for minimum and odd values', () => {
+  it('[AC-US-EL-01-05] requires an odd seat count of at least three', () => {
     const wrapper = mountComponent()
     const vm = getVm(wrapper)
 
@@ -172,5 +172,24 @@ describe('CreateElectionForm.vue', () => {
 
     expect(tooSmall.success).toBe(false)
     expect(notOdd.success).toBe(false)
+  })
+
+  it('[AC-US-EL-01-13] requires a meaningful title and description', () => {
+    const wrapper = mountComponent()
+    const vm = getVm(wrapper)
+
+    const shortTitle = vm.schema.safeParse({
+      title: 'AB',
+      description: 'A valid election description',
+      winnerCount: '3'
+    })
+    const shortDescription = vm.schema.safeParse({
+      title: 'Election',
+      description: 'Too short',
+      winnerCount: '3'
+    })
+
+    expect(shortTitle.success).toBe(false)
+    expect(shortDescription.success).toBe(false)
   })
 })
