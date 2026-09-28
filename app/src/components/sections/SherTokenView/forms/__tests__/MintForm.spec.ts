@@ -273,6 +273,25 @@ describe('MintForm.vue', () => {
     expect(mintMutation.mutate).toHaveBeenCalled()
   })
 
+  it('[AC-US-SHER-004-07] rejects issuance with an invalid recipient or stake', async () => {
+    const invalidRecipient = mountForm()
+    await invalidRecipient.find('[data-test="add-mode-button"]').trigger('click')
+    await invalidRecipient.find('[data-test="amount-input"]').setValue('10')
+    await settle()
+    await invalidRecipient.find('form').trigger('submit')
+    await flushPromises()
+
+    const invalidStake = mountForm()
+    await invalidStake.find('[data-test="emit-member-input"]').trigger('click')
+    await invalidStake.find('[data-test="add-mode-button"]').trigger('click')
+    await invalidStake.find('[data-test="amount-input"]').setValue('0')
+    await settle()
+    await invalidStake.find('form').trigger('submit')
+    await flushPromises()
+
+    expect(mintMutation.mutate).not.toHaveBeenCalled()
+  })
+
   it('[AC-US-SHER-004-01] computes incremental issuance for an ending balance', async () => {
     setSupplyAndBalance(100_000_000n, 20_000_000n) // 100 tokens, recipient 20
     const wrapper = mountForm({ memberInput: { name: 'Bob', address: VALID_ADDRESS } })

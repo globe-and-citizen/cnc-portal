@@ -1,7 +1,15 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
 import InvestorsHeader from '../InvestorsHeader.vue'
 import { parseUnits } from 'viem'
-import { mockInvestorReads, mockTeamStore, mockUserStore, renderWithProviders } from '@/tests/mocks'
+import {
+  mockInvestorReads,
+  mockTeamStore,
+  mockToast,
+  mockUserStore,
+  renderWithProviders
+} from '@/tests/mocks'
+import { log } from '@/lib/logging'
+import { EMPTY_VALUE } from '@/utils/format'
 
 describe('[US-SHER-003] InvestorsHeader', () => {
   let wrapper: ReturnType<typeof createComponent>
@@ -24,6 +32,7 @@ describe('[US-SHER-003] InvestorsHeader', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.stubGlobal('useToast', () => mockToast)
 
     // Initialize store state
     mockTeamStore.currentTeam = {
@@ -107,28 +116,30 @@ describe('[US-SHER-003] InvestorsHeader', () => {
       expect(overviewCards).toHaveLength(3)
     })
 
-    it('shows dots when token symbol is not available', () => {
-      mockInvestorReads.symbol.data.value = null
+    it('[AC-US-SHER-003-08] shows unavailable values for a missing token symbol', () => {
+      mockInvestorReads.symbol.data.value = ' '
 
       wrapper = createComponent()
       const cards = wrapper.findAll(SELECTORS.overviewCards)
 
-      expect(cards[1].find(SELECTORS.amount).text()).toBe('...')
-      expect(cards[2].find(SELECTORS.amount).text()).toBe('...')
+      expect(cards[1].find(SELECTORS.amount).text()).toBe(EMPTY_VALUE)
+      expect(cards[2].find(SELECTORS.amount).text()).toBe(EMPTY_VALUE)
     })
 
-    it('shows dots when balance is null', () => {
+    it('[AC-US-SHER-003-06] shows unavailable values for missing balance and supply', () => {
       mockInvestorReads.balanceOf.data.value = null
+      mockInvestorReads.totalSupply.data.value = undefined
 
       wrapper = createComponent()
       const cards = wrapper.findAll(SELECTORS.overviewCards)
 
-      expect(cards[1].find(SELECTORS.amount).text()).toBe('...')
+      expect(cards[1].find(SELECTORS.amount).text()).toBe(EMPTY_VALUE)
+      expect(cards[2].find(SELECTORS.amount).text()).toBe(EMPTY_VALUE)
     })
   })
 
   describe('Edge Cases and Data Validation', () => {
-    it('handles empty shareholders array', () => {
+    it('[AC-US-SHER-003-05] distinguishes an empty shareholder list', () => {
       mockInvestorReads.shareholders.data.value = []
 
       wrapper = createComponent()
@@ -156,6 +167,26 @@ describe('[US-SHER-003] InvestorsHeader', () => {
       const balanceCard = cards[1]
 
       expect(balanceCard.find(SELECTORS.amount).text()).toBe('0 BTC')
+    })
+
+    it('[AC-US-SHER-003-07] reports a shareholder read failure without replacing known values', async () => {
+      const logErrorSpy = vi.spyOn(log, 'error')
+      wrapper = createComponent()
+
+      mockInvestorReads.shareholders.error.value = new Error('shareholder read failed')
+      await wrapper.vm.$nextTick()
+
+      expect(wrapper.findAll(SELECTORS.overviewCards)[0].find(SELECTORS.amount).text()).toBe(
+        '2 Investors'
+      )
+      expect(logErrorSpy).toHaveBeenCalledWith(
+        'Error fetching shareholders',
+        mockInvestorReads.shareholders.error.value
+      )
+      expect(mockToast.add).toHaveBeenCalledWith({
+        title: 'Error fetching shareholders',
+        color: 'error'
+      })
     })
   })
 })

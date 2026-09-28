@@ -15,6 +15,11 @@ These acceptance criteria follow the
   owns the contract, a Board member manages the action through the Board workflow.
 - A **pending Board action** is an action awaiting review or approval. It is distinct from a direct owner action and can be executed only
   under the Board contract's rules.
+- A contract's **pause capability** is an explicit policy for its Officer generation. The policy records whether pause is supported, the
+  protected operation scope, and the selectors used to read and change the state; ABI presence alone is not sufficient evidence.
+- The current suite reports pause state as **Active**, **Paused**, **Not supported**, or **Unavailable**. Active and Paused require a
+  successful supported-state read. An unknown generation, a missing capability, or a failed read is Unavailable and exposes no status
+  action.
 - A **Campaign Manager** defines advertising rates and the Bank destination for validated advertising spend. It is managed separately from
   the current contract suite.
 - A previous Officer generation remains available as deployment history. It is not the active suite used for current operations.
@@ -30,7 +35,7 @@ flowchart LR
     Member --> History[Deployment history]
 
     Current --> Inspect[Inspect contract state]
-    Inspect --> Direct[Owner transfers ownership or changes status]
+    Inspect --> Direct[Owner transfers ownership or changes a supported status]
     Inspect --> Board[Board member reviews pending Board actions]
     Current --> Redeploy[Company owner redeploys Officer]
     Redeploy --> Migration[Set shareholder migration root or recover later]
@@ -60,14 +65,16 @@ flowchart LR
 #### Happy Path
 
 - [x] `AC-US-CONTRACT-001-01` A company member can view the active Officer address, its version, and its current non-Campaign contracts.
-- [x] `AC-US-CONTRACT-001-02` A company member can filter the current contract suite by active or paused status.
+- [x] `AC-US-CONTRACT-001-02` A company member can filter the current contract suite by verified active or paused status; unsupported and
+      unavailable states remain visible in the unfiltered suite instead of being classified as active.
 - [x] `AC-US-CONTRACT-001-03` A company member can inspect a contract's address, owner, deployer, current status, and available on-chain
       read data.
 
 #### Business Rules
 
 - [x] `AC-US-CONTRACT-001-04` Campaign Manager contracts are managed through the Campaigns journey rather than the current contract suite.
-- [x] `AC-US-CONTRACT-001-05` A contract's paused or active status remains distinguishable in the current suite.
+- [x] `AC-US-CONTRACT-001-05` A contract's pause state remains distinguishable as active, paused, not supported, or unavailable according to
+      its Officer-generation capability and the latest read evidence.
 
 #### Edge & Error Cases
 
@@ -78,6 +85,8 @@ flowchart LR
       read can be retried.
 - [x] `AC-US-CONTRACT-001-09` For contracts that hold value, the current suite distinguishes loading, unavailable, zero, and populated
       balances and exposes the supported-asset breakdown.
+- [x] `AC-US-CONTRACT-001-10` An unknown Officer generation, a missing pause capability, or a failed supported-state read is reported as
+      unavailable instead of active.
 
 **Dependencies:** Current company and its active Officer generation
 
@@ -92,7 +101,8 @@ flowchart LR
 #### Happy Path
 
 - [x] `AC-US-CONTRACT-002-01` An eligible user can transfer ownership of a current contract to a selected recipient.
-- [x] `AC-US-CONTRACT-002-02` An eligible user can pause an active contract or resume a paused contract.
+- [x] `AC-US-CONTRACT-002-02` An eligible user can pause an active contract or resume a paused contract when the Officer-generation
+      capability explicitly supports the operation and its current state was verified.
 - [x] `AC-US-CONTRACT-002-03` An eligible Board member can open, review, and approve pending Board actions for a contract.
 - [x] `AC-US-CONTRACT-002-04` A successful direct operation refreshes the displayed contract state.
 
@@ -110,6 +120,7 @@ flowchart LR
 - [x] `AC-US-CONTRACT-002-10` A failed direct ownership transfer is shown in the transfer context without changing the displayed owner.
 - [x] `AC-US-CONTRACT-002-11` Transferring the current Investor contract grants ownership, administrator authority, and minter authority to
       the successor atomically; the previous owner loses those two roles while unrelated technical minters remain unchanged. _(contract)_
+- [x] `AC-US-CONTRACT-002-12` Contracts whose pause capability is unsupported or unavailable do not expose pause or resume actions.
 
 **Dependencies:** US-CONTRACT-001, current contract permissions, and a connected wallet
 
@@ -210,7 +221,7 @@ flowchart LR
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `bb49842f8f2b363271f29e9dc2ff1238b2310319`
+**Implementation evidence reviewed against:** `da4b1aaff94af72299220ea5da2084ca848bd652`
 
 - [Board reads](../../../app/src/composables/bod/reads.ts), [Board writes](../../../app/src/composables/bod/writes.ts),
   [shared contract reads](../../../app/src/composables/contracts/useContractReadData.ts), and
@@ -219,6 +230,8 @@ flowchart LR
 - [Contract Management page and Officer-generation derivation](../../../app/src/views/team/%5Bid%5D/ContractManagementView.vue)
 - [Current contract section](../../../app/src/components/sections/ContractManagementView/MainContractSection.vue)
 - [Current contract table and selected action boundary](../../../app/src/components/sections/ContractManagementView/MainContractTable.vue)
+- [Version-aware pause capability policy](../../../app/src/utils/contracts/pauseCapabilities.ts) and
+  [capability-backed contract reads](../../../app/src/composables/contracts/readTeamContracts.ts)
 - [Current contract desktop table](../../../app/src/components/sections/ContractManagementView/MainContractDesktopTable.vue)
 - [Current contract action menu](../../../app/src/components/sections/ContractManagementView/MainContractActionMenu.vue)
 - [Current contract mobile card](../../../app/src/components/sections/ContractManagementView/MainContractMobileCard.vue)
@@ -242,11 +255,18 @@ flowchart LR
 - [Current contract action tests](../../../app/src/components/sections/ContractManagementView/__tests__/MainContractActions.spec.ts)
 - [Current contract table tests](../../../app/src/components/sections/ContractManagementView/__tests__/MainContractTable.spec.ts)
 - [Current contract action-menu tests](../../../app/src/components/sections/ContractManagementView/__tests__/MainContractActionMenu.spec.ts)
+- [Pause capability policy tests](../../../app/src/utils/contracts/__tests__/pauseCapabilities.spec.ts),
+  [pause-state read tests](../../../app/src/composables/contracts/__tests__/readTeamContracts.spec.ts), and
+  [pause-state presentation tests](../../../app/src/components/sections/ContractManagementView/__tests__/MainContractPauseStatus.spec.ts)
 - [Officer redeploy form tests](../../../app/src/components/sections/ContractManagementView/__tests__/RedeployOfficerModal.spec.ts)
 - [Officer deployment tests](../../../contract/test/Officer.spec.ts) and [Investor authority tests](../../../contract/test/Investor.spec.ts)
 
 ## Known Gaps
 
+- Pause semantics are not yet uniform across the Solidity suite. The current Expense Account pause does not stop signed expense transfers,
+  Officer beacon configuration remains available while the Officer is paused, and Proposals inherits pause state without pause controls or
+  pause-guarded proposal operations. The capability policy reflects the deployed behaviour; changing these semantics requires a separate,
+  versioned contract upgrade and deployment rather than a frontend-only change.
 - Campaign Manager click and impression rates are configurable and readable, but the current portal and contract accept cumulative spend as
   an input; they do not derive validated spend from those rates. `AC-US-CONTRACT-003-04` therefore remains incomplete.
 - The legacy TeamContractDetailExtend suite duplicates the current manager-settings coverage with obsolete mocks and assertion-free cases,

@@ -6,6 +6,7 @@ import {
   mockSafeDepositRouterAddress,
   mockSafeDepositRouterReads,
   mockSafeDepositRouterWrites,
+  mockTeamStore,
   mockToast,
   mockUseConnection,
   renderWithProviders
@@ -23,12 +24,13 @@ describe('ToggleSherCompensationAction.vue', () => {
     mockSafeDepositRouterReads.safeAddress.data.value = '0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB'
     mockUseConnection.isConnected.value = true
     mockUseConnection.address.value = '0xaAaAaAaaAaAaAaaAaAAAAAAAAaaaAaAaAaaAaaAa'
+    mockTeamStore.currentTeamMeta.data.isArchived = false
 
     mockSafeDepositRouterWrites.enableDeposits.mutateAsync.mockResolvedValue(undefined)
     mockSafeDepositRouterWrites.disableDeposits.mutateAsync.mockResolvedValue(undefined)
   })
 
-  it('does not render when safe deposit router address is missing', () => {
+  it('[AC-US-SHER-005-08] hides deposit controls when the router is missing', () => {
     mockSafeDepositRouterAddress.value = ''
     const wrapper = createWrapper()
 
@@ -91,7 +93,7 @@ describe('ToggleSherCompensationAction.vue', () => {
     expect(mockSafeDepositRouterWrites.enableDeposits.mutateAsync).toHaveBeenCalledTimes(1)
   })
 
-  it('never writes the safe address itself when it mismatches', async () => {
+  it('[AC-US-SHER-005-08] blocks enabling deposits when the company Safe is not synchronized', async () => {
     mockSafeDepositRouterReads.depositsEnabled.data.value = false
     mockSafeDepositRouterReads.safeAddress.data.value = '0x1111111111111111111111111111111111111111'
     const wrapper = createWrapper()
@@ -112,14 +114,28 @@ describe('ToggleSherCompensationAction.vue', () => {
     expect(button.attributes('disabled')).toBeDefined()
   })
 
-  it('watch enable error path surfaces the classified message', async () => {
+  it('[AC-US-SHER-005-09] reports a failed deposit-control write without success', async () => {
     const wrapper = createWrapper()
     mockSafeDepositRouterWrites.enableDeposits.error.value = new Error('boom')
     await nextTick()
     expect(mockToast.add).toHaveBeenCalledWith(
       expect.objectContaining({ title: 'boom', color: 'error' })
     )
+    expect(mockToast.add).not.toHaveBeenCalledWith(
+      expect.objectContaining({ title: 'SHER compensation enabled successfully' })
+    )
     wrapper.unmount()
+  })
+
+  it('[AC-US-SHER-005-07] blocks deposit configuration for an archived company', async () => {
+    mockTeamStore.currentTeamMeta.data.isArchived = true
+    const wrapper = createWrapper()
+
+    expect(
+      wrapper.find('[data-test="toggle-sher-compensation-button"]').attributes('disabled')
+    ).toBeDefined()
+    await wrapper.findComponent({ name: 'ActionButton' }).vm.$emit('click')
+    expect(mockSafeDepositRouterWrites.disableDeposits.mutateAsync).not.toHaveBeenCalled()
   })
 
   it('watch enable error reports a wallet rejection as cancelled', async () => {

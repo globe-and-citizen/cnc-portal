@@ -79,7 +79,8 @@ remains in frozen deployment snapshots and Git.
 
 Use [`../deploy-upgrade-v2.0.1.sh`](../deploy-upgrade-v2.0.1.sh) through the npm commands documented in the
 [Polygon 2.0.1 runbook](../releases/polygon-v2.0.1.md). The script intentionally targets Polygon only because fresh local deployments
-already use the current implementations. Do not invoke Officer before Investor.
+already use the current implementations. Its live orchestrator reuses one Hardhat connection for the four sequential module deployments and
+their readbacks so the production keystore is unlocked once. Do not invoke Officer before Investor.
 
 ## Adding New Contracts
 

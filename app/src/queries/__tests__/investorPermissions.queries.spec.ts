@@ -5,14 +5,14 @@ import { fetchInvestorPermissions, MINTER_ROLE } from '@/queries/investorPermiss
 
 const investor = '0x1000000000000000000000000000000000000000' as Address
 const owner = '0x2000000000000000000000000000000000000000' as Address
-const knownMinter = '0x3000000000000000000000000000000000000000' as Address
+const knownOfficer = '0x3000000000000000000000000000000000000000' as Address
 const eventMinter = '0x4000000000000000000000000000000000000000' as Address
 
 function makeClient(options?: { rejectedEvents?: string[]; ownerReadFails?: boolean }) {
   const roles = new Map([
     [`${zeroHash}:${owner}`.toLowerCase(), true],
     [`${String(MINTER_ROLE)}:${owner}`.toLowerCase(), true],
-    [`${String(MINTER_ROLE)}:${knownMinter}`.toLowerCase(), true],
+    [`${String(MINTER_ROLE)}:${knownOfficer}`.toLowerCase(), true],
     [`${String(MINTER_ROLE)}:${eventMinter}`.toLowerCase(), true]
   ])
 
@@ -35,13 +35,13 @@ function makeClient(options?: { rejectedEvents?: string[]; ownerReadFails?: bool
 
 describe('fetchInvestorPermissions', () => {
   it('[AC-US-SHER-009-01] discovers event-only holders and verifies current roles', async () => {
-    const result = await fetchInvestorPermissions(makeClient(), investor, [owner, knownMinter])
+    const result = await fetchInvestorPermissions(makeClient(), investor, [owner, knownOfficer])
 
     expect(result.evidence).toBe('complete')
     expect(result.accounts).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ address: owner, isOwner: true, isAdmin: true, isMinter: true }),
-        expect.objectContaining({ address: knownMinter, isMinter: true }),
+        expect.objectContaining({ address: knownOfficer, isMinter: true }),
         expect.objectContaining({ address: eventMinter, isMinter: true })
       ])
     )
@@ -51,24 +51,24 @@ describe('fetchInvestorPermissions', () => {
     const result = await fetchInvestorPermissions(
       makeClient({ rejectedEvents: ['RoleRevoked'] }),
       investor,
-      [knownMinter]
+      [knownOfficer]
     )
 
     expect(result.evidence).toBe('partial')
     expect(result.gaps).toContain('RoleRevoked history could not be scanned.')
-    expect(result.accounts).toContainEqual(expect.objectContaining({ address: knownMinter }))
+    expect(result.accounts).toContainEqual(expect.objectContaining({ address: knownOfficer }))
   })
 
-  it('[AC-US-SHER-009-02] keeps verified known holders when historical logs are unavailable', async () => {
+  it('[AC-US-SHER-009-02] keeps a verified known Officer when historical logs are unavailable', async () => {
     const result = await fetchInvestorPermissions(
       makeClient({ rejectedEvents: ['RoleGranted', 'RoleRevoked'] }),
       investor,
-      [knownMinter]
+      [knownOfficer]
     )
 
     expect(result.evidence).toBe('unavailable')
     expect(result.accounts).toContainEqual(
-      expect.objectContaining({ address: knownMinter, isMinter: true })
+      expect.objectContaining({ address: knownOfficer, isMinter: true })
     )
   })
 

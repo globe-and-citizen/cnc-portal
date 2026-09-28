@@ -36,11 +36,14 @@ const KNOWN_NETWORKS = new Set(['polygon', 'mainnet', 'sepolia', 'amoy', 'localh
 /** Networks where a missing baseline should be treated as an error (production). */
 const PRODUCTION_NETWORKS = new Set(['polygon', 'mainnet'])
 
-function resolveNetwork(network: string): string {
+function resolveNetwork(network: string, bakeMode: boolean): string {
   if (network === 'default' || network === 'hardhat') {
+    if (process.env.CNC_STORAGE_BASELINE_NETWORK && !bakeMode) return network
+
     throw new Error(
       'No network selected. Pass `--network <name>` (e.g. polygon, localhost). ' +
-        'The in-memory hardhat network is not a valid baseline target.'
+        'The in-memory hardhat network can only run read-only validation with ' +
+        'CNC_STORAGE_BASELINE_NETWORK set explicitly.'
     )
   }
   if (!KNOWN_NETWORKS.has(network)) {
@@ -49,6 +52,29 @@ function resolveNetwork(network: string): string {
     )
   }
   return network
+}
+
+function selectedContracts(): ContractConfig[] {
+  const singleTarget = process.env.CONTRACT?.trim()
+  const multipleTargets = process.env.CONTRACTS?.split(',')
+    .map((name) => name.trim())
+    .filter(Boolean)
+
+  if (singleTarget && multipleTargets && multipleTargets.length > 0) {
+    throw new Error('Set either CONTRACT or CONTRACTS, not both')
+  }
+
+  const targetNames = singleTarget
+    ? [singleTarget]
+    : multipleTargets && multipleTargets.length > 0
+      ? Array.from(new Set(multipleTargets))
+      : undefined
+
+  if (!targetNames) return UPGRADEABLE_CONTRACTS
+
+  return targetNames.map(
+    (name) => UPGRADEABLE_CONTRACTS.find((config) => config.name === name) ?? { name }
+  )
 }
 
 function baselineDir(network: string): string {
@@ -338,16 +364,13 @@ function printResult(r: ValidationResult) {
 
 async function main() {
   const connection = await hre.network.getOrCreate()
-  const network = resolveNetwork(connection.networkName)
+  const bakeMode = process.env.BAKE === '1'
+  const network = resolveNetwork(connection.networkName, bakeMode)
   await hre.tasks.getTask('build').run({ quiet: true })
   const upgrades = await createUpgrades(hre, connection)
 
-  const bakeMode = process.env.BAKE === '1'
   const baselineNetwork = resolveBaselineNetwork(network, bakeMode)
-  const target = process.env.CONTRACT
-  const targets: ContractConfig[] = target
-    ? [UPGRADEABLE_CONTRACTS.find((c) => c.name === target) ?? { name: target }]
-    : UPGRADEABLE_CONTRACTS
+  const targets = selectedContracts()
 
   if (bakeMode) {
     console.log(
