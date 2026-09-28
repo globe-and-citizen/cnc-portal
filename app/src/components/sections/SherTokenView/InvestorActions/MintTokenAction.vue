@@ -32,16 +32,19 @@ import MintForm from '@/components/sections/SherTokenView/forms/MintForm.vue'
 import ActionButton from '@/components/sections/SherTokenView/ActionButton.vue'
 import { useUserDataStore } from '@/stores'
 import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
+import { useInvestorHasRole } from '@/composables/investor/permissions'
+import { MINTER_ROLE } from '@/queries/investorPermissions.queries'
 
 interface Props {
   tokenSymbol: string
-  investorsOwner: Address
 }
 
-const props = defineProps<Props>()
+defineProps<Props>()
 
-const { address: currentAddress } = useUserDataStore()
+const userStore = useUserDataStore()
 const { isWriteDisabled, archivedTooltip } = useTeamWriteGuard()
+const currentAddress = computed(() => userStore.address as Address | undefined)
+const minterRole = useInvestorHasRole(MINTER_ROLE, currentAddress)
 
 const modalState = ref({
   mount: false,
@@ -49,11 +52,12 @@ const modalState = ref({
 })
 
 const canMint = computed(() => {
-  return currentAddress === props.investorsOwner
+  return minterRole.data.value === true
 })
 
 const cannotMintReason = computed(() => {
-  if (currentAddress !== props.investorsOwner) return 'Only the token owner can mint tokens'
+  if (minterRole.isLoading.value) return 'Checking Investor minter permission'
+  if (!canMint.value) return 'Only an account with the Investor minter role can mint tokens'
   return ''
 })
 
@@ -64,7 +68,7 @@ const mintTooltip = computed(() => {
 })
 
 const openModal = () => {
-  if (isWriteDisabled.value) return
+  if (isWriteDisabled.value || !canMint.value) return
   modalState.value = { mount: true, show: true }
 }
 

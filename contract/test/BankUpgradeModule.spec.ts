@@ -4,14 +4,15 @@ import { expect } from 'chai'
 before(initializeHardhat)
 
 /**
- * Exercises the semantics of ignition/modules/BankUpgradeModule.ts:
+ * Exercises the Bank beacon-upgrade semantics expected from any future
+ * release-specific upgrade module:
  *   1. Deploy a new Bank implementation.
  *   2. Point the existing Beacon at the new implementation via upgradeTo.
  *   3. Verify that proxies already deployed against the beacon observe the new code
  *      while preserving their storage (owner, paused flag, supported tokens).
  *   4. Verify access control: only the beacon owner can upgrade.
  */
-describe('BankUpgradeModule', function () {
+describe('Bank beacon upgrades', function () {
   async function deployFixture() {
     const [beaconOwner, user1, attacker] = await ethers.getSigners()
 

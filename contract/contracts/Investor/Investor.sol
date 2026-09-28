@@ -149,6 +149,11 @@ contract Investor is
   error Investor__LengthMismatch();
   /// @dev Dividends are frozen until the in-progress migration is completed.
   error Investor__DividendsFrozenDuringMigration();
+  /// @dev Investor ownership cannot be renounced because ownership and role authority move together.
+  error Investor__OwnershipRenunciationDisabled();
+  /// @dev The current owner must retain the roles that define Investor human authority.
+  /// @param role Role that cannot be removed from the current owner.
+  error Investor__OwnerRoleRequired(bytes32 role);
 
   modifier onlyBank() {
     if (msg.sender != _getBankAddress()) revert Investor__NotBank(msg.sender);
@@ -403,7 +408,49 @@ contract Investor is
 
   /// @notice Semver of the implementation currently behind the proxy.
   function version() external pure returns (string memory) {
-    return "2.0.0";
+    return "2.0.1";
+  }
+
+  /**
+   * @notice Transfers Investor ownership and its human authority roles as one operation.
+   * @dev Technical minters are preserved. The previous owner loses only the two roles that define
+   *      human Investor control; unrelated role holders are not modified.
+   * @param newOwner Address that will receive ownership, DEFAULT_ADMIN_ROLE, and MINTER_ROLE.
+   */
+  function transferOwnership(address newOwner) public override onlyOwner {
+    if (newOwner == address(0)) revert OwnableInvalidOwner(address(0));
+
+    address previousOwner = owner();
+    if (newOwner == previousOwner) {
+      _transferOwnership(newOwner);
+      return;
+    }
+
+    _grantRole(DEFAULT_ADMIN_ROLE, newOwner);
+    _grantRole(MINTER_ROLE, newOwner);
+    _transferOwnership(newOwner);
+    _revokeRole(MINTER_ROLE, previousOwner);
+    _revokeRole(DEFAULT_ADMIN_ROLE, previousOwner);
+  }
+
+  /**
+   * @notice Investor ownership cannot be renounced.
+   * @dev Renunciation would leave Ownable and AccessControl authority in contradictory states.
+   */
+  function renounceOwnership() public override {
+    revert Investor__OwnershipRenunciationDisabled();
+  }
+
+  /// @notice Revokes a role unless it is one the current owner must retain.
+  function revokeRole(bytes32 role, address account) public override {
+    _requireOwnerRolePreserved(role, account);
+    super.revokeRole(role, account);
+  }
+
+  /// @notice Renounces a role unless it is one the current owner must retain.
+  function renounceRole(bytes32 role, address callerConfirmation) public override {
+    _requireOwnerRolePreserved(role, callerConfirmation);
+    super.renounceRole(role, callerConfirmation);
   }
 
   /// @notice Returns the token's decimal count.
@@ -466,6 +513,11 @@ contract Investor is
     s_migrationClaimed[account] = true;
     _mint(account, amount);
     emit MigrationClaimed(account, amount);
+  }
+
+  function _requireOwnerRolePreserved(bytes32 role, address account) private view {
+    if (account == owner() && (role == DEFAULT_ADMIN_ROLE || role == MINTER_ROLE))
+      revert Investor__OwnerRoleRequired(role);
   }
 
   /// @dev Reverts if a migration root is set but the migration has not been completed yet.

@@ -11,7 +11,7 @@ const DistributeMintActionStub = {
 }
 
 const MintTokenActionStub = {
-  props: ['tokenSymbol', 'investorsOwner'],
+  props: ['tokenSymbol'],
   template: '<div data-test="mint-token-action" />'
 }
 
@@ -43,10 +43,8 @@ describe('[US-SHER-001][US-SHER-002][US-SHER-004][US-SHER-005] InvestorsActions.
     })
 
     mockInvestorReads.symbol.data.value = 'SHER'
-    mockInvestorReads.owner.data.value = '0xOwner'
     mockInvestorReads.shareholders.data.value = ['0x123', '0x456']
     mockInvestorReads.symbol.isLoading.value = false
-    mockInvestorReads.owner.isLoading.value = false
   })
 
   const createWrapper = () =>
@@ -67,7 +65,6 @@ describe('[US-SHER-001][US-SHER-002][US-SHER-004][US-SHER-005] InvestorsActions.
 
   it('renders skeletons when data is loading', () => {
     mockInvestorReads.symbol.isLoading.value = true
-    mockInvestorReads.owner.isLoading.value = true
 
     const wrapper = createWrapper()
 
@@ -99,7 +96,6 @@ describe('[US-SHER-001][US-SHER-002][US-SHER-004][US-SHER-005] InvestorsActions.
     )
 
     expect(mint.props('tokenSymbol')).toBe('SHER')
-    expect(mint.props('investorsOwner')).toBe('0xOwner' as Address)
 
     expect(pay.props('tokenSymbol')).toBe('SHER')
     expect(pay.props('shareholdersCount')).toBe(2)
@@ -120,13 +116,6 @@ describe('[US-SHER-001][US-SHER-002][US-SHER-004][US-SHER-005] InvestorsActions.
     const wrapper = createWrapper()
 
     mockInvestorReads.shareholders.error.value = new Error('Shareholders error')
-    await wrapper.vm.$nextTick()
-  })
-
-  it('shows error toast when owner fetch fails', async () => {
-    const wrapper = createWrapper()
-
-    mockInvestorReads.owner.error.value = new Error('Owner error')
     await wrapper.vm.$nextTick()
   })
 })

@@ -1,44 +1,52 @@
 {
   "storage": [
     {
-      "astId": 30806,
-      "contract": "project/contracts/CashRemunerationEIP712.sol:CashRemunerationEIP712",
-      "label": "s_supportedTokens",
+      "astId": 25632,
+      "contract": "project/contracts/Investor/Investor.sol:Investor",
+      "label": "s_shareholderSet",
       "offset": 0,
       "slot": "0",
       "type": "t_struct(AddressSet)15376_storage"
     },
     {
-      "astId": 20869,
-      "contract": "project/contracts/CashRemunerationEIP712.sol:CashRemunerationEIP712",
-      "label": "s_paidWageClaims",
-      "offset": 0,
-      "slot": "2",
-      "type": "t_mapping(t_bytes32,t_bool)"
-    },
-    {
-      "astId": 20871,
-      "contract": "project/contracts/CashRemunerationEIP712.sol:CashRemunerationEIP712",
+      "astId": 25635,
+      "contract": "project/contracts/Investor/Investor.sol:Investor",
       "label": "s_officerAddress",
       "offset": 0,
-      "slot": "3",
+      "slot": "2",
       "type": "t_address"
     },
     {
-      "astId": 20875,
-      "contract": "project/contracts/CashRemunerationEIP712.sol:CashRemunerationEIP712",
-      "label": "s_disabledWageClaims",
+      "astId": 25638,
+      "contract": "project/contracts/Investor/Investor.sol:Investor",
+      "label": "s_migrationRoot",
       "offset": 0,
-      "slot": "4",
-      "type": "t_mapping(t_bytes32,t_bool)"
+      "slot": "3",
+      "type": "t_bytes32"
     },
     {
-      "astId": 20879,
-      "contract": "project/contracts/CashRemunerationEIP712.sol:CashRemunerationEIP712",
-      "label": "__gap",
+      "astId": 25643,
+      "contract": "project/contracts/Investor/Investor.sol:Investor",
+      "label": "s_migrationClaimed",
+      "offset": 0,
+      "slot": "4",
+      "type": "t_mapping(t_address,t_bool)"
+    },
+    {
+      "astId": 25646,
+      "contract": "project/contracts/Investor/Investor.sol:Investor",
+      "label": "s_migrationComplete",
       "offset": 0,
       "slot": "5",
-      "type": "t_array(t_uint256)49_storage"
+      "type": "t_bool"
+    },
+    {
+      "astId": 25651,
+      "contract": "project/contracts/Investor/Investor.sol:Investor",
+      "label": "__gap",
+      "offset": 0,
+      "slot": "6",
+      "type": "t_array(t_uint256)50_storage"
     }
   ],
   "types": {
@@ -53,11 +61,11 @@
       "label": "bytes32[]",
       "numberOfBytes": "32"
     },
-    "t_array(t_uint256)49_storage": {
+    "t_array(t_uint256)50_storage": {
       "base": "t_uint256",
       "encoding": "inplace",
-      "label": "uint256[49]",
-      "numberOfBytes": "1568"
+      "label": "uint256[50]",
+      "numberOfBytes": "1600"
     },
     "t_bool": {
       "encoding": "inplace",
@@ -69,10 +77,10 @@
       "label": "bytes32",
       "numberOfBytes": "32"
     },
-    "t_mapping(t_bytes32,t_bool)": {
+    "t_mapping(t_address,t_bool)": {
       "encoding": "mapping",
-      "key": "t_bytes32",
-      "label": "mapping(bytes32 => bool)",
+      "key": "t_address",
+      "label": "mapping(address => bool)",
       "numberOfBytes": "32",
       "value": "t_bool"
     },
@@ -89,7 +97,7 @@
       "members": [
         {
           "astId": 15375,
-          "contract": "project/contracts/CashRemunerationEIP712.sol:CashRemunerationEIP712",
+          "contract": "project/contracts/Investor/Investor.sol:Investor",
           "label": "_inner",
           "offset": 0,
           "slot": "0",
@@ -104,7 +112,7 @@
       "members": [
         {
           "astId": 14703,
-          "contract": "project/contracts/CashRemunerationEIP712.sol:CashRemunerationEIP712",
+          "contract": "project/contracts/Investor/Investor.sol:Investor",
           "label": "_values",
           "offset": 0,
           "slot": "0",
@@ -112,7 +120,7 @@
         },
         {
           "astId": 14707,
-          "contract": "project/contracts/CashRemunerationEIP712.sol:CashRemunerationEIP712",
+          "contract": "project/contracts/Investor/Investor.sol:Investor",
           "label": "_positions",
           "offset": 0,
           "slot": "1",
