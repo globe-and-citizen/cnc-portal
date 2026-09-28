@@ -7,7 +7,6 @@ on:
     branches: "**"
     paths:
       - "backend/**"
-      - ".github/workflows/backend-vitest.yml"
     types: [opened, synchronize, reopened, labeled]
   workflow_dispatch:
 
