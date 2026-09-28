@@ -3,9 +3,9 @@ import type { Team } from '../../src/types/team'
 import { expect, test } from './fixtures'
 import { E2E_MEMBER, E2E_MEMBER_PRIVATE_KEY, publicClient, artifact } from './e2e-chain'
 import { useWallet } from './e2e-page'
+import { createOperationalTeamFixture } from './team-factory'
 import {
   addRealCompanyMember,
-  createOperationalCompany,
   deleteCompanyThroughUi,
   signInToRealStack
 } from './company/real-company-page'
@@ -36,24 +36,30 @@ test.describe(
      * - [AC-US-SHER-009-05]
      */
     test('grants, persists, and revokes a real Investor minter role', async ({ browser, page }) => {
-      const memberContext = await browser.newContext()
-      const memberPage = await memberContext.newPage()
-      await useWallet(memberPage, E2E_MEMBER_PRIVATE_KEY)
-      await signInToRealStack(memberPage)
-      await memberContext.close()
-
-      const company = await createOperationalCompany(page)
+      const teamFixture = await createOperationalTeamFixture()
 
       try {
-        await page.locator('[data-test="skip-safe-setup-button"]').click()
-        await addRealCompanyMember(page, company.teamId, E2E_MEMBER)
+        await signInToRealStack(page)
+        await page.goto(`/teams/${teamFixture.teamId}`)
+        await expect(page).toHaveURL(new RegExp(`/teams/${teamFixture.teamId}$`))
+
+        const memberContext = await browser.newContext()
+        try {
+          const memberPage = await memberContext.newPage()
+          await useWallet(memberPage, E2E_MEMBER_PRIVATE_KEY)
+          await signInToRealStack(memberPage)
+        } finally {
+          await memberContext.close()
+        }
+
+        await addRealCompanyMember(page, teamFixture.teamId, E2E_MEMBER)
 
         const teamLoaded = page.waitForResponse(
           (response) =>
             response.request().method() === 'GET' &&
-            new URL(response.url()).pathname === `/api/teams/${company.teamId}`
+            new URL(response.url()).pathname === `/api/teams/${teamFixture.teamId}`
         )
-        await page.goto(`/teams/${company.teamId}/sher-token`)
+        await page.goto(`/teams/${teamFixture.teamId}/sher-token`)
         const teamResponse = await teamLoaded
         expect(teamResponse.ok()).toBe(true)
         const team = (await teamResponse.json()) as Team
@@ -76,8 +82,8 @@ test.describe(
         })
         await expect.poll(() => hasMinterRole(investor, E2E_MEMBER)).toBe(true)
 
-        await page.locator(`a[href="/teams/${company.teamId}"]`).first().click()
-        await page.locator(`a[href="/teams/${company.teamId}/sher-token"]`).click()
+        await page.locator(`a[href="/teams/${teamFixture.teamId}"]`).first().click()
+        await page.locator(`a[href="/teams/${teamFixture.teamId}/sher-token"]`).click()
         const revokeButton = page.locator(`[data-test="revoke-minter-${E2E_MEMBER.toLowerCase()}"]`)
         await expect(revokeButton).toBeVisible({ timeout: 30_000 })
         await revokeButton.click()
@@ -91,7 +97,7 @@ test.describe(
         await expect.poll(() => hasMinterRole(investor, E2E_MEMBER)).toBe(false)
       } finally {
         if (!page.isClosed()) {
-          await deleteCompanyThroughUi(page, company.teamId, company.team.name)
+          await deleteCompanyThroughUi(page, teamFixture.teamId, teamFixture.team.name)
         }
       }
     })
