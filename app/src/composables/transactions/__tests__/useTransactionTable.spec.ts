@@ -118,4 +118,21 @@ describe('useTransactionTable', () => {
     expect(table.displayedTransactions.value).toHaveLength(3)
     expect(table.total.value).toBe(3)
   })
+
+  it('does not apply an upper cutoff to the all-time range', async () => {
+    const futureTransaction = {
+      ...buildTransactions(1)[0]!,
+      date: new Date(Date.UTC(2030, 0, 1)).toISOString()
+    }
+    const table = useTransactionTable(computed(() => [futureTransaction]))
+
+    table.dateRange.value = {
+      start: new Date(0),
+      end: new Date(Date.UTC(2025, 0, 1, 23, 59, 59))
+    }
+    await nextTick()
+
+    expect(table.displayedTransactions.value).toHaveLength(1)
+    expect(table.total.value).toBe(1)
+  })
 })
