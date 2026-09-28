@@ -10,8 +10,13 @@
           <AddressTooltip :address="row.contract.address" :slice="true" class="mt-1 text-xs" />
         </div>
       </div>
-      <UBadge :color="row.contract.paused ? 'warning' : 'success'" variant="subtle" size="sm">
-        {{ row.contract.paused ? 'Paused' : 'Active' }}
+      <UBadge
+        :color="pauseStatus.color"
+        variant="subtle"
+        size="sm"
+        data-test="contract-pause-status"
+      >
+        {{ pauseStatus.label }}
       </UBadge>
     </div>
 
@@ -48,6 +53,7 @@
 import { computed } from 'vue'
 import AddressTooltip from '@/components/ui/AddressTooltip.vue'
 import UserIdentity from '@/components/ui/UserIdentity.vue'
+import { getContractPauseStatusPresentation } from '@/utils/contracts/pauseCapabilities'
 import { getContractPresentation } from '@/utils/contracts/presentation'
 import MainContractActionMenu from './MainContractActionMenu.vue'
 import MainContractBalanceCell from './MainContractBalanceCell.vue'
@@ -68,4 +74,7 @@ const emit = defineEmits<{
 }>()
 
 const presentation = computed(() => getContractPresentation(props.row.contract.type))
+const pauseStatus = computed(() =>
+  getContractPauseStatusPresentation(props.row.contract.pauseStatus)
+)
 </script>

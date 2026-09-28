@@ -31,11 +31,10 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { DropdownMenuItem } from '@nuxt/ui'
-import type { TableRow } from '@/types/table'
-import type { ContractActionState } from './MainContractTable.types'
+import type { ContractActionState, ManagedContractRow } from './MainContractTable.types'
 
 interface Props {
-  row: TableRow
+  row: ManagedContractRow
   actionState: ContractActionState
 }
 
@@ -48,6 +47,21 @@ const emit = defineEmits<{
   'transfer-ownership': []
   'change-status': [paused: boolean]
 }>()
+
+const statusMenuItem = computed<DropdownMenuItem | undefined>(() => {
+  if (props.row.pauseStatus !== 'active' && props.row.pauseStatus !== 'paused') {
+    return undefined
+  }
+
+  const paused = props.row.pauseStatus === 'paused'
+  return {
+    label: paused ? 'Resume contract' : 'Pause contract',
+    icon: paused ? 'i-lucide-play' : 'i-lucide-pause',
+    color: paused ? 'success' : 'error',
+    disabled: !props.actionState.canChangeStatus,
+    onSelect: () => emit('change-status', paused)
+  }
+})
 
 const menuItems = computed<DropdownMenuItem[][]>(() => [
   [
@@ -82,13 +96,7 @@ const menuItems = computed<DropdownMenuItem[][]>(() => [
       disabled: !props.actionState.canManage,
       onSelect: () => emit('transfer-ownership')
     },
-    {
-      label: props.row.paused ? 'Resume contract' : 'Pause contract',
-      icon: props.row.paused ? 'i-lucide-play' : 'i-lucide-pause',
-      color: props.row.paused ? 'success' : 'error',
-      disabled: !props.actionState.canManage,
-      onSelect: () => emit('change-status', Boolean(props.row.paused))
-    }
+    ...(statusMenuItem.value ? [statusMenuItem.value] : [])
   ]
 ])
 </script>

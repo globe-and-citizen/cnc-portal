@@ -89,29 +89,28 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useClipboard } from '@vueuse/core'
-import type { Abi, Address } from 'viem'
+import type { Address } from 'viem'
 import { NETWORK } from '@/constant'
 import { useBodIsMember } from '@/composables/bod/reads'
 import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
 import { useGetBodActionsQuery } from '@/queries'
 import { useTeamStore, useUserDataStore } from '@/stores'
 import type { TeamContract, User } from '@/types'
-import type { TableRow } from '@/types/table'
 import type { FormattedAction } from '@/utils/contracts/management'
 import { filterAndFormatActions } from '@/utils/contracts/management'
-import { getTeamContracts } from '@/composables/contracts/readTeamContracts'
+import {
+  getTeamContracts,
+  type TeamContractReadModel
+} from '@/composables/contracts/readTeamContracts'
 import { getContractPresentation } from '@/utils/contracts/presentation'
 import MainContractActions from './MainContractActions.vue'
 import MainContractDesktopTable from './MainContractDesktopTable.vue'
 import MainContractMobileCard from './MainContractMobileCard.vue'
-import type { ContractActionState, ContractTableRow } from './MainContractTable.types'
-
-interface EnrichedContract extends Omit<TeamContract, 'admins'> {
-  admins?: string[]
-  owner: string | null
-  paused: boolean | null
-  abi: Abi
-}
+import type {
+  ContractActionState,
+  ContractTableRow,
+  ManagedContractRow
+} from './MainContractTable.types'
 
 type ContractActionSurface = 'details' | 'transfer' | 'approval' | null
 
@@ -134,11 +133,11 @@ const userDataStore = useUserDataStore()
 const toast = useToast()
 const { copy } = useClipboard()
 const { isWriteDisabled } = useTeamWriteGuard()
-const enrichedContracts = ref<EnrichedContract[]>([])
+const enrichedContracts = ref<TeamContractReadModel[]>([])
 const isRefreshing = ref(false)
 const statusFilter = ref<'all' | 'active' | 'paused'>('all')
 const sortOrder = ref<'contract' | 'status'>('contract')
-const selectedContract = ref<EnrichedContract | null>(null)
+const selectedContract = ref<TeamContractReadModel | null>(null)
 const selectedActionSurface = ref<ContractActionSurface>(null)
 const statusChangeRequest = ref<ContractStatusChangeRequest | null>(null)
 const nextStatusChangeRequestId = ref(0)
@@ -164,18 +163,21 @@ const sortOptions = [
 ]
 const displayedContracts = computed(() => {
   const filtered = enrichedContracts.value.filter((contract) => {
-    if (statusFilter.value === 'paused') return contract.paused === true
-    if (statusFilter.value === 'active') return contract.paused !== true
+    if (statusFilter.value === 'paused') return contract.pauseStatus === 'paused'
+    if (statusFilter.value === 'active') return contract.pauseStatus === 'active'
     return true
   })
 
   return [...filtered].sort((a, b) => {
-    if (sortOrder.value === 'status') return Number(a.paused) - Number(b.paused)
+    if (sortOrder.value === 'status') {
+      const statusOrder = ['active', 'paused', 'not-supported', 'unavailable']
+      return statusOrder.indexOf(a.pauseStatus) - statusOrder.indexOf(b.pauseStatus)
+    }
     return presentation(a.type).label.localeCompare(presentation(b.type).label)
   })
 })
 const pausedCount = computed(
-  () => enrichedContracts.value.filter((contract) => contract.paused === true).length
+  () => enrichedContracts.value.filter((contract) => contract.pauseStatus === 'paused').length
 )
 const pendingActionsByContract = computed(
   () =>
@@ -205,20 +207,23 @@ const VALUE_HOLDING_TYPES = new Set([
 ])
 const holdsValue = (type: string) => VALUE_HOLDING_TYPES.has(type)
 const presentation = (type: string) => getContractPresentation(type)
-const pendingActionsFor = (contract: EnrichedContract): FormattedAction =>
+const pendingActionsFor = (contract: TeamContractReadModel): FormattedAction =>
   pendingActionsByContract.value.get(contract.address) ?? []
-const isBodAction = (contract: EnrichedContract) =>
+const isBodAction = (contract: TeamContractReadModel) =>
   contract.owner === teamStore.getContractAddressByType('BoardOfDirectors') &&
   isCurrentUserBodMember.value === true
-const canManage = (contract: EnrichedContract) =>
+const canManage = (contract: TeamContractReadModel) =>
   !isWriteDisabled.value && (contract.owner === userDataStore.address || isBodAction(contract))
-const canReviewPendingActions = (contract: EnrichedContract) =>
+const canReviewPendingActions = (contract: TeamContractReadModel) =>
   !isWriteDisabled.value && isBodAction(contract) && pendingActionsFor(contract).length > 0
-const actionStateFor = (contract: EnrichedContract): ContractActionState | undefined =>
+const actionStateFor = (contract: TeamContractReadModel): ContractActionState | undefined =>
   showActions.value
     ? {
         pendingActionCount: pendingActionsFor(contract).length,
         canManage: canManage(contract),
+        canChangeStatus:
+          canManage(contract) &&
+          (contract.pauseStatus === 'active' || contract.pauseStatus === 'paused'),
         canReviewPendingActions: canReviewPendingActions(contract)
       }
     : undefined
@@ -248,19 +253,21 @@ async function refresh() {
   isRefreshing.value = true
   try {
     enrichedContracts.value =
-      ((await getTeamContracts(props.contracts as TeamContract[])) as EnrichedContract[]) || []
+      (await getTeamContracts(props.contracts as TeamContract[], props.version)) || []
   } finally {
     isRefreshing.value = false
   }
 }
 
-function openContractAction(contract: TableRow, surface: ContractActionSurface) {
-  selectedContract.value = contract as EnrichedContract
+function openContractAction(contract: ManagedContractRow, surface: ContractActionSurface) {
+  selectedContract.value = contract as TeamContractReadModel
   selectedActionSurface.value = surface
 }
 
-function requestStatusChange(contract: TableRow, paused: boolean) {
-  selectedContract.value = contract as EnrichedContract
+function requestStatusChange(contract: ManagedContractRow, paused: boolean) {
+  if (contract.pauseStatus !== 'active' && contract.pauseStatus !== 'paused') return
+
+  selectedContract.value = contract as TeamContractReadModel
   selectedActionSurface.value = null
   nextStatusChangeRequestId.value += 1
   statusChangeRequest.value = {

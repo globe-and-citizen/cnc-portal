@@ -3,7 +3,7 @@
 **Scope:** Pure, shared data-shaping boundaries for the `app/` frontend and the separation of their stateful, network, browser, SDK, and
 file-export effects.
 
-**Last verified:** 2026-09-07
+**Last verified:** 2026-09-28
 
 ## Consumers
 
@@ -49,6 +49,8 @@ flowchart LR
 - Utility runtime imports are acyclic. Type-only relationships are erased by TypeScript and do not participate in the runtime graph.
 - Contract reads, store-backed transaction presentation, Safe browser access, logging, spreadsheet/PDF generation, and Safe SDK transaction
   effects remain outside `utils`.
+- Contract capability policy remains a pure, version-aware utility; the contract-read composable owns Wagmi effects and maps failed reads to
+  an explicit unavailable state.
 - Accounting utilities keep token movements and USD calculations as fixed-scale `bigint` values through journal validation and every report
   projection. Conversion to a JavaScript `number` belongs only to presentation and export boundaries.
 - Accounting contracts shared across account resolution, the journal, and financial-statement projections are declared in one type-only
@@ -69,7 +71,7 @@ flowchart LR
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `8767f7775f1d2d5c0b6bf31c4571909a4108e922`
+**Implementation evidence reviewed against:** `da4b1aaff94af72299220ea5da2084ca848bd652`
 
 - [Utility ownership map and domain implementations](../../../app/src/utils/)
 - [Shared Accounting domain contracts](../../../app/src/utils/accounting/types.ts)
@@ -84,7 +86,10 @@ flowchart LR
 - [Safe Deposit Router amount-model tests](../../../app/src/utils/safeDepositRouter/__tests__/model.spec.ts),
   [amount-validation tests](../../../app/src/utils/safeDepositRouter/__tests__/model.validation.spec.ts), and
   [Vesting schedule and presentation tests](../../../app/src/utils/vesting/__tests__/)
-- [Contract-read owner](../../../app/src/composables/contracts/readTeamContracts.ts)
+- [Version-aware contract pause policy](../../../app/src/utils/contracts/pauseCapabilities.ts),
+  [policy tests](../../../app/src/utils/contracts/__tests__/pauseCapabilities.spec.ts),
+  [contract-read owner](../../../app/src/composables/contracts/readTeamContracts.ts), and
+  [contract-read tests](../../../app/src/composables/contracts/__tests__/readTeamContracts.spec.ts)
 - [Safe browser effects](../../../app/src/lib/safe/browser.ts), [Safe transaction effects](../../../app/src/lib/safe/transactions.ts),
   [logging](../../../app/src/lib/logging.ts), [accounting exports](../../../app/src/lib/accounting/), and
   [file exports](../../../app/src/lib/files/)

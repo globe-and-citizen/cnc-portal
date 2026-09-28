@@ -47,7 +47,12 @@ const DEFAULT_ROW: TableRow = {
       stateMutability: 'nonpayable'
     }
   ],
-  paused: false,
+  pauseStatus: 'active',
+  pauseCapability: {
+    support: 'operations',
+    scope: 'Protected operations.',
+    selectors: { status: 'paused', pause: 'pause', resume: 'unpause' }
+  },
   owner: '0xOwner0000000000000000000000000000000001',
   deployer: '0xDeployer0000000000000000000000000000001',
   type: 'Treasury'
@@ -253,7 +258,7 @@ describe('MainContractActions.vue', () => {
     expect(mutationByFn.pause.mutate).toHaveBeenCalledTimes(1)
 
     const paused = mountComponent(
-      { paused: true },
+      { pauseStatus: 'paused' },
       { statusChangeRequest: { id: 2, paused: true } }
     )
     await flushPromises()
@@ -276,7 +281,7 @@ describe('MainContractActions.vue', () => {
       options?.onSuccess?.()
     )
     const resumeWrapper = mountComponent(
-      { paused: true },
+      { pauseStatus: 'paused' },
       { statusChangeRequest: { id: 2, paused: true } }
     )
     await flushPromises()
@@ -291,7 +296,7 @@ describe('MainContractActions.vue', () => {
 
     mockLog.error.mockClear()
     const resumeWrapper = mountComponent(
-      { paused: true },
+      { pauseStatus: 'paused' },
       { statusChangeRequest: { id: 2, paused: true } }
     )
     mutationByFn.unpause.error.value = new Error('unpause failed')

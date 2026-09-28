@@ -23,9 +23,10 @@
             <div class="py-4">
               <dt class="text-muted">Status</dt>
               <dd class="mt-2">
-                <UBadge :color="row.paused ? 'warning' : 'success'" variant="subtle">
-                  {{ row.paused ? 'Paused' : 'Active' }}
+                <UBadge :color="pauseStatus.color" variant="subtle">
+                  {{ pauseStatus.label }}
                 </UBadge>
+                <p class="text-muted mt-2 text-xs">{{ pauseCapabilityDescription }}</p>
               </dd>
             </div>
             <div class="py-4">
@@ -121,6 +122,10 @@ import { useContractOwnershipTransfer } from '@/composables/contracts/useContrac
 import { useContractStatusChange } from '@/composables/contracts/useContractStatusChange'
 import type { TableRow } from '@/types/table'
 import type { FormattedAction } from '@/utils/contracts/management'
+import {
+  getContractPauseStatusPresentation,
+  type ContractPauseStatus
+} from '@/utils/contracts/pauseCapabilities'
 import { getContractPresentation } from '@/utils/contracts/presentation'
 import BodApprovalContent from './BodApprovalContent.vue'
 import ContractReadDataSection from './ContractReadDataSection.vue'
@@ -156,6 +161,16 @@ const handledStatusChangeRequest = ref<number | null>(null)
 const rowRef = computed<TableRow>(() => props.row ?? {})
 const isBodActionRef = toRef(props, 'isBodAction')
 const presentation = computed(() => getContractPresentation(props.row?.type ?? ''))
+const pauseStatus = computed(() =>
+  getContractPauseStatusPresentation(
+    (props.row?.pauseStatus as ContractPauseStatus | undefined) ?? 'unavailable'
+  )
+)
+const pauseCapabilityDescription = computed(
+  () =>
+    props.row?.pauseCapability?.scope ??
+    'Pause capability could not be verified for this contract generation.'
+)
 const contractAddress = computed(() => props.row?.address as Address)
 const contractAbi = computed<Abi>(() => props.row?.abi ?? [])
 const isDetailsOpen = computed(() => props.open === 'details')
