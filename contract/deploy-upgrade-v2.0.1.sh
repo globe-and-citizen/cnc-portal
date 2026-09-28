@@ -27,11 +27,14 @@ timestamp="$(date -u +%Y%m%dT%H%M%SZ)"
 manifest_path="${CNC_UPGRADE_MANIFEST_PATH:-$contract_dir/.upgrade-state/${network}-v2.0.1-${timestamp}.json}"
 
 echo "Validating storage and implementation safety for the four 2.0.1 upgrades..."
-for contract_name in CashRemunerationEIP712 ExpenseAccountEIP712 Investor Officer; do
+(
+  # These checks use compiled bytecode and committed storage baselines only. Keep
+  # production configuration out of this process so the keystore remains locked.
+  unset POLYGON_URL PRIVATE_KEY POLYGONSCAN_API_KEY
   CNC_STORAGE_BASELINE_NETWORK=polygon \
-    CONTRACT="$contract_name" \
-    npm run validate-upgrade:polygon
-done
+    CONTRACTS=CashRemunerationEIP712,ExpenseAccountEIP712,Investor,Officer \
+    npx hardhat run scripts/validate-upgrade.ts --network hardhat
+)
 
 echo "Verifying beacon ownership and recording rollback inputs..."
 CNC_UPGRADE_TARGET=all \

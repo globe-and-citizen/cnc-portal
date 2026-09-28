@@ -81,6 +81,10 @@ upgrade. The script must fail before the first transaction unless it has:
 - rejected a dirty production worktree;
 - defined dependency ordering between upgraded contracts.
 
+Group a release's static implementation and storage checks into one simulated Hardhat process using the production storage baselines. Do not
+load RPC or signer secrets for those static checks. A read-only production preflight may then unlock the keystore once to confirm the
+connected chain, beacon ownership, current implementations, and rollback manifest before any deployment starts.
+
 After each `upgradeTo`, read back the implementation and reported contract version before continuing. Do not add upgrade modules to
 `deploy.sh`; that script is reserved for fresh installations.
 

@@ -146,6 +146,10 @@ When one release upgrades multiple beacons, use a fail-fast script that validate
 pre-upgrade implementation addresses to a local ignored manifest before broadcasting the first transaction. Do not place live deployment
 addresses in a second committed configuration file; resolve them from the canonical Ignition deployment registry.
 
+Run the release's static implementation and storage checks together on a simulated Hardhat network with the production baseline selected
+explicitly. This keeps RPC and signer secrets out of static validation. Use one production-network preflight process to unlock the keystore,
+verify every target, and save the rollback manifest before deployment.
+
 The Polygon 2.0.1 release uses [`deploy-upgrade-v2.0.1.sh`](./deploy-upgrade-v2.0.1.sh) and the
 [`Polygon 2.0.1 runbook`](./releases/polygon-v2.0.1.md). Investor must be upgraded before Officer because the new Officer permission setup
 depends on the new Investor ownership override.
