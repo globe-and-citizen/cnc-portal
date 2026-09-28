@@ -24,5 +24,13 @@
   "FixedReturnBeaconModule#FixedReturn": "0xAADcE1e848c1acF557610EAa99ade724A430C0c0",
   "FixedReturnBeaconModule#Beacon": "0xD146733DF1f7dF13233697efc1aCC59abB4FdD71",
   "Officer#Officer": "0x870BF5480ECb9981B9dd893F9Acd2753aD82a3bA",
-  "Officer#FactoryBeacon": "0xF4265dC2236012C2Fd5bC771D0f6c3f30D210FFc"
+  "Officer#FactoryBeacon": "0xF4265dC2236012C2Fd5bC771D0f6c3f30D210FFc",
+  "CashRemunerationV201UpgradeModule#CashRemunerationFactoryBeacon_v2_0_1": "0x905DB5c2D7430955Fa3F6348045A426a81292bD2",
+  "CashRemunerationV201UpgradeModule#CashRemunerationEIP712_v2_0_1": "0x30705bA7E0E2176F1C68E539b90D1125E6a50b2D",
+  "ExpenseAccountV201UpgradeModule#ExpenseAccountFactoryBeacon_v2_0_1": "0x2fFe554afC64e97560000da73d9fb109A9E6D533",
+  "ExpenseAccountV201UpgradeModule#ExpenseAccountEIP712_v2_0_1": "0x99BbfAe0B7C577e5587C4EB55272Df312c00284f",
+  "InvestorV201UpgradeModule#InvestorBeacon_v2_0_1": "0xbdeFDa968D089b6cEDa90F4507a54eB133E06Fb6",
+  "InvestorV201UpgradeModule#Investor_v2_0_1": "0x985646bF795b808A1e2642C654d24c3805bb41Ea",
+  "OfficerV201UpgradeModule#OfficerFactoryBeacon_v2_0_1": "0xF4265dC2236012C2Fd5bC771D0f6c3f30D210FFc",
+  "OfficerV201UpgradeModule#Officer_v2_0_1": "0x48e5DBB05FE0aB82ec823Be58eCdf0d1463b473b"
 }

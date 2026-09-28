@@ -7,8 +7,9 @@ Script that checks whether upgradeable contracts can be safely upgraded in place
 ```mermaid
 flowchart TD
     Start([npm run validate-upgrade:polygon]) --> ResolveNet{--network flag?}
-    ResolveNet -- "missing (defaults to hardhat)" --> Reject[Reject with error]
-    ResolveNet -- "polygon / localhost / ..." --> Compile[npx hardhat compile]
+    ResolveNet -- "missing baseline on hardhat" --> Reject[Reject with error]
+    ResolveNet -- "live network" --> Compile[npx hardhat compile]
+    ResolveNet -- "hardhat plus explicit baseline" --> Compile
 
     Compile --> Loop["For each upgradeable contract<br/>(Bank, Officer, InvestorV1, ...)"]
 
@@ -103,8 +104,22 @@ stays at the end.
 | `npm run validate-upgrade:polygon`                   | Validate all contracts against polygon baselines |
 | `npm run validate-upgrade:local`                     | Validate against localhost baselines             |
 | `CONTRACT=X npm run validate-upgrade:polygon`        | Validate a single contract                       |
+| `CONTRACTS=X,Y npm run validate-upgrade:polygon`     | Validate a comma-separated contract set          |
 | `BAKE=1 npm run validate-upgrade:polygon`            | Bake all baselines for polygon                   |
 | `BAKE=1 CONTRACT=X npm run validate-upgrade:polygon` | Bake one baseline                                |
+
+Static release checks can use a simulated network without loading RPC or signer configuration when the baseline is explicit:
+
+```bash
+CNC_STORAGE_BASELINE_NETWORK=polygon \
+  CONTRACTS=CashRemunerationEIP712,ExpenseAccountEIP712,Investor,Officer \
+  npx hardhat run scripts/validate-upgrade.ts --network hardhat
+```
+
+The simulated network is rejected unless `CNC_STORAGE_BASELINE_NETWORK` is set, and it can never be used to bake a baseline. Production
+release wrappers should unset production RPC and signer variables around this static command, then open one live-network Hardhat process for
+preflight, sequential Ignition deployments, per-target readbacks, and final verification. Keeping the live operation in one process allows
+the keystore plugin to reuse its in-memory master key after one password prompt.
 
 ## File structure
 

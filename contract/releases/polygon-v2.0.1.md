@@ -27,7 +27,7 @@ deployment registry, and the candidates are compared to the committed Polygon 2.
 
 Before any transaction, the guarded script:
 
-- validates the four storage layouts against the Polygon 2.0.0 baselines;
+- validates all four implementations and storage layouts in one simulated Hardhat process against the Polygon 2.0.0 baselines;
 - requires the connected chain to match the selected deployment registry;
 - confirms that the configured signer owns every target beacon;
 - confirms each current implementation reports an expected version;
@@ -51,6 +51,8 @@ CNC_CONFIRM_POLYGON_V201_UPGRADE=upgrade-polygon-v2.0.1 npm run prepare-upgrade:
 ```
 
 This command validates layouts, ownership, versions, constructor wiring, and rollback inputs. It does not broadcast an upgrade transaction.
+Static implementation and storage checks do not load Polygon configuration. The production keystore is unlocked once, only when the
+read-only Polygon preflight checks beacon ownership and implementations and records the rollback manifest.
 
 ## Polygon deployment
 
@@ -60,8 +62,10 @@ Only after the preparation output and rollback manifest have been reviewed, run:
 CNC_CONFIRM_POLYGON_V201_UPGRADE=upgrade-polygon-v2.0.1 npm run deploy-upgrade:v201:polygon
 ```
 
-The script upgrades and reads back one target at a time. If a step fails, stop and inspect the saved manifest and on-chain state before
-continuing. Do not restart blindly: completed Ignition futures and already-upgraded beacons must be reconciled first.
+The script keeps the preflight, all four Ignition deployments, their per-target readbacks, and the final verification in one Hardhat
+process. The production keystore is therefore unlocked once for the complete live operation. It still upgrades and verifies one target at a
+time in the documented order. If a step fails, stop and inspect the saved manifest and on-chain state before continuing. Do not restart
+blindly: completed Ignition futures and already-upgraded beacons must be reconciled first.
 
 ## Post-deployment evidence
 
