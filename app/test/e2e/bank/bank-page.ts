@@ -1,6 +1,6 @@
 // Bank-specific Playwright page, backend and journey helpers.
 import { expect, type Locator, type Page } from '@playwright/test'
-import { parseEther, parseUnits } from 'viem'
+import { parseEther, parseUnits, type Address } from 'viem'
 import {
   E2E_MEMBER,
   E2E_MEMBER_PRIVATE_KEY,
@@ -95,17 +95,26 @@ export async function transferBankToContract(
   contractName: string,
   amount: string,
   tokenSymbol: string
-): Promise<void> {
+): Promise<Address> {
   await page.locator('[data-test="transfer-button"]').click()
   const transfer = page.getByRole('dialog', { name: 'Transfer from Bank Contract' })
   await transfer.getByPlaceholder('Name').fill(contractName)
-  await transfer.locator('[data-test="contract-row"]').filter({ hasText: contractName }).click()
+  const contractRow = transfer
+    .locator('[data-test="contract-row"]')
+    .filter({ hasText: contractName })
+  const contractTestId = await contractRow
+    .locator('[data-test^="contract-dropdown-"]')
+    .getAttribute('data-test')
+  const contractAddress = contractTestId?.replace('contract-dropdown-', '')
+  if (!contractAddress) throw new Error(`Expected an address for ${contractName}`)
+  await contractRow.click()
   await selectToken(page, transfer, tokenSymbol)
   await dialogAmount(transfer).fill(amount)
   await transfer.locator('[data-test="transferButton"]').click()
   await expect(page.getByText('Transferred successfully', { exact: true })).toBeVisible({
     timeout: 30_000
   })
+  return contractAddress as Address
 }
 
 export async function completeCashOut(page: Page): Promise<void> {
