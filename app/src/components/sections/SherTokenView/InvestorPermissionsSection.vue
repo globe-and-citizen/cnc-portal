@@ -21,7 +21,11 @@
       </div>
     </template>
 
-    <USkeleton v-if="permissions.isPending.value" class="h-32 w-full" />
+    <USkeleton
+      v-if="permissions.isPending.value"
+      class="h-32 w-full"
+      data-test="permission-loading"
+    />
     <template v-else>
       <UAlert
         v-if="evidence !== 'complete'"
@@ -36,7 +40,19 @@
         "
         description="The table only shows roles that could be verified on-chain. Retry before relying on it as a complete authority list."
         data-test="permission-evidence-warning"
-      />
+      >
+        <template #actions>
+          <UButton
+            color="neutral"
+            variant="outline"
+            size="xs"
+            label="Retry"
+            :loading="permissions.isFetching.value"
+            data-test="permission-evidence-retry"
+            @click="retryPermissions"
+          />
+        </template>
+      </UAlert>
 
       <UTable :data="rows" :columns="columns" data-test="investor-permissions-table">
         <template #identity-cell="{ row: { original: row } }">
@@ -83,7 +99,10 @@
     >
       <template #body>
         <div class="flex flex-col gap-4">
-          <SelectMemberContractsInput v-model="grantTarget" />
+          <SelectMemberContractsInput
+            v-model="grantTarget"
+            :disabled="isWriteDisabled || grantRole.isPending.value"
+          />
           <UAlert
             v-if="actionError"
             color="error"
@@ -226,10 +245,22 @@ const rows = computed<PermissionRow[]>(() =>
   })
 )
 
+const grantableAddresses = computed(
+  () =>
+    new Set(
+      [
+        ...(teamStore.currentTeam?.members ?? []),
+        ...(teamStore.currentTeam?.teamContracts ?? [])
+      ].map((account) => account.address.toLowerCase())
+    )
+)
+
 const canSubmitGrant = computed(
   () =>
     canManage.value &&
+    !isWriteDisabled.value &&
     isAddress(grantTarget.value.address) &&
+    grantableAddresses.value.has(grantTarget.value.address.toLowerCase()) &&
     !rows.value.some(
       (row) => row.address.toLowerCase() === grantTarget.value.address.toLowerCase() && row.isMinter
     ) &&
@@ -251,6 +282,10 @@ function openGrantModal() {
   grantTarget.value = { name: '', address: '' }
   actionError.value = ''
   grantModalOpen.value = true
+}
+
+function retryPermissions() {
+  void permissions.refetch()
 }
 
 function openRevokeModal(row: PermissionRow) {

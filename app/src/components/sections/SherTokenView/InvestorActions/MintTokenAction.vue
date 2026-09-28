@@ -68,7 +68,7 @@ const mintTooltip = computed(() => {
 })
 
 const openModal = () => {
-  if (isWriteDisabled.value) return
+  if (isWriteDisabled.value || !canMint.value) return
   modalState.value = { mount: true, show: true }
 }
 

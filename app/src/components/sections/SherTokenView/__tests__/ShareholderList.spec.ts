@@ -72,7 +72,7 @@ describe('ShareholderList', () => {
       }
     })
 
-  it('opens mint modal when clicking mint individual', async () => {
+  it('[AC-US-SHER-004-06] opens individual mint for an Investor minter', async () => {
     const wrapper = createComponent()
 
     // No MintForm before the click — modal body is not mounted
@@ -85,5 +85,15 @@ describe('ShareholderList', () => {
     expect(mintForm.exists()).toBe(true)
     // Selected shareholder propagated to MintForm via memberInput.address
     expect(mintForm.attributes('data-address')).toBe('0x123')
+  })
+
+  it('[AC-US-SHER-004-06] blocks individual mint without the Investor minter role', async () => {
+    mockInvestorPermissions.hasRole.data.value = false
+    const wrapper = createComponent()
+    const mintButton = wrapper.find('[data-test="mint-individual"]')
+
+    expect(mintButton.attributes('disabled')).toBeDefined()
+    await mintButton.trigger('click')
+    expect(wrapper.find('[data-test="mint-form"]').exists()).toBe(false)
   })
 })

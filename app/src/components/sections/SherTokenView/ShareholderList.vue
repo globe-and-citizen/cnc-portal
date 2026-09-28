@@ -117,7 +117,7 @@ const mintIndividualTooltip = computed(() => {
 })
 
 function openMintIndividualModal(shareholder: Address) {
-  if (isWriteDisabled.value) return
+  if (isWriteDisabled.value || !canMint.value) return
   selectedShareholder.value = shareholder
   mintIndividualModal.value = { mount: true, show: true }
 }

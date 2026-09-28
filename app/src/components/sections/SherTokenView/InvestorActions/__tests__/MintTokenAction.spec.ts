@@ -38,7 +38,7 @@ describe('MintTokenAction.vue', () => {
     mockInvestorPermissions.hasRole.isLoading.value = false
   })
 
-  it('enables mint button for an Investor minter and opens modal', async () => {
+  it('[AC-US-SHER-004-06] enables mint for an Investor minter and opens the modal', async () => {
     const wrapper = createWrapper()
 
     expect(wrapper.findComponent({ name: 'UTooltip' }).props('text')).toBeUndefined()
@@ -49,7 +49,7 @@ describe('MintTokenAction.vue', () => {
     expect(wrapper.find('[data-test="mint-form"]').exists()).toBe(true)
   })
 
-  it('disables mint button without the minter role and shows tooltip reason', () => {
+  it('[AC-US-SHER-004-06] disables mint without the minter role and shows the reason', async () => {
     mockInvestorPermissions.hasRole.data.value = false
     const wrapper = createWrapper()
 
@@ -57,6 +57,8 @@ describe('MintTokenAction.vue', () => {
       'Only an account with the Investor minter role can mint tokens'
     )
     expect(wrapper.find('[data-test="mint-button"]').attributes('disabled')).toBeDefined()
+    await wrapper.find('[data-test="mint-button"]').trigger('click')
+    expect(wrapper.find('[data-test="mint-form"]').exists()).toBe(false)
   })
 
   it('renders mint form component only when modal is mounted', () => {
