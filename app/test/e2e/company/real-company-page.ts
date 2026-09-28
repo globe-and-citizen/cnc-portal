@@ -149,7 +149,7 @@ export async function addRealCompanyMember(
     .filter({ hasText: `${memberAddress.slice(0, 6)}...${memberAddress.slice(-4)}` })
     .click()
   await page.locator('[data-test="add-members-submit"]').click()
-  await expect(page.getByText('Members added successfully', { exact: true })).toBeVisible()
+  await expect(page.getByText('Members added successfully', { exact: true }).last()).toBeVisible()
 }
 
 export async function deleteCompanyThroughUi(

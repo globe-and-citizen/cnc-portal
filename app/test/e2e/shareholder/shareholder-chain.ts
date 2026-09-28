@@ -1,14 +1,19 @@
 import type { Address } from 'viem'
 import type { Team } from '../../../src/types/team'
-import { artifact, E2E_OWNER, publicClient, tokenBalance, type Artifact } from '../e2e-chain'
+import { artifact, E2E_OWNER, publicClient, tokenBalance, write, type Artifact } from '../e2e-chain'
 
-export interface ShareholderE2EFixture {
+export interface ShareholderIssuanceE2EFixture {
+  bank: Address
   investor: Address
   router: Address
-  safe: Address
   usdc: Address
+  bankArtifact: Artifact
   investorArtifact: Artifact
   routerArtifact: Artifact
+}
+
+export interface ShareholderE2EFixture extends ShareholderIssuanceE2EFixture {
+  safe: Address
 }
 
 export interface ShareholderPosition {
@@ -52,20 +57,31 @@ async function supportedUsdc(router: Address, routerArtifact: Artifact): Promise
   throw new Error('Integrated Safe Deposit Router does not support USDC')
 }
 
-export async function shareholderFixtureFromTeam(team: Team): Promise<ShareholderE2EFixture> {
-  const [investorArtifact, routerArtifact] = await Promise.all([
+export async function shareholderIssuanceFixtureFromTeam(
+  team: Team
+): Promise<ShareholderIssuanceE2EFixture> {
+  const [bankArtifact, investorArtifact, routerArtifact] = await Promise.all([
+    contractArtifact('Bank.sol/Bank.json'),
     contractArtifact('Investor/Investor.sol/Investor.json'),
     contractArtifact('SafeDepositRouter.sol/SafeDepositRouter.json')
   ])
   const router = teamContractAddress(team, 'SafeDepositRouter')
 
   return {
+    bank: teamContractAddress(team, 'Bank'),
     investor: teamContractAddress(team, 'Investor'),
     router,
-    safe: teamContractAddress(team, 'Safe'),
     usdc: await supportedUsdc(router, routerArtifact),
+    bankArtifact,
     investorArtifact,
     routerArtifact
+  }
+}
+
+export async function shareholderFixtureFromTeam(team: Team): Promise<ShareholderE2EFixture> {
+  return {
+    ...(await shareholderIssuanceFixtureFromTeam(team)),
+    safe: teamContractAddress(team, 'Safe')
   }
 }
 
@@ -80,10 +96,11 @@ export async function routerState(fixture: ShareholderE2EFixture) {
 }
 
 export async function shareholderPosition(
-  fixture: ShareholderE2EFixture
+  fixture: ShareholderIssuanceE2EFixture,
+  account: Address = E2E_OWNER
 ): Promise<ShareholderPosition> {
   const [balance, shareholders, symbol, totalSupply] = await Promise.all([
-    read<bigint>(fixture.investor, fixture.investorArtifact, 'balanceOf', [E2E_OWNER]),
+    read<bigint>(fixture.investor, fixture.investorArtifact, 'balanceOf', [account]),
     read<readonly { shareholder: Address; amount: bigint }[]>(
       fixture.investor,
       fixture.investorArtifact,
@@ -98,11 +115,66 @@ export async function shareholderPosition(
 export const safeUsdcBalance = (fixture: ShareholderE2EFixture) =>
   tokenBalance(fixture.usdc, fixture.safe)
 
+export const bankUsdcBalance = (fixture: ShareholderIssuanceE2EFixture) =>
+  tokenBalance(fixture.usdc, fixture.bank)
+
+export async function ensureUsdcBalance(
+  fixture: ShareholderIssuanceE2EFixture,
+  account: Address,
+  minimum: bigint
+): Promise<void> {
+  const current = await tokenBalance(fixture.usdc, account)
+  if (current >= minimum) return
+
+  const tokenArtifact = await contractArtifact('test/MockERC20.sol/MockERC20.json')
+  await write(fixture.usdc, tokenArtifact.abi, 'mint', [account, minimum - current])
+}
+
 export async function depositedEvents(fixture: ShareholderE2EFixture) {
   return publicClient.getContractEvents({
     address: fixture.router,
     abi: fixture.routerArtifact.abi,
     eventName: 'Deposited',
+    fromBlock: 0n,
+    toBlock: 'latest'
+  })
+}
+
+export async function mintedEvents(fixture: ShareholderIssuanceE2EFixture) {
+  return publicClient.getContractEvents({
+    address: fixture.investor,
+    abi: fixture.investorArtifact.abi,
+    eventName: 'Minted',
+    fromBlock: 0n,
+    toBlock: 'latest'
+  })
+}
+
+export async function dividendDistributedEvents(fixture: ShareholderIssuanceE2EFixture) {
+  return publicClient.getContractEvents({
+    address: fixture.investor,
+    abi: fixture.investorArtifact.abi,
+    eventName: 'DividendDistributed',
+    fromBlock: 0n,
+    toBlock: 'latest'
+  })
+}
+
+export async function dividendPaidEvents(fixture: ShareholderIssuanceE2EFixture) {
+  return publicClient.getContractEvents({
+    address: fixture.investor,
+    abi: fixture.investorArtifact.abi,
+    eventName: 'DividendPaid',
+    fromBlock: 0n,
+    toBlock: 'latest'
+  })
+}
+
+export async function bankDividendEvents(fixture: ShareholderIssuanceE2EFixture) {
+  return publicClient.getContractEvents({
+    address: fixture.bank,
+    abi: fixture.bankArtifact.abi,
+    eventName: 'DividendDistributionTriggered',
     fromBlock: 0n,
     toBlock: 'latest'
   })

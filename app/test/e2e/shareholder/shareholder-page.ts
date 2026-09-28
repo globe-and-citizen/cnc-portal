@@ -1,5 +1,7 @@
 import { expect, type Page } from '@playwright/test'
 import type { Team } from '../../../src/types/team'
+import type { Address } from 'viem'
+import { dialogAmount, openAccountFromSidebar, selectToken } from '../e2e-page'
 
 export async function openRealShareholderManagement(page: Page, teamId: string): Promise<Team> {
   const teamResponse = page.waitForResponse(
@@ -67,4 +69,52 @@ export async function investThroughSafe(page: Page, amount: string): Promise<voi
     })
   ).toBeVisible({ timeout: 60_000 })
   await expect(dialog).toBeHidden()
+}
+
+export async function issueShares(page: Page, recipient: Address, amount: string): Promise<void> {
+  const action = page.locator('[data-test="mint-button"]')
+  await expect(action).toBeEnabled({ timeout: 30_000 })
+  await action.click()
+
+  const dialog = page.getByRole('dialog', { name: 'Issue E2E tokens' })
+  await dialog.locator('[data-test="member-contracts-address-input"]').fill(recipient)
+  const recipientRow = dialog
+    .locator('[data-test="user-row"]')
+    .filter({ hasText: `${recipient.slice(0, 6)}...${recipient.slice(-4)}` })
+  await expect(recipientRow).toBeVisible()
+  await recipientRow.click()
+  await dialog.locator('[data-test="add-mode-button"]').click()
+  await dialog.locator('[data-test="amount-input"]').fill(amount)
+  await expect(dialog.locator('[data-test="submit-button"]')).toBeEnabled()
+  await dialog.locator('[data-test="submit-button"]').click()
+
+  await expect(page.getByText('Tokens issued successfully', { exact: true }).last()).toBeVisible({
+    timeout: 30_000
+  })
+  await expect(dialog).toBeHidden()
+}
+
+export async function fundBankWithUsdc(page: Page, teamId: string, amount: string): Promise<void> {
+  await openAccountFromSidebar(page, `/teams/${teamId}/accounts/bank-account`)
+  await page.getByRole('button', { name: 'Deposit', exact: true }).click()
+  const dialog = page.getByRole('dialog', { name: 'Deposit to Bank Contract' })
+  await selectToken(page, dialog, 'USDC')
+  await dialogAmount(dialog).fill(amount)
+  await dialog.locator('[data-test="deposit-button"]').click()
+  await expect(page.getByText('USDC deposited successfully', { exact: true })).toBeVisible({
+    timeout: 60_000
+  })
+  await expect(dialog).toBeHidden()
+}
+
+export async function distributeUsdcDividends(page: Page, amount: string): Promise<void> {
+  const action = page.locator('[data-test="pay-dividends-button"]')
+  await expect(action).toBeEnabled({ timeout: 30_000 })
+  await action.click()
+
+  const dialog = page.getByRole('dialog', { name: 'Pay Dividends to the shareholders' })
+  await selectToken(page, dialog, 'USDC')
+  await dialogAmount(dialog).fill(amount)
+  await dialog.locator('[data-test="pay-dividends-submit-button"]').click()
+  await expect(dialog).toBeHidden({ timeout: 60_000 })
 }
