@@ -214,11 +214,17 @@ coverage; the latest execution result and artifacts belong in Playwright reports
     `E2E-PATH-06`.
   - Dependencies: an operational company, eligible issuer, funded Bank, and at least one shareholder.
   - Main path:
-    - [ ] Issue SHER with the required role and verify the cap table.
-    - [ ] Distribute a dividend through the supported authorization path.
-    - [ ] Verify proportional receipts and refreshed shareholder activity.
+    - [x] Create an operational company, add a member, and issue `30 E2E` to the owner and `10 E2E` to the member through browser writes.
+    - [x] Verify both successful receipts, `Minted` events, the `40 E2E` total supply, and the two-address shareholder register on-chain.
+    - [x] Fund Bank with `4 USDC` through the portal and distribute the held balance through the direct owner authorization path.
+    - [x] Verify the Bank and Investor distribution events, the two successful proportional payments (`3 USDC` and `1 USDC`), and the
+          emptied Bank balance on-chain.
+    - [x] Reload and verify the two-shareholder cap table, `75%` / `25%` ownership, and the grouped distribution activity with both
+          shareholder payments.
   - Expected result: issuance and distribution are reflected consistently in balances and history.
-  - Status: planned.
+  - Status: integrated main path for direct owner distribution; Board action orchestration remains focused frontend evidence.
+  - Evidence:
+    [integrated shareholder issuance and dividend lifecycle](../../app/test/e2e/shareholder/shareholder-issuance-dividends.integrated.spec.ts).
 
 - `E2E-PATH-08` — Complete a shareholder migration
   - Stories validated:
