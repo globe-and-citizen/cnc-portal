@@ -15,7 +15,7 @@ plugin tells us we have to.
 │     for a compatible change)                                    │
 │  2. Bump version() per semver                                   │
 │  3. Run: npm run validate-upgrade:polygon                        │
-│  4a. PASS → deploy via the existing XxxUpgradeModule            │
+│  4a. PASS → create a versioned release upgrade module           │
 │  4b. FAIL → read errors, try to keep storage compatible:        │
 │       - append new vars at the end, not in the middle           │
 │       - use the __gap to absorb new vars                        │
@@ -139,6 +139,21 @@ git commit -m "chore(contracts): bake polygon/InvestorV1 baseline after 1.3.0 de
 ```
 
 Do the same on `localhost` after a local deploy.sh run, if you maintain local baselines.
+
+### Guarded multi-contract releases
+
+When one release upgrades multiple beacons, use a fail-fast script that validates and reads back every target independently. Save the
+pre-upgrade implementation addresses to a local ignored manifest before broadcasting the first transaction. Do not place live deployment
+addresses in a second committed configuration file; resolve them from the canonical Ignition deployment registry.
+
+The Polygon 2.0.1 release uses [`deploy-upgrade-v2.0.1.sh`](./deploy-upgrade-v2.0.1.sh) and the
+[`Polygon 2.0.1 runbook`](./releases/polygon-v2.0.1.md). Investor must be upgraded before Officer because the new Officer permission setup
+depends on the new Investor ownership override.
+
+Every production release must have new versioned Ignition modules. Never change a versioned release module after it has been used. A release
+script must depend only on those versioned modules and should target only networks that need the in-place upgrade. Fresh networks receive
+the current implementation from `deploy.sh`; they do not need to replay production upgrades. The
+[upgrade-module guide](./ignition/modules/README.md) defines the module pattern, release-script guards, and required tests.
 
 ### Validating a single contract
 

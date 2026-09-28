@@ -37,9 +37,7 @@
           <UTooltip :text="mintIndividualTooltip">
             <UButton
               color="primary"
-              :disabled="
-                isWriteDisabled || userStore.address != teamStore.currentTeam?.ownerAddress
-              "
+              :disabled="isWriteDisabled || !canMint"
               data-test="mint-individual"
               @click="openMintIndividualModal(row.shareholder)"
             >
@@ -88,6 +86,8 @@ import { formatStakePercentageFromSupply } from '@/utils/investors/mintAllocatio
 import { formatUnits, type Address } from 'viem'
 import { computed, ref, watch } from 'vue'
 import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
+import { useInvestorHasRole } from '@/composables/investor/permissions'
+import { MINTER_ROLE } from '@/queries/investorPermissions.queries'
 
 type ShareholderInfo = {
   shareholder: Address
@@ -103,17 +103,21 @@ const selectedShareholder = ref<Address | null>(null)
 const teamStore = useTeamStore()
 const userStore = useUserDataStore()
 const { isWriteDisabled, archivedTooltip } = useTeamWriteGuard()
+const currentAccount = computed(() => userStore.address as Address | undefined)
+const minterRole = useInvestorHasRole(MINTER_ROLE, currentAccount)
+const canMint = computed(() => minterRole.data.value === true)
 
 const mintIndividualTooltip = computed(() => {
   if (archivedTooltip.value) return archivedTooltip.value
-  if (userStore.address != teamStore.currentTeam?.ownerAddress) {
-    return 'Only the team owner can mint tokens for shareholders'
+  if (minterRole.isLoading.value) return 'Checking Investor minter permission'
+  if (!canMint.value) {
+    return 'Only an account with the Investor minter role can mint tokens for shareholders'
   }
   return undefined
 })
 
 function openMintIndividualModal(shareholder: Address) {
-  if (isWriteDisabled.value) return
+  if (isWriteDisabled.value || !canMint.value) return
   selectedShareholder.value = shareholder
   mintIndividualModal.value = { mount: true, show: true }
 }

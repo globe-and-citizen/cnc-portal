@@ -4,6 +4,7 @@
     <ShareholderMigrationBanner />
     <ShareholderClaimSection />
     <InvestorsActions />
+    <InvestorPermissionsSection v-if="currentInvestorAddress" />
     <ShareholderList />
   </div>
   <div class="flex flex-col gap-y-8">
@@ -22,8 +23,10 @@ import ShareholderList from '@/components/sections/SherTokenView/ShareholderList
 import InvestorsTransactions from '@/components/sections/SherTokenView/InvestorsTransactions.vue'
 import ShareholderMigrationBanner from '@/components/sections/SherTokenView/ShareholderMigrationBanner.vue'
 import ShareholderClaimSection from '@/components/sections/SherTokenView/ShareholderClaimSection.vue'
+import InvestorPermissionsSection from '@/components/sections/SherTokenView/InvestorPermissionsSection.vue'
 
 const teamStore = useTeamStore()
 
 const investorsAddress = computed(() => teamStore.getInvestorAddress())
+const currentInvestorAddress = computed(() => teamStore.getContractAddressByType('Investor'))
 </script>

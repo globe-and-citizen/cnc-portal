@@ -18,8 +18,10 @@ SHER token.
   holder balances, shareholder set, share issuance, dividend distribution, and migration state.
 - A **shareholder** is an address with a non-zero Investor balance. Its ownership percentage is its balance divided by the current total
   supply.
-- The Investor owner controls migration completion and bulk issuance. Its `MINTER_ROLE` controls individual issuance. The initial owner
-  receives that role, but the portal currently uses ownership checks rather than preflighting the role before offering individual issuance.
+- The Investor owner controls migration completion and bulk issuance. Investor ownership always moves together with `DEFAULT_ADMIN_ROLE` and
+  `MINTER_ROLE`; the current owner cannot renounce ownership or remove either authority role from itself.
+- Investor administrators can review current role holders and grant or revoke `MINTER_ROLE`. The portal reconstructs candidates from role
+  events, verifies their current state with `hasRole`, and labels incomplete RPC evidence instead of presenting it as an empty role set.
 - The **Safe Deposit Router** is the investment integration: it accepts supported deposits into the registered Safe and calls the Investor
   contract to issue SHER at its configured multiplier.
 - The **Bank** is the dividend integration: the Bank owner executes a payout directly, or an eligible Board member creates the Bank action.
@@ -36,6 +38,7 @@ SHER token.
 | Safe Deposit Router → Investor issuance | `US-SHER-005`, `US-SHER-001`                |
 | Bank → Investor dividend distribution   | `US-SHER-002`                               |
 | Investor migration root and claims      | `US-SHER-008`, `US-SHER-006`, `US-SHER-007` |
+| Investor ownership and role authority   | `US-SHER-009`, `US-SHER-004`                |
 
 ## Lifecycle
 
@@ -44,7 +47,8 @@ flowchart LR
     Member[Company member] --> Review[Review holdings, cap table, and activity]
     RouterOwner[Router owner] --> Configure[Configure Safe and investment terms]
     Investor[Investor] --> Invest[Invest through the Safe Deposit Router]
-    InvestorOwner[Investor owner with minter role] --> Issue[Issue SHER]
+    InvestorAdmin[Investor administrator] --> Permissions[Review and manage minter authority]
+    Permissions --> Issue[Authorized minter issues SHER]
     BankOwner[Bank owner or Board member] --> Dividend[Distribute dividends]
 
     Redeploy[Officer redeployment] --> Snapshot[Commit shareholder snapshot]
@@ -65,19 +69,31 @@ flowchart LR
 | US-SHER-006 | Claim a migrated shareholding            | Shareholder                     | 🧪 Validation  |
 | US-SHER-007 | Settle and close a shareholder migration | Investor owner                  | 🚧 In Progress |
 | US-SHER-008 | Start a shareholder migration            | Company owner                   | 🔗 Reference   |
+| US-SHER-009 | Manage Investor permissions              | Investor administrator          | 🧪 Validation  |
 
 ## Test Coverage Overview
 
-| User Story  | E2E Status | Owning Path |
-| ----------- | ---------- | ----------- |
-| US-SHER-001 | 📋 Planned | E2E-PATH-06 |
-| US-SHER-002 | 📋 Planned | E2E-PATH-07 |
-| US-SHER-003 | 📋 Planned | E2E-PATH-06 |
-| US-SHER-004 | 📋 Planned | E2E-PATH-07 |
-| US-SHER-005 | 📋 Planned | E2E-PATH-06 |
-| US-SHER-006 | 📋 Planned | E2E-PATH-08 |
-| US-SHER-007 | 📋 Planned | E2E-PATH-08 |
-| US-SHER-008 | 📋 Planned | E2E-PATH-08 |
+| User Story  | Main Journey  | Coverage Target | Gaps                                                                                                                    |
+| ----------- | ------------- | --------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| US-SHER-001 | ✅ Integrated | ⚠️ 6/10 met     | `AC-US-SHER-001-05`, `AC-US-SHER-001-06`, `AC-US-SHER-001-07`, `AC-US-SHER-001-10`                                      |
+| US-SHER-002 | 📋 Planned    | ⚠️ 3/12 met     | `AC-US-SHER-002-01`–`06`, `AC-US-SHER-002-09`, `AC-US-SHER-002-10`, `AC-US-SHER-002-12`; `02` and `03` lack integration |
+| US-SHER-003 | ✅ Integrated | ⚠️ 4/8 met      | `AC-US-SHER-003-05`–`08`                                                                                                |
+| US-SHER-004 | 📋 Planned    | ⚠️ 4/8 met      | `AC-US-SHER-004-02`, `AC-US-SHER-004-04`, `AC-US-SHER-004-05`, `AC-US-SHER-004-07`                                      |
+| US-SHER-005 | ✅ Integrated | ⚠️ 4/9 met      | `AC-US-SHER-005-04`, `AC-US-SHER-005-06`–`09`                                                                           |
+| US-SHER-006 | 📋 Planned    | ⚠️ 1/8 met      | `AC-US-SHER-006-01`–`03`, `AC-US-SHER-006-05`–`08`                                                                      |
+| US-SHER-007 | 📋 Planned    | ⚠️ 2/8 met      | `AC-US-SHER-007-01`, `AC-US-SHER-007-02`, `AC-US-SHER-007-04`, `AC-US-SHER-007-06`–`08`                                 |
+| US-SHER-008 | 🔗 Reference  | N/A             | Coverage is owned by `US-CONTRACT-005`                                                                                  |
+| US-SHER-009 | ✅ Integrated | ✅ 8/8 met      | None                                                                                                                    |
+
+## Proof Strategy Reference
+
+| Strategy                  | Responsibilities              | Required Evidence   | Proof Rationale                                                                 |
+| ------------------------- | ----------------------------- | ------------------- | ------------------------------------------------------------------------------- |
+| `PS-INTEGRATED-JOURNEY`   | Frontend + Contract           | Integrated E2E      | Portal actions and reads must agree with the durable on-chain result.           |
+| `PS-FRONTEND`             | Frontend                      | Frontend            | The portal owns the presentation, validation, guard, or recovery decision.      |
+| `PS-CONTRACT`             | Contract                      | Contract            | The smart contract exclusively owns and enforces the rule.                      |
+| `PS-FRONTEND-CONTRACT`    | Frontend + Contract           | Frontend + Contract | Portal prevention and contract enforcement can fail independently.              |
+| `PS-MIGRATION-INTEGRATED` | Frontend + Backend + Contract | Integrated E2E      | Persisted snapshots, browser orchestration, and on-chain state must stay equal. |
 
 ## US-SHER-001: Invest in the Safe and Receive SHER
 
@@ -111,6 +127,21 @@ flowchart LR
 - [x] `AC-US-SHER-001-08` Rejecting or failing the approval stops the flow before any deposit is submitted.
 - [x] `AC-US-SHER-001-09` A failed deposit resets the form to the amount step and shows an error without reporting a successful investment.
 - [x] `AC-US-SHER-001-10` Cancelling the form resets its amount and closes the investment modal.
+
+### Test Coverage
+
+| Acceptance Criterion | Proof Strategy          | Current Evidence          | Status     |
+| -------------------- | ----------------------- | ------------------------- | ---------- |
+| `AC-US-SHER-001-01`  | `PS-INTEGRATED-JOURNEY` | Integrated E2E + Frontend | ✅ Met     |
+| `AC-US-SHER-001-02`  | `PS-INTEGRATED-JOURNEY` | Integrated E2E            | ✅ Met     |
+| `AC-US-SHER-001-03`  | `PS-INTEGRATED-JOURNEY` | Integrated E2E + Frontend | ✅ Met     |
+| `AC-US-SHER-001-04`  | `PS-INTEGRATED-JOURNEY` | Integrated E2E            | ✅ Met     |
+| `AC-US-SHER-001-05`  | `PS-FRONTEND`           | None linked               | ❌ Missing |
+| `AC-US-SHER-001-06`  | `PS-FRONTEND`           | None linked               | ❌ Missing |
+| `AC-US-SHER-001-07`  | `PS-FRONTEND`           | None linked               | ❌ Missing |
+| `AC-US-SHER-001-08`  | `PS-FRONTEND`           | Frontend                  | ✅ Met     |
+| `AC-US-SHER-001-09`  | `PS-FRONTEND`           | Frontend                  | ✅ Met     |
+| `AC-US-SHER-001-10`  | `PS-FRONTEND`           | None linked               | ❌ Missing |
 
 **Accounting:** The complete router operation is booked once by
 [`UC-SDR-01`](../accounting/journal-entry-catalogue.md#uc-sdr-01--investor-contribution); the matching Safe receipt and Investor mint are
@@ -148,6 +179,23 @@ supporting evidence, not separate entries.
 - [x] `AC-US-SHER-002-11` A Board-action attempt without a Bank address does not create an action.
 - [x] `AC-US-SHER-002-12` A failure while reading the Bank owner is reported without enabling an unauthorized dividend action.
 
+### Test Coverage
+
+| Acceptance Criterion | Proof Strategy          | Current Evidence | Status          |
+| -------------------- | ----------------------- | ---------------- | --------------- |
+| `AC-US-SHER-002-01`  | `PS-FRONTEND`           | None linked      | ❌ Missing      |
+| `AC-US-SHER-002-02`  | `PS-INTEGRATED-JOURNEY` | Frontend         | ⚠️ Insufficient |
+| `AC-US-SHER-002-03`  | `PS-INTEGRATED-JOURNEY` | Frontend         | ⚠️ Insufficient |
+| `AC-US-SHER-002-04`  | `PS-FRONTEND`           | None linked      | ❌ Missing      |
+| `AC-US-SHER-002-05`  | `PS-FRONTEND`           | None linked      | ❌ Missing      |
+| `AC-US-SHER-002-06`  | `PS-FRONTEND`           | None linked      | ❌ Missing      |
+| `AC-US-SHER-002-07`  | `PS-FRONTEND`           | Frontend         | ✅ Met          |
+| `AC-US-SHER-002-08`  | `PS-CONTRACT`           | Contract         | ✅ Met          |
+| `AC-US-SHER-002-09`  | `PS-FRONTEND`           | None linked      | ❌ Missing      |
+| `AC-US-SHER-002-10`  | `PS-FRONTEND`           | None linked      | ❌ Missing      |
+| `AC-US-SHER-002-11`  | `PS-FRONTEND`           | Frontend         | ✅ Met          |
+| `AC-US-SHER-002-12`  | `PS-FRONTEND`           | None linked      | ❌ Missing      |
+
 **Accounting:** Per-shareholder payments are grouped into [`UC-INV-01`](../accounting/journal-entry-catalogue.md#uc-inv-01--dividend-paid).
 Bank's distribution trigger is not booked again.
 
@@ -181,6 +229,19 @@ Bank's distribution trigger is not booked again.
 - [ ] `AC-US-SHER-003-08` Missing or invalid Investor token-symbol data is presented as unavailable throughout the overview and activity
       history rather than as a fabricated token identity.
 
+### Test Coverage
+
+| Acceptance Criterion | Proof Strategy          | Current Evidence | Status     |
+| -------------------- | ----------------------- | ---------------- | ---------- |
+| `AC-US-SHER-003-01`  | `PS-INTEGRATED-JOURNEY` | Integrated E2E   | ✅ Met     |
+| `AC-US-SHER-003-02`  | `PS-INTEGRATED-JOURNEY` | Integrated E2E   | ✅ Met     |
+| `AC-US-SHER-003-03`  | `PS-INTEGRATED-JOURNEY` | Integrated E2E   | ✅ Met     |
+| `AC-US-SHER-003-04`  | `PS-INTEGRATED-JOURNEY` | Integrated E2E   | ✅ Met     |
+| `AC-US-SHER-003-05`  | `PS-FRONTEND`           | None linked      | ❌ Missing |
+| `AC-US-SHER-003-06`  | `PS-FRONTEND`           | None linked      | ❌ Missing |
+| `AC-US-SHER-003-07`  | `PS-FRONTEND`           | None linked      | ❌ Missing |
+| `AC-US-SHER-003-08`  | `PS-FRONTEND`           | None linked      | ❌ Missing |
+
 **Dependencies:** Current Investor contract and company access
 
 ## US-SHER-004: Issue SHER to a Shareholder
@@ -203,13 +264,26 @@ Bank's distribution trigger is not booked again.
 - [x] `AC-US-SHER-004-03` The Investor contract requires `MINTER_ROLE` for an individual issuance. _(contract)_
 - [x] `AC-US-SHER-004-04` The recipient address and incremental issuance amount must be valid and greater than zero.
 - [x] `AC-US-SHER-004-05` An archived company cannot start an issuance write.
-- [ ] `AC-US-SHER-004-06` The portal verifies that the connected user has `MINTER_ROLE` and applies that same authorization rule to both
+- [x] `AC-US-SHER-004-06` The portal verifies that the connected user has `MINTER_ROLE` and applies that same authorization rule to both
       individual-issuance entry points.
 
 #### Edge & Error Cases
 
 - [x] `AC-US-SHER-004-07` An invalid recipient or invalid stake does not submit an individual issuance.
 - [x] `AC-US-SHER-004-08` A rejected or failed individual issuance does not report SHER as issued.
+
+### Test Coverage
+
+| Acceptance Criterion | Proof Strategy          | Current Evidence    | Status     |
+| -------------------- | ----------------------- | ------------------- | ---------- |
+| `AC-US-SHER-004-01`  | `PS-FRONTEND`           | Frontend            | ✅ Met     |
+| `AC-US-SHER-004-02`  | `PS-INTEGRATED-JOURNEY` | None linked         | ❌ Missing |
+| `AC-US-SHER-004-03`  | `PS-CONTRACT`           | Contract            | ✅ Met     |
+| `AC-US-SHER-004-04`  | `PS-FRONTEND-CONTRACT`  | None linked         | ❌ Missing |
+| `AC-US-SHER-004-05`  | `PS-FRONTEND`           | None linked         | ❌ Missing |
+| `AC-US-SHER-004-06`  | `PS-FRONTEND-CONTRACT`  | Frontend + Contract | ✅ Met     |
+| `AC-US-SHER-004-07`  | `PS-FRONTEND`           | None linked         | ❌ Missing |
+| `AC-US-SHER-004-08`  | `PS-FRONTEND`           | Frontend            | ✅ Met     |
 
 **Accounting:** A direct mint not backed by Router, Payroll, or Vesting evidence uses
 [`DEFAULT-D`](../accounting/journal-entry-catalogue.md#default-d--direct-sher-issuance).
@@ -242,6 +316,20 @@ Bank's distribution trigger is not booked again.
 - [x] `AC-US-SHER-005-08` A missing router or company Safe prevents the corresponding configuration write.
 - [x] `AC-US-SHER-005-09` A rejected or failed router write does not report the configuration as updated.
 
+### Test Coverage
+
+| Acceptance Criterion | Proof Strategy          | Current Evidence          | Status          |
+| -------------------- | ----------------------- | ------------------------- | --------------- |
+| `AC-US-SHER-005-01`  | `PS-INTEGRATED-JOURNEY` | Integrated E2E + Frontend | ✅ Met          |
+| `AC-US-SHER-005-02`  | `PS-INTEGRATED-JOURNEY` | Integrated E2E + Contract | ✅ Met          |
+| `AC-US-SHER-005-03`  | `PS-INTEGRATED-JOURNEY` | Integrated E2E + Contract | ✅ Met          |
+| `AC-US-SHER-005-04`  | `PS-FRONTEND-CONTRACT`  | Frontend                  | ⚠️ Insufficient |
+| `AC-US-SHER-005-05`  | `PS-INTEGRATED-JOURNEY` | Integrated E2E            | ✅ Met          |
+| `AC-US-SHER-005-06`  | `PS-FRONTEND-CONTRACT`  | Contract                  | ⚠️ Insufficient |
+| `AC-US-SHER-005-07`  | `PS-FRONTEND`           | None linked               | ❌ Missing      |
+| `AC-US-SHER-005-08`  | `PS-FRONTEND`           | None linked               | ❌ Missing      |
+| `AC-US-SHER-005-09`  | `PS-FRONTEND`           | None linked               | ❌ Missing      |
+
 **Dependencies:** US-SAFE-001, an active Safe Deposit Router, and a connected router owner
 
 ## US-SHER-006: Claim a Migrated Shareholding
@@ -269,6 +357,19 @@ Bank's distribution trigger is not booked again.
 - [x] `AC-US-SHER-006-06` A connected address not present in the snapshot cannot submit a claim.
 - [x] `AC-US-SHER-006-07` A failed claim remains visible as a failure and does not report migrated shares as received.
 - [x] `AC-US-SHER-006-08` A completed migration no longer accepts an additional self-claim. _(contract)_
+
+### Test Coverage
+
+| Acceptance Criterion | Proof Strategy            | Current Evidence | Status          |
+| -------------------- | ------------------------- | ---------------- | --------------- |
+| `AC-US-SHER-006-01`  | `PS-MIGRATION-INTEGRATED` | None linked      | ❌ Missing      |
+| `AC-US-SHER-006-02`  | `PS-MIGRATION-INTEGRATED` | Contract         | ⚠️ Insufficient |
+| `AC-US-SHER-006-03`  | `PS-MIGRATION-INTEGRATED` | Contract         | ⚠️ Insufficient |
+| `AC-US-SHER-006-04`  | `PS-CONTRACT`             | Contract         | ✅ Met          |
+| `AC-US-SHER-006-05`  | `PS-MIGRATION-INTEGRATED` | None linked      | ❌ Missing      |
+| `AC-US-SHER-006-06`  | `PS-FRONTEND`             | None linked      | ❌ Missing      |
+| `AC-US-SHER-006-07`  | `PS-FRONTEND`             | None linked      | ❌ Missing      |
+| `AC-US-SHER-006-08`  | `PS-CONTRACT`             | None linked      | ❌ Missing      |
 
 **Accounting:** A migration claim preserves an existing ownership allocation. It is not a new economic issuance and creates no journal
 entry.
@@ -302,6 +403,19 @@ entry.
 - [x] `AC-US-SHER-007-07` A migration with no usable proof does not dispatch a partial allocation.
 - [x] `AC-US-SHER-007-08` A failed dispatch or closure is reported without marking the migration complete.
 
+### Test Coverage
+
+| Acceptance Criterion | Proof Strategy            | Current Evidence | Status          |
+| -------------------- | ------------------------- | ---------------- | --------------- |
+| `AC-US-SHER-007-01`  | `PS-MIGRATION-INTEGRATED` | Contract         | ⚠️ Insufficient |
+| `AC-US-SHER-007-02`  | `PS-MIGRATION-INTEGRATED` | Frontend         | ⚠️ Insufficient |
+| `AC-US-SHER-007-03`  | `PS-CONTRACT`             | Contract         | ✅ Met          |
+| `AC-US-SHER-007-04`  | `PS-MIGRATION-INTEGRATED` | None linked      | ❌ Missing      |
+| `AC-US-SHER-007-05`  | `PS-CONTRACT`             | Contract         | ✅ Met          |
+| `AC-US-SHER-007-06`  | `PS-FRONTEND-CONTRACT`    | None linked      | ❌ Missing      |
+| `AC-US-SHER-007-07`  | `PS-FRONTEND`             | None linked      | ❌ Missing      |
+| `AC-US-SHER-007-08`  | `PS-FRONTEND`             | None linked      | ❌ Missing      |
+
 **Accounting:** Dispatch and closure complete an existing ownership migration. They do not create a new economic issuance or journal entry.
 
 **Dependencies:** US-SHER-008 and an Investor owner
@@ -318,12 +432,58 @@ the redeployment and migration-root commit. Shareholder Management exposes the m
 
 **Dependencies:** US-CONTRACT-005 and a previous Investor generation
 
+## US-SHER-009: Manage Investor Permissions
+
+**As an** Investor administrator\
+**I want to** review and manage Investor token-minter authority\
+**So that** human and automated issuance uses explicit, current on-chain permissions
+
+### Acceptance Criteria
+
+#### Happy Path
+
+- [x] `AC-US-SHER-009-01` A company member can review the verified Investor owner, administrators, and minters with known member or contract
+      identities where available.
+- [x] `AC-US-SHER-009-03` A connected Investor administrator can grant `MINTER_ROLE` to a valid team member or contract address, and the
+      refreshed permission list reflects the confirmed on-chain state.
+- [x] `AC-US-SHER-009-04` A connected Investor administrator can revoke `MINTER_ROLE` from a delegated minter, and the refreshed permission
+      list reflects the confirmed on-chain state.
+
+#### Business Rules
+
+- [x] `AC-US-SHER-009-05` Only a connected account with `DEFAULT_ADMIN_ROLE` can initiate minter-role changes, and an archived company
+      cannot initiate those writes.
+- [x] `AC-US-SHER-009-06` The current Investor owner retains `DEFAULT_ADMIN_ROLE` and `MINTER_ROLE`; ownership transfer grants both roles to
+      the successor and removes them from the previous owner without removing unrelated technical minters. _(contract)_
+- [x] `AC-US-SHER-009-07` Revoking a known Cash Remuneration, Safe Deposit Router, or Vesting minter requires explicit acknowledgement of
+      the affected automated issuance flow.
+
+#### Edge & Error Cases
+
+- [x] `AC-US-SHER-009-02` A failed or partial historical role scan is labelled unavailable or incomplete and does not masquerade as an
+      authoritative empty permission list.
+- [x] `AC-US-SHER-009-08` A rejected or failed role transaction remains visible as a failure and does not report a successful permission
+      change.
+
+### Test Coverage
+
+| Acceptance Criterion | Proof Strategy          | Current Evidence                     | Status |
+| -------------------- | ----------------------- | ------------------------------------ | ------ |
+| `AC-US-SHER-009-01`  | `PS-INTEGRATED-JOURNEY` | Integrated E2E + Frontend            | ✅ Met |
+| `AC-US-SHER-009-02`  | `PS-FRONTEND`           | Frontend                             | ✅ Met |
+| `AC-US-SHER-009-03`  | `PS-INTEGRATED-JOURNEY` | Integrated E2E + Frontend            | ✅ Met |
+| `AC-US-SHER-009-04`  | `PS-INTEGRATED-JOURNEY` | Integrated E2E + Contract            | ✅ Met |
+| `AC-US-SHER-009-05`  | `PS-FRONTEND-CONTRACT`  | Integrated E2E + Frontend + Contract | ✅ Met |
+| `AC-US-SHER-009-06`  | `PS-CONTRACT`           | Contract                             | ✅ Met |
+| `AC-US-SHER-009-07`  | `PS-FRONTEND`           | Frontend                             | ✅ Met |
+| `AC-US-SHER-009-08`  | `PS-FRONTEND`           | Frontend                             | ✅ Met |
+
+**Dependencies:** Current Investor contract, a connected Investor administrator, and a connected wallet
+
 ## Known Gaps
 
 - Bulk initial issuance through `distributeMint` is a disabled, coming-soon portal control. The Investor contract implements it, but no
   current portal story claims that a user can complete it.
-- The main issuance action is exposed to the Investor owner and the shareholder-list entry point to the company owner, while the contract
-  requires `MINTER_ROLE`. Neither control preflights that role, so the portal needs one contract-aligned authorization rule (`US-SHER-004`).
 - Migration dispatch and closure are surfaced to the company owner, while the contract restricts them to the Investor owner. The portal does
   not yet verify that both roles resolve to the connected user (`US-SHER-007`).
 - Investor activity falls back to the literal `SHER` symbol when the symbol read is missing or invalid, so the activity history can present
@@ -331,21 +491,28 @@ the redeployment and migration-root commit. Shareholder Management exposes the m
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `272d6bd8d455cf09e681192f3b9c6c284b63b4fa`
+**Implementation evidence reviewed against:** `b875448a4f35252e12e8f75f73d5b738003c5baf`
 
 - [Shareholder Management route](../../../app/src/views/team/%5Bid%5D/SherTokenView.vue) and
   [Investor overview](../../../app/src/components/sections/SherTokenView/InvestorsHeader.vue)
+- [Investor action panel](../../../app/src/components/sections/SherTokenView/InvestorsActions.vue)
 - [Shareholder list](../../../app/src/components/sections/SherTokenView/ShareholderList.vue) and
   [Investor and router transaction history](../../../app/src/components/sections/SherTokenView/InvestorsTransactions.vue)
 - [Individual issuance action](../../../app/src/components/sections/SherTokenView/InvestorActions/MintTokenAction.vue),
   [issuance form](../../../app/src/components/sections/SherTokenView/forms/MintForm.vue), and
   [Investor writes](../../../app/src/composables/investor/writes.ts)
+- [Investor permission surface](../../../app/src/components/sections/SherTokenView/InvestorPermissionsSection.vue),
+  [permission reads](../../../app/src/composables/investor/permissions.ts), and
+  [role evidence query](../../../app/src/queries/investorPermissions.queries.ts), with
+  [permission presentation helpers](../../../app/src/utils/investors/permissions.ts)
 - [Router configuration actions](../../../app/src/components/sections/SherTokenView/InvestorActions/SetSafeAddressAction.vue),
   [deposit control](../../../app/src/components/sections/SherTokenView/InvestorActions/ToggleSherCompensationAction.vue), and
   [multiplier action](../../../app/src/components/sections/SherTokenView/InvestorActions/SetCompensationMultiplierAction.vue)
 - [Investment action](../../../app/src/components/sections/SherTokenView/InvestorActions/InvestInSafeAction.vue),
   [investment form](../../../app/src/components/sections/SherTokenView/forms/SafeDepositRouterForm.vue), and
   [router investment ledger mapper](../../../app/src/utils/accounting/mappers/safeDepositRouter.ts)
+- [Integrated shareholder investment lifecycle](../../../app/test/e2e/shareholder/shareholder-investment.integrated.spec.ts) and
+  [on-chain shareholder assertions](../../../app/test/e2e/shareholder/shareholder-chain.ts)
 - [Dividend action](../../../app/src/components/sections/SherTokenView/InvestorActions/PayDividendsAction.vue) and
   [dividend form](../../../app/src/components/sections/SherTokenView/forms/PayDividendsForm.vue)
 - [Migration banner](../../../app/src/components/sections/SherTokenView/ShareholderMigrationBanner.vue),
@@ -355,7 +522,9 @@ the redeployment and migration-root commit. Shareholder Management exposes the m
   [migration orchestration](../../../app/src/composables/investor/useShareholderMigration.ts), and
   [claim and settlement writes](../../../app/src/composables/investor/useClaimMigration.ts)
 - [Investor overview tests](../../../app/src/components/sections/SherTokenView/__tests__/InvestorsHeader.spec.ts),
-  [issuance-form tests](../../../app/src/components/sections/SherTokenView/forms/__tests__/MintForm.spec.ts)
+  [issuance-form tests](../../../app/src/components/sections/SherTokenView/forms/__tests__/MintForm.spec.ts),
+  [permission component tests](../../../app/src/components/sections/SherTokenView/__tests__/InvestorPermissionsSection.spec.ts), and
+  [integrated permission lifecycle](../../../app/test/e2e/investor-permissions.integrated.spec.ts)
 
 ## Related Documentation
 
@@ -366,6 +535,7 @@ the redeployment and migration-root commit. Shareholder Management exposes the m
 - [Contract Management](../contract-management/README.md)
 - [Shareholder migration flow](../../contracts/features/shareholder-migration-flow.md)
 - [Safe Deposit Router contract behaviour](../../contracts/features/safe-deposit-router/README.md)
+- [Current Investor contract behaviour](../../contracts/features/investor/README.md)
 - [Product feature inventory](../README.md)
 
 _[← Back to feature inventory](../README.md)_

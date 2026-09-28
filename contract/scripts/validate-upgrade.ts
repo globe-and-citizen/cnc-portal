@@ -59,6 +59,24 @@ function baselinePath(network: string, contractName: string): string {
   return path.join(baselineDir(network), `${contractName}.json`)
 }
 
+function resolveBaselineNetwork(network: string, bakeMode: boolean): string {
+  const requestedNetwork = process.env.CNC_STORAGE_BASELINE_NETWORK
+  if (!requestedNetwork) return network
+
+  if (bakeMode) {
+    throw new Error(
+      'CNC_STORAGE_BASELINE_NETWORK cannot be used with BAKE=1; bake against the connected network explicitly'
+    )
+  }
+  if (!KNOWN_NETWORKS.has(requestedNetwork)) {
+    throw new Error(
+      `CNC_STORAGE_BASELINE_NETWORK must name a known network: ${Array.from(KNOWN_NETWORKS).join(', ')}`
+    )
+  }
+
+  return requestedNetwork
+}
+
 type StorageEntry = {
   label: string
   offset: number
@@ -325,6 +343,7 @@ async function main() {
   const upgrades = await createUpgrades(hre, connection)
 
   const bakeMode = process.env.BAKE === '1'
+  const baselineNetwork = resolveBaselineNetwork(network, bakeMode)
   const target = process.env.CONTRACT
   const targets: ContractConfig[] = target
     ? [UPGRADEABLE_CONTRACTS.find((c) => c.name === target) ?? { name: target }]
@@ -345,11 +364,15 @@ async function main() {
     return
   }
 
-  console.log(`\nValidating ${targets.length} upgradeable contract(s) on network "${network}"...\n`)
+  const baselineNotice =
+    baselineNetwork === network ? '' : ` using "${baselineNetwork}" storage baselines`
+  console.log(
+    `\nValidating ${targets.length} upgradeable contract(s) on network "${network}"${baselineNotice}...\n`
+  )
   const results: ValidationResult[] = []
   for (const cfg of targets) {
     try {
-      results.push(await validateContract(cfg, network, connection, upgrades))
+      results.push(await validateContract(cfg, baselineNetwork, connection, upgrades))
     } catch (e) {
       results.push({
         name: cfg.name,

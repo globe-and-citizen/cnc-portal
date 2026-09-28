@@ -743,7 +743,8 @@ contract UserBeaconProxy {
 3. All existing proxies automatically use new logic
 4. No data migration needed (storage layout compatible)
 
-**Upgrade Modules**: `/contract/ignition/modules/*UpgradeModule.ts`
+**Upgrade modules**: release-specific recipes under `/contract/ignition/modules/`; see the
+[upgrade-module guide](../../contract/ignition/modules/README.md).
 
 ---
 

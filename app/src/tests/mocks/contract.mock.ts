@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { zeroHash } from 'viem'
 import { createContractReadMock, createContractWriteV3Mock } from './erc20.mock'
 import type { Election, LendingOfferStruct } from '@/types'
+import type { InvestorPermissionsResult } from '@/queries/investorPermissions.queries'
 
 /**
  * Elections Contract Mocks
@@ -145,6 +146,15 @@ export const mockInvestorReads = {
   migrationComplete: createContractReadMock(false)
 }
 
+export const mockInvestorPermissions = {
+  list: createContractReadMock<InvestorPermissionsResult>({
+    accounts: [],
+    evidence: 'complete' as const,
+    gaps: []
+  }),
+  hasRole: createContractReadMock(false)
+}
+
 export const mockInvestorWrites = {
   invest: createContractWriteV3Mock(),
   claimDividend: createContractWriteV3Mock(),
@@ -157,7 +167,9 @@ export const mockInvestorWrites = {
   unpause: createContractWriteV3Mock(),
   initialize: createContractWriteV3Mock(),
   transferOwnership: createContractWriteV3Mock(),
-  renounceOwnership: createContractWriteV3Mock()
+  renounceOwnership: createContractWriteV3Mock(),
+  grantRole: createContractWriteV3Mock(),
+  revokeRole: createContractWriteV3Mock()
 }
 
 /**
@@ -201,6 +213,7 @@ export const resetContractMocks = () => {
     mockBankReads,
     mockBODReads,
     mockInvestorReads,
+    mockInvestorPermissions,
     mockCashRemunerationReads,
     mockExpenseAccountReads,
     mockVestingReads,

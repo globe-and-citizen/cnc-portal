@@ -108,6 +108,8 @@ flowchart LR
 
 - [x] `AC-US-CONTRACT-002-09` Rejecting a wallet request does not report a successful contract operation.
 - [x] `AC-US-CONTRACT-002-10` A failed direct ownership transfer is shown in the transfer context without changing the displayed owner.
+- [x] `AC-US-CONTRACT-002-11` Transferring the current Investor contract grants ownership, administrator authority, and minter authority to
+      the successor atomically; the previous owner loses those two roles while unrelated technical minters remain unchanged. _(contract)_
 
 **Dependencies:** US-CONTRACT-001, current contract permissions, and a connected wallet
 
@@ -201,12 +203,14 @@ flowchart LR
       the form.
 - [x] `AC-US-CONTRACT-005-10` A malformed pending Board-action description remains discoverable with fallback action details and does not
       hide other actions.
+- [x] `AC-US-CONTRACT-005-11` A newly deployed Investor ends with the company owner holding ownership, administrator authority, and minter
+      authority; the Officer retains neither temporary role and configured technical minters remain authorized. _(contract)_
 
 **Dependencies:** US-CONTRACT-001, a current company owner, a connected wallet, and an active Officer generation
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `027a59e8c6a540a461c5f686284c92651f143c9f`
+**Implementation evidence reviewed against:** `bb49842f8f2b363271f29e9dc2ff1238b2310319`
 
 - [Board reads](../../../app/src/composables/bod/reads.ts), [Board writes](../../../app/src/composables/bod/writes.ts),
   [shared contract reads](../../../app/src/composables/contracts/useContractReadData.ts), and
@@ -233,10 +237,13 @@ flowchart LR
 - [Officer redeploy entry point](../../../app/src/components/sections/ContractManagementView/MainContractSection.vue)
 - [Officer redeploy form and recovery actions](../../../app/src/components/sections/ContractManagementView/RedeployOfficerModal.vue)
 - [Officer redeploy workflow](../../../app/src/composables/contracts/useOfficerRedeploy.ts)
+- [Officer deployment authority cleanup](../../../contract/contracts/Officer.sol) and
+  [Investor ownership authority transfer](../../../contract/contracts/Investor/Investor.sol)
 - [Current contract action tests](../../../app/src/components/sections/ContractManagementView/__tests__/MainContractActions.spec.ts)
 - [Current contract table tests](../../../app/src/components/sections/ContractManagementView/__tests__/MainContractTable.spec.ts)
 - [Current contract action-menu tests](../../../app/src/components/sections/ContractManagementView/__tests__/MainContractActionMenu.spec.ts)
 - [Officer redeploy form tests](../../../app/src/components/sections/ContractManagementView/__tests__/RedeployOfficerModal.spec.ts)
+- [Officer deployment tests](../../../contract/test/Officer.spec.ts) and [Investor authority tests](../../../contract/test/Investor.spec.ts)
 
 ## Known Gaps
 

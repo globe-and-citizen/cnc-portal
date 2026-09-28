@@ -4,7 +4,7 @@ import { groupTransactionsByTxHash } from '@/utils/transactions/history'
 import { getTransactionTypeLabel } from '@/utils/transactions/registry'
 import type { GroupedTransactionRow } from '@/types/transaction-history'
 import { usePagination } from '@/composables/usePagination'
-import type { Range } from '@/utils/dates/picker'
+import { isAllTimeRange, type Range } from '@/utils/dates/picker'
 
 type TransactionBase = {
   txHash: string
@@ -54,7 +54,7 @@ export const useTransactionTable = <T extends TransactionBase>(
   const filteredTransactions = computed(() => {
     let filtered = transactions.value
 
-    if (dateRange.value) {
+    if (dateRange.value && !isAllTimeRange(dateRange.value)) {
       const { start: startDate, end: endDate } = dateRange.value
       filtered = filtered.filter((tx) => {
         const txDate = new Date(tx.date)

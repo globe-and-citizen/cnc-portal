@@ -10,15 +10,7 @@
       </div>
     </template>
 
-    <template
-      v-if="
-        isLoadingTokenSymbol ||
-        isLoadingInvestorsOwner ||
-        !safeTokenSymbol ||
-        !safeInvestorsOwner ||
-        !investorAddress
-      "
-    >
+    <template v-if="isLoadingTokenSymbol || !safeTokenSymbol || !investorAddress">
       <div class="grid grid-cols-2 gap-2.5 md:grid-cols-3 xl:grid-cols-6">
         <USkeleton v-for="i in 7" :key="i" class="h-20 rounded-lg" :data-test="`skeleton-${i}`" />
       </div>
@@ -32,7 +24,7 @@
           :token-symbol="safeTokenSymbol"
           :investors-address="investorAddress"
         />
-        <MintTokenAction :token-symbol="safeTokenSymbol" :investors-owner="safeInvestorsOwner" />
+        <MintTokenAction :token-symbol="safeTokenSymbol" />
         <PayDividendsAction
           :token-symbol="safeTokenSymbol"
           :shareholders-count="safeShareholders.length"
@@ -60,11 +52,7 @@ import SetSafeAddressAction from './InvestorActions/SetSafeAddressAction.vue'
 import ToggleSherCompensationAction from './InvestorActions/ToggleSherCompensationAction.vue'
 import SetCompensationMultiplierAction from './InvestorActions/SetCompensationMultiplierAction.vue'
 import InvestInSafeAction from './InvestorActions/InvestInSafeAction.vue'
-import {
-  useInvestorSymbol,
-  useInvestorShareholders,
-  useInvestorOwner
-} from '@/composables/investor/reads'
+import { useInvestorSymbol, useInvestorShareholders } from '@/composables/investor/reads'
 
 defineEmits<{
   refetchShareholders: []
@@ -91,16 +79,6 @@ const safeShareholders = computed(() =>
   Array.isArray(shareholders.value) ? shareholders.value : ([] as string[])
 )
 
-const {
-  data: investorsOwner,
-  error: errorInvestorsOwner,
-  isLoading: isLoadingInvestorsOwner
-} = useInvestorOwner()
-
-const safeInvestorsOwner = computed(() =>
-  typeof investorsOwner.value === 'string' ? investorsOwner.value : ''
-)
-
 watch(tokenSymbolError, (value) => {
   if (value) {
     log.error('Error fetching token symbol', value)
@@ -112,13 +90,6 @@ watch(shareholderError, (value) => {
   if (value) {
     log.error('Error fetching shareholders', value)
     toast.add({ title: 'Error fetching shareholders', color: 'error' })
-  }
-})
-
-watch(errorInvestorsOwner, (value) => {
-  if (value) {
-    log.error('Error fetching investors owner', value)
-    toast.add({ title: 'Error fetching investors owner', color: 'error' })
   }
 })
 </script>

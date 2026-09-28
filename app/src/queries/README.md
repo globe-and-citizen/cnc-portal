@@ -13,6 +13,7 @@ This folder contains all TanStack Query hooks for API interactions in the CNC Po
 | `expense.queries.ts`             | Expenses      | Expense account operations             |
 | `health.queries.ts`              | Health        | Backend health checks                  |
 | `historicalTokenRate.queries.ts` | Market data   | Immutable transaction-date USD rates   |
+| `investorPermissions.queries.ts` | Chain data    | Verified Investor role-holder evidence |
 | `member.queries.ts`              | Members       | Team member management                 |
 | `notification.queries.ts`        | Notifications | User notifications                     |
 | `queryClient.ts`                 | Shared cache  | Application-wide query client          |

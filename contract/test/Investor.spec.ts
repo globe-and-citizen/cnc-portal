@@ -126,6 +126,108 @@ describe('Investor — Merkle-pull migration', () => {
     })
   })
 
+  describe('authority lifecycle', () => {
+    /**
+     * Covers:
+     * - [AC-US-SHER-004-03]
+     * - [AC-US-SHER-004-06]
+     * - [AC-US-SHER-009-06]
+     */
+    it('[AC-US-CONTRACT-002-11] transfers ownership and human roles atomically', async () => {
+      const { investor, owner, addr1: successor, addr2: technicalMinter } = await deployFixture()
+      const minterRole = await investor.MINTER_ROLE()
+      const adminRole = await investor.DEFAULT_ADMIN_ROLE()
+
+      await investor.grantRole(minterRole, technicalMinter.address)
+      await expect(investor.transferOwnership(successor.address))
+        .to.emit(investor, 'OwnershipTransferred')
+        .withArgs(owner.address, successor.address)
+
+      expect(await investor.owner()).to.equal(successor.address)
+      expect(await investor.hasRole(adminRole, successor.address)).to.equal(true)
+      expect(await investor.hasRole(minterRole, successor.address)).to.equal(true)
+      expect(await investor.hasRole(adminRole, owner.address)).to.equal(false)
+      expect(await investor.hasRole(minterRole, owner.address)).to.equal(false)
+      expect(await investor.hasRole(minterRole, technicalMinter.address)).to.equal(true)
+
+      await expect(investor.individualMint(technicalMinter.address, 1n))
+        .to.be.revertedWithCustomError(investor, 'AccessControlUnauthorizedAccount')
+        .withArgs(owner.address, minterRole)
+
+      await expect(investor.connect(successor).individualMint(successor.address, 1n))
+        .to.emit(investor, 'Minted')
+        .withArgs(successor.address, 1n)
+    })
+
+    it('[AC-US-SHER-009-04] lets the successor administer minter permissions', async () => {
+      const { investor, addr1: successor, addr2: delegatedMinter } = await deployFixture()
+      const minterRole = await investor.MINTER_ROLE()
+
+      await investor.transferOwnership(successor.address)
+      await investor.connect(successor).grantRole(minterRole, delegatedMinter.address)
+      expect(await investor.hasRole(minterRole, delegatedMinter.address)).to.equal(true)
+
+      await investor.connect(successor).revokeRole(minterRole, delegatedMinter.address)
+      expect(await investor.hasRole(minterRole, delegatedMinter.address)).to.equal(false)
+    })
+
+    it('[AC-US-SHER-009-05] rejects minter administration by a non-administrator', async () => {
+      const { investor, addr1: nonAdministrator, addr2: delegatedMinter } = await deployFixture()
+      const adminRole = await investor.DEFAULT_ADMIN_ROLE()
+      const minterRole = await investor.MINTER_ROLE()
+
+      await expect(
+        investor.connect(nonAdministrator).grantRole(minterRole, delegatedMinter.address)
+      )
+        .to.be.revertedWithCustomError(investor, 'AccessControlUnauthorizedAccount')
+        .withArgs(nonAdministrator.address, adminRole)
+    })
+
+    it('preserves the current owner roles when transferring to the same address', async () => {
+      const { investor, owner } = await deployFixture()
+      const minterRole = await investor.MINTER_ROLE()
+      const adminRole = await investor.DEFAULT_ADMIN_ROLE()
+
+      await investor.transferOwnership(owner.address)
+
+      expect(await investor.owner()).to.equal(owner.address)
+      expect(await investor.hasRole(adminRole, owner.address)).to.equal(true)
+      expect(await investor.hasRole(minterRole, owner.address)).to.equal(true)
+    })
+
+    it('rejects ownership renunciation so role authority cannot outlive ownership', async () => {
+      const { investor } = await deployFixture()
+
+      await expect(investor.renounceOwnership()).to.be.revertedWithCustomError(
+        investor,
+        'Investor__OwnershipRenunciationDisabled'
+      )
+    })
+
+    it('prevents the current owner from losing either human authority role', async () => {
+      const { investor, owner } = await deployFixture()
+      const minterRole = await investor.MINTER_ROLE()
+      const adminRole = await investor.DEFAULT_ADMIN_ROLE()
+
+      await expect(investor.revokeRole(minterRole, owner.address))
+        .to.be.revertedWithCustomError(investor, 'Investor__OwnerRoleRequired')
+        .withArgs(minterRole)
+      await expect(investor.renounceRole(adminRole, owner.address))
+        .to.be.revertedWithCustomError(investor, 'Investor__OwnerRoleRequired')
+        .withArgs(adminRole)
+    })
+
+    it('lets delegated minters renounce their own role', async () => {
+      const { investor, addr1: delegatedMinter } = await deployFixture()
+      const minterRole = await investor.MINTER_ROLE()
+
+      await investor.grantRole(minterRole, delegatedMinter.address)
+      await investor.connect(delegatedMinter).renounceRole(minterRole, delegatedMinter.address)
+
+      expect(await investor.hasRole(minterRole, delegatedMinter.address)).to.equal(false)
+    })
+  })
+
   describe('claim', () => {
     it('[AC-US-SHER-006-02] mints the caller snapshot balance against a valid proof', async () => {
       await investor.setMigrationRoot(tree.root)

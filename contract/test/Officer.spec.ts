@@ -464,6 +464,17 @@ describe('Officer Contract', function () {
         deployedContracts[5].contractAddress
       )
       expect(hasMinterRole).to.be.true
+
+      const adminRole = await investorInstance.DEFAULT_ADMIN_ROLE()
+      expect(await investorInstance.owner()).to.equal(owner.address)
+      expect(await investorInstance.hasRole(adminRole, owner.address)).to.equal(true)
+      expect(await investorInstance.hasRole(minterRole, owner.address)).to.equal(true)
+      expect(
+        await investorInstance.hasRole(adminRole, await officerContract.getAddress())
+      ).to.equal(false)
+      expect(
+        await investorInstance.hasRole(minterRole, await officerContract.getAddress())
+      ).to.equal(false)
     })
 
     it('does not deploy contracts during initialization when isDeployAllContracts is false', async function () {

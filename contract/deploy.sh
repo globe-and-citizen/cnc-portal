@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 
+# Fresh-installation entry point. This script creates new implementations,
+# beacons, and Officer wiring; it never upgrades an existing deployment.
+# Production upgrades use a release-specific deploy-upgrade-vX.Y.Z.sh script.
+
 # Check if the first argument is provided
 if [ -z "$1" ]; then
   echo "Error: No network specified."
