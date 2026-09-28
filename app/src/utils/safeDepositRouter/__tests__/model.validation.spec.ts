@@ -67,22 +67,22 @@ describe('safeDepositRouterUtil — deposit amount validation', () => {
         expect(schemaErrors(result)).toContain('Amount is required.')
       })
 
-      it('rejects a non-numeric amount', () => {
+      it('[AC-US-SHER-001-06] rejects a non-numeric amount', () => {
         const result = buildDepositAmountSchema(1000).safeParse({ amount: 'abc' })
         expect(schemaErrors(result)).toContain('Enter a valid amount greater than 0.')
       })
 
-      it('rejects zero', () => {
+      it('[AC-US-SHER-001-06] rejects a non-positive amount', () => {
         const result = buildDepositAmountSchema(1000).safeParse({ amount: '0' })
         expect(schemaErrors(result)).toContain('Enter a valid amount greater than 0.')
       })
 
-      it('rejects an amount above the balance', () => {
+      it('[AC-US-SHER-001-06] rejects an amount above the wallet balance', () => {
         const result = buildDepositAmountSchema(100).safeParse({ amount: '150' })
         expect(schemaErrors(result)).toContain('Amount exceeds available balance.')
       })
 
-      it('rejects more decimals than the token allows', () => {
+      it('[AC-US-SHER-001-06] rejects an amount beyond token precision', () => {
         const result = buildDepositAmountSchema(1000).safeParse({ amount: '1.1234567' })
         expect(schemaErrors(result)).toContain(
           'Enter a valid token amount with up to 6 decimal places.'

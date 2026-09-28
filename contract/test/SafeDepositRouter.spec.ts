@@ -90,13 +90,23 @@ describe('SafeDepositRouter', function () {
     expect(await router.getDepositsEnabled()).to.equal(false)
   })
 
-  it('rejects non-owner deposit control calls', async () => {
+  it('[AC-US-SHER-005-04] rejects every router configuration write from a non-owner', async () => {
     const { nonOwner, router } = await deployFixture()
 
     await expect(router.connect(nonOwner).enableDeposits()).to.be.revertedWithCustomError(
       router,
       'OwnableUnauthorizedAccount'
     )
+    await expect(router.connect(nonOwner).disableDeposits()).to.be.revertedWithCustomError(
+      router,
+      'OwnableUnauthorizedAccount'
+    )
+    await expect(
+      router.connect(nonOwner).setSafeAddress(nonOwner.address)
+    ).to.be.revertedWithCustomError(router, 'OwnableUnauthorizedAccount')
+    await expect(
+      router.connect(nonOwner).setMultiplier(ethers.parseUnits('2', 18))
+    ).to.be.revertedWithCustomError(router, 'OwnableUnauthorizedAccount')
   })
 
   it('reverts deposit when deposits are disabled', async () => {

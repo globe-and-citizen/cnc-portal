@@ -26,11 +26,12 @@ describe('SetSafeAddressAction.vue', () => {
     mockSafeDepositRouterReads.safeAddress.data.value = OTHER_ADDRESS
     mockUseConnection.isConnected.value = true
     mockUseConnection.address.value = '0xaAaAaAaaAaAaAaaAaAAAAAAAAaaaAaAaAaaAaaAa'
+    mockTeamStore.currentTeamMeta.data.isArchived = false
 
     mockSafeDepositRouterWrites.setSafeAddress.mutateAsync.mockResolvedValue(undefined)
   })
 
-  it('does not render when safe deposit router address is missing', () => {
+  it('[AC-US-SHER-005-08] hides Safe configuration when the router is missing', () => {
     mockSafeDepositRouterAddress.value = ''
     const wrapper = createWrapper()
 
@@ -48,7 +49,7 @@ describe('SetSafeAddressAction.vue', () => {
     })
   })
 
-  it('blocks and warns when the connected account is not the owner', async () => {
+  it('[AC-US-SHER-005-04] blocks Safe configuration for a non-owner', async () => {
     mockUseConnection.address.value = '0x0000000000000000000000000000000000000001'
     const wrapper = createWrapper()
 
@@ -61,7 +62,7 @@ describe('SetSafeAddressAction.vue', () => {
     )
   })
 
-  it('warns when the team has no Safe address', async () => {
+  it('[AC-US-SHER-005-08] blocks Safe configuration when the company Safe is missing', async () => {
     mockTeamStore.getContractAddressByType = vi.fn(
       () => ''
     ) as unknown as typeof mockTeamStore.getContractAddressByType
@@ -91,7 +92,7 @@ describe('SetSafeAddressAction.vue', () => {
     expect(mockSafeDepositRouterWrites.setSafeAddress.mutateAsync).not.toHaveBeenCalled()
   })
 
-  it('reports a failed safe address update', async () => {
+  it('[AC-US-SHER-005-09] reports a failed Safe update without reporting success', async () => {
     const wrapper = createWrapper()
     mockSafeDepositRouterWrites.setSafeAddress.error.value = new Error('boom')
     await nextTick()
@@ -99,7 +100,21 @@ describe('SetSafeAddressAction.vue', () => {
     expect(mockToast.add).toHaveBeenCalledWith(
       expect.objectContaining({ title: 'boom', color: 'error' })
     )
+    expect(mockToast.add).not.toHaveBeenCalledWith(
+      expect.objectContaining({ title: 'Safe address updated successfully' })
+    )
     wrapper.unmount()
+  })
+
+  it('[AC-US-SHER-005-07] blocks Safe configuration for an archived company', async () => {
+    mockTeamStore.currentTeamMeta.data.isArchived = true
+    const wrapper = createWrapper()
+
+    expect(
+      wrapper.find('[data-test="set-safe-address-button"]').attributes('disabled')
+    ).toBeDefined()
+    await wrapper.findComponent({ name: 'ActionButton' }).vm.$emit('click')
+    expect(mockSafeDepositRouterWrites.setSafeAddress.mutateAsync).not.toHaveBeenCalled()
   })
 
   it('reports a user-rejected safe address update', async () => {
