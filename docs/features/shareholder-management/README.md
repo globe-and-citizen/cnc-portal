@@ -64,27 +64,27 @@ flowchart LR
 | ----------- | ---------------------------------------- | ------------------------------- | -------------- |
 | US-SHER-001 | Invest in the Safe and receive SHER      | Company member                  | 🧪 Validation  |
 | US-SHER-002 | Distribute dividends to shareholders     | Bank owner / Board member       | 🧪 Validation  |
-| US-SHER-003 | Review shareholder position and activity | Company member                  | 🚧 In Progress |
+| US-SHER-003 | Review shareholder position and activity | Company member                  | 🧪 Validation  |
 | US-SHER-004 | Issue SHER to a shareholder              | Investor owner with minter role | 🚧 In Progress |
 | US-SHER-005 | Configure shareholder investment         | Safe Deposit Router owner       | 🧪 Validation  |
 | US-SHER-006 | Claim a migrated shareholding            | Shareholder                     | 🧪 Validation  |
-| US-SHER-007 | Settle and close a shareholder migration | Investor owner                  | 🚧 In Progress |
+| US-SHER-007 | Settle and close a shareholder migration | Investor owner                  | 🧪 Validation  |
 | US-SHER-008 | Start a shareholder migration            | Company owner                   | 🔗 Reference   |
 | US-SHER-009 | Manage Investor permissions              | Investor administrator          | 🧪 Validation  |
 
 ## Test Coverage Overview
 
-| User Story  | Main Journey  | Coverage Target | Gaps                                                                                                                    |
-| ----------- | ------------- | --------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| US-SHER-001 | ✅ Integrated | ⚠️ 6/10 met     | `AC-US-SHER-001-05`, `AC-US-SHER-001-06`, `AC-US-SHER-001-07`, `AC-US-SHER-001-10`                                      |
-| US-SHER-002 | 📋 Planned    | ⚠️ 3/12 met     | `AC-US-SHER-002-01`–`06`, `AC-US-SHER-002-09`, `AC-US-SHER-002-10`, `AC-US-SHER-002-12`; `02` and `03` lack integration |
-| US-SHER-003 | ✅ Integrated | ⚠️ 4/8 met      | `AC-US-SHER-003-05`–`08`                                                                                                |
-| US-SHER-004 | 📋 Planned    | ⚠️ 4/8 met      | `AC-US-SHER-004-02`, `AC-US-SHER-004-04`, `AC-US-SHER-004-05`, `AC-US-SHER-004-07`                                      |
-| US-SHER-005 | ✅ Integrated | ⚠️ 4/9 met      | `AC-US-SHER-005-04`, `AC-US-SHER-005-06`–`09`                                                                           |
-| US-SHER-006 | 📋 Planned    | ⚠️ 1/8 met      | `AC-US-SHER-006-01`–`03`, `AC-US-SHER-006-05`–`08`                                                                      |
-| US-SHER-007 | 📋 Planned    | ⚠️ 2/8 met      | `AC-US-SHER-007-01`, `AC-US-SHER-007-02`, `AC-US-SHER-007-04`, `AC-US-SHER-007-06`–`08`                                 |
-| US-SHER-008 | 🔗 Reference  | N/A             | Coverage is owned by `US-CONTRACT-005`                                                                                  |
-| US-SHER-009 | ✅ Integrated | ✅ 8/8 met      | None                                                                                                                    |
+| User Story  | Main Journey  | Coverage Target | Gaps                                                                                          |
+| ----------- | ------------- | --------------- | --------------------------------------------------------------------------------------------- |
+| US-SHER-001 | ✅ Integrated | ✅ 10/10 met    | —                                                                                             |
+| US-SHER-002 | 📋 Planned    | ⚠️ 10/12 met    | `AC-US-SHER-002-02` and `AC-US-SHER-002-03` lack integration                                  |
+| US-SHER-003 | ✅ Integrated | ✅ 8/8 met      | —                                                                                             |
+| US-SHER-004 | 📋 Planned    | ⚠️ 6/8 met      | `AC-US-SHER-004-02`; `AC-US-SHER-004-04` lacks contract enforcement                           |
+| US-SHER-005 | ✅ Integrated | ✅ 9/9 met      | —                                                                                             |
+| US-SHER-006 | 📋 Planned    | ⚠️ 4/8 met      | `AC-US-SHER-006-01`–`03` lack integration; `AC-US-SHER-006-05` has no representative evidence |
+| US-SHER-007 | 📋 Planned    | ⚠️ 5/8 met      | `AC-US-SHER-007-01`, `AC-US-SHER-007-02`, and `AC-US-SHER-007-04` lack integration            |
+| US-SHER-008 | 🔗 Reference  | N/A             | Coverage is owned by `US-CONTRACT-005`                                                        |
+| US-SHER-009 | ✅ Integrated | ✅ 8/8 met      | None                                                                                          |
 
 ## Proof Strategy Reference
 
@@ -131,18 +131,18 @@ flowchart LR
 
 ### Test Coverage
 
-| Acceptance Criterion | Proof Strategy          | Current Evidence          | Status     |
-| -------------------- | ----------------------- | ------------------------- | ---------- |
-| `AC-US-SHER-001-01`  | `PS-INTEGRATED-JOURNEY` | Integrated E2E + Frontend | ✅ Met     |
-| `AC-US-SHER-001-02`  | `PS-INTEGRATED-JOURNEY` | Integrated E2E            | ✅ Met     |
-| `AC-US-SHER-001-03`  | `PS-INTEGRATED-JOURNEY` | Integrated E2E + Frontend | ✅ Met     |
-| `AC-US-SHER-001-04`  | `PS-INTEGRATED-JOURNEY` | Integrated E2E            | ✅ Met     |
-| `AC-US-SHER-001-05`  | `PS-FRONTEND`           | None linked               | ❌ Missing |
-| `AC-US-SHER-001-06`  | `PS-FRONTEND`           | None linked               | ❌ Missing |
-| `AC-US-SHER-001-07`  | `PS-FRONTEND`           | None linked               | ❌ Missing |
-| `AC-US-SHER-001-08`  | `PS-FRONTEND`           | Frontend                  | ✅ Met     |
-| `AC-US-SHER-001-09`  | `PS-FRONTEND`           | Frontend                  | ✅ Met     |
-| `AC-US-SHER-001-10`  | `PS-FRONTEND`           | None linked               | ❌ Missing |
+| Acceptance Criterion | Proof Strategy          | Current Evidence          | Status |
+| -------------------- | ----------------------- | ------------------------- | ------ |
+| `AC-US-SHER-001-01`  | `PS-INTEGRATED-JOURNEY` | Integrated E2E + Frontend | ✅ Met |
+| `AC-US-SHER-001-02`  | `PS-INTEGRATED-JOURNEY` | Integrated E2E            | ✅ Met |
+| `AC-US-SHER-001-03`  | `PS-INTEGRATED-JOURNEY` | Integrated E2E + Frontend | ✅ Met |
+| `AC-US-SHER-001-04`  | `PS-INTEGRATED-JOURNEY` | Integrated E2E            | ✅ Met |
+| `AC-US-SHER-001-05`  | `PS-FRONTEND`           | Frontend                  | ✅ Met |
+| `AC-US-SHER-001-06`  | `PS-FRONTEND`           | Frontend                  | ✅ Met |
+| `AC-US-SHER-001-07`  | `PS-FRONTEND`           | Frontend                  | ✅ Met |
+| `AC-US-SHER-001-08`  | `PS-FRONTEND`           | Frontend                  | ✅ Met |
+| `AC-US-SHER-001-09`  | `PS-FRONTEND`           | Frontend                  | ✅ Met |
+| `AC-US-SHER-001-10`  | `PS-FRONTEND`           | Frontend                  | ✅ Met |
 
 **Accounting:** The complete router operation is booked once by
 [`UC-SDR-01`](../accounting/journal-entry-catalogue.md#uc-sdr-01--investor-contribution); the matching Safe receipt and Investor mint are
@@ -184,18 +184,18 @@ supporting evidence, not separate entries.
 
 | Acceptance Criterion | Proof Strategy          | Current Evidence | Status          |
 | -------------------- | ----------------------- | ---------------- | --------------- |
-| `AC-US-SHER-002-01`  | `PS-FRONTEND`           | None linked      | ❌ Missing      |
+| `AC-US-SHER-002-01`  | `PS-FRONTEND`           | Frontend         | ✅ Met          |
 | `AC-US-SHER-002-02`  | `PS-INTEGRATED-JOURNEY` | Frontend         | ⚠️ Insufficient |
 | `AC-US-SHER-002-03`  | `PS-INTEGRATED-JOURNEY` | Frontend         | ⚠️ Insufficient |
-| `AC-US-SHER-002-04`  | `PS-FRONTEND`           | None linked      | ❌ Missing      |
-| `AC-US-SHER-002-05`  | `PS-FRONTEND`           | None linked      | ❌ Missing      |
-| `AC-US-SHER-002-06`  | `PS-FRONTEND`           | None linked      | ❌ Missing      |
+| `AC-US-SHER-002-04`  | `PS-FRONTEND`           | Frontend         | ✅ Met          |
+| `AC-US-SHER-002-05`  | `PS-FRONTEND`           | Frontend         | ✅ Met          |
+| `AC-US-SHER-002-06`  | `PS-FRONTEND`           | Frontend         | ✅ Met          |
 | `AC-US-SHER-002-07`  | `PS-FRONTEND`           | Frontend         | ✅ Met          |
 | `AC-US-SHER-002-08`  | `PS-CONTRACT`           | Contract         | ✅ Met          |
-| `AC-US-SHER-002-09`  | `PS-FRONTEND`           | None linked      | ❌ Missing      |
-| `AC-US-SHER-002-10`  | `PS-FRONTEND`           | None linked      | ❌ Missing      |
+| `AC-US-SHER-002-09`  | `PS-FRONTEND`           | Frontend         | ✅ Met          |
+| `AC-US-SHER-002-10`  | `PS-FRONTEND`           | Frontend         | ✅ Met          |
 | `AC-US-SHER-002-11`  | `PS-FRONTEND`           | Frontend         | ✅ Met          |
-| `AC-US-SHER-002-12`  | `PS-FRONTEND`           | None linked      | ❌ Missing      |
+| `AC-US-SHER-002-12`  | `PS-FRONTEND`           | Frontend         | ✅ Met          |
 
 **Accounting:** Per-shareholder payments are grouped into [`UC-INV-01`](../accounting/journal-entry-catalogue.md#uc-inv-01--dividend-paid).
 Bank's distribution trigger is not booked again.
@@ -227,21 +227,21 @@ Bank's distribution trigger is not booked again.
 
 - [x] `AC-US-SHER-003-06` Missing Investor balance or total-supply data is presented as unavailable rather than as a fabricated amount.
 - [x] `AC-US-SHER-003-07` A failed shareholder or activity read is reported without replacing known values with successful-looking data.
-- [ ] `AC-US-SHER-003-08` Missing or invalid Investor token-symbol data is presented as unavailable throughout the overview and activity
+- [x] `AC-US-SHER-003-08` Missing or invalid Investor token-symbol data is presented as unavailable throughout the overview and activity
       history rather than as a fabricated token identity.
 
 ### Test Coverage
 
-| Acceptance Criterion | Proof Strategy          | Current Evidence | Status     |
-| -------------------- | ----------------------- | ---------------- | ---------- |
-| `AC-US-SHER-003-01`  | `PS-INTEGRATED-JOURNEY` | Integrated E2E   | ✅ Met     |
-| `AC-US-SHER-003-02`  | `PS-INTEGRATED-JOURNEY` | Integrated E2E   | ✅ Met     |
-| `AC-US-SHER-003-03`  | `PS-INTEGRATED-JOURNEY` | Integrated E2E   | ✅ Met     |
-| `AC-US-SHER-003-04`  | `PS-INTEGRATED-JOURNEY` | Integrated E2E   | ✅ Met     |
-| `AC-US-SHER-003-05`  | `PS-FRONTEND`           | None linked      | ❌ Missing |
-| `AC-US-SHER-003-06`  | `PS-FRONTEND`           | None linked      | ❌ Missing |
-| `AC-US-SHER-003-07`  | `PS-FRONTEND`           | None linked      | ❌ Missing |
-| `AC-US-SHER-003-08`  | `PS-FRONTEND`           | None linked      | ❌ Missing |
+| Acceptance Criterion | Proof Strategy          | Current Evidence | Status |
+| -------------------- | ----------------------- | ---------------- | ------ |
+| `AC-US-SHER-003-01`  | `PS-INTEGRATED-JOURNEY` | Integrated E2E   | ✅ Met |
+| `AC-US-SHER-003-02`  | `PS-INTEGRATED-JOURNEY` | Integrated E2E   | ✅ Met |
+| `AC-US-SHER-003-03`  | `PS-INTEGRATED-JOURNEY` | Integrated E2E   | ✅ Met |
+| `AC-US-SHER-003-04`  | `PS-INTEGRATED-JOURNEY` | Integrated E2E   | ✅ Met |
+| `AC-US-SHER-003-05`  | `PS-FRONTEND`           | Frontend         | ✅ Met |
+| `AC-US-SHER-003-06`  | `PS-FRONTEND`           | Frontend         | ✅ Met |
+| `AC-US-SHER-003-07`  | `PS-FRONTEND`           | Frontend         | ✅ Met |
+| `AC-US-SHER-003-08`  | `PS-FRONTEND`           | Frontend         | ✅ Met |
 
 **Dependencies:** Current Investor contract and company access
 
@@ -263,7 +263,7 @@ Bank's distribution trigger is not booked again.
 #### Business Rules
 
 - [x] `AC-US-SHER-004-03` The Investor contract requires `MINTER_ROLE` for an individual issuance. _(contract)_
-- [x] `AC-US-SHER-004-04` The recipient address and incremental issuance amount must be valid and greater than zero.
+- [ ] `AC-US-SHER-004-04` The recipient address and incremental issuance amount must be valid and greater than zero.
 - [x] `AC-US-SHER-004-05` An archived company cannot start an issuance write.
 - [x] `AC-US-SHER-004-06` The portal verifies that the connected user has `MINTER_ROLE` and applies that same authorization rule to both
       individual-issuance entry points.
@@ -281,9 +281,9 @@ Bank's distribution trigger is not booked again.
 | `AC-US-SHER-004-02`  | `PS-INTEGRATED-JOURNEY` | None linked         | ❌ Missing |
 | `AC-US-SHER-004-03`  | `PS-CONTRACT`           | Contract            | ✅ Met     |
 | `AC-US-SHER-004-04`  | `PS-FRONTEND-CONTRACT`  | None linked         | ❌ Missing |
-| `AC-US-SHER-004-05`  | `PS-FRONTEND`           | None linked         | ❌ Missing |
+| `AC-US-SHER-004-05`  | `PS-FRONTEND`           | Frontend            | ✅ Met     |
 | `AC-US-SHER-004-06`  | `PS-FRONTEND-CONTRACT`  | Frontend + Contract | ✅ Met     |
-| `AC-US-SHER-004-07`  | `PS-FRONTEND`           | None linked         | ❌ Missing |
+| `AC-US-SHER-004-07`  | `PS-FRONTEND`           | Frontend            | ✅ Met     |
 | `AC-US-SHER-004-08`  | `PS-FRONTEND`           | Frontend            | ✅ Met     |
 
 **Accounting:** A direct mint not backed by Router, Payroll, or Vesting evidence uses
@@ -319,17 +319,17 @@ Bank's distribution trigger is not booked again.
 
 ### Test Coverage
 
-| Acceptance Criterion | Proof Strategy          | Current Evidence          | Status          |
-| -------------------- | ----------------------- | ------------------------- | --------------- |
-| `AC-US-SHER-005-01`  | `PS-INTEGRATED-JOURNEY` | Integrated E2E + Frontend | ✅ Met          |
-| `AC-US-SHER-005-02`  | `PS-INTEGRATED-JOURNEY` | Integrated E2E + Contract | ✅ Met          |
-| `AC-US-SHER-005-03`  | `PS-INTEGRATED-JOURNEY` | Integrated E2E + Contract | ✅ Met          |
-| `AC-US-SHER-005-04`  | `PS-FRONTEND-CONTRACT`  | Frontend                  | ⚠️ Insufficient |
-| `AC-US-SHER-005-05`  | `PS-INTEGRATED-JOURNEY` | Integrated E2E            | ✅ Met          |
-| `AC-US-SHER-005-06`  | `PS-FRONTEND-CONTRACT`  | Contract                  | ⚠️ Insufficient |
-| `AC-US-SHER-005-07`  | `PS-FRONTEND`           | None linked               | ❌ Missing      |
-| `AC-US-SHER-005-08`  | `PS-FRONTEND`           | None linked               | ❌ Missing      |
-| `AC-US-SHER-005-09`  | `PS-FRONTEND`           | None linked               | ❌ Missing      |
+| Acceptance Criterion | Proof Strategy          | Current Evidence          | Status |
+| -------------------- | ----------------------- | ------------------------- | ------ |
+| `AC-US-SHER-005-01`  | `PS-INTEGRATED-JOURNEY` | Integrated E2E + Frontend | ✅ Met |
+| `AC-US-SHER-005-02`  | `PS-INTEGRATED-JOURNEY` | Integrated E2E + Contract | ✅ Met |
+| `AC-US-SHER-005-03`  | `PS-INTEGRATED-JOURNEY` | Integrated E2E + Contract | ✅ Met |
+| `AC-US-SHER-005-04`  | `PS-FRONTEND-CONTRACT`  | Frontend + Contract       | ✅ Met |
+| `AC-US-SHER-005-05`  | `PS-INTEGRATED-JOURNEY` | Integrated E2E            | ✅ Met |
+| `AC-US-SHER-005-06`  | `PS-FRONTEND-CONTRACT`  | Frontend + Contract       | ✅ Met |
+| `AC-US-SHER-005-07`  | `PS-FRONTEND`           | Frontend                  | ✅ Met |
+| `AC-US-SHER-005-08`  | `PS-FRONTEND`           | Frontend                  | ✅ Met |
+| `AC-US-SHER-005-09`  | `PS-FRONTEND`           | Frontend                  | ✅ Met |
 
 **Dependencies:** US-SAFE-001, an active Safe Deposit Router, and a connected router owner
 
@@ -361,16 +361,16 @@ Bank's distribution trigger is not booked again.
 
 ### Test Coverage
 
-| Acceptance Criterion | Proof Strategy            | Current Evidence | Status          |
-| -------------------- | ------------------------- | ---------------- | --------------- |
-| `AC-US-SHER-006-01`  | `PS-MIGRATION-INTEGRATED` | None linked      | ❌ Missing      |
-| `AC-US-SHER-006-02`  | `PS-MIGRATION-INTEGRATED` | Contract         | ⚠️ Insufficient |
-| `AC-US-SHER-006-03`  | `PS-MIGRATION-INTEGRATED` | Contract         | ⚠️ Insufficient |
-| `AC-US-SHER-006-04`  | `PS-CONTRACT`             | Contract         | ✅ Met          |
-| `AC-US-SHER-006-05`  | `PS-MIGRATION-INTEGRATED` | None linked      | ❌ Missing      |
-| `AC-US-SHER-006-06`  | `PS-FRONTEND`             | None linked      | ❌ Missing      |
-| `AC-US-SHER-006-07`  | `PS-FRONTEND`             | None linked      | ❌ Missing      |
-| `AC-US-SHER-006-08`  | `PS-CONTRACT`             | None linked      | ❌ Missing      |
+| Acceptance Criterion | Proof Strategy            | Current Evidence    | Status          |
+| -------------------- | ------------------------- | ------------------- | --------------- |
+| `AC-US-SHER-006-01`  | `PS-MIGRATION-INTEGRATED` | Frontend            | ⚠️ Insufficient |
+| `AC-US-SHER-006-02`  | `PS-MIGRATION-INTEGRATED` | Contract            | ⚠️ Insufficient |
+| `AC-US-SHER-006-03`  | `PS-MIGRATION-INTEGRATED` | Frontend + Contract | ⚠️ Insufficient |
+| `AC-US-SHER-006-04`  | `PS-CONTRACT`             | Contract            | ✅ Met          |
+| `AC-US-SHER-006-05`  | `PS-MIGRATION-INTEGRATED` | None linked         | ❌ Missing      |
+| `AC-US-SHER-006-06`  | `PS-FRONTEND`             | Frontend            | ✅ Met          |
+| `AC-US-SHER-006-07`  | `PS-FRONTEND`             | Frontend            | ✅ Met          |
+| `AC-US-SHER-006-08`  | `PS-CONTRACT`             | Contract            | ✅ Met          |
 
 **Accounting:** A migration claim preserves an existing ownership allocation. It is not a new economic issuance and creates no journal
 entry.
@@ -396,7 +396,7 @@ entry.
 
 - [x] `AC-US-SHER-007-04` Dispatch uses the persisted snapshot's holder addresses, amounts, and Merkle proofs.
 - [x] `AC-US-SHER-007-05` The Investor contract restricts dispatch and closure to its owner. _(contract)_
-- [ ] `AC-US-SHER-007-06` The portal verifies that the connected company owner is also the Investor owner before enabling dispatch or
+- [x] `AC-US-SHER-007-06` The portal verifies that the connected company owner is also the Investor owner before enabling dispatch or
       closure.
 
 #### Edge & Error Cases
@@ -406,16 +406,16 @@ entry.
 
 ### Test Coverage
 
-| Acceptance Criterion | Proof Strategy            | Current Evidence | Status          |
-| -------------------- | ------------------------- | ---------------- | --------------- |
-| `AC-US-SHER-007-01`  | `PS-MIGRATION-INTEGRATED` | Contract         | ⚠️ Insufficient |
-| `AC-US-SHER-007-02`  | `PS-MIGRATION-INTEGRATED` | Frontend         | ⚠️ Insufficient |
-| `AC-US-SHER-007-03`  | `PS-CONTRACT`             | Contract         | ✅ Met          |
-| `AC-US-SHER-007-04`  | `PS-MIGRATION-INTEGRATED` | None linked      | ❌ Missing      |
-| `AC-US-SHER-007-05`  | `PS-CONTRACT`             | Contract         | ✅ Met          |
-| `AC-US-SHER-007-06`  | `PS-FRONTEND-CONTRACT`    | None linked      | ❌ Missing      |
-| `AC-US-SHER-007-07`  | `PS-FRONTEND`             | None linked      | ❌ Missing      |
-| `AC-US-SHER-007-08`  | `PS-FRONTEND`             | None linked      | ❌ Missing      |
+| Acceptance Criterion | Proof Strategy            | Current Evidence    | Status          |
+| -------------------- | ------------------------- | ------------------- | --------------- |
+| `AC-US-SHER-007-01`  | `PS-MIGRATION-INTEGRATED` | Contract            | ⚠️ Insufficient |
+| `AC-US-SHER-007-02`  | `PS-MIGRATION-INTEGRATED` | Frontend            | ⚠️ Insufficient |
+| `AC-US-SHER-007-03`  | `PS-CONTRACT`             | Contract            | ✅ Met          |
+| `AC-US-SHER-007-04`  | `PS-MIGRATION-INTEGRATED` | Frontend            | ⚠️ Insufficient |
+| `AC-US-SHER-007-05`  | `PS-CONTRACT`             | Contract            | ✅ Met          |
+| `AC-US-SHER-007-06`  | `PS-FRONTEND-CONTRACT`    | Frontend + Contract | ✅ Met          |
+| `AC-US-SHER-007-07`  | `PS-FRONTEND`             | Frontend            | ✅ Met          |
+| `AC-US-SHER-007-08`  | `PS-FRONTEND`             | Frontend            | ✅ Met          |
 
 **Accounting:** Dispatch and closure complete an existing ownership migration. They do not create a new economic issuance or journal entry.
 
@@ -485,14 +485,13 @@ the redeployment and migration-root commit. Shareholder Management exposes the m
 
 - Bulk initial issuance through `distributeMint` is a disabled, coming-soon portal control. The Investor contract implements it, but no
   current portal story claims that a user can complete it.
-- Migration dispatch and closure are surfaced to the company owner, while the contract restricts them to the Investor owner. The portal does
-  not yet verify that both roles resolve to the connected user (`US-SHER-007`).
-- Investor activity falls back to the literal `SHER` symbol when the symbol read is missing or invalid, so the activity history can present
-  a fabricated token identity (`US-SHER-003`).
+- Individual issuance rejects invalid recipients and non-positive amounts in the portal, and OpenZeppelin rejects a zero recipient on-chain,
+  but `Investor.individualMint` still accepts a zero amount and emits `Minted`. Completing `AC-US-SHER-004-04` requires a future Investor
+  implementation version rather than changing the deployed `2.0.1` behaviour in place.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `a8cbb0e32a7bab616ecf4b0fda0578eafa015ce0`
+**Implementation evidence reviewed against:** `bbaee0ff26342858a52d616f26443cbbf3b4bcfc`
 
 - [Shareholder Management route](../../../app/src/views/team/%5Bid%5D/SherTokenView.vue) and
   [Investor overview](../../../app/src/components/sections/SherTokenView/InvestorsHeader.vue)
@@ -518,8 +517,12 @@ the redeployment and migration-root commit. Shareholder Management exposes the m
 - [Dividend action](../../../app/src/components/sections/SherTokenView/InvestorActions/PayDividendsAction.vue) and
   [dividend form](../../../app/src/components/sections/SherTokenView/forms/PayDividendsForm.vue)
 - [Migration banner](../../../app/src/components/sections/SherTokenView/ShareholderMigrationBanner.vue),
+  [claim and settlement access guard](../../../app/src/components/sections/SherTokenView/ShareholderClaimSection.vue),
   [shareholder claim](../../../app/src/components/sections/SherTokenView/MerkleClaimForm.vue), and
   [migration settlement](../../../app/src/components/sections/SherTokenView/MigrationOwnerSweep.vue)
+- [Migration claim-section tests](../../../app/src/components/sections/SherTokenView/__tests__/ShareholderClaimSection.spec.ts),
+  [self-claim tests](../../../app/src/components/sections/SherTokenView/__tests__/MerkleClaimForm.spec.ts), and
+  [owner-settlement tests](../../../app/src/components/sections/SherTokenView/__tests__/MigrationOwnerSweep.spec.ts)
 - [Current Investor contract](../../../contract/contracts/Investor/Investor.sol),
   [migration orchestration](../../../app/src/composables/investor/useShareholderMigration.ts), and
   [claim and settlement writes](../../../app/src/composables/investor/useClaimMigration.ts)
