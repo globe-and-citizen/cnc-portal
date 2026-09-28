@@ -37,6 +37,10 @@ Before any transaction, the guarded script:
 The script exits on the first failure. Investor is upgraded before Officer because Officer 2.0.1 expects the Investor 2.0.1 ownership and
 role behaviour.
 
+The four committed baselines describe the exact storage-bearing `2.0.0` sources already behind the Polygon beacons. They restore missing or
+stale production references; they are not baselines baked from the unreleased `2.0.1` deployments. Each `2.0.1` change is storage-neutral,
+so the compiled candidate must compare equal to those `2.0.0` layouts before any transaction is broadcast.
+
 ## Local rehearsal
 
 Start from a known local deployment whose canonical addresses are recorded under `ignition/deployments/chain-31337/`, then run:

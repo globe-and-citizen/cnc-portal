@@ -78,12 +78,12 @@ flowchart LR
 | US-SHER-001 | ✅ Integrated | ⚠️ 6/10 met     | `AC-US-SHER-001-05`, `AC-US-SHER-001-06`, `AC-US-SHER-001-07`, `AC-US-SHER-001-10`                                      |
 | US-SHER-002 | 📋 Planned    | ⚠️ 3/12 met     | `AC-US-SHER-002-01`–`06`, `AC-US-SHER-002-09`, `AC-US-SHER-002-10`, `AC-US-SHER-002-12`; `02` and `03` lack integration |
 | US-SHER-003 | ✅ Integrated | ⚠️ 4/8 met      | `AC-US-SHER-003-05`–`08`                                                                                                |
-| US-SHER-004 | 📋 Planned    | ⚠️ 2/8 met      | `AC-US-SHER-004-02`–`07`                                                                                                |
+| US-SHER-004 | 📋 Planned    | ⚠️ 4/8 met      | `AC-US-SHER-004-02`, `AC-US-SHER-004-04`, `AC-US-SHER-004-05`, `AC-US-SHER-004-07`                                      |
 | US-SHER-005 | ✅ Integrated | ⚠️ 4/9 met      | `AC-US-SHER-005-04`, `AC-US-SHER-005-06`–`09`                                                                           |
 | US-SHER-006 | 📋 Planned    | ⚠️ 1/8 met      | `AC-US-SHER-006-01`–`03`, `AC-US-SHER-006-05`–`08`                                                                      |
 | US-SHER-007 | 📋 Planned    | ⚠️ 2/8 met      | `AC-US-SHER-007-01`, `AC-US-SHER-007-02`, `AC-US-SHER-007-04`, `AC-US-SHER-007-06`–`08`                                 |
 | US-SHER-008 | 🔗 Reference  | N/A             | Coverage is owned by `US-CONTRACT-005`                                                                                  |
-| US-SHER-009 | ✅ Integrated | ⚠️ 6/8 met      | `AC-US-SHER-009-05`, `AC-US-SHER-009-08`                                                                                |
+| US-SHER-009 | ✅ Integrated | ✅ 8/8 met      | None                                                                                                                    |
 
 ## Proof Strategy Reference
 
@@ -274,16 +274,16 @@ Bank's distribution trigger is not booked again.
 
 ### Test Coverage
 
-| Acceptance Criterion | Proof Strategy          | Current Evidence | Status     |
-| -------------------- | ----------------------- | ---------------- | ---------- |
-| `AC-US-SHER-004-01`  | `PS-FRONTEND`           | Frontend         | ✅ Met     |
-| `AC-US-SHER-004-02`  | `PS-INTEGRATED-JOURNEY` | None linked      | ❌ Missing |
-| `AC-US-SHER-004-03`  | `PS-CONTRACT`           | None linked      | ❌ Missing |
-| `AC-US-SHER-004-04`  | `PS-FRONTEND-CONTRACT`  | None linked      | ❌ Missing |
-| `AC-US-SHER-004-05`  | `PS-FRONTEND`           | None linked      | ❌ Missing |
-| `AC-US-SHER-004-06`  | `PS-FRONTEND-CONTRACT`  | None linked      | ❌ Missing |
-| `AC-US-SHER-004-07`  | `PS-FRONTEND`           | None linked      | ❌ Missing |
-| `AC-US-SHER-004-08`  | `PS-FRONTEND`           | Frontend         | ✅ Met     |
+| Acceptance Criterion | Proof Strategy          | Current Evidence    | Status     |
+| -------------------- | ----------------------- | ------------------- | ---------- |
+| `AC-US-SHER-004-01`  | `PS-FRONTEND`           | Frontend            | ✅ Met     |
+| `AC-US-SHER-004-02`  | `PS-INTEGRATED-JOURNEY` | None linked         | ❌ Missing |
+| `AC-US-SHER-004-03`  | `PS-CONTRACT`           | Contract            | ✅ Met     |
+| `AC-US-SHER-004-04`  | `PS-FRONTEND-CONTRACT`  | None linked         | ❌ Missing |
+| `AC-US-SHER-004-05`  | `PS-FRONTEND`           | None linked         | ❌ Missing |
+| `AC-US-SHER-004-06`  | `PS-FRONTEND-CONTRACT`  | Frontend + Contract | ✅ Met     |
+| `AC-US-SHER-004-07`  | `PS-FRONTEND`           | None linked         | ❌ Missing |
+| `AC-US-SHER-004-08`  | `PS-FRONTEND`           | Frontend            | ✅ Met     |
 
 **Accounting:** A direct mint not backed by Router, Payroll, or Vesting evidence uses
 [`DEFAULT-D`](../accounting/journal-entry-catalogue.md#default-d--direct-sher-issuance).
@@ -467,16 +467,16 @@ the redeployment and migration-root commit. Shareholder Management exposes the m
 
 ### Test Coverage
 
-| Acceptance Criterion | Proof Strategy          | Current Evidence          | Status          |
-| -------------------- | ----------------------- | ------------------------- | --------------- |
-| `AC-US-SHER-009-01`  | `PS-INTEGRATED-JOURNEY` | Integrated E2E + Frontend | ✅ Met          |
-| `AC-US-SHER-009-02`  | `PS-FRONTEND`           | Frontend                  | ✅ Met          |
-| `AC-US-SHER-009-03`  | `PS-INTEGRATED-JOURNEY` | Integrated E2E + Frontend | ✅ Met          |
-| `AC-US-SHER-009-04`  | `PS-INTEGRATED-JOURNEY` | Integrated E2E + Frontend | ✅ Met          |
-| `AC-US-SHER-009-05`  | `PS-FRONTEND-CONTRACT`  | Integrated E2E            | ⚠️ Insufficient |
-| `AC-US-SHER-009-06`  | `PS-CONTRACT`           | Contract                  | ✅ Met          |
-| `AC-US-SHER-009-07`  | `PS-FRONTEND`           | Frontend                  | ✅ Met          |
-| `AC-US-SHER-009-08`  | `PS-FRONTEND`           | None linked               | ❌ Missing      |
+| Acceptance Criterion | Proof Strategy          | Current Evidence                     | Status |
+| -------------------- | ----------------------- | ------------------------------------ | ------ |
+| `AC-US-SHER-009-01`  | `PS-INTEGRATED-JOURNEY` | Integrated E2E + Frontend            | ✅ Met |
+| `AC-US-SHER-009-02`  | `PS-FRONTEND`           | Frontend                             | ✅ Met |
+| `AC-US-SHER-009-03`  | `PS-INTEGRATED-JOURNEY` | Integrated E2E + Frontend            | ✅ Met |
+| `AC-US-SHER-009-04`  | `PS-INTEGRATED-JOURNEY` | Integrated E2E + Contract            | ✅ Met |
+| `AC-US-SHER-009-05`  | `PS-FRONTEND-CONTRACT`  | Integrated E2E + Frontend + Contract | ✅ Met |
+| `AC-US-SHER-009-06`  | `PS-CONTRACT`           | Contract                             | ✅ Met |
+| `AC-US-SHER-009-07`  | `PS-FRONTEND`           | Frontend                             | ✅ Met |
+| `AC-US-SHER-009-08`  | `PS-FRONTEND`           | Frontend                             | ✅ Met |
 
 **Dependencies:** Current Investor contract, a connected Investor administrator, and a connected wallet
 
@@ -491,7 +491,7 @@ the redeployment and migration-root commit. Shareholder Management exposes the m
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `7e963bb272745fa8875c72360da5e4136ec86120`
+**Implementation evidence reviewed against:** `3ac64152306e5b60bc91ff3ed0dab2407ac4f9b5`
 
 - [Shareholder Management route](../../../app/src/views/team/%5Bid%5D/SherTokenView.vue) and
   [Investor overview](../../../app/src/components/sections/SherTokenView/InvestorsHeader.vue)
