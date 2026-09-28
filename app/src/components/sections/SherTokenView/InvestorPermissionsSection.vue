@@ -184,18 +184,11 @@ import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
 import { useTeamStore, useUserDataStore } from '@/stores'
 import { DEFAULT_ADMIN_ROLE, MINTER_ROLE } from '@/queries/investorPermissions.queries'
 import { classifyError } from '@/utils/errors/classifyContractError'
-
-type PermissionRow = {
-  address: Address
-  label: string
-  kind: 'member' | 'contract' | 'external'
-  isOwner: boolean
-  isAdmin: boolean
-  isMinter: boolean
-  isProtectedTechnical: boolean
-}
-
-const protectedTechnicalTypes = new Set(['CashRemunerationEIP712', 'SafeDepositRouter', 'Vesting'])
+import {
+  buildInvestorPermissionRows,
+  getGrantableInvestorAddresses,
+  type InvestorPermissionRow
+} from '@/utils/investors/permissions'
 
 const teamStore = useTeamStore()
 const userStore = useUserDataStore()
@@ -212,7 +205,7 @@ const revokeRole = useRevokeInvestorRole()
 const grantModalOpen = ref(false)
 const revokeModalOpen = ref(false)
 const grantTarget = ref({ name: '', address: '' })
-const revokeTarget = ref<PermissionRow | null>(null)
+const revokeTarget = ref<InvestorPermissionRow | null>(null)
 const impactConfirmed = ref(false)
 const actionError = ref('')
 
@@ -224,36 +217,11 @@ const manageTooltip = computed(() => {
   return undefined
 })
 
-const rows = computed<PermissionRow[]>(() =>
-  (permissions.data.value?.accounts ?? []).map((account) => {
-    const normalized = account.address.toLowerCase()
-    const member = teamStore.currentTeam?.members.find(
-      (candidate) => candidate.address.toLowerCase() === normalized
-    )
-    const contract = teamStore.currentTeam?.teamContracts.find(
-      (candidate) => candidate.address.toLowerCase() === normalized
-    )
-    return {
-      address: account.address,
-      label: member?.name ?? contract?.type ?? 'External account',
-      kind: member ? 'member' : contract ? 'contract' : 'external',
-      isOwner: account.isOwner,
-      isAdmin: account.isAdmin === true,
-      isMinter: account.isMinter === true,
-      isProtectedTechnical: !!contract && protectedTechnicalTypes.has(contract.type)
-    }
-  })
+const rows = computed(() =>
+  buildInvestorPermissionRows(permissions.data.value?.accounts ?? [], teamStore.currentTeam)
 )
 
-const grantableAddresses = computed(
-  () =>
-    new Set(
-      [
-        ...(teamStore.currentTeam?.members ?? []),
-        ...(teamStore.currentTeam?.teamContracts ?? [])
-      ].map((account) => account.address.toLowerCase())
-    )
-)
+const grantableAddresses = computed(() => getGrantableInvestorAddresses(teamStore.currentTeam))
 
 const canSubmitGrant = computed(
   () =>
@@ -267,11 +235,11 @@ const canSubmitGrant = computed(
     !grantRole.isPending.value
 )
 
-function canRevoke(row: PermissionRow) {
+function canRevoke(row: InvestorPermissionRow) {
   return canManage.value && !isWriteDisabled.value && !row.isOwner && !revokeRole.isPending.value
 }
 
-function revokeTooltip(row: PermissionRow) {
+function revokeTooltip(row: InvestorPermissionRow) {
   if (row.isOwner) return 'The Investor owner must retain the minter role'
   if (!canManage.value) return 'Only an Investor administrator can revoke minter roles'
   return undefined
@@ -288,7 +256,7 @@ function retryPermissions() {
   void permissions.refetch()
 }
 
-function openRevokeModal(row: PermissionRow) {
+function openRevokeModal(row: InvestorPermissionRow) {
   if (!canRevoke(row)) return
   revokeTarget.value = row
   impactConfirmed.value = false
