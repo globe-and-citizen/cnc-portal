@@ -315,7 +315,7 @@ weeklyClaimRoutes.put(
  *   security:
  *     - bearerAuth: []
  *   description: |
- *     Performs an action on a weekly claim (sign, withdraw, enable, or disable).
+ *     Signs or records withdrawal of a weekly claim. Enable/disable status is derived only by chain reconciliation.
  *     The caller must be a member of the claim's team. Beyond that, `sign`,
  *     `disable` and `enable` require the Cash Remuneration owner or the team
  *     owner, while `withdraw` is restricted to the member the claim belongs to.
@@ -332,7 +332,7 @@ weeklyClaimRoutes.put(
  *       required: true
  *       schema:
  *         type: string
- *         enum: [sign, withdraw, disable, enable]
+ *         enum: [sign, withdraw]
  *       description: The action to perform on the weekly claim
  *   requestBody:
  *     content:
@@ -342,7 +342,7 @@ weeklyClaimRoutes.put(
  *           properties:
  *             signature:
  *               type: string
- *               description: The EIP-712 signature. Required for `action=sign` and `action=enable`.
+ *               description: The EIP-712 signature. Required for `action=sign`.
  *             signedAgainstContractAddress:
  *               type: string
  *               description: |

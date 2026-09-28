@@ -32,7 +32,7 @@ describe('claimFormUtil', () => {
     })
   })
 
-  it('enforces memo bounds after trimming', () => {
+  it('[AC-US-PAYROLL-005-08] enforces memo bounds after trimming', () => {
     const schema = buildClaimFormSchema()
 
     for (const length of [1, DAILY_CLAIM_MEMO_MAX_LENGTH]) {
@@ -53,7 +53,7 @@ describe('claimFormUtil', () => {
     ).toBe(false)
   })
 
-  it('applies the supplied or default daily cap', () => {
+  it('[AC-US-PAYROLL-005-07] applies the supplied or default daily cap', () => {
     const cappedSchema = buildClaimFormSchema(6)
 
     expect(
@@ -91,7 +91,7 @@ describe('claimFormUtil', () => {
     ).toBe(false)
   })
 
-  it('counts existing work on the same day against the daily cap', () => {
+  it('[AC-US-PAYROLL-005-10] counts existing work on the same day against the daily cap', () => {
     const schema = buildClaimFormSchema(8, [
       { minutesWorked: 420, dayWorked: '2024-01-10T00:00:00.000Z' }
     ])
@@ -116,6 +116,69 @@ describe('claimFormUtil', () => {
       overLimit.error?.issues.find((issue) => issue.path.includes('hoursWorked'))?.message
     ).toContain('Remaining: 1h')
     expect(otherDay.success).toBe(true)
+  })
+
+  it('[AC-US-PAYROLL-005-04] rejects a zero-duration claim', () => {
+    const result = buildClaimFormSchema().safeParse({
+      ...formFields,
+      hoursWorked: '0',
+      minutesWorked: '0',
+      memo: 'No time worked'
+    })
+
+    expect(result.success).toBe(false)
+    expect(
+      result.error?.issues.some((issue) => issue.message === 'Duration must be greater than 0')
+    ).toBe(true)
+  })
+
+  it('[AC-US-PAYROLL-005-05] accepts ten-minute increments and rejects other minute values', () => {
+    const schema = buildClaimFormSchema()
+
+    for (const minutesWorked of ['10', '20', '30', '40', '50']) {
+      expect(
+        schema.safeParse({ ...formFields, minutesWorked, memo: 'Valid increment' }).success
+      ).toBe(true)
+    }
+    expect(
+      schema.safeParse({ ...formFields, minutesWorked: '5', memo: 'Invalid increment' }).success
+    ).toBe(false)
+  })
+
+  it('[AC-US-PAYROLL-005-06] caps a daily claim at 24 hours', () => {
+    const schema = buildClaimFormSchema(24)
+
+    expect(
+      schema.safeParse({
+        ...formFields,
+        hoursWorked: '24',
+        memo: 'Exactly one day'
+      }).success
+    ).toBe(true)
+    expect(
+      schema.safeParse({
+        ...formFields,
+        hoursWorked: '24',
+        minutesWorked: '10',
+        memo: 'Over one day'
+      }).success
+    ).toBe(false)
+  })
+
+  it('[AC-US-PAYROLL-005-15] allows four days of history and rejects five days', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date(Date.UTC(2024, 0, 12, 12)))
+
+    try {
+      expect(isClaimDateDisabled({ year: 2024, month: 1, day: 8 }, { restrictSubmit: true })).toBe(
+        false
+      )
+      expect(isClaimDateDisabled({ year: 2024, month: 1, day: 7 }, { restrictSubmit: true })).toBe(
+        true
+      )
+    } finally {
+      vi.useRealTimers()
+    }
   })
 
   it('maps existing files and validates calendar selections', () => {

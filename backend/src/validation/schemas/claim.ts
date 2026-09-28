@@ -64,7 +64,7 @@ export const dailyClaimMemoSchema = z
   );
 
 // Claim creation request body
-export const addClaimBodySchema = z.object({
+export const addClaimBodySchema = z.strictObject({
   teamId: teamIdSchema,
   minutesWorked: workedMinutesSchema,
   memo: dailyClaimMemoSchema,

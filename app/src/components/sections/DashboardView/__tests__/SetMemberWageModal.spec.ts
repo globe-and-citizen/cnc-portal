@@ -125,6 +125,16 @@ describe('SetMemberWageModal', () => {
     await wrapper.vm.$nextTick()
   }
 
+  it('[AC-US-PAYROLL-002-04] restores wage replacement after the wage is resumed', async () => {
+    const wrapper = createWrapper({ wage: { ...mockWage, disabled: true } })
+    expect(wrapper.find('[data-test="set-wage-button"]').attributes('disabled')).toBeDefined()
+    await wrapper.setProps({ wage: { ...mockWage, disabled: false } })
+    expect(wrapper.find('[data-test="set-wage-button"]').attributes('disabled')).toBeUndefined()
+    await openModal(wrapper)
+    expect(wrapper.find('[data-test="standard-step"]').exists()).toBe(true)
+    wrapper.unmount()
+  })
+
   const currentWageData = (wrapper: ReturnType<typeof createWrapper>): WageDataVm => {
     const step = wrapper.findComponent(StandardStepStub).exists()
       ? wrapper.findComponent(StandardStepStub)

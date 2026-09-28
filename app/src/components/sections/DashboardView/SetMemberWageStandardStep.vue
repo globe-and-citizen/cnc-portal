@@ -1,6 +1,6 @@
 <template>
   <UForm
-    :schema="standardSchema"
+    :schema="standardWageFormSchema"
     :state="wageData"
     class="space-y-4"
     data-test="standard-wage-step"
@@ -15,6 +15,7 @@
             type="number"
             size="xl"
             placeholder="e.g. 40"
+            data-test="weekly-cap-input"
             :ui="{ base: 'pl-36', leading: 'pointer-events-none' }"
           >
             <template #leading>
@@ -54,7 +55,7 @@
           :key="rate.type"
           class="flex items-center gap-4"
         >
-          <USwitch v-model="rate.enabled" />
+          <USwitch v-model="rate.enabled" :data-test="`rate-${rate.type}-enabled`" />
           <UFormField :name="`ratePerHour.${index}.amount`" class="w-full">
             <UInput
               v-model="rate.amount"
@@ -63,6 +64,7 @@
               class="w-full"
               size="xl"
               :disabled="!rate.enabled"
+              :data-test="`rate-${rate.type}-amount`"
             >
               <template #trailing>
                 <UBadge
@@ -153,9 +155,9 @@
 
 <script setup lang="ts">
 import { computed, watch } from 'vue'
-import * as z from 'zod'
 import { NETWORK } from '@/constant'
 import { DEFAULT_MAXIMUM_HOURS_PER_DAY } from '@/utils/wages/model'
+import { standardWageFormSchema } from '@/utils/wages/validation'
 import type { Wage, WageWithForm } from '@/types'
 
 const emit = defineEmits<{ validated: []; cancel: []; reset: [] }>()
@@ -183,28 +185,4 @@ watch(
     })
   }
 )
-
-const rateSchema = z.object({
-  type: z.enum(['native', 'usdc', 'sher', 'usdc.e']),
-  amount: z.coerce.number(),
-  enabled: z.boolean()
-})
-
-const standardSchema = z.object({
-  maximumHoursPerWeek: z.coerce
-    .number()
-    .int('Must be a whole number')
-    .positive('Max weekly hours must be greater than 0')
-    .max(40, 'Maximum regular hours per week cannot exceed 40 hours'),
-  maximumHoursPerDay: z.coerce
-    .number()
-    .int('Must be a whole number')
-    .positive('Max daily hours must be greater than 0')
-    .max(24, 'Maximum hours per day cannot exceed 24 hours'),
-  ratePerHour: z.array(rateSchema).superRefine((rates, ctx) => {
-    if (rates.filter((r) => r.enabled).length === 0) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, path: [], message: 'Enable at least one rate' })
-    }
-  })
-})
 </script>
