@@ -1,7 +1,14 @@
 import { expect, type Page } from '@playwright/test'
 import type { Team } from '../../../src/types/team'
+import type { CreateOfficerResponse } from '../../../src/queries/contract.queries'
+import type { InvestorMigration } from '../../../src/queries/investorMigration.queries'
 import type { Address } from 'viem'
 import { dialogAmount, openAccountFromSidebar, selectToken } from '../e2e-page'
+
+export interface OfficerMigrationRedeployment {
+  migration: InvestorMigration
+  officer: CreateOfficerResponse
+}
 
 export async function openRealShareholderManagement(page: Page, teamId: string): Promise<Team> {
   const teamResponse = page.waitForResponse(
@@ -92,6 +99,99 @@ export async function issueShares(page: Page, recipient: Address, amount: string
     timeout: 30_000
   })
   await expect(dialog).toBeHidden()
+}
+
+export async function redeployOfficerWithMigration(
+  page: Page,
+  teamId: string,
+  name: string,
+  symbol: string
+): Promise<OfficerMigrationRedeployment> {
+  await page.goto(`/teams/${teamId}/contract-management`)
+  await expect(page).toHaveURL(new RegExp(`/teams/${teamId}/contract-management$`))
+  const action = page.locator('[data-test="createAddCampaign"]')
+  await expect(action).toBeEnabled({ timeout: 30_000 })
+  await action.click()
+
+  const dialog = page.getByRole('dialog', { name: 'Redeploy Officer Contract' })
+  await expect(dialog).toBeVisible()
+  await dialog.locator('[data-test="redeploy-share-name-input"]').fill(name)
+  await dialog.locator('[data-test="redeploy-share-symbol-input"]').fill(symbol)
+
+  const officerRegistered = page.waitForResponse(
+    (response) =>
+      response.request().method() === 'POST' &&
+      new URL(response.url()).pathname === '/api/contract/officer'
+  )
+  const migrationPersisted = page.waitForResponse(
+    (response) =>
+      response.request().method() === 'POST' &&
+      new URL(response.url()).pathname === '/api/investor-migration'
+  )
+  await dialog.locator('[data-test="confirm-redeploy-contracts"]').click()
+
+  const [officerResponse, migrationResponse] = await Promise.all([
+    officerRegistered,
+    migrationPersisted
+  ])
+  expect(officerResponse.ok()).toBe(true)
+  expect(migrationResponse.ok()).toBe(true)
+  await expect(
+    page.getByText('Officer redeployed and contracts synced', { exact: true }).last()
+  ).toBeVisible({ timeout: 120_000 })
+  await expect(dialog).toBeHidden()
+
+  return {
+    officer: (await officerResponse.json()) as CreateOfficerResponse,
+    migration: (await migrationResponse.json()) as InvestorMigration
+  }
+}
+
+export async function readMigrationSnapshots(
+  page: Page,
+  teamId: string
+): Promise<InvestorMigration[]> {
+  const migrationLoaded = page.waitForResponse((response) => {
+    const url = new URL(response.url())
+    return (
+      response.request().method() === 'GET' &&
+      url.pathname === '/api/investor-migration' &&
+      url.searchParams.get('teamId') === teamId
+    )
+  })
+  await page.reload()
+  const response = await migrationLoaded
+  expect(response.ok()).toBe(true)
+  return response.json() as Promise<InvestorMigration[]>
+}
+
+export async function claimMigratedShares(page: Page, expectedAmount: string): Promise<void> {
+  const amount = page.locator('[data-test="claim-amount-input"]')
+  await expect(amount).toHaveValue(expectedAmount, { timeout: 30_000 })
+  const action = page.locator('[data-test="claim-button"]')
+  await expect(action).toBeEnabled()
+  await action.click()
+  await expect(page.getByText('Shares claimed!', { exact: true }).last()).toBeVisible({
+    timeout: 60_000
+  })
+}
+
+export async function dispatchRemainingMigrationClaims(page: Page): Promise<void> {
+  const action = page.locator('[data-test="dispatch-button"]')
+  await expect(action).toBeEnabled({ timeout: 30_000 })
+  await action.click()
+  await expect(page.getByText('Claims dispatched!', { exact: true }).last()).toBeVisible({
+    timeout: 60_000
+  })
+}
+
+export async function completeShareholderMigration(page: Page): Promise<void> {
+  const action = page.locator('[data-test="complete-migration-button"]')
+  await expect(action).toBeEnabled({ timeout: 30_000 })
+  await action.click()
+  await expect(page.getByText('Migration completed!', { exact: true }).last()).toBeVisible({
+    timeout: 60_000
+  })
 }
 
 export async function fundBankWithUsdc(page: Page, teamId: string, amount: string): Promise<void> {

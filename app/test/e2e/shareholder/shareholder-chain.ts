@@ -1,4 +1,4 @@
-import type { Address } from 'viem'
+import type { Address, Hex } from 'viem'
 import type { Team } from '../../../src/types/team'
 import { artifact, E2E_OWNER, publicClient, tokenBalance, write, type Artifact } from '../e2e-chain'
 
@@ -112,6 +112,35 @@ export async function shareholderPosition(
   return { balance, shareholders, symbol, totalSupply }
 }
 
+export async function investorAddressFromOfficer(officer: Address): Promise<Address> {
+  const officerArtifact = await contractArtifact('Officer.sol/Officer.json')
+  const contracts = await read<readonly { contractType: string; contractAddress: Address }[]>(
+    officer,
+    officerArtifact,
+    'getTeam'
+  )
+  const investor = contracts.find(
+    (contract) => contract.contractType === 'Investor' || contract.contractType === 'InvestorV1'
+  )
+  if (!investor) throw new Error('Officer does not expose an Investor contract')
+  return investor.contractAddress
+}
+
+export const migrationRoot = (fixture: ShareholderIssuanceE2EFixture) =>
+  read<Hex>(fixture.investor, fixture.investorArtifact, 'getMigrationRoot')
+
+export const migrationClaimed = (fixture: ShareholderIssuanceE2EFixture, shareholder: Address) =>
+  read<boolean>(fixture.investor, fixture.investorArtifact, 'getMigrationClaimed', [shareholder])
+
+export const migrationComplete = (fixture: ShareholderIssuanceE2EFixture) =>
+  read<boolean>(fixture.investor, fixture.investorArtifact, 'isMigrationComplete')
+
+export const mintInvestorShares = (
+  fixture: ShareholderIssuanceE2EFixture,
+  shareholder: Address,
+  amount: bigint
+) => write(fixture.investor, fixture.investorArtifact.abi, 'individualMint', [shareholder, amount])
+
 export const safeUsdcBalance = (fixture: ShareholderE2EFixture) =>
   tokenBalance(fixture.usdc, fixture.safe)
 
@@ -145,6 +174,36 @@ export async function mintedEvents(fixture: ShareholderIssuanceE2EFixture) {
     address: fixture.investor,
     abi: fixture.investorArtifact.abi,
     eventName: 'Minted',
+    fromBlock: 0n,
+    toBlock: 'latest'
+  })
+}
+
+export async function migrationRootSetEvents(fixture: ShareholderIssuanceE2EFixture) {
+  return publicClient.getContractEvents({
+    address: fixture.investor,
+    abi: fixture.investorArtifact.abi,
+    eventName: 'MigrationRootSet',
+    fromBlock: 0n,
+    toBlock: 'latest'
+  })
+}
+
+export async function migrationClaimedEvents(fixture: ShareholderIssuanceE2EFixture) {
+  return publicClient.getContractEvents({
+    address: fixture.investor,
+    abi: fixture.investorArtifact.abi,
+    eventName: 'MigrationClaimed',
+    fromBlock: 0n,
+    toBlock: 'latest'
+  })
+}
+
+export async function migrationCompletedEvents(fixture: ShareholderIssuanceE2EFixture) {
+  return publicClient.getContractEvents({
+    address: fixture.investor,
+    abi: fixture.investorArtifact.abi,
+    eventName: 'MigrationCompleted',
     fromBlock: 0n,
     toBlock: 'latest'
   })
