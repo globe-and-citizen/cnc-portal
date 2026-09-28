@@ -182,10 +182,12 @@ import { useInvestorHasRole, useInvestorPermissions } from '@/composables/invest
 import { useGrantInvestorRole, useRevokeInvestorRole } from '@/composables/investor/writes'
 import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
 import { useTeamStore, useUserDataStore } from '@/stores'
+import { useGetTeamOfficersQuery } from '@/queries/contract.queries'
 import { DEFAULT_ADMIN_ROLE, MINTER_ROLE } from '@/queries/investorPermissions.queries'
 import { classifyError } from '@/utils/errors/classifyContractError'
 import {
   buildInvestorPermissionRows,
+  buildInvestorPermissionOfficers,
   getGrantableInvestorAddresses,
   type InvestorPermissionRow
 } from '@/utils/investors/permissions'
@@ -194,7 +196,16 @@ const teamStore = useTeamStore()
 const userStore = useUserDataStore()
 const toast = useToast()
 const { isWriteDisabled, archivedTooltip } = useTeamWriteGuard()
-const permissions = useInvestorPermissions()
+const officerHistory = useGetTeamOfficersQuery({
+  queryParams: { teamId: computed(() => teamStore.currentTeamId ?? '') }
+})
+const officers = computed(() =>
+  buildInvestorPermissionOfficers(
+    teamStore.currentTeam?.currentOfficer,
+    officerHistory.data.value ?? []
+  )
+)
+const permissions = useInvestorPermissions(officers)
 const currentAccount = computed(() =>
   isAddress(userStore.address) ? (userStore.address as Address) : undefined
 )
@@ -218,7 +229,11 @@ const manageTooltip = computed(() => {
 })
 
 const rows = computed(() =>
-  buildInvestorPermissionRows(permissions.data.value?.accounts ?? [], teamStore.currentTeam)
+  buildInvestorPermissionRows(
+    permissions.data.value?.accounts ?? [],
+    teamStore.currentTeam,
+    officers.value
+  )
 )
 
 const grantableAddresses = computed(() => getGrantableInvestorAddresses(teamStore.currentTeam))
