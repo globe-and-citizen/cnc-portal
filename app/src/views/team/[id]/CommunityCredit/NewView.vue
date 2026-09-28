@@ -59,6 +59,7 @@
                   type="number"
                   min="0"
                   :color="basicsErrors.target ? 'error' : undefined"
+                  :disabled="isOfferOnChain"
                   placeholder="25000"
                   class="w-full"
                   data-test="cc-target"
@@ -84,6 +85,7 @@
                     type="button"
                     role="radio"
                     :aria-checked="form.token === t"
+                    :disabled="isOfferOnChain"
                     :class="creditChipClass(form.token === t)"
                     :data-test="`cc-token-${t}`"
                     @click="form.token = t"
@@ -128,7 +130,9 @@
           <UButton
             color="primary"
             :label="publishLabel"
-            :trailing-icon="isLastStep ? 'heroicons:rocket-launch' : 'heroicons:arrow-right'"
+            :trailing-icon="
+              isLastStep || isOfferOnChain ? 'heroicons:rocket-launch' : 'heroicons:arrow-right'
+            "
             :loading="isPublishing"
             :disabled="isPublishing"
             data-test="cc-next"
@@ -218,14 +222,16 @@ const isPublishing = computed(
 )
 const submitError = ref<string | null>(null)
 // Set once createLendingOffer's tx is mined, so a retry after a metadata POST
-// failure repairs just that instead of re-sending the on-chain tx. Cleared by
-// back(), since editing Terms/Access afterwards would otherwise attach this id to
-// silently different round parameters.
+// failure repairs just that instead of re-sending the on-chain tx. Never cleared
+// while on this page: the round's target, token, terms and access are now fixed
+// on-chain (FixedReturn has no edit or cancel), so only the off-chain name and
+// purpose stay editable — see back()/next().
 const createdOfferId = ref<number | null>(null)
+const isOfferOnChain = computed(() => createdOfferId.value !== null)
 const publishLabel = computed(() => {
-  if (!isLastStep.value) return 'Continue'
   if (isPublishing.value) return 'Publishing…'
-  return createdOfferId.value !== null ? 'Retry saving details' : 'Publish credit call'
+  if (isOfferOnChain.value) return 'Retry saving details'
+  return isLastStep.value ? 'Publish credit call' : 'Continue'
 })
 
 const basicsErrors = reactive<Record<string, string>>({})
@@ -237,10 +243,10 @@ function validateBasics(): boolean {
 }
 
 function back() {
-  if (step.value > 0) {
-    step.value--
-    createdOfferId.value = null
-  }
+  // Once the round is on-chain, Terms/Access can't change — jump straight back to
+  // Basics, where only the name and purpose are still editable.
+  if (isOfferOnChain.value) step.value = 0
+  else if (step.value > 0) step.value--
 }
 
 /** Re-checks the Terms step's deadline directly against `form` — CreditCallTermsStep
@@ -259,6 +265,12 @@ function isTermsDeadlineStillValid(): boolean {
 
 function next() {
   if (step.value === 0 && !validateBasics()) return
+  // Only the off-chain details are left to save: skip Terms/Access and the deadline
+  // re-check, which no longer applies to a round that already exists.
+  if (isOfferOnChain.value) {
+    publish()
+    return
+  }
   if (step.value === 1 && termsStepRef.value?.validate?.() === false) return
   if (step.value === 2 && accessStepRef.value?.validate?.() === false) return
 
