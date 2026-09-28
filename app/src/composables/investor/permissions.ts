@@ -1,7 +1,7 @@
 import { getPublicClient } from '@wagmi/core'
 import { useQuery } from '@tanstack/vue-query'
 import { useReadContract } from '@wagmi/vue'
-import { computed, unref, type MaybeRef, type Ref } from 'vue'
+import { computed, toValue, unref, type MaybeRef, type MaybeRefOrGetter, type Ref } from 'vue'
 import { isAddress, zeroAddress, type Address, type Hex } from 'viem'
 import { investorAbi } from '@/artifacts/abi/generated'
 import { currentChainId } from '@/constant'
@@ -10,19 +10,24 @@ import {
   type InvestorPermissionsResult
 } from '@/queries/investorPermissions.queries'
 import { useTeamStore } from '@/stores/teamStore'
+import {
+  getKnownInvestorPermissionAddresses,
+  type InvestorPermissionOfficer
+} from '@/utils/investors/permissions'
 import { config } from '@/wagmi.config'
 
 export const INVESTOR_PERMISSIONS_QUERY_KEY = 'investor-permissions'
 
-export function useInvestorPermissions() {
+export function useInvestorPermissions(
+  officers: MaybeRefOrGetter<readonly InvestorPermissionOfficer[]> = []
+) {
   const teamStore = useTeamStore()
   const investorAddress = computed(() => teamStore.getContractAddressByType('Investor'))
   const knownAccounts = computed<Address[]>(() => {
     const team = teamStore.currentTeamMeta.data
     const candidates = [
       team?.ownerAddress,
-      ...(team?.members.map((member) => member.address) ?? []),
-      ...(team?.teamContracts.map((contract) => contract.address) ?? [])
+      ...getKnownInvestorPermissionAddresses(team, toValue(officers))
     ]
     const byAddress = new Map<string, Address>()
     for (const candidate of candidates) {

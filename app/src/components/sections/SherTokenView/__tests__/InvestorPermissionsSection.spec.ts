@@ -1,7 +1,7 @@
 import { flushPromises, mount } from '@vue/test-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Address } from 'viem'
-import { reactive } from 'vue'
+import { reactive, ref } from 'vue'
 import InvestorPermissionsSection from '../InvestorPermissionsSection.vue'
 import {
   mockInvestorPermissions,
@@ -11,11 +11,45 @@ import {
   mockUserStore
 } from '@/tests/mocks'
 import { MINTER_ROLE } from '@/queries/investorPermissions.queries'
+import { useGetTeamOfficersQuery, type TeamOfficerWithContracts } from '@/queries/contract.queries'
 
 const owner = '0x1000000000000000000000000000000000000000' as Address
 const member = '0x2000000000000000000000000000000000000000' as Address
 const router = '0x3000000000000000000000000000000000000000' as Address
 const external = '0x4000000000000000000000000000000000000000' as Address
+const currentOfficer = '0x5000000000000000000000000000000000000000' as Address
+const previousOfficer = '0x6000000000000000000000000000000000000000' as Address
+
+const officerHistory: TeamOfficerWithContracts[] = [
+  {
+    id: 2,
+    address: currentOfficer,
+    version: '2.0.1',
+    teamId: 1,
+    deployer: owner,
+    deployBlockNumber: '20',
+    deployedAt: '2026-09-28T00:00:00.000Z',
+    previousOfficerId: 1,
+    isCurrent: true,
+    contracts: [],
+    createdAt: '2026-09-28T00:00:00.000Z',
+    updatedAt: '2026-09-28T00:00:00.000Z'
+  },
+  {
+    id: 1,
+    address: previousOfficer,
+    version: '2.0.0',
+    teamId: 1,
+    deployer: owner,
+    deployBlockNumber: '10',
+    deployedAt: '2026-09-27T00:00:00.000Z',
+    previousOfficerId: null,
+    isCurrent: false,
+    contracts: [],
+    createdAt: '2026-09-27T00:00:00.000Z',
+    updatedAt: '2026-09-27T00:00:00.000Z'
+  }
+]
 
 const TableStub = {
   props: ['data', 'columns'],
@@ -57,7 +91,23 @@ describe('InvestorPermissionsSection', () => {
       ...mockTeamStore.currentTeam,
       isArchived: false,
       ownerAddress: owner,
-      members: [{ id: '1', name: 'Member', address: member, teamId: 1 }],
+      currentOfficer: {
+        id: 2,
+        address: currentOfficer,
+        teamId: 1,
+        deployer: owner,
+        deployBlockNumber: '20',
+        deployedAt: '2026-09-28T00:00:00.000Z',
+        previousOfficerId: 1,
+        version: '2.0.1',
+        previousOfficer: { id: 1, address: previousOfficer },
+        createdAt: '2026-09-28T00:00:00.000Z',
+        updatedAt: '2026-09-28T00:00:00.000Z'
+      },
+      members: [
+        { id: '1', name: 'Owner', address: owner, teamId: 1 },
+        { id: '2', name: 'Member', address: member, teamId: 1 }
+      ],
       teamContracts: [
         {
           type: 'SafeDepositRouter',
@@ -69,6 +119,12 @@ describe('InvestorPermissionsSection', () => {
     })
     mockTeamStore.currentTeam = team
     mockTeamStore.currentTeamMeta.data = team
+    vi.mocked(useGetTeamOfficersQuery).mockReturnValue({
+      data: ref(officerHistory),
+      isPending: ref(false),
+      isError: ref(false),
+      refetch: vi.fn()
+    } as unknown as ReturnType<typeof useGetTeamOfficersQuery>)
     mockInvestorPermissions.hasRole.data.value = true
     mockInvestorPermissions.hasRole.isLoading.value = false
     mockInvestorPermissions.list.data.value = {
@@ -76,7 +132,9 @@ describe('InvestorPermissionsSection', () => {
       gaps: [],
       accounts: [
         { address: owner, isOwner: true, isAdmin: true, isMinter: true },
-        { address: router, isOwner: false, isAdmin: false, isMinter: true }
+        { address: router, isOwner: false, isAdmin: false, isMinter: true },
+        { address: currentOfficer, isOwner: false, isAdmin: true, isMinter: true },
+        { address: previousOfficer, isOwner: false, isAdmin: false, isMinter: true }
       ]
     }
     mockInvestorWrites.grantRole.mutateAsync.mockResolvedValue({ hash: '0xgrant' })
@@ -102,6 +160,23 @@ describe('InvestorPermissionsSection', () => {
     expect(wrapper.text()).toContain('Administrator')
     expect(wrapper.text()).toContain('Minter')
     expect(wrapper.text()).toContain('SafeDepositRouter')
+    expect(wrapper.text()).toContain('Officer')
+    expect(wrapper.text()).toContain('Officer (previous)')
+    expect(wrapper.text()).not.toContain('External account')
+  })
+
+  it('keeps an unrelated role holder classified as external', () => {
+    mockInvestorPermissions.list.data.value.accounts.push({
+      address: external,
+      isOwner: false,
+      isAdmin: false,
+      isMinter: true
+    })
+
+    const wrapper = createWrapper()
+
+    expect(wrapper.text()).toContain('External account')
+    expect(wrapper.text()).toContain('External')
   })
 
   it('[AC-US-SHER-009-02] warns when discovery evidence is incomplete', () => {
