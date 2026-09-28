@@ -6,6 +6,7 @@ import path from 'node:path'
 
 const contractRoot = path.resolve(import.meta.dirname, '..')
 const deploymentScript = path.join(contractRoot, 'deploy-upgrade-v2.0.1.sh')
+const deploymentOrchestrator = path.join(contractRoot, 'scripts', 'deploy-v201-upgrade.ts')
 
 describe('Polygon 2.0.1 deployment script', function () {
   it('has valid Bash syntax and strict failure handling', function () {
@@ -41,30 +42,25 @@ describe('Polygon 2.0.1 deployment script', function () {
   })
 
   it('uses release-specific modules, upgrades Investor before Officer, and verifies each transition', function () {
-    const source = readFileSync(deploymentScript, 'utf8')
+    const source = readFileSync(deploymentOrchestrator, 'utf8')
     expect(source).to.include(
-      'deploy_and_verify CashRemunerationEIP712 ignition/modules/upgrades/v2.0.1/CashRemunerationUpgradeModule.ts'
+      '../ignition/modules/upgrades/v2.0.1/CashRemunerationUpgradeModule.js'
     )
-    expect(source).to.include(
-      'deploy_and_verify ExpenseAccountEIP712 ignition/modules/upgrades/v2.0.1/ExpenseAccountUpgradeModule.ts'
-    )
-    const investorUpgrade = source.indexOf(
-      'deploy_and_verify Investor ignition/modules/upgrades/v2.0.1/InvestorUpgradeModule.ts'
-    )
-    const officerUpgrade = source.indexOf(
-      'deploy_and_verify Officer ignition/modules/upgrades/v2.0.1/OfficerUpgradeModule.ts'
-    )
+    expect(source).to.include('../ignition/modules/upgrades/v2.0.1/ExpenseAccountUpgradeModule.js')
+    const investorUpgrade = source.indexOf('connection.ignition.deploy(InvestorUpgradeModule')
+    const officerUpgrade = source.indexOf('connection.ignition.deploy(OfficerUpgradeModule')
 
     expect(investorUpgrade).to.be.greaterThan(-1)
     expect(officerUpgrade).to.be.greaterThan(investorUpgrade)
-    expect(source).to.include('CNC_EXPECTED_VERSIONS=2.0.1')
-    expect(source).to.include('CNC_UPGRADE_MANIFEST_PATH="$manifest_path"')
-    expect(source).to.include('CNC_STORAGE_BASELINE_NETWORK=polygon')
+    expect(source.match(/connection\.ignition\.deploy\(/g)).to.have.length(4)
+    expect(source).to.include('await verifyTarget')
+    expect(source).to.include("expectedVersions: ['2.0.1']")
+    expect(source).to.include("process.env.CNC_PREPARE_ONLY === '1'")
+    expect(source).to.include('CNC_CONFIRM_POLYGON_V201_UPGRADE')
+    expect(source).to.include('CNC_UPGRADE_MANIFEST_PATH is required')
+    expect(source).to.include("['status', '--porcelain', '--untracked-files=no']")
     expect(source).to.not.include('localhost')
     expect(source).to.not.include('V201UpgradeModule.ts')
-    expect(source).to.not.match(
-      /ignition\/modules\/(?:CashRemuneration|ExpenseAccount|Investor|Officer)UpgradeModule\.ts/
-    )
   })
 
   it('groups static validation without production secrets and opens Polygon only for preflight', function () {
@@ -101,13 +97,17 @@ describe('Polygon 2.0.1 deployment script', function () {
       expect(result.status, result.stderr).to.equal(0)
       expect(readFileSync(commandLog, 'utf8').trim().split('\n')).to.deep.equal([
         'hardhat run scripts/validate-upgrade.ts --network hardhat|baseline=polygon|contracts=CashRemunerationEIP712,ExpenseAccountEIP712,Investor,Officer|target=|polygon_url=unset|private_key=unset',
-        'hardhat run scripts/verify-v201-upgrade.ts --network polygon|baseline=|contracts=|target=all|polygon_url=must-not-reach-static-validation|private_key=must-not-reach-static-validation'
+        'hardhat run scripts/deploy-v201-upgrade.ts --network polygon|baseline=|contracts=|target=|polygon_url=must-not-reach-static-validation|private_key=must-not-reach-static-validation'
       ])
-      expect(result.stdout).to.include(
-        'Preparation checks passed. No upgrade transaction was broadcast.'
-      )
     } finally {
       rmSync(fakeBin, { recursive: true, force: true })
     }
+  })
+
+  it('uses one Polygon Hardhat process for the complete live deployment', function () {
+    const source = readFileSync(deploymentScript, 'utf8')
+    expect(source.match(/npx hardhat run scripts\/deploy-v201-upgrade\.ts/g)).to.have.length(1)
+    expect(source).to.not.include('npx hardhat ignition deploy')
+    expect(source).to.not.include('deploy_and_verify')
   })
 })

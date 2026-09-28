@@ -62,8 +62,10 @@ Only after the preparation output and rollback manifest have been reviewed, run:
 CNC_CONFIRM_POLYGON_V201_UPGRADE=upgrade-polygon-v2.0.1 npm run deploy-upgrade:v201:polygon
 ```
 
-The script upgrades and reads back one target at a time. If a step fails, stop and inspect the saved manifest and on-chain state before
-continuing. Do not restart blindly: completed Ignition futures and already-upgraded beacons must be reconciled first.
+The script keeps the preflight, all four Ignition deployments, their per-target readbacks, and the final verification in one Hardhat
+process. The production keystore is therefore unlocked once for the complete live operation. It still upgrades and verifies one target at a
+time in the documented order. If a step fails, stop and inspect the saved manifest and on-chain state before continuing. Do not restart
+blindly: completed Ignition futures and already-upgraded beacons must be reconciled first.
 
 ## Post-deployment evidence
 

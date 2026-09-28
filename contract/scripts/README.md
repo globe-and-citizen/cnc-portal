@@ -117,8 +117,9 @@ CNC_STORAGE_BASELINE_NETWORK=polygon \
 ```
 
 The simulated network is rejected unless `CNC_STORAGE_BASELINE_NETWORK` is set, and it can never be used to bake a baseline. Production
-release wrappers should unset production RPC and signer variables around this static command, then open one live-network process for their
-read-only ownership and implementation preflight.
+release wrappers should unset production RPC and signer variables around this static command, then open one live-network Hardhat process for
+preflight, sequential Ignition deployments, per-target readbacks, and final verification. Keeping the live operation in one process allows
+the keystore plugin to reuse its in-memory master key after one password prompt.
 
 ## File structure
 
