@@ -491,7 +491,7 @@ the redeployment and migration-root commit. Shareholder Management exposes the m
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `3ac64152306e5b60bc91ff3ed0dab2407ac4f9b5`
+**Implementation evidence reviewed against:** `b875448a4f35252e12e8f75f73d5b738003c5baf`
 
 - [Shareholder Management route](../../../app/src/views/team/%5Bid%5D/SherTokenView.vue) and
   [Investor overview](../../../app/src/components/sections/SherTokenView/InvestorsHeader.vue)
@@ -503,7 +503,8 @@ the redeployment and migration-root commit. Shareholder Management exposes the m
   [Investor writes](../../../app/src/composables/investor/writes.ts)
 - [Investor permission surface](../../../app/src/components/sections/SherTokenView/InvestorPermissionsSection.vue),
   [permission reads](../../../app/src/composables/investor/permissions.ts), and
-  [role evidence query](../../../app/src/queries/investorPermissions.queries.ts)
+  [role evidence query](../../../app/src/queries/investorPermissions.queries.ts), with
+  [permission presentation helpers](../../../app/src/utils/investors/permissions.ts)
 - [Router configuration actions](../../../app/src/components/sections/SherTokenView/InvestorActions/SetSafeAddressAction.vue),
   [deposit control](../../../app/src/components/sections/SherTokenView/InvestorActions/ToggleSherCompensationAction.vue), and
   [multiplier action](../../../app/src/components/sections/SherTokenView/InvestorActions/SetCompensationMultiplierAction.vue)
