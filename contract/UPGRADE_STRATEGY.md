@@ -15,7 +15,7 @@ plugin tells us we have to.
 │     for a compatible change)                                    │
 │  2. Bump version() per semver                                   │
 │  3. Run: npm run validate-upgrade:polygon                        │
-│  4a. PASS → deploy via the existing XxxUpgradeModule            │
+│  4a. PASS → create a versioned release upgrade module           │
 │  4b. FAIL → read errors, try to keep storage compatible:        │
 │       - append new vars at the end, not in the middle           │
 │       - use the __gap to absorb new vars                        │
@@ -150,12 +150,10 @@ The Polygon 2.0.1 release uses [`deploy-upgrade-v2.0.1.sh`](./deploy-upgrade-v2.
 [`Polygon 2.0.1 runbook`](./releases/polygon-v2.0.1.md). Investor must be upgraded before Officer because the new Officer permission setup
 depends on the new Investor ownership override.
 
-Every production release must have new versioned Ignition modules. Never change a versioned release module after it has been used: the same
-module file must be rehearsed locally and then deployed to production, with Ignition state isolated by chain ID. Unversioned modules may be
-kept for historical compatibility, but a release script must not depend on them.
-
-A release rehearsal may set `CNC_STORAGE_BASELINE_NETWORK` to the production network so local and production runs compare the candidate
-against the same committed production layout. This override is validation-only and is rejected while baking baselines.
+Every production release must have new versioned Ignition modules. Never change a versioned release module after it has been used. A release
+script must depend only on those versioned modules and should target only networks that need the in-place upgrade. Fresh networks receive
+the current implementation from `deploy.sh`; they do not need to replay production upgrades. The
+[upgrade-module guide](./ignition/modules/README.md) defines the module pattern, release-script guards, and required tests.
 
 ### Validating a single contract
 

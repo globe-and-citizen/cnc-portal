@@ -18,10 +18,10 @@ The release owns four immutable Ignition recipes:
 - `InvestorV201UpgradeModule.ts`
 - `OfficerV201UpgradeModule.ts`
 
-Run these exact files in the local rehearsal and on Polygon. Do not edit an older generic module or reuse a `V201` module for a later
-release. Ignition records each network in a separate chain journal, while `CNC_UPGRADE_CHAIN_ID` selects that chain's canonical deployment
-registry. Both paths compare the candidate layouts to the same Polygon 2.0.0 baselines. This keeps the implementation recipe and safety gate
-identical while the addresses remain network-specific.
+The guarded release script runs these exact files on Polygon. Do not edit an older generic module or reuse a `V201` module for a later
+release. `CNC_UPGRADE_CHAIN_ID` selects the canonical Polygon deployment registry, and the candidates are compared to the committed Polygon
+2.0.0 baselines. Fresh local environments already deploy the 2.0.1 implementations through `deploy.sh`, so they do not replay this
+production-only upgrade.
 
 ## Safety checks
 
@@ -40,17 +40,6 @@ role behaviour.
 The four committed baselines describe the exact storage-bearing `2.0.0` sources already behind the Polygon beacons. They restore missing or
 stale production references; they are not baselines baked from the unreleased `2.0.1` deployments. Each `2.0.1` change is storage-neutral,
 so the compiled candidate must compare equal to those `2.0.0` layouts before any transaction is broadcast.
-
-## Local rehearsal
-
-Start from a known local deployment whose canonical addresses are recorded under `ignition/deployments/chain-31337/`, then run:
-
-```bash
-npm run rehearse-upgrade:v201:local
-```
-
-After the run, verify that all four beacon implementations changed, every proxy still exposes its prior state, and every proxy reports
-`2.0.1`.
 
 ## Polygon preparation
 

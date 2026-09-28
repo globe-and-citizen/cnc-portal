@@ -2,6 +2,8 @@
 
 This directory contains Hardhat Ignition modules for deploying the Officer and its sub-contracts (beacons).
 
+See the [`modules` upgrade guide](./modules/README.md) before creating or running an upgrade module.
+
 ## Current Modules
 
 The **OfficerModule** deploys the following beacons:
@@ -67,16 +69,16 @@ The current Polygon 2.0.1 release uses one independently verifiable module per e
 | [`InvestorV201UpgradeModule`](./modules/InvestorV201UpgradeModule.ts)                 | `InvestorBeaconModule#Beacon`                | Investor               |
 | [`OfficerV201UpgradeModule`](./modules/OfficerV201UpgradeModule.ts)                   | `Officer#FactoryBeacon`                      | Officer                |
 
-The Officer module also resolves `FeeCollectorModule#FeeCollector` and supplies it to the new implementation constructor. Modules require
-`CNC_UPGRADE_CHAIN_ID=137` for Polygon or `31337` for a local rehearsal; they refuse any other deployment registry.
+The Officer module also resolves `FeeCollectorModule#FeeCollector` and supplies it to the new implementation constructor. These release
+modules require `CNC_UPGRADE_CHAIN_ID=137` and refuse any other deployment registry.
 
 Release modules are immutable deployment recipes: do not edit a `V<version>` module for a later release. Create a new versioned module so
-local rehearsals and production use the same module definition while Ignition keeps separate journals per chain. The older unversioned
-upgrade modules are historical and are not invoked by the 2.0.1 release script. The local rehearsal also uses the Polygon 2.0.0 storage
-baselines, so a missing local scratch baseline cannot weaken the release gate.
+each production upgrade has an auditable recipe and distinct Ignition future IDs. The unversioned example and one-off upgrade modules have
+been removed; their executed history remains in frozen deployment snapshots and Git.
 
 Use [`../deploy-upgrade-v2.0.1.sh`](../deploy-upgrade-v2.0.1.sh) through the npm commands documented in the
-[Polygon 2.0.1 runbook](../releases/polygon-v2.0.1.md). Do not invoke Officer before Investor.
+[Polygon 2.0.1 runbook](../releases/polygon-v2.0.1.md). The script intentionally targets Polygon only because fresh local deployments
+already use the current implementations. Do not invoke Officer before Investor.
 
 ## Adding New Contracts
 
