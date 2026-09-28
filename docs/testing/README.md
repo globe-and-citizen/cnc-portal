@@ -25,9 +25,11 @@ npm run test:coverage
 
 ### Browser acceptance and integrated E2E
 
-Every Playwright profile targets services and fixtures that are already prepared. The integrated profile requires the frontend, backend,
-migrated database, local chain, and contract infrastructure. Browser acceptance requires its frontend and deterministic local node, prepared
-once with `npm run setup:e2e:browser`. Playwright has no server or infrastructure setup configuration.
+Every Playwright profile targets services and shared infrastructure that are already prepared. The integrated profile requires the frontend,
+backend, migrated database, local chain, and contract infrastructure. Individual integrated paths may use an authenticated Node-side factory
+to prepare isolated domain data before browser actions; these setup calls are not product-flow evidence. Browser acceptance requires its
+frontend and deterministic local node, prepared once with `npm run setup:e2e:browser`. Playwright has no server or shared-infrastructure
+setup configuration.
 
 ```bash
 cd app
