@@ -11,17 +11,17 @@ No command in this runbook deploys a new user-facing proxy. Existing proxy stora
 
 ## Reproducibility rule
 
-The release owns four immutable Ignition recipes:
+The release owns four immutable Ignition recipes under `ignition/modules/upgrades/v2.0.1/`:
 
-- `CashRemunerationV201UpgradeModule.ts`
-- `ExpenseAccountV201UpgradeModule.ts`
-- `InvestorV201UpgradeModule.ts`
-- `OfficerV201UpgradeModule.ts`
+- `CashRemunerationUpgradeModule.ts`
+- `ExpenseAccountUpgradeModule.ts`
+- `InvestorUpgradeModule.ts`
+- `OfficerUpgradeModule.ts`
 
-The guarded release script runs these exact files on Polygon. Do not edit an older generic module or reuse a `V201` module for a later
-release. `CNC_UPGRADE_CHAIN_ID` selects the canonical Polygon deployment registry, and the candidates are compared to the committed Polygon
-2.0.0 baselines. Fresh local environments already deploy the 2.0.1 implementations through `deploy.sh`, so they do not replay this
-production-only upgrade.
+The guarded release script runs these exact files on Polygon. Do not edit this version directory or reuse it for a later release. The
+internal Ignition IDs retain `V201` so their journal identities remain unique. `CNC_UPGRADE_CHAIN_ID` selects the canonical Polygon
+deployment registry, and the candidates are compared to the committed Polygon 2.0.0 baselines. Fresh local environments already deploy the
+2.0.1 implementations through `deploy.sh`, so they do not replay this production-only upgrade.
 
 ## Safety checks
 

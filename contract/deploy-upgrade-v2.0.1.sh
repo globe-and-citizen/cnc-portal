@@ -55,10 +55,10 @@ deploy_and_verify() {
     npx hardhat run scripts/verify-v201-upgrade.ts --network "$network"
 }
 
-deploy_and_verify CashRemunerationEIP712 ignition/modules/CashRemunerationV201UpgradeModule.ts
-deploy_and_verify ExpenseAccountEIP712 ignition/modules/ExpenseAccountV201UpgradeModule.ts
-deploy_and_verify Investor ignition/modules/InvestorV201UpgradeModule.ts
-deploy_and_verify Officer ignition/modules/OfficerV201UpgradeModule.ts
+deploy_and_verify CashRemunerationEIP712 ignition/modules/upgrades/v2.0.1/CashRemunerationUpgradeModule.ts
+deploy_and_verify ExpenseAccountEIP712 ignition/modules/upgrades/v2.0.1/ExpenseAccountUpgradeModule.ts
+deploy_and_verify Investor ignition/modules/upgrades/v2.0.1/InvestorUpgradeModule.ts
+deploy_and_verify Officer ignition/modules/upgrades/v2.0.1/OfficerUpgradeModule.ts
 
 echo "Verifying the complete Polygon 2.0.1 implementation set..."
 CNC_UPGRADE_TARGET=all \

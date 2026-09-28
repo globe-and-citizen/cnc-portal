@@ -2,7 +2,7 @@ import { buildModule } from '@nomicfoundation/hardhat-ignition/modules'
 import {
   loadDeploymentAddresses,
   requireDeploymentAddress
-} from '../lib/deployment-addresses.js'
+} from '../../../lib/deployment-addresses.js'
 
 export default buildModule('InvestorV201UpgradeModule', (m) => {
   const beaconOwner = m.getAccount(0)

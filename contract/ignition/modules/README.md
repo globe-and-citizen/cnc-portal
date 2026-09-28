@@ -18,16 +18,20 @@ Create an upgrade module only when all of these conditions are true:
 Fresh local environments should use [`../../deploy.sh`](../../deploy.sh), which deploys the latest implementations and new beacons. They do
 not need to replay production upgrade history.
 
-## Naming and lifecycle
+## Directory, naming, and lifecycle
 
-Name the file and Ignition module after the target release, with dots removed from the version:
+Group each release under `upgrades/vX.Y.Z/`, then use a contract-specific filename without repeating the version:
 
-- `InvestorV201UpgradeModule.ts` for `2.0.1`
-- `BankV203UpgradeModule.ts` for `2.0.3`
+- `upgrades/v2.0.1/InvestorUpgradeModule.ts`
+- `upgrades/v2.0.3/BankUpgradeModule.ts`
 
-A versioned module is an immutable release recipe. After it has been used on its target network, never edit it for a later release. Create a
-new module with new Ignition future IDs instead. Remove unversioned templates and one-off modules once no current release script uses them;
-Git and frozen deployment snapshots retain the history.
+The directory versions the source file, but Ignition does not use the directory as the module identity. Keep the compact version in
+`buildModule(...)` and in every future ID, for example `InvestorV201UpgradeModule` and `Investor_v2_0_1`. This prevents journal collisions
+between releases.
+
+A version directory is an immutable release recipe. After it has been used on its target network, never edit it for a later release. Create
+a new directory with new Ignition module and future IDs instead. Remove root-level templates and one-off modules once no current release
+script uses them; Git and frozen deployment snapshots retain the history.
 
 ## Implementation pattern
 
@@ -39,7 +43,7 @@ import { buildModule } from '@nomicfoundation/hardhat-ignition/modules'
 import {
   loadDeploymentAddresses,
   requireDeploymentAddress
-} from '../lib/deployment-addresses.js'
+} from '../../../lib/deployment-addresses.js'
 
 export default buildModule('ExampleV203UpgradeModule', (m) => {
   const beaconOwner = m.getAccount(0)
@@ -66,8 +70,8 @@ implementation, resolving deployed dependencies from the same canonical registry
 
 ## Release script
 
-Add the module to one `deploy-upgrade-vX.Y.Z.sh` script for the network that actually needs the upgrade. The script must fail before the
-first transaction unless it has:
+Add the module path from `modules/upgrades/vX.Y.Z/` to one `deploy-upgrade-vX.Y.Z.sh` script for the network that actually needs the
+upgrade. The script must fail before the first transaction unless it has:
 
 - validated storage compatibility against that network's committed baseline;
 - confirmed the connected chain and the canonical deployment registry agree;

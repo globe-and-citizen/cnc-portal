@@ -5,7 +5,8 @@ import { ZeroAddress } from 'ethers'
 before(initializeHardhat)
 
 /**
- * Exercises the semantics of ignition/modules/CashRemunerationV201UpgradeModule.ts:
+ * Exercises the semantics of
+ * ignition/modules/upgrades/v2.0.1/CashRemunerationUpgradeModule.ts:
  *   1. Deploy a new CashRemunerationEIP712 implementation.
  *   2. Point the existing FactoryBeacon at it via upgradeTo.
  *   3. Verify that a proxy deployed against the factory beacon observes the new

@@ -42,16 +42,16 @@ describe('Polygon 2.0.1 deployment script', function () {
   it('uses release-specific modules, upgrades Investor before Officer, and verifies each transition', function () {
     const source = readFileSync(deploymentScript, 'utf8')
     expect(source).to.include(
-      'deploy_and_verify CashRemunerationEIP712 ignition/modules/CashRemunerationV201UpgradeModule.ts'
+      'deploy_and_verify CashRemunerationEIP712 ignition/modules/upgrades/v2.0.1/CashRemunerationUpgradeModule.ts'
     )
     expect(source).to.include(
-      'deploy_and_verify ExpenseAccountEIP712 ignition/modules/ExpenseAccountV201UpgradeModule.ts'
+      'deploy_and_verify ExpenseAccountEIP712 ignition/modules/upgrades/v2.0.1/ExpenseAccountUpgradeModule.ts'
     )
     const investorUpgrade = source.indexOf(
-      'deploy_and_verify Investor ignition/modules/InvestorV201UpgradeModule.ts'
+      'deploy_and_verify Investor ignition/modules/upgrades/v2.0.1/InvestorUpgradeModule.ts'
     )
     const officerUpgrade = source.indexOf(
-      'deploy_and_verify Officer ignition/modules/OfficerV201UpgradeModule.ts'
+      'deploy_and_verify Officer ignition/modules/upgrades/v2.0.1/OfficerUpgradeModule.ts'
     )
 
     expect(investorUpgrade).to.be.greaterThan(-1)
@@ -60,6 +60,7 @@ describe('Polygon 2.0.1 deployment script', function () {
     expect(source).to.include('CNC_UPGRADE_MANIFEST_PATH="$manifest_path"')
     expect(source).to.include('CNC_STORAGE_BASELINE_NETWORK=polygon')
     expect(source).to.not.include('localhost')
+    expect(source).to.not.include('V201UpgradeModule.ts')
     expect(source).to.not.match(
       /ignition\/modules\/(?:CashRemuneration|ExpenseAccount|Investor|Officer)UpgradeModule\.ts/
     )
