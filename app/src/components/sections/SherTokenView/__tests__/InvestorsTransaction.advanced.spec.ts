@@ -5,6 +5,7 @@ import { log } from '@/lib/logging'
 import { useTeamStore } from '@/stores'
 import { useCurrencyStore } from '@/stores/currencyStore'
 import { mockInvestorReads } from '@/tests/mocks'
+import { EMPTY_VALUE } from '@/utils/format'
 
 // Auto-imported @nuxt/ui components bypass `config.global.stubs` because the
 // Nuxt UI Vite plugin resolves them through their file path. Mocking the
@@ -200,18 +201,20 @@ describe('InvestorsTransactions advanced', () => {
     expect(nativeRow?.amountUSD).toBe(0)
   })
 
-  it('falls back to SHER symbol when investor symbol is not a string', () => {
+  it('[AC-US-SHER-003-08] presents an invalid Investor symbol as unavailable', () => {
     mockInvestorSymbolData.value = { unexpected: true } as unknown as string
+    mockInvestorReads.symbol.data.value = { unexpected: true } as unknown as string
     wrapper = createWrapper()
-    expect(tableData(wrapper).find((row) => row.type === 'mint')?.token).toBe('SHER')
+    expect(tableData(wrapper).find((row) => row.type === 'mint')?.token).toBe(EMPTY_VALUE)
   })
 
-  it('logs investor and safe router query errors once per unique message', async () => {
+  it('[AC-US-SHER-003-07] reports activity errors without replacing known rows', async () => {
     const logErrorSpy = vi.spyOn(log, 'error')
     wrapper = createWrapper()
     const investorQueryError = new Error('investor query failed')
     eventFeedState.investorError.value = investorQueryError
     await nextTick()
+    expect(tableData(wrapper).some((row) => row.type === 'mint')).toBe(true)
     expect(logErrorSpy).toHaveBeenCalledWith(
       'RPC log investor transaction query error:',
       investorQueryError
@@ -220,6 +223,7 @@ describe('InvestorsTransactions advanced', () => {
     const safeQueryError = new Error('safe router query failed')
     eventFeedState.safeError.value = safeQueryError
     await nextTick()
+    expect(tableData(wrapper).some((row) => row.type === 'safeDeposit')).toBe(true)
     expect(logErrorSpy).toHaveBeenCalledWith(
       'RPC log safe deposit router transaction query error:',
       safeQueryError

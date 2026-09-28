@@ -7,6 +7,7 @@ import {
   mockSafeDepositRouterAddress,
   mockSafeDepositRouterReads,
   mockSafeDepositRouterWrites,
+  mockTeamStore,
   mockToast,
   mockUseConnection,
   renderWithProviders
@@ -30,11 +31,12 @@ describe('[US-SHER-005] SetCompensationMultiplierAction.vue', () => {
 
     mockUseConnection.isConnected.value = true
     mockUseConnection.address.value = '0xaAaAaAaaAaAaAaaAaAAAAAAAAaaaAaAaAaaAaaAa'
+    mockTeamStore.currentTeamMeta.data.isArchived = false
 
     mockSafeDepositRouterWrites.setMultiplier.mutateAsync.mockResolvedValue(undefined)
   })
 
-  it('does not render when safe deposit router address is missing', () => {
+  it('[AC-US-SHER-005-08] hides multiplier configuration when the router is missing', () => {
     mockSafeDepositRouterAddress.value = ''
     const wrapper = createWrapper()
 
@@ -59,7 +61,7 @@ describe('[US-SHER-005] SetCompensationMultiplierAction.vue', () => {
     expect(wrapper.find('[data-test="multiplier-input"]').exists()).toBe(true)
   })
 
-  it('blocks modal open for non-owner', async () => {
+  it('[AC-US-SHER-005-04] blocks multiplier configuration for a non-owner', async () => {
     mockUseConnection.address.value = '0x0000000000000000000000000000000000000001'
     const wrapper = createWrapper()
 
@@ -104,7 +106,7 @@ describe('[US-SHER-005] SetCompensationMultiplierAction.vue', () => {
   })
 
   describe('schema validation', () => {
-    it('blocks submit and surfaces required error when multiplier is empty', async () => {
+    it('[AC-US-SHER-005-06] rejects an empty multiplier', async () => {
       const wrapper = createWrapper()
 
       await wrapper.find('[data-test="set-compensation-multiplier-button"]').trigger('click')
@@ -116,7 +118,7 @@ describe('[US-SHER-005] SetCompensationMultiplierAction.vue', () => {
       expect(wrapper.text()).toContain('Multiplier is required')
     })
 
-    it('blocks submit and surfaces numeric error when multiplier is not a number', async () => {
+    it('[AC-US-SHER-005-06] rejects a non-numeric multiplier', async () => {
       const wrapper = createWrapper()
 
       await wrapper.find('[data-test="set-compensation-multiplier-button"]').trigger('click')
@@ -128,7 +130,7 @@ describe('[US-SHER-005] SetCompensationMultiplierAction.vue', () => {
       expect(wrapper.text()).toContain('Must be a valid number')
     })
 
-    it('blocks submit and surfaces min error when multiplier is below minimum', async () => {
+    it('[AC-US-SHER-005-06] rejects a multiplier below the minimum', async () => {
       const wrapper = createWrapper()
 
       await wrapper.find('[data-test="set-compensation-multiplier-button"]').trigger('click')
@@ -140,7 +142,7 @@ describe('[US-SHER-005] SetCompensationMultiplierAction.vue', () => {
       expect(wrapper.text()).toContain('Multiplier must be at least 1')
     })
 
-    it('blocks submit and surfaces max error when multiplier exceeds maximum', async () => {
+    it('[AC-US-SHER-005-06] rejects a multiplier above the configured range', async () => {
       const wrapper = createWrapper()
 
       await wrapper.find('[data-test="set-compensation-multiplier-button"]').trigger('click')
@@ -176,14 +178,28 @@ describe('[US-SHER-005] SetCompensationMultiplierAction.vue', () => {
     expect(mockSafeDepositRouterWrites.setMultiplier.mutateAsync).not.toHaveBeenCalled()
   })
 
-  it('watcher handles write error with generic message', async () => {
+  it('[AC-US-SHER-005-09] reports a failed multiplier write without success', async () => {
     const wrapper = createWrapper()
 
     mockSafeDepositRouterWrites.setMultiplier.error.value = new Error('boom')
     await nextTick()
 
-    expect(wrapper.exists()).toBe(true)
+    expect(mockToast.add).toHaveBeenCalledWith(expect.objectContaining({ color: 'error' }))
+    expect(mockToast.add).not.toHaveBeenCalledWith(
+      expect.objectContaining({ title: expect.stringContaining('updated successfully') })
+    )
     wrapper.unmount()
+  })
+
+  it('[AC-US-SHER-005-07] blocks multiplier configuration for an archived company', async () => {
+    mockTeamStore.currentTeamMeta.data.isArchived = true
+    const wrapper = createWrapper()
+
+    expect(
+      wrapper.find('[data-test="set-compensation-multiplier-button"]').attributes('disabled')
+    ).toBeDefined()
+    await wrapper.find('[data-test="set-compensation-multiplier-button"]').trigger('click')
+    expect(wrapper.find('[data-test="multiplier-input"]').exists()).toBe(false)
   })
 
   it('watcher reports a wallet rejection as cancelled', async () => {

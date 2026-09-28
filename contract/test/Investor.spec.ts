@@ -291,16 +291,30 @@ describe('Investor — Merkle-pull migration', () => {
       ).to.be.revertedWithCustomError(investor, 'Investor__LengthMismatch')
     })
 
-    it('[AC-US-SHER-007-05] rejects bulk dispatch by a non-owner', async () => {
+    /**
+     * Covers:
+     * - [AC-US-SHER-007-05]
+     * - [AC-US-SHER-007-06]
+     */
+    it('rejects migration settlement by a non-owner', async () => {
       await investor.setMigrationRoot(tree.root)
       await expect(
         investor.connect(addr1).bulkClaim([addr2.address], [50n], [tree.proof(1)])
       ).to.be.revertedWithCustomError(investor, 'OwnableUnauthorizedAccount')
+      await expect(investor.connect(addr1).completeMigration()).to.be.revertedWithCustomError(
+        investor,
+        'OwnableUnauthorizedAccount'
+      )
     })
   })
 
   describe('completeMigration', () => {
-    it('[AC-US-SHER-007-03] closes claims once migration completes', async () => {
+    /**
+     * Covers:
+     * - [AC-US-SHER-006-08]
+     * - [AC-US-SHER-007-03]
+     */
+    it('closes claims once migration completes', async () => {
       await investor.setMigrationRoot(tree.root)
       await investor.connect(addr1).claim(100n, tree.proof(0))
       await expect(investor.completeMigration()).to.emit(investor, 'MigrationCompleted')

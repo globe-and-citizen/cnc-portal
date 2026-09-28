@@ -3,7 +3,7 @@ import { mount } from '@vue/test-utils'
 import { createTestingPinia } from '@pinia/testing'
 import { nextTick } from 'vue'
 import MintTokenAction from '../MintTokenAction.vue'
-import { mockInvestorPermissions, mockUserStore } from '@/tests/mocks'
+import { mockInvestorPermissions, mockTeamStore, mockUserStore } from '@/tests/mocks'
 
 describe('MintTokenAction.vue', () => {
   const createWrapper = () =>
@@ -36,6 +36,7 @@ describe('MintTokenAction.vue', () => {
     mockUserStore.address = '0x0000000000000000000000000000000000000001'
     mockInvestorPermissions.hasRole.data.value = true
     mockInvestorPermissions.hasRole.isLoading.value = false
+    mockTeamStore.currentTeamMeta.data.isArchived = false
   })
 
   it('[AC-US-SHER-004-06] enables mint for an Investor minter and opens the modal', async () => {
@@ -56,6 +57,15 @@ describe('MintTokenAction.vue', () => {
     expect(wrapper.findComponent({ name: 'UTooltip' }).props('text')).toBe(
       'Only an account with the Investor minter role can mint tokens'
     )
+    expect(wrapper.find('[data-test="mint-button"]').attributes('disabled')).toBeDefined()
+    await wrapper.find('[data-test="mint-button"]').trigger('click')
+    expect(wrapper.find('[data-test="mint-form"]').exists()).toBe(false)
+  })
+
+  it('[AC-US-SHER-004-05] blocks issuance for an archived company', async () => {
+    mockTeamStore.currentTeamMeta.data.isArchived = true
+    const wrapper = createWrapper()
+
     expect(wrapper.find('[data-test="mint-button"]').attributes('disabled')).toBeDefined()
     await wrapper.find('[data-test="mint-button"]').trigger('click')
     expect(wrapper.find('[data-test="mint-form"]').exists()).toBe(false)

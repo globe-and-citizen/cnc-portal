@@ -83,7 +83,7 @@ describe('SafeDepositRouterForm.vue', () => {
     mockERC20Reads.allowance.data.value = 0n
   })
 
-  it('handles bidirectional amount calculations and cancel/reset paths', async () => {
+  it('[AC-US-SHER-001-10] resets the investment form and closes it on cancel', async () => {
     const wrapper = createWrapper()
     const vm = getVm(wrapper)
     const compensation = () => wrapper.findComponent({ name: 'CompensationAmountInput' })
@@ -191,7 +191,7 @@ describe('SafeDepositRouterForm.vue', () => {
     expect(wrapper.emitted('closeModal')).toBeTruthy()
   })
 
-  it('guards submitForm when prerequisites are missing', async () => {
+  it('[AC-US-SHER-001-07] blocks deposit when required router inputs are unavailable', async () => {
     const wrapper = createWrapper()
     const vm = getVm(wrapper)
 
