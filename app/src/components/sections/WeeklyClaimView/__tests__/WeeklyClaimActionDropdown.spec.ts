@@ -116,7 +116,22 @@ describe('[US-PAYROLL-008] [US-PAYROLL-009] [US-PAYROLL-010] WeeklyClaimActionDr
     vi.useRealTimers()
   })
 
-  it('does not render dropdown actions for withdrawn status', () => {
+  /** Covers: [AC-US-PAYROLL-008-06], [AC-US-PAYROLL-008-07] */
+  it('offers normal signing for pending claims and explicit re-signing for disabled claims', async () => {
+    const pending = createWrapper('pending')
+    await pending.find('[data-test="weekly-claim-actions-button"]').trigger('click')
+    expect(pending.findComponent({ name: 'CRSigne' }).props('isResign')).toBeFalsy()
+    expect(pending.find('[data-test="pending-sign"]').exists()).toBe(true)
+    pending.unmount()
+    const disabled = createWrapper('disabled')
+    await disabled.find('[data-test="weekly-claim-actions-button"]').trigger('click')
+    expect(disabled.findComponent({ name: 'CRSigne' }).props('isResign')).toBe(true)
+    expect(disabled.find('[data-test="disabled-resign"]').exists()).toBe(true)
+    expect(disabled.find('[data-test="pending-sign"]').exists()).toBe(false)
+    disabled.unmount()
+  })
+
+  it('[AC-US-PAYROLL-009-07] [AC-US-PAYROLL-009-08] hides all actions for withdrawn status', () => {
     const wrapper = createWrapper('withdrawn')
     expect(wrapper.find('button').exists()).toBe(false)
     expect(wrapper.find('ul').exists()).toBe(false)
@@ -225,7 +240,8 @@ describe('[US-PAYROLL-008] [US-PAYROLL-009] [US-PAYROLL-010] WeeklyClaimActionDr
     expect(mockCashRemunerationWrites.disableClaim.mutate).toHaveBeenCalledOnce()
   })
 
-  it('disables claim successfully and syncs weekly claims', async () => {
+  /** Covers: [AC-US-PAYROLL-009-03], [AC-US-PAYROLL-011-06] */
+  it('disables claim successfully and syncs weekly claims after the transaction', async () => {
     const mutateAsync = setupSyncMutation(vi.fn().mockResolvedValue(undefined))
 
     const wrapper = createWrapper('signed')

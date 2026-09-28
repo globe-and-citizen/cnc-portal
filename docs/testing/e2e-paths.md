@@ -44,11 +44,18 @@ coverage; the latest execution result and artifacts belong in Playwright and CI 
   - in CI, the workflow prepares those services before Playwright starts;
   - browser-acceptance fixtures are provisioned explicitly with `npm run setup:e2e:browser`, outside Playwright;
   - integrated infrastructure is deployed by the developer or CI stack, also before Playwright starts;
+  - an integrated scenario may call a Node-side team factory before its browser actions to create isolated domain data through the real
+    backend API and dedicated local chain;
   - the E2E test checks readiness and exercises product behaviour, but does not own service startup.
+- Fixture-preparation rule:
+  - a team factory prepares only scenario data (team, Officer generation, and its managed contracts), not shared chain infrastructure;
+  - factory calls are setup and do not count as product-flow evidence; the scenario still drives the behaviour under test through the UI;
+  - the factory must authenticate with the test wallet, restrict writes to the disposable local backend and chain, and return verified
+    backend and chain state;
 - Browser-action rule:
   - Playwright may submit a contract transaction only through a user-accessible product action;
-  - Playwright must not deploy fixture infrastructure, alter contract code or balances, control mining, or mutate chain state directly
-    through RPC methods.
+  - browser code must not deploy fixtures, alter contract code or balances, control mining, or mutate chain state directly through RPC
+    methods; the Node-side team factory is the narrow setup-only exception for integrated scenarios that do not test onboarding.
 - Execution profiles:
   - `@integrated` paths use the developer- or CI-managed frontend, backend, database, and local chain without intercepting CNC Portal
     boundaries;
@@ -64,7 +71,8 @@ coverage; the latest execution result and artifacts belong in Playwright and CI 
   - the job starts one local node, provisions browser fixtures outside Playwright, and starts the browser frontend before the first phase;
   - it then resets that node, provisions a disposable PostgreSQL database, applies migrations, deploys integrated infrastructure, and starts
     the backend and integrated frontend before the second phase;
-  - Playwright still performs only user-accessible product actions, and CI retains reports plus failure traces and stack logs as evidence.
+  - integrated paths may use the Node-side team factory for scenario setup, while Playwright performs the product actions being tested; CI
+    retains reports plus failure traces and stack logs as evidence.
 
 ## G0 — Integrated Technical Readiness
 
@@ -292,11 +300,15 @@ coverage; the latest execution result and artifacts belong in Playwright and CI 
     - `US-PAYROLL-002` — pause or resume the wage.
   - Dependencies: an operational company with owner and member.
   - Main path:
-    - [ ] Create and then replace the member wage.
-    - [ ] Pause and resume it.
-    - [ ] Verify the persisted active wage and visible status after reload.
+    - [x] Create and then replace the member wage.
+    - [x] Pause and resume it.
+    - [x] Block a member without a wage and reject a claim while the wage is paused.
+    - [x] Submit a persisted claim after resuming the wage.
+    - [x] Verify the persisted active wage and visible status after reload.
   - Expected result: exactly one current wage controls the member's eligibility.
-  - Status: planned.
+  - Status: partial; the owner and member journeys run against the real frontend, backend, PostgreSQL database, and local chain. A member
+    without a wage is blocked and a paused wage is rejected by the backend; broader wage-form validation remains lower-level coverage.
+  - Evidence: [integrated Payroll tests](../../app/test/e2e/payroll/payroll.integrated.spec.ts).
 
 - `E2E-PATH-12` — Prepare a weekly claim
   - Stories validated:
@@ -306,11 +318,14 @@ coverage; the latest execution result and artifacts belong in Playwright and CI 
     - `US-PAYROLL-007` — delete a daily claim.
   - Dependencies: an active wage from `E2E-PATH-11`.
   - Main path:
-    - [ ] Save weekly goals.
-    - [ ] Create, edit, and delete eligible daily work entries.
-    - [ ] Recreate the final entry set and verify weekly totals.
+    - [x] Save weekly goals.
+    - [x] Create, edit, and delete eligible daily work entries.
+    - [x] Recreate the final entry set and verify weekly totals.
+    - [x] Preserve the valid entry while rejecting daily and weekly cap overages.
   - Expected result: the member reaches a deterministic claim-ready week.
-  - Status: planned.
+  - Status: partial; one real member identity saves goals and prepares a persisted claim through the product UI. Daily form validation and
+    the server-side weekly cap preserve the valid entry; attachments and other rejected edits remain separately covered.
+  - Evidence: [integrated Payroll tests](../../app/test/e2e/payroll/payroll.integrated.spec.ts).
 
 - `E2E-PATH-13` — Approve, reconcile, withdraw, and review payroll
   - Stories validated:
@@ -318,17 +333,29 @@ coverage; the latest execution result and artifacts belong in Playwright and CI 
     - `US-PAYROLL-009` — disable or re-enable a signed claim;
     - `US-PAYROLL-010` — withdraw an approved claim;
     - `US-PAYROLL-011` — reconcile claims with the chain;
-    - `US-PAYROLL-012` — review payroll history.
+    - `US-PAYROLL-012` — review payroll history;
+    - `US-PAYROLL-013` — review the Payroll account position.
   - Reused dependency: `US-PAYROLL-003` references the Accounts-owned funding journey and is not revalidated here.
   - Dependencies: a claim-ready week, current contract owner, and funded Payroll contract.
   - Main path:
-    - [ ] Sign the completed weekly claim.
-    - [ ] Disable and re-enable it without creating a second claim.
-    - [ ] Withdraw through a real chain transaction.
-    - [ ] Reconcile backend and chain state.
-    - [ ] Verify member and owner histories after reload.
-  - Expected result: one claim remains traceable from approval through payment and history.
-  - Status: planned.
+    - [x] Sign the completed weekly claim.
+    - [x] Disable and re-enable it without creating a second claim.
+    - [x] Withdraw native and USDC compensation and mint SHER through a real chain transaction; verify the decoded payload and token
+          decimals.
+    - [x] Reconcile backend and chain state.
+    - [x] Verify member and owner histories after reload.
+    - [x] Keep signed, disabled, and withdrawn claims read-only for the member.
+    - [x] Block non-owner signing and withdrawal controls, and retain a signed claim when Payroll has insufficient USDC.
+    - [x] Open Payroll Account after funding and withdrawal; verify exact token holdings and read-only member access.
+    - [ ] Verify account summaries, activity and filters in the integrated browser journey.
+  - Expected result: one claim remains traceable from approval through payment, account position, and history.
+  - Status: partial; the browser funds Payroll through Bank, signs a completed-week claim, verifies the disabled and paid chain flags,
+    withdraws as the paid member, and reloads both perspectives. It also verifies the role-gated controls, frozen lifecycle states, and the
+    contract's insufficient-funds rejection. Payroll Account holdings and member access are included; integrated activity and summary checks
+    remain planned. The current-month summary boundary is covered by frontend tests. Invalid EIP-712 signatures are rejected by the backend
+    signature-validator test rather than an integrated browser journey, because a true integrated wallet produces valid signatures.
+  - Evidence: [integrated Payroll payment test](../../app/test/e2e/payroll/payroll-payment.integrated.spec.ts) and
+    [insufficient-funding test](../../app/test/e2e/payroll/payroll-insufficient-funds.integrated.spec.ts).
 
 ## G6 — Expense Account Lifecycle
 
@@ -414,7 +441,8 @@ coverage; the latest execution result and artifacts belong in Playwright and CI 
 
 ## Cross-Group Execution Rules
 
-- Run `E2E-PATH-00` before functional paths, but keep environment preparation outside Playwright.
+- Run `E2E-PATH-00` before functional paths; keep service and shared-infrastructure preparation outside Playwright, while scenario-specific
+  teams may be prepared by the authenticated Node-side factory.
 - Give every story one primary owning path; reused stories and fixtures are dependencies, not duplicate coverage claims.
 - Use isolated or uniquely identified data for every path.
 - A failed dependency marks the consuming path blocked, not failed on its own story assertion.

@@ -129,7 +129,7 @@ describe('CashRemunerationTransactions', () => {
   })
 
   // Covers: AC-US-PAYROLL-013-04
-  it('filters displayed rows by selected type', async () => {
+  it('[AC-US-PAYROLL-013-04] filters displayed rows by selected type', async () => {
     wrapper = createWrapper()
 
     wrapper.getComponent({ name: 'USelect' }).vm.$emit('update:modelValue', 'deposit')
@@ -141,7 +141,7 @@ describe('CashRemunerationTransactions', () => {
   })
 
   // Covers: AC-US-PAYROLL-013-04
-  it('filters displayed rows by date range', async () => {
+  it('[AC-US-PAYROLL-013-04] filters displayed rows by date range', async () => {
     wrapper = createWrapper()
 
     expect(

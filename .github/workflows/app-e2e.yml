@@ -207,6 +207,7 @@ jobs:
         working-directory: ./app
         env:
           HEADLESS: "true"
+          CNC_E2E_BACKEND_URL: http://127.0.0.1:3000
 
       - name: 📊 Upload integrated Playwright report
         if: always()

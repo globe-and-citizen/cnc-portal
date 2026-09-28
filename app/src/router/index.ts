@@ -51,7 +51,7 @@ const router = createRouter({
           path: '/teams/:id/accounts/payroll-account',
           name: 'payroll-account',
           meta: { name: 'Payroll Account' },
-          component: () => import('@/views/team/[id]/Accounts/CashRemunerationView.vue')
+          component: () => import('@/views/team/[id]/Accounts/PayrollView.vue')
         },
         {
           path: '/teams/:id/accounts/team-payroll',
@@ -69,7 +69,7 @@ const router = createRouter({
           path: '/teams/:id/cash-remunerations/member/:memberAddress',
           name: 'cash-remunerations-member',
           meta: { name: 'Member Compensation' },
-          component: () => import('@/views/team/[id]/Accounts/CashRemunerationView.vue')
+          component: () => import('@/views/team/[id]/Accounts/PayrollView.vue')
         },
         {
           path: '/teams/:id/vesting',

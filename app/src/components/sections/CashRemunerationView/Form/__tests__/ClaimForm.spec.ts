@@ -64,7 +64,7 @@ describe('ClaimForm.vue', () => {
     expect(wrapper.find('[data-test="claim-error-alert"]').exists()).toBe(false)
   })
 
-  it('supports edit actions and replaces the form when initial data changes', async () => {
+  it('[AC-US-PAYROLL-006-03] keeps the original work date locked while editing a claim', async () => {
     const wrapper = createWrapper({
       mode: 'edit',
       initialData: {
@@ -75,6 +75,7 @@ describe('ClaimForm.vue', () => {
       }
     })
 
+    expect(wrapper.get('[data-test="date-input"]').attributes('disabled')).toBeDefined()
     await wrapper.find('[data-test="cancel-button"]').trigger('click')
     expect(wrapper.emitted('cancel')).toBeTruthy()
 

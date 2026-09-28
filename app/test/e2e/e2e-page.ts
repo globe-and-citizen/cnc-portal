@@ -106,9 +106,14 @@ export async function openAccountFromSidebar(page: Page, href: string): Promise<
     ? `${teamRoot}/accounts/payroll-account`
     : `${teamRoot}/accounts/bank-account`
   const parentLabel = isPayroll ? 'Payroll' : 'Accounts'
-  const accountsMenu = page.locator(`a[href="${parentHref}"]`).filter({
-    hasText: parentLabel
-  })
+  const accountsMenu = page
+    .getByRole('link', { name: parentLabel, exact: true })
+    .and(page.locator(`a[href="${parentHref}"]`))
+  if (href === parentHref) {
+    await accountsMenu.click()
+    await expect(page).toHaveURL(new RegExp(`${href}$`, 'i'), { timeout: 30_000 })
+    return
+  }
   const accountsToggle = accountsMenu.locator('[aria-controls]')
   if ((await accountsToggle.getAttribute('aria-expanded')) !== 'true') {
     await accountsToggle.click()
@@ -122,6 +127,22 @@ export async function openAccountFromSidebar(page: Page, href: string): Promise<
 }
 
 export const dialogAmount = (dialog: Locator) => dialog.locator('input[data-test="amountInput"]')
+
+/** Check actual holdings without requiring an external fiat-price quote. */
+export async function expectTokenHolding(
+  page: Page,
+  amount: string,
+  symbol: string
+): Promise<void> {
+  const holdings = page
+    .getByRole('table')
+    .filter({ has: page.getByRole('columnheader', { name: 'RANK', exact: true }) })
+  await expect(
+    holdings.getByRole('cell', { name: `${amount} ${symbol}`, exact: true })
+  ).toBeVisible({
+    timeout: 30_000
+  })
+}
 
 export async function selectToken(page: Page, dialog: Locator, symbol: string): Promise<void> {
   await dialog.locator('[data-test="tokenSelect"]').click()

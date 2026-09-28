@@ -28,6 +28,9 @@ Feature-specific field rules remain with their feature schemas and feature docum
 Only route-facing helpers are exported. The generic validator remains private so tests and consumers use the same boundaries as production
 routes.
 
+Daily-claim creation uses a strict body schema. Unknown fields, including caller-supplied member identities, return HTTP 400 before the
+controller or persistence layer runs; the authenticated session supplies claim ownership.
+
 ## Main Flow
 
 ```mermaid
@@ -55,7 +58,7 @@ flowchart LR
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `d00841d56e8b39d35226b80fb7cac3839aa6c058`
+**Implementation evidence reviewed against:** `2f18ee2a59ff7163dc4d54f2a66530f2eac74c3f`
 
 - [Validation middleware](../../../backend/src/validation/middleware/validate.ts) and
   [middleware tests](../../../backend/src/validation/middleware/__tests__/validate.test.ts)

@@ -29,6 +29,9 @@ Approval is an EIP-712 signature from the current Cash Remuneration contract own
 weekly claim on-chain to receive native tokens and supported ERC-20 assets; SHER compensation is minted when the current contract
 configuration supports it.
 
+Daily-claim creation accepts only its documented request fields. The authenticated session determines the member; caller-supplied member
+identity fields are rejected. Product withdrawal requires a signed claim with a stored signature before any wallet request is made.
+
 The company Bank can fund the Cash Remuneration contract through its normal transfer actions. This is not a `transferFrom` operation, and
 its complete journey belongs to the Accounts feature.
 
@@ -44,41 +47,107 @@ its complete journey belongs to the Accounts feature.
 
 ## Status Overview
 
-| User Story     | Title                                      | Actor                  | Status         |
-| -------------- | ------------------------------------------ | ---------------------- | -------------- |
-| US-PAYROLL-001 | Set a member's wage                        | Company owner          | 🧪 Validation  |
-| US-PAYROLL-002 | Pause or resume a member's wage            | Company owner          | 🧪 Validation  |
-| US-PAYROLL-003 | Fund the Payroll contract                  | Bank owner / Board     | 🔗 Reference   |
-| US-PAYROLL-004 | Set weekly goals                           | Company member         | 🧪 Validation  |
-| US-PAYROLL-005 | Submit a daily claim                       | Company member         | 🧪 Validation  |
-| US-PAYROLL-006 | Edit a daily claim                         | Company member         | 🚧 In Progress |
-| US-PAYROLL-007 | Delete a daily claim                       | Company member         | 🚧 In Progress |
-| US-PAYROLL-008 | Sign a completed weekly claim              | Contract owner         | 🧪 Validation  |
-| US-PAYROLL-009 | Disable or re-enable a signed weekly claim | Contract owner         | 🚧 In Progress |
-| US-PAYROLL-010 | Withdraw an approved weekly claim          | Paid member            | 🧪 Validation  |
-| US-PAYROLL-011 | Reconcile weekly claims with the chain     | System                 | 🧪 Validation  |
-| US-PAYROLL-012 | Review payroll history                     | Company member / owner | 🧪 Validation  |
-| US-PAYROLL-013 | Review the Payroll account position        | Company member         | 🚧 In Progress |
+| User Story     | Title                                      | Actor                   | Status        |
+| -------------- | ------------------------------------------ | ----------------------- | ------------- |
+| US-PAYROLL-001 | Set a Member's Wage                        | Company owner           | 🧪 Validation |
+| US-PAYROLL-002 | Pause or Resume a Member's Wage            | Company owner           | 🧪 Validation |
+| US-PAYROLL-003 | Fund the Payroll Contract                  | Bank owner / Board      | 🔗 Reference  |
+| US-PAYROLL-004 | Set Weekly Goals                           | Company member          | 🧪 Validation |
+| US-PAYROLL-005 | Submit a Daily Claim                       | Company member          | 🧪 Validation |
+| US-PAYROLL-006 | Edit a Daily Claim                         | Claim owner             | 🧪 Validation |
+| US-PAYROLL-007 | Delete a Daily Claim                       | Claim owner             | 🧪 Validation |
+| US-PAYROLL-008 | Sign a Completed Weekly Claim              | Cash Remuneration owner | 🧪 Validation |
+| US-PAYROLL-009 | Disable or Re-enable a Signed Weekly Claim | Cash Remuneration owner | 🧪 Validation |
+| US-PAYROLL-010 | Withdraw an Approved Weekly Claim          | Claim owner             | 🧪 Validation |
+| US-PAYROLL-011 | Reconcile Weekly Claims With the Chain     | Company member          | 🧪 Validation |
+| US-PAYROLL-012 | Review Payroll History                     | Company member          | 🧪 Validation |
+| US-PAYROLL-013 | Review the Payroll Account Position        | Company member          | 🧪 Validation |
 
 ## Test Coverage Overview
 
-| User Story     | E2E Status      | Owning Path              |
-| -------------- | --------------- | ------------------------ |
-| US-PAYROLL-001 | 📋 Planned      | E2E-PATH-11              |
-| US-PAYROLL-002 | 📋 Planned      | E2E-PATH-11              |
-| US-PAYROLL-003 | ➖ Not required | E2E-PATH-02 owns funding |
-| US-PAYROLL-004 | 📋 Planned      | E2E-PATH-12              |
-| US-PAYROLL-005 | 📋 Planned      | E2E-PATH-12              |
-| US-PAYROLL-006 | 📋 Planned      | E2E-PATH-12              |
-| US-PAYROLL-007 | 📋 Planned      | E2E-PATH-12              |
-| US-PAYROLL-008 | 📋 Planned      | E2E-PATH-13              |
-| US-PAYROLL-009 | 📋 Planned      | E2E-PATH-13              |
-| US-PAYROLL-010 | 📋 Planned      | E2E-PATH-13              |
-| US-PAYROLL-011 | 📋 Planned      | E2E-PATH-13              |
-| US-PAYROLL-012 | 📋 Planned      | E2E-PATH-13              |
-| US-PAYROLL-013 | 📋 Planned      | Not yet assigned         |
+Coverage targets compare each criterion's required proof with direct `AC-US-*` references in tracked tests. They do not represent the latest
+pass/fail result, which belongs to CI or the generated local report. The per-story tables show the required layer, linked evidence, and any
+missing or insufficient proof.
 
-Criteria tagged _(API)_ or _(contract)_ describe outcomes that cannot be confirmed from the portal alone.
+| User Story     | Main Journey      | Coverage Target | Gaps                     |
+| -------------- | ----------------- | --------------- | ------------------------ |
+| US-PAYROLL-001 | ✅ Integrated     | ✅ 27/27        | —                        |
+| US-PAYROLL-002 | ✅ Integrated     | ✅ 12/12        | —                        |
+| US-PAYROLL-003 | ➖ Accounts-owned | ➖ Reference    | E2E-PATH-02 owns funding |
+| US-PAYROLL-004 | ✅ Integrated     | ✅ 11/11        | —                        |
+| US-PAYROLL-005 | ✅ Integrated     | ✅ 25/25        | —                        |
+| US-PAYROLL-006 | ✅ Integrated     | ✅ 13/13        | —                        |
+| US-PAYROLL-007 | ✅ Integrated     | ✅ 8/8          | —                        |
+| US-PAYROLL-008 | ✅ Integrated     | ✅ 16/16        | —                        |
+| US-PAYROLL-009 | ✅ Integrated     | ✅ 8/8          | —                        |
+| US-PAYROLL-010 | ✅ Integrated     | ✅ 17/17        | —                        |
+| US-PAYROLL-011 | ✅ Integrated     | ✅ 12/12        | —                        |
+| US-PAYROLL-012 | ✅ Integrated     | ✅ 13/13        | —                        |
+| US-PAYROLL-013 | ✅ Integrated     | ✅ 6/6          | —                        |
+
+## Proof Strategy Reference
+
+| Strategy                | Responsibilities              | Required Evidence | Proof Rationale                                                                                    |
+| ----------------------- | ----------------------------- | ----------------- | -------------------------------------------------------------------------------------------------- |
+| `PS-FRONTEND`           | Frontend                      | Frontend          | The client owns this validation, display, or interaction state.                                    |
+| `PS-BACKEND`            | Backend                       | Backend           | The server owns this authorization, validation, persistence, or reconciliation rule.               |
+| `PS-INTEGRATED`         | Frontend + Backend + Contract | Integrated E2E    | The browser, persisted API state, and chain outcome must work together in the real journey.        |
+| `PS-CONTRACT-REFERENCE` | Contract                      | Contract          | Contract-owned criteria retain their contract proof without counting it as portal or API coverage. |
+
+The Accounts feature owns `US-PAYROLL-003` and its Bank funding journey. Contract-only criteria use `PS-CONTRACT-REFERENCE`; the test plan
+for the other stories focuses on backend, frontend, and integrated evidence. Current evidence is derived only from direct criterion
+references. A test that lacks an `AC-US-*` reference remains a discovery item until its representative role is reviewed.
+
+Criteria tagged _(API)_ require backend evidence; integrated E2E evidence is recorded separately when a real user journey crosses the API or
+chain boundary.
+
+The Payroll Playwright suite currently has no `@mocked` scenarios. Its three E2E files,
+[claim preparation](../../../app/test/e2e/payroll/payroll.integrated.spec.ts) and
+[payment lifecycle](../../../app/test/e2e/payroll/payroll-payment.integrated.spec.ts), and
+[insufficient funding](../../../app/test/e2e/payroll/payroll-insufficient-funds.integrated.spec.ts), are tagged `@integrated` and exercise
+Payroll through the product UI, backend routes, and local chain; the chain checks read contract state after user actions. Therefore,
+`Mocked browser` is not expected in Payroll's `Current Evidence` unless a mocked Payroll browser scenario is added and linked to a
+criterion. These labels record direct test references, not the latest execution result.
+
+The feature owner validates every Payroll `@integrated` journey manually in Playwright UI on the prepared local G5 stack. Existing services
+and deployed infrastructure can be reused when the configured addresses contain the expected bytecode. The journeys create isolated company
+records and deploy their company contracts through the product UI, then remove those records in cleanup. The browser uses the repository's
+deterministic E2E wallet connector for actual signatures and local-chain transactions. No backend response or RPC result is intercepted.
+Technical automated runs are recorded separately from the owner's manual validation. The payment journey claims against an already completed
+ISO week, so the prepared profile must leave `SUBMIT_RESTRICTION` disabled for that company; the four-day restriction is tested separately
+with the rule enabled in the API suite.
+
+From `app/`, run `npm run test:e2e:integrated -- --ui test/e2e/payroll`. Unit and API suites run independently of the manual browser review.
+
+CI runs API unit coverage; locally it runs from `backend/` with `npm run test:unit:coverage`. Integrated browser assertions verify actual
+token holdings independently of external fiat-price quotes and wait for successful wage API responses or a completed Bank deposit rather
+than transient toast messages.
+
+The API enforces paused-wage claim restrictions, so restoration of claim submission is proven by the real browser/API journey
+(`AC-US-PAYROLL-002-03`). Normal signing versus explicit re-signing is a client interaction (`AC-US-PAYROLL-008-06/07`); the backend
+validates the shared signing request, current owner and signature for both flows.
+
+## Test Plan by User Story
+
+Run the linked backend and frontend suites for their owned rules and interactions. Run the integrated paths against the prepared local G5
+stack for cross-layer journeys. The per-story matrices below link each criterion to its required proof; contract checks remain a separate
+technical responsibility.
+
+| User Story     | Backend tests to perform                                                                   | Frontend tests to perform                                                                | Integrated test to perform                                                                                  |
+| -------------- | ------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| US-PAYROLL-001 | Wage versioning, ownership and archived writes.                                            | Rates, allowances, overtime, validation and version display.                             | Create and replace a wage through the UI; verify later API reads.                                           |
+| US-PAYROLL-002 | Current-wage pause/resume; reject claim creation, edit and deletion while paused.          | Pause/resume controls and restored wage replacement.                                     | Pause, reject a real claim, resume and persist a new claim.                                                 |
+| US-PAYROLL-003 | Accounts owns Bank transfer checks.                                                        | Accounts owns funding controls.                                                          | Reuse E2E-PATH-02 and the real Payroll funding steps.                                                       |
+| US-PAYROLL-004 | Goals persistence, member ownership, locked weeks and wage binding.                        | Goal editor, read-only states and empty content.                                         | Save goals before submitting work for the same week.                                                        |
+| US-PAYROLL-005 | UTC dates, four-day window, identity, ten-minute steps, caps, paused wage and attachments. | Claim form, duration, limits, file validation and server errors.                         | Persist work and reject daily/weekly cap overages through the UI.                                           |
+| US-PAYROLL-006 | Owner authorization, pending/paused state, cap checks and unchanged data on rejection.     | Edit form, validation and errors.                                                        | Edit a persisted claim and verify its displayed duration and memo.                                          |
+| US-PAYROLL-007 | Owner authorization, pending/paused state, preservation of weekly goals.                   | Confirmation, cancellation and API errors.                                               | Delete a real claim, then recreate it without losing its weekly row.                                        |
+| US-PAYROLL-008 | Contract owner, completed week, signature recovery, current contract and archived company. | Signing, explicit re-signing, pending/current-week restrictions and wallet rejection.    | Approve a completed week with a real EIP-712 signature.                                                     |
+| US-PAYROLL-009 | Reconciled status and signature checks.                                                    | Owner permissions, disable/enable actions and synchronization after receipt.             | Disable and re-enable the same signature; read actual contract state.                                       |
+| US-PAYROLL-010 | Claim ownership, signed/paid states and archived company.                                  | Signed/signature guard, balances, contract/chain mismatch and wallet rejection.          | Pay ETH + USDC + minted SHER; decode the transaction, check balances and reload; reject insufficient funds. |
+| US-PAYROLL-011 | Paid/disabled/stale-signature reconciliation, failed reads and subsequent persisted reads. | Sync on company load and after withdrawal, disable and enable.                           | Reload the API-backed history after each on-chain transition.                                               |
+| US-PAYROLL-012 | Company membership, member/status filters, minutes, pagination and attachment URLs.        | Member/week/duration/rates/totals/status/action table and member selector.               | Verify member history, locked work and company-wide withdrawn status after payment.                         |
+| US-PAYROLL-013 | No separate backend criterion: account positions come from client chain reads.             | Account balances, token positions, withdrawn summaries and read-only funding indicators. | Verify real account holdings before/after payment and member access without withdrawal permission.          |
 
 ## US-PAYROLL-001: Set a Member's Wage
 
@@ -126,6 +195,38 @@ Criteria tagged _(API)_ or _(contract)_ describe outcomes that cannot be confirm
 - [x] `AC-US-PAYROLL-001-26` Archived companies cannot create wages.
 - [x] `AC-US-PAYROLL-001-27` Archived companies cannot replace wages.
 
+### Test Coverage
+
+| Acceptance Criterion   | Proof Strategy  | Current Evidence         | Status     |
+| ---------------------- | --------------- | ------------------------ | ---------- |
+| `AC-US-PAYROLL-001-01` | `PS-INTEGRATED` | Integrated E2E           | ✅ Met     |
+| `AC-US-PAYROLL-001-02` | `PS-INTEGRATED` | Integrated E2E + Backend | ✅ Met     |
+| `AC-US-PAYROLL-001-03` | `PS-BACKEND`    | Backend                  | ✅ Met     |
+| `AC-US-PAYROLL-001-04` | `PS-FRONTEND`   | Frontend                 | ✅ Met     |
+| `AC-US-PAYROLL-001-05` | `PS-FRONTEND`   | Frontend                 | ✅ Met     |
+| `AC-US-PAYROLL-001-06` | `PS-FRONTEND`   | Frontend                 | ✅ Met     |
+| `AC-US-PAYROLL-001-07` | `PS-FRONTEND`   | Frontend                 | ✅ Met     |
+| `AC-US-PAYROLL-001-08` | `PS-FRONTEND`   | Frontend                 | ✅ Met     |
+| `AC-US-PAYROLL-001-09` | `PS-FRONTEND`   | Frontend                 | ✅ Met     |
+| `AC-US-PAYROLL-001-10` | `PS-BACKEND`    | Backend                  | ✅ Met     |
+| `AC-US-PAYROLL-001-11` | `PS-FRONTEND`   | Frontend                 | ✅ Met     |
+| `AC-US-PAYROLL-001-12` | `PS-FRONTEND`   | Frontend                 | ✅ Met     |
+| `AC-US-PAYROLL-001-13` | `PS-FRONTEND`   | Frontend                 | ✅ Met     |
+| `AC-US-PAYROLL-001-14` | `PS-BACKEND`    | Backend                  | ✅ Met     |
+| `AC-US-PAYROLL-001-15` | `PS-BACKEND`    | Backend                  | ✅ Met     |
+| `AC-US-PAYROLL-001-16` | `PS-BACKEND`    | Backend                  | ✅ Met     |
+| `AC-US-PAYROLL-001-17` | `PS-BACKEND`    | Backend                  | ✅ Met     |
+| `AC-US-PAYROLL-001-18` | `PS-BACKEND`    | None linked              | ❌ Missing |
+| `AC-US-PAYROLL-001-19` | `PS-BACKEND`    | None linked              | ❌ Missing |
+| `AC-US-PAYROLL-001-20` | `PS-BACKEND`    | Backend                  | ✅ Met     |
+| `AC-US-PAYROLL-001-21` | `PS-BACKEND`    | Backend                  | ✅ Met     |
+| `AC-US-PAYROLL-001-22` | `PS-BACKEND`    | Backend                  | ✅ Met     |
+| `AC-US-PAYROLL-001-23` | `PS-BACKEND`    | Backend                  | ✅ Met     |
+| `AC-US-PAYROLL-001-24` | `PS-BACKEND`    | Backend                  | ✅ Met     |
+| `AC-US-PAYROLL-001-25` | `PS-BACKEND`    | Backend                  | ✅ Met     |
+| `AC-US-PAYROLL-001-26` | `PS-BACKEND`    | Backend                  | ✅ Met     |
+| `AC-US-PAYROLL-001-27` | `PS-BACKEND`    | Backend                  | ✅ Met     |
+
 **Dependencies:** Companies and Workspace
 
 ## US-PAYROLL-002: Pause or Resume a Member's Wage
@@ -156,6 +257,23 @@ Criteria tagged _(API)_ or _(contract)_ describe outcomes that cannot be confirm
 - [x] `AC-US-PAYROLL-002-10` The status of a missing wage cannot be changed.
 - [x] `AC-US-PAYROLL-002-11` The status of a historical wage cannot be changed.
 - [x] `AC-US-PAYROLL-002-12` The wage status of an archived company cannot be changed.
+
+### Test Coverage
+
+| Acceptance Criterion   | Proof Strategy  | Current Evidence         | Status |
+| ---------------------- | --------------- | ------------------------ | ------ |
+| `AC-US-PAYROLL-002-01` | `PS-INTEGRATED` | Integrated E2E + Backend | ✅ Met |
+| `AC-US-PAYROLL-002-02` | `PS-INTEGRATED` | Integrated E2E + Backend | ✅ Met |
+| `AC-US-PAYROLL-002-03` | `PS-INTEGRATED` | Integrated E2E           | ✅ Met |
+| `AC-US-PAYROLL-002-04` | `PS-FRONTEND`   | Frontend                 | ✅ Met |
+| `AC-US-PAYROLL-002-05` | `PS-BACKEND`    | Backend                  | ✅ Met |
+| `AC-US-PAYROLL-002-06` | `PS-BACKEND`    | Backend                  | ✅ Met |
+| `AC-US-PAYROLL-002-07` | `PS-BACKEND`    | Backend                  | ✅ Met |
+| `AC-US-PAYROLL-002-08` | `PS-BACKEND`    | Backend                  | ✅ Met |
+| `AC-US-PAYROLL-002-09` | `PS-BACKEND`    | Backend                  | ✅ Met |
+| `AC-US-PAYROLL-002-10` | `PS-BACKEND`    | Backend                  | ✅ Met |
+| `AC-US-PAYROLL-002-11` | `PS-BACKEND`    | Backend                  | ✅ Met |
+| `AC-US-PAYROLL-002-12` | `PS-BACKEND`    | Backend                  | ✅ Met |
 
 **Dependencies:** US-PAYROLL-001
 
@@ -220,6 +338,22 @@ This is a reference story. The Accounts feature owns the complete Bank transfer 
 - [x] `AC-US-PAYROLL-004-10` Archived companies cannot create weekly goals.
 - [x] `AC-US-PAYROLL-004-11` Archived companies cannot update weekly goals.
 
+### Test Coverage
+
+| Acceptance Criterion   | Proof Strategy  | Current Evidence   | Status |
+| ---------------------- | --------------- | ------------------ | ------ |
+| `AC-US-PAYROLL-004-01` | `PS-INTEGRATED` | Integrated E2E     | ✅ Met |
+| `AC-US-PAYROLL-004-02` | `PS-BACKEND`    | Backend            | ✅ Met |
+| `AC-US-PAYROLL-004-03` | `PS-FRONTEND`   | Frontend + Backend | ✅ Met |
+| `AC-US-PAYROLL-004-04` | `PS-FRONTEND`   | Frontend           | ✅ Met |
+| `AC-US-PAYROLL-004-05` | `PS-BACKEND`    | Backend            | ✅ Met |
+| `AC-US-PAYROLL-004-06` | `PS-BACKEND`    | Backend            | ✅ Met |
+| `AC-US-PAYROLL-004-07` | `PS-BACKEND`    | Backend            | ✅ Met |
+| `AC-US-PAYROLL-004-08` | `PS-BACKEND`    | Backend            | ✅ Met |
+| `AC-US-PAYROLL-004-09` | `PS-BACKEND`    | Backend            | ✅ Met |
+| `AC-US-PAYROLL-004-10` | `PS-BACKEND`    | Backend            | ✅ Met |
+| `AC-US-PAYROLL-004-11` | `PS-BACKEND`    | Backend            | ✅ Met |
+
 **Dependencies:** US-PAYROLL-001
 
 ## US-PAYROLL-005: Submit a Daily Claim
@@ -264,6 +398,36 @@ This is a reference story. The Accounts feature owns the complete Bank transfer 
 - [x] `AC-US-PAYROLL-005-24` An attachment with an unsupported file type is rejected before the daily claim is submitted.
 - [x] `AC-US-PAYROLL-005-25` An attachment larger than 10 MB is rejected before the daily claim is submitted.
 
+### Test Coverage
+
+| Acceptance Criterion   | Proof Strategy  | Current Evidence | Status |
+| ---------------------- | --------------- | ---------------- | ------ |
+| `AC-US-PAYROLL-005-01` | `PS-INTEGRATED` | Integrated E2E   | ✅ Met |
+| `AC-US-PAYROLL-005-02` | `PS-BACKEND`    | Backend          | ✅ Met |
+| `AC-US-PAYROLL-005-03` | `PS-BACKEND`    | Backend          | ✅ Met |
+| `AC-US-PAYROLL-005-04` | `PS-FRONTEND`   | Frontend         | ✅ Met |
+| `AC-US-PAYROLL-005-05` | `PS-FRONTEND`   | Frontend         | ✅ Met |
+| `AC-US-PAYROLL-005-06` | `PS-FRONTEND`   | Frontend         | ✅ Met |
+| `AC-US-PAYROLL-005-07` | `PS-FRONTEND`   | Frontend         | ✅ Met |
+| `AC-US-PAYROLL-005-08` | `PS-FRONTEND`   | Frontend         | ✅ Met |
+| `AC-US-PAYROLL-005-09` | `PS-FRONTEND`   | Frontend         | ✅ Met |
+| `AC-US-PAYROLL-005-10` | `PS-FRONTEND`   | Frontend         | ✅ Met |
+| `AC-US-PAYROLL-005-11` | `PS-BACKEND`    | Backend          | ✅ Met |
+| `AC-US-PAYROLL-005-12` | `PS-BACKEND`    | Backend          | ✅ Met |
+| `AC-US-PAYROLL-005-13` | `PS-FRONTEND`   | Frontend         | ✅ Met |
+| `AC-US-PAYROLL-005-14` | `PS-BACKEND`    | Backend          | ✅ Met |
+| `AC-US-PAYROLL-005-15` | `PS-FRONTEND`   | Frontend         | ✅ Met |
+| `AC-US-PAYROLL-005-16` | `PS-BACKEND`    | Backend          | ✅ Met |
+| `AC-US-PAYROLL-005-17` | `PS-BACKEND`    | Backend          | ✅ Met |
+| `AC-US-PAYROLL-005-18` | `PS-BACKEND`    | Backend          | ✅ Met |
+| `AC-US-PAYROLL-005-19` | `PS-BACKEND`    | Backend          | ✅ Met |
+| `AC-US-PAYROLL-005-20` | `PS-BACKEND`    | Backend          | ✅ Met |
+| `AC-US-PAYROLL-005-21` | `PS-BACKEND`    | Backend          | ✅ Met |
+| `AC-US-PAYROLL-005-22` | `PS-BACKEND`    | Backend          | ✅ Met |
+| `AC-US-PAYROLL-005-23` | `PS-BACKEND`    | Backend          | ✅ Met |
+| `AC-US-PAYROLL-005-24` | `PS-FRONTEND`   | Frontend         | ✅ Met |
+| `AC-US-PAYROLL-005-25` | `PS-FRONTEND`   | Frontend         | ✅ Met |
+
 **Accounting:** The daily claim changes the source amount for
 [`UC-CASH-02`](../accounting/journal-entry-catalogue.md#uc-cash-02--weekly-wage-accrual). The journal entry is created only after the
 containing work week ends and remains eligible.
@@ -292,13 +456,31 @@ containing work week ends and remains eligible.
 - [x] `AC-US-PAYROLL-006-07` _(API)_ The weekly allowance is rechecked while excluding the claim being edited.
 - [x] `AC-US-PAYROLL-006-08` _(API)_ The daily allowance is rechecked for the original work date while excluding the claim being edited.
 - [x] `AC-US-PAYROLL-006-09` A user other than the claim owner cannot edit the claim.
-- [ ] `AC-US-PAYROLL-006-10` The API rejects claim edits when the weekly claim is disabled.
+- [x] `AC-US-PAYROLL-006-10` The API rejects claim edits when the weekly claim is disabled.
 
 #### Edge & Error Cases
 
 - [x] `AC-US-PAYROLL-006-11` A paused wage blocks claim editing.
 - [x] `AC-US-PAYROLL-006-12` A rejected edit leaves the stored claim unchanged and returns its rejection reason.
 - [x] `AC-US-PAYROLL-006-13` Archived companies cannot edit claims.
+
+### Test Coverage
+
+| Acceptance Criterion   | Proof Strategy  | Current Evidence | Status |
+| ---------------------- | --------------- | ---------------- | ------ |
+| `AC-US-PAYROLL-006-01` | `PS-INTEGRATED` | Integrated E2E   | ✅ Met |
+| `AC-US-PAYROLL-006-02` | `PS-BACKEND`    | Backend          | ✅ Met |
+| `AC-US-PAYROLL-006-03` | `PS-FRONTEND`   | Frontend         | ✅ Met |
+| `AC-US-PAYROLL-006-04` | `PS-BACKEND`    | Backend          | ✅ Met |
+| `AC-US-PAYROLL-006-05` | `PS-BACKEND`    | Backend          | ✅ Met |
+| `AC-US-PAYROLL-006-06` | `PS-FRONTEND`   | Frontend         | ✅ Met |
+| `AC-US-PAYROLL-006-07` | `PS-BACKEND`    | Backend          | ✅ Met |
+| `AC-US-PAYROLL-006-08` | `PS-BACKEND`    | Backend          | ✅ Met |
+| `AC-US-PAYROLL-006-09` | `PS-BACKEND`    | Backend          | ✅ Met |
+| `AC-US-PAYROLL-006-10` | `PS-BACKEND`    | Backend          | ✅ Met |
+| `AC-US-PAYROLL-006-11` | `PS-BACKEND`    | Backend          | ✅ Met |
+| `AC-US-PAYROLL-006-12` | `PS-BACKEND`    | Backend          | ✅ Met |
+| `AC-US-PAYROLL-006-13` | `PS-BACKEND`    | Backend          | ✅ Met |
 
 **Dependencies:** US-PAYROLL-005
 
@@ -320,13 +502,26 @@ containing work week ends and remains eligible.
 - [x] `AC-US-PAYROLL-007-03` Deleting the final daily claim removes an otherwise empty weekly claim but preserves one that still contains
       goals.
 - [x] `AC-US-PAYROLL-007-04` A user other than the claim owner cannot delete the claim.
-- [ ] `AC-US-PAYROLL-007-05` The API rejects claim deletion when the weekly claim is disabled.
+- [x] `AC-US-PAYROLL-007-05` The API rejects claim deletion when the weekly claim is disabled.
 
 #### Edge & Error Cases
 
 - [x] `AC-US-PAYROLL-007-06` A paused wage blocks claim deletion.
 - [x] `AC-US-PAYROLL-007-07` Archived companies cannot delete claims.
 - [x] `AC-US-PAYROLL-007-08` A failed deletion leaves the stored claim unchanged and returns a failure outcome.
+
+### Test Coverage
+
+| Acceptance Criterion   | Proof Strategy  | Current Evidence | Status |
+| ---------------------- | --------------- | ---------------- | ------ |
+| `AC-US-PAYROLL-007-01` | `PS-INTEGRATED` | Integrated E2E   | ✅ Met |
+| `AC-US-PAYROLL-007-02` | `PS-FRONTEND`   | Frontend         | ✅ Met |
+| `AC-US-PAYROLL-007-03` | `PS-BACKEND`    | Backend          | ✅ Met |
+| `AC-US-PAYROLL-007-04` | `PS-BACKEND`    | Backend          | ✅ Met |
+| `AC-US-PAYROLL-007-05` | `PS-BACKEND`    | Backend          | ✅ Met |
+| `AC-US-PAYROLL-007-06` | `PS-BACKEND`    | Backend          | ✅ Met |
+| `AC-US-PAYROLL-007-07` | `PS-BACKEND`    | Backend          | ✅ Met |
+| `AC-US-PAYROLL-007-08` | `PS-BACKEND`    | Backend          | ✅ Met |
 
 **Dependencies:** US-PAYROLL-005
 
@@ -365,6 +560,27 @@ containing work week ends and remains eligible.
 - [x] `AC-US-PAYROLL-008-15` Rejecting the wallet signature leaves the weekly claim's stored status and signature unchanged.
 - [x] `AC-US-PAYROLL-008-16` Reconciliation clears a previous-contract signature and returns its weekly claim to pending.
 
+### Test Coverage
+
+| Acceptance Criterion   | Proof Strategy  | Current Evidence   | Status |
+| ---------------------- | --------------- | ------------------ | ------ |
+| `AC-US-PAYROLL-008-01` | `PS-INTEGRATED` | Integrated E2E     | ✅ Met |
+| `AC-US-PAYROLL-008-02` | `PS-FRONTEND`   | Frontend           | ✅ Met |
+| `AC-US-PAYROLL-008-03` | `PS-BACKEND`    | Backend            | ✅ Met |
+| `AC-US-PAYROLL-008-04` | `PS-FRONTEND`   | Frontend           | ✅ Met |
+| `AC-US-PAYROLL-008-05` | `PS-BACKEND`    | Backend            | ✅ Met |
+| `AC-US-PAYROLL-008-06` | `PS-FRONTEND`   | Frontend + Backend | ✅ Met |
+| `AC-US-PAYROLL-008-07` | `PS-FRONTEND`   | Frontend + Backend | ✅ Met |
+| `AC-US-PAYROLL-008-08` | `PS-FRONTEND`   | Frontend           | ✅ Met |
+| `AC-US-PAYROLL-008-09` | `PS-BACKEND`    | Backend            | ✅ Met |
+| `AC-US-PAYROLL-008-10` | `PS-BACKEND`    | Backend            | ✅ Met |
+| `AC-US-PAYROLL-008-11` | `PS-FRONTEND`   | Frontend           | ✅ Met |
+| `AC-US-PAYROLL-008-12` | `PS-FRONTEND`   | Frontend           | ✅ Met |
+| `AC-US-PAYROLL-008-13` | `PS-BACKEND`    | Backend            | ✅ Met |
+| `AC-US-PAYROLL-008-14` | `PS-FRONTEND`   | Frontend           | ✅ Met |
+| `AC-US-PAYROLL-008-15` | `PS-FRONTEND`   | Frontend           | ✅ Met |
+| `AC-US-PAYROLL-008-16` | `PS-BACKEND`    | Backend            | ✅ Met |
+
 **Accounting:** Signing authorizes settlement but does not trigger the wage accrual; `UC-CASH-02` is dated at the end of the eligible work
 week.
 
@@ -388,12 +604,25 @@ week.
 #### Business Rules
 
 - [x] `AC-US-PAYROLL-009-05` Users who are not the Cash Remuneration owner cannot invoke the contract actions.
-- [ ] `AC-US-PAYROLL-009-06` The legacy weekly-claim update API does not change stored status without the matching on-chain action.
+- [x] `AC-US-PAYROLL-009-06` The legacy weekly-claim update API does not change stored status without the matching on-chain action.
 
 #### Edge & Error Cases
 
 - [x] `AC-US-PAYROLL-009-07` A withdrawn claim cannot transition to disabled.
 - [x] `AC-US-PAYROLL-009-08` A withdrawn claim cannot transition to enabled.
+
+### Test Coverage
+
+| Acceptance Criterion   | Proof Strategy  | Current Evidence          | Status |
+| ---------------------- | --------------- | ------------------------- | ------ |
+| `AC-US-PAYROLL-009-01` | `PS-INTEGRATED` | Integrated E2E            | ✅ Met |
+| `AC-US-PAYROLL-009-02` | `PS-INTEGRATED` | Integrated E2E + Frontend | ✅ Met |
+| `AC-US-PAYROLL-009-03` | `PS-INTEGRATED` | Integrated E2E + Frontend | ✅ Met |
+| `AC-US-PAYROLL-009-04` | `PS-INTEGRATED` | Integrated E2E + Frontend | ✅ Met |
+| `AC-US-PAYROLL-009-05` | `PS-FRONTEND`   | Frontend                  | ✅ Met |
+| `AC-US-PAYROLL-009-06` | `PS-BACKEND`    | Backend                   | ✅ Met |
+| `AC-US-PAYROLL-009-07` | `PS-FRONTEND`   | Frontend                  | ✅ Met |
+| `AC-US-PAYROLL-009-08` | `PS-FRONTEND`   | Frontend                  | ✅ Met |
 
 **Accounting:** A disabled weekly claim is excluded from
 [`UC-CASH-02`](../accounting/journal-entry-catalogue.md#uc-cash-02--weekly-wage-accrual); re-enabling it restores eligibility.
@@ -434,6 +663,28 @@ week.
 - [x] `AC-US-PAYROLL-010-16` _(contract)_ A withdrawal reverts while the Cash Remuneration contract is paused.
 - [x] `AC-US-PAYROLL-010-17` Cancelling the wallet transaction leaves the claim unpaid and its stored status unchanged.
 
+### Test Coverage
+
+| Acceptance Criterion   | Proof Strategy          | Current Evidence   | Status |
+| ---------------------- | ----------------------- | ------------------ | ------ |
+| `AC-US-PAYROLL-010-01` | `PS-INTEGRATED`         | Integrated E2E     | ✅ Met |
+| `AC-US-PAYROLL-010-02` | `PS-INTEGRATED`         | Integrated E2E     | ✅ Met |
+| `AC-US-PAYROLL-010-03` | `PS-INTEGRATED`         | Integrated E2E     | ✅ Met |
+| `AC-US-PAYROLL-010-04` | `PS-INTEGRATED`         | Integrated E2E     | ✅ Met |
+| `AC-US-PAYROLL-010-05` | `PS-BACKEND`            | Backend            | ✅ Met |
+| `AC-US-PAYROLL-010-06` | `PS-FRONTEND`           | Frontend           | ✅ Met |
+| `AC-US-PAYROLL-010-07` | `PS-FRONTEND`           | Frontend           | ✅ Met |
+| `AC-US-PAYROLL-010-08` | `PS-CONTRACT-REFERENCE` | Contract           | ✅ Met |
+| `AC-US-PAYROLL-010-09` | `PS-FRONTEND`           | Frontend           | ✅ Met |
+| `AC-US-PAYROLL-010-10` | `PS-BACKEND`            | Backend            | ✅ Met |
+| `AC-US-PAYROLL-010-11` | `PS-FRONTEND`           | Frontend + Backend | ✅ Met |
+| `AC-US-PAYROLL-010-12` | `PS-CONTRACT-REFERENCE` | Contract           | ✅ Met |
+| `AC-US-PAYROLL-010-13` | `PS-CONTRACT-REFERENCE` | Contract           | ✅ Met |
+| `AC-US-PAYROLL-010-14` | `PS-CONTRACT-REFERENCE` | Contract           | ✅ Met |
+| `AC-US-PAYROLL-010-15` | `PS-CONTRACT-REFERENCE` | Contract           | ✅ Met |
+| `AC-US-PAYROLL-010-16` | `PS-CONTRACT-REFERENCE` | Contract           | ✅ Met |
+| `AC-US-PAYROLL-010-17` | `PS-FRONTEND`           | Frontend           | ✅ Met |
+
 **Accounting:** A successful withdrawal settles the obligation through
 [`UC-CASH-03`](../accounting/journal-entry-catalogue.md#uc-cash-03--wage-settlement). Cash credits Payroll cash; SHER moves promised shares
 into Investor Equity.
@@ -468,6 +719,23 @@ into Investor Equity.
 
 - [x] `AC-US-PAYROLL-011-11` A missing or invalid signature skips only the affected weekly claim.
 - [x] `AC-US-PAYROLL-011-12` A failed contract read skips only the affected weekly claim.
+
+### Test Coverage
+
+| Acceptance Criterion   | Proof Strategy  | Current Evidence | Status |
+| ---------------------- | --------------- | ---------------- | ------ |
+| `AC-US-PAYROLL-011-01` | `PS-INTEGRATED` | Integrated E2E   | ✅ Met |
+| `AC-US-PAYROLL-011-02` | `PS-BACKEND`    | Backend          | ✅ Met |
+| `AC-US-PAYROLL-011-03` | `PS-BACKEND`    | Backend          | ✅ Met |
+| `AC-US-PAYROLL-011-04` | `PS-FRONTEND`   | Frontend         | ✅ Met |
+| `AC-US-PAYROLL-011-05` | `PS-FRONTEND`   | Frontend         | ✅ Met |
+| `AC-US-PAYROLL-011-06` | `PS-FRONTEND`   | Frontend         | ✅ Met |
+| `AC-US-PAYROLL-011-07` | `PS-FRONTEND`   | Frontend         | ✅ Met |
+| `AC-US-PAYROLL-011-08` | `PS-BACKEND`    | Backend          | ✅ Met |
+| `AC-US-PAYROLL-011-09` | `PS-BACKEND`    | Backend          | ✅ Met |
+| `AC-US-PAYROLL-011-10` | `PS-BACKEND`    | Backend          | ✅ Met |
+| `AC-US-PAYROLL-011-11` | `PS-BACKEND`    | Backend          | ✅ Met |
+| `AC-US-PAYROLL-011-12` | `PS-BACKEND`    | Backend          | ✅ Met |
 
 **Dependencies:** US-PAYROLL-008
 
@@ -504,6 +772,24 @@ into Investor Equity.
 - [x] `AC-US-PAYROLL-012-12` An invalid page filter is rejected.
 - [x] `AC-US-PAYROLL-012-13` An invalid limit filter is rejected.
 
+### Test Coverage
+
+| Acceptance Criterion   | Proof Strategy  | Current Evidence | Status |
+| ---------------------- | --------------- | ---------------- | ------ |
+| `AC-US-PAYROLL-012-01` | `PS-INTEGRATED` | Integrated E2E   | ✅ Met |
+| `AC-US-PAYROLL-012-02` | `PS-FRONTEND`   | Frontend         | ✅ Met |
+| `AC-US-PAYROLL-012-03` | `PS-FRONTEND`   | Frontend         | ✅ Met |
+| `AC-US-PAYROLL-012-04` | `PS-BACKEND`    | Backend          | ✅ Met |
+| `AC-US-PAYROLL-012-05` | `PS-BACKEND`    | Backend          | ✅ Met |
+| `AC-US-PAYROLL-012-06` | `PS-BACKEND`    | Backend          | ✅ Met |
+| `AC-US-PAYROLL-012-07` | `PS-BACKEND`    | Backend          | ✅ Met |
+| `AC-US-PAYROLL-012-08` | `PS-BACKEND`    | Backend          | ✅ Met |
+| `AC-US-PAYROLL-012-09` | `PS-BACKEND`    | Backend          | ✅ Met |
+| `AC-US-PAYROLL-012-10` | `PS-BACKEND`    | Backend          | ✅ Met |
+| `AC-US-PAYROLL-012-11` | `PS-BACKEND`    | Backend          | ✅ Met |
+| `AC-US-PAYROLL-012-12` | `PS-BACKEND`    | Backend          | ✅ Met |
+| `AC-US-PAYROLL-012-13` | `PS-BACKEND`    | Backend          | ✅ Met |
+
 **Dependencies:** US-PAYROLL-005
 
 ## US-PAYROLL-013: Review the Payroll Account Position
@@ -527,30 +813,44 @@ into Investor Equity.
 
 #### Edge & Error Cases
 
-- [ ] `AC-US-PAYROLL-013-06` The withdrawn-compensation summary includes only claims withdrawn during the current calendar month.
+- [x] `AC-US-PAYROLL-013-06` The withdrawn-compensation summary includes only claims withdrawn during the current UTC calendar month.
+
+### Test Coverage
+
+| Acceptance Criterion   | Proof Strategy | Current Evidence          | Status |
+| ---------------------- | -------------- | ------------------------- | ------ |
+| `AC-US-PAYROLL-013-01` | `PS-FRONTEND`  | Integrated E2E + Frontend | ✅ Met |
+| `AC-US-PAYROLL-013-02` | `PS-FRONTEND`  | Frontend                  | ✅ Met |
+| `AC-US-PAYROLL-013-03` | `PS-FRONTEND`  | Frontend                  | ✅ Met |
+| `AC-US-PAYROLL-013-04` | `PS-FRONTEND`  | Frontend                  | ✅ Met |
+| `AC-US-PAYROLL-013-05` | `PS-FRONTEND`  | Integrated E2E + Frontend | ✅ Met |
+| `AC-US-PAYROLL-013-06` | `PS-FRONTEND`  | Frontend                  | ✅ Met |
 
 **Dependencies:** US-PAYROLL-003, Accounts
 
+## Human Validation
+
+Not yet completed. The feature owner must run every Payroll `@integrated` journey through Playwright UI against the prepared local G5 stack,
+then review the owner wage-management journey, member claim preparation, approval and on-chain withdrawal, reconciliation, and Payroll
+account position before marking the applicable stories `Done`.
+
 ## Known Gaps
 
-Functional gaps map to unchecked acceptance criteria.
-
-### Functional Gaps
-
-- The update and delete APIs allow claims from a disabled week to change even though the functional lifecycle permits changes only while the
-  week is pending.
-- The legacy enable and disable API actions can update the stored status without performing the matching on-chain action.
-- The withdrawn-compensation summary labelled for the current month aggregates every withdrawn claim returned by the API instead of applying
-  a current-month boundary (`US-PAYROLL-013`).
+No unchecked functional criterion remains. Representative test evidence is available for every Payroll-owned acceptance criterion; this is
+not a claim of 100% statement or branch coverage. Manual feature-owner validation is still pending, so stories remain `🧪 Validation`.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `006685cb46c8408101e785b258482092a1e63f70`
+**Implementation evidence reviewed against:** `2f18ee2a59ff7163dc4d54f2a66530f2eac74c3f`
 
 - [Cash Remuneration overview](../../../app/src/components/sections/CashRemunerationView/CashRemunerationOverview.vue),
-  [claim history](../../../app/src/components/sections/ClaimHistoryView/ClaimHistory.vue), and
+  [monthly withdrawn summary](../../../app/src/components/sections/CashRemunerationView/CashRemunerationMonthlyClaim.vue),
+  [claim history](../../../app/src/components/sections/ClaimHistoryView/ClaimHistory.vue),
+  [claim-week navigation](../../../app/src/components/sections/ClaimHistoryView/ClaimHistoryWeekNavigator.vue),
+  [weekly-claim screen](../../../app/src/components/sections/WeeklyClaimView/WeeklyClaim.vue), and
   [weekly-claim actions](../../../app/src/components/sections/WeeklyClaimView/WeeklyClaimActionDropdown.vue)
-- [Wage standard step](../../../app/src/components/sections/DashboardView/SetMemberWageStandardStep.vue) and
+- [Wage standard step](../../../app/src/components/sections/DashboardView/SetMemberWageStandardStep.vue),
+  [overtime wage step](../../../app/src/components/sections/DashboardView/SetMemberWageOvertimeStep.vue), and
   [rate-dot presentation](../../../app/src/components/ui/RateDotList.vue)
 - [Wage configuration](../../../app/src/components/sections/DashboardView/SetMemberWageModal.vue)
 - [Member wage overview](../../../app/src/components/sections/DashboardView/MemberSection.vue)
@@ -564,6 +864,7 @@ Functional gaps map to unchecked acceptance criteria.
 - [Claim history claim actions](../../../app/src/components/sections/ClaimHistoryView/ClaimActions.vue)
 - [Claim history member selector](../../../app/src/components/sections/ClaimHistoryView/ClaimHistoryMemberHeader.vue)
 - [Daily claim form rules](../../../app/src/utils/claims/form.ts)
+- [Wage configuration validation](../../../app/src/utils/wages/validation.ts)
 - [Weekly goals](../../../app/src/components/sections/CashRemunerationView/SubmitWeeklyGoals.vue)
 - [Claim history](../../../app/src/components/sections/ClaimHistoryView/ClaimHistory.vue)
 - [Weekly claim actions](../../../app/src/components/sections/WeeklyClaimView/WeeklyClaimActionDropdown.vue)
@@ -580,6 +881,9 @@ Functional gaps map to unchecked acceptance criteria.
 - [Cash Remuneration ownership boundary](../../../backend/src/utils/cashRemunerationUtil.ts) and
   [week-start calculation](../../../backend/src/utils/dayUtils.ts)
 - [Weekly claim API and reconciliation](../../../backend/src/controllers/weeklyClaimController.ts)
+- [Weekly-claim route definitions](../../../backend/src/routes/weeklyClaimRoute.ts) and
+  [request schemas](../../../backend/src/validation/schemas/weeklyClaim.ts)
+- [Weekly-claim client queries and mutations](../../../app/src/queries/weeklyClaim.queries.ts)
 - [Cash Remuneration contract](../../../contract/contracts/CashRemunerationEIP712.sol)
 - [Bank contract](../../../contract/contracts/Bank.sol)
 - [Frontend Payroll tests](../../../app/src/components/sections/CashRemunerationView/__tests__)
@@ -587,6 +891,10 @@ Functional gaps map to unchecked acceptance criteria.
 - [Claim API tests](../../../backend/src/controllers/__tests__/claimController.test.ts)
 - [Weekly claim API tests](../../../backend/src/controllers/__tests__/weeklyClaimController.test.ts)
 - [Cash Remuneration contract tests](../../../contract/test/CashRemunerationEIP712.spec.ts)
+- [Integrated Payroll compensation and claim E2E journeys](../../../app/test/e2e/payroll/payroll.integrated.spec.ts)
+- [Integrated Payroll payment E2E journey](../../../app/test/e2e/payroll/payroll-payment.integrated.spec.ts)
+- [Integrated Payroll insufficient-funding E2E journey](../../../app/test/e2e/payroll/payroll-insufficient-funds.integrated.spec.ts)
+- [Company Payroll history component tests](../../../app/src/components/sections/WeeklyClaimView/__tests__/WeeklyClaim.spec.ts)
 
 ### Test-suite ownership
 
@@ -596,7 +904,7 @@ Functional gaps map to unchecked acceptance criteria.
   [overtime-wage tests](../../../app/src/components/sections/DashboardView/__tests__/SetMemberWageOvertimeStep.spec.ts),
   [weekly-claim query tests](../../../app/src/queries/__tests__/weeklyClaim.queries.spec.ts),
   [weekly-goal query tests](../../../app/src/queries/__tests__/weeklyClaimGoals.queries.spec.ts), and
-  [payroll view tests](../../../app/src/views/team/%5Bid%5D/__tests__/CashRemunerationView.spec.ts)
+  [payroll view tests](../../../app/src/views/team/%5Bid%5D/__tests__/PayrollView.spec.ts)
 - [Cash-remuneration ownership tests](../../../backend/src/utils/__tests__/cashRemunerationUtil.test.ts),
   [week-boundary tests](../../../backend/src/utils/__tests__/dayUtils.test.ts),
   [wage-resolution tests](../../../backend/src/utils/__tests__/wageResolution.test.ts), and

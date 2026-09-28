@@ -65,14 +65,26 @@ function getHourlyRateInUserCurrency(
   }, 0)
 }
 
+function wasWithdrawnThisUtcMonth(weeklyClaim: WeeklyClaim, now = new Date()): boolean {
+  const withdrawnAt = new Date(weeklyClaim.updatedAt)
+  if (Number.isNaN(withdrawnAt.getTime())) return false
+
+  return (
+    withdrawnAt.getUTCFullYear() === now.getUTCFullYear() &&
+    withdrawnAt.getUTCMonth() === now.getUTCMonth()
+  )
+}
+
 const totalMonthlyClaim = computed(() => {
   const rows = weeklyClaims.value?.data
   if (!rows) return ''
-  const total = rows.reduce((sum: number, weeklyClaim: WeeklyClaim) => {
-    const timeWorked = getTotalTimeWorked(weeklyClaim.claims)
-    const rate = getHourlyRateInUserCurrency(weeklyClaim.wage.ratePerHour)
-    return sum + (timeWorked / 60) * rate
-  }, 0)
+  const total = rows
+    .filter((weeklyClaim) => wasWithdrawnThisUtcMonth(weeklyClaim))
+    .reduce((sum: number, weeklyClaim: WeeklyClaim) => {
+      const timeWorked = getTotalTimeWorked(weeklyClaim.claims)
+      const rate = getHourlyRateInUserCurrency(weeklyClaim.wage.ratePerHour)
+      return sum + (timeWorked / 60) * rate
+    }, 0)
   return formatCurrencyShort(total, currency.value.code)
 })
 
