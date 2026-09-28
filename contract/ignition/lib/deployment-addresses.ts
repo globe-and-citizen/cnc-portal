@@ -2,19 +2,17 @@ import { getAddress, isAddress } from 'ethers'
 import fs from 'node:fs'
 import path from 'node:path'
 
-export const SUPPORTED_UPGRADE_CHAIN_IDS = [137, 31337] as const
+export const POLYGON_UPGRADE_CHAIN_ID = 137 as const
 
-export type SupportedUpgradeChainId = (typeof SUPPORTED_UPGRADE_CHAIN_IDS)[number]
+export type SupportedUpgradeChainId = typeof POLYGON_UPGRADE_CHAIN_ID
 export type DeploymentAddresses = Record<string, string>
 
 export function getUpgradeChainId(): SupportedUpgradeChainId {
   const rawChainId = process.env.CNC_UPGRADE_CHAIN_ID
   const chainId = Number(rawChainId)
 
-  if (!SUPPORTED_UPGRADE_CHAIN_IDS.includes(chainId as SupportedUpgradeChainId)) {
-    throw new Error(
-      'CNC_UPGRADE_CHAIN_ID must be set to 137 (Polygon) or 31337 (local rehearsal)'
-    )
+  if (chainId !== POLYGON_UPGRADE_CHAIN_ID) {
+    throw new Error('CNC_UPGRADE_CHAIN_ID must be set to 137 (Polygon)')
   }
 
   return chainId as SupportedUpgradeChainId

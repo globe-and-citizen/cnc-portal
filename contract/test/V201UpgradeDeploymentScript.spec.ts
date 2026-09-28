@@ -27,6 +27,18 @@ describe('Polygon 2.0.1 deployment script', function () {
     expect(result.stderr).to.include('Refusing Polygon upgrade without')
   })
 
+  it('rejects networks that do not need the production upgrade', function () {
+    const result = spawnSync('bash', [deploymentScript, 'localhost'], {
+      cwd: contractRoot,
+      env: process.env,
+      encoding: 'utf8'
+    })
+
+    expect(result.status).to.equal(1)
+    expect(result.stderr).to.include('Usage:')
+    expect(result.stderr).to.include('[polygon]')
+  })
+
   it('uses release-specific modules, upgrades Investor before Officer, and verifies each transition', function () {
     const source = readFileSync(deploymentScript, 'utf8')
     expect(source).to.include(
@@ -46,8 +58,8 @@ describe('Polygon 2.0.1 deployment script', function () {
     expect(officerUpgrade).to.be.greaterThan(investorUpgrade)
     expect(source).to.include('CNC_EXPECTED_VERSIONS=2.0.1')
     expect(source).to.include('CNC_UPGRADE_MANIFEST_PATH="$manifest_path"')
-    expect(source).to.include('CNC_STORAGE_BASELINE_NETWORK="$baseline_network"')
-    expect(source.match(/baseline_network="polygon"/g)).to.have.lengthOf(2)
+    expect(source).to.include('CNC_STORAGE_BASELINE_NETWORK=polygon')
+    expect(source).to.not.include('localhost')
     expect(source).to.not.match(
       /ignition\/modules\/(?:CashRemuneration|ExpenseAccount|Investor|Officer)UpgradeModule\.ts/
     )

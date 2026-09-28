@@ -5,33 +5,21 @@ contract_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$contract_dir"
 
 network="${1:-polygon}"
-case "$network" in
-  polygon)
-    chain_id=137
-    validation_script="validate-upgrade:polygon"
-    baseline_network="polygon"
-    ;;
-  localhost)
-    chain_id=31337
-    validation_script="validate-upgrade:local"
-    baseline_network="polygon"
-    ;;
-  *)
-    echo "Usage: $0 [polygon|localhost]" >&2
-    exit 1
-    ;;
-esac
+if [[ "$network" != "polygon" ]]; then
+  echo "Usage: $0 [polygon]" >&2
+  exit 1
+fi
 
-if [[ "$network" == "polygon" ]]; then
-  if [[ "${CNC_CONFIRM_POLYGON_V201_UPGRADE:-}" != "upgrade-polygon-v2.0.1" ]]; then
-    echo "Refusing Polygon upgrade without CNC_CONFIRM_POLYGON_V201_UPGRADE=upgrade-polygon-v2.0.1" >&2
-    exit 1
-  fi
+chain_id=137
 
-  if [[ -n "$(git status --porcelain --untracked-files=no)" && "${CNC_ALLOW_DIRTY_UPGRADE_WORKTREE:-0}" != "1" ]]; then
-    echo "Refusing Polygon upgrade from a dirty worktree. Commit or isolate local changes first." >&2
-    exit 1
-  fi
+if [[ "${CNC_CONFIRM_POLYGON_V201_UPGRADE:-}" != "upgrade-polygon-v2.0.1" ]]; then
+  echo "Refusing Polygon upgrade without CNC_CONFIRM_POLYGON_V201_UPGRADE=upgrade-polygon-v2.0.1" >&2
+  exit 1
+fi
+
+if [[ -n "$(git status --porcelain --untracked-files=no)" && "${CNC_ALLOW_DIRTY_UPGRADE_WORKTREE:-0}" != "1" ]]; then
+  echo "Refusing Polygon upgrade from a dirty worktree. Commit or isolate local changes first." >&2
+  exit 1
 fi
 
 export CNC_UPGRADE_CHAIN_ID="$chain_id"
@@ -40,9 +28,9 @@ manifest_path="${CNC_UPGRADE_MANIFEST_PATH:-$contract_dir/.upgrade-state/${netwo
 
 echo "Validating storage and implementation safety for the four 2.0.1 upgrades..."
 for contract_name in CashRemunerationEIP712 ExpenseAccountEIP712 Investor Officer; do
-  CNC_STORAGE_BASELINE_NETWORK="$baseline_network" \
+  CNC_STORAGE_BASELINE_NETWORK=polygon \
     CONTRACT="$contract_name" \
-    npm run "$validation_script"
+    npm run validate-upgrade:polygon
 done
 
 echo "Verifying beacon ownership and recording rollback inputs..."
