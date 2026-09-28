@@ -127,6 +127,12 @@ describe('Investor — Merkle-pull migration', () => {
   })
 
   describe('authority lifecycle', () => {
+    /**
+     * Covers:
+     * - [AC-US-SHER-004-03]
+     * - [AC-US-SHER-004-06]
+     * - [AC-US-SHER-009-06]
+     */
     it('[AC-US-CONTRACT-002-11] transfers ownership and human roles atomically', async () => {
       const { investor, owner, addr1: successor, addr2: technicalMinter } = await deployFixture()
       const minterRole = await investor.MINTER_ROLE()
@@ -163,6 +169,18 @@ describe('Investor — Merkle-pull migration', () => {
 
       await investor.connect(successor).revokeRole(minterRole, delegatedMinter.address)
       expect(await investor.hasRole(minterRole, delegatedMinter.address)).to.equal(false)
+    })
+
+    it('[AC-US-SHER-009-05] rejects minter administration by a non-administrator', async () => {
+      const { investor, addr1: nonAdministrator, addr2: delegatedMinter } = await deployFixture()
+      const adminRole = await investor.DEFAULT_ADMIN_ROLE()
+      const minterRole = await investor.MINTER_ROLE()
+
+      await expect(
+        investor.connect(nonAdministrator).grantRole(minterRole, delegatedMinter.address)
+      )
+        .to.be.revertedWithCustomError(investor, 'AccessControlUnauthorizedAccount')
+        .withArgs(nonAdministrator.address, adminRole)
     })
 
     it('preserves the current owner roles when transferring to the same address', async () => {

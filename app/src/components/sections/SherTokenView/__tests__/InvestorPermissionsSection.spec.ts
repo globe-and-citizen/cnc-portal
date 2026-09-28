@@ -160,7 +160,7 @@ describe('InvestorPermissionsSection', () => {
     expect(wrapper.get('[data-test="grant-minter-confirm"]').attributes('disabled')).toBeDefined()
   })
 
-  it('[AC-US-SHER-009-04] requires impact confirmation before revoking a technical minter', async () => {
+  it('[AC-US-SHER-009-07] requires impact confirmation before revoking a technical minter', async () => {
     const wrapper = createWrapper()
 
     await wrapper.get(`[data-test="revoke-minter-${router.toLowerCase()}"]`).trigger('click')
