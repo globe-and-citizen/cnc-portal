@@ -6,7 +6,7 @@ This checklist organizes integrated E2E coverage around business paths rather th
 stories when the same actors, persisted state, and UX sequence connect them naturally.
 
 The canonical product outcomes remain in the linked feature documentation. Story and acceptance-criterion references below define intended
-coverage; the latest execution result and artifacts belong in Playwright reports.
+coverage; the latest execution result and artifacts belong in Playwright and CI reports.
 
 ## Path Model
 
@@ -41,6 +41,7 @@ coverage; the latest execution result and artifacts belong in Playwright reports
   - external services not owned by CNC Portal, such as token-price providers.
 - Runtime ownership:
   - locally, the developer starts and controls the frontend, backend, database, and node;
+  - in CI, the workflow prepares those services before Playwright starts;
   - browser-acceptance fixtures are provisioned explicitly with `npm run setup:e2e:browser`, outside Playwright;
   - integrated infrastructure is deployed by the developer or CI stack, also before Playwright starts;
   - an integrated scenario may call a Node-side team factory before its browser actions to create isolated domain data through the real
@@ -56,7 +57,8 @@ coverage; the latest execution result and artifacts belong in Playwright reports
   - browser code must not deploy fixtures, alter contract code or balances, control mining, or mutate chain state directly through RPC
     methods; the Node-side team factory is the narrow setup-only exception for integrated scenarios that do not test onboarding.
 - Execution profiles:
-  - `@integrated` paths use the developer-managed frontend, backend, database, and local chain without intercepting CNC Portal boundaries;
+  - `@integrated` paths use the developer- or CI-managed frontend, backend, database, and local chain without intercepting CNC Portal
+    boundaries;
   - `@browser` scenarios may inject backend state, direct fixture setup, wallet failures, or network outcomes and do not count as integrated
     E2E evidence;
   - `@mocked` is the narrower marker for browser scenarios that explicitly replace a product boundary;

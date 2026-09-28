@@ -73,6 +73,17 @@
   - Known issues and limitations
   - Security notes
 
+### 8. Created/Updated CI/CD Workflow
+
+- **File**: `.github/workflows/app-e2e.yml`
+- **Features**:
+  - Runs in the Playwright container image, so browsers need no separate install step
+  - Starts one local Hardhat node and a disposable PostgreSQL service for the job
+  - Provisions browser-acceptance contracts, starts the browser frontend, and runs the `@browser` coverage suite
+  - Resets the node, migrates the disposable database, deploys the integrated infrastructure, and starts the backend and frontend
+  - Runs the `@integrated` journeys
+  - Uploads browser coverage, both Playwright reports, and failure traces with stack logs
+
 ## ⚠️ Known Issues
 
 ### 1. Synpress Cache Build Warnings

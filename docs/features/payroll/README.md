@@ -113,15 +113,15 @@ The feature owner validates every Payroll `@integrated` journey manually in Play
 and deployed infrastructure can be reused when the configured addresses contain the expected bytecode. The journeys create isolated company
 records and deploy their company contracts through the product UI, then remove those records in cleanup. The browser uses the repository's
 deterministic E2E wallet connector for actual signatures and local-chain transactions. No backend response or RPC result is intercepted.
-Technical automated runs are recorded separately from the owner's manual validation. The prepared profile must retain the completed-week
-submission configuration described in the [integrated test setup](../../../app/test/README.md); the four-day restriction is tested
-separately with the rule enabled in the API suite.
+Technical automated runs are recorded separately from the owner's manual validation. The payment journey claims against an already completed
+ISO week, so the prepared profile must leave `SUBMIT_RESTRICTION` disabled for that company; the four-day restriction is tested separately
+with the rule enabled in the API suite.
 
 From `app/`, run `npm run test:e2e:integrated -- --ui test/e2e/payroll`. Unit and API suites run independently of the manual browser review.
 
-Run API unit coverage from `backend/` with `npm run test:unit:coverage`. Integrated browser assertions verify actual token holdings
-independently of external fiat-price quotes and wait for successful wage API responses or a completed Bank deposit rather than transient
-toast messages.
+CI runs API unit coverage; locally it runs from `backend/` with `npm run test:unit:coverage`. Integrated browser assertions verify actual
+token holdings independently of external fiat-price quotes and wait for successful wage API responses or a completed Bank deposit rather
+than transient toast messages.
 
 The API enforces paused-wage claim restrictions, so restoration of claim submission is proven by the real browser/API journey
 (`AC-US-PAYROLL-002-03`). Normal signing versus explicit re-signing is a client interaction (`AC-US-PAYROLL-008-06/07`); the backend

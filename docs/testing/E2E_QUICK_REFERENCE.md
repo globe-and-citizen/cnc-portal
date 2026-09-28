@@ -157,6 +157,7 @@ backend's owner/member and archived rules to `PUT` and `DELETE /api/teams/:id`, 
 | `.env.e2e`                             | Test environment variables |
 | `test/wallet-setup/connected.setup.ts` | MetaMask wallet setup      |
 | `.cache-synpress/`                     | Synpress cache directory   |
+| `.github/workflows/app-e2e.yml`        | CI/CD workflow             |
 
 ## 📝 Environment Variables
 
