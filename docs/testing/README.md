@@ -25,9 +25,11 @@ npm run test:coverage
 
 ### Browser acceptance and integrated E2E
 
-Every Playwright profile targets services and fixtures that are already prepared. The integrated profile requires the frontend, backend,
-migrated database, local chain, and contract infrastructure. Browser acceptance requires its frontend and deterministic local node, prepared
-once with `npm run setup:e2e:browser`. Playwright has no server or infrastructure setup configuration.
+Every Playwright profile targets services and shared infrastructure that are already prepared. The integrated profile requires the frontend,
+backend, migrated database, local chain, and contract infrastructure. Individual integrated paths may use an authenticated Node-side factory
+to prepare isolated domain data before browser actions; these setup calls are not product-flow evidence. Browser acceptance requires its
+frontend and deterministic local node, prepared once with `npm run setup:e2e:browser`. Playwright has no server or shared-infrastructure
+setup configuration.
 
 ```bash
 cd app
@@ -42,11 +44,6 @@ npm run test:browser:acceptance
 
 Prepare each profile's services and fixtures before invoking Playwright. Run browser acceptance and integrated E2E separately so their
 reports remain distinct; only the integrated profile supplies E2E evidence.
-
-The integrated database setup is started from `app/` with `E2E_INTEGRATED_SETUP=true npm run setup:e2e:integrated`. The app owns this
-Playwright setup entry point and delegates the database update to a Prisma script in `backend/`. The guard disables the Payroll submission
-restriction only in the disposable integrated database so a completed-week claim can exercise the real approval and withdrawal lifecycle; it
-must not be run against shared data.
 
 The Vite development server ignores generated `coverage/` artifacts so per-page coverage snapshots do not trigger hot reloads during an
 active browser suite.

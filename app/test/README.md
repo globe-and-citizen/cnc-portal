@@ -49,13 +49,11 @@ BASE_URL=http://127.0.0.1:5173 npm run test:browser:acceptance # terminal 3
 
 `npm run setup:e2e:browser` is idempotent for an already prepared browser-acceptance node. It fails on a partially provisioned or unexpected
 chain instead of silently changing that state. The integrated profile has its own externally provisioned contracts, database, backend, and
-frontend; it does not run this browser-fixture command. Its provisioning command is deliberately guarded by `E2E_INTEGRATED_SETUP=true` and
-configures only its disposable database. In particular, it disables `SUBMIT_RESTRICTION` so Payroll can create a completed-week claim for
-the real signature and withdrawal journey; it must never target a shared database.
-
-After pointing `backend/.env` at the disposable integrated database, run `E2E_INTEGRATED_SETUP=true npm run setup:e2e:integrated` from
-`app/`. The app owns the integrated E2E setup entry point; it invokes the backend's Prisma script from the backend directory. The setup is
-separate from the Playwright runner and refuses to change the setting unless the guard is set.
+frontend; it does not run this browser-fixture command. Integrated tests that need an operational company may call the Node-side
+`test/e2e/team-factory.ts` before browser actions. Set `CNC_E2E_BACKEND_URL` to the local integrated backend origin; the factory signs in
+with the public Hardhat test account, creates the team through the real API, deploys its Officer generation on the dedicated local chain,
+registers that Officer through the API, and verifies the returned team state. It is setup only: onboarding tests still create and deploy the
+company through the UI.
 
 ## Layout
 
@@ -63,6 +61,7 @@ separate from the Playwright runner and refuses to change the setting unless the
 test/
 └── e2e/
     ├── fixtures.ts             # shared Playwright fixtures
+    ├── team-factory.ts         # authenticated integrated team and Officer setup
     ├── login.spec.ts           # SIWE login flow
     └── bank/
         ├── bank-account.spec.ts # US-BANK-001..004 browser journeys

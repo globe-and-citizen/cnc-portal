@@ -42,12 +42,19 @@ coverage; the latest execution result and artifacts belong in Playwright reports
 - Runtime ownership:
   - locally, the developer starts and controls the frontend, backend, database, and node;
   - browser-acceptance fixtures are provisioned explicitly with `npm run setup:e2e:browser`, outside Playwright;
-  - integrated infrastructure is deployed by the developer before Playwright starts;
+  - integrated infrastructure is deployed by the developer or CI stack, also before Playwright starts;
+  - an integrated scenario may call a Node-side team factory before its browser actions to create isolated domain data through the real
+    backend API and dedicated local chain;
   - the E2E test checks readiness and exercises product behaviour, but does not own service startup.
+- Fixture-preparation rule:
+  - a team factory prepares only scenario data (team, Officer generation, and its managed contracts), not shared chain infrastructure;
+  - factory calls are setup and do not count as product-flow evidence; the scenario still drives the behaviour under test through the UI;
+  - the factory must authenticate with the test wallet, restrict writes to the disposable local backend and chain, and return verified
+    backend and chain state;
 - Browser-action rule:
   - Playwright may submit a contract transaction only through a user-accessible product action;
-  - Playwright must not deploy fixture infrastructure, alter contract code or balances, control mining, or mutate chain state directly
-    through RPC methods.
+  - browser code must not deploy fixtures, alter contract code or balances, control mining, or mutate chain state directly through RPC
+    methods; the Node-side team factory is the narrow setup-only exception for integrated scenarios that do not test onboarding.
 - Execution profiles:
   - `@integrated` paths use the developer-managed frontend, backend, database, and local chain without intercepting CNC Portal boundaries;
   - `@browser` scenarios may inject backend state, direct fixture setup, wallet failures, or network outcomes and do not count as integrated
@@ -56,7 +63,14 @@ coverage; the latest execution result and artifacts belong in Playwright reports
   - run every migrated integrated path with `npm run test:e2e` from `app/`;
   - run browser acceptance with `npm run test:browser:acceptance` from `app/`;
   - both commands only select Playwright tests; neither provisions services, contracts, or fixtures;
-  - the developer prepares the selected profile before invoking either command.
+  - the developer or CI prepares the selected profile before invoking either command.
+- CI ownership:
+  - one `Full-stack E2E` job owns both phases and publishes separate browser-acceptance and integrated reports;
+  - the job starts one local node, provisions browser fixtures outside Playwright, and starts the browser frontend before the first phase;
+  - it then resets that node, provisions a disposable PostgreSQL database, applies migrations, deploys integrated infrastructure, and starts
+    the backend and integrated frontend before the second phase;
+  - integrated paths may use the Node-side team factory for scenario setup, while Playwright performs the product actions being tested; CI
+    retains reports plus failure traces and stack logs as evidence.
 
 ## G0 — Integrated Technical Readiness
 
@@ -419,7 +433,8 @@ coverage; the latest execution result and artifacts belong in Playwright reports
 
 ## Cross-Group Execution Rules
 
-- Run `E2E-PATH-00` before functional paths, but keep environment preparation outside Playwright.
+- Run `E2E-PATH-00` before functional paths; keep service and shared-infrastructure preparation outside Playwright, while scenario-specific
+  teams may be prepared by the authenticated Node-side factory.
 - Give every story one primary owning path; reused stories and fixtures are dependencies, not duplicate coverage claims.
 - Use isolated or uniquely identified data for every path.
 - A failed dependency marks the consuming path blocked, not failed on its own story assertion.
