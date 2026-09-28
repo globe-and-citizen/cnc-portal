@@ -12,7 +12,6 @@ import {
   tokenBalance
 } from './e2e-chain'
 import { dialogAmount, openAccountFromSidebar, selectToken, useWallet } from './e2e-page'
-import { expectTokenHolding } from './e2e-page'
 import { grossForNet } from './bank/bank-chain'
 import { completeCashOut, transferBankToContract } from './bank/bank-page'
 import {

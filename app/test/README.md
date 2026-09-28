@@ -54,7 +54,8 @@ configures only its disposable database. In particular, it disables `SUBMIT_REST
 the real signature and withdrawal journey; it must never target a shared database.
 
 After pointing `backend/.env` at the disposable integrated database, run `E2E_INTEGRATED_SETUP=true npm run setup:e2e:integrated` from
-`backend/`. This explicit setup command is separate from the Playwright runner and refuses to change the setting unless the guard is set.
+`app/`. The app owns the integrated E2E setup entry point; it invokes the backend's Prisma script from the backend directory. The setup is
+separate from the Playwright runner and refuses to change the setting unless the guard is set.
 
 ## Layout
 

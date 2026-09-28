@@ -22,6 +22,7 @@
     "test:watch": "vitest -u",
     "test:unit:coverage": "npx vitest run --coverage",
     "setup:e2e:browser": "node --experimental-strip-types test/e2e/prepare-browser-environment.ts",
+    "setup:e2e:integrated": "cd ../backend && npm exec -- ts-node scripts/provisionIntegratedE2e.ts",
     "test:e2e": "npm run test:e2e:integrated",
     "test:e2e:integrated": "playwright test --grep @integrated",
     "test:browser:acceptance": "playwright test --grep @browser",

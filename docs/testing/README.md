@@ -43,9 +43,10 @@ npm run test:browser:acceptance
 Prepare each profile's services and fixtures before invoking Playwright. Run browser acceptance and integrated E2E separately so their
 reports remain distinct; only the integrated profile supplies E2E evidence.
 
-The integrated database setup is guarded by `E2E_INTEGRATED_SETUP=true`. It disables the Payroll submission restriction only in that
-disposable database so a completed-week claim can exercise the real approval and withdrawal lifecycle; it must not be run against shared
-data.
+The integrated database setup is started from `app/` with `E2E_INTEGRATED_SETUP=true npm run setup:e2e:integrated`. The app owns this
+Playwright setup entry point and delegates the database update to a Prisma script in `backend/`. The guard disables the Payroll submission
+restriction only in the disposable integrated database so a completed-week claim can exercise the real approval and withdrawal lifecycle; it
+must not be run against shared data.
 
 The Vite development server ignores generated `coverage/` artifacts so per-page coverage snapshots do not trigger hot reloads during an
 active browser suite.

@@ -119,11 +119,9 @@ separately with the rule enabled in the API suite.
 
 From `app/`, run `npm run test:e2e:integrated -- --ui test/e2e/payroll`. Unit and API suites run independently of the manual browser review.
 
-Run API unit coverage from `backend/` with `npm run test:unit:coverage`. The PostgreSQL suite exercises the actual uniqueness migration in
-temporary schemas inside rolled-back transactions; it does not reset application data. Run it from `backend/` with
-`npm run test:payroll:database`. It requires a local `DATABASE_URL` in `backend/.env` or `PAYROLL_TEST_DATABASE_URL` in the process
-environment. Integrated browser assertions verify actual token holdings independently of external fiat-price quotes and wait for successful
-wage API responses or a completed Bank deposit rather than transient toast messages.
+Run API unit coverage from `backend/` with `npm run test:unit:coverage`. Integrated browser assertions verify actual token holdings
+independently of external fiat-price quotes and wait for successful wage API responses or a completed Bank deposit rather than transient
+toast messages.
 
 The API enforces paused-wage claim restrictions, so restoration of claim submission is proven by the real browser/API journey
 (`AC-US-PAYROLL-002-03`). Normal signing versus explicit re-signing is a client interaction (`AC-US-PAYROLL-008-06/07`); the backend
@@ -135,21 +133,21 @@ Run the linked backend and frontend suites for their owned rules and interaction
 stack for cross-layer journeys. The per-story matrices below link each criterion to its required proof; contract checks remain a separate
 technical responsibility.
 
-| User Story     | Backend tests to perform                                                                            | Frontend tests to perform                                                                | Integrated test to perform                                                                                  |
-| -------------- | --------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| US-PAYROLL-001 | Wage versioning, ownership, archived writes, real PostgreSQL uniqueness and migration preservation. | Rates, allowances, overtime, validation and version display.                             | Create and replace a wage through the UI; verify later API reads.                                           |
-| US-PAYROLL-002 | Current-wage pause/resume; reject claim creation, edit and deletion while paused.                   | Pause/resume controls and restored wage replacement.                                     | Pause, reject a real claim, resume and persist a new claim.                                                 |
-| US-PAYROLL-003 | Accounts owns Bank transfer checks.                                                                 | Accounts owns funding controls.                                                          | Reuse E2E-PATH-02 and the real Payroll funding steps.                                                       |
-| US-PAYROLL-004 | Goals persistence, member ownership, locked weeks and wage binding.                                 | Goal editor, read-only states and empty content.                                         | Save goals before submitting work for the same week.                                                        |
-| US-PAYROLL-005 | UTC dates, four-day window, identity, ten-minute steps, caps, paused wage and attachments.          | Claim form, duration, limits, file validation and server errors.                         | Persist work and reject daily/weekly cap overages through the UI.                                           |
-| US-PAYROLL-006 | Owner authorization, pending/paused state, cap checks and unchanged data on rejection.              | Edit form, validation and errors.                                                        | Edit a persisted claim and verify its displayed duration and memo.                                          |
-| US-PAYROLL-007 | Owner authorization, pending/paused state, preservation of weekly goals.                            | Confirmation, cancellation and API errors.                                               | Delete a real claim, then recreate it without losing its weekly row.                                        |
-| US-PAYROLL-008 | Contract owner, completed week, signature recovery, current contract and archived company.          | Signing, explicit re-signing, pending/current-week restrictions and wallet rejection.    | Approve a completed week with a real EIP-712 signature.                                                     |
-| US-PAYROLL-009 | Reconciled status and signature checks.                                                             | Owner permissions, disable/enable actions and synchronization after receipt.             | Disable and re-enable the same signature; read actual contract state.                                       |
-| US-PAYROLL-010 | Claim ownership, signed/paid states and archived company.                                           | Signed/signature guard, balances, contract/chain mismatch and wallet rejection.          | Pay ETH + USDC + minted SHER; decode the transaction, check balances and reload; reject insufficient funds. |
-| US-PAYROLL-011 | Paid/disabled/stale-signature reconciliation, failed reads and subsequent persisted reads.          | Sync on company load and after withdrawal, disable and enable.                           | Reload the API-backed history after each on-chain transition.                                               |
-| US-PAYROLL-012 | Company membership, member/status filters, minutes, pagination and attachment URLs.                 | Member/week/duration/rates/totals/status/action table and member selector.               | Verify member history, locked work and company-wide withdrawn status after payment.                         |
-| US-PAYROLL-013 | No separate backend criterion: account positions come from client chain reads.                      | Account balances, token positions, withdrawn summaries and read-only funding indicators. | Verify real account holdings before/after payment and member access without withdrawal permission.          |
+| User Story     | Backend tests to perform                                                                   | Frontend tests to perform                                                                | Integrated test to perform                                                                                  |
+| -------------- | ------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| US-PAYROLL-001 | Wage versioning, ownership and archived writes.                                            | Rates, allowances, overtime, validation and version display.                             | Create and replace a wage through the UI; verify later API reads.                                           |
+| US-PAYROLL-002 | Current-wage pause/resume; reject claim creation, edit and deletion while paused.          | Pause/resume controls and restored wage replacement.                                     | Pause, reject a real claim, resume and persist a new claim.                                                 |
+| US-PAYROLL-003 | Accounts owns Bank transfer checks.                                                        | Accounts owns funding controls.                                                          | Reuse E2E-PATH-02 and the real Payroll funding steps.                                                       |
+| US-PAYROLL-004 | Goals persistence, member ownership, locked weeks and wage binding.                        | Goal editor, read-only states and empty content.                                         | Save goals before submitting work for the same week.                                                        |
+| US-PAYROLL-005 | UTC dates, four-day window, identity, ten-minute steps, caps, paused wage and attachments. | Claim form, duration, limits, file validation and server errors.                         | Persist work and reject daily/weekly cap overages through the UI.                                           |
+| US-PAYROLL-006 | Owner authorization, pending/paused state, cap checks and unchanged data on rejection.     | Edit form, validation and errors.                                                        | Edit a persisted claim and verify its displayed duration and memo.                                          |
+| US-PAYROLL-007 | Owner authorization, pending/paused state, preservation of weekly goals.                   | Confirmation, cancellation and API errors.                                               | Delete a real claim, then recreate it without losing its weekly row.                                        |
+| US-PAYROLL-008 | Contract owner, completed week, signature recovery, current contract and archived company. | Signing, explicit re-signing, pending/current-week restrictions and wallet rejection.    | Approve a completed week with a real EIP-712 signature.                                                     |
+| US-PAYROLL-009 | Reconciled status and signature checks.                                                    | Owner permissions, disable/enable actions and synchronization after receipt.             | Disable and re-enable the same signature; read actual contract state.                                       |
+| US-PAYROLL-010 | Claim ownership, signed/paid states and archived company.                                  | Signed/signature guard, balances, contract/chain mismatch and wallet rejection.          | Pay ETH + USDC + minted SHER; decode the transaction, check balances and reload; reject insufficient funds. |
+| US-PAYROLL-011 | Paid/disabled/stale-signature reconciliation, failed reads and subsequent persisted reads. | Sync on company load and after withdrawal, disable and enable.                           | Reload the API-backed history after each on-chain transition.                                               |
+| US-PAYROLL-012 | Company membership, member/status filters, minutes, pagination and attachment URLs.        | Member/week/duration/rates/totals/status/action table and member selector.               | Verify member history, locked work and company-wide withdrawn status after payment.                         |
+| US-PAYROLL-013 | No separate backend criterion: account positions come from client chain reads.             | Account balances, token positions, withdrawn summaries and read-only funding indicators. | Verify real account holdings before/after payment and member access without withdrawal permission.          |
 
 ## US-PAYROLL-001: Set a Member's Wage
 
@@ -896,7 +894,6 @@ not a claim of 100% statement or branch coverage. Manual feature-owner validatio
 - [Integrated Payroll compensation and claim E2E journeys](../../../app/test/e2e/payroll/payroll.integrated.spec.ts)
 - [Integrated Payroll payment E2E journey](../../../app/test/e2e/payroll/payroll-payment.integrated.spec.ts)
 - [Integrated Payroll insufficient-funding E2E journey](../../../app/test/e2e/payroll/payroll-insufficient-funds.integrated.spec.ts)
-- [Real PostgreSQL uniqueness and migration tests](../../../backend/test/integration/payroll-database.integration.test.ts)
 - [Company Payroll history component tests](../../../app/src/components/sections/WeeklyClaimView/__tests__/WeeklyClaim.spec.ts)
 
 ### Test-suite ownership
