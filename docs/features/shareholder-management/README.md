@@ -22,6 +22,7 @@ SHER token.
   `MINTER_ROLE`; the current owner cannot renounce ownership or remove either authority role from itself.
 - Investor administrators can review current role holders and grant or revoke `MINTER_ROLE`. The portal reconstructs candidates from role
   events, verifies their current state with `hasRole`, and labels incomplete RPC evidence instead of presenting it as an empty role set.
+  Current and previous Officer generations are identified as company contracts for inspection but are not eligible for a new minter grant.
 - The **Safe Deposit Router** is the investment integration: it accepts supported deposits into the registered Safe and calls the Investor
   contract to issue SHER at its configured multiplier.
 - The **Bank** is the dividend integration: the Bank owner executes a payout directly, or an eligible Board member creates the Bank action.
@@ -442,8 +443,8 @@ the redeployment and migration-root commit. Shareholder Management exposes the m
 
 #### Happy Path
 
-- [x] `AC-US-SHER-009-01` A company member can review the verified Investor owner, administrators, and minters with known member or contract
-      identities where available.
+- [x] `AC-US-SHER-009-01` A company member can review the verified Investor owner, administrators, and minters with known member, current or
+      previous Officer, team-contract, and external identities distinguished where available.
 - [x] `AC-US-SHER-009-03` A connected Investor administrator can grant `MINTER_ROLE` to a valid team member or contract address, and the
       refreshed permission list reflects the confirmed on-chain state.
 - [x] `AC-US-SHER-009-04` A connected Investor administrator can revoke `MINTER_ROLE` from a delegated minter, and the refreshed permission
@@ -460,8 +461,8 @@ the redeployment and migration-root commit. Shareholder Management exposes the m
 
 #### Edge & Error Cases
 
-- [x] `AC-US-SHER-009-02` A failed or partial historical role scan is labelled unavailable or incomplete and does not masquerade as an
-      authoritative empty permission list.
+- [x] `AC-US-SHER-009-02` A failed or partial historical role scan is labelled unavailable or incomplete, directly verifies known company
+      accounts including Officer generations, and does not masquerade as an authoritative empty permission list.
 - [x] `AC-US-SHER-009-08` A rejected or failed role transaction remains visible as a failure and does not report a successful permission
       change.
 
@@ -491,7 +492,7 @@ the redeployment and migration-root commit. Shareholder Management exposes the m
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `b875448a4f35252e12e8f75f73d5b738003c5baf`
+**Implementation evidence reviewed against:** `a8cbb0e32a7bab616ecf4b0fda0578eafa015ce0`
 
 - [Shareholder Management route](../../../app/src/views/team/%5Bid%5D/SherTokenView.vue) and
   [Investor overview](../../../app/src/components/sections/SherTokenView/InvestorsHeader.vue)
@@ -503,6 +504,7 @@ the redeployment and migration-root commit. Shareholder Management exposes the m
   [Investor writes](../../../app/src/composables/investor/writes.ts)
 - [Investor permission surface](../../../app/src/components/sections/SherTokenView/InvestorPermissionsSection.vue),
   [permission reads](../../../app/src/composables/investor/permissions.ts), and
+  [Officer history query](../../../app/src/queries/contract.queries.ts),
   [role evidence query](../../../app/src/queries/investorPermissions.queries.ts), with
   [permission presentation helpers](../../../app/src/utils/investors/permissions.ts)
 - [Router configuration actions](../../../app/src/components/sections/SherTokenView/InvestorActions/SetSafeAddressAction.vue),
@@ -523,7 +525,8 @@ the redeployment and migration-root commit. Shareholder Management exposes the m
   [claim and settlement writes](../../../app/src/composables/investor/useClaimMigration.ts)
 - [Investor overview tests](../../../app/src/components/sections/SherTokenView/__tests__/InvestorsHeader.spec.ts),
   [issuance-form tests](../../../app/src/components/sections/SherTokenView/forms/__tests__/MintForm.spec.ts),
-  [permission component tests](../../../app/src/components/sections/SherTokenView/__tests__/InvestorPermissionsSection.spec.ts), and
+  [permission component tests](../../../app/src/components/sections/SherTokenView/__tests__/InvestorPermissionsSection.spec.ts),
+  [permission identity tests](../../../app/src/utils/investors/__tests__/permissions.spec.ts), and
   [integrated permission lifecycle](../../../app/test/e2e/investor-permissions.integrated.spec.ts)
 
 ## Related Documentation
