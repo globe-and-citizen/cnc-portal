@@ -197,35 +197,35 @@ technical responsibility.
 
 ### Test Coverage
 
-| Acceptance Criterion   | Proof Strategy  | Current Evidence         | Status |
-| ---------------------- | --------------- | ------------------------ | ------ |
-| `AC-US-PAYROLL-001-01` | `PS-INTEGRATED` | Integrated E2E           | ✅ Met |
-| `AC-US-PAYROLL-001-02` | `PS-INTEGRATED` | Integrated E2E + Backend | ✅ Met |
-| `AC-US-PAYROLL-001-03` | `PS-BACKEND`    | Backend                  | ✅ Met |
-| `AC-US-PAYROLL-001-04` | `PS-FRONTEND`   | Frontend                 | ✅ Met |
-| `AC-US-PAYROLL-001-05` | `PS-FRONTEND`   | Frontend                 | ✅ Met |
-| `AC-US-PAYROLL-001-06` | `PS-FRONTEND`   | Frontend                 | ✅ Met |
-| `AC-US-PAYROLL-001-07` | `PS-FRONTEND`   | Frontend                 | ✅ Met |
-| `AC-US-PAYROLL-001-08` | `PS-FRONTEND`   | Frontend                 | ✅ Met |
-| `AC-US-PAYROLL-001-09` | `PS-FRONTEND`   | Frontend                 | ✅ Met |
-| `AC-US-PAYROLL-001-10` | `PS-BACKEND`    | Backend                  | ✅ Met |
-| `AC-US-PAYROLL-001-11` | `PS-FRONTEND`   | Frontend                 | ✅ Met |
-| `AC-US-PAYROLL-001-12` | `PS-FRONTEND`   | Frontend                 | ✅ Met |
-| `AC-US-PAYROLL-001-13` | `PS-FRONTEND`   | Frontend                 | ✅ Met |
-| `AC-US-PAYROLL-001-14` | `PS-BACKEND`    | Backend                  | ✅ Met |
-| `AC-US-PAYROLL-001-15` | `PS-BACKEND`    | Backend                  | ✅ Met |
-| `AC-US-PAYROLL-001-16` | `PS-BACKEND`    | Backend                  | ✅ Met |
-| `AC-US-PAYROLL-001-17` | `PS-BACKEND`    | Backend                  | ✅ Met |
-| `AC-US-PAYROLL-001-18` | `PS-BACKEND`    | Backend                  | ✅ Met |
-| `AC-US-PAYROLL-001-19` | `PS-BACKEND`    | Backend                  | ✅ Met |
-| `AC-US-PAYROLL-001-20` | `PS-BACKEND`    | Backend                  | ✅ Met |
-| `AC-US-PAYROLL-001-21` | `PS-BACKEND`    | Backend                  | ✅ Met |
-| `AC-US-PAYROLL-001-22` | `PS-BACKEND`    | Backend                  | ✅ Met |
-| `AC-US-PAYROLL-001-23` | `PS-BACKEND`    | Backend                  | ✅ Met |
-| `AC-US-PAYROLL-001-24` | `PS-BACKEND`    | Backend                  | ✅ Met |
-| `AC-US-PAYROLL-001-25` | `PS-BACKEND`    | Backend                  | ✅ Met |
-| `AC-US-PAYROLL-001-26` | `PS-BACKEND`    | Backend                  | ✅ Met |
-| `AC-US-PAYROLL-001-27` | `PS-BACKEND`    | Backend                  | ✅ Met |
+| Acceptance Criterion   | Proof Strategy  | Current Evidence         | Status     |
+| ---------------------- | --------------- | ------------------------ | ---------- |
+| `AC-US-PAYROLL-001-01` | `PS-INTEGRATED` | Integrated E2E           | ✅ Met     |
+| `AC-US-PAYROLL-001-02` | `PS-INTEGRATED` | Integrated E2E + Backend | ✅ Met     |
+| `AC-US-PAYROLL-001-03` | `PS-BACKEND`    | Backend                  | ✅ Met     |
+| `AC-US-PAYROLL-001-04` | `PS-FRONTEND`   | Frontend                 | ✅ Met     |
+| `AC-US-PAYROLL-001-05` | `PS-FRONTEND`   | Frontend                 | ✅ Met     |
+| `AC-US-PAYROLL-001-06` | `PS-FRONTEND`   | Frontend                 | ✅ Met     |
+| `AC-US-PAYROLL-001-07` | `PS-FRONTEND`   | Frontend                 | ✅ Met     |
+| `AC-US-PAYROLL-001-08` | `PS-FRONTEND`   | Frontend                 | ✅ Met     |
+| `AC-US-PAYROLL-001-09` | `PS-FRONTEND`   | Frontend                 | ✅ Met     |
+| `AC-US-PAYROLL-001-10` | `PS-BACKEND`    | Backend                  | ✅ Met     |
+| `AC-US-PAYROLL-001-11` | `PS-FRONTEND`   | Frontend                 | ✅ Met     |
+| `AC-US-PAYROLL-001-12` | `PS-FRONTEND`   | Frontend                 | ✅ Met     |
+| `AC-US-PAYROLL-001-13` | `PS-FRONTEND`   | Frontend                 | ✅ Met     |
+| `AC-US-PAYROLL-001-14` | `PS-BACKEND`    | Backend                  | ✅ Met     |
+| `AC-US-PAYROLL-001-15` | `PS-BACKEND`    | Backend                  | ✅ Met     |
+| `AC-US-PAYROLL-001-16` | `PS-BACKEND`    | Backend                  | ✅ Met     |
+| `AC-US-PAYROLL-001-17` | `PS-BACKEND`    | Backend                  | ✅ Met     |
+| `AC-US-PAYROLL-001-18` | `PS-BACKEND`    | None linked              | ❌ Missing |
+| `AC-US-PAYROLL-001-19` | `PS-BACKEND`    | None linked              | ❌ Missing |
+| `AC-US-PAYROLL-001-20` | `PS-BACKEND`    | Backend                  | ✅ Met     |
+| `AC-US-PAYROLL-001-21` | `PS-BACKEND`    | Backend                  | ✅ Met     |
+| `AC-US-PAYROLL-001-22` | `PS-BACKEND`    | Backend                  | ✅ Met     |
+| `AC-US-PAYROLL-001-23` | `PS-BACKEND`    | Backend                  | ✅ Met     |
+| `AC-US-PAYROLL-001-24` | `PS-BACKEND`    | Backend                  | ✅ Met     |
+| `AC-US-PAYROLL-001-25` | `PS-BACKEND`    | Backend                  | ✅ Met     |
+| `AC-US-PAYROLL-001-26` | `PS-BACKEND`    | Backend                  | ✅ Met     |
+| `AC-US-PAYROLL-001-27` | `PS-BACKEND`    | Backend                  | ✅ Met     |
 
 **Dependencies:** Companies and Workspace
 
