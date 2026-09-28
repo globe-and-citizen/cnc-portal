@@ -159,12 +159,6 @@ jobs:
           npm run prisma:migrate
         working-directory: ./backend
 
-      - name: 🧰 Prepare the integrated E2E database
-        run: npm run setup:e2e:integrated
-        working-directory: ./app
-        env:
-          E2E_INTEGRATED_SETUP: "true"
-
       - name: 🚀 Deploy integrated E2E infrastructure
         run: |
           cp scripts/recipients.json.example scripts/recipients.json
