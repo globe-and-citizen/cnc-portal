@@ -1,36 +1,52 @@
 {
   "storage": [
     {
-      "astId": 16958,
-      "contract": "contracts/Officer.sol:Officer",
-      "label": "contractBeacons",
+      "astId": 26967,
+      "contract": "project/contracts/Officer.sol:Officer",
+      "label": "s_contractBeacons",
       "offset": 0,
       "slot": "0",
       "type": "t_mapping(t_string_memory_ptr,t_address)"
     },
     {
-      "astId": 16988,
-      "contract": "contracts/Officer.sol:Officer",
-      "label": "contractTypes",
+      "astId": 26971,
+      "contract": "project/contracts/Officer.sol:Officer",
+      "label": "s_contractTypes",
       "offset": 0,
       "slot": "1",
       "type": "t_array(t_string_storage)dyn_storage"
     },
     {
-      "astId": 16999,
-      "contract": "contracts/Officer.sol:Officer",
-      "label": "deployedContracts",
+      "astId": 26976,
+      "contract": "project/contracts/Officer.sol:Officer",
+      "label": "s_deployedContracts",
       "offset": 0,
       "slot": "2",
-      "type": "t_array(t_struct(DeployedContract)16994_storage)dyn_storage"
+      "type": "t_array(t_struct(DeployedContract)26959_storage)dyn_storage"
     },
     {
-      "astId": 17002,
-      "contract": "contracts/Officer.sol:Officer",
-      "label": "bodContract",
+      "astId": 26979,
+      "contract": "project/contracts/Officer.sol:Officer",
+      "label": "s_bodContract",
       "offset": 0,
       "slot": "3",
       "type": "t_address"
+    },
+    {
+      "astId": 26984,
+      "contract": "project/contracts/Officer.sol:Officer",
+      "label": "s_deployedContractsByHash",
+      "offset": 0,
+      "slot": "4",
+      "type": "t_mapping(t_bytes32,t_address)"
+    },
+    {
+      "astId": 26989,
+      "contract": "project/contracts/Officer.sol:Officer",
+      "label": "__gap",
+      "offset": 0,
+      "slot": "5",
+      "type": "t_array(t_uint256)50_storage"
     }
   ],
   "types": {
@@ -45,11 +61,29 @@
       "label": "string[]",
       "numberOfBytes": "32"
     },
-    "t_array(t_struct(DeployedContract)16994_storage)dyn_storage": {
-      "base": "t_struct(DeployedContract)16994_storage",
+    "t_array(t_struct(DeployedContract)26959_storage)dyn_storage": {
+      "base": "t_struct(DeployedContract)26959_storage",
       "encoding": "dynamic_array",
       "label": "struct Officer.DeployedContract[]",
       "numberOfBytes": "32"
+    },
+    "t_array(t_uint256)50_storage": {
+      "base": "t_uint256",
+      "encoding": "inplace",
+      "label": "uint256[50]",
+      "numberOfBytes": "1600"
+    },
+    "t_bytes32": {
+      "encoding": "inplace",
+      "label": "bytes32",
+      "numberOfBytes": "32"
+    },
+    "t_mapping(t_bytes32,t_address)": {
+      "encoding": "mapping",
+      "key": "t_bytes32",
+      "label": "mapping(bytes32 => address)",
+      "numberOfBytes": "32",
+      "value": "t_address"
     },
     "t_mapping(t_string_memory_ptr,t_address)": {
       "encoding": "mapping",
@@ -68,21 +102,21 @@
       "label": "string",
       "numberOfBytes": "32"
     },
-    "t_struct(DeployedContract)16994_storage": {
+    "t_struct(DeployedContract)26959_storage": {
       "encoding": "inplace",
       "label": "struct Officer.DeployedContract",
       "members": [
         {
-          "astId": 16991,
-          "contract": "contracts/Officer.sol:Officer",
+          "astId": 26956,
+          "contract": "project/contracts/Officer.sol:Officer",
           "label": "contractType",
           "offset": 0,
           "slot": "0",
           "type": "t_string_storage"
         },
         {
-          "astId": 16993,
-          "contract": "contracts/Officer.sol:Officer",
+          "astId": 26958,
+          "contract": "project/contracts/Officer.sol:Officer",
           "label": "contractAddress",
           "offset": 0,
           "slot": "1",
@@ -90,6 +124,11 @@
         }
       ],
       "numberOfBytes": "64"
+    },
+    "t_uint256": {
+      "encoding": "inplace",
+      "label": "uint256",
+      "numberOfBytes": "32"
     }
   }
 }

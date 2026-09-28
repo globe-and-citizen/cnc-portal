@@ -3,7 +3,12 @@ import { describe, expect, it, vi, beforeEach } from 'vitest'
 import ShareholderList from '../../SherTokenView/ShareholderList.vue'
 import { parseEther, parseUnits } from 'viem'
 import { createTestingPinia } from '@pinia/testing'
-import { mockInvestorReads, mockTeamStore, mockUserStore } from '@/tests/mocks'
+import {
+  mockInvestorPermissions,
+  mockInvestorReads,
+  mockTeamStore,
+  mockUserStore
+} from '@/tests/mocks'
 
 const TableComponentStub = {
   props: ['rows', 'columns', 'loading'],
@@ -51,6 +56,8 @@ describe('ShareholderList', () => {
       { shareholder: '0x123', amount: parseEther('100') },
       { shareholder: '0x456', amount: parseEther('200') }
     ]
+    mockInvestorPermissions.hasRole.data.value = true
+    mockInvestorPermissions.hasRole.isLoading.value = false
   })
 
   const createComponent = () =>
@@ -65,7 +72,7 @@ describe('ShareholderList', () => {
       }
     })
 
-  it('opens mint modal when clicking mint individual', async () => {
+  it('[AC-US-SHER-004-06] opens individual mint for an Investor minter', async () => {
     const wrapper = createComponent()
 
     // No MintForm before the click — modal body is not mounted
@@ -78,5 +85,15 @@ describe('ShareholderList', () => {
     expect(mintForm.exists()).toBe(true)
     // Selected shareholder propagated to MintForm via memberInput.address
     expect(mintForm.attributes('data-address')).toBe('0x123')
+  })
+
+  it('[AC-US-SHER-004-06] blocks individual mint without the Investor minter role', async () => {
+    mockInvestorPermissions.hasRole.data.value = false
+    const wrapper = createComponent()
+    const mintButton = wrapper.find('[data-test="mint-individual"]')
+
+    expect(mintButton.attributes('disabled')).toBeDefined()
+    await mintButton.trigger('click')
+    expect(wrapper.find('[data-test="mint-form"]').exists()).toBe(false)
   })
 })

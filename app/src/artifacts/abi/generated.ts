@@ -3760,6 +3760,16 @@ export const investorAbi = [
     name: 'Investor__NotBank'
   },
   { type: 'error', inputs: [], name: 'Investor__OfficerAddressNotSet' },
+  {
+    type: 'error',
+    inputs: [{ name: 'role', internalType: 'bytes32', type: 'bytes32' }],
+    name: 'Investor__OwnerRoleRequired'
+  },
+  {
+    type: 'error',
+    inputs: [],
+    name: 'Investor__OwnershipRenunciationDisabled'
+  },
   { type: 'error', inputs: [], name: 'Investor__ZeroAddress' },
   { type: 'error', inputs: [], name: 'Investor__ZeroAmount' },
   { type: 'error', inputs: [], name: 'NotInitializing' },

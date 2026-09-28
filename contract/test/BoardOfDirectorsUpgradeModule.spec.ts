@@ -4,13 +4,14 @@ import { expect } from 'chai'
 before(initializeHardhat)
 
 /**
- * Exercises the semantics of ignition/modules/BoardOfDirectorsUpgradeModule.ts:
+ * Exercises the BoardOfDirectors beacon-upgrade semantics expected from any
+ * future release-specific upgrade module:
  *   1. Deploy a new BoardOfDirectors implementation.
  *   2. Point the existing Beacon at it via upgradeTo.
  *   3. Verify state (owners list) is preserved through the upgrade.
  *   4. Verify access control: only the beacon owner can upgrade.
  */
-describe('BoardOfDirectorsUpgradeModule', function () {
+describe('BoardOfDirectors beacon upgrades', function () {
   async function deployFixture() {
     const [beaconOwner, boardMember1, boardMember2, attacker] = await ethers.getSigners()
 
