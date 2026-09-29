@@ -230,15 +230,21 @@ coverage; the latest execution result and artifacts belong in Playwright and CI 
     `E2E-PATH-06`.
   - Dependencies: an operational company, eligible issuer, funded Bank, and at least one shareholder.
   - Main path:
-    - [x] Create an operational company, add a member, and issue `30 E2E` to the owner and `10 E2E` to the member through browser writes.
+    - [x] Create an operational company with the required authenticated members, then issue `30 E2E` to the owner and `10 E2E` to one member
+          through browser writes.
     - [x] Verify both successful receipts, `Minted` events, the `40 E2E` total supply, and the two-address shareholder register on-chain.
     - [x] Fund Bank with `4 USDC` through the portal and distribute the held balance through the direct owner authorization path.
     - [x] Verify the Bank and Investor distribution events, the two successful proportional payments (`3 USDC` and `1 USDC`), and the
           emptied Bank balance on-chain.
-    - [x] Reload and verify the two-shareholder cap table, `75%` / `25%` ownership, and the grouped distribution activity with both
+    - [x] Establish a real three-seat Board through the Elections and Board contracts, transfer Bank ownership to it, and fund Bank again.
+    - [x] Submit the second dividend through the owner browser, verify the zero-based Board action is persisted, and confirm that balances
+          do not move before the approval quorum is reached.
+    - [x] Approve through a second Board-member browser and verify quorum execution, Board approval and execution events, the Bank and
+          Investor distribution events, both proportional payments, and the emptied Bank balance on-chain.
+    - [x] Reload and verify the two-shareholder cap table, `75%` / `25%` ownership, and both grouped distribution activities with their
           shareholder payments.
-  - Expected result: issuance and distribution are reflected consistently in balances and history.
-  - Status: integrated main path for direct owner distribution; Board action orchestration remains focused frontend evidence.
+  - Expected result: direct-owner and Board-approved distributions produce the same durable proportional shareholder result.
+  - Status: integrated main paths for direct owner distribution and Board action approval/execution.
   - Evidence:
     [integrated shareholder issuance and dividend lifecycle](../../app/test/e2e/shareholder/shareholder-issuance-dividends.integrated.spec.ts).
 

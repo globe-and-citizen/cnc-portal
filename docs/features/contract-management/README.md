@@ -221,7 +221,7 @@ flowchart LR
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `eea70642a42652b212473784e06ab8c1e536c77a`
+**Implementation evidence reviewed against:** `981b174cd7d46564ceff2b07eef46baf60467130`
 
 - [Board reads](../../../app/src/composables/bod/reads.ts), [Board writes](../../../app/src/composables/bod/writes.ts),
   [shared contract reads](../../../app/src/composables/contracts/useContractReadData.ts), and
@@ -242,6 +242,8 @@ flowchart LR
 - [Contract-status behaviour](../../../app/src/composables/contracts/useContractStatusChange.ts)
 - [Pending Board-action behaviour](../../../app/src/components/sections/ContractManagementView/MainContractActions.vue)
 - [Pending Board-action data formatting](../../../app/src/utils/contracts/management.ts)
+- [Integrated Board dividend approval and quorum execution](../../../app/test/e2e/shareholder/shareholder-issuance-dividends.integrated.spec.ts),
+  including persistence of the first zero-based Board action
 - [Campaign Management section](../../../app/src/components/sections/ContractManagementView/AdvertiseContractSection.vue)
 - [Advertising campaign workspace](../../../app/src/components/sections/ContractManagementView/AdvertisingCampaignWorkspace.vue)
 - [Campaign Manager setup form](../../../app/src/components/sections/ContractManagementView/forms/CreateAddCampaign.vue) and
