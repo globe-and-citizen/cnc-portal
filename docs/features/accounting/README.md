@@ -64,8 +64,28 @@ insufficient; the detailed evidence distribution remains available in the genera
 | US-ACCT-002 | ✅ Integrated | ✅ 12/12        | —                                                                   |
 | US-ACCT-003 | ✅ Integrated | ✅ 11/11        | —                                                                   |
 | US-ACCT-004 | ✅ Integrated | ✅ 9/9          | —                                                                   |
-| US-ACCT-005 | ✅ Integrated | ⚠️ 12/13        | 1 — `AC-US-ACCT-005-10`, whose historical sources are not built yet |
+| US-ACCT-005 | ✅ Integrated | ✅ 13/13        | —                                                                   |
 | US-ACCT-006 | ✅ Integrated | ✅ 11/11        | —                                                                   |
+
+### Accounting Use-Case Test Evidence
+
+The story matrix tracks user-visible acceptance criteria. This table links the active accounting rules in the
+[rule catalogue](./journal-entry-catalogue.md) to their representative mapper tests. These are frontend unit tests; the integrated journeys
+exercise representative company operations, not every rule. The catalogue's declared inactive identifiers are intentionally not counted as
+implemented use cases.
+
+| Use-Case Family        | Active Rules                                              | Representative Tests                                                                                                                                                                                                                                                                                                                                                                                                          |
+| ---------------------- | --------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Treasury and Safe cash | `UC-BANK-02`, `UC-BANK-03`, `INTERNAL`, `CASH-OUT`, `FEE` | [bank.spec.ts](../../../app/src/utils/accounting/__tests__/bank.spec.ts), [safe.spec.ts](../../../app/src/utils/accounting/__tests__/safe.spec.ts), [bankFeeAssembly.spec.ts](../../../app/src/utils/accounting/__tests__/bankFeeAssembly.spec.ts), [internalAddresses.spec.ts](../../../app/src/utils/accounting/__tests__/internalAddresses.spec.ts)                                                                        |
+| Payroll                | `UC-CASH-02`, `UC-CASH-03`                                | [payrollAccrual.spec.ts](../../../app/src/utils/accounting/__tests__/payrollAccrual.spec.ts), [payroll.spec.ts](../../../app/src/utils/accounting/__tests__/payroll.spec.ts), [sherAccrualRate.spec.ts](../../../app/src/utils/accounting/__tests__/sherAccrualRate.spec.ts), [sherIssuance.spec.ts](../../../app/src/utils/accounting/__tests__/sherIssuance.spec.ts)                                                        |
+| Expense payout         | `UC-EXP-01`                                               | [expenseAccount.spec.ts](../../../app/src/utils/accounting/__tests__/expenseAccount.spec.ts), [enrichment.spec.ts](../../../app/src/utils/accounting/__tests__/enrichment.spec.ts), [orchestrator.spec.ts](../../../app/src/utils/accounting/__tests__/orchestrator.spec.ts)                                                                                                                                                  |
+| Community Credit       | `UC-CREDIT-01`, `UC-CREDIT-03`, `UC-CREDIT-05`            | [fixedReturn.spec.ts](../../../app/src/utils/accounting/__tests__/fixedReturn.spec.ts), [fixedReturn.interest.spec.ts](../../../app/src/utils/accounting/__tests__/fixedReturn.interest.spec.ts), [assemble.fixedReturn.spec.ts](../../../app/src/utils/accounting/__tests__/assemble.fixedReturn.spec.ts), [generation migration spec](../../../app/src/composables/accounting/__tests__/useCNCAccounting.migration.spec.ts) |
+| Investor               | `UC-SDR-01`, `UC-INV-01`, `DEFAULT-D`                     | [safeDepositRouter.spec.ts](../../../app/src/utils/accounting/__tests__/safeDepositRouter.spec.ts), [investor.spec.ts](../../../app/src/utils/accounting/__tests__/investor.spec.ts), [sherIssuance.spec.ts](../../../app/src/utils/accounting/__tests__/sherIssuance.spec.ts)                                                                                                                                                |
+| Vesting                | `UC-VEST-01`, `UC-VEST-02`, `UC-VEST-03`                  | [vesting.spec.ts](../../../app/src/utils/accounting/__tests__/vesting.spec.ts), [sherIssuance.spec.ts](../../../app/src/utils/accounting/__tests__/sherIssuance.spec.ts)                                                                                                                                                                                                                                                      |
+
+The real-operation evidence is in the [Accounting journey](../../../app/test/e2e/accounting/accounting-journey.integrated.spec.ts) and
+[contract-generation journey](../../../app/test/e2e/accounting/accounting-generations.integrated.spec.ts). Their current execution status is
+reported by CI and is separate from the test evidence listed above.
 
 ## Proof Strategy Reference
 
@@ -292,7 +312,7 @@ Each acceptance criterion references one reusable strategy instead of repeating 
 - [x] `AC-US-ACCT-005-08` Current Investor identity takes precedence over `InvestorV1`; the legacy contract remains the fallback when no
       current Investor exists.
 - [x] `AC-US-ACCT-005-09` Duplicate generation events are removed by their on-chain identity.
-- [ ] `AC-US-ACCT-005-10` Historical Community Credit terms and SHER valuation inputs resolve from their owning generation.
+- [x] `AC-US-ACCT-005-10` Historical Community Credit terms and SHER valuation inputs resolve from their owning generation.
 
 #### Edge & Error Cases
 
@@ -302,21 +322,21 @@ Each acceptance criterion references one reusable strategy instead of repeating 
 
 ### Test Coverage
 
-| Acceptance Criterion | Proof Strategy           | Current Evidence          | Status     |
-| -------------------- | ------------------------ | ------------------------- | ---------- |
-| `AC-US-ACCT-005-01`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E + Frontend | ✅ Met     |
-| `AC-US-ACCT-005-02`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E            | ✅ Met     |
-| `AC-US-ACCT-005-03`  | `PS-FRONTEND`            | Frontend                  | ✅ Met     |
-| `AC-US-ACCT-005-04`  | `PS-FRONTEND`            | Frontend                  | ✅ Met     |
-| `AC-US-ACCT-005-05`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E + Frontend | ✅ Met     |
-| `AC-US-ACCT-005-06`  | `PS-FRONTEND`            | None linked               | ❌ Missing |
-| `AC-US-ACCT-005-07`  | `PS-FRONTEND`            | Frontend                  | ✅ Met     |
-| `AC-US-ACCT-005-08`  | `PS-FRONTEND`            | Frontend                  | ✅ Met     |
-| `AC-US-ACCT-005-09`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E            | ✅ Met     |
-| `AC-US-ACCT-005-10`  | `PS-FRONTEND`            | None linked               | ❌ Missing |
-| `AC-US-ACCT-005-11`  | `PS-FRONTEND`            | Frontend                  | ✅ Met     |
-| `AC-US-ACCT-005-12`  | `PS-FRONTEND`            | Frontend                  | ✅ Met     |
-| `AC-US-ACCT-005-13`  | `PS-FRONTEND`            | Frontend                  | ✅ Met     |
+| Acceptance Criterion | Proof Strategy           | Current Evidence          | Status |
+| -------------------- | ------------------------ | ------------------------- | ------ |
+| `AC-US-ACCT-005-01`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E + Frontend | ✅ Met |
+| `AC-US-ACCT-005-02`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E            | ✅ Met |
+| `AC-US-ACCT-005-03`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
+| `AC-US-ACCT-005-04`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
+| `AC-US-ACCT-005-05`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E + Frontend | ✅ Met |
+| `AC-US-ACCT-005-06`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
+| `AC-US-ACCT-005-07`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
+| `AC-US-ACCT-005-08`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
+| `AC-US-ACCT-005-09`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E            | ✅ Met |
+| `AC-US-ACCT-005-10`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
+| `AC-US-ACCT-005-11`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
+| `AC-US-ACCT-005-12`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
+| `AC-US-ACCT-005-13`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
 
 **Dependencies:** Contract deployment history and US-ACCT-001
 
@@ -378,14 +398,13 @@ applicable stories `Done`.
 ## Known Gaps
 
 - Closing cash balances are not reconciled with live on-chain balances (`US-ACCT-001`).
-- Historical Community Credit terms and SHER valuation inputs still use current-generation sources (`US-ACCT-005`).
 - Off-platform activity without a connected data source is absent from the automated books.
 - Safe outgoing evidence does not infer cash movements hidden inside MultiSend, module, or custom calls.
 - A Bank fee without matching outflow evidence is withheld until the source feed can be reconciled (`US-ACCT-002`).
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `006685cb46c8408101e785b258482092a1e63f70`
+**Implementation evidence reviewed against:** `79315400c2ea74759a5505d6c66382ad3279b045`
 
 - [Accounting page](../../../app/src/components/sections/AccountingView/AccountingPage.vue),
   [team routes](../../../app/src/router/index.ts), and [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts)

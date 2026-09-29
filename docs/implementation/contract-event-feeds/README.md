@@ -53,6 +53,9 @@ flowchart LR
 - RPC logs are the only client-side source for these contract event feeds.
 - A decoded event has the stable identity `<txHash>-<logIndex>`; duplicate scans collapse on that identity.
 - Contract generations scan from their deployment boundary whenever it is known.
+- FixedReturn `LendingOfferCreated` rows preserve the offer token and fixed-return basis points, allowing Accounting to value historical
+  rounds from the contract generation that emitted them. SafeDepositRouter multiplier-change rows retain their emitter address and timestamp
+  for historical SHER valuation.
 - Equivalent target sets share one deterministic event-query identity regardless of input order or address casing. Changing an address or
   its effective deployment boundary changes that identity.
 - A failed generation scan leaves the remaining generations available and records a scan gap for consumers that surface reconciliation
@@ -68,7 +71,7 @@ flowchart LR
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `006685cb46c8408101e785b258482092a1e63f70`
+**Implementation evidence reviewed against:** `79315400c2ea74759a5505d6c66382ad3279b045`
 
 - [Shared RPC log scanner](../../../app/src/composables/eventsViaLogs.ts),
   [immutable block timestamp query](../../../app/src/queries/blockTimestamp.queries.ts), and
