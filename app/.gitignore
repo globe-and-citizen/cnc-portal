@@ -36,6 +36,7 @@ coverage
 .cache-synpress
 test-results
 playwright-report
+blob-report
 # Sentry Config File
 .env.sentry-build-plugin
 

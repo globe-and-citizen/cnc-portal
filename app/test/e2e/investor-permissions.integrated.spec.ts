@@ -1,6 +1,6 @@
 import { keccak256, toBytes, type Address } from 'viem'
 import type { Team } from '../../src/types/team'
-import { expect, test } from './fixtures'
+import { expect, test } from './fixtures/integrated'
 import { E2E_MEMBER, E2E_MEMBER_PRIVATE_KEY, publicClient, artifact } from './e2e-chain'
 
 const minterRole = keccak256(toBytes('MINTER_ROLE'))

@@ -1,5 +1,5 @@
 import { type Hex } from 'viem'
-import { expect, test } from '../fixtures'
+import { expect, test } from '../fixtures/integrated'
 import { E2E_MEMBER, E2E_MEMBER_PRIVATE_KEY, tokenBalance } from '../e2e-chain'
 import { payrollUsdc as usdc, wageClaimState } from './payroll-chain'
 import {

@@ -93,7 +93,7 @@ jobs:
           echo "The browser-acceptance frontend did not become ready"
           exit 1
 
-      - name: 🧪 Run browser acceptance coverage
+      - name: 🧪 Run isolated and chain-backed browser coverage
         run: npm run test:browser:acceptance:coverage
         working-directory: ./app
         env:

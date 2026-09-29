@@ -1,4 +1,4 @@
-import { expect, test } from '../fixtures'
+import { expect, test } from '../fixtures/chain'
 import { parseUnits } from 'viem'
 import { E2E_MEMBER, E2E_OWNER } from '../e2e-chain'
 import {

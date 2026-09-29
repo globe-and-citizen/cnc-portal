@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test'
-import { expect, test } from '../fixtures'
+import { expect, test } from '../fixtures/integrated'
 import {
   E2E_MEMBER,
   E2E_MEMBER_PRIVATE_KEY,

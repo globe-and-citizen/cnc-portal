@@ -1,4 +1,4 @@
-import { expect, test } from '../fixtures'
+import { expect, test } from '../fixtures/mocked'
 import {
   archiveAction,
   archivedBanner,
@@ -27,10 +27,11 @@ import {
 } from './company-lifecycle-page'
 
 const DELETED = 'Company deleted successfully'
+const TAGS = ['@US-COMPANIES-008', '@browser', '@mocked', '@parallel-safe']
 
 // Mocked browser coverage of US-COMPANIES-008. The API is simulated, so cascading
 // deletion of related records needs backend coverage.
-test.describe('Company deletion', { tag: ['@US-COMPANIES-008', '@browser', '@mocked'] }, () => {
+test.describe('Company deletion', { tag: TAGS }, () => {
   test('lets the owner delete the company from the dashboard and returns to the list', async ({
     page
   }) => {

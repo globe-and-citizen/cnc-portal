@@ -1,4 +1,4 @@
-import { expect, test } from './fixtures'
+import { expect, test } from './fixtures/integrated'
 import { ownerNonce } from './company/company-chain'
 import { signInToRealStack } from './company/real-company-page'
 

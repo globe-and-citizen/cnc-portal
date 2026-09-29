@@ -3,7 +3,7 @@ import { parseEther, parseUnits } from 'viem'
 import type { Locator, Page } from '@playwright/test'
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
-import { expect, test } from './fixtures'
+import { expect, test } from './fixtures/integrated'
 import {
   E2E_MEMBER,
   E2E_MEMBER_PRIVATE_KEY,

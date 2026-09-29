@@ -1,5 +1,5 @@
 import { zeroAddress } from 'viem'
-import { expect, test } from '../fixtures'
+import { expect, test } from '../fixtures/chain'
 import { E2E_MEMBER, E2E_NEW_SIGNER, E2E_OWNER } from '../e2e-chain'
 import { rejectNextWalletRequest } from '../e2e-page'
 import {

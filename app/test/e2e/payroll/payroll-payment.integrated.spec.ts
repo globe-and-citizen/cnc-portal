@@ -1,5 +1,5 @@
 import { parseEther, parseUnits, type Hex } from 'viem'
-import { expect, test } from '../fixtures'
+import { expect, test } from '../fixtures/integrated'
 import { E2E_MEMBER, E2E_MEMBER_PRIVATE_KEY, publicClient, tokenBalance } from '../e2e-chain'
 import {
   assertThreeAssetPayment,

@@ -1,4 +1,4 @@
-import { expect, test } from '../fixtures'
+import { expect, test } from '../fixtures/chain'
 import { parseEther, parseUnits } from 'viem'
 import { E2E_MEMBER, nativeBalance, sendToken, tokenBalance } from '../e2e-chain'
 import {
