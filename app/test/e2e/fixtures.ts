@@ -1,7 +1,22 @@
-import { test as base, type Page } from '@playwright/test'
+import { test as base, type BrowserContext, type Page } from '@playwright/test'
 import { mkdir, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { randomUUID } from 'node:crypto'
+import type { Hex } from 'viem'
+import { E2E_OWNER_PRIVATE_KEY, revertChain, snapshotChain } from './e2e-chain'
+import { useWallet } from './e2e-page'
+import { signInToRealStack } from './company/real-company-page'
+import {
+  deleteIntegratedTeam,
+  removeIntegratedTeamFeatureOverride,
+  setIntegratedTeamFeatureOverride,
+  type IntegratedFeatureStatus
+} from './integrated-api'
+import {
+  createOperationalTeamFixture,
+  type OperationalTeamFixture,
+  type OperationalTeamOptions
+} from './team-factory'
 
 const COVERAGE_DIR = join(process.cwd(), 'coverage', 'e2e', '.tmp')
 const TOKEN_PRICE_ROUTE = 'https://api.coingecko.com/api/v3/coins/**'
@@ -39,11 +54,86 @@ async function dumpCoverage(page: Page): Promise<void> {
   )
 }
 
-export const test = base.extend({
+async function stubTokenPrices(target: Page | BrowserContext): Promise<void> {
+  await target.route(TOKEN_PRICE_ROUTE, (route) => route.fulfill({ json: TOKEN_PRICE_RESPONSE }))
+}
+
+export type WalletPageFactory = (privateKey: Hex) => Promise<Page>
+export type OperationalTeamFactory = (
+  options?: OperationalTeamOptions
+) => Promise<OperationalTeamFixture>
+export type TeamFeatureOverrideFactory = (
+  teamId: string,
+  functionName: string,
+  status: IntegratedFeatureStatus
+) => Promise<void>
+
+interface E2EFixtures {
+  authenticatedPage: Page
+  walletPage: WalletPageFactory
+  operationalTeam: OperationalTeamFactory
+  teamFeatureOverride: TeamFeatureOverrideFactory
+  chainIsolation: void
+}
+
+export const test = base.extend<E2EFixtures>({
+  chainIsolation: [
+    async ({}, use) => {
+      const snapshotId = await snapshotChain()
+      try {
+        await use()
+      } finally {
+        await revertChain(snapshotId)
+      }
+    },
+    { auto: true }
+  ],
   page: async ({ page }, use) => {
-    await page.route(TOKEN_PRICE_ROUTE, (route) => route.fulfill({ json: TOKEN_PRICE_RESPONSE }))
+    await stubTokenPrices(page)
     await use(page)
     await dumpCoverage(page)
+  },
+  authenticatedPage: async ({ page }, use) => {
+    await useWallet(page, E2E_OWNER_PRIVATE_KEY)
+    await signInToRealStack(page)
+    await use(page)
+  },
+  walletPage: async ({ browser }, use) => {
+    const sessions: Array<{ context: BrowserContext; page: Page }> = []
+    await use(async (privateKey) => {
+      const context = await browser.newContext()
+      await stubTokenPrices(context)
+      const page = await context.newPage()
+      sessions.push({ context, page })
+      await useWallet(page, privateKey)
+      await signInToRealStack(page)
+      return page
+    })
+    for (const { context, page } of sessions.reverse()) {
+      await dumpCoverage(page)
+      await context.close()
+    }
+  },
+  operationalTeam: async ({}, use) => {
+    const teams: OperationalTeamFixture[] = []
+    await use(async (options) => {
+      const team = await createOperationalTeamFixture(options)
+      teams.push(team)
+      return team
+    })
+    for (const team of teams.reverse()) {
+      await deleteIntegratedTeam(team.teamId)
+    }
+  },
+  teamFeatureOverride: async ({}, use) => {
+    const overrides: Array<{ teamId: string; functionName: string }> = []
+    await use(async (teamId, functionName, status) => {
+      await setIntegratedTeamFeatureOverride(teamId, functionName, status)
+      overrides.push({ teamId, functionName })
+    })
+    for (const { teamId, functionName } of overrides.reverse()) {
+      await removeIntegratedTeamFeatureOverride(teamId, functionName)
+    }
   }
 })
 

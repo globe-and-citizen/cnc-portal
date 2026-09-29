@@ -1,14 +1,6 @@
 import { expect, test } from '../fixtures'
 import { parseUnits } from 'viem'
-import {
-  E2E_MEMBER,
-  nativeBalance,
-  revertChain,
-  sendNative,
-  sendToken,
-  snapshotChain,
-  tokenBalance
-} from '../e2e-chain'
+import { E2E_MEMBER, nativeBalance, sendNative, sendToken, tokenBalance } from '../e2e-chain'
 import { dialogAmount, E2E_RPC_ROUTE, failLogReads, rejectNextWalletRequest } from '../e2e-page'
 import { deployBankE2EFixture, type BankE2EFixture } from '../bank/bank-chain'
 import { selectRecipient } from '../bank/bank-page'
@@ -21,18 +13,9 @@ import {
 } from './expense-page'
 
 let fixture: BankE2EFixture
-let snapshotId: string
 
 test.beforeAll(async () => {
   fixture = await deployBankE2EFixture()
-})
-
-test.beforeEach(async () => {
-  snapshotId = await snapshotChain()
-})
-
-test.afterEach(async () => {
-  await revertChain(snapshotId)
 })
 
 test.describe('Expense Account', { tag: ['@browser', '@mocked'] }, () => {

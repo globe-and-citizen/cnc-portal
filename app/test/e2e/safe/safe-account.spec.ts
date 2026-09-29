@@ -4,10 +4,8 @@ import {
   E2E_MEMBER,
   E2E_NEW_SIGNER,
   nativeBalance,
-  revertChain,
   sendNative,
   sendToken,
-  snapshotChain,
   tokenBalance
 } from '../e2e-chain'
 import { dialogAmount, rejectNextWalletRequest, selectToken } from '../e2e-page'
@@ -23,18 +21,9 @@ import {
 import { transaction } from './safe-transaction'
 
 let fixture: SafeE2EFixture
-let snapshotId: string
 
 test.beforeAll(async () => {
   fixture = await deploySafeE2EFixture()
-})
-
-test.beforeEach(async () => {
-  snapshotId = await snapshotChain()
-})
-
-test.afterEach(async () => {
-  await revertChain(snapshotId)
 })
 
 test.describe('Safe Account', { tag: ['@browser', '@mocked'] }, () => {

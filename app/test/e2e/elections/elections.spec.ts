@@ -1,6 +1,6 @@
 import { zeroAddress } from 'viem'
 import { expect, test } from '../fixtures'
-import { E2E_MEMBER, E2E_NEW_SIGNER, E2E_OWNER, revertChain, snapshotChain } from '../e2e-chain'
+import { E2E_MEMBER, E2E_NEW_SIGNER, E2E_OWNER } from '../e2e-chain'
 import { rejectNextWalletRequest } from '../e2e-page'
 import {
   castOwnerVote,
@@ -24,18 +24,9 @@ import {
 } from './elections-page'
 
 let fixture: ElectionsE2EFixture
-let snapshotId: string
 
 test.beforeAll(async () => {
   fixture = await deployElectionsE2EFixture()
-})
-
-test.beforeEach(async () => {
-  snapshotId = await snapshotChain()
-})
-
-test.afterEach(async () => {
-  await revertChain(snapshotId)
 })
 
 test.describe('Board Elections lifecycle', { tag: ['@browser', '@mocked'] }, () => {

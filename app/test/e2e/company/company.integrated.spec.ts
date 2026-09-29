@@ -1,7 +1,7 @@
 import type { Address } from 'viem'
 import { expect, test } from '../fixtures'
 import { E2E_MEMBER, E2E_MEMBER_PRIVATE_KEY, E2E_OWNER, hasCode, publicClient } from '../e2e-chain'
-import { openAccountFromSidebar, useWallet } from '../e2e-page'
+import { openAccountFromSidebar } from '../e2e-page'
 import {
   deployedContracts,
   expectedContractTypes,
@@ -16,7 +16,6 @@ import {
   finishRealCompanyWithoutContracts,
   openCompanyMetadataActions,
   openRealCompaniesList,
-  signInToRealStack,
   uniqueCompanyName
 } from './real-company-page'
 
@@ -136,12 +135,11 @@ test.describe(
      * - [AC-US-COMPANIES-005-02]
      * - [AC-US-COMPANIES-005-03]
      */
-    test('updates company details and manages the member lifecycle', async ({ browser, page }) => {
-      const memberContext = await browser.newContext()
-      const memberPage = await memberContext.newPage()
-      await useWallet(memberPage, E2E_MEMBER_PRIVATE_KEY)
-      await signInToRealStack(memberPage)
-      await memberContext.close()
+    test('updates company details and manages the member lifecycle', async ({
+      walletPage,
+      page
+    }) => {
+      await walletPage(E2E_MEMBER_PRIVATE_KEY)
 
       const company = await createRealCompany(page)
       const teamId = String(company.id)

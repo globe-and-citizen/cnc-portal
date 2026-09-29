@@ -124,7 +124,12 @@ export async function submitDailyClaim(
   page: Page,
   options: { hours: string; memo: string }
 ): Promise<void> {
-  await page.locator('[data-test="modal-submit-hours-button"]').click()
+  const openClaim = page.locator('[data-test="modal-submit-hours-button"]')
+  await expect(
+    openClaim,
+    'The selected Payroll week must allow claim submission before the scenario continues'
+  ).toBeEnabled({ timeout: 10_000 })
+  await openClaim.click()
   const dialog = page.getByRole('dialog', { name: 'Submit Claim' })
   await dialog.locator('[data-test="hours-worked-input"]').fill(options.hours)
   await dialog.locator('[data-test="memo-input"]').fill(options.memo)
