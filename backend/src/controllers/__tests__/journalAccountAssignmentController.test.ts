@@ -100,7 +100,7 @@ describe('JournalAccountAssignment Controller', () => {
   });
 
   describe('PUT /', () => {
-    it('rejects a missing or unsupported account', async () => {
+    it('[AC-US-ACCT-006-06] [AC-US-ACCT-006-10] rejects a missing or unsupported account', async () => {
       expect(
         (await request(app).put('/').send({ teamId: 1, journalEntryId: JOURNAL_ENTRY_ID })).status
       ).toBe(400);
@@ -115,7 +115,7 @@ describe('JournalAccountAssignment Controller', () => {
       ).toBe(400);
     });
 
-    it('rejects a log id because assignments key the complete JournalEntry hash', async () => {
+    it('[AC-US-ACCT-006-10] rejects a log id because assignments key the complete JournalEntry hash', async () => {
       const response = await request(app)
         .put('/')
         .send({

@@ -68,7 +68,7 @@ describe('exact accounting precision', () => {
     expect(view.totalAssets).toBe('$0.01')
   })
 
-  it('sums report families before presentation rounding', () => {
+  it('[AC-US-ACCT-004-07] sums report families before presentation rounding', () => {
     const journal = finalizeJournal([
       posting('service', 'Cash — Bank', 'Service Revenue', 4_000n),
       posting('gain', 'Cash — Safe', 'Trading Gain', 4_000n),

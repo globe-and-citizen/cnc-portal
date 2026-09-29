@@ -101,7 +101,7 @@ describe('Bank fee journal assembly', () => {
     expect(accounting.unmatchedFeeOperationIds).toEqual([operationId])
   })
 
-  it('assembles fees from legacy and current Bank generations against their paying Bank', () => {
+  it('[AC-US-ACCT-005-03] assembles fees from legacy and current Bank generations against their paying Bank', () => {
     const legacyOperation = `0x${'a'.repeat(64)}`
     const currentOperation = `0x${'b'.repeat(64)}`
     const events = bankEvents(currentOperation, true)
