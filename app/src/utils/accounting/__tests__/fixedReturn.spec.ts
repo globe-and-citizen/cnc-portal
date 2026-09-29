@@ -154,8 +154,8 @@ describe('mapFixedReturnEvents', () => {
       ctx
     )
     expect(entries.map((e) => e.id)).toEqual([
-      `credit-principal-1-${ADDR.lender}`,
-      `credit-principal-1-${ADDR.client}`
+      `credit-principal-${ADDR.credit}-1-${ADDR.lender}`,
+      `credit-principal-${ADDR.credit}-1-${ADDR.client}`
     ])
     expect(entries.reduce((sum, e) => sum + Number(e.rawAmount), 0)).toBe(10000000)
   })

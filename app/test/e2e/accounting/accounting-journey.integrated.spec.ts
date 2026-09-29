@@ -260,6 +260,7 @@ test.describe(
 
         // 9. The owner labels it, and the label survives a reload.
         await assignWithdrawalAccount(page, ASSIGNED_ACCOUNT, ASSIGNMENT_MEMO)
+        await page.reload()
         await openAccounting(page, teamId, 'account-assignments')
         expect(await readAssignmentDecision(page)).toBe(ASSIGNED_ACCOUNT)
 

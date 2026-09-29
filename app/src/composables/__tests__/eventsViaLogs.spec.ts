@@ -284,7 +284,7 @@ describe('useContractEventsViaLogs query identity', () => {
     expect(query).not.toHaveProperty('loading')
   })
 
-  it('is stable across target order and address casing', () => {
+  it('[AC-US-ACCT-005-06] keys event feeds by normalized deployment addresses and boundaries', () => {
     useTestEventFeed([
       { address: NEW, fromBlock: 20n },
       { address: OLD.toUpperCase(), fromBlock: 10n }
@@ -308,7 +308,7 @@ describe('useContractEventsViaLogs query identity', () => {
     ])
   })
 
-  it('uses the earliest effective boundary when an address is repeated', () => {
+  it('[AC-US-ACCT-005-06] uses the earliest effective boundary when an address is repeated', () => {
     useTestEventFeed([
       { address: OLD, fromBlock: 30n },
       { address: OLD.toUpperCase(), fromBlock: 10n },
@@ -326,7 +326,7 @@ describe('useContractEventsViaLogs query identity', () => {
     ])
   })
 
-  it('reacts when a deployment boundary becomes available or changes', () => {
+  it('[AC-US-ACCT-005-06] reacts when a deployment boundary becomes available or changes', () => {
     const targets = ref<ScanTarget[]>([{ address: OLD }])
     useTestEventFeed(targets)
     const query = capturedQuery()

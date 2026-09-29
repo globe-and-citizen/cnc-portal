@@ -45,8 +45,8 @@
  * A repayment then draws that liability down; only a fee that was never recognised
  * — because the round's rate was unavailable — falls through to `Interest Expense`
  * at payment time. Either way the total cost booked is exactly what the lenders
- * were paid. The rate travels on `LendingOfferCreated` but not through the mapper's
- * feed, so recognition happens only when `offerTerms` is supplied (see `assemble`).
+ * were paid. The generation-scoped rate travels on `LendingOfferCreated`, so
+ * historical rounds do not depend on a read from the current deployment.
  *
  * Splitting a repayment installment: `repayLenders` distributes cumulatively and
  * makes no principal/interest distinction, so the split is reconstructed here —
@@ -81,9 +81,13 @@ const INTEREST_EXPENSE = 'Interest Expense' as const
 /** A lender's cumulative deposit on one offer, kept in first-lent order. */
 type OfferDeposits = Map<string, { lender: string; amount: bigint }>
 
-/** `${offerId}|${lender}` — keys a lender's position within one offer. */
-function positionKey(offerId: string, lender: string): string {
-  return `${offerId}|${lender.toLowerCase()}`
+/** Offer ids restart after redeployment, so every running balance is generation-scoped. */
+function scopedOfferKey(offerId: string, contractAddress?: string): string {
+  return `${contractAddress?.toLowerCase() ?? '*'}|${offerId}`
+}
+
+function positionKey(offerId: string, lender: string, contractAddress?: string): string {
+  return `${scopedOfferKey(offerId, contractAddress)}|${lender.toLowerCase()}`
 }
 
 /** Read-modify-write helper for the running per-key bigint balances. */
@@ -94,14 +98,14 @@ function bump(balances: Map<string, bigint>, key: string, delta: bigint): void {
 /** Accumulate a lender's deposit on an offer, preserving first-lent order. */
 function addDeposit(
   byOffer: Map<string, OfferDeposits>,
-  offerId: string,
+  offerKey: string,
   lender: string,
   amount: bigint
 ): void {
-  let deposits = byOffer.get(offerId)
+  let deposits = byOffer.get(offerKey)
   if (!deposits) {
     deposits = new Map()
-    byOffer.set(offerId, deposits)
+    byOffer.set(offerKey, deposits)
   }
   const key = lender.toLowerCase()
   const seen = deposits.get(key)
@@ -126,7 +130,7 @@ export function mapFixedReturnEvents(
 ): JournalEntryDraft[] {
   const tokenByOffer = new Map<string, TokenId>()
   for (const row of input.lendingOfferCreateds ?? []) {
-    tokenByOffer.set(row.offerId, ctx.tokenIdOf(row.token))
+    tokenByOffer.set(scopedOfferKey(row.offerId, row.contractAddress), ctx.tokenIdOf(row.token))
   }
 
   /** Principal sitting in the contract for an offer, not yet swept or refunded. */
@@ -149,17 +153,18 @@ export function mapFixedReturnEvents(
   const entries: JournalEntryDraft[] = []
 
   for (const event of creditTimeline(input)) {
-    const token = tokenByOffer.get(event.offerId)
+    const offerKey = scopedOfferKey(event.offerId, event.contractAddress)
+    const token = tokenByOffer.get(offerKey) ?? tokenByOffer.get(scopedOfferKey(event.offerId))
     if (!token) {
-      if (!unvalued.has(event.offerId)) {
-        unvalued.add(event.offerId)
+      if (!unvalued.has(offerKey)) {
+        unvalued.add(offerKey)
         entries.push(unvaluedOfferMemo(event))
       }
       continue
     }
     const at = atDate(event.timestamp)
     const usd = (raw: bigint): number => ctx.toUsd(raw, token, at)
-    const key = event.lender ? positionKey(event.offerId, event.lender) : ''
+    const key = event.lender ? positionKey(event.offerId, event.lender, event.contractAddress) : ''
 
     switch (event.kind) {
       case 'lent': {
@@ -167,10 +172,10 @@ export function mapFixedReturnEvents(
         // deposit is only tracked (per lender, and against the round) — not posted.
         const amount = toBigInt(event.amount)
         if (amount <= 0n || !event.lender) break
-        bump(heldByOffer, event.offerId, amount)
+        bump(heldByOffer, offerKey, amount)
         bump(owedToLender, key, amount)
-        bump(owedByRound, event.offerId, amount)
-        addDeposit(depositsByOffer, event.offerId, event.lender, amount)
+        bump(owedByRound, offerKey, amount)
+        addDeposit(depositsByOffer, offerKey, event.lender, amount)
         break
       }
 
@@ -178,15 +183,15 @@ export function mapFixedReturnEvents(
         // The round closed: the whole principal raised is swept to Bank in the
         // same transaction and is now the team's money. Recognise the loan here,
         // straight to Bank — one leg per lender, so the journal reads who is owed.
-        const deposits = depositsByOffer.get(event.offerId)
-        heldByOffer.set(event.offerId, 0n)
-        depositsByOffer.delete(event.offerId)
+        const deposits = depositsByOffer.get(offerKey)
+        heldByOffer.set(offerKey, 0n)
+        depositsByOffer.delete(offerKey)
         if (!deposits) break
         for (const { lender, amount } of deposits.values()) {
           if (amount <= 0n) continue
           entries.push(
             makeJournalEntryDraft({
-              id: `credit-principal-${event.offerId}-${lender.toLowerCase()}`,
+              id: `credit-principal-${event.contractAddress?.toLowerCase() ?? 'unknown'}-${event.offerId}-${lender.toLowerCase()}`,
               sourceOperationId: event.id,
               sourceContract: event.contractAddress,
               timestamp: event.timestamp,
@@ -211,7 +216,7 @@ export function mapFixedReturnEvents(
         const owed = toBigInt(event.amount)
         if (owed <= 0n) break
         bump(payableToLender, key, owed)
-        bump(owedByRound, event.offerId, owed)
+        bump(owedByRound, offerKey, owed)
         entries.push(
           makeJournalEntryDraft({
             id: event.id,
@@ -236,7 +241,7 @@ export function mapFixedReturnEvents(
         if (amount <= 0n) break
         const outstanding = owedToLender.get(key) ?? 0n
         const principal = amount < outstanding ? amount : outstanding
-        const creditRemainingUsd = drawRound(owedByRound, event.offerId, amount, usd)
+        const creditRemainingUsd = drawRound(owedByRound, offerKey, amount, usd)
         if (principal > 0n) {
           owedToLender.set(key, outstanding - principal)
           entries.push(
@@ -276,9 +281,9 @@ export function mapFixedReturnEvents(
         // trackers for the round are simply unwound.
         const amount = toBigInt(event.amount)
         if (amount <= 0n) break
-        bump(heldByOffer, event.offerId, -amount)
+        bump(heldByOffer, offerKey, -amount)
         bump(owedToLender, key, -amount)
-        bump(owedByRound, event.offerId, -amount)
+        bump(owedByRound, offerKey, -amount)
         break
       }
     }
