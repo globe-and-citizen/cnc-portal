@@ -1,6 +1,7 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { createTestingPinia } from '@pinia/testing'
+import { nextTick, ref } from 'vue'
 import InvestorsActions from '@/components/sections/SherTokenView/InvestorsActions.vue'
 import type { Address } from 'viem'
 import { mockInvestorReads, mockTeamStore } from '@/tests/mocks'
@@ -103,6 +104,24 @@ describe('[US-SHER-001][US-SHER-002][US-SHER-004][US-SHER-005] InvestorsActions.
       '0x2222222222222222222222222222222222222222' as Address
     )
     expect(pay.props('bankAddress')).toBe('0x1111111111111111111111111111111111111111' as Address)
+  })
+
+  it('updates the dividend Bank address when the team contracts finish loading', async () => {
+    const loadedBankAddress = '0x1111111111111111111111111111111111111111' as Address
+    const bankAddress = ref<Address | undefined>()
+    mockTeamStore.getContractAddressByType = vi.fn((type: string) => {
+      if (type === 'InvestorV1') return '0x2222222222222222222222222222222222222222'
+      if (type === 'Bank') return bankAddress.value
+      return undefined
+    })
+    const wrapper = createWrapper()
+    const pay = wrapper.findComponent(PayDividendsActionStub)
+
+    expect(pay.props('bankAddress')).toBeUndefined()
+
+    bankAddress.value = loadedBankAddress
+    await nextTick()
+    expect(pay.props('bankAddress')).toBe(loadedBankAddress)
   })
 
   it('shows error toast when token symbol fails', async () => {

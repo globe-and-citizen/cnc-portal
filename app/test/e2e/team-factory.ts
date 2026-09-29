@@ -1,7 +1,8 @@
 import { readFile } from 'node:fs/promises'
 import { randomUUID } from 'node:crypto'
 import { SiweMessage } from 'siwe'
-import type { Address } from 'viem'
+import type { Address, Hex } from 'viem'
+import { privateKeyToAccount } from 'viem/accounts'
 import type { Team } from '../../src/types/team'
 import type { ContractType } from '../../src/types/teamContract'
 import { E2E_RPC_URL } from '../../src/e2e/chain.ts'
@@ -43,6 +44,7 @@ export interface OperationalTeamOptions {
   description?: string
   investorName?: string
   investorSymbol?: string
+  memberPrivateKeys?: readonly Hex[]
 }
 
 const API_BASE_PATH = '/api'
@@ -111,11 +113,17 @@ async function requestJson<T>(
   return JSON.parse(responseText) as T
 }
 
-async function authenticateOwner(backendUrl: URL): Promise<string> {
-  const { nonce } = await requestJson<{ nonce: string }>(backendUrl, `/user/nonce/${E2E_OWNER}`)
+async function authenticateAccount(
+  backendUrl: URL,
+  account: ReturnType<typeof privateKeyToAccount>
+): Promise<string> {
+  const { nonce } = await requestJson<{ nonce: string }>(
+    backendUrl,
+    `/user/nonce/${account.address}`
+  )
   const frontendOrigin = new URL(process.env.BASE_URL ?? 'http://localhost:5173').origin
   const message = new SiweMessage({
-    address: E2E_OWNER,
+    address: account.address,
     statement: 'Sign in with Ethereum to the app.',
     nonce,
     chainId: EXPECTED_CHAIN_ID,
@@ -123,7 +131,7 @@ async function authenticateOwner(backendUrl: URL): Promise<string> {
     domain: frontendOrigin,
     version: '1'
   }).prepareMessage()
-  const signature = await ownerAccount.signMessage({ message })
+  const signature = await account.signMessage({ message })
 
   const { accessToken } = await requestJson<SiweAuthResponse>(backendUrl, '/auth/siwe', {
     method: 'POST',
@@ -180,13 +188,21 @@ export async function createOperationalTeamFixture(
     name: options.investorName ?? 'E2E Shares',
     symbol: options.investorSymbol ?? 'E2E'
   }
-  const token = await authenticateOwner(backendUrl)
+  const memberAccounts = (options.memberPrivateKeys ?? []).map((privateKey) =>
+    privateKeyToAccount(privateKey)
+  )
+  const token = await authenticateAccount(backendUrl, ownerAccount)
+  await Promise.all(memberAccounts.map((account) => authenticateAccount(backendUrl, account)))
   const name = options.name ?? `E2E Factory Company ${randomUUID()}`
   const description = options.description ?? 'Prepared by the integrated E2E team factory.'
   const createdTeam = await requestJson<TeamApiResponse>(backendUrl, '/teams', {
     method: 'POST',
     token,
-    body: { name, description, members: [] }
+    body: {
+      name,
+      description,
+      members: memberAccounts.map((account) => ({ address: account.address }))
+    }
   })
 
   try {
