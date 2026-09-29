@@ -95,7 +95,9 @@ test harness. Consolidating them into a generic response map would obscure the s
 ## Failure diagnostics
 
 Fixture prerequisites must fail before a long journey begins. Page helpers should assert that the next control is visible and enabled before
-clicking it. For example, Payroll claim submission reports a disabled week within ten seconds instead of waiting for the complete test
-timeout.
+clicking it. Payroll wage setup first opens the owning Payroll workspace and verifies the members table, while claim submission reports a
+disabled week within ten seconds instead of waiting for the complete test timeout. A secondary wallet session that consumes a newly created
+notification must be opened after the notification is persisted so its query cache cannot retain pre-scenario data. Navigation from an
+overlay must also dismiss that overlay before the next covered action when it remains mounted across the SPA route change.
 
 Do not increase a scenario timeout to hide an invalid fixture. Repair the prepared state or make the missing prerequisite explicit.

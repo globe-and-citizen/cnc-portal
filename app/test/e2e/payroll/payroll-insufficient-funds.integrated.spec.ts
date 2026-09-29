@@ -28,7 +28,7 @@ test.describe(
 
       await page.goto(`/teams/${company.teamId}`)
       await expect(page).toHaveURL(new RegExp(`/teams/${company.teamId}$`))
-      await setMemberUsdcWage(page, E2E_MEMBER, {
+      await setMemberUsdcWage(page, company.teamId, E2E_MEMBER, {
         weeklyCap: '8',
         dailyCap: '8',
         hourlyRate: '1'

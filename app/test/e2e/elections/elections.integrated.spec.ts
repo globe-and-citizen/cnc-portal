@@ -97,7 +97,6 @@ test.describe(
       const company = await operationalTeam({
         memberPrivateKeys: [E2E_MEMBER_PRIVATE_KEY, E2E_NEW_SIGNER_PRIVATE_KEY]
       })
-      const memberPage = await walletPage(E2E_MEMBER_PRIVATE_KEY)
 
       const creationTime = await currentE2ETime()
       await page.clock.setFixedTime(new Date(creationTime * 1_000))
@@ -137,13 +136,16 @@ test.describe(
       )
 
       await advanceE2ETimeTo(createdElection[4] + 1n)
+      // Open the member session after the notification exists so its query cache
+      // cannot retain an empty or previous-test notification list.
+      const memberPage = await walletPage(E2E_MEMBER_PRIVATE_KEY)
       await memberPage.clock.setFixedTime(new Date((await currentE2ETime()) * 1_000))
       await memberPage.locator('[data-test="notifications"]').click()
       const notification = memberPage
         .locator('a[data-test^="notification-"]')
         .filter({ hasText: electionNotificationMessage })
         .first()
-      await expect(notification).toBeVisible()
+      await expect(notification).toBeVisible({ timeout: 30_000 })
       const notificationRead = memberPage.waitForResponse(
         (response) =>
           response.request().method() === 'PUT' &&
@@ -155,7 +157,14 @@ test.describe(
         new RegExp(`/teams/${company.teamId}/administration/bod-elections$`)
       )
 
-      await memberPage.getByRole('button', { name: 'Vote Now' }).click()
+      // Nuxt UI can retain the notification popover across the SPA navigation,
+      // where it overlaps the election action. Close it before continuing the
+      // visible voting journey.
+      await memberPage.keyboard.press('Escape')
+      await expect(memberPage.locator('[data-test="notification-dropdown"]')).toBeHidden()
+      const voteNow = memberPage.getByRole('button', { name: 'Vote Now' })
+      await expect(voteNow).toBeVisible({ timeout: 30_000 })
+      await voteNow.click()
       const candidates = await electionCandidates(fixture)
       await memberPage.getByRole('button', { name: 'Cast a Vote' }).first().click()
       await expect(memberPage.getByText('Vote Casted successfully!', { exact: true })).toBeVisible({

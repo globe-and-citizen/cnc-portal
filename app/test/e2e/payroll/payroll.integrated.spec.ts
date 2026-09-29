@@ -37,12 +37,12 @@ test.describe(
         memberPage.locator('[data-test="submit-weekly-goals-disabled-button"]')
       ).toBeDisabled()
 
-      await setMemberUsdcWage(page, E2E_MEMBER, {
+      await setMemberUsdcWage(page, company.teamId, E2E_MEMBER, {
         weeklyCap: '12',
         dailyCap: '4',
         hourlyRate: '1'
       })
-      await setMemberUsdcWage(page, E2E_MEMBER, {
+      await setMemberUsdcWage(page, company.teamId, E2E_MEMBER, {
         weeklyCap: '16',
         dailyCap: '6',
         hourlyRate: '2'
@@ -103,7 +103,7 @@ test.describe(
 
       await page.goto(`/teams/${company.teamId}`)
       await expect(page).toHaveURL(new RegExp(`/teams/${company.teamId}$`))
-      await setMemberUsdcWage(page, E2E_MEMBER, {
+      await setMemberUsdcWage(page, company.teamId, E2E_MEMBER, {
         weeklyCap: '16',
         dailyCap: '8',
         hourlyRate: '1'
@@ -146,7 +146,7 @@ test.describe(
 
       await page.goto(`/teams/${company.teamId}`)
       await expect(page).toHaveURL(new RegExp(`/teams/${company.teamId}$`))
-      await setMemberUsdcWage(page, E2E_MEMBER, {
+      await setMemberUsdcWage(page, company.teamId, E2E_MEMBER, {
         weeklyCap: '3',
         dailyCap: '8',
         hourlyRate: '1'

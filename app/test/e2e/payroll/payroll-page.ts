@@ -50,6 +50,7 @@ async function selectFundingAsset(page: Page, dialog: Locator, asset: 'USDC' | '
 
 export async function setMemberUsdcWage(
   page: Page,
+  teamId: string,
   memberAddress: Address,
   options: {
     dailyCap: string
@@ -59,6 +60,12 @@ export async function setMemberUsdcWage(
     sherRate?: string
   }
 ): Promise<void> {
+  const payrollPath = `/teams/${teamId}/accounts/payroll-account`
+  if (new URL(page.url()).pathname !== payrollPath) {
+    await openAccountFromSidebar(page, payrollPath)
+  }
+  await expect(page.locator('[data-test="members-table"]')).toBeVisible({ timeout: 30_000 })
+
   const actions = page.locator(`[data-test="member-actions-${memberAddress}"]`)
   await actions.locator('[data-test="set-wage-button"]').click()
 
