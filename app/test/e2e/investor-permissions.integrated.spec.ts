@@ -2,13 +2,8 @@ import { keccak256, toBytes, type Address } from 'viem'
 import type { Team } from '../../src/types/team'
 import { expect, test } from './fixtures'
 import { E2E_MEMBER, E2E_MEMBER_PRIVATE_KEY, publicClient, artifact } from './e2e-chain'
-import { useWallet } from './e2e-page'
 import { createOperationalTeamFixture } from './team-factory'
-import {
-  addRealCompanyMember,
-  deleteCompanyThroughUi,
-  signInToRealStack
-} from './company/real-company-page'
+import { deleteCompanyThroughUi, signInToRealStack } from './company/real-company-page'
 
 const minterRole = keccak256(toBytes('MINTER_ROLE'))
 
@@ -35,24 +30,15 @@ test.describe(
      * - [AC-US-SHER-009-04]
      * - [AC-US-SHER-009-05]
      */
-    test('grants, persists, and revokes a real Investor minter role', async ({ browser, page }) => {
-      const teamFixture = await createOperationalTeamFixture()
+    test('grants, persists, and revokes a real Investor minter role', async ({ page }) => {
+      const teamFixture = await createOperationalTeamFixture({
+        memberPrivateKeys: [E2E_MEMBER_PRIVATE_KEY]
+      })
 
       try {
         await signInToRealStack(page)
         await page.goto(`/teams/${teamFixture.teamId}`)
         await expect(page).toHaveURL(new RegExp(`/teams/${teamFixture.teamId}$`))
-
-        const memberContext = await browser.newContext()
-        try {
-          const memberPage = await memberContext.newPage()
-          await useWallet(memberPage, E2E_MEMBER_PRIVATE_KEY)
-          await signInToRealStack(memberPage)
-        } finally {
-          await memberContext.close()
-        }
-
-        await addRealCompanyMember(page, teamFixture.teamId, E2E_MEMBER)
 
         const teamLoaded = page.waitForResponse(
           (response) =>

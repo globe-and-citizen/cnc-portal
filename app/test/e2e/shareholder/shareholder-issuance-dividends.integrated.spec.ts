@@ -1,30 +1,41 @@
-import { parseUnits } from 'viem'
+import { encodeFunctionData, parseUnits } from 'viem'
 import { expect, test } from '../fixtures'
 import {
   E2E_MEMBER,
   E2E_MEMBER_PRIVATE_KEY,
+  E2E_NEW_SIGNER,
+  E2E_NEW_SIGNER_PRIVATE_KEY,
   E2E_OWNER,
   publicClient,
   tokenBalance
 } from '../e2e-chain'
 import { useWallet } from '../e2e-page'
+import { deleteCompanyThroughUi, signInToRealStack } from '../company/real-company-page'
 import {
-  addRealCompanyMember,
-  createOperationalCompany,
-  deleteCompanyThroughUi,
-  signInToRealStack
-} from '../company/real-company-page'
+  boardAction,
+  boardActionAddedEvents,
+  boardActionCount,
+  boardActionExecutedEvents,
+  boardApprovalEvents,
+  currentBoard,
+  electionsFixtureFromTeam,
+  establishBoardThroughElection
+} from '../elections/elections-chain'
+import { createOperationalTeamFixture } from '../team-factory'
 import {
   bankDividendEvents,
+  bankOwner,
   bankUsdcBalance,
   dividendDistributedEvents,
   dividendPaidEvents,
   ensureUsdcBalance,
   mintedEvents,
   shareholderIssuanceFixtureFromTeam,
-  shareholderPosition
+  shareholderPosition,
+  transferBankOwnership
 } from './shareholder-chain'
 import {
+  approvePendingBankDividend,
   distributeUsdcDividends,
   fundBankWithUsdc,
   issueShares,
@@ -42,13 +53,15 @@ test.describe(
   '[US-SHER-002/003/004] Integrated SHER issuance and dividend lifecycle',
   { tag: ['@US-SHER-002', '@US-SHER-003', '@US-SHER-004', '@integrated'] },
   () => {
-    test.setTimeout(300_000)
+    test.setTimeout(360_000)
 
     /**
      * Covers:
      * - [AC-US-SHER-002-01]
      * - [AC-US-SHER-002-02]
+     * - [AC-US-SHER-002-03]
      * - [AC-US-SHER-002-04]
+     * - [AC-US-SHER-002-13]
      * - [AC-US-SHER-003-01]
      * - [AC-US-SHER-003-02]
      * - [AC-US-SHER-003-03]
@@ -60,20 +73,20 @@ test.describe(
       browser,
       page
     }) => {
+      const company = await createOperationalTeamFixture({
+        memberPrivateKeys: [E2E_MEMBER_PRIVATE_KEY, E2E_NEW_SIGNER_PRIVATE_KEY]
+      })
       const memberContext = await browser.newContext()
       const memberPage = await memberContext.newPage()
       await useWallet(memberPage, E2E_MEMBER_PRIVATE_KEY)
       await signInToRealStack(memberPage)
-      await memberContext.close()
-
-      const company = await createOperationalCompany(page)
 
       try {
-        await page.locator('[data-test="skip-safe-setup-button"]').click()
-        await addRealCompanyMember(page, company.teamId, E2E_MEMBER)
+        await signInToRealStack(page)
 
         const team = await openRealShareholderManagement(page, company.teamId)
         const fixture = await shareholderIssuanceFixtureFromTeam(team)
+        const electionsFixture = await electionsFixtureFromTeam(team)
         expect(await shareholderPosition(fixture)).toEqual({
           balance: 0n,
           shareholders: [],
@@ -176,6 +189,99 @@ test.describe(
           'success'
         )
 
+        await establishBoardThroughElection(electionsFixture, [
+          E2E_OWNER,
+          E2E_MEMBER,
+          E2E_NEW_SIGNER
+        ])
+        expect(
+          (await currentBoard(electionsFixture)).map((address) => address.toLowerCase()).sort()
+        ).toEqual(
+          [E2E_OWNER, E2E_MEMBER, E2E_NEW_SIGNER].map((address) => address.toLowerCase()).sort()
+        )
+        await transferBankOwnership(fixture, electionsFixture.board)
+        await expect.poll(() => bankOwner(fixture)).toBe(electionsFixture.board)
+
+        await ensureUsdcBalance(fixture, E2E_OWNER, parseUnits('4', 6))
+        await fundBankWithUsdc(page, company.teamId, '4')
+        await expect.poll(() => bankUsdcBalance(fixture)).toBe(parseUnits('4', 6))
+        const ownerBeforeBoard = await tokenBalance(fixture.usdc, E2E_OWNER)
+        const memberBeforeBoard = await tokenBalance(fixture.usdc, E2E_MEMBER)
+        expect(await boardActionCount(electionsFixture)).toBe(0n)
+
+        await openRealShareholderManagement(page, company.teamId)
+        const actionPersisted = page.waitForResponse((response) => {
+          const url = new URL(response.url())
+          return response.request().method() === 'POST' && url.pathname === '/api/actions/'
+        })
+        await distributeUsdcDividends(page, '4')
+        expect((await actionPersisted).status()).toBe(201)
+
+        await expect.poll(() => boardActionCount(electionsFixture)).toBe(1n)
+        const pendingAction = await boardAction(electionsFixture, 0n)
+        expect(pendingAction).toEqual([
+          0n,
+          fixture.bank,
+          expect.stringContaining('Pay Dividends Request'),
+          1,
+          false,
+          encodeFunctionData({
+            abi: fixture.bankArtifact.abi,
+            functionName: 'distributeTokenDividends',
+            args: [fixture.usdc, parseUnits('4', 6)]
+          }),
+          E2E_OWNER
+        ])
+        expect(await bankUsdcBalance(fixture)).toBe(parseUnits('4', 6))
+        expect(await tokenBalance(fixture.usdc, E2E_OWNER)).toBe(ownerBeforeBoard)
+        expect(await tokenBalance(fixture.usdc, E2E_MEMBER)).toBe(memberBeforeBoard)
+        expect(await bankDividendEvents(fixture)).toHaveLength(1)
+        const addedEvents = await boardActionAddedEvents(electionsFixture)
+        expect(addedEvents).toHaveLength(1)
+        expect(addedEvents[0]?.args).toMatchObject({ id: 0n, target: fixture.bank })
+
+        await approvePendingBankDividend(memberPage, company.teamId)
+        await expect.poll(async () => (await boardAction(electionsFixture, 0n))[4]).toBe(true)
+        const executedAction = await boardAction(electionsFixture, 0n)
+        expect(executedAction[3]).toBe(2)
+        expect(executedAction[4]).toBe(true)
+        await expect.poll(() => bankUsdcBalance(fixture)).toBe(0n)
+        await expect
+          .poll(() => tokenBalance(fixture.usdc, E2E_OWNER))
+          .toBe(ownerBeforeBoard + parseUnits('3', 6))
+        await expect
+          .poll(() => tokenBalance(fixture.usdc, E2E_MEMBER))
+          .toBe(memberBeforeBoard + parseUnits('1', 6))
+
+        const [
+          approvalEvents,
+          executedEvents,
+          allBankDistributions,
+          allDistributions,
+          allPayments
+        ] = await Promise.all([
+          boardApprovalEvents(electionsFixture),
+          boardActionExecutedEvents(electionsFixture),
+          bankDividendEvents(fixture),
+          dividendDistributedEvents(fixture),
+          dividendPaidEvents(fixture)
+        ])
+        expect(approvalEvents).toHaveLength(1)
+        expect(approvalEvents[0]?.args).toMatchObject({ id: 0n, approver: E2E_MEMBER })
+        expect(executedEvents).toHaveLength(1)
+        expect(executedEvents[0]?.args).toMatchObject({ id: 0n, target: fixture.bank })
+        expect(allBankDistributions).toHaveLength(2)
+        expect(allDistributions).toHaveLength(2)
+        expect(allPayments).toHaveLength(4)
+        const executionHash = executedEvents[0]?.transactionHash
+        expect(executionHash).toBeTruthy()
+        expect((await publicClient.getTransactionReceipt({ hash: executionHash! })).status).toBe(
+          'success'
+        )
+
+        await memberPage.reload()
+        await expect(memberPage.getByRole('button', { name: '1 Review' })).toHaveCount(0)
+
         await page.reload()
         await expect(page.getByText('2 Investors', { exact: true })).toBeVisible({
           timeout: 30_000
@@ -188,14 +294,20 @@ test.describe(
         await expect(shareholderRows.filter({ hasText: '25.00%' })).toContainText('10 E2E')
 
         const history = page.locator('[data-test="investor-transactions"]')
-        const distributionRow = history.getByRole('row').filter({ hasText: 'Dividend distributed' })
-        await expect(distributionRow).toBeVisible({ timeout: 30_000 })
-        await expect(distributionRow).toContainText('3 events')
-        await distributionRow.locator('[data-test="investor-transaction-expand-button"]').click()
+        const distributionRows = history
+          .getByRole('row')
+          .filter({ hasText: 'Dividend distributed' })
+        await expect(distributionRows).toHaveCount(2, { timeout: 30_000 })
+        await expect(distributionRows.first()).toContainText('3 events')
+        await distributionRows
+          .first()
+          .locator('[data-test="investor-transaction-expand-button"]')
+          .click()
         await expect(
           history.locator('tbody').getByText('Dividend paid', { exact: true })
         ).toHaveCount(2)
       } finally {
+        await memberContext.close()
         if (!page.isClosed()) {
           await deleteCompanyThroughUi(page, company.teamId, company.team.name)
         }

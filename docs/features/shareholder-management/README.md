@@ -74,17 +74,17 @@ flowchart LR
 
 ## Test Coverage Overview
 
-| User Story  | Main Journey  | Coverage Target | Gaps                                                                                          |
-| ----------- | ------------- | --------------- | --------------------------------------------------------------------------------------------- |
-| US-SHER-001 | ✅ Integrated | ✅ 10/10 met    | —                                                                                             |
-| US-SHER-002 | ✅ Integrated | ⚠️ 11/12 met    | `AC-US-SHER-002-03` lacks integrated Board-action execution                                   |
-| US-SHER-003 | ✅ Integrated | ✅ 8/8 met      | —                                                                                             |
-| US-SHER-004 | ✅ Integrated | ⚠️ 7/8 met      | `AC-US-SHER-004-04` lacks contract enforcement                                                |
-| US-SHER-005 | ✅ Integrated | ✅ 9/9 met      | —                                                                                             |
-| US-SHER-006 | 📋 Planned    | ⚠️ 4/8 met      | `AC-US-SHER-006-01`–`03` lack integration; `AC-US-SHER-006-05` has no representative evidence |
-| US-SHER-007 | 📋 Planned    | ⚠️ 5/8 met      | `AC-US-SHER-007-01`, `AC-US-SHER-007-02`, and `AC-US-SHER-007-04` lack integration            |
-| US-SHER-008 | 🔗 Reference  | N/A             | Coverage is owned by `US-CONTRACT-005`                                                        |
-| US-SHER-009 | ✅ Integrated | ✅ 8/8 met      | None                                                                                          |
+| User Story  | Main Journey  | Coverage Target | Gaps                                           |
+| ----------- | ------------- | --------------- | ---------------------------------------------- |
+| US-SHER-001 | ✅ Integrated | ✅ 10/10 met    | —                                              |
+| US-SHER-002 | ✅ Integrated | ✅ 13/13 met    | —                                              |
+| US-SHER-003 | ✅ Integrated | ✅ 8/8 met      | —                                              |
+| US-SHER-004 | ✅ Integrated | ⚠️ 7/8 met      | `AC-US-SHER-004-04` lacks contract enforcement |
+| US-SHER-005 | ✅ Integrated | ✅ 9/9 met      | —                                              |
+| US-SHER-006 | ✅ Integrated | ✅ 8/8 met      | —                                              |
+| US-SHER-007 | ✅ Integrated | ✅ 8/8 met      | —                                              |
+| US-SHER-008 | 🔗 Reference  | N/A             | Coverage is owned by `US-CONTRACT-005`         |
+| US-SHER-009 | ✅ Integrated | ✅ 8/8 met      | None                                           |
 
 ## Proof Strategy Reference
 
@@ -164,6 +164,8 @@ supporting evidence, not separate entries.
       available Bank balance.
 - [x] `AC-US-SHER-002-02` A direct owner action calls the matching native-token or ERC-20 dividend distribution on Bank.
 - [x] `AC-US-SHER-002-03` An eligible Board member creates the matching Bank action instead of executing the dividend directly.
+- [x] `AC-US-SHER-002-13` After the required Board approvals, the action executes the matching Bank dividend once and produces the same
+      proportional on-chain shareholder payments as the direct-owner path.
 
 #### Business Rules
 
@@ -182,20 +184,21 @@ supporting evidence, not separate entries.
 
 ### Test Coverage
 
-| Acceptance Criterion | Proof Strategy          | Current Evidence          | Status          |
-| -------------------- | ----------------------- | ------------------------- | --------------- |
-| `AC-US-SHER-002-01`  | `PS-FRONTEND`           | Integrated E2E + Frontend | ✅ Met          |
-| `AC-US-SHER-002-02`  | `PS-INTEGRATED-JOURNEY` | Integrated E2E + Frontend | ✅ Met          |
-| `AC-US-SHER-002-03`  | `PS-INTEGRATED-JOURNEY` | Frontend                  | ⚠️ Insufficient |
-| `AC-US-SHER-002-04`  | `PS-FRONTEND`           | Integrated E2E + Frontend | ✅ Met          |
-| `AC-US-SHER-002-05`  | `PS-FRONTEND`           | Frontend                  | ✅ Met          |
-| `AC-US-SHER-002-06`  | `PS-FRONTEND`           | Frontend                  | ✅ Met          |
-| `AC-US-SHER-002-07`  | `PS-FRONTEND`           | Frontend                  | ✅ Met          |
-| `AC-US-SHER-002-08`  | `PS-CONTRACT`           | Contract                  | ✅ Met          |
-| `AC-US-SHER-002-09`  | `PS-FRONTEND`           | Frontend                  | ✅ Met          |
-| `AC-US-SHER-002-10`  | `PS-FRONTEND`           | Frontend                  | ✅ Met          |
-| `AC-US-SHER-002-11`  | `PS-FRONTEND`           | Frontend                  | ✅ Met          |
-| `AC-US-SHER-002-12`  | `PS-FRONTEND`           | Frontend                  | ✅ Met          |
+| Acceptance Criterion | Proof Strategy          | Current Evidence          | Status |
+| -------------------- | ----------------------- | ------------------------- | ------ |
+| `AC-US-SHER-002-01`  | `PS-FRONTEND`           | Integrated E2E + Frontend | ✅ Met |
+| `AC-US-SHER-002-02`  | `PS-INTEGRATED-JOURNEY` | Integrated E2E + Frontend | ✅ Met |
+| `AC-US-SHER-002-03`  | `PS-INTEGRATED-JOURNEY` | Integrated E2E + Frontend | ✅ Met |
+| `AC-US-SHER-002-04`  | `PS-FRONTEND`           | Integrated E2E + Frontend | ✅ Met |
+| `AC-US-SHER-002-05`  | `PS-FRONTEND`           | Frontend                  | ✅ Met |
+| `AC-US-SHER-002-06`  | `PS-FRONTEND`           | Frontend                  | ✅ Met |
+| `AC-US-SHER-002-07`  | `PS-FRONTEND`           | Frontend                  | ✅ Met |
+| `AC-US-SHER-002-08`  | `PS-CONTRACT`           | Contract                  | ✅ Met |
+| `AC-US-SHER-002-09`  | `PS-FRONTEND`           | Frontend                  | ✅ Met |
+| `AC-US-SHER-002-10`  | `PS-FRONTEND`           | Frontend                  | ✅ Met |
+| `AC-US-SHER-002-11`  | `PS-FRONTEND`           | Frontend                  | ✅ Met |
+| `AC-US-SHER-002-12`  | `PS-FRONTEND`           | Frontend                  | ✅ Met |
+| `AC-US-SHER-002-13`  | `PS-INTEGRATED-JOURNEY` | Integrated E2E            | ✅ Met |
 
 **Accounting:** Per-shareholder payments are grouped into [`UC-INV-01`](../accounting/journal-entry-catalogue.md#uc-inv-01--dividend-paid).
 Bank's distribution trigger is not booked again.
@@ -361,16 +364,16 @@ Bank's distribution trigger is not booked again.
 
 ### Test Coverage
 
-| Acceptance Criterion | Proof Strategy            | Current Evidence    | Status          |
-| -------------------- | ------------------------- | ------------------- | --------------- |
-| `AC-US-SHER-006-01`  | `PS-MIGRATION-INTEGRATED` | Frontend            | ⚠️ Insufficient |
-| `AC-US-SHER-006-02`  | `PS-MIGRATION-INTEGRATED` | Contract            | ⚠️ Insufficient |
-| `AC-US-SHER-006-03`  | `PS-MIGRATION-INTEGRATED` | Frontend + Contract | ⚠️ Insufficient |
-| `AC-US-SHER-006-04`  | `PS-CONTRACT`             | Contract            | ✅ Met          |
-| `AC-US-SHER-006-05`  | `PS-MIGRATION-INTEGRATED` | None linked         | ❌ Missing      |
-| `AC-US-SHER-006-06`  | `PS-FRONTEND`             | Frontend            | ✅ Met          |
-| `AC-US-SHER-006-07`  | `PS-FRONTEND`             | Frontend            | ✅ Met          |
-| `AC-US-SHER-006-08`  | `PS-CONTRACT`             | Contract            | ✅ Met          |
+| Acceptance Criterion | Proof Strategy            | Current Evidence                     | Status |
+| -------------------- | ------------------------- | ------------------------------------ | ------ |
+| `AC-US-SHER-006-01`  | `PS-MIGRATION-INTEGRATED` | Integrated E2E + Frontend            | ✅ Met |
+| `AC-US-SHER-006-02`  | `PS-MIGRATION-INTEGRATED` | Integrated E2E + Contract            | ✅ Met |
+| `AC-US-SHER-006-03`  | `PS-MIGRATION-INTEGRATED` | Integrated E2E + Frontend + Contract | ✅ Met |
+| `AC-US-SHER-006-04`  | `PS-CONTRACT`             | Contract                             | ✅ Met |
+| `AC-US-SHER-006-05`  | `PS-MIGRATION-INTEGRATED` | Integrated E2E                       | ✅ Met |
+| `AC-US-SHER-006-06`  | `PS-FRONTEND`             | Frontend                             | ✅ Met |
+| `AC-US-SHER-006-07`  | `PS-FRONTEND`             | Frontend                             | ✅ Met |
+| `AC-US-SHER-006-08`  | `PS-CONTRACT`             | Contract                             | ✅ Met |
 
 **Accounting:** A migration claim preserves an existing ownership allocation. It is not a new economic issuance and creates no journal
 entry.
@@ -406,16 +409,16 @@ entry.
 
 ### Test Coverage
 
-| Acceptance Criterion | Proof Strategy            | Current Evidence    | Status          |
-| -------------------- | ------------------------- | ------------------- | --------------- |
-| `AC-US-SHER-007-01`  | `PS-MIGRATION-INTEGRATED` | Contract            | ⚠️ Insufficient |
-| `AC-US-SHER-007-02`  | `PS-MIGRATION-INTEGRATED` | Frontend            | ⚠️ Insufficient |
-| `AC-US-SHER-007-03`  | `PS-CONTRACT`             | Contract            | ✅ Met          |
-| `AC-US-SHER-007-04`  | `PS-MIGRATION-INTEGRATED` | Frontend            | ⚠️ Insufficient |
-| `AC-US-SHER-007-05`  | `PS-CONTRACT`             | Contract            | ✅ Met          |
-| `AC-US-SHER-007-06`  | `PS-FRONTEND-CONTRACT`    | Frontend + Contract | ✅ Met          |
-| `AC-US-SHER-007-07`  | `PS-FRONTEND`             | Frontend            | ✅ Met          |
-| `AC-US-SHER-007-08`  | `PS-FRONTEND`             | Frontend            | ✅ Met          |
+| Acceptance Criterion | Proof Strategy            | Current Evidence          | Status |
+| -------------------- | ------------------------- | ------------------------- | ------ |
+| `AC-US-SHER-007-01`  | `PS-MIGRATION-INTEGRATED` | Integrated E2E + Contract | ✅ Met |
+| `AC-US-SHER-007-02`  | `PS-MIGRATION-INTEGRATED` | Integrated E2E + Frontend | ✅ Met |
+| `AC-US-SHER-007-03`  | `PS-CONTRACT`             | Integrated E2E + Contract | ✅ Met |
+| `AC-US-SHER-007-04`  | `PS-MIGRATION-INTEGRATED` | Integrated E2E + Frontend | ✅ Met |
+| `AC-US-SHER-007-05`  | `PS-CONTRACT`             | Contract                  | ✅ Met |
+| `AC-US-SHER-007-06`  | `PS-FRONTEND-CONTRACT`    | Frontend + Contract       | ✅ Met |
+| `AC-US-SHER-007-07`  | `PS-FRONTEND`             | Frontend                  | ✅ Met |
+| `AC-US-SHER-007-08`  | `PS-FRONTEND`             | Frontend                  | ✅ Met |
 
 **Accounting:** Dispatch and closure complete an existing ownership migration. They do not create a new economic issuance or journal entry.
 
@@ -491,7 +494,7 @@ the redeployment and migration-root commit. Shareholder Management exposes the m
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `9f8ecfed94ecf24006952194304bf83ee2b4dbbd`
+**Implementation evidence reviewed against:** `981b174cd7d46564ceff2b07eef46baf60467130`
 
 - [Shareholder Management route](../../../app/src/views/team/%5Bid%5D/SherTokenView.vue) and
   [Investor overview](../../../app/src/components/sections/SherTokenView/InvestorsHeader.vue)
@@ -516,8 +519,12 @@ the redeployment and migration-root commit. Shareholder Management exposes the m
   [on-chain shareholder assertions](../../../app/test/e2e/shareholder/shareholder-chain.ts)
 - [Integrated shareholder issuance and dividend lifecycle](../../../app/test/e2e/shareholder/shareholder-issuance-dividends.integrated.spec.ts)
   and [browser shareholder actions](../../../app/test/e2e/shareholder/shareholder-page.ts)
+- [Integrated shareholder migration lifecycle](../../../app/test/e2e/shareholder/shareholder-migration.integrated.spec.ts), including the
+  persisted snapshot, self-claim, owner settlement, closure, and restored dividend path
 - [Dividend action](../../../app/src/components/sections/SherTokenView/InvestorActions/PayDividendsAction.vue) and
-  [dividend form](../../../app/src/components/sections/SherTokenView/forms/PayDividendsForm.vue)
+  [dividend form](../../../app/src/components/sections/SherTokenView/forms/PayDividendsForm.vue), with
+  [Board authority reads](../../../app/src/composables/bod/reads.ts) and
+  [zero-based Board action validation](../../../backend/src/validation/schemas/actions.ts)
 - [Migration banner](../../../app/src/components/sections/SherTokenView/ShareholderMigrationBanner.vue),
   [claim and settlement access guard](../../../app/src/components/sections/SherTokenView/ShareholderClaimSection.vue),
   [shareholder claim](../../../app/src/components/sections/SherTokenView/MerkleClaimForm.vue), and

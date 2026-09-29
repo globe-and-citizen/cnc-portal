@@ -62,7 +62,7 @@ const toast = useToast()
 const teamStore = useTeamStore()
 
 const investorAddress = computed(() => teamStore.getInvestorAddress())
-const bankAddress = teamStore.getContractAddressByType('Bank')
+const bankAddress = computed(() => teamStore.getContractAddressByType('Bank'))
 
 const {
   data: tokenSymbol,
