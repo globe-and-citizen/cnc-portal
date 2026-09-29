@@ -32,9 +32,9 @@ to prepare isolated domain data before browser actions; these setup calls are no
 frontend and deterministic local node, prepared once with `npm run setup:e2e:browser`. Playwright has no server or shared-infrastructure
 setup configuration.
 
-Every Playwright test runs inside an automatic chain snapshot. Integrated tests can additionally request authenticated owner/member pages,
-operational teams, and disposable team feature overrides. See the [fixture catalogue](./e2e-fixtures.md) before adding setup to an
-individual spec.
+Chain-backed browser and integrated tests run inside an automatic chain snapshot. Fully simulated browser scenarios skip Hardhat entirely
+and may run with file-level parallelism. Integrated tests can additionally request authenticated owner/member pages, operational teams, and
+disposable team feature overrides. See the [fixture catalogue](./e2e-fixtures.md) before adding setup to an individual spec.
 
 ```bash
 cd app
@@ -47,13 +47,13 @@ npm run setup:e2e:browser
 npm run test:browser:acceptance
 ```
 
-Prepare each profile's services and fixtures before invoking Playwright. Run browser acceptance and integrated E2E separately so their
-reports remain distinct; only the integrated profile supplies E2E evidence.
+Prepare each profile's services and fixtures before invoking Playwright. Browser acceptance first runs `@parallel-safe` simulated files on
+three workers, then runs chain-backed files on one worker and merges both reports. Run browser acceptance and integrated E2E separately so
+their reports remain distinct; only the integrated profile supplies E2E evidence.
 
-CI exposes one `Full-stack E2E` job. The workflow starts the shared local node, explicitly provisions browser-acceptance contracts, and
-starts the browser frontend before the first Playwright invocation. It then resets the same node and provisions the disposable database,
-backend, integrated deployment manifest, and frontend before the `@integrated` invocation. The two phases keep separate logical state and
-publish separate reports because only the integrated phase is E2E evidence.
+CI runs independent `Browser acceptance` and `Integrated journeys` jobs, then exposes one lightweight `Full-stack E2E` aggregate check. The
+browser job prepares its own local node, contracts, and frontend. The integrated job prepares a separate local node, disposable database,
+backend, deployment manifest, and frontend. The profiles publish separate reports because only the integrated phase is E2E evidence.
 
 The Vite development server ignores generated `coverage/` artifacts so per-page coverage snapshots do not trigger hot reloads during an
 active browser suite.
