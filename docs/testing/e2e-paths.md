@@ -72,9 +72,10 @@ coverage; the latest execution result and artifacts belong in Playwright and CI 
   - the developer or CI prepares the selected profile before invoking either command.
 - CI ownership:
   - one `Full-stack E2E` job owns both phases and publishes separate browser-acceptance and integrated reports;
+  - the job has a 60-minute budget so the complete browser catalogue and integrated journeys can finish on one isolated stack;
   - the job starts one local node, provisions browser fixtures outside Playwright, and starts the browser frontend before the first phase;
-  - it then resets that node, provisions a disposable PostgreSQL database, applies migrations, deploys integrated infrastructure, and starts
-    the backend and integrated frontend before the second phase;
+  - it then resets that node, provisions a disposable PostgreSQL database, applies migrations, seeds the deterministic E2E actors, deploys
+    integrated infrastructure, and starts the backend and integrated frontend before the second phase;
   - integrated paths may use the Node-side team factory for scenario setup, while Playwright performs the product actions being tested; CI
     retains reports plus failure traces and stack logs as evidence.
 

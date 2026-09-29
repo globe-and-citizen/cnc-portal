@@ -35,6 +35,7 @@
     "prisma:generate": "npx prisma generate",
     "seed": "ts-node prisma/seed.ts",
     "seed:dev": "NODE_ENV=development ts-node prisma/seed.ts",
+    "seed:e2e": "NODE_ENV=test ts-node prisma/seed-e2e.ts",
     "seed:test": "NODE_ENV=test ts-node prisma/seed.ts",
     "seed:staging": "NODE_ENV=staging ts-node prisma/seed.ts",
     "seed:reset": "npx prisma migrate reset --force && npm run seed",

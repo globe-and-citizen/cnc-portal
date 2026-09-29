@@ -22,7 +22,7 @@ jobs:
     if: github.event.action != 'labeled' || github.event.label.name == 'run'
     runs-on: ubuntu-latest
     container: mcr.microsoft.com/playwright:v1.48.2-noble
-    timeout-minutes: 45
+    timeout-minutes: 60
 
     services:
       postgres:
@@ -159,13 +159,9 @@ jobs:
           npm run prisma:migrate
         working-directory: ./backend
 
-      - name: 👤 Seed the integrated E2E administrator
-        run: npm run seed:test
+      - name: 👤 Seed the integrated E2E actors
+        run: npm run seed:e2e
         working-directory: ./backend
-        env:
-          SEED_ADMINS: "true"
-          ADMIN_ADDRESSES: "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
-          ADMIN_ROLES: ROLE_ADMIN
 
       - name: 🚀 Deploy integrated E2E infrastructure
         run: |

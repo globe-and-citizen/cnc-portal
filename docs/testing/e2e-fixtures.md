@@ -16,9 +16,23 @@ Examples:
 - an authentication test must still perform SIWE through the UI instead of requesting an already authenticated page;
 - direct API or chain preparation is setup evidence only and must never be counted as a completed user journey.
 
+## Directory ownership
+
+Reusable E2E setup is grouped by responsibility:
+
+- `app/test/e2e/fixtures/` owns Playwright lifecycle, automatic isolation, tracked resources, and cleanup;
+- `app/test/e2e/factories/` owns reusable creation of prerequisite business state through real local boundaries;
+- each domain directory retains its own `*-page.ts` and `*-chain.ts` helpers because those helpers encode domain-specific UI and contract
+  graphs;
+- root-level E2E support modules are reserved for low-level helpers shared by fixtures, factories, and multiple domains.
+
+A factory creates state. A fixture controls when that state is made available and guarantees cleanup. Domain actions must not be moved into
+a shared fixture merely to shorten a scenario.
+
 ## Shared fixture catalogue
 
-The shared fixtures live in `app/test/e2e/fixtures.ts`.
+The shared fixtures live in `app/test/e2e/fixtures/index.ts`. Integrated operational-team creation lives in
+`app/test/e2e/factories/operational-team.ts`.
 
 | Fixture                                     | Scope                 | Responsibility                                                                                                | Cleanup                                                       |
 | ------------------------------------------- | --------------------- | ------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
@@ -30,15 +44,13 @@ The shared fixtures live in `app/test/e2e/fixtures.ts`.
 | `teamFeatureOverride(teamId, name, status)` | Opt-in factory        | Create or update a disposable team override through the real admin API                                        | Remove every requested override                               |
 
 `authenticatedPage`, `operationalTeam`, and `teamFeatureOverride` are integrated-profile fixtures. They require the disposable backend and
-database, and the owner test account must have the local administrator role. The CI workflow seeds that role before starting the backend.
-For a local integrated run, seed the same role after migrating the disposable database:
+database. The dedicated E2E seed creates the deterministic owner, member, and secondary signer; only the owner receives the local
+administrator role. It does not create teams, wages, claims, or other scenario state. The CI workflow runs this seed before starting the
+backend. For a local integrated run, run the same command after migrating the disposable database:
 
 ```bash
 cd backend
-SEED_ADMINS=true \
-ADMIN_ADDRESSES=0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 \
-ADMIN_ROLES=ROLE_ADMIN \
-npm run seed:test
+npm run seed:e2e
 ```
 
 The feature-override fixture creates `SUBMIT_RESTRICTION` with its normal enabled status only when the disposable database does not contain
