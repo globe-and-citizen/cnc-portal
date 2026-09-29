@@ -50,11 +50,11 @@ BASE_URL=http://127.0.0.1:5173 npm run test:browser:acceptance # terminal 3
 `npm run setup:e2e:browser` is idempotent for an already prepared browser-acceptance node. It fails on a partially provisioned or unexpected
 chain instead of silently changing that state. The integrated profile has its own externally provisioned contracts, database, backend, and
 frontend; it does not run this browser-fixture command. Integrated tests that need an operational company may call the Node-side
-`test/e2e/team-factory.ts` before browser actions. Set `CNC_E2E_BACKEND_URL` to the local integrated backend origin; the factory signs in
-with the public Hardhat owner account and any requested scenario-member accounts, creates the team with those authenticated members through
-the real API, deploys its Officer generation on the dedicated local chain, registers that Officer through the API, and verifies the returned
-team state. Pre-provision members only when membership itself is not the behaviour under test. The factory is setup only: onboarding and
-membership-management tests still perform those product actions through the UI.
+`test/e2e/factories/operational-team.ts` before browser actions. Set `CNC_E2E_BACKEND_URL` to the local integrated backend origin; the
+factory signs in with the public Hardhat owner account and any requested scenario-member accounts, creates the team with those authenticated
+members through the real API, deploys its Officer generation on the dedicated local chain, registers that Officer through the API, and
+verifies the returned team state. Pre-provision members only when membership itself is not the behaviour under test. The factory is setup
+only: onboarding and membership-management tests still perform those product actions through the UI.
 
 The shared Playwright fixture layer exposes authenticated owner and secondary-wallet pages, tracked operational-team factories, disposable
 team feature overrides, automatic cleanup, and per-test chain isolation. The complete ownership rules and spec audit are documented in the
@@ -65,10 +65,13 @@ team feature overrides, automatic cleanup, and per-test chain isolation. The com
 ```text
 test/
 └── e2e/
-    ├── fixtures.ts             # shared Playwright fixtures
-    ├── integrated-api.ts       # local-only SIWE and authenticated setup requests
-    ├── team-factory.ts         # authenticated members, integrated team, and Officer setup
-    ├── login.spec.ts           # SIWE login flow
+    ├── fixtures/
+    │   └── index.ts                         # Playwright lifecycle, tracked resources, and cleanup
+    ├── factories/
+    │   ├── operational-team.ts              # authenticated team and Officer setup
+    │   └── operational-team-deployment.ts   # Officer deployment configuration
+    ├── integrated-api.ts                    # local-only SIWE and authenticated setup requests
+    ├── login.spec.ts                        # SIWE login flow
     └── bank/
         ├── bank-account.spec.ts # US-BANK-001..004 browser journeys
         ├── bank-chain.ts        # isolated Bank, Board, account, fee, and token deployment

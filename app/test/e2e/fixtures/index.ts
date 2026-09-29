@@ -3,20 +3,20 @@ import { mkdir, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { randomUUID } from 'node:crypto'
 import type { Hex } from 'viem'
-import { E2E_OWNER_PRIVATE_KEY, revertChain, snapshotChain } from './e2e-chain'
-import { useWallet } from './e2e-page'
-import { signInToRealStack } from './company/real-company-page'
+import { E2E_OWNER_PRIVATE_KEY, revertChain, snapshotChain } from '../e2e-chain'
+import { useWallet } from '../e2e-page'
+import { signInToRealStack } from '../company/real-company-page'
 import {
   deleteIntegratedTeam,
   removeIntegratedTeamFeatureOverride,
   setIntegratedTeamFeatureOverride,
   type IntegratedFeatureStatus
-} from './integrated-api'
+} from '../integrated-api'
 import {
   createOperationalTeamFixture,
   type OperationalTeamFixture,
   type OperationalTeamOptions
-} from './team-factory'
+} from '../factories/operational-team'
 
 const COVERAGE_DIR = join(process.cwd(), 'coverage', 'e2e', '.tmp')
 const TOKEN_PRICE_ROUTE = 'https://api.coingecko.com/api/v3/coins/**'

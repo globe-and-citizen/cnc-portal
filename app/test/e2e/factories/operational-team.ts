@@ -2,11 +2,11 @@ import { readFile } from 'node:fs/promises'
 import { randomUUID } from 'node:crypto'
 import type { Address, Hex } from 'viem'
 import { privateKeyToAccount } from 'viem/accounts'
-import type { Team } from '../../src/types/team'
-import type { ContractType } from '../../src/types/teamContract'
-import { E2E_RPC_URL } from '../../src/e2e/chain.ts'
-import { E2E_OWNER, ownerAccount, publicClient } from './e2e-chain'
-import { authenticateIntegratedAccount, requestIntegratedApi } from './integrated-api'
+import type { Team } from '../../../src/types/team'
+import type { ContractType } from '../../../src/types/teamContract'
+import { E2E_RPC_URL } from '../../../src/e2e/chain.ts'
+import { E2E_OWNER, ownerAccount, publicClient } from '../e2e-chain'
+import { authenticateIntegratedAccount, requestIntegratedApi } from '../integrated-api'
 import {
   assertAddressHasCode,
   buildBeaconConfigs,
@@ -15,7 +15,7 @@ import {
   requiredAddress,
   type DeployedOfficer,
   type DeploymentAddressManifest
-} from './team-factory-deployment'
+} from './operational-team-deployment'
 
 interface TeamApiResponse {
   id: number | string
@@ -46,7 +46,7 @@ export interface OperationalTeamOptions {
 const EXPECTED_CHAIN_ID = 31_337
 const LOCAL_HOSTS = new Set(['localhost', '127.0.0.1', '::1'])
 const DEPLOYMENT_MANIFEST_URL = new URL(
-  '../../src/artifacts/deployed_addresses/chain-31337.json',
+  '../../../src/artifacts/deployed_addresses/chain-31337.json',
   import.meta.url
 )
 
