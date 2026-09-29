@@ -381,29 +381,44 @@ coverage; the latest execution result and artifacts belong in Playwright and CI 
     - `US-ACCT-002` — trace operations in the General Ledger;
     - `US-ACCT-003` — review financial statements;
     - `US-ACCT-005` — review historical contract activity.
-  - Reused dependencies: representative Bank, shareholder, credit, payroll, and expense transactions from their owning paths.
+  - Dependencies: an operational company whose treasury deposit, share issuance, payroll withdrawal, and expense spend are produced by this
+    path rather than reused from another one, so a books regression cannot be mistaken for a Payroll or Expense failure.
   - Main path:
-    - [ ] Load the complete Accounting journal after the source operations.
-    - [ ] Verify every source operation produces one balanced journal entry.
-    - [ ] Trace entries to their transactions and concrete company accounts.
-    - [ ] Verify the Income Statement, Balance Sheet, and Trial Balance share one balanced snapshot.
-    - [ ] Verify historical Officer generations remain separate and complete.
-    - [ ] Refresh and verify the same books are reconstructed.
+    - [x] Load the complete Accounting journal after the source operations.
+    - [x] Verify every source operation produces one balanced journal entry.
+    - [x] Trace entries to their transactions and concrete company accounts.
+    - [x] Verify the Income Statement, Balance Sheet, and Trial Balance share one balanced snapshot.
+    - [x] Verify historical Officer generations remain separate and complete.
+    - [x] Refresh and verify the same books are reconstructed.
+  - Separate variants: incomplete, failed, and missing-rate source states remain frontend coverage, because an integrated stack cannot
+    withhold one source without replacing a product boundary.
   - Expected result: the company books reconcile with cross-feature persisted and on-chain evidence.
-  - Status: planned.
+  - Status: integrated main path; the production frontend, owned backend, disposable database, and local chain run together, with the token
+    price pinned so totals stay reproducible. Contract generations are verified by a separate resettable spec, because a redeployment
+    replaces the treasury the reviewed journey continues to use.
+  - Evidence: [integrated Accounting journey](../../app/test/e2e/accounting/accounting-journey.integrated.spec.ts) and
+    [integrated contract generations](../../app/test/e2e/accounting/accounting-generations.integrated.spec.ts).
 
 - `E2E-PATH-16` — Classify an external withdrawal and export the reviewed books
   - Stories validated:
     - `US-ACCT-006` — classify an external withdrawal;
     - `US-ACCT-004` — export Accounting reports.
   - Dependencies: reviewed journal and statements from `E2E-PATH-15` and deterministic valuation inputs.
+  - Reason for sharing one run: the export must carry the reviewed state, so this path continues the `E2E-PATH-15` browser session instead
+    of reviewing one company and exporting another.
   - Main path:
-    - [ ] Classify an unassigned external withdrawal.
-    - [ ] Verify the classification persists and updates the affected reports.
-    - [ ] Export the selected reports.
-    - [ ] Verify exported filters, rows, and totals match the reviewed UI state.
+    - [x] Classify an unassigned external withdrawal.
+    - [x] Verify the classification persists and updates the affected reports.
+    - [x] Verify a member can read the classification but can neither edit it in the UI nor write it through the API.
+    - [x] Export the selected reports.
+    - [x] Verify exported filters, rows, and totals match the reviewed UI state.
+    - [x] Remove the classification and verify the account inferred from the source evidence returns.
+  - Separate variants: rejected saves, malformed records, and ineligible entries remain frontend and backend coverage.
   - Expected result: the reviewed classification and exported books preserve the same accounting snapshot.
-  - Status: planned.
+  - Status: integrated main path; the owner labels a real unattributable Bank withdrawal, the reports that depend on it follow the label
+    while the balance sheet totals do not, the downloaded workbook is read back and compared with the filtered screen, and reverting the
+    label restores the inferred account without touching the cash or fee lines.
+  - Evidence: [integrated Accounting journey](../../app/test/e2e/accounting/accounting-journey.integrated.spec.ts).
 
 ## G8 — Board Election Lifecycle
 
