@@ -56,12 +56,17 @@ the real API, deploys its Officer generation on the dedicated local chain, regis
 team state. Pre-provision members only when membership itself is not the behaviour under test. The factory is setup only: onboarding and
 membership-management tests still perform those product actions through the UI.
 
+The shared Playwright fixture layer exposes authenticated owner and secondary-wallet pages, tracked operational-team factories, disposable
+team feature overrides, automatic cleanup, and per-test chain isolation. The complete ownership rules and spec audit are documented in the
+[E2E fixture catalogue](../../docs/testing/e2e-fixtures.md).
+
 ## Layout
 
 ```text
 test/
 └── e2e/
     ├── fixtures.ts             # shared Playwright fixtures
+    ├── integrated-api.ts       # local-only SIWE and authenticated setup requests
     ├── team-factory.ts         # authenticated members, integrated team, and Officer setup
     ├── login.spec.ts           # SIWE login flow
     └── bank/
@@ -75,12 +80,12 @@ The mock connector itself lives in `src/e2e/mockConnector.ts` and is wired in `s
 ## Writing tests
 
 Tests are plain Playwright. The wallet is available in-page via the mock connector, so tests drive the UI and stub the backend. For a
-chain-backed journey, reset and deploy a narrow fixture through `test/e2e/bank/bank-chain.ts`; its first two deployments are intentionally
-the USDC and USDCe addresses injected into the E2E Vite build above. The Bank suite snapshots and restores the chain around every test, and
-runs serially because all scenarios share that deployment.
+chain-backed browser journey, deploy a narrow domain fixture such as `test/e2e/bank/bank-chain.ts`; its first two deployments are
+intentionally the USDC and USDCe addresses injected into the E2E Vite build above. The shared fixture layer snapshots and restores the
+prepared chain around every test. Domain suites with one shared deployment remain serial.
 
 ```ts
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./fixtures";
 
 test("does something", async ({ page }) => {
   await page.route("**/api/teams**", (route) =>
@@ -105,6 +110,8 @@ test("does something", async ({ page }) => {
 - Set `cnc-e2e-private-key` before page load to exercise another Hardhat account, or set `cnc-e2e-reject-next-transaction=true` to reject
   exactly the next wallet transaction.
 - Prefer web-first assertions (`expect(locator).toBeVisible()`) and `page.waitForURL` over fixed `waitForTimeout` delays.
+- Use `authenticatedPage`, `walletPage`, `operationalTeam`, and `teamFeatureOverride` only for prerequisites outside the journey's own
+  acceptance evidence.
 
 ## Test wallet
 

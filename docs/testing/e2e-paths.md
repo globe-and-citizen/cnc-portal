@@ -52,6 +52,10 @@ coverage; the latest execution result and artifacts belong in Playwright and CI 
   - factory calls are setup and do not count as product-flow evidence; the scenario still drives the behaviour under test through the UI;
   - the factory must authenticate with the test wallet, restrict writes to the disposable local backend and chain, and return verified
     backend and chain state;
+  - the shared Playwright layer snapshots and restores the prepared chain around every test, tracks additional wallet contexts, and deletes
+    every team or team-feature override created through its factories;
+  - authentication, onboarding, membership, or configuration fixtures are prohibited when that action is the acceptance evidence owned by
+    the current path; the complete decisions are recorded in the [fixture catalogue](./e2e-fixtures.md);
 - Browser-action rule:
   - Playwright may submit a contract transaction only through a user-accessible product action;
   - browser code must not deploy fixtures, alter contract code or balances, control mining, or mutate chain state directly through RPC

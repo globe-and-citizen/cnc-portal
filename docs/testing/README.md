@@ -5,6 +5,7 @@ This directory contains comprehensive testing documentation and guides for the C
 ## Contents
 
 - **[Integrated E2E Checklist](./e2e-paths.md)** - G0 through G7 integrated test groups and paths
+- **[Playwright E2E Fixture Catalogue](./e2e-fixtures.md)** - Shared fixtures, boundary rules, cleanup, and complete spec audit
 - **[Unit Testing Guide](./unit-testing.md)** - Guidelines for writing unit tests with Vue Test Utils and Vitest
 - **[Global Mocks Setup](./global-mocks-setup.md)** - Centralized mock definitions for TanStack Vue Query and Axios
 
@@ -30,6 +31,10 @@ backend, migrated database, local chain, and contract infrastructure. Individual
 to prepare isolated domain data before browser actions; these setup calls are not product-flow evidence. Browser acceptance requires its
 frontend and deterministic local node, prepared once with `npm run setup:e2e:browser`. Playwright has no server or shared-infrastructure
 setup configuration.
+
+Every Playwright test runs inside an automatic chain snapshot. Integrated tests can additionally request authenticated owner/member pages,
+operational teams, and disposable team feature overrides. See the [fixture catalogue](./e2e-fixtures.md) before adding setup to an
+individual spec.
 
 ```bash
 cd app
