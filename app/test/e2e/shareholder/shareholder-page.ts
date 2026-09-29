@@ -218,3 +218,27 @@ export async function distributeUsdcDividends(page: Page, amount: string): Promi
   await dialog.locator('[data-test="pay-dividends-submit-button"]').click()
   await expect(dialog).toBeHidden({ timeout: 60_000 })
 }
+
+export async function approvePendingBankDividend(page: Page, teamId: string): Promise<void> {
+  await page.goto(`/teams/${teamId}/contract-management`)
+  await expect(page).toHaveURL(new RegExp(`/teams/${teamId}/contract-management$`))
+
+  const reviewButton = page.getByRole('button', { name: /\d+ Review/ }).first()
+  await expect(reviewButton).toBeEnabled({ timeout: 30_000 })
+  await reviewButton.click()
+
+  const dialog = page.getByRole('dialog', { name: 'Review Pending Actions' })
+  await expect(dialog).toBeVisible()
+  const dividendAction = dialog.getByRole('row').filter({ hasText: /Pay dividends of/ })
+  await expect(dividendAction).toHaveCount(1)
+  await dividendAction.getByRole('button', { name: 'Approve', exact: true }).click()
+  await expect(dialog.getByText('Board Approval Required', { exact: true })).toBeVisible()
+
+  const actionUpdated = page.waitForResponse((response) => {
+    const url = new URL(response.url())
+    return response.request().method() === 'PATCH' && /^\/api\/actions\/\d+$/.test(url.pathname)
+  })
+  await dialog.getByRole('button', { name: 'Approve Action', exact: true }).click()
+  expect((await actionUpdated).ok()).toBe(true)
+  await expect(dialog).toBeHidden({ timeout: 60_000 })
+}

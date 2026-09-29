@@ -8,12 +8,8 @@ import {
   tokenBalance
 } from '../e2e-chain'
 import { useWallet } from '../e2e-page'
-import {
-  addRealCompanyMember,
-  createOperationalCompany,
-  deleteCompanyThroughUi,
-  signInToRealStack
-} from '../company/real-company-page'
+import { deleteCompanyThroughUi, signInToRealStack } from '../company/real-company-page'
+import { createOperationalTeamFixture } from '../team-factory'
 import {
   bankUsdcBalance,
   ensureUsdcBalance,
@@ -74,16 +70,16 @@ test.describe(
       browser,
       page
     }) => {
+      const company = await createOperationalTeamFixture({
+        memberPrivateKeys: [E2E_MEMBER_PRIVATE_KEY]
+      })
       const memberContext = await browser.newContext()
       const memberPage = await memberContext.newPage()
       await useWallet(memberPage, E2E_MEMBER_PRIVATE_KEY)
       await signInToRealStack(memberPage)
 
-      const company = await createOperationalCompany(page)
-
       try {
-        await page.locator('[data-test="skip-safe-setup-button"]').click()
-        await addRealCompanyMember(page, company.teamId, E2E_MEMBER)
+        await signInToRealStack(page)
 
         const previousTeam = await openRealShareholderManagement(page, company.teamId)
         const previousFixture = await shareholderIssuanceFixtureFromTeam(previousTeam)

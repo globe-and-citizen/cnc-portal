@@ -147,6 +147,12 @@ export const safeUsdcBalance = (fixture: ShareholderE2EFixture) =>
 export const bankUsdcBalance = (fixture: ShareholderIssuanceE2EFixture) =>
   tokenBalance(fixture.usdc, fixture.bank)
 
+export const bankOwner = (fixture: ShareholderIssuanceE2EFixture) =>
+  read<Address>(fixture.bank, fixture.bankArtifact, 'owner')
+
+export const transferBankOwnership = (fixture: ShareholderIssuanceE2EFixture, owner: Address) =>
+  write(fixture.bank, fixture.bankArtifact.abi, 'transferOwnership', [owner])
+
 export async function ensureUsdcBalance(
   fixture: ShareholderIssuanceE2EFixture,
   account: Address,
