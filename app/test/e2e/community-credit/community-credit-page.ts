@@ -163,12 +163,30 @@ export async function openRound(page: Page, roundName: string): Promise<void> {
 export async function lendToRound(page: Page, amount: string): Promise<void> {
   await page.locator('[data-test="round-cta-lend"]').click()
   const modal = page.locator('[data-test="credit-lend-modal"]')
-  const amountInput = modal.locator('[data-test="lend-amount-input"]')
-  const confirm = modal.locator('[data-test="lend-confirm"]')
 
   await expect(modal).toBeVisible()
-  await amountInput.fill(amount)
-  await expect(amountInput).toHaveValue(amount)
-  await expect(confirm).toBeEnabled({ timeout: 10_000 })
-  await confirm.click({ timeout: 10_000 })
+  // The chain-backed reads can briefly recreate UInput's native input on a slow runner.
+  // Keep each attempt bounded and require the value plus enabled action to belong to a
+  // stable render instead of letting one detached input consume the global test timeout.
+  await expect
+    .poll(
+      async () => {
+        try {
+          const amountInput = modal.locator('[data-test="lend-amount-input"]')
+          await amountInput.fill(amount, { timeout: 2_000 })
+          await expect(modal.locator('[data-test="lend-confirm"]')).toBeEnabled({ timeout: 2_000 })
+          return await amountInput.inputValue()
+        } catch {
+          return ''
+        }
+      },
+      {
+        message: 'wait for a stable, actionable lending form',
+        timeout: 20_000,
+        intervals: [250, 500, 1_000]
+      }
+    )
+    .toBe(amount)
+
+  await modal.locator('[data-test="lend-confirm"]').click({ timeout: 10_000 })
 }
