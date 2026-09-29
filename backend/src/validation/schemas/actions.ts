@@ -17,7 +17,10 @@ export const getActionsQuerySchema = z.object({
 
 export const addActionBodySchema = z.object({
   teamId: positiveIntegerSchema,
-  actionId: positiveIntegerSchema,
+  actionId: z.coerce
+    .number({ message: 'Must be a number' })
+    .int('Must be an integer')
+    .nonnegative('Must be a non-negative integer'),
   description: z.string().trim().min(1, 'Description is required'),
   targetAddress: addressSchema,
   data: z.string().trim().min(1, 'Encoded call data is required'),
