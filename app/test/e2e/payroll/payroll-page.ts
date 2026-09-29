@@ -141,7 +141,10 @@ export async function submitDailyClaim(
   await dialog.locator('[data-test="hours-worked-input"]').fill(options.hours)
   await dialog.locator('[data-test="memo-input"]').fill(options.memo)
   await dialog.locator('[data-test="submit-claim-button"]').click()
-  await expect(page.getByText('Wage claim added successfully', { exact: true })).toBeVisible()
+  await expect(dialog).toBeHidden({ timeout: 30_000 })
+  await expect(page.locator('[data-test="daily-breakdown"]')).toContainText(options.memo, {
+    timeout: 30_000
+  })
 }
 
 export async function fundCashRemuneration(

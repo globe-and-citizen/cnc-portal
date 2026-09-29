@@ -162,6 +162,13 @@ export async function openRound(page: Page, roundName: string): Promise<void> {
 /** Drives the Lend modal to submission (approval, if needed, then the deposit). */
 export async function lendToRound(page: Page, amount: string): Promise<void> {
   await page.locator('[data-test="round-cta-lend"]').click()
-  await page.locator('[data-test="lend-amount-input"]').fill(amount)
-  await page.locator('[data-test="lend-confirm"]').click()
+  const modal = page.locator('[data-test="credit-lend-modal"]')
+  const amountInput = modal.locator('[data-test="lend-amount-input"]')
+  const confirm = modal.locator('[data-test="lend-confirm"]')
+
+  await expect(modal).toBeVisible()
+  await amountInput.fill(amount)
+  await expect(amountInput).toHaveValue(amount)
+  await expect(confirm).toBeEnabled({ timeout: 10_000 })
+  await confirm.click({ timeout: 10_000 })
 }
