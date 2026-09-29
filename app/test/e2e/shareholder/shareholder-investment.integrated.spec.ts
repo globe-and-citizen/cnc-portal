@@ -1,4 +1,4 @@
-import { expect, test } from '../fixtures'
+import { expect, test } from '../fixtures/integrated'
 import { E2E_OWNER, publicClient } from '../e2e-chain'
 import {
   createOperationalCompany,

@@ -3,7 +3,14 @@ import { expect, type Page, type Request } from '@playwright/test'
 import type { Address } from 'viem'
 import { E2E_MEMBER, E2E_MEMBER_PRIVATE_KEY, E2E_OWNER } from '../e2e-chain'
 import type { CommunityCreditE2EFixture } from './community-credit-chain'
-import { json, signInAndOpenFirstTeam, stubBackend, useWallet, type E2EUser } from '../e2e-page'
+import {
+  chooseCalendarDate,
+  json,
+  signInAndOpenFirstTeam,
+  stubBackend,
+  useWallet,
+  type E2EUser
+} from '../e2e-page'
 
 interface FixedReturnOfferingResponse {
   id: number
@@ -123,7 +130,11 @@ export async function publishCreditCall(
   await page.locator('[data-test="cc-name"]').fill(name)
   await page.locator('[data-test="cc-next"]').click()
 
-  // Terms step: accept the wizard's own defaults (6% rate, 90-day term).
+  // Terms step: pick the required deadline, then accept the wizard's defaults
+  // for the 6% rate and 90-day term.
+  const deadline = new Date()
+  deadline.setDate(deadline.getDate() + 7)
+  await chooseCalendarDate(page, '[data-test="cc-deadline"]', deadline)
   await page.locator('[data-test="cc-next"]').click()
 
   // Access step.
@@ -146,11 +157,23 @@ export async function openRound(page: Page, roundName: string): Promise<void> {
     .locator('[data-test="credit-round-card"]', { hasText: roundName })
     .getByText(roundName, { exact: true })
     .click()
+  // The list card also exposes a Lend action. Do not let the next helper interact
+  // with that stale list control while Vue Router is still mounting the detail view.
+  await expect(page).toHaveURL(/\/community-credit\/\d+(?:\/[^/?#]+)?(?:[?#].*)?$/, {
+    timeout: 30_000
+  })
 }
 
 /** Drives the Lend modal to submission (approval, if needed, then the deposit). */
 export async function lendToRound(page: Page, amount: string): Promise<void> {
   await page.locator('[data-test="round-cta-lend"]').click()
-  await page.locator('[data-test="lend-amount-input"]').fill(amount)
-  await page.locator('[data-test="lend-confirm"]').click()
+  const modal = page.locator('[data-test="credit-lend-modal"]')
+  const amountInput = modal.locator('[data-test="lend-amount-input"]')
+  const confirm = modal.locator('[data-test="lend-confirm"]')
+
+  await expect(modal).toBeVisible()
+  await amountInput.fill(amount)
+  await expect(amountInput).toHaveValue(amount)
+  await expect(confirm).toBeEnabled({ timeout: 10_000 })
+  await confirm.click({ timeout: 10_000 })
 }

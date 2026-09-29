@@ -17,32 +17,14 @@ on:
   workflow_dispatch:
 
 jobs:
-  full-stack-e2e:
-    name: Full-stack E2E
+  browser-acceptance:
+    name: Browser acceptance
     if: github.event.action != 'labeled' || github.event.label.name == 'run'
     runs-on: ubuntu-latest
     container: mcr.microsoft.com/playwright:v1.48.2-noble
-    timeout-minutes: 45
-
-    services:
-      postgres:
-        image: postgres:16-alpine
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: cnc_e2e
-        options: >-
-          --health-cmd "pg_isready -U postgres -d cnc_e2e" --health-interval 5s --health-timeout 5s --health-retries 10
-
+    timeout-minutes: 25
     env:
       CI: "true"
-      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/cnc_e2e
-      NODE_ENV: test
-      SECRET_KEY: full-stack-e2e-only
-      FRONTEND_URL: http://localhost:5173
-      PORT: "3000"
-      CHAIN_ID: "31337"
-      RPC_URL: http://127.0.0.1:8545
 
     steps:
       - name: 🛫 Checkout
@@ -55,16 +37,11 @@ jobs:
           cache: "npm"
           cache-dependency-path: |
             app/package-lock.json
-            backend/package-lock.json
             contract/package-lock.json
 
       - name: 📦 Install application dependencies
         run: npm ci
         working-directory: ./app
-
-      - name: 📦 Install backend dependencies
-        run: npm ci
-        working-directory: ./backend
 
       - name: 📦 Install contract dependencies
         run: npm ci
@@ -75,7 +52,7 @@ jobs:
         working-directory: ./contract
 
       - name: ⛓ Start the local Hardhat node
-        run: npm run node -- --hostname 0.0.0.0 > ../hardhat-e2e.log 2>&1 &
+        run: npm run node -- --hostname 0.0.0.0 > ../hardhat-browser-e2e.log 2>&1 &
         working-directory: ./contract
 
       - name: ⏳ Wait for the local chain
@@ -116,7 +93,7 @@ jobs:
           echo "The browser-acceptance frontend did not become ready"
           exit 1
 
-      - name: 🧪 Run browser acceptance coverage
+      - name: 🧪 Run isolated and chain-backed browser coverage
         run: npm run test:browser:acceptance:coverage
         working-directory: ./app
         env:
@@ -146,17 +123,100 @@ jobs:
           path: app/playwright-report/
           retention-days: 30
 
-      - name: ♻️ Reset the local chain for integrated journeys
+      - name: 📈 Upload browser failure evidence
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-acceptance-failure-evidence
+          path: |
+            app/test-results/
+            hardhat-browser-e2e.log
+            browser-frontend-e2e.log
+          retention-days: 7
+
+  integrated-journeys:
+    name: Integrated journeys
+    if: github.event.action != 'labeled' || github.event.label.name == 'run'
+    runs-on: ubuntu-latest
+    container: mcr.microsoft.com/playwright:v1.48.2-noble
+    timeout-minutes: 60
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: cnc_e2e
+        options: >-
+          --health-cmd "pg_isready -U postgres -d cnc_e2e" --health-interval 5s --health-timeout 5s --health-retries 10
+
+    env:
+      CI: "true"
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/cnc_e2e
+      NODE_ENV: test
+      SECRET_KEY: integrated-e2e-only
+      FRONTEND_URL: http://localhost:5173
+      PORT: "3000"
+      CHAIN_ID: "31337"
+      RPC_URL: http://127.0.0.1:8545
+
+    steps:
+      - name: 🛫 Checkout
+        uses: actions/checkout@v6
+
+      - name: 🏗 Set up Node.js 24.x
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24.x
+          cache: "npm"
+          cache-dependency-path: |
+            app/package-lock.json
+            backend/package-lock.json
+            contract/package-lock.json
+
+      - name: 📦 Install application dependencies
+        run: npm ci
+        working-directory: ./app
+
+      - name: 📦 Install backend dependencies
+        run: npm ci
+        working-directory: ./backend
+
+      - name: 📦 Install contract dependencies
+        run: npm ci
+        working-directory: ./contract
+
+      - name: 🔨 Compile contracts
+        run: npm run compile
+        working-directory: ./contract
+
+      - name: ⛓ Start the local Hardhat node
+        run: npm run node -- --hostname 0.0.0.0 > ../hardhat-integrated-e2e.log 2>&1 &
+        working-directory: ./contract
+
+      - name: ⏳ Wait for the local chain
         run: |
-          curl --fail --silent \
-            --header "content-type: application/json" \
-            --data '{"jsonrpc":"2.0","method":"hardhat_reset","params":[],"id":1}' \
-            http://127.0.0.1:8545 > /dev/null
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent \
+              --header "content-type: application/json" \
+              --data '{"jsonrpc":"2.0","method":"eth_chainId","params":[],"id":1}' \
+              http://127.0.0.1:8545 > /dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "The local chain did not become ready"
+          exit 1
 
       - name: 🗄 Generate Prisma client and migrate the disposable database
         run: |
           npm run prisma:generate
           npm run prisma:migrate
+        working-directory: ./backend
+
+      - name: 👤 Seed the integrated E2E actors
+        run: npm run seed:e2e
         working-directory: ./backend
 
       - name: 🚀 Deploy integrated E2E infrastructure
@@ -217,15 +277,32 @@ jobs:
           path: app/playwright-report/
           retention-days: 30
 
-      - name: 📈 Upload failure traces and stack logs
+      - name: 📈 Upload integrated failure evidence
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: e2e-failure-evidence
+          name: integrated-e2e-failure-evidence
           path: |
             app/test-results/
-            hardhat-e2e.log
-            browser-frontend-e2e.log
+            hardhat-integrated-e2e.log
             backend-e2e.log
             frontend-e2e.log
           retention-days: 7
+
+  full-stack-e2e:
+    name: Full-stack E2E
+    if: always() && (github.event.action != 'labeled' || github.event.label.name == 'run')
+    needs: [browser-acceptance, integrated-journeys]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: ✅ Confirm both E2E profiles passed
+        env:
+          BROWSER_RESULT: ${{ needs.browser-acceptance.result }}
+          INTEGRATED_RESULT: ${{ needs.integrated-journeys.result }}
+        run: |
+          if [ "$BROWSER_RESULT" != "success" ] || [ "$INTEGRATED_RESULT" != "success" ]; then
+            echo "Browser acceptance: $BROWSER_RESULT"
+            echo "Integrated journeys: $INTEGRATED_RESULT"
+            exit 1
+          fi

@@ -1,6 +1,6 @@
-import { expect, test } from '../fixtures'
+import { expect, test } from '../fixtures/chain'
 import { parseUnits } from 'viem'
-import { E2E_MEMBER, E2E_OWNER, revertChain, snapshotChain } from '../e2e-chain'
+import { E2E_MEMBER, E2E_OWNER } from '../e2e-chain'
 import {
   createOfferOnChain,
   deployCommunityCreditE2EFixture,
@@ -16,21 +16,12 @@ import {
 } from './community-credit-page'
 
 let fixture: CommunityCreditE2EFixture
-let snapshotId: string
 
 test.beforeAll(async () => {
   fixture = await deployCommunityCreditE2EFixture()
 })
 
-test.beforeEach(async () => {
-  snapshotId = await snapshotChain()
-})
-
-test.afterEach(async () => {
-  await revertChain(snapshotId)
-})
-
-test.describe('Community Credit — round', () => {
+test.describe('Community Credit — round', { tag: ['@browser', '@mocked'] }, () => {
   test.describe.configure({ mode: 'serial' })
   test.setTimeout(180_000)
 

@@ -19,8 +19,9 @@ export default defineConfig({
   // Retry on CI only.
   retries: process.env.CI ? 2 : 0,
 
-  // E2E fixtures deploy into one dedicated Hardhat node. A single worker keeps
-  // their deterministic token addresses stable across every account journey.
+  // Chain-backed profiles share one dedicated Hardhat node and remain serial.
+  // The browser-acceptance script explicitly overrides this for scenarios
+  // tagged @parallel-safe, whose backend and chain boundaries are simulated.
   workers: 1,
 
   // Reporter to use

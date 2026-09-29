@@ -52,6 +52,10 @@ coverage; the latest execution result and artifacts belong in Playwright and CI 
   - factory calls are setup and do not count as product-flow evidence; the scenario still drives the behaviour under test through the UI;
   - the factory must authenticate with the test wallet, restrict writes to the disposable local backend and chain, and return verified
     backend and chain state;
+  - the chain and integrated Playwright layers snapshot and restore the prepared chain around every applicable test; the integrated layer
+    also tracks additional wallet contexts and deletes every team or team-feature override created through its factories;
+  - authentication, onboarding, membership, or configuration fixtures are prohibited when that action is the acceptance evidence owned by
+    the current path; the complete decisions are recorded in the [fixture catalogue](./e2e-fixtures.md);
 - Browser-action rule:
   - Playwright may submit a contract transaction only through a user-accessible product action;
   - browser code must not deploy fixtures, alter contract code or balances, control mining, or mutate chain state directly through RPC
@@ -62,15 +66,19 @@ coverage; the latest execution result and artifacts belong in Playwright and CI 
   - `@browser` scenarios may inject backend state, direct fixture setup, wallet failures, or network outcomes and do not count as integrated
     E2E evidence;
   - `@mocked` is the narrower marker for browser scenarios that explicitly replace a product boundary;
+  - `@parallel-safe` marks browser scenarios whose owned backend and chain boundaries are fully simulated; it is independent of `@mocked`
+    because some mocked scenarios still use real local contracts;
   - run every migrated integrated path with `npm run test:e2e` from `app/`;
   - run browser acceptance with `npm run test:browser:acceptance` from `app/`;
   - both commands only select Playwright tests; neither provisions services, contracts, or fixtures;
   - the developer or CI prepares the selected profile before invoking either command.
 - CI ownership:
-  - one `Full-stack E2E` job owns both phases and publishes separate browser-acceptance and integrated reports;
-  - the job starts one local node, provisions browser fixtures outside Playwright, and starts the browser frontend before the first phase;
-  - it then resets that node, provisions a disposable PostgreSQL database, applies migrations, deploys integrated infrastructure, and starts
-    the backend and integrated frontend before the second phase;
+  - independent `Browser acceptance` and `Integrated journeys` jobs run in parallel on isolated local chains and publish separate reports;
+  - the browser job provisions browser fixtures outside Playwright, runs parallel-safe files on three workers, runs chain-backed files on
+    one worker, merges both reports, and owns a 25-minute budget;
+  - the integrated job provisions a disposable PostgreSQL database, applies migrations, seeds the deterministic E2E actors, deploys its
+    chain infrastructure, and owns a 60-minute budget;
+  - a lightweight `Full-stack E2E` aggregator preserves the protected check name and passes only when both profile jobs succeed;
   - integrated paths may use the Node-side team factory for scenario setup, while Playwright performs the product actions being tested; CI
     retains reports plus failure traces and stack logs as evidence.
 

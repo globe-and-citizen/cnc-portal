@@ -1,12 +1,12 @@
 import { readFile } from 'node:fs/promises'
 import { randomUUID } from 'node:crypto'
-import { SiweMessage } from 'siwe'
 import type { Address, Hex } from 'viem'
 import { privateKeyToAccount } from 'viem/accounts'
-import type { Team } from '../../src/types/team'
-import type { ContractType } from '../../src/types/teamContract'
-import { E2E_RPC_URL } from '../../src/e2e/chain.ts'
-import { E2E_OWNER, ownerAccount, publicClient } from './e2e-chain'
+import type { Team } from '../../../src/types/team'
+import type { ContractType } from '../../../src/types/teamContract'
+import { E2E_RPC_URL } from '../../../src/e2e/chain.ts'
+import { E2E_OWNER, ownerAccount, publicClient } from '../e2e-chain'
+import { authenticateIntegratedAccount, requestIntegratedApi } from '../integrated-api'
 import {
   assertAddressHasCode,
   buildBeaconConfigs,
@@ -15,14 +15,10 @@ import {
   requiredAddress,
   type DeployedOfficer,
   type DeploymentAddressManifest
-} from './team-factory-deployment'
+} from './operational-team-deployment'
 
 interface TeamApiResponse {
   id: number | string
-}
-
-interface SiweAuthResponse {
-  accessToken: string
 }
 
 interface CreateOfficerResponse {
@@ -47,32 +43,12 @@ export interface OperationalTeamOptions {
   memberPrivateKeys?: readonly Hex[]
 }
 
-const API_BASE_PATH = '/api'
 const EXPECTED_CHAIN_ID = 31_337
 const LOCAL_HOSTS = new Set(['localhost', '127.0.0.1', '::1'])
 const DEPLOYMENT_MANIFEST_URL = new URL(
-  '../../src/artifacts/deployed_addresses/chain-31337.json',
+  '../../../src/artifacts/deployed_addresses/chain-31337.json',
   import.meta.url
 )
-
-function getBackendUrl(): URL {
-  const configuredUrl = process.env.CNC_E2E_BACKEND_URL
-  if (!configuredUrl) {
-    throw new Error('Set CNC_E2E_BACKEND_URL to the local integrated-test backend origin')
-  }
-
-  const url = new URL(configuredUrl)
-  if (
-    url.protocol !== 'http:' ||
-    !LOCAL_HOSTS.has(url.hostname) ||
-    url.username !== '' ||
-    url.password !== ''
-  ) {
-    throw new Error('The integrated team factory only accepts a local HTTP backend')
-  }
-
-  return new URL(url.origin)
-}
 
 function assertLocalChainUrl(): void {
   const url = new URL(E2E_RPC_URL)
@@ -84,62 +60,6 @@ function assertLocalChainUrl(): void {
   ) {
     throw new Error('The integrated team factory only accepts a local HTTP chain')
   }
-}
-
-async function requestJson<T>(
-  backendUrl: URL,
-  path: string,
-  options: { method?: 'GET' | 'POST' | 'DELETE'; token?: string; body?: unknown } = {}
-): Promise<T> {
-  const headers = new Headers({ Accept: 'application/json' })
-  if (options.token) headers.set('Authorization', `Bearer ${options.token}`)
-  if (options.body !== undefined) headers.set('Content-Type', 'application/json')
-
-  const response = await fetch(new URL(`${API_BASE_PATH}${path}`, backendUrl), {
-    method: options.method ?? 'GET',
-    headers,
-    ...(options.body === undefined ? {} : { body: JSON.stringify(options.body) })
-  })
-  const responseText = await response.text()
-
-  if (!response.ok) {
-    throw new Error(
-      `Integrated team factory request ${options.method ?? 'GET'} ${path} failed ` +
-        `(${response.status}): ${responseText}`
-    )
-  }
-
-  if (!responseText) return undefined as T
-  return JSON.parse(responseText) as T
-}
-
-async function authenticateAccount(
-  backendUrl: URL,
-  account: ReturnType<typeof privateKeyToAccount>
-): Promise<string> {
-  const { nonce } = await requestJson<{ nonce: string }>(
-    backendUrl,
-    `/user/nonce/${account.address}`
-  )
-  const frontendOrigin = new URL(process.env.BASE_URL ?? 'http://localhost:5173').origin
-  const message = new SiweMessage({
-    address: account.address,
-    statement: 'Sign in with Ethereum to the app.',
-    nonce,
-    chainId: EXPECTED_CHAIN_ID,
-    uri: frontendOrigin,
-    domain: frontendOrigin,
-    version: '1'
-  }).prepareMessage()
-  const signature = await account.signMessage({ message })
-
-  const { accessToken } = await requestJson<SiweAuthResponse>(backendUrl, '/auth/siwe', {
-    method: 'POST',
-    body: { message, signature }
-  })
-
-  if (!accessToken) throw new Error('SIWE authentication returned no access token')
-  return accessToken
 }
 
 async function loadDeploymentAddresses(): Promise<DeploymentAddressManifest> {
@@ -165,7 +85,6 @@ export async function createOperationalTeamFixture(
     )
   }
 
-  const backendUrl = getBackendUrl()
   const manifest = await loadDeploymentAddresses()
   const officerFactory = requiredAddress(manifest, 'Officer#FactoryBeacon')
   await assertAddressHasCode(officerFactory, 'the Officer factory')
@@ -191,11 +110,11 @@ export async function createOperationalTeamFixture(
   const memberAccounts = (options.memberPrivateKeys ?? []).map((privateKey) =>
     privateKeyToAccount(privateKey)
   )
-  const token = await authenticateAccount(backendUrl, ownerAccount)
-  await Promise.all(memberAccounts.map((account) => authenticateAccount(backendUrl, account)))
+  const token = await authenticateIntegratedAccount(ownerAccount)
+  await Promise.all(memberAccounts.map((account) => authenticateIntegratedAccount(account)))
   const name = options.name ?? `E2E Factory Company ${randomUUID()}`
   const description = options.description ?? 'Prepared by the integrated E2E team factory.'
-  const createdTeam = await requestJson<TeamApiResponse>(backendUrl, '/teams', {
+  const createdTeam = await requestIntegratedApi<TeamApiResponse>('/teams', {
     method: 'POST',
     token,
     body: {
@@ -208,7 +127,7 @@ export async function createOperationalTeamFixture(
   try {
     const officer = await deployOfficer(manifest, investorInput)
 
-    await requestJson<CreateOfficerResponse>(backendUrl, '/contract/officer', {
+    await requestIntegratedApi<CreateOfficerResponse>('/contract/officer', {
       method: 'POST',
       token,
       body: {
@@ -219,7 +138,7 @@ export async function createOperationalTeamFixture(
       }
     })
 
-    const team = await requestJson<Team>(backendUrl, `/teams/${createdTeam.id}`, { token })
+    const team = await requestIntegratedApi<Team>(`/teams/${createdTeam.id}`, { token })
     if (team.currentOfficer?.address.toLowerCase() !== officer.address.toLowerCase()) {
       throw new Error('The backend did not return the Officer registered by the team factory')
     }
@@ -256,7 +175,7 @@ export async function createOperationalTeamFixture(
     }
   } catch (error) {
     try {
-      await requestJson(backendUrl, `/teams/${createdTeam.id}`, { method: 'DELETE', token })
+      await requestIntegratedApi(`/teams/${createdTeam.id}`, { method: 'DELETE', token })
     } catch {
       // Preserve the setup failure; the CI database is disposable and will be reset.
     }

@@ -50,20 +50,40 @@ BASE_URL=http://127.0.0.1:5173 npm run test:browser:acceptance # terminal 3
 `npm run setup:e2e:browser` is idempotent for an already prepared browser-acceptance node. It fails on a partially provisioned or unexpected
 chain instead of silently changing that state. The integrated profile has its own externally provisioned contracts, database, backend, and
 frontend; it does not run this browser-fixture command. Integrated tests that need an operational company may call the Node-side
-`test/e2e/team-factory.ts` before browser actions. Set `CNC_E2E_BACKEND_URL` to the local integrated backend origin; the factory signs in
-with the public Hardhat owner account and any requested scenario-member accounts, creates the team with those authenticated members through
-the real API, deploys its Officer generation on the dedicated local chain, registers that Officer through the API, and verifies the returned
-team state. Pre-provision members only when membership itself is not the behaviour under test. The factory is setup only: onboarding and
-membership-management tests still perform those product actions through the UI.
+`test/e2e/factories/operational-team.ts` before browser actions. Set `CNC_E2E_BACKEND_URL` to the local integrated backend origin; the
+factory signs in with the public Hardhat owner account and any requested scenario-member accounts, creates the team with those authenticated
+members through the real API, deploys its Officer generation on the dedicated local chain, registers that Officer through the API, and
+verifies the returned team state. Pre-provision members only when membership itself is not the behaviour under test. The factory is setup
+only: onboarding and membership-management tests still perform those product actions through the UI.
+
+The shared Playwright fixture layer separates browser-only lifecycle from chain and integrated setup. Simulated scenarios use the base
+browser lifecycle without touching Hardhat, while chain-backed and integrated scenarios add per-test snapshots. Integrated fixtures also
+expose authenticated owner and secondary-wallet pages, tracked operational-team factories, disposable team feature overrides, and cleanup.
+The complete ownership rules and spec audit are documented in the [E2E fixture catalogue](../../docs/testing/e2e-fixtures.md).
+
+`npm run test:browser:acceptance` executes two phases and merges their Playwright blob reports into one HTML report:
+
+- `@parallel-safe` scenarios run file-level parallelism with three workers;
+- the remaining `@browser` scenarios use the shared local chain and remain on one worker.
+
+The `@parallel-safe` tag describes isolation, not whether a scenario is mocked. Some `@mocked` browser scenarios still deploy contracts and
+must remain in the chain-backed phase.
 
 ## Layout
 
 ```text
 test/
 └── e2e/
-    ├── fixtures.ts             # shared Playwright fixtures
-    ├── team-factory.ts         # authenticated members, integrated team, and Officer setup
-    ├── login.spec.ts           # SIWE login flow
+    ├── fixtures/
+    │   ├── base.ts                          # browser lifecycle, price stub, and coverage
+    │   ├── mocked.ts                        # parallel-safe simulated scenarios
+    │   ├── chain.ts                         # per-test Hardhat snapshot and restore
+    │   └── integrated.ts                    # authenticated pages, factories, and cleanup
+    ├── factories/
+    │   ├── operational-team.ts              # authenticated team and Officer setup
+    │   └── operational-team-deployment.ts   # Officer deployment configuration
+    ├── integrated-api.ts                    # local-only SIWE and authenticated setup requests
+    ├── login.spec.ts                        # SIWE login flow
     └── bank/
         ├── bank-account.spec.ts # US-BANK-001..004 browser journeys
         ├── bank-chain.ts        # isolated Bank, Board, account, fee, and token deployment
@@ -75,12 +95,13 @@ The mock connector itself lives in `src/e2e/mockConnector.ts` and is wired in `s
 ## Writing tests
 
 Tests are plain Playwright. The wallet is available in-page via the mock connector, so tests drive the UI and stub the backend. For a
-chain-backed journey, reset and deploy a narrow fixture through `test/e2e/bank/bank-chain.ts`; its first two deployments are intentionally
-the USDC and USDCe addresses injected into the E2E Vite build above. The Bank suite snapshots and restores the chain around every test, and
-runs serially because all scenarios share that deployment.
+chain-backed browser journey, deploy a narrow domain fixture such as `test/e2e/bank/bank-chain.ts`; its first two deployments are
+intentionally the USDC and USDCe addresses injected into the E2E Vite build above. Import `fixtures/chain` so the prepared chain is restored
+around every test. A scenario whose owned backend and chain boundaries are fully simulated imports `fixtures/mocked` and may carry
+`@parallel-safe`. Domain suites with one shared deployment remain serial.
 
 ```ts
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./fixtures/mocked";
 
 test("does something", async ({ page }) => {
   await page.route("**/api/teams**", (route) =>
@@ -100,11 +121,15 @@ test("does something", async ({ page }) => {
 ### Conventions
 
 - Add stable `data-testid` attributes to interactive elements.
+- Add `@parallel-safe` only when a scenario performs no RPC read, contract deployment, or chain write and owns no shared mutable backend
+  state.
 - Stub backend calls with `page.route` to keep tests hermetic.
 - Use the dedicated E2E node (`VITE_E2E_RPC_URL`), never a developer node, for transaction scenarios.
 - Set `cnc-e2e-private-key` before page load to exercise another Hardhat account, or set `cnc-e2e-reject-next-transaction=true` to reject
   exactly the next wallet transaction.
 - Prefer web-first assertions (`expect(locator).toBeVisible()`) and `page.waitForURL` over fixed `waitForTimeout` delays.
+- Use `authenticatedPage`, `walletPage`, `operationalTeam`, and `teamFeatureOverride` only for prerequisites outside the journey's own
+  acceptance evidence.
 
 ## Test wallet
 
