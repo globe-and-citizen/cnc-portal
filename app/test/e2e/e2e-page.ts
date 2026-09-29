@@ -149,6 +149,24 @@ export async function selectToken(page: Page, dialog: Locator, symbol: string): 
   await page.getByRole('option', { name: symbol, exact: true }).click()
 }
 
+/** Choose a real day from a Nuxt UI calendar popover. */
+export async function chooseCalendarDate(
+  page: Page,
+  triggerSelector: string,
+  day: Date
+): Promise<void> {
+  await page.locator(triggerSelector).click()
+  const value = [
+    day.getFullYear(),
+    String(day.getMonth() + 1).padStart(2, '0'),
+    String(day.getDate()).padStart(2, '0')
+  ].join('-')
+  await page
+    .locator('[data-reka-popper-content-wrapper] [data-state="open"]')
+    .locator(`[data-value="${value}"]`)
+    .click()
+}
+
 export interface RpcCall {
   id: number
   method: string

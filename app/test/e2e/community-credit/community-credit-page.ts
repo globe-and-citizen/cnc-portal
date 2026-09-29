@@ -3,7 +3,14 @@ import { expect, type Page, type Request } from '@playwright/test'
 import type { Address } from 'viem'
 import { E2E_MEMBER, E2E_MEMBER_PRIVATE_KEY, E2E_OWNER } from '../e2e-chain'
 import type { CommunityCreditE2EFixture } from './community-credit-chain'
-import { json, signInAndOpenFirstTeam, stubBackend, useWallet, type E2EUser } from '../e2e-page'
+import {
+  chooseCalendarDate,
+  json,
+  signInAndOpenFirstTeam,
+  stubBackend,
+  useWallet,
+  type E2EUser
+} from '../e2e-page'
 
 interface FixedReturnOfferingResponse {
   id: number
@@ -123,7 +130,11 @@ export async function publishCreditCall(
   await page.locator('[data-test="cc-name"]').fill(name)
   await page.locator('[data-test="cc-next"]').click()
 
-  // Terms step: accept the wizard's own defaults (6% rate, 90-day term).
+  // Terms step: pick the required deadline, then accept the wizard's defaults
+  // for the 6% rate and 90-day term.
+  const deadline = new Date()
+  deadline.setDate(deadline.getDate() + 7)
+  await chooseCalendarDate(page, '[data-test="cc-deadline"]', deadline)
   await page.locator('[data-test="cc-next"]').click()
 
   // Access step.

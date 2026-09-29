@@ -4,6 +4,7 @@ import type { Page, Request } from '@playwright/test'
 import type { Hex } from 'viem'
 import { E2E_MEMBER_PRIVATE_KEY, E2E_OWNER } from '../e2e-chain'
 import {
+  chooseCalendarDate,
   json,
   openAccountFromSidebar,
   signInAndOpenFirstTeam,
@@ -139,14 +140,5 @@ export async function openExpenseAccount(
 
 /** Choose a real calendar day instead of mutating the approval form state. */
 export async function chooseApprovalDate(page: Page, selector: string, day: Date): Promise<void> {
-  await page.locator(selector).click()
-  const value = [
-    day.getFullYear(),
-    String(day.getMonth() + 1).padStart(2, '0'),
-    String(day.getDate()).padStart(2, '0')
-  ].join('-')
-  await page
-    .locator('[data-reka-popper-content-wrapper] [data-state="open"]')
-    .locator(`[data-value="${value}"]`)
-    .click()
+  await chooseCalendarDate(page, selector, day)
 }
