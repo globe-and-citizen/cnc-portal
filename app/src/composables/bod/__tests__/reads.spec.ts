@@ -1,5 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { createContractReadMock, mockTeamStore, useReadContractFn } from '@/tests/mocks'
+import {
+  createContractReadMock,
+  mockTeamStore,
+  mockUserStore,
+  useReadContractFn
+} from '@/tests/mocks'
+import { useUserDataStore } from '@/stores'
+import { reactive } from 'vue'
 import type { Address } from 'viem'
 
 // `bod.setup.ts` supplies component tests with a mock of these composables.
@@ -64,9 +71,32 @@ describe('BOD Contract Reads', () => {
     expect(useReadContractFn).toHaveBeenCalledWith(
       expect.objectContaining({
         functionName: 'isMember',
-        args: [MOCK_DATA.memberAddress],
+        args: expect.objectContaining({ value: [MOCK_DATA.memberAddress] }),
         query: expect.objectContaining({ enabled: expect.objectContaining({ value: true }) })
       })
+    )
+  })
+
+  it('reacts when the connected Board member address becomes available after setup', () => {
+    const userStore = reactive({ ...mockUserStore, address: '' })
+    vi.mocked(useUserDataStore).mockReturnValue(userStore as ReturnType<typeof useUserDataStore>)
+    const membershipRead = createContractReadMock(true)
+    const ownerRead = createContractReadMock<Address | undefined>(MOCK_DATA.bodAddress)
+    mockTeamStore.getContractAddressByType = vi.fn(() => MOCK_DATA.bodAddress)
+    useReadContractFn.mockReturnValueOnce(membershipRead).mockReturnValueOnce(ownerRead)
+
+    useBodIsBodAction(MOCK_DATA.bodAddress)
+
+    const membershipConfig = useReadContractFn.mock.calls[0]?.[0]
+    expect(membershipConfig?.query?.enabled.value).toBe(false)
+    expect(membershipConfig?.args.value).toEqual([''])
+
+    userStore.address = MOCK_DATA.memberAddress
+    expect(membershipConfig?.query?.enabled.value).toBe(true)
+    expect(membershipConfig?.args.value).toEqual([MOCK_DATA.memberAddress])
+
+    vi.mocked(useUserDataStore).mockReturnValue(
+      mockUserStore as ReturnType<typeof useUserDataStore>
     )
   })
 

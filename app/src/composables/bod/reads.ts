@@ -115,12 +115,13 @@ export function useBodIsMember(memberAddress: MaybeRef<Address>) {
   const bodAddress = computed(() => teamStore.getContractAddressByType('BoardOfDirectors'))
   const isBodAddressValid = computed(() => !!bodAddress.value && isAddress(bodAddress.value))
   const memberAddressValue = computed(() => unref(memberAddress))
+  const memberArgs = computed(() => [memberAddressValue.value] as const)
 
   return useReadContract({
     address: bodAddress,
     abi: boardOfDirectorsAbi,
     functionName: 'isMember',
-    args: [memberAddressValue.value] as const,
+    args: memberArgs,
     query: {
       enabled: computed(() => isBodAddressValid.value && isAddress(memberAddressValue.value))
     }
@@ -148,7 +149,8 @@ export function useBodApprovalCount() {
  */
 export function useBodIsBodAction(contractAddress: MaybeRef<Address>) {
   const userDataStore = useUserDataStore()
-  const { data: isBodMember } = useBodIsMember(userDataStore.address as Address)
+  const currentUserAddress = computed(() => userDataStore.address as Address)
+  const { data: isBodMember } = useBodIsMember(currentUserAddress)
   const { data: owner } = useBodOwner(contractAddress)
 
   const teamStore = useTeamStore()

@@ -85,7 +85,8 @@ const {
   isSuccess: isActionAdded
 } = addActionComposable
 
-const { isBodAction } = useBodIsBodAction(props.bankAddress as Address)
+const bankAddress = computed(() => props.bankAddress as Address)
+const { isBodAction } = useBodIsBodAction(bankAddress)
 const { data: bankOwner, error: bankOwnerError } = useBankOwner()
 
 const toast = useToast()

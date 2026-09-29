@@ -4,6 +4,7 @@ import { createTestingPinia } from '@pinia/testing'
 import { nextTick } from 'vue'
 import type { Address } from 'viem'
 import PayDividendsAction from '../PayDividendsAction.vue'
+import { useBodIsBodAction } from '@/composables/bod/reads'
 import {
   mockBankReads,
   mockBankWrites,
@@ -82,6 +83,16 @@ describe('PayDividendsAction.vue', () => {
     expect(
       wrapper.find('[data-test="pay-dividends-button"]').attributes('disabled')
     ).toBeUndefined()
+  })
+
+  it('keeps Board ownership detection reactive while the Bank address loads', async () => {
+    const wrapper = createWrapper({ bankAddress: undefined })
+    const reactiveBankAddress = vi.mocked(useBodIsBodAction).mock.calls[0]?.[0]
+
+    expect(reactiveBankAddress).toEqual(expect.objectContaining({ value: undefined }))
+
+    await wrapper.setProps({ bankAddress })
+    expect(reactiveBankAddress).toEqual(expect.objectContaining({ value: bankAddress }))
   })
 
   it('[AC-US-SHER-002-04] blocks dividends without a token symbol', () => {
