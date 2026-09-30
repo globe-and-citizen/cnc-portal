@@ -50,6 +50,7 @@ async function selectFundingAsset(page: Page, dialog: Locator, asset: 'USDC' | '
 
 export async function setMemberUsdcWage(
   page: Page,
+  teamId: string,
   memberAddress: Address,
   options: {
     dailyCap: string
@@ -59,6 +60,12 @@ export async function setMemberUsdcWage(
     sherRate?: string
   }
 ): Promise<void> {
+  const payrollPath = `/teams/${teamId}/accounts/payroll-account`
+  if (new URL(page.url()).pathname !== payrollPath) {
+    await openAccountFromSidebar(page, payrollPath)
+  }
+  await expect(page.locator('[data-test="members-table"]')).toBeVisible({ timeout: 30_000 })
+
   const actions = page.locator(`[data-test="member-actions-${memberAddress}"]`)
   await actions.locator('[data-test="set-wage-button"]').click()
 
@@ -124,12 +131,20 @@ export async function submitDailyClaim(
   page: Page,
   options: { hours: string; memo: string }
 ): Promise<void> {
-  await page.locator('[data-test="modal-submit-hours-button"]').click()
+  const openClaim = page.locator('[data-test="modal-submit-hours-button"]')
+  await expect(
+    openClaim,
+    'The selected Payroll week must allow claim submission before the scenario continues'
+  ).toBeEnabled({ timeout: 10_000 })
+  await openClaim.click()
   const dialog = page.getByRole('dialog', { name: 'Submit Claim' })
   await dialog.locator('[data-test="hours-worked-input"]').fill(options.hours)
   await dialog.locator('[data-test="memo-input"]').fill(options.memo)
   await dialog.locator('[data-test="submit-claim-button"]').click()
-  await expect(page.getByText('Wage claim added successfully', { exact: true })).toBeVisible()
+  await expect(dialog).toBeHidden({ timeout: 30_000 })
+  await expect(page.locator('[data-test="daily-breakdown"]')).toContainText(options.memo, {
+    timeout: 30_000
+  })
 }
 
 export async function fundCashRemuneration(

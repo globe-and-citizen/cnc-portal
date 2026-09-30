@@ -1,5 +1,5 @@
 import type { Locator } from '@playwright/test'
-import { expect, test } from '../fixtures'
+import { expect, test } from '../fixtures/mocked'
 import {
   cardDescription,
   cardName,
@@ -21,7 +21,7 @@ import {
 const NEW_NAME = 'E2E Renamed Company'
 const NEW_DESCRIPTION = 'Updated through the lifecycle E2E suite.'
 const UPDATED = 'Company updated successfully'
-const TAGS = ['@US-COMPANIES-004', '@browser', '@mocked']
+const TAGS = ['@US-COMPANIES-004', '@browser', '@mocked', '@parallel-safe']
 
 const nameInput = (form: Locator) => form.getByPlaceholder('Acme Corp')
 const descriptionInput = (form: Locator) => form.getByPlaceholder('Enter a short description')

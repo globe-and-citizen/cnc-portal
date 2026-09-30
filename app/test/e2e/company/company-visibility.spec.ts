@@ -1,4 +1,4 @@
-import { expect, test } from '../fixtures'
+import { expect, test } from '../fixtures/mocked'
 import { E2E_MEMBER } from '../e2e-chain'
 import {
   cancelDialog,
@@ -20,7 +20,7 @@ import {
 
 const HIDDEN = 'Company hidden successfully'
 const VISIBLE = 'Company is visible again'
-const TAGS = ['@US-COMPANIES-007', '@browser', '@mocked']
+const TAGS = ['@US-COMPANIES-007', '@browser', '@mocked', '@parallel-safe']
 
 // Mocked browser coverage of US-COMPANIES-007. The API is simulated, so the per-member
 // persistence of the visibility flag needs backend coverage.

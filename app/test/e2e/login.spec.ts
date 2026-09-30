@@ -1,4 +1,4 @@
-import { test, expect } from './fixtures'
+import { expect, test } from './fixtures/mocked'
 
 /**
  * Covers US-AUTH-001: Sign in to the Client (happy path).
@@ -21,7 +21,7 @@ const json = (body: unknown) => ({
   body: JSON.stringify(body)
 })
 
-test.describe('US-AUTH-001: Sign in to the Client', { tag: '@browser' }, () => {
+test.describe('US-AUTH-001: Sign in to the Client', { tag: ['@browser', '@parallel-safe'] }, () => {
   test(
     'a portal user signs in with the mock wallet and accesses their companies',
     { tag: '@US-AUTH-001' },

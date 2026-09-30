@@ -1,7 +1,7 @@
 import type { Page, Request } from '@playwright/test'
 import type { Address } from 'viem'
 import type { Team } from '../../../src/types/team'
-import { expect, test } from '../fixtures'
+import { expect, test } from '../fixtures/mocked'
 import { E2E_MEMBER, E2E_OWNER } from '../e2e-chain'
 import {
   json,
@@ -120,7 +120,7 @@ async function finishMockedCompanyWithoutContracts(page: Page): Promise<void> {
 
 test.describe(
   '[US-COMPANIES-001] Mocked company creation variants',
-  { tag: ['@US-COMPANIES-001', '@mocked', '@browser'] },
+  { tag: ['@US-COMPANIES-001', '@mocked', '@browser', '@parallel-safe'] },
   () => {
     test.describe.configure({ mode: 'parallel' })
 
@@ -189,7 +189,7 @@ test.describe(
 
 test.describe(
   '[US-COMPANIES-002] Mocked Officer deployment variants',
-  { tag: ['@US-COMPANIES-002', '@mocked', '@browser'] },
+  { tag: ['@US-COMPANIES-002', '@mocked', '@browser', '@parallel-safe'] },
   () => {
     /**
      * Covers:
@@ -229,7 +229,7 @@ test.describe(
 
 test.describe(
   '[US-COMPANIES-004] Mocked company update variants',
-  { tag: ['@US-COMPANIES-004', '@mocked', '@browser'] },
+  { tag: ['@US-COMPANIES-004', '@mocked', '@browser', '@parallel-safe'] },
   () => {
     test('[AC-US-COMPANIES-004-03] rejects invalid metadata before making an API request', async ({
       page

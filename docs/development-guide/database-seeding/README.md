@@ -2,7 +2,7 @@
 
 **Scope:** Developer and operational tooling for controlled Prisma seed execution
 
-**Last verified:** 2026-08-21
+**Last verified:** 2026-09-29
 
 Database seeding is not a user-accessible product feature. This guide owns the current execution flags and safety boundaries implemented by
 the backend seed orchestrator.
@@ -30,6 +30,21 @@ npm run seed
 ```
 
 The valid administrator roles are `ROLE_ADMIN` and `ROLE_SUPER_ADMIN`. Address and role lists must contain the same number of entries.
+
+## Integrated E2E Actors
+
+The integrated Playwright profile has a separate, deterministic seed:
+
+```bash
+npm run seed:e2e
+```
+
+This command is restricted to `NODE_ENV=test`. It upserts the three public Hardhat actors used by the browser journeys and assigns the local
+administrator role only to the owner actor. It deliberately creates no teams, wages, claims, expenses, or contracts: scenario factories own
+that disposable state and clean it up after each test.
+
+Do not replace this command with `SEED_DATABASE=true npm run seed:test` in the E2E workflow. The generic test dataset adds unrelated records
+and makes the browser journeys depend on generated ordering and volume.
 
 ## Execution Flow
 
@@ -92,6 +107,7 @@ been revalidated against the current implementation; use this README and current
 - [Seed orchestrator](../../../backend/prisma/seed.ts)
 - [Environment profiles](../../../backend/prisma/seeders/config.ts)
 - [Administrator seeder](../../../backend/prisma/seeders/admin.ts)
+- [Integrated E2E actor seed](../../../backend/prisma/seed-e2e.ts)
 - [Backend scripts](../../../backend/package.json)
 
 ## Related Documentation

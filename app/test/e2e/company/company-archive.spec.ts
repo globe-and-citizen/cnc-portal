@@ -1,4 +1,4 @@
-import { expect, test } from '../fixtures'
+import { expect, test } from '../fixtures/mocked'
 import {
   archiveAction,
   archivedBanner,
@@ -26,10 +26,11 @@ import {
 
 const ARCHIVED = 'Company archived successfully'
 const UNARCHIVED = 'Company unarchived successfully'
+const TAGS = ['@US-COMPANIES-006', '@browser', '@mocked', '@parallel-safe']
 
 // Mocked browser coverage of US-COMPANIES-006. The API is simulated, so the server-side
 // rejection of writes against an archived company needs backend coverage.
-test.describe('Company archiving', { tag: ['@US-COMPANIES-006', '@browser', '@mocked'] }, () => {
+test.describe('Company archiving', { tag: TAGS }, () => {
   test('lets the owner archive the company from the dashboard and restore it from the banner', async ({
     page
   }) => {

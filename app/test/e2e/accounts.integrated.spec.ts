@@ -3,23 +3,23 @@ import { parseEther, parseUnits } from 'viem'
 import type { Locator, Page } from '@playwright/test'
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
-import { expect, test } from './fixtures'
+import { expect, test } from './fixtures/integrated'
 import {
   E2E_MEMBER,
   E2E_MEMBER_PRIVATE_KEY,
   E2E_OWNER,
+  E2E_OWNER_PRIVATE_KEY,
   nativeBalance,
   tokenBalance
 } from './e2e-chain'
-import { dialogAmount, openAccountFromSidebar, selectToken, useWallet } from './e2e-page'
+import { dialogAmount, openAccountFromSidebar, selectToken } from './e2e-page'
 import { grossForNet } from './bank/bank-chain'
 import { completeCashOut, transferBankToContract } from './bank/bank-page'
 import {
   addRealCompanyMember,
   createOperationalCompany,
   deleteCompanyThroughUi,
-  deploySafeThroughUi,
-  signInToRealStack
+  deploySafeThroughUi
 } from './company/real-company-page'
 import { chooseApprovalDate } from './expense/expense-page'
 
@@ -177,12 +177,8 @@ test.describe(
      * - [AC-US-BANK-002-10]
      * - [AC-US-BANK-004-01]
      */
-    test('grants, spends and controls one persisted allowance', async ({ browser, page }) => {
-      const memberContext = await browser.newContext()
-      const memberPage = await memberContext.newPage()
-      await useWallet(memberPage, E2E_MEMBER_PRIVATE_KEY)
-      await signInToRealStack(memberPage)
-      await memberContext.close()
+    test('grants, spends and controls one persisted allowance', async ({ walletPage, page }) => {
+      const memberPage = await walletPage(E2E_MEMBER_PRIVATE_KEY)
 
       const company = await createOperationalCompany(page)
 
@@ -269,32 +265,27 @@ test.describe(
             .locator('[data-test="amount"]')
         ).toHaveText('1')
 
-        const spendingContext = await browser.newContext()
-        const spendingPage = await spendingContext.newPage()
-        await useWallet(spendingPage, E2E_MEMBER_PRIVATE_KEY)
-        await signInToRealStack(spendingPage)
-        await spendingPage.goto(`/teams/${company.teamId}`)
+        await memberPage.goto(`/teams/${company.teamId}`)
         await openAccountFromSidebar(
-          spendingPage,
+          memberPage,
           `/teams/${company.teamId}/accounts/expense-account`
         )
         const memberBefore = await tokenBalance(usdc, E2E_MEMBER)
-        await spendingPage.locator('[data-test="transfer-button"]').click()
-        const spend = spendingPage.getByRole('dialog', {
+        await memberPage.locator('[data-test="transfer-button"]').click()
+        const spend = memberPage.getByRole('dialog', {
           name: 'Transfer from Expenses Contract'
         })
         await spend.getByPlaceholder('Address').fill(E2E_MEMBER)
         await spend.locator('[data-test="user-row"]').click()
         await dialogAmount(spend).fill('3')
         await spend.locator('[data-test="transferButton"]').click()
-        await expect(spendingPage.getByText('Transfer Successful', { exact: true })).toBeVisible({
+        await expect(memberPage.getByText('Transfer Successful', { exact: true })).toBeVisible({
           timeout: 30_000
         })
         await expect
           .poll(() => tokenBalance(usdc, E2E_MEMBER))
           .toBe(memberBefore + parseUnits('3', 6))
         await expect.poll(() => tokenBalance(usdc, expense)).toBe(parseUnits('5', 6))
-        await spendingContext.close()
 
         await openAccountFromSidebar(page, `/teams/${company.teamId}/accounts/bank-account`)
         await openAccountFromSidebar(page, `/teams/${company.teamId}/accounts/expense-account`)
@@ -313,23 +304,17 @@ test.describe(
         await openAccountFromSidebar(page, `/teams/${company.teamId}/accounts/expense-account`)
         await expect(page.locator('[data-test="disable-button"]')).toBeVisible()
 
-        const reviewContext = await browser.newContext()
-        const reviewPage = await reviewContext.newPage()
-        try {
-          await signInToRealStack(reviewPage)
-          await reviewPage.goto(`/teams/${company.teamId}`)
-          await openAccountFromSidebar(
-            reviewPage,
-            `/teams/${company.teamId}/accounts/expense-account`
-          )
-          await expect(
-            reviewPage
-              .locator('[data-test="expense-transactions"]')
-              .getByText('Token transfer', { exact: true })
-          ).toBeVisible({ timeout: 30_000 })
-        } finally {
-          await reviewContext.close()
-        }
+        const reviewPage = await walletPage(E2E_OWNER_PRIVATE_KEY)
+        await reviewPage.goto(`/teams/${company.teamId}`)
+        await openAccountFromSidebar(
+          reviewPage,
+          `/teams/${company.teamId}/accounts/expense-account`
+        )
+        await expect(
+          reviewPage
+            .locator('[data-test="expense-transactions"]')
+            .getByText('Token transfer', { exact: true })
+        ).toBeVisible({ timeout: 30_000 })
 
         const ownerBeforeCashOut = await tokenBalance(usdc, E2E_OWNER)
         await page.goto(`/teams/${company.teamId}`)
