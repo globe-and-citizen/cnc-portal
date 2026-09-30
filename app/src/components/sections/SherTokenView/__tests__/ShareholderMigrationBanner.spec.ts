@@ -105,7 +105,7 @@ function mountBanner() {
   })
 }
 
-describe('ShareholderMigrationBanner', () => {
+describe('[US-CONTRACT-005] ShareholderMigrationBanner', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockMigrateState.isPending.value = false

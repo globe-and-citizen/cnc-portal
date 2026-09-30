@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { mount, flushPromises } from '@vue/test-utils'
+import { mount, flushPromises, type VueWrapper } from '@vue/test-utils'
 import { computed } from 'vue'
 import { Time } from '@internationalized/date'
 import { parseEventLogs, type Address } from 'viem'
@@ -49,6 +49,15 @@ vi.mock('@/queries/fixedReturnOffering.queries', async (importOriginal) => ({
 
 import NewView from '../NewView.vue'
 
+/** The subscription deadline date starts empty, so every full run through the wizard
+ *  has to pick one on the Terms step, the way an issuer does. */
+async function pickFutureDeadline(wrapper: VueWrapper) {
+  const nextYear = new Date().getFullYear() + 1
+  await wrapper
+    .findComponent({ name: 'UCalendar' })
+    .vm.$emit('update:modelValue', { year: nextYear, month: 1, day: 15 })
+}
+
 const FIXED_RETURN_ADDRESS = '0x5234567890123456789012345678901234567890' as Address
 const mockParseEventLogs = vi.mocked(parseEventLogs)
 
@@ -62,6 +71,7 @@ describe('NewView', () => {
     mockFixedReturnReads.getSupportedTokens.data.value = []
     useQueryClientFn.mockReturnValue({
       invalidateQueries: mockInvalidateQueries,
+      refetchQueries: vi.fn(),
       getQueryData: vi.fn(),
       setQueryData: vi.fn(),
       removeQueries: vi.fn()
@@ -110,7 +120,7 @@ describe('NewView', () => {
     expect(wrapper.find('[data-test="cc-name"]').exists()).toBe(true)
   })
 
-  it('blocks advancing past Basics on a too-short name, then clears once fixed', async () => {
+  it('[AC-US-CC-002-01] blocks a round name shorter than three characters', async () => {
     const wrapper = mount(NewView)
 
     await wrapper.find('[data-test="cc-name"]').setValue('Q3')
@@ -124,7 +134,7 @@ describe('NewView', () => {
     expect(wrapper.find('[data-test="cc-term-30"]').exists()).toBe(true)
   })
 
-  it('blocks advancing past Basics with a non-positive target', async () => {
+  it('[AC-US-CC-002-03] blocks a non-positive funding target', async () => {
     const wrapper = mount(NewView)
 
     await wrapper.find('[data-test="cc-name"]').setValue('Q3 runway bridge')
@@ -134,7 +144,7 @@ describe('NewView', () => {
     expect(wrapper.find('[data-test="cc-target-error"]').text()).toContain('greater than 0')
   })
 
-  it('blocks advancing past Terms with a deadline in the past', async () => {
+  it('[AC-US-CC-002-05] blocks a subscription deadline in the past', async () => {
     const wrapper = mount(NewView)
 
     await wrapper.find('[data-test="cc-name"]').setValue('Q3 runway bridge')
@@ -151,7 +161,23 @@ describe('NewView', () => {
     expect(wrapper.find('[data-test="cc-term-30"]').exists()).toBe(true) // still on Terms
   })
 
-  it('creates the offer on-chain and returns to the list on publish', async () => {
+  it('[AC-US-CC-002-05] requires a subscription deadline to be picked before leaving Terms', async () => {
+    const wrapper = mount(NewView)
+    await wrapper.find('[data-test="cc-name"]').setValue('Q3 runway bridge')
+    await wrapper.find('[data-test="cc-next"]').trigger('click') // Basics → Terms
+    await wrapper.find('[data-test="cc-next"]').trigger('click') // no date picked
+
+    expect(wrapper.find('[data-test="cc-deadline-error"]').text()).toBe(
+      'Subscription deadline is required'
+    )
+    expect(wrapper.find('[data-test="cc-deadline"]').exists()).toBe(true) // still on Terms
+
+    // Picking a date clears the error straight away, without another Continue.
+    await pickFutureDeadline(wrapper)
+    expect(wrapper.find('[data-test="cc-deadline-error"]').exists()).toBe(false)
+  })
+
+  it('[AC-US-CC-002-06] creates the round on-chain and returns to the list', async () => {
     mockFixedReturnWrites.createLendingOffer.mutateAsync.mockResolvedValueOnce({
       hash: '0xhash',
       receipt: { logs: [] },
@@ -162,7 +188,8 @@ describe('NewView', () => {
 
     // Basics → Terms → Access → Publish
     await wrapper.find('[data-test="cc-name"]').setValue('Q3 runway bridge')
-    await wrapper.find('[data-test="cc-next"]').trigger('click')
+    await wrapper.find('[data-test="cc-next"]').trigger('click') // Basics → Terms
+    await pickFutureDeadline(wrapper)
     await wrapper.find('[data-test="cc-next"]').trigger('click')
     await wrapper.find('[data-test="cc-next"]').trigger('click')
     await flushPromises()
@@ -178,7 +205,8 @@ describe('NewView', () => {
     const wrapper = mount(NewView)
 
     await wrapper.find('[data-test="cc-name"]').setValue('Q3 runway bridge')
-    await wrapper.find('[data-test="cc-next"]').trigger('click')
+    await wrapper.find('[data-test="cc-next"]').trigger('click') // Basics → Terms
+    await pickFutureDeadline(wrapper)
     await wrapper.find('[data-test="cc-next"]').trigger('click')
     await wrapper.find('[data-test="cc-next"]').trigger('click')
     await flushPromises()
@@ -186,7 +214,7 @@ describe('NewView', () => {
     expect(wrapper.find('[data-test="cc-error"]').exists()).toBe(true)
   })
 
-  it('retries only the metadata POST after an on-chain success but metadata failure, without re-submitting on-chain', async () => {
+  it('[AC-US-CC-002-15] retries metadata without creating a second on-chain round', async () => {
     mockFixedReturnWrites.createLendingOffer.mutateAsync.mockResolvedValueOnce({
       hash: '0xhash',
       receipt: { logs: [] },
@@ -197,7 +225,8 @@ describe('NewView', () => {
 
     const wrapper = mount(NewView)
     await wrapper.find('[data-test="cc-name"]').setValue('Q3 runway bridge')
-    await wrapper.find('[data-test="cc-next"]').trigger('click')
+    await wrapper.find('[data-test="cc-next"]').trigger('click') // Basics → Terms
+    await pickFutureDeadline(wrapper)
     await wrapper.find('[data-test="cc-next"]').trigger('click')
     await wrapper.find('[data-test="cc-next"]').trigger('click')
     await flushPromises()
@@ -219,12 +248,54 @@ describe('NewView', () => {
     )
   })
 
+  it('[AC-US-CC-002-15] going back after a failed metadata save only edits the name, never re-creates the round', async () => {
+    mockFixedReturnWrites.createLendingOffer.mutateAsync.mockResolvedValueOnce({
+      hash: '0xhash',
+      receipt: { logs: [] },
+      simulation: {}
+    } as never)
+    mockParseEventLogs.mockReturnValueOnce([{ args: { offerId: 3n } }] as never)
+    mockCreateMetadata.mockRejectedValueOnce(new Error('metadata down'))
+
+    const wrapper = mount(NewView)
+    await wrapper.find('[data-test="cc-name"]').setValue('Q3 runway bridge')
+    await wrapper.find('[data-test="cc-next"]').trigger('click') // Basics → Terms
+    await pickFutureDeadline(wrapper)
+    await wrapper.find('[data-test="cc-next"]').trigger('click')
+    await wrapper.find('[data-test="cc-next"]').trigger('click')
+    await flushPromises()
+    expect(mockFixedReturnWrites.createLendingOffer.mutateAsync).toHaveBeenCalledTimes(1)
+
+    // Back skips the on-chain Terms/Access steps and lands on Basics, where the
+    // target and token are locked but the name is still editable.
+    await wrapper.find('[data-test="cc-back"]').trigger('click')
+    expect(wrapper.find('[data-test="cc-name"]').exists()).toBe(true)
+    expect(wrapper.find('#cc-target').attributes('disabled')).toBeDefined()
+    expect(wrapper.find('[data-test="cc-next"]').text()).toBe('Retry saving details')
+
+    await wrapper.find('[data-test="cc-name"]').setValue('Q3 runway bridge (fixed)')
+    mockCreateMetadata.mockResolvedValueOnce(undefined)
+    await wrapper.find('[data-test="cc-next"]').trigger('click')
+    await flushPromises()
+
+    expect(mockFixedReturnWrites.createLendingOffer.mutateAsync).toHaveBeenCalledTimes(1)
+    expect(mockCreateMetadata).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        body: expect.objectContaining({ offerId: 3, title: 'Q3 runway bridge (fixed)' })
+      })
+    )
+    expect(mockRouterPush).toHaveBeenLastCalledWith(
+      expect.objectContaining({ name: 'community-credit' })
+    )
+  })
+
   it('blocks publishing when the team has no deployed Credit Account', async () => {
     vi.mocked(useFixedReturnAddress).mockReturnValue(computed(() => undefined))
     const wrapper = mount(NewView)
 
     await wrapper.find('[data-test="cc-name"]').setValue('Q3 runway bridge')
-    await wrapper.find('[data-test="cc-next"]').trigger('click')
+    await wrapper.find('[data-test="cc-next"]').trigger('click') // Basics → Terms
+    await pickFutureDeadline(wrapper)
     await wrapper.find('[data-test="cc-next"]').trigger('click')
     await wrapper.find('[data-test="cc-next"]').trigger('click')
     await flushPromises()

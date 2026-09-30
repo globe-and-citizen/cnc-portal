@@ -1,0 +1,474 @@
+# Integrated E2E Checklist
+
+**Scope:** G0 technical readiness through G8 Board Election verification
+
+This checklist organizes integrated E2E coverage around business paths rather than one path per user story. A path may validate several
+stories when the same actors, persisted state, and UX sequence connect them naturally.
+
+The canonical product outcomes remain in the linked feature documentation. Story and acceptance-criterion references below define intended
+coverage; the latest execution result and artifacts belong in Playwright and CI reports.
+
+## Path Model
+
+- One path represents one coherent business objective from an actor's point of view.
+- The main success sequence should run as one browser test when later actions consume state created by earlier actions.
+- Validation, authorization, recovery, and injected-failure branches remain separate tests attached to the same path.
+- A story is validated only when the path performs its observable action and verifies the resulting backend, database, or chain state.
+- Seeded or API-created state is a dependency, not evidence that the story creating that state passed.
+- Keep a destructive terminal action in its own path when it would prevent subsequent checks or make failures harder to diagnose.
+
+## Group Catalogue
+
+- G0 — Integrated technical readiness.
+- G1 — Company onboarding and treasury readiness.
+- G2 — Company administration and member access.
+- G3 — Shareholder lifecycle and SHER.
+- G4 — Community Credit lifecycle.
+- G5 — Payroll lifecycle.
+- G6 — Expense Account lifecycle.
+- G7 — Cross-feature Accounting verification.
+- G8 — Board Election lifecycle.
+
+## Integration Boundary
+
+- Real boundaries:
+  - browser and production frontend code;
+  - SIWE authentication and backend authorization;
+  - backend routes and controllers;
+  - migrated PostgreSQL database;
+  - local chain, deployed contracts, transactions, receipts, events, and refreshed reads.
+- Simulated boundaries:
+  - external services not owned by CNC Portal, such as token-price providers.
+- Runtime ownership:
+  - locally, the developer starts and controls the frontend, backend, database, and node;
+  - in CI, the workflow prepares those services before Playwright starts;
+  - browser-acceptance fixtures are provisioned explicitly with `npm run setup:e2e:browser`, outside Playwright;
+  - integrated infrastructure is deployed by the developer or CI stack, also before Playwright starts;
+  - an integrated scenario may call a Node-side team factory before its browser actions to create isolated domain data through the real
+    backend API and dedicated local chain;
+  - the E2E test checks readiness and exercises product behaviour, but does not own service startup.
+- Fixture-preparation rule:
+  - a team factory prepares only scenario data (team, Officer generation, and its managed contracts), not shared chain infrastructure;
+  - factory calls are setup and do not count as product-flow evidence; the scenario still drives the behaviour under test through the UI;
+  - the factory must authenticate with the test wallet, restrict writes to the disposable local backend and chain, and return verified
+    backend and chain state;
+  - the chain and integrated Playwright layers snapshot and restore the prepared chain around every applicable test; the integrated layer
+    also tracks additional wallet contexts and deletes every team or team-feature override created through its factories;
+  - authentication, onboarding, membership, or configuration fixtures are prohibited when that action is the acceptance evidence owned by
+    the current path; the complete decisions are recorded in the [fixture catalogue](./e2e-fixtures.md);
+- Browser-action rule:
+  - Playwright may submit a contract transaction only through a user-accessible product action;
+  - browser code must not deploy fixtures, alter contract code or balances, control mining, or mutate chain state directly through RPC
+    methods; the Node-side team factory is the narrow setup-only exception for integrated scenarios that do not test onboarding.
+- Execution profiles:
+  - `@integrated` paths use the developer- or CI-managed frontend, backend, database, and local chain without intercepting CNC Portal
+    boundaries;
+  - `@browser` scenarios may inject backend state, direct fixture setup, wallet failures, or network outcomes and do not count as integrated
+    E2E evidence;
+  - `@mocked` is the narrower marker for browser scenarios that explicitly replace a product boundary;
+  - `@parallel-safe` marks browser scenarios whose owned backend and chain boundaries are fully simulated; it is independent of `@mocked`
+    because some mocked scenarios still use real local contracts;
+  - run every migrated integrated path with `npm run test:e2e` from `app/`;
+  - run browser acceptance with `npm run test:browser:acceptance` from `app/`;
+  - both commands only select Playwright tests; neither provisions services, contracts, or fixtures;
+  - the developer or CI prepares the selected profile before invoking either command.
+- CI ownership:
+  - independent `Browser acceptance` and `Integrated journeys` jobs run in parallel on isolated local chains and publish separate reports;
+  - the browser job provisions browser fixtures outside Playwright, runs parallel-safe files on three workers, runs chain-backed files on
+    one worker, merges both reports, and owns a 25-minute budget;
+  - the integrated job provisions a disposable PostgreSQL database, applies migrations, seeds the deterministic E2E actors, deploys its
+    chain infrastructure, and owns a 60-minute budget;
+  - a lightweight `Full-stack E2E` aggregator preserves the protected check name and passes only when both profile jobs succeed;
+  - integrated paths may use the Node-side team factory for scenario setup, while Playwright performs the product actions being tested; CI
+    retains reports plus failure traces and stack logs as evidence.
+
+## G0 — Integrated Technical Readiness
+
+- `E2E-PATH-00` — Validate the externally prepared test stack
+  - Stories validated: none; this path only proves that product paths can start.
+  - Required checks:
+    - [ ] Confirm the frontend health check succeeds.
+    - [ ] Confirm the backend health check succeeds.
+    - [ ] Confirm the migrated database is reachable through the backend.
+    - [ ] Confirm the local node uses the expected chain and contains the required deployed infrastructure.
+    - [ ] Confirm the browser and backend target the same local chain.
+    - [ ] Authenticate the owner and member through SIWE.
+  - Expected result: every required boundary is ready before a functional path begins.
+  - Status: partial; real SIWE authentication is executable, while explicit frontend/backend/database/chain readiness assertions remain to
+    be added.
+  - Owning stories: `US-AUTH-001`; `US-AUTH-002` and `US-AUTH-003` remain outside this client path.
+  - Evidence: [integrated authentication test](../../app/test/e2e/authentication.integrated.spec.ts).
+
+## G1 — Company Onboarding and Treasury Readiness
+
+- `E2E-PATH-01` — Create, deploy, and reopen an operational company
+  - Stories validated:
+    - `US-COMPANIES-001` — create a company workspace;
+    - `US-COMPANIES-002` — deploy the initial Officer suite;
+    - `US-COMPANIES-003` — browse and open the company.
+  - Actors: company creator and owner; the owner also satisfies the member role for the list journey.
+  - Dependencies: G0 and predeployed Officer infrastructure.
+  - Main path:
+    - [ ] Sign in through SIWE.
+    - [ ] Enter company metadata and submit it through the real backend.
+    - [ ] Verify the company, owner, and creator membership persisted.
+    - [ ] Enter the SHER name and symbol.
+    - [ ] Submit a real Officer deployment transaction.
+    - [ ] Verify the receipt, Officer, child contracts, and Investor metadata on-chain.
+    - [ ] Verify the backend registered the Officer address and deployment metadata.
+    - [ ] Continue past the optional Safe step.
+    - [ ] Find the company in the Companies list and reopen its workspace.
+    - [ ] Verify its metadata, members, lifecycle state, and feature navigation.
+  - Separate variants:
+    - required-field and member-address validation;
+    - wallet rejection or reverted deployment;
+    - failed Officer registration after a successful transaction;
+    - non-owner member access and unavailable workspace states.
+  - Expected result: the same persisted company moves from creation to a contract-backed workspace and remains recoverable from the list.
+  - Status: executable locally; required-field, member-address, failed-create, and wallet-rejection variants use mocked browser boundaries.
+  - Evidence: [integrated company tests](../../app/test/e2e/company/company.integrated.spec.ts) and
+    [mocked browser variants](../../app/test/e2e/company/company.mocked.spec.ts).
+
+- `E2E-PATH-02` — Establish the company treasury
+  - Stories validated:
+    - `US-SAFE-001` — configure the company Safe;
+    - `US-BANK-001` — fund the company Bank.
+  - Actors: company owner, then company member.
+  - Dependencies: an operational company from `E2E-PATH-01`, deployed Safe infrastructure, and funded local wallets.
+  - Main path:
+    - [ ] Deploy a Safe through the UI with a real transaction.
+    - [ ] Verify its code, owner list, threshold, and backend registration.
+    - [ ] Open the current Bank from the same company.
+    - [ ] Deposit the native token and verify its receipt and balance change.
+    - [ ] Deposit a supported ERC-20 token and verify its receipt and balance change.
+    - [ ] Reload and verify that the Safe, balances, and Bank history remain available.
+  - Alternative branch: import an existing local Safe and verify its owners and threshold remain unchanged.
+  - Separate variants: rejected wallet requests, failed Safe registration, unsupported imports, and failed deposits.
+  - Expected result: the company has a registered Safe and a funded Bank backed by durable chain evidence.
+  - Status: partial; Safe deployment, backend registration, Bank deposits, balances, and history run through the integrated stack. Safe
+    import and injected failure variants remain browser acceptance coverage.
+  - Evidence: [integrated Accounts test](../../app/test/e2e/accounts.integrated.spec.ts).
+
+## G2 — Company Administration and Member Access
+
+- `E2E-PATH-03` — Maintain company identity and membership
+  - Stories validated:
+    - `US-COMPANIES-004` — update company details;
+    - `US-COMPANIES-005` — manage company members.
+  - Actors: company owner and invited member.
+  - Dependencies: a persisted company from G1 and a second authenticated portal user.
+  - Main path:
+    - [ ] Update the company name and description and verify persistence in the workspace and list.
+    - [ ] Add the second user as a member.
+    - [ ] Sign in as that member and verify workspace access.
+    - [ ] Remove the member and verify the membership and access changes persist.
+  - Separate variants: invalid metadata, existing members, owner removal, non-owner writes, archived-company writes, and rejected requests.
+  - Expected result: company identity and membership remain consistent for both actors.
+  - Status: partial; metadata and membership mutations now share one integrated path, while second-user access remains planned.
+  - Evidence: [integrated company tests](../../app/test/e2e/company/company.integrated.spec.ts) and
+    [mocked update variants](../../app/test/e2e/company/company-update.spec.ts).
+
+- `E2E-PATH-04` — Suspend and recover company access
+  - Stories validated:
+    - `US-COMPANIES-007` — control personal company-list visibility;
+    - `US-COMPANIES-006` — archive or restore a company.
+  - Actors: company member and company owner.
+  - Dependencies: a persisted company with both actors from `E2E-PATH-03`.
+  - Main path:
+    - [ ] Hide and recover the company from the member's own list.
+    - [ ] Verify the owner's list is unaffected by the member's visibility preference.
+    - [ ] Archive the company as owner.
+    - [ ] Verify default-list exclusion and archived-list recovery.
+    - [ ] Verify company writes are frozen while personal visibility remains changeable.
+    - [ ] Restore the company and verify its normal actions return.
+  - Separate variants: non-member visibility changes, non-owner lifecycle changes, and rejected archived writes.
+  - Expected result: personal visibility and company lifecycle remain distinct and recoverable.
+  - Status: partial; archive/restore and hide/show now share one integrated path, while cross-wallet isolation remains planned.
+  - Evidence: [integrated company tests](../../app/test/e2e/company/company.integrated.spec.ts),
+    [mocked lifecycle variants](../../app/test/e2e/company/company-archive.spec.ts), and
+    [mocked visibility variants](../../app/test/e2e/company/company-visibility.spec.ts).
+
+- `E2E-PATH-05` — Permanently retire a company
+  - Story validated: `US-COMPANIES-008` — permanently delete a company.
+  - Reason for isolation: deletion is terminal and would destroy the shared state needed by other G2 paths.
+  - Actor: company owner.
+  - Dependencies: a disposable company whose preceding lifecycle evidence has already been collected.
+  - Main path:
+    - [ ] Cancel once and verify the company remains available.
+    - [ ] Confirm deletion and verify the Companies list is restored.
+    - [ ] Verify the company endpoint returns unavailable and related records are removed.
+  - Separate variants: non-owner and rejected deletion.
+  - Expected result: the deleted workspace cannot be reopened or restored.
+  - Status: partial; cancellation and permanent removal pass, while cascade evidence remains to be added.
+  - Evidence: [integrated company tests](../../app/test/e2e/company/company.integrated.spec.ts) and
+    [mocked deletion variants](../../app/test/e2e/company/company-delete.spec.ts).
+
+## G3 — Shareholder Lifecycle and SHER
+
+- `E2E-PATH-06` — Configure investment, invest, and review the shareholder position
+  - Stories validated:
+    - `US-SHER-005` — configure shareholder investment;
+    - `US-SHER-001` — invest in the Safe and receive SHER;
+    - `US-SHER-003` — review shareholder position and activity.
+  - Actors: company owner as router owner and investor.
+  - Dependencies: an operational company, a Safe deployed through the portal, current Investor and Safe Deposit Router contracts, and a
+    funded local wallet.
+  - Main path:
+    - [x] Create an operational company and deploy its Safe through the real portal and backend.
+    - [x] Synchronize the router with the registered Safe, set a `2x` multiplier, and enable deposits through owner browser writes.
+    - [x] Verify the configuration on-chain and confirm investment stays unavailable before the Safe synchronization is complete.
+    - [x] Invest USDC through the browser, including the required ERC-20 approval and router deposit transactions.
+    - [x] Verify the Safe receipt, router deposit event, SHER issuance, total supply, and shareholder register on-chain.
+    - [x] Reload and verify the Investor symbol, wallet balance, total supply, shareholder count, address, balance, ownership percentage,
+          and configuration and investment activity.
+    - [x] Filter the activity by type and date and open a concrete transaction detail.
+  - Separate variants: disabled or paused deposits, amount and dependency validation, rejected approval, failed deposit, cancellation,
+    unauthorized configuration, archived-company writes, and failed reads remain focused frontend or contract tests where representative
+    evidence is linked.
+  - Expected result: the investment configuration produces a durable shareholder position.
+  - Status: integrated main path; the production frontend, owned backend, disposable database, and local chain run together. Controlled
+    validation, permission, and recovery variants remain focused layer tests.
+  - Evidence: [integrated shareholder investment lifecycle](../../app/test/e2e/shareholder/shareholder-investment.integrated.spec.ts).
+
+- `E2E-PATH-07` — Issue SHER, distribute dividends, and review the result
+  - Stories validated:
+    - `US-SHER-004` — issue SHER to a shareholder;
+    - `US-SHER-002` — distribute dividends.
+  - Reused verification: the shareholder position and activity from `US-SHER-003` are read again, while primary ownership remains in
+    `E2E-PATH-06`.
+  - Dependencies: an operational company, eligible issuer, funded Bank, and at least one shareholder.
+  - Main path:
+    - [x] Create an operational company with the required authenticated members, then issue `30 E2E` to the owner and `10 E2E` to one member
+          through browser writes.
+    - [x] Verify both successful receipts, `Minted` events, the `40 E2E` total supply, and the two-address shareholder register on-chain.
+    - [x] Fund Bank with `4 USDC` through the portal and distribute the held balance through the direct owner authorization path.
+    - [x] Verify the Bank and Investor distribution events, the two successful proportional payments (`3 USDC` and `1 USDC`), and the
+          emptied Bank balance on-chain.
+    - [x] Establish a real three-seat Board through the Elections and Board contracts, transfer Bank ownership to it, and fund Bank again.
+    - [x] Submit the second dividend through the owner browser, verify the zero-based Board action is persisted, and confirm that balances
+          do not move before the approval quorum is reached.
+    - [x] Approve through a second Board-member browser and verify quorum execution, Board approval and execution events, the Bank and
+          Investor distribution events, both proportional payments, and the emptied Bank balance on-chain.
+    - [x] Reload and verify the two-shareholder cap table, `75%` / `25%` ownership, and both grouped distribution activities with their
+          shareholder payments.
+  - Expected result: direct-owner and Board-approved distributions produce the same durable proportional shareholder result.
+  - Status: integrated main paths for direct owner distribution and Board action approval/execution.
+  - Evidence:
+    [integrated shareholder issuance and dividend lifecycle](../../app/test/e2e/shareholder/shareholder-issuance-dividends.integrated.spec.ts).
+
+- `E2E-PATH-08` — Complete a shareholder migration
+  - Stories validated:
+    - `US-SHER-006` — claim a migrated shareholding (owned evidence);
+    - `US-SHER-007` — settle and close the migration (owned evidence);
+    - `US-SHER-008` — start a shareholder migration (reference only; owned by `US-CONTRACT-005`).
+  - Reused verification: `AC-US-CONTRACT-005-03` provides the owning Officer-redeployment and migration-root journey. This path does not
+    reassign Contract Management ownership.
+  - Dependencies: previous and current Investor generations, migration data, owner, and shareholder wallets.
+  - Main path:
+    - [x] Create a two-holder previous Investor, redeploy the Officer through the portal, and verify the real migration root plus persisted
+          snapshot.
+    - [x] Change an old-contract balance after snapshot creation, then self-claim the unchanged frozen allocation as that shareholder.
+    - [x] Dispatch the remaining allocation as the Investor owner and close the migration through the portal.
+    - [x] Reload and verify the final `75%` / `25%` cap table, completed migration state, successful event receipts, and rejection of an
+          additional claim.
+    - [x] Fund the current Bank and distribute dividends after closure, proving that the migration freeze no longer blocks payouts.
+  - Expected result: every frozen allocation exists exactly once in the current Investor, migration is closed, and dividends resume.
+  - Status: integrated.
+  - Evidence: [integrated shareholder migration lifecycle](../../app/test/e2e/shareholder/shareholder-migration.integrated.spec.ts).
+
+## G4 — Community Credit Lifecycle
+
+- `E2E-PATH-09` — Publish, fund, repay, and inspect a credit round
+  - Stories validated:
+    - `US-CC-001` — inspect the Credit Account;
+    - `US-CC-002` — publish a credit call;
+    - `US-CC-003` — lend to an open round;
+    - `US-CC-005` — repay lenders.
+  - Actors: issuer and lender.
+  - Dependencies: an operational company, current Community Credit contracts, and funded wallets.
+  - Main path:
+    - [ ] Inspect the initial Credit Account state.
+    - [ ] Publish a credit call and verify the new round on-chain.
+    - [ ] Lend to the round and verify balances and participation.
+    - [ ] Repay lenders and verify receipts and final balances.
+    - [ ] Reload the account and verify the complete round history.
+  - Expected result: one credit round is traceable from publication through repayment.
+  - Status: planned.
+
+- `E2E-PATH-10` — Recover a stalled credit round
+  - Story validated: `US-CC-004` — resolve a stalled round.
+  - Reason for isolation: the path deliberately creates an exceptional round state that must not block the normal credit lifecycle.
+  - Dependencies: a disposable round created through the real product flow.
+  - Main path:
+    - [ ] Move the round into a supported stalled state.
+    - [ ] Execute the issuer's recovery action.
+    - [ ] Verify participant balances, round state, and refreshed history.
+  - Expected result: the exceptional round reaches its defined terminal state without corrupting other rounds.
+  - Status: planned.
+
+## G5 — Payroll Lifecycle
+
+- `E2E-PATH-11` — Configure and control member compensation
+  - Stories validated:
+    - `US-PAYROLL-001` — set a member's wage;
+    - `US-PAYROLL-002` — pause or resume the wage.
+  - Dependencies: an operational company with owner and member.
+  - Main path:
+    - [x] Create and then replace the member wage.
+    - [x] Pause and resume it.
+    - [x] Block a member without a wage and reject a claim while the wage is paused.
+    - [x] Submit a persisted claim after resuming the wage.
+    - [x] Verify the persisted active wage and visible status after reload.
+  - Expected result: exactly one current wage controls the member's eligibility.
+  - Status: partial; the owner and member journeys run against the real frontend, backend, PostgreSQL database, and local chain. A member
+    without a wage is blocked and a paused wage is rejected by the backend; broader wage-form validation remains lower-level coverage.
+  - Evidence: [integrated Payroll tests](../../app/test/e2e/payroll/payroll.integrated.spec.ts).
+
+- `E2E-PATH-12` — Prepare a weekly claim
+  - Stories validated:
+    - `US-PAYROLL-004` — set weekly goals;
+    - `US-PAYROLL-005` — submit a daily claim;
+    - `US-PAYROLL-006` — edit a daily claim;
+    - `US-PAYROLL-007` — delete a daily claim.
+  - Dependencies: an active wage from `E2E-PATH-11`.
+  - Main path:
+    - [x] Save weekly goals.
+    - [x] Create, edit, and delete eligible daily work entries.
+    - [x] Recreate the final entry set and verify weekly totals.
+    - [x] Preserve the valid entry while rejecting daily and weekly cap overages.
+  - Expected result: the member reaches a deterministic claim-ready week.
+  - Status: partial; one real member identity saves goals and prepares a persisted claim through the product UI. Daily form validation and
+    the server-side weekly cap preserve the valid entry; attachments and other rejected edits remain separately covered.
+  - Evidence: [integrated Payroll tests](../../app/test/e2e/payroll/payroll.integrated.spec.ts).
+
+- `E2E-PATH-13` — Approve, reconcile, withdraw, and review payroll
+  - Stories validated:
+    - `US-PAYROLL-008` — sign a completed weekly claim;
+    - `US-PAYROLL-009` — disable or re-enable a signed claim;
+    - `US-PAYROLL-010` — withdraw an approved claim;
+    - `US-PAYROLL-011` — reconcile claims with the chain;
+    - `US-PAYROLL-012` — review payroll history;
+    - `US-PAYROLL-013` — review the Payroll account position.
+  - Reused dependency: `US-PAYROLL-003` references the Accounts-owned funding journey and is not revalidated here.
+  - Dependencies: a claim-ready week, current contract owner, and funded Payroll contract.
+  - Main path:
+    - [x] Sign the completed weekly claim.
+    - [x] Disable and re-enable it without creating a second claim.
+    - [x] Withdraw native and USDC compensation and mint SHER through a real chain transaction; verify the decoded payload and token
+          decimals.
+    - [x] Reconcile backend and chain state.
+    - [x] Verify member and owner histories after reload.
+    - [x] Keep signed, disabled, and withdrawn claims read-only for the member.
+    - [x] Block non-owner signing and withdrawal controls, and retain a signed claim when Payroll has insufficient USDC.
+    - [x] Open Payroll Account after funding and withdrawal; verify exact token holdings and read-only member access.
+    - [ ] Verify account summaries, activity and filters in the integrated browser journey.
+  - Expected result: one claim remains traceable from approval through payment, account position, and history.
+  - Status: partial; the browser funds Payroll through Bank, signs a completed-week claim, verifies the disabled and paid chain flags,
+    withdraws as the paid member, and reloads both perspectives. It also verifies the role-gated controls, frozen lifecycle states, and the
+    contract's insufficient-funds rejection. Payroll Account holdings and member access are included; integrated activity and summary checks
+    remain planned. The current-month summary boundary is covered by frontend tests. Invalid EIP-712 signatures are rejected by the backend
+    signature-validator test rather than an integrated browser journey, because a true integrated wallet produces valid signatures.
+  - Evidence: [integrated Payroll payment test](../../app/test/e2e/payroll/payroll-payment.integrated.spec.ts) and
+    [insufficient-funding test](../../app/test/e2e/payroll/payroll-insufficient-funds.integrated.spec.ts).
+
+## G6 — Expense Account Lifecycle
+
+- `E2E-PATH-14` — Approve, spend, control, and audit an expense allowance
+  - Stories validated:
+    - `US-EXP-001` — grant a signed spending approval;
+    - `US-EXP-002` — spend from the Expense Account;
+    - `US-EXP-003` — deactivate or reactivate the approval;
+    - `US-EXP-004` — review the account and its history.
+  - Actors: Expense Account owner and approved recipient.
+  - Dependencies: an operational company, funded Expense Account, and both wallets.
+  - Main path:
+    - [ ] Create and persist a correctly scoped signed approval.
+    - [ ] Spend within the approval and verify recipient and contract balances.
+    - [ ] Deactivate the approval and verify spending is blocked.
+    - [ ] Reactivate it and complete another valid spend.
+    - [ ] Reload balances, approval state, and transaction history.
+  - Separate variants: overspending, invalid signatures, unauthorized actions, and insufficient funds.
+  - Expected result: one allowance remains auditable across its complete active and inactive lifecycle.
+  - Status: partial; the main persisted approval, member spend, lifecycle control, balance, and history sequence is executable. Invalid
+    signatures, overspending, authorization failures, and insufficient-fund variants remain browser acceptance or lower-layer coverage.
+  - Evidence: [integrated Accounts test](../../app/test/e2e/accounts.integrated.spec.ts).
+
+## G7 — Cross-Feature Accounting Verification
+
+- `E2E-PATH-15` — Trace source operations through the company books
+  - Stories validated:
+    - `US-ACCT-001` — view the Accounting overview;
+    - `US-ACCT-002` — trace operations in the General Ledger;
+    - `US-ACCT-003` — review financial statements;
+    - `US-ACCT-005` — review historical contract activity.
+  - Reused dependencies: representative Bank, shareholder, credit, payroll, and expense transactions from their owning paths.
+  - Main path:
+    - [ ] Load the complete Accounting journal after the source operations.
+    - [ ] Verify every source operation produces one balanced journal entry.
+    - [ ] Trace entries to their transactions and concrete company accounts.
+    - [ ] Verify the Income Statement, Balance Sheet, and Trial Balance share one balanced snapshot.
+    - [ ] Verify historical Officer generations remain separate and complete.
+    - [ ] Refresh and verify the same books are reconstructed.
+  - Expected result: the company books reconcile with cross-feature persisted and on-chain evidence.
+  - Status: planned.
+
+- `E2E-PATH-16` — Classify an external withdrawal and export the reviewed books
+  - Stories validated:
+    - `US-ACCT-006` — classify an external withdrawal;
+    - `US-ACCT-004` — export Accounting reports.
+  - Dependencies: reviewed journal and statements from `E2E-PATH-15` and deterministic valuation inputs.
+  - Main path:
+    - [ ] Classify an unassigned external withdrawal.
+    - [ ] Verify the classification persists and updates the affected reports.
+    - [ ] Export the selected reports.
+    - [ ] Verify exported filters, rows, and totals match the reviewed UI state.
+  - Expected result: the reviewed classification and exported books preserve the same accounting snapshot.
+  - Status: planned.
+
+## G8 — Board Election Lifecycle
+
+- `E2E-PATH-17` — Create, vote, publish, and review a Board election
+  - Stories validated:
+    - `US-EL-01` — create a Board election;
+    - `US-EL-02` — cast a vote;
+    - `US-EL-03` — publish election results;
+    - `US-EL-04` — request election-created notifications;
+    - `US-EL-07` — view the current Board of Directors;
+    - `US-EL-08` — review a published election.
+  - Actors: company owner and eligible voter.
+  - Dependencies: a company with Elections and Board of Directors contracts and funded local wallets.
+  - Main path:
+    - [x] Register the actors, create an operational company, deploy its contracts, and add its members through the real stack.
+    - [x] Create an election through the portal and verify its configuration and fixed eligible-voter snapshot on-chain.
+    - [x] Verify the backend persists member notifications before acknowledging the hand-off.
+    - [x] Open the persisted notification as an eligible member, mark it read, and follow it to the election.
+    - [x] Cast a ballot and verify the recorded choice, vote count, and refreshed portal state.
+    - [x] Publish the results and verify the published state, Board membership, and next-election availability on-chain and in the portal.
+    - [x] Reload, open the published election from history, and review its elected Board.
+  - Separate variants: rejected wallet requests for creation, voting, and publication; notification failures; and archived-company write
+    guards remain controlled mocked-browser acceptance tests.
+  - Expected result: the election remains traceable from creation through the elected Board and published history.
+  - Status: integrated main path; the production frontend, owned backend, database, and local chain run together. Controlled recovery and
+    guard variants remain browser acceptance.
+  - Evidence: [integrated election lifecycle](../../app/test/e2e/elections/elections.integrated.spec.ts) and
+    [mocked browser election variants](../../app/test/e2e/elections/elections.spec.ts).
+
+## Cross-Group Execution Rules
+
+- Run `E2E-PATH-00` before functional paths; keep service and shared-infrastructure preparation outside Playwright, while scenario-specific
+  teams may be prepared by the authenticated Node-side factory.
+- Give every story one primary owning path; reused stories and fixtures are dependencies, not duplicate coverage claims.
+- Use isolated or uniquely identified data for every path.
+- A failed dependency marks the consuming path blocked, not failed on its own story assertion.
+- Keep the main business path compact; implement permission, validation, and recovery branches as separately runnable tests.
+- Do not mark a complete story E2E-covered from a representative grouped path alone; remaining acceptance criteria still need evidence.
+
+## Related Product Criteria
+
+- [Companies user stories](../features/companies/README.md)
+- [Accounts user stories](../features/accounts/README.md)
+- [Shareholder Management user stories](../features/shareholder-management/README.md)
+- [Community Credit user stories](../features/community-credit/README.md)
+- [Payroll user stories](../features/payroll/README.md)
+- [Accounting user stories](../features/accounting/README.md)
+- [Board Elections user stories](../features/elections/README.md)

@@ -80,7 +80,7 @@ const mountComponent = (overrides: Partial<TransactionHistoryItemRow> = {}, open
     }
   })
 
-describe('TransactionDetailSlideover', () => {
+describe('[US-PAYGATE-004] TransactionDetailSlideover', () => {
   it('displays the friendly type label in the event badge', () => {
     const wrapper = mountComponent({ type: 'tokenTransfer' })
 

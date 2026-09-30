@@ -6,12 +6,13 @@ import { mockBankReads, mockBankWrites } from '../mocks/contract.mock'
 const MOCK_BANK_ADDRESS = '0x2234567890123456789012345678901234567890' as Address
 
 /**
- * Mock Bank read composables. `useBankPaused`/`useBankSupportedTokens` are dead —
- * see src/composables/bank/reads.ts for the commented-out definitions.
+ * Mock Bank read composables. `useBankSupportedTokens` is dead — see
+ * src/composables/bank/reads.ts for the commented-out definition.
  */
 vi.mock('@/composables/bank/reads', () => ({
   useBankAddress: vi.fn(() => computed(() => MOCK_BANK_ADDRESS)),
-  useBankOwner: vi.fn(() => mockBankReads.owner)
+  useBankOwner: vi.fn(() => mockBankReads.owner),
+  useBankPaused: vi.fn(() => mockBankReads.paused)
 }))
 
 /**

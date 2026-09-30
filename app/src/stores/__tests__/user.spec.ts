@@ -9,7 +9,7 @@ vi.unmock('@/stores/user')
 import { useUserDataStore } from '@/stores/user'
 
 describe('User Data Store', () => {
-  it('Should set user data correctly', () => {
+  it('stores the user identity and nonce', () => {
     setActivePinia(createPinia())
     const userStore = useUserDataStore()
     const name = 'John Doe'
@@ -23,7 +23,7 @@ describe('User Data Store', () => {
     expect(userStore.nonce).toBe(nonce)
   })
 
-  it('Should clear user data correctly', () => {
+  it('clears the stored user identity and nonce', () => {
     const userStore = useUserDataStore()
     const name = 'John Doe'
     const address = '0x123456789'
@@ -37,7 +37,7 @@ describe('User Data Store', () => {
     expect(userStore.nonce).toBe('')
   })
 
-  it('Should set authentication status correctly', () => {
+  it('stores the authentication status', () => {
     const userStore = useUserDataStore()
     const status = true
     userStore.setAuthStatus(status)

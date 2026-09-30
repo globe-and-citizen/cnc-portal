@@ -21,12 +21,13 @@ interface Props {
   round: CreditRound
   isOwner: boolean
   isLendAllowed: boolean
+  isLendPositionUnavailable: boolean
   isRepaymentAvailable: boolean
   isRefundPending: boolean
   isPartialFundingPending: boolean
 }
 
-type ActionEvent = 'lend' | 'repay' | 'refund' | 'acceptPartialFunding'
+type ActionEvent = 'lend' | 'repay' | 'refund' | 'acceptPartialFunding' | 'retryLendPosition'
 
 type RoundAction = {
   test: string
@@ -44,37 +45,59 @@ const emit = defineEmits<{
   repay: []
   refund: []
   acceptPartialFunding: []
+  retryLendPosition: []
 }>()
 
 const actions = computed<RoundAction[]>(() => {
   const { round } = props
   if (round.status === 'open') {
-    return props.isLendAllowed
+    if (props.isLendAllowed) {
+      return [
+        {
+          test: 'round-cta-lend',
+          label: 'Lend now',
+          icon: 'heroicons:hand-raised',
+          color: 'primary',
+          variant: 'solid',
+          emit: 'lend'
+        }
+      ]
+    }
+    // A failed position read isn't confirmed ineligibility — offer a retry instead
+    // of silently hiding the action, same distinction CreditRoundCard makes.
+    if (props.isLendPositionUnavailable) {
+      return [
+        {
+          test: 'round-cta-retry-lend-position',
+          label: 'Check eligibility',
+          icon: 'heroicons:arrow-path',
+          color: 'warning',
+          variant: 'soft',
+          emit: 'retryLendPosition'
+        }
+      ]
+    }
+    return []
+  }
+  // Repayable is gated purely by treasury capability (Bank owner, not paused) —
+  // deliberately independent of `isOwner` (the FixedReturn round issuer), since the
+  // wallet that can actually execute the repay may not be the same wallet that
+  // created the round.
+  if (isRepayableRoundStatus(round.status)) {
+    return props.isRepaymentAvailable
       ? [
           {
-            test: 'round-cta-lend',
-            label: 'Lend now',
-            icon: 'heroicons:hand-raised',
+            test: 'round-cta-repay',
+            label: 'Repay round',
+            icon: 'heroicons:arrow-uturn-left',
             color: 'primary',
             variant: 'solid',
-            emit: 'lend'
+            emit: 'repay'
           }
         ]
       : []
   }
   if (!props.isOwner) return []
-  if (isRepayableRoundStatus(round.status) && props.isRepaymentAvailable) {
-    return [
-      {
-        test: 'round-cta-repay',
-        label: 'Repay round',
-        icon: 'heroicons:arrow-uturn-left',
-        color: 'primary',
-        variant: 'solid',
-        emit: 'repay'
-      }
-    ]
-  }
   if (round.status !== 'stalled') return []
 
   const actions: RoundAction[] = [
@@ -106,6 +129,7 @@ function emitAction(action: ActionEvent) {
   if (action === 'lend') emit('lend', props.round)
   else if (action === 'repay') emit('repay')
   else if (action === 'refund') emit('refund')
+  else if (action === 'retryLendPosition') emit('retryLendPosition')
   else emit('acceptPartialFunding')
 }
 </script>

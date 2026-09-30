@@ -16,7 +16,7 @@ describe('resolveCurrentWage', () => {
     vi.clearAllMocks();
   });
 
-  it('returns the current leaf of the member wage chain', async () => {
+  it('[AC-US-PAYROLL-001-23] returns the current leaf of the member wage chain', async () => {
     const currentWage = { id: 7, teamId: 1, userAddress: '0xabc', nextWageId: null };
     vi.mocked(prisma.wage.findFirst).mockResolvedValue(currentWage as never);
 
@@ -26,7 +26,7 @@ describe('resolveCurrentWage', () => {
     });
   });
 
-  it('returns null when the member has no current wage', async () => {
+  it('[AC-US-PAYROLL-001-24] returns null when the member has no current wage', async () => {
     vi.mocked(prisma.wage.findFirst).mockResolvedValue(null);
 
     await expect(resolveCurrentWage(1, '0xabc')).resolves.toBeNull();

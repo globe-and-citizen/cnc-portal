@@ -48,13 +48,13 @@ const endOfPrevMonth = new Date(now.getFullYear(), now.getMonth(), 0).getTime() 
 
 // Derive monthly spend from RPC-sourced Expense events. Transfers out = native
 // (tokenAddress = zeroAddress) + token.
-const { result: expenseEvents, loading, error } = useExpenseEventsViaLogs(contractAddress)
+const { data: expenseEvents, isPending: loading, error } = useExpenseEventsViaLogs(contractAddress)
 
 const transfersInRange = (
   start: number,
   end: number
 ): { amount: bigint; tokenAddress: string }[] => {
-  const events = expenseEvents.value
+  const events = expenseEvents.value?.events
   if (!events) return []
   const inRange = (ts: number) => ts >= start && ts <= end
   return [

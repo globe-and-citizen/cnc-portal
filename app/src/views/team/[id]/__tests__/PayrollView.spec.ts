@@ -1,0 +1,66 @@
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { shallowMount } from '@vue/test-utils'
+import PayrollView from '../Accounts/PayrollView.vue'
+import { createTestingPinia } from '@pinia/testing'
+import { mockTeamStore, mockUserStore } from '@/tests/mocks'
+
+describe('[US-PAYROLL-008] [US-PAYROLL-013] PayrollView.vue', () => {
+  const createComponent = () => {
+    return shallowMount(PayrollView, {
+      global: {
+        plugins: [createTestingPinia({ createSpy: vi.fn })]
+      }
+    })
+  }
+
+  const originalTeamMeta = mockTeamStore.currentTeamMeta
+
+  afterEach(() => {
+    mockTeamStore.currentTeamMeta = originalTeamMeta
+  })
+
+  it('passes correct props to TokenHoldingsSection', () => {
+    const wrapper = createComponent()
+    const genericTokenHoldingSection = wrapper.findComponent({
+      name: 'TokenHoldingsSection'
+    })
+
+    expect(genericTokenHoldingSection.exists()).toBeTruthy()
+    expect(genericTokenHoldingSection.props('address')).toBe(
+      '0x6666666666666666666666666666666666666666'
+    )
+  })
+
+  it('renders CashRemunerationOverview component', () => {
+    const wrapper = createComponent()
+    const overview = wrapper.findComponent({ name: 'CashRemunerationOverview' })
+
+    expect(overview.exists()).toBeTruthy()
+  })
+
+  it('[AC-US-PAYROLL-013-05] shows the account position to a member without owner permissions', () => {
+    mockUserStore.address = '0x9999999999999999999999999999999999999999'
+
+    const wrapper = createComponent()
+
+    expect(wrapper.findComponent({ name: 'CashRemunerationOverview' }).exists()).toBe(true)
+    expect(wrapper.findComponent({ name: 'TokenHoldingsSection' }).exists()).toBe(true)
+    expect(wrapper.findComponent({ name: 'CRSigne' }).exists()).toBe(false)
+    expect(wrapper.findComponent({ name: 'CRWithdrawClaim' }).exists()).toBe(false)
+  })
+
+  it('hides the migration banner when the team is migrated', () => {
+    const wrapper = createComponent()
+    expect(wrapper.find('[data-test="cash-remuneration-migration-banner"]').exists()).toBe(false)
+  })
+
+  it('shows the migration banner when the team is not migrated (issue #1825)', () => {
+    mockTeamStore.currentTeamMeta = {
+      isPending: false,
+      data: { ...originalTeamMeta.data, isMigrated: false }
+    } as typeof mockTeamStore.currentTeamMeta
+
+    const wrapper = createComponent()
+    expect(wrapper.find('[data-test="cash-remuneration-migration-banner"]').exists()).toBe(true)
+  })
+})

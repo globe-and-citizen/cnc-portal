@@ -5,6 +5,7 @@ import { Time } from '@internationalized/date'
 import CreditCallTermsStep from '../CreditCallTermsStep.vue'
 import type { CreditCallForm } from '@/types'
 import { MINUTES_PER_DAY } from '@/utils/communityCredit/model'
+import { addCreditTerm } from '@/utils/communityCredit/offer'
 
 function makeForm(overrides: Partial<CreditCallForm> = {}): CreditCallForm {
   return reactive({
@@ -167,6 +168,29 @@ describe('CreditCallTermsStep', () => {
       expect(form.deadlineTime).toBe(`${pad(local.getUTCHours())}:${pad(local.getUTCMinutes())}`)
     })
 
+    it('starts with no deadline date and keeps the pre-filled end-of-day time when one is picked', async () => {
+      const form = makeForm({ deadline: '', deadlineTime: '23:59' })
+      const wrapper = mountStep(form)
+      expect(wrapper.find('[data-test="cc-deadline"]').text()).toBe('Select a date')
+      const timeInput = wrapper.findComponent({ name: 'UInputTime' })
+      expect((timeInput.props('modelValue') as Time).hour).toBe(23)
+
+      wrapper.findComponent({ name: 'UCalendar' }).vm.$emit('update:modelValue', {
+        year: 2026,
+        month: 8,
+        day: 15
+      })
+      await wrapper.vm.$nextTick()
+
+      // The picked local day at 23:59 local, stored as UTC — not midnight.
+      const local = new Date(2026, 7, 15, 23, 59)
+      const pad = (n: number) => String(n).padStart(2, '0')
+      expect(form.deadline).toBe(
+        `${local.getUTCFullYear()}-${pad(local.getUTCMonth() + 1)}-${pad(local.getUTCDate())}`
+      )
+      expect(form.deadlineTime).toBe(`${pad(local.getUTCHours())}:${pad(local.getUTCMinutes())}`)
+    })
+
     it('shows the real UTC value as a live readout next to the local fields', () => {
       const wrapper = mountStep(makeForm({ deadline: '2026-07-31', deadlineTime: '12:00' }))
       expect(wrapper.find('[data-test="cc-deadline-utc-readout"]').text()).toContain(
@@ -176,8 +200,16 @@ describe('CreditCallTermsStep', () => {
   })
 
   describe('validate', () => {
-    it('passes for a valid form', () => {
-      const wrapper = mountStep(makeForm())
+    it('[AC-US-CC-002-05] accepts a future deadline and a positive term through 30 years', () => {
+      const form = makeForm()
+      const wrapper = mountStep(form)
+      expect(wrapper.vm.validate()).toBe(true)
+
+      form.period = Math.round(
+        (addCreditTerm(form.deadline, form.deadlineTime, 30, 'years') -
+          addCreditTerm(form.deadline, form.deadlineTime, 0, 'years')) /
+          60
+      )
       expect(wrapper.vm.validate()).toBe(true)
     })
 
@@ -200,16 +232,19 @@ describe('CreditCallTermsStep', () => {
       )
     })
 
-    it('passes with a zero rate — an interest-free round is a valid use case', () => {
-      const wrapper = mountStep(makeForm({ rate: '0' }))
-      expect(wrapper.vm.validate()).toBe(true)
-    })
+    it('[AC-US-CC-002-04] accepts inclusive 0%-to-100% rates and rejects values outside the range', async () => {
+      expect(mountStep(makeForm({ rate: '0' })).vm.validate()).toBe(true)
+      expect(mountStep(makeForm({ rate: '100' })).vm.validate()).toBe(true)
 
-    it('fails and shows an error when the rate is negative', async () => {
-      const wrapper = mountStep(makeForm({ rate: '-1' }))
-      expect(wrapper.vm.validate()).toBe(false)
-      await wrapper.vm.$nextTick()
-      expect(wrapper.find('[data-test="cc-rate-error"]').text()).toContain('cannot be negative')
+      const belowRange = mountStep(makeForm({ rate: '-1' }))
+      expect(belowRange.vm.validate()).toBe(false)
+      await belowRange.vm.$nextTick()
+      expect(belowRange.find('[data-test="cc-rate-error"]').text()).toContain('cannot be negative')
+
+      const aboveRange = mountStep(makeForm({ rate: '101' }))
+      expect(aboveRange.vm.validate()).toBe(false)
+      await aboveRange.vm.$nextTick()
+      expect(aboveRange.find('[data-test="cc-rate-error"]').text()).toContain('100% or less')
     })
 
     it('fails and shows a calendar-breakdown error when the term exceeds the 30-year maximum', async () => {

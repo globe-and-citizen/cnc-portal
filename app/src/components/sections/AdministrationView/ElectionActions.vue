@@ -23,10 +23,10 @@
     <!-- Offered wherever the owner meets a finished election: publishing is the
          only way to unblock the team, so it must not hide on the details page. -->
     <PublishResult
-      v-if="awaitingPublication"
+      v-if="awaitingPublication && formattedElection"
       :disabled="!isOwner"
       :disabled-reason="PUBLISH_OWNER_ONLY_TOOLTIP"
-      :election-id="formattedElection?.id ?? 1"
+      :election-id="formattedElection.id"
     />
     <UTooltip :text="createElectionTooltip">
       <UButton

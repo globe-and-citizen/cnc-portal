@@ -18,7 +18,7 @@ type Cell = string | number
 type SheetRows = Cell[][]
 
 /** The options shared by a General Ledger spreadsheet projection and its screen scope. */
-export interface GeneralLedgerSheetOptions {
+interface GeneralLedgerSheetOptions {
   from?: Date | null
   to?: Date | null
   columns?: LedgerColumnKey[]

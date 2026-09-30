@@ -11,7 +11,7 @@ describe('dependenciesUtil', () => {
     vi.restoreAllMocks();
   });
 
-  it('should create a new PrismaClient instance on first call', async () => {
+  it('creates a new PrismaClient instance on first call', async () => {
     const consoleLogSpy = vi.spyOn(console, 'log');
 
     // Import the module
@@ -24,7 +24,7 @@ describe('dependenciesUtil', () => {
     expect(consoleLogSpy).toHaveBeenCalledWith('✅ New PrismaClient instance created');
   });
 
-  it('should reuse existing PrismaClient instance on subsequent calls', async () => {
+  it('reuses existing PrismaClient instance on subsequent calls', async () => {
     const consoleLogSpy = vi.spyOn(console, 'log');
 
     // Import and get first instance
@@ -40,7 +40,7 @@ describe('dependenciesUtil', () => {
     expect(firstInstance).toBeDefined();
   });
 
-  it('should use DATABASE_URL from environment', async () => {
+  it('uses DATABASE_URL from environment', async () => {
     process.env.DATABASE_URL = 'postgresql://test:test@localhost:5432/test_db';
 
     const { prisma } = await import('../dependenciesUtil');
@@ -48,7 +48,7 @@ describe('dependenciesUtil', () => {
     expect(prisma).toBeDefined();
   });
 
-  it('should set log level based on NODE_ENV', async () => {
+  it('sets log level based on NODE_ENV', async () => {
     // Test with development environment
     const originalEnv = process.env.NODE_ENV;
     process.env.NODE_ENV = 'development';
@@ -62,14 +62,14 @@ describe('dependenciesUtil', () => {
     process.env.NODE_ENV = originalEnv;
   });
 
-  it('should provide disconnectPrisma function', async () => {
+  it('provides disconnectPrisma function', async () => {
     const { disconnectPrisma } = await import('../dependenciesUtil');
 
     expect(disconnectPrisma).toBeDefined();
     expect(typeof disconnectPrisma).toBe('function');
   });
 
-  it('should disconnect PrismaClient when disconnectPrisma is called', async () => {
+  it('disconnects PrismaClient when disconnectPrisma is called', async () => {
     const consoleLogSpy = vi.spyOn(console, 'log');
 
     const { disconnectPrisma } = await import('../dependenciesUtil');
@@ -81,7 +81,7 @@ describe('dependenciesUtil', () => {
     expect(consoleLogSpy).toHaveBeenCalledWith('🔌 PrismaClient disconnected');
   });
 
-  it('should handle production environment log level', async () => {
+  it('handles production environment log level', async () => {
     const originalEnv = process.env.NODE_ENV;
     process.env.NODE_ENV = 'production';
 

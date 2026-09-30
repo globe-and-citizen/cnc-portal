@@ -1,0 +1,29 @@
+meta {
+  name: Election - 01 - Notifications - Notify Team Of New Election
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{host}}/elections/{{teamId}}
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {}
+}
+
+docs {
+  Run as the team owner (the address behind {{accessToken}} must be the owner of team {{teamId}}).
+}
+
+tests {
+  test("should return 201 when the team owner notifies the team", function() {
+    expect(res.getStatus()).to.equal(201);
+  });
+}

@@ -12,7 +12,7 @@
       :title="
         tokenBalanceValue != null && tokenSymbolText
           ? formatUnits(tokenBalanceValue, 6) + ' ' + tokenSymbolText
-          : '...'
+          : EMPTY_VALUE
       "
       subtitle="Your Balance"
       variant="success"
@@ -24,7 +24,7 @@
       :title="
         totalSupplyValue != null && tokenSymbolText
           ? formatUnits(totalSupplyValue, 6) + ' ' + tokenSymbolText
-          : '...'
+          : EMPTY_VALUE
       "
       subtitle="Total Supply"
       variant="warning"
@@ -50,6 +50,8 @@ import {
 } from '@/composables/investor/reads'
 import { computed, watch } from 'vue'
 import { log } from '@/lib/logging'
+import { EMPTY_VALUE } from '@/utils/format'
+import { useToast } from '@nuxt/ui/composables'
 
 const teamStore = useTeamStore()
 const toast = useToast()
@@ -63,7 +65,7 @@ const { data: tokenBalance, error: tokenBalanceError } = useInvestorBalanceOf(
 const { data: shareholders, error: shareholderError } = useInvestorShareholders()
 
 const tokenSymbolText = computed(() =>
-  typeof tokenSymbol.value === 'string' ? tokenSymbol.value : ''
+  typeof tokenSymbol.value === 'string' ? tokenSymbol.value.trim() : ''
 )
 
 const tokenBalanceValue = computed(() =>

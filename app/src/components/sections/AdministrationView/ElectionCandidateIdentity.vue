@@ -13,7 +13,7 @@
         <div
           class="relative overflow-hidden rounded-full"
           :class="{
-            'h-24 w-24 ring-4 ring-gray-200': isDetailedView,
+            'ring-default h-24 w-24 ring-4': isDetailedView,
             'h-11 w-11 ring-2 ring-white/50': !isDetailedView && layout === 'default',
             'h-16 w-16': layout === 'alternate' && !isDetailedView
           }"
@@ -36,10 +36,10 @@
 
     <!-- Role and Address Section (only for alternate layout) -->
     <div v-if="!isCollapsed && layout === 'alternate'" class="mt-6 ml-19">
-      <p v-if="user.role" class="text-lg text-gray-600" data-test="user-role">
+      <p v-if="user.role" class="text-muted text-lg" data-test="user-role">
         {{ user.role }}
       </p>
-      <p class="mt-1 text-sm text-gray-400" data-test="formatted-address">
+      <p class="text-dimmed mt-1 text-sm" data-test="formatted-address">
         {{ formatedUserAddress }}
       </p>
     </div>
@@ -47,7 +47,7 @@
     <!-- Default Layout Content -->
     <div
       v-if="!isCollapsed && layout !== 'alternate'"
-      class="flex text-gray-600"
+      class="text-muted flex"
       :class="{
         'flex-col items-center text-center': isDetailedView,
         'flex-col': layout === 'default' && !isDetailedView
@@ -65,7 +65,7 @@
       </p>
       <p
         v-if="isDetailedView"
-        class="mt-2 font-bold text-gray-400"
+        class="text-dimmed mt-2 font-bold"
         :class="{ 'text-sm': isDetailedView, 'text-xs': !isDetailedView }"
         data-test="user-role"
       >

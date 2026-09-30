@@ -1,78 +1,64 @@
 import { hardhat, mainnet, polygon, polygonAmoy, sepolia } from 'viem/chains';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-// Mock the createPublicClient, http and fallback functions
-vi.mock('viem', () => ({
-  createPublicClient: vi.fn(),
-  http: vi.fn(),
-  fallback: vi.fn(),
+const { mockCreatePublicClient, mockFallback, mockHttp } = vi.hoisted(() => ({
+  mockCreatePublicClient: vi.fn((config: unknown) => config),
+  mockFallback: vi.fn((transports: unknown[]) => ({ transports })),
+  mockHttp: vi.fn((url?: string) => ({ url })),
 }));
 
-// Import the module after mocking
-import { http, fallback } from 'viem';
-import { getChain, getTransport } from '../viem.config';
+vi.mock('viem', () => ({
+  createPublicClient: mockCreatePublicClient,
+  fallback: mockFallback,
+  http: mockHttp,
+}));
+
+const loadConfiguredClient = async (chainId?: string) => {
+  if (chainId === undefined) delete process.env.CHAIN_ID;
+  else process.env.CHAIN_ID = chainId;
+  return (await import('../viem.config')).default;
+};
 
 describe('viem.config', () => {
   beforeEach(() => {
-    // Clear all mocks before each test
     vi.clearAllMocks();
-    // Reset environment variables
-    process.env.CHAIN_ID = undefined;
+    vi.resetModules();
+    delete process.env.CHAIN_ID;
+    delete process.env.RPC_URL;
   });
 
-  describe('getChain', () => {
-    it('should return sepolia as default when chainId is undefined', () => {
-      expect(getChain(undefined)).toBe(sepolia);
-    });
+  it.each([
+    ['the default chain', undefined, sepolia],
+    ['an unknown chain', '999999', sepolia],
+    ['mainnet', mainnet.id.toString(), mainnet],
+    ['sepolia', sepolia.id.toString(), sepolia],
+    ['polygon', polygon.id.toString(), polygon],
+    ['hardhat', hardhat.id.toString(), hardhat],
+    ['polygon Amoy', polygonAmoy.id.toString(), polygonAmoy],
+    ['a hexadecimal mainnet ID', '0x1', mainnet],
+    ['a hexadecimal polygon ID', '0x89', polygon],
+  ])('configures %s', async (_label, chainId, expectedChain) => {
+    await loadConfiguredClient(chainId);
 
-    it('should return sepolia as default for unknown chain ID', () => {
-      expect(getChain('999999')).toBe(sepolia);
-    });
-
-    it('should correctly identify mainnet', () => {
-      expect(getChain(mainnet.id.toString())).toBe(mainnet);
-    });
-
-    it('should correctly identify sepolia', () => {
-      expect(getChain(sepolia.id.toString())).toBe(sepolia);
-    });
-
-    it('should correctly identify polygon', () => {
-      expect(getChain(polygon.id.toString())).toBe(polygon);
-    });
-
-    it('should correctly identify hardhat', () => {
-      expect(getChain(hardhat.id.toString())).toBe(hardhat);
-    });
-
-    it('should correctly identify polygonAmoy', () => {
-      expect(getChain(polygonAmoy.id.toString())).toBe(polygonAmoy);
-    });
-
-    it('should handle hex chain IDs', () => {
-      expect(getChain('0x1')).toBe(mainnet); // mainnet hex ID
-      expect(getChain('0x89')).toBe(polygon); // polygon hex ID
-    });
+    expect(mockCreatePublicClient).toHaveBeenCalledWith(
+      expect.objectContaining({ chain: expectedChain })
+    );
   });
 
-  describe('getTransport', () => {
-    it('keeps a single transport for chains without public peers (hardhat)', () => {
-      getTransport(hardhat);
-      expect(fallback).not.toHaveBeenCalled();
-    });
+  it('uses a single transport for a chain without public peers', async () => {
+    await loadConfiguredClient(hardhat.id.toString());
 
-    it('wraps polygon reads in a fallback across public endpoints', () => {
-      getTransport(polygon);
-      expect(fallback).toHaveBeenCalledTimes(1);
-      expect(http).toHaveBeenCalledWith('https://polygon.drpc.org');
-      expect(http).toHaveBeenCalledWith('https://polygon-bor-rpc.publicnode.com');
-    });
+    expect(mockHttp).toHaveBeenCalledWith();
+    expect(mockFallback).not.toHaveBeenCalled();
+  });
 
-    it('wraps mainnet reads in a fallback across public endpoints', () => {
-      getTransport(mainnet);
-      expect(fallback).toHaveBeenCalledTimes(1);
-      expect(http).toHaveBeenCalledWith('https://eth.drpc.org');
-      expect(http).toHaveBeenCalledWith('https://ethereum-rpc.publicnode.com');
-    });
+  it.each([
+    [polygon, ['https://polygon.drpc.org', 'https://polygon-bor-rpc.publicnode.com']],
+    [mainnet, ['https://eth.drpc.org', 'https://ethereum-rpc.publicnode.com']],
+  ])('configures public fallback transports for $name', async (chain, expectedUrls) => {
+    await loadConfiguredClient(chain.id.toString());
+
+    for (const url of expectedUrls) expect(mockHttp).toHaveBeenCalledWith(url);
+    expect(mockFallback).toHaveBeenCalledTimes(1);
   });
 });

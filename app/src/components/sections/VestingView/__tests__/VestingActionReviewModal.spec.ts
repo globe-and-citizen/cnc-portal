@@ -39,7 +39,7 @@ describe('VestingActionReviewModal.vue', () => {
     mockVestingWrites.stopVesting.mutateAsync.mockResolvedValue(undefined)
   })
 
-  it('reviews and confirms the exact claimable release', async () => {
+  it('[AC-US-VESTING-003-01] reviews and confirms the exact claimable release', async () => {
     const wrapper = mountComponent()
     expect(wrapper.text()).toContain('4 SHR')
     await wrapper.get('[data-test="vesting-action-confirm"]').trigger('click')
@@ -66,7 +66,7 @@ describe('VestingActionReviewModal.vue', () => {
     expect(wrapper.emitted('success')).toEqual([['stop']])
   })
 
-  it('keeps the modal open and explains a rejected wallet request', async () => {
+  it('[US-VESTING-003] keeps the modal open and explains a rejected wallet request', async () => {
     mockVestingWrites.release.mutateAsync.mockRejectedValue(
       new BaseError('rejected', { cause: new UserRejectedRequestError(new Error('rejected')) })
     )

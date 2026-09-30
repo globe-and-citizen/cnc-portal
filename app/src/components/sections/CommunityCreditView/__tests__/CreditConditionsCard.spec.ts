@@ -28,7 +28,7 @@ function makeRound(overrides: Partial<CreditRound> = {}): CreditRound {
   }
 }
 
-describe('CreditConditionsCard', () => {
+describe('[US-CC-001] CreditConditionsCard', () => {
   it('renders restricted access, cap and date values', () => {
     const wrapper = mount(CreditConditionsCard, { props: { round: makeRound() } })
 
@@ -38,6 +38,19 @@ describe('CreditConditionsCard', () => {
     expect(wrapper.text()).toContain('Oct 26')
     expect(wrapper.text()).toContain('Restricted list')
     expect(wrapper.text()).toContain('500 USDC')
+  })
+
+  it("renders the cap amount in the round's own token, not a hardcoded default", () => {
+    // Regression test: the cap's formatAmount() call used to omit the token
+    // argument, silently defaulting to 'USDC' regardless of the round's
+    // actual token — invisible in the test above because its fixture already
+    // used 'USDC'. A non-USDC token is the only way to catch this.
+    const wrapper = mount(CreditConditionsCard, {
+      props: { round: makeRound({ token: 'USDCe' }) }
+    })
+
+    expect(wrapper.text()).toContain('500 USDCe')
+    expect(wrapper.text()).not.toContain('USDC ')
   })
 
   it('renders public access, no-cap and missing-date fallbacks', () => {

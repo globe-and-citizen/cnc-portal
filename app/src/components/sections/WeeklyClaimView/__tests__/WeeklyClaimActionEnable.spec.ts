@@ -87,7 +87,7 @@ describe('WeeklyClaimActionEnable', () => {
     setEnableSuccess()
   })
 
-  it('does nothing on-chain when user is not contract owner', async () => {
+  it('[AC-US-PAYROLL-009-05] does nothing on-chain when user is not contract owner', async () => {
     setupSyncMutation()
     const wrapper = createWrapper(false)
 
@@ -97,7 +97,8 @@ describe('WeeklyClaimActionEnable', () => {
     expect(mockCashRemunerationWrites.enableClaim.mutate).not.toHaveBeenCalled()
   })
 
-  it('enables claim successfully and syncs backend state', async () => {
+  /** Covers: [AC-US-PAYROLL-009-02], [AC-US-PAYROLL-009-04], [AC-US-PAYROLL-011-07] */
+  it('enables claim and syncs backend state after the transaction succeeds', async () => {
     const mutateAsync = setupSyncMutation(vi.fn().mockResolvedValue(undefined))
 
     const wrapper = createWrapper(true)

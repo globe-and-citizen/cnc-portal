@@ -8,41 +8,9 @@
  * historical deployment.
  */
 import { getAddress, isAddress, type Address } from 'viem'
-import {
-  ACCOUNT_FAMILIES,
-  accountFamilyOf,
-  type AccountFamily,
-  type AccountName
-} from './chartOfAccounts'
-import type { LedgerEntry } from './ledgerEntry'
-
-/** Stable identity of one concrete account in the books. */
-export type AccountId = string
-
-/** Whether a deployment-specific account could be resolved from source evidence. */
-export type AccountResolution = 'resolved' | 'unresolved'
-
-/** One actual account that a journal line can post to. */
-export interface Account {
-  /** Stable key used by journal lines and report roll-ups. */
-  id: AccountId
-  /** The shared family that supplies this account's classification and normal side. */
-  family: AccountFamily
-  /** The authoritative contract identity for a deployment-specific account. */
-  contractAddress?: Address
-  /** `unresolved` means source evidence did not identify a concrete deployment. */
-  resolution: AccountResolution
-}
-
-/** The single source of concrete account resolution for one assembled book. */
-export interface AccountRegistry {
-  /** All concrete accounts touched by the assembled book, in chart order. */
-  accounts: readonly Account[]
-  /** Resolve one chart family and optional contract address to its concrete account. */
-  resolve(family: AccountName, contractAddress?: string | null): Account
-  /** Read a concrete account by its stable identity. */
-  get(id: AccountId): Account | undefined
-}
+import { ACCOUNT_FAMILIES, accountFamilyOf, type AccountName } from './chartOfAccounts'
+import type { JournalEntryDraft } from './journalEntryDraft'
+import type { Account, AccountId, AccountRegistry } from './types'
 
 function normalizeContractAddress(value: string | null | undefined): Address | undefined {
   return value && isAddress(value) ? getAddress(value) : undefined
@@ -52,8 +20,7 @@ function normalizeContractAddress(value: string | null | undefined): Address | u
 export function accountFor(familyName: AccountName, contractAddress?: string | null): Account {
   const family = accountFamilyOf(familyName)
   const address = family.deploymentScoped ? normalizeContractAddress(contractAddress) : undefined
-  const resolution: AccountResolution =
-    family.deploymentScoped && !address ? 'unresolved' : 'resolved'
+  const resolution = family.deploymentScoped && !address ? 'unresolved' : 'resolved'
   const suffix = address
     ? `:${address.toLowerCase()}`
     : resolution === 'unresolved'
@@ -83,7 +50,7 @@ function noteAccount(
  * attached by a mapper is the only evidence used to resolve a deployment-specific
  * account; posting order and activity on another contract are intentionally ignored.
  */
-export function buildAccountRegistry(entries: readonly LedgerEntry[]): AccountRegistry {
+export function buildAccountRegistry(entries: readonly JournalEntryDraft[]): AccountRegistry {
   const accounts = new Map<AccountId, Account>()
 
   // Non-deployment families are always one concrete account. Deployment-specific

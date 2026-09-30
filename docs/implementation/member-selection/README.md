@@ -43,7 +43,7 @@ flowchart LR
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `8b231a2e0ccf81bf988ee73a26f8a53512d15f18`
+**Implementation evidence reviewed against:** `8a3e58b97250117c479651ca1cb8c490204d44bd`
 
 - [Shared user identity](../../../app/src/components/ui/UserIdentity.vue),
   [contract member selector](../../../app/src/components/ui/inputs/SelectMemberContractsInput.vue), and
@@ -59,6 +59,8 @@ flowchart LR
 - [Vesting beneficiary consumer](../../../app/src/components/sections/VestingView/forms/VestingGrantDetails.vue)
 - [Selection scope behaviour tests](../../../app/src/components/ui/inputs/__tests__/SelectMemberInput.spec.ts)
 - [Multi-selection behaviour tests](../../../app/src/components/ui/inputs/__tests__/MultiSelectMemberInput.spec.ts)
+- [Member-result tests](../../../app/src/components/ui/inputs/__tests__/SelectMemberResults.spec.ts) and
+  [member-token result tests](../../../app/src/components/ui/inputs/__tests__/SelectMemberWithTokenInput.spec.ts)
 
 ## Related Documentation
 

@@ -93,7 +93,7 @@
           />
           <div class="min-w-[90px] text-right">
             <div :class="lender.refunded ? 'text-muted text-sm' : 'text-sm font-bold'">
-              {{ formatAmount(lender.amount) }}
+              {{ formatAmount(lender.amount, round.token) }}
             </div>
             <UBadge
               v-if="lender.refunded"
@@ -131,7 +131,7 @@ const ringStyle = computed(() => ({
 }))
 const remainingNote = computed(() => {
   if (props.round.status === 'open' || props.round.status === 'stalled') {
-    return `${formatAmount(props.round.target - props.round.raised)} remaining`
+    return `${formatAmount(props.round.target - props.round.raised, props.round.token)} remaining`
   }
   if (props.round.status === 'refunded') {
     return 'Refunded — principal returned to lenders'
@@ -153,8 +153,8 @@ const gauges = computed(() => [
     pct: pct.value,
     ringStyle: ringStyle.value,
     label: 'funded',
-    amount: formatAmount(props.round.raised),
-    totalNote: `raised of ${formatAmount(props.round.target)}`,
+    amount: formatAmount(props.round.raised, props.round.token),
+    totalNote: `raised of ${formatAmount(props.round.target, props.round.token)}`,
     remainingNote: remainingNote.value
   },
   {
@@ -162,11 +162,11 @@ const gauges = computed(() => [
     pct: repaymentPct.value,
     ringStyle: repaymentRingStyle.value,
     label: 'repaid',
-    amount: formatAmount(props.round.totalRepaid),
-    totalNote: `repaid of ${formatAmount(totalDue.value)}`,
+    amount: formatAmount(props.round.totalRepaid, props.round.token),
+    totalNote: `repaid of ${formatAmount(totalDue.value, props.round.token)}`,
     remainingNote:
       totalDue.value > props.round.totalRepaid
-        ? `${formatAmount(totalDue.value - props.round.totalRepaid)} remaining`
+        ? `${formatAmount(totalDue.value - props.round.totalRepaid, props.round.token)} remaining`
         : undefined
   }
 ])
@@ -175,13 +175,13 @@ const stats = computed(() => [
   {
     icon: 'heroicons:receipt-percent',
     label: 'Interest due',
-    value: formatAmount(roundInterest(props.round)),
+    value: formatAmount(roundInterest(props.round), props.round.token),
     sub: `at ${props.round.rate}% fixed`
   },
   {
     icon: 'heroicons:flag',
     label: 'Total at maturity',
-    value: formatAmount(totalDue.value),
+    value: formatAmount(totalDue.value, props.round.token),
     sub: `matures ${props.round.maturity || '—'}`
   },
   {
@@ -200,7 +200,9 @@ const stats = computed(() => [
 
 const access = computed(() => {
   const restricted = props.round.restricted
-  const capNote = props.round.cap ? ` · capped at ${formatAmount(props.round.cap)} each` : ''
+  const capNote = props.round.cap
+    ? ` · capped at ${formatAmount(props.round.cap, props.round.token)} each`
+    : ''
   return {
     icon: restricted ? 'heroicons:lock-closed' : 'heroicons:globe-alt',
     chipClass: restricted ? 'bg-warning/15 text-warning' : 'bg-primary/10 text-primary',

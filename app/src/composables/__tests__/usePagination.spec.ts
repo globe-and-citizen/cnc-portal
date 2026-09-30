@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { usePagination } from '@/composables/usePagination'
+import { ref, nextTick } from 'vue'
+import { usePaginatedList, usePagination } from '@/composables/usePagination'
 import { setMockRoute, mockRouterReplace } from '@/tests/mocks'
 
 // The query object the last `router.replace` was called with.
@@ -116,5 +117,43 @@ describe('usePagination', () => {
       reset()
       expect(lastReplacedQuery()).toEqual({ pageSize: '20' })
     })
+  })
+})
+
+describe('usePaginatedList', () => {
+  const numbered = (count: number) => Array.from({ length: count }, (_, i) => i + 1)
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    setMockRoute({ query: {} })
+  })
+
+  it('slices the current page out of the list', () => {
+    setMockRoute({ query: { page: '2', pageSize: '10' } })
+    const { pageItems, total } = usePaginatedList(() => numbered(25))
+    expect(total.value).toBe(25)
+    expect(pageItems.value).toEqual([11, 12, 13, 14, 15, 16, 17, 18, 19, 20])
+  })
+
+  it('follows the list as it changes', async () => {
+    const items = ref(numbered(3))
+    const { pageItems } = usePaginatedList(() => items.value)
+    expect(pageItems.value).toEqual([1, 2, 3])
+
+    items.value = numbered(5)
+    await nextTick()
+    expect(pageItems.value).toEqual([1, 2, 3, 4, 5])
+  })
+
+  it('falls back to the last page when the list shrinks under the current one', async () => {
+    setMockRoute({ query: { page: '3', pageSize: '10' } })
+    const items = ref(numbered(25))
+    const { page, pageItems } = usePaginatedList(() => items.value)
+    expect(pageItems.value).toEqual([21, 22, 23, 24, 25])
+
+    items.value = numbered(12)
+    await nextTick()
+    expect(page.value).toBe(2)
+    expect(pageItems.value).toEqual([11, 12])
   })
 })

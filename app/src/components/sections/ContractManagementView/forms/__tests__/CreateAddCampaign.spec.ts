@@ -9,7 +9,7 @@ import { createMockMutationResponse } from '@/tests/mocks/query.mock'
 
 const mountComponent = () => mount(CreateAddCampaign)
 
-describe('CreateAddCampaign.vue', () => {
+describe('[US-CONTRACT-003] CreateAddCampaign.vue', () => {
   beforeEach(() => {
     vi.clearAllMocks()
   })

@@ -38,7 +38,7 @@ const WAGE_CLAIM_TYPES = {
 dayjs.extend(utc);
 dayjs.extend(isoWeek);
 
-export type WeeklyClaimAction = 'sign' | 'withdraw' | 'disable' | 'enable';
+export type WeeklyClaimAction = 'sign' | 'withdraw';
 type statusType = 'pending' | 'signed' | 'withdrawn' | 'disabled';
 
 const deriveWeeklyClaimStatus = (isPaid: boolean, isDisabled: boolean): statusType => {
@@ -53,9 +53,7 @@ export const updateWeeklyClaims = async (req: Request, res: Response) => {
   const action = req.query.action as WeeklyClaimAction;
   // Route-level `validateRequest(updateWeeklyClaimRequestSchema)` already
   // enforces that signedAgainstContractAddress / typedDataMessage / chainId
-  // are present for `action=sign` (see weeklyClaim.ts), so `id` and
-  // `signature` here are guaranteed valid — no re-checking needed.
-  const { signature } = req.body as { signature?: string };
+  // are present for `action=sign` (see weeklyClaim.ts).
 
   let data: Prisma.WeeklyClaimUpdateInput = {};
   // let singleClaimStatus: statusType = "pending";
@@ -76,72 +74,6 @@ export const updateWeeklyClaims = async (req: Request, res: Response) => {
     }
 
     switch (action) {
-      case 'enable': {
-        const enableErrors: string[] = [];
-
-        // Check if the caller is the Cash Remuneration owner
-        const isCallerCashRemunOwnerEnable = await isCashRemunerationOwner(
-          callerAddress,
-          weeklyClaim.wage.team.id
-        );
-
-        // If not Cash Remuneration owner, check if they're the team owner
-        if (!isCallerCashRemunOwnerEnable && weeklyClaim.wage.team.ownerAddress !== callerAddress)
-          enableErrors.push('Caller is not the Cash Remuneration owner or the team owner');
-
-        // check if the weekly claim is already signed or withdrawn
-        if (!weeklyClaim.signature)
-          enableErrors.push('No claim existing signature: You need to sign claim first');
-        if (
-          weeklyClaim.status === 'signed' &&
-          callerAddress ===
-            (typeof weeklyClaim.data === 'object' && weeklyClaim.data !== null
-              ? (weeklyClaim.data as Record<string, unknown>)['ownerAddress']
-              : undefined)
-        ) {
-          enableErrors.push('Weekly claim already active');
-        } else if (weeklyClaim.status === 'withdrawn') {
-          enableErrors.push('Weekly claim already withdrawn');
-        }
-
-        if (enableErrors.length > 0) return errorResponse(400, enableErrors.join('; '), res);
-
-        data = { signature, status: 'signed' };
-        // singleClaimStatus = "signed";
-        break;
-      }
-      case 'disable': {
-        const disableErrors: string[] = [];
-
-        // Check if the caller is the Cash Remuneration owner
-        const _isCallerCashRemunOwner = await isCashRemunerationOwner(
-          callerAddress,
-          weeklyClaim.wage.team.id
-        );
-
-        // If not Cash Remuneration owner, check if they're the team owner
-        if (!_isCallerCashRemunOwner && weeklyClaim.wage.team.ownerAddress !== callerAddress)
-          disableErrors.push('Caller is not the Cash Remuneration owner or the team owner');
-
-        // check if the weekly claim is already signed or withdrawn
-        if (
-          weeklyClaim.status === 'disabled' &&
-          callerAddress ===
-            (typeof weeklyClaim.data === 'object' && weeklyClaim.data !== null
-              ? (weeklyClaim.data as Record<string, unknown>)['ownerAddress']
-              : undefined)
-        ) {
-          disableErrors.push('Weekly claim already disabled');
-        } else if (weeklyClaim.status === 'withdrawn') {
-          disableErrors.push('Weekly claim already withdrawn');
-        }
-
-        if (disableErrors.length > 0) return errorResponse(400, disableErrors.join('; '), res);
-
-        data = { signature, status: 'disabled' };
-        // singleClaimStatus = "signed";
-        break;
-      }
       case 'sign': {
         const { signature, signedAgainstContractAddress, typedDataMessage, chainId } =
           req.body as SignWeeklyClaimBody;

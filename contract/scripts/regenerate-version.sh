@@ -9,11 +9,10 @@
 # Writes:
 #   contract/versions/<version>/abi/*.json
 #   contract/versions/<version>/deployed_addresses/chain-137.json
-#   app/src/artifacts/abi/<version>/json/*.json
-#   app/src/artifacts/deployed_addresses/<version>/chain-137.json
 #
-# After regenerating the versions you care about, rebuild the registry:
+# After regenerating the versions you care about, rebuild and distribute them:
 #   node contract/scripts/build-version-registry.mjs
+#   node contract/scripts/distribute-versions.mjs
 set -euo pipefail
 
 VERSION="${1:?usage: regenerate-version.sh <version> <deploy-commit>}"
@@ -26,18 +25,15 @@ echo "[$VERSION] clone + checkout $COMMIT"
 git clone --quiet "$REPO" "$TMP/clone"
 git -C "$TMP/clone" checkout -f --detach "$COMMIT"
 
-echo "[$VERSION] npm ci + hardhat compile (regenerates ABIs at this commit)"
-( cd "$TMP/clone/contract" && npm ci --no-audit --no-fund && npx hardhat compile )
+echo "[$VERSION] npm ci + compile at the historical commit"
+( cd "$TMP/clone/contract" && npm ci --no-audit --no-fund && npm run compile )
 
 CANON="$REPO/contract/versions/$VERSION"
-APP_ABI="$REPO/app/src/artifacts/abi/$VERSION/json"
-APP_ADDR="$REPO/app/src/artifacts/deployed_addresses/$VERSION"
-mkdir -p "$CANON/abi" "$CANON/deployed_addresses" "$APP_ABI" "$APP_ADDR"
+mkdir -p "$CANON/abi" "$CANON/deployed_addresses"
 
-cp "$TMP/clone/app/src/artifacts/abi/json/"*.json "$CANON/abi/"
+node "$REPO/contract/scripts/extract-compiled-abis.mjs" \
+  "$TMP/clone/contract/artifacts" "$CANON/abi"
 cp "$TMP/clone/contract/ignition/deployments/chain-137/deployed_addresses.json" \
    "$CANON/deployed_addresses/chain-137.json"
-cp "$CANON/abi/"*.json "$APP_ABI/"
-cp "$CANON/deployed_addresses/chain-137.json" "$APP_ADDR/chain-137.json"
 
-echo "[$VERSION] done: $(ls "$CANON/abi" | wc -l | tr -d ' ') ABI json + deployed_addresses"
+echo "[$VERSION] done: $(ls "$CANON/abi" | wc -l | tr -d ' ') canonical ABI json + deployed_addresses"

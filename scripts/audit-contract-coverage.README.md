@@ -30,8 +30,8 @@ détail dépliable des orphelins et des usages.
 ## Fonctionnement
 
 1. **Auto‑découverte** des slugs : chaque sous‑dossier de `app/src/composables/` contenant `reads.ts` ou `writes.ts`.
-2. **Extraction de l'ABI** via les JSON sous `app/src/artifacts/abi/json/*.json`, typée avec `abitype` et formatée en signatures lisibles
-   via `formatAbiItem`.
+2. **Extraction de l'ABI** via `app/src/artifacts/abi/generated.ts` (et l'ABI ERC-20 canonique de `viem`), typée avec `abitype` et formatée
+   en signatures lisibles via `formatAbiItem`.
 3. **Parsing des composables** : regex sur `export (function|const) useXxx` puis recherche de `functionName: '...'` ou
    `functionName: CONST.KEY` (les objets `as const` sont résolus).
 4. **Mocks** : parse de `contract.mock.ts`, récupère les clés de `mockXxxReads` / `mockXxxWrites` par contrat ; alias tolérés

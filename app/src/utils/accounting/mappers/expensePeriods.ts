@@ -39,7 +39,7 @@ function monthsSince(startDate: number, timestamp: number): number {
 }
 
 /** A budget's frequency behaviour, as needed to place a draw in its period. */
-export interface PeriodSpec {
+interface PeriodSpec {
   frequencyType: number
   /** Period-anchor time, Unix seconds — the approval's `startDate`. */
   startDate: number

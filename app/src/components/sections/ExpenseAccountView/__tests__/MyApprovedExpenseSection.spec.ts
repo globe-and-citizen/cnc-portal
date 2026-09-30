@@ -46,7 +46,7 @@ describe('MyApprovedExpenseSection', () => {
     vi.mocked(useGetExpensesQuery).mockReturnValue(createMockQueryResponse([]))
   })
 
-  it('renders a row only for the current user approvals', () => {
+  it('[AC-US-EXP-004-07] renders a row only for the current user approvals', () => {
     vi.mocked(useGetExpensesQuery).mockReturnValue(
       createMockQueryResponse([
         expense({ signature: '0xa' }, { frequencyType: 0 }),
@@ -59,7 +59,7 @@ describe('MyApprovedExpenseSection', () => {
     expect(wrapper.find('[data-test="my-expenses-empty"]').exists()).toBe(false)
   })
 
-  it('shows an empty state when the user has no approvals', () => {
+  it('[AC-US-EXP-004-09] shows an empty state when the user has no approvals', () => {
     expect(createWrapper().find('[data-test="my-expenses-empty"]').exists()).toBe(true)
   })
 })

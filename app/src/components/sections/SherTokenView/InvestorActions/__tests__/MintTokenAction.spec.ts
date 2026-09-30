@@ -2,14 +2,11 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { createTestingPinia } from '@pinia/testing'
 import { nextTick } from 'vue'
-import type { Address } from 'viem'
 import MintTokenAction from '../MintTokenAction.vue'
-import { mockUserStore } from '@/tests/mocks'
+import { mockInvestorPermissions, mockTeamStore, mockUserStore } from '@/tests/mocks'
 
 describe('MintTokenAction.vue', () => {
-  const owner = '0x0000000000000000000000000000000000000001' as Address
-
-  const createWrapper = (props = {}) =>
+  const createWrapper = () =>
     mount(MintTokenAction, {
       global: {
         plugins: [createTestingPinia({ createSpy: vi.fn })],
@@ -30,18 +27,19 @@ describe('MintTokenAction.vue', () => {
         }
       },
       props: {
-        tokenSymbol: 'SHER',
-        investorsOwner: owner,
-        ...props
+        tokenSymbol: 'SHER'
       }
     })
 
   beforeEach(() => {
     vi.clearAllMocks()
-    mockUserStore.address = owner
+    mockUserStore.address = '0x0000000000000000000000000000000000000001'
+    mockInvestorPermissions.hasRole.data.value = true
+    mockInvestorPermissions.hasRole.isLoading.value = false
+    mockTeamStore.currentTeamMeta.data.isArchived = false
   })
 
-  it('enables mint button for token owner and opens modal', async () => {
+  it('[AC-US-SHER-004-06] enables mint for an Investor minter and opens the modal', async () => {
     const wrapper = createWrapper()
 
     expect(wrapper.findComponent({ name: 'UTooltip' }).props('text')).toBeUndefined()
@@ -52,15 +50,25 @@ describe('MintTokenAction.vue', () => {
     expect(wrapper.find('[data-test="mint-form"]').exists()).toBe(true)
   })
 
-  it('disables mint button for non-owner and shows tooltip reason', () => {
-    const wrapper = createWrapper({
-      investorsOwner: '0x2222222222222222222222222222222222222222' as Address
-    })
+  it('[AC-US-SHER-004-06] disables mint without the minter role and shows the reason', async () => {
+    mockInvestorPermissions.hasRole.data.value = false
+    const wrapper = createWrapper()
 
     expect(wrapper.findComponent({ name: 'UTooltip' }).props('text')).toBe(
-      'Only the token owner can mint tokens'
+      'Only an account with the Investor minter role can mint tokens'
     )
     expect(wrapper.find('[data-test="mint-button"]').attributes('disabled')).toBeDefined()
+    await wrapper.find('[data-test="mint-button"]').trigger('click')
+    expect(wrapper.find('[data-test="mint-form"]').exists()).toBe(false)
+  })
+
+  it('[AC-US-SHER-004-05] blocks issuance for an archived company', async () => {
+    mockTeamStore.currentTeamMeta.data.isArchived = true
+    const wrapper = createWrapper()
+
+    expect(wrapper.find('[data-test="mint-button"]').attributes('disabled')).toBeDefined()
+    await wrapper.find('[data-test="mint-button"]').trigger('click')
+    expect(wrapper.find('[data-test="mint-form"]').exists()).toBe(false)
   })
 
   it('renders mint form component only when modal is mounted', () => {

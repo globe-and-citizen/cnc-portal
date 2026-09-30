@@ -1,14 +1,16 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import ShowIndex from '@/views/team/[id]/ShowIndex.vue'
 import { mount } from '@vue/test-utils'
-import { setMockRoute } from '@/tests/mocks/router.mock'
+import { mockRoute, setMockRoute } from '@/tests/mocks/router.mock'
+import { mockTeamStore, mockSyncWeeklyClaimsMutation } from '@/tests/mocks'
+import { defineComponent, h, markRaw, nextTick, onMounted, type Component } from 'vue'
 
 describe('ShowIndex', () => {
   beforeEach(() => {
     vi.clearAllMocks()
   })
 
-  const mountShowIndex = () =>
+  const mountShowIndex = (routerView: Component | boolean = true) =>
     mount(ShowIndex, {
       global: {
         stubs: {
@@ -16,7 +18,7 @@ describe('ShowIndex', () => {
           TeamMeta: true,
           CompanyOverview: true,
           TeamArchivedBanner: true,
-          RouterView: true
+          RouterView: routerView
         }
       }
     })
@@ -31,6 +33,17 @@ describe('ShowIndex', () => {
     expect(wrapper.html()).toContain('company-overview-stub')
   })
 
+  it('[AC-US-PAYROLL-011-04] synchronizes payroll when the company contracts are loaded', () => {
+    setMockRoute({ name: 'show-team', params: { id: '1' }, meta: { name: 'Overview' } })
+    mockTeamStore.currentTeamId = '1'
+    expect(mockTeamStore.currentTeamMeta.data.teamContracts.length).toBeGreaterThan(0)
+    const wrapper = mountShowIndex()
+    expect(mockSyncWeeklyClaimsMutation.mutate).toHaveBeenCalledWith({
+      queryParams: { teamId: '1' }
+    })
+    wrapper.unmount()
+  })
+
   it('no longer renders an in-page breadcrumb (it now lives in the navbar)', () => {
     setMockRoute({ name: 'show-team', params: { id: '1' }, meta: { name: 'Overview' } })
 
@@ -38,5 +51,46 @@ describe('ShowIndex', () => {
 
     // The breadcrumb skeleton/loader used to render here; it belongs to NavBreadcrumb now.
     expect(wrapper.find('[data-test="loader"]').exists()).toBe(false)
+  })
+
+  it('preserves the Accounting route owner between reports and remounts it for another team', async () => {
+    const accountingOwnerMounted = vi.fn()
+    const AccountingOwner = markRaw(
+      defineComponent({
+        setup() {
+          onMounted(accountingOwnerMounted)
+          return () => h('div', { 'data-test': 'accounting-owner' })
+        }
+      })
+    )
+    const RouterViewStub = defineComponent({
+      setup(_, { slots }) {
+        return () => slots.default?.({ Component: AccountingOwner })
+      }
+    })
+
+    setMockRoute({
+      name: 'accounting-summary',
+      params: { id: '1' },
+      path: '/teams/1/accounting/summary',
+      fullPath: '/teams/1/accounting/summary'
+    })
+    const wrapper = mountShowIndex(RouterViewStub)
+    await nextTick()
+    const initialMountCount = accountingOwnerMounted.mock.calls.length
+    expect(initialMountCount).toBeGreaterThan(0)
+
+    mockRoute.name = 'accounting-ledger'
+    mockRoute.path = '/teams/1/accounting/ledger'
+    mockRoute.fullPath = '/teams/1/accounting/ledger'
+    await nextTick()
+    expect(accountingOwnerMounted).toHaveBeenCalledTimes(initialMountCount)
+
+    mockRoute.params = { id: '2' }
+    mockRoute.path = '/teams/2/accounting/ledger'
+    mockRoute.fullPath = '/teams/2/accounting/ledger'
+    await nextTick()
+    expect(accountingOwnerMounted.mock.calls.length).toBeGreaterThan(initialMountCount)
+    wrapper.unmount()
   })
 })

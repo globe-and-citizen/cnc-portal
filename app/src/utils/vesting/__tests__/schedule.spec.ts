@@ -88,7 +88,7 @@ describe('vestingScheduleUtil', () => {
     expect(resolveVestingTokenSymbol(undefined)).toBe('SHARES')
   })
 
-  it('matches the contract linear accrual available at the cliff', () => {
+  it('[AC-US-VESTING-005-06] keeps accrued shares locked until the cliff', () => {
     const start = new Date(2026, 0, 1, 9, 0)
     const cliff = new Date(2027, 0, 1, 9, 0)
     const end = new Date(2030, 0, 1, 9, 0)
@@ -123,7 +123,12 @@ describe('vestingScheduleUtil', () => {
     ])
   })
 
-  it('derives V2 claimable amounts and schedule state from contract tuples', () => {
+  /**
+   * Covers:
+   * - [AC-US-VESTING-005-01]
+   * - [AC-US-VESTING-005-03]
+   */
+  it('derives displayed amounts and schedule state from contract tuples', () => {
     const now = 1_700_050_000
     const [schedule] = buildVestingSchedules(
       [

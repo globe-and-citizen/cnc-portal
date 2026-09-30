@@ -97,8 +97,8 @@ export function useIncomingBankTokenTransfersViaLogs(
   })
 
   return {
-    result: events.result,
-    loading: computed(() => events.loading.value || officers.isPending.value),
+    ...events,
+    isPending: computed(() => events.isPending.value || officers.isPending.value),
     error: computed(() => events.error.value ?? officers.error.value),
     refetch: events.refetch
   }

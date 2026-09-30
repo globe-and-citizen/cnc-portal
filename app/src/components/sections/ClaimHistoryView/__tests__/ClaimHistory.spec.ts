@@ -13,7 +13,7 @@ dayjs.extend(isoWeek)
 
 import ClaimHistory from '../ClaimHistory.vue'
 
-describe('ClaimHistory.vue', () => {
+describe('[US-PAYROLL-012] ClaimHistory.vue', () => {
   const openSubmitClaimForDayMock = vi.fn()
 
   const createWrapper = () =>

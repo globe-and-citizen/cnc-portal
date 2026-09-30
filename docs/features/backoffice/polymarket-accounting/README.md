@@ -67,22 +67,26 @@ flowchart LR
 
 #### Happy Path
 
-- [x] An authenticated administrator or super administrator can open Polymarket accounting.
-- [x] An administrator can enter a valid wallet address and load its accounting analysis.
-- [x] A valid wallet address is represented in the route query, enabling a separate browser tab to analyze a different address.
+- [x] `AC-US-POLY-ACCOUNTING-001-01` An authenticated administrator or super administrator can open Polymarket accounting.
+- [x] `AC-US-POLY-ACCOUNTING-001-02` An administrator can enter a valid wallet address and load its accounting analysis.
+- [x] `AC-US-POLY-ACCOUNTING-001-03` A valid wallet address is represented in the route query, enabling a separate browser tab to analyze a
+      different address.
 
 #### Business Rules
 
-- [x] Dashboard authentication and administrator-role authorization are enforced before the journey is entered.
-- [x] The journey reads any valid public wallet address; it does not require the address to be owned by, or linked to, the administrator, a
-      portal user, or a company.
-- [x] An empty or invalid address does not start upstream accounting queries.
+- [x] `AC-US-POLY-ACCOUNTING-001-04` Dashboard authentication and administrator-role authorization are enforced before the journey is
+      entered.
+- [x] `AC-US-POLY-ACCOUNTING-001-05` The journey reads any valid public wallet address; it does not require the address to be owned by, or
+      linked to, the administrator, a portal user, or a company.
+- [x] `AC-US-POLY-ACCOUNTING-001-06` An empty or invalid address does not start upstream accounting queries.
 
 #### Edge & Error Cases
 
-- [x] An administrator who has not supplied an address is prompted to enter one before the statement views have data to show.
-- [ ] An invalid non-empty address produces a clear validation outcome instead of rendering empty reconstructed figures.
-- [x] A valid address can be opened on its Polymarket profile for a direct source comparison.
+- [x] `AC-US-POLY-ACCOUNTING-001-07` An administrator who has not supplied an address is prompted to enter one before the statement views
+      have data to show.
+- [ ] `AC-US-POLY-ACCOUNTING-001-08` An invalid non-empty address produces a clear validation outcome instead of rendering empty
+      reconstructed figures.
+- [x] `AC-US-POLY-ACCOUNTING-001-09` A valid address can be opened on its Polymarket profile for a direct source comparison.
 
 **Dependencies:** Dashboard authentication and administrator roles
 
@@ -96,28 +100,30 @@ flowchart LR
 
 #### Happy Path
 
-- [x] The analysis combines wallet activity, positions, and on-chain USD-token transfers into deposits, withdrawals, cash, returns, rewards,
-      fees, and position values.
-- [x] The summary exposes accounting identities for cash, capital, balance sheet, cost basis, P&L, lot tracking, trial balance, and
-      statement consistency.
-- [x] The all-time profile P&L is used when available and the reconstructed summary remains available when that best-effort feed fails.
-- [x] An administrator can refresh all source feeds for the selected wallet.
+- [x] `AC-US-POLY-ACCOUNTING-002-01` The analysis combines wallet activity, positions, and on-chain USD-token transfers into deposits,
+      withdrawals, cash, returns, rewards, fees, and position values.
+- [x] `AC-US-POLY-ACCOUNTING-002-02` The summary exposes accounting identities for cash, capital, balance sheet, cost basis, P&L, lot
+      tracking, trial balance, and statement consistency.
+- [x] `AC-US-POLY-ACCOUNTING-002-03` The all-time profile P&L is used when available and the reconstructed summary remains available when
+      that best-effort feed fails.
+- [x] `AC-US-POLY-ACCOUNTING-002-04` An administrator can refresh all source feeds for the selected wallet.
 
 #### Business Rules
 
-- [x] Transfers sharing a transaction hash with a Polymarket activity are reconciled as a single settlement instead of being counted as an
-      external deposit or withdrawal.
-- [x] A difference between the on-chain settlement and activity cash flow is represented as a reconciliation adjustment rather than being
-      silently discarded.
-- [x] When the transfer-history source reaches its safety limit, the journey warns that deposit and withdrawal totals may be incomplete.
+- [x] `AC-US-POLY-ACCOUNTING-002-05` Transfers sharing a transaction hash with a Polymarket activity are reconciled as a single settlement
+      instead of being counted as an external deposit or withdrawal.
+- [x] `AC-US-POLY-ACCOUNTING-002-06` A difference between the on-chain settlement and activity cash flow is represented as a reconciliation
+      adjustment rather than being silently discarded.
+- [x] `AC-US-POLY-ACCOUNTING-002-07` When the transfer-history source reaches its safety limit, the journey warns that deposit and
+      withdrawal totals may be incomplete.
 
 #### Edge & Error Cases
 
-- [x] A failure of activity, position, or transfer data is reported as an accounting data-load failure.
-- [ ] The journey reports when the activity or position history reaches its 10,000-row client fetch limit instead of presenting the partial
-      history as complete.
-- [ ] When a summary is viewed as of a past date, its accounting-identity checks use the same historical snapshot rather than current
-      all-time aggregates.
+- [x] `AC-US-POLY-ACCOUNTING-002-08` A failure of activity, position, or transfer data is reported as an accounting data-load failure.
+- [ ] `AC-US-POLY-ACCOUNTING-002-09` The journey reports when the activity or position history reaches its 10,000-row client fetch limit
+      instead of presenting the partial history as complete.
+- [ ] `AC-US-POLY-ACCOUNTING-002-10` When a summary is viewed as of a past date, its accounting-identity checks use the same historical
+      snapshot rather than current all-time aggregates.
 
 **Dependencies:** US-POLY-ACCOUNTING-001 and availability of the external activity, position, profile, and transfer sources
 
@@ -131,25 +137,28 @@ flowchart LR
 
 #### Happy Path
 
-- [x] An administrator can review realized wins, losses, rewards, net income, and comprehensive income for a selected reporting period.
-- [x] The income statement derives realized results by replaying activity with weighted-average-cost lot accounting, including resolved
-      worthless positions that have no redemption transaction.
-- [x] An administrator can review a balance sheet with cash, open contracts at cost, owner capital, retained earnings, and the balance
-      identity.
-- [x] An administrator can select a historical reporting date for the summary and balance sheet.
+- [x] `AC-US-POLY-ACCOUNTING-003-01` An administrator can review realized wins, losses, rewards, net income, and comprehensive income for a
+      selected reporting period.
+- [x] `AC-US-POLY-ACCOUNTING-003-02` The income statement derives realized results by replaying activity with weighted-average-cost lot
+      accounting, including resolved worthless positions that have no redemption transaction.
+- [x] `AC-US-POLY-ACCOUNTING-003-03` An administrator can review a balance sheet with cash, open contracts at cost, owner capital, retained
+      earnings, and the balance identity.
+- [x] `AC-US-POLY-ACCOUNTING-003-04` An administrator can select a historical reporting date for the summary and balance sheet.
 
 #### Business Rules
 
-- [x] Historical snapshots carry open contracts at cost; current market value, unrealized P&L, and the profile P&L are unavailable for a
-      historical date.
-- [x] The balance sheet records no liabilities for the reconstructed Polymarket wallet and checks that assets equal liabilities plus equity.
-- [x] The income statement distinguishes realized income from unrealized changes on open positions.
+- [x] `AC-US-POLY-ACCOUNTING-003-05` Historical snapshots carry open contracts at cost; current market value, unrealized P&L, and the
+      profile P&L are unavailable for a historical date.
+- [x] `AC-US-POLY-ACCOUNTING-003-06` The balance sheet records no liabilities for the reconstructed Polymarket wallet and checks that assets
+      equal liabilities plus equity.
+- [x] `AC-US-POLY-ACCOUNTING-003-07` The income statement distinguishes realized income from unrealized changes on open positions.
 
 #### Edge & Error Cases
 
-- [x] A period without matching activity reports zero realized results and no trade rows.
-- [x] When Polymarket-reported realized P&L differs from the reconstructed lot result, the statement exposes the reconciliation difference.
-- [x] Missing live position pricing does not cause a historical snapshot to use today's price retroactively.
+- [x] `AC-US-POLY-ACCOUNTING-003-08` A period without matching activity reports zero realized results and no trade rows.
+- [x] `AC-US-POLY-ACCOUNTING-003-09` When Polymarket-reported realized P&L differs from the reconstructed lot result, the statement exposes
+      the reconciliation difference.
+- [x] `AC-US-POLY-ACCOUNTING-003-10` Missing live position pricing does not cause a historical snapshot to use today's price retroactively.
 
 **Dependencies:** US-POLY-ACCOUNTING-002
 
@@ -163,26 +172,29 @@ flowchart LR
 
 #### Happy Path
 
-- [x] The ledger exposes dated activity and corresponding debit and credit lines for deposits, withdrawals, trades, settlements, rewards,
-      and other reconstructed categories.
-- [x] An administrator can constrain the ledger by reporting period, categories, text search, and page size, then navigate the resulting
-      pages.
-- [x] An administrator can choose visible ledger columns without changing the underlying accounting entries.
-- [x] An administrator can export the currently filtered ledger rows as CSV.
-- [x] The trial balance reports total debits, total credits, and whether they balance for the selected period.
+- [x] `AC-US-POLY-ACCOUNTING-004-01` The ledger exposes dated activity and corresponding debit and credit lines for deposits, withdrawals,
+      trades, settlements, rewards, and other reconstructed categories.
+- [x] `AC-US-POLY-ACCOUNTING-004-02` An administrator can constrain the ledger by reporting period, categories, text search, and page size,
+      then navigate the resulting pages.
+- [x] `AC-US-POLY-ACCOUNTING-004-03` An administrator can choose visible ledger columns without changing the underlying accounting entries.
+- [x] `AC-US-POLY-ACCOUNTING-004-04` An administrator can export the currently filtered ledger rows as CSV.
+- [x] `AC-US-POLY-ACCOUNTING-004-05` The trial balance reports total debits, total credits, and whether they balance for the selected
+      period.
 
 #### Business Rules
 
-- [x] A search match on any journal line retains the complete activity bundle for that entry, rather than presenting an isolated line
-      without its corresponding posting.
-- [x] Ledger pagination is tied to the current route so the selected page and page size can be shared and reloaded.
-- [x] An on-chain transfer and Polymarket activity remain distinguishable sources in the ledger.
+- [x] `AC-US-POLY-ACCOUNTING-004-06` A search match on any journal line retains the complete activity bundle for that entry, rather than
+      presenting an isolated line without its corresponding posting.
+- [x] `AC-US-POLY-ACCOUNTING-004-07` Ledger pagination is tied to the current route so the selected page and page size can be shared and
+      reloaded.
+- [x] `AC-US-POLY-ACCOUNTING-004-08` An on-chain transfer and Polymarket activity remain distinguishable sources in the ledger.
 
 #### Edge & Error Cases
 
-- [x] A filter combination with no matching entries produces an empty result rather than stale prior entries.
-- [x] Clearing all categories produces no ledger rows until a category is selected again.
-- [x] A missing market link or transaction hash does not prevent the corresponding ledger entry from being reviewed or exported.
+- [x] `AC-US-POLY-ACCOUNTING-004-09` A filter combination with no matching entries produces an empty result rather than stale prior entries.
+- [x] `AC-US-POLY-ACCOUNTING-004-10` Clearing all categories produces no ledger rows until a category is selected again.
+- [x] `AC-US-POLY-ACCOUNTING-004-11` A missing market link or transaction hash does not prevent the corresponding ledger entry from being
+      reviewed or exported.
 
 **Dependencies:** US-POLY-ACCOUNTING-002
 
@@ -196,21 +208,25 @@ flowchart LR
 
 #### Happy Path
 
-- [x] An administrator can inspect every loaded position's market, outcome, shares, average and current price, cost basis, current value,
-      unrealized P&L, and realized P&L.
-- [x] The position feed includes zero-size closed positions as well as current exposure for accounting purposes.
-- [x] An administrator can search positions, paginate the matching result, and open a linked market when a market reference is available.
+- [x] `AC-US-POLY-ACCOUNTING-005-01` An administrator can inspect every loaded position's market, outcome, shares, average and current
+      price, cost basis, current value, unrealized P&L, and realized P&L.
+- [x] `AC-US-POLY-ACCOUNTING-005-02` The position feed includes zero-size closed positions as well as current exposure for accounting
+      purposes.
+- [x] `AC-US-POLY-ACCOUNTING-005-03` An administrator can search positions, paginate the matching result, and open a linked market when a
+      market reference is available.
 
 #### Business Rules
 
-- [x] Position values and P&L are supplied by the current Polymarket position feed, not inferred from the dashboard's presentation state.
-- [x] Changing a position search resets its pagination to the first matching page.
+- [x] `AC-US-POLY-ACCOUNTING-005-04` Position values and P&L are supplied by the current Polymarket position feed, not inferred from the
+      dashboard's presentation state.
+- [x] `AC-US-POLY-ACCOUNTING-005-05` Changing a position search resets its pagination to the first matching page.
 
 #### Edge & Error Cases
 
-- [x] A wallet with no loaded positions reports an empty position result.
-- [x] A position without a market reference remains reviewable without an external link.
-- [x] A failed position source is reported by the accounting journey rather than presented as a successful empty portfolio.
+- [x] `AC-US-POLY-ACCOUNTING-005-06` A wallet with no loaded positions reports an empty position result.
+- [x] `AC-US-POLY-ACCOUNTING-005-07` A position without a market reference remains reviewable without an external link.
+- [x] `AC-US-POLY-ACCOUNTING-005-08` A failed position source is reported by the accounting journey rather than presented as a successful
+      empty portfolio.
 
 **Dependencies:** US-POLY-ACCOUNTING-002
 

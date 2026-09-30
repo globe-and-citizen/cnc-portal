@@ -10,6 +10,7 @@ const buildMockClaimsValue = () => ({
   data: [
     {
       id: 1,
+      updatedAt: new Date().toISOString(),
       claims: [{ minutesWorked: 120 }, { minutesWorked: 180 }],
       wage: {
         ratePerHour: [{ type: 'native', amount: 2 }]
@@ -57,7 +58,29 @@ describe('CashRemunerationMonthlyClaim.vue', () => {
     expect(wrapper.exists()).toBe(true)
   })
 
-  it('computes and passes total monthly claim to OverviewCard', () => {
+  it('[AC-US-PAYROLL-013-06] computes the current UTC month withdrawn total for OverviewCard', () => {
+    const wrapper = createComponent()
+    const card = wrapper.findComponent({ name: 'OverviewCard' })
+
+    expect(card.props('title')).toBe('$20K')
+  })
+
+  it('[AC-US-PAYROLL-013-06] excludes withdrawn claims outside the current UTC month', () => {
+    const now = new Date()
+    const currentMonthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1))
+    const previousMonthEnd = new Date(currentMonthStart.getTime() - 1)
+    const nextMonthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1))
+    const currentClaim = buildMockClaimsValue().data[0]
+
+    mockClaims.value = {
+      data: [
+        { ...currentClaim, id: 1, updatedAt: currentMonthStart.toISOString() },
+        { ...currentClaim, id: 2, updatedAt: previousMonthEnd.toISOString() },
+        { ...currentClaim, id: 3, updatedAt: nextMonthStart.toISOString() }
+      ],
+      total: 3
+    }
+
     const wrapper = createComponent()
     const card = wrapper.findComponent({ name: 'OverviewCard' })
 

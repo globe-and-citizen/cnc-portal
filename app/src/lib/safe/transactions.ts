@@ -17,6 +17,7 @@ import type {
 } from '@/types/safe.mutation'
 import type { TokenId } from '@/constant'
 import { getTokenDecimals } from '@/utils/tokens/metadata'
+import { normalizeSafeAddress } from '@/utils/safe/address'
 import externalApiClient from '@/lib/external.axios.ts'
 
 type SafeTransactionResponseLike = {
@@ -52,6 +53,7 @@ function getTransactionResponse(
 async function postTransactionProposal(params: ProposeTransactionParams): Promise<void> {
   const { chainId, safeAddress, safeTxHash, transactionData, sender, signature, origin } = params
   const txServiceUrl = getTxServiceUrl(chainId)
+  const normalizedSafeAddress = normalizeSafeAddress(safeAddress)
 
   const body: ProposeTransactionBody = {
     ...transactionData,
@@ -62,7 +64,7 @@ async function postTransactionProposal(params: ProposeTransactionParams): Promis
   }
 
   await externalApiClient.post(
-    `${txServiceUrl}/api/v1/safes/${safeAddress}/multisig-transactions/`,
+    `${txServiceUrl}/api/v1/safes/${normalizedSafeAddress}/multisig-transactions/`,
     body
   )
 }

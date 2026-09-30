@@ -83,7 +83,7 @@ describe('TransferForm.vue', () => {
   })
 
   describe('Actions', () => {
-    it('renders the Board approval notice when the form is used in bod mode', () => {
+    it('[AC-US-BANK-002-05] renders the Board approval notice when the form is used in bod mode', () => {
       const w = factory({ isBodAction: true })
 
       expect(w.find('[data-test="bod-action-alert"]').exists()).toBe(true)
@@ -177,7 +177,7 @@ describe('TransferForm.vue', () => {
       expect(w.emitted('transfer')).toBeFalsy()
     })
 
-    it('does not submit an amount when the fee-adjusted total exceeds the balance', async () => {
+    it('[AC-US-BANK-002-06] does not submit an amount when the fee-adjusted total exceeds the balance', async () => {
       const w = factory({ feeBps: 1000, modelValue: createModelValue({ amount: '91' }) })
 
       await w.find('form').trigger('submit')

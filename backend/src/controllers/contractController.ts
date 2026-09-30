@@ -18,15 +18,6 @@ type SyncContractsBody = z.infer<typeof syncContractsBodySchema>;
 type CreateOfficerBody = z.infer<typeof createOfficerBodySchema>;
 type GetContractsQuery = z.infer<typeof getContractsQuerySchema>;
 
-// Re-exported so consumers (teamController, tests) keep a single import path
-// while the detection itself lives in utils/officerVersion.
-export {
-  ACTIVE_OFFICER_FOLDER_BY_CHAIN,
-  getActiveOfficerFolder,
-  getActiveOfficerVersion,
-  isActiveOfficerVersion,
-} from '../utils/officerVersion';
-
 // Look up the head of a team's Officer linked list — the row with no
 // successor pointing back to it. Returns null if the team has never had an
 // Officer deployed.

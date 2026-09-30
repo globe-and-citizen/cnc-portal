@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { siweAuth } from '../auth.api'
 import apiClient from '@/lib/axios'
 
-describe('auth.api', () => {
+describe('[US-AUTH-001] auth.api', () => {
   beforeEach(() => {
     vi.clearAllMocks()
   })

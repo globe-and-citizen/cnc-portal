@@ -13,6 +13,7 @@ import {
   useQueryClientFn
 } from '@/tests/mocks'
 import { offerStruct, sampleRound } from './communityCreditFixtures'
+import { fixedReturnKeys } from '@/composables/fixedReturn/reads'
 
 const MOCK_USER_ADDRESS = '0x0000000000000000000000000000000000000001'
 const repaymentLenderData = [
@@ -58,12 +59,14 @@ describe('RoundView repayment', () => {
     mockBankWrites.fundFixedReturnRepayment.mutateAsync.mockReset()
     mockBankWrites.fundFixedReturnRepayment.mutateAsync.mockResolvedValue(undefined)
     mockBankReads.owner.data.value = MOCK_USER_ADDRESS
+    mockBankReads.paused.data.value = false
     mockERC20Reads.balanceOf.data.value = 10_000_000000n
     mockERC20Reads.balanceOf.refetch.mockClear()
     mockFixedReturnReads.getLendingOffer.refetch.mockClear()
     mockFixedReturnReads.offerLenders.data.value = repaymentLenderData
     useQueryClientFn.mockReturnValue({
       invalidateQueries: mockInvalidateQueries,
+      refetchQueries: vi.fn(),
       getQueryData: vi.fn(),
       setQueryData: vi.fn(),
       removeQueries: vi.fn()
@@ -79,7 +82,36 @@ describe('RoundView repayment', () => {
     expect(wrapper.find('[data-test="confirm-repay"]').exists()).toBe(true)
   })
 
-  it('writes exact units, refreshes the route data, and returns after a full repayment', async () => {
+  it("shows the repay CTA to the Bank owner even when they are not the round's FixedReturn issuer", async () => {
+    store.isOwner = false
+    const wrapper = mountRound(sampleRound({ status: 'active' }), offerStruct(), 'ledger')
+    await flushPromises()
+
+    expect(wrapper.find('[data-test="round-cta-repay"]').exists()).toBe(true)
+  })
+
+  it("shows the repay form to the Bank owner even when they are not the round's FixedReturn issuer", async () => {
+    store.isOwner = false
+    const wrapper = mountRound(sampleRound({ status: 'active' }))
+    await flushPromises()
+
+    expect(wrapper.find('[data-test="confirm-repay"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="repay-bank-blocked"]').exists()).toBe(false)
+  })
+
+  it('[AC-US-CC-005-12] blocks repayment while the Bank is paused', async () => {
+    mockBankReads.paused.data.value = true
+    const wrapper = mountRound(sampleRound({ status: 'active' }))
+    await flushPromises()
+
+    expect(wrapper.find('[data-test="repay-bank-blocked"]').exists()).toBe(true)
+    expect(wrapper.findComponent('[data-test="confirm-repay"]').props('disabled')).toBe(true)
+
+    await wrapper.find('[data-test="confirm-repay"]').trigger('click')
+    expect(mockBankWrites.fundFixedReturnRepayment.mutateAsync).not.toHaveBeenCalled()
+  })
+
+  it('[AC-US-CC-005-06] settles the round after a full repayment', async () => {
     const wrapper = mountRound(
       sampleRound({ status: 'active' }),
       offerStruct({ totalFunded: 5000_000000n })
@@ -94,7 +126,7 @@ describe('RoundView repayment', () => {
     })
     expect(mockFixedReturnReads.getLendingOffer.refetch).toHaveBeenCalled()
     expect(mockERC20Reads.balanceOf.refetch).toHaveBeenCalled()
-    expect(mockInvalidateQueries).toHaveBeenCalledWith({ queryKey: ['fixedReturnOfferLenders'] })
+    expect(mockInvalidateQueries).toHaveBeenCalledWith({ queryKey: fixedReturnKeys.all })
     expect(mockRouterPush).toHaveBeenLastCalledWith(
       expect.objectContaining({
         name: 'community-credit-round',
@@ -129,7 +161,7 @@ describe('RoundView repayment', () => {
     expect(mockRouterPush).not.toHaveBeenCalled()
   })
 
-  it('rejects an amount above the exact remaining obligation without writing', async () => {
+  it('[AC-US-CC-005-08] rejects an amount above the outstanding obligation', async () => {
     const wrapper = mountRound(
       sampleRound({ status: 'active' }),
       offerStruct({ totalFunded: 5000_000000n })
@@ -144,7 +176,7 @@ describe('RoundView repayment', () => {
     expect(wrapper.get('[data-test="repay-error"]').text()).toContain('outstanding balance')
   })
 
-  it('rejects an amount above the exact Bank balance without writing', async () => {
+  it('[AC-US-CC-005-09] rejects an amount above the Bank balance', async () => {
     mockERC20Reads.balanceOf.data.value = 5000_000000n
     const wrapper = mountRound(
       sampleRound({ status: 'active' }),

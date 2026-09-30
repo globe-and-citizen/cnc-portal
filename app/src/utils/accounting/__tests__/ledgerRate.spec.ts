@@ -1,16 +1,15 @@
 import { describe, it, expect } from 'vitest'
 import { journalLedgerRows } from '@/utils/accounting/journalLedgerPresenter'
-import { buildJournal } from '@/utils/accounting/generalLedger'
-import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
+import { finalizeJournal } from '@/utils/accounting/__tests__/assembleAccounting'
+import type { JournalEntryDraft } from '@/utils/accounting/journalEntryDraft'
 
 /** A minimal priced posting whose lead row carries the given rate of record. */
-const entryWithRate = (rate: number): LedgerEntry => ({
+const entryWithRate = (rate: number): JournalEntryDraft => ({
   id: `r-${rate}`,
   timestamp: 100,
   useCase: 'INTERNAL',
   debit: 'Cash — Expense',
   credit: 'Cash — Bank',
-  amountUsd: 10,
   token: 'usdc',
   rawAmount: '10000000',
   memo: '',
@@ -20,7 +19,7 @@ const entryWithRate = (rate: number): LedgerEntry => ({
 
 /** The rate string shown on a posting's lead row (the only row with a movement). */
 const rateOf = (rate: number): string =>
-  journalLedgerRows(buildJournal([entryWithRate(rate)]))[0].rate
+  journalLedgerRows(finalizeJournal([entryWithRate(rate)]))[0].rate
 
 describe('Rate column formatting (trailing zeros trimmed)', () => {
   it('drops padding zeros so whole and short rates read cleanly', () => {

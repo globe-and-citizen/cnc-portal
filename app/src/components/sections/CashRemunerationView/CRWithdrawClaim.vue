@@ -89,6 +89,7 @@ const getTokenAddress = (type: string): Address => {
 
 const withdrawClaim = async () => {
   if (withdrawTx.isPending.value || isTeamArchived.value) return
+  if (props.weeklyClaim.status !== 'signed' || !props.weeklyClaim.signature) return
 
   const currentContract = teamStore.getContractAddressByType('CashRemunerationEIP712') as
     | Address

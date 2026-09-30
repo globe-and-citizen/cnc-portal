@@ -3,7 +3,7 @@ import { mount } from '@vue/test-utils'
 import WeeklyRecap from '@/components/sections/ClaimHistoryView/WeeklyRecap.vue'
 import { useCurrencyStore } from '@/stores'
 
-describe('ClaimHistory WeeklyRecap', () => {
+describe('[US-PAYROLL-012] ClaimHistory WeeklyRecap', () => {
   const createWrapper = (props: Record<string, unknown> = {}) =>
     mount(WeeklyRecap, {
       props,

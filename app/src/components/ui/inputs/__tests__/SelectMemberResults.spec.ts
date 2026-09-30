@@ -51,14 +51,14 @@ describe('SelectMemberResults', () => {
     if (wrapper) wrapper.unmount()
   })
 
-  it('should render nothing when members array is empty', () => {
+  it('renders nothing when members array is empty', () => {
     wrapper = createWrapper({ members: [] })
 
     expect(wrapper.find(SELECTORS.userSearchResults).exists()).toBe(false)
     expect(wrapper.text()).not.toContain('Team Members')
   })
 
-  it('should render title and members when members array has items', async () => {
+  it('renders title and members when members array has items', async () => {
     wrapper = createWrapper({ members: MOCK_MEMBERS })
     await nextTick()
 
@@ -69,7 +69,7 @@ describe('SelectMemberResults', () => {
     expect(rows.length).toBe(3)
   })
 
-  it('should render UserIdentity for each member', async () => {
+  it('renders UserIdentity for each member', async () => {
     wrapper = createWrapper({ members: MOCK_MEMBERS })
     await nextTick()
 
@@ -78,7 +78,7 @@ describe('SelectMemberResults', () => {
     })
   })
 
-  it('should emit select event when a member row is clicked', async () => {
+  it('emits select event when a member row is clicked', async () => {
     wrapper = createWrapper({ members: MOCK_MEMBERS })
     await nextTick()
 
@@ -91,7 +91,7 @@ describe('SelectMemberResults', () => {
     expect(wrapper.emitted('select')?.[0]).toEqual([MOCK_MEMBERS[0]])
   })
 
-  it('should emit select event with correct member for each row', async () => {
+  it('emits select event with correct member for each row', async () => {
     wrapper = createWrapper({ members: MOCK_MEMBERS })
     await nextTick()
 
@@ -109,7 +109,7 @@ describe('SelectMemberResults', () => {
     })
   })
 
-  it('should render single member correctly', async () => {
+  it('renders a single member result', async () => {
     const singleMember = [MOCK_MEMBERS[0]!]
     wrapper = createWrapper({ members: singleMember })
     await nextTick()
@@ -119,7 +119,7 @@ describe('SelectMemberResults', () => {
     expect(wrapper.find(SELECTORS.userComponent(singleMember[0]!.address)).exists()).toBe(true)
   })
 
-  it('should update when members prop changes', async () => {
+  it('updates when members prop changes', async () => {
     wrapper = createWrapper({ members: [] })
     await nextTick()
 

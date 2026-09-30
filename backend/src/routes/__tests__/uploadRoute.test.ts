@@ -83,14 +83,14 @@ describe('uploadRoute', () => {
   });
 
   describe('POST /', () => {
-    it('should return 400 if no files are provided', async () => {
+    it('returns 400 if no files are provided', async () => {
       const response = await request(app).post('/').send({});
 
       expect(response.status).toBe(400);
       expect(response.body).toEqual({ error: 'No files provided' });
     });
 
-    it('should upload files and return urls with metadata', async () => {
+    it('uploads files and returns URLs with metadata', async () => {
       const mockMetadata1 = {
         key: 'uploads/abc123hash.jpg',
         fileType: 'image/jpeg',
@@ -133,7 +133,7 @@ describe('uploadRoute', () => {
       expect(mockGetPresignedDownloadUrl).toHaveBeenCalledWith(mockMetadata2.key, 86400);
     });
 
-    it('should return 500 if upload fails', async () => {
+    it('returns 500 if upload fails', async () => {
       const errorMessage = 'Upload failed';
       mockUploadFiles.mockResolvedValue([{ success: false, error: errorMessage }]);
 
@@ -146,7 +146,7 @@ describe('uploadRoute', () => {
       });
     });
 
-    it.skip('should return 500 if storage is not configured', async () => {
+    it.skip('returns 500 if storage is not configured', async () => {
       mockIsStorageConfigured.mockReturnValue(false);
 
       const response = await request(app).post('/').send({ hasFiles: true });
@@ -155,7 +155,7 @@ describe('uploadRoute', () => {
       expect(response.body.error).toBe('Storage not configured');
     });
 
-    it('should handle unexpected exceptions', async () => {
+    it('reports an unexpected upload failure', async () => {
       mockUploadFiles.mockRejectedValue(new Error('Unexpected error'));
 
       const response = await request(app).post('/').send({ hasFiles: true });

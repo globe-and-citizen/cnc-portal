@@ -20,6 +20,24 @@ Deposits remain in the Credit Account while a round is raising. Reaching the tar
 the principal to the company Bank. Refunds and repayments are pushed to every lender by an issuer transaction; lenders do not claim them
 individually. The round name and purpose are stored off-chain, while its financial terms and settlement state remain on-chain.
 
+## Architecture
+
+Terminology mapping (FixedReturn instance ↔ Credit Account, lending offer ↔ round) is documented once, above, in
+[Product Model](#product-model) — nothing below restates it. Contract terminology (`FixedReturn`) stays at the gateway layer (contracts,
+composables, cache keys); product terminology (`Community Credit`, round, Credit Account) is used above that boundary (routes, views,
+product-facing copy).
+
+| Layer                    | Owner                                                                                         | Key files                                                                                                    |
+| ------------------------ | --------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| FixedReturn contract     | On-chain offer lifecycle, deposits, whitelist/caps, refunds, repayment fan-out                | `contract/contracts/FixedReturn.sol`                                                                         |
+| Bank contract            | Resolves the offer token, funds FixedReturn, triggers repayment                               | `contract/contracts/Bank.sol`                                                                                |
+| Metadata API             | Off-chain `title`/`purpose` by `(teamId, offerId)`                                            | `backend/src/controllers/fixedReturnOfferingController.ts`, `app/src/queries/fixedReturnOffering.queries.ts` |
+| FixedReturn reads/writes | Raw typed contract gateway — no product naming                                                | `app/src/composables/fixedReturn/reads.ts`, `app/src/composables/fixedReturn/writes.ts`                      |
+| Cache policy             | Shared `fixedReturnKeys` query-key factory and mutation-specific invalidation helpers         | `app/src/composables/fixedReturn/{reads,invalidation}.ts`                                                    |
+| Community Credit store   | Product read model — offer list + metadata + owner mapped to `CreditRound`; derives `isOwner` | `app/src/stores/communityCredit.ts`                                                                          |
+| Views (route owners)     | Route/navigation, user intent, mutations, toasts                                              | `app/src/views/team/[id]/CommunityCredit/{IndexView,NewView,RoundView}.vue`                                  |
+| Presentation components  | Props in, events out — no direct reads/writes                                                 | `app/src/components/sections/CommunityCreditView/*.vue`                                                      |
+
 ## Lifecycle
 
 ```mermaid
@@ -42,13 +60,23 @@ automatically when a deadline or maturity date passes.
 
 ## Status Overview
 
-| User Story | Title                      | Actor          | Status         |
-| ---------- | -------------------------- | -------------- | -------------- |
-| US-CC-001  | Inspect the Credit Account | Company member | 🚧 In Progress |
-| US-CC-002  | Publish a credit call      | Company issuer | 🚧 In Progress |
-| US-CC-003  | Lend to an open round      | Company member | 🚧 In Progress |
-| US-CC-004  | Resolve a stalled round    | Company issuer | 🧪 Validation  |
-| US-CC-005  | Repay lenders              | Company issuer | 🚧 In Progress |
+| User Story | Title                      | Actor              | Status         |
+| ---------- | -------------------------- | ------------------ | -------------- |
+| US-CC-001  | Inspect the Credit Account | Company member     | 🚧 In Progress |
+| US-CC-002  | Publish a credit call      | Company issuer     | 🚧 In Progress |
+| US-CC-003  | Lend to an open round      | Company member     | 🚧 In Progress |
+| US-CC-004  | Resolve a stalled round    | Company issuer     | 🧪 Validation  |
+| US-CC-005  | Repay lenders              | Current Bank owner | 🚧 In Progress |
+
+## Test Coverage Overview
+
+| User Story | E2E Status | Owning Path |
+| ---------- | ---------- | ----------- |
+| US-CC-001  | 📋 Planned | E2E-PATH-09 |
+| US-CC-002  | 📋 Planned | E2E-PATH-09 |
+| US-CC-003  | 📋 Planned | E2E-PATH-09 |
+| US-CC-004  | 📋 Planned | E2E-PATH-10 |
+| US-CC-005  | 📋 Planned | E2E-PATH-09 |
 
 ## US-CC-001: Inspect the Credit Account
 
@@ -60,19 +88,21 @@ automatically when a deadline or maturity date passes.
 
 #### Happy Path
 
-- [x] Each round exposes its purpose, token, target, amount raised, flat rate, access mode, dates, and current status.
-- [ ] A lender can distinguish their own deposited and expected-return positions from the issuer's total debt figures.
-- [x] An opened round exposes its lender breakdown, settlement progress, and matching on-chain activity.
+- [x] `AC-US-CC-001-01` Each round exposes its purpose, token, target, amount raised, flat rate, access mode, dates, and current status.
+- [ ] `AC-US-CC-001-02` A lender can distinguish their own deposited and expected-return positions from the issuer's total debt figures.
+- [x] `AC-US-CC-001-03` An opened round exposes its lender breakdown, settlement progress, and matching on-chain activity.
 
 #### Business Rules
 
-- [ ] Rounds that still require an issuer action remain accessible separately from settled rounds.
+- [ ] `AC-US-CC-001-04` Rounds that still require an issuer action remain accessible separately from settled rounds.
+- [x] `AC-US-CC-001-05` Account-level statistics (outstanding principal, interest due, lifetime raised, lifetime repaid) are grouped and
+      displayed per token; amounts from different tokens are never summed into a single figure.
 
 #### Edge & Error Cases
 
-- [x] A company without a deployed Credit Account receives the missing prerequisite instead of an empty round result.
-- [x] The Credit Account journey distinguishes loading, an unavailable read with recovery, a confirmed missing round, and populated
-      outcomes.
+- [x] `AC-US-CC-001-06` A company without a deployed Credit Account receives the missing prerequisite instead of an empty round result.
+- [x] `AC-US-CC-001-07` The Credit Account journey distinguishes loading, an unavailable read with recovery, a confirmed missing round, and
+      populated outcomes.
 
 ## US-CC-002: Publish a Credit Call
 
@@ -84,28 +114,38 @@ automatically when a deadline or maturity date passes.
 
 #### Happy Path
 
-- [x] The issuer can define a round name of at least three characters and an optional purpose.
-- [x] The issuer can select an ERC-20 token supported by the company's Credit Account.
-- [x] The issuer can define a positive funding target.
-- [x] The issuer can define a flat interest rate from 0% to 100% for the complete term.
-- [x] The issuer can define a future subscription deadline and a positive term of at most 30 years.
-- [x] Successful publication creates one on-chain round, persists its metadata, and exposes the round through subsequent Credit Account
-      reads.
+- [x] `AC-US-CC-002-01` The issuer can define a round name of at least three characters and an optional purpose.
+- [x] `AC-US-CC-002-02` The issuer can select an ERC-20 token supported by the company's Credit Account.
+- [x] `AC-US-CC-002-03` The issuer can define a positive funding target.
+- [x] `AC-US-CC-002-04` The issuer can define a flat interest rate from 0% to 100% for the complete term.
+- [x] `AC-US-CC-002-05` The issuer can define a future subscription deadline and a positive term of at most 30 years. The deadline date
+      starts empty and must be picked explicitly; only the time is pre-filled (end of day, local time).
+- [x] `AC-US-CC-002-06` Successful publication creates one on-chain round, persists its metadata, and exposes the round through subsequent
+      Credit Account reads.
 
 #### Business Rules
 
-- [x] A general-access round can apply an optional positive per-lender cap that does not exceed the funding target.
-- [x] A restricted round requires at least one lender and rejects duplicate lender addresses.
-- [x] Every capped restricted lender requires a positive allocation.
-- [x] Fully capped restricted allocations must total at least the funding target.
-- [x] The subscription deadline is validated again immediately before publication.
-- [x] Off-chain metadata is associated with the exact offer identifier emitted by the on-chain creation transaction.
+- [x] `AC-US-CC-002-07` A general-access round can apply an optional positive per-lender cap that does not exceed the funding target.
+- [x] `AC-US-CC-002-08` A restricted round requires at least one lender and rejects duplicate lender addresses.
+- [x] `AC-US-CC-002-09` Every capped restricted lender requires a positive allocation.
+- [x] `AC-US-CC-002-10` Fully capped restricted allocations must total at least the funding target.
+- [x] `AC-US-CC-002-11` The subscription deadline is validated again immediately before publication.
+- [x] `AC-US-CC-002-12` Off-chain metadata is associated with the exact offer identifier emitted by the on-chain creation transaction.
+- [x] `AC-US-CC-002-16` Saving metadata is idempotent on (team, offer identifier): retrying with the same title and purpose leaves the
+      stored record unchanged, and retrying with edited values overwrites it with whatever is currently in the form — there is no separate
+      conflict check against the original save.
+- [x] `AC-US-CC-002-17` Metadata cannot be saved for an offer identifier that does not yet exist on the connected Credit Account.
+- [x] `AC-US-CC-002-18` Only the current Credit Account owner can save metadata for a round.
 
 #### Edge & Error Cases
 
-- [x] Invalid round terms are rejected before an on-chain transaction is requested.
-- [x] Rejecting or failing the on-chain creation leaves the Credit Account unchanged and returns a failure outcome.
-- [x] Once the on-chain round exists, a metadata failure can be retried without creating a second round.
+- [x] `AC-US-CC-002-13` Invalid round terms are rejected before an on-chain transaction is requested.
+- [x] `AC-US-CC-002-14` Rejecting or failing the on-chain creation leaves the Credit Account unchanged and returns a failure outcome.
+- [x] `AC-US-CC-002-15` Once the on-chain round exists, a metadata save failure can be retried any number of times with identical or edited
+      values without creating a duplicate round or a conflict error; going back only reaches the name and purpose, since target, token,
+      terms and access are fixed on-chain.
+
+**Accounting:** Publishing terms moves no company funds and creates no journal entry.
 
 ## US-CC-003: Lend to an Open Round
 
@@ -117,24 +157,30 @@ automatically when a deadline or maturity date passes.
 
 #### Happy Path
 
-- [x] An eligible member can lend to a round while it is open and before its subscription deadline.
-- [x] A successful lend increases both the round's funded amount and the lender's deposited position.
-- [x] A successful lend refreshes the round and the lender's position before another lending decision.
-- [x] A successful lend refreshes the matching activity feed before another decision.
-- [ ] A successful lend refreshes the lender's token balance before another decision.
+- [x] `AC-US-CC-003-01` An eligible member can lend to a round while it is open and before its subscription deadline.
+- [x] `AC-US-CC-003-02` A successful lend increases both the round's funded amount and the lender's deposited position.
+- [x] `AC-US-CC-003-03` A successful lend refreshes the round and the lender's position before another lending decision.
+- [x] `AC-US-CC-003-04` A successful lend refreshes the matching activity feed before another decision.
+- [ ] `AC-US-CC-003-05` A successful lend refreshes the lender's token balance before another decision.
 
 #### Business Rules
 
-- [x] A restricted round accepts funds only from a member with a non-zero allocation.
-- [x] The lender's available amount is the lower of the remaining funding target and their remaining cap or allocation.
-- [x] A lending amount must be greater than 0.
-- [x] A lending amount cannot exceed the lender's available amount.
-- [x] Token approval is requested only when the current allowance is insufficient.
+- [x] `AC-US-CC-003-06` A restricted round accepts funds only from a member with a non-zero allocation.
+- [x] `AC-US-CC-003-07` The lender's available amount is the lower of the remaining funding target and their remaining cap or allocation.
+- [x] `AC-US-CC-003-08` A lending amount must be greater than 0.
+- [x] `AC-US-CC-003-09` A lending amount cannot exceed the lender's available amount.
+- [x] `AC-US-CC-003-10` Token approval is requested only when the current allowance is insufficient.
+- [x] `AC-US-CC-003-12` A failed read of the connected member's whitelist allocation or deposited amount is presented as unavailable with a
+      retry, never as a confirmed zero — a transient read failure must not look like "not eligible" or "nothing deposited yet."
 
 #### Edge & Error Cases
 
-- [x] Rejecting approval, rejecting the lending transaction, or an on-chain failure leaves the round unchanged and returns a recoverable
-      failure outcome.
+- [x] `AC-US-CC-003-11` Rejecting approval, rejecting the lending transaction, or an on-chain failure leaves the round unchanged and returns
+      a recoverable failure outcome.
+
+**Accounting:** A contribution remains source evidence while the round is open. When the round becomes funded, Accounting books principal
+through [`UC-CREDIT-01`](../accounting/journal-entry-catalogue.md#uc-credit-01--funded-principal) and fixed return through
+[`UC-CREDIT-05`](../accounting/journal-entry-catalogue.md#uc-credit-05--fixed-return-recognized).
 
 ## US-CC-004: Resolve a Stalled Round
 
@@ -146,62 +192,71 @@ automatically when a deadline or maturity date passes.
 
 #### Happy Path
 
-- [x] The issuer can refund a stalled round, returning every lender's principal in one transaction.
-- [x] The issuer can accept a positive partial raise and continue the round using the actual funded amount.
-- [x] Accepting a partial raise transfers the raised principal to the company Bank.
-- [x] A successful resolution refreshes the round and lender data.
+- [x] `AC-US-CC-004-01` The issuer can refund a stalled round, returning every lender's principal in one transaction.
+- [x] `AC-US-CC-004-02` The issuer can accept a positive partial raise and continue the round using the actual funded amount.
+- [x] `AC-US-CC-004-03` Accepting a partial raise transfers the raised principal to the company Bank.
+- [x] `AC-US-CC-004-04` A successful resolution refreshes the round and lender data.
 
 #### Business Rules
 
-- [x] A round below target remains on-chain as open after its subscription deadline until the issuer resolves it.
-- [x] Refund and partial acceptance are mutually exclusive final decisions for a stalled round.
+- [x] `AC-US-CC-004-05` A round below target remains on-chain as open after its subscription deadline until the issuer resolves it.
+- [x] `AC-US-CC-004-06` Refund and partial acceptance are mutually exclusive final decisions for a stalled round.
 
 #### Edge & Error Cases
 
-- [x] A partial raise of 0 cannot be accepted.
-- [x] A failed resolution leaves the round unchanged and returns a failure outcome.
+- [x] `AC-US-CC-004-07` A partial raise of 0 cannot be accepted.
+- [x] `AC-US-CC-004-08` A failed resolution leaves the round unchanged and returns a failure outcome.
+
+**Accounting:** Accepting a partial raise activates `UC-CREDIT-01` and `UC-CREDIT-05`. Refunding lenders returns funds that never entered
+the company's books and creates no journal entry.
 
 ## US-CC-005: Repay Lenders
 
-**As a** company issuer\
+**As a** current company Bank owner\
 **I want to** repay principal and fixed interest from the company treasury\
 **So that** every lender receives their proportional entitlement
 
 ### How It Works
 
-1. The selected round exposes its current obligation, Bank balance, and each lender's settlement progress before the issuer submits an
-   installment.
+1. The selected round exposes its current obligation, Bank balance, and each lender's settlement progress before the current Bank owner
+   submits an installment.
 2. The portal validates the requested amount in token base units and waits for the Bank balance before submitting an installment.
-3. A full repayment returns to that round's default detail after the settlement data refreshes; a partial repayment keeps the issuer in the
-   repayment view with refreshed figures.
+3. A full repayment returns to that round's default detail after the settlement data refreshes; a partial repayment keeps the Bank owner in
+   the repayment view with refreshed figures.
 
 ### Acceptance Criteria
 
 #### Happy Path
 
-- [x] The issuer can repay a funded, partially repaid, or overdue round from the company Bank.
-- [x] An installment distributes each lender's cumulative proportional entitlement without overpaying the round or leaving rounding dust.
-- [x] A successful installment refreshes repayment progress and lender settlement data.
-- [x] A successful installment refreshes the matching activity feed before another decision.
-- [ ] A successful installment refreshes lender token balances and the Bank token balance before another decision.
-- [x] Repaying the complete obligation settles the round and prevents further repayment.
+- [x] `AC-US-CC-005-01` The current Bank owner can repay a funded, partially repaid, or overdue round from the company Bank.
+- [x] `AC-US-CC-005-02` An installment distributes each lender's cumulative proportional entitlement without overpaying the round or leaving
+      rounding dust.
+- [x] `AC-US-CC-005-03` A successful installment refreshes repayment progress and lender settlement data.
+- [x] `AC-US-CC-005-04` A successful installment refreshes the matching activity feed before another decision.
+- [ ] `AC-US-CC-005-05` A successful installment refreshes lender token balances and the Bank token balance before another decision.
+- [x] `AC-US-CC-005-06` Repaying the complete obligation settles the round and prevents further repayment.
 
 #### Business Rules
 
-- [x] A repayment amount must be greater than 0.
-- [x] A repayment amount cannot exceed the outstanding obligation.
-- [x] A repayment amount cannot exceed the Bank's token balance.
-- [x] The portal does not submit a repayment until the Bank balance is available and the amount passes the exact token-unit limits.
-- [x] The Bank rejects repayment from an account other than its current owner.
-- [x] A paused Bank rejects repayment.
-- [x] The repayment action is unavailable to a wallet other than the current Bank owner.
-- [ ] The repayment action is unavailable while the Bank is paused.
+- [x] `AC-US-CC-005-07` A repayment amount must be greater than 0.
+- [x] `AC-US-CC-005-08` A repayment amount cannot exceed the outstanding obligation.
+- [x] `AC-US-CC-005-09` A repayment amount cannot exceed the Bank's token balance.
+- [x] `AC-US-CC-005-10` The portal does not submit a repayment until the Bank balance is available and the amount passes the exact
+      token-unit limits.
+- [x] `AC-US-CC-005-11` The Bank rejects repayment from an account other than its current owner.
+- [x] `AC-US-CC-005-12` A paused Bank rejects repayment.
+- [x] `AC-US-CC-005-13` The repayment action is unavailable to a wallet other than the current Bank owner.
+- [x] `AC-US-CC-005-14` The repayment action is unavailable while the Bank is paused.
 
 #### Edge & Error Cases
 
-- [x] A round that is still raising cannot be repaid.
-- [x] A settled round cannot be repaid again.
-- [x] Rejecting or failing a repayment preserves the outstanding amount and returns a recoverable failure outcome.
+- [x] `AC-US-CC-005-15` A round that is still raising cannot be repaid.
+- [x] `AC-US-CC-005-16` A settled round cannot be repaid again.
+- [x] `AC-US-CC-005-17` Rejecting or failing a repayment preserves the outstanding amount and returns a recoverable failure outcome.
+
+**Accounting:** Each repayment settles principal and interest through
+[`UC-CREDIT-03`](../accounting/journal-entry-catalogue.md#uc-credit-03--principal-and-interest-repaid). Lender payments from the same
+transaction remain one General Ledger entry.
 
 ## Known Gaps
 
@@ -212,14 +267,34 @@ The following verified gaps have technical evidence and remediation directions i
 
 - Rounds that require an issuer action are grouped with settled history.
 - Lenders cannot review their personal deposited and expected-return positions separately from the company's debt.
-- Lending and repayment refresh the matching activity feed but not every affected token balance.
-- The main repayment CTA requires both the Credit Account and Bank owner, and the product does not yet reflect the Bank pause state.
+- Lending, repayment, refunding, and accepting partial funding now invalidate the cached balance/allowance reads for the round's own token
+  (so a widget that renders them would pick up the change on its next read), but no Community Credit surface currently renders a lender's
+  own token balance — the matching activity feed still doesn't refresh every affected balance visibly.
+
+## Read Model & Caching
+
+FixedReturn's three on-chain read hooks (`useFixedReturnAllOffers`, `useFixedReturnOfferLenders`, `useFixedReturnMyLenderPositions`, all in
+`composables/fixedReturn/reads.ts`) share one `fixedReturnKeys` query-key factory (`composables/fixedReturn/keys.ts`) instead of duplicated
+string literals, and one domain invalidation function per successful mutation (`invalidateAfterLend`/`Repay`/`Refund`/`AcceptPartialFunding`
+in `composables/fixedReturn/invalidation.ts`) instead of a hand-copied 4-key set at every call site.
+
+A failed on-chain read for an offer's lenders or a connected member's position is never converted into a fabricated empty list or a zero
+position — `useFixedReturnOfferLenders` rejects the query on failure (matching `useFixedReturnAllOffers`'s existing behavior), and
+`useFixedReturnMyLenderPositions`'s result is a discriminated union per offer (`{status: 'ok', ...} | {status: 'error', error}`) so one
+offer's failed read doesn't erase another offer's confirmed data. Consumers present a failed read as "unavailable, retry" rather than "not
+eligible" — see `CreditLendModal.vue`'s and `RoundView.vue`'s own "Check eligibility" retry actions, and `CreditRoundCard.vue`'s equivalent.
+
+The round-detail page reads its own offer's position directly via `useFixedReturnMyLenderPosition(offerId)` (built on the existing
+single-value `getLenderAllocation`/`getLenderDeposits` reads) instead of the plural, all-offers-shaped hook — removing a duplicate 1+4N-read
+re-fetch of the entire round list on every cold visit to a round's detail route. Measured via
+`composables/fixedReturn/__tests__/rpcBudget.spec.ts`: the overview (all offers + all connected-member positions) costs `1 + 4N` on-chain
+calls for `N` offers, and a single offer's lender breakdown costs `1 + 2L` for `L` lenders — the round-detail page no longer pays the
+overview's `1 + 4N` a second time on top of its own `1 + 2L`.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `a48a6e36a123718e2fa2cb73fd89425c57807c68`
+**Implementation evidence reviewed against:** `81ea764c11b24df295de4242056f6b69255a49cc`
 
-- [Community Credit components](../../../app/src/components/sections/CommunityCreditView/)
 - [Credit Account page](../../../app/src/views/team/[id]/CommunityCredit/IndexView.vue)
 - [Credit-call wizard](../../../app/src/views/team/[id]/CommunityCredit/NewView.vue)
 - [Round detail](../../../app/src/views/team/[id]/CommunityCredit/RoundView.vue)
@@ -229,6 +304,10 @@ The following verified gaps have technical evidence and remediation directions i
 - [Credit round read states](../../../app/src/components/sections/CommunityCreditView/CreditRoundReadState.vue)
 - [Community Credit store](../../../app/src/stores/communityCredit.ts)
 - [Community Credit reads](../../../app/src/composables/fixedReturn/reads.ts)
+- [FixedReturn query-key factory](../../../app/src/composables/fixedReturn/keys.ts)
+- [FixedReturn mutation cache invalidation](../../../app/src/composables/fixedReturn/invalidation.ts)
+- [Connected lender's live offering derivation](../../../app/src/composables/fixedReturn/useMyLenderOffering.ts)
+- [Bank reads (owner and paused state, gating repayment)](../../../app/src/composables/bank/reads.ts)
 - [Repayment amount validation](../../../app/src/types/communityCredit.schemas.ts)
 - [Repayment lifecycle status](../../../app/src/utils/communityCredit/roundStatus.ts)
 - [Credit-call access step](../../../app/src/components/sections/CommunityCreditView/CreditCallAccessStep.vue)
@@ -242,16 +321,19 @@ The following verified gaps have technical evidence and remediation directions i
 - [Credit round ledger](../../../app/src/components/sections/CommunityCreditView/CreditRoundLedger.vue)
 - [Whitelist allocation editor](../../../app/src/components/sections/CommunityCreditView/CreditWhitelistEditor.vue)
 - [FixedReturn contract](../../../contract/contracts/FixedReturn.sol)
-- [Contract behaviour tests](../../../contract/test/FixedReturn.spec.ts)
+- [Metadata controller](../../../backend/src/controllers/fixedReturnOfferingController.ts)
+- [Metadata route](../../../backend/src/routes/fixedReturnOfferingRoute.ts)
 - [Metadata controller tests](../../../backend/src/controllers/__tests__/fixedReturnOfferingController.test.ts)
 - [Frontend feature tests](../../../app/src/views/team/[id]/CommunityCredit/__tests__/communityCreditViews.spec.ts)
 
 ## Related Documentation
 
+- [Community Credit read-model implementation](../../implementation/community-credit-read-model/README.md)
+- [FixedReturn contract behaviour](../../contracts/features/fixed-return/README.md)
 - [Async UI State Framework](../../platform/async-ui-state-framework.md)
 - [Client Navigation implementation](../../implementation/client-navigation/README.md)
 - [Date Picker implementation](../../implementation/date-picker/README.md)
 - [Transaction History implementation](../../implementation/transaction-history/README.md)
 - [Detailed flow and implementation analysis](./user-flow-analysis.md)
-- [Community Credit accounting rules](../accounting/cnc-accounting-spec.md)
+- [Accounting use cases, posting rules, and journal entries](../accounting/journal-entry-catalogue.md)
 - [Product Feature Inventory](../README.md)

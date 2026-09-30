@@ -13,6 +13,9 @@ lerna-debug.log*
 # Bulk transfer recipients (not versioned)
 /contract/scripts/recipients.json
 
+# Local contract-upgrade rollback manifests (contain live deployment addresses)
+/contract/.upgrade-state/
+
 node_modules
 .DS_Store
 dist
@@ -53,6 +56,16 @@ app/.env.production
 # Local review / architecture notes (not for public repo)
 /reviews/
 /archi-update.md
+
+# Generated acceptance-criterion coverage reports (local only)
+/reports/acceptance-coverage/
+
+# Local agent planning scratchpad (never committed)
+/reports/planning.md
+
+# Generated autonomous-agent audit reports (published as workflow artifacts or GitHub issues)
+/reports/agent-audits/
+
 # Keep .claude local (settings, worktrees, …) but share committed agent skills
 .claude/*
 !.claude/skills/

@@ -13,7 +13,7 @@ const counts: SafeTransactionFilterCounts = {
   invalid: 1
 }
 
-describe('SafeTransactionStatusFilter', () => {
+describe('[US-SAFE-005] SafeTransactionStatusFilter', () => {
   it('prioritizes transactions that need action by default', () => {
     const wrapper = mount(SafeTransactionStatusFilter, { props: { counts } })
 

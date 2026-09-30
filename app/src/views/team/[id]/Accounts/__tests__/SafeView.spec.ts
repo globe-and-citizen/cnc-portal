@@ -3,7 +3,7 @@ import { shallowMount } from '@vue/test-utils'
 import SafeView from '../SafeView.vue'
 import { mockTeamData, mockTeamStore } from '@/tests/mocks'
 
-describe('SafeView.vue', () => {
+describe('[US-SAFE-001] [US-SAFE-002] SafeView.vue', () => {
   it('keeps the loading state visible while the team Safe is being resolved', () => {
     mockTeamStore.currentTeamId = mockTeamData.id
     mockTeamStore.currentTeamMeta = {
@@ -33,14 +33,18 @@ describe('SafeView.vue', () => {
     expect(wrapper.find('[data-test="safe-loading-state"]').exists()).toBe(false)
   })
 
-  it('shows the Safe wallet when its address is available', () => {
-    mockTeamStore.getContractAddressByType.mockReturnValue(
-      '0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB'
-    )
+  it('[AC-US-SAFE-002-05] uses the registered Safe address for wallet reporting', () => {
+    const safeAddress = '0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB'
+    mockTeamStore.getContractAddressByType.mockReturnValue(safeAddress)
 
     const wrapper = shallowMount(SafeView)
 
     expect(wrapper.find('[data-test="safe-wallet-view"]').exists()).toBe(true)
     expect(wrapper.find('[data-test="safe-setup-view"]').exists()).toBe(false)
+    expect(wrapper.findComponent({ name: 'SafeBalanceSection' }).props('address')).toBe(safeAddress)
+    expect(wrapper.findComponent({ name: 'TokenHoldingsSection' }).props('address')).toBe(
+      safeAddress
+    )
+    expect(wrapper.findComponent({ name: 'SafeOwnersCard' }).props('address')).toBe(safeAddress)
   })
 })

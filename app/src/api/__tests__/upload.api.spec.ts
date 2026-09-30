@@ -7,7 +7,7 @@ describe('uploadFileApi', () => {
     vi.clearAllMocks()
   })
 
-  it('should upload a single file successfully', async () => {
+  it('posts a single file as multipart data and returns the response', async () => {
     const mockFile = new File(['test content'], 'test.txt', { type: 'text/plain' })
     const mockResponse = {
       files: [

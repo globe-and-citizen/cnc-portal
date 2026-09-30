@@ -4,23 +4,19 @@
  * Section sheets — Summary, Income Statement, Balance Sheet, Trial Balance,
  * General Ledger — are built by pure, unit-tested functions that read the live
  * engine output ({@link AccountingExportSnapshot}) through the same presenters the view
- * uses. {@link buildAccountingSheets} yields the classic four exported tabs
- * (everything except the Summary); {@link buildSheets} builds an arbitrary
- * selection. {@link exportSheetsExcel} lazy-loads SheetJS and writes the file.
+ * uses. {@link buildSheets} builds the requested section selection and
+ * {@link exportSheetsExcel} lazy-loads SheetJS and writes the file.
  */
 import type { AccountingExportSnapshot } from '@/utils/accounting/exportSpec'
 import {
   presentIncome,
   presentBalance,
   presentTrial,
-  presentSummaryCards,
-  presentBanner,
-  filterByPeriod,
+  presentSummary,
   incomeExportTitle,
   balanceExportTitle,
   trialExportTitle
 } from '@/utils/accounting/presenter'
-import { buildGeneralLedger } from '@/utils/accounting/generalLedger'
 import type { SectionKey, SectionSpec } from '@/utils/accounting/exportSpec'
 import { generalLedgerSheetRows } from './generalLedgerSheet'
 
@@ -29,7 +25,7 @@ type SheetRows = Cell[][]
 /** Turns a party's address into a display name; defaults to a shortened address. */
 export type ResolveName = (address: string) => string
 
-export interface AccountingSheet {
+interface AccountingSheet {
   name: string
   rows: SheetRows
 }
@@ -46,8 +42,7 @@ function usd(value: string): number | '' {
 }
 
 function summarySheet(books: AccountingExportSnapshot): SheetRows {
-  const cards = presentSummaryCards(books.summary, books.incomeStatement, books.balanceSheet)
-  const banner = presentBanner(books.balanceSheet, books.generalLedger)
+  const { cards, banner } = presentSummary(books.journal)
   return [
     ['Summary'],
     [],
@@ -106,10 +101,7 @@ function balanceSheetRows(books: AccountingExportSnapshot, asOf?: Date | null): 
 }
 
 function trialSheet(books: AccountingExportSnapshot, asOf?: Date | null): SheetRows {
-  const ledger = asOf
-    ? buildGeneralLedger(filterByPeriod(books.journal, null, asOf))
-    : books.generalLedger
-  const trial = presentTrial(ledger)
+  const trial = presentTrial(books.journal, asOf)
   return [
     [trialExportTitle(asOf)],
     [],
@@ -166,19 +158,6 @@ export function buildSheets(
   resolveName?: ResolveName
 ): AccountingSheet[] {
   return specs.map((spec) => sectionSheet(books, spec, resolveName))
-}
-
-/** The four exported tabs (everything except the Summary), in display order. */
-export function buildAccountingSheets(
-  books: AccountingExportSnapshot,
-  resolveName?: ResolveName
-): AccountingSheet[] {
-  return [
-    { name: 'Income Statement', rows: incomeSheet(books) },
-    { name: 'Balance Sheet', rows: balanceSheetRows(books) },
-    { name: 'Trial Balance', rows: trialSheet(books) },
-    { name: 'General Ledger', rows: generalLedgerSheetRows(books, resolveName) }
-  ]
 }
 
 function downloadBlob(blob: Blob, filename: string): void {
@@ -270,11 +249,4 @@ export async function exportSheetsExcel(
     type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
   })
   downloadBlob(blob, filename)
-}
-
-export async function exportAccountingExcel(
-  books: AccountingExportSnapshot,
-  resolveName?: ResolveName
-): Promise<void> {
-  await exportSheetsExcel(buildAccountingSheets(books, resolveName), 'cnc-accounting.xlsx')
 }

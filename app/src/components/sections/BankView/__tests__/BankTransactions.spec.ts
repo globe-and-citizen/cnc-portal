@@ -19,7 +19,7 @@ vi.mock('@nuxt/ui/components/Table.vue', () => ({
   default: {
     name: 'UTable',
     props: ['data', 'columns', 'loading', 'getSubRows'],
-    template: '<div data-test="bank-table"></div>'
+    template: '<div data-test="bank-table"><slot v-if="!data?.length" name="empty" /></div>'
   }
 }))
 vi.mock('@nuxt/ui/components/Select.vue', () => ({
@@ -74,7 +74,7 @@ describe('BankTransactions', () => {
     if (wrapper) wrapper.unmount()
   })
 
-  it('maps query data and passes rows/columns to UTable', () => {
+  it('[AC-US-BANK-003-02] maps Bank activity into the transaction table', () => {
     wrapper = createWrapper()
 
     const data = tableData(wrapper)
@@ -86,13 +86,14 @@ describe('BankTransactions', () => {
   })
 
   it('passes loading state to UTable', () => {
-    mockBankQuery.loading.value = true
+    mockBankQuery.isPending.value = true
 
     wrapper = createWrapper()
     expect(tableLoading(wrapper)).toBe(true)
   })
 
-  it('filters displayed rows by selected type', async () => {
+  // Covers: AC-US-BANK-003-03
+  it('[AC-US-BANK-003-03] filters displayed rows by selected type', async () => {
     wrapper = createWrapper()
 
     wrapper.getComponent({ name: 'USelect' }).vm.$emit('update:modelValue', 'deposit')
@@ -103,7 +104,8 @@ describe('BankTransactions', () => {
     expect(data[0]?.type).toBe('deposit')
   })
 
-  it('filters displayed rows by date range', async () => {
+  // Covers: AC-US-BANK-003-03
+  it('[AC-US-BANK-003-03] filters displayed rows by date range', async () => {
     wrapper = createWrapper()
 
     expect(wrapper.get('[data-test="bank-transaction-history-date-select"]').exists()).toBe(true)
@@ -129,7 +131,7 @@ describe('BankTransactions', () => {
   it('handles token resolution fallback and invalid amounts', () => {
     mockCurrencyStore.supportedTokens = []
     mockGetTokenPrice.mockImplementation((tokenId: string) => (tokenId === 'native' ? 3 : 0))
-    mockBankQuery.result.value = {
+    mockBankQuery.data.value!.events = {
       bankDeposits: {
         items: [
           {
@@ -176,7 +178,7 @@ describe('BankTransactions', () => {
   })
 
   it('renders child value fallback for grouped zero-value events', () => {
-    mockBankQuery.result.value = {
+    mockBankQuery.data.value!.events = {
       bankDeposits: {
         items: [
           {
@@ -214,7 +216,7 @@ describe('BankTransactions', () => {
   })
 
   it('maps token support and ownership transfer events with a — value', () => {
-    mockBankQuery.result.value = {
+    mockBankQuery.data.value!.events = {
       ...buildBankQueryResult(),
       bankDeposits: { items: [] },
       bankTransfers: { items: [] },
@@ -267,7 +269,7 @@ describe('BankTransactions', () => {
   })
 
   it('shows the initial token support count for the deployment ownership transfer', () => {
-    mockBankQuery.result.value = {
+    mockBankQuery.data.value!.events = {
       ...buildBankQueryResult(),
       bankDeposits: { items: [] },
       bankTransfers: { items: [] },

@@ -14,7 +14,7 @@ const stubs = {
   IconifyIcon: true
 }
 
-describe('SafeTransactionsWarning', () => {
+describe('[US-SAFE-006] SafeTransactionsWarning', () => {
   it('explains and labels a conflicting approval', () => {
     const wrapper = mount(SafeTransactionsWarning, {
       props: { modelValue: true, action: 'approve' },

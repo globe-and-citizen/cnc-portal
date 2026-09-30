@@ -4,6 +4,8 @@ This directory contains comprehensive testing documentation and guides for the C
 
 ## Contents
 
+- **[Integrated E2E Checklist](./e2e-paths.md)** - G0 through G7 integrated test groups and paths
+- **[Playwright E2E Fixture Catalogue](./e2e-fixtures.md)** - Shared fixtures, boundary rules, cleanup, and complete spec audit
 - **[Unit Testing Guide](./unit-testing.md)** - Guidelines for writing unit tests with Vue Test Utils and Vitest
 - **[Global Mocks Setup](./global-mocks-setup.md)** - Centralized mock definitions for TanStack Vue Query and Axios
 
@@ -21,6 +23,40 @@ npm run test:watch
 # Run tests with coverage
 npm run test:coverage
 ```
+
+### Browser acceptance and integrated E2E
+
+Every Playwright profile targets services and shared infrastructure that are already prepared. The integrated profile requires the frontend,
+backend, migrated database, local chain, and contract infrastructure. Individual integrated paths may use an authenticated Node-side factory
+to prepare isolated domain data before browser actions; these setup calls are not product-flow evidence. Browser acceptance requires its
+frontend and deterministic local node, prepared once with `npm run setup:e2e:browser`. Playwright has no server or shared-infrastructure
+setup configuration.
+
+Chain-backed browser and integrated tests run inside an automatic chain snapshot. Fully simulated browser scenarios skip Hardhat entirely
+and may run with file-level parallelism. Integrated tests can additionally request authenticated owner/member pages, operational teams, and
+disposable team feature overrides. See the [fixture catalogue](./e2e-fixtures.md) before adding setup to an individual spec.
+
+```bash
+cd app
+
+# Real frontend, backend, database, and chain boundaries for every migrated path
+npm run test:e2e
+
+# Simulated backend, failure, and fixture-backed variants
+npm run setup:e2e:browser
+npm run test:browser:acceptance
+```
+
+Prepare each profile's services and fixtures before invoking Playwright. Browser acceptance first runs `@parallel-safe` simulated files on
+three workers, then runs chain-backed files on one worker and merges both reports. Run browser acceptance and integrated E2E separately so
+their reports remain distinct; only the integrated profile supplies E2E evidence.
+
+CI runs independent `Browser acceptance` and `Integrated journeys` jobs, then exposes one lightweight `Full-stack E2E` aggregate check. The
+browser job prepares its own local node, contracts, and frontend. The integrated job prepares a separate local node, disposable database,
+backend, deployment manifest, and frontend. The profiles publish separate reports because only the integrated phase is E2E evidence.
+
+The Vite development server ignores generated `coverage/` artifacts so per-page coverage snapshots do not trigger hot reloads during an
+active browser suite.
 
 ### Test Structure
 

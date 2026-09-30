@@ -132,7 +132,7 @@ const TransferFormStub = defineComponent({
   template: '<div data-test="transfer-form"><slot name="header" /></div>'
 })
 
-describe('SafeBalanceSection', () => {
+describe('[US-SAFE-002] SafeBalanceSection rendering', () => {
   let wrapper: VueWrapper
   const mockCurrency = ref(MOCK_DATA.defaultCurrency)
   const mockSafeInfo = ref<typeof MOCK_DATA.safeInfo | null>(MOCK_DATA.safeInfo)
@@ -204,14 +204,21 @@ describe('SafeBalanceSection', () => {
   })
 
   describe('Component Rendering', () => {
-    it('should show loading spinner when isLoading is true', () => {
+    it('[AC-US-SAFE-002-01] renders Safe holdings and their local-currency value', () => {
+      wrapper = createWrapper()
+
+      expect(wrapper.get('[data-test="safe-total-usd"]').text()).toBe('$4,500.00')
+      expect(wrapper.text()).toContain('$4,500.00 USD')
+    })
+
+    it('shows loading spinner when isLoading is true', () => {
       mockUseContractBalance.isLoading.value = true
       wrapper = createWrapper()
 
       expect(wrapper.find('[data-test="safe-balance-loading"]').exists()).toBe(true)
     })
 
-    it('should show fallback values when safeInfo is null', () => {
+    it('shows fallback values when safeInfo is null', () => {
       mockSafeInfo.value = null
       wrapper = createWrapper()
 
@@ -221,7 +228,7 @@ describe('SafeBalanceSection', () => {
   })
 
   describe('Tokens Computation', () => {
-    it('should handle missing USD price gracefully', async () => {
+    it('lists an unpriced token with a zero USD value', async () => {
       // An unpriced token still lists, at a value of 0 — it must not vanish
       // from the picker just because the price feed has nothing for it.
       const sourceBalance = mockUseContractBalance.balances.value[0]!
@@ -242,7 +249,7 @@ describe('SafeBalanceSection', () => {
   })
 
   describe('Transfer Modal', () => {
-    it('should disable transfer button for non-owner', async () => {
+    it('[AC-US-SAFE-003-04] disables outgoing transfers for a non-signer', async () => {
       mockUserStore.address = '0x9999999999999999999999999999999999999999'
       wrapper = createWrapper()
 
@@ -255,7 +262,7 @@ describe('SafeBalanceSection', () => {
       expect(wrapper.find('[data-test="transfer-modal"]').exists()).toBe(false)
     })
 
-    it('should handle empty tokens list gracefully', async () => {
+    it('renders no token rows when the token list is empty', async () => {
       mockUseContractBalance.balances.value = [] as typeof mockUseContractBalance.balances.value
       wrapper = createWrapper()
 

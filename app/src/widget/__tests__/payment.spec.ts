@@ -102,7 +102,7 @@ describe('payWithWidget', () => {
     )
   })
 
-  it('skips the approve step when the existing allowance already covers the amount', async () => {
+  it('[AC-US-PAYGATE-003-05] skips approval when the existing allowance covers the amount', async () => {
     vi.mocked(readContract).mockResolvedValue(AMOUNT as never)
 
     await payWithWidget(baseParams)
@@ -119,7 +119,7 @@ describe('payWithWidget', () => {
     )
   })
 
-  it('reports failed and throws a clean message when the transaction reverts on-chain and the reason cannot be recovered', async () => {
+  it('[AC-US-PAYGATE-003-09] reports failure when the transaction reverts on-chain', async () => {
     vi.mocked(waitForTransactionReceipt).mockResolvedValue({
       status: 'reverted',
       blockNumber: 100n

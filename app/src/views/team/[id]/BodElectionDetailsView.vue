@@ -2,10 +2,10 @@
   <ElectionSummarySection
     v-if="currentElectionId"
     :election-id="currentElectionId"
-    :is-details="formattedElection?.resultsPublished"
+    :is-details="election?.resultsPublished"
   />
   <BodMembersSection
-    v-if="formattedElection?.resultsPublished && currentElectionId"
+    v-if="election?.resultsPublished && currentElectionId"
     :election-id="currentElectionId"
   />
   <ElectionCandidatesSection v-if="currentElectionId" :election-id="currentElectionId" />
@@ -15,80 +15,30 @@
 import ElectionSummarySection from '@/components/sections/AdministrationView/ElectionSummarySection.vue'
 import ElectionCandidatesSection from '@/components/sections/AdministrationView/ElectionCandidatesSection.vue'
 import BodMembersSection from '@/components/sections/AdministrationView/BodMembersSection.vue'
-import { useTeamStore } from '@/stores'
-import { computed, watch } from 'vue'
-import { useReadContract } from '@wagmi/vue'
-import { electionsAbi } from '@/artifacts/abi/generated'
-import { useRouter } from 'vue-router'
-import { log } from '@/lib/logging'
+import {
+  provideBoDElections,
+  useBoDElections,
+  useElectionsNextElectionId
+} from '@/composables/elections'
+import {
+  currentElectionId as electionInProgress,
+  parseElectionId
+} from '@/utils/elections/election'
+import { computed } from 'vue'
+import { useRoute } from 'vue-router'
 
-const teamStore = useTeamStore()
-const router = useRouter()
-const electionsAddress = computed(() => teamStore.getContractAddressByType('Elections'))
+const route = useRoute()
+const { data: nextElectionId } = useElectionsNextElectionId()
 
-// Fetch next election ID
-const {
-  data: nextElectionId
-  // isLoading: isLoadingNextElectionId,
-} = useReadContract({
-  functionName: 'getNextElectionId',
-  address: electionsAddress.value,
-  abi: electionsAbi,
-  query: {
-    enabled: true
-  }
-})
+/**
+ * The election named in the URL, which is how a past one is opened, and
+ * otherwise the election in progress — the one before the next id.
+ */
+const currentElectionId = computed(
+  () => parseElectionId(route.query.electionId) ?? electionInProgress(nextElectionId.value)
+)
 
-// Compute current election ID
-const currentElectionId = computed(() => {
-  if (typeof router.currentRoute.value.query.electionId === 'string')
-    return BigInt(router.currentRoute.value.query.electionId)
-  if (
-    nextElectionId.value &&
-    (typeof nextElectionId.value === 'number' || typeof nextElectionId.value === 'bigint')
-  ) {
-    return BigInt(Number(nextElectionId.value) - 1)
-  }
-  return 0n // Handle cases where nextElectionId is not available
-})
-
-// Fetch current election details
-const { data: currentElection, error: errorGetElection } = useReadContract({
-  functionName: 'getElection',
-  address: electionsAddress.value,
-  abi: electionsAbi,
-  args: [currentElectionId],
-  query: {
-    enabled: true
-  }
-})
-
-type ElectionTuple = [bigint, string, string, string, bigint, bigint, bigint, boolean]
-
-const formattedElection = computed(() => {
-  if (!currentElection.value) return null
-
-  const raw = currentElection.value
-  if (!Array.isArray(raw) || raw.length < 8) {
-    return null
-  }
-  const tuple = raw as unknown as ElectionTuple
-
-  return {
-    id: Number(tuple[0]),
-    title: tuple[1],
-    description: tuple[2],
-    createdBy: tuple[3],
-    startDate: new Date(Number(tuple[4]) * 1000),
-    endDate: new Date(Number(tuple[5]) * 1000),
-    seatCount: Number(tuple[6]),
-    resultsPublished: tuple[7]
-  }
-})
-
-watch(errorGetElection, (error) => {
-  if (error) {
-    log.error('Error fetching current election: ', error)
-  }
-})
+const bodElection = useBoDElections(currentElectionId)
+provideBoDElections(bodElection)
+const { formattedElection: election } = bodElection
 </script>

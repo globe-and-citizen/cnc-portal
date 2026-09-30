@@ -28,7 +28,7 @@ export const getCurrentCashRemunerationContract = (teamId: number) =>
  * @param teamId The team ID
  * @returns The owner address of the Cash Remuneration contract or null if not found
  */
-export const getCashRemunerationOwner = async (teamId: number): Promise<Address | null> => {
+const getCashRemunerationOwner = async (teamId: number): Promise<Address | null> => {
   try {
     const contract = await getCurrentCashRemunerationContract(teamId);
 

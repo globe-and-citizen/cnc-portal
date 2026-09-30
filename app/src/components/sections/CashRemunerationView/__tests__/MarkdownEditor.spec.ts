@@ -35,7 +35,7 @@ vi.mock('@nuxt/ui/components/Textarea.vue', () => ({
 
 const factory = (modelValue = '') => mount(MarkdownEditor, { props: { modelValue } })
 
-describe('MarkdownEditor', () => {
+describe('[US-PAYROLL-004] MarkdownEditor', () => {
   it('starts in Write mode showing the WYSIWYG editor, not the raw source', () => {
     const wrapper = factory('# hi')
 

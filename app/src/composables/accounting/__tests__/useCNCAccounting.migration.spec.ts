@@ -12,9 +12,8 @@ const { captured, feed } = vi.hoisted(() => {
   const feed = (key: string) => (arg: unknown) => {
     captured[key] = arg
     return {
-      result: { value: null },
-      gaps: { value: [] },
-      loading: { value: false },
+      data: { value: { events: null, gaps: [], timestampGaps: [] } },
+      isPending: { value: false },
       error: { value: null },
       refetch: () => Promise.resolve()
     }
@@ -46,6 +45,8 @@ import { useCNCAccounting } from '../useCNCAccounting'
 const OLD_BANK = '0x1111111111111111111111111111111111111111'
 const NEW_BANK = '0x2222222222222222222222222222222222222222'
 const SAFE = '0x3333333333333333333333333333333333333333'
+const INVESTOR_V1 = '0x4444444444444444444444444444444444444444'
+const INVESTOR_V2 = '0x5555555555555555555555555555555555555555'
 const OWNER = '0x0000000000000000000000000000000000000001'
 
 const contract = (address: string, type = 'Bank') => ({
@@ -72,7 +73,7 @@ const setOfficers = (officers: unknown[]) =>
   } as unknown as ReturnType<typeof useGetTeamOfficersQuery>)
 
 describe('useCNCAccounting — contract migration', () => {
-  it('scans every Bank generation from its own deploy block', () => {
+  it('[AC-US-ACCT-005-01] scans every Bank generation from its own deploy block', () => {
     setTeam([contract(NEW_BANK), contract(SAFE, 'Safe')])
     setOfficers([
       { deployBlockNumber: '100', contracts: [contract(OLD_BANK)] },
@@ -87,12 +88,33 @@ describe('useCNCAccounting — contract migration', () => {
     ])
   })
 
-  it('falls back to the current contracts with no boundary when there is no Officer history', () => {
+  it('[AC-US-ACCT-005-11] falls back to current contracts when Officer history is absent', () => {
     setTeam([contract(NEW_BANK)])
     setOfficers([])
 
     useCNCAccounting('1')
 
     expect(toValue(captured.bank)).toEqual([{ address: NEW_BANK, fromBlock: undefined }])
+  })
+
+  it('[AC-US-ACCT-005-01] scans both Investor generations from their own deploy blocks', () => {
+    setTeam([contract(INVESTOR_V2, 'Investor')])
+    setOfficers([
+      {
+        deployBlockNumber: '300',
+        contracts: [contract(INVESTOR_V1, 'InvestorV1')]
+      },
+      {
+        deployBlockNumber: '400',
+        contracts: [contract(INVESTOR_V2, 'Investor')]
+      }
+    ])
+
+    useCNCAccounting('1')
+
+    expect(toValue(captured.investor)).toEqual([
+      { address: INVESTOR_V1, fromBlock: 300n },
+      { address: INVESTOR_V2, fromBlock: 400n }
+    ])
   })
 })

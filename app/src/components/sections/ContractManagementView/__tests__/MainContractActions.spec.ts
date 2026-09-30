@@ -47,7 +47,12 @@ const DEFAULT_ROW: TableRow = {
       stateMutability: 'nonpayable'
     }
   ],
-  paused: false,
+  pauseStatus: 'active',
+  pauseCapability: {
+    support: 'operations',
+    scope: 'Protected operations.',
+    selectors: { status: 'paused', pause: 'pause', resume: 'unpause' }
+  },
   owner: '0xOwner0000000000000000000000000000000001',
   deployer: '0xDeployer0000000000000000000000000000001',
   type: 'Treasury'
@@ -169,7 +174,7 @@ describe('MainContractActions.vue', () => {
     })
   })
 
-  it('executes a direct ownership transfer for the selected owner', async () => {
+  it('[AC-US-CONTRACT-002-01] executes a direct ownership transfer for the selected owner', async () => {
     const wrapper = mountComponent({ owner: mockUserStore.address }, { open: 'transfer' })
 
     await wrapper.find('[data-test="emit-transfer"]').trigger('click')
@@ -177,7 +182,7 @@ describe('MainContractActions.vue', () => {
     expect(mutationByFn.transferOwnership.mutate).toHaveBeenCalled()
   })
 
-  it('creates a Board action when the selected transfer is Board-gated', async () => {
+  it('[AC-US-CONTRACT-002-06] creates a Board action when the selected transfer is Board-gated', async () => {
     const wrapper = mountComponent({}, { open: 'transfer', isBodAction: true })
 
     await wrapper.find('[data-test="emit-transfer"]').trigger('click')
@@ -189,7 +194,7 @@ describe('MainContractActions.vue', () => {
     expect(mockBodAddAction.executeAddAction).toHaveBeenCalled()
   })
 
-  it('logs a direct ownership-transfer error without closing the selected modal', async () => {
+  it('[AC-US-CONTRACT-002-10] logs a direct ownership-transfer error without closing the selected modal', async () => {
     const wrapper = mountComponent({ owner: mockUserStore.address }, { open: 'transfer' })
 
     await wrapper.find('[data-test="emit-transfer"]').trigger('click')
@@ -200,7 +205,7 @@ describe('MainContractActions.vue', () => {
     expect(wrapper.find('[data-test="transfer-ownership-form"]').exists()).toBe(true)
   })
 
-  it('opens a selected pending-actions flow and approves its chosen action', async () => {
+  it('[AC-US-CONTRACT-002-03] opens a selected pending-actions flow and approves its chosen action', async () => {
     const wrapper = mountComponent({}, { open: 'approval', pendingActions: [{ id: 1 }] })
 
     await wrapper.vm.$nextTick()
@@ -232,7 +237,7 @@ describe('MainContractActions.vue', () => {
     expect(wrapper.emitted('contract-status-changed')).toBeTruthy()
   })
 
-  it('notifies the table and invalidates reads when direct transfer succeeds', async () => {
+  it('[AC-US-CONTRACT-002-04] notifies the table and invalidates reads when direct transfer succeeds', async () => {
     type MutateOpts = { onSuccess?: () => void }
     mutationByFn.transferOwnership.mutate.mockImplementationOnce(
       (_variables: unknown, options?: MutateOpts) => options?.onSuccess?.()
@@ -247,13 +252,13 @@ describe('MainContractActions.vue', () => {
     expect(wrapper.emitted('update:open')).toContainEqual([null])
   })
 
-  it('runs the selected contract status write once for each request', async () => {
+  it('[AC-US-CONTRACT-002-02] runs the selected contract status write once for each request', async () => {
     const active = mountComponent({}, { statusChangeRequest: { id: 1, paused: false } })
     await flushPromises()
     expect(mutationByFn.pause.mutate).toHaveBeenCalledTimes(1)
 
     const paused = mountComponent(
-      { paused: true },
+      { pauseStatus: 'paused' },
       { statusChangeRequest: { id: 2, paused: true } }
     )
     await flushPromises()
@@ -276,7 +281,7 @@ describe('MainContractActions.vue', () => {
       options?.onSuccess?.()
     )
     const resumeWrapper = mountComponent(
-      { paused: true },
+      { pauseStatus: 'paused' },
       { statusChangeRequest: { id: 2, paused: true } }
     )
     await flushPromises()
@@ -291,7 +296,7 @@ describe('MainContractActions.vue', () => {
 
     mockLog.error.mockClear()
     const resumeWrapper = mountComponent(
-      { paused: true },
+      { pauseStatus: 'paused' },
       { statusChangeRequest: { id: 2, paused: true } }
     )
     mutationByFn.unpause.error.value = new Error('unpause failed')

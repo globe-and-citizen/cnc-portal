@@ -2,20 +2,25 @@ import { vi } from 'vitest'
 import { ref } from 'vue'
 import { zeroHash } from 'viem'
 import { createContractReadMock, createContractWriteV3Mock } from './erc20.mock'
-import type { LendingOfferStruct } from '@/types'
+import type { Election, LendingOfferStruct } from '@/types'
+import type { InvestorPermissionsResult } from '@/queries/investorPermissions.queries'
 
 /**
  * Elections Contract Mocks
  */
 export const mockElectionsReads = {
-  address: createContractReadMock('0x1234567890123456789012345678901234567890'),
+  address: createContractReadMock<string | undefined>('0x1234567890123456789012345678901234567890'),
   owner: createContractReadMock('0x742d35Cc6bF8C55C6C2e013e5492D2b6637e0886'),
+  nextElectionId: createContractReadMock<bigint | number | null>(null),
   getElection: createContractReadMock<readonly (string | bigint | boolean)[] | null>(null),
   getVoteCount: createContractReadMock(0n),
+  getCandidateVoteCounts: createContractReadMock<Readonly<Record<string, bigint>>>({}),
   getCandidates: createContractReadMock<string[]>([]),
   getEligibleVoters: createContractReadMock<string[]>([]),
   getWinners: createContractReadMock<string[]>([]),
-  hasVoted: createContractReadMock(false)
+  hasVoted: createContractReadMock(false),
+  getVoterChoice: createContractReadMock<string | undefined>(undefined),
+  pastElections: createContractReadMock<Election[]>([])
 }
 
 export const mockElectionsWrites = {
@@ -55,7 +60,7 @@ export const mockBankWrites = {
  */
 export const mockBODReads = {
   owner: createContractReadMock('0x742d35Cc6bF8C55C6C2e013e5492D2b6637e0886'),
-  boardMembers: createContractReadMock([]),
+  boardMembers: createContractReadMock<string[] | undefined>([]),
   isMember: createContractReadMock(false),
   isActionExecuted: createContractReadMock(false),
   isApproved: createContractReadMock(false),
@@ -141,6 +146,15 @@ export const mockInvestorReads = {
   migrationComplete: createContractReadMock(false)
 }
 
+export const mockInvestorPermissions = {
+  list: createContractReadMock<InvestorPermissionsResult>({
+    accounts: [],
+    evidence: 'complete' as const,
+    gaps: []
+  }),
+  hasRole: createContractReadMock(false)
+}
+
 export const mockInvestorWrites = {
   invest: createContractWriteV3Mock(),
   claimDividend: createContractWriteV3Mock(),
@@ -153,7 +167,9 @@ export const mockInvestorWrites = {
   unpause: createContractWriteV3Mock(),
   initialize: createContractWriteV3Mock(),
   transferOwnership: createContractWriteV3Mock(),
-  renounceOwnership: createContractWriteV3Mock()
+  renounceOwnership: createContractWriteV3Mock(),
+  grantRole: createContractWriteV3Mock(),
+  revokeRole: createContractWriteV3Mock()
 }
 
 /**
@@ -197,6 +213,7 @@ export const resetContractMocks = () => {
     mockBankReads,
     mockBODReads,
     mockInvestorReads,
+    mockInvestorPermissions,
     mockCashRemunerationReads,
     mockExpenseAccountReads,
     mockVestingReads,
@@ -220,6 +237,7 @@ export const resetContractMocks = () => {
     Object.values(mockGroup).forEach((mock) => {
       mock.error.value = null
       mock.isLoading.value = false
+      mock.isFetching.value = false
       mock.isSuccess.value = true
       mock.isError.value = false
       mock.isFetched.value = true
@@ -274,4 +292,10 @@ export const resetContractMocks = () => {
       mock.executeApproveAction.mockClear()
     }
   })
+
+  // Data is left alone above so a suite can seed it once, but the Elections
+  // address and election id decide whether the pages render at all: a test that
+  // clears one must not decide the next test’s starting point.
+  mockElectionsReads.address.data.value = '0x1234567890123456789012345678901234567890'
+  mockElectionsReads.nextElectionId.data.value = null
 }

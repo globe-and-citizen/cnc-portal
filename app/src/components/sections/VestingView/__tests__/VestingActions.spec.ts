@@ -10,7 +10,7 @@ const mountComponent = () =>
     global: { plugins: [createTestingPinia({ createSpy: vi.fn })] }
   })
 
-describe('VestingActions.vue', () => {
+describe('[US-VESTING-001] VestingActions.vue', () => {
   beforeEach(() => {
     mockTeamStore.currentTeam = {
       ...mockTeamStore.currentTeam,

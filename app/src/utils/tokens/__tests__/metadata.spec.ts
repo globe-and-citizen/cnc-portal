@@ -39,7 +39,11 @@ describe('constantUtil', () => {
     if (!usdcAddress || !usdceAddress) return
 
     expect(tokenSymbol(usdcAddress)).toBe('USDC')
-    expect(tokenSymbol(usdceAddress)).toBe('USDC.e')
+    // Must match SUPPORTED_TOKENS' own symbol exactly — Community Credit's
+    // findCreditToken() looks a round's token up against that same value, so
+    // a diverging symbol here (e.g. the old hardcoded 'USDC.e') makes every
+    // round in that token permanently unlendable.
+    expect(tokenSymbol(usdceAddress)).toBe('USDCe')
     expect(tokenSymbol(zeroAddress)).not.toBe('')
     expect(tokenSymbol('0x1111111111111111111111111111111111111111')).toBe('')
   })

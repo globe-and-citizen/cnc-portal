@@ -4,8 +4,8 @@
  * Wraps the pure PDF / Excel builders ({@link buildTables} / {@link buildSheets})
  * with the live books, the party-name resolver and toast + error handling, so a
  * page only has to declare *which* sections (and their current filter state) to
- * export. Snapshots the reactive journal and reports at
- * call time, so the file reflects exactly what's on screen when the button is hit.
+ * export. Snapshots the reactive journal at call time, so the file reflects
+ * exactly what's on screen when the button is hit.
  */
 import { useAccountingContext } from './useAccountingContext'
 import { useTransactionPresentation } from '@/composables/transactions/useTransactionPresentation'
@@ -25,8 +25,7 @@ export function useAccountingExport() {
 
   /** Freeze the reactive books into a plain value for the pure builders. */
   const snapshot = (): AccountingExportSnapshot => ({
-    journal: accounting.journal.value,
-    ...accounting.reports.value
+    journal: accounting.journal.value
   })
 
   async function exportPdf(

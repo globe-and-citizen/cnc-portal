@@ -19,7 +19,7 @@ const mountInputs = (props: Record<string, unknown> = {}) =>
     }
   })
 
-describe('TwinAmountInputs.vue', () => {
+describe('[US-SHER-004] TwinAmountInputs.vue', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockInvestorReads.totalSupply.data.value = 100_000_000n

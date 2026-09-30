@@ -42,7 +42,7 @@ describe('sweepMigration', () => {
     expect(executeContractWrite).toHaveBeenCalledTimes(1)
   })
 
-  it('closes the migration in a separate owner transaction', async () => {
+  it('[AC-US-SHER-007-02] closes the migration in a separate owner transaction', async () => {
     await completeMigration(INVESTOR)
 
     expect(executeContractWrite).toHaveBeenCalledWith({

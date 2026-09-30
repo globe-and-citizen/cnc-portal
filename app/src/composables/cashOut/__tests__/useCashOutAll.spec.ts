@@ -14,6 +14,8 @@ import {
   useQueryClientFn
 } from '@/tests/mocks'
 import { buildCashOutPlan } from '../plan'
+import { SUPPORTED_TOKENS } from '@/constant'
+import { contractBalanceKeys } from '@/composables/useContractBalance'
 
 const BANK_ADDRESS = '0x1111111111111111111111111111111111111111'
 const RECIPIENT = '0x00000000000000000000000000000000000000aa'
@@ -51,10 +53,17 @@ describe('useCashOutAll', () => {
     mockBankWrites.transfer.mutateAsync.mockResolvedValue(undefined)
     mockBankWrites.transferToken.mutateAsync.mockResolvedValue(undefined)
     mockWagmiCore.getBalance.mockResolvedValue(nativeBalance(5n))
-    mockWagmiCore.readContract.mockResolvedValue(1000n)
+    mockWagmiCore.readContract.mockImplementation(
+      async (_config: unknown, parameters: { functionName?: string }) =>
+        parameters.functionName === 'getSupportedTokens'
+          ? SUPPORTED_TOKENS.filter((token) => token.id !== 'native')
+              .slice(0, 2)
+              .map((token) => token.address)
+          : 1000n
+    )
   })
 
-  it('runs the three accounts in order and ends complete', async () => {
+  it('[AC-US-BANK-004-01] consolidates the source accounts before draining the Bank', async () => {
     const flow = useCashOutAll()
     await flow.start(fullPlan())
 
@@ -70,7 +79,20 @@ describe('useCashOutAll', () => {
     expect(invalidateQueries).toHaveBeenCalledTimes(1)
   })
 
-  it('forwards the Bank native balance then every held ERC-20 to the owner', async () => {
+  it('refreshes only contract balance and contract-read queries after a successful run', async () => {
+    const flow = useCashOutAll()
+    await flow.start(fullPlan())
+
+    const filter = invalidateQueries.mock.calls[0]?.[0] as {
+      predicate: (query: { queryKey: readonly unknown[] }) => boolean
+    }
+
+    expect(filter.predicate({ queryKey: contractBalanceKeys.all })).toBe(true)
+    expect(filter.predicate({ queryKey: ['readContract', BANK_ADDRESS] })).toBe(true)
+    expect(filter.predicate({ queryKey: ['unrelated-query'] })).toBe(false)
+  })
+
+  it('[AC-US-BANK-004-01] forwards every held Bank asset to the connected owner', async () => {
     const flow = useCashOutAll()
     await flow.start(fullPlan())
 
@@ -82,9 +104,16 @@ describe('useCashOutAll', () => {
     })
   })
 
-  it('skips Bank assets that have a zero balance', async () => {
+  it('[AC-US-BANK-004-04] skips Bank assets that have a zero balance', async () => {
     mockWagmiCore.getBalance.mockResolvedValue(nativeBalance(0n))
-    mockWagmiCore.readContract.mockResolvedValue(0n)
+    mockWagmiCore.readContract.mockImplementation(
+      async (_config: unknown, parameters: { functionName?: string }) =>
+        parameters.functionName === 'getSupportedTokens'
+          ? SUPPORTED_TOKENS.filter((token) => token.id !== 'native')
+              .slice(0, 2)
+              .map((token) => token.address)
+          : 0n
+    )
 
     const flow = useCashOutAll()
     await flow.start(fullPlan())
@@ -94,7 +123,7 @@ describe('useCashOutAll', () => {
     expect(flow.isComplete.value).toBe(true)
   })
 
-  it('stops on a failing step, marks it failed and leaves the rest pending', async () => {
+  it('[AC-US-BANK-004-06] stops on a failing step, marks it failed and leaves the rest pending', async () => {
     mockExpenseAccountWrites.ownerWithdrawAllToBank.mutateAsync.mockRejectedValueOnce(
       new Error('RPC node unavailable')
     )
@@ -108,7 +137,7 @@ describe('useCashOutAll', () => {
     expect(invalidateQueries).not.toHaveBeenCalled()
   })
 
-  it('shows a friendly message when the wallet rejects the request', async () => {
+  it('[AC-US-BANK-004-07] shows a friendly message when the wallet rejects the request', async () => {
     mockCashRemunerationWrites.ownerWithdrawAllToBank.mutateAsync.mockRejectedValueOnce(
       new BaseError('rejected', { cause: new UserRejectedRequestError(new Error('rejected')) })
     )
@@ -138,7 +167,7 @@ describe('useCashOutAll', () => {
     expect(mockExpenseAccountWrites.ownerWithdrawAllToBank.mutateAsync).toHaveBeenCalledTimes(2)
   })
 
-  it('does nothing for an empty plan', async () => {
+  it('[AC-US-BANK-004-08] does nothing for an empty plan', async () => {
     const flow = useCashOutAll()
     await flow.start([])
 
@@ -182,7 +211,7 @@ describe('useCashOutAll', () => {
       expect(vi.mocked(useTransferToken).mock.calls[0][0]).toHaveProperty('value', LEGACY_BANK)
     })
 
-    it('reads the supplied Bank balances and forwards them to the recipient', async () => {
+    it('[AC-US-BANK-004-02] forwards a historic Bank generation to the current Bank', async () => {
       await legacyFlow().start(fullPlan())
 
       expect(mockWagmiCore.getBalance).toHaveBeenCalledWith(expect.anything(), {

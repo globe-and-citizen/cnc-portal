@@ -40,10 +40,51 @@
 </template>
 
 <script setup lang="ts">
+import { computed, onUnmounted, ref } from 'vue'
 import VestingActions from '@/components/sections/VestingView/VestingActions.vue'
 import VestingFlow from '@/components/sections/VestingView/VestingFlow.vue'
 import VestingStats from '@/components/sections/VestingView/VestingStats.vue'
-import { useVestingSchedules } from '@/composables/vesting/useVestingSchedules'
+import { useInvestorSymbol } from '@/composables/investor/reads'
+import { useBlockTimestamp } from '@/composables/useBlockTimestamp'
+import {
+  useVestingGetAllArchivedVestingsFlat,
+  useVestingGetVestingsWithMembers
+} from '@/composables/vesting/reads'
+import {
+  buildVestingSchedules,
+  resolveVestingTokenSymbol,
+  summarizeVestingSchedules
+} from '@/utils/vesting/schedule'
 
-const { schedules, totals, tokenSymbol, isLoading, error, refetch } = useVestingSchedules()
+const fallbackNowSeconds = ref(Math.floor(Date.now() / 1000))
+const timer = setInterval(() => {
+  fallbackNowSeconds.value = Math.floor(Date.now() / 1000)
+}, 60_000)
+onUnmounted(() => clearInterval(timer))
+
+const blockTimestamp = useBlockTimestamp()
+const nowSeconds = computed(() =>
+  blockTimestamp.value === null ? fallbackNowSeconds.value : Number(blockTimestamp.value)
+)
+const activeSchedules = useVestingGetVestingsWithMembers()
+const archivedSchedules = useVestingGetAllArchivedVestingsFlat()
+const { data: investorSymbol } = useInvestorSymbol()
+
+const schedules = computed(() =>
+  buildVestingSchedules(
+    [activeSchedules.data.value, archivedSchedules.data.value],
+    nowSeconds.value
+  )
+)
+const totals = computed(() => summarizeVestingSchedules(schedules.value))
+const tokenSymbol = computed(() => resolveVestingTokenSymbol(investorSymbol.value))
+const isLoading = computed(
+  () => activeSchedules.isLoading.value || archivedSchedules.isLoading.value
+)
+const error = computed(() => activeSchedules.error.value || archivedSchedules.error.value)
+
+async function refetch() {
+  await Promise.all([activeSchedules.refetch(), archivedSchedules.refetch()])
+  fallbackNowSeconds.value = Math.floor(Date.now() / 1000)
+}
 </script>

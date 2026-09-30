@@ -147,7 +147,7 @@ describe('TransferAction.vue', () => {
       expect(wrapper.find('[data-test="transfer-form"]').exists()).toBe(false)
     })
 
-    it('reports a failed balance read instead of an empty dialog', async () => {
+    it('[AC-US-EXP-002-12] reports a failed balance read instead of an empty dialog', async () => {
       contractBalanceState.data.value = { balances: [], total: undefined }
       contractBalanceState.error.value = new Error('rpc down')
 
@@ -250,7 +250,7 @@ describe('TransferAction.vue', () => {
     expect(wrapper.text()).toContain('Failed to verify expense approval signature')
   })
 
-  it('blocks transfers when the approval was signed for another expense account', async () => {
+  it('[AC-US-EXP-002-05] blocks transfers when the approval was signed for another expense account', async () => {
     const wrapper = createComponent({
       ...ERC20_BUDGET,
       signedAgainstContractAddress: '0x6666666666666666666666666666666666666666'

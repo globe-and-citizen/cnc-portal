@@ -32,6 +32,7 @@ describe('InvestInSafeAction', () => {
     mockSafeDepositRouterReads.depositsEnabled.isLoading.value = false
     mockSafeDepositRouterReads.paused.data.value = false
     mockSafeDepositRouterReads.paused.isLoading.value = false
+    mockTeamStore.currentTeamMeta.data.isArchived = false
     mockTeamStore.getContractAddressByType = vi.fn((type) => {
       if (type === 'Safe') return '0x1234567890123456789012345678901234567890'
       return '0x0000000000000000000000000000000000000000'
@@ -52,7 +53,7 @@ describe('InvestInSafeAction', () => {
     expect(wrapper.findComponent({ name: 'UTooltip' }).props('text')).toBeUndefined()
   })
 
-  it('disables button and shows tooltip when deposits are disabled', () => {
+  it('[AC-US-SHER-001-05] disables investment when deposits are disabled', () => {
     mockSafeDepositRouterReads.depositsEnabled.data.value = false
     const wrapper = createWrapper()
 
@@ -69,7 +70,7 @@ describe('InvestInSafeAction', () => {
     expect(wrapper.find('[data-test="invest-in-safe-button"]').attributes('disabled')).toBeDefined()
   })
 
-  it('disables button when safe address is missing', () => {
+  it('[AC-US-SHER-001-05] disables investment when the company Safe is missing', () => {
     mockTeamStore.getContractAddressByType = vi.fn(
       () => ''
     ) as unknown as typeof mockTeamStore.getContractAddressByType
@@ -78,14 +79,23 @@ describe('InvestInSafeAction', () => {
     expect(wrapper.find('[data-test="invest-in-safe-button"]').attributes('disabled')).toBeDefined()
   })
 
-  it('disables button when paused', () => {
+  it('[AC-US-SHER-001-05] disables investment when the router is paused', () => {
     mockSafeDepositRouterReads.paused.data.value = true
     const wrapper = createWrapper()
 
     expect(wrapper.find('[data-test="invest-in-safe-button"]').attributes('disabled')).toBeDefined()
   })
 
-  it('clicking enabled button opens the modal', async () => {
+  it('[AC-US-SHER-001-05] disables investment when the company is archived', async () => {
+    mockTeamStore.currentTeamMeta.data.isArchived = true
+    const wrapper = createWrapper()
+
+    expect(wrapper.find('[data-test="invest-in-safe-button"]').attributes('disabled')).toBeDefined()
+    await wrapper.find('[data-test="invest-in-safe-button"]').trigger('click')
+    expect(wrapper.find('[data-test="safe-deposit-router-form"]').exists()).toBe(false)
+  })
+
+  it('[AC-US-SHER-001-01] opens the investment form when deposits are available', async () => {
     const wrapper = createWrapper()
 
     await wrapper.find('[data-test="invest-in-safe-button"]').trigger('click')

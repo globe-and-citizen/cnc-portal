@@ -28,16 +28,17 @@
 
     <template #status-cell="{ row: { original: row } }">
       <UBadge
-        :color="row.contract.paused ? 'warning' : 'success'"
+        :color="pauseStatus(row.contract.pauseStatus).color"
         variant="subtle"
         size="sm"
         class="gap-1.5"
+        data-test="contract-pause-status"
       >
         <span
           class="size-1.5 rounded-full"
-          :class="row.contract.paused ? 'bg-warning' : 'bg-success'"
+          :class="pauseStatus(row.contract.pauseStatus).dotClass"
         />
-        {{ row.contract.paused ? 'Paused' : 'Active' }}
+        {{ pauseStatus(row.contract.pauseStatus).label }}
       </UBadge>
     </template>
 
@@ -70,6 +71,7 @@
 import { computed } from 'vue'
 import AddressTooltip from '@/components/ui/AddressTooltip.vue'
 import UserIdentity from '@/components/ui/UserIdentity.vue'
+import { getContractPauseStatusPresentation } from '@/utils/contracts/pauseCapabilities'
 import { getContractPresentation } from '@/utils/contracts/presentation'
 import MainContractActionMenu from './MainContractActionMenu.vue'
 import MainContractBalanceCell from './MainContractBalanceCell.vue'
@@ -99,4 +101,5 @@ const columns = computed(() => [
   ...(props.showActions ? [{ accessorKey: 'actions', header: 'Pending / Actions' }] : [])
 ])
 const presentation = (type: string) => getContractPresentation(type)
+const pauseStatus = getContractPauseStatusPresentation
 </script>

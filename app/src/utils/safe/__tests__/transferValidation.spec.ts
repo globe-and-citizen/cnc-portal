@@ -10,7 +10,7 @@ describe('validateSafeTransfer', () => {
   }
 
   describe('valid inputs', () => {
-    it('should return valid for correct safe transfer', () => {
+    it('returns valid for correct safe transfer', () => {
       const result = validateSafeTransfer(validOptions)
       expect(result.isValid).toBe(true)
       expect(result.error).toBeUndefined()
@@ -18,7 +18,7 @@ describe('validateSafeTransfer', () => {
   })
 
   describe('invalid recipient address', () => {
-    it('should reject invalid recipient address', () => {
+    it('rejects invalid recipient address', () => {
       const result = validateSafeTransfer({
         ...validOptions,
         to: 'invalid-recipient'
@@ -27,7 +27,7 @@ describe('validateSafeTransfer', () => {
       expect(result.error).toBe('Invalid recipient address')
     })
 
-    it('should reject empty recipient address', () => {
+    it('rejects empty recipient address', () => {
       const result = validateSafeTransfer({
         ...validOptions,
         to: ''
@@ -38,7 +38,7 @@ describe('validateSafeTransfer', () => {
   })
 
   describe('invalid amount', () => {
-    it('should reject zero amount', () => {
+    it('rejects zero amount', () => {
       const result = validateSafeTransfer({
         ...validOptions,
         amount: '0'
@@ -47,7 +47,7 @@ describe('validateSafeTransfer', () => {
       expect(result.error).toBe('Invalid transfer amount')
     })
 
-    it('should reject negative amount', () => {
+    it('rejects negative amount', () => {
       const result = validateSafeTransfer({
         ...validOptions,
         amount: '-10'
@@ -56,7 +56,7 @@ describe('validateSafeTransfer', () => {
       expect(result.error).toBe('Invalid transfer amount')
     })
 
-    it('should reject empty amount', () => {
+    it('rejects empty amount', () => {
       const result = validateSafeTransfer({
         ...validOptions,
         amount: ''
@@ -65,7 +65,7 @@ describe('validateSafeTransfer', () => {
       expect(result.error).toBe('Invalid transfer amount')
     })
 
-    it('should reject undefined amount', () => {
+    it('rejects undefined amount', () => {
       const result = validateSafeTransfer({
         ...validOptions,
         amount: undefined as unknown as string

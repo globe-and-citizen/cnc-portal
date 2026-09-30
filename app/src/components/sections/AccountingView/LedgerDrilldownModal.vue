@@ -75,7 +75,7 @@ import {
 } from '@/utils/accounting/accountLedger'
 import type { DrilldownBalance } from '@/composables/accounting/useLedgerDrilldown'
 import { journalLedgerRows } from '@/utils/accounting/journalLedgerPresenter'
-import type { JournalEntry } from '@/utils/accounting/journalEntry'
+import type { JournalEntry } from '@/utils/accounting/types'
 
 const props = defineProps<{
   account: string

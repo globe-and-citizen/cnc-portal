@@ -47,7 +47,7 @@ describe('ProfileImageUpload.vue', () => {
   })
 
   describe('Validation', () => {
-    it('rejects non-image files without calling the mutation', async () => {
+    it('[AC-US-PROFILE-001-05] rejects non-image files without calling the mutation', async () => {
       wrapper = mountComponent()
       await triggerFileSelection(createMockFile('document.pdf', 'application/pdf'))
 
@@ -55,7 +55,7 @@ describe('ProfileImageUpload.vue', () => {
       expect(mockUploadFileState.mutate).not.toHaveBeenCalled()
     })
 
-    it('rejects files larger than 10MB without calling the mutation', async () => {
+    it('[AC-US-PROFILE-001-05] rejects files larger than 10MB without calling the mutation', async () => {
       wrapper = mountComponent()
       await triggerFileSelection(createMockFile('large.png', 'image/png', 11 * 1024 * 1024))
 
@@ -76,7 +76,7 @@ describe('ProfileImageUpload.vue', () => {
   })
 
   describe('Upload', () => {
-    it('uploads and emits the new model value on success', async () => {
+    it('[AC-US-PROFILE-001-02] uploads and emits the new model value on success', async () => {
       const expectedUrl = 'https://storage.railway.app/uploaded-image.png'
 
       wrapper = mountComponent({ modelValue: '' })

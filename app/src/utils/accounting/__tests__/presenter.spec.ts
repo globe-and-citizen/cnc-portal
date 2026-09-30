@@ -13,9 +13,9 @@ import {
 } from '@/utils/accounting/presenter'
 import { presentJournalLedger } from '@/utils/accounting/journalLedgerPresenter'
 import { accountFor } from '@/utils/accounting/accountRegistry'
-import { buildJournal } from '@/utils/accounting/generalLedger'
-import { categoryOf } from '@/utils/accounting/ledgerCategory'
-import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
+import { finalizeJournal } from '@/utils/accounting/__tests__/assembleAccounting'
+import { categoryLabelOf } from '@/utils/accounting/ledgerCategory'
+import type { JournalEntryDraft } from '@/utils/accounting/journalEntryDraft'
 import { sampleBooks } from './fixtures'
 
 /** The shared live book: a $100 client deposit and a $30 expense payout. */
@@ -88,35 +88,35 @@ describe('presentBalance', () => {
     expect(balance.totalLiabilities).toBe('$0.00')
   })
 
-  const nativeEntry = (amountUsd: number): LedgerEntry => ({
-    id: 'pol',
+  const bankDeposit = (amountUsd: number): JournalEntryDraft => ({
+    id: 'bank',
     timestamp: 1,
     useCase: 'UC-BANK-02',
     debit: 'Cash — Bank',
     credit: 'Service Revenue',
-    amountUsd,
-    token: 'native',
-    rawAmount: '28953000000000000', // 0.028953 POL
+    token: 'usdc',
+    rawAmount: String(amountUsd * 1_000_000),
+    rate: 1,
     internal: false,
     memo: '',
     enrichment: 'not-applicable'
   })
 
   it('lists a non-cash asset (Trading account) as its own drillable asset line', () => {
-    const tradingEntry: LedgerEntry = {
+    const tradingEntry: JournalEntryDraft = {
       id: 'trd',
       timestamp: 1,
       useCase: 'CASH-OUT',
       debit: 'Trading account',
       credit: 'Cash — Bank',
-      amountUsd: 30,
       token: 'usdc',
       rawAmount: '30000000',
+      rate: 1,
       internal: false,
       memo: '',
       enrichment: 'not-applicable'
     }
-    const balance = presentBalance(buildJournal([tradingEntry]))
+    const balance = presentBalance(finalizeJournal([tradingEntry]))
     expect(balance.assetLines.find((line) => line.label === 'Trading account')).toMatchObject({
       value: '$30.00',
       account: { family: { name: 'Trading account' } }
@@ -124,20 +124,16 @@ describe('presentBalance', () => {
   })
 
   it('labels later Bank deployments separately while retaining their concrete account selections', () => {
-    const journal = buildJournal([
+    const journal = finalizeJournal([
       {
-        ...nativeEntry(100),
+        ...bankDeposit(100),
         id: 'bank-1',
-        token: 'usdc',
-        rawAmount: '100000000',
         debitInstance: '0x1111111111111111111111111111111111111111'
       },
       {
-        ...nativeEntry(25),
+        ...bankDeposit(25),
         id: 'bank-2',
         timestamp: 2,
-        token: 'usdc',
-        rawAmount: '25000000',
         debitInstance: '0x2222222222222222222222222222222222222222'
       }
     ])
@@ -157,7 +153,7 @@ describe('presentBalance', () => {
 
 describe('presentTrial', () => {
   it('puts each account balance on its normal side and stays balanced', () => {
-    const trial = presentTrial(books().generalLedger)
+    const trial = presentTrial(books().journal)
     expect(trial.balanced).toBe(true)
     const revenue = trial.rows.find((r) => r.account.family.name === 'Service Revenue')
     expect(revenue?.nature).toBe('Income')
@@ -185,20 +181,28 @@ describe('presentJournalLedger', () => {
   })
 
   it('categorizes the Bank protocol fee as an Expense (not a neutral Transfer)', () => {
-    const fee: LedgerEntry = {
-      id: 'fee-1',
+    const tx = `0x${'f'.repeat(64)}`
+    const fee: JournalEntryDraft = {
+      id: `${tx}-2`,
       timestamp: 100,
       useCase: 'FEE',
       debit: 'Transaction Fee Expense',
       credit: 'Cash — Bank',
-      amountUsd: 0.5,
       token: 'usdc',
       rawAmount: '500000',
+      rate: 1,
       memo: 'Transaction fee skimmed from Bank',
       enrichment: 'not-applicable'
     }
-    expect(categoryOf(fee)).toBe('Expense')
-    const ledger = presentJournalLedger(buildJournal([fee]))
+    const outflow: JournalEntryDraft = {
+      ...fee,
+      id: `${tx}-1`,
+      useCase: 'CASH-OUT',
+      debit: 'Operating Expense',
+      rawAmount: '5000000'
+    }
+    expect(categoryLabelOf(finalizeJournal([outflow, fee])[0]!)).toBe('Expense')
+    const ledger = presentJournalLedger(finalizeJournal([fee]))
     expect(ledger.entryCount).toBe(0)
     expect(ledger.rows).toEqual([])
   })
@@ -224,7 +228,7 @@ describe('presentJournalLedger', () => {
 })
 
 describe('filterByPeriod', () => {
-  const entries = books().entries
+  const entries = books().journal
   it('keeps entries inside an inclusive window', () => {
     expect(filterByPeriod(entries, new Date(150_000), null)).toHaveLength(1) // only ts=200
     expect(filterByPeriod(entries, null, new Date(150_000))).toHaveLength(1) // only ts=100

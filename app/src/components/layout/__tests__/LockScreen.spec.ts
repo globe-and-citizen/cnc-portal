@@ -1,7 +1,7 @@
 import { mount } from '@vue/test-utils'
 import { describe, it, expect, vi, afterEach } from 'vitest'
 import LockScreen from '../LockScreen.vue'
-import { mockUseConnection } from '@/tests/mocks/wagmi.vue.mock'
+import { mockUseConnection, mockUseDisconnect } from '@/tests/mocks/wagmi.vue.mock'
 
 describe('LockScreen.vue', () => {
   let wrapper: ReturnType<typeof mount> | null = null
@@ -35,15 +35,15 @@ describe('LockScreen.vue', () => {
     expect(wrapper.text()).toContain('0x1234...7890')
   })
 
-  it('calls disconnect when Logout button is clicked', async () => {
+  it('[AC-US-AUTH-003-09] disconnects the wallet from the locked session', async () => {
     wrapper = mount(LockScreen, {
       props: {
         user: { address: '0x1111111111111111111111111111111111111111' }
       }
     })
 
-    // Component renders with user address
-    expect(wrapper.exists()).toBe(true)
-    expect(wrapper.text()).toContain('0x1111...1111')
+    await wrapper.get('button').trigger('click')
+
+    expect(mockUseDisconnect.mutate).toHaveBeenCalledOnce()
   })
 })

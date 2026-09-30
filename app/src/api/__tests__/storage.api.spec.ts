@@ -7,7 +7,7 @@ describe('getFileUrlApi', () => {
     vi.clearAllMocks()
   })
 
-  it('should fetch file URL with both key and expiresIn parameters', async () => {
+  it('fetches file URL with both key and expiresIn parameters', async () => {
     const mockResponse = {
       url: 'https://example.com/signed-url-custom',
       expiresIn: 7200
@@ -27,7 +27,7 @@ describe('getFileUrlApi', () => {
     })
   })
 
-  it('should return response with correct structure (url and expiresIn)', async () => {
+  it('returns response with correct structure (url and expiresIn)', async () => {
     const mockResponse = {
       url: 'https://cdn.example.com/files/document.pdf?token=abc123',
       expiresIn: 1800

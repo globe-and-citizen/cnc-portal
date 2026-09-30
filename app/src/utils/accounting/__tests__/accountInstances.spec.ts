@@ -8,7 +8,7 @@ import {
   transfersFromReceiptLogs,
   type TransactionAccountEvidence
 } from '@/utils/accounting/accountInstances'
-import { makeEntry, type LedgerEntry } from '@/utils/accounting/ledgerEntry'
+import { makeJournalEntryDraft, type JournalEntryDraft } from '@/utils/accounting/journalEntryDraft'
 
 const BANK = '0x1111111111111111111111111111111111111111' as Address
 const BANK_2 = '0x2222222222222222222222222222222222222222' as Address
@@ -35,17 +35,17 @@ const contracts: TeamContract[] = [
 
 function posting(
   id: string,
-  fields: Pick<LedgerEntry, 'debit' | 'credit'> & Partial<LedgerEntry>
-): LedgerEntry {
-  return makeEntry({
+  fields: Pick<JournalEntryDraft, 'debit' | 'credit'> & Partial<JournalEntryDraft>
+): JournalEntryDraft {
+  return makeJournalEntryDraft({
     id,
     timestamp: 1,
     useCase: 'INTERNAL',
     debit: fields.debit,
     credit: fields.credit,
-    amountUsd: 1,
     token: 'usdc',
     rawAmount: '1000000',
+    rate: 1,
     internal: true,
     memo: 'Test movement',
     ...fields
@@ -124,8 +124,14 @@ describe('deployment account evidence', () => {
 
     const books = assembleWithAccountEvidence(entries, accounts, evidence)
     expect(
-      books.accountRegistry.accounts.filter((account) => account.contractAddress)
-    ).toHaveLength(4)
+      new Set(
+        books.journal.flatMap((entry) =>
+          entry.lines.flatMap((line) =>
+            line.account.contractAddress ? [line.account.contractAddress] : []
+          )
+        )
+      ).size
+    ).toBe(4)
     expect(
       books.journal.find((entry) => entry.id === HASH_BANK_IN)?.lines[0].account
     ).toMatchObject({

@@ -77,7 +77,7 @@ const SELECTORS = {
   skipSafeSetupButton: '[data-test="skip-safe-setup-button"]'
 } as const
 
-describe('AddTeamForm Safe setup', () => {
+describe('[US-SAFE-001] AddTeamForm Safe setup', () => {
   let wrapper: VueWrapper | undefined
 
   const mountComponent = () =>
@@ -165,7 +165,7 @@ describe('AddTeamForm Safe setup', () => {
     expect(mockRouterPush).toHaveBeenCalledWith(`/teams/${mockTeamData.id}`)
   })
 
-  it('navigates to the team when Safe setup is skipped', async () => {
+  it('[AC-US-SAFE-001-09] continues company creation when Safe setup is skipped', async () => {
     await goToSafeSetup()
     await wrapper!.get(SELECTORS.skipSafeSetupButton).trigger('click')
 

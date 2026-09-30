@@ -7,6 +7,7 @@ import {
   mockUseReadContract,
   mockBodIsBodAction,
   mockBodAddAction,
+  mockTeamStore,
   mockUserStore,
   mockUseContractBalance,
   mockBankWrites,
@@ -178,6 +179,19 @@ describe('TransferModal', () => {
     expect(wrapper.find('[data-test="transfer-button"]').attributes('disabled')).toBeUndefined()
   })
 
+  it('[AC-US-BANK-002-11] blocks transfers for an archived company', async () => {
+    mockTeamStore.currentTeamMeta = {
+      isPending: false,
+      data: { ...mockTeamStore.currentTeam, isArchived: true }
+    }
+    wrapper = mountComponent()
+
+    const trigger = wrapper.find('[data-test="transfer-button"]')
+    expect(trigger.attributes('disabled')).toBeDefined()
+    await trigger.trigger('click')
+    expect(wrapper.find('[data-test="transfer-modal"]').exists()).toBe(false)
+  })
+
   it('exposes isLoading true while a transfer mutation is pending', async () => {
     wrapper = mountComponent()
     mockBankWrites.transfer.isPending.value = true
@@ -207,7 +221,34 @@ describe('TransferModal', () => {
     expect(wrapper.find('[data-test="transfer-form-stub"]').exists()).toBe(true)
   })
 
-  it('uses the bod action path instead of a direct transfer when bod mode is enabled', async () => {
+  it('[AC-US-BANK-002-08] excludes SHER from Bank transfer choices', async () => {
+    wrapper = mountComponent()
+    setBalances([
+      makeTokenBalance({
+        token: { id: 'native', symbol: NETWORK.currencySymbol, name: 'Native', code: 'ETH' },
+        amount: 10,
+        usdPrice: 2000
+      }),
+      makeTokenBalance({
+        token: { id: 'usdc', symbol: 'USDC', name: 'USD Coin', code: 'USDC', decimals: 6 },
+        amount: 5000,
+        usdPrice: 1
+      }),
+      makeTokenBalance({
+        token: { id: 'sher', symbol: 'SHER', name: 'Sher Token', code: 'SHER' },
+        amount: 1000,
+        usdPrice: 1
+      })
+    ])
+    await openModal(wrapper)
+
+    expect(transferForm(wrapper).props('tokens')).toEqual([
+      expect.objectContaining({ tokenId: 'native' }),
+      expect.objectContaining({ tokenId: 'usdc' })
+    ])
+  })
+
+  it('[AC-US-BANK-002-02] uses the Board action path when Board mode is enabled', async () => {
     wrapper = mountComponent()
     mockBodIsBodAction.isBodAction.value = true
     await openModal(wrapper)
@@ -223,7 +264,7 @@ describe('TransferModal', () => {
     expect(mockBankWrites.transferToken.mutate).not.toHaveBeenCalled()
   })
 
-  it('handles direct token transfers and invalidates the contract balance query', async () => {
+  it('[AC-US-BANK-002-01] handles a direct token transfer and refreshes the balance', async () => {
     const { invalidateQueries } = createQueryClient()
     wrapper = mountComponent()
     await openModal(wrapper)

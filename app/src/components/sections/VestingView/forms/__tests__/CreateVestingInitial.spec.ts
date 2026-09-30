@@ -42,7 +42,7 @@ describe('CreateVesting.vue — configuration', () => {
     expect(wrapper.find('[data-test="member"]').exists()).toBe(true)
   })
 
-  it('closes the modal when the user cancels configuration', async () => {
+  it('[AC-US-VESTING-001-13] closes without creating when configuration is cancelled', async () => {
     await wrapper.find('[data-test="cancel-button"]').trigger('click')
 
     expect(wrapper.emitted('closeAddVestingModal')).toHaveLength(1)

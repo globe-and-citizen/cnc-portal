@@ -35,25 +35,29 @@ The display name and profile image can be changed from the client navigation and
 
 #### Happy Path
 
-- [x] An authenticated portal user can open the profile form from the client navigation and save a changed display name or profile image.
-- [x] A successful profile-image upload applies the returned URL to the profile draft before it is saved.
+- [x] `AC-US-PROFILE-001-01` An authenticated portal user can open the profile form from the client navigation and save a changed display
+      name or profile image.
+- [x] `AC-US-PROFILE-001-02` A successful profile-image upload applies the returned URL to the profile draft before it is saved.
 
 #### Business Rules
 
-- [x] The wallet address is displayed but is not editable in the profile form.
-- [x] A display name must contain between 3 and 100 characters.
-- [x] A profile image must use a supported image type and be no larger than 10 MB.
+- [x] `AC-US-PROFILE-001-03` The wallet address is displayed but is not editable in the profile form.
+- [x] `AC-US-PROFILE-001-04` A display name must contain between 3 and 100 characters.
+- [x] `AC-US-PROFILE-001-05` A profile image must use a supported image type and be no larger than 10 MB.
+- [x] `AC-US-PROFILE-001-08` Profile identity surfaces show the user's current name and image when available and use a fallback identity
+      when either value is absent.
+- [x] `AC-US-PROFILE-001-09` A user can update only their own profile; a missing or different authenticated wallet is rejected.
 
 #### Edge & Error Cases
 
-- [x] An invalid image is rejected without changing the profile draft.
-- [x] An upload or profile-save failure leaves the form available and exposes the failure to the user.
+- [x] `AC-US-PROFILE-001-06` An invalid image is rejected without changing the profile draft.
+- [x] `AC-US-PROFILE-001-07` An upload or profile-save failure leaves the form available and exposes the failure to the user.
 
 **Dependencies:** An authenticated portal user and the user-profile API
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `787921e5cf9dd1cf46fd0f69f651dba7d8785374`
+**Implementation evidence reviewed against:** `f801239c22cef84ba985937c2ac8194efb7dd9dd`
 
 - [Navigation profile entry](../../../app/src/components/layout/NavBar.vue) and
   [sidebar profile entry](../../../app/src/components/ui/SidebarLayout.vue)
@@ -61,11 +65,26 @@ The display name and profile image can be changed from the client navigation and
   [profile-image upload](../../../app/src/components/forms/ProfileImageUpload.vue)
 - [User update mutation](../../../app/src/queries/user.queries.ts) and
   [single-file upload mutation](../../../app/src/queries/file.queries.ts)
+- [User request schema](../../../backend/src/validation/schemas/user.ts) and
+  [user-schema tests](../../../backend/src/validation/schemas/__tests__/user.test.ts)
 - [Profile-image component tests](../../../app/src/components/forms/__tests__/ProfileImageUpload.spec.ts) and
-  [file-query tests](../../../app/src/queries/__tests__/file.queries.spec.ts)
+  [profile form tests](../../../app/src/components/forms/__tests__/EditUserForm.spec.ts)
+
+### Test-suite ownership
+
+- [Profile form tests](../../../app/src/components/forms/__tests__/EditUserForm.spec.ts),
+  [profile API tests](../../../app/src/api/__tests__/user.api.spec.ts), and
+  [profile-image upload tests](../../../app/src/components/forms/__tests__/ProfileImageUpload.spec.ts)
+- [Profile navigation tests](../../../app/src/components/layout/__tests__/NavBar.spec.ts),
+  [sidebar tests](../../../app/src/components/ui/__tests__/SidebarLayout.spec.ts), and
+  [user-identity tests](../../../app/src/components/ui/__tests__/UserIdentity.spec.ts)
+- [User API controller tests](../../../backend/src/controllers/__tests__/userController.test.ts) and
+  [user request-schema tests](../../../backend/src/validation/schemas/__tests__/user.test.ts)
 
 ## Related Documentation
 
+- [File Storage implementation](../../implementation/file-storage/README.md)
+- [Request Validation implementation](../../implementation/request-validation/README.md)
 - [Client data access implementation](../../implementation/client-data-access/README.md)
 - [Authentication](../authentication/README.md)
 

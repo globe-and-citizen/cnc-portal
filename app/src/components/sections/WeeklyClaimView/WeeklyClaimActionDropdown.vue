@@ -141,7 +141,12 @@
     </Teleport>
 
     <!-- Dropdown trigger button -->
-    <UButton variant="ghost" size="sm" @click.stop="toggleDropdown">
+    <UButton
+      variant="ghost"
+      size="sm"
+      data-test="weekly-claim-actions-button"
+      @click.stop="toggleDropdown"
+    >
       <IconifyIcon :icon="ellipsisIcon" class="h-5 w-5" />
     </UButton>
   </div>

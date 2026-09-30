@@ -28,7 +28,7 @@ vi.mock('@/composables/contracts/useContractWritesV3', () => ({
   })
 }))
 
-describe('TeamContractsDetail.vue', () => {
+describe('[US-CONTRACT-003] TeamContractsDetail.vue', () => {
   const contractAddress = '0xE55978c9f7B9bFc190B355d65e7F1dEc2F41D320'
   const testData = [
     { key: 'costPerClick', value: '0.1' },

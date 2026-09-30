@@ -18,7 +18,7 @@ describe('WidgetPreviewCard', () => {
     expect(wrapper.text()).not.toContain('Preview outcome on Pay')
   })
 
-  it('shows the configured amount and facture ID before paying', () => {
+  it('[AC-US-PAYGATE-003-01] shows the configured amount and facture ID before paying', () => {
     const wrapper = mount(WidgetPreviewCard, { props: { selectedToken: 'USDC' } })
 
     expect(wrapper.text()).toContain('order_8842')

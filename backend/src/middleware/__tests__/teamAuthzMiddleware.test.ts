@@ -31,7 +31,7 @@ vi.mock('../../utils', async () => {
   };
 });
 
-describe('rejectIfArchived', () => {
+describe('[US-COMPANIES-006] rejectIfArchived', () => {
   let mockReq: Partial<Request>;
   let mockRes: Partial<Response>;
   let mockNext: ReturnType<typeof vi.fn>;

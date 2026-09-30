@@ -123,7 +123,7 @@ describe('PayDividendsForm.vue', () => {
     expect(wrapper.find('[data-test="bank-empty-warning"]').exists()).toBe(false)
   })
 
-  it('emits submit with parsed native token amount', async () => {
+  it('[AC-US-SHER-002-01] submits a positive native amount within the Bank balance', async () => {
     mockUseContractBalance.balances.value = defaultBalances()
 
     const wrapper = createComponent()
@@ -142,7 +142,7 @@ describe('PayDividendsForm.vue', () => {
     expect(submitEvents?.[0]).toEqual([1500000000000000000n, 'native'])
   })
 
-  it('respects token decimals when submitting alternate token', async () => {
+  it('[AC-US-SHER-002-01] submits a held ERC-20 amount using its token precision', async () => {
     mockUseContractBalance.balances.value = defaultBalances()
 
     const wrapper = createComponent()
@@ -165,7 +165,7 @@ describe('PayDividendsForm.vue', () => {
     expect(submitEvents?.[0]).toEqual([2500000n, 'usdc'])
   })
 
-  it('passes non-sher tokens to TokenAmountInput', () => {
+  it('[AC-US-SHER-002-07] excludes SHER from dividend token choices', () => {
     mockUseContractBalance.balances.value = defaultBalances()
 
     const wrapper = createComponent()
@@ -177,11 +177,29 @@ describe('PayDividendsForm.vue', () => {
     expect(tokensProp.some((token) => token.tokenId === 'sher')).toBe(false)
   })
 
-  it('shows the Board approval notice when a Board action is required', () => {
+  it('[AC-US-SHER-002-06] identifies the Board approval requirement before submission', () => {
     mockUseContractBalance.balances.value = defaultBalances()
 
     const wrapper = createComponent({ isBodAction: true })
     expect(wrapper.find('[data-test="bod-action-alert"]').exists()).toBe(true)
     expect(wrapper.text()).toContain('This will create a BOD action')
+  })
+
+  it('[AC-US-SHER-002-10] rejects zero, non-numeric, and over-balance amounts', async () => {
+    mockUseContractBalance.balances.value = defaultBalances()
+    const wrapper = createComponent()
+    const tokenAmount = wrapper.findComponent(TokenAmountInputStub)
+    const submitButton = wrapper.find('[data-test="pay-dividends-submit-button"]')
+
+    for (const invalidAmount of ['0', 'not-a-number', '11']) {
+      tokenAmount.vm.$emit('update:modelValue', {
+        amount: invalidAmount,
+        tokenId: 'native'
+      })
+      await wrapper.vm.$nextTick()
+      await submitButton.trigger('click')
+    }
+
+    expect(wrapper.emitted('submit')).toBeUndefined()
   })
 })

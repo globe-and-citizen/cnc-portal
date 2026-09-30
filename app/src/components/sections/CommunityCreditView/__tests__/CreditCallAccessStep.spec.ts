@@ -40,7 +40,7 @@ function whitelistEntry(form: CreditCallForm, index = 0): CreditCallForm['whitel
 // (0x1111…1111) — same searchable-member source WhitelistEditor already uses for Issue Note.
 const BOB = '0x1111111111111111111111111111111111111111'
 
-describe('CreditCallAccessStep', () => {
+describe('[US-CC-002] CreditCallAccessStep', () => {
   describe('access mode picker', () => {
     it('toggles form.access and its aria-checked state when a row is clicked', async () => {
       const form = makeForm()

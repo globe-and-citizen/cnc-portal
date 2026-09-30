@@ -9,40 +9,16 @@
 import BodMembersSection from '@/components/sections/AdministrationView/BodMembersSection.vue'
 import ElectionSummarySection from '@/components/sections/AdministrationView/ElectionSummarySection.vue'
 import PastElectionsSection from '@/components/sections/AdministrationView/PastElectionsSection.vue'
-import { useReadContract } from '@wagmi/vue'
-import { electionsAbi } from '@/artifacts/abi/generated'
-import { useTeamStore } from '@/stores'
+import ContractOwnerCard from '@/components/ui/ContractOwnerCard.vue'
+import { useElectionsAddress, useElectionsNextElectionId } from '@/composables/elections'
+import { currentElectionId as electionInProgress } from '@/utils/elections/election'
 import { computed, watch } from 'vue'
 import { log } from '@/lib/logging'
-import ContractOwnerCard from '@/components/ui/ContractOwnerCard.vue'
 
-const teamStore = useTeamStore()
-const electionsAddress = computed(() => teamStore.getContractAddressByType('Elections'))
+const electionsAddress = useElectionsAddress()
+const { data: nextElectionId, error: errorGetNextElectionId } = useElectionsNextElectionId()
 
-// Fetch next election ID
-const {
-  data: nextElectionId,
-  error: errorGetNextElectionId
-  // isLoading: isLoadingNextElectionId,
-} = useReadContract({
-  functionName: 'getNextElectionId',
-  address: electionsAddress,
-  abi: electionsAbi,
-  query: {
-    enabled: computed(() => !!electionsAddress.value)
-  }
-})
-
-// Compute current election ID
-const currentElectionId = computed(() => {
-  if (
-    nextElectionId.value &&
-    (typeof nextElectionId.value === 'number' || typeof nextElectionId.value === 'bigint')
-  ) {
-    return BigInt(Number(nextElectionId.value) - 1)
-  }
-  return 0n // Handle cases where nextElectionId is not available
-})
+const currentElectionId = computed(() => electionInProgress(nextElectionId.value))
 
 watch(errorGetNextElectionId, (error) => {
   if (error) {

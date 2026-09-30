@@ -33,7 +33,7 @@ async function openModal(wrapper: ReturnType<typeof mountModal>) {
   await wrapper.vm.$nextTick()
 }
 
-describe('TeamMetaArchiveModal.vue', () => {
+describe('[US-COMPANIES-006] TeamMetaArchiveModal.vue', () => {
   beforeEach(() => {
     mutateSpy.mockClear()
     resetSpy.mockClear()

@@ -41,7 +41,7 @@ describe('CreditCallAccessStep validate()', () => {
     expect(wrapper.vm.validate()).toBe(true)
   })
 
-  it('fails and shows an error when "restricted" is chosen with nobody added', async () => {
+  it('[AC-US-CC-002-08] rejects restricted access with no lenders', async () => {
     const wrapper = mountStep(makeForm({ access: 'restricted' }))
     expect(wrapper.vm.validate()).toBe(false)
     await wrapper.vm.$nextTick()
@@ -67,7 +67,7 @@ describe('CreditCallAccessStep validate()', () => {
   })
 
   describe('mode 2 — cap on (capOn: true)', () => {
-    it('fails when a whitelisted lender has no amount set', async () => {
+    it('[AC-US-CC-002-09] rejects a capped lender with no allocation', async () => {
       const wrapper = mountStep(
         makeForm({
           access: 'restricted',
@@ -112,7 +112,7 @@ describe('CreditCallAccessStep validate()', () => {
       expect(wrapper.vm.validate()).toBe(true)
     })
 
-    it('fails when whitelisted allocations fall short of the target — no uncapped lender to absorb the rest', async () => {
+    it('[AC-US-CC-002-10] rejects fully capped allocations below the funding target', async () => {
       const wrapper = mountStep(
         makeForm({
           target: '10000',
@@ -129,7 +129,7 @@ describe('CreditCallAccessStep validate()', () => {
       )
     })
 
-    it('fails and shows an error when the cap is left at zero', async () => {
+    it('[AC-US-CC-002-07] rejects a zero general lender cap', async () => {
       const wrapper = mountStep(makeForm({ capOn: true, cap: '0' }))
       expect(wrapper.vm.validate()).toBe(false)
       await wrapper.vm.$nextTick()
@@ -138,7 +138,7 @@ describe('CreditCallAccessStep validate()', () => {
       )
     })
 
-    it('fails and shows an error when the cap exceeds the principal target', async () => {
+    it('[AC-US-CC-002-07] rejects a general lender cap above the funding target', async () => {
       const wrapper = mountStep(makeForm({ target: '10000', capOn: true, cap: '20000' }))
       expect(wrapper.vm.validate()).toBe(false)
       await wrapper.vm.$nextTick()

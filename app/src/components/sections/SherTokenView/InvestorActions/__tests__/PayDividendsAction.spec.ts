@@ -4,6 +4,7 @@ import { createTestingPinia } from '@pinia/testing'
 import { nextTick } from 'vue'
 import type { Address } from 'viem'
 import PayDividendsAction from '../PayDividendsAction.vue'
+import { useBodIsBodAction } from '@/composables/bod/reads'
 import {
   mockBankReads,
   mockBankWrites,
@@ -68,6 +69,7 @@ describe('PayDividendsAction.vue', () => {
       id: 'team-1',
       name: 'Test Team'
     } as unknown as typeof mockTeamStore.currentTeam
+    mockTeamStore.currentTeamMeta.data.isArchived = false
   })
 
   afterEach(() => {
@@ -83,7 +85,17 @@ describe('PayDividendsAction.vue', () => {
     ).toBeUndefined()
   })
 
-  it('shows token missing reason', () => {
+  it('keeps Board ownership detection reactive while the Bank address loads', async () => {
+    const wrapper = createWrapper({ bankAddress: undefined })
+    const reactiveBankAddress = vi.mocked(useBodIsBodAction).mock.calls[0]?.[0]
+
+    expect(reactiveBankAddress).toEqual(expect.objectContaining({ value: undefined }))
+
+    await wrapper.setProps({ bankAddress })
+    expect(reactiveBankAddress).toEqual(expect.objectContaining({ value: bankAddress }))
+  })
+
+  it('[AC-US-SHER-002-04] blocks dividends without a token symbol', () => {
     const wrapper = createWrapper({ tokenSymbol: undefined })
 
     expect(wrapper.findComponent({ name: 'UTooltip' }).props('text')).toBe(
@@ -92,7 +104,7 @@ describe('PayDividendsAction.vue', () => {
     expect(wrapper.find('[data-test="pay-dividends-button"]').attributes('disabled')).toBeDefined()
   })
 
-  it('shows shareholders missing reason when zero', () => {
+  it('[AC-US-SHER-002-04] blocks dividends without shareholders', () => {
     const wrapper = createWrapper({ shareholdersCount: 0 })
 
     expect(wrapper.findComponent({ name: 'UTooltip' }).props('text')).toBe(
@@ -110,7 +122,7 @@ describe('PayDividendsAction.vue', () => {
     expect(wrapper.find('[data-test="pay-dividends-button"]').attributes('disabled')).toBeDefined()
   })
 
-  it('shows authorization reason for non-owner outside BOD', () => {
+  it('[AC-US-SHER-002-05] blocks a user outside Bank ownership and Board authority', () => {
     mockUserStore.address = memberAddress
     const wrapper = createWrapper()
 
@@ -156,7 +168,16 @@ describe('PayDividendsAction.vue', () => {
     expect(mockBodAddAction.executeAddAction).not.toHaveBeenCalled()
   })
 
-  it('in BOD mode exits early when bankAddress is missing', async () => {
+  it('[AC-US-SHER-002-09] blocks dividends for an archived company', async () => {
+    mockTeamStore.currentTeamMeta.data.isArchived = true
+    const wrapper = createWrapper()
+
+    expect(wrapper.find('[data-test="pay-dividends-button"]').attributes('disabled')).toBeDefined()
+    await wrapper.find('[data-test="pay-dividends-button"]').trigger('click')
+    expect(wrapper.find('[data-test="pay-dividends-form"]').exists()).toBe(false)
+  })
+
+  it('[AC-US-SHER-002-11] does not create a Board action without a Bank address', async () => {
     mockBodIsBodAction.isBodAction.value = true
     const wrapper = createWrapper({ bankAddress: undefined })
 
@@ -168,7 +189,7 @@ describe('PayDividendsAction.vue', () => {
     expect(mockBodAddAction.executeAddAction).not.toHaveBeenCalled()
   })
 
-  it('in BOD mode creates native dividends action', async () => {
+  it('[AC-US-SHER-002-03] creates a Board action for a native dividend', async () => {
     mockBodIsBodAction.isBodAction.value = true
     const wrapper = createWrapper()
 
@@ -201,7 +222,7 @@ describe('PayDividendsAction.vue', () => {
     )
   })
 
-  it('in non-BOD mode executes native write and closes modal', async () => {
+  it('[AC-US-SHER-002-02] executes a native dividend directly for the Bank owner', async () => {
     const wrapper = createWrapper()
 
     await wrapper.find('[data-test="pay-dividends-button"]').trigger('click')
@@ -228,14 +249,15 @@ describe('PayDividendsAction.vue', () => {
     expect(mockBankWrites.distributeTokenDividends.mutateAsync).toHaveBeenCalledTimes(1)
   })
 
-  it('reacts to bank owner read error by logging and toasting', async () => {
+  it('[AC-US-SHER-002-12] reports an unavailable Bank owner without enabling dividends', async () => {
     const wrapper = createWrapper()
 
+    mockBankReads.owner.data.value = undefined
     mockBankReads.owner.error.value = new Error('bank owner read failed')
     await nextTick()
 
     expect(mockLog.error).toHaveBeenCalledWith('Error fetching bank owner', expect.any(Error))
-    expect(wrapper.exists()).toBe(true)
+    expect(wrapper.find('[data-test="pay-dividends-button"]').attributes('disabled')).toBeDefined()
   })
 
   it('closes modal when action is marked as added', async () => {

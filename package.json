@@ -7,8 +7,11 @@
     "knip": "knip --config knip.json --include exports",
     "knip:production": "knip --config knip.json --production --include exports --no-exit-code --reporter compact",
     "knip:report": "knip --config knip.json --include exports --no-exit-code --reporter compact",
+    "lint:acceptance-traceability": "node scripts/validate-acceptance-criteria-traceability.mjs",
+    "report:acceptance-coverage": "node scripts/report-acceptance-criteria-coverage.mjs",
     "lint:docs-freshness": "node scripts/validate-documentation-freshness.mjs",
     "lint:md": "markdownlint-cli2",
+    "test:acceptance-traceability": "node --test scripts/acceptance-criteria-traceability.test.mjs",
     "test:docs-freshness": "node --test scripts/documentation-freshness.test.mjs",
     "test:ui-ux-review-contract": "node --test scripts/ui-ux-review-contract.test.mjs",
     "prepare": "husky"
@@ -22,11 +25,11 @@
     "@types/node": "^24.13.3",
     "conventional-changelog-angular": "^8.1.0",
     "conventional-changelog-cli": "^5.0.0",
-    "danger": "^13.0.7",
+    "danger": "^13.0.8",
     "husky": "^9.1.7",
     "knip": "^6.34.0",
     "lint-staged": "^17.0.5",
-    "markdownlint-cli2": "^0.23.2",
+    "markdownlint-cli2": "^0.23.3",
     "prettier": "^3.9.6",
     "typescript": "^5.9.3"
   }

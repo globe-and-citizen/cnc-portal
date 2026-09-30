@@ -49,7 +49,7 @@ const mountSection = () =>
     }
   })
 
-describe('TeamMetaSection.vue', () => {
+describe('[US-COMPANIES-003] TeamMetaSection.vue', () => {
   beforeEach(() => {
     vi.mocked(useTeamStore).mockReturnValue(teamStoreState as never)
     vi.mocked(useUserDataStore).mockReturnValue({ address: '0xOWNER' } as never)

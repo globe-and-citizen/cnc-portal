@@ -48,7 +48,7 @@ const createWrapperWithProps = (
     }
   })
 
-describe('SetMemberWageOvertimeStep.vue', () => {
+describe('[US-PAYROLL-001] SetMemberWageOvertimeStep.vue', () => {
   it('renders overtime banner and recap sections', () => {
     const wrapper = createWrapper()
 
@@ -60,7 +60,7 @@ describe('SetMemberWageOvertimeStep.vue', () => {
     expect(wrapper.find('[data-test="overtime-rate-recap"]').exists()).toBe(true)
   })
 
-  it('renders formatted standard and overtime rate recap values', () => {
+  it('[AC-US-PAYROLL-001-04] renders standard and overtime rates separately', () => {
     const wrapper = createWrapper(
       createWageData({
         ratePerHour: [

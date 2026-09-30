@@ -6,7 +6,7 @@ import { formatDateTime } from '@/utils/format'
 // Lightweight stub to capture props passed to the child cards
 const CardStub = {
   name: 'ElectionStatsCard',
-  props: ['data', 'icon', 'bgColor', 'textColor', 'title', 'color'],
+  props: ['data', 'icon', 'title', 'color'],
   template: '<div data-test="card" :data-title="title" :data-data="String(data)"></div>'
 }
 
@@ -25,7 +25,12 @@ describe('ElectionStats', () => {
     voters: 20
   }
 
-  it('renders four stat cards with correct data and titles', () => {
+  /**
+   * Covers:
+   * - [AC-US-EL-05-02]
+   * - [AC-US-EL-06-01]
+   */
+  it('renders schedule boundaries and turnout for the selected election', () => {
     const wrapper = mount(ElectionStats, {
       props: { formattedElection },
       global: {

@@ -39,7 +39,7 @@ vi.mock('@/composables/elections', () => ({
   }))
 }))
 
-describe('archived team write guard (TeamMetaActions)', () => {
+describe('[US-COMPANIES-006] archived team write guard (TeamMetaActions)', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     // Caller is the team owner so the archive guard is the only thing that can
@@ -159,7 +159,7 @@ describe('archived team write guard (TeamMetaActions)', () => {
   })
 
   describe('ElectionActions', () => {
-    it('disables create election when team is archived', () => {
+    it('[AC-US-EL-01-12] disables election creation when the company is archived', () => {
       vi.mocked(useTeamStore).mockReturnValue({
         currentTeamId: '1',
         currentTeamMeta: archivedTeamMeta

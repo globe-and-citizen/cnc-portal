@@ -70,7 +70,7 @@ describe('VestingFlow.vue', () => {
     expect(review.props('schedule')).toEqual(schedule)
   })
 
-  it('keeps an open review synchronized with the latest schedule state', async () => {
+  it('[AC-US-VESTING-003-11] keeps an open review synchronized with the latest schedule state', async () => {
     const wrapper = mountComponent()
     wrapper.getComponent(VestingScheduleList).vm.$emit('action', 'release', schedule)
     await wrapper.vm.$nextTick()

@@ -74,14 +74,14 @@ describe('BankBeacon', () => {
   }
 
   context('deployment', () => {
-    it('should deploy correctly', async () => {
+    it('deploys with the configured owner and implementation', async () => {
       const { superAdmin, beacon, bankImplementation } = await loadFixture(deployFixture)
 
       expect(await beacon.owner()).to.eq(superAdmin.address)
       expect(await beacon.implementation()).to.eq(await bankImplementation.getAddress())
     })
 
-    it('should deploy beacon proxy correctly', async () => {
+    it('initializes a beacon proxy for its owner', async () => {
       const { beacon, user3, encodedInitializeUser3 } = await loadFixture(deployFixture)
 
       const BankBeaconProxy = await ethers.getContractFactory('UserBeaconProxy')
@@ -98,14 +98,14 @@ describe('BankBeacon', () => {
       expect(owner).to.eq(user3.address)
     })
 
-    it('should set superAdmin correctly', async () => {
+    it('assigns the super administrator as beacon owner', async () => {
       const { superAdmin, beacon } = await loadFixture(deployFixture)
       expect(await beacon.owner()).to.eq(superAdmin.address)
     })
   })
 
   describe('upgrade', () => {
-    it('should upgrade correctly', async () => {
+    it('upgrades to a new implementation', async () => {
       const { superAdmin, beacon } = await loadFixture(deployFixture)
 
       // upgrade to new address
@@ -118,7 +118,7 @@ describe('BankBeacon', () => {
       expect(await beacon.implementation()).to.eq(await newImpl.getAddress())
     })
 
-    it('should not upgrade if not admin', async () => {
+    it('does not upgrade if not admin', async () => {
       const { user1, beacon } = await loadFixture(deployFixture)
 
       const BankImplementationFactory = await ethers.getContractFactory('Bank')
@@ -131,7 +131,7 @@ describe('BankBeacon', () => {
   })
 
   describe('bank functions', () => {
-    it('should read correctly', async () => {
+    it('reads state through the proxy', async () => {
       const { bankBeaconProxy1 } = await loadFixture(deployFixture)
 
       const bankBeacon = await ethers.getContractAt('Bank', await bankBeaconProxy1.getAddress())
@@ -139,7 +139,7 @@ describe('BankBeacon', () => {
       expect(paused).to.be.false
     })
 
-    it('should write correctly', async () => {
+    it('writes state through the proxy', async () => {
       const { user1, bankBeaconProxy1 } = await loadFixture(deployFixture)
       const bankBeaconProxy = await ethers.getContractAt(
         'Bank',
@@ -152,7 +152,7 @@ describe('BankBeacon', () => {
       expect(paused).to.be.true
     })
 
-    it('should not be able to write if not owner', async () => {
+    it('rejects writes from a non-owner', async () => {
       const { user2, bankBeaconProxy1, bankImplementation } = await loadFixture(deployFixture)
 
       const bankBeaconProxy = await ethers.getContractAt(

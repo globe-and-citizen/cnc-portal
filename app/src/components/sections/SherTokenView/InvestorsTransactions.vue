@@ -208,7 +208,7 @@ import {
 } from '@/utils/transactions/registry'
 import { log } from '@/lib/logging'
 import { computed, watch } from 'vue'
-import { formatPercent } from '@/utils/format'
+import { EMPTY_VALUE, formatPercent } from '@/utils/format'
 import { useTransactionTable } from '@/composables/transactions/useTransactionTable'
 import { useTransactionInline } from '@/composables/transactions/useTransactionInline'
 import { useTransactionPresentation } from '@/composables/transactions/useTransactionPresentation'
@@ -222,9 +222,10 @@ const teamStore = useTeamStore()
 const currencyStore = useCurrencyStore()
 const { resolveUser } = useTransactionPresentation()
 const { data: investorSymbolData } = useInvestorSymbol()
-const investorTokenSymbol = computed(() =>
-  typeof investorSymbolData.value === 'string' ? investorSymbolData.value : 'SHER'
-)
+const investorTokenSymbol = computed(() => {
+  const symbol = investorSymbolData.value
+  return typeof symbol === 'string' && symbol.trim() ? symbol.trim() : EMPTY_VALUE
+})
 
 const investorAddress = computed(() => {
   const address = teamStore.getInvestorAddress()
@@ -244,18 +245,22 @@ const getUsdPrice = (tokenId: TokenId | null): number => {
   return 0
 }
 
-const { result, error, loading: investorLoading } = useInvestorEventsViaLogs(investorAddress)
+const {
+  data: investorData,
+  error,
+  isPending: investorLoading
+} = useInvestorEventsViaLogs(investorAddress)
 
 const {
-  result: safeResult,
+  data: safeData,
   error: safeError,
-  loading: safeLoading
+  isPending: safeLoading
 } = useSafeDepositRouterEventsViaLogs(safeDepositRouterAddress)
 
 const loading = computed(() => investorLoading.value || safeLoading.value)
 
 const enrichedTransactions = computed(() =>
-  buildRawInvestorTransactions(result.value, safeResult.value).map((tx) =>
+  buildRawInvestorTransactions(investorData.value?.events, safeData.value?.events).map((tx) =>
     mapRawInvestorTransaction(
       tx,
       investorTokenSymbol.value,

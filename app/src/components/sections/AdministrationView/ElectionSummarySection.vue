@@ -13,7 +13,6 @@
           <ElectionActions
             v-if="!isDetails"
             :election-id="currentElectionId"
-            @show-results-modal="showResultsModal = true"
             @show-create-election-modal="showCreateElectionModal = { mount: true, show: true }"
           />
           <UModal
@@ -30,7 +29,7 @@
           >
             <template #body>
               <CreateElectionForm
-                :is-loading="isLoadingCreateElection /*|| isConfirmingCreateElection*/"
+                :is-loading="isLoadingCreateElection"
                 :error-message="createElectionError"
                 @create-proposal="createElection"
                 @close-modal="() => (showCreateElectionModal = { mount: false, show: false })"
@@ -60,10 +59,7 @@
         <ElectionStats :formatted-election="formattedElection" />
       </div>
     </div>
-    <ElectionSummaryEmptyState
-      v-else
-      @show-create-election-modal="showCreateElectionModal = { mount: true, show: true }"
-    />
+    <ElectionSummaryEmptyState v-else />
   </UCard>
 </template>
 
@@ -85,7 +81,6 @@ const props = defineProps<{ electionId: bigint; isDetails?: boolean }>()
 
 const teamStore = useTeamStore()
 const toast = useToast()
-const showResultsModal = ref(false)
 const currentElectionId = computed(() => props.electionId)
 const { electionsAddress, formattedElection } = useBoDElections(currentElectionId)
 const showCreateElectionModal = ref({

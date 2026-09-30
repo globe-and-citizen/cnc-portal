@@ -50,7 +50,7 @@ const conditions = computed(() => [
   {
     icon: 'heroicons:scale',
     label: 'Cap per lender',
-    value: props.round.cap ? formatAmount(props.round.cap) : 'No cap'
+    value: props.round.cap ? formatAmount(props.round.cap, props.round.token) : 'No cap'
   }
 ])
 </script>

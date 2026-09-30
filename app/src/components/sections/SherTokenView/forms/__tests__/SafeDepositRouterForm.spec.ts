@@ -83,7 +83,7 @@ describe('SafeDepositRouterForm.vue', () => {
     mockERC20Reads.allowance.data.value = 0n
   })
 
-  it('handles bidirectional amount calculations and cancel/reset paths', async () => {
+  it('[AC-US-SHER-001-10] resets the investment form and closes it on cancel', async () => {
     const wrapper = createWrapper()
     const vm = getVm(wrapper)
     const compensation = () => wrapper.findComponent({ name: 'CompensationAmountInput' })
@@ -122,7 +122,7 @@ describe('SafeDepositRouterForm.vue', () => {
     expect(wrapper.exists()).toBe(true)
   })
 
-  it('approve onError resets the step and surfaces a user-rejection toast', async () => {
+  it('[AC-US-SHER-001-08] stops before deposit when approval fails', async () => {
     const wrapper = createWrapper()
     const vm = getVm(wrapper)
 
@@ -136,7 +136,7 @@ describe('SafeDepositRouterForm.vue', () => {
     expect(mockSafeDepositRouterWrites.deposit.mutate).not.toHaveBeenCalled()
   })
 
-  it('deposit onError resets the step', async () => {
+  it('[AC-US-SHER-001-09] resets after a failed deposit without reporting success', async () => {
     const wrapper = createWrapper()
     const vm = getVm(wrapper)
 
@@ -150,7 +150,7 @@ describe('SafeDepositRouterForm.vue', () => {
     expect(vm.currentStep).toBe(0)
   })
 
-  it('runs approval then deposit sequentially and closes on success', async () => {
+  it('[AC-US-SHER-001-03] approves insufficient allowance before depositing', async () => {
     const wrapper = createWrapper()
     const vm = getVm(wrapper)
 
@@ -191,7 +191,7 @@ describe('SafeDepositRouterForm.vue', () => {
     expect(wrapper.emitted('closeModal')).toBeTruthy()
   })
 
-  it('guards submitForm when prerequisites are missing', async () => {
+  it('[AC-US-SHER-001-07] blocks deposit when required router inputs are unavailable', async () => {
     const wrapper = createWrapper()
     const vm = getVm(wrapper)
 

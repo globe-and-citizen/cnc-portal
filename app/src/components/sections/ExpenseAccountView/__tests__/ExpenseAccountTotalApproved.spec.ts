@@ -4,14 +4,14 @@ import ExpenseAccountTotalApproved from '../ExpenseAccountTotalApproved.vue'
 import { createMockQueryResponse } from '@/tests/mocks'
 import { useGetExpensesQuery } from '@/queries/expense.queries'
 
-describe('ExpenseAccountTotalApproved', () => {
+describe('[US-EXP-004] ExpenseAccountTotalApproved', () => {
   beforeEach(() => {
     vi.mocked(useGetExpensesQuery).mockReturnValue(createMockQueryResponse([]))
   })
 
   const amountText = () => mount(ExpenseAccountTotalApproved).find('[data-test="amount"]').text()
 
-  it('counts distinct approved members, ignoring address casing', () => {
+  it('[AC-US-EXP-004-01] counts distinct approved members for the account summary', () => {
     vi.mocked(useGetExpensesQuery).mockReturnValue(
       createMockQueryResponse([
         { userAddress: '0xAAA' },

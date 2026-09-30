@@ -9,6 +9,7 @@
         <div
           v-for="weekItem in monthWeeksWithClaims"
           :key="weekItem.week.isoString"
+          :data-test="`week-${weekItem.week.isoString}`"
           @click="selectWeek(weekItem.week)"
           :class="[
             'cursor-pointer rounded-lg border p-3',

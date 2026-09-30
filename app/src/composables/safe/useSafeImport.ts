@@ -1,8 +1,9 @@
 import { useMutation } from '@tanstack/vue-query'
 import { readContract } from '@wagmi/core'
-import { getAddress, isAddress, type Address } from 'viem'
+import { isAddress, type Address } from 'viem'
 import { currentChainId } from '@/constant'
 import { config } from '@/wagmi.config'
+import { normalizeSafeAddress } from '@/utils/safe/address'
 
 const SAFE_INSPECTION_ABI = [
   {
@@ -44,7 +45,7 @@ export async function inspectSafe(address: string): Promise<ImportedSafeSummary>
     throw new Error('Enter a valid Safe address')
   }
 
-  const safeAddress = getAddress(address)
+  const safeAddress = normalizeSafeAddress(address)
 
   try {
     const [owners, threshold, version] = await Promise.all([

@@ -48,13 +48,11 @@
               class="text-primary h-9 w-9 animate-spin"
               data-test="safe-balance-loading"
             />
-            <span v-else>{{ balance?.total.usd.formatted ?? '—' }}</span>
+            <span v-else data-test="safe-total-usd">{{ totalUsd }}</span>
           </span>
           <span class="text-sm text-gray-600">USD</span>
         </div>
-        <p class="mt-1 text-sm text-gray-500">
-          ≈ {{ balance?.total.local.formatted ?? '—' }} {{ currency.code }}
-        </p>
+        <p class="mt-1 text-sm text-gray-500">≈ {{ totalLocal }} {{ currency.code }}</p>
 
         <div class="mt-5 flex flex-wrap gap-3">
           <div class="rounded-lg bg-gray-50 px-3 py-2 dark:bg-gray-800/60">
@@ -66,7 +64,7 @@
           <div class="rounded-lg bg-gray-50 px-3 py-2 dark:bg-gray-800/60">
             <p class="text-xs text-gray-500">Your role</p>
             <p class="mt-1 font-semibold" data-test="safe-user-role">
-              {{ roleLabel }}
+              {{ roleCopy.label }}
             </p>
           </div>
         </div>
@@ -78,8 +76,8 @@
           :color="isSafeInfoLoading ? 'neutral' : isConnectedUserOwner ? 'success' : 'info'"
           variant="soft"
           :icon="isConnectedUserOwner ? 'i-lucide-key-round' : 'i-lucide-info'"
-          :title="roleNoticeTitle"
-          :description="roleDescription"
+          :title="roleCopy.noticeTitle"
+          :description="roleCopy.description"
           data-test="safe-role-notice"
         />
 
@@ -100,8 +98,8 @@
             color="secondary"
             leading-icon="i-lucide-arrow-right-left"
             label="Create transfer"
-            :disabled="!isConnectedUserOwner"
-            :title="transferPermissionHint"
+            :disabled="!isConnectedUserOwner || isWriteDisabled"
+            :title="roleCopy.transferHint"
             class="justify-center"
             data-test="transfer-button"
             @click="openTransferModal"
@@ -164,7 +162,6 @@ import { useStorage } from '@vueuse/core'
 import { useToast } from '@nuxt/ui/composables'
 import AddressTooltip from '@/components/ui/AddressTooltip.vue'
 import { getSafeHomeUrl, openSafeAppUrl } from '@/composables/safe'
-import { useUserDataStore } from '@/stores'
 import { useContractBalance } from '@/composables/useContractBalance'
 import { useGetSafeInfoQuery } from '@/queries/safe.queries'
 import TransferForm, { type TransferModel } from '@/components/forms/TransferForm.vue'
@@ -173,10 +170,12 @@ import { useTransferFromSafeMutation } from '@/queries/safe.mutations'
 import DepositSafeForm from '@/components/sections/SafeView/forms/DepositSafeForm.vue'
 import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
 import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
+import { useSafeSignerRole } from '@/composables/safe/useSafeSignerRole'
+import { formatCurrency, formatUsd } from '@/utils/format'
+import { signerRoleCopy } from '@/utils/safe/signerRole'
 
 const props = defineProps<{ address: Address }>()
 const chainId = useChainId()
-const userDataStore = useUserDataStore()
 const currency = useStorage('currency', { code: 'USD', name: 'US Dollar', symbol: '$' })
 const { isWriteDisabled } = useTeamWriteGuard()
 
@@ -186,6 +185,10 @@ const {
   error: balanceError,
   refetch: refetchBalance
 } = useContractBalance(props.address)
+const totalUsd = computed(() => formatUsd(balance.value?.total.usd.value))
+const totalLocal = computed(() =>
+  formatCurrency(balance.value?.total.local.value, { currency: currency.value.code })
+)
 const {
   data: safeInfo,
   isLoading: isSafeInfoLoading,
@@ -206,37 +209,9 @@ const tokens = computed<TokenOption[]>(() =>
     .filter((item) => item.tokenId !== 'sher')
 )
 
-const isConnectedUserOwner = computed(() => {
-  if (!userDataStore.address || !safeInfo.value?.owners?.length) return false
-  return safeInfo.value.owners.some(
-    (owner) => owner.toLowerCase() === userDataStore.address?.toLowerCase()
-  )
-})
-
-const roleDescription = computed(() =>
-  isSafeInfoLoading.value
-    ? 'Checking the connected wallet against the Safe owner list.'
-    : isConnectedUserOwner.value
-      ? 'You can propose transfers, approve pending actions, and execute transactions once the threshold is reached.'
-      : 'You can review activity and deposit funds. Connect a Safe signer wallet to propose transfers or approve actions.'
-)
-
-const roleLabel = computed(() => {
-  if (isSafeInfoLoading.value) return 'Checking permissions…'
-  return isConnectedUserOwner.value ? 'Safe signer' : 'Viewer / depositor'
-})
-
-const roleNoticeTitle = computed(() => {
-  if (isSafeInfoLoading.value) return 'Checking signer permissions'
-  return isConnectedUserOwner.value
-    ? 'Signer wallet connected'
-    : 'Safe information is read-only for this wallet'
-})
-
-const transferPermissionHint = computed(() =>
-  isConnectedUserOwner.value
-    ? 'Create a transfer proposal for signer approval.'
-    : 'Only a Safe signer can create a transfer proposal.'
+const { isConnectedUserOwner } = useSafeSignerRole(safeInfo)
+const roleCopy = computed(() =>
+  signerRoleCopy({ isLoading: isSafeInfoLoading.value, isOwner: isConnectedUserOwner.value })
 )
 
 const depositModal = ref({ mount: false, show: false })
@@ -275,7 +250,7 @@ const openDepositModal = () => {
 }
 
 const openTransferModal = () => {
-  if (!isConnectedUserOwner.value) return
+  if (!isConnectedUserOwner.value || isWriteDisabled.value) return
   transferModal.value = { mount: true, show: true }
 }
 

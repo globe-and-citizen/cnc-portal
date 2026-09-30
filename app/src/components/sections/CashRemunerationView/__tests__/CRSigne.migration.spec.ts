@@ -125,7 +125,7 @@ describe('CRSigne — issue #1825 sign payload + migration freeze', () => {
     if (wrapper) wrapper.unmount()
   })
 
-  it('sends signedAgainstContractAddress + chainId + typedDataMessage with the sign request', async () => {
+  it('[AC-US-PAYROLL-008-02] sends signedAgainstContractAddress + chainId + typedDataMessage with the sign request', async () => {
     const mutateAsync = vi.fn().mockResolvedValue(undefined)
     vi.mocked(useUpdateWeeklyClaimMutation).mockReturnValueOnce({
       ...createMockMutationResponse(),
@@ -158,7 +158,7 @@ describe('CRSigne — issue #1825 sign payload + migration freeze', () => {
     )
   })
 
-  it('disables the approve button when the team is not migrated', () => {
+  it('[AC-US-PAYROLL-008-14] disables the approve button when the team is not migrated', () => {
     mockTeamStore.currentTeamMeta = {
       isPending: false,
       data: { ...mockTeamStore.currentTeam, isMigrated: false }

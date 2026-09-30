@@ -10,6 +10,19 @@ Operational guidance for AI coding agents working in this repository. Human cont
 2. Work in the subproject you touch. This monorepo has no workspace tool: each subproject owns its `package.json` and dependencies.
 3. Read the specialised guide for the affected area. Do not treat this file as a replacement for the implementation guides.
 
+## Agent planning scratchpad
+
+- At the start of every agent session, read `reports/planning.md` when it exists. It is a local, Git-ignored work log for commitments made
+  during agent conversations; never stage or commit it.
+- When a concrete action is agreed during a conversation, add it to `Actions ouvertes` with a priority, status, next action, and concise
+  context or evidence. Keep statuses current: `À faire`, `En cours`, `Bloqué`, or `À vérifier`.
+- Do not treat the scratchpad as canonical product or implementation documentation. Durable decisions, acceptance criteria, issue status,
+  and delivery evidence belong in their canonical documentation or GitHub issue/PR.
+- When an action is verified as complete, move it to `Historique terminé` with the completion date, result, and evidence. Never delete a
+  completed action automatically; preserve the trace unless the user explicitly requests an archival purge.
+- At the end of a task, update the scratchpad so unfinished work and blockers remain visible for the next agent. Do not mark an item
+  complete without executable, CI, or explicit manual evidence appropriate to the work.
+
 ## Repository skills
 
 Task-specific workflows are versioned under `.agents/skills/`. Use only the one that matches the work:
@@ -23,6 +36,10 @@ Task-specific workflows are versioned under `.agents/skills/`. Use only the one 
 - `cnc-contract-change` — Solidity and ABI changes.
 
 `AGENTS.md` remains the universal contract. Skills contain procedures; detailed standards remain in their specialised guides.
+
+Recurring AI-agent audits follow the [Autonomous Semantic Audit Contracts](./docs/development-guide/autonomous-audits/README.md). These
+audits require contextual reasoning beyond deterministic CI output and may create tracked draft remediation PRs only within their documented
+confidence and safety boundaries.
 
 ## Repository map
 
@@ -115,6 +132,8 @@ changing agent-instruction Markdown, run:
 npm run lint:md
 # Markdown style lives in .prettier-markdown.json. Checks all tracked Markdown files; subproject format checks exclude Markdown.
 npm run format:md:check
+npm run test:acceptance-traceability
+npm run lint:acceptance-traceability
 npm run test:docs-freshness
 npm run lint:docs-freshness
 bash scripts/audit-doc-drift.sh

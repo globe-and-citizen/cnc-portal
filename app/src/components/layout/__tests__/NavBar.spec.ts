@@ -30,7 +30,7 @@ describe('NavBar', () => {
   })
 
   describe('Render', () => {
-    it('Should Render the component', () => {
+    it('Renders the component', () => {
       const wrapper = createWrapper()
       expect(wrapper.exists()).toBe(true)
     })
@@ -48,7 +48,7 @@ describe('NavBar', () => {
     })
   })
 
-  it('opens profile modal when settings item is selected', async () => {
+  it('[AC-US-PROFILE-001-01] opens the profile form from navigation settings', async () => {
     const wrapper = createWrapper()
     const dropdown = wrapper.findComponent({ name: 'UDropdown' })
     const items = dropdown.props('items') as Array<{ onSelect?: () => void }>

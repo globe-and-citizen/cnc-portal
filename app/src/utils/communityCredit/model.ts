@@ -71,10 +71,15 @@ export function roundToDisplayPrecision(n: number): number {
   return Math.round(n * 10000) / 10000
 }
 
-/** Repayable ceiling for a round: the tighter of what's still owed and what the treasury
- *  currently holds (a `null` balance — not yet loaded — imposes no extra cap). */
-export function repayableCeiling(outstanding: number, treasuryBalance: number | null): number {
-  return roundToDisplayPrecision(Math.min(outstanding, treasuryBalance ?? outstanding))
+/** Repayable ceiling for a round, in exact token base units: the tighter of what's
+ *  still owed and what the treasury currently holds (a `null` balance — not yet
+ *  loaded — imposes no extra cap). Bigint throughout so a large or high-decimal
+ *  balance never loses precision on its way to prefilling the repay amount — a lossy
+ *  `Number()` ceiling can drift a fraction of a unit off the true outstanding balance,
+ *  which turns "Max" into a repayment that still leaves the round short. */
+export function repayableCeilingUnits(outstanding: bigint, treasuryBalance: bigint | null): bigint {
+  const ceiling = treasuryBalance ?? outstanding
+  return outstanding < ceiling ? outstanding : ceiling
 }
 
 /** Two-letter initials from a member name, ignoring a trailing `(you)`. */

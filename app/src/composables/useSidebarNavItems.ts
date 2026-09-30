@@ -202,9 +202,9 @@ export function useSidebarNavItems(): ComputedRef<NavigationMenuItem[][]> {
               to: { name: 'accounting-ledger', params: teamParams() }
             },
             {
-              label: 'Classification',
-              active: name === 'accounting-classification',
-              to: { name: 'accounting-classification', params: teamParams() }
+              label: 'Account Assignments',
+              active: name === 'accounting-account-assignments',
+              to: { name: 'accounting-account-assignments', params: teamParams() }
             }
           ]
         },

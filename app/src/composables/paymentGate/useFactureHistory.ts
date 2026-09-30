@@ -32,7 +32,7 @@ export interface FacturePayment extends TransactionHistoryItemRow {
 export function useFactureHistory(bankAddress: MaybeRefOrGetter<Address | undefined>) {
   const events = useBankEventsViaLogs(bankAddress)
 
-  const tokenDeposits = computed(() => events.result.value?.bankTokenDeposits.items ?? [])
+  const tokenDeposits = computed(() => events.data.value?.events.bankTokenDeposits.items ?? [])
   const depositHashes = computed(() => [
     ...new Set(tokenDeposits.value.map((item) => extractTxHashFromId(item.id)))
   ])
@@ -94,7 +94,7 @@ export function useFactureHistory(bankAddress: MaybeRefOrGetter<Address | undefi
 
   return {
     payments,
-    loading: computed(() => events.loading.value || calldataQuery.isPending.value),
+    loading: computed(() => events.isPending.value || calldataQuery.isPending.value),
     error: computed(() => events.error.value ?? calldataQuery.error.value)
   }
 }

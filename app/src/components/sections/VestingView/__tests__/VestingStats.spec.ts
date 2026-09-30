@@ -3,7 +3,7 @@ import { renderWithProviders } from '@/tests/mocks'
 import VestingStats from '@/components/sections/VestingView/VestingStats.vue'
 
 describe('VestingStats.vue', () => {
-  it('renders all four V2 totals with the token symbol', () => {
+  it('[AC-US-VESTING-002-01] renders promised, vested, claimable, and released totals', () => {
     const wrapper = renderWithProviders(VestingStats, {
       props: {
         totals: {

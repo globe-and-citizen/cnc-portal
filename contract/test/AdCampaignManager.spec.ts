@@ -27,7 +27,7 @@ describe('AdCampaignManager', () => {
   })
 
   describe('Deployment', () => {
-    it('Should deploy the contract with correct initial values', async () => {
+    it('deploys the contract with correct initial values', async () => {
       expect(await adCampaignManager.getCostPerClick()).to.equal(ethers.parseEther('0.01'))
       expect(await adCampaignManager.getCostPerImpression()).to.equal(ethers.parseEther('0.001'))
       expect(await adCampaignManager.getBankContractAddress()).to.equal(owner.address)
@@ -35,7 +35,7 @@ describe('AdCampaignManager', () => {
   })
 
   describe('Ad Campaigns', () => {
-    it('Should allow an advertiser to create an ad campaign', async () => {
+    it('allows an advertiser to create an ad campaign', async () => {
       // Execute the transaction to create an ad campaign
       const tx = await adCampaignManager.connect(advertiser).createAdCampaign({
         value: ethers.parseEther('10')
@@ -77,7 +77,7 @@ describe('AdCampaignManager', () => {
       expect(campaign.budget).to.equal(ethers.parseEther('10'))
     })
 
-    it('Should not allow creating an ad campaign with zero budget', async () => {
+    it('does not allow creating an ad campaign with zero budget', async () => {
       await expect(
         adCampaignManager.connect(advertiser).createAdCampaign({
           value: ethers.parseEther('0')
@@ -85,7 +85,7 @@ describe('AdCampaignManager', () => {
       ).to.be.revertedWithCustomError(adCampaignManager, 'AdCampaignManager__ZeroAmount')
     })
 
-    it('Should not allow unauthorized users to request withdrawal', async () => {
+    it('does not allow unauthorized users to request withdrawal', async () => {
       // Ensure the campaign is active before attempting the withdrawal
       const campaignId = await adCampaignManager.getCampaignCodesToId(campaignCode)
       const campaign = await adCampaignManager.getAdCampaigns(campaignId)
@@ -105,7 +105,7 @@ describe('AdCampaignManager', () => {
         .withArgs(unauthorizedUser.address)
     })
 
-    it('Should not allow creating an ad campaign with invalid budget', async () => {
+    it('does not allow creating an ad campaign with invalid budget', async () => {
       await expect(
         adCampaignManager.connect(advertiser).createAdCampaign({
           value: ethers.parseEther('0') // Negative budget
@@ -113,7 +113,7 @@ describe('AdCampaignManager', () => {
       ).to.be.revertedWithCustomError(adCampaignManager, 'AdCampaignManager__ZeroAmount')
     })
 
-    it('Should fail to withdraw by a non-advertiser', async () => {
+    it('fails to withdraw by a non-advertiser', async () => {
       // Ensure the campaign is active before attempting the withdrawal
       const campaignId = await adCampaignManager.getCampaignCodesToId(campaignCode)
       const campaign = await adCampaignManager.getAdCampaigns(campaignId)
@@ -133,7 +133,7 @@ describe('AdCampaignManager', () => {
         .withArgs(admin.address)
     })
 
-    it('Should allow the owner or admin to claim payment', async () => {
+    it('allows the owner or admin to claim payment', async () => {
       // Simulate the owner claiming the payment
       // Use the campaign ID as the campaign code
       const currentAmountSpent = ethers.parseEther('3')
@@ -146,7 +146,7 @@ describe('AdCampaignManager', () => {
         .withArgs(campaignCode, ethers.parseEther('3'))
     })
 
-    it('Should not allow claiming payment with invalid amount', async () => {
+    it('does not allow claiming payment with invalid amount', async () => {
       const invalidAmountSpent = ethers.parseEther('0') // Negative amount
 
       await expect(
@@ -154,14 +154,14 @@ describe('AdCampaignManager', () => {
       ).to.be.revertedWithCustomError(adCampaignManager, 'AdCampaignManager__ZeroAmount')
     })
 
-    it('Should allow the owner to update cost per click and cost per impression', async () => {
+    it('allows the owner to update cost per click and cost per impression', async () => {
       await adCampaignManager.connect(owner).setCostPerClick(ethers.parseEther('0.02'))
       await adCampaignManager.connect(owner).setCostPerImpression(ethers.parseEther('0.01'))
       expect(await adCampaignManager.getCostPerClick()).to.equal(ethers.parseEther('0.02'))
       expect(await adCampaignManager.getCostPerImpression()).to.equal(10000000000000000n)
     })
 
-    it('Should not allow unauthorized users to set the cost per click', async () => {
+    it('does not allow unauthorized users to set the cost per click', async () => {
       await expect(
         adCampaignManager.connect(unauthorizedUser).setCostPerClick(ethers.parseEther('0.02'))
       )
@@ -169,14 +169,14 @@ describe('AdCampaignManager', () => {
         .withArgs(unauthorizedUser.address)
     })
 
-    it('Should allow the owner to update cost per click and cost per impression', async () => {
+    it('allows the owner to update cost per click and cost per impression', async () => {
       await adCampaignManager.connect(owner).setCostPerClick(ethers.parseEther('0.02'))
       await adCampaignManager.connect(owner).setCostPerImpression(ethers.parseEther('0.01'))
       expect(await adCampaignManager.getCostPerClick()).to.equal(ethers.parseEther('0.02'))
       expect(await adCampaignManager.getCostPerImpression()).to.equal(10000000000000000n)
     })
 
-    it('should revert if bankContractAddress is set to address(0)', async () => {
+    it('reverts if bankContractAddress is set to address(0)', async () => {
       await expect(
         adCampaignManager
           .connect(owner)
@@ -184,13 +184,13 @@ describe('AdCampaignManager', () => {
       ).to.be.revertedWithCustomError(adCampaignManager, 'AdCampaignManager__ZeroAddress')
     })
 
-    it('Should not allow non-owners to update cost per click', async () => {
+    it('does not allow non-owners to update cost per click', async () => {
       await expect(adCampaignManager.connect(advertiser).setCostPerClick(ethers.parseEther('0.02')))
         .to.be.revertedWithCustomError(adCampaignManager, 'AdCampaignManager__NotAdminOrOwner')
         .withArgs(advertiser.address)
     })
 
-    it('Should not allow non-owners to update cost per impression', async () => {
+    it('does not allow non-owners to update cost per impression', async () => {
       await expect(
         adCampaignManager.connect(advertiser).setCostPerImpression(ethers.parseEther('0.02'))
       )
@@ -198,14 +198,14 @@ describe('AdCampaignManager', () => {
         .withArgs(advertiser.address)
     })
 
-    it('Should fail to claim payment with an invalid campaign code', async () => {
+    it('fails to claim payment with an invalid campaign code', async () => {
       const invalidCode = 'INVALID_CODE'
       await expect(
         adCampaignManager.connect(owner).claimPayment(invalidCode, ethers.parseEther('3'))
       ).to.be.revertedWithCustomError(adCampaignManager, 'AdCampaignManager__InvalidCampaignCode')
     })
 
-    it('Should allow the advertiser to request and approve withdrawal', async () => {
+    it('allows the advertiser to request and approve withdrawal', async () => {
       // Campaign created in the first test
       const currentAmountSpent = ethers.parseEther('6')
 
@@ -222,14 +222,14 @@ describe('AdCampaignManager', () => {
         .withArgs(campaignCode, ethers.parseEther('3'))
     })
 
-    it('Should mark the campaign as completed when the entire budget is claimed', async () => {
+    it('marks the campaign as completed when the entire budget is claimed', async () => {
       const campaignId = await adCampaignManager.getCampaignCodesToId(campaignCode)
       const campaign = await adCampaignManager.getAdCampaigns(campaignId)
 
       expect(campaign.status).to.equal(1) // 1 = Completed
     })
 
-    it('Should mark the campaign as completed when the amount spent equals or exceeds the budget', async () => {
+    it('marks the campaign as completed when the amount spent equals or exceeds the budget', async () => {
       // Create a new campaign with a fixed budget
       const tx = await adCampaignManager.connect(advertiser).createAdCampaign({
         value: ethers.parseEther('5') // Budget is 5 ETH
@@ -257,7 +257,7 @@ describe('AdCampaignManager', () => {
       expect(updatedCampaign.status).to.equal(1) // 1 = Completed
     })
 
-    it('Should generate a unique campaign code for each ad campaign', async () => {
+    it('generates a unique campaign code for each ad campaign', async () => {
       // Create the first ad campaign
       const tx1 = await adCampaignManager.connect(advertiser).createAdCampaign({
         value: ethers.parseEther('5')
@@ -306,7 +306,7 @@ describe('AdCampaignManager', () => {
   })
 
   describe('Admin Management', () => {
-    it('Should allow only owner to add and remove admins', async () => {
+    it('allows only owner to add and remove admins', async () => {
       const tx = await adCampaignManager.connect(owner).addAdmin(admin.address)
       await expect(tx).to.emit(adCampaignManager, 'AdminAdded').withArgs(admin.address)
 
@@ -319,7 +319,7 @@ describe('AdCampaignManager', () => {
       const isAdminAfterRemoval = await adCampaignManager.getAdmins(admin.address)
       expect(isAdminAfterRemoval).to.be.false
     })
-    it('Should allow only admins or the owner to set the bankContractAddress', async () => {
+    it('allows only admins or the owner to set the bankContractAddress', async () => {
       await adCampaignManager.connect(owner).setBankContractAddress(admin.address)
       expect(await adCampaignManager.getBankContractAddress()).to.equal(admin.address)
 
@@ -329,7 +329,7 @@ describe('AdCampaignManager', () => {
         .withArgs(advertiser.address)
     })
 
-    it('Should not allow unauthorized users to set the cost per click', async () => {
+    it('does not allow unauthorized users to set the cost per click', async () => {
       await expect(
         adCampaignManager.connect(unauthorizedUser).setCostPerClick(ethers.parseEther('0.02'))
       )
@@ -337,7 +337,7 @@ describe('AdCampaignManager', () => {
         .withArgs(unauthorizedUser.address)
     })
 
-    it('Should not allow unauthorized users to set the cost per impression', async () => {
+    it('does not allow unauthorized users to set the cost per impression', async () => {
       await expect(
         adCampaignManager.connect(unauthorizedUser).setCostPerImpression(ethers.parseEther('0.02'))
       )
@@ -345,7 +345,7 @@ describe('AdCampaignManager', () => {
         .withArgs(unauthorizedUser.address)
     })
 
-    it('Should allow only admins or the owner to set the cost per click', async () => {
+    it('allows only admins or the owner to set the cost per click', async () => {
       await adCampaignManager.connect(owner).setCostPerClick(ethers.parseEther('0.02'))
       expect(await adCampaignManager.getCostPerClick()).to.equal(ethers.parseEther('0.02'))
 
@@ -355,7 +355,7 @@ describe('AdCampaignManager', () => {
         .withArgs(advertiser.address)
     })
 
-    it('Should allow only admins or the owner to set the cost per impression', async () => {
+    it('allows only admins or the owner to set the cost per impression', async () => {
       await adCampaignManager.connect(owner).setCostPerImpression(ethers.parseEther('0.002'))
       expect(await adCampaignManager.getCostPerImpression()).to.equal(ethers.parseEther('0.002'))
 
@@ -369,7 +369,7 @@ describe('AdCampaignManager', () => {
   })
 
   describe('Pausable', () => {
-    it('Should allow the owner to pause and unpause the contract', async () => {
+    it('allows the owner to pause and unpause the contract', async () => {
       await adCampaignManager.connect(owner).pause()
       expect(await adCampaignManager.paused()).to.be.true
 
@@ -377,7 +377,7 @@ describe('AdCampaignManager', () => {
       expect(await adCampaignManager.paused()).to.be.false
     })
 
-    it('Should allow the owner to pause and unpause the contract', async () => {
+    it('allows the owner to pause and unpause the contract', async () => {
       await adCampaignManager.connect(owner).pause()
       expect(await adCampaignManager.paused()).to.equal(true)
 
@@ -391,7 +391,7 @@ describe('AdCampaignManager', () => {
       expect(await adCampaignManager.paused()).to.equal(false)
     })
 
-    it('Should generate a unique campaign code', async () => {
+    it('generates a unique campaign code', async () => {
       const tx1 = await adCampaignManager.connect(advertiser).createAdCampaign({
         value: ethers.parseEther('5')
       })
@@ -430,7 +430,7 @@ describe('AdCampaignManager', () => {
       expect(campaignCode1).to.not.equal(campaignCode2)
     })
 
-    it('Should revert when trying to claim payment for a non-existent campaign code', async () => {
+    it('reverts when trying to claim payment for a non-existent campaign code', async () => {
       // Try to claim payment for an invalid campaign code
       const invalidCampaignCode = 'invalid_campaign'
       await expect(
@@ -438,7 +438,7 @@ describe('AdCampaignManager', () => {
       ).to.be.revertedWithCustomError(adCampaignManager, 'AdCampaignManager__InvalidCampaignCode')
     })
 
-    it('Should return the correct ad campaign for a valid campaign code', async () => {
+    it('returns the correct ad campaign for a valid campaign code', async () => {
       // Create a new campaign
       const tx = await adCampaignManager.connect(advertiser).createAdCampaign({
         value: ethers.parseEther('5') // Budget of 5 ETH

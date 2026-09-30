@@ -4,9 +4,9 @@
  * incoming Bank→Expense transfers use the dedicated Bank RPC-log feed.
  */
 import type { MaybeRefOrGetter } from 'vue'
-import ExpenseV1 from '@/artifacts/abi/V1/json/ExpenseAccountEIP712.json'
-import ExpenseV01 from '@/artifacts/abi/V0.1/json/ExpenseAccountEIP712.json'
-import ExpenseV0 from '@/artifacts/abi/V0/json/ExpenseAccountEIP712.json'
+import { expenseAccountEip712Abi as expenseV1Abi } from '@/artifacts/abi/V1/generated'
+import { expenseAccountEip712Abi as expenseV01Abi } from '@/artifacts/abi/V0.1/generated'
+import { expenseAccountEip712Abi as expenseV0Abi } from '@/artifacts/abi/V0/generated'
 import type { ExpenseEventFeed } from '@/types/contract-events/expense'
 import {
   str,
@@ -16,7 +16,7 @@ import {
   type ContractAddressInput
 } from '@/composables/eventsViaLogs'
 
-const EXPENSE_EVENT_ABI = unionEventAbi([ExpenseV1, ExpenseV01, ExpenseV0])
+const EXPENSE_EVENT_ABI = unionEventAbi([expenseV1Abi, expenseV01Abi, expenseV0Abi])
 
 const empty = (): ExpenseEventFeed => ({
   expenseDeposits: { items: [] },

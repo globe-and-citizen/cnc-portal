@@ -23,7 +23,7 @@ const baseTotal = {
   local: { value: 50500, formatted: '$50.5K' }
 }
 
-describe('BankBalanceSection', () => {
+describe('[US-BANK-003] BankBalanceSection', () => {
   const defaultProps = {
     bankAddress: '0x1234567890123456789012345678901234567890' as Address
   }
@@ -50,10 +50,11 @@ describe('BankBalanceSection', () => {
     mockUseContractBalance.isLoading.value = false
   })
 
-  it('renders total balance', () => {
+  it('[AC-US-BANK-003-01] renders Bank holdings and their local-currency value', () => {
     const wrapper = createWrapper()
 
-    expect(wrapper.text()).toContain(mockUseContractBalance.total.value.usd.formatted)
+    expect(wrapper.get('[data-test="bank-total-usd"]').text()).toBe('$50,500.00')
+    expect(wrapper.get('[data-test="bank-total-local"]').text()).toContain('$50,500.00 USD')
     expect(wrapper.text()).toContain('USD')
   })
 

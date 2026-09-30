@@ -50,7 +50,7 @@ describe('getSafeTransactionState', () => {
     [{ nonce: 2 }, 'invalid'],
     [{ confirmations: [makeConfirmation(signer)] }, 'pending'],
     [{ confirmations: [makeConfirmation(signer), makeConfirmation('0xother')] }, 'ready']
-  ])('classifies the transaction state', (overrides, expectedState) => {
+  ])('[AC-US-SAFE-005-05] classifies the transaction state', (overrides, expectedState) => {
     const transaction = makeTransaction(overrides as Partial<SafeTransaction>)
 
     expect(getSafeTransactionState(transaction, { currentNonce: 3 }).state).toBe(expectedState)
@@ -155,7 +155,7 @@ describe('buildSafeTransactionQueueRows', () => {
 })
 
 describe('getSafeTransactionPermissions', () => {
-  it('explains that a connected non-signer cannot act', () => {
+  it('[AC-US-SAFE-006-04] prevents a connected non-signer from acting', () => {
     const permissions = getSafeTransactionPermissions(makeTransaction(), {
       state: 'pending',
       isSigner: false,
@@ -166,7 +166,7 @@ describe('getSafeTransactionPermissions', () => {
     expect(permissions.approveHint).toBe('Only a Safe signer can perform this action.')
   })
 
-  it('prevents the connected signer from approving twice', () => {
+  it('[AC-US-SAFE-006-05] prevents the connected signer from approving twice', () => {
     const transaction = makeTransaction({ confirmations: [makeConfirmation(signer)] })
     const permissions = getSafeTransactionPermissions(transaction, {
       state: 'pending',
@@ -177,6 +177,20 @@ describe('getSafeTransactionPermissions', () => {
     expect(permissions.canApprove).toBe(false)
     expect(permissions.approveHint).toContain('already approved')
   })
+
+  it.each(['executed', 'invalid'] as const)(
+    '[AC-US-SAFE-006-07] prevents actions on %s transactions',
+    (state) => {
+      const permissions = getSafeTransactionPermissions(makeTransaction(), {
+        state,
+        isSigner: true,
+        connectedAddress: signer
+      })
+
+      expect(permissions.canApprove).toBe(false)
+      expect(permissions.canExecute).toBe(false)
+    }
+  )
 
   it('allows a signer to execute ready and conflicting transactions', () => {
     const transaction = makeTransaction({

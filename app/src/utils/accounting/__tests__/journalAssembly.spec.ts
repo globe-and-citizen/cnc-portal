@@ -1,16 +1,23 @@
 import { describe, expect, it } from 'vitest'
-import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
+import { buildAccountingSummary } from '@/utils/accounting/accountingSummary'
+import { buildBalanceSheet } from '@/utils/accounting/balanceSheet'
+import { buildGeneralLedger } from '@/utils/accounting/generalLedger'
+import { buildIncomeStatement } from '@/utils/accounting/incomeStatement'
+import type { JournalEntryDraft } from '@/utils/accounting/journalEntryDraft'
 import { assembleRawAccounting } from './assembleAccounting'
+import { usd } from './fixtures'
 
-function posting(overrides: Partial<LedgerEntry> & Pick<LedgerEntry, 'id'>): LedgerEntry {
+function posting(
+  overrides: Partial<JournalEntryDraft> & Pick<JournalEntryDraft, 'id'>
+): JournalEntryDraft {
   return {
     timestamp: 100,
     useCase: 'UC-BANK-03',
     debit: 'Cash — Payroll',
     credit: 'Cash — Bank',
-    amountUsd: 10,
     token: 'usdc',
     rawAmount: '10000000',
+    rate: 1,
     internal: true,
     memo: 'Fund payroll',
     enrichment: 'not-applicable',
@@ -28,7 +35,6 @@ describe('accounting journal assembly', () => {
       timestamp: 101,
       useCase: 'FEE',
       debit: 'Transaction Fee Expense',
-      amountUsd: 0.05,
       rawAmount: '50000',
       internal: false,
       memo: 'Transaction fee'
@@ -41,12 +47,12 @@ describe('accounting journal assembly', () => {
       id: sourceOperationId,
       sourceOperationId,
       lines: [
-        { account: { family: { name: 'Cash — Payroll' } }, debit: 10 },
-        { account: { family: { name: 'Transaction Fee Expense' } }, debit: 0.05 },
-        { account: { family: { name: 'Cash — Bank' } }, credit: 10.05 }
+        { account: { family: { name: 'Cash — Payroll' } }, debit: usd(10) },
+        { account: { family: { name: 'Transaction Fee Expense' } }, debit: usd(0.05) },
+        { account: { family: { name: 'Cash — Bank' } }, credit: usd(10.05) }
       ]
     })
-    expect(accounting.generalLedger.entries).toEqual(accounting.journal)
+    expect(buildGeneralLedger(accounting.journal).entries).toEqual(accounting.journal)
   })
 
   it('projects one Bank transfer with its fee consistently into every statement', () => {
@@ -57,7 +63,6 @@ describe('accounting journal assembly', () => {
       useCase: 'UC-BANK-02',
       debit: 'Cash — Bank',
       credit: 'Service Revenue',
-      amountUsd: 100,
       rawAmount: '100000000',
       internal: false,
       memo: 'Client payment'
@@ -68,29 +73,31 @@ describe('accounting journal assembly', () => {
       sourceOperationId,
       useCase: 'FEE',
       debit: 'Transaction Fee Expense',
-      amountUsd: 0.05,
       rawAmount: '50000',
       internal: false,
       memo: 'Transaction fee'
     })
 
     const accounting = assembleRawAccounting([deposit, transfer, fee])
+    const summary = buildAccountingSummary(accounting.journal)
+    const income = buildIncomeStatement(accounting.journal)
+    const balance = buildBalanceSheet(accounting.journal)
 
     expect(accounting.journal).toHaveLength(2)
-    expect(accounting.summary).toMatchObject({
-      cash: 99.95,
-      income: 100,
-      expense: 0.05,
-      transactionFees: 0.05
+    expect(summary).toMatchObject({
+      cash: usd(99.95),
+      income: usd(100),
+      expense: usd(0.05),
+      transactionFees: usd(0.05)
     })
-    expect(accounting.incomeStatement).toMatchObject({
-      totalRevenue: 100,
-      totalExpenses: 0.05,
-      netIncome: 99.95
+    expect(income).toMatchObject({
+      totalRevenue: usd(100),
+      totalExpenses: usd(0.05),
+      netIncome: usd(99.95)
     })
-    expect(accounting.balanceSheet).toMatchObject({
-      totalAssets: 99.95,
-      earningsToDate: 99.95,
+    expect(balance).toMatchObject({
+      totalAssets: usd(99.95),
+      earningsToDate: usd(99.95),
       balanced: true
     })
   })
@@ -109,7 +116,6 @@ describe('accounting journal assembly', () => {
         useCase: 'UC-CREDIT-03',
         debit: 'Loan Payable',
         credit: 'Cash — Bank',
-        amountUsd: 2,
         rawAmount: '2000000',
         counterparty,
         internal: false,
@@ -124,9 +130,10 @@ describe('accounting journal assembly', () => {
         id: txHash,
         sourceOperationId: txHash,
         txHash,
+        activityAmount: usd(8),
         lines: [
-          { account: { family: { name: 'Loan Payable' } }, debit: 8 },
-          { account: { family: { name: 'Cash — Bank' } }, credit: 8 }
+          { account: { family: { name: 'Loan Payable' } }, debit: usd(8) },
+          { account: { family: { name: 'Cash — Bank' } }, credit: usd(8) }
         ]
       }
     ])
@@ -140,7 +147,6 @@ describe('accounting journal assembly', () => {
       useCase: 'FEE',
       debit: 'Transaction Fee Expense',
       credit: 'Cash — Bank',
-      amountUsd: 0.05,
       rawAmount: '50000',
       internal: false,
       memo: 'Transaction fee'
@@ -148,7 +154,6 @@ describe('accounting journal assembly', () => {
 
     const accounting = assembleRawAccounting([fee])
 
-    expect(accounting.entries).toEqual([])
     expect(accounting.journal).toEqual([])
     expect(accounting.unmatchedFeeOperationIds).toEqual([sourceOperationId])
   })

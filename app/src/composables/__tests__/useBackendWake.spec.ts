@@ -18,7 +18,7 @@ describe('useBackendWake Composable', () => {
   })
 
   describe('useBackendWake', () => {
-    it('should call refetch on mount', async () => {
+    it('calls refetch on mount', async () => {
       const TestComponent = defineComponent({
         setup() {
           useBackendWake()
@@ -39,7 +39,7 @@ describe('useBackendWake Composable', () => {
       wrapper.unmount()
     })
 
-    it('should handle refetch errors silently', async () => {
+    it('handles refetch errors silently', async () => {
       const consoleDebugSpy = vi.spyOn(console, 'debug').mockImplementation(() => {})
       mockHealthQueryRefetch.mockRejectedValueOnce(new Error('Network error'))
 
@@ -66,7 +66,7 @@ describe('useBackendWake Composable', () => {
       wrapper.unmount()
     })
 
-    it('should not block component rendering', async () => {
+    it('does not block component rendering', async () => {
       const TestComponent = defineComponent({
         setup() {
           useBackendWake()
@@ -86,7 +86,7 @@ describe('useBackendWake Composable', () => {
       wrapper.unmount()
     })
 
-    it('should work in multiple component instances', async () => {
+    it('shares wake-up behavior across multiple component instances', async () => {
       const TestComponent = defineComponent({
         setup() {
           useBackendWake()

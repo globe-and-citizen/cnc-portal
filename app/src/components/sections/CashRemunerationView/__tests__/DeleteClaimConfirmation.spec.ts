@@ -32,7 +32,7 @@ const defaultClaim: Claim = {
   updatedAt: '2024-01-01T00:00:00.000Z'
 }
 
-describe('DeleteClaimConfirmation', () => {
+describe('[US-PAYROLL-007] DeleteClaimConfirmation', () => {
   afterEach(() => {
     vi.clearAllMocks()
   })
@@ -65,18 +65,18 @@ describe('DeleteClaimConfirmation', () => {
   }
 
   describe('Component Rendering', () => {
-    it('should render correctly', () => {
+    it('renders the delete confirmation', () => {
       const wrapper = createWrapper()
       expect(wrapper.exists()).toBeTruthy()
     })
 
-    it('should display claim details', () => {
+    it('displays claim details', () => {
       const wrapper = createWrapper()
       expect(wrapper.text()).toContain('8h')
       expect(wrapper.text()).toContain(dayjs(defaultClaim.dayWorked).format('MMM D, YYYY'))
     })
 
-    it('should render action buttons', () => {
+    it('renders action buttons', () => {
       const wrapper = createWrapper()
       expect(wrapper.find('[data-test="confirm-delete-claim-button"]').exists()).toBe(true)
       expect(wrapper.find('[data-test="cancel-delete-claim-button"]').exists()).toBe(true)
@@ -84,7 +84,24 @@ describe('DeleteClaimConfirmation', () => {
   })
 
   describe('Delete Functionality', () => {
-    it('should call delete mutation and emit close on success', async () => {
+    it('[AC-US-PAYROLL-007-02] deletes only after confirmation and preserves the claim on cancel', async () => {
+      const mutateAsync = vi.fn().mockResolvedValue(undefined)
+      const cancelled = createWrapper({}, { mutateAsync })
+      expect(mutateAsync).not.toHaveBeenCalled()
+      await cancelled.find('[data-test="cancel-delete-claim-button"]').trigger('click')
+      await flushPromises()
+      expect(mutateAsync).not.toHaveBeenCalled()
+      expect(cancelled.emitted('close')).toBeTruthy()
+      cancelled.unmount()
+
+      const confirmed = createWrapper({}, { mutateAsync })
+      expect(mutateAsync).not.toHaveBeenCalled()
+      await confirmed.find('[data-test="confirm-delete-claim-button"]').trigger('click')
+      await flushPromises()
+      expect(mutateAsync).toHaveBeenCalledExactlyOnceWith({ pathParams: { claimId: 1 } })
+      confirmed.unmount()
+    })
+    it('calls the delete mutation and emits close on success', async () => {
       const mockMutateAsync = vi.fn().mockResolvedValue(undefined)
       const wrapper = createWrapper({}, { mutateAsync: mockMutateAsync })
 
@@ -108,7 +125,7 @@ describe('DeleteClaimConfirmation', () => {
   })
 
   describe('Confirmation interactions', () => {
-    it('should emit close when cancel button is clicked', async () => {
+    it('emits close when cancel button is clicked', async () => {
       const wrapper = createWrapper()
 
       await wrapper.find('[data-test="cancel-delete-claim-button"]').trigger('click')
@@ -118,7 +135,7 @@ describe('DeleteClaimConfirmation', () => {
   })
 
   describe('Date Formatting', () => {
-    it('should format date correctly', () => {
+    it('displays the claim date as a short month date', () => {
       const testDate = '2024-01-01T00:00:00.000Z'
       const wrapper = createWrapper({
         claim: { ...defaultClaim, dayWorked: testDate }
@@ -127,7 +144,7 @@ describe('DeleteClaimConfirmation', () => {
       expect(wrapper.text()).toContain('Jan 1, 2024')
     })
 
-    it('should handle different date formats', () => {
+    it('handles different date formats', () => {
       const testDate = '2024-06-15T12:30:00.000Z'
       const wrapper = createWrapper({
         claim: { ...defaultClaim, dayWorked: testDate }

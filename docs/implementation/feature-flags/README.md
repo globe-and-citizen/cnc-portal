@@ -2,7 +2,7 @@
 
 **Scope:** Persisted global settings, team overrides, administrator APIs, and consuming feature enforcement
 
-**Last verified:** 2026-08-21
+**Last verified:** 2026-09-08
 
 **Consumers:** [Feature Restrictions](../../features/backoffice/feature-restrictions/README.md) and the Payroll claim-submission window
 
@@ -55,9 +55,9 @@ only decides whether a submitted work date falls inside the claim-submission win
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `bb3c3e19191a28cce80152deb6dfe45a074b61df`
+**Implementation evidence reviewed against:** `ec8b46717ab3737ad4644aa693774d048f696d71`
 
-- [Persistence models](../../../backend/prisma/schema.prisma), including the separate Accounting classification records
+- [Global-setting and team-override persistence models](../../../backend/prisma/schema.prisma)
 - [Effective-status and persistence utilities](../../../backend/src/utils/featureUtils.ts)
 - [Administrator feature controller](../../../backend/src/controllers/featureController.ts)
 - [Administrator feature routes](../../../backend/src/routes/featureRoutes.ts)
@@ -68,6 +68,8 @@ only decides whether a submitted work date falls inside the claim-submission win
 - [Backoffice feature list](../../../dashboard/app/pages/features/index.vue)
 - [Canonical dashboard formatter](../../../dashboard/app/utils/format/) for the feature lifecycle timestamps
 - [Claim enforcement](../../../backend/src/controllers/claimController.ts)
+- [Client feature-filter tests](../../../app/src/composables/__tests__/useFacetFilter.spec.ts) and
+  [restricted-submission tests](../../../app/src/composables/__tests__/useSubmitRestriction.spec.ts)
 
 ## Related Documentation
 

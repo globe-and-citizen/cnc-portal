@@ -12,7 +12,7 @@ import {
   formatRoundTerm,
   MINUTES_PER_DAY,
   reachedFundingTarget,
-  repayableCeiling,
+  repayableCeilingUnits,
   roundToDisplayPrecision,
   roundInterest,
   roundTotalDue,
@@ -49,11 +49,20 @@ describe('communityCreditUtil', () => {
     })
 
     it('caps repayable amount at the treasury balance when loaded', () => {
-      expect(repayableCeiling(1000, 400.123456)).toBe(400.1235)
+      expect(repayableCeilingUnits(1000n, 400n)).toBe(400n)
     })
 
     it('uses the outstanding amount when the treasury balance has not loaded yet', () => {
-      expect(repayableCeiling(1000.123456, null)).toBe(1000.1235)
+      expect(repayableCeilingUnits(1000n, null)).toBe(1000n)
+    })
+
+    it('round-trips a large, 18-decimal outstanding balance through the ceiling without precision loss', () => {
+      // 123456789012345678901n exceeds Number.MAX_SAFE_INTEGER — a Number()-based
+      // ceiling would silently round this, drifting "Max" off the true balance.
+      const outstanding = 123456789012345678901n
+      const treasuryBalance = 999999999999999999999n
+      expect(repayableCeilingUnits(outstanding, treasuryBalance)).toBe(outstanding)
+      expect(repayableCeilingUnits(treasuryBalance, outstanding)).toBe(outstanding)
     })
   })
 

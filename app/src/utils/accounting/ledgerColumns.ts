@@ -19,7 +19,7 @@ export type LedgerColumnKey =
   | 'rate'
 
 /** A ledger column as rendered in the selector and the exports. */
-export type LedgerColumn = { value: LedgerColumnKey; label: string }
+type LedgerColumn = { value: LedgerColumnKey; label: string }
 
 /**
  * Ledger columns as `{ value, label }`, for the show/hide-columns selector.

@@ -11,19 +11,72 @@
  * (see `wagmi.config.ts`); it is never used in dev or production builds.
  */
 import { createConnector } from '@wagmi/vue'
-import { type Hex, SwitchChainError, numberToHex } from 'viem'
+import {
+  createWalletClient,
+  http,
+  type Address,
+  type Hex,
+  SwitchChainError,
+  UserRejectedRequestError,
+  numberToHex
+} from 'viem'
 import { privateKeyToAccount } from 'viem/accounts'
+import { hardhat } from 'viem/chains'
 
 /** Hardhat's well-known account #0 — a public test key, safe to commit. */
 const E2E_PRIVATE_KEY: Hex = '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80'
+const PRIVATE_KEY_STORAGE_KEY = 'cnc-e2e-private-key'
+const REJECT_NEXT_TRANSACTION_STORAGE_KEY = 'cnc-e2e-reject-next-transaction'
+
+const configuredPrivateKey = (): Hex => {
+  try {
+    const value = globalThis.localStorage?.getItem(PRIVATE_KEY_STORAGE_KEY)
+    return value && /^0x[0-9a-fA-F]{64}$/.test(value) ? (value as Hex) : E2E_PRIVATE_KEY
+  } catch {
+    return E2E_PRIVATE_KEY
+  }
+}
+
+const shouldRejectNextTransaction = (): boolean => {
+  try {
+    if (globalThis.localStorage?.getItem(REJECT_NEXT_TRANSACTION_STORAGE_KEY) !== 'true') {
+      return false
+    }
+    globalThis.localStorage.removeItem(REJECT_NEXT_TRANSACTION_STORAGE_KEY)
+    return true
+  } catch {
+    return false
+  }
+}
 
 type RpcRequest = { method: string; params?: readonly unknown[] }
 
+type RpcTransaction = {
+  from?: string
+  to?: Address
+  data?: Hex
+  value?: Hex
+  gas?: Hex
+  gasPrice?: Hex
+  maxFeePerGas?: Hex
+  maxPriorityFeePerGas?: Hex
+  nonce?: Hex
+}
+
+const asBigInt = (value: Hex | undefined) => (value === undefined ? undefined : BigInt(value))
+
+/** Falls back to a developer's regular local node when Playwright is not driving the build. */
+const rpcUrl = (): string => import.meta.env.VITE_E2E_RPC_URL ?? 'http://127.0.0.1:8545'
+
 export function e2eMockConnector() {
-  const account = privateKeyToAccount(E2E_PRIVATE_KEY)
+  const account = privateKeyToAccount(configuredPrivateKey())
+  const walletClient = createWalletClient({ account, chain: hardhat, transport: http(rpcUrl()) })
 
   return createConnector((config) => {
-    let connected = false
+    // The E2E wallet represents a browser wallet whose test account was already
+    // approved. Starting authorized prevents Wagmi's initial reconnect from
+    // racing the SIWE login and replacing its newly-established connection.
+    let connected = true
     let currentChainId = config.chains[0].id
 
     const provider = {
@@ -38,17 +91,49 @@ export function e2eMockConnector() {
             const [data] = params as [Hex]
             return account.signMessage({ message: { raw: data } })
           }
+          case 'eth_sign': {
+            const [, data] = params as [Address, Hex]
+            return account.signMessage({ message: { raw: data } })
+          }
           case 'eth_signTypedData_v4': {
             const [, typedData] = params as [string, string]
             return account.signTypedData(JSON.parse(typedData))
           }
           case 'wallet_switchEthereumChain':
             return null
+          case 'eth_sendTransaction':
+          case 'wallet_sendTransaction': {
+            if (shouldRejectNextTransaction()) {
+              throw new UserRejectedRequestError(new Error('E2E wallet request rejected'))
+            }
+            const [request] = params as [RpcTransaction]
+            if (!request || request.from?.toLowerCase() !== account.address.toLowerCase()) {
+              throw new Error('e2eMockConnector can send transactions only from its test account')
+            }
+
+            // Wagmi treats this connector as a JSON-RPC wallet and therefore
+            // asks it for `eth_sendTransaction`. Sign with the local Hardhat
+            // account, then broadcast the raw transaction to the E2E node.
+            return walletClient.sendTransaction({
+              account,
+              ...(request.to ? { to: request.to } : {}),
+              ...(request.data ? { data: request.data } : {}),
+              ...(request.value ? { value: asBigInt(request.value) } : {})
+            })
+          }
           default:
-            throw new Error(`e2eMockConnector: unhandled RPC method "${method}"`)
+            // Every read (`eth_call`, `eth_getCode`, `eth_estimateGas`, …) goes
+            // straight to the E2E node, as an injected wallet would forward it.
+            return walletClient.request({ method, params } as never)
         }
       }
     }
+
+    // Safe Protocol Kit consumes the browser's EIP-1193 provider directly,
+    // whereas Wagmi obtains this connector through `getProvider`. Mirror the
+    // E2E-only provider on `window` so Safe writes exercise the same SDK path
+    // as an injected wallet without requiring a browser extension.
+    ;(globalThis as typeof globalThis & { ethereum?: typeof provider }).ethereum = provider
 
     return {
       id: 'e2e-mock',

@@ -5,7 +5,7 @@ const SAFE_ADDRESS = '0x0000000000000000000000000000000000000001'
 const OWNER_ADDRESS = '0x0000000000000000000000000000000000000002'
 const RECIPIENT_ADDRESS = '0x0000000000000000000000000000000000000003'
 
-describe('safe.schemas', () => {
+describe('[US-SAFE-001] [US-SAFE-003] Safe form schemas', () => {
   describe('deploySafeSchema', () => {
     it('accepts a valid payload', () => {
       const parsed = deploySafeSchema.parse({

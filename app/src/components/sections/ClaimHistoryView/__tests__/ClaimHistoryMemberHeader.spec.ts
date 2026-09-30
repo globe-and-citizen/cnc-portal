@@ -86,7 +86,7 @@ describe('ClaimHistoryMemberHeader', () => {
     expect(wrapper.findComponent({ name: 'USelectMenu' }).exists()).toBe(false)
   })
 
-  it('routes to the selected member claim history from the searchable selector', async () => {
+  it('[AC-US-PAYROLL-012-03] routes to the selected member claim history from the searchable selector', async () => {
     const member = mockTeamData.members[0]
     const nextMember = mockTeamData.members[1]
     if (!member || !nextMember) throw new Error('Mock member data is required')

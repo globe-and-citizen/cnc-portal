@@ -11,6 +11,7 @@ export function createContractReadMock<T>(defaultValue?: T) {
     data: ref(defaultValue),
     error: ref<Error | null>(null),
     isLoading: ref(false),
+    isFetching: ref(false),
     isSuccess: ref(true),
     isError: ref(false),
     isFetched: ref(true),

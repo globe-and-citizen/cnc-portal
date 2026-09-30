@@ -57,7 +57,11 @@
             <template #trailing><span class="text-muted text-xs font-bold">Local</span></template>
           </UInputTime>
         </div>
-        <p class="text-muted mt-1 text-xs" data-test="cc-deadline-utc-readout">
+        <p
+          v-if="deadlineUtcReadout"
+          class="text-muted mt-1 text-xs"
+          data-test="cc-deadline-utc-readout"
+        >
           = {{ deadlineUtcReadout }}
         </p>
         <p v-if="termErrors.deadline" class="text-error mt-1 text-xs" data-test="cc-deadline-error">
@@ -189,6 +193,9 @@ defineExpose({ validate })
 // while what's actually submitted never changes meaning. `localDeadline` below is the
 // single derived view both the calendar and time input read from and write through.
 function utcToLocalParts(dateStr: string, timeStr: string): { date: string; time: string } {
+  // No date picked yet: there's nothing to convert, so keep the pre-filled time as-is
+  // for the time input and for the date the issuer picks next.
+  if (!dateStr) return { date: '', time: timeStr }
   const utc = new Date(`${dateStr}T${timeStr || '00:00'}:00Z`)
   if (isNaN(utc.getTime())) return { date: '', time: '' }
   const pad = (n: number) => String(n).padStart(2, '0')
@@ -264,6 +271,7 @@ const deadlineLabel = computed(() => {
 function onSelectDeadlineDate(value: CalendarDate | null | undefined) {
   if (!value) return
   applyLocalDeadline(calendarDateToDeadline(value), localDeadline.value.time)
+  termErrors.deadline = '' // the "required" error no longer applies once a date is picked
   deadlineOpen.value = false
 }
 

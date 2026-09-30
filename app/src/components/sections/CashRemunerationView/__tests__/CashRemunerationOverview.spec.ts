@@ -12,7 +12,7 @@ describe('CashRemunerationOverview', () => {
     })
   }
 
-  it('renders correctly', () => {
+  it('[US-PAYROLL-013] renders the Payroll account overview', () => {
     const wrapper = createComponent()
     expect(wrapper.exists()).toBeTruthy()
   })

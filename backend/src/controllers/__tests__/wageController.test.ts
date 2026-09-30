@@ -74,6 +74,13 @@ const mockWage = {
 } as unknown as Wage;
 
 describe('Wage Controller', () => {
+  it('[AC-US-PAYROLL-001-20] exposes no wage cancellation route', async () => {
+    vi.clearAllMocks();
+    const response = await request(app).delete('/1');
+    expect(response.status).toBe(404);
+    expect(prisma.wage.delete).not.toHaveBeenCalled();
+    expect(prisma.wage.update).not.toHaveBeenCalled();
+  });
   describe('PUT: /setWage', () => {
     beforeEach(() => {
       vi.clearAllMocks();
@@ -89,14 +96,14 @@ describe('Wage Controller', () => {
       });
     });
 
-    it('should return 400 if required parameters are missing', async () => {
+    it('returns 400 if required parameters are missing', async () => {
       const response = await request(app).put('/setWage').send({});
 
       expect(response.status).toBe(400);
       expect(response.body.message).toContain('Invalid request body');
     });
 
-    it('should return 400 if parameters are invalid', async () => {
+    it('returns 400 if parameters are invalid', async () => {
       const response = await request(app)
         .put('/setWage')
         .send({
@@ -113,7 +120,7 @@ describe('Wage Controller', () => {
       expect(response.body.message).toContain('Invalid request body');
     });
 
-    it('should return 403 if caller is not the owner of the team', async () => {
+    it('[AC-US-PAYROLL-001-21] rejects wage changes from a non-owner', async () => {
       vi.spyOn(prisma.team, 'findUnique').mockResolvedValue({
         ...mockTeam,
         ownerAddress: '0x0000000000000000000000000000000000000000',
@@ -134,7 +141,7 @@ describe('Wage Controller', () => {
       expect(response.body.message).toBe('Unauthorized: Caller is not the owner of the team');
     });
 
-    it('should create a new wage if no previous wage exists', async () => {
+    it('[AC-US-PAYROLL-001-02] creates a new wage if no previous wage exists', async () => {
       vi.spyOn(prisma.team, 'findFirst').mockResolvedValue(mockTeam);
       vi.spyOn(prisma.wage, 'findFirst').mockResolvedValue(null);
       vi.spyOn(prisma.wage, 'findMany').mockResolvedValue([]);
@@ -156,7 +163,7 @@ describe('Wage Controller', () => {
       expect(prisma.wage.create).toHaveBeenCalled();
     });
 
-    it('should default the daily cap to 8 hours when it is not provided', async () => {
+    it('[AC-US-PAYROLL-001-10] defaults the daily allowance to 8 hours', async () => {
       vi.spyOn(prisma.team, 'findFirst').mockResolvedValue(mockTeam);
       vi.spyOn(prisma.wage, 'findFirst').mockResolvedValue(null);
       vi.spyOn(prisma.wage, 'findMany').mockResolvedValue([]);
@@ -179,7 +186,7 @@ describe('Wage Controller', () => {
       );
     });
 
-    it('should persist the daily cap provided by the owner', async () => {
+    it('persists the daily cap provided by the owner', async () => {
       vi.spyOn(prisma.team, 'findFirst').mockResolvedValue(mockTeam);
       vi.spyOn(prisma.wage, 'findFirst').mockResolvedValue(null);
       vi.spyOn(prisma.wage, 'findMany').mockResolvedValue([]);
@@ -203,7 +210,7 @@ describe('Wage Controller', () => {
       );
     });
 
-    it('should reject a daily cap above 24 hours', async () => {
+    it('rejects a daily cap above 24 hours', async () => {
       const response = await request(app)
         .put('/setWage')
         .send({
@@ -218,7 +225,7 @@ describe('Wage Controller', () => {
       expect(response.body.message).toContain('Invalid request body');
     });
 
-    it('should store DbNull when overtimeRatePerHour is explicitly null', async () => {
+    it('stores DbNull when overtimeRatePerHour is explicitly null', async () => {
       vi.spyOn(prisma.team, 'findFirst').mockResolvedValue(mockTeam);
       vi.spyOn(prisma.wage, 'findFirst').mockResolvedValue(null);
       vi.spyOn(prisma.wage, 'findMany').mockResolvedValue([]);
@@ -238,7 +245,7 @@ describe('Wage Controller', () => {
       expect(prisma.wage.create).toHaveBeenCalled();
     });
 
-    it('should persist overtime rates when provided', async () => {
+    it('persists overtime rates when provided', async () => {
       vi.spyOn(prisma.team, 'findFirst').mockResolvedValue(mockTeam);
       vi.spyOn(prisma.wage, 'findFirst').mockResolvedValue(null);
       vi.spyOn(prisma.wage, 'findMany').mockResolvedValue([]);
@@ -274,7 +281,7 @@ describe('Wage Controller', () => {
       expect(response.body.maximumOvertimeHoursPerWeek).toBe(8);
     });
 
-    it('should return 400 if overtime rates are provided without maximumOvertimeHoursPerWeek', async () => {
+    it('returns 400 if overtime rates are provided without maximumOvertimeHoursPerWeek', async () => {
       vi.spyOn(prisma.team, 'findFirst').mockResolvedValue(mockTeam);
       vi.spyOn(prisma.wage, 'findFirst').mockResolvedValue(null);
       vi.spyOn(prisma.wage, 'findMany').mockResolvedValue([]);
@@ -298,7 +305,7 @@ describe('Wage Controller', () => {
       );
     });
 
-    it('should return the newly created wage when an active wage already exists', async () => {
+    it('returns the newly created wage when an active wage already exists', async () => {
       vi.spyOn(prisma.team, 'findFirst').mockResolvedValue(mockTeam);
       vi.spyOn(prisma.wage, 'findFirst').mockResolvedValue(mockWage);
       vi.spyOn(prisma.wage, 'create').mockResolvedValue({
@@ -327,7 +334,7 @@ describe('Wage Controller', () => {
       expect(response.body.maximumOvertimeHoursPerWeek).toBe(12);
     });
 
-    it('should return 500 if all wage have a next wage', async () => {
+    it('returns 500 if all wages have a next wage', async () => {
       vi.spyOn(prisma.team, 'findFirst').mockResolvedValue(mockTeam);
       vi.spyOn(prisma.wage, 'findFirst').mockResolvedValue(null);
       vi.spyOn(prisma.wage, 'findMany').mockResolvedValue([mockWage]);
@@ -349,7 +356,7 @@ describe('Wage Controller', () => {
       expect(response.body.message).toContain('Internal server error has occured');
     });
 
-    it('should chain a new wage to the previous wage if it exists', async () => {
+    it('[AC-US-PAYROLL-001-14] chains a new wage to the previous wage if it exists', async () => {
       vi.spyOn(prisma.team, 'findFirst').mockResolvedValue(mockTeam);
       vi.spyOn(prisma.wage, 'findFirst').mockResolvedValue(mockWage);
       vi.spyOn(prisma.wage, 'create').mockResolvedValue(mockWage);
@@ -370,7 +377,7 @@ describe('Wage Controller', () => {
       expect(prisma.wage.create).toHaveBeenCalled();
     });
 
-    it('should return 500 on internal server error', async () => {
+    it('returns 500 on internal server error', async () => {
       vi.spyOn(prisma.team, 'findUnique').mockRejectedValue(new Error('Database error'));
 
       const response = await request(app)
@@ -389,7 +396,7 @@ describe('Wage Controller', () => {
       expect(response.body.message).toContain('Internal server error');
     });
 
-    it('should return 500 if there is a server error', async () => {
+    it('returns 500 if there is a server error', async () => {
       vi.spyOn(prisma.team, 'findFirst').mockResolvedValue(mockTeam);
       vi.spyOn(prisma.wage, 'findFirst').mockRejectedValue('Server error');
 
@@ -404,7 +411,7 @@ describe('Wage Controller', () => {
       expect(response.body.message).toContain('Invalid request body');
     });
 
-    it('should return 400 if maximumHoursPerWeek alone exceeds 40', async () => {
+    it('returns 400 if maximumHoursPerWeek alone exceeds 40', async () => {
       const response = await request(app)
         .put('/setWage')
         .send({
@@ -420,7 +427,7 @@ describe('Wage Controller', () => {
       );
     });
 
-    it('should return 400 if maximumOvertimeHoursPerWeek exceeds 20', async () => {
+    it('returns 400 if maximumOvertimeHoursPerWeek exceeds 20', async () => {
       const response = await request(app)
         .put('/setWage')
         .send({
@@ -438,7 +445,7 @@ describe('Wage Controller', () => {
       );
     });
 
-    it('should return 400 if the current wage is disabled', async () => {
+    it('[AC-US-PAYROLL-001-25] [AC-US-PAYROLL-002-08] blocks replacement while the current wage is disabled', async () => {
       vi.spyOn(prisma.team, 'findFirst').mockResolvedValue(mockTeam);
       vi.spyOn(prisma.wage, 'findFirst').mockResolvedValue({ ...mockWage, disabled: true } as Wage);
 
@@ -455,7 +462,7 @@ describe('Wage Controller', () => {
       expect(response.body.message).toBe('Cannot set wage: the current wage is disabled');
     });
 
-    it('should allow max limits of exactly 40 regular + 20 overtime', async () => {
+    it('allows max limits of exactly 40 regular + 20 overtime', async () => {
       vi.spyOn(prisma.team, 'findFirst').mockResolvedValue(mockTeam);
       vi.spyOn(prisma.wage, 'findFirst').mockResolvedValue(null);
       vi.spyOn(prisma.wage, 'findMany').mockResolvedValue([]);
@@ -486,7 +493,7 @@ describe('Wage Controller', () => {
       maximumHoursPerWeek: 40,
     };
 
-    it('creates an immediate new wage version when a current wage exists', async () => {
+    it('[AC-US-PAYROLL-001-15] [AC-US-PAYROLL-001-22] creates an immediate off-chain wage version', async () => {
       vi.spyOn(prisma.team, 'findFirst').mockResolvedValue(mockTeam);
       vi.spyOn(prisma.wage, 'findFirst').mockResolvedValue(mockWage);
       const createSpy = vi
@@ -519,13 +526,13 @@ describe('Wage Controller', () => {
       });
     });
 
-    it('should return 400 if teamId is invalid', async () => {
+    it('returns 400 if teamId is invalid', async () => {
       const response = await request(app).get('/').query({ teamId: 'abc' });
       expect(response.status).toBe(400);
       expect(response.body.message).toContain('Invalid query parameters');
     });
 
-    it('should return 403 if user is not a team member', async () => {
+    it('returns 403 if user is not a team member', async () => {
       // Simulate the case where the user is not a member of the team
       vi.spyOn(prisma.team, 'findFirst').mockResolvedValue(null); //  return false
 
@@ -535,7 +542,7 @@ describe('Wage Controller', () => {
       expect(response.body.message).toBe('Caller is not a member of the team');
     });
 
-    it('should return 200 and wages if user is a team member', async () => {
+    it('[AC-US-PAYROLL-001-03] returns wages to a company member', async () => {
       // Simulate that the user is indeed a member of the team
       vi.spyOn(prisma.team, 'findFirst').mockResolvedValue(mockTeam);
 
@@ -558,7 +565,7 @@ describe('Wage Controller', () => {
       );
     });
 
-    it('should return 500 on internal server error', async () => {
+    it('returns 500 on internal server error', async () => {
       // Simulate a database error when checking team membership
       vi.spyOn(prisma.team, 'findFirst').mockRejectedValue(new Error('Database error'));
 
@@ -568,7 +575,7 @@ describe('Wage Controller', () => {
       expect(response.body.message).toContain('Internal server error');
     });
 
-    it('returns only current wage versions without schedule metadata', async () => {
+    it('[AC-US-PAYROLL-001-23] returns only current wage versions without schedule metadata', async () => {
       vi.spyOn(prisma.team, 'findFirst').mockResolvedValue(mockTeam);
       vi.spyOn(prisma.wage, 'findMany').mockResolvedValue([
         { ...mockWage, id: 2, nextWageId: null } as never,
@@ -586,7 +593,7 @@ describe('Wage Controller', () => {
       });
     });
 
-    it('should return wages with null maximumOvertimeHoursPerWeek for legacy records', async () => {
+    it('[AC-US-PAYROLL-001-03] returns wages with null maximumOvertimeHoursPerWeek for legacy records', async () => {
       vi.spyOn(prisma.team, 'findFirst').mockResolvedValue(mockTeam);
       vi.spyOn(prisma.wage, 'findMany').mockResolvedValue([
         {
@@ -605,7 +612,7 @@ describe('Wage Controller', () => {
       expect(response.body[0].maximumOvertimeHoursPerWeek).toBeNull();
     });
 
-    it('should return wages with existing maximumOvertimeHoursPerWeek unchanged', async () => {
+    it('[AC-US-PAYROLL-001-03] returns wages with existing maximumOvertimeHoursPerWeek unchanged', async () => {
       vi.spyOn(prisma.team, 'findFirst').mockResolvedValue(mockTeam);
       vi.spyOn(prisma.wage, 'findMany').mockResolvedValue([
         {
@@ -624,7 +631,7 @@ describe('Wage Controller', () => {
       expect(response.body[0].maximumOvertimeHoursPerWeek).toBe(400);
     });
 
-    it('should not overwrite maximumOvertimeHoursPerWeek when it already has a value', async () => {
+    it('does not overwrite maximumOvertimeHoursPerWeek when it already has a value', async () => {
       vi.spyOn(prisma.team, 'findFirst').mockResolvedValue(mockTeam);
       vi.spyOn(prisma.wage, 'findMany').mockResolvedValue([
         {
@@ -655,17 +662,17 @@ describe('Wage Controller', () => {
       vi.spyOn(prisma.team, 'findUnique').mockResolvedValue({ isArchived: false } as never);
     });
 
-    it('should return 400 if wageId is not a valid integer', async () => {
+    it('returns 400 if wageId is not a valid integer', async () => {
       const response = await request(app).put('/abc').query({ action: 'disable' });
       expect(response.status).toBe(400);
     });
 
-    it('should return 400 if action is invalid', async () => {
+    it('returns 400 if action is invalid', async () => {
       const response = await request(app).put('/1').query({ action: 'invalid' });
       expect(response.status).toBe(400);
     });
 
-    it('should return 404 if wage not found', async () => {
+    it('[AC-US-PAYROLL-002-10] rejects a status change when the wage does not exist', async () => {
       vi.spyOn(prisma.wage, 'findUnique').mockResolvedValue(null);
       vi.spyOn(prisma.wage, 'findFirst').mockResolvedValue(null);
 
@@ -675,7 +682,7 @@ describe('Wage Controller', () => {
       expect(response.body.message).toBe('Missing or invalid teamId at params.wageId');
     });
 
-    it('should return 403 if caller is not the owner of the team', async () => {
+    it('[AC-US-PAYROLL-002-09] rejects a wage status change by a non-owner', async () => {
       vi.spyOn(prisma.wage, 'findUnique').mockResolvedValue({ teamId: 1 } as never);
       vi.mocked(prisma.wage.findFirst).mockReset();
       vi.mocked(prisma.wage.findFirst).mockResolvedValue({
@@ -689,7 +696,7 @@ describe('Wage Controller', () => {
       expect(response.body.message).toBe('Caller is not the owner of the team');
     });
 
-    it('should disable a wage', async () => {
+    it('[AC-US-PAYROLL-002-01] disables a wage', async () => {
       vi.mocked(prisma.wage.findFirst).mockReset();
       vi.mocked(prisma.wage.findFirst).mockResolvedValue({
         ...mockWage,
@@ -706,7 +713,7 @@ describe('Wage Controller', () => {
       );
     });
 
-    it('should enable a wage', async () => {
+    it('[AC-US-PAYROLL-002-02] enables a wage', async () => {
       vi.mocked(prisma.wage.findFirst).mockReset();
       vi.mocked(prisma.wage.findFirst).mockResolvedValue({
         ...mockWage,
@@ -724,7 +731,26 @@ describe('Wage Controller', () => {
       );
     });
 
-    it('should return 500 on internal server error', async () => {
+    it('[AC-US-PAYROLL-002-11] excludes historical versions from wage status changes', async () => {
+      vi.mocked(prisma.wage.findUnique).mockResolvedValue({
+        ...mockWage,
+        teamId: 1,
+        nextWageId: 2,
+      } as never);
+      vi.mocked(prisma.wage.findFirst).mockResolvedValue(null);
+      const updateSpy = vi.spyOn(prisma.wage, 'update');
+      const response = await request(app).put('/1').query({ action: 'disable' });
+      expect(response.status).toBe(404);
+      expect(response.body.message).toBe('Wage not found');
+      expect(prisma.wage.findFirst).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 1, nextWageId: null },
+        })
+      );
+      expect(updateSpy).not.toHaveBeenCalled();
+    });
+
+    it('returns 500 on internal server error', async () => {
       vi.spyOn(prisma.wage, 'findFirst').mockRejectedValue(new Error('Database error'));
 
       const response = await request(app).put('/1').query({ action: 'disable' });

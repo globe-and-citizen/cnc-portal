@@ -33,10 +33,10 @@
 
 - **File**: `app/playwright.config.ts`
 - **Improvements**:
-  - Added environment variable support (BASE_URL, HEADLESS, SKIP_SERVER)
+  - Added environment variable support (BASE_URL, HEADLESS)
   - Enhanced reporter (HTML + list format)
   - Added failure artifacts (screenshots, videos, traces)
-  - Made webServer optional for flexible testing
+  - Removed Playwright-managed servers; developers and CI prepare the stack explicitly
   - Better timeout and worker configuration for CI
 
 ### 5. Created Environment Configuration
@@ -77,12 +77,12 @@
 
 - **File**: `.github/workflows/app-e2e.yml`
 - **Features**:
-  - Installs Playwright browsers with dependencies
-  - Sets up Foundry/Anvil for local blockchain
-  - Builds Synpress cache
-  - Starts dev server
-  - Runs E2E tests
-  - Uploads test results and traces
+  - Runs in the Playwright container image, so browsers need no separate install step
+  - Starts one local Hardhat node and a disposable PostgreSQL service for the job
+  - Provisions browser-acceptance contracts, starts the browser frontend, and runs the `@browser` coverage suite
+  - Resets the node, migrates the disposable database, deploys the integrated infrastructure, and starts the backend and frontend
+  - Runs the `@integrated` journeys
+  - Uploads browser coverage, both Playwright reports, and failure traces with stack logs
 
 ## ⚠️ Known Issues
 

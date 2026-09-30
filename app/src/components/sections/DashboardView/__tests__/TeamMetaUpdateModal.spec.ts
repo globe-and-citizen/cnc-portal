@@ -53,7 +53,7 @@ async function submitForm(wrapper: ReturnType<typeof mountModal>) {
   await flushPromises()
 }
 
-describe('TeamMetaUpdateModal.vue', () => {
+describe('[US-COMPANIES-004] TeamMetaUpdateModal.vue', () => {
   beforeEach(() => {
     mutateSpy.mockClear()
     resetSpy.mockClear()

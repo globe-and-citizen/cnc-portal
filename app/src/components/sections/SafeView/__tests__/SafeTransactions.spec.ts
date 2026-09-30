@@ -89,7 +89,7 @@ const WarningStub = defineComponent({
   </div>`
 })
 
-describe('SafeTransactions', () => {
+describe('[US-SAFE-005] [US-SAFE-006] SafeTransactions', () => {
   let wrapper: VueWrapper | undefined
   const transactions = ref<SafeTransaction[]>([])
 
@@ -141,7 +141,7 @@ describe('SafeTransactions', () => {
     expect(mobileListProps).not.toHaveProperty('isTransactionLoading')
   })
 
-  it('requires confirmation before approving when another valid transaction is pending', async () => {
+  it('[AC-US-SAFE-006-08] requires confirmation before a threshold-reaching approval', async () => {
     transactions.value = [
       makeTransaction({
         confirmations: [

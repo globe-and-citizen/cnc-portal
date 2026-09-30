@@ -108,7 +108,7 @@ describe('CashRemunerationTransactions', () => {
     if (wrapper) wrapper.unmount()
   })
 
-  it('maps query data and passes rows/columns to UTable', () => {
+  it('[AC-US-PAYROLL-013-03] maps native deposits, token deposits, and withdrawals to table rows', () => {
     wrapper = createWrapper()
 
     const data = tableData(wrapper)
@@ -122,13 +122,14 @@ describe('CashRemunerationTransactions', () => {
   })
 
   it('passes loading state to UTable', () => {
-    incomingTransfersQuery.loading.value = true
+    incomingTransfersQuery.isPending.value = true
 
     wrapper = createWrapper()
     expect(tableLoading(wrapper)).toBe(true)
   })
 
-  it('filters displayed rows by selected type', async () => {
+  // Covers: AC-US-PAYROLL-013-04
+  it('[AC-US-PAYROLL-013-04] filters displayed rows by selected type', async () => {
     wrapper = createWrapper()
 
     wrapper.getComponent({ name: 'USelect' }).vm.$emit('update:modelValue', 'deposit')
@@ -139,7 +140,8 @@ describe('CashRemunerationTransactions', () => {
     expect(data[0]?.type).toBe('deposit')
   })
 
-  it('filters displayed rows by date range', async () => {
+  // Covers: AC-US-PAYROLL-013-04
+  it('[AC-US-PAYROLL-013-04] filters displayed rows by date range', async () => {
     wrapper = createWrapper()
 
     expect(
@@ -166,7 +168,7 @@ describe('CashRemunerationTransactions', () => {
   })
 
   it('maps ownership transfer events with a zero amount', () => {
-    mockCashRemQuery.result.value = {
+    mockCashRemQuery.data.value!.events = {
       ...buildCashRemunerationQueryResult(),
       cashRemunerationOwnershipTransferreds: {
         items: [
@@ -196,7 +198,7 @@ describe('CashRemunerationTransactions', () => {
   it('handles token resolution fallback and invalid amounts', () => {
     mockCurrencyStore.supportedTokens = []
     mockGetTokenPrice.mockImplementation((tokenId: string) => (tokenId === 'native' ? 3 : 0))
-    mockCashRemQuery.result.value = {
+    mockCashRemQuery.data.value!.events = {
       cashRemunerationDeposits: {
         items: [
           {
@@ -241,7 +243,7 @@ describe('CashRemunerationTransactions', () => {
   })
 
   it('renders grouped child rows and aggregated parent values', () => {
-    mockCashRemQuery.result.value = {
+    mockCashRemQuery.data.value!.events = {
       cashRemunerationDeposits: {
         items: [
           {
@@ -273,7 +275,7 @@ describe('CashRemunerationTransactions', () => {
       cashRemunerationTokenSupportAddeds: { items: [] },
       cashRemunerationTokenSupportRemoveds: { items: [] }
     }
-    incomingTransfersQuery.result.value = undefined
+    incomingTransfersQuery.data.value = undefined
 
     wrapper = createWrapper()
 
@@ -287,7 +289,7 @@ describe('CashRemunerationTransactions', () => {
   })
 
   it('renders counterparty and value fallbacks for zero-value metadata events', () => {
-    mockCashRemQuery.result.value = {
+    mockCashRemQuery.data.value!.events = {
       cashRemunerationDeposits: { items: [] },
       cashRemunerationWithdraws: { items: [] },
       cashRemunerationWithdrawTokens: { items: [] },
@@ -308,7 +310,7 @@ describe('CashRemunerationTransactions', () => {
       cashRemunerationTokenSupportAddeds: { items: [] },
       cashRemunerationTokenSupportRemoveds: { items: [] }
     }
-    incomingTransfersQuery.result.value = undefined
+    incomingTransfersQuery.data.value = undefined
 
     wrapper = createWrapper()
 

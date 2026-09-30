@@ -125,3 +125,12 @@ Fichiers principaux :
 - `app/src/components/sections/SherTokenView/MerkleClaimForm.vue`
 - `backend/src/controllers/investorMigrationController.ts`
 - `contract/contracts/Investor/Investor.sol`
+
+## Preuves d'implémentation
+
+- [Tests du contrat Investor](../../../contract/test/Investor.spec.ts)
+- [Tests de l'orchestration du snapshot](../../../app/src/composables/investor/__tests__/useShareholderMigration.spec.ts)
+- [Tests de l'orchestration de fermeture](../../../app/src/composables/investor/__tests__/useSweepMigration.spec.ts)
+- [Tests de l'API de migration](../../../backend/src/controllers/__tests__/investorMigrationController.test.ts)
+- [Tests de parité et du snapshot Merkle](../../../backend/src/services/__tests__/merkleParity.test.ts) et
+  [tests du service de snapshot](../../../backend/src/services/__tests__/merkleSnapshotService.test.ts)

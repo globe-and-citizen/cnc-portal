@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
 import type { Address } from 'viem'
-import { buildAccountingSheets, buildSheets, exportAccountingExcel } from '../spreadsheet'
+import { buildSheets, exportSheetsExcel } from '../spreadsheet'
 import type { CncAccounting } from '@/utils/accounting/assemble'
 import { assembleAccounting } from '@/utils/accounting/__tests__/assembleAccounting'
 import { USDC_ADDRESS } from '@/constant'
@@ -97,8 +97,13 @@ function booksWithExpense(): CncAccounting {
   })
 }
 
-describe('buildAccountingSheets', () => {
-  const sheets = buildAccountingSheets(sampleBooks())
+describe('buildSheets (complete report selection)', () => {
+  const sheets = buildSheets(sampleBooks(), [
+    { key: 'income' },
+    { key: 'balance' },
+    { key: 'trial' },
+    { key: 'ledger' }
+  ])
   const byName = (name: string) => sheets.find((s) => s.name === name)!
 
   it('produces one sheet per tab except the Summary', () => {
@@ -153,9 +158,11 @@ describe('buildAccountingSheets', () => {
   })
 
   it('fills the Activity column via the supplied name resolver', () => {
-    const rows = buildAccountingSheets(sampleBooks(), () => 'Acme Client').find(
-      (s) => s.name === 'General Ledger'
-    )!.rows
+    const rows = buildSheets(
+      sampleBooks(),
+      [{ key: 'income' }, { key: 'balance' }, { key: 'trial' }, { key: 'ledger' }],
+      () => 'Acme Client'
+    ).find((s) => s.name === 'General Ledger')!.rows
     // header + first journal line; Activity is the 5th column (index 4).
     expect(String(rows[3][4])).toContain('Acme Client')
   })
@@ -244,7 +251,7 @@ describe('buildSheets (section selection)', () => {
   })
 })
 
-describe('exportAccountingExcel', () => {
+describe('exportSheetsExcel', () => {
   afterEach(() => {
     vi.unstubAllGlobals()
     vi.restoreAllMocks()
@@ -264,7 +271,13 @@ describe('exportAccountingExcel', () => {
     vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {})
     vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
 
-    await exportAccountingExcel(sampleBooks())
+    const sheets = buildSheets(sampleBooks(), [
+      { key: 'income' },
+      { key: 'balance' },
+      { key: 'trial' },
+      { key: 'ledger' }
+    ])
+    await exportSheetsExcel(sheets, 'cnc-accounting.xlsx')
 
     expect(captured).not.toBeNull()
     expect(captured!.type).toContain('spreadsheetml')

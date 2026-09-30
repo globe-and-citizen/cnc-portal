@@ -1,20 +1,36 @@
 {
   "storage": [
     {
-      "astId": 22839,
-      "contract": "contracts/expense-account/ExpenseAccountEIP712.sol:ExpenseAccountEIP712",
-      "label": "expenseBalances",
+      "astId": 30806,
+      "contract": "project/contracts/expense-account/ExpenseAccountEIP712.sol:ExpenseAccountEIP712",
+      "label": "s_supportedTokens",
       "offset": 0,
       "slot": "0",
-      "type": "t_mapping(t_bytes32,t_struct(ExpenseBalance)22834_storage)"
+      "type": "t_struct(AddressSet)15376_storage"
     },
     {
-      "astId": 22844,
-      "contract": "contracts/expense-account/ExpenseAccountEIP712.sol:ExpenseAccountEIP712",
-      "label": "supportedTokens",
+      "astId": 31178,
+      "contract": "project/contracts/expense-account/ExpenseAccountEIP712.sol:ExpenseAccountEIP712",
+      "label": "s_expenseBalances",
       "offset": 0,
-      "slot": "1",
-      "type": "t_mapping(t_string_memory_ptr,t_address)"
+      "slot": "2",
+      "type": "t_mapping(t_bytes32,t_struct(ExpenseBalance)31161_storage)"
+    },
+    {
+      "astId": 31180,
+      "contract": "project/contracts/expense-account/ExpenseAccountEIP712.sol:ExpenseAccountEIP712",
+      "label": "s_officerAddress",
+      "offset": 0,
+      "slot": "3",
+      "type": "t_address"
+    },
+    {
+      "astId": 31184,
+      "contract": "project/contracts/expense-account/ExpenseAccountEIP712.sol:ExpenseAccountEIP712",
+      "label": "__gap",
+      "offset": 0,
+      "slot": "4",
+      "type": "t_array(t_uint256)49_storage"
     }
   ],
   "types": {
@@ -23,73 +39,118 @@
       "label": "address",
       "numberOfBytes": "20"
     },
+    "t_array(t_bytes32)dyn_storage": {
+      "base": "t_bytes32",
+      "encoding": "dynamic_array",
+      "label": "bytes32[]",
+      "numberOfBytes": "32"
+    },
+    "t_array(t_uint256)49_storage": {
+      "base": "t_uint256",
+      "encoding": "inplace",
+      "label": "uint256[49]",
+      "numberOfBytes": "1568"
+    },
     "t_bytes32": {
       "encoding": "inplace",
       "label": "bytes32",
       "numberOfBytes": "32"
     },
-    "t_enum(ApprovalState)22824": {
+    "t_enum(ApprovalState)31133": {
       "encoding": "inplace",
       "label": "enum ExpenseAccountEIP712.ApprovalState",
       "numberOfBytes": "1"
     },
-    "t_mapping(t_bytes32,t_struct(ExpenseBalance)22834_storage)": {
+    "t_mapping(t_bytes32,t_struct(ExpenseBalance)31161_storage)": {
       "encoding": "mapping",
       "key": "t_bytes32",
       "label": "mapping(bytes32 => struct ExpenseAccountEIP712.ExpenseBalance)",
       "numberOfBytes": "32",
-      "value": "t_struct(ExpenseBalance)22834_storage"
+      "value": "t_struct(ExpenseBalance)31161_storage"
     },
-    "t_mapping(t_string_memory_ptr,t_address)": {
+    "t_mapping(t_bytes32,t_uint256)": {
       "encoding": "mapping",
-      "key": "t_string_memory_ptr",
-      "label": "mapping(string => address)",
+      "key": "t_bytes32",
+      "label": "mapping(bytes32 => uint256)",
       "numberOfBytes": "32",
-      "value": "t_address"
+      "value": "t_uint256"
     },
-    "t_string_memory_ptr": {
-      "encoding": "bytes",
-      "label": "string",
-      "numberOfBytes": "32"
+    "t_struct(AddressSet)15376_storage": {
+      "encoding": "inplace",
+      "label": "struct EnumerableSet.AddressSet",
+      "members": [
+        {
+          "astId": 15375,
+          "contract": "project/contracts/expense-account/ExpenseAccountEIP712.sol:ExpenseAccountEIP712",
+          "label": "_inner",
+          "offset": 0,
+          "slot": "0",
+          "type": "t_struct(Set)14708_storage"
+        }
+      ],
+      "numberOfBytes": "64"
     },
-    "t_struct(ExpenseBalance)22834_storage": {
+    "t_struct(ExpenseBalance)31161_storage": {
       "encoding": "inplace",
       "label": "struct ExpenseAccountEIP712.ExpenseBalance",
       "members": [
         {
-          "astId": 22826,
-          "contract": "contracts/expense-account/ExpenseAccountEIP712.sol:ExpenseAccountEIP712",
+          "astId": 31153,
+          "contract": "project/contracts/expense-account/ExpenseAccountEIP712.sol:ExpenseAccountEIP712",
           "label": "lastWithdrawnDate",
           "offset": 0,
           "slot": "0",
           "type": "t_uint256"
         },
         {
-          "astId": 22828,
-          "contract": "contracts/expense-account/ExpenseAccountEIP712.sol:ExpenseAccountEIP712",
+          "astId": 31155,
+          "contract": "project/contracts/expense-account/ExpenseAccountEIP712.sol:ExpenseAccountEIP712",
           "label": "totalWithdrawn",
           "offset": 0,
           "slot": "1",
           "type": "t_uint256"
         },
         {
-          "astId": 22830,
-          "contract": "contracts/expense-account/ExpenseAccountEIP712.sol:ExpenseAccountEIP712",
+          "astId": 31157,
+          "contract": "project/contracts/expense-account/ExpenseAccountEIP712.sol:ExpenseAccountEIP712",
           "label": "lastWithdrawnPeriod",
           "offset": 0,
           "slot": "2",
           "type": "t_uint256"
         },
         {
-          "astId": 22833,
-          "contract": "contracts/expense-account/ExpenseAccountEIP712.sol:ExpenseAccountEIP712",
+          "astId": 31160,
+          "contract": "project/contracts/expense-account/ExpenseAccountEIP712.sol:ExpenseAccountEIP712",
           "label": "state",
           "offset": 0,
           "slot": "3",
-          "type": "t_enum(ApprovalState)22824"
+          "type": "t_enum(ApprovalState)31133"
         }
       ],
       "numberOfBytes": "128"
+    },
+    "t_struct(Set)14708_storage": {
+      "encoding": "inplace",
+      "label": "struct EnumerableSet.Set",
+      "members": [
+        {
+          "astId": 14703,
+          "contract": "project/contracts/expense-account/ExpenseAccountEIP712.sol:ExpenseAccountEIP712",
+          "label": "_values",
+          "offset": 0,
+          "slot": "0",
+          "type": "t_array(t_bytes32)dyn_storage"
+        },
+        {
+          "astId": 14707,
+          "contract": "project/contracts/expense-account/ExpenseAccountEIP712.sol:ExpenseAccountEIP712",
+          "label": "_positions",
+          "offset": 0,
+          "slot": "1",
+          "type": "t_mapping(t_bytes32,t_uint256)"
+        }
+      ],
+      "numberOfBytes": "64"
     },
     "t_uint256": {
       "encoding": "inplace",

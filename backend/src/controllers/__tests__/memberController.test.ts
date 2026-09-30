@@ -110,7 +110,7 @@ describe('Member Controller', () => {
   });
 
   describe('POST: /team/:id/member', () => {
-    it('should add members', async () => {
+    it('[AC-US-COMPANIES-005-02] adds eligible company members', async () => {
       vi.mocked(prisma.team.findUnique).mockResolvedValue(mockResolvedTeam);
       vi.mocked(prisma.team.update).mockResolvedValueOnce(mockResolvedTeam);
 
@@ -120,7 +120,7 @@ describe('Member Controller', () => {
       expect(response.body).toEqual({ members: mockResolvedTeam.members });
     });
 
-    it('should return 400 when Member is not well formatted', async () => {
+    it('[AC-US-COMPANIES-005-05] rejects a malformed member address', async () => {
       const response = await request(app)
         .post('/team/1/member')
         .send([
@@ -132,7 +132,7 @@ describe('Member Controller', () => {
       expect(response.body.message).toContain('Invalid');
     });
 
-    it('Should return 404 when team is not found', async () => {
+    it('returns not found when the company is unavailable', async () => {
       vi.mocked(prisma.team.findUnique).mockResolvedValue(null);
 
       const response = await request(app).post('/team/1/member').send(fakeMembers);
@@ -141,7 +141,7 @@ describe('Member Controller', () => {
       expect(response.body).toEqual({ message: 'Team not found' });
     });
 
-    it('Should return 400 when members already exist in the team', async () => {
+    it('[AC-US-COMPANIES-005-08] rejects members who already belong to the company', async () => {
       const teamWithExistingMembers = {
         ...mockResolvedTeam,
 
@@ -157,7 +157,7 @@ describe('Member Controller', () => {
       });
     });
 
-    it('Should return 403 when the caller is not the owner', async () => {
+    it('[AC-US-COMPANIES-005-04] rejects member additions from a non-owner', async () => {
       const teamWithDifferentOwner = {
         ...mockResolvedTeam,
         ownerAddress: '0xNotOwnerAddress',
@@ -173,7 +173,7 @@ describe('Member Controller', () => {
       });
     });
 
-    it('Should return 500 when an error occurs', async () => {
+    it('reports an unexpected member-addition failure', async () => {
       const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
       vi.mocked(prisma.team.findUnique).mockRejectedValue('Server error');
 
@@ -190,7 +190,7 @@ describe('Member Controller', () => {
   });
 
   describe('DELETE: /team/:id/member/:memberAddress', () => {
-    it('should delete member', async () => {
+    it('[AC-US-COMPANIES-005-03] removes an existing company member', async () => {
       vi.mocked(prisma.team.findUnique).mockResolvedValue(mockResolvedTeam);
       vi.mocked(prisma.team.update).mockResolvedValue(mockResolvedTeam);
       vi.mocked(prisma.memberTeamsData.delete).mockResolvedValueOnce({} as any);
@@ -202,7 +202,7 @@ describe('Member Controller', () => {
       expect(response.status).toBe(204);
     });
 
-    it('should return 404 when team is not found', async () => {
+    it('returns 404 when team is not found', async () => {
       vi.mocked(prisma.team.findUnique).mockResolvedValue(null);
 
       const response = await request(app).delete(
@@ -213,7 +213,7 @@ describe('Member Controller', () => {
       expect(response.body).toEqual({ message: 'Team not found' });
     });
 
-    it('should return 404 when member is not found in the team', async () => {
+    it('[AC-US-COMPANIES-005-09] rejects removal of a missing member', async () => {
       vi.mocked(prisma.team.findUnique).mockResolvedValue(mockResolvedTeam);
 
       const response = await request(app).delete(
@@ -226,7 +226,7 @@ describe('Member Controller', () => {
       });
     });
 
-    it('should return 403 when the caller is not the owner', async () => {
+    it('returns 403 when the caller is not the owner', async () => {
       const teamWithDifferentOwner = {
         ...mockResolvedTeam,
         ownerAddress: '0xNotOwnerAddress',
@@ -244,7 +244,12 @@ describe('Member Controller', () => {
       });
     });
 
-    it('should return 403 when the owner is trying to delete himself', async () => {
+    /**
+     * Covers:
+     * - [AC-US-COMPANIES-005-06]
+     * - [AC-US-COMPANIES-005-09]
+     */
+    it('rejects removal of the company owner', async () => {
       vi.mocked(prisma.team.findUnique).mockResolvedValue(mockResolvedTeam);
       vi.mocked(prisma.team.update).mockResolvedValue(mockResolvedTeam);
 
@@ -256,7 +261,7 @@ describe('Member Controller', () => {
       });
     });
 
-    it('should return 500 when an error occurs', async () => {
+    it('[AC-US-COMPANIES-005-10] reports a failed membership change', async () => {
       const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
       vi.mocked(prisma.team.findUnique).mockRejectedValue('Server error');
 
@@ -275,7 +280,7 @@ describe('Member Controller', () => {
   });
 
   describe('Direct controller coverage', () => {
-    it('addMembers should return 404 when team is missing in controller', async () => {
+    it('addMembers returns not found when the company is unavailable', async () => {
       vi.mocked(prisma.team.findUnique).mockResolvedValueOnce(null);
 
       const req = {
@@ -290,7 +295,7 @@ describe('Member Controller', () => {
       expect(res.json).toHaveBeenCalledWith({ message: 'Team not found' });
     });
 
-    it('addMembers should return 500 with Error message when findUnique throws Error', async () => {
+    it('addMembers reports an Error thrown during company lookup', async () => {
       vi.mocked(prisma.team.findUnique).mockRejectedValueOnce(new Error('findUnique failed'));
 
       const req = {
@@ -308,7 +313,7 @@ describe('Member Controller', () => {
       });
     });
 
-    it('addMembers should return 500 fallback when findUnique throws non-Error', async () => {
+    it('addMembers reports a non-Error thrown during company lookup', async () => {
       vi.mocked(prisma.team.findUnique).mockRejectedValueOnce('findUnique failed');
 
       const req = {
@@ -326,7 +331,7 @@ describe('Member Controller', () => {
       });
     });
 
-    it('deleteMember should return 404 when team is missing in controller', async () => {
+    it('deleteMember returns not found when the company is unavailable', async () => {
       vi.mocked(prisma.team.findUnique).mockResolvedValueOnce(null);
 
       const req = {
@@ -340,7 +345,7 @@ describe('Member Controller', () => {
       expect(res.json).toHaveBeenCalledWith({ message: 'Team not found' });
     });
 
-    it('deleteMember should return 500 when memberTeamsData.delete throws Error', async () => {
+    it('deleteMember reports an Error thrown while deleting membership data', async () => {
       vi.mocked(prisma.team.findUnique).mockResolvedValueOnce(mockResolvedTeam as any);
       vi.mocked(prisma.memberTeamsData.delete).mockRejectedValueOnce(new Error('delete failed'));
 
@@ -358,7 +363,7 @@ describe('Member Controller', () => {
       });
     });
 
-    it('deleteMember should return 500 fallback when memberTeamsData.delete throws non-Error', async () => {
+    it('deleteMember reports a non-Error thrown while deleting membership data', async () => {
       vi.mocked(prisma.team.findUnique).mockResolvedValueOnce(mockResolvedTeam as any);
       vi.mocked(prisma.memberTeamsData.delete).mockRejectedValueOnce('delete failed');
 
@@ -376,7 +381,7 @@ describe('Member Controller', () => {
       });
     });
 
-    it('deleteMember should return 500 with Error message when outer try fails with Error', async () => {
+    it('deleteMember reports an Error thrown during company lookup', async () => {
       vi.mocked(prisma.team.findUnique).mockRejectedValueOnce(new Error('team lookup failed'));
 
       const req = {
@@ -393,7 +398,7 @@ describe('Member Controller', () => {
       });
     });
 
-    it('deleteMember should return 500 fallback when outer try fails with non-Error', async () => {
+    it('deleteMember reports a non-Error thrown during company lookup', async () => {
       vi.mocked(prisma.team.findUnique).mockRejectedValueOnce('team lookup failed');
 
       const req = {

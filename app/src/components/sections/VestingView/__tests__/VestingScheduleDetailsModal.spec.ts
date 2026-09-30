@@ -20,7 +20,7 @@ const cancelledSchedule: VestingSchedule = {
 }
 
 describe('VestingScheduleDetailsModal.vue', () => {
-  it('shows the released and cancelled amounts with local and UTC boundaries', () => {
+  it('[AC-US-VESTING-005-07] shows released and cancelled amounts with exact boundaries', () => {
     const wrapper = mount(VestingScheduleDetailsModal, {
       props: {
         open: true,

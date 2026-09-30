@@ -126,8 +126,110 @@ describe('Investor — Merkle-pull migration', () => {
     })
   })
 
+  describe('authority lifecycle', () => {
+    /**
+     * Covers:
+     * - [AC-US-SHER-004-03]
+     * - [AC-US-SHER-004-06]
+     * - [AC-US-SHER-009-06]
+     */
+    it('[AC-US-CONTRACT-002-11] transfers ownership and human roles atomically', async () => {
+      const { investor, owner, addr1: successor, addr2: technicalMinter } = await deployFixture()
+      const minterRole = await investor.MINTER_ROLE()
+      const adminRole = await investor.DEFAULT_ADMIN_ROLE()
+
+      await investor.grantRole(minterRole, technicalMinter.address)
+      await expect(investor.transferOwnership(successor.address))
+        .to.emit(investor, 'OwnershipTransferred')
+        .withArgs(owner.address, successor.address)
+
+      expect(await investor.owner()).to.equal(successor.address)
+      expect(await investor.hasRole(adminRole, successor.address)).to.equal(true)
+      expect(await investor.hasRole(minterRole, successor.address)).to.equal(true)
+      expect(await investor.hasRole(adminRole, owner.address)).to.equal(false)
+      expect(await investor.hasRole(minterRole, owner.address)).to.equal(false)
+      expect(await investor.hasRole(minterRole, technicalMinter.address)).to.equal(true)
+
+      await expect(investor.individualMint(technicalMinter.address, 1n))
+        .to.be.revertedWithCustomError(investor, 'AccessControlUnauthorizedAccount')
+        .withArgs(owner.address, minterRole)
+
+      await expect(investor.connect(successor).individualMint(successor.address, 1n))
+        .to.emit(investor, 'Minted')
+        .withArgs(successor.address, 1n)
+    })
+
+    it('[AC-US-SHER-009-04] lets the successor administer minter permissions', async () => {
+      const { investor, addr1: successor, addr2: delegatedMinter } = await deployFixture()
+      const minterRole = await investor.MINTER_ROLE()
+
+      await investor.transferOwnership(successor.address)
+      await investor.connect(successor).grantRole(minterRole, delegatedMinter.address)
+      expect(await investor.hasRole(minterRole, delegatedMinter.address)).to.equal(true)
+
+      await investor.connect(successor).revokeRole(minterRole, delegatedMinter.address)
+      expect(await investor.hasRole(minterRole, delegatedMinter.address)).to.equal(false)
+    })
+
+    it('[AC-US-SHER-009-05] rejects minter administration by a non-administrator', async () => {
+      const { investor, addr1: nonAdministrator, addr2: delegatedMinter } = await deployFixture()
+      const adminRole = await investor.DEFAULT_ADMIN_ROLE()
+      const minterRole = await investor.MINTER_ROLE()
+
+      await expect(
+        investor.connect(nonAdministrator).grantRole(minterRole, delegatedMinter.address)
+      )
+        .to.be.revertedWithCustomError(investor, 'AccessControlUnauthorizedAccount')
+        .withArgs(nonAdministrator.address, adminRole)
+    })
+
+    it('preserves the current owner roles when transferring to the same address', async () => {
+      const { investor, owner } = await deployFixture()
+      const minterRole = await investor.MINTER_ROLE()
+      const adminRole = await investor.DEFAULT_ADMIN_ROLE()
+
+      await investor.transferOwnership(owner.address)
+
+      expect(await investor.owner()).to.equal(owner.address)
+      expect(await investor.hasRole(adminRole, owner.address)).to.equal(true)
+      expect(await investor.hasRole(minterRole, owner.address)).to.equal(true)
+    })
+
+    it('rejects ownership renunciation so role authority cannot outlive ownership', async () => {
+      const { investor } = await deployFixture()
+
+      await expect(investor.renounceOwnership()).to.be.revertedWithCustomError(
+        investor,
+        'Investor__OwnershipRenunciationDisabled'
+      )
+    })
+
+    it('prevents the current owner from losing either human authority role', async () => {
+      const { investor, owner } = await deployFixture()
+      const minterRole = await investor.MINTER_ROLE()
+      const adminRole = await investor.DEFAULT_ADMIN_ROLE()
+
+      await expect(investor.revokeRole(minterRole, owner.address))
+        .to.be.revertedWithCustomError(investor, 'Investor__OwnerRoleRequired')
+        .withArgs(minterRole)
+      await expect(investor.renounceRole(adminRole, owner.address))
+        .to.be.revertedWithCustomError(investor, 'Investor__OwnerRoleRequired')
+        .withArgs(adminRole)
+    })
+
+    it('lets delegated minters renounce their own role', async () => {
+      const { investor, addr1: delegatedMinter } = await deployFixture()
+      const minterRole = await investor.MINTER_ROLE()
+
+      await investor.grantRole(minterRole, delegatedMinter.address)
+      await investor.connect(delegatedMinter).renounceRole(minterRole, delegatedMinter.address)
+
+      expect(await investor.hasRole(minterRole, delegatedMinter.address)).to.equal(false)
+    })
+  })
+
   describe('claim', () => {
-    it('mints the caller their snapshot balance against a valid proof', async () => {
+    it('[AC-US-SHER-006-02] mints the caller snapshot balance against a valid proof', async () => {
       await investor.setMigrationRoot(tree.root)
       await expect(investor.connect(addr1).claim(100n, tree.proof(0)))
         .to.emit(investor, 'MigrationClaimed')
@@ -136,13 +238,13 @@ describe('Investor — Merkle-pull migration', () => {
       expect(await investor.getMigrationClaimed(addr1.address)).to.equal(true)
     })
 
-    it('reverts when the root is not set', async () => {
+    it('[AC-US-SHER-006-03] rejects a claim when the migration root is unavailable', async () => {
       await expect(
         investor.connect(addr1).claim(100n, tree.proof(0))
       ).to.be.revertedWithCustomError(investor, 'Investor__MigrationRootNotSet')
     })
 
-    it('reverts on an invalid proof', async () => {
+    it('[AC-US-SHER-006-04] rejects an invalid Merkle proof', async () => {
       await investor.setMigrationRoot(tree.root)
       await expect(
         investor.connect(addr1).claim(100n, tree.proof(1))
@@ -156,7 +258,7 @@ describe('Investor — Merkle-pull migration', () => {
       ).to.be.revertedWithCustomError(investor, 'Investor__InvalidProof')
     })
 
-    it('reverts on a double claim', async () => {
+    it('[AC-US-SHER-006-04] rejects a repeated claim', async () => {
       await investor.setMigrationRoot(tree.root)
       await investor.connect(addr1).claim(100n, tree.proof(0))
       await expect(
@@ -166,7 +268,7 @@ describe('Investor — Merkle-pull migration', () => {
   })
 
   describe('bulkClaim (owner sweep)', () => {
-    it('mints unclaimed holders and skips already-claimed ones', async () => {
+    it('[AC-US-SHER-007-01] mints unclaimed holders and skips already-claimed ones', async () => {
       await investor.setMigrationRoot(tree.root)
       await investor.connect(addr1).claim(100n, tree.proof(0))
 
@@ -189,16 +291,30 @@ describe('Investor — Merkle-pull migration', () => {
       ).to.be.revertedWithCustomError(investor, 'Investor__LengthMismatch')
     })
 
-    it('reverts for a non-owner', async () => {
+    /**
+     * Covers:
+     * - [AC-US-SHER-007-05]
+     * - [AC-US-SHER-007-06]
+     */
+    it('rejects migration settlement by a non-owner', async () => {
       await investor.setMigrationRoot(tree.root)
       await expect(
         investor.connect(addr1).bulkClaim([addr2.address], [50n], [tree.proof(1)])
       ).to.be.revertedWithCustomError(investor, 'OwnableUnauthorizedAccount')
+      await expect(investor.connect(addr1).completeMigration()).to.be.revertedWithCustomError(
+        investor,
+        'OwnableUnauthorizedAccount'
+      )
     })
   })
 
   describe('completeMigration', () => {
-    it('closes claims once complete', async () => {
+    /**
+     * Covers:
+     * - [AC-US-SHER-006-08]
+     * - [AC-US-SHER-007-03]
+     */
+    it('closes claims once migration completes', async () => {
       await investor.setMigrationRoot(tree.root)
       await investor.connect(addr1).claim(100n, tree.proof(0))
       await expect(investor.completeMigration()).to.emit(investor, 'MigrationCompleted')
@@ -211,7 +327,7 @@ describe('Investor — Merkle-pull migration', () => {
   })
 
   describe('dividend freeze during migration', () => {
-    it('freezes distribution while a migration is in progress and unfreezes on completion', async () => {
+    it('[AC-US-SHER-002-08] freezes dividends during migration and restores them on completion', async () => {
       await investor.setMigrationRoot(tree.root)
       await investor.connect(addr1).claim(100n, tree.proof(0))
 

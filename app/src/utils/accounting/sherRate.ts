@@ -18,7 +18,7 @@
  *   `SHERS To Be Issued`) — that portion floats at today's rate until it is taken.
  *
  * The matching of withdrawals to accruals (freeze the withdrawn portion, float the
- * pending one) lives in `mappers/sherIssuance.ts` ({@link settleWithdrawnSher}).
+ * pending one) lives in `sherIssuance.ts` ({@link settleWithdrawnSher}).
  */
 import { formatUnits } from 'viem'
 import type { SafeMultiplierUpdatedRow, SafeDepositRow } from '@/types/contract-events/investor'
@@ -39,7 +39,7 @@ function toWhole(value: string | bigint, decimals: number): number {
 }
 
 /** The whole-units SHER-per-token multiplier in effect from `timestamp` onward. */
-export interface SherMultiplierPoint {
+interface SherMultiplierPoint {
   timestamp: number
   multiplier: number
 }

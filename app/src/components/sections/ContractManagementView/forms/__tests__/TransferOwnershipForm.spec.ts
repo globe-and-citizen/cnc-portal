@@ -192,7 +192,7 @@ describe('TransferOwnershipForm.vue', () => {
       expect(wrapper.find('[data-test="back-button"]').exists()).toBe(false)
     })
 
-    it('shows the Board approval notice when isBodAction=true', async () => {
+    it('[AC-US-CONTRACT-002-07] identifies Board approval before transfer submission', async () => {
       const wrapper = mountComponent({ isBodAction: true })
       await nextTick()
       expect(wrapper.find('[data-test="bod-action-alert"]').exists()).toBe(true)

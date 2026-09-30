@@ -28,6 +28,7 @@ import {
   mkdirSync,
   existsSync
 } from 'fs'
+import { createRequire } from 'module'
 import { join, relative, basename, dirname, extname } from 'path'
 import { fileURLToPath, pathToFileURL } from 'url'
 
@@ -35,7 +36,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url))
 const ROOT = join(__dirname, '..')
 const APP_SRC = join(ROOT, 'app/src')
 const COMPOSABLES_DIR = join(APP_SRC, 'composables')
-const ABI_JSON_DIR = join(APP_SRC, 'artifacts/abi/json')
+const ABI_MODULE_FILE = join(APP_SRC, 'artifacts/abi/generated.ts')
 const MOCKS_FILE = join(APP_SRC, 'tests/mocks/contract.mock.ts')
 const SETUP_DIR = join(APP_SRC, 'tests/setup')
 const OUT_DIR = join(__dirname, 'out')
@@ -50,18 +51,21 @@ const CONTRACT_FILTER = (() => {
 
 // ── Manifests ────────────────────────────────────────────────────────────────
 
-/** composable slug → ABI JSON filename (without .json) */
-const ABI_JSON_MAP = {
-  bank: 'Bank',
-  bod: 'BoardOfDirectors',
-  investor: 'InvestorV1',
-  erc20: 'ERC20',
-  elections: 'Elections',
-  safeDepositRouter: 'SafeDepositRouter',
-  cashRemuneration: 'CashRemunerationEIP712',
-  expenseAccount: 'ExpenseAccountEIP712',
-  vesting: 'Vesting'
+/** composable slug → export in the current typed ABI module. */
+const ABI_EXPORT_MAP = {
+  bank: 'bankAbi',
+  bod: 'boardOfDirectorsAbi',
+  investor: 'investorAbi',
+  elections: 'electionsAbi',
+  safeDepositRouter: 'safeDepositRouterAbi',
+  cashRemuneration: 'cashRemunerationEip712Abi',
+  expenseAccount: 'expenseAccountEip712Abi',
+  vesting: 'vestingAbi'
 }
+
+const currentAbiModule = await import(pathToFileURL(ABI_MODULE_FILE).href)
+const requireFromApp = createRequire(join(ROOT, 'app/package.json'))
+const { erc20Abi } = requireFromApp('viem')
 
 /** composable slug → mock namespace prefix used in contract.mock.ts */
 const MOCK_NAMESPACE_MAP = {
@@ -153,16 +157,13 @@ function discoverSlugs() {
   return slugs
 }
 
-// ── 2. Extract contract functions from JSON ABI ─────────────────────────────
+// ── 2. Extract contract functions from typed ABI module ─────────────────────
 
 function loadAbiFunctions(slug, formatAbiItem) {
-  const abiName = ABI_JSON_MAP[slug]
-  if (!abiName) return { reads: [], writes: [], abiFile: null, error: 'unmapped' }
-  const abiFile = join(ABI_JSON_DIR, `${abiName}.json`)
-  if (!existsSync(abiFile)) {
-    return { reads: [], writes: [], abiFile: rel(abiFile), error: 'abi-missing' }
-  }
-  const abi = JSON.parse(readFileSync(abiFile, 'utf8'))
+  const exportName = ABI_EXPORT_MAP[slug]
+  const abi = slug === 'erc20' ? erc20Abi : currentAbiModule[exportName]
+  if (!abi) return { reads: [], writes: [], abiFile: null, error: 'unmapped' }
+  const abiFile = slug === 'erc20' ? 'viem#erc20Abi' : `${rel(ABI_MODULE_FILE)}#${exportName}`
   const reads = []
   const writes = []
   for (const item of abi) {
@@ -180,7 +181,7 @@ function loadAbiFunctions(slug, formatAbiItem) {
       writes.push(entry)
     }
   }
-  return { reads, writes, abiFile: rel(abiFile), error: null }
+  return { reads, writes, abiFile, error: null }
 }
 
 // ── 3. Parse composables ────────────────────────────────────────────────────

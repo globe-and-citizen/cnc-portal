@@ -29,10 +29,8 @@ interface MockTeam {
 }
 
 // Hoisted mocks
-const { mockuseGetSafeInfoQuery, mockGetSafeSettingsUrl, mockOpenSafeAppUrl } = vi.hoisted(() => ({
-  mockuseGetSafeInfoQuery: vi.fn(),
-  mockGetSafeSettingsUrl: vi.fn(),
-  mockOpenSafeAppUrl: vi.fn()
+const { mockuseGetSafeInfoQuery } = vi.hoisted(() => ({
+  mockuseGetSafeInfoQuery: vi.fn()
 }))
 
 // Test constants - defined before mocks
@@ -70,12 +68,6 @@ vi.mock('@/queries/safe.queries', () => ({
   useGetSafeInfoQuery: mockuseGetSafeInfoQuery
 }))
 
-// Mock Safe composables
-vi.mock('@/composables/safe', () => ({
-  getSafeSettingsUrl: mockGetSafeSettingsUrl,
-  openSafeAppUrl: mockOpenSafeAppUrl
-}))
-
 // Component stubs
 const SELECTORS = {
   card: '[data-test="card-component"]',
@@ -88,8 +80,7 @@ const SELECTORS = {
   removeOwnerBtn: '[data-test="remove-owner-button"]',
   addSignerModal: '[data-test="add-signer-modal"]',
   updateThresholdModal: '[data-test="update-threshold-modal"]',
-  loadingSpinner: '.animate-spin',
-  openSafeAppFooter: '[data-test="open-safe-app-footer"]'
+  loadingSpinner: '.animate-spin'
 } as const
 
 const AddressTooltipStub = defineComponent({
@@ -118,7 +109,7 @@ const UpdateThresholdModalStub = defineComponent({
   template: '<div data-test="update-threshold-modal"></div>'
 })
 
-describe('SafeOwnersCard', () => {
+describe('[US-SAFE-004] SafeOwnersCard', () => {
   let wrapper: VueWrapper<InstanceType<typeof SafeOwnersCard>>
 
   const defaultProps = { address: MOCK_DATA.safeAddress }
@@ -158,12 +149,6 @@ describe('SafeOwnersCard', () => {
       address: ''
     } as ReturnType<typeof useUserDataStore>)
 
-    mockGetSafeSettingsUrl.mockReturnValue(
-      'https://app.safe.global/settings/setup?safe=polygon:0x1234567890123456789012345678901234567890'
-    )
-
-    mockOpenSafeAppUrl.mockImplementation(() => {})
-
     // Reset reactive values
     mockSafeInfoData.value = null
     mockIsLoading.value = false
@@ -175,7 +160,7 @@ describe('SafeOwnersCard', () => {
   })
 
   describe('Component Rendering', () => {
-    it('should render action buttons in card header', () => {
+    it('renders action buttons in card header', () => {
       wrapper = createWrapper()
 
       expect(wrapper.find(SELECTORS.addSignerBtn).exists()).toBe(true)
@@ -184,14 +169,14 @@ describe('SafeOwnersCard', () => {
   })
 
   describe('Loading States', () => {
-    it('should show loading spinner when data is fetching', () => {
+    it('shows loading spinner when data is fetching', () => {
       mockIsLoading.value = true
       wrapper = createWrapper()
 
       expect(wrapper.find(SELECTORS.loadingSpinner).exists()).toBe(true)
     })
 
-    it('should hide content during loading', () => {
+    it('hides content during loading', () => {
       mockIsLoading.value = true
       wrapper = createWrapper()
 
@@ -200,7 +185,7 @@ describe('SafeOwnersCard', () => {
   })
 
   describe('Owners Display', () => {
-    it('should display all owners correctly', async () => {
+    it('[AC-US-SAFE-002-01] displays every Safe owner', async () => {
       mockSafeInfoData.value = MOCK_DATA.safeInfo
       wrapper = createWrapper()
       await nextTick()
@@ -209,7 +194,7 @@ describe('SafeOwnersCard', () => {
       expect(ownerItems).toHaveLength(MOCK_DATA.safeInfo.owners.length)
     })
 
-    it('should show total owners count in footer', async () => {
+    it('shows total owners count in footer', async () => {
       mockSafeInfoData.value = MOCK_DATA.safeInfo
       wrapper = createWrapper()
       await nextTick()
@@ -221,7 +206,7 @@ describe('SafeOwnersCard', () => {
       }
     })
 
-    it('should render RemoveOwnerButton for each owner', async () => {
+    it('renders RemoveOwnerButton for each owner', async () => {
       mockSafeInfoData.value = MOCK_DATA.safeInfo
       wrapper = createWrapper()
       await nextTick()
@@ -232,7 +217,12 @@ describe('SafeOwnersCard', () => {
   })
 
   describe('User Permissions', () => {
-    it('should disable add signer button when user is not an owner', async () => {
+    /**
+     * Covers:
+     * - [AC-US-SAFE-004-05]
+     * - [AC-US-SAFE-004-08]
+     */
+    it('disables signer management when the connected wallet is not a Safe owner', async () => {
       vi.mocked(useUserDataStore).mockReturnValue({
         address: '0x9999999999999999999999999999999999999999' as Address
       } as ReturnType<typeof useUserDataStore>)

@@ -314,21 +314,8 @@ const submitForm = () => {
   })
 }
 
-const formRef = ref<HTMLElement | null>(null)
-const showDropdown = ref<boolean>(false)
-
-const handleClickOutside = (event: MouseEvent) => {
-  if (formRef.value && !formRef.value.contains(event.target as Node)) {
-    showDropdown.value = false
-  }
-}
-
 onMounted(() => {
-  document.addEventListener('click', handleClickOutside)
   clock = setInterval(() => (now.value = Date.now()), 30 * 1000)
 })
-onUnmounted(() => {
-  document.removeEventListener('click', handleClickOutside)
-  clearInterval(clock)
-})
+onUnmounted(() => clearInterval(clock))
 </script>

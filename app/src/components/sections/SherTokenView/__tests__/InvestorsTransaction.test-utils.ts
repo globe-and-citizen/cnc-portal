@@ -197,11 +197,15 @@ export const setupDefaultState = () => {
     return null
   })
 
-  eventFeedState.investorResult.value = buildInvestorResult()
+  eventFeedState.investorResult.value = {
+    events: buildInvestorResult(),
+    gaps: [],
+    timestampGaps: []
+  }
   eventFeedState.investorError.value = null
   eventFeedState.investorLoading.value = false
 
-  eventFeedState.safeResult.value = buildSafeResult()
+  eventFeedState.safeResult.value = { events: buildSafeResult(), gaps: [], timestampGaps: [] }
   eventFeedState.safeError.value = null
   eventFeedState.safeLoading.value = false
 
@@ -211,13 +215,13 @@ export const setupDefaultState = () => {
   mockUseQuery.mockReset()
   mockUseQuery
     .mockReturnValueOnce({
-      result: eventFeedState.investorResult,
+      data: eventFeedState.investorResult,
       error: eventFeedState.investorError,
-      loading: eventFeedState.investorLoading
+      isPending: eventFeedState.investorLoading
     })
     .mockReturnValueOnce({
-      result: eventFeedState.safeResult,
+      data: eventFeedState.safeResult,
       error: eventFeedState.safeError,
-      loading: eventFeedState.safeLoading
+      isPending: eventFeedState.safeLoading
     })
 }

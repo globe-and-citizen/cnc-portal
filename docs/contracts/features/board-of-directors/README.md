@@ -30,6 +30,11 @@
 - **Pattern:** Majority >50% required; auto-executes on the approval that crosses the threshold; encoded ABI calls against any target
   contract
 
+## Implementation Evidence
+
+- [Board contract tests](../../../../contract/test/BoardOfDirectors.spec.ts)
+- [Board upgrade tests](../../../../contract/test/BoardOfDirectorsUpgradeModule.spec.ts)
+
 ---
 
 ## US-BOD-001: Set Board Membership (from Elections Results)

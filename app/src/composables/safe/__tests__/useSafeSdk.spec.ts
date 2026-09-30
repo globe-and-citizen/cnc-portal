@@ -1,6 +1,11 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { hardhat } from 'viem/chains'
 import { useSafeSDK } from '../useSafeSdk'
+import { E2E_SAFE_INFRA, E2E_SAFE_LIBRARIES } from '@/e2e/chain'
 import { mockUseConnection } from '@/tests/mocks'
+
+const LOWERCASE_SAFE_ADDRESS = '0x0557f280d9da274254e85ee70c2936694e494275'
+const CHECKSUM_SAFE_ADDRESS = '0x0557F280D9DA274254e85Ee70c2936694e494275'
 
 const { mockSafeInit, mockGetInjectedProvider } = vi.hoisted(() => ({
   mockSafeInit: vi.fn(),
@@ -27,6 +32,11 @@ describe('useSafeSDK', () => {
     useSafeSDK().clearCache()
   })
 
+  afterEach(() => {
+    vi.unstubAllEnvs()
+    vi.resetModules()
+  })
+
   describe('loadSafe', () => {
     it('throws for invalid safe addresses', async () => {
       const { loadSafe } = useSafeSDK()
@@ -34,11 +44,11 @@ describe('useSafeSDK', () => {
       await expect(loadSafe('invalid-safe')).rejects.toThrow('Invalid Safe address')
     })
 
-    it('caches SDK instances by safe address and signer', async () => {
+    it('normalizes Safe addresses and caches equivalent casing as one SDK instance', async () => {
       const { loadSafe } = useSafeSDK()
 
-      const firstPromise = loadSafe('0x1111111111111111111111111111111111111111')
-      const secondPromise = loadSafe('0x1111111111111111111111111111111111111111')
+      const firstPromise = loadSafe(LOWERCASE_SAFE_ADDRESS)
+      const secondPromise = loadSafe(CHECKSUM_SAFE_ADDRESS)
 
       const [firstSdk, secondSdk] = await Promise.all([firstPromise, secondPromise])
 
@@ -47,8 +57,25 @@ describe('useSafeSDK', () => {
       expect(mockSafeInit).toHaveBeenCalledWith({
         provider: 'mock-provider',
         signer: '0x1111111111111111111111111111111111111111',
-        safeAddress: '0x1111111111111111111111111111111111111111'
+        safeAddress: CHECKSUM_SAFE_ADDRESS
       })
+    })
+
+    it('clears a Safe-specific cache entry only while a wallet is connected', async () => {
+      const { loadSafe, clearSafeCache } = useSafeSDK()
+
+      await loadSafe(LOWERCASE_SAFE_ADDRESS)
+      clearSafeCache(CHECKSUM_SAFE_ADDRESS)
+      await loadSafe(LOWERCASE_SAFE_ADDRESS)
+
+      expect(mockSafeInit).toHaveBeenCalledTimes(2)
+
+      mockUseConnection.address.value = undefined
+      clearSafeCache(CHECKSUM_SAFE_ADDRESS)
+      mockUseConnection.address.value = '0x1111111111111111111111111111111111111111'
+
+      await loadSafe(LOWERCASE_SAFE_ADDRESS)
+      expect(mockSafeInit).toHaveBeenCalledTimes(2)
     })
 
     it('removes rejected cache entries so a later retry reinitializes', async () => {
@@ -65,6 +92,30 @@ describe('useSafeSDK', () => {
         sdk: 'safe-retry'
       })
       expect(mockSafeInit).toHaveBeenCalledTimes(2)
+    })
+
+    it('configures the E2E Safe deployment addresses on Hardhat', async () => {
+      vi.stubEnv('VITE_E2E', 'true')
+      vi.resetModules()
+      const { useSafeSDK: useE2ESafeSDK } = await import('../useSafeSdk')
+      const { loadSafe } = useE2ESafeSDK()
+
+      await loadSafe(LOWERCASE_SAFE_ADDRESS)
+
+      expect(mockSafeInit).toHaveBeenCalledWith({
+        provider: 'mock-provider',
+        signer: '0x1111111111111111111111111111111111111111',
+        safeAddress: CHECKSUM_SAFE_ADDRESS,
+        contractNetworks: {
+          [hardhat.id]: {
+            safeSingletonAddress: E2E_SAFE_INFRA.singleton,
+            safeProxyFactoryAddress: E2E_SAFE_INFRA.proxyFactory,
+            fallbackHandlerAddress: E2E_SAFE_INFRA.fallbackHandler,
+            multiSendAddress: E2E_SAFE_LIBRARIES.multiSend,
+            multiSendCallOnlyAddress: E2E_SAFE_LIBRARIES.multiSendCallOnly
+          }
+        }
+      })
     })
   })
 })

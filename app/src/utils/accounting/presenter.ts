@@ -1,16 +1,21 @@
 import type { AccountClass, AccountName } from './chartOfAccounts'
-import type { Account } from './accountRegistry'
-import type { GeneralLedger } from './generalLedger'
+import { buildGeneralLedger } from './generalLedger'
 import { buildIncomeStatement } from './incomeStatement'
-import { buildBalanceSheet, type BalanceSheet } from './balanceSheet'
-import type { JournalEntry } from './journalEntry'
+import { buildBalanceSheet } from './balanceSheet'
 import { NETWORK, type TokenId } from '@/constant'
 import { formatDate, formatDateTime, formatUsd, fromUnix } from '@/utils/format'
+import { usdAmountToNumber } from './monetaryAmount'
+import type { Account, BalanceSheet, JournalEntry, UsdAmount } from './types'
 
-// The summary metric cards live in their own module — see ./summaryCards.
-export { presentSummaryCards, type SummaryCard } from './summaryCards'
+// The summary display model lives in its own module — see ./summaryCards.
+export {
+  presentSummary,
+  type SummaryBanner,
+  type SummaryCard,
+  type SummaryView
+} from './summaryCards'
 
-export type TrialNature = 'Asset' | 'Equity' | 'Contra-equity' | 'Income' | 'Liability' | 'Expense'
+type TrialNature = 'Asset' | 'Equity' | 'Contra-equity' | 'Income' | 'Liability' | 'Expense'
 
 /** Soft badge classes per trial-balance account nature. */
 const NATURE_BADGE: Record<TrialNature, string> = {
@@ -27,8 +32,8 @@ const NATURE_BADGE: Record<TrialNature, string> = {
  * JS negative zero) is collapsed to a clean `$0.00` — never the misleading
  * `$-0.00` that a hand-rolled currency formatter can emit for `−0`.
  */
-export function money(amountUsd: number): string {
-  return formatUsd(amountUsd)
+export function money(amountUsd: number | UsdAmount): string {
+  return formatUsd(typeof amountUsd === 'bigint' ? usdAmountToNumber(amountUsd) : amountUsd)
 }
 
 /** Unix-seconds → `Jan 8, 2026` (matches the dashboard ledger date style). */
@@ -54,13 +59,7 @@ export interface StatementLineView {
   accounts?: AccountName[]
 }
 
-export interface SummaryBanner {
-  balanced: boolean
-  identity: string
-  trial: string
-}
-
-export interface TrialRow {
+interface TrialRow {
   /** Canonical concrete account for drill-down and reconciliation. */
   account: Account
   /** Display name — the account, suffixed ` #2` / ` #3` for a redeployed pocket's later instances. */
@@ -77,7 +76,7 @@ export interface TrialRow {
   crMuted: boolean
 }
 
-export interface IncomeView {
+interface IncomeView {
   revenueLines: StatementLineView[]
   expenseLines: StatementLineView[]
   totalRevenue: string
@@ -86,7 +85,7 @@ export interface IncomeView {
   netNegative: boolean
 }
 
-export interface BalanceView {
+interface BalanceView {
   assetLines: BalanceLineView[]
   liabilityLines: BalanceLineView[]
   equityLines: BalanceLineView[]
@@ -163,16 +162,6 @@ export function filterByPeriod<T extends { timestamp: number }>(
 
 // ── Presenters ──────────────────────────────────────────────────────────────
 
-/** The "books are balanced" banner copy from the live statements. */
-export function presentBanner(balance: BalanceSheet, ledger: GeneralLedger): SummaryBanner {
-  // `totalEquity` is the balancing residual, so the three figures foot exactly.
-  return {
-    balanced: balance.balanced && ledger.balanced,
-    identity: `${money(balance.totalAssets)} = ${money(balance.totalLiabilities)} + ${money(balance.totalEquity)}`,
-    trial: `Trial balance Dr ${money(ledger.debitBalanceTotal)} = Cr ${money(ledger.creditBalanceTotal)}`
-  }
-}
-
 /** Income-statement lines for a reporting period. */
 export function presentIncome(
   entries: readonly JournalEntry[],
@@ -194,7 +183,7 @@ export function presentIncome(
     totalRevenue: money(income.totalRevenue),
     totalExpenses: money(income.totalExpenses),
     netIncome: money(income.netIncome),
-    netNegative: income.netIncome < 0
+    netNegative: income.netIncome < 0n
   }
 }
 
@@ -243,12 +232,17 @@ export function presentBalance(entries: readonly JournalEntry[], asOf?: Date | n
   }
 }
 
-/** Trial-balance rows + balanced total from the live general ledger. */
-export function presentTrial(ledger: GeneralLedger): {
+/** Build and present the Trial Balance directly from the canonical journal. */
+export function presentTrial(
+  entries: readonly JournalEntry[],
+  asOf?: Date | null
+): {
   rows: TrialRow[]
   total: string
   balanced: boolean
 } {
+  const scopedEntries = filterByPeriod(entries, null, asOf)
+  const ledger = buildGeneralLedger(scopedEntries)
   const rows: TrialRow[] = ledger.trialBalance.map((row) => {
     const debitSide = row.account.family.normalBalance === 'debit'
     return {

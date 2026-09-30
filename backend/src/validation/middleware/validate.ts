@@ -27,7 +27,7 @@ const formatZodError = (error: ZodError): string => {
  * @param schemas - Object containing schemas for body, query, and/or params
  * @returns Express middleware function
  */
-export const validate = (schemas: ValidationSchemas) => {
+const validate = (schemas: ValidationSchemas) => {
   return (req: Request, res: Response, next: NextFunction) => {
     try {
       // Validate body if schema provided
@@ -123,17 +123,6 @@ export const validateParams = (schema: ZodSchema) => validate({ params: schema }
 export const validateBodyAndParams = (bodySchema: ZodSchema, paramsSchema: ZodSchema) =>
   validate({ body: bodySchema, params: paramsSchema });
 
-// Validate body and query
-export const validateBodyAndQuery = (bodySchema: ZodSchema, querySchema: ZodSchema) =>
-  validate({ body: bodySchema, query: querySchema });
-
 // Validate params and query
 export const validateParamsAndQuery = (paramsSchema: ZodSchema, querySchema: ZodSchema) =>
   validate({ params: paramsSchema, query: querySchema });
-
-// Validate all three
-export const validateAll = (
-  bodySchema: ZodSchema,
-  querySchema: ZodSchema,
-  paramsSchema: ZodSchema
-) => validate({ body: bodySchema, query: querySchema, params: paramsSchema });

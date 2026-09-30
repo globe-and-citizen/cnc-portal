@@ -1,5 +1,5 @@
 import { mount } from '@vue/test-utils'
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import { CalendarDate } from '@internationalized/date'
 import CreateElectionForm from '../CreateElectionForm.vue'
 import { emittedPayload, getVm, mountComponent, tomorrow } from './CreateElectionForm.harness'
@@ -20,7 +20,7 @@ describe('CreateElectionForm.vue', () => {
     expect(wrapper.text()).toContain('An odd number')
   })
 
-  it('renders error alert when errorMessage prop is set', async () => {
+  it('[AC-US-EL-01-09] renders and clears a recoverable creation error', async () => {
     const wrapper = mount(CreateElectionForm, {
       props: { isLoading: false, errorMessage: 'Contract reverted' }
     })
@@ -33,7 +33,7 @@ describe('CreateElectionForm.vue', () => {
     expect(wrapper.find('[data-test="error-alert"]').exists()).toBe(false)
   })
 
-  it('syncs input and popover v-model bindings with component state', async () => {
+  it('syncs input and popover bindings with component state', async () => {
     const wrapper = mountComponent()
     const vm = getVm(wrapper)
 
@@ -54,7 +54,7 @@ describe('CreateElectionForm.vue', () => {
     expect(vm.endDateOpen).toBe(true)
   })
 
-  it('requires at least one candidate', () => {
+  it('[AC-US-EL-01-05] requires at least one candidate', () => {
     const wrapper = mountComponent()
     const vm = getVm(wrapper)
 
@@ -67,7 +67,7 @@ describe('CreateElectionForm.vue', () => {
     expect(wrapper.emitted('createProposal')).toBeFalsy()
   })
 
-  it('requires enough candidates based on winnerCount', () => {
+  it('[AC-US-EL-01-05] requires at least as many candidates as seats', () => {
     const wrapper = mountComponent()
     const vm = getVm(wrapper)
 
@@ -84,7 +84,7 @@ describe('CreateElectionForm.vue', () => {
     expect(wrapper.emitted('createProposal')).toBeFalsy()
   })
 
-  it('rejects duplicate candidates', () => {
+  it('[AC-US-EL-01-05] rejects duplicate candidates', () => {
     const wrapper = mountComponent()
     const vm = getVm(wrapper)
 
@@ -117,7 +117,7 @@ describe('CreateElectionForm.vue', () => {
     expect(emittedPayload(wrapper).candidates).toEqual([{ name: '', candidateAddress: '' }])
   })
 
-  it('updates both days from the calendar handlers declared in popover content', () => {
+  it('updates both days from the calendar selections', () => {
     const wrapper = mountComponent()
     const vm = getVm(wrapper)
     const popovers = wrapper.findAllComponents({ name: 'UPopover' })
@@ -143,7 +143,7 @@ describe('CreateElectionForm.vue', () => {
     expect(vm.state.endDay?.getFullYear()).toBe(2030)
   })
 
-  it('updates formData through MultiSelectMemberInput v-model binding', async () => {
+  it('updates the selected candidates from the member picker', async () => {
     const wrapper = mountComponent()
     const vm = getVm(wrapper)
     const multiSelect = wrapper.findComponent({ name: 'MultiSelectMemberInput' })
@@ -155,7 +155,7 @@ describe('CreateElectionForm.vue', () => {
     expect(vm.formData).toEqual([{ address: '0xabc', name: 'Alice' }])
   })
 
-  it('applies winnerCount zod constraints for minimum and odd values', () => {
+  it('[AC-US-EL-01-05] requires an odd seat count of at least three', () => {
     const wrapper = mountComponent()
     const vm = getVm(wrapper)
 
@@ -174,38 +174,22 @@ describe('CreateElectionForm.vue', () => {
     expect(notOdd.success).toBe(false)
   })
 
-  it('registers and removes outside click listener on mount lifecycle', () => {
-    const addListenerSpy = vi.spyOn(document, 'addEventListener')
-    const removeListenerSpy = vi.spyOn(document, 'removeEventListener')
-
-    const wrapper = mountComponent()
-    wrapper.unmount()
-
-    expect(addListenerSpy).toHaveBeenCalledWith('click', expect.any(Function))
-    expect(removeListenerSpy).toHaveBeenCalledWith('click', expect.any(Function))
-
-    addListenerSpy.mockRestore()
-    removeListenerSpy.mockRestore()
-  })
-
-  it('handles outside click only when ref exists and target is outside', () => {
+  it('[AC-US-EL-01-13] requires a meaningful title and description', () => {
     const wrapper = mountComponent()
     const vm = getVm(wrapper)
 
-    vm.showDropdown = true
-    vm.handleClickOutside({ target: document.body } as unknown as MouseEvent)
-    expect(vm.showDropdown).toBe(true)
+    const shortTitle = vm.schema.safeParse({
+      title: 'AB',
+      description: 'A valid election description',
+      winnerCount: '3'
+    })
+    const shortDescription = vm.schema.safeParse({
+      title: 'Election',
+      description: 'Too short',
+      winnerCount: '3'
+    })
 
-    vm.formRef = {
-      contains: () => true
-    }
-    vm.handleClickOutside({ target: document.body } as unknown as MouseEvent)
-    expect(vm.showDropdown).toBe(true)
-
-    vm.formRef = {
-      contains: () => false
-    }
-    vm.handleClickOutside({ target: document.body } as unknown as MouseEvent)
-    expect(vm.showDropdown).toBe(false)
+    expect(shortTitle.success).toBe(false)
+    expect(shortDescription.success).toBe(false)
   })
 })

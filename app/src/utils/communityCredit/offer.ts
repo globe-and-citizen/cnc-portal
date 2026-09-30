@@ -276,6 +276,20 @@ export function toLenderOffering(
   }
 }
 
+/**
+ * Cap/allocation summary tile for the Lend modal — "No cap" when the offer has
+ * neither a whitelist allocation nor an enabled general cap, otherwise the lender's
+ * remaining room after what they've already deposited.
+ */
+export function creditLenderCapDisplay(offering: CreditLenderOffering | null): {
+  label: string
+  value: string
+} {
+  if (offering?.cap == null) return { label: 'Per-lender cap', value: 'No cap' }
+  const capLeft = Math.max(0, offering.cap - offering.myDeposited)
+  return { label: 'Your cap left', value: formatCreditTokenAmount(capLeft, offering.token) }
+}
+
 /** Mirrors the two time/state guards at the start of FixedReturn.lendFunds. */
 export function isLendingOfferAcceptingFunds(offer: LendingOfferStruct, now = new Date()): boolean {
   const nowSeconds = BigInt(Math.floor(now.getTime() / 1000))

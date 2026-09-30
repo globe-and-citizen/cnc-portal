@@ -360,6 +360,7 @@ export const resetUploadFileState = () => resetMutationStateMock(mockUploadFileS
  */
 export const useQueryClientFn = vi.fn(() => ({
   invalidateQueries: vi.fn(async () => undefined),
+  refetchQueries: vi.fn(async () => undefined),
   getQueryData: vi.fn(() => undefined),
   setQueryData: vi.fn(() => undefined),
   removeQueries: vi.fn(() => undefined)
@@ -381,6 +382,7 @@ export const useQueryFn = vi.fn(() => ({
  *
  *   useQueryClientFn.mockReturnValue({
  *     invalidateQueries: mockInvalidateQueries,
+ *     refetchQueries: vi.fn(),
  *     getQueryData: vi.fn(),
  *     setQueryData: vi.fn(),
  *     removeQueries: vi.fn()

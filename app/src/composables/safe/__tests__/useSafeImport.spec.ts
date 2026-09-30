@@ -45,7 +45,7 @@ describe('inspectSafe', () => {
     expect(mockReadContract).not.toHaveBeenCalled()
   })
 
-  it('rejects an address that does not expose the Safe interface', async () => {
+  it('[AC-US-SAFE-001-07] rejects an address that does not expose the Safe interface', async () => {
     mockReadContract.mockReset()
     mockReadContract.mockRejectedValue(new Error('execution reverted'))
 

@@ -3,11 +3,12 @@
 **Scope:** Shared period and as-of-date selection for client accounting reports, transaction histories, and the matching dashboard
 accounting picker.
 
-**Last verified:** 2026-09-01
+**Last verified:** 2026-09-27
 
 ## Consumers
 
 - [Accounting](../../features/accounting/README.md) uses direct date and range selection for its reports.
+- [Payroll](../../features/payroll/README.md) uses month navigation for claim-history review.
 - [Accounts](../../features/accounts/README.md), [Community Credit](../../features/community-credit/README.md), and
   [Shareholder Management](../../features/shareholder-management/README.md) use the shared range picker directly in their transaction
   histories.
@@ -35,13 +36,15 @@ flowchart LR
   date-picker utility owns pure resolution and formatting rules.
 - Transaction histories bind their `Range | undefined` filter model directly to `DatePicker` in `range` mode. Their existing storage keys
   and `data-test` selectors remain stable.
+- The range picker represents `All time` with an epoch-start range. Transaction-history consumers recognize that sentinel as an unbounded
+  ledger view, so a client clock behind the chain does not hide future-stamped entries.
 - A custom range is committed only when both boundaries exist and the start is not after the end.
 - When persistence is configured, malformed, incomplete, stale, mode-incompatible, or unordered stored snapshots are ignored and the picker
   uses its default state.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `f023d87829325129989cf6dd573814a8f01858c9`
+**Implementation evidence reviewed against:** `c4adbc20714d30fd7089ee5e1a362b3e300508d7`
 
 - [Client DatePicker](../../../app/src/components/ui/DatePicker.vue),
   [dashboard DatePicker](../../../dashboard/app/components/DatePicker.vue),
@@ -52,6 +55,7 @@ flowchart LR
 - [Client picker behaviour tests](../../../app/src/components/ui/__tests__/DatePicker.spec.ts),
   [transaction-history filter tests](../../../app/src/composables/transactions/__tests__/useTransactionTable.spec.ts), and
   [date utility tests](../../../app/src/utils/dates/__tests__/picker.spec.ts)
+- [Payroll month-selector tests](../../../app/src/components/sections/ClaimHistoryView/__tests__/MonthSelector.spec.ts)
 
 ## Related Documentation
 

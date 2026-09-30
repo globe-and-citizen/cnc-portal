@@ -18,7 +18,7 @@ type Cell = string | number
 type Align = 'left' | 'right'
 
 /** The options shared by a General Ledger PDF projection and its screen scope. */
-export interface GeneralLedgerPdfOptions {
+interface GeneralLedgerPdfOptions {
   from?: Date | null
   to?: Date | null
   columns?: LedgerColumnKey[]

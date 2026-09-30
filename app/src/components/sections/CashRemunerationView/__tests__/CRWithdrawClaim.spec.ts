@@ -13,7 +13,8 @@ import {
   mockCashRemunerationWrites,
   mockTeamStore,
   mockGetBalance,
-  mockWagmiCore
+  mockWagmiCore,
+  mockSyncWeeklyClaimsMutation
 } from '@/tests/mocks'
 import { mockLog } from '@/tests/mocks/utils.mock'
 import * as contractErrors from '@/utils/errors/classifyContractError'
@@ -124,6 +125,42 @@ describe('CRWithdrawClaim', () => {
 
     // expect(mockToast.add).toHaveBeenCalledWith({ title: 'Claim withdrawn', color: 'success' })
     expect(mockCashRemunerationWrites.withdraw.mutate).toHaveBeenCalled()
+  })
+
+  it.each(['pending', 'disabled', 'withdrawn'] as const)(
+    '[AC-US-PAYROLL-010-09] blocks a %s claim before contacting the wallet',
+    async (status) => {
+      createWrapper({ weeklyClaim: { ...mockClaim, status } })
+      await clickWithdrawButton()
+      expect(mockCashRemunerationWrites.withdraw.mutate).not.toHaveBeenCalled()
+      expect(mockWagmiCore.readContract).not.toHaveBeenCalled()
+    }
+  )
+
+  it('[AC-US-PAYROLL-010-09] blocks a signed claim without a stored signature', async () => {
+    createWrapper({ weeklyClaim: { ...mockClaim, signature: null } })
+    await clickWithdrawButton()
+    expect(mockCashRemunerationWrites.withdraw.mutate).not.toHaveBeenCalled()
+    expect(mockWagmiCore.readContract).not.toHaveBeenCalled()
+  })
+
+  it('[AC-US-PAYROLL-010-11] prevents withdrawal for an archived company', async () => {
+    mockTeamStore.currentTeamMeta.data = { ...mockTeamStore.currentTeamMeta.data, isArchived: true }
+    createWrapper()
+    expect(wrapper.find('[data-test="withdraw-button"]').attributes('disabled')).toBeDefined()
+    await clickWithdrawButton()
+    expect(mockCashRemunerationWrites.withdraw.mutate).not.toHaveBeenCalled()
+    expect(mockSyncWeeklyClaimsMutation.mutateAsync).not.toHaveBeenCalled()
+  })
+
+  it('[AC-US-PAYROLL-011-05] synchronizes the company after a successful withdrawal', async () => {
+    createWrapper()
+    await clickWithdrawButton()
+    expect(mockCashRemunerationWrites.withdraw.mutate).toHaveBeenCalledTimes(1)
+    expect(mockSyncWeeklyClaimsMutation.mutateAsync).toHaveBeenCalledWith({
+      queryParams: { teamId: '1' }
+    })
+    expect(wrapper.emitted('claim-withdrawn')).toBeTruthy()
   })
 
   it('withdraws and emits from dropdown when owner', async () => {
@@ -315,7 +352,7 @@ describe('CRWithdrawClaim', () => {
     // expect(mockToast.add).toHaveBeenCalledWith({ title: 'Unknown failure', color: 'error' })
   })
 
-  it('handles withdraw mutation onError with user_rejected silently', async () => {
+  it('[AC-US-PAYROLL-010-17] leaves the claim unpaid and unsynced when the wallet request is rejected', async () => {
     vi.spyOn(contractErrors, 'classifyError').mockReturnValue({
       category: 'user_rejected',
       userMessage: 'User rejected',
@@ -332,6 +369,7 @@ describe('CRWithdrawClaim', () => {
     await clickWithdrawButton()
 
     expect(mockLog.error).toHaveBeenCalledWith('Withdraw error', expect.any(Error))
+    expect(mockSyncWeeklyClaimsMutation.mutateAsync).not.toHaveBeenCalled()
   })
 
   it('handles withdraw mutation onError with regular error', async () => {
@@ -353,7 +391,7 @@ describe('CRWithdrawClaim', () => {
     expect(mockLog.error).toHaveBeenCalledWith('Withdraw error', expect.any(Error))
   })
 
-  it('blocks withdraw when claim was signed for a different contract', async () => {
+  it('[AC-US-PAYROLL-010-06] blocks withdraw when claim was signed for a different contract', async () => {
     const claimOnOtherContract: WeeklyClaim = {
       ...mockClaim,
       data: {
@@ -369,7 +407,7 @@ describe('CRWithdrawClaim', () => {
     expect(mockCashRemunerationWrites.withdraw.mutate).not.toHaveBeenCalled()
   })
 
-  it('blocks withdraw when claim was signed on a different chain', async () => {
+  it('[AC-US-PAYROLL-010-06] blocks withdraw when claim was signed on a different chain', async () => {
     const claimOnOtherChain: WeeklyClaim = {
       ...mockClaim,
       data: {
@@ -385,7 +423,7 @@ describe('CRWithdrawClaim', () => {
     expect(mockCashRemunerationWrites.withdraw.mutate).not.toHaveBeenCalled()
   })
 
-  it('blocks withdraw when recovered signer does not match contract owner', async () => {
+  it('[AC-US-PAYROLL-010-07] blocks withdraw when recovered signer does not match contract owner', async () => {
     vi.spyOn(viem, 'recoverTypedDataAddress').mockResolvedValueOnce(
       '0x3333333333333333333333333333333333333333' as Address
     )

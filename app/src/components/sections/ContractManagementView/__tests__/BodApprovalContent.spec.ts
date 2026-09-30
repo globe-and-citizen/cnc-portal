@@ -72,7 +72,7 @@ describe('BodApprovalContent', () => {
     })
   })
 
-  it('renders and shows approval progress', async () => {
+  it('[AC-US-CONTRACT-002-03] renders the pending Board action and its approval progress', async () => {
     const wrapper = mountComponent({ alreadyApproved: true })
     await flushPromises()
     // Progress summary "1/2" when current user has approved
@@ -82,7 +82,7 @@ describe('BodApprovalContent', () => {
     expect(wrapper.text()).toContain('Bob')
   })
 
-  it('emits approve-action when clicking approve and user has not approved yet', async () => {
+  it('[AC-US-CONTRACT-002-03] requests approval when an eligible member has not approved', async () => {
     const wrapper = mountComponent({ alreadyApproved: false })
     await flushPromises()
 

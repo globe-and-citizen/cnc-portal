@@ -10,8 +10,10 @@ import {
   mockERC20Reads,
   mockERC20Writes,
   mockBankWrites,
-  useQueryClientFn
+  useQueryClientFn,
+  mockUseChainId
 } from '@/tests/mocks'
+import { contractBalanceKeys } from '@/composables/useContractBalance'
 
 const defaultProps = {
   bankAddress: zeroAddress as Address
@@ -95,7 +97,8 @@ describe('DepositBankForm.vue', () => {
     expect(mockTransactionFunctions.mockMutateAsync).not.toHaveBeenCalled()
   })
 
-  it('handles native token deposits successfully and on failure', async () => {
+  it('[AC-US-BANK-001-01] handles native token deposits successfully and on failure', async () => {
+    const { invalidateQueries } = createQueryClient()
     const wrapper = createWrapper({ title: 'Deposit Bank Form' })
 
     await setTokenAmount(wrapper, '0.1', 'native', true)
@@ -103,6 +106,9 @@ describe('DepositBankForm.vue', () => {
     await flushPromises()
 
     expect(mockTransactionFunctions.mockMutateAsync).toHaveBeenCalled()
+    expect(invalidateQueries).toHaveBeenCalledWith({
+      queryKey: contractBalanceKeys.detail(defaultProps.bankAddress, mockUseChainId.value)
+    })
     expect(wrapper.emitted('closeModal')).toBeTruthy()
 
     mockTransactionFunctions.mockMutateAsync.mockRejectedValueOnce(new Error('Transaction failed'))
@@ -127,7 +133,7 @@ describe('DepositBankForm.vue', () => {
     expect(wrapper.text()).toContain('Approval')
   })
 
-  it('runs approval first when allowance is insufficient and then deposits token', async () => {
+  it('[AC-US-BANK-001-07] requests approval when allowance is insufficient', async () => {
     const { invalidateQueries } = createQueryClient()
     mockERC20Reads.allowance.data.value = 0n
     const wrapper = createWrapper()
@@ -146,7 +152,7 @@ describe('DepositBankForm.vue', () => {
     expect(wrapper.emitted('closeModal')).toBeTruthy()
   })
 
-  it('skips approval when allowance is sufficient', async () => {
+  it('[AC-US-BANK-001-07] skips approval when allowance is sufficient', async () => {
     mockERC20Reads.allowance.data.value = 1000000n
     const wrapper = createWrapper()
 

@@ -27,7 +27,7 @@ describe('Elections Contract Reads', () => {
   })
 
   describe('useElectionsAddress', () => {
-    it('should return mock elections address', () => {
+    it('returns mock elections address', () => {
       const result = useElectionsAddress()
 
       expect(result).toBeDefined()
@@ -36,7 +36,7 @@ describe('Elections Contract Reads', () => {
   })
 
   describe('useElectionsOwner', () => {
-    it('should return mock owner address', () => {
+    it('returns mock owner address', () => {
       const result = useElectionsOwner()
 
       expect(result).toBe(mockElectionsReads.owner)
@@ -44,7 +44,7 @@ describe('Elections Contract Reads', () => {
       expect(result.isSuccess.value).toBe(true)
     })
 
-    it('should handle error state', () => {
+    it('handles error state', () => {
       mockElectionsReads.owner.isError.value = true
       mockElectionsReads.owner.error.value = new Error('Failed to fetch owner')
 
@@ -54,7 +54,7 @@ describe('Elections Contract Reads', () => {
       expect(result.error.value).toBeInstanceOf(Error)
     })
 
-    it('should support refetch functionality', () => {
+    it('supports refetch functionality', () => {
       const result = useElectionsOwner()
 
       result.refetch()
@@ -63,7 +63,7 @@ describe('Elections Contract Reads', () => {
   })
 
   describe('useElectionsGetElection', () => {
-    it('should return election data mock', () => {
+    it('returns election data mock', () => {
       mockElectionsReads.getElection.data.value = {
         id: MOCK_DATA.electionId,
         title: 'Test Election',
@@ -76,7 +76,7 @@ describe('Elections Contract Reads', () => {
       expect(result.data.value).toBeDefined()
     })
 
-    it('should handle loading state', () => {
+    it('handles loading state', () => {
       mockElectionsReads.getElection.isLoading.value = true
       mockElectionsReads.getElection.isSuccess.value = false
 
@@ -88,7 +88,7 @@ describe('Elections Contract Reads', () => {
   })
 
   describe('useElectionsGetVoteCount', () => {
-    it('should return vote count mock', () => {
+    it('returns vote count mock', () => {
       mockElectionsReads.getVoteCount.data.value = 42n
 
       const result = useElectionsGetVoteCount(MOCK_DATA.electionId)
@@ -97,7 +97,7 @@ describe('Elections Contract Reads', () => {
       expect(result.data.value).toBe(42n)
     })
 
-    it('should handle zero votes', () => {
+    it('handles zero votes', () => {
       mockElectionsReads.getVoteCount.data.value = 0n
 
       const result = useElectionsGetVoteCount(MOCK_DATA.electionId)
@@ -105,7 +105,7 @@ describe('Elections Contract Reads', () => {
       expect(result.data.value).toBe(0n)
     })
 
-    it('should handle large vote counts', () => {
+    it('handles large vote counts', () => {
       mockElectionsReads.getVoteCount.data.value = 1000000n
 
       const result = useElectionsGetVoteCount(MOCK_DATA.electionId)
@@ -115,7 +115,7 @@ describe('Elections Contract Reads', () => {
   })
 
   describe('useElectionsGetCandidates', () => {
-    it('should return candidates list mock', () => {
+    it('returns candidates list mock', () => {
       const candidates = [MOCK_DATA.candidateAddress]
       mockElectionsReads.getCandidates.data.value = candidates
 
@@ -125,7 +125,7 @@ describe('Elections Contract Reads', () => {
       expect(result.data.value).toEqual(candidates)
     })
 
-    it('should handle empty candidates', () => {
+    it('handles empty candidates', () => {
       mockElectionsReads.getCandidates.data.value = []
 
       const result = useElectionsGetCandidates(MOCK_DATA.electionId)
@@ -133,7 +133,7 @@ describe('Elections Contract Reads', () => {
       expect(result.data.value).toEqual([])
     })
 
-    it('should handle multiple candidates', () => {
+    it('handles multiple candidates', () => {
       const candidates = [
         MOCK_DATA.candidateAddress,
         '0x0000000000000000000000000000000000000001' as Address,
@@ -148,7 +148,7 @@ describe('Elections Contract Reads', () => {
   })
 
   describe('useElectionsGetEligibleVoters', () => {
-    it('should return eligible voters mock', () => {
+    it('returns eligible voters mock', () => {
       const voters = [MOCK_DATA.voterAddress]
       mockElectionsReads.getEligibleVoters.data.value = voters
 
@@ -158,7 +158,7 @@ describe('Elections Contract Reads', () => {
       expect(result.data.value).toEqual(voters)
     })
 
-    it('should handle no eligible voters', () => {
+    it('handles no eligible voters', () => {
       mockElectionsReads.getEligibleVoters.data.value = []
 
       const result = useElectionsGetEligibleVoters(MOCK_DATA.electionId)
@@ -168,7 +168,7 @@ describe('Elections Contract Reads', () => {
   })
 
   describe('useElectionsGetWinners', () => {
-    it('should return winners list mock', () => {
+    it('returns winners list mock', () => {
       const winners = [MOCK_DATA.candidateAddress]
       mockElectionsReads.getWinners.data.value = winners
 
@@ -178,7 +178,7 @@ describe('Elections Contract Reads', () => {
       expect(result.data.value).toEqual(winners)
     })
 
-    it('should handle no winners', () => {
+    it('handles no winners', () => {
       mockElectionsReads.getWinners.data.value = []
 
       const result = useElectionsGetWinners(MOCK_DATA.electionId)
@@ -186,7 +186,7 @@ describe('Elections Contract Reads', () => {
       expect(result.data.value).toEqual([])
     })
 
-    it('should handle multiple winners', () => {
+    it('handles multiple winners', () => {
       const winners = [
         MOCK_DATA.candidateAddress,
         '0x0000000000000000000000000000000000000003' as Address
@@ -200,7 +200,7 @@ describe('Elections Contract Reads', () => {
   })
 
   describe('useElectionsHasVoted', () => {
-    it('should return hasVoted status mock - not voted', () => {
+    it('returns hasVoted status mock - not voted', () => {
       mockElectionsReads.hasVoted.data.value = false
 
       const result = useElectionsHasVoted(MOCK_DATA.electionId, MOCK_DATA.voterAddress)
@@ -209,7 +209,7 @@ describe('Elections Contract Reads', () => {
       expect(result.data.value).toBe(false)
     })
 
-    it('should show voter has voted', () => {
+    it('shows voter has voted', () => {
       mockElectionsReads.hasVoted.data.value = true
 
       const result = useElectionsHasVoted(MOCK_DATA.electionId, MOCK_DATA.voterAddress)
@@ -219,7 +219,7 @@ describe('Elections Contract Reads', () => {
   })
 
   describe('Mock Behavior', () => {
-    it('should have consistent interface for all read functions', () => {
+    it('has consistent interface for all read functions', () => {
       const owner = useElectionsOwner()
       const election = useElectionsGetElection(MOCK_DATA.electionId)
       const voteCount = useElectionsGetVoteCount(MOCK_DATA.electionId)
@@ -236,7 +236,7 @@ describe('Elections Contract Reads', () => {
       expect(hasVoted).toHaveProperty('data')
     })
 
-    it('should reset mocks properly', () => {
+    it('restores election read mocks to their default state', () => {
       mockElectionsReads.owner.isError.value = true
       mockElectionsReads.getVoteCount.data.value = 999n
 
@@ -246,7 +246,7 @@ describe('Elections Contract Reads', () => {
       expect(mockElectionsReads.owner.isSuccess.value).toBe(true)
     })
 
-    it('should support mock customization for different scenarios', () => {
+    it('supports mock customization for different scenarios', () => {
       // Scenario 1: Successful read
       mockElectionsReads.owner.data.value = MOCK_DATA.ownerAddress
       const result1 = useElectionsOwner()

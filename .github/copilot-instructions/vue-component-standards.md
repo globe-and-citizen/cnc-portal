@@ -83,6 +83,11 @@ The [API-surface check](../../app/scripts/check-api-surface.mjs) runs as part of
 [its baseline](../../app/scripts/api-surface-baseline.json): existing entries may shrink or be removed, but a normal change cannot add an
 entry or increase its allowance.
 
+Query-backed composables should normally return the standard TanStack Query result instead of copying it into custom `result`, `loading`,
+`error`, or `refetch` aliases. Keep domain data and related completeness metadata together in the query `data`; override `data` while
+spreading the query only when a domain adapter must transform the payload. ESLint emits an advisory warning when a composable returns the
+ambiguous `result` plus `loading` facade shape; review the boundary rather than suppressing the warning (#2793).
+
 An exception needs both a coherent reason and an explicit, reviewable annotation immediately above the affected component or composable. Use
 it only for a real technical boundary (for example a protocol adapter, a query/mutation wrapper, or a lifecycle listener), or for one
 strongly cohesive public contract. State the boundary and the tracking issue:

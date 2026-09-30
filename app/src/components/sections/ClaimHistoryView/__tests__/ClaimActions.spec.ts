@@ -5,7 +5,7 @@ import { nextTick } from 'vue'
 
 import type { Claim, SupportedTokens } from '@/types'
 
-describe('ClaimActions', () => {
+describe('[US-PAYROLL-006] [US-PAYROLL-007] ClaimActions', () => {
   const mockClaim: Claim = {
     id: 1,
     hoursWorked: 480,
@@ -73,14 +73,14 @@ describe('ClaimActions', () => {
   })
 
   describe('Component Rendering', () => {
-    it('should render action buttons', () => {
+    it('renders action buttons', () => {
       const wrapper = createWrapper()
 
       expect(wrapper.find('[data-test="edit-claim-button"]').exists()).toBe(true)
       expect(wrapper.find('[data-test="delete-claim-button"]').exists()).toBe(true)
     })
 
-    it('should not render modals by default', () => {
+    it('does not render modals by default', () => {
       const wrapper = createWrapper()
 
       expect(wrapper.findComponent({ name: 'EditClaims' }).exists()).toBe(false)
@@ -89,7 +89,7 @@ describe('ClaimActions', () => {
   })
 
   describe('Edit Modal', () => {
-    it('should open edit modal when edit button is clicked', async () => {
+    it('opens edit modal when edit button is clicked', async () => {
       const wrapper = createWrapper()
 
       await wrapper.find('[data-test="edit-claim-button"]').trigger('click')
@@ -99,7 +99,7 @@ describe('ClaimActions', () => {
       expect(editModal.exists()).toBe(true)
     })
 
-    it('should pass the claim and its week siblings to edit modal', async () => {
+    it('passes the claim and its week siblings to edit modal', async () => {
       const siblingClaim: Claim = { ...mockClaim, id: 2, minutesWorked: 120 }
       const wrapper = createWrapper([mockClaim, siblingClaim])
 
@@ -113,7 +113,7 @@ describe('ClaimActions', () => {
   })
 
   describe('Delete Modal', () => {
-    it('should open delete modal when delete button is clicked', async () => {
+    it('opens delete modal when delete button is clicked', async () => {
       const wrapper = createWrapper()
 
       await wrapper.find('[data-test="delete-claim-button"]').trigger('click')
@@ -123,7 +123,7 @@ describe('ClaimActions', () => {
       expect(deleteModal.exists()).toBe(true)
     })
 
-    it('should pass correct props to delete modal', async () => {
+    it('passes correct props to delete modal', async () => {
       const wrapper = createWrapper()
 
       await wrapper.find('[data-test="delete-claim-button"]').trigger('click')
@@ -135,7 +135,7 @@ describe('ClaimActions', () => {
   })
 
   describe('Modal State Management', () => {
-    it('should maintain independent state for edit and delete modals', async () => {
+    it('maintains independent state for edit and delete modals', async () => {
       const wrapper = createWrapper()
 
       // Open edit modal
@@ -160,7 +160,7 @@ describe('ClaimActions', () => {
   })
 
   describe('Button Interactions', () => {
-    it('should render edit button with correct styling', () => {
+    it('renders edit button with correct styling', () => {
       const wrapper = createWrapper()
       const editButton = wrapper.find('[data-test="edit-claim-button"]')
 
@@ -168,14 +168,14 @@ describe('ClaimActions', () => {
       expect(editButton.find('[data-test="u-icon"]').exists()).toBe(true)
     })
 
-    it('should render delete button with correct styling', () => {
+    it('renders delete button with correct styling', () => {
       const wrapper = createWrapper()
       const deleteButton = wrapper.find('[data-test="delete-claim-button"]')
 
       expect(deleteButton.exists()).toBe(true)
     })
 
-    it('should handle multiple button clicks correctly', async () => {
+    it('keeps the edit modal open after repeated edit clicks', async () => {
       const wrapper = createWrapper()
 
       // Click edit button multiple times

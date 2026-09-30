@@ -20,6 +20,7 @@ import { SAFE_PROXY_FACTORY_ABI } from '@/artifacts/abi/safe-proxy-factory'
 import { deploySafeSchema } from '@/types/safe.schemas'
 import type { SafeDeploymentParams } from '@/types/safe.mutation'
 import { safeKeys } from '@/queries/safe.queries'
+import { normalizeSafeAddress } from '@/utils/safe/address'
 
 const SAFE_SETUP_ABI = [
   {
@@ -114,7 +115,7 @@ export async function deploySafe(args: DeploySafeArgs): Promise<DeploySafeResult
     throw new Error('Failed to extract Safe proxy address from deployment event')
   }
 
-  const safeAddress = event.args.proxy
+  const safeAddress = normalizeSafeAddress(event.args.proxy)
 
   log.info('Safe proxy address extracted:', safeAddress)
 

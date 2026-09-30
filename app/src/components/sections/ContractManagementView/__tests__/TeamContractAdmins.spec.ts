@@ -31,7 +31,7 @@ vi.mock('@/composables/contracts/useContractWritesV3', () => ({
   })
 }))
 
-describe('TeamContractAdmins.vue', () => {
+describe('[US-CONTRACT-003] TeamContractAdmins.vue', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     addAdminMutation.isPending.value = false

@@ -7,7 +7,8 @@ before(initializeHardhat)
 
 describe('Elections', function () {
   async function deployFixture() {
-    const [owner, voter1, voter2, candidate1, candidate2, nonVoter] = await ethers.getSigners()
+    const [owner, voter1, voter2, candidate1, candidate2, candidate3, nonVoter] =
+      await ethers.getSigners()
 
     const MockOfficerFactory = await ethers.getContractFactory('MockOfficer')
     const mockOfficer = await MockOfficerFactory.deploy()
@@ -38,7 +39,17 @@ describe('Elections', function () {
 
     await mockOfficer.setDeployedContract('BoardOfDirectors', await boardOfDirectors.getAddress())
 
-    return { elections, boardOfDirectors, owner, voter1, voter2, candidate1, candidate2, nonVoter }
+    return {
+      elections,
+      boardOfDirectors,
+      owner,
+      voter1,
+      voter2,
+      candidate1,
+      candidate2,
+      candidate3,
+      nonVoter
+    }
   }
 
   async function createActiveElection(
@@ -76,8 +87,15 @@ describe('Elections', function () {
     expect(await elections.getNextElectionId()).to.equal(1)
   })
 
-  it('creates elections with valid params', async () => {
-    const { elections, owner, candidate1, candidate2, voter1, voter2 } = await deployFixture()
+  /**
+   * Covers:
+   * - [AC-US-EL-01-01]
+   * - [AC-US-EL-01-02]
+   * - [AC-US-EL-01-03]
+   */
+  it('creates an election with its configuration and eligible voters', async () => {
+    const { elections, owner, candidate1, candidate2, candidate3, voter1, voter2 } =
+      await deployFixture()
     const now = await time.latest()
 
     await expect(
@@ -88,14 +106,47 @@ describe('Elections', function () {
           'Select board member',
           now + 100,
           now + 7 * 24 * 60 * 60 + 100,
-          1,
-          [candidate1.address, candidate2.address],
+          3,
+          [candidate1.address, candidate2.address, candidate3.address],
           [voter1.address, voter2.address]
         )
-    ).to.emit(elections, 'ElectionCreated')
+    )
+      .to.emit(elections, 'ElectionCreated')
+      .withArgs(1, 'Board Election', owner.address, now + 100, now + 7 * 24 * 60 * 60 + 100, 3)
+
+    expect(await elections.getNextElectionId()).to.equal(2)
+    const election = await elections.getElection(1)
+    expect(election.title).to.equal('Board Election')
+    expect(election.description).to.equal('Select board member')
+    expect(election.seatCount).to.equal(3)
+    expect(await elections.getElectionEligibleVoters(1)).to.deep.equal([
+      voter1.address,
+      voter2.address
+    ])
   })
 
-  it('allows eligible voters to cast votes and blocks non-voters', async () => {
+  it('[AC-US-EL-01-04] rejects election creation by a non-owner', async () => {
+    const { elections, voter1, candidate1, candidate2 } = await deployFixture()
+    const now = await time.latest()
+
+    await expect(
+      elections
+        .connect(voter1)
+        .createElection(
+          'Unauthorized',
+          'Only the owner may create this election',
+          now + 100,
+          now + 1_000,
+          1,
+          [candidate1.address, candidate2.address],
+          [voter1.address]
+        )
+    )
+      .to.be.revertedWithCustomError(elections, 'OwnableUnauthorizedAccount')
+      .withArgs(voter1.address)
+  })
+
+  it('[AC-US-EL-02-04] allows eligible voters and rejects non-voters', async () => {
     const { elections, owner, voter1, candidate1, candidate2, voter2, nonVoter } =
       await deployFixture()
 
@@ -117,7 +168,7 @@ describe('Elections', function () {
     ).to.be.revertedWithCustomError(elections, 'Elections__NotEligibleVoter')
   })
 
-  it('publishes results and updates board winners', async () => {
+  it('[AC-US-EL-03-02] publishes results and updates Board winners', async () => {
     const { elections, boardOfDirectors, owner, voter1, voter2, candidate1, candidate2 } =
       await deployFixture()
 
@@ -151,7 +202,7 @@ describe('Elections', function () {
     expect(await elections.paused()).to.equal(false)
   })
 
-  it('rejects createElection with even seat count', async () => {
+  it('[AC-US-EL-01-11] rejects an even seat count', async () => {
     const { elections, owner, candidate1, candidate2, voter1 } = await deployFixture()
 
     const now = await time.latest()
@@ -169,7 +220,7 @@ describe('Elections', function () {
     ).to.be.revertedWithCustomError(elections, 'ElectionUtils__InvalidSeatCount')
   })
 
-  it('rejects createElection with invalid dates (start in past)', async () => {
+  it('[AC-US-EL-01-06] rejects an election start in the past', async () => {
     const { elections, owner, candidate1, candidate2, voter1 } = await deployFixture()
 
     const now = await time.latest()
@@ -187,7 +238,7 @@ describe('Elections', function () {
     ).to.be.revertedWithCustomError(elections, 'ElectionUtils__InvalidDates')
   })
 
-  it('rejects createElection with end before start', async () => {
+  it('[AC-US-EL-01-06] rejects an election whose end precedes its start', async () => {
     const { elections, owner, candidate1, candidate2, voter1 } = await deployFixture()
 
     const now = await time.latest()
@@ -205,7 +256,7 @@ describe('Elections', function () {
     ).to.be.revertedWithCustomError(elections, 'ElectionUtils__InvalidDates')
   })
 
-  it('rejects createElection with duplicate candidates', async () => {
+  it('[AC-US-EL-01-11] rejects duplicate candidates', async () => {
     const { elections, owner, candidate1, voter1 } = await deployFixture()
 
     const now = await time.latest()
@@ -221,6 +272,25 @@ describe('Elections', function () {
         [voter1.address]
       )
     ).to.be.revertedWithCustomError(elections, 'ElectionUtils__DuplicateCandidates')
+  })
+
+  it('[AC-US-EL-01-11] rejects fewer candidates than seats', async () => {
+    const { elections, owner, candidate1, voter1 } = await deployFixture()
+    const now = await time.latest()
+
+    await expect(
+      elections
+        .connect(owner)
+        .createElection(
+          'Invalid',
+          'Not enough candidates',
+          now + 100,
+          now + 1_000,
+          3,
+          [candidate1.address],
+          [voter1.address]
+        )
+    ).to.be.revertedWithCustomError(elections, 'ElectionUtils__InsufficientCandidates')
   })
 
   it('rejects createElection with duplicate voters', async () => {
@@ -241,7 +311,7 @@ describe('Elections', function () {
     ).to.be.revertedWithCustomError(elections, 'ElectionUtils__DuplicateVoters')
   })
 
-  it('rejects createElection when a previous election is ongoing', async () => {
+  it('[AC-US-EL-01-07] rejects creation while previous results are unpublished', async () => {
     const { elections, owner, candidate1, candidate2, voter1, voter2 } = await deployFixture()
 
     await createActiveElection(
@@ -270,7 +340,7 @@ describe('Elections', function () {
     ).to.be.revertedWithCustomError(elections, 'Elections__ElectionIsOngoing')
   })
 
-  it('rejects castVote when already voted', async () => {
+  it('[AC-US-EL-02-03] rejects a second vote from the same voter', async () => {
     const { elections, owner, voter1, voter2, candidate1, candidate2 } = await deployFixture()
 
     await createActiveElection(
@@ -289,7 +359,27 @@ describe('Elections', function () {
     ).to.be.revertedWithCustomError(elections, 'Elections__AlreadyVoted')
   })
 
-  it('rejects castVote before election starts', async () => {
+  it('[AC-US-EL-02-02] records the voter choice, participation, and candidate count', async () => {
+    const { elections, owner, voter1, voter2, candidate1, candidate2 } = await deployFixture()
+
+    await createActiveElection(
+      elections,
+      owner,
+      candidate1.address,
+      candidate2.address,
+      voter1.address,
+      voter2.address
+    )
+
+    await elections.connect(voter1).castVote(1, candidate1.address)
+
+    expect(await elections.getVoterChoice(1, voter1.address)).to.equal(candidate1.address)
+    expect(await elections.hasVoted(1, voter1.address)).to.equal(true)
+    expect(await elections.getVoteCounts(1, candidate1.address)).to.equal(1)
+    expect(await elections.getVoteCount(1)).to.equal(1)
+  })
+
+  it('[AC-US-EL-02-05] rejects a vote before the election starts', async () => {
     const { elections, owner, voter1, voter2, candidate1, candidate2 } = await deployFixture()
 
     const now = await time.latest()
@@ -314,7 +404,47 @@ describe('Elections', function () {
     ).to.be.revertedWithCustomError(elections, 'Elections__ElectionNotActive')
   })
 
-  it('rejects publishResults before election ends and not all voted', async () => {
+  it('[AC-US-EL-02-05] rejects a vote after the election ends', async () => {
+    const { elections, owner, voter1, candidate1, candidate2 } = await deployFixture()
+    const now = await time.latest()
+
+    await elections
+      .connect(owner)
+      .createElection(
+        'Short Election',
+        'Voting window has ended',
+        now + 10,
+        now + 20,
+        1,
+        [candidate1.address, candidate2.address],
+        [voter1.address]
+      )
+    await time.increase(21)
+
+    await expect(
+      elections.connect(voter1).castVote(1, candidate1.address)
+    ).to.be.revertedWithCustomError(elections, 'Elections__ElectionNotActive')
+  })
+
+  it('[AC-US-EL-02-05] rejects an address that is not an election candidate', async () => {
+    const { elections, owner, voter1, voter2, candidate1, candidate2, nonVoter } =
+      await deployFixture()
+
+    await createActiveElection(
+      elections,
+      owner,
+      candidate1.address,
+      candidate2.address,
+      voter1.address,
+      voter2.address
+    )
+
+    await expect(
+      elections.connect(voter1).castVote(1, nonVoter.address)
+    ).to.be.revertedWithCustomError(elections, 'ElectionUtils__InvalidCandidate')
+  })
+
+  it('[AC-US-EL-03-07] rejects publication before the election is ready', async () => {
     const { elections, owner, voter1, voter2, candidate1, candidate2 } = await deployFixture()
 
     await createActiveElection(
@@ -335,7 +465,7 @@ describe('Elections', function () {
     )
   })
 
-  it('allows publishResults after all voters have voted (before end)', async () => {
+  it('[AC-US-EL-03-01] publishes after every eligible voter has voted', async () => {
     const { elections, owner, voter1, voter2, candidate1, candidate2 } = await deployFixture()
 
     await createActiveElection(
@@ -354,7 +484,7 @@ describe('Elections', function () {
     await expect(elections.connect(owner).publishResults(1)).to.emit(elections, 'ResultsPublished')
   })
 
-  it('allows publishResults after election has ended (not all voted)', async () => {
+  it('[AC-US-EL-03-01] publishes after the election end time', async () => {
     const { elections, owner, voter1, voter2, candidate1, candidate2 } = await deployFixture()
 
     const now = await time.latest()
@@ -383,7 +513,7 @@ describe('Elections', function () {
     await expect(elections.connect(owner).publishResults(1)).to.emit(elections, 'ResultsPublished')
   })
 
-  it('rejects publishResults if already published', async () => {
+  it('[AC-US-EL-03-07] rejects a second publication', async () => {
     const { elections, owner, voter1, voter2, candidate1, candidate2 } = await deployFixture()
 
     await createActiveElection(
@@ -404,6 +534,56 @@ describe('Elections', function () {
       elections,
       'Elections__ResultsAlreadyPublished'
     )
+  })
+
+  it('[AC-US-EL-03-05] rejects result publication by a non-owner', async () => {
+    const { elections, owner, voter1, voter2, candidate1, candidate2 } = await deployFixture()
+
+    await createActiveElection(
+      elections,
+      owner,
+      candidate1.address,
+      candidate2.address,
+      voter1.address,
+      voter2.address
+    )
+    await elections.connect(voter1).castVote(1, candidate1.address)
+    await elections.connect(voter2).castVote(1, candidate1.address)
+
+    await expect(elections.connect(voter1).publishResults(1))
+      .to.be.revertedWithCustomError(elections, 'OwnableUnauthorizedAccount')
+      .withArgs(voter1.address)
+  })
+
+  it('[AC-US-EL-03-06] permits the next election after publication', async () => {
+    const { elections, owner, voter1, voter2, candidate1, candidate2 } = await deployFixture()
+
+    await createActiveElection(
+      elections,
+      owner,
+      candidate1.address,
+      candidate2.address,
+      voter1.address,
+      voter2.address
+    )
+    await elections.connect(voter1).castVote(1, candidate1.address)
+    await elections.connect(voter2).castVote(1, candidate2.address)
+    await elections.connect(owner).publishResults(1)
+
+    const now = await time.latest()
+    await elections
+      .connect(owner)
+      .createElection(
+        'Next Election',
+        'Allowed after publication',
+        now + 100,
+        now + 1_000,
+        1,
+        [candidate1.address, candidate2.address],
+        [voter1.address, voter2.address]
+      )
+
+    expect(await elections.getNextElectionId()).to.equal(3)
   })
 
   it('rejects publishResults for non-existent election', async () => {
@@ -470,8 +650,14 @@ describe('Elections', function () {
     expect(candidates).to.include(candidate2.address)
   })
 
-  it('getElectionEligibleVoters returns voters', async () => {
-    const { elections, owner, voter1, voter2, candidate1, candidate2 } = await deployFixture()
+  /**
+   * Covers:
+   * - [AC-US-EL-10-01]
+   * - [AC-US-EL-10-02]
+   */
+  it('keeps the election eligible-voter snapshot fixed after creation', async () => {
+    const { elections, owner, voter1, voter2, candidate1, candidate2, nonVoter } =
+      await deployFixture()
 
     await createActiveElection(
       elections,
@@ -482,9 +668,16 @@ describe('Elections', function () {
       voter2.address
     )
 
-    const voters = await elections.getElectionEligibleVoters(1)
-    expect(voters).to.include(voter1.address)
-    expect(voters).to.include(voter2.address)
+    expect(await elections.getElectionEligibleVoters(1)).to.deep.equal([
+      voter1.address,
+      voter2.address
+    ])
+
+    expect(await elections.getElectionEligibleVoters(1)).to.deep.equal([
+      voter1.address,
+      voter2.address
+    ])
+    expect(await elections.isEligibleVoter(1, nonVoter.address)).to.equal(false)
   })
 
   it('getElectionWinners reverts before results published', async () => {
@@ -597,7 +790,7 @@ describe('Elections', function () {
     expect(await elections.getVoteCount(1)).to.equal(1)
   })
 
-  it('getElectionResults handles tie-breaking by address comparison', async () => {
+  it('[AC-US-EL-03-04] resolves tied results by address order', async () => {
     const { elections, owner, voter1, voter2, candidate1, candidate2 } = await deployFixture()
 
     await createActiveElection(

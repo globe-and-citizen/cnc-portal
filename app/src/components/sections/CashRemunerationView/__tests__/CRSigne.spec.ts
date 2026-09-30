@@ -148,7 +148,7 @@ describe('CRSigne', () => {
       expect(wrapper.find('[data-test="sign-action"]').exists()).toBe(false)
     })
 
-    it('should build typed data with correct token addresses', async () => {
+    it('builds typed data with correct token addresses', async () => {
       const customClaim: WeeklyClaim = {
         ...mockClaim,
         wage: {
@@ -189,7 +189,7 @@ describe('CRSigne', () => {
       )
     })
 
-    it('should emit close when user is not owner', async () => {
+    it('emits close when user is not owner', async () => {
       mockUseReadContract.data.value = '0x9999999999999999999999999999999999999999'
 
       createWrapper({ isDropDown: true })
@@ -200,7 +200,7 @@ describe('CRSigne', () => {
       expect(wrapper.emitted()).toHaveProperty('close')
     })
 
-    it('should skip dropdown click when loading', async () => {
+    it('skips dropdown click when loading', async () => {
       let resolvePending: (() => void) | undefined
       const pending = new Promise<void>((resolve) => {
         resolvePending = resolve
@@ -228,22 +228,32 @@ describe('CRSigne', () => {
   })
 
   describe('Error Handling', () => {
-    it('should show error toast when user rejects signature', async () => {
+    it('[AC-US-PAYROLL-008-15] keeps claim state unchanged when the signer rejects the wallet request', async () => {
       mockUseSignTypedData.data.value = ''
       mockUseSignTypedData.mutateAsync.mockRejectedValue(new Error('User rejected the request'))
+      const mutation = createMockMutationResponse()
+      const mutateAsync = mutation.mutateAsync as ReturnType<typeof vi.fn>
+      vi.mocked(useUpdateWeeklyClaimMutation).mockReturnValueOnce(
+        mutation as unknown as ReturnType<typeof useUpdateWeeklyClaimMutation>
+      )
+      const claimBefore = { ...mockClaim }
 
-      createWrapper()
+      createWrapper({ weeklyClaim: claimBefore })
       await clickApprove()
+
+      expect(mutateAsync).not.toHaveBeenCalled()
+      expect(claimBefore.status).toBe('pending')
+      expect(claimBefore.signature).toBeNull()
     })
 
-    it('should show error toast when signature is missing', async () => {
+    it('shows error toast when signature is missing', async () => {
       mockUseSignTypedData.mutateAsync.mockResolvedValue(undefined)
 
       createWrapper()
       await clickApprove()
     })
 
-    it('should show error toast when claim update fails', async () => {
+    it('shows error toast when claim update fails', async () => {
       vi.mocked(useUpdateWeeklyClaimMutation).mockReturnValueOnce(
         createMockMutationResponse(null, false, new Error('Update failed')) as ReturnType<
           typeof useUpdateWeeklyClaimMutation
@@ -254,7 +264,7 @@ describe('CRSigne', () => {
       await clickApprove()
     })
 
-    it('should show error toast when cash remuneration address is missing', async () => {
+    it('shows error toast when cash remuneration address is missing', async () => {
       mockTeamStore.getContractAddressByType = vi.fn((type: ContractType) => {
         if (type === 'CashRemunerationEIP712') return ''
         if (type === 'InvestorV1') return '0x1111111111111111111111111111111111111111'
@@ -266,7 +276,7 @@ describe('CRSigne', () => {
       await clickApprove()
     })
 
-    it('should handle resign flow when claim is disabled', async () => {
+    it('[AC-US-PAYROLL-008-08] handles resign flow when claim is disabled', async () => {
       mockWagmiCore.readContract.mockResolvedValue(true)
       mockCashRemunerationWrites.enableClaim.mutateAsync = vi.fn().mockResolvedValue('0xhash')
 
@@ -277,7 +287,7 @@ describe('CRSigne', () => {
       expect(mockCashRemunerationWrites.enableClaim.mutateAsync).toHaveBeenCalled()
     })
 
-    it('should skip enable flow when claim is not disabled', async () => {
+    it('skips enable flow when claim is not disabled', async () => {
       mockWagmiCore.readContract.mockResolvedValue(false)
       mockCashRemunerationWrites.enableClaim.mutateAsync = vi.fn()
 
@@ -288,7 +298,7 @@ describe('CRSigne', () => {
       expect(mockCashRemunerationWrites.enableClaim.mutateAsync).not.toHaveBeenCalled()
     })
 
-    it('should show error toast when cash remuneration owner fetch fails', async () => {
+    it('shows error toast when cash remuneration owner fetch fails', async () => {
       createWrapper()
       await nextTick()
       mockUseReadContract.error.value = new Error('Fetch failed') as unknown as null

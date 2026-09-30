@@ -46,6 +46,7 @@
         :disabled="loading || (formattedUnlockedBalance ?? 0) === 0"
         color="primary"
         class="w-44 text-center"
+        data-test="pay-dividends-submit-button"
         @click="onSubmit()"
         label="submit"
       />

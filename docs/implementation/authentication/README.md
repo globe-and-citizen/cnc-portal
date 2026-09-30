@@ -65,6 +65,7 @@ sequenceDiagram
 
 - [Client lock screen](../../../app/src/components/layout/LockScreen.vue) and
   [client authentication state](../../../app/src/composables/useAuth.ts)
+- [Client session store](../../../app/src/stores/user.ts) and [session-store tests](../../../app/src/stores/__tests__/user.spec.ts)
 - [Client SIWE orchestration](../../../app/src/composables/useSiwe.ts)
 - [Client login page](../../../app/src/views/LoginView.vue)
 - [Client SIWE tests](../../../app/src/composables/__tests__/useSiwe.spec.ts)

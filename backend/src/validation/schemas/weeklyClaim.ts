@@ -85,8 +85,8 @@ export const weeklyClaimIdParamsSchema = z.object({
 
 // Update weekly claim query parameters
 export const updateWeeklyClaimQuerySchema = z.object({
-  action: z.enum(['sign', 'withdraw', 'disable', 'enable'], {
-    message: 'Invalid action. Allowed actions are: sign, withdraw, disable, enable',
+  action: z.enum(['sign', 'withdraw'], {
+    message: 'Invalid action. Allowed actions are: sign, withdraw',
   }),
 });
 
@@ -110,8 +110,7 @@ export const signWeeklyClaimBodySchema = z.object({
 // Update weekly claim request body
 //
 // Derived from signWeeklyClaimBodySchema so the same shape covers
-// withdraw / disable / enable, where these fields don't apply and are
-// simply absent from the body.
+// withdraw, where these fields don't apply and are simply absent from the body.
 export const updateWeeklyClaimBodySchema = signWeeklyClaimBodySchema.partial();
 
 // Update weekly claim — full request (params + query + body validated

@@ -23,14 +23,13 @@ const { store } = vi.hoisted(() => {
     isLoading: false,
     isError: false,
     isOwner: true,
-    isLender: false,
     rounds: [] as CreditRound[],
     activeRounds: [] as CreditRound[],
     historyRounds: [] as CreditRound[],
-    outstandingPrincipal: 0,
-    interestDue: 0,
-    raisedLifetime: 0,
-    repaidLifetime: 0,
+    outstandingPrincipalByToken: new Map<string, number>(),
+    interestDueByToken: new Map<string, number>(),
+    raisedLifetimeByToken: new Map<string, number>(),
+    repaidLifetimeByToken: new Map<string, number>(),
     nextMaturity: '—',
     members: [] as unknown[],
     getRound: (id: string): CreditRound | undefined => store.rounds.find((r) => r.id === id)
@@ -58,7 +57,6 @@ function resetStore() {
     isLoading: false,
     isError: false,
     isOwner: true,
-    isLender: false,
     rounds: [],
     activeRounds: [],
     historyRounds: [],
@@ -78,6 +76,7 @@ describe('Community Credit views', () => {
     mockFixedReturnReads.myLenderPositions.data.value = new Map()
     useQueryClientFn.mockReturnValue({
       invalidateQueries: mockInvalidateQueries,
+      refetchQueries: vi.fn(),
       getQueryData: vi.fn(),
       setQueryData: vi.fn(),
       removeQueries: vi.fn()
@@ -211,7 +210,7 @@ describe('Community Credit views', () => {
       )
     })
 
-    it('lets the owner push refunds to every lender on a stalled round in one step', async () => {
+    it('[AC-US-CC-004-01] refunds every lender on a stalled round in one step', async () => {
       store.isOwner = true
       const wrapper = mountRound(sampleRound({ status: 'stalled' }), offerStruct({ state: 0 }))
       await flushPromises()
@@ -222,7 +221,7 @@ describe('Community Credit views', () => {
       })
     })
 
-    it('lets the owner accept partial funding on a stalled round instead of refunding', async () => {
+    it('[AC-US-CC-004-02] accepts a positive partial raise on a stalled round', async () => {
       store.isOwner = true
       const wrapper = mountRound(
         sampleRound({ status: 'stalled', raised: 23400 }),
@@ -256,7 +255,7 @@ describe('Community Credit views', () => {
 
     it('hides the Lend action on a restricted round when the owner has no whitelist allocation', async () => {
       store.isOwner = true
-      mockFixedReturnReads.myLenderPositions.data.value = new Map()
+      mockFixedReturnReads.lenderAllocation.data.value = 0n
       const wrapper = mountRound(sampleRound({ restricted: true }))
       await flushPromises()
       expect(wrapper.find('[data-test="round-cta-lend"]').exists()).toBe(false)
@@ -264,12 +263,27 @@ describe('Community Credit views', () => {
 
     it('offers the Lend action on a restricted round once the owner has a whitelist allocation', async () => {
       store.isOwner = true
-      mockFixedReturnReads.myLenderPositions.data.value = new Map([
-        [1, { allocation: 500n, deposited: 0n }]
-      ])
+      mockFixedReturnReads.lenderAllocation.data.value = 500n
       const wrapper = mountRound(sampleRound({ restricted: true }))
       await flushPromises()
       expect(wrapper.find('[data-test="round-cta-lend"]').exists()).toBe(true)
+    })
+
+    it('offers a retry instead of hiding Lend when the position read failed, not confirmed zero', async () => {
+      store.isOwner = true
+      mockFixedReturnReads.lenderAllocation.data.value = 0n
+      mockFixedReturnReads.lenderAllocation.isError.value = true
+      const wrapper = mountRound(sampleRound({ restricted: true }))
+      await flushPromises()
+      expect(wrapper.find('[data-test="round-cta-lend"]').exists()).toBe(false)
+      expect(wrapper.find('[data-test="round-cta-retry-lend-position"]').exists()).toBe(true)
+    })
+
+    it('shows a refresh-error banner instead of an empty lender list when offerLenders fails', async () => {
+      mockFixedReturnReads.offerLenders.isError.value = true
+      const wrapper = mountRound(sampleRound())
+      await flushPromises()
+      expect(wrapper.find('[data-test="round-refresh-error"]').exists()).toBe(true)
     })
   })
 })

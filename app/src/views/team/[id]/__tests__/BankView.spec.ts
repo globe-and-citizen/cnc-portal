@@ -7,7 +7,7 @@ import { mockTeamStore } from '@/tests/mocks/store.mock'
 
 import BankView from '../Accounts/BankView.vue'
 
-describe('BankView', () => {
+describe('[US-BANK-003] BankView', () => {
   let wrapper: VueWrapper<ComponentPublicInstance & typeof BankView>
 
   beforeEach(() => {

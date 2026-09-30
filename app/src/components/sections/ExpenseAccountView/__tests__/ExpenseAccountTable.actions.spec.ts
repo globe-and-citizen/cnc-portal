@@ -91,7 +91,7 @@ const mockApprovals = [
   }
 ]
 
-describe('ExpenseAccountTable - Actions and Loading', () => {
+describe('[US-EXP-003] [US-EXP-004] ExpenseAccountTable - Actions and Loading', () => {
   setActivePinia(createPinia())
 
   interface ComponentOptions {
@@ -139,21 +139,21 @@ describe('ExpenseAccountTable - Actions and Loading', () => {
   })
 
   describe('Action Buttons and Loading States', () => {
-    it('calls deactivateApproval mutation when Disable is clicked', async () => {
+    it('[AC-US-EXP-003-01] submits deactivation for an enabled approval', async () => {
       const wrapper = createComponent()
       await wrapper.find('[data-test="disable-button"]').trigger('click')
       await flushPromises()
       expect(mockExpenseAccountWrites.deactivateApproval.mutate).toHaveBeenCalled()
     })
 
-    it('calls activateApproval mutation when Enable is clicked', async () => {
+    it('[AC-US-EXP-003-02] submits reactivation for a disabled approval', async () => {
       const wrapper = createComponent()
       await wrapper.find('[data-test="enable-button"]').trigger('click')
       await flushPromises()
       expect(mockExpenseAccountWrites.activateApproval.mutate).toHaveBeenCalled()
     })
 
-    it('runs the deactivate onSuccess path: toast + cache invalidation', async () => {
+    it('[AC-US-EXP-003-03] refreshes approval records after deactivation succeeds', async () => {
       mockExpenseAccountWrites.deactivateApproval.mutate.mockImplementationOnce(
         (_v: unknown, opts?: MutationOpts) => opts?.onSuccess?.()
       )
@@ -206,7 +206,7 @@ describe('ExpenseAccountTable - Actions and Loading', () => {
       expect(logErrorSpy).toHaveBeenCalled()
     })
 
-    it('should notify error if error getting owner', async () => {
+    it('notifies error if error getting owner', async () => {
       mockUseReadContract.error.value = new Error('Error getting owner')
       const wrapper = createComponent()
       const logErrorSpy = vi.spyOn(log, 'error')
@@ -219,7 +219,7 @@ describe('ExpenseAccountTable - Actions and Loading', () => {
   })
 
   describe('Empty and error states', () => {
-    it('shows an empty message when there are no approvals', () => {
+    it('[AC-US-EXP-004-09] shows an empty message when there are no approvals', () => {
       vi.mocked(useGetExpensesQuery).mockReturnValue(
         createMockQueryResponse([]) as ReturnType<typeof useGetExpensesQuery>
       )
@@ -228,7 +228,7 @@ describe('ExpenseAccountTable - Actions and Loading', () => {
       expect(wrapper.find('[data-test="approvals-error"]').exists()).toBe(false)
     })
 
-    it('shows an error message when the approvals fetch fails', () => {
+    it('[AC-US-EXP-004-10] distinguishes an approval read failure from an empty result', () => {
       vi.mocked(useGetExpensesQuery).mockReturnValue(
         createMockQueryResponse([], false, new Error('boom')) as ReturnType<
           typeof useGetExpensesQuery
@@ -238,7 +238,7 @@ describe('ExpenseAccountTable - Actions and Loading', () => {
       expect(wrapper.find('[data-test="approvals-error"]').exists()).toBe(true)
     })
 
-    it('renders an icon-bearing badge for an expired approval', () => {
+    it('[AC-US-EXP-004-03] renders the current approval lifecycle state', () => {
       vi.mocked(useGetExpensesQuery).mockReturnValue(
         createMockQueryResponse([{ ...mockApprovals[0], status: 'expired' }]) as ReturnType<
           typeof useGetExpensesQuery
@@ -246,6 +246,22 @@ describe('ExpenseAccountTable - Actions and Loading', () => {
       )
       const wrapper = createComponent()
       expect(wrapper.text()).toContain('expired')
+    })
+
+    it('[AC-US-EXP-003-09] keeps expired and exhausted approvals unavailable after synchronization', () => {
+      vi.mocked(useGetExpensesQuery).mockReturnValue(
+        createMockQueryResponse([
+          { ...mockApprovals[0], status: 'expired' },
+          { ...mockApprovals[1], status: 'exhausted' }
+        ]) as ReturnType<typeof useGetExpensesQuery>
+      )
+
+      const wrapper = createComponent()
+
+      expect(wrapper.text()).toContain('expired')
+      expect(wrapper.text()).toContain('exhausted')
+      expect(wrapper.find('[data-test="enable-button"]').exists()).toBe(false)
+      expect(wrapper.find('[data-test="disable-button"]').exists()).toBe(false)
     })
   })
 })

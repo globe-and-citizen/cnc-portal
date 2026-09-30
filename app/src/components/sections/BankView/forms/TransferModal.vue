@@ -4,11 +4,12 @@
     <!-- Transfer Button with Tooltip -->
     <UTooltip
       :text="
-        !hasTheRight
+        archivedTooltip ??
+        (!hasTheRight
           ? 'Only the bank owner can transfer funds'
           : !isBalanceGreaterThanZero
             ? 'Bank balance is 0'
-            : undefined
+            : undefined)
       "
     >
       <UButton
@@ -16,7 +17,7 @@
         leading-icon="heroicons-outline:arrows-right-left"
         label="Transfer"
         @click="openModal"
-        :disabled="!hasTheRight || !isBalanceGreaterThanZero"
+        :disabled="isWriteDisabled || !hasTheRight || !isBalanceGreaterThanZero"
         data-test="transfer-button"
       />
     </UTooltip>
@@ -59,10 +60,12 @@ import { useBodAddAction } from '@/composables/bod/writes'
 import { useBodIsBodAction } from '@/composables/bod/reads'
 import { useOfficerFeeBps } from '@/composables/officer/reads'
 import { useTransfer, useTransferToken } from '@/composables/bank/writes'
+import { bankEventKeys } from '@/composables/bank/useBankEventsViaLogs'
 import { classifyError } from '@/utils/errors/classifyContractError'
 import { log } from '@/lib/logging'
 import type { TokenOption } from '@/types'
 import { useContractBalance, contractBalanceKeys } from '@/composables'
+import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
 
 interface Props {
   bankAddress: Address
@@ -73,6 +76,7 @@ const props = withDefaults(defineProps<Props>(), {})
 const chainId = useChainId()
 const queryClient = useQueryClient()
 const toast = useToast()
+const { archivedTooltip, isWriteDisabled } = useTeamWriteGuard()
 
 const { data: balance } = useContractBalance(props.bankAddress)
 const balances = computed(() => balance.value?.balances ?? [])
@@ -164,6 +168,7 @@ const resetTransferValues = () => {
 
 // Open modal
 const openModal = () => {
+  if (isWriteDisabled.value) return
   modal.value = { mount: true, show: true }
 }
 
@@ -182,8 +187,18 @@ const handleTransfer = async (data: {
   // To give recipient exactly `userAmountBigInt`, we must send: amount * 10000 / (10000 - feeBps)
   const userAmountBigInt = isNativeToken ? parseEther(data.amount) : parseUnits(data.amount, 6)
   const feeBps = BigInt(feeBpsNumber.value)
-  const transferAmount =
-    feeBps > 0n ? (userAmountBigInt * 10000n) / (10000n - feeBps) : userAmountBigInt
+  const transferAmount = (() => {
+    if (feeBps === 0n) return userAmountBigInt
+
+    const denominator = 10000n - feeBps
+    const candidate = (userAmountBigInt * 10000n) / denominator
+    const candidateNet = candidate - (candidate * feeBps) / 10000n
+
+    // Solidity rounds the fee down. Most values therefore need the floor
+    // candidate; increment only when that candidate would under-deliver by
+    // the smallest token unit.
+    return candidateNet < userAmountBigInt ? candidate + 1n : candidate
+  })()
 
   if (isBodAction.value) {
     // BOD Action path
@@ -225,6 +240,7 @@ const handleTransfer = async (data: {
     await queryClient.invalidateQueries({
       queryKey: contractBalanceKeys.detail(props.bankAddress, chainId.value)
     })
+    await queryClient.invalidateQueries({ queryKey: bankEventKeys.all })
 
     resetTransferValues()
   }

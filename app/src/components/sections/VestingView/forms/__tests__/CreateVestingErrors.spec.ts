@@ -6,7 +6,7 @@ import CreateVesting from '@/components/sections/VestingView/forms/CreateVesting
 import SelectMemberInput from '@/components/ui/inputs/SelectMemberInput.vue'
 import { mockVestingWrites, resetContractMocks } from '@/tests/mocks'
 
-describe('CreateVesting.vue — write feedback', () => {
+describe('[US-VESTING-001] CreateVesting.vue — write feedback', () => {
   let wrapper: VueWrapper
 
   beforeEach(async () => {

@@ -7,6 +7,7 @@
       :columns="columns"
       :loading="isTeamClaimDataFetching"
       overflow="overflow-visible"
+      data-test="weekly-claims-table"
     >
       <template #member-cell="{ row: { original: row } }">
         <RouterLink

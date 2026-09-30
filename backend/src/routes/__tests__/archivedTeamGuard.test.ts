@@ -93,7 +93,12 @@ describe('archived team guard on write routes', () => {
   describe('POST /teams/:id/member', () => {
     const app = mount(teamRoutes);
 
-    it('returns 409 for archived team', async () => {
+    /**
+     * Covers:
+     * - [AC-US-COMPANIES-005-07]
+     * - [AC-US-COMPANIES-006-05]
+     */
+    it('rejects member additions when the company is archived', async () => {
       mockTeamArchiveLookups(true);
 
       const response = await request(app)
@@ -122,7 +127,12 @@ describe('archived team guard on write routes', () => {
   describe('DELETE /teams/:id/member/:memberAddress', () => {
     const app = mount(teamRoutes);
 
-    it('returns 409 for archived team', async () => {
+    /**
+     * Covers:
+     * - [AC-US-COMPANIES-005-07]
+     * - [AC-US-COMPANIES-006-05]
+     */
+    it('rejects member removal when the company is archived', async () => {
       mockTeamArchiveLookups(true);
 
       const response = await request(app).delete(`/1/member/${MEMBER_ADDRESS}`);
@@ -134,7 +144,7 @@ describe('archived team guard on write routes', () => {
   describe('POST /contract', () => {
     const app = mount(contractRoutes);
 
-    it('returns 409 for archived team', async () => {
+    it('[AC-US-COMPANIES-006-05] rejects contract registration for an archived company', async () => {
       mockTeamArchiveLookups(true);
 
       const response = await request(app).post('/').send({
@@ -162,7 +172,7 @@ describe('archived team guard on write routes', () => {
   describe('PATCH /expense/:id', () => {
     const app = mount(expenseRoutes);
 
-    it('returns 409 for archived team', async () => {
+    it('rejects expense updates for an archived company', async () => {
       vi.mocked(prisma.expense.findUnique).mockResolvedValue({ teamId: 1 } as never);
       mockTeamArchiveLookups(true);
 
@@ -175,7 +185,7 @@ describe('archived team guard on write routes', () => {
   describe('POST /expense', () => {
     const app = mount(expenseRoutes);
 
-    it('returns 409 for archived team', async () => {
+    it('rejects expense creation for an archived company', async () => {
       mockTeamArchiveLookups(true);
 
       const response = await request(app)
@@ -203,7 +213,7 @@ describe('archived team guard on write routes', () => {
   describe('POST /claim', () => {
     const app = mount(claimRoutes);
 
-    it('returns 409 for archived team', async () => {
+    it('[AC-US-COMPANIES-006-05] rejects claim creation for an archived company', async () => {
       mockTeamArchiveLookups(true);
 
       const response = await request(app).post('/').send({
@@ -219,7 +229,7 @@ describe('archived team guard on write routes', () => {
   describe('PUT /claim/:claimId', () => {
     const app = mount(claimRoutes);
 
-    it('returns 409 for archived team', async () => {
+    it('[AC-US-PAYROLL-006-13] rejects claim edits for an archived company', async () => {
       vi.mocked(prisma.claim.findUnique).mockResolvedValue({
         wage: { teamId: 1 },
       } as never);
@@ -234,7 +244,7 @@ describe('archived team guard on write routes', () => {
   describe('DELETE /claim/:claimId', () => {
     const app = mount(claimRoutes);
 
-    it('returns 409 for archived team', async () => {
+    it('[AC-US-PAYROLL-007-07] rejects claim deletion for an archived company', async () => {
       vi.mocked(prisma.claim.findUnique).mockResolvedValue({
         wage: { teamId: 1 },
       } as never);
@@ -249,7 +259,8 @@ describe('archived team guard on write routes', () => {
   describe('PUT /wage/setWage', () => {
     const app = mount(wageRoutes);
 
-    it('returns 409 for archived team', async () => {
+    /** Covers: [AC-US-PAYROLL-001-26], [AC-US-PAYROLL-001-27] */
+    it('rejects setting or replacing a wage for an archived company', async () => {
       mockTeamArchiveLookups(true);
 
       const response = await request(app)
@@ -268,7 +279,7 @@ describe('archived team guard on write routes', () => {
   describe('PUT /wage/:wageId', () => {
     const app = mount(wageRoutes);
 
-    it('returns 409 for archived team', async () => {
+    it('[AC-US-PAYROLL-002-12] rejects wage status updates for an archived company', async () => {
       vi.mocked(prisma.wage.findUnique).mockResolvedValue({ teamId: 1 } as never);
       mockTeamArchiveLookups(true);
 
@@ -278,10 +289,27 @@ describe('archived team guard on write routes', () => {
     });
   });
 
+  describe('PUT /weekly-claim/goals', () => {
+    const app = mount(weeklyClaimRoutes);
+
+    it('[AC-US-PAYROLL-004-10] [AC-US-PAYROLL-004-11] rejects weekly-goal writes for an archived company', async () => {
+      mockTeamArchiveLookups(true);
+
+      const response = await request(app).put('/goals').send({
+        teamId: 1,
+        weekStart: new Date().toISOString(),
+        weeklyGoals: 'Updated goals',
+      });
+
+      expect(response.status).toBe(409);
+      expect(response.body.message).toBe('Team is archived and cannot be modified');
+    });
+  });
+
   describe('POST /weekly-claim/sync', () => {
     const app = mount(weeklyClaimRoutes);
 
-    it('returns 409 for archived team', async () => {
+    it('rejects weekly-claim synchronization for an archived company', async () => {
       mockTeamArchiveLookups(true);
 
       const response = await request(app).post('/sync').query({ teamId: 1 });
@@ -293,7 +321,28 @@ describe('archived team guard on write routes', () => {
   describe('PUT /weekly-claim/:id', () => {
     const app = mount(weeklyClaimRoutes);
 
-    it('returns 409 for archived team', async () => {
+    it('[AC-US-PAYROLL-008-13] rejects signing for an archived company', async () => {
+      vi.mocked(prisma.weeklyClaim.findUnique).mockResolvedValue({ teamId: 1 } as never);
+      mockTeamArchiveLookups(true);
+      const response = await request(app)
+        .put('/1')
+        .query({ action: 'sign' })
+        .send({
+          signature: '0xabcd',
+          signedAgainstContractAddress: OWNER_ADDRESS,
+          chainId: 31337,
+          typedDataMessage: {
+            employeeAddress: MEMBER_ADDRESS,
+            minutesWorked: 60,
+            date: '1700000000',
+            wages: [{ hourlyRate: '1', tokenAddress: OWNER_ADDRESS }],
+          },
+        });
+      expect(response.status).toBe(409);
+      expect(response.body.message).toBe('Team is archived and cannot be modified');
+    });
+
+    it('[AC-US-PAYROLL-010-11] rejects weekly-claim withdrawal for an archived company', async () => {
       vi.mocked(prisma.weeklyClaim.findUnique).mockResolvedValue({ teamId: 1 } as never);
       mockTeamArchiveLookups(true);
 
@@ -306,7 +355,7 @@ describe('archived team guard on write routes', () => {
   describe('PUT /contract/sync', () => {
     const app = mount(contractRoutes);
 
-    it('returns 409 for archived team', async () => {
+    it('rejects contract synchronization for an archived company', async () => {
       mockTeamArchiveLookups(true);
 
       const response = await request(app).put('/sync').send({ teamId: 1 });
@@ -318,7 +367,12 @@ describe('archived team guard on write routes', () => {
   describe('POST /contract/officer', () => {
     const app = mount(contractRoutes);
 
-    it('returns 409 for archived team', async () => {
+    /**
+     * Covers:
+     * - [AC-US-COMPANIES-002-05]
+     * - [AC-US-COMPANIES-006-05]
+     */
+    it('rejects officer migration for an archived company', async () => {
       mockTeamArchiveLookups(true);
 
       const response = await request(app).post('/officer').send({
@@ -333,7 +387,7 @@ describe('archived team guard on write routes', () => {
   describe('POST /elections/:teamId', () => {
     const app = mount(electionRoutes);
 
-    it('returns 409 for archived team', async () => {
+    it('[AC-US-EL-04-07] rejects election notifications for an archived company', async () => {
       vi.mocked(prisma.team.findUnique).mockResolvedValue({ isArchived: true } as never);
 
       const response = await request(app).post('/1').send({});
@@ -358,7 +412,7 @@ describe('archived team guard on write routes', () => {
   describe('POST /actions', () => {
     const app = mount(actionRoutes);
 
-    it('returns 409 for archived team', async () => {
+    it('rejects action creation for an archived company', async () => {
       vi.mocked(prisma.team.findUnique).mockResolvedValue({ isArchived: true } as never);
 
       const response = await request(app).post('/').send({
@@ -377,7 +431,7 @@ describe('archived team guard on write routes', () => {
   describe('PATCH /actions/:id', () => {
     const app = mount(actionRoutes);
 
-    it('returns 409 for archived team', async () => {
+    it('rejects action updates for an archived company', async () => {
       vi.mocked(prisma.boardOfDirectorActions.findUnique).mockResolvedValue({
         teamId: 1,
       } as never);

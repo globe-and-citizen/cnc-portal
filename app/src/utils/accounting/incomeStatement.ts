@@ -11,29 +11,10 @@
  * example: revenue 115 (Service 100 + Trading Gain 15), expenses 110.80
  * (Payroll 50.80 + Operating 20 + Trading Loss 20 + Dividend 20) → net +4.20.
  */
-import { ACCOUNT_NAMES, classOf, type AccountName } from './chartOfAccounts'
+import { ACCOUNT_NAMES, classOf } from './chartOfAccounts'
 import { journalFamilyBalances } from './journalBalances'
-import type { JournalEntry } from './journalEntry'
-
-export interface StatementLine {
-  account: AccountName
-  amount: number
-}
-
-export interface IncomeStatement {
-  /** Income accounts with non-zero activity (revenue + gains). */
-  revenue: StatementLine[]
-  /** Expense accounts with non-zero activity (costs + losses). */
-  expenses: StatementLine[]
-  totalRevenue: number
-  totalExpenses: number
-  /** totalRevenue − totalExpenses. */
-  netIncome: number
-}
-
-function round2(value: number): number {
-  return Math.round(value * 100) / 100
-}
+import { ZERO_USD_AMOUNT } from './monetaryAmount'
+import type { IncomeStatement, JournalEntry, StatementLine } from './types'
 
 /** Build the income statement from canonical JournalEntry lines. */
 export function buildIncomeStatement(entries: readonly JournalEntry[]): IncomeStatement {
@@ -41,13 +22,13 @@ export function buildIncomeStatement(entries: readonly JournalEntry[]): IncomeSt
 
   const revenue: StatementLine[] = []
   const expenses: StatementLine[] = []
-  let totalRevenue = 0
-  let totalExpenses = 0
+  let totalRevenue = ZERO_USD_AMOUNT
+  let totalExpenses = ZERO_USD_AMOUNT
 
   // Walk the chart in declared order so lines read top-down and stay stable.
   for (const account of ACCOUNT_NAMES) {
-    const amount = net.get(account) ?? 0
-    if (amount === 0) continue
+    const amount = net.get(account) ?? ZERO_USD_AMOUNT
+    if (amount === ZERO_USD_AMOUNT) continue
     const cls = classOf(account)
     if (cls === 'INCOME') {
       revenue.push({ account, amount })
@@ -58,13 +39,11 @@ export function buildIncomeStatement(entries: readonly JournalEntry[]): IncomeSt
     }
   }
 
-  totalRevenue = round2(totalRevenue)
-  totalExpenses = round2(totalExpenses)
   return {
     revenue,
     expenses,
     totalRevenue,
     totalExpenses,
-    netIncome: round2(totalRevenue - totalExpenses)
+    netIncome: totalRevenue - totalExpenses
   }
 }

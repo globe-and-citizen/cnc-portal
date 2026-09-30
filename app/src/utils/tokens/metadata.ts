@@ -1,4 +1,4 @@
-import { NETWORK, USDC_ADDRESS, USDT_ADDRESS, USDC_E_ADDRESS } from '@/constant'
+import { NETWORK, SUPPORTED_TOKENS, USDC_ADDRESS, USDT_ADDRESS, USDC_E_ADDRESS } from '@/constant'
 import { zeroAddress, formatEther, parseUnits } from 'viem'
 import type { TokenId } from '@/constant'
 import USDCIcon from '@/assets/usdc.png'
@@ -29,14 +29,23 @@ const tokenDecimals: Record<TokenId, number> = {
 const tokenIdSet = new Set<TokenId>(Object.keys(tokenDecimals) as TokenId[])
 
 export const tokenSymbol = (tokenAddress: string) => {
-  const symbols = {
-    [USDC_ADDRESS.toLocaleLowerCase()]: 'USDC',
-    [USDT_ADDRESS.toLocaleLowerCase()]: 'USDT',
-    [USDC_E_ADDRESS.toLocaleLowerCase()]: 'USDC.e',
-    [zeroAddress]: NETWORK.currencySymbol
-  }
+  // USDC/USDC.e/native come from SUPPORTED_TOKENS — the same symbol
+  // `findCreditToken` (Community Credit's own lend flow) looks up against, so
+  // a round's displayed token can never drift from what it can actually be
+  // funded with. USDC.e used to have its own hand-typed 'USDC.e' here,
+  // diverging from SUPPORTED_TOKENS' 'USDCe' and making every USDC.e round
+  // unlendable — "Unsupported token: USDC.e" on every attempt.
+  const normalized = tokenAddress.toLocaleLowerCase()
+  const supported = SUPPORTED_TOKENS.find(
+    (token) => token.address.toLocaleLowerCase() === normalized
+  )
+  if (supported) return supported.symbol
 
-  return symbols[tokenAddress.toLocaleLowerCase()] || ''
+  // USDT isn't tracked in SUPPORTED_TOKENS (Community Credit and the Payment
+  // Gate widget don't offer it), so it keeps its own direct mapping.
+  if (normalized === USDT_ADDRESS.toLocaleLowerCase()) return 'USDT'
+
+  return ''
 }
 
 export const formatEtherUtil = (amount: bigint, tokenAddress: string) =>

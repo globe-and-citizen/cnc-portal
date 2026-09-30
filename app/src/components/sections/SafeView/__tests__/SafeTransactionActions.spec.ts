@@ -10,7 +10,7 @@ const defaultProps = {
 }
 
 describe('SafeTransactionActions', () => {
-  it('shows only the signer actions currently available', () => {
+  it('[AC-US-SAFE-005-06] shows only the signer actions currently available', () => {
     const wrapper = mount(SafeTransactionActions, { props: defaultProps })
 
     expect(wrapper.get('[data-test="approve-button"]').attributes('title')).toBe(

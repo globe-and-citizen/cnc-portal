@@ -8,14 +8,6 @@ const { multerState } = vi.hoisted(() => ({
 
 // Mock storageService
 vi.mock('../../services/storageService', () => ({
-  ALLOWED_IMAGE_MIMETYPES: ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'],
-  ALLOWED_DOCUMENT_MIMETYPES: [
-    'application/pdf',
-    'text/plain',
-    'application/zip',
-    'application/x-zip-compressed',
-    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-  ],
   ALLOWED_MIMETYPES: [
     'image/png',
     'image/jpeg',
@@ -56,7 +48,7 @@ describe('upload', () => {
   });
 
   describe('upload middleware', () => {
-    it('should export upload middleware', async () => {
+    it('exports upload middleware', async () => {
       const { upload } = await import('../upload');
 
       expect(upload).toBeDefined();
@@ -64,7 +56,7 @@ describe('upload', () => {
       expect(typeof upload.single).toBe('function');
     });
 
-    it('should accept allowed mimetypes in fileFilter', async () => {
+    it('accepts allowed mimetypes in fileFilter', async () => {
       await import('../upload');
 
       const callback = vi.fn();
@@ -73,7 +65,7 @@ describe('upload', () => {
       expect(callback).toHaveBeenCalledWith(null, true);
     });
 
-    it('should reject unsupported mimetypes in fileFilter', async () => {
+    it('rejects unsupported mimetypes in fileFilter', async () => {
       await import('../upload');
 
       const callback = vi.fn();
@@ -87,21 +79,6 @@ describe('upload', () => {
       const [error] = callback.mock.calls[0];
       expect(error).toBeInstanceOf(Error);
       expect((error as Error).message).toContain('Only image files');
-    });
-
-    it('should export ALLOWED_IMAGE_MIMETYPES', async () => {
-      const { ALLOWED_IMAGE_MIMETYPES } = await import('../upload');
-
-      expect(ALLOWED_IMAGE_MIMETYPES).toBeDefined();
-      expect(ALLOWED_IMAGE_MIMETYPES).toContain('image/png');
-      expect(ALLOWED_IMAGE_MIMETYPES).toContain('image/jpeg');
-    });
-
-    it('should export ALLOWED_DOCUMENT_MIMETYPES', async () => {
-      const { ALLOWED_DOCUMENT_MIMETYPES } = await import('../upload');
-
-      expect(ALLOWED_DOCUMENT_MIMETYPES).toBeDefined();
-      expect(ALLOWED_DOCUMENT_MIMETYPES).toContain('application/pdf');
     });
   });
 });

@@ -44,6 +44,7 @@ const UTableStub = defineComponent({
   },
   template: `
     <div data-test="bank-table">
+      <slot v-if="!data?.length" name="empty" />
       <template v-for="(row, index) in data || []" :key="index">
         <div data-test="bank-rendered-row">
           <slot name="type-cell" :row="rowContext(row, 0)" />

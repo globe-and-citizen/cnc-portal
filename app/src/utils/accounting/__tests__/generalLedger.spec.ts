@@ -1,24 +1,27 @@
 import { describe, it, expect } from 'vitest'
-import { buildGeneralLedger, buildJournal } from '@/utils/accounting/generalLedger'
+import { buildGeneralLedger } from '@/utils/accounting/generalLedger'
+import { finalizeJournal } from '@/utils/accounting/__tests__/assembleAccounting'
 import type { AccountName } from '@/utils/accounting/chartOfAccounts'
-import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
+import type { JournalEntryDraft } from '@/utils/accounting/journalEntryDraft'
 import { catalogueLedger } from './catalogueLedger'
+import { usdNumber } from './fixtures'
 
-const generalLedger = (entries: readonly LedgerEntry[]) => buildGeneralLedger(buildJournal(entries))
+const generalLedger = (entries: readonly JournalEntryDraft[]) =>
+  buildGeneralLedger(finalizeJournal(entries))
 
 describe('buildGeneralLedger — catalogue worked example', () => {
   const gl = generalLedger(catalogueLedger)
   const balanceOf = (account: AccountName): number =>
-    gl.trialBalance.find((r) => r.account.family.name === account)?.balance ?? 0
+    usdNumber(gl.trialBalance.find((r) => r.account.family.name === account)?.balance ?? 0n)
 
   it('is balanced gross (Σ debit lines = Σ credit lines = journal total)', () => {
-    expect(gl.totalDebit).toBeCloseTo(678.1, 2)
-    expect(gl.totalCredit).toBeCloseTo(678.1, 2)
+    expect(usdNumber(gl.totalDebit)).toBeCloseTo(678.1, 2)
+    expect(usdNumber(gl.totalCredit)).toBeCloseTo(678.1, 2)
   })
 
   it('is balanced net (Σ debit balances = Σ credit balances = trial balance)', () => {
-    expect(gl.debitBalanceTotal).toBeCloseTo(253, 2)
-    expect(gl.creditBalanceTotal).toBeCloseTo(253, 2)
+    expect(usdNumber(gl.debitBalanceTotal)).toBeCloseTo(253, 2)
+    expect(usdNumber(gl.creditBalanceTotal)).toBeCloseTo(253, 2)
     expect(gl.balanced).toBe(true)
   })
 
@@ -51,15 +54,15 @@ describe('buildGeneralLedger — catalogue worked example', () => {
     // but the pooled 0.01 credit rounds to a single 0.01. Rounding per account
     // then summing reads 0.02 vs 0.01 — "out of balance" — yet the raw totals are
     // exactly equal. The balanced check must run on the raw sums.
-    const cent = (id: string, debit: AccountName, credit: AccountName): LedgerEntry => ({
+    const cent = (id: string, debit: AccountName, credit: AccountName): JournalEntryDraft => ({
       id,
       timestamp: 1,
       useCase: 'UC-BANK-02',
       debit,
       credit,
-      amountUsd: 0.005,
       token: 'usdc',
       rawAmount: '5000',
+      rate: 1,
       internal: false,
       memo: '',
       enrichment: 'not-applicable'
@@ -69,7 +72,7 @@ describe('buildGeneralLedger — catalogue worked example', () => {
       cent('b', 'Cash — Safe', 'Service Revenue')
     ])
     expect(gl2.balanced).toBe(true)
-    expect(gl2.debitBalanceTotal).toBeCloseTo(gl2.creditBalanceTotal, 2)
+    expect(gl2.debitBalanceTotal).toBe(gl2.creditBalanceTotal)
   })
 
   it('keeps an unresolved redeployment leg separate from concrete Bank accounts', () => {
@@ -83,31 +86,31 @@ describe('buildGeneralLedger — catalogue worked example', () => {
       instance: string,
       amountUsd: number,
       timestamp: number
-    ): LedgerEntry => ({
+    ): JournalEntryDraft => ({
       id,
       timestamp,
       useCase: 'UC-BANK-02',
       debit: 'Cash — Bank',
       debitInstance: instance as `0x${string}`,
       credit: 'Service Revenue',
-      amountUsd,
       token: 'usdc',
       rawAmount: String(amountUsd * 1e6),
+      rate: 1,
       internal: false,
       memo: '',
       enrichment: 'not-applicable'
     })
     // A leg with NO instance (a FixedReturn sweep straight to Bank) has no source
     // evidence for either Bank deployment. It remains explicit for reconciliation.
-    const blankBankLeg: LedgerEntry = {
+    const blankBankLeg: JournalEntryDraft = {
       id: 'd',
       timestamp: 15,
       useCase: 'UC-CREDIT-01',
       debit: 'Cash — Bank',
       credit: 'Loan Payable',
-      amountUsd: 20,
       token: 'usdc',
       rawAmount: '20000000',
+      rate: 1,
       internal: false,
       memo: '',
       enrichment: 'not-applicable'
@@ -127,27 +130,27 @@ describe('buildGeneralLedger — catalogue worked example', () => {
     expect(bank1Row?.accountLabel).toBe('Cash — Bank')
     expect(bank1Row?.split).toBe(true)
     expect(bank1Row?.isPrimaryInstance).toBe(true)
-    expect(bank1Row?.balance).toBeCloseTo(150, 2)
+    expect(usdNumber(bank1Row!.balance)).toBeCloseTo(150, 2)
     expect(bank2Row?.accountLabel).toBe('Cash — Bank 2')
     expect(bank2Row?.isPrimaryInstance).toBe(false)
-    expect(bank2Row?.balance).toBeCloseTo(30, 2) // only the post-redeploy deposit
+    expect(usdNumber(bank2Row!.balance)).toBeCloseTo(30, 2) // only the post-redeploy deposit
     expect(unresolvedRow?.accountLabel).toBe('Cash — Bank (unresolved)')
-    expect(unresolvedRow?.balance).toBeCloseTo(20, 2)
+    expect(usdNumber(unresolvedRow!.balance)).toBeCloseTo(20, 2)
     // The book remains balanced even while one account needs reconciliation.
     expect(gl2.balanced).toBe(true)
   })
 
   it('does not split Safe — its address survives redeploys', () => {
-    const safeLeg = (id: string, instance: string, amountUsd: number): LedgerEntry => ({
+    const safeLeg = (id: string, instance: string, amountUsd: number): JournalEntryDraft => ({
       id,
       timestamp: Number(id),
       useCase: 'UC-BANK-02',
       debit: 'Cash — Safe',
       debitInstance: instance as `0x${string}`,
       credit: 'Service Revenue',
-      amountUsd,
       token: 'usdc',
       rawAmount: String(amountUsd * 1e6),
+      rate: 1,
       internal: false,
       memo: '',
       enrichment: 'not-applicable'
@@ -161,7 +164,7 @@ describe('buildGeneralLedger — catalogue worked example', () => {
     const safeRows = gl2.trialBalance.filter((r) => r.account.family.name === 'Cash — Safe')
     expect(safeRows).toHaveLength(1)
     expect(safeRows[0].accountLabel).toBe('Cash — Safe')
-    expect(safeRows[0].balance).toBeCloseTo(15, 2)
+    expect(usdNumber(safeRows[0].balance)).toBeCloseTo(15, 2)
   })
 
   it('keeps a single un-redeployed pocket as one un-suffixed row', () => {
@@ -174,9 +177,9 @@ describe('buildGeneralLedger — catalogue worked example', () => {
         debit: 'Cash — Bank',
         debitInstance: bank as `0x${string}`,
         credit: 'Service Revenue',
-        amountUsd: 42,
         token: 'usdc',
         rawAmount: '42000000',
+        rate: 1,
         internal: false,
         memo: '',
         enrichment: 'not-applicable'
@@ -189,15 +192,15 @@ describe('buildGeneralLedger — catalogue worked example', () => {
   })
 
   it('rejects an unbalanced posting before the trial-balance projection runs', () => {
-    const halfPosting: LedgerEntry = {
+    const halfPosting: JournalEntryDraft = {
       id: 'broken',
       timestamp: 1,
       useCase: 'CASH-IN',
       debit: 'Cash — Bank',
       credit: null, // mapper bug: a debit with no matching credit
-      amountUsd: 5,
       token: 'usdc',
       rawAmount: '5000000',
+      rate: 1,
       internal: false,
       memo: 'half posting',
       enrichment: 'not-applicable'

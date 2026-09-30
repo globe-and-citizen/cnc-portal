@@ -3,7 +3,7 @@
 **Scope:** Pure, shared data-shaping boundaries for the `app/` frontend and the separation of their stateful, network, browser, SDK, and
 file-export effects.
 
-**Last verified:** 2026-09-05
+**Last verified:** 2026-09-28
 
 ## Consumers
 
@@ -49,6 +49,18 @@ flowchart LR
 - Utility runtime imports are acyclic. Type-only relationships are erased by TypeScript and do not participate in the runtime graph.
 - Contract reads, store-backed transaction presentation, Safe browser access, logging, spreadsheet/PDF generation, and Safe SDK transaction
   effects remain outside `utils`.
+- Contract capability policy remains a pure, version-aware utility; the contract-read composable owns Wagmi effects and maps failed reads to
+  an explicit unavailable state.
+- Accounting utilities keep token movements and USD calculations as fixed-scale `bigint` values through journal validation and every report
+  projection. Conversion to a JavaScript `number` belongs only to presentation and export boundaries.
+- Accounting contracts shared across account resolution, the journal, and financial-statement projections are declared in one type-only
+  module. Types that describe one mapper, export adapter, composable, or presenter remain local to that implementation.
+- Accounting source mapping exposes one public function per domain. Its barrel owns orchestration only; evidence-specific helpers and
+  fallbacks remain private, and post-mapping settlement stays at the assembly level.
+- Accounting journal assembly accepts only rate-stamped source postings and rejects monetary input without a rate instead of adapting a
+  transitional JavaScript `number`.
+- Every Accounting presenter accepts a `JournalEntry` collection directly, so components and exporters do not compose lower-level filtering
+  and report builders or synchronize parallel report objects to obtain display values.
 - Boundary validation fails with the exact files and imports that violate the contract; it does not silently maintain an exception baseline.
 - Utility specs remain colocated with their domain owner and validate unchanged formatting, accounting, and transaction semantics.
 
@@ -59,18 +71,46 @@ flowchart LR
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `c7f058d0227a463709ac7a54ea95f3164cf385b2`
+**Implementation evidence reviewed against:** `da4b1aaff94af72299220ea5da2084ca848bd652`
 
 - [Utility ownership map and domain implementations](../../../app/src/utils/)
+- [Shared Accounting domain contracts](../../../app/src/utils/accounting/types.ts)
+- [Fixed-scale accounting monetary domain](../../../app/src/utils/accounting/monetaryAmount.ts)
 - [Pure accounting account-instance evidence resolver](../../../app/src/utils/accounting/accountInstances.ts)
+- [Accounting source-mapper orchestrator](../../../app/src/utils/accounting/mappers/index.ts) and
+  [SHER realization settlement](../../../app/src/utils/accounting/sherIssuance.ts)
 - [Utility boundary validator](../../../app/scripts/check-utility-boundaries.mjs) and
   [validator tests](../../../app/scripts/__tests__/check-utility-boundaries.node.mjs)
 - [Store-backed transaction presentation](../../../app/src/composables/transactions/useTransactionPresentation.ts) and
   [pure presentation model](../../../app/src/utils/transactions/presentation.ts)
-- [Contract-read owner](../../../app/src/composables/contracts/readTeamContracts.ts)
+- [Safe Deposit Router amount-model tests](../../../app/src/utils/safeDepositRouter/__tests__/model.spec.ts),
+  [amount-validation tests](../../../app/src/utils/safeDepositRouter/__tests__/model.validation.spec.ts), and
+  [Vesting schedule and presentation tests](../../../app/src/utils/vesting/__tests__/)
+- [Version-aware contract pause policy](../../../app/src/utils/contracts/pauseCapabilities.ts),
+  [policy tests](../../../app/src/utils/contracts/__tests__/pauseCapabilities.spec.ts),
+  [contract-read owner](../../../app/src/composables/contracts/readTeamContracts.ts), and
+  [contract-read tests](../../../app/src/composables/contracts/__tests__/readTeamContracts.spec.ts)
 - [Safe browser effects](../../../app/src/lib/safe/browser.ts), [Safe transaction effects](../../../app/src/lib/safe/transactions.ts),
   [logging](../../../app/src/lib/logging.ts), [accounting exports](../../../app/src/lib/accounting/), and
   [file exports](../../../app/src/lib/files/)
+- [Overview-card tests](../../../app/src/components/ui/__tests__/OverviewCard.spec.ts),
+  [address-presentation tests](../../../app/src/components/ui/__tests__/AddressTooltip.spec.ts),
+  [token-holdings tests](../../../app/src/components/ui/__tests__/TokenHoldingsSection.spec.ts),
+  [token-amount input tests](../../../app/src/components/ui/inputs/__tests__/TokenAmountInput.spec.ts),
+  [rate-presentation tests](../../../app/src/components/ui/__tests__/RateDotList.spec.ts),
+  [step-indicator tests](../../../app/src/components/ui/__tests__/StepIndicator.spec.ts),
+  [timeline-icon tests](../../../app/src/components/ui/__tests__/TimelineIcon.spec.ts),
+  [shared constant tests](../../../app/src/constant/__tests__/index.test.ts),
+  [logging tests](../../../app/src/lib/__tests__/logging.spec.ts), and
+  [currency-store tests](../../../app/src/stores/__tests__/currencyStore.spec.ts)
+- [Contract-balance query tests](../../../app/src/composables/__tests__/useContractBalance.spec.ts),
+  [token-balance shaping tests](../../../app/src/lib/balances/__tests__/tokenBalances.spec.ts),
+  [ERC-20 read tests](../../../app/src/composables/erc20/__tests__/reads.spec.ts), and
+  [ERC-20 write tests](../../../app/src/composables/erc20/__tests__/writes.spec.ts)
+- [Safe composable export tests](../../../app/src/composables/safe/__tests__/index.test.ts),
+  [Safe SDK boundary tests](../../../app/src/composables/safe/__tests__/useSafeSdk.spec.ts),
+  [Safe browser-boundary tests](../../../app/src/lib/safe/__tests__/browser.spec.ts), and
+  [Safe transaction-effect tests](../../../app/src/lib/safe/__tests__/transactions.spec.ts)
 
 ## Related Documentation
 

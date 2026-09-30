@@ -11,7 +11,7 @@ import {
   safeDepositRouterAbi,
   vestingAbi
 } from '@/artifacts/abi/generated'
-import votingAbiJson from '@/artifacts/abi/V2/json/Voting.json'
+import { votingAbi } from '@/artifacts/abi/V2/generated'
 import { SAFE_VERSION } from '@/types/safe'
 import { formatNumber } from '@/utils/format'
 import { getSafeSingletonDeployment } from '@safe-global/safe-deployments'
@@ -46,7 +46,7 @@ export const CONTRACT_ABI_MAP: Record<string, Abi> = {
   Safe: safeAbi,
   Elections: electionsAbi,
   Proposals: proposalsAbi,
-  Voting: votingAbiJson as Abi,
+  Voting: votingAbi,
   Campaign: adCampaignManagerAbi,
   FixedReturn: fixedReturnAbi,
   Vesting: vestingAbi

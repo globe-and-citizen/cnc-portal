@@ -165,7 +165,7 @@ describe('User Controller', () => {
   });
 
   describe('updateUser', () => {
-    it('returns 401 when caller address is missing', async () => {
+    it('[AC-US-PROFILE-001-09] returns 401 when caller address is missing', async () => {
       setAuth(undefined);
       const response = await request(app)
         .put(`/${DEFAULT_ADDRESS}`)
@@ -174,7 +174,7 @@ describe('User Controller', () => {
       expect(response.body.message).toBe('Update user error: Missing user address');
     });
 
-    it('returns 403 when caller is not the user', async () => {
+    it('[AC-US-PROFILE-001-09] returns 403 when caller is not the user', async () => {
       setAuth(ALT_ADDRESS);
       vi.spyOn(prisma.user, 'findUnique').mockResolvedValue(mockUser);
 

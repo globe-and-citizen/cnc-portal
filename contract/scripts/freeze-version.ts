@@ -10,20 +10,18 @@ import * as path from 'node:path'
  *
  * Run this BEFORE compiling/deploying the next version (see the release runbook
  * in .claude/plans and contract/UPGRADE_STRATEGY.md). It never compiles — it
- * only copies already-generated artifacts, so the frozen `<version>/` folders
- * are siblings of the `json/` dirs that `abiExporter` wipes with `clear:true`.
+ * only copies already-generated consumer artifacts. The canonical historical
+ * archive remains contract/versions/<version>/.
  *
  * What it snapshots per consumer:
- *   - ABIs:      the flat `json/*.json` set + the typed wrapper `*.ts` files.
+ *   - App ABIs:  the current typed `generated.ts` module.
+ *   - Other ABIs: the flat `json/*.json` set + the typed wrapper `*.ts` files.
  *   - Addresses: the real-network deployed_addresses (chain-137/11155111/80002);
  *                chain-31337 (local hardhat, per-machine) is intentionally skipped.
  *   - Backend:   its 6 hand-maintained ABI JSONs (raw arrays).
  *
  * It only ever copies files VERBATIM, so every frozen file is byte-identical to
- * a source that already passes its consumer's format/lint gate. It deliberately
- * does NOT generate an index/barrel: that file's style (quotes, semicolons) is
- * consumer-specific, so each consumer's version-aware resolver PR creates its own
- * entry point in its own style.
+ * a source that already passes its consumer's format/lint gate.
  */
 
 const rawVersion = process.argv[2]
@@ -60,7 +58,7 @@ function copyFiles(src: string, dest: string, filter: (f: string) => boolean): s
 }
 
 // Freeze an ABI dir that holds a flat `json/` folder + sibling wrapper `.ts`
-// files (app, dashboard, ponder). Wrappers are copied verbatim: their relative
+// files (dashboard and ponder). Wrappers are copied verbatim: their relative
 // `./json/*.json` imports stay valid because json/ is copied alongside them.
 // An existing index.ts (a resolver barrel) is intentionally not re-copied — the
 // resolver owns it per version.
@@ -73,6 +71,18 @@ function freezeAbiDir(abiRoot: string): void {
   copyFiles(path.join(abiRoot, 'json'), path.join(dest, 'json'), (f) => f.endsWith('.json'))
   const wrappers = copyFiles(abiRoot, dest, (f) => f.endsWith('.ts') && f !== 'index.ts')
   console.log(`  froze ${path.relative(repoRoot, dest)} (${wrappers.length} wrappers)`)
+}
+
+function freezeAppAbi(abiRoot: string): void {
+  const source = path.join(abiRoot, 'generated.ts')
+  if (!fs.existsSync(source)) {
+    console.warn(`  skip (absent): ${path.relative(repoRoot, source)}`)
+    return
+  }
+  const dest = path.join(abiRoot, version, 'generated.ts')
+  ensureDir(path.dirname(dest))
+  fs.copyFileSync(source, dest)
+  console.log(`  froze ${path.relative(repoRoot, dest)}`)
 }
 
 // Freeze a deployed_addresses dir (real networks only): copy the top-level
@@ -90,7 +100,7 @@ function freezeAddressDir(addrRoot: string): void {
 console.log(`Freezing current artifacts as "${version}"...`)
 
 // app
-freezeAbiDir(path.join(repoRoot, 'app/src/artifacts/abi'))
+freezeAppAbi(path.join(repoRoot, 'app/src/artifacts/abi'))
 freezeAddressDir(path.join(repoRoot, 'app/src/artifacts/deployed_addresses'))
 
 // dashboard

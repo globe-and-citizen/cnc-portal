@@ -74,7 +74,7 @@ describe('SafeDepositRouter', function () {
     expect(await router.getDepositsEnabled()).to.equal(false)
   })
 
-  it('allows owner to enable and disable deposits', async () => {
+  it('[AC-US-SHER-005-02] allows the owner to enable and disable deposits', async () => {
     const { owner, router } = await deployFixture()
 
     await expect(router.connect(owner).enableDeposits())
@@ -90,13 +90,23 @@ describe('SafeDepositRouter', function () {
     expect(await router.getDepositsEnabled()).to.equal(false)
   })
 
-  it('rejects non-owner deposit control calls', async () => {
+  it('[AC-US-SHER-005-04] rejects every router configuration write from a non-owner', async () => {
     const { nonOwner, router } = await deployFixture()
 
     await expect(router.connect(nonOwner).enableDeposits()).to.be.revertedWithCustomError(
       router,
       'OwnableUnauthorizedAccount'
     )
+    await expect(router.connect(nonOwner).disableDeposits()).to.be.revertedWithCustomError(
+      router,
+      'OwnableUnauthorizedAccount'
+    )
+    await expect(
+      router.connect(nonOwner).setSafeAddress(nonOwner.address)
+    ).to.be.revertedWithCustomError(router, 'OwnableUnauthorizedAccount')
+    await expect(
+      router.connect(nonOwner).setMultiplier(ethers.parseUnits('2', 18))
+    ).to.be.revertedWithCustomError(router, 'OwnableUnauthorizedAccount')
   })
 
   it('reverts deposit when deposits are disabled', async () => {
@@ -230,7 +240,7 @@ describe('SafeDepositRouter', function () {
     ).to.be.revertedWithCustomError(router, 'SafeDepositRouter__InvalidSafeAddress')
   })
 
-  it('updates multiplier', async () => {
+  it('[AC-US-SHER-005-03] updates the SHER multiplier', async () => {
     const { owner, router } = await deployFixture()
 
     const newMultiplier = ethers.parseUnits('2', 18)
@@ -243,7 +253,7 @@ describe('SafeDepositRouter', function () {
     expect(await router.getMultiplier()).to.equal(newMultiplier)
   })
 
-  it('rejects multiplier below minimum', async () => {
+  it('[AC-US-SHER-005-06] rejects a multiplier below the configured minimum', async () => {
     const { owner, router } = await deployFixture()
 
     await expect(router.connect(owner).setMultiplier(0)).to.be.revertedWithCustomError(

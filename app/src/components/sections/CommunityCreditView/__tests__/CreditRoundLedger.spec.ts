@@ -95,7 +95,7 @@ function mountLedger(round: CreditRound) {
   })
 }
 
-describe('CreditRoundLedger', () => {
+describe('[US-CC-001] CreditRoundLedger', () => {
   it('renders funding progress, lender table values and child cards', () => {
     const wrapper = mountLedger(makeRound())
 
@@ -109,6 +109,22 @@ describe('CreditRoundLedger', () => {
     expect(wrapper.text()).toContain('110 USDC')
     expect(wrapper.text()).toContain('25 USDC')
     expect(wrapper.text()).toContain('25%')
+  })
+
+  it("renders every amount in the round's own token, not a hardcoded default", () => {
+    // Regression test: every formatAmount() call here used to omit the token
+    // argument, silently defaulting to 'USDC' regardless of the round's
+    // actual token — invisible in the other tests above because their fixture
+    // already used 'USDC'. A non-USDC token is the only way to catch this.
+    const wrapper = mountLedger(makeRound({ token: 'USDCe' }))
+
+    expect(wrapper.text()).toContain('400 USDCe')
+    expect(wrapper.text()).toContain('of 1,000 USDCe target')
+    expect(wrapper.text()).toContain('600 USDCe remaining')
+    expect(wrapper.text()).toContain('100 USDCe')
+    expect(wrapper.text()).toContain('110 USDCe')
+    expect(wrapper.text()).toContain('25 USDCe')
+    expect(wrapper.text()).not.toContain('USDC ')
   })
 
   it('renders refunded and empty lender states', () => {

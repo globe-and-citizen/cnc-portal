@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import { mount } from '@vue/test-utils'
 import MainContractActionMenu from '../MainContractActionMenu.vue'
-import type { TableRow } from '@/types/table'
+import type { ManagedContractRow } from '../MainContractTable.types'
 
-const DEFAULT_ROW: TableRow = {
+const DEFAULT_ROW: ManagedContractRow = {
   address: '0xContract000000000000000000000000000001',
-  paused: false,
+  pauseStatus: 'active',
   owner: '0xOwner0000000000000000000000000000000001',
   type: 'Treasury'
 }
@@ -17,13 +17,17 @@ type MenuItem = {
   onSelect?: () => void
 }
 
-function mountComponent(rowOverrides: Partial<TableRow> = {}, props: Record<string, unknown> = {}) {
+function mountComponent(
+  rowOverrides: Partial<ManagedContractRow> = {},
+  props: Record<string, unknown> = {}
+) {
   return mount(MainContractActionMenu, {
     props: {
       row: { ...DEFAULT_ROW, ...rowOverrides },
       actionState: {
         pendingActionCount: 0,
         canManage: false,
+        canChangeStatus: false,
         canReviewPendingActions: false
       },
       ...props
@@ -44,8 +48,8 @@ function selectMenuItem(wrapper: ReturnType<typeof mountComponent>, label: strin
 
 describe('MainContractActionMenu.vue', () => {
   it('renders the contextual actions for active and paused contracts', () => {
-    const active = mountComponent({ paused: false })
-    const paused = mountComponent({ paused: true })
+    const active = mountComponent({ pauseStatus: 'active' })
+    const paused = mountComponent({ pauseStatus: 'paused' })
 
     expect(getMenuItems(active).map((item) => item.label)).toContain('Transfer ownership')
     expect(getMenuItems(active).map((item) => item.label)).toContain('Pause contract')
@@ -58,7 +62,18 @@ describe('MainContractActionMenu.vue', () => {
     )
   })
 
-  it('keeps privileged actions disabled without the selected contract permission', () => {
+  it('[AC-US-CONTRACT-002-12] omits status actions for unsupported and unavailable capabilities', () => {
+    const unsupported = mountComponent({ pauseStatus: 'not-supported' })
+    const unavailable = mountComponent({ pauseStatus: 'unavailable' })
+
+    for (const wrapper of [unsupported, unavailable]) {
+      const labels = getMenuItems(wrapper).map((item) => item.label)
+      expect(labels).not.toContain('Pause contract')
+      expect(labels).not.toContain('Resume contract')
+    }
+  })
+
+  it('[AC-US-CONTRACT-002-05] disables privileged actions without contract permission', () => {
     const wrapper = mountComponent()
 
     expect(
@@ -79,6 +94,7 @@ describe('MainContractActionMenu.vue', () => {
         actionState: {
           pendingActionCount: 1,
           canManage: true,
+          canChangeStatus: true,
           canReviewPendingActions: true
         }
       }

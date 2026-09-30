@@ -5,6 +5,7 @@ import { log } from '@/lib/logging'
 import { useTeamStore } from '@/stores'
 import { useCurrencyStore } from '@/stores/currencyStore'
 import { mockInvestorReads } from '@/tests/mocks'
+import { EMPTY_VALUE } from '@/utils/format'
 
 // Auto-imported @nuxt/ui components bypass `config.global.stubs` because the
 // Nuxt UI Vite plugin resolves them through their file path. Mocking the
@@ -84,9 +85,9 @@ vi.mock('@/composables/investor/useInvestorEventsViaLogs', async () => {
     useInvestorEventsViaLogs: (addr: { value: string }) => {
       capture.investor = addr
       return {
-        result: eventFeedState.investorResult,
+        data: eventFeedState.investorResult,
         error: eventFeedState.investorError,
-        loading: eventFeedState.investorLoading
+        isPending: eventFeedState.investorLoading
       }
     }
   }
@@ -101,9 +102,9 @@ vi.mock('@/composables/investor/useSafeDepositRouterEventsViaLogs', async () => 
     useSafeDepositRouterEventsViaLogs: (addr: { value: string }) => {
       capture.safe = addr
       return {
-        result: eventFeedState.safeResult,
+        data: eventFeedState.safeResult,
         error: eventFeedState.safeError,
-        loading: eventFeedState.safeLoading
+        isPending: eventFeedState.safeLoading
       }
     }
   }
@@ -114,10 +115,14 @@ describe('InvestorsTransactions advanced', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
-    eventFeedState.investorResult.value = buildInvestorResult()
+    eventFeedState.investorResult.value = {
+      events: buildInvestorResult(),
+      gaps: [],
+      timestampGaps: []
+    }
     eventFeedState.investorError.value = null
     eventFeedState.investorLoading.value = false
-    eventFeedState.safeResult.value = buildSafeResult()
+    eventFeedState.safeResult.value = { events: buildSafeResult(), gaps: [], timestampGaps: [] }
     eventFeedState.safeError.value = null
     eventFeedState.safeLoading.value = false
     mockGetTokenPrice.mockReturnValue(1)
@@ -156,32 +161,36 @@ describe('InvestorsTransactions advanced', () => {
   it('handles parse failures and usd price fallbacks', () => {
     mockGetTokenPrice.mockReturnValue(0)
     eventFeedState.safeResult.value = {
-      safeDeposits: {
-        items: [
-          {
-            id: '0xusdcdeposit-0',
-            contractAddress: SAFE_ROUTER_ADDRESS,
-            depositor: '0x4444444444444444444444444444444444444444',
-            token: USDC_ADDRESS,
-            tokenAmount: '5000000',
-            sherAmount: '0',
-            timestamp: 1_700_000_300
-          },
-          {
-            id: '0xnativedeposit-0',
-            contractAddress: SAFE_ROUTER_ADDRESS,
-            depositor: '0x5555555555555555555555555555555555555555',
-            token: ZERO_ADDRESS,
-            tokenAmount: 'not-a-number',
-            sherAmount: '0',
-            timestamp: 1_700_000_400
-          }
-        ]
+      events: {
+        safeDeposits: {
+          items: [
+            {
+              id: '0xusdcdeposit-0',
+              contractAddress: SAFE_ROUTER_ADDRESS,
+              depositor: '0x4444444444444444444444444444444444444444',
+              token: USDC_ADDRESS,
+              tokenAmount: '5000000',
+              sherAmount: '0',
+              timestamp: 1_700_000_300
+            },
+            {
+              id: '0xnativedeposit-0',
+              contractAddress: SAFE_ROUTER_ADDRESS,
+              depositor: '0x5555555555555555555555555555555555555555',
+              token: ZERO_ADDRESS,
+              tokenAmount: 'not-a-number',
+              sherAmount: '0',
+              timestamp: 1_700_000_400
+            }
+          ]
+        },
+        safeDepositsEnableds: { items: [] },
+        safeDepositsDisableds: { items: [] },
+        safeAddressUpdateds: { items: [] },
+        safeMultiplierUpdateds: { items: [] }
       },
-      safeDepositsEnableds: { items: [] },
-      safeDepositsDisableds: { items: [] },
-      safeAddressUpdateds: { items: [] },
-      safeMultiplierUpdateds: { items: [] }
+      gaps: [],
+      timestampGaps: []
     }
     wrapper = createWrapper()
     const data = tableData(wrapper)
@@ -192,18 +201,20 @@ describe('InvestorsTransactions advanced', () => {
     expect(nativeRow?.amountUSD).toBe(0)
   })
 
-  it('falls back to SHER symbol when investor symbol is not a string', () => {
+  it('[AC-US-SHER-003-08] presents an invalid Investor symbol as unavailable', () => {
     mockInvestorSymbolData.value = { unexpected: true } as unknown as string
+    mockInvestorReads.symbol.data.value = { unexpected: true } as unknown as string
     wrapper = createWrapper()
-    expect(tableData(wrapper).find((row) => row.type === 'mint')?.token).toBe('SHER')
+    expect(tableData(wrapper).find((row) => row.type === 'mint')?.token).toBe(EMPTY_VALUE)
   })
 
-  it('logs investor and safe router query errors once per unique message', async () => {
+  it('[AC-US-SHER-003-07] reports activity errors without replacing known rows', async () => {
     const logErrorSpy = vi.spyOn(log, 'error')
     wrapper = createWrapper()
     const investorQueryError = new Error('investor query failed')
     eventFeedState.investorError.value = investorQueryError
     await nextTick()
+    expect(tableData(wrapper).some((row) => row.type === 'mint')).toBe(true)
     expect(logErrorSpy).toHaveBeenCalledWith(
       'RPC log investor transaction query error:',
       investorQueryError
@@ -212,6 +223,7 @@ describe('InvestorsTransactions advanced', () => {
     const safeQueryError = new Error('safe router query failed')
     eventFeedState.safeError.value = safeQueryError
     await nextTick()
+    expect(tableData(wrapper).some((row) => row.type === 'safeDeposit')).toBe(true)
     expect(logErrorSpy).toHaveBeenCalledWith(
       'RPC log safe deposit router transaction query error:',
       safeQueryError

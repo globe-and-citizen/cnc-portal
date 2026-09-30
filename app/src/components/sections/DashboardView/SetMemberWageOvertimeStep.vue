@@ -1,6 +1,6 @@
 <template>
   <UForm
-    :schema="overtimeSchema"
+    :schema="overtimeWageFormSchema"
     :state="wageData"
     class="space-y-4"
     data-test="overtime-rules-step"
@@ -134,10 +134,10 @@
 
 <script setup lang="ts">
 import { watch } from 'vue'
-import * as z from 'zod'
 import { NETWORK } from '@/constant'
 import type { WageWithForm } from '@/types'
 import RateDotList from '@/components/ui/RateDotList.vue'
+import { overtimeWageFormSchema } from '@/utils/wages/validation'
 
 const emit = defineEmits<{ validated: []; back: [] }>()
 
@@ -156,27 +156,4 @@ watch(
     })
   }
 )
-
-const rateSchema = z.object({
-  type: z.enum(['native', 'usdc', 'sher', 'usdc.e']),
-  amount: z.coerce.number(),
-  enabled: z.boolean()
-})
-
-const overtimeSchema = z.object({
-  maximumOvertimeHoursPerWeek: z.coerce
-    .number()
-    .int('Must be a whole number')
-    .positive('Overtime hours must be greater than 0')
-    .max(20, 'Maximum overtime hours per week cannot exceed 20 hours'),
-  overtimeRatePerHour: z.array(rateSchema).superRefine((rates, ctx) => {
-    if (rates.filter((r) => r.enabled).length === 0) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: [],
-        message: 'Enable at least one overtime rate'
-      })
-    }
-  })
-})
 </script>

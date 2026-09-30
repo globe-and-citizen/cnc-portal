@@ -6,13 +6,15 @@
 //
 //   node contract/scripts/distribute-versions.mjs
 //
-// - app + dashboard + ponder: <V>/json/*.json (flat ABIs) + deployed_addresses/<V>/chain-137.json
+// - app:                       <V>/generated.ts (typed ABI module) + deployed addresses
+// - dashboard + ponder:        <V>/json/*.json (flat ABIs) + deployed addresses
 // - backend:                   <V>/<hand-maintained-name>.json (its 6 named raw-ABI files)
 // The legacy lowercase `v1` snapshot is migrated to `V1` out-of-band via `git rm`
 // (a case-insensitive FS makes an in-script rm of v1 unsafe once V1 exists).
 import { readFileSync, writeFileSync, mkdirSync, rmSync, existsSync, readdirSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
+import { generateVersionedAbiModules } from './versioned-abi-modules.mjs'
 
 const REPO = join(dirname(fileURLToPath(import.meta.url)), '../..')
 const VERSIONS = join(REPO, 'contract/versions')
@@ -20,14 +22,11 @@ const folders = Object.keys(
   JSON.parse(readFileSync(join(VERSIONS, 'registry.json'), 'utf8')).folders
 )
 
-// Consumers that take the canonical flat json ABIs + chain-137 addresses, keyed by
-// version folder. Their on-disk parents differ (app/dashboard nest under `abi/`,
-// ponder under `abis/`), so each names its own abi + address base.
-// Only the JSON is packaged — the typed `.ts` wrappers ponder's config imports are a
-// deferred runtime concern (hand-maintained, divergent format); these version folders
-// are for tracking/audit, matching app + dashboard.
+const APP_ADDRESS_BASE = 'app/src/artifacts/deployed_addresses'
+
+// Consumers that still take canonical flat JSON ABIs. Their runtime generation
+// is independent from the Vue app's typed, literal-preserving ABI modules.
 const JSON_CONSUMERS = [
-  { abiBase: 'app/src/artifacts/abi', addrBase: 'app/src/artifacts/deployed_addresses' },
   {
     abiBase: 'dashboard/app/artifacts/abi',
     addrBase: 'dashboard/app/artifacts/deployed_addresses'
@@ -51,10 +50,14 @@ const copy = (from, to) => {
   writeFileSync(to, readFileSync(from))
 }
 
+await generateVersionedAbiModules()
+
 for (const v of folders) {
   const srcAbi = join(VERSIONS, v, 'abi')
   const srcAddr = join(VERSIONS, v, 'deployed_addresses/chain-137.json')
   const abiFiles = readdirSync(srcAbi).filter((f) => f.endsWith('.json'))
+
+  copy(srcAddr, join(REPO, APP_ADDRESS_BASE, v, 'chain-137.json'))
 
   for (const { abiBase, addrBase } of JSON_CONSUMERS) {
     const abiDir = join(REPO, abiBase, v, 'json')
@@ -77,7 +80,9 @@ for (const v of folders) {
   // Officer FactoryBeacon back to a generation means matching the beacon
   // address, and the registry only stores the module *reference*.
   copy(srcAddr, join(REPO, BACKEND, 'deployed_addresses', v, 'chain-137.json'))
-  console.log(`  ${v}: ${abiFiles.length} abi -> app/dashboard/ponder, ${n} -> backend`)
+  console.log(
+    `  ${v}: generated.ts -> app, ${abiFiles.length} JSON ABIs -> dashboard/ponder, ${n} -> backend`
+  )
 }
 
 console.log(`distributed ${folders.join(', ')} to app, dashboard, ponder, backend`)

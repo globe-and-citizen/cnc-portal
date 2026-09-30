@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import type { WeeklyClaim } from '@/types/cash-remuneration'
-import { mapPayrollAccruals } from '@/utils/accounting/mappers/payrollAccrual'
-import { makeCtx, ADDR } from './fixtures'
+import { mapPayroll } from '@/utils/accounting/mappers/payroll'
+import { makeCtx, ADDR, draftUsdValue } from './fixtures'
 
 const ctx = makeCtx() // toUsd: native $2, usdc $1, sher $0.50
 
@@ -20,40 +20,46 @@ function claim(over: Partial<WeeklyClaim> = {}): WeeklyClaim {
   } as WeeklyClaim
 }
 
-describe('mapPayrollAccruals', () => {
+describe('mapPayroll accruals', () => {
   it('accrues a submitted claim: Dr Payroll Expense / Cr Wage Payable at the wage rate', () => {
-    const [entry] = mapPayrollAccruals([claim()], ctx)
+    const [entry] = mapPayroll({ weeklyClaims: [claim()] }, ctx)
     expect(entry).toMatchObject({
       useCase: 'UC-CASH-02',
       debit: 'Payroll Expense',
       credit: 'Wage Payable',
       category: 'Payroll'
     })
-    expect(entry.amountUsd).toBe(50) // 2h × 25 USDC × $1
+    expect(draftUsdValue(entry)).toBe(50) // 2h × 25 USDC × $1
   })
 
   it('books the SHER rate as Deferred SHER Compensation against SHERS To Be Issued', () => {
-    const [entry] = mapPayrollAccruals(
-      [claim({ wage: { ratePerHour: [{ type: 'sher', amount: 10 }] } } as Partial<WeeklyClaim>)],
+    const [entry] = mapPayroll(
+      {
+        weeklyClaims: [
+          claim({ wage: { ratePerHour: [{ type: 'sher', amount: 10 }] } } as Partial<WeeklyClaim>)
+        ]
+      },
       ctx
     )
     expect(entry.debit).toBe('Deferred SHER Compensation')
     expect(entry.credit).toBe('SHERS To Be Issued')
-    expect(entry.amountUsd).toBe(10) // 2h × 10 SHER × $0.50
+    expect(draftUsdValue(entry)).toBe(10) // 2h × 10 SHER × $0.50
   })
 
   it('splits a multi-token wage into one balanced posting per rate', () => {
-    const entries = mapPayrollAccruals(
-      [
-        claim({
-          wage: {
-            ratePerHour: [
-              { type: 'usdc', amount: 25 },
-              { type: 'sher', amount: 10 }
-            ]
-          }
-        } as Partial<WeeklyClaim>)
-      ],
+    const entries = mapPayroll(
+      {
+        weeklyClaims: [
+          claim({
+            wage: {
+              ratePerHour: [
+                { type: 'usdc', amount: 25 },
+                { type: 'sher', amount: 10 }
+              ]
+            }
+          } as Partial<WeeklyClaim>)
+        ]
+      },
       ctx
     )
     expect(entries).toHaveLength(2)
@@ -62,32 +68,34 @@ describe('mapPayrollAccruals', () => {
   })
 
   it('values overtime minutes at the overtime rate (reuses the canonical wage calc)', () => {
-    const [entry] = mapPayrollAccruals(
-      [
-        claim({
-          minutesWorked: 180, // 3h
-          wage: {
-            maximumHoursPerWeek: 2, // 2h regular, 1h overtime
-            ratePerHour: [{ type: 'usdc', amount: 10 }],
-            overtimeRatePerHour: [{ type: 'usdc', amount: 20 }]
-          }
-        } as Partial<WeeklyClaim>)
-      ],
+    const [entry] = mapPayroll(
+      {
+        weeklyClaims: [
+          claim({
+            minutesWorked: 180, // 3h
+            wage: {
+              maximumHoursPerWeek: 2, // 2h regular, 1h overtime
+              ratePerHour: [{ type: 'usdc', amount: 10 }],
+              overtimeRatePerHour: [{ type: 'usdc', amount: 20 }]
+            }
+          } as Partial<WeeklyClaim>)
+        ]
+      },
       ctx
     )
     // 2h × $10 + 1h × $20 = $40 — the old flat calc would wrongly book 3h × $10 = $30.
-    expect(entry.amountUsd).toBe(40)
+    expect(draftUsdValue(entry)).toBe(40)
   })
 
   it('does not accrue a disabled (cancelled) claim', () => {
-    expect(mapPayrollAccruals([claim({ status: 'disabled' })], ctx)).toHaveLength(0)
+    expect(mapPayroll({ weeklyClaims: [claim({ status: 'disabled' })] }, ctx)).toHaveLength(0)
   })
 
   it('does not accrue a week still in progress (relative to now)', () => {
     const weekStart = new Date('2026-06-22T00:00:00Z') // Monday
     const midWeek = new Date('2026-06-24T00:00:00Z').getTime() // before the week closes
     expect(
-      mapPayrollAccruals([claim({ weekStart: weekStart.toISOString() })], ctx, midWeek)
+      mapPayroll({ weeklyClaims: [claim({ weekStart: weekStart.toISOString() })] }, ctx, midWeek)
     ).toHaveLength(0)
   })
 
@@ -95,15 +103,19 @@ describe('mapPayrollAccruals', () => {
     const weekStart = new Date('2026-06-22T00:00:00Z') // Monday
     const afterWeek = new Date('2026-06-29T00:00:00Z').getTime() // week closed
     expect(
-      mapPayrollAccruals([claim({ weekStart: weekStart.toISOString() })], ctx, afterWeek)
+      mapPayroll({ weeklyClaims: [claim({ weekStart: weekStart.toISOString() })] }, ctx, afterWeek)
     ).toHaveLength(1)
   })
 
   it('dates the accrual at the end of the work week (noon Sunday), not submission', () => {
     const weekStart = new Date('2026-06-22T00:00:00Z') // Monday
     const created = new Date('2026-06-30T00:00:00Z') // submitted the following week
-    const [entry] = mapPayrollAccruals(
-      [claim({ weekStart: weekStart.toISOString(), createdAt: created.toISOString() })],
+    const [entry] = mapPayroll(
+      {
+        weeklyClaims: [
+          claim({ weekStart: weekStart.toISOString(), createdAt: created.toISOString() })
+        ]
+      },
       ctx
     )
     const weekEnd = new Date('2026-06-28T12:00:00Z') // Sunday noon UTC

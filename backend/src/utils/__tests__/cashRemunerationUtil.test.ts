@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
-import { getCashRemunerationOwner, isCashRemunerationOwner } from '../cashRemunerationUtil';
+import { isCashRemunerationOwner } from '../cashRemunerationUtil';
 import { prisma } from '../';
 import publicClient from '../viem.config';
 
@@ -22,127 +22,13 @@ vi.mock('../viem.config', () => ({
   },
 }));
 
-describe('cashRemunerationUtil', () => {
+describe('[US-PAYROLL-008] Cash Remuneration ownership', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  describe('getCashRemunerationOwner', () => {
-    it('should return owner address for a valid team', async () => {
-      const teamId = 1;
-      const contractAddress = '0x1234567890123456789012345678901234567890';
-      const ownerAddress = '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd';
-
-      vi.mocked(prisma.teamContract.findFirst).mockResolvedValue({
-        id: 1,
-        teamId,
-        address: contractAddress,
-        type: 'CashRemunerationEIP712',
-        deployer: ownerAddress,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      });
-
-      vi.mocked(publicClient.readContract).mockResolvedValue(ownerAddress);
-
-      const result = await getCashRemunerationOwner(teamId);
-
-      expect(result).toBe(ownerAddress);
-      // Scoped to the current Officer (linked-list head) — required after
-      // an Officer redeploy leaves multiple TeamContract rows of this type
-      // for the team. See cashRemunerationUtil.ts.
-      expect(prisma.teamContract.findFirst).toHaveBeenCalledWith({
-        where: {
-          teamId,
-          type: 'CashRemunerationEIP712',
-          officer: { nextOfficer: { is: null } },
-        },
-      });
-      expect(publicClient.readContract).toHaveBeenCalledWith({
-        address: contractAddress,
-        abi: expect.any(Array),
-        functionName: 'owner',
-      });
-    });
-
-    it('should return null if contract not found', async () => {
-      const teamId = 1;
-
-      vi.mocked(prisma.teamContract.findFirst).mockResolvedValue(null);
-
-      const result = await getCashRemunerationOwner(teamId);
-
-      expect(result).toBeNull();
-      expect(publicClient.readContract).not.toHaveBeenCalled();
-    });
-
-    it('should return null if contract address is invalid', async () => {
-      const teamId = 1;
-
-      vi.mocked(prisma.teamContract.findFirst).mockResolvedValue({
-        id: 1,
-        teamId,
-        address: 'invalid-address',
-        type: 'CashRemunerationEIP712',
-        deployer: '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      });
-
-      const result = await getCashRemunerationOwner(teamId);
-
-      expect(result).toBeNull();
-      expect(publicClient.readContract).not.toHaveBeenCalled();
-    });
-
-    it('should return null and log error if readContract throws', async () => {
-      const teamId = 1;
-      const contractAddress = '0x1234567890123456789012345678901234567890';
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-
-      vi.mocked(prisma.teamContract.findFirst).mockResolvedValue({
-        id: 1,
-        teamId,
-        address: contractAddress,
-        type: 'CashRemunerationEIP712',
-        deployer: '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      });
-
-      vi.mocked(publicClient.readContract).mockRejectedValue(new Error('Contract error'));
-
-      const result = await getCashRemunerationOwner(teamId);
-
-      expect(result).toBeNull();
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        'Error getting Cash Remuneration owner:',
-        expect.any(Error)
-      );
-
-      consoleErrorSpy.mockRestore();
-    });
-
-    it('should return null if prisma throws an error', async () => {
-      const teamId = 1;
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-
-      vi.mocked(prisma.teamContract.findFirst).mockRejectedValue(new Error('Database error'));
-
-      const result = await getCashRemunerationOwner(teamId);
-
-      expect(result).toBeNull();
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        'Error getting Cash Remuneration owner:',
-        expect.any(Error)
-      );
-
-      consoleErrorSpy.mockRestore();
-    });
-  });
-
   describe('isCashRemunerationOwner', () => {
-    it('should return true if user is the owner', async () => {
+    it('returns true if user is the owner', async () => {
       const userAddress = '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd' as `0x${string}`;
       const teamId = 1;
 
@@ -161,9 +47,21 @@ describe('cashRemunerationUtil', () => {
       const result = await isCashRemunerationOwner(userAddress, teamId);
 
       expect(result).toBe(true);
+      expect(prisma.teamContract.findFirst).toHaveBeenCalledWith({
+        where: {
+          teamId,
+          type: 'CashRemunerationEIP712',
+          officer: { nextOfficer: { is: null } },
+        },
+      });
+      expect(publicClient.readContract).toHaveBeenCalledWith({
+        address: '0x1234567890123456789012345678901234567890',
+        abi: expect.any(Array),
+        functionName: 'owner',
+      });
     });
 
-    it('should return false if user is not the owner', async () => {
+    it('returns false if user is not the owner', async () => {
       const userAddress = '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd' as `0x${string}`;
       const ownerAddress = '0x9999999999999999999999999999999999999999';
       const teamId = 1;
@@ -185,7 +83,25 @@ describe('cashRemunerationUtil', () => {
       expect(result).toBe(false);
     });
 
-    it('should return false if owner cannot be retrieved', async () => {
+    it('returns false for an invalid contract address', async () => {
+      const userAddress = '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd' as `0x${string}`;
+      const teamId = 1;
+
+      vi.mocked(prisma.teamContract.findFirst).mockResolvedValue({
+        id: 1,
+        teamId,
+        address: 'invalid-address',
+        type: 'CashRemunerationEIP712',
+        deployer: userAddress,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+
+      await expect(isCashRemunerationOwner(userAddress, teamId)).resolves.toBe(false);
+      expect(publicClient.readContract).not.toHaveBeenCalled();
+    });
+
+    it('returns false if owner cannot be retrieved', async () => {
       const userAddress = '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd' as `0x${string}`;
       const teamId = 1;
 
@@ -194,9 +110,10 @@ describe('cashRemunerationUtil', () => {
       const result = await isCashRemunerationOwner(userAddress, teamId);
 
       expect(result).toBe(false);
+      expect(publicClient.readContract).not.toHaveBeenCalled();
     });
 
-    it('should return false and log error if an exception occurs', async () => {
+    it('returns false and logs an error when owner lookup fails', async () => {
       const userAddress = '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd' as `0x${string}`;
       const teamId = 1;
       const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});

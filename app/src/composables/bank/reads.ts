@@ -27,3 +27,20 @@ export function useBankOwner(address?: MaybeRefOrGetter<Address | undefined>) {
     }
   })
 }
+
+/**
+ * Whether a Bank is currently paused (`Pausable.paused()`). Defaults to the team's
+ * current Bank; pass an address to read the Bank of an archived Officer generation instead.
+ */
+export function useBankPaused(address?: MaybeRefOrGetter<Address | undefined>) {
+  const currentBankAddress = useBankAddress()
+  const bankAddress = computed(() => toValue(address) ?? currentBankAddress.value)
+  return useReadContract({
+    address: bankAddress,
+    abi: bankAbi,
+    functionName: 'paused',
+    query: {
+      enabled: computed(() => !!bankAddress.value && isAddress(bankAddress.value))
+    }
+  })
+}

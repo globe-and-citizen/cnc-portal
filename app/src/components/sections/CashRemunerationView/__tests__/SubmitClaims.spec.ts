@@ -65,7 +65,7 @@ describe('SubmitClaims', () => {
     expect(submitButton.attributes('disabled')).toBeDefined()
   })
 
-  it('disables submit button on a non-current week when restriction is active', () => {
+  it('[AC-US-PAYROLL-005-13] disables submit button on a non-current week when restriction is active', () => {
     mockUseSubmitRestriction.isRestricted.value = true
     try {
       const wrapper = createComponent({

@@ -9,18 +9,16 @@
  * as the source mappers, spec §2).
  *
  * Pipeline (spec §2):
- *   raw feeds → {@link LedgerSources} + {@link MapperContext} + enrichment
- *             → buildCncLedgerEntries (#2113 mappers + off-chain join)
- *             → buildLedger (#2117 consolidation: dedupe twins)
- *             → buildJournal (validated canonical journal)
- *             → General Ledger / Trial Balance / financial-statement projections
+ *   raw feeds → source adapters → JournalEntryDraft[]
+ *             → account evidence → reconcile and finalize once
+ *             → JournalEntry[]
  */
 import { type Address } from 'viem'
 import type { TeamContract } from '@/types/teamContract'
 import type { WeeklyClaim } from '@/types/cash-remuneration'
 import type { ExpenseResponse } from '@/types/expense-account'
 import type { SafeIncomingTransfer, SafeTransaction } from '@/types/safe'
-import type { TransactionClassificationRecord } from '@/types/accounting-classification'
+import type { JournalAccountAssignmentRecord } from '@/types/journal-account-assignment'
 import type { BankEventFeed } from '@/types/contract-events/bank'
 import type { CashRemunerationEventFeed } from '@/types/contract-events/cash-remuneration'
 import type { ExpenseEventFeed } from '@/types/contract-events/expense'
@@ -31,38 +29,25 @@ import type {
 } from '@/types/contract-events/investor'
 import type { VestingEventFeed } from '@/types/contract-events/vesting'
 import { collectInternalAddresses } from '@/utils/accounting/internalAddresses'
-import type { ClassificationOverride } from '@/utils/accounting/classification'
 import { buildMapperContext } from '@/utils/accounting/mappers/context'
 import type { CreditOfferTerms } from '@/utils/accounting/mappers/creditTimeline'
-import { buildCncLedgerEntries, type LedgerSources } from '@/utils/accounting/mappers'
-import { buildLedger } from '@/utils/accounting/buildLedger'
-import {
-  buildAccountingSummary,
-  type AccountingSummary
-} from '@/utils/accounting/accountingSummary'
-import { buildAccountRegistry, type AccountRegistry } from '@/utils/accounting/accountRegistry'
+import { mapCncJournalEntryDrafts, type JournalEntrySources } from '@/utils/accounting/mappers'
 import {
   resolveAccountInstances,
   type TransactionAccountEvidence
 } from '@/utils/accounting/accountInstances'
 import type { AccountName } from '@/utils/accounting/chartOfAccounts'
-import {
-  buildGeneralLedger,
-  buildJournal,
-  type GeneralLedger,
-  type JournalEntry
-} from '@/utils/accounting/generalLedger'
-import { reconcileJournalEntrySources } from '@/utils/accounting/journalEntry'
-import { buildIncomeStatement, type IncomeStatement } from '@/utils/accounting/incomeStatement'
-import { buildBalanceSheet, type BalanceSheet } from '@/utils/accounting/balanceSheet'
-import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
+import { applyJournalAccountAssignments } from '@/utils/accounting/journalAccountAssignment'
+import { finalizeJournalEntryDrafts } from '@/utils/accounting/journalEntry'
+import type { JournalEntryDraft } from '@/utils/accounting/journalEntryDraft'
+import type { JournalEntry } from '@/utils/accounting/types'
 import { tokenUsdRate, type UsdRateOfRecord } from '@/utils/accounting/toUsd'
 import {
   buildSherMultiplierTimeline,
   makeSherUsdRate,
   currentSherUsdRate
 } from '@/utils/accounting/sherRate'
-import { settleWithdrawnSher } from '@/utils/accounting/mappers/sherIssuance'
+import { settleWithdrawnSher } from '@/utils/accounting/sherIssuance'
 import { atDate } from '@/utils/accounting/mappers/context'
 import { toSafeTransferRows, toSafeOutgoingTransferRows } from '@/utils/accounting/safeTransfers'
 
@@ -97,90 +82,55 @@ export interface CncAccountingInput {
   // ── portal DB rows (off-chain enrichment context, spec §3.2) ──
   weeklyClaims?: readonly WeeklyClaim[]
   expenses?: readonly ExpenseResponse[]
-  /** Manual Bank/Safe transaction classifications, overriding address inference (#2457). */
-  classifications?: readonly TransactionClassificationRecord[] | null
+  /** Owner-selected counter-accounts, keyed by transaction-backed JournalEntry. */
+  accountAssignments?: readonly JournalAccountAssignmentRecord[] | null
 }
 
-/** The transitional posting feed, canonical journal, and report projections a team's books resolve to. */
+/** The canonical journal and reconciliation diagnostics resolved for a team's books. */
 export interface CncAccounting {
-  /**
-   * Deduped, chronologically sorted mapper postings retained at the assembly
-   * boundary. Views and exports consume the journal, never these source pairs.
-   */
-  entries: LedgerEntry[]
-  /** The canonical concrete-account source of truth for this assembled book. */
-  accountRegistry: AccountRegistry
   /** The validated, ordered double-entry journal built once after consolidation. */
   journal: JournalEntry[]
-  /** Roll-up totals for the summary cards. */
-  summary: AccountingSummary
-  /** Double-entry journal + trial balance. */
-  generalLedger: GeneralLedger
-  incomeStatement: IncomeStatement
-  balanceSheet: BalanceSheet
   /** Fee logs withheld because their Bank outflow counterpart is missing. */
   unmatchedFeeOperationIds: string[]
 }
 
-/**
- * Phase-1 default FX resolver. Native (POL/ETH) and SHER have **no historical
- * price feed yet** (spec §6 "FX / price-of-record" is a Phase-2 gap). Rather than
- * throw — which would blank the whole page — we value them at 0 until a price
- * oracle is wired, so stablecoin (USDC) figures still render. Callers can inject
- * a real resolver (e.g. the agreed SHER mint price) via `rateOfRecord`.
- */
-const phase1RateOfRecord: UsdRateOfRecord = () => 0
+/** Preserve non-pegged source movements until their rate-of-record source resolves. */
+const unavailableRateOfRecord: UsdRateOfRecord = () => 0
 
 /** Pull an event-feed field's `.items`, tolerating a missing/null result. */
 function items<T>(field: { items: T[] } | null | undefined): T[] {
   return field?.items ?? []
 }
 
-/**
- * Index the manual classifications by their transaction identity so the mapper
- * context can look one up per ledger entry. Keys are lowercased to match the entry
- * ids (`${txHash}-${logIndex}`), guarding against a mixed-case hash from the API.
- */
-function toClassificationMap(
-  records: readonly TransactionClassificationRecord[] | null | undefined
-): Map<string, ClassificationOverride> {
-  const map = new Map<string, ClassificationOverride>()
-  for (const record of records ?? []) {
-    map.set(record.txId.toLowerCase(), { category: record.category, memo: record.memo })
-  }
-  return map
-}
-
-/** Build the {@link LedgerSources} the mappers consume from the raw query results. */
-function toLedgerSources(input: CncAccountingInput): LedgerSources {
-  const sources: LedgerSources = {}
+/** Build the {@link JournalEntrySources} the mappers consume from the raw query results. */
+function toJournalEntrySources(input: CncAccountingInput): JournalEntrySources {
+  const sources: JournalEntrySources = {}
 
   if (input.bankEvents) {
     sources.bank = {
       deposits: items(input.bankEvents.bankDeposits),
       tokenDeposits: items(input.bankEvents.bankTokenDeposits),
       transfers: items(input.bankEvents.bankTransfers),
-      tokenTransfers: items(input.bankEvents.bankTokenTransfers)
-    }
-    sources.fees = {
-      bankFeePaids: items(input.bankEvents.bankFeePaids)
+      tokenTransfers: items(input.bankEvents.bankTokenTransfers),
+      fees: items(input.bankEvents.bankFeePaids)
     }
   }
 
-  if (input.cashRemunerationEvents) {
+  if (input.cashRemunerationEvents || input.weeklyClaims) {
     const events = input.cashRemunerationEvents
-    sources.cashRemuneration = {
-      deposits: items(events.cashRemunerationDeposits),
-      withdraws: items(events.cashRemunerationWithdraws),
-      withdrawTokens: items(events.cashRemunerationWithdrawTokens),
-      ownerTreasuryWithdrawNatives: items(events.cashRemunerationOwnerTreasuryWithdrawNatives),
-      ownerTreasuryWithdrawTokens: items(events.cashRemunerationOwnerTreasuryWithdrawTokens)
+    sources.payroll = {
+      deposits: items(events?.cashRemunerationDeposits),
+      withdraws: items(events?.cashRemunerationWithdraws),
+      withdrawTokens: items(events?.cashRemunerationWithdrawTokens),
+      ownerTreasuryWithdrawNatives: items(events?.cashRemunerationOwnerTreasuryWithdrawNatives),
+      ownerTreasuryWithdrawTokens: items(events?.cashRemunerationOwnerTreasuryWithdrawTokens),
+      weeklyClaims: input.weeklyClaims
     }
   }
 
   if (input.expenseEvents) {
     const events = input.expenseEvents
-    sources.expenseAccount = {
+    sources.expense = {
       deposits: items(events.expenseDeposits),
       tokenDeposits: items(events.expenseTokenDeposits),
       transfers: items(events.expenseTransfers),
@@ -263,10 +213,10 @@ function toLedgerSources(input: CncAccountingInput): LedgerSources {
  * increase Investor Equity. Here each SHER leg is stamped at the multiplier of its
  * **own date** (historised timeline), so a withdrawal / mint freezes at its
  * realization-date rate. {@link settleWithdrawnSher} then re-values the *pending*
- * (un-withdrawn) accruals to the current multiplier — see {@link buildRawCncEntries}.
+ * (un-withdrawn) accruals to the current multiplier — see {@link buildCncJournalEntryDrafts}.
  */
 function buildRateOfRecord(input: CncAccountingInput): UsdRateOfRecord {
-  const baseRate = input.rateOfRecord ?? phase1RateOfRecord
+  const baseRate = input.rateOfRecord ?? unavailableRateOfRecord
   const sherRate = makeSherUsdRate(
     buildSherMultiplierTimeline(
       input.safeDepositRouterEvents?.safeMultiplierUpdateds?.items,
@@ -281,10 +231,10 @@ function buildRateOfRecord(input: CncAccountingInput): UsdRateOfRecord {
 
 /**
  * Run the source mappers and stamp each posting with its rate of record, yielding
- * the raw, pre-consolidation feed: Devise (`token`), Quantité (`rawAmount`), Taux
- * (`rate`) and the derived Montant USD (`amountUsd`), spec §2.
+ * the drafts' Devise (`token`), Quantité (`rawAmount`) and Taux (`rate`), spec §2.
+ * The exact USD amount does not exist until final JournalEntry lines are built.
  */
-export function buildRawCncEntries(input: CncAccountingInput): LedgerEntry[] {
+export function buildCncJournalEntryDrafts(input: CncAccountingInput): JournalEntryDraft[] {
   const internalAddresses = collectInternalAddresses(input.contracts)
   const rateOfRecord = buildRateOfRecord(input)
 
@@ -292,20 +242,18 @@ export function buildRawCncEntries(input: CncAccountingInput): LedgerEntry[] {
     contracts: input.contracts,
     internalAddresses,
     sherTokenAddress: input.sherTokenAddress,
-    rateOfRecord,
-    classifications: toClassificationMap(input.classifications)
+    rateOfRecord
   })
 
-  const rawEntries = buildCncLedgerEntries(toLedgerSources(input), ctx, {
+  const drafts = mapCncJournalEntryDrafts(toJournalEntrySources(input), ctx, {
     weeklyClaims: input.weeklyClaims,
     expenses: input.expenses
   })
 
   // The rate is a pure function of (token, timestamp), so it is resolved once here
-  // rather than threaded through every mapper — with the same resolver the mappers
-  // valued `amountUsd` with, so amountUsd = Quantité × rate. Each SHER leg lands at
-  // its own-date rate, so a withdrawal / mint is frozen at its realization value.
-  const stamped = rawEntries.map((entry) => ({
+  // rather than threaded through every mapper. Each SHER leg lands at its own-date
+  // rate, so a withdrawal / mint is frozen at its realization value.
+  const stamped = drafts.map((entry) => ({
     ...entry,
     rate: tokenUsdRate(entry.token, atDate(entry.timestamp), rateOfRecord)
   }))
@@ -325,36 +273,35 @@ export function buildRawCncEntries(input: CncAccountingInput): LedgerEntry[] {
 }
 
 /**
- * Consolidate a raw feed into the ledger and the three statements. Split from
+ * Consolidate source drafts into the canonical journal. Split from
  * {@link assembleWithAccountEvidence} so the accounting composable can derive
- * price-fetch days from the raw entries without running the mapper pipeline twice.
+ * price-fetch days from the drafts without running the mapper pipeline twice.
  */
-function assembleFromRawEntries(rawEntries: readonly LedgerEntry[]): CncAccounting {
-  const reconciliation = reconcileJournalEntrySources(rawEntries)
-  const { entries } = buildLedger(reconciliation.entries)
-  const accountRegistry = buildAccountRegistry(entries)
-  const journal = buildJournal(entries, accountRegistry)
+function assembleFromDrafts(
+  drafts: readonly JournalEntryDraft[],
+  accountAssignments?: readonly JournalAccountAssignmentRecord[] | null
+): CncAccounting {
+  const finalized = finalizeJournalEntryDrafts(drafts)
+  const journal = applyJournalAccountAssignments(finalized.journal, accountAssignments)
 
   return {
-    entries,
-    accountRegistry,
     journal,
-    summary: buildAccountingSummary(journal),
-    generalLedger: buildGeneralLedger(journal),
-    incomeStatement: buildIncomeStatement(journal),
-    balanceSheet: buildBalanceSheet(journal),
-    unmatchedFeeOperationIds: reconciliation.unmatchedFeeOperationIds
+    unmatchedFeeOperationIds: finalized.unmatchedFeeOperationIds
   }
 }
 
 /**
  * Complete deployment-specific cash legs from verified transaction evidence
- * before building every canonical report projection.
+ * before building the canonical journal.
  */
 export function assembleWithAccountEvidence(
-  rawEntries: readonly LedgerEntry[],
+  drafts: readonly JournalEntryDraft[],
   deploymentAccounts: ReadonlyMap<string, AccountName>,
-  evidence: TransactionAccountEvidence
+  evidence: TransactionAccountEvidence,
+  accountAssignments?: readonly JournalAccountAssignmentRecord[] | null
 ): CncAccounting {
-  return assembleFromRawEntries(resolveAccountInstances(rawEntries, deploymentAccounts, evidence))
+  return assembleFromDrafts(
+    resolveAccountInstances(drafts, deploymentAccounts, evidence),
+    accountAssignments
+  )
 }

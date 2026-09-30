@@ -1,0 +1,34 @@
+meta {
+  name: Election - 02 - Edge Case - Notifications - Caller Is Not Team Owner
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{host}}/elections/{{teamId}}
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {}
+}
+
+docs {
+  Run with an {{accessToken}} that belongs to a teammate of team {{teamId}} who is not its owner.
+}
+
+tests {
+  test("should return 403 when the caller is not the team owner", function() {
+    expect(res.getStatus()).to.equal(403);
+  });
+  
+  test("should explain that only the owner can notify", function() {
+    expect(res.body).to.have.property('message');
+    expect(res.body.message).to.equal('Only the team owner can send election notifications');
+  });
+}

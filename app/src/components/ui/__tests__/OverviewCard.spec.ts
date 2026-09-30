@@ -4,7 +4,7 @@ import OverviewCard from '../OverviewCard.vue'
 import bagIcon from '@/assets/bag.svg'
 
 describe('OverviewCard', () => {
-  it('should renders card correctly', async () => {
+  it('renders the supplied title and subtitle', async () => {
     const wrapper = mount(OverviewCard, {
       props: {
         title: '73.9K USD',

@@ -33,18 +33,18 @@ describe('ExpenseAccount (EIP712) - Administrative Tests', () => {
   })
 
   describe('Contract Deployment and Ownership', () => {
-    it('Should set the right owner', async () => {
+    it('sets the right owner', async () => {
       expect(await expenseAccount.owner()).to.equal(owner.address)
     })
 
-    it('Should initialize supported tokens correctly', async () => {
+    it('initializes the supported token addresses', async () => {
       expect(await expenseAccount.isTokenSupported(await mockUSDT.getAddress())).to.equal(true)
       expect(await expenseAccount.isTokenSupported(await mockUSDC.getAddress())).to.equal(true)
     })
   })
 
   describe('Native Token Management', () => {
-    it('Should allow owner to deposit native tokens', async () => {
+    it('allows owner to deposit native tokens', async () => {
       const amount = ethers.parseEther('100')
       const tx = await owner.sendTransaction({
         to: await expenseAccount.getAddress(),
@@ -55,7 +55,7 @@ describe('ExpenseAccount (EIP712) - Administrative Tests', () => {
       await expect(tx).to.emit(expenseAccount, 'Deposited').withArgs(owner.address, amount)
     })
 
-    it('Should return correct contract balance', async () => {
+    it('returns correct contract balance', async () => {
       const amount = ethers.parseEther('100')
       await owner.sendTransaction({
         to: await expenseAccount.getAddress(),
@@ -106,7 +106,7 @@ describe('ExpenseAccount (EIP712) - Administrative Tests', () => {
       signatureHash = ethers.keccak256(signature)
     })
 
-    it('Should allow owner to deactivate approval', async () => {
+    it('[AC-US-EXP-003-01] allows owner to deactivate approval', async () => {
       await expect(expenseAccount.deactivateApproval(signatureHash))
         .to.emit(expenseAccount, 'ApprovalDeactivated')
         .withArgs(signatureHash)
@@ -115,7 +115,7 @@ describe('ExpenseAccount (EIP712) - Administrative Tests', () => {
       expect(expenseBalance.state).to.equal(2) // Inactive state
     })
 
-    it('Should allow owner to activate approval', async () => {
+    it('[AC-US-EXP-003-02] allows owner to activate approval', async () => {
       // First deactivate
       await expenseAccount.deactivateApproval(signatureHash)
 
@@ -128,7 +128,7 @@ describe('ExpenseAccount (EIP712) - Administrative Tests', () => {
       expect(expenseBalance.state).to.equal(1) // Active state
     })
 
-    it('Should not allow non-owners to manage approvals', async () => {
+    it('[AC-US-EXP-003-04] does not allow non-owners to manage approvals', async () => {
       await expect(
         expenseAccount.connect(imposter).deactivateApproval(signatureHash)
       ).to.be.revertedWithCustomError(expenseAccount, 'OwnableUnauthorizedAccount')
@@ -140,11 +140,11 @@ describe('ExpenseAccount (EIP712) - Administrative Tests', () => {
   })
 
   describe('Pause/Unpause Functionality', () => {
-    it('Should allow owner to pause the contract', async () => {
+    it('allows owner to pause the contract', async () => {
       await expect(expenseAccount.pause()).to.emit(expenseAccount, 'Paused').withArgs(owner.address)
     })
 
-    it('Should allow owner to unpause the contract', async () => {
+    it('allows owner to unpause the contract', async () => {
       // First pause
       await expenseAccount.pause()
 
@@ -154,7 +154,7 @@ describe('ExpenseAccount (EIP712) - Administrative Tests', () => {
         .withArgs(owner.address)
     })
 
-    it('Should not allow non-owners to pause/unpause', async () => {
+    it('does not allow non-owners to pause/unpause', async () => {
       await expect(expenseAccount.connect(imposter).pause()).to.be.revertedWithCustomError(
         expenseAccount,
         'OwnableUnauthorizedAccount'
@@ -180,7 +180,7 @@ describe('ExpenseAccount (EIP712) - Administrative Tests', () => {
         .approve(await expenseAccount.getAddress(), ethers.parseEther('1000'))
     })
 
-    it('Should allow token deposits', async () => {
+    it('allows token deposits', async () => {
       const amount = ethers.parseEther('100')
 
       const tx = await expenseAccount
@@ -194,7 +194,7 @@ describe('ExpenseAccount (EIP712) - Administrative Tests', () => {
       expect(await expenseAccount.getTokenBalance(await mockUSDT.getAddress())).to.equal(amount)
     })
 
-    it('Should allow deposits from tokens that do not return a boolean', async () => {
+    it('allows deposits from tokens that do not return a boolean', async () => {
       const NoReturnToken = await ethers.getContractFactory('MockNoReturnERC20')
       const noReturnToken = await NoReturnToken.deploy()
       const tokenAddress = await noReturnToken.getAddress()
@@ -209,7 +209,7 @@ describe('ExpenseAccount (EIP712) - Administrative Tests', () => {
       expect(await noReturnToken.balanceOf(await expenseAccount.getAddress())).to.equal(amount)
     })
 
-    it('Should allow owner to add and remove token support', async () => {
+    it('allows owner to add and remove token support', async () => {
       const MockToken = await ethers.getContractFactory('MockERC20')
       const newToken = await MockToken.deploy('NEW', 'NEW')
 
@@ -224,7 +224,7 @@ describe('ExpenseAccount (EIP712) - Administrative Tests', () => {
         .withArgs(await newToken.getAddress())
     })
 
-    it('Should correctly check if token is supported', async () => {
+    it('checks if token is supported', async () => {
       expect(await expenseAccount.isTokenSupported(await mockUSDT.getAddress())).to.be.true
       expect(await expenseAccount.isTokenSupported(await mockUSDC.getAddress())).to.be.true
       expect(await expenseAccount.isTokenSupported(ethers.ZeroAddress)).to.be.false
@@ -232,7 +232,7 @@ describe('ExpenseAccount (EIP712) - Administrative Tests', () => {
         .be.false
     })
 
-    it('Should return correct token balance', async () => {
+    it('returns correct token balance', async () => {
       const amount = ethers.parseEther('50')
       await expenseAccount.connect(owner).depositToken(await mockUSDT.getAddress(), amount)
 
@@ -241,7 +241,7 @@ describe('ExpenseAccount (EIP712) - Administrative Tests', () => {
     })
 
     describe('Token Management Restrictions', () => {
-      it('Should not allow deposits with unsupported tokens', async () => {
+      it('does not allow deposits with unsupported tokens', async () => {
         const amount = ethers.parseEther('100')
         const unsupportedToken = '0x9876543210987654321098765432109876543210'
 
@@ -250,13 +250,13 @@ describe('ExpenseAccount (EIP712) - Administrative Tests', () => {
         ).to.be.revertedWithCustomError(expenseAccount, 'ExpenseAccountEIP712__TokenNotSupported')
       })
 
-      it('Should not allow zero amount deposits', async () => {
+      it('does not allow zero amount deposits', async () => {
         await expect(
           expenseAccount.connect(owner).depositToken(await mockUSDT.getAddress(), 0)
         ).to.be.revertedWithCustomError(expenseAccount, 'ExpenseAccountEIP712__ZeroAmount')
       })
 
-      it('Should not allow non-owners to change token addresses', async () => {
+      it('does not allow non-owners to change token addresses', async () => {
         const MockToken = await ethers.getContractFactory('MockERC20')
         const newToken = await MockToken.deploy('NEW', 'NEW')
 
@@ -265,13 +265,13 @@ describe('ExpenseAccount (EIP712) - Administrative Tests', () => {
         ).to.be.revertedWithCustomError(expenseAccount, 'OwnableUnauthorizedAccount')
       })
 
-      it('Should not allow changing to invalid token symbols', async () => {
+      it('does not allow changing to invalid token symbols', async () => {
         await expect(
           expenseAccount.addTokenSupport(ethers.ZeroAddress)
         ).to.be.revertedWithCustomError(expenseAccount, 'TokenSupport__ZeroAddress')
       })
 
-      it('Should not allow setting zero address as token address', async () => {
+      it('does not allow setting zero address as token address', async () => {
         await expect(
           expenseAccount.removeTokenSupport(ethers.ZeroAddress)
         ).to.be.revertedWithCustomError(expenseAccount, 'TokenSupport__ZeroAddress')

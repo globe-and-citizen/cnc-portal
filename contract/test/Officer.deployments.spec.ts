@@ -39,7 +39,7 @@ describe('Officer Contract', function () {
   let owner: SignerWithAddress
   let feeCollector: FeeCollector
 
-  it('Should deploy contracts', async function () {
+  it('deploys contracts', async function () {
     ;[owner] = await ethers.getSigners()
 
     const MockToken = await ethers.getContractFactory('MockERC20')

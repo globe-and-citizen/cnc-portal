@@ -18,7 +18,7 @@ const MOCK_DATA = {
   defaultRate: '1.5'
 } as const
 
-describe('CompensationAmountInput - Advanced Features', () => {
+describe('[US-SHER-001] CompensationAmountInput - Advanced Features', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockInvestorReads.symbol.data.value = MOCK_DATA.tokenSymbol
@@ -36,7 +36,7 @@ describe('CompensationAmountInput - Advanced Features', () => {
   }
 
   describe('Rapid State Changes', () => {
-    it('should handle rapid input changes', async () => {
+    it('handles rapid input changes', async () => {
       const wrapper = createWrapper()
       const input = wrapper.find(SELECTORS.compensationInput)
 
@@ -50,7 +50,7 @@ describe('CompensationAmountInput - Advanced Features', () => {
       expect(emissions[emissions.length - 1][0]).toBe('1000')
     })
 
-    it('should handle rapid prop changes', async () => {
+    it('handles rapid prop changes', async () => {
       const wrapper = createWrapper({
         modelValue: '100'
       })
@@ -64,7 +64,7 @@ describe('CompensationAmountInput - Advanced Features', () => {
       expect(input.element.value).toContain('109')
     })
 
-    it('should update when deposit token symbol changes', async () => {
+    it('updates when deposit token symbol changes', async () => {
       const wrapper = createWrapper({
         depositTokenSymbol: 'USDC'
       })
@@ -78,7 +78,7 @@ describe('CompensationAmountInput - Advanced Features', () => {
   })
 
   describe('Slot Customization', () => {
-    it('should allow custom label via slot', () => {
+    it('allows custom label via slot', () => {
       const wrapper = mount(CompensationAmountInput, {
         props: {
           modelValue: '0',
@@ -93,7 +93,7 @@ describe('CompensationAmountInput - Advanced Features', () => {
       expect(wrapper.find('.custom-label').text()).toBe('Custom Label')
     })
 
-    it('should use default label when slot is not provided', () => {
+    it('uses default label when slot is not provided', () => {
       const wrapper = createWrapper()
 
       const labelText = wrapper.find(SELECTORS.labelText)
@@ -103,7 +103,7 @@ describe('CompensationAmountInput - Advanced Features', () => {
   })
 
   describe('Edge Cases - Extreme Values', () => {
-    it('should handle very small decimal values', () => {
+    it('handles very small decimal values', () => {
       const wrapper = createWrapper({
         modelValue: '0.0000000001',
         decimals: 10
@@ -113,7 +113,7 @@ describe('CompensationAmountInput - Advanced Features', () => {
       expect(input.element.value).toBeDefined()
     })
 
-    it('should handle very large values', () => {
+    it('handles very large values', () => {
       const wrapper = createWrapper({
         modelValue: '999999999999999'
       })
@@ -122,7 +122,7 @@ describe('CompensationAmountInput - Advanced Features', () => {
       expect(input.element.value).toBeDefined()
     })
 
-    it('should handle missing investor symbol', () => {
+    it('handles missing investor symbol', () => {
       mockInvestorReads.symbol.data.value = undefined
       const wrapper = createWrapper()
 
@@ -131,7 +131,7 @@ describe('CompensationAmountInput - Advanced Features', () => {
   })
 
   describe('Integration with Investor Composable', () => {
-    it('should fetch and display token symbol from composable', () => {
+    it('fetches and displays the token symbol from the composable', () => {
       mockInvestorReads.symbol.data.value = 'TESTSHER'
       const wrapper = createWrapper()
 
@@ -139,7 +139,7 @@ describe('CompensationAmountInput - Advanced Features', () => {
       expect(labelText.text()).toContain('TESTSHER')
     })
 
-    it('should handle loading state of token symbol', () => {
+    it('handles loading state of token symbol', () => {
       mockInvestorReads.symbol.data.value = undefined
       mockInvestorReads.symbol.isLoading.value = true
       const wrapper = createWrapper()
@@ -147,7 +147,7 @@ describe('CompensationAmountInput - Advanced Features', () => {
       expect(wrapper.find(SELECTORS.compensationAmount).exists()).toBe(true)
     })
 
-    it('should update when token symbol is loaded', async () => {
+    it('updates when token symbol is loaded', async () => {
       mockInvestorReads.symbol.data.value = undefined
       const wrapper = createWrapper()
 
@@ -158,7 +158,7 @@ describe('CompensationAmountInput - Advanced Features', () => {
       expect(labelText.text()).toContain('LOADEDSHER')
     })
 
-    it('should update aria-label when token symbol changes', async () => {
+    it('updates aria-label when token symbol changes', async () => {
       const wrapper = createWrapper()
 
       mockInvestorReads.symbol.data.value = 'NEWTOKEN'
@@ -170,7 +170,7 @@ describe('CompensationAmountInput - Advanced Features', () => {
   })
 
   describe('Props Validation', () => {
-    it('should accept string rate prop', () => {
+    it('accepts string rate prop', () => {
       const wrapper = createWrapper({
         rate: '1.5'
       })
@@ -178,7 +178,7 @@ describe('CompensationAmountInput - Advanced Features', () => {
       expect(wrapper.props('rate')).toBe('1.5')
     })
 
-    it('should accept number rate prop', () => {
+    it('accepts number rate prop', () => {
       const wrapper = createWrapper({
         rate: 2.5
       })
@@ -186,7 +186,7 @@ describe('CompensationAmountInput - Advanced Features', () => {
       expect(wrapper.props('rate')).toBe(2.5)
     })
 
-    it('should use default values for optional props', () => {
+    it('uses default values for optional props', () => {
       const wrapper = mount(CompensationAmountInput, {
         props: {
           modelValue: '0',
@@ -202,7 +202,7 @@ describe('CompensationAmountInput - Advanced Features', () => {
   })
 
   describe('Error Handling', () => {
-    it('should handle invalid prop types gracefully', () => {
+    it('falls back safely when numeric props contain invalid values', () => {
       const wrapper = mount(CompensationAmountInput, {
         props: {
           modelValue: '0',
@@ -215,7 +215,7 @@ describe('CompensationAmountInput - Advanced Features', () => {
       expect(wrapper.find(SELECTORS.compensationAmount).exists()).toBe(true)
     })
 
-    it('should handle undefined decimals prop', () => {
+    it('handles undefined decimals prop', () => {
       const wrapper = mount(CompensationAmountInput, {
         props: {
           modelValue: '100.123456',
@@ -231,14 +231,14 @@ describe('CompensationAmountInput - Advanced Features', () => {
   })
 
   describe('Component Lifecycle', () => {
-    it('should clean up properly on unmount', () => {
+    it('unmounts after rendering the compensation input', () => {
       const wrapper = createWrapper()
       expect(wrapper.find(SELECTORS.compensationAmount).exists()).toBe(true)
 
       expect(() => wrapper.unmount()).not.toThrow()
     })
 
-    it('should handle multiple mount/unmount cycles', () => {
+    it('handles multiple mount/unmount cycles', () => {
       for (let i = 0; i < 5; i++) {
         const wrapper = createWrapper()
         expect(wrapper.find(SELECTORS.compensationAmount).exists()).toBe(true)

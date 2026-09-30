@@ -3,7 +3,7 @@ import { mount } from '@vue/test-utils'
 import TokenConfigCard from '../TokenConfigCard.vue'
 
 describe('TokenConfigCard', () => {
-  it('offers only USDC and USDCe — POL is never rendered', () => {
+  it('[AC-US-PAYGATE-001-03] offers only USDC and USDCe — POL is never rendered', () => {
     const wrapper = mount(TokenConfigCard, { props: { selectedToken: 'USDC' } })
     const buttons = wrapper.findAll('[data-test="payment-gate-token-options"] button')
 

@@ -188,6 +188,7 @@ import SafeIncomingTransactions from '@/components/sections/SafeView/SafeIncomin
 import SafeDeploymentCard from '@/components/sections/SafeView/SafeDeploymentCard.vue'
 import SafeImportCard from '@/components/sections/SafeView/SafeImportCard.vue'
 import { useTeamStore, useUserDataStore } from '@/stores'
+import { normalizeSafeAddress } from '@/utils/safe/address'
 
 const route = useRoute()
 const router = useRouter()
@@ -235,13 +236,14 @@ watch(safeAddress, (address) => {
 })
 
 const handleSafeRegistered = async (address: Address) => {
-  deployedSafeAddress.value = address
+  const normalizedAddress = normalizeSafeAddress(address)
+  deployedSafeAddress.value = normalizedAddress
   isLoadingSafe.value = true
 
-  if (route.params.id && route.params.address !== address) {
+  if (route.params.id && route.params.address !== normalizedAddress) {
     await router.replace({
       name: 'safe-account',
-      params: { id: route.params.id as string, address }
+      params: { id: route.params.id as string, address: normalizedAddress }
     })
   }
 }

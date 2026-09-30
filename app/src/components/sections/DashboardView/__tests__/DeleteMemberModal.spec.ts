@@ -24,7 +24,7 @@ const makeWrapper = () =>
     }
   })
 
-describe('DeleteMemberModal.vue', () => {
+describe('[US-COMPANIES-005] DeleteMemberModal.vue', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.mocked(useDeleteMemberMutation).mockReturnValue({
@@ -34,7 +34,7 @@ describe('DeleteMemberModal.vue', () => {
     } as never)
   })
 
-  it('should open and close modal with trigger and cancel', async () => {
+  it('opens the modal from the trigger and closes it on cancel', async () => {
     const wrapper = makeWrapper()
 
     expect(wrapper.find('[data-test="delete-member-confirm-button"]').exists()).toBe(false)
@@ -48,7 +48,7 @@ describe('DeleteMemberModal.vue', () => {
     expect(wrapper.find('[data-test="delete-member-confirm-button"]').exists()).toBe(false)
   })
 
-  it('should use empty member address fallback when address is missing', async () => {
+  it('uses empty member address fallback when address is missing', async () => {
     const wrapper = mount(DeleteMemberModal, {
       props: {
         member: { name: 'Unknown' },
@@ -71,7 +71,7 @@ describe('DeleteMemberModal.vue', () => {
     )
   })
 
-  it('should handles successful delete by closing modal and emitting event', async () => {
+  it('handles successful delete by closing modal and emitting event', async () => {
     mutateSpy.mockImplementationOnce((_payload, options) => options?.onSuccess?.())
 
     const wrapper = makeWrapper()
@@ -104,7 +104,7 @@ describe('DeleteMemberModal.vue', () => {
     expect(wrapperFallback.text()).toContain('Failed to remove member')
   })
 
-  it('should close modal when modal emits update:open false', async () => {
+  it('closes modal when modal emits update:open false', async () => {
     const wrapper = makeWrapper()
 
     await wrapper.find('[data-test="delete-member-button"]').trigger('click')
