@@ -16,14 +16,16 @@ import type {
 } from '@/types/contract-events/fixedReturn'
 
 /**
- * A funded round's economics, read from `getLendingOffer`. Only the rate is
- * needed: the contract's obligation is flat, so the maturity date changes nothing
+ * A funded round's economics. Only the rate is needed: the contract's obligation
+ * is flat, so the maturity date changes nothing
  * about what is owed — it is a display concern the credit views read for
  * themselves, not an accounting input.
  */
 export interface CreditOfferTerms {
   /** Offer id, as the event feed spells it (decimal string). */
   offerId: string
+  /** Deployment that owns this offer; ids restart from one after a redeploy. */
+  contractAddress?: string
   /** Flat rate over the whole term, in basis points (800 = 8%). */
   interestRateBps: number
 }
@@ -91,11 +93,17 @@ export function toBigInt(raw: string | undefined): bigint {
 function depositsAtFunding(
   input: FixedReturnMapperInput,
   offerId: string,
-  fundedAt: number
+  fundedAt: number,
+  contractAddress?: string
 ): Array<{ lender: string; deposit: bigint }> {
   const byLender = new Map<string, { lender: string; deposit: bigint }>()
   for (const row of input.fundsLents ?? []) {
-    if (row.offerId !== offerId || row.timestamp > fundedAt) continue
+    if (
+      row.offerId !== offerId ||
+      row.timestamp > fundedAt ||
+      (contractAddress && row.contractAddress.toLowerCase() !== contractAddress.toLowerCase())
+    )
+      continue
     const key = row.lender.toLowerCase()
     const seen = byLender.get(key)
     if (seen) seen.deposit += toBigInt(row.amount)
@@ -121,14 +129,33 @@ function depositsAtFunding(
  * the same figures the contract will actually pay out.
  */
 function interestEvents(input: FixedReturnMapperInput): CreditEvent[] {
-  const termsByOffer = new Map((input.offerTerms ?? []).map((terms) => [terms.offerId, terms]))
-  if (termsByOffer.size === 0) return []
-
+  const termsByOffer = new Map(
+    (input.offerTerms ?? []).map((terms) => [offerKey(terms.offerId, terms.contractAddress), terms])
+  )
   return (input.lendingOfferFundeds ?? []).flatMap((funded) => {
-    const bps = termsByOffer.get(funded.offerId)?.interestRateBps
+    const created = (input.lendingOfferCreateds ?? []).find(
+      (offer) =>
+        offer.offerId === funded.offerId &&
+        (!funded.contractAddress ||
+          offer.contractAddress.toLowerCase() === funded.contractAddress.toLowerCase())
+    )
+    const bps =
+      (funded.contractAddress
+        ? termsByOffer.get(offerKey(funded.offerId, funded.contractAddress))
+        : undefined
+      )?.interestRateBps ??
+      termsByOffer.get(offerKey(funded.offerId))?.interestRateBps ??
+      // Creation events are historical, contract-scoped evidence. A live read
+      // from the current deployment cannot supply terms for a retired contract.
+      (created?.interestRateBps ? Number(created.interestRateBps) : undefined)
     if (!bps || bps <= 0) return []
 
-    const lenders = depositsAtFunding(input, funded.offerId, funded.timestamp)
+    const lenders = depositsAtFunding(
+      input,
+      funded.offerId,
+      funded.timestamp,
+      funded.contractAddress
+    )
     const totalFunded = lenders.reduce((sum, l) => sum + l.deposit, 0n)
     if (totalFunded <= 0n) return []
     const obligation = totalFunded + (totalFunded * BigInt(Math.round(bps))) / 10_000n
@@ -146,7 +173,7 @@ function interestEvents(input: FixedReturnMapperInput): CreditEvent[] {
           kind: 'interest' as const,
           // Keyed by the round and the lender alone — the id never moves, so the
           // row keeps its identity across refetches, exports and drill-downs.
-          id: `credit-interest-${funded.offerId}-${lender.toLowerCase()}`,
+          id: `credit-interest-${funded.contractAddress?.toLowerCase() ?? 'unknown'}-${funded.offerId}-${lender.toLowerCase()}`,
           sourceOperationId: funded.id,
           contractAddress: funded.contractAddress,
           offerId: funded.offerId,
@@ -157,6 +184,10 @@ function interestEvents(input: FixedReturnMapperInput): CreditEvent[] {
       ]
     })
   })
+}
+
+function offerKey(offerId: string, contractAddress?: string): string {
+  return `${contractAddress?.toLowerCase() ?? '*'}:${offerId}`
 }
 
 /** Every credit event of every round, oldest first. */

@@ -75,7 +75,7 @@ describe('buildGeneralLedger — catalogue worked example', () => {
     expect(gl2.debitBalanceTotal).toBe(gl2.creditBalanceTotal)
   })
 
-  it('keeps an unresolved redeployment leg separate from concrete Bank accounts', () => {
+  it('[AC-US-ACCT-003-08] [AC-US-ACCT-005-13] keeps an unresolved redeployment leg separate from concrete Bank accounts', () => {
     // One team, two Bank contracts (a redeploy). Deposits before the redeploy hit
     // the first Bank; the deposit after it hits Bank #2 — which must carry only its
     // own transaction, while the original keeps everything up to the redeploy.

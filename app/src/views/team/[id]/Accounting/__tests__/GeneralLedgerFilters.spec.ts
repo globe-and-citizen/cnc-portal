@@ -30,6 +30,9 @@ vi.mock('@/composables/accounting/useAccountingExport', () => ({
 import GeneralLedgerView from '../GeneralLedgerView.vue'
 import AccountFilterSelect from '@/components/sections/AccountingView/AccountFilterSelect.vue'
 import CurrencyFilterSelect from '@/components/sections/AccountingView/CurrencyFilterSelect.vue'
+import LedgerTable from '@/components/sections/AccountingView/LedgerTable.vue'
+import DatePicker from '@/components/ui/DatePicker.vue'
+import { mockRoute } from '@/tests/mocks/router.mock'
 
 const setBook = (entries: JournalEntryDraft[]) => {
   ctx.journal!.value = finalizeJournal(entries)
@@ -120,6 +123,49 @@ describe('GeneralLedgerView currency filter', () => {
     setBook(catalogueLedger.slice(0, 8))
     await flushPromises()
     expect(wrapper.text()).toContain('Total movements')
+    wrapper.unmount()
+  })
+})
+
+describe('GeneralLedgerView empty and paginated scopes', () => {
+  /**
+   * The catalogue is fixed in March 2026, so an explicit window keeps the
+   * "nothing matches" case independent of the clock the suite runs on.
+   */
+  const emptyWindow = { start: new Date('2020-01-01'), end: new Date('2020-12-31') }
+
+  it('[AC-US-ACCT-002-10] reports an empty ledger with zero totals when no entry matches', async () => {
+    const wrapper = renderWithProviders(GeneralLedgerView)
+    await flushPromises()
+    expect(wrapper.findComponent(LedgerTable).props('rows').length).toBeGreaterThan(0)
+
+    await wrapper.findComponent(DatePicker).vm.$emit('update:modelValue', emptyWindow)
+    await flushPromises()
+
+    const ledger = wrapper.findComponent(LedgerTable)
+    expect(ledger.props('rows')).toEqual([])
+    expect(ledger.props('total')).toBe('$0.00')
+    expect(wrapper.text()).toContain('0 entries')
+    expect(wrapper.text()).toContain('Total movements')
+    wrapper.unmount()
+  })
+
+  it('[AC-US-ACCT-002-11] returns to a valid page when a filter shrinks the journal', async () => {
+    const wrapper = renderWithProviders(GeneralLedgerView, {
+      route: { query: { ledgerPage: '2', ledgerSize: '10' } }
+    })
+    await flushPromises()
+    expect(wrapper.findComponent(LedgerTable).props('rows').length).toBeGreaterThan(0)
+
+    // One account holds fewer entries than a full page, so an unreset page 2
+    // would leave the ledger empty while the badge still counts its entries.
+    const filter = wrapper.findComponent(AccountFilterSelect)
+    await filter.find('[data-test="account-filter-all"]').trigger('click')
+    await filter.findAll('[data-test^="account-filter-"]')[1]!.trigger('click')
+    await flushPromises()
+
+    expect(mockRoute.query.ledgerPage).toBeUndefined()
+    expect(wrapper.findComponent(LedgerTable).props('rows').length).toBeGreaterThan(0)
     wrapper.unmount()
   })
 })
