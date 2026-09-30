@@ -172,8 +172,10 @@ test.describe(
         // 3. One balanced entry per source operation.
         expect(duplicatedTransactions(opening.entries)).toEqual([])
         expect(unbalancedEntries(opening.entries)).toEqual([])
+        // Outside cash reaches the company twice: the treasury deposit, and the
+        // deposit that puts the week's wage within reach of Payroll.
         const deposits = opening.entries.filter((entry) => entry.label === 'Service revenue')
-        expect(deposits).toHaveLength(1)
+        expect(deposits).toHaveLength(2)
         const issuance = entryLabelled(opening.entries, 'Share issuance')
         const accrual = entryLabelled(opening.entries, 'Wage accrual')
         entryLabelled(opening.entries, 'Wage settlement')
@@ -181,9 +183,10 @@ test.describe(
         expect(entryAccounts(issuance)).toEqual(['SHERS To Be Issued', 'Investor Equity'])
         expect(entryAccounts(spend)).toContain('Operating Expense')
 
-        // Funding the company's own contracts moves cash between pockets only.
+        // Funding the company's own contracts moves cash between pockets only —
+        // once into Payroll for the wage, once into the Expense Account.
         const fundings = opening.entries.filter((entry) => entry.label === 'Treasury funding')
-        expect(fundings).toHaveLength(1)
+        expect(fundings).toHaveLength(2)
         for (const funding of fundings) {
           const counterAccounts = entryAccounts(funding).filter(
             (account) => account !== 'Transaction Fee Expense'
@@ -200,7 +203,7 @@ test.describe(
         }
 
         // 4. An entry traces back to its transaction and to the accounts it moved.
-        const deposit = deposits[0]!
+        const deposit = entriesForTransaction(opening.entries, depositHash)[0]!
         expect(deposit.txHash).toMatch(/^0x[0-9a-fA-F]{64}$/)
         expect(entriesForTransaction(opening.entries, deposit.txHash)).toHaveLength(1)
         expect(entryAccounts(deposit)).toEqual(['Cash — Bank', 'Service Revenue'])
