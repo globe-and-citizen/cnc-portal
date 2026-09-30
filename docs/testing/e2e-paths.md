@@ -48,7 +48,7 @@ The snapshot is now path-level. Its status is derived from the checklist below, 
 | ----- | ------------- | ------------------ | ---------- |
 | G0    | `E2E-PATH-00` | `9/9`              | ✅ Covered |
 | G1    | `E2E-PATH-01` | `21/21`            | ✅ Covered |
-| G1    | `E2E-PATH-02` | `8/15`             | 🟡 Partial |
+| G1    | `E2E-PATH-02` | `7/9`              | 🟡 Partial |
 | G2    | `E2E-PATH-03` | `7/9`              | 🟡 Partial |
 | G2    | `E2E-PATH-04` | `5/10`             | 🟡 Partial |
 | G2    | `E2E-PATH-05` | `4/6`              | 🟡 Partial |
@@ -194,18 +194,13 @@ prove several acceptance criteria; the precise `AC-*` mapping remains canonical 
   - Evidence: [integrated company tests](../../app/test/e2e/company/company.integrated.spec.ts) and
     [mocked browser variants](../../app/test/e2e/company/company.mocked.spec.ts).
 
-- `E2E-PATH-02` — Establish the company treasury
+- `E2E-PATH-02` — Fund the company Bank
   - Stories validated:
-    - `US-SAFE-001` — configure the company Safe;
     - `US-BANK-001` — fund the company Bank.
-  - Actors: company owner, then company member.
-  - Dependencies: an operational company from `E2E-PATH-01`, deployed Safe infrastructure, and funded local wallets.
+    - `US-BANK-003` — review the Bank position and history; post-reload assertions remain open in this path.
+  - Actors: company owner.
+  - Dependencies: an operational company from `E2E-PATH-01` and funded local wallets.
   - Main path:
-    - [x] `US-SAFE-001` Deploy a Safe through the UI with a real transaction.
-    - [ ] `US-SAFE-002` Verify the Safe code after deployment.
-    - [ ] `US-SAFE-002` Verify the Safe owner list after deployment.
-    - [ ] `US-SAFE-002` Verify the Safe threshold after deployment.
-    - [ ] `US-SAFE-002` Verify the backend Safe registration after deployment.
     - [x] `US-BANK-001` Open the current Bank from the same company.
     - [x] `US-BANK-001` Deposit the native token through the UI.
     - [x] `US-BANK-001` Verify the native-token deposit receipt.
@@ -213,15 +208,16 @@ prove several acceptance criteria; the precise `AC-*` mapping remains canonical 
     - [x] `US-BANK-001` Deposit a supported ERC-20 token through the UI.
     - [x] `US-BANK-001` Verify the ERC-20 deposit receipt.
     - [x] `US-BANK-001` Verify the ERC-20 balance change.
-    - [ ] `US-SAFE-002` Reload and verify that the Safe remains available.
     - [ ] `US-BANK-003` Reload and verify that the Bank balances remain available.
     - [ ] `US-BANK-003` Reload and verify that the Bank history remains available.
-  - Alternative branch: import an existing local Safe and verify its owners and threshold remain unchanged.
-  - Separate variants: rejected wallet requests, failed Safe registration, unsupported imports, and failed deposits.
-  - Expected result: the company has a registered Safe and a funded Bank backed by durable chain evidence.
-  - Status: Integrated partial — Safe deployment and Bank deposits, balances, and in-flow history run through the integrated stack. Complete
-    Safe read-back, post-reload persistence, import, and injected failure variants remain browser acceptance coverage.
-  - Evidence: [integrated Accounts test](../../app/test/e2e/accounts.integrated.spec.ts).
+  - Deferred scope: the complete Safe US/AC journey is outside this path. Separate Safe tests continue to prove the scenarios that are
+    currently executable, while incomplete Safe coverage must not gate this Bank path or count in its coverage ratio.
+  - Separate variants: rejected wallet requests and failed deposits remain browser acceptance coverage.
+  - Expected result: the company has a funded Bank backed by durable chain evidence; Safe readiness is handled separately.
+  - Status: Integrated partial — Bank deposits, balances, and in-flow history run through the integrated stack, while post-reload Bank
+    persistence remains to be proven. Safe coverage is tracked independently and does not gate this path.
+  - Evidence: [integrated Accounts test](../../app/test/e2e/accounts.integrated.spec.ts) for the Bank assertions; its separate Safe
+    assertions are not prerequisites for this path and remain tracked outside its coverage ratio.
 
 ## G2 — Company Administration and Member Access
 
