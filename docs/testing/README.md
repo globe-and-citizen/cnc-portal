@@ -4,24 +4,25 @@ This directory contains comprehensive testing documentation and guides for the C
 
 ## Contents
 
-- **[Integrated E2E Checklist](./e2e-paths.md)** - G0 through G7 integrated test groups and paths
+- **[Integrated E2E Paths](./e2e-paths.md)** - G0 through G8 business paths and current evidence status
 - **[Playwright E2E Fixture Catalogue](./e2e-fixtures.md)** - Shared fixtures, boundary rules, cleanup, and complete spec audit
+- **[Application E2E Guide](../../app/test/README.md)** - Playwright profiles, setup commands, and authoring conventions
 - **[Unit Testing Guide](./unit-testing.md)** - Guidelines for writing unit tests with Vue Test Utils and Vitest
-- **[Global Mocks Setup](./global-mocks-setup.md)** - Centralized mock definitions for TanStack Vue Query and Axios
+- **[Mock System](./MOCK_SYSTEM.md)** - Current centralized Vitest mocks and per-test overrides
 
 ## Quick Start
 
 ### Running Tests
 
 ```bash
-# Run all tests
-npm run test:unit
+# Run all app unit tests once
+npm run test:unit -- --run
 
 # Run tests in watch mode
 npm run test:watch
 
-# Run tests with coverage
-npm run test:coverage
+# Run unit tests with coverage
+npm run test:unit:coverage
 ```
 
 ### Browser acceptance and integrated E2E
@@ -49,7 +50,8 @@ npm run test:browser:acceptance
 
 Prepare each profile's services and fixtures before invoking Playwright. Browser acceptance first runs `@parallel-safe` simulated files on
 three workers, then runs chain-backed files on one worker and merges both reports. Run browser acceptance and integrated E2E separately so
-their reports remain distinct; only the integrated profile supplies E2E evidence.
+their reports remain distinct. Browser acceptance is evidence for browser-boundary behaviour; only the integrated profile is evidence for a
+full-stack business journey.
 
 CI runs independent `Browser acceptance` and `Integrated journeys` jobs, then exposes one lightweight `Full-stack E2E` aggregate check. The
 browser job prepares its own local node, contracts, and frontend. The integrated job prepares a separate local node, disposable database,
@@ -91,4 +93,4 @@ src/
 - [Vitest Documentation](https://vitest.dev/)
 - [Vue Test Utils](https://test-utils.vuejs.org/)
 - [TanStack Vue Query](https://tanstack.com/query/latest/docs/vue/overview)
-- [CNC Portal Copilot Instructions](./.github/copilot-instructions/)
+- [Testing Overview](../../.github/copilot-instructions/testing-overview.md)
