@@ -40,35 +40,35 @@ coverage; the latest execution result and artifacts belong in Playwright and CI 
 
 The snapshot is now path-level. Its status is derived from the checklist below, not from the result of the latest local or CI execution:
 
-- `Integrated covered` means that every current path-checklist assertion is `[x]` and an integrated evidence file is linked.
-- `Integrated partial` means that integrated evidence is linked but one or more current path-checklist assertions remain `[ ]`.
-- `Planned` means that no integrated business path is currently linked.
+- `✅ Covered` means that every current path-checklist assertion is `[x]` and an integrated evidence file is linked.
+- `🟡 Partial` means that integrated evidence is linked but one or more current path-checklist assertions remain `[ ]`.
+- `⬜ Planned` means that no integrated business path is currently linked.
 
-| Group | Path | Main-path status   | Evidence inventory | Remaining direct evidence                                                                               | Complementary evidence or AC boundary                                                                                           |
-| ----- | ---- | ------------------ | ------------------ | ------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| G0    | `00` | Integrated partial | `2/9`              | Frontend, backend, database, chain, shared-network, and second-member SIWE readiness assertions         | Owner SIWE path is linked; readiness checks remain technical prerequisites.                                                     |
-| G1    | `01` | Integrated covered | `21/21`            | None in the current main path                                                                           | Validation, member-address, failed-create, and wallet-rejection variants remain browser-focused.                                |
-| G1    | `02` | Integrated partial | `8/15`             | Safe code, owners, threshold, backend registration, and post-reload Safe/Bank state                     | Safe import and injected-failure variants remain browser acceptance coverage.                                                   |
-| G2    | `03` | Integrated partial | `7/9`              | Member workspace access and removed-member access revocation                                            | Mocked update variants remain separately linked.                                                                                |
-| G2    | `04` | Integrated partial | `5/10`             | Member hide/recover, owner-list isolation, archived-write freeze, and archived visibility changes       | Mocked lifecycle and visibility variants remain separately linked.                                                              |
-| G2    | `05` | Integrated partial | `4/6`              | Deleted-company endpoint unavailability and related-record removal                                      | Mocked deletion variants remain separately linked.                                                                              |
-| G3    | `06` | Integrated covered | `26/26`            | None in the current main path                                                                           | Focused validation, permission, and recovery variants remain separate.                                                          |
-| G3    | `07` | Integrated covered | `35/35`            | None in the current main path                                                                           | Focused validation and permission variants remain separate.                                                                     |
-| G3    | `08` | Integrated covered | `15/15`            | None in the current main path                                                                           | The migration-root ownership remains referenced to `US-CONTRACT-005`; focused migration guards remain separate.                 |
-| G4    | `09` | Planned            | `0/9`              | Complete publish-to-repayment integrated journey                                                        | Browser round setup is not integrated evidence.                                                                                 |
-| G4    | `10` | Planned            | `0/5`              | Complete stalled-round recovery integrated journey                                                      | No integrated stalled-round evidence is currently linked.                                                                       |
-| G5    | `11` | Integrated covered | `9/9`              | None in the current main path                                                                           | Broader wage-form validation remains lower-layer coverage.                                                                      |
-| G5    | `12` | Integrated covered | `8/8`              | None in the current main path                                                                           | Attachments and additional rejected edits remain separate coverage.                                                             |
-| G5    | `13` | Integrated partial | `20/22`            | Payroll Account summaries, activity, and filters in the integrated browser journey                      | Invalid-signature evidence is lower-layer; insufficient-funds coverage has its own integrated evidence.                         |
-| G6    | `14` | Integrated partial | `9/15`             | Blocked spend while deactivated, valid spend after reactivation, and post-reload balances/state/history | Browser and lower-layer negative variants remain separately linked.                                                             |
-| G7    | `15` | Planned            | `0/10`             | Complete cross-feature journal, ledger, statements, historical-generation, and reconstruction journey   | Lower-layer accounting evidence exists but is not an integrated path.                                                           |
-| G7    | `16` | Planned            | `0/7`              | Integrated classification, report-update, and export journey                                            | Deterministic valuation inputs remain a dependency; no integrated path is currently linked.                                     |
-| G8    | `17` | Integrated covered | `23/23`            | None in the current main path                                                                           | Five ACs remain without direct proof: `AC-US-EL-02-08`, `AC-US-EL-03-09`, `AC-US-EL-04-06`, `AC-US-EL-08-04`, `AC-US-EL-08-05`. |
+| Group | Path | Evidence inventory | Status     |
+| ----- | ---- | ------------------ | ---------- |
+| G0    | `00` | `2/9`              | 🟡 Partial |
+| G1    | `01` | `21/21`            | ✅ Covered |
+| G1    | `02` | `8/15`             | 🟡 Partial |
+| G2    | `03` | `7/9`              | 🟡 Partial |
+| G2    | `04` | `5/10`             | 🟡 Partial |
+| G2    | `05` | `4/6`              | 🟡 Partial |
+| G3    | `06` | `26/26`            | ✅ Covered |
+| G3    | `07` | `35/35`            | ✅ Covered |
+| G3    | `08` | `15/15`            | ✅ Covered |
+| G4    | `09` | `0/9`              | ⬜ Planned |
+| G4    | `10` | `0/5`              | ⬜ Planned |
+| G5    | `11` | `9/9`              | ✅ Covered |
+| G5    | `12` | `8/8`              | ✅ Covered |
+| G5    | `13` | `20/22`            | 🟡 Partial |
+| G6    | `14` | `9/15`             | 🟡 Partial |
+| G7    | `15` | `0/10`             | ⬜ Planned |
+| G7    | `16` | `0/7`              | ⬜ Planned |
+| G8    | `17` | `23/23`            | ✅ Covered |
 
-The detailed path sections below own the scope and remaining work for each row. `Evidence inventory` counts the current checklist
-assertions, not test cases or passing executions. A covered main path does not imply that every acceptance criterion of its linked user
-stories is complete; the canonical feature README remains the authority for AC-level status. The generated acceptance-coverage reports
-remain a static inventory and must not be used as a last-run status board.
+The detailed path sections below own the remaining work for each row. `Evidence inventory` counts the current checklist assertions, not test
+cases or passing executions. A `✅ Covered` path does not imply that every acceptance criterion of its linked user stories is complete; the
+canonical feature README remains the authority for AC-level status. The generated acceptance-coverage reports remain a static inventory and
+must not be used as a last-run status board.
 
 The `[x]` and `[ ]` markers in the detailed checklists are an evidence inventory: `[x]` means that the linked test directly proves the line,
 while `[ ]` means that the direct evidence is still missing. They are not a latest-run result. Use the `Status` line for the coverage
