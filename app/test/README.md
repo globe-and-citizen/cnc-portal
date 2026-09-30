@@ -2,14 +2,11 @@
 
 End-to-end (E2E) tests for the CNC Portal, using Playwright with an in-browser **wagmi mock connector** to exercise Web3 wallet flows.
 
-## Why a mock connector instead of MetaMask
+## Wallet model
 
-Driving the real MetaMask extension (e.g. via Synpress) is slow and brittle: extension selectors break on every MetaMask release, popup
-orchestration adds 30-60s per scenario, and CI becomes flaky.
-
-Instead, when the app is started with `VITE_E2E=true`, `wagmi.config.ts` registers `e2eMockConnector` (`src/e2e/mockConnector.ts`) — a
-connector that wraps a viem local account (Hardhat test account #0). It handles `connect`, `switchChain` and message signing **in-page**, so
-Playwright drives the UI exactly like a real user, with no extension and no popups.
+When the app is started with `VITE_E2E=true`, `wagmi.config.ts` registers `e2eMockConnector` (`src/e2e/mockConnector.ts`) — a connector that
+wraps a viem local account (Hardhat test account #0). It handles `connect`, `switchChain` and message signing in-page, so Playwright drives
+the UI through the same product actions without requiring a browser extension or wallet popups.
 
 Message signing is done locally with the test private key. Playwright never starts the frontend, backend, database, or Hardhat node. The
 developer or CI must prepare the required stack before running a suite.

@@ -42,8 +42,6 @@
     "coverage:e2e:report": "nyc report",
     "test": "playwright test --ui",
     "test:debug": "playwright test --debug",
-    "test:build:cache": "synpress --headless",
-    "test:build:cache:force": "synpress --headless --force",
     "test:headless": "HEADLESS=true playwright test",
     "coverage": "npx serve coverage/",
     "prod": "node dist/index.js",
@@ -107,7 +105,6 @@
   "devDependencies": {
     "@pinia/testing": "^1.0.3",
     "@playwright/test": "1.48.2",
-    "@synthetixio/synpress": "^4.1.1",
     "@tsconfig/node20": "^20.1.2",
     "@types/jsdom": "^27.0.0",
     "@types/node": "^24.10.1",

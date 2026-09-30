@@ -21,7 +21,7 @@ Comprehensive guides for developing features in the CNC Portal project.
 
 - **[Testing Overview](../testing/)** - Main testing guide
   - [Unit Testing](../testing/unit-testing.md) - How to write unit tests
-  - [Global Mocks Setup](../testing/global-mocks-setup.md) - Mock system documentation
+  - [Mock System](../testing/MOCK_SYSTEM.md) - Current centralized mock system
 
 ### Code Standards
 
@@ -59,7 +59,7 @@ Comprehensive guides for developing features in the CNC Portal project.
    npm run test:watch
 
    # Coverage report
-   npm run test:coverage
+   npm run test:unit:coverage
    ```
 
 4. **Check Code Quality**
@@ -104,7 +104,7 @@ src/
 
 ### Adding a New Query Hook
 
-See [Global Mocks Setup Guide](../testing/global-mocks-setup.md#adding-new-mocks)
+See the [Mock System guide](../testing/MOCK_SYSTEM.md#adding-a-global-mock) and the [test utilities guide](../../app/src/tests/README.md).
 
 ### Adding a New Component
 
