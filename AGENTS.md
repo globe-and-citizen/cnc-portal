@@ -10,6 +10,19 @@ Operational guidance for AI coding agents working in this repository. Human cont
 2. Work in the subproject you touch. This monorepo has no workspace tool: each subproject owns its `package.json` and dependencies.
 3. Read the specialised guide for the affected area. Do not treat this file as a replacement for the implementation guides.
 
+## Agent planning scratchpad
+
+- At the start of every agent session, read `reports/planning.md` when it exists. It is a local, Git-ignored work log for commitments made
+  during agent conversations; never stage or commit it.
+- When a concrete action is agreed during a conversation, add it to `Actions ouvertes` with a priority, status, next action, and concise
+  context or evidence. Keep statuses current: `À faire`, `En cours`, `Bloqué`, or `À vérifier`.
+- Do not treat the scratchpad as canonical product or implementation documentation. Durable decisions, acceptance criteria, issue status,
+  and delivery evidence belong in their canonical documentation or GitHub issue/PR.
+- When an action is verified as complete, move it to `Historique terminé` with the completion date, result, and evidence. Never delete a
+  completed action automatically; preserve the trace unless the user explicitly requests an archival purge.
+- At the end of a task, update the scratchpad so unfinished work and blockers remain visible for the next agent. Do not mark an item
+  complete without executable, CI, or explicit manual evidence appropriate to the work.
+
 ## Repository skills
 
 Task-specific workflows are versioned under `.agents/skills/`. Use only the one that matches the work:

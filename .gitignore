@@ -60,6 +60,9 @@ app/.env.production
 # Generated acceptance-criterion coverage reports (local only)
 /reports/acceptance-coverage/
 
+# Local agent planning scratchpad (never committed)
+/reports/planning.md
+
 # Generated autonomous-agent audit reports (published as workflow artifacts or GitHub issues)
 /reports/agent-audits/
 
