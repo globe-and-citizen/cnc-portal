@@ -46,7 +46,7 @@ The snapshot is now path-level. Its status is derived from the checklist below, 
 
 | Group | Path          | Evidence inventory | Status     |
 | ----- | ------------- | ------------------ | ---------- |
-| G0    | `E2E-PATH-00` | `2/9`              | 🟡 Partial |
+| G0    | `E2E-PATH-00` | `9/9`              | ✅ Covered |
 | G1    | `E2E-PATH-01` | `21/21`            | ✅ Covered |
 | G1    | `E2E-PATH-02` | `8/15`             | 🟡 Partial |
 | G2    | `E2E-PATH-03` | `7/9`              | 🟡 Partial |
@@ -136,20 +136,21 @@ prove several acceptance criteria; the precise `AC-*` mapping remains canonical 
 - `E2E-PATH-00` — Validate the externally prepared test stack
   - Stories validated: none; this path only proves that product paths can start.
   - Required checks:
-    - [ ] `TECH-READINESS` Confirm the frontend health check succeeds.
-    - [ ] `TECH-READINESS` Confirm the backend health check succeeds.
-    - [ ] `TECH-READINESS` Confirm the migrated database is reachable through the backend.
-    - [ ] `TECH-READINESS` Confirm the local node uses the expected chain.
-    - [ ] `TECH-READINESS` Confirm the local node contains the required deployed infrastructure.
-    - [ ] `TECH-READINESS` Confirm the browser and backend target the same local chain.
+    - [x] `TECH-READINESS` Confirm the frontend health check succeeds.
+    - [x] `TECH-READINESS` Confirm the backend health check succeeds.
+    - [x] `TECH-READINESS` Confirm the migrated database is reachable through the backend.
+    - [x] `TECH-READINESS` Confirm the local node uses the expected chain.
+    - [x] `TECH-READINESS` Confirm the local node contains the required deployed infrastructure.
+    - [x] `TECH-READINESS` Confirm the browser and backend target the same local chain.
     - [x] `US-AUTH-001` Authenticate the owner through SIWE.
     - [x] `US-AUTH-001` Verify the real stack returns the Companies page after authentication.
-    - [ ] `US-AUTH-001` Authenticate a second member through SIWE as part of the readiness path.
+    - [x] `US-AUTH-001` Authenticate a second E2E actor through SIWE as part of the readiness path.
   - Expected result: every required boundary is ready before a functional path begins.
-  - Status: Integrated partial — real SIWE authentication is executable, while explicit frontend/backend/database/chain readiness assertions
-    remain to be added.
+  - Status: Integrated covered — the linked readiness test verifies the frontend, backend, database, local chain, deployed infrastructure,
+    cross-layer chain identity, and two real SIWE actors before functional paths run.
   - Owning stories: `US-AUTH-001`; `US-AUTH-002` and `US-AUTH-003` remain outside this client path.
-  - Evidence: [integrated authentication test](../../app/test/e2e/authentication.integrated.spec.ts).
+  - Evidence: [integrated technical readiness test](../../app/test/e2e/readiness.integrated.spec.ts) and
+    [integrated authentication test](../../app/test/e2e/authentication.integrated.spec.ts).
 
 ## G1 — Company Onboarding and Treasury Readiness
 

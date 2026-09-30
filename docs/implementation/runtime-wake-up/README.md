@@ -1,8 +1,8 @@
 # Runtime Wake-Up
 
-**Scope:** Non-blocking frontend health pings and deployment-time database readiness
+**Scope:** Non-blocking frontend health pings, dependency readiness, and deployment-time database readiness
 
-**Last verified:** 2026-08-21
+**Last verified:** 2026-09-30
 
 **Consumers:** The Vue client, Nuxt dashboard, backend deployment workflow, and every journey that depends on the backend being responsive
 after an idle period
@@ -20,13 +20,18 @@ flowchart LR
   dashboardQuery --> health
   health --> backend[Backend process]
 
+  readiness[GET /api/health/readiness] --> backend
+  readiness --> database
+  readiness --> chain[(Configured chain)]
+
   deploy[Deployment workflow] --> wakeScript[Database wake script]
   wakeScript --> database[(Database)]
 ```
 
-The public health endpoint reports backend process availability and intentionally performs no database query. Database readiness is handled
-separately by a deployment script that connects, executes a minimal query, retries failures, and exits non-zero after the retry budget is
-exhausted.
+The public health endpoint reports backend process availability and intentionally performs no database query. The public readiness endpoint
+checks database reachability and the chain observed by the backend against `CHAIN_ID`, returning `503` when either dependency is unavailable
+or mismatched. Database wake-up remains handled separately by a deployment script that connects, executes a minimal query, retries failures,
+and exits non-zero after the retry budget is exhausted.
 
 ## Invariants
 
@@ -34,6 +39,8 @@ exhausted.
 - Client and dashboard queries cache the result for three minutes and do not poll automatically.
 - Frontend failures are logged at debug level and remain non-critical.
 - The health endpoint exposes service status without database internals.
+- The readiness endpoint exposes dependency statuses and chain identifiers without database or RPC error details.
+- Readiness is successful only when the database query succeeds and the backend observes the configured chain.
 - Deployment-time database wake-up disconnects between failed attempts to avoid connection leaks.
 
 ## Failure Behaviour
@@ -52,6 +59,7 @@ exhausted.
 - [Dashboard app integration](../../../dashboard/app/app.vue)
 - [Health controller](../../../backend/src/controllers/healthController.ts)
 - [Health route](../../../backend/src/routes/healthRoutes.ts)
+- [Health route tests](../../../backend/src/controllers/__tests__/healthController.test.ts)
 - [Database wake script](../../../backend/scripts/wake-db.ts)
 
 ## Related Documentation
