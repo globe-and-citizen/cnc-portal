@@ -126,7 +126,8 @@ test.describe(
      */
     test('reconciles source operations, labels an external withdrawal and exports the reviewed books', async ({
       browser,
-      page
+      page,
+      teamFeatureOverride
     }) => {
       await useWallet(page, E2E_OWNER_PRIVATE_KEY)
       const memberContext = await browser.newContext()
@@ -141,6 +142,9 @@ test.describe(
       try {
         await page.locator('[data-test="skip-safe-setup-button"]').click()
         await addRealCompanyMember(page, teamId, E2E_MEMBER)
+        // The wage the books settle belongs to a completed week, which the
+        // default submit restriction refuses.
+        await teamFeatureOverride(teamId, 'SUBMIT_RESTRICTION', 'disabled')
 
         // 1. A representative set of operations, each produced through the product.
         const depositHash = await depositUsdcToBank(page, teamId, '10')
