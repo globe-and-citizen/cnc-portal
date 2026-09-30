@@ -53,9 +53,9 @@ coverage; the latest execution result and artifacts belong in Playwright and CI 
 The detailed path sections below own the scope and remaining work for each row. The generated acceptance-coverage reports remain a static
 inventory and must not be used as a last-run status board.
 
-The `[ ]` and `[x]` markers in the detailed checklists describe planned evidence obligations recorded for each path. They are not a test run
-result. Use the `Status` line for the current coverage classification and the linked Playwright or CI report for the result of a particular
-execution.
+The `[x]` and `[ ]` markers in the detailed checklists are an evidence inventory: `[x]` means that the linked test directly proves the line,
+while `[ ]` means that the direct evidence is still missing. They are not a latest-run result. Use the `Status` line for the coverage
+classification and the linked Playwright or CI report for the result of a particular execution.
 
 ## Integration Boundary
 
@@ -120,7 +120,8 @@ execution.
     - [ ] Confirm the migrated database is reachable through the backend.
     - [ ] Confirm the local node uses the expected chain and contains the required deployed infrastructure.
     - [ ] Confirm the browser and backend target the same local chain.
-    - [ ] Authenticate the owner and member through SIWE.
+    - [x] Authenticate the owner through SIWE and verify the real stack returns the Companies page.
+    - [ ] Authenticate a second member through SIWE as part of the readiness path.
   - Expected result: every required boundary is ready before a functional path begins.
   - Status: Integrated partial — real SIWE authentication is executable, while explicit frontend/backend/database/chain readiness assertions
     remain to be added.
@@ -137,16 +138,16 @@ execution.
   - Actors: company creator and owner; the owner also satisfies the member role for the list journey.
   - Dependencies: G0 and predeployed Officer infrastructure.
   - Main path:
-    - [ ] Sign in through SIWE.
-    - [ ] Enter company metadata and submit it through the real backend.
-    - [ ] Verify the company, owner, and creator membership persisted.
-    - [ ] Enter the SHER name and symbol.
-    - [ ] Submit a real Officer deployment transaction.
-    - [ ] Verify the receipt, Officer, child contracts, and Investor metadata on-chain.
-    - [ ] Verify the backend registered the Officer address and deployment metadata.
-    - [ ] Continue past the optional Safe step.
-    - [ ] Find the company in the Companies list and reopen its workspace.
-    - [ ] Verify its metadata, members, lifecycle state, and feature navigation.
+    - [x] Sign in through SIWE.
+    - [x] Enter company metadata and submit it through the real backend.
+    - [x] Verify the company, owner, and creator membership persisted.
+    - [x] Enter the SHER name and symbol.
+    - [x] Submit a real Officer deployment transaction.
+    - [x] Verify the receipt, Officer, child contracts, and Investor metadata on-chain.
+    - [x] Verify the backend registered the Officer address and deployment metadata.
+    - [x] Continue past the optional Safe step.
+    - [x] Find the company in the Companies list and reopen its workspace.
+    - [x] Verify its metadata, members, lifecycle state, and feature navigation.
   - Separate variants:
     - required-field and member-address validation;
     - wallet rejection or reverted deployment;
@@ -165,11 +166,11 @@ execution.
   - Actors: company owner, then company member.
   - Dependencies: an operational company from `E2E-PATH-01`, deployed Safe infrastructure, and funded local wallets.
   - Main path:
-    - [ ] Deploy a Safe through the UI with a real transaction.
-    - [ ] Verify its code, owner list, threshold, and backend registration.
-    - [ ] Open the current Bank from the same company.
-    - [ ] Deposit the native token and verify its receipt and balance change.
-    - [ ] Deposit a supported ERC-20 token and verify its receipt and balance change.
+    - [x] Deploy a Safe through the UI with a real transaction.
+    - [ ] Verify its code, owner list, threshold, and backend registration as one complete read-back.
+    - [x] Open the current Bank from the same company.
+    - [x] Deposit the native token and verify its receipt and balance change.
+    - [x] Deposit a supported ERC-20 token and verify its receipt and balance change.
     - [ ] Reload and verify that the Safe, balances, and Bank history remain available.
   - Alternative branch: import an existing local Safe and verify its owners and threshold remain unchanged.
   - Separate variants: rejected wallet requests, failed Safe registration, unsupported imports, and failed deposits.
@@ -187,10 +188,11 @@ execution.
   - Actors: company owner and invited member.
   - Dependencies: a persisted company from G1 and a second authenticated portal user.
   - Main path:
-    - [ ] Update the company name and description and verify persistence in the workspace and list.
-    - [ ] Add the second user as a member.
+    - [x] Update the company name and description and verify persistence in the workspace and list.
+    - [x] Add the second user as a member.
     - [ ] Sign in as that member and verify workspace access.
-    - [ ] Remove the member and verify the membership and access changes persist.
+    - [x] Remove the member and verify the membership row changes persist.
+    - [ ] Verify that the removed member can no longer access the workspace.
   - Separate variants: invalid metadata, existing members, owner removal, non-owner writes, archived-company writes, and rejected requests.
   - Expected result: company identity and membership remain consistent for both actors.
   - Status: Integrated partial — metadata and membership mutations share one integrated path, while second-user access remains planned.
@@ -206,10 +208,10 @@ execution.
   - Main path:
     - [ ] Hide and recover the company from the member's own list.
     - [ ] Verify the owner's list is unaffected by the member's visibility preference.
-    - [ ] Archive the company as owner.
-    - [ ] Verify default-list exclusion and archived-list recovery.
+    - [x] Archive the company as owner.
+    - [x] Verify default-list exclusion and archived-list recovery.
     - [ ] Verify company writes are frozen while personal visibility remains changeable.
-    - [ ] Restore the company and verify its normal actions return.
+    - [x] Restore the company and verify its normal actions return.
   - Separate variants: non-member visibility changes, non-owner lifecycle changes, and rejected archived writes.
   - Expected result: personal visibility and company lifecycle remain distinct and recoverable.
   - Status: Integrated partial — archive/restore and hide/show share one integrated path, while cross-wallet isolation remains planned.
@@ -223,8 +225,8 @@ execution.
   - Actor: company owner.
   - Dependencies: a disposable company whose preceding lifecycle evidence has already been collected.
   - Main path:
-    - [ ] Cancel once and verify the company remains available.
-    - [ ] Confirm deletion and verify the Companies list is restored.
+    - [x] Cancel once and verify the company remains available.
+    - [x] Confirm deletion and verify the Companies list is restored.
     - [ ] Verify the company endpoint returns unavailable and related records are removed.
   - Separate variants: non-owner and rejected deletion.
   - Expected result: the deleted workspace cannot be reopened or restored.
@@ -413,10 +415,12 @@ execution.
   - Actors: Expense Account owner and approved recipient.
   - Dependencies: an operational company, funded Expense Account, and both wallets.
   - Main path:
-    - [ ] Create and persist a correctly scoped signed approval.
-    - [ ] Spend within the approval and verify recipient and contract balances.
-    - [ ] Deactivate the approval and verify spending is blocked.
-    - [ ] Reactivate it and complete another valid spend.
+    - [x] Create and persist a correctly scoped signed approval.
+    - [x] Spend within the approval and verify recipient and contract balances.
+    - [x] Deactivate the approval and verify its disabled state.
+    - [ ] Attempt spending while the approval is deactivated and verify that it is blocked.
+    - [x] Reactivate the approval and verify its active state.
+    - [ ] Complete another valid spend after reactivation.
     - [ ] Reload balances, approval state, and transaction history.
   - Separate variants: overspending, invalid signatures, unauthorized actions, and insufficient funds.
   - Expected result: one allowance remains auditable across its complete active and inactive lifecycle.
