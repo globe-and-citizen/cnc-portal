@@ -263,7 +263,6 @@ export default [
       '**/dist-widget/**',
       '**/coverage/**',
       '**/playwright-report/**',
-      '**/.cache-synpress/**',
       '**/test-results/**'
     ]
   },
