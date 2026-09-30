@@ -44,26 +44,26 @@ The snapshot is now path-level. Its status is derived from the checklist below, 
 - `🟡 Partial` means that integrated evidence is linked but one or more current path-checklist assertions remain `[ ]`.
 - `⬜ Planned` means that no integrated business path is currently linked.
 
-| Group | Path | Evidence inventory | Status     |
-| ----- | ---- | ------------------ | ---------- |
-| G0    | `00` | `2/9`              | 🟡 Partial |
-| G1    | `01` | `21/21`            | ✅ Covered |
-| G1    | `02` | `8/15`             | 🟡 Partial |
-| G2    | `03` | `7/9`              | 🟡 Partial |
-| G2    | `04` | `5/10`             | 🟡 Partial |
-| G2    | `05` | `4/6`              | 🟡 Partial |
-| G3    | `06` | `26/26`            | ✅ Covered |
-| G3    | `07` | `35/35`            | ✅ Covered |
-| G3    | `08` | `15/15`            | ✅ Covered |
-| G4    | `09` | `0/9`              | ⬜ Planned |
-| G4    | `10` | `0/5`              | ⬜ Planned |
-| G5    | `11` | `9/9`              | ✅ Covered |
-| G5    | `12` | `8/8`              | ✅ Covered |
-| G5    | `13` | `20/22`            | 🟡 Partial |
-| G6    | `14` | `9/15`             | 🟡 Partial |
-| G7    | `15` | `0/10`             | ⬜ Planned |
-| G7    | `16` | `0/7`              | ⬜ Planned |
-| G8    | `17` | `23/23`            | ✅ Covered |
+| Group | Path          | Evidence inventory | Status     |
+| ----- | ------------- | ------------------ | ---------- |
+| G0    | `E2E-PATH-00` | `2/9`              | 🟡 Partial |
+| G1    | `E2E-PATH-01` | `21/21`            | ✅ Covered |
+| G1    | `E2E-PATH-02` | `8/15`             | 🟡 Partial |
+| G2    | `E2E-PATH-03` | `7/9`              | 🟡 Partial |
+| G2    | `E2E-PATH-04` | `5/10`             | 🟡 Partial |
+| G2    | `E2E-PATH-05` | `4/6`              | 🟡 Partial |
+| G3    | `E2E-PATH-06` | `26/26`            | ✅ Covered |
+| G3    | `E2E-PATH-07` | `35/35`            | ✅ Covered |
+| G3    | `E2E-PATH-08` | `15/15`            | ✅ Covered |
+| G4    | `E2E-PATH-09` | `0/9`              | ⬜ Planned |
+| G4    | `E2E-PATH-10` | `0/5`              | ⬜ Planned |
+| G5    | `E2E-PATH-11` | `9/9`              | ✅ Covered |
+| G5    | `E2E-PATH-12` | `8/8`              | ✅ Covered |
+| G5    | `E2E-PATH-13` | `20/22`            | 🟡 Partial |
+| G6    | `E2E-PATH-14` | `9/15`             | 🟡 Partial |
+| G7    | `E2E-PATH-15` | `0/10`             | ⬜ Planned |
+| G7    | `E2E-PATH-16` | `0/7`              | ⬜ Planned |
+| G8    | `E2E-PATH-17` | `23/23`            | ✅ Covered |
 
 The detailed path sections below own the remaining work for each row. `Evidence inventory` counts the current checklist assertions, not test
 cases or passing executions. A `✅ Covered` path does not imply that every acceptance criterion of its linked user stories is complete; the
