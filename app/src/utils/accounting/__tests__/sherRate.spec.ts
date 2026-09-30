@@ -71,6 +71,15 @@ describe('makeSherUsdRate (per-date timeline — freezes a leg at its own date)'
     expect(rate(new Date(200 * 1000))).toBeCloseTo(0.2)
   })
 
+  it('[AC-US-ACCT-005-10] uses the first update’s old multiplier before the change', () => {
+    const timeline = buildSherMultiplierTimeline([update(200, 4, 5), update(300, 5, 6)], undefined)
+    const rate = makeSherUsdRate(timeline)!
+
+    expect(rate(new Date(150 * 1000))).toBeCloseTo(0.25)
+    expect(rate(new Date(250 * 1000))).toBeCloseTo(0.2)
+    expect(rate(new Date(350 * 1000))).toBeCloseTo(1 / 6)
+  })
+
   it('defends dates before the first change against a malformed oldMultiplier', () => {
     const rows = [{ ...update(100, 1, 4), oldMultiplier: '' }]
     const rate = makeSherUsdRate(buildSherMultiplierTimeline(rows, undefined))!

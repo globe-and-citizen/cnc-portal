@@ -1,8 +1,13 @@
-import { expect, test } from '../fixtures'
+import { expect, test } from '../fixtures/integrated'
 import { E2E_OWNER_PRIVATE_KEY } from '../e2e-chain'
 import { useWallet } from '../e2e-page'
 import { createOperationalCompany, deleteCompanyThroughUi } from '../company/real-company-page'
-import { entryAccounts, usdValue } from './accounting-books'
+import {
+  entriesForTransaction,
+  entryAccounts,
+  normalizedLedger,
+  usdValue
+} from './accounting-books'
 import {
   expectCompleteBooks,
   openAccounting,
@@ -39,7 +44,7 @@ test.describe(
         await page.locator('[data-test="skip-safe-setup-button"]').click()
 
         // The first generation books its own treasury deposit.
-        await depositUsdcToBank(page, teamId, '4')
+        const firstDepositHash = await depositUsdcToBank(page, teamId, '4')
         await openAccounting(page, teamId, 'ledger', WHOLE_BOOK)
         const firstGeneration = await readLedger(page)
         expect(firstGeneration.entries).toHaveLength(1)
@@ -47,7 +52,7 @@ test.describe(
 
         // A second generation of contracts, then an operation on the new Bank.
         await redeployContractsThroughUi(page, teamId)
-        await depositUsdcToBank(page, teamId, '6')
+        const secondDepositHash = await depositUsdcToBank(page, teamId, '6')
 
         await openAccounting(page, teamId, 'ledger', WHOLE_BOOK)
         await expectCompleteBooks(page)
@@ -64,6 +69,12 @@ test.describe(
         const hashes = consolidated.entries.map((entry) => entry.txHash)
         expect(new Set(hashes).size).toBe(2)
         expect(hashes).toContain(firstGeneration.entries[0]!.txHash)
+        for (const hash of [firstDepositHash, secondDepositHash]) {
+          expect(entriesForTransaction(consolidated.entries, hash)).toHaveLength(1)
+          expect(entriesForTransaction(consolidated.entries, hash)[0]?.label).toBe(
+            'Service revenue'
+          )
+        }
 
         // Each deployment keeps its own Trial Balance row and redeploy hint.
         await openAccounting(page, teamId, 'trial')
@@ -78,7 +89,7 @@ test.describe(
         await openAccounting(page, teamId, 'ledger', WHOLE_BOOK)
         const rebuilt = await readLedger(page)
         expect(rebuilt.total).toBe(consolidated.total)
-        expect(rebuilt.entries.map((entry) => entry.txHash)).toEqual(hashes)
+        expect(normalizedLedger(rebuilt.entries)).toEqual(normalizedLedger(consolidated.entries))
       } finally {
         if (!page.isClosed()) {
           await deleteCompanyThroughUi(page, teamId, company.team.name)

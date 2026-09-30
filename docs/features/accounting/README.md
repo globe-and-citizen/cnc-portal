@@ -312,7 +312,9 @@ Each acceptance criterion references one reusable strategy instead of repeating 
 - [x] `AC-US-ACCT-005-08` Current Investor identity takes precedence over `InvestorV1`; the legacy contract remains the fallback when no
       current Investor exists.
 - [x] `AC-US-ACCT-005-09` Duplicate generation events are removed by their on-chain identity.
-- [x] `AC-US-ACCT-005-10` Historical Community Credit terms and SHER valuation inputs resolve from their owning generation.
+- [x] `AC-US-ACCT-005-10` Historical Community Credit terms resolve from their owning FixedReturn generation; SHER valuation replays
+      timestamped multiplier changes and uses the current router's constructor multiplier when no change event exists. Resolving the
+      constructor multiplier of a retired router with no change event is outside this criterion.
 
 #### Edge & Error Cases
 
@@ -337,6 +339,14 @@ Each acceptance criterion references one reusable strategy instead of repeating 
 | `AC-US-ACCT-005-11`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
 | `AC-US-ACCT-005-12`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
 | `AC-US-ACCT-005-13`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
+
+**Representative regression tests for `AC-US-ACCT-005-10`:**
+[Community Credit generation terms](../../../app/src/utils/accounting/__tests__/fixedReturn.interest.spec.ts),
+[SHER change history](../../../app/src/utils/accounting/__tests__/sherRate.spec.ts), and
+[the current router's constructor-time SHER multiplier](../../../app/src/utils/accounting/__tests__/assemble.sherMultiplier.spec.ts). The
+Community Credit mapper keys each offer's terms by its lowercase FixedReturn address and offer id, because a live read from the current
+deployment cannot describe retired offers. SHER valuation uses timestamped multiplier changes, with the constructor value covered before the
+first change and for the current router when no change event exists.
 
 **Dependencies:** Contract deployment history and US-ACCT-001
 

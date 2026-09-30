@@ -372,7 +372,7 @@ function interestLegs(input: {
  */
 function unvaluedOfferMemo(event: CreditEvent): JournalEntryDraft {
   return makeJournalEntryDraft({
-    id: `credit-unvalued-${event.offerId}`,
+    id: `credit-unvalued-${event.contractAddress?.toLowerCase() ?? 'unknown'}-${event.offerId}`,
     sourceContract: event.contractAddress,
     timestamp: event.timestamp,
     useCase: 'UC-CREDIT-01',

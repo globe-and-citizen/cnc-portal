@@ -32,6 +32,26 @@ export interface LedgerView {
   total: string
 }
 
+/** Stable comparison of every displayed entry and line after the books rebuild. */
+export function normalizedLedger(entries: readonly LedgerEntry[]) {
+  return entries.map((entry) => ({
+    label: entry.label,
+    txHash: entry.txHash.toLowerCase(),
+    lines: entry.lines.map((line) => ({
+      date: line.date,
+      action: line.action,
+      txHash: line.txHash.toLowerCase(),
+      activity: line.activity,
+      account: line.account,
+      currency: line.currency,
+      quantity: line.quantity,
+      rate: line.rate,
+      debit: line.dr,
+      credit: line.cr
+    }))
+  }))
+}
+
 /** A displayed amount as a number; an absent or em-dash cell is zero. */
 export function usdValue(text: string): number {
   if (!text || text === '—') return 0

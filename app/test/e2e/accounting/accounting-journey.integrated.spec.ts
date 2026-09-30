@@ -1,4 +1,4 @@
-import { expect, test } from '../fixtures'
+import { expect, test } from '../fixtures/integrated'
 import {
   E2E_MEMBER,
   E2E_MEMBER_PRIVATE_KEY,
@@ -18,6 +18,7 @@ import {
   entriesForTransaction,
   entryAccounts,
   entryTotals,
+  normalizedLedger,
   sumUsd,
   unbalancedEntries,
   usdValue,
@@ -142,10 +143,10 @@ test.describe(
         await addRealCompanyMember(page, teamId, E2E_MEMBER)
 
         // 1. A representative set of operations, each produced through the product.
-        await depositUsdcToBank(page, teamId, '10')
+        const depositHash = await depositUsdcToBank(page, teamId, '10')
         await issueSharesToOwner(page, teamId, E2E_OWNER, '30')
         await payOneWeeklyClaim(page, memberPage, teamId)
-        await fundContractFromBank(page, teamId, 'ExpenseAccountEIP712', '2')
+        const funding = await fundContractFromBank(page, teamId, 'ExpenseAccountEIP712', '2')
         await approveExpenseSpending(page, teamId, '2')
         await spendFromExpenseAccount(memberPage, teamId, '1')
 
@@ -168,7 +169,7 @@ test.describe(
         expect(duplicatedTransactions(opening.entries)).toEqual([])
         expect(unbalancedEntries(opening.entries)).toEqual([])
         const deposits = opening.entries.filter((entry) => entry.label === 'Service revenue')
-        expect(deposits.length).toBeGreaterThanOrEqual(1)
+        expect(deposits).toHaveLength(1)
         const issuance = entryLabelled(opening.entries, 'Share issuance')
         const accrual = entryLabelled(opening.entries, 'Wage accrual')
         entryLabelled(opening.entries, 'Wage settlement')
@@ -178,12 +179,20 @@ test.describe(
 
         // Funding the company's own contracts moves cash between pockets only.
         const fundings = opening.entries.filter((entry) => entry.label === 'Treasury funding')
-        expect(fundings.length).toBeGreaterThanOrEqual(1)
+        expect(fundings).toHaveLength(1)
         for (const funding of fundings) {
           const counterAccounts = entryAccounts(funding).filter(
             (account) => account !== 'Transaction Fee Expense'
           )
           expect(counterAccounts.every((account) => account.startsWith('Cash — '))).toBe(true)
+        }
+
+        for (const [txHash, label] of [
+          [depositHash, 'Service revenue'],
+          [funding.txHash, 'Treasury funding']
+        ] as const) {
+          expect(entriesForTransaction(opening.entries, txHash)).toHaveLength(1)
+          expect(entriesForTransaction(opening.entries, txHash)[0]?.label).toBe(label)
         }
 
         // 4. An entry traces back to its transaction and to the accounts it moved.
@@ -234,9 +243,7 @@ test.describe(
         await openAccounting(page, teamId, 'ledger', WHOLE_BOOK)
         const rebuilt = await readLedger(page)
         expect(rebuilt.total).toBe(opening.total)
-        expect(rebuilt.entries.map((entry) => [entry.label, entry.txHash])).toEqual(
-          opening.entries.map((entry) => [entry.label, entry.txHash])
-        )
+        expect(normalizedLedger(rebuilt.entries)).toEqual(normalizedLedger(opening.entries))
 
         // 8. A treasury movement the portal cannot attribute.
         await withdrawToExternalAddress(page, teamId, E2E_NEW_SIGNER, '1')

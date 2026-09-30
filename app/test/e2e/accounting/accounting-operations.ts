@@ -2,8 +2,8 @@
 // through the product exactly as a company would, never seeded, so the books are
 // verified against behaviour the portal actually performed.
 import { expect, type Page } from '@playwright/test'
-import type { Address } from 'viem'
-import { E2E_MEMBER } from '../e2e-chain'
+import { parseAbiItem, parseUnits, type Address, type Hex } from 'viem'
+import { E2E_MEMBER, E2E_USDC_ADDRESS, publicClient } from '../e2e-chain'
 import { dialogAmount, openAccountFromSidebar, selectToken } from '../e2e-page'
 import { chooseApprovalDate } from '../expense/expense-page'
 import { issueShares, openRealShareholderManagement } from '../shareholder/shareholder-page'
@@ -30,6 +30,13 @@ async function openSettledBank(page: Page, teamId: string): Promise<void> {
   )
 }
 
+async function currentBankAddress(page: Page): Promise<Address> {
+  const text = await page.locator('[data-test="bank-contract-address"]').textContent()
+  const address = text?.match(/0x[a-fA-F0-9]{40}/)?.[0]
+  if (!address) throw new Error('Expected the current Bank address')
+  return address as Address
+}
+
 /** The same settling wait for the Expense Account's own contract-backed forms. */
 async function openSettledExpenseAccount(page: Page, teamId: string): Promise<void> {
   await openAccountFromSidebar(page, `/teams/${teamId}/accounts/expense-account`)
@@ -40,8 +47,10 @@ async function openSettledExpenseAccount(page: Page, teamId: string): Promise<vo
 }
 
 /** Deposit USDC into Bank from the owner wallet — cash the company did not hold. */
-export async function depositUsdcToBank(page: Page, teamId: string, amount: string): Promise<void> {
+export async function depositUsdcToBank(page: Page, teamId: string, amount: string): Promise<Hex> {
   await openSettledBank(page, teamId)
+  const bankAddress = await currentBankAddress(page)
+  const fromBlock = await publicClient.getBlockNumber()
   await page.getByRole('button', { name: 'Deposit', exact: true }).click()
   const deposit = page.getByRole('dialog', { name: 'Deposit to Bank Contract' })
   await selectToken(page, deposit, 'USDC')
@@ -51,6 +60,20 @@ export async function depositUsdcToBank(page: Page, teamId: string, amount: stri
     timeout: 30_000
   })
   await expect(deposit).toBeHidden({ timeout: 30_000 })
+  const logs = await publicClient.getLogs({
+    address: bankAddress,
+    event: parseAbiItem(
+      'event TokenDeposited(address indexed depositor, address indexed token, uint256 amount)'
+    ),
+    args: { token: E2E_USDC_ADDRESS },
+    fromBlock: fromBlock + 1n,
+    toBlock: 'latest'
+  })
+  const operationLogs = logs.filter((log) => log.args.amount === parseUnits(amount, 6))
+  if (operationLogs.length !== 1 || !operationLogs[0]?.transactionHash) {
+    throw new Error(`Expected one USDC deposit event for ${amount} on Bank ${bankAddress}`)
+  }
+  return operationLogs[0].transactionHash
 }
 
 /** Issue share tokens to the owner through the Share Token page. */
@@ -70,8 +93,10 @@ export async function fundContractFromBank(
   teamId: string,
   contractName: string,
   amount: string
-): Promise<Address> {
+): Promise<{ address: Address; txHash: Hex }> {
   await openSettledBank(page, teamId)
+  const bankAddress = await currentBankAddress(page)
+  const fromBlock = await publicClient.getBlockNumber()
   await page.locator('[data-test="transfer-button"]').click()
   const transfer = page.getByRole('dialog', { name: 'Transfer from Bank Contract' })
   await transfer.getByPlaceholder('Name').fill(contractName)
@@ -86,7 +111,20 @@ export async function fundContractFromBank(
   await expect(page.getByText('Transferred successfully', { exact: true })).toBeVisible({
     timeout: 30_000
   })
-  return address as Address
+  const logs = await publicClient.getLogs({
+    address: bankAddress,
+    event: parseAbiItem(
+      'event TokenTransfer(address indexed sender, address indexed to, address indexed token, uint256 amount)'
+    ),
+    args: { to: address as Address, token: E2E_USDC_ADDRESS },
+    fromBlock: fromBlock + 1n,
+    toBlock: 'latest'
+  })
+  const operationLogs = logs.filter((log) => log.args.amount === parseUnits(amount, 6))
+  if (operationLogs.length !== 1 || !operationLogs[0]?.transactionHash) {
+    throw new Error(`Expected one USDC treasury funding event for ${amount} to ${address}`)
+  }
+  return { address: address as Address, txHash: operationLogs[0].transactionHash }
 }
 
 /**
