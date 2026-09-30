@@ -24,12 +24,11 @@ import {
 } from '../payroll/payroll-page'
 
 /**
- * The USDC the integrated stack actually deployed. `E2E_TOKENS.usdc` names the
- * browser-acceptance fixture instead, which lands on a different address once the
- * chain is reset and the integrated infrastructure is deployed, so an event filter
- * built from it matches nothing here.
+ * The USDC the integrated stack actually deployed. `E2E_USDC_ADDRESS` names the
+ * browser-acceptance fixture, which the integrated deployment does not reproduce,
+ * so an event filter built from it matches nothing on this chain.
  */
-const INTEGRATED_USDC = (
+const INTEGRATED_USDC: Address = requiredAddress(
   JSON.parse(
     readFileSync(
       fileURLToPath(
@@ -37,8 +36,9 @@ const INTEGRATED_USDC = (
       ),
       'utf8'
     )
-  ) as Record<string, string>
-)['MockTokens#USDC'] as Address
+  ) as DeploymentAddressManifest,
+  'MockTokens#USDC'
+)
 
 /**
  * Open Bank and wait for it to resolve the contract it is about to act on. The
@@ -259,7 +259,7 @@ export async function payOneWeeklyClaim(
   await expect(page.locator(`[data-test="member-actions-${E2E_MEMBER}"]`)).toBeVisible({
     timeout: 60_000
   })
-  await setMemberUsdcWage(page, E2E_MEMBER, {
+  await setMemberUsdcWage(page, teamId, E2E_MEMBER, {
     weeklyCap: '8',
     dailyCap: '8',
     hourlyRate: '1'
