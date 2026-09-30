@@ -1,6 +1,13 @@
-# Integrated E2E Checklist
+# E2E Business Paths and Evidence
 
 **Scope:** G0 technical readiness through G8 Board Election verification
+
+**Status model:** `Planned` means no integrated path is currently linked; `Integrated partial` means the main journey exists but one or more
+observable outcomes remain uncovered; `Integrated covered` means the linked main journey exercises the documented outcome through the real
+frontend, backend, database, and chain; `Browser variants` identifies focused browser-acceptance evidence that is not integrated evidence.
+
+This document records the current evidence shape. It does not claim that the latest local or CI execution passed; read the Playwright report
+and protected CI checks for execution results.
 
 This checklist organizes integrated E2E coverage around business paths rather than one path per user story. A path may validate several
 stories when the same actors, persisted state, and UX sequence connect them naturally.
@@ -28,6 +35,27 @@ coverage; the latest execution result and artifacts belong in Playwright and CI 
 - G6 — Expense Account lifecycle.
 - G7 — Cross-feature Accounting verification.
 - G8 — Board Election lifecycle.
+
+## Current status snapshot
+
+| Path group                | Paths   | Integrated status          | Browser or lower-layer status                          | Main remaining boundary                                        |
+| ------------------------- | ------- | -------------------------- | ------------------------------------------------------ | -------------------------------------------------------------- |
+| G0 Readiness              | `00`    | Integrated partial         | SIWE path exists                                       | Explicit service, database, and chain readiness assertions     |
+| G1 Company and treasury   | `01–02` | `01` covered; `02` partial | Validation, import, and failure variants               | Safe import and failure branches                               |
+| G2 Company administration | `03–05` | Integrated partial         | Focused mocked variants exist                          | Second-wallet isolation and complete cascade proof             |
+| G3 Shareholder and SHER   | `06–08` | Integrated covered         | Focused validation and permission variants             | No main-path blocker recorded                                  |
+| G4 Community Credit       | `09–10` | Planned                    | Browser round setup is not integrated proof            | Publish-to-repayment and stalled-round journeys                |
+| G5 Payroll                | `11–13` | Integrated partial         | Lower-layer validation and insufficient-funds coverage | Account summaries, filters, and remaining validation branches  |
+| G6 Expense Account        | `14`    | Integrated partial         | Browser and lower-layer failure variants               | Complete integrated approval audit and negative branches       |
+| G7 Accounting             | `15–16` | Planned                    | Lower-layer accounting evidence exists                 | Cross-feature journal, classification, and export journeys     |
+| G8 Elections              | `17`    | Integrated covered         | Guard and recovery variants are browser-focused        | Five remaining unproven acceptance criteria tracked separately |
+
+The detailed path sections below own the scope and remaining work for each row. The generated acceptance-coverage reports remain a static
+inventory and must not be used as a last-run status board.
+
+The `[ ]` and `[x]` markers in the detailed checklists describe planned evidence obligations recorded for each path. They are not a test run
+result. Use the `Status` line for the current coverage classification and the linked Playwright or CI report for the result of a particular
+execution.
 
 ## Integration Boundary
 
@@ -94,8 +122,8 @@ coverage; the latest execution result and artifacts belong in Playwright and CI 
     - [ ] Confirm the browser and backend target the same local chain.
     - [ ] Authenticate the owner and member through SIWE.
   - Expected result: every required boundary is ready before a functional path begins.
-  - Status: partial; real SIWE authentication is executable, while explicit frontend/backend/database/chain readiness assertions remain to
-    be added.
+  - Status: Integrated partial — real SIWE authentication is executable, while explicit frontend/backend/database/chain readiness assertions
+    remain to be added.
   - Owning stories: `US-AUTH-001`; `US-AUTH-002` and `US-AUTH-003` remain outside this client path.
   - Evidence: [integrated authentication test](../../app/test/e2e/authentication.integrated.spec.ts).
 
@@ -125,7 +153,8 @@ coverage; the latest execution result and artifacts belong in Playwright and CI 
     - failed Officer registration after a successful transaction;
     - non-owner member access and unavailable workspace states.
   - Expected result: the same persisted company moves from creation to a contract-backed workspace and remains recoverable from the list.
-  - Status: executable locally; required-field, member-address, failed-create, and wallet-rejection variants use mocked browser boundaries.
+  - Status: Integrated covered — the main onboarding path is executable; required-field, member-address, failed-create, and wallet-rejection
+    variants use browser boundaries.
   - Evidence: [integrated company tests](../../app/test/e2e/company/company.integrated.spec.ts) and
     [mocked browser variants](../../app/test/e2e/company/company.mocked.spec.ts).
 
@@ -145,8 +174,8 @@ coverage; the latest execution result and artifacts belong in Playwright and CI 
   - Alternative branch: import an existing local Safe and verify its owners and threshold remain unchanged.
   - Separate variants: rejected wallet requests, failed Safe registration, unsupported imports, and failed deposits.
   - Expected result: the company has a registered Safe and a funded Bank backed by durable chain evidence.
-  - Status: partial; Safe deployment, backend registration, Bank deposits, balances, and history run through the integrated stack. Safe
-    import and injected failure variants remain browser acceptance coverage.
+  - Status: Integrated partial — Safe deployment, backend registration, Bank deposits, balances, and history run through the integrated
+    stack. Safe import and injected failure variants remain browser acceptance coverage.
   - Evidence: [integrated Accounts test](../../app/test/e2e/accounts.integrated.spec.ts).
 
 ## G2 — Company Administration and Member Access
@@ -164,7 +193,7 @@ coverage; the latest execution result and artifacts belong in Playwright and CI 
     - [ ] Remove the member and verify the membership and access changes persist.
   - Separate variants: invalid metadata, existing members, owner removal, non-owner writes, archived-company writes, and rejected requests.
   - Expected result: company identity and membership remain consistent for both actors.
-  - Status: partial; metadata and membership mutations now share one integrated path, while second-user access remains planned.
+  - Status: Integrated partial — metadata and membership mutations share one integrated path, while second-user access remains planned.
   - Evidence: [integrated company tests](../../app/test/e2e/company/company.integrated.spec.ts) and
     [mocked update variants](../../app/test/e2e/company/company-update.spec.ts).
 
@@ -183,7 +212,7 @@ coverage; the latest execution result and artifacts belong in Playwright and CI 
     - [ ] Restore the company and verify its normal actions return.
   - Separate variants: non-member visibility changes, non-owner lifecycle changes, and rejected archived writes.
   - Expected result: personal visibility and company lifecycle remain distinct and recoverable.
-  - Status: partial; archive/restore and hide/show now share one integrated path, while cross-wallet isolation remains planned.
+  - Status: Integrated partial — archive/restore and hide/show share one integrated path, while cross-wallet isolation remains planned.
   - Evidence: [integrated company tests](../../app/test/e2e/company/company.integrated.spec.ts),
     [mocked lifecycle variants](../../app/test/e2e/company/company-archive.spec.ts), and
     [mocked visibility variants](../../app/test/e2e/company/company-visibility.spec.ts).
@@ -199,7 +228,7 @@ coverage; the latest execution result and artifacts belong in Playwright and CI 
     - [ ] Verify the company endpoint returns unavailable and related records are removed.
   - Separate variants: non-owner and rejected deletion.
   - Expected result: the deleted workspace cannot be reopened or restored.
-  - Status: partial; cancellation and permanent removal pass, while cascade evidence remains to be added.
+  - Status: Integrated partial — cancellation and permanent removal pass, while cascade evidence remains to be added.
   - Evidence: [integrated company tests](../../app/test/e2e/company/company.integrated.spec.ts) and
     [mocked deletion variants](../../app/test/e2e/company/company-delete.spec.ts).
 
@@ -226,7 +255,7 @@ coverage; the latest execution result and artifacts belong in Playwright and CI 
     unauthorized configuration, archived-company writes, and failed reads remain focused frontend or contract tests where representative
     evidence is linked.
   - Expected result: the investment configuration produces a durable shareholder position.
-  - Status: integrated main path; the production frontend, owned backend, disposable database, and local chain run together. Controlled
+  - Status: Integrated covered — the production frontend, owned backend, disposable database, and local chain run together. Controlled
     validation, permission, and recovery variants remain focused layer tests.
   - Evidence: [integrated shareholder investment lifecycle](../../app/test/e2e/shareholder/shareholder-investment.integrated.spec.ts).
 
@@ -252,7 +281,7 @@ coverage; the latest execution result and artifacts belong in Playwright and CI 
     - [x] Reload and verify the two-shareholder cap table, `75%` / `25%` ownership, and both grouped distribution activities with their
           shareholder payments.
   - Expected result: direct-owner and Board-approved distributions produce the same durable proportional shareholder result.
-  - Status: integrated main paths for direct owner distribution and Board action approval/execution.
+  - Status: Integrated covered — direct-owner distribution and Board action approval/execution run through integrated main paths.
   - Evidence:
     [integrated shareholder issuance and dividend lifecycle](../../app/test/e2e/shareholder/shareholder-issuance-dividends.integrated.spec.ts).
 
@@ -273,7 +302,7 @@ coverage; the latest execution result and artifacts belong in Playwright and CI 
           additional claim.
     - [x] Fund the current Bank and distribute dividends after closure, proving that the migration freeze no longer blocks payouts.
   - Expected result: every frozen allocation exists exactly once in the current Investor, migration is closed, and dividends resume.
-  - Status: integrated.
+  - Status: Integrated covered.
   - Evidence: [integrated shareholder migration lifecycle](../../app/test/e2e/shareholder/shareholder-migration.integrated.spec.ts).
 
 ## G4 — Community Credit Lifecycle
@@ -293,7 +322,7 @@ coverage; the latest execution result and artifacts belong in Playwright and CI 
     - [ ] Repay lenders and verify receipts and final balances.
     - [ ] Reload the account and verify the complete round history.
   - Expected result: one credit round is traceable from publication through repayment.
-  - Status: planned.
+  - Status: Planned — no integrated business path is currently linked.
 
 - `E2E-PATH-10` — Recover a stalled credit round
   - Story validated: `US-CC-004` — resolve a stalled round.
@@ -304,7 +333,7 @@ coverage; the latest execution result and artifacts belong in Playwright and CI 
     - [ ] Execute the issuer's recovery action.
     - [ ] Verify participant balances, round state, and refreshed history.
   - Expected result: the exceptional round reaches its defined terminal state without corrupting other rounds.
-  - Status: planned.
+  - Status: Planned — no integrated business path is currently linked.
 
 ## G5 — Payroll Lifecycle
 
@@ -320,8 +349,9 @@ coverage; the latest execution result and artifacts belong in Playwright and CI 
     - [x] Submit a persisted claim after resuming the wage.
     - [x] Verify the persisted active wage and visible status after reload.
   - Expected result: exactly one current wage controls the member's eligibility.
-  - Status: partial; the owner and member journeys run against the real frontend, backend, PostgreSQL database, and local chain. A member
-    without a wage is blocked and a paused wage is rejected by the backend; broader wage-form validation remains lower-level coverage.
+  - Status: Integrated partial — the owner and member journeys run against the real frontend, backend, PostgreSQL database, and local chain.
+    A member without a wage is blocked and a paused wage is rejected by the backend; broader wage-form validation remains lower-level
+    coverage.
   - Evidence: [integrated Payroll tests](../../app/test/e2e/payroll/payroll.integrated.spec.ts).
 
 - `E2E-PATH-12` — Prepare a weekly claim
@@ -337,8 +367,8 @@ coverage; the latest execution result and artifacts belong in Playwright and CI 
     - [x] Recreate the final entry set and verify weekly totals.
     - [x] Preserve the valid entry while rejecting daily and weekly cap overages.
   - Expected result: the member reaches a deterministic claim-ready week.
-  - Status: partial; one real member identity saves goals and prepares a persisted claim through the product UI. Daily form validation and
-    the server-side weekly cap preserve the valid entry; attachments and other rejected edits remain separately covered.
+  - Status: Integrated partial — one real member identity saves goals and prepares a persisted claim through the product UI. Daily form
+    validation and the server-side weekly cap preserve the valid entry; attachments and other rejected edits remain separately covered.
   - Evidence: [integrated Payroll tests](../../app/test/e2e/payroll/payroll.integrated.spec.ts).
 
 - `E2E-PATH-13` — Approve, reconcile, withdraw, and review payroll
@@ -363,11 +393,12 @@ coverage; the latest execution result and artifacts belong in Playwright and CI 
     - [x] Open Payroll Account after funding and withdrawal; verify exact token holdings and read-only member access.
     - [ ] Verify account summaries, activity and filters in the integrated browser journey.
   - Expected result: one claim remains traceable from approval through payment, account position, and history.
-  - Status: partial; the browser funds Payroll through Bank, signs a completed-week claim, verifies the disabled and paid chain flags,
-    withdraws as the paid member, and reloads both perspectives. It also verifies the role-gated controls, frozen lifecycle states, and the
-    contract's insufficient-funds rejection. Payroll Account holdings and member access are included; integrated activity and summary checks
-    remain planned. The current-month summary boundary is covered by frontend tests. Invalid EIP-712 signatures are rejected by the backend
-    signature-validator test rather than an integrated browser journey, because a true integrated wallet produces valid signatures.
+  - Status: Integrated partial — the browser funds Payroll through Bank, signs a completed-week claim, verifies the disabled and paid chain
+    flags, withdraws as the paid member, and reloads both perspectives. It also verifies the role-gated controls, frozen lifecycle states,
+    and the contract's insufficient-funds rejection. Payroll Account holdings and member access are included; integrated activity and
+    summary checks remain planned. The current-month summary boundary is covered by frontend tests. Invalid EIP-712 signatures are rejected
+    by the backend signature-validator test rather than an integrated browser journey, because a true integrated wallet produces valid
+    signatures.
   - Evidence: [integrated Payroll payment test](../../app/test/e2e/payroll/payroll-payment.integrated.spec.ts) and
     [insufficient-funding test](../../app/test/e2e/payroll/payroll-insufficient-funds.integrated.spec.ts).
 
@@ -389,8 +420,9 @@ coverage; the latest execution result and artifacts belong in Playwright and CI 
     - [ ] Reload balances, approval state, and transaction history.
   - Separate variants: overspending, invalid signatures, unauthorized actions, and insufficient funds.
   - Expected result: one allowance remains auditable across its complete active and inactive lifecycle.
-  - Status: partial; the main persisted approval, member spend, lifecycle control, balance, and history sequence is executable. Invalid
-    signatures, overspending, authorization failures, and insufficient-fund variants remain browser acceptance or lower-layer coverage.
+  - Status: Integrated partial — the main persisted approval, member spend, lifecycle control, balance, and history sequence is executable.
+    Invalid signatures, overspending, authorization failures, and insufficient-fund variants remain browser acceptance or lower-layer
+    coverage.
   - Evidence: [integrated Accounts test](../../app/test/e2e/accounts.integrated.spec.ts).
 
 ## G7 — Cross-Feature Accounting Verification
@@ -418,6 +450,7 @@ coverage; the latest execution result and artifacts belong in Playwright and CI 
     replaces the treasury the reviewed journey continues to use.
   - Evidence: [integrated Accounting journey](../../app/test/e2e/accounting/accounting-journey.integrated.spec.ts) and
     [integrated contract generations](../../app/test/e2e/accounting/accounting-generations.integrated.spec.ts).
+  - Status: Planned — no integrated business path is currently linked.
 
 - `E2E-PATH-16` — Classify an external withdrawal and export the reviewed books
   - Stories validated:
@@ -439,6 +472,7 @@ coverage; the latest execution result and artifacts belong in Playwright and CI 
     while the balance sheet totals do not, the downloaded workbook is read back and compared with the filtered screen, and reverting the
     label restores the inferred account without touching the cash or fee lines.
   - Evidence: [integrated Accounting journey](../../app/test/e2e/accounting/accounting-journey.integrated.spec.ts).
+  - Status: Planned — no integrated business path is currently linked.
 
 ## G8 — Board Election Lifecycle
 
@@ -463,7 +497,7 @@ coverage; the latest execution result and artifacts belong in Playwright and CI 
   - Separate variants: rejected wallet requests for creation, voting, and publication; notification failures; and archived-company write
     guards remain controlled mocked-browser acceptance tests.
   - Expected result: the election remains traceable from creation through the elected Board and published history.
-  - Status: integrated main path; the production frontend, owned backend, database, and local chain run together. Controlled recovery and
+  - Status: Integrated covered — the production frontend, owned backend, database, and local chain run together. Controlled recovery and
     guard variants remain browser acceptance.
   - Evidence: [integrated election lifecycle](../../app/test/e2e/elections/elections.integrated.spec.ts) and
     [mocked browser election variants](../../app/test/e2e/elections/elections.spec.ts).

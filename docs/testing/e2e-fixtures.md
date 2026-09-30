@@ -1,5 +1,7 @@
 # Playwright E2E Fixture Catalogue
 
+**Last reviewed:** 2026-09-30
+
 This catalogue defines which Playwright fixtures may prepare test state and which actions must remain visible product interactions. The
 canonical business paths and their acceptance evidence remain in [Integrated E2E Checklist](./e2e-paths.md).
 
