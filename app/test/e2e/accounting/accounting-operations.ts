@@ -1,11 +1,17 @@
 // The source operations the Accounting journey books. Each one is produced
 // through the product exactly as a company would, never seeded, so the books are
 // verified against behaviour the portal actually performed.
+import { readFileSync } from 'node:fs'
+import { fileURLToPath } from 'node:url'
 import { expect, type Page } from '@playwright/test'
 import { parseAbiItem, parseUnits, type Address, type Hex } from 'viem'
-import { E2E_MEMBER, E2E_USDC_ADDRESS, publicClient } from '../e2e-chain'
+import { E2E_MEMBER, publicClient } from '../e2e-chain'
 import { dialogAmount, openAccountFromSidebar, selectToken } from '../e2e-page'
 import { chooseApprovalDate } from '../expense/expense-page'
+import {
+  requiredAddress,
+  type DeploymentAddressManifest
+} from '../factories/operational-team-deployment'
 import { issueShares, openRealShareholderManagement } from '../shareholder/shareholder-page'
 import {
   completedWeekStart,
@@ -16,6 +22,23 @@ import {
   setMemberUsdcWage,
   submitDailyClaim
 } from '../payroll/payroll-page'
+
+/**
+ * The USDC the integrated stack actually deployed. `E2E_TOKENS.usdc` names the
+ * browser-acceptance fixture instead, which lands on a different address once the
+ * chain is reset and the integrated infrastructure is deployed, so an event filter
+ * built from it matches nothing here.
+ */
+const INTEGRATED_USDC = (
+  JSON.parse(
+    readFileSync(
+      fileURLToPath(
+        new URL('../../../src/artifacts/deployed_addresses/chain-31337.json', import.meta.url)
+      ),
+      'utf8'
+    )
+  ) as Record<string, string>
+)['MockTokens#USDC'] as Address
 
 /**
  * Open Bank and wait for it to resolve the contract it is about to act on. The
@@ -65,7 +88,7 @@ export async function depositUsdcToBank(page: Page, teamId: string, amount: stri
     event: parseAbiItem(
       'event TokenDeposited(address indexed depositor, address indexed token, uint256 amount)'
     ),
-    args: { token: E2E_USDC_ADDRESS },
+    args: { token: INTEGRATED_USDC },
     fromBlock: fromBlock + 1n,
     toBlock: 'latest'
   })
@@ -116,7 +139,7 @@ export async function fundContractFromBank(
     event: parseAbiItem(
       'event TokenTransfer(address indexed sender, address indexed to, address indexed token, uint256 amount)'
     ),
-    args: { to: address as Address, token: E2E_USDC_ADDRESS },
+    args: { to: address as Address, token: INTEGRATED_USDC },
     fromBlock: fromBlock + 1n,
     toBlock: 'latest'
   })
