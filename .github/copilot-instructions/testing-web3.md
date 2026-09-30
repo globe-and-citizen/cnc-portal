@@ -141,6 +141,6 @@ expect(mockToast.add).toHaveBeenCalledWith(
 
 ## What NOT to do
 
-- Don't run a real local node in unit tests (that's E2E territory — Hardhat in `contract/`, or Synpress in `app/test/e2e/`).
+- Don't run a real local node in unit tests (that's E2E territory — Hardhat in `contract/` and the Playwright profiles in `app/test/e2e/`).
 - Don't assert on tx hashes byte-for-byte; use `expect.stringMatching(/^0x[a-fA-F0-9]+$/)`.
 - Don't mock `useToast` per-test — once at the top of the file is enough.
