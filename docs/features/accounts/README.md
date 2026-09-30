@@ -642,7 +642,10 @@ a transfer to another known company pocket is
 **Accounting:** A confirmed transfer is classified as
 [`UC-BANK-02`](../accounting/journal-entry-catalogue.md#uc-bank-02--external-cash-receipt),
 [`CASH-OUT`](../accounting/journal-entry-catalogue.md#cash-out--external-bank-or-safe-payment), or
-[`INTERNAL`](../accounting/journal-entry-catalogue.md#internal--other-company-pocket-transfer) from its counterparty evidence.
+[`INTERNAL`](../accounting/journal-entry-catalogue.md#internal--other-company-pocket-transfer) from its counterparty evidence. Transfers
+between Safe and known company contracts such as Bank, Payroll, and Expense are internal movements and do not incur a Safe protocol fee.
+Bank transfers can incur the Bank's configured protocol fee; Accounting adds a matched fee to the Bank journal entry. See the
+[Accounting test script](../accounting/accounting-test-script.md#treasury-scenarios).
 
 **Dependencies:** US-SAFE-001 and US-SAFE-006
 

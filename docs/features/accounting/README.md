@@ -26,6 +26,9 @@ These acceptance criteria follow the
 - The [Accounting rule catalogue](./journal-entry-catalogue.md) maps transaction stories to domain use cases, generic posting rules, journal
   components, and General Ledger output. The [Accounting Read Model](../../implementation/accounting-read-model/README.md) owns the shared
   processing architecture.
+- The [Accounting test script](./accounting-test-script.md) gives a manual scenario checklist for the proposed accounting model, including
+  source-independent pocket transfers, evidence-based treatment of external cash, fee composition, and report reconciliation. Its proposed
+  identifiers remain illustrative until the runtime migration is implemented.
 
 ## Lifecycle
 

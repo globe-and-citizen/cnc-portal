@@ -28,6 +28,87 @@ interpretation. The [Accounting Read Model](../../implementation/accounting-read
 The representative tables below show USD-valued General Ledger rows. The runtime also retains each line's original currency, quantity, and
 rate of record. The examples illustrate account direction and balance; they do not impose a fixed transaction amount.
 
+## Proposed Refactor — Illustrative Excerpt
+
+This section demonstrates a possible target structure; the identifiers below are proposed names, not current runtime values. The purpose is
+to show the intended distinction between business use cases, generic posting rules, and journal components before applying a complete
+catalogue-wide migration.
+
+### Identifier Convention
+
+| Kind                      | Proposed format       | Example             | Use                                                                               |
+| ------------------------- | --------------------- | ------------------- | --------------------------------------------------------------------------------- |
+| Business accounting event | `UC-<DOMAIN>-<NNN>`   | `UC-PAYROLL-001`    | An economic event with a defined trigger and accounting meaning                   |
+| Generic evidence rule     | `RULE-<DOMAIN>-<NNN>` | `RULE-TREASURY-001` | A fallback used when evidence proves a cash movement but not its business purpose |
+| Journal component         | `COMP-<DOMAIN>-<NNN>` | `COMP-TREASURY-001` | An independently evidenced amount attached to its parent operation                |
+
+The domain identifies the economic area, not the contract or pocket that happened to emit an event. The sequence is local to that domain.
+These identifiers are a greenfield proposal: none claims to rename or preserve the meaning of a current runtime value.
+
+### Proposed Accounting Meanings
+
+| Proposed identifier | Meaning                                                                                                                       | Core posting                                                                           |
+| ------------------- | ----------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| `UC-TREASURY-001`   | Internal transfer between two company-controlled pockets, regardless of whether Bank, Safe, Payroll, or Expense is the source | Debit destination cash; credit source cash                                             |
+| `RULE-TREASURY-001` | External cash receipt whose business purpose is not established by the available evidence                                     | Debit receiving cash; credit a proposed Unclassified Receipts account until classified |
+| `RULE-TREASURY-002` | External cash payment whose business purpose is not established by the available evidence                                     | Debit a proposed Unclassified Payments account until classified; credit source cash    |
+| `UC-EQUITY-001`     | Investor capital contribution established by investment-specific evidence, such as a SafeDepositRouter operation              | Debit receiving cash; credit Investor Equity                                           |
+| `COMP-TREASURY-001` | Transaction fee independently confirmed for an operation                                                                      | Add the fee expense and corresponding cash line to the parent entry                    |
+
+The suspense accounts in the two fallback rules are new chart-of-accounts proposals. An external address alone does not establish revenue,
+capital, or operating expense. A specific domain event takes precedence when its own evidence establishes the business purpose; the generic
+treasury fallback applies only when no such event can be identified. A fee is orthogonal: it may accompany a qualifying Bank movement, but
+it does not decide whether the underlying movement is an internal transfer, receipt, or payment.
+
+### Story-to-Scenario Decision Map
+
+Each row is one observable accounting scenario. A story can select different rows based on operation evidence, and the same accounting use
+case can be referenced by multiple stories.
+
+| User story                                                                            | Condition                                                                                                 | Accounting result                                                                                                | Journal grouping                                                                 |
+| ------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| [US-BANK-002](../accounts/README.md#us-bank-002-transfer-bank-funds)                  | Bank transfers funds to a company-controlled pocket and no more specific economic event owns the movement | `UC-TREASURY-001`; add `COMP-TREASURY-001` only when the Bank fee is confirmed                                   | One balanced entry; the fee is attached to the transfer                          |
+| [US-BANK-002](../accounts/README.md#us-bank-002-transfer-bank-funds)                  | Bank pays an external address and evidence identifies an expense, dividend, or another business event     | The owning domain UC; add `COMP-TREASURY-001` if a Bank fee is confirmed                                         | One entry for the business event and its matched fee                             |
+| [US-BANK-002](../accounts/README.md#us-bank-002-transfer-bank-funds)                  | Bank pays an external address but evidence does not establish its business purpose                        | `RULE-TREASURY-002`; optional `COMP-TREASURY-001`                                                                | One entry with an unclassified counter-account and any matched fee               |
+| [US-BANK-004](../accounts/README.md#us-bank-004-cash-out-available-treasury-funds)    | A cash-out step moves funds to another company-controlled pocket                                          | `UC-TREASURY-001`                                                                                                | One internal transfer entry for that step                                        |
+| [US-BANK-004](../accounts/README.md#us-bank-004-cash-out-available-treasury-funds)    | A cash-out step pays an external address                                                                  | The owning domain UC when known; otherwise `RULE-TREASURY-002`; Bank fee component only for a confirmed Bank fee | One payment entry for that step                                                  |
+| [US-SAFE-003](../accounts/README.md#us-safe-003-manage-safe-funds)                    | Safe transfers to a known company-controlled pocket                                                       | `UC-TREASURY-001`, the same event as a Bank-to-pocket transfer                                                   | One internal movement; no Safe protocol fee                                      |
+| [US-EXP-002](../accounts/README.md#us-exp-002-spend-from-the-expense-account)         | Expense funds are sent to a known company-controlled pocket                                               | `UC-TREASURY-001`, unless a more specific business event already books that cash leg                             | Internal movement; no operating expense is recognized by the transfer alone      |
+| [US-SAFE-003](../accounts/README.md#us-safe-003-manage-safe-funds)                    | Safe receives funds through a confirmed SafeDepositRouter investment                                      | `UC-EQUITY-001`                                                                                                  | Investment evidence owns the receipt; do not also create an unclassified receipt |
+| [US-SAFE-003](../accounts/README.md#us-safe-003-manage-safe-funds)                    | Safe receives funds externally without evidence of the business purpose                                   | `RULE-TREASURY-001`                                                                                              | One receipt entry pending classification; no Safe protocol fee                   |
+| [US-PAYROLL-003](../payroll/README.md#us-payroll-003-fund-the-payroll-contract)       | Company funds move from Bank to Payroll                                                                   | `UC-TREASURY-001`, the same event as any other internal pocket transfer                                          | One internal movement; no revenue or expense                                     |
+| [US-VESTING-004](../vesting/README.md#us-vesting-004-stop-an-active-vesting-schedule) | Stop releases accrued shares and cancels an unvested remainder                                            | Two distinct vesting UCs: one for release, one for forfeiture                                                    | Both posting sets belong to the stop operation's single journal entry            |
+
+This map shows the intended many-to-many relationship without deriving accounting meaning from the emitting pocket: `UC-TREASURY-001` can
+serve Bank, Safe, and Payroll stories, while one Bank-transfer story can lead to an internal transfer, a business-specific payment, or an
+unclassified payment depending on destination and purpose evidence.
+
+### Rule Definition Example
+
+#### `UC-TREASURY-001` — Internal Company-Pocket Transfer
+
+- **Trigger:** Confirmed funds move from one company-controlled pocket to another.
+- **Applies when:** The source and destination are both company-controlled pockets, regardless of which pocket or contract emitted the
+  indexed transfer evidence.
+- **Does not apply when:** A more specific business event already books the same cash leg, or when either side is an external address.
+- **Source stories:** `US-BANK-002`, `US-BANK-004`, `US-PAYROLL-003`, `US-SAFE-003`, and `US-EXP-002`.
+- **Evidence handling:** Resolve both pocket instances and deduplicate mirrored transfer evidence. Attach `COMP-TREASURY-001` only when a
+  fee is independently confirmed for the source operation.
+- **Journal result:** Debit the destination pocket and credit the source pocket. Add the fee expense debit and corresponding Bank cash
+  credit only when a fee was charged.
+
+For $100 moved from Safe to Payroll, with no fee:
+
+| Account        | Debit (USD) | Credit (USD) |
+| -------------- | ----------: | -----------: |
+| Cash — Payroll |         100 |              |
+| Cash — Safe    |             |          100 |
+
+The same rule and cash-account structure apply to a confirmed Bank-to-Payroll transfer. If that operation also has a confirmed
+$1 fee,
+`COMP-TREASURY-001` adds a $1 debit to Transaction Fee Expense and raises the source cash credit to $101. Source pocket changes the
+account line; it does not change the meaning of the transfer.
+
 ## Accounting Rule Taxonomy
 
 | Kind                         | Identifiers                               | Meaning                                                                                            |
@@ -58,27 +139,27 @@ that state instead of presenting the affected books as final.
 
 ## Story-to-Accounting-Rule Map
 
-| Transaction journey          | User story IDs                                                                                      | Accounting rule IDs                                  | Posting moment                                                     | General Ledger result                                       |
-| ---------------------------- | --------------------------------------------------------------------------------------------------- | ---------------------------------------------------- | ------------------------------------------------------------------ | ----------------------------------------------------------- |
-| Fund the Bank                | [US-BANK-001](../accounts/README.md#us-bank-001-fund-the-bank)                                      | `UC-BANK-02`                                         | External funds reach Bank                                          | Service revenue receipt                                     |
-| Transfer Bank funds          | [US-BANK-002](../accounts/README.md#us-bank-002-transfer-bank-funds)                                | `UC-BANK-03`, `CASH-OUT`, `INTERNAL`; optional `FEE` | Bank transfer executes                                             | Treasury funding, external payment, and any transaction fee |
-| Cash out treasury funds      | [US-BANK-004](../accounts/README.md#us-bank-004-cash-out-available-treasury-funds)                  | `INTERNAL`, then `CASH-OUT`; optional `FEE`          | Each cash-out step executes                                        | Pocket sweep followed by external payment                   |
-| Spend from Expense           | [US-EXP-002](../accounts/README.md#us-exp-002-spend-from-the-expense-account)                       | `UC-EXP-01` or `INTERNAL`                            | Approved transfer executes                                         | Operating expense or pocket transfer                        |
-| Manage Safe funds            | [US-SAFE-003](../accounts/README.md#us-safe-003-manage-safe-funds)                                  | `UC-BANK-02`, `CASH-OUT`, or `INTERNAL`              | Confirmed Safe transfer is indexed                                 | Receipt, external payment, or pocket transfer               |
-| Fund Payroll                 | [US-PAYROLL-003](../payroll/README.md#us-payroll-003-fund-the-payroll-contract)                     | `UC-BANK-03` or `INTERNAL`                           | Funds reach Payroll                                                | Treasury funding transfer                                   |
-| Submit a daily claim         | [US-PAYROLL-005](../payroll/README.md#us-payroll-005-submit-a-daily-claim)                          | `UC-CASH-02`                                         | The containing work week ends while eligible                       | Wage accrual                                                |
-| Disable or re-enable a claim | [US-PAYROLL-009](../payroll/README.md#us-payroll-009-disable-or-re-enable-a-signed-weekly-claim)    | `UC-CASH-02`                                         | No entry on status change; ended claims accrue only while eligible | Wage accrual appears or is excluded                         |
-| Withdraw a weekly claim      | [US-PAYROLL-010](../payroll/README.md#us-payroll-010-withdraw-an-approved-weekly-claim)             | `UC-CASH-03`                                         | Withdrawal executes                                                | Wage or SHER settlement                                     |
-| Publish a credit call        | [US-CC-002](../community-credit/README.md#us-cc-002-publish-a-credit-call)                          | —                                                    | Terms are created without company funds moving                     | No ledger entry                                             |
-| Lend to a round              | [US-CC-003](../community-credit/README.md#us-cc-003-lend-to-an-open-round)                          | `UC-CREDIT-01` and `UC-CREDIT-05`                    | The contribution funds the round; otherwise no posting             | Principal receipt and interest obligation when funded       |
-| Resolve a stalled round      | [US-CC-004](../community-credit/README.md#us-cc-004-resolve-a-stalled-round)                        | `UC-CREDIT-01` and `UC-CREDIT-05`                    | A partial raise is accepted; a refund has no posting               | Principal receipt and interest obligation                   |
-| Repay lenders                | [US-CC-005](../community-credit/README.md#us-cc-005-repay-lenders)                                  | `UC-CREDIT-03`                                       | Repayment is distributed                                           | Principal and interest settlement                           |
-| Invest through the router    | [US-SHER-001](../shareholder-management/README.md#us-sher-001-invest-in-the-safe-and-receive-sher)  | `UC-SDR-01`                                          | Router deposit and SHER mint execute                               | Investor contribution                                       |
-| Distribute dividends         | [US-SHER-002](../shareholder-management/README.md#us-sher-002-distribute-dividends-to-shareholders) | `UC-INV-01`                                          | Investor pays shareholders                                         | Dividend expense and cash outflow                           |
-| Issue SHER directly          | [US-SHER-004](../shareholder-management/README.md#us-sher-004-issue-sher-to-a-shareholder)          | `DEFAULT-D`                                          | Unbacked mint executes                                             | Share issuance                                              |
-| Create a vesting schedule    | [US-VESTING-001](../vesting/README.md#us-vesting-001-create-a-minute-precise-vesting-schedule)      | `UC-VEST-01`                                         | Grant is created                                                   | Restricted-stock commitment                                 |
-| Release vested shares        | [US-VESTING-003](../vesting/README.md#us-vesting-003-release-accrued-shares)                        | `UC-VEST-02`                                         | Shares are released                                                | Promised shares become issued equity                        |
-| Stop a vesting schedule      | [US-VESTING-004](../vesting/README.md#us-vesting-004-stop-an-active-vesting-schedule)               | `UC-VEST-02` and/or `UC-VEST-03`                     | Stop executes                                                      | Accrued release and unvested cancellation                   |
+| Transaction journey          | User story IDs                                                                                      | Accounting rule IDs                                  | Posting moment                                                     | General Ledger result                                               |
+| ---------------------------- | --------------------------------------------------------------------------------------------------- | ---------------------------------------------------- | ------------------------------------------------------------------ | ------------------------------------------------------------------- |
+| Fund the Bank                | [US-BANK-001](../accounts/README.md#us-bank-001-fund-the-bank)                                      | `UC-BANK-02`                                         | External funds reach Bank                                          | Service revenue receipt                                             |
+| Transfer Bank funds          | [US-BANK-002](../accounts/README.md#us-bank-002-transfer-bank-funds)                                | `UC-BANK-03`, `CASH-OUT`, `INTERNAL`; optional `FEE` | Bank transfer executes                                             | Treasury funding, external payment, and any transaction fee         |
+| Cash out treasury funds      | [US-BANK-004](../accounts/README.md#us-bank-004-cash-out-available-treasury-funds)                  | `INTERNAL`, then `CASH-OUT`; optional `FEE`          | Each cash-out step executes                                        | Pocket sweep followed by external payment                           |
+| Spend from Expense           | [US-EXP-002](../accounts/README.md#us-exp-002-spend-from-the-expense-account)                       | `UC-EXP-01` or `INTERNAL`                            | Approved transfer executes                                         | Operating expense or pocket transfer                                |
+| Manage Safe funds            | [US-SAFE-003](../accounts/README.md#us-safe-003-manage-safe-funds)                                  | `UC-BANK-02`, `CASH-OUT`, or `INTERNAL`              | Confirmed Safe transfer is indexed                                 | Receipt, external payment, or pocket transfer; no Safe protocol fee |
+| Fund Payroll                 | [US-PAYROLL-003](../payroll/README.md#us-payroll-003-fund-the-payroll-contract)                     | `UC-BANK-03` or `INTERNAL`                           | Funds reach Payroll                                                | Treasury funding transfer                                           |
+| Submit a daily claim         | [US-PAYROLL-005](../payroll/README.md#us-payroll-005-submit-a-daily-claim)                          | `UC-CASH-02`                                         | The containing work week ends while eligible                       | Wage accrual                                                        |
+| Disable or re-enable a claim | [US-PAYROLL-009](../payroll/README.md#us-payroll-009-disable-or-re-enable-a-signed-weekly-claim)    | `UC-CASH-02`                                         | No entry on status change; ended claims accrue only while eligible | Wage accrual appears or is excluded                                 |
+| Withdraw a weekly claim      | [US-PAYROLL-010](../payroll/README.md#us-payroll-010-withdraw-an-approved-weekly-claim)             | `UC-CASH-03`                                         | Withdrawal executes                                                | Wage or SHER settlement                                             |
+| Publish a credit call        | [US-CC-002](../community-credit/README.md#us-cc-002-publish-a-credit-call)                          | —                                                    | Terms are created without company funds moving                     | No ledger entry                                                     |
+| Lend to a round              | [US-CC-003](../community-credit/README.md#us-cc-003-lend-to-an-open-round)                          | `UC-CREDIT-01` and `UC-CREDIT-05`                    | The contribution funds the round; otherwise no posting             | Principal receipt and interest obligation when funded               |
+| Resolve a stalled round      | [US-CC-004](../community-credit/README.md#us-cc-004-resolve-a-stalled-round)                        | `UC-CREDIT-01` and `UC-CREDIT-05`                    | A partial raise is accepted; a refund has no posting               | Principal receipt and interest obligation                           |
+| Repay lenders                | [US-CC-005](../community-credit/README.md#us-cc-005-repay-lenders)                                  | `UC-CREDIT-03`                                       | Repayment is distributed                                           | Principal and interest settlement                                   |
+| Invest through the router    | [US-SHER-001](../shareholder-management/README.md#us-sher-001-invest-in-the-safe-and-receive-sher)  | `UC-SDR-01`                                          | Router deposit and SHER mint execute                               | Investor contribution                                               |
+| Distribute dividends         | [US-SHER-002](../shareholder-management/README.md#us-sher-002-distribute-dividends-to-shareholders) | `UC-INV-01`                                          | Investor pays shareholders                                         | Dividend expense and cash outflow                                   |
+| Issue SHER directly          | [US-SHER-004](../shareholder-management/README.md#us-sher-004-issue-sher-to-a-shareholder)          | `DEFAULT-D`                                          | Unbacked mint executes                                             | Share issuance                                                      |
+| Create a vesting schedule    | [US-VESTING-001](../vesting/README.md#us-vesting-001-create-a-minute-precise-vesting-schedule)      | `UC-VEST-01`                                         | Grant is created                                                   | Restricted-stock commitment                                         |
+| Release vested shares        | [US-VESTING-003](../vesting/README.md#us-vesting-003-release-accrued-shares)                        | `UC-VEST-02`                                         | Shares are released                                                | Promised shares become issued equity                                |
+| Stop a vesting schedule      | [US-VESTING-004](../vesting/README.md#us-vesting-004-stop-an-active-vesting-schedule)               | `UC-VEST-02` and/or `UC-VEST-03`                     | Stop executes                                                      | Accrued release and unvested cancellation                           |
 
 ## Treasury and Cash Rules
 
@@ -129,6 +210,10 @@ For $100 received by the destination pocket and a $1 Bank fee:
 - **Input:** A confirmed movement between two known company pockets that is not owned by a more specific rule.
 - **Processing:** Source and destination deployments are resolved separately. Mirrored evidence is deduplicated only when it describes the
   same operation and complementary movement.
+- **Safe and Bank distinction:** A transfer from Safe to Bank, Payroll, Expense, or another known company contract is an internal movement
+  with no Safe transaction-fee posting. A Bank transfer can incur the Bank's configured protocol fee; when a fee event is matched, the fee
+  is posted separately through `FEE` within the same balanced journal entry. The receiving pocket and source evidence determine the transfer
+  rule, not the presence of a fee.
 - **General Ledger:** Label `Internal transfer`; activity links to the most specific owning journey. No revenue or expense is recognized.
 
 For a $100 movement between two company pockets:
@@ -137,6 +222,9 @@ For a $100 movement between two company pockets:
 | ----------------------- | ----------: | -----------: |
 | Destination cash pocket |         100 |              |
 | Source cash pocket      |             |          100 |
+
+For example, moving $100 from Safe to Payroll posts `Dr Cash — Payroll $100`and`Cr Cash — Safe
+$100`. The Safe movement itself has no protocol fee. A corresponding Bank-to-Payroll funding transfer may add the Bank fee line when the Bank contract charges one; see [`UC-BANK-03`](#uc-bank-03--bank-funds-a-company-pocket) and [`FEE`](#fee--transaction-fee-component).
 
 ### `CASH-OUT` — External Bank or Safe Payment
 
@@ -148,6 +236,9 @@ For a $100 movement between two company pockets:
 - **Processing:** The mapper initially classifies the counter-account as `Operating Expense`. A valid account assignment may replace it with
   `Owner Capital`, `Payroll Expense`, `Interest Expense`, or `Dividend Expense`. Compound entries remain read-only.
 - **General Ledger:** Label `Cash payment`; activity links to Bank or Safe. Account Assignments and the ledger show the same complete entry.
+
+Bank external payments can include a matched Bank protocol fee. Safe external payments do not create a `FEE` component or
+`Transaction Fee Expense` line; their journal reflects only the outgoing Safe amount and the provisional counter-account until classified.
 
 For a $100 external Bank payment assigned to Operating Expense and a $1 fee:
 
