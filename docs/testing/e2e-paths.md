@@ -57,6 +57,10 @@ The `[x]` and `[ ]` markers in the detailed checklists are an evidence inventory
 while `[ ]` means that the direct evidence is still missing. They are not a latest-run result. Use the `Status` line for the coverage
 classification and the linked Playwright or CI report for the result of a particular execution.
 
+Each product step is prefixed with its canonical `US-*` user-story anchor. We use the user story at path level because one journey step can
+prove several acceptance criteria; the precise `AC-*` mapping remains canonical in the linked feature README and the representative test's
+`Covers` block. `TECH-READINESS` marks a technical prerequisite that is not itself a product story.
+
 ## Integration Boundary
 
 - Real boundaries:
@@ -115,13 +119,15 @@ classification and the linked Playwright or CI report for the result of a partic
 - `E2E-PATH-00` — Validate the externally prepared test stack
   - Stories validated: none; this path only proves that product paths can start.
   - Required checks:
-    - [ ] Confirm the frontend health check succeeds.
-    - [ ] Confirm the backend health check succeeds.
-    - [ ] Confirm the migrated database is reachable through the backend.
-    - [ ] Confirm the local node uses the expected chain and contains the required deployed infrastructure.
-    - [ ] Confirm the browser and backend target the same local chain.
-    - [x] Authenticate the owner through SIWE and verify the real stack returns the Companies page.
-    - [ ] Authenticate a second member through SIWE as part of the readiness path.
+    - [ ] `TECH-READINESS` Confirm the frontend health check succeeds.
+    - [ ] `TECH-READINESS` Confirm the backend health check succeeds.
+    - [ ] `TECH-READINESS` Confirm the migrated database is reachable through the backend.
+    - [ ] `TECH-READINESS` Confirm the local node uses the expected chain.
+    - [ ] `TECH-READINESS` Confirm the local node contains the required deployed infrastructure.
+    - [ ] `TECH-READINESS` Confirm the browser and backend target the same local chain.
+    - [x] `US-AUTH-001` Authenticate the owner through SIWE.
+    - [x] `US-AUTH-001` Verify the real stack returns the Companies page after authentication.
+    - [ ] `US-AUTH-001` Authenticate a second member through SIWE as part of the readiness path.
   - Expected result: every required boundary is ready before a functional path begins.
   - Status: Integrated partial — real SIWE authentication is executable, while explicit frontend/backend/database/chain readiness assertions
     remain to be added.
@@ -138,16 +144,27 @@ classification and the linked Playwright or CI report for the result of a partic
   - Actors: company creator and owner; the owner also satisfies the member role for the list journey.
   - Dependencies: G0 and predeployed Officer infrastructure.
   - Main path:
-    - [x] Sign in through SIWE.
-    - [x] Enter company metadata and submit it through the real backend.
-    - [x] Verify the company, owner, and creator membership persisted.
-    - [x] Enter the SHER name and symbol.
-    - [x] Submit a real Officer deployment transaction.
-    - [x] Verify the receipt, Officer, child contracts, and Investor metadata on-chain.
-    - [x] Verify the backend registered the Officer address and deployment metadata.
-    - [x] Continue past the optional Safe step.
-    - [x] Find the company in the Companies list and reopen its workspace.
-    - [x] Verify its metadata, members, lifecycle state, and feature navigation.
+    - [x] `US-AUTH-001` Sign in through SIWE.
+    - [x] `US-COMPANIES-001` Enter company metadata.
+    - [x] `US-COMPANIES-001` Submit the company through the real backend.
+    - [x] `US-COMPANIES-001` Verify that the company persisted.
+    - [x] `US-COMPANIES-001` Verify that the owner and creator membership persisted.
+    - [x] `US-COMPANIES-002` Enter the SHER name.
+    - [x] `US-COMPANIES-002` Enter the SHER symbol.
+    - [x] `US-COMPANIES-002` Submit a real Officer deployment transaction.
+    - [x] `US-COMPANIES-002` Verify the Officer deployment receipt on-chain.
+    - [x] `US-COMPANIES-002` Verify the Officer contract on-chain.
+    - [x] `US-COMPANIES-002` Verify the child contracts on-chain.
+    - [x] `US-COMPANIES-002` Verify the Investor metadata on-chain.
+    - [x] `US-COMPANIES-002` Verify the backend registered the Officer address.
+    - [x] `US-COMPANIES-002` Verify the backend persisted the deployment metadata.
+    - [x] `US-COMPANIES-003` Continue past the optional Safe step.
+    - [x] `US-COMPANIES-003` Find the company in the Companies list.
+    - [x] `US-COMPANIES-003` Reopen the company workspace.
+    - [x] `US-COMPANIES-003` Verify its metadata.
+    - [x] `US-COMPANIES-003` Verify its members.
+    - [x] `US-COMPANIES-003` Verify its lifecycle state.
+    - [x] `US-COMPANIES-003` Verify its feature navigation.
   - Separate variants:
     - required-field and member-address validation;
     - wallet rejection or reverted deployment;
@@ -166,17 +183,26 @@ classification and the linked Playwright or CI report for the result of a partic
   - Actors: company owner, then company member.
   - Dependencies: an operational company from `E2E-PATH-01`, deployed Safe infrastructure, and funded local wallets.
   - Main path:
-    - [x] Deploy a Safe through the UI with a real transaction.
-    - [ ] Verify its code, owner list, threshold, and backend registration as one complete read-back.
-    - [x] Open the current Bank from the same company.
-    - [x] Deposit the native token and verify its receipt and balance change.
-    - [x] Deposit a supported ERC-20 token and verify its receipt and balance change.
-    - [ ] Reload and verify that the Safe, balances, and Bank history remain available.
+    - [x] `US-SAFE-001` Deploy a Safe through the UI with a real transaction.
+    - [ ] `US-SAFE-002` Verify the Safe code after deployment.
+    - [ ] `US-SAFE-002` Verify the Safe owner list after deployment.
+    - [ ] `US-SAFE-002` Verify the Safe threshold after deployment.
+    - [ ] `US-SAFE-002` Verify the backend Safe registration after deployment.
+    - [x] `US-BANK-001` Open the current Bank from the same company.
+    - [x] `US-BANK-001` Deposit the native token through the UI.
+    - [x] `US-BANK-001` Verify the native-token deposit receipt.
+    - [x] `US-BANK-001` Verify the native-token balance change.
+    - [x] `US-BANK-001` Deposit a supported ERC-20 token through the UI.
+    - [x] `US-BANK-001` Verify the ERC-20 deposit receipt.
+    - [x] `US-BANK-001` Verify the ERC-20 balance change.
+    - [ ] `US-SAFE-002` Reload and verify that the Safe remains available.
+    - [ ] `US-BANK-003` Reload and verify that the Bank balances remain available.
+    - [ ] `US-BANK-003` Reload and verify that the Bank history remains available.
   - Alternative branch: import an existing local Safe and verify its owners and threshold remain unchanged.
   - Separate variants: rejected wallet requests, failed Safe registration, unsupported imports, and failed deposits.
   - Expected result: the company has a registered Safe and a funded Bank backed by durable chain evidence.
-  - Status: Integrated partial — Safe deployment, backend registration, Bank deposits, balances, and history run through the integrated
-    stack. Safe import and injected failure variants remain browser acceptance coverage.
+  - Status: Integrated partial — Safe deployment and Bank deposits, balances, and in-flow history run through the integrated stack. Complete
+    Safe read-back, post-reload persistence, import, and injected failure variants remain browser acceptance coverage.
   - Evidence: [integrated Accounts test](../../app/test/e2e/accounts.integrated.spec.ts).
 
 ## G2 — Company Administration and Member Access
@@ -188,14 +214,19 @@ classification and the linked Playwright or CI report for the result of a partic
   - Actors: company owner and invited member.
   - Dependencies: a persisted company from G1 and a second authenticated portal user.
   - Main path:
-    - [x] Update the company name and description and verify persistence in the workspace and list.
-    - [x] Add the second user as a member.
-    - [ ] Sign in as that member and verify workspace access.
-    - [x] Remove the member and verify the membership row changes persist.
-    - [ ] Verify that the removed member can no longer access the workspace.
+    - [x] `US-COMPANIES-004` Update the company name.
+    - [x] `US-COMPANIES-004` Update the company description.
+    - [x] `US-COMPANIES-004` Verify the updated identity persists in the workspace.
+    - [x] `US-COMPANIES-004` Verify the updated identity persists in the Companies list.
+    - [x] `US-COMPANIES-005` Add the second user as a member.
+    - [ ] `US-COMPANIES-003` Sign in as that member and verify workspace access.
+    - [x] `US-COMPANIES-005` Remove the member.
+    - [x] `US-COMPANIES-005` Verify that the membership-row change persists.
+    - [ ] `US-COMPANIES-005` Verify that the removed member can no longer access the workspace.
   - Separate variants: invalid metadata, existing members, owner removal, non-owner writes, archived-company writes, and rejected requests.
   - Expected result: company identity and membership remain consistent for both actors.
-  - Status: Integrated partial — metadata and membership mutations share one integrated path, while second-user access remains planned.
+  - Status: Integrated partial — metadata and membership mutations share one integrated path, while second-user access and revocation remain
+    planned.
   - Evidence: [integrated company tests](../../app/test/e2e/company/company.integrated.spec.ts) and
     [mocked update variants](../../app/test/e2e/company/company-update.spec.ts).
 
@@ -206,15 +237,20 @@ classification and the linked Playwright or CI report for the result of a partic
   - Actors: company member and company owner.
   - Dependencies: a persisted company with both actors from `E2E-PATH-03`.
   - Main path:
-    - [ ] Hide and recover the company from the member's own list.
-    - [ ] Verify the owner's list is unaffected by the member's visibility preference.
-    - [x] Archive the company as owner.
-    - [x] Verify default-list exclusion and archived-list recovery.
-    - [ ] Verify company writes are frozen while personal visibility remains changeable.
-    - [x] Restore the company and verify its normal actions return.
+    - [ ] `US-COMPANIES-007` Hide the company from the member's own list.
+    - [ ] `US-COMPANIES-007` Recover the company in the member's own list.
+    - [ ] `US-COMPANIES-007` Verify the owner's list is unaffected by the member's visibility preference.
+    - [x] `US-COMPANIES-006` Archive the company as owner.
+    - [x] `US-COMPANIES-006` Verify the company is excluded from the default list.
+    - [x] `US-COMPANIES-006` Recover the company from the archived list.
+    - [ ] `US-COMPANIES-006` Verify company writes are frozen while the company is archived.
+    - [ ] `US-COMPANIES-007` Verify personal visibility remains changeable while the company is archived.
+    - [x] `US-COMPANIES-006` Restore the company.
+    - [x] `US-COMPANIES-006` Verify that normal company actions return after restoration.
   - Separate variants: non-member visibility changes, non-owner lifecycle changes, and rejected archived writes.
   - Expected result: personal visibility and company lifecycle remain distinct and recoverable.
-  - Status: Integrated partial — archive/restore and hide/show share one integrated path, while cross-wallet isolation remains planned.
+  - Status: Integrated partial — archive/restore and hide/show share one integrated path, while cross-wallet isolation, archived-write
+    rejection, and visibility-change proof remain planned.
   - Evidence: [integrated company tests](../../app/test/e2e/company/company.integrated.spec.ts),
     [mocked lifecycle variants](../../app/test/e2e/company/company-archive.spec.ts), and
     [mocked visibility variants](../../app/test/e2e/company/company-visibility.spec.ts).
@@ -225,9 +261,12 @@ classification and the linked Playwright or CI report for the result of a partic
   - Actor: company owner.
   - Dependencies: a disposable company whose preceding lifecycle evidence has already been collected.
   - Main path:
-    - [x] Cancel once and verify the company remains available.
-    - [x] Confirm deletion and verify the Companies list is restored.
-    - [ ] Verify the company endpoint returns unavailable and related records are removed.
+    - [x] `US-COMPANIES-008` Cancel once.
+    - [x] `US-COMPANIES-008` Verify the company remains available after cancellation.
+    - [x] `US-COMPANIES-008` Confirm permanent deletion.
+    - [x] `US-COMPANIES-008` Verify the Companies list is restored after deletion.
+    - [ ] `US-COMPANIES-008` Verify the company endpoint returns unavailable.
+    - [ ] `US-COMPANIES-008` Verify related records are removed.
   - Separate variants: non-owner and rejected deletion.
   - Expected result: the deleted workspace cannot be reopened or restored.
   - Status: Integrated partial — cancellation and permanent removal pass, while cascade evidence remains to be added.
@@ -245,14 +284,32 @@ classification and the linked Playwright or CI report for the result of a partic
   - Dependencies: an operational company, a Safe deployed through the portal, current Investor and Safe Deposit Router contracts, and a
     funded local wallet.
   - Main path:
-    - [x] Create an operational company and deploy its Safe through the real portal and backend.
-    - [x] Synchronize the router with the registered Safe, set a `2x` multiplier, and enable deposits through owner browser writes.
-    - [x] Verify the configuration on-chain and confirm investment stays unavailable before the Safe synchronization is complete.
-    - [x] Invest USDC through the browser, including the required ERC-20 approval and router deposit transactions.
-    - [x] Verify the Safe receipt, router deposit event, SHER issuance, total supply, and shareholder register on-chain.
-    - [x] Reload and verify the Investor symbol, wallet balance, total supply, shareholder count, address, balance, ownership percentage,
-          and configuration and investment activity.
-    - [x] Filter the activity by type and date and open a concrete transaction detail.
+    - [x] `US-COMPANIES-001` Create an operational company through the real portal and backend.
+    - [x] `US-SAFE-001` Deploy the company's Safe through the real portal and backend.
+    - [x] `US-SHER-005` Synchronize the router with the registered Safe.
+    - [x] `US-SHER-005` Set a `2x` investment multiplier.
+    - [x] `US-SHER-005` Enable deposits through owner browser writes.
+    - [x] `US-SHER-005` Verify the investment configuration on-chain.
+    - [x] `US-SHER-005` Verify that investment stays unavailable before Safe synchronization is complete.
+    - [x] `US-SHER-001` Approve the required ERC-20 allowance through the browser.
+    - [x] `US-SHER-001` Invest USDC through the browser.
+    - [x] `US-SHER-001` Verify the Safe receipt.
+    - [x] `US-SHER-001` Verify the router deposit event.
+    - [x] `US-SHER-001` Verify SHER issuance.
+    - [x] `US-SHER-001` Verify the total supply.
+    - [x] `US-SHER-001` Verify the shareholder register on-chain.
+    - [x] `US-SHER-003` Reload and verify the Investor symbol.
+    - [x] `US-SHER-003` Reload and verify the investor wallet balance.
+    - [x] `US-SHER-003` Reload and verify the total supply.
+    - [x] `US-SHER-003` Reload and verify the shareholder count.
+    - [x] `US-SHER-003` Reload and verify the shareholder address.
+    - [x] `US-SHER-003` Reload and verify the shareholder balance.
+    - [x] `US-SHER-003` Reload and verify the ownership percentage.
+    - [x] `US-SHER-003` Reload and verify the investment configuration.
+    - [x] `US-SHER-003` Reload and verify investment activity.
+    - [x] `US-SHER-003` Filter the activity by type.
+    - [x] `US-SHER-003` Filter the activity by date.
+    - [x] `US-SHER-003` Open a concrete transaction detail.
   - Separate variants: disabled or paused deposits, amount and dependency validation, rejected approval, failed deposit, cancellation,
     unauthorized configuration, archived-company writes, and failed reads remain focused frontend or contract tests where representative
     evidence is linked.
@@ -269,19 +326,41 @@ classification and the linked Playwright or CI report for the result of a partic
     `E2E-PATH-06`.
   - Dependencies: an operational company, eligible issuer, funded Bank, and at least one shareholder.
   - Main path:
-    - [x] Create an operational company with the required authenticated members, then issue `30 E2E` to the owner and `10 E2E` to one member
-          through browser writes.
-    - [x] Verify both successful receipts, `Minted` events, the `40 E2E` total supply, and the two-address shareholder register on-chain.
-    - [x] Fund Bank with `4 USDC` through the portal and distribute the held balance through the direct owner authorization path.
-    - [x] Verify the Bank and Investor distribution events, the two successful proportional payments (`3 USDC` and `1 USDC`), and the
-          emptied Bank balance on-chain.
-    - [x] Establish a real three-seat Board through the Elections and Board contracts, transfer Bank ownership to it, and fund Bank again.
-    - [x] Submit the second dividend through the owner browser, verify the zero-based Board action is persisted, and confirm that balances
-          do not move before the approval quorum is reached.
-    - [x] Approve through a second Board-member browser and verify quorum execution, Board approval and execution events, the Bank and
-          Investor distribution events, both proportional payments, and the emptied Bank balance on-chain.
-    - [x] Reload and verify the two-shareholder cap table, `75%` / `25%` ownership, and both grouped distribution activities with their
-          shareholder payments.
+    - [x] `US-COMPANIES-001` Create an operational company with the required authenticated members.
+    - [x] `US-SHER-004` Issue `30 E2E` to the owner through browser writes.
+    - [x] `US-SHER-004` Issue `10 E2E` to one member through browser writes.
+    - [x] `US-SHER-004` Verify the owner's successful issuance receipt.
+    - [x] `US-SHER-004` Verify the member's successful issuance receipt.
+    - [x] `US-SHER-004` Verify the `Minted` events.
+    - [x] `US-SHER-004` Verify the `40 E2E` total supply.
+    - [x] `US-SHER-004` Verify the two-address shareholder register on-chain.
+    - [x] `US-SHER-002` Fund the Bank with `4 USDC` through the portal.
+    - [x] `US-SHER-002` Distribute the held balance through the direct owner authorization path.
+    - [x] `US-SHER-002` Verify the Bank distribution event.
+    - [x] `US-SHER-002` Verify the Investor distribution event.
+    - [x] `US-SHER-002` Verify the owner's proportional payment of `3 USDC`.
+    - [x] `US-SHER-002` Verify the member's proportional payment of `1 USDC`.
+    - [x] `US-SHER-002` Verify the emptied Bank balance on-chain.
+    - [x] `US-SHER-002` Establish a real three-seat Board through the Elections and Board contracts.
+    - [x] `US-SHER-002` Transfer Bank ownership to the Board.
+    - [x] `US-SHER-002` Fund the Bank again.
+    - [x] `US-SHER-002` Submit the second dividend through the owner browser.
+    - [x] `US-SHER-002` Verify the zero-based Board action is persisted.
+    - [x] `US-SHER-002` Verify that balances do not move before the approval quorum is reached.
+    - [x] `US-SHER-002` Approve through a second Board-member browser.
+    - [x] `US-SHER-002` Verify quorum execution.
+    - [x] `US-SHER-002` Verify the Board approval event.
+    - [x] `US-SHER-002` Verify the Board execution event.
+    - [x] `US-SHER-002` Verify the Bank distribution event for the Board-approved dividend.
+    - [x] `US-SHER-002` Verify the Investor distribution event for the Board-approved dividend.
+    - [x] `US-SHER-002` Verify the owner's proportional payment for the Board-approved dividend.
+    - [x] `US-SHER-002` Verify the member's proportional payment for the Board-approved dividend.
+    - [x] `US-SHER-002` Verify the emptied Bank balance on-chain after the Board-approved dividend.
+    - [x] `US-SHER-003` Reload and verify the two-shareholder cap table.
+    - [x] `US-SHER-003` Reload and verify `75%` / `25%` ownership.
+    - [x] `US-SHER-003` Reload and verify the grouped direct-owner distribution activity.
+    - [x] `US-SHER-003` Reload and verify the grouped Board-approved distribution activity.
+    - [x] `US-SHER-003` Reload and verify the shareholder payments in the distribution activities.
   - Expected result: direct-owner and Board-approved distributions produce the same durable proportional shareholder result.
   - Status: Integrated covered — direct-owner distribution and Board action approval/execution run through integrated main paths.
   - Evidence:
@@ -296,13 +375,21 @@ classification and the linked Playwright or CI report for the result of a partic
     reassign Contract Management ownership.
   - Dependencies: previous and current Investor generations, migration data, owner, and shareholder wallets.
   - Main path:
-    - [x] Create a two-holder previous Investor, redeploy the Officer through the portal, and verify the real migration root plus persisted
-          snapshot.
-    - [x] Change an old-contract balance after snapshot creation, then self-claim the unchanged frozen allocation as that shareholder.
-    - [x] Dispatch the remaining allocation as the Investor owner and close the migration through the portal.
-    - [x] Reload and verify the final `75%` / `25%` cap table, completed migration state, successful event receipts, and rejection of an
-          additional claim.
-    - [x] Fund the current Bank and distribute dividends after closure, proving that the migration freeze no longer blocks payouts.
+    - [x] `US-SHER-008` Create a two-holder previous Investor.
+    - [x] `US-SHER-008` Redeploy the Officer through the portal.
+    - [x] `US-SHER-008` Verify the real migration root.
+    - [x] `US-SHER-008` Verify the persisted migration snapshot.
+    - [x] `US-SHER-006` Change an old-contract balance after snapshot creation.
+    - [x] `US-SHER-006` Self-claim the unchanged frozen allocation as that shareholder.
+    - [x] `US-SHER-007` Dispatch the remaining allocation as the Investor owner.
+    - [x] `US-SHER-007` Close the migration through the portal.
+    - [x] `US-SHER-006` Reload and verify the final `75%` / `25%` cap table.
+    - [x] `US-SHER-007` Reload and verify the completed migration state.
+    - [x] `US-SHER-006` Reload and verify successful migration event receipts.
+    - [x] `US-SHER-006` Verify that an additional claim is rejected.
+    - [x] `US-SHER-002` Fund the current Bank after migration closure.
+    - [x] `US-SHER-002` Distribute dividends after migration closure.
+    - [x] `US-SHER-002` Verify that the migration freeze no longer blocks payouts.
   - Expected result: every frozen allocation exists exactly once in the current Investor, migration is closed, and dividends resume.
   - Status: Integrated covered.
   - Evidence: [integrated shareholder migration lifecycle](../../app/test/e2e/shareholder/shareholder-migration.integrated.spec.ts).
@@ -318,11 +405,15 @@ classification and the linked Playwright or CI report for the result of a partic
   - Actors: issuer and lender.
   - Dependencies: an operational company, current Community Credit contracts, and funded wallets.
   - Main path:
-    - [ ] Inspect the initial Credit Account state.
-    - [ ] Publish a credit call and verify the new round on-chain.
-    - [ ] Lend to the round and verify balances and participation.
-    - [ ] Repay lenders and verify receipts and final balances.
-    - [ ] Reload the account and verify the complete round history.
+    - [ ] `US-CC-001` Inspect the initial Credit Account state.
+    - [ ] `US-CC-002` Publish a credit call.
+    - [ ] `US-CC-002` Verify the new round on-chain.
+    - [ ] `US-CC-003` Lend to the round.
+    - [ ] `US-CC-003` Verify lender balances and participation.
+    - [ ] `US-CC-005` Repay the lenders.
+    - [ ] `US-CC-005` Verify repayment receipts and final balances.
+    - [ ] `US-CC-001` Reload the account.
+    - [ ] `US-CC-001` Verify the complete round history.
   - Expected result: one credit round is traceable from publication through repayment.
   - Status: Planned — no integrated business path is currently linked.
 
@@ -331,9 +422,11 @@ classification and the linked Playwright or CI report for the result of a partic
   - Reason for isolation: the path deliberately creates an exceptional round state that must not block the normal credit lifecycle.
   - Dependencies: a disposable round created through the real product flow.
   - Main path:
-    - [ ] Move the round into a supported stalled state.
-    - [ ] Execute the issuer's recovery action.
-    - [ ] Verify participant balances, round state, and refreshed history.
+    - [ ] `US-CC-004` Move the round into a supported stalled state.
+    - [ ] `US-CC-004` Execute the issuer's recovery action.
+    - [ ] `US-CC-004` Verify participant balances after recovery.
+    - [ ] `US-CC-004` Verify the recovered round state.
+    - [ ] `US-CC-004` Refresh and verify the recovery history.
   - Expected result: the exceptional round reaches its defined terminal state without corrupting other rounds.
   - Status: Planned — no integrated business path is currently linked.
 
@@ -345,11 +438,15 @@ classification and the linked Playwright or CI report for the result of a partic
     - `US-PAYROLL-002` — pause or resume the wage.
   - Dependencies: an operational company with owner and member.
   - Main path:
-    - [x] Create and then replace the member wage.
-    - [x] Pause and resume it.
-    - [x] Block a member without a wage and reject a claim while the wage is paused.
-    - [x] Submit a persisted claim after resuming the wage.
-    - [x] Verify the persisted active wage and visible status after reload.
+    - [x] `US-PAYROLL-001` Create the member wage.
+    - [x] `US-PAYROLL-001` Replace the member wage.
+    - [x] `US-PAYROLL-002` Pause the member wage.
+    - [x] `US-PAYROLL-002` Resume the member wage.
+    - [x] `US-PAYROLL-001` Block a member without a wage.
+    - [x] `US-PAYROLL-002` Reject a claim while the wage is paused.
+    - [x] `US-PAYROLL-002` Submit a persisted claim after resuming the wage.
+    - [x] `US-PAYROLL-001` Reload and verify the persisted active wage.
+    - [x] `US-PAYROLL-002` Reload and verify the visible wage status.
   - Expected result: exactly one current wage controls the member's eligibility.
   - Status: Integrated partial — the owner and member journeys run against the real frontend, backend, PostgreSQL database, and local chain.
     A member without a wage is blocked and a paused wage is rejected by the backend; broader wage-form validation remains lower-level
@@ -364,10 +461,14 @@ classification and the linked Playwright or CI report for the result of a partic
     - `US-PAYROLL-007` — delete a daily claim.
   - Dependencies: an active wage from `E2E-PATH-11`.
   - Main path:
-    - [x] Save weekly goals.
-    - [x] Create, edit, and delete eligible daily work entries.
-    - [x] Recreate the final entry set and verify weekly totals.
-    - [x] Preserve the valid entry while rejecting daily and weekly cap overages.
+    - [x] `US-PAYROLL-004` Save weekly goals.
+    - [x] `US-PAYROLL-005` Create an eligible daily work entry.
+    - [x] `US-PAYROLL-006` Edit an eligible daily work entry.
+    - [x] `US-PAYROLL-007` Delete an eligible daily work entry.
+    - [x] `US-PAYROLL-005` Recreate the final entry set.
+    - [x] `US-PAYROLL-005` Verify weekly totals.
+    - [x] `US-PAYROLL-005` Preserve the valid entry while rejecting daily cap overages.
+    - [x] `US-PAYROLL-005` Preserve the valid entry while rejecting weekly cap overages.
   - Expected result: the member reaches a deterministic claim-ready week.
   - Status: Integrated partial — one real member identity saves goals and prepares a persisted claim through the product UI. Daily form
     validation and the server-side weekly cap preserve the valid entry; attachments and other rejected edits remain separately covered.
@@ -384,16 +485,28 @@ classification and the linked Playwright or CI report for the result of a partic
   - Reused dependency: `US-PAYROLL-003` references the Accounts-owned funding journey and is not revalidated here.
   - Dependencies: a claim-ready week, current contract owner, and funded Payroll contract.
   - Main path:
-    - [x] Sign the completed weekly claim.
-    - [x] Disable and re-enable it without creating a second claim.
-    - [x] Withdraw native and USDC compensation and mint SHER through a real chain transaction; verify the decoded payload and token
-          decimals.
-    - [x] Reconcile backend and chain state.
-    - [x] Verify member and owner histories after reload.
-    - [x] Keep signed, disabled, and withdrawn claims read-only for the member.
-    - [x] Block non-owner signing and withdrawal controls, and retain a signed claim when Payroll has insufficient USDC.
-    - [x] Open Payroll Account after funding and withdrawal; verify exact token holdings and read-only member access.
-    - [ ] Verify account summaries, activity and filters in the integrated browser journey.
+    - [x] `US-PAYROLL-008` Sign the completed weekly claim.
+    - [x] `US-PAYROLL-009` Disable the signed weekly claim.
+    - [x] `US-PAYROLL-009` Re-enable the signed weekly claim without creating a second claim.
+    - [x] `US-PAYROLL-010` Withdraw native compensation through a real chain transaction.
+    - [x] `US-PAYROLL-010` Withdraw USDC compensation through a real chain transaction.
+    - [x] `US-PAYROLL-010` Mint SHER through a real chain transaction.
+    - [x] `US-PAYROLL-010` Verify the decoded withdrawal payload.
+    - [x] `US-PAYROLL-010` Verify the withdrawal token decimals.
+    - [x] `US-PAYROLL-011` Reconcile backend and chain state.
+    - [x] `US-PAYROLL-012` Reload and verify member history.
+    - [x] `US-PAYROLL-012` Reload and verify owner history.
+    - [x] `US-PAYROLL-009` Keep signed claims read-only for the member.
+    - [x] `US-PAYROLL-009` Keep disabled claims read-only for the member.
+    - [x] `US-PAYROLL-010` Keep withdrawn claims read-only for the member.
+    - [x] `US-PAYROLL-008` Block non-owner signing controls.
+    - [x] `US-PAYROLL-010` Block non-owner withdrawal controls.
+    - [x] `US-PAYROLL-010` Retain a signed claim when Payroll has insufficient USDC.
+    - [x] `US-PAYROLL-013` Open Payroll Account after funding and withdrawal.
+    - [x] `US-PAYROLL-013` Verify exact Payroll token holdings.
+    - [x] `US-PAYROLL-013` Verify read-only member access.
+    - [ ] `US-PAYROLL-013` Verify account summaries in the integrated browser journey.
+    - [ ] `US-PAYROLL-013` Verify account activity and filters in the integrated browser journey.
   - Expected result: one claim remains traceable from approval through payment, account position, and history.
   - Status: Integrated partial — the browser funds Payroll through Bank, signs a completed-week claim, verifies the disabled and paid chain
     flags, withdraws as the paid member, and reloads both perspectives. It also verifies the role-gated controls, frozen lifecycle states,
@@ -415,18 +528,26 @@ classification and the linked Playwright or CI report for the result of a partic
   - Actors: Expense Account owner and approved recipient.
   - Dependencies: an operational company, funded Expense Account, and both wallets.
   - Main path:
-    - [x] Create and persist a correctly scoped signed approval.
-    - [x] Spend within the approval and verify recipient and contract balances.
-    - [x] Deactivate the approval and verify its disabled state.
-    - [ ] Attempt spending while the approval is deactivated and verify that it is blocked.
-    - [x] Reactivate the approval and verify its active state.
-    - [ ] Complete another valid spend after reactivation.
-    - [ ] Reload balances, approval state, and transaction history.
+    - [x] `US-EXP-001` Create a correctly scoped signed approval.
+    - [x] `US-EXP-001` Verify the approval persists.
+    - [x] `US-EXP-002` Spend within the approval.
+    - [x] `US-EXP-002` Verify the recipient balance.
+    - [x] `US-EXP-002` Verify the Expense Account contract balance.
+    - [x] `US-EXP-003` Deactivate the approval.
+    - [x] `US-EXP-003` Verify its disabled state.
+    - [ ] `US-EXP-002` Attempt spending while the approval is deactivated.
+    - [ ] `US-EXP-003` Verify that spending is blocked while the approval is deactivated.
+    - [x] `US-EXP-003` Reactivate the approval.
+    - [x] `US-EXP-003` Verify its active state.
+    - [ ] `US-EXP-002` Complete another valid spend after reactivation.
+    - [ ] `US-EXP-004` Reload and verify the balances.
+    - [ ] `US-EXP-004` Reload and verify the approval state.
+    - [ ] `US-EXP-004` Reload and verify the transaction history.
   - Separate variants: overspending, invalid signatures, unauthorized actions, and insufficient funds.
   - Expected result: one allowance remains auditable across its complete active and inactive lifecycle.
-  - Status: Integrated partial — the main persisted approval, member spend, lifecycle control, balance, and history sequence is executable.
-    Invalid signatures, overspending, authorization failures, and insufficient-fund variants remain browser acceptance or lower-layer
-    coverage.
+  - Status: Integrated partial — the main persisted approval, member spend, lifecycle control, balances, and in-flow history sequence is
+    executable. Post-reload and negative spend assertions remain planned. Invalid signatures, overspending, authorization failures, and
+    insufficient-fund variants remain browser acceptance or lower-layer coverage.
   - Evidence: [integrated Accounts test](../../app/test/e2e/accounts.integrated.spec.ts).
 
 ## G7 — Cross-Feature Accounting Verification
@@ -439,12 +560,16 @@ classification and the linked Playwright or CI report for the result of a partic
     - `US-ACCT-005` — review historical contract activity.
   - Reused dependencies: representative Bank, shareholder, credit, payroll, and expense transactions from their owning paths.
   - Main path:
-    - [ ] Load the complete Accounting journal after the source operations.
-    - [ ] Verify every source operation produces one balanced journal entry.
-    - [ ] Trace entries to their transactions and concrete company accounts.
-    - [ ] Verify the Income Statement, Balance Sheet, and Trial Balance share one balanced snapshot.
-    - [ ] Verify historical Officer generations remain separate and complete.
-    - [ ] Refresh and verify the same books are reconstructed.
+    - [ ] `US-ACCT-001` Load the complete Accounting journal after the source operations.
+    - [ ] `US-ACCT-002` Verify every source operation produces one balanced journal entry.
+    - [ ] `US-ACCT-002` Trace journal entries to their source transactions.
+    - [ ] `US-ACCT-002` Trace journal entries to concrete company accounts.
+    - [ ] `US-ACCT-003` Verify the Income Statement uses the balanced snapshot.
+    - [ ] `US-ACCT-003` Verify the Balance Sheet uses the balanced snapshot.
+    - [ ] `US-ACCT-003` Verify the Trial Balance uses the balanced snapshot.
+    - [ ] `US-ACCT-005` Verify historical Officer generations remain separate.
+    - [ ] `US-ACCT-005` Verify historical Officer generations remain complete.
+    - [ ] `US-ACCT-001` Refresh and verify that the same books are reconstructed.
   - Expected result: the company books reconcile with cross-feature persisted and on-chain evidence.
   - Status: Planned — no integrated business path is currently linked.
 
@@ -454,10 +579,13 @@ classification and the linked Playwright or CI report for the result of a partic
     - `US-ACCT-004` — export Accounting reports.
   - Dependencies: reviewed journal and statements from `E2E-PATH-15` and deterministic valuation inputs.
   - Main path:
-    - [ ] Classify an unassigned external withdrawal.
-    - [ ] Verify the classification persists and updates the affected reports.
-    - [ ] Export the selected reports.
-    - [ ] Verify exported filters, rows, and totals match the reviewed UI state.
+    - [ ] `US-ACCT-006` Classify an unassigned external withdrawal.
+    - [ ] `US-ACCT-006` Verify that the classification persists.
+    - [ ] `US-ACCT-006` Verify that the classification updates the affected reports.
+    - [ ] `US-ACCT-004` Export the selected reports.
+    - [ ] `US-ACCT-004` Verify exported filters match the reviewed UI state.
+    - [ ] `US-ACCT-004` Verify exported rows match the reviewed UI state.
+    - [ ] `US-ACCT-004` Verify exported totals match the reviewed UI state.
   - Expected result: the reviewed classification and exported books preserve the same accounting snapshot.
   - Status: Planned — no integrated business path is currently linked.
 
@@ -474,13 +602,29 @@ classification and the linked Playwright or CI report for the result of a partic
   - Actors: company owner and eligible voter.
   - Dependencies: a company with Elections and Board of Directors contracts and funded local wallets.
   - Main path:
-    - [x] Register the actors, create an operational company, deploy its contracts, and add its members through the real stack.
-    - [x] Create an election through the portal and verify its configuration and fixed eligible-voter snapshot on-chain.
-    - [x] Verify the backend persists member notifications before acknowledging the hand-off.
-    - [x] Open the persisted notification as an eligible member, mark it read, and follow it to the election.
-    - [x] Cast a ballot and verify the recorded choice, vote count, and refreshed portal state.
-    - [x] Publish the results and verify the published state, Board membership, and next-election availability on-chain and in the portal.
-    - [x] Reload, open the published election from history, and review its elected Board.
+    - [x] `US-AUTH-001` Register the actors through the real stack.
+    - [x] `US-COMPANIES-001` Create an operational company through the real stack.
+    - [x] `US-COMPANIES-002` Deploy the company's contracts through the real stack.
+    - [x] `US-COMPANIES-005` Add the company members through the real stack.
+    - [x] `US-EL-01` Create an election through the portal.
+    - [x] `US-EL-01` Verify the election configuration on-chain.
+    - [x] `US-EL-01` Verify the fixed eligible-voter snapshot on-chain.
+    - [x] `US-EL-04` Verify the backend persists member notifications.
+    - [x] `US-EL-04` Open the persisted notification as an eligible member.
+    - [x] `US-EL-04` Mark the notification as read.
+    - [x] `US-EL-04` Follow the notification to the election.
+    - [x] `US-EL-02` Cast a ballot.
+    - [x] `US-EL-02` Verify the recorded choice.
+    - [x] `US-EL-02` Verify the vote count.
+    - [x] `US-EL-02` Verify the refreshed portal state.
+    - [x] `US-EL-03` Publish the election results.
+    - [x] `US-EL-03` Verify the published state on-chain.
+    - [x] `US-EL-03` Verify the published state in the portal.
+    - [x] `US-EL-07` Verify Board membership on-chain.
+    - [x] `US-EL-07` Verify Board membership in the portal.
+    - [x] `US-EL-03` Verify that the next election is available.
+    - [x] `US-EL-08` Reload and open the published election from history.
+    - [x] `US-EL-08` Review the elected Board.
   - Separate variants: rejected wallet requests for creation, voting, and publication; notification failures; and archived-company write
     guards remain controlled mocked-browser acceptance tests.
   - Expected result: the election remains traceable from creation through the elected Board and published history.
