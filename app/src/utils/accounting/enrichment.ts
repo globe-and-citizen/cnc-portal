@@ -66,7 +66,7 @@ function nearest<T>(
  * canonical wage calc (the one the claim is signed and paid with), so it equals
  * the on-chain amount exactly. `null` when the claim has no rate in that token.
  */
-function claimTokenTotal(claim: WeeklyClaim, token: TokenId): bigint | null {
+function claimTokenTotal(claim: WeeklyClaim, token: JournalEntryDraft['token']): bigint | null {
   const rates = claim.wage?.ratePerHour
   if (!rates?.length) return null
   try {

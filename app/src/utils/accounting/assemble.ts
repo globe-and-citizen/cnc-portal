@@ -50,6 +50,8 @@ import {
 import { settleWithdrawnSher } from '@/utils/accounting/sherIssuance'
 import { atDate } from '@/utils/accounting/mappers/context'
 import { toSafeTransferRows, toSafeOutgoingTransferRows } from '@/utils/accounting/safeTransfers'
+import { applySafeSettlementRates } from './safeExchanges'
+import type { AccountingDiagnostic } from './types'
 
 /** The raw feeds for one team, as fetched by {@link useCNCAccounting}. */
 export interface CncAccountingInput {
@@ -77,6 +79,8 @@ export interface CncAccountingInput {
   vestingEvents?: VestingEventFeed | null
   safeDepositRouterEvents?: SafeDepositRouterEventFeed | null
   safeTransfers?: readonly SafeIncomingTransfer[] | null
+  /** Authoritative actual movements, including route/allowance-driven ERC-20 outflows. */
+  safeAssetTransfers?: readonly SafeIncomingTransfer[] | null
   /** Executed multisig transactions — outflows from the Safe. */
   safeOutgoingTransactions?: readonly SafeTransaction[] | null
   // ── portal DB rows (off-chain enrichment context, spec §3.2) ──
@@ -88,6 +92,7 @@ export interface CncAccountingInput {
 
 /** The canonical journal and reconciliation diagnostics resolved for a team's books. */
 export interface CncAccounting {
+  assetDiagnostics?: AccountingDiagnostic[]
   /** The validated, ordered double-entry journal built once after consolidation. */
   journal: JournalEntry[]
   /** Fee logs withheld because their Bank outflow counterpart is missing. */
@@ -197,7 +202,13 @@ function toJournalEntrySources(input: CncAccountingInput): JournalEntrySources {
     )
     sources.safe = {
       safeAddress: input.safeAddress,
-      transfers: [...incomingRows, ...outgoingRows]
+      transfers:
+        input.safeAssetTransfers !== undefined
+          ? toSafeTransferRows(
+              input.safeAssetTransfers,
+              input.safeDepositRouterEvents?.safeDeposits?.items
+            )
+          : [...incomingRows, ...outgoingRows]
     }
   }
 
@@ -269,7 +280,9 @@ export function buildCncJournalEntryDrafts(input: CncAccountingInput): JournalEn
   // A Community Credit sweep has no Bank event that identifies its destination
   // generation. Keep that absence explicit; the canonical account registry turns
   // the Bank leg into an unresolved account instead of attributing it by timing.
-  return settleWithdrawnSher(stamped, currentRate).sort((a, b) => a.timestamp - b.timestamp)
+  return applySafeSettlementRates(settleWithdrawnSher(stamped, currentRate)).sort(
+    (a, b) => a.timestamp - b.timestamp
+  )
 }
 
 /**
@@ -286,7 +299,8 @@ function assembleFromDrafts(
 
   return {
     journal,
-    unmatchedFeeOperationIds: finalized.unmatchedFeeOperationIds
+    unmatchedFeeOperationIds: finalized.unmatchedFeeOperationIds,
+    assetDiagnostics: finalized.assetDiagnostics
   }
 }
 

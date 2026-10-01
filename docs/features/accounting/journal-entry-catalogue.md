@@ -30,14 +30,14 @@ rate of record. The examples illustrate account direction and balance; they do n
 
 ## Accounting Rule Taxonomy
 
-| Kind                         | Identifiers                               | Meaning                                                                                            |
-| ---------------------------- | ----------------------------------------- | -------------------------------------------------------------------------------------------------- |
-| Domain use case              | Active emitted `UC-*` identifiers         | A specific business accounting event with its own trigger and journal result                       |
-| Legacy domain rule           | `DEFAULT-D`                               | Direct SHER issuance; semantically a domain rule despite its historical identifier                 |
-| Generic posting rule         | `CASH-OUT`, `INTERNAL`                    | A reusable classification selected from transaction evidence across several product stories        |
-| Entry component              | `FEE`                                     | Additional journal lines attached to a parent Bank outflow, never a standalone finalized operation |
-| Declared inactive identifier | `UC-CREDIT-02`, `UC-CREDIT-04`, `CASH-IN` | A runtime value that no current source mapper emits                                                |
-| No-posting boundary          | No identifier                             | Evidence is tracked, but no company journal entry is created at that lifecycle stage               |
+| Kind                         | Identifiers                                       | Meaning                                                                                            |
+| ---------------------------- | ------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| Domain use case              | Active emitted `UC-*` identifiers and `SAFE-SWAP` | A specific business accounting event with its own trigger and journal result                       |
+| Legacy domain rule           | `DEFAULT-D`                                       | Direct SHER issuance; semantically a domain rule despite its historical identifier                 |
+| Generic posting rule         | `CASH-OUT`, `INTERNAL`                            | A reusable classification selected from transaction evidence across several product stories        |
+| Entry component              | `FEE`                                             | Additional journal lines attached to a parent Bank outflow, never a standalone finalized operation |
+| Declared inactive identifier | `UC-CREDIT-02`, `UC-CREDIT-04`, `CASH-IN`         | A runtime value that no current source mapper emits                                                |
+| No-posting boundary          | No identifier                                     | Evidence is tracked, but no company journal entry is created at that lifecycle stage               |
 
 ## End-to-End Processing
 
@@ -64,7 +64,7 @@ that state instead of presenting the affected books as final.
 | Transfer Bank funds          | [US-BANK-002](../accounts/README.md#us-bank-002-transfer-bank-funds)                                | `UC-BANK-03`, `CASH-OUT`, `INTERNAL`; optional `FEE` | Bank transfer executes                                             | Treasury funding, external payment, and any transaction fee |
 | Cash out treasury funds      | [US-BANK-004](../accounts/README.md#us-bank-004-cash-out-available-treasury-funds)                  | `INTERNAL`, then `CASH-OUT`; optional `FEE`          | Each cash-out step executes                                        | Pocket sweep followed by external payment                   |
 | Spend from Expense           | [US-EXP-002](../accounts/README.md#us-exp-002-spend-from-the-expense-account)                       | `UC-EXP-01` or `INTERNAL`                            | Approved transfer executes                                         | Operating expense or pocket transfer                        |
-| Manage Safe funds            | [US-SAFE-003](../accounts/README.md#us-safe-003-manage-safe-funds)                                  | `UC-BANK-02`, `CASH-OUT`, or `INTERNAL`              | Confirmed Safe transfer is indexed                                 | Receipt, external payment, or pocket transfer               |
+| Manage Safe funds            | [US-SAFE-003](../accounts/README.md#us-safe-003-manage-safe-funds)                                  | `UC-BANK-02`, `CASH-OUT`, `INTERNAL`, or `SAFE-SWAP` | Confirmed Safe transfer is indexed                                 | Receipt, external payment, or pocket transfer               |
 | Fund Payroll                 | [US-PAYROLL-003](../payroll/README.md#us-payroll-003-fund-the-payroll-contract)                     | `UC-BANK-03` or `INTERNAL`                           | Funds reach Payroll                                                | Treasury funding transfer                                   |
 | Submit a daily claim         | [US-PAYROLL-005](../payroll/README.md#us-payroll-005-submit-a-daily-claim)                          | `UC-CASH-02`                                         | The containing work week ends while eligible                       | Wage accrual                                                |
 | Disable or re-enable a claim | [US-PAYROLL-009](../payroll/README.md#us-payroll-009-disable-or-re-enable-a-signed-weekly-claim)    | `UC-CASH-02`                                         | No entry on status change; ended claims accrue only while eligible | Wage accrual appears or is excluded                         |
@@ -88,8 +88,10 @@ that state instead of presenting the affected books as final.
 [US-SAFE-003](../accounts/README.md#us-safe-003-manage-safe-funds).
 
 - **Input:** A Bank deposit event or confirmed Safe inflow whose sender is not a known company pocket.
-- **Processing:** The mapper resolves the receiving deployment account. A SafeDepositRouter-backed Safe inflow is removed here because
-  `UC-SDR-01` owns that operation.
+- **Processing:** The mapper resolves the receiving deployment account. Evidenced swaps bypass the receipt fallback. Discovered-asset
+  receipts, mints and ambiguous multi-asset settlements credit `Unclassified Receipts` and keep Accounting partial until classified.
+  Ordinary known-token direct receipts retain the current Service Revenue rule. A SafeDepositRouter-backed Safe inflow is removed here
+  because `UC-SDR-01` owns that operation.
 - **General Ledger:** Label `Service revenue`; activity links to the receiving Bank or Safe. The entry retains the original currency,
   quantity, rate, and transaction hash.
 
@@ -101,6 +103,30 @@ For a direct external receipt valued at $100:
 | Service Revenue            |             |          100 |
 
 An external wallet may belong to a company member; that alone does not make the receipt an internal transfer.
+
+### `SAFE-SWAP` — Evidenced Safe Asset Exchange
+
+**Source story:** [US-SAFE-003](../accounts/README.md#us-safe-003-manage-safe-funds).
+
+- **Input:** Opposing movements of different assets sharing one transaction and an external settlement counterparty.
+- **Processing:** Preserve asset identity by network and contract, exact raw quantity and decimals. Debit the acquired asset and credit the
+  disposed asset at its full-history weighted-average carrying value. Recognize the difference as an exchange gain or loss.
+- **General Ledger:** Label `Asset exchange`, category `Swap`. Acquisition value can use the actual known stablecoin paid; other values
+  require the asset's own historical price evidence. Current portfolio prices do not rewrite the books.
+
+For an asset acquired for $20 and later sold for 30.658984 USDC, the sale is:
+
+| Account             | Currency       | Debit (USD) | Credit (USD) |
+| ------------------- | -------------- | ----------: | -----------: |
+| Cash — Safe         | USDC           |   30.658984 |              |
+| Cash — Safe         | Acquired asset |             |           20 |
+| Asset Exchange Gain | USD            |             |    10.658984 |
+
+Ancillary mints remain separate unclassified evidence. Missing decimals, acquisition basis or valuation keeps reports incomplete; complex
+batches and different-counterparty settlements need further evidence before automatic classification. Network fees are not inferred from the
+difference between proceeds and carrying value. See the
+[read model](../../implementation/accounting-read-model/README.md#safe-assets-and-exchanges) and
+[regression evidence](../../../app/src/utils/accounting/__tests__/safeExchanges.spec.ts).
 
 ### `UC-BANK-03` — Bank Funds a Company Pocket
 

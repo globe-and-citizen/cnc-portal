@@ -6,12 +6,12 @@
  * therefore an ordinary `Transaction Fee Expense` line within its source
  * operation, never a second transaction or a special filter category.
  */
-import { formatNumber } from '@/utils/format'
+import { formatNumber, formatExactNumber } from '@/utils/format'
+import { formatUnits } from 'viem'
 import { activityDestinationOf, type ActivityDestination } from './activityDestination'
 import { activityOf, entryLabel, type ActivityCell } from './describeEntry'
 import { badgeClassOf, categoryLabelOf } from './ledgerCategory'
 import { currencySymbol, filterByPeriod, formatUnixDateTime, money, periodLabel } from './presenter'
-import { wholeTokenAmount } from './toUsd'
 import { creditOf, debitOf } from './journalEntry'
 import { ZERO_USD_AMOUNT, usdRateToNumber } from './monetaryAmount'
 import type { Account, JournalEntry, JournalEntryLine, UsdAmount } from './types'
@@ -129,7 +129,7 @@ export function journalLedgerCurrencies(entries: readonly JournalEntry[]): strin
   const currencies = new Set<string>()
   for (const entry of entries) {
     for (const line of entry.lines) {
-      if (line.movement) currencies.add(currencySymbol(line.movement.token))
+      if (line.movement) currencies.add(currencySymbol(line.movement.token, line.movement.asset))
     }
   }
   return [...currencies].sort()
@@ -142,7 +142,10 @@ export function filterJournalLedgerByCurrency(
 ): JournalEntry[] {
   const wanted = new Set(currencies)
   return entries.filter((entry) =>
-    entry.lines.some((line) => line.movement && wanted.has(currencySymbol(line.movement.token)))
+    entry.lines.some(
+      (line) =>
+        line.movement && wanted.has(currencySymbol(line.movement.token, line.movement.asset))
+    )
   )
 }
 
@@ -160,16 +163,16 @@ export function filterJournalLedgerEntries(
 /** The Devise / Quantité / Taux columns of one journal line's token movement. */
 function movementOf(line: JournalEntryLine): Pick<LedgerRow, 'currency' | 'quantity' | 'rate'> {
   if (!line.movement) return NO_MOVEMENT
-  let whole = 0
-  try {
-    whole = wholeTokenAmount(line.movement.rawAmount, line.movement.token)
-  } catch {
-    // A malformed raw amount does not alter the validated reporting amount.
-  }
   return {
-    currency: currencySymbol(line.movement.token),
-    quantity: formatNumber(whole, { maxDecimals: 6 }),
-    rate: `$${formatNumber(usdRateToNumber(line.movement.rate), { maxDecimals: 6 })}`
+    currency: currencySymbol(line.movement.token, line.movement.asset),
+    quantity:
+      line.movement.decimals === null
+        ? 'Unavailable'
+        : formatExactNumber(formatUnits(line.movement.rawAmount, line.movement.decimals)),
+    rate:
+      line.movement.rate === 0n
+        ? 'Unavailable'
+        : `$${formatNumber(usdRateToNumber(line.movement.rate), { maxDecimals: 6 })}`
   }
 }
 

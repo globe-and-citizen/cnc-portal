@@ -11,6 +11,7 @@ import {
   useQueryClientFn
 } from '@/tests/mocks'
 import { mockUserStore } from '@/tests/mocks/store.mock'
+import { mockUseSafePortfolio } from '@/tests/mocks/safePortfolio.mock'
 
 // Mock @iconify/vue
 vi.mock('@iconify/vue', () => ({
@@ -204,6 +205,11 @@ describe('[US-SAFE-002] SafeBalanceSection rendering', () => {
   })
 
   describe('Component Rendering', () => {
+    it('[AC-US-SAFE-003-11] marks the wallet total incomplete when a discovered holding cannot be valued', () => {
+      mockUseSafePortfolio.isIncomplete.value = true
+      wrapper = createWrapper()
+      expect(wrapper.get('[data-test="safe-total-usd"]').text()).toBe('Incomplete')
+    })
     it('[AC-US-SAFE-002-01] renders Safe holdings and their local-currency value', () => {
       wrapper = createWrapper()
 

@@ -167,6 +167,7 @@ export interface DecodedCall {
 }
 
 export interface SafeIncomingTransfer {
+  transferId?: string
   type: 'ETHER_TRANSFER' | 'ERC20_TRANSFER' | 'ERC721_TRANSFER'
   executionDate: string
   blockNumber: number
@@ -174,7 +175,7 @@ export interface SafeIncomingTransfer {
   to: string
   from: string
   value: string
-  tokenAddress?: string
+  tokenAddress?: string | null
   tokenInfo?: {
     type: string
     address: string
@@ -182,6 +183,7 @@ export interface SafeIncomingTransfer {
     symbol: string
     decimals: number
     logoUri?: string
+    trusted?: boolean
   }
 }
 

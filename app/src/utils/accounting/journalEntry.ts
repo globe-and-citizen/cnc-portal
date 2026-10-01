@@ -5,12 +5,14 @@
  * concrete AccountId resolved by `accountRegistry.ts` before report projections
  * consume it.
  */
-import { getTokenDecimals } from '@/utils/tokens/metadata'
+import { assetDecimals } from '@/utils/tokens/assets'
+import { prepareSafeExchanges } from './safeExchanges'
 import { buildAccountRegistry } from './accountRegistry'
 import { sourceOperationIdOf, transactionHashOf, type JournalEntryDraft } from './journalEntryDraft'
 import { assertValidJournalEntry } from './journalEntryValidation'
 import { ZERO_USD_AMOUNT, usdAmountFromToken, usdRateFromNumber } from './monetaryAmount'
 import type { AccountRegistry, JournalEntry, JournalEntryLine, UsdAmount } from './types'
+import type { AccountingDiagnostic } from './types'
 
 /** Result of validating source postings before they become JournalEntry records. */
 interface JournalDraftReconciliation {
@@ -125,11 +127,13 @@ function linesOf(entry: JournalEntryDraft, accounts: AccountRegistry): JournalEn
   }
   const rate = usdRateFromNumber(entry.rate)
   const rawAmount = BigInt(entry.rawAmount)
-  const amount = usdAmountFromToken(rawAmount, entry.token, rate)
+  const amount =
+    entry.carryingAmount ?? usdAmountFromToken(rawAmount, entry.token, rate, entry.asset)
   const movement = {
     token: entry.token,
     rawAmount,
-    decimals: getTokenDecimals(entry.token),
+    decimals: assetDecimals(entry.token, entry.asset),
+    ...(entry.asset ? { asset: entry.asset } : {}),
     rate
   }
   const lines: JournalEntryLine[] = []
@@ -137,7 +141,7 @@ function linesOf(entry: JournalEntryDraft, accounts: AccountRegistry): JournalEn
     lines.push({
       id: `${entry.id}:debit`,
       account: accounts.resolve(entry.debit, entry.debitInstance),
-      movement: { ...movement },
+      ...(rawAmount !== 0n ? { movement: { ...movement } } : {}),
       debit: amount
     })
   }
@@ -145,7 +149,7 @@ function linesOf(entry: JournalEntryDraft, accounts: AccountRegistry): JournalEn
     lines.push({
       id: `${entry.id}:credit`,
       account: accounts.resolve(entry.credit, entry.creditInstance),
-      movement: { ...movement },
+      ...(rawAmount !== 0n ? { movement: { ...movement } } : {}),
       credit: amount
     })
   }
@@ -258,7 +262,10 @@ function finalizeOperation(
   const ordered = entries
     .slice()
     .sort((a, b) => a.timestamp - b.timestamp || a.id.localeCompare(b.id))
-  const primary = ordered.find((entry) => !isBankFeeDraft(entry)) ?? ordered[0]!
+  const primary =
+    ordered.find((entry) => entry.useCase === 'SAFE-SWAP') ??
+    ordered.find((entry) => !isBankFeeDraft(entry)) ??
+    ordered[0]!
   const lineDrafts = [primary, ...ordered.filter((entry) => entry !== primary)]
   const monetary = ordered.some((entry) => entry.debit !== null || entry.credit !== null)
   const counterparties = new Set(
@@ -291,6 +298,7 @@ function finalizeOperation(
 
 /** Result of the only draft-to-journal reconciliation and validation boundary. */
 export interface JournalFinalization {
+  assetDiagnostics: AccountingDiagnostic[]
   journal: JournalEntry[]
   unmatchedFeeOperationIds: string[]
 }
@@ -303,9 +311,9 @@ export function finalizeJournalEntryDrafts(
   drafts: readonly JournalEntryDraft[]
 ): JournalFinalization {
   const reconciliation = reconcileDrafts(drafts)
-  const reconciled = reconcileMirroredInternalDrafts(reconciliation.entries).sort(
-    (a, b) => a.timestamp - b.timestamp || a.id.localeCompare(b.id)
-  )
+  const reconciled = prepareSafeExchanges(
+    reconcileMirroredInternalDrafts(reconciliation.entries)
+  ).sort((a, b) => a.timestamp - b.timestamp || a.id.localeCompare(b.id))
   const accounts = buildAccountRegistry(reconciled)
   const byOperation = new Map<string, JournalEntryDraft[]>()
   for (const draft of reconciled) {
@@ -316,6 +324,11 @@ export function finalizeJournalEntryDrafts(
   }
 
   return {
+    assetDiagnostics: reconciled.flatMap((entry) =>
+      entry.accountingIssue
+        ? [{ kind: entry.accountingIssue, txHash: entry.txHash ?? entry.id }]
+        : []
+    ),
     journal: [...byOperation.entries()]
       .map(([operationId, entries]) => finalizeOperation(entries, accounts, operationId))
       .sort((a, b) => a.timestamp - b.timestamp || a.id.localeCompare(b.id)),

@@ -3,7 +3,7 @@
 **Scope:** Pure, shared data-shaping boundaries for the `app/` frontend and the separation of their stateful, network, browser, SDK, and
 file-export effects.
 
-**Last verified:** 2026-09-28
+**Last verified:** 2026-10-01
 
 ## Consumers
 
@@ -69,9 +69,17 @@ flowchart LR
 - The boundary check enforces structural dependencies and cycles; it cannot identify two semantically duplicate pure helpers with different
   names. Code review and the domain map remain responsible for that discovery.
 
+### Read-only asset identities
+
+[Asset identities and metadata](../../../app/src/utils/tokens/assets.ts) distinguish the fixed payment `TokenId` allowlist from arbitrary
+ERC-20 assets observed by Safe. Unknown contracts retain their network/address identity, and missing decimals remain explicit. Accounting
+carries metadata with its raw movements and uses exact carrying values for Safe exchanges; it never reuses native metadata for an unknown
+ERC-20. The canonical `formatExactNumber` formatter preserves all decimal token digits through display without a JavaScript floating-point
+conversion. See the [Accounting read model](../accounting-read-model/README.md) for carrying-basis and classification boundaries.
+
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `da4b1aaff94af72299220ea5da2084ca848bd652`
+**Implementation evidence reviewed against:** `b8013282ba1fc834aa7ff584cae2963c6efb9263`
 
 - [Utility ownership map and domain implementations](../../../app/src/utils/)
 - [Shared Accounting domain contracts](../../../app/src/utils/accounting/types.ts)

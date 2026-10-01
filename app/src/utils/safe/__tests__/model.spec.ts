@@ -55,7 +55,7 @@ describe('safe utils', () => {
       expect(result).toBe('1 USDC')
     })
 
-    it('falls back to native symbol when token is unknown or invalid value', () => {
+    it('keeps unknown ERC-20 transfers distinct from native amounts', () => {
       const unknown = formatSafeTransactionValue(
         '0',
         {
@@ -67,7 +67,7 @@ describe('safe utils', () => {
         } as never,
         '0xUnknownToken'
       )
-      expect(unknown).toContain(NETWORK.currencySymbol)
+      expect(unknown).toBe('Token transfer (metadata unavailable)')
 
       expect(formatSafeTransactionValue('not-a-number')).toBe(`0 ${NETWORK.currencySymbol}`)
     })

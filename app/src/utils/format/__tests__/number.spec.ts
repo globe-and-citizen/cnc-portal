@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import {
   formatCompact,
   formatCurrency,
+  formatExactNumber,
   formatNumber,
   formatPercent,
   formatToken,
@@ -9,6 +10,21 @@ import {
   formatUsd
 } from '@/utils/format/number'
 import { EMPTY_VALUE } from '@/utils/format/shared'
+
+describe('formatExactNumber', () => {
+  it('retains all ERC-20 base-unit digits for small and large quantities', () => {
+    expect(formatExactNumber('0.011371464599721321')).toBe('0.011371464599721321')
+    expect(formatExactNumber('9007199254740993.000000000000000001')).toBe(
+      '9,007,199,254,740,993.000000000000000001'
+    )
+    expect(formatExactNumber('-0.000000000000000001')).toBe('-0.000000000000000001')
+  })
+  it('trims redundant zeros and rejects malformed quantities', () => {
+    expect(formatExactNumber('-0.000')).toBe('0')
+    expect(formatExactNumber('01.2300')).toBe('1.23')
+    expect(formatExactNumber('1e20')).toBe(EMPTY_VALUE)
+  })
+})
 
 describe('formatNumber', () => {
   it('adds thousands separators and trims trailing zeros', () => {

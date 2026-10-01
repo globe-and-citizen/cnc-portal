@@ -2,7 +2,7 @@
 
 **Scope:** Shared client HTTP query and mutation boundaries under `app/src/queries/`, including their central export surface
 
-**Last verified:** 2026-09-01
+**Last verified:** 2026-10-01
 
 ## Consumers
 
@@ -31,9 +31,16 @@ flowchart LR
 - `uploadSingleFile` returns the first uploaded file URL and throws when the backend response does not contain one.
 - The `@/queries` barrel re-exports focused query modules; it does not combine their endpoint behaviour or server state.
 
+### Contract-based asset markets
+
+[Asset market discovery](../../../app/src/queries/assetMarket.queries.ts) verifies the provider platform and contract address before
+returning an asset's coin identity or current USD price. Coin identity is cached independently from periodically refreshed prices.
+Historical rates continue to use immutable coin/date snapshots. Safe transfer history is paginated and deduplicated using the service
+transfer identity; later-page failures reject the whole history. The read-only Safe portfolio is independent of CNC payment allowlists.
+
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `787921e5cf9dd1cf46fd0f69f651dba7d8785374`
+**Implementation evidence reviewed against:** `b8013282ba1fc834aa7ff584cae2963c6efb9263`
 
 - [Query barrel](../../../app/src/queries/index.ts), [query factory](../../../app/src/queries/queryFactory.ts), and
   [single-file upload query](../../../app/src/queries/file.queries.ts)
