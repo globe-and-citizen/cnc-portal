@@ -20,6 +20,8 @@ coverage; the latest execution result and artifacts belong in Playwright and CI 
 
 - G0 is checked before Playwright; it does not validate a user story and is not counted as E2E path coverage.
 - One path represents one coherent business objective from an actor's point of view.
+- A reference to another path describes the required state or capability, never execution order or reuse of that test's state. Each
+  integrated test prepares its own prerequisites inside its isolation boundary.
 - The main success sequence should run as one browser test when later actions consume state created by earlier actions.
 - Validation, authorization, recovery, and injected-failure branches remain separate tests attached to the same path.
 - A story is validated only when the path performs its observable action and verifies the resulting backend, database, or chain state.
@@ -56,12 +58,12 @@ execution:
 | Group | Path          | Evidence inventory | Status     |
 | ----- | ------------- | ------------------ | ---------- |
 | G1    | `E2E-PATH-01` | `21/21`            | ✅ Covered |
-| G1    | `E2E-PATH-02` | `7/9`              | 🟡 Partial |
+| G1    | `E2E-PATH-02` | `5/9`              | 🟡 Partial |
 | G2    | `E2E-PATH-03` | `7/9`              | 🟡 Partial |
 | G2    | `E2E-PATH-04` | `5/10`             | 🟡 Partial |
 | G2    | `E2E-PATH-05` | `4/6`              | 🟡 Partial |
 | G3    | `E2E-PATH-06` | `26/26`            | ✅ Covered |
-| G3    | `E2E-PATH-07` | `35/35`            | ✅ Covered |
+| G3    | `E2E-PATH-07` | `34/34`            | ✅ Covered |
 | G3    | `E2E-PATH-08` | `15/15`            | ✅ Covered |
 | G4    | `E2E-PATH-09` | `0/9`              | ⬜ Planned |
 | G4    | `E2E-PATH-10` | `0/5`              | ⬜ Planned |
@@ -71,7 +73,7 @@ execution:
 | G6    | `E2E-PATH-14` | `9/15`             | 🟡 Partial |
 | G7    | `E2E-PATH-15` | `0/10`             | ⬜ Planned |
 | G7    | `E2E-PATH-16` | `0/7`              | ⬜ Planned |
-| G8    | `E2E-PATH-17` | `23/23`            | ✅ Covered |
+| G8    | `E2E-PATH-17` | `20/20`            | ✅ Covered |
 
 The detailed path sections below own the remaining work for each row. `Evidence inventory` counts the current checklist assertions, not test
 cases or passing executions. A `✅ Covered` path does not imply that every acceptance criterion of its linked user stories is complete; the
@@ -200,14 +202,15 @@ belongs to its own scenarios. Neither check turns G0 into product-flow evidence.
     - `US-BANK-001` — fund the company Bank.
     - `US-BANK-003` — review the Bank position and history; post-reload assertions remain open in this path.
   - Actors: company owner.
-  - Dependencies: an operational company from `E2E-PATH-01` and funded local wallets.
+  - Dependencies: an operational company prepared within this test, equivalent to the outcome of `E2E-PATH-01`, and funded local wallets.
+    Creating that company is setup here, not another claim of onboarding coverage.
   - Main path:
     - [x] `US-BANK-001` Open the current Bank from the same company.
     - [x] `US-BANK-001` Deposit the native token through the UI.
-    - [x] `US-BANK-001` Verify the native-token deposit receipt.
+    - [ ] `US-BANK-001` Verify the successful native-token deposit receipt on-chain.
     - [x] `US-BANK-001` Verify the native-token balance change.
     - [x] `US-BANK-001` Deposit a supported ERC-20 token through the UI.
-    - [x] `US-BANK-001` Verify the ERC-20 deposit receipt.
+    - [ ] `US-BANK-001` Verify the successful ERC-20 deposit receipt on-chain.
     - [x] `US-BANK-001` Verify the ERC-20 balance change.
     - [ ] `US-BANK-003` Reload and verify that the Bank balances remain available.
     - [ ] `US-BANK-003` Reload and verify that the Bank history remains available.
@@ -217,8 +220,9 @@ belongs to its own scenarios. Neither check turns G0 into product-flow evidence.
     assertions.
   - Separate variants: rejected wallet requests and failed deposits remain browser acceptance coverage.
   - Expected result: the company has a funded Bank backed by durable chain evidence; Safe readiness is handled separately.
-  - Status: Integrated partial — Bank deposits, balances, and in-flow history run through the integrated stack, while post-reload Bank
-    persistence remains to be proven. Safe coverage is tracked independently and does not gate this path.
+  - Status: Integrated partial — Bank deposits, on-chain balances, and in-flow history run through the integrated stack. The test observes
+    success toasts and balance changes, but does not assert either mined deposit receipt; post-reload balances and history also remain to be
+    proven. Safe coverage is tracked independently and does not gate this path.
   - Evidence: [integrated Bank test](../../app/test/e2e/accounts.integrated.spec.ts); the Safe setup test is independent and excluded from
     this path's coverage ratio.
 
@@ -229,7 +233,7 @@ belongs to its own scenarios. Neither check turns G0 into product-flow evidence.
     - `US-COMPANIES-004` — update company details;
     - `US-COMPANIES-005` — manage company members.
   - Actors: company owner and invited member.
-  - Dependencies: a persisted company from G1 and a second authenticated portal user.
+  - Dependencies: a company prepared within this test and a second authenticated portal user; G1 owns onboarding evidence.
   - Main path:
     - [x] `US-COMPANIES-004` Update the company name.
     - [x] `US-COMPANIES-004` Update the company description.
@@ -252,7 +256,8 @@ belongs to its own scenarios. Neither check turns G0 into product-flow evidence.
     - `US-COMPANIES-007` — control personal company-list visibility;
     - `US-COMPANIES-006` — archive or restore a company.
   - Actors: company member and company owner.
-  - Dependencies: a persisted company with both actors from `E2E-PATH-03`.
+  - Dependencies: a disposable company prepared within this test; a second authenticated member is still needed for the unchecked
+    personal-visibility assertions. `E2E-PATH-03` owns membership evidence, not reusable test state.
   - Main path:
     - [ ] `US-COMPANIES-007` Hide the company from the member's own list.
     - [ ] `US-COMPANIES-007` Recover the company in the member's own list.
@@ -266,17 +271,17 @@ belongs to its own scenarios. Neither check turns G0 into product-flow evidence.
     - [x] `US-COMPANIES-006` Verify that normal company actions return after restoration.
   - Separate variants: non-member visibility changes, non-owner lifecycle changes, and rejected archived writes.
   - Expected result: personal visibility and company lifecycle remain distinct and recoverable.
-  - Status: Integrated partial — archive/restore and hide/show share one integrated path, while cross-wallet isolation, archived-write
-    rejection, and visibility-change proof remain planned.
+  - Status: Integrated partial — owner hide/show and archive/restore run in the integrated test. Member-specific visibility, cross-wallet
+    isolation, archived-write rejection, and visibility changes while archived remain unproven in this path.
   - Evidence: [integrated company tests](../../app/test/e2e/company/company.integrated.spec.ts),
     [mocked lifecycle variants](../../app/test/e2e/company/company-archive.spec.ts), and
     [mocked visibility variants](../../app/test/e2e/company/company-visibility.spec.ts).
 
 - `E2E-PATH-05` — Permanently retire a company
   - Story validated: `US-COMPANIES-008` — permanently delete a company.
-  - Reason for isolation: deletion is terminal and would destroy the shared state needed by other G2 paths.
+  - Reason for isolation: deletion is terminal and would prevent later checks within the same journey.
   - Actor: company owner.
-  - Dependencies: a disposable company whose preceding lifecycle evidence has already been collected.
+  - Dependencies: a disposable company created within this test; prior G2 paths own their own lifecycle evidence and state.
   - Main path:
     - [x] `US-COMPANIES-008` Cancel once.
     - [x] `US-COMPANIES-008` Verify the company remains available after cancellation.
@@ -339,11 +344,13 @@ belongs to its own scenarios. Neither check turns G0 into product-flow evidence.
   - Stories validated:
     - `US-SHER-004` — issue SHER to a shareholder;
     - `US-SHER-002` — distribute dividends.
-  - Reused verification: the shareholder position and activity from `US-SHER-003` are read again, while primary ownership remains in
-    `E2E-PATH-06`.
-  - Dependencies: an operational company, eligible issuer, funded Bank, and at least one shareholder.
+  - Reused verification: shareholder position and activity are read again on this scenario's company; `E2E-PATH-06` owns primary
+    `US-SHER-003` coverage, not reusable test state.
+  - Dependencies: an operational company, eligible issuer, and owner/member wallets with USDC for Bank funding. The shareholders are created
+    by the browser issuance actions below, not required as prior state.
+  - Scenario setup, not coverage: the authenticated Node-side factory creates the company, its members, and its Officer generation. Company
+    creation evidence remains owned by `E2E-PATH-01`.
   - Main path:
-    - [x] `US-COMPANIES-001` Create an operational company with the required authenticated members.
     - [x] `US-SHER-004` Issue `30 E2E` to the owner through browser writes.
     - [x] `US-SHER-004` Issue `10 E2E` to one member through browser writes.
     - [x] `US-SHER-004` Verify the owner's successful issuance receipt.
@@ -388,8 +395,8 @@ belongs to its own scenarios. Neither check turns G0 into product-flow evidence.
     - `US-SHER-006` — claim a migrated shareholding (owned evidence);
     - `US-SHER-007` — settle and close the migration (owned evidence);
     - `US-SHER-008` — start a shareholder migration (reference only; owned by `US-CONTRACT-005`).
-  - Reused verification: `AC-US-CONTRACT-005-03` provides the owning Officer-redeployment and migration-root journey. This path does not
-    reassign Contract Management ownership.
+  - Reused verification: this scenario performs its own Officer redeployment and migration-root checks; `AC-US-CONTRACT-005-03` remains
+    owned by Contract Management rather than becoming a dependency on another test's state.
   - Dependencies: previous and current Investor generations, migration data, owner, and shareholder wallets.
   - Main path:
     - [x] `US-SHER-008` Create a two-holder previous Investor.
@@ -465,9 +472,8 @@ belongs to its own scenarios. Neither check turns G0 into product-flow evidence.
     - [x] `US-PAYROLL-001` Reload and verify the persisted active wage.
     - [x] `US-PAYROLL-002` Reload and verify the visible wage status.
   - Expected result: exactly one current wage controls the member's eligibility.
-  - Status: Integrated partial — the owner and member journeys run against the real frontend, backend, PostgreSQL database, and local chain.
-    A member without a wage is blocked and a paused wage is rejected by the backend; broader wage-form validation remains lower-level
-    coverage.
+  - Status: Integrated covered — the linked owner and member journeys prove every listed wage and pause/resume assertion against the real
+    stack. Broader wage-form validation remains lower-level coverage outside this path checklist.
   - Evidence: [integrated Payroll tests](../../app/test/e2e/payroll/payroll.integrated.spec.ts).
 
 - `E2E-PATH-12` — Prepare a weekly claim
@@ -476,7 +482,7 @@ belongs to its own scenarios. Neither check turns G0 into product-flow evidence.
     - `US-PAYROLL-005` — submit a daily claim;
     - `US-PAYROLL-006` — edit a daily claim;
     - `US-PAYROLL-007` — delete a daily claim.
-  - Dependencies: an active wage from `E2E-PATH-11`.
+  - Dependencies: an active wage prepared within each claim test; `E2E-PATH-11` owns wage configuration coverage, not shared state.
   - Main path:
     - [x] `US-PAYROLL-004` Save weekly goals.
     - [x] `US-PAYROLL-005` Create an eligible daily work entry.
@@ -487,8 +493,8 @@ belongs to its own scenarios. Neither check turns G0 into product-flow evidence.
     - [x] `US-PAYROLL-005` Preserve the valid entry while rejecting daily cap overages.
     - [x] `US-PAYROLL-005` Preserve the valid entry while rejecting weekly cap overages.
   - Expected result: the member reaches a deterministic claim-ready week.
-  - Status: Integrated partial — one real member identity saves goals and prepares a persisted claim through the product UI. Daily form
-    validation and the server-side weekly cap preserve the valid entry; attachments and other rejected edits remain separately covered.
+  - Status: Integrated covered — one real member identity saves goals and prepares a persisted claim through the product UI. The listed
+    daily and weekly cap checks preserve the valid entry; attachments and other rejected edits remain separately covered outside this path.
   - Evidence: [integrated Payroll tests](../../app/test/e2e/payroll/payroll.integrated.spec.ts).
 
 - `E2E-PATH-13` — Approve, reconcile, withdraw, and review payroll
@@ -500,7 +506,8 @@ belongs to its own scenarios. Neither check turns G0 into product-flow evidence.
     - `US-PAYROLL-012` — review payroll history;
     - `US-PAYROLL-013` — review the Payroll account position.
   - Reused dependency: `US-PAYROLL-003` references the Accounts-owned funding journey and is not revalidated here.
-  - Dependencies: a claim-ready week, current contract owner, and funded Payroll contract.
+  - Dependencies: a claim-ready week prepared within this scenario, current contract owner, and funded Payroll contract. No state is reused
+    from `E2E-PATH-12`.
   - Main path:
     - [x] `US-PAYROLL-008` Sign the completed weekly claim.
     - [x] `US-PAYROLL-009` Disable the signed weekly claim.
@@ -569,13 +576,20 @@ belongs to its own scenarios. Neither check turns G0 into product-flow evidence.
 
 ## G7 — Cross-Feature Accounting Verification
 
+These Accounting paths consume real backend and chain data, but never state left by G1–G6 or by another G7 test. Each test creates its own
+disposable company and source operations within one chain snapshot and database cleanup scope. Bounded Node-side setup may prepare source
+transactions that are prerequisites for Accounting assertions; it does not prove the source feature's user journey. The Accounting review,
+classification, and export actions themselves remain browser-driven.
+
 - `E2E-PATH-15` — Trace source operations through the company books
   - Stories validated:
     - `US-ACCT-001` — view the Accounting overview;
     - `US-ACCT-002` — trace operations in the General Ledger;
     - `US-ACCT-003` — review financial statements;
     - `US-ACCT-005` — review historical contract activity.
-  - Reused dependencies: representative Bank, shareholder, credit, payroll, and expense transactions from their owning paths.
+  - Dependencies: one independently prepared company with representative Bank, shareholder, credit, payroll, and expense operations and
+    previous/current Officer generations. The same test or its scenario-owned setup must create and retain those real source records; G1–G6
+    tests cannot provide them. Each source category remains planned until its records and Accounting assertions are both proven.
   - Main path:
     - [ ] `US-ACCT-001` Load the complete Accounting journal after the source operations.
     - [ ] `US-ACCT-002` Verify every source operation produces one balanced journal entry.
@@ -594,7 +608,8 @@ belongs to its own scenarios. Neither check turns G0 into product-flow evidence.
   - Stories validated:
     - `US-ACCT-006` — classify an external withdrawal;
     - `US-ACCT-004` — export Accounting reports.
-  - Dependencies: reviewed journal and statements from `E2E-PATH-15` and deterministic valuation inputs.
+  - Dependencies: a separate disposable company, deterministic valuation inputs, and an unclassified external withdrawal created within this
+    test. Prepare and review its journal and statements in this same isolation scope; do not reuse `E2E-PATH-15` state.
   - Main path:
     - [ ] `US-ACCT-006` Classify an unassigned external withdrawal.
     - [ ] `US-ACCT-006` Verify that the classification persists.
@@ -617,12 +632,11 @@ belongs to its own scenarios. Neither check turns G0 into product-flow evidence.
     - `US-EL-07` — view the current Board of Directors;
     - `US-EL-08` — review a published election.
   - Actors: company owner and eligible voter.
-  - Dependencies: a company with Elections and Board of Directors contracts and funded local wallets.
+  - Dependencies: a company with Elections and Board of Directors contracts, eligible members, and funded local wallets.
+  - Scenario setup, not coverage: the authenticated Node-side factory creates the company, registers its members, and deploys the Officer
+    suite. Company onboarding, deployment, and member-management evidence remain owned by G1 and G2.
   - Main path:
-    - [x] `US-AUTH-001` Register the actors through the real stack.
-    - [x] `US-COMPANIES-001` Create an operational company through the real stack.
-    - [x] `US-COMPANIES-002` Deploy the company's contracts through the real stack.
-    - [x] `US-COMPANIES-005` Add the company members through the real stack.
+    - [x] `US-AUTH-001` Sign in the owner and eligible voter through the real browser UI.
     - [x] `US-EL-01` Create an election through the portal.
     - [x] `US-EL-01` Verify the election configuration on-chain.
     - [x] `US-EL-01` Verify the fixed eligible-voter snapshot on-chain.
@@ -654,9 +668,11 @@ belongs to its own scenarios. Neither check turns G0 into product-flow evidence.
 
 - Verify shared technical prerequisites with G0 before Playwright; scenario-specific teams may be prepared by the authenticated Node-side
   factory. The integrated authentication test checks browser/backend chain identity during the SIWE journey.
+- Path references identify ownership or prerequisite state, not test order. Chain snapshots are restored and factory-created teams are
+  deleted after each integrated test; a consuming path must prepare its own state within that test's isolation boundary.
 - Give every story one primary owning path; reused stories and fixtures are dependencies, not duplicate coverage claims.
 - Use isolated or uniquely identified data for every path.
-- A failed dependency marks the consuming path blocked, not failed on its own story assertion.
+- A failed prerequisite setup blocks its own scenario, not a different path's evidence status.
 - Keep the main business path compact; implement permission, validation, and recovery branches as separately runnable tests.
 - Do not mark a complete story E2E-covered from a representative grouped path alone; remaining acceptance criteria still need evidence.
 

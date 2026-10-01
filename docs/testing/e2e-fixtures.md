@@ -8,7 +8,9 @@ canonical business paths and their acceptance evidence remain in [Integrated E2E
 ## Boundary rule
 
 A fixture may prepare infrastructure, authentication, disposable actors, or domain state that is only a prerequisite of the journey under
-test. It must not replace the product action that the scenario claims as acceptance evidence.
+test. It must not replace the product action that the scenario claims as acceptance evidence. Each integrated test owns its own state: chain
+snapshots are restored and factory-created teams are deleted after the test. A path may require an outcome described by another path, but it
+cannot consume that other test's company or transactions.
 
 Examples:
 
