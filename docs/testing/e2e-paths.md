@@ -1,10 +1,10 @@
 # E2E Readiness and Business Paths
 
-**Scope:** G0 technical readiness gate and G1 through G8 business-path evidence
+**Scope:** G0 technical readiness gate and G1 through G12 client business-path evidence
 
 **Status model:** `Planned` means no integrated path is currently linked; `Integrated partial` means the main journey exists but one or more
-observable outcomes remain uncovered; `Integrated covered` means the linked main journey exercises the documented outcome through the real
-frontend, backend, database, and chain; `Browser variants` identifies focused browser-acceptance evidence that is not integrated evidence.
+observable outcomes remain uncovered; `Integrated covered` means the linked main journey exercises the documented outcome through every real
+boundary required by that path; `Browser variants` identifies focused browser-acceptance evidence that is not integrated evidence.
 
 This document records the current evidence shape. It does not claim that the latest local or CI execution passed; read the Playwright report
 and protected CI checks for execution results.
@@ -20,6 +20,8 @@ coverage; the latest execution result and artifacts belong in Playwright and CI 
 
 - G0 is checked before Playwright; it does not validate a user story and is not counted as E2E path coverage.
 - One path represents one coherent business objective from an actor's point of view.
+- A story may span focused paths when its acceptance outcomes require different actors or terminal states. Name the distinct AC focus so the
+  same outcome is not counted twice.
 - A reference to another path describes the required state or capability, never execution order or reuse of that test's state. Each
   integrated test prepares its own prerequisites inside its isolation boundary.
 - The main success sequence should run as one browser test when later actions consume state created by earlier actions.
@@ -39,6 +41,15 @@ coverage; the latest execution result and artifacts belong in Playwright and CI 
 - G6 — Expense Account lifecycle.
 - G7 — Cross-feature Accounting verification.
 - G8 — Board Election lifecycle.
+- G9 — Client authentication recovery and profile identity.
+- G10 — Contract Management operations and history.
+- G11 — Vesting lifecycle.
+- G12 — Payment Gate merchant and customer lifecycle.
+
+G1–G12 cover the capabilities in the [client feature catalogue](../features/README.md#client-features). A listed path is an integration
+target, not a claim that every acceptance criterion of its feature is ready or proven. Backoffice capabilities have a separate runtime and
+are not silently counted as client paths. The Safe end-to-end lifecycle remains outside the required Bank path until its local service can
+be proven; the draft facture-ID status lookup (`US-PAYGATE-005`) is not an executable E2E requirement yet.
 
 ## Current status snapshot
 
@@ -74,6 +85,17 @@ execution:
 | G7    | `E2E-PATH-15` | `0/10`             | ⬜ Planned |
 | G7    | `E2E-PATH-16` | `0/7`              | ⬜ Planned |
 | G8    | `E2E-PATH-17` | `20/20`            | ✅ Covered |
+| G9    | `E2E-PATH-18` | `0/5`              | ⬜ Planned |
+| G9    | `E2E-PATH-19` | `0/6`              | ⬜ Planned |
+| G10   | `E2E-PATH-20` | `0/7`              | ⬜ Planned |
+| G10   | `E2E-PATH-21` | `0/5`              | ⬜ Planned |
+| G10   | `E2E-PATH-22` | `0/6`              | ⬜ Planned |
+| G10   | `E2E-PATH-23` | `0/7`              | ⬜ Planned |
+| G10   | `E2E-PATH-24` | `0/5`              | ⬜ Planned |
+| G11   | `E2E-PATH-25` | `0/8`              | ⬜ Planned |
+| G11   | `E2E-PATH-26` | `0/6`              | ⬜ Planned |
+| G12   | `E2E-PATH-27` | `0/5`              | ⬜ Planned |
+| G12   | `E2E-PATH-28` | `0/8`              | ⬜ Planned |
 
 The detailed path sections below own the remaining work for each row. `Evidence inventory` counts the current checklist assertions, not test
 cases or passing executions. A `✅ Covered` path does not imply that every acceptance criterion of its linked user stories is complete; the
@@ -90,7 +112,7 @@ prove several acceptance criteria; the precise `AC-*` mapping remains canonical 
 
 ## Integration Boundary
 
-- Real boundaries:
+- Real boundaries, as required by the specific path:
   - browser and production frontend code;
   - SIWE authentication and backend authorization;
   - backend routes and controllers;
@@ -664,13 +686,224 @@ classification, and export actions themselves remain browser-driven.
   - Evidence: [integrated election lifecycle](../../app/test/e2e/elections/elections.integrated.spec.ts) and
     [mocked browser election variants](../../app/test/e2e/elections/elections.spec.ts).
 
+## G9 — Client Authentication Recovery and Profile Identity
+
+- `E2E-PATH-18` — Recover from an interrupted client sign-in
+  - Story validated: `US-AUTH-003` — recover from an interrupted login.
+  - Reused prerequisite: `US-AUTH-001` owns successful SIWE sign-in evidence in G1; this path owns recovery, not another copy of onboarding.
+  - Actor: portal user.
+  - Dependencies: a disposable user identity, the real client authentication backend, and a controllable wallet rejection in this scenario.
+  - Main path:
+    - [ ] `US-AUTH-003` Start client sign-in and reject the wallet signature.
+    - [ ] `US-AUTH-003` Verify that no authenticated session or protected company access is granted.
+    - [ ] `US-AUTH-003` Retry sign-in with the same wallet.
+    - [ ] `US-AUTH-003` Verify the backend accepts the fresh SIWE signature and issues the user's session.
+    - [ ] `US-AUTH-003` Reload a protected route and verify the recovered session remains usable.
+  - Separate variants: network-switch rejection, nonce failure, invalid signature, and profile-load failure; none is evidence of a completed
+    recovery until the affected boundary is exercised and observed. Client token cleanup after a failed profile request remains unchecked in
+    `AC-US-AUTH-003-06`.
+  - Expected result: a failed attempt does not authenticate the user, while a fresh attempt succeeds without manual state repair.
+  - Status: Planned — no integrated recovery path is currently linked.
+
+- `E2E-PATH-19` — Update and reopen the user's profile
+  - Story validated: `US-PROFILE-001` — update profile identity.
+  - Actor: authenticated portal user.
+  - Dependencies: a scenario-owned user and a working profile-image storage boundary for the upload step; company creation is not needed.
+  - Main path:
+    - [ ] `US-PROFILE-001` Open the profile from the client navigation.
+    - [ ] `US-PROFILE-001` Change the display name.
+    - [ ] `US-PROFILE-001` Upload a supported profile image and verify its returned URL enters the draft.
+    - [ ] `US-PROFILE-001` Save the changed profile through the real API.
+    - [ ] `US-PROFILE-001` Verify the authenticated user's persisted name and image.
+    - [ ] `US-PROFILE-001` Reload and verify the updated identity on a profile surface.
+  - Separate variants: invalid name or image, failed upload/save, and cross-wallet authorization.
+  - Expected result: the user can recognize their persisted profile after reloading without changing another user's identity.
+  - Status: Planned — no integrated profile path is currently linked.
+
+## G10 — Contract Management Operations and History
+
+Every path here prepares its own disposable company and Officer generation. A generation deployed by G1 or the shareholder migration path is
+not reusable test state. Campaign Manager contracts are outside the current-contract suite.
+
+- `E2E-PATH-20` — Inspect and control a current contract
+  - Stories validated:
+    - `US-CONTRACT-001` — review the current contract suite;
+    - `US-CONTRACT-002` — operate a current contract with a supported pause capability.
+  - AC focus for the shared operations story: `AC-US-CONTRACT-002-02` (supported pause/resume) and `AC-US-CONTRACT-002-04` (refreshed
+    state).
+  - Actors: company member for inspection and eligible owner for the write.
+  - Dependencies: a scenario-owned current Officer suite containing a contract whose pause/resume capability is supported.
+  - Main path:
+    - [ ] `US-CONTRACT-001` Open Contract Management and identify the active Officer generation.
+    - [ ] `US-CONTRACT-001` Inspect a current contract's address, owner, and verified status.
+    - [ ] `US-CONTRACT-002` Pause the eligible contract through the owner UI.
+    - [ ] `US-CONTRACT-002` Verify the successful transaction and on-chain paused state.
+    - [ ] `US-CONTRACT-002` Resume the same contract through the owner UI.
+    - [ ] `US-CONTRACT-002` Verify the successful transaction and on-chain active state.
+    - [ ] `US-CONTRACT-001` Reload and verify that the current contract status remains accurate.
+  - Separate variants: unsupported or unreadable pause capability, unauthorized actor, archived company, and wallet rejection.
+  - Expected result: members see the current suite, and an eligible owner can change and refresh a supported contract state.
+  - Status: Planned — no integrated current-contract operations path is currently linked.
+
+- `E2E-PATH-21` — Transfer a current contract's ownership
+  - Story validated: `US-CONTRACT-002` — manage current contract operations.
+  - AC focus: `AC-US-CONTRACT-002-01` (direct transfer); Investor authority and Board-owned transfer remain separate variants.
+  - Actor: current contract owner.
+  - Dependencies: a scenario-owned current contract and a distinct recipient wallet; this test does not consume `E2E-PATH-20` state.
+  - Main path:
+    - [ ] `US-CONTRACT-002` Identify the current owner on the contract detail.
+    - [ ] `US-CONTRACT-002` Submit an ownership transfer through the portal.
+    - [ ] `US-CONTRACT-002` Verify the successful ownership-transfer receipt.
+    - [ ] `US-CONTRACT-002` Verify the recipient owns the contract on-chain.
+    - [ ] `US-CONTRACT-002` Reload and verify the displayed owner and available actions match the new authority.
+  - Separate variants: Board-owned contracts require a Board proposal and quorum approval; Investor transfer must preserve administrator and
+    minter authority; failed or rejected transfers must not change the owner.
+  - Expected result: displayed and on-chain ownership agree after a direct transfer.
+  - Status: Planned — no integrated ownership-transfer path is currently linked.
+
+- `E2E-PATH-22` — Create and close an advertising campaign
+  - Story validated: `US-CONTRACT-003` — manage advertising campaigns.
+  - Actor: authorized company member.
+  - Dependencies: a scenario-owned company with a configured Campaign Manager; this is not a current-suite contract action.
+  - Main path:
+    - [ ] `US-CONTRACT-003` Open the company's Campaign Manager workspace.
+    - [ ] `US-CONTRACT-003` Inspect the configured administrators and settings.
+    - [ ] `US-CONTRACT-003` Update an authorized campaign setting.
+    - [ ] `US-CONTRACT-003` Create a campaign through the portal.
+    - [ ] `US-CONTRACT-003` Review its persisted or on-chain campaign state.
+    - [ ] `US-CONTRACT-003` Close the campaign and verify the terminal state after refresh.
+  - Separate variants: missing Campaign Manager, unauthorized actor, and read failure. Advertising-spend routing remains an unchecked
+    product criterion (`AC-US-CONTRACT-003-04`) and is not claimed by this path.
+  - Expected result: an authorized user can manage one campaign from creation to closure without confusing it with the current suite.
+  - Status: Planned — no integrated campaign path is currently linked.
+
+- `E2E-PATH-23` — Redeploy an Officer and inspect both generations
+  - Stories validated:
+    - `US-CONTRACT-005` — redeploy an Officer generation;
+    - `US-CONTRACT-004` — review deployment history.
+  - AC focus for history: `AC-US-CONTRACT-004-01` and `AC-US-CONTRACT-004-02` (previous versus current generation).
+  - Actor: company owner.
+  - Dependencies: a scenario-owned company with one current Officer generation and the infrastructure for a second deployment.
+  - Main path:
+    - [ ] `US-CONTRACT-005` Open the redeploy flow from the active Officer.
+    - [ ] `US-CONTRACT-005` Enter a new share-token name and symbol.
+    - [ ] `US-CONTRACT-005` Submit and verify the new Officer deployment receipt.
+    - [ ] `US-CONTRACT-005` Verify the backend registers the new generation as current.
+    - [ ] `US-CONTRACT-004` Verify the previous generation remains in deployment history.
+    - [ ] `US-CONTRACT-004` Verify the previous generation is not presented as the current suite.
+    - [ ] `US-CONTRACT-004` Reload and verify both generations remain distinguishable.
+  - Separate variants: failed deployment or registration and shareholder migration with a previous cap table. `E2E-PATH-08` owns the
+    shareholder-claim journey; its Officer setup is not reused here.
+  - Expected result: a new current suite is available while the previous suite remains accurately reviewable.
+  - Status: Planned — no integrated Contract Management redeploy/history path is currently linked.
+
+- `E2E-PATH-24` — Recover funded balances from a previous contract generation
+  - Story validated: `US-CONTRACT-004` — review deployment history and recover eligible legacy balances.
+  - AC focus: `AC-US-CONTRACT-004-04` (eligible legacy balance recovery).
+  - Actor: eligible owner of the previous contracts.
+  - Dependencies: a separate disposable company with an independently funded previous generation and a current destination generation.
+  - Main path:
+    - [ ] `US-CONTRACT-004` Open the previous generation and inspect recoverable source balances.
+    - [ ] `US-CONTRACT-004` Start the eligible recovery through the portal.
+    - [ ] `US-CONTRACT-004` Verify the recovery transaction receipt and source balance change.
+    - [ ] `US-CONTRACT-004` Verify the current company Bank receives the recovered amount.
+    - [ ] `US-CONTRACT-004` Reload and verify the recovery is no longer offered for an empty source.
+  - Separate variants: unsupported full sweep, unauthorized owner, archived company, and retry after a failed step.
+  - Expected result: a funded legacy source is reconciled into the current destination without duplicating a recovery.
+  - Status: Planned — no integrated legacy-recovery path is currently linked.
+
+## G11 — Vesting Lifecycle
+
+- `E2E-PATH-25` — Create, accrue, and release a vesting schedule
+  - Stories validated:
+    - `US-VESTING-001` — create a vesting schedule;
+    - `US-VESTING-002` — view schedules and totals;
+    - `US-VESTING-003` — release accrued shares;
+    - `US-VESTING-005` — understand vested and claimable progress.
+  - Actors: company owner and beneficiary member.
+  - Dependencies: a scenario-owned company with current Vesting and Investor contracts, both wallets, and a deterministic local-chain clock
+    advanced only by scenario setup outside browser actions.
+  - Main path:
+    - [ ] `US-VESTING-001` Create a positive grant for the member through the portal.
+    - [ ] `US-VESTING-001` Verify the creation receipt and on-chain schedule without prematurely minted shares.
+    - [ ] `US-VESTING-002` Open the schedule and verify the owner's and member's persisted views.
+    - [ ] `US-VESTING-005` Reach an accrued, claimable boundary and verify the displayed progress.
+    - [ ] `US-VESTING-003` Release the claimable amount as the beneficiary through the portal.
+    - [ ] `US-VESTING-003` Verify the release receipt and Investor share balance.
+    - [ ] `US-VESTING-002` Verify the schedule totals and remaining claimable amount update.
+    - [ ] `US-VESTING-002` Reload and verify the released schedule and aggregate totals.
+  - Separate variants: invalid boundaries or grant, non-owner creation, non-beneficiary release, cancellation, and failed writes.
+  - Expected result: one grant is created, accrues deterministically, and mints shares only when released by its beneficiary.
+  - Status: Planned — no integrated Vesting create/release path is currently linked.
+
+- `E2E-PATH-26` — Stop a vesting schedule and reconcile its remainder
+  - Story validated: `US-VESTING-004` — stop an active vesting schedule.
+  - Actor: company owner.
+  - Dependencies: a separate scenario-owned active schedule with accrued and unvested portions; this test does not consume `E2E-PATH-25`
+    state.
+  - Main path:
+    - [ ] `US-VESTING-004` Inspect the active schedule and its accrued and unvested amounts.
+    - [ ] `US-VESTING-004` Stop the schedule through the owner UI.
+    - [ ] `US-VESTING-004` Verify the successful stop receipt.
+    - [ ] `US-VESTING-004` Verify the accrued amount was released without minting the unvested remainder.
+    - [ ] `US-VESTING-004` Verify the schedule is cancelled and cannot be stopped again.
+    - [ ] `US-VESTING-004` Reload and verify its cancelled status and final amounts.
+  - Separate variants: stop before cliff, non-owner or archived-company attempt, cancellation, and failed stop.
+  - Expected result: the beneficiary keeps only the accrued amount and the rest of the grant is permanently cancelled.
+  - Status: Planned — no integrated Vesting stop path is currently linked.
+
+## G12 — Payment Gate Merchant and Customer Lifecycle
+
+Payment Gate includes an embeddable widget and a merchant-owned page in addition to the portal. These are part of the business boundary: the
+setup page alone cannot prove an embedded payment. `US-PAYGATE-005` remains Draft because facture-ID status lookup has no current mechanism;
+it is not silently counted as covered or required by these paths.
+
+- `E2E-PATH-27` — Configure and embed a merchant payment widget
+  - Stories validated:
+    - `US-PAYGATE-001` — configure the accepted token;
+    - `US-PAYGATE-002` — embed the widget on the merchant page.
+  - Actor: merchant.
+  - Dependencies: a scenario-owned company with an existing Bank, a configured widget script, and a disposable merchant host page.
+  - Main path:
+    - [ ] `US-PAYGATE-001` Select a supported payment token in the Setup page.
+    - [ ] `US-PAYGATE-001` Verify the preview and generated configuration use that token.
+    - [ ] `US-PAYGATE-002` Copy the embed instructions with the company's Bank address.
+    - [ ] `US-PAYGATE-002` Mount the configured widget on the disposable merchant page.
+    - [ ] `US-PAYGATE-002` Verify the mounted widget targets the same Bank and token without a separate account.
+  - Separate variants: no deployed Bank, missing widget script, unsupported token, and the alternative snippet formats.
+  - Expected result: the merchant can deploy a widget bound to their current company Bank and selected token.
+  - Status: Planned — no integrated setup-to-embed path is currently linked.
+
+- `E2E-PATH-28` — Pay through the embedded widget and review merchant history
+  - Stories validated:
+    - `US-PAYGATE-003` — pay through the widget;
+    - `US-PAYGATE-004` — review payment history.
+  - Actors: customer and merchant.
+  - Dependencies: a separately prepared merchant page with the real widget, a company Bank, a funded customer wallet, and a unique facture
+    ID. `E2E-PATH-27` owns setup evidence, not reusable state.
+  - Main path:
+    - [ ] `US-PAYGATE-003` Show the customer the configured amount and facture ID before payment.
+    - [ ] `US-PAYGATE-003` Submit a token payment through the embedded widget.
+    - [ ] `US-PAYGATE-003` Verify the successful Bank deposit receipt and matching facture-ID event.
+    - [ ] `US-PAYGATE-003` Verify the exact token amount reached the merchant Bank.
+    - [ ] `US-PAYGATE-003` Verify the merchant-page status callback reports the matching payment.
+    - [ ] `US-PAYGATE-004` Open the company's Payment Gate history in the portal.
+    - [ ] `US-PAYGATE-004` Verify the confirmed payment and on-chain transaction details.
+    - [ ] `US-PAYGATE-004` Reload and verify the same facture-linked entry remains in history.
+  - Separate variants: wallet rejection, on-chain revert, retry, and non-widget Bank deposits excluded from history. The matching-event
+    success rule is still unchecked in `AC-US-PAYGATE-003-08`; do not mark this path covered until the product rule and integrated proof
+    both exist.
+  - Expected result: the customer payment is confirmed by the Bank and remains traceable by the merchant's facture ID.
+  - Status: Planned — no integrated widget-payment/history path is currently linked.
+
 ## Cross-Group Execution Rules
 
 - Verify shared technical prerequisites with G0 before Playwright; scenario-specific teams may be prepared by the authenticated Node-side
   factory. The integrated authentication test checks browser/backend chain identity during the SIWE journey.
 - Path references identify ownership or prerequisite state, not test order. Chain snapshots are restored and factory-created teams are
   deleted after each integrated test; a consuming path must prepare its own state within that test's isolation boundary.
-- Give every story one primary owning path; reused stories and fixtures are dependencies, not duplicate coverage claims.
+- Assign each observable acceptance outcome to one owning path. A story may need focused paths for distinct outcomes, but reused setup and
+  incidental observations are not duplicate coverage claims.
 - Use isolated or uniquely identified data for every path.
 - A failed prerequisite setup blocks its own scenario, not a different path's evidence status.
 - Keep the main business path compact; implement permission, validation, and recovery branches as separately runnable tests.
@@ -678,6 +911,8 @@ classification, and export actions themselves remain browser-driven.
 
 ## Related Product Criteria
 
+- [Authentication user stories](../features/authentication/README.md)
+- [User Profile user stories](../features/user-profile/README.md)
 - [Companies user stories](../features/companies/README.md)
 - [Accounts user stories](../features/accounts/README.md)
 - [Shareholder Management user stories](../features/shareholder-management/README.md)
@@ -685,3 +920,6 @@ classification, and export actions themselves remain browser-driven.
 - [Payroll user stories](../features/payroll/README.md)
 - [Accounting user stories](../features/accounting/README.md)
 - [Board Elections user stories](../features/elections/README.md)
+- [Contract Management user stories](../features/contract-management/README.md)
+- [Vesting user stories](../features/vesting/README.md)
+- [Payment Gate user stories](../features/payment-gate/README.md)
