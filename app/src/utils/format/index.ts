@@ -18,6 +18,7 @@ export { EMPTY_VALUE, FORMAT_LOCALE } from './shared'
 export {
   formatCompact,
   formatCurrency,
+  formatExactNumber,
   formatNumber,
   formatPercent,
   formatToken,
