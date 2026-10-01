@@ -81,7 +81,7 @@ replaced; it does not imply that all boundaries are simulated, so it is not a wo
 
 | Spec                                                            | Profile        | Setup decision                                                                                                          |
 | --------------------------------------------------------------- | -------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| `accounts.integrated.spec.ts`                                   | Integrated     | Keeps the UI Safe deployment and Bank deposit evidence; the full Safe US/AC set is not a prerequisite for `E2E-PATH-02` |
+| `accounts.integrated.spec.ts`                                   | Integrated     | Skips optional Safe setup for the Bank path; Bank deposits, transfers, and Expense Account actions stay UI-driven       |
 | `authentication.integrated.spec.ts`                             | Integrated     | Performs SIWE through the UI and compares the browser wallet's chain with the backend chain                             |
 | `bank/bank-account.spec.ts`                                     | Browser chain  | Retains its Bank contract graph and serial chain isolation                                                              |
 | `community-credit/community-credit-round.spec.ts`               | Browser chain  | Retains its Fixed Return graph and serial chain isolation                                                               |
@@ -100,6 +100,7 @@ replaced; it does not imply that all boundaries are simulated, so it is not a wo
 | `payroll/payroll-payment.integrated.spec.ts`                    | Integrated     | Uses an operational team, two wallet pages, and a disposable submit-restriction override                                |
 | `payroll/payroll.integrated.spec.ts`                            | Integrated     | Uses operational teams and authenticated wallet pages; keeps the default submission restriction                         |
 | `safe/safe-account.spec.ts`                                     | Browser chain  | Retains its Safe graph, transaction-service recorder, and serial chain isolation                                        |
+| `safe/safe-setup.integrated.spec.ts`                            | Integrated     | Deploys and registers a Safe through the UI; the transaction-service response is stubbed for the account view           |
 | `shareholder/shareholder-investment.integrated.spec.ts`         | Integrated     | Retains UI company and Safe setup because the Safe wizard is required by this path                                      |
 | `shareholder/shareholder-issuance-dividends.integrated.spec.ts` | Integrated     | Uses an operational team and isolated member page; issuance, funding, Board approval, and distribution remain UI-driven |
 | `shareholder/shareholder-migration.integrated.spec.ts`          | Integrated     | Uses an operational team and isolated member page; redeployment, claims, settlement, and distribution remain UI-driven  |

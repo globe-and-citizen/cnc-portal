@@ -212,13 +212,15 @@ belongs to its own scenarios. Neither check turns G0 into product-flow evidence.
     - [ ] `US-BANK-003` Reload and verify that the Bank balances remain available.
     - [ ] `US-BANK-003` Reload and verify that the Bank history remains available.
   - Deferred scope: the complete Safe US/AC journey is outside this path. Separate Safe tests continue to prove the scenarios that are
-    currently executable, while incomplete Safe coverage must not gate this Bank path or count in its coverage ratio.
+    currently executable, while incomplete Safe coverage must not gate this Bank path or count in its coverage ratio. The Bank test skips
+    optional Safe setup; a separate [Safe setup test](../../app/test/e2e/safe/safe-setup.integrated.spec.ts) keeps the supported deployment
+    assertions.
   - Separate variants: rejected wallet requests and failed deposits remain browser acceptance coverage.
   - Expected result: the company has a funded Bank backed by durable chain evidence; Safe readiness is handled separately.
   - Status: Integrated partial — Bank deposits, balances, and in-flow history run through the integrated stack, while post-reload Bank
     persistence remains to be proven. Safe coverage is tracked independently and does not gate this path.
-  - Evidence: [integrated Accounts test](../../app/test/e2e/accounts.integrated.spec.ts) for the Bank assertions; its separate Safe
-    assertions are not prerequisites for this path and remain tracked outside its coverage ratio.
+  - Evidence: [integrated Bank test](../../app/test/e2e/accounts.integrated.spec.ts); the Safe setup test is independent and excluded from
+    this path's coverage ratio.
 
 ## G2 — Company Administration and Member Access
 
