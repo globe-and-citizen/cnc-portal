@@ -82,7 +82,7 @@ replaced; it does not imply that all boundaries are simulated, so it is not a wo
 | Spec                                                            | Profile        | Setup decision                                                                                                          |
 | --------------------------------------------------------------- | -------------- | ----------------------------------------------------------------------------------------------------------------------- |
 | `accounts.integrated.spec.ts`                                   | Integrated     | Keeps the UI Safe deployment and Bank deposit evidence; the full Safe US/AC set is not a prerequisite for `E2E-PATH-02` |
-| `authentication.integrated.spec.ts`                             | Integrated     | Performs SIWE through the UI because authentication is the behavior under test                                          |
+| `authentication.integrated.spec.ts`                             | Integrated     | Performs SIWE through the UI and compares the browser wallet's chain with the backend chain                             |
 | `bank/bank-account.spec.ts`                                     | Browser chain  | Retains its Bank contract graph and serial chain isolation                                                              |
 | `community-credit/community-credit-round.spec.ts`               | Browser chain  | Retains its Fixed Return graph and serial chain isolation                                                               |
 | `company/company-archive.spec.ts`                               | Browser mocked | Retains focused stateful API responses; parallel-safe                                                                   |
@@ -99,7 +99,6 @@ replaced; it does not imply that all boundaries are simulated, so it is not a wo
 | `payroll/payroll-insufficient-funds.integrated.spec.ts`         | Integrated     | Uses an operational team, two wallet pages, and a disposable submit-restriction override                                |
 | `payroll/payroll-payment.integrated.spec.ts`                    | Integrated     | Uses an operational team, two wallet pages, and a disposable submit-restriction override                                |
 | `payroll/payroll.integrated.spec.ts`                            | Integrated     | Uses operational teams and authenticated wallet pages; keeps the default submission restriction                         |
-| `readiness.integrated.spec.ts`                                  | Integrated     | Diagnoses the prepared stack independently of the CI technical preflight and business paths                             |
 | `safe/safe-account.spec.ts`                                     | Browser chain  | Retains its Safe graph, transaction-service recorder, and serial chain isolation                                        |
 | `shareholder/shareholder-investment.integrated.spec.ts`         | Integrated     | Retains UI company and Safe setup because the Safe wizard is required by this path                                      |
 | `shareholder/shareholder-issuance-dividends.integrated.spec.ts` | Integrated     | Uses an operational team and isolated member page; issuance, funding, Board approval, and distribution remain UI-driven |

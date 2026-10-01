@@ -24,7 +24,7 @@ npm run test:e2e
 
 CI runs `npm run preflight:e2e:integrated` after preparing the stack and before Playwright. For a local run, set `CNC_E2E_BACKEND_URL` to
 the local backend origin and run the same preflight to check frontend reachability, database and chain readiness, and shared contract code.
-The G0 browser test remains an independent diagnostic; the dedicated authentication test proves SIWE.
+The dedicated integrated authentication test proves SIWE and checks that the browser wallet and backend target the same chain.
 
 Useful variants:
 

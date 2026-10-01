@@ -4,7 +4,7 @@ This directory contains comprehensive testing documentation and guides for the C
 
 ## Contents
 
-- **[Integrated E2E Paths](./e2e-paths.md)** - G0 technical diagnostic, G1 through G8 business paths, and current evidence status
+- **[Integrated E2E Paths](./e2e-paths.md)** - G0 technical gate, G1 through G8 business paths, and current evidence status
 - **[Playwright E2E Fixture Catalogue](./e2e-fixtures.md)** - Shared fixtures, boundary rules, cleanup, and complete spec audit
 - **[Application E2E Guide](../../app/test/README.md)** - Playwright profiles, setup commands, and authoring conventions
 - **[Unit Testing Guide](./unit-testing.md)** - Guidelines for writing unit tests with Vue Test Utils and Vitest
@@ -59,9 +59,9 @@ full-stack business journey.
 CI runs independent `Browser acceptance` and `Integrated journeys` jobs, then exposes one lightweight `Full-stack E2E` aggregate check. The
 browser job prepares its own local node, contracts, and frontend. The integrated job prepares a separate local node, disposable database,
 backend, deployment manifest, and frontend. Its [technical preflight](../../app/scripts/check-integrated-readiness.mjs) verifies frontend
-reachability, backend database/chain readiness, chain identity, and shared Officer/Bank/token code before Playwright. The G0 browser test
-remains an independent diagnostic; SIWE is exercised by the dedicated authentication test. The profiles publish separate reports because
-only the integrated phase is E2E evidence.
+reachability, backend database/chain readiness, chain identity, and shared Officer/Bank/token code before Playwright. The integrated
+authentication test additionally compares the browser wallet's chain with the backend chain while exercising SIWE. The profiles publish
+separate reports because only the integrated phase is E2E evidence.
 
 The Vite development server ignores generated `coverage/` artifacts so per-page coverage snapshots do not trigger hot reloads during an
 active browser suite.
