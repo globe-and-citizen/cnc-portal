@@ -107,14 +107,18 @@ export async function openMemberPayrollHistory(
 
 /** Select a completed ISO week without mutating time or product data. */
 export async function selectHistoryWeek(page: Page, weekStart: Date): Promise<void> {
-  const now = new Date()
-  const monthChanged =
-    weekStart.getUTCFullYear() !== now.getUTCFullYear() ||
-    weekStart.getUTCMonth() !== now.getUTCMonth()
-  if (monthChanged) await page.locator('[data-test="prev-month"]').click()
-
   const weekIso = weekStart.toISOString()
-  await page.locator(`[data-test="week-${weekIso}"]`).click()
+  const week = page.locator(`[data-test="week-${weekIso}"]`)
+  await expect(page.locator('[data-test^="week-"][data-test$="Z"]').first()).toBeVisible({
+    timeout: 10_000
+  })
+  // The navigator may already show the target month when the current ISO week
+  // straddles a month boundary. Navigate from the rendered weeks, not today.
+  if (!(await week.isVisible())) {
+    await page.locator('[data-test="prev-month"]').click()
+  }
+  await expect(week).toBeVisible({ timeout: 10_000 })
+  await week.click({ timeout: 10_000 })
   await expect(page.locator('[data-test="daily-breakdown"]')).toBeVisible()
 }
 
