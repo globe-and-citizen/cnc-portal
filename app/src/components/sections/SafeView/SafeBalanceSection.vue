@@ -162,7 +162,6 @@ import { useStorage } from '@vueuse/core'
 import { useToast } from '@nuxt/ui/composables'
 import AddressTooltip from '@/components/ui/AddressTooltip.vue'
 import { getSafeHomeUrl, openSafeAppUrl } from '@/composables/safe'
-import { useContractBalance } from '@/composables/useContractBalance'
 import { useGetSafeInfoQuery } from '@/queries/safe.queries'
 import TransferForm, { type TransferModel } from '@/components/forms/TransferForm.vue'
 import type { TokenOption } from '@/types'
@@ -173,21 +172,31 @@ import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
 import { useSafeSignerRole } from '@/composables/safe/useSafeSignerRole'
 import { formatCurrency, formatUsd } from '@/utils/format'
 import { signerRoleCopy } from '@/utils/safe/signerRole'
+import { useSafePortfolio } from '@/composables/safe/useSafePortfolio'
 
 const props = defineProps<{ address: Address }>()
 const chainId = useChainId()
 const currency = useStorage('currency', { code: 'USD', name: 'US Dollar', symbol: '$' })
 const { isWriteDisabled } = useTeamWriteGuard()
 
-const {
-  data: balance,
-  isLoading,
-  error: balanceError,
-  refetch: refetchBalance
-} = useContractBalance(props.address)
-const totalUsd = computed(() => formatUsd(balance.value?.total.usd.value))
+const portfolio = useSafePortfolio(() => props.address)
+const { data: balance, error: balanceError, refetch: refetchBalance } = portfolio.supported
+const isLoading = portfolio.isLoading
+const totalUsd = computed(() =>
+  portfolio.isIncomplete.value ? 'Incomplete' : formatUsd(portfolio.totalUsd.value)
+)
 const totalLocal = computed(() =>
-  formatCurrency(balance.value?.total.local.value, { currency: currency.value.code })
+  formatCurrency(
+    portfolio.totalUsd.value === undefined
+      ? undefined
+      : currency.value.code === 'USD'
+        ? portfolio.totalUsd.value
+        : balance.value?.total.usd.value
+          ? (portfolio.totalUsd.value * balance.value.total.local.value) /
+            balance.value.total.usd.value
+          : undefined,
+    { currency: currency.value.code }
+  )
 )
 const {
   data: safeInfo,
@@ -239,6 +248,7 @@ const transferData: Ref<TransferModel> = ref(initialTransferDataValue())
 
 const retryOverview = () => {
   void refetchBalance()
+  void portfolio.refetch()
   void refetchSafeInfo()
 }
 

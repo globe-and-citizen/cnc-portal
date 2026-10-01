@@ -76,7 +76,7 @@
       </div>
       <div class="grid grid-cols-1 gap-6 xl:grid-cols-5">
         <div class="min-w-0 xl:col-span-3">
-          <TokenHoldingsSection :key="safeAddress" :address="safeAddress" class="h-full" />
+          <SafeAssetHoldings :key="safeAddress" :address="safeAddress" class="h-full" />
         </div>
         <div id="safe-control" class="min-w-0 scroll-mt-4 xl:col-span-2">
           <SafeOwnersCard :address="safeAddress" />
@@ -182,7 +182,7 @@ import { isAddress, type Address } from 'viem'
 import AddressTooltip from '@/components/ui/AddressTooltip.vue'
 import SafeBalanceSection from '@/components/sections/SafeView/SafeBalanceSection.vue'
 import SafeOwnersCard from '@/components/sections/SafeView/SafeOwnersCard.vue'
-import TokenHoldingsSection from '@/components/ui/TokenHoldingsSection.vue'
+import SafeAssetHoldings from '@/components/sections/SafeView/SafeAssetHoldings.vue'
 import SafeTransactions from '@/components/sections/SafeView/SafeTransactions.vue'
 import SafeIncomingTransactions from '@/components/sections/SafeView/SafeIncomingTransactions.vue'
 import SafeDeploymentCard from '@/components/sections/SafeView/SafeDeploymentCard.vue'
