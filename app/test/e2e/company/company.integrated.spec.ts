@@ -1,7 +1,19 @@
 import type { Address } from 'viem'
 import { expect, test } from '../fixtures/integrated'
-import { E2E_MEMBER, E2E_MEMBER_PRIVATE_KEY, E2E_OWNER, hasCode, publicClient } from '../e2e-chain'
+import {
+  E2E_MEMBER,
+  E2E_MEMBER_PRIVATE_KEY,
+  E2E_OWNER,
+  hasCode,
+  ownerAccount,
+  publicClient
+} from '../e2e-chain'
 import { openAccountFromSidebar } from '../e2e-page'
+import {
+  authenticateIntegratedAccount,
+  deleteIntegratedTeam,
+  requestIntegratedApi
+} from '../integrated-api'
 import {
   deployedContracts,
   expectedContractTypes,
@@ -12,6 +24,7 @@ import {
 import {
   createRealCompany,
   deleteCompanyThroughUi,
+  deployOfficerThroughUi,
   enterShareDetails,
   finishRealCompanyWithoutContracts,
   openCompanyMetadataActions,
@@ -224,30 +237,94 @@ test.describe(
 )
 
 test.describe('[US-COMPANIES-008] Integrated company deletion', { tag: '@integrated' }, () => {
+  test.setTimeout(180_000)
+
   /**
    * Covers:
    * - [AC-US-COMPANIES-008-01]
+   * - [AC-US-COMPANIES-008-02]
    * - [AC-US-COMPANIES-008-04]
    * - [AC-US-COMPANIES-008-05]
    */
-  test('keeps a cancelled deletion and permanently deletes after confirmation', async ({
+  test('keeps a cancelled deletion and removes the company and populated related records after confirmation', async ({
     page
   }) => {
+    if (!process.env.DATABASE_URL) {
+      throw new Error('Set DATABASE_URL to the disposable integrated E2E database')
+    }
+    const { prisma, disconnectPrisma } =
+      await import('../../../../backend/src/utils/dependenciesUtil')
     const company = await createRealCompany(page)
     const teamId = String(company.id)
+    const id = company.id
 
-    await finishRealCompanyWithoutContracts(page, teamId)
-    await page.reload()
-    await openCompanyMetadataActions(page, company.name)
-    await page.locator('[data-test="team-meta-delete-open"]').click()
-    await page.getByRole('dialog').getByRole('button', { name: 'Cancel' }).click()
-    await expect(page.getByRole('heading', { name: company.name, exact: true })).toBeVisible()
+    try {
+      const { officer } = await deployOfficerThroughUi(page)
+      await page.locator('[data-test="skip-safe-setup-button"]').click()
+      await expect(page).toHaveURL(new RegExp(`/teams/${teamId}$`))
 
-    await page.locator('[data-test="team-meta-delete-open"]').click()
-    await page.locator('[data-test="delete-team-button"]').click()
-    await expect(page).toHaveURL(/\/teams$/)
-    await expect(card(page, teamId)).toHaveCount(0)
-    await page.reload()
-    await expect(card(page, teamId)).toHaveCount(0)
+      const token = await authenticateIntegratedAccount(ownerAccount)
+      const available = await requestIntegratedApi<{ id: number; name: string }>(
+        `/teams/${teamId}`,
+        { token }
+      )
+      expect(available).toMatchObject({ id, name: company.name })
+      expect(await prisma.team.findUnique({ where: { id } })).toMatchObject({ name: company.name })
+
+      const membership = await prisma.memberTeamsData.findMany({
+        where: { teamId: id },
+        select: { memberAddress: true }
+      })
+      const officers = await prisma.teamOfficer.findMany({
+        where: { teamId: id },
+        select: { address: true }
+      })
+      const contracts = await prisma.teamContract.findMany({
+        where: { teamId: id },
+        select: { address: true }
+      })
+      expect(membership.map(({ memberAddress }) => memberAddress.toLowerCase())).toContain(
+        E2E_OWNER.toLowerCase()
+      )
+      expect(officers).toContainEqual({ address: officer.address })
+      expect(contracts.length).toBeGreaterThan(0)
+
+      await page.reload()
+      await openCompanyMetadataActions(page, company.name)
+      await page.locator('[data-test="team-meta-delete-open"]').click()
+      await page.getByRole('dialog').getByRole('button', { name: 'Cancel' }).click()
+      await expect(page.getByRole('heading', { name: company.name, exact: true })).toBeVisible()
+      expect(await requestIntegratedApi(`/teams/${teamId}`, { token })).toMatchObject({
+        id,
+        name: company.name
+      })
+
+      await page.locator('[data-test="team-meta-delete-open"]').click()
+      const deleted = page.waitForResponse(
+        (response) =>
+          response.request().method() === 'DELETE' &&
+          new URL(response.url()).pathname === `/api/teams/${teamId}`
+      )
+      await page.locator('[data-test="delete-team-button"]').click()
+      expect((await deleted).status()).toBe(204)
+      await expect(page).toHaveURL(/\/teams$/)
+      await expect(card(page, teamId)).toHaveCount(0)
+      await page.reload()
+      await expect(card(page, teamId)).toHaveCount(0)
+
+      await expect(requestIntegratedApi(`/teams/${teamId}`, { token })).rejects.toMatchObject({
+        status: 404
+      })
+      expect(await prisma.team.findUnique({ where: { id } })).toBeNull()
+      expect(await prisma.memberTeamsData.count({ where: { teamId: id } })).toBe(0)
+      expect(await prisma.teamOfficer.count({ where: { teamId: id } })).toBe(0)
+      expect(await prisma.teamContract.count({ where: { teamId: id } })).toBe(0)
+    } finally {
+      try {
+        await deleteIntegratedTeam(teamId)
+      } finally {
+        await disconnectPrisma()
+      }
+    }
   })
 })
