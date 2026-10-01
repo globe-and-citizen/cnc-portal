@@ -133,7 +133,7 @@ describe('useCNCAccounting', () => {
     expect(Array.isArray(acc.journal.value)).toBe(true)
   })
 
-  it('prefers the current Investor address even when InvestorV1 is listed first', () => {
+  it('[AC-US-ACCT-005-08] prefers the current Investor address even when InvestorV1 is listed first', () => {
     vi.mocked(useGetTeamQuery).mockReturnValue({
       data: ref({
         ...mockTeamData,
@@ -166,7 +166,7 @@ describe('useCNCAccounting', () => {
     expect(entry?.lines.map((line) => line.movement?.token)).toEqual(['sher', 'sher'])
   })
 
-  it('falls back to InvestorV1 when no current Investor exists', () => {
+  it('[AC-US-ACCT-005-08] falls back to InvestorV1 when no current Investor exists', () => {
     setInvestorFeed(dividendFeed(INVESTOR_V1))
 
     const entry = useCNCAccounting('1', { rateOfRecord: () => 1 }).journal.value.find(
@@ -183,7 +183,7 @@ describe('useCNCAccounting', () => {
     expect(status.diagnostics.value).toEqual([])
   })
 
-  it('retains an unvalued native movement and reports its missing rate', () => {
+  it('[AC-US-ACCT-001-12] retains an unvalued native movement and reports its missing rate', () => {
     historicalRates.rateOfRecord.mockReturnValue(0)
     setInvestorFeed(dividendFeed(zeroAddress))
 

@@ -129,6 +129,16 @@ describe('buildSheets (complete report selection)', () => {
     expect(balance.find((r) => r[0] === 'Earnings to date')![1]).toBe(100)
   })
 
+  it('[AC-US-ACCT-004-06] keeps concrete account rows and the earnings contributions', () => {
+    const balance = byName('Balance Sheet').rows
+    const row = (label: string) => balance.find((candidate) => candidate[0] === label)
+    // The concrete pocket, then the accounts explaining what earnings are made of.
+    expect(row('Cash — Bank')![1]).toBe(100)
+    expect(row('Earnings to date calculation')).toBeTruthy()
+    expect(row('Service Revenue')![1]).toBe(100)
+    expect(row('Earnings to date')![1]).toBe(100)
+  })
+
   it('trial balance totals debit = credit', () => {
     const total = byName('Trial Balance').rows.find((r) => r[0] === 'Total')!
     expect(total[2]).toBe(total[3])
@@ -203,7 +213,7 @@ describe('buildSheets (section selection)', () => {
     expect(ledger.name).toBe('General Ledger')
   })
 
-  it('drills a single account into its own sheet (issue #2249)', () => {
+  it('[AC-US-ACCT-004-03] drills a single account into its own sheet (issue #2249)', () => {
     const books = sampleBooks()
     const accountId = books.journal[0]!.lines[0]!.account.id
     const [ledger] = buildSheets(books, [
@@ -248,6 +258,40 @@ describe('buildSheets (section selection)', () => {
     expect(income.some((r) => r[0] === 'Operating Expense')).toBe(true)
     const totalExpenses = income.find((r) => r[0] === 'Total expenses')!
     expect(totalExpenses[1]).toBe(30)
+  })
+})
+
+describe('buildSheets (empty selection)', () => {
+  it('[AC-US-ACCT-004-09] keeps the selected report structure without inventing entries', () => {
+    const noActivity = assembleAccounting({
+      contracts: [
+        { type: 'Bank', address: BANK as Address, deployer: BANK as Address, admins: [] }
+      ],
+      bankEvents: { ...emptyBankEvents, bankTokenDeposits: { items: [] } }
+    })
+    const sheets = buildSheets(noActivity, [{ key: 'income' }, { key: 'trial' }, { key: 'ledger' }])
+    const rowsOf = (name: string) => sheets.find((s) => s.name === name)!.rows
+    expect(sheets.map((s) => s.name)).toEqual([
+      'Income Statement',
+      'Trial Balance',
+      'General Ledger'
+    ])
+
+    // Title, blank, header and the total row — and nothing between them.
+    const ledger = rowsOf('General Ledger')
+    expect([String(ledger[0][0]), ledger[2][0], ledger.at(-1)![2]]).toEqual([
+      'General Ledger',
+      'Date',
+      'Total movements'
+    ])
+    expect(ledger).toHaveLength(4)
+    expect(ledger.at(-1)![9]).toBe(0)
+
+    const income = rowsOf('Income Statement')
+    expect(income.find((r) => r[0] === 'Total revenue')![1]).toBe(0)
+    expect(income.find((r) => r[0] === 'Total expenses')![1]).toBe(0)
+    const trialTotal = rowsOf('Trial Balance').find((r) => r[0] === 'Total')!
+    expect(trialTotal[2]).toBe(trialTotal[3])
   })
 })
 

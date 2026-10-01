@@ -36,6 +36,8 @@ flowchart LR
 - Successful mutations invalidate the FixedReturn reads and event feed affected by the operation. Lending, repayment, refund, and partial
   acceptance also invalidate reads for the round token.
 - Off-chain metadata remains keyed by company and on-chain offer identifier.
+- Accounting uses the `LendingOfferCreated` event's token and fixed-return basis points for the FixedReturn generation that emitted it;
+  repeated offer IDs in a replacement contract are isolated by contract address.
 
 ## Known Gaps
 
@@ -44,7 +46,7 @@ flowchart LR
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `272d6bd8d455cf09e681192f3b9c6c284b63b4fa`
+**Implementation evidence reviewed against:** `79315400c2ea74759a5505d6c66382ad3279b045`
 
 - [FixedReturn read and write gateways](../../../app/src/composables/fixedReturn/),
   [their focused tests](../../../app/src/composables/fixedReturn/__tests__/), and

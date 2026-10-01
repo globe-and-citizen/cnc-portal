@@ -82,8 +82,8 @@ execution:
 | G5    | `E2E-PATH-12` | `8/8`              | ✅ Covered |
 | G5    | `E2E-PATH-13` | `20/22`            | 🟡 Partial |
 | G6    | `E2E-PATH-14` | `9/15`             | 🟡 Partial |
-| G7    | `E2E-PATH-15` | `0/10`             | ⬜ Planned |
-| G7    | `E2E-PATH-16` | `0/7`              | ⬜ Planned |
+| G7    | `E2E-PATH-15` | `10/11`            | 🟡 Partial |
+| G7    | `E2E-PATH-16` | `9/9`              | ✅ Covered |
 | G8    | `E2E-PATH-17` | `20/20`            | ✅ Covered |
 | G9    | `E2E-PATH-18` | `0/5`              | ⬜ Planned |
 | G9    | `E2E-PATH-19` | `0/6`              | ⬜ Planned |
@@ -598,10 +598,12 @@ belongs to its own scenarios. Neither check turns G0 into product-flow evidence.
 
 ## G7 — Cross-Feature Accounting Verification
 
-These Accounting paths consume real backend and chain data, but never state left by G1–G6 or by another G7 test. Each test creates its own
-disposable company and source operations within one chain snapshot and database cleanup scope. Bounded Node-side setup may prepare source
-transactions that are prerequisites for Accounting assertions; it does not prove the source feature's user journey. The Accounting review,
-classification, and export actions themselves remain browser-driven.
+These Accounting paths consume real backend and chain data, but never state left by G1–G6 or a different G7 test. The integrated journey
+creates its own disposable company and source operations within one chain snapshot and database cleanup scope. `E2E-PATH-15` and
+`E2E-PATH-16` share that one browser test because classification and export must consume the books just reviewed; the historical-generation
+checks run in a separately resettable test. Future source categories must be prepared within their own test scope. Factory setup, if used,
+is a prerequisite rather than proof of the source feature's user journey. The Accounting review, classification, and export actions remain
+browser-driven.
 
 - `E2E-PATH-15` — Trace source operations through the company books
   - Stories validated:
@@ -609,39 +611,51 @@ classification, and export actions themselves remain browser-driven.
     - `US-ACCT-002` — trace operations in the General Ledger;
     - `US-ACCT-003` — review financial statements;
     - `US-ACCT-005` — review historical contract activity.
-  - Dependencies: one independently prepared company with representative Bank, shareholder, credit, payroll, and expense operations and
-    previous/current Officer generations. The same test or its scenario-owned setup must create and retain those real source records; G1–G6
-    tests cannot provide them. Each source category remains planned until its records and Accounting assertions are both proven.
+  - Dependencies: a scenario-owned company whose Bank deposits, share issuance, payroll withdrawal, and expense spend are produced through
+    the portal. Previous and current Officer generations are prepared within the separate historical-generation test. Credit source
+    operations are still missing from the integrated books journey; G4 tests cannot supply reusable state.
   - Main path:
-    - [ ] `US-ACCT-001` Load the complete Accounting journal after the source operations.
-    - [ ] `US-ACCT-002` Verify every source operation produces one balanced journal entry.
-    - [ ] `US-ACCT-002` Trace journal entries to their source transactions.
-    - [ ] `US-ACCT-002` Trace journal entries to concrete company accounts.
-    - [ ] `US-ACCT-003` Verify the Income Statement uses the balanced snapshot.
-    - [ ] `US-ACCT-003` Verify the Balance Sheet uses the balanced snapshot.
-    - [ ] `US-ACCT-003` Verify the Trial Balance uses the balanced snapshot.
-    - [ ] `US-ACCT-005` Verify historical Officer generations remain separate.
-    - [ ] `US-ACCT-005` Verify historical Officer generations remain complete.
-    - [ ] `US-ACCT-001` Refresh and verify that the same books are reconstructed.
+    - [x] `US-ACCT-001` Load the complete Accounting journal for the exercised source operations.
+    - [x] `US-ACCT-002` Verify every exercised source operation produces one balanced journal entry.
+    - [x] `US-ACCT-002` Trace representative Bank entries to their source transaction hashes.
+    - [x] `US-ACCT-002` Trace journal entries to concrete company accounts.
+    - [ ] `US-ACCT-002` Trace a real Community Credit operation to its balanced journal entry.
+    - [x] `US-ACCT-003` Verify the Income Statement uses the balanced snapshot.
+    - [x] `US-ACCT-003` Verify the Balance Sheet uses the balanced snapshot.
+    - [x] `US-ACCT-003` Verify the Trial Balance uses the balanced snapshot.
+    - [x] `US-ACCT-005` Verify historical Officer generations remain separate.
+    - [x] `US-ACCT-005` Verify historical Officer generations remain complete.
+    - [x] `US-ACCT-001` Refresh and verify that the same books are reconstructed.
+  - Separate variants: incomplete, failed, and missing-rate source states remain frontend coverage because an integrated stack cannot
+    withhold one source without replacing a product boundary.
   - Expected result: the company books reconcile with cross-feature persisted and on-chain evidence.
-  - Status: Planned — no integrated business path is currently linked.
+  - Status: Integrated partial — real Bank, shareholder, payroll, and expense operations feed balanced books and statements; a separately
+    resettable test verifies historical generations. Community Credit source-to-book evidence is still missing. The token price is pinned so
+    totals stay reproducible.
+  - Evidence: [integrated Accounting journey](../../app/test/e2e/accounting/accounting-journey.integrated.spec.ts) and
+    [integrated contract generations](../../app/test/e2e/accounting/accounting-generations.integrated.spec.ts).
 
 - `E2E-PATH-16` — Classify an external withdrawal and export the reviewed books
   - Stories validated:
     - `US-ACCT-006` — classify an external withdrawal;
     - `US-ACCT-004` — export Accounting reports.
-  - Dependencies: a separate disposable company, deterministic valuation inputs, and an unclassified external withdrawal created within this
-    test. Prepare and review its journal and statements in this same isolation scope; do not reuse `E2E-PATH-15` state.
+  - Dependencies: the reviewed books and a new unclassified external withdrawal produced within the same isolated browser test as
+    `E2E-PATH-15`, plus deterministic valuation inputs. This does not reuse state left by another test.
   - Main path:
-    - [ ] `US-ACCT-006` Classify an unassigned external withdrawal.
-    - [ ] `US-ACCT-006` Verify that the classification persists.
-    - [ ] `US-ACCT-006` Verify that the classification updates the affected reports.
-    - [ ] `US-ACCT-004` Export the selected reports.
-    - [ ] `US-ACCT-004` Verify exported filters match the reviewed UI state.
-    - [ ] `US-ACCT-004` Verify exported rows match the reviewed UI state.
-    - [ ] `US-ACCT-004` Verify exported totals match the reviewed UI state.
+    - [x] `US-ACCT-006` Classify an unassigned external withdrawal.
+    - [x] `US-ACCT-006` Verify that the classification persists after reload.
+    - [x] `US-ACCT-006` Verify that the classification updates the affected reports.
+    - [x] `US-ACCT-006` Verify a member can read but cannot edit the classification through the UI or API.
+    - [x] `US-ACCT-004` Export the selected reports.
+    - [x] `US-ACCT-004` Verify exported filters match the reviewed UI state.
+    - [x] `US-ACCT-004` Verify exported rows match the reviewed UI state.
+    - [x] `US-ACCT-004` Verify exported totals match the reviewed UI state.
+    - [x] `US-ACCT-006` Remove the classification and verify the inferred account returns.
+  - Separate variants: rejected saves, malformed records, and ineligible entries remain frontend and backend coverage.
   - Expected result: the reviewed classification and exported books preserve the same accounting snapshot.
-  - Status: Planned — no integrated business path is currently linked.
+  - Status: Integrated covered — the owner labels a real external Bank withdrawal, reloads the persisted choice, compares the dependent
+    reports and downloaded workbook with the reviewed state, and reverts the label without changing the cash or fee lines.
+  - Evidence: [integrated Accounting journey](../../app/test/e2e/accounting/accounting-journey.integrated.spec.ts).
 
 ## G8 — Board Election Lifecycle
 

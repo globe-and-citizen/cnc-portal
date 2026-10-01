@@ -91,7 +91,7 @@ describe('mapPayroll accruals', () => {
     expect(mapPayroll({ weeklyClaims: [claim({ status: 'disabled' })] }, ctx)).toHaveLength(0)
   })
 
-  it('does not accrue a week still in progress (relative to now)', () => {
+  it('[AC-US-ACCT-001-06] does not accrue a week still in progress (relative to now)', () => {
     const weekStart = new Date('2026-06-22T00:00:00Z') // Monday
     const midWeek = new Date('2026-06-24T00:00:00Z').getTime() // before the week closes
     expect(
@@ -99,7 +99,7 @@ describe('mapPayroll accruals', () => {
     ).toHaveLength(0)
   })
 
-  it('accrues once the week has ended', () => {
+  it('[AC-US-ACCT-001-06] accrues once the week has ended', () => {
     const weekStart = new Date('2026-06-22T00:00:00Z') // Monday
     const afterWeek = new Date('2026-06-29T00:00:00Z').getTime() // week closed
     expect(
