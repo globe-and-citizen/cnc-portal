@@ -139,9 +139,12 @@ test.describe('G4 integrated Community Credit lifecycle', { tag: '@integrated' }
     expect(await tokenBalance(usdc, E2E_MEMBER)).toBe(memberStartingBalance - target + repayment)
     expect(await tokenBalance(usdc, bank)).toBe(bankStartingBalance + parseUnits('4', 6))
     expect((await getLendingOffer(fixedReturn, 1n)).state).toBe(3)
+    await expect(ownerPage).toHaveURL(new RegExp(`/teams/${team.teamId}/community-credit/1$`), {
+      timeout: 30_000
+    })
 
     await ownerPage.reload()
-    await expect(ownerPage.getByRole('heading', { name })).toBeVisible()
+    await expect(ownerPage.getByRole('heading', { name, exact: true })).toBeVisible()
     await expect(ownerPage.getByText('Repaid', { exact: true }).first()).toBeVisible()
     await expect(
       ownerPage
@@ -258,7 +261,7 @@ test.describe('G4 integrated Community Credit lifecycle', { tag: '@integrated' }
         .nth(2)
     ).toContainText('0 USDC')
     await ownerPage.reload()
-    await expect(ownerPage.getByRole('heading', { name })).toBeVisible()
+    await expect(ownerPage.getByRole('heading', { name, exact: true })).toBeVisible()
     await expect(ownerPage.getByText('Refunded', { exact: true }).first()).toBeVisible()
     await expect(ownerPage.locator('[data-test="round-cta-refundable"]')).toHaveCount(0)
     await expect(ownerPage.locator('[data-test="round-cta-accept-partial"]')).toHaveCount(0)
