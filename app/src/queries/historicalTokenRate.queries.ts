@@ -1,7 +1,9 @@
 /** Immutable transaction-date token prices shared through the TanStack Query cache. */
 import { computed, toValue, type MaybeRefOrGetter } from 'vue'
 import { useQuery, type QueryClient } from '@tanstack/vue-query'
-import { SUPPORTED_TOKENS, type TokenId } from '@/constant'
+import { SUPPORTED_TOKENS } from '@/constant'
+import type { AssetId } from '@/utils/tokens/assets'
+import { fetchAssetCoinId } from './assetMarket.queries'
 import {
   round6,
   utcRateDate,
@@ -41,12 +43,14 @@ export const historicalTokenRateKeys = {
     ] as const
 }
 
-const recordKey = (token: TokenId, date: string): string => `${token}:${date}`
+const recordKey = (token: AssetId, date: string): string => `${token}:${date}`
 
 function resolvedTargets(targets: readonly HistoricalRateTarget[]): ResolvedHistoricalRateTarget[] {
   const resolved = new Map<string, ResolvedHistoricalRateTarget>()
   for (const target of targets) {
-    const coinId = SUPPORTED_TOKENS.find(({ id }) => id === target.token)?.coingeckoId
+    const coinId = target.token.startsWith('erc20:')
+      ? target.token
+      : SUPPORTED_TOKENS.find(({ id }) => id === target.token)?.coingeckoId
     if (!coinId || coinId === 'unknown') continue
     resolved.set(recordKey(target.token, target.date), { ...target, coinId })
   }
@@ -83,7 +87,11 @@ export async function fetchHistoricalTokenRate(
       if (typeof rate !== 'number' || !Number.isFinite(rate) || rate <= 0) {
         throw new Error(`Historical USD rate unavailable for ${coinId} on ${date}`)
       }
-      return round6(rate)
+      const rounded = round6(rate)
+      if (rounded <= 0 || !Number.isSafeInteger(Math.round(rounded * 1e6))) {
+        throw new Error(`Historical USD rate precision unavailable for ${coinId} on ${date}`)
+      }
+      return rounded
     }
   })
 }
@@ -103,11 +111,15 @@ export function useHistoricalTokenRatesQuery(
   const query = useQuery<HistoricalRateMap>({
     queryKey: computed(() => historicalTokenRateKeys.set(requested.value)),
     enabled: computed(() => toValue(enabled) && requested.value.length > 0),
+    refetchInterval: 60_000,
     queryFn: async () => {
       const pairs = await Promise.all(
         requested.value.map(async (target) => {
           try {
-            const rate = await fetchHistoricalTokenRate(queryClient, target.coinId, target.date)
+            const coinId = target.token.startsWith('erc20:')
+              ? await fetchAssetCoinId(queryClient, target.token)
+              : target.coinId
+            const rate = await fetchHistoricalTokenRate(queryClient, coinId, target.date)
             return [recordKey(target.token, target.date), rate] as const
           } catch {
             return [recordKey(target.token, target.date), 0] as const

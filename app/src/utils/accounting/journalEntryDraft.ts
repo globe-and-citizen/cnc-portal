@@ -11,7 +11,8 @@
  * the final JournalEntry lines are built.
  */
 import { getAddress, isAddress, type Address } from 'viem'
-import type { TokenId } from '@/constant'
+import type { AssetId, AssetMetadata } from '@/utils/tokens/assets'
+import type { UsdAmount } from './types'
 import type { AccountName } from './chartOfAccounts'
 
 /** The transaction-hash head of an indexed event id (`<txHash>-<logIndex>`). */
@@ -40,6 +41,7 @@ export function sourceOperationIdOf(eventId: string): string {
  * catalogue treats specially (internal pocket-to-pocket moves and fee skims).
  */
 export type UseCase =
+  | 'SAFE-SWAP'
   /** Direct external deposit into a treasury pocket → Service Revenue. */
   | 'UC-BANK-02'
   /** Fund payroll/expense pockets from Bank — internal move. */
@@ -121,7 +123,17 @@ export interface JournalEntryDraft {
   /** The pocket contract instance holding the credited cash — see {@link debitInstance}. */
   creditInstance?: Address
   /** Token actually moved on-chain — the entry's currency (spec §2 "Devise"). */
-  token: TokenId
+  token: AssetId
+  asset?: AssetMetadata
+  /** Exact carrying value on exchange/disposal lines; market-rate evidence stays separate. */
+  carryingAmount?: UsdAmount
+  /** Rate evidenced by stablecoin consideration in this on-chain exchange. */
+  settlementRate?: boolean
+  /** Reconciliation gaps that prevent complete books. */
+  accountingIssue?:
+    | 'asset-metadata-unavailable'
+    | 'exchange-basis-unavailable'
+    | 'unclassified-asset-movement'
   /** Raw on-chain amount in the token's base units (stringified bigint). */
   rawAmount: string
   /**

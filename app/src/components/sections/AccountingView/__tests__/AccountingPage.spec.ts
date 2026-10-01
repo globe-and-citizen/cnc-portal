@@ -72,7 +72,10 @@ describe('AccountingPage', () => {
       },
       { kind: 'orphan-bank-fee', txHash: `0x${'b'.repeat(64)}` },
       { kind: 'receipt-unavailable', txHash: `0x${'c'.repeat(64)}` },
-      { kind: 'rate-unavailable', token: 'native' }
+      { kind: 'rate-unavailable', token: 'native' },
+      { kind: 'asset-metadata-unavailable', txHash: `0x${'d'.repeat(64)}` },
+      { kind: 'exchange-basis-unavailable', txHash: `0x${'e'.repeat(64)}` },
+      { kind: 'unclassified-asset-movement', txHash: `0x${'f'.repeat(64)}` }
     ])
 
     const wrapper = renderWithProviders(AccountingPage)
@@ -85,7 +88,10 @@ describe('AccountingPage', () => {
     expect(wrapper.text()).toContain('block timestamp is unavailable')
     expect(wrapper.text()).toContain('matching outflow is unavailable')
     expect(wrapper.text()).toContain('Transaction receipt')
-    expect(wrapper.text()).toContain('NATIVE movements were withheld')
+    expect(wrapper.text()).toContain('NATIVE has no available historical USD rate')
+    expect(wrapper.text()).toContain('Token metadata is unavailable')
+    expect(wrapper.text()).toContain('needs complete acquisition and valuation evidence')
+    expect(wrapper.text()).toContain('needs accounting classification')
   })
 
   it('[AC-US-ACCT-001-10] withholds reports after a fatal company-source failure', () => {

@@ -8,7 +8,7 @@ import type {
   AccountingSourceId,
   AccountingSourceStatus
 } from '@/utils/accounting/types'
-import type { TokenId } from '@/constant'
+import type { AssetId } from '@/utils/tokens/assets'
 
 interface ReactiveValue<T> {
   readonly value: T
@@ -79,6 +79,7 @@ interface AccountingStatusInput {
   sources: readonly AccountingSourceDefinition[]
   eventSources: readonly AccountingEventSourceDefinition[]
   reconciliation: {
+    assetDiagnostics?: ReactiveValue<readonly AccountingDiagnostic[]>
     unmatchedFeeOperationIds: ReactiveValue<readonly string[]>
     unavailableReceiptOperationIds: ReactiveValue<readonly string[]>
   }
@@ -129,7 +130,7 @@ function eventPartialReason(feed: EventFeedAvailability): string | undefined {
   return gaps ? `${gaps} event evidence gap${gaps === 1 ? '' : 's'} detected.` : undefined
 }
 
-function monetaryNonPeggedTokens(entries: readonly JournalEntryDraft[]): TokenId[] {
+function monetaryNonPeggedTokens(entries: readonly JournalEntryDraft[]): AssetId[] {
   return [
     ...new Set(
       entries
@@ -173,10 +174,25 @@ export function useAccountingStatus(input: AccountingStatusInput): AccountingSta
               reason: 'One or more token rates are unavailable.'
             }
           : { source: 'token-rates', label: 'Token USD rates', state: 'ready' }
-    return [...statuses, rateStatus]
+    const assetGaps = input.reconciliation.assetDiagnostics?.value ?? []
+    return [
+      ...statuses,
+      rateStatus,
+      ...(assetGaps.length
+        ? [
+            {
+              source: 'safe-transfers' as const,
+              label: 'Safe asset reconciliation',
+              state: 'partial' as const,
+              reason: 'Asset identity, carrying basis, or classification needs verification.'
+            }
+          ]
+        : [])
+    ]
   })
 
   const diagnostics = computed<readonly AccountingDiagnostic[]>(() => [
+    ...(input.reconciliation.assetDiagnostics?.value ?? []),
     ...definitions
       .filter((definition) => definition.applicable() && Boolean(definition.query.error?.value))
       .map(

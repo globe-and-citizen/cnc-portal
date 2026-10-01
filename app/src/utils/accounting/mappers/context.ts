@@ -70,7 +70,9 @@ export function buildMapperContext(input: BuildMapperContextInput): MapperContex
       return 'native'
     }
     if (sher && getAddress(tokenAddress) === sher) return 'sher'
-    return resolveTokenIdByAddress(tokenAddress) ?? 'native'
+    const token = resolveTokenIdByAddress(tokenAddress)
+    if (!token) throw new Error(`Unknown token contract: ${tokenAddress}`)
+    return token
   }
 
   const pocketOf = (address: string | null | undefined): AccountName | null => {

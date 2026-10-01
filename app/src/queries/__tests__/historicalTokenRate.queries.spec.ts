@@ -109,6 +109,15 @@ describe('historical token rate queries', () => {
     expect(request).toHaveBeenCalledTimes(2)
   })
 
+  it.each([1e-10, 1e15])(
+    'rejects a price outside the exact six-decimal rate range: %s',
+    async (rate) => {
+      await expect(
+        fetchHistoricalTokenRate(queryClient(), 'asset', '2026-03-13', async () => response(rate))
+      ).rejects.toThrow('Historical USD rate precision unavailable')
+    }
+  )
+
   it('normalizes target sets and exposes reactive query state', async () => {
     const data = ref<Record<string, number>>()
     const isLoading = ref(false)

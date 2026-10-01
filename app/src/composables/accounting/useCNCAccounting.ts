@@ -8,7 +8,7 @@
  *     Expense, FixedReturn (Community Credit), Investor and SafeDepositRouter
  *     contracts, reconstructed from the RPC via the shared `use*EventsViaLogs`
  *     composables (no indexer dependency).
- *   - **Safe** — the team Safe's incoming native / ERC-20 transfers (spec §3.1).
+ *   - **Safe** — complete actual native / ERC-20 incoming and outgoing movements.
  *   - **Backend DB** — the team's contracts, signed weekly claims and approved
  *     expenses, the off-chain accrual and journal account-assignment context
  *     (spec §3.2).
@@ -37,10 +37,7 @@ import { useGetTeamQuery } from '@/queries/team.queries'
 import { useGetTeamOfficersQuery } from '@/queries/contract.queries'
 import { useGetExpensesQuery } from '@/queries/expense.queries'
 import { useGetJournalAccountAssignmentsQuery } from '@/queries/journalAccountAssignment.queries'
-import {
-  useGetSafeIncomingTransfersQuery,
-  useGetSafeOutgoingTransactionsQuery
-} from '@/queries/safe.queries'
+import { useGetSafeTransfersQuery } from '@/queries/safe.queries'
 import { useGetTeamWeeklyClaimsQuery } from '@/queries/weeklyClaim.queries'
 import { useHistoricalTokenRatesQuery } from '@/queries/historicalTokenRate.queries'
 import { useTransactionEvidence } from './useTransactionEvidence'
@@ -57,6 +54,7 @@ import {
 } from '@/utils/accounting/assemble'
 import { knownDeploymentAccounts } from '@/utils/accounting/accountInstances'
 import * as accountingValuation from '@/utils/accounting/toUsd'
+import { prepareSafeExchanges } from '@/utils/accounting/safeExchanges'
 
 /** Safe Transaction Service page size; every page is loaded before assembly. */
 const SAFE_PAGE_SIZE = 500
@@ -206,12 +204,8 @@ export function useCNCAccounting(
   const expenses = useGetExpensesQuery({ queryParams: { teamId } })
   const accountAssignments = useGetJournalAccountAssignmentsQuery({ queryParams: { teamId } })
 
-  // ── Safe service: incoming + outgoing transfers (optional / flaky — never blocks) ──
-  const safeTransfers = useGetSafeIncomingTransfersQuery({
-    pathParams: { safeAddress },
-    queryParams: { limit: SAFE_PAGE_SIZE }
-  })
-  const safeOutgoing = useGetSafeOutgoingTransactionsQuery({
+  // Safe history includes actual settlements; a failed feed makes reports incomplete.
+  const safeAssetTransfers = useGetSafeTransfersQuery({
     pathParams: { safeAddress },
     queryParams: { limit: SAFE_PAGE_SIZE }
   })
@@ -232,8 +226,7 @@ export function useCNCAccounting(
     investorEvents: investor.data.value?.events,
     vestingEvents: vesting.data.value?.events,
     safeDepositRouterEvents: router.data.value?.events,
-    safeTransfers: safeTransfers.data.value,
-    safeOutgoingTransactions: safeOutgoing.data.value,
+    safeAssetTransfers: safeAssetTransfers.data.value ?? [],
     weeklyClaims: weeklyClaims.data.value?.data,
     expenses: expenses.data.value,
     accountAssignments: accountAssignments.data.value
@@ -241,7 +234,7 @@ export function useCNCAccounting(
 
   const provisionalDrafts = computed(() => buildCncJournalEntryDrafts(baseInput.value))
   const historicalTargets = computed(() =>
-    accountingValuation.historicalRateTargets(provisionalDrafts.value)
+    accountingValuation.historicalRateTargets(prepareSafeExchanges(provisionalDrafts.value))
   )
   const historicalRates = useHistoricalTokenRatesQuery(
     historicalTargets,
@@ -298,19 +291,8 @@ export function useCNCAccounting(
   const hasSafe = () => Boolean(safeAddress.value)
   const sourceDefinitions = [
     accountingQuerySource('company', 'Company', hasTeamId, team, { fatal: true }),
+    accountingQuerySource('safe-transfers', 'Safe asset movements', hasSafe, safeAssetTransfers),
     accountingQuerySource('contract-history', 'Contract deployment history', hasTeamId, officers),
-    accountingQuerySource(
-      'safe-incoming-transfers',
-      'Safe incoming transfers',
-      hasSafe,
-      safeTransfers
-    ),
-    accountingQuerySource(
-      'safe-outgoing-transactions',
-      'Safe outgoing transactions',
-      hasSafe,
-      safeOutgoing
-    ),
     accountingQuerySource('weekly-claims', 'Weekly claims', hasTeamId, weeklyClaims),
     accountingQuerySource('expenses', 'Approved expenses', hasTeamId, expenses),
     accountingQuerySource(
@@ -343,11 +325,14 @@ export function useCNCAccounting(
     sources: sourceDefinitions,
     eventSources,
     reconciliation: {
+      assetDiagnostics: computed(() => accounting.value.assetDiagnostics ?? []),
       unmatchedFeeOperationIds: computed(() => accounting.value.unmatchedFeeOperationIds),
       unavailableReceiptOperationIds: transactionEvidence.unavailableOperationIds
     },
     rates: {
-      drafts,
+      drafts: computed(() =>
+        prepareSafeExchanges(drafts.value).filter((entry) => entry.carryingAmount === undefined)
+      ),
       isLoading: historicalRates.isLoading
     }
   })
