@@ -61,6 +61,10 @@ changes. Its three pure runtime stages are `buildCncJournalEntryDrafts(CncAccoun
 and `assembleWithAccountEvidence(drafts, deploymentAccounts, evidence, accountAssignments)`, which returns the journal and reconciliation
 diagnostics without Vue or network I/O.
 
+Community Credit offer IDs and lifecycle balances are scoped by FixedReturn contract address because IDs restart after redeployment. The
+creation event supplies each generation's token and fixed-return basis points; Accounting does not borrow current-contract terms for old
+rounds. SHER multiplier-change events from every known SafeDepositRouter generation feed the date-ordered valuation timeline.
+
 The incoming-transfer and executed-transaction Safe queries remain disabled until the reactive company Safe address resolves. Once enabled,
 the address is checksum-normalized before it enters the query key or Transaction Service request. Each query then follows the service's
 `next` links to exhaustion before publishing its array to Accounting. The configured `limit` controls the request page size rather than the
@@ -601,7 +605,7 @@ because deposits and company-pocket transfers are not manual assignment targets.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `006685cb46c8408101e785b258482092a1e63f70`
+**Implementation evidence reviewed against:** `79315400c2ea74759a5505d6c66382ad3279b045`
 
 - [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts),
   [source-status projection](../../../app/src/composables/accounting/useAccountingStatus.ts),

@@ -1,473 +1,153 @@
 # Unit Testing Guide
 
-Comprehensive guide for writing unit tests in the CNC Portal project using Vitest, Vue Test Utils, and TanStack Vue Query.
+**Scope:** Vitest unit, composable, utility, and Vue component tests under `app/src/`.
 
-## Overview
+The repository's detailed conventions live in the [test utilities guide](../../app/src/tests/README.md), the
+[testing overview](../../.github/copilot-instructions/testing-overview.md), and the
+[testing patterns](../../.github/copilot-instructions/testing-patterns.md). This page keeps the shortest practical recipe for adding or
+updating an app unit test.
 
-This project uses:
+## Test locations and names
 
-- **Vitest** - Fast unit test framework
-- **Vue Test Utils** - Vue component testing utilities
-- **TanStack Vue Query** - Server state management
-- **Pinia** - State management with `@pinia/testing`
-- **Axios** - HTTP client (mocked in tests)
+Place a spec beside the code it covers:
 
-## Test Structure
-
-### Test File Location
-
-Test files are placed in a `__tests__` directory next to the source file:
-
-```
-src/
-├── components/
-│   ├── ButtonUI.vue
-│   └── __tests__/
-│       └── ButtonUI.spec.ts
+```text
+app/src/components/Foo.vue
+app/src/components/__tests__/Foo.spec.ts
+app/src/composables/useFoo.ts
+app/src/composables/__tests__/useFoo.spec.ts
+app/src/utils/foo/model.ts
+app/src/utils/foo/__tests__/model.spec.ts
 ```
 
-### Test File Naming
+Use `.spec.ts` for unit and component tests. Use `.integration.spec.ts` only when the test intentionally exercises several application
+boundaries together. Playwright journeys live under `app/test/e2e/` and follow the separate [E2E guide](../../app/test/README.md).
 
-- Unit tests: `FileName.spec.ts`
-- Integration tests: `FileName.integration.spec.ts`
-- Advanced/Edge cases: `FileName.advanced.spec.ts`
+## Component mounting
 
-## Basic Test Structure
+Use `renderWithProviders` for the default component setup. It installs the shared test providers and lets a spec override only what it
+needs:
 
-```typescript
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { mount } from "@vue/test-utils";
-import { createTestingPinia } from "@pinia/testing";
-import MyComponent from "@/components/MyComponent.vue";
+```ts
+import { renderWithProviders } from '@/tests/mocks'
 
-describe("MyComponent", () => {
-  let wrapper;
+const wrapper = renderWithProviders(MyComponent, {
+  props: { loading: false },
+  global: { stubs: { LocalChild: true } }
+})
 
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  afterEach(() => {
-    if (wrapper) wrapper.unmount();
-  });
-
-  describe("Component Rendering", () => {
-    it("should render component correctly", () => {
-      wrapper = mount(MyComponent, {
-        global: {
-          plugins: [createTestingPinia({ createSpy: vi.fn })],
-        },
-      });
-
-      expect(wrapper.exists()).toBe(true);
-    });
-  });
-});
+expect(wrapper.find('[data-test="submit-button"]').exists()).toBe(true)
 ```
 
-## Component Testing
+Use `mount` directly only when the test intentionally needs a different provider setup. Prefer `data-test` attributes, rendered text,
+emitted events, accessible roles, and public child props over CSS classes or private component state.
 
-### Mounting Components
+## Shared mocks
 
-```typescript
-import { mount, shallowMount } from "@vue/test-utils";
+Global Vitest setup files already mock the commonly used wagmi, viem, TanStack Query, Pinia, API, composable, and Nuxt UI boundaries. Reuse
+the exported handles from `@/tests/mocks`; do not register the same module again in a spec.
 
-// Full mount - renders all child components
-const wrapper = mount(MyComponent, {
-  props: { message: "Hello" },
-  global: {
-    plugins: [createTestingPinia({ createSpy: vi.fn })],
-    stubs: { ChildComponent: true },
-  },
-});
+```ts
+import { mockERC20Reads, resetERC20Mocks } from '@/tests/mocks'
 
-// Shallow mount - only renders the component, not children
-const wrapper = shallowMount(MyComponent);
+beforeEach(() => resetERC20Mocks())
+
+it('renders a token balance', () => {
+  mockERC20Reads.balanceOf.data.value = 500n
+
+  const wrapper = renderWithProviders(TokenBalance)
+
+  expect(wrapper.find('[data-test="token-balance"]').text()).toContain('500')
+})
 ```
 
-### Accessing Component Elements
+For the complete module catalogue, reset rules, and global-mock extension procedure, read [`MOCK_SYSTEM.md`](./MOCK_SYSTEM.md).
 
-```typescript
-// Use data-test attributes for stable selection
-const button = wrapper.find('[data-test="submit-button"]');
-const items = wrapper.findAll('[data-test="item"]');
+## Query and mutation tests
 
-// Check if element exists
-expect(button.exists()).toBe(true);
+Use the current query names and mutation contract. For example, the team module exposes `useGetTeamsQuery` and `useCreateTeamMutation`, not
+the older `useTeamsQuery` or `useCreateTeamQuery` names:
 
-// Get text content
-expect(button.text()).toBe("Submit");
+```ts
+import { vi } from 'vitest'
+import ListIndex from '@/views/team/ListIndex.vue'
+import { useGetTeamsQuery } from '@/queries/team.queries'
+import { renderWithProviders, mockTeamsData, createMockQueryResponse } from '@/tests/mocks'
 
-// Get attributes
-expect(button.attributes("disabled")).toBeDefined();
+it('renders the returned companies', () => {
+  vi.mocked(useGetTeamsQuery).mockReturnValue(
+    createMockQueryResponse(mockTeamsData)
+  )
 
-// Get classes
-expect(button.classes()).toContain("btn-primary");
+  const wrapper = renderWithProviders(ListIndex)
+
+  expect(wrapper.text()).toContain('Test Team')
+})
 ```
 
-### Testing Props and Emits
+When testing a mutation composable, assert the payload sent to the underlying operation, the error state, and the invalidated query keys.
+Use the real query-key factory when the contract requires a specific cache boundary.
 
-```typescript
-describe("Props", () => {
-  it("should accept and display props", () => {
-    const wrapper = mount(MyComponent, {
-      props: {
-        title: "Test Title",
-        count: 5,
-      },
-    });
+## Observable behaviour
 
-    expect(wrapper.text()).toContain("Test Title");
-  });
+Each test should have one focused, declarative outcome:
 
-  it("should emit events with correct payload", async () => {
-    const wrapper = mount(MyComponent);
+```ts
+it('emits the selected token when the user changes the field', async () => {
+  const wrapper = renderWithProviders(TokenSelector)
 
-    await wrapper.find('[data-test="button"]').trigger("click");
+  await wrapper.find('[data-test="token-select"]').setValue('usdc')
 
-    expect(wrapper.emitted("submit")).toBeTruthy();
-    expect(wrapper.emitted("submit")[0]).toEqual([expectedData]);
-  });
-});
+  expect(wrapper.emitted('update:modelValue')?.at(-1)?.[0]).toBe('usdc')
+})
 ```
 
-### Testing User Interactions
+For asynchronous behaviour, use `await nextTick()` for Vue updates and `await flushPromises()` for pending promises. Avoid arbitrary timeout
+delays. For failures, assert the user-visible error or the domain error mapped by the tested boundary.
 
-```typescript
-describe("User Interactions", () => {
-  it("should handle click events", async () => {
-    const wrapper = mount(MyComponent);
+## Acceptance traceability
 
-    await wrapper.find('[data-test="button"]').trigger("click");
+Put one canonical acceptance ID in the representative test title when one test proves one criterion. Use a structured `Covers` block only
+when one coherent test proves several criteria. The identifier is traceability metadata; the assertions remain the proof. Follow the
+complete [acceptance traceability contract](../../docs/platform/feature-specification-guide.md#acceptance-criteria-and-traceability).
 
-    expect(wrapper.vm.clicked).toBe(true);
-  });
-
-  it("should handle keyboard events", async () => {
-    const wrapper = mount(MyComponent);
-
-    await wrapper.find('[data-test="input"]').trigger("keydown.enter");
-
-    // Assert expected behavior
-  });
-
-  it("should handle form submission", async () => {
-    const wrapper = mount(MyComponent);
-
-    await wrapper.find('[data-test="form"]').trigger("submit");
-
-    expect(wrapper.emitted("submit")).toBeTruthy();
-  });
-});
-```
-
-## Testing with TanStack Vue Query
-
-All query hooks are automatically mocked globally. Use `createMockQueryResponse` to override:
-
-```typescript
-import { useTeamsQuery } from "@/queries/team.queries";
-import { createMockQueryResponse } from "@/tests/mocks/query.mock";
-import { VueQueryPlugin, QueryClient } from "@tanstack/vue-query";
-import { vi } from "vitest";
-
-describe("Teams Component", () => {
-  it("should display teams from query", () => {
-    const queryClient = new QueryClient();
-    const customTeams = [
-      { id: "1", name: "Team A" },
-      { id: "2", name: "Team B" },
-    ];
-
-    vi.mocked(useTeamsQuery).mockReturnValue(
-      createMockQueryResponse(customTeams),
-    );
-
-    const wrapper = mount(TeamsComponent, {
-      global: {
-        plugins: [
-          createTestingPinia({ createSpy: vi.fn }),
-          [VueQueryPlugin, { queryClient }],
-        ],
-      },
-    });
-
-    expect(wrapper.text()).toContain("Team A");
-    expect(wrapper.text()).toContain("Team B");
-  });
-
-  it("should handle loading state", () => {
-    const queryClient = new QueryClient();
-
-    vi.mocked(useTeamsQuery).mockReturnValue(
-      createMockQueryResponse([], true), // isLoading = true
-    );
-
-    const wrapper = mount(TeamsComponent, {
-      global: {
-        plugins: [
-          createTestingPinia({ createSpy: vi.fn }),
-          [VueQueryPlugin, { queryClient }],
-        ],
-      },
-    });
-
-    expect(wrapper.find('[data-test="loader"]').exists()).toBe(true);
-  });
-
-  it("should handle error state", () => {
-    const queryClient = new QueryClient();
-    const error = new Error("Failed to fetch teams");
-
-    vi.mocked(useTeamsQuery).mockReturnValue(
-      createMockQueryResponse([], false, error),
-    );
-
-    const wrapper = mount(TeamsComponent, {
-      global: {
-        plugins: [
-          createTestingPinia({ createSpy: vi.fn }),
-          [VueQueryPlugin, { queryClient }],
-        ],
-      },
-    });
-
-    expect(wrapper.find('[data-test="error-message"]').exists()).toBe(true);
-  });
-});
-```
-
-## Testing with Pinia
-
-```typescript
-import { useTeamStore } from "@/stores/teamStore";
-import { createTestingPinia } from "@pinia/testing";
-
-describe("Component with Pinia Store", () => {
-  it("should access store state", () => {
-    const wrapper = mount(MyComponent, {
-      global: {
-        plugins: [
-          createTestingPinia({
-            createSpy: vi.fn,
-            initialState: {
-              team: {
-                currentTeamId: "1",
-                teams: [{ id: "1", name: "Team A" }],
-              },
-            },
-          }),
-        ],
-      },
-    });
-
-    const store = useTeamStore();
-    expect(store.currentTeamId).toBe("1");
-  });
-
-  it("should call store actions", async () => {
-    const wrapper = mount(MyComponent, {
-      global: {
-        plugins: [createTestingPinia({ createSpy: vi.fn })],
-      },
-    });
-
-    const store = useTeamStore();
-    await wrapper.find('[data-test="load-button"]').trigger("click");
-
-    expect(store.loadTeams).toHaveBeenCalled();
-  });
-});
-```
-
-## Testing Async Operations
-
-```typescript
-import { nextTick, flushPromises } from "vue";
-
-describe("Async Operations", () => {
-  it("should handle async data loading", async () => {
-    const wrapper = mount(MyComponent);
-
-    // Wait for component to render
-    await nextTick();
-
-    // Wait for all pending promises
-    await flushPromises();
-
-    // Assert after async operations complete
-    expect(wrapper.text()).toContain("Loaded Data");
-  });
-
-  it("should handle promise resolution", async () => {
-    const mockApi = vi.fn().mockResolvedValue({ data: "test" });
-
-    const wrapper = mount(MyComponent, {
-      props: { apiCall: mockApi },
-    });
-
-    await flushPromises();
-
-    expect(mockApi).toHaveBeenCalled();
-    expect(wrapper.vm.result).toEqual({ data: "test" });
-  });
-});
-```
-
-## Testing Computed Properties and Watchers
-
-```typescript
-describe("Reactivity", () => {
-  it("should update computed property", async () => {
-    const wrapper = mount(MyComponent, {
-      props: { count: 5 },
-    });
-
-    expect(wrapper.vm.doubledCount).toBe(10);
-
-    await wrapper.setProps({ count: 10 });
-
-    expect(wrapper.vm.doubledCount).toBe(20);
-  });
-
-  it("should trigger watchers", async () => {
-    const wrapper = mount(MyComponent);
-
-    await wrapper.setData({ value: "new" });
-    await nextTick();
-
-    expect(wrapper.vm.watching).toBe(true);
-  });
-});
-```
-
-## Common Testing Patterns
-
-### Testing Conditional Rendering
-
-```typescript
-it("should show element when condition is true", async () => {
-  const wrapper = mount(MyComponent, {
-    data: () => ({ isVisible: false }),
-  });
-
-  expect(wrapper.find('[data-test="secret"]').exists()).toBe(false);
-
-  await wrapper.setData({ isVisible: true });
-
-  expect(wrapper.find('[data-test="secret"]').exists()).toBe(true);
-});
-```
-
-### Testing List Rendering
-
-```typescript
-it("should render list items", () => {
-  const items = [
-    { id: 1, name: "Item 1" },
-    { id: 2, name: "Item 2" },
-    { id: 3, name: "Item 3" },
-  ];
-
-  const wrapper = mount(ListComponent, {
-    props: { items },
-  });
-
-  const listItems = wrapper.findAll('[data-test="item"]');
-  expect(listItems).toHaveLength(3);
-  expect(listItems[0].text()).toContain("Item 1");
-});
-```
-
-### Testing Form Validation
-
-```typescript
-it("should validate required fields", async () => {
-  const wrapper = mount(FormComponent);
-
-  await wrapper.find('[data-test="submit"]').trigger("click");
-
-  expect(wrapper.find('[data-test="email-error"]').exists()).toBe(true);
-  expect(wrapper.find('[data-test="email-error"]').text()).toContain(
-    "required",
-  );
-});
-```
-
-## Coverage Requirements
-
-Target coverage thresholds:
-
-- **Statements**: 80%+
-- **Branches**: 75%+
-- **Functions**: 80%+
-- **Lines**: 80%+
-
-Run coverage report:
+Run the repository-level inventory from the repository root:
 
 ```bash
-npm run test:coverage
+npm run report:acceptance-coverage
 ```
 
-## Best Practices
+The generated report is an audit inventory, not evidence that the latest test run passed.
 
-1. **Arrange-Act-Assert Pattern**
+## Coverage and local commands
 
-   ```typescript
-   it("should do something", () => {
-     // Arrange
-     const wrapper = mount(Component);
-
-     // Act
-     await wrapper.find('[data-test="button"]').trigger("click");
-
-     // Assert
-     expect(wrapper.emitted("event")).toBeTruthy();
-   });
-   ```
-
-2. **Use Descriptive Test Names**
-
-   - ✅ `should display error message when validation fails`
-   - ❌ `should work`
-
-3. **Keep Tests Focused**
-
-   - Test one thing per test
-   - Use descriptive assertions
-   - Avoid testing implementation details
-
-4. **Mock External Dependencies**
-
-   - Use centralized mocks from `src/tests/mocks/`
-   - Don't make real API calls
-   - Don't test third-party libraries
-
-5. **Clean Up Properly**
-   - Use `beforeEach` and `afterEach`
-   - Clear all mocks between tests
-   - Unmount components after tests
-
-## Debugging Tests
+Coverage targets are advisory quality signals, not a substitute for behavioural assertions. The app exposes these commands:
 
 ```bash
-# Run tests in debug mode with inspector
-node --inspect-brk ./node_modules/vitest/vitest.mjs run
+cd app
 
-# Run single test file
-npm run test:unit src/components/__tests__/MyComponent.spec.ts
+# Run all app unit tests once
+npm run test:unit -- --run
 
-# Run tests matching pattern
-npm run test:unit -- --grep "should display"
+# Watch unit tests without updating snapshots implicitly
+npm run test:unit -- --watch
 
-# Watch mode for development
-npm run test:watch
+# Generate the app unit-test coverage report
+npm run test:unit:coverage
+
+# Type-check and lint the app
+npm run type-check
+npm run lint
 ```
 
-## Resources
+The repository-level validation commands and required pre-push checks remain defined in [`AGENTS.md`](../../AGENTS.md).
 
-- [Vitest Documentation](https://vitest.dev/)
-- [Vue Test Utils API](https://test-utils.vuejs.org/)
-- [Testing Library Best Practices](https://testing-library.com/)
-- [CNC Portal Testing Patterns](./testing-patterns.md)
-- [Global Mocks Setup Guide](./global-mocks-setup.md)
+## References
+
+- [Test utilities and global setup](../../app/src/tests/README.md)
+- [Mock system](./MOCK_SYSTEM.md)
+- [Testing overview](../../.github/copilot-instructions/testing-overview.md)
+- [Testing patterns](../../.github/copilot-instructions/testing-patterns.md)
+- [Testing anti-patterns](../../.github/copilot-instructions/testing-anti-patterns.md)
+- [Vue Test Utils](https://test-utils.vuejs.org/)
+- [Vitest](https://vitest.dev/)

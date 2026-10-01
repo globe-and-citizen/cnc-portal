@@ -30,7 +30,6 @@ import { useBankEventsViaLogs } from '@/composables/bank/useBankEventsViaLogs'
 import { useCashRemunerationEventsViaLogs } from '@/composables/cashRemuneration/useCashRemunerationEventsViaLogs'
 import { useExpenseEventsViaLogs } from '@/composables/expense/useExpenseEventsViaLogs'
 import { useFixedReturnEventsViaLogs } from '@/composables/fixedReturn/useFixedReturnEventsViaLogs'
-import { useFixedReturnAllOffers } from '@/composables/fixedReturn/reads'
 import { useInvestorEventsViaLogs } from '@/composables/investor/useInvestorEventsViaLogs'
 import { useVestingEventsViaLogs } from '@/composables/vesting/useVestingEventsViaLogs'
 import { useSafeDepositRouterEventsViaLogs } from '@/composables/investor/useSafeDepositRouterEventsViaLogs'
@@ -57,7 +56,6 @@ import {
   type CncAccountingInput
 } from '@/utils/accounting/assemble'
 import { knownDeploymentAccounts } from '@/utils/accounting/accountInstances'
-import type { CreditOfferTerms } from '@/utils/accounting/mappers/creditTimeline'
 import * as accountingValuation from '@/utils/accounting/toUsd'
 
 /** Safe Transaction Service page size; every page is loaded before assembly. */
@@ -158,7 +156,6 @@ export function useCNCAccounting(
       return ''
     })
 
-  const fixedReturnAddress = addressOf('FixedReturn')
   const investorAddress = addressOf('Investor', 'InvestorV1')
   const routerAddress = addressOf('SafeDepositRouter')
   const safeAddress = computed(() => {
@@ -204,21 +201,6 @@ export function useCNCAccounting(
     return Number.isFinite(whole) && whole > 0 ? whole : null
   })
 
-  // ── Contract read: each Community Credit round's rate. It does not reach the
-  // mapper through the event feed, and without it the fixed return can only be
-  // expensed on the day it is paid — so the offer structs are read straight from
-  // FixedReturn and handed to the mapper, which recognises the whole fee when the
-  // round funds (see mappers/creditTimeline). A failed read simply leaves the list
-  // empty and the books fall back to the cash-basis treatment. ──
-  const fixedReturnOffers = useFixedReturnAllOffers(fixedReturnAddress)
-
-  const fixedReturnOfferTerms = computed<CreditOfferTerms[]>(() =>
-    (fixedReturnOffers.data.value ?? []).map(({ offerId, offer }) => ({
-      offerId: String(offerId),
-      interestRateBps: Number(offer.interestRateBps)
-    }))
-  )
-
   // ── Backend DB: off-chain enrichment and JournalEntry account assignments ──
   const weeklyClaims = useGetTeamWeeklyClaimsQuery({ queryParams: { teamId } })
   const expenses = useGetExpensesQuery({ queryParams: { teamId } })
@@ -247,7 +229,6 @@ export function useCNCAccounting(
     cashRemunerationEvents: cashRem.data.value?.events,
     expenseEvents: expense.data.value?.events,
     fixedReturnEvents: fixedReturn.data.value?.events,
-    fixedReturnOfferTerms: fixedReturnOfferTerms.value,
     investorEvents: investor.data.value?.events,
     vestingEvents: vesting.data.value?.events,
     safeDepositRouterEvents: router.data.value?.events,
@@ -318,12 +299,6 @@ export function useCNCAccounting(
   const sourceDefinitions = [
     accountingQuerySource('company', 'Company', hasTeamId, team, { fatal: true }),
     accountingQuerySource('contract-history', 'Contract deployment history', hasTeamId, officers),
-    accountingQuerySource(
-      'credit-terms',
-      'Community Credit terms',
-      () => Boolean(fixedReturnAddress.value),
-      fixedReturnOffers
-    ),
     accountingQuerySource(
       'safe-incoming-transfers',
       'Safe incoming transfers',

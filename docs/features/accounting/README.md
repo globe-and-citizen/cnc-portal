@@ -57,14 +57,49 @@ flowchart LR
 
 ## Test Coverage Overview
 
-| User Story  | E2E Status | Owning Path |
-| ----------- | ---------- | ----------- |
-| US-ACCT-001 | 📋 Planned | E2E-PATH-15 |
-| US-ACCT-002 | 📋 Planned | E2E-PATH-15 |
-| US-ACCT-003 | 📋 Planned | E2E-PATH-15 |
-| US-ACCT-004 | 📋 Planned | E2E-PATH-16 |
-| US-ACCT-005 | 📋 Planned | E2E-PATH-15 |
-| US-ACCT-006 | 📋 Planned | E2E-PATH-16 |
+Coverage targets compare each criterion's required evidence with direct `AC-US-*` references in tracked tests. They do not represent the
+latest pass/fail result, which belongs to CI or the generated local report. Gaps identify criteria whose required evidence is missing or
+insufficient; the detailed evidence distribution remains available in the generated report instead of being repeated here.
+
+| User Story  | Main Journey  | Coverage Target | Gaps                                                                |
+| ----------- | ------------- | --------------- | ------------------------------------------------------------------- |
+| US-ACCT-001 | ✅ Integrated | ⚠️ 11/12        | 1 — `AC-US-ACCT-001-08`, whose cash reconciliation is not built yet |
+| US-ACCT-002 | ✅ Integrated | ✅ 12/12        | —                                                                   |
+| US-ACCT-003 | ✅ Integrated | ✅ 11/11        | —                                                                   |
+| US-ACCT-004 | ✅ Integrated | ✅ 9/9          | —                                                                   |
+| US-ACCT-005 | ✅ Integrated | ✅ 13/13        | —                                                                   |
+| US-ACCT-006 | ✅ Integrated | ✅ 11/11        | —                                                                   |
+
+### Accounting Use-Case Test Evidence
+
+The story matrix tracks user-visible acceptance criteria. This table links the active accounting rules in the
+[rule catalogue](./journal-entry-catalogue.md) to their representative mapper tests. These are frontend unit tests; the integrated journeys
+exercise representative company operations, not every rule. The catalogue's declared inactive identifiers are intentionally not counted as
+implemented use cases.
+
+| Use-Case Family        | Active Rules                                              | Representative Tests                                                                                                                                                                                                                                                                                                                                                                                                          |
+| ---------------------- | --------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Treasury and Safe cash | `UC-BANK-02`, `UC-BANK-03`, `INTERNAL`, `CASH-OUT`, `FEE` | [bank.spec.ts](../../../app/src/utils/accounting/__tests__/bank.spec.ts), [safe.spec.ts](../../../app/src/utils/accounting/__tests__/safe.spec.ts), [bankFeeAssembly.spec.ts](../../../app/src/utils/accounting/__tests__/bankFeeAssembly.spec.ts), [internalAddresses.spec.ts](../../../app/src/utils/accounting/__tests__/internalAddresses.spec.ts)                                                                        |
+| Payroll                | `UC-CASH-02`, `UC-CASH-03`                                | [payrollAccrual.spec.ts](../../../app/src/utils/accounting/__tests__/payrollAccrual.spec.ts), [payroll.spec.ts](../../../app/src/utils/accounting/__tests__/payroll.spec.ts), [sherAccrualRate.spec.ts](../../../app/src/utils/accounting/__tests__/sherAccrualRate.spec.ts), [sherIssuance.spec.ts](../../../app/src/utils/accounting/__tests__/sherIssuance.spec.ts)                                                        |
+| Expense payout         | `UC-EXP-01`                                               | [expenseAccount.spec.ts](../../../app/src/utils/accounting/__tests__/expenseAccount.spec.ts), [enrichment.spec.ts](../../../app/src/utils/accounting/__tests__/enrichment.spec.ts), [orchestrator.spec.ts](../../../app/src/utils/accounting/__tests__/orchestrator.spec.ts)                                                                                                                                                  |
+| Community Credit       | `UC-CREDIT-01`, `UC-CREDIT-03`, `UC-CREDIT-05`            | [fixedReturn.spec.ts](../../../app/src/utils/accounting/__tests__/fixedReturn.spec.ts), [fixedReturn.interest.spec.ts](../../../app/src/utils/accounting/__tests__/fixedReturn.interest.spec.ts), [assemble.fixedReturn.spec.ts](../../../app/src/utils/accounting/__tests__/assemble.fixedReturn.spec.ts), [generation migration spec](../../../app/src/composables/accounting/__tests__/useCNCAccounting.migration.spec.ts) |
+| Investor               | `UC-SDR-01`, `UC-INV-01`, `DEFAULT-D`                     | [safeDepositRouter.spec.ts](../../../app/src/utils/accounting/__tests__/safeDepositRouter.spec.ts), [investor.spec.ts](../../../app/src/utils/accounting/__tests__/investor.spec.ts), [sherIssuance.spec.ts](../../../app/src/utils/accounting/__tests__/sherIssuance.spec.ts)                                                                                                                                                |
+| Vesting                | `UC-VEST-01`, `UC-VEST-02`, `UC-VEST-03`                  | [vesting.spec.ts](../../../app/src/utils/accounting/__tests__/vesting.spec.ts), [sherIssuance.spec.ts](../../../app/src/utils/accounting/__tests__/sherIssuance.spec.ts)                                                                                                                                                                                                                                                      |
+
+The real-operation evidence is in the [Accounting journey](../../../app/test/e2e/accounting/accounting-journey.integrated.spec.ts) and
+[contract-generation journey](../../../app/test/e2e/accounting/accounting-generations.integrated.spec.ts). Their current execution status is
+reported by CI and is separate from the test evidence listed above.
+
+## Proof Strategy Reference
+
+Each acceptance criterion references one reusable strategy instead of repeating the same responsibility, evidence, and rationale text.
+
+| Strategy                 | Responsibilities   | Required Evidence | Proof Rationale                                                                     |
+| ------------------------ | ------------------ | ----------------- | ----------------------------------------------------------------------------------- |
+| `PS-FRONTEND`            | Frontend           | Frontend          | The read model owns this deterministic derivation, valuation, or presentation rule. |
+| `PS-FRONTEND-INTEGRATED` | Frontend           | Integrated E2E    | The books must be proven against operations the portal actually performed.          |
+| `PS-API`                 | Frontend + Backend | Integrated E2E    | The browser/API hand-off and persisted user-visible state must work together.       |
+| `PS-BACKEND`             | Backend            | Backend           | The backend owns this API authorization, validation, or persistence rule.           |
 
 ## US-ACCT-001: View the Accounting Overview
 
@@ -97,6 +132,23 @@ flowchart LR
 - [x] `AC-US-ACCT-001-11` A missing block timestamp withholds the affected event instead of creating a zero-date entry.
 - [x] `AC-US-ACCT-001-12` A missing rate retains the non-zero movement and reports `rate-unavailable` instead of substituting a current
       price.
+
+### Test Coverage
+
+| Acceptance Criterion | Proof Strategy           | Current Evidence          | Status     |
+| -------------------- | ------------------------ | ------------------------- | ---------- |
+| `AC-US-ACCT-001-01`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E + Frontend | ✅ Met     |
+| `AC-US-ACCT-001-02`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E            | ✅ Met     |
+| `AC-US-ACCT-001-03`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E            | ✅ Met     |
+| `AC-US-ACCT-001-04`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E            | ✅ Met     |
+| `AC-US-ACCT-001-05`  | `PS-FRONTEND`            | Frontend                  | ✅ Met     |
+| `AC-US-ACCT-001-06`  | `PS-FRONTEND`            | Frontend                  | ✅ Met     |
+| `AC-US-ACCT-001-07`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E            | ✅ Met     |
+| `AC-US-ACCT-001-08`  | `PS-FRONTEND`            | None linked               | ❌ Missing |
+| `AC-US-ACCT-001-09`  | `PS-FRONTEND`            | Frontend                  | ✅ Met     |
+| `AC-US-ACCT-001-10`  | `PS-FRONTEND`            | Frontend                  | ✅ Met     |
+| `AC-US-ACCT-001-11`  | `PS-FRONTEND`            | Frontend                  | ✅ Met     |
+| `AC-US-ACCT-001-12`  | `PS-FRONTEND`            | Frontend                  | ✅ Met     |
 
 **Dependencies:** Current company, accounting source providers, and valuation sources
 
@@ -131,6 +183,23 @@ flowchart LR
 - [x] `AC-US-ACCT-002-11` Changing a filter resets pagination to a valid page.
 - [x] `AC-US-ACCT-002-12` An account drill-down carries its opening balance from activity before the selected period.
 
+### Test Coverage
+
+| Acceptance Criterion | Proof Strategy           | Current Evidence          | Status |
+| -------------------- | ------------------------ | ------------------------- | ------ |
+| `AC-US-ACCT-002-01`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E + Frontend | ✅ Met |
+| `AC-US-ACCT-002-02`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E + Frontend | ✅ Met |
+| `AC-US-ACCT-002-03`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E + Frontend | ✅ Met |
+| `AC-US-ACCT-002-04`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E            | ✅ Met |
+| `AC-US-ACCT-002-05`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
+| `AC-US-ACCT-002-06`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E + Frontend | ✅ Met |
+| `AC-US-ACCT-002-07`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E            | ✅ Met |
+| `AC-US-ACCT-002-08`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
+| `AC-US-ACCT-002-09`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E            | ✅ Met |
+| `AC-US-ACCT-002-10`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
+| `AC-US-ACCT-002-11`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
+| `AC-US-ACCT-002-12`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
+
 **Dependencies:** US-ACCT-001
 
 ## US-ACCT-003: Review Financial Statements
@@ -163,6 +232,22 @@ flowchart LR
 - [x] `AC-US-ACCT-003-10` Point-in-time statements exclude later entries.
 - [x] `AC-US-ACCT-003-11` A statement line without evidence does not expose an empty drill-down as supporting detail.
 
+### Test Coverage
+
+| Acceptance Criterion | Proof Strategy           | Current Evidence          | Status |
+| -------------------- | ------------------------ | ------------------------- | ------ |
+| `AC-US-ACCT-003-01`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E + Frontend | ✅ Met |
+| `AC-US-ACCT-003-02`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E + Frontend | ✅ Met |
+| `AC-US-ACCT-003-03`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E + Frontend | ✅ Met |
+| `AC-US-ACCT-003-04`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
+| `AC-US-ACCT-003-05`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E            | ✅ Met |
+| `AC-US-ACCT-003-06`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E            | ✅ Met |
+| `AC-US-ACCT-003-07`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E            | ✅ Met |
+| `AC-US-ACCT-003-08`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
+| `AC-US-ACCT-003-09`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
+| `AC-US-ACCT-003-10`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
+| `AC-US-ACCT-003-11`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
+
 **Dependencies:** US-ACCT-001 and US-ACCT-002
 
 ## US-ACCT-004: Export Accounting Reports
@@ -191,6 +276,20 @@ flowchart LR
 - [x] `AC-US-ACCT-004-08` An export failure is reported without changing the books.
 - [x] `AC-US-ACCT-004-09` An empty export keeps the selected report structure without inventing entries.
 
+### Test Coverage
+
+| Acceptance Criterion | Proof Strategy           | Current Evidence          | Status |
+| -------------------- | ------------------------ | ------------------------- | ------ |
+| `AC-US-ACCT-004-01`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E + Frontend | ✅ Met |
+| `AC-US-ACCT-004-02`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E            | ✅ Met |
+| `AC-US-ACCT-004-03`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
+| `AC-US-ACCT-004-04`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E + Frontend | ✅ Met |
+| `AC-US-ACCT-004-05`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E            | ✅ Met |
+| `AC-US-ACCT-004-06`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
+| `AC-US-ACCT-004-07`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
+| `AC-US-ACCT-004-08`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
+| `AC-US-ACCT-004-09`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
+
 **Dependencies:** US-ACCT-002 or US-ACCT-003
 
 ## US-ACCT-005: Review Historical Contract Activity
@@ -216,13 +315,41 @@ flowchart LR
 - [x] `AC-US-ACCT-005-08` Current Investor identity takes precedence over `InvestorV1`; the legacy contract remains the fallback when no
       current Investor exists.
 - [x] `AC-US-ACCT-005-09` Duplicate generation events are removed by their on-chain identity.
-- [ ] `AC-US-ACCT-005-10` Historical Community Credit terms and SHER valuation inputs resolve from their owning generation.
+- [x] `AC-US-ACCT-005-10` Historical Community Credit terms resolve from their owning FixedReturn generation; SHER valuation replays
+      timestamped multiplier changes and uses the current router's constructor multiplier when no change event exists. Resolving the
+      constructor multiplier of a retired router with no change event is outside this criterion.
 
 #### Edge & Error Cases
 
 - [x] `AC-US-ACCT-005-11` When deployment history is unavailable, Accounting falls back to the current contract set.
 - [x] `AC-US-ACCT-005-12` One empty or failed generation does not remove available activity from other generations.
 - [x] `AC-US-ACCT-005-13` An unproven deployment leg remains a separate unresolved account instead of being assigned to an older deployment.
+
+### Test Coverage
+
+| Acceptance Criterion | Proof Strategy           | Current Evidence          | Status |
+| -------------------- | ------------------------ | ------------------------- | ------ |
+| `AC-US-ACCT-005-01`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E + Frontend | ✅ Met |
+| `AC-US-ACCT-005-02`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E            | ✅ Met |
+| `AC-US-ACCT-005-03`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
+| `AC-US-ACCT-005-04`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
+| `AC-US-ACCT-005-05`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E + Frontend | ✅ Met |
+| `AC-US-ACCT-005-06`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
+| `AC-US-ACCT-005-07`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
+| `AC-US-ACCT-005-08`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
+| `AC-US-ACCT-005-09`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E            | ✅ Met |
+| `AC-US-ACCT-005-10`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
+| `AC-US-ACCT-005-11`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
+| `AC-US-ACCT-005-12`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
+| `AC-US-ACCT-005-13`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
+
+**Representative regression tests for `AC-US-ACCT-005-10`:**
+[Community Credit generation terms](../../../app/src/utils/accounting/__tests__/fixedReturn.interest.spec.ts),
+[SHER change history](../../../app/src/utils/accounting/__tests__/sherRate.spec.ts), and
+[the current router's constructor-time SHER multiplier](../../../app/src/utils/accounting/__tests__/assemble.sherMultiplier.spec.ts). The
+Community Credit mapper keys each offer's terms by its lowercase FixedReturn address and offer id, because a live read from the current
+deployment cannot describe retired offers. SHER valuation uses timestamped multiplier changes, with the constructor value covered before the
+first change and for the current router when no change event exists.
 
 **Dependencies:** Contract deployment history and US-ACCT-001
 
@@ -257,19 +384,40 @@ flowchart LR
       journal.
 - [x] `AC-US-ACCT-006-11` A failed save or removal leaves the previous entry visible and reports that the change was not applied.
 
+### Test Coverage
+
+| Acceptance Criterion | Proof Strategy           | Current Evidence          | Status |
+| -------------------- | ------------------------ | ------------------------- | ------ |
+| `AC-US-ACCT-006-01`  | `PS-API`                 | Integrated E2E            | ✅ Met |
+| `AC-US-ACCT-006-02`  | `PS-API`                 | Integrated E2E + Frontend | ✅ Met |
+| `AC-US-ACCT-006-03`  | `PS-API`                 | Integrated E2E + Frontend | ✅ Met |
+| `AC-US-ACCT-006-04`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E + Frontend | ✅ Met |
+| `AC-US-ACCT-006-05`  | `PS-API`                 | Integrated E2E            | ✅ Met |
+| `AC-US-ACCT-006-06`  | `PS-BACKEND`             | Backend                   | ✅ Met |
+| `AC-US-ACCT-006-07`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E            | ✅ Met |
+| `AC-US-ACCT-006-08`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
+| `AC-US-ACCT-006-09`  | `PS-API`                 | Integrated E2E + Frontend | ✅ Met |
+| `AC-US-ACCT-006-10`  | `PS-BACKEND`             | Backend                   | ✅ Met |
+| `AC-US-ACCT-006-11`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
+
 **Dependencies:** US-ACCT-002 and the journal account-assignment API
+
+## Human Validation
+
+Not yet completed. The feature owner must run the Accounting `@integrated` journeys through Playwright against the prepared local G7 stack,
+then review the overview, General Ledger, statements, exports, contract generations, and withdrawal classification before marking the
+applicable stories `Done`.
 
 ## Known Gaps
 
 - Closing cash balances are not reconciled with live on-chain balances (`US-ACCT-001`).
-- Historical Community Credit terms and SHER valuation inputs still use current-generation sources (`US-ACCT-005`).
 - Off-platform activity without a connected data source is absent from the automated books.
 - Safe outgoing evidence does not infer cash movements hidden inside MultiSend, module, or custom calls.
 - A Bank fee without matching outflow evidence is withheld until the source feed can be reconciled (`US-ACCT-002`).
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `006685cb46c8408101e785b258482092a1e63f70`
+**Implementation evidence reviewed against:** `79315400c2ea74759a5505d6c66382ad3279b045`
 
 - [Accounting page](../../../app/src/components/sections/AccountingView/AccountingPage.vue),
   [team routes](../../../app/src/router/index.ts), and [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts)
@@ -298,6 +446,21 @@ flowchart LR
   [redeployed-ledger presentation tests](../../../app/src/components/sections/AccountingView/__tests__/LedgerRedeployLabel.spec.ts),
   [accounting export journey tests](../../../app/src/composables/accounting/__tests__/useAccountingExport.spec.ts), and
   [General Ledger interaction tests](../../../app/src/views/team/%5Bid%5D/Accounting/__tests__/GeneralLedgerInteractions.spec.ts)
+- Degraded-source evidence: [event-scan gap tests](../../../app/src/composables/__tests__/eventsViaLogs.spec.ts) and
+  [missing-rate tests](../../../app/src/composables/accounting/__tests__/useCNCAccounting.spec.ts)
+- Report-scope evidence: [statement presenter tests](../../../app/src/utils/accounting/__tests__/presenter.spec.ts),
+  [Trial Balance account tests](../../../app/src/utils/accounting/__tests__/generalLedger.spec.ts),
+  [Balance Sheet account tests](../../../app/src/utils/accounting/__tests__/balanceSheet.spec.ts), and
+  [export workbook tests](../../../app/src/lib/accounting/__tests__/spreadsheet.spec.ts)
+- Account-assignment API evidence:
+  [assignment controller tests](../../../backend/src/controllers/__tests__/journalAccountAssignmentController.test.ts)
+- Valuation and recognition evidence: [USD normalization tests](../../../app/src/utils/accounting/__tests__/toUsd.spec.ts),
+  [payroll accrual tests](../../../app/src/utils/accounting/__tests__/payrollAccrual.spec.ts), and
+  [exact-precision tests](../../../app/src/utils/accounting/__tests__/exactPrecision.spec.ts)
+- Multi-generation evidence: [internal-address tests](../../../app/src/utils/accounting/__tests__/internalAddresses.spec.ts),
+  [treasury-sweep tests](../../../app/src/utils/accounting/__tests__/bank.spec.ts), and
+  [legacy Bank fee tests](../../../app/src/utils/accounting/__tests__/bankFeeAssembly.spec.ts)
+- Drill-down export evidence: [ledger drill-down tests](../../../app/src/composables/accounting/__tests__/useLedgerDrilldown.spec.ts)
 
 ## Related Documentation
 
