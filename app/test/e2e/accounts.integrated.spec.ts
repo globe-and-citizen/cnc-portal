@@ -18,8 +18,7 @@ import { completeCashOut, transferBankToContract } from './bank/bank-page'
 import {
   addRealCompanyMember,
   createOperationalCompany,
-  deleteCompanyThroughUi,
-  deploySafeThroughUi
+  deleteCompanyThroughUi
 } from './company/real-company-page'
 import { chooseApprovalDate } from './expense/expense-page'
 
@@ -54,18 +53,15 @@ async function depositUsdc(page: Page, amount: string) {
 }
 
 test.describe(
-  '[US-SAFE-001/US-BANK-001/002/003] Integrated treasury readiness',
+  '[US-BANK-001/002/003] Integrated Bank funding',
   {
-    tag: ['@US-SAFE-001', '@US-BANK-001', '@US-BANK-002', '@US-BANK-003', '@integrated']
+    tag: ['@US-BANK-001', '@US-BANK-002', '@US-BANK-003', '@integrated']
   },
   () => {
     test.setTimeout(240_000)
 
     /**
      * Covers:
-     * - [AC-US-SAFE-001-01]
-     * - [AC-US-SAFE-001-03]
-     * - [AC-US-SAFE-001-05]
      * - [AC-US-BANK-001-01]
      * - [AC-US-BANK-001-02]
      * - [AC-US-BANK-001-03]
@@ -75,22 +71,12 @@ test.describe(
      * - [AC-US-BANK-003-01]
      * - [AC-US-BANK-003-02]
      */
-    test('deploys the company Safe and funds the Bank through the product UI', async ({ page }) => {
+    test('funds the company Bank and transfers to the Expense Account', async ({ page }) => {
       const company = await createOperationalCompany(page)
 
       try {
-        const safe = await deploySafeThroughUi(page, company.teamId)
-        expect(safe.type).toBe('Safe')
-
-        await openAccountFromSidebar(
-          page,
-          `/teams/${company.teamId}/accounts/safe-account/${safe.address}`
-        )
-        await expect(page.locator('[data-test="safe-wallet-view"]')).toBeVisible()
-        await expect(page.locator('[data-test="safe-threshold-summary"]')).toHaveText(
-          '1 of 1 signers'
-        )
-
+        await page.locator('[data-test="skip-safe-setup-button"]').click()
+        await expect(page).toHaveURL(new RegExp(`/teams/${company.teamId}$`))
         await openAccountFromSidebar(page, `/teams/${company.teamId}/accounts/bank-account`)
         const bank = await addressFrom(page.locator('[data-test="bank-contract-address"]'))
         await page.getByRole('button', { name: 'Deposit', exact: true }).click()

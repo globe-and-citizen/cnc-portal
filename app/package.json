@@ -22,6 +22,8 @@
     "test:watch": "vitest -u",
     "test:unit:coverage": "npx vitest run --coverage",
     "setup:e2e:browser": "node --experimental-strip-types test/e2e/prepare-browser-environment.ts",
+    "preflight:e2e:integrated": "node scripts/check-integrated-readiness.mjs",
+    "test:preflight:e2e": "node --test scripts/__tests__/check-integrated-readiness.node.mjs",
     "test:e2e": "npm run test:e2e:integrated",
     "test:e2e:integrated": "playwright test --grep @integrated",
     "pretest:browser:acceptance": "rm -rf blob-report playwright-report coverage/e2e",
