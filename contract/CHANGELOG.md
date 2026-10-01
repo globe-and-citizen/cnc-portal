@@ -69,6 +69,13 @@ Each entry should answer:
 
 ## ExpenseAccountEIP712
 
+### ExpenseAccountEIP712 2.0.2 — unreleased
+
+- What: reject signed transfers while their approval is deactivated, including one-time approvals.
+- Storage: none.
+- Shipped via: pending upgrade in place.
+- Networks: not deployed.
+
 ### ExpenseAccountEIP712 2.0.1 — unreleased
 
 - What: use SafeERC20 for expense payouts, deposits, and treasury token withdrawals.
