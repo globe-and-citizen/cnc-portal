@@ -21,3 +21,14 @@ export function useExpenseAccountOwner() {
     query: { enabled: !!contractAddress.value && isAddress(contractAddress.value) }
   })
 }
+
+export function useExpenseAccountSupportedTokens() {
+  const contractAddress = useExpenseAccountAddress()
+
+  return useReadContract({
+    address: contractAddress,
+    abi: expenseAccountEip712Abi,
+    functionName: 'getSupportedTokens',
+    query: { enabled: computed(() => !!contractAddress.value && isAddress(contractAddress.value)) }
+  })
+}

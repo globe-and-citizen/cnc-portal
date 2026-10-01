@@ -1,8 +1,8 @@
 import type { BudgetLimit, ExpenseResponse, TokenBalance, TokenOption } from '@/types'
-import { tokenSymbol } from '../tokens/metadata'
-import { parseEther, zeroAddress } from 'viem'
-import type { TokenId } from '@/constant'
+import { parseUnits } from 'viem'
 import type { TableRow } from '@/types/table'
+import type { TokenId } from '@/constant'
+import { productExpenseToken } from './tokenPolicy'
 
 /**
  * EIP-712 struct definition of a budget limit. Must stay byte-for-byte in step
@@ -21,19 +21,21 @@ export const budgetLimitTypes = {
   ]
 } as const
 
-/** A budget limit in the units the contract expects: wei for native, 6-decimal for ERC-20. */
-export const buildContractBudgetLimit = (budgetLimit: BudgetLimit) => ({
-  amount:
-    budgetLimit.tokenAddress === zeroAddress
-      ? parseEther(`${budgetLimit.amount}`)
-      : BigInt(Number(budgetLimit.amount) * 1e6),
-  frequencyType: Number(budgetLimit.frequencyType),
-  customFrequency: BigInt(Number(budgetLimit.customFrequency)),
-  startDate: BigInt(Number(budgetLimit.startDate)),
-  endDate: BigInt(Number(budgetLimit.endDate)),
-  tokenAddress: budgetLimit.tokenAddress,
-  approvedAddress: budgetLimit.approvedAddress
-})
+/** A budget limit in the selected product token's actual smallest units. */
+export const buildContractBudgetLimit = (budgetLimit: BudgetLimit) => {
+  const token = productExpenseToken(budgetLimit.tokenAddress)
+  if (!token) throw new Error('Unsupported Expense Account token')
+
+  return {
+    amount: parseUnits(String(budgetLimit.amount), token.decimals),
+    frequencyType: Number(budgetLimit.frequencyType),
+    customFrequency: BigInt(Number(budgetLimit.customFrequency)),
+    startDate: BigInt(Number(budgetLimit.startDate)),
+    endDate: BigInt(Number(budgetLimit.endDate)),
+    tokenAddress: budgetLimit.tokenAddress,
+    approvedAddress: budgetLimit.approvedAddress
+  }
+}
 
 // Frequency types mapping
 export const frequencyTypes = [
@@ -69,25 +71,23 @@ export const getTokens = (
   if (!expense) return []
 
   const tokenAddress = expense.data.tokenAddress
-  const symbol = tokenSymbol(tokenAddress ?? '')
-  const tokenId = tokenAddress === zeroAddress ? 'native' : 'usdc'
-
-  const balance =
-    tokenAddress === zeroAddress
-      ? findToken('native', balances)?.amount
-      : findToken('usdc', balances)?.amount
+  const token = productExpenseToken(tokenAddress ?? '')
+  if (!token) return []
+  const tokenId = token.id
+  const holding = findToken(tokenId, balances)
+  const balance = holding?.amount
 
   const spendableBalance = getRemainingExpenseBalance(expense, balance ?? 0)
 
-  return symbol && !isNaN(Number(balance))
+  return holding && !isNaN(Number(balance))
     ? [
         {
-          symbol,
+          symbol: token.symbol,
           balance: Number(balance),
           spendableBalance: spendableBalance,
-          tokenId: tokenId as TokenId,
-          price: balances.find((b) => b.token.id === tokenId)?.price.usd.value || 0,
-          code: balances.find((b) => b.token.id === tokenId)?.token.code || ''
+          tokenId,
+          price: holding.price.usd.value,
+          code: holding.token.code
         }
       ]
     : []
