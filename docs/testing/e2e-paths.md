@@ -1,6 +1,6 @@
 # E2E Business Paths and Evidence
 
-**Scope:** G0 technical readiness through G8 Board Election verification
+**Scope:** G0 integrated-stack diagnostics and G1 through G8 business-path evidence
 
 **Status model:** `Planned` means no integrated path is currently linked; `Integrated partial` means the main journey exists but one or more
 observable outcomes remain uncovered; `Integrated covered` means the linked main journey exercises the documented outcome through the real
@@ -18,6 +18,7 @@ coverage; the latest execution result and artifacts belong in Playwright and CI 
 ## Path Model
 
 - One path represents one coherent business objective from an actor's point of view.
+- G0 is the technical diagnostic exception to this business-path rule.
 - The main success sequence should run as one browser test when later actions consume state created by earlier actions.
 - Validation, authorization, recovery, and injected-failure branches remain separate tests attached to the same path.
 - A story is validated only when the path performs its observable action and verifies the resulting backend, database, or chain state.
@@ -26,7 +27,7 @@ coverage; the latest execution result and artifacts belong in Playwright and CI 
 
 ## Group Catalogue
 
-- G0 — Integrated technical readiness.
+- G0 — Independent integrated-stack diagnostic.
 - G1 — Company onboarding and treasury readiness.
 - G2 — Company administration and member access.
 - G3 — Shareholder lifecycle and SHER.
@@ -46,7 +47,7 @@ The snapshot is now path-level. Its status is derived from the checklist below, 
 
 | Group | Path          | Evidence inventory | Status     |
 | ----- | ------------- | ------------------ | ---------- |
-| G0    | `E2E-PATH-00` | `9/9`              | ✅ Covered |
+| G0    | `E2E-PATH-00` | `6/6`              | ✅ Covered |
 | G1    | `E2E-PATH-01` | `21/21`            | ✅ Covered |
 | G1    | `E2E-PATH-02` | `7/9`              | 🟡 Partial |
 | G2    | `E2E-PATH-03` | `7/9`              | 🟡 Partial |
@@ -95,7 +96,8 @@ prove several acceptance criteria; the precise `AC-*` mapping remains canonical 
   - integrated infrastructure is deployed by the developer or CI stack, also before Playwright starts;
   - an integrated scenario may call a Node-side team factory before its browser actions to create isolated domain data through the real
     backend API and dedicated local chain;
-  - the E2E test checks readiness and exercises product behaviour, but does not own service startup.
+  - the CI preflight checks the prepared frontend, backend dependencies, local chain, and shared Officer/Bank/token contracts before
+    Playwright; the G0 browser test remains an independently runnable diagnostic, not a Playwright dependency for business paths.
 - Fixture-preparation rule:
   - a team factory prepares only scenario data (team, Officer generation, and its managed contracts), not shared chain infrastructure;
   - factory calls are setup and do not count as product-flow evidence; the scenario still drives the behaviour under test through the UI;
@@ -126,15 +128,15 @@ prove several acceptance criteria; the precise `AC-*` mapping remains canonical 
   - the browser job provisions browser fixtures outside Playwright, runs parallel-safe files on three workers, runs chain-backed files on
     one worker, merges both reports, and owns a 25-minute budget;
   - the integrated job provisions a disposable PostgreSQL database, applies migrations, seeds the deterministic E2E actors, deploys its
-    chain infrastructure, and owns a 60-minute budget;
+    chain infrastructure, verifies technical readiness, and owns a 60-minute budget;
   - a lightweight `Full-stack E2E` aggregator preserves the protected check name and passes only when both profile jobs succeed;
   - integrated paths may use the Node-side team factory for scenario setup, while Playwright performs the product actions being tested; CI
     retains reports plus failure traces and stack logs as evidence.
 
-## G0 — Integrated Technical Readiness
+## G0 — Independent Integrated-Stack Diagnostic
 
 - `E2E-PATH-00` — Validate the externally prepared test stack
-  - Stories validated: none; this path only proves that product paths can start.
+  - Stories validated: none; this test diagnoses the prepared stack independently of business-path execution.
   - Required checks:
     - [x] `TECH-READINESS` Confirm the frontend health check succeeds.
     - [x] `TECH-READINESS` Confirm the backend health check succeeds.
@@ -142,15 +144,12 @@ prove several acceptance criteria; the precise `AC-*` mapping remains canonical 
     - [x] `TECH-READINESS` Confirm the local node uses the expected chain.
     - [x] `TECH-READINESS` Confirm the local node contains the required deployed infrastructure.
     - [x] `TECH-READINESS` Confirm the browser and backend target the same local chain.
-    - [x] `US-AUTH-001` Authenticate the owner through SIWE.
-    - [x] `US-AUTH-001` Verify the real stack returns the Companies page after authentication.
-    - [x] `US-AUTH-001` Authenticate a second E2E actor through SIWE as part of the readiness path.
-  - Expected result: every required boundary is ready before a functional path begins.
-  - Status: Integrated covered — the linked readiness test verifies the frontend, backend, database, local chain, deployed infrastructure,
-    cross-layer chain identity, and two real SIWE actors before functional paths run.
-  - Owning stories: `US-AUTH-001`; `US-AUTH-002` and `US-AUTH-003` remain outside this client path.
-  - Evidence: [integrated technical readiness test](../../app/test/e2e/readiness.integrated.spec.ts) and
-    [integrated authentication test](../../app/test/e2e/authentication.integrated.spec.ts).
+  - Expected result: the independent diagnostic identifies an unavailable or mismatched integrated boundary.
+  - Status: Integrated covered — the linked test verifies the frontend, backend, database, local chain, deployed infrastructure, and
+    cross-layer chain identity. The CI [technical preflight](../../app/scripts/check-integrated-readiness.mjs) checks shared infrastructure
+    before Playwright, without depending on the result or order of this browser test.
+  - Authentication evidence remains in the [integrated authentication test](../../app/test/e2e/authentication.integrated.spec.ts).
+  - Evidence: [integrated technical readiness test](../../app/test/e2e/readiness.integrated.spec.ts).
 
 ## G1 — Company Onboarding and Treasury Readiness
 
@@ -649,8 +648,8 @@ prove several acceptance criteria; the precise `AC-*` mapping remains canonical 
 
 ## Cross-Group Execution Rules
 
-- Run `E2E-PATH-00` before functional paths; keep service and shared-infrastructure preparation outside Playwright, while scenario-specific
-  teams may be prepared by the authenticated Node-side factory.
+- Verify shared technical prerequisites with the CI preflight before Playwright. `E2E-PATH-00` runs as an independent diagnostic and is not
+  a prerequisite of functional paths; scenario-specific teams may be prepared by the authenticated Node-side factory.
 - Give every story one primary owning path; reused stories and fixtures are dependencies, not duplicate coverage claims.
 - Use isolated or uniquely identified data for every path.
 - A failed dependency marks the consuming path blocked, not failed on its own story assertion.

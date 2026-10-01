@@ -99,6 +99,7 @@ replaced; it does not imply that all boundaries are simulated, so it is not a wo
 | `payroll/payroll-insufficient-funds.integrated.spec.ts`         | Integrated     | Uses an operational team, two wallet pages, and a disposable submit-restriction override                                |
 | `payroll/payroll-payment.integrated.spec.ts`                    | Integrated     | Uses an operational team, two wallet pages, and a disposable submit-restriction override                                |
 | `payroll/payroll.integrated.spec.ts`                            | Integrated     | Uses operational teams and authenticated wallet pages; keeps the default submission restriction                         |
+| `readiness.integrated.spec.ts`                                  | Integrated     | Diagnoses the prepared stack independently of the CI technical preflight and business paths                             |
 | `safe/safe-account.spec.ts`                                     | Browser chain  | Retains its Safe graph, transaction-service recorder, and serial chain isolation                                        |
 | `shareholder/shareholder-investment.integrated.spec.ts`         | Integrated     | Retains UI company and Safe setup because the Safe wizard is required by this path                                      |
 | `shareholder/shareholder-issuance-dividends.integrated.spec.ts` | Integrated     | Uses an operational team and isolated member page; issuance, funding, Board approval, and distribution remain UI-driven |
