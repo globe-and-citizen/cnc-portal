@@ -4,7 +4,7 @@
 journal, including the persisted counter-account assignments it consumes. Accounting report projections consume that journal on demand. This
 model does not create or persist manual journal entries.
 
-**Last verified:** 2026-09-12
+**Last verified:** 2026-10-01
 
 ## Consumers
 
@@ -32,7 +32,7 @@ flowchart LR
     feeds --> input
     assignments --> input
     input --> mapped[Pure JournalEntryDraft mapping]
-    mapped --> rateTargets[Native token and UTC date targets]
+    mapped --> rateTargets[Asset and UTC date targets]
     rateTargets --> rateCache[Immutable historical rate cache]
     rateCache --> valued[Rate-stamped drafts]
     mapped --> valued
@@ -54,33 +54,33 @@ grouped status, and a refresh operation. `useAccountingStatus` projects each app
 `failed`; a source that does not apply is `not-applicable`. A fatal company failure takes precedence, then loading, then partial evidence.
 Contract event feeds retain their domain events and completeness gaps together as `{ events, gaps, timestampGaps }` in the standard TanStack
 query `data`. Only `ready` mounts the nested reports, so a balanced subset cannot be mistaken for final books. Typed diagnostics identify
-source errors, contract-scan gaps, unavailable block timestamps, orphan fees, receipt failures, and unavailable rates. The parent Accounting
-route remains mounted while its report child changes, so the shared context prevents those reports from independently fetching and
-assembling the same books. The team workspace gives that route owner a stable key within one team and a new key when the team identifier
-changes. Its three pure runtime stages are `buildCncJournalEntryDrafts(CncAccountingInput)`, `applyHistoricalRates(drafts, rateOfRecord)`,
-and `assembleWithAccountEvidence(drafts, deploymentAccounts, evidence, accountAssignments)`, which returns the journal and reconciliation
-diagnostics without Vue or network I/O.
+source errors, contract-scan gaps, unavailable block timestamps, orphan fees, receipt failures, unavailable rates, and asset classification
+or basis gaps. The parent Accounting route remains mounted while its report child changes, so the shared context prevents those reports from
+independently fetching and assembling the same books. The team workspace gives that route owner a stable key within one team and a new key
+when the team identifier changes. Its three pure runtime stages are `buildCncJournalEntryDrafts(CncAccountingInput)`,
+`applyHistoricalRates(drafts, rateOfRecord)`, and `assembleWithAccountEvidence(drafts, deploymentAccounts, evidence, accountAssignments)`,
+which returns the journal and reconciliation diagnostics without Vue or network I/O.
 
 Community Credit offer IDs and lifecycle balances are scoped by FixedReturn contract address because IDs restart after redeployment. The
 creation event supplies each generation's token and fixed-return basis points; Accounting does not borrow current-contract terms for old
 rounds. SHER multiplier-change events from every known SafeDepositRouter generation feed the date-ordered valuation timeline.
 
-The incoming-transfer and executed-transaction Safe queries remain disabled until the reactive company Safe address resolves. Once enabled,
-the address is checksum-normalized before it enters the query key or Transaction Service request. Each query then follows the service's
-`next` links to exhaustion before publishing its array to Accounting. The configured `limit` controls the request page size rather than the
-total history returned. A later-page failure rejects the whole query instead of publishing a silently partial Safe history.
+The actual-transfer Safe query remains disabled until the reactive company Safe address resolves. Once enabled, the address is
+checksum-normalized before it enters the query key or Transaction Service request. The query follows the service's `next` links to
+exhaustion before publishing its array to Accounting. The configured `limit` controls the request page size rather than the total history
+returned. A later-page failure rejects the whole query instead of publishing a silently partial Safe history.
 
 Contract logs do not carry timestamps. `eventsViaLogs` resolves every distinct mined block through the shared TanStack Query client, keyed
 by network and block number with infinite staleness and garbage-collection time because a mined block is immutable. Concurrent event feeds
 and later refetches therefore share one block read. A failed block read or a decoded log without a block number does not receive a synthetic
 timestamp: the event is withheld and emitted as a typed source diagnostic, which keeps the Accounting route out of `ready`.
 
-The provisional draft feed derives one unique native-token target per UTC transaction date. `historicalTokenRate.queries.ts` resolves each
-target through the shared TanStack Query client using an atomic `coinId + date + USD` identity. A successful snapshot has infinite staleness
-and garbage-collection time because it is the immutable rate of record; concurrent operations and later refreshes reuse it. The aggregate
-target-set query remains retryable, so a failed or not-yet-published date can resolve on Accounting refresh without refetching successful
-dates. It never falls back to the current market price. Stablecoins retain their one-dollar peg, and SHER remains under its separate
-multiplier realization policy.
+The provisional draft feed derives one unique non-pegged asset target per required UTC transaction date. `historicalTokenRate.queries.ts`
+resolves each target through the shared TanStack Query client using an atomic `coinId + date + USD` identity. A successful snapshot has
+infinite staleness and garbage-collection time because it is the immutable rate of record; concurrent operations and later refreshes reuse
+it. The aggregate target-set query remains retryable, so a failed or not-yet-published date can resolve on Accounting refresh without
+refetching successful dates. It never falls back to the current market price. Stablecoins retain their one-dollar peg, and SHER remains
+under its separate multiplier realization policy.
 
 Each contract-event query is also keyed by its normalized generation targets: lowercase address plus effective deployment `fromBlock`,
 sorted independently of API order. A later or asynchronously resolved boundary therefore selects a distinct history range. Duplicate
@@ -89,6 +89,37 @@ addresses retain the earliest boundary so no known portion of that deployment's 
 Investor history still scans both `InvestorV1` and current `Investor` deployments. Live SHER identity is separate from that historical
 collection: the current `Investor` address always takes precedence when both types exist in the current contract set, regardless of API
 ordering, and `InvestorV1` is used only when no current `Investor` exists.
+
+### Safe assets and exchanges
+
+The authoritative Safe source is `/transfers/`, paginated to exhaustion, deduplicated by service `transferId`, and refreshed every minute.
+It includes real ERC-20 `transferFrom` settlements that cannot be inferred from the Safe multisig call's top-level calldata. Missing token
+metadata is read from its contract when possible. Metadata must match the transfer's contract address; unsupported or absent decimals retain
+raw movements with a completeness diagnostic. The exact monetary layer currently supports token precision from zero through 18 decimals. A
+larger precision remains unavailable rather than being silently rounded or interpreted as native.
+
+Dynamic assets carry an `erc20:<chainId>:<contractAddress>` identity and per-movement metadata. The fixed CNC payment allowlist is
+unchanged. Contract-address market discovery resolves the provider coin identity before historical snapshots are requested. Missing market
+coverage or rate limits remain retryable gaps; current prices are used only in the Safe portfolio.
+
+`SAFE-SWAP` matches opposing different-asset movements with the same transaction and external counterparty. Complex or unmatched multi-asset
+operations are flagged for classification instead of treating their receipts as service revenue. Token mints in the same transaction are
+retained separately in `Unclassified Receipts`; their economic nature is not inferred from mint evidence alone.
+
+Journal finalization replays the full Safe history using weighted-average carrying basis. Known stablecoin consideration establishes an
+acquired asset's exact carrying amount and transaction-date unit rate. Outgoing exchange lines remove the evidenced carrying amount; their
+displayed unit rate is carrying cost per unit, and exact carrying amounts avoid six-decimal rate-rounding residues. Incoming market
+valuations and realized differences balance the operation through `Asset Exchange Gain` or `Asset Exchange Loss`. Missing acquisition
+history or valuation produces zero-valued movement evidence and a partial status, never an invented basis. A prior non-exchange payment
+depleted at a different transaction-price valuation invalidates later automatic swap basis; other payment rules remain unchanged.
+Network/DEX fees are not inferred from an unexplained difference; standalone fee evidence remains necessary. Cross-transaction swap intents
+and arbitrary DeFi operations require additional protocol evidence and remain a boundary of automatic classification.
+
+Implementation: [asset identity](../../../app/src/utils/tokens/assets.ts),
+[exchange carrying-value replay](../../../app/src/utils/accounting/safeExchanges.ts),
+[contract market discovery](../../../app/src/queries/assetMarket.queries.ts),
+[Safe portfolio](../../../app/src/composables/safe/useSafePortfolio.ts), and
+[exchange regression tests](../../../app/src/utils/accounting/__tests__/safeExchanges.spec.ts).
 
 ### Runtime Export Boundary
 
@@ -278,7 +309,7 @@ assembled, records a typed gap, and keeps the report gate out of `ready`.
 flowchart LR
     input[CncAccountingInput] --> context[JournalEntrySources and MapperContext]
     context --> mapped[Mapped JournalEntryDraft evidence]
-    mapped --> rateTargets[Native token and UTC date targets]
+    mapped --> rateTargets[Asset and UTC date targets]
     rateTargets --> rateCache[Immutable historical rate cache]
     rateCache --> drafts[Rate-resolved JournalEntryDraft evidence]
     mapped --> drafts
@@ -605,7 +636,7 @@ because deposits and company-pocket transfers are not manual assignment targets.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `79315400c2ea74759a5505d6c66382ad3279b045`
+**Implementation evidence reviewed against:** `b8013282ba1fc834aa7ff584cae2963c6efb9263`
 
 - [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts),
   [source-status projection](../../../app/src/composables/accounting/useAccountingStatus.ts),

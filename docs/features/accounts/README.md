@@ -89,7 +89,7 @@ mocked browser path for the external Safe Transaction Service boundary.
 | US-EXP-004  | ✅ Integrated | ✅ 12/12        | —                                                                                                           |
 | US-SAFE-001 | 🚧 Partial    | ⚠️ 9/11         | 2 — `AC-US-SAFE-001-02`, `AC-US-SAFE-001-06`                                                                |
 | US-SAFE-002 | 🧪 Mocked     | ⚠️ 6/8          | 2 — `AC-US-SAFE-002-01`, `AC-US-SAFE-002-02`                                                                |
-| US-SAFE-003 | 📋 Planned    | ⚠️ 4/9          | 5 — `AC-US-SAFE-003-01`, `AC-US-SAFE-003-02`, `AC-US-SAFE-003-03`, `AC-US-SAFE-003-06`, `AC-US-SAFE-003-07` |
+| US-SAFE-003 | 📋 Planned    | ⚠️ 6/11         | 5 — `AC-US-SAFE-003-01`, `AC-US-SAFE-003-02`, `AC-US-SAFE-003-03`, `AC-US-SAFE-003-06`, `AC-US-SAFE-003-07` |
 | US-SAFE-004 | 📋 Planned    | ⚠️ 4/9          | 5 — `AC-US-SAFE-004-01`, `AC-US-SAFE-004-02`, `AC-US-SAFE-004-03`, `AC-US-SAFE-004-04`, `AC-US-SAFE-004-07` |
 | US-SAFE-005 | 🧪 Mocked     | ✅ 9/9          | —                                                                                                           |
 | US-SAFE-006 | 🧪 Mocked     | ✅ 10/10        | —                                                                                                           |
@@ -618,12 +618,15 @@ a transfer to another known company pocket is
 - [x] `AC-US-SAFE-003-04` Only a current Safe owner can propose an outgoing Safe transfer.
 - [x] `AC-US-SAFE-003-05` Company membership alone does not grant Safe signer permission.
 - [x] `AC-US-SAFE-003-06` An outgoing transfer follows the Safe's current approval threshold.
+- [x] `AC-US-SAFE-003-10` Assets acquired outside CNC retain their contract identity, currency and exact quantity in Safe holdings without
+      expanding CNC payment permissions.
 
 #### Edge & Error Cases
 
 - [x] `AC-US-SAFE-003-07` A proposal below the approval threshold remains pending without moving funds.
 - [x] `AC-US-SAFE-003-08` A rejected or failed proposal leaves Safe balances unchanged.
 - [x] `AC-US-SAFE-003-09` An archived company cannot initiate a Safe deposit or transfer.
+- [x] `AC-US-SAFE-003-11` An unavailable discovered balance or valuation keeps the wallet total explicitly incomplete.
 
 ### Test Coverage
 
@@ -638,11 +641,15 @@ a transfer to another known company pocket is
 | `AC-US-SAFE-003-07`  | `PS-CHAIN`            | Mocked browser            | ⚠️ Insufficient |
 | `AC-US-SAFE-003-08`  | `PS-BROWSER`          | Mocked browser            | ✅ Met          |
 | `AC-US-SAFE-003-09`  | `PS-BROWSER`          | Mocked browser            | ✅ Met          |
+| `AC-US-SAFE-003-10`  | `PS-FRONTEND`         | Frontend                  | ✅ Met          |
+| `AC-US-SAFE-003-11`  | `PS-FRONTEND`         | Frontend                  | ✅ Met          |
 
 **Accounting:** A confirmed transfer is classified as
 [`UC-BANK-02`](../accounting/journal-entry-catalogue.md#uc-bank-02--external-cash-receipt),
 [`CASH-OUT`](../accounting/journal-entry-catalogue.md#cash-out--external-bank-or-safe-payment), or
-[`INTERNAL`](../accounting/journal-entry-catalogue.md#internal--other-company-pocket-transfer) from its counterparty evidence.
+[`INTERNAL`](../accounting/journal-entry-catalogue.md#internal--other-company-pocket-transfer) from its counterparty evidence. Evidenced
+external exchanges use [`SAFE-SWAP`](../accounting/journal-entry-catalogue.md#safe-swap--evidenced-safe-asset-exchange); ambiguous movements
+remain incomplete until classified. See the [Safe exchange review script](../accounting/safe-swap-test-script.md).
 
 **Dependencies:** US-SAFE-001 and US-SAFE-006
 
@@ -787,7 +794,7 @@ a transfer to another known company pocket is
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `f9473a935eb099c84119860d9129989abde1638f`
+**Implementation evidence reviewed against:** `b8013282ba1fc834aa7ff584cae2963c6efb9263`
 
 - [Bank deposit modal](../../../app/src/components/sections/BankView/forms/DepositModal.vue),
   [Bank transfer modal](../../../app/src/components/sections/BankView/forms/TransferModal.vue),
@@ -861,6 +868,24 @@ a transfer to another known company pocket is
 - [Expense calendar-period tests](../../../contract/test/ExpenseAccountEIP712V2.calendarBasedPeriods.spec.ts),
   [Expense custom-frequency tests](../../../contract/test/ExpenseAccountEIP712V2.customFrequency.spec.ts), and
   [Expense period-boundary tests](../../../contract/test/ExpenseAccountEIP712V2.isNewPeriod.spec.ts)
+
+## Discovered Safe assets
+
+The Safe account additionally displays ERC-20 assets discovered from its transfer history, including assets acquired outside CNC. Their
+contract address, currency, quantity, and available current USD valuation are shown independently of the tokens allowed in CNC payment
+forms. An unavailable balance or price remains explicit and makes the wallet total incomplete. Token discovery does not enable an asset for
+payroll, deposits, or transfers proposed by CNC. Historical tokens remain discoverable after their current balance becomes zero.
+
+The portfolio refreshes periodically and on explicit refresh. Provider failures remain retryable. Unknown or untrusted assets do not receive
+an invented price. See the [Accounting read model](../../implementation/accounting-read-model/README.md) for swap treatment.
+
+Executable evidence: [discovered holdings tests](../../../app/src/components/sections/SafeView/__tests__/SafeAssetHoldings.spec.ts),
+[overview tests](../../../app/src/components/sections/SafeView/__tests__/SafeBalanceSection.rendering.spec.ts), and
+[portfolio query tests](../../../app/src/composables/safe/__tests__/useSafePortfolio.spec.ts).
+
+Implementation: [Safe portfolio](../../../app/src/composables/safe/useSafePortfolio.ts),
+[discovered asset holdings](../../../app/src/components/sections/SafeView/SafeAssetHoldings.vue), and
+[contract asset identities](../../../app/src/utils/tokens/assets.ts). Human validation of external swaps remains pending.
 
 ## Related Documentation
 
