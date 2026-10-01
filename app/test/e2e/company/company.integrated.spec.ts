@@ -1,3 +1,4 @@
+import { createRequire } from 'node:module'
 import type { Address } from 'viem'
 import { expect, test } from '../fixtures/integrated'
 import {
@@ -249,14 +250,20 @@ test.describe('[US-COMPANIES-008] Integrated company deletion', { tag: '@integra
   test('keeps a cancelled deletion and removes the company and populated related records after confirmation', async ({
     page
   }) => {
-    if (!process.env.DATABASE_URL) {
+    const databaseUrl = process.env.DATABASE_URL
+    if (!databaseUrl) {
       throw new Error('Set DATABASE_URL to the disposable integrated E2E database')
     }
-    const { prisma, disconnectPrisma } =
-      await import('../../../../backend/src/utils/dependenciesUtil')
+    const backendRequire = createRequire(
+      new URL('../../../../backend/package.json', import.meta.url)
+    )
+    const { PrismaClient } = backendRequire(
+      '@prisma/client'
+    ) as typeof import('../../../../backend/node_modules/@prisma/client')
+    const prisma = new PrismaClient({ datasources: { db: { url: databaseUrl } } })
     const company = await createRealCompany(page)
     const teamId = String(company.id)
-    const id = company.id
+    const id = Number(company.id)
 
     try {
       const { officer } = await deployOfficerThroughUi(page)
@@ -323,7 +330,7 @@ test.describe('[US-COMPANIES-008] Integrated company deletion', { tag: '@integra
       try {
         await deleteIntegratedTeam(teamId)
       } finally {
-        await disconnectPrisma()
+        await prisma.$disconnect()
       }
     }
   })
