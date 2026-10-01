@@ -83,9 +83,10 @@ replaced; it does not imply that all boundaries are simulated, so it is not a wo
 
 | Spec                                                            | Profile        | Setup decision                                                                                                          |
 | --------------------------------------------------------------- | -------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| `accounts.integrated.spec.ts`                                   | Integrated     | Skips optional Safe setup for the Bank path; Bank deposits, transfers, and Expense Account actions stay UI-driven       |
+| `accounts.integrated.spec.ts`                                   | Integrated     | Keeps Expense Account allowance and spending actions UI-driven                                                          |
 | `authentication.integrated.spec.ts`                             | Integrated     | Performs SIWE through the UI and compares the browser wallet's chain with the backend chain                             |
 | `bank/bank-account.spec.ts`                                     | Browser chain  | Retains its Bank contract graph and serial chain isolation                                                              |
+| `bank/bank-funding.integrated.spec.ts`                          | Integrated     | Skips optional Safe setup; Bank deposits, receipts, reload, history, and transfer stay independently UI-driven          |
 | `community-credit/community-credit-round.spec.ts`               | Browser chain  | Retains its Fixed Return graph and serial chain isolation                                                               |
 | `company/company-archive.spec.ts`                               | Browser mocked | Retains focused stateful API responses; parallel-safe                                                                   |
 | `company/company-delete.spec.ts`                                | Browser mocked | Retains focused deletion responses; parallel-safe                                                                       |

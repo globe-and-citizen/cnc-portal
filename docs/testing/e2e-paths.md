@@ -69,7 +69,7 @@ execution:
 | Group | Path          | Evidence inventory | Status     |
 | ----- | ------------- | ------------------ | ---------- |
 | G1    | `E2E-PATH-01` | `21/21`            | ✅ Covered |
-| G1    | `E2E-PATH-02` | `5/9`              | 🟡 Partial |
+| G1    | `E2E-PATH-02` | `9/9`              | ✅ Covered |
 | G2    | `E2E-PATH-03` | `7/9`              | 🟡 Partial |
 | G2    | `E2E-PATH-04` | `5/10`             | 🟡 Partial |
 | G2    | `E2E-PATH-05` | `4/6`              | 🟡 Partial |
@@ -222,31 +222,30 @@ belongs to its own scenarios. Neither check turns G0 into product-flow evidence.
 - `E2E-PATH-02` — Fund the company Bank
   - Stories validated:
     - `US-BANK-001` — fund the company Bank.
-    - `US-BANK-003` — review the Bank position and history; post-reload assertions remain open in this path.
+    - `US-BANK-003` — review the Bank position and history after reloading the page.
   - Actors: company owner.
   - Dependencies: an operational company prepared within this test, equivalent to the outcome of `E2E-PATH-01`, and funded local wallets.
     Creating that company is setup here, not another claim of onboarding coverage.
   - Main path:
     - [x] `US-BANK-001` Open the current Bank from the same company.
     - [x] `US-BANK-001` Deposit the native token through the UI.
-    - [ ] `US-BANK-001` Verify the successful native-token deposit receipt on-chain.
+    - [x] `US-BANK-001` Verify the successful native-token deposit receipt on-chain.
     - [x] `US-BANK-001` Verify the native-token balance change.
     - [x] `US-BANK-001` Deposit a supported ERC-20 token through the UI.
-    - [ ] `US-BANK-001` Verify the successful ERC-20 deposit receipt on-chain.
+    - [x] `US-BANK-001` Verify the successful ERC-20 deposit receipt on-chain.
     - [x] `US-BANK-001` Verify the ERC-20 balance change.
-    - [ ] `US-BANK-003` Reload and verify that the Bank balances remain available.
-    - [ ] `US-BANK-003` Reload and verify that the Bank history remains available.
+    - [x] `US-BANK-003` Reload and verify that the Bank balances remain available.
+    - [x] `US-BANK-003` Reload and verify that the Bank history remains available.
   - Deferred scope: the complete Safe US/AC journey is outside this path. Separate Safe tests continue to prove the scenarios that are
     currently executable, while incomplete Safe coverage must not gate this Bank path or count in its coverage ratio. The Bank test skips
     optional Safe setup; a separate [Safe setup test](../../app/test/e2e/safe/safe-setup.integrated.spec.ts) keeps the supported deployment
     assertions.
   - Separate variants: rejected wallet requests and failed deposits remain browser acceptance coverage.
   - Expected result: the company has a funded Bank backed by durable chain evidence; Safe readiness is handled separately.
-  - Status: Integrated partial — Bank deposits, on-chain balances, and in-flow history run through the integrated stack. The test observes
-    success toasts and balance changes, but does not assert either mined deposit receipt; post-reload balances and history also remain to be
-    proven. Safe coverage is tracked independently and does not gate this path.
-  - Evidence: [integrated Bank test](../../app/test/e2e/accounts.integrated.spec.ts); the Safe setup test is independent and excluded from
-    this path's coverage ratio.
+  - Status: Integrated covered — the Bank path links each UI deposit to its successful on-chain receipt and event, then reloads to verify
+    both asset balances and the same deposit transactions in history. Safe coverage is tracked independently and does not gate this path.
+  - Evidence: [integrated Bank test](../../app/test/e2e/bank/bank-funding.integrated.spec.ts); the Safe setup test is independent and
+    excluded from this path's coverage ratio.
 
 ## G2 — Company Administration and Member Access
 
