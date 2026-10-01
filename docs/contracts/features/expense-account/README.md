@@ -1,7 +1,7 @@
 # Contract: ExpenseAccountEIP712
 
 **Epic Goal:** Allow employees to submit expenses against owner-signed budgets without requiring the owner to be online at submission time.
-**Contract File:** `contracts/expense-account/ExpenseAccountEIP712.sol` **Upgradeable:** Yes (Beacon) **Last updated:** 2026-09-23
+**Contract File:** `contracts/expense-account/ExpenseAccountEIP712.sol` **Upgradeable:** Yes (Beacon) **Last updated:** 2026-10-01
 
 ---
 
@@ -12,11 +12,11 @@
 | US-EXP-001 | Submit an expense with an owner-signed budget (EIP-712)                         |    🚧    |    🚫    | L      |
 | US-EXP-002 | Enforce budget constraints (amount per transaction, amount per period)          |    ✅    |    🚫    | M      |
 | US-EXP-003 | Reset budget usage after period expires                                         |    ✅    |    🚫    | M      |
-| US-EXP-004 | Deactivate / reactivate a budget approval                                       |    🚧    |    🚫    | S      |
+| US-EXP-004 | Deactivate / reactivate a budget approval                                       |    ✅    |    🚫    | S      |
 | US-EXP-005 | Deposit ETH/ERC20 into the expense account                                      |    🚧    |    🚫    | S      |
 | US-EXP-006 | Support multiple budget period types (one-time, daily, weekly, monthly, custom) |    ✅    |    🚫    | M      |
 
-**Contract: 3 complete, 3 in progress — Frontend: 0 / 6**
+**Contract: 4 complete, 2 in progress — Frontend: 0 / 6**
 
 ---
 
@@ -47,7 +47,7 @@
 - [x] Budget limits from the signed struct are enforced (see US-EXP-002)
 - [x] ETH or ERC20 transferred to `recipient` on success
 - [x] Reverts if the signature is invalid or the budget is exhausted
-- [ ] Reverts if the approval is deactivated
+- [x] Reverts if the approval is deactivated
 - [ ] Reverts if the contract is paused
 
 ---
@@ -90,14 +90,14 @@
 > **As a** team owner, **I want to** revoke or re-enable a specific budget signature, **so that** I can stop payments against a compromised
 > or obsolete approval.
 
-**Status:** 🚧 | **Priority:** P2 | **Effort:** S | **Dependencies:** US-EXP-001
+**Status:** ✅ | **Priority:** P2 | **Effort:** S | **Dependencies:** US-EXP-001
 
 ### Acceptance Criteria
 
 - [x] Owner can mark a specific signature hash as inactive
-- [ ] `transfer` reverts if the budget is marked inactive
+- [x] `transfer` reverts if the budget is marked inactive
 - [x] Owner can reactivate a previously deactivated budget
-- [ ] Deactivation prevents subsequent transfers authorized by that signature hash
+- [x] Deactivation prevents subsequent transfers authorized by that signature hash
 
 ---
 
@@ -136,13 +136,15 @@
 ## Known Gaps
 
 - `transfer` is not guarded by `whenNotPaused`, so pausing the contract does not currently block an approved spend.
-- `deactivateApproval` records the inactive state, but transfer validation does not currently consult that state.
 - One-time approvals return from validation before the supported-token check, so an unsupported ERC-20 held by the contract can be spent.
 
 ## Implementation Evidence
 
+**Implementation evidence reviewed against:** `d2caa0c9822c5b325aa690b2f4c9d597291cddc0`
+
 - [Expense Account contract](../../../../contract/contracts/expense-account/ExpenseAccountEIP712.sol)
 - [Core contract tests](../../../../contract/test/ExpenseAccountEIP712.spec.ts),
+  [approval lifecycle tests](../../../../contract/test/ExpenseAccountEIP712V2.spec.ts),
   [calendar-period tests](../../../../contract/test/ExpenseAccountEIP712V2.calendarBasedPeriods.spec.ts),
   [custom-frequency tests](../../../../contract/test/ExpenseAccountEIP712V2.customFrequency.spec.ts), and
   [period-boundary tests](../../../../contract/test/ExpenseAccountEIP712V2.isNewPeriod.spec.ts)

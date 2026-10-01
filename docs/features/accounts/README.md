@@ -59,7 +59,7 @@ flowchart LR
 | US-BANK-004 | Cash out available treasury funds          | Bank owner                 | 🧪 Validation  |
 | US-EXP-001  | Grant a signed spending approval           | Expense Account owner      | 🧪 Validation  |
 | US-EXP-002  | Spend from the Expense Account             | Approved recipient         | 🚧 In Progress |
-| US-EXP-003  | Deactivate or reactivate an approval       | Expense Account owner      | 🚧 In Progress |
+| US-EXP-003  | Deactivate or reactivate an approval       | Expense Account owner      | 🧪 Validation  |
 | US-EXP-004  | Review the Expense Account and its history | Company member / recipient | 🧪 Validation  |
 | US-SAFE-001 | Set up a Safe                              | Company owner              | 🧪 Validation  |
 | US-SAFE-002 | Inspect Safe details                       | Company member             | 🧪 Validation  |
@@ -85,7 +85,7 @@ mocked browser path for the external Safe Transaction Service boundary.
 | US-BANK-004 | 🚧 Partial    | ⚠️ 7/8          | 1 — `AC-US-BANK-004-02`                                                                                     |
 | US-EXP-001  | ✅ Integrated | ✅ 13/13        | —                                                                                                           |
 | US-EXP-002  | 🚧 Partial    | ⚠️ 10/12        | 2 — `AC-US-EXP-002-07`, `AC-US-EXP-002-09`                                                                  |
-| US-EXP-003  | ✅ Integrated | ⚠️ 8/9          | 1 — `AC-US-EXP-003-05`                                                                                      |
+| US-EXP-003  | ✅ Integrated | ✅ 9/9          | —                                                                                                           |
 | US-EXP-004  | ✅ Integrated | ✅ 12/12        | —                                                                                                           |
 | US-SAFE-001 | 🚧 Partial    | ⚠️ 9/11         | 2 — `AC-US-SAFE-001-02`, `AC-US-SAFE-001-06`                                                                |
 | US-SAFE-002 | 🧪 Mocked     | ⚠️ 6/8          | 2 — `AC-US-SAFE-002-01`, `AC-US-SAFE-002-02`                                                                |
@@ -436,7 +436,7 @@ a transfer to another known company pocket is
 #### Business Rules
 
 - [x] `AC-US-EXP-003-04` Only the current Expense Account owner can change an approval's active state.
-- [ ] `AC-US-EXP-003-05` A deactivated approval cannot authorize a spend. _(contract)_
+- [x] `AC-US-EXP-003-05` A deactivated approval cannot authorize a spend. _(contract)_
 - [x] `AC-US-EXP-003-06` Reactivation preserves the approval's original signed limits and expiry.
 
 #### Edge & Error Cases
@@ -447,17 +447,17 @@ a transfer to another known company pocket is
 
 ### Test Coverage
 
-| Acceptance Criterion | Proof Strategy        | Current Evidence                     | Status     |
-| -------------------- | --------------------- | ------------------------------------ | ---------- |
-| `AC-US-EXP-003-01`   | `PS-CHAIN-CONTRACT`   | Integrated E2E + Frontend + Contract | ✅ Met     |
-| `AC-US-EXP-003-02`   | `PS-CHAIN-CONTRACT`   | Integrated E2E + Frontend + Contract | ✅ Met     |
-| `AC-US-EXP-003-03`   | `PS-API-BACKEND`      | Integrated E2E + Frontend + Backend  | ✅ Met     |
-| `AC-US-EXP-003-04`   | `PS-BACKEND-CONTRACT` | Backend + Contract                   | ✅ Met     |
-| `AC-US-EXP-003-05`   | `PS-CONTRACT`         | None linked                          | ❌ Missing |
-| `AC-US-EXP-003-06`   | `PS-CONTRACT`         | Contract                             | ✅ Met     |
-| `AC-US-EXP-003-07`   | `PS-BROWSER`          | Mocked browser                       | ✅ Met     |
-| `AC-US-EXP-003-08`   | `PS-BROWSER`          | Mocked browser                       | ✅ Met     |
-| `AC-US-EXP-003-09`   | `PS-FRONTEND`         | Frontend                             | ✅ Met     |
+| Acceptance Criterion | Proof Strategy        | Current Evidence                     | Status |
+| -------------------- | --------------------- | ------------------------------------ | ------ |
+| `AC-US-EXP-003-01`   | `PS-CHAIN-CONTRACT`   | Integrated E2E + Frontend + Contract | ✅ Met |
+| `AC-US-EXP-003-02`   | `PS-CHAIN-CONTRACT`   | Integrated E2E + Frontend + Contract | ✅ Met |
+| `AC-US-EXP-003-03`   | `PS-API-BACKEND`      | Integrated E2E + Frontend + Backend  | ✅ Met |
+| `AC-US-EXP-003-04`   | `PS-BACKEND-CONTRACT` | Backend + Contract                   | ✅ Met |
+| `AC-US-EXP-003-05`   | `PS-CONTRACT`         | Integrated E2E + Contract            | ✅ Met |
+| `AC-US-EXP-003-06`   | `PS-CONTRACT`         | Contract                             | ✅ Met |
+| `AC-US-EXP-003-07`   | `PS-BROWSER`          | Mocked browser                       | ✅ Met |
+| `AC-US-EXP-003-08`   | `PS-BROWSER`          | Mocked browser                       | ✅ Met |
+| `AC-US-EXP-003-09`   | `PS-FRONTEND`         | Frontend                             | ✅ Met |
 
 **Accounting:** Changing an approval's active state moves no money and creates no journal entry.
 
@@ -780,14 +780,13 @@ a transfer to another known company pocket is
 - Bank history does not distinguish a failed event read from a successfully loaded empty history (`US-BANK-003`).
 - A one-time Expense approval can spend an unsupported ERC-20 token held by the contract (`US-EXP-002`).
 - Pausing the Expense Account does not prevent spending (`US-EXP-002`).
-- Deactivating an Expense approval changes its recorded state but does not prevent that signature from authorizing a spend (`US-EXP-003`).
 - The shared owner-treasury withdrawal action supports both a direct owner write and a Board proposal, but its owning Accounts story and
   authorization boundary have not yet been agreed. Its test suite remains in the documentation review queue rather than being assigned a
   misleading US or AC.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `f9473a935eb099c84119860d9129989abde1638f`
+**Implementation evidence reviewed against:** `d2caa0c9822c5b325aa690b2f4c9d597291cddc0`
 
 - [Bank deposit modal](../../../app/src/components/sections/BankView/forms/DepositModal.vue),
   [Bank transfer modal](../../../app/src/components/sections/BankView/forms/TransferModal.vue),
@@ -844,7 +843,8 @@ a transfer to another known company pocket is
   [Expense Account contract](../../../contract/contracts/expense-account/ExpenseAccountEIP712.sol)
 - [Expense component tests](../../../app/src/components/sections/ExpenseAccountView/__tests__),
   [Expense API tests](../../../backend/src/controllers/__tests__/expenseController.test.ts), and
-  [Expense contract tests](../../../contract/test/ExpenseAccountEIP712.spec.ts)
+  [Expense contract tests](../../../contract/test/ExpenseAccountEIP712.spec.ts) and
+  [Expense lifecycle tests](../../../contract/test/ExpenseAccountEIP712V2.spec.ts)
 - [Payroll account page](../../../app/src/views/team/%5Bid%5D/Accounts/PayrollView.vue)
 
 ### Test-suite ownership
