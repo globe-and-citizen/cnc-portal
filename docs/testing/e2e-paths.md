@@ -70,8 +70,8 @@ execution:
 | ----- | ------------- | ------------------ | ---------- |
 | G1    | `E2E-PATH-01` | `21/21`            | ✅ Covered |
 | G1    | `E2E-PATH-02` | `9/9`              | ✅ Covered |
-| G2    | `E2E-PATH-03` | `7/9`              | 🟡 Partial |
-| G2    | `E2E-PATH-04` | `5/10`             | 🟡 Partial |
+| G2    | `E2E-PATH-03` | `9/9`              | ✅ Covered |
+| G2    | `E2E-PATH-04` | `10/10`            | ✅ Covered |
 | G2    | `E2E-PATH-05` | `4/6`              | 🟡 Partial |
 | G3    | `E2E-PATH-06` | `26/26`            | ✅ Covered |
 | G3    | `E2E-PATH-07` | `34/34`            | ✅ Covered |
@@ -251,6 +251,7 @@ belongs to its own scenarios. Neither check turns G0 into product-flow evidence.
 
 - `E2E-PATH-03` — Maintain company identity and membership
   - Stories validated:
+    - `US-COMPANIES-003` — browse and open my companies;
     - `US-COMPANIES-004` — update company details;
     - `US-COMPANIES-005` — manage company members.
   - Actors: company owner and invited member.
@@ -261,14 +262,13 @@ belongs to its own scenarios. Neither check turns G0 into product-flow evidence.
     - [x] `US-COMPANIES-004` Verify the updated identity persists in the workspace.
     - [x] `US-COMPANIES-004` Verify the updated identity persists in the Companies list.
     - [x] `US-COMPANIES-005` Add the second user as a member.
-    - [ ] `US-COMPANIES-003` Sign in as that member and verify workspace access.
+    - [x] `US-COMPANIES-003` Sign in as that member and verify workspace access.
     - [x] `US-COMPANIES-005` Remove the member.
     - [x] `US-COMPANIES-005` Verify that the membership-row change persists.
-    - [ ] `US-COMPANIES-005` Verify that the removed member can no longer access the workspace.
+    - [x] `US-COMPANIES-005` Verify that the removed member can no longer access the workspace.
   - Separate variants: invalid metadata, existing members, owner removal, non-owner writes, archived-company writes, and rejected requests.
   - Expected result: company identity and membership remain consistent for both actors.
-  - Status: Integrated partial — metadata and membership mutations share one integrated path, while second-user access and revocation remain
-    planned.
+  - Status: Integrated covered — the member opens the workspace after invitation, then loses list and direct workspace access after removal.
   - Evidence: [integrated company tests](../../app/test/e2e/company/company.integrated.spec.ts) and
     [mocked update variants](../../app/test/e2e/company/company-update.spec.ts).
 
@@ -277,24 +277,26 @@ belongs to its own scenarios. Neither check turns G0 into product-flow evidence.
     - `US-COMPANIES-007` — control personal company-list visibility;
     - `US-COMPANIES-006` — archive or restore a company.
   - Actors: company member and company owner.
-  - Dependencies: a disposable company prepared within this test; a second authenticated member is still needed for the unchecked
-    personal-visibility assertions. `E2E-PATH-03` owns membership evidence, not reusable test state.
+  - Dependencies: a disposable company and a second authenticated member prepared within this test. `E2E-PATH-03` owns its separate
+    membership journey, not reusable test state.
   - Main path:
-    - [ ] `US-COMPANIES-007` Hide the company from the member's own list.
-    - [ ] `US-COMPANIES-007` Recover the company in the member's own list.
-    - [ ] `US-COMPANIES-007` Verify the owner's list is unaffected by the member's visibility preference.
+    - [x] `US-COMPANIES-007` Hide the company from the member's own list.
+    - [x] `US-COMPANIES-007` Recover the company in the member's own list.
+    - [x] `US-COMPANIES-007` Verify the owner's list is unaffected by the member's visibility preference.
     - [x] `US-COMPANIES-006` Archive the company as owner.
     - [x] `US-COMPANIES-006` Verify the company is excluded from the default list.
     - [x] `US-COMPANIES-006` Recover the company from the archived list.
-    - [ ] `US-COMPANIES-006` Verify company writes are frozen while the company is archived.
-    - [ ] `US-COMPANIES-007` Verify personal visibility remains changeable while the company is archived.
+    - [x] `US-COMPANIES-006` Verify company-settings and membership controls are disabled while archived; server-side rejection remains
+          separately covered by backend tests.
+    - [x] `US-COMPANIES-007` Verify personal visibility remains changeable while the company is archived.
     - [x] `US-COMPANIES-006` Restore the company.
     - [x] `US-COMPANIES-006` Verify that normal company actions return after restoration.
   - Separate variants: non-member visibility changes, non-owner lifecycle changes, and rejected archived writes.
   - Expected result: personal visibility and company lifecycle remain distinct and recoverable.
-  - Status: Integrated partial — owner hide/show and archive/restore run in the integrated test. Member-specific visibility, cross-wallet
-    isolation, archived-write rejection, and visibility changes while archived remain unproven in this path.
-  - Evidence: [integrated company tests](../../app/test/e2e/company/company.integrated.spec.ts),
+  - Status: Integrated covered — the member's hide/show preference does not affect the owner; owner archive/restore and disabled controls
+    remain independent of member visibility, which can still change while archived. Server-side rejected-write variants stay in backend
+    coverage rather than being claimed as part of this integrated path.
+  - Evidence: [integrated access lifecycle](../../app/test/e2e/company/company-access.integrated.spec.ts),
     [mocked lifecycle variants](../../app/test/e2e/company/company-archive.spec.ts), and
     [mocked visibility variants](../../app/test/e2e/company/company-visibility.spec.ts).
 
