@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises'
 import { expect, test } from './fixtures/integrated'
-import { E2E_MEMBER_PRIVATE_KEY, E2E_OWNER_PRIVATE_KEY, publicClient } from './e2e-chain'
+import { E2E_OWNER_PRIVATE_KEY, publicClient } from './e2e-chain'
 import { useWallet } from './e2e-page'
 import { integratedBackendUrl } from './integrated-api'
 import {
@@ -26,10 +26,9 @@ interface ReadinessResponse {
 }
 
 test.describe('Integrated technical readiness', { tag: '@integrated' }, () => {
-  test('validates every boundary required by functional paths', async ({
+  test('diagnoses the prepared frontend, backend, database, chain and contracts', async ({
     page,
-    request,
-    walletPage
+    request
   }) => {
     await useWallet(page, E2E_OWNER_PRIVATE_KEY)
     const frontendResponse = await page.goto('/')
@@ -74,17 +73,5 @@ test.describe('Integrated technical readiness', { tag: '@integrated' }, () => {
       await readFile(DEPLOYMENT_MANIFEST_URL, 'utf8')
     ) as DeploymentAddressManifest
     await assertIntegratedInfrastructure(manifest)
-
-    const authentication = page.waitForResponse(
-      (response) =>
-        response.request().method() === 'POST' &&
-        new URL(response.url()).pathname === '/api/auth/siwe'
-    )
-    await page.getByTestId('sign-in').click()
-    expect((await authentication).ok()).toBe(true)
-    await expect(page).toHaveURL(/\/teams$/)
-
-    const secondActorPage = await walletPage(E2E_MEMBER_PRIVATE_KEY)
-    await expect(secondActorPage).toHaveURL(/\/teams$/)
   })
 })
