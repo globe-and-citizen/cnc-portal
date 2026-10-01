@@ -72,7 +72,7 @@ execution:
 | G1    | `E2E-PATH-02` | `9/9`              | ✅ Covered |
 | G2    | `E2E-PATH-03` | `9/9`              | ✅ Covered |
 | G2    | `E2E-PATH-04` | `10/10`            | ✅ Covered |
-| G2    | `E2E-PATH-05` | `4/6`              | 🟡 Partial |
+| G2    | `E2E-PATH-05` | `6/6`              | ✅ Covered |
 | G3    | `E2E-PATH-06` | `26/26`            | ✅ Covered |
 | G3    | `E2E-PATH-07` | `34/34`            | ✅ Covered |
 | G3    | `E2E-PATH-08` | `15/15`            | ✅ Covered |
@@ -310,11 +310,13 @@ belongs to its own scenarios. Neither check turns G0 into product-flow evidence.
     - [x] `US-COMPANIES-008` Verify the company remains available after cancellation.
     - [x] `US-COMPANIES-008` Confirm permanent deletion.
     - [x] `US-COMPANIES-008` Verify the Companies list is restored after deletion.
-    - [ ] `US-COMPANIES-008` Verify the company endpoint returns unavailable.
-    - [ ] `US-COMPANIES-008` Verify related records are removed.
+    - [x] `US-COMPANIES-008` Verify the company endpoint returns `404` after deletion.
+    - [x] `US-COMPANIES-008` Verify populated membership metadata, Officer, and team-contract rows are removed from the database.
   - Separate variants: non-owner and rejected deletion.
   - Expected result: the deleted workspace cannot be reopened or restored.
-  - Status: Integrated partial — cancellation and permanent removal pass, while cascade evidence remains to be added.
+  - Status: Integrated covered — an authenticated API read succeeds before deletion and returns `404` afterward. Direct reads against the
+    same disposable database find membership metadata, an Officer, and team contracts before the UI deletion, then find no rows for that
+    company in those three relationships afterward. This path does not exercise cascades for unpopulated relationship types.
   - Evidence: [integrated company tests](../../app/test/e2e/company/company.integrated.spec.ts) and
     [mocked deletion variants](../../app/test/e2e/company/company-delete.spec.ts).
 

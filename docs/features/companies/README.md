@@ -412,16 +412,19 @@ Each acceptance criterion references one reusable strategy instead of repeating 
 
 ### Test Coverage
 
-| Acceptance Criterion     | Proof Strategy           | Current Evidence | Status |
-| ------------------------ | ------------------------ | ---------------- | ------ |
-| `AC-US-COMPANIES-008-01` | `PS-API`                 | Integrated E2E   | ✅ Met |
-| `AC-US-COMPANIES-008-02` | `PS-BACKEND`             | Backend          | ✅ Met |
-| `AC-US-COMPANIES-008-03` | `PS-BROWSER`             | Mocked browser   | ✅ Met |
-| `AC-US-COMPANIES-008-04` | `PS-API`                 | Integrated E2E   | ✅ Met |
-| `AC-US-COMPANIES-008-05` | `PS-FRONTEND-INTEGRATED` | Integrated E2E   | ✅ Met |
-| `AC-US-COMPANIES-008-06` | `PS-BROWSER`             | Mocked browser   | ✅ Met |
+| Acceptance Criterion     | Proof Strategy           | Current Evidence         | Status |
+| ------------------------ | ------------------------ | ------------------------ | ------ |
+| `AC-US-COMPANIES-008-01` | `PS-API`                 | Integrated E2E           | ✅ Met |
+| `AC-US-COMPANIES-008-02` | `PS-BACKEND`             | Integrated E2E + Backend | ✅ Met |
+| `AC-US-COMPANIES-008-03` | `PS-BROWSER`             | Mocked browser           | ✅ Met |
+| `AC-US-COMPANIES-008-04` | `PS-API`                 | Integrated E2E           | ✅ Met |
+| `AC-US-COMPANIES-008-05` | `PS-FRONTEND-INTEGRATED` | Integrated E2E           | ✅ Met |
+| `AC-US-COMPANIES-008-06` | `PS-BROWSER`             | Mocked browser           | ✅ Met |
 
 **Dependencies:** US-COMPANIES-003
+
+The integrated deletion path verifies database cascade behavior for populated membership metadata, Officer, and team-contract records. Other
+company relationship types are not claimed by this path.
 
 ## Human Validation
 
