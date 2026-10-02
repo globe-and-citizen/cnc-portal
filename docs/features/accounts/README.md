@@ -919,7 +919,7 @@ wallet transfer, while this story owns the source-account return.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `882dac180e33252cbce45accb60eff30b07e194d`
+**Implementation evidence reviewed against:** `4f7474d5bd72da6bd1ded405c321b57286bd06cc`
 
 - [Bank deposit modal](../../../app/src/components/sections/BankView/forms/DepositModal.vue),
   [Bank transfer modal](../../../app/src/components/sections/BankView/forms/TransferModal.vue),

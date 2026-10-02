@@ -48,7 +48,11 @@ test.describe(
      * - [AC-US-PAYROLL-011-01]
      * - [AC-US-PAYROLL-012-01]
      * - [AC-US-PAYROLL-013-01]
+     * - [AC-US-PAYROLL-013-02]
+     * - [AC-US-PAYROLL-013-03]
+     * - [AC-US-PAYROLL-013-04]
      * - [AC-US-PAYROLL-013-05]
+     * - [AC-US-PAYROLL-013-06]
      */
     test('approves, controls, pays and reloads one completed-week claim', async ({
       authenticatedPage: page,
@@ -119,6 +123,21 @@ test.describe(
           disabled: false,
           paid: false
         })
+
+      const payrollAccountPath = `/teams/${company.teamId}/accounts/payroll-account`
+      const companyPayrollPath = `/teams/${company.teamId}/accounts/team-payroll`
+      const summaryAmount = (subtitle: string) =>
+        page
+          .locator('div[data-variant]')
+          .filter({ has: page.getByText(subtitle, { exact: true }) })
+          .locator('[data-test="amount"]')
+      await page.goto(payrollAccountPath)
+      await expect(summaryAmount('Pending Claim')).toHaveText('$2.00', { timeout: 30_000 })
+      await expect(summaryAmount('Month Claimed')).toHaveText('$0.00', { timeout: 30_000 })
+      await page.reload()
+      await expect(summaryAmount('Pending Claim')).toHaveText('$2.00', { timeout: 30_000 })
+      await page.goto(companyPayrollPath)
+      await expect(weeklyClaims).toContainText('Signed', { timeout: 30_000 })
 
       await openWeeklyClaimActions(page, weeklyClaims, 'signed-withdraw')
       await expect(page.locator('[data-test="signed-withdraw"]')).toHaveClass(/pointer-events-none/)
@@ -204,6 +223,65 @@ test.describe(
         usdc: '1',
         memberReadOnly: true
       })
+
+      const memberSummaryAmount = (subtitle: string) =>
+        memberPage
+          .locator('div[data-variant]')
+          .filter({ has: memberPage.getByText(subtitle, { exact: true }) })
+          .locator('[data-test="amount"]')
+      await expect(memberSummaryAmount('Pending Claim')).toHaveText('$0.00', { timeout: 30_000 })
+      await expect(memberSummaryAmount('Month Claimed')).toHaveText('$2.00', { timeout: 30_000 })
+      await memberPage.reload()
+      await expect(memberSummaryAmount('Pending Claim')).toHaveText('$0.00', { timeout: 30_000 })
+      await expect(memberSummaryAmount('Month Claimed')).toHaveText('$2.00', { timeout: 30_000 })
+
+      await memberPage.goto(companyPayrollPath)
+      const activity = memberPage.locator('[data-test="cash-remuneration-transactions"]')
+      const rowWithType = (label: string) =>
+        activity.getByRole('row').filter({ has: memberPage.getByText(label, { exact: true }) })
+      const nativeDeposit = rowWithType('Deposit')
+      const tokenDeposit = rowWithType('Token deposit')
+      const withdrawal = rowWithType('Withdrawal')
+      const tokenWithdrawal = rowWithType('Token withdrawal')
+      await expect(nativeDeposit).toContainText('0.003', { timeout: 30_000 })
+      await expect(tokenDeposit).toContainText('3 USDC', { timeout: 30_000 })
+      await expect(tokenDeposit).toContainText('$3.00')
+      await expect(withdrawal).toContainText('0.002', { timeout: 30_000 })
+      await expect(withdrawal).toContainText('-2.00 USDC')
+      await expect(withdrawal).toContainText('$2.00')
+      await memberPage.reload()
+      await expect(tokenDeposit).toContainText('3 USDC', { timeout: 30_000 })
+      await expect(withdrawal).toContainText('-2.00 USDC', { timeout: 30_000 })
+
+      const typeFilter = activity.locator(
+        '[data-test="cash-remuneration-transaction-history-type-filter"]'
+      )
+      await typeFilter.click()
+      await memberPage.getByRole('option', { name: 'Token deposit', exact: true }).click()
+      await expect(tokenDeposit).toHaveCount(1)
+      await expect(withdrawal).toHaveCount(0)
+      await expect(nativeDeposit).toHaveCount(0)
+
+      const dateFilter = activity.locator(
+        '[data-test="cash-remuneration-transaction-history-date-select"]'
+      )
+      await dateFilter.locator('[data-test="date-picker-trigger"]').click()
+      await memberPage.locator('[data-test="date-picker-month-previous"]').click()
+      await expect(activity.getByText('No data', { exact: true })).toBeVisible()
+      await memberPage.reload()
+      await expect(activity.getByText('No data', { exact: true })).toBeVisible({ timeout: 30_000 })
+      await dateFilter.locator('[data-test="date-picker-trigger"]').click()
+      await memberPage.locator('[data-test="date-picker-month-next"]').click()
+      await expect(tokenDeposit).toContainText('3 USDC', { timeout: 30_000 })
+      await typeFilter.click()
+      await memberPage.getByRole('option', { name: 'Withdrawal', exact: true }).click()
+      await expect(withdrawal).toContainText('-0.002 GO')
+      await expect(withdrawal).toContainText('$0.00')
+      await expect(tokenDeposit).toHaveCount(0)
+      await typeFilter.click()
+      await memberPage.getByRole('option', { name: 'Token withdrawal', exact: true }).click()
+      await expect(tokenWithdrawal).toContainText('-2.00 USDC')
+      await expect(withdrawal).toHaveCount(0)
     })
   }
 )

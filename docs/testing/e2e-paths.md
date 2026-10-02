@@ -85,7 +85,7 @@ execution:
 | G4    | `E2E-PATH-10` | `0/5`              | ⬜ Planned |
 | G5    | `E2E-PATH-11` | `9/9`              | ✅ Covered |
 | G5    | `E2E-PATH-12` | `8/8`              | ✅ Covered |
-| G5    | `E2E-PATH-13` | `20/22`            | 🟡 Partial |
+| G5    | `E2E-PATH-13` | `22/22`            | ✅ Covered |
 | G6    | `E2E-PATH-14` | `9/15`             | 🟡 Partial |
 | G7    | `E2E-PATH-15` | `10/11`            | 🟡 Partial |
 | G7    | `E2E-PATH-16` | `9/9`              | ✅ Covered |
@@ -558,15 +558,16 @@ belongs to its own scenarios. Neither check turns G0 into product-flow evidence.
     - [x] `US-PAYROLL-013` Open Payroll Account after funding and withdrawal.
     - [x] `US-PAYROLL-013` Verify exact Payroll token holdings.
     - [x] `US-PAYROLL-013` Verify read-only member access.
-    - [ ] `US-PAYROLL-013` Verify account summaries in the integrated browser journey.
-    - [ ] `US-PAYROLL-013` Verify account activity and filters in the integrated browser journey.
+    - [x] `US-PAYROLL-013` Verify account summaries in the integrated browser journey.
+    - [x] `US-PAYROLL-013` Verify account activity and filters in the integrated browser journey.
   - Expected result: one claim remains traceable from approval through payment, account position, and history.
-  - Status: Integrated partial — the browser funds Payroll through Bank, signs a completed-week claim, verifies the disabled and paid chain
-    flags, withdraws as the paid member, and reloads both perspectives. It also verifies the role-gated controls, frozen lifecycle states,
-    and the contract's insufficient-funds rejection. Payroll Account holdings and member access are included; integrated activity and
-    summary checks remain planned. The current-month summary boundary is covered by frontend tests. Invalid EIP-712 signatures are rejected
-    by the backend signature-validator test rather than an integrated browser journey, because a true integrated wallet produces valid
-    signatures.
+  - Status: Integrated covered — the browser funds Payroll through Bank, signs a completed-week claim, verifies the disabled and paid chain
+    flags, withdraws as the paid member, and reloads both perspectives. It verifies the role-gated controls, frozen lifecycle states, and
+    the contract's insufficient-funds rejection. Payroll Account checks assert holdings, member access, signed-pending and monthly withdrawn
+    summaries before and after payment and reload. The activity view asserts native and token deposits, the grouped withdrawal, their
+    displayed monetary values, and positive and negative type/date filters, including a persisted date selection after reload. The
+    current-month summary boundary is covered by frontend tests. Invalid EIP-712 signatures are rejected by the backend signature-validator
+    test rather than an integrated browser journey, because a true integrated wallet produces valid signatures.
   - Evidence: [integrated Payroll payment test](../../app/test/e2e/payroll/payroll-payment.integrated.spec.ts) and
     [insufficient-funding test](../../app/test/e2e/payroll/payroll-insufficient-funds.integrated.spec.ts).
 
