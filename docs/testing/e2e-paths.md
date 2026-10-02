@@ -26,9 +26,14 @@ coverage; the latest execution result and artifacts belong in Playwright and CI 
   integrated test prepares its own prerequisites inside its isolation boundary.
 - The main success sequence should run as one browser test when later actions consume state created by earlier actions.
 - Validation, authorization, recovery, and injected-failure branches remain separate tests attached to the same path.
-- A story is validated only when the path performs its observable action and verifies the resulting backend, database, or chain state.
+- A story is validated when the path performs its observable action and checks the result at the boundary necessary for that story. A UI or
+  API response does not establish an internal database invariant.
 - Seeded or API-created state is a dependency, not evidence that the story creating that state passed.
 - Keep a destructive terminal action in its own path when it would prevent subsequent checks or make failures harder to diagnose.
+- Before adding a checklist assertion, ask whether it matters to the actor's objective, is observable through the ordinary journey without
+  extra setup solely for that assertion, and would change the path's acceptance if it failed. If any answer is no, keep it out of the path.
+  Assess a genuine internal invariant with its owning feature and implementation; do not add fixtures, backend tests, or CI steps merely to
+  satisfy an incidental path line.
 
 ## Group Catalogue
 
@@ -72,7 +77,7 @@ execution:
 | G1    | `E2E-PATH-02` | `9/9`              | ✅ Covered |
 | G2    | `E2E-PATH-03` | `9/9`              | ✅ Covered |
 | G2    | `E2E-PATH-04` | `10/10`            | ✅ Covered |
-| G2    | `E2E-PATH-05` | `6/6`              | ✅ Covered |
+| G2    | `E2E-PATH-05` | `5/5`              | ✅ Covered |
 | G3    | `E2E-PATH-06` | `26/26`            | ✅ Covered |
 | G3    | `E2E-PATH-07` | `34/34`            | ✅ Covered |
 | G3    | `E2E-PATH-08` | `15/15`            | ✅ Covered |
@@ -311,16 +316,13 @@ belongs to its own scenarios. Neither check turns G0 into product-flow evidence.
     - [x] `US-COMPANIES-008` Confirm permanent deletion.
     - [x] `US-COMPANIES-008` Verify the Companies list is restored after deletion.
     - [x] `US-COMPANIES-008` Verify the company endpoint returns `404` after deletion.
-    - [x] `US-COMPANIES-008` Verify the owner cannot retrieve the deleted company's contracts or Officers through the API.
   - Separate variants: non-owner and rejected deletion.
   - Expected result: the deleted workspace cannot be reopened or restored.
-  - Status: Integrated covered — the owner's authenticated API reads expose the company's membership, Officer, and contracts before the UI
-    deletion. Afterward, the company and its related contract and Officer endpoints return `404`. This user journey proves API
-    unavailability, not physical removal of database rows. A separate backend integration test checks cascades for populated membership
-    metadata, Officer, and team-contract records; it does not cover other relationship types.
+  - Status: Integrated covered — the owner cancels once, reloads the available company, then confirms deletion through the UI. The Companies
+    list no longer shows it, and reopening its URL produces a company API `404` and the unavailable state. The path does not claim a
+    database-cascade check.
   - Evidence: [integrated company tests](../../app/test/e2e/company/company.integrated.spec.ts) and
-    [mocked deletion variants](../../app/test/e2e/company/company-delete.spec.ts). The physical cascade is checked by the
-    [backend deletion test](../../backend/src/controllers/__tests__/team-deletion-cascade.e2e-test.ts).
+    [mocked deletion variants](../../app/test/e2e/company/company-delete.spec.ts).
 
 ## G3 — Shareholder Lifecycle and SHER
 

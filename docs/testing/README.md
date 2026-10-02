@@ -35,9 +35,8 @@ setup configuration.
 
 Chain-backed browser and integrated tests run inside an automatic chain snapshot. Fully simulated browser scenarios skip Hardhat entirely
 and may run with file-level parallelism. Integrated tests can additionally request authenticated owner/member pages, operational teams, and
-disposable team feature overrides. See the [fixture catalogue](./e2e-fixtures.md) before adding setup to an individual spec. Set
-`DATABASE_URL` only for the backend service and its own integration tests. Playwright observes the Company deletion through the UI and
-public API; the separate backend test verifies the database cascade on the disposable database.
+disposable team feature overrides. See the [fixture catalogue](./e2e-fixtures.md) before adding setup to an individual spec. Prepare only
+the state required by the path's actor actions; apply the [path scope check](./e2e-paths.md#path-model) before adding assertions.
 
 ```bash
 cd app

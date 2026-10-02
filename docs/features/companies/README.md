@@ -423,11 +423,6 @@ Each acceptance criterion references one reusable strategy instead of repeating 
 
 **Dependencies:** US-COMPANIES-003
 
-The integrated browser path verifies that a company deleted through the UI and its related resources become unavailable through public API
-reads. The separate [backend integration test](../../../backend/src/controllers/__tests__/team-deletion-cascade.e2e-test.ts) verifies
-database cascades for populated membership metadata, Officer, and team-contract records through the deletion route. Other company
-relationship types are not claimed by these tests.
-
 ## Human Validation
 
 Validated on 2026-08-27 against the reviewed Companies journeys, role and archived-state boundaries, and the implementation evidence below.
