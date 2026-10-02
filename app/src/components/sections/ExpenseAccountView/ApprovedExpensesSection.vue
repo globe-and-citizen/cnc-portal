@@ -84,7 +84,7 @@ import ApproveUsersEIP712Form from '@/components/sections/ExpenseAccountView/for
 import { useUserDataStore, useTeamStore } from '@/stores'
 import { useRoute } from 'vue-router'
 import { useReadContract, useChainId, useSignTypedData } from '@wagmi/vue'
-import { parseEther, zeroAddress, type Address } from 'viem'
+import { zeroAddress, type Address } from 'viem'
 import { expenseAccountEip712Abi } from '@/artifacts/abi/generated'
 import type { User, BudgetLimit } from '@/types'
 import { getAxiosErrorMessage } from '@/utils/errors/http'
@@ -92,6 +92,9 @@ import { log } from '@/lib/logging'
 import ApproveExpenseSummaryForm from '@/components/sections/ExpenseAccountView/forms/ApproveExpenseSummaryForm.vue'
 import { useCreateExpenseMutation } from '@/queries/expense.queries'
 import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
+import { budgetLimitTypes, buildContractBudgetLimit } from '@/utils/expenses/model'
+import { useExpenseAccountSupportedTokens } from '@/composables/expenseAccount/reads'
+import { isExpenseApprovalTokenAllowed } from '@/utils/expenses/tokenPolicy'
 
 const confirmationModal = ref(false)
 const approveErrorMessage = ref('')
@@ -109,6 +112,7 @@ const route = useRoute()
 const chainId = useChainId()
 const { signTypedDataAsync, error: signTypedDataError } = useSignTypedData()
 const { mutateAsync: addExpenseData, error: errorAddExpenseData } = useCreateExpenseMutation()
+const { refetch: refetchSupportedTokens } = useExpenseAccountSupportedTokens()
 
 const expenseAccountEip712Address = computed(
   () => teamStore.getContractAddressByType('ExpenseAccountEIP712') as Address
@@ -137,6 +141,26 @@ const approveMemberTooltip = computed(() => {
 
 //#region Functions
 const approveUser = async (data: BudgetLimit) => {
+  if (data.tokenAddress !== zeroAddress) {
+    const support = await refetchSupportedTokens()
+    const supported = Array.isArray(support.data)
+      ? support.data.filter((address): address is string => typeof address === 'string')
+      : undefined
+    if (support.isError || !isExpenseApprovalTokenAllowed(data.tokenAddress, supported)) {
+      approveErrorMessage.value = 'This token is no longer supported by the Expense Account'
+      return
+    }
+  }
+
+  let message: ReturnType<typeof buildContractBudgetLimit>
+  try {
+    message = buildContractBudgetLimit(data)
+  } catch {
+    approveErrorMessage.value =
+      'The selected token or amount is not available for Expense Account approval'
+    return
+  }
+
   loadingApprove.value = true
   const verifyingContract = expenseAccountEip712Address.value
 
@@ -146,45 +170,8 @@ const approveUser = async (data: BudgetLimit) => {
     chainId: chainId.value,
     verifyingContract: verifyingContract as Address
   }
-  // const types = {
-  //   BudgetData: [
-  //     { name: 'budgetType', type: 'uint8' },
-  //     { name: 'value', type: 'uint256' }
-  //   ],
-  //   BudgetLimit: [
-  //     { name: 'approvedAddress', type: 'address' },
-  //     { name: 'budgetData', type: 'BudgetData[]' },
-  //     { name: 'expiry', type: 'uint256' },
-  //     { name: 'tokenAddress', type: 'address' }
-  //   ]
-  // }
-
-  const types = {
-    BudgetLimit: [
-      { name: 'amount', type: 'uint256' },
-      { name: 'frequencyType', type: 'uint8' },
-      { name: 'customFrequency', type: 'uint256' },
-      { name: 'startDate', type: 'uint256' },
-      { name: 'endDate', type: 'uint256' },
-      { name: 'tokenAddress', type: 'address' },
-      { name: 'approvedAddress', type: 'address' }
-    ]
-  }
-
-  const message = {
-    ...data,
-    amount:
-      data.tokenAddress === zeroAddress
-        ? parseEther(`${data.amount}`)
-        : BigInt(Number(data.amount) * 1e6),
-    frequencyType: Number(data.frequencyType),
-    customFrequency: BigInt(Number(data.customFrequency)),
-    startDate: Number(data.startDate),
-    endDate: Number(data.endDate)
-  }
-
   const signedApproval = await signTypedDataAsync({
-    types,
+    types: budgetLimitTypes,
     primaryType: 'BudgetLimit',
     message,
     domain

@@ -2,6 +2,7 @@ import type { Address } from 'viem'
 import { expect, test } from '../fixtures/integrated'
 import { E2E_MEMBER, E2E_MEMBER_PRIVATE_KEY, E2E_OWNER, hasCode, publicClient } from '../e2e-chain'
 import { openAccountFromSidebar } from '../e2e-page'
+import { deleteIntegratedTeam } from '../integrated-api'
 import {
   deployedContracts,
   expectedContractTypes,
@@ -224,30 +225,59 @@ test.describe(
 )
 
 test.describe('[US-COMPANIES-008] Integrated company deletion', { tag: '@integrated' }, () => {
+  test.setTimeout(180_000)
+
   /**
    * Covers:
    * - [AC-US-COMPANIES-008-01]
    * - [AC-US-COMPANIES-008-04]
    * - [AC-US-COMPANIES-008-05]
    */
-  test('keeps a cancelled deletion and permanently deletes after confirmation', async ({
+  test('keeps a cancelled deletion and makes the company unavailable after confirmation', async ({
     page
   }) => {
     const company = await createRealCompany(page)
     const teamId = String(company.id)
 
-    await finishRealCompanyWithoutContracts(page, teamId)
-    await page.reload()
-    await openCompanyMetadataActions(page, company.name)
-    await page.locator('[data-test="team-meta-delete-open"]').click()
-    await page.getByRole('dialog').getByRole('button', { name: 'Cancel' }).click()
-    await expect(page.getByRole('heading', { name: company.name, exact: true })).toBeVisible()
+    try {
+      await finishRealCompanyWithoutContracts(page, teamId)
 
-    await page.locator('[data-test="team-meta-delete-open"]').click()
-    await page.locator('[data-test="delete-team-button"]').click()
-    await expect(page).toHaveURL(/\/teams$/)
-    await expect(card(page, teamId)).toHaveCount(0)
-    await page.reload()
-    await expect(card(page, teamId)).toHaveCount(0)
+      await openCompanyMetadataActions(page, company.name)
+      await page.locator('[data-test="team-meta-delete-open"]').click()
+      await page.getByRole('dialog').getByRole('button', { name: 'Cancel' }).click()
+      const retained = page.waitForResponse(
+        (response) =>
+          response.request().method() === 'GET' &&
+          new URL(response.url()).pathname === `/api/teams/${teamId}`
+      )
+      await page.reload()
+      expect((await retained).status()).toBe(200)
+      await expect(page.getByRole('heading', { name: company.name, exact: true })).toBeVisible()
+
+      await openCompanyMetadataActions(page, company.name)
+      await page.locator('[data-test="team-meta-delete-open"]').click()
+      const deleted = page.waitForResponse(
+        (response) =>
+          response.request().method() === 'DELETE' &&
+          new URL(response.url()).pathname === `/api/teams/${teamId}`
+      )
+      await page.locator('[data-test="delete-team-button"]').click()
+      expect((await deleted).status()).toBe(204)
+      await expect(page).toHaveURL(/\/teams$/)
+      await expect(card(page, teamId)).toHaveCount(0)
+      await page.reload()
+      await expect(card(page, teamId)).toHaveCount(0)
+
+      const unavailable = page.waitForResponse(
+        (response) =>
+          response.request().method() === 'GET' &&
+          new URL(response.url()).pathname === `/api/teams/${teamId}`
+      )
+      await page.goto(`/teams/${teamId}`)
+      expect((await unavailable).status()).toBe(404)
+      await expect(page.locator('[data-test="error-state"]')).toContainText('Company not found')
+    } finally {
+      await deleteIntegratedTeam(teamId)
+    }
   })
 })

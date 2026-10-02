@@ -12,7 +12,7 @@ import {
 
 const BANK_TOKEN_TRANSFER_ABI = [
   parseAbiItem(
-    'event TokenTransfer(address indexed sender, address indexed to, address token, uint256 amount)'
+    'event TokenTransfer(address indexed sender, address indexed to, address indexed token, uint256 amount)'
   )
 ]
 
