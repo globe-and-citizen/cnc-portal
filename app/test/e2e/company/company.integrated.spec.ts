@@ -275,9 +275,7 @@ test.describe('[US-COMPANIES-008] Integrated company deletion', { tag: '@integra
       )
       await page.goto(`/teams/${teamId}`)
       expect((await unavailable).status()).toBe(404)
-      await expect(page.locator('[data-test="error-state"]')).toContainText(
-        "We couldn't load this company"
-      )
+      await expect(page.locator('[data-test="error-state"]')).toContainText('Company not found')
     } finally {
       await deleteIntegratedTeam(teamId)
     }
