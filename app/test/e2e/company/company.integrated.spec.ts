@@ -1,4 +1,3 @@
-import { createRequire } from 'node:module'
 import type { Address } from 'viem'
 import { expect, test } from '../fixtures/integrated'
 import {
@@ -41,6 +40,14 @@ interface OfficerRegistrationResponse {
     address: Address
     deployBlockNumber: string
   }
+}
+
+interface CompanyApiResponse {
+  id: number
+  name: string
+  members: { address: Address }[]
+  currentOfficer: { address: Address } | null
+  teamContracts: { address: Address }[]
 }
 
 test.describe(
@@ -243,24 +250,12 @@ test.describe('[US-COMPANIES-008] Integrated company deletion', { tag: '@integra
   /**
    * Covers:
    * - [AC-US-COMPANIES-008-01]
-   * - [AC-US-COMPANIES-008-02]
    * - [AC-US-COMPANIES-008-04]
    * - [AC-US-COMPANIES-008-05]
    */
-  test('keeps a cancelled deletion and removes the company and populated related records after confirmation', async ({
+  test('keeps a cancelled deletion and makes the company unavailable after confirmation', async ({
     page
   }) => {
-    const databaseUrl = process.env.DATABASE_URL
-    if (!databaseUrl) {
-      throw new Error('Set DATABASE_URL to the disposable integrated E2E database')
-    }
-    const backendRequire = createRequire(
-      new URL('../../../../backend/package.json', import.meta.url)
-    )
-    const { PrismaClient } = backendRequire(
-      '@prisma/client'
-    ) as typeof import('../../../../backend/node_modules/@prisma/client')
-    const prisma = new PrismaClient({ datasources: { db: { url: databaseUrl } } })
     const company = await createRealCompany(page)
     const teamId = String(company.id)
     const id = Number(company.id)
@@ -271,29 +266,20 @@ test.describe('[US-COMPANIES-008] Integrated company deletion', { tag: '@integra
       await expect(page).toHaveURL(new RegExp(`/teams/${teamId}$`))
 
       const token = await authenticateIntegratedAccount(ownerAccount)
-      const available = await requestIntegratedApi<{ id: number; name: string }>(
-        `/teams/${teamId}`,
-        { token }
-      )
+      const available = await requestIntegratedApi<CompanyApiResponse>(`/teams/${teamId}`, {
+        token
+      })
       expect(available).toMatchObject({ id, name: company.name })
-      expect(await prisma.team.findUnique({ where: { id } })).toMatchObject({ name: company.name })
-
-      const membership = await prisma.memberTeamsData.findMany({
-        where: { teamId: id },
-        select: { memberAddress: true }
-      })
-      const officers = await prisma.teamOfficer.findMany({
-        where: { teamId: id },
-        select: { address: true }
-      })
-      const contracts = await prisma.teamContract.findMany({
-        where: { teamId: id },
-        select: { address: true }
-      })
-      expect(membership.map(({ memberAddress }) => memberAddress.toLowerCase())).toContain(
+      expect(available.members.map(({ address }) => address.toLowerCase())).toContain(
         E2E_OWNER.toLowerCase()
       )
-      expect(officers).toContainEqual({ address: officer.address })
+      expect(available.currentOfficer?.address).toBe(officer.address)
+      expect(available.teamContracts.length).toBeGreaterThan(0)
+
+      const contracts = await requestIntegratedApi<{ address: Address }[]>(
+        `/contract?teamId=${teamId}`,
+        { token }
+      )
       expect(contracts.length).toBeGreaterThan(0)
 
       await page.reload()
@@ -322,16 +308,14 @@ test.describe('[US-COMPANIES-008] Integrated company deletion', { tag: '@integra
       await expect(requestIntegratedApi(`/teams/${teamId}`, { token })).rejects.toMatchObject({
         status: 404
       })
-      expect(await prisma.team.findUnique({ where: { id } })).toBeNull()
-      expect(await prisma.memberTeamsData.count({ where: { teamId: id } })).toBe(0)
-      expect(await prisma.teamOfficer.count({ where: { teamId: id } })).toBe(0)
-      expect(await prisma.teamContract.count({ where: { teamId: id } })).toBe(0)
+      await expect(
+        requestIntegratedApi(`/contract?teamId=${teamId}`, { token })
+      ).rejects.toMatchObject({ status: 404 })
+      await expect(
+        requestIntegratedApi(`/contract/officers?teamId=${teamId}`, { token })
+      ).rejects.toMatchObject({ status: 404 })
     } finally {
-      try {
-        await deleteIntegratedTeam(teamId)
-      } finally {
-        await prisma.$disconnect()
-      }
+      await deleteIntegratedTeam(teamId)
     }
   })
 })

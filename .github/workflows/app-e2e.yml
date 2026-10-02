@@ -276,6 +276,12 @@ jobs:
           HEADLESS: "true"
           CNC_E2E_BACKEND_URL: http://127.0.0.1:3000
 
+      - name: 🧪 Verify backend deletion cascades
+        run: npm run test:e2e
+        working-directory: ./backend
+        env:
+          CNC_E2E_DISPOSABLE_DATABASE: "1"
+
       - name: 📊 Upload integrated Playwright report
         if: always()
         uses: actions/upload-artifact@v4
