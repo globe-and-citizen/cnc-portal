@@ -36,8 +36,8 @@ setup configuration.
 Chain-backed browser and integrated tests run inside an automatic chain snapshot. Fully simulated browser scenarios skip Hardhat entirely
 and may run with file-level parallelism. Integrated tests can additionally request authenticated owner/member pages, operational teams, and
 disposable team feature overrides. See the [fixture catalogue](./e2e-fixtures.md) before adding setup to an individual spec. Set
-`DATABASE_URL` for Playwright to the same disposable database used by the integrated backend: the Company deletion path reads populated
-related rows before and after its UI action to verify database cascades.
+`DATABASE_URL` only for the backend service and its own integration tests. Playwright observes the Company deletion through the UI and
+public API; the separate backend test verifies the database cascade on the disposable database.
 
 ```bash
 cd app

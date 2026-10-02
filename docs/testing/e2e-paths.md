@@ -311,14 +311,16 @@ belongs to its own scenarios. Neither check turns G0 into product-flow evidence.
     - [x] `US-COMPANIES-008` Confirm permanent deletion.
     - [x] `US-COMPANIES-008` Verify the Companies list is restored after deletion.
     - [x] `US-COMPANIES-008` Verify the company endpoint returns `404` after deletion.
-    - [x] `US-COMPANIES-008` Verify populated membership metadata, Officer, and team-contract rows are removed from the database.
+    - [x] `US-COMPANIES-008` Verify the owner cannot retrieve the deleted company's contracts or Officers through the API.
   - Separate variants: non-owner and rejected deletion.
   - Expected result: the deleted workspace cannot be reopened or restored.
-  - Status: Integrated covered — an authenticated API read succeeds before deletion and returns `404` afterward. Direct reads against the
-    same disposable database find membership metadata, an Officer, and team contracts before the UI deletion, then find no rows for that
-    company in those three relationships afterward. This path does not exercise cascades for unpopulated relationship types.
+  - Status: Integrated covered — the owner's authenticated API reads expose the company's membership, Officer, and contracts before the UI
+    deletion. Afterward, the company and its related contract and Officer endpoints return `404`. This user journey proves API
+    unavailability, not physical removal of database rows. A separate backend integration test checks cascades for populated membership
+    metadata, Officer, and team-contract records; it does not cover other relationship types.
   - Evidence: [integrated company tests](../../app/test/e2e/company/company.integrated.spec.ts) and
-    [mocked deletion variants](../../app/test/e2e/company/company-delete.spec.ts).
+    [mocked deletion variants](../../app/test/e2e/company/company-delete.spec.ts). The physical cascade is checked by the
+    [backend deletion test](../../backend/src/controllers/__tests__/team-deletion-cascade.e2e-test.ts).
 
 ## G3 — Shareholder Lifecycle and SHER
 
