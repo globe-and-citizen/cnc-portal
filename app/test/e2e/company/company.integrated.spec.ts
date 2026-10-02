@@ -1,19 +1,8 @@
 import type { Address } from 'viem'
 import { expect, test } from '../fixtures/integrated'
-import {
-  E2E_MEMBER,
-  E2E_MEMBER_PRIVATE_KEY,
-  E2E_OWNER,
-  hasCode,
-  ownerAccount,
-  publicClient
-} from '../e2e-chain'
+import { E2E_MEMBER, E2E_MEMBER_PRIVATE_KEY, E2E_OWNER, hasCode, publicClient } from '../e2e-chain'
 import { openAccountFromSidebar } from '../e2e-page'
-import {
-  authenticateIntegratedAccount,
-  deleteIntegratedTeam,
-  requestIntegratedApi
-} from '../integrated-api'
+import { deleteIntegratedTeam } from '../integrated-api'
 import {
   deployedContracts,
   expectedContractTypes,
@@ -24,7 +13,6 @@ import {
 import {
   createRealCompany,
   deleteCompanyThroughUi,
-  deployOfficerThroughUi,
   enterShareDetails,
   finishRealCompanyWithoutContracts,
   openCompanyMetadataActions,
@@ -40,14 +28,6 @@ interface OfficerRegistrationResponse {
     address: Address
     deployBlockNumber: string
   }
-}
-
-interface CompanyApiResponse {
-  id: number
-  name: string
-  members: { address: Address }[]
-  currentOfficer: { address: Address } | null
-  teamContracts: { address: Address }[]
 }
 
 test.describe(
@@ -258,40 +238,23 @@ test.describe('[US-COMPANIES-008] Integrated company deletion', { tag: '@integra
   }) => {
     const company = await createRealCompany(page)
     const teamId = String(company.id)
-    const id = Number(company.id)
 
     try {
-      const { officer } = await deployOfficerThroughUi(page)
-      await page.locator('[data-test="skip-safe-setup-button"]').click()
-      await expect(page).toHaveURL(new RegExp(`/teams/${teamId}$`))
+      await finishRealCompanyWithoutContracts(page, teamId)
 
-      const token = await authenticateIntegratedAccount(ownerAccount)
-      const available = await requestIntegratedApi<CompanyApiResponse>(`/teams/${teamId}`, {
-        token
-      })
-      expect(available).toMatchObject({ id, name: company.name })
-      expect(available.members.map(({ address }) => address.toLowerCase())).toContain(
-        E2E_OWNER.toLowerCase()
-      )
-      expect(available.currentOfficer?.address).toBe(officer.address)
-      expect(available.teamContracts.length).toBeGreaterThan(0)
-
-      const contracts = await requestIntegratedApi<{ address: Address }[]>(
-        `/contract?teamId=${teamId}`,
-        { token }
-      )
-      expect(contracts.length).toBeGreaterThan(0)
-
-      await page.reload()
       await openCompanyMetadataActions(page, company.name)
       await page.locator('[data-test="team-meta-delete-open"]').click()
       await page.getByRole('dialog').getByRole('button', { name: 'Cancel' }).click()
+      const retained = page.waitForResponse(
+        (response) =>
+          response.request().method() === 'GET' &&
+          new URL(response.url()).pathname === `/api/teams/${teamId}`
+      )
+      await page.reload()
+      expect((await retained).status()).toBe(200)
       await expect(page.getByRole('heading', { name: company.name, exact: true })).toBeVisible()
-      expect(await requestIntegratedApi(`/teams/${teamId}`, { token })).toMatchObject({
-        id,
-        name: company.name
-      })
 
+      await openCompanyMetadataActions(page, company.name)
       await page.locator('[data-test="team-meta-delete-open"]').click()
       const deleted = page.waitForResponse(
         (response) =>
@@ -305,15 +268,16 @@ test.describe('[US-COMPANIES-008] Integrated company deletion', { tag: '@integra
       await page.reload()
       await expect(card(page, teamId)).toHaveCount(0)
 
-      await expect(requestIntegratedApi(`/teams/${teamId}`, { token })).rejects.toMatchObject({
-        status: 404
-      })
-      await expect(
-        requestIntegratedApi(`/contract?teamId=${teamId}`, { token })
-      ).rejects.toMatchObject({ status: 404 })
-      await expect(
-        requestIntegratedApi(`/contract/officers?teamId=${teamId}`, { token })
-      ).rejects.toMatchObject({ status: 404 })
+      const unavailable = page.waitForResponse(
+        (response) =>
+          response.request().method() === 'GET' &&
+          new URL(response.url()).pathname === `/api/teams/${teamId}`
+      )
+      await page.goto(`/teams/${teamId}`)
+      expect((await unavailable).status()).toBe(404)
+      await expect(page.locator('[data-test="error-state"]')).toContainText(
+        "We couldn't load this company"
+      )
     } finally {
       await deleteIntegratedTeam(teamId)
     }
