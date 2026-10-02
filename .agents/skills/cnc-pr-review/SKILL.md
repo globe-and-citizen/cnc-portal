@@ -12,6 +12,9 @@ Review two independent questions. A PR must pass both before it is ready.
 1. Resolve the PR, its base branch, linked issue, changed files, checks, and review threads.
 2. Read the issue acceptance criteria before examining implementation details.
 3. For a contract change, read `.github/copilot-instructions/solidity-audit-checklist.md` as well.
+4. Apply the independent-review stage of [Development Relationship Validation](../../../docs/development-guide/relationship-validation.md).
+   Check the author's relationship scope, omitted consumers, applicability reasons, guarantees, and representative evidence independently;
+   record completion proposals for gaps.
 
 ## Review both axes
 
@@ -28,3 +31,5 @@ report evidence to the primary reviewer; they do not post comments or alter the 
 - Explain what is wrong, why it matters, and the reusable principle. Do not write the replacement code unless asked.
 - Use `REQUEST_CHANGES` for a real bug or unmet acceptance criterion; use `COMMENT` for observations and nits. Never auto-approve.
 - If no finding remains, report the evidence reviewed rather than claiming certainty beyond the available checks.
+- Include the relationship verdict and inspected revision in the review summary. Before any authorized merge, refresh affected results
+  against the exact head and target revision using the guide's final validation stage.

@@ -12,6 +12,9 @@ Treat each contract edit as a security-sensitive change with an explicit interfa
 - Read `.github/copilot-instructions/solidity-audit-checklist.md` and the relevant contract tests before changing behaviour.
 - Confirm the target contract version and deployment context. Do not deploy or upgrade a contract without explicit user authorization.
 - Identify every frontend ABI, address artifact, indexer, and documentation surface affected by the interface change.
+- Apply [Development Relationship Validation](../../../docs/development-guide/relationship-validation.md) to the affected methods, events,
+  consumers, economic rules, and journeys. Reassess after interface changes and record proof or completion proposals before review
+  readiness.
 
 ## Implement and validate
 
