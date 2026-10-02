@@ -56,7 +56,8 @@ CNC_CONFIRM_POLYGON_V201_UPGRADE=upgrade-polygon-v2.0.1 npm run prepare-upgrade:
 
 This command validates layouts, ownership, versions, constructor wiring, and rollback inputs. It does not broadcast an upgrade transaction.
 Static implementation and storage checks do not load Polygon configuration. The production keystore is unlocked once, only when the
-read-only Polygon preflight checks beacon ownership and implementations and records the rollback manifest. An existing manifest is never overwritten; retain the original rollback inputs.
+read-only Polygon preflight checks beacon ownership and implementations and records the rollback manifest. An existing manifest is never
+overwritten; retain the original rollback inputs.
 
 ## Polygon deployment
 
