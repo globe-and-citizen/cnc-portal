@@ -18,8 +18,9 @@ Use `gh`, not the GitHub MCP. Keep GitHub text in English, conventional-commit p
    gh api user --jq .login
    ```
 
-3. Give the issue a concise problem, scope boundary, acceptance criteria, and validation evidence expected. Assign it to the current
-   authenticated user.
+3. Give the issue a concise problem, scope boundary, acceptance criteria, and validation evidence expected. Complete its relationship plan
+   using [Development Relationship Validation](../../../docs/development-guide/relationship-validation.md), including affected consumers,
+   applicability, and completion proposals. Assign it to the current authenticated user.
 4. Place Sprint work under the right Goal. Attach a child using its database id, not its issue number:
 
    ```bash
@@ -34,11 +35,15 @@ Use `gh`, not the GitHub MCP. Keep GitHub text in English, conventional-commit p
 3. Commit each logical change atomically, then push the feature branch. Never push directly to `main`, `master`, or `develop`; never
    force-push without explicit approval.
 4. Open a draft PR against `develop` unless the user asks for review-ready status. Use `.github/pull_request_template.md`, describe user or
-   developer impact and validation, and include `Closes #N` or `Fixes #N`. Write multiline Markdown to a body file and pass it through
-   `--body-file`; do not pass escaped `\n` in a shell `--body` string. Read the published body back before considering the artifact
-   complete.
+   developer impact and validation, complete the relationship results with revision and evidence, and include `Closes #N` or `Fixes #N`.
+   Keep unresolved required guarantees visible in drafts and resolve them before requesting review. Write multiline Markdown to a body file
+   and pass it through `--body-file`; do not pass escaped `\n` in a shell `--body` string. Read the published body back before considering
+   the artifact complete.
 
 ## Review routing
 
 Use `cnc-pr-review` for a full PR review. Post genuine findings inline through the reviews API, use `REQUEST_CHANGES` for real bugs or unmet
 requirements, and never auto-approve.
+
+Before an authorized merge, apply the guide's final validation stage to the exact PR head and current target revision. Refresh results
+affected by new commits or synchronization and verify live required checks; prior green results do not establish current readiness.
