@@ -65,7 +65,7 @@ orchestration.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `d2caa0c9822c5b325aa690b2f4c9d597291cddc0`
+**Implementation evidence reviewed against:** `977d73f7c042253f4a107f632798fbbddbc8f4d4`
 
 - [Expense Account contract](../../../../contract/contracts/expense-account/ExpenseAccountEIP712.sol)
 - [Core contract tests](../../../../contract/test/ExpenseAccountEIP712.spec.ts),
