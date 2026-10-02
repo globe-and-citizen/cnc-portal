@@ -73,7 +73,7 @@ Each entry should answer:
 
 - What: reject signed transfers while their approval is deactivated, including one-time approvals.
 - Storage: none.
-- Shipped via: pending upgrade in place.
+- Shipped via: pending upgrade in place using the [2.0.2 release recipe](releases/polygon-v2.0.2.md).
 - Networks: not deployed.
 
 ### ExpenseAccountEIP712 2.0.1 — unreleased

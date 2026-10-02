@@ -110,4 +110,6 @@ npm run compile
 npm run test
 ```
 
-The current Polygon `2.0.1` commands and operator checks are documented in the [`Polygon 2.0.1 runbook`](../../releases/polygon-v2.0.1.md).
+Release commands and operator checks are documented in the [Polygon 2.0.1 runbook](../../releases/polygon-v2.0.1.md) and the
+[Expense Account 2.0.2 runbook](../../releases/polygon-v2.0.2.md). Static validation must reject a compiled candidate whose `version()` no
+longer matches its release before opening the production connection.
