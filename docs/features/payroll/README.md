@@ -32,8 +32,9 @@ configuration supports it.
 Daily-claim creation accepts only its documented request fields. The authenticated session determines the member; caller-supplied member
 identity fields are rejected. Product withdrawal requires a signed claim with a stored signature before any wallet request is made.
 
-The company Bank can fund the Cash Remuneration contract through its normal transfer actions. This is not a `transferFrom` operation, and
-its complete journey belongs to the Accounts feature.
+The company Bank can fund the Cash Remuneration contract through its normal transfer actions. A wallet can also send native currency or
+ERC-20 assets directly to the Payroll address. Bank owns the initiated transfer and its fee; Payroll owns the receiving balance and whether
+that asset can pay a claim. The [treasury flow map](../accounts/treasury-flow-map.md) links the two journeys.
 
 ## Lifecycle
 
@@ -47,21 +48,22 @@ its complete journey belongs to the Accounts feature.
 
 ## Status Overview
 
-| User Story     | Title                                      | Actor                   | Status        |
-| -------------- | ------------------------------------------ | ----------------------- | ------------- |
-| US-PAYROLL-001 | Set a Member's Wage                        | Company owner           | 🧪 Validation |
-| US-PAYROLL-002 | Pause or Resume a Member's Wage            | Company owner           | 🧪 Validation |
-| US-PAYROLL-003 | Fund the Payroll Contract                  | Bank owner / Board      | 🔗 Reference  |
-| US-PAYROLL-004 | Set Weekly Goals                           | Company member          | 🧪 Validation |
-| US-PAYROLL-005 | Submit a Daily Claim                       | Company member          | 🧪 Validation |
-| US-PAYROLL-006 | Edit a Daily Claim                         | Claim owner             | 🧪 Validation |
-| US-PAYROLL-007 | Delete a Daily Claim                       | Claim owner             | 🧪 Validation |
-| US-PAYROLL-008 | Sign a Completed Weekly Claim              | Cash Remuneration owner | 🧪 Validation |
-| US-PAYROLL-009 | Disable or Re-enable a Signed Weekly Claim | Cash Remuneration owner | 🧪 Validation |
-| US-PAYROLL-010 | Withdraw an Approved Weekly Claim          | Claim owner             | 🧪 Validation |
-| US-PAYROLL-011 | Reconcile Weekly Claims With the Chain     | Company member          | 🧪 Validation |
-| US-PAYROLL-012 | Review Payroll History                     | Company member          | 🧪 Validation |
-| US-PAYROLL-013 | Review the Payroll Account Position        | Company member          | 🧪 Validation |
+| User Story     | Title                                      | Actor                     | Status         |
+| -------------- | ------------------------------------------ | ------------------------- | -------------- |
+| US-PAYROLL-001 | Set a Member's Wage                        | Company owner             | 🧪 Validation  |
+| US-PAYROLL-002 | Pause or Resume a Member's Wage            | Company owner             | 🧪 Validation  |
+| US-PAYROLL-003 | Fund the Payroll Contract                  | Account funder            | 🚧 In Progress |
+| US-PAYROLL-004 | Set Weekly Goals                           | Company member            | 🧪 Validation  |
+| US-PAYROLL-005 | Submit a Daily Claim                       | Company member            | 🧪 Validation  |
+| US-PAYROLL-006 | Edit a Daily Claim                         | Claim owner               | 🧪 Validation  |
+| US-PAYROLL-007 | Delete a Daily Claim                       | Claim owner               | 🧪 Validation  |
+| US-PAYROLL-008 | Sign a Completed Weekly Claim              | Cash Remuneration owner   | 🧪 Validation  |
+| US-PAYROLL-009 | Disable or Re-enable a Signed Weekly Claim | Cash Remuneration owner   | 🧪 Validation  |
+| US-PAYROLL-010 | Withdraw an Approved Weekly Claim          | Claim owner               | 🧪 Validation  |
+| US-PAYROLL-011 | Reconcile Weekly Claims With the Chain     | Company member            | 🧪 Validation  |
+| US-PAYROLL-012 | Review Payroll History                     | Company member            | 🧪 Validation  |
+| US-PAYROLL-013 | Review the Payroll Account Position        | Company member            | 🧪 Validation  |
+| US-PAYROLL-014 | Return Payroll funds to Bank               | Authorized treasury actor | 🚧 In Progress |
 
 ## Test Coverage Overview
 
@@ -69,34 +71,39 @@ Coverage targets compare each criterion's required proof with direct `AC-US-*` r
 pass/fail result, which belongs to CI or the generated local report. The per-story tables show the required layer, linked evidence, and any
 missing or insufficient proof.
 
-| User Story     | Main Journey      | Coverage Target | Gaps                     |
-| -------------- | ----------------- | --------------- | ------------------------ |
-| US-PAYROLL-001 | ✅ Integrated     | ✅ 27/27        | —                        |
-| US-PAYROLL-002 | ✅ Integrated     | ✅ 12/12        | —                        |
-| US-PAYROLL-003 | ➖ Accounts-owned | ➖ Reference    | E2E-PATH-02 owns funding |
-| US-PAYROLL-004 | ✅ Integrated     | ✅ 11/11        | —                        |
-| US-PAYROLL-005 | ✅ Integrated     | ✅ 25/25        | —                        |
-| US-PAYROLL-006 | ✅ Integrated     | ✅ 13/13        | —                        |
-| US-PAYROLL-007 | ✅ Integrated     | ✅ 8/8          | —                        |
-| US-PAYROLL-008 | ✅ Integrated     | ✅ 16/16        | —                        |
-| US-PAYROLL-009 | ✅ Integrated     | ✅ 8/8          | —                        |
-| US-PAYROLL-010 | ✅ Integrated     | ✅ 17/17        | —                        |
-| US-PAYROLL-011 | ✅ Integrated     | ✅ 12/12        | —                        |
-| US-PAYROLL-012 | ✅ Integrated     | ✅ 13/13        | —                        |
-| US-PAYROLL-013 | ✅ Integrated     | ✅ 6/6          | —                        |
+| User Story     | Main Journey  | Coverage Target | Gaps                                                                                                             |
+| -------------- | ------------- | --------------- | ---------------------------------------------------------------------------------------------------------------- |
+| US-PAYROLL-001 | ✅ Integrated | ✅ 27/27        | —                                                                                                                |
+| US-PAYROLL-002 | ✅ Integrated | ✅ 12/12        | —                                                                                                                |
+| US-PAYROLL-003 | 🚧 Partial    | ⚠️ 3/8          | 5 — Bank receipt, unfunded withdrawal, token eligibility, and direct ERC-20 history need representative proof    |
+| US-PAYROLL-004 | ✅ Integrated | ✅ 11/11        | —                                                                                                                |
+| US-PAYROLL-005 | ✅ Integrated | ✅ 25/25        | —                                                                                                                |
+| US-PAYROLL-006 | ✅ Integrated | ✅ 13/13        | —                                                                                                                |
+| US-PAYROLL-007 | ✅ Integrated | ✅ 8/8          | —                                                                                                                |
+| US-PAYROLL-008 | ✅ Integrated | ✅ 16/16        | —                                                                                                                |
+| US-PAYROLL-009 | ✅ Integrated | ✅ 8/8          | —                                                                                                                |
+| US-PAYROLL-010 | ✅ Integrated | ✅ 17/17        | —                                                                                                                |
+| US-PAYROLL-011 | ✅ Integrated | ✅ 12/12        | —                                                                                                                |
+| US-PAYROLL-012 | ✅ Integrated | ✅ 13/13        | —                                                                                                                |
+| US-PAYROLL-013 | ✅ Integrated | ✅ 6/6          | —                                                                                                                |
+| US-PAYROLL-014 | 🚧 Partial    | ⚠️ 1/8          | 7 — source-to-Bank settlement and governance need chain proof; balances of unswept tokens need explicit handling |
 
 ## Proof Strategy Reference
 
-| Strategy                | Responsibilities              | Required Evidence | Proof Rationale                                                                                    |
-| ----------------------- | ----------------------------- | ----------------- | -------------------------------------------------------------------------------------------------- |
-| `PS-FRONTEND`           | Frontend                      | Frontend          | The client owns this validation, display, or interaction state.                                    |
-| `PS-BACKEND`            | Backend                       | Backend           | The server owns this authorization, validation, persistence, or reconciliation rule.               |
-| `PS-INTEGRATED`         | Frontend + Backend + Contract | Integrated E2E    | The browser, persisted API state, and chain outcome must work together in the real journey.        |
-| `PS-CONTRACT-REFERENCE` | Contract                      | Contract          | Contract-owned criteria retain their contract proof without counting it as portal or API coverage. |
+| Strategy                | Responsibilities              | Required Evidence         | Proof Rationale                                                                                    |
+| ----------------------- | ----------------------------- | ------------------------- | -------------------------------------------------------------------------------------------------- |
+| `PS-FRONTEND`           | Frontend                      | Frontend                  | The client owns this validation, display, or interaction state.                                    |
+| `PS-BACKEND`            | Backend                       | Backend                   | The server owns this authorization, validation, persistence, or reconciliation rule.               |
+| `PS-INTEGRATED`         | Frontend + Backend + Contract | Integrated E2E            | The browser, persisted API state, and chain outcome must work together in the real journey.        |
+| `PS-CONTRACT-REFERENCE` | Contract                      | Contract                  | Contract-owned criteria retain their contract proof without counting it as portal or API coverage. |
+| `PS-CHAIN`              | Frontend + Contract           | Integrated E2E            | The wallet transaction and recipient balance must agree after a real chain write.                  |
+| `PS-CONTRACT`           | Contract                      | Contract                  | The contract owns the receive, support, or authorization rule.                                     |
+| `PS-BROWSER`            | Frontend                      | Mocked browser            | A controlled user action or warning needs browser-level proof.                                     |
+| `PS-CHAIN-CONTRACT`     | Frontend + Contract           | Integrated E2E + Contract | The real return and its on-chain restrictions need independent proof.                              |
 
-The Accounts feature owns `US-PAYROLL-003` and its Bank funding journey. Contract-only criteria use `PS-CONTRACT-REFERENCE`; the test plan
-for the other stories focuses on backend, frontend, and integrated evidence. Current evidence is derived only from direct criterion
-references. A test that lacks an `AC-US-*` reference remains a discovery item until its representative role is reviewed.
+Accounts owns the Bank transfer in `US-BANK-002`, while `US-PAYROLL-003` owns the receiving Payroll outcome. The test plan for the other
+stories focuses on backend, frontend, and integrated evidence. Current evidence is derived only from direct criterion references. A test
+that lacks an `AC-US-*` reference remains a discovery item until its representative role is reviewed.
 
 Criteria tagged _(API)_ require backend evidence; integrated E2E evidence is recorded separately when a real user journey crosses the API or
 chain boundary.
@@ -133,21 +140,22 @@ Run the linked backend and frontend suites for their owned rules and interaction
 stack for cross-layer journeys. The per-story matrices below link each criterion to its required proof; contract checks remain a separate
 technical responsibility.
 
-| User Story     | Backend tests to perform                                                                   | Frontend tests to perform                                                                | Integrated test to perform                                                                                                    |
-| -------------- | ------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| US-PAYROLL-001 | Wage versioning, ownership and archived writes.                                            | Rates, allowances, overtime, validation and version display.                             | Create and replace a wage through the UI; verify later API reads.                                                             |
-| US-PAYROLL-002 | Current-wage pause/resume; reject claim creation, edit and deletion while paused.          | Pause/resume controls and restored wage replacement.                                     | Pause, reject a real claim, resume and persist a new claim.                                                                   |
-| US-PAYROLL-003 | Accounts owns Bank transfer checks.                                                        | Accounts owns funding controls.                                                          | Reuse E2E-PATH-02 and the real Payroll funding steps.                                                                         |
-| US-PAYROLL-004 | Goals persistence, member ownership, locked weeks and wage binding.                        | Goal editor, read-only states and empty content.                                         | Save goals before submitting work for the same week.                                                                          |
-| US-PAYROLL-005 | UTC dates, four-day window, identity, ten-minute steps, caps, paused wage and attachments. | Claim form, duration, limits, file validation and server errors.                         | Persist work and reject daily/weekly cap overages through the UI.                                                             |
-| US-PAYROLL-006 | Owner authorization, pending/paused state, cap checks and unchanged data on rejection.     | Edit form, validation and errors.                                                        | Edit a persisted claim and verify its displayed duration and memo.                                                            |
-| US-PAYROLL-007 | Owner authorization, pending/paused state, preservation of weekly goals.                   | Confirmation, cancellation and API errors.                                               | Delete a real claim, then recreate it without losing its weekly row.                                                          |
-| US-PAYROLL-008 | Contract owner, completed week, signature recovery, current contract and archived company. | Signing, explicit re-signing, pending/current-week restrictions and wallet rejection.    | Approve a completed week with a real EIP-712 signature.                                                                       |
-| US-PAYROLL-009 | Reconciled status and signature checks.                                                    | Owner permissions, disable/enable actions and synchronization after receipt.             | Disable and re-enable the same signature; read actual contract state.                                                         |
-| US-PAYROLL-010 | Claim ownership, signed/paid states and archived company.                                  | Signed/signature guard, balances, contract/chain mismatch and wallet rejection.          | Pay ETH + USDC + minted SHER; decode the transaction, check balances and reload; reject insufficient funds.                   |
-| US-PAYROLL-011 | Paid/disabled/stale-signature reconciliation, failed reads and subsequent persisted reads. | Sync on company load and after withdrawal, disable and enable.                           | Reload the API-backed history after each on-chain transition.                                                                 |
-| US-PAYROLL-012 | Company membership, member/status filters, minutes, pagination and attachment URLs.        | Member/week/duration/rates/totals/status/action table and member selector.               | Verify member history, locked work and company-wide withdrawn status after payment.                                           |
-| US-PAYROLL-013 | No separate backend criterion: account positions come from client chain reads.             | Account balances, token positions, withdrawn summaries and read-only funding indicators. | Verify holdings, signed/monthly summaries, activity values and date/type filters through the funded and paid browser journey. |
+| User Story     | Backend tests to perform                                                                   | Frontend tests to perform                                                                | Integrated test to perform                                                                                  |
+| -------------- | ------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| US-PAYROLL-001 | Wage versioning, ownership and archived writes.                                            | Rates, allowances, overtime, validation and version display.                             | Create and replace a wage through the UI; verify later API reads.                                           |
+| US-PAYROLL-002 | Current-wage pause/resume; reject claim creation, edit and deletion while paused.          | Pause/resume controls and restored wage replacement.                                     | Pause, reject a real claim, resume and persist a new claim.                                                 |
+| US-PAYROLL-003 | No Payroll API write owns the chain deposit.                                               | Receiving balance and asset availability; Bank owns its transfer controls.               | Prove a Bank transfer and wallet-origin deposit against Payroll balances and history.                       |
+| US-PAYROLL-004 | Goals persistence, member ownership, locked weeks and wage binding.                        | Goal editor, read-only states and empty content.                                         | Save goals before submitting work for the same week.                                                        |
+| US-PAYROLL-005 | UTC dates, four-day window, identity, ten-minute steps, caps, paused wage and attachments. | Claim form, duration, limits, file validation and server errors.                         | Persist work and reject daily/weekly cap overages through the UI.                                           |
+| US-PAYROLL-006 | Owner authorization, pending/paused state, cap checks and unchanged data on rejection.     | Edit form, validation and errors.                                                        | Edit a persisted claim and verify its displayed duration and memo.                                          |
+| US-PAYROLL-007 | Owner authorization, pending/paused state, preservation of weekly goals.                   | Confirmation, cancellation and API errors.                                               | Delete a real claim, then recreate it without losing its weekly row.                                        |
+| US-PAYROLL-008 | Contract owner, completed week, signature recovery, current contract and archived company. | Signing, explicit re-signing, pending/current-week restrictions and wallet rejection.    | Approve a completed week with a real EIP-712 signature.                                                     |
+| US-PAYROLL-009 | Reconciled status and signature checks.                                                    | Owner permissions, disable/enable actions and synchronization after receipt.             | Disable and re-enable the same signature; read actual contract state.                                       |
+| US-PAYROLL-010 | Claim ownership, signed/paid states and archived company.                                  | Signed/signature guard, balances, contract/chain mismatch and wallet rejection.          | Pay ETH + USDC + minted SHER; decode the transaction, check balances and reload; reject insufficient funds. |
+| US-PAYROLL-011 | Paid/disabled/stale-signature reconciliation, failed reads and subsequent persisted reads. | Sync on company load and after withdrawal, disable and enable.                           | Reload the API-backed history after each on-chain transition.                                               |
+| US-PAYROLL-012 | Company membership, member/status filters, minutes, pagination and attachment URLs.        | Member/week/duration/rates/totals/status/action table and member selector.               | Verify member history, locked work and company-wide withdrawn status after payment.                         |
+| US-PAYROLL-013 | No separate backend criterion: account positions come from client chain reads.             | Account balances, token positions, withdrawn summaries and read-only funding indicators. | Verify holdings, signed/monthly summaries, activity values and date/type filters through the funded and paid browser journey.          |
+| US-PAYROLL-014 | No Payroll API write owns the source-account return.                                       | Direct return, Board proposal, warning, and refreshed balances.                          | Prove the real source-to-Bank movement and rejection without a later wallet cash-out.                       |
 
 ## US-PAYROLL-001: Set a Member's Wage
 
@@ -279,11 +287,13 @@ technical responsibility.
 
 ## US-PAYROLL-003: Fund the Payroll Contract
 
-**As a** Bank owner or Board member\
-**I want to** transfer treasury assets to the Cash Remuneration contract\
+**As an** account funder\
+**I want to** add assets to the Cash Remuneration account\
 **So that** members can withdraw compensation paid in non-mintable assets
 
-This is a reference story. The Accounts feature owns the complete Bank transfer journey.
+The funder may use a wallet directly or an authorized Bank transfer. `US-BANK-002` owns the Bank-side action and its fee; this story owns
+the Payroll balance and payment availability. Native transfers call the receiver, while direct ERC-20 transfers do not emit a Payroll
+deposit event.
 
 ### Acceptance Criteria
 
@@ -291,24 +301,45 @@ This is a reference story. The Accounts feature owns the complete Bank transfer 
 
 - [x] `AC-US-PAYROLL-003-01` The Bank owner can send native assets to the Cash Remuneration address.
 - [x] `AC-US-PAYROLL-003-02` The Bank owner can send supported ERC-20 assets to the Cash Remuneration address.
-- [x] `AC-US-PAYROLL-003-03` The Cash Remuneration contract can receive native assets.
-- [x] `AC-US-PAYROLL-003-04` The Cash Remuneration contract can receive supported ERC-20 assets.
+- [x] `AC-US-PAYROLL-003-03` Native currency sent from a wallet to Cash Remuneration increases its native balance. _(contract)_
+- [x] `AC-US-PAYROLL-003-04` A supported ERC-20 sent directly from a wallet to Cash Remuneration increases that token's balance.
+      _(contract)_
 
 #### Business Rules
 
 - [x] `AC-US-PAYROLL-003-05` _(contract)_ SHER compensation follows the configured Investor minting path instead of requiring a prefunded
       SHER balance.
+- [ ] `AC-US-PAYROLL-003-07` A Bank funding action offers an ERC-20 destination only when Cash Remuneration supports that token.
 
 #### Edge & Error Cases
 
 - [x] `AC-US-PAYROLL-003-06` _(contract)_ A withdrawal in a non-mintable asset fails when the Cash Remuneration contract lacks the required
       balance.
+- [ ] `AC-US-PAYROLL-003-08` A wallet-origin ERC-20 transfer is identifiable in Payroll account history even though the Cash Remuneration
+      contract emits no deposit event.
 
-**Accounting:** Funding is a company-pocket movement booked by
-[`UC-BANK-03`](../accounting/journal-entry-catalogue.md#uc-bank-03--bank-funds-a-company-pocket) or
-[`INTERNAL`](../accounting/journal-entry-catalogue.md#internal--other-company-pocket-transfer); it is not payroll expense.
+### Test Coverage
 
-**Dependencies:** Accounts, [Bank contract](../../contracts/features/bank/README.md)
+| Acceptance Criterion   | Proof Strategy | Current Evidence | Status     |
+| ---------------------- | -------------- | ---------------- | ---------- |
+| `AC-US-PAYROLL-003-01` | `PS-CHAIN`     | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-003-02` | `PS-CHAIN`     | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-003-03` | `PS-CONTRACT`  | Contract         | ✅ Met     |
+| `AC-US-PAYROLL-003-04` | `PS-CONTRACT`  | Contract         | ✅ Met     |
+| `AC-US-PAYROLL-003-05` | `PS-CONTRACT`  | Contract         | ✅ Met     |
+| `AC-US-PAYROLL-003-06` | `PS-CONTRACT`  | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-003-07` | `PS-CHAIN`     | None linked      | ❌ Missing |
+| `AC-US-PAYROLL-003-08` | `PS-CHAIN`     | None linked      | ❌ Missing |
+
+**Accounting:** Bank-origin funding is a company-pocket movement booked by
+[`UC-BANK-03`](../accounting/journal-entry-catalogue.md#uc-bank-03--bank-funds-a-company-pocket). Direct wallet funding requires the source
+and purpose classification planned in [#2878](https://github.com/globe-and-citizen/cnc-portal/issues/2878); receiving funds is not itself a
+wage expense.
+
+**Cross-domain relationship:** Transfer handoff from `US-BANK-002` for Bank-origin funding; direct wallet funding has no Bank initiation
+story. [Accounting #2878](https://github.com/globe-and-citizen/cnc-portal/issues/2878) owns direct-movement discovery and reconciliation.
+
+**Dependencies:** Current Cash Remuneration contract and a connected wallet or `US-BANK-002`
 
 ## US-PAYROLL-004: Set Weekly Goals
 
@@ -828,6 +859,57 @@ into Investor Equity.
 
 **Dependencies:** US-PAYROLL-003, Accounts
 
+## US-PAYROLL-014: Return Payroll Funds to Bank
+
+**As an** authorized treasury actor\
+**I want to** return available Cash Remuneration funds to Bank\
+**So that** the company can manage unused payroll liquidity in its treasury
+
+This direct Payroll action is distinct from the multi-account `US-BANK-004` cash-out run. A Board member can propose the action, while only
+the Cash Remuneration owner executes the contract write directly or after approved governance.
+
+### Acceptance Criteria
+
+#### Happy Path
+
+- [x] `AC-US-PAYROLL-014-01` The Cash Remuneration owner can return its native balance to the Bank of the same contract generation.
+- [x] `AC-US-PAYROLL-014-02` The Cash Remuneration owner can return balances of its currently supported ERC-20 assets to that Bank.
+- [x] `AC-US-PAYROLL-014-03` An eligible Board member can submit the same return as a proposal requiring approval.
+- [x] `AC-US-PAYROLL-014-04` A successful return decreases the source balance and increases the destination Bank balance for each moved
+      asset.
+
+#### Business Rules
+
+- [x] `AC-US-PAYROLL-014-05` Only the Cash Remuneration owner can execute a direct return. _(contract)_
+- [x] `AC-US-PAYROLL-014-06` Before confirmation, the actor is informed that signed claims remain valid but may lack funds after the return.
+
+#### Edge & Error Cases
+
+- [ ] `AC-US-PAYROLL-014-07` An asset outside the contract's current supported-token set is not reported as returned when its balance
+      remains in Cash Remuneration.
+- [x] `AC-US-PAYROLL-014-08` Cancelling or rejecting the return leaves the Payroll and Bank balances unchanged.
+
+### Test Coverage
+
+| Acceptance Criterion   | Proof Strategy      | Current Evidence | Status          |
+| ---------------------- | ------------------- | ---------------- | --------------- |
+| `AC-US-PAYROLL-014-01` | `PS-CHAIN-CONTRACT` | None linked      | ❌ Missing      |
+| `AC-US-PAYROLL-014-02` | `PS-CHAIN-CONTRACT` | None linked      | ❌ Missing      |
+| `AC-US-PAYROLL-014-03` | `PS-BROWSER`        | Frontend         | ⚠️ Insufficient |
+| `AC-US-PAYROLL-014-04` | `PS-CHAIN`          | None linked      | ❌ Missing      |
+| `AC-US-PAYROLL-014-05` | `PS-CONTRACT`       | None linked      | ❌ Missing      |
+| `AC-US-PAYROLL-014-06` | `PS-FRONTEND`       | Frontend         | ✅ Met          |
+| `AC-US-PAYROLL-014-07` | `PS-CONTRACT`       | None linked      | ❌ Missing      |
+| `AC-US-PAYROLL-014-08` | `PS-BROWSER`        | None linked      | ❌ Missing      |
+
+**Accounting:** A source-account return is an [`INTERNAL`](../accounting/journal-entry-catalogue.md#internal--other-company-pocket-transfer)
+movement, not wage expense.
+
+**Cross-domain relationship:** `US-BANK-004` may orchestrate this return as one step of a larger cash-out run. Bank owns its later wallet
+transfer, while this story owns the source-account return.
+
+**Dependencies:** Current or eligible historical Cash Remuneration account, its generation's Bank, and a connected authorized wallet
+
 ## Human Validation
 
 Not yet completed. The feature owner must run every Payroll `@integrated` journey through Playwright UI against the prepared local G5 stack,
@@ -836,8 +918,11 @@ account position before marking the applicable stories `Done`.
 
 ## Known Gaps
 
-No unchecked functional criterion remains. Representative test evidence is available for every Payroll-owned acceptance criterion; this is
-not a claim of 100% statement or branch coverage. Manual feature-owner validation is still pending, so stories remain `🧪 Validation`.
+Wallet-origin ERC-20 funding has no Cash Remuneration deposit event and is absent from the current incoming-transfer feed, which reads
+Bank-origin transfers only (`US-PAYROLL-003`). A Bank asset can also be unsupported by the receiving Cash Remuneration contract. Direct
+return does not yet explain how signed claims may become unfunded, and unsupported ERC-20 balances can remain after the supported-token
+sweep (`US-PAYROLL-014`). [#2878](https://github.com/globe-and-citizen/cnc-portal/issues/2878) plans direct-movement discovery and
+reconciliation. Other Payroll stories retain their existing implementation and human-validation status.
 
 ## Implementation Evidence
 
@@ -887,6 +972,9 @@ not a claim of 100% statement or branch coverage. Manual feature-owner validatio
 - [Weekly-claim client queries and mutations](../../../app/src/queries/weeklyClaim.queries.ts)
 - [Cash Remuneration contract](../../../contract/contracts/CashRemunerationEIP712.sol)
 - [Bank contract](../../../contract/contracts/Bank.sol)
+- [Direct Payroll return](../../../app/src/components/sections/OwnerTreasuryWithdrawAction.vue),
+  [Payroll activity](../../../app/src/components/sections/CashRemunerationView/CashRemunerationTransactions.vue), and
+  [incoming Bank token-transfer feed](../../../app/src/composables/bank/useIncomingBankTokenTransfersViaLogs.ts)
 - [Frontend Payroll tests](../../../app/src/components/sections/CashRemunerationView/__tests__)
 - [Wage API tests](../../../backend/src/controllers/__tests__/wageController.test.ts)
 - [Claim API tests](../../../backend/src/controllers/__tests__/claimController.test.ts)

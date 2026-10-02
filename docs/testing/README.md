@@ -35,7 +35,8 @@ setup configuration.
 
 Chain-backed browser and integrated tests run inside an automatic chain snapshot. Fully simulated browser scenarios skip Hardhat entirely
 and may run with file-level parallelism. Integrated tests can additionally request authenticated owner/member pages, operational teams, and
-disposable team feature overrides. See the [fixture catalogue](./e2e-fixtures.md) before adding setup to an individual spec.
+disposable team feature overrides. See the [fixture catalogue](./e2e-fixtures.md) before adding setup to an individual spec. Prepare only
+the state required by the path's actor actions; apply the [path scope check](./e2e-paths.md#path-model) before adding assertions.
 
 ```bash
 cd app

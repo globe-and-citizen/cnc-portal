@@ -32,7 +32,7 @@
       <USelect
         v-if="filteredMembers.length > 0"
         v-model="input.token"
-        :items="options"
+        :items="tokenOptions"
         :disabled="teamStore.currentTeamMeta.isPending"
         aria-label="Select token"
         data-test="token-selector"
@@ -68,13 +68,14 @@
 
 <script lang="ts" setup>
 import { computed, ref } from 'vue'
-import { NETWORK, USDC_ADDRESS } from '@/constant'
-import { zeroAddress } from 'viem'
 import { useTeamStore } from '@/stores'
 import { useFocus, watchDebounced } from '@vueuse/core'
 import UserIdentity from '../UserIdentity.vue'
 
 const emit = defineEmits(['selectMember'])
+defineProps<{
+  tokenOptions: Array<{ value: string; label: string }>
+}>()
 const input = defineModel({
   default: {
     name: '',
@@ -91,17 +92,6 @@ const { focused: nameInputFocus } = useFocus(computed(() => nameInput.value?.inp
 const { focused: addressInputFocus } = useFocus(
   computed(() => addressInput.value?.inputRef ?? null)
 )
-const tokens = ref({
-  USDC: USDC_ADDRESS,
-  [NETWORK.currencySymbol]: zeroAddress
-})
-const options = computed(() => {
-  return Object.entries(tokens.value).map(([symbol, address]) => ({
-    value: address,
-    label: symbol === 'SepoliaETH' ? 'SepETH' : symbol
-  }))
-})
-
 const filteredMembers = computed(() => {
   if (!teamStore.currentTeam?.members) return []
 
