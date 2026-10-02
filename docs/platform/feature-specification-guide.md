@@ -55,6 +55,28 @@ focused documents.
 Product and contract documentation remain separate even when they share a name. For example, `docs/features/vesting/README.md` owns the
 portal journey, while `docs/contracts/features/vesting/README.md` owns the Solidity behaviour that supports it.
 
+## Cross-Domain Story Relationships
+
+A movement or policy can affect several features without making every feature the owner of the same user action. Describe the relationship
+where its result is observable and link the other canonical story. Use these relationship types:
+
+| Relationship         | Owning story                                                                       | Other domain's responsibility                                                      |
+| -------------------- | ---------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| Transfer handoff     | The initiating domain owns the action, authorization, amount, and fees.            | The receiving domain owns the credited balance, availability, and its own history. |
+| Orchestrated journey | The domain that offers the end-to-end goal owns order, partial failure, and retry. | Each participating domain retains the rules for its own operation.                 |
+| Shared policy        | The policy's canonical technical or product owner defines the common rule once.    | Each affected feature states its independently observable result or restriction.   |
+| Derived projection   | The reporting domain owns reconciliation and presentation of source evidence.      | Source stories retain the operation; reporting does not create another transfer.   |
+
+Record the relationship type, linked story IDs, and the distinct outcome under each affected story's dependencies or a short
+`Cross-domain relationship` note. Use a focused flow map when several stories participate; its rows link canonical AC owners rather than
+copying criteria. A shared component or contract method alone does not merge distinct actor goals into one story. Conversely, one movement
+can prove criteria in its initiating and receiving stories without being executed twice. A reporting projection should identify the same
+source operation across feeds so that it does not create duplicate accounting entries.
+
+For a Bank transfer to Expense or Payroll, `US-BANK-002` owns the transfer and its fee. The destination funding story owns the account
+balance and spendability. A direct wallet deposit has no Bank initiation story, so the destination funding story owns that path. The
+[treasury flow map](../features/accounts/treasury-flow-map.md) records these links as a concrete example.
+
 ## Location and Naming
 
 - Create one directory per client capability: `docs/features/<kebab-case-feature>/`.

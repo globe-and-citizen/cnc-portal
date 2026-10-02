@@ -5,6 +5,10 @@ import type { ComponentPublicInstance } from 'vue'
 import { createTestingPinia } from '@pinia/testing'
 import { useTeamStore } from '@/stores'
 
+vi.mock('@nuxt/ui/components/Select.vue', async () => ({
+  default: (await import('@/tests/stubs/nuxt-ui.stubs')).USelectStub
+}))
+
 // Mock team store data
 const mockLocalTeamStore = {
   currentTeam: {
@@ -32,7 +36,8 @@ describe('SelectMemberWithTokenInput.vue', () => {
           name: '',
           address: '',
           token: ''
-        }
+        },
+        tokenOptions: [{ value: '0xasset', label: 'Asset' }]
       },
       global: {
         plugins: [createTestingPinia({ createSpy: vi.fn })]
@@ -103,5 +108,12 @@ describe('SelectMemberWithTokenInput.vue', () => {
 
     expect(tokenSelector.exists()).toBe(true)
     expect(tokenSelector.attributes('aria-label')).toBe('Select token')
+  })
+
+  it('renders only the token options provided by the approval policy', async () => {
+    expect(wrapper.find('[data-test="token-selector"]').text()).toContain('Asset')
+    await wrapper.setProps({ tokenOptions: [{ value: '0xother', label: 'Other' }] })
+    expect(wrapper.find('[data-test="token-selector"]').text()).toContain('Other')
+    expect(wrapper.find('[data-test="token-selector"]').text()).not.toContain('Asset')
   })
 })

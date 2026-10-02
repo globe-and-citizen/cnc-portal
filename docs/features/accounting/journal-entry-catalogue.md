@@ -62,10 +62,13 @@ that state instead of presenting the affected books as final.
 | ---------------------------- | --------------------------------------------------------------------------------------------------- | ---------------------------------------------------- | ------------------------------------------------------------------ | ----------------------------------------------------------- |
 | Fund the Bank                | [US-BANK-001](../accounts/README.md#us-bank-001-fund-the-bank)                                      | `UC-BANK-02`                                         | External funds reach Bank                                          | Service revenue receipt                                     |
 | Transfer Bank funds          | [US-BANK-002](../accounts/README.md#us-bank-002-transfer-bank-funds)                                | `UC-BANK-03`, `CASH-OUT`, `INTERNAL`; optional `FEE` | Bank transfer executes                                             | Treasury funding, external payment, and any transaction fee |
+| Fund Expense Account         | [US-EXP-005](../accounts/README.md#us-exp-005-fund-the-expense-account)                             | `UC-BANK-03` for Bank source; direct source planned  | Funds reach Expense Account                                        | Treasury funding or pending direct-movement classification  |
+| Return Expense funds to Bank | [US-EXP-006](../accounts/README.md#us-exp-006-return-expense-account-funds-to-bank)                 | `INTERNAL` after source discovery                    | Source-account return executes                                     | Company-pocket transfer planned in #2878                    |
 | Cash out treasury funds      | [US-BANK-004](../accounts/README.md#us-bank-004-cash-out-available-treasury-funds)                  | `INTERNAL`, then `CASH-OUT`; optional `FEE`          | Each cash-out step executes                                        | Pocket sweep followed by external payment                   |
 | Spend from Expense           | [US-EXP-002](../accounts/README.md#us-exp-002-spend-from-the-expense-account)                       | `UC-EXP-01` or `INTERNAL`                            | Approved transfer executes                                         | Operating expense or pocket transfer                        |
 | Manage Safe funds            | [US-SAFE-003](../accounts/README.md#us-safe-003-manage-safe-funds)                                  | `UC-BANK-02`, `CASH-OUT`, or `INTERNAL`              | Confirmed Safe transfer is indexed                                 | Receipt, external payment, or pocket transfer               |
-| Fund Payroll                 | [US-PAYROLL-003](../payroll/README.md#us-payroll-003-fund-the-payroll-contract)                     | `UC-BANK-03` or `INTERNAL`                           | Funds reach Payroll                                                | Treasury funding transfer                                   |
+| Fund Payroll                 | [US-PAYROLL-003](../payroll/README.md#us-payroll-003-fund-the-payroll-contract)                     | `UC-BANK-03` for Bank source; direct source planned  | Funds reach Payroll                                                | Treasury funding or pending direct-movement classification  |
+| Return Payroll funds to Bank | [US-PAYROLL-014](../payroll/README.md#us-payroll-014-return-payroll-funds-to-bank)                  | `INTERNAL` after source discovery                    | Source-account return executes                                     | Company-pocket transfer planned in #2878                    |
 | Submit a daily claim         | [US-PAYROLL-005](../payroll/README.md#us-payroll-005-submit-a-daily-claim)                          | `UC-CASH-02`                                         | The containing work week ends while eligible                       | Wage accrual                                                |
 | Disable or re-enable a claim | [US-PAYROLL-009](../payroll/README.md#us-payroll-009-disable-or-re-enable-a-signed-weekly-claim)    | `UC-CASH-02`                                         | No entry on status change; ended claims accrue only while eligible | Wage accrual appears or is excluded                         |
 | Withdraw a weekly claim      | [US-PAYROLL-010](../payroll/README.md#us-payroll-010-withdraw-an-approved-weekly-claim)             | `UC-CASH-03`                                         | Withdrawal executes                                                | Wage or SHER settlement                                     |
@@ -104,8 +107,9 @@ An external wallet may belong to a company member; that alone does not make the 
 
 ### `UC-BANK-03` — Bank Funds a Company Pocket
 
-**Source stories:** [US-BANK-002](../accounts/README.md#us-bank-002-transfer-bank-funds) and
-[US-PAYROLL-003](../payroll/README.md#us-payroll-003-fund-the-payroll-contract).
+**Source stories:** [US-BANK-002](../accounts/README.md#us-bank-002-transfer-bank-funds),
+[US-EXP-005](../accounts/README.md#us-exp-005-fund-the-expense-account), and
+[US-PAYROLL-003](../payroll/README.md#us-payroll-003-fund-the-payroll-contract) for Bank-origin funding.
 
 - **Input:** A Bank transfer whose destination resolves to another known company cash pocket.
 - **Processing:** The Bank event establishes the source operation. Mirrored destination evidence is removed; a same-transaction fee is
@@ -123,6 +127,8 @@ For $100 received by the destination pocket and a $1 Bank fee:
 ### `INTERNAL` — Other Company-Pocket Transfer
 
 **Source stories:** [US-BANK-004](../accounts/README.md#us-bank-004-cash-out-available-treasury-funds),
+[US-EXP-006](../accounts/README.md#us-exp-006-return-expense-account-funds-to-bank),
+[US-PAYROLL-014](../payroll/README.md#us-payroll-014-return-payroll-funds-to-bank),
 [US-EXP-002](../accounts/README.md#us-exp-002-spend-from-the-expense-account), and
 [US-SAFE-003](../accounts/README.md#us-safe-003-manage-safe-funds).
 
