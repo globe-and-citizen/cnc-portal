@@ -115,6 +115,9 @@ export async function openCommunityCredit(
 
 export interface PublishCreditCallOptions {
   name: string
+  teamId?: string
+  target?: string
+  purpose?: string
   access?: 'everyone' | 'restricted'
   /** Team member addresses to whitelist, only used when `access` is `'restricted'`. */
   whitelist?: Address[]
@@ -124,10 +127,19 @@ export interface PublishCreditCallOptions {
  *  for target/rate/term unless the journey under test cares about them. */
 export async function publishCreditCall(
   page: Page,
-  { name, access = 'everyone', whitelist = [] }: PublishCreditCallOptions
+  {
+    name,
+    teamId = '1',
+    target,
+    purpose,
+    access = 'everyone',
+    whitelist = []
+  }: PublishCreditCallOptions
 ): Promise<void> {
   await page.locator('[data-test="new-credit-call"]').click()
   await page.locator('[data-test="cc-name"]').fill(name)
+  if (target) await page.locator('[data-test="cc-target"]').fill(target)
+  if (purpose) await page.locator('#cc-desc').fill(purpose)
   await page.locator('[data-test="cc-next"]').click()
 
   // Terms step: pick the required deadline, then accept the wizard's defaults
@@ -146,7 +158,9 @@ export async function publishCreditCall(
     }
   }
   await page.locator('[data-test="cc-next"]').click()
-  await expect(page).toHaveURL(/\/teams\/1\/community-credit$/, { timeout: 30_000 })
+  await expect(page).toHaveURL(new RegExp(`/teams/${teamId}/community-credit$`), {
+    timeout: 30_000
+  })
 }
 
 export async function openRound(page: Page, roundName: string): Promise<void> {

@@ -3,7 +3,7 @@
 // deposit and transfer forms have in common.
 import { expect, type Locator, type Page, type Request, type Route } from '@playwright/test'
 import type { Address, Hex } from 'viem'
-import { E2E_RPC_URL } from '../../src/e2e/chain'
+import { E2E_RPC_URL } from './e2e-chain'
 
 /** Playwright matches route strings against the normalized request URL. */
 export const E2E_RPC_ROUTE = `${E2E_RPC_URL}/`
