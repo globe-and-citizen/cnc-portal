@@ -42,11 +42,11 @@ Coverage targets compare each criterion with its required representative evidenc
 generated coverage report and CI retain file-level and execution evidence. Known assertion gaps remain insufficient even when a static
 reference has the expected layer label.
 
-| User Story  | Main Journey | Coverage Target | Gaps                   |
-| ----------- | ------------ | --------------- | ---------------------- |
-| US-FLAG-001 | Not required | ❌ 0/10 met     | `AC-US-FLAG-001-01–10` |
-| US-FLAG-002 | Not required | ❌ 0/12 met     | `AC-US-FLAG-002-01–12` |
-| US-FLAG-003 | Not required | ❌ 0/7 met      | `AC-US-FLAG-003-01–07` |
+| User Story  | Main Journey | Coverage Target | Gaps                          |
+| ----------- | ------------ | --------------- | ----------------------------- |
+| US-FLAG-001 | Not required | ❌ 0/10 met     | `AC-US-FLAG-001-01–10`        |
+| US-FLAG-002 | Not required | ⚠️ 1/12 met     | `AC-US-FLAG-002-01–06, 08–12` |
+| US-FLAG-003 | Not required | ⚠️ 1/7 met      | `AC-US-FLAG-003-01–04, 06–07` |
 
 ## Proof Strategy Reference
 
@@ -97,8 +97,8 @@ reference has the expected layer label.
 | `AC-US-FLAG-001-05`  | `PS-FL-RULE`   | None linked      | ❌ Missing      |
 | `AC-US-FLAG-001-06`  | `PS-FL-RULE`   | None linked      | ❌ Missing      |
 | `AC-US-FLAG-001-07`  | `PS-FL-RULE`   | None linked      | ❌ Missing      |
-| `AC-US-FLAG-001-08`  | `PS-FL-RULE`   | Backend          | 🔎 Unverified   |
-| `AC-US-FLAG-001-09`  | `PS-FL-RULE`   | Backend          | 🔎 Unverified   |
+| `AC-US-FLAG-001-08`  | `PS-FL-RULE`   | Backend          | ⚠️ Insufficient |
+| `AC-US-FLAG-001-09`  | `PS-FL-RULE`   | Backend          | ⚠️ Insufficient |
 | `AC-US-FLAG-001-10`  | `PS-FL-RULE`   | None linked      | ❌ Missing      |
 
 ## US-FLAG-002: Manage Company Overrides
@@ -140,11 +140,11 @@ reference has the expected layer label.
 | `AC-US-FLAG-002-04`  | `PS-FL-WRITE`  | Backend          | ⚠️ Insufficient |
 | `AC-US-FLAG-002-05`  | `PS-FL-RULE`   | None linked      | ❌ Missing      |
 | `AC-US-FLAG-002-06`  | `PS-FL-RULE`   | None linked      | ❌ Missing      |
-| `AC-US-FLAG-002-07`  | `PS-FL-RULE`   | Backend          | 🔎 Unverified   |
-| `AC-US-FLAG-002-08`  | `PS-FL-RULE`   | Backend          | 🔎 Unverified   |
-| `AC-US-FLAG-002-09`  | `PS-FL-RULE`   | Backend          | 🔎 Unverified   |
-| `AC-US-FLAG-002-10`  | `PS-FL-RULE`   | Backend          | 🔎 Unverified   |
-| `AC-US-FLAG-002-11`  | `PS-FL-RULE`   | Backend          | 🔎 Unverified   |
+| `AC-US-FLAG-002-07`  | `PS-FL-RULE`   | Backend          | ✅ Met          |
+| `AC-US-FLAG-002-08`  | `PS-FL-RULE`   | Backend          | ⚠️ Insufficient |
+| `AC-US-FLAG-002-09`  | `PS-FL-RULE`   | Backend          | ⚠️ Insufficient |
+| `AC-US-FLAG-002-10`  | `PS-FL-RULE`   | Backend          | ⚠️ Insufficient |
+| `AC-US-FLAG-002-11`  | `PS-FL-RULE`   | Backend          | ⚠️ Insufficient |
 | `AC-US-FLAG-002-12`  | `PS-FL-RULE`   | None linked      | ❌ Missing      |
 
 ## US-FLAG-003: Remove Obsolete Restrictions
@@ -179,7 +179,7 @@ reference has the expected layer label.
 | `AC-US-FLAG-003-02`  | `PS-FL-WRITE`  | Backend          | ⚠️ Insufficient |
 | `AC-US-FLAG-003-03`  | `PS-FL-GUARD`  | None linked      | ❌ Missing      |
 | `AC-US-FLAG-003-04`  | `PS-FL-UI`     | None linked      | ❌ Missing      |
-| `AC-US-FLAG-003-05`  | `PS-FL-RULE`   | Backend          | 🔎 Unverified   |
+| `AC-US-FLAG-003-05`  | `PS-FL-RULE`   | Backend          | ✅ Met          |
 | `AC-US-FLAG-003-06`  | `PS-FL-FAIL`   | Backend          | ⚠️ Insufficient |
 | `AC-US-FLAG-003-07`  | `PS-FL-RULE`   | None linked      | ❌ Missing      |
 
@@ -191,6 +191,8 @@ reference has the expected layer label.
 - `AC-US-FLAG-002-04` has separate mocked-delete and fallback references, but no representative delete-to-fallback transition. The
   `AC-US-FLAG-003-02` reference checks mocked deletion calls rather than durable all-or-nothing deletion; neither closes the atomicity gap
   in `AC-US-FLAG-003-07`.
+- The direct backend markers for `001-08–09` and `002-08–11` check error responses, but not every promised no-create or unchanged-record
+  result. They remain insufficient until representative assertions cover those state guarantees.
 
 ## Implementation Evidence
 
