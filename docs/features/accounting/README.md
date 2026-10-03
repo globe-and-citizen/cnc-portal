@@ -418,7 +418,7 @@ applicable stories `Done`.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `79315400c2ea74759a5505d6c66382ad3279b045`
+**Implementation evidence reviewed against:** `d9a236b9df4c1709dcd431f3fb5d333d26090ae4`
 
 - [Accounting page](../../../app/src/components/sections/AccountingView/AccountingPage.vue),
   [team routes](../../../app/src/router/index.ts), and [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts)
@@ -437,6 +437,7 @@ applicable stories `Done`.
 - [Accounting exports](../../../app/src/composables/accounting/useAccountingExport.ts) and
   [journal export snapshot](../../../app/src/utils/accounting/exportSpec.ts)
 - [Report interaction tests](../../../app/src/views/team/%5Bid%5D/Accounting/__tests__/AccountingReports.spec.ts),
+  [Balance Sheet drill-down tests](../../../app/src/views/team/%5Bid%5D/Accounting/__tests__/BalanceSheetDrilldown.spec.ts),
   [General Ledger filter tests](../../../app/src/views/team/%5Bid%5D/Accounting/__tests__/GeneralLedgerFilters.spec.ts),
   [account-assignment journey tests](../../../app/src/views/team/%5Bid%5D/Accounting/__tests__/AccountAssignmentsView.spec.ts), and
   [multi-generation journey tests](../../../app/src/composables/accounting/__tests__/useCNCAccounting.migration.spec.ts)

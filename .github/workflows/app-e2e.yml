@@ -262,6 +262,13 @@ jobs:
           echo "The frontend did not become ready"
           exit 1
 
+      - name: 🔎 Verify integrated stack readiness
+        run: npm run preflight:e2e:integrated
+        working-directory: ./app
+        env:
+          BASE_URL: http://127.0.0.1:5173
+          CNC_E2E_BACKEND_URL: http://127.0.0.1:3000
+
       - name: 🧪 Run integrated user journeys
         run: npm run test:e2e:integrated
         working-directory: ./app

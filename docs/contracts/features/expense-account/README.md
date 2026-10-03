@@ -1,152 +1,69 @@
 # Contract: ExpenseAccountEIP712
 
-**Epic Goal:** Allow employees to submit expenses against owner-signed budgets without requiring the owner to be online at submission time.
-**Contract File:** `contracts/expense-account/ExpenseAccountEIP712.sol` **Upgradeable:** Yes (Beacon) **Last updated:** 2026-09-23
+**Contract file:** `contract/contracts/expense-account/ExpenseAccountEIP712.sol`\
+**Upgradeable:** Yes (Beacon)\
+**Last updated:** 2026-10-01
 
----
+This document owns current Solidity behaviour. The [Accounts feature](../../../features/accounts/README.md) owns the canonical `US-EXP-*`
+product stories and acceptance criteria; contract capabilities do not allocate a second series of product story IDs.
 
-## Status Overview
+## Funding and token support
 
-| User Story | Title                                                                           | Contract | Frontend | Effort |
-| ---------- | ------------------------------------------------------------------------------- | :------: | :------: | ------ |
-| US-EXP-001 | Submit an expense with an owner-signed budget (EIP-712)                         |    🚧    |    🚫    | L      |
-| US-EXP-002 | Enforce budget constraints (amount per transaction, amount per period)          |    ✅    |    🚫    | M      |
-| US-EXP-003 | Reset budget usage after period expires                                         |    ✅    |    🚫    | M      |
-| US-EXP-004 | Deactivate / reactivate a budget approval                                       |    🚧    |    🚫    | S      |
-| US-EXP-005 | Deposit ETH/ERC20 into the expense account                                      |    🚧    |    🚫    | S      |
-| US-EXP-006 | Support multiple budget period types (one-time, daily, weekly, monthly, custom) |    ✅    |    🚫    | M      |
+- `receive()` accepts native currency from any address and emits `Deposited`.
+- `depositToken(token, amount)` pulls a positive ERC-20 amount from the caller, requires the token to be supported and the contract to be
+  unpaused, and emits `TokenDeposited`.
+- An ERC-20 contract can transfer tokens directly to this address without calling `depositToken`. Such a transfer bypasses its token-support
+  check and emits no Expense Account deposit event. The token balance can increase even when the asset is not usable for an approved spend
+  or included in an owner sweep.
+- The owner can add or remove ERC-20 support. `getSupportedTokens()` exposes the current support set; native currency is separate from that
+  list. The contract's support set does not by itself supply portal metadata, pricing, or historical accounting evidence.
 
-**Contract: 3 complete, 3 in progress — Frontend: 0 / 6**
+## Signed spending approvals
 
----
+The owner signs an EIP-712 `BudgetLimit` bound to the contract and chain. `transfer` verifies the signature, recipient, dates, budget
+limits, and relevant token rules, then pays from the Expense Account's own balance. A valid signature does not reserve funds. The recipient
+can spend only what remains within the approval and contract balance.
 
-## Implementation Notes
+### Period boundaries
 
-- **Contract:** `contracts/expense-account/ExpenseAccountEIP712.sol`
-- **Key functions:** `transfer`, `addTokenSupport`, `removeTokenSupport`, `deactivateApproval`, `activateApproval`
-- **Access roles:** Owner signs budgets off-chain; any address holding a valid signature can submit an expense; `onlyOwner` for token
-  support management and deactivation
-- **EIP-712:** Domain separator includes contract address and chain ID; typed data struct includes recipient, amount, budget limits, nonce,
-  and period type
-- **Budget types:** `TransactionsPerPeriod`, `AmountPerPeriod`, `AmountPerTransaction`
-- **Period types:** `OneTime`, `Daily`, `Weekly`, `Monthly`, `Custom`
+The signed `startDate` anchors the approval. The first calendar week or month can therefore be shorter than a complete week or month.
 
----
+| Frequency | Boundary used by `getPeriod`                                                                |
+| --------- | ------------------------------------------------------------------------------------------- |
+| One-time  | A single period with no reset.                                                              |
+| Daily     | Consecutive 24-hour intervals from `startDate`.                                             |
+| Weekly    | Monday 00:00 UTC; the first period ends at the next Monday.                                 |
+| Monthly   | First day of each calendar month at 00:00 UTC; the first period ends at the next month.     |
+| Custom    | Consecutive intervals of the positive signed `customFrequency` in seconds from `startDate`. |
 
-## US-EXP-001: Submit an Expense with an Owner-Signed Budget (EIP-712)
+The signed `endDate` is a Unix timestamp. `transfer` rejects a spend after that instant; the product rule for a date chosen in the portal
+must specify the instant sent by the form separately.
 
-> **As an** employee, **I want to** submit an expense using a budget approval signed by the team owner, **so that** I can get reimbursed
-> without requiring the owner to be online at the moment of payment.
+## Return to Bank
 
-**Status:** 🚧 | **Priority:** P1 | **Effort:** L | **Dependencies:** US-EXP-005
-
-### Acceptance Criteria
-
-- [x] `transfer(recipient, amount, budgetLimit, signature)` verifies the EIP-712 signature
-- [x] Signature recovery confirms the signer is the contract owner
-- [x] Budget limits from the signed struct are enforced (see US-EXP-002)
-- [x] ETH or ERC20 transferred to `recipient` on success
-- [x] Reverts if the signature is invalid or the budget is exhausted
-- [ ] Reverts if the approval is deactivated
-- [ ] Reverts if the contract is paused
-
----
-
-## US-EXP-002: Enforce Budget Constraints (Amount per Transaction, Amount per Period)
-
-> **As a** team owner, **I want to** define spend limits in the signed budget, **so that** employees cannot exceed approved amounts.
-
-**Status:** ✅ | **Priority:** P1 | **Effort:** M | **Dependencies:** US-EXP-001
-
-### Acceptance Criteria
-
-- [x] `AmountPerTransaction`: single submission must not exceed the limit
-- [x] `AmountPerPeriod`: cumulative spend within the current period must not exceed the limit
-- [x] `TransactionsPerPeriod`: number of submissions within the current period must not exceed the limit
-- [x] Usage tracking stored per budget signature hash
-- [x] Reverts with descriptive error if any constraint is violated
-
----
-
-## US-EXP-003: Reset Budget Usage After Period Expires
-
-> **As a** team owner, **I want to** have period-based budgets automatically reset when the period rolls over, **so that** employees get
-> their full allowance each period without requiring a new signature.
-
-**Status:** ✅ | **Priority:** P1 | **Effort:** M | **Dependencies:** US-EXP-002
-
-### Acceptance Criteria
-
-- [x] Each usage record includes the timestamp of the period start
-- [x] Before checking limits, the contract computes the current period boundary based on the period type
-- [x] If `block.timestamp` is in a new period, usage counters reset to zero
-- [x] `OneTime` budgets never reset — signature can only be used within a single cumulative limit
-- [x] `Custom` period uses a duration stored in the signed budget struct
-
----
-
-## US-EXP-004: Deactivate / Reactivate a Budget Approval
-
-> **As a** team owner, **I want to** revoke or re-enable a specific budget signature, **so that** I can stop payments against a compromised
-> or obsolete approval.
-
-**Status:** 🚧 | **Priority:** P2 | **Effort:** S | **Dependencies:** US-EXP-001
-
-### Acceptance Criteria
-
-- [x] Owner can mark a specific signature hash as inactive
-- [ ] `transfer` reverts if the budget is marked inactive
-- [x] Owner can reactivate a previously deactivated budget
-- [ ] Deactivation prevents subsequent transfers authorized by that signature hash
-
----
-
-## US-EXP-005: Deposit ETH/ERC20 into the Expense Account
-
-> **As a** team owner, **I want to** fund the expense account with ETH or ERC20 tokens, **so that** approved expenses can be paid out.
-
-**Status:** 🚧 | **Priority:** P1 | **Effort:** S | **Dependencies:** none
-
-### Acceptance Criteria
-
-- [x] `receive()` accepts plain ETH deposits from any address
-- [x] `addTokenSupport(token)` whitelists an ERC20 for use in expense submissions (owner only)
-- [x] `removeTokenSupport(token)` removes an ERC20 from the whitelist (owner only)
-- [ ] `transfer` rejects every unsupported ERC-20, including for one-time approvals
-- [x] Balance visible via standard ERC20 `balanceOf` and `address(this).balance`
-
----
-
-## US-EXP-006: Support Multiple Budget Period Types
-
-> **As a** team owner, **I want to** sign budgets with different period granularities (one-time, daily, weekly, monthly, or custom), **so
-> that** different expense scenarios are covered without deploying additional contracts.
-
-**Status:** ✅ | **Priority:** P2 | **Effort:** M | **Dependencies:** US-EXP-003
-
-### Acceptance Criteria
-
-- [x] `OneTime`: budget usable once (or until cumulative limit hit); never resets
-- [x] `Daily`: resets every 24 hours from the first use timestamp
-- [x] `Weekly`: resets every 7 days
-- [x] `Monthly`: resets every 30 days
-- [x] `Custom`: resets every N seconds where N is encoded in the signed budget struct
-- [x] Period type encoded in the EIP-712 typed data and verified from the signature
+`ownerWithdrawAllToBank()` is an owner-only, non-reentrant action available while the contract is unpaused. It resolves the Bank through the
+same Officer generation, then sends the native balance and balances of every token _currently_ in `getSupportedTokens()`. It does not revoke
+signed approvals or sweep tokens removed from support. The portal's
+[direct return story](../../../features/accounts/README.md#us-exp-006-return-expense-account-funds-to-bank) owns the visible workflow; the
+[Bank cash-out story](../../../features/accounts/README.md#us-bank-004-cash-out-available-treasury-funds) owns the separate multi-account
+orchestration.
 
 ## Known Gaps
 
 - `transfer` is not guarded by `whenNotPaused`, so pausing the contract does not currently block an approved spend.
 - `deactivateApproval` records the inactive state, but transfer validation does not currently consult that state.
 - One-time approvals return from validation before the supported-token check, so an unsupported ERC-20 held by the contract can be spent.
+- A direct ERC-20 transfer can leave an unsupported balance outside the supported-token owner sweep. Direct-movement discovery and
+  reconciliation are planned in [#2878](https://github.com/globe-and-citizen/cnc-portal/issues/2878).
 
 ## Implementation Evidence
+
+**Implementation evidence reviewed against:** `882dac180e33252cbce45accb60eff30b07e194d`
 
 - [Expense Account contract](../../../../contract/contracts/expense-account/ExpenseAccountEIP712.sol)
 - [Core contract tests](../../../../contract/test/ExpenseAccountEIP712.spec.ts),
   [calendar-period tests](../../../../contract/test/ExpenseAccountEIP712V2.calendarBasedPeriods.spec.ts),
   [custom-frequency tests](../../../../contract/test/ExpenseAccountEIP712V2.customFrequency.spec.ts), and
   [period-boundary tests](../../../../contract/test/ExpenseAccountEIP712V2.isNewPeriod.spec.ts)
-
----
 
 _[← Back to index](../README.md)_

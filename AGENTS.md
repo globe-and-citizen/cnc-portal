@@ -75,6 +75,9 @@ artifacts; after changing a contract interface, run `npm run generate-abi` in `c
 
 ## Workflow and public hygiene
 
+- Apply the [Development Relationship Validation](./docs/development-guide/relationship-validation.md) checklist at issue scoping,
+  implementation and review readiness, independent PR review, and final validation before merge. Inspect affected consumers even when their
+  files are unchanged; record applicability, evidence, and completion proposals in the issue/PR using that guide's result contract.
 - Use Conventional Commits with the matching gitmoji. Keep commits atomic. GitHub artifacts and user-facing UI strings are in English; see
   [commit conventions](./.github/copilot-instructions/commit-conventions.md).
 - Before opening a PR, search for a suitable issue or create one, assign it to the current authenticated GitHub user unless the task names

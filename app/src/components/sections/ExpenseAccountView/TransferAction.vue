@@ -95,11 +95,13 @@ import type { BudgetLimit } from '@/types'
 import { useContractBalance } from '@/composables'
 import { useTeamStore } from '@/stores'
 import { budgetLimitTypes, buildContractBudgetLimit, getTokens } from '@/utils/expenses/model'
+import { productExpenseToken } from '@/utils/expenses/tokenPolicy'
 import { classifyError } from '@/utils/errors/classifyContractError'
 import { log } from '@/lib/logging'
 import {
   encodeFunctionData,
   parseEther,
+  parseUnits,
   recoverTypedDataAddress,
   zeroAddress,
   type Address,
@@ -293,10 +295,15 @@ const transferNativeToken = async (to: string, amount: string, budgetLimit: Budg
 // calls `transferFrom` on the caller — so no ERC20 allowance is needed here.
 const transferErc20Token = (to: string, amount: string, budgetLimit: BudgetLimit) => {
   if (!expenseAccountEip712Address.value) return
+  const token = productExpenseToken(budgetLimit.tokenAddress)
+  if (!token) {
+    errorMessage.value = 'This token is not available for Expense Account spending'
+    return
+  }
 
   submitExpenseAccountTransfer([
     to,
-    BigInt(Number(amount) * 1e6),
+    parseUnits(amount, token.decimals),
     buildContractBudgetLimit(budgetLimit),
     props.row.signature
   ] as const)

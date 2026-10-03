@@ -103,11 +103,14 @@ recognition or settlement rule defined by the use case.
 | [US-BANK-004](../accounts/README.md#us-bank-004-cash-out-available-treasury-funds)                  | Final external payment with valid operating-expense evidence or classification    | `UC-EXPENSE-001`                                         | `RULE-EXTERNAL` out, fee?                              |
 | [US-EXP-002](../accounts/README.md#us-exp-002-spend-from-the-expense-account)                       | Approved external payout                                                          | `UC-EXPENSE-001`                                         | `RULE-EXTERNAL` out                                    |
 | [US-EXP-002](../accounts/README.md#us-exp-002-spend-from-the-expense-account)                       | Transfer to a company pocket                                                      | `UC-TREASURY-001`                                        | `RULE-INTERNAL`                                        |
+| [US-EXP-005](../accounts/README.md#us-exp-005-fund-the-expense-account)                             | Company funds reach Expense Account from another pocket                           | `UC-TREASURY-001`                                        | `RULE-INTERNAL`, fee? for Bank                         |
+| [US-EXP-006](../accounts/README.md#us-exp-006-return-expense-account-funds-to-bank)                 | Source-account return reaches its generation's Bank                               | `UC-TREASURY-001`                                        | `RULE-INTERNAL`                                        |
 | [US-SAFE-003](../accounts/README.md#us-safe-003-manage-safe-funds)                                  | Transfer to or from a company pocket                                              | `UC-TREASURY-001`                                        | `RULE-INTERNAL`                                        |
 | [US-SAFE-003](../accounts/README.md#us-safe-003-manage-safe-funds)                                  | External receipt without established purpose                                      | `UC-TREASURY-002`                                        | `RULE-EXTERNAL` in                                     |
 | [US-SAFE-003](../accounts/README.md#us-safe-003-manage-safe-funds)                                  | External payment without established purpose                                      | `UC-TREASURY-003`                                        | `RULE-EXTERNAL` out                                    |
 | [US-SAFE-003](../accounts/README.md#us-safe-003-manage-safe-funds)                                  | External payment with valid operating-expense classification                      | `UC-EXPENSE-001`                                         | `RULE-EXTERNAL` out                                    |
 | [US-PAYROLL-003](../payroll/README.md#us-payroll-003-fund-the-payroll-contract)                     | Company funds reach Payroll from another pocket                                   | `UC-TREASURY-001`                                        | `RULE-INTERNAL`, fee? for Bank                         |
+| [US-PAYROLL-014](../payroll/README.md#us-payroll-014-return-payroll-funds-to-bank)                  | Source-account return reaches its generation's Bank                               | `UC-TREASURY-001`                                        | `RULE-INTERNAL`                                        |
 | [US-PAYROLL-005](../payroll/README.md#us-payroll-005-submit-a-daily-claim)                          | Containing work week ends while eligible                                          | `UC-PAYROLL-001`                                         | Wage accrual                                           |
 | [US-PAYROLL-009](../payroll/README.md#us-payroll-009-disable-or-re-enable-a-signed-weekly-claim)    | Status determines ended-week accrual eligibility; no separate status-change entry | `UC-PAYROLL-001`                                         | Wage accrual                                           |
 | [US-PAYROLL-010](../payroll/README.md#us-payroll-010-withdraw-an-approved-weekly-claim)             | Confirmed withdrawal settles cash wages and/or SHER wages                         | `UC-PAYROLL-002`                                         | `RULE-EXTERNAL` out for cash; share issuance for SHER  |
@@ -144,8 +147,8 @@ it produces an entry.
 
 ### `UC-TREASURY-001` — Internal Company-Pocket Transfer
 
-**Source stories:** `US-BANK-001`, `US-BANK-002`, `US-BANK-004`, `US-EXP-002`, `US-SAFE-003`, and `US-PAYROLL-003`; links and conditions
-appear in the story map above.
+**Source stories:** `US-BANK-001`, `US-BANK-002`, `US-BANK-004`, `US-EXP-002`, `US-EXP-005`, `US-EXP-006`, `US-SAFE-003`, `US-PAYROLL-003`,
+and `US-PAYROLL-014`; links and conditions appear in the story map above.
 
 - **Trigger and evidence:** Confirmed cash moves between two company pockets, with no more specific business event owning that movement.
 - **Rules:** `RULE-INTERNAL`; add `RULE-FEE` only for an independently confirmed Bank fee.
@@ -542,10 +545,18 @@ removed because `UC-SDR-01` owns them. Target `UC-TREASURY-002` suspense treatme
 Current Bank funding debits destination cash and credits Bank cash, labelled `Treasury funding`; matched fees share the entry. Target
 `UC-TREASURY-001` applies `RULE-INTERNAL` and conditional `RULE-FEE`.
 
+Bank-origin funding serves `US-BANK-002`, `US-EXP-005`, and `US-PAYROLL-003`. Direct wallet funding of Expense Account or Payroll still
+requires complete source discovery and classification; a wallet outside the company's pockets must not be treated as an internal source. The
+[treasury flow map](../accounts/treasury-flow-map.md) records these receiving-story boundaries and the discovery gaps.
+
 ### `INTERNAL` — Other Company-Pocket Transfer
 
 Current other pocket movements debit destination cash and credit source cash, labelled `Internal transfer`. Target `UC-TREASURY-001` uses
 the same economic identity as Bank funding; Safe movements generate no Bank protocol fee.
+
+Source-account returns in `US-EXP-006` and `US-PAYROLL-014` belong to this treatment once source discovery is complete. Their
+direct-movement discovery and reconciliation remain planned in [#2878](https://github.com/globe-and-citizen/cnc-portal/issues/2878); the
+target story map does not establish implemented coverage.
 
 ### `CASH-OUT` — External Bank or Safe Payment
 

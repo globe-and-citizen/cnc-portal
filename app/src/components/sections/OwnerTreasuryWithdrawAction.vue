@@ -6,7 +6,7 @@
         size="sm"
         :disabled="!hasWithdrawableBalance || isLoadingAction || archivedDisabled"
         data-test="owner-withdraw-button"
-        label="Return Transfer to Bank  "
+        label="Return funds to Bank"
         @click="openWithdrawModal"
       />
     </TeamArchivedTooltip>
@@ -32,8 +32,9 @@
             color="warning"
             variant="soft"
             icon="i-heroicons-exclamation-triangle"
-            title="You are about to return transfer all available funds to the Bank."
-            description="By continuing, MetaMask will open and you will be asked to confirm the transaction."
+            title="Return supported funds to Bank"
+            :description="outstandingObligationWarning"
+            data-test="outstanding-obligation-warning"
           />
 
           <div class="flex justify-end gap-2">
@@ -97,6 +98,12 @@ const withdrawModal = ref({ mount: false, show: false })
 const modalWarningMessage = ref('')
 
 const isCash = computed(() => props.contractType === 'CashRemunerationEIP712')
+
+const outstandingObligationWarning = computed(() =>
+  isCash.value
+    ? 'This return does not cancel signed payroll claims. Claims may lack funds until Payroll is funded again. Native currency and currently supported tokens are returned; other token balances may remain.'
+    : 'This return does not cancel spending approvals. Approved expenses may lack funds until the Expense Account is funded again. Native currency and currently supported tokens are returned; other token balances may remain.'
+)
 
 const contractAddress = computed(
   () => teamStore.getContractAddressByType(props.contractType) as Address | undefined
