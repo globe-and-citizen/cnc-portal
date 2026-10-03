@@ -55,11 +55,11 @@ Coverage targets compare each criterion with its required representative evidenc
 generated coverage report and CI retain file-level and execution evidence. Known assertion gaps remain insufficient even when a static
 reference has the expected layer label.
 
-| User Story      | Main Journey | Coverage Target | Gaps                       |
-| --------------- | ------------ | --------------- | -------------------------- |
-| US-TEAM-OPS-001 | Not required | ❌ 0/11 met     | `AC-US-TEAM-OPS-001-01–11` |
-| US-TEAM-OPS-002 | Not required | ❌ 0/6 met      | `AC-US-TEAM-OPS-002-01–06` |
-| US-TEAM-OPS-003 | Not required | ❌ 0/10 met     | `AC-US-TEAM-OPS-003-01–10` |
+| User Story      | Main Journey | Coverage Target | Gaps                              |
+| --------------- | ------------ | --------------- | --------------------------------- |
+| US-TEAM-OPS-001 | Not required | ⚠️ 1/11 met     | `AC-US-TEAM-OPS-001-01–07, 09–11` |
+| US-TEAM-OPS-002 | Not required | ❌ 0/6 met      | `AC-US-TEAM-OPS-002-01–06`        |
+| US-TEAM-OPS-003 | Not required | ❌ 0/10 met     | `AC-US-TEAM-OPS-003-01–10`        |
 
 ## Proof Strategy Reference
 
@@ -117,7 +117,7 @@ reference has the expected layer label.
 | `AC-US-TEAM-OPS-001-05` | `PS-CO-D`      | None linked      | ❌ Missing      |
 | `AC-US-TEAM-OPS-001-06` | `PS-CO-B`      | None linked      | ❌ Missing      |
 | `AC-US-TEAM-OPS-001-07` | `PS-CO-D`      | None linked      | ❌ Missing      |
-| `AC-US-TEAM-OPS-001-08` | `PS-CO-B`      | Backend          | 🔎 Unverified   |
+| `AC-US-TEAM-OPS-001-08` | `PS-CO-B`      | Backend          | ✅ Met          |
 | `AC-US-TEAM-OPS-001-09` | `PS-CO-D`      | None linked      | ❌ Missing      |
 | `AC-US-TEAM-OPS-001-10` | `PS-CO-D`      | None linked      | ❌ Missing      |
 | `AC-US-TEAM-OPS-001-11` | `PS-CO-D`      | None linked      | ❌ Missing      |
