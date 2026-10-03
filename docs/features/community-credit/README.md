@@ -77,7 +77,7 @@ reference has the expected layer label.
 | User Story | Main Journey | Coverage Target | Gaps                 |
 | ---------- | ------------ | --------------- | -------------------- |
 | US-CC-001  | ⬜ Planned   | ❌ 0/7 met      | `AC-US-CC-001-01–07` |
-| US-CC-002  | ⬜ Planned   | ❌ 0/18 met     | `AC-US-CC-002-01–18` |
+| US-CC-002  | ⬜ Planned   | ⚠️ 2/18 met     | `AC-US-CC-002-01–16` |
 | US-CC-003  | ⬜ Planned   | ❌ 0/12 met     | `AC-US-CC-003-01–12` |
 | US-CC-004  | ⬜ Planned   | ❌ 0/8 met      | `AC-US-CC-004-01–08` |
 | US-CC-005  | ⬜ Planned   | ❌ 0/17 met     | `AC-US-CC-005-01–17` |
@@ -183,11 +183,11 @@ reference has the expected layer label.
 
 | Acceptance Criterion | Proof Strategy | Current Evidence | Status          |
 | -------------------- | -------------- | ---------------- | --------------- |
-| `AC-US-CC-002-01`    | `PS-LOCAL`     | Frontend         | 🔎 Unverified   |
+| `AC-US-CC-002-01`    | `PS-LOCAL`     | Frontend         | ⚠️ Insufficient |
 | `AC-US-CC-002-02`    | `PS-RULE`      | None linked      | ❌ Missing      |
-| `AC-US-CC-002-03`    | `PS-LOCAL`     | Frontend         | 🔎 Unverified   |
-| `AC-US-CC-002-04`    | `PS-LOCAL`     | Frontend         | 🔎 Unverified   |
-| `AC-US-CC-002-05`    | `PS-LOCAL`     | Frontend         | 🔎 Unverified   |
+| `AC-US-CC-002-03`    | `PS-LOCAL`     | Frontend         | ⚠️ Insufficient |
+| `AC-US-CC-002-04`    | `PS-LOCAL`     | Frontend         | ⚠️ Insufficient |
+| `AC-US-CC-002-05`    | `PS-LOCAL`     | Frontend         | ⚠️ Insufficient |
 | `AC-US-CC-002-06`    | `PS-PUBLISH`   | Frontend         | ⚠️ Insufficient |
 | `AC-US-CC-002-07`    | `PS-RULE`      | Frontend         | ⚠️ Insufficient |
 | `AC-US-CC-002-08`    | `PS-RULE`      | Frontend         | ⚠️ Insufficient |
@@ -195,9 +195,9 @@ reference has the expected layer label.
 | `AC-US-CC-002-10`    | `PS-RULE`      | Frontend         | ⚠️ Insufficient |
 | `AC-US-CC-002-11`    | `PS-LOCAL`     | None linked      | ❌ Missing      |
 | `AC-US-CC-002-12`    | `PS-PUBLISH`   | None linked      | ❌ Missing      |
-| `AC-US-CC-002-16`    | `PS-API`       | Backend          | 🔎 Unverified   |
-| `AC-US-CC-002-17`    | `PS-API`       | Backend          | 🔎 Unverified   |
-| `AC-US-CC-002-18`    | `PS-API`       | Backend          | 🔎 Unverified   |
+| `AC-US-CC-002-16`    | `PS-API`       | Backend          | ⚠️ Insufficient |
+| `AC-US-CC-002-17`    | `PS-API`       | Backend          | ✅ Met          |
+| `AC-US-CC-002-18`    | `PS-API`       | Backend          | ✅ Met          |
 | `AC-US-CC-002-13`    | `PS-LOCAL`     | None linked      | ❌ Missing      |
 | `AC-US-CC-002-14`    | `PS-FAIL`      | None linked      | ❌ Missing      |
 | `AC-US-CC-002-15`    | `PS-RETRY`     | Frontend         | ⚠️ Insufficient |
@@ -384,6 +384,9 @@ The following verified gaps have technical evidence and remediation directions i
 - The marked read-state and repayment tests cover narrower branches than the complete route, partial-acceptance, installment and
   multi-lender outcomes in `001-07`, `002-06`, `002-12`, `004-02–03`, and `005-02`. These remain proof gaps even where contract or frontend
   support exists.
+- The marked publish-form tests omit optional-purpose retention, positive target propagation, flat-rate conversion, and some deadline
+  defaults (`002-01`, `03–05`). The `002-16` backend tests mock an upsert result rather than proving a persisted identical or edited retry;
+  one purported retry performs only one request. These markers remain insufficient.
 
 ## Read Model & Caching
 
