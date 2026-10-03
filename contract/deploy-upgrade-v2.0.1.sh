@@ -31,7 +31,7 @@ echo "Validating storage and implementation safety for the four 2.0.1 upgrades..
   # These checks use compiled bytecode and committed storage baselines only. Keep
   # production configuration out of this process so the keystore remains locked.
   unset POLYGON_URL PRIVATE_KEY POLYGONSCAN_API_KEY
-  CNC_STORAGE_BASELINE_NETWORK=polygon \
+  CNC_EXPECTED_IMPLEMENTATION_VERSION=2.0.1 CNC_STORAGE_BASELINE_NETWORK=polygon \
     CONTRACTS=CashRemunerationEIP712,ExpenseAccountEIP712,Investor,Officer \
     npx hardhat run scripts/validate-upgrade.ts --network hardhat
 )

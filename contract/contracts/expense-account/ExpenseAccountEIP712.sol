@@ -210,6 +210,8 @@ contract ExpenseAccountEIP712 is
   error ExpenseAccountEIP712__SignerNotAuthorized(address expected, address actual);
   /// @dev The transfer did not pass the validation checks.
   error ExpenseAccountEIP712__TransferNotAllowed();
+  /// @dev The owner has deactivated this signed approval.
+  error ExpenseAccountEIP712__ApprovalInactive();
   /// @dev The contract's native balance is less than the requested amount.
   /// @param required The amount requested.
   /// @param available The current contract native balance.
@@ -573,7 +575,7 @@ contract ExpenseAccountEIP712 is
 
   /// @notice Current contract version, per semver.
   function version() public pure returns (string memory) {
-    return "2.0.1";
+    return "2.0.2";
   }
 
   /**
@@ -621,6 +623,7 @@ contract ExpenseAccountEIP712 is
     if (amount > budgetLimit.amount) revert ExpenseAccountEIP712__AmountExceedsBudgetLimit();
 
     ExpenseBalance storage balance = s_expenseBalances[signatureHash];
+    if (balance.state == ApprovalState.Inactive) revert ExpenseAccountEIP712__ApprovalInactive();
 
     // For one-time withdrawals
     if (budgetLimit.frequencyType == FrequencyType.OneTime) {
