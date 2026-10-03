@@ -1,6 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import ClaimHistoryMemberHeader from '@/components/sections/ClaimHistoryView/ClaimHistoryMemberHeader.vue'
-import { mockRouterPush, mockTeamData, mockTeamStore, renderWithProviders } from '@/tests/mocks'
+import AddressTooltip from '@/components/ui/AddressTooltip.vue'
+import {
+  mockRouterPush,
+  mockTeamData,
+  mockTeamStore,
+  mockUseClipboard,
+  renderWithProviders
+} from '@/tests/mocks'
 
 describe('ClaimHistoryMemberHeader', () => {
   const baseMembers = [...mockTeamData.members]
@@ -32,8 +39,26 @@ describe('ClaimHistoryMemberHeader', () => {
     expect(wrapper.find('[data-test="member-header"]').exists()).toBe(true)
     expect(wrapper.find('[data-test="claim-user-name"]').text()).toContain(member.name)
     expect(wrapper.find('[data-test="claim-user-address"]').exists()).toBe(true)
+    expect(wrapper.findComponent(AddressTooltip).props()).toMatchObject({
+      address: member.address,
+      slice: true
+    })
+    expect(wrapper.find('[data-test="address-tooltip"]').text()).toBe(
+      `${member.address.slice(0, 6)}...${member.address.slice(-4)}`
+    )
     expect(wrapper.find('[data-test="claim-user-image"]').exists()).toBe(true)
     expect(wrapper.find('[data-test="claim-user-image-wrapper"]').exists()).toBe(true)
+  })
+
+  it('copies the complete address when the member header displays an abbreviated address', async () => {
+    const member = baseMembers[0]
+    if (!member) throw new Error('Mock member data is required')
+    mockUseClipboard.isSupported.value = true
+    const wrapper = createWrapper(member.address)
+
+    await wrapper.find('[data-test="copy-address-tooltip"]').trigger('click')
+
+    expect(mockUseClipboard.copy).toHaveBeenCalledWith(member.address)
   })
 
   it('hides the image block when member has no imageUrl', () => {
@@ -95,7 +120,16 @@ describe('ClaimHistoryMemberHeader', () => {
     const selector = wrapper.findComponent({ name: 'USelectMenu' })
 
     expect(selector.props('searchInput')).toEqual({ placeholder: 'Search members…' })
-    expect(selector.props('filterFields')).toEqual(['label', 'description'])
+    expect(selector.props('filterFields')).toEqual(['label', 'value'])
+    expect(selector.props('items')).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          value: nextMember.address,
+          label: nextMember.name,
+          description: `${nextMember.address.slice(0, 6)}...${nextMember.address.slice(-4)}`
+        })
+      ])
+    )
 
     await selector.vm.$emit('update:modelValue', nextMember.address)
 
@@ -103,6 +137,23 @@ describe('ClaimHistoryMemberHeader', () => {
       name: 'payroll-history',
       params: { id: mockTeamStore.currentTeamId, memberAddress: nextMember.address }
     })
+  })
+
+  it('uses an abbreviated address as the selector label for a member without a name', () => {
+    const member = baseMembers[0]
+    if (!member) throw new Error('Mock member data is required')
+    mockTeamStore.currentTeamMeta.data!.members = [{ ...member, name: '' }]
+
+    const wrapper = createWrapper(member.address)
+    const selector = wrapper.findComponent({ name: 'USelectMenu' })
+
+    expect(selector.props('items')).toEqual([
+      expect.objectContaining({
+        value: member.address,
+        label: `${member.address.slice(0, 6)}...${member.address.slice(-4)}`,
+        description: `${member.address.slice(0, 6)}...${member.address.slice(-4)}`
+      })
+    ])
   })
 
   it('handles undefined memberAddress safely', () => {
