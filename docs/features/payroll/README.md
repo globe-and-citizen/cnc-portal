@@ -73,7 +73,7 @@ missing or insufficient proof.
 
 | User Story     | Main Journey  | Coverage Target | Gaps                                                                                                             |
 | -------------- | ------------- | --------------- | ---------------------------------------------------------------------------------------------------------------- |
-| US-PAYROLL-001 | ✅ Integrated | ✅ 27/27        | —                                                                                                                |
+| US-PAYROLL-001 | ✅ Integrated | ⚠️ 25/27        | `AC-US-PAYROLL-001-18–19` lacks direct backend proof                                                             |
 | US-PAYROLL-002 | ✅ Integrated | ✅ 12/12        | —                                                                                                                |
 | US-PAYROLL-003 | 🚧 Partial    | ⚠️ 3/8          | 5 — Bank receipt, unfunded withdrawal, token eligibility, and direct ERC-20 history need representative proof    |
 | US-PAYROLL-004 | ✅ Integrated | ✅ 11/11        | —                                                                                                                |

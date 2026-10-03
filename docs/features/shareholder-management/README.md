@@ -83,7 +83,6 @@ flowchart LR
 | US-SHER-005 | ✅ Integrated | ✅ 9/9 met      | —                                              |
 | US-SHER-006 | ✅ Integrated | ✅ 8/8 met      | —                                              |
 | US-SHER-007 | ✅ Integrated | ✅ 8/8 met      | —                                              |
-| US-SHER-008 | 🔗 Reference  | N/A             | Coverage is owned by `US-CONTRACT-005`         |
 | US-SHER-009 | ✅ Integrated | ✅ 8/8 met      | None                                           |
 
 ## Proof Strategy Reference
