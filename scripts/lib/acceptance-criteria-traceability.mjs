@@ -166,6 +166,80 @@ export function parseAcceptanceCoverageRows(document) {
   return rows
 }
 
+function tableRowsUnderHeading(document, heading) {
+  const lines = document.content.split('\n')
+  const start = lines.indexOf(`## ${heading}`)
+  if (start === -1) return null
+  const end = lines.findIndex((line, index) => index > start && line.startsWith('## '))
+  return lines.slice(start + 1, end === -1 ? undefined : end).filter((line) => line.startsWith('|'))
+}
+
+function markdownTableCells(line) {
+  return line
+    .split('|')
+    .slice(1, -1)
+    .map((cell) => cell.trim())
+}
+
+export function validateFeatureCoverageStructure(featureDocuments) {
+  const errors = []
+
+  for (const document of featureDocuments) {
+    const storyIds = [...document.content.matchAll(/^## (US-[A-Z0-9-]+):/gm)].map((match) => match[1])
+    const statusLines = tableRowsUnderHeading(document, 'Status Overview')
+    const overviewLines = tableRowsUnderHeading(document, 'Test Coverage Overview')
+    const strategies = parseProofStrategies(document)
+    const coverageRows = parseAcceptanceCoverageRows(document)
+
+    if (!statusLines) {
+      errors.push(`${document.path} is missing Status Overview.`)
+      continue
+    }
+    if (!overviewLines) {
+      errors.push(`${document.path} is missing Test Coverage Overview.`)
+      continue
+    }
+
+    const overviewHeader = markdownTableCells(overviewLines[0] ?? '')
+    if (overviewHeader.join('|') !== 'User Story|Main Journey|Coverage Target|Gaps') {
+      errors.push(`${document.path} must use User Story, Main Journey, Coverage Target, and Gaps in its coverage overview.`)
+    }
+
+    const statusRows = statusLines
+      .map(markdownTableCells)
+      .filter((cells) => /^US-[A-Z0-9-]+$/.test(cells[0] ?? ''))
+    const overviewRows = overviewLines
+      .map(markdownTableCells)
+      .filter((cells) => /^US-[A-Z0-9-]+$/.test(cells[0] ?? ''))
+    const statusIds = statusRows.map((cells) => cells[0])
+    const overviewIds = overviewRows.map((cells) => cells[0])
+    const expectedOverviewIds = statusRows
+      .filter((cells) => !cells[3]?.includes('🔗 Reference'))
+      .map((cells) => cells[0])
+
+    if (storyIds.join('|') !== statusIds.join('|')) {
+      errors.push(`${document.path} must list every detailed story once, in the same order as Status Overview.`)
+    }
+    if (expectedOverviewIds.join('|') !== overviewIds.join('|')) {
+      errors.push(`${document.path} must list every owned story once, in status order, in Test Coverage Overview.`)
+    }
+
+    const assessableIds = statusRows
+      .filter((cells) => !cells[3]?.includes('🔗 Reference') && !cells[3]?.includes('📝 Draft'))
+      .map((cells) => cells[0])
+    if (assessableIds.length > 0 && strategies.length === 0) {
+      errors.push(`${document.path} is missing Proof Strategy Reference for its assessable stories.`)
+    }
+    for (const storyId of assessableIds) {
+      if (!coverageRows.some((row) => row.storyId === storyId)) {
+        errors.push(`${document.path} is missing Test Coverage for ${storyId}.`)
+      }
+    }
+  }
+
+  return errors
+}
+
 export function acceptanceCriterionReferences(document) {
   const e2eMode = classifyE2eCoverageMode(document)
 
@@ -576,8 +650,13 @@ function validateAcceptanceCoverageRows({ featureDocuments, criteria, references
   return errors
 }
 
-export function validateAcceptanceCriteriaTraceability({ featureDocuments, testDocuments }) {
+export function validateAcceptanceCriteriaTraceability({
+  featureDocuments,
+  testDocuments,
+  enforceFeatureCoverage = false
+}) {
   const errors = []
+  if (enforceFeatureCoverage) errors.push(...validateFeatureCoverageStructure(featureDocuments))
   const criteria = featureDocuments.flatMap(parseAcceptanceCriteria)
   const criteriaById = new Map()
   const criteriaByStory = new Map()

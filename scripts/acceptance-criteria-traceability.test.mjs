@@ -11,7 +11,8 @@ import {
   singleIdCoverageComments,
   summarizeAcceptanceCriterionCoverage,
   summarizeTestFileInventory,
-  validateAcceptanceCriteriaTraceability
+  validateAcceptanceCriteriaTraceability,
+  validateFeatureCoverageStructure
 } from './lib/acceptance-criteria-traceability.mjs'
 
 const feature = (content, path = 'docs/features/example/README.md') => ({
@@ -57,6 +58,72 @@ test('parses acceptance criteria only inside a user story acceptance section', (
       outcome: 'A failure preserves the previous state.'
     }
   ])
+})
+
+test('requires the validated coverage structure for every assessable story', () => {
+  const complete = feature(`# Example — User Stories
+
+## Status Overview
+
+| User Story | Title | Actor | Status |
+| ---------- | ----- | ----- | ------ |
+| US-EXAMPLE-001 | Do something | User | 🧪 Validation |
+| US-EXAMPLE-002 | Future lookup | User | 📝 Draft |
+| US-EXAMPLE-003 | Related result | User | 🔗 Reference |
+
+## Test Coverage Overview
+
+| User Story | Main Journey | Coverage Target | Gaps |
+| ---------- | ------------ | --------------- | ---- |
+| US-EXAMPLE-001 | ⬜ Planned | ❌ 0/1 met | AC-US-EXAMPLE-001-01 |
+| US-EXAMPLE-002 | 📝 Draft | 📝 Not assessed | Lookup authority undecided |
+
+## Proof Strategy Reference
+
+| Strategy | Responsibilities | Required Evidence | Proof Rationale |
+| -------- | ---------------- | ----------------- | --------------- |
+| \`PS-API\` | Backend | Backend | The API owns the persisted result. |
+
+## US-EXAMPLE-001: Do Something
+
+### Acceptance Criteria
+
+#### Happy Path
+
+- [x] \`AC-US-EXAMPLE-001-01\` The result is persisted.
+
+### Test Coverage
+
+| Acceptance Criterion | Proof Strategy | Current Evidence | Status |
+| -------------------- | -------------- | ---------------- | ------ |
+| \`AC-US-EXAMPLE-001-01\` | \`PS-API\` | None linked | ❌ Missing |
+
+## US-EXAMPLE-002: Future Lookup
+
+### Acceptance Criteria
+
+#### Happy Path
+
+- [ ] \`AC-US-EXAMPLE-002-01\` The lookup resolves the real status.
+
+## US-EXAMPLE-003: Related Result
+
+This is owned elsewhere.
+`)
+
+  assert.deepEqual(validateFeatureCoverageStructure([complete]), [])
+  assert.deepEqual(
+    validateFeatureCoverageStructure([
+      feature(complete.content.replace('## Test Coverage Overview', '## Old Coverage'))
+    ]),
+    ['docs/features/example/README.md is missing Test Coverage Overview.']
+  )
+  assert.deepEqual(
+    validateFeatureCoverageStructure([
+      feature(complete.content.replace('### Test Coverage', '### Old Coverage'))
+    ]),
+    ['docs/features/example/README.md is missing Test Coverage for US-EXAMPLE-001.']
+  )
 })
 
 test('rejects a single-ID Covers block in favor of the representative test title', () => {
