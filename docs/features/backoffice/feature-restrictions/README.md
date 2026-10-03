@@ -36,6 +36,29 @@ flowchart LR
 | US-FLAG-002 | Manage company overrides     | Platform administrator | 🚧 In Progress |
 | US-FLAG-003 | Remove obsolete restrictions | Platform administrator | 🚧 In Progress |
 
+## Test Coverage Overview
+
+Coverage targets compare each criterion with its required representative evidence. Static references are not a current passing run; the
+generated coverage report and CI retain file-level and execution evidence. Known assertion gaps remain insufficient even when a static
+reference has the expected layer label.
+
+| User Story  | Main Journey | Coverage Target | Gaps                   |
+| ----------- | ------------ | --------------- | ---------------------- |
+| US-FLAG-001 | Not required | ❌ 0/10 met     | `AC-US-FLAG-001-01–10` |
+| US-FLAG-002 | Not required | ❌ 0/12 met     | `AC-US-FLAG-002-01–12` |
+| US-FLAG-003 | Not required | ❌ 0/7 met      | `AC-US-FLAG-003-01–07` |
+
+## Proof Strategy Reference
+
+| Strategy      | Responsibilities    | Required Evidence   | Proof Rationale                                                        |
+| ------------- | ------------------- | ------------------- | ---------------------------------------------------------------------- |
+| `PS-FL-READ`  | Dashboard + Backend | Dashboard + Backend | List and detail payloads must match the visible dashboard state.       |
+| `PS-FL-WRITE` | Dashboard + Backend | Dashboard + Backend | A saved change must persist and refresh the administrator view.        |
+| `PS-FL-GUARD` | Dashboard + Backend | Dashboard + Backend | Dashboard guard and independent API authorization can fail separately. |
+| `PS-FL-RULE`  | Backend             | Backend             | The server owns validation, uniqueness, precedence, and atomicity.     |
+| `PS-FL-UI`    | Dashboard           | Dashboard           | Cancellation must not send a mutation.                                 |
+| `PS-FL-FAIL`  | Dashboard + Backend | Dashboard + Backend | A failed delete must not be reported as a completed change.            |
+
 ## US-FLAG-001: Manage Global Restrictions
 
 **As a** platform administrator\
@@ -62,6 +85,21 @@ flowchart LR
 - [x] `AC-US-FLAG-001-08` An invalid or duplicate restriction is rejected without creating a record.
 - [x] `AC-US-FLAG-001-09` Updating a missing restriction is rejected without creating a record.
 - [x] `AC-US-FLAG-001-10` An invalid global status update is rejected without changing the persisted restriction.
+
+### Test Coverage
+
+| Acceptance Criterion | Proof Strategy | Current Evidence | Status          |
+| -------------------- | -------------- | ---------------- | --------------- |
+| `AC-US-FLAG-001-01`  | `PS-FL-READ`   | Backend          | ⚠️ Insufficient |
+| `AC-US-FLAG-001-02`  | `PS-FL-WRITE`  | Backend          | ⚠️ Insufficient |
+| `AC-US-FLAG-001-03`  | `PS-FL-WRITE`  | Backend          | ⚠️ Insufficient |
+| `AC-US-FLAG-001-04`  | `PS-FL-GUARD`  | None linked      | ❌ Missing      |
+| `AC-US-FLAG-001-05`  | `PS-FL-RULE`   | None linked      | ❌ Missing      |
+| `AC-US-FLAG-001-06`  | `PS-FL-RULE`   | None linked      | ❌ Missing      |
+| `AC-US-FLAG-001-07`  | `PS-FL-RULE`   | None linked      | ❌ Missing      |
+| `AC-US-FLAG-001-08`  | `PS-FL-RULE`   | Backend          | 🔎 Unverified   |
+| `AC-US-FLAG-001-09`  | `PS-FL-RULE`   | Backend          | 🔎 Unverified   |
+| `AC-US-FLAG-001-10`  | `PS-FL-RULE`   | None linked      | ❌ Missing      |
 
 ## US-FLAG-002: Manage Company Overrides
 
@@ -92,6 +130,23 @@ flowchart LR
 - [x] `AC-US-FLAG-002-11` Removing a missing override is rejected without changing other overrides.
 - [x] `AC-US-FLAG-002-12` An invalid override status is rejected without changing the persisted override.
 
+### Test Coverage
+
+| Acceptance Criterion | Proof Strategy | Current Evidence | Status          |
+| -------------------- | -------------- | ---------------- | --------------- |
+| `AC-US-FLAG-002-01`  | `PS-FL-READ`   | None linked      | ❌ Missing      |
+| `AC-US-FLAG-002-02`  | `PS-FL-WRITE`  | Backend          | ⚠️ Insufficient |
+| `AC-US-FLAG-002-03`  | `PS-FL-WRITE`  | Backend          | ⚠️ Insufficient |
+| `AC-US-FLAG-002-04`  | `PS-FL-WRITE`  | Backend          | ⚠️ Insufficient |
+| `AC-US-FLAG-002-05`  | `PS-FL-RULE`   | None linked      | ❌ Missing      |
+| `AC-US-FLAG-002-06`  | `PS-FL-RULE`   | None linked      | ❌ Missing      |
+| `AC-US-FLAG-002-07`  | `PS-FL-RULE`   | Backend          | 🔎 Unverified   |
+| `AC-US-FLAG-002-08`  | `PS-FL-RULE`   | Backend          | 🔎 Unverified   |
+| `AC-US-FLAG-002-09`  | `PS-FL-RULE`   | Backend          | 🔎 Unverified   |
+| `AC-US-FLAG-002-10`  | `PS-FL-RULE`   | Backend          | 🔎 Unverified   |
+| `AC-US-FLAG-002-11`  | `PS-FL-RULE`   | Backend          | 🔎 Unverified   |
+| `AC-US-FLAG-002-12`  | `PS-FL-RULE`   | None linked      | ❌ Missing      |
+
 ## US-FLAG-003: Remove Obsolete Restrictions
 
 **As a** platform administrator\
@@ -116,11 +171,26 @@ flowchart LR
 - [x] `AC-US-FLAG-003-06` A failed deletion is reported as a failure rather than success.
 - [ ] `AC-US-FLAG-003-07` A failed deletion leaves the restriction and all its company overrides unchanged.
 
+### Test Coverage
+
+| Acceptance Criterion | Proof Strategy | Current Evidence | Status          |
+| -------------------- | -------------- | ---------------- | --------------- |
+| `AC-US-FLAG-003-01`  | `PS-FL-WRITE`  | Backend          | ⚠️ Insufficient |
+| `AC-US-FLAG-003-02`  | `PS-FL-WRITE`  | Backend          | ⚠️ Insufficient |
+| `AC-US-FLAG-003-03`  | `PS-FL-GUARD`  | None linked      | ❌ Missing      |
+| `AC-US-FLAG-003-04`  | `PS-FL-UI`     | None linked      | ❌ Missing      |
+| `AC-US-FLAG-003-05`  | `PS-FL-RULE`   | Backend          | 🔎 Unverified   |
+| `AC-US-FLAG-003-06`  | `PS-FL-FAIL`   | Backend          | ⚠️ Insufficient |
+| `AC-US-FLAG-003-07`  | `PS-FL-RULE`   | None linked      | ❌ Missing      |
+
 ## Known Gaps
 
 - Restriction details return at most 100 company overrides, so additional overrides are omitted.
 - Restriction deletion removes overrides before deleting the restriction without a database transaction, so a partial failure can remove
   overrides while preserving the restriction.
+- `AC-US-FLAG-002-04` has separate mocked-delete and fallback references, but no representative delete-to-fallback transition. The
+  `AC-US-FLAG-003-02` reference checks mocked deletion calls rather than durable all-or-nothing deletion; neither closes the atomicity gap
+  in `AC-US-FLAG-003-07`.
 
 ## Implementation Evidence
 
