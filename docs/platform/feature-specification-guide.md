@@ -2,7 +2,7 @@
 
 **Status:** Current — applied to every canonical product feature user story
 
-**Last updated:** 2026-09-23
+**Last updated:** 2026-10-03
 
 **Purpose:** Define the canonical, reviewable documentation contract for CNC Portal features
 
@@ -267,8 +267,11 @@ priority or estimation. Detailed stories do not repeat their status after the ac
 
 #### Test Coverage Overview
 
-When a feature is part of an active test-coverage review, add a separate table immediately after the status overview. Do not add test state
-to the product `Status` column: delivery, representative automated evidence, E2E scope, and the latest execution result are different facts.
+Every canonical feature with owned acceptance criteria has a separate table immediately after the status overview. Do not add test state to
+the product `Status` column: delivery, representative automated evidence, E2E scope, and the latest execution result are different facts.
+Reference-only stories without owned criteria remain in the product status overview but do not receive invented criteria or coverage rows.
+Keep draft stories visible in the coverage overview as `📝 Draft` with the missing product or proof-boundary decision; do not assign a
+speculative proof target before the responsible implementation layer is decided.
 
 ```markdown
 | User Story     | Main Journey  | Coverage Target | Gaps |
@@ -276,7 +279,8 @@ to the product `Status` column: delivery, representative automated evidence, E2E
 | US-FEATURE-001 | ✅ Integrated | ✅ 5/5 met      | —    |
 ```
 
-- `Main Journey` states whether the primary user path is integrated, mocked, planned, blocked, or not required. `✅ Integrated` means the
+- `Main Journey` states whether the primary user path is integrated, mocked, planned, blocked, or not required. `Not required` is valid when
+  the story's required proof lives in another layer, including a backoffice capability without a client E2E path. `✅ Integrated` means the
   browser crosses every boundary required by that path; a seeded, stubbed, or snapshot-provided dependency is not a validated user action.
 - `Coverage Target` compares criteria whose required proof is present with the story's complete criterion count. Do not mark a story partial
   merely because intentionally mocked or layer-specific criteria are not integrated.
@@ -284,8 +288,9 @@ to the product `Status` column: delivery, representative automated evidence, E2E
 - Store the evidence distribution, owning `E2E-PATH-*`, detailed test-file mapping, latest pass/fail result, and run artifacts in the
   generated coverage report, CI, or a test-run record rather than duplicating them in this durable summary.
 
-The table is optional while this model is being piloted. When present, keep one row per story in the same stable-ID order as the status
-overview and refresh it when representative test references or E2E boundaries change.
+Keep one row per owned story in the same stable-ID order as the status overview and refresh it when representative test references or E2E
+boundaries change. A missing direct test reference is a traceability gap, not proof that the product behaviour is absent. Do not infer a
+passing current run from this table.
 
 Before the detailed stories, define each proof strategy used by the feature once. A strategy combines the responsible code layers, the
 smallest required evidence set, and the reason that boundary must be tested:
@@ -305,8 +310,10 @@ Use stable, descriptive `PS-*` identifiers. Define only strategies used by that 
 responsibilities, required evidence, or boundary rationale differs. The reference table is part of the feature's coverage plan; it does not
 describe the latest test execution result.
 
-For a coverage-reviewed story, add a compact table after its acceptance criteria and before its dependencies. Refer to the strategy instead
-of repeating its three defining fields on every criterion:
+For every non-reference story whose proof boundary is defined, add a compact table after its acceptance criteria and before its
+dependencies. An unresolved draft may defer its per-criterion proof strategy until its product and implementation boundary are decided;
+identify that decision explicitly in the overview and known gaps. Refer to the strategy instead of repeating its three defining fields on
+every criterion:
 
 ```markdown
 ### Test Coverage
@@ -333,6 +340,8 @@ of repeating its three defining fields on every criterion:
   `❌ Missing` when no representative proof is linked.
 - Coverage status records traceability against the planned test boundary, not whether the latest run passed. Keep current execution results
   in CI or the generated local report.
+- Review the representative assertions before counting a direct identifier as proof. If the assertion does not establish the criterion,
+  correct its marker or the test; do not use a coverage row to launder a weak reference into `✅ Met`.
 
 If a criterion contains outcomes that can pass or fail independently, need different responsibility owners, or require different evidence,
 split it before assigning the proof strategy. Keep a transversal criterion intact when its layers jointly produce one cohesive observable
@@ -548,7 +557,10 @@ This rule applies to every committed documentation file, not only feature README
 - [ ] Every criterion is a functional, observable, independently reviewable outcome that remains valid after a visual redesign.
 - [ ] UI and UX requirements are kept outside feature acceptance criteria.
 - [ ] Statuses, checkboxes, and the human-validation statement agree.
-- [ ] Any test coverage overview remains separate from product status and states the actual E2E integration boundary.
+- [ ] Every owned story has a coverage-overview row and, when its proof boundary is defined, a per-criterion coverage table using a defined
+      proof strategy; unresolved drafts name the decision that prevents a target, while reference-only stories have no invented criteria or
+      proof.
+- [ ] The coverage overview remains separate from product status and states the actual E2E integration boundary.
 - [ ] Known gaps are visible and not hidden under `✅ Done`.
 - [ ] Evidence links resolve to current code or tests.
 - [ ] Related feature and contract documentation is linked without duplication.
