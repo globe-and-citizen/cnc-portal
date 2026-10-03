@@ -784,7 +784,9 @@ into Investor Equity.
       attachments.
 - [x] `AC-US-PAYROLL-012-02` Company-wide payroll history provides each claim's member, week, duration, rates, computed amounts, status, and
       valid transitions.
-- [x] `AC-US-PAYROLL-012-03` A company member can select another current member to review that member's claim history.
+- [x] `AC-US-PAYROLL-012-03` A company member can select another current member to review that member's claim history. The selector and
+      member header display wallet addresses in the CNC abbreviated format (`0x098C...9DFB`); search, navigation, copying, and explorer
+      links use the complete address.
 - [x] `AC-US-PAYROLL-012-04` _(API)_ Weekly claims can be filtered by status.
 - [x] `AC-US-PAYROLL-012-05` _(API)_ Weekly claims can be filtered by member.
 - [x] `AC-US-PAYROLL-012-06` _(API)_ Weekly-claim total minutes are derived from their daily claims.
@@ -926,7 +928,7 @@ reconciliation. Other Payroll stories retain their existing implementation and h
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `4f7474d5bd72da6bd1ded405c321b57286bd06cc`
+**Implementation evidence reviewed against:** `d9472cd4a56d707a0dc6fc0cec23b306bce9637d`
 
 - [Cash Remuneration overview](../../../app/src/components/sections/CashRemunerationView/CashRemunerationOverview.vue),
   [monthly withdrawn summary](../../../app/src/components/sections/CashRemunerationView/CashRemunerationMonthlyClaim.vue),
