@@ -51,6 +51,29 @@ flowchart LR
 | US-CONTRACT-OPS-002 | Audit stored Officer-version metadata    | Platform administrator | 🚧 In Progress |
 | US-CONTRACT-OPS-003 | Synchronize Officer-version metadata     | Platform administrator | 🧪 Validation  |
 
+## Test Coverage Overview
+
+Coverage targets compare each criterion with its required representative evidence. Static references are not a current passing run; the
+generated coverage report and CI retain file-level and execution evidence. Known assertion gaps remain insufficient even when a static
+reference has the expected layer label.
+
+| User Story          | Main Journey | Coverage Target | Gaps                           |
+| ------------------- | ------------ | --------------- | ------------------------------ |
+| US-CONTRACT-OPS-001 | Not required | ❌ 0/9 met      | `AC-US-CONTRACT-OPS-001-01–09` |
+| US-CONTRACT-OPS-002 | Not required | ❌ 0/11 met     | `AC-US-CONTRACT-OPS-002-01–11` |
+| US-CONTRACT-OPS-003 | Not required | ❌ 0/11 met     | `AC-US-CONTRACT-OPS-003-01–11` |
+
+## Proof Strategy Reference
+
+| Strategy       | Responsibilities    | Required Evidence   | Proof Rationale                                                                 |
+| -------------- | ------------------- | ------------------- | ------------------------------------------------------------------------------- |
+| `PS-VO-REG`    | Dashboard           | Dashboard           | Bundled registry rendering must handle missing references.                      |
+| `PS-VO-CHAIN`  | Dashboard           | Dashboard           | Controlled chain reads must distinguish authority lookup failure.               |
+| `PS-VO-AUDIT`  | Dashboard           | Dashboard           | The preview must handle filters, unresolved records, and read-only behaviour.   |
+| `PS-VO-PARITY` | Dashboard + Backend | Dashboard + Backend | Dashboard detection and server resolution must agree for historical scope.      |
+| `PS-VO-UI`     | Dashboard           | Dashboard           | Confirmation, cache refresh, failure, and report state belong to the dashboard. |
+| `PS-VO-B`      | Backend             | Backend             | The server owns API authorization, scan scope, and persisted changes.           |
+
 ## US-CONTRACT-OPS-001: Inspect the Contract Deployment Registry
 
 **As a** platform administrator\
@@ -80,6 +103,20 @@ flowchart LR
 - [x] `AC-US-CONTRACT-OPS-001-08` A generation without a configured beacon remains represented as a transparent-proxy contract rather than
       as a missing contract.
 - [x] `AC-US-CONTRACT-OPS-001-09` A missing configured address is presented as unavailable rather than as a fabricated address.
+
+### Test Coverage
+
+| Acceptance Criterion        | Proof Strategy | Current Evidence | Status     |
+| --------------------------- | -------------- | ---------------- | ---------- |
+| `AC-US-CONTRACT-OPS-001-01` | `PS-VO-REG`    | None linked      | ❌ Missing |
+| `AC-US-CONTRACT-OPS-001-02` | `PS-VO-REG`    | None linked      | ❌ Missing |
+| `AC-US-CONTRACT-OPS-001-03` | `PS-VO-REG`    | None linked      | ❌ Missing |
+| `AC-US-CONTRACT-OPS-001-04` | `PS-VO-CHAIN`  | None linked      | ❌ Missing |
+| `AC-US-CONTRACT-OPS-001-05` | `PS-VO-REG`    | None linked      | ❌ Missing |
+| `AC-US-CONTRACT-OPS-001-06` | `PS-VO-REG`    | None linked      | ❌ Missing |
+| `AC-US-CONTRACT-OPS-001-07` | `PS-VO-REG`    | None linked      | ❌ Missing |
+| `AC-US-CONTRACT-OPS-001-08` | `PS-VO-REG`    | None linked      | ❌ Missing |
+| `AC-US-CONTRACT-OPS-001-09` | `PS-VO-REG`    | None linked      | ❌ Missing |
 
 **Dependencies:** Dashboard authentication, administrator role, and the bundled version registry
 
@@ -115,6 +152,22 @@ flowchart LR
 - [ ] `AC-US-CONTRACT-OPS-002-11` An unavailable version and beacon probe is distinguished from an Officer whose generation is genuinely
       unrecognized.
 
+### Test Coverage
+
+| Acceptance Criterion        | Proof Strategy | Current Evidence | Status          |
+| --------------------------- | -------------- | ---------------- | --------------- |
+| `AC-US-CONTRACT-OPS-002-01` | `PS-VO-AUDIT`  | None linked      | ❌ Missing      |
+| `AC-US-CONTRACT-OPS-002-02` | `PS-VO-PARITY` | None linked      | ❌ Missing      |
+| `AC-US-CONTRACT-OPS-002-03` | `PS-VO-PARITY` | Backend          | ⚠️ Insufficient |
+| `AC-US-CONTRACT-OPS-002-04` | `PS-VO-AUDIT`  | Backend          | ⚠️ Insufficient |
+| `AC-US-CONTRACT-OPS-002-05` | `PS-VO-AUDIT`  | None linked      | ❌ Missing      |
+| `AC-US-CONTRACT-OPS-002-06` | `PS-VO-PARITY` | None linked      | ❌ Missing      |
+| `AC-US-CONTRACT-OPS-002-07` | `PS-VO-AUDIT`  | None linked      | ❌ Missing      |
+| `AC-US-CONTRACT-OPS-002-08` | `PS-VO-AUDIT`  | Backend          | ⚠️ Insufficient |
+| `AC-US-CONTRACT-OPS-002-09` | `PS-VO-AUDIT`  | None linked      | ❌ Missing      |
+| `AC-US-CONTRACT-OPS-002-10` | `PS-VO-AUDIT`  | None linked      | ❌ Missing      |
+| `AC-US-CONTRACT-OPS-002-11` | `PS-VO-PARITY` | None linked      | ❌ Missing      |
+
 **Dependencies:** US-CONTRACT-OPS-001, dashboard authentication, administrator role, company Officer records, and on-chain read access
 
 ## US-CONTRACT-OPS-003: Synchronize Officer-Version Metadata
@@ -149,6 +202,22 @@ flowchart LR
       divergence.
 - [x] `AC-US-CONTRACT-OPS-003-11` A synchronization request with no detected changes completes without rewriting an Officer record. _(API)_
 
+### Test Coverage
+
+| Acceptance Criterion        | Proof Strategy | Current Evidence | Status        |
+| --------------------------- | -------------- | ---------------- | ------------- |
+| `AC-US-CONTRACT-OPS-003-01` | `PS-VO-UI`     | None linked      | ❌ Missing    |
+| `AC-US-CONTRACT-OPS-003-02` | `PS-VO-B`      | None linked      | ❌ Missing    |
+| `AC-US-CONTRACT-OPS-003-03` | `PS-VO-B`      | Backend          | 🔎 Unverified |
+| `AC-US-CONTRACT-OPS-003-04` | `PS-VO-UI`     | None linked      | ❌ Missing    |
+| `AC-US-CONTRACT-OPS-003-05` | `PS-VO-B`      | None linked      | ❌ Missing    |
+| `AC-US-CONTRACT-OPS-003-06` | `PS-VO-B`      | Backend          | 🔎 Unverified |
+| `AC-US-CONTRACT-OPS-003-07` | `PS-VO-B`      | None linked      | ❌ Missing    |
+| `AC-US-CONTRACT-OPS-003-08` | `PS-VO-B`      | None linked      | ❌ Missing    |
+| `AC-US-CONTRACT-OPS-003-09` | `PS-VO-UI`     | None linked      | ❌ Missing    |
+| `AC-US-CONTRACT-OPS-003-10` | `PS-VO-PARITY` | None linked      | ❌ Missing    |
+| `AC-US-CONTRACT-OPS-003-11` | `PS-VO-B`      | None linked      | ❌ Missing    |
+
 **Dependencies:** US-CONTRACT-OPS-002, dashboard authentication, administrator role, and on-chain read access
 
 ## Known Gaps
@@ -161,6 +230,11 @@ flowchart LR
   source of that result (`US-CONTRACT-OPS-002`).
 - The dashboard has no dedicated automated tests for contract-history display or the Officer-version synchronization interaction. Backend
   controller and version-resolution tests exist; human validation remains required.
+- `AC-US-CONTRACT-OPS-003-01` describes the dashboard preview-and-confirmation journey, not an API precondition: an authorized caller can
+  invoke the synchronization endpoint directly. `AC-US-CONTRACT-OPS-002-04` and `002-08` have backend references for narrower server fields
+  and dry-run behaviour, not proof of the complete dashboard preview.
+- A failed version probe can be counted as an unresolved result in a completed report. The current mutation-failure test does not establish
+  every failure outcome promised by `AC-US-CONTRACT-OPS-003-09`.
 
 ## Implementation Evidence
 
