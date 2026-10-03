@@ -70,13 +70,35 @@ automatically when a deadline or maturity date passes.
 
 ## Test Coverage Overview
 
-| User Story | E2E Status | Owning Path |
-| ---------- | ---------- | ----------- |
-| US-CC-001  | 📋 Planned | E2E-PATH-09 |
-| US-CC-002  | 📋 Planned | E2E-PATH-09 |
-| US-CC-003  | 📋 Planned | E2E-PATH-09 |
-| US-CC-004  | 📋 Planned | E2E-PATH-10 |
-| US-CC-005  | 📋 Planned | E2E-PATH-09 |
+Coverage targets compare each criterion with its required representative evidence. Static references are not a current passing run; the
+generated coverage report and CI retain file-level and execution evidence. Known assertion gaps remain insufficient even when a static
+reference has the expected layer label.
+
+| User Story | Main Journey | Coverage Target | Gaps                 |
+| ---------- | ------------ | --------------- | -------------------- |
+| US-CC-001  | ⬜ Planned   | ❌ 0/7 met      | `AC-US-CC-001-01–07` |
+| US-CC-002  | ⬜ Planned   | ❌ 0/18 met     | `AC-US-CC-002-01–18` |
+| US-CC-003  | ⬜ Planned   | ❌ 0/12 met     | `AC-US-CC-003-01–12` |
+| US-CC-004  | ⬜ Planned   | ❌ 0/8 met      | `AC-US-CC-004-01–08` |
+| US-CC-005  | ⬜ Planned   | ❌ 0/17 met     | `AC-US-CC-005-01–17` |
+
+## Proof Strategy Reference
+
+| Strategy        | Responsibilities              | Required Evidence         | Proof Rationale                                                                  |
+| --------------- | ----------------------------- | ------------------------- | -------------------------------------------------------------------------------- |
+| `PS-READ-ALL`   | Frontend + Backend + Contract | Integrated E2E            | On-chain round state and API metadata must agree in the account view.            |
+| `PS-READ-CHAIN` | Frontend + Contract           | Integrated E2E            | The round detail must reflect the selected live contract state.                  |
+| `PS-LOCAL`      | Frontend                      | Frontend                  | The client owns deterministic form rules and derived figures.                    |
+| `PS-UI`         | Frontend                      | Mocked browser            | Controlled dependencies must expose access, missing-data, and recovery branches. |
+| `PS-REFRESH`    | Frontend                      | Mocked browser            | A completed write must refresh data used by the next decision.                   |
+| `PS-PUBLISH`    | Frontend + Backend + Contract | Integrated E2E            | The offer receipt, saved metadata, and reloaded round must join by one ID.       |
+| `PS-CHAIN-FLOW` | Frontend + Contract           | Integrated E2E            | A wallet action must change funds and the visible round state.                   |
+| `PS-RULE`       | Frontend + Contract           | Frontend + Contract       | Portal limits and on-chain enforcement can diverge.                              |
+| `PS-API`        | Backend                       | Backend                   | The metadata API owns existence, ownership, and update semantics.                |
+| `PS-RETRY`      | Frontend + Backend            | Mocked browser + Backend  | Metadata failure must be retryable without creating a second round.              |
+| `PS-FAIL`       | Frontend + Contract           | Mocked browser + Contract | Rejected or reverted writes must preserve state and permit recovery.             |
+| `PS-PROTOCOL`   | Contract                      | Contract                  | Lifecycle and payout invariants must hold independently of the portal.           |
+| `PS-READY`      | Frontend                      | Frontend + Mocked browser | Unknown balance must block submission as well as invalid exact units.            |
 
 ## US-CC-001: Inspect the Credit Account
 
@@ -103,6 +125,18 @@ automatically when a deadline or maturity date passes.
 - [x] `AC-US-CC-001-06` A company without a deployed Credit Account receives the missing prerequisite instead of an empty round result.
 - [x] `AC-US-CC-001-07` The Credit Account journey distinguishes loading, an unavailable read with recovery, a confirmed missing round, and
       populated outcomes.
+
+### Test Coverage
+
+| Acceptance Criterion | Proof Strategy  | Current Evidence | Status          |
+| -------------------- | --------------- | ---------------- | --------------- |
+| `AC-US-CC-001-01`    | `PS-READ-ALL`   | None linked      | ❌ Missing      |
+| `AC-US-CC-001-02`    | `PS-UI`         | None linked      | ❌ Missing      |
+| `AC-US-CC-001-03`    | `PS-READ-CHAIN` | None linked      | ❌ Missing      |
+| `AC-US-CC-001-04`    | `PS-UI`         | None linked      | ❌ Missing      |
+| `AC-US-CC-001-05`    | `PS-LOCAL`      | Frontend         | ⚠️ Insufficient |
+| `AC-US-CC-001-06`    | `PS-UI`         | None linked      | ❌ Missing      |
+| `AC-US-CC-001-07`    | `PS-UI`         | Frontend         | ⚠️ Insufficient |
 
 ## US-CC-002: Publish a Credit Call
 
@@ -145,6 +179,29 @@ automatically when a deadline or maturity date passes.
       values without creating a duplicate round or a conflict error; going back only reaches the name and purpose, since target, token,
       terms and access are fixed on-chain.
 
+### Test Coverage
+
+| Acceptance Criterion | Proof Strategy | Current Evidence | Status          |
+| -------------------- | -------------- | ---------------- | --------------- |
+| `AC-US-CC-002-01`    | `PS-LOCAL`     | Frontend         | 🔎 Unverified   |
+| `AC-US-CC-002-02`    | `PS-RULE`      | None linked      | ❌ Missing      |
+| `AC-US-CC-002-03`    | `PS-LOCAL`     | Frontend         | 🔎 Unverified   |
+| `AC-US-CC-002-04`    | `PS-LOCAL`     | Frontend         | 🔎 Unverified   |
+| `AC-US-CC-002-05`    | `PS-LOCAL`     | Frontend         | 🔎 Unverified   |
+| `AC-US-CC-002-06`    | `PS-PUBLISH`   | Frontend         | ⚠️ Insufficient |
+| `AC-US-CC-002-07`    | `PS-RULE`      | Frontend         | ⚠️ Insufficient |
+| `AC-US-CC-002-08`    | `PS-RULE`      | Frontend         | ⚠️ Insufficient |
+| `AC-US-CC-002-09`    | `PS-RULE`      | Frontend         | ⚠️ Insufficient |
+| `AC-US-CC-002-10`    | `PS-RULE`      | Frontend         | ⚠️ Insufficient |
+| `AC-US-CC-002-11`    | `PS-LOCAL`     | None linked      | ❌ Missing      |
+| `AC-US-CC-002-12`    | `PS-PUBLISH`   | None linked      | ❌ Missing      |
+| `AC-US-CC-002-16`    | `PS-API`       | Backend          | 🔎 Unverified   |
+| `AC-US-CC-002-17`    | `PS-API`       | Backend          | 🔎 Unverified   |
+| `AC-US-CC-002-18`    | `PS-API`       | Backend          | 🔎 Unverified   |
+| `AC-US-CC-002-13`    | `PS-LOCAL`     | None linked      | ❌ Missing      |
+| `AC-US-CC-002-14`    | `PS-FAIL`      | None linked      | ❌ Missing      |
+| `AC-US-CC-002-15`    | `PS-RETRY`     | Frontend         | ⚠️ Insufficient |
+
 **Accounting:** Publishing terms moves no company funds and creates no journal entry.
 
 ## US-CC-003: Lend to an Open Round
@@ -178,6 +235,23 @@ automatically when a deadline or maturity date passes.
 - [x] `AC-US-CC-003-11` Rejecting approval, rejecting the lending transaction, or an on-chain failure leaves the round unchanged and returns
       a recoverable failure outcome.
 
+### Test Coverage
+
+| Acceptance Criterion | Proof Strategy  | Current Evidence | Status          |
+| -------------------- | --------------- | ---------------- | --------------- |
+| `AC-US-CC-003-01`    | `PS-CHAIN-FLOW` | None linked      | ❌ Missing      |
+| `AC-US-CC-003-02`    | `PS-CHAIN-FLOW` | None linked      | ❌ Missing      |
+| `AC-US-CC-003-03`    | `PS-REFRESH`    | None linked      | ❌ Missing      |
+| `AC-US-CC-003-04`    | `PS-REFRESH`    | None linked      | ❌ Missing      |
+| `AC-US-CC-003-05`    | `PS-REFRESH`    | None linked      | ❌ Missing      |
+| `AC-US-CC-003-06`    | `PS-PROTOCOL`   | Frontend         | ⚠️ Insufficient |
+| `AC-US-CC-003-07`    | `PS-RULE`       | None linked      | ❌ Missing      |
+| `AC-US-CC-003-08`    | `PS-RULE`       | None linked      | ❌ Missing      |
+| `AC-US-CC-003-09`    | `PS-RULE`       | None linked      | ❌ Missing      |
+| `AC-US-CC-003-10`    | `PS-UI`         | Frontend         | ⚠️ Insufficient |
+| `AC-US-CC-003-12`    | `PS-UI`         | Frontend         | ⚠️ Insufficient |
+| `AC-US-CC-003-11`    | `PS-FAIL`       | None linked      | ❌ Missing      |
+
 **Accounting:** A contribution remains source evidence while the round is open. When the round becomes funded, Accounting books principal
 through [`UC-CREDIT-01`](../accounting/journal-entry-catalogue.md#uc-credit-01--funded-principal) and fixed return through
 [`UC-CREDIT-05`](../accounting/journal-entry-catalogue.md#uc-credit-05--fixed-return-recognized).
@@ -206,6 +280,19 @@ through [`UC-CREDIT-01`](../accounting/journal-entry-catalogue.md#uc-credit-01--
 
 - [x] `AC-US-CC-004-07` A partial raise of 0 cannot be accepted.
 - [x] `AC-US-CC-004-08` A failed resolution leaves the round unchanged and returns a failure outcome.
+
+### Test Coverage
+
+| Acceptance Criterion | Proof Strategy  | Current Evidence | Status          |
+| -------------------- | --------------- | ---------------- | --------------- |
+| `AC-US-CC-004-01`    | `PS-CHAIN-FLOW` | Frontend         | ⚠️ Insufficient |
+| `AC-US-CC-004-02`    | `PS-CHAIN-FLOW` | Frontend         | ⚠️ Insufficient |
+| `AC-US-CC-004-03`    | `PS-CHAIN-FLOW` | None linked      | ❌ Missing      |
+| `AC-US-CC-004-04`    | `PS-REFRESH`    | None linked      | ❌ Missing      |
+| `AC-US-CC-004-05`    | `PS-PROTOCOL`   | None linked      | ❌ Missing      |
+| `AC-US-CC-004-06`    | `PS-PROTOCOL`   | None linked      | ❌ Missing      |
+| `AC-US-CC-004-07`    | `PS-PROTOCOL`   | None linked      | ❌ Missing      |
+| `AC-US-CC-004-08`    | `PS-FAIL`       | None linked      | ❌ Missing      |
 
 **Accounting:** Accepting a partial raise activates `UC-CREDIT-01` and `UC-CREDIT-05`. Refunding lenders returns funds that never entered
 the company's books and creates no journal entry.
@@ -254,6 +341,28 @@ the company's books and creates no journal entry.
 - [x] `AC-US-CC-005-16` A settled round cannot be repaid again.
 - [x] `AC-US-CC-005-17` Rejecting or failing a repayment preserves the outstanding amount and returns a recoverable failure outcome.
 
+### Test Coverage
+
+| Acceptance Criterion | Proof Strategy  | Current Evidence | Status          |
+| -------------------- | --------------- | ---------------- | --------------- |
+| `AC-US-CC-005-01`    | `PS-CHAIN-FLOW` | None linked      | ❌ Missing      |
+| `AC-US-CC-005-02`    | `PS-PROTOCOL`   | None linked      | ❌ Missing      |
+| `AC-US-CC-005-03`    | `PS-REFRESH`    | None linked      | ❌ Missing      |
+| `AC-US-CC-005-04`    | `PS-REFRESH`    | None linked      | ❌ Missing      |
+| `AC-US-CC-005-05`    | `PS-REFRESH`    | None linked      | ❌ Missing      |
+| `AC-US-CC-005-06`    | `PS-CHAIN-FLOW` | Frontend         | ⚠️ Insufficient |
+| `AC-US-CC-005-07`    | `PS-RULE`       | None linked      | ❌ Missing      |
+| `AC-US-CC-005-08`    | `PS-RULE`       | Frontend         | ⚠️ Insufficient |
+| `AC-US-CC-005-09`    | `PS-RULE`       | Frontend         | ⚠️ Insufficient |
+| `AC-US-CC-005-10`    | `PS-READY`      | Frontend         | ⚠️ Insufficient |
+| `AC-US-CC-005-11`    | `PS-PROTOCOL`   | None linked      | ❌ Missing      |
+| `AC-US-CC-005-12`    | `PS-PROTOCOL`   | Frontend         | ⚠️ Insufficient |
+| `AC-US-CC-005-13`    | `PS-UI`         | Frontend         | ⚠️ Insufficient |
+| `AC-US-CC-005-14`    | `PS-UI`         | None linked      | ❌ Missing      |
+| `AC-US-CC-005-15`    | `PS-PROTOCOL`   | Frontend         | ⚠️ Insufficient |
+| `AC-US-CC-005-16`    | `PS-PROTOCOL`   | None linked      | ❌ Missing      |
+| `AC-US-CC-005-17`    | `PS-FAIL`       | None linked      | ❌ Missing      |
+
 **Accounting:** Each repayment settles principal and interest through
 [`UC-CREDIT-03`](../accounting/journal-entry-catalogue.md#uc-credit-03--principal-and-interest-repaid). Lender payments from the same
 transaction remain one General Ledger entry.
@@ -270,6 +379,11 @@ The following verified gaps have technical evidence and remediation directions i
 - Lending, repayment, refunding, and accepting partial funding now invalidate the cached balance/allowance reads for the round's own token
   (so a widget that renders them would pick up the change on its next read), but no Community Credit surface currently renders a lender's
   own token balance — the matching activity feed still doesn't refresh every affected balance visibly.
+- `AC-US-CC-001-05` has a component marker for separately labelled symbols, but the store groups by display symbol rather than token
+  address. Different token contracts sharing one symbol can be summed; the criterion is not fully established by that test.
+- The marked read-state and repayment tests cover narrower branches than the complete route, partial-acceptance, installment and
+  multi-lender outcomes in `001-07`, `002-06`, `002-12`, `004-02–03`, and `005-02`. These remain proof gaps even where contract or frontend
+  support exists.
 
 ## Read Model & Caching
 
