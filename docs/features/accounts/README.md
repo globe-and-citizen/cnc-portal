@@ -64,7 +64,7 @@ flowchart LR
 | US-BANK-004 | Cash out available treasury funds          | Bank owner                 | 🧪 Validation  |
 | US-EXP-001  | Grant a signed spending approval           | Expense Account owner      | 🧪 Validation  |
 | US-EXP-002  | Spend from the Expense Account             | Approved recipient         | 🚧 In Progress |
-| US-EXP-003  | Deactivate or reactivate an approval       | Expense Account owner      | 🚧 In Progress |
+| US-EXP-003  | Deactivate or reactivate an approval       | Expense Account owner      | 🧪 Validation  |
 | US-EXP-004  | Review the Expense Account and its history | Company member / recipient | 🧪 Validation  |
 | US-EXP-005  | Fund the Expense Account                   | Account funder             | 🚧 In Progress |
 | US-EXP-006  | Return Expense Account funds to Bank       | Authorized treasury actor  | 🚧 In Progress |
@@ -92,7 +92,7 @@ mocked browser path for the external Safe Transaction Service boundary.
 | US-BANK-004 | 🚧 Partial    | ⚠️ 7/8          | 1 — `AC-US-BANK-004-02`                                                                                                |
 | US-EXP-001  | ✅ Integrated | ✅ 15/15        | —                                                                                                                      |
 | US-EXP-002  | 🚧 Partial    | ⚠️ 14/16        | 2 — `AC-US-EXP-002-07`, `AC-US-EXP-002-09`                                                                             |
-| US-EXP-003  | ✅ Integrated | ⚠️ 8/9          | 1 — `AC-US-EXP-003-05`                                                                                                 |
+| US-EXP-003  | ✅ Integrated | ✅ 9/9          | —                                                                                                                      |
 | US-EXP-004  | ✅ Integrated | ✅ 12/12        | —                                                                                                                      |
 | US-EXP-005  | 🚧 Partial    | ⚠️ 4/7          | 3 — approved-spend availability, destination token eligibility, and direct ERC-20 history need proof or implementation |
 | US-EXP-006  | 🚧 Partial    | ⚠️ 1/8          | 7 — source-to-Bank settlement and governance need chain proof; balances of unswept tokens need explicit handling       |
@@ -465,7 +465,7 @@ a transfer to another known company pocket is
 #### Business Rules
 
 - [x] `AC-US-EXP-003-04` Only the current Expense Account owner can change an approval's active state.
-- [ ] `AC-US-EXP-003-05` A deactivated approval cannot authorize a spend. _(contract)_
+- [x] `AC-US-EXP-003-05` A deactivated approval cannot authorize a spend. _(contract)_
 - [x] `AC-US-EXP-003-06` Reactivation preserves the approval's original signed limits and expiry.
 
 #### Edge & Error Cases
@@ -476,17 +476,17 @@ a transfer to another known company pocket is
 
 ### Test Coverage
 
-| Acceptance Criterion | Proof Strategy        | Current Evidence                     | Status     |
-| -------------------- | --------------------- | ------------------------------------ | ---------- |
-| `AC-US-EXP-003-01`   | `PS-CHAIN-CONTRACT`   | Integrated E2E + Frontend + Contract | ✅ Met     |
-| `AC-US-EXP-003-02`   | `PS-CHAIN-CONTRACT`   | Integrated E2E + Frontend + Contract | ✅ Met     |
-| `AC-US-EXP-003-03`   | `PS-API-BACKEND`      | Integrated E2E + Frontend + Backend  | ✅ Met     |
-| `AC-US-EXP-003-04`   | `PS-BACKEND-CONTRACT` | Backend + Contract                   | ✅ Met     |
-| `AC-US-EXP-003-05`   | `PS-CONTRACT`         | None linked                          | ❌ Missing |
-| `AC-US-EXP-003-06`   | `PS-CONTRACT`         | Contract                             | ✅ Met     |
-| `AC-US-EXP-003-07`   | `PS-BROWSER`          | Mocked browser                       | ✅ Met     |
-| `AC-US-EXP-003-08`   | `PS-BROWSER`          | Mocked browser                       | ✅ Met     |
-| `AC-US-EXP-003-09`   | `PS-FRONTEND`         | Frontend                             | ✅ Met     |
+| Acceptance Criterion | Proof Strategy        | Current Evidence                     | Status |
+| -------------------- | --------------------- | ------------------------------------ | ------ |
+| `AC-US-EXP-003-01`   | `PS-CHAIN-CONTRACT`   | Integrated E2E + Frontend + Contract | ✅ Met |
+| `AC-US-EXP-003-02`   | `PS-CHAIN-CONTRACT`   | Integrated E2E + Frontend + Contract | ✅ Met |
+| `AC-US-EXP-003-03`   | `PS-API-BACKEND`      | Integrated E2E + Frontend + Backend  | ✅ Met |
+| `AC-US-EXP-003-04`   | `PS-BACKEND-CONTRACT` | Backend + Contract                   | ✅ Met |
+| `AC-US-EXP-003-05`   | `PS-CONTRACT`         | Integrated E2E + Contract            | ✅ Met |
+| `AC-US-EXP-003-06`   | `PS-CONTRACT`         | Contract                             | ✅ Met |
+| `AC-US-EXP-003-07`   | `PS-BROWSER`          | Mocked browser                       | ✅ Met |
+| `AC-US-EXP-003-08`   | `PS-BROWSER`          | Mocked browser                       | ✅ Met |
+| `AC-US-EXP-003-09`   | `PS-FRONTEND`         | Frontend                             | ✅ Met |
 
 **Accounting:** Changing an approval's active state moves no money and creates no journal entry.
 
@@ -909,7 +909,6 @@ Bank transfers can incur the Bank's configured protocol fee; Accounting adds a m
 - Bank history does not distinguish a failed event read from a successfully loaded empty history (`US-BANK-003`).
 - A one-time Expense approval can spend an unsupported ERC-20 token held by the contract (`US-EXP-002`).
 - Pausing the Expense Account does not prevent spending (`US-EXP-002`).
-- Deactivating an Expense approval changes its recorded state but does not prevent that signature from authorizing a spend (`US-EXP-003`).
 - A wallet-origin direct ERC-20 transfer to Expense emits no Expense deposit event and is absent from the current incoming-transfer feed,
   which reads Bank-origin transfers only (`US-EXP-005`). Accounting discovery is planned in
   [#2878](https://github.com/globe-and-citizen/cnc-portal/issues/2878).
@@ -922,7 +921,7 @@ Bank transfers can incur the Bank's configured protocol fee; Accounting adds a m
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `4f7474d5bd72da6bd1ded405c321b57286bd06cc`
+**Implementation evidence reviewed against:** `977d73f7c042253f4a107f632798fbbddbc8f4d4`
 
 - [Bank deposit modal](../../../app/src/components/sections/BankView/forms/DepositModal.vue),
   [Bank transfer modal](../../../app/src/components/sections/BankView/forms/TransferModal.vue),
@@ -982,7 +981,8 @@ Bank transfers can incur the Bank's configured protocol fee; Accounting adds a m
   [Expense Account contract](../../../contract/contracts/expense-account/ExpenseAccountEIP712.sol)
 - [Expense component tests](../../../app/src/components/sections/ExpenseAccountView/__tests__),
   [Expense API tests](../../../backend/src/controllers/__tests__/expenseController.test.ts), and
-  [Expense contract tests](../../../contract/test/ExpenseAccountEIP712.spec.ts)
+  [Expense contract tests](../../../contract/test/ExpenseAccountEIP712.spec.ts) and
+  [Expense lifecycle tests](../../../contract/test/ExpenseAccountEIP712V2.spec.ts)
 - [Payroll account page](../../../app/src/views/team/%5Bid%5D/Accounts/PayrollView.vue)
 
 ### Test-suite ownership

@@ -6,7 +6,8 @@ import hre from 'hardhat'
 import {
   getUpgradeChainId,
   loadDeploymentAddresses,
-  requireDeploymentAddress
+  requireDeploymentAddress,
+  type DeploymentAddresses
 } from '../../ignition/lib/deployment-addresses.js'
 
 type HardhatConnection = Awaited<ReturnType<typeof hre.network.getOrCreate>>
@@ -25,10 +26,11 @@ type VerificationResult = {
   version: string
 }
 
-export type V201VerificationOptions = {
+export type BeaconVerificationOptions = {
   target?: string
   expectedVersions?: readonly string[]
   manifestPath?: string
+  deploymentAddresses?: DeploymentAddresses
 }
 
 const TARGETS: UpgradeTarget[] = [
@@ -78,13 +80,14 @@ function gitRevision(): string {
   }
 }
 
-export async function verifyV201Upgrade(
+export async function verifyBeaconUpgrade(
   connection: HardhatConnection,
   {
     target: requestedTarget = 'all',
     expectedVersions = ['2.0.0', '2.0.1'],
-    manifestPath
-  }: V201VerificationOptions = {}
+    manifestPath,
+    deploymentAddresses
+  }: BeaconVerificationOptions = {}
 ): Promise<VerificationResult[]> {
   const configuredChainId = getUpgradeChainId()
   const network = await connection.ethers.provider.getNetwork()
@@ -98,7 +101,7 @@ export async function verifyV201Upgrade(
 
   const [upgradeSigner] = await connection.ethers.getSigners()
   const upgradeSignerAddress = await upgradeSigner.getAddress()
-  const deployedAddresses = loadDeploymentAddresses(configuredChainId)
+  const deployedAddresses = deploymentAddresses ?? loadDeploymentAddresses(configuredChainId)
   const versions = allowedVersions(expectedVersions)
   const results: VerificationResult[] = []
 
@@ -173,7 +176,8 @@ export async function verifyV201Upgrade(
         },
         null,
         2
-      )}\n`
+      )}\n`,
+      { flag: 'wx' }
     )
     console.log(`Saved pre-upgrade state to ${resolvedManifestPath}`)
   }
