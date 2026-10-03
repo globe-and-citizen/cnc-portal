@@ -67,13 +67,13 @@ Coverage targets compare each criterion with its required representative evidenc
 generated coverage report and CI retain file-level and execution evidence. Known assertion gaps remain insufficient even when a static
 reference has the expected layer label.
 
-| User Story     | Main Journey | Coverage Target | Gaps                      |
-| -------------- | ------------ | --------------- | ------------------------- |
-| US-VESTING-001 | ⬜ Planned   | ❌ 0/14 met     | `AC-US-VESTING-001-01–14` |
-| US-VESTING-002 | ⬜ Planned   | ❌ 0/10 met     | `AC-US-VESTING-002-01–10` |
-| US-VESTING-003 | ⬜ Planned   | ❌ 0/11 met     | `AC-US-VESTING-003-01–11` |
-| US-VESTING-004 | ⬜ Planned   | ❌ 0/10 met     | `AC-US-VESTING-004-01–10` |
-| US-VESTING-005 | ⬜ Planned   | ❌ 0/8 met      | `AC-US-VESTING-005-01–08` |
+| User Story     | Main Journey | Coverage Target | Gaps                                    |
+| -------------- | ------------ | --------------- | --------------------------------------- |
+| US-VESTING-001 | ⬜ Planned   | ⚠️ 3/14 met     | `AC-US-VESTING-001-01–04, 07–11, 13–14` |
+| US-VESTING-002 | ⬜ Planned   | ❌ 0/10 met     | `AC-US-VESTING-002-01–10`               |
+| US-VESTING-003 | ⬜ Planned   | ⚠️ 2/11 met     | `AC-US-VESTING-003-01–05, 08–11`        |
+| US-VESTING-004 | ⬜ Planned   | ❌ 0/10 met     | `AC-US-VESTING-004-01–10`               |
+| US-VESTING-005 | ⬜ Planned   | ⚠️ 2/8 met      | `AC-US-VESTING-005-01–06`               |
 
 ## Proof Strategy Reference
 
@@ -127,14 +127,14 @@ reference has the expected layer label.
 | `AC-US-VESTING-001-02` | `PS-BROWSER`      | None linked      | ❌ Missing      |
 | `AC-US-VESTING-001-03` | `PS-BROWSER`      | None linked      | ❌ Missing      |
 | `AC-US-VESTING-001-04` | `PS-CHAIN-WRITE`  | None linked      | ❌ Missing      |
-| `AC-US-VESTING-001-05` | `PS-CONTRACT`     | Contract         | 🔎 Unverified   |
-| `AC-US-VESTING-001-06` | `PS-CONTRACT`     | Contract         | 🔎 Unverified   |
+| `AC-US-VESTING-001-05` | `PS-CONTRACT`     | Contract         | ✅ Met          |
+| `AC-US-VESTING-001-06` | `PS-CONTRACT`     | Contract         | ✅ Met          |
 | `AC-US-VESTING-001-07` | `PS-BROWSER`      | None linked      | ❌ Missing      |
 | `AC-US-VESTING-001-08` | `PS-FRONTEND`     | None linked      | ❌ Missing      |
 | `AC-US-VESTING-001-09` | `PS-CHAIN-WRITE`  | Frontend         | ⚠️ Insufficient |
 | `AC-US-VESTING-001-10` | `PS-FRONTEND`     | None linked      | ❌ Missing      |
 | `AC-US-VESTING-001-11` | `PS-SHARED-RULE`  | None linked      | ❌ Missing      |
-| `AC-US-VESTING-001-12` | `PS-CONTRACT`     | Contract         | 🔎 Unverified   |
+| `AC-US-VESTING-001-12` | `PS-CONTRACT`     | Contract         | ✅ Met          |
 | `AC-US-VESTING-001-13` | `PS-BROWSER`      | Frontend         | ⚠️ Insufficient |
 | `AC-US-VESTING-001-14` | `PS-FAILED-WRITE` | None linked      | ❌ Missing      |
 
@@ -224,14 +224,14 @@ reference has the expected layer label.
 | `AC-US-VESTING-003-01` | `PS-CHAIN-WRITE`   | Frontend         | ⚠️ Insufficient |
 | `AC-US-VESTING-003-02` | `PS-CHAIN-WRITE`   | None linked      | ❌ Missing      |
 | `AC-US-VESTING-003-03` | `PS-CONTRACT`      | None linked      | ❌ Missing      |
-| `AC-US-VESTING-003-04` | `PS-CONTRACT`      | Contract         | 🔎 Unverified   |
+| `AC-US-VESTING-003-04` | `PS-CONTRACT`      | Contract         | ⚠️ Insufficient |
 | `AC-US-VESTING-003-05` | `PS-SHARED-RULE`   | None linked      | ❌ Missing      |
-| `AC-US-VESTING-003-06` | `PS-CONTRACT`      | Contract         | 🔎 Unverified   |
-| `AC-US-VESTING-003-07` | `PS-CONTRACT`      | Contract         | 🔎 Unverified   |
+| `AC-US-VESTING-003-06` | `PS-CONTRACT`      | Contract         | ✅ Met          |
+| `AC-US-VESTING-003-07` | `PS-CONTRACT`      | Contract         | ✅ Met          |
 | `AC-US-VESTING-003-08` | `PS-ARCHIVE-PAUSE` | Contract         | ⚠️ Insufficient |
 | `AC-US-VESTING-003-09` | `PS-BROWSER`       | None linked      | ❌ Missing      |
 | `AC-US-VESTING-003-10` | `PS-CONTRACT`      | None linked      | ❌ Missing      |
-| `AC-US-VESTING-003-11` | `PS-FRONTEND`      | Frontend         | 🔎 Unverified   |
+| `AC-US-VESTING-003-11` | `PS-FRONTEND`      | Frontend         | ⚠️ Insufficient |
 
 **Accounting:** A successful release moves promised shares into Investor Equity through
 [`UC-VEST-02`](../accounting/journal-entry-catalogue.md#uc-vest-02--vested-sher-released). Its matching Investor mint is not booked again.
@@ -275,7 +275,7 @@ reference has the expected layer label.
 | `AC-US-VESTING-004-04` | `PS-CONTRACT`      | None linked      | ❌ Missing      |
 | `AC-US-VESTING-004-05` | `PS-CONTRACT`      | None linked      | ❌ Missing      |
 | `AC-US-VESTING-004-06` | `PS-CONTRACT`      | Contract         | ⚠️ Insufficient |
-| `AC-US-VESTING-004-07` | `PS-CONTRACT`      | Contract         | 🔎 Unverified   |
+| `AC-US-VESTING-004-07` | `PS-CONTRACT`      | Contract         | ⚠️ Insufficient |
 | `AC-US-VESTING-004-08` | `PS-ARCHIVE-PAUSE` | Contract         | ⚠️ Insufficient |
 | `AC-US-VESTING-004-09` | `PS-BROWSER`       | None linked      | ❌ Missing      |
 | `AC-US-VESTING-004-10` | `PS-CONTRACT`      | None linked      | ❌ Missing      |
@@ -316,12 +316,12 @@ reference has the expected layer label.
 | ---------------------- | ---------------- | ---------------- | --------------- |
 | `AC-US-VESTING-005-01` | `PS-CHAIN-READ`  | Frontend         | ⚠️ Insufficient |
 | `AC-US-VESTING-005-02` | `PS-FRONTEND`    | None linked      | ❌ Missing      |
-| `AC-US-VESTING-005-03` | `PS-FRONTEND`    | Frontend         | 🔎 Unverified   |
+| `AC-US-VESTING-005-03` | `PS-FRONTEND`    | Frontend         | ⚠️ Insufficient |
 | `AC-US-VESTING-005-04` | `PS-SHARED-RULE` | None linked      | ❌ Missing      |
 | `AC-US-VESTING-005-05` | `PS-FRONTEND`    | None linked      | ❌ Missing      |
 | `AC-US-VESTING-005-06` | `PS-SHARED-RULE` | Frontend         | ⚠️ Insufficient |
-| `AC-US-VESTING-005-07` | `PS-FRONTEND`    | Frontend         | 🔎 Unverified   |
-| `AC-US-VESTING-005-08` | `PS-FRONTEND`    | Frontend         | 🔎 Unverified   |
+| `AC-US-VESTING-005-07` | `PS-FRONTEND`    | Frontend         | ✅ Met          |
+| `AC-US-VESTING-005-08` | `PS-FRONTEND`    | Frontend         | ✅ Met          |
 
 **Dependencies:** US-VESTING-002, US-VESTING-003, US-VESTING-004
 
@@ -383,3 +383,6 @@ Accounting-owned acceptance contract and has no independent validation status.
   after-start pre-cliff case; its static Contract label is conservatively `⚠️ Insufficient`.
 - The archive/pause criteria `003-08` and `004-08` currently cover only part of the combined gate. A read failure on the active schedule is
   tested, but `002-09` also promises the archived read state. Those branches need distinct representative proof.
+- The test marked `003-04` leaves the second grant locked, so it cannot prove release is limited to the selected claimable grant. `003-11`
+  checks a child prop but not both latest review amounts; `004-07` checks repeat stop but not release after stop; and `005-03` marks only
+  Claimable, not all seven stated states.
