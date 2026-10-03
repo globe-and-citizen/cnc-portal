@@ -166,6 +166,98 @@ export function parseAcceptanceCoverageRows(document) {
   return rows
 }
 
+function tableRowsUnderHeading(document, heading) {
+  const lines = document.content.split('\n')
+  const start = lines.indexOf(`## ${heading}`)
+  if (start === -1) return null
+  const end = lines.findIndex((line, index) => index > start && line.startsWith('## '))
+  return lines.slice(start + 1, end === -1 ? undefined : end).filter((line) => line.startsWith('|'))
+}
+
+function markdownTableCells(line) {
+  return line
+    .split('|')
+    .slice(1, -1)
+    .map((cell) => cell.trim())
+}
+
+export function validateFeatureCoverageStructure(featureDocuments) {
+  const errors = []
+
+  for (const document of featureDocuments) {
+    const storyIds = [...document.content.matchAll(/^## (US-[A-Z0-9-]+):/gm)].map((match) => match[1])
+    for (const heading of ['Status Overview', 'Test Coverage Overview', 'Proof Strategy Reference']) {
+      const count = document.content.split('\n').filter((line) => line === `## ${heading}`).length
+      if (count > 1) errors.push(`${document.path} repeats ${heading}; keep one canonical section.`)
+    }
+    const statusLines = tableRowsUnderHeading(document, 'Status Overview')
+    const overviewLines = tableRowsUnderHeading(document, 'Test Coverage Overview')
+    const strategies = parseProofStrategies(document)
+    const coverageRows = parseAcceptanceCoverageRows(document)
+
+    if (!statusLines) {
+      errors.push(`${document.path} is missing Status Overview.`)
+      continue
+    }
+    if (!overviewLines) {
+      errors.push(`${document.path} is missing Test Coverage Overview.`)
+      continue
+    }
+
+    const overviewHeader = markdownTableCells(overviewLines[0] ?? '')
+    if (overviewHeader.join('|') !== 'User Story|Main Journey|Coverage Target|Gaps') {
+      errors.push(`${document.path} must use User Story, Main Journey, Coverage Target, and Gaps in its coverage overview.`)
+    }
+
+    const statusRows = statusLines
+      .map(markdownTableCells)
+      .filter((cells) => /^US-[A-Z0-9-]+$/.test(cells[0] ?? ''))
+    const overviewRows = overviewLines
+      .map(markdownTableCells)
+      .filter((cells) => /^US-[A-Z0-9-]+$/.test(cells[0] ?? ''))
+    const statusIds = statusRows.map((cells) => cells[0])
+    const overviewIds = overviewRows.map((cells) => cells[0])
+    const expectedOverviewIds = statusRows
+      .filter((cells) => !cells[3]?.includes('🔗 Reference'))
+      .map((cells) => cells[0])
+
+    if (storyIds.join('|') !== statusIds.join('|')) {
+      errors.push(`${document.path} must list every detailed story once, in the same order as Status Overview.`)
+    }
+    if (expectedOverviewIds.join('|') !== overviewIds.join('|')) {
+      errors.push(`${document.path} must list every owned story once, in status order, in Test Coverage Overview.`)
+    }
+
+    const assessableIds = statusRows
+      .filter((cells) => !cells[3]?.includes('🔗 Reference') && !cells[3]?.includes('📝 Draft'))
+      .map((cells) => cells[0])
+    if (assessableIds.length > 0 && strategies.length === 0) {
+      errors.push(`${document.path} is missing Proof Strategy Reference for its assessable stories.`)
+    }
+    for (const storyId of assessableIds) {
+      const storyCoverage = coverageRows.filter((row) => row.storyId === storyId)
+      if (storyCoverage.length === 0) {
+        errors.push(`${document.path} is missing Test Coverage for ${storyId}.`)
+        continue
+      }
+
+      const criterionCount = parseAcceptanceCriteria(document).filter(
+        (criterion) => criterion.storyId === storyId
+      ).length
+      const metCount = storyCoverage.filter((row) => row.status === '✅ Met').length
+      const summary = overviewRows.find((cells) => cells[0] === storyId)?.[2] ?? ''
+      const ratio = summary.match(/(\d+)\/(\d+)/)
+      if (!ratio || Number(ratio[1]) !== metCount || Number(ratio[2]) !== criterionCount) {
+        errors.push(
+          `${document.path} reports ${summary || 'no coverage target'} for ${storyId}; expected ${metCount}/${criterionCount}.`
+        )
+      }
+    }
+  }
+
+  return errors
+}
+
 export function acceptanceCriterionReferences(document) {
   const e2eMode = classifyE2eCoverageMode(document)
 
@@ -515,6 +607,13 @@ function validateAcceptanceCoverageRows({ featureDocuments, criteria, references
         continue
       }
 
+      if (row.expected === 'Decision pending') {
+        if (criterion.checked || row.current !== 'None linked' || row.status !== '📝 Pending') {
+          errors.push(`${location} may defer a proof decision only for an unchecked criterion without linked evidence.`)
+        }
+        continue
+      }
+
       if (row.responsibilities !== null) {
         const responsibilityLabels = row.responsibilities.split(' + ').map((label) => label.trim())
         const invalidResponsibilities = responsibilityLabels.filter(
@@ -556,7 +655,8 @@ function validateAcceptanceCoverageRows({ featureDocuments, criteria, references
         : currentLabels.length > 0
           ? '⚠️ Insufficient'
           : '❌ Missing'
-      if (row.status !== expectedStatus) {
+      const conservativeReview = hasExpectedCoverage && ['⚠️ Insufficient', '🔎 Unverified'].includes(row.status)
+      if (row.status !== expectedStatus && !conservativeReview) {
         errors.push(`${location} reports ${row.status} for ${row.id}; expected ${expectedStatus}.`)
       }
     }
@@ -576,8 +676,13 @@ function validateAcceptanceCoverageRows({ featureDocuments, criteria, references
   return errors
 }
 
-export function validateAcceptanceCriteriaTraceability({ featureDocuments, testDocuments }) {
+export function validateAcceptanceCriteriaTraceability({
+  featureDocuments,
+  testDocuments,
+  enforceFeatureCoverage = false
+}) {
   const errors = []
+  if (enforceFeatureCoverage) errors.push(...validateFeatureCoverageStructure(featureDocuments))
   const criteria = featureDocuments.flatMap(parseAcceptanceCriteria)
   const criteriaById = new Map()
   const criteriaByStory = new Map()

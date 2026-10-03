@@ -15,8 +15,9 @@ These acceptance criteria follow the
 - **Companies operations** is the administrator dashboard's read-only oversight capability. It does not create, edit, archive, delete, or
   change a company's membership; those workspace actions belong to [Companies and workspace](../../companies/README.md).
 - Dashboard navigation and the platform-wide company-list API both require an authenticated `ROLE_ADMIN` or `ROLE_SUPER_ADMIN` user.
-- The default platform list includes active companies only. It exposes a membership count, not the identities of individual company members,
-  and it does not provide a control to include archived companies.
+- The default dashboard list includes active companies only. Its list view displays a membership count rather than member identities and
+  provides no control to include archived companies. The underlying administrator API also returns member names and addresses; the UI
+  presentation is not a data-minimization guarantee for that API.
 - An **Officer generation** is one deployed Officer for a company. The current generation is the head of its succession chain; older
   generations remain visible for operational history. Contracts not associated with an Officer generation are shown as shared,
   version-independent contracts.
@@ -48,6 +49,28 @@ flowchart LR
 | US-TEAM-OPS-002 | Inspect a company profile                  | Platform administrator | ✅ Done |
 | US-TEAM-OPS-003 | Investigate Officer contracts and balances | Platform administrator | ✅ Done |
 
+## Test Coverage Overview
+
+Coverage targets compare each criterion with its required representative evidence. Static references are not a current passing run; the
+generated coverage report and CI retain file-level and execution evidence. Known assertion gaps remain insufficient even when a static
+reference has the expected layer label.
+
+| User Story      | Main Journey | Coverage Target | Gaps                              |
+| --------------- | ------------ | --------------- | --------------------------------- |
+| US-TEAM-OPS-001 | Not required | ⚠️ 1/11 met     | `AC-US-TEAM-OPS-001-01–07, 09–11` |
+| US-TEAM-OPS-002 | Not required | ❌ 0/6 met      | `AC-US-TEAM-OPS-002-01–06`        |
+| US-TEAM-OPS-003 | Not required | ❌ 0/10 met     | `AC-US-TEAM-OPS-003-01–10`        |
+
+## Proof Strategy Reference
+
+| Strategy       | Responsibilities    | Required Evidence   | Proof Rationale                                                                           |
+| -------------- | ------------------- | ------------------- | ----------------------------------------------------------------------------------------- |
+| `PS-CO-D`      | Dashboard           | Dashboard           | Navigation, summaries, grouping, and load states belong to the dashboard.                 |
+| `PS-CO-API`    | Dashboard + Backend | Dashboard + Backend | Returned company and Officer data must support what the administrator sees.               |
+| `PS-CO-B`      | Backend             | Backend             | The server owns role, archive, and current-generation rules.                              |
+| `PS-CO-RPC`    | Dashboard           | Dashboard           | Controlled RPC success and failure must distinguish a real zero from an unavailable read. |
+| `PS-CO-DETAIL` | Dashboard + Backend | Dashboard + Backend | Contract metadata and associated history must agree in the detail view.                   |
+
 ## US-TEAM-OPS-001: Access and Inspect Platform Companies
 
 **As a** platform administrator\
@@ -72,7 +95,7 @@ flowchart LR
 - [x] `AC-US-TEAM-OPS-001-05` A visitor without a session is redirected to sign in, and an authenticated user without an administrator role
       is sent to access denied before using the dashboard journey.
 - [x] `AC-US-TEAM-OPS-001-06` The default platform list excludes archived companies.
-- [x] `AC-US-TEAM-OPS-001-07` The list exposes each company's membership count rather than individual member identities.
+- [x] `AC-US-TEAM-OPS-001-07` The dashboard list displays each company's membership count rather than individual member identities.
 - [x] `AC-US-TEAM-OPS-001-08` The platform-wide company-list API, implemented by the technical `/teams` endpoint, independently restricts
       unfiltered results to administrator roles. _(API)_
 
@@ -82,6 +105,22 @@ flowchart LR
       refresh.
 - [x] `AC-US-TEAM-OPS-001-10` A platform with no active companies produces an empty list and zero-valued company summary.
 - [x] `AC-US-TEAM-OPS-001-11` An administrator can request a fresh platform company list after an earlier load.
+
+### Test Coverage
+
+| Acceptance Criterion    | Proof Strategy | Current Evidence | Status          |
+| ----------------------- | -------------- | ---------------- | --------------- |
+| `AC-US-TEAM-OPS-001-01` | `PS-CO-API`    | Backend          | ⚠️ Insufficient |
+| `AC-US-TEAM-OPS-001-02` | `PS-CO-D`      | None linked      | ❌ Missing      |
+| `AC-US-TEAM-OPS-001-03` | `PS-CO-RPC`    | None linked      | ❌ Missing      |
+| `AC-US-TEAM-OPS-001-04` | `PS-CO-D`      | None linked      | ❌ Missing      |
+| `AC-US-TEAM-OPS-001-05` | `PS-CO-D`      | None linked      | ❌ Missing      |
+| `AC-US-TEAM-OPS-001-06` | `PS-CO-B`      | None linked      | ❌ Missing      |
+| `AC-US-TEAM-OPS-001-07` | `PS-CO-D`      | None linked      | ❌ Missing      |
+| `AC-US-TEAM-OPS-001-08` | `PS-CO-B`      | Backend          | ✅ Met          |
+| `AC-US-TEAM-OPS-001-09` | `PS-CO-D`      | None linked      | ❌ Missing      |
+| `AC-US-TEAM-OPS-001-10` | `PS-CO-D`      | None linked      | ❌ Missing      |
+| `AC-US-TEAM-OPS-001-11` | `PS-CO-D`      | None linked      | ❌ Missing      |
 
 **Dependencies:** Dashboard authentication and administrator roles
 
@@ -110,6 +149,17 @@ flowchart LR
 
 - [x] `AC-US-TEAM-OPS-002-05` Loading a company profile displays a pending state until its details are available.
 - [x] `AC-US-TEAM-OPS-002-06` An unavailable or failed company-detail request reports that the company could not be loaded.
+
+### Test Coverage
+
+| Acceptance Criterion    | Proof Strategy | Current Evidence | Status     |
+| ----------------------- | -------------- | ---------------- | ---------- |
+| `AC-US-TEAM-OPS-002-01` | `PS-CO-API`    | None linked      | ❌ Missing |
+| `AC-US-TEAM-OPS-002-02` | `PS-CO-D`      | None linked      | ❌ Missing |
+| `AC-US-TEAM-OPS-002-03` | `PS-CO-B`      | None linked      | ❌ Missing |
+| `AC-US-TEAM-OPS-002-04` | `PS-CO-D`      | None linked      | ❌ Missing |
+| `AC-US-TEAM-OPS-002-05` | `PS-CO-D`      | None linked      | ❌ Missing |
+| `AC-US-TEAM-OPS-002-06` | `PS-CO-D`      | None linked      | ❌ Missing |
 
 **Dependencies:** US-TEAM-OPS-001
 
@@ -145,12 +195,30 @@ flowchart LR
 - [x] `AC-US-TEAM-OPS-003-10` A failed event-log request reports the retrieval failure instead of presenting an empty event history as
       successful.
 
+### Test Coverage
+
+| Acceptance Criterion    | Proof Strategy | Current Evidence | Status     |
+| ----------------------- | -------------- | ---------------- | ---------- |
+| `AC-US-TEAM-OPS-003-01` | `PS-CO-API`    | None linked      | ❌ Missing |
+| `AC-US-TEAM-OPS-003-02` | `PS-CO-API`    | None linked      | ❌ Missing |
+| `AC-US-TEAM-OPS-003-03` | `PS-CO-DETAIL` | None linked      | ❌ Missing |
+| `AC-US-TEAM-OPS-003-04` | `PS-CO-RPC`    | None linked      | ❌ Missing |
+| `AC-US-TEAM-OPS-003-05` | `PS-CO-B`      | None linked      | ❌ Missing |
+| `AC-US-TEAM-OPS-003-06` | `PS-CO-D`      | None linked      | ❌ Missing |
+| `AC-US-TEAM-OPS-003-07` | `PS-CO-RPC`    | None linked      | ❌ Missing |
+| `AC-US-TEAM-OPS-003-08` | `PS-CO-D`      | None linked      | ❌ Missing |
+| `AC-US-TEAM-OPS-003-09` | `PS-CO-D`      | None linked      | ❌ Missing |
+| `AC-US-TEAM-OPS-003-10` | `PS-CO-RPC`    | None linked      | ❌ Missing |
+
 **Dependencies:** US-TEAM-OPS-002 and available backend and chain data
 
 ## Human Validation
 
 Validated on 2026-08-27 against the administrator access boundary, company-list and company-profile journeys, Officer and balance
 investigation, and the independent API role enforcement described below.
+
+The validation date is historical, not a current automated-test result. A failed balance read can currently appear as zero in the list recap
+or detail view; `AC-US-TEAM-OPS-001-03` and `AC-US-TEAM-OPS-003-04` still need failure-versus-confirmed-zero proof.
 
 ## Implementation Evidence
 

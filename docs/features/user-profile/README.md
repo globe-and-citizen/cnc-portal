@@ -25,6 +25,26 @@ The display name and profile image can be changed from the client navigation and
 | -------------- | ----------------------- | ----------- | ------------- |
 | US-PROFILE-001 | Update profile identity | Portal user | 🧪 Validation |
 
+## Test Coverage Overview
+
+Coverage targets compare the required proof below with direct representative `AC-US-*` references, not with the latest test run. The profile
+journey remains planned for integrated E2E; focused tests already prove some independent rules.
+
+| User Story     | Main Journey | Coverage Target | Gaps                                                                                                  |
+| -------------- | ------------ | --------------- | ----------------------------------------------------------------------------------------------------- |
+| US-PROFILE-001 | ⬜ Planned   | ⚠️ 5/9 met      | `AC-US-PROFILE-001-01`, `02` (real save/upload), `06` (draft unchanged), `07` (both failure branches) |
+
+## Proof Strategy Reference
+
+| Strategy             | Responsibilities   | Required Evidence  | Proof Rationale                                                                            |
+| -------------------- | ------------------ | ------------------ | ------------------------------------------------------------------------------------------ |
+| `PS-PROFILE-JOURNEY` | Frontend + Backend | Integrated E2E     | The form, real API or storage boundary, persistence, and refreshed identity must agree.    |
+| `PS-PROFILE-UI`      | Frontend           | Frontend           | The client owns the read-only, image-validation, and fallback identity behaviour.          |
+| `PS-PROFILE-NAME`    | Frontend + Backend | Frontend + Backend | Both the form and the API must enforce the same name limits.                               |
+| `PS-PROFILE-ACCESS`  | Backend            | Backend            | The API must reject updates without the authenticated profile owner's wallet.              |
+| `PS-PROFILE-INVALID` | Frontend           | Frontend           | Invalid selection must leave the existing draft untouched.                                 |
+| `PS-PROFILE-FAILURE` | Frontend           | Mocked browser     | Upload and save failures must each leave the form recoverable across the interaction flow. |
+
 ## US-PROFILE-001: Update Profile Identity
 
 **As a** portal user\
@@ -52,6 +72,20 @@ The display name and profile image can be changed from the client navigation and
 
 - [x] `AC-US-PROFILE-001-06` An invalid image is rejected without changing the profile draft.
 - [x] `AC-US-PROFILE-001-07` An upload or profile-save failure leaves the form available and exposes the failure to the user.
+
+### Test Coverage
+
+| Acceptance Criterion   | Proof Strategy       | Current Evidence   | Status          |
+| ---------------------- | -------------------- | ------------------ | --------------- |
+| `AC-US-PROFILE-001-01` | `PS-PROFILE-JOURNEY` | Frontend           | ⚠️ Insufficient |
+| `AC-US-PROFILE-001-02` | `PS-PROFILE-JOURNEY` | Frontend           | ⚠️ Insufficient |
+| `AC-US-PROFILE-001-03` | `PS-PROFILE-UI`      | Frontend           | ✅ Met          |
+| `AC-US-PROFILE-001-04` | `PS-PROFILE-NAME`    | Frontend + Backend | ✅ Met          |
+| `AC-US-PROFILE-001-05` | `PS-PROFILE-UI`      | Frontend           | ✅ Met          |
+| `AC-US-PROFILE-001-06` | `PS-PROFILE-INVALID` | None linked        | ❌ Missing      |
+| `AC-US-PROFILE-001-07` | `PS-PROFILE-FAILURE` | Frontend           | ⚠️ Insufficient |
+| `AC-US-PROFILE-001-08` | `PS-PROFILE-UI`      | Frontend           | ✅ Met          |
+| `AC-US-PROFILE-001-09` | `PS-PROFILE-ACCESS`  | Backend            | ✅ Met          |
 
 **Dependencies:** An authenticated portal user and the user-profile API
 
