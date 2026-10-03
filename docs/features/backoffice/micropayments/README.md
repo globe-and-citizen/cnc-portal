@@ -216,17 +216,17 @@ reference has the expected layer label.
 
 ### Test Coverage
 
-| Acceptance Criterion         | Proof Strategy  | Current Evidence | Status        |
-| ---------------------------- | --------------- | ---------------- | ------------- |
-| `AC-US-MICROPAYMENTS-003-01` | `PS-M-JOINT`    | None linked      | ❌ Missing    |
-| `AC-US-MICROPAYMENTS-003-02` | `PS-M-JOINT`    | None linked      | ❌ Missing    |
-| `AC-US-MICROPAYMENTS-003-03` | `PS-M-JOINT`    | None linked      | ❌ Missing    |
-| `AC-US-MICROPAYMENTS-003-04` | `PS-M-CONTRACT` | None linked      | ❌ Missing    |
-| `AC-US-MICROPAYMENTS-003-05` | `PS-M-CONTRACT` | Contract         | 🔎 Unverified |
-| `AC-US-MICROPAYMENTS-003-06` | `PS-M-JOINT`    | None linked      | ❌ Missing    |
-| `AC-US-MICROPAYMENTS-003-07` | `PS-M-UI`       | None linked      | ❌ Missing    |
-| `AC-US-MICROPAYMENTS-003-08` | `PS-M-UI`       | None linked      | ❌ Missing    |
-| `AC-US-MICROPAYMENTS-003-09` | `PS-M-UI`       | None linked      | ❌ Missing    |
+| Acceptance Criterion         | Proof Strategy  | Current Evidence | Status          |
+| ---------------------------- | --------------- | ---------------- | --------------- |
+| `AC-US-MICROPAYMENTS-003-01` | `PS-M-JOINT`    | None linked      | ❌ Missing      |
+| `AC-US-MICROPAYMENTS-003-02` | `PS-M-JOINT`    | None linked      | ❌ Missing      |
+| `AC-US-MICROPAYMENTS-003-03` | `PS-M-JOINT`    | None linked      | ❌ Missing      |
+| `AC-US-MICROPAYMENTS-003-04` | `PS-M-CONTRACT` | None linked      | ❌ Missing      |
+| `AC-US-MICROPAYMENTS-003-05` | `PS-M-CONTRACT` | Contract         | ⚠️ Insufficient |
+| `AC-US-MICROPAYMENTS-003-06` | `PS-M-JOINT`    | None linked      | ❌ Missing      |
+| `AC-US-MICROPAYMENTS-003-07` | `PS-M-UI`       | None linked      | ❌ Missing      |
+| `AC-US-MICROPAYMENTS-003-08` | `PS-M-UI`       | None linked      | ❌ Missing      |
+| `AC-US-MICROPAYMENTS-003-09` | `PS-M-UI`       | None linked      | ❌ Missing      |
 
 **Dependencies:** US-MICROPAYMENTS-001 and ownership of V1
 
@@ -263,7 +263,7 @@ reference has the expected layer label.
 | `AC-US-MICROPAYMENTS-004-01` | `PS-M-JOINT`    | None linked      | ❌ Missing      |
 | `AC-US-MICROPAYMENTS-004-02` | `PS-M-JOINT`    | Contract         | ⚠️ Insufficient |
 | `AC-US-MICROPAYMENTS-004-03` | `PS-M-UI`       | None linked      | ❌ Missing      |
-| `AC-US-MICROPAYMENTS-004-04` | `PS-M-CONTRACT` | Contract         | 🔎 Unverified   |
+| `AC-US-MICROPAYMENTS-004-04` | `PS-M-CONTRACT` | Contract         | ⚠️ Insufficient |
 | `AC-US-MICROPAYMENTS-004-05` | `PS-M-CONTRACT` | None linked      | ❌ Missing      |
 | `AC-US-MICROPAYMENTS-004-06` | `PS-M-UI`       | None linked      | ❌ Missing      |
 | `AC-US-MICROPAYMENTS-004-07` | `PS-M-UI`       | None linked      | ❌ Missing      |
@@ -345,9 +345,9 @@ reference has the expected layer label.
 | Acceptance Criterion         | Proof Strategy  | Current Evidence | Status          |
 | ---------------------------- | --------------- | ---------------- | --------------- |
 | `AC-US-MICROPAYMENTS-006-01` | `PS-M-UI`       | None linked      | ❌ Missing      |
-| `AC-US-MICROPAYMENTS-006-02` | `PS-M-CONTRACT` | Contract         | 🔎 Unverified   |
+| `AC-US-MICROPAYMENTS-006-02` | `PS-M-CONTRACT` | Contract         | ⚠️ Insufficient |
 | `AC-US-MICROPAYMENTS-006-03` | `PS-M-UI`       | None linked      | ❌ Missing      |
-| `AC-US-MICROPAYMENTS-006-04` | `PS-M-CONTRACT` | Contract         | 🔎 Unverified   |
+| `AC-US-MICROPAYMENTS-006-04` | `PS-M-CONTRACT` | Contract         | ⚠️ Insufficient |
 | `AC-US-MICROPAYMENTS-006-05` | `PS-M-CONTRACT` | None linked      | ❌ Missing      |
 | `AC-US-MICROPAYMENTS-006-06` | `PS-M-JOINT`    | Contract         | ⚠️ Insufficient |
 | `AC-US-MICROPAYMENTS-006-07` | `PS-M-UI`       | None linked      | ❌ Missing      |
@@ -407,6 +407,8 @@ reference has the expected layer label.
 - The registry selects V2 by default, while the page has no V2 panel and its resolver has no V2 ABI/address mapping. V1 management is
   available only after choosing the V1 version; it must not be counted as the current-generation journey. The six direct contract markers
   target current Solidity source rather than the V1 dashboard deployment, so none establishes a V1 browser outcome by itself.
+- The marked owner-guard and sweep tests exercise current Solidity source, not a V1 deployment. `003-05` also omits a marked zero-address
+  assertion, `004-04` and `006-04` check rejection without the full owner outcome, and `006-02` lacks the configured-beneficiary branch.
 - The V1 fee list can display its empty state after a failed configuration read, contrary to the full failure distinction in
   `AC-US-MICROPAYMENTS-001-11`.
 - The V1 panel only renders the native token and ERC-20s known to its local token registry. It detects supported ERC-20 addresses outside
