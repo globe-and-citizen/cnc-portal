@@ -57,11 +57,11 @@ Coverage targets compare each criterion with its required representative evidenc
 generated coverage report and CI retain file-level and execution evidence. Known assertion gaps remain insufficient even when a static
 reference has the expected layer label.
 
-| User Story          | Main Journey | Coverage Target | Gaps                           |
-| ------------------- | ------------ | --------------- | ------------------------------ |
-| US-CONTRACT-OPS-001 | Not required | ❌ 0/9 met      | `AC-US-CONTRACT-OPS-001-01–09` |
-| US-CONTRACT-OPS-002 | Not required | ❌ 0/11 met     | `AC-US-CONTRACT-OPS-002-01–11` |
-| US-CONTRACT-OPS-003 | Not required | ❌ 0/11 met     | `AC-US-CONTRACT-OPS-003-01–11` |
+| User Story          | Main Journey | Coverage Target | Gaps                                         |
+| ------------------- | ------------ | --------------- | -------------------------------------------- |
+| US-CONTRACT-OPS-001 | Not required | ❌ 0/9 met      | `AC-US-CONTRACT-OPS-001-01–09`               |
+| US-CONTRACT-OPS-002 | Not required | ❌ 0/11 met     | `AC-US-CONTRACT-OPS-002-01–11`               |
+| US-CONTRACT-OPS-003 | Not required | ⚠️ 2/11 met     | `AC-US-CONTRACT-OPS-003-01–02, 04–05, 07–11` |
 
 ## Proof Strategy Reference
 
@@ -204,19 +204,19 @@ reference has the expected layer label.
 
 ### Test Coverage
 
-| Acceptance Criterion        | Proof Strategy | Current Evidence | Status        |
-| --------------------------- | -------------- | ---------------- | ------------- |
-| `AC-US-CONTRACT-OPS-003-01` | `PS-VO-UI`     | None linked      | ❌ Missing    |
-| `AC-US-CONTRACT-OPS-003-02` | `PS-VO-B`      | None linked      | ❌ Missing    |
-| `AC-US-CONTRACT-OPS-003-03` | `PS-VO-B`      | Backend          | 🔎 Unverified |
-| `AC-US-CONTRACT-OPS-003-04` | `PS-VO-UI`     | None linked      | ❌ Missing    |
-| `AC-US-CONTRACT-OPS-003-05` | `PS-VO-B`      | None linked      | ❌ Missing    |
-| `AC-US-CONTRACT-OPS-003-06` | `PS-VO-B`      | Backend          | 🔎 Unverified |
-| `AC-US-CONTRACT-OPS-003-07` | `PS-VO-B`      | None linked      | ❌ Missing    |
-| `AC-US-CONTRACT-OPS-003-08` | `PS-VO-B`      | None linked      | ❌ Missing    |
-| `AC-US-CONTRACT-OPS-003-09` | `PS-VO-UI`     | None linked      | ❌ Missing    |
-| `AC-US-CONTRACT-OPS-003-10` | `PS-VO-PARITY` | None linked      | ❌ Missing    |
-| `AC-US-CONTRACT-OPS-003-11` | `PS-VO-B`      | None linked      | ❌ Missing    |
+| Acceptance Criterion        | Proof Strategy | Current Evidence | Status     |
+| --------------------------- | -------------- | ---------------- | ---------- |
+| `AC-US-CONTRACT-OPS-003-01` | `PS-VO-UI`     | None linked      | ❌ Missing |
+| `AC-US-CONTRACT-OPS-003-02` | `PS-VO-B`      | None linked      | ❌ Missing |
+| `AC-US-CONTRACT-OPS-003-03` | `PS-VO-B`      | Backend          | ✅ Met     |
+| `AC-US-CONTRACT-OPS-003-04` | `PS-VO-UI`     | None linked      | ❌ Missing |
+| `AC-US-CONTRACT-OPS-003-05` | `PS-VO-B`      | None linked      | ❌ Missing |
+| `AC-US-CONTRACT-OPS-003-06` | `PS-VO-B`      | Backend          | ✅ Met     |
+| `AC-US-CONTRACT-OPS-003-07` | `PS-VO-B`      | None linked      | ❌ Missing |
+| `AC-US-CONTRACT-OPS-003-08` | `PS-VO-B`      | None linked      | ❌ Missing |
+| `AC-US-CONTRACT-OPS-003-09` | `PS-VO-UI`     | None linked      | ❌ Missing |
+| `AC-US-CONTRACT-OPS-003-10` | `PS-VO-PARITY` | None linked      | ❌ Missing |
+| `AC-US-CONTRACT-OPS-003-11` | `PS-VO-B`      | None linked      | ❌ Missing |
 
 **Dependencies:** US-CONTRACT-OPS-002, dashboard authentication, administrator role, and on-chain read access
 
