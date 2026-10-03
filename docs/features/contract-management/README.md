@@ -60,13 +60,13 @@ Coverage targets compare each criterion with its required representative evidenc
 generated coverage report and CI retain file-level and execution evidence. Known assertion gaps remain insufficient even when a static
 reference has the expected layer label.
 
-| User Story      | Main Journey | Coverage Target | Gaps                       |
-| --------------- | ------------ | --------------- | -------------------------- |
-| US-CONTRACT-001 | ⬜ Planned   | ❌ 0/10 met     | `AC-US-CONTRACT-001-01–10` |
-| US-CONTRACT-002 | ⬜ Planned   | ❌ 0/12 met     | `AC-US-CONTRACT-002-01–12` |
-| US-CONTRACT-003 | ⬜ Planned   | ❌ 0/6 met      | `AC-US-CONTRACT-003-01–06` |
-| US-CONTRACT-004 | ⬜ Planned   | ❌ 0/9 met      | `AC-US-CONTRACT-004-01–09` |
-| US-CONTRACT-005 | ⬜ Planned   | ❌ 0/11 met     | `AC-US-CONTRACT-005-01–11` |
+| User Story      | Main Journey | Coverage Target | Gaps                                  |
+| --------------- | ------------ | --------------- | ------------------------------------- |
+| US-CONTRACT-001 | ⬜ Planned   | ⚠️ 5/10 met     | `AC-US-CONTRACT-001-01, 03–04, 06–07` |
+| US-CONTRACT-002 | ⬜ Planned   | ⚠️ 2/12 met     | `AC-US-CONTRACT-002-01–10`            |
+| US-CONTRACT-003 | ⬜ Planned   | ⚠️ 1/6 met      | `AC-US-CONTRACT-003-02–06`            |
+| US-CONTRACT-004 | ⬜ Planned   | ⚠️ 2/9 met      | `AC-US-CONTRACT-004-01–04, 06–07, 09` |
+| US-CONTRACT-005 | ⬜ Planned   | ⚠️ 1/11 met     | `AC-US-CONTRACT-005-01–02, 04–11`     |
 
 ## Proof Strategy Reference
 
@@ -122,18 +122,18 @@ reference has the expected layer label.
 
 ### Test Coverage
 
-| Acceptance Criterion    | Proof Strategy  | Current Evidence | Status        |
-| ----------------------- | --------------- | ---------------- | ------------- |
-| `AC-US-CONTRACT-001-01` | `PS-API`        | None linked      | ❌ Missing    |
-| `AC-US-CONTRACT-001-02` | `PS-FRONTEND`   | Frontend         | 🔎 Unverified |
-| `AC-US-CONTRACT-001-03` | `PS-CHAIN-READ` | None linked      | ❌ Missing    |
-| `AC-US-CONTRACT-001-04` | `PS-FRONTEND`   | None linked      | ❌ Missing    |
-| `AC-US-CONTRACT-001-05` | `PS-FRONTEND`   | Frontend         | 🔎 Unverified |
-| `AC-US-CONTRACT-001-06` | `PS-BROWSER`    | None linked      | ❌ Missing    |
-| `AC-US-CONTRACT-001-07` | `PS-BROWSER`    | None linked      | ❌ Missing    |
-| `AC-US-CONTRACT-001-08` | `PS-FRONTEND`   | Frontend         | 🔎 Unverified |
-| `AC-US-CONTRACT-001-09` | `PS-FRONTEND`   | Frontend         | 🔎 Unverified |
-| `AC-US-CONTRACT-001-10` | `PS-FRONTEND`   | Frontend         | 🔎 Unverified |
+| Acceptance Criterion    | Proof Strategy  | Current Evidence | Status     |
+| ----------------------- | --------------- | ---------------- | ---------- |
+| `AC-US-CONTRACT-001-01` | `PS-API`        | None linked      | ❌ Missing |
+| `AC-US-CONTRACT-001-02` | `PS-FRONTEND`   | Frontend         | ✅ Met     |
+| `AC-US-CONTRACT-001-03` | `PS-CHAIN-READ` | None linked      | ❌ Missing |
+| `AC-US-CONTRACT-001-04` | `PS-FRONTEND`   | None linked      | ❌ Missing |
+| `AC-US-CONTRACT-001-05` | `PS-FRONTEND`   | Frontend         | ✅ Met     |
+| `AC-US-CONTRACT-001-06` | `PS-BROWSER`    | None linked      | ❌ Missing |
+| `AC-US-CONTRACT-001-07` | `PS-BROWSER`    | None linked      | ❌ Missing |
+| `AC-US-CONTRACT-001-08` | `PS-FRONTEND`   | Frontend         | ✅ Met     |
+| `AC-US-CONTRACT-001-09` | `PS-FRONTEND`   | Frontend         | ✅ Met     |
+| `AC-US-CONTRACT-001-10` | `PS-FRONTEND`   | Frontend         | ✅ Met     |
 
 **Dependencies:** Current company and its active Officer generation
 
@@ -177,14 +177,14 @@ reference has the expected layer label.
 | `AC-US-CONTRACT-002-02` | `PS-CHAIN-WRITE` | Frontend         | ⚠️ Insufficient |
 | `AC-US-CONTRACT-002-03` | `PS-BOARD`       | Frontend         | ⚠️ Insufficient |
 | `AC-US-CONTRACT-002-04` | `PS-CHAIN-WRITE` | Frontend         | ⚠️ Insufficient |
-| `AC-US-CONTRACT-002-05` | `PS-FRONTEND`    | Frontend         | 🔎 Unverified   |
+| `AC-US-CONTRACT-002-05` | `PS-FRONTEND`    | Frontend         | ⚠️ Insufficient |
 | `AC-US-CONTRACT-002-06` | `PS-BOARD`       | Frontend         | ⚠️ Insufficient |
-| `AC-US-CONTRACT-002-07` | `PS-FRONTEND`    | Frontend         | 🔎 Unverified   |
+| `AC-US-CONTRACT-002-07` | `PS-FRONTEND`    | Frontend         | ⚠️ Insufficient |
 | `AC-US-CONTRACT-002-08` | `PS-FRONTEND`    | None linked      | ❌ Missing      |
 | `AC-US-CONTRACT-002-09` | `PS-FRONTEND`    | None linked      | ❌ Missing      |
-| `AC-US-CONTRACT-002-10` | `PS-FRONTEND`    | Frontend         | 🔎 Unverified   |
-| `AC-US-CONTRACT-002-11` | `PS-CONTRACT`    | Contract         | 🔎 Unverified   |
-| `AC-US-CONTRACT-002-12` | `PS-FRONTEND`    | Frontend         | 🔎 Unverified   |
+| `AC-US-CONTRACT-002-10` | `PS-FRONTEND`    | Frontend         | ⚠️ Insufficient |
+| `AC-US-CONTRACT-002-11` | `PS-CONTRACT`    | Contract         | ✅ Met          |
+| `AC-US-CONTRACT-002-12` | `PS-FRONTEND`    | Frontend         | ✅ Met          |
 
 **Dependencies:** US-CONTRACT-001, current contract permissions, and a connected wallet
 
@@ -214,14 +214,14 @@ reference has the expected layer label.
 
 ### Test Coverage
 
-| Acceptance Criterion    | Proof Strategy   | Current Evidence | Status        |
-| ----------------------- | ---------------- | ---------------- | ------------- |
-| `AC-US-CONTRACT-003-01` | `PS-FRONTEND`    | Frontend         | 🔎 Unverified |
-| `AC-US-CONTRACT-003-02` | `PS-CAMPAIGN`    | None linked      | ❌ Missing    |
-| `AC-US-CONTRACT-003-03` | `PS-CAMPAIGN`    | None linked      | ❌ Missing    |
-| `AC-US-CONTRACT-003-04` | Decision pending | None linked      | 📝 Pending    |
-| `AC-US-CONTRACT-003-05` | `PS-FRONTEND`    | Frontend         | 🔎 Unverified |
-| `AC-US-CONTRACT-003-06` | `PS-FRONTEND`    | Frontend         | 🔎 Unverified |
+| Acceptance Criterion    | Proof Strategy   | Current Evidence | Status          |
+| ----------------------- | ---------------- | ---------------- | --------------- |
+| `AC-US-CONTRACT-003-01` | `PS-FRONTEND`    | Frontend         | ✅ Met          |
+| `AC-US-CONTRACT-003-02` | `PS-CAMPAIGN`    | None linked      | ❌ Missing      |
+| `AC-US-CONTRACT-003-03` | `PS-CAMPAIGN`    | None linked      | ❌ Missing      |
+| `AC-US-CONTRACT-003-04` | Decision pending | None linked      | 📝 Pending      |
+| `AC-US-CONTRACT-003-05` | `PS-FRONTEND`    | Frontend         | ⚠️ Insufficient |
+| `AC-US-CONTRACT-003-06` | `PS-FRONTEND`    | Frontend         | ⚠️ Insufficient |
 
 **Dependencies:** Current company and a configured Campaign Manager
 
@@ -261,12 +261,12 @@ reference has the expected layer label.
 | `AC-US-CONTRACT-004-01` | `PS-API`               | Frontend         | ⚠️ Insufficient |
 | `AC-US-CONTRACT-004-04` | `PS-RECOVERY`          | Frontend         | ⚠️ Insufficient |
 | `AC-US-CONTRACT-004-02` | `PS-API`               | None linked      | ❌ Missing      |
-| `AC-US-CONTRACT-004-05` | `PS-FRONTEND`          | Frontend         | 🔎 Unverified   |
+| `AC-US-CONTRACT-004-05` | `PS-FRONTEND`          | Frontend         | ✅ Met          |
 | `AC-US-CONTRACT-004-06` | `PS-FRONTEND-CONTRACT` | Frontend         | ⚠️ Insufficient |
 | `AC-US-CONTRACT-004-07` | `PS-FRONTEND`          | None linked      | ❌ Missing      |
-| `AC-US-CONTRACT-004-08` | `PS-FRONTEND`          | Frontend         | 🔎 Unverified   |
+| `AC-US-CONTRACT-004-08` | `PS-FRONTEND`          | Frontend         | ✅ Met          |
 | `AC-US-CONTRACT-004-03` | `PS-FRONTEND`          | None linked      | ❌ Missing      |
-| `AC-US-CONTRACT-004-09` | `PS-FRONTEND`          | Frontend         | 🔎 Unverified   |
+| `AC-US-CONTRACT-004-09` | `PS-FRONTEND`          | Frontend         | ⚠️ Insufficient |
 
 **Dependencies:** Current company and the Officer-generation history read
 
@@ -308,19 +308,19 @@ reference has the expected layer label.
 
 ### Test Coverage
 
-| Acceptance Criterion    | Proof Strategy       | Current Evidence | Status        |
-| ----------------------- | -------------------- | ---------------- | ------------- |
-| `AC-US-CONTRACT-005-01` | `PS-FRONTEND`        | Frontend         | 🔎 Unverified |
-| `AC-US-CONTRACT-005-02` | `PS-FULL-STACK`      | None linked      | ❌ Missing    |
-| `AC-US-CONTRACT-005-03` | `PS-FULL-STACK`      | Integrated E2E   | 🔎 Unverified |
-| `AC-US-CONTRACT-005-04` | `PS-BROWSER-BACKEND` | None linked      | ❌ Missing    |
-| `AC-US-CONTRACT-005-05` | `PS-FRONTEND`        | Frontend         | 🔎 Unverified |
-| `AC-US-CONTRACT-005-06` | `PS-FULL-STACK`      | None linked      | ❌ Missing    |
-| `AC-US-CONTRACT-005-07` | `PS-MIGRATION-LATER` | None linked      | ❌ Missing    |
-| `AC-US-CONTRACT-005-08` | `PS-FRONTEND`        | None linked      | ❌ Missing    |
-| `AC-US-CONTRACT-005-09` | `PS-FRONTEND`        | None linked      | ❌ Missing    |
-| `AC-US-CONTRACT-005-10` | `PS-FRONTEND`        | None linked      | ❌ Missing    |
-| `AC-US-CONTRACT-005-11` | `PS-CONTRACT`        | None linked      | ❌ Missing    |
+| Acceptance Criterion    | Proof Strategy       | Current Evidence | Status          |
+| ----------------------- | -------------------- | ---------------- | --------------- |
+| `AC-US-CONTRACT-005-01` | `PS-FRONTEND`        | Frontend         | ⚠️ Insufficient |
+| `AC-US-CONTRACT-005-02` | `PS-FULL-STACK`      | None linked      | ❌ Missing      |
+| `AC-US-CONTRACT-005-03` | `PS-FULL-STACK`      | Integrated E2E   | ✅ Met          |
+| `AC-US-CONTRACT-005-04` | `PS-BROWSER-BACKEND` | None linked      | ❌ Missing      |
+| `AC-US-CONTRACT-005-05` | `PS-FRONTEND`        | Frontend         | ⚠️ Insufficient |
+| `AC-US-CONTRACT-005-06` | `PS-FULL-STACK`      | None linked      | ❌ Missing      |
+| `AC-US-CONTRACT-005-07` | `PS-MIGRATION-LATER` | None linked      | ❌ Missing      |
+| `AC-US-CONTRACT-005-08` | `PS-FRONTEND`        | None linked      | ❌ Missing      |
+| `AC-US-CONTRACT-005-09` | `PS-FRONTEND`        | None linked      | ❌ Missing      |
+| `AC-US-CONTRACT-005-10` | `PS-FRONTEND`        | None linked      | ❌ Missing      |
+| `AC-US-CONTRACT-005-11` | `PS-CONTRACT`        | None linked      | ❌ Missing      |
 
 **Dependencies:** US-CONTRACT-001, a current company owner, a connected wallet, and an active Officer generation
 
@@ -382,6 +382,12 @@ reference has the expected layer label.
 - The marked direct-transfer test only checks a mocked mutation call, not successor ownership on-chain (`AC-US-CONTRACT-002-04`). The
   legacy-recovery component test checks a recovery plan, not completed movement into the current Bank (`004-04`). An integrated shareholder
   migration test supports the migration-root transition but not every redeploy/history outcome in `US-CONTRACT-005`.
+- The Board-transfer alert test checks only that a message appears (`002-07`), and its "at least half" wording understates the contract's
+  majority threshold for an even-sized Board. The direct-transfer failure test (`002-10`) checks logging and an open form, not the visible
+  error or unchanged owner. Permission-menu `002-05` bypasses the actual owner/Board eligibility derivation.
+- The missing-Campaign-Manager test (`003-05`) does not establish an actionable setup path; the read-failure test (`003-06`) does not
+  exercise retry. Recovery `004-09` lacks a marked assertion that prior completed steps stay completed. Redeploy `005-01` does not traverse
+  the active-generation entry point, and `005-05` checks a blank name but not a blank symbol.
 - Historic balance recovery overlaps the Bank account result in `AC-US-BANK-004-02`. Contract Management owns initiating recovery; Accounts
   owns verifying the receiving Bank balance. Their combined evidence must not be counted twice as separate completed transfers.
 - The legacy TeamContractDetailExtend suite duplicates the current manager-settings coverage with obsolete mocks and assertion-free cases,
