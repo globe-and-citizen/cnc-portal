@@ -476,6 +476,8 @@ it to an earlier or later deployment based on activity order.
 - Trial Balance grouping uses `AccountId`, not a display label or a contract-generation order.
 - Balance Sheet account lines reuse the Trial Balance grouping by `AccountId`. The account's family supplies its account class and normal
   balance; a later deployment or unresolved account never merges into another deployment before the report line and drill-down are selected.
+  Selecting the account label, Details indicator, or row opens the matching line by its stable account ID, including when the table wraps
+  account objects in reactive proxies.
 - Earnings to date is calculated from the same Trial Balance income and expense rows. The supporting rows remain concrete and drillable;
   their signed contributions are the only temporary-account aggregate added to total equity.
 - A deployment-specific instance is resolved only when it is a known company deployment of the matching family, either named directly by the
@@ -605,7 +607,7 @@ because deposits and company-pocket transfers are not manual assignment targets.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `79315400c2ea74759a5505d6c66382ad3279b045`
+**Implementation evidence reviewed against:** `d9a236b9df4c1709dcd431f3fb5d333d26090ae4`
 
 - [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts),
   [source-status projection](../../../app/src/composables/accounting/useAccountingStatus.ts),
@@ -661,7 +663,8 @@ because deposits and company-pocket transfers are not manual assignment targets.
   [statement presenter](../../../app/src/utils/accounting/presenter.ts), and
   [Balance Sheet route view](../../../app/src/views/team/%5Bid%5D/Accounting/BalanceSheetView.vue),
   [Balance Sheet table](../../../app/src/components/sections/AccountingView/BalanceSheetTable.vue), and
-  [Balance Sheet tests](../../../app/src/utils/accounting/__tests__/balanceSheet.spec.ts)
+  [Balance Sheet tests](../../../app/src/utils/accounting/__tests__/balanceSheet.spec.ts) and
+  [Balance Sheet drill-down tests](../../../app/src/views/team/%5Bid%5D/Accounting/__tests__/BalanceSheetDrilldown.spec.ts)
 - [Chart of accounts](../../../app/src/utils/accounting/chartOfAccounts.ts) and
   [concrete account registry](../../../app/src/utils/accounting/accountRegistry.ts), and
   [account-instance evidence resolver](../../../app/src/utils/accounting/accountInstances.ts)

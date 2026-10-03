@@ -11,7 +11,9 @@ evidence.
 ## Route the work
 
 1. Read `AGENTS.md`, `todolist.md`, the relevant issue or PR, and the touched paths.
-2. Mark the active todo item and identify blockers before beginning implementation.
+2. Mark the active todo item and identify blockers before beginning implementation. Scope the relationships and affected consumers with
+   [Development Relationship Validation](../../../docs/development-guide/relationship-validation.md), including concrete completion
+   proposals for missing relations.
 3. Select only the needed skills:
    - GitHub artifacts or publishing → `cnc-github-flow`
    - PR review → `cnc-pr-review`
@@ -32,4 +34,5 @@ evidence.
 ## Integrate and finish
 
 The primary agent evaluates all evidence, integrates the changes, runs the required checks, and owns commits and PR state. Mark the todo
-complete only after the agreed outcome and validation are complete.
+complete only after the agreed outcome and validation are complete. Maintain the relationship results through implementation and review;
+refresh affected evidence against the exact head and target revision before any authorized merge.

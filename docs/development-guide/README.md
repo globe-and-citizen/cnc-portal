@@ -4,6 +4,11 @@ Comprehensive guides for developing features in the CNC Portal project.
 
 ## Contents
 
+### Development Workflow
+
+- **[Development Relationship Validation](./relationship-validation.md)** - Required relationship checks from issue scoping through final
+  merge validation, with evidence and completion proposals
+
 ### Database Tooling
 
 - **[Database Seeding](./database-seeding/README.md)** - Current flags, safety boundaries, and execution flow
@@ -76,11 +81,13 @@ Comprehensive guides for developing features in the CNC Portal project.
 
 ### Creating a New Feature
 
-1. **Create component** with proper structure
-2. **Write tests** following unit testing guide
-3. **Update mocks** if adding new queries
-4. **Update documentation** for public APIs
-5. **Submit for review** using review checklist
+Follow [Development Relationship Validation](./relationship-validation.md) throughout the change:
+
+1. **Scope the issue** against canonical expectations and identify affected relationships and consumers.
+2. **Implement the change** using the affected area's guides, reassessing relationships after each logical change.
+3. **Validate and document** the actual guarantees and record evidence or completion proposals in the PR.
+4. **Submit for independent review** using the review checklist and relationship results.
+5. **Revalidate before merge** against the current PR head and target revision.
 
 ### File Organization
 
@@ -124,6 +131,8 @@ See the [Mock System guide](../testing/MOCK_SYSTEM.md#adding-a-global-mock) and 
 
 Before submitting a PR:
 
+- [ ] Relationship results, evidence, applicability reasons, and completion proposals follow the
+      [relationship-validation guide](./relationship-validation.md).
 - [ ] All tests pass (`npm run test:unit`)
 - [ ] TypeScript compiles without errors (`npm run type-check`)
 - [ ] No ESLint errors (`npm run lint`)

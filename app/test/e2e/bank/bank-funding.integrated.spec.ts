@@ -43,6 +43,7 @@ test.describe(
      * - [AC-US-BANK-002-09]
      * - [AC-US-BANK-003-01]
      * - [AC-US-BANK-003-02]
+     * - [AC-US-EXP-005-03]
      */
     test('funds the company Bank and transfers to the Expense Account', async ({ page }) => {
       const company = await createOperationalCompany(page)

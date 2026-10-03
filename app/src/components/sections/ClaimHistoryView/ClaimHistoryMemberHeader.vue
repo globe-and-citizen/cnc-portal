@@ -22,7 +22,11 @@
 
             <div class="flex items-center gap-2">
               <img :src="addressIconPath" alt="" class="h-4 w-4" />
-              <AddressTooltip :address="displayedMember?.address" data-test="claim-user-address" />
+              <AddressTooltip
+                :address="displayedMember?.address"
+                :slice="true"
+                data-test="claim-user-address"
+              />
             </div>
           </div>
         </div>
@@ -33,7 +37,7 @@
             :items="memberOptions"
             value-key="value"
             :search-input="{ placeholder: 'Search members…' }"
-            :filter-fields="['label', 'description']"
+            :filter-fields="['label', 'value']"
             placeholder="Select a user"
             aria-label="Select a user"
             class="w-full"
@@ -51,6 +55,7 @@ import type { Address } from 'viem'
 import { useRouter } from 'vue-router'
 import { useTeamStore } from '@/stores'
 import AddressTooltip from '@/components/ui/AddressTooltip.vue'
+import { formatAddress } from '@/utils/format'
 
 interface Props {
   memberAddress: Address
@@ -73,8 +78,8 @@ const displayedMember = computed(() => {
 const memberOptions = computed(() =>
   members.value.map((member) => ({
     value: member.address,
-    label: member.name || member.address,
-    description: member.address,
+    label: member.name || formatAddress(member.address),
+    description: formatAddress(member.address),
     avatar: member.imageUrl
       ? { src: member.imageUrl, alt: `${member.name || 'User'} avatar` }
       : undefined

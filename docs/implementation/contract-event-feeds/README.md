@@ -46,7 +46,8 @@ flowchart LR
 6. The domain mapper returns its source-neutral event feed for a transaction history or Accounting assembly.
 7. The Bank feed maps V0/V0.1 Bank-emitted fees and queries the V1/V2 FeeCollectors by paying Bank. For legacy ERC-20 fees, it takes the
    currency only from the next transfer event in the same transaction and Bank generation; native and unmatched fees remain tokenless.
-8. Incoming Bank token transfers use every known Officer-generation Bank target, so a later Bank deployment does not hide prior transfers.
+8. Incoming Bank token transfers use every known Officer-generation Bank target and decode the indexed token address and transferred amount
+   from each Bank event, so a later Bank deployment does not hide prior transfers or their value.
 
 ## Invariants and Failure Behaviour
 
@@ -71,7 +72,7 @@ flowchart LR
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `79315400c2ea74759a5505d6c66382ad3279b045`
+**Implementation evidence reviewed against:** `43907f7271b790fdccc63abdf7f9d80dcae4dbd6`
 
 - [Shared RPC log scanner](../../../app/src/composables/eventsViaLogs.ts),
   [immutable block timestamp query](../../../app/src/queries/blockTimestamp.queries.ts), and

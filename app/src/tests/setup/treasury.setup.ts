@@ -11,7 +11,8 @@ vi.mock('@/composables/cashRemuneration/reads', () => ({
 }))
 
 vi.mock('@/composables/expenseAccount/reads', () => ({
-  useExpenseAccountOwner: vi.fn(() => mockExpenseAccountReads.owner)
+  useExpenseAccountOwner: vi.fn(() => mockExpenseAccountReads.owner),
+  useExpenseAccountSupportedTokens: vi.fn(() => mockExpenseAccountReads.supportedTokens)
 }))
 
 vi.mock('@/composables/cashRemuneration/writes', () => ({
