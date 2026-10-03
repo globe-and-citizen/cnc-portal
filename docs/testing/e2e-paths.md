@@ -86,7 +86,7 @@ execution:
 | G5    | `E2E-PATH-11` | `9/9`              | ✅ Covered |
 | G5    | `E2E-PATH-12` | `8/8`              | ✅ Covered |
 | G5    | `E2E-PATH-13` | `22/22`            | ✅ Covered |
-| G6    | `E2E-PATH-14` | `9/15`             | 🟡 Partial |
+| G6    | `E2E-PATH-14` | `15/15`            | ✅ Covered |
 | G7    | `E2E-PATH-15` | `10/11`            | 🟡 Partial |
 | G7    | `E2E-PATH-16` | `9/9`              | ✅ Covered |
 | G8    | `E2E-PATH-17` | `20/20`            | ✅ Covered |
@@ -589,19 +589,21 @@ belongs to its own scenarios. Neither check turns G0 into product-flow evidence.
     - [x] `US-EXP-002` Verify the Expense Account contract balance.
     - [x] `US-EXP-003` Deactivate the approval.
     - [x] `US-EXP-003` Verify its disabled state.
-    - [ ] `US-EXP-002` Attempt spending while the approval is deactivated.
-    - [ ] `US-EXP-003` Verify that spending is blocked while the approval is deactivated.
+    - [x] `US-EXP-002` Attempt spending while the approval is deactivated.
+    - [x] `US-EXP-003` Verify that spending is blocked while the approval is deactivated.
     - [x] `US-EXP-003` Reactivate the approval.
     - [x] `US-EXP-003` Verify its active state.
-    - [ ] `US-EXP-002` Complete another valid spend after reactivation.
-    - [ ] `US-EXP-004` Reload and verify the balances.
-    - [ ] `US-EXP-004` Reload and verify the approval state.
-    - [ ] `US-EXP-004` Reload and verify the transaction history.
+    - [x] `US-EXP-002` Complete another valid spend after reactivation.
+    - [x] `US-EXP-004` Reload and verify the balances.
+    - [x] `US-EXP-004` Reload and verify the approval state.
+    - [x] `US-EXP-004` Reload and verify the transaction history.
   - Separate variants: overspending, invalid signatures, unauthorized actions, and insufficient funds.
   - Expected result: one allowance remains auditable across its complete active and inactive lifecycle.
-  - Status: Integrated partial — the main persisted approval, member spend, lifecycle control, balances, and in-flow history sequence is
-    executable. Post-reload and negative spend assertions remain planned. Invalid signatures, overspending, authorization failures, and
-    insufficient-fund variants remain browser acceptance or lower-layer coverage.
+  - Status: Integrated covered — the owner grants and deactivates one persisted approval; the member spends, sees the disabled Spend
+    control, and the same signed transfer is rejected by the deployed contract without moving funds or changing usage. After reactivation,
+    the member spends again. Reloaded owner and member views show the final balances and active approval; reloaded history shows both
+    successful transfers. Invalid signatures, overspending, authorization failures, and insufficient-fund variants remain browser acceptance
+    or lower-layer coverage.
   - Evidence: [integrated Accounts test](../../app/test/e2e/accounts.integrated.spec.ts).
 
 ## G7 — Cross-Feature Accounting Verification
