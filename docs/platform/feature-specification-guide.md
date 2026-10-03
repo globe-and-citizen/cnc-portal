@@ -333,15 +333,20 @@ every criterion:
   A real integrated path can prove more than one responsibility when it exercises the relevant decisions and resulting state.
 - A strategy's `Proof Rationale` names the rule or boundary failure that the required evidence must detect. It explains why that proof level
   is necessary instead of restating the criterion or merely listing the implementation stack.
-- `Proof Strategy` references one definition from the feature's `Proof Strategy Reference`. An undefined strategy ID is invalid.
+- `Proof Strategy` references one definition from the feature's `Proof Strategy Reference`. An undefined strategy ID is invalid. For an
+  individual unchecked criterion whose product/proof boundary is still undecided, use `Decision pending` instead, with `None linked` and
+  `📝 Pending`; record the missing decision in Known Gaps and replace this exception once it is settled.
 - `Current Evidence` is derived from direct representative `AC-US-*` references. `Integrated E2E` and `Mocked browser` come from the
   Playwright suite's `@integrated` or `@mocked` classification; `None linked` means no representative reference is currently registered.
 - `Status` is `✅ Met` when every required proof is present, `⚠️ Insufficient` when some proof exists but a required boundary is absent, or
-  `❌ Missing` when no representative proof is linked.
+  `❌ Missing` when no representative proof is linked. Use `🔎 Unverified` when the required static labels are present but the test
+  assertions have not yet been examined against the complete outcome; this does not count as met in the overview.
 - Coverage status records traceability against the planned test boundary, not whether the latest run passed. Keep current execution results
   in CI or the generated local report.
 - Review the representative assertions before counting a direct identifier as proof. If the assertion does not establish the criterion,
-  correct its marker or the test; do not use a coverage row to launder a weak reference into `✅ Met`.
+  correct its marker or the test; do not use a coverage row to launder a weak reference into `✅ Met`. Until that correction is made,
+  `⚠️ Insufficient` may conservatively override a complete static label match; list the criterion and the assertion gap in the feature's
+  known gaps so the downgrade is auditable. Do not upgrade `🔎 Unverified` to `✅ Met` without that assertion review.
 
 If a criterion contains outcomes that can pass or fail independently, need different responsibility owners, or require different evidence,
 split it before assigning the proof strategy. Keep a transversal criterion intact when its layers jointly produce one cohesive observable

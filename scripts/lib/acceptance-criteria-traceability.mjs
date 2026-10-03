@@ -186,6 +186,10 @@ export function validateFeatureCoverageStructure(featureDocuments) {
 
   for (const document of featureDocuments) {
     const storyIds = [...document.content.matchAll(/^## (US-[A-Z0-9-]+):/gm)].map((match) => match[1])
+    for (const heading of ['Status Overview', 'Test Coverage Overview', 'Proof Strategy Reference']) {
+      const count = document.content.split('\n').filter((line) => line === `## ${heading}`).length
+      if (count > 1) errors.push(`${document.path} repeats ${heading}; keep one canonical section.`)
+    }
     const statusLines = tableRowsUnderHeading(document, 'Status Overview')
     const overviewLines = tableRowsUnderHeading(document, 'Test Coverage Overview')
     const strategies = parseProofStrategies(document)
@@ -231,8 +235,22 @@ export function validateFeatureCoverageStructure(featureDocuments) {
       errors.push(`${document.path} is missing Proof Strategy Reference for its assessable stories.`)
     }
     for (const storyId of assessableIds) {
-      if (!coverageRows.some((row) => row.storyId === storyId)) {
+      const storyCoverage = coverageRows.filter((row) => row.storyId === storyId)
+      if (storyCoverage.length === 0) {
         errors.push(`${document.path} is missing Test Coverage for ${storyId}.`)
+        continue
+      }
+
+      const criterionCount = parseAcceptanceCriteria(document).filter(
+        (criterion) => criterion.storyId === storyId
+      ).length
+      const metCount = storyCoverage.filter((row) => row.status === '✅ Met').length
+      const summary = overviewRows.find((cells) => cells[0] === storyId)?.[2] ?? ''
+      const ratio = summary.match(/(\d+)\/(\d+)/)
+      if (!ratio || Number(ratio[1]) !== metCount || Number(ratio[2]) !== criterionCount) {
+        errors.push(
+          `${document.path} reports ${summary || 'no coverage target'} for ${storyId}; expected ${metCount}/${criterionCount}.`
+        )
       }
     }
   }
@@ -589,6 +607,13 @@ function validateAcceptanceCoverageRows({ featureDocuments, criteria, references
         continue
       }
 
+      if (row.expected === 'Decision pending') {
+        if (criterion.checked || row.current !== 'None linked' || row.status !== '📝 Pending') {
+          errors.push(`${location} may defer a proof decision only for an unchecked criterion without linked evidence.`)
+        }
+        continue
+      }
+
       if (row.responsibilities !== null) {
         const responsibilityLabels = row.responsibilities.split(' + ').map((label) => label.trim())
         const invalidResponsibilities = responsibilityLabels.filter(
@@ -630,7 +655,8 @@ function validateAcceptanceCoverageRows({ featureDocuments, criteria, references
         : currentLabels.length > 0
           ? '⚠️ Insufficient'
           : '❌ Missing'
-      if (row.status !== expectedStatus) {
+      const conservativeReview = hasExpectedCoverage && ['⚠️ Insufficient', '🔎 Unverified'].includes(row.status)
+      if (row.status !== expectedStatus && !conservativeReview) {
         errors.push(`${location} reports ${row.status} for ${row.id}; expected ${expectedStatus}.`)
       }
     }

@@ -124,6 +124,20 @@ This is owned elsewhere.
     ]),
     ['docs/features/example/README.md is missing Test Coverage for US-EXAMPLE-001.']
   )
+  assert.deepEqual(
+    validateFeatureCoverageStructure([
+      feature(complete.content.replace('❌ 0/1 met', '✅ 1/1 met'))
+    ]),
+    [
+      'docs/features/example/README.md reports ✅ 1/1 met for US-EXAMPLE-001; expected 0/1.'
+    ]
+  )
+  assert.deepEqual(
+    validateFeatureCoverageStructure([
+      feature(complete.content.replace('## Proof Strategy Reference', '## Test Coverage Overview\n\n## Proof Strategy Reference'))
+    ]),
+    ['docs/features/example/README.md repeats Test Coverage Overview; keep one canonical section.']
+  )
 })
 
 test('rejects a single-ID Covers block in favor of the representative test title', () => {
@@ -248,6 +262,24 @@ test('validates optional per-story coverage targets against representative evide
     }).errors,
     []
   )
+  assert.deepEqual(
+    validateAcceptanceCriteriaTraceability({
+      featureDocuments: [
+        feature(documentedCoverage.content.replace('Integrated E2E | ✅ Met', 'Integrated E2E | ⚠️ Insufficient'))
+      ],
+      testDocuments: [integratedTest]
+    }).errors,
+    []
+  )
+  assert.deepEqual(
+    validateAcceptanceCriteriaTraceability({
+      featureDocuments: [
+        feature(documentedCoverage.content.replace('Integrated E2E | ✅ Met', 'Integrated E2E | 🔎 Unverified'))
+      ],
+      testDocuments: [integratedTest]
+    }).errors,
+    []
+  )
 })
 
 test('rejects invalid proof strategies and unknown strategy references', () => {
@@ -316,6 +348,35 @@ test('rejects stale current coverage and derived status cells', () => {
     [
       'docs/features/example/README.md:20 reports Mocked browser for AC-US-EXAMPLE-001-01; current representative coverage is Integrated E2E.',
       'docs/features/example/README.md:21 reports ✅ Met for AC-US-EXAMPLE-001-02; expected ❌ Missing.'
+    ]
+  )
+})
+
+test('allows an unresolved proof decision only for an unchecked criterion', () => {
+  const pending = feature(`${validFeature.content}
+
+### Test Coverage
+
+| Acceptance Criterion | Proof Strategy | Current Evidence | Status |
+| -------------------- | -------------- | ---------------- | ------ |
+| \`AC-US-EXAMPLE-001-01\` | Frontend | None linked | ❌ Missing |
+| \`AC-US-EXAMPLE-001-02\` | Decision pending | None linked | 📝 Pending |
+`)
+
+  assert.deepEqual(
+    validateAcceptanceCriteriaTraceability({
+      featureDocuments: [pending],
+      testDocuments: []
+    }).errors,
+    []
+  )
+  assert.deepEqual(
+    validateAcceptanceCriteriaTraceability({
+      featureDocuments: [feature(pending.content.replace('- [ ] `AC-US-EXAMPLE-001-02`', '- [x] `AC-US-EXAMPLE-001-02`'))],
+      testDocuments: []
+    }).errors,
+    [
+      'docs/features/example/README.md:21 may defer a proof decision only for an unchecked criterion without linked evidence.'
     ]
   )
 })

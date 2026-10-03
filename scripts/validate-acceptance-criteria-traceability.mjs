@@ -35,7 +35,8 @@ const testPaths = paths.filter(
 )
 const result = validateAcceptanceCriteriaTraceability({
   featureDocuments: readDocuments(featurePaths),
-  testDocuments: readDocuments(testPaths)
+  testDocuments: readDocuments(testPaths),
+  enforceFeatureCoverage: true
 })
 
 if (result.errors.length > 0) {
