@@ -11,6 +11,10 @@ Before editing, read and follow the [Feature Documentation Guide](../../../docs/
 canonical owner of feature eligibility, document structure, story statuses, acceptance semantics, progressive disclosure, and diagram rules.
 Do not duplicate that guide in a feature README.
 
+Apply [Development Relationship Validation](../../../docs/development-guide/relationship-validation.md) to the documented criteria,
+implementation, cross-domain consumers, and proof claims. Record the assessment and completion proposals in the issue/PR; keep each
+canonical rule with its existing owner.
+
 ## Classify the subject
 
 - Confirm that a user can reach the capability through current navigation, linked routes, access guards, and meaningful actions. A route or
