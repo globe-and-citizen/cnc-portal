@@ -57,6 +57,29 @@ flowchart LR
 | US-POLY-ACCOUNTING-004 | Investigate and export the activity ledger | Platform administrator | 🧪 Validation  |
 | US-POLY-ACCOUNTING-005 | Inspect Polymarket positions               | Platform administrator | 🧪 Validation  |
 
+## Test Coverage Overview
+
+Coverage targets compare each criterion with its required representative evidence. Static references are not a current passing run; the
+generated coverage report and CI retain file-level and execution evidence. Known assertion gaps remain insufficient even when a static
+reference has the expected layer label.
+
+| User Story             | Main Journey | Coverage Target | Gaps                              |
+| ---------------------- | ------------ | --------------- | --------------------------------- |
+| US-POLY-ACCOUNTING-001 | ⬜ Planned   | ❌ 0/9 met      | `AC-US-POLY-ACCOUNTING-001-01–09` |
+| US-POLY-ACCOUNTING-002 | ⬜ Planned   | ❌ 0/10 met     | `AC-US-POLY-ACCOUNTING-002-01–10` |
+| US-POLY-ACCOUNTING-003 | ⬜ Planned   | ❌ 0/10 met     | `AC-US-POLY-ACCOUNTING-003-01–10` |
+| US-POLY-ACCOUNTING-004 | ⬜ Planned   | ❌ 0/11 met     | `AC-US-POLY-ACCOUNTING-004-01–11` |
+| US-POLY-ACCOUNTING-005 | ⬜ Planned   | ❌ 0/8 met      | `AC-US-POLY-ACCOUNTING-005-01–08` |
+
+## Proof Strategy Reference
+
+| Strategy        | Responsibilities | Required Evidence | Proof Rationale                                                                           |
+| --------------- | ---------------- | ----------------- | ----------------------------------------------------------------------------------------- |
+| `PS-P-UI`       | Dashboard        | Dashboard         | Address, navigation, filtering, pagination, and export behaviour belong to the dashboard. |
+| `PS-P-CALC`     | Dashboard        | Dashboard         | Reconstruction and lot-accounting invariants need controlled source records.              |
+| `PS-P-FLOW`     | Dashboard        | Dashboard         | Source orchestration must produce the displayed calculated outcome.                       |
+| `PS-P-TRANSFER` | Dashboard        | Dashboard         | Truncation detection and administrator warning must agree across server and client.       |
+
 ## US-POLY-ACCOUNTING-001: Access and Select a Public Wallet
 
 **As a** platform administrator\
@@ -87,6 +110,20 @@ flowchart LR
 - [ ] `AC-US-POLY-ACCOUNTING-001-08` An invalid non-empty address produces a clear validation outcome instead of rendering empty
       reconstructed figures.
 - [x] `AC-US-POLY-ACCOUNTING-001-09` A valid address can be opened on its Polymarket profile for a direct source comparison.
+
+### Test Coverage
+
+| Acceptance Criterion           | Proof Strategy | Current Evidence | Status     |
+| ------------------------------ | -------------- | ---------------- | ---------- |
+| `AC-US-POLY-ACCOUNTING-001-01` | `PS-P-UI`      | None linked      | ❌ Missing |
+| `AC-US-POLY-ACCOUNTING-001-02` | `PS-P-FLOW`    | None linked      | ❌ Missing |
+| `AC-US-POLY-ACCOUNTING-001-03` | `PS-P-UI`      | None linked      | ❌ Missing |
+| `AC-US-POLY-ACCOUNTING-001-04` | `PS-P-UI`      | None linked      | ❌ Missing |
+| `AC-US-POLY-ACCOUNTING-001-05` | `PS-P-FLOW`    | None linked      | ❌ Missing |
+| `AC-US-POLY-ACCOUNTING-001-06` | `PS-P-FLOW`    | None linked      | ❌ Missing |
+| `AC-US-POLY-ACCOUNTING-001-07` | `PS-P-UI`      | None linked      | ❌ Missing |
+| `AC-US-POLY-ACCOUNTING-001-08` | `PS-P-UI`      | None linked      | ❌ Missing |
+| `AC-US-POLY-ACCOUNTING-001-09` | `PS-P-UI`      | None linked      | ❌ Missing |
 
 **Dependencies:** Dashboard authentication and administrator roles
 
@@ -125,6 +162,21 @@ flowchart LR
 - [ ] `AC-US-POLY-ACCOUNTING-002-10` When a summary is viewed as of a past date, its accounting-identity checks use the same historical
       snapshot rather than current all-time aggregates.
 
+### Test Coverage
+
+| Acceptance Criterion           | Proof Strategy  | Current Evidence | Status     |
+| ------------------------------ | --------------- | ---------------- | ---------- |
+| `AC-US-POLY-ACCOUNTING-002-01` | `PS-P-FLOW`     | None linked      | ❌ Missing |
+| `AC-US-POLY-ACCOUNTING-002-02` | `PS-P-FLOW`     | None linked      | ❌ Missing |
+| `AC-US-POLY-ACCOUNTING-002-03` | `PS-P-FLOW`     | None linked      | ❌ Missing |
+| `AC-US-POLY-ACCOUNTING-002-04` | `PS-P-FLOW`     | None linked      | ❌ Missing |
+| `AC-US-POLY-ACCOUNTING-002-05` | `PS-P-CALC`     | None linked      | ❌ Missing |
+| `AC-US-POLY-ACCOUNTING-002-06` | `PS-P-CALC`     | None linked      | ❌ Missing |
+| `AC-US-POLY-ACCOUNTING-002-07` | `PS-P-TRANSFER` | None linked      | ❌ Missing |
+| `AC-US-POLY-ACCOUNTING-002-08` | `PS-P-FLOW`     | None linked      | ❌ Missing |
+| `AC-US-POLY-ACCOUNTING-002-09` | `PS-P-FLOW`     | None linked      | ❌ Missing |
+| `AC-US-POLY-ACCOUNTING-002-10` | `PS-P-FLOW`     | None linked      | ❌ Missing |
+
 **Dependencies:** US-POLY-ACCOUNTING-001 and availability of the external activity, position, profile, and transfer sources
 
 ## US-POLY-ACCOUNTING-003: Review Reconstructed Financial Statements
@@ -159,6 +211,21 @@ flowchart LR
 - [x] `AC-US-POLY-ACCOUNTING-003-09` When Polymarket-reported realized P&L differs from the reconstructed lot result, the statement exposes
       the reconciliation difference.
 - [x] `AC-US-POLY-ACCOUNTING-003-10` Missing live position pricing does not cause a historical snapshot to use today's price retroactively.
+
+### Test Coverage
+
+| Acceptance Criterion           | Proof Strategy | Current Evidence | Status     |
+| ------------------------------ | -------------- | ---------------- | ---------- |
+| `AC-US-POLY-ACCOUNTING-003-01` | `PS-P-FLOW`    | None linked      | ❌ Missing |
+| `AC-US-POLY-ACCOUNTING-003-02` | `PS-P-CALC`    | None linked      | ❌ Missing |
+| `AC-US-POLY-ACCOUNTING-003-03` | `PS-P-FLOW`    | None linked      | ❌ Missing |
+| `AC-US-POLY-ACCOUNTING-003-04` | `PS-P-FLOW`    | None linked      | ❌ Missing |
+| `AC-US-POLY-ACCOUNTING-003-05` | `PS-P-CALC`    | None linked      | ❌ Missing |
+| `AC-US-POLY-ACCOUNTING-003-06` | `PS-P-CALC`    | None linked      | ❌ Missing |
+| `AC-US-POLY-ACCOUNTING-003-07` | `PS-P-CALC`    | None linked      | ❌ Missing |
+| `AC-US-POLY-ACCOUNTING-003-08` | `PS-P-FLOW`    | None linked      | ❌ Missing |
+| `AC-US-POLY-ACCOUNTING-003-09` | `PS-P-FLOW`    | None linked      | ❌ Missing |
+| `AC-US-POLY-ACCOUNTING-003-10` | `PS-P-CALC`    | None linked      | ❌ Missing |
 
 **Dependencies:** US-POLY-ACCOUNTING-002
 
@@ -196,6 +263,22 @@ flowchart LR
 - [x] `AC-US-POLY-ACCOUNTING-004-11` A missing market link or transaction hash does not prevent the corresponding ledger entry from being
       reviewed or exported.
 
+### Test Coverage
+
+| Acceptance Criterion           | Proof Strategy | Current Evidence | Status     |
+| ------------------------------ | -------------- | ---------------- | ---------- |
+| `AC-US-POLY-ACCOUNTING-004-01` | `PS-P-FLOW`    | None linked      | ❌ Missing |
+| `AC-US-POLY-ACCOUNTING-004-02` | `PS-P-UI`      | None linked      | ❌ Missing |
+| `AC-US-POLY-ACCOUNTING-004-03` | `PS-P-UI`      | None linked      | ❌ Missing |
+| `AC-US-POLY-ACCOUNTING-004-04` | `PS-P-FLOW`    | None linked      | ❌ Missing |
+| `AC-US-POLY-ACCOUNTING-004-05` | `PS-P-FLOW`    | None linked      | ❌ Missing |
+| `AC-US-POLY-ACCOUNTING-004-06` | `PS-P-FLOW`    | None linked      | ❌ Missing |
+| `AC-US-POLY-ACCOUNTING-004-07` | `PS-P-UI`      | None linked      | ❌ Missing |
+| `AC-US-POLY-ACCOUNTING-004-08` | `PS-P-FLOW`    | None linked      | ❌ Missing |
+| `AC-US-POLY-ACCOUNTING-004-09` | `PS-P-UI`      | None linked      | ❌ Missing |
+| `AC-US-POLY-ACCOUNTING-004-10` | `PS-P-UI`      | None linked      | ❌ Missing |
+| `AC-US-POLY-ACCOUNTING-004-11` | `PS-P-FLOW`    | None linked      | ❌ Missing |
+
 **Dependencies:** US-POLY-ACCOUNTING-002
 
 ## US-POLY-ACCOUNTING-005: Inspect Polymarket Positions
@@ -228,6 +311,19 @@ flowchart LR
 - [x] `AC-US-POLY-ACCOUNTING-005-08` A failed position source is reported by the accounting journey rather than presented as a successful
       empty portfolio.
 
+### Test Coverage
+
+| Acceptance Criterion           | Proof Strategy | Current Evidence | Status     |
+| ------------------------------ | -------------- | ---------------- | ---------- |
+| `AC-US-POLY-ACCOUNTING-005-01` | `PS-P-FLOW`    | None linked      | ❌ Missing |
+| `AC-US-POLY-ACCOUNTING-005-02` | `PS-P-FLOW`    | None linked      | ❌ Missing |
+| `AC-US-POLY-ACCOUNTING-005-03` | `PS-P-UI`      | None linked      | ❌ Missing |
+| `AC-US-POLY-ACCOUNTING-005-04` | `PS-P-FLOW`    | None linked      | ❌ Missing |
+| `AC-US-POLY-ACCOUNTING-005-05` | `PS-P-UI`      | None linked      | ❌ Missing |
+| `AC-US-POLY-ACCOUNTING-005-06` | `PS-P-UI`      | None linked      | ❌ Missing |
+| `AC-US-POLY-ACCOUNTING-005-07` | `PS-P-UI`      | None linked      | ❌ Missing |
+| `AC-US-POLY-ACCOUNTING-005-08` | `PS-P-FLOW`    | None linked      | ❌ Missing |
+
 **Dependencies:** US-POLY-ACCOUNTING-002
 
 ## Known Gaps
@@ -238,6 +334,9 @@ flowchart LR
   (`US-POLY-ACCOUNTING-002`).
 - The Summary's historical date selector does not scope the adjacent Accounting Identities card, which continues to use current all-time
   aggregates (`US-POLY-ACCOUNTING-002`).
+- Summary and Balance Sheet have separate historical date selectors; `AC-US-POLY-ACCOUNTING-003-04` must not be read as one shared date
+  setting. A source failure can show an alert while the Positions panel still says no positions were found, so `005-08` does not yet
+  distinguish failure from a successful empty portfolio consistently.
 - The dashboard has no dedicated automated tests for the Polymarket accounting route, source-query orchestration, or statement and ledger
   interactions. Human validation against representative wallets remains required.
 

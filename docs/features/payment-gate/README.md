@@ -42,6 +42,31 @@ These acceptance criteria follow the
 | US-PAYGATE-004 | Review Payment History                  | Merchant        | 🧪 Validation  |
 | US-PAYGATE-005 | Recall a Payment's Status by Facture ID | Merchant        | 📝 Draft       |
 
+## Test Coverage Overview
+
+Coverage targets compare required proof with direct representative `AC-US-*` references, not with the latest test run. The merchant-page and
+widget-payment paths are planned; a source-only widget assertion is not integrated payment evidence.
+
+| User Story     | Main Journey | Coverage Target | Gaps                                               |
+| -------------- | ------------ | --------------- | -------------------------------------------------- |
+| US-PAYGATE-001 | ⬜ Planned   | ⚠️ 1/3 met      | `AC-US-PAYGATE-001-01–02`                          |
+| US-PAYGATE-002 | ⬜ Planned   | ⚠️ 2/6 met      | `AC-US-PAYGATE-002-01–03`, `06`                    |
+| US-PAYGATE-003 | ⬜ Planned   | ⚠️ 6/13 met     | `AC-US-PAYGATE-003-02–04`, `06`, `08–09`, `12`     |
+| US-PAYGATE-004 | ⬜ Planned   | ❌ 0/6 met      | All `AC-US-PAYGATE-004-*` criteria                 |
+| US-PAYGATE-005 | 📝 Draft     | 📝 Not assessed | Authoritative facture-ID lookup boundary undecided |
+
+## Proof Strategy Reference
+
+| Strategy             | Responsibilities    | Required Evidence | Proof Rationale                                                                                      |
+| -------------------- | ------------------- | ----------------- | ---------------------------------------------------------------------------------------------------- |
+| `PS-PAYGATE-SETUP`   | Frontend            | Frontend          | Configuration choices and unsupported values are determined in the merchant setup client.            |
+| `PS-PAYGATE-EMBED`   | Frontend            | Integrated E2E    | A generated snippet must load the real widget on the merchant page with the intended settings.       |
+| `PS-PAYGATE-BANK`    | Frontend + Contract | Integrated E2E    | The selected destination must be the company's deployed Bank, not a placeholder or wrong contract.   |
+| `PS-PAYGATE-UI`      | Frontend            | Frontend          | Local recap, validation, and recoverable error states belong to the widget client.                   |
+| `PS-PAYGATE-PAYMENT` | Frontend + Contract | Integrated E2E    | Wallet approval, Bank receipt, callback, and displayed outcome must match one real payment.          |
+| `PS-PAYGATE-RETRY`   | Frontend            | Mocked browser    | A controlled wallet or chain failure must leave the embedded widget usable for a retry.              |
+| `PS-PAYGATE-HISTORY` | Frontend + Contract | Integrated E2E    | The merchant's history must reconstruct the same confirmed Bank deposit and facture ID after reload. |
+
 ## US-PAYGATE-001: Configure the Widget's Accepted Token
 
 **As a** merchant\
@@ -57,8 +82,21 @@ These acceptance criteria follow the
 
 #### Business Rules
 
-- [x] `AC-US-PAYGATE-001-02` No product element other than the accepted token is configurable in this version — style and layout are fixed.
+- [x] `AC-US-PAYGATE-001-02` The accepted token is the merchant's only configurable payment parameter in this version.
 - [x] `AC-US-PAYGATE-001-03` Only tokens the widget can actually accept payment in are offered as selectable options.
+
+#### Edge & Error Cases
+
+Unsupported payment-token configurations are handled by `AC-US-PAYGATE-003-04`; no separate token-selection failure outcome is currently
+specified for this story.
+
+### Test Coverage
+
+| Acceptance Criterion   | Proof Strategy     | Current Evidence | Status     |
+| ---------------------- | ------------------ | ---------------- | ---------- |
+| `AC-US-PAYGATE-001-01` | `PS-PAYGATE-SETUP` | None linked      | ❌ Missing |
+| `AC-US-PAYGATE-001-02` | `PS-PAYGATE-SETUP` | None linked      | ❌ Missing |
+| `AC-US-PAYGATE-001-03` | `PS-PAYGATE-SETUP` | Frontend         | ✅ Met     |
 
 **Dependencies:** none — this is the capability's entry point
 
@@ -91,6 +129,17 @@ token\
       a snippet built around a placeholder address.
 - [x] `AC-US-PAYGATE-002-05` When the widget's script URL isn't configured for this deployment, the Setup page shows an explicit
       "unavailable" state instead of a snippet whose script tag would never actually load a widget.
+
+### Test Coverage
+
+| Acceptance Criterion   | Proof Strategy     | Current Evidence | Status          |
+| ---------------------- | ------------------ | ---------------- | --------------- |
+| `AC-US-PAYGATE-002-01` | `PS-PAYGATE-SETUP` | None linked      | ❌ Missing      |
+| `AC-US-PAYGATE-002-02` | `PS-PAYGATE-EMBED` | Frontend         | ⚠️ Insufficient |
+| `AC-US-PAYGATE-002-03` | `PS-PAYGATE-BANK`  | None linked      | ❌ Missing      |
+| `AC-US-PAYGATE-002-04` | `PS-PAYGATE-SETUP` | Frontend         | ✅ Met          |
+| `AC-US-PAYGATE-002-05` | `PS-PAYGATE-SETUP` | Frontend         | ✅ Met          |
+| `AC-US-PAYGATE-002-06` | `PS-PAYGATE-EMBED` | Frontend         | ⚠️ Insufficient |
 
 **Dependencies:** US-PAYGATE-001 and a company with a deployed Bank contract
 
@@ -143,6 +192,24 @@ token\
       attribute, the customer sees an explicit "payment unavailable" message instead of a payment form built around bad data, and the
       merchant gets a console diagnostic naming exactly what's wrong.
 
+### Test Coverage
+
+| Acceptance Criterion   | Proof Strategy       | Current Evidence | Status          |
+| ---------------------- | -------------------- | ---------------- | --------------- |
+| `AC-US-PAYGATE-003-01` | `PS-PAYGATE-UI`      | Frontend         | ✅ Met          |
+| `AC-US-PAYGATE-003-02` | `PS-PAYGATE-PAYMENT` | None linked      | ❌ Missing      |
+| `AC-US-PAYGATE-003-03` | `PS-PAYGATE-PAYMENT` | None linked      | ❌ Missing      |
+| `AC-US-PAYGATE-003-04` | `PS-PAYGATE-UI`      | None linked      | ❌ Missing      |
+| `AC-US-PAYGATE-003-05` | `PS-PAYGATE-UI`      | Frontend         | ✅ Met          |
+| `AC-US-PAYGATE-003-06` | `PS-PAYGATE-UI`      | None linked      | ❌ Missing      |
+| `AC-US-PAYGATE-003-07` | `PS-PAYGATE-UI`      | Frontend         | ✅ Met          |
+| `AC-US-PAYGATE-003-08` | `PS-PAYGATE-PAYMENT` | None linked      | ❌ Missing      |
+| `AC-US-PAYGATE-003-09` | `PS-PAYGATE-PAYMENT` | Frontend         | ⚠️ Insufficient |
+| `AC-US-PAYGATE-003-10` | `PS-PAYGATE-UI`      | Frontend         | ✅ Met          |
+| `AC-US-PAYGATE-003-11` | `PS-PAYGATE-UI`      | Frontend         | ✅ Met          |
+| `AC-US-PAYGATE-003-12` | `PS-PAYGATE-RETRY`   | None linked      | ❌ Missing      |
+| `AC-US-PAYGATE-003-13` | `PS-PAYGATE-UI`      | Frontend         | ✅ Met          |
+
 **Dependencies:** US-PAYGATE-002, a connected wallet, and a sufficient token balance
 
 ## US-PAYGATE-004: Review Payment History
@@ -171,6 +238,17 @@ token\
 - [x] `AC-US-PAYGATE-004-05` An empty history is shown as an explicit empty state, not an empty table with no explanation.
 - [x] `AC-US-PAYGATE-004-06` A failed history read is shown as an explicit error instead of a silently empty or stale table.
 
+### Test Coverage
+
+| Acceptance Criterion   | Proof Strategy       | Current Evidence | Status          |
+| ---------------------- | -------------------- | ---------------- | --------------- |
+| `AC-US-PAYGATE-004-01` | `PS-PAYGATE-HISTORY` | None linked      | ❌ Missing      |
+| `AC-US-PAYGATE-004-02` | `PS-PAYGATE-HISTORY` | None linked      | ❌ Missing      |
+| `AC-US-PAYGATE-004-03` | `PS-PAYGATE-HISTORY` | None linked      | ❌ Missing      |
+| `AC-US-PAYGATE-004-04` | `PS-PAYGATE-HISTORY` | Frontend         | ⚠️ Insufficient |
+| `AC-US-PAYGATE-004-05` | `PS-PAYGATE-UI`      | None linked      | ❌ Missing      |
+| `AC-US-PAYGATE-004-06` | `PS-PAYGATE-UI`      | None linked      | ❌ Missing      |
+
 **Dependencies:** US-PAYGATE-003
 
 ## US-PAYGATE-005: Recall a Payment's Status by Facture ID
@@ -187,8 +265,13 @@ token\
 
 #### Business Rules
 
-- [ ] `AC-US-PAYGATE-005-02` The mechanism linking a facture ID to its on-chain transaction — a contract-level record or a database record —
-      is decided and implemented.
+- [ ] `AC-US-PAYGATE-005-02` The same facture ID and Bank address resolve to the corresponding payment status even if the merchant page did
+      not receive the widget callback.
+
+#### Edge & Error Cases
+
+Unknown or ambiguous facture IDs, as well as the authoritative lookup mechanism, remain product and implementation decisions for this draft
+story; no error outcome is claimed as implemented.
 
 **Dependencies:** US-PAYGATE-003
 

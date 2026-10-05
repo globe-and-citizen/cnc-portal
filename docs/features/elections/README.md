@@ -76,7 +76,7 @@ Each acceptance criterion references one reusable strategy instead of repeating 
 | `PS-CONTRACT`          | Contract                      | Contract                  | The contract owns this authorization, lifecycle, or immutable-state rule.            |
 | `PS-FRONTEND-CONTRACT` | Frontend + Contract           | Frontend + Contract       | Portal and contract rules can fail independently and both require direct proof.      |
 | `PS-CHAIN-CONTRACT`    | Frontend + Contract           | Integrated E2E + Contract | The integrated wallet journey and focused on-chain invariant need independent proof. |
-| `PS-BROWSER-CONTRACT`  | Frontend + Contract           | Mocked browser + Contract | A wallet journey and its resulting chain state must be observed together.            |
+| `PS-BROWSER-CONTRACT`  | Frontend + Contract           | Mocked browser + Contract | The controlled browser branch and on-chain rule can fail independently.              |
 | `PS-BACKEND`           | Backend                       | Backend                   | The backend owns this API authorization or notification rule.                        |
 | `PS-BROWSER-BACKEND`   | Frontend + Backend            | Mocked browser + Backend  | The portal hand-off and backend rule can fail independently.                         |
 | `PS-FULL-JOURNEY`      | Frontend + Backend + Contract | Integrated E2E            | The portal, owned API, and chain result must work without replacing a CNC boundary.  |

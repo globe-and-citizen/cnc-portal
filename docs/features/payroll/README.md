@@ -73,7 +73,7 @@ missing or insufficient proof.
 
 | User Story     | Main Journey  | Coverage Target | Gaps                                                                                                             |
 | -------------- | ------------- | --------------- | ---------------------------------------------------------------------------------------------------------------- |
-| US-PAYROLL-001 | ✅ Integrated | ✅ 27/27        | —                                                                                                                |
+| US-PAYROLL-001 | ✅ Integrated | ⚠️ 25/27        | `AC-US-PAYROLL-001-18–19` lacks direct backend proof                                                             |
 | US-PAYROLL-002 | ✅ Integrated | ✅ 12/12        | —                                                                                                                |
 | US-PAYROLL-003 | 🚧 Partial    | ⚠️ 3/8          | 5 — Bank receipt, unfunded withdrawal, token eligibility, and direct ERC-20 history need representative proof    |
 | US-PAYROLL-004 | ✅ Integrated | ✅ 11/11        | —                                                                                                                |
@@ -94,6 +94,7 @@ missing or insufficient proof.
 | ----------------------- | ----------------------------- | ------------------------- | -------------------------------------------------------------------------------------------------- |
 | `PS-FRONTEND`           | Frontend                      | Frontend                  | The client owns this validation, display, or interaction state.                                    |
 | `PS-BACKEND`            | Backend                       | Backend                   | The server owns this authorization, validation, persistence, or reconciliation rule.               |
+| `PS-API`                | Frontend + Backend            | Integrated E2E            | The browser action and persisted API result must agree across the real journey.                    |
 | `PS-INTEGRATED`         | Frontend + Backend + Contract | Integrated E2E            | The browser, persisted API state, and chain outcome must work together in the real journey.        |
 | `PS-CONTRACT-REFERENCE` | Contract                      | Contract                  | Contract-owned criteria retain their contract proof without counting it as portal or API coverage. |
 | `PS-CHAIN`              | Frontend + Contract           | Integrated E2E            | The wallet transaction and recipient balance must agree after a real chain write.                  |
@@ -107,55 +108,6 @@ that lacks an `AC-US-*` reference remains a discovery item until its representat
 
 Criteria tagged _(API)_ require backend evidence; integrated E2E evidence is recorded separately when a real user journey crosses the API or
 chain boundary.
-
-The Payroll Playwright suite currently has no `@mocked` scenarios. Its three E2E files,
-[claim preparation](../../../app/test/e2e/payroll/payroll.integrated.spec.ts) and
-[payment lifecycle](../../../app/test/e2e/payroll/payroll-payment.integrated.spec.ts), and
-[insufficient funding](../../../app/test/e2e/payroll/payroll-insufficient-funds.integrated.spec.ts), are tagged `@integrated` and exercise
-Payroll through the product UI, backend routes, and local chain; the chain checks read contract state after user actions. Therefore,
-`Mocked browser` is not expected in Payroll's `Current Evidence` unless a mocked Payroll browser scenario is added and linked to a
-criterion. These labels record direct test references, not the latest execution result.
-
-The feature owner validates every Payroll `@integrated` journey manually in Playwright UI on the prepared local G5 stack. Existing services
-and deployed infrastructure can be reused when the configured addresses contain the expected bytecode. The journeys create isolated company
-records and deploy their company contracts through the product UI, then remove those records in cleanup. The browser uses the repository's
-deterministic E2E wallet connector for actual signatures and local-chain transactions. No backend response or RPC result is intercepted.
-Technical automated runs are recorded separately from the owner's manual validation. The payment journey claims against an already completed
-ISO week, so the prepared profile must leave `SUBMIT_RESTRICTION` disabled for that company; the four-day restriction is tested separately
-with the rule enabled in the API suite.
-
-From `app/`, run `npm run test:e2e:integrated -- --ui test/e2e/payroll`. Unit and API suites run independently of the manual browser review.
-
-CI runs API unit coverage; locally it runs from `backend/` with `npm run test:unit:coverage`. Integrated browser assertions verify actual
-token holdings independently of external fiat-price quotes and wait for successful wage API responses or a completed Bank deposit rather
-than transient toast messages.
-
-The API enforces paused-wage claim restrictions, so restoration of claim submission is proven by the real browser/API journey
-(`AC-US-PAYROLL-002-03`). Normal signing versus explicit re-signing is a client interaction (`AC-US-PAYROLL-008-06/07`); the backend
-validates the shared signing request, current owner and signature for both flows.
-
-## Test Plan by User Story
-
-Run the linked backend and frontend suites for their owned rules and interactions. Run the integrated paths against the prepared local G5
-stack for cross-layer journeys. The per-story matrices below link each criterion to its required proof; contract checks remain a separate
-technical responsibility.
-
-| User Story     | Backend tests to perform                                                                   | Frontend tests to perform                                                                | Integrated test to perform                                                                                                    |
-| -------------- | ------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| US-PAYROLL-001 | Wage versioning, ownership and archived writes.                                            | Rates, allowances, overtime, validation and version display.                             | Create and replace a wage through the UI; verify later API reads.                                                             |
-| US-PAYROLL-002 | Current-wage pause/resume; reject claim creation, edit and deletion while paused.          | Pause/resume controls and restored wage replacement.                                     | Pause, reject a real claim, resume and persist a new claim.                                                                   |
-| US-PAYROLL-003 | No Payroll API write owns the chain deposit.                                               | Receiving balance and asset availability; Bank owns its transfer controls.               | Prove a Bank transfer and wallet-origin deposit against Payroll balances and history.                                         |
-| US-PAYROLL-004 | Goals persistence, member ownership, locked weeks and wage binding.                        | Goal editor, read-only states and empty content.                                         | Save goals before submitting work for the same week.                                                                          |
-| US-PAYROLL-005 | UTC dates, four-day window, identity, ten-minute steps, caps, paused wage and attachments. | Claim form, duration, limits, file validation and server errors.                         | Persist work and reject daily/weekly cap overages through the UI.                                                             |
-| US-PAYROLL-006 | Owner authorization, pending/paused state, cap checks and unchanged data on rejection.     | Edit form, validation and errors.                                                        | Edit a persisted claim and verify its displayed duration and memo.                                                            |
-| US-PAYROLL-007 | Owner authorization, pending/paused state, preservation of weekly goals.                   | Confirmation, cancellation and API errors.                                               | Delete a real claim, then recreate it without losing its weekly row.                                                          |
-| US-PAYROLL-008 | Contract owner, completed week, signature recovery, current contract and archived company. | Signing, explicit re-signing, pending/current-week restrictions and wallet rejection.    | Approve a completed week with a real EIP-712 signature.                                                                       |
-| US-PAYROLL-009 | Reconciled status and signature checks.                                                    | Owner permissions, disable/enable actions and synchronization after receipt.             | Disable and re-enable the same signature; read actual contract state.                                                         |
-| US-PAYROLL-010 | Claim ownership, signed/paid states and archived company.                                  | Signed/signature guard, balances, contract/chain mismatch and wallet rejection.          | Pay ETH + USDC + minted SHER; decode the transaction, check balances and reload; reject insufficient funds.                   |
-| US-PAYROLL-011 | Paid/disabled/stale-signature reconciliation, failed reads and subsequent persisted reads. | Sync on company load and after withdrawal, disable and enable.                           | Reload the API-backed history after each on-chain transition.                                                                 |
-| US-PAYROLL-012 | Company membership, member/status filters, minutes, pagination and attachment URLs.        | Member/week/duration/rates/totals/status/action table and member selector.               | Verify member history, locked work and company-wide withdrawn status after payment.                                           |
-| US-PAYROLL-013 | No separate backend criterion: account positions come from client chain reads.             | Account balances, token positions, withdrawn summaries and read-only funding indicators. | Verify holdings, signed/monthly summaries, activity values and date/type filters through the funded and paid browser journey. |
-| US-PAYROLL-014 | No Payroll API write owns the source-account return.                                       | Direct return, Board proposal, warning, and refreshed balances.                          | Prove the real source-to-Bank movement and rejection without a later wallet cash-out.                                         |
 
 ## US-PAYROLL-001: Set a Member's Wage
 
@@ -205,35 +157,35 @@ technical responsibility.
 
 ### Test Coverage
 
-| Acceptance Criterion   | Proof Strategy  | Current Evidence         | Status     |
-| ---------------------- | --------------- | ------------------------ | ---------- |
-| `AC-US-PAYROLL-001-01` | `PS-INTEGRATED` | Integrated E2E           | ✅ Met     |
-| `AC-US-PAYROLL-001-02` | `PS-INTEGRATED` | Integrated E2E + Backend | ✅ Met     |
-| `AC-US-PAYROLL-001-03` | `PS-BACKEND`    | Backend                  | ✅ Met     |
-| `AC-US-PAYROLL-001-04` | `PS-FRONTEND`   | Frontend                 | ✅ Met     |
-| `AC-US-PAYROLL-001-05` | `PS-FRONTEND`   | Frontend                 | ✅ Met     |
-| `AC-US-PAYROLL-001-06` | `PS-FRONTEND`   | Frontend                 | ✅ Met     |
-| `AC-US-PAYROLL-001-07` | `PS-FRONTEND`   | Frontend                 | ✅ Met     |
-| `AC-US-PAYROLL-001-08` | `PS-FRONTEND`   | Frontend                 | ✅ Met     |
-| `AC-US-PAYROLL-001-09` | `PS-FRONTEND`   | Frontend                 | ✅ Met     |
-| `AC-US-PAYROLL-001-10` | `PS-BACKEND`    | Backend                  | ✅ Met     |
-| `AC-US-PAYROLL-001-11` | `PS-FRONTEND`   | Frontend                 | ✅ Met     |
-| `AC-US-PAYROLL-001-12` | `PS-FRONTEND`   | Frontend                 | ✅ Met     |
-| `AC-US-PAYROLL-001-13` | `PS-FRONTEND`   | Frontend                 | ✅ Met     |
-| `AC-US-PAYROLL-001-14` | `PS-BACKEND`    | Backend                  | ✅ Met     |
-| `AC-US-PAYROLL-001-15` | `PS-BACKEND`    | Backend                  | ✅ Met     |
-| `AC-US-PAYROLL-001-16` | `PS-BACKEND`    | Backend                  | ✅ Met     |
-| `AC-US-PAYROLL-001-17` | `PS-BACKEND`    | Backend                  | ✅ Met     |
-| `AC-US-PAYROLL-001-18` | `PS-BACKEND`    | None linked              | ❌ Missing |
-| `AC-US-PAYROLL-001-19` | `PS-BACKEND`    | None linked              | ❌ Missing |
-| `AC-US-PAYROLL-001-20` | `PS-BACKEND`    | Backend                  | ✅ Met     |
-| `AC-US-PAYROLL-001-21` | `PS-BACKEND`    | Backend                  | ✅ Met     |
-| `AC-US-PAYROLL-001-22` | `PS-BACKEND`    | Backend                  | ✅ Met     |
-| `AC-US-PAYROLL-001-23` | `PS-BACKEND`    | Backend                  | ✅ Met     |
-| `AC-US-PAYROLL-001-24` | `PS-BACKEND`    | Backend                  | ✅ Met     |
-| `AC-US-PAYROLL-001-25` | `PS-BACKEND`    | Backend                  | ✅ Met     |
-| `AC-US-PAYROLL-001-26` | `PS-BACKEND`    | Backend                  | ✅ Met     |
-| `AC-US-PAYROLL-001-27` | `PS-BACKEND`    | Backend                  | ✅ Met     |
+| Acceptance Criterion   | Proof Strategy | Current Evidence         | Status     |
+| ---------------------- | -------------- | ------------------------ | ---------- |
+| `AC-US-PAYROLL-001-01` | `PS-API`       | Integrated E2E           | ✅ Met     |
+| `AC-US-PAYROLL-001-02` | `PS-API`       | Integrated E2E + Backend | ✅ Met     |
+| `AC-US-PAYROLL-001-03` | `PS-BACKEND`   | Backend                  | ✅ Met     |
+| `AC-US-PAYROLL-001-04` | `PS-FRONTEND`  | Frontend                 | ✅ Met     |
+| `AC-US-PAYROLL-001-05` | `PS-FRONTEND`  | Frontend                 | ✅ Met     |
+| `AC-US-PAYROLL-001-06` | `PS-FRONTEND`  | Frontend                 | ✅ Met     |
+| `AC-US-PAYROLL-001-07` | `PS-FRONTEND`  | Frontend                 | ✅ Met     |
+| `AC-US-PAYROLL-001-08` | `PS-FRONTEND`  | Frontend                 | ✅ Met     |
+| `AC-US-PAYROLL-001-09` | `PS-FRONTEND`  | Frontend                 | ✅ Met     |
+| `AC-US-PAYROLL-001-10` | `PS-BACKEND`   | Backend                  | ✅ Met     |
+| `AC-US-PAYROLL-001-11` | `PS-FRONTEND`  | Frontend                 | ✅ Met     |
+| `AC-US-PAYROLL-001-12` | `PS-FRONTEND`  | Frontend                 | ✅ Met     |
+| `AC-US-PAYROLL-001-13` | `PS-FRONTEND`  | Frontend                 | ✅ Met     |
+| `AC-US-PAYROLL-001-14` | `PS-BACKEND`   | Backend                  | ✅ Met     |
+| `AC-US-PAYROLL-001-15` | `PS-BACKEND`   | Backend                  | ✅ Met     |
+| `AC-US-PAYROLL-001-16` | `PS-BACKEND`   | Backend                  | ✅ Met     |
+| `AC-US-PAYROLL-001-17` | `PS-BACKEND`   | Backend                  | ✅ Met     |
+| `AC-US-PAYROLL-001-18` | `PS-BACKEND`   | None linked              | ❌ Missing |
+| `AC-US-PAYROLL-001-19` | `PS-BACKEND`   | None linked              | ❌ Missing |
+| `AC-US-PAYROLL-001-20` | `PS-BACKEND`   | Backend                  | ✅ Met     |
+| `AC-US-PAYROLL-001-21` | `PS-BACKEND`   | Backend                  | ✅ Met     |
+| `AC-US-PAYROLL-001-22` | `PS-BACKEND`   | Backend                  | ✅ Met     |
+| `AC-US-PAYROLL-001-23` | `PS-BACKEND`   | Backend                  | ✅ Met     |
+| `AC-US-PAYROLL-001-24` | `PS-BACKEND`   | Backend                  | ✅ Met     |
+| `AC-US-PAYROLL-001-25` | `PS-BACKEND`   | Backend                  | ✅ Met     |
+| `AC-US-PAYROLL-001-26` | `PS-BACKEND`   | Backend                  | ✅ Met     |
+| `AC-US-PAYROLL-001-27` | `PS-BACKEND`   | Backend                  | ✅ Met     |
 
 **Dependencies:** Companies and Workspace
 
@@ -268,20 +220,20 @@ technical responsibility.
 
 ### Test Coverage
 
-| Acceptance Criterion   | Proof Strategy  | Current Evidence         | Status |
-| ---------------------- | --------------- | ------------------------ | ------ |
-| `AC-US-PAYROLL-002-01` | `PS-INTEGRATED` | Integrated E2E + Backend | ✅ Met |
-| `AC-US-PAYROLL-002-02` | `PS-INTEGRATED` | Integrated E2E + Backend | ✅ Met |
-| `AC-US-PAYROLL-002-03` | `PS-INTEGRATED` | Integrated E2E           | ✅ Met |
-| `AC-US-PAYROLL-002-04` | `PS-FRONTEND`   | Frontend                 | ✅ Met |
-| `AC-US-PAYROLL-002-05` | `PS-BACKEND`    | Backend                  | ✅ Met |
-| `AC-US-PAYROLL-002-06` | `PS-BACKEND`    | Backend                  | ✅ Met |
-| `AC-US-PAYROLL-002-07` | `PS-BACKEND`    | Backend                  | ✅ Met |
-| `AC-US-PAYROLL-002-08` | `PS-BACKEND`    | Backend                  | ✅ Met |
-| `AC-US-PAYROLL-002-09` | `PS-BACKEND`    | Backend                  | ✅ Met |
-| `AC-US-PAYROLL-002-10` | `PS-BACKEND`    | Backend                  | ✅ Met |
-| `AC-US-PAYROLL-002-11` | `PS-BACKEND`    | Backend                  | ✅ Met |
-| `AC-US-PAYROLL-002-12` | `PS-BACKEND`    | Backend                  | ✅ Met |
+| Acceptance Criterion   | Proof Strategy | Current Evidence         | Status |
+| ---------------------- | -------------- | ------------------------ | ------ |
+| `AC-US-PAYROLL-002-01` | `PS-API`       | Integrated E2E + Backend | ✅ Met |
+| `AC-US-PAYROLL-002-02` | `PS-API`       | Integrated E2E + Backend | ✅ Met |
+| `AC-US-PAYROLL-002-03` | `PS-API`       | Integrated E2E           | ✅ Met |
+| `AC-US-PAYROLL-002-04` | `PS-FRONTEND`  | Frontend                 | ✅ Met |
+| `AC-US-PAYROLL-002-05` | `PS-BACKEND`   | Backend                  | ✅ Met |
+| `AC-US-PAYROLL-002-06` | `PS-BACKEND`   | Backend                  | ✅ Met |
+| `AC-US-PAYROLL-002-07` | `PS-BACKEND`   | Backend                  | ✅ Met |
+| `AC-US-PAYROLL-002-08` | `PS-BACKEND`   | Backend                  | ✅ Met |
+| `AC-US-PAYROLL-002-09` | `PS-BACKEND`   | Backend                  | ✅ Met |
+| `AC-US-PAYROLL-002-10` | `PS-BACKEND`   | Backend                  | ✅ Met |
+| `AC-US-PAYROLL-002-11` | `PS-BACKEND`   | Backend                  | ✅ Met |
+| `AC-US-PAYROLL-002-12` | `PS-BACKEND`   | Backend                  | ✅ Met |
 
 **Dependencies:** US-PAYROLL-001
 
@@ -371,19 +323,19 @@ story. [Accounting #2878](https://github.com/globe-and-citizen/cnc-portal/issues
 
 ### Test Coverage
 
-| Acceptance Criterion   | Proof Strategy  | Current Evidence   | Status |
-| ---------------------- | --------------- | ------------------ | ------ |
-| `AC-US-PAYROLL-004-01` | `PS-INTEGRATED` | Integrated E2E     | ✅ Met |
-| `AC-US-PAYROLL-004-02` | `PS-BACKEND`    | Backend            | ✅ Met |
-| `AC-US-PAYROLL-004-03` | `PS-FRONTEND`   | Frontend + Backend | ✅ Met |
-| `AC-US-PAYROLL-004-04` | `PS-FRONTEND`   | Frontend           | ✅ Met |
-| `AC-US-PAYROLL-004-05` | `PS-BACKEND`    | Backend            | ✅ Met |
-| `AC-US-PAYROLL-004-06` | `PS-BACKEND`    | Backend            | ✅ Met |
-| `AC-US-PAYROLL-004-07` | `PS-BACKEND`    | Backend            | ✅ Met |
-| `AC-US-PAYROLL-004-08` | `PS-BACKEND`    | Backend            | ✅ Met |
-| `AC-US-PAYROLL-004-09` | `PS-BACKEND`    | Backend            | ✅ Met |
-| `AC-US-PAYROLL-004-10` | `PS-BACKEND`    | Backend            | ✅ Met |
-| `AC-US-PAYROLL-004-11` | `PS-BACKEND`    | Backend            | ✅ Met |
+| Acceptance Criterion   | Proof Strategy | Current Evidence   | Status |
+| ---------------------- | -------------- | ------------------ | ------ |
+| `AC-US-PAYROLL-004-01` | `PS-API`       | Integrated E2E     | ✅ Met |
+| `AC-US-PAYROLL-004-02` | `PS-BACKEND`   | Backend            | ✅ Met |
+| `AC-US-PAYROLL-004-03` | `PS-FRONTEND`  | Frontend + Backend | ✅ Met |
+| `AC-US-PAYROLL-004-04` | `PS-FRONTEND`  | Frontend           | ✅ Met |
+| `AC-US-PAYROLL-004-05` | `PS-BACKEND`   | Backend            | ✅ Met |
+| `AC-US-PAYROLL-004-06` | `PS-BACKEND`   | Backend            | ✅ Met |
+| `AC-US-PAYROLL-004-07` | `PS-BACKEND`   | Backend            | ✅ Met |
+| `AC-US-PAYROLL-004-08` | `PS-BACKEND`   | Backend            | ✅ Met |
+| `AC-US-PAYROLL-004-09` | `PS-BACKEND`   | Backend            | ✅ Met |
+| `AC-US-PAYROLL-004-10` | `PS-BACKEND`   | Backend            | ✅ Met |
+| `AC-US-PAYROLL-004-11` | `PS-BACKEND`   | Backend            | ✅ Met |
 
 **Dependencies:** US-PAYROLL-001
 
@@ -431,33 +383,33 @@ story. [Accounting #2878](https://github.com/globe-and-citizen/cnc-portal/issues
 
 ### Test Coverage
 
-| Acceptance Criterion   | Proof Strategy  | Current Evidence | Status |
-| ---------------------- | --------------- | ---------------- | ------ |
-| `AC-US-PAYROLL-005-01` | `PS-INTEGRATED` | Integrated E2E   | ✅ Met |
-| `AC-US-PAYROLL-005-02` | `PS-BACKEND`    | Backend          | ✅ Met |
-| `AC-US-PAYROLL-005-03` | `PS-BACKEND`    | Backend          | ✅ Met |
-| `AC-US-PAYROLL-005-04` | `PS-FRONTEND`   | Frontend         | ✅ Met |
-| `AC-US-PAYROLL-005-05` | `PS-FRONTEND`   | Frontend         | ✅ Met |
-| `AC-US-PAYROLL-005-06` | `PS-FRONTEND`   | Frontend         | ✅ Met |
-| `AC-US-PAYROLL-005-07` | `PS-FRONTEND`   | Frontend         | ✅ Met |
-| `AC-US-PAYROLL-005-08` | `PS-FRONTEND`   | Frontend         | ✅ Met |
-| `AC-US-PAYROLL-005-09` | `PS-FRONTEND`   | Frontend         | ✅ Met |
-| `AC-US-PAYROLL-005-10` | `PS-FRONTEND`   | Frontend         | ✅ Met |
-| `AC-US-PAYROLL-005-11` | `PS-BACKEND`    | Backend          | ✅ Met |
-| `AC-US-PAYROLL-005-12` | `PS-BACKEND`    | Backend          | ✅ Met |
-| `AC-US-PAYROLL-005-13` | `PS-FRONTEND`   | Frontend         | ✅ Met |
-| `AC-US-PAYROLL-005-14` | `PS-BACKEND`    | Backend          | ✅ Met |
-| `AC-US-PAYROLL-005-15` | `PS-FRONTEND`   | Frontend         | ✅ Met |
-| `AC-US-PAYROLL-005-16` | `PS-BACKEND`    | Backend          | ✅ Met |
-| `AC-US-PAYROLL-005-17` | `PS-BACKEND`    | Backend          | ✅ Met |
-| `AC-US-PAYROLL-005-18` | `PS-BACKEND`    | Backend          | ✅ Met |
-| `AC-US-PAYROLL-005-19` | `PS-BACKEND`    | Backend          | ✅ Met |
-| `AC-US-PAYROLL-005-20` | `PS-BACKEND`    | Backend          | ✅ Met |
-| `AC-US-PAYROLL-005-21` | `PS-BACKEND`    | Backend          | ✅ Met |
-| `AC-US-PAYROLL-005-22` | `PS-BACKEND`    | Backend          | ✅ Met |
-| `AC-US-PAYROLL-005-23` | `PS-BACKEND`    | Backend          | ✅ Met |
-| `AC-US-PAYROLL-005-24` | `PS-FRONTEND`   | Frontend         | ✅ Met |
-| `AC-US-PAYROLL-005-25` | `PS-FRONTEND`   | Frontend         | ✅ Met |
+| Acceptance Criterion   | Proof Strategy | Current Evidence | Status |
+| ---------------------- | -------------- | ---------------- | ------ |
+| `AC-US-PAYROLL-005-01` | `PS-API`       | Integrated E2E   | ✅ Met |
+| `AC-US-PAYROLL-005-02` | `PS-BACKEND`   | Backend          | ✅ Met |
+| `AC-US-PAYROLL-005-03` | `PS-BACKEND`   | Backend          | ✅ Met |
+| `AC-US-PAYROLL-005-04` | `PS-FRONTEND`  | Frontend         | ✅ Met |
+| `AC-US-PAYROLL-005-05` | `PS-FRONTEND`  | Frontend         | ✅ Met |
+| `AC-US-PAYROLL-005-06` | `PS-FRONTEND`  | Frontend         | ✅ Met |
+| `AC-US-PAYROLL-005-07` | `PS-FRONTEND`  | Frontend         | ✅ Met |
+| `AC-US-PAYROLL-005-08` | `PS-FRONTEND`  | Frontend         | ✅ Met |
+| `AC-US-PAYROLL-005-09` | `PS-FRONTEND`  | Frontend         | ✅ Met |
+| `AC-US-PAYROLL-005-10` | `PS-FRONTEND`  | Frontend         | ✅ Met |
+| `AC-US-PAYROLL-005-11` | `PS-BACKEND`   | Backend          | ✅ Met |
+| `AC-US-PAYROLL-005-12` | `PS-BACKEND`   | Backend          | ✅ Met |
+| `AC-US-PAYROLL-005-13` | `PS-FRONTEND`  | Frontend         | ✅ Met |
+| `AC-US-PAYROLL-005-14` | `PS-BACKEND`   | Backend          | ✅ Met |
+| `AC-US-PAYROLL-005-15` | `PS-FRONTEND`  | Frontend         | ✅ Met |
+| `AC-US-PAYROLL-005-16` | `PS-BACKEND`   | Backend          | ✅ Met |
+| `AC-US-PAYROLL-005-17` | `PS-BACKEND`   | Backend          | ✅ Met |
+| `AC-US-PAYROLL-005-18` | `PS-BACKEND`   | Backend          | ✅ Met |
+| `AC-US-PAYROLL-005-19` | `PS-BACKEND`   | Backend          | ✅ Met |
+| `AC-US-PAYROLL-005-20` | `PS-BACKEND`   | Backend          | ✅ Met |
+| `AC-US-PAYROLL-005-21` | `PS-BACKEND`   | Backend          | ✅ Met |
+| `AC-US-PAYROLL-005-22` | `PS-BACKEND`   | Backend          | ✅ Met |
+| `AC-US-PAYROLL-005-23` | `PS-BACKEND`   | Backend          | ✅ Met |
+| `AC-US-PAYROLL-005-24` | `PS-FRONTEND`  | Frontend         | ✅ Met |
+| `AC-US-PAYROLL-005-25` | `PS-FRONTEND`  | Frontend         | ✅ Met |
 
 **Accounting:** The daily claim changes the source amount for
 [`UC-CASH-02`](../accounting/journal-entry-catalogue.md#uc-cash-02--weekly-wage-accrual). The journal entry is created only after the
@@ -497,21 +449,21 @@ containing work week ends and remains eligible.
 
 ### Test Coverage
 
-| Acceptance Criterion   | Proof Strategy  | Current Evidence | Status |
-| ---------------------- | --------------- | ---------------- | ------ |
-| `AC-US-PAYROLL-006-01` | `PS-INTEGRATED` | Integrated E2E   | ✅ Met |
-| `AC-US-PAYROLL-006-02` | `PS-BACKEND`    | Backend          | ✅ Met |
-| `AC-US-PAYROLL-006-03` | `PS-FRONTEND`   | Frontend         | ✅ Met |
-| `AC-US-PAYROLL-006-04` | `PS-BACKEND`    | Backend          | ✅ Met |
-| `AC-US-PAYROLL-006-05` | `PS-BACKEND`    | Backend          | ✅ Met |
-| `AC-US-PAYROLL-006-06` | `PS-FRONTEND`   | Frontend         | ✅ Met |
-| `AC-US-PAYROLL-006-07` | `PS-BACKEND`    | Backend          | ✅ Met |
-| `AC-US-PAYROLL-006-08` | `PS-BACKEND`    | Backend          | ✅ Met |
-| `AC-US-PAYROLL-006-09` | `PS-BACKEND`    | Backend          | ✅ Met |
-| `AC-US-PAYROLL-006-10` | `PS-BACKEND`    | Backend          | ✅ Met |
-| `AC-US-PAYROLL-006-11` | `PS-BACKEND`    | Backend          | ✅ Met |
-| `AC-US-PAYROLL-006-12` | `PS-BACKEND`    | Backend          | ✅ Met |
-| `AC-US-PAYROLL-006-13` | `PS-BACKEND`    | Backend          | ✅ Met |
+| Acceptance Criterion   | Proof Strategy | Current Evidence | Status |
+| ---------------------- | -------------- | ---------------- | ------ |
+| `AC-US-PAYROLL-006-01` | `PS-API`       | Integrated E2E   | ✅ Met |
+| `AC-US-PAYROLL-006-02` | `PS-BACKEND`   | Backend          | ✅ Met |
+| `AC-US-PAYROLL-006-03` | `PS-FRONTEND`  | Frontend         | ✅ Met |
+| `AC-US-PAYROLL-006-04` | `PS-BACKEND`   | Backend          | ✅ Met |
+| `AC-US-PAYROLL-006-05` | `PS-BACKEND`   | Backend          | ✅ Met |
+| `AC-US-PAYROLL-006-06` | `PS-FRONTEND`  | Frontend         | ✅ Met |
+| `AC-US-PAYROLL-006-07` | `PS-BACKEND`   | Backend          | ✅ Met |
+| `AC-US-PAYROLL-006-08` | `PS-BACKEND`   | Backend          | ✅ Met |
+| `AC-US-PAYROLL-006-09` | `PS-BACKEND`   | Backend          | ✅ Met |
+| `AC-US-PAYROLL-006-10` | `PS-BACKEND`   | Backend          | ✅ Met |
+| `AC-US-PAYROLL-006-11` | `PS-BACKEND`   | Backend          | ✅ Met |
+| `AC-US-PAYROLL-006-12` | `PS-BACKEND`   | Backend          | ✅ Met |
+| `AC-US-PAYROLL-006-13` | `PS-BACKEND`   | Backend          | ✅ Met |
 
 **Dependencies:** US-PAYROLL-005
 
@@ -543,16 +495,16 @@ containing work week ends and remains eligible.
 
 ### Test Coverage
 
-| Acceptance Criterion   | Proof Strategy  | Current Evidence | Status |
-| ---------------------- | --------------- | ---------------- | ------ |
-| `AC-US-PAYROLL-007-01` | `PS-INTEGRATED` | Integrated E2E   | ✅ Met |
-| `AC-US-PAYROLL-007-02` | `PS-FRONTEND`   | Frontend         | ✅ Met |
-| `AC-US-PAYROLL-007-03` | `PS-BACKEND`    | Backend          | ✅ Met |
-| `AC-US-PAYROLL-007-04` | `PS-BACKEND`    | Backend          | ✅ Met |
-| `AC-US-PAYROLL-007-05` | `PS-BACKEND`    | Backend          | ✅ Met |
-| `AC-US-PAYROLL-007-06` | `PS-BACKEND`    | Backend          | ✅ Met |
-| `AC-US-PAYROLL-007-07` | `PS-BACKEND`    | Backend          | ✅ Met |
-| `AC-US-PAYROLL-007-08` | `PS-BACKEND`    | Backend          | ✅ Met |
+| Acceptance Criterion   | Proof Strategy | Current Evidence | Status |
+| ---------------------- | -------------- | ---------------- | ------ |
+| `AC-US-PAYROLL-007-01` | `PS-API`       | Integrated E2E   | ✅ Met |
+| `AC-US-PAYROLL-007-02` | `PS-FRONTEND`  | Frontend         | ✅ Met |
+| `AC-US-PAYROLL-007-03` | `PS-BACKEND`   | Backend          | ✅ Met |
+| `AC-US-PAYROLL-007-04` | `PS-BACKEND`   | Backend          | ✅ Met |
+| `AC-US-PAYROLL-007-05` | `PS-BACKEND`   | Backend          | ✅ Met |
+| `AC-US-PAYROLL-007-06` | `PS-BACKEND`   | Backend          | ✅ Met |
+| `AC-US-PAYROLL-007-07` | `PS-BACKEND`   | Backend          | ✅ Met |
+| `AC-US-PAYROLL-007-08` | `PS-BACKEND`   | Backend          | ✅ Met |
 
 **Dependencies:** US-PAYROLL-005
 
@@ -1004,6 +956,7 @@ reconciliation. Other Payroll stories retain their existing implementation and h
 
 ## Related Documentation
 
+- [Payroll integrated path catalogue](../../testing/e2e-paths.md#g5--payroll-lifecycle)
 - [File Storage implementation](../../implementation/file-storage/README.md)
 - [Request Validation implementation](../../implementation/request-validation/README.md)
 - [Client Navigation implementation](../../implementation/client-navigation/README.md)

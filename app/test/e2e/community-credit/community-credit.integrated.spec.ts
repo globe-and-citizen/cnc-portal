@@ -31,7 +31,12 @@ import {
 test.describe('G4 integrated Community Credit lifecycle', { tag: '@integrated' }, () => {
   test.setTimeout(300_000)
 
-  /** Covers AC-US-CC-002-06/12, AC-US-CC-003-01/02, and AC-US-CC-005-01/06. */
+  /**
+   * Covers:
+   * - [AC-US-CC-002-06]
+   * - [AC-US-CC-003-01]
+   * - [AC-US-CC-003-02]
+   */
   test('E2E-PATH-09: publish, fund, repay, and reload independent balances and history', async ({
     authenticatedPage: ownerPage,
     walletPage,
@@ -162,7 +167,6 @@ test.describe('G4 integrated Community Credit lifecycle', { tag: '@integrated' }
     ).toContainText('Repaid')
   })
 
-  /** Covers AC-US-CC-004-01/05/06 for the refund decision. */
   test('E2E-PATH-10: expire an underfunded round, refund, and reload balances and history', async ({
     authenticatedPage: ownerPage,
     walletPage,
