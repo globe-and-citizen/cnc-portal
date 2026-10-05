@@ -74,13 +74,16 @@ Coverage targets compare each criterion with its required representative evidenc
 generated coverage report and CI retain file-level and execution evidence. Known assertion gaps remain insufficient even when a static
 reference has the expected layer label.
 
-| User Story | Main Journey | Coverage Target | Gaps                 |
-| ---------- | ------------ | --------------- | -------------------- |
-| US-CC-001  | ⬜ Planned   | ❌ 0/7 met      | `AC-US-CC-001-01–07` |
-| US-CC-002  | ⬜ Planned   | ⚠️ 2/18 met     | `AC-US-CC-002-01–16` |
-| US-CC-003  | ⬜ Planned   | ❌ 0/12 met     | `AC-US-CC-003-01–12` |
-| US-CC-004  | ⬜ Planned   | ❌ 0/8 met      | `AC-US-CC-004-01–08` |
-| US-CC-005  | ⬜ Planned   | ❌ 0/17 met     | `AC-US-CC-005-01–17` |
+| User Story | Main Journey  | Coverage Target | Gaps                          |
+| ---------- | ------------- | --------------- | ----------------------------- |
+| US-CC-001  | ✅ Integrated | ❌ 0/7 met      | `AC-US-CC-001-01–07`          |
+| US-CC-002  | ✅ Integrated | ⚠️ 3/18 met     | `AC-US-CC-002-01–05`, `07–16` |
+| US-CC-003  | ✅ Integrated | ⚠️ 2/12 met     | `AC-US-CC-003-03–12`          |
+| US-CC-004  | ✅ Integrated | ❌ 0/8 met      | `AC-US-CC-004-01–08`          |
+| US-CC-005  | ✅ Integrated | ❌ 0/17 met     | `AC-US-CC-005-01–17`          |
+
+The integrated main journeys belong to [E2E-PATH-09 and E2E-PATH-10](../../testing/e2e-paths.md#g4--community-credit-lifecycle). They do not
+prove every criterion or replace direct, assertion-reviewed AC evidence.
 
 ## Proof Strategy Reference
 
@@ -181,26 +184,26 @@ reference has the expected layer label.
 
 ### Test Coverage
 
-| Acceptance Criterion | Proof Strategy | Current Evidence | Status          |
-| -------------------- | -------------- | ---------------- | --------------- |
-| `AC-US-CC-002-01`    | `PS-LOCAL`     | Frontend         | ⚠️ Insufficient |
-| `AC-US-CC-002-02`    | `PS-RULE`      | None linked      | ❌ Missing      |
-| `AC-US-CC-002-03`    | `PS-LOCAL`     | Frontend         | ⚠️ Insufficient |
-| `AC-US-CC-002-04`    | `PS-LOCAL`     | Frontend         | ⚠️ Insufficient |
-| `AC-US-CC-002-05`    | `PS-LOCAL`     | Frontend         | ⚠️ Insufficient |
-| `AC-US-CC-002-06`    | `PS-PUBLISH`   | Frontend         | ⚠️ Insufficient |
-| `AC-US-CC-002-07`    | `PS-RULE`      | Frontend         | ⚠️ Insufficient |
-| `AC-US-CC-002-08`    | `PS-RULE`      | Frontend         | ⚠️ Insufficient |
-| `AC-US-CC-002-09`    | `PS-RULE`      | Frontend         | ⚠️ Insufficient |
-| `AC-US-CC-002-10`    | `PS-RULE`      | Frontend         | ⚠️ Insufficient |
-| `AC-US-CC-002-11`    | `PS-LOCAL`     | None linked      | ❌ Missing      |
-| `AC-US-CC-002-12`    | `PS-PUBLISH`   | None linked      | ❌ Missing      |
-| `AC-US-CC-002-16`    | `PS-API`       | Backend          | ⚠️ Insufficient |
-| `AC-US-CC-002-17`    | `PS-API`       | Backend          | ✅ Met          |
-| `AC-US-CC-002-18`    | `PS-API`       | Backend          | ✅ Met          |
-| `AC-US-CC-002-13`    | `PS-LOCAL`     | None linked      | ❌ Missing      |
-| `AC-US-CC-002-14`    | `PS-FAIL`      | None linked      | ❌ Missing      |
-| `AC-US-CC-002-15`    | `PS-RETRY`     | Frontend         | ⚠️ Insufficient |
+| Acceptance Criterion | Proof Strategy | Current Evidence          | Status          |
+| -------------------- | -------------- | ------------------------- | --------------- |
+| `AC-US-CC-002-01`    | `PS-LOCAL`     | Frontend                  | ⚠️ Insufficient |
+| `AC-US-CC-002-02`    | `PS-RULE`      | None linked               | ❌ Missing      |
+| `AC-US-CC-002-03`    | `PS-LOCAL`     | Frontend                  | ⚠️ Insufficient |
+| `AC-US-CC-002-04`    | `PS-LOCAL`     | Frontend                  | ⚠️ Insufficient |
+| `AC-US-CC-002-05`    | `PS-LOCAL`     | Frontend                  | ⚠️ Insufficient |
+| `AC-US-CC-002-06`    | `PS-PUBLISH`   | Integrated E2E + Frontend | ✅ Met          |
+| `AC-US-CC-002-07`    | `PS-RULE`      | Frontend                  | ⚠️ Insufficient |
+| `AC-US-CC-002-08`    | `PS-RULE`      | Frontend                  | ⚠️ Insufficient |
+| `AC-US-CC-002-09`    | `PS-RULE`      | Frontend                  | ⚠️ Insufficient |
+| `AC-US-CC-002-10`    | `PS-RULE`      | Frontend                  | ⚠️ Insufficient |
+| `AC-US-CC-002-11`    | `PS-LOCAL`     | None linked               | ❌ Missing      |
+| `AC-US-CC-002-12`    | `PS-PUBLISH`   | None linked               | ❌ Missing      |
+| `AC-US-CC-002-16`    | `PS-API`       | Backend                   | ⚠️ Insufficient |
+| `AC-US-CC-002-17`    | `PS-API`       | Backend                   | ✅ Met          |
+| `AC-US-CC-002-18`    | `PS-API`       | Backend                   | ✅ Met          |
+| `AC-US-CC-002-13`    | `PS-LOCAL`     | None linked               | ❌ Missing      |
+| `AC-US-CC-002-14`    | `PS-FAIL`      | None linked               | ❌ Missing      |
+| `AC-US-CC-002-15`    | `PS-RETRY`     | Frontend                  | ⚠️ Insufficient |
 
 **Accounting:** Publishing terms moves no company funds and creates no journal entry.
 
@@ -239,8 +242,8 @@ reference has the expected layer label.
 
 | Acceptance Criterion | Proof Strategy  | Current Evidence | Status          |
 | -------------------- | --------------- | ---------------- | --------------- |
-| `AC-US-CC-003-01`    | `PS-CHAIN-FLOW` | None linked      | ❌ Missing      |
-| `AC-US-CC-003-02`    | `PS-CHAIN-FLOW` | None linked      | ❌ Missing      |
+| `AC-US-CC-003-01`    | `PS-CHAIN-FLOW` | Integrated E2E   | ✅ Met          |
+| `AC-US-CC-003-02`    | `PS-CHAIN-FLOW` | Integrated E2E   | ✅ Met          |
 | `AC-US-CC-003-03`    | `PS-REFRESH`    | None linked      | ❌ Missing      |
 | `AC-US-CC-003-04`    | `PS-REFRESH`    | None linked      | ❌ Missing      |
 | `AC-US-CC-003-05`    | `PS-REFRESH`    | None linked      | ❌ Missing      |
@@ -382,8 +385,8 @@ The following verified gaps have technical evidence and remediation directions i
 - `AC-US-CC-001-05` has a component marker for separately labelled symbols, but the store groups by display symbol rather than token
   address. Different token contracts sharing one symbol can be summed; the criterion is not fully established by that test.
 - The marked read-state and repayment tests cover narrower branches than the complete route, partial-acceptance, installment and
-  multi-lender outcomes in `001-07`, `002-06`, `002-12`, `004-02–03`, and `005-02`. These remain proof gaps even where contract or frontend
-  support exists.
+  multi-lender outcomes in `001-07`, `002-12`, `004-02–03`, and `005-02`. These remain proof gaps even where contract or frontend support
+  exists.
 - The marked publish-form tests omit optional-purpose retention, positive target propagation, flat-rate conversion, and some deadline
   defaults (`002-01`, `03–05`). The `002-16` backend tests mock an upsert result rather than proving a persisted identical or edited retry;
   one purported retry performs only one request. These markers remain insufficient.

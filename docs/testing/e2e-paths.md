@@ -81,13 +81,13 @@ execution:
 | G3    | `E2E-PATH-06` | `26/26`            | ✅ Covered |
 | G3    | `E2E-PATH-07` | `34/34`            | ✅ Covered |
 | G3    | `E2E-PATH-08` | `15/15`            | ✅ Covered |
-| G4    | `E2E-PATH-09` | `0/9`              | ⬜ Planned |
-| G4    | `E2E-PATH-10` | `0/5`              | ⬜ Planned |
+| G4    | `E2E-PATH-09` | `9/9`              | ✅ Covered |
+| G4    | `E2E-PATH-10` | `5/5`              | ✅ Covered |
 | G5    | `E2E-PATH-11` | `9/9`              | ✅ Covered |
 | G5    | `E2E-PATH-12` | `8/8`              | ✅ Covered |
 | G5    | `E2E-PATH-13` | `22/22`            | ✅ Covered |
 | G6    | `E2E-PATH-14` | `15/15`            | ✅ Covered |
-| G7    | `E2E-PATH-15` | `10/11`            | 🟡 Partial |
+| G7    | `E2E-PATH-15` | `11/11`            | ✅ Covered |
 | G7    | `E2E-PATH-16` | `9/9`              | ✅ Covered |
 | G8    | `E2E-PATH-17` | `20/20`            | ✅ Covered |
 | G9    | `E2E-PATH-18` | `0/5`              | ⬜ Planned |
@@ -458,30 +458,40 @@ belongs to its own scenarios. Neither check turns G0 into product-flow evidence.
   - Actors: issuer and lender.
   - Dependencies: an operational company, current Community Credit contracts, and funded wallets.
   - Main path:
-    - [ ] `US-CC-001` Inspect the initial Credit Account state.
-    - [ ] `US-CC-002` Publish a credit call.
-    - [ ] `US-CC-002` Verify the new round on-chain.
-    - [ ] `US-CC-003` Lend to the round.
-    - [ ] `US-CC-003` Verify lender balances and participation.
-    - [ ] `US-CC-005` Repay the lenders.
-    - [ ] `US-CC-005` Verify repayment receipts and final balances.
-    - [ ] `US-CC-001` Reload the account.
-    - [ ] `US-CC-001` Verify the complete round history.
+    - [x] `US-CC-001` Inspect the initial Credit Account state.
+    - [x] `US-CC-002` Publish a credit call.
+    - [x] `US-CC-002` Verify the new round on-chain.
+    - [x] `US-CC-003` Lend to the round.
+    - [x] `US-CC-003` Verify lender balances and participation.
+    - [x] `US-CC-005` Repay the lenders.
+    - [x] `US-CC-005` Verify repayment receipts and final balances.
+    - [x] `US-CC-001` Reload the account.
+    - [x] `US-CC-001` Verify the complete round history.
   - Expected result: one credit round is traceable from publication through repayment.
-  - Status: Planned — no integrated business path is currently linked.
+  - Status: Integrated covered — the linked path proves the listed product steps through the real portal, authenticated backend, disposable
+    database, and local chain. Browser-only Community Credit tests remain separate evidence.
+  - Evidence: [integrated Community Credit journeys](../../app/test/e2e/community-credit/community-credit.integrated.spec.ts).
 
 - `E2E-PATH-10` — Recover a stalled credit round
   - Story validated: `US-CC-004` — resolve a stalled round.
   - Reason for isolation: the path deliberately creates an exceptional round state that must not block the normal credit lifecycle.
   - Dependencies: a disposable round created through the real product flow.
   - Main path:
-    - [ ] `US-CC-004` Move the round into a supported stalled state.
-    - [ ] `US-CC-004` Execute the issuer's recovery action.
-    - [ ] `US-CC-004` Verify participant balances after recovery.
-    - [ ] `US-CC-004` Verify the recovered round state.
-    - [ ] `US-CC-004` Refresh and verify the recovery history.
+    - [x] `US-CC-004` Move the round into a supported stalled state.
+    - [x] `US-CC-004` Execute the issuer's recovery action.
+    - [x] `US-CC-004` Verify participant balances after recovery.
+    - [x] `US-CC-004` Verify the recovered round state.
+    - [x] `US-CC-004` Refresh and verify the recovery history.
   - Expected result: the exceptional round reaches its defined terminal state without corrupting other rounds.
-  - Status: Planned — no integrated business path is currently linked.
+  - Status: Integrated covered — this independently resettable path publishes and funds its own round, advances past the deadline, refunds
+    through the issuer UI, and verifies the member and issuer outcomes after reload.
+  - Evidence: [integrated Community Credit journeys](../../app/test/e2e/community-credit/community-credit.integrated.spec.ts).
+
+The operational-team factory and pre-funded test wallets prepare prerequisites only. Publication, lending, treasury funding, repayment, and
+refund are submitted through the portal. Each path uses its own chain snapshot and database team cleanup. No CNC Portal API or chain
+boundary is intercepted; only the external token-price response is stubbed. The tests assert mined receipts, contract state, balances,
+persisted metadata read from the backend, and reloaded portal history. Local execution on 2026-10-01 passed both tests in one run and each
+path individually. These path checks do not close the separate feature acceptance gaps listed in the Community Credit README.
 
 ## G5 — Payroll Lifecycle
 
@@ -621,15 +631,15 @@ browser-driven.
     - `US-ACCT-002` — trace operations in the General Ledger;
     - `US-ACCT-003` — review financial statements;
     - `US-ACCT-005` — review historical contract activity.
-  - Dependencies: a scenario-owned company whose Bank deposits, share issuance, payroll withdrawal, and expense spend are produced through
-    the portal. Previous and current Officer generations are prepared within the separate historical-generation test. Credit source
-    operations are still missing from the integrated books journey; G4 tests cannot supply reusable state.
+  - Dependencies: a scenario-owned company whose Bank deposits, share issuance, payroll withdrawal, expense spend, and Community Credit
+    funding are produced through the portal. Previous and current Officer generations are prepared within the separate historical-generation
+    test. The credit operation uses its own round and never consumes G4 test state.
   - Main path:
     - [x] `US-ACCT-001` Load the complete Accounting journal for the exercised source operations.
     - [x] `US-ACCT-002` Verify every exercised source operation produces one balanced journal entry.
     - [x] `US-ACCT-002` Trace representative Bank entries to their source transaction hashes.
     - [x] `US-ACCT-002` Trace journal entries to concrete company accounts.
-    - [ ] `US-ACCT-002` Trace a real Community Credit operation to its balanced journal entry.
+    - [x] `US-ACCT-002` Trace a real Community Credit operation to its balanced journal entry.
     - [x] `US-ACCT-003` Verify the Income Statement uses the balanced snapshot.
     - [x] `US-ACCT-003` Verify the Balance Sheet uses the balanced snapshot.
     - [x] `US-ACCT-003` Verify the Trial Balance uses the balanced snapshot.
@@ -639,9 +649,10 @@ browser-driven.
   - Separate variants: incomplete, failed, and missing-rate source states remain frontend coverage because an integrated stack cannot
     withhold one source without replacing a product boundary.
   - Expected result: the company books reconcile with cross-feature persisted and on-chain evidence.
-  - Status: Integrated partial — real Bank, shareholder, payroll, and expense operations feed balanced books and statements; a separately
-    resettable test verifies historical generations. Community Credit source-to-book evidence is still missing. The token price is pinned so
-    totals stay reproducible.
+  - Status: Integrated covered — real Bank, shareholder, payroll, expense, and Community Credit operations feed balanced books and
+    statements; a separately resettable test verifies historical generations. The journey publishes and fully funds one zero-interest Credit
+    round, then matches the funding receipt to exactly one balanced loan-principal entry and checks that it survives a reload. The token
+    price is pinned so totals stay reproducible.
   - Evidence: [integrated Accounting journey](../../app/test/e2e/accounting/accounting-journey.integrated.spec.ts) and
     [integrated contract generations](../../app/test/e2e/accounting/accounting-generations.integrated.spec.ts).
 
