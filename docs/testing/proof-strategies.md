@@ -5,19 +5,19 @@ assessable proof obligation. Feature READMEs select IDs from this registry; they
 
 ## Proof Strategy Reference
 
-| Strategy                      | Responsibilities              | Required Evidence | Proof Rationale                                                                                              |
-| ----------------------------- | ----------------------------- | ----------------- | ------------------------------------------------------------------------------------------------------------ |
-| `PS-FRONTEND`                 | Frontend                      | Frontend          | A client-side rule, derivation, or state transition needs a focused frontend assertion.                      |
-| `PS-BACKEND`                  | Backend                       | Backend           | An API rule, authorization decision, or persisted outcome needs a backend assertion.                         |
-| `PS-CONTRACT`                 | Contract                      | Contract          | An on-chain rule or state transition needs a contract assertion.                                             |
-| `PS-DASHBOARD`                | Dashboard                     | Dashboard         | A backoffice presentation or local interaction needs a dashboard assertion.                                  |
-| `PS-BROWSER`                  | Frontend                      | Mocked browser    | A user interaction or controlled failure branch needs browser evidence with explicit mocked dependencies.    |
-| `PS-FRONTEND-INTEGRATED`      | Frontend                      | Integrated E2E    | Client behavior must survive the real primary browser journey, including its relevant navigation and reload. |
-| `PS-API-INTEGRATED`           | Frontend + Backend            | Integrated E2E    | The browser/API hand-off and its resulting persisted user-visible state must work together.                  |
-| `PS-CHAIN-INTEGRATED`         | Frontend + Contract           | Integrated E2E    | A browser action must produce and observe the intended real-chain result.                                    |
-| `PS-FULL-STACK-INTEGRATED`    | Frontend + Backend + Contract | Integrated E2E    | Browser, API, and chain must jointly produce the observable outcome.                                         |
-| `PS-DASHBOARD-INTEGRATED`     | Dashboard                     | Integrated E2E    | A dashboard journey must produce the user-visible result through its real required dependencies.             |
-| `PS-DASHBOARD-API-INTEGRATED` | Dashboard + Backend           | Integrated E2E    | A dashboard action must cross the real API boundary and show the resulting persisted state.                  |
+| Strategy                      | Responsibilities              | Required Evidence | Proof Rationale                                                                                           |
+| ----------------------------- | ----------------------------- | ----------------- | --------------------------------------------------------------------------------------------------------- |
+| `PS-FRONTEND`                 | Frontend                      | Frontend          | A client-side rule, derivation, or state transition needs a focused frontend assertion.                   |
+| `PS-BACKEND`                  | Backend                       | Backend           | An API rule, authorization decision, or persisted outcome needs a backend assertion.                      |
+| `PS-CONTRACT`                 | Contract                      | Contract          | An on-chain rule or state transition needs a contract assertion.                                          |
+| `PS-DASHBOARD`                | Dashboard                     | Dashboard         | A backoffice presentation or local interaction needs a dashboard assertion.                               |
+| `PS-BROWSER`                  | Frontend                      | Mocked browser    | A user interaction or controlled failure branch needs browser evidence with explicit mocked dependencies. |
+| `PS-FRONTEND-INTEGRATED`      | Frontend                      | Integrated E2E    | Client behavior must work in the primary integrated browser journey, not only in isolation.               |
+| `PS-API-INTEGRATED`           | Frontend + Backend            | Integrated E2E    | The browser/API hand-off and resulting user-visible state must work together.                             |
+| `PS-CHAIN-INTEGRATED`         | Frontend + Contract           | Integrated E2E    | A browser action must produce and observe the intended real-chain result.                                 |
+| `PS-FULL-STACK-INTEGRATED`    | Frontend + Backend + Contract | Integrated E2E    | Browser, API, and chain must jointly produce the observable outcome.                                      |
+| `PS-DASHBOARD-INTEGRATED`     | Dashboard                     | Integrated E2E    | A dashboard journey must produce the user-visible result through its real required dependencies.          |
+| `PS-DASHBOARD-API-INTEGRATED` | Dashboard + Backend           | Integrated E2E    | A dashboard action must cross the real API boundary and show the resulting state.                         |
 
 Several IDs on one acceptance criterion mean **all** listed obligations are required. Each ID has its own row, current direct evidence, and
 status; the criterion counts as met only when every row is `✅ Met`. `PS-FRONTEND` plus `PS-BACKEND` does not imply `PS-API-INTEGRATED`;
