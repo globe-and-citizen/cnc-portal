@@ -87,7 +87,7 @@ execution:
 | G5    | `E2E-PATH-12` | `8/8`              | ✅ Covered |
 | G5    | `E2E-PATH-13` | `22/22`            | ✅ Covered |
 | G6    | `E2E-PATH-14` | `15/15`            | ✅ Covered |
-| G7    | `E2E-PATH-15` | `10/11`            | 🟡 Partial |
+| G7    | `E2E-PATH-15` | `11/11`            | ✅ Covered |
 | G7    | `E2E-PATH-16` | `9/9`              | ✅ Covered |
 | G8    | `E2E-PATH-17` | `20/20`            | ✅ Covered |
 | G9    | `E2E-PATH-18` | `0/5`              | ⬜ Planned |
@@ -631,15 +631,15 @@ browser-driven.
     - `US-ACCT-002` — trace operations in the General Ledger;
     - `US-ACCT-003` — review financial statements;
     - `US-ACCT-005` — review historical contract activity.
-  - Dependencies: a scenario-owned company whose Bank deposits, share issuance, payroll withdrawal, and expense spend are produced through
-    the portal. Previous and current Officer generations are prepared within the separate historical-generation test. Credit source
-    operations are still missing from the integrated books journey; G4 tests cannot supply reusable state.
+  - Dependencies: a scenario-owned company whose Bank deposits, share issuance, payroll withdrawal, expense spend, and Community Credit
+    funding are produced through the portal. Previous and current Officer generations are prepared within the separate historical-generation
+    test. The credit operation uses its own round and never consumes G4 test state.
   - Main path:
     - [x] `US-ACCT-001` Load the complete Accounting journal for the exercised source operations.
     - [x] `US-ACCT-002` Verify every exercised source operation produces one balanced journal entry.
     - [x] `US-ACCT-002` Trace representative Bank entries to their source transaction hashes.
     - [x] `US-ACCT-002` Trace journal entries to concrete company accounts.
-    - [ ] `US-ACCT-002` Trace a real Community Credit operation to its balanced journal entry.
+    - [x] `US-ACCT-002` Trace a real Community Credit operation to its balanced journal entry.
     - [x] `US-ACCT-003` Verify the Income Statement uses the balanced snapshot.
     - [x] `US-ACCT-003` Verify the Balance Sheet uses the balanced snapshot.
     - [x] `US-ACCT-003` Verify the Trial Balance uses the balanced snapshot.
@@ -649,9 +649,10 @@ browser-driven.
   - Separate variants: incomplete, failed, and missing-rate source states remain frontend coverage because an integrated stack cannot
     withhold one source without replacing a product boundary.
   - Expected result: the company books reconcile with cross-feature persisted and on-chain evidence.
-  - Status: Integrated partial — real Bank, shareholder, payroll, and expense operations feed balanced books and statements; a separately
-    resettable test verifies historical generations. Community Credit source-to-book evidence is still missing. The token price is pinned so
-    totals stay reproducible.
+  - Status: Integrated covered — real Bank, shareholder, payroll, expense, and Community Credit operations feed balanced books and
+    statements; a separately resettable test verifies historical generations. The journey publishes and fully funds one zero-interest Credit
+    round, then matches the funding receipt to exactly one balanced loan-principal entry and checks that it survives a reload. The token
+    price is pinned so totals stay reproducible.
   - Evidence: [integrated Accounting journey](../../app/test/e2e/accounting/accounting-journey.integrated.spec.ts) and
     [integrated contract generations](../../app/test/e2e/accounting/accounting-generations.integrated.spec.ts).
 

@@ -85,7 +85,8 @@ implemented use cases.
 
 The real-operation evidence is in the [Accounting journey](../../../app/test/e2e/accounting/accounting-journey.integrated.spec.ts) and
 [contract-generation journey](../../../app/test/e2e/accounting/accounting-generations.integrated.spec.ts). Their current execution status is
-reported by CI and is separate from the test evidence listed above.
+reported by CI and is separate from the test evidence listed above. The Accounting journey publishes and fully funds its own zero-interest
+Community Credit round, matches the funding transaction to one balanced `UC-CREDIT-01` entry, and checks the same entry after a reload.
 
 ## Proof Strategy Reference
 
