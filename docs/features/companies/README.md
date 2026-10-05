@@ -71,16 +71,16 @@ Coverage targets compare each criterion's required evidence with direct `AC-US-*
 latest pass/fail result, which belongs to CI or the generated local report. Gaps identify criteria whose required evidence is missing or
 insufficient; the detailed evidence distribution remains available in the generated report instead of being repeated here.
 
-| User Story       | Main Journey  | Coverage Target | Gaps |
-| ---------------- | ------------- | --------------- | ---- |
-| US-COMPANIES-001 | ✅ Integrated | ✅ 8/8          | —    |
-| US-COMPANIES-002 | ✅ Integrated | ✅ 8/8          | —    |
-| US-COMPANIES-003 | ✅ Integrated | ✅ 12/12        | —    |
-| US-COMPANIES-004 | ✅ Integrated | ✅ 6/6          | —    |
-| US-COMPANIES-005 | ✅ Integrated | ✅ 10/10        | —    |
-| US-COMPANIES-006 | ✅ Integrated | ✅ 7/7          | —    |
-| US-COMPANIES-007 | ✅ Integrated | ✅ 6/6          | —    |
-| US-COMPANIES-008 | ✅ Integrated | ✅ 6/6          | —    |
+| User Story       | Main Journey  | Coverage Target | Gaps                                                                         |
+| ---------------- | ------------- | --------------- | ---------------------------------------------------------------------------- |
+| US-COMPANIES-001 | ✅ Integrated | ⚠️ 7/8          | `AC-US-COMPANIES-001-03`                                                     |
+| US-COMPANIES-002 | ✅ Integrated | ⚠️ 7/8          | `AC-US-COMPANIES-002-02`                                                     |
+| US-COMPANIES-003 | ✅ Integrated | ✅ 12/12        | —                                                                            |
+| US-COMPANIES-004 | ✅ Integrated | ⚠️ 5/6          | `AC-US-COMPANIES-004-01`                                                     |
+| US-COMPANIES-005 | ✅ Integrated | ⚠️ 8/10         | `AC-US-COMPANIES-005-02`, `AC-US-COMPANIES-005-03`                           |
+| US-COMPANIES-006 | ✅ Integrated | ⚠️ 4/7          | `AC-US-COMPANIES-006-01`, `AC-US-COMPANIES-006-02`, `AC-US-COMPANIES-006-03` |
+| US-COMPANIES-007 | ✅ Integrated | ⚠️ 5/6          | `AC-US-COMPANIES-007-01`                                                     |
+| US-COMPANIES-008 | ✅ Integrated | ⚠️ 4/6          | `AC-US-COMPANIES-008-01`, `AC-US-COMPANIES-008-04`                           |
 
 Proof obligations use the [shared proof-strategy registry](../../testing/proof-strategies.md). Multiple IDs for one AC are cumulative.
 
@@ -112,16 +112,17 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 
 ### Test Coverage
 
-| Acceptance Criterion     | Proof Strategy           | Current Evidence | Status |
-| ------------------------ | ------------------------ | ---------------- | ------ |
-| `AC-US-COMPANIES-001-01` | `PS-FRONTEND-INTEGRATED` | Integrated E2E   | ✅ Met |
-| `AC-US-COMPANIES-001-02` | `PS-FRONTEND-INTEGRATED` | Integrated E2E   | ✅ Met |
-| `AC-US-COMPANIES-001-03` | `PS-API-INTEGRATED`      | Integrated E2E   | ✅ Met |
-| `AC-US-COMPANIES-001-04` | `PS-BROWSER`             | Mocked browser   | ✅ Met |
-| `AC-US-COMPANIES-001-05` | `PS-BROWSER`             | Mocked browser   | ✅ Met |
-| `AC-US-COMPANIES-001-06` | `PS-BACKEND`             | Backend          | ✅ Met |
-| `AC-US-COMPANIES-001-07` | `PS-BROWSER`             | Mocked browser   | ✅ Met |
-| `AC-US-COMPANIES-001-08` | `PS-BROWSER`             | Mocked browser   | ✅ Met |
+| Acceptance Criterion     | Proof Strategy           | Current Evidence         | Status          |
+| ------------------------ | ------------------------ | ------------------------ | --------------- |
+| `AC-US-COMPANIES-001-01` | `PS-FRONTEND-INTEGRATED` | Integrated E2E           | ✅ Met          |
+| `AC-US-COMPANIES-001-02` | `PS-FRONTEND-INTEGRATED` | Integrated E2E           | ✅ Met          |
+| `AC-US-COMPANIES-001-03` | `PS-API-INTEGRATED`      | Integrated E2E + Backend | ✅ Met          |
+| `AC-US-COMPANIES-001-03` | `PS-BACKEND`             | Integrated E2E + Backend | ⚠️ Insufficient |
+| `AC-US-COMPANIES-001-04` | `PS-BROWSER`             | Mocked browser           | ✅ Met          |
+| `AC-US-COMPANIES-001-05` | `PS-BROWSER`             | Mocked browser           | ✅ Met          |
+| `AC-US-COMPANIES-001-06` | `PS-BACKEND`             | Backend                  | ✅ Met          |
+| `AC-US-COMPANIES-001-07` | `PS-BROWSER`             | Mocked browser           | ✅ Met          |
+| `AC-US-COMPANIES-001-08` | `PS-BROWSER`             | Mocked browser           | ✅ Met          |
 
 **Dependencies:** Connected user with a portal account
 
@@ -152,16 +153,18 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 
 ### Test Coverage
 
-| Acceptance Criterion     | Proof Strategy             | Current Evidence | Status |
-| ------------------------ | -------------------------- | ---------------- | ------ |
-| `AC-US-COMPANIES-002-01` | `PS-FRONTEND-INTEGRATED`   | Integrated E2E   | ✅ Met |
-| `AC-US-COMPANIES-002-02` | `PS-FULL-STACK-INTEGRATED` | Integrated E2E   | ✅ Met |
-| `AC-US-COMPANIES-002-03` | `PS-FULL-STACK-INTEGRATED` | Integrated E2E   | ✅ Met |
-| `AC-US-COMPANIES-002-04` | `PS-BROWSER`               | Mocked browser   | ✅ Met |
-| `AC-US-COMPANIES-002-05` | `PS-BACKEND`               | Backend          | ✅ Met |
-| `AC-US-COMPANIES-002-06` | `PS-BROWSER`               | Mocked browser   | ✅ Met |
-| `AC-US-COMPANIES-002-07` | `PS-BROWSER`               | Mocked browser   | ✅ Met |
-| `AC-US-COMPANIES-002-08` | `PS-FRONTEND`              | Frontend         | ✅ Met |
+| Acceptance Criterion     | Proof Strategy             | Current Evidence | Status          |
+| ------------------------ | -------------------------- | ---------------- | --------------- |
+| `AC-US-COMPANIES-002-01` | `PS-FRONTEND-INTEGRATED`   | Integrated E2E   | ✅ Met          |
+| `AC-US-COMPANIES-002-02` | `PS-FULL-STACK-INTEGRATED` | Integrated E2E   | ✅ Met          |
+| `AC-US-COMPANIES-002-02` | `PS-BACKEND`               | Integrated E2E   | ⚠️ Insufficient |
+| `AC-US-COMPANIES-002-02` | `PS-CONTRACT`              | Integrated E2E   | ⚠️ Insufficient |
+| `AC-US-COMPANIES-002-03` | `PS-FULL-STACK-INTEGRATED` | Integrated E2E   | ✅ Met          |
+| `AC-US-COMPANIES-002-04` | `PS-BROWSER`               | Mocked browser   | ✅ Met          |
+| `AC-US-COMPANIES-002-05` | `PS-BACKEND`               | Backend          | ✅ Met          |
+| `AC-US-COMPANIES-002-06` | `PS-BROWSER`               | Mocked browser   | ✅ Met          |
+| `AC-US-COMPANIES-002-07` | `PS-BROWSER`               | Mocked browser   | ✅ Met          |
+| `AC-US-COMPANIES-002-08` | `PS-FRONTEND`              | Frontend         | ✅ Met          |
 
 **Dependencies:** US-COMPANIES-001, a connected wallet, and the active network
 
@@ -200,20 +203,20 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 
 ### Test Coverage
 
-| Acceptance Criterion     | Proof Strategy      | Current Evidence | Status |
-| ------------------------ | ------------------- | ---------------- | ------ |
-| `AC-US-COMPANIES-003-01` | `PS-API-INTEGRATED` | Integrated E2E   | ✅ Met |
-| `AC-US-COMPANIES-003-02` | `PS-API-INTEGRATED` | Integrated E2E   | ✅ Met |
-| `AC-US-COMPANIES-003-03` | `PS-BROWSER`        | Mocked browser   | ✅ Met |
-| `AC-US-COMPANIES-003-04` | `PS-BACKEND`        | Backend          | ✅ Met |
-| `AC-US-COMPANIES-003-05` | `PS-BACKEND`        | Backend          | ✅ Met |
-| `AC-US-COMPANIES-003-06` | `PS-BROWSER`        | Mocked browser   | ✅ Met |
-| `AC-US-COMPANIES-003-07` | `PS-BACKEND`        | Backend          | ✅ Met |
-| `AC-US-COMPANIES-003-08` | `PS-BACKEND`        | Backend          | ✅ Met |
-| `AC-US-COMPANIES-003-09` | `PS-BACKEND`        | Backend          | ✅ Met |
-| `AC-US-COMPANIES-003-10` | `PS-FRONTEND`       | Frontend         | ✅ Met |
-| `AC-US-COMPANIES-003-11` | `PS-FRONTEND`       | Frontend         | ✅ Met |
-| `AC-US-COMPANIES-003-12` | `PS-FRONTEND`       | Frontend         | ✅ Met |
+| Acceptance Criterion     | Proof Strategy      | Current Evidence         | Status |
+| ------------------------ | ------------------- | ------------------------ | ------ |
+| `AC-US-COMPANIES-003-01` | `PS-API-INTEGRATED` | Integrated E2E           | ✅ Met |
+| `AC-US-COMPANIES-003-02` | `PS-API-INTEGRATED` | Integrated E2E           | ✅ Met |
+| `AC-US-COMPANIES-003-03` | `PS-BROWSER`        | Mocked browser           | ✅ Met |
+| `AC-US-COMPANIES-003-04` | `PS-BACKEND`        | Backend                  | ✅ Met |
+| `AC-US-COMPANIES-003-05` | `PS-BACKEND`        | Integrated E2E + Backend | ✅ Met |
+| `AC-US-COMPANIES-003-06` | `PS-BROWSER`        | Mocked browser           | ✅ Met |
+| `AC-US-COMPANIES-003-07` | `PS-BACKEND`        | Backend                  | ✅ Met |
+| `AC-US-COMPANIES-003-08` | `PS-BACKEND`        | Backend                  | ✅ Met |
+| `AC-US-COMPANIES-003-09` | `PS-BACKEND`        | Backend                  | ✅ Met |
+| `AC-US-COMPANIES-003-10` | `PS-FRONTEND`       | Frontend                 | ✅ Met |
+| `AC-US-COMPANIES-003-11` | `PS-FRONTEND`       | Frontend                 | ✅ Met |
+| `AC-US-COMPANIES-003-12` | `PS-FRONTEND`       | Frontend                 | ✅ Met |
 
 **Dependencies:** Connected user with a portal account
 
@@ -242,15 +245,16 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 
 ### Test Coverage
 
-| Acceptance Criterion     | Proof Strategy      | Current Evidence | Status |
-| ------------------------ | ------------------- | ---------------- | ------ |
-| `AC-US-COMPANIES-004-01` | `PS-API-INTEGRATED` | Integrated E2E   | ✅ Met |
-| `AC-US-COMPANIES-004-02` | `PS-BACKEND`        | Backend          | ✅ Met |
-| `AC-US-COMPANIES-004-03` | `PS-BROWSER`        | Mocked browser   | ✅ Met |
-| `AC-US-COMPANIES-004-04` | `PS-BROWSER`        | Mocked browser   | ✅ Met |
-| `AC-US-COMPANIES-004-04` | `PS-BACKEND`        | Backend          | ✅ Met |
-| `AC-US-COMPANIES-004-05` | `PS-BROWSER`        | Mocked browser   | ✅ Met |
-| `AC-US-COMPANIES-004-06` | `PS-BACKEND`        | Backend          | ✅ Met |
+| Acceptance Criterion     | Proof Strategy      | Current Evidence         | Status          |
+| ------------------------ | ------------------- | ------------------------ | --------------- |
+| `AC-US-COMPANIES-004-01` | `PS-API-INTEGRATED` | Integrated E2E           | ✅ Met          |
+| `AC-US-COMPANIES-004-01` | `PS-BACKEND`        | Integrated E2E           | ⚠️ Insufficient |
+| `AC-US-COMPANIES-004-02` | `PS-BACKEND`        | Backend                  | ✅ Met          |
+| `AC-US-COMPANIES-004-03` | `PS-BROWSER`        | Mocked browser           | ✅ Met          |
+| `AC-US-COMPANIES-004-04` | `PS-BROWSER`        | Mocked browser + Backend | ✅ Met          |
+| `AC-US-COMPANIES-004-04` | `PS-BACKEND`        | Mocked browser + Backend | ✅ Met          |
+| `AC-US-COMPANIES-004-05` | `PS-BROWSER`        | Mocked browser           | ✅ Met          |
+| `AC-US-COMPANIES-004-06` | `PS-BACKEND`        | Backend                  | ✅ Met          |
 
 **Dependencies:** US-COMPANIES-003
 
@@ -283,18 +287,20 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 
 ### Test Coverage
 
-| Acceptance Criterion     | Proof Strategy      | Current Evidence | Status |
-| ------------------------ | ------------------- | ---------------- | ------ |
-| `AC-US-COMPANIES-005-01` | `PS-API-INTEGRATED` | Integrated E2E   | ✅ Met |
-| `AC-US-COMPANIES-005-02` | `PS-API-INTEGRATED` | Integrated E2E   | ✅ Met |
-| `AC-US-COMPANIES-005-03` | `PS-API-INTEGRATED` | Integrated E2E   | ✅ Met |
-| `AC-US-COMPANIES-005-04` | `PS-BACKEND`        | Backend          | ✅ Met |
-| `AC-US-COMPANIES-005-05` | `PS-BACKEND`        | Backend          | ✅ Met |
-| `AC-US-COMPANIES-005-06` | `PS-BACKEND`        | Backend          | ✅ Met |
-| `AC-US-COMPANIES-005-07` | `PS-BACKEND`        | Backend          | ✅ Met |
-| `AC-US-COMPANIES-005-08` | `PS-BACKEND`        | Backend          | ✅ Met |
-| `AC-US-COMPANIES-005-09` | `PS-BACKEND`        | Backend          | ✅ Met |
-| `AC-US-COMPANIES-005-10` | `PS-BACKEND`        | Backend          | ✅ Met |
+| Acceptance Criterion     | Proof Strategy      | Current Evidence         | Status          |
+| ------------------------ | ------------------- | ------------------------ | --------------- |
+| `AC-US-COMPANIES-005-01` | `PS-API-INTEGRATED` | Integrated E2E           | ✅ Met          |
+| `AC-US-COMPANIES-005-02` | `PS-API-INTEGRATED` | Integrated E2E + Backend | ✅ Met          |
+| `AC-US-COMPANIES-005-02` | `PS-BACKEND`        | Integrated E2E + Backend | ⚠️ Insufficient |
+| `AC-US-COMPANIES-005-03` | `PS-API-INTEGRATED` | Integrated E2E + Backend | ✅ Met          |
+| `AC-US-COMPANIES-005-03` | `PS-BACKEND`        | Integrated E2E + Backend | ⚠️ Insufficient |
+| `AC-US-COMPANIES-005-04` | `PS-BACKEND`        | Backend                  | ✅ Met          |
+| `AC-US-COMPANIES-005-05` | `PS-BACKEND`        | Backend                  | ✅ Met          |
+| `AC-US-COMPANIES-005-06` | `PS-BACKEND`        | Backend                  | ✅ Met          |
+| `AC-US-COMPANIES-005-07` | `PS-BACKEND`        | Backend                  | ✅ Met          |
+| `AC-US-COMPANIES-005-08` | `PS-BACKEND`        | Backend                  | ✅ Met          |
+| `AC-US-COMPANIES-005-09` | `PS-BACKEND`        | Backend                  | ✅ Met          |
+| `AC-US-COMPANIES-005-10` | `PS-BACKEND`        | Backend                  | ✅ Met          |
 
 **Dependencies:** US-COMPANIES-003
 
@@ -327,17 +333,20 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 
 ### Test Coverage
 
-| Acceptance Criterion     | Proof Strategy      | Current Evidence | Status |
-| ------------------------ | ------------------- | ---------------- | ------ |
-| `AC-US-COMPANIES-006-01` | `PS-API-INTEGRATED` | Integrated E2E   | ✅ Met |
-| `AC-US-COMPANIES-006-02` | `PS-API-INTEGRATED` | Integrated E2E   | ✅ Met |
-| `AC-US-COMPANIES-006-03` | `PS-API-INTEGRATED` | Integrated E2E   | ✅ Met |
-| `AC-US-COMPANIES-006-04` | `PS-BROWSER`        | Mocked browser   | ✅ Met |
-| `AC-US-COMPANIES-006-05` | `PS-BACKEND`        | Backend          | ✅ Met |
-| `AC-US-COMPANIES-006-06` | `PS-BROWSER`        | Mocked browser   | ✅ Met |
-| `AC-US-COMPANIES-006-06` | `PS-BACKEND`        | Backend          | ✅ Met |
-| `AC-US-COMPANIES-006-07` | `PS-BROWSER`        | Mocked browser   | ✅ Met |
-| `AC-US-COMPANIES-006-07` | `PS-BACKEND`        | Backend          | ✅ Met |
+| Acceptance Criterion     | Proof Strategy      | Current Evidence         | Status          |
+| ------------------------ | ------------------- | ------------------------ | --------------- |
+| `AC-US-COMPANIES-006-01` | `PS-API-INTEGRATED` | Integrated E2E + Backend | ✅ Met          |
+| `AC-US-COMPANIES-006-01` | `PS-BACKEND`        | Integrated E2E + Backend | ⚠️ Insufficient |
+| `AC-US-COMPANIES-006-02` | `PS-API-INTEGRATED` | Integrated E2E           | ✅ Met          |
+| `AC-US-COMPANIES-006-02` | `PS-BACKEND`        | Integrated E2E           | ⚠️ Insufficient |
+| `AC-US-COMPANIES-006-03` | `PS-API-INTEGRATED` | Integrated E2E           | ✅ Met          |
+| `AC-US-COMPANIES-006-03` | `PS-BACKEND`        | Integrated E2E           | ⚠️ Insufficient |
+| `AC-US-COMPANIES-006-04` | `PS-BROWSER`        | Mocked browser           | ✅ Met          |
+| `AC-US-COMPANIES-006-05` | `PS-BACKEND`        | Backend                  | ✅ Met          |
+| `AC-US-COMPANIES-006-06` | `PS-BROWSER`        | Mocked browser + Backend | ✅ Met          |
+| `AC-US-COMPANIES-006-06` | `PS-BACKEND`        | Mocked browser + Backend | ✅ Met          |
+| `AC-US-COMPANIES-006-07` | `PS-BROWSER`        | Mocked browser + Backend | ✅ Met          |
+| `AC-US-COMPANIES-006-07` | `PS-BACKEND`        | Mocked browser + Backend | ✅ Met          |
 
 **Dependencies:** US-COMPANIES-003
 
@@ -366,15 +375,17 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 
 ### Test Coverage
 
-| Acceptance Criterion     | Proof Strategy      | Current Evidence | Status |
-| ------------------------ | ------------------- | ---------------- | ------ |
-| `AC-US-COMPANIES-007-01` | `PS-API-INTEGRATED` | Integrated E2E   | ✅ Met |
-| `AC-US-COMPANIES-007-02` | `PS-API-INTEGRATED` | Integrated E2E   | ✅ Met |
-| `AC-US-COMPANIES-007-03` | `PS-BROWSER`        | Mocked browser   | ✅ Met |
-| `AC-US-COMPANIES-007-04` | `PS-BROWSER`        | Mocked browser   | ✅ Met |
-| `AC-US-COMPANIES-007-04` | `PS-BACKEND`        | Backend          | ✅ Met |
-| `AC-US-COMPANIES-007-05` | `PS-BACKEND`        | Backend          | ✅ Met |
-| `AC-US-COMPANIES-007-06` | `PS-BACKEND`        | Backend          | ✅ Met |
+| Acceptance Criterion     | Proof Strategy      | Current Evidence                          | Status          |
+| ------------------------ | ------------------- | ----------------------------------------- | --------------- |
+| `AC-US-COMPANIES-007-01` | `PS-API-INTEGRATED` | Integrated E2E                            | ✅ Met          |
+| `AC-US-COMPANIES-007-01` | `PS-BACKEND`        | Integrated E2E                            | ⚠️ Insufficient |
+| `AC-US-COMPANIES-007-02` | `PS-API-INTEGRATED` | Integrated E2E + Backend                  | ✅ Met          |
+| `AC-US-COMPANIES-007-02` | `PS-BACKEND`        | Integrated E2E + Backend                  | ✅ Met          |
+| `AC-US-COMPANIES-007-03` | `PS-BROWSER`        | Integrated E2E + Mocked browser           | ✅ Met          |
+| `AC-US-COMPANIES-007-04` | `PS-BROWSER`        | Integrated E2E + Mocked browser + Backend | ✅ Met          |
+| `AC-US-COMPANIES-007-04` | `PS-BACKEND`        | Integrated E2E + Mocked browser + Backend | ✅ Met          |
+| `AC-US-COMPANIES-007-05` | `PS-BACKEND`        | Backend                                   | ✅ Met          |
+| `AC-US-COMPANIES-007-06` | `PS-BACKEND`        | Backend                                   | ✅ Met          |
 
 **Dependencies:** US-COMPANIES-003
 
@@ -404,14 +415,16 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 
 ### Test Coverage
 
-| Acceptance Criterion     | Proof Strategy           | Current Evidence | Status |
-| ------------------------ | ------------------------ | ---------------- | ------ |
-| `AC-US-COMPANIES-008-01` | `PS-API-INTEGRATED`      | Integrated E2E   | ✅ Met |
-| `AC-US-COMPANIES-008-02` | `PS-BACKEND`             | Backend          | ✅ Met |
-| `AC-US-COMPANIES-008-03` | `PS-BROWSER`             | Mocked browser   | ✅ Met |
-| `AC-US-COMPANIES-008-04` | `PS-API-INTEGRATED`      | Integrated E2E   | ✅ Met |
-| `AC-US-COMPANIES-008-05` | `PS-FRONTEND-INTEGRATED` | Integrated E2E   | ✅ Met |
-| `AC-US-COMPANIES-008-06` | `PS-BROWSER`             | Mocked browser   | ✅ Met |
+| Acceptance Criterion     | Proof Strategy           | Current Evidence | Status          |
+| ------------------------ | ------------------------ | ---------------- | --------------- |
+| `AC-US-COMPANIES-008-01` | `PS-API-INTEGRATED`      | Integrated E2E   | ✅ Met          |
+| `AC-US-COMPANIES-008-01` | `PS-BACKEND`             | Integrated E2E   | ⚠️ Insufficient |
+| `AC-US-COMPANIES-008-02` | `PS-BACKEND`             | Backend          | ✅ Met          |
+| `AC-US-COMPANIES-008-03` | `PS-BROWSER`             | Mocked browser   | ✅ Met          |
+| `AC-US-COMPANIES-008-04` | `PS-API-INTEGRATED`      | Integrated E2E   | ✅ Met          |
+| `AC-US-COMPANIES-008-04` | `PS-BACKEND`             | Integrated E2E   | ⚠️ Insufficient |
+| `AC-US-COMPANIES-008-05` | `PS-FRONTEND-INTEGRATED` | Integrated E2E   | ✅ Met          |
+| `AC-US-COMPANIES-008-06` | `PS-BROWSER`             | Mocked browser   | ✅ Met          |
 
 **Dependencies:** US-COMPANIES-003
 
@@ -489,5 +502,12 @@ This validation does not attest to a live on-chain Officer deployment.
 - [Contract Management](../contract-management/README.md)
 - [Community Credit](../community-credit/README.md)
 - [Product feature inventory](../README.md)
+
+## Known Gaps
+
+- Focused backend evidence for `AC-US-COMPANIES-001-03` checks the response status and name, but not owner/member persistence. The marked
+  add/remove-member tests for `AC-US-COMPANIES-005-02` and `AC-US-COMPANIES-005-03` do not assert the saved membership change. The marked
+  `AC-US-COMPANIES-006-01` backend test covers restoration but not archiving. These ACs retain integrated evidence; their backend
+  obligations remain insufficient until representative assertions cover the full owned results.
 
 _[← Back to feature inventory](../README.md)_

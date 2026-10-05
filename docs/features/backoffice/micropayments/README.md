@@ -257,18 +257,18 @@ Proof obligations use the [shared proof-strategy registry](../../../testing/proo
 
 ### Test Coverage
 
-| Acceptance Criterion         | Proof Strategy | Current Evidence       | Status          |
-| ---------------------------- | -------------- | ---------------------- | --------------- |
-| `AC-US-MICROPAYMENTS-004-01` | `PS-DASHBOARD` | None linked            | ❌ Missing      |
-| `AC-US-MICROPAYMENTS-004-01` | `PS-CONTRACT`  | None linked            | ❌ Missing      |
-| `AC-US-MICROPAYMENTS-004-02` | `PS-DASHBOARD` | Other linked: Contract | ⚠️ Insufficient |
-| `AC-US-MICROPAYMENTS-004-02` | `PS-CONTRACT`  | Contract               | ✅ Met          |
-| `AC-US-MICROPAYMENTS-004-03` | `PS-DASHBOARD` | None linked            | ❌ Missing      |
-| `AC-US-MICROPAYMENTS-004-04` | `PS-CONTRACT`  | Contract               | ⚠️ Insufficient |
-| `AC-US-MICROPAYMENTS-004-05` | `PS-CONTRACT`  | None linked            | ❌ Missing      |
-| `AC-US-MICROPAYMENTS-004-06` | `PS-DASHBOARD` | None linked            | ❌ Missing      |
-| `AC-US-MICROPAYMENTS-004-07` | `PS-DASHBOARD` | None linked            | ❌ Missing      |
-| `AC-US-MICROPAYMENTS-004-08` | `PS-DASHBOARD` | None linked            | ❌ Missing      |
+| Acceptance Criterion         | Proof Strategy | Current Evidence | Status          |
+| ---------------------------- | -------------- | ---------------- | --------------- |
+| `AC-US-MICROPAYMENTS-004-01` | `PS-DASHBOARD` | None linked      | ❌ Missing      |
+| `AC-US-MICROPAYMENTS-004-01` | `PS-CONTRACT`  | None linked      | ❌ Missing      |
+| `AC-US-MICROPAYMENTS-004-02` | `PS-DASHBOARD` | Contract         | ⚠️ Insufficient |
+| `AC-US-MICROPAYMENTS-004-02` | `PS-CONTRACT`  | Contract         | ✅ Met          |
+| `AC-US-MICROPAYMENTS-004-03` | `PS-DASHBOARD` | None linked      | ❌ Missing      |
+| `AC-US-MICROPAYMENTS-004-04` | `PS-CONTRACT`  | Contract         | ⚠️ Insufficient |
+| `AC-US-MICROPAYMENTS-004-05` | `PS-CONTRACT`  | None linked      | ❌ Missing      |
+| `AC-US-MICROPAYMENTS-004-06` | `PS-DASHBOARD` | None linked      | ❌ Missing      |
+| `AC-US-MICROPAYMENTS-004-07` | `PS-DASHBOARD` | None linked      | ❌ Missing      |
+| `AC-US-MICROPAYMENTS-004-08` | `PS-DASHBOARD` | None linked      | ❌ Missing      |
 
 **Dependencies:** US-MICROPAYMENTS-001 and ownership of V1
 
@@ -344,18 +344,18 @@ Proof obligations use the [shared proof-strategy registry](../../../testing/proo
 
 ### Test Coverage
 
-| Acceptance Criterion         | Proof Strategy | Current Evidence       | Status          |
-| ---------------------------- | -------------- | ---------------------- | --------------- |
-| `AC-US-MICROPAYMENTS-006-01` | `PS-DASHBOARD` | None linked            | ❌ Missing      |
-| `AC-US-MICROPAYMENTS-006-02` | `PS-CONTRACT`  | Contract               | ⚠️ Insufficient |
-| `AC-US-MICROPAYMENTS-006-03` | `PS-DASHBOARD` | None linked            | ❌ Missing      |
-| `AC-US-MICROPAYMENTS-006-04` | `PS-CONTRACT`  | Contract               | ⚠️ Insufficient |
-| `AC-US-MICROPAYMENTS-006-05` | `PS-CONTRACT`  | None linked            | ❌ Missing      |
-| `AC-US-MICROPAYMENTS-006-06` | `PS-DASHBOARD` | Other linked: Contract | ⚠️ Insufficient |
-| `AC-US-MICROPAYMENTS-006-06` | `PS-CONTRACT`  | Contract               | ✅ Met          |
-| `AC-US-MICROPAYMENTS-006-07` | `PS-DASHBOARD` | None linked            | ❌ Missing      |
-| `AC-US-MICROPAYMENTS-006-08` | `PS-DASHBOARD` | None linked            | ❌ Missing      |
-| `AC-US-MICROPAYMENTS-006-09` | `PS-DASHBOARD` | None linked            | ❌ Missing      |
+| Acceptance Criterion         | Proof Strategy | Current Evidence | Status          |
+| ---------------------------- | -------------- | ---------------- | --------------- |
+| `AC-US-MICROPAYMENTS-006-01` | `PS-DASHBOARD` | None linked      | ❌ Missing      |
+| `AC-US-MICROPAYMENTS-006-02` | `PS-CONTRACT`  | Contract         | ⚠️ Insufficient |
+| `AC-US-MICROPAYMENTS-006-03` | `PS-DASHBOARD` | None linked      | ❌ Missing      |
+| `AC-US-MICROPAYMENTS-006-04` | `PS-CONTRACT`  | Contract         | ⚠️ Insufficient |
+| `AC-US-MICROPAYMENTS-006-05` | `PS-CONTRACT`  | None linked      | ❌ Missing      |
+| `AC-US-MICROPAYMENTS-006-06` | `PS-DASHBOARD` | Contract         | ⚠️ Insufficient |
+| `AC-US-MICROPAYMENTS-006-06` | `PS-CONTRACT`  | Contract         | ✅ Met          |
+| `AC-US-MICROPAYMENTS-006-07` | `PS-DASHBOARD` | None linked      | ❌ Missing      |
+| `AC-US-MICROPAYMENTS-006-08` | `PS-DASHBOARD` | None linked      | ❌ Missing      |
+| `AC-US-MICROPAYMENTS-006-09` | `PS-DASHBOARD` | None linked      | ❌ Missing      |
 
 **Dependencies:** US-MICROPAYMENTS-001 and ownership of V1
 

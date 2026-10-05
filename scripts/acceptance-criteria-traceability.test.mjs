@@ -80,9 +80,9 @@ test('requires the validated coverage structure for every assessable story', () 
 
 ## Proof Strategy Reference
 
-| Strategy | Responsibilities | Required Evidence | Proof Rationale |
+| Strategy | Proof Obligation | Required Evidence | Proof Rationale |
 | -------- | ---------------- | ----------------- | --------------- |
-| \`PS-API\` | Backend | Backend | The API owns the persisted result. |
+| \`PS-API\` | Backend rule | Backend | The API owns the persisted result. |
 
 ## US-EXAMPLE-001: Do Something
 
@@ -205,10 +205,10 @@ test('validates optional per-story coverage targets against representative evide
     '## US-EXAMPLE-001: Do Something',
     `## Proof Strategy Reference
 
-| Strategy | Responsibilities | Required Evidence | Proof Rationale |
+| Strategy | Proof Obligation | Required Evidence | Proof Rationale |
 | -------- | ---------------- | ----------------- | --------------- |
-| \`PS-API\` | Frontend + Backend | Integrated E2E | The API boundary must work. |
-| \`PS-BROWSER\` | Frontend | Mocked browser | The browser branch needs a controlled response. |
+| \`PS-API\` | Real API boundary | Integrated E2E | The API boundary must work. |
+| \`PS-BROWSER\` | Browser behavior | Mocked browser | The browser branch needs a controlled response. |
 
 ## US-EXAMPLE-001: Do Something`
   )}
@@ -233,7 +233,7 @@ test('validates optional per-story coverage targets against representative evide
       documentPath: 'docs/features/example/README.md',
       line: 7,
       id: 'PS-API',
-      responsibilities: 'Frontend + Backend',
+      obligation: 'Real API boundary',
       expected: 'Integrated E2E',
       rationale: 'The API boundary must work.'
     },
@@ -241,7 +241,7 @@ test('validates optional per-story coverage targets against representative evide
       documentPath: 'docs/features/example/README.md',
       line: 8,
       id: 'PS-BROWSER',
-      responsibilities: 'Frontend',
+      obligation: 'Browser behavior',
       expected: 'Mocked browser',
       rationale: 'The browser branch needs a controlled response.'
     }
@@ -300,10 +300,10 @@ test('rejects invalid proof strategies and unknown strategy references', () => {
     '## US-EXAMPLE-001: Do Something',
     `## Proof Strategy Reference
 
-| Strategy | Responsibilities | Required Evidence | Proof Rationale |
+| Strategy | Proof Obligation | Required Evidence | Proof Rationale |
 | -------- | ---------------- | ----------------- | --------------- |
-| \`PS-API\` | Frontend + Database | Integrated E2E | |
-| \`PS-BROWSER\` | Frontend | Browser snapshot | The browser branch needs controlled data. |
+| \`PS-API\` | Database rule | Integrated E2E | |
+| \`PS-BROWSER\` | Browser behavior | Browser snapshot | The browser branch needs controlled data. |
 
 ## US-EXAMPLE-001: Do Something`
   )}
@@ -328,8 +328,9 @@ test('rejects invalid proof strategies and unknown strategy references', () => {
       testDocuments: [integratedTest]
     }).errors,
     [
-      'docs/features/example/README.md:7 uses unsupported responsibilities Database for PS-API.',
+      'docs/features/example/README.md:7 uses unsupported proof obligation Database rule for PS-API.',
       'docs/features/example/README.md:7 is missing a proof rationale for PS-API.',
+      'docs/features/example/README.md:8 requires Browser snapshot for PS-BROWSER; Browser behavior requires Mocked browser.',
       'docs/features/example/README.md:8 uses unsupported required evidence Browser snapshot for PS-BROWSER.',
       'docs/features/example/README.md:28 references unknown proof strategy PS-UNKNOWN for AC-US-EXAMPLE-001-02.'
     ]
@@ -401,11 +402,11 @@ test('allows an unresolved proof decision only for an unchecked criterion', () =
 const sharedProofStrategies = feature(
   `## Proof Strategy Reference
 
-| Strategy | Responsibilities | Required Evidence | Proof Rationale |
+| Strategy | Proof Obligation | Required Evidence | Proof Rationale |
 | -------- | ---------------- | ----------------- | --------------- |
-| \`PS-FRONTEND\` | Frontend | Frontend | The client owns this rule. |
-| \`PS-BACKEND\` | Backend | Backend | The API owns this rule. |
-| \`PS-API-INTEGRATED\` | Frontend + Backend | Integrated E2E | The hand-off must work. |
+| \`PS-FRONTEND\` | Frontend rule | Frontend | The client owns this rule. |
+| \`PS-BACKEND\` | Backend rule | Backend | The API owns this rule. |
+| \`PS-API-INTEGRATED\` | Real API boundary | Integrated E2E | The hand-off must work. |
 `,
   'docs/testing/proof-strategies.md'
 )
@@ -439,9 +440,10 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 
 | Acceptance Criterion | Proof Strategy | Current Evidence | Status |
 | -------------------- | -------------- | ---------------- | ------ |
-| \`AC-US-EXAMPLE-001-01\` | \`PS-FRONTEND\` | Frontend | ✅ Met |
-| \`AC-US-EXAMPLE-001-01\` | \`PS-BACKEND\` | Backend | ✅ Met |
-| \`AC-US-EXAMPLE-001-02\` | \`PS-API-INTEGRATED\` | Other linked: Frontend + Backend | ⚠️ Insufficient |
+| \`AC-US-EXAMPLE-001-01\` | \`PS-FRONTEND\` | Frontend + Backend | ✅ Met |
+| \`AC-US-EXAMPLE-001-01\` | \`PS-BACKEND\` | Frontend + Backend | ✅ Met |
+| \`AC-US-EXAMPLE-001-02\` | \`PS-BACKEND\` | Frontend + Backend | ✅ Met |
+| \`AC-US-EXAMPLE-001-02\` | \`PS-API-INTEGRATED\` | Frontend + Backend | ⚠️ Insufficient |
 `)
 
 const composableTests = [
@@ -466,8 +468,8 @@ test('composes independent obligations without inferring integrated proof from u
     validate(
       feature(
         composableFeature.content.replace(
-          'Other linked: Frontend + Backend | ⚠️ Insufficient',
-          'Other linked: Frontend + Backend | ✅ Met'
+          '`PS-API-INTEGRATED` | Frontend + Backend | ⚠️ Insufficient',
+          '`PS-API-INTEGRATED` | Frontend + Backend | ✅ Met'
         )
       )
     ).some((error) => error.includes('expected ⚠️ Insufficient'))
@@ -481,11 +483,11 @@ test('composes independent obligations without inferring integrated proof from u
     validate(
       feature(
         composableFeature.content.replace(
-          '| `AC-US-EXAMPLE-001-01` | `PS-BACKEND` | Backend | ✅ Met |',
+          '| `AC-US-EXAMPLE-001-01` | `PS-BACKEND` | Frontend + Backend | ✅ Met |',
           '| `AC-US-EXAMPLE-001-01` | `PS-BACKEND` | Frontend | ✅ Met |'
         )
       )
-    ).some((error) => error.includes('current representative coverage is Backend'))
+    ).some((error) => error.includes('current representative coverage is Frontend + Backend'))
   )
 
   const integrated = testDocument(
@@ -495,9 +497,102 @@ test('composes independent obligations without inferring integrated proof from u
   const completed = feature(
     composableFeature.content
       .replace('⚠️ 1/2 met', '✅ 2/2 met')
-      .replace('Other linked: Frontend + Backend | ⚠️ Insufficient', 'Integrated E2E | ✅ Met')
+      .replace(
+        '| `AC-US-EXAMPLE-001-02` | `PS-BACKEND` | Frontend + Backend | ✅ Met |',
+        '| `AC-US-EXAMPLE-001-02` | `PS-BACKEND` | Integrated E2E + Frontend + Backend | ✅ Met |'
+      )
+      .replace(
+        '| `AC-US-EXAMPLE-001-02` | `PS-API-INTEGRATED` | Frontend + Backend | ⚠️ Insufficient |',
+        '| `AC-US-EXAMPLE-001-02` | `PS-API-INTEGRATED` | Integrated E2E + Frontend + Backend | ✅ Met |'
+      )
   )
   assert.deepEqual(validate(completed, [...composableTests, integrated]), [])
+})
+
+test('a real chain journey does not replace its independently required contract proof', () => {
+  const registry = feature(
+    `## Proof Strategy Reference
+
+| Strategy | Proof Obligation | Required Evidence | Proof Rationale |
+| -------- | ---------------- | ----------------- | --------------- |
+| \`PS-CONTRACT\` | Contract rule | Contract | The contract owns the state transition. |
+| \`PS-CHAIN-INTEGRATED\` | Real chain boundary | Integrated E2E | The portal must cross the real chain boundary. |
+`,
+    'docs/testing/proof-strategies.md'
+  )
+  const documented = feature(`# Example — User Stories
+
+## Status Overview
+
+| User Story | Title | Actor | Status |
+| ---------- | ----- | ----- | ------ |
+| US-EXAMPLE-001 | Transfer a balance | User | 🧪 Validation |
+
+## Test Coverage Overview
+
+| User Story | Main Journey | Coverage Target | Gaps |
+| ---------- | ------------ | --------------- | ---- |
+| US-EXAMPLE-001 | ✅ Integrated | ⚠️ 0/1 | AC-US-EXAMPLE-001-01 |
+
+Proof obligations use the [shared registry](../../testing/proof-strategies.md).
+
+## US-EXAMPLE-001: Transfer a Balance
+
+### Acceptance Criteria
+
+#### Happy Path
+
+- [x] \`AC-US-EXAMPLE-001-01\` A successful transfer updates the contract balance.
+
+### Test Coverage
+
+| Acceptance Criterion | Proof Strategy | Current Evidence | Status |
+| -------------------- | -------------- | ---------------- | ------ |
+| \`AC-US-EXAMPLE-001-01\` | \`PS-CHAIN-INTEGRATED\` | Integrated E2E | ✅ Met |
+| \`AC-US-EXAMPLE-001-01\` | \`PS-CONTRACT\` | Integrated E2E | ⚠️ Insufficient |
+`)
+  const integrated = testDocument(
+    'test.describe("journey", { tag: "@integrated" }, () => { test("[AC-US-EXAMPLE-001-01] transfers", () => {}) })',
+    'app/test/e2e/example.integrated.spec.ts'
+  )
+  const validate = (document, tests) =>
+    validateAcceptanceCriteriaTraceability({
+      featureDocuments: [document],
+      proofStrategyDocument: registry,
+      testDocuments: tests,
+      enforceFeatureCoverage: true
+    }).errors
+
+  assert.deepEqual(validate(documented, [integrated]), [])
+  const contract = testDocument(
+    'it("[AC-US-EXAMPLE-001-01] updates the balance", () => {})',
+    'contract/test/Example.spec.ts'
+  )
+  const complete = feature(
+    documented.content
+      .replace('⚠️ 0/1 | AC-US-EXAMPLE-001-01', '✅ 1/1 | —')
+      .replaceAll('Integrated E2E | ✅ Met', 'Integrated E2E + Contract | ✅ Met')
+      .replace('Integrated E2E | ⚠️ Insufficient', 'Integrated E2E + Contract | ✅ Met')
+  )
+  assert.deepEqual(validate(complete, [integrated, contract]), [])
+})
+
+test('a focused strategy cannot redefine its required test layer as integrated E2E', () => {
+  const invalidRegistry = feature(
+    sharedProofStrategies.content.replace(
+      '\`PS-BACKEND\` | Backend rule | Backend |',
+      '\`PS-BACKEND\` | Backend rule | Integrated E2E |'
+    ),
+    sharedProofStrategies.path
+  )
+  const errors = validateAcceptanceCriteriaTraceability({
+    featureDocuments: [composableFeature],
+    proofStrategyDocument: invalidRegistry,
+    testDocuments: composableTests,
+    enforceFeatureCoverage: true
+  }).errors
+
+  assert.ok(errors.some((error) => error.includes('Backend rule requires Backend')))
 })
 
 test('rejects duplicate, missing, local, and undefined shared strategy assignments', () => {
@@ -513,8 +608,8 @@ test('rejects duplicate, missing, local, and undefined shared strategy assignmen
     validate(
       feature(
         composableFeature.content.replace(
-          '| `AC-US-EXAMPLE-001-01` | `PS-BACKEND` | Backend | ✅ Met |',
-          '| `AC-US-EXAMPLE-001-01` | `PS-BACKEND` | Backend | ✅ Met |\n| `AC-US-EXAMPLE-001-01` | `PS-BACKEND` | Backend | ✅ Met |'
+          '| `AC-US-EXAMPLE-001-01` | `PS-BACKEND` | Frontend + Backend | ✅ Met |',
+          '| `AC-US-EXAMPLE-001-01` | `PS-BACKEND` | Frontend + Backend | ✅ Met |\n| `AC-US-EXAMPLE-001-01` | `PS-BACKEND` | Frontend + Backend | ✅ Met |'
         )
       )
     ).some((error) => error.includes('duplicates proof strategy PS-BACKEND'))
@@ -523,7 +618,7 @@ test('rejects duplicate, missing, local, and undefined shared strategy assignmen
     validate(
       feature(
         composableFeature.content.replace(
-          '| `AC-US-EXAMPLE-001-02` | `PS-API-INTEGRATED` | Other linked: Frontend + Backend | ⚠️ Insufficient |',
+          '| `AC-US-EXAMPLE-001-02` | `PS-BACKEND` | Frontend + Backend | ✅ Met |\n| `AC-US-EXAMPLE-001-02` | `PS-API-INTEGRATED` | Frontend + Backend | ⚠️ Insufficient |',
           ''
         )
       )
@@ -537,14 +632,14 @@ test('rejects duplicate, missing, local, and undefined shared strategy assignmen
   assert.ok(
     validate(
       feature(
-        `${composableFeature.content}\n## Proof Strategy Reference\n\n| Strategy | Responsibilities | Required Evidence | Proof Rationale |\n| -------- | ---------------- | ----------------- | --------------- |\n| \`PS-BACKEND\` | Backend | Backend | Local override. |`
+        `${composableFeature.content}\n## Proof Strategy Reference\n\n| Strategy | Proof Obligation | Required Evidence | Proof Rationale |\n| -------- | ---------------- | ----------------- | --------------- |\n| \`PS-BACKEND\` | Backend rule | Backend | Local override. |`
       )
     ).some((error) => error.includes('redefines proof strategies'))
   )
   assert.ok(
     validate(
       feature(
-        `${composableFeature.content}\n## Local definitions\n\n| \`PS-BACKEND\` | Backend | Backend | Local override. |`
+        `${composableFeature.content}\n## Local definitions\n\n| \`PS-BACKEND\` | Backend rule | Backend | Local override. |`
       )
     ).some((error) => error.includes('contains a local proof-strategy definition'))
   )
@@ -552,7 +647,7 @@ test('rejects duplicate, missing, local, and undefined shared strategy assignmen
     validate(
       composableFeature,
       feature(
-        `${sharedProofStrategies.content}| \`PS-BACKEND\` | Backend | Backend | Conflicting duplicate. |`,
+        `${sharedProofStrategies.content}| \`PS-BACKEND\` | Backend rule | Backend | Conflicting duplicate. |`,
         sharedProofStrategies.path
       )
     ).some((error) => error.includes('duplicates proof strategy PS-BACKEND'))

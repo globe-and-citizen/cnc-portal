@@ -141,29 +141,29 @@ Proof obligations use the [shared proof-strategy registry](../../../testing/proo
 
 ### Test Coverage
 
-| Acceptance Criterion | Proof Strategy                | Current Evidence      | Status          |
-| -------------------- | ----------------------------- | --------------------- | --------------- |
-| `AC-US-STATS-002-01` | `PS-DASHBOARD`                | Other linked: Backend | ⚠️ Insufficient |
-| `AC-US-STATS-002-01` | `PS-BACKEND`                  | Backend               | ✅ Met          |
-| `AC-US-STATS-002-02` | `PS-DASHBOARD`                | None linked           | ❌ Missing      |
-| `AC-US-STATS-002-02` | `PS-BACKEND`                  | None linked           | ❌ Missing      |
-| `AC-US-STATS-002-03` | `PS-DASHBOARD`                | None linked           | ❌ Missing      |
-| `AC-US-STATS-002-03` | `PS-DASHBOARD-INTEGRATED`     | None linked           | ❌ Missing      |
-| `AC-US-STATS-002-04` | `PS-DASHBOARD`                | Other linked: Backend | ⚠️ Insufficient |
-| `AC-US-STATS-002-04` | `PS-BACKEND`                  | Backend               | ✅ Met          |
-| `AC-US-STATS-002-05` | `PS-DASHBOARD-API-INTEGRATED` | None linked           | ❌ Missing      |
-| `AC-US-STATS-002-06` | `PS-BACKEND`                  | None linked           | ❌ Missing      |
-| `AC-US-STATS-002-07` | `PS-BACKEND`                  | None linked           | ❌ Missing      |
-| `AC-US-STATS-002-08` | `PS-BACKEND`                  | None linked           | ❌ Missing      |
-| `AC-US-STATS-002-09` | `PS-DASHBOARD`                | None linked           | ❌ Missing      |
-| `AC-US-STATS-002-09` | `PS-DASHBOARD-INTEGRATED`     | None linked           | ❌ Missing      |
-| `AC-US-STATS-002-10` | `PS-BACKEND`                  | None linked           | ❌ Missing      |
-| `AC-US-STATS-002-11` | `PS-DASHBOARD`                | None linked           | ❌ Missing      |
-| `AC-US-STATS-002-11` | `PS-BACKEND`                  | None linked           | ❌ Missing      |
-| `AC-US-STATS-002-12` | `PS-BACKEND`                  | None linked           | ❌ Missing      |
-| `AC-US-STATS-002-13` | `PS-BACKEND`                  | None linked           | ❌ Missing      |
-| `AC-US-STATS-002-14` | `PS-DASHBOARD`                | None linked           | ❌ Missing      |
-| `AC-US-STATS-002-14` | `PS-BACKEND`                  | None linked           | ❌ Missing      |
+| Acceptance Criterion | Proof Strategy                | Current Evidence | Status          |
+| -------------------- | ----------------------------- | ---------------- | --------------- |
+| `AC-US-STATS-002-01` | `PS-DASHBOARD`                | Backend          | ⚠️ Insufficient |
+| `AC-US-STATS-002-01` | `PS-BACKEND`                  | Backend          | ✅ Met          |
+| `AC-US-STATS-002-02` | `PS-DASHBOARD`                | None linked      | ❌ Missing      |
+| `AC-US-STATS-002-02` | `PS-BACKEND`                  | None linked      | ❌ Missing      |
+| `AC-US-STATS-002-03` | `PS-DASHBOARD`                | None linked      | ❌ Missing      |
+| `AC-US-STATS-002-03` | `PS-DASHBOARD-INTEGRATED`     | None linked      | ❌ Missing      |
+| `AC-US-STATS-002-04` | `PS-DASHBOARD`                | Backend          | ⚠️ Insufficient |
+| `AC-US-STATS-002-04` | `PS-BACKEND`                  | Backend          | ✅ Met          |
+| `AC-US-STATS-002-05` | `PS-DASHBOARD-API-INTEGRATED` | None linked      | ❌ Missing      |
+| `AC-US-STATS-002-06` | `PS-BACKEND`                  | None linked      | ❌ Missing      |
+| `AC-US-STATS-002-07` | `PS-BACKEND`                  | None linked      | ❌ Missing      |
+| `AC-US-STATS-002-08` | `PS-BACKEND`                  | None linked      | ❌ Missing      |
+| `AC-US-STATS-002-09` | `PS-DASHBOARD`                | None linked      | ❌ Missing      |
+| `AC-US-STATS-002-09` | `PS-DASHBOARD-INTEGRATED`     | None linked      | ❌ Missing      |
+| `AC-US-STATS-002-10` | `PS-BACKEND`                  | None linked      | ❌ Missing      |
+| `AC-US-STATS-002-11` | `PS-DASHBOARD`                | None linked      | ❌ Missing      |
+| `AC-US-STATS-002-11` | `PS-BACKEND`                  | None linked      | ❌ Missing      |
+| `AC-US-STATS-002-12` | `PS-BACKEND`                  | None linked      | ❌ Missing      |
+| `AC-US-STATS-002-13` | `PS-BACKEND`                  | None linked      | ❌ Missing      |
+| `AC-US-STATS-002-14` | `PS-DASHBOARD`                | None linked      | ❌ Missing      |
+| `AC-US-STATS-002-14` | `PS-BACKEND`                  | None linked      | ❌ Missing      |
 
 **Dependencies:** US-STATS-001 and available database and chain providers
 
@@ -256,21 +256,21 @@ Proof obligations use the [shared proof-strategy registry](../../../testing/proo
 
 ### Test Coverage
 
-| Acceptance Criterion | Proof Strategy | Current Evidence      | Status          |
-| -------------------- | -------------- | --------------------- | --------------- |
-| `AC-US-STATS-004-01` | `PS-DASHBOARD` | Other linked: Backend | ⚠️ Insufficient |
-| `AC-US-STATS-004-01` | `PS-BACKEND`   | Backend               | ✅ Met          |
-| `AC-US-STATS-004-02` | `PS-DASHBOARD` | None linked           | ❌ Missing      |
-| `AC-US-STATS-004-02` | `PS-BACKEND`   | None linked           | ❌ Missing      |
-| `AC-US-STATS-004-03` | `PS-BACKEND`   | None linked           | ❌ Missing      |
-| `AC-US-STATS-004-04` | `PS-BACKEND`   | None linked           | ❌ Missing      |
-| `AC-US-STATS-004-05` | `PS-BACKEND`   | None linked           | ❌ Missing      |
-| `AC-US-STATS-004-06` | `PS-DASHBOARD` | None linked           | ❌ Missing      |
-| `AC-US-STATS-004-06` | `PS-BACKEND`   | None linked           | ❌ Missing      |
-| `AC-US-STATS-004-07` | `PS-BACKEND`   | None linked           | ❌ Missing      |
-| `AC-US-STATS-004-08` | `PS-BACKEND`   | None linked           | ❌ Missing      |
-| `AC-US-STATS-004-09` | `PS-DASHBOARD` | None linked           | ❌ Missing      |
-| `AC-US-STATS-004-09` | `PS-BACKEND`   | None linked           | ❌ Missing      |
+| Acceptance Criterion | Proof Strategy | Current Evidence | Status          |
+| -------------------- | -------------- | ---------------- | --------------- |
+| `AC-US-STATS-004-01` | `PS-DASHBOARD` | Backend          | ⚠️ Insufficient |
+| `AC-US-STATS-004-01` | `PS-BACKEND`   | Backend          | ✅ Met          |
+| `AC-US-STATS-004-02` | `PS-DASHBOARD` | None linked      | ❌ Missing      |
+| `AC-US-STATS-004-02` | `PS-BACKEND`   | None linked      | ❌ Missing      |
+| `AC-US-STATS-004-03` | `PS-BACKEND`   | None linked      | ❌ Missing      |
+| `AC-US-STATS-004-04` | `PS-BACKEND`   | None linked      | ❌ Missing      |
+| `AC-US-STATS-004-05` | `PS-BACKEND`   | None linked      | ❌ Missing      |
+| `AC-US-STATS-004-06` | `PS-DASHBOARD` | None linked      | ❌ Missing      |
+| `AC-US-STATS-004-06` | `PS-BACKEND`   | None linked      | ❌ Missing      |
+| `AC-US-STATS-004-07` | `PS-BACKEND`   | None linked      | ❌ Missing      |
+| `AC-US-STATS-004-08` | `PS-BACKEND`   | None linked      | ❌ Missing      |
+| `AC-US-STATS-004-09` | `PS-DASHBOARD` | None linked      | ❌ Missing      |
+| `AC-US-STATS-004-09` | `PS-BACKEND`   | None linked      | ❌ Missing      |
 
 **Dependencies:** US-STATS-001
 

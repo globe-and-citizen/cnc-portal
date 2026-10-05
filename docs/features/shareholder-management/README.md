@@ -74,16 +74,16 @@ flowchart LR
 
 ## Test Coverage Overview
 
-| User Story  | Main Journey  | Coverage Target | Gaps                                           |
-| ----------- | ------------- | --------------- | ---------------------------------------------- |
-| US-SHER-001 | ✅ Integrated | ✅ 10/10 met    | —                                              |
-| US-SHER-002 | ✅ Integrated | ✅ 13/13 met    | —                                              |
-| US-SHER-003 | ✅ Integrated | ✅ 8/8 met      | —                                              |
-| US-SHER-004 | ✅ Integrated | ⚠️ 7/8 met      | `AC-US-SHER-004-04` lacks contract enforcement |
-| US-SHER-005 | ✅ Integrated | ✅ 9/9 met      | —                                              |
-| US-SHER-006 | ✅ Integrated | ✅ 8/8 met      | —                                              |
-| US-SHER-007 | ✅ Integrated | ✅ 8/8 met      | —                                              |
-| US-SHER-009 | ✅ Integrated | ✅ 8/8 met      | None                                           |
+| User Story  | Main Journey  | Coverage Target | Gaps                                                          |
+| ----------- | ------------- | --------------- | ------------------------------------------------------------- |
+| US-SHER-001 | ✅ Integrated | ⚠️ 7/10         | `AC-US-SHER-001-02`, `AC-US-SHER-001-03`, `AC-US-SHER-001-04` |
+| US-SHER-002 | ✅ Integrated | ⚠️ 10/13        | `AC-US-SHER-002-02`, `AC-US-SHER-002-03`, `AC-US-SHER-002-13` |
+| US-SHER-003 | ✅ Integrated | ⚠️ 7/8          | `AC-US-SHER-003-04`                                           |
+| US-SHER-004 | ✅ Integrated | ⚠️ 6/8          | `AC-US-SHER-004-02`, `AC-US-SHER-004-04`                      |
+| US-SHER-005 | ✅ Integrated | ⚠️ 7/9          | `AC-US-SHER-005-01`, `AC-US-SHER-005-05`                      |
+| US-SHER-006 | ✅ Integrated | ⚠️ 5/8          | `AC-US-SHER-006-01`, `AC-US-SHER-006-03`, `AC-US-SHER-006-05` |
+| US-SHER-007 | ✅ Integrated | ⚠️ 5/8          | `AC-US-SHER-007-01`, `AC-US-SHER-007-02`, `AC-US-SHER-007-04` |
+| US-SHER-009 | ✅ Integrated | ⚠️ 7/8          | `AC-US-SHER-009-03`                                           |
 
 Proof obligations use the [shared proof-strategy registry](../../testing/proof-strategies.md). Multiple IDs for one AC are cumulative.
 
@@ -122,18 +122,22 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 
 ### Test Coverage
 
-| Acceptance Criterion | Proof Strategy        | Current Evidence | Status |
-| -------------------- | --------------------- | ---------------- | ------ |
-| `AC-US-SHER-001-01`  | `PS-CHAIN-INTEGRATED` | Integrated E2E   | ✅ Met |
-| `AC-US-SHER-001-02`  | `PS-CHAIN-INTEGRATED` | Integrated E2E   | ✅ Met |
-| `AC-US-SHER-001-03`  | `PS-CHAIN-INTEGRATED` | Integrated E2E   | ✅ Met |
-| `AC-US-SHER-001-04`  | `PS-CHAIN-INTEGRATED` | Integrated E2E   | ✅ Met |
-| `AC-US-SHER-001-05`  | `PS-FRONTEND`         | Frontend         | ✅ Met |
-| `AC-US-SHER-001-06`  | `PS-FRONTEND`         | Frontend         | ✅ Met |
-| `AC-US-SHER-001-07`  | `PS-FRONTEND`         | Frontend         | ✅ Met |
-| `AC-US-SHER-001-08`  | `PS-FRONTEND`         | Frontend         | ✅ Met |
-| `AC-US-SHER-001-09`  | `PS-FRONTEND`         | Frontend         | ✅ Met |
-| `AC-US-SHER-001-10`  | `PS-FRONTEND`         | Frontend         | ✅ Met |
+| Acceptance Criterion | Proof Strategy        | Current Evidence          | Status          |
+| -------------------- | --------------------- | ------------------------- | --------------- |
+| `AC-US-SHER-001-01`  | `PS-CHAIN-INTEGRATED` | Integrated E2E + Frontend | ✅ Met          |
+| `AC-US-SHER-001-02`  | `PS-CHAIN-INTEGRATED` | Integrated E2E            | ✅ Met          |
+| `AC-US-SHER-001-02`  | `PS-FRONTEND`         | Integrated E2E            | ⚠️ Insufficient |
+| `AC-US-SHER-001-03`  | `PS-CHAIN-INTEGRATED` | Integrated E2E + Frontend | ✅ Met          |
+| `AC-US-SHER-001-03`  | `PS-CONTRACT`         | Integrated E2E + Frontend | ⚠️ Insufficient |
+| `AC-US-SHER-001-03`  | `PS-FRONTEND`         | Integrated E2E + Frontend | ✅ Met          |
+| `AC-US-SHER-001-04`  | `PS-CHAIN-INTEGRATED` | Integrated E2E            | ✅ Met          |
+| `AC-US-SHER-001-04`  | `PS-CONTRACT`         | Integrated E2E            | ⚠️ Insufficient |
+| `AC-US-SHER-001-05`  | `PS-FRONTEND`         | Frontend                  | ✅ Met          |
+| `AC-US-SHER-001-06`  | `PS-FRONTEND`         | Frontend                  | ✅ Met          |
+| `AC-US-SHER-001-07`  | `PS-FRONTEND`         | Frontend                  | ✅ Met          |
+| `AC-US-SHER-001-08`  | `PS-FRONTEND`         | Frontend                  | ✅ Met          |
+| `AC-US-SHER-001-09`  | `PS-FRONTEND`         | Frontend                  | ✅ Met          |
+| `AC-US-SHER-001-10`  | `PS-FRONTEND`         | Frontend                  | ✅ Met          |
 
 **Accounting:** The complete router operation is booked once by
 [`UC-SDR-01`](../accounting/journal-entry-catalogue.md#uc-sdr-01--investor-contribution); the matching Safe receipt and Investor mint are
@@ -175,21 +179,24 @@ supporting evidence, not separate entries.
 
 ### Test Coverage
 
-| Acceptance Criterion | Proof Strategy        | Current Evidence | Status |
-| -------------------- | --------------------- | ---------------- | ------ |
-| `AC-US-SHER-002-01`  | `PS-FRONTEND`         | Frontend         | ✅ Met |
-| `AC-US-SHER-002-02`  | `PS-CHAIN-INTEGRATED` | Integrated E2E   | ✅ Met |
-| `AC-US-SHER-002-03`  | `PS-CHAIN-INTEGRATED` | Integrated E2E   | ✅ Met |
-| `AC-US-SHER-002-04`  | `PS-FRONTEND`         | Frontend         | ✅ Met |
-| `AC-US-SHER-002-05`  | `PS-FRONTEND`         | Frontend         | ✅ Met |
-| `AC-US-SHER-002-06`  | `PS-FRONTEND`         | Frontend         | ✅ Met |
-| `AC-US-SHER-002-07`  | `PS-FRONTEND`         | Frontend         | ✅ Met |
-| `AC-US-SHER-002-08`  | `PS-CONTRACT`         | Contract         | ✅ Met |
-| `AC-US-SHER-002-09`  | `PS-FRONTEND`         | Frontend         | ✅ Met |
-| `AC-US-SHER-002-10`  | `PS-FRONTEND`         | Frontend         | ✅ Met |
-| `AC-US-SHER-002-11`  | `PS-FRONTEND`         | Frontend         | ✅ Met |
-| `AC-US-SHER-002-12`  | `PS-FRONTEND`         | Frontend         | ✅ Met |
-| `AC-US-SHER-002-13`  | `PS-CHAIN-INTEGRATED` | Integrated E2E   | ✅ Met |
+| Acceptance Criterion | Proof Strategy        | Current Evidence          | Status          |
+| -------------------- | --------------------- | ------------------------- | --------------- |
+| `AC-US-SHER-002-01`  | `PS-FRONTEND`         | Integrated E2E + Frontend | ✅ Met          |
+| `AC-US-SHER-002-02`  | `PS-CHAIN-INTEGRATED` | Integrated E2E + Frontend | ✅ Met          |
+| `AC-US-SHER-002-02`  | `PS-CONTRACT`         | Integrated E2E + Frontend | ⚠️ Insufficient |
+| `AC-US-SHER-002-03`  | `PS-CHAIN-INTEGRATED` | Integrated E2E + Frontend | ✅ Met          |
+| `AC-US-SHER-002-03`  | `PS-CONTRACT`         | Integrated E2E + Frontend | ⚠️ Insufficient |
+| `AC-US-SHER-002-04`  | `PS-FRONTEND`         | Integrated E2E + Frontend | ✅ Met          |
+| `AC-US-SHER-002-05`  | `PS-FRONTEND`         | Frontend                  | ✅ Met          |
+| `AC-US-SHER-002-06`  | `PS-FRONTEND`         | Frontend                  | ✅ Met          |
+| `AC-US-SHER-002-07`  | `PS-FRONTEND`         | Frontend                  | ✅ Met          |
+| `AC-US-SHER-002-08`  | `PS-CONTRACT`         | Contract                  | ✅ Met          |
+| `AC-US-SHER-002-09`  | `PS-FRONTEND`         | Frontend                  | ✅ Met          |
+| `AC-US-SHER-002-10`  | `PS-FRONTEND`         | Frontend                  | ✅ Met          |
+| `AC-US-SHER-002-11`  | `PS-FRONTEND`         | Frontend                  | ✅ Met          |
+| `AC-US-SHER-002-12`  | `PS-FRONTEND`         | Frontend                  | ✅ Met          |
+| `AC-US-SHER-002-13`  | `PS-CHAIN-INTEGRATED` | Integrated E2E            | ✅ Met          |
+| `AC-US-SHER-002-13`  | `PS-CONTRACT`         | Integrated E2E            | ⚠️ Insufficient |
 
 **Accounting:** Per-shareholder payments are grouped into [`UC-INV-01`](../accounting/journal-entry-catalogue.md#uc-inv-01--dividend-paid).
 Bank's distribution trigger is not booked again.
@@ -226,16 +233,17 @@ Bank's distribution trigger is not booked again.
 
 ### Test Coverage
 
-| Acceptance Criterion | Proof Strategy        | Current Evidence | Status |
-| -------------------- | --------------------- | ---------------- | ------ |
-| `AC-US-SHER-003-01`  | `PS-CHAIN-INTEGRATED` | Integrated E2E   | ✅ Met |
-| `AC-US-SHER-003-02`  | `PS-CHAIN-INTEGRATED` | Integrated E2E   | ✅ Met |
-| `AC-US-SHER-003-03`  | `PS-CHAIN-INTEGRATED` | Integrated E2E   | ✅ Met |
-| `AC-US-SHER-003-04`  | `PS-CHAIN-INTEGRATED` | Integrated E2E   | ✅ Met |
-| `AC-US-SHER-003-05`  | `PS-FRONTEND`         | Frontend         | ✅ Met |
-| `AC-US-SHER-003-06`  | `PS-FRONTEND`         | Frontend         | ✅ Met |
-| `AC-US-SHER-003-07`  | `PS-FRONTEND`         | Frontend         | ✅ Met |
-| `AC-US-SHER-003-08`  | `PS-FRONTEND`         | Frontend         | ✅ Met |
+| Acceptance Criterion | Proof Strategy        | Current Evidence | Status          |
+| -------------------- | --------------------- | ---------------- | --------------- |
+| `AC-US-SHER-003-01`  | `PS-CHAIN-INTEGRATED` | Integrated E2E   | ✅ Met          |
+| `AC-US-SHER-003-02`  | `PS-CHAIN-INTEGRATED` | Integrated E2E   | ✅ Met          |
+| `AC-US-SHER-003-03`  | `PS-CHAIN-INTEGRATED` | Integrated E2E   | ✅ Met          |
+| `AC-US-SHER-003-04`  | `PS-CHAIN-INTEGRATED` | Integrated E2E   | ✅ Met          |
+| `AC-US-SHER-003-04`  | `PS-FRONTEND`         | Integrated E2E   | ⚠️ Insufficient |
+| `AC-US-SHER-003-05`  | `PS-FRONTEND`         | Frontend         | ✅ Met          |
+| `AC-US-SHER-003-06`  | `PS-FRONTEND`         | Frontend         | ✅ Met          |
+| `AC-US-SHER-003-07`  | `PS-FRONTEND`         | Frontend         | ✅ Met          |
+| `AC-US-SHER-003-08`  | `PS-FRONTEND`         | Frontend         | ✅ Met          |
 
 **Dependencies:** Current Investor contract and company access
 
@@ -269,18 +277,19 @@ Bank's distribution trigger is not booked again.
 
 ### Test Coverage
 
-| Acceptance Criterion | Proof Strategy        | Current Evidence | Status     |
-| -------------------- | --------------------- | ---------------- | ---------- |
-| `AC-US-SHER-004-01`  | `PS-FRONTEND`         | Frontend         | ✅ Met     |
-| `AC-US-SHER-004-02`  | `PS-CHAIN-INTEGRATED` | Integrated E2E   | ✅ Met     |
-| `AC-US-SHER-004-03`  | `PS-CONTRACT`         | Contract         | ✅ Met     |
-| `AC-US-SHER-004-04`  | `PS-FRONTEND`         | None linked      | ❌ Missing |
-| `AC-US-SHER-004-04`  | `PS-CONTRACT`         | None linked      | ❌ Missing |
-| `AC-US-SHER-004-05`  | `PS-FRONTEND`         | Frontend         | ✅ Met     |
-| `AC-US-SHER-004-06`  | `PS-FRONTEND`         | Frontend         | ✅ Met     |
-| `AC-US-SHER-004-06`  | `PS-CONTRACT`         | Contract         | ✅ Met     |
-| `AC-US-SHER-004-07`  | `PS-FRONTEND`         | Frontend         | ✅ Met     |
-| `AC-US-SHER-004-08`  | `PS-FRONTEND`         | Frontend         | ✅ Met     |
+| Acceptance Criterion | Proof Strategy        | Current Evidence          | Status          |
+| -------------------- | --------------------- | ------------------------- | --------------- |
+| `AC-US-SHER-004-01`  | `PS-FRONTEND`         | Integrated E2E + Frontend | ✅ Met          |
+| `AC-US-SHER-004-02`  | `PS-CHAIN-INTEGRATED` | Integrated E2E            | ✅ Met          |
+| `AC-US-SHER-004-02`  | `PS-CONTRACT`         | Integrated E2E            | ⚠️ Insufficient |
+| `AC-US-SHER-004-03`  | `PS-CONTRACT`         | Contract                  | ✅ Met          |
+| `AC-US-SHER-004-04`  | `PS-FRONTEND`         | None linked               | ❌ Missing      |
+| `AC-US-SHER-004-04`  | `PS-CONTRACT`         | None linked               | ❌ Missing      |
+| `AC-US-SHER-004-05`  | `PS-FRONTEND`         | Frontend                  | ✅ Met          |
+| `AC-US-SHER-004-06`  | `PS-FRONTEND`         | Frontend + Contract       | ✅ Met          |
+| `AC-US-SHER-004-06`  | `PS-CONTRACT`         | Frontend + Contract       | ✅ Met          |
+| `AC-US-SHER-004-07`  | `PS-FRONTEND`         | Frontend                  | ✅ Met          |
+| `AC-US-SHER-004-08`  | `PS-FRONTEND`         | Frontend                  | ✅ Met          |
 
 **Accounting:** A direct mint not backed by Router, Payroll, or Vesting evidence uses
 [`DEFAULT-D`](../accounting/journal-entry-catalogue.md#default-d--direct-sher-issuance).
@@ -315,19 +324,23 @@ Bank's distribution trigger is not booked again.
 
 ### Test Coverage
 
-| Acceptance Criterion | Proof Strategy        | Current Evidence | Status |
-| -------------------- | --------------------- | ---------------- | ------ |
-| `AC-US-SHER-005-01`  | `PS-CHAIN-INTEGRATED` | Integrated E2E   | ✅ Met |
-| `AC-US-SHER-005-02`  | `PS-CHAIN-INTEGRATED` | Integrated E2E   | ✅ Met |
-| `AC-US-SHER-005-03`  | `PS-CHAIN-INTEGRATED` | Integrated E2E   | ✅ Met |
-| `AC-US-SHER-005-04`  | `PS-FRONTEND`         | Frontend         | ✅ Met |
-| `AC-US-SHER-005-04`  | `PS-CONTRACT`         | Contract         | ✅ Met |
-| `AC-US-SHER-005-05`  | `PS-CHAIN-INTEGRATED` | Integrated E2E   | ✅ Met |
-| `AC-US-SHER-005-06`  | `PS-FRONTEND`         | Frontend         | ✅ Met |
-| `AC-US-SHER-005-06`  | `PS-CONTRACT`         | Contract         | ✅ Met |
-| `AC-US-SHER-005-07`  | `PS-FRONTEND`         | Frontend         | ✅ Met |
-| `AC-US-SHER-005-08`  | `PS-FRONTEND`         | Frontend         | ✅ Met |
-| `AC-US-SHER-005-09`  | `PS-FRONTEND`         | Frontend         | ✅ Met |
+| Acceptance Criterion | Proof Strategy        | Current Evidence          | Status          |
+| -------------------- | --------------------- | ------------------------- | --------------- |
+| `AC-US-SHER-005-01`  | `PS-CHAIN-INTEGRATED` | Integrated E2E + Frontend | ✅ Met          |
+| `AC-US-SHER-005-01`  | `PS-CONTRACT`         | Integrated E2E + Frontend | ⚠️ Insufficient |
+| `AC-US-SHER-005-02`  | `PS-CHAIN-INTEGRATED` | Integrated E2E + Contract | ✅ Met          |
+| `AC-US-SHER-005-02`  | `PS-CONTRACT`         | Integrated E2E + Contract | ✅ Met          |
+| `AC-US-SHER-005-03`  | `PS-CHAIN-INTEGRATED` | Integrated E2E + Contract | ✅ Met          |
+| `AC-US-SHER-005-03`  | `PS-CONTRACT`         | Integrated E2E + Contract | ✅ Met          |
+| `AC-US-SHER-005-04`  | `PS-FRONTEND`         | Frontend + Contract       | ✅ Met          |
+| `AC-US-SHER-005-04`  | `PS-CONTRACT`         | Frontend + Contract       | ✅ Met          |
+| `AC-US-SHER-005-05`  | `PS-CHAIN-INTEGRATED` | Integrated E2E            | ✅ Met          |
+| `AC-US-SHER-005-05`  | `PS-CONTRACT`         | Integrated E2E            | ⚠️ Insufficient |
+| `AC-US-SHER-005-06`  | `PS-FRONTEND`         | Frontend + Contract       | ✅ Met          |
+| `AC-US-SHER-005-06`  | `PS-CONTRACT`         | Frontend + Contract       | ✅ Met          |
+| `AC-US-SHER-005-07`  | `PS-FRONTEND`         | Frontend                  | ✅ Met          |
+| `AC-US-SHER-005-08`  | `PS-FRONTEND`         | Frontend                  | ✅ Met          |
+| `AC-US-SHER-005-09`  | `PS-FRONTEND`         | Frontend                  | ✅ Met          |
 
 **Dependencies:** US-SAFE-001, an active Safe Deposit Router, and a connected router owner
 
@@ -359,16 +372,22 @@ Bank's distribution trigger is not booked again.
 
 ### Test Coverage
 
-| Acceptance Criterion | Proof Strategy             | Current Evidence | Status |
-| -------------------- | -------------------------- | ---------------- | ------ |
-| `AC-US-SHER-006-01`  | `PS-FULL-STACK-INTEGRATED` | Integrated E2E   | ✅ Met |
-| `AC-US-SHER-006-02`  | `PS-FULL-STACK-INTEGRATED` | Integrated E2E   | ✅ Met |
-| `AC-US-SHER-006-03`  | `PS-FULL-STACK-INTEGRATED` | Integrated E2E   | ✅ Met |
-| `AC-US-SHER-006-04`  | `PS-CONTRACT`              | Contract         | ✅ Met |
-| `AC-US-SHER-006-05`  | `PS-FULL-STACK-INTEGRATED` | Integrated E2E   | ✅ Met |
-| `AC-US-SHER-006-06`  | `PS-FRONTEND`              | Frontend         | ✅ Met |
-| `AC-US-SHER-006-07`  | `PS-FRONTEND`              | Frontend         | ✅ Met |
-| `AC-US-SHER-006-08`  | `PS-CONTRACT`              | Contract         | ✅ Met |
+| Acceptance Criterion | Proof Strategy             | Current Evidence                     | Status          |
+| -------------------- | -------------------------- | ------------------------------------ | --------------- |
+| `AC-US-SHER-006-01`  | `PS-FULL-STACK-INTEGRATED` | Integrated E2E + Frontend            | ✅ Met          |
+| `AC-US-SHER-006-01`  | `PS-CONTRACT`              | Integrated E2E + Frontend            | ⚠️ Insufficient |
+| `AC-US-SHER-006-02`  | `PS-FULL-STACK-INTEGRATED` | Integrated E2E + Contract            | ✅ Met          |
+| `AC-US-SHER-006-02`  | `PS-CONTRACT`              | Integrated E2E + Contract            | ✅ Met          |
+| `AC-US-SHER-006-03`  | `PS-FULL-STACK-INTEGRATED` | Integrated E2E + Frontend + Contract | ✅ Met          |
+| `AC-US-SHER-006-03`  | `PS-BACKEND`               | Integrated E2E + Frontend + Contract | ⚠️ Insufficient |
+| `AC-US-SHER-006-03`  | `PS-CONTRACT`              | Integrated E2E + Frontend + Contract | ✅ Met          |
+| `AC-US-SHER-006-04`  | `PS-CONTRACT`              | Contract                             | ✅ Met          |
+| `AC-US-SHER-006-05`  | `PS-FULL-STACK-INTEGRATED` | Integrated E2E                       | ✅ Met          |
+| `AC-US-SHER-006-05`  | `PS-BACKEND`               | Integrated E2E                       | ⚠️ Insufficient |
+| `AC-US-SHER-006-05`  | `PS-CONTRACT`              | Integrated E2E                       | ⚠️ Insufficient |
+| `AC-US-SHER-006-06`  | `PS-FRONTEND`              | Frontend                             | ✅ Met          |
+| `AC-US-SHER-006-07`  | `PS-FRONTEND`              | Frontend                             | ✅ Met          |
+| `AC-US-SHER-006-08`  | `PS-CONTRACT`              | Contract                             | ✅ Met          |
 
 **Accounting:** A migration claim preserves an existing ownership allocation. It is not a new economic issuance and creates no journal
 entry.
@@ -404,17 +423,22 @@ entry.
 
 ### Test Coverage
 
-| Acceptance Criterion | Proof Strategy             | Current Evidence | Status |
-| -------------------- | -------------------------- | ---------------- | ------ |
-| `AC-US-SHER-007-01`  | `PS-FULL-STACK-INTEGRATED` | Integrated E2E   | ✅ Met |
-| `AC-US-SHER-007-02`  | `PS-FULL-STACK-INTEGRATED` | Integrated E2E   | ✅ Met |
-| `AC-US-SHER-007-03`  | `PS-CONTRACT`              | Contract         | ✅ Met |
-| `AC-US-SHER-007-04`  | `PS-FULL-STACK-INTEGRATED` | Integrated E2E   | ✅ Met |
-| `AC-US-SHER-007-05`  | `PS-CONTRACT`              | Contract         | ✅ Met |
-| `AC-US-SHER-007-06`  | `PS-FRONTEND`              | Frontend         | ✅ Met |
-| `AC-US-SHER-007-06`  | `PS-CONTRACT`              | Contract         | ✅ Met |
-| `AC-US-SHER-007-07`  | `PS-FRONTEND`              | Frontend         | ✅ Met |
-| `AC-US-SHER-007-08`  | `PS-FRONTEND`              | Frontend         | ✅ Met |
+| Acceptance Criterion | Proof Strategy             | Current Evidence          | Status          |
+| -------------------- | -------------------------- | ------------------------- | --------------- |
+| `AC-US-SHER-007-01`  | `PS-FULL-STACK-INTEGRATED` | Integrated E2E + Contract | ✅ Met          |
+| `AC-US-SHER-007-01`  | `PS-BACKEND`               | Integrated E2E + Contract | ⚠️ Insufficient |
+| `AC-US-SHER-007-01`  | `PS-CONTRACT`              | Integrated E2E + Contract | ✅ Met          |
+| `AC-US-SHER-007-02`  | `PS-FULL-STACK-INTEGRATED` | Integrated E2E + Frontend | ✅ Met          |
+| `AC-US-SHER-007-02`  | `PS-CONTRACT`              | Integrated E2E + Frontend | ⚠️ Insufficient |
+| `AC-US-SHER-007-03`  | `PS-CONTRACT`              | Integrated E2E + Contract | ✅ Met          |
+| `AC-US-SHER-007-04`  | `PS-FULL-STACK-INTEGRATED` | Integrated E2E + Frontend | ✅ Met          |
+| `AC-US-SHER-007-04`  | `PS-BACKEND`               | Integrated E2E + Frontend | ⚠️ Insufficient |
+| `AC-US-SHER-007-04`  | `PS-CONTRACT`              | Integrated E2E + Frontend | ⚠️ Insufficient |
+| `AC-US-SHER-007-05`  | `PS-CONTRACT`              | Contract                  | ✅ Met          |
+| `AC-US-SHER-007-06`  | `PS-FRONTEND`              | Frontend + Contract       | ✅ Met          |
+| `AC-US-SHER-007-06`  | `PS-CONTRACT`              | Frontend + Contract       | ✅ Met          |
+| `AC-US-SHER-007-07`  | `PS-FRONTEND`              | Frontend                  | ✅ Met          |
+| `AC-US-SHER-007-08`  | `PS-FRONTEND`              | Frontend                  | ✅ Met          |
 
 **Accounting:** Dispatch and closure complete an existing ownership migration. They do not create a new economic issuance or journal entry.
 
@@ -467,17 +491,19 @@ the redeployment and migration-root commit. Shareholder Management exposes the m
 
 ### Test Coverage
 
-| Acceptance Criterion | Proof Strategy        | Current Evidence | Status |
-| -------------------- | --------------------- | ---------------- | ------ |
-| `AC-US-SHER-009-01`  | `PS-CHAIN-INTEGRATED` | Integrated E2E   | ✅ Met |
-| `AC-US-SHER-009-02`  | `PS-FRONTEND`         | Frontend         | ✅ Met |
-| `AC-US-SHER-009-03`  | `PS-CHAIN-INTEGRATED` | Integrated E2E   | ✅ Met |
-| `AC-US-SHER-009-04`  | `PS-CHAIN-INTEGRATED` | Integrated E2E   | ✅ Met |
-| `AC-US-SHER-009-05`  | `PS-FRONTEND`         | Frontend         | ✅ Met |
-| `AC-US-SHER-009-05`  | `PS-CONTRACT`         | Contract         | ✅ Met |
-| `AC-US-SHER-009-06`  | `PS-CONTRACT`         | Contract         | ✅ Met |
-| `AC-US-SHER-009-07`  | `PS-FRONTEND`         | Frontend         | ✅ Met |
-| `AC-US-SHER-009-08`  | `PS-FRONTEND`         | Frontend         | ✅ Met |
+| Acceptance Criterion | Proof Strategy        | Current Evidence                     | Status          |
+| -------------------- | --------------------- | ------------------------------------ | --------------- |
+| `AC-US-SHER-009-01`  | `PS-CHAIN-INTEGRATED` | Integrated E2E + Frontend            | ✅ Met          |
+| `AC-US-SHER-009-02`  | `PS-FRONTEND`         | Frontend                             | ✅ Met          |
+| `AC-US-SHER-009-03`  | `PS-CHAIN-INTEGRATED` | Integrated E2E + Frontend            | ✅ Met          |
+| `AC-US-SHER-009-03`  | `PS-CONTRACT`         | Integrated E2E + Frontend            | ⚠️ Insufficient |
+| `AC-US-SHER-009-04`  | `PS-CHAIN-INTEGRATED` | Integrated E2E + Contract            | ✅ Met          |
+| `AC-US-SHER-009-04`  | `PS-CONTRACT`         | Integrated E2E + Contract            | ✅ Met          |
+| `AC-US-SHER-009-05`  | `PS-FRONTEND`         | Integrated E2E + Frontend + Contract | ✅ Met          |
+| `AC-US-SHER-009-05`  | `PS-CONTRACT`         | Integrated E2E + Frontend + Contract | ✅ Met          |
+| `AC-US-SHER-009-06`  | `PS-CONTRACT`         | Contract                             | ✅ Met          |
+| `AC-US-SHER-009-07`  | `PS-FRONTEND`         | Frontend                             | ✅ Met          |
+| `AC-US-SHER-009-08`  | `PS-FRONTEND`         | Frontend                             | ✅ Met          |
 
 **Dependencies:** Current Investor contract, a connected Investor administrator, and a connected wallet
 

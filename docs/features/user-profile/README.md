@@ -30,9 +30,9 @@ The display name and profile image can be changed from the client navigation and
 Coverage targets compare the required proof below with direct representative `AC-US-*` references, not with the latest test run. The profile
 journey remains planned for integrated E2E; focused tests already prove some independent rules.
 
-| User Story     | Main Journey | Coverage Target | Gaps                                                                                                  |
-| -------------- | ------------ | --------------- | ----------------------------------------------------------------------------------------------------- |
-| US-PROFILE-001 | ⬜ Planned   | ⚠️ 5/9 met      | `AC-US-PROFILE-001-01`, `02` (real save/upload), `06` (draft unchanged), `07` (both failure branches) |
+| User Story     | Main Journey | Coverage Target | Gaps                                                                                           |
+| -------------- | ------------ | --------------- | ---------------------------------------------------------------------------------------------- |
+| US-PROFILE-001 | ⬜ Planned   | ⚠️ 5/9          | `AC-US-PROFILE-001-01`, `AC-US-PROFILE-001-02`, `AC-US-PROFILE-001-06`, `AC-US-PROFILE-001-07` |
 
 Proof obligations use the [shared proof-strategy registry](../../testing/proof-strategies.md). Multiple IDs for one AC are cumulative.
 
@@ -66,18 +66,19 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 
 ### Test Coverage
 
-| Acceptance Criterion   | Proof Strategy      | Current Evidence       | Status          |
-| ---------------------- | ------------------- | ---------------------- | --------------- |
-| `AC-US-PROFILE-001-01` | `PS-API-INTEGRATED` | Other linked: Frontend | ⚠️ Insufficient |
-| `AC-US-PROFILE-001-02` | `PS-API-INTEGRATED` | Other linked: Frontend | ⚠️ Insufficient |
-| `AC-US-PROFILE-001-03` | `PS-FRONTEND`       | Frontend               | ✅ Met          |
-| `AC-US-PROFILE-001-04` | `PS-FRONTEND`       | Frontend               | ✅ Met          |
-| `AC-US-PROFILE-001-04` | `PS-BACKEND`        | Backend                | ✅ Met          |
-| `AC-US-PROFILE-001-05` | `PS-FRONTEND`       | Frontend               | ✅ Met          |
-| `AC-US-PROFILE-001-06` | `PS-FRONTEND`       | None linked            | ❌ Missing      |
-| `AC-US-PROFILE-001-07` | `PS-BROWSER`        | Other linked: Frontend | ⚠️ Insufficient |
-| `AC-US-PROFILE-001-08` | `PS-FRONTEND`       | Frontend               | ✅ Met          |
-| `AC-US-PROFILE-001-09` | `PS-BACKEND`        | Backend                | ✅ Met          |
+| Acceptance Criterion   | Proof Strategy      | Current Evidence   | Status          |
+| ---------------------- | ------------------- | ------------------ | --------------- |
+| `AC-US-PROFILE-001-01` | `PS-API-INTEGRATED` | Frontend           | ⚠️ Insufficient |
+| `AC-US-PROFILE-001-01` | `PS-BACKEND`        | Frontend           | ⚠️ Insufficient |
+| `AC-US-PROFILE-001-02` | `PS-API-INTEGRATED` | Frontend           | ⚠️ Insufficient |
+| `AC-US-PROFILE-001-03` | `PS-FRONTEND`       | Frontend           | ✅ Met          |
+| `AC-US-PROFILE-001-04` | `PS-FRONTEND`       | Frontend + Backend | ✅ Met          |
+| `AC-US-PROFILE-001-04` | `PS-BACKEND`        | Frontend + Backend | ✅ Met          |
+| `AC-US-PROFILE-001-05` | `PS-FRONTEND`       | Frontend           | ✅ Met          |
+| `AC-US-PROFILE-001-06` | `PS-FRONTEND`       | None linked        | ❌ Missing      |
+| `AC-US-PROFILE-001-07` | `PS-BROWSER`        | Frontend           | ⚠️ Insufficient |
+| `AC-US-PROFILE-001-08` | `PS-FRONTEND`       | Frontend           | ✅ Met          |
+| `AC-US-PROFILE-001-09` | `PS-BACKEND`        | Backend            | ✅ Met          |
 
 **Dependencies:** An authenticated portal user and the user-profile API
 

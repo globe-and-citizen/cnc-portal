@@ -145,23 +145,23 @@ Proof obligations use the [shared proof-strategy registry](../../../testing/proo
 
 ### Test Coverage
 
-| Acceptance Criterion        | Proof Strategy | Current Evidence      | Status          |
-| --------------------------- | -------------- | --------------------- | --------------- |
-| `AC-US-CONTRACT-OPS-002-01` | `PS-DASHBOARD` | None linked           | ❌ Missing      |
-| `AC-US-CONTRACT-OPS-002-02` | `PS-DASHBOARD` | None linked           | ❌ Missing      |
-| `AC-US-CONTRACT-OPS-002-02` | `PS-BACKEND`   | None linked           | ❌ Missing      |
-| `AC-US-CONTRACT-OPS-002-03` | `PS-DASHBOARD` | Other linked: Backend | ⚠️ Insufficient |
-| `AC-US-CONTRACT-OPS-002-03` | `PS-BACKEND`   | Backend               | ✅ Met          |
-| `AC-US-CONTRACT-OPS-002-04` | `PS-DASHBOARD` | Other linked: Backend | ⚠️ Insufficient |
-| `AC-US-CONTRACT-OPS-002-05` | `PS-DASHBOARD` | None linked           | ❌ Missing      |
-| `AC-US-CONTRACT-OPS-002-06` | `PS-DASHBOARD` | None linked           | ❌ Missing      |
-| `AC-US-CONTRACT-OPS-002-06` | `PS-BACKEND`   | None linked           | ❌ Missing      |
-| `AC-US-CONTRACT-OPS-002-07` | `PS-DASHBOARD` | None linked           | ❌ Missing      |
-| `AC-US-CONTRACT-OPS-002-08` | `PS-DASHBOARD` | Other linked: Backend | ⚠️ Insufficient |
-| `AC-US-CONTRACT-OPS-002-09` | `PS-DASHBOARD` | None linked           | ❌ Missing      |
-| `AC-US-CONTRACT-OPS-002-10` | `PS-DASHBOARD` | None linked           | ❌ Missing      |
-| `AC-US-CONTRACT-OPS-002-11` | `PS-DASHBOARD` | None linked           | ❌ Missing      |
-| `AC-US-CONTRACT-OPS-002-11` | `PS-BACKEND`   | None linked           | ❌ Missing      |
+| Acceptance Criterion        | Proof Strategy | Current Evidence | Status          |
+| --------------------------- | -------------- | ---------------- | --------------- |
+| `AC-US-CONTRACT-OPS-002-01` | `PS-DASHBOARD` | None linked      | ❌ Missing      |
+| `AC-US-CONTRACT-OPS-002-02` | `PS-DASHBOARD` | None linked      | ❌ Missing      |
+| `AC-US-CONTRACT-OPS-002-02` | `PS-BACKEND`   | None linked      | ❌ Missing      |
+| `AC-US-CONTRACT-OPS-002-03` | `PS-DASHBOARD` | Backend          | ⚠️ Insufficient |
+| `AC-US-CONTRACT-OPS-002-03` | `PS-BACKEND`   | Backend          | ✅ Met          |
+| `AC-US-CONTRACT-OPS-002-04` | `PS-DASHBOARD` | Backend          | ⚠️ Insufficient |
+| `AC-US-CONTRACT-OPS-002-05` | `PS-DASHBOARD` | None linked      | ❌ Missing      |
+| `AC-US-CONTRACT-OPS-002-06` | `PS-DASHBOARD` | None linked      | ❌ Missing      |
+| `AC-US-CONTRACT-OPS-002-06` | `PS-BACKEND`   | None linked      | ❌ Missing      |
+| `AC-US-CONTRACT-OPS-002-07` | `PS-DASHBOARD` | None linked      | ❌ Missing      |
+| `AC-US-CONTRACT-OPS-002-08` | `PS-DASHBOARD` | Backend          | ⚠️ Insufficient |
+| `AC-US-CONTRACT-OPS-002-09` | `PS-DASHBOARD` | None linked      | ❌ Missing      |
+| `AC-US-CONTRACT-OPS-002-10` | `PS-DASHBOARD` | None linked      | ❌ Missing      |
+| `AC-US-CONTRACT-OPS-002-11` | `PS-DASHBOARD` | None linked      | ❌ Missing      |
+| `AC-US-CONTRACT-OPS-002-11` | `PS-BACKEND`   | None linked      | ❌ Missing      |
 
 **Dependencies:** US-CONTRACT-OPS-001, dashboard authentication, administrator role, company Officer records, and on-chain read access
 

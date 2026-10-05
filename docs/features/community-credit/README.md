@@ -56,13 +56,13 @@ Coverage targets compare each criterion with its required representative evidenc
 generated coverage report and CI retain file-level and execution evidence. Known assertion gaps remain insufficient even when a static
 reference has the expected layer label.
 
-| User Story | Main Journey  | Coverage Target | Gaps                          |
-| ---------- | ------------- | --------------- | ----------------------------- |
-| US-CC-001  | ✅ Integrated | ❌ 0/7 met      | `AC-US-CC-001-01–07`          |
-| US-CC-002  | ✅ Integrated | ⚠️ 3/18 met     | `AC-US-CC-002-01–05`, `07–16` |
-| US-CC-003  | ✅ Integrated | ⚠️ 2/12 met     | `AC-US-CC-003-03–12`          |
-| US-CC-004  | ✅ Integrated | ❌ 0/8 met      | `AC-US-CC-004-01–08`          |
-| US-CC-005  | ✅ Integrated | ❌ 0/17 met     | `AC-US-CC-005-01–17`          |
+| User Story | Main Journey  | Coverage Target | Gaps                                                                                                                                                                                                                                                                                                                              |
+| ---------- | ------------- | --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| US-CC-001  | ✅ Integrated | ❌ 0/7 met      | `AC-US-CC-001-01–07`                                                                                                                                                                                                                                                                                                              |
+| US-CC-002  | ✅ Integrated | ⚠️ 2/18         | `AC-US-CC-002-01`, `AC-US-CC-002-02`, `AC-US-CC-002-03`, `AC-US-CC-002-04`, `AC-US-CC-002-05`, `AC-US-CC-002-06`, `AC-US-CC-002-07`, `AC-US-CC-002-08`, `AC-US-CC-002-09`, `AC-US-CC-002-10`, `AC-US-CC-002-11`, `AC-US-CC-002-12`, `AC-US-CC-002-16`, `AC-US-CC-002-13`, `AC-US-CC-002-14`, `AC-US-CC-002-15`                    |
+| US-CC-003  | ✅ Integrated | ❌ 0/12         | `AC-US-CC-003-01`, `AC-US-CC-003-02`, `AC-US-CC-003-03`, `AC-US-CC-003-04`, `AC-US-CC-003-05`, `AC-US-CC-003-06`, `AC-US-CC-003-07`, `AC-US-CC-003-08`, `AC-US-CC-003-09`, `AC-US-CC-003-10`, `AC-US-CC-003-12`, `AC-US-CC-003-11`                                                                                                |
+| US-CC-004  | ✅ Integrated | ❌ 0/8          | `AC-US-CC-004-01`, `AC-US-CC-004-02`, `AC-US-CC-004-03`, `AC-US-CC-004-04`, `AC-US-CC-004-05`, `AC-US-CC-004-06`, `AC-US-CC-004-07`, `AC-US-CC-004-08`                                                                                                                                                                            |
+| US-CC-005  | ✅ Integrated | ❌ 0/17         | `AC-US-CC-005-01`, `AC-US-CC-005-02`, `AC-US-CC-005-03`, `AC-US-CC-005-04`, `AC-US-CC-005-05`, `AC-US-CC-005-06`, `AC-US-CC-005-07`, `AC-US-CC-005-08`, `AC-US-CC-005-09`, `AC-US-CC-005-10`, `AC-US-CC-005-11`, `AC-US-CC-005-12`, `AC-US-CC-005-13`, `AC-US-CC-005-14`, `AC-US-CC-005-15`, `AC-US-CC-005-16`, `AC-US-CC-005-17` |
 
 The integrated main journeys belong to [E2E-PATH-09 and E2E-PATH-10](../../testing/e2e-paths.md#g4--community-credit-lifecycle). They do not
 prove every criterion or replace direct, assertion-reviewed AC evidence.
@@ -97,15 +97,15 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 
 ### Test Coverage
 
-| Acceptance Criterion | Proof Strategy             | Current Evidence       | Status          |
-| -------------------- | -------------------------- | ---------------------- | --------------- |
-| `AC-US-CC-001-01`    | `PS-FULL-STACK-INTEGRATED` | None linked            | ❌ Missing      |
-| `AC-US-CC-001-02`    | `PS-BROWSER`               | None linked            | ❌ Missing      |
-| `AC-US-CC-001-03`    | `PS-CHAIN-INTEGRATED`      | None linked            | ❌ Missing      |
-| `AC-US-CC-001-04`    | `PS-BROWSER`               | None linked            | ❌ Missing      |
-| `AC-US-CC-001-05`    | `PS-FRONTEND`              | Frontend               | ⚠️ Insufficient |
-| `AC-US-CC-001-06`    | `PS-BROWSER`               | None linked            | ❌ Missing      |
-| `AC-US-CC-001-07`    | `PS-BROWSER`               | Other linked: Frontend | ⚠️ Insufficient |
+| Acceptance Criterion | Proof Strategy             | Current Evidence | Status          |
+| -------------------- | -------------------------- | ---------------- | --------------- |
+| `AC-US-CC-001-01`    | `PS-FULL-STACK-INTEGRATED` | None linked      | ❌ Missing      |
+| `AC-US-CC-001-02`    | `PS-BROWSER`               | None linked      | ❌ Missing      |
+| `AC-US-CC-001-03`    | `PS-CHAIN-INTEGRATED`      | None linked      | ❌ Missing      |
+| `AC-US-CC-001-04`    | `PS-BROWSER`               | None linked      | ❌ Missing      |
+| `AC-US-CC-001-05`    | `PS-FRONTEND`              | Frontend         | ⚠️ Insufficient |
+| `AC-US-CC-001-06`    | `PS-BROWSER`               | None linked      | ❌ Missing      |
+| `AC-US-CC-001-07`    | `PS-BROWSER`               | Frontend         | ⚠️ Insufficient |
 
 ## US-CC-002: Publish a Credit Call
 
@@ -150,33 +150,36 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 
 ### Test Coverage
 
-| Acceptance Criterion | Proof Strategy             | Current Evidence       | Status          |
-| -------------------- | -------------------------- | ---------------------- | --------------- |
-| `AC-US-CC-002-01`    | `PS-FRONTEND`              | Frontend               | ⚠️ Insufficient |
-| `AC-US-CC-002-02`    | `PS-FRONTEND`              | None linked            | ❌ Missing      |
-| `AC-US-CC-002-02`    | `PS-CONTRACT`              | None linked            | ❌ Missing      |
-| `AC-US-CC-002-03`    | `PS-FRONTEND`              | Frontend               | ⚠️ Insufficient |
-| `AC-US-CC-002-04`    | `PS-FRONTEND`              | Frontend               | ⚠️ Insufficient |
-| `AC-US-CC-002-05`    | `PS-FRONTEND`              | Frontend               | ⚠️ Insufficient |
-| `AC-US-CC-002-06`    | `PS-FULL-STACK-INTEGRATED` | Integrated E2E         | ✅ Met          |
-| `AC-US-CC-002-07`    | `PS-FRONTEND`              | Frontend               | ✅ Met          |
-| `AC-US-CC-002-07`    | `PS-CONTRACT`              | Other linked: Frontend | ⚠️ Insufficient |
-| `AC-US-CC-002-08`    | `PS-FRONTEND`              | Frontend               | ✅ Met          |
-| `AC-US-CC-002-08`    | `PS-CONTRACT`              | Other linked: Frontend | ⚠️ Insufficient |
-| `AC-US-CC-002-09`    | `PS-FRONTEND`              | Frontend               | ✅ Met          |
-| `AC-US-CC-002-09`    | `PS-CONTRACT`              | Other linked: Frontend | ⚠️ Insufficient |
-| `AC-US-CC-002-10`    | `PS-FRONTEND`              | Frontend               | ✅ Met          |
-| `AC-US-CC-002-10`    | `PS-CONTRACT`              | Other linked: Frontend | ⚠️ Insufficient |
-| `AC-US-CC-002-11`    | `PS-FRONTEND`              | None linked            | ❌ Missing      |
-| `AC-US-CC-002-12`    | `PS-FULL-STACK-INTEGRATED` | None linked            | ❌ Missing      |
-| `AC-US-CC-002-16`    | `PS-BACKEND`               | Backend                | ⚠️ Insufficient |
-| `AC-US-CC-002-17`    | `PS-BACKEND`               | Backend                | ✅ Met          |
-| `AC-US-CC-002-18`    | `PS-BACKEND`               | Backend                | ✅ Met          |
-| `AC-US-CC-002-13`    | `PS-FRONTEND`              | None linked            | ❌ Missing      |
-| `AC-US-CC-002-14`    | `PS-BROWSER`               | None linked            | ❌ Missing      |
-| `AC-US-CC-002-14`    | `PS-CONTRACT`              | None linked            | ❌ Missing      |
-| `AC-US-CC-002-15`    | `PS-BROWSER`               | Other linked: Frontend | ⚠️ Insufficient |
-| `AC-US-CC-002-15`    | `PS-BACKEND`               | Other linked: Frontend | ⚠️ Insufficient |
+| Acceptance Criterion | Proof Strategy             | Current Evidence          | Status          |
+| -------------------- | -------------------------- | ------------------------- | --------------- |
+| `AC-US-CC-002-01`    | `PS-FRONTEND`              | Frontend                  | ⚠️ Insufficient |
+| `AC-US-CC-002-02`    | `PS-FRONTEND`              | None linked               | ❌ Missing      |
+| `AC-US-CC-002-02`    | `PS-CONTRACT`              | None linked               | ❌ Missing      |
+| `AC-US-CC-002-03`    | `PS-FRONTEND`              | Frontend                  | ⚠️ Insufficient |
+| `AC-US-CC-002-04`    | `PS-FRONTEND`              | Frontend                  | ⚠️ Insufficient |
+| `AC-US-CC-002-05`    | `PS-FRONTEND`              | Frontend                  | ⚠️ Insufficient |
+| `AC-US-CC-002-06`    | `PS-FULL-STACK-INTEGRATED` | Integrated E2E + Frontend | ✅ Met          |
+| `AC-US-CC-002-06`    | `PS-BACKEND`               | Integrated E2E + Frontend | ⚠️ Insufficient |
+| `AC-US-CC-002-06`    | `PS-CONTRACT`              | Integrated E2E + Frontend | ⚠️ Insufficient |
+| `AC-US-CC-002-07`    | `PS-FRONTEND`              | Frontend                  | ✅ Met          |
+| `AC-US-CC-002-07`    | `PS-CONTRACT`              | Frontend                  | ⚠️ Insufficient |
+| `AC-US-CC-002-08`    | `PS-FRONTEND`              | Frontend                  | ✅ Met          |
+| `AC-US-CC-002-08`    | `PS-CONTRACT`              | Frontend                  | ⚠️ Insufficient |
+| `AC-US-CC-002-09`    | `PS-FRONTEND`              | Frontend                  | ✅ Met          |
+| `AC-US-CC-002-09`    | `PS-CONTRACT`              | Frontend                  | ⚠️ Insufficient |
+| `AC-US-CC-002-10`    | `PS-FRONTEND`              | Frontend                  | ✅ Met          |
+| `AC-US-CC-002-10`    | `PS-CONTRACT`              | Frontend                  | ⚠️ Insufficient |
+| `AC-US-CC-002-11`    | `PS-FRONTEND`              | None linked               | ❌ Missing      |
+| `AC-US-CC-002-12`    | `PS-FULL-STACK-INTEGRATED` | None linked               | ❌ Missing      |
+| `AC-US-CC-002-12`    | `PS-BACKEND`               | None linked               | ❌ Missing      |
+| `AC-US-CC-002-16`    | `PS-BACKEND`               | Backend                   | ⚠️ Insufficient |
+| `AC-US-CC-002-17`    | `PS-BACKEND`               | Backend                   | ✅ Met          |
+| `AC-US-CC-002-18`    | `PS-BACKEND`               | Backend                   | ✅ Met          |
+| `AC-US-CC-002-13`    | `PS-FRONTEND`              | None linked               | ❌ Missing      |
+| `AC-US-CC-002-14`    | `PS-BROWSER`               | None linked               | ❌ Missing      |
+| `AC-US-CC-002-14`    | `PS-CONTRACT`              | None linked               | ❌ Missing      |
+| `AC-US-CC-002-15`    | `PS-BROWSER`               | Frontend                  | ⚠️ Insufficient |
+| `AC-US-CC-002-15`    | `PS-BACKEND`               | Frontend                  | ⚠️ Insufficient |
 
 **Accounting:** Publishing terms moves no company funds and creates no journal entry.
 
@@ -213,24 +216,26 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 
 ### Test Coverage
 
-| Acceptance Criterion | Proof Strategy        | Current Evidence       | Status          |
-| -------------------- | --------------------- | ---------------------- | --------------- |
-| `AC-US-CC-003-01`    | `PS-CHAIN-INTEGRATED` | Integrated E2E         | ✅ Met          |
-| `AC-US-CC-003-02`    | `PS-CHAIN-INTEGRATED` | Integrated E2E         | ✅ Met          |
-| `AC-US-CC-003-03`    | `PS-BROWSER`          | None linked            | ❌ Missing      |
-| `AC-US-CC-003-04`    | `PS-BROWSER`          | None linked            | ❌ Missing      |
-| `AC-US-CC-003-05`    | `PS-BROWSER`          | None linked            | ❌ Missing      |
-| `AC-US-CC-003-06`    | `PS-CONTRACT`         | Other linked: Frontend | ⚠️ Insufficient |
-| `AC-US-CC-003-07`    | `PS-FRONTEND`         | None linked            | ❌ Missing      |
-| `AC-US-CC-003-07`    | `PS-CONTRACT`         | None linked            | ❌ Missing      |
-| `AC-US-CC-003-08`    | `PS-FRONTEND`         | None linked            | ❌ Missing      |
-| `AC-US-CC-003-08`    | `PS-CONTRACT`         | None linked            | ❌ Missing      |
-| `AC-US-CC-003-09`    | `PS-FRONTEND`         | None linked            | ❌ Missing      |
-| `AC-US-CC-003-09`    | `PS-CONTRACT`         | None linked            | ❌ Missing      |
-| `AC-US-CC-003-10`    | `PS-BROWSER`          | Other linked: Frontend | ⚠️ Insufficient |
-| `AC-US-CC-003-12`    | `PS-BROWSER`          | Other linked: Frontend | ⚠️ Insufficient |
-| `AC-US-CC-003-11`    | `PS-BROWSER`          | None linked            | ❌ Missing      |
-| `AC-US-CC-003-11`    | `PS-CONTRACT`         | None linked            | ❌ Missing      |
+| Acceptance Criterion | Proof Strategy        | Current Evidence | Status          |
+| -------------------- | --------------------- | ---------------- | --------------- |
+| `AC-US-CC-003-01`    | `PS-CHAIN-INTEGRATED` | Integrated E2E   | ✅ Met          |
+| `AC-US-CC-003-01`    | `PS-CONTRACT`         | Integrated E2E   | ⚠️ Insufficient |
+| `AC-US-CC-003-02`    | `PS-CHAIN-INTEGRATED` | Integrated E2E   | ✅ Met          |
+| `AC-US-CC-003-02`    | `PS-CONTRACT`         | Integrated E2E   | ⚠️ Insufficient |
+| `AC-US-CC-003-03`    | `PS-BROWSER`          | None linked      | ❌ Missing      |
+| `AC-US-CC-003-04`    | `PS-BROWSER`          | None linked      | ❌ Missing      |
+| `AC-US-CC-003-05`    | `PS-BROWSER`          | None linked      | ❌ Missing      |
+| `AC-US-CC-003-06`    | `PS-CONTRACT`         | Frontend         | ⚠️ Insufficient |
+| `AC-US-CC-003-07`    | `PS-FRONTEND`         | None linked      | ❌ Missing      |
+| `AC-US-CC-003-07`    | `PS-CONTRACT`         | None linked      | ❌ Missing      |
+| `AC-US-CC-003-08`    | `PS-FRONTEND`         | None linked      | ❌ Missing      |
+| `AC-US-CC-003-08`    | `PS-CONTRACT`         | None linked      | ❌ Missing      |
+| `AC-US-CC-003-09`    | `PS-FRONTEND`         | None linked      | ❌ Missing      |
+| `AC-US-CC-003-09`    | `PS-CONTRACT`         | None linked      | ❌ Missing      |
+| `AC-US-CC-003-10`    | `PS-BROWSER`          | Frontend         | ⚠️ Insufficient |
+| `AC-US-CC-003-12`    | `PS-BROWSER`          | Frontend         | ⚠️ Insufficient |
+| `AC-US-CC-003-11`    | `PS-BROWSER`          | None linked      | ❌ Missing      |
+| `AC-US-CC-003-11`    | `PS-CONTRACT`         | None linked      | ❌ Missing      |
 
 **Accounting:** A contribution remains source evidence while the round is open. When the round becomes funded, Accounting books principal
 through [`UC-CREDIT-01`](../accounting/journal-entry-catalogue.md#uc-credit-01--funded-principal) and fixed return through
@@ -263,17 +268,20 @@ through [`UC-CREDIT-01`](../accounting/journal-entry-catalogue.md#uc-credit-01--
 
 ### Test Coverage
 
-| Acceptance Criterion | Proof Strategy        | Current Evidence       | Status          |
-| -------------------- | --------------------- | ---------------------- | --------------- |
-| `AC-US-CC-004-01`    | `PS-CHAIN-INTEGRATED` | Other linked: Frontend | ⚠️ Insufficient |
-| `AC-US-CC-004-02`    | `PS-CHAIN-INTEGRATED` | Other linked: Frontend | ⚠️ Insufficient |
-| `AC-US-CC-004-03`    | `PS-CHAIN-INTEGRATED` | None linked            | ❌ Missing      |
-| `AC-US-CC-004-04`    | `PS-BROWSER`          | None linked            | ❌ Missing      |
-| `AC-US-CC-004-05`    | `PS-CONTRACT`         | None linked            | ❌ Missing      |
-| `AC-US-CC-004-06`    | `PS-CONTRACT`         | None linked            | ❌ Missing      |
-| `AC-US-CC-004-07`    | `PS-CONTRACT`         | None linked            | ❌ Missing      |
-| `AC-US-CC-004-08`    | `PS-BROWSER`          | None linked            | ❌ Missing      |
-| `AC-US-CC-004-08`    | `PS-CONTRACT`         | None linked            | ❌ Missing      |
+| Acceptance Criterion | Proof Strategy        | Current Evidence | Status          |
+| -------------------- | --------------------- | ---------------- | --------------- |
+| `AC-US-CC-004-01`    | `PS-CHAIN-INTEGRATED` | Frontend         | ⚠️ Insufficient |
+| `AC-US-CC-004-01`    | `PS-CONTRACT`         | Frontend         | ⚠️ Insufficient |
+| `AC-US-CC-004-02`    | `PS-CHAIN-INTEGRATED` | Frontend         | ⚠️ Insufficient |
+| `AC-US-CC-004-02`    | `PS-CONTRACT`         | Frontend         | ⚠️ Insufficient |
+| `AC-US-CC-004-03`    | `PS-CHAIN-INTEGRATED` | None linked      | ❌ Missing      |
+| `AC-US-CC-004-03`    | `PS-CONTRACT`         | None linked      | ❌ Missing      |
+| `AC-US-CC-004-04`    | `PS-BROWSER`          | None linked      | ❌ Missing      |
+| `AC-US-CC-004-05`    | `PS-CONTRACT`         | None linked      | ❌ Missing      |
+| `AC-US-CC-004-06`    | `PS-CONTRACT`         | None linked      | ❌ Missing      |
+| `AC-US-CC-004-07`    | `PS-CONTRACT`         | None linked      | ❌ Missing      |
+| `AC-US-CC-004-08`    | `PS-BROWSER`          | None linked      | ❌ Missing      |
+| `AC-US-CC-004-08`    | `PS-CONTRACT`         | None linked      | ❌ Missing      |
 
 **Accounting:** Accepting a partial raise activates `UC-CREDIT-01` and `UC-CREDIT-05`. Refunding lenders returns funds that never entered
 the company's books and creates no journal entry.
@@ -324,30 +332,32 @@ the company's books and creates no journal entry.
 
 ### Test Coverage
 
-| Acceptance Criterion | Proof Strategy        | Current Evidence       | Status          |
-| -------------------- | --------------------- | ---------------------- | --------------- |
-| `AC-US-CC-005-01`    | `PS-CHAIN-INTEGRATED` | None linked            | ❌ Missing      |
-| `AC-US-CC-005-02`    | `PS-CONTRACT`         | None linked            | ❌ Missing      |
-| `AC-US-CC-005-03`    | `PS-BROWSER`          | None linked            | ❌ Missing      |
-| `AC-US-CC-005-04`    | `PS-BROWSER`          | None linked            | ❌ Missing      |
-| `AC-US-CC-005-05`    | `PS-BROWSER`          | None linked            | ❌ Missing      |
-| `AC-US-CC-005-06`    | `PS-CHAIN-INTEGRATED` | Other linked: Frontend | ⚠️ Insufficient |
-| `AC-US-CC-005-07`    | `PS-FRONTEND`         | None linked            | ❌ Missing      |
-| `AC-US-CC-005-07`    | `PS-CONTRACT`         | None linked            | ❌ Missing      |
-| `AC-US-CC-005-08`    | `PS-FRONTEND`         | Frontend               | ✅ Met          |
-| `AC-US-CC-005-08`    | `PS-CONTRACT`         | Other linked: Frontend | ⚠️ Insufficient |
-| `AC-US-CC-005-09`    | `PS-FRONTEND`         | Frontend               | ✅ Met          |
-| `AC-US-CC-005-09`    | `PS-CONTRACT`         | Other linked: Frontend | ⚠️ Insufficient |
-| `AC-US-CC-005-10`    | `PS-FRONTEND`         | Frontend               | ✅ Met          |
-| `AC-US-CC-005-10`    | `PS-BROWSER`          | Other linked: Frontend | ⚠️ Insufficient |
-| `AC-US-CC-005-11`    | `PS-CONTRACT`         | None linked            | ❌ Missing      |
-| `AC-US-CC-005-12`    | `PS-CONTRACT`         | Other linked: Frontend | ⚠️ Insufficient |
-| `AC-US-CC-005-13`    | `PS-BROWSER`          | Other linked: Frontend | ⚠️ Insufficient |
-| `AC-US-CC-005-14`    | `PS-BROWSER`          | None linked            | ❌ Missing      |
-| `AC-US-CC-005-15`    | `PS-CONTRACT`         | Other linked: Frontend | ⚠️ Insufficient |
-| `AC-US-CC-005-16`    | `PS-CONTRACT`         | None linked            | ❌ Missing      |
-| `AC-US-CC-005-17`    | `PS-BROWSER`          | None linked            | ❌ Missing      |
-| `AC-US-CC-005-17`    | `PS-CONTRACT`         | None linked            | ❌ Missing      |
+| Acceptance Criterion | Proof Strategy        | Current Evidence | Status          |
+| -------------------- | --------------------- | ---------------- | --------------- |
+| `AC-US-CC-005-01`    | `PS-CHAIN-INTEGRATED` | None linked      | ❌ Missing      |
+| `AC-US-CC-005-01`    | `PS-CONTRACT`         | None linked      | ❌ Missing      |
+| `AC-US-CC-005-02`    | `PS-CONTRACT`         | None linked      | ❌ Missing      |
+| `AC-US-CC-005-03`    | `PS-BROWSER`          | None linked      | ❌ Missing      |
+| `AC-US-CC-005-04`    | `PS-BROWSER`          | None linked      | ❌ Missing      |
+| `AC-US-CC-005-05`    | `PS-BROWSER`          | None linked      | ❌ Missing      |
+| `AC-US-CC-005-06`    | `PS-CHAIN-INTEGRATED` | Frontend         | ⚠️ Insufficient |
+| `AC-US-CC-005-06`    | `PS-CONTRACT`         | Frontend         | ⚠️ Insufficient |
+| `AC-US-CC-005-07`    | `PS-FRONTEND`         | None linked      | ❌ Missing      |
+| `AC-US-CC-005-07`    | `PS-CONTRACT`         | None linked      | ❌ Missing      |
+| `AC-US-CC-005-08`    | `PS-FRONTEND`         | Frontend         | ✅ Met          |
+| `AC-US-CC-005-08`    | `PS-CONTRACT`         | Frontend         | ⚠️ Insufficient |
+| `AC-US-CC-005-09`    | `PS-FRONTEND`         | Frontend         | ✅ Met          |
+| `AC-US-CC-005-09`    | `PS-CONTRACT`         | Frontend         | ⚠️ Insufficient |
+| `AC-US-CC-005-10`    | `PS-FRONTEND`         | Frontend         | ✅ Met          |
+| `AC-US-CC-005-10`    | `PS-BROWSER`          | Frontend         | ⚠️ Insufficient |
+| `AC-US-CC-005-11`    | `PS-CONTRACT`         | None linked      | ❌ Missing      |
+| `AC-US-CC-005-12`    | `PS-CONTRACT`         | Frontend         | ⚠️ Insufficient |
+| `AC-US-CC-005-13`    | `PS-BROWSER`          | Frontend         | ⚠️ Insufficient |
+| `AC-US-CC-005-14`    | `PS-BROWSER`          | None linked      | ❌ Missing      |
+| `AC-US-CC-005-15`    | `PS-CONTRACT`         | Frontend         | ⚠️ Insufficient |
+| `AC-US-CC-005-16`    | `PS-CONTRACT`         | None linked      | ❌ Missing      |
+| `AC-US-CC-005-17`    | `PS-BROWSER`          | None linked      | ❌ Missing      |
+| `AC-US-CC-005-17`    | `PS-CONTRACT`         | None linked      | ❌ Missing      |
 
 **Accounting:** Each repayment settles principal and interest through
 [`UC-CREDIT-03`](../accounting/journal-entry-catalogue.md#uc-credit-03--principal-and-interest-repaid). Lender payments from the same

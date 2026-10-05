@@ -67,13 +67,13 @@ Coverage targets compare each criterion with its required representative evidenc
 generated coverage report and CI retain file-level and execution evidence. Known assertion gaps remain insufficient even when a static
 reference has the expected layer label.
 
-| User Story     | Main Journey | Coverage Target | Gaps                                    |
-| -------------- | ------------ | --------------- | --------------------------------------- |
-| US-VESTING-001 | ⬜ Planned   | ⚠️ 3/14 met     | `AC-US-VESTING-001-01–04, 07–11, 13–14` |
-| US-VESTING-002 | ⬜ Planned   | ❌ 0/10 met     | `AC-US-VESTING-002-01–10`               |
-| US-VESTING-003 | ⬜ Planned   | ⚠️ 2/11 met     | `AC-US-VESTING-003-01–05, 08–11`        |
-| US-VESTING-004 | ⬜ Planned   | ❌ 0/10 met     | `AC-US-VESTING-004-01–10`               |
-| US-VESTING-005 | ⬜ Planned   | ⚠️ 2/8 met      | `AC-US-VESTING-005-01–06`               |
+| User Story     | Main Journey | Coverage Target | Gaps                                                                                                                                                                                                                                                                   |
+| -------------- | ------------ | --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| US-VESTING-001 | ⬜ Planned   | ⚠️ 3/14         | `AC-US-VESTING-001-01`, `AC-US-VESTING-001-02`, `AC-US-VESTING-001-03`, `AC-US-VESTING-001-04`, `AC-US-VESTING-001-07`, `AC-US-VESTING-001-08`, `AC-US-VESTING-001-09`, `AC-US-VESTING-001-10`, `AC-US-VESTING-001-11`, `AC-US-VESTING-001-13`, `AC-US-VESTING-001-14` |
+| US-VESTING-002 | ⬜ Planned   | ❌ 0/10         | `AC-US-VESTING-002-01`, `AC-US-VESTING-002-02`, `AC-US-VESTING-002-03`, `AC-US-VESTING-002-04`, `AC-US-VESTING-002-05`, `AC-US-VESTING-002-06`, `AC-US-VESTING-002-07`, `AC-US-VESTING-002-08`, `AC-US-VESTING-002-09`, `AC-US-VESTING-002-10`                         |
+| US-VESTING-003 | ⬜ Planned   | ⚠️ 2/11         | `AC-US-VESTING-003-01`, `AC-US-VESTING-003-02`, `AC-US-VESTING-003-03`, `AC-US-VESTING-003-04`, `AC-US-VESTING-003-05`, `AC-US-VESTING-003-08`, `AC-US-VESTING-003-09`, `AC-US-VESTING-003-10`, `AC-US-VESTING-003-11`                                                 |
+| US-VESTING-004 | ⬜ Planned   | ❌ 0/10         | `AC-US-VESTING-004-01`, `AC-US-VESTING-004-02`, `AC-US-VESTING-004-03`, `AC-US-VESTING-004-04`, `AC-US-VESTING-004-05`, `AC-US-VESTING-004-06`, `AC-US-VESTING-004-07`, `AC-US-VESTING-004-08`, `AC-US-VESTING-004-09`, `AC-US-VESTING-004-10`                         |
+| US-VESTING-005 | ⬜ Planned   | ⚠️ 2/8          | `AC-US-VESTING-005-01`, `AC-US-VESTING-005-02`, `AC-US-VESTING-005-03`, `AC-US-VESTING-005-04`, `AC-US-VESTING-005-05`, `AC-US-VESTING-005-06`                                                                                                                         |
 
 Proof obligations use the [shared proof-strategy registry](../../testing/proof-strategies.md). Multiple IDs for one AC are cumulative.
 
@@ -110,24 +110,26 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 
 ### Test Coverage
 
-| Acceptance Criterion   | Proof Strategy        | Current Evidence       | Status          |
-| ---------------------- | --------------------- | ---------------------- | --------------- |
-| `AC-US-VESTING-001-01` | `PS-CHAIN-INTEGRATED` | None linked            | ❌ Missing      |
-| `AC-US-VESTING-001-02` | `PS-BROWSER`          | None linked            | ❌ Missing      |
-| `AC-US-VESTING-001-03` | `PS-BROWSER`          | None linked            | ❌ Missing      |
-| `AC-US-VESTING-001-04` | `PS-CHAIN-INTEGRATED` | None linked            | ❌ Missing      |
-| `AC-US-VESTING-001-05` | `PS-CONTRACT`         | Contract               | ✅ Met          |
-| `AC-US-VESTING-001-06` | `PS-CONTRACT`         | Contract               | ✅ Met          |
-| `AC-US-VESTING-001-07` | `PS-BROWSER`          | None linked            | ❌ Missing      |
-| `AC-US-VESTING-001-08` | `PS-FRONTEND`         | None linked            | ❌ Missing      |
-| `AC-US-VESTING-001-09` | `PS-CHAIN-INTEGRATED` | Other linked: Frontend | ⚠️ Insufficient |
-| `AC-US-VESTING-001-10` | `PS-FRONTEND`         | None linked            | ❌ Missing      |
-| `AC-US-VESTING-001-11` | `PS-FRONTEND`         | None linked            | ❌ Missing      |
-| `AC-US-VESTING-001-11` | `PS-CONTRACT`         | None linked            | ❌ Missing      |
-| `AC-US-VESTING-001-12` | `PS-CONTRACT`         | Contract               | ✅ Met          |
-| `AC-US-VESTING-001-13` | `PS-BROWSER`          | Other linked: Frontend | ⚠️ Insufficient |
-| `AC-US-VESTING-001-14` | `PS-BROWSER`          | None linked            | ❌ Missing      |
-| `AC-US-VESTING-001-14` | `PS-CONTRACT`         | None linked            | ❌ Missing      |
+| Acceptance Criterion   | Proof Strategy        | Current Evidence | Status          |
+| ---------------------- | --------------------- | ---------------- | --------------- |
+| `AC-US-VESTING-001-01` | `PS-CHAIN-INTEGRATED` | None linked      | ❌ Missing      |
+| `AC-US-VESTING-001-01` | `PS-CONTRACT`         | None linked      | ❌ Missing      |
+| `AC-US-VESTING-001-02` | `PS-BROWSER`          | None linked      | ❌ Missing      |
+| `AC-US-VESTING-001-03` | `PS-BROWSER`          | None linked      | ❌ Missing      |
+| `AC-US-VESTING-001-04` | `PS-CHAIN-INTEGRATED` | None linked      | ❌ Missing      |
+| `AC-US-VESTING-001-05` | `PS-CONTRACT`         | Contract         | ✅ Met          |
+| `AC-US-VESTING-001-06` | `PS-CONTRACT`         | Contract         | ✅ Met          |
+| `AC-US-VESTING-001-07` | `PS-BROWSER`          | None linked      | ❌ Missing      |
+| `AC-US-VESTING-001-08` | `PS-FRONTEND`         | None linked      | ❌ Missing      |
+| `AC-US-VESTING-001-09` | `PS-CHAIN-INTEGRATED` | Frontend         | ⚠️ Insufficient |
+| `AC-US-VESTING-001-09` | `PS-FRONTEND`         | Frontend         | ✅ Met          |
+| `AC-US-VESTING-001-10` | `PS-FRONTEND`         | None linked      | ❌ Missing      |
+| `AC-US-VESTING-001-11` | `PS-FRONTEND`         | None linked      | ❌ Missing      |
+| `AC-US-VESTING-001-11` | `PS-CONTRACT`         | None linked      | ❌ Missing      |
+| `AC-US-VESTING-001-12` | `PS-CONTRACT`         | Contract         | ✅ Met          |
+| `AC-US-VESTING-001-13` | `PS-BROWSER`          | Frontend         | ⚠️ Insufficient |
+| `AC-US-VESTING-001-14` | `PS-BROWSER`          | None linked      | ❌ Missing      |
+| `AC-US-VESTING-001-14` | `PS-CONTRACT`         | None linked      | ❌ Missing      |
 
 **Accounting:** Creating the grant records its full commitment through
 [`UC-VEST-01`](../accounting/journal-entry-catalogue.md#uc-vest-01--vesting-grant) without minting shares.
@@ -164,18 +166,19 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 
 ### Test Coverage
 
-| Acceptance Criterion   | Proof Strategy        | Current Evidence       | Status          |
-| ---------------------- | --------------------- | ---------------------- | --------------- |
-| `AC-US-VESTING-002-01` | `PS-CHAIN-INTEGRATED` | Other linked: Frontend | ⚠️ Insufficient |
-| `AC-US-VESTING-002-02` | `PS-CHAIN-INTEGRATED` | None linked            | ❌ Missing      |
-| `AC-US-VESTING-002-03` | `PS-FRONTEND`         | None linked            | ❌ Missing      |
-| `AC-US-VESTING-002-04` | `PS-FRONTEND`         | None linked            | ❌ Missing      |
-| `AC-US-VESTING-002-05` | `PS-CHAIN-INTEGRATED` | None linked            | ❌ Missing      |
-| `AC-US-VESTING-002-06` | `PS-FRONTEND`         | None linked            | ❌ Missing      |
-| `AC-US-VESTING-002-07` | `PS-FRONTEND`         | None linked            | ❌ Missing      |
-| `AC-US-VESTING-002-08` | `PS-BROWSER`          | None linked            | ❌ Missing      |
-| `AC-US-VESTING-002-09` | `PS-BROWSER`          | Other linked: Frontend | ⚠️ Insufficient |
-| `AC-US-VESTING-002-10` | `PS-BROWSER`          | None linked            | ❌ Missing      |
+| Acceptance Criterion   | Proof Strategy        | Current Evidence | Status          |
+| ---------------------- | --------------------- | ---------------- | --------------- |
+| `AC-US-VESTING-002-01` | `PS-CHAIN-INTEGRATED` | Frontend         | ⚠️ Insufficient |
+| `AC-US-VESTING-002-02` | `PS-CHAIN-INTEGRATED` | None linked      | ❌ Missing      |
+| `AC-US-VESTING-002-02` | `PS-CONTRACT`         | None linked      | ❌ Missing      |
+| `AC-US-VESTING-002-03` | `PS-FRONTEND`         | None linked      | ❌ Missing      |
+| `AC-US-VESTING-002-04` | `PS-FRONTEND`         | None linked      | ❌ Missing      |
+| `AC-US-VESTING-002-05` | `PS-CHAIN-INTEGRATED` | None linked      | ❌ Missing      |
+| `AC-US-VESTING-002-06` | `PS-FRONTEND`         | None linked      | ❌ Missing      |
+| `AC-US-VESTING-002-07` | `PS-FRONTEND`         | None linked      | ❌ Missing      |
+| `AC-US-VESTING-002-08` | `PS-BROWSER`          | None linked      | ❌ Missing      |
+| `AC-US-VESTING-002-09` | `PS-BROWSER`          | Frontend         | ⚠️ Insufficient |
+| `AC-US-VESTING-002-10` | `PS-BROWSER`          | None linked      | ❌ Missing      |
 
 **Dependencies:** US-VESTING-001
 
@@ -210,21 +213,23 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 
 ### Test Coverage
 
-| Acceptance Criterion   | Proof Strategy        | Current Evidence       | Status          |
-| ---------------------- | --------------------- | ---------------------- | --------------- |
-| `AC-US-VESTING-003-01` | `PS-CHAIN-INTEGRATED` | Other linked: Frontend | ⚠️ Insufficient |
-| `AC-US-VESTING-003-02` | `PS-CHAIN-INTEGRATED` | None linked            | ❌ Missing      |
-| `AC-US-VESTING-003-03` | `PS-CONTRACT`         | None linked            | ❌ Missing      |
-| `AC-US-VESTING-003-04` | `PS-CONTRACT`         | Contract               | ⚠️ Insufficient |
-| `AC-US-VESTING-003-05` | `PS-FRONTEND`         | None linked            | ❌ Missing      |
-| `AC-US-VESTING-003-05` | `PS-CONTRACT`         | None linked            | ❌ Missing      |
-| `AC-US-VESTING-003-06` | `PS-CONTRACT`         | Contract               | ✅ Met          |
-| `AC-US-VESTING-003-07` | `PS-CONTRACT`         | Contract               | ✅ Met          |
-| `AC-US-VESTING-003-08` | `PS-BROWSER`          | Other linked: Contract | ⚠️ Insufficient |
-| `AC-US-VESTING-003-08` | `PS-CONTRACT`         | Contract               | ✅ Met          |
-| `AC-US-VESTING-003-09` | `PS-BROWSER`          | None linked            | ❌ Missing      |
-| `AC-US-VESTING-003-10` | `PS-CONTRACT`         | None linked            | ❌ Missing      |
-| `AC-US-VESTING-003-11` | `PS-FRONTEND`         | Frontend               | ⚠️ Insufficient |
+| Acceptance Criterion   | Proof Strategy        | Current Evidence | Status          |
+| ---------------------- | --------------------- | ---------------- | --------------- |
+| `AC-US-VESTING-003-01` | `PS-CHAIN-INTEGRATED` | Frontend         | ⚠️ Insufficient |
+| `AC-US-VESTING-003-01` | `PS-CONTRACT`         | Frontend         | ⚠️ Insufficient |
+| `AC-US-VESTING-003-02` | `PS-CHAIN-INTEGRATED` | None linked      | ❌ Missing      |
+| `AC-US-VESTING-003-02` | `PS-CONTRACT`         | None linked      | ❌ Missing      |
+| `AC-US-VESTING-003-03` | `PS-CONTRACT`         | None linked      | ❌ Missing      |
+| `AC-US-VESTING-003-04` | `PS-CONTRACT`         | Contract         | ⚠️ Insufficient |
+| `AC-US-VESTING-003-05` | `PS-FRONTEND`         | None linked      | ❌ Missing      |
+| `AC-US-VESTING-003-05` | `PS-CONTRACT`         | None linked      | ❌ Missing      |
+| `AC-US-VESTING-003-06` | `PS-CONTRACT`         | Contract         | ✅ Met          |
+| `AC-US-VESTING-003-07` | `PS-CONTRACT`         | Contract         | ✅ Met          |
+| `AC-US-VESTING-003-08` | `PS-BROWSER`          | Contract         | ⚠️ Insufficient |
+| `AC-US-VESTING-003-08` | `PS-CONTRACT`         | Contract         | ✅ Met          |
+| `AC-US-VESTING-003-09` | `PS-BROWSER`          | None linked      | ❌ Missing      |
+| `AC-US-VESTING-003-10` | `PS-CONTRACT`         | None linked      | ❌ Missing      |
+| `AC-US-VESTING-003-11` | `PS-FRONTEND`         | Frontend         | ⚠️ Insufficient |
 
 **Accounting:** A successful release moves promised shares into Investor Equity through
 [`UC-VEST-02`](../accounting/journal-entry-catalogue.md#uc-vest-02--vested-sher-released). Its matching Investor mint is not booked again.
@@ -260,19 +265,22 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 
 ### Test Coverage
 
-| Acceptance Criterion   | Proof Strategy        | Current Evidence       | Status          |
-| ---------------------- | --------------------- | ---------------------- | --------------- |
-| `AC-US-VESTING-004-01` | `PS-CHAIN-INTEGRATED` | None linked            | ❌ Missing      |
-| `AC-US-VESTING-004-02` | `PS-CHAIN-INTEGRATED` | None linked            | ❌ Missing      |
-| `AC-US-VESTING-004-03` | `PS-CHAIN-INTEGRATED` | None linked            | ❌ Missing      |
-| `AC-US-VESTING-004-04` | `PS-CONTRACT`         | None linked            | ❌ Missing      |
-| `AC-US-VESTING-004-05` | `PS-CONTRACT`         | None linked            | ❌ Missing      |
-| `AC-US-VESTING-004-06` | `PS-CONTRACT`         | Contract               | ⚠️ Insufficient |
-| `AC-US-VESTING-004-07` | `PS-CONTRACT`         | Contract               | ⚠️ Insufficient |
-| `AC-US-VESTING-004-08` | `PS-BROWSER`          | Other linked: Contract | ⚠️ Insufficient |
-| `AC-US-VESTING-004-08` | `PS-CONTRACT`         | Contract               | ✅ Met          |
-| `AC-US-VESTING-004-09` | `PS-BROWSER`          | None linked            | ❌ Missing      |
-| `AC-US-VESTING-004-10` | `PS-CONTRACT`         | None linked            | ❌ Missing      |
+| Acceptance Criterion   | Proof Strategy        | Current Evidence | Status          |
+| ---------------------- | --------------------- | ---------------- | --------------- |
+| `AC-US-VESTING-004-01` | `PS-CHAIN-INTEGRATED` | None linked      | ❌ Missing      |
+| `AC-US-VESTING-004-01` | `PS-CONTRACT`         | None linked      | ❌ Missing      |
+| `AC-US-VESTING-004-02` | `PS-CHAIN-INTEGRATED` | None linked      | ❌ Missing      |
+| `AC-US-VESTING-004-02` | `PS-CONTRACT`         | None linked      | ❌ Missing      |
+| `AC-US-VESTING-004-03` | `PS-CHAIN-INTEGRATED` | None linked      | ❌ Missing      |
+| `AC-US-VESTING-004-03` | `PS-CONTRACT`         | None linked      | ❌ Missing      |
+| `AC-US-VESTING-004-04` | `PS-CONTRACT`         | None linked      | ❌ Missing      |
+| `AC-US-VESTING-004-05` | `PS-CONTRACT`         | None linked      | ❌ Missing      |
+| `AC-US-VESTING-004-06` | `PS-CONTRACT`         | Contract         | ⚠️ Insufficient |
+| `AC-US-VESTING-004-07` | `PS-CONTRACT`         | Contract         | ⚠️ Insufficient |
+| `AC-US-VESTING-004-08` | `PS-BROWSER`          | Contract         | ⚠️ Insufficient |
+| `AC-US-VESTING-004-08` | `PS-CONTRACT`         | Contract         | ✅ Met          |
+| `AC-US-VESTING-004-09` | `PS-BROWSER`          | None linked      | ❌ Missing      |
+| `AC-US-VESTING-004-10` | `PS-CONTRACT`         | None linked      | ❌ Missing      |
 
 **Accounting:** A stop may group an accrued release (`UC-VEST-02`) with cancellation of the unvested remainder through
 [`UC-VEST-03`](../accounting/journal-entry-catalogue.md#uc-vest-03--unvested-grant-cancelled) in one journal entry.
@@ -306,18 +314,19 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 
 ### Test Coverage
 
-| Acceptance Criterion   | Proof Strategy        | Current Evidence       | Status          |
-| ---------------------- | --------------------- | ---------------------- | --------------- |
-| `AC-US-VESTING-005-01` | `PS-CHAIN-INTEGRATED` | Other linked: Frontend | ⚠️ Insufficient |
-| `AC-US-VESTING-005-02` | `PS-FRONTEND`         | None linked            | ❌ Missing      |
-| `AC-US-VESTING-005-03` | `PS-FRONTEND`         | Frontend               | ⚠️ Insufficient |
-| `AC-US-VESTING-005-04` | `PS-FRONTEND`         | None linked            | ❌ Missing      |
-| `AC-US-VESTING-005-04` | `PS-CONTRACT`         | None linked            | ❌ Missing      |
-| `AC-US-VESTING-005-05` | `PS-FRONTEND`         | None linked            | ❌ Missing      |
-| `AC-US-VESTING-005-06` | `PS-FRONTEND`         | Frontend               | ✅ Met          |
-| `AC-US-VESTING-005-06` | `PS-CONTRACT`         | Other linked: Frontend | ⚠️ Insufficient |
-| `AC-US-VESTING-005-07` | `PS-FRONTEND`         | Frontend               | ✅ Met          |
-| `AC-US-VESTING-005-08` | `PS-FRONTEND`         | Frontend               | ✅ Met          |
+| Acceptance Criterion   | Proof Strategy        | Current Evidence | Status          |
+| ---------------------- | --------------------- | ---------------- | --------------- |
+| `AC-US-VESTING-005-01` | `PS-CHAIN-INTEGRATED` | Frontend         | ⚠️ Insufficient |
+| `AC-US-VESTING-005-01` | `PS-CONTRACT`         | Frontend         | ⚠️ Insufficient |
+| `AC-US-VESTING-005-02` | `PS-FRONTEND`         | None linked      | ❌ Missing      |
+| `AC-US-VESTING-005-03` | `PS-FRONTEND`         | Frontend         | ⚠️ Insufficient |
+| `AC-US-VESTING-005-04` | `PS-FRONTEND`         | None linked      | ❌ Missing      |
+| `AC-US-VESTING-005-04` | `PS-CONTRACT`         | None linked      | ❌ Missing      |
+| `AC-US-VESTING-005-05` | `PS-FRONTEND`         | None linked      | ❌ Missing      |
+| `AC-US-VESTING-005-06` | `PS-FRONTEND`         | Frontend         | ✅ Met          |
+| `AC-US-VESTING-005-06` | `PS-CONTRACT`         | Frontend         | ⚠️ Insufficient |
+| `AC-US-VESTING-005-07` | `PS-FRONTEND`         | Frontend         | ✅ Met          |
+| `AC-US-VESTING-005-08` | `PS-FRONTEND`         | Frontend         | ✅ Met          |
 
 **Dependencies:** US-VESTING-002, US-VESTING-003, US-VESTING-004
 

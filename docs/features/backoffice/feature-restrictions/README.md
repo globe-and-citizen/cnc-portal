@@ -79,22 +79,22 @@ Proof obligations use the [shared proof-strategy registry](../../../testing/proo
 
 ### Test Coverage
 
-| Acceptance Criterion | Proof Strategy | Current Evidence      | Status          |
-| -------------------- | -------------- | --------------------- | --------------- |
-| `AC-US-FLAG-001-01`  | `PS-DASHBOARD` | Other linked: Backend | ⚠️ Insufficient |
-| `AC-US-FLAG-001-01`  | `PS-BACKEND`   | Backend               | ✅ Met          |
-| `AC-US-FLAG-001-02`  | `PS-DASHBOARD` | Other linked: Backend | ⚠️ Insufficient |
-| `AC-US-FLAG-001-02`  | `PS-BACKEND`   | Backend               | ✅ Met          |
-| `AC-US-FLAG-001-03`  | `PS-DASHBOARD` | Other linked: Backend | ⚠️ Insufficient |
-| `AC-US-FLAG-001-03`  | `PS-BACKEND`   | Backend               | ✅ Met          |
-| `AC-US-FLAG-001-04`  | `PS-DASHBOARD` | None linked           | ❌ Missing      |
-| `AC-US-FLAG-001-04`  | `PS-BACKEND`   | None linked           | ❌ Missing      |
-| `AC-US-FLAG-001-05`  | `PS-BACKEND`   | None linked           | ❌ Missing      |
-| `AC-US-FLAG-001-06`  | `PS-BACKEND`   | None linked           | ❌ Missing      |
-| `AC-US-FLAG-001-07`  | `PS-BACKEND`   | None linked           | ❌ Missing      |
-| `AC-US-FLAG-001-08`  | `PS-BACKEND`   | Backend               | ⚠️ Insufficient |
-| `AC-US-FLAG-001-09`  | `PS-BACKEND`   | Backend               | ⚠️ Insufficient |
-| `AC-US-FLAG-001-10`  | `PS-BACKEND`   | None linked           | ❌ Missing      |
+| Acceptance Criterion | Proof Strategy | Current Evidence | Status          |
+| -------------------- | -------------- | ---------------- | --------------- |
+| `AC-US-FLAG-001-01`  | `PS-DASHBOARD` | Backend          | ⚠️ Insufficient |
+| `AC-US-FLAG-001-01`  | `PS-BACKEND`   | Backend          | ✅ Met          |
+| `AC-US-FLAG-001-02`  | `PS-DASHBOARD` | Backend          | ⚠️ Insufficient |
+| `AC-US-FLAG-001-02`  | `PS-BACKEND`   | Backend          | ✅ Met          |
+| `AC-US-FLAG-001-03`  | `PS-DASHBOARD` | Backend          | ⚠️ Insufficient |
+| `AC-US-FLAG-001-03`  | `PS-BACKEND`   | Backend          | ✅ Met          |
+| `AC-US-FLAG-001-04`  | `PS-DASHBOARD` | None linked      | ❌ Missing      |
+| `AC-US-FLAG-001-04`  | `PS-BACKEND`   | None linked      | ❌ Missing      |
+| `AC-US-FLAG-001-05`  | `PS-BACKEND`   | None linked      | ❌ Missing      |
+| `AC-US-FLAG-001-06`  | `PS-BACKEND`   | None linked      | ❌ Missing      |
+| `AC-US-FLAG-001-07`  | `PS-BACKEND`   | None linked      | ❌ Missing      |
+| `AC-US-FLAG-001-08`  | `PS-BACKEND`   | Backend          | ⚠️ Insufficient |
+| `AC-US-FLAG-001-09`  | `PS-BACKEND`   | Backend          | ⚠️ Insufficient |
+| `AC-US-FLAG-001-10`  | `PS-BACKEND`   | None linked      | ❌ Missing      |
 
 ## US-FLAG-002: Manage Company Overrides
 
@@ -127,24 +127,24 @@ Proof obligations use the [shared proof-strategy registry](../../../testing/proo
 
 ### Test Coverage
 
-| Acceptance Criterion | Proof Strategy | Current Evidence      | Status          |
-| -------------------- | -------------- | --------------------- | --------------- |
-| `AC-US-FLAG-002-01`  | `PS-DASHBOARD` | None linked           | ❌ Missing      |
-| `AC-US-FLAG-002-01`  | `PS-BACKEND`   | None linked           | ❌ Missing      |
-| `AC-US-FLAG-002-02`  | `PS-DASHBOARD` | Other linked: Backend | ⚠️ Insufficient |
-| `AC-US-FLAG-002-02`  | `PS-BACKEND`   | Backend               | ✅ Met          |
-| `AC-US-FLAG-002-03`  | `PS-DASHBOARD` | Other linked: Backend | ⚠️ Insufficient |
-| `AC-US-FLAG-002-03`  | `PS-BACKEND`   | Backend               | ✅ Met          |
-| `AC-US-FLAG-002-04`  | `PS-DASHBOARD` | Other linked: Backend | ⚠️ Insufficient |
-| `AC-US-FLAG-002-04`  | `PS-BACKEND`   | Backend               | ✅ Met          |
-| `AC-US-FLAG-002-05`  | `PS-BACKEND`   | None linked           | ❌ Missing      |
-| `AC-US-FLAG-002-06`  | `PS-BACKEND`   | None linked           | ❌ Missing      |
-| `AC-US-FLAG-002-07`  | `PS-BACKEND`   | Backend               | ✅ Met          |
-| `AC-US-FLAG-002-08`  | `PS-BACKEND`   | Backend               | ⚠️ Insufficient |
-| `AC-US-FLAG-002-09`  | `PS-BACKEND`   | Backend               | ⚠️ Insufficient |
-| `AC-US-FLAG-002-10`  | `PS-BACKEND`   | Backend               | ⚠️ Insufficient |
-| `AC-US-FLAG-002-11`  | `PS-BACKEND`   | Backend               | ⚠️ Insufficient |
-| `AC-US-FLAG-002-12`  | `PS-BACKEND`   | None linked           | ❌ Missing      |
+| Acceptance Criterion | Proof Strategy | Current Evidence | Status          |
+| -------------------- | -------------- | ---------------- | --------------- |
+| `AC-US-FLAG-002-01`  | `PS-DASHBOARD` | None linked      | ❌ Missing      |
+| `AC-US-FLAG-002-01`  | `PS-BACKEND`   | None linked      | ❌ Missing      |
+| `AC-US-FLAG-002-02`  | `PS-DASHBOARD` | Backend          | ⚠️ Insufficient |
+| `AC-US-FLAG-002-02`  | `PS-BACKEND`   | Backend          | ✅ Met          |
+| `AC-US-FLAG-002-03`  | `PS-DASHBOARD` | Backend          | ⚠️ Insufficient |
+| `AC-US-FLAG-002-03`  | `PS-BACKEND`   | Backend          | ✅ Met          |
+| `AC-US-FLAG-002-04`  | `PS-DASHBOARD` | Backend          | ⚠️ Insufficient |
+| `AC-US-FLAG-002-04`  | `PS-BACKEND`   | Backend          | ✅ Met          |
+| `AC-US-FLAG-002-05`  | `PS-BACKEND`   | None linked      | ❌ Missing      |
+| `AC-US-FLAG-002-06`  | `PS-BACKEND`   | None linked      | ❌ Missing      |
+| `AC-US-FLAG-002-07`  | `PS-BACKEND`   | Backend          | ✅ Met          |
+| `AC-US-FLAG-002-08`  | `PS-BACKEND`   | Backend          | ⚠️ Insufficient |
+| `AC-US-FLAG-002-09`  | `PS-BACKEND`   | Backend          | ⚠️ Insufficient |
+| `AC-US-FLAG-002-10`  | `PS-BACKEND`   | Backend          | ⚠️ Insufficient |
+| `AC-US-FLAG-002-11`  | `PS-BACKEND`   | Backend          | ⚠️ Insufficient |
+| `AC-US-FLAG-002-12`  | `PS-BACKEND`   | None linked      | ❌ Missing      |
 
 ## US-FLAG-003: Remove Obsolete Restrictions
 
@@ -172,19 +172,19 @@ Proof obligations use the [shared proof-strategy registry](../../../testing/proo
 
 ### Test Coverage
 
-| Acceptance Criterion | Proof Strategy | Current Evidence      | Status          |
-| -------------------- | -------------- | --------------------- | --------------- |
-| `AC-US-FLAG-003-01`  | `PS-DASHBOARD` | Other linked: Backend | ⚠️ Insufficient |
-| `AC-US-FLAG-003-01`  | `PS-BACKEND`   | Backend               | ✅ Met          |
-| `AC-US-FLAG-003-02`  | `PS-DASHBOARD` | Other linked: Backend | ⚠️ Insufficient |
-| `AC-US-FLAG-003-02`  | `PS-BACKEND`   | Backend               | ✅ Met          |
-| `AC-US-FLAG-003-03`  | `PS-DASHBOARD` | None linked           | ❌ Missing      |
-| `AC-US-FLAG-003-03`  | `PS-BACKEND`   | None linked           | ❌ Missing      |
-| `AC-US-FLAG-003-04`  | `PS-DASHBOARD` | None linked           | ❌ Missing      |
-| `AC-US-FLAG-003-05`  | `PS-BACKEND`   | Backend               | ✅ Met          |
-| `AC-US-FLAG-003-06`  | `PS-DASHBOARD` | Other linked: Backend | ⚠️ Insufficient |
-| `AC-US-FLAG-003-06`  | `PS-BACKEND`   | Backend               | ✅ Met          |
-| `AC-US-FLAG-003-07`  | `PS-BACKEND`   | None linked           | ❌ Missing      |
+| Acceptance Criterion | Proof Strategy | Current Evidence | Status          |
+| -------------------- | -------------- | ---------------- | --------------- |
+| `AC-US-FLAG-003-01`  | `PS-DASHBOARD` | Backend          | ⚠️ Insufficient |
+| `AC-US-FLAG-003-01`  | `PS-BACKEND`   | Backend          | ✅ Met          |
+| `AC-US-FLAG-003-02`  | `PS-DASHBOARD` | Backend          | ⚠️ Insufficient |
+| `AC-US-FLAG-003-02`  | `PS-BACKEND`   | Backend          | ✅ Met          |
+| `AC-US-FLAG-003-03`  | `PS-DASHBOARD` | None linked      | ❌ Missing      |
+| `AC-US-FLAG-003-03`  | `PS-BACKEND`   | None linked      | ❌ Missing      |
+| `AC-US-FLAG-003-04`  | `PS-DASHBOARD` | None linked      | ❌ Missing      |
+| `AC-US-FLAG-003-05`  | `PS-BACKEND`   | Backend          | ✅ Met          |
+| `AC-US-FLAG-003-06`  | `PS-DASHBOARD` | Backend          | ⚠️ Insufficient |
+| `AC-US-FLAG-003-06`  | `PS-BACKEND`   | Backend          | ✅ Met          |
+| `AC-US-FLAG-003-07`  | `PS-BACKEND`   | None linked      | ❌ Missing      |
 
 ## Known Gaps
 

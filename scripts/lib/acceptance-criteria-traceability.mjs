@@ -18,6 +18,19 @@ export const ACCEPTANCE_COVERAGE_LABELS = [
   'Dashboard'
 ]
 export const ACCEPTANCE_RESPONSIBILITY_LABELS = ['Frontend', 'Backend', 'Contract', 'Dashboard']
+export const PROOF_OBLIGATIONS = {
+  'Frontend rule': 'Frontend',
+  'Backend rule': 'Backend',
+  'Contract rule': 'Contract',
+  'Dashboard rule': 'Dashboard',
+  'Browser behavior': 'Mocked browser',
+  'Integrated client journey': 'Integrated E2E',
+  'Real API boundary': 'Integrated E2E',
+  'Real chain boundary': 'Integrated E2E',
+  'Real API and chain boundary': 'Integrated E2E',
+  'Integrated dashboard journey': 'Integrated E2E',
+  'Real dashboard/API boundary': 'Integrated E2E'
+}
 
 export function classifyE2eCoverageMode(document) {
   if (!/^app\/test\/e2e\//.test(document.path)) return null
@@ -98,7 +111,7 @@ export function parseProofStrategies(document) {
       documentPath: document.path,
       line: index + 1,
       id,
-      responsibilities: cells[1],
+      obligation: cells[1],
       expected: cells[2],
       rationale: cells[3]
     })
@@ -583,13 +596,13 @@ function validateProofStrategyDefinitions(strategies, errors) {
     }
     strategiesById.set(strategy.id, strategy)
 
-    const responsibilityLabels = strategy.responsibilities.split(' + ').map((label) => label.trim())
-    const invalidResponsibilities = responsibilityLabels.filter(
-      (label) => !ACCEPTANCE_RESPONSIBILITY_LABELS.includes(label)
-    )
-    if (invalidResponsibilities.length > 0) {
+    if (!Object.hasOwn(PROOF_OBLIGATIONS, strategy.obligation)) {
       errors.push(
-        `${location} uses unsupported responsibilities ${invalidResponsibilities.join(', ')} for ${strategy.id}.`
+        `${location} uses unsupported proof obligation ${strategy.obligation} for ${strategy.id}.`
+      )
+    } else if (strategy.expected !== PROOF_OBLIGATIONS[strategy.obligation]) {
+      errors.push(
+        `${location} requires ${strategy.expected} for ${strategy.id}; ${strategy.obligation} requires ${PROOF_OBLIGATIONS[strategy.obligation]}.`
       )
     }
 
@@ -710,16 +723,7 @@ function validateAcceptanceCoverageRows({
       }
 
       const currentLabels = acceptanceCoverageLabels(coverageById.get(row.id))
-      const matchingLabels = expectedLabels.filter((label) => currentLabels.includes(label))
-      const expectedCurrent = proofStrategyDocument
-        ? matchingLabels.length > 0
-          ? matchingLabels.join(' + ')
-          : currentLabels.length > 0
-            ? `Other linked: ${currentLabels.join(' + ')}`
-            : 'None linked'
-        : currentLabels.length > 0
-          ? currentLabels.join(' + ')
-          : 'None linked'
+      const expectedCurrent = currentLabels.length > 0 ? currentLabels.join(' + ') : 'None linked'
       if (row.current !== expectedCurrent) {
         errors.push(
           `${location} reports ${row.current} for ${row.id}; current representative coverage is ${expectedCurrent}.`

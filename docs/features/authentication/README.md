@@ -46,11 +46,11 @@ flowchart TB
 Coverage targets compare each criterion's required evidence with direct representative `AC-US-*` references. They do not describe the latest
 test run. The integrated client sign-in exists; recovery and backoffice journeys remain separate targets.
 
-| User Story  | Main Journey  | Coverage Target | Gaps                            |
-| ----------- | ------------- | --------------- | ------------------------------- |
-| US-AUTH-001 | ✅ Integrated | ⚠️ 4/9 met      | `AC-US-AUTH-001-04–06`, `08–09` |
-| US-AUTH-002 | ⬜ Planned    | ❌ 0/8 met      | All `AC-US-AUTH-002-*` criteria |
-| US-AUTH-003 | ⬜ Planned    | ⚠️ 1/9 met      | `AC-US-AUTH-003-01–08`          |
+| User Story  | Main Journey  | Coverage Target | Gaps                                                                                                                                                                   |
+| ----------- | ------------- | --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| US-AUTH-001 | ✅ Integrated | ⚠️ 3/9          | `AC-US-AUTH-001-01`, `AC-US-AUTH-001-04`, `AC-US-AUTH-001-05`, `AC-US-AUTH-001-06`, `AC-US-AUTH-001-08`, `AC-US-AUTH-001-09`                                           |
+| US-AUTH-002 | ⬜ Planned    | ❌ 0/8 met      | All `AC-US-AUTH-002-*` criteria                                                                                                                                        |
+| US-AUTH-003 | ⬜ Planned    | ⚠️ 1/9          | `AC-US-AUTH-003-01`, `AC-US-AUTH-003-02`, `AC-US-AUTH-003-03`, `AC-US-AUTH-003-04`, `AC-US-AUTH-003-05`, `AC-US-AUTH-003-06`, `AC-US-AUTH-003-07`, `AC-US-AUTH-003-08` |
 
 Proof obligations use the [shared proof-strategy registry](../../testing/proof-strategies.md). Multiple IDs for one AC are cumulative.
 
@@ -83,18 +83,19 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 
 ### Test Coverage
 
-| Acceptance Criterion | Proof Strategy      | Current Evidence | Status     |
-| -------------------- | ------------------- | ---------------- | ---------- |
-| `AC-US-AUTH-001-01`  | `PS-API-INTEGRATED` | Integrated E2E   | ✅ Met     |
-| `AC-US-AUTH-001-02`  | `PS-BACKEND`        | Backend          | ✅ Met     |
-| `AC-US-AUTH-001-03`  | `PS-FRONTEND`       | Frontend         | ✅ Met     |
-| `AC-US-AUTH-001-04`  | `PS-FRONTEND`       | None linked      | ❌ Missing |
-| `AC-US-AUTH-001-04`  | `PS-BACKEND`        | None linked      | ❌ Missing |
-| `AC-US-AUTH-001-05`  | `PS-BACKEND`        | None linked      | ❌ Missing |
-| `AC-US-AUTH-001-06`  | `PS-BACKEND`        | None linked      | ❌ Missing |
-| `AC-US-AUTH-001-07`  | `PS-API-INTEGRATED` | Integrated E2E   | ✅ Met     |
-| `AC-US-AUTH-001-08`  | `PS-FRONTEND`       | None linked      | ❌ Missing |
-| `AC-US-AUTH-001-09`  | `PS-BACKEND`        | None linked      | ❌ Missing |
+| Acceptance Criterion | Proof Strategy      | Current Evidence          | Status          |
+| -------------------- | ------------------- | ------------------------- | --------------- |
+| `AC-US-AUTH-001-01`  | `PS-API-INTEGRATED` | Integrated E2E + Frontend | ✅ Met          |
+| `AC-US-AUTH-001-01`  | `PS-BACKEND`        | Integrated E2E + Frontend | ⚠️ Insufficient |
+| `AC-US-AUTH-001-02`  | `PS-BACKEND`        | Backend                   | ✅ Met          |
+| `AC-US-AUTH-001-03`  | `PS-FRONTEND`       | Frontend                  | ✅ Met          |
+| `AC-US-AUTH-001-04`  | `PS-FRONTEND`       | None linked               | ❌ Missing      |
+| `AC-US-AUTH-001-04`  | `PS-BACKEND`        | None linked               | ❌ Missing      |
+| `AC-US-AUTH-001-05`  | `PS-BACKEND`        | None linked               | ❌ Missing      |
+| `AC-US-AUTH-001-06`  | `PS-BACKEND`        | None linked               | ❌ Missing      |
+| `AC-US-AUTH-001-07`  | `PS-API-INTEGRATED` | Integrated E2E            | ✅ Met          |
+| `AC-US-AUTH-001-08`  | `PS-FRONTEND`       | None linked               | ❌ Missing      |
+| `AC-US-AUTH-001-09`  | `PS-BACKEND`        | None linked               | ❌ Missing      |
 
 ## US-AUTH-002: Sign in to the Backoffice
 
@@ -177,6 +178,7 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 | `AC-US-AUTH-003-06`  | `PS-BROWSER`        | None linked      | ❌ Missing |
 | `AC-US-AUTH-003-07`  | `PS-BROWSER`        | None linked      | ❌ Missing |
 | `AC-US-AUTH-003-08`  | `PS-API-INTEGRATED` | None linked      | ❌ Missing |
+| `AC-US-AUTH-003-08`  | `PS-BACKEND`        | None linked      | ❌ Missing |
 | `AC-US-AUTH-003-09`  | `PS-FRONTEND`       | Frontend         | ✅ Met     |
 
 ## Known Gaps

@@ -100,20 +100,20 @@ Proof obligations use the [shared proof-strategy registry](../../../testing/proo
 
 ### Test Coverage
 
-| Acceptance Criterion    | Proof Strategy | Current Evidence      | Status          |
-| ----------------------- | -------------- | --------------------- | --------------- |
-| `AC-US-TEAM-OPS-001-01` | `PS-DASHBOARD` | Other linked: Backend | ⚠️ Insufficient |
-| `AC-US-TEAM-OPS-001-01` | `PS-BACKEND`   | Backend               | ✅ Met          |
-| `AC-US-TEAM-OPS-001-02` | `PS-DASHBOARD` | None linked           | ❌ Missing      |
-| `AC-US-TEAM-OPS-001-03` | `PS-DASHBOARD` | None linked           | ❌ Missing      |
-| `AC-US-TEAM-OPS-001-04` | `PS-DASHBOARD` | None linked           | ❌ Missing      |
-| `AC-US-TEAM-OPS-001-05` | `PS-DASHBOARD` | None linked           | ❌ Missing      |
-| `AC-US-TEAM-OPS-001-06` | `PS-BACKEND`   | None linked           | ❌ Missing      |
-| `AC-US-TEAM-OPS-001-07` | `PS-DASHBOARD` | None linked           | ❌ Missing      |
-| `AC-US-TEAM-OPS-001-08` | `PS-BACKEND`   | Backend               | ✅ Met          |
-| `AC-US-TEAM-OPS-001-09` | `PS-DASHBOARD` | None linked           | ❌ Missing      |
-| `AC-US-TEAM-OPS-001-10` | `PS-DASHBOARD` | None linked           | ❌ Missing      |
-| `AC-US-TEAM-OPS-001-11` | `PS-DASHBOARD` | None linked           | ❌ Missing      |
+| Acceptance Criterion    | Proof Strategy | Current Evidence | Status          |
+| ----------------------- | -------------- | ---------------- | --------------- |
+| `AC-US-TEAM-OPS-001-01` | `PS-DASHBOARD` | Backend          | ⚠️ Insufficient |
+| `AC-US-TEAM-OPS-001-01` | `PS-BACKEND`   | Backend          | ✅ Met          |
+| `AC-US-TEAM-OPS-001-02` | `PS-DASHBOARD` | None linked      | ❌ Missing      |
+| `AC-US-TEAM-OPS-001-03` | `PS-DASHBOARD` | None linked      | ❌ Missing      |
+| `AC-US-TEAM-OPS-001-04` | `PS-DASHBOARD` | None linked      | ❌ Missing      |
+| `AC-US-TEAM-OPS-001-05` | `PS-DASHBOARD` | None linked      | ❌ Missing      |
+| `AC-US-TEAM-OPS-001-06` | `PS-BACKEND`   | None linked      | ❌ Missing      |
+| `AC-US-TEAM-OPS-001-07` | `PS-DASHBOARD` | None linked      | ❌ Missing      |
+| `AC-US-TEAM-OPS-001-08` | `PS-BACKEND`   | Backend          | ✅ Met          |
+| `AC-US-TEAM-OPS-001-09` | `PS-DASHBOARD` | None linked      | ❌ Missing      |
+| `AC-US-TEAM-OPS-001-10` | `PS-DASHBOARD` | None linked      | ❌ Missing      |
+| `AC-US-TEAM-OPS-001-11` | `PS-DASHBOARD` | None linked      | ❌ Missing      |
 
 **Dependencies:** Dashboard authentication and administrator roles
 
