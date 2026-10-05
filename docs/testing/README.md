@@ -64,6 +64,15 @@ reachability, backend database/chain readiness, chain identity, and shared Offic
 authentication test additionally compares the browser wallet's chain with the backend chain while exercising SIWE. The profiles publish
 separate reports because only the integrated phase is E2E evidence.
 
+When multiple local checkouts run E2E at once, choose one isolated node per checkout. Set `CNC_E2E_RPC_URL` to that node for the contract
+deployment, integrated preflight, and Playwright process, and set `VITE_E2E_RPC_URL` to the same endpoint for the portal. The backend
+`RPC_URL` must also target that node. The preflight checks code from the selected node against the checkout's deployment manifest.
+
+The G4 Community Credit integrated spec uses the operational-team factory to prepare an isolated company, contracts, and member. Shared E2E
+infrastructure funds the test wallets. The portal publishes and settles each round; the real API persists round metadata in the disposable
+database. Each path has its own chain snapshot and team cleanup, and the external token-price response is the only browser stub. Run the two
+paths individually when investigating a failure; neither depends on the other's round or metadata.
+
 The Vite development server ignores generated `coverage/` artifacts so per-page coverage snapshots do not trigger hot reloads during an
 active browser suite.
 

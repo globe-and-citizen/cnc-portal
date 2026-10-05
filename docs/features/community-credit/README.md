@@ -70,13 +70,17 @@ automatically when a deadline or maturity date passes.
 
 ## Test Coverage Overview
 
-| User Story | E2E Status | Owning Path |
-| ---------- | ---------- | ----------- |
-| US-CC-001  | 📋 Planned | E2E-PATH-09 |
-| US-CC-002  | 📋 Planned | E2E-PATH-09 |
-| US-CC-003  | 📋 Planned | E2E-PATH-09 |
-| US-CC-004  | 📋 Planned | E2E-PATH-10 |
-| US-CC-005  | 📋 Planned | E2E-PATH-09 |
+| User Story | E2E Status    | Owning Path |
+| ---------- | ------------- | ----------- |
+| US-CC-001  | ✅ Integrated | E2E-PATH-09 |
+| US-CC-002  | ✅ Integrated | E2E-PATH-09 |
+| US-CC-003  | ✅ Integrated | E2E-PATH-09 |
+| US-CC-004  | ✅ Integrated | E2E-PATH-10 |
+| US-CC-005  | ✅ Integrated | E2E-PATH-09 |
+
+This E2E status covers the main G4 paths in [the integrated path register](../../testing/e2e-paths.md#g4--community-credit-lifecycle). It
+does not mark every acceptance criterion in these stories as implemented or integrated; the unchecked criteria and known gaps below remain
+open.
 
 ## US-CC-001: Inspect the Credit Account
 
