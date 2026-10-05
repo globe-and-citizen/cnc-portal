@@ -111,7 +111,7 @@ async function main() {
   const count = await checkIntegratedReadiness({
     frontendUrl: localUrl(process.env.BASE_URL ?? 'http://127.0.0.1:5173', 'BASE_URL'),
     backendUrl: localUrl(process.env.CNC_E2E_BACKEND_URL, 'CNC_E2E_BACKEND_URL'),
-    rpcUrl: localUrl('http://127.0.0.1:8545', 'Local E2E RPC'),
+    rpcUrl: localUrl(process.env.CNC_E2E_RPC_URL ?? 'http://127.0.0.1:8545', 'Local E2E RPC'),
     manifest
   })
   console.log(`Integrated E2E preflight passed (${count} shared contracts verified)`)

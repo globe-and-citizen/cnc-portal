@@ -81,8 +81,8 @@ execution:
 | G3    | `E2E-PATH-06` | `26/26`            | ✅ Covered |
 | G3    | `E2E-PATH-07` | `34/34`            | ✅ Covered |
 | G3    | `E2E-PATH-08` | `15/15`            | ✅ Covered |
-| G4    | `E2E-PATH-09` | `0/9`              | ⬜ Planned |
-| G4    | `E2E-PATH-10` | `0/5`              | ⬜ Planned |
+| G4    | `E2E-PATH-09` | `9/9`              | ✅ Covered |
+| G4    | `E2E-PATH-10` | `5/5`              | ✅ Covered |
 | G5    | `E2E-PATH-11` | `9/9`              | ✅ Covered |
 | G5    | `E2E-PATH-12` | `8/8`              | ✅ Covered |
 | G5    | `E2E-PATH-13` | `22/22`            | ✅ Covered |
@@ -458,30 +458,40 @@ belongs to its own scenarios. Neither check turns G0 into product-flow evidence.
   - Actors: issuer and lender.
   - Dependencies: an operational company, current Community Credit contracts, and funded wallets.
   - Main path:
-    - [ ] `US-CC-001` Inspect the initial Credit Account state.
-    - [ ] `US-CC-002` Publish a credit call.
-    - [ ] `US-CC-002` Verify the new round on-chain.
-    - [ ] `US-CC-003` Lend to the round.
-    - [ ] `US-CC-003` Verify lender balances and participation.
-    - [ ] `US-CC-005` Repay the lenders.
-    - [ ] `US-CC-005` Verify repayment receipts and final balances.
-    - [ ] `US-CC-001` Reload the account.
-    - [ ] `US-CC-001` Verify the complete round history.
+    - [x] `US-CC-001` Inspect the initial Credit Account state.
+    - [x] `US-CC-002` Publish a credit call.
+    - [x] `US-CC-002` Verify the new round on-chain.
+    - [x] `US-CC-003` Lend to the round.
+    - [x] `US-CC-003` Verify lender balances and participation.
+    - [x] `US-CC-005` Repay the lenders.
+    - [x] `US-CC-005` Verify repayment receipts and final balances.
+    - [x] `US-CC-001` Reload the account.
+    - [x] `US-CC-001` Verify the complete round history.
   - Expected result: one credit round is traceable from publication through repayment.
-  - Status: Planned — no integrated business path is currently linked.
+  - Status: Integrated covered — the linked path proves the listed product steps through the real portal, authenticated backend, disposable
+    database, and local chain. Browser-only Community Credit tests remain separate evidence.
+  - Evidence: [integrated Community Credit journeys](../../app/test/e2e/community-credit/community-credit.integrated.spec.ts).
 
 - `E2E-PATH-10` — Recover a stalled credit round
   - Story validated: `US-CC-004` — resolve a stalled round.
   - Reason for isolation: the path deliberately creates an exceptional round state that must not block the normal credit lifecycle.
   - Dependencies: a disposable round created through the real product flow.
   - Main path:
-    - [ ] `US-CC-004` Move the round into a supported stalled state.
-    - [ ] `US-CC-004` Execute the issuer's recovery action.
-    - [ ] `US-CC-004` Verify participant balances after recovery.
-    - [ ] `US-CC-004` Verify the recovered round state.
-    - [ ] `US-CC-004` Refresh and verify the recovery history.
+    - [x] `US-CC-004` Move the round into a supported stalled state.
+    - [x] `US-CC-004` Execute the issuer's recovery action.
+    - [x] `US-CC-004` Verify participant balances after recovery.
+    - [x] `US-CC-004` Verify the recovered round state.
+    - [x] `US-CC-004` Refresh and verify the recovery history.
   - Expected result: the exceptional round reaches its defined terminal state without corrupting other rounds.
-  - Status: Planned — no integrated business path is currently linked.
+  - Status: Integrated covered — this independently resettable path publishes and funds its own round, advances past the deadline, refunds
+    through the issuer UI, and verifies the member and issuer outcomes after reload.
+  - Evidence: [integrated Community Credit journeys](../../app/test/e2e/community-credit/community-credit.integrated.spec.ts).
+
+The operational-team factory and pre-funded test wallets prepare prerequisites only. Publication, lending, treasury funding, repayment, and
+refund are submitted through the portal. Each path uses its own chain snapshot and database team cleanup. No CNC Portal API or chain
+boundary is intercepted; only the external token-price response is stubbed. The tests assert mined receipts, contract state, balances,
+persisted metadata read from the backend, and reloaded portal history. Local execution on 2026-10-01 passed both tests in one run and each
+path individually. These path checks do not close the separate feature acceptance gaps listed in the Community Credit README.
 
 ## G5 — Payroll Lifecycle
 

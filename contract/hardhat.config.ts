@@ -26,7 +26,7 @@ export default defineConfig({
     localhost: {
       type: 'http',
       chainId: 31337,
-      url: 'http://localhost:8545'
+      url: process.env.CNC_E2E_RPC_URL ?? 'http://localhost:8545'
     },
     polygon: {
       type: 'http',
