@@ -20,24 +20,6 @@ Deposits remain in the Credit Account while a round is raising. Reaching the tar
 the principal to the company Bank. Refunds and repayments are pushed to every lender by an issuer transaction; lenders do not claim them
 individually. The round name and purpose are stored off-chain, while its financial terms and settlement state remain on-chain.
 
-## Architecture
-
-Terminology mapping (FixedReturn instance ↔ Credit Account, lending offer ↔ round) is documented once, above, in
-[Product Model](#product-model) — nothing below restates it. Contract terminology (`FixedReturn`) stays at the gateway layer (contracts,
-composables, cache keys); product terminology (`Community Credit`, round, Credit Account) is used above that boundary (routes, views,
-product-facing copy).
-
-| Layer                    | Owner                                                                                         | Key files                                                                                                    |
-| ------------------------ | --------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| FixedReturn contract     | On-chain offer lifecycle, deposits, whitelist/caps, refunds, repayment fan-out                | `contract/contracts/FixedReturn.sol`                                                                         |
-| Bank contract            | Resolves the offer token, funds FixedReturn, triggers repayment                               | `contract/contracts/Bank.sol`                                                                                |
-| Metadata API             | Off-chain `title`/`purpose` by `(teamId, offerId)`                                            | `backend/src/controllers/fixedReturnOfferingController.ts`, `app/src/queries/fixedReturnOffering.queries.ts` |
-| FixedReturn reads/writes | Raw typed contract gateway — no product naming                                                | `app/src/composables/fixedReturn/reads.ts`, `app/src/composables/fixedReturn/writes.ts`                      |
-| Cache policy             | Shared `fixedReturnKeys` query-key factory and mutation-specific invalidation helpers         | `app/src/composables/fixedReturn/{reads,invalidation}.ts`                                                    |
-| Community Credit store   | Product read model — offer list + metadata + owner mapped to `CreditRound`; derives `isOwner` | `app/src/stores/communityCredit.ts`                                                                          |
-| Views (route owners)     | Route/navigation, user intent, mutations, toasts                                              | `app/src/views/team/[id]/CommunityCredit/{IndexView,NewView,RoundView}.vue`                                  |
-| Presentation components  | Props in, events out — no direct reads/writes                                                 | `app/src/components/sections/CommunityCreditView/*.vue`                                                      |
-
 ## Lifecycle
 
 ```mermaid
@@ -390,26 +372,6 @@ The following verified gaps have technical evidence and remediation directions i
 - The marked publish-form tests omit optional-purpose retention, positive target propagation, flat-rate conversion, and some deadline
   defaults (`002-01`, `03–05`). The `002-16` backend tests mock an upsert result rather than proving a persisted identical or edited retry;
   one purported retry performs only one request. These markers remain insufficient.
-
-## Read Model & Caching
-
-FixedReturn's three on-chain read hooks (`useFixedReturnAllOffers`, `useFixedReturnOfferLenders`, `useFixedReturnMyLenderPositions`, all in
-`composables/fixedReturn/reads.ts`) share one `fixedReturnKeys` query-key factory (`composables/fixedReturn/keys.ts`) instead of duplicated
-string literals, and one domain invalidation function per successful mutation (`invalidateAfterLend`/`Repay`/`Refund`/`AcceptPartialFunding`
-in `composables/fixedReturn/invalidation.ts`) instead of a hand-copied 4-key set at every call site.
-
-A failed on-chain read for an offer's lenders or a connected member's position is never converted into a fabricated empty list or a zero
-position — `useFixedReturnOfferLenders` rejects the query on failure (matching `useFixedReturnAllOffers`'s existing behavior), and
-`useFixedReturnMyLenderPositions`'s result is a discriminated union per offer (`{status: 'ok', ...} | {status: 'error', error}`) so one
-offer's failed read doesn't erase another offer's confirmed data. Consumers present a failed read as "unavailable, retry" rather than "not
-eligible" — see `CreditLendModal.vue`'s and `RoundView.vue`'s own "Check eligibility" retry actions, and `CreditRoundCard.vue`'s equivalent.
-
-The round-detail page reads its own offer's position directly via `useFixedReturnMyLenderPosition(offerId)` (built on the existing
-single-value `getLenderAllocation`/`getLenderDeposits` reads) instead of the plural, all-offers-shaped hook — removing a duplicate 1+4N-read
-re-fetch of the entire round list on every cold visit to a round's detail route. Measured via
-`composables/fixedReturn/__tests__/rpcBudget.spec.ts`: the overview (all offers + all connected-member positions) costs `1 + 4N` on-chain
-calls for `N` offers, and a single offer's lender breakdown costs `1 + 2L` for `L` lenders — the round-detail page no longer pays the
-overview's `1 + 4N` a second time on top of its own `1 + 2L`.
 
 ## Implementation Evidence
 

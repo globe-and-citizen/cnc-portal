@@ -108,55 +108,6 @@ that lacks an `AC-US-*` reference remains a discovery item until its representat
 Criteria tagged _(API)_ require backend evidence; integrated E2E evidence is recorded separately when a real user journey crosses the API or
 chain boundary.
 
-The Payroll Playwright suite currently has no `@mocked` scenarios. Its three E2E files,
-[claim preparation](../../../app/test/e2e/payroll/payroll.integrated.spec.ts) and
-[payment lifecycle](../../../app/test/e2e/payroll/payroll-payment.integrated.spec.ts), and
-[insufficient funding](../../../app/test/e2e/payroll/payroll-insufficient-funds.integrated.spec.ts), are tagged `@integrated` and exercise
-Payroll through the product UI, backend routes, and local chain; the chain checks read contract state after user actions. Therefore,
-`Mocked browser` is not expected in Payroll's `Current Evidence` unless a mocked Payroll browser scenario is added and linked to a
-criterion. These labels record direct test references, not the latest execution result.
-
-The feature owner validates every Payroll `@integrated` journey manually in Playwright UI on the prepared local G5 stack. Existing services
-and deployed infrastructure can be reused when the configured addresses contain the expected bytecode. The journeys create isolated company
-records and deploy their company contracts through the product UI, then remove those records in cleanup. The browser uses the repository's
-deterministic E2E wallet connector for actual signatures and local-chain transactions. No backend response or RPC result is intercepted.
-Technical automated runs are recorded separately from the owner's manual validation. The payment journey claims against an already completed
-ISO week, so the prepared profile must leave `SUBMIT_RESTRICTION` disabled for that company; the four-day restriction is tested separately
-with the rule enabled in the API suite.
-
-From `app/`, run `npm run test:e2e:integrated -- --ui test/e2e/payroll`. Unit and API suites run independently of the manual browser review.
-
-CI runs API unit coverage; locally it runs from `backend/` with `npm run test:unit:coverage`. Integrated browser assertions verify actual
-token holdings independently of external fiat-price quotes and wait for successful wage API responses or a completed Bank deposit rather
-than transient toast messages.
-
-The API enforces paused-wage claim restrictions, so restoration of claim submission is proven by the real browser/API journey
-(`AC-US-PAYROLL-002-03`). Normal signing versus explicit re-signing is a client interaction (`AC-US-PAYROLL-008-06/07`); the backend
-validates the shared signing request, current owner and signature for both flows.
-
-## Test Plan by User Story
-
-Run the linked backend and frontend suites for their owned rules and interactions. Run the integrated paths against the prepared local G5
-stack for cross-layer journeys. The per-story matrices below link each criterion to its required proof; contract checks remain a separate
-technical responsibility.
-
-| User Story     | Backend tests to perform                                                                   | Frontend tests to perform                                                                | Integrated test to perform                                                                                                    |
-| -------------- | ------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| US-PAYROLL-001 | Wage versioning, ownership and archived writes.                                            | Rates, allowances, overtime, validation and version display.                             | Create and replace a wage through the UI; verify later API reads.                                                             |
-| US-PAYROLL-002 | Current-wage pause/resume; reject claim creation, edit and deletion while paused.          | Pause/resume controls and restored wage replacement.                                     | Pause, reject a real claim, resume and persist a new claim.                                                                   |
-| US-PAYROLL-003 | No Payroll API write owns the chain deposit.                                               | Receiving balance and asset availability; Bank owns its transfer controls.               | Prove a Bank transfer and wallet-origin deposit against Payroll balances and history.                                         |
-| US-PAYROLL-004 | Goals persistence, member ownership, locked weeks and wage binding.                        | Goal editor, read-only states and empty content.                                         | Save goals before submitting work for the same week.                                                                          |
-| US-PAYROLL-005 | UTC dates, four-day window, identity, ten-minute steps, caps, paused wage and attachments. | Claim form, duration, limits, file validation and server errors.                         | Persist work and reject daily/weekly cap overages through the UI.                                                             |
-| US-PAYROLL-006 | Owner authorization, pending/paused state, cap checks and unchanged data on rejection.     | Edit form, validation and errors.                                                        | Edit a persisted claim and verify its displayed duration and memo.                                                            |
-| US-PAYROLL-007 | Owner authorization, pending/paused state, preservation of weekly goals.                   | Confirmation, cancellation and API errors.                                               | Delete a real claim, then recreate it without losing its weekly row.                                                          |
-| US-PAYROLL-008 | Contract owner, completed week, signature recovery, current contract and archived company. | Signing, explicit re-signing, pending/current-week restrictions and wallet rejection.    | Approve a completed week with a real EIP-712 signature.                                                                       |
-| US-PAYROLL-009 | Reconciled status and signature checks.                                                    | Owner permissions, disable/enable actions and synchronization after receipt.             | Disable and re-enable the same signature; read actual contract state.                                                         |
-| US-PAYROLL-010 | Claim ownership, signed/paid states and archived company.                                  | Signed/signature guard, balances, contract/chain mismatch and wallet rejection.          | Pay ETH + USDC + minted SHER; decode the transaction, check balances and reload; reject insufficient funds.                   |
-| US-PAYROLL-011 | Paid/disabled/stale-signature reconciliation, failed reads and subsequent persisted reads. | Sync on company load and after withdrawal, disable and enable.                           | Reload the API-backed history after each on-chain transition.                                                                 |
-| US-PAYROLL-012 | Company membership, member/status filters, minutes, pagination and attachment URLs.        | Member/week/duration/rates/totals/status/action table and member selector.               | Verify member history, locked work and company-wide withdrawn status after payment.                                           |
-| US-PAYROLL-013 | No separate backend criterion: account positions come from client chain reads.             | Account balances, token positions, withdrawn summaries and read-only funding indicators. | Verify holdings, signed/monthly summaries, activity values and date/type filters through the funded and paid browser journey. |
-| US-PAYROLL-014 | No Payroll API write owns the source-account return.                                       | Direct return, Board proposal, warning, and refreshed balances.                          | Prove the real source-to-Bank movement and rejection without a later wallet cash-out.                                         |
-
 ## US-PAYROLL-001: Set a Member's Wage
 
 **As a** company owner\
@@ -1004,6 +955,7 @@ reconciliation. Other Payroll stories retain their existing implementation and h
 
 ## Related Documentation
 
+- [Payroll integrated path catalogue](../../testing/e2e-paths.md#g5--payroll-lifecycle)
 - [File Storage implementation](../../implementation/file-storage/README.md)
 - [Request Validation implementation](../../implementation/request-validation/README.md)
 - [Client Navigation implementation](../../implementation/client-navigation/README.md)

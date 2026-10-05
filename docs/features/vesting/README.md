@@ -334,13 +334,6 @@ evidence becomes `UC-VEST-01`, `UC-VEST-02`, and `UC-VEST-03` in the General Led
 
 **Dependencies:** US-VESTING-001, US-VESTING-003, US-VESTING-004, and US-ACCT-002
 
-## UI/UX Notes
-
-- Schedule creation review includes the beneficiary, grant, boundaries, cliff effect, and first claimable amount.
-- Release review includes the claimable amount before wallet confirmation.
-- Stop confirmation includes the shares to release and cancel before signing.
-- Loading, empty, and schedule read-error states remain distinguishable and actionable.
-
 ## Human Validation
 
 Validated on 2026-08-21 against the current contract behaviour, automated evidence, and product review, for `US-VESTING-001` through
