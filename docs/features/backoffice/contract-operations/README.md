@@ -63,16 +63,7 @@ reference has the expected layer label.
 | US-CONTRACT-OPS-002 | Not required | ❌ 0/11 met     | `AC-US-CONTRACT-OPS-002-01–11`               |
 | US-CONTRACT-OPS-003 | Not required | ⚠️ 2/11 met     | `AC-US-CONTRACT-OPS-003-01–02, 04–05, 07–11` |
 
-## Proof Strategy Reference
-
-| Strategy       | Responsibilities    | Required Evidence   | Proof Rationale                                                                 |
-| -------------- | ------------------- | ------------------- | ------------------------------------------------------------------------------- |
-| `PS-VO-REG`    | Dashboard           | Dashboard           | Bundled registry rendering must handle missing references.                      |
-| `PS-VO-CHAIN`  | Dashboard           | Dashboard           | Controlled chain reads must distinguish authority lookup failure.               |
-| `PS-VO-AUDIT`  | Dashboard           | Dashboard           | The preview must handle filters, unresolved records, and read-only behaviour.   |
-| `PS-VO-PARITY` | Dashboard + Backend | Dashboard + Backend | Dashboard detection and server resolution must agree for historical scope.      |
-| `PS-VO-UI`     | Dashboard           | Dashboard           | Confirmation, cache refresh, failure, and report state belong to the dashboard. |
-| `PS-VO-B`      | Backend             | Backend             | The server owns API authorization, scan scope, and persisted changes.           |
+Proof obligations use the [shared proof-strategy registry](../../../testing/proof-strategies.md). Multiple IDs for one AC are cumulative.
 
 ## US-CONTRACT-OPS-001: Inspect the Contract Deployment Registry
 
@@ -108,15 +99,15 @@ reference has the expected layer label.
 
 | Acceptance Criterion        | Proof Strategy | Current Evidence | Status     |
 | --------------------------- | -------------- | ---------------- | ---------- |
-| `AC-US-CONTRACT-OPS-001-01` | `PS-VO-REG`    | None linked      | ❌ Missing |
-| `AC-US-CONTRACT-OPS-001-02` | `PS-VO-REG`    | None linked      | ❌ Missing |
-| `AC-US-CONTRACT-OPS-001-03` | `PS-VO-REG`    | None linked      | ❌ Missing |
-| `AC-US-CONTRACT-OPS-001-04` | `PS-VO-CHAIN`  | None linked      | ❌ Missing |
-| `AC-US-CONTRACT-OPS-001-05` | `PS-VO-REG`    | None linked      | ❌ Missing |
-| `AC-US-CONTRACT-OPS-001-06` | `PS-VO-REG`    | None linked      | ❌ Missing |
-| `AC-US-CONTRACT-OPS-001-07` | `PS-VO-REG`    | None linked      | ❌ Missing |
-| `AC-US-CONTRACT-OPS-001-08` | `PS-VO-REG`    | None linked      | ❌ Missing |
-| `AC-US-CONTRACT-OPS-001-09` | `PS-VO-REG`    | None linked      | ❌ Missing |
+| `AC-US-CONTRACT-OPS-001-01` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-CONTRACT-OPS-001-02` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-CONTRACT-OPS-001-03` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-CONTRACT-OPS-001-04` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-CONTRACT-OPS-001-05` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-CONTRACT-OPS-001-06` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-CONTRACT-OPS-001-07` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-CONTRACT-OPS-001-08` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-CONTRACT-OPS-001-09` | `PS-DASHBOARD` | None linked      | ❌ Missing |
 
 **Dependencies:** Dashboard authentication, administrator role, and the bundled version registry
 
@@ -154,19 +145,23 @@ reference has the expected layer label.
 
 ### Test Coverage
 
-| Acceptance Criterion        | Proof Strategy | Current Evidence | Status          |
-| --------------------------- | -------------- | ---------------- | --------------- |
-| `AC-US-CONTRACT-OPS-002-01` | `PS-VO-AUDIT`  | None linked      | ❌ Missing      |
-| `AC-US-CONTRACT-OPS-002-02` | `PS-VO-PARITY` | None linked      | ❌ Missing      |
-| `AC-US-CONTRACT-OPS-002-03` | `PS-VO-PARITY` | Backend          | ⚠️ Insufficient |
-| `AC-US-CONTRACT-OPS-002-04` | `PS-VO-AUDIT`  | Backend          | ⚠️ Insufficient |
-| `AC-US-CONTRACT-OPS-002-05` | `PS-VO-AUDIT`  | None linked      | ❌ Missing      |
-| `AC-US-CONTRACT-OPS-002-06` | `PS-VO-PARITY` | None linked      | ❌ Missing      |
-| `AC-US-CONTRACT-OPS-002-07` | `PS-VO-AUDIT`  | None linked      | ❌ Missing      |
-| `AC-US-CONTRACT-OPS-002-08` | `PS-VO-AUDIT`  | Backend          | ⚠️ Insufficient |
-| `AC-US-CONTRACT-OPS-002-09` | `PS-VO-AUDIT`  | None linked      | ❌ Missing      |
-| `AC-US-CONTRACT-OPS-002-10` | `PS-VO-AUDIT`  | None linked      | ❌ Missing      |
-| `AC-US-CONTRACT-OPS-002-11` | `PS-VO-PARITY` | None linked      | ❌ Missing      |
+| Acceptance Criterion        | Proof Strategy | Current Evidence      | Status          |
+| --------------------------- | -------------- | --------------------- | --------------- |
+| `AC-US-CONTRACT-OPS-002-01` | `PS-DASHBOARD` | None linked           | ❌ Missing      |
+| `AC-US-CONTRACT-OPS-002-02` | `PS-DASHBOARD` | None linked           | ❌ Missing      |
+| `AC-US-CONTRACT-OPS-002-02` | `PS-BACKEND`   | None linked           | ❌ Missing      |
+| `AC-US-CONTRACT-OPS-002-03` | `PS-DASHBOARD` | Other linked: Backend | ⚠️ Insufficient |
+| `AC-US-CONTRACT-OPS-002-03` | `PS-BACKEND`   | Backend               | ✅ Met          |
+| `AC-US-CONTRACT-OPS-002-04` | `PS-DASHBOARD` | Other linked: Backend | ⚠️ Insufficient |
+| `AC-US-CONTRACT-OPS-002-05` | `PS-DASHBOARD` | None linked           | ❌ Missing      |
+| `AC-US-CONTRACT-OPS-002-06` | `PS-DASHBOARD` | None linked           | ❌ Missing      |
+| `AC-US-CONTRACT-OPS-002-06` | `PS-BACKEND`   | None linked           | ❌ Missing      |
+| `AC-US-CONTRACT-OPS-002-07` | `PS-DASHBOARD` | None linked           | ❌ Missing      |
+| `AC-US-CONTRACT-OPS-002-08` | `PS-DASHBOARD` | Other linked: Backend | ⚠️ Insufficient |
+| `AC-US-CONTRACT-OPS-002-09` | `PS-DASHBOARD` | None linked           | ❌ Missing      |
+| `AC-US-CONTRACT-OPS-002-10` | `PS-DASHBOARD` | None linked           | ❌ Missing      |
+| `AC-US-CONTRACT-OPS-002-11` | `PS-DASHBOARD` | None linked           | ❌ Missing      |
+| `AC-US-CONTRACT-OPS-002-11` | `PS-BACKEND`   | None linked           | ❌ Missing      |
 
 **Dependencies:** US-CONTRACT-OPS-001, dashboard authentication, administrator role, company Officer records, and on-chain read access
 
@@ -206,17 +201,18 @@ reference has the expected layer label.
 
 | Acceptance Criterion        | Proof Strategy | Current Evidence | Status     |
 | --------------------------- | -------------- | ---------------- | ---------- |
-| `AC-US-CONTRACT-OPS-003-01` | `PS-VO-UI`     | None linked      | ❌ Missing |
-| `AC-US-CONTRACT-OPS-003-02` | `PS-VO-B`      | None linked      | ❌ Missing |
-| `AC-US-CONTRACT-OPS-003-03` | `PS-VO-B`      | Backend          | ✅ Met     |
-| `AC-US-CONTRACT-OPS-003-04` | `PS-VO-UI`     | None linked      | ❌ Missing |
-| `AC-US-CONTRACT-OPS-003-05` | `PS-VO-B`      | None linked      | ❌ Missing |
-| `AC-US-CONTRACT-OPS-003-06` | `PS-VO-B`      | Backend          | ✅ Met     |
-| `AC-US-CONTRACT-OPS-003-07` | `PS-VO-B`      | None linked      | ❌ Missing |
-| `AC-US-CONTRACT-OPS-003-08` | `PS-VO-B`      | None linked      | ❌ Missing |
-| `AC-US-CONTRACT-OPS-003-09` | `PS-VO-UI`     | None linked      | ❌ Missing |
-| `AC-US-CONTRACT-OPS-003-10` | `PS-VO-PARITY` | None linked      | ❌ Missing |
-| `AC-US-CONTRACT-OPS-003-11` | `PS-VO-B`      | None linked      | ❌ Missing |
+| `AC-US-CONTRACT-OPS-003-01` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-CONTRACT-OPS-003-02` | `PS-BACKEND`   | None linked      | ❌ Missing |
+| `AC-US-CONTRACT-OPS-003-03` | `PS-BACKEND`   | Backend          | ✅ Met     |
+| `AC-US-CONTRACT-OPS-003-04` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-CONTRACT-OPS-003-05` | `PS-BACKEND`   | None linked      | ❌ Missing |
+| `AC-US-CONTRACT-OPS-003-06` | `PS-BACKEND`   | Backend          | ✅ Met     |
+| `AC-US-CONTRACT-OPS-003-07` | `PS-BACKEND`   | None linked      | ❌ Missing |
+| `AC-US-CONTRACT-OPS-003-08` | `PS-BACKEND`   | None linked      | ❌ Missing |
+| `AC-US-CONTRACT-OPS-003-09` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-CONTRACT-OPS-003-10` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-CONTRACT-OPS-003-10` | `PS-BACKEND`   | None linked      | ❌ Missing |
+| `AC-US-CONTRACT-OPS-003-11` | `PS-BACKEND`   | None linked      | ❌ Missing |
 
 **Dependencies:** US-CONTRACT-OPS-002, dashboard authentication, administrator role, and on-chain read access
 

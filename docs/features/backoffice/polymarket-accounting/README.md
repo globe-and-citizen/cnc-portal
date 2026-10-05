@@ -71,14 +71,7 @@ reference has the expected layer label.
 | US-POLY-ACCOUNTING-004 | ⬜ Planned   | ❌ 0/11 met     | `AC-US-POLY-ACCOUNTING-004-01–11` |
 | US-POLY-ACCOUNTING-005 | ⬜ Planned   | ❌ 0/8 met      | `AC-US-POLY-ACCOUNTING-005-01–08` |
 
-## Proof Strategy Reference
-
-| Strategy        | Responsibilities | Required Evidence | Proof Rationale                                                                           |
-| --------------- | ---------------- | ----------------- | ----------------------------------------------------------------------------------------- |
-| `PS-P-UI`       | Dashboard        | Dashboard         | Address, navigation, filtering, pagination, and export behaviour belong to the dashboard. |
-| `PS-P-CALC`     | Dashboard        | Dashboard         | Reconstruction and lot-accounting invariants need controlled source records.              |
-| `PS-P-FLOW`     | Dashboard        | Dashboard         | Source orchestration must produce the displayed calculated outcome.                       |
-| `PS-P-TRANSFER` | Dashboard        | Dashboard         | Truncation detection and administrator warning must agree across server and client.       |
+Proof obligations use the [shared proof-strategy registry](../../../testing/proof-strategies.md). Multiple IDs for one AC are cumulative.
 
 ## US-POLY-ACCOUNTING-001: Access and Select a Public Wallet
 
@@ -115,15 +108,15 @@ reference has the expected layer label.
 
 | Acceptance Criterion           | Proof Strategy | Current Evidence | Status     |
 | ------------------------------ | -------------- | ---------------- | ---------- |
-| `AC-US-POLY-ACCOUNTING-001-01` | `PS-P-UI`      | None linked      | ❌ Missing |
-| `AC-US-POLY-ACCOUNTING-001-02` | `PS-P-FLOW`    | None linked      | ❌ Missing |
-| `AC-US-POLY-ACCOUNTING-001-03` | `PS-P-UI`      | None linked      | ❌ Missing |
-| `AC-US-POLY-ACCOUNTING-001-04` | `PS-P-UI`      | None linked      | ❌ Missing |
-| `AC-US-POLY-ACCOUNTING-001-05` | `PS-P-FLOW`    | None linked      | ❌ Missing |
-| `AC-US-POLY-ACCOUNTING-001-06` | `PS-P-FLOW`    | None linked      | ❌ Missing |
-| `AC-US-POLY-ACCOUNTING-001-07` | `PS-P-UI`      | None linked      | ❌ Missing |
-| `AC-US-POLY-ACCOUNTING-001-08` | `PS-P-UI`      | None linked      | ❌ Missing |
-| `AC-US-POLY-ACCOUNTING-001-09` | `PS-P-UI`      | None linked      | ❌ Missing |
+| `AC-US-POLY-ACCOUNTING-001-01` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-POLY-ACCOUNTING-001-02` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-POLY-ACCOUNTING-001-03` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-POLY-ACCOUNTING-001-04` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-POLY-ACCOUNTING-001-05` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-POLY-ACCOUNTING-001-06` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-POLY-ACCOUNTING-001-07` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-POLY-ACCOUNTING-001-08` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-POLY-ACCOUNTING-001-09` | `PS-DASHBOARD` | None linked      | ❌ Missing |
 
 **Dependencies:** Dashboard authentication and administrator roles
 
@@ -164,18 +157,18 @@ reference has the expected layer label.
 
 ### Test Coverage
 
-| Acceptance Criterion           | Proof Strategy  | Current Evidence | Status     |
-| ------------------------------ | --------------- | ---------------- | ---------- |
-| `AC-US-POLY-ACCOUNTING-002-01` | `PS-P-FLOW`     | None linked      | ❌ Missing |
-| `AC-US-POLY-ACCOUNTING-002-02` | `PS-P-FLOW`     | None linked      | ❌ Missing |
-| `AC-US-POLY-ACCOUNTING-002-03` | `PS-P-FLOW`     | None linked      | ❌ Missing |
-| `AC-US-POLY-ACCOUNTING-002-04` | `PS-P-FLOW`     | None linked      | ❌ Missing |
-| `AC-US-POLY-ACCOUNTING-002-05` | `PS-P-CALC`     | None linked      | ❌ Missing |
-| `AC-US-POLY-ACCOUNTING-002-06` | `PS-P-CALC`     | None linked      | ❌ Missing |
-| `AC-US-POLY-ACCOUNTING-002-07` | `PS-P-TRANSFER` | None linked      | ❌ Missing |
-| `AC-US-POLY-ACCOUNTING-002-08` | `PS-P-FLOW`     | None linked      | ❌ Missing |
-| `AC-US-POLY-ACCOUNTING-002-09` | `PS-P-FLOW`     | None linked      | ❌ Missing |
-| `AC-US-POLY-ACCOUNTING-002-10` | `PS-P-FLOW`     | None linked      | ❌ Missing |
+| Acceptance Criterion           | Proof Strategy | Current Evidence | Status     |
+| ------------------------------ | -------------- | ---------------- | ---------- |
+| `AC-US-POLY-ACCOUNTING-002-01` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-POLY-ACCOUNTING-002-02` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-POLY-ACCOUNTING-002-03` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-POLY-ACCOUNTING-002-04` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-POLY-ACCOUNTING-002-05` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-POLY-ACCOUNTING-002-06` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-POLY-ACCOUNTING-002-07` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-POLY-ACCOUNTING-002-08` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-POLY-ACCOUNTING-002-09` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-POLY-ACCOUNTING-002-10` | `PS-DASHBOARD` | None linked      | ❌ Missing |
 
 **Dependencies:** US-POLY-ACCOUNTING-001 and availability of the external activity, position, profile, and transfer sources
 
@@ -216,16 +209,16 @@ reference has the expected layer label.
 
 | Acceptance Criterion           | Proof Strategy | Current Evidence | Status     |
 | ------------------------------ | -------------- | ---------------- | ---------- |
-| `AC-US-POLY-ACCOUNTING-003-01` | `PS-P-FLOW`    | None linked      | ❌ Missing |
-| `AC-US-POLY-ACCOUNTING-003-02` | `PS-P-CALC`    | None linked      | ❌ Missing |
-| `AC-US-POLY-ACCOUNTING-003-03` | `PS-P-FLOW`    | None linked      | ❌ Missing |
-| `AC-US-POLY-ACCOUNTING-003-04` | `PS-P-FLOW`    | None linked      | ❌ Missing |
-| `AC-US-POLY-ACCOUNTING-003-05` | `PS-P-CALC`    | None linked      | ❌ Missing |
-| `AC-US-POLY-ACCOUNTING-003-06` | `PS-P-CALC`    | None linked      | ❌ Missing |
-| `AC-US-POLY-ACCOUNTING-003-07` | `PS-P-CALC`    | None linked      | ❌ Missing |
-| `AC-US-POLY-ACCOUNTING-003-08` | `PS-P-FLOW`    | None linked      | ❌ Missing |
-| `AC-US-POLY-ACCOUNTING-003-09` | `PS-P-FLOW`    | None linked      | ❌ Missing |
-| `AC-US-POLY-ACCOUNTING-003-10` | `PS-P-CALC`    | None linked      | ❌ Missing |
+| `AC-US-POLY-ACCOUNTING-003-01` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-POLY-ACCOUNTING-003-02` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-POLY-ACCOUNTING-003-03` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-POLY-ACCOUNTING-003-04` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-POLY-ACCOUNTING-003-05` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-POLY-ACCOUNTING-003-06` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-POLY-ACCOUNTING-003-07` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-POLY-ACCOUNTING-003-08` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-POLY-ACCOUNTING-003-09` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-POLY-ACCOUNTING-003-10` | `PS-DASHBOARD` | None linked      | ❌ Missing |
 
 **Dependencies:** US-POLY-ACCOUNTING-002
 
@@ -267,17 +260,17 @@ reference has the expected layer label.
 
 | Acceptance Criterion           | Proof Strategy | Current Evidence | Status     |
 | ------------------------------ | -------------- | ---------------- | ---------- |
-| `AC-US-POLY-ACCOUNTING-004-01` | `PS-P-FLOW`    | None linked      | ❌ Missing |
-| `AC-US-POLY-ACCOUNTING-004-02` | `PS-P-UI`      | None linked      | ❌ Missing |
-| `AC-US-POLY-ACCOUNTING-004-03` | `PS-P-UI`      | None linked      | ❌ Missing |
-| `AC-US-POLY-ACCOUNTING-004-04` | `PS-P-FLOW`    | None linked      | ❌ Missing |
-| `AC-US-POLY-ACCOUNTING-004-05` | `PS-P-FLOW`    | None linked      | ❌ Missing |
-| `AC-US-POLY-ACCOUNTING-004-06` | `PS-P-FLOW`    | None linked      | ❌ Missing |
-| `AC-US-POLY-ACCOUNTING-004-07` | `PS-P-UI`      | None linked      | ❌ Missing |
-| `AC-US-POLY-ACCOUNTING-004-08` | `PS-P-FLOW`    | None linked      | ❌ Missing |
-| `AC-US-POLY-ACCOUNTING-004-09` | `PS-P-UI`      | None linked      | ❌ Missing |
-| `AC-US-POLY-ACCOUNTING-004-10` | `PS-P-UI`      | None linked      | ❌ Missing |
-| `AC-US-POLY-ACCOUNTING-004-11` | `PS-P-FLOW`    | None linked      | ❌ Missing |
+| `AC-US-POLY-ACCOUNTING-004-01` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-POLY-ACCOUNTING-004-02` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-POLY-ACCOUNTING-004-03` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-POLY-ACCOUNTING-004-04` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-POLY-ACCOUNTING-004-05` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-POLY-ACCOUNTING-004-06` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-POLY-ACCOUNTING-004-07` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-POLY-ACCOUNTING-004-08` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-POLY-ACCOUNTING-004-09` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-POLY-ACCOUNTING-004-10` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-POLY-ACCOUNTING-004-11` | `PS-DASHBOARD` | None linked      | ❌ Missing |
 
 **Dependencies:** US-POLY-ACCOUNTING-002
 
@@ -315,14 +308,14 @@ reference has the expected layer label.
 
 | Acceptance Criterion           | Proof Strategy | Current Evidence | Status     |
 | ------------------------------ | -------------- | ---------------- | ---------- |
-| `AC-US-POLY-ACCOUNTING-005-01` | `PS-P-FLOW`    | None linked      | ❌ Missing |
-| `AC-US-POLY-ACCOUNTING-005-02` | `PS-P-FLOW`    | None linked      | ❌ Missing |
-| `AC-US-POLY-ACCOUNTING-005-03` | `PS-P-UI`      | None linked      | ❌ Missing |
-| `AC-US-POLY-ACCOUNTING-005-04` | `PS-P-FLOW`    | None linked      | ❌ Missing |
-| `AC-US-POLY-ACCOUNTING-005-05` | `PS-P-UI`      | None linked      | ❌ Missing |
-| `AC-US-POLY-ACCOUNTING-005-06` | `PS-P-UI`      | None linked      | ❌ Missing |
-| `AC-US-POLY-ACCOUNTING-005-07` | `PS-P-UI`      | None linked      | ❌ Missing |
-| `AC-US-POLY-ACCOUNTING-005-08` | `PS-P-FLOW`    | None linked      | ❌ Missing |
+| `AC-US-POLY-ACCOUNTING-005-01` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-POLY-ACCOUNTING-005-02` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-POLY-ACCOUNTING-005-03` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-POLY-ACCOUNTING-005-04` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-POLY-ACCOUNTING-005-05` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-POLY-ACCOUNTING-005-06` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-POLY-ACCOUNTING-005-07` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-POLY-ACCOUNTING-005-08` | `PS-DASHBOARD` | None linked      | ❌ Missing |
 
 **Dependencies:** US-POLY-ACCOUNTING-002
 

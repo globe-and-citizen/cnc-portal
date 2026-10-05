@@ -55,17 +55,7 @@ widget-payment paths are planned; a source-only widget assertion is not integrat
 | US-PAYGATE-004 | ⬜ Planned   | ❌ 0/6 met      | All `AC-US-PAYGATE-004-*` criteria                 |
 | US-PAYGATE-005 | 📝 Draft     | 📝 Not assessed | Authoritative facture-ID lookup boundary undecided |
 
-## Proof Strategy Reference
-
-| Strategy             | Responsibilities    | Required Evidence | Proof Rationale                                                                                      |
-| -------------------- | ------------------- | ----------------- | ---------------------------------------------------------------------------------------------------- |
-| `PS-PAYGATE-SETUP`   | Frontend            | Frontend          | Configuration choices and unsupported values are determined in the merchant setup client.            |
-| `PS-PAYGATE-EMBED`   | Frontend            | Integrated E2E    | A generated snippet must load the real widget on the merchant page with the intended settings.       |
-| `PS-PAYGATE-BANK`    | Frontend + Contract | Integrated E2E    | The selected destination must be the company's deployed Bank, not a placeholder or wrong contract.   |
-| `PS-PAYGATE-UI`      | Frontend            | Frontend          | Local recap, validation, and recoverable error states belong to the widget client.                   |
-| `PS-PAYGATE-PAYMENT` | Frontend + Contract | Integrated E2E    | Wallet approval, Bank receipt, callback, and displayed outcome must match one real payment.          |
-| `PS-PAYGATE-RETRY`   | Frontend            | Mocked browser    | A controlled wallet or chain failure must leave the embedded widget usable for a retry.              |
-| `PS-PAYGATE-HISTORY` | Frontend + Contract | Integrated E2E    | The merchant's history must reconstruct the same confirmed Bank deposit and facture ID after reload. |
+Proof obligations use the [shared proof-strategy registry](../../testing/proof-strategies.md). Multiple IDs for one AC are cumulative.
 
 ## US-PAYGATE-001: Configure the Widget's Accepted Token
 
@@ -92,11 +82,11 @@ specified for this story.
 
 ### Test Coverage
 
-| Acceptance Criterion   | Proof Strategy     | Current Evidence | Status     |
-| ---------------------- | ------------------ | ---------------- | ---------- |
-| `AC-US-PAYGATE-001-01` | `PS-PAYGATE-SETUP` | None linked      | ❌ Missing |
-| `AC-US-PAYGATE-001-02` | `PS-PAYGATE-SETUP` | None linked      | ❌ Missing |
-| `AC-US-PAYGATE-001-03` | `PS-PAYGATE-SETUP` | Frontend         | ✅ Met     |
+| Acceptance Criterion   | Proof Strategy | Current Evidence | Status     |
+| ---------------------- | -------------- | ---------------- | ---------- |
+| `AC-US-PAYGATE-001-01` | `PS-FRONTEND`  | None linked      | ❌ Missing |
+| `AC-US-PAYGATE-001-02` | `PS-FRONTEND`  | None linked      | ❌ Missing |
+| `AC-US-PAYGATE-001-03` | `PS-FRONTEND`  | Frontend         | ✅ Met     |
 
 **Dependencies:** none — this is the capability's entry point
 
@@ -132,14 +122,14 @@ token\
 
 ### Test Coverage
 
-| Acceptance Criterion   | Proof Strategy     | Current Evidence | Status          |
-| ---------------------- | ------------------ | ---------------- | --------------- |
-| `AC-US-PAYGATE-002-01` | `PS-PAYGATE-SETUP` | None linked      | ❌ Missing      |
-| `AC-US-PAYGATE-002-02` | `PS-PAYGATE-EMBED` | Frontend         | ⚠️ Insufficient |
-| `AC-US-PAYGATE-002-03` | `PS-PAYGATE-BANK`  | None linked      | ❌ Missing      |
-| `AC-US-PAYGATE-002-04` | `PS-PAYGATE-SETUP` | Frontend         | ✅ Met          |
-| `AC-US-PAYGATE-002-05` | `PS-PAYGATE-SETUP` | Frontend         | ✅ Met          |
-| `AC-US-PAYGATE-002-06` | `PS-PAYGATE-EMBED` | Frontend         | ⚠️ Insufficient |
+| Acceptance Criterion   | Proof Strategy           | Current Evidence       | Status          |
+| ---------------------- | ------------------------ | ---------------------- | --------------- |
+| `AC-US-PAYGATE-002-01` | `PS-FRONTEND`            | None linked            | ❌ Missing      |
+| `AC-US-PAYGATE-002-02` | `PS-FRONTEND-INTEGRATED` | Other linked: Frontend | ⚠️ Insufficient |
+| `AC-US-PAYGATE-002-03` | `PS-CHAIN-INTEGRATED`    | None linked            | ❌ Missing      |
+| `AC-US-PAYGATE-002-04` | `PS-FRONTEND`            | Frontend               | ✅ Met          |
+| `AC-US-PAYGATE-002-05` | `PS-FRONTEND`            | Frontend               | ✅ Met          |
+| `AC-US-PAYGATE-002-06` | `PS-FRONTEND-INTEGRATED` | Other linked: Frontend | ⚠️ Insufficient |
 
 **Dependencies:** US-PAYGATE-001 and a company with a deployed Bank contract
 
@@ -194,21 +184,21 @@ token\
 
 ### Test Coverage
 
-| Acceptance Criterion   | Proof Strategy       | Current Evidence | Status          |
-| ---------------------- | -------------------- | ---------------- | --------------- |
-| `AC-US-PAYGATE-003-01` | `PS-PAYGATE-UI`      | Frontend         | ✅ Met          |
-| `AC-US-PAYGATE-003-02` | `PS-PAYGATE-PAYMENT` | None linked      | ❌ Missing      |
-| `AC-US-PAYGATE-003-03` | `PS-PAYGATE-PAYMENT` | None linked      | ❌ Missing      |
-| `AC-US-PAYGATE-003-04` | `PS-PAYGATE-UI`      | None linked      | ❌ Missing      |
-| `AC-US-PAYGATE-003-05` | `PS-PAYGATE-UI`      | Frontend         | ✅ Met          |
-| `AC-US-PAYGATE-003-06` | `PS-PAYGATE-UI`      | None linked      | ❌ Missing      |
-| `AC-US-PAYGATE-003-07` | `PS-PAYGATE-UI`      | Frontend         | ✅ Met          |
-| `AC-US-PAYGATE-003-08` | `PS-PAYGATE-PAYMENT` | None linked      | ❌ Missing      |
-| `AC-US-PAYGATE-003-09` | `PS-PAYGATE-PAYMENT` | Frontend         | ⚠️ Insufficient |
-| `AC-US-PAYGATE-003-10` | `PS-PAYGATE-UI`      | Frontend         | ✅ Met          |
-| `AC-US-PAYGATE-003-11` | `PS-PAYGATE-UI`      | Frontend         | ✅ Met          |
-| `AC-US-PAYGATE-003-12` | `PS-PAYGATE-RETRY`   | None linked      | ❌ Missing      |
-| `AC-US-PAYGATE-003-13` | `PS-PAYGATE-UI`      | Frontend         | ✅ Met          |
+| Acceptance Criterion   | Proof Strategy        | Current Evidence       | Status          |
+| ---------------------- | --------------------- | ---------------------- | --------------- |
+| `AC-US-PAYGATE-003-01` | `PS-FRONTEND`         | Frontend               | ✅ Met          |
+| `AC-US-PAYGATE-003-02` | `PS-CHAIN-INTEGRATED` | None linked            | ❌ Missing      |
+| `AC-US-PAYGATE-003-03` | `PS-CHAIN-INTEGRATED` | None linked            | ❌ Missing      |
+| `AC-US-PAYGATE-003-04` | `PS-FRONTEND`         | None linked            | ❌ Missing      |
+| `AC-US-PAYGATE-003-05` | `PS-FRONTEND`         | Frontend               | ✅ Met          |
+| `AC-US-PAYGATE-003-06` | `PS-FRONTEND`         | None linked            | ❌ Missing      |
+| `AC-US-PAYGATE-003-07` | `PS-FRONTEND`         | Frontend               | ✅ Met          |
+| `AC-US-PAYGATE-003-08` | `PS-CHAIN-INTEGRATED` | None linked            | ❌ Missing      |
+| `AC-US-PAYGATE-003-09` | `PS-CHAIN-INTEGRATED` | Other linked: Frontend | ⚠️ Insufficient |
+| `AC-US-PAYGATE-003-10` | `PS-FRONTEND`         | Frontend               | ✅ Met          |
+| `AC-US-PAYGATE-003-11` | `PS-FRONTEND`         | Frontend               | ✅ Met          |
+| `AC-US-PAYGATE-003-12` | `PS-BROWSER`          | None linked            | ❌ Missing      |
+| `AC-US-PAYGATE-003-13` | `PS-FRONTEND`         | Frontend               | ✅ Met          |
 
 **Dependencies:** US-PAYGATE-002, a connected wallet, and a sufficient token balance
 
@@ -240,14 +230,14 @@ token\
 
 ### Test Coverage
 
-| Acceptance Criterion   | Proof Strategy       | Current Evidence | Status          |
-| ---------------------- | -------------------- | ---------------- | --------------- |
-| `AC-US-PAYGATE-004-01` | `PS-PAYGATE-HISTORY` | None linked      | ❌ Missing      |
-| `AC-US-PAYGATE-004-02` | `PS-PAYGATE-HISTORY` | None linked      | ❌ Missing      |
-| `AC-US-PAYGATE-004-03` | `PS-PAYGATE-HISTORY` | None linked      | ❌ Missing      |
-| `AC-US-PAYGATE-004-04` | `PS-PAYGATE-HISTORY` | Frontend         | ⚠️ Insufficient |
-| `AC-US-PAYGATE-004-05` | `PS-PAYGATE-UI`      | None linked      | ❌ Missing      |
-| `AC-US-PAYGATE-004-06` | `PS-PAYGATE-UI`      | None linked      | ❌ Missing      |
+| Acceptance Criterion   | Proof Strategy        | Current Evidence       | Status          |
+| ---------------------- | --------------------- | ---------------------- | --------------- |
+| `AC-US-PAYGATE-004-01` | `PS-CHAIN-INTEGRATED` | None linked            | ❌ Missing      |
+| `AC-US-PAYGATE-004-02` | `PS-CHAIN-INTEGRATED` | None linked            | ❌ Missing      |
+| `AC-US-PAYGATE-004-03` | `PS-CHAIN-INTEGRATED` | None linked            | ❌ Missing      |
+| `AC-US-PAYGATE-004-04` | `PS-CHAIN-INTEGRATED` | Other linked: Frontend | ⚠️ Insufficient |
+| `AC-US-PAYGATE-004-05` | `PS-FRONTEND`         | None linked            | ❌ Missing      |
+| `AC-US-PAYGATE-004-06` | `PS-FRONTEND`         | None linked            | ❌ Missing      |
 
 **Dependencies:** US-PAYGATE-003
 

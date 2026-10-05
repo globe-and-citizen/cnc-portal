@@ -88,16 +88,7 @@ The real-operation evidence is in the [Accounting journey](../../../app/test/e2e
 reported by CI and is separate from the test evidence listed above. The Accounting journey publishes and fully funds its own zero-interest
 Community Credit round, matches the funding transaction to one balanced `UC-CREDIT-01` entry, and checks the same entry after a reload.
 
-## Proof Strategy Reference
-
-Each acceptance criterion references one reusable strategy instead of repeating the same responsibility, evidence, and rationale text.
-
-| Strategy                 | Responsibilities   | Required Evidence | Proof Rationale                                                                     |
-| ------------------------ | ------------------ | ----------------- | ----------------------------------------------------------------------------------- |
-| `PS-FRONTEND`            | Frontend           | Frontend          | The read model owns this deterministic derivation, valuation, or presentation rule. |
-| `PS-FRONTEND-INTEGRATED` | Frontend           | Integrated E2E    | The books must be proven against operations the portal actually performed.          |
-| `PS-API`                 | Frontend + Backend | Integrated E2E    | The browser/API hand-off and persisted user-visible state must work together.       |
-| `PS-BACKEND`             | Backend            | Backend           | The backend owns this API authorization, validation, or persistence rule.           |
+Proof obligations use the [shared proof-strategy registry](../../testing/proof-strategies.md). Multiple IDs for one AC are cumulative.
 
 ## US-ACCT-001: View the Accounting Overview
 
@@ -133,20 +124,20 @@ Each acceptance criterion references one reusable strategy instead of repeating 
 
 ### Test Coverage
 
-| Acceptance Criterion | Proof Strategy           | Current Evidence          | Status     |
-| -------------------- | ------------------------ | ------------------------- | ---------- |
-| `AC-US-ACCT-001-01`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E + Frontend | ✅ Met     |
-| `AC-US-ACCT-001-02`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E            | ✅ Met     |
-| `AC-US-ACCT-001-03`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E            | ✅ Met     |
-| `AC-US-ACCT-001-04`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E            | ✅ Met     |
-| `AC-US-ACCT-001-05`  | `PS-FRONTEND`            | Frontend                  | ✅ Met     |
-| `AC-US-ACCT-001-06`  | `PS-FRONTEND`            | Frontend                  | ✅ Met     |
-| `AC-US-ACCT-001-07`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E            | ✅ Met     |
-| `AC-US-ACCT-001-08`  | `PS-FRONTEND`            | None linked               | ❌ Missing |
-| `AC-US-ACCT-001-09`  | `PS-FRONTEND`            | Frontend                  | ✅ Met     |
-| `AC-US-ACCT-001-10`  | `PS-FRONTEND`            | Frontend                  | ✅ Met     |
-| `AC-US-ACCT-001-11`  | `PS-FRONTEND`            | Frontend                  | ✅ Met     |
-| `AC-US-ACCT-001-12`  | `PS-FRONTEND`            | Frontend                  | ✅ Met     |
+| Acceptance Criterion | Proof Strategy           | Current Evidence | Status     |
+| -------------------- | ------------------------ | ---------------- | ---------- |
+| `AC-US-ACCT-001-01`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E   | ✅ Met     |
+| `AC-US-ACCT-001-02`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E   | ✅ Met     |
+| `AC-US-ACCT-001-03`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E   | ✅ Met     |
+| `AC-US-ACCT-001-04`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E   | ✅ Met     |
+| `AC-US-ACCT-001-05`  | `PS-FRONTEND`            | Frontend         | ✅ Met     |
+| `AC-US-ACCT-001-06`  | `PS-FRONTEND`            | Frontend         | ✅ Met     |
+| `AC-US-ACCT-001-07`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E   | ✅ Met     |
+| `AC-US-ACCT-001-08`  | `PS-FRONTEND`            | None linked      | ❌ Missing |
+| `AC-US-ACCT-001-09`  | `PS-FRONTEND`            | Frontend         | ✅ Met     |
+| `AC-US-ACCT-001-10`  | `PS-FRONTEND`            | Frontend         | ✅ Met     |
+| `AC-US-ACCT-001-11`  | `PS-FRONTEND`            | Frontend         | ✅ Met     |
+| `AC-US-ACCT-001-12`  | `PS-FRONTEND`            | Frontend         | ✅ Met     |
 
 **Dependencies:** Current company, accounting source providers, and valuation sources
 
@@ -183,20 +174,20 @@ Each acceptance criterion references one reusable strategy instead of repeating 
 
 ### Test Coverage
 
-| Acceptance Criterion | Proof Strategy           | Current Evidence          | Status |
-| -------------------- | ------------------------ | ------------------------- | ------ |
-| `AC-US-ACCT-002-01`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E + Frontend | ✅ Met |
-| `AC-US-ACCT-002-02`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E + Frontend | ✅ Met |
-| `AC-US-ACCT-002-03`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E + Frontend | ✅ Met |
-| `AC-US-ACCT-002-04`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E            | ✅ Met |
-| `AC-US-ACCT-002-05`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
-| `AC-US-ACCT-002-06`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E + Frontend | ✅ Met |
-| `AC-US-ACCT-002-07`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E            | ✅ Met |
-| `AC-US-ACCT-002-08`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
-| `AC-US-ACCT-002-09`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E            | ✅ Met |
-| `AC-US-ACCT-002-10`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
-| `AC-US-ACCT-002-11`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
-| `AC-US-ACCT-002-12`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
+| Acceptance Criterion | Proof Strategy           | Current Evidence | Status |
+| -------------------- | ------------------------ | ---------------- | ------ |
+| `AC-US-ACCT-002-01`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E   | ✅ Met |
+| `AC-US-ACCT-002-02`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E   | ✅ Met |
+| `AC-US-ACCT-002-03`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E   | ✅ Met |
+| `AC-US-ACCT-002-04`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E   | ✅ Met |
+| `AC-US-ACCT-002-05`  | `PS-FRONTEND`            | Frontend         | ✅ Met |
+| `AC-US-ACCT-002-06`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E   | ✅ Met |
+| `AC-US-ACCT-002-07`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E   | ✅ Met |
+| `AC-US-ACCT-002-08`  | `PS-FRONTEND`            | Frontend         | ✅ Met |
+| `AC-US-ACCT-002-09`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E   | ✅ Met |
+| `AC-US-ACCT-002-10`  | `PS-FRONTEND`            | Frontend         | ✅ Met |
+| `AC-US-ACCT-002-11`  | `PS-FRONTEND`            | Frontend         | ✅ Met |
+| `AC-US-ACCT-002-12`  | `PS-FRONTEND`            | Frontend         | ✅ Met |
 
 **Dependencies:** US-ACCT-001
 
@@ -232,19 +223,19 @@ Each acceptance criterion references one reusable strategy instead of repeating 
 
 ### Test Coverage
 
-| Acceptance Criterion | Proof Strategy           | Current Evidence          | Status |
-| -------------------- | ------------------------ | ------------------------- | ------ |
-| `AC-US-ACCT-003-01`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E + Frontend | ✅ Met |
-| `AC-US-ACCT-003-02`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E + Frontend | ✅ Met |
-| `AC-US-ACCT-003-03`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E + Frontend | ✅ Met |
-| `AC-US-ACCT-003-04`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
-| `AC-US-ACCT-003-05`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E            | ✅ Met |
-| `AC-US-ACCT-003-06`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E            | ✅ Met |
-| `AC-US-ACCT-003-07`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E            | ✅ Met |
-| `AC-US-ACCT-003-08`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
-| `AC-US-ACCT-003-09`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
-| `AC-US-ACCT-003-10`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
-| `AC-US-ACCT-003-11`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
+| Acceptance Criterion | Proof Strategy           | Current Evidence | Status |
+| -------------------- | ------------------------ | ---------------- | ------ |
+| `AC-US-ACCT-003-01`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E   | ✅ Met |
+| `AC-US-ACCT-003-02`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E   | ✅ Met |
+| `AC-US-ACCT-003-03`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E   | ✅ Met |
+| `AC-US-ACCT-003-04`  | `PS-FRONTEND`            | Frontend         | ✅ Met |
+| `AC-US-ACCT-003-05`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E   | ✅ Met |
+| `AC-US-ACCT-003-06`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E   | ✅ Met |
+| `AC-US-ACCT-003-07`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E   | ✅ Met |
+| `AC-US-ACCT-003-08`  | `PS-FRONTEND`            | Frontend         | ✅ Met |
+| `AC-US-ACCT-003-09`  | `PS-FRONTEND`            | Frontend         | ✅ Met |
+| `AC-US-ACCT-003-10`  | `PS-FRONTEND`            | Frontend         | ✅ Met |
+| `AC-US-ACCT-003-11`  | `PS-FRONTEND`            | Frontend         | ✅ Met |
 
 **Dependencies:** US-ACCT-001 and US-ACCT-002
 
@@ -276,17 +267,17 @@ Each acceptance criterion references one reusable strategy instead of repeating 
 
 ### Test Coverage
 
-| Acceptance Criterion | Proof Strategy           | Current Evidence          | Status |
-| -------------------- | ------------------------ | ------------------------- | ------ |
-| `AC-US-ACCT-004-01`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E + Frontend | ✅ Met |
-| `AC-US-ACCT-004-02`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E            | ✅ Met |
-| `AC-US-ACCT-004-03`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
-| `AC-US-ACCT-004-04`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E + Frontend | ✅ Met |
-| `AC-US-ACCT-004-05`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E            | ✅ Met |
-| `AC-US-ACCT-004-06`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
-| `AC-US-ACCT-004-07`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
-| `AC-US-ACCT-004-08`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
-| `AC-US-ACCT-004-09`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
+| Acceptance Criterion | Proof Strategy           | Current Evidence | Status |
+| -------------------- | ------------------------ | ---------------- | ------ |
+| `AC-US-ACCT-004-01`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E   | ✅ Met |
+| `AC-US-ACCT-004-02`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E   | ✅ Met |
+| `AC-US-ACCT-004-03`  | `PS-FRONTEND`            | Frontend         | ✅ Met |
+| `AC-US-ACCT-004-04`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E   | ✅ Met |
+| `AC-US-ACCT-004-05`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E   | ✅ Met |
+| `AC-US-ACCT-004-06`  | `PS-FRONTEND`            | Frontend         | ✅ Met |
+| `AC-US-ACCT-004-07`  | `PS-FRONTEND`            | Frontend         | ✅ Met |
+| `AC-US-ACCT-004-08`  | `PS-FRONTEND`            | Frontend         | ✅ Met |
+| `AC-US-ACCT-004-09`  | `PS-FRONTEND`            | Frontend         | ✅ Met |
 
 **Dependencies:** US-ACCT-002 or US-ACCT-003
 
@@ -325,21 +316,21 @@ Each acceptance criterion references one reusable strategy instead of repeating 
 
 ### Test Coverage
 
-| Acceptance Criterion | Proof Strategy           | Current Evidence          | Status |
-| -------------------- | ------------------------ | ------------------------- | ------ |
-| `AC-US-ACCT-005-01`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E + Frontend | ✅ Met |
-| `AC-US-ACCT-005-02`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E            | ✅ Met |
-| `AC-US-ACCT-005-03`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
-| `AC-US-ACCT-005-04`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
-| `AC-US-ACCT-005-05`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E + Frontend | ✅ Met |
-| `AC-US-ACCT-005-06`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
-| `AC-US-ACCT-005-07`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
-| `AC-US-ACCT-005-08`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
-| `AC-US-ACCT-005-09`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E            | ✅ Met |
-| `AC-US-ACCT-005-10`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
-| `AC-US-ACCT-005-11`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
-| `AC-US-ACCT-005-12`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
-| `AC-US-ACCT-005-13`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
+| Acceptance Criterion | Proof Strategy           | Current Evidence | Status |
+| -------------------- | ------------------------ | ---------------- | ------ |
+| `AC-US-ACCT-005-01`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E   | ✅ Met |
+| `AC-US-ACCT-005-02`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E   | ✅ Met |
+| `AC-US-ACCT-005-03`  | `PS-FRONTEND`            | Frontend         | ✅ Met |
+| `AC-US-ACCT-005-04`  | `PS-FRONTEND`            | Frontend         | ✅ Met |
+| `AC-US-ACCT-005-05`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E   | ✅ Met |
+| `AC-US-ACCT-005-06`  | `PS-FRONTEND`            | Frontend         | ✅ Met |
+| `AC-US-ACCT-005-07`  | `PS-FRONTEND`            | Frontend         | ✅ Met |
+| `AC-US-ACCT-005-08`  | `PS-FRONTEND`            | Frontend         | ✅ Met |
+| `AC-US-ACCT-005-09`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E   | ✅ Met |
+| `AC-US-ACCT-005-10`  | `PS-FRONTEND`            | Frontend         | ✅ Met |
+| `AC-US-ACCT-005-11`  | `PS-FRONTEND`            | Frontend         | ✅ Met |
+| `AC-US-ACCT-005-12`  | `PS-FRONTEND`            | Frontend         | ✅ Met |
+| `AC-US-ACCT-005-13`  | `PS-FRONTEND`            | Frontend         | ✅ Met |
 
 **Representative regression tests for `AC-US-ACCT-005-10`:**
 [Community Credit generation terms](../../../app/src/utils/accounting/__tests__/fixedReturn.interest.spec.ts),
@@ -384,19 +375,19 @@ first change and for the current router when no change event exists.
 
 ### Test Coverage
 
-| Acceptance Criterion | Proof Strategy           | Current Evidence          | Status |
-| -------------------- | ------------------------ | ------------------------- | ------ |
-| `AC-US-ACCT-006-01`  | `PS-API`                 | Integrated E2E            | ✅ Met |
-| `AC-US-ACCT-006-02`  | `PS-API`                 | Integrated E2E + Frontend | ✅ Met |
-| `AC-US-ACCT-006-03`  | `PS-API`                 | Integrated E2E + Frontend | ✅ Met |
-| `AC-US-ACCT-006-04`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E + Frontend | ✅ Met |
-| `AC-US-ACCT-006-05`  | `PS-API`                 | Integrated E2E            | ✅ Met |
-| `AC-US-ACCT-006-06`  | `PS-BACKEND`             | Backend                   | ✅ Met |
-| `AC-US-ACCT-006-07`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E            | ✅ Met |
-| `AC-US-ACCT-006-08`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
-| `AC-US-ACCT-006-09`  | `PS-API`                 | Integrated E2E + Frontend | ✅ Met |
-| `AC-US-ACCT-006-10`  | `PS-BACKEND`             | Backend                   | ✅ Met |
-| `AC-US-ACCT-006-11`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
+| Acceptance Criterion | Proof Strategy           | Current Evidence | Status |
+| -------------------- | ------------------------ | ---------------- | ------ |
+| `AC-US-ACCT-006-01`  | `PS-API-INTEGRATED`      | Integrated E2E   | ✅ Met |
+| `AC-US-ACCT-006-02`  | `PS-API-INTEGRATED`      | Integrated E2E   | ✅ Met |
+| `AC-US-ACCT-006-03`  | `PS-API-INTEGRATED`      | Integrated E2E   | ✅ Met |
+| `AC-US-ACCT-006-04`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E   | ✅ Met |
+| `AC-US-ACCT-006-05`  | `PS-API-INTEGRATED`      | Integrated E2E   | ✅ Met |
+| `AC-US-ACCT-006-06`  | `PS-BACKEND`             | Backend          | ✅ Met |
+| `AC-US-ACCT-006-07`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E   | ✅ Met |
+| `AC-US-ACCT-006-08`  | `PS-FRONTEND`            | Frontend         | ✅ Met |
+| `AC-US-ACCT-006-09`  | `PS-API-INTEGRATED`      | Integrated E2E   | ✅ Met |
+| `AC-US-ACCT-006-10`  | `PS-BACKEND`             | Backend          | ✅ Met |
+| `AC-US-ACCT-006-11`  | `PS-FRONTEND`            | Frontend         | ✅ Met |
 
 **Dependencies:** US-ACCT-002 and the journal account-assignment API
 

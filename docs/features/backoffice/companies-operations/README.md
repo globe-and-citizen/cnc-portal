@@ -61,15 +61,7 @@ reference has the expected layer label.
 | US-TEAM-OPS-002 | Not required | ❌ 0/6 met      | `AC-US-TEAM-OPS-002-01–06`        |
 | US-TEAM-OPS-003 | Not required | ❌ 0/10 met     | `AC-US-TEAM-OPS-003-01–10`        |
 
-## Proof Strategy Reference
-
-| Strategy       | Responsibilities    | Required Evidence   | Proof Rationale                                                                           |
-| -------------- | ------------------- | ------------------- | ----------------------------------------------------------------------------------------- |
-| `PS-CO-D`      | Dashboard           | Dashboard           | Navigation, summaries, grouping, and load states belong to the dashboard.                 |
-| `PS-CO-API`    | Dashboard + Backend | Dashboard + Backend | Returned company and Officer data must support what the administrator sees.               |
-| `PS-CO-B`      | Backend             | Backend             | The server owns role, archive, and current-generation rules.                              |
-| `PS-CO-RPC`    | Dashboard           | Dashboard           | Controlled RPC success and failure must distinguish a real zero from an unavailable read. |
-| `PS-CO-DETAIL` | Dashboard + Backend | Dashboard + Backend | Contract metadata and associated history must agree in the detail view.                   |
+Proof obligations use the [shared proof-strategy registry](../../../testing/proof-strategies.md). Multiple IDs for one AC are cumulative.
 
 ## US-TEAM-OPS-001: Access and Inspect Platform Companies
 
@@ -108,19 +100,20 @@ reference has the expected layer label.
 
 ### Test Coverage
 
-| Acceptance Criterion    | Proof Strategy | Current Evidence | Status          |
-| ----------------------- | -------------- | ---------------- | --------------- |
-| `AC-US-TEAM-OPS-001-01` | `PS-CO-API`    | Backend          | ⚠️ Insufficient |
-| `AC-US-TEAM-OPS-001-02` | `PS-CO-D`      | None linked      | ❌ Missing      |
-| `AC-US-TEAM-OPS-001-03` | `PS-CO-RPC`    | None linked      | ❌ Missing      |
-| `AC-US-TEAM-OPS-001-04` | `PS-CO-D`      | None linked      | ❌ Missing      |
-| `AC-US-TEAM-OPS-001-05` | `PS-CO-D`      | None linked      | ❌ Missing      |
-| `AC-US-TEAM-OPS-001-06` | `PS-CO-B`      | None linked      | ❌ Missing      |
-| `AC-US-TEAM-OPS-001-07` | `PS-CO-D`      | None linked      | ❌ Missing      |
-| `AC-US-TEAM-OPS-001-08` | `PS-CO-B`      | Backend          | ✅ Met          |
-| `AC-US-TEAM-OPS-001-09` | `PS-CO-D`      | None linked      | ❌ Missing      |
-| `AC-US-TEAM-OPS-001-10` | `PS-CO-D`      | None linked      | ❌ Missing      |
-| `AC-US-TEAM-OPS-001-11` | `PS-CO-D`      | None linked      | ❌ Missing      |
+| Acceptance Criterion    | Proof Strategy | Current Evidence      | Status          |
+| ----------------------- | -------------- | --------------------- | --------------- |
+| `AC-US-TEAM-OPS-001-01` | `PS-DASHBOARD` | Other linked: Backend | ⚠️ Insufficient |
+| `AC-US-TEAM-OPS-001-01` | `PS-BACKEND`   | Backend               | ✅ Met          |
+| `AC-US-TEAM-OPS-001-02` | `PS-DASHBOARD` | None linked           | ❌ Missing      |
+| `AC-US-TEAM-OPS-001-03` | `PS-DASHBOARD` | None linked           | ❌ Missing      |
+| `AC-US-TEAM-OPS-001-04` | `PS-DASHBOARD` | None linked           | ❌ Missing      |
+| `AC-US-TEAM-OPS-001-05` | `PS-DASHBOARD` | None linked           | ❌ Missing      |
+| `AC-US-TEAM-OPS-001-06` | `PS-BACKEND`   | None linked           | ❌ Missing      |
+| `AC-US-TEAM-OPS-001-07` | `PS-DASHBOARD` | None linked           | ❌ Missing      |
+| `AC-US-TEAM-OPS-001-08` | `PS-BACKEND`   | Backend               | ✅ Met          |
+| `AC-US-TEAM-OPS-001-09` | `PS-DASHBOARD` | None linked           | ❌ Missing      |
+| `AC-US-TEAM-OPS-001-10` | `PS-DASHBOARD` | None linked           | ❌ Missing      |
+| `AC-US-TEAM-OPS-001-11` | `PS-DASHBOARD` | None linked           | ❌ Missing      |
 
 **Dependencies:** Dashboard authentication and administrator roles
 
@@ -154,12 +147,13 @@ reference has the expected layer label.
 
 | Acceptance Criterion    | Proof Strategy | Current Evidence | Status     |
 | ----------------------- | -------------- | ---------------- | ---------- |
-| `AC-US-TEAM-OPS-002-01` | `PS-CO-API`    | None linked      | ❌ Missing |
-| `AC-US-TEAM-OPS-002-02` | `PS-CO-D`      | None linked      | ❌ Missing |
-| `AC-US-TEAM-OPS-002-03` | `PS-CO-B`      | None linked      | ❌ Missing |
-| `AC-US-TEAM-OPS-002-04` | `PS-CO-D`      | None linked      | ❌ Missing |
-| `AC-US-TEAM-OPS-002-05` | `PS-CO-D`      | None linked      | ❌ Missing |
-| `AC-US-TEAM-OPS-002-06` | `PS-CO-D`      | None linked      | ❌ Missing |
+| `AC-US-TEAM-OPS-002-01` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-TEAM-OPS-002-01` | `PS-BACKEND`   | None linked      | ❌ Missing |
+| `AC-US-TEAM-OPS-002-02` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-TEAM-OPS-002-03` | `PS-BACKEND`   | None linked      | ❌ Missing |
+| `AC-US-TEAM-OPS-002-04` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-TEAM-OPS-002-05` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-TEAM-OPS-002-06` | `PS-DASHBOARD` | None linked      | ❌ Missing |
 
 **Dependencies:** US-TEAM-OPS-001
 
@@ -199,16 +193,19 @@ reference has the expected layer label.
 
 | Acceptance Criterion    | Proof Strategy | Current Evidence | Status     |
 | ----------------------- | -------------- | ---------------- | ---------- |
-| `AC-US-TEAM-OPS-003-01` | `PS-CO-API`    | None linked      | ❌ Missing |
-| `AC-US-TEAM-OPS-003-02` | `PS-CO-API`    | None linked      | ❌ Missing |
-| `AC-US-TEAM-OPS-003-03` | `PS-CO-DETAIL` | None linked      | ❌ Missing |
-| `AC-US-TEAM-OPS-003-04` | `PS-CO-RPC`    | None linked      | ❌ Missing |
-| `AC-US-TEAM-OPS-003-05` | `PS-CO-B`      | None linked      | ❌ Missing |
-| `AC-US-TEAM-OPS-003-06` | `PS-CO-D`      | None linked      | ❌ Missing |
-| `AC-US-TEAM-OPS-003-07` | `PS-CO-RPC`    | None linked      | ❌ Missing |
-| `AC-US-TEAM-OPS-003-08` | `PS-CO-D`      | None linked      | ❌ Missing |
-| `AC-US-TEAM-OPS-003-09` | `PS-CO-D`      | None linked      | ❌ Missing |
-| `AC-US-TEAM-OPS-003-10` | `PS-CO-RPC`    | None linked      | ❌ Missing |
+| `AC-US-TEAM-OPS-003-01` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-TEAM-OPS-003-01` | `PS-BACKEND`   | None linked      | ❌ Missing |
+| `AC-US-TEAM-OPS-003-02` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-TEAM-OPS-003-02` | `PS-BACKEND`   | None linked      | ❌ Missing |
+| `AC-US-TEAM-OPS-003-03` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-TEAM-OPS-003-03` | `PS-BACKEND`   | None linked      | ❌ Missing |
+| `AC-US-TEAM-OPS-003-04` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-TEAM-OPS-003-05` | `PS-BACKEND`   | None linked      | ❌ Missing |
+| `AC-US-TEAM-OPS-003-06` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-TEAM-OPS-003-07` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-TEAM-OPS-003-08` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-TEAM-OPS-003-09` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-TEAM-OPS-003-10` | `PS-DASHBOARD` | None linked      | ❌ Missing |
 
 **Dependencies:** US-TEAM-OPS-002 and available backend and chain data
 

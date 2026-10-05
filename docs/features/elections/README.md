@@ -64,22 +64,7 @@ owned backend, and local chain together. Mocked browser tests retain controlled 
 | US-EL-10   | 📋 Planned    | ⚠️ 2/5          | `AC-US-EL-10-03` through `-05`     |
 | US-EL-11   | 📋 Planned    | ❌ 0/5          | `AC-US-EL-11-01` through `-05`     |
 
-## Proof Strategy Reference
-
-Each acceptance criterion references one reusable strategy instead of repeating the same responsibility, evidence, and rationale text.
-
-| Strategy               | Responsibilities              | Required Evidence         | Proof Rationale                                                                      |
-| ---------------------- | ----------------------------- | ------------------------- | ------------------------------------------------------------------------------------ |
-| `PS-FRONTEND`          | Frontend                      | Frontend                  | The frontend owns this deterministic validation, derivation, or interaction state.   |
-| `PS-BROWSER`           | Frontend                      | Mocked browser            | The user interaction needs browser-level proof with controlled dependency outcomes.  |
-| `PS-CHAIN`             | Frontend + Contract           | Integrated E2E            | The real wallet/chain hand-off and resulting user-visible state must work together.  |
-| `PS-CONTRACT`          | Contract                      | Contract                  | The contract owns this authorization, lifecycle, or immutable-state rule.            |
-| `PS-FRONTEND-CONTRACT` | Frontend + Contract           | Frontend + Contract       | Portal and contract rules can fail independently and both require direct proof.      |
-| `PS-CHAIN-CONTRACT`    | Frontend + Contract           | Integrated E2E + Contract | The integrated wallet journey and focused on-chain invariant need independent proof. |
-| `PS-BROWSER-CONTRACT`  | Frontend + Contract           | Mocked browser + Contract | The controlled browser branch and on-chain rule can fail independently.              |
-| `PS-BACKEND`           | Backend                       | Backend                   | The backend owns this API authorization or notification rule.                        |
-| `PS-BROWSER-BACKEND`   | Frontend + Backend            | Mocked browser + Backend  | The portal hand-off and backend rule can fail independently.                         |
-| `PS-FULL-JOURNEY`      | Frontend + Backend + Contract | Integrated E2E            | The portal, owned API, and chain result must work without replacing a CNC boundary.  |
+Proof obligations use the [shared proof-strategy registry](../../testing/proof-strategies.md). Multiple IDs for one AC are cumulative.
 
 ## US-EL-01: Create a Board Election
 
@@ -115,22 +100,24 @@ Each acceptance criterion references one reusable strategy instead of repeating 
 
 ### Test Coverage
 
-| Acceptance Criterion | Proof Strategy         | Current Evidence                                      | Status |
-| -------------------- | ---------------------- | ----------------------------------------------------- | ------ |
-| `AC-US-EL-01-01`     | `PS-CHAIN`             | Integrated E2E + Mocked browser + Frontend + Contract | ✅ Met |
-| `AC-US-EL-01-02`     | `PS-CHAIN`             | Integrated E2E + Mocked browser + Contract            | ✅ Met |
-| `AC-US-EL-01-03`     | `PS-CHAIN`             | Integrated E2E + Mocked browser + Frontend + Contract | ✅ Met |
-| `AC-US-EL-01-04`     | `PS-CONTRACT`          | Contract                                              | ✅ Met |
-| `AC-US-EL-01-05`     | `PS-FRONTEND`          | Frontend                                              | ✅ Met |
-| `AC-US-EL-01-06`     | `PS-FRONTEND-CONTRACT` | Frontend + Contract                                   | ✅ Met |
-| `AC-US-EL-01-07`     | `PS-FRONTEND-CONTRACT` | Frontend + Contract                                   | ✅ Met |
-| `AC-US-EL-01-08`     | `PS-BROWSER`           | Mocked browser + Frontend                             | ✅ Met |
-| `AC-US-EL-01-09`     | `PS-FRONTEND`          | Frontend                                              | ✅ Met |
-| `AC-US-EL-01-10`     | `PS-FRONTEND`          | Frontend                                              | ✅ Met |
-| `AC-US-EL-01-11`     | `PS-CONTRACT`          | Contract                                              | ✅ Met |
-| `AC-US-EL-01-12`     | `PS-BROWSER`           | Mocked browser + Frontend                             | ✅ Met |
-| `AC-US-EL-01-13`     | `PS-FRONTEND`          | Frontend                                              | ✅ Met |
-| `AC-US-EL-01-14`     | `PS-FRONTEND`          | Frontend                                              | ✅ Met |
+| Acceptance Criterion | Proof Strategy        | Current Evidence | Status |
+| -------------------- | --------------------- | ---------------- | ------ |
+| `AC-US-EL-01-01`     | `PS-CHAIN-INTEGRATED` | Integrated E2E   | ✅ Met |
+| `AC-US-EL-01-02`     | `PS-CHAIN-INTEGRATED` | Integrated E2E   | ✅ Met |
+| `AC-US-EL-01-03`     | `PS-CHAIN-INTEGRATED` | Integrated E2E   | ✅ Met |
+| `AC-US-EL-01-04`     | `PS-CONTRACT`         | Contract         | ✅ Met |
+| `AC-US-EL-01-05`     | `PS-FRONTEND`         | Frontend         | ✅ Met |
+| `AC-US-EL-01-06`     | `PS-FRONTEND`         | Frontend         | ✅ Met |
+| `AC-US-EL-01-06`     | `PS-CONTRACT`         | Contract         | ✅ Met |
+| `AC-US-EL-01-07`     | `PS-FRONTEND`         | Frontend         | ✅ Met |
+| `AC-US-EL-01-07`     | `PS-CONTRACT`         | Contract         | ✅ Met |
+| `AC-US-EL-01-08`     | `PS-BROWSER`          | Mocked browser   | ✅ Met |
+| `AC-US-EL-01-09`     | `PS-FRONTEND`         | Frontend         | ✅ Met |
+| `AC-US-EL-01-10`     | `PS-FRONTEND`         | Frontend         | ✅ Met |
+| `AC-US-EL-01-11`     | `PS-CONTRACT`         | Contract         | ✅ Met |
+| `AC-US-EL-01-12`     | `PS-BROWSER`          | Mocked browser   | ✅ Met |
+| `AC-US-EL-01-13`     | `PS-FRONTEND`         | Frontend         | ✅ Met |
+| `AC-US-EL-01-14`     | `PS-FRONTEND`         | Frontend         | ✅ Met |
 
 **Dependencies:** Current company, Elections contract, and connected company-owner wallet
 
@@ -163,17 +150,18 @@ Each acceptance criterion references one reusable strategy instead of repeating 
 
 ### Test Coverage
 
-| Acceptance Criterion | Proof Strategy      | Current Evidence                           | Status     |
-| -------------------- | ------------------- | ------------------------------------------ | ---------- |
-| `AC-US-EL-02-01`     | `PS-CHAIN`          | Integrated E2E + Mocked browser            | ✅ Met     |
-| `AC-US-EL-02-02`     | `PS-CHAIN-CONTRACT` | Integrated E2E + Mocked browser + Contract | ✅ Met     |
-| `AC-US-EL-02-03`     | `PS-CONTRACT`       | Contract                                   | ✅ Met     |
-| `AC-US-EL-02-04`     | `PS-CONTRACT`       | Contract                                   | ✅ Met     |
-| `AC-US-EL-02-05`     | `PS-CONTRACT`       | Contract                                   | ✅ Met     |
-| `AC-US-EL-02-06`     | `PS-BROWSER`        | Mocked browser                             | ✅ Met     |
-| `AC-US-EL-02-07`     | `PS-CHAIN`          | Integrated E2E + Mocked browser + Frontend | ✅ Met     |
-| `AC-US-EL-02-08`     | `PS-BROWSER`        | None linked                                | ❌ Missing |
-| `AC-US-EL-02-09`     | `PS-BROWSER`        | Mocked browser                             | ✅ Met     |
+| Acceptance Criterion | Proof Strategy        | Current Evidence | Status     |
+| -------------------- | --------------------- | ---------------- | ---------- |
+| `AC-US-EL-02-01`     | `PS-CHAIN-INTEGRATED` | Integrated E2E   | ✅ Met     |
+| `AC-US-EL-02-02`     | `PS-CHAIN-INTEGRATED` | Integrated E2E   | ✅ Met     |
+| `AC-US-EL-02-02`     | `PS-CONTRACT`         | Contract         | ✅ Met     |
+| `AC-US-EL-02-03`     | `PS-CONTRACT`         | Contract         | ✅ Met     |
+| `AC-US-EL-02-04`     | `PS-CONTRACT`         | Contract         | ✅ Met     |
+| `AC-US-EL-02-05`     | `PS-CONTRACT`         | Contract         | ✅ Met     |
+| `AC-US-EL-02-06`     | `PS-BROWSER`          | Mocked browser   | ✅ Met     |
+| `AC-US-EL-02-07`     | `PS-CHAIN-INTEGRATED` | Integrated E2E   | ✅ Met     |
+| `AC-US-EL-02-08`     | `PS-BROWSER`          | None linked      | ❌ Missing |
+| `AC-US-EL-02-09`     | `PS-BROWSER`          | Mocked browser   | ✅ Met     |
 
 **Dependencies:** US-EL-01
 
@@ -207,18 +195,23 @@ Each acceptance criterion references one reusable strategy instead of repeating 
 
 ### Test Coverage
 
-| Acceptance Criterion | Proof Strategy         | Current Evidence                           | Status     |
-| -------------------- | ---------------------- | ------------------------------------------ | ---------- |
-| `AC-US-EL-03-01`     | `PS-CHAIN-CONTRACT`    | Integrated E2E + Contract                  | ✅ Met     |
-| `AC-US-EL-03-02`     | `PS-CHAIN-CONTRACT`    | Integrated E2E + Mocked browser + Contract | ✅ Met     |
-| `AC-US-EL-03-03`     | `PS-CHAIN`             | Integrated E2E + Frontend                  | ✅ Met     |
-| `AC-US-EL-03-04`     | `PS-CONTRACT`          | Contract                                   | ✅ Met     |
-| `AC-US-EL-03-05`     | `PS-FRONTEND-CONTRACT` | Frontend + Contract                        | ✅ Met     |
-| `AC-US-EL-03-06`     | `PS-CHAIN-CONTRACT`    | Integrated E2E + Mocked browser + Contract | ✅ Met     |
-| `AC-US-EL-03-07`     | `PS-CONTRACT`          | Contract                                   | ✅ Met     |
-| `AC-US-EL-03-08`     | `PS-BROWSER`           | Mocked browser                             | ✅ Met     |
-| `AC-US-EL-03-09`     | `PS-BROWSER-CONTRACT`  | None linked                                | ❌ Missing |
-| `AC-US-EL-03-10`     | `PS-BROWSER`           | Mocked browser                             | ✅ Met     |
+| Acceptance Criterion | Proof Strategy        | Current Evidence | Status     |
+| -------------------- | --------------------- | ---------------- | ---------- |
+| `AC-US-EL-03-01`     | `PS-CHAIN-INTEGRATED` | Integrated E2E   | ✅ Met     |
+| `AC-US-EL-03-01`     | `PS-CONTRACT`         | Contract         | ✅ Met     |
+| `AC-US-EL-03-02`     | `PS-CHAIN-INTEGRATED` | Integrated E2E   | ✅ Met     |
+| `AC-US-EL-03-02`     | `PS-CONTRACT`         | Contract         | ✅ Met     |
+| `AC-US-EL-03-03`     | `PS-CHAIN-INTEGRATED` | Integrated E2E   | ✅ Met     |
+| `AC-US-EL-03-04`     | `PS-CONTRACT`         | Contract         | ✅ Met     |
+| `AC-US-EL-03-05`     | `PS-FRONTEND`         | Frontend         | ✅ Met     |
+| `AC-US-EL-03-05`     | `PS-CONTRACT`         | Contract         | ✅ Met     |
+| `AC-US-EL-03-06`     | `PS-CHAIN-INTEGRATED` | Integrated E2E   | ✅ Met     |
+| `AC-US-EL-03-06`     | `PS-CONTRACT`         | Contract         | ✅ Met     |
+| `AC-US-EL-03-07`     | `PS-CONTRACT`         | Contract         | ✅ Met     |
+| `AC-US-EL-03-08`     | `PS-BROWSER`          | Mocked browser   | ✅ Met     |
+| `AC-US-EL-03-09`     | `PS-BROWSER`          | None linked      | ❌ Missing |
+| `AC-US-EL-03-09`     | `PS-CONTRACT`         | None linked      | ❌ Missing |
+| `AC-US-EL-03-10`     | `PS-BROWSER`          | Mocked browser   | ✅ Met     |
 
 **Dependencies:** US-EL-02
 
@@ -250,15 +243,16 @@ Each acceptance criterion references one reusable strategy instead of repeating 
 
 ### Test Coverage
 
-| Acceptance Criterion | Proof Strategy       | Current Evidence                                     | Status     |
-| -------------------- | -------------------- | ---------------------------------------------------- | ---------- |
-| `AC-US-EL-04-01`     | `PS-FULL-JOURNEY`    | Integrated E2E + Mocked browser + Frontend + Backend | ✅ Met     |
-| `AC-US-EL-04-02`     | `PS-FULL-JOURNEY`    | Integrated E2E + Frontend                            | ✅ Met     |
-| `AC-US-EL-04-03`     | `PS-BROWSER`         | Mocked browser + Frontend                            | ✅ Met     |
-| `AC-US-EL-04-04`     | `PS-BACKEND`         | Backend                                              | ✅ Met     |
-| `AC-US-EL-04-05`     | `PS-FRONTEND`        | Frontend                                             | ✅ Met     |
-| `AC-US-EL-04-06`     | `PS-BROWSER-BACKEND` | None linked                                          | ❌ Missing |
-| `AC-US-EL-04-07`     | `PS-BACKEND`         | Backend                                              | ✅ Met     |
+| Acceptance Criterion | Proof Strategy             | Current Evidence | Status     |
+| -------------------- | -------------------------- | ---------------- | ---------- |
+| `AC-US-EL-04-01`     | `PS-FULL-STACK-INTEGRATED` | Integrated E2E   | ✅ Met     |
+| `AC-US-EL-04-02`     | `PS-FULL-STACK-INTEGRATED` | Integrated E2E   | ✅ Met     |
+| `AC-US-EL-04-03`     | `PS-BROWSER`               | Mocked browser   | ✅ Met     |
+| `AC-US-EL-04-04`     | `PS-BACKEND`               | Backend          | ✅ Met     |
+| `AC-US-EL-04-05`     | `PS-FRONTEND`              | Frontend         | ✅ Met     |
+| `AC-US-EL-04-06`     | `PS-BROWSER`               | None linked      | ❌ Missing |
+| `AC-US-EL-04-06`     | `PS-BACKEND`               | None linked      | ❌ Missing |
+| `AC-US-EL-04-07`     | `PS-BACKEND`               | Backend          | ✅ Met     |
 
 **Dependencies:** US-EL-01 and the notification service
 
@@ -356,13 +350,13 @@ Each acceptance criterion references one reusable strategy instead of repeating 
 
 ### Test Coverage
 
-| Acceptance Criterion | Proof Strategy | Current Evidence          | Status |
-| -------------------- | -------------- | ------------------------- | ------ |
-| `AC-US-EL-07-01`     | `PS-CHAIN`     | Integrated E2E + Frontend | ✅ Met |
-| `AC-US-EL-07-02`     | `PS-BROWSER`   | Mocked browser + Frontend | ✅ Met |
-| `AC-US-EL-07-03`     | `PS-CHAIN`     | Integrated E2E + Frontend | ✅ Met |
-| `AC-US-EL-07-04`     | `PS-FRONTEND`  | Frontend                  | ✅ Met |
-| `AC-US-EL-07-05`     | `PS-CHAIN`     | Integrated E2E + Frontend | ✅ Met |
+| Acceptance Criterion | Proof Strategy        | Current Evidence | Status |
+| -------------------- | --------------------- | ---------------- | ------ |
+| `AC-US-EL-07-01`     | `PS-CHAIN-INTEGRATED` | Integrated E2E   | ✅ Met |
+| `AC-US-EL-07-02`     | `PS-BROWSER`          | Mocked browser   | ✅ Met |
+| `AC-US-EL-07-03`     | `PS-CHAIN-INTEGRATED` | Integrated E2E   | ✅ Met |
+| `AC-US-EL-07-04`     | `PS-FRONTEND`         | Frontend         | ✅ Met |
+| `AC-US-EL-07-05`     | `PS-CHAIN-INTEGRATED` | Integrated E2E   | ✅ Met |
 
 **Dependencies:** US-EL-03 and the Board of Directors contract
 
@@ -391,14 +385,14 @@ Each acceptance criterion references one reusable strategy instead of repeating 
 
 ### Test Coverage
 
-| Acceptance Criterion | Proof Strategy | Current Evidence                           | Status     |
-| -------------------- | -------------- | ------------------------------------------ | ---------- |
-| `AC-US-EL-08-01`     | `PS-CHAIN`     | Integrated E2E + Mocked browser + Frontend | ✅ Met     |
-| `AC-US-EL-08-02`     | `PS-CHAIN`     | Integrated E2E + Mocked browser + Frontend | ✅ Met     |
-| `AC-US-EL-08-03`     | `PS-FRONTEND`  | Frontend                                   | ✅ Met     |
-| `AC-US-EL-08-04`     | `PS-FRONTEND`  | None linked                                | ❌ Missing |
-| `AC-US-EL-08-05`     | `PS-FRONTEND`  | None linked                                | ❌ Missing |
-| `AC-US-EL-08-06`     | `PS-CHAIN`     | Integrated E2E + Frontend                  | ✅ Met     |
+| Acceptance Criterion | Proof Strategy        | Current Evidence | Status     |
+| -------------------- | --------------------- | ---------------- | ---------- |
+| `AC-US-EL-08-01`     | `PS-CHAIN-INTEGRATED` | Integrated E2E   | ✅ Met     |
+| `AC-US-EL-08-02`     | `PS-CHAIN-INTEGRATED` | Integrated E2E   | ✅ Met     |
+| `AC-US-EL-08-03`     | `PS-FRONTEND`         | Frontend         | ✅ Met     |
+| `AC-US-EL-08-04`     | `PS-FRONTEND`         | None linked      | ❌ Missing |
+| `AC-US-EL-08-05`     | `PS-FRONTEND`         | None linked      | ❌ Missing |
+| `AC-US-EL-08-06`     | `PS-CHAIN-INTEGRATED` | Integrated E2E   | ✅ Met     |
 
 **Dependencies:** US-EL-03
 
@@ -425,12 +419,14 @@ Each acceptance criterion references one reusable strategy instead of repeating 
 
 ### Test Coverage
 
-| Acceptance Criterion | Proof Strategy       | Current Evidence | Status     |
-| -------------------- | -------------------- | ---------------- | ---------- |
-| `AC-US-EL-09-01`     | `PS-FULL-JOURNEY`    | None linked      | ❌ Missing |
-| `AC-US-EL-09-02`     | `PS-FULL-JOURNEY`    | None linked      | ❌ Missing |
-| `AC-US-EL-09-03`     | `PS-BROWSER-BACKEND` | None linked      | ❌ Missing |
-| `AC-US-EL-09-04`     | `PS-BROWSER-BACKEND` | None linked      | ❌ Missing |
+| Acceptance Criterion | Proof Strategy             | Current Evidence | Status     |
+| -------------------- | -------------------------- | ---------------- | ---------- |
+| `AC-US-EL-09-01`     | `PS-FULL-STACK-INTEGRATED` | None linked      | ❌ Missing |
+| `AC-US-EL-09-02`     | `PS-FULL-STACK-INTEGRATED` | None linked      | ❌ Missing |
+| `AC-US-EL-09-03`     | `PS-BROWSER`               | None linked      | ❌ Missing |
+| `AC-US-EL-09-03`     | `PS-BACKEND`               | None linked      | ❌ Missing |
+| `AC-US-EL-09-04`     | `PS-BROWSER`               | None linked      | ❌ Missing |
+| `AC-US-EL-09-04`     | `PS-BACKEND`               | None linked      | ❌ Missing |
 
 **Dependencies:** US-EL-03 and the notification service
 
@@ -458,13 +454,14 @@ Each acceptance criterion references one reusable strategy instead of repeating 
 
 ### Test Coverage
 
-| Acceptance Criterion | Proof Strategy        | Current Evidence | Status     |
-| -------------------- | --------------------- | ---------------- | ---------- |
-| `AC-US-EL-10-01`     | `PS-CONTRACT`         | Contract         | ✅ Met     |
-| `AC-US-EL-10-02`     | `PS-CONTRACT`         | Contract         | ✅ Met     |
-| `AC-US-EL-10-03`     | `PS-BROWSER`          | None linked      | ❌ Missing |
-| `AC-US-EL-10-04`     | `PS-BROWSER`          | None linked      | ❌ Missing |
-| `AC-US-EL-10-05`     | `PS-BROWSER-CONTRACT` | None linked      | ❌ Missing |
+| Acceptance Criterion | Proof Strategy | Current Evidence | Status     |
+| -------------------- | -------------- | ---------------- | ---------- |
+| `AC-US-EL-10-01`     | `PS-CONTRACT`  | Contract         | ✅ Met     |
+| `AC-US-EL-10-02`     | `PS-CONTRACT`  | Contract         | ✅ Met     |
+| `AC-US-EL-10-03`     | `PS-BROWSER`   | None linked      | ❌ Missing |
+| `AC-US-EL-10-04`     | `PS-BROWSER`   | None linked      | ❌ Missing |
+| `AC-US-EL-10-05`     | `PS-BROWSER`   | None linked      | ❌ Missing |
+| `AC-US-EL-10-05`     | `PS-CONTRACT`  | None linked      | ❌ Missing |
 
 **Dependencies:** US-EL-01
 
@@ -492,13 +489,16 @@ Each acceptance criterion references one reusable strategy instead of repeating 
 
 ### Test Coverage
 
-| Acceptance Criterion | Proof Strategy        | Current Evidence | Status     |
-| -------------------- | --------------------- | ---------------- | ---------- |
-| `AC-US-EL-11-01`     | `PS-BROWSER-CONTRACT` | None linked      | ❌ Missing |
-| `AC-US-EL-11-02`     | `PS-BROWSER-CONTRACT` | None linked      | ❌ Missing |
-| `AC-US-EL-11-03`     | `PS-CONTRACT`         | None linked      | ❌ Missing |
-| `AC-US-EL-11-04`     | `PS-BROWSER-CONTRACT` | None linked      | ❌ Missing |
-| `AC-US-EL-11-05`     | `PS-BROWSER`          | None linked      | ❌ Missing |
+| Acceptance Criterion | Proof Strategy | Current Evidence | Status     |
+| -------------------- | -------------- | ---------------- | ---------- |
+| `AC-US-EL-11-01`     | `PS-BROWSER`   | None linked      | ❌ Missing |
+| `AC-US-EL-11-01`     | `PS-CONTRACT`  | None linked      | ❌ Missing |
+| `AC-US-EL-11-02`     | `PS-BROWSER`   | None linked      | ❌ Missing |
+| `AC-US-EL-11-02`     | `PS-CONTRACT`  | None linked      | ❌ Missing |
+| `AC-US-EL-11-03`     | `PS-CONTRACT`  | None linked      | ❌ Missing |
+| `AC-US-EL-11-04`     | `PS-BROWSER`   | None linked      | ❌ Missing |
+| `AC-US-EL-11-04`     | `PS-CONTRACT`  | None linked      | ❌ Missing |
+| `AC-US-EL-11-05`     | `PS-BROWSER`   | None linked      | ❌ Missing |
 
 **Dependencies:** US-EL-01 and a future contract decision
 
