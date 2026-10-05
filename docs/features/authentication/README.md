@@ -46,28 +46,13 @@ flowchart TB
 Coverage targets compare each criterion's required evidence with direct representative `AC-US-*` references. They do not describe the latest
 test run. The integrated client sign-in exists; recovery and backoffice journeys remain separate targets.
 
-| User Story  | Main Journey  | Coverage Target | Gaps                            |
-| ----------- | ------------- | --------------- | ------------------------------- |
-| US-AUTH-001 | ✅ Integrated | ⚠️ 4/9 met      | `AC-US-AUTH-001-04–06`, `08–09` |
-| US-AUTH-002 | ⬜ Planned    | ❌ 0/8 met      | All `AC-US-AUTH-002-*` criteria |
-| US-AUTH-003 | ⬜ Planned    | ⚠️ 1/9 met      | `AC-US-AUTH-003-01–08`          |
+| User Story  | Main Journey  | Coverage Target | Gaps                                                                                                                                                                   |
+| ----------- | ------------- | --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| US-AUTH-001 | ✅ Integrated | ⚠️ 3/9          | `AC-US-AUTH-001-01`, `AC-US-AUTH-001-04`, `AC-US-AUTH-001-05`, `AC-US-AUTH-001-06`, `AC-US-AUTH-001-08`, `AC-US-AUTH-001-09`                                           |
+| US-AUTH-002 | ⬜ Planned    | ❌ 0/8 met      | All `AC-US-AUTH-002-*` criteria                                                                                                                                        |
+| US-AUTH-003 | ⬜ Planned    | ⚠️ 1/9          | `AC-US-AUTH-003-01`, `AC-US-AUTH-003-02`, `AC-US-AUTH-003-03`, `AC-US-AUTH-003-04`, `AC-US-AUTH-003-05`, `AC-US-AUTH-003-06`, `AC-US-AUTH-003-07`, `AC-US-AUTH-003-08` |
 
-## Proof Strategy Reference
-
-| Strategy                | Responsibilities    | Required Evidence   | Proof Rationale                                                                          |
-| ----------------------- | ------------------- | ------------------- | ---------------------------------------------------------------------------------------- |
-| `PS-CLIENT-SIWE`        | Frontend + Backend  | Integrated E2E      | The signed browser journey must establish a real backend session and protected access.   |
-| `PS-CLIENT-WALLET`      | Frontend            | Frontend            | The client owns network preparation before it requests the SIWE signature.               |
-| `PS-SIWE-MESSAGE`       | Frontend + Backend  | Frontend + Backend  | Message fields and backend verification must agree on the signed domain and nonce.       |
-| `PS-SIWE-BACKEND`       | Backend             | Backend             | The backend owns account creation, nonce verification, token issuance, and rejection.    |
-| `PS-CLIENT-GUARD`       | Frontend            | Frontend            | The client route guard must reject a missing local session for every protected route.    |
-| `PS-BACKOFFICE-ENTRY`   | Dashboard + Backend | Dashboard + Backend | Dashboard session handling and persisted administrator authority can fail separately.    |
-| `PS-BACKOFFICE-UI`      | Dashboard           | Dashboard           | The dashboard owns wallet connection, session persistence, logout, and local redirects.  |
-| `PS-BACKOFFICE-ROLE`    | Dashboard + Backend | Dashboard + Backend | The dashboard guard and backend role check must both prevent unauthorized entry.         |
-| `PS-CLIENT-RETRY`       | Frontend + Backend  | Integrated E2E      | A failed signing attempt must be recoverable against the real authentication boundary.   |
-| `PS-CLIENT-FAILURE`     | Frontend            | Mocked browser      | Controlled wallet and API failures must leave the client unauthenticated and retryable.  |
-| `PS-BACKOFFICE-FAILURE` | Dashboard           | Dashboard           | The dashboard must distinguish its own signature, network, API, and connectivity errors. |
-| `PS-SESSION-LOCK`       | Frontend            | Frontend            | A wallet mismatch must lock the protected view until authentication is restarted.        |
+Proof obligations use the [shared proof-strategy registry](../../testing/proof-strategies.md). Multiple IDs for one AC are cumulative.
 
 ## US-AUTH-001: Sign in to the Client
 
@@ -98,17 +83,19 @@ test run. The integrated client sign-in exists; recovery and backoffice journeys
 
 ### Test Coverage
 
-| Acceptance Criterion | Proof Strategy     | Current Evidence          | Status     |
-| -------------------- | ------------------ | ------------------------- | ---------- |
-| `AC-US-AUTH-001-01`  | `PS-CLIENT-SIWE`   | Integrated E2E + Frontend | ✅ Met     |
-| `AC-US-AUTH-001-02`  | `PS-SIWE-BACKEND`  | Backend                   | ✅ Met     |
-| `AC-US-AUTH-001-03`  | `PS-CLIENT-WALLET` | Frontend                  | ✅ Met     |
-| `AC-US-AUTH-001-04`  | `PS-SIWE-MESSAGE`  | None linked               | ❌ Missing |
-| `AC-US-AUTH-001-05`  | `PS-SIWE-BACKEND`  | None linked               | ❌ Missing |
-| `AC-US-AUTH-001-06`  | `PS-SIWE-BACKEND`  | None linked               | ❌ Missing |
-| `AC-US-AUTH-001-07`  | `PS-CLIENT-SIWE`   | Integrated E2E            | ✅ Met     |
-| `AC-US-AUTH-001-08`  | `PS-CLIENT-GUARD`  | None linked               | ❌ Missing |
-| `AC-US-AUTH-001-09`  | `PS-SIWE-BACKEND`  | None linked               | ❌ Missing |
+| Acceptance Criterion | Proof Strategy      | Current Evidence          | Status          |
+| -------------------- | ------------------- | ------------------------- | --------------- |
+| `AC-US-AUTH-001-01`  | `PS-API-INTEGRATED` | Integrated E2E + Frontend | ✅ Met          |
+| `AC-US-AUTH-001-01`  | `PS-BACKEND`        | Integrated E2E + Frontend | ⚠️ Insufficient |
+| `AC-US-AUTH-001-02`  | `PS-BACKEND`        | Backend                   | ✅ Met          |
+| `AC-US-AUTH-001-03`  | `PS-FRONTEND`       | Frontend                  | ✅ Met          |
+| `AC-US-AUTH-001-04`  | `PS-FRONTEND`       | None linked               | ❌ Missing      |
+| `AC-US-AUTH-001-04`  | `PS-BACKEND`        | None linked               | ❌ Missing      |
+| `AC-US-AUTH-001-05`  | `PS-BACKEND`        | None linked               | ❌ Missing      |
+| `AC-US-AUTH-001-06`  | `PS-BACKEND`        | None linked               | ❌ Missing      |
+| `AC-US-AUTH-001-07`  | `PS-API-INTEGRATED` | Integrated E2E            | ✅ Met          |
+| `AC-US-AUTH-001-08`  | `PS-FRONTEND`       | None linked               | ❌ Missing      |
+| `AC-US-AUTH-001-09`  | `PS-BACKEND`        | None linked               | ❌ Missing      |
 
 ## US-AUTH-002: Sign in to the Backoffice
 
@@ -137,16 +124,19 @@ test run. The integrated client sign-in exists; recovery and backoffice journeys
 
 ### Test Coverage
 
-| Acceptance Criterion | Proof Strategy        | Current Evidence | Status     |
-| -------------------- | --------------------- | ---------------- | ---------- |
-| `AC-US-AUTH-002-01`  | `PS-BACKOFFICE-ENTRY` | None linked      | ❌ Missing |
-| `AC-US-AUTH-002-02`  | `PS-BACKOFFICE-UI`    | None linked      | ❌ Missing |
-| `AC-US-AUTH-002-03`  | `PS-BACKOFFICE-ROLE`  | None linked      | ❌ Missing |
-| `AC-US-AUTH-002-04`  | `PS-BACKOFFICE-UI`    | None linked      | ❌ Missing |
-| `AC-US-AUTH-002-05`  | `PS-BACKOFFICE-UI`    | None linked      | ❌ Missing |
-| `AC-US-AUTH-002-06`  | `PS-BACKOFFICE-UI`    | None linked      | ❌ Missing |
-| `AC-US-AUTH-002-07`  | `PS-BACKOFFICE-ROLE`  | None linked      | ❌ Missing |
-| `AC-US-AUTH-002-08`  | `PS-BACKOFFICE-UI`    | None linked      | ❌ Missing |
+| Acceptance Criterion | Proof Strategy | Current Evidence | Status     |
+| -------------------- | -------------- | ---------------- | ---------- |
+| `AC-US-AUTH-002-01`  | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-AUTH-002-01`  | `PS-BACKEND`   | None linked      | ❌ Missing |
+| `AC-US-AUTH-002-02`  | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-AUTH-002-03`  | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-AUTH-002-03`  | `PS-BACKEND`   | None linked      | ❌ Missing |
+| `AC-US-AUTH-002-04`  | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-AUTH-002-05`  | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-AUTH-002-06`  | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-AUTH-002-07`  | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-AUTH-002-07`  | `PS-BACKEND`   | None linked      | ❌ Missing |
+| `AC-US-AUTH-002-08`  | `PS-DASHBOARD` | None linked      | ❌ Missing |
 
 ## US-AUTH-003: Recover from an Interrupted Login
 
@@ -178,17 +168,18 @@ test run. The integrated client sign-in exists; recovery and backoffice journeys
 
 ### Test Coverage
 
-| Acceptance Criterion | Proof Strategy          | Current Evidence | Status     |
-| -------------------- | ----------------------- | ---------------- | ---------- |
-| `AC-US-AUTH-003-01`  | `PS-CLIENT-RETRY`       | None linked      | ❌ Missing |
-| `AC-US-AUTH-003-02`  | `PS-CLIENT-FAILURE`     | None linked      | ❌ Missing |
-| `AC-US-AUTH-003-03`  | `PS-CLIENT-FAILURE`     | None linked      | ❌ Missing |
-| `AC-US-AUTH-003-04`  | `PS-CLIENT-FAILURE`     | None linked      | ❌ Missing |
-| `AC-US-AUTH-003-05`  | `PS-BACKOFFICE-FAILURE` | None linked      | ❌ Missing |
-| `AC-US-AUTH-003-06`  | `PS-CLIENT-FAILURE`     | None linked      | ❌ Missing |
-| `AC-US-AUTH-003-07`  | `PS-CLIENT-FAILURE`     | None linked      | ❌ Missing |
-| `AC-US-AUTH-003-08`  | `PS-CLIENT-RETRY`       | None linked      | ❌ Missing |
-| `AC-US-AUTH-003-09`  | `PS-SESSION-LOCK`       | Frontend         | ✅ Met     |
+| Acceptance Criterion | Proof Strategy      | Current Evidence | Status     |
+| -------------------- | ------------------- | ---------------- | ---------- |
+| `AC-US-AUTH-003-01`  | `PS-API-INTEGRATED` | None linked      | ❌ Missing |
+| `AC-US-AUTH-003-02`  | `PS-BROWSER`        | None linked      | ❌ Missing |
+| `AC-US-AUTH-003-03`  | `PS-BROWSER`        | None linked      | ❌ Missing |
+| `AC-US-AUTH-003-04`  | `PS-BROWSER`        | None linked      | ❌ Missing |
+| `AC-US-AUTH-003-05`  | `PS-DASHBOARD`      | None linked      | ❌ Missing |
+| `AC-US-AUTH-003-06`  | `PS-BROWSER`        | None linked      | ❌ Missing |
+| `AC-US-AUTH-003-07`  | `PS-BROWSER`        | None linked      | ❌ Missing |
+| `AC-US-AUTH-003-08`  | `PS-API-INTEGRATED` | None linked      | ❌ Missing |
+| `AC-US-AUTH-003-08`  | `PS-BACKEND`        | None linked      | ❌ Missing |
+| `AC-US-AUTH-003-09`  | `PS-FRONTEND`       | Frontend         | ✅ Met     |
 
 ## Known Gaps
 

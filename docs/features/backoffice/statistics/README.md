@@ -56,16 +56,7 @@ reference has the expected layer label.
 | US-STATS-003 | ⬜ Planned   | ❌ 0/14 met     | `AC-US-STATS-003-01–14` |
 | US-STATS-004 | ⬜ Planned   | ❌ 0/9 met      | `AC-US-STATS-004-01–09` |
 
-## Proof Strategy Reference
-
-| Strategy       | Responsibilities    | Required Evidence          | Proof Rationale                                                                            |
-| -------------- | ------------------- | -------------------------- | ------------------------------------------------------------------------------------------ |
-| `PS-S-UI`      | Dashboard           | Dashboard                  | Route and visible interactions belong to the dashboard.                                    |
-| `PS-S-API`     | Backend             | Backend                    | The server owns authorization, validation, aggregation, and pagination.                    |
-| `PS-S-AUTH`    | Dashboard + Backend | Dashboard + Backend        | Dashboard and API access barriers can fail independently.                                  |
-| `PS-S-FLOW`    | Dashboard + Backend | Dashboard + Backend        | Periods, API results, and failures must reach the intended section.                        |
-| `PS-S-TVL`     | Dashboard           | Dashboard + Integrated E2E | Company discovery and live chain balance scope require both calculation and journey proof. |
-| `PS-S-REFRESH` | Dashboard + Backend | Integrated E2E             | Refresh must obtain fresh database metrics and TVL.                                        |
+Proof obligations use the [shared proof-strategy registry](../../../testing/proof-strategies.md). Multiple IDs for one AC are cumulative.
 
 ## US-STATS-001: Access Administrator Statistics
 
@@ -98,16 +89,20 @@ reference has the expected layer label.
 
 | Acceptance Criterion | Proof Strategy | Current Evidence | Status          |
 | -------------------- | -------------- | ---------------- | --------------- |
-| `AC-US-STATS-001-01` | `PS-S-AUTH`    | None linked      | ❌ Missing      |
-| `AC-US-STATS-001-02` | `PS-S-AUTH`    | None linked      | ❌ Missing      |
-| `AC-US-STATS-001-03` | `PS-S-API`     | None linked      | ❌ Missing      |
-| `AC-US-STATS-001-04` | `PS-S-API`     | Backend          | ⚠️ Insufficient |
-| `AC-US-STATS-001-05` | `PS-S-API`     | None linked      | ❌ Missing      |
-| `AC-US-STATS-001-06` | `PS-S-AUTH`    | None linked      | ❌ Missing      |
-| `AC-US-STATS-001-07` | `PS-S-UI`      | None linked      | ❌ Missing      |
-| `AC-US-STATS-001-08` | `PS-S-UI`      | None linked      | ❌ Missing      |
-| `AC-US-STATS-001-09` | `PS-S-API`     | None linked      | ❌ Missing      |
-| `AC-US-STATS-001-10` | `PS-S-FLOW`    | None linked      | ❌ Missing      |
+| `AC-US-STATS-001-01` | `PS-DASHBOARD` | None linked      | ❌ Missing      |
+| `AC-US-STATS-001-01` | `PS-BACKEND`   | None linked      | ❌ Missing      |
+| `AC-US-STATS-001-02` | `PS-DASHBOARD` | None linked      | ❌ Missing      |
+| `AC-US-STATS-001-02` | `PS-BACKEND`   | None linked      | ❌ Missing      |
+| `AC-US-STATS-001-03` | `PS-BACKEND`   | None linked      | ❌ Missing      |
+| `AC-US-STATS-001-04` | `PS-BACKEND`   | Backend          | ⚠️ Insufficient |
+| `AC-US-STATS-001-05` | `PS-BACKEND`   | None linked      | ❌ Missing      |
+| `AC-US-STATS-001-06` | `PS-DASHBOARD` | None linked      | ❌ Missing      |
+| `AC-US-STATS-001-06` | `PS-BACKEND`   | None linked      | ❌ Missing      |
+| `AC-US-STATS-001-07` | `PS-DASHBOARD` | None linked      | ❌ Missing      |
+| `AC-US-STATS-001-08` | `PS-DASHBOARD` | None linked      | ❌ Missing      |
+| `AC-US-STATS-001-09` | `PS-BACKEND`   | None linked      | ❌ Missing      |
+| `AC-US-STATS-001-10` | `PS-DASHBOARD` | None linked      | ❌ Missing      |
+| `AC-US-STATS-001-10` | `PS-BACKEND`   | None linked      | ❌ Missing      |
 
 **Dependencies:** Dashboard authentication and administrator roles
 
@@ -146,22 +141,29 @@ reference has the expected layer label.
 
 ### Test Coverage
 
-| Acceptance Criterion | Proof Strategy | Current Evidence | Status          |
-| -------------------- | -------------- | ---------------- | --------------- |
-| `AC-US-STATS-002-01` | `PS-S-FLOW`    | Backend          | ⚠️ Insufficient |
-| `AC-US-STATS-002-02` | `PS-S-FLOW`    | None linked      | ❌ Missing      |
-| `AC-US-STATS-002-03` | `PS-S-TVL`     | None linked      | ❌ Missing      |
-| `AC-US-STATS-002-04` | `PS-S-FLOW`    | Backend          | ⚠️ Insufficient |
-| `AC-US-STATS-002-05` | `PS-S-REFRESH` | None linked      | ❌ Missing      |
-| `AC-US-STATS-002-06` | `PS-S-API`     | None linked      | ❌ Missing      |
-| `AC-US-STATS-002-07` | `PS-S-API`     | None linked      | ❌ Missing      |
-| `AC-US-STATS-002-08` | `PS-S-API`     | None linked      | ❌ Missing      |
-| `AC-US-STATS-002-09` | `PS-S-TVL`     | None linked      | ❌ Missing      |
-| `AC-US-STATS-002-10` | `PS-S-API`     | None linked      | ❌ Missing      |
-| `AC-US-STATS-002-11` | `PS-S-FLOW`    | None linked      | ❌ Missing      |
-| `AC-US-STATS-002-12` | `PS-S-API`     | None linked      | ❌ Missing      |
-| `AC-US-STATS-002-13` | `PS-S-API`     | None linked      | ❌ Missing      |
-| `AC-US-STATS-002-14` | `PS-S-FLOW`    | None linked      | ❌ Missing      |
+| Acceptance Criterion | Proof Strategy                | Current Evidence | Status          |
+| -------------------- | ----------------------------- | ---------------- | --------------- |
+| `AC-US-STATS-002-01` | `PS-DASHBOARD`                | Backend          | ⚠️ Insufficient |
+| `AC-US-STATS-002-01` | `PS-BACKEND`                  | Backend          | ✅ Met          |
+| `AC-US-STATS-002-02` | `PS-DASHBOARD`                | None linked      | ❌ Missing      |
+| `AC-US-STATS-002-02` | `PS-BACKEND`                  | None linked      | ❌ Missing      |
+| `AC-US-STATS-002-03` | `PS-DASHBOARD`                | None linked      | ❌ Missing      |
+| `AC-US-STATS-002-03` | `PS-DASHBOARD-INTEGRATED`     | None linked      | ❌ Missing      |
+| `AC-US-STATS-002-04` | `PS-DASHBOARD`                | Backend          | ⚠️ Insufficient |
+| `AC-US-STATS-002-04` | `PS-BACKEND`                  | Backend          | ✅ Met          |
+| `AC-US-STATS-002-05` | `PS-DASHBOARD-API-INTEGRATED` | None linked      | ❌ Missing      |
+| `AC-US-STATS-002-06` | `PS-BACKEND`                  | None linked      | ❌ Missing      |
+| `AC-US-STATS-002-07` | `PS-BACKEND`                  | None linked      | ❌ Missing      |
+| `AC-US-STATS-002-08` | `PS-BACKEND`                  | None linked      | ❌ Missing      |
+| `AC-US-STATS-002-09` | `PS-DASHBOARD`                | None linked      | ❌ Missing      |
+| `AC-US-STATS-002-09` | `PS-DASHBOARD-INTEGRATED`     | None linked      | ❌ Missing      |
+| `AC-US-STATS-002-10` | `PS-BACKEND`                  | None linked      | ❌ Missing      |
+| `AC-US-STATS-002-11` | `PS-DASHBOARD`                | None linked      | ❌ Missing      |
+| `AC-US-STATS-002-11` | `PS-BACKEND`                  | None linked      | ❌ Missing      |
+| `AC-US-STATS-002-12` | `PS-BACKEND`                  | None linked      | ❌ Missing      |
+| `AC-US-STATS-002-13` | `PS-BACKEND`                  | None linked      | ❌ Missing      |
+| `AC-US-STATS-002-14` | `PS-DASHBOARD`                | None linked      | ❌ Missing      |
+| `AC-US-STATS-002-14` | `PS-BACKEND`                  | None linked      | ❌ Missing      |
 
 **Dependencies:** US-STATS-001 and available database and chain providers
 
@@ -202,20 +204,27 @@ reference has the expected layer label.
 
 | Acceptance Criterion | Proof Strategy | Current Evidence | Status     |
 | -------------------- | -------------- | ---------------- | ---------- |
-| `AC-US-STATS-003-01` | `PS-S-FLOW`    | None linked      | ❌ Missing |
-| `AC-US-STATS-003-02` | `PS-S-FLOW`    | None linked      | ❌ Missing |
-| `AC-US-STATS-003-03` | `PS-S-FLOW`    | None linked      | ❌ Missing |
-| `AC-US-STATS-003-04` | `PS-S-FLOW`    | None linked      | ❌ Missing |
-| `AC-US-STATS-003-05` | `PS-S-FLOW`    | None linked      | ❌ Missing |
-| `AC-US-STATS-003-06` | `PS-S-API`     | None linked      | ❌ Missing |
-| `AC-US-STATS-003-07` | `PS-S-API`     | None linked      | ❌ Missing |
-| `AC-US-STATS-003-08` | `PS-S-API`     | None linked      | ❌ Missing |
-| `AC-US-STATS-003-09` | `PS-S-API`     | None linked      | ❌ Missing |
-| `AC-US-STATS-003-10` | `PS-S-API`     | None linked      | ❌ Missing |
-| `AC-US-STATS-003-11` | `PS-S-API`     | None linked      | ❌ Missing |
-| `AC-US-STATS-003-12` | `PS-S-API`     | None linked      | ❌ Missing |
-| `AC-US-STATS-003-13` | `PS-S-FLOW`    | None linked      | ❌ Missing |
-| `AC-US-STATS-003-14` | `PS-S-FLOW`    | None linked      | ❌ Missing |
+| `AC-US-STATS-003-01` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-STATS-003-01` | `PS-BACKEND`   | None linked      | ❌ Missing |
+| `AC-US-STATS-003-02` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-STATS-003-02` | `PS-BACKEND`   | None linked      | ❌ Missing |
+| `AC-US-STATS-003-03` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-STATS-003-03` | `PS-BACKEND`   | None linked      | ❌ Missing |
+| `AC-US-STATS-003-04` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-STATS-003-04` | `PS-BACKEND`   | None linked      | ❌ Missing |
+| `AC-US-STATS-003-05` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-STATS-003-05` | `PS-BACKEND`   | None linked      | ❌ Missing |
+| `AC-US-STATS-003-06` | `PS-BACKEND`   | None linked      | ❌ Missing |
+| `AC-US-STATS-003-07` | `PS-BACKEND`   | None linked      | ❌ Missing |
+| `AC-US-STATS-003-08` | `PS-BACKEND`   | None linked      | ❌ Missing |
+| `AC-US-STATS-003-09` | `PS-BACKEND`   | None linked      | ❌ Missing |
+| `AC-US-STATS-003-10` | `PS-BACKEND`   | None linked      | ❌ Missing |
+| `AC-US-STATS-003-11` | `PS-BACKEND`   | None linked      | ❌ Missing |
+| `AC-US-STATS-003-12` | `PS-BACKEND`   | None linked      | ❌ Missing |
+| `AC-US-STATS-003-13` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-STATS-003-13` | `PS-BACKEND`   | None linked      | ❌ Missing |
+| `AC-US-STATS-003-14` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-STATS-003-14` | `PS-BACKEND`   | None linked      | ❌ Missing |
 
 **Dependencies:** US-STATS-001 and US-STATS-002
 
@@ -249,15 +258,19 @@ reference has the expected layer label.
 
 | Acceptance Criterion | Proof Strategy | Current Evidence | Status          |
 | -------------------- | -------------- | ---------------- | --------------- |
-| `AC-US-STATS-004-01` | `PS-S-FLOW`    | Backend          | ⚠️ Insufficient |
-| `AC-US-STATS-004-02` | `PS-S-FLOW`    | None linked      | ❌ Missing      |
-| `AC-US-STATS-004-03` | `PS-S-API`     | None linked      | ❌ Missing      |
-| `AC-US-STATS-004-04` | `PS-S-API`     | None linked      | ❌ Missing      |
-| `AC-US-STATS-004-05` | `PS-S-API`     | None linked      | ❌ Missing      |
-| `AC-US-STATS-004-06` | `PS-S-FLOW`    | None linked      | ❌ Missing      |
-| `AC-US-STATS-004-07` | `PS-S-API`     | None linked      | ❌ Missing      |
-| `AC-US-STATS-004-08` | `PS-S-API`     | None linked      | ❌ Missing      |
-| `AC-US-STATS-004-09` | `PS-S-FLOW`    | None linked      | ❌ Missing      |
+| `AC-US-STATS-004-01` | `PS-DASHBOARD` | Backend          | ⚠️ Insufficient |
+| `AC-US-STATS-004-01` | `PS-BACKEND`   | Backend          | ✅ Met          |
+| `AC-US-STATS-004-02` | `PS-DASHBOARD` | None linked      | ❌ Missing      |
+| `AC-US-STATS-004-02` | `PS-BACKEND`   | None linked      | ❌ Missing      |
+| `AC-US-STATS-004-03` | `PS-BACKEND`   | None linked      | ❌ Missing      |
+| `AC-US-STATS-004-04` | `PS-BACKEND`   | None linked      | ❌ Missing      |
+| `AC-US-STATS-004-05` | `PS-BACKEND`   | None linked      | ❌ Missing      |
+| `AC-US-STATS-004-06` | `PS-DASHBOARD` | None linked      | ❌ Missing      |
+| `AC-US-STATS-004-06` | `PS-BACKEND`   | None linked      | ❌ Missing      |
+| `AC-US-STATS-004-07` | `PS-BACKEND`   | None linked      | ❌ Missing      |
+| `AC-US-STATS-004-08` | `PS-BACKEND`   | None linked      | ❌ Missing      |
+| `AC-US-STATS-004-09` | `PS-DASHBOARD` | None linked      | ❌ Missing      |
+| `AC-US-STATS-004-09` | `PS-BACKEND`   | None linked      | ❌ Missing      |
 
 **Dependencies:** US-STATS-001
 

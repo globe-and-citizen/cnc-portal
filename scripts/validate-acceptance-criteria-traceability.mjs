@@ -9,7 +9,10 @@ import { validateAcceptanceCriteriaTraceability } from './lib/acceptance-criteri
 const repositoryRoot = resolve(fileURLToPath(new URL('..', import.meta.url)))
 
 function trackedPaths() {
-  return execFileSync('git', ['ls-files'], { cwd: repositoryRoot, encoding: 'utf8' })
+  return execFileSync('git', ['ls-files'], {
+    cwd: repositoryRoot,
+    encoding: 'utf8'
+  })
     .trim()
     .split('\n')
     .filter(Boolean)
@@ -35,6 +38,7 @@ const testPaths = paths.filter(
 )
 const result = validateAcceptanceCriteriaTraceability({
   featureDocuments: readDocuments(featurePaths),
+  proofStrategyDocument: readDocuments(['docs/testing/proof-strategies.md'])[0],
   testDocuments: readDocuments(testPaths),
   enforceFeatureCoverage: true
 })

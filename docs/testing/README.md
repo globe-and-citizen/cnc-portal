@@ -5,6 +5,7 @@ This directory contains comprehensive testing documentation and guides for the C
 ## Contents
 
 - **[Integrated E2E Paths](./e2e-paths.md)** - G0 technical gate, G1 through G12 client business paths, and current evidence status
+- **[Shared Proof Strategies](./proof-strategies.md)** - Canonical `PS-*` obligations used by feature acceptance criteria
 - **[Playwright E2E Fixture Catalogue](./e2e-fixtures.md)** - Shared fixtures, boundary rules, cleanup, and complete spec audit
 - **[Application E2E Guide](../../app/test/README.md)** - Playwright profiles, setup commands, and authoring conventions
 - **[Unit Testing Guide](./unit-testing.md)** - Guidelines for writing unit tests with Vue Test Utils and Vitest

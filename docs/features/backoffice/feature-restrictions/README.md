@@ -48,16 +48,7 @@ reference has the expected layer label.
 | US-FLAG-002 | Not required | ⚠️ 1/12 met     | `AC-US-FLAG-002-01–06, 08–12` |
 | US-FLAG-003 | Not required | ⚠️ 1/7 met      | `AC-US-FLAG-003-01–04, 06–07` |
 
-## Proof Strategy Reference
-
-| Strategy      | Responsibilities    | Required Evidence   | Proof Rationale                                                        |
-| ------------- | ------------------- | ------------------- | ---------------------------------------------------------------------- |
-| `PS-FL-READ`  | Dashboard + Backend | Dashboard + Backend | List and detail payloads must match the visible dashboard state.       |
-| `PS-FL-WRITE` | Dashboard + Backend | Dashboard + Backend | A saved change must persist and refresh the administrator view.        |
-| `PS-FL-GUARD` | Dashboard + Backend | Dashboard + Backend | Dashboard guard and independent API authorization can fail separately. |
-| `PS-FL-RULE`  | Backend             | Backend             | The server owns validation, uniqueness, precedence, and atomicity.     |
-| `PS-FL-UI`    | Dashboard           | Dashboard           | Cancellation must not send a mutation.                                 |
-| `PS-FL-FAIL`  | Dashboard + Backend | Dashboard + Backend | A failed delete must not be reported as a completed change.            |
+Proof obligations use the [shared proof-strategy registry](../../../testing/proof-strategies.md). Multiple IDs for one AC are cumulative.
 
 ## US-FLAG-001: Manage Global Restrictions
 
@@ -90,16 +81,20 @@ reference has the expected layer label.
 
 | Acceptance Criterion | Proof Strategy | Current Evidence | Status          |
 | -------------------- | -------------- | ---------------- | --------------- |
-| `AC-US-FLAG-001-01`  | `PS-FL-READ`   | Backend          | ⚠️ Insufficient |
-| `AC-US-FLAG-001-02`  | `PS-FL-WRITE`  | Backend          | ⚠️ Insufficient |
-| `AC-US-FLAG-001-03`  | `PS-FL-WRITE`  | Backend          | ⚠️ Insufficient |
-| `AC-US-FLAG-001-04`  | `PS-FL-GUARD`  | None linked      | ❌ Missing      |
-| `AC-US-FLAG-001-05`  | `PS-FL-RULE`   | None linked      | ❌ Missing      |
-| `AC-US-FLAG-001-06`  | `PS-FL-RULE`   | None linked      | ❌ Missing      |
-| `AC-US-FLAG-001-07`  | `PS-FL-RULE`   | None linked      | ❌ Missing      |
-| `AC-US-FLAG-001-08`  | `PS-FL-RULE`   | Backend          | ⚠️ Insufficient |
-| `AC-US-FLAG-001-09`  | `PS-FL-RULE`   | Backend          | ⚠️ Insufficient |
-| `AC-US-FLAG-001-10`  | `PS-FL-RULE`   | None linked      | ❌ Missing      |
+| `AC-US-FLAG-001-01`  | `PS-DASHBOARD` | Backend          | ⚠️ Insufficient |
+| `AC-US-FLAG-001-01`  | `PS-BACKEND`   | Backend          | ✅ Met          |
+| `AC-US-FLAG-001-02`  | `PS-DASHBOARD` | Backend          | ⚠️ Insufficient |
+| `AC-US-FLAG-001-02`  | `PS-BACKEND`   | Backend          | ✅ Met          |
+| `AC-US-FLAG-001-03`  | `PS-DASHBOARD` | Backend          | ⚠️ Insufficient |
+| `AC-US-FLAG-001-03`  | `PS-BACKEND`   | Backend          | ✅ Met          |
+| `AC-US-FLAG-001-04`  | `PS-DASHBOARD` | None linked      | ❌ Missing      |
+| `AC-US-FLAG-001-04`  | `PS-BACKEND`   | None linked      | ❌ Missing      |
+| `AC-US-FLAG-001-05`  | `PS-BACKEND`   | None linked      | ❌ Missing      |
+| `AC-US-FLAG-001-06`  | `PS-BACKEND`   | None linked      | ❌ Missing      |
+| `AC-US-FLAG-001-07`  | `PS-BACKEND`   | None linked      | ❌ Missing      |
+| `AC-US-FLAG-001-08`  | `PS-BACKEND`   | Backend          | ⚠️ Insufficient |
+| `AC-US-FLAG-001-09`  | `PS-BACKEND`   | Backend          | ⚠️ Insufficient |
+| `AC-US-FLAG-001-10`  | `PS-BACKEND`   | None linked      | ❌ Missing      |
 
 ## US-FLAG-002: Manage Company Overrides
 
@@ -134,18 +129,22 @@ reference has the expected layer label.
 
 | Acceptance Criterion | Proof Strategy | Current Evidence | Status          |
 | -------------------- | -------------- | ---------------- | --------------- |
-| `AC-US-FLAG-002-01`  | `PS-FL-READ`   | None linked      | ❌ Missing      |
-| `AC-US-FLAG-002-02`  | `PS-FL-WRITE`  | Backend          | ⚠️ Insufficient |
-| `AC-US-FLAG-002-03`  | `PS-FL-WRITE`  | Backend          | ⚠️ Insufficient |
-| `AC-US-FLAG-002-04`  | `PS-FL-WRITE`  | Backend          | ⚠️ Insufficient |
-| `AC-US-FLAG-002-05`  | `PS-FL-RULE`   | None linked      | ❌ Missing      |
-| `AC-US-FLAG-002-06`  | `PS-FL-RULE`   | None linked      | ❌ Missing      |
-| `AC-US-FLAG-002-07`  | `PS-FL-RULE`   | Backend          | ✅ Met          |
-| `AC-US-FLAG-002-08`  | `PS-FL-RULE`   | Backend          | ⚠️ Insufficient |
-| `AC-US-FLAG-002-09`  | `PS-FL-RULE`   | Backend          | ⚠️ Insufficient |
-| `AC-US-FLAG-002-10`  | `PS-FL-RULE`   | Backend          | ⚠️ Insufficient |
-| `AC-US-FLAG-002-11`  | `PS-FL-RULE`   | Backend          | ⚠️ Insufficient |
-| `AC-US-FLAG-002-12`  | `PS-FL-RULE`   | None linked      | ❌ Missing      |
+| `AC-US-FLAG-002-01`  | `PS-DASHBOARD` | None linked      | ❌ Missing      |
+| `AC-US-FLAG-002-01`  | `PS-BACKEND`   | None linked      | ❌ Missing      |
+| `AC-US-FLAG-002-02`  | `PS-DASHBOARD` | Backend          | ⚠️ Insufficient |
+| `AC-US-FLAG-002-02`  | `PS-BACKEND`   | Backend          | ✅ Met          |
+| `AC-US-FLAG-002-03`  | `PS-DASHBOARD` | Backend          | ⚠️ Insufficient |
+| `AC-US-FLAG-002-03`  | `PS-BACKEND`   | Backend          | ✅ Met          |
+| `AC-US-FLAG-002-04`  | `PS-DASHBOARD` | Backend          | ⚠️ Insufficient |
+| `AC-US-FLAG-002-04`  | `PS-BACKEND`   | Backend          | ✅ Met          |
+| `AC-US-FLAG-002-05`  | `PS-BACKEND`   | None linked      | ❌ Missing      |
+| `AC-US-FLAG-002-06`  | `PS-BACKEND`   | None linked      | ❌ Missing      |
+| `AC-US-FLAG-002-07`  | `PS-BACKEND`   | Backend          | ✅ Met          |
+| `AC-US-FLAG-002-08`  | `PS-BACKEND`   | Backend          | ⚠️ Insufficient |
+| `AC-US-FLAG-002-09`  | `PS-BACKEND`   | Backend          | ⚠️ Insufficient |
+| `AC-US-FLAG-002-10`  | `PS-BACKEND`   | Backend          | ⚠️ Insufficient |
+| `AC-US-FLAG-002-11`  | `PS-BACKEND`   | Backend          | ⚠️ Insufficient |
+| `AC-US-FLAG-002-12`  | `PS-BACKEND`   | None linked      | ❌ Missing      |
 
 ## US-FLAG-003: Remove Obsolete Restrictions
 
@@ -175,13 +174,17 @@ reference has the expected layer label.
 
 | Acceptance Criterion | Proof Strategy | Current Evidence | Status          |
 | -------------------- | -------------- | ---------------- | --------------- |
-| `AC-US-FLAG-003-01`  | `PS-FL-WRITE`  | Backend          | ⚠️ Insufficient |
-| `AC-US-FLAG-003-02`  | `PS-FL-WRITE`  | Backend          | ⚠️ Insufficient |
-| `AC-US-FLAG-003-03`  | `PS-FL-GUARD`  | None linked      | ❌ Missing      |
-| `AC-US-FLAG-003-04`  | `PS-FL-UI`     | None linked      | ❌ Missing      |
-| `AC-US-FLAG-003-05`  | `PS-FL-RULE`   | Backend          | ✅ Met          |
-| `AC-US-FLAG-003-06`  | `PS-FL-FAIL`   | Backend          | ⚠️ Insufficient |
-| `AC-US-FLAG-003-07`  | `PS-FL-RULE`   | None linked      | ❌ Missing      |
+| `AC-US-FLAG-003-01`  | `PS-DASHBOARD` | Backend          | ⚠️ Insufficient |
+| `AC-US-FLAG-003-01`  | `PS-BACKEND`   | Backend          | ✅ Met          |
+| `AC-US-FLAG-003-02`  | `PS-DASHBOARD` | Backend          | ⚠️ Insufficient |
+| `AC-US-FLAG-003-02`  | `PS-BACKEND`   | Backend          | ✅ Met          |
+| `AC-US-FLAG-003-03`  | `PS-DASHBOARD` | None linked      | ❌ Missing      |
+| `AC-US-FLAG-003-03`  | `PS-BACKEND`   | None linked      | ❌ Missing      |
+| `AC-US-FLAG-003-04`  | `PS-DASHBOARD` | None linked      | ❌ Missing      |
+| `AC-US-FLAG-003-05`  | `PS-BACKEND`   | Backend          | ✅ Met          |
+| `AC-US-FLAG-003-06`  | `PS-DASHBOARD` | Backend          | ⚠️ Insufficient |
+| `AC-US-FLAG-003-06`  | `PS-BACKEND`   | Backend          | ✅ Met          |
+| `AC-US-FLAG-003-07`  | `PS-BACKEND`   | None linked      | ❌ Missing      |
 
 ## Known Gaps
 

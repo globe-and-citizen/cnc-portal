@@ -74,15 +74,7 @@ reference has the expected layer label.
 | US-MICROPAYMENTS-006 | ⬜ Planned   | ❌ 0/9 met      | `AC-US-MICROPAYMENTS-006-01–09` |
 | US-MICROPAYMENTS-007 | ⬜ Planned   | ❌ 0/9 met      | `AC-US-MICROPAYMENTS-007-01–09` |
 
-## Proof Strategy Reference
-
-| Strategy        | Responsibilities     | Required Evidence    | Proof Rationale                                                                |
-| --------------- | -------------------- | -------------------- | ------------------------------------------------------------------------------ |
-| `PS-M-UI`       | Dashboard            | Dashboard            | Version selection, controls, and failure states belong to the dashboard.       |
-| `PS-M-CONTRACT` | Contract             | Contract             | Owner guards, fee, token, and sweep rules need version-matched contract proof. |
-| `PS-M-JOINT`    | Dashboard + Contract | Dashboard + Contract | Displayed state or submitted action must agree with the selected deployment.   |
-| `PS-M-BANK`     | Contract             | Contract             | Bank, Officer, and FeeCollector fee delivery must agree across contracts.      |
-| `PS-M-LEGACY`   | Dashboard + Contract | Dashboard + Contract | Historical target, ABI, and action semantics differ from current versions.     |
+Proof obligations use the [shared proof-strategy registry](../../../testing/proof-strategies.md). Multiple IDs for one AC are cumulative.
 
 ## US-MICROPAYMENTS-001: Inspect FeeCollector Deployments
 
@@ -126,18 +118,19 @@ reference has the expected layer label.
 
 | Acceptance Criterion         | Proof Strategy | Current Evidence | Status     |
 | ---------------------------- | -------------- | ---------------- | ---------- |
-| `AC-US-MICROPAYMENTS-001-01` | `PS-M-UI`      | None linked      | ❌ Missing |
-| `AC-US-MICROPAYMENTS-001-02` | `PS-M-UI`      | None linked      | ❌ Missing |
-| `AC-US-MICROPAYMENTS-001-03` | `PS-M-UI`      | None linked      | ❌ Missing |
-| `AC-US-MICROPAYMENTS-001-04` | `PS-M-UI`      | None linked      | ❌ Missing |
-| `AC-US-MICROPAYMENTS-001-05` | `PS-M-UI`      | None linked      | ❌ Missing |
-| `AC-US-MICROPAYMENTS-001-06` | `PS-M-UI`      | None linked      | ❌ Missing |
-| `AC-US-MICROPAYMENTS-001-07` | `PS-M-JOINT`   | None linked      | ❌ Missing |
-| `AC-US-MICROPAYMENTS-001-08` | `PS-M-BANK`    | None linked      | ❌ Missing |
-| `AC-US-MICROPAYMENTS-001-09` | `PS-M-BANK`    | None linked      | ❌ Missing |
-| `AC-US-MICROPAYMENTS-001-10` | `PS-M-UI`      | None linked      | ❌ Missing |
-| `AC-US-MICROPAYMENTS-001-11` | `PS-M-UI`      | None linked      | ❌ Missing |
-| `AC-US-MICROPAYMENTS-001-12` | `PS-M-UI`      | None linked      | ❌ Missing |
+| `AC-US-MICROPAYMENTS-001-01` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-MICROPAYMENTS-001-02` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-MICROPAYMENTS-001-03` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-MICROPAYMENTS-001-04` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-MICROPAYMENTS-001-05` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-MICROPAYMENTS-001-06` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-MICROPAYMENTS-001-07` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-MICROPAYMENTS-001-07` | `PS-CONTRACT`  | None linked      | ❌ Missing |
+| `AC-US-MICROPAYMENTS-001-08` | `PS-CONTRACT`  | None linked      | ❌ Missing |
+| `AC-US-MICROPAYMENTS-001-09` | `PS-CONTRACT`  | None linked      | ❌ Missing |
+| `AC-US-MICROPAYMENTS-001-10` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-MICROPAYMENTS-001-11` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-MICROPAYMENTS-001-12` | `PS-DASHBOARD` | None linked      | ❌ Missing |
 
 **Dependencies:** Dashboard authentication, administrator roles, and the selected FeeCollector deployment
 
@@ -172,17 +165,19 @@ reference has the expected layer label.
 
 ### Test Coverage
 
-| Acceptance Criterion         | Proof Strategy  | Current Evidence | Status     |
-| ---------------------------- | --------------- | ---------------- | ---------- |
-| `AC-US-MICROPAYMENTS-002-01` | `PS-M-JOINT`    | None linked      | ❌ Missing |
-| `AC-US-MICROPAYMENTS-002-02` | `PS-M-UI`       | None linked      | ❌ Missing |
-| `AC-US-MICROPAYMENTS-002-03` | `PS-M-UI`       | None linked      | ❌ Missing |
-| `AC-US-MICROPAYMENTS-002-04` | `PS-M-CONTRACT` | None linked      | ❌ Missing |
-| `AC-US-MICROPAYMENTS-002-05` | `PS-M-UI`       | None linked      | ❌ Missing |
-| `AC-US-MICROPAYMENTS-002-06` | `PS-M-JOINT`    | None linked      | ❌ Missing |
-| `AC-US-MICROPAYMENTS-002-07` | `PS-M-UI`       | None linked      | ❌ Missing |
-| `AC-US-MICROPAYMENTS-002-08` | `PS-M-UI`       | None linked      | ❌ Missing |
-| `AC-US-MICROPAYMENTS-002-09` | `PS-M-UI`       | None linked      | ❌ Missing |
+| Acceptance Criterion         | Proof Strategy | Current Evidence | Status     |
+| ---------------------------- | -------------- | ---------------- | ---------- |
+| `AC-US-MICROPAYMENTS-002-01` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-MICROPAYMENTS-002-01` | `PS-CONTRACT`  | None linked      | ❌ Missing |
+| `AC-US-MICROPAYMENTS-002-02` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-MICROPAYMENTS-002-03` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-MICROPAYMENTS-002-04` | `PS-CONTRACT`  | None linked      | ❌ Missing |
+| `AC-US-MICROPAYMENTS-002-05` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-MICROPAYMENTS-002-06` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-MICROPAYMENTS-002-06` | `PS-CONTRACT`  | None linked      | ❌ Missing |
+| `AC-US-MICROPAYMENTS-002-07` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-MICROPAYMENTS-002-08` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-MICROPAYMENTS-002-09` | `PS-DASHBOARD` | None linked      | ❌ Missing |
 
 **Dependencies:** US-MICROPAYMENTS-001 and ownership of V1
 
@@ -216,17 +211,21 @@ reference has the expected layer label.
 
 ### Test Coverage
 
-| Acceptance Criterion         | Proof Strategy  | Current Evidence | Status          |
-| ---------------------------- | --------------- | ---------------- | --------------- |
-| `AC-US-MICROPAYMENTS-003-01` | `PS-M-JOINT`    | None linked      | ❌ Missing      |
-| `AC-US-MICROPAYMENTS-003-02` | `PS-M-JOINT`    | None linked      | ❌ Missing      |
-| `AC-US-MICROPAYMENTS-003-03` | `PS-M-JOINT`    | None linked      | ❌ Missing      |
-| `AC-US-MICROPAYMENTS-003-04` | `PS-M-CONTRACT` | None linked      | ❌ Missing      |
-| `AC-US-MICROPAYMENTS-003-05` | `PS-M-CONTRACT` | Contract         | ⚠️ Insufficient |
-| `AC-US-MICROPAYMENTS-003-06` | `PS-M-JOINT`    | None linked      | ❌ Missing      |
-| `AC-US-MICROPAYMENTS-003-07` | `PS-M-UI`       | None linked      | ❌ Missing      |
-| `AC-US-MICROPAYMENTS-003-08` | `PS-M-UI`       | None linked      | ❌ Missing      |
-| `AC-US-MICROPAYMENTS-003-09` | `PS-M-UI`       | None linked      | ❌ Missing      |
+| Acceptance Criterion         | Proof Strategy | Current Evidence | Status          |
+| ---------------------------- | -------------- | ---------------- | --------------- |
+| `AC-US-MICROPAYMENTS-003-01` | `PS-DASHBOARD` | None linked      | ❌ Missing      |
+| `AC-US-MICROPAYMENTS-003-01` | `PS-CONTRACT`  | None linked      | ❌ Missing      |
+| `AC-US-MICROPAYMENTS-003-02` | `PS-DASHBOARD` | None linked      | ❌ Missing      |
+| `AC-US-MICROPAYMENTS-003-02` | `PS-CONTRACT`  | None linked      | ❌ Missing      |
+| `AC-US-MICROPAYMENTS-003-03` | `PS-DASHBOARD` | None linked      | ❌ Missing      |
+| `AC-US-MICROPAYMENTS-003-03` | `PS-CONTRACT`  | None linked      | ❌ Missing      |
+| `AC-US-MICROPAYMENTS-003-04` | `PS-CONTRACT`  | None linked      | ❌ Missing      |
+| `AC-US-MICROPAYMENTS-003-05` | `PS-CONTRACT`  | Contract         | ⚠️ Insufficient |
+| `AC-US-MICROPAYMENTS-003-06` | `PS-DASHBOARD` | None linked      | ❌ Missing      |
+| `AC-US-MICROPAYMENTS-003-06` | `PS-CONTRACT`  | None linked      | ❌ Missing      |
+| `AC-US-MICROPAYMENTS-003-07` | `PS-DASHBOARD` | None linked      | ❌ Missing      |
+| `AC-US-MICROPAYMENTS-003-08` | `PS-DASHBOARD` | None linked      | ❌ Missing      |
+| `AC-US-MICROPAYMENTS-003-09` | `PS-DASHBOARD` | None linked      | ❌ Missing      |
 
 **Dependencies:** US-MICROPAYMENTS-001 and ownership of V1
 
@@ -258,16 +257,18 @@ reference has the expected layer label.
 
 ### Test Coverage
 
-| Acceptance Criterion         | Proof Strategy  | Current Evidence | Status          |
-| ---------------------------- | --------------- | ---------------- | --------------- |
-| `AC-US-MICROPAYMENTS-004-01` | `PS-M-JOINT`    | None linked      | ❌ Missing      |
-| `AC-US-MICROPAYMENTS-004-02` | `PS-M-JOINT`    | Contract         | ⚠️ Insufficient |
-| `AC-US-MICROPAYMENTS-004-03` | `PS-M-UI`       | None linked      | ❌ Missing      |
-| `AC-US-MICROPAYMENTS-004-04` | `PS-M-CONTRACT` | Contract         | ⚠️ Insufficient |
-| `AC-US-MICROPAYMENTS-004-05` | `PS-M-CONTRACT` | None linked      | ❌ Missing      |
-| `AC-US-MICROPAYMENTS-004-06` | `PS-M-UI`       | None linked      | ❌ Missing      |
-| `AC-US-MICROPAYMENTS-004-07` | `PS-M-UI`       | None linked      | ❌ Missing      |
-| `AC-US-MICROPAYMENTS-004-08` | `PS-M-UI`       | None linked      | ❌ Missing      |
+| Acceptance Criterion         | Proof Strategy | Current Evidence | Status          |
+| ---------------------------- | -------------- | ---------------- | --------------- |
+| `AC-US-MICROPAYMENTS-004-01` | `PS-DASHBOARD` | None linked      | ❌ Missing      |
+| `AC-US-MICROPAYMENTS-004-01` | `PS-CONTRACT`  | None linked      | ❌ Missing      |
+| `AC-US-MICROPAYMENTS-004-02` | `PS-DASHBOARD` | Contract         | ⚠️ Insufficient |
+| `AC-US-MICROPAYMENTS-004-02` | `PS-CONTRACT`  | Contract         | ✅ Met          |
+| `AC-US-MICROPAYMENTS-004-03` | `PS-DASHBOARD` | None linked      | ❌ Missing      |
+| `AC-US-MICROPAYMENTS-004-04` | `PS-CONTRACT`  | Contract         | ⚠️ Insufficient |
+| `AC-US-MICROPAYMENTS-004-05` | `PS-CONTRACT`  | None linked      | ❌ Missing      |
+| `AC-US-MICROPAYMENTS-004-06` | `PS-DASHBOARD` | None linked      | ❌ Missing      |
+| `AC-US-MICROPAYMENTS-004-07` | `PS-DASHBOARD` | None linked      | ❌ Missing      |
+| `AC-US-MICROPAYMENTS-004-08` | `PS-DASHBOARD` | None linked      | ❌ Missing      |
 
 **Dependencies:** US-MICROPAYMENTS-001 and ownership of V1
 
@@ -299,15 +300,16 @@ reference has the expected layer label.
 
 ### Test Coverage
 
-| Acceptance Criterion         | Proof Strategy  | Current Evidence | Status     |
-| ---------------------------- | --------------- | ---------------- | ---------- |
-| `AC-US-MICROPAYMENTS-005-01` | `PS-M-JOINT`    | None linked      | ❌ Missing |
-| `AC-US-MICROPAYMENTS-005-02` | `PS-M-CONTRACT` | None linked      | ❌ Missing |
-| `AC-US-MICROPAYMENTS-005-03` | `PS-M-CONTRACT` | None linked      | ❌ Missing |
-| `AC-US-MICROPAYMENTS-005-04` | `PS-M-UI`       | None linked      | ❌ Missing |
-| `AC-US-MICROPAYMENTS-005-05` | `PS-M-UI`       | None linked      | ❌ Missing |
-| `AC-US-MICROPAYMENTS-005-06` | `PS-M-UI`       | None linked      | ❌ Missing |
-| `AC-US-MICROPAYMENTS-005-07` | `PS-M-UI`       | None linked      | ❌ Missing |
+| Acceptance Criterion         | Proof Strategy | Current Evidence | Status     |
+| ---------------------------- | -------------- | ---------------- | ---------- |
+| `AC-US-MICROPAYMENTS-005-01` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-MICROPAYMENTS-005-01` | `PS-CONTRACT`  | None linked      | ❌ Missing |
+| `AC-US-MICROPAYMENTS-005-02` | `PS-CONTRACT`  | None linked      | ❌ Missing |
+| `AC-US-MICROPAYMENTS-005-03` | `PS-CONTRACT`  | None linked      | ❌ Missing |
+| `AC-US-MICROPAYMENTS-005-04` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-MICROPAYMENTS-005-05` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-MICROPAYMENTS-005-06` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-MICROPAYMENTS-005-07` | `PS-DASHBOARD` | None linked      | ❌ Missing |
 
 **Dependencies:** US-MICROPAYMENTS-001 and ownership of V1
 
@@ -342,17 +344,18 @@ reference has the expected layer label.
 
 ### Test Coverage
 
-| Acceptance Criterion         | Proof Strategy  | Current Evidence | Status          |
-| ---------------------------- | --------------- | ---------------- | --------------- |
-| `AC-US-MICROPAYMENTS-006-01` | `PS-M-UI`       | None linked      | ❌ Missing      |
-| `AC-US-MICROPAYMENTS-006-02` | `PS-M-CONTRACT` | Contract         | ⚠️ Insufficient |
-| `AC-US-MICROPAYMENTS-006-03` | `PS-M-UI`       | None linked      | ❌ Missing      |
-| `AC-US-MICROPAYMENTS-006-04` | `PS-M-CONTRACT` | Contract         | ⚠️ Insufficient |
-| `AC-US-MICROPAYMENTS-006-05` | `PS-M-CONTRACT` | None linked      | ❌ Missing      |
-| `AC-US-MICROPAYMENTS-006-06` | `PS-M-JOINT`    | Contract         | ⚠️ Insufficient |
-| `AC-US-MICROPAYMENTS-006-07` | `PS-M-UI`       | None linked      | ❌ Missing      |
-| `AC-US-MICROPAYMENTS-006-08` | `PS-M-UI`       | None linked      | ❌ Missing      |
-| `AC-US-MICROPAYMENTS-006-09` | `PS-M-UI`       | None linked      | ❌ Missing      |
+| Acceptance Criterion         | Proof Strategy | Current Evidence | Status          |
+| ---------------------------- | -------------- | ---------------- | --------------- |
+| `AC-US-MICROPAYMENTS-006-01` | `PS-DASHBOARD` | None linked      | ❌ Missing      |
+| `AC-US-MICROPAYMENTS-006-02` | `PS-CONTRACT`  | Contract         | ⚠️ Insufficient |
+| `AC-US-MICROPAYMENTS-006-03` | `PS-DASHBOARD` | None linked      | ❌ Missing      |
+| `AC-US-MICROPAYMENTS-006-04` | `PS-CONTRACT`  | Contract         | ⚠️ Insufficient |
+| `AC-US-MICROPAYMENTS-006-05` | `PS-CONTRACT`  | None linked      | ❌ Missing      |
+| `AC-US-MICROPAYMENTS-006-06` | `PS-DASHBOARD` | Contract         | ⚠️ Insufficient |
+| `AC-US-MICROPAYMENTS-006-06` | `PS-CONTRACT`  | Contract         | ✅ Met          |
+| `AC-US-MICROPAYMENTS-006-07` | `PS-DASHBOARD` | None linked      | ❌ Missing      |
+| `AC-US-MICROPAYMENTS-006-08` | `PS-DASHBOARD` | None linked      | ❌ Missing      |
+| `AC-US-MICROPAYMENTS-006-09` | `PS-DASHBOARD` | None linked      | ❌ Missing      |
 
 **Dependencies:** US-MICROPAYMENTS-001 and ownership of V1
 
@@ -390,15 +393,18 @@ reference has the expected layer label.
 
 | Acceptance Criterion         | Proof Strategy | Current Evidence | Status     |
 | ---------------------------- | -------------- | ---------------- | ---------- |
-| `AC-US-MICROPAYMENTS-007-01` | `PS-M-LEGACY`  | None linked      | ❌ Missing |
-| `AC-US-MICROPAYMENTS-007-02` | `PS-M-UI`      | None linked      | ❌ Missing |
-| `AC-US-MICROPAYMENTS-007-03` | `PS-M-LEGACY`  | None linked      | ❌ Missing |
-| `AC-US-MICROPAYMENTS-007-04` | `PS-M-UI`      | None linked      | ❌ Missing |
-| `AC-US-MICROPAYMENTS-007-05` | `PS-M-UI`      | None linked      | ❌ Missing |
-| `AC-US-MICROPAYMENTS-007-06` | `PS-M-LEGACY`  | None linked      | ❌ Missing |
-| `AC-US-MICROPAYMENTS-007-07` | `PS-M-UI`      | None linked      | ❌ Missing |
-| `AC-US-MICROPAYMENTS-007-08` | `PS-M-UI`      | None linked      | ❌ Missing |
-| `AC-US-MICROPAYMENTS-007-09` | `PS-M-UI`      | None linked      | ❌ Missing |
+| `AC-US-MICROPAYMENTS-007-01` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-MICROPAYMENTS-007-01` | `PS-CONTRACT`  | None linked      | ❌ Missing |
+| `AC-US-MICROPAYMENTS-007-02` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-MICROPAYMENTS-007-03` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-MICROPAYMENTS-007-03` | `PS-CONTRACT`  | None linked      | ❌ Missing |
+| `AC-US-MICROPAYMENTS-007-04` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-MICROPAYMENTS-007-05` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-MICROPAYMENTS-007-06` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-MICROPAYMENTS-007-06` | `PS-CONTRACT`  | None linked      | ❌ Missing |
+| `AC-US-MICROPAYMENTS-007-07` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-MICROPAYMENTS-007-08` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-MICROPAYMENTS-007-09` | `PS-DASHBOARD` | None linked      | ❌ Missing |
 
 **Dependencies:** US-MICROPAYMENTS-001, ownership of V0 or V0.1, and the selected historical deployment
 

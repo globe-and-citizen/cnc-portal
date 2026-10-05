@@ -18,6 +18,19 @@ export const ACCEPTANCE_COVERAGE_LABELS = [
   'Dashboard'
 ]
 export const ACCEPTANCE_RESPONSIBILITY_LABELS = ['Frontend', 'Backend', 'Contract', 'Dashboard']
+export const PROOF_OBLIGATIONS = {
+  'Frontend rule': 'Frontend',
+  'Backend rule': 'Backend',
+  'Contract rule': 'Contract',
+  'Dashboard rule': 'Dashboard',
+  'Browser behavior': 'Mocked browser',
+  'Integrated client journey': 'Integrated E2E',
+  'Real API boundary': 'Integrated E2E',
+  'Real chain boundary': 'Integrated E2E',
+  'Real API and chain boundary': 'Integrated E2E',
+  'Integrated dashboard journey': 'Integrated E2E',
+  'Real dashboard/API boundary': 'Integrated E2E'
+}
 
 export function classifyE2eCoverageMode(document) {
   if (!/^app\/test\/e2e\//.test(document.path)) return null
@@ -98,7 +111,7 @@ export function parseProofStrategies(document) {
       documentPath: document.path,
       line: index + 1,
       id,
-      responsibilities: cells[1],
+      obligation: cells[1],
       expected: cells[2],
       rationale: cells[3]
     })
@@ -181,19 +194,40 @@ function markdownTableCells(line) {
     .map((cell) => cell.trim())
 }
 
-export function validateFeatureCoverageStructure(featureDocuments) {
+export function validateFeatureCoverageStructure(featureDocuments, proofStrategyDocument = null) {
   const errors = []
 
   for (const document of featureDocuments) {
-    const storyIds = [...document.content.matchAll(/^## (US-[A-Z0-9-]+):/gm)].map((match) => match[1])
-    for (const heading of ['Status Overview', 'Test Coverage Overview', 'Proof Strategy Reference']) {
+    const storyIds = [...document.content.matchAll(/^## (US-[A-Z0-9-]+):/gm)].map(
+      (match) => match[1]
+    )
+    for (const heading of [
+      'Status Overview',
+      'Test Coverage Overview',
+      'Proof Strategy Reference'
+    ]) {
       const count = document.content.split('\n').filter((line) => line === `## ${heading}`).length
       if (count > 1) errors.push(`${document.path} repeats ${heading}; keep one canonical section.`)
+      if (proofStrategyDocument && heading === 'Proof Strategy Reference' && count > 0) {
+        errors.push(
+          `${document.path} redefines proof strategies instead of using the shared registry.`
+        )
+      }
     }
     const statusLines = tableRowsUnderHeading(document, 'Status Overview')
     const overviewLines = tableRowsUnderHeading(document, 'Test Coverage Overview')
     const strategies = parseProofStrategies(document)
     const coverageRows = parseAcceptanceCoverageRows(document)
+
+    if (
+      proofStrategyDocument &&
+      /^\|\s*`PS-[A-Z0-9-]+`\s*\|/m.test(document.content) &&
+      strategies.length === 0
+    ) {
+      errors.push(
+        `${document.path} contains a local proof-strategy definition instead of using the shared registry.`
+      )
+    }
 
     if (!statusLines) {
       errors.push(`${document.path} is missing Status Overview.`)
@@ -206,7 +240,9 @@ export function validateFeatureCoverageStructure(featureDocuments) {
 
     const overviewHeader = markdownTableCells(overviewLines[0] ?? '')
     if (overviewHeader.join('|') !== 'User Story|Main Journey|Coverage Target|Gaps') {
-      errors.push(`${document.path} must use User Story, Main Journey, Coverage Target, and Gaps in its coverage overview.`)
+      errors.push(
+        `${document.path} must use User Story, Main Journey, Coverage Target, and Gaps in its coverage overview.`
+      )
     }
 
     const statusRows = statusLines
@@ -222,17 +258,30 @@ export function validateFeatureCoverageStructure(featureDocuments) {
       .map((cells) => cells[0])
 
     if (storyIds.join('|') !== statusIds.join('|')) {
-      errors.push(`${document.path} must list every detailed story once, in the same order as Status Overview.`)
+      errors.push(
+        `${document.path} must list every detailed story once, in the same order as Status Overview.`
+      )
     }
     if (expectedOverviewIds.join('|') !== overviewIds.join('|')) {
-      errors.push(`${document.path} must list every owned story once, in status order, in Test Coverage Overview.`)
+      errors.push(
+        `${document.path} must list every owned story once, in status order, in Test Coverage Overview.`
+      )
     }
 
     const assessableIds = statusRows
       .filter((cells) => !cells[3]?.includes('🔗 Reference') && !cells[3]?.includes('📝 Draft'))
       .map((cells) => cells[0])
-    if (assessableIds.length > 0 && strategies.length === 0) {
-      errors.push(`${document.path} is missing Proof Strategy Reference for its assessable stories.`)
+    if (assessableIds.length > 0) {
+      if (
+        proofStrategyDocument &&
+        !repositoryLinks(document).includes(proofStrategyDocument.path)
+      ) {
+        errors.push(`${document.path} must link to the shared proof-strategy registry.`)
+      } else if (!proofStrategyDocument && strategies.length === 0) {
+        errors.push(
+          `${document.path} is missing Proof Strategy Reference for its assessable stories.`
+        )
+      }
     }
     for (const storyId of assessableIds) {
       const storyCoverage = coverageRows.filter((row) => row.storyId === storyId)
@@ -244,7 +293,16 @@ export function validateFeatureCoverageStructure(featureDocuments) {
       const criterionCount = parseAcceptanceCriteria(document).filter(
         (criterion) => criterion.storyId === storyId
       ).length
-      const metCount = storyCoverage.filter((row) => row.status === '✅ Met').length
+      const obligationsByCriterion = new Map()
+      for (const row of storyCoverage) {
+        const obligations = obligationsByCriterion.get(row.id) ?? []
+        obligations.push(row)
+        obligationsByCriterion.set(row.id, obligations)
+      }
+      const metCount = [...obligationsByCriterion.values()].filter(
+        (obligations) =>
+          obligations.length > 0 && obligations.every((row) => row.status === '✅ Met')
+      ).length
       const summary = overviewRows.find((cells) => cells[0] === storyId)?.[2] ?? ''
       const ratio = summary.match(/(\d+)\/(\d+)/)
       if (!ratio || Number(ratio[1]) !== metCount || Number(ratio[2]) !== criterionCount) {
@@ -528,7 +586,49 @@ export function acceptanceCoverageLabels(criterion) {
   return labels
 }
 
-function validateAcceptanceCoverageRows({ featureDocuments, criteria, references }) {
+function validateProofStrategyDefinitions(strategies, errors) {
+  const strategiesById = new Map()
+  for (const strategy of strategies) {
+    const location = `${strategy.documentPath}:${strategy.line}`
+    if (strategiesById.has(strategy.id)) {
+      errors.push(`${location} duplicates proof strategy ${strategy.id}.`)
+      continue
+    }
+    strategiesById.set(strategy.id, strategy)
+
+    if (!Object.hasOwn(PROOF_OBLIGATIONS, strategy.obligation)) {
+      errors.push(
+        `${location} uses unsupported proof obligation ${strategy.obligation} for ${strategy.id}.`
+      )
+    } else if (strategy.expected !== PROOF_OBLIGATIONS[strategy.obligation]) {
+      errors.push(
+        `${location} requires ${strategy.expected} for ${strategy.id}; ${strategy.obligation} requires ${PROOF_OBLIGATIONS[strategy.obligation]}.`
+      )
+    }
+
+    const expectedLabels = strategy.expected.split(' + ').map((label) => label.trim())
+    const invalidExpected = expectedLabels.filter(
+      (label) => !ACCEPTANCE_COVERAGE_LABELS.includes(label)
+    )
+    if (invalidExpected.length > 0) {
+      errors.push(
+        `${location} uses unsupported required evidence ${invalidExpected.join(', ')} for ${strategy.id}.`
+      )
+    }
+
+    if (!strategy.rationale) {
+      errors.push(`${location} is missing a proof rationale for ${strategy.id}.`)
+    }
+  }
+  return strategiesById
+}
+
+function validateAcceptanceCoverageRows({
+  featureDocuments,
+  proofStrategyDocument,
+  criteria,
+  references
+}) {
   const errors = []
   const criteriaById = new Map(criteria.map((criterion) => [criterion.id, criterion]))
   const coverageById = new Map(
@@ -537,45 +637,16 @@ function validateAcceptanceCoverageRows({ featureDocuments, criteria, references
       criterion
     ])
   )
+  const sharedStrategies = proofStrategyDocument
+    ? validateProofStrategyDefinitions(parseProofStrategies(proofStrategyDocument), errors)
+    : null
+  if (proofStrategyDocument && sharedStrategies.size === 0) {
+    errors.push(`${proofStrategyDocument.path} has no proof-strategy definitions.`)
+  }
 
   for (const document of featureDocuments) {
-    const strategies = parseProofStrategies(document)
-    const strategiesById = new Map()
-
-    for (const strategy of strategies) {
-      const location = `${strategy.documentPath}:${strategy.line}`
-      if (strategiesById.has(strategy.id)) {
-        errors.push(`${location} duplicates proof strategy ${strategy.id}.`)
-        continue
-      }
-      strategiesById.set(strategy.id, strategy)
-
-      const responsibilityLabels = strategy.responsibilities
-        .split(' + ')
-        .map((label) => label.trim())
-      const invalidResponsibilities = responsibilityLabels.filter(
-        (label) => !ACCEPTANCE_RESPONSIBILITY_LABELS.includes(label)
-      )
-      if (invalidResponsibilities.length > 0) {
-        errors.push(
-          `${location} uses unsupported responsibilities ${invalidResponsibilities.join(', ')} for ${strategy.id}.`
-        )
-      }
-
-      const expectedLabels = strategy.expected.split(' + ').map((label) => label.trim())
-      const invalidExpected = expectedLabels.filter(
-        (label) => !ACCEPTANCE_COVERAGE_LABELS.includes(label)
-      )
-      if (invalidExpected.length > 0) {
-        errors.push(
-          `${location} uses unsupported required evidence ${invalidExpected.join(', ')} for ${strategy.id}.`
-        )
-      }
-
-      if (!strategy.rationale) {
-        errors.push(`${location} is missing a proof rationale for ${strategy.id}.`)
-      }
-    }
+    const strategiesById =
+      sharedStrategies ?? validateProofStrategyDefinitions(parseProofStrategies(document), errors)
 
     const rows = parseAcceptanceCoverageRows(document)
     const coveredStories = new Set(rows.map((row) => row.storyId))
@@ -593,11 +664,19 @@ function validateAcceptanceCoverageRows({ featureDocuments, criteria, references
           `${location} declares ${row.id} under ${row.storyId}, but it belongs to ${criterion.storyId}.`
         )
       }
-      if (rowsById.has(row.id)) {
-        errors.push(`${location} duplicates the test-coverage row for ${row.id}.`)
+      const obligations = rowsById.get(row.id) ?? new Map()
+      const assignment = row.strategyId ?? row.expected
+      if (obligations.has(assignment)) {
+        errors.push(`${location} duplicates proof strategy ${assignment} for ${row.id}.`)
         continue
       }
-      rowsById.set(row.id, row)
+      obligations.set(assignment, row)
+      rowsById.set(row.id, obligations)
+
+      if (proofStrategyDocument && !row.strategyId && row.expected !== 'Decision pending') {
+        errors.push(`${location} must reference a shared proof strategy for ${row.id}.`)
+        continue
+      }
 
       const strategy = row.strategyId ? strategiesById.get(row.strategyId) : null
       if (row.strategyId && !strategy) {
@@ -609,7 +688,9 @@ function validateAcceptanceCoverageRows({ featureDocuments, criteria, references
 
       if (row.expected === 'Decision pending') {
         if (criterion.checked || row.current !== 'None linked' || row.status !== '📝 Pending') {
-          errors.push(`${location} may defer a proof decision only for an unchecked criterion without linked evidence.`)
+          errors.push(
+            `${location} may defer a proof decision only for an unchecked criterion without linked evidence.`
+          )
         }
         continue
       }
@@ -655,7 +736,8 @@ function validateAcceptanceCoverageRows({ featureDocuments, criteria, references
         : currentLabels.length > 0
           ? '⚠️ Insufficient'
           : '❌ Missing'
-      const conservativeReview = hasExpectedCoverage && ['⚠️ Insufficient', '🔎 Unverified'].includes(row.status)
+      const conservativeReview =
+        hasExpectedCoverage && ['⚠️ Insufficient', '🔎 Unverified'].includes(row.status)
       if (row.status !== expectedStatus && !conservativeReview) {
         errors.push(`${location} reports ${row.status} for ${row.id}; expected ${expectedStatus}.`)
       }
@@ -679,10 +761,16 @@ function validateAcceptanceCoverageRows({ featureDocuments, criteria, references
 export function validateAcceptanceCriteriaTraceability({
   featureDocuments,
   testDocuments,
+  proofStrategyDocument = null,
   enforceFeatureCoverage = false
 }) {
   const errors = []
-  if (enforceFeatureCoverage) errors.push(...validateFeatureCoverageStructure(featureDocuments))
+  if (enforceFeatureCoverage) {
+    if (!proofStrategyDocument) {
+      errors.push('Strict feature coverage requires the shared proof-strategy registry.')
+    }
+    errors.push(...validateFeatureCoverageStructure(featureDocuments, proofStrategyDocument))
+  }
   const criteria = featureDocuments.flatMap(parseAcceptanceCriteria)
   const criteriaById = new Map()
   const criteriaByStory = new Map()
@@ -752,6 +840,7 @@ export function validateAcceptanceCriteriaTraceability({
   errors.push(
     ...validateAcceptanceCoverageRows({
       featureDocuments,
+      proofStrategyDocument,
       criteria,
       references
     })
