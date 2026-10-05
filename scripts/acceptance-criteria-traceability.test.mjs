@@ -128,13 +128,16 @@ This is owned elsewhere.
     validateFeatureCoverageStructure([
       feature(complete.content.replace('❌ 0/1 met', '✅ 1/1 met'))
     ]),
-    [
-      'docs/features/example/README.md reports ✅ 1/1 met for US-EXAMPLE-001; expected 0/1.'
-    ]
+    ['docs/features/example/README.md reports ✅ 1/1 met for US-EXAMPLE-001; expected 0/1.']
   )
   assert.deepEqual(
     validateFeatureCoverageStructure([
-      feature(complete.content.replace('## Proof Strategy Reference', '## Test Coverage Overview\n\n## Proof Strategy Reference'))
+      feature(
+        complete.content.replace(
+          '## Proof Strategy Reference',
+          '## Test Coverage Overview\n\n## Proof Strategy Reference'
+        )
+      )
     ]),
     ['docs/features/example/README.md repeats Test Coverage Overview; keep one canonical section.']
   )
@@ -265,7 +268,12 @@ test('validates optional per-story coverage targets against representative evide
   assert.deepEqual(
     validateAcceptanceCriteriaTraceability({
       featureDocuments: [
-        feature(documentedCoverage.content.replace('Integrated E2E | ✅ Met', 'Integrated E2E | ⚠️ Insufficient'))
+        feature(
+          documentedCoverage.content.replace(
+            'Integrated E2E | ✅ Met',
+            'Integrated E2E | ⚠️ Insufficient'
+          )
+        )
       ],
       testDocuments: [integratedTest]
     }).errors,
@@ -274,7 +282,12 @@ test('validates optional per-story coverage targets against representative evide
   assert.deepEqual(
     validateAcceptanceCriteriaTraceability({
       featureDocuments: [
-        feature(documentedCoverage.content.replace('Integrated E2E | ✅ Met', 'Integrated E2E | 🔎 Unverified'))
+        feature(
+          documentedCoverage.content.replace(
+            'Integrated E2E | ✅ Met',
+            'Integrated E2E | 🔎 Unverified'
+          )
+        )
       ],
       testDocuments: [integratedTest]
     }).errors,
@@ -372,12 +385,177 @@ test('allows an unresolved proof decision only for an unchecked criterion', () =
   )
   assert.deepEqual(
     validateAcceptanceCriteriaTraceability({
-      featureDocuments: [feature(pending.content.replace('- [ ] `AC-US-EXAMPLE-001-02`', '- [x] `AC-US-EXAMPLE-001-02`'))],
+      featureDocuments: [
+        feature(
+          pending.content.replace('- [ ] `AC-US-EXAMPLE-001-02`', '- [x] `AC-US-EXAMPLE-001-02`')
+        )
+      ],
       testDocuments: []
     }).errors,
     [
       'docs/features/example/README.md:21 may defer a proof decision only for an unchecked criterion without linked evidence.'
     ]
+  )
+})
+
+const sharedProofStrategies = feature(
+  `## Proof Strategy Reference
+
+| Strategy | Responsibilities | Required Evidence | Proof Rationale |
+| -------- | ---------------- | ----------------- | --------------- |
+| \`PS-FRONTEND\` | Frontend | Frontend | The client owns this rule. |
+| \`PS-BACKEND\` | Backend | Backend | The API owns this rule. |
+| \`PS-API-INTEGRATED\` | Frontend + Backend | Integrated E2E | The hand-off must work. |
+`,
+  'docs/testing/proof-strategies.md'
+)
+
+const composableFeature = feature(`# Example — User Stories
+
+## Status Overview
+
+| User Story | Title | Actor | Status |
+| ---------- | ----- | ----- | ------ |
+| US-EXAMPLE-001 | Complete a transaction | User | 🧪 Validation |
+
+## Test Coverage Overview
+
+| User Story | Main Journey | Coverage Target | Gaps |
+| ---------- | ------------ | --------------- | ---- |
+| US-EXAMPLE-001 | ⬜ Planned | ⚠️ 1/2 met | AC-US-EXAMPLE-001-02 |
+
+Proof obligations use the [shared proof-strategy registry](../../testing/proof-strategies.md).
+
+## US-EXAMPLE-001: Complete a Transaction
+
+### Acceptance Criteria
+
+#### Happy Path
+
+- [x] \`AC-US-EXAMPLE-001-01\` Client and API rules hold.
+- [x] \`AC-US-EXAMPLE-001-02\` The browser/API hand-off persists the result.
+
+### Test Coverage
+
+| Acceptance Criterion | Proof Strategy | Current Evidence | Status |
+| -------------------- | -------------- | ---------------- | ------ |
+| \`AC-US-EXAMPLE-001-01\` | \`PS-FRONTEND\` | Frontend | ✅ Met |
+| \`AC-US-EXAMPLE-001-01\` | \`PS-BACKEND\` | Backend | ✅ Met |
+| \`AC-US-EXAMPLE-001-02\` | \`PS-API-INTEGRATED\` | Other linked: Frontend + Backend | ⚠️ Insufficient |
+`)
+
+const composableTests = [
+  testDocument('test("[AC-US-EXAMPLE-001-01] [AC-US-EXAMPLE-001-02] client", () => {})'),
+  testDocument(
+    'test("[AC-US-EXAMPLE-001-01] [AC-US-EXAMPLE-001-02] API", () => {})',
+    'backend/src/example/example.test.ts'
+  )
+]
+
+test('composes independent obligations without inferring integrated proof from unit layers', () => {
+  const validate = (document, tests = composableTests) =>
+    validateAcceptanceCriteriaTraceability({
+      featureDocuments: [document],
+      proofStrategyDocument: sharedProofStrategies,
+      testDocuments: tests,
+      enforceFeatureCoverage: true
+    }).errors
+
+  assert.deepEqual(validate(composableFeature), [])
+  assert.ok(
+    validate(
+      feature(
+        composableFeature.content.replace(
+          'Other linked: Frontend + Backend | ⚠️ Insufficient',
+          'Other linked: Frontend + Backend | ✅ Met'
+        )
+      )
+    ).some((error) => error.includes('expected ⚠️ Insufficient'))
+  )
+  assert.ok(
+    validate(feature(composableFeature.content.replace('⚠️ 1/2 met', '✅ 2/2 met'))).some((error) =>
+      error.includes('expected 1/2')
+    )
+  )
+  assert.ok(
+    validate(
+      feature(
+        composableFeature.content.replace(
+          '| `AC-US-EXAMPLE-001-01` | `PS-BACKEND` | Backend | ✅ Met |',
+          '| `AC-US-EXAMPLE-001-01` | `PS-BACKEND` | Frontend | ✅ Met |'
+        )
+      )
+    ).some((error) => error.includes('current representative coverage is Backend'))
+  )
+
+  const integrated = testDocument(
+    'test.describe("journey", { tag: "@integrated" }, () => { test("[AC-US-EXAMPLE-001-02] persists", () => {}) })',
+    'app/test/e2e/example.integrated.spec.ts'
+  )
+  const completed = feature(
+    composableFeature.content
+      .replace('⚠️ 1/2 met', '✅ 2/2 met')
+      .replace('Other linked: Frontend + Backend | ⚠️ Insufficient', 'Integrated E2E | ✅ Met')
+  )
+  assert.deepEqual(validate(completed, [...composableTests, integrated]), [])
+})
+
+test('rejects duplicate, missing, local, and undefined shared strategy assignments', () => {
+  const validate = (document, registry = sharedProofStrategies) =>
+    validateAcceptanceCriteriaTraceability({
+      featureDocuments: [document],
+      proofStrategyDocument: registry,
+      testDocuments: composableTests,
+      enforceFeatureCoverage: true
+    }).errors
+
+  assert.ok(
+    validate(
+      feature(
+        composableFeature.content.replace(
+          '| `AC-US-EXAMPLE-001-01` | `PS-BACKEND` | Backend | ✅ Met |',
+          '| `AC-US-EXAMPLE-001-01` | `PS-BACKEND` | Backend | ✅ Met |\n| `AC-US-EXAMPLE-001-01` | `PS-BACKEND` | Backend | ✅ Met |'
+        )
+      )
+    ).some((error) => error.includes('duplicates proof strategy PS-BACKEND'))
+  )
+  assert.ok(
+    validate(
+      feature(
+        composableFeature.content.replace(
+          '| `AC-US-EXAMPLE-001-02` | `PS-API-INTEGRATED` | Other linked: Frontend + Backend | ⚠️ Insufficient |',
+          ''
+        )
+      )
+    ).some((error) => error.includes('missing a test-coverage row for AC-US-EXAMPLE-001-02'))
+  )
+  assert.ok(
+    validate(
+      feature(composableFeature.content.replace('`PS-API-INTEGRATED`', '`PS-UNKNOWN`'))
+    ).some((error) => error.includes('unknown proof strategy PS-UNKNOWN'))
+  )
+  assert.ok(
+    validate(
+      feature(
+        `${composableFeature.content}\n## Proof Strategy Reference\n\n| Strategy | Responsibilities | Required Evidence | Proof Rationale |\n| -------- | ---------------- | ----------------- | --------------- |\n| \`PS-BACKEND\` | Backend | Backend | Local override. |`
+      )
+    ).some((error) => error.includes('redefines proof strategies'))
+  )
+  assert.ok(
+    validate(
+      feature(
+        `${composableFeature.content}\n## Local definitions\n\n| \`PS-BACKEND\` | Backend | Backend | Local override. |`
+      )
+    ).some((error) => error.includes('contains a local proof-strategy definition'))
+  )
+  assert.ok(
+    validate(
+      composableFeature,
+      feature(
+        `${sharedProofStrategies.content}| \`PS-BACKEND\` | Backend | Backend | Conflicting duplicate. |`,
+        sharedProofStrategies.path
+      )
+    ).some((error) => error.includes('duplicates proof strategy PS-BACKEND'))
   )
 })
 
