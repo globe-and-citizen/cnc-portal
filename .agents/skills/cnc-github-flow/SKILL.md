@@ -33,19 +33,22 @@ Use `gh`, not the GitHub MCP. Keep GitHub text in English, conventional-commit p
 
 5. Read back the child's native parent and the parent's sub-issue list. Resolve any mismatch before treating the issue as placed.
 
-## Keep parent issues current
+## Propagate issue changes through the hierarchy
 
-When a child issue's scope, plan, status, blocker, validation evidence, or completion changes:
+When an issue's scope, plan, status, blocker, validation evidence, or completion changes:
 
-1. Read the child's current state, its native parent, and the affected ancestor chain. Record the change on the immediate parent in the same
-   workflow. Use a concise comment for the dated progress or decision; edit the parent's description or checklist when its durable plan,
-   scope, dependencies, or completion criteria have changed. Link the child and its evidence.
-2. Continue up the ancestor chain wherever the change affects an outcome, plan, blocker, status, or checklist. Reconcile a moved child with
-   both its old and new parent chains. Keep each parent's summary consistent with its actual native children and evidence; do not check off
-   a task, claim validation, or close a parent solely because a child or PR closed. Reassess each parent's Project status against its own
-   exit criteria and update it when warranted.
-3. Read back the updated parent descriptions, comments, checklists, and project status. Leave unresolved decisions or missing evidence
-   visible rather than presenting the parent as complete.
+1. Read the changed issue, its descendants, its native parent, and each ancestor. At each ancestor, inspect the other child branches for a
+   shared dependency, assumption, scope, acceptance criterion, sequence, or validation claim affected by the change. Record the change on
+   the immediate parent in the same workflow, even when no other branch is affected.
+2. Use a concise comment for dated progress or decisions; edit an issue's description or checklist when its durable plan, scope,
+   dependencies, or completion criteria change. Propagate through relevant sibling branches and their descendants, then reassess their
+   parents and affected ancestors. Stop at branches with no concrete impact; do not copy status or checklist changes mechanically. Track
+   visited issues so a branch is updated once per change. Link the originating issue and evidence in each affected update.
+3. Reconcile a moved issue with both its old and new parent chains. Keep each parent's summary consistent with its native children and
+   evidence; do not check off a task, claim validation, or close a parent solely because a child or PR closed. Reassess each affected
+   issue's Project status against its own exit criteria and update it when warranted.
+4. Read back updated descriptions, comments, checklists, native relationships, and project statuses. Leave unresolved decisions or missing
+   evidence visible rather than presenting an affected issue as complete.
 
 ## Publish a branch
 
