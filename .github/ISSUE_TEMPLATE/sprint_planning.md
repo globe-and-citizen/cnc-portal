@@ -67,7 +67,8 @@ Below are example sections you can use or modify for your sprint:
 ## Notes
 
 - Update the sprint number in the title
-- Replace example sections with the original sprint goals and attach their `[Goals]` issues as native sub-issues
+- Replace example sections with the original sprint goals; create their `[Goals]` issues from the Sprint Goal template and attach them as
+  native sub-issues
 - Track unrelated corrective or technical work under `[Goals] Sprint [NUMBER] Bug and perf`, outside the original goal checklist
 - Use nested checkboxes for subtasks
 - Add additional sections as needed for your sprint scope
