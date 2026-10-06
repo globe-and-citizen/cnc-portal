@@ -75,6 +75,10 @@ artifacts; after changing a contract interface, run `npm run generate-abi` in `c
 
 ## Workflow and public hygiene
 
+- Every work issue must have a native GitHub parent; only explicit hierarchy roots, such as Sprint or backlog planning issues, may be
+  parentless. Sprint work follows Sprint → Goal → optional coordinator → delivery. When an issue's plan, scope, status, blockers, or
+  completion evidence changes, update its parent and affected ancestors in the same workflow. Follow the
+  [GitHub flow](./.agents/skills/cnc-github-flow/SKILL.md) for attachment, progress records, and readback.
 - Apply the [Development Relationship Validation](./docs/development-guide/relationship-validation.md) checklist at issue scoping,
   implementation and review readiness, independent PR review, and final validation before merge. Inspect affected consumers even when their
   files are unchanged; record applicability, evidence, and completion proposals in the issue/PR using that guide's result contract.
