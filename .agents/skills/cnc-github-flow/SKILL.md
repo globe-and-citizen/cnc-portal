@@ -5,8 +5,18 @@ description: Manage CNC Portal GitHub issues, Sprint hierarchy, pull requests, r
 
 # CNC GitHub flow
 
-Use `gh`, not the GitHub MCP. Keep GitHub text in English, conventional-commit plus gitmoji titles, and public-repository hygiene from
-`AGENTS.md`.
+Use `gh`, not the GitHub MCP. Keep GitHub text in English and follow the title conventions and public-repository hygiene from `AGENTS.md`.
+
+## Sprint and Goal issue titles
+
+Sprint planning and Sprint Goal issues use their own titles without a Conventional Commit type or gitmoji:
+
+- Sprint root: `[Sprint] Sprint <number> plan — <date range>`.
+- Planned Goal: `[Goals] <outcome> — Sprint <number>`.
+- Catch-all Goal: `[Goals] Sprint <number> Bug and perf`.
+
+Keep Conventional Commit titles for ordinary delivery and coordination issues, commits, and pull requests. Do not rename historical Sprint
+or Goal issues solely to normalize older title variants.
 
 ## Create or organize an issue
 
@@ -18,14 +28,44 @@ Use `gh`, not the GitHub MCP. Keep GitHub text in English, conventional-commit p
    gh api user --jq .login
    ```
 
-3. Give the issue a concise problem, scope boundary, acceptance criteria, and validation evidence expected. Assign it to the current
-   authenticated user.
-4. Place Sprint work under the right Goal. Attach a child using its database id, not its issue number:
+3. Give the issue a concise problem, scope boundary, acceptance criteria, and validation evidence expected. Complete its relationship plan
+   using [Development Relationship Validation](../../../docs/development-guide/relationship-validation.md), including affected consumers,
+   applicability, and completion proposals. Assign it to the current authenticated user.
+4. Identify the native parent before creating or reusing an issue. Sprint and backlog planning issues are explicit roots. Attach original
+   Sprint Goals beneath the Sprint and planned delivery beneath its relevant Goal or coordinator. Each Sprint also has a separate bugs and
+   perf sub-issue for corrective or technical work outside those Goals; attach that work beneath this branch, without adding it to the
+   original Sprint Goal checklist. Attach backlog work beneath its appropriate backlog parent. If the intended parent does not exist,
+   establish its place in the hierarchy first. Do not leave a work issue orphaned. Attach a child using its database id, not its issue
+   number:
 
    ```bash
    CHILD_ID=$(gh api "repos/globe-and-citizen/cnc-portal/issues/<child-number>" --jq .id)
    gh api --method POST "repos/globe-and-citizen/cnc-portal/issues/<parent-number>/sub_issues" -F sub_issue_id="$CHILD_ID"
    ```
+
+5. Create every Sprint Goal from [the Sprint Goal template](../../../.github/ISSUE_TEMPLATE/sprint_goal.md). Its preset title is for a
+   planned outcome; change it to `[Goals] Sprint <number> Bug and perf` for the separate catch-all Goal. Complete the Goal type, expected
+   outcome, exit criteria, product story impact, canonical references, owner and validator, scope boundary, and relationship plan for either
+   kind. Match its Project Sprint Iteration to the Sprint root and classify its Size as `Goals`. Keep the root's original Goal checklist
+   limited to planned outcomes.
+6. Read back the child's native parent and the parent's sub-issue list. Resolve any mismatch before treating the issue as placed.
+
+## Propagate issue changes through the hierarchy
+
+When an issue's scope, plan, status, blocker, validation evidence, or completion changes:
+
+1. Read the changed issue, its descendants, its native parent, and each ancestor. At each ancestor, inspect the other child branches for a
+   shared dependency, assumption, scope, acceptance criterion, sequence, or validation claim affected by the change. Record the change on
+   the immediate parent in the same workflow, even when no other branch is affected.
+2. Use a concise comment for dated progress or decisions; edit an issue's description or checklist when its durable plan, scope,
+   dependencies, or completion criteria change. Propagate through relevant sibling branches and their descendants, then reassess their
+   parents and affected ancestors. Stop at branches with no concrete impact; do not copy status or checklist changes mechanically. Track
+   visited issues so a branch is updated once per change. Link the originating issue and evidence in each affected update.
+3. Reconcile a moved issue with both its old and new parent chains. Keep each parent's summary consistent with its native children and
+   evidence; do not check off a task, claim validation, or close a parent solely because a child or PR closed. Reassess each affected
+   issue's Project status against its own exit criteria and update it when warranted.
+4. Read back updated descriptions, comments, checklists, native relationships, and project statuses. Leave unresolved decisions or missing
+   evidence visible rather than presenting an affected issue as complete.
 
 ## Publish a branch
 
@@ -34,11 +74,15 @@ Use `gh`, not the GitHub MCP. Keep GitHub text in English, conventional-commit p
 3. Commit each logical change atomically, then push the feature branch. Never push directly to `main`, `master`, or `develop`; never
    force-push without explicit approval.
 4. Open a draft PR against `develop` unless the user asks for review-ready status. Use `.github/pull_request_template.md`, describe user or
-   developer impact and validation, and include `Closes #N` or `Fixes #N`. Write multiline Markdown to a body file and pass it through
-   `--body-file`; do not pass escaped `\n` in a shell `--body` string. Read the published body back before considering the artifact
-   complete.
+   developer impact and validation, complete the relationship results with revision and evidence, and include `Closes #N` or `Fixes #N`.
+   Keep unresolved required guarantees visible in drafts and resolve them before requesting review. Write multiline Markdown to a body file
+   and pass it through `--body-file`; do not pass escaped `\n` in a shell `--body` string. Read the published body back before considering
+   the artifact complete.
 
 ## Review routing
 
 Use `cnc-pr-review` for a full PR review. Post genuine findings inline through the reviews API, use `REQUEST_CHANGES` for real bugs or unmet
 requirements, and never auto-approve.
+
+Before an authorized merge, apply the guide's final validation stage to the exact PR head and current target revision. Refresh results
+affected by new commits or synchronization and verify live required checks; prior green results do not establish current readiness.

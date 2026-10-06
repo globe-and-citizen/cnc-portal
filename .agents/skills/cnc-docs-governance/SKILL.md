@@ -32,7 +32,9 @@ requests as their authority or rationale.
 
 ## Change safely
 
-1. Inspect the affected source, linked guides, and the runtime or test evidence before editing.
+1. Inspect the affected source, linked guides, and the runtime or test evidence before editing. Apply
+   [Development Relationship Validation](../../../docs/development-guide/relationship-validation.md) to changed owners, shared rules,
+   consumers, and proof claims; justify non-applicable product checks for documentation-only work.
 2. Keep current behaviour separate from historical issue and PR context.
 3. Use compact navigation in entry points; put variants and examples in their specialised guide.
 4. Apply the [Documentation Freshness Policy](../../../docs/platform/documentation-freshness-policy.md) before changing a behavioural

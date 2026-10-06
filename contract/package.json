@@ -33,7 +33,9 @@
     "generate-abi": "wagmi generate && cd .. && npx --prefix contract prettier --config contract/abi-prettier.config.json --write app/src/artifacts/abi/generated.ts",
     "generate-versioned-abi": "node scripts/versioned-abi-modules.mjs",
     "verify-versioned-abi-sync": "node scripts/versioned-abi-modules.mjs --check",
-    "verify-abi-sync": "npm run generate-abi && npm run verify-versioned-abi-sync && git diff --exit-code -- ../app/src/artifacts/abi"
+    "verify-abi-sync": "npm run generate-abi && npm run verify-versioned-abi-sync && git diff --exit-code -- ../app/src/artifacts/abi",
+    "prepare-upgrade:v202:polygon": "CNC_PREPARE_ONLY=1 bash deploy-upgrade-v2.0.2.sh polygon",
+    "deploy-upgrade:v202:polygon": "bash deploy-upgrade-v2.0.2.sh polygon"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

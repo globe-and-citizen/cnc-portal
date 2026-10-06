@@ -11,6 +11,10 @@ Before editing, read and follow the [Feature Documentation Guide](../../../docs/
 canonical owner of feature eligibility, document structure, story statuses, acceptance semantics, progressive disclosure, and diagram rules.
 Do not duplicate that guide in a feature README.
 
+Apply [Development Relationship Validation](../../../docs/development-guide/relationship-validation.md) to the documented criteria,
+implementation, cross-domain consumers, and proof claims. Record the assessment and completion proposals in the issue/PR; keep each
+canonical rule with its existing owner.
+
 ## Classify the subject
 
 - Confirm that a user can reach the capability through current navigation, linked routes, access guards, and meaningful actions. A route or
@@ -69,10 +73,11 @@ requested or required by the active GitHub workflow.
   missing outcomes remain visible.
 - Apply the guide's status and human-review contract exactly. Fully implemented criteria without a completed product review belong in
   `🧪 Validation`, not `✅ Done`.
-- For an active coverage review, use the guide's per-story coverage summary, feature-level proof-strategy reference, and compact
-  per-criterion strategy table. Define each responsibility, required-evidence, and proof-rationale combination once, then reference its
-  stable `PS-*` ID from every matching criterion. Derive current evidence from direct `AC-US-*` references, list insufficient boundaries as
-  gaps, and never classify a story as partial solely because a criterion is intentionally covered by a mock or a lower test layer.
+- For an active coverage review, use the guide's per-story coverage summary, the shared proof-strategy registry, and compact per-criterion
+  strategy table. Compose its stable `PS-*` IDs from actual owning layers and material boundaries: a backend- or contract-owned rule needs
+  its focused proof even when an integrated journey exists. Derive the complete AC-level current evidence from direct `AC-US-*` references
+  on every strategy row, list insufficient obligations as gaps, and never classify a story as partial solely because a criterion is
+  intentionally covered by a mock or a lower test layer.
 - Use the generated repository inventory to keep frontend, backend, contract, dashboard, and E2E test files visible. Distinguish direct
   US/AC markers from canonical Implementation Evidence links: the latter maps feature support but does not prove a story or criterion. Keep
   contract- or implementation-owned tests in the technical-only category. Treat an unmapped file as an audit item, not as acceptance

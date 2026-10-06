@@ -122,6 +122,32 @@ export function buildBeaconConfigs(manifest: DeploymentAddressManifest): BeaconC
   return configs
 }
 
+/** Verify the shared contracts deployed before integrated E2E journeys start. */
+export async function assertIntegratedInfrastructure(
+  manifest: DeploymentAddressManifest
+): Promise<void> {
+  const requiredContracts: Array<[Address, string]> = [
+    [requiredAddress(manifest, 'Officer#FactoryBeacon'), 'the Officer factory'],
+    ...buildBeaconConfigs(manifest).map(
+      ({ beaconAddress, beaconType }) =>
+        [beaconAddress, `the ${beaconType} beacon`] as [Address, string]
+    ),
+    [requiredAddress(manifest, 'MockTokens#USDC'), 'the USDC mock token'],
+    [requiredAddress(manifest, 'MockTokens#USDCe'), 'the USDCe mock token'],
+    [requiredAddress(manifest, 'MockTokens#USDT'), 'the USDT mock token'],
+    [requiredAddress(manifest, 'SafeInfraModule#SafeL2'), 'the Safe singleton'],
+    [requiredAddress(manifest, 'SafeInfraModule#SafeProxyFactory'), 'the Safe proxy factory'],
+    [
+      requiredAddress(manifest, 'SafeInfraModule#CompatibilityFallbackHandler'),
+      'the Safe fallback handler'
+    ]
+  ]
+
+  await Promise.all(
+    requiredContracts.map(([address, label]) => assertAddressHasCode(address, label))
+  )
+}
+
 export function buildDeploymentConfigs(
   currentUserAddress: Address,
   investorInput: { name: string; symbol: string },

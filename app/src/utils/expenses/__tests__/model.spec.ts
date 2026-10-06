@@ -1,10 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { getTokens } from '../model'
-import { SUPPORTED_TOKENS, USDC_ADDRESS } from '@/constant'
+import { buildContractBudgetLimit, getTokens } from '../model'
+import { SUPPORTED_TOKENS, USDC_ADDRESS, USDC_E_ADDRESS } from '@/constant'
 import type { TokenBalance } from '@/types'
 import type { TableRow } from '@/types/table'
 
 const usdcConfig = SUPPORTED_TOKENS.find((token) => token.id === 'usdc')!
+const bridgedUsdcConfig = SUPPORTED_TOKENS.find((token) => token.id === 'usdc.e')!
 
 const money = (value: number) => ({ value, formatted: `${value}` })
 const pair = (value: number) => ({ usd: money(value), local: money(value) })
@@ -16,6 +17,11 @@ const heldUsdc = (amount: number): TokenBalance => ({
   amount,
   price: pair(1),
   value: pair(amount)
+})
+
+const heldBridgedUsdc = (amount: number): TokenBalance => ({
+  ...heldUsdc(amount),
+  token: bridgedUsdcConfig
 })
 
 /**
@@ -74,5 +80,49 @@ describe('getTokens', () => {
     const [token] = getTokens([expenseRow()], '0xSignature', [heldUsdc(10)])
 
     expect(token).toMatchObject({ symbol: 'USDC', balance: 10, spendableBalance: 2 })
+  })
+
+  it('[AC-US-EXP-002-04] uses the approved ERC-20 address instead of another token balance', () => {
+    const row = expenseRow({ data: { amount: 2, tokenAddress: USDC_E_ADDRESS } })
+    const [token] = getTokens([row], row.signature, [heldUsdc(10), heldBridgedUsdc(0.5)])
+
+    expect(token).toMatchObject({
+      tokenId: 'usdc.e',
+      symbol: 'USDCe',
+      balance: 0.5,
+      spendableBalance: 0.5
+    })
+  })
+
+  it('refuses to infer a balance for an unrecognized approval asset', () => {
+    const row = expenseRow({
+      data: { amount: 2, tokenAddress: '0x1111111111111111111111111111111111111111' }
+    })
+    expect(getTokens([row], row.signature, [heldUsdc(10)])).toEqual([])
+  })
+})
+
+describe('buildContractBudgetLimit', () => {
+  const budget = {
+    amount: 1.25,
+    frequencyType: 1,
+    customFrequency: 0,
+    startDate: 1,
+    endDate: 2,
+    tokenAddress: USDC_E_ADDRESS,
+    approvedAddress: '0x2222222222222222222222222222222222222222'
+  }
+
+  it('uses the selected asset decimals without floating-point multiplication', () => {
+    expect(buildContractBudgetLimit(budget).amount).toBe(1_250_000n)
+  })
+
+  it('rejects an asset outside the product catalogue', () => {
+    expect(() =>
+      buildContractBudgetLimit({
+        ...budget,
+        tokenAddress: '0x1111111111111111111111111111111111111111'
+      })
+    ).toThrow('Unsupported Expense Account token')
   })
 })

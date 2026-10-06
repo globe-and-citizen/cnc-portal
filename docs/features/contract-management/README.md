@@ -54,6 +54,22 @@ flowchart LR
 | US-CONTRACT-004 | Review deployment history          | Company member            | 🧪 Validation  |
 | US-CONTRACT-005 | Redeploy an Officer generation     | Company owner             | 🧪 Validation  |
 
+## Test Coverage Overview
+
+Coverage targets compare each criterion with its required representative evidence. Static references are not a current passing run; the
+generated coverage report and CI retain file-level and execution evidence. Known assertion gaps remain insufficient even when a static
+reference has the expected layer label.
+
+| User Story      | Main Journey | Coverage Target | Gaps                                                                                                                                                                                                                                                                              |
+| --------------- | ------------ | --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| US-CONTRACT-001 | ⬜ Planned   | ⚠️ 5/10 met     | `AC-US-CONTRACT-001-01, 03–04, 06–07`                                                                                                                                                                                                                                             |
+| US-CONTRACT-002 | ⬜ Planned   | ⚠️ 2/12         | `AC-US-CONTRACT-002-01`, `AC-US-CONTRACT-002-02`, `AC-US-CONTRACT-002-03`, `AC-US-CONTRACT-002-04`, `AC-US-CONTRACT-002-05`, `AC-US-CONTRACT-002-06`, `AC-US-CONTRACT-002-07`, `AC-US-CONTRACT-002-08`, `AC-US-CONTRACT-002-09`, `AC-US-CONTRACT-002-10`                          |
+| US-CONTRACT-003 | ⬜ Planned   | ⚠️ 1/6          | `AC-US-CONTRACT-003-02`, `AC-US-CONTRACT-003-03`, `AC-US-CONTRACT-003-04`, `AC-US-CONTRACT-003-05`, `AC-US-CONTRACT-003-06`                                                                                                                                                       |
+| US-CONTRACT-004 | ⬜ Planned   | ⚠️ 2/9          | `AC-US-CONTRACT-004-01`, `AC-US-CONTRACT-004-04`, `AC-US-CONTRACT-004-02`, `AC-US-CONTRACT-004-06`, `AC-US-CONTRACT-004-07`, `AC-US-CONTRACT-004-03`, `AC-US-CONTRACT-004-09`                                                                                                     |
+| US-CONTRACT-005 | ⬜ Planned   | ❌ 0/11         | `AC-US-CONTRACT-005-01`, `AC-US-CONTRACT-005-02`, `AC-US-CONTRACT-005-03`, `AC-US-CONTRACT-005-04`, `AC-US-CONTRACT-005-05`, `AC-US-CONTRACT-005-06`, `AC-US-CONTRACT-005-07`, `AC-US-CONTRACT-005-08`, `AC-US-CONTRACT-005-09`, `AC-US-CONTRACT-005-10`, `AC-US-CONTRACT-005-11` |
+
+Proof obligations use the [shared proof-strategy registry](../../testing/proof-strategies.md). Multiple IDs for one AC are cumulative.
+
 ## US-CONTRACT-001: Review the Current Contract Suite
 
 **As a** company member\
@@ -87,6 +103,21 @@ flowchart LR
       balances and exposes the supported-asset breakdown.
 - [x] `AC-US-CONTRACT-001-10` An unknown Officer generation, a missing pause capability, or a failed supported-state read is reported as
       unavailable instead of active.
+
+### Test Coverage
+
+| Acceptance Criterion    | Proof Strategy        | Current Evidence | Status     |
+| ----------------------- | --------------------- | ---------------- | ---------- |
+| `AC-US-CONTRACT-001-01` | `PS-API-INTEGRATED`   | None linked      | ❌ Missing |
+| `AC-US-CONTRACT-001-02` | `PS-FRONTEND`         | Frontend         | ✅ Met     |
+| `AC-US-CONTRACT-001-03` | `PS-CHAIN-INTEGRATED` | None linked      | ❌ Missing |
+| `AC-US-CONTRACT-001-04` | `PS-FRONTEND`         | None linked      | ❌ Missing |
+| `AC-US-CONTRACT-001-05` | `PS-FRONTEND`         | Frontend         | ✅ Met     |
+| `AC-US-CONTRACT-001-06` | `PS-BROWSER`          | None linked      | ❌ Missing |
+| `AC-US-CONTRACT-001-07` | `PS-BROWSER`          | None linked      | ❌ Missing |
+| `AC-US-CONTRACT-001-08` | `PS-FRONTEND`         | Frontend         | ✅ Met     |
+| `AC-US-CONTRACT-001-09` | `PS-FRONTEND`         | Frontend         | ✅ Met     |
+| `AC-US-CONTRACT-001-10` | `PS-FRONTEND`         | Frontend         | ✅ Met     |
 
 **Dependencies:** Current company and its active Officer generation
 
@@ -122,6 +153,27 @@ flowchart LR
       the successor atomically; the previous owner loses those two roles while unrelated technical minters remain unchanged. _(contract)_
 - [x] `AC-US-CONTRACT-002-12` Contracts whose pause capability is unsupported or unavailable do not expose pause or resume actions.
 
+### Test Coverage
+
+| Acceptance Criterion    | Proof Strategy        | Current Evidence | Status          |
+| ----------------------- | --------------------- | ---------------- | --------------- |
+| `AC-US-CONTRACT-002-01` | `PS-CHAIN-INTEGRATED` | Frontend         | ⚠️ Insufficient |
+| `AC-US-CONTRACT-002-01` | `PS-CONTRACT`         | Frontend         | ⚠️ Insufficient |
+| `AC-US-CONTRACT-002-02` | `PS-CHAIN-INTEGRATED` | Frontend         | ⚠️ Insufficient |
+| `AC-US-CONTRACT-002-02` | `PS-CONTRACT`         | Frontend         | ⚠️ Insufficient |
+| `AC-US-CONTRACT-002-03` | `PS-CHAIN-INTEGRATED` | Frontend         | ⚠️ Insufficient |
+| `AC-US-CONTRACT-002-03` | `PS-CONTRACT`         | Frontend         | ⚠️ Insufficient |
+| `AC-US-CONTRACT-002-04` | `PS-CHAIN-INTEGRATED` | Frontend         | ⚠️ Insufficient |
+| `AC-US-CONTRACT-002-05` | `PS-FRONTEND`         | Frontend         | ⚠️ Insufficient |
+| `AC-US-CONTRACT-002-06` | `PS-CHAIN-INTEGRATED` | Frontend         | ⚠️ Insufficient |
+| `AC-US-CONTRACT-002-06` | `PS-CONTRACT`         | Frontend         | ⚠️ Insufficient |
+| `AC-US-CONTRACT-002-07` | `PS-FRONTEND`         | Frontend         | ⚠️ Insufficient |
+| `AC-US-CONTRACT-002-08` | `PS-FRONTEND`         | None linked      | ❌ Missing      |
+| `AC-US-CONTRACT-002-09` | `PS-FRONTEND`         | None linked      | ❌ Missing      |
+| `AC-US-CONTRACT-002-10` | `PS-FRONTEND`         | Frontend         | ⚠️ Insufficient |
+| `AC-US-CONTRACT-002-11` | `PS-CONTRACT`         | Contract         | ✅ Met          |
+| `AC-US-CONTRACT-002-12` | `PS-FRONTEND`         | Frontend         | ✅ Met          |
+
 **Dependencies:** US-CONTRACT-001, current contract permissions, and a connected wallet
 
 ## US-CONTRACT-003: Manage Advertising Campaigns
@@ -147,6 +199,19 @@ flowchart LR
 - [x] `AC-US-CONTRACT-003-05` A company without a Campaign Manager receives an actionable unavailable-state message.
 - [x] `AC-US-CONTRACT-003-06` The campaign workspace distinguishes loading, a failed read with recovery, a confirmed empty result, and
       populated campaigns.
+
+### Test Coverage
+
+| Acceptance Criterion    | Proof Strategy        | Current Evidence | Status          |
+| ----------------------- | --------------------- | ---------------- | --------------- |
+| `AC-US-CONTRACT-003-01` | `PS-FRONTEND`         | Frontend         | ✅ Met          |
+| `AC-US-CONTRACT-003-02` | `PS-CHAIN-INTEGRATED` | None linked      | ❌ Missing      |
+| `AC-US-CONTRACT-003-02` | `PS-CONTRACT`         | None linked      | ❌ Missing      |
+| `AC-US-CONTRACT-003-03` | `PS-CHAIN-INTEGRATED` | None linked      | ❌ Missing      |
+| `AC-US-CONTRACT-003-03` | `PS-CONTRACT`         | None linked      | ❌ Missing      |
+| `AC-US-CONTRACT-003-04` | Decision pending      | None linked      | 📝 Pending      |
+| `AC-US-CONTRACT-003-05` | `PS-FRONTEND`         | Frontend         | ⚠️ Insufficient |
+| `AC-US-CONTRACT-003-06` | `PS-FRONTEND`         | Frontend         | ⚠️ Insufficient |
 
 **Dependencies:** Current company and a configured Campaign Manager
 
@@ -178,6 +243,22 @@ flowchart LR
 
 - [x] `AC-US-CONTRACT-004-03` An empty deployment history remains distinguishable from a failed history read.
 - [x] `AC-US-CONTRACT-004-09` A failed recovery step identifies the failure and can be retried without rebuilding the completed sequence.
+
+### Test Coverage
+
+| Acceptance Criterion    | Proof Strategy        | Current Evidence | Status          |
+| ----------------------- | --------------------- | ---------------- | --------------- |
+| `AC-US-CONTRACT-004-01` | `PS-API-INTEGRATED`   | Frontend         | ⚠️ Insufficient |
+| `AC-US-CONTRACT-004-04` | `PS-CHAIN-INTEGRATED` | Frontend         | ⚠️ Insufficient |
+| `AC-US-CONTRACT-004-04` | `PS-CONTRACT`         | Frontend         | ⚠️ Insufficient |
+| `AC-US-CONTRACT-004-02` | `PS-API-INTEGRATED`   | None linked      | ❌ Missing      |
+| `AC-US-CONTRACT-004-05` | `PS-FRONTEND`         | Frontend         | ✅ Met          |
+| `AC-US-CONTRACT-004-06` | `PS-FRONTEND`         | Frontend         | ✅ Met          |
+| `AC-US-CONTRACT-004-06` | `PS-CONTRACT`         | Frontend         | ⚠️ Insufficient |
+| `AC-US-CONTRACT-004-07` | `PS-FRONTEND`         | None linked      | ❌ Missing      |
+| `AC-US-CONTRACT-004-08` | `PS-FRONTEND`         | Frontend         | ✅ Met          |
+| `AC-US-CONTRACT-004-03` | `PS-FRONTEND`         | None linked      | ❌ Missing      |
+| `AC-US-CONTRACT-004-09` | `PS-FRONTEND`         | Frontend         | ⚠️ Insufficient |
 
 **Dependencies:** Current company and the Officer-generation history read
 
@@ -216,6 +297,28 @@ flowchart LR
       hide other actions.
 - [x] `AC-US-CONTRACT-005-11` A newly deployed Investor ends with the company owner holding ownership, administrator authority, and minter
       authority; the Officer retains neither temporary role and configured technical minters remain authorized. _(contract)_
+
+### Test Coverage
+
+| Acceptance Criterion    | Proof Strategy             | Current Evidence | Status          |
+| ----------------------- | -------------------------- | ---------------- | --------------- |
+| `AC-US-CONTRACT-005-01` | `PS-FRONTEND`              | Frontend         | ⚠️ Insufficient |
+| `AC-US-CONTRACT-005-02` | `PS-FULL-STACK-INTEGRATED` | None linked      | ❌ Missing      |
+| `AC-US-CONTRACT-005-02` | `PS-BACKEND`               | None linked      | ❌ Missing      |
+| `AC-US-CONTRACT-005-02` | `PS-CONTRACT`              | None linked      | ❌ Missing      |
+| `AC-US-CONTRACT-005-03` | `PS-FULL-STACK-INTEGRATED` | Integrated E2E   | ✅ Met          |
+| `AC-US-CONTRACT-005-03` | `PS-CONTRACT`              | Integrated E2E   | ⚠️ Insufficient |
+| `AC-US-CONTRACT-005-04` | `PS-BROWSER`               | None linked      | ❌ Missing      |
+| `AC-US-CONTRACT-005-04` | `PS-BACKEND`               | None linked      | ❌ Missing      |
+| `AC-US-CONTRACT-005-05` | `PS-FRONTEND`              | Frontend         | ⚠️ Insufficient |
+| `AC-US-CONTRACT-005-06` | `PS-FULL-STACK-INTEGRATED` | None linked      | ❌ Missing      |
+| `AC-US-CONTRACT-005-06` | `PS-BACKEND`               | None linked      | ❌ Missing      |
+| `AC-US-CONTRACT-005-07` | `PS-FULL-STACK-INTEGRATED` | None linked      | ❌ Missing      |
+| `AC-US-CONTRACT-005-07` | `PS-CONTRACT`              | None linked      | ❌ Missing      |
+| `AC-US-CONTRACT-005-08` | `PS-FRONTEND`              | None linked      | ❌ Missing      |
+| `AC-US-CONTRACT-005-09` | `PS-FRONTEND`              | None linked      | ❌ Missing      |
+| `AC-US-CONTRACT-005-10` | `PS-FRONTEND`              | None linked      | ❌ Missing      |
+| `AC-US-CONTRACT-005-11` | `PS-CONTRACT`              | None linked      | ❌ Missing      |
 
 **Dependencies:** US-CONTRACT-001, a current company owner, a connected wallet, and an active Officer generation
 
@@ -272,7 +375,19 @@ flowchart LR
   pause-guarded proposal operations. The capability policy reflects the deployed behaviour; changing these semantics requires a separate,
   versioned contract upgrade and deployment rather than a frontend-only change.
 - Campaign Manager click and impression rates are configurable and readable, but the current portal and contract accept cumulative spend as
-  an input; they do not derive validated spend from those rates. `AC-US-CONTRACT-003-04` therefore remains incomplete.
+  an input; they do not derive validated spend from those rates. `AC-US-CONTRACT-003-04` therefore remains incomplete, and its proof
+  strategy cannot be settled until the spend authority and validation rule are defined.
+- The marked direct-transfer test only checks a mocked mutation call, not successor ownership on-chain (`AC-US-CONTRACT-002-04`). The
+  legacy-recovery component test checks a recovery plan, not completed movement into the current Bank (`004-04`). An integrated shareholder
+  migration test supports the migration-root transition but not every redeploy/history outcome in `US-CONTRACT-005`.
+- The Board-transfer alert test checks only that a message appears (`002-07`), and its "at least half" wording understates the contract's
+  majority threshold for an even-sized Board. The direct-transfer failure test (`002-10`) checks logging and an open form, not the visible
+  error or unchanged owner. Permission-menu `002-05` bypasses the actual owner/Board eligibility derivation.
+- The missing-Campaign-Manager test (`003-05`) does not establish an actionable setup path; the read-failure test (`003-06`) does not
+  exercise retry. Recovery `004-09` lacks a marked assertion that prior completed steps stay completed. Redeploy `005-01` does not traverse
+  the active-generation entry point, and `005-05` checks a blank name but not a blank symbol.
+- Historic balance recovery overlaps the Bank account result in `AC-US-BANK-004-02`. Contract Management owns initiating recovery; Accounts
+  owns verifying the receiving Bank balance. Their combined evidence must not be counted twice as separate completed transfers.
 - The legacy TeamContractDetailExtend suite duplicates the current manager-settings coverage with obsolete mocks and assertion-free cases,
   while TeamContractEventList exercises a component that no current product surface imports. Both suites remain intentionally unmapped
   pending cleanup or restoration of a reachable journey.

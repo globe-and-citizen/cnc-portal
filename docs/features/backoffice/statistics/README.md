@@ -43,6 +43,21 @@ flowchart LR
 | US-STATS-003 | Explore category statistics             | Administrator | 🚧 In Progress |
 | US-STATS-004 | Review recent platform activity         | Administrator | 🚧 In Progress |
 
+## Test Coverage Overview
+
+Coverage targets compare each criterion with its required representative evidence. Static references are not a current passing run; the
+generated coverage report and CI retain file-level and execution evidence. Known assertion gaps remain insufficient even when a static
+reference has the expected layer label.
+
+| User Story   | Main Journey | Coverage Target | Gaps                    |
+| ------------ | ------------ | --------------- | ----------------------- |
+| US-STATS-001 | ⬜ Planned   | ❌ 0/10 met     | `AC-US-STATS-001-01–10` |
+| US-STATS-002 | ⬜ Planned   | ❌ 0/14 met     | `AC-US-STATS-002-01–14` |
+| US-STATS-003 | ⬜ Planned   | ❌ 0/14 met     | `AC-US-STATS-003-01–14` |
+| US-STATS-004 | ⬜ Planned   | ❌ 0/9 met      | `AC-US-STATS-004-01–09` |
+
+Proof obligations use the [shared proof-strategy registry](../../../testing/proof-strategies.md). Multiple IDs for one AC are cumulative.
+
 ## US-STATS-001: Access Administrator Statistics
 
 **As an** administrator\
@@ -69,6 +84,25 @@ flowchart LR
 - [x] `AC-US-STATS-001-08` An authenticated non-administrator is denied access to the dashboard.
 - [x] `AC-US-STATS-001-09` An authenticated non-administrator receives a forbidden response from the statistics API.
 - [x] `AC-US-STATS-001-10` An expired statistics session is cleared before further protected data is requested.
+
+### Test Coverage
+
+| Acceptance Criterion | Proof Strategy | Current Evidence | Status          |
+| -------------------- | -------------- | ---------------- | --------------- |
+| `AC-US-STATS-001-01` | `PS-DASHBOARD` | None linked      | ❌ Missing      |
+| `AC-US-STATS-001-01` | `PS-BACKEND`   | None linked      | ❌ Missing      |
+| `AC-US-STATS-001-02` | `PS-DASHBOARD` | None linked      | ❌ Missing      |
+| `AC-US-STATS-001-02` | `PS-BACKEND`   | None linked      | ❌ Missing      |
+| `AC-US-STATS-001-03` | `PS-BACKEND`   | None linked      | ❌ Missing      |
+| `AC-US-STATS-001-04` | `PS-BACKEND`   | Backend          | ⚠️ Insufficient |
+| `AC-US-STATS-001-05` | `PS-BACKEND`   | None linked      | ❌ Missing      |
+| `AC-US-STATS-001-06` | `PS-DASHBOARD` | None linked      | ❌ Missing      |
+| `AC-US-STATS-001-06` | `PS-BACKEND`   | None linked      | ❌ Missing      |
+| `AC-US-STATS-001-07` | `PS-DASHBOARD` | None linked      | ❌ Missing      |
+| `AC-US-STATS-001-08` | `PS-DASHBOARD` | None linked      | ❌ Missing      |
+| `AC-US-STATS-001-09` | `PS-BACKEND`   | None linked      | ❌ Missing      |
+| `AC-US-STATS-001-10` | `PS-DASHBOARD` | None linked      | ❌ Missing      |
+| `AC-US-STATS-001-10` | `PS-BACKEND`   | None linked      | ❌ Missing      |
 
 **Dependencies:** Dashboard authentication and administrator roles
 
@@ -105,6 +139,32 @@ flowchart LR
 - [x] `AC-US-STATS-002-13` An invalid reporting period is rejected without running an aggregate query. _(API)_
 - [x] `AC-US-STATS-002-14` A failed statistics request is reported without fabricating overview values.
 
+### Test Coverage
+
+| Acceptance Criterion | Proof Strategy                | Current Evidence | Status          |
+| -------------------- | ----------------------------- | ---------------- | --------------- |
+| `AC-US-STATS-002-01` | `PS-DASHBOARD`                | Backend          | ⚠️ Insufficient |
+| `AC-US-STATS-002-01` | `PS-BACKEND`                  | Backend          | ✅ Met          |
+| `AC-US-STATS-002-02` | `PS-DASHBOARD`                | None linked      | ❌ Missing      |
+| `AC-US-STATS-002-02` | `PS-BACKEND`                  | None linked      | ❌ Missing      |
+| `AC-US-STATS-002-03` | `PS-DASHBOARD`                | None linked      | ❌ Missing      |
+| `AC-US-STATS-002-03` | `PS-DASHBOARD-INTEGRATED`     | None linked      | ❌ Missing      |
+| `AC-US-STATS-002-04` | `PS-DASHBOARD`                | Backend          | ⚠️ Insufficient |
+| `AC-US-STATS-002-04` | `PS-BACKEND`                  | Backend          | ✅ Met          |
+| `AC-US-STATS-002-05` | `PS-DASHBOARD-API-INTEGRATED` | None linked      | ❌ Missing      |
+| `AC-US-STATS-002-06` | `PS-BACKEND`                  | None linked      | ❌ Missing      |
+| `AC-US-STATS-002-07` | `PS-BACKEND`                  | None linked      | ❌ Missing      |
+| `AC-US-STATS-002-08` | `PS-BACKEND`                  | None linked      | ❌ Missing      |
+| `AC-US-STATS-002-09` | `PS-DASHBOARD`                | None linked      | ❌ Missing      |
+| `AC-US-STATS-002-09` | `PS-DASHBOARD-INTEGRATED`     | None linked      | ❌ Missing      |
+| `AC-US-STATS-002-10` | `PS-BACKEND`                  | None linked      | ❌ Missing      |
+| `AC-US-STATS-002-11` | `PS-DASHBOARD`                | None linked      | ❌ Missing      |
+| `AC-US-STATS-002-11` | `PS-BACKEND`                  | None linked      | ❌ Missing      |
+| `AC-US-STATS-002-12` | `PS-BACKEND`                  | None linked      | ❌ Missing      |
+| `AC-US-STATS-002-13` | `PS-BACKEND`                  | None linked      | ❌ Missing      |
+| `AC-US-STATS-002-14` | `PS-DASHBOARD`                | None linked      | ❌ Missing      |
+| `AC-US-STATS-002-14` | `PS-BACKEND`                  | None linked      | ❌ Missing      |
+
 **Dependencies:** US-STATS-001 and available database and chain providers
 
 ## US-STATS-003: Explore Category Statistics
@@ -140,6 +200,32 @@ flowchart LR
 - [ ] `AC-US-STATS-003-13` Every displayed category metric maps to a field returned by its current API response.
 - [x] `AC-US-STATS-003-14` A failed category request is reported without replacing the failed result with fabricated data.
 
+### Test Coverage
+
+| Acceptance Criterion | Proof Strategy | Current Evidence | Status     |
+| -------------------- | -------------- | ---------------- | ---------- |
+| `AC-US-STATS-003-01` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-STATS-003-01` | `PS-BACKEND`   | None linked      | ❌ Missing |
+| `AC-US-STATS-003-02` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-STATS-003-02` | `PS-BACKEND`   | None linked      | ❌ Missing |
+| `AC-US-STATS-003-03` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-STATS-003-03` | `PS-BACKEND`   | None linked      | ❌ Missing |
+| `AC-US-STATS-003-04` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-STATS-003-04` | `PS-BACKEND`   | None linked      | ❌ Missing |
+| `AC-US-STATS-003-05` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-STATS-003-05` | `PS-BACKEND`   | None linked      | ❌ Missing |
+| `AC-US-STATS-003-06` | `PS-BACKEND`   | None linked      | ❌ Missing |
+| `AC-US-STATS-003-07` | `PS-BACKEND`   | None linked      | ❌ Missing |
+| `AC-US-STATS-003-08` | `PS-BACKEND`   | None linked      | ❌ Missing |
+| `AC-US-STATS-003-09` | `PS-BACKEND`   | None linked      | ❌ Missing |
+| `AC-US-STATS-003-10` | `PS-BACKEND`   | None linked      | ❌ Missing |
+| `AC-US-STATS-003-11` | `PS-BACKEND`   | None linked      | ❌ Missing |
+| `AC-US-STATS-003-12` | `PS-BACKEND`   | None linked      | ❌ Missing |
+| `AC-US-STATS-003-13` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-STATS-003-13` | `PS-BACKEND`   | None linked      | ❌ Missing |
+| `AC-US-STATS-003-14` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-STATS-003-14` | `PS-BACKEND`   | None linked      | ❌ Missing |
+
 **Dependencies:** US-STATS-001 and US-STATS-002
 
 ## US-STATS-004: Review Recent Platform Activity
@@ -168,6 +254,24 @@ flowchart LR
 - [x] `AC-US-STATS-004-08` An invalid activity limit is rejected without querying activity sources. _(API)_
 - [x] `AC-US-STATS-004-09` A failed activity request is reported without creating synthetic activity.
 
+### Test Coverage
+
+| Acceptance Criterion | Proof Strategy | Current Evidence | Status          |
+| -------------------- | -------------- | ---------------- | --------------- |
+| `AC-US-STATS-004-01` | `PS-DASHBOARD` | Backend          | ⚠️ Insufficient |
+| `AC-US-STATS-004-01` | `PS-BACKEND`   | Backend          | ✅ Met          |
+| `AC-US-STATS-004-02` | `PS-DASHBOARD` | None linked      | ❌ Missing      |
+| `AC-US-STATS-004-02` | `PS-BACKEND`   | None linked      | ❌ Missing      |
+| `AC-US-STATS-004-03` | `PS-BACKEND`   | None linked      | ❌ Missing      |
+| `AC-US-STATS-004-04` | `PS-BACKEND`   | None linked      | ❌ Missing      |
+| `AC-US-STATS-004-05` | `PS-BACKEND`   | None linked      | ❌ Missing      |
+| `AC-US-STATS-004-06` | `PS-DASHBOARD` | None linked      | ❌ Missing      |
+| `AC-US-STATS-004-06` | `PS-BACKEND`   | None linked      | ❌ Missing      |
+| `AC-US-STATS-004-07` | `PS-BACKEND`   | None linked      | ❌ Missing      |
+| `AC-US-STATS-004-08` | `PS-BACKEND`   | None linked      | ❌ Missing      |
+| `AC-US-STATS-004-09` | `PS-DASHBOARD` | None linked      | ❌ Missing      |
+| `AC-US-STATS-004-09` | `PS-BACKEND`   | None linked      | ❌ Missing      |
+
 **Dependencies:** US-STATS-001
 
 ## Known Gaps
@@ -180,6 +284,12 @@ flowchart LR
 - The top-companies endpoint paginates before sorting by membership and therefore does not guarantee a platform-wide ranking
   (`US-STATS-003`).
 - The selected reporting period does not constrain recent activity (`US-STATS-004`).
+- Overview refresh does not refetch the separate TVL queries (`AC-US-STATS-002-05`). Concurrent section requests share one error state, so a
+  later request can clear a failure (`002-14`, `003-14`, `004-09`). The activity API returns status, but its dashboard row does not display
+  a separate status value (`004-02`).
+- The `AC-US-STATS-001-04` backend marker only asserts that an authorization helper exists; its test app mocks authorization and does not
+  prove the production guard. The `002-04` marker covers one period, and `004-01` checks only a narrow activity subset. These references
+  must not be treated as complete assertion proof.
 
 ## Implementation Evidence
 

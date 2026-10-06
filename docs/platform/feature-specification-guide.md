@@ -2,7 +2,7 @@
 
 **Status:** Current — applied to every canonical product feature user story
 
-**Last updated:** 2026-09-23
+**Last updated:** 2026-10-03
 
 **Purpose:** Define the canonical, reviewable documentation contract for CNC Portal features
 
@@ -54,6 +54,28 @@ focused documents.
 
 Product and contract documentation remain separate even when they share a name. For example, `docs/features/vesting/README.md` owns the
 portal journey, while `docs/contracts/features/vesting/README.md` owns the Solidity behaviour that supports it.
+
+## Cross-Domain Story Relationships
+
+A movement or policy can affect several features without making every feature the owner of the same user action. Describe the relationship
+where its result is observable and link the other canonical story. Use these relationship types:
+
+| Relationship         | Owning story                                                                       | Other domain's responsibility                                                      |
+| -------------------- | ---------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| Transfer handoff     | The initiating domain owns the action, authorization, amount, and fees.            | The receiving domain owns the credited balance, availability, and its own history. |
+| Orchestrated journey | The domain that offers the end-to-end goal owns order, partial failure, and retry. | Each participating domain retains the rules for its own operation.                 |
+| Shared policy        | The policy's canonical technical or product owner defines the common rule once.    | Each affected feature states its independently observable result or restriction.   |
+| Derived projection   | The reporting domain owns reconciliation and presentation of source evidence.      | Source stories retain the operation; reporting does not create another transfer.   |
+
+Record the relationship type, linked story IDs, and the distinct outcome under each affected story's dependencies or a short
+`Cross-domain relationship` note. Use a focused flow map when several stories participate; its rows link canonical AC owners rather than
+copying criteria. A shared component or contract method alone does not merge distinct actor goals into one story. Conversely, one movement
+can prove criteria in its initiating and receiving stories without being executed twice. A reporting projection should identify the same
+source operation across feeds so that it does not create duplicate accounting entries.
+
+For a Bank transfer to Expense or Payroll, `US-BANK-002` owns the transfer and its fee. The destination funding story owns the account
+balance and spendability. A direct wallet deposit has no Bank initiation story, so the destination funding story owns that path. The
+[treasury flow map](../features/accounts/treasury-flow-map.md) records these links as a concrete example.
 
 ## Location and Naming
 
@@ -245,8 +267,11 @@ priority or estimation. Detailed stories do not repeat their status after the ac
 
 #### Test Coverage Overview
 
-When a feature is part of an active test-coverage review, add a separate table immediately after the status overview. Do not add test state
-to the product `Status` column: delivery, representative automated evidence, E2E scope, and the latest execution result are different facts.
+Every canonical feature with owned acceptance criteria has a separate table immediately after the status overview. Do not add test state to
+the product `Status` column: delivery, representative automated evidence, E2E scope, and the latest execution result are different facts.
+Reference-only stories without owned criteria remain in the product status overview but do not receive invented criteria or coverage rows.
+Keep draft stories visible in the coverage overview as `📝 Draft` with the missing product or proof-boundary decision; do not assign a
+speculative proof target before the responsible implementation layer is decided.
 
 ```markdown
 | User Story     | Main Journey  | Coverage Target | Gaps |
@@ -254,63 +279,73 @@ to the product `Status` column: delivery, representative automated evidence, E2E
 | US-FEATURE-001 | ✅ Integrated | ✅ 5/5 met      | —    |
 ```
 
-- `Main Journey` states whether the primary user path is integrated, mocked, planned, blocked, or not required. `✅ Integrated` means the
+- `Main Journey` states whether the primary user path is integrated, mocked, planned, blocked, or not required. `Not required` is valid when
+  the story's required proof lives in another layer, including a backoffice capability without a client E2E path. `✅ Integrated` means the
   browser crosses every boundary required by that path; a seeded, stubbed, or snapshot-provided dependency is not a validated user action.
-- `Coverage Target` compares criteria whose required proof is present with the story's complete criterion count. Do not mark a story partial
-  merely because intentionally mocked or layer-specific criteria are not integrated.
+- `Coverage Target` counts each criterion once, and only when all of its required proof obligations are met, against the story's complete
+  criterion count. Do not mark a story partial merely because intentionally mocked or layer-specific criteria are not integrated.
 - `Gaps` lists criteria whose required proof is absent or insufficient. Use `—` when every target is met.
 - Store the evidence distribution, owning `E2E-PATH-*`, detailed test-file mapping, latest pass/fail result, and run artifacts in the
   generated coverage report, CI, or a test-run record rather than duplicating them in this durable summary.
 
-The table is optional while this model is being piloted. When present, keep one row per story in the same stable-ID order as the status
-overview and refresh it when representative test references or E2E boundaries change.
+Keep one row per owned story in the same stable-ID order as the status overview and refresh it when representative test references or E2E
+boundaries change. A missing direct test reference is a traceability gap, not proof that the product behaviour is absent. Do not infer a
+passing current run from this table.
 
-Before the detailed stories, define each proof strategy used by the feature once. A strategy combines the responsible code layers, the
-smallest required evidence set, and the reason that boundary must be tested:
+Before the detailed stories, link to the [shared proof-strategy registry](../testing/proof-strategies.md). It defines each stable `PS-*`
+identifier once, with its proof obligation, required evidence, and rationale. Feature READMEs must not copy or override the registry. An AC
+may reference several IDs when its obligations can fail independently; every ID is required, not an alternative. A frontend and backend
+unit-test pair never implies an integrated browser/API proof; choose an explicit integrated ID when the hand-off is part of the outcome.
 
-```markdown
-## Proof Strategy Reference
-
-| Strategy      | Responsibilities   | Required Evidence        | Proof Rationale                                           |
-| ------------- | ------------------ | ------------------------ | --------------------------------------------------------- |
-| `PS-API`      | Frontend + Backend | Integrated E2E           | The persisted API outcome must be visible.                |
-| `PS-API-RULE` | Frontend + Backend | Mocked browser + Backend | The browser handling and API rule can fail independently. |
-| `PS-BROWSER`  | Frontend           | Mocked browser           | A controlled browser branch must be proven.               |
-| `PS-BACKEND`  | Backend            | Backend                  | The backend owns the rule or persistence.                 |
-```
-
-Use stable, descriptive `PS-*` identifiers. Define only strategies used by that feature, and create a separate strategy whenever the
-responsibilities, required evidence, or boundary rationale differs. The reference table is part of the feature's coverage plan; it does not
-describe the latest test execution result.
-
-For a coverage-reviewed story, add a compact table after its acceptance criteria and before its dependencies. Refer to the strategy instead
-of repeating its three defining fields on every criterion:
+For every non-reference story whose proof boundary is defined, add a compact table after its acceptance criteria and before its
+dependencies. Use one row per AC–strategy obligation, including repeated AC IDs when several strategies are required. `Current Evidence` is
+the complete AC-level inventory on every row, while `Status` evaluates only the strategy on that row. An unresolved draft may defer its
+per-criterion proof strategy until its product and implementation boundary are decided; identify that decision explicitly in the overview
+and known gaps:
 
 ```markdown
 ### Test Coverage
 
 | Acceptance Criterion   | Proof Strategy | Current Evidence | Status          |
 | ---------------------- | -------------- | ---------------- | --------------- |
-| `AC-US-FEATURE-001-01` | `PS-API`       | Integrated E2E   | ✅ Met          |
-| `AC-US-FEATURE-001-02` | `PS-API-RULE`  | Mocked browser   | ⚠️ Insufficient |
-| `AC-US-FEATURE-001-03` | `PS-BACKEND`   | None linked      | ❌ Missing      |
+| `AC-US-FEATURE-001-01` | `PS-BACKEND`        | Integrated E2E + Backend | ✅ Met          |
+| `AC-US-FEATURE-001-01` | `PS-API-INTEGRATED` | Integrated E2E + Backend | ✅ Met          |
+| `AC-US-FEATURE-001-02` | `PS-BROWSER`        | Mocked browser   | ✅ Met          |
+| `AC-US-FEATURE-001-02` | `PS-BACKEND`        | Mocked browser   | ⚠️ Insufficient |
+| `AC-US-FEATURE-001-03` | `PS-BACKEND`        | None linked      | ❌ Missing      |
 ```
 
-- A strategy's `Responsibilities` identifies the code layers that make a decision, enforce a rule, or own a state transition required by the
-  criterion: `Frontend`, `Backend`, `Contract`, or `Dashboard`. Join independent owners with `+`. A layer that only transports data is a
-  participant, not automatically a responsibility; represent a risky hand-off through the required integration evidence instead.
-- A strategy's `Required Evidence` states the smallest deliberate proof set that covers those responsibilities and any material boundary
-  risk: `Integrated E2E`, `Mocked browser`, `Frontend`, `Backend`, `Contract`, or `Dashboard`. Join independently required proofs with `+`.
-  A real integrated path can prove more than one responsibility when it exercises the relevant decisions and resulting state.
+- Identify the code layers that make a decision, enforce a rule, or own a state transition required by the criterion. A layer that only
+  transports data is a participant, not automatically an owner; represent a material hand-off through an integrated strategy instead. If the
+  backend owns an AC rule, authorization decision, or persisted result, include `PS-BACKEND`. If a contract owns an on-chain rule or state
+  transition, include `PS-CONTRACT`. Their focused tests remain mandatory even when an integrated journey also proves the boundary. Do not
+  infer either ownership solely from the presence of an API or chain in the journey.
+- For frontend-owned behavior, select a focused frontend test for an independently failing local rule, a mocked-browser test for a user
+  interaction or controlled error, or integrated E2E when the real API or chain hand-off is essential to the outcome. Do not make frontend
+  tests mandatory for backend-only or contract-only ACs. An integrated test need not be duplicated by a frontend unit test unless a distinct
+  client rule needs targeted proof. Dashboard behavior follows the same distinction with its dashboard strategies.
+- A strategy's `Proof Obligation` identifies one focused rule, browser behavior, or integration boundary. `Required Evidence` states the
+  test type that must directly prove it: `Integrated E2E`, `Mocked browser`, `Frontend`, `Backend`, `Contract`, or `Dashboard`. Several
+  strategy IDs on one AC form a conjunction, not alternatives or an implicit hierarchy of tests.
 - A strategy's `Proof Rationale` names the rule or boundary failure that the required evidence must detect. It explains why that proof level
   is necessary instead of restating the criterion or merely listing the implementation stack.
-- `Proof Strategy` references one definition from the feature's `Proof Strategy Reference`. An undefined strategy ID is invalid.
+- `Proof Strategy` references one definition from the shared registry. Duplicate AC–strategy pairs and undefined IDs are invalid. All rows
+  for one AC are conjunctive; count that AC as met only when every row is `✅ Met`. For an individual unchecked criterion whose
+  product/proof boundary is still undecided, use `Decision pending` instead, with `None linked` and `📝 Pending`; record the missing
+  decision in Known Gaps and replace this exception once it is settled.
 - `Current Evidence` is derived from direct representative `AC-US-*` references. `Integrated E2E` and `Mocked browser` come from the
-  Playwright suite's `@integrated` or `@mocked` classification; `None linked` means no representative reference is currently registered.
+  Playwright suite's `@integrated` or `@mocked` classification. Show **all** linked test types for the AC on every strategy row, even when a
+  type does not satisfy that row's obligation. `None linked` means no representative reference is registered for the AC. Do not confuse this
+  static inventory with assertion quality or the latest passing test run.
 - `Status` is `✅ Met` when every required proof is present, `⚠️ Insufficient` when some proof exists but a required boundary is absent, or
-  `❌ Missing` when no representative proof is linked.
+  `❌ Missing` when no representative proof is linked. Use `🔎 Unverified` when the required static labels are present but the test
+  assertions have not yet been examined against the complete outcome; this does not count as met in the overview.
 - Coverage status records traceability against the planned test boundary, not whether the latest run passed. Keep current execution results
   in CI or the generated local report.
+- Review the representative assertions before counting a direct identifier as proof. If the assertion does not establish the criterion,
+  correct its marker or the test; do not use a coverage row to launder a weak reference into `✅ Met`. Until that correction is made,
+  `⚠️ Insufficient` may conservatively override a complete static label match; list the criterion and the assertion gap in the feature's
+  known gaps so the downgrade is auditable. Do not upgrade `🔎 Unverified` to `✅ Met` without that assertion review.
 
 If a criterion contains outcomes that can pass or fail independently, need different responsibility owners, or require different evidence,
 split it before assigning the proof strategy. Keep a transversal criterion intact when its layers jointly produce one cohesive observable
@@ -526,7 +561,10 @@ This rule applies to every committed documentation file, not only feature README
 - [ ] Every criterion is a functional, observable, independently reviewable outcome that remains valid after a visual redesign.
 - [ ] UI and UX requirements are kept outside feature acceptance criteria.
 - [ ] Statuses, checkboxes, and the human-validation statement agree.
-- [ ] Any test coverage overview remains separate from product status and states the actual E2E integration boundary.
+- [ ] Every owned story has a coverage-overview row and, when its proof boundary is defined, a per-criterion coverage table using a defined
+      proof strategy; unresolved drafts name the decision that prevents a target, while reference-only stories have no invented criteria or
+      proof.
+- [ ] The coverage overview remains separate from product status and states the actual E2E integration boundary.
 - [ ] Known gaps are visible and not hidden under `✅ Done`.
 - [ ] Evidence links resolve to current code or tests.
 - [ ] Related feature and contract documentation is linked without duplication.

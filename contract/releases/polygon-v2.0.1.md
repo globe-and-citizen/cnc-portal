@@ -27,7 +27,8 @@ deployment registry, and the candidates are compared to the committed Polygon 2.
 
 Before any transaction, the guarded script:
 
-- validates all four implementations and storage layouts in one simulated Hardhat process against the Polygon 2.0.0 baselines;
+- validates all four candidate versions are `2.0.1`, along with implementation safety and storage layouts, in one simulated Hardhat process
+  against the Polygon 2.0.0 baselines;
 - requires the connected chain to match the selected deployment registry;
 - confirms that the configured signer owns every target beacon;
 - confirms each current implementation reports an expected version;
@@ -41,6 +42,9 @@ The four committed baselines describe the exact storage-bearing `2.0.0` sources 
 stale production references; they are not baselines baked from the unreleased `2.0.1` deployments. Each `2.0.1` change is storage-neutral,
 so the compiled candidate must compare equal to those `2.0.0` layouts before any transaction is broadcast.
 
+The release rejects a newer compiled candidate before any live transaction. In particular, a checkout containing Expense Account `2.0.2`
+cannot run this four-contract recipe as `2.0.1`; use the separate [Expense Account 2.0.2 runbook](./polygon-v2.0.2.md) for that patch.
+
 ## Polygon preparation
 
 Load the authorised beacon-owner signer through the project's Hardhat keystore and configure the Polygon network environment. Then run the
@@ -52,7 +56,8 @@ CNC_CONFIRM_POLYGON_V201_UPGRADE=upgrade-polygon-v2.0.1 npm run prepare-upgrade:
 
 This command validates layouts, ownership, versions, constructor wiring, and rollback inputs. It does not broadcast an upgrade transaction.
 Static implementation and storage checks do not load Polygon configuration. The production keystore is unlocked once, only when the
-read-only Polygon preflight checks beacon ownership and implementations and records the rollback manifest.
+read-only Polygon preflight checks beacon ownership and implementations and records the rollback manifest. An existing manifest is never
+overwritten; retain the original rollback inputs.
 
 ## Polygon deployment
 

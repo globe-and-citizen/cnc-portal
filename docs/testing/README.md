@@ -4,7 +4,8 @@ This directory contains comprehensive testing documentation and guides for the C
 
 ## Contents
 
-- **[Integrated E2E Paths](./e2e-paths.md)** - G0 through G8 business paths and current evidence status
+- **[Integrated E2E Paths](./e2e-paths.md)** - G0 technical gate, G1 through G12 client business paths, and current evidence status
+- **[Shared Proof Strategies](./proof-strategies.md)** - Canonical `PS-*` obligations used by feature acceptance criteria
 - **[Playwright E2E Fixture Catalogue](./e2e-fixtures.md)** - Shared fixtures, boundary rules, cleanup, and complete spec audit
 - **[Application E2E Guide](../../app/test/README.md)** - Playwright profiles, setup commands, and authoring conventions
 - **[Unit Testing Guide](./unit-testing.md)** - Guidelines for writing unit tests with Vue Test Utils and Vitest
@@ -35,10 +36,14 @@ setup configuration.
 
 Chain-backed browser and integrated tests run inside an automatic chain snapshot. Fully simulated browser scenarios skip Hardhat entirely
 and may run with file-level parallelism. Integrated tests can additionally request authenticated owner/member pages, operational teams, and
-disposable team feature overrides. See the [fixture catalogue](./e2e-fixtures.md) before adding setup to an individual spec.
+disposable team feature overrides. See the [fixture catalogue](./e2e-fixtures.md) before adding setup to an individual spec. Prepare only
+the state required by the path's actor actions; apply the [path scope check](./e2e-paths.md#path-model) before adding assertions.
 
 ```bash
 cd app
+
+# Verify the prepared integrated stack (set CNC_E2E_BACKEND_URL to its local origin first)
+npm run preflight:e2e:integrated
 
 # Real frontend, backend, database, and chain boundaries for every migrated path
 npm run test:e2e
@@ -55,7 +60,19 @@ full-stack business journey.
 
 CI runs independent `Browser acceptance` and `Integrated journeys` jobs, then exposes one lightweight `Full-stack E2E` aggregate check. The
 browser job prepares its own local node, contracts, and frontend. The integrated job prepares a separate local node, disposable database,
-backend, deployment manifest, and frontend. The profiles publish separate reports because only the integrated phase is E2E evidence.
+backend, deployment manifest, and frontend. Its [technical preflight](../../app/scripts/check-integrated-readiness.mjs) verifies frontend
+reachability, backend database/chain readiness, chain identity, and shared Officer/Bank/token code before Playwright. The integrated
+authentication test additionally compares the browser wallet's chain with the backend chain while exercising SIWE. The profiles publish
+separate reports because only the integrated phase is E2E evidence.
+
+When multiple local checkouts run E2E at once, choose one isolated node per checkout. Set `CNC_E2E_RPC_URL` to that node for the contract
+deployment, integrated preflight, and Playwright process, and set `VITE_E2E_RPC_URL` to the same endpoint for the portal. The backend
+`RPC_URL` must also target that node. The preflight checks code from the selected node against the checkout's deployment manifest.
+
+The G4 Community Credit integrated spec uses the operational-team factory to prepare an isolated company, contracts, and member. Shared E2E
+infrastructure funds the test wallets. The portal publishes and settles each round; the real API persists round metadata in the disposable
+database. Each path has its own chain snapshot and team cleanup, and the external token-price response is the only browser stub. Run the two
+paths individually when investigating a failure; neither depends on the other's round or metadata.
 
 The Vite development server ignores generated `coverage/` artifacts so per-page coverage snapshots do not trigger hot reloads during an
 active browser suite.

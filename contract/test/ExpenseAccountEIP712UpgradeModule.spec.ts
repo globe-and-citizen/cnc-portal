@@ -71,7 +71,7 @@ describe('ExpenseAccountV201UpgradeModule', function () {
     expect(await factoryBeacon.implementation()).to.not.equal(
       await initialImplementation.getAddress()
     )
-    expect(await proxy.version()).to.equal('2.0.1')
+    expect(await proxy.version()).to.equal('2.0.2')
     expect(await proxy.owner()).to.equal(proxyOwner.address)
     expect(await proxy.isTokenSupported(await token.getAddress())).to.equal(true)
     expect(await proxy.getSupportedTokens()).to.deep.equal(supportedTokensBefore)
