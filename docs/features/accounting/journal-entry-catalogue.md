@@ -653,7 +653,7 @@ cases.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `f3144ed5dc47f4b21801535a79fd157177a3a545`
+**Implementation evidence reviewed against:** `6eebae66bffc134e6c8b51d03046c29da401a0f5`
 
 These sources support current-runtime correspondence and preserved domain postings, not implementation of proposed identifiers or suspense
 accounts.

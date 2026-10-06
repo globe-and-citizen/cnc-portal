@@ -4,7 +4,7 @@
 journal, including the persisted counter-account assignments it consumes. Accounting report projections consume that journal on demand. This
 model does not create or persist manual journal entries.
 
-**Last verified:** 2026-10-01
+**Last verified:** 2026-10-06
 
 ## Consumers
 
@@ -638,7 +638,7 @@ because deposits and company-pocket transfers are not manual assignment targets.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `b8013282ba1fc834aa7ff584cae2963c6efb9263`
+**Implementation evidence reviewed against:** `6eebae66bffc134e6c8b51d03046c29da401a0f5`
 
 - [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts),
   [source-status projection](../../../app/src/composables/accounting/useAccountingStatus.ts),
