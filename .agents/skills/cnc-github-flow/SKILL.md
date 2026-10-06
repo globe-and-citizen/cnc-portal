@@ -33,7 +33,10 @@ Use `gh`, not the GitHub MCP. Keep GitHub text in English, conventional-commit p
    gh api --method POST "repos/globe-and-citizen/cnc-portal/issues/<parent-number>/sub_issues" -F sub_issue_id="$CHILD_ID"
    ```
 
-5. Read back the child's native parent and the parent's sub-issue list. Resolve any mismatch before treating the issue as placed.
+5. Give a new Sprint bugs and perf coordinator the same Goal contract as other Sprint Goals: Goal type, expected outcome, exit criteria,
+   product story impact, canonical references, owner and validator, and scope boundary. Match its Project Sprint Iteration to the Sprint
+   root and classify its Size as `Goals`. Keep the root's original Goal checklist limited to planned outcomes.
+6. Read back the child's native parent and the parent's sub-issue list. Resolve any mismatch before treating the issue as placed.
 
 ## Propagate issue changes through the hierarchy
 
