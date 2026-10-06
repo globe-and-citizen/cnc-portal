@@ -5,8 +5,18 @@ description: Manage CNC Portal GitHub issues, Sprint hierarchy, pull requests, r
 
 # CNC GitHub flow
 
-Use `gh`, not the GitHub MCP. Keep GitHub text in English, conventional-commit plus gitmoji titles, and public-repository hygiene from
-`AGENTS.md`.
+Use `gh`, not the GitHub MCP. Keep GitHub text in English and follow the title conventions and public-repository hygiene from `AGENTS.md`.
+
+## Sprint and Goal issue titles
+
+Sprint planning and Sprint Goal issues use their own titles without a Conventional Commit type or gitmoji:
+
+- Sprint root: `[Sprint] Sprint <number> plan — <date range>`.
+- Planned Goal: `[Goals] <outcome> — Sprint <number>`.
+- Catch-all Goal: `[Goals] Sprint <number> Bug and perf`.
+
+Keep Conventional Commit titles for ordinary delivery and coordination issues, commits, and pull requests. Do not rename historical Sprint
+or Goal issues solely to normalize older title variants.
 
 ## Create or organize an issue
 

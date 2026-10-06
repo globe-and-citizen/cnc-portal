@@ -1,7 +1,7 @@
 ---
 name: Sprint Planning
 about: Template for planning sprint goals and tasks
-title: "Sprint [NUMBER] Plan"
+title: "[Sprint] Sprint [NUMBER] plan — [START]–[END]"
 labels: "sprint, planning"
 assignees: ""
 ---
@@ -67,6 +67,7 @@ Below are example sections you can use or modify for your sprint:
 ## Notes
 
 - Update the sprint number in the title
-- Replace example sections with your actual sprint goals
+- Replace example sections with the original sprint goals and attach their `[Goals]` issues as native sub-issues
+- Track unrelated corrective or technical work under `[Goals] Sprint [NUMBER] Bug and perf`, outside the original goal checklist
 - Use nested checkboxes for subtasks
 - Add additional sections as needed for your sprint scope
