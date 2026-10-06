@@ -21,10 +21,12 @@ Use `gh`, not the GitHub MCP. Keep GitHub text in English, conventional-commit p
 3. Give the issue a concise problem, scope boundary, acceptance criteria, and validation evidence expected. Complete its relationship plan
    using [Development Relationship Validation](../../../docs/development-guide/relationship-validation.md), including affected consumers,
    applicability, and completion proposals. Assign it to the current authenticated user.
-4. Identify the native parent before creating or reusing an issue. Sprint and backlog planning issues are explicit roots; attach Goals
-   beneath the Sprint, coordinating issues beneath the relevant Goal, delivery issues beneath the relevant Goal or coordinator, and backlog
-   work beneath its appropriate backlog parent. If the intended parent does not exist, establish its place in the hierarchy first. Do not
-   leave a work issue orphaned. Attach a child using its database id, not its issue number:
+4. Identify the native parent before creating or reusing an issue. Sprint and backlog planning issues are explicit roots. Attach original
+   Sprint Goals beneath the Sprint and planned delivery beneath its relevant Goal or coordinator. Each Sprint also has a separate bugs and
+   perf sub-issue for corrective or technical work outside those Goals; attach that work beneath this branch, without adding it to the
+   original Sprint Goal checklist. Attach backlog work beneath its appropriate backlog parent. If the intended parent does not exist,
+   establish its place in the hierarchy first. Do not leave a work issue orphaned. Attach a child using its database id, not its issue
+   number:
 
    ```bash
    CHILD_ID=$(gh api "repos/globe-and-citizen/cnc-portal/issues/<child-number>" --jq .id)
