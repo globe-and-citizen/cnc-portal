@@ -23,9 +23,13 @@ These acceptance criteria follow the
   explicit; Accounting does not present incomplete books as final.
 - [Understanding Accounting through six questions](./accounting-model.md) provides a progressive visual explanation of treasury pockets,
   balanced entries, redeployments, multi-generation assembly, completeness, and report derivation.
-- The [Accounting rule catalogue](./journal-entry-catalogue.md) maps transaction stories to domain use cases, generic posting rules, journal
-  components, and General Ledger output. The [Accounting Read Model](../../implementation/accounting-read-model/README.md) owns the shared
-  processing architecture.
+- The [Accounting rule catalogue](./journal-entry-catalogue.md) covers events that produce accounting entries, organizing economic use cases
+  by selection condition with related transaction stories, posting rules, and complete journal entries. Internal/external/fee rules describe
+  the applicable treasury movements. Its runtime correspondence section records the currently implemented identifiers and migration
+  boundaries. The [Accounting Read Model](../../implementation/accounting-read-model/README.md) owns the shared processing architecture.
+- The [Accounting test script](./accounting-test-script.md) gives a manual scenario checklist for the proposed accounting model, including
+  source-independent pocket transfers, evidence-based treatment of external cash, fee composition, and report reconciliation. Its proposed
+  identifiers remain illustrative until the runtime migration is implemented.
 
 ## Lifecycle
 
