@@ -28,7 +28,7 @@ import {
  * browser-acceptance fixture, which the integrated deployment does not reproduce,
  * so an event filter built from it matches nothing on this chain.
  */
-const INTEGRATED_USDC: Address = requiredAddress(
+export const INTEGRATED_USDC: Address = requiredAddress(
   JSON.parse(
     readFileSync(
       fileURLToPath(

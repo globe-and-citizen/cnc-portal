@@ -62,14 +62,14 @@ Coverage targets compare each criterion's required evidence with direct `AC-US-*
 latest pass/fail result, which belongs to CI or the generated local report. Gaps identify criteria whose required evidence is missing or
 insufficient; the detailed evidence distribution remains available in the generated report instead of being repeated here.
 
-| User Story  | Main Journey  | Coverage Target | Gaps                                                                |
-| ----------- | ------------- | --------------- | ------------------------------------------------------------------- |
-| US-ACCT-001 | ✅ Integrated | ⚠️ 11/12        | 1 — `AC-US-ACCT-001-08`, whose cash reconciliation is not built yet |
-| US-ACCT-002 | ✅ Integrated | ✅ 12/12        | —                                                                   |
-| US-ACCT-003 | ✅ Integrated | ✅ 11/11        | —                                                                   |
-| US-ACCT-004 | ✅ Integrated | ✅ 9/9          | —                                                                   |
-| US-ACCT-005 | ✅ Integrated | ✅ 13/13        | —                                                                   |
-| US-ACCT-006 | ✅ Integrated | ✅ 11/11        | —                                                                   |
+| User Story  | Main Journey  | Coverage Target | Gaps                                                                                                    |
+| ----------- | ------------- | --------------- | ------------------------------------------------------------------------------------------------------- |
+| US-ACCT-001 | ✅ Integrated | ⚠️ 11/12        | 1 — `AC-US-ACCT-001-08`, whose cash reconciliation is not built yet                                     |
+| US-ACCT-002 | ✅ Integrated | ✅ 12/12        | —                                                                                                       |
+| US-ACCT-003 | ✅ Integrated | ✅ 11/11        | —                                                                                                       |
+| US-ACCT-004 | ✅ Integrated | ✅ 9/9          | —                                                                                                       |
+| US-ACCT-005 | ✅ Integrated | ✅ 13/13        | —                                                                                                       |
+| US-ACCT-006 | ✅ Integrated | ⚠️ 6/11         | `AC-US-ACCT-006-01`, `AC-US-ACCT-006-02`, `AC-US-ACCT-006-03`, `AC-US-ACCT-006-05`, `AC-US-ACCT-006-09` |
 
 ### Accounting Use-Case Test Evidence
 
@@ -89,18 +89,10 @@ implemented use cases.
 
 The real-operation evidence is in the [Accounting journey](../../../app/test/e2e/accounting/accounting-journey.integrated.spec.ts) and
 [contract-generation journey](../../../app/test/e2e/accounting/accounting-generations.integrated.spec.ts). Their current execution status is
-reported by CI and is separate from the test evidence listed above.
+reported by CI and is separate from the test evidence listed above. The Accounting journey publishes and fully funds its own zero-interest
+Community Credit round, matches the funding transaction to one balanced `UC-CREDIT-01` entry, and checks the same entry after a reload.
 
-## Proof Strategy Reference
-
-Each acceptance criterion references one reusable strategy instead of repeating the same responsibility, evidence, and rationale text.
-
-| Strategy                 | Responsibilities   | Required Evidence | Proof Rationale                                                                     |
-| ------------------------ | ------------------ | ----------------- | ----------------------------------------------------------------------------------- |
-| `PS-FRONTEND`            | Frontend           | Frontend          | The read model owns this deterministic derivation, valuation, or presentation rule. |
-| `PS-FRONTEND-INTEGRATED` | Frontend           | Integrated E2E    | The books must be proven against operations the portal actually performed.          |
-| `PS-API`                 | Frontend + Backend | Integrated E2E    | The browser/API hand-off and persisted user-visible state must work together.       |
-| `PS-BACKEND`             | Backend            | Backend           | The backend owns this API authorization, validation, or persistence rule.           |
+Proof obligations use the [shared proof-strategy registry](../../testing/proof-strategies.md). Multiple IDs for one AC are cumulative.
 
 ## US-ACCT-001: View the Accounting Overview
 
@@ -387,19 +379,24 @@ first change and for the current router when no change event exists.
 
 ### Test Coverage
 
-| Acceptance Criterion | Proof Strategy           | Current Evidence          | Status |
-| -------------------- | ------------------------ | ------------------------- | ------ |
-| `AC-US-ACCT-006-01`  | `PS-API`                 | Integrated E2E            | ✅ Met |
-| `AC-US-ACCT-006-02`  | `PS-API`                 | Integrated E2E + Frontend | ✅ Met |
-| `AC-US-ACCT-006-03`  | `PS-API`                 | Integrated E2E + Frontend | ✅ Met |
-| `AC-US-ACCT-006-04`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E + Frontend | ✅ Met |
-| `AC-US-ACCT-006-05`  | `PS-API`                 | Integrated E2E            | ✅ Met |
-| `AC-US-ACCT-006-06`  | `PS-BACKEND`             | Backend                   | ✅ Met |
-| `AC-US-ACCT-006-07`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E            | ✅ Met |
-| `AC-US-ACCT-006-08`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
-| `AC-US-ACCT-006-09`  | `PS-API`                 | Integrated E2E + Frontend | ✅ Met |
-| `AC-US-ACCT-006-10`  | `PS-BACKEND`             | Backend                   | ✅ Met |
-| `AC-US-ACCT-006-11`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
+| Acceptance Criterion | Proof Strategy           | Current Evidence          | Status          |
+| -------------------- | ------------------------ | ------------------------- | --------------- |
+| `AC-US-ACCT-006-01`  | `PS-API-INTEGRATED`      | Integrated E2E            | ✅ Met          |
+| `AC-US-ACCT-006-01`  | `PS-BACKEND`             | Integrated E2E            | ⚠️ Insufficient |
+| `AC-US-ACCT-006-02`  | `PS-API-INTEGRATED`      | Integrated E2E + Frontend | ✅ Met          |
+| `AC-US-ACCT-006-02`  | `PS-BACKEND`             | Integrated E2E + Frontend | ⚠️ Insufficient |
+| `AC-US-ACCT-006-03`  | `PS-API-INTEGRATED`      | Integrated E2E + Frontend | ✅ Met          |
+| `AC-US-ACCT-006-03`  | `PS-BACKEND`             | Integrated E2E + Frontend | ⚠️ Insufficient |
+| `AC-US-ACCT-006-04`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E + Frontend | ✅ Met          |
+| `AC-US-ACCT-006-05`  | `PS-API-INTEGRATED`      | Integrated E2E            | ✅ Met          |
+| `AC-US-ACCT-006-05`  | `PS-BACKEND`             | Integrated E2E            | ⚠️ Insufficient |
+| `AC-US-ACCT-006-06`  | `PS-BACKEND`             | Backend                   | ✅ Met          |
+| `AC-US-ACCT-006-07`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E            | ✅ Met          |
+| `AC-US-ACCT-006-08`  | `PS-FRONTEND`            | Frontend                  | ✅ Met          |
+| `AC-US-ACCT-006-09`  | `PS-API-INTEGRATED`      | Integrated E2E + Frontend | ✅ Met          |
+| `AC-US-ACCT-006-09`  | `PS-BACKEND`             | Integrated E2E + Frontend | ⚠️ Insufficient |
+| `AC-US-ACCT-006-10`  | `PS-BACKEND`             | Backend                   | ✅ Met          |
+| `AC-US-ACCT-006-11`  | `PS-FRONTEND`            | Frontend                  | ✅ Met          |
 
 **Dependencies:** US-ACCT-002 and the journal account-assignment API
 

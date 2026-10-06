@@ -46,6 +46,7 @@ import {
   ledgerTotalRow,
   sheetRow
 } from './accounting-export'
+import { expectAccountingCreditEntry, fundAccountingCreditRound } from './accounting-credit'
 import {
   approveExpenseSpending,
   depositUsdcToBank,
@@ -153,6 +154,7 @@ test.describe(
         const funding = await fundContractFromBank(page, teamId, 'ExpenseAccountEIP712', '2')
         await approveExpenseSpending(page, teamId, '2')
         await spendFromExpenseAccount(memberPage, teamId, '1')
+        const credit = await fundAccountingCreditRound(page, teamId, company.officer.address)
 
         // 2. The overview loads complete books for those operations.
         await openAccounting(page, teamId, 'summary')
@@ -224,6 +226,8 @@ test.describe(
         expect(drilledHashes).toContain(deposit.txHash)
         await drilldown.getByRole('button', { name: 'Close', exact: true }).last().click()
 
+        expectAccountingCreditEntry(opening.entries, credit)
+
         // 5. The three statements describe one consistent snapshot.
         await openAccounting(page, teamId, 'income')
         const income = await readAmounts(body)
@@ -251,6 +255,7 @@ test.describe(
         const rebuilt = await readLedger(page)
         expect(rebuilt.total).toBe(opening.total)
         expect(normalizedLedger(rebuilt.entries)).toEqual(normalizedLedger(opening.entries))
+        expect(entriesForTransaction(rebuilt.entries, credit.txHash)).toHaveLength(1)
 
         // 8. A treasury movement the portal cannot attribute.
         await withdrawToExternalAddress(page, teamId, E2E_NEW_SIGNER, '1')

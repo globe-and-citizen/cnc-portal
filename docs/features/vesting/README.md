@@ -61,6 +61,22 @@ stateDiagram-v2
 | US-VESTING-005 | Understand vested and claimable progress | Member / Owner | ✅ Done        |
 | US-VESTING-006 | See vesting in the company books         | Member / Owner | 🔗 Reference   |
 
+## Test Coverage Overview
+
+Coverage targets compare each criterion with its required representative evidence. Static references are not a current passing run; the
+generated coverage report and CI retain file-level and execution evidence. Known assertion gaps remain insufficient even when a static
+reference has the expected layer label.
+
+| User Story     | Main Journey | Coverage Target | Gaps                                                                                                                                                                                                                                                                   |
+| -------------- | ------------ | --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| US-VESTING-001 | ⬜ Planned   | ⚠️ 3/14         | `AC-US-VESTING-001-01`, `AC-US-VESTING-001-02`, `AC-US-VESTING-001-03`, `AC-US-VESTING-001-04`, `AC-US-VESTING-001-07`, `AC-US-VESTING-001-08`, `AC-US-VESTING-001-09`, `AC-US-VESTING-001-10`, `AC-US-VESTING-001-11`, `AC-US-VESTING-001-13`, `AC-US-VESTING-001-14` |
+| US-VESTING-002 | ⬜ Planned   | ❌ 0/10         | `AC-US-VESTING-002-01`, `AC-US-VESTING-002-02`, `AC-US-VESTING-002-03`, `AC-US-VESTING-002-04`, `AC-US-VESTING-002-05`, `AC-US-VESTING-002-06`, `AC-US-VESTING-002-07`, `AC-US-VESTING-002-08`, `AC-US-VESTING-002-09`, `AC-US-VESTING-002-10`                         |
+| US-VESTING-003 | ⬜ Planned   | ⚠️ 2/11         | `AC-US-VESTING-003-01`, `AC-US-VESTING-003-02`, `AC-US-VESTING-003-03`, `AC-US-VESTING-003-04`, `AC-US-VESTING-003-05`, `AC-US-VESTING-003-08`, `AC-US-VESTING-003-09`, `AC-US-VESTING-003-10`, `AC-US-VESTING-003-11`                                                 |
+| US-VESTING-004 | ⬜ Planned   | ❌ 0/10         | `AC-US-VESTING-004-01`, `AC-US-VESTING-004-02`, `AC-US-VESTING-004-03`, `AC-US-VESTING-004-04`, `AC-US-VESTING-004-05`, `AC-US-VESTING-004-06`, `AC-US-VESTING-004-07`, `AC-US-VESTING-004-08`, `AC-US-VESTING-004-09`, `AC-US-VESTING-004-10`                         |
+| US-VESTING-005 | ⬜ Planned   | ⚠️ 2/8          | `AC-US-VESTING-005-01`, `AC-US-VESTING-005-02`, `AC-US-VESTING-005-03`, `AC-US-VESTING-005-04`, `AC-US-VESTING-005-05`, `AC-US-VESTING-005-06`                                                                                                                         |
+
+Proof obligations use the [shared proof-strategy registry](../../testing/proof-strategies.md). Multiple IDs for one AC are cumulative.
+
 ## US-VESTING-001: Create a Minute-Precise Vesting Schedule
 
 **As a** team owner\
@@ -91,6 +107,29 @@ stateDiagram-v2
 
 - [x] `AC-US-VESTING-001-13` Cancelling schedule creation does not create an on-chain schedule.
 - [x] `AC-US-VESTING-001-14` A failed schedule creation does not create an on-chain schedule and preserves the entered context.
+
+### Test Coverage
+
+| Acceptance Criterion   | Proof Strategy        | Current Evidence | Status          |
+| ---------------------- | --------------------- | ---------------- | --------------- |
+| `AC-US-VESTING-001-01` | `PS-CHAIN-INTEGRATED` | None linked      | ❌ Missing      |
+| `AC-US-VESTING-001-01` | `PS-CONTRACT`         | None linked      | ❌ Missing      |
+| `AC-US-VESTING-001-02` | `PS-BROWSER`          | None linked      | ❌ Missing      |
+| `AC-US-VESTING-001-03` | `PS-BROWSER`          | None linked      | ❌ Missing      |
+| `AC-US-VESTING-001-04` | `PS-CHAIN-INTEGRATED` | None linked      | ❌ Missing      |
+| `AC-US-VESTING-001-05` | `PS-CONTRACT`         | Contract         | ✅ Met          |
+| `AC-US-VESTING-001-06` | `PS-CONTRACT`         | Contract         | ✅ Met          |
+| `AC-US-VESTING-001-07` | `PS-BROWSER`          | None linked      | ❌ Missing      |
+| `AC-US-VESTING-001-08` | `PS-FRONTEND`         | None linked      | ❌ Missing      |
+| `AC-US-VESTING-001-09` | `PS-CHAIN-INTEGRATED` | Frontend         | ⚠️ Insufficient |
+| `AC-US-VESTING-001-09` | `PS-FRONTEND`         | Frontend         | ✅ Met          |
+| `AC-US-VESTING-001-10` | `PS-FRONTEND`         | None linked      | ❌ Missing      |
+| `AC-US-VESTING-001-11` | `PS-FRONTEND`         | None linked      | ❌ Missing      |
+| `AC-US-VESTING-001-11` | `PS-CONTRACT`         | None linked      | ❌ Missing      |
+| `AC-US-VESTING-001-12` | `PS-CONTRACT`         | Contract         | ✅ Met          |
+| `AC-US-VESTING-001-13` | `PS-BROWSER`          | Frontend         | ⚠️ Insufficient |
+| `AC-US-VESTING-001-14` | `PS-BROWSER`          | None linked      | ❌ Missing      |
+| `AC-US-VESTING-001-14` | `PS-CONTRACT`         | None linked      | ❌ Missing      |
 
 **Accounting:** Creating the grant records its full commitment through
 [`UC-VEST-01`](../accounting/journal-entry-catalogue.md#uc-vest-01--vesting-grant) without minting shares.
@@ -125,6 +164,22 @@ stateDiagram-v2
       data.
 - [ ] `AC-US-VESTING-002-10` A malformed successful schedule payload is reported instead of being treated as an empty schedule scope.
 
+### Test Coverage
+
+| Acceptance Criterion   | Proof Strategy        | Current Evidence | Status          |
+| ---------------------- | --------------------- | ---------------- | --------------- |
+| `AC-US-VESTING-002-01` | `PS-CHAIN-INTEGRATED` | Frontend         | ⚠️ Insufficient |
+| `AC-US-VESTING-002-02` | `PS-CHAIN-INTEGRATED` | None linked      | ❌ Missing      |
+| `AC-US-VESTING-002-02` | `PS-CONTRACT`         | None linked      | ❌ Missing      |
+| `AC-US-VESTING-002-03` | `PS-FRONTEND`         | None linked      | ❌ Missing      |
+| `AC-US-VESTING-002-04` | `PS-FRONTEND`         | None linked      | ❌ Missing      |
+| `AC-US-VESTING-002-05` | `PS-CHAIN-INTEGRATED` | None linked      | ❌ Missing      |
+| `AC-US-VESTING-002-06` | `PS-FRONTEND`         | None linked      | ❌ Missing      |
+| `AC-US-VESTING-002-07` | `PS-FRONTEND`         | None linked      | ❌ Missing      |
+| `AC-US-VESTING-002-08` | `PS-BROWSER`          | None linked      | ❌ Missing      |
+| `AC-US-VESTING-002-09` | `PS-BROWSER`          | Frontend         | ⚠️ Insufficient |
+| `AC-US-VESTING-002-10` | `PS-BROWSER`          | None linked      | ❌ Missing      |
+
 **Dependencies:** US-VESTING-001
 
 ## US-VESTING-003: Release Accrued Shares
@@ -155,6 +210,26 @@ stateDiagram-v2
 - [x] `AC-US-VESTING-003-10` A failed release does not change the schedule or mint shares.
 - [x] `AC-US-VESTING-003-11` An open release review stays synchronized with the selected schedule's latest claimable and released amounts
       before confirmation.
+
+### Test Coverage
+
+| Acceptance Criterion   | Proof Strategy        | Current Evidence | Status          |
+| ---------------------- | --------------------- | ---------------- | --------------- |
+| `AC-US-VESTING-003-01` | `PS-CHAIN-INTEGRATED` | Frontend         | ⚠️ Insufficient |
+| `AC-US-VESTING-003-01` | `PS-CONTRACT`         | Frontend         | ⚠️ Insufficient |
+| `AC-US-VESTING-003-02` | `PS-CHAIN-INTEGRATED` | None linked      | ❌ Missing      |
+| `AC-US-VESTING-003-02` | `PS-CONTRACT`         | None linked      | ❌ Missing      |
+| `AC-US-VESTING-003-03` | `PS-CONTRACT`         | None linked      | ❌ Missing      |
+| `AC-US-VESTING-003-04` | `PS-CONTRACT`         | Contract         | ⚠️ Insufficient |
+| `AC-US-VESTING-003-05` | `PS-FRONTEND`         | None linked      | ❌ Missing      |
+| `AC-US-VESTING-003-05` | `PS-CONTRACT`         | None linked      | ❌ Missing      |
+| `AC-US-VESTING-003-06` | `PS-CONTRACT`         | Contract         | ✅ Met          |
+| `AC-US-VESTING-003-07` | `PS-CONTRACT`         | Contract         | ✅ Met          |
+| `AC-US-VESTING-003-08` | `PS-BROWSER`          | Contract         | ⚠️ Insufficient |
+| `AC-US-VESTING-003-08` | `PS-CONTRACT`         | Contract         | ✅ Met          |
+| `AC-US-VESTING-003-09` | `PS-BROWSER`          | None linked      | ❌ Missing      |
+| `AC-US-VESTING-003-10` | `PS-CONTRACT`         | None linked      | ❌ Missing      |
+| `AC-US-VESTING-003-11` | `PS-FRONTEND`         | Frontend         | ⚠️ Insufficient |
 
 **Accounting:** A successful release moves promised shares into Investor Equity through
 [`UC-VEST-02`](../accounting/journal-entry-catalogue.md#uc-vest-02--vested-sher-released). Its matching Investor mint is not booked again.
@@ -188,6 +263,25 @@ stateDiagram-v2
 - [x] `AC-US-VESTING-004-09` Cancelling a stop does not change the active schedule.
 - [x] `AC-US-VESTING-004-10` A failed stop leaves the schedule active.
 
+### Test Coverage
+
+| Acceptance Criterion   | Proof Strategy        | Current Evidence | Status          |
+| ---------------------- | --------------------- | ---------------- | --------------- |
+| `AC-US-VESTING-004-01` | `PS-CHAIN-INTEGRATED` | None linked      | ❌ Missing      |
+| `AC-US-VESTING-004-01` | `PS-CONTRACT`         | None linked      | ❌ Missing      |
+| `AC-US-VESTING-004-02` | `PS-CHAIN-INTEGRATED` | None linked      | ❌ Missing      |
+| `AC-US-VESTING-004-02` | `PS-CONTRACT`         | None linked      | ❌ Missing      |
+| `AC-US-VESTING-004-03` | `PS-CHAIN-INTEGRATED` | None linked      | ❌ Missing      |
+| `AC-US-VESTING-004-03` | `PS-CONTRACT`         | None linked      | ❌ Missing      |
+| `AC-US-VESTING-004-04` | `PS-CONTRACT`         | None linked      | ❌ Missing      |
+| `AC-US-VESTING-004-05` | `PS-CONTRACT`         | None linked      | ❌ Missing      |
+| `AC-US-VESTING-004-06` | `PS-CONTRACT`         | Contract         | ⚠️ Insufficient |
+| `AC-US-VESTING-004-07` | `PS-CONTRACT`         | Contract         | ⚠️ Insufficient |
+| `AC-US-VESTING-004-08` | `PS-BROWSER`          | Contract         | ⚠️ Insufficient |
+| `AC-US-VESTING-004-08` | `PS-CONTRACT`         | Contract         | ✅ Met          |
+| `AC-US-VESTING-004-09` | `PS-BROWSER`          | None linked      | ❌ Missing      |
+| `AC-US-VESTING-004-10` | `PS-CONTRACT`         | None linked      | ❌ Missing      |
+
 **Accounting:** A stop may group an accrued release (`UC-VEST-02`) with cancellation of the unvested remainder through
 [`UC-VEST-03`](../accounting/journal-entry-catalogue.md#uc-vest-03--unvested-grant-cancelled) in one journal entry.
 
@@ -218,6 +312,22 @@ stateDiagram-v2
 - [x] `AC-US-VESTING-005-07` A Cancelled schedule exposes both its released amount and its cancelled amount.
 - [x] `AC-US-VESTING-005-08` A positive base-unit share amount remains visibly positive instead of being rounded to zero.
 
+### Test Coverage
+
+| Acceptance Criterion   | Proof Strategy        | Current Evidence | Status          |
+| ---------------------- | --------------------- | ---------------- | --------------- |
+| `AC-US-VESTING-005-01` | `PS-CHAIN-INTEGRATED` | Frontend         | ⚠️ Insufficient |
+| `AC-US-VESTING-005-01` | `PS-CONTRACT`         | Frontend         | ⚠️ Insufficient |
+| `AC-US-VESTING-005-02` | `PS-FRONTEND`         | None linked      | ❌ Missing      |
+| `AC-US-VESTING-005-03` | `PS-FRONTEND`         | Frontend         | ⚠️ Insufficient |
+| `AC-US-VESTING-005-04` | `PS-FRONTEND`         | None linked      | ❌ Missing      |
+| `AC-US-VESTING-005-04` | `PS-CONTRACT`         | None linked      | ❌ Missing      |
+| `AC-US-VESTING-005-05` | `PS-FRONTEND`         | None linked      | ❌ Missing      |
+| `AC-US-VESTING-005-06` | `PS-FRONTEND`         | Frontend         | ✅ Met          |
+| `AC-US-VESTING-005-06` | `PS-CONTRACT`         | Frontend         | ⚠️ Insufficient |
+| `AC-US-VESTING-005-07` | `PS-FRONTEND`         | Frontend         | ✅ Met          |
+| `AC-US-VESTING-005-08` | `PS-FRONTEND`         | Frontend         | ✅ Met          |
+
 **Dependencies:** US-VESTING-002, US-VESTING-003, US-VESTING-004
 
 ## US-VESTING-006: See Vesting in the Company Books
@@ -228,13 +338,6 @@ evidence becomes `UC-VEST-01`, `UC-VEST-02`, and `UC-VEST-03` in the General Led
 [Vesting accounting policy](../accounting/vesting-accounting-restricted-stock.md) explains the restricted-stock treatment.
 
 **Dependencies:** US-VESTING-001, US-VESTING-003, US-VESTING-004, and US-ACCT-002
-
-## UI/UX Notes
-
-- Schedule creation review includes the beneficiary, grant, boundaries, cliff effect, and first claimable amount.
-- Release review includes the claimable amount before wallet confirmation.
-- Stop confirmation includes the shares to release and cancel before signing.
-- Loading, empty, and schedule read-error states remain distinguishable and actionable.
 
 ## Human Validation
 
@@ -273,3 +376,11 @@ Accounting-owned acceptance contract and has no independent validation status.
 
 - A successfully decoded Vesting response whose member, index, and schedule arrays have inconsistent lengths is currently reduced to an
   empty schedule list, making malformed data indistinguishable from a company with no schedules (`US-VESTING-002`).
+- Existing markers for cancellation, creation, stop, and cliff progress (`001-13`, `003-01`, `004-06`, `005-06`) assert narrower UI or
+  contract branches than their full acceptance outcomes. In particular, the marked `004-06` test covers a stop before start, not every
+  after-start pre-cliff case; its static Contract label is conservatively `⚠️ Insufficient`.
+- The archive/pause criteria `003-08` and `004-08` currently cover only part of the combined gate. A read failure on the active schedule is
+  tested, but `002-09` also promises the archived read state. Those branches need distinct representative proof.
+- The test marked `003-04` leaves the second grant locked, so it cannot prove release is limited to the selected claimable grant. `003-11`
+  checks a child prop but not both latest review amounts; `004-07` checks repeat stop but not release after stop; and `005-03` marks only
+  Claimable, not all seven stated states.

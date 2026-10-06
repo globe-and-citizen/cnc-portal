@@ -5,6 +5,7 @@ This directory contains comprehensive testing documentation and guides for the C
 ## Contents
 
 - **[Integrated E2E Paths](./e2e-paths.md)** - G0 technical gate, G1 through G12 client business paths, and current evidence status
+- **[Shared Proof Strategies](./proof-strategies.md)** - Canonical `PS-*` obligations used by feature acceptance criteria
 - **[Playwright E2E Fixture Catalogue](./e2e-fixtures.md)** - Shared fixtures, boundary rules, cleanup, and complete spec audit
 - **[Application E2E Guide](../../app/test/README.md)** - Playwright profiles, setup commands, and authoring conventions
 - **[Unit Testing Guide](./unit-testing.md)** - Guidelines for writing unit tests with Vue Test Utils and Vitest
@@ -63,6 +64,15 @@ backend, deployment manifest, and frontend. Its [technical preflight](../../app/
 reachability, backend database/chain readiness, chain identity, and shared Officer/Bank/token code before Playwright. The integrated
 authentication test additionally compares the browser wallet's chain with the backend chain while exercising SIWE. The profiles publish
 separate reports because only the integrated phase is E2E evidence.
+
+When multiple local checkouts run E2E at once, choose one isolated node per checkout. Set `CNC_E2E_RPC_URL` to that node for the contract
+deployment, integrated preflight, and Playwright process, and set `VITE_E2E_RPC_URL` to the same endpoint for the portal. The backend
+`RPC_URL` must also target that node. The preflight checks code from the selected node against the checkout's deployment manifest.
+
+The G4 Community Credit integrated spec uses the operational-team factory to prepare an isolated company, contracts, and member. Shared E2E
+infrastructure funds the test wallets. The portal publishes and settles each round; the real API persists round metadata in the disposable
+database. Each path has its own chain snapshot and team cleanup, and the external token-price response is the only browser stub. Run the two
+paths individually when investigating a failure; neither depends on the other's round or metadata.
 
 The Vite development server ignores generated `coverage/` artifacts so per-page coverage snapshots do not trigger hot reloads during an
 active browser suite.
