@@ -38,15 +38,16 @@ ERC-20 is identified by its network and contract address; its original currency 
 discovery does not expand the tokens allowed in CNC payment forms.
 
 A simple exchange requires opposing different-asset legs sharing a transaction and external settlement counterparty. The acquired asset is
-debited and the disposed asset credited at its weighted-average carrying value. The difference is an `Asset Exchange Gain` or
-`Asset Exchange Loss`, never `Service Revenue`. Actual stablecoin consideration can establish the acquired asset's transaction-date value.
-Current portfolio prices never replace historical accounting evidence.
+debited at its own historical market rate and the disposed asset credited at its weighted-average carrying value. The difference is an
+`Asset Exchange Gain` or `Asset Exchange Loss`, never `Service Revenue`. Stablecoin spent does not set the acquired asset's unit price or
+hide an exchange loss in its carrying value. Current portfolio prices never replace historical accounting evidence.
 
 Ancillary mints and ambiguous batches require classification. Missing decimals, rate, or acquisition basis keeps Accounting incomplete.
 Cross-transaction intents and arbitrary DeFi actions need additional protocol evidence. See the
 [Accounting Read Model](../../implementation/accounting-read-model/README.md#safe-assets-and-exchanges) for these boundaries and the
-[exchange regression suite](../../../app/src/utils/accounting/__tests__/safeExchanges.spec.ts) for current executable evidence. Human
-validation of external swap journeys remains pending. Use the [manual Safe exchange checks](./safe-swap-test-script.md).
+[exchange regression suite](../../../app/src/utils/accounting/__tests__/safeExchanges.spec.ts) and
+[market-rate regressions](../../../app/src/utils/accounting/__tests__/safeExchanges.marketRates.spec.ts) for current executable evidence.
+Human validation of external swap journeys remains pending. Use the [manual Safe exchange checks](./safe-swap-test-script.md).
 
 ## Lifecycle
 
@@ -130,8 +131,8 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 
 - [x] `AC-US-ACCT-001-04` Every posted journal entry balances.
 - [x] `AC-US-ACCT-001-05` USD-pegged tokens use a one-dollar rate, native tokens use their immutable transaction-date snapshot, and SHER
-      uses its compensation valuation policy. Discovered assets use their own contract-based price source or evidenced exchange
-      consideration.
+      uses its compensation valuation policy. Discovered assets use their own contract-based historical price source; exchange consideration
+      never substitutes for a missing market rate.
 - [x] `AC-US-ACCT-001-06` Payroll obligations are recognized when an eligible work week ends, before settlement.
 - [x] `AC-US-ACCT-001-07` Transfers between known company accounts do not change revenue or expenses.
 - [ ] `AC-US-ACCT-001-08` Closing cash balances are reconciled with the corresponding on-chain balances.
@@ -436,7 +437,7 @@ applicable stories `Done`.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `6eebae66bffc134e6c8b51d03046c29da401a0f5`
+**Implementation evidence reviewed against:** `c0daaa216e32f8aed46763b10706d2916af04ec1`
 
 - [Accounting page](../../../app/src/components/sections/AccountingView/AccountingPage.vue),
   [team routes](../../../app/src/router/index.ts), and [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts)

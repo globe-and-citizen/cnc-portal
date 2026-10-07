@@ -4,7 +4,7 @@
 journal, including the persisted counter-account assignments it consumes. Accounting report projections consume that journal on demand. This
 model does not create or persist manual journal entries.
 
-**Last verified:** 2026-10-06
+**Last verified:** 2026-10-07
 
 ## Consumers
 
@@ -106,20 +106,23 @@ coverage or rate limits remain retryable gaps; current prices are used only in t
 operations are flagged for classification instead of treating their receipts as service revenue. Token mints in the same transaction are
 retained separately in `Unclassified Receipts`; their economic nature is not inferred from mint evidence alone.
 
-Journal finalization replays the full Safe history using weighted-average carrying basis. Known stablecoin consideration establishes an
-acquired asset's exact carrying amount and transaction-date unit rate. Outgoing exchange lines remove the evidenced carrying amount; their
-displayed unit rate is carrying cost per unit, and exact carrying amounts avoid six-decimal rate-rounding residues. Incoming market
-valuations and realized differences balance the operation through `Asset Exchange Gain` or `Asset Exchange Loss`. Missing acquisition
-history or valuation produces zero-valued movement evidence and a partial status, never an invented basis. A prior non-exchange payment
-depleted at a different transaction-price valuation invalidates later automatic swap basis; other payment rules remain unchanged.
-Network/DEX fees are not inferred from an unexplained difference; standalone fee evidence remains necessary. Cross-transaction swap intents
-and arbitrary DeFi operations require additional protocol evidence and remain a boundary of automatic classification.
+Journal finalization replays the full Safe history using weighted-average carrying basis. Acquired assets use their own contract-resolved
+historical market rate and exact received quantity; the stablecoin spent never implies their unit price or suppresses historical-rate
+requests. The provider snapshot is for the UTC transaction date, not a tick at the exact transaction second. Outgoing exchange lines remove
+the evidenced carrying amount; their displayed unit rate is carrying cost per unit, and exact carrying amounts avoid six-decimal
+rate-rounding residues. Incoming market valuations and realized differences balance the operation through `Asset Exchange Gain` or
+`Asset Exchange Loss`. Missing acquisition history or valuation produces zero-valued movement evidence and a partial status, never an
+invented basis. A prior non-exchange payment depleted at a different transaction-price valuation invalidates later automatic swap basis;
+other payment rules remain unchanged. Network/DEX fees are not inferred from an unexplained difference; standalone fee evidence remains
+necessary. Cross-transaction swap intents and arbitrary DeFi operations require additional protocol evidence and remain a boundary of
+automatic classification.
 
 Implementation: [asset identity](../../../app/src/utils/tokens/assets.ts),
 [exchange carrying-value replay](../../../app/src/utils/accounting/safeExchanges.ts),
 [contract market discovery](../../../app/src/queries/assetMarket.queries.ts),
 [Safe portfolio](../../../app/src/composables/safe/useSafePortfolio.ts), and
-[exchange regression tests](../../../app/src/utils/accounting/__tests__/safeExchanges.spec.ts).
+[exchange regression tests](../../../app/src/utils/accounting/__tests__/safeExchanges.spec.ts) and
+[market-rate regressions](../../../app/src/utils/accounting/__tests__/safeExchanges.marketRates.spec.ts).
 
 ### Runtime Export Boundary
 
@@ -638,7 +641,7 @@ because deposits and company-pocket transfers are not manual assignment targets.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `6eebae66bffc134e6c8b51d03046c29da401a0f5`
+**Implementation evidence reviewed against:** `c0daaa216e32f8aed46763b10706d2916af04ec1`
 
 - [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts),
   [source-status projection](../../../app/src/composables/accounting/useAccountingStatus.ts),

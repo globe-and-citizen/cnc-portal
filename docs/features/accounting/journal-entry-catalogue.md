@@ -543,10 +543,12 @@ suspense treatment extends pending classification to other unidentified receipts
 **Source story:** [US-SAFE-003](../accounts/README.md#us-safe-003-manage-safe-funds).
 
 - **Input:** Opposing movements of different assets sharing one transaction and an external settlement counterparty.
-- **Processing:** Preserve asset identity by network and contract, exact raw quantity and decimals. Debit the acquired asset and credit the
-  disposed asset at its full-history weighted-average carrying value. Recognize the difference as an exchange gain or loss.
-- **General Ledger:** Label `Asset exchange`, category `Swap`. Acquisition value can use the actual known stablecoin paid; other values
-  require the asset's own historical price evidence. Current portfolio prices do not rewrite the books.
+- **Processing:** Preserve asset identity by network and contract, exact raw quantity and decimals. Debit the acquired asset at its own
+  historical market rate and credit the disposed asset at its full-history weighted-average carrying value. Recognize the difference as an
+  exchange gain or loss; do not infer fees from that difference.
+- **General Ledger:** Label `Asset exchange`, category `Swap`. The receipt's quantity times its historical rate determines its USD value;
+  stablecoin paid never sets the receipt's unit price. Missing market evidence keeps the operation partial. Current portfolio prices do not
+  rewrite the books.
 
 For an asset acquired for $20 and later sold for 30.658984 USDC, the sale is:
 
