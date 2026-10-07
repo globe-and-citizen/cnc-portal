@@ -2,7 +2,7 @@
 import { formatUnits } from 'viem'
 import { currentChainId, SUPPORTED_TOKENS } from '@/constant'
 import type { ContractBalances } from '@/types'
-import { formatExactNumber } from '@/utils/format'
+import { formatExactNumber, formatNumber } from '@/utils/format'
 import { formatCurrencyShort } from '@/utils/currency/display'
 import { assetId, type AssetMetadata } from '@/utils/tokens/assets'
 import EthereumIcon from '@/assets/Ethereum.png'
@@ -15,6 +15,12 @@ export interface SafePortfolioAsset {
   quantity: string | null
   priceUsd: number | null
   valueUsd: number | null
+}
+
+function holdingAmountLabel(quantity: string | null) {
+  if (quantity === null) return 'Balance unavailable'
+  const formatted = formatNumber(quantity)
+  return Number(quantity) > 0 && formatted === '0' ? `<${formatNumber(0.0001)}` : formatted
 }
 
 export function safePortfolioRows(
@@ -58,6 +64,7 @@ export function safePortfolioRows(
       quantity: balance
         ? formatExactNumber(formatUnits(balance.raw, token.decimals))
         : 'Balance unavailable',
+      amountLabel: holdingAmountLabel(balance ? formatUnits(balance.raw, token.decimals) : null),
       amount: balance?.amount ?? null,
       price: hasPrice ? localPrice : null,
       priceLabel: hasPrice ? balance!.price.local.formatted : 'Price unavailable',
@@ -86,8 +93,9 @@ export function safePortfolioRows(
         name: row.asset.name,
         symbol: row.asset.symbol,
         address: row.asset.address,
-        icon: null,
+        icon: row.asset.logoUri ?? null,
         quantity: row.quantity === null ? 'Balance unavailable' : formatExactNumber(row.quantity),
+        amountLabel: holdingAmountLabel(row.quantity),
         amount: row.quantity === null ? null : Number(row.quantity),
         price,
         priceLabel: price === null ? 'Price unavailable' : formatCurrencyShort(price, currencyCode),

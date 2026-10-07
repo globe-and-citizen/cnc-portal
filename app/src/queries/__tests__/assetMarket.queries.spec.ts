@@ -44,4 +44,17 @@ describe('contract asset market discovery', () => {
       'Asset market network unavailable'
     )
   })
+  it('returns the logo from the verified contract metadata without requiring a price', async () => {
+    const logoUri = 'https://assets.example/dai.png'
+    await expect(
+      fetchAssetMarket(client(), { chainId: 137, address }, async () => ({
+        ok: true,
+        json: async () => ({
+          id: 'dai',
+          platforms: { 'polygon-pos': address },
+          image: { small: logoUri }
+        })
+      }))
+    ).resolves.toEqual({ coinId: 'dai', priceUsd: null, logoUri })
+  })
 })

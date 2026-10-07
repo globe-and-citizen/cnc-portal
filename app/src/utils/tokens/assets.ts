@@ -14,6 +14,18 @@ export interface AssetMetadata {
   /** Unknown/unsupported precision remains explicit instead of assuming 18. */
   decimals: number | null
   trusted?: boolean
+  logoUri?: string
+}
+
+/** Display-only token images; executable and credential-bearing URLs are not logos. */
+export function assetLogoUri(value: unknown): string | undefined {
+  if (typeof value !== 'string' || !value.trim()) return undefined
+  try {
+    const url = new URL(value.trim())
+    return url.protocol === 'https:' && !url.username && !url.password ? url.href : undefined
+  } catch {
+    return undefined
+  }
 }
 
 export function assetId(address: string, chainId: number): AssetId {
@@ -29,6 +41,7 @@ export function assetMetadata(
     name: string
     decimals: number
     trusted?: boolean
+    logoUri?: string
   } | null
 ): AssetMetadata {
   const matches = info?.address?.toLowerCase() === address.toLowerCase()
@@ -36,6 +49,7 @@ export function assetMetadata(
     matches && Number.isInteger(info.decimals) && info.decimals >= 0 && info.decimals <= 18
       ? info.decimals
       : null
+  const logoUri = matches ? assetLogoUri(info.logoUri) : undefined
   return {
     id: assetId(address, chainId),
     chainId,
@@ -43,7 +57,8 @@ export function assetMetadata(
     symbol: matches && info.symbol?.trim() ? info.symbol.trim().slice(0, 40) : address,
     name: matches && info.name?.trim() ? info.name.trim().slice(0, 100) : 'Unknown token',
     decimals,
-    ...(matches && info.trusted !== undefined ? { trusted: info.trusted } : {})
+    ...(matches && info.trusted !== undefined ? { trusted: info.trusted } : {}),
+    ...(logoUri ? { logoUri } : {})
   }
 }
 

@@ -37,7 +37,11 @@ describe('safe queries', () => {
       transferId: 'token-1',
       type: 'ERC20_TRANSFER',
       tokenAddress: SECOND_LOWERCASE_SAFE_ADDRESS,
-      tokenInfo: { trusted: false }
+      tokenInfo: {
+        address: SECOND_LOWERCASE_SAFE_ADDRESS,
+        trusted: false,
+        logoUri: 'https://assets.example/token.png'
+      }
     } as SafeIncomingTransfer
     vi.spyOn(externalApiClient, 'get').mockResolvedValueOnce({
       data: { next: null, results: [row] }
@@ -55,7 +59,8 @@ describe('safe queries', () => {
       address: SECOND_LOWERCASE_SAFE_ADDRESS,
       decimals: 6,
       symbol: 'ASSET',
-      trusted: false
+      trusted: false,
+      logoUri: 'https://assets.example/token.png'
     })
     expect(mockWagmiCore.readContract).toHaveBeenCalledWith(
       expect.anything(),

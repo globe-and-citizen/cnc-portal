@@ -31,7 +31,7 @@ describe('Safe holdings', () => {
     expect(wrapper.text()).not.toContain('Other Safe assets')
   })
 
-  it('preserves the original table title, column titles, row presentation and compact currency labels', () => {
+  it('preserves the original titles, icons and currency labels while showing compact symbols', () => {
     mockUseContractBalance.balances.value = SUPPORTED_TOKENS.map((token) =>
       makeTokenBalance({ token, amount: 0.1, usdPrice: 1 })
     )
@@ -46,8 +46,28 @@ describe('Safe holdings', () => {
       'Coin Price',
       'Balance'
     ])
-    expect(table.findAll('tbody tr').map((row) => row.text())).toEqual(
-      original.findAll('tbody tr').map((row) => row.text())
+    expect(table.findAll('[data-test="safe-holding-token"]').map((row) => row.text())).toEqual(
+      SUPPORTED_TOKENS.map((token) =>
+        token.symbol === 'POL' || token.symbol === 'ETH' || token.id !== 'native'
+          ? token.symbol
+          : `${token.symbol.charAt(0)}${token.symbol}`
+      )
+    )
+    expect(table.text()).not.toContain('USD Coin')
+    expect(
+      table.findAll('tbody tr').map((row) =>
+        row
+          .findAll('td')
+          .slice(2)
+          .map((cell) => cell.text())
+      )
+    ).toEqual(
+      original.findAll('tbody tr').map((row) =>
+        row
+          .findAll('td')
+          .slice(2)
+          .map((cell) => cell.text())
+      )
     )
     expect(table.findAll('img').map((image) => image.attributes('src'))).toEqual(
       original.findAll('img').map((image) => image.attributes('src'))
@@ -82,15 +102,53 @@ describe('Safe holdings', () => {
     const table = wrapper.find('[data-test="safe-asset-table"]')
     expect(table.text()).toContain('AWETH')
     expect(
-      wrapper.findAll('[data-test="safe-holding-token"]').map((item) => item.attributes('title'))
-    ).toContain(token)
-    expect(table.text()).toContain('0.011371464599721321')
+      wrapper
+        .findAll('[data-test="safe-holding-token"]')
+        .some((item) => item.attributes('title')?.includes(token))
+    ).toBe(true)
+    expect(table.text()).toContain('0.0114 AWETH')
+    expect(table.findAll('[data-test="safe-holding-amount"]').at(-1)?.attributes('title')).toBe(
+      '0.011371464599721321'
+    )
     expect(table.text()).toContain('Price unavailable')
     expect(table.text()).toContain('Value unavailable')
     expect(table.findAll('tbody tr')).toHaveLength(4)
     expect(wrapper.find('[data-test="safe-asset-valuation-warning"]').exists()).toBe(true)
     await wrapper.find('[data-test="refresh-safe-assets"]').trigger('click')
     expect(mockUseSafePortfolio.refetch).toHaveBeenCalledOnce()
+  })
+
+  it('shows DAI with its token logo and a four-decimal amount, preserving the full quantity on hover', async () => {
+    const logoUri = 'https://assets.example/dai.png'
+    mockUseSafePortfolio.assets.data.value = [
+      {
+        asset: assetMetadata(token, 137, {
+          address: token,
+          name: 'Polygon PoS Bridged DAI',
+          symbol: 'DAI',
+          decimals: 18,
+          logoUri
+        }),
+        raw: 286595379927822735n,
+        quantity: '0.286595379927822735',
+        priceUsd: 1,
+        valueUsd: 0.286595379927822735
+      }
+    ]
+    const wrapper = renderWithProviders(SafeAssetHoldings, { props: { address } })
+    const row = wrapper.find('[data-test="safe-asset-table"]').findAll('tbody tr').at(-1)!
+    expect(row.find('[data-test="safe-holding-token"]').text()).toBe('DAI')
+    expect(row.text()).not.toContain('Polygon PoS Bridged DAI')
+    expect(row.find('[data-test="safe-holding-amount"]').text()).toBe('0.2866 DAI')
+    expect(row.find('[data-test="safe-holding-amount"]').attributes('title')).toBe(
+      '0.286595379927822735'
+    )
+    expect(row.find('img').attributes('src')).toBe(logoUri)
+    expect(row.find('img').attributes('alt')).toBe('DAI')
+    await row.find('img').trigger('error')
+    expect(row.find('img').exists()).toBe(false)
+    await wrapper.find('[data-test="refresh-safe-assets"]').trigger('click')
+    expect(row.find('img').exists()).toBe(true)
   })
 
   it('adds WETH after discovery and removes it when its balance returns to zero', async () => {

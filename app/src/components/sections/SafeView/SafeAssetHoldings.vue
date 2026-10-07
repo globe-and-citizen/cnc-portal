@@ -15,7 +15,9 @@
         data-test="safe-asset-table"
       >
         <template #amount-cell="{ row: { original: row } }">
-          {{ row.quantity }} {{ row.token.symbol }}
+          <span :title="row.quantity" data-test="safe-holding-amount">
+            {{ row.amountLabel }} {{ row.token.symbol }}
+          </span>
         </template>
         <template #price-cell="{ row: { original: row } }">
           {{ row.priceLabel }} / {{ row.token.symbol }}
@@ -26,22 +28,20 @@
         <template #token-cell="{ row: { original: row } }">
           <div
             class="flex items-center gap-2 lg:w-48"
-            :title="row.address ?? undefined"
+            :title="row.address ? `${row.name} (${row.address})` : row.name"
             data-test="safe-holding-token"
           >
             <img
-              v-if="row.icon"
+              v-if="row.icon && !failedIcons.has(row.icon)"
               :src="row.icon"
-              :alt="row.token.name"
+              :alt="row.token.symbol"
               class="h-8 w-8 rounded-full"
+              @error="row.icon && failedIcons.add(row.icon)"
             />
             <div v-else class="flex h-8 w-8 items-center justify-center rounded-full bg-gray-200">
-              <span class="text-gray-500">{{ row.token.name.charAt(0) }}</span>
+              <span class="text-gray-500">{{ row.token.symbol.charAt(0) }}</span>
             </div>
-            <div class="flex flex-col">
-              <div class="font-medium">{{ row.token.name }}</div>
-              <div class="text-sm text-gray-500">{{ row.token.symbol }}</div>
-            </div>
+            <div class="font-medium">{{ row.token.symbol }}</div>
           </div>
         </template>
       </UTable>
@@ -59,12 +59,12 @@
       label="Refresh assets"
       variant="outline"
       data-test="refresh-safe-assets"
-      @click="portfolio.refetch()"
+      @click="refreshAssets"
     />
   </div>
 </template>
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useStorage } from '@vueuse/core'
 import type { Address } from 'viem'
 import { useSafePortfolio } from '@/composables/safe/useSafePortfolio'
@@ -75,6 +75,11 @@ interface Props {
 
 const props = defineProps<Props>()
 const portfolio = useSafePortfolio(() => props.address)
+const failedIcons = ref(new Set<string>())
+async function refreshAssets() {
+  failedIcons.value.clear()
+  await portfolio.refetch()
+}
 const currency = useStorage('currency', { code: 'USD', name: 'US Dollar', symbol: '$' })
 const rows = computed(() =>
   safePortfolioRows(

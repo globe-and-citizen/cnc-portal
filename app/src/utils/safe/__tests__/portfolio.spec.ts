@@ -33,8 +33,10 @@ describe('Safe holdings presentation', () => {
     ])
     expect(rows[0].quantity).toBe('0.000001')
     expect(rows[2].quantity).toBe('0.000000000000000001')
+    expect(rows[2].amountLabel).toBe('<0.0001')
     expect(rows[3]).toMatchObject({
       quantity: '0.011371464599721321',
+      amountLabel: '0.0114',
       price: 2000,
       priceLabel: '$2K',
       balanceLabel: '$22.74'

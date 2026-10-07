@@ -159,6 +159,10 @@ export function useGetSafeTransfersQuery(params: GetSafeIncomingTransfersParams)
                 name,
                 symbol,
                 decimals,
+                ...(row.tokenInfo?.address?.toLowerCase() === tokenAddress.toLowerCase() &&
+                row.tokenInfo.logoUri
+                  ? { logoUri: row.tokenInfo.logoUri }
+                  : {}),
                 ...(row.tokenInfo?.trusted === false ? { trusted: false } : {})
               }
           } catch {

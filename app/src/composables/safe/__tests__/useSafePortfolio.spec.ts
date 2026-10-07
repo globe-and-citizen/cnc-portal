@@ -6,6 +6,7 @@ import { mockWagmiCore, mockUseChainId } from '@/tests/mocks/wagmi.vue.mock'
 import { currentChainId } from '@/constant'
 import { config } from '@/wagmi.config'
 import type { SafePortfolioAsset } from '../useSafePortfolio'
+import * as assetMarkets from '@/queries/assetMarket.queries'
 const { useSafePortfolio } =
   await vi.importActual<typeof import('../useSafePortfolio')>('../useSafePortfolio')
 const address = '0x1111111111111111111111111111111111111111' as const
@@ -63,6 +64,37 @@ describe('Safe portfolio discovery', () => {
     useSafePortfolio(address)
     const rows = await useQueryFn.mock.calls.at(-1)![0].queryFn()
     expect(rows[0]).toMatchObject({ raw: 0n, quantity: '0', valueUsd: 0 })
+  })
+  it('enriches an already discovered token with its later logo metadata', async () => {
+    const logoUri = 'https://assets.example/dai.png'
+    const withLogo = { ...movement, tokenInfo: { ...movement.tokenInfo!, logoUri } }
+    useQueryFn
+      .mockReturnValueOnce(state([movement, withLogo]))
+      .mockReturnValueOnce(state<SafePortfolioAsset[]>([]))
+    mockWagmiCore.readContract.mockResolvedValueOnce(1n)
+    useSafePortfolio(address)
+    const rows = await useQueryFn.mock.calls.at(-1)![0].queryFn()
+    expect(rows).toHaveLength(1)
+    expect(rows[0].asset.logoUri).toBe(logoUri)
+  })
+  it('uses the verified contract market logo when Safe metadata has none', async () => {
+    const logoUri = 'https://assets.example/dai.png'
+    const market = vi
+      .spyOn(assetMarkets, 'fetchAssetMarket')
+      .mockResolvedValueOnce({ coinId: 'dai', priceUsd: 1, logoUri })
+    try {
+      useQueryFn
+        .mockReturnValueOnce(
+          state([{ ...movement, tokenInfo: { ...movement.tokenInfo!, trusted: true } }])
+        )
+        .mockReturnValueOnce(state<SafePortfolioAsset[]>([]))
+      mockWagmiCore.readContract.mockResolvedValueOnce(1n)
+      useSafePortfolio(address)
+      const rows = await useQueryFn.mock.calls.at(-1)![0].queryFn()
+      expect(rows[0]).toMatchObject({ asset: { logoUri }, priceUsd: 1 })
+    } finally {
+      market.mockRestore()
+    }
   })
   it('reports a transfer-service failure without showing a complete supported-only total', () => {
     const transfers = {

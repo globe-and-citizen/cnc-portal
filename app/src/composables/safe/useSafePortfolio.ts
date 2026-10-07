@@ -30,7 +30,13 @@ export function useSafePortfolio(address: MaybeRefOrGetter<Address | undefined>)
         continue
       const asset = assetMetadata(transfer.tokenAddress, currentChainId, transfer.tokenInfo)
       const existing = tokens.get(asset.id)
-      if (!existing || existing.decimals === null) tokens.set(asset.id, asset)
+      if (!existing || existing.decimals === null)
+        tokens.set(asset.id, {
+          ...asset,
+          ...(existing?.logoUri && !asset.logoUri ? { logoUri: existing.logoUri } : {})
+        })
+      else if (!existing.logoUri && asset.logoUri)
+        tokens.set(asset.id, { ...existing, logoUri: asset.logoUri })
     }
     return [...tokens.values()].sort((a, b) => a.id.localeCompare(b.id))
   })
@@ -71,8 +77,11 @@ export function useSafePortfolio(address: MaybeRefOrGetter<Address | undefined>)
               if (Number.isInteger(decimals) && decimals >= 0 && decimals <= 18)
                 asset.decimals = decimals
             }
-            if (raw !== 0n && asset.trusted !== false)
-              priceUsd = (await fetchAssetMarket(queryClient, asset)).priceUsd
+            if (raw !== 0n && asset.trusted !== false) {
+              const market = await fetchAssetMarket(queryClient, asset)
+              priceUsd = market.priceUsd
+              asset.logoUri ??= market.logoUri
+            }
           } catch {
             /* Keep unknown balances/prices explicit in the portfolio. */
           }

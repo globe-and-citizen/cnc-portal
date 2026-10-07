@@ -1,6 +1,7 @@
 /** Contract-based market discovery; symbols never select a price source. */
 import type { QueryClient } from '@tanstack/vue-query'
 import type { AssetMetadata } from '@/utils/tokens/assets'
+import { assetLogoUri } from '@/utils/tokens/assets'
 
 const PLATFORMS: Readonly<Record<number, string>> = {
   1: 'ethereum',
@@ -12,6 +13,7 @@ const PLATFORMS: Readonly<Record<number, string>> = {
 interface AssetMarket {
   coinId: string
   priceUsd: number | null
+  logoUri?: string
 }
 type Request = (
   input: string,
@@ -38,6 +40,7 @@ export async function fetchAssetMarket(
         id?: unknown
         platforms?: Record<string, string>
         market_data?: { current_price?: { usd?: unknown } }
+        image?: { small?: unknown; thumb?: unknown; large?: unknown }
       }
       if (
         typeof body.id !== 'string' ||
@@ -45,9 +48,14 @@ export async function fetchAssetMarket(
       )
         throw new Error('Asset market contract mismatch')
       const price = body.market_data?.current_price?.usd
+      const logoUri =
+        assetLogoUri(body.image?.small) ??
+        assetLogoUri(body.image?.thumb) ??
+        assetLogoUri(body.image?.large)
       return {
         coinId: body.id,
-        priceUsd: typeof price === 'number' && Number.isFinite(price) && price > 0 ? price : null
+        priceUsd: typeof price === 'number' && Number.isFinite(price) && price > 0 ? price : null,
+        ...(logoUri ? { logoUri } : {})
       }
     }
   })
