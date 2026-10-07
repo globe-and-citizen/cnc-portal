@@ -120,6 +120,8 @@ automatic classification.
 The read-only Safe portfolio combines supported balances with discovered ERC-20 balances for current wallet valuation. A nonzero supported
 holding with a missing, nonpositive, or nonfinite USD price keeps the total incomplete, just as unavailable discovered valuations do. A
 confirmed zero holding does not require a price. These current-price completeness checks do not change historical journal valuation.
+Optional contract-matched logo metadata is display-only. Safe holdings use compact amount labels while preserving the exact quantity for
+inspection; the rounding and logo metadata do not alter source movements, accounting classification, carrying values, or historical rates.
 
 Implementation: [asset identity](../../../app/src/utils/tokens/assets.ts),
 [exchange carrying-value replay](../../../app/src/utils/accounting/safeExchanges.ts),
@@ -645,7 +647,7 @@ because deposits and company-pocket transfers are not manual assignment targets.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `96b2755bae0cb9a5fa3b0cd007efe6abf571b69d`
+**Implementation evidence reviewed against:** `32fb441f5965ff20bb1045ae1e065d25538e1afa`
 
 - [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts),
   [source-status projection](../../../app/src/composables/accounting/useAccountingStatus.ts),

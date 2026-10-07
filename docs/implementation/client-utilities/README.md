@@ -72,21 +72,24 @@ flowchart LR
 ### Read-only asset identities
 
 [Asset identities and metadata](../../../app/src/utils/tokens/assets.ts) distinguish the fixed payment `TokenId` allowlist from arbitrary
-ERC-20 assets observed by Safe. Unknown contracts retain their network/address identity, and missing decimals remain explicit. Accounting
-carries metadata with its raw movements and uses exact carrying values for Safe exchanges; it never reuses native metadata for an unknown
-ERC-20. The canonical `formatExactNumber` formatter preserves all decimal token digits through display without a JavaScript floating-point
-conversion. See the [Accounting read model](../accounting-read-model/README.md) for carrying-basis and classification boundaries.
+ERC-20 assets observed by Safe. Unknown contracts retain their network/address identity, and missing decimals remain explicit. Optional
+display logos retain only HTTPS URLs without embedded credentials from metadata matching the contract address. Accounting carries metadata
+with its raw movements and uses exact carrying values for Safe exchanges; it never reuses native metadata for an unknown ERC-20. The
+canonical `formatExactNumber` formatter preserves all decimal token digits through display without a JavaScript floating-point conversion.
+See the [Accounting read model](../accounting-read-model/README.md) for carrying-basis and classification boundaries.
 
 [Safe holdings presentation](../../../app/src/utils/safe/portfolio.ts) combines the fixed supported currencies with discovered holdings.
 Supported currencies retain their configured order and remain present at zero or unavailable balance. Additional holdings are deduplicated
 by network and contract, omit confirmed zero balances, and retain explicit unavailable balance and valuation states. Quantities use raw
-token units or exact decimal strings through the canonical formatter. Supported valuations retain the existing local-currency labels;
-discovered USD valuations use a local/USD price ratio from a supported currency and the same compact formatter. An unavailable conversion
-rate leaves local prices and values explicitly unavailable. Numeric sort values remain separate from exact quantity and currency labels.
+token units or exact decimal strings through the canonical formatter. Compact amount labels use the canonical four-decimal number format,
+retain the exact quantity separately, and identify positive sub-precision balances as `<0.0001`. Supported valuations retain the existing
+local-currency labels; discovered USD valuations use a local/USD price ratio from a supported currency and the same compact formatter. An
+unavailable conversion rate leaves local prices and values explicitly unavailable. Numeric sort values remain separate from exact quantity
+and currency labels.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `8f6dcc62993ae036305f6bb9c8502c89b62ea5bc`
+**Implementation evidence reviewed against:** `32fb441f5965ff20bb1045ae1e065d25538e1afa`
 
 - [Utility ownership map and domain implementations](../../../app/src/utils/)
 - [Shared Accounting domain contracts](../../../app/src/utils/accounting/types.ts)

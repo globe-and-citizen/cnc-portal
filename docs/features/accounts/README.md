@@ -949,7 +949,7 @@ movements remain incomplete until classified. See the [Safe exchange review scri
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `8f6dcc62993ae036305f6bb9c8502c89b62ea5bc`
+**Implementation evidence reviewed against:** `32fb441f5965ff20bb1045ae1e065d25538e1afa`
 
 - [Bank deposit modal](../../../app/src/components/sections/BankView/forms/DepositModal.vue),
   [Bank transfer modal](../../../app/src/components/sections/BankView/forms/TransferModal.vue),
@@ -1037,8 +1037,11 @@ tokens remain discoverable for future refreshes. Contract identity is preserved 
 remain separate assets.
 
 The original `Token Holding` presentation is retained, with `RANK`, `Token`, `Amount`, `Coin Price`, and `Balance` columns. Additional
-assets use the same icon/name/symbol layout, compact valuation format, and unit-price suffix as the supported currencies. Contract addresses
-are available on the token's hover title without adding another visible line.
+assets use the same compact valuation format and unit-price suffix as the supported currencies. Token identities show their symbol on one
+line (for example, DAI), with the full name and contract address available on hover. Amounts show up to four decimal places with trailing
+zeros trimmed; the exact quantity remains available on hover. A positive quantity below the displayed precision reads `<0.0001` rather than
+zero. The three base currencies keep their existing logos; additional tokens use the logo from matching Safe metadata or verified
+contract-based market metadata. Missing or failed images use a neutral initial and can be retried with asset refresh.
 
 Each holding retains its currency, exact quantity, contract identity, and available current valuation in the selected display currency
 independently of the tokens allowed in CNC payment forms. An unavailable balance or price remains explicit, including while the first
