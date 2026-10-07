@@ -35,8 +35,9 @@ describe('Safe holdings presentation', () => {
     expect(rows[2].quantity).toBe('0.000000000000000001')
     expect(rows[3]).toMatchObject({
       quantity: '0.011371464599721321',
-      price: '$2,000.000000',
-      value: '$22.74'
+      price: 2000,
+      priceLabel: '$2K',
+      balanceLabel: '$22.74'
     })
   })
 
@@ -68,8 +69,33 @@ describe('Safe holdings presentation', () => {
     expect(rows).toHaveLength(4)
     expect(rows[3]).toMatchObject({
       quantity: 'Balance unavailable',
-      price: 'Price unavailable',
-      value: 'Value unavailable'
+      priceLabel: 'Price unavailable',
+      balanceLabel: 'Value unavailable'
+    })
+  })
+
+  it('uses the selected currency and the original compact format for discovered tokens', () => {
+    const balances = SUPPORTED_TOKENS.map((token) =>
+      makeTokenBalance({ token, amount: 1, usdPrice: 1, localPrice: 0.9 })
+    )
+    const rows = safePortfolioRows(
+      [heldAsset()],
+      {
+        balances,
+        total: { usd: { value: 3, formatted: '$3' }, local: { value: 2.7, formatted: '€2.7' } }
+      },
+      'EUR'
+    )
+    expect(rows[3]).toMatchObject({ price: 1800, priceLabel: '€1.8K', balanceLabel: '€20.47' })
+  })
+
+  it('keeps local valuations unavailable when no conversion rate is known', () => {
+    const rows = safePortfolioRows([heldAsset()], undefined, 'EUR')
+    expect(rows[3]).toMatchObject({
+      price: null,
+      priceLabel: 'Price unavailable',
+      balance: null,
+      balanceLabel: 'Value unavailable'
     })
   })
 })

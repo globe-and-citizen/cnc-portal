@@ -2,7 +2,8 @@
 import { formatUnits } from 'viem'
 import { currentChainId, SUPPORTED_TOKENS } from '@/constant'
 import type { ContractBalances } from '@/types'
-import { formatExactNumber, formatUsd } from '@/utils/format'
+import { formatExactNumber } from '@/utils/format'
+import { formatCurrencyShort } from '@/utils/currency/display'
 import { assetId, type AssetMetadata } from '@/utils/tokens/assets'
 import EthereumIcon from '@/assets/Ethereum.png'
 import USDCIcon from '@/assets/usdc.png'
@@ -18,30 +19,54 @@ export interface SafePortfolioAsset {
 
 export function safePortfolioRows(
   assets: readonly SafePortfolioAsset[],
-  supported?: ContractBalances
+  supported?: ContractBalances,
+  currencyCode = 'USD'
 ) {
   const supportedIds = new Set(
     SUPPORTED_TOKENS.map((token) => assetId(token.address, currentChainId))
   )
+  const pricedBalance = supported?.balances.find(
+    (row) =>
+      Number.isFinite(row.price.usd.value) &&
+      row.price.usd.value > 0 &&
+      Number.isFinite(row.price.local.value) &&
+      row.price.local.value > 0
+  )
+  const localRate =
+    currencyCode === 'USD'
+      ? 1
+      : pricedBalance
+        ? pricedBalance.price.local.value / pricedBalance.price.usd.value
+        : null
   const fixedRows = SUPPORTED_TOKENS.map((token) => {
     const balance = supported?.balances.find((entry) => entry.token.id === token.id)
-    const priceUsd = balance?.price.usd.value
-    const hasPrice = priceUsd !== undefined && Number.isFinite(priceUsd) && priceUsd > 0
+    const localPrice = balance?.price.local.value
+    const hasPrice = localPrice !== undefined && Number.isFinite(localPrice) && localPrice > 0
     return {
       id: assetId(token.address, currentChainId),
       name: token.name,
       symbol: token.symbol,
       address: token.id === 'native' ? null : token.address,
-      icon: token.id !== 'native' ? USDCIcon : token.symbol === 'POL' ? MaticIcon : EthereumIcon,
+      icon:
+        token.id !== 'native'
+          ? USDCIcon
+          : token.symbol === 'POL'
+            ? MaticIcon
+            : token.symbol === 'ETH'
+              ? EthereumIcon
+              : null,
       quantity: balance
         ? formatExactNumber(formatUnits(balance.raw, token.decimals))
         : 'Balance unavailable',
-      price: hasPrice ? formatUsd(priceUsd, { decimals: 6 }) : 'Price unavailable',
-      value:
+      amount: balance?.amount ?? null,
+      price: hasPrice ? localPrice : null,
+      priceLabel: hasPrice ? balance!.price.local.formatted : 'Price unavailable',
+      balance: balance?.raw === 0n ? 0 : balance && hasPrice ? balance.value.local.value : null,
+      balanceLabel:
         balance?.raw === 0n
-          ? formatUsd(0)
+          ? formatCurrencyShort(0, currencyCode)
           : balance && hasPrice
-            ? formatUsd(balance.value.usd.value)
+            ? balance.value.local.formatted
             : 'Value unavailable'
     }
   })
@@ -53,15 +78,27 @@ export function safePortfolioRows(
   const discoveredRows = [...discovered.values()]
     .filter((row) => row.raw !== 0n)
     .sort((a, b) => a.asset.id.localeCompare(b.asset.id))
-    .map((row) => ({
-      id: assetId(row.asset.address, row.asset.chainId),
-      name: row.asset.name,
-      symbol: row.asset.symbol,
-      address: row.asset.address,
-      icon: null,
-      quantity: row.quantity === null ? 'Balance unavailable' : formatExactNumber(row.quantity),
-      price: row.priceUsd === null ? 'Price unavailable' : formatUsd(row.priceUsd, { decimals: 6 }),
-      value: row.valueUsd === null ? 'Value unavailable' : formatUsd(row.valueUsd)
-    }))
-  return [...fixedRows, ...discoveredRows].map((row, index) => ({ ...row, rank: index + 1 }))
+    .map((row) => {
+      const price = row.priceUsd !== null && localRate !== null ? row.priceUsd * localRate : null
+      const balance = row.valueUsd !== null && localRate !== null ? row.valueUsd * localRate : null
+      return {
+        id: assetId(row.asset.address, row.asset.chainId),
+        name: row.asset.name,
+        symbol: row.asset.symbol,
+        address: row.asset.address,
+        icon: null,
+        quantity: row.quantity === null ? 'Balance unavailable' : formatExactNumber(row.quantity),
+        amount: row.quantity === null ? null : Number(row.quantity),
+        price,
+        priceLabel: price === null ? 'Price unavailable' : formatCurrencyShort(price, currencyCode),
+        balance,
+        balanceLabel:
+          balance === null ? 'Value unavailable' : formatCurrencyShort(balance, currencyCode)
+      }
+    })
+  return [...fixedRows, ...discoveredRows].map((row, index) => ({
+    ...row,
+    token: { name: row.name, symbol: row.symbol },
+    rank: index + 1
+  }))
 }
