@@ -949,7 +949,7 @@ movements remain incomplete until classified. See the [Safe exchange review scri
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `96b2755bae0cb9a5fa3b0cd007efe6abf571b69d`
+**Implementation evidence reviewed against:** `8f6dcc62993ae036305f6bb9c8502c89b62ea5bc`
 
 - [Bank deposit modal](../../../app/src/components/sections/BankView/forms/DepositModal.vue),
   [Bank transfer modal](../../../app/src/components/sections/BankView/forms/TransferModal.vue),
@@ -1036,13 +1036,20 @@ visible even at zero balance. Additional assets appear when held and disappear w
 tokens remain discoverable for future refreshes. Contract identity is preserved by network and address rather than symbol, so WETH and AWETH
 remain separate assets.
 
-Each holding retains its currency, exact quantity, contract address, and available current USD valuation independently of the tokens allowed
-in CNC payment forms. An unavailable balance or price remains explicit, including while the first balance read is pending. A missing price
-for a held supported or discovered asset makes the wallet total incomplete. A confirmed zero balance has zero value without requiring a
-price. Token discovery does not enable an asset for payroll, deposits, or transfers proposed by CNC.
+The original `Token Holding` presentation is retained, with `RANK`, `Token`, `Amount`, `Coin Price`, and `Balance` columns. Additional
+assets use the same icon/name/symbol layout, compact valuation format, and unit-price suffix as the supported currencies. Contract addresses
+are available on the token's hover title without adding another visible line.
+
+Each holding retains its currency, exact quantity, contract identity, and available current valuation in the selected display currency
+independently of the tokens allowed in CNC payment forms. An unavailable balance or price remains explicit, including while the first
+balance read is pending. A missing USD price for a held supported or discovered asset makes the wallet total incomplete. A confirmed zero
+balance has zero value without requiring a price. Token discovery does not enable an asset for payroll, deposits, or transfers proposed by
+CNC.
 
 The portfolio refreshes periodically and on explicit refresh. Provider failures remain retryable. Unknown or untrusted assets do not receive
-an invented price. See the [Accounting read model](../../implementation/accounting-read-model/README.md) for swap treatment.
+an invented price. Discovered USD market values use the supported currency prices for conversion to another selected currency; an
+unavailable conversion keeps that displayed valuation explicitly unavailable. See the
+[Accounting read model](../../implementation/accounting-read-model/README.md) for swap treatment.
 
 Executable evidence: [discovered holdings tests](../../../app/src/components/sections/SafeView/__tests__/SafeAssetHoldings.spec.ts),
 [overview tests](../../../app/src/components/sections/SafeView/__tests__/SafeBalanceSection.rendering.spec.ts), and

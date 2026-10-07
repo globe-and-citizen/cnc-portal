@@ -80,11 +80,13 @@ conversion. See the [Accounting read model](../accounting-read-model/README.md) 
 [Safe holdings presentation](../../../app/src/utils/safe/portfolio.ts) combines the fixed supported currencies with discovered holdings.
 Supported currencies retain their configured order and remain present at zero or unavailable balance. Additional holdings are deduplicated
 by network and contract, omit confirmed zero balances, and retain explicit unavailable balance and valuation states. Quantities use raw
-token units or exact decimal strings through the canonical formatter; USD prices and values use the same currency for every row.
+token units or exact decimal strings through the canonical formatter. Supported valuations retain the existing local-currency labels;
+discovered USD valuations use a local/USD price ratio from a supported currency and the same compact formatter. An unavailable conversion
+rate leaves local prices and values explicitly unavailable. Numeric sort values remain separate from exact quantity and currency labels.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `96b2755bae0cb9a5fa3b0cd007efe6abf571b69d`
+**Implementation evidence reviewed against:** `8f6dcc62993ae036305f6bb9c8502c89b62ea5bc`
 
 - [Utility ownership map and domain implementations](../../../app/src/utils/)
 - [Shared Accounting domain contracts](../../../app/src/utils/accounting/types.ts)
