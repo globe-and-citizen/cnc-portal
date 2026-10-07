@@ -4,7 +4,10 @@
 own their acceptance criteria; this map does not duplicate them.
 
 The [feature documentation guide](../../platform/feature-specification-guide.md#cross-domain-story-relationships) defines the relationship
-types. A single transfer can have source and destination evidence, but Accounting groups matching evidence under one source operation.
+types. A single transfer can have source and destination evidence, but Accounting groups matching evidence under one source operation. The
+[Accounting scenario tables](../accounting/journal-entry-catalogue.md#use-case-overview) group all participating stories on the same
+scenario row, including Safe and approved Expense transfers to known company pockets. Each participating canonical story links back to the
+shared scenario and its peers. The movement table below retains the runtime rule and discovery status for the listed treasury paths.
 
 | Movement                | Relationship     | Initiating story                                                                   | Receiving outcome                                                                         | Accounting rule or status                                                                                                                                                                          |
 | ----------------------- | ---------------- | ---------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

@@ -156,6 +156,17 @@ A receipt from another known company pocket is an internal transfer instead.
 
 **Dependencies:** Current Bank contract and a connected wallet
 
+**Shared accounting scenarios:**
+
+Each row identifies the responsibilities shared with other stories for one accounting operation. Existing acceptance and evidence statuses
+remain as recorded above.
+
+| Scenario and accounting use case                                                                                                                                          | This story's responsibility                   | Other participating stories                                                                                 |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| A direct Bank transfer funds another known Bank generation. [UC-TREASURY-001](../accounting/journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer) | Receives the funding in the destination Bank. | [US-BANK-002](#us-bank-002-transfer-bank-funds) — initiates the transfer                                    |
+| Safe funds Bank. [UC-TREASURY-001](../accounting/journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer)                                            | Receives the Bank funding.                    | [US-SAFE-003](#us-safe-003-manage-safe-funds) — initiates the Safe transfer                                 |
+| An approved Expense payout reaches Bank. [UC-TREASURY-001](../accounting/journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer)                    | Receives the Bank funding.                    | [US-EXP-002](#us-exp-002-spend-from-the-expense-account) — executes the approved payout to a company pocket |
+
 ## US-BANK-002: Transfer Bank Funds
 
 **As a** Bank owner or Board member\
@@ -222,6 +233,21 @@ through [`FEE`](../accounting/journal-entry-catalogue.md#fee--transaction-fee-co
 **Cross-domain relationship:** A transfer into Expense or Payroll is a handoff to `US-EXP-005` or `US-PAYROLL-003`. This story owns the
 source authorization, transfer amount, and fee; each destination story owns the credited and usable funds.
 
+**Shared accounting scenarios:**
+
+Each row identifies the responsibilities shared with other stories for one accounting operation. Existing acceptance and evidence statuses
+remain as recorded above.
+
+| Scenario and accounting use case                                                                                                                                                                                   | This story's responsibility                                          | Other participating stories                                                                                                                                                                                      |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Bank funds Payroll. [UC-TREASURY-001](../accounting/journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer)                                                                                  | Initiates the transfer and owns Bank authorization, amount, and fee. | [US-PAYROLL-003](../payroll/README.md#us-payroll-003-fund-the-payroll-contract) — owns the credited Payroll balance and payment availability                                                                     |
+| Bank funds the Expense Account. [UC-TREASURY-001](../accounting/journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer)                                                                      | Initiates the transfer and owns Bank authorization, amount, and fee. | [US-EXP-005](#us-exp-005-fund-the-expense-account) — owns the credited Expense balance and spending availability                                                                                                 |
+| Bank funds Safe. [UC-TREASURY-001](../accounting/journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer)                                                                                     | Initiates the transfer and owns the Bank fee.                        | [US-SAFE-003](#us-safe-003-manage-safe-funds) — receives the Safe funding                                                                                                                                        |
+| A direct Bank transfer funds another known Bank generation. [UC-TREASURY-001](../accounting/journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer)                                          | Initiates the transfer.                                              | [US-BANK-001](#us-bank-001-fund-the-bank) — receives the funding in the destination Bank                                                                                                                         |
+| A historical-generation cash-out run forwards Bank funds to the current Bank. [UC-TREASURY-001](../accounting/journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer)                        | Owns the Bank transfer and fee.                                      | [US-BANK-004](#us-bank-004-cash-out-available-treasury-funds) — orchestrates the forwarding step; [US-BANK-003](#us-bank-003-review-the-bank-position-and-history) — owns the receiving Bank balance and history |
+| A cash-out run makes its final external Bank payment without an established purpose. [UC-TREASURY-003](../accounting/journal-entry-catalogue.md#uc-treasury-003--external-payment-pending-classification)          | Owns the Bank transfer, authorization, amount, and fee.              | [US-BANK-004](#us-bank-004-cash-out-available-treasury-funds) — orchestrates the final payment                                                                                                                   |
+| A cash-out run makes its final external Bank payment with valid operating-expense evidence or classification. [UC-EXPENSE-001](../accounting/journal-entry-catalogue.md#uc-expense-001--operating-expense-payment) | Owns the Bank transfer, authorization, amount, and fee.              | [US-BANK-004](#us-bank-004-cash-out-available-treasury-funds) — orchestrates the final payment                                                                                                                   |
+
 ## US-BANK-003: Review the Bank Position and History
 
 **As a** company member\
@@ -263,6 +289,19 @@ source authorization, transfer amount, and fee; each destination story owns the 
 | `AC-US-BANK-003-08`  | `PS-BROWSER`          | None linked               | ❌ Missing |
 
 **Dependencies:** Current Bank contract and an available chain event provider
+
+**Shared accounting scenarios:**
+
+Each row identifies the responsibilities shared with other stories for one accounting operation. Existing acceptance and evidence statuses
+remain as recorded above.
+
+| Scenario and accounting use case                                                                                                                                                            | This story's responsibility                  | Other participating stories                                                                                                                                                                                                           |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Expense funds return directly to their generation's Bank. [UC-TREASURY-001](../accounting/journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer)                     | Owns the receiving Bank balance and history. | [US-EXP-006](#us-exp-006-return-expense-account-funds-to-bank) — initiates the source-account return                                                                                                                                  |
+| Payroll funds return directly to their generation's Bank. [UC-TREASURY-001](../accounting/journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer)                     | Owns the receiving Bank balance and history. | [US-PAYROLL-014](../payroll/README.md#us-payroll-014-return-payroll-funds-to-bank) — initiates the source-account return                                                                                                              |
+| A cash-out run returns Expense funds to their generation's Bank. [UC-TREASURY-001](../accounting/journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer)              | Owns the receiving Bank balance and history. | [US-BANK-004](#us-bank-004-cash-out-available-treasury-funds) — orchestrates the step and owns sequence recovery; [US-EXP-006](#us-exp-006-return-expense-account-funds-to-bank) — owns the source-account return                     |
+| A cash-out run returns Payroll funds to their generation's Bank. [UC-TREASURY-001](../accounting/journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer)              | Owns the receiving Bank balance and history. | [US-BANK-004](#us-bank-004-cash-out-available-treasury-funds) — orchestrates the step and owns sequence recovery; [US-PAYROLL-014](../payroll/README.md#us-payroll-014-return-payroll-funds-to-bank) — owns the source-account return |
+| A historical-generation cash-out run forwards Bank funds to the current Bank. [UC-TREASURY-001](../accounting/journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer) | Owns the receiving Bank balance and history. | [US-BANK-004](#us-bank-004-cash-out-available-treasury-funds) — orchestrates the forwarding step; [US-BANK-002](#us-bank-002-transfer-bank-funds) — owns the Bank transfer and fee                                                    |
 
 ## US-BANK-004: Cash Out Available Treasury Funds
 
@@ -327,6 +366,19 @@ The final wallet payment is [`CASH-OUT`](../accounting/journal-entry-catalogue.m
 
 **Cross-domain relationship:** This journey orchestrates the direct source-account returns in `US-EXP-006` and `US-PAYROLL-014` before the
 Bank's final wallet transfer. Its retry and partial-failure criteria apply to the sequence as a whole.
+
+**Shared accounting scenarios:**
+
+Each row identifies the responsibilities shared with other stories for one accounting operation. Existing acceptance and evidence statuses
+remain as recorded above.
+
+| Scenario and accounting use case                                                                                                                                                                                   | This story's responsibility                       | Other participating stories                                                                                                                                                                                                         |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| A cash-out run returns Expense funds to their generation's Bank. [UC-TREASURY-001](../accounting/journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer)                                     | Orchestrates the step and owns sequence recovery. | [US-EXP-006](#us-exp-006-return-expense-account-funds-to-bank) — owns the source-account return; [US-BANK-003](#us-bank-003-review-the-bank-position-and-history) — owns the receiving Bank balance and history                     |
+| A cash-out run returns Payroll funds to their generation's Bank. [UC-TREASURY-001](../accounting/journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer)                                     | Orchestrates the step and owns sequence recovery. | [US-PAYROLL-014](../payroll/README.md#us-payroll-014-return-payroll-funds-to-bank) — owns the source-account return; [US-BANK-003](#us-bank-003-review-the-bank-position-and-history) — owns the receiving Bank balance and history |
+| A historical-generation cash-out run forwards Bank funds to the current Bank. [UC-TREASURY-001](../accounting/journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer)                        | Orchestrates the forwarding step.                 | [US-BANK-002](#us-bank-002-transfer-bank-funds) — owns the Bank transfer and fee; [US-BANK-003](#us-bank-003-review-the-bank-position-and-history) — owns the receiving Bank balance and history                                    |
+| A cash-out run makes its final external Bank payment without an established purpose. [UC-TREASURY-003](../accounting/journal-entry-catalogue.md#uc-treasury-003--external-payment-pending-classification)          | Orchestrates the final payment.                   | [US-BANK-002](#us-bank-002-transfer-bank-funds) — owns the Bank transfer, authorization, amount, and fee                                                                                                                            |
+| A cash-out run makes its final external Bank payment with valid operating-expense evidence or classification. [UC-EXPENSE-001](../accounting/journal-entry-catalogue.md#uc-expense-001--operating-expense-payment) | Orchestrates the final payment.                   | [US-BANK-002](#us-bank-002-transfer-bank-funds) — owns the Bank transfer, authorization, amount, and fee                                                                                                                            |
 
 ## US-EXP-001: Grant a Signed Spending Approval
 
@@ -452,6 +504,18 @@ a transfer to another known company pocket is
 [`INTERNAL`](../accounting/journal-entry-catalogue.md#internal--other-company-pocket-transfer).
 
 **Dependencies:** US-EXP-001 and US-EXP-005
+
+**Shared accounting scenarios:**
+
+Each row identifies the responsibilities shared with other stories for one accounting operation. Existing acceptance and evidence statuses
+remain as recorded above.
+
+| Scenario and accounting use case                                                                                                                                                   | This story's responsibility                              | Other participating stories                                                                                                                  |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| An approved Expense payout reaches Bank. [UC-TREASURY-001](../accounting/journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer)                             | Executes the approved payout to a company pocket.        | [US-BANK-001](#us-bank-001-fund-the-bank) — receives the Bank funding                                                                        |
+| An approved Expense payout reaches Payroll. [UC-TREASURY-001](../accounting/journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer)                          | Executes the approved payout to a company pocket.        | [US-PAYROLL-003](../payroll/README.md#us-payroll-003-fund-the-payroll-contract) — owns the credited Payroll balance and payment availability |
+| An approved Expense payout reaches Safe. [UC-TREASURY-001](../accounting/journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer)                             | Executes the approved payout to a company pocket.        | [US-SAFE-003](#us-safe-003-manage-safe-funds) — receives the Safe funding                                                                    |
+| An approved Expense payout reaches another known Expense deployment. [UC-TREASURY-001](../accounting/journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer) | Executes the approved payout from the source deployment. | [US-EXP-005](#us-exp-005-fund-the-expense-account) — owns the credited balance and spending availability in the destination deployment       |
 
 ## US-EXP-003: Deactivate or Reactivate an Approval
 
@@ -600,6 +664,17 @@ story. [Accounting #2878](https://github.com/globe-and-citizen/cnc-portal/issues
 
 **Dependencies:** Current Expense Account contract, connected wallet or `US-BANK-002`, and `US-EXP-001` for approved spending
 
+**Shared accounting scenarios:**
+
+Each row identifies the responsibilities shared with other stories for one accounting operation. Existing acceptance and evidence statuses
+remain as recorded above.
+
+| Scenario and accounting use case                                                                                                                                                   | This story's responsibility                                                        | Other participating stories                                                                                           |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| Bank funds the Expense Account. [UC-TREASURY-001](../accounting/journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer)                                      | Owns the credited Expense balance and spending availability.                       | [US-BANK-002](#us-bank-002-transfer-bank-funds) — initiates the transfer and owns Bank authorization, amount, and fee |
+| Safe funds the Expense Account. [UC-TREASURY-001](../accounting/journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer)                                      | Owns the credited Expense balance and spending availability.                       | [US-SAFE-003](#us-safe-003-manage-safe-funds) — initiates the Safe transfer                                           |
+| An approved Expense payout reaches another known Expense deployment. [UC-TREASURY-001](../accounting/journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer) | Owns the credited balance and spending availability in the destination deployment. | [US-EXP-002](#us-exp-002-spend-from-the-expense-account) — executes the approved payout from the source deployment    |
+
 ## US-EXP-006: Return Expense Account Funds to Bank
 
 **As an** authorized treasury actor\
@@ -654,6 +729,16 @@ movement, not an operating expense.
 wallet transfer, while this story owns the source-account return.
 
 **Dependencies:** Current or eligible historical Expense Account, its generation's Bank, and a connected authorized wallet
+
+**Shared accounting scenarios:**
+
+Each row identifies the responsibilities shared with other stories for one accounting operation. Existing acceptance and evidence statuses
+remain as recorded above.
+
+| Scenario and accounting use case                                                                                                                                               | This story's responsibility          | Other participating stories                                                                                                                                                                                                      |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Expense funds return directly to their generation's Bank. [UC-TREASURY-001](../accounting/journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer)        | Initiates the source-account return. | [US-BANK-003](#us-bank-003-review-the-bank-position-and-history) — owns the receiving Bank balance and history                                                                                                                   |
+| A cash-out run returns Expense funds to their generation's Bank. [UC-TREASURY-001](../accounting/journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer) | Owns the source-account return.      | [US-BANK-004](#us-bank-004-cash-out-available-treasury-funds) — orchestrates the step and owns sequence recovery; [US-BANK-003](#us-bank-003-review-the-bank-position-and-history) — owns the receiving Bank balance and history |
 
 ## US-SAFE-001: Set Up a Safe
 
@@ -794,6 +879,19 @@ Bank transfers can incur the Bank's configured protocol fee; Accounting adds a m
 [Accounting test script](../accounting/accounting-test-script.md#treasury-scenarios).
 
 **Dependencies:** US-SAFE-001 and US-SAFE-006
+
+**Shared accounting scenarios:**
+
+Each row identifies the responsibilities shared with other stories for one accounting operation. Existing acceptance and evidence statuses
+remain as recorded above.
+
+| Scenario and accounting use case                                                                                                                       | This story's responsibility  | Other participating stories                                                                                                                  |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| Bank funds Safe. [UC-TREASURY-001](../accounting/journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer)                         | Receives the Safe funding.   | [US-BANK-002](#us-bank-002-transfer-bank-funds) — initiates the transfer and owns the Bank fee                                               |
+| Safe funds Bank. [UC-TREASURY-001](../accounting/journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer)                         | Initiates the Safe transfer. | [US-BANK-001](#us-bank-001-fund-the-bank) — receives the Bank funding                                                                        |
+| Safe funds Payroll. [UC-TREASURY-001](../accounting/journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer)                      | Initiates the Safe transfer. | [US-PAYROLL-003](../payroll/README.md#us-payroll-003-fund-the-payroll-contract) — owns the credited Payroll balance and payment availability |
+| Safe funds the Expense Account. [UC-TREASURY-001](../accounting/journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer)          | Initiates the Safe transfer. | [US-EXP-005](#us-exp-005-fund-the-expense-account) — owns the credited Expense balance and spending availability                             |
+| An approved Expense payout reaches Safe. [UC-TREASURY-001](../accounting/journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer) | Receives the Safe funding.   | [US-EXP-002](#us-exp-002-spend-from-the-expense-account) — executes the approved payout to a company pocket                                  |
 
 ## US-SAFE-004: Manage Safe Signers and Threshold
 

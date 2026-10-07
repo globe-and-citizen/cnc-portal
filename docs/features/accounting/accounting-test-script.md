@@ -1,7 +1,7 @@
 # Accounting Model — Manual Validation Script
 
 Use this script to run concrete examples from the [use-case overview](./journal-entry-catalogue.md#use-case-overview): identify the economic
-use case from the situation, open its section, match the scenario in its table of related user stories, and check the applicable rules and
+use case from the situation, open its section, match the scenario and all its participating user stories, and check the applicable rules and
 entry. The `UC-<DOMAIN>-<NNN>` and `RULE-*` identifiers are proposed names, not current runtime values. Run these checks against a build
 that implements the proposed model; until then, record each affected case as **Blocked**.
 
@@ -142,7 +142,9 @@ Compare the Safe-to-Payroll transfer in Scenario 1 with Bank funding Payroll and
 
 - [ ] Each pure internal pocket movement uses `UC-TREASURY-001` and applies `RULE-INTERNAL`.
 - [ ] Each entry names its actual source and destination deployment accounts while keeping the same accounting meaning.
-- [ ] The stories remain separately traceable to their own transaction hashes.
+- [ ] For each shared movement, all participating stories refer to the same transaction hash and the same complete journal entry.
+- [ ] The UC scenario row lists the initiating and receiving stories together; each canonical story links to the shared scenario and the
+      other participating story.
 
 ## Domain Examples
 

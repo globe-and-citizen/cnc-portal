@@ -281,6 +281,17 @@ story. [Accounting #2878](https://github.com/globe-and-citizen/cnc-portal/issues
 
 **Dependencies:** Current Cash Remuneration contract and a connected wallet or `US-BANK-002`
 
+**Shared accounting scenarios:**
+
+Each row identifies the responsibilities shared with other stories for one accounting operation. Existing acceptance and evidence statuses
+remain as recorded above.
+
+| Scenario and accounting use case                                                                                                                          | This story's responsibility                                 | Other participating stories                                                                                                                |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| Bank funds Payroll. [UC-TREASURY-001](../accounting/journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer)                         | Owns the credited Payroll balance and payment availability. | [US-BANK-002](../accounts/README.md#us-bank-002-transfer-bank-funds) — initiates the transfer and owns Bank authorization, amount, and fee |
+| Safe funds Payroll. [UC-TREASURY-001](../accounting/journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer)                         | Owns the credited Payroll balance and payment availability. | [US-SAFE-003](../accounts/README.md#us-safe-003-manage-safe-funds) — initiates the Safe transfer                                           |
+| An approved Expense payout reaches Payroll. [UC-TREASURY-001](../accounting/journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer) | Owns the credited Payroll balance and payment availability. | [US-EXP-002](../accounts/README.md#us-exp-002-spend-from-the-expense-account) — executes the approved payout to a company pocket           |
+
 ## US-PAYROLL-004: Set Weekly Goals
 
 **As a** company member\
@@ -406,6 +417,15 @@ story. [Accounting #2878](https://github.com/globe-and-citizen/cnc-portal/issues
 containing work week ends and remains eligible.
 
 **Dependencies:** US-PAYROLL-001
+
+**Shared accounting scenarios:**
+
+Each row identifies the responsibilities shared with other stories for one accounting operation. Existing acceptance and evidence statuses
+remain as recorded above.
+
+| Scenario and accounting use case                                                                                                                                          | This story's responsibility                          | Other participating stories                                                                                                                          |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| A work week ends with submitted daily claims and an eligible weekly claim. [UC-PAYROLL-001](../accounting/journal-entry-catalogue.md#uc-payroll-001--weekly-wage-accrual) | Supplies the daily claims used to calculate accrual. | [US-PAYROLL-009](#us-payroll-009-disable-or-re-enable-a-signed-weekly-claim) — controls claim eligibility; changing status creates no separate entry |
 
 ## US-PAYROLL-006: Edit a Daily Claim
 
@@ -608,6 +628,15 @@ week.
 [`UC-CASH-02`](../accounting/journal-entry-catalogue.md#uc-cash-02--weekly-wage-accrual); re-enabling it restores eligibility.
 
 **Dependencies:** US-PAYROLL-008
+
+**Shared accounting scenarios:**
+
+Each row identifies the responsibilities shared with other stories for one accounting operation. Existing acceptance and evidence statuses
+remain as recorded above.
+
+| Scenario and accounting use case                                                                                                                                          | This story's responsibility                                            | Other participating stories                                                                                  |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| A work week ends with submitted daily claims and an eligible weekly claim. [UC-PAYROLL-001](../accounting/journal-entry-catalogue.md#uc-payroll-001--weekly-wage-accrual) | Controls claim eligibility; changing status creates no separate entry. | [US-PAYROLL-005](#us-payroll-005-submit-a-daily-claim) — supplies the daily claims used to calculate accrual |
 
 ## US-PAYROLL-010: Withdraw an Approved Weekly Claim
 
@@ -868,6 +897,16 @@ movement, not wage expense.
 transfer, while this story owns the source-account return.
 
 **Dependencies:** Current or eligible historical Cash Remuneration account, its generation's Bank, and a connected authorized wallet
+
+**Shared accounting scenarios:**
+
+Each row identifies the responsibilities shared with other stories for one accounting operation. Existing acceptance and evidence statuses
+remain as recorded above.
+
+| Scenario and accounting use case                                                                                                                                               | This story's responsibility          | Other participating stories                                                                                                                                                                                                                                                |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Payroll funds return directly to their generation's Bank. [UC-TREASURY-001](../accounting/journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer)        | Initiates the source-account return. | [US-BANK-003](../accounts/README.md#us-bank-003-review-the-bank-position-and-history) — owns the receiving Bank balance and history                                                                                                                                        |
+| A cash-out run returns Payroll funds to their generation's Bank. [UC-TREASURY-001](../accounting/journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer) | Owns the source-account return.      | [US-BANK-004](../accounts/README.md#us-bank-004-cash-out-available-treasury-funds) — orchestrates the step and owns sequence recovery; [US-BANK-003](../accounts/README.md#us-bank-003-review-the-bank-position-and-history) — owns the receiving Bank balance and history |
 
 ## Human Validation
 
