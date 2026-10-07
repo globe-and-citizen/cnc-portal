@@ -6,6 +6,26 @@ model does not create or persist manual journal entries.
 
 **Last verified:** 2026-09-12
 
+## Target Product Contract
+
+The [direct movement policy](../../features/accounting/direct-movement-policy.md) and canonical
+[US-ACCT-007–010](../../features/accounting/README.md#us-acct-007-review-direct-treasury-movements) define the next product boundary across
+all verified company-held contracts. They require shared, incrementally synchronized evidence; stable movement identity across domain
+histories and books; owner classification of eligible receipts; and reconciliation of asset quantities at a common block. Auxiliary holdings
+retain a distinct deployment account and explicit spendability restrictions. Shared infrastructure is not automatically company custody. The
+policy inventory records the inspected receivers and missing consumers.
+
+These requirements are not implemented by the client-side runtime described below. In particular, `rawContractTokenTransfers` reaches Bank
+history but is not consumed by `toJournalEntrySources`; Payroll and Expense eventless wallet receipts are missing; their deposit mappers
+assume internal funding; and Investor, Router, Campaign, Vesting, and governance holdings lack complete direct-movement discovery. Resolving
+an unknown source to an unresolved Bank account does not establish an internal transfer.
+
+The target shared backend snapshot must retain per-deployment and asset coverage, last verified block, source movement evidence,
+classification audit, and revision/completeness state. Domain views and every Accounting projection consume the same verified journal
+version. A requested sync discovers off-platform transfers; notification alone does not. Native evidence unavailable from the selected
+provider remains an explicit gap. Detailed provider, storage, and delivery choices belong to the bounded implementation work under
+[#2878](https://github.com/globe-and-citizen/cnc-portal/issues/2878); this product-definition change selects no new provider or runtime API.
+
 ## Consumers
 
 - The [Accounting feature](../../features/accounting/README.md) uses this read model for its consolidated books, reports, drill-downs, and

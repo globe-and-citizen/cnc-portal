@@ -23,6 +23,10 @@ criteria follow the [feature documentation review contract](../../platform/featu
 - A schedule is recorded in the company books as a **restricted-stock grant**: the whole award is committed to equity when the schedule is
   defined, released shares become issued equity, and a stop cancels the unvested remainder. Vesting never affects the company profit.
 
+The [direct asset movement product contract](../accounting/direct-movement-policy.md) defines company custody, unsolicited receipts,
+historical coverage, classification, and reconciliation across domains. Its target behaviour remains pending implementation; new ACs are
+unchecked.
+
 ## Lifecycle
 
 ```mermaid
@@ -67,13 +71,13 @@ Coverage targets compare each criterion with its required representative evidenc
 generated coverage report and CI retain file-level and execution evidence. Known assertion gaps remain insufficient even when a static
 reference has the expected layer label.
 
-| User Story     | Main Journey | Coverage Target | Gaps                                                                                                                                                                                                                                                                   |
-| -------------- | ------------ | --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| US-VESTING-001 | ⬜ Planned   | ⚠️ 3/14         | `AC-US-VESTING-001-01`, `AC-US-VESTING-001-02`, `AC-US-VESTING-001-03`, `AC-US-VESTING-001-04`, `AC-US-VESTING-001-07`, `AC-US-VESTING-001-08`, `AC-US-VESTING-001-09`, `AC-US-VESTING-001-10`, `AC-US-VESTING-001-11`, `AC-US-VESTING-001-13`, `AC-US-VESTING-001-14` |
-| US-VESTING-002 | ⬜ Planned   | ❌ 0/10         | `AC-US-VESTING-002-01`, `AC-US-VESTING-002-02`, `AC-US-VESTING-002-03`, `AC-US-VESTING-002-04`, `AC-US-VESTING-002-05`, `AC-US-VESTING-002-06`, `AC-US-VESTING-002-07`, `AC-US-VESTING-002-08`, `AC-US-VESTING-002-09`, `AC-US-VESTING-002-10`                         |
-| US-VESTING-003 | ⬜ Planned   | ⚠️ 2/11         | `AC-US-VESTING-003-01`, `AC-US-VESTING-003-02`, `AC-US-VESTING-003-03`, `AC-US-VESTING-003-04`, `AC-US-VESTING-003-05`, `AC-US-VESTING-003-08`, `AC-US-VESTING-003-09`, `AC-US-VESTING-003-10`, `AC-US-VESTING-003-11`                                                 |
-| US-VESTING-004 | ⬜ Planned   | ❌ 0/10         | `AC-US-VESTING-004-01`, `AC-US-VESTING-004-02`, `AC-US-VESTING-004-03`, `AC-US-VESTING-004-04`, `AC-US-VESTING-004-05`, `AC-US-VESTING-004-06`, `AC-US-VESTING-004-07`, `AC-US-VESTING-004-08`, `AC-US-VESTING-004-09`, `AC-US-VESTING-004-10`                         |
-| US-VESTING-005 | ⬜ Planned   | ⚠️ 2/8          | `AC-US-VESTING-005-01`, `AC-US-VESTING-005-02`, `AC-US-VESTING-005-03`, `AC-US-VESTING-005-04`, `AC-US-VESTING-005-05`, `AC-US-VESTING-005-06`                                                                                                                         |
+| User Story     | Main Journey | Coverage Target | Gaps                                                                                                                                                                                                                                                                                           |
+| -------------- | ------------ | --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| US-VESTING-001 | ⬜ Planned   | ⚠️ 3/14         | `AC-US-VESTING-001-01`, `AC-US-VESTING-001-02`, `AC-US-VESTING-001-03`, `AC-US-VESTING-001-04`, `AC-US-VESTING-001-07`, `AC-US-VESTING-001-08`, `AC-US-VESTING-001-09`, `AC-US-VESTING-001-10`, `AC-US-VESTING-001-11`, `AC-US-VESTING-001-13`, `AC-US-VESTING-001-14`                         |
+| US-VESTING-002 | ⬜ Planned   | ❌ 0/12 met     | `AC-US-VESTING-002-01`, `AC-US-VESTING-002-02`, `AC-US-VESTING-002-03`, `AC-US-VESTING-002-04`, `AC-US-VESTING-002-05`, `AC-US-VESTING-002-06`, `AC-US-VESTING-002-07`, `AC-US-VESTING-002-08`, `AC-US-VESTING-002-09`, `AC-US-VESTING-002-10`, `AC-US-VESTING-002-11`, `AC-US-VESTING-002-12` |
+| US-VESTING-003 | ⬜ Planned   | ⚠️ 2/11         | `AC-US-VESTING-003-01`, `AC-US-VESTING-003-02`, `AC-US-VESTING-003-03`, `AC-US-VESTING-003-04`, `AC-US-VESTING-003-05`, `AC-US-VESTING-003-08`, `AC-US-VESTING-003-09`, `AC-US-VESTING-003-10`, `AC-US-VESTING-003-11`                                                                         |
+| US-VESTING-004 | ⬜ Planned   | ❌ 0/10         | `AC-US-VESTING-004-01`, `AC-US-VESTING-004-02`, `AC-US-VESTING-004-03`, `AC-US-VESTING-004-04`, `AC-US-VESTING-004-05`, `AC-US-VESTING-004-06`, `AC-US-VESTING-004-07`, `AC-US-VESTING-004-08`, `AC-US-VESTING-004-09`, `AC-US-VESTING-004-10`                                                 |
+| US-VESTING-005 | ⬜ Planned   | ⚠️ 2/8          | `AC-US-VESTING-005-01`, `AC-US-VESTING-005-02`, `AC-US-VESTING-005-03`, `AC-US-VESTING-005-04`, `AC-US-VESTING-005-05`, `AC-US-VESTING-005-06`                                                                                                                                                 |
 
 Proof obligations use the [shared proof-strategy registry](../../testing/proof-strategies.md). Multiple IDs for one AC are cumulative.
 
@@ -151,11 +155,14 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 - [x] `AC-US-VESTING-002-03` Users can switch between their own schedules and all team schedules.
 - [x] `AC-US-VESTING-002-04` Users can filter schedules by All, Active, Claimable, Completed, or Cancelled.
 - [x] `AC-US-VESTING-002-05` Creating, releasing, or stopping a schedule refreshes the schedules and aggregate totals.
+- [ ] `AC-US-VESTING-002-11` A member can inspect direct assets held by Vesting separately from schedule totals, using the same evidence as
+      Accounting.
 
 #### Business Rules
 
 - [x] `AC-US-VESTING-002-06` A schedule is Completed when its full grant has been released.
 - [x] `AC-US-VESTING-002-07` A schedule is Cancelled when the team owner has stopped it.
+- [ ] `AC-US-VESTING-002-12` An unsolicited asset receipt does not create a vesting schedule or increase granted or claimable SHER.
 
 #### Edge & Error Cases
 
@@ -166,21 +173,35 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 
 ### Test Coverage
 
-| Acceptance Criterion   | Proof Strategy        | Current Evidence | Status          |
-| ---------------------- | --------------------- | ---------------- | --------------- |
-| `AC-US-VESTING-002-01` | `PS-CHAIN-INTEGRATED` | Frontend         | ⚠️ Insufficient |
-| `AC-US-VESTING-002-02` | `PS-CHAIN-INTEGRATED` | None linked      | ❌ Missing      |
-| `AC-US-VESTING-002-02` | `PS-CONTRACT`         | None linked      | ❌ Missing      |
-| `AC-US-VESTING-002-03` | `PS-FRONTEND`         | None linked      | ❌ Missing      |
-| `AC-US-VESTING-002-04` | `PS-FRONTEND`         | None linked      | ❌ Missing      |
-| `AC-US-VESTING-002-05` | `PS-CHAIN-INTEGRATED` | None linked      | ❌ Missing      |
-| `AC-US-VESTING-002-06` | `PS-FRONTEND`         | None linked      | ❌ Missing      |
-| `AC-US-VESTING-002-07` | `PS-FRONTEND`         | None linked      | ❌ Missing      |
-| `AC-US-VESTING-002-08` | `PS-BROWSER`          | None linked      | ❌ Missing      |
-| `AC-US-VESTING-002-09` | `PS-BROWSER`          | Frontend         | ⚠️ Insufficient |
-| `AC-US-VESTING-002-10` | `PS-BROWSER`          | None linked      | ❌ Missing      |
+| Acceptance Criterion   | Proof Strategy             | Current Evidence | Status          |
+| ---------------------- | -------------------------- | ---------------- | --------------- |
+| `AC-US-VESTING-002-01` | `PS-CHAIN-INTEGRATED`      | Frontend         | ⚠️ Insufficient |
+| `AC-US-VESTING-002-02` | `PS-CHAIN-INTEGRATED`      | None linked      | ❌ Missing      |
+| `AC-US-VESTING-002-02` | `PS-CONTRACT`              | None linked      | ❌ Missing      |
+| `AC-US-VESTING-002-03` | `PS-FRONTEND`              | None linked      | ❌ Missing      |
+| `AC-US-VESTING-002-04` | `PS-FRONTEND`              | None linked      | ❌ Missing      |
+| `AC-US-VESTING-002-05` | `PS-CHAIN-INTEGRATED`      | None linked      | ❌ Missing      |
+| `AC-US-VESTING-002-06` | `PS-FRONTEND`              | None linked      | ❌ Missing      |
+| `AC-US-VESTING-002-07` | `PS-FRONTEND`              | None linked      | ❌ Missing      |
+| `AC-US-VESTING-002-08` | `PS-BROWSER`               | None linked      | ❌ Missing      |
+| `AC-US-VESTING-002-09` | `PS-BROWSER`               | Frontend         | ⚠️ Insufficient |
+| `AC-US-VESTING-002-10` | `PS-BROWSER`               | None linked      | ❌ Missing      |
+| `AC-US-VESTING-002-11` | `PS-BACKEND`               | None linked      | ❌ Missing      |
+| `AC-US-VESTING-002-11` | `PS-FULL-STACK-INTEGRATED` | None linked      | ❌ Missing      |
+| `AC-US-VESTING-002-12` | `PS-BACKEND`               | None linked      | ❌ Missing      |
+| `AC-US-VESTING-002-12` | `PS-CONTRACT`              | None linked      | ❌ Missing      |
+| `AC-US-VESTING-002-12` | `PS-FULL-STACK-INTEGRATED` | None linked      | ❌ Missing      |
 
 **Dependencies:** US-VESTING-001
+
+### Direct Movement Scenarios
+
+Target behaviour follows the [direct movement policy](../accounting/direct-movement-policy.md). Each row represents the same evidenced
+movement across the participating stories.
+
+| Scenario                                                                                                                                                                                             | This story owns                                       | Related stories and roles                                                                                                                                                                                                                                                                                                                                                                           |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| External tokens reach Vesting without a grant operation or established purpose. [UC-TREASURY-002](../accounting/journal-entry-catalogue.md#uc-treasury-002--external-receipt-pending-classification) | Separates holdings from granted and claimable shares. | [US-CONTRACT-001](../contract-management/README.md#us-contract-001-review-the-current-contract-suite) — exposes custody and recovery limits; [US-ACCT-007](../accounting/README.md#us-acct-007-review-direct-treasury-movements) — owns movement evidence and identity; [US-ACCT-010](../accounting/README.md#us-acct-010-classify-direct-external-receipts) — owns eligible receipt classification |
 
 ## US-VESTING-003: Release Accrued Shares
 
@@ -373,6 +394,9 @@ Accounting-owned acceptance contract and has no independent validation status.
 - [Contract features index](../../contracts/features/README.md)
 
 ## Known Gaps
+
+- The schedule journey does not expose unsolicited token holdings separately from vested compensation. Direct custody and its correlation to
+  Accounting remain unimplemented (`AC-US-VESTING-002-11–12`).
 
 - A successfully decoded Vesting response whose member, index, and schedule arrays have inconsistent lengths is currently reduced to an
   empty schedule list, making malformed data indistinguishable from a company with no schedules (`US-VESTING-002`).

@@ -31,6 +31,17 @@ These acceptance criteria follow the
   source-independent pocket transfers, evidence-based treatment of external cash, fee composition, and report reconciliation. Its proposed
   identifiers remain illustrative until the runtime migration is implemented.
 
+The [direct asset movement product contract](./direct-movement-policy.md) defines company custody, unsolicited receipts, historical
+coverage, classification, and reconciliation across domains. Its target behaviour remains pending implementation; new ACs are unchecked.
+
+### Product Transition
+
+Existing checked criteria and their test references retain the currently implemented event-feed and client-processing scope.
+`US-ACCT-007–010` define the additional target behaviour. In that target, report completeness refers to the verified snapshot being
+presented; a failed candidate refresh retains the previous complete snapshot under `US-ACCT-008`. Receipt classification follows
+`US-ACCT-010`; the restrictions in `US-ACCT-006` continue to apply to the withdrawal-assignment workflow. The later implementation must
+revalidate these relationships and migrate the affected evidence before marking the new criteria complete.
+
 ## Lifecycle
 
 ```mermaid
@@ -47,14 +58,18 @@ flowchart LR
 
 ## Status Overview
 
-| User Story  | Title                                  | Actor          | Status         |
-| ----------- | -------------------------------------- | -------------- | -------------- |
-| US-ACCT-001 | View the Accounting overview           | Company member | 🚧 In Progress |
-| US-ACCT-002 | Trace operations in the General Ledger | Company member | 🧪 Validation  |
-| US-ACCT-003 | Review financial statements            | Company member | 🧪 Validation  |
-| US-ACCT-004 | Export accounting reports              | Company member | 🧪 Validation  |
-| US-ACCT-005 | Review historical contract activity    | Company member | 🚧 In Progress |
-| US-ACCT-006 | Classify an external withdrawal        | Company owner  | 🧪 Validation  |
+| User Story  | Title                                    | Actor          | Status         |
+| ----------- | ---------------------------------------- | -------------- | -------------- |
+| US-ACCT-001 | View the Accounting overview             | Company member | 🚧 In Progress |
+| US-ACCT-002 | Trace operations in the General Ledger   | Company member | 🧪 Validation  |
+| US-ACCT-003 | Review financial statements              | Company member | 🧪 Validation  |
+| US-ACCT-004 | Export accounting reports                | Company member | 🧪 Validation  |
+| US-ACCT-005 | Review historical contract activity      | Company member | 🚧 In Progress |
+| US-ACCT-006 | Classify an external withdrawal          | Company owner  | 🧪 Validation  |
+| US-ACCT-007 | Review direct treasury movements         | Company member | 🚧 In Progress |
+| US-ACCT-008 | Access synchronized company books        | Company member | 🚧 In Progress |
+| US-ACCT-009 | Investigate treasury balance differences | Company member | 🚧 In Progress |
+| US-ACCT-010 | Classify direct external receipts        | Company owner  | 🚧 In Progress |
 
 ## Test Coverage Overview
 
@@ -62,14 +77,18 @@ Coverage targets compare each criterion's required evidence with direct `AC-US-*
 latest pass/fail result, which belongs to CI or the generated local report. Gaps identify criteria whose required evidence is missing or
 insufficient; the detailed evidence distribution remains available in the generated report instead of being repeated here.
 
-| User Story  | Main Journey  | Coverage Target | Gaps                                                                                                    |
-| ----------- | ------------- | --------------- | ------------------------------------------------------------------------------------------------------- |
-| US-ACCT-001 | ✅ Integrated | ⚠️ 11/12        | 1 — `AC-US-ACCT-001-08`, whose cash reconciliation is not built yet                                     |
-| US-ACCT-002 | ✅ Integrated | ✅ 12/12        | —                                                                                                       |
-| US-ACCT-003 | ✅ Integrated | ✅ 11/11        | —                                                                                                       |
-| US-ACCT-004 | ✅ Integrated | ✅ 9/9          | —                                                                                                       |
-| US-ACCT-005 | ✅ Integrated | ✅ 13/13        | —                                                                                                       |
-| US-ACCT-006 | ✅ Integrated | ⚠️ 6/11         | `AC-US-ACCT-006-01`, `AC-US-ACCT-006-02`, `AC-US-ACCT-006-03`, `AC-US-ACCT-006-05`, `AC-US-ACCT-006-09` |
+| User Story  | Main Journey  | Coverage Target | Gaps                                                                                                                                                                                                                                                                                                                                                                                                          |
+| ----------- | ------------- | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| US-ACCT-001 | ✅ Integrated | ⚠️ 11/12 met    | `AC-US-ACCT-001-08`                                                                                                                                                                                                                                                                                                                                                                                           |
+| US-ACCT-002 | ✅ Integrated | ✅ 12/12        | —                                                                                                                                                                                                                                                                                                                                                                                                             |
+| US-ACCT-003 | ✅ Integrated | ✅ 11/11        | —                                                                                                                                                                                                                                                                                                                                                                                                             |
+| US-ACCT-004 | ✅ Integrated | ✅ 9/9          | —                                                                                                                                                                                                                                                                                                                                                                                                             |
+| US-ACCT-005 | ✅ Integrated | ✅ 13/13 met    | —                                                                                                                                                                                                                                                                                                                                                                                                             |
+| US-ACCT-006 | ✅ Integrated | ⚠️ 6/11 met     | `AC-US-ACCT-006-01`, `AC-US-ACCT-006-02`, `AC-US-ACCT-006-03`, `AC-US-ACCT-006-05`, `AC-US-ACCT-006-09`                                                                                                                                                                                                                                                                                                       |
+| US-ACCT-007 | ⬜ Planned    | ❌ 0/17 met     | `AC-US-ACCT-007-01`, `AC-US-ACCT-007-02`, `AC-US-ACCT-007-03`, `AC-US-ACCT-007-04`, `AC-US-ACCT-007-05`, `AC-US-ACCT-007-06`, `AC-US-ACCT-007-07`, `AC-US-ACCT-007-08`, `AC-US-ACCT-007-09`, `AC-US-ACCT-007-10`, `AC-US-ACCT-007-11`, `AC-US-ACCT-007-12`, `AC-US-ACCT-007-13`, `AC-US-ACCT-007-14`, `AC-US-ACCT-007-15`, `AC-US-ACCT-007-16`, `AC-US-ACCT-007-17`                                           |
+| US-ACCT-008 | ⬜ Planned    | ❌ 0/10 met     | `AC-US-ACCT-008-01`, `AC-US-ACCT-008-02`, `AC-US-ACCT-008-03`, `AC-US-ACCT-008-04`, `AC-US-ACCT-008-05`, `AC-US-ACCT-008-06`, `AC-US-ACCT-008-07`, `AC-US-ACCT-008-08`, `AC-US-ACCT-008-09`, `AC-US-ACCT-008-10`                                                                                                                                                                                              |
+| US-ACCT-009 | ⬜ Planned    | ❌ 0/9 met      | `AC-US-ACCT-009-01`, `AC-US-ACCT-009-02`, `AC-US-ACCT-009-03`, `AC-US-ACCT-009-04`, `AC-US-ACCT-009-05`, `AC-US-ACCT-009-06`, `AC-US-ACCT-009-07`, `AC-US-ACCT-009-08`, `AC-US-ACCT-009-09`                                                                                                                                                                                                                   |
+| US-ACCT-010 | ⬜ Planned    | ❌ 0/19 met     | `AC-US-ACCT-010-01`, `AC-US-ACCT-010-02`, `AC-US-ACCT-010-03`, `AC-US-ACCT-010-04`, `AC-US-ACCT-010-05`, `AC-US-ACCT-010-06`, `AC-US-ACCT-010-07`, `AC-US-ACCT-010-08`, `AC-US-ACCT-010-09`, `AC-US-ACCT-010-10`, `AC-US-ACCT-010-11`, `AC-US-ACCT-010-12`, `AC-US-ACCT-010-13`, `AC-US-ACCT-010-14`, `AC-US-ACCT-010-15`, `AC-US-ACCT-010-16`, `AC-US-ACCT-010-17`, `AC-US-ACCT-010-18`, `AC-US-ACCT-010-19` |
 
 ### Accounting Use-Case Test Evidence
 
@@ -400,6 +419,331 @@ first change and for the current router when no change event exists.
 
 **Dependencies:** US-ACCT-002 and the journal account-assignment API
 
+## US-ACCT-007: Review Direct Treasury Movements
+
+**As a** company member\
+**I want to** review direct movements affecting company treasury addresses\
+**So that** the books and contract histories include funds moved without using a contract function
+
+### Acceptance Criteria
+
+#### Happy Path
+
+- [ ] `AC-US-ACCT-007-01` A direct native-token movement into or out of a verified company-held address is recorded when sufficient chain
+      evidence identifies it, even when the contract emits no business event.
+- [ ] `AC-US-ACCT-007-02` A direct ERC-20 movement into or out of a verified company-held address is recorded even when the contract emits
+      no business event.
+- [ ] `AC-US-ACCT-007-03` A recorded direct movement appears in the General Ledger and in the relevant domain or contract activity history
+      with the same transaction evidence.
+- [ ] `AC-US-ACCT-007-12` Holdings at auxiliary company contracts retain their own deployment account and disclose restricted or unknown
+      spendability.
+
+#### Business Rules
+
+- [ ] `AC-US-ACCT-007-04` Direct movements from every known treasury contract generation are included from that generation's deployment
+      boundary.
+- [ ] `AC-US-ACCT-007-05` A token initially supported, added, or later removed from a contract remains in the historical coverage of the
+      period in which it was relevant.
+- [ ] `AC-US-ACCT-007-06` A movement between known company accounts remains an internal transfer and creates no revenue or expense.
+- [ ] `AC-US-ACCT-007-07` A movement already represented by a contract event is not posted or displayed a second time.
+- [ ] `AC-US-ACCT-007-08` Distinct movements within one blockchain transaction retain distinct identities.
+- [ ] `AC-US-ACCT-007-11` Each movement identifies the company custody evidence and deployment applicable at the time of the movement.
+- [ ] `AC-US-ACCT-007-14` A raw receipt alone creates no credit-round allocation, wage settlement, spending approval, share issuance,
+      vesting entitlement, or campaign budget.
+- [ ] `AC-US-ACCT-007-15` Shared infrastructure balances are excluded from company assets unless an evidenced company claim establishes
+      their inclusion.
+- [ ] `AC-US-ACCT-007-17` Own-company SHER and NFTs discovered at a contract remain distinguishable from valued cash assets.
+
+#### Edge & Error Cases
+
+- [ ] `AC-US-ACCT-007-09` A directly received ERC-20 outside the recognized asset catalogue is identified as outside the valued accounting
+      scope rather than silently treated as a supported asset.
+- [ ] `AC-US-ACCT-007-10` When available chain evidence cannot establish a native movement, the affected coverage is marked incomplete and
+      no movement is invented.
+- [ ] `AC-US-ACCT-007-13` A reverted transfer attempt creates no received movement.
+- [ ] `AC-US-ACCT-007-16` An unresolved custody relationship is reported as incomplete coverage without assigning its balance to a guessed
+      company account.
+
+### Test Coverage
+
+| Acceptance Criterion | Proof Strategy             | Current Evidence | Status     |
+| -------------------- | -------------------------- | ---------------- | ---------- |
+| `AC-US-ACCT-007-01`  | `PS-BACKEND`               | None linked      | ❌ Missing |
+| `AC-US-ACCT-007-01`  | `PS-FULL-STACK-INTEGRATED` | None linked      | ❌ Missing |
+| `AC-US-ACCT-007-02`  | `PS-BACKEND`               | None linked      | ❌ Missing |
+| `AC-US-ACCT-007-02`  | `PS-FULL-STACK-INTEGRATED` | None linked      | ❌ Missing |
+| `AC-US-ACCT-007-03`  | `PS-BACKEND`               | None linked      | ❌ Missing |
+| `AC-US-ACCT-007-03`  | `PS-FULL-STACK-INTEGRATED` | None linked      | ❌ Missing |
+| `AC-US-ACCT-007-04`  | `PS-BACKEND`               | None linked      | ❌ Missing |
+| `AC-US-ACCT-007-04`  | `PS-FULL-STACK-INTEGRATED` | None linked      | ❌ Missing |
+| `AC-US-ACCT-007-05`  | `PS-BACKEND`               | None linked      | ❌ Missing |
+| `AC-US-ACCT-007-05`  | `PS-FULL-STACK-INTEGRATED` | None linked      | ❌ Missing |
+| `AC-US-ACCT-007-06`  | `PS-BACKEND`               | None linked      | ❌ Missing |
+| `AC-US-ACCT-007-06`  | `PS-FULL-STACK-INTEGRATED` | None linked      | ❌ Missing |
+| `AC-US-ACCT-007-07`  | `PS-BACKEND`               | None linked      | ❌ Missing |
+| `AC-US-ACCT-007-07`  | `PS-FULL-STACK-INTEGRATED` | None linked      | ❌ Missing |
+| `AC-US-ACCT-007-08`  | `PS-BACKEND`               | None linked      | ❌ Missing |
+| `AC-US-ACCT-007-08`  | `PS-FULL-STACK-INTEGRATED` | None linked      | ❌ Missing |
+| `AC-US-ACCT-007-09`  | `PS-BACKEND`               | None linked      | ❌ Missing |
+| `AC-US-ACCT-007-09`  | `PS-FULL-STACK-INTEGRATED` | None linked      | ❌ Missing |
+| `AC-US-ACCT-007-10`  | `PS-BACKEND`               | None linked      | ❌ Missing |
+| `AC-US-ACCT-007-10`  | `PS-FULL-STACK-INTEGRATED` | None linked      | ❌ Missing |
+| `AC-US-ACCT-007-11`  | `PS-BACKEND`               | None linked      | ❌ Missing |
+| `AC-US-ACCT-007-11`  | `PS-FULL-STACK-INTEGRATED` | None linked      | ❌ Missing |
+| `AC-US-ACCT-007-12`  | `PS-BACKEND`               | None linked      | ❌ Missing |
+| `AC-US-ACCT-007-12`  | `PS-FULL-STACK-INTEGRATED` | None linked      | ❌ Missing |
+| `AC-US-ACCT-007-13`  | `PS-BACKEND`               | None linked      | ❌ Missing |
+| `AC-US-ACCT-007-13`  | `PS-FULL-STACK-INTEGRATED` | None linked      | ❌ Missing |
+| `AC-US-ACCT-007-14`  | `PS-BACKEND`               | None linked      | ❌ Missing |
+| `AC-US-ACCT-007-14`  | `PS-FULL-STACK-INTEGRATED` | None linked      | ❌ Missing |
+| `AC-US-ACCT-007-15`  | `PS-BACKEND`               | None linked      | ❌ Missing |
+| `AC-US-ACCT-007-15`  | `PS-FULL-STACK-INTEGRATED` | None linked      | ❌ Missing |
+| `AC-US-ACCT-007-16`  | `PS-BACKEND`               | None linked      | ❌ Missing |
+| `AC-US-ACCT-007-16`  | `PS-FULL-STACK-INTEGRATED` | None linked      | ❌ Missing |
+| `AC-US-ACCT-007-17`  | `PS-BACKEND`               | None linked      | ❌ Missing |
+| `AC-US-ACCT-007-17`  | `PS-FULL-STACK-INTEGRATED` | None linked      | ❌ Missing |
+
+**Dependencies:** US-ACCT-008 for the shared source of accounting data.
+
+### Direct Movement Scenarios
+
+Target behaviour follows the [direct movement policy](direct-movement-policy.md). Each row represents the same evidenced movement across the
+participating stories.
+
+| Scenario                                                                                                                                                                                                                | This story owns                                                              | Related stories and roles                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| External wallet funds Bank without established purpose or facture evidence. [UC-TREASURY-002](journal-entry-catalogue.md#uc-treasury-002--external-receipt-pending-classification)                                      | Owns movement evidence and identity.                                         | [US-BANK-001](../accounts/README.md#us-bank-001-fund-the-bank) — owns received funding; [US-BANK-003](../accounts/README.md#us-bank-003-review-the-bank-position-and-history) — owns Bank history; [US-PAYGATE-004](../payment-gate/README.md#us-paygate-004-review-payment-history) — keeps unmatched receipts outside invoice history; [US-ACCT-010](README.md#us-acct-010-classify-direct-external-receipts) — owns eligible receipt classification |
+| External wallet funds Safe without established purpose or investment evidence. [UC-TREASURY-002](journal-entry-catalogue.md#uc-treasury-002--external-receipt-pending-classification)                                   | Owns movement evidence and identity.                                         | [US-SAFE-003](../accounts/README.md#us-safe-003-manage-safe-funds) — owns funding; [US-SAFE-002](../accounts/README.md#us-safe-002-inspect-safe-details) — owns Safe asset history; [US-ACCT-010](README.md#us-acct-010-classify-direct-external-receipts) — owns eligible receipt classification                                                                                                                                                      |
+| External wallet funds Payroll without established business purpose. [UC-TREASURY-002](journal-entry-catalogue.md#uc-treasury-002--external-receipt-pending-classification)                                              | Owns movement evidence and identity.                                         | [US-PAYROLL-003](../payroll/README.md#us-payroll-003-fund-the-payroll-contract) — owns received funding and payment availability; [US-PAYROLL-013](../payroll/README.md#us-payroll-013-review-the-payroll-account-position) — owns Payroll position and history; [US-ACCT-010](README.md#us-acct-010-classify-direct-external-receipts) — owns eligible receipt classification                                                                         |
+| External wallet funds Expense without established business purpose. [UC-TREASURY-002](journal-entry-catalogue.md#uc-treasury-002--external-receipt-pending-classification)                                              | Owns movement evidence and identity.                                         | [US-EXP-005](../accounts/README.md#us-exp-005-fund-the-expense-account) — owns received funding and spending availability; [US-EXP-004](../accounts/README.md#us-exp-004-review-the-expense-account-and-its-history) — owns Expense position and history; [US-ACCT-010](README.md#us-acct-010-classify-direct-external-receipts) — owns eligible receipt classification                                                                                |
+| External tokens reach FixedReturn without a credit-round operation or established purpose. [UC-TREASURY-002](journal-entry-catalogue.md#uc-treasury-002--external-receipt-pending-classification)                       | Owns movement evidence and identity.                                         | [US-CC-001](../community-credit/README.md#us-cc-001-inspect-the-credit-account) — separates unallocated holdings from credit rounds; [US-ACCT-010](README.md#us-acct-010-classify-direct-external-receipts) — owns eligible receipt classification                                                                                                                                                                                                     |
+| External assets reach Investor or SafeDepositRouter without an investment, distribution, or established purpose. [UC-TREASURY-002](journal-entry-catalogue.md#uc-treasury-002--external-receipt-pending-classification) | Owns movement evidence and identity.                                         | [US-SHER-003](../shareholder-management/README.md#us-sher-003-review-shareholder-position-and-activity) — separates direct holdings from shares and dividends; [US-CONTRACT-001](../contract-management/README.md#us-contract-001-review-the-current-contract-suite) — exposes custody and recovery limits; [US-ACCT-010](README.md#us-acct-010-classify-direct-external-receipts) — owns eligible receipt classification                              |
+| External assets reach AdCampaignManager without a campaign operation or established purpose. [UC-TREASURY-002](journal-entry-catalogue.md#uc-treasury-002--external-receipt-pending-classification)                     | Owns movement evidence and identity.                                         | [US-CONTRACT-003](../contract-management/README.md#us-contract-003-manage-advertising-campaigns) — separates unallocated holdings from campaign budgets; [US-ACCT-010](README.md#us-acct-010-classify-direct-external-receipts) — owns eligible receipt classification                                                                                                                                                                                 |
+| External tokens reach Vesting without a grant operation or established purpose. [UC-TREASURY-002](journal-entry-catalogue.md#uc-treasury-002--external-receipt-pending-classification)                                  | Owns movement evidence and identity.                                         | [US-VESTING-002](../vesting/README.md#us-vesting-002-view-schedules-and-aggregate-totals) — separates holdings from granted and claimable shares; [US-CONTRACT-001](../contract-management/README.md#us-contract-001-review-the-current-contract-suite) — exposes custody and recovery limits; [US-ACCT-010](README.md#us-acct-010-classify-direct-external-receipts) — owns eligible receipt classification                                           |
+| External tokens reach another verified company-held contract without an established purpose. [UC-TREASURY-002](journal-entry-catalogue.md#uc-treasury-002--external-receipt-pending-classification)                     | Owns movement evidence and identity.                                         | [US-CONTRACT-001](../contract-management/README.md#us-contract-001-review-the-current-contract-suite) — owns auxiliary contract inspection; [US-ACCT-010](README.md#us-acct-010-classify-direct-external-receipts) — owns eligible receipt classification                                                                                                                                                                                              |
+| Owner-authorized Router recovery moves held tokens to the same company Safe. [UC-TREASURY-001](journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer)                                            | Correlates source and destination without a second receipt or sher issuance. | [US-SHER-003](../shareholder-management/README.md#us-sher-003-review-shareholder-position-and-activity) — traces the Router receipt and recovery; [US-SAFE-002](../accounts/README.md#us-safe-002-inspect-safe-details) — owns receiving Safe history                                                                                                                                                                                                  |
+| A verified auxiliary company contract makes an evidenced external payment without established purpose. [UC-TREASURY-003](journal-entry-catalogue.md#uc-treasury-003--external-payment-pending-classification)           | Owns evidence and pending-payment identity.                                  | [US-CONTRACT-001](../contract-management/README.md#us-contract-001-review-the-current-contract-suite) — exposes the contract movement                                                                                                                                                                                                                                                                                                                  |
+
+## US-ACCT-008: Access Synchronized Company Books
+
+**As a** company member\
+**I want to** access a shared, verified accounting snapshot\
+**So that** opening reports does not repeatedly rebuild the company's full history
+
+### Acceptance Criteria
+
+#### Happy Path
+
+- [ ] `AC-US-ACCT-008-01` Accounting reports for a company use the same verified journal snapshot.
+- [ ] `AC-US-ACCT-008-02` A requested refresh incorporates newly available activity while retaining previously verified activity without
+      duplication.
+- [ ] `AC-US-ACCT-008-03` A deposit confirmed through the platform invalidates the affected company's snapshot and requests a refresh.
+- [ ] `AC-US-ACCT-008-04` After a new snapshot is verified, other members actively viewing the company receive the updated data without
+      manually refreshing.
+
+#### Business Rules
+
+- [ ] `AC-US-ACCT-008-05` A snapshot identifies its last verified block, verification time, and completeness state.
+- [ ] `AC-US-ACCT-008-06` An off-platform movement becomes eligible for discovery at the next requested synchronization; until then, the
+      last verified block remains visible.
+- [ ] `AC-US-ACCT-008-07` Ordinary requests reuse verified history and synchronize only the chain ranges that may contain new or revised
+      evidence.
+
+#### Edge & Error Cases
+
+- [ ] `AC-US-ACCT-008-08` A failed or partial refresh does not replace the last complete snapshot; its age and failure state remain visible.
+- [ ] `AC-US-ACCT-008-09` If no complete snapshot exists, incomplete evidence is not presented as final accounting reports.
+- [ ] `AC-US-ACCT-008-10` Revised chain evidence invalidates the affected snapshot before another version is marked verified.
+
+### Test Coverage
+
+| Acceptance Criterion | Proof Strategy             | Current Evidence | Status     |
+| -------------------- | -------------------------- | ---------------- | ---------- |
+| `AC-US-ACCT-008-01`  | `PS-BACKEND`               | None linked      | ❌ Missing |
+| `AC-US-ACCT-008-01`  | `PS-FULL-STACK-INTEGRATED` | None linked      | ❌ Missing |
+| `AC-US-ACCT-008-02`  | `PS-BACKEND`               | None linked      | ❌ Missing |
+| `AC-US-ACCT-008-02`  | `PS-FULL-STACK-INTEGRATED` | None linked      | ❌ Missing |
+| `AC-US-ACCT-008-03`  | `PS-BACKEND`               | None linked      | ❌ Missing |
+| `AC-US-ACCT-008-03`  | `PS-FULL-STACK-INTEGRATED` | None linked      | ❌ Missing |
+| `AC-US-ACCT-008-04`  | `PS-BACKEND`               | None linked      | ❌ Missing |
+| `AC-US-ACCT-008-04`  | `PS-FULL-STACK-INTEGRATED` | None linked      | ❌ Missing |
+| `AC-US-ACCT-008-05`  | `PS-BACKEND`               | None linked      | ❌ Missing |
+| `AC-US-ACCT-008-05`  | `PS-FULL-STACK-INTEGRATED` | None linked      | ❌ Missing |
+| `AC-US-ACCT-008-06`  | `PS-BACKEND`               | None linked      | ❌ Missing |
+| `AC-US-ACCT-008-06`  | `PS-FULL-STACK-INTEGRATED` | None linked      | ❌ Missing |
+| `AC-US-ACCT-008-07`  | `PS-BACKEND`               | None linked      | ❌ Missing |
+| `AC-US-ACCT-008-07`  | `PS-FULL-STACK-INTEGRATED` | None linked      | ❌ Missing |
+| `AC-US-ACCT-008-08`  | `PS-BACKEND`               | None linked      | ❌ Missing |
+| `AC-US-ACCT-008-08`  | `PS-FULL-STACK-INTEGRATED` | None linked      | ❌ Missing |
+| `AC-US-ACCT-008-09`  | `PS-BACKEND`               | None linked      | ❌ Missing |
+| `AC-US-ACCT-008-09`  | `PS-FULL-STACK-INTEGRATED` | None linked      | ❌ Missing |
+| `AC-US-ACCT-008-10`  | `PS-BACKEND`               | None linked      | ❌ Missing |
+| `AC-US-ACCT-008-10`  | `PS-FULL-STACK-INTEGRATED` | None linked      | ❌ Missing |
+
+**Dependencies:** Company identity, deployment history, chain evidence, and accounting rules.
+
+## US-ACCT-009: Investigate Treasury Balance Differences
+
+**As a** company member\
+**I want to** locate where recorded and on-chain treasury balances diverge\
+**So that** I can investigate the missing or incorrect movement
+
+### Acceptance Criteria
+
+#### Happy Path
+
+- [ ] `AC-US-ACCT-009-01` For each covered treasury address and asset, the member can see the accounting quantity, on-chain quantity,
+      difference, and common comparison block.
+- [ ] `AC-US-ACCT-009-02` The investigation shows the last verified matching checkpoint and the first verified differing checkpoint.
+- [ ] `AC-US-ACCT-009-03` When historical on-chain state permits it, the investigation identifies the first divergent block; otherwise it
+      reports the bounded interval supported by the evidence.
+
+#### Business Rules
+
+- [ ] `AC-US-ACCT-009-04` Reconciliation compares asset quantities before any USD valuation or display rounding.
+- [ ] `AC-US-ACCT-009-05` A detected difference does not create an automatic balancing journal entry.
+- [ ] `AC-US-ACCT-009-09` Reconciliation distinguishes restricted or unallocated holdings from amounts available for the destination
+      domain's obligations.
+
+#### Edge & Error Cases
+
+- [ ] `AC-US-ACCT-009-06` Missing historical state or incomplete movement coverage is reported without claiming an exact divergence point.
+- [ ] `AC-US-ACCT-009-07` If no matching checkpoint exists, the investigation states that the divergence may precede the first verified
+      comparison.
+- [ ] `AC-US-ACCT-009-08` Missing valuation does not erase the original asset quantity from reconciliation.
+
+### Test Coverage
+
+| Acceptance Criterion | Proof Strategy             | Current Evidence | Status     |
+| -------------------- | -------------------------- | ---------------- | ---------- |
+| `AC-US-ACCT-009-01`  | `PS-BACKEND`               | None linked      | ❌ Missing |
+| `AC-US-ACCT-009-01`  | `PS-FULL-STACK-INTEGRATED` | None linked      | ❌ Missing |
+| `AC-US-ACCT-009-02`  | `PS-BACKEND`               | None linked      | ❌ Missing |
+| `AC-US-ACCT-009-02`  | `PS-FULL-STACK-INTEGRATED` | None linked      | ❌ Missing |
+| `AC-US-ACCT-009-03`  | `PS-BACKEND`               | None linked      | ❌ Missing |
+| `AC-US-ACCT-009-03`  | `PS-FULL-STACK-INTEGRATED` | None linked      | ❌ Missing |
+| `AC-US-ACCT-009-04`  | `PS-BACKEND`               | None linked      | ❌ Missing |
+| `AC-US-ACCT-009-04`  | `PS-FULL-STACK-INTEGRATED` | None linked      | ❌ Missing |
+| `AC-US-ACCT-009-05`  | `PS-BACKEND`               | None linked      | ❌ Missing |
+| `AC-US-ACCT-009-05`  | `PS-FULL-STACK-INTEGRATED` | None linked      | ❌ Missing |
+| `AC-US-ACCT-009-06`  | `PS-BACKEND`               | None linked      | ❌ Missing |
+| `AC-US-ACCT-009-06`  | `PS-FULL-STACK-INTEGRATED` | None linked      | ❌ Missing |
+| `AC-US-ACCT-009-07`  | `PS-BACKEND`               | None linked      | ❌ Missing |
+| `AC-US-ACCT-009-07`  | `PS-FULL-STACK-INTEGRATED` | None linked      | ❌ Missing |
+| `AC-US-ACCT-009-08`  | `PS-BACKEND`               | None linked      | ❌ Missing |
+| `AC-US-ACCT-009-08`  | `PS-FULL-STACK-INTEGRATED` | None linked      | ❌ Missing |
+| `AC-US-ACCT-009-09`  | `PS-BACKEND`               | None linked      | ❌ Missing |
+| `AC-US-ACCT-009-09`  | `PS-FULL-STACK-INTEGRATED` | None linked      | ❌ Missing |
+
+**Dependencies:** US-ACCT-007 and US-ACCT-008.
+
+## US-ACCT-010: Classify Direct External Receipts
+
+**As a** company owner\
+**I want to** control the classification of direct external receipts\
+**So that** their accounting category reflects their purpose without treating an unknown receipt as revenue
+
+### Acceptance Criteria
+
+#### Happy Path
+
+- [ ] `AC-US-ACCT-010-01` An eligible receipt without a reliable accounting category is initially recorded against Unclassified Receipts and
+      remains pending classification.
+- [ ] `AC-US-ACCT-010-02` The owner can select an eligible default counter-account for future direct external receipts.
+- [ ] `AC-US-ACCT-010-03` The owner can choose automatic classification or review of each receipt.
+- [ ] `AC-US-ACCT-010-04` In automatic mode, a new eligible receipt uses the configured default account.
+- [ ] `AC-US-ACCT-010-05` In review mode, a new eligible receipt remains in Unclassified Receipts until the owner classifies it.
+- [ ] `AC-US-ACCT-010-06` The owner can reclassify one eligible receipt independently of other receipts.
+
+#### Business Rules
+
+- [ ] `AC-US-ACCT-010-07` A classification change records who made it, when it was made, and the movement it affects.
+- [ ] `AC-US-ACCT-010-08` Changing the default policy does not silently change previously posted classifications.
+- [ ] `AC-US-ACCT-010-09` Classification changes neither the cash movement nor its asset quantity, valuation evidence, or transaction
+      reference.
+- [ ] `AC-US-ACCT-010-10` Internal transfers and receipts governed by a more specific accounting rule are not eligible for this fallback
+      classification.
+- [ ] `AC-US-ACCT-010-11` Company members can inspect classifications, but only the owner can change the policy or classify a receipt.
+- [ ] `AC-US-ACCT-010-12` Distinct eligible receipts in one blockchain transaction can be classified independently.
+- [ ] `AC-US-ACCT-010-14` Enabling receipt classification preserves previously posted classifications until an explicit audited owner
+      reclassification.
+- [ ] `AC-US-ACCT-010-15` Eligible receipt defaults are Service Revenue, Owner Capital, or Loan Payable; other cash, expense, and
+      share-issuance accounts are rejected.
+- [ ] `AC-US-ACCT-010-16` Without an explicitly selected automatic policy, an unidentified receipt remains pending classification.
+- [ ] `AC-US-ACCT-010-17` An older newly discovered receipt retains its original transaction date and remains pending unless an explicitly
+      applicable policy establishes its classification.
+- [ ] `AC-US-ACCT-010-19` A reclassification records the previous account, new account, and reason alongside its actor, time, and movement
+      reference.
+
+#### Edge & Error Cases
+
+- [ ] `AC-US-ACCT-010-13` An unsupported account or failed classification change leaves the previous journal state intact and reports the
+      failure.
+- [ ] `AC-US-ACCT-010-18` Revised or invalidated movement evidence invalidates its dependent classification without losing the prior audit
+      trail.
+
+### Test Coverage
+
+| Acceptance Criterion | Proof Strategy             | Current Evidence | Status     |
+| -------------------- | -------------------------- | ---------------- | ---------- |
+| `AC-US-ACCT-010-01`  | `PS-BACKEND`               | None linked      | ❌ Missing |
+| `AC-US-ACCT-010-01`  | `PS-FULL-STACK-INTEGRATED` | None linked      | ❌ Missing |
+| `AC-US-ACCT-010-02`  | `PS-BACKEND`               | None linked      | ❌ Missing |
+| `AC-US-ACCT-010-02`  | `PS-FULL-STACK-INTEGRATED` | None linked      | ❌ Missing |
+| `AC-US-ACCT-010-03`  | `PS-BACKEND`               | None linked      | ❌ Missing |
+| `AC-US-ACCT-010-03`  | `PS-FULL-STACK-INTEGRATED` | None linked      | ❌ Missing |
+| `AC-US-ACCT-010-04`  | `PS-BACKEND`               | None linked      | ❌ Missing |
+| `AC-US-ACCT-010-04`  | `PS-FULL-STACK-INTEGRATED` | None linked      | ❌ Missing |
+| `AC-US-ACCT-010-05`  | `PS-BACKEND`               | None linked      | ❌ Missing |
+| `AC-US-ACCT-010-05`  | `PS-FULL-STACK-INTEGRATED` | None linked      | ❌ Missing |
+| `AC-US-ACCT-010-06`  | `PS-BACKEND`               | None linked      | ❌ Missing |
+| `AC-US-ACCT-010-06`  | `PS-FULL-STACK-INTEGRATED` | None linked      | ❌ Missing |
+| `AC-US-ACCT-010-07`  | `PS-BACKEND`               | None linked      | ❌ Missing |
+| `AC-US-ACCT-010-07`  | `PS-FULL-STACK-INTEGRATED` | None linked      | ❌ Missing |
+| `AC-US-ACCT-010-08`  | `PS-BACKEND`               | None linked      | ❌ Missing |
+| `AC-US-ACCT-010-08`  | `PS-FULL-STACK-INTEGRATED` | None linked      | ❌ Missing |
+| `AC-US-ACCT-010-09`  | `PS-BACKEND`               | None linked      | ❌ Missing |
+| `AC-US-ACCT-010-09`  | `PS-FULL-STACK-INTEGRATED` | None linked      | ❌ Missing |
+| `AC-US-ACCT-010-10`  | `PS-BACKEND`               | None linked      | ❌ Missing |
+| `AC-US-ACCT-010-10`  | `PS-FULL-STACK-INTEGRATED` | None linked      | ❌ Missing |
+| `AC-US-ACCT-010-11`  | `PS-BACKEND`               | None linked      | ❌ Missing |
+| `AC-US-ACCT-010-11`  | `PS-FULL-STACK-INTEGRATED` | None linked      | ❌ Missing |
+| `AC-US-ACCT-010-12`  | `PS-BACKEND`               | None linked      | ❌ Missing |
+| `AC-US-ACCT-010-12`  | `PS-FULL-STACK-INTEGRATED` | None linked      | ❌ Missing |
+| `AC-US-ACCT-010-13`  | `PS-BACKEND`               | None linked      | ❌ Missing |
+| `AC-US-ACCT-010-13`  | `PS-FULL-STACK-INTEGRATED` | None linked      | ❌ Missing |
+| `AC-US-ACCT-010-14`  | `PS-BACKEND`               | None linked      | ❌ Missing |
+| `AC-US-ACCT-010-14`  | `PS-FULL-STACK-INTEGRATED` | None linked      | ❌ Missing |
+| `AC-US-ACCT-010-15`  | `PS-BACKEND`               | None linked      | ❌ Missing |
+| `AC-US-ACCT-010-15`  | `PS-FULL-STACK-INTEGRATED` | None linked      | ❌ Missing |
+| `AC-US-ACCT-010-16`  | `PS-BACKEND`               | None linked      | ❌ Missing |
+| `AC-US-ACCT-010-16`  | `PS-FULL-STACK-INTEGRATED` | None linked      | ❌ Missing |
+| `AC-US-ACCT-010-17`  | `PS-BACKEND`               | None linked      | ❌ Missing |
+| `AC-US-ACCT-010-17`  | `PS-FULL-STACK-INTEGRATED` | None linked      | ❌ Missing |
+| `AC-US-ACCT-010-18`  | `PS-BACKEND`               | None linked      | ❌ Missing |
+| `AC-US-ACCT-010-18`  | `PS-FULL-STACK-INTEGRATED` | None linked      | ❌ Missing |
+| `AC-US-ACCT-010-19`  | `PS-BACKEND`               | None linked      | ❌ Missing |
+| `AC-US-ACCT-010-19`  | `PS-FULL-STACK-INTEGRATED` | None linked      | ❌ Missing |
+
+**Dependencies:** US-ACCT-007, US-ACCT-008, and UC-TREASURY-002.
+
+### Direct Movement Scenarios
+
+Target behaviour follows the [direct movement policy](direct-movement-policy.md). Each row represents the same evidenced movement across the
+participating stories.
+
+| Scenario                                                                                                                                                                                                                | This story owns                       | Related stories and roles                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| External wallet funds Bank without established purpose or facture evidence. [UC-TREASURY-002](journal-entry-catalogue.md#uc-treasury-002--external-receipt-pending-classification)                                      | Owns eligible receipt classification. | [US-BANK-001](../accounts/README.md#us-bank-001-fund-the-bank) — owns received funding; [US-BANK-003](../accounts/README.md#us-bank-003-review-the-bank-position-and-history) — owns Bank history; [US-PAYGATE-004](../payment-gate/README.md#us-paygate-004-review-payment-history) — keeps unmatched receipts outside invoice history; [US-ACCT-007](README.md#us-acct-007-review-direct-treasury-movements) — owns movement evidence and identity |
+| External wallet funds Safe without established purpose or investment evidence. [UC-TREASURY-002](journal-entry-catalogue.md#uc-treasury-002--external-receipt-pending-classification)                                   | Owns eligible receipt classification. | [US-SAFE-003](../accounts/README.md#us-safe-003-manage-safe-funds) — owns funding; [US-SAFE-002](../accounts/README.md#us-safe-002-inspect-safe-details) — owns Safe asset history; [US-ACCT-007](README.md#us-acct-007-review-direct-treasury-movements) — owns movement evidence and identity                                                                                                                                                      |
+| External wallet funds Payroll without established business purpose. [UC-TREASURY-002](journal-entry-catalogue.md#uc-treasury-002--external-receipt-pending-classification)                                              | Owns eligible receipt classification. | [US-PAYROLL-003](../payroll/README.md#us-payroll-003-fund-the-payroll-contract) — owns received funding and payment availability; [US-PAYROLL-013](../payroll/README.md#us-payroll-013-review-the-payroll-account-position) — owns Payroll position and history; [US-ACCT-007](README.md#us-acct-007-review-direct-treasury-movements) — owns movement evidence and identity                                                                         |
+| External wallet funds Expense without established business purpose. [UC-TREASURY-002](journal-entry-catalogue.md#uc-treasury-002--external-receipt-pending-classification)                                              | Owns eligible receipt classification. | [US-EXP-005](../accounts/README.md#us-exp-005-fund-the-expense-account) — owns received funding and spending availability; [US-EXP-004](../accounts/README.md#us-exp-004-review-the-expense-account-and-its-history) — owns Expense position and history; [US-ACCT-007](README.md#us-acct-007-review-direct-treasury-movements) — owns movement evidence and identity                                                                                |
+| External tokens reach FixedReturn without a credit-round operation or established purpose. [UC-TREASURY-002](journal-entry-catalogue.md#uc-treasury-002--external-receipt-pending-classification)                       | Owns eligible receipt classification. | [US-CC-001](../community-credit/README.md#us-cc-001-inspect-the-credit-account) — separates unallocated holdings from credit rounds; [US-ACCT-007](README.md#us-acct-007-review-direct-treasury-movements) — owns movement evidence and identity                                                                                                                                                                                                     |
+| External assets reach Investor or SafeDepositRouter without an investment, distribution, or established purpose. [UC-TREASURY-002](journal-entry-catalogue.md#uc-treasury-002--external-receipt-pending-classification) | Owns eligible receipt classification. | [US-SHER-003](../shareholder-management/README.md#us-sher-003-review-shareholder-position-and-activity) — separates direct holdings from shares and dividends; [US-CONTRACT-001](../contract-management/README.md#us-contract-001-review-the-current-contract-suite) — exposes custody and recovery limits; [US-ACCT-007](README.md#us-acct-007-review-direct-treasury-movements) — owns movement evidence and identity                              |
+| External assets reach AdCampaignManager without a campaign operation or established purpose. [UC-TREASURY-002](journal-entry-catalogue.md#uc-treasury-002--external-receipt-pending-classification)                     | Owns eligible receipt classification. | [US-CONTRACT-003](../contract-management/README.md#us-contract-003-manage-advertising-campaigns) — separates unallocated holdings from campaign budgets; [US-ACCT-007](README.md#us-acct-007-review-direct-treasury-movements) — owns movement evidence and identity                                                                                                                                                                                 |
+| External tokens reach Vesting without a grant operation or established purpose. [UC-TREASURY-002](journal-entry-catalogue.md#uc-treasury-002--external-receipt-pending-classification)                                  | Owns eligible receipt classification. | [US-VESTING-002](../vesting/README.md#us-vesting-002-view-schedules-and-aggregate-totals) — separates holdings from granted and claimable shares; [US-CONTRACT-001](../contract-management/README.md#us-contract-001-review-the-current-contract-suite) — exposes custody and recovery limits; [US-ACCT-007](README.md#us-acct-007-review-direct-treasury-movements) — owns movement evidence and identity                                           |
+| External tokens reach another verified company-held contract without an established purpose. [UC-TREASURY-002](journal-entry-catalogue.md#uc-treasury-002--external-receipt-pending-classification)                     | Owns eligible receipt classification. | [US-CONTRACT-001](../contract-management/README.md#us-contract-001-review-the-current-contract-suite) — owns auxiliary contract inspection; [US-ACCT-007](README.md#us-acct-007-review-direct-treasury-movements) — owns movement evidence and identity                                                                                                                                                                                              |
+
 ## Human Validation
 
 Not yet completed. The feature owner must run the Accounting `@integrated` journeys through Playwright against the prepared local G7 stack,
@@ -407,6 +751,11 @@ then review the overview, General Ledger, statements, exports, contract generati
 applicable stories `Done`.
 
 ## Known Gaps
+
+- The direct-movement target (`US-ACCT-007–010`) has no shared backend snapshot, complete cross-contract discovery, receipt-classification
+  policy, or quantity reconciliation yet. Raw Bank token rows stop at history; Payroll/Expense deposit mapping assumes internal funding and
+  can leave an unresolved Bank counter-account for an external wallet. Auxiliary custody accounts are absent. Existing criteria and test
+  references retain their implemented scope; new target criteria have no representative proof yet.
 
 - Closing cash balances are not reconciled with live on-chain balances (`US-ACCT-001`).
 - Off-platform activity without a connected data source is absent from the automated books.

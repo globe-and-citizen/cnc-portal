@@ -36,6 +36,10 @@ The company Bank can fund the Cash Remuneration contract through its normal tran
 ERC-20 assets directly to the Payroll address. Bank owns the initiated transfer and its fee; Payroll owns the receiving balance and whether
 that asset can pay a claim. The [treasury flow map](../accounts/treasury-flow-map.md) links the two journeys.
 
+The [direct asset movement product contract](../accounting/direct-movement-policy.md) defines company custody, unsolicited receipts,
+historical coverage, classification, and reconciliation across domains. Its target behaviour remains pending implementation; new ACs are
+unchecked.
+
 ## Lifecycle
 
 1. The company owner sets a wage for the member.
@@ -62,7 +66,7 @@ that asset can pay a claim. The [treasury flow map](../accounts/treasury-flow-ma
 | US-PAYROLL-010 | Withdraw an Approved Weekly Claim          | Claim owner               | 🧪 Validation  |
 | US-PAYROLL-011 | Reconcile Weekly Claims With the Chain     | Company member            | 🧪 Validation  |
 | US-PAYROLL-012 | Review Payroll History                     | Company member            | 🧪 Validation  |
-| US-PAYROLL-013 | Review the Payroll Account Position        | Company member            | 🧪 Validation  |
+| US-PAYROLL-013 | Review the Payroll Account Position        | Company member            | 🚧 In Progress |
 | US-PAYROLL-014 | Return Payroll funds to Bank               | Authorized treasury actor | 🚧 In Progress |
 
 ## Test Coverage Overview
@@ -85,7 +89,7 @@ missing or insufficient proof.
 | US-PAYROLL-010 | ✅ Integrated | ⚠️ 13/17        | `AC-US-PAYROLL-010-01`, `AC-US-PAYROLL-010-02`, `AC-US-PAYROLL-010-03`, `AC-US-PAYROLL-010-04`                                                                         |
 | US-PAYROLL-011 | ✅ Integrated | ⚠️ 11/12        | `AC-US-PAYROLL-011-01`                                                                                                                                                 |
 | US-PAYROLL-012 | ✅ Integrated | ✅ 13/13        | —                                                                                                                                                                      |
-| US-PAYROLL-013 | ✅ Integrated | ✅ 6/6          | —                                                                                                                                                                      |
+| US-PAYROLL-013 | ✅ Integrated | ⚠️ 6/7 met      | `AC-US-PAYROLL-013-07`                                                                                                                                                 |
 | US-PAYROLL-014 | 🚧 Partial    | ⚠️ 1/8          | `AC-US-PAYROLL-014-01`, `AC-US-PAYROLL-014-02`, `AC-US-PAYROLL-014-03`, `AC-US-PAYROLL-014-04`, `AC-US-PAYROLL-014-05`, `AC-US-PAYROLL-014-07`, `AC-US-PAYROLL-014-08` |
 
 Proof obligations use the [shared proof-strategy registry](../../testing/proof-strategies.md). Multiple IDs for one AC are cumulative.
@@ -291,6 +295,15 @@ remain as recorded above.
 | Bank funds Payroll. [UC-TREASURY-001](../accounting/journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer)                         | Owns the credited Payroll balance and payment availability. | [US-BANK-002](../accounts/README.md#us-bank-002-transfer-bank-funds) — initiates the transfer and owns Bank authorization, amount, and fee |
 | Safe funds Payroll. [UC-TREASURY-001](../accounting/journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer)                         | Owns the credited Payroll balance and payment availability. | [US-SAFE-003](../accounts/README.md#us-safe-003-manage-safe-funds) — initiates the Safe transfer                                           |
 | An approved Expense payout reaches Payroll. [UC-TREASURY-001](../accounting/journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer) | Owns the credited Payroll balance and payment availability. | [US-EXP-002](../accounts/README.md#us-exp-002-spend-from-the-expense-account) — executes the approved payout to a company pocket           |
+
+### Direct Movement Scenarios
+
+Target behaviour follows the [direct movement policy](../accounting/direct-movement-policy.md). Each row represents the same evidenced
+movement across the participating stories.
+
+| Scenario                                                                                                                                                                                 | This story owns                                 | Related stories and roles                                                                                                                                                                                                                                                                                                                                                  |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| External wallet funds Payroll without established business purpose. [UC-TREASURY-002](../accounting/journal-entry-catalogue.md#uc-treasury-002--external-receipt-pending-classification) | Owns received funding and payment availability. | [US-PAYROLL-013](README.md#us-payroll-013-review-the-payroll-account-position) — owns Payroll position and history; [US-ACCT-007](../accounting/README.md#us-acct-007-review-direct-treasury-movements) — owns movement evidence and identity; [US-ACCT-010](../accounting/README.md#us-acct-010-classify-direct-external-receipts) — owns eligible receipt classification |
 
 ## US-PAYROLL-004: Set Weekly Goals
 
@@ -822,6 +835,8 @@ into Investor Equity.
 - [x] `AC-US-PAYROLL-013-02` The account summary reports the value of signed claims that remain pending for withdrawal.
 - [x] `AC-US-PAYROLL-013-03` Account activity lists native deposits, token deposits, and withdrawals with their monetary values.
 - [x] `AC-US-PAYROLL-013-04` A company member can filter Cash Remuneration activity by date and transaction type.
+- [ ] `AC-US-PAYROLL-013-07` Payroll activity includes direct native-token and ERC-20 movements without a Cash Remuneration event, using the
+      same movement evidence as Accounting.
 
 #### Business Rules
 
@@ -833,16 +848,27 @@ into Investor Equity.
 
 ### Test Coverage
 
-| Acceptance Criterion   | Proof Strategy | Current Evidence          | Status |
-| ---------------------- | -------------- | ------------------------- | ------ |
-| `AC-US-PAYROLL-013-01` | `PS-FRONTEND`  | Integrated E2E + Frontend | ✅ Met |
-| `AC-US-PAYROLL-013-02` | `PS-FRONTEND`  | Integrated E2E + Frontend | ✅ Met |
-| `AC-US-PAYROLL-013-03` | `PS-FRONTEND`  | Integrated E2E + Frontend | ✅ Met |
-| `AC-US-PAYROLL-013-04` | `PS-FRONTEND`  | Integrated E2E + Frontend | ✅ Met |
-| `AC-US-PAYROLL-013-05` | `PS-FRONTEND`  | Integrated E2E + Frontend | ✅ Met |
-| `AC-US-PAYROLL-013-06` | `PS-FRONTEND`  | Integrated E2E + Frontend | ✅ Met |
+| Acceptance Criterion   | Proof Strategy             | Current Evidence          | Status     |
+| ---------------------- | -------------------------- | ------------------------- | ---------- |
+| `AC-US-PAYROLL-013-01` | `PS-FRONTEND`              | Integrated E2E + Frontend | ✅ Met     |
+| `AC-US-PAYROLL-013-02` | `PS-FRONTEND`              | Integrated E2E + Frontend | ✅ Met     |
+| `AC-US-PAYROLL-013-03` | `PS-FRONTEND`              | Integrated E2E + Frontend | ✅ Met     |
+| `AC-US-PAYROLL-013-04` | `PS-FRONTEND`              | Integrated E2E + Frontend | ✅ Met     |
+| `AC-US-PAYROLL-013-05` | `PS-FRONTEND`              | Integrated E2E + Frontend | ✅ Met     |
+| `AC-US-PAYROLL-013-06` | `PS-FRONTEND`              | Integrated E2E + Frontend | ✅ Met     |
+| `AC-US-PAYROLL-013-07` | `PS-BACKEND`               | None linked               | ❌ Missing |
+| `AC-US-PAYROLL-013-07` | `PS-FULL-STACK-INTEGRATED` | None linked               | ❌ Missing |
 
 **Dependencies:** US-PAYROLL-003, Accounts
+
+### Direct Movement Scenarios
+
+Target behaviour follows the [direct movement policy](../accounting/direct-movement-policy.md). Each row represents the same evidenced
+movement across the participating stories.
+
+| Scenario                                                                                                                                                                                 | This story owns                    | Related stories and roles                                                                                                                                                                                                                                                                                                                                                     |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| External wallet funds Payroll without established business purpose. [UC-TREASURY-002](../accounting/journal-entry-catalogue.md#uc-treasury-002--external-receipt-pending-classification) | Owns payroll position and history. | [US-PAYROLL-003](README.md#us-payroll-003-fund-the-payroll-contract) — owns received funding and payment availability; [US-ACCT-007](../accounting/README.md#us-acct-007-review-direct-treasury-movements) — owns movement evidence and identity; [US-ACCT-010](../accounting/README.md#us-acct-010-classify-direct-external-receipts) — owns eligible receipt classification |
 
 ## US-PAYROLL-014: Return Payroll Funds to Bank
 
@@ -915,6 +941,9 @@ then review the owner wage-management journey, member claim preparation, approva
 account position before marking the applicable stories `Done`.
 
 ## Known Gaps
+
+- The new `AC-US-PAYROLL-013-07` requires direct movement discovery and shared evidence; current tests of `AC-US-PAYROLL-013-03` cover the
+  existing event and Bank-transfer feeds. A native external receipt can still be mapped to internal funding with an unresolved Bank account.
 
 The focused backend test marked `AC-US-PAYROLL-001-02` asserts wage creation, but not that a subsequent member-wage read returns the new
 version. The backend obligation remains insufficient; the integrated journey is a separate proof boundary.

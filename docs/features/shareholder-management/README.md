@@ -41,6 +41,10 @@ SHER token.
 | Investor migration root and claims      | `US-SHER-008`, `US-SHER-006`, `US-SHER-007` |
 | Investor ownership and role authority   | `US-SHER-009`, `US-SHER-004`                |
 
+The [direct asset movement product contract](../accounting/direct-movement-policy.md) defines company custody, unsolicited receipts,
+historical coverage, classification, and reconciliation across domains. Its target behaviour remains pending implementation; new ACs are
+unchecked.
+
 ## Lifecycle
 
 ```mermaid
@@ -64,7 +68,7 @@ flowchart LR
 | ----------- | ---------------------------------------- | ------------------------------- | -------------- |
 | US-SHER-001 | Invest in the Safe and receive SHER      | Company member                  | 🧪 Validation  |
 | US-SHER-002 | Distribute dividends to shareholders     | Bank owner / Board member       | 🧪 Validation  |
-| US-SHER-003 | Review shareholder position and activity | Company member                  | 🧪 Validation  |
+| US-SHER-003 | Review shareholder position and activity | Company member                  | 🚧 In Progress |
 | US-SHER-004 | Issue SHER to a shareholder              | Investor owner with minter role | 🚧 In Progress |
 | US-SHER-005 | Configure shareholder investment         | Safe Deposit Router owner       | 🧪 Validation  |
 | US-SHER-006 | Claim a migrated shareholding            | Shareholder                     | 🧪 Validation  |
@@ -74,16 +78,16 @@ flowchart LR
 
 ## Test Coverage Overview
 
-| User Story  | Main Journey  | Coverage Target | Gaps                                                          |
-| ----------- | ------------- | --------------- | ------------------------------------------------------------- |
-| US-SHER-001 | ✅ Integrated | ⚠️ 7/10         | `AC-US-SHER-001-02`, `AC-US-SHER-001-03`, `AC-US-SHER-001-04` |
-| US-SHER-002 | ✅ Integrated | ⚠️ 10/13        | `AC-US-SHER-002-02`, `AC-US-SHER-002-03`, `AC-US-SHER-002-13` |
-| US-SHER-003 | ✅ Integrated | ⚠️ 7/8          | `AC-US-SHER-003-04`                                           |
-| US-SHER-004 | ✅ Integrated | ⚠️ 6/8          | `AC-US-SHER-004-02`, `AC-US-SHER-004-04`                      |
-| US-SHER-005 | ✅ Integrated | ⚠️ 7/9          | `AC-US-SHER-005-01`, `AC-US-SHER-005-05`                      |
-| US-SHER-006 | ✅ Integrated | ⚠️ 5/8          | `AC-US-SHER-006-01`, `AC-US-SHER-006-03`, `AC-US-SHER-006-05` |
-| US-SHER-007 | ✅ Integrated | ⚠️ 5/8          | `AC-US-SHER-007-01`, `AC-US-SHER-007-02`, `AC-US-SHER-007-04` |
-| US-SHER-009 | ✅ Integrated | ⚠️ 7/8          | `AC-US-SHER-009-03`                                           |
+| User Story  | Main Journey  | Coverage Target | Gaps                                                                               |
+| ----------- | ------------- | --------------- | ---------------------------------------------------------------------------------- |
+| US-SHER-001 | ✅ Integrated | ⚠️ 7/10         | `AC-US-SHER-001-02`, `AC-US-SHER-001-03`, `AC-US-SHER-001-04`                      |
+| US-SHER-002 | ✅ Integrated | ⚠️ 10/13        | `AC-US-SHER-002-02`, `AC-US-SHER-002-03`, `AC-US-SHER-002-13`                      |
+| US-SHER-003 | ✅ Integrated | ⚠️ 7/11 met     | `AC-US-SHER-003-04`, `AC-US-SHER-003-09`, `AC-US-SHER-003-10`, `AC-US-SHER-003-11` |
+| US-SHER-004 | ✅ Integrated | ⚠️ 6/8          | `AC-US-SHER-004-02`, `AC-US-SHER-004-04`                                           |
+| US-SHER-005 | ✅ Integrated | ⚠️ 7/9          | `AC-US-SHER-005-01`, `AC-US-SHER-005-05`                                           |
+| US-SHER-006 | ✅ Integrated | ⚠️ 5/8          | `AC-US-SHER-006-01`, `AC-US-SHER-006-03`, `AC-US-SHER-006-05`                      |
+| US-SHER-007 | ✅ Integrated | ⚠️ 5/8          | `AC-US-SHER-007-01`, `AC-US-SHER-007-02`, `AC-US-SHER-007-04`                      |
+| US-SHER-009 | ✅ Integrated | ⚠️ 7/8          | `AC-US-SHER-009-03`                                                                |
 
 Proof obligations use the [shared proof-strategy registry](../../testing/proof-strategies.md). Multiple IDs for one AC are cumulative.
 
@@ -218,11 +222,16 @@ Bank's distribution trigger is not booked again.
 - [x] `AC-US-SHER-003-02` A company member can review every current shareholder's address, SHER balance, and ownership percentage.
 - [x] `AC-US-SHER-003-03` A company member can review Investor and Safe Deposit Router activity, filter it by date and type, and open a
       transaction's details.
+- [ ] `AC-US-SHER-003-09` A member can inspect direct Investor and SafeDepositRouter asset movements and holdings with the same evidence as
+      Accounting.
+- [ ] `AC-US-SHER-003-11` A Router recovery to the company Safe retains the original receipt reference and is identified as an internal
+      movement without issuing SHER.
 
 #### Business Rules
 
 - [x] `AC-US-SHER-003-04` A shareholder's displayed ownership percentage is calculated from its current Investor balance and total supply.
 - [x] `AC-US-SHER-003-05` A shareholder list with no issued SHER remains distinguishable from a list with holders.
+- [ ] `AC-US-SHER-003-10` A receipt without investment or distribution evidence is distinguishable from issued SHER and paid dividends.
 
 #### Edge & Error Cases
 
@@ -233,19 +242,37 @@ Bank's distribution trigger is not booked again.
 
 ### Test Coverage
 
-| Acceptance Criterion | Proof Strategy        | Current Evidence | Status          |
-| -------------------- | --------------------- | ---------------- | --------------- |
-| `AC-US-SHER-003-01`  | `PS-CHAIN-INTEGRATED` | Integrated E2E   | ✅ Met          |
-| `AC-US-SHER-003-02`  | `PS-CHAIN-INTEGRATED` | Integrated E2E   | ✅ Met          |
-| `AC-US-SHER-003-03`  | `PS-CHAIN-INTEGRATED` | Integrated E2E   | ✅ Met          |
-| `AC-US-SHER-003-04`  | `PS-CHAIN-INTEGRATED` | Integrated E2E   | ✅ Met          |
-| `AC-US-SHER-003-04`  | `PS-FRONTEND`         | Integrated E2E   | ⚠️ Insufficient |
-| `AC-US-SHER-003-05`  | `PS-FRONTEND`         | Frontend         | ✅ Met          |
-| `AC-US-SHER-003-06`  | `PS-FRONTEND`         | Frontend         | ✅ Met          |
-| `AC-US-SHER-003-07`  | `PS-FRONTEND`         | Frontend         | ✅ Met          |
-| `AC-US-SHER-003-08`  | `PS-FRONTEND`         | Frontend         | ✅ Met          |
+| Acceptance Criterion | Proof Strategy             | Current Evidence | Status          |
+| -------------------- | -------------------------- | ---------------- | --------------- |
+| `AC-US-SHER-003-01`  | `PS-CHAIN-INTEGRATED`      | Integrated E2E   | ✅ Met          |
+| `AC-US-SHER-003-02`  | `PS-CHAIN-INTEGRATED`      | Integrated E2E   | ✅ Met          |
+| `AC-US-SHER-003-03`  | `PS-CHAIN-INTEGRATED`      | Integrated E2E   | ✅ Met          |
+| `AC-US-SHER-003-04`  | `PS-CHAIN-INTEGRATED`      | Integrated E2E   | ✅ Met          |
+| `AC-US-SHER-003-04`  | `PS-FRONTEND`              | Integrated E2E   | ⚠️ Insufficient |
+| `AC-US-SHER-003-05`  | `PS-FRONTEND`              | Frontend         | ✅ Met          |
+| `AC-US-SHER-003-06`  | `PS-FRONTEND`              | Frontend         | ✅ Met          |
+| `AC-US-SHER-003-07`  | `PS-FRONTEND`              | Frontend         | ✅ Met          |
+| `AC-US-SHER-003-08`  | `PS-FRONTEND`              | Frontend         | ✅ Met          |
+| `AC-US-SHER-003-09`  | `PS-BACKEND`               | None linked      | ❌ Missing      |
+| `AC-US-SHER-003-09`  | `PS-FULL-STACK-INTEGRATED` | None linked      | ❌ Missing      |
+| `AC-US-SHER-003-10`  | `PS-BACKEND`               | None linked      | ❌ Missing      |
+| `AC-US-SHER-003-10`  | `PS-CONTRACT`              | None linked      | ❌ Missing      |
+| `AC-US-SHER-003-10`  | `PS-FULL-STACK-INTEGRATED` | None linked      | ❌ Missing      |
+| `AC-US-SHER-003-11`  | `PS-BACKEND`               | None linked      | ❌ Missing      |
+| `AC-US-SHER-003-11`  | `PS-CONTRACT`              | None linked      | ❌ Missing      |
+| `AC-US-SHER-003-11`  | `PS-FULL-STACK-INTEGRATED` | None linked      | ❌ Missing      |
 
 **Dependencies:** Current Investor contract and company access
+
+### Direct Movement Scenarios
+
+Target behaviour follows the [direct movement policy](../accounting/direct-movement-policy.md). Each row represents the same evidenced
+movement across the participating stories.
+
+| Scenario                                                                                                                                                                                                                              | This story owns                                      | Related stories and roles                                                                                                                                                                                                                                                                                                                                                                           |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| External assets reach Investor or SafeDepositRouter without an investment, distribution, or established purpose. [UC-TREASURY-002](../accounting/journal-entry-catalogue.md#uc-treasury-002--external-receipt-pending-classification) | Separates direct holdings from shares and dividends. | [US-CONTRACT-001](../contract-management/README.md#us-contract-001-review-the-current-contract-suite) — exposes custody and recovery limits; [US-ACCT-007](../accounting/README.md#us-acct-007-review-direct-treasury-movements) — owns movement evidence and identity; [US-ACCT-010](../accounting/README.md#us-acct-010-classify-direct-external-receipts) — owns eligible receipt classification |
+| Owner-authorized Router recovery moves held tokens to the same company Safe. [UC-TREASURY-001](../accounting/journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer)                                            | Traces the router receipt and recovery.              | [US-SAFE-002](../accounts/README.md#us-safe-002-inspect-safe-details) — owns receiving Safe history; [US-ACCT-007](../accounting/README.md#us-acct-007-review-direct-treasury-movements) — correlates source and destination without a second receipt or SHER issuance                                                                                                                              |
 
 ## US-SHER-004: Issue SHER to a Shareholder
 
@@ -508,6 +535,9 @@ the redeployment and migration-root commit. Shareholder Management exposes the m
 **Dependencies:** Current Investor contract, a connected Investor administrator, and a connected wallet
 
 ## Known Gaps
+
+- Investor native receipts and direct ERC-20 holdings at Investor/Router are not completely discovered by the mint/dividend/router-deposit
+  feeds. Auxiliary account identity and Router recovery correlation remain unimplemented (`AC-US-SHER-003-09–11`).
 
 - Bulk initial issuance through `distributeMint` is a disabled, coming-soon portal control. The Investor contract implements it, but no
   current portal story claims that a user can complete it.

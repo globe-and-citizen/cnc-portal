@@ -1,7 +1,7 @@
 # Treasury Flow Relationships
 
-**Purpose:** Link the canonical stories for movements that cross Bank, Expense Account, Payroll, and Accounting. The linked feature READMEs
-own their acceptance criteria; this map does not duplicate them.
+**Purpose:** Link the canonical stories for movements across company-held contracts and Accounting. The linked feature READMEs own their
+acceptance criteria; this map does not duplicate them.
 
 The [feature documentation guide](../../platform/feature-specification-guide.md#cross-domain-story-relationships) defines the relationship
 types. A single transfer can have source and destination evidence, but Accounting groups matching evidence under one source operation. The
@@ -22,6 +22,17 @@ shared scenario and its peers. The movement table below retains the runtime rule
 
 ## Shared policy and derived projections
 
+- The [direct movement product contract](../accounting/direct-movement-policy.md) inventories Bank, Safe, Payroll, Expense, FixedReturn,
+  Investor, Router, Campaign, Vesting, and auxiliary company contracts, and explains shared infrastructure exclusions. The runtime rows
+  above describe current paths; target external receipts use
+  [UC-TREASURY-002](../accounting/journal-entry-catalogue.md#uc-treasury-002--external-receipt-pending-classification) for any verified
+  company-held destination when no specific economic purpose is established. Owner receipt classification is canonical in
+  [US-ACCT-010](../accounting/README.md#us-acct-010-classify-direct-external-receipts), with implementation pending.
+- [US-ACCT-007](../accounting/README.md#us-acct-007-review-direct-treasury-movements) owns shared movement discovery and identity;
+  [US-ACCT-008](../accounting/README.md#us-acct-008-access-synchronized-company-books) owns synchronization and freshness;
+  [US-ACCT-009](../accounting/README.md#us-acct-009-investigate-treasury-balance-differences) owns quantity reconciliation. A direct
+  movement appears in every affected domain history and in the same journal without creating duplicate postings. Auxiliary contracts use
+  their domain or Contract Management inspection story; lack of a dedicated deposit screen does not remove coverage.
 - Token eligibility is evaluated at both the initiating account and the receiving account. A Bank-supported ERC-20 is not automatically
   supported for Expense spending or Payroll claims. The portal can offer a new Expense approval only for native currency or an ERC-20 in
   both the current contract support set and the product token catalogue. An unsolicited ERC-20 transfer can still increase a contract

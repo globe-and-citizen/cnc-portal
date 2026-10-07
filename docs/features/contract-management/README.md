@@ -26,6 +26,10 @@ These acceptance criteria follow the
 - **Redeploying an Officer** creates a new Officer generation and its workspace contracts. The previous generation remains in deployment
   history, while the company's Safe is not changed by this action.
 
+The [direct asset movement product contract](../accounting/direct-movement-policy.md) defines company custody, unsolicited receipts,
+historical coverage, classification, and reconciliation across domains. Its target behaviour remains pending implementation; new ACs are
+unchecked.
+
 ## Lifecycle
 
 ```mermaid
@@ -48,10 +52,10 @@ flowchart LR
 
 | User Story      | Title                              | Actor                     | Status         |
 | --------------- | ---------------------------------- | ------------------------- | -------------- |
-| US-CONTRACT-001 | Review the current contract suite  | Company member            | 🧪 Validation  |
+| US-CONTRACT-001 | Review the current contract suite  | Company member            | 🚧 In Progress |
 | US-CONTRACT-002 | Manage current contract operations | Owner / Board member      | 🧪 Validation  |
 | US-CONTRACT-003 | Manage advertising campaigns       | Authorized company member | 🚧 In Progress |
-| US-CONTRACT-004 | Review deployment history          | Company member            | 🧪 Validation  |
+| US-CONTRACT-004 | Review deployment history          | Company member            | 🚧 In Progress |
 | US-CONTRACT-005 | Redeploy an Officer generation     | Company owner             | 🧪 Validation  |
 
 ## Test Coverage Overview
@@ -62,10 +66,10 @@ reference has the expected layer label.
 
 | User Story      | Main Journey | Coverage Target | Gaps                                                                                                                                                                                                                                                                              |
 | --------------- | ------------ | --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| US-CONTRACT-001 | ⬜ Planned   | ⚠️ 5/10 met     | `AC-US-CONTRACT-001-01, 03–04, 06–07`                                                                                                                                                                                                                                             |
+| US-CONTRACT-001 | ⬜ Planned   | ⚠️ 5/12 met     | `AC-US-CONTRACT-001-01`, `AC-US-CONTRACT-001-03`, `AC-US-CONTRACT-001-04`, `AC-US-CONTRACT-001-06`, `AC-US-CONTRACT-001-07`, `AC-US-CONTRACT-001-11`, `AC-US-CONTRACT-001-12`                                                                                                     |
 | US-CONTRACT-002 | ⬜ Planned   | ⚠️ 2/12         | `AC-US-CONTRACT-002-01`, `AC-US-CONTRACT-002-02`, `AC-US-CONTRACT-002-03`, `AC-US-CONTRACT-002-04`, `AC-US-CONTRACT-002-05`, `AC-US-CONTRACT-002-06`, `AC-US-CONTRACT-002-07`, `AC-US-CONTRACT-002-08`, `AC-US-CONTRACT-002-09`, `AC-US-CONTRACT-002-10`                          |
-| US-CONTRACT-003 | ⬜ Planned   | ⚠️ 1/6          | `AC-US-CONTRACT-003-02`, `AC-US-CONTRACT-003-03`, `AC-US-CONTRACT-003-04`, `AC-US-CONTRACT-003-05`, `AC-US-CONTRACT-003-06`                                                                                                                                                       |
-| US-CONTRACT-004 | ⬜ Planned   | ⚠️ 2/9          | `AC-US-CONTRACT-004-01`, `AC-US-CONTRACT-004-04`, `AC-US-CONTRACT-004-02`, `AC-US-CONTRACT-004-06`, `AC-US-CONTRACT-004-07`, `AC-US-CONTRACT-004-03`, `AC-US-CONTRACT-004-09`                                                                                                     |
+| US-CONTRACT-003 | ⬜ Planned   | ⚠️ 1/8 met      | `AC-US-CONTRACT-003-02`, `AC-US-CONTRACT-003-03`, `AC-US-CONTRACT-003-04`, `AC-US-CONTRACT-003-05`, `AC-US-CONTRACT-003-06`, `AC-US-CONTRACT-003-07`, `AC-US-CONTRACT-003-08`                                                                                                     |
+| US-CONTRACT-004 | ⬜ Planned   | ⚠️ 2/10 met     | `AC-US-CONTRACT-004-01`, `AC-US-CONTRACT-004-02`, `AC-US-CONTRACT-004-03`, `AC-US-CONTRACT-004-04`, `AC-US-CONTRACT-004-06`, `AC-US-CONTRACT-004-07`, `AC-US-CONTRACT-004-09`, `AC-US-CONTRACT-004-10`                                                                            |
 | US-CONTRACT-005 | ⬜ Planned   | ❌ 0/11         | `AC-US-CONTRACT-005-01`, `AC-US-CONTRACT-005-02`, `AC-US-CONTRACT-005-03`, `AC-US-CONTRACT-005-04`, `AC-US-CONTRACT-005-05`, `AC-US-CONTRACT-005-06`, `AC-US-CONTRACT-005-07`, `AC-US-CONTRACT-005-08`, `AC-US-CONTRACT-005-09`, `AC-US-CONTRACT-005-10`, `AC-US-CONTRACT-005-11` |
 
 Proof obligations use the [shared proof-strategy registry](../../testing/proof-strategies.md). Multiple IDs for one AC are cumulative.
@@ -85,6 +89,8 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
       unavailable states remain visible in the unfiltered suite instead of being classified as active.
 - [x] `AC-US-CONTRACT-001-03` A company member can inspect a contract's address, owner, deployer, current status, and available on-chain
       read data.
+- [ ] `AC-US-CONTRACT-001-11` A member can inspect direct asset movements for each verified company contract, including auxiliary and
+      governance contracts, using the same evidence as Accounting.
 
 #### Business Rules
 
@@ -103,23 +109,41 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
       balances and exposes the supported-asset breakdown.
 - [x] `AC-US-CONTRACT-001-10` An unknown Officer generation, a missing pause capability, or a failed supported-state read is reported as
       unavailable instead of active.
+- [ ] `AC-US-CONTRACT-001-12` An unexpected holding exposes restricted or unknown recovery capability without promising an unsupported
+      withdrawal action.
 
 ### Test Coverage
 
-| Acceptance Criterion    | Proof Strategy        | Current Evidence | Status     |
-| ----------------------- | --------------------- | ---------------- | ---------- |
-| `AC-US-CONTRACT-001-01` | `PS-API-INTEGRATED`   | None linked      | ❌ Missing |
-| `AC-US-CONTRACT-001-02` | `PS-FRONTEND`         | Frontend         | ✅ Met     |
-| `AC-US-CONTRACT-001-03` | `PS-CHAIN-INTEGRATED` | None linked      | ❌ Missing |
-| `AC-US-CONTRACT-001-04` | `PS-FRONTEND`         | None linked      | ❌ Missing |
-| `AC-US-CONTRACT-001-05` | `PS-FRONTEND`         | Frontend         | ✅ Met     |
-| `AC-US-CONTRACT-001-06` | `PS-BROWSER`          | None linked      | ❌ Missing |
-| `AC-US-CONTRACT-001-07` | `PS-BROWSER`          | None linked      | ❌ Missing |
-| `AC-US-CONTRACT-001-08` | `PS-FRONTEND`         | Frontend         | ✅ Met     |
-| `AC-US-CONTRACT-001-09` | `PS-FRONTEND`         | Frontend         | ✅ Met     |
-| `AC-US-CONTRACT-001-10` | `PS-FRONTEND`         | Frontend         | ✅ Met     |
+| Acceptance Criterion    | Proof Strategy             | Current Evidence | Status     |
+| ----------------------- | -------------------------- | ---------------- | ---------- |
+| `AC-US-CONTRACT-001-01` | `PS-API-INTEGRATED`        | None linked      | ❌ Missing |
+| `AC-US-CONTRACT-001-02` | `PS-FRONTEND`              | Frontend         | ✅ Met     |
+| `AC-US-CONTRACT-001-03` | `PS-CHAIN-INTEGRATED`      | None linked      | ❌ Missing |
+| `AC-US-CONTRACT-001-04` | `PS-FRONTEND`              | None linked      | ❌ Missing |
+| `AC-US-CONTRACT-001-05` | `PS-FRONTEND`              | Frontend         | ✅ Met     |
+| `AC-US-CONTRACT-001-06` | `PS-BROWSER`               | None linked      | ❌ Missing |
+| `AC-US-CONTRACT-001-07` | `PS-BROWSER`               | None linked      | ❌ Missing |
+| `AC-US-CONTRACT-001-08` | `PS-FRONTEND`              | Frontend         | ✅ Met     |
+| `AC-US-CONTRACT-001-09` | `PS-FRONTEND`              | Frontend         | ✅ Met     |
+| `AC-US-CONTRACT-001-10` | `PS-FRONTEND`              | Frontend         | ✅ Met     |
+| `AC-US-CONTRACT-001-11` | `PS-BACKEND`               | None linked      | ❌ Missing |
+| `AC-US-CONTRACT-001-11` | `PS-FULL-STACK-INTEGRATED` | None linked      | ❌ Missing |
+| `AC-US-CONTRACT-001-12` | `PS-BACKEND`               | None linked      | ❌ Missing |
+| `AC-US-CONTRACT-001-12` | `PS-FULL-STACK-INTEGRATED` | None linked      | ❌ Missing |
 
 **Dependencies:** Current company and its active Officer generation
+
+### Direct Movement Scenarios
+
+Target behaviour follows the [direct movement policy](../accounting/direct-movement-policy.md). Each row represents the same evidenced
+movement across the participating stories.
+
+| Scenario                                                                                                                                                                                                                              | This story owns                      | Related stories and roles                                                                                                                                                                                                                                                                                                                                                                                             |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| External assets reach Investor or SafeDepositRouter without an investment, distribution, or established purpose. [UC-TREASURY-002](../accounting/journal-entry-catalogue.md#uc-treasury-002--external-receipt-pending-classification) | Exposes custody and recovery limits. | [US-SHER-003](../shareholder-management/README.md#us-sher-003-review-shareholder-position-and-activity) — separates direct holdings from shares and dividends; [US-ACCT-007](../accounting/README.md#us-acct-007-review-direct-treasury-movements) — owns movement evidence and identity; [US-ACCT-010](../accounting/README.md#us-acct-010-classify-direct-external-receipts) — owns eligible receipt classification |
+| External tokens reach Vesting without a grant operation or established purpose. [UC-TREASURY-002](../accounting/journal-entry-catalogue.md#uc-treasury-002--external-receipt-pending-classification)                                  | Exposes custody and recovery limits. | [US-VESTING-002](../vesting/README.md#us-vesting-002-view-schedules-and-aggregate-totals) — separates holdings from granted and claimable shares; [US-ACCT-007](../accounting/README.md#us-acct-007-review-direct-treasury-movements) — owns movement evidence and identity; [US-ACCT-010](../accounting/README.md#us-acct-010-classify-direct-external-receipts) — owns eligible receipt classification              |
+| External tokens reach another verified company-held contract without an established purpose. [UC-TREASURY-002](../accounting/journal-entry-catalogue.md#uc-treasury-002--external-receipt-pending-classification)                     | Owns auxiliary contract inspection.  | [US-ACCT-007](../accounting/README.md#us-acct-007-review-direct-treasury-movements) — owns movement evidence and identity; [US-ACCT-010](../accounting/README.md#us-acct-010-classify-direct-external-receipts) — owns eligible receipt classification                                                                                                                                                                |
+| A verified auxiliary company contract makes an evidenced external payment without established purpose. [UC-TREASURY-003](../accounting/journal-entry-catalogue.md#uc-treasury-003--external-payment-pending-classification)           | Exposes the contract movement.       | [US-ACCT-007](../accounting/README.md#us-acct-007-review-direct-treasury-movements) — owns evidence and pending-payment identity                                                                                                                                                                                                                                                                                      |
 
 ## US-CONTRACT-002: Manage Current Contract Operations
 
@@ -189,10 +213,13 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 - [x] `AC-US-CONTRACT-003-01` A user can identify the Campaign Manager configured for the company.
 - [x] `AC-US-CONTRACT-003-02` An authorized user can manage Campaign Manager administrators and settings.
 - [x] `AC-US-CONTRACT-003-03` An authorized user can create, review, and close advertising campaigns.
+- [ ] `AC-US-CONTRACT-003-07` The Campaigns journey exposes direct holdings and movements that have not been allocated to a campaign, using
+      the same evidence as Accounting.
 
 #### Business Rules
 
 - [ ] `AC-US-CONTRACT-003-04` Campaign Manager rates and Bank destination determine how validated advertising spend is handled.
+- [ ] `AC-US-CONTRACT-003-08` An unsolicited receipt does not create a campaign or increase a recorded campaign budget.
 
 #### Edge & Error Cases
 
@@ -202,18 +229,32 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 
 ### Test Coverage
 
-| Acceptance Criterion    | Proof Strategy        | Current Evidence | Status          |
-| ----------------------- | --------------------- | ---------------- | --------------- |
-| `AC-US-CONTRACT-003-01` | `PS-FRONTEND`         | Frontend         | ✅ Met          |
-| `AC-US-CONTRACT-003-02` | `PS-CHAIN-INTEGRATED` | None linked      | ❌ Missing      |
-| `AC-US-CONTRACT-003-02` | `PS-CONTRACT`         | None linked      | ❌ Missing      |
-| `AC-US-CONTRACT-003-03` | `PS-CHAIN-INTEGRATED` | None linked      | ❌ Missing      |
-| `AC-US-CONTRACT-003-03` | `PS-CONTRACT`         | None linked      | ❌ Missing      |
-| `AC-US-CONTRACT-003-04` | Decision pending      | None linked      | 📝 Pending      |
-| `AC-US-CONTRACT-003-05` | `PS-FRONTEND`         | Frontend         | ⚠️ Insufficient |
-| `AC-US-CONTRACT-003-06` | `PS-FRONTEND`         | Frontend         | ⚠️ Insufficient |
+| Acceptance Criterion    | Proof Strategy             | Current Evidence | Status          |
+| ----------------------- | -------------------------- | ---------------- | --------------- |
+| `AC-US-CONTRACT-003-01` | `PS-FRONTEND`              | Frontend         | ✅ Met          |
+| `AC-US-CONTRACT-003-02` | `PS-CHAIN-INTEGRATED`      | None linked      | ❌ Missing      |
+| `AC-US-CONTRACT-003-02` | `PS-CONTRACT`              | None linked      | ❌ Missing      |
+| `AC-US-CONTRACT-003-03` | `PS-CHAIN-INTEGRATED`      | None linked      | ❌ Missing      |
+| `AC-US-CONTRACT-003-03` | `PS-CONTRACT`              | None linked      | ❌ Missing      |
+| `AC-US-CONTRACT-003-04` | Decision pending           | None linked      | 📝 Pending      |
+| `AC-US-CONTRACT-003-05` | `PS-FRONTEND`              | Frontend         | ⚠️ Insufficient |
+| `AC-US-CONTRACT-003-06` | `PS-FRONTEND`              | Frontend         | ⚠️ Insufficient |
+| `AC-US-CONTRACT-003-07` | `PS-BACKEND`               | None linked      | ❌ Missing      |
+| `AC-US-CONTRACT-003-07` | `PS-FULL-STACK-INTEGRATED` | None linked      | ❌ Missing      |
+| `AC-US-CONTRACT-003-08` | `PS-BACKEND`               | None linked      | ❌ Missing      |
+| `AC-US-CONTRACT-003-08` | `PS-CONTRACT`              | None linked      | ❌ Missing      |
+| `AC-US-CONTRACT-003-08` | `PS-FULL-STACK-INTEGRATED` | None linked      | ❌ Missing      |
 
 **Dependencies:** Current company and a configured Campaign Manager
+
+### Direct Movement Scenarios
+
+Target behaviour follows the [direct movement policy](../accounting/direct-movement-policy.md). Each row represents the same evidenced
+movement across the participating stories.
+
+| Scenario                                                                                                                                                                                                          | This story owns                                       | Related stories and roles                                                                                                                                                                                                                              |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| External assets reach AdCampaignManager without a campaign operation or established purpose. [UC-TREASURY-002](../accounting/journal-entry-catalogue.md#uc-treasury-002--external-receipt-pending-classification) | Separates unallocated holdings from campaign budgets. | [US-ACCT-007](../accounting/README.md#us-acct-007-review-direct-treasury-movements) — owns movement evidence and identity; [US-ACCT-010](../accounting/README.md#us-acct-010-classify-direct-external-receipts) — owns eligible receipt classification |
 
 ## US-CONTRACT-004: Review Deployment History
 
@@ -228,6 +269,8 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 - [x] `AC-US-CONTRACT-004-01` A company member can view previous Officer generations separately from the active suite.
 - [x] `AC-US-CONTRACT-004-04` An eligible legacy-contract owner can review funded source accounts and move recoverable balances through the
       legacy Officer into the current company Bank.
+- [ ] `AC-US-CONTRACT-004-10` Historical deployments retain direct movement history and holdings after replacement, with the same evidence
+      as Accounting.
 
 #### Business Rules
 
@@ -246,21 +289,27 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 
 ### Test Coverage
 
-| Acceptance Criterion    | Proof Strategy        | Current Evidence | Status          |
-| ----------------------- | --------------------- | ---------------- | --------------- |
-| `AC-US-CONTRACT-004-01` | `PS-API-INTEGRATED`   | Frontend         | ⚠️ Insufficient |
-| `AC-US-CONTRACT-004-04` | `PS-CHAIN-INTEGRATED` | Frontend         | ⚠️ Insufficient |
-| `AC-US-CONTRACT-004-04` | `PS-CONTRACT`         | Frontend         | ⚠️ Insufficient |
-| `AC-US-CONTRACT-004-02` | `PS-API-INTEGRATED`   | None linked      | ❌ Missing      |
-| `AC-US-CONTRACT-004-05` | `PS-FRONTEND`         | Frontend         | ✅ Met          |
-| `AC-US-CONTRACT-004-06` | `PS-FRONTEND`         | Frontend         | ✅ Met          |
-| `AC-US-CONTRACT-004-06` | `PS-CONTRACT`         | Frontend         | ⚠️ Insufficient |
-| `AC-US-CONTRACT-004-07` | `PS-FRONTEND`         | None linked      | ❌ Missing      |
-| `AC-US-CONTRACT-004-08` | `PS-FRONTEND`         | Frontend         | ✅ Met          |
-| `AC-US-CONTRACT-004-03` | `PS-FRONTEND`         | None linked      | ❌ Missing      |
-| `AC-US-CONTRACT-004-09` | `PS-FRONTEND`         | Frontend         | ⚠️ Insufficient |
+| Acceptance Criterion    | Proof Strategy             | Current Evidence | Status          |
+| ----------------------- | -------------------------- | ---------------- | --------------- |
+| `AC-US-CONTRACT-004-01` | `PS-API-INTEGRATED`        | Frontend         | ⚠️ Insufficient |
+| `AC-US-CONTRACT-004-04` | `PS-CHAIN-INTEGRATED`      | Frontend         | ⚠️ Insufficient |
+| `AC-US-CONTRACT-004-04` | `PS-CONTRACT`              | Frontend         | ⚠️ Insufficient |
+| `AC-US-CONTRACT-004-02` | `PS-API-INTEGRATED`        | None linked      | ❌ Missing      |
+| `AC-US-CONTRACT-004-05` | `PS-FRONTEND`              | Frontend         | ✅ Met          |
+| `AC-US-CONTRACT-004-06` | `PS-FRONTEND`              | Frontend         | ✅ Met          |
+| `AC-US-CONTRACT-004-06` | `PS-CONTRACT`              | Frontend         | ⚠️ Insufficient |
+| `AC-US-CONTRACT-004-07` | `PS-FRONTEND`              | None linked      | ❌ Missing      |
+| `AC-US-CONTRACT-004-08` | `PS-FRONTEND`              | Frontend         | ✅ Met          |
+| `AC-US-CONTRACT-004-03` | `PS-FRONTEND`              | None linked      | ❌ Missing      |
+| `AC-US-CONTRACT-004-09` | `PS-FRONTEND`              | Frontend         | ⚠️ Insufficient |
+| `AC-US-CONTRACT-004-10` | `PS-BACKEND`               | None linked      | ❌ Missing      |
+| `AC-US-CONTRACT-004-10` | `PS-FULL-STACK-INTEGRATED` | None linked      | ❌ Missing      |
 
 **Dependencies:** Current company and the Officer-generation history read
+
+**Shared policy:** [US-ACCT-007](../accounting/README.md#us-acct-007-review-direct-treasury-movements) owns movement evidence for every
+generation; [US-ACCT-009](../accounting/README.md#us-acct-009-investigate-treasury-balance-differences) owns quantity reconciliation.
+Historical deployments preserve the same per-domain scenarios and UC selection as current deployments.
 
 ## US-CONTRACT-005: Redeploy an Officer Generation
 
@@ -369,6 +418,10 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 - [Officer deployment tests](../../../contract/test/Officer.spec.ts) and [Investor authority tests](../../../contract/test/Investor.spec.ts)
 
 ## Known Gaps
+
+- Direct movement history is not implemented for every current or historical company contract. Campaign unallocated holdings and
+  contract-specific recovery limitations need the new cross-domain evidence (`AC-US-CONTRACT-001-11–12`, `AC-US-CONTRACT-003-07–08`,
+  `AC-US-CONTRACT-004-10`).
 
 - Pause semantics are not yet uniform across the Solidity suite. The current Expense Account pause does not stop signed expense transfers,
   Officer beacon configuration remains available while the Officer is paused, and Proposals inherits pause state without pause controls or
