@@ -1,9 +1,9 @@
 # Accounting Model — Manual Validation Script
 
-Use this script to run concrete examples from the [journal-entry catalogue](./journal-entry-catalogue.md#use-case-to-story-map): identify
-the economic use case from the situation, locate its related user stories, and check the applicable rules and entry. The `UC-<DOMAIN>-<NNN>`
-and `RULE-*` identifiers are proposed names, not current runtime values. Run these checks against a build that implements the proposed
-model; until then, record each affected case as **Blocked**.
+Use this script to run concrete examples from the [use-case overview](./journal-entry-catalogue.md#use-case-overview): identify the economic
+use case from the situation, open its section, match the scenario in its table of related user stories, and check the applicable rules and
+entry. The `UC-<DOMAIN>-<NNN>` and `RULE-*` identifiers are proposed names, not current runtime values. Run these checks against a build
+that implements the proposed model; until then, record each affected case as **Blocked**.
 
 USD values below are illustrative. Use the same token for both sides of each example, confirm its rate of record, and record the actual
 transaction hash and displayed General Ledger entry.
