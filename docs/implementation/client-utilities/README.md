@@ -77,9 +77,14 @@ carries metadata with its raw movements and uses exact carrying values for Safe 
 ERC-20. The canonical `formatExactNumber` formatter preserves all decimal token digits through display without a JavaScript floating-point
 conversion. See the [Accounting read model](../accounting-read-model/README.md) for carrying-basis and classification boundaries.
 
+[Safe holdings presentation](../../../app/src/utils/safe/portfolio.ts) combines the fixed supported currencies with discovered holdings.
+Supported currencies retain their configured order and remain present at zero or unavailable balance. Additional holdings are deduplicated
+by network and contract, omit confirmed zero balances, and retain explicit unavailable balance and valuation states. Quantities use raw
+token units or exact decimal strings through the canonical formatter; USD prices and values use the same currency for every row.
+
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `b8013282ba1fc834aa7ff584cae2963c6efb9263`
+**Implementation evidence reviewed against:** `96b2755bae0cb9a5fa3b0cd007efe6abf571b69d`
 
 - [Utility ownership map and domain implementations](../../../app/src/utils/)
 - [Shared Accounting domain contracts](../../../app/src/utils/accounting/types.ts)

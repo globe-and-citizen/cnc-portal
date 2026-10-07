@@ -117,6 +117,10 @@ other payment rules remain unchanged. Network/DEX fees are not inferred from an 
 necessary. Cross-transaction swap intents and arbitrary DeFi operations require additional protocol evidence and remain a boundary of
 automatic classification.
 
+The read-only Safe portfolio combines supported balances with discovered ERC-20 balances for current wallet valuation. A nonzero supported
+holding with a missing, nonpositive, or nonfinite USD price keeps the total incomplete, just as unavailable discovered valuations do. A
+confirmed zero holding does not require a price. These current-price completeness checks do not change historical journal valuation.
+
 Implementation: [asset identity](../../../app/src/utils/tokens/assets.ts),
 [exchange carrying-value replay](../../../app/src/utils/accounting/safeExchanges.ts),
 [contract market discovery](../../../app/src/queries/assetMarket.queries.ts),
@@ -641,7 +645,7 @@ because deposits and company-pocket transfers are not manual assignment targets.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `c0daaa216e32f8aed46763b10706d2916af04ec1`
+**Implementation evidence reviewed against:** `96b2755bae0cb9a5fa3b0cd007efe6abf571b69d`
 
 - [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts),
   [source-status projection](../../../app/src/composables/accounting/useAccountingStatus.ts),

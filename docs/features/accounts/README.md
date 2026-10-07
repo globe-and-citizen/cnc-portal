@@ -949,7 +949,7 @@ movements remain incomplete until classified. See the [Safe exchange review scri
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `6eebae66bffc134e6c8b51d03046c29da401a0f5`
+**Implementation evidence reviewed against:** `96b2755bae0cb9a5fa3b0cd007efe6abf571b69d`
 
 - [Bank deposit modal](../../../app/src/components/sections/BankView/forms/DepositModal.vue),
   [Bank transfer modal](../../../app/src/components/sections/BankView/forms/TransferModal.vue),
@@ -1030,10 +1030,16 @@ movements remain incomplete until classified. See the [Safe exchange review scri
 
 ## Discovered Safe assets
 
-The Safe account additionally displays ERC-20 assets discovered from its transfer history, including assets acquired outside CNC. Their
-contract address, currency, quantity, and available current USD valuation are shown independently of the tokens allowed in CNC payment
-forms. An unavailable balance or price remains explicit and makes the wallet total incomplete. Token discovery does not enable an asset for
-payroll, deposits, or transfers proposed by CNC. Historical tokens remain discoverable after their current balance becomes zero.
+The Safe account displays supported currencies and ERC-20 assets discovered from its transfer history in one holdings table, including
+assets acquired outside CNC such as WETH. USDC, USDCe, and the configured network's native currency (POL on Polygon) remain first and
+visible even at zero balance. Additional assets appear when held and disappear when their confirmed current balance becomes zero; historical
+tokens remain discoverable for future refreshes. Contract identity is preserved by network and address rather than symbol, so WETH and AWETH
+remain separate assets.
+
+Each holding retains its currency, exact quantity, contract address, and available current USD valuation independently of the tokens allowed
+in CNC payment forms. An unavailable balance or price remains explicit, including while the first balance read is pending. A missing price
+for a held supported or discovered asset makes the wallet total incomplete. A confirmed zero balance has zero value without requiring a
+price. Token discovery does not enable an asset for payroll, deposits, or transfers proposed by CNC.
 
 The portfolio refreshes periodically and on explicit refresh. Provider failures remain retryable. Unknown or untrusted assets do not receive
 an invented price. See the [Accounting read model](../../implementation/accounting-read-model/README.md) for swap treatment.
@@ -1043,7 +1049,9 @@ Executable evidence: [discovered holdings tests](../../../app/src/components/sec
 [portfolio query tests](../../../app/src/composables/safe/__tests__/useSafePortfolio.spec.ts).
 
 Implementation: [Safe portfolio](../../../app/src/composables/safe/useSafePortfolio.ts),
-[discovered asset holdings](../../../app/src/components/sections/SafeView/SafeAssetHoldings.vue), and
+[unified asset holdings](../../../app/src/components/sections/SafeView/SafeAssetHoldings.vue),
+[holdings presentation](../../../app/src/utils/safe/portfolio.ts),
+[holdings presentation tests](../../../app/src/utils/safe/__tests__/portfolio.spec.ts), and
 [contract asset identities](../../../app/src/utils/tokens/assets.ts). Human validation of external swaps remains pending.
 
 ## Related Documentation
