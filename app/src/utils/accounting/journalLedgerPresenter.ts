@@ -49,8 +49,10 @@ export interface LedgerRow {
   creditAmount?: UsdAmount
   /** The posting's currency (spec §2 "Devise"), e.g. `POL` / `USDC`. */
   currency: string
-  /** Whole-token quantity moved (spec §2 "Quantité"), 6-dp, e.g. `0.070352`. */
+  /** Complete whole-token quantity for inspection and exports; never calculation input. */
   quantity: string
+  /** Compact table quantity, up to six decimals with positive sub-precision values explicit. */
+  quantityDisplay?: string
   /** USD rate of record (spec §2 "Taux"), up to 6-dp with trailing zeros trimmed, e.g. `$0.08` / `$1`. */
   rate: string
   /** Running balance of the drilled account after this posting (see
@@ -161,14 +163,23 @@ export function filterJournalLedgerEntries(
 }
 
 /** The Devise / Quantité / Taux columns of one journal line's token movement. */
-function movementOf(line: JournalEntryLine): Pick<LedgerRow, 'currency' | 'quantity' | 'rate'> {
+function movementOf(
+  line: JournalEntryLine
+): Pick<LedgerRow, 'currency' | 'quantity' | 'quantityDisplay' | 'rate'> {
   if (!line.movement) return NO_MOVEMENT
+  const quantity =
+    line.movement.decimals === null
+      ? null
+      : formatUnits(line.movement.rawAmount, line.movement.decimals)
+  const roundedQuantity =
+    quantity === null ? 'Unavailable' : formatNumber(quantity, { maxDecimals: 6 })
   return {
     currency: currencySymbol(line.movement.token, line.movement.asset),
-    quantity:
-      line.movement.decimals === null
-        ? 'Unavailable'
-        : formatExactNumber(formatUnits(line.movement.rawAmount, line.movement.decimals)),
+    quantity: quantity === null ? 'Unavailable' : formatExactNumber(quantity),
+    quantityDisplay:
+      line.movement.rawAmount > 0n && roundedQuantity === '0'
+        ? `<${formatNumber(0.000001, { maxDecimals: 6 })}`
+        : roundedQuantity,
     rate:
       line.movement.rate === 0n
         ? 'Unavailable'
