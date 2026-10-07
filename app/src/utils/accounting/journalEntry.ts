@@ -11,8 +11,13 @@ import { buildAccountRegistry } from './accountRegistry'
 import { sourceOperationIdOf, transactionHashOf, type JournalEntryDraft } from './journalEntryDraft'
 import { assertValidJournalEntry } from './journalEntryValidation'
 import { ZERO_USD_AMOUNT, usdAmountFromToken, usdRateFromNumber } from './monetaryAmount'
-import type { AccountRegistry, JournalEntry, JournalEntryLine, UsdAmount } from './types'
-import type { AccountingDiagnostic } from './types'
+import type {
+  AccountingDiagnostic,
+  AccountRegistry,
+  JournalEntry,
+  JournalEntryLine,
+  UsdAmount
+} from './types'
 
 /** Result of validating source postings before they become JournalEntry records. */
 interface JournalDraftReconciliation {

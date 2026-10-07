@@ -69,6 +69,10 @@ interface JournalAccountFilterOption {
 /** The empty activity carried by all but the first line of a journal entry. */
 const NO_ACTIVITY: ActivityCell = { kind: 'plain', text: '' }
 const NO_MOVEMENT = { currency: '', quantity: '', rate: '' }
+/** Shown in place of a quantity or rate that cannot be computed from source evidence. */
+const UNAVAILABLE = 'Unavailable'
+/** Smallest quantity the compact table column renders exactly, below which it shows `<` this value. */
+const MIN_DISPLAYED_QUANTITY = formatNumber(0.000001, { maxDecimals: 6 })
 
 /** A deterministic label index for concrete accounts, matching Trial Balance numbering. */
 function accountLabels(entries: readonly JournalEntry[]): Map<string, string> {
@@ -172,17 +176,17 @@ function movementOf(
       ? null
       : formatUnits(line.movement.rawAmount, line.movement.decimals)
   const roundedQuantity =
-    quantity === null ? 'Unavailable' : formatNumber(quantity, { maxDecimals: 6 })
+    quantity === null ? UNAVAILABLE : formatNumber(quantity, { maxDecimals: 6 })
   return {
     currency: currencySymbol(line.movement.token, line.movement.asset),
-    quantity: quantity === null ? 'Unavailable' : formatExactNumber(quantity),
+    quantity: quantity === null ? UNAVAILABLE : formatExactNumber(quantity),
     quantityDisplay:
       line.movement.rawAmount > 0n && roundedQuantity === '0'
-        ? `<${formatNumber(0.000001, { maxDecimals: 6 })}`
+        ? `<${MIN_DISPLAYED_QUANTITY}`
         : roundedQuantity,
     rate:
       line.movement.rate === 0n
-        ? 'Unavailable'
+        ? UNAVAILABLE
         : `$${formatNumber(usdRateToNumber(line.movement.rate), { maxDecimals: 6 })}`
   }
 }

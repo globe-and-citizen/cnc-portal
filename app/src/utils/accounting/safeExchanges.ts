@@ -1,6 +1,5 @@
 /** Replay Safe carrying values and balance evidenced asset exchanges without creating service revenue. */
-import type { AssetId } from '@/utils/tokens/assets'
-import { assetDecimals } from '@/utils/tokens/assets'
+import { assetDecimals, type AssetId } from '@/utils/tokens/assets'
 import { makeJournalEntryDraft, type JournalEntryDraft } from './journalEntryDraft'
 import { usdAmountFromToken, usdRateFromNumber, usdAmountToNumber } from './monetaryAmount'
 import { round6, wholeTokenAmount } from './toUsd'
@@ -20,7 +19,14 @@ function marketAmount(entry: JournalEntryDraft): bigint {
   )
 }
 
-/** Full-history weighted-average carrying basis, replayed on every source/rate refresh. */
+/**
+ * Full-history weighted-average carrying basis, replayed on every source/rate refresh.
+ *
+ * Within one operation, non-exchange entries (e.g. a same-operation mint) are applied
+ * first as ordinary evidence — never as another swap receipt. A non-exchange depletion
+ * that disagrees with its market price cannot establish a weighted acquisition basis for
+ * a later swap, so it marks that holding incomplete.
+ */
 export function prepareSafeExchanges(drafts: readonly JournalEntryDraft[]): JournalEntryDraft[] {
   const holdings = new Map<AssetId, Holding>()
   const operations = new Map<string, JournalEntryDraft[]>()
@@ -61,8 +67,6 @@ export function prepareSafeExchanges(drafts: readonly JournalEntryDraft[]): Jour
     if (holding) {
       holding.quantity -= quantity
       holding.amount -= exchange && amount !== null ? amount : marketAmount(entry)
-      // Other payments retain their existing transaction-price policy. A differing
-      // depletion cannot establish a weighted acquisition basis for a later swap.
       if (!exchange && (amount === null || amount !== marketAmount(entry))) holding.complete = false
       if (holding.quantity < 0n || holding.amount < 0n) holding.complete = false
     }
@@ -71,7 +75,6 @@ export function prepareSafeExchanges(drafts: readonly JournalEntryDraft[]): Jour
   for (const group of operations.values()) {
     const exchange = group.filter((entry) => entry.useCase === 'SAFE-SWAP')
     const other = group.filter((entry) => entry.useCase !== 'SAFE-SWAP')
-    // Same-operation token mints are separate evidence, not another swap receipt.
     for (const entry of other) {
       add(entry)
       remove(entry, false)

@@ -124,6 +124,7 @@ export interface JournalEntryDraft {
   creditInstance?: Address
   /** Token actually moved on-chain — the entry's currency (spec §2 "Devise"). */
   token: AssetId
+  /** Identity/precision/trust evidence for an ERC-20 `token` the mapper doesn't already know. */
   asset?: AssetMetadata
   /** Exact carrying value on exchange/disposal lines; market-rate evidence stays separate. */
   carryingAmount?: UsdAmount

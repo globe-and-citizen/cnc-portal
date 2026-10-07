@@ -40,7 +40,7 @@ import type { AccountName } from '@/utils/accounting/chartOfAccounts'
 import { applyJournalAccountAssignments } from '@/utils/accounting/journalAccountAssignment'
 import { finalizeJournalEntryDrafts } from '@/utils/accounting/journalEntry'
 import type { JournalEntryDraft } from '@/utils/accounting/journalEntryDraft'
-import type { JournalEntry } from '@/utils/accounting/types'
+import type { AccountingDiagnostic, JournalEntry } from '@/utils/accounting/types'
 import { tokenUsdRate, type UsdRateOfRecord } from '@/utils/accounting/toUsd'
 import {
   buildSherMultiplierTimeline,
@@ -50,7 +50,6 @@ import {
 import { settleWithdrawnSher } from '@/utils/accounting/sherIssuance'
 import { atDate } from '@/utils/accounting/mappers/context'
 import { toSafeTransferRows, toSafeOutgoingTransferRows } from '@/utils/accounting/safeTransfers'
-import type { AccountingDiagnostic } from './types'
 
 /** The raw feeds for one team, as fetched by {@link useCNCAccounting}. */
 export interface CncAccountingInput {
@@ -191,24 +190,20 @@ function toJournalEntrySources(input: CncAccountingInput): JournalEntrySources {
   }
 
   if (input.safeAddress) {
-    const incomingRows = toSafeTransferRows(
-      input.safeTransfers,
-      input.safeDepositRouterEvents?.safeDeposits?.items
-    )
-    const outgoingRows = toSafeOutgoingTransferRows(
-      input.safeOutgoingTransactions,
-      input.safeAddress
-    )
-    sources.safe = {
-      safeAddress: input.safeAddress,
-      transfers:
-        input.safeAssetTransfers !== undefined
-          ? toSafeTransferRows(
-              input.safeAssetTransfers,
+    const transfers =
+      input.safeAssetTransfers !== undefined
+        ? toSafeTransferRows(
+            input.safeAssetTransfers,
+            input.safeDepositRouterEvents?.safeDeposits?.items
+          )
+        : [
+            ...toSafeTransferRows(
+              input.safeTransfers,
               input.safeDepositRouterEvents?.safeDeposits?.items
-            )
-          : [...incomingRows, ...outgoingRows]
-    }
+            ),
+            ...toSafeOutgoingTransferRows(input.safeOutgoingTransactions, input.safeAddress)
+          ]
+    sources.safe = { safeAddress: input.safeAddress, transfers }
   }
 
   return sources

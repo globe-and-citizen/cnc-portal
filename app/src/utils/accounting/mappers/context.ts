@@ -26,9 +26,10 @@ export interface MapperContext {
   pocketOf: (address: string | null | undefined) => AccountName | null
 }
 
-/** Maps each CNC money-pocket contract type to its Cash account in the chart.
+/**
+ * Maps each CNC money-pocket contract type to its Cash account in the chart.
  * FixedReturn (Community Credit) holds lender deposits until the offer funds.
- *SafeDepositRouter holds no balance — the cash it routes lands in the Safe.
+ * SafeDepositRouter holds no balance — the cash it routes lands in the Safe.
  */
 function buildPocketIndex(
   contracts: readonly TeamContract[] | undefined

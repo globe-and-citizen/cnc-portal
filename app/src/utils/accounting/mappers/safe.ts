@@ -21,8 +21,7 @@ import { getAddress, isAddress } from 'viem'
 import { makeJournalEntryDraft, type JournalEntryDraft } from '@/utils/accounting/journalEntryDraft'
 import { isInternalAddress } from '@/utils/accounting/internalAddresses'
 import type { MapperContext } from './context'
-import { assetId, knownAssetId, type AssetMetadata } from '@/utils/tokens/assets'
-import type { AssetId } from '@/utils/tokens/assets'
+import { assetId, knownAssetId, type AssetId, type AssetMetadata } from '@/utils/tokens/assets'
 
 /** A normalized token transfer touching the Safe (native = `token: null`). */
 export interface SafeTransferRow {
@@ -44,6 +43,7 @@ export interface SafeMapperInput {
 
 const SAFE = 'Cash — Safe' as const
 
+/** Resolve the asset id for a transfer, falling back to its raw contract identity for an unknown ERC-20. */
 function tokenOf(row: SafeTransferRow, ctx: MapperContext): AssetId {
   const known = knownAssetId(row.token)
   if (known) return known
@@ -51,12 +51,17 @@ function tokenOf(row: SafeTransferRow, ctx: MapperContext): AssetId {
     const resolved = ctx.tokenIdOf(row.token)
     if (resolved !== 'native') return resolved
   } catch {
-    /* Unknown ERC-20 is preserved using its contract identity. */
+    // fall through to the contract-identity fallback below
   }
   return row.asset?.id ?? assetId(row.token ?? 'unknown', 0)
 }
 
-/** Match opposing, different-asset legs with the same external settlement counterparty. */
+/**
+ * Match opposing, different-asset legs with the same external settlement counterparty.
+ * A group whose incoming or outgoing side mixes more than one token, or where both
+ * sides share the same token, is a complex batch — it remains unclassified rather
+ * than guessing which legs belong together.
+ */
 function exchangeRowIds(input: SafeMapperInput, ctx: MapperContext): Set<string> {
   const groups = new Map<string, { incoming: SafeTransferRow[]; outgoing: SafeTransferRow[] }>()
   for (const row of input.transfers ?? []) {
@@ -82,7 +87,6 @@ function exchangeRowIds(input: SafeMapperInput, ctx: MapperContext): Set<string>
   for (const group of groups.values()) {
     const incomingTokens = new Set(group.incoming.map((row) => tokenOf(row, ctx)))
     const outgoingTokens = new Set(group.outgoing.map((row) => tokenOf(row, ctx)))
-    // Complex batches remain unclassified, rather than guessing which legs belong together.
     if (
       incomingTokens.size !== 1 ||
       outgoingTokens.size !== 1 ||
@@ -98,6 +102,18 @@ function sameAddress(a: string, b: string): boolean {
   return isAddress(a) && isAddress(b) && getAddress(a) === getAddress(b)
 }
 
+/** The `asset`/`accountingIssue` fields a draft carries only when its token is an ERC-20. */
+function erc20AssetFields(
+  tokenId: AssetId,
+  asset: AssetMetadata | undefined
+): Partial<Pick<JournalEntryDraft, 'asset' | 'accountingIssue'>> {
+  if (!tokenId.startsWith('erc20:')) return {}
+  return {
+    asset,
+    ...(asset?.decimals == null ? { accountingIssue: 'asset-metadata-unavailable' as const } : {})
+  }
+}
+
 function inferInflow(
   row: SafeTransferRow,
   ctx: MapperContext,
@@ -111,14 +127,7 @@ function inferInflow(
     debit: SAFE,
     debitInstance: safeAddress,
     token: tokenId,
-    ...(tokenId.startsWith('erc20:')
-      ? {
-          asset: row.asset,
-          ...(row.asset?.decimals == null
-            ? { accountingIssue: 'asset-metadata-unavailable' as const }
-            : {})
-        }
-      : {}),
+    ...erc20AssetFields(tokenId, row.asset),
     rawAmount: row.amount,
     counterparty: row.from,
     txHash: row.txHash
@@ -134,14 +143,12 @@ function inferInflow(
       memo: `Internal funding into Safe from ${sourcePocket}`
     })
   }
+  const unclassified = tokenId.startsWith('erc20:') || /^0x0{40}$/i.test(row.from)
   return makeJournalEntryDraft({
     ...base,
     useCase: 'UC-BANK-02',
-    credit:
-      tokenId.startsWith('erc20:') || /^0x0{40}$/i.test(row.from)
-        ? 'Unclassified Receipts'
-        : 'Service Revenue',
-    ...(tokenId.startsWith('erc20:') || /^0x0{40}$/i.test(row.from)
+    credit: unclassified ? 'Unclassified Receipts' : 'Service Revenue',
+    ...(unclassified
       ? { accountingIssue: base.accountingIssue ?? ('unclassified-asset-movement' as const) }
       : {}),
     memo: 'Direct deposit into Safe'
@@ -161,14 +168,7 @@ function inferOutflow(
     credit: SAFE,
     creditInstance: safeAddress,
     token: tokenId,
-    ...(tokenId.startsWith('erc20:')
-      ? {
-          asset: row.asset,
-          ...(row.asset?.decimals == null
-            ? { accountingIssue: 'asset-metadata-unavailable' as const }
-            : {})
-        }
-      : {}),
+    ...erc20AssetFields(tokenId, row.asset),
     rawAmount: row.amount,
     counterparty: row.to,
     txHash: row.txHash
@@ -235,21 +235,15 @@ export function mapSafeTransfers(input: SafeMapperInput, ctx: MapperContext): Jo
           debitInstance: incoming ? input.safeAddress : undefined,
           creditInstance: incoming ? undefined : input.safeAddress,
           token,
-          ...(token.startsWith('erc20:') ? { asset: row.asset } : {}),
+          ...erc20AssetFields(token, row.asset),
           rawAmount: row.amount,
           counterparty: incoming ? row.from : row.to,
-          ...(token.startsWith('erc20:') && row.asset?.decimals == null
-            ? { accountingIssue: 'asset-metadata-unavailable' }
-            : {}),
           memo: 'Safe asset exchange'
         })
       )
       continue
     }
     if (sameAddress(row.to, input.safeAddress)) {
-      // A Safe inflow is either a direct Service Revenue deposit or an internal
-      // transfer, based on its source evidence. Do not override that posting
-      // with a legacy manual category.
       const entry = inferInflow(row, ctx, input.safeAddress)
       if (!entry.internal && row.txHash && mixedOperations.has(row.txHash.toLowerCase())) {
         entry.credit = 'Unclassified Receipts'
@@ -262,7 +256,6 @@ export function mapSafeTransfers(input: SafeMapperInput, ctx: MapperContext): Jo
         entry.accountingIssue ??= 'unclassified-asset-movement'
       entries.push(entry)
     }
-    // A transfer touching neither side of the Safe is not a Safe move — skip it.
   }
   return entries
 }
