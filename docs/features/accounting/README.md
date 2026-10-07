@@ -15,6 +15,9 @@ These acceptance criteria follow the
   debit and credit context is never lost.
 - Monetary lines retain their original currency and exact quantity. Reports use a rate of record and aggregate exact fixed-scale USD values
   before display rounding.
+- Ledger quantities and recorded rates display up to six decimals with trailing zeros trimmed. Complete quantities and recorded rates remain
+  inspectable by hover, keyboard focus, or tap; positive quantities that would display as zero are identified as below display precision.
+  Display formatting does not change journal calculations or the existing export quantities.
 - Payroll is accrued when an eligible work week ends. Expense Account spending is recognized when cash moves. Transfers between known
   company pockets are not revenue or expense.
 - Accounting includes every known contract generation. Each deployment remains a distinct cash account even when report totals aggregate the
@@ -204,7 +207,7 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 | `AC-US-ACCT-002-01`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E + Frontend | ✅ Met |
 | `AC-US-ACCT-002-02`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E + Frontend | ✅ Met |
 | `AC-US-ACCT-002-03`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E + Frontend | ✅ Met |
-| `AC-US-ACCT-002-04`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E            | ✅ Met |
+| `AC-US-ACCT-002-04`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E + Frontend | ✅ Met |
 | `AC-US-ACCT-002-05`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
 | `AC-US-ACCT-002-06`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E + Frontend | ✅ Met |
 | `AC-US-ACCT-002-07`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E            | ✅ Met |
@@ -437,7 +440,7 @@ applicable stories `Done`.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `c0daaa216e32f8aed46763b10706d2916af04ec1`
+**Implementation evidence reviewed against:** `13a17527a29346224fc619351fad1336244cfda6`
 
 - [Accounting page](../../../app/src/components/sections/AccountingView/AccountingPage.vue),
   [team routes](../../../app/src/router/index.ts), and [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts)

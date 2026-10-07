@@ -576,15 +576,20 @@ separate fee entry in this projection. Ledger action and transaction labels are 
 source use-case evidence; no persisted presentation category participates. The General Ledger renders the transaction hash once on the
 entry's first line and preserves its full value in PDF and spreadsheet exports; synthetic operations have no transaction-hash value. A
 transaction-backed hash links to the configured network block explorer in a separate tab. Activity narration and exported activity text
-reuse the canonical address and duration formatters rather than maintaining Accounting-specific display rules. Every visible General Ledger
-column, including the account drill-down Balance column, has bounded widths and supports pointer, touch, and keyboard resizing; a
-double-click restores its default width. JournalEntry assembly groups source postings and withholds a `FeePaid` source without matching
-Bank-outflow evidence, returning it as a reconciliation gap. Bank fees are collected from each supported generation: V0/V0.1 local events
-infer an ERC-20 currency only from the next movement in the same transaction and Bank, while V1/V2 query their version-specific
-FeeCollectors by payer. Those protocol FeeCollectors are not part of the company's internal-pocket registry. Account and statement
-drill-downs select complete JournalEntry records by a concrete Account or account family, then flatten their validated lines for display and
-exports. Their running balances update only on lines posted to the selected account; an aggregate statement line has no single running
-balance. A fee remains an ordinary line of the source operation in every drill-down.
+reuse the canonical address and duration formatters rather than maintaining Accounting-specific display rules. Quantity cells use a separate
+six-decimal display label while their complete decimal-string quantity remains available for inspection and export. Positive quantities that
+would round to zero display `<0.000001`. Rate cells retain the recorded six-decimal rate with trailing zeros trimmed; their details identify
+the recorded USD price per token rather than claiming precision beyond the journal's rate scale. Both cells expose details through a hover
+tooltip, keyboard focus, or a tap-generated click, with Escape and focus loss dismissing the detail. Unavailable and absent movements remain
+plain text. No formatted label participates in valuation, debit/credit sums, or running balances. Every visible General Ledger column,
+including the account drill-down Balance column, has bounded widths and supports pointer, touch, and keyboard resizing; a double-click
+restores its default width. JournalEntry assembly groups source postings and withholds a `FeePaid` source without matching Bank-outflow
+evidence, returning it as a reconciliation gap. Bank fees are collected from each supported generation: V0/V0.1 local events infer an ERC-20
+currency only from the next movement in the same transaction and Bank, while V1/V2 query their version-specific FeeCollectors by payer.
+Those protocol FeeCollectors are not part of the company's internal-pocket registry. Account and statement drill-downs select complete
+JournalEntry records by a concrete Account or account family, then flatten their validated lines for display and exports. Their running
+balances update only on lines posted to the selected account; an aggregate statement line has no single running balance. A fee remains an
+ordinary line of the source operation in every drill-down.
 
 All report identities, totals, and drill-down running balances above use the exact fixed-scale journal integers. Presenters and exporters
 convert those values to numbers and apply human-readable rounding only after the selected snapshot and its aggregates have been calculated;
@@ -647,7 +652,7 @@ because deposits and company-pocket transfers are not manual assignment targets.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `32fb441f5965ff20bb1045ae1e065d25538e1afa`
+**Implementation evidence reviewed against:** `13a17527a29346224fc619351fad1336244cfda6`
 
 - [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts),
   [source-status projection](../../../app/src/composables/accounting/useAccountingStatus.ts),
@@ -719,6 +724,7 @@ because deposits and company-pocket transfers are not manual assignment targets.
   [General Ledger journal presenter](../../../app/src/utils/accounting/journalLedgerPresenter.ts)
 - [General Ledger route view](../../../app/src/views/team/%5Bid%5D/Accounting/GeneralLedgerView.vue),
   [General Ledger table](../../../app/src/components/sections/AccountingView/LedgerTable.vue),
+  [precision detail cell](../../../app/src/components/sections/AccountingView/LedgerPrecisionCell.vue),
   [drill-down modal](../../../app/src/components/sections/AccountingView/LedgerDrilldownModal.vue),
   [drill-down composable](../../../app/src/composables/accounting/useLedgerDrilldown.ts), and
   [account drill-down utilities](../../../app/src/utils/accounting/accountLedger.ts),
@@ -737,6 +743,8 @@ because deposits and company-pocket transfers are not manual assignment targets.
   [transaction evidence tests](../../../app/src/composables/accounting/__tests__/useTransactionEvidence.spec.ts),
   [account-registry tests](../../../app/src/utils/accounting/__tests__/accountRegistry.spec.ts),
   [General Ledger table tests](../../../app/src/components/sections/AccountingView/__tests__/LedgerRedeployLabel.spec.ts),
+  [precision detail tests](../../../app/src/components/sections/AccountingView/__tests__/LedgerPrecisionCell.spec.ts),
+  [export quantity regressions](../../../app/src/lib/accounting/__tests__/generalLedgerPrecision.spec.ts),
   [journal General Ledger tests](../../../app/src/utils/accounting/__tests__/journalLedgerPresenter.spec.ts), and
   [journal and Trial Balance tests](../../../app/src/utils/accounting/__tests__/generalLedger.spec.ts), and
   [journal statement-projection tests](../../../app/src/utils/accounting/__tests__/journalAssembly.spec.ts), and

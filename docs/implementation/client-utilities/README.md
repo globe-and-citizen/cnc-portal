@@ -61,6 +61,9 @@ flowchart LR
   transitional JavaScript `number`.
 - Every Accounting presenter accepts a `JournalEntry` collection directly, so components and exporters do not compose lower-level filtering
   and report builders or synchronize parallel report objects to obtain display values.
+- The General Ledger presenter keeps a complete decimal-string quantity for inspection and existing export consumers alongside a separate
+  six-decimal table label. A positive quantity below display precision is explicit; labels never feed journal calculations or running
+  balances.
 - Boundary validation fails with the exact files and imports that violate the contract; it does not silently maintain an exception baseline.
 - Utility specs remain colocated with their domain owner and validate unchanged formatting, accounting, and transaction semantics.
 
@@ -89,7 +92,7 @@ and currency labels.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `32fb441f5965ff20bb1045ae1e065d25538e1afa`
+**Implementation evidence reviewed against:** `13a17527a29346224fc619351fad1336244cfda6`
 
 - [Utility ownership map and domain implementations](../../../app/src/utils/)
 - [Shared Accounting domain contracts](../../../app/src/utils/accounting/types.ts)
