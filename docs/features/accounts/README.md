@@ -949,7 +949,7 @@ movements remain incomplete until classified. See the [Safe exchange review scri
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `32fb441f5965ff20bb1045ae1e065d25538e1afa`
+**Implementation evidence reviewed against:** `633778cf98e216b8952a31670a35e6f066f40202`
 
 - [Bank deposit modal](../../../app/src/components/sections/BankView/forms/DepositModal.vue),
   [Bank transfer modal](../../../app/src/components/sections/BankView/forms/TransferModal.vue),
@@ -1041,7 +1041,7 @@ assets use the same compact valuation format and unit-price suffix as the suppor
 line (for example, DAI), with the full name and contract address available on hover. Amounts show up to four decimal places with trailing
 zeros trimmed; the exact quantity remains available on hover. A positive quantity below the displayed precision reads `<0.0001` rather than
 zero. The three base currencies keep their existing logos; additional tokens use the logo from matching Safe metadata or verified
-contract-based market metadata. Missing or failed images use a neutral initial and can be retried with asset refresh.
+contract-based market metadata. Missing or failed images use a neutral initial.
 
 Each holding retains its currency, exact quantity, contract identity, and available current valuation in the selected display currency
 independently of the tokens allowed in CNC payment forms. An unavailable balance or price remains explicit, including while the first
@@ -1049,9 +1049,9 @@ balance read is pending. A missing USD price for a held supported or discovered 
 balance has zero value without requiring a price. Token discovery does not enable an asset for payroll, deposits, or transfers proposed by
 CNC.
 
-The portfolio refreshes periodically and on explicit refresh. Provider failures remain retryable. Unknown or untrusted assets do not receive
-an invented price. Discovered USD market values use the supported currency prices for conversion to another selected currency; an
-unavailable conversion keeps that displayed valuation explicitly unavailable. See the
+The portfolio refreshes periodically; the holdings section has no manual refresh button. Provider failures remain retryable. Unknown or
+untrusted assets do not receive an invented price. Discovered USD market values use the supported currency prices for conversion to another
+selected currency; an unavailable conversion keeps that displayed valuation explicitly unavailable. See the
 [Accounting read model](../../implementation/accounting-read-model/README.md) for swap treatment.
 
 Executable evidence: [discovered holdings tests](../../../app/src/components/sections/SafeView/__tests__/SafeAssetHoldings.spec.ts),
