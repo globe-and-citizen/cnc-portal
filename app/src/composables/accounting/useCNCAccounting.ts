@@ -234,7 +234,7 @@ export function useCNCAccounting(
 
   const provisionalDrafts = computed(() => buildCncJournalEntryDrafts(baseInput.value))
   const historicalTargets = computed(() =>
-    accountingValuation.historicalRateTargets(prepareSafeExchanges(provisionalDrafts.value))
+    accountingValuation.historicalRateTargets(provisionalDrafts.value)
   )
   const historicalRates = useHistoricalTokenRatesQuery(
     historicalTargets,

@@ -1,8 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { ref } from 'vue'
+import { ref, toValue } from 'vue'
 import { zeroAddress } from 'viem'
 import { useGetTeamQuery } from '@/queries/team.queries'
 import * as safeQueries from '@/queries/safe.queries'
+import * as historicalRateQueries from '@/queries/historicalTokenRate.queries'
 import { USDC_ADDRESS } from '@/constant'
 import type { SafeIncomingTransfer } from '@/types/safe'
 import { mockTeamData } from '@/tests/mocks'
@@ -67,13 +68,32 @@ describe('Safe exchanges in the Accounting data layer', () => {
       error: ref(null),
       refetch: vi.fn()
     } as unknown as ReturnType<typeof useGetTeamQuery>)
+    const marketRate = ref(0)
+    const rates = vi.spyOn(historicalRateQueries, 'useHistoricalTokenRatesQuery').mockReturnValue({
+      rateOfRecord: (asset) => (asset.startsWith('erc20:') ? marketRate.value : 1),
+      isLoading: ref(false),
+      refetch: vi.fn().mockResolvedValue(undefined)
+    })
     try {
-      const accounting = useCNCAccounting('1', {
-        rateOfRecord: (token) => (token.startsWith('erc20:') ? 0 : 1)
+      const accounting = useCNCAccounting('1')
+      expect(accounting.status.state.value).toBe('partial')
+      expect(toValue(rates.mock.calls.at(-1)![0])).toContainEqual({
+        token: expect.stringContaining('erc20:'),
+        date: '2026-06-01'
       })
+      marketRate.value = 1800
       expect(
         accounting.journal.value.filter((entry) => entry.useCase === 'SAFE-SWAP')
       ).toHaveLength(2)
+      const purchase = accounting.journal.value.find(
+        (entry) => entry.txHash === data.value[1]!.transactionHash
+      )!
+      expect(
+        purchase.lines.find((line) => line.movement?.asset?.symbol === 'AWETH')?.movement?.rate
+      ).toBe(1800000000n)
+      expect(
+        purchase.lines.some((line) => line.account.family.name === 'Asset Exchange Loss')
+      ).toBe(true)
       expect(accounting.status.state.value).toBe('ready')
       await accounting.refetch()
       expect(refetch).toHaveBeenCalledOnce()
@@ -87,6 +107,7 @@ describe('Safe exchanges in the Accounting data layer', () => {
       ).toBe(true)
     } finally {
       feed.mockRestore()
+      rates.mockRestore()
     }
   })
 })

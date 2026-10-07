@@ -66,7 +66,6 @@ export function historicalRateTargets(
       BigInt(entry.rawAmount) === 0n ||
       isUsdPegged(entry.token) ||
       entry.token === 'sher' ||
-      entry.settlementRate ||
       (entry.carryingAmount !== undefined && entry.carryingAmount > 0n)
     ) {
       continue
@@ -126,12 +125,7 @@ export function applyHistoricalRates(
   rateOfRecord: UsdRateOfRecord
 ): JournalEntryDraft[] {
   return entries.map((entry) => {
-    if (
-      isUsdPegged(entry.token) ||
-      entry.token === 'sher' ||
-      entry.settlementRate ||
-      BigInt(entry.rawAmount) === 0n
-    ) {
+    if (isUsdPegged(entry.token) || entry.token === 'sher' || BigInt(entry.rawAmount) === 0n) {
       return entry
     }
 

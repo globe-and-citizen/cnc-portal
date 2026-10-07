@@ -1,55 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import { USDC_ADDRESS } from '@/constant'
-import type { SafeIncomingTransfer } from '@/types/safe'
 import { buildCncJournalEntryDrafts } from '../assemble'
 import { finalizeJournalEntryDrafts } from '../journalEntry'
 import { journalLedgerRows } from '../journalLedgerPresenter'
 import { usd, ADDR } from './fixtures'
-import { assetId } from '@/utils/tokens/assets'
-import { applyHistoricalRates } from '../toUsd'
 
-const TOKEN = '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
-const ROUTER = '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'
-const tx = (n: number) => `0x${String(n).padStart(64, '0')}`
-const transfer = (
-  n: number,
-  index: number,
-  from: string,
-  to: string,
-  tokenAddress: string,
-  value: string
-): SafeIncomingTransfer => ({
-  type: 'ERC20_TRANSFER',
-  transferId: `${tx(n)}-${index}`,
-  transactionHash: tx(n),
-  executionDate: `2026-06-${String(n).padStart(2, '0')}T12:00:00Z`,
-  blockNumber: n,
-  from,
-  to,
-  tokenAddress,
-  value,
-  tokenInfo: {
-    type: 'ERC20',
-    address: tokenAddress,
-    name: tokenAddress === TOKEN ? 'Aave asset' : 'USD Coin',
-    symbol: tokenAddress === TOKEN ? 'AWETH' : 'USDC',
-    decimals: tokenAddress === TOKEN ? 18 : 6,
-    trusted: true
-  }
-})
-const history = () => [
-  transfer(1, 0, ADDR.client, ADDR.safe, USDC_ADDRESS, '20000000'),
-  transfer(2, 0, ADDR.safe, ROUTER, USDC_ADDRESS, '20000000'),
-  transfer(2, 1, ROUTER, ADDR.safe, TOKEN, '10000000000000000'),
-  transfer(3, 0, ADDR.safe, ROUTER, TOKEN, '10000000000000000'),
-  transfer(3, 1, ROUTER, ADDR.safe, USDC_ADDRESS, '30658984')
-]
-const drafts = (rows = history()) =>
-  buildCncJournalEntryDrafts({
-    safeAddress: ADDR.safe,
-    safeAssetTransfers: rows,
-    rateOfRecord: () => 0
-  })
+import { drafts, history, transfer, TOKEN, ROUTER, tx } from './safeExchangeFixtures'
 
 describe('Safe asset exchange accounting', () => {
   it('[AC-US-ACCT-002-13] replays a stablecoin-to-AWETH round trip with exact cash and realized gain', () => {
@@ -76,17 +32,6 @@ describe('Safe asset exchange accounting', () => {
     expect(
       swaps[0]!.lines.find((line) => line.movement?.token.startsWith('erc20:'))?.movement?.rawAmount
     ).toBe(10n ** 16n)
-  })
-  it('preserves settlement rates when market history is unavailable or differs', () => {
-    const source = drafts()
-    const acquired = source.find(
-      (entry) =>
-        entry.token === assetId(TOKEN, entry.asset?.chainId ?? 0) && entry.debit === 'Cash — Safe'
-    )!
-    expect(acquired.rate).toBe(2000)
-    expect(
-      applyHistoricalRates(source, () => 9999).find((entry) => entry.id === acquired.id)?.rate
-    ).toBe(2000)
   })
   it('retains the weighted-average basis after a partial sale and realizes the final loss', () => {
     const rows = history().slice(0, 3)
@@ -185,7 +130,7 @@ describe('Safe asset exchange accounting', () => {
   it('preserves six-decimal assets and does not peg a token merely named USDC', () => {
     const row = transfer(1, 0, ADDR.client, ADDR.safe, TOKEN, '1234567')
     row.tokenInfo = { ...row.tokenInfo!, decimals: 6, symbol: 'USDC' }
-    const result = finalizeJournalEntryDrafts(drafts([row]))
+    const result = finalizeJournalEntryDrafts(drafts([row], 0))
     expect(journalLedgerRows(result.journal)[0]!.quantity).toBe('1.234567')
     expect(result.journal[0]!.lines[0]!.movement!.rate).toBe(0n)
   })
@@ -194,13 +139,14 @@ describe('Safe asset exchange accounting', () => {
     const result = finalizeJournalEntryDrafts(drafts([row]))
     expect(journalLedgerRows(result.journal)[0]!.quantity).toBe('0.011371464599721321')
   })
-  it('keeps an unrepresentable settlement unit rate partial without crashing the journal', () => {
+  it('values a tiny receipt without inventing an unrepresentable consideration-based unit rate', () => {
     const rows = history().slice(0, 3)
     rows[2]!.value = '1'
     const result = finalizeJournalEntryDrafts(drafts(rows))
-    expect(
-      result.assetDiagnostics.some((issue) => issue.kind === 'exchange-basis-unavailable')
-    ).toBe(true)
+    expect(result.assetDiagnostics).toEqual([])
+    expect(journalLedgerRows(result.journal).find((row) => row.currency === 'AWETH')?.rate).toBe(
+      '$2,000'
+    )
   })
   it('requires further basis evidence after a payment depleted the holding at a different valuation', () => {
     const rows = history().slice(0, 3)
@@ -212,7 +158,7 @@ describe('Safe asset exchange accounting', () => {
     const source = buildCncJournalEntryDrafts({
       safeAddress: ADDR.safe,
       safeAssetTransfers: rows,
-      rateOfRecord: () => 3000
+      rateOfRecord: (_token, at) => (at.getUTCDate() === 2 ? 2000 : 3000)
     })
     const result = finalizeJournalEntryDrafts(source)
     expect(result.assetDiagnostics).toContainEqual({

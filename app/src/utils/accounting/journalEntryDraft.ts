@@ -127,8 +127,6 @@ export interface JournalEntryDraft {
   asset?: AssetMetadata
   /** Exact carrying value on exchange/disposal lines; market-rate evidence stays separate. */
   carryingAmount?: UsdAmount
-  /** Rate evidenced by stablecoin consideration in this on-chain exchange. */
-  settlementRate?: boolean
   /** Reconciliation gaps that prevent complete books. */
   accountingIssue?:
     | 'asset-metadata-unavailable'

@@ -3,7 +3,7 @@ import type { AssetId } from '@/utils/tokens/assets'
 import { assetDecimals } from '@/utils/tokens/assets'
 import { makeJournalEntryDraft, type JournalEntryDraft } from './journalEntryDraft'
 import { usdAmountFromToken, usdRateFromNumber, usdAmountToNumber } from './monetaryAmount'
-import { isUsdPegged, round6, wholeTokenAmount } from './toUsd'
+import { round6, wholeTokenAmount } from './toUsd'
 
 interface Holding {
   quantity: bigint
@@ -20,47 +20,11 @@ function marketAmount(entry: JournalEntryDraft): bigint {
   )
 }
 
-export function applySafeSettlementRates(
-  drafts: readonly JournalEntryDraft[]
-): JournalEntryDraft[] {
-  const valued = drafts.map((entry) => ({ ...entry }))
-  const groups = new Map<string, JournalEntryDraft[]>()
-  for (const entry of valued) {
-    if (entry.useCase !== 'SAFE-SWAP') continue
-    const key = entry.txHash?.toLowerCase() ?? entry.id
-    const group = groups.get(key) ?? []
-    group.push(entry)
-    groups.set(key, group)
-  }
-  for (const group of groups.values()) {
-    const incoming = group.filter((entry) => entry.debit === 'Cash — Safe')
-    const outgoing = group.filter((entry) => entry.credit === 'Cash — Safe')
-    const consideration = outgoing.reduce((sum, entry) => sum + marketAmount(entry), 0n)
-    if (
-      !outgoing.length ||
-      !outgoing.every((entry) => isUsdPegged(entry.token)) ||
-      incoming.length !== 1 ||
-      consideration <= 0n
-    )
-      continue
-    const entry = incoming[0]!
-    if (assetDecimals(entry.token, entry.asset) === null || entry.asset?.trusted === false) continue
-    const quantity = wholeTokenAmount(BigInt(entry.rawAmount), entry.token, entry.asset)
-    const rate = round6(usdAmountToNumber(consideration) / quantity)
-    if (!Number.isFinite(rate) || rate <= 0 || !Number.isSafeInteger(Math.round(rate * 1e6)))
-      continue
-    entry.rate = rate
-    entry.settlementRate = true
-    entry.carryingAmount = consideration
-  }
-  return valued
-}
-
 /** Full-history weighted-average carrying basis, replayed on every source/rate refresh. */
 export function prepareSafeExchanges(drafts: readonly JournalEntryDraft[]): JournalEntryDraft[] {
   const holdings = new Map<AssetId, Holding>()
   const operations = new Map<string, JournalEntryDraft[]>()
-  for (const entry of applySafeSettlementRates(drafts).sort(
+  for (const entry of [...drafts].sort(
     (a, b) => a.timestamp - b.timestamp || a.id.localeCompare(b.id)
   )) {
     const key = entry.txHash?.toLowerCase() ?? entry.sourceOperationId ?? entry.id
