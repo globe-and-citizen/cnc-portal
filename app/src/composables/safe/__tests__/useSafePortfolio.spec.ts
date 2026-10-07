@@ -75,6 +75,15 @@ describe('Safe portfolio discovery', () => {
     expect(portfolio.isIncomplete.value).toBe(true)
     expect(portfolio.totalUsd.value).toBeUndefined()
   })
+  it('keeps the total incomplete when a held supported currency has no usable USD price', () => {
+    useQueryFn.mockReturnValueOnce(state([])).mockReturnValueOnce(state<SafePortfolioAsset[]>([]))
+    const portfolio = useSafePortfolio(address)
+    mockUseContractBalance.balances.value[0]!.price.usd.value = 0
+    expect(portfolio.isIncomplete.value).toBe(true)
+    expect(portfolio.totalUsd.value).toBeUndefined()
+    mockUseContractBalance.balances.value[0]!.raw = 0n
+    expect(portfolio.isIncomplete.value).toBe(false)
+  })
   it('rejects reads on a wallet network different from the Safe source network', async () => {
     mockUseChainId.value = currentChainId === 137 ? 1 : 137
     useQueryFn.mockReturnValueOnce(state([movement])).mockReturnValueOnce(state([]))

@@ -94,6 +94,10 @@ export function useSafePortfolio(address: MaybeRefOrGetter<Address | undefined>)
     () =>
       Boolean(supported.error.value) ||
       !supported.data.value ||
+      supported.data.value.balances.some(
+        (row) =>
+          row.raw !== 0n && (!Number.isFinite(row.price.usd.value) || row.price.usd.value <= 0)
+      ) ||
       Boolean(transfers.error.value) ||
       Boolean(assets.error.value) ||
       !transfers.data.value ||
