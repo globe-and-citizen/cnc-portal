@@ -54,13 +54,6 @@
       data-test="safe-asset-valuation-warning"
       class="mt-4"
     />
-    <UButton
-      class="mt-3"
-      label="Refresh assets"
-      variant="outline"
-      data-test="refresh-safe-assets"
-      @click="refreshAssets"
-    />
   </div>
 </template>
 <script setup lang="ts">
@@ -76,10 +69,6 @@ interface Props {
 const props = defineProps<Props>()
 const portfolio = useSafePortfolio(() => props.address)
 const failedIcons = ref(new Set<string>())
-async function refreshAssets() {
-  failedIcons.value.clear()
-  await portfolio.refetch()
-}
 const currency = useStorage('currency', { code: 'USD', name: 'US Dollar', symbol: '$' })
 const rows = computed(() =>
   safePortfolioRows(

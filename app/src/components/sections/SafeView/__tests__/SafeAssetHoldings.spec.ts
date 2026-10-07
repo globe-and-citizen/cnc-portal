@@ -80,7 +80,7 @@ describe('Safe holdings', () => {
     original.unmount()
   })
 
-  it('[AC-US-SAFE-003-10] renders the exact discovered currency, precision and unavailable valuation, and refreshes it', async () => {
+  it('[AC-US-SAFE-003-10] renders the exact discovered currency, precision and unavailable valuation', () => {
     mockUseSafePortfolio.assets.data.value = [
       {
         asset,
@@ -114,8 +114,6 @@ describe('Safe holdings', () => {
     expect(table.text()).toContain('Value unavailable')
     expect(table.findAll('tbody tr')).toHaveLength(4)
     expect(wrapper.find('[data-test="safe-asset-valuation-warning"]').exists()).toBe(true)
-    await wrapper.find('[data-test="refresh-safe-assets"]').trigger('click')
-    expect(mockUseSafePortfolio.refetch).toHaveBeenCalledOnce()
   })
 
   it('shows DAI with its token logo and a four-decimal amount, preserving the full quantity on hover', async () => {
@@ -147,8 +145,6 @@ describe('Safe holdings', () => {
     expect(row.find('img').attributes('alt')).toBe('DAI')
     await row.find('img').trigger('error')
     expect(row.find('img').exists()).toBe(false)
-    await wrapper.find('[data-test="refresh-safe-assets"]').trigger('click')
-    expect(row.find('img').exists()).toBe(true)
   })
 
   it('adds WETH after discovery and removes it when its balance returns to zero', async () => {
