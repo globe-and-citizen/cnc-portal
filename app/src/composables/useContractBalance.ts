@@ -7,6 +7,7 @@ import { useCurrencyStore } from '@/stores'
 import { SUPPORTED_TOKENS, type TokenId } from '@/constant'
 import { fetchTokenBalances, toContractBalances } from '@/lib/balances/tokenBalances'
 import type { ContractBalances } from '@/types'
+import type { externalReadPolicy } from '@/lib/externalReads'
 
 export type { ContractBalances, TokenBalance, CurrencyPair, Money } from '@/types'
 
@@ -51,7 +52,10 @@ export const contractBalanceKeys = {
  * `address` may be a ref/getter — the query re-keys and refetches when it
  * changes, and stays disabled while it is undefined.
  */
-export function useContractBalance(address: MaybeRefOrGetter<Address | undefined>) {
+export function useContractBalance(
+  address: MaybeRefOrGetter<Address | undefined>,
+  readPolicy?: ReturnType<typeof externalReadPolicy>
+) {
   const chainId = useChainId()
   const currencyStore = useCurrencyStore()
   const contractAddress = computed(() => toValue(address))
@@ -60,6 +64,7 @@ export function useContractBalance(address: MaybeRefOrGetter<Address | undefined
     queryKey: computed(() => contractBalanceKeys.detail(contractAddress.value, chainId.value)),
     enabled: computed(() => !!contractAddress.value),
     refetchInterval: REFETCH_INTERVAL,
+    ...readPolicy,
     queryFn: () =>
       fetchTokenBalances(wagmiConfig, {
         address: contractAddress.value as Address,

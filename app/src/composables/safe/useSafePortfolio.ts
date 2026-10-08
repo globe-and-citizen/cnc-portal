@@ -4,19 +4,30 @@ import { useQuery } from '@tanstack/vue-query'
 import { useChainId } from '@wagmi/vue'
 import { readContract } from '@wagmi/core'
 import { erc20Abi, formatUnits, isAddress, type Address } from 'viem'
-import { useContractBalance } from '@/composables/useContractBalance'
+import { useContractBalance, contractBalanceKeys } from '@/composables/useContractBalance'
 import { useGetSafeTransfersQuery } from '@/queries/safe.queries'
 import { fetchAssetMarket } from '@/queries/assetMarket.queries'
 import { queryClient } from '@/queries/queryClient'
 import { config } from '@/wagmi.config'
-import { currentChainId } from '@/constant'
-import { assetMetadata, knownAssetId, type AssetMetadata } from '@/utils/tokens/assets'
+import { currentChainId, SUPPORTED_TOKENS } from '@/constant'
+import { assetId, assetMetadata, type AssetMetadata } from '@/utils/tokens/assets'
 import type { SafePortfolioAsset } from '@/utils/safe/portfolio'
+import { normalizeSafeAddress } from '@/utils/safe/address'
+import { externalReadPolicy, TOKEN_METADATA_FRESHNESS } from '@/lib/externalReads'
 export type { SafePortfolioAsset } from '@/utils/safe/portfolio'
+
+// Only currencies already read by useContractBalance are excluded from discovery.
+const supportedAssetIds = new Set(
+  SUPPORTED_TOKENS.map((token) => assetId(token.address, currentChainId))
+)
 
 export function useSafePortfolio(address: MaybeRefOrGetter<Address | undefined>) {
   const chainId = useChainId()
-  const supported = useContractBalance(address)
+  const safeAddress = computed(() => {
+    const value = toValue(address)
+    return value ? normalizeSafeAddress(value) : undefined
+  })
+  const supported = useContractBalance(safeAddress, externalReadPolicy(60_000))
   const transfers = useGetSafeTransfersQuery({ pathParams: { safeAddress: address } })
   const discovered = computed(() => {
     const tokens = new Map<string, AssetMetadata>()
@@ -25,7 +36,7 @@ export function useSafePortfolio(address: MaybeRefOrGetter<Address | undefined>)
         transfer.type !== 'ERC20_TRANSFER' ||
         !transfer.tokenAddress ||
         !isAddress(transfer.tokenAddress) ||
-        knownAssetId(transfer.tokenAddress)
+        supportedAssetIds.has(assetId(transfer.tokenAddress, currentChainId))
       )
         continue
       const asset = assetMetadata(transfer.tokenAddress, currentChainId, transfer.tokenInfo)
@@ -42,18 +53,18 @@ export function useSafePortfolio(address: MaybeRefOrGetter<Address | undefined>)
   })
   const assets = useQuery<SafePortfolioAsset[]>({
     queryKey: computed(() => [
+      ...contractBalanceKeys.detail(safeAddress.value, chainId.value),
       'safe-portfolio',
-      { address: toValue(address), chainId: chainId.value, assets: discovered.value }
+      { assets: discovered.value }
     ]),
     enabled: computed(() => Boolean(toValue(address)) && transfers.data.value !== undefined),
-    staleTime: 60_000,
-    refetchInterval: 60_000,
+    ...externalReadPolicy(60_000),
     queryFn: async () => {
       const network = config.chains.find(
         (chain) => chain.id === chainId.value && chain.id === currentChainId
       )
       if (!network) throw new Error('Switch to the Safe network to read its assets')
-      const owner = toValue(address)!
+      const owner = safeAddress.value!
       return Promise.all(
         discovered.value.map(async (source) => {
           const asset = { ...source }
@@ -68,22 +79,33 @@ export function useSafePortfolio(address: MaybeRefOrGetter<Address | undefined>)
               chainId: network.id
             })
             if (asset.decimals === null) {
-              const decimals = await readContract(config, {
-                address: asset.address as Address,
-                abi: erc20Abi,
-                functionName: 'decimals',
-                chainId: network.id
+              const decimals = await queryClient.fetchQuery({
+                queryKey: ['safe-token-decimals', network.id, asset.address.toLowerCase()],
+                ...externalReadPolicy(TOKEN_METADATA_FRESHNESS, false),
+                retry: false,
+                gcTime: TOKEN_METADATA_FRESHNESS,
+                queryFn: () =>
+                  readContract(config, {
+                    address: asset.address as Address,
+                    abi: erc20Abi,
+                    functionName: 'decimals',
+                    chainId: network.id
+                  })
               })
               if (Number.isInteger(decimals) && decimals >= 0 && decimals <= 18)
                 asset.decimals = decimals
             }
-            if (raw !== 0n && asset.trusted !== false) {
+          } catch {
+            /* Keep unknown balances explicit; price availability must not erase a balance. */
+          }
+          if (raw !== null && raw !== 0n && asset.trusted !== false) {
+            try {
               const market = await fetchAssetMarket(queryClient, asset)
               priceUsd = market.priceUsd
               asset.logoUri ??= market.logoUri
+            } catch {
+              /* Keep the verified balance when the market service is unavailable. */
             }
-          } catch {
-            /* Keep unknown balances/prices explicit in the portfolio. */
           }
           const quantity =
             raw !== null && asset.decimals !== null ? formatUnits(raw, asset.decimals) : null
