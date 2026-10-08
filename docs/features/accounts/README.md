@@ -949,7 +949,7 @@ movements remain incomplete until classified. See the [Safe exchange review scri
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `633778cf98e216b8952a31670a35e6f066f40202`
+**Implementation evidence reviewed against:** `e0afafbea5c6669900a3fd30d7e9cd15f9477214`
 
 - [Bank deposit modal](../../../app/src/components/sections/BankView/forms/DepositModal.vue),
   [Bank transfer modal](../../../app/src/components/sections/BankView/forms/TransferModal.vue),
@@ -1036,6 +1036,16 @@ visible even at zero balance. Additional assets appear when held and disappear w
 tokens remain discoverable for future refreshes. Contract identity is preserved by network and address rather than symbol, so WETH and AWETH
 remain separate assets.
 
+Discovery excludes only currencies already displayed by the fixed supported-token balance reader, matching network and contract address
+case-insensitively. A token recognized elsewhere in CNC but absent from that fixed list, such as USDT/USDT0, remains a discovered holding.
+Its actual contract metadata supplies the displayed symbol and decimals; a missing market price does not hide a held token. This read-only
+display does not add that token to payment allowlists or change its Accounting identity.
+
+Deposits without ERC-20 metadata remain visible as `Token amount unavailable`: the raw value cannot be converted reliably without the
+token's decimals. Their raw transfer objects retain the contract address and transaction hash for inspection. The transfer's `from` field is
+the indexed event sender, not proof of who signed the outer transaction. Incoming assets do not require Safe signer approval, and a
+displayed name or symbol does not establish a token's authenticity.
+
 The original `Token Holding` presentation is retained, with `RANK`, `Token`, `Amount`, `Coin Price`, and `Balance` columns. Additional
 assets use the same compact valuation format and unit-price suffix as the supported currencies. Token identities show their symbol on one
 line (for example, DAI), with the full name and contract address available on hover. Amounts show up to four decimal places with trailing
@@ -1054,11 +1064,25 @@ untrusted assets do not receive an invented price. Discovered USD market values 
 selected currency; an unavailable conversion keeps that displayed valuation explicitly unavailable. See the
 [Accounting read model](../../implementation/accounting-read-model/README.md) for swap treatment.
 
+Safe balances refresh approximately every minute while their page is active. Complete transfer histories and Safe information refresh
+approximately every five minutes; pending transactions refresh every minute when the queue contains an unexecuted transaction and every five
+minutes otherwise. Prices remain fresh for five minutes, recovered token metadata for 24 hours, and unused regular query data stays in the
+browser cache for 30 minutes. Small randomized offsets spread periodic requests; background tabs and window focus do not trigger extra
+polling. Safe and market reads are paced separately in the browser and pause after HTTP 429 responses. See
+[Client Data Access](../../implementation/client-data-access/README.md#browser-request-coordination) for recovery and session boundaries.
+
+Confirmed Safe transaction execution and directly executed transfers invalidate supported and discovered balances together, plus the
+complete incoming, outgoing, and settlement-transfer histories. A proposal refreshes the transaction queue without treating it as a
+completed transfer. Histories can remain behind the chain until the Safe Transaction Service indexes the operation; periodic refreshes
+continue to reconcile them. Existing balance invalidations also reach the discovered portfolio because both use the canonical balance-key
+prefix. Other account surfaces retain their existing balance cadence.
+
 Executable evidence: [discovered holdings tests](../../../app/src/components/sections/SafeView/__tests__/SafeAssetHoldings.spec.ts),
 [overview tests](../../../app/src/components/sections/SafeView/__tests__/SafeBalanceSection.rendering.spec.ts), and
 [portfolio query tests](../../../app/src/composables/safe/__tests__/useSafePortfolio.spec.ts).
 
 Implementation: [Safe portfolio](../../../app/src/composables/safe/useSafePortfolio.ts),
+[shared balance reads](../../../app/src/composables/useContractBalance.ts),
 [unified asset holdings](../../../app/src/components/sections/SafeView/SafeAssetHoldings.vue),
 [holdings presentation](../../../app/src/utils/safe/portfolio.ts),
 [holdings presentation tests](../../../app/src/utils/safe/__tests__/portfolio.spec.ts), and

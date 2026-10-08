@@ -82,6 +82,13 @@ it. The aggregate target-set query remains retryable, so a failed or not-yet-pub
 refetching successful dates. It never falls back to the current market price. Stablecoins retain their one-dollar peg, and SHER remains
 under its separate multiplier realization policy.
 
+Safe histories now refresh approximately every five minutes while retaining complete pagination and stable transfer identities. Missing
+historical rates are retried on the same cadence; successful immutable date snapshots are reused. Current contract markets use a five-minute
+cache, and verified coin identities and recovered token metadata use a 24-hour cache. Safe and CoinGecko reads pass through separate paced
+browser queues with provider-wide pauses within the session after HTTP 429. This changes loading and recovery cadence, not source inclusion,
+exchange classification, precision, or rate-of-record policy. A failed later Safe page never publishes a partial replacement feed. See
+[Client Data Access](../client-data-access/README.md#browser-request-coordination) for the session-only boundary.
+
 Each contract-event query is also keyed by its normalized generation targets: lowercase address plus effective deployment `fromBlock`,
 sorted independently of API order. A later or asynchronously resolved boundary therefore selects a distinct history range. Duplicate
 addresses retain the earliest boundary so no known portion of that deployment's history is hidden.
@@ -129,6 +136,11 @@ Implementation: [asset identity](../../../app/src/utils/tokens/assets.ts),
 [Safe portfolio](../../../app/src/composables/safe/useSafePortfolio.ts), and
 [exchange regression tests](../../../app/src/utils/accounting/__tests__/safeExchanges.spec.ts) and
 [market-rate regressions](../../../app/src/utils/accounting/__tests__/safeExchanges.marketRates.spec.ts).
+
+The Safe portfolio's discovery exclusion is based on the fixed supported-currency balance reader, not the global known-token resolver.
+USDT/USDT0 and other recognized contracts outside the fixed holdings list remain visible as discovered ERC-20s. The global token resolver
+continues to supply existing Accounting identities and stablecoin valuation rules; the holdings correction does not remap journal entries or
+broaden payment allowlists.
 
 ### Runtime Export Boundary
 
@@ -652,7 +664,7 @@ because deposits and company-pocket transfers are not manual assignment targets.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `13a17527a29346224fc619351fad1336244cfda6`
+**Implementation evidence reviewed against:** `e0afafbea5c6669900a3fd30d7e9cd15f9477214`
 
 - [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts),
   [source-status projection](../../../app/src/composables/accounting/useAccountingStatus.ts),

@@ -92,7 +92,13 @@ and currency labels.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `13a17527a29346224fc619351fad1336244cfda6`
+[Shared balance reads](../../../app/src/composables/useContractBalance.ts) accept an optional Safe read policy while preserving the existing
+default cadence for other consumers. Supported and discovered Safe balances share a normalized balance-key prefix so existing
+post-confirmation balance invalidations reach both. [Currency prices](../../../app/src/stores/currencyStore.ts) retain their existing
+currency payload and conversions while adopting the five-minute market cache and paced browser reads described in
+[Client Data Access](../client-data-access/README.md#browser-request-coordination).
+
+**Implementation evidence reviewed against:** `e0afafbea5c6669900a3fd30d7e9cd15f9477214`
 
 - [Utility ownership map and domain implementations](../../../app/src/utils/)
 - [Shared Accounting domain contracts](../../../app/src/utils/accounting/types.ts)
