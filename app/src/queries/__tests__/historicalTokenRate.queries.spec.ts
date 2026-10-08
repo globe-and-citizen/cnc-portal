@@ -58,6 +58,30 @@ describe('historical token rate queries', () => {
     expect(request).toHaveBeenCalledTimes(1)
   })
 
+  it('keeps successful snapshots immutable beyond the daily refresh interval', async () => {
+    vi.useFakeTimers()
+    const cache = queryClient()
+    const request = vi.fn(async () => response(0.5))
+    try {
+      await fetchHistoricalTokenRate(cache, 'asset', '2026-03-13', request)
+      await vi.advanceTimersByTimeAsync(2 * 24 * 60 * 60_000)
+      await fetchHistoricalTokenRate(cache, 'asset', '2026-03-13', request)
+      expect(request).toHaveBeenCalledTimes(1)
+    } finally {
+      cache.clear()
+      vi.useRealTimers()
+    }
+  })
+
+  it('checks an unchanged historical target set once a day with no focus refresh', () => {
+    useHistoricalTokenRatesQuery([{ token: 'native', date: '2026-03-13' }])
+    const query = useQueryFn.mock.calls.at(-1)![0]
+    expect(query.staleTime).toBe(24 * 60 * 60_000)
+    expect(query.refetchInterval).toBeGreaterThanOrEqual(24 * 60 * 60_000)
+    expect(query.refetchInterval).toBeLessThan(1.1 * 24 * 60 * 60_000)
+    expect(query.refetchOnWindowFocus).toBe(false)
+  })
+
   it('requests the exact historical UTC date without localization data', async () => {
     const request = vi.fn(async () => response(0.5))
 

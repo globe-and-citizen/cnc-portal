@@ -113,7 +113,8 @@ export function useHistoricalTokenRatesQuery(
   const query = useQuery<HistoricalRateMap>({
     queryKey: computed(() => historicalTokenRateKeys.set(requested.value)),
     enabled: computed(() => toValue(enabled) && requested.value.length > 0),
-    ...externalReadPolicy(300_000),
+    ...externalReadPolicy(24 * 60 * 60_000),
+    gcTime: 24 * 60 * 60_000,
     queryFn: async () => {
       const pairs = await Promise.all(
         requested.value.map(async (target) => {
