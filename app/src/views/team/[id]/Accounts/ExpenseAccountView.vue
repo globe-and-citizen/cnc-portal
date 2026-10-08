@@ -3,7 +3,11 @@
     <!-- TODO move it to the top of the page when cash remuneration will have his own page -->
     <!-- Cash Remuneration stats: Only apear for owner -->
     <ExpenseStatsSection />
-    <TokenHoldingsSection v-if="expenseContractAddress" :address="expenseContractAddress!" />
+    <TokenHoldingsSection
+      v-if="expenseContractAddress"
+      :rows="holdingRows"
+      :is-loading="isLoadingHoldings"
+    />
 
     <MyApprovedExpenseSection />
 
@@ -21,6 +25,8 @@ import MyApprovedExpenseSection from '@/components/sections/ExpenseAccountView/M
 import ApprovedExpensesSection from '@/components/sections/ExpenseAccountView/ApprovedExpensesSection.vue'
 import { useTeamStore } from '@/stores'
 import { computed } from 'vue'
+import { useContractBalance } from '@/composables/useContractBalance'
+import { tokenHoldingRows } from '@/utils/tokens/holdings'
 import TokenHoldingsSection from '@/components/ui/TokenHoldingsSection.vue'
 import ContractOwnerCard from '@/components/ui/ContractOwnerCard.vue'
 //#endregion
@@ -29,4 +35,6 @@ const teamStore = useTeamStore()
 const expenseContractAddress = computed(() =>
   teamStore.getContractAddressByType('ExpenseAccountEIP712')
 )
+const { data: holdings, isLoading: isLoadingHoldings } = useContractBalance(expenseContractAddress)
+const holdingRows = computed(() => tokenHoldingRows(holdings.value))
 </script>

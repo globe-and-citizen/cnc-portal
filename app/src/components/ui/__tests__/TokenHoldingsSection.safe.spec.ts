@@ -1,13 +1,13 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { renderWithProviders } from '@/tests/mocks'
-import SafeAssetHoldings from '../SafeAssetHoldings.vue'
 import { mockUseSafePortfolio } from '@/tests/mocks/safePortfolio.mock'
 import { assetMetadata } from '@/utils/tokens/assets'
 import { SUPPORTED_TOKENS } from '@/constant'
 import { makeTokenBalance, mockUseContractBalance } from '@/tests/mocks/composables.mock'
 import TokenHoldingsSection from '@/components/ui/TokenHoldingsSection.vue'
+import { safePortfolioRows } from '@/utils/safe/portfolio'
+import { tokenHoldingRows } from '@/utils/tokens/holdings'
 
-const address = '0x1111111111111111111111111111111111111111'
 const token = '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
 const asset = assetMetadata(token, 137, {
   address: token,
@@ -15,6 +15,18 @@ const asset = assetMetadata(token, 137, {
   symbol: 'AWETH',
   decimals: 18
 })
+
+const rows = () =>
+  safePortfolioRows(mockUseSafePortfolio.assets.data.value, mockUseContractBalance.data.value)
+const renderHoldings = () =>
+  renderWithProviders(TokenHoldingsSection, {
+    props: {
+      rows: rows(),
+      isLoading: mockUseSafePortfolio.isLoading.value,
+      isIncomplete: mockUseSafePortfolio.isIncomplete.value,
+      compact: true
+    }
+  })
 
 describe('Safe holdings', () => {
   beforeEach(() => {
@@ -24,7 +36,7 @@ describe('Safe holdings', () => {
   })
 
   it('keeps the three supported currencies in one table even when all balances are zero', () => {
-    const wrapper = renderWithProviders(SafeAssetHoldings, { props: { address } })
+    const wrapper = renderHoldings()
     expect(wrapper.findAll('table')).toHaveLength(1)
     expect(wrapper.find('[data-test="safe-asset-table"]').findAll('tbody tr')).toHaveLength(3)
     for (const token of SUPPORTED_TOKENS) expect(wrapper.text()).toContain(`0 ${token.symbol}`)
@@ -35,8 +47,10 @@ describe('Safe holdings', () => {
     mockUseContractBalance.balances.value = SUPPORTED_TOKENS.map((token) =>
       makeTokenBalance({ token, amount: 0.1, usdPrice: 1 })
     )
-    const wrapper = renderWithProviders(SafeAssetHoldings, { props: { address } })
-    const original = renderWithProviders(TokenHoldingsSection, { props: { address } })
+    const wrapper = renderHoldings()
+    const original = renderWithProviders(TokenHoldingsSection, {
+      props: { rows: tokenHoldingRows(mockUseContractBalance.data.value) }
+    })
     const table = wrapper.find('[data-test="safe-asset-table"]')
     expect(wrapper.text()).toContain('Token Holding')
     expect(table.findAll('thead th').map((cell) => cell.text())).toEqual([
@@ -98,7 +112,7 @@ describe('Safe holdings', () => {
       }
     ]
     mockUseSafePortfolio.isIncomplete.value = true
-    const wrapper = renderWithProviders(SafeAssetHoldings, { props: { address } })
+    const wrapper = renderHoldings()
     const table = wrapper.find('[data-test="safe-asset-table"]')
     expect(table.text()).toContain('AWETH')
     expect(
@@ -133,7 +147,7 @@ describe('Safe holdings', () => {
         valueUsd: 0.286595379927822735
       }
     ]
-    const wrapper = renderWithProviders(SafeAssetHoldings, { props: { address } })
+    const wrapper = renderHoldings()
     const row = wrapper.find('[data-test="safe-asset-table"]').findAll('tbody tr').at(-1)!
     expect(row.find('[data-test="safe-holding-token"]').text()).toBe('DAI')
     expect(row.text()).not.toContain('Polygon PoS Bridged DAI')
@@ -148,7 +162,7 @@ describe('Safe holdings', () => {
   })
 
   it('adds WETH after discovery and removes it when its balance returns to zero', async () => {
-    const wrapper = renderWithProviders(SafeAssetHoldings, { props: { address } })
+    const wrapper = renderHoldings()
     const weth = {
       asset: { ...asset, name: 'Wrapped Ether', symbol: 'WETH' },
       raw: 10n ** 16n,
@@ -157,11 +171,11 @@ describe('Safe holdings', () => {
       valueUsd: 20
     }
     mockUseSafePortfolio.assets.data.value = [weth]
-    await wrapper.vm.$nextTick()
+    await wrapper.setProps({ rows: rows() })
     expect(wrapper.text()).toContain('0.01 WETH')
     expect(wrapper.text()).toContain('$20')
     mockUseSafePortfolio.assets.data.value = [{ ...weth, raw: 0n, quantity: '0', valueUsd: 0 }]
-    await wrapper.vm.$nextTick()
+    await wrapper.setProps({ rows: rows() })
     expect(wrapper.text()).not.toContain('WETH')
     expect(wrapper.find('[data-test="safe-asset-table"]').findAll('tbody tr')).toHaveLength(3)
   })
@@ -169,7 +183,7 @@ describe('Safe holdings', () => {
   it('retains base currencies with unavailable balances while the first read is pending', () => {
     mockUseContractBalance.hasData.value = false
     mockUseContractBalance.isLoading.value = true
-    const wrapper = renderWithProviders(SafeAssetHoldings, { props: { address } })
+    const wrapper = renderHoldings()
     const rows = wrapper.find('[data-test="safe-asset-table"]').findAll('tbody tr')
     expect(rows).toHaveLength(3)
     for (const row of rows) {

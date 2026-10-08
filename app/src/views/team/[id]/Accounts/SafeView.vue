@@ -76,7 +76,13 @@
       </div>
       <div class="grid grid-cols-1 gap-6 xl:grid-cols-5">
         <div class="min-w-0 xl:col-span-3">
-          <SafeAssetHoldings :key="safeAddress" :address="safeAddress" class="h-full" />
+          <TokenHoldingsSection
+            :rows="holdingRows"
+            :is-loading="isLoadingHoldings"
+            :is-incomplete="isIncomplete"
+            compact
+            class="h-full"
+          />
         </div>
         <div id="safe-control" class="min-w-0 scroll-mt-4 xl:col-span-2">
           <SafeOwnersCard :address="safeAddress" />
@@ -182,7 +188,10 @@ import { isAddress, type Address } from 'viem'
 import AddressTooltip from '@/components/ui/AddressTooltip.vue'
 import SafeBalanceSection from '@/components/sections/SafeView/SafeBalanceSection.vue'
 import SafeOwnersCard from '@/components/sections/SafeView/SafeOwnersCard.vue'
-import SafeAssetHoldings from '@/components/sections/SafeView/SafeAssetHoldings.vue'
+import TokenHoldingsSection from '@/components/ui/TokenHoldingsSection.vue'
+import { useSafePortfolio } from '@/composables/safe/useSafePortfolio'
+import { safePortfolioRows } from '@/utils/safe/portfolio'
+import { useStorage } from '@vueuse/core'
 import SafeTransactions from '@/components/sections/SafeView/SafeTransactions.vue'
 import SafeIncomingTransactions from '@/components/sections/SafeView/SafeIncomingTransactions.vue'
 import SafeDeploymentCard from '@/components/sections/SafeView/SafeDeploymentCard.vue'
@@ -216,6 +225,17 @@ const setupSteps = [
 
 const safeAddress = computed(
   () => teamStore.getContractAddressByType('Safe') || deployedSafeAddress.value
+)
+
+const {
+  assets,
+  supported,
+  isLoading: isLoadingHoldings,
+  isIncomplete
+} = useSafePortfolio(safeAddress)
+const currency = useStorage('currency', { code: 'USD', name: 'US Dollar', symbol: '$' })
+const holdingRows = computed(() =>
+  safePortfolioRows(assets.data.value ?? [], supported.data.value, currency.value.code)
 )
 
 const isResolvingSafe = computed(() => teamStore.currentTeamMeta.isPending || isLoadingSafe.value)
