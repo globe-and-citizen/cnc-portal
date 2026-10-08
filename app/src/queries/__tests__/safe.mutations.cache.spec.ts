@@ -18,6 +18,10 @@ describe('Safe confirmed-operation cache refresh', () => {
   const seed = (client: QueryClient) => {
     const keys = [
       safeKeys.balance(address, chainId),
+      safeKeys.info(address),
+      safeKeys.transactions(address),
+      safeKeys.transaction('0xsafehash'),
+      [...safeKeys.all, 'future-read', { safeAddress: address }],
       [...safeKeys.balance(address, chainId), 'safe-portfolio', { assets: [] }],
       safeKeys.transfers(address, chainId),
       safeKeys.incomingTransfers(address, 500),
@@ -55,7 +59,10 @@ describe('Safe confirmed-operation cache refresh', () => {
         await mutation.onSuccess({ hash: '0xhash', executed } satisfies SafeExecutionResult, {
           pathParams: { safeAddress: address }
         })
-        for (const key of keys) expect(client.getQueryState(key)?.isInvalidated).toBe(executed)
+        for (const key of keys)
+          expect(client.getQueryState(key)?.isInvalidated).toBe(
+            executed || JSON.stringify(key) === JSON.stringify(safeKeys.transactions(address))
+          )
       } finally {
         client.clear()
       }

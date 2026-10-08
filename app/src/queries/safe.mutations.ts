@@ -24,15 +24,12 @@ import { getTxServiceUrl, transformToSafeMultisigResponse } from '@/utils/safe/m
 import { getConnectedSigner } from '@/utils/wallet/address'
 import { safeKeys } from './safe.queries'
 
-/** Refresh balances and full movement histories after a confirmed Safe operation. */
-function invalidateSafeAssetQueries(client: QueryClient, safeAddress: string, chainId: number) {
-  const keys = [
-    safeKeys.balance(safeAddress, chainId),
-    safeKeys.transfers(safeAddress, chainId),
-    safeKeys.incomingTransfers(safeAddress),
-    safeKeys.outgoingTransactions(safeAddress)
-  ]
-  return Promise.all(keys.map((queryKey) => client.invalidateQueries({ queryKey })))
+/** Refresh all Safe service reads and this wallet's on-chain balance groups. */
+export function invalidateSafeQueries(client: QueryClient, safeAddress: string, chainId: number) {
+  return Promise.all([
+    client.invalidateQueries({ queryKey: safeKeys.all }),
+    client.invalidateQueries({ queryKey: safeKeys.balance(safeAddress, chainId) })
+  ])
 }
 
 // ============================================================================
@@ -123,15 +120,7 @@ export function useExecuteTransactionMutation() {
     onSuccess: async (_, variables) => {
       const chainId = variables.queryParams.chainId
 
-      await Promise.all([
-        queryClient.invalidateQueries({
-          queryKey: safeKeys.info(variables.pathParams.safeAddress)
-        }),
-        queryClient.invalidateQueries({
-          queryKey: safeKeys.transactions(variables.pathParams.safeAddress)
-        }),
-        invalidateSafeAssetQueries(queryClient, variables.pathParams.safeAddress, chainId)
-      ])
+      await invalidateSafeQueries(queryClient, variables.pathParams.safeAddress, chainId)
     }
   })
 }
@@ -274,7 +263,7 @@ export function useTransferFromSafeMutation() {
         return
       }
 
-      await invalidateSafeAssetQueries(queryClient, variables.pathParams.safeAddress, chainId.value)
+      await invalidateSafeQueries(queryClient, variables.pathParams.safeAddress, chainId.value)
     }
   })
 }
