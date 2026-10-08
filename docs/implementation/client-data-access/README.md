@@ -70,7 +70,7 @@ guarantee that provider quotas can absorb concurrent users.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `e0afafbea5c6669900a3fd30d7e9cd15f9477214`
+**Implementation evidence reviewed against:** `f5294816472dea0d1966d24752f544aa71bc48a7`
 
 - [Query barrel](../../../app/src/queries/index.ts), [query factory](../../../app/src/queries/queryFactory.ts), and
   [single-file upload query](../../../app/src/queries/file.queries.ts)

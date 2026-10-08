@@ -98,7 +98,7 @@ post-confirmation balance invalidations reach both. [Currency prices](../../../a
 currency payload and conversions while adopting the five-minute market cache and paced browser reads described in
 [Client Data Access](../client-data-access/README.md#browser-request-coordination).
 
-**Implementation evidence reviewed against:** `e0afafbea5c6669900a3fd30d7e9cd15f9477214`
+**Implementation evidence reviewed against:** `f5294816472dea0d1966d24752f544aa71bc48a7`
 
 - [Utility ownership map and domain implementations](../../../app/src/utils/)
 - [Shared Accounting domain contracts](../../../app/src/utils/accounting/types.ts)
