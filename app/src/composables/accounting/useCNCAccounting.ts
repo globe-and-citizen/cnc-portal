@@ -24,8 +24,7 @@ import { type Address } from 'viem'
 import { safeDepositRouterAbi } from '@/artifacts/abi/generated'
 import { formatSafeDepositRouterMultiplier } from '@/utils/safeDepositRouter/model'
 import { normalizeSafeAddress } from '@/utils/safe/address'
-import type { ContractType, TeamContract } from '@/types/teamContract'
-import type { ScanTarget } from '@/composables/eventsViaLogs'
+import type { ContractType } from '@/types/teamContract'
 import { useBankEventsViaLogs } from '@/composables/bank/useBankEventsViaLogs'
 import { useCashRemunerationEventsViaLogs } from '@/composables/cashRemuneration/useCashRemunerationEventsViaLogs'
 import { useExpenseEventsViaLogs } from '@/composables/expense/useExpenseEventsViaLogs'
@@ -51,6 +50,12 @@ import {
 } from '@/utils/accounting/assemble'
 import { knownDeploymentAccounts } from '@/utils/accounting/accountInstances'
 import * as accountingValuation from '@/utils/accounting/toUsd'
+import {
+  accountingGenerations,
+  generationContracts,
+  generationScanTargets,
+  currentContractAddress
+} from '@/utils/accounting/contractGenerations'
 import { prepareSafeExchanges } from '@/utils/accounting/safeExchanges'
 
 /** Safe Transaction Service page size; every page is loaded before assembly. */
@@ -77,79 +82,14 @@ export function useCNCAccounting(
     queryParams: { teamId: computed(() => toValue(teamId) ?? '') }
   })
 
-  /** One deployment generation: its contracts and the deploy block to scan from. */
-  interface Generation {
-    deployBlockNumber: string | null
-    contracts: { address: string; type: string; deployer?: string }[]
-  }
-
-  const generations = computed<Generation[]>(() => {
-    const officerList = officers.data.value ?? []
-    // No Officer history (older data): treat the current contracts as a single
-    // boundary-less generation so the books still load.
-    if (!officerList.length) {
-      return [{ deployBlockNumber: null, contracts: contracts.value }]
-    }
-    const gens: Generation[] = officerList.map((officer) => ({
-      deployBlockNumber: officer.deployBlockNumber,
-      contracts: officer.contracts
-    }))
-    // Officer-less pockets (Safe / SafeDepositRouter) survive redeploys and are
-    // governed by no Officer; add them once as a boundary-less generation.
-    const governed = new Set(
-      officerList.flatMap((officer) =>
-        officer.contracts.map((contract) => contract.address.toLowerCase())
-      )
-    )
-    const officerless = contracts.value.filter(
-      (contract) => !governed.has(contract.address.toLowerCase())
-    )
-    if (officerless.length) gens.push({ deployBlockNumber: null, contracts: officerless })
-    return gens
-  })
-
-  const allContracts = computed<TeamContract[]>(() =>
-    generations.value.flatMap((generation) =>
-      generation.contracts.map((contract) => ({
-        address: contract.address as Address,
-        type: contract.type as ContractType,
-        deployer: (contract.deployer ?? contract.address) as Address,
-        admins: []
-      }))
-    )
+  const generations = computed(() =>
+    accountingGenerations(contracts.value, officers.data.value ?? [])
   )
-
-  /** Scan targets for a contract type across every generation, each with its deploy block. */
+  const allContracts = computed(() => generationContracts(generations.value))
   const targetsOf = (...types: ContractType[]) =>
-    computed<ScanTarget[]>(() => {
-      const wanted = new Set<string>(types)
-      const targets: ScanTarget[] = []
-      for (const generation of generations.value) {
-        const fromBlock = generation.deployBlockNumber
-          ? BigInt(generation.deployBlockNumber)
-          : undefined
-        for (const contract of generation.contracts) {
-          if (wanted.has(contract.type)) {
-            targets.push({ address: contract.address.toLowerCase(), fromBlock })
-          }
-        }
-      }
-      return targets
-    })
-
-  /**
-   * Current-generation address for reads that reflect live contract state.
-   * Types are checked in preference order so API result ordering cannot select
-   * a legacy deployment over its current replacement.
-   */
+    computed(() => generationScanTargets(generations.value, types))
   const addressOf = (...types: ContractType[]) =>
-    computed<string>(() => {
-      for (const type of types) {
-        const address = contracts.value.find((contract) => contract.type === type)?.address
-        if (address) return address.toLowerCase()
-      }
-      return ''
-    })
+    computed(() => currentContractAddress(contracts.value, types))
 
   const investorAddress = addressOf('Investor', 'InvestorV1')
   const routerAddress = addressOf('SafeDepositRouter')
