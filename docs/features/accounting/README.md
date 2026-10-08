@@ -415,7 +415,7 @@ applicable stories `Done`.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `d9a236b9df4c1709dcd431f3fb5d333d26090ae4`
+**Implementation evidence reviewed against:** `db8d14389e87181b2f727f1fcdb02096ad0cd65f`
 
 - [Accounting page](../../../app/src/components/sections/AccountingView/AccountingPage.vue),
   [team routes](../../../app/src/router/index.ts), and [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts)

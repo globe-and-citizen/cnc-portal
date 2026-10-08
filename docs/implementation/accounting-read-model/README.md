@@ -4,7 +4,7 @@
 journal, including the persisted counter-account assignments it consumes. Accounting report projections consume that journal on demand. This
 model does not create or persist manual journal entries.
 
-**Last verified:** 2026-09-12
+**Last verified:** 2026-10-08
 
 ## Consumers
 
@@ -64,6 +64,11 @@ diagnostics without Vue or network I/O.
 Community Credit offer IDs and lifecycle balances are scoped by FixedReturn contract address because IDs restart after redeployment. The
 creation event supplies each generation's token and fixed-return basis points; Accounting does not borrow current-contract terms for old
 rounds. SHER multiplier-change events from every known SafeDepositRouter generation feed the date-ordered valuation timeline.
+
+Safe histories and market rates use the shared backend [Provider Read Coordination](../provider-read-coordination/README.md) capability.
+Complete history snapshots persist across client sessions; incremental synchronization and daily reconciliation retain source identities. A
+synchronization failure preserves the previous snapshot without reporting a new partial scan as complete. Historical USD snapshots persist
+by provider coin and UTC date; provider failures never substitute a current price or invent a journal valuation.
 
 The incoming-transfer and executed-transaction Safe queries remain disabled until the reactive company Safe address resolves. Once enabled,
 the address is checksum-normalized before it enters the query key or Transaction Service request. Each query then follows the service's
@@ -607,7 +612,7 @@ because deposits and company-pocket transfers are not manual assignment targets.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `d9a236b9df4c1709dcd431f3fb5d333d26090ae4`
+**Implementation evidence reviewed against:** `db8d14389e87181b2f727f1fcdb02096ad0cd65f`
 
 - [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts),
   [source-status projection](../../../app/src/composables/accounting/useAccountingStatus.ts),
