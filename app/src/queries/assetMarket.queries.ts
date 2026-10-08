@@ -4,13 +4,8 @@ import type { AssetMetadata } from '@/utils/tokens/assets'
 import { assetLogoUri } from '@/utils/tokens/assets'
 import { externalReadPolicy, fetchMarketRead, TOKEN_METADATA_FRESHNESS } from '@/lib/externalReads'
 
-const PLATFORMS: Readonly<Record<number, string>> = {
-  1: 'ethereum',
-  137: 'polygon-pos',
-  42161: 'arbitrum-one',
-  10: 'optimistic-ethereum',
-  8453: 'base'
-}
+const POLYGON_CHAIN_ID = 137
+const POLYGON_PLATFORM = 'polygon-pos'
 interface AssetMarket {
   coinId: string
   priceUsd: number | null
@@ -26,7 +21,7 @@ export async function fetchAssetMarket(
   asset: Pick<AssetMetadata, 'chainId' | 'address'>,
   request: Request = fetchMarketRead
 ): Promise<AssetMarket> {
-  const platform = PLATFORMS[asset.chainId]
+  const platform = asset.chainId === POLYGON_CHAIN_ID ? POLYGON_PLATFORM : undefined
   if (!platform) throw new Error('Asset market network unavailable')
   return client.fetchQuery({
     queryKey: ['asset-market', asset.chainId, asset.address.toLowerCase()],

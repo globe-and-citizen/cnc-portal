@@ -66,11 +66,16 @@ describe('contract asset market discovery', () => {
       }))
     ).resolves.toEqual({ coinId: 'token', priceUsd: null })
   })
-  it('keeps unsupported network markets unavailable', async () => {
-    await expect(fetchAssetMarket(client(), { chainId: 999, address })).rejects.toThrow(
-      'Asset market network unavailable'
-    )
-  })
+  it.each([31337, 80002, 11155111, 1, 42161, 10, 8453, 999])(
+    'keeps non-Polygon contract markets unavailable without contacting the provider: %s',
+    async (chainId) => {
+      const request = vi.fn()
+      await expect(fetchAssetMarket(client(), { chainId, address }, request)).rejects.toThrow(
+        'Asset market network unavailable'
+      )
+      expect(request).not.toHaveBeenCalled()
+    }
+  )
   it('returns the logo from the verified contract metadata without requiring a price', async () => {
     const logoUri = 'https://assets.example/dai.png'
     await expect(

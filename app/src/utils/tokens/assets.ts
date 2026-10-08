@@ -11,7 +11,7 @@ export interface AssetMetadata {
   address: string
   symbol: string
   name: string
-  /** Unknown/unsupported precision remains explicit instead of assuming 18. */
+  /** Null when matching metadata is missing/invalid, RPC recovery fails, or precision exceeds 18. */
   decimals: number | null
   trusted?: boolean
   logoUri?: string
@@ -28,6 +28,7 @@ export function assetLogoUri(value: unknown): string | undefined {
   }
 }
 
+/** Discovery uses chain + lowercase contract; supported payment TokenIds are resolved separately. */
 export function assetId(address: string, chainId: number): AssetId {
   return `erc20:${chainId}:${address.toLowerCase()}`
 }
