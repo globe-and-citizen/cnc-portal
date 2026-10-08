@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/vue-query'
 import { computed, toValue } from 'vue'
 import { isAddress, type Address } from 'viem'
 import { contractBalanceKeys } from '@/composables/useContractBalance'
-import externalApiClient from '@/lib/external.axios.ts'
+import { readSafe, providerQueryPolicy, providerInterval } from '@/lib/providerReads'
 import { normalizeSafeAddress } from '@/utils/safe/address'
 import type { SafeInfo, SafeTransaction } from '@/types/safe'
 import { TX_SERVICE_BY_CHAIN } from '@/types/safe'
@@ -43,7 +43,7 @@ async function fetchAllSafePages<T>(initialUrl: string, signal: AbortSignal): Pr
     visited.add(pageUrl)
 
     const currentUrl: string = pageUrl
-    const { data } = await externalApiClient.get<SafePage<T>>(currentUrl, { signal })
+    const { data } = await readSafe<SafePage<T>>(chainId, currentUrl, signal)
     results.push(...(data.results ?? []))
     pageUrl = data.next ? new URL(data.next, currentUrl).toString() : null
   }
@@ -66,12 +66,16 @@ export const safeKeys = {
   transaction: (safeTxHash: string | undefined) =>
     [...safeKeys.transactionDetails(), { safeTxHash }] as const,
   incomingTransferLists: () => [...safeKeys.all, 'incoming-transfers'] as const,
+  incomingForSafe: (address: string) =>
+    [...safeKeys.incomingTransferLists(), { safeAddress: safeAddressKey(address) }] as const,
   incomingTransfers: (safeAddress: string | undefined, limit?: number) =>
     [
       ...safeKeys.incomingTransferLists(),
       { safeAddress: safeAddressKey(safeAddress), limit }
     ] as const,
   outgoingTransactionLists: () => [...safeKeys.all, 'outgoing-transactions'] as const,
+  outgoingForSafe: (address: string) =>
+    [...safeKeys.outgoingTransactionLists(), { safeAddress: safeAddressKey(address) }] as const,
   outgoingTransactions: (safeAddress: string | undefined, limit?: number) =>
     [
       ...safeKeys.outgoingTransactionLists(),
@@ -108,13 +112,15 @@ export function useGetSafeInfoQuery(params: GetSafeInfoParams) {
       const address = requireSafeAddress(safeAddress.value)
       if (!txService) throw new Error(`Unsupported chainId: ${chainId}`)
 
-      const { data } = await externalApiClient.get<SafeInfo>(
+      const { data } = await readSafe<SafeInfo>(
+        chainId,
         `${txService.url}/api/v1/safes/${address}/`
       )
       return data
     },
     staleTime: 300_000,
-    refetchInterval: 300_000
+    refetchInterval: providerInterval('safe', 300_000),
+    ...providerQueryPolicy
   })
 }
 
@@ -141,13 +147,19 @@ export function useGetSafeTransactionsQuery(params: GetSafeTransactionsParams) {
       const address = requireSafeAddress(safeAddress.value)
       if (!txService) throw new Error(`Unsupported chainId: ${chainId}`)
 
-      const { data } = await externalApiClient.get<{ results: SafeTransaction[] }>(
+      const { data } = await readSafe<{ results: SafeTransaction[] }>(
+        chainId,
         `${txService.url}/api/v1/safes/${address}/multisig-transactions`
       )
       return data.results || []
     },
     staleTime: 300_000,
-    refetchInterval: 300_000
+    refetchInterval: (query) =>
+      providerInterval(
+        'safe',
+        query.state.data?.some((transaction) => !transaction.isExecuted) ? 30_000 : 300_000
+      )(),
+    ...providerQueryPolicy
   })
 }
 
@@ -175,13 +187,15 @@ export function useGetSafeTransactionQuery(params: GetSafeTransactionParams) {
 
       if (!txService) throw new Error(`Unsupported chainId: ${chainId}`)
 
-      const { data } = await externalApiClient.get<SafeTransaction>(
+      const { data } = await readSafe<SafeTransaction>(
+        chainId,
         `${txService.url}/api/v1/multisig-transactions/${hash}/`
       )
       return data
     },
     staleTime: 300_000,
-    gcTime: 300_000
+    gcTime: 300_000,
+    ...providerQueryPolicy
   })
 }
 
@@ -221,7 +235,8 @@ export function useGetSafeIncomingTransfersQuery(params: GetSafeIncomingTransfer
       )
     },
     staleTime: 300_000,
-    refetchInterval: 300_000
+    refetchInterval: providerInterval('safe', 300_000),
+    ...providerQueryPolicy
   })
 }
 
@@ -251,6 +266,7 @@ export function useGetSafeOutgoingTransactionsQuery(params: GetSafeOutgoingTrans
       )
     },
     staleTime: 300_000,
-    refetchInterval: 300_000
+    refetchInterval: providerInterval('safe', 300_000),
+    ...providerQueryPolicy
   })
 }

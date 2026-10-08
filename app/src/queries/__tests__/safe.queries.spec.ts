@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ref, toValue, type MaybeRefOrGetter } from 'vue'
 import { contractBalanceKeys } from '@/composables/useContractBalance'
-import externalApiClient from '@/lib/external.axios'
+import apiClient from '@/lib/axios'
 import type { SafeIncomingTransfer, SafeTransaction } from '@/types/safe'
 import { useQueryFn } from '@/tests/mocks/composables.mock'
 
@@ -99,7 +99,7 @@ describe('safe queries', () => {
   })
 
   it('loads every incoming transfer page in service order', async () => {
-    const get = vi.spyOn(externalApiClient, 'get')
+    const get = vi.spyOn(apiClient, 'get')
     get
       .mockResolvedValueOnce({
         data: {
@@ -127,12 +127,12 @@ describe('safe queries', () => {
     expect(get.mock.calls[0]?.[0]).toContain(`/safes/${CHECKSUM_SAFE_ADDRESS}/`)
     expect(get.mock.calls[0]?.[0]).toContain('/incoming-transfers/?limit=2')
     expect(get.mock.calls[1]?.[0]).toContain('/incoming-transfers/?limit=2&offset=2')
-    expect(get).toHaveBeenNthCalledWith(1, expect.any(String), { signal })
-    expect(get).toHaveBeenNthCalledWith(2, expect.any(String), { signal })
+    expect(get).toHaveBeenNthCalledWith(1, expect.any(String), { signal, providerManaged: true })
+    expect(get).toHaveBeenNthCalledWith(2, expect.any(String), { signal, providerManaged: true })
   })
 
   it('loads every executed outgoing transaction page in service order', async () => {
-    const get = vi.spyOn(externalApiClient, 'get')
+    const get = vi.spyOn(apiClient, 'get')
     get
       .mockResolvedValueOnce({
         data: {
@@ -162,7 +162,7 @@ describe('safe queries', () => {
   })
 
   it('rejects the whole query when a later page cannot be loaded', async () => {
-    const get = vi.spyOn(externalApiClient, 'get')
+    const get = vi.spyOn(apiClient, 'get')
     const pageError = new Error('Safe page unavailable')
     get
       .mockResolvedValueOnce({
@@ -184,7 +184,7 @@ describe('safe queries', () => {
   })
 
   it('rejects repeated pagination links instead of looping forever', async () => {
-    const get = vi.spyOn(externalApiClient, 'get')
+    const get = vi.spyOn(apiClient, 'get')
     const repeatedPage = '/api/v1/safes/0xSafe/incoming-transfers/?limit=1&offset=1'
     get
       .mockResolvedValueOnce({ data: { next: repeatedPage, results: [incoming('0xIncoming1')] } })

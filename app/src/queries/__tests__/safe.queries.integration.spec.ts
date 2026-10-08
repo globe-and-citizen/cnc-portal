@@ -2,7 +2,7 @@ import { flushPromises, mount } from '@vue/test-utils'
 import { QueryClient, VueQueryPlugin } from '@tanstack/vue-query'
 import { defineComponent, h, ref } from 'vue'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import externalApiClient from '@/lib/external.axios'
+import apiClient from '@/lib/axios'
 
 const FIRST_LOWERCASE_SAFE_ADDRESS = '0x0557f280d9da274254e85ee70c2936694e494275'
 const FIRST_CHECKSUM_SAFE_ADDRESS = '0x0557F280D9DA274254e85Ee70c2936694e494275'
@@ -24,7 +24,7 @@ describe('Safe query reactivity', () => {
 
   it('requests both Accounting feeds when an asynchronous Safe address resolves', async () => {
     const address = ref<string>()
-    const get = vi.spyOn(externalApiClient, 'get').mockResolvedValue({
+    const get = vi.spyOn(apiClient, 'get').mockResolvedValue({
       data: { next: null, results: [] }
     })
     const queryClient = new QueryClient({

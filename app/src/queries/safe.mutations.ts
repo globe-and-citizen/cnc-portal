@@ -23,6 +23,7 @@ import {
 import { getTxServiceUrl, transformToSafeMultisigResponse } from '@/utils/safe/model'
 import { getConnectedSigner } from '@/utils/wallet/address'
 import { safeKeys } from './safe.queries'
+import { invalidateSafeReads } from '@/lib/providerReads'
 
 // ============================================================================
 // POST /api/v1/multisig-transactions/{safeTxHash}/confirmations/ - Approve
@@ -61,7 +62,8 @@ export function useApproveTransactionMutation() {
         { signature: signature.data }
       )
     },
-    onSuccess: (_, variables) => {
+    onSuccess: async (_, variables) => {
+      await invalidateSafeReads(variables.queryParams.chainId, variables.pathParams.safeAddress)
       queryClient.invalidateQueries({
         queryKey: safeKeys.transactions(variables.pathParams.safeAddress)
       })
@@ -111,6 +113,7 @@ export function useExecuteTransactionMutation() {
     },
     onSuccess: async (_, variables) => {
       const chainId = variables.queryParams.chainId
+      await invalidateSafeReads(chainId, variables.pathParams.safeAddress)
 
       // One balance key per Safe now covers native and every ERC-20 it holds,
       // so an executed transfer needs no per-token invalidation.
@@ -123,6 +126,12 @@ export function useExecuteTransactionMutation() {
         }),
         queryClient.invalidateQueries({
           queryKey: safeKeys.balance(variables.pathParams.safeAddress, chainId)
+        }),
+        queryClient.invalidateQueries({
+          queryKey: safeKeys.incomingForSafe(variables.pathParams.safeAddress)
+        }),
+        queryClient.invalidateQueries({
+          queryKey: safeKeys.outgoingForSafe(variables.pathParams.safeAddress)
         })
       ])
     }
@@ -195,7 +204,8 @@ export function useUpdateSafeOwnersMutation() {
         transactionData
       })
     },
-    onSuccess: (txHash, variables) => {
+    onSuccess: async (txHash, variables) => {
+      await invalidateSafeReads(variables.queryParams.chainId, variables.pathParams.safeAddress)
       queryClient.invalidateQueries({ queryKey: safeKeys.info(variables.pathParams.safeAddress) })
       queryClient.invalidateQueries({
         queryKey: safeKeys.transactions(variables.pathParams.safeAddress)
@@ -258,6 +268,7 @@ export function useTransferFromSafeMutation() {
       return { hash, executed: true }
     },
     onSuccess: async (result, variables) => {
+      await invalidateSafeReads(chainId.value, variables.pathParams.safeAddress)
       // Pending transactions (needed for proposals when threshold >= 2)
       await queryClient.invalidateQueries({
         queryKey: safeKeys.transactions(variables.pathParams.safeAddress)
@@ -272,6 +283,14 @@ export function useTransferFromSafeMutation() {
       await queryClient.invalidateQueries({
         queryKey: safeKeys.balance(variables.pathParams.safeAddress, chainId.value)
       })
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: safeKeys.incomingForSafe(variables.pathParams.safeAddress)
+        }),
+        queryClient.invalidateQueries({
+          queryKey: safeKeys.outgoingForSafe(variables.pathParams.safeAddress)
+        })
+      ])
     }
   })
 }

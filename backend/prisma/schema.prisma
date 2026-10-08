@@ -9,6 +9,29 @@ generator client {
   binaryTargets = ["native", "linux-musl", "debian-openssl-3.0.x"]
 }
 
+// Shared public-provider reads. Leases and pacing are coordinated across API instances.
+model ProviderReadCache {
+  key        String    @id
+  payload    Json?
+  expiresAt  DateTime?
+  leaseToken String?
+  leaseUntil DateTime?
+  updatedAt  DateTime  @updatedAt
+
+  @@index([expiresAt])
+}
+
+model ProviderReadBudget {
+  provider      String    @id
+  nextRequestAt DateTime  @default(now())
+  blockedUntil  DateTime?
+  leaseToken    String?
+  leaseUntil    DateTime?
+  requestCount  Int       @default(0)
+  limitedCount  Int       @default(0)
+  lastRequestAt DateTime?
+}
+
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")

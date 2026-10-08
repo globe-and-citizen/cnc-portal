@@ -9,6 +9,7 @@ import {
   type UsdRateOfRecord
 } from '@/utils/accounting/toUsd'
 import { queryClient } from './queryClient'
+import { fetchHistoricalMarket, providerQueryPolicy, providerInterval } from '@/lib/providerReads'
 
 interface ResolvedHistoricalRateTarget extends HistoricalRateTarget {
   coinId: string
@@ -63,12 +64,13 @@ export async function fetchHistoricalTokenRate(
   client: QueryClient,
   coinId: string,
   date: string,
-  request: HistoricalRateFetcher = globalThis.fetch
+  request: HistoricalRateFetcher = fetchHistoricalMarket
 ): Promise<number> {
   return client.fetchQuery({
     queryKey: historicalTokenRateKeys.rate(coinId, date),
     staleTime: Infinity,
     gcTime: Infinity,
+    ...providerQueryPolicy,
     queryFn: async ({ signal }) => {
       const url = new URL(
         `https://api.coingecko.com/api/v3/coins/${encodeURIComponent(coinId)}/history`
@@ -103,6 +105,9 @@ export function useHistoricalTokenRatesQuery(
   const query = useQuery<HistoricalRateMap>({
     queryKey: computed(() => historicalTokenRateKeys.set(requested.value)),
     enabled: computed(() => toValue(enabled) && requested.value.length > 0),
+    staleTime: 60_000,
+    refetchInterval: providerInterval('market', 60_000),
+    ...providerQueryPolicy,
     queryFn: async () => {
       const pairs = await Promise.all(
         requested.value.map(async (target) => {

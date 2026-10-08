@@ -39,6 +39,16 @@ describe('apiClient retry interceptor', () => {
     })
   }
 
+  it('does not retry a coordinated provider read even when the upstream boundary reports 429', async () => {
+    const adapter = adapterThatFailsThenSucceeds(4, 429)
+    apiClient.defaults.adapter = adapter
+    const config: import('../axios').ProviderManagedRequestConfig = { providerManaged: true }
+    const promise = apiClient.get('external/market/simple/price', config).catch((error) => error)
+    await vi.runAllTimersAsync()
+    await promise
+    expect(adapter).toHaveBeenCalledOnce()
+  })
+
   it('retries on 503 and eventually succeeds within 3 retries', async () => {
     apiClient.defaults.adapter = adapterThatFailsThenSucceeds(2, 503)
     const promise = apiClient.get('test')

@@ -3,7 +3,7 @@ import { useStorage } from '@vueuse/core'
 import { defineStore } from 'pinia'
 import { LIST_CURRENCIES, SUPPORTED_TOKENS } from '@/constant'
 import type { TokenId } from '@/constant'
-import { useQuery } from '@tanstack/vue-query'
+import { useMarketPricesQuery } from '@/queries/marketPrice.queries'
 import type { Ref } from 'vue'
 import { useTeamStore } from '@/stores/teamStore'
 import { computed, ref } from 'vue'
@@ -48,12 +48,13 @@ export const useCurrencyStore = defineStore('currency', () => {
     return tokens
   })
 
-  // Fetch prices for all tokens
-  async function fetchTokenPrice(coingeckoId: string) {
-    const res = await fetch(`https://api.coingecko.com/api/v3/coins/${coingeckoId}`)
-    if (!res.ok) throw new Error('Failed to fetch price')
-    return res.json() as Promise<PriceResponse>
-  }
+  const marketPrices = useMarketPricesQuery(
+    () =>
+      supportedToken.value
+        .filter((token) => token.id !== 'sher' && token.coingeckoId !== 'unknown')
+        .map((token) => token.coingeckoId),
+    () => LIST_CURRENCIES.map((item) => item.code)
+  )
   /**
    * @dev For a dynamic supported token, Map is better than Array
    */
@@ -76,13 +77,27 @@ export const useCurrencyStore = defineStore('currency', () => {
         loading: ref(false)
       })
     } else {
-      const { data, isFetching } = useQuery({
-        queryKey: ['price', token.coingeckoId],
-        queryFn: () => fetchTokenPrice(token.coingeckoId),
-        retryDelay: 300_000,
-        gcTime: 1000 * 60 * 10
+      const data = computed<PriceResponse | undefined>(() => {
+        const prices = marketPrices.data.value?.[token.coingeckoId]
+        if (!prices) return undefined
+        return {
+          market_data: {
+            current_price: {
+              ...Object.fromEntries(
+                Object.entries(prices).filter(
+                  (entry): entry is [string, number] => typeof entry[1] === 'number'
+                )
+              ),
+              usd: prices.usd ?? 0,
+              cad: prices.cad ?? 0,
+              eur: prices.eur ?? 0,
+              idr: prices.idr ?? 0,
+              inr: prices.inr ?? 0
+            }
+          }
+        }
       })
-      tokenStates.push({ id: token.id, data, loading: isFetching })
+      tokenStates.push({ id: token.id, data, loading: marketPrices.isFetching })
     }
   })
 
