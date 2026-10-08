@@ -110,7 +110,7 @@ describe('Currency Store', () => {
   })
 
   it('fetchTokenPrice queryFn throws on fetch error', async () => {
-    global.fetch = vi.fn().mockResolvedValue({ ok: false }) as unknown as typeof fetch
+    global.fetch = vi.fn().mockResolvedValue(new Response(null, { status: 503 }))
     let capturedQueryFn: (() => Promise<unknown>) | undefined
     useQueryFn.mockImplementation((options: { queryFn: () => Promise<unknown> }) => {
       capturedQueryFn = options.queryFn
@@ -122,7 +122,7 @@ describe('Currency Store', () => {
     })
     const store = useCurrencyStore()
     expect(capturedQueryFn).toBeDefined()
-    await expect(capturedQueryFn!()).rejects.toThrow('Failed to fetch price')
+    await expect(capturedQueryFn!()).rejects.toThrow('External read failed (503)')
     // getTokenInfo should return null prices
     const native = store.getTokenInfo('native')
     expect(native).toMatchSnapshot()

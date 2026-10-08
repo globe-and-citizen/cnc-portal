@@ -5,6 +5,33 @@ import { fetchAssetMarket } from '../assetMarket.queries'
 const address = '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
 const client = () => new QueryClient({ defaultOptions: { queries: { retry: false } } })
 describe('contract asset market discovery', () => {
+  it('shares the price for five minutes across concurrent and later callers', async () => {
+    vi.useFakeTimers()
+    const cache = client()
+    const request = vi.fn(async () => ({
+      ok: true,
+      json: async () => ({
+        id: 'asset',
+        platforms: { 'polygon-pos': address },
+        market_data: { current_price: { usd: 2 } }
+      })
+    }))
+    try {
+      await Promise.all([
+        fetchAssetMarket(cache, { chainId: 137, address }, request),
+        fetchAssetMarket(cache, { chainId: 137, address: address.toUpperCase() }, request)
+      ])
+      await vi.advanceTimersByTimeAsync(299_999)
+      await fetchAssetMarket(cache, { chainId: 137, address }, request)
+      expect(request).toHaveBeenCalledTimes(1)
+      await vi.advanceTimersByTimeAsync(1)
+      await fetchAssetMarket(cache, { chainId: 137, address }, request)
+      expect(request).toHaveBeenCalledTimes(2)
+    } finally {
+      cache.clear()
+      vi.useRealTimers()
+    }
+  })
   it('selects the price by platform and verified contract address', async () => {
     const request = vi.fn(async () => ({
       ok: true,

@@ -5,6 +5,7 @@ import externalApiClient from '@/lib/external.axios'
 import type { SafeIncomingTransfer, SafeTransaction } from '@/types/safe'
 import { useQueryFn } from '@/tests/mocks/composables.mock'
 import { mockWagmiCore } from '@/tests/mocks/wagmi.vue.mock'
+import { queryClient } from '../queryClient'
 
 const LOWERCASE_SAFE_ADDRESS = '0x0557f280d9da274254e85ee70c2936694e494275'
 const CHECKSUM_SAFE_ADDRESS = '0x0557F280D9DA274254e85Ee70c2936694e494275'
@@ -32,6 +33,39 @@ const incoming = (transactionHash: string) => ({ transactionHash }) as SafeIncom
 const outgoing = (safeTxHash: string) => ({ safeTxHash }) as SafeTransaction
 
 describe('safe queries', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    queryClient.clear()
+  })
+
+  it('reuses recovered contract metadata across complete history refreshes', async () => {
+    const makeRow = () =>
+      ({
+        transferId: 'metadata-cache',
+        type: 'ERC20_TRANSFER',
+        tokenAddress: SECOND_LOWERCASE_SAFE_ADDRESS,
+        tokenInfo: null
+      }) as SafeIncomingTransfer
+    vi.spyOn(externalApiClient, 'get')
+      .mockResolvedValueOnce({ data: { next: null, results: [makeRow()] } })
+      .mockResolvedValueOnce({ data: { next: null, results: [makeRow()] } })
+    mockWagmiCore.readContract
+      .mockReset()
+      .mockResolvedValueOnce(6)
+      .mockResolvedValueOnce('ASSET')
+      .mockResolvedValueOnce('Asset')
+    safeQueries.useGetSafeTransfersQuery({ pathParams: { safeAddress: LOWERCASE_SAFE_ADDRESS } })
+    const query = capturedQuery<SafeIncomingTransfer>()
+    const context = { signal: new AbortController().signal }
+    const first = await query.queryFn(context)
+    const next = await query.queryFn(context)
+    expect(first[0]?.tokenInfo).toEqual(next[0]?.tokenInfo)
+    expect(mockWagmiCore.readContract).toHaveBeenCalledTimes(3)
+    const cache = queryClient.getQueryCache().find({
+      queryKey: ['safe-token-metadata', 137, SECOND_LOWERCASE_SAFE_ADDRESS]
+    })
+    expect(cache?.options.staleTime).toBe(24 * 60 * 60_000)
+  })
   it('recovers missing ERC-20 metadata from the actual contract and preserves an explicit untrusted flag', async () => {
     const row = {
       transferId: 'token-1',
@@ -108,10 +142,6 @@ describe('safe queries', () => {
       capturedQuery<SafeIncomingTransfer>().queryFn({ signal: new AbortController().signal })
     ).rejects.toThrow('Safe transfer identity unavailable')
   })
-  beforeEach(() => {
-    vi.clearAllMocks()
-  })
-
   it('builds incoming transfer keys with a checksum-normalized address and optional limit', () => {
     expect(safeKeys.incomingTransfers(LOWERCASE_SAFE_ADDRESS, 10)).toEqual([
       'safe',
@@ -122,7 +152,7 @@ describe('safe queries', () => {
     expect(safeKeys.incomingTransfers(LOWERCASE_SAFE_ADDRESS)).toEqual([
       'safe',
       'incoming-transfers',
-      { safeAddress: CHECKSUM_SAFE_ADDRESS, limit: undefined }
+      { safeAddress: CHECKSUM_SAFE_ADDRESS }
     ])
   })
 

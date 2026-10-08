@@ -3,10 +3,14 @@ import { ref } from 'vue'
 import type { SafeIncomingTransfer } from '@/types/safe'
 import { useQueryFn, mockUseContractBalance } from '@/tests/mocks/composables.mock'
 import { mockWagmiCore, mockUseChainId } from '@/tests/mocks/wagmi.vue.mock'
-import { currentChainId } from '@/constant'
+import { currentChainId, SUPPORTED_TOKENS, USDT_ADDRESS } from '@/constant'
 import { config } from '@/wagmi.config'
 import type { SafePortfolioAsset } from '../useSafePortfolio'
 import * as assetMarkets from '@/queries/assetMarket.queries'
+import { queryClient } from '@/queries/queryClient'
+import { contractBalanceKeys } from '@/composables/useContractBalance'
+import { knownAssetId } from '@/utils/tokens/assets'
+import { safePortfolioRows } from '@/utils/safe/portfolio'
 const { useSafePortfolio } =
   await vi.importActual<typeof import('../useSafePortfolio')>('../useSafePortfolio')
 const address = '0x1111111111111111111111111111111111111111' as const
@@ -33,6 +37,7 @@ describe('Safe portfolio discovery', () => {
   afterEach(() => Object.assign(config, { chains: originalChains }))
   beforeEach(() => {
     vi.clearAllMocks()
+    queryClient.clear()
     mockUseChainId.value = currentChainId
     mockWagmiCore.readContract.mockReset()
     Object.assign(config, { chains: [{ id: currentChainId }] })
@@ -44,6 +49,9 @@ describe('Safe portfolio discovery', () => {
     mockWagmiCore.readContract.mockResolvedValueOnce(10n ** 16n)
     const portfolio = useSafePortfolio(address)
     const query = useQueryFn.mock.calls.at(-1)![0]
+    expect(query.queryKey.value.slice(0, 2)).toEqual(
+      contractBalanceKeys.detail(address, currentChainId)
+    )
     const rows = await query.queryFn()
     expect(rows).toHaveLength(1)
     expect(rows[0]).toMatchObject({
@@ -55,6 +63,62 @@ describe('Safe portfolio discovery', () => {
     assets.data.value = rows
     expect(portfolio.isIncomplete.value).toBe(true)
     expect(portfolio.totalUsd.value).toBeUndefined()
+  })
+  it.each([USDT_ADDRESS, USDT_ADDRESS.toLowerCase()])(
+    'displays a held USDT0 recognized by address but absent from fixed currencies: %s',
+    async (tokenAddress) => {
+      expect(knownAssetId(tokenAddress)).toBe('usdt')
+      expect(SUPPORTED_TOKENS.some((token) => token.id === 'usdt')).toBe(false)
+      const transfer = {
+        ...movement,
+        tokenAddress,
+        tokenInfo: {
+          address: tokenAddress,
+          name: 'USDT0',
+          symbol: 'USDT0',
+          decimals: 6,
+          trusted: true
+        }
+      } as SafeIncomingTransfer
+      useQueryFn.mockReturnValueOnce(state([transfer])).mockReturnValueOnce(state([]))
+      mockWagmiCore.readContract.mockResolvedValueOnce(88_615n)
+      const market = vi
+        .spyOn(assetMarkets, 'fetchAssetMarket')
+        .mockResolvedValueOnce({ coinId: 'usdt0', priceUsd: 1 })
+      try {
+        useSafePortfolio(address)
+        const rows = await useQueryFn.mock.calls.at(-1)![0].queryFn()
+        expect(rows).toHaveLength(1)
+        expect(rows[0]).toMatchObject({
+          raw: 88_615n,
+          quantity: '0.088615',
+          asset: { symbol: 'USDT0', address: tokenAddress.toLowerCase() }
+        })
+        expect(safePortfolioRows(rows).find((row) => row.symbol === 'USDT0')).toMatchObject({
+          quantity: '0.088615',
+          amountLabel: '0.0886'
+        })
+        expect(mockWagmiCore.readContract).toHaveBeenCalledWith(
+          config,
+          expect.objectContaining({
+            address: tokenAddress.toLowerCase(),
+            functionName: 'balanceOf',
+            args: [address]
+          })
+        )
+      } finally {
+        market.mockRestore()
+      }
+    }
+  )
+  it('leaves fixed currencies to their existing balance reads regardless of address casing', async () => {
+    const tokenAddress = SUPPORTED_TOKENS[0]!.address.toUpperCase().replace('0X', '0x')
+    useQueryFn
+      .mockReturnValueOnce(state([{ ...movement, tokenAddress }]))
+      .mockReturnValueOnce(state([]))
+    useSafePortfolio(address)
+    await expect(useQueryFn.mock.calls.at(-1)![0].queryFn()).resolves.toEqual([])
+    expect(mockWagmiCore.readContract).not.toHaveBeenCalled()
   })
   it('keeps zero-balance historical assets discoverable without making the total incomplete', async () => {
     useQueryFn
@@ -124,5 +188,27 @@ describe('Safe portfolio discovery', () => {
       'Switch to the Safe network'
     )
     expect(mockWagmiCore.readContract).not.toHaveBeenCalled()
+  })
+  it('reuses missing token decimals while still refreshing the current balance', async () => {
+    const withoutDecimals = { ...movement, tokenInfo: null }
+    useQueryFn.mockReturnValueOnce(state([withoutDecimals])).mockReturnValueOnce(state([]))
+    mockWagmiCore.readContract
+      .mockResolvedValueOnce(1_000_000n)
+      .mockResolvedValueOnce(6)
+      .mockResolvedValueOnce(2_000_000n)
+    vi.spyOn(assetMarkets, 'fetchAssetMarket').mockResolvedValue({ coinId: 'asset', priceUsd: 1 })
+    try {
+      useSafePortfolio(address)
+      const query = useQueryFn.mock.calls.at(-1)![0]
+      const first = await query.queryFn()
+      const next = await query.queryFn()
+      expect(first[0].quantity).toBe('1')
+      expect(next[0].quantity).toBe('2')
+      expect(
+        mockWagmiCore.readContract.mock.calls.map(([, params]) => params.functionName)
+      ).toEqual(['balanceOf', 'decimals', 'balanceOf'])
+    } finally {
+      vi.mocked(assetMarkets.fetchAssetMarket).mockRestore()
+    }
   })
 })
