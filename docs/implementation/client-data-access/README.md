@@ -2,7 +2,7 @@
 
 **Scope:** Shared client HTTP query and mutation boundaries under `app/src/queries/`, including their central export surface
 
-**Last verified:** 2026-09-01
+**Last verified:** 2026-10-08
 
 ## Consumers
 
@@ -31,9 +31,15 @@ flowchart LR
 - `uploadSingleFile` returns the first uploaded file URL and throws when the backend response does not contain one.
 - The `@/queries` barrel re-exports focused query modules; it does not combine their endpoint behaviour or server state.
 
+## Coordinated provider reads
+
+Safe and market reads use the authenticated backend [Provider Read Coordination](../provider-read-coordination/README.md) boundary. Those
+requests bypass the general Axios retry interceptor because the provider transport owns pacing and cooldowns. Other HTTP request behaviour
+retains its existing retry policy.
+
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `787921e5cf9dd1cf46fd0f69f651dba7d8785374`
+**Implementation evidence reviewed against:** `db8d14389e87181b2f727f1fcdb02096ad0cd65f`
 
 - [Query barrel](../../../app/src/queries/index.ts), [query factory](../../../app/src/queries/queryFactory.ts), and
   [single-file upload query](../../../app/src/queries/file.queries.ts)

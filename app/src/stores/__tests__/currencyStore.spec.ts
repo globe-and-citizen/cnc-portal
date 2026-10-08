@@ -5,6 +5,8 @@ import { setActivePinia, createPinia } from 'pinia'
 vi.unmock('@/stores/currencyStore')
 import { nextTick, ref } from 'vue'
 import { useQueryFn } from '@/tests/mocks'
+import { SUPPORTED_TOKENS } from '@/constant'
+import apiClient from '@/lib/axios'
 
 // @tanstack/vue-query is mocked globally via composables.setup.ts
 // useQueryFn is exported from composables.mock.ts and used as the useQuery implementation
@@ -74,12 +76,15 @@ describe('Currency Store', () => {
         }
       }
     }
-    global.fetch = vi.fn().mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve(fakeResponse)
-    }) as unknown as typeof fetch
     useQueryFn.mockReturnValue({
-      data: ref(fakeResponse),
+      data: ref(
+        Object.fromEntries(
+          SUPPORTED_TOKENS.map((token) => [
+            token.coingeckoId,
+            fakeResponse.market_data.current_price
+          ])
+        )
+      ),
       refetch: vi.fn(),
       isFetching: ref(false)
     })
@@ -110,19 +115,23 @@ describe('Currency Store', () => {
   })
 
   it('fetchTokenPrice queryFn throws on fetch error', async () => {
-    global.fetch = vi.fn().mockResolvedValue({ ok: false }) as unknown as typeof fetch
-    let capturedQueryFn: (() => Promise<unknown>) | undefined
-    useQueryFn.mockImplementation((options: { queryFn: () => Promise<unknown> }) => {
-      capturedQueryFn = options.queryFn
-      return {
-        data: ref(undefined),
-        refetch: vi.fn(),
-        isFetching: ref(false)
+    vi.mocked(apiClient.get).mockRejectedValueOnce(new Error('Failed to fetch price'))
+    let capturedQueryFn: ((context: { signal: AbortSignal }) => Promise<unknown>) | undefined
+    useQueryFn.mockImplementation(
+      (options: { queryFn: (context: { signal: AbortSignal }) => Promise<unknown> }) => {
+        capturedQueryFn = options.queryFn
+        return {
+          data: ref(undefined),
+          refetch: vi.fn(),
+          isFetching: ref(false)
+        }
       }
-    })
+    )
     const store = useCurrencyStore()
     expect(capturedQueryFn).toBeDefined()
-    await expect(capturedQueryFn!()).rejects.toThrow('Failed to fetch price')
+    await expect(capturedQueryFn!({ signal: new AbortController().signal })).rejects.toThrow(
+      'Failed to fetch price'
+    )
     // getTokenInfo should return null prices
     const native = store.getTokenInfo('native')
     expect(native).toMatchSnapshot()

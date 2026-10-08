@@ -38,12 +38,20 @@ const MAX_RETRIES = 3
 const RETRY_DELAY_MS = 1000
 
 type RetryableConfig = InternalAxiosRequestConfig & { __retryCount?: number }
+export interface ProviderManagedRequestConfig {
+  providerManaged: true
+  signal?: AbortSignal
+}
 
 apiClient.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
     const config = error.config as RetryableConfig | undefined
     if (!config) return Promise.reject(error)
+    // Coordinated provider reads own their retry/cooldown policy; never multiply retries here.
+    if ((config as RetryableConfig & { providerManaged?: boolean }).providerManaged) {
+      return Promise.reject(error)
+    }
 
     const status = error.response?.status
     const shouldRetry =

@@ -939,9 +939,16 @@ Bank transfers can incur the Bank's configured protocol fee; Accounting adds a m
 - The selected approval end date is currently sent as local midnight. The product decision about whether that date includes the whole day
   remains open; the confirmed period-reset rules do not decide this separately signed expiry instant.
 
+## Provider read availability
+
+Safe information and transaction reads use the shared backend
+[Provider Read Coordination](../../implementation/provider-read-coordination/README.md) cache. Completed Safe actions invalidate their
+server and client read caches. Pending proposals refresh every 30 seconds while the screen is active; idle lists and owner information
+refresh every five minutes. Provider cooldowns remain explicit read failures and never replay a signature or completed chain operation.
+
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `977d73f7c042253f4a107f632798fbbddbc8f4d4`
+**Implementation evidence reviewed against:** `db8d14389e87181b2f727f1fcdb02096ad0cd65f`
 
 - [Bank deposit modal](../../../app/src/components/sections/BankView/forms/DepositModal.vue),
   [Bank transfer modal](../../../app/src/components/sections/BankView/forms/TransferModal.vue),

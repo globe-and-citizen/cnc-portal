@@ -2,7 +2,7 @@
 
 **Status:** Current documentation index
 
-**Last updated:** 2026-09-09
+**Last updated:** 2026-10-08
 
 This index owns CNC Portal's shared architectural capabilities. Product features remain in the
 [Product Feature Inventory](../features/README.md), contract behaviour remains under [`docs/contracts/`](../contracts/README.md), and
@@ -54,6 +54,7 @@ flowchart LR
 | [Contract Owner Resolution](./contract-owner-resolution/README.md)       | Resolves and presents a contract owner                                  | Accounts, shareholder management            | 2026-08-30    |
 | [Client Utilities](./client-utilities/README.md)                         | Pure, explicit client data-shaping boundaries                           | All client product surfaces                 | 2026-09-01    |
 | [Client Data Access](./client-data-access/README.md)                     | Focused client HTTP query and mutation boundaries                       | Client product features                     | 2026-09-01    |
+| [Provider Read Coordination](./provider-read-coordination/README.md)     | Shared provider cache, persistent histories and paced external reads    | Safe, Accounting, currency prices           | 2026-10-08    |
 | [Accounting Read Model](./accounting-read-model/README.md)               | Consolidated postings, canonical journal, and report boundaries         | Accounting feature                          | 2026-09-04    |
 | [Request Validation](./request-validation/README.md)                     | Parses and normalizes backend request sections                          | Backend API routes                          | 2026-09-09    |
 | [File Storage](./file-storage/README.md)                                 | Validated uploads and time-limited attachment access                    | User Profile, Payroll                       | 2026-09-09    |

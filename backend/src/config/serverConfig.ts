@@ -27,6 +27,7 @@ import electionsRoute from '../routes/electionsRoute';
 import devRoutes from '../routes/devRoutes';
 import statsRoutes from '../routes/statsRoute';
 import healthRoutes from '../routes/healthRoutes';
+import providerReadRoutes from '../routes/providerReadRoutes';
 import featureRoutes from '../routes/featureRoutes';
 import officerVersionRoutes from '../routes/officerVersionRoutes';
 import sentryTunnelRoute from '../routes/sentryTunnelRoute';
@@ -197,6 +198,7 @@ class Server {
   }
 
   private routes() {
+    this.app.use('/api/external/', authorizeUser, providerReadRoutes);
     // Public health check endpoint (no auth required)
     this.app.use(this.paths.health, healthRoutes);
 

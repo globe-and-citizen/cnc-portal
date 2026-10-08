@@ -2,7 +2,7 @@
 
 **Scope:** Persisted global settings, team overrides, administrator APIs, and consuming feature enforcement
 
-**Last verified:** 2026-09-08
+**Last verified:** 2026-10-08
 
 **Consumers:** [Feature Restrictions](../../features/backoffice/feature-restrictions/README.md) and the Payroll claim-submission window
 
@@ -55,7 +55,7 @@ only decides whether a submitted work date falls inside the claim-submission win
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `ec8b46717ab3737ad4644aa693774d048f696d71`
+**Implementation evidence reviewed against:** `db8d14389e87181b2f727f1fcdb02096ad0cd65f`
 
 - [Global-setting and team-override persistence models](../../../backend/prisma/schema.prisma)
 - [Effective-status and persistence utilities](../../../backend/src/utils/featureUtils.ts)
