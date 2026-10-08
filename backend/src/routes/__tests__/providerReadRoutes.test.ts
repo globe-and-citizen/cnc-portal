@@ -1,4 +1,5 @@
 import express from 'express';
+import rateLimit from 'express-rate-limit';
 import request from 'supertest';
 import jwt from 'jsonwebtoken';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -20,6 +21,8 @@ vi.mock('../../services/providerReads', () => ({
 }));
 
 const app = express();
+// Match the production server's rate-limit boundary before authentication.
+app.use(rateLimit({ windowMs: 60_000, max: 120 }));
 app.use('/external', authorizeUser, routes);
 const token = () =>
   jwt.sign({ address: '0x1111111111111111111111111111111111111111' }, 'test-only-secret');
