@@ -136,7 +136,7 @@ Some use cases apply together to distinct economic effects in one operation. Pri
 
 For Bank → Payroll funding, `UC-TREASURY-001` links both `US-BANK-002` (transfer authorization, amount, and fee) and `US-PAYROLL-003`
 (credited balance and payment availability). These stories describe the initiating and receiving sides of one movement, not two entries. The
-[treasury flow map](../accounts/treasury-flow-map.md) records the canonical acceptance owners.
+[internal-transfer scenarios](#uc-treasury-001--internal-company-pocket-transfer) link their canonical acceptance owners.
 
 ### Events Without Accounting Entries
 
@@ -688,7 +688,8 @@ Current Bank funding debits destination cash and credits Bank cash, labelled `Tr
 
 Bank-origin funding serves `US-BANK-002`, `US-EXP-005`, and `US-PAYROLL-003`. Direct wallet funding of Expense Account or Payroll still
 requires complete source discovery and classification; a wallet outside the company's pockets must not be treated as an internal source. The
-[treasury flow map](../accounts/treasury-flow-map.md) records these receiving-story boundaries and the discovery gaps.
+[direct movement policy](./direct-movement-policy.md#contract-and-domain-coverage) records these receiving-story boundaries and the
+discovery gaps.
 
 ### `INTERNAL` — Other Company-Pocket Transfer
 

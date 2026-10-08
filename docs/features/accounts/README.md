@@ -15,7 +15,8 @@ These acceptance criteria follow the
 - **Expense Account** lets the current contract owner grant signed spending approvals. A recipient spends against the approval without
   receiving custody of the whole account.
 - A wallet can fund an account directly, while a Bank-origin payment is initiated under the Bank transfer story. The destination account
-  owns the credited balance and its availability. These relationships are indexed in the [treasury flow map](treasury-flow-map.md).
+  owns the credited balance and its availability. The [Accounting UC scenarios](../accounting/journal-entry-catalogue.md#use-case-overview)
+  link all participating stories and their roles.
 - Bank and Expense Account actions use the current contracts selected for the company. Safe actions use the Safe registered to the company
   on the active network.
 - A Bank transfer with a positive `BANK` fee sends that fee to the FeeCollector deployed for its contract generation. Native transfers
@@ -30,6 +31,15 @@ These acceptance criteria follow the
 The [direct asset movement product contract](../accounting/direct-movement-policy.md) defines company custody, unsolicited receipts,
 historical coverage, classification, and reconciliation across domains. Its target behaviour remains pending implementation; new ACs are
 unchecked.
+
+### Proposed token expansion
+
+Treat token onboarding as a shared capability with a per-network eligibility matrix. For each proposed asset, record its address, decimals,
+symbol, pricing source, and whether Bank, Expense, Payroll, and Accounting can each handle it. A contract's `getSupportedTokens()` result
+controls its current on-chain eligibility; the product catalogue supplies trusted display and amount metadata. New approval or transfer
+choices require both. A token becomes available in a journey only after its destination contract, write path, balance and activity views,
+and Accounting classification have representative proof. Roll out each network and domain explicitly rather than assuming that adding a
+token to one contract enables it everywhere. This is a proposal for product review; no additional token is enabled by this document.
 
 ## Lifecycle
 

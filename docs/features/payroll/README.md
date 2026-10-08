@@ -34,7 +34,9 @@ identity fields are rejected. Product withdrawal requires a signed claim with a 
 
 The company Bank can fund the Cash Remuneration contract through its normal transfer actions. A wallet can also send native currency or
 ERC-20 assets directly to the Payroll address. Bank owns the initiated transfer and its fee; Payroll owns the receiving balance and whether
-that asset can pay a claim. The [treasury flow map](../accounts/treasury-flow-map.md) links the two journeys.
+that asset can pay a claim. The
+[internal-transfer UC scenarios](../accounting/journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer) link the two
+journeys.
 
 The [direct asset movement product contract](../accounting/direct-movement-policy.md) defines company custody, unsolicited receipts,
 historical coverage, classification, and reconciliation across domains. Its target behaviour remains pending implementation; new ACs are
