@@ -5,7 +5,7 @@ import { useQueryFn, mockUseContractBalance } from '@/tests/mocks/composables.mo
 import { mockWagmiCore, mockUseChainId } from '@/tests/mocks/wagmi.vue.mock'
 import { currentChainId, SUPPORTED_TOKENS, USDT_ADDRESS } from '@/constant'
 import { config } from '@/wagmi.config'
-import type { SafePortfolioAsset } from '../useSafePortfolio'
+import type { SafePortfolioAsset } from '@/utils/safe/portfolio'
 import * as assetMarkets from '@/queries/assetMarket.queries'
 import { queryClient } from '@/queries/queryClient'
 import { contractBalanceKeys } from '@/composables/useContractBalance'

@@ -1,126 +1,28 @@
 /** Discover held ERC-20s from complete Safe movements and read their current on-chain balance. */
 import { computed, toValue, type MaybeRefOrGetter } from 'vue'
-import { useQuery } from '@tanstack/vue-query'
-import { useChainId } from '@wagmi/vue'
-import { readContract } from '@wagmi/core'
-import { erc20Abi, formatUnits, isAddress, type Address } from 'viem'
-import { useContractBalance, contractBalanceKeys } from '@/composables/useContractBalance'
+import type { Address } from 'viem'
+import { useContractBalance } from '@/composables/useContractBalance'
 import { useGetSafeTransfersQuery } from '@/queries/safe.queries'
-import { fetchAssetMarket } from '@/queries/assetMarket.queries'
-import { queryClient } from '@/queries/queryClient'
-import { config } from '@/wagmi.config'
-import { currentChainId, SUPPORTED_TOKENS } from '@/constant'
-import { assetId, assetMetadata, type AssetMetadata } from '@/utils/tokens/assets'
-import type { SafePortfolioAsset } from '@/utils/safe/portfolio'
+import { currentChainId } from '@/constant'
 import { normalizeSafeAddress } from '@/utils/safe/address'
-import { externalReadPolicy, TOKEN_METADATA_FRESHNESS } from '@/lib/externalReads'
-export type { SafePortfolioAsset } from '@/utils/safe/portfolio'
+import { externalReadPolicy } from '@/lib/externalReads'
 
-// Only currencies already read by useContractBalance are excluded from discovery.
-const supportedAssetIds = new Set(
-  SUPPORTED_TOKENS.map((token) => assetId(token.address, currentChainId))
-)
+import { discoverSafeAssets } from '@/utils/safe/assetDiscovery'
+import { useGetSafePortfolioAssetsQuery } from '@/queries/safePortfolio.queries'
 
 export function useSafePortfolio(address: MaybeRefOrGetter<Address | undefined>) {
-  const chainId = useChainId()
   const safeAddress = computed(() => {
     const value = toValue(address)
     return value ? normalizeSafeAddress(value) : undefined
   })
   const supported = useContractBalance(safeAddress, externalReadPolicy(60_000))
   const transfers = useGetSafeTransfersQuery({ pathParams: { safeAddress: address } })
-  const discovered = computed(() => {
-    const tokens = new Map<string, AssetMetadata>()
-    for (const transfer of transfers.data.value ?? []) {
-      if (
-        transfer.type !== 'ERC20_TRANSFER' ||
-        !transfer.tokenAddress ||
-        !isAddress(transfer.tokenAddress) ||
-        supportedAssetIds.has(assetId(transfer.tokenAddress, currentChainId))
-      )
-        continue
-      const asset = assetMetadata(transfer.tokenAddress, currentChainId, transfer.tokenInfo)
-      const existing = tokens.get(asset.id)
-      if (!existing || existing.decimals === null)
-        tokens.set(asset.id, {
-          ...asset,
-          ...(existing?.logoUri && !asset.logoUri ? { logoUri: existing.logoUri } : {})
-        })
-      else if (!existing.logoUri && asset.logoUri)
-        tokens.set(asset.id, { ...existing, logoUri: asset.logoUri })
-    }
-    return [...tokens.values()].sort((a, b) => a.id.localeCompare(b.id))
-  })
-  const assets = useQuery<SafePortfolioAsset[]>({
-    queryKey: computed(() => [
-      ...contractBalanceKeys.detail(safeAddress.value, chainId.value),
-      'safe-portfolio',
-      { assets: discovered.value }
-    ]),
-    enabled: computed(() => Boolean(toValue(address)) && transfers.data.value !== undefined),
-    ...externalReadPolicy(60_000),
-    queryFn: async () => {
-      const network = config.chains.find(
-        (chain) => chain.id === chainId.value && chain.id === currentChainId
-      )
-      if (!network) throw new Error('Switch to the Safe network to read its assets')
-      const owner = safeAddress.value!
-      return Promise.all(
-        discovered.value.map(async (source) => {
-          const asset = { ...source }
-          let raw: bigint | null = null
-          let priceUsd: number | null = null
-          try {
-            raw = await readContract(config, {
-              address: asset.address as Address,
-              abi: erc20Abi,
-              functionName: 'balanceOf',
-              args: [owner],
-              chainId: network.id
-            })
-            if (asset.decimals === null) {
-              const decimals = await queryClient.fetchQuery({
-                queryKey: ['safe-token-decimals', network.id, asset.address.toLowerCase()],
-                ...externalReadPolicy(TOKEN_METADATA_FRESHNESS, false),
-                retry: false,
-                gcTime: TOKEN_METADATA_FRESHNESS,
-                queryFn: () =>
-                  readContract(config, {
-                    address: asset.address as Address,
-                    abi: erc20Abi,
-                    functionName: 'decimals',
-                    chainId: network.id
-                  })
-              })
-              if (Number.isInteger(decimals) && decimals >= 0 && decimals <= 18)
-                asset.decimals = decimals
-            }
-          } catch {
-            /* Keep unknown balances explicit; price availability must not erase a balance. */
-          }
-          if (raw !== null && raw !== 0n && asset.trusted !== false) {
-            try {
-              const market = await fetchAssetMarket(queryClient, asset)
-              priceUsd = market.priceUsd
-              asset.logoUri ??= market.logoUri
-            } catch {
-              /* Keep the verified balance when the market service is unavailable. */
-            }
-          }
-          const quantity =
-            raw !== null && asset.decimals !== null ? formatUnits(raw, asset.decimals) : null
-          const value = quantity !== null && priceUsd !== null ? Number(quantity) * priceUsd : null
-          return {
-            asset,
-            raw,
-            quantity,
-            priceUsd,
-            valueUsd: raw === 0n ? 0 : value !== null && Number.isFinite(value) ? value : null
-          }
-        })
-      )
-    }
-  })
+  const discovered = computed(() => discoverSafeAssets(transfers.data.value ?? [], currentChainId))
+  const assets = useGetSafePortfolioAssetsQuery(
+    safeAddress,
+    discovered,
+    () => transfers.data.value !== undefined
+  )
   const isIncomplete = computed(
     () =>
       Boolean(supported.error.value) ||

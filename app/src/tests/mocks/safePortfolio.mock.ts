@@ -1,6 +1,6 @@
 import { computed, ref } from 'vue'
 import { vi } from 'vitest'
-import type { SafePortfolioAsset } from '@/composables/safe/useSafePortfolio'
+import type { SafePortfolioAsset } from '@/utils/safe/portfolio'
 import { mockUseContractBalance } from './composables.mock'
 
 export const mockUseSafePortfolio = {
