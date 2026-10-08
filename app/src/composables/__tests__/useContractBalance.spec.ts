@@ -6,6 +6,7 @@ import { mockWagmiCore, mockUseChainId } from '@/tests/mocks/wagmi.vue.mock'
 import { useCurrencyStore } from '@/stores'
 import { SUPPORTED_TOKENS } from '@/constant'
 import type { RawTokenBalances } from '@/lib/balances/tokenBalances'
+import { externalReadPolicy } from '@/lib/externalReads'
 
 // Globally mocked in composables.setup.ts — this spec exercises the real one.
 vi.unmock('@/composables/useContractBalance')
@@ -154,5 +155,27 @@ describe('useContractBalance', () => {
     })
 
     mockUseChainId.value = 1
+  })
+
+  it('applies the Safe cache policy while keeping the supported-token RPC reads', async () => {
+    mockUseChainId.value = 31337
+    mockWagmiCore.getBalance.mockResolvedValue({ value: 0n })
+    mockWagmiCore.readContract.mockResolvedValue(0n)
+
+    useContractBalance(ADDRESS, externalReadPolicy(60_000))
+    expect(captured.refetchInterval).toBeGreaterThanOrEqual(60_000)
+    expect(captured.refetchInterval).toBeLessThan(66_000)
+    await captured.queryFn()
+    expect(mockWagmiCore.readContract).toHaveBeenCalledTimes(erc20Tokens.length)
+    for (const token of erc20Tokens) {
+      expect(mockWagmiCore.readContract).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({
+          address: token.address,
+          functionName: 'balanceOf',
+          chainId: 31337
+        })
+      )
+    }
   })
 })

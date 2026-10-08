@@ -161,7 +161,8 @@ import type { Address } from 'viem'
 import { useStorage } from '@vueuse/core'
 import { useToast } from '@nuxt/ui/composables'
 import AddressTooltip from '@/components/ui/AddressTooltip.vue'
-import { getSafeHomeUrl, openSafeAppUrl } from '@/composables/safe'
+import { getSafeHomeUrl } from '@/utils/safe/model'
+import { openSafeAppUrl } from '@/lib/safe/browser'
 import { useGetSafeInfoQuery } from '@/queries/safe.queries'
 import TransferForm, { type TransferModel } from '@/components/forms/TransferForm.vue'
 import type { TokenOption } from '@/types'
@@ -173,26 +174,36 @@ import { useSafeSignerRole } from '@/composables/safe/useSafeSignerRole'
 import { formatCurrency, formatUsd } from '@/utils/format'
 import { signerRoleCopy } from '@/utils/safe/signerRole'
 import { useSafePortfolio } from '@/composables/safe/useSafePortfolio'
+import { useContractBalance } from '@/composables/useContractBalance'
+import { externalReadPolicy } from '@/lib/externalReads'
+import { normalizeSafeAddress } from '@/utils/safe/address'
 
 const props = defineProps<{ address: Address }>()
 const chainId = useChainId()
 const currency = useStorage('currency', { code: 'USD', name: 'US Dollar', symbol: '$' })
 const { isWriteDisabled } = useTeamWriteGuard()
 
-const portfolio = useSafePortfolio(() => props.address)
-const { data: balance, error: balanceError, refetch: refetchBalance } = portfolio.supported
-const isLoading = portfolio.isLoading
+const { data: balance, error: balanceError } = useContractBalance(
+  () => normalizeSafeAddress(props.address),
+  externalReadPolicy(60_000)
+)
+const {
+  totalUsd: portfolioTotalUsd,
+  isIncomplete,
+  isLoading,
+  refetch: refetchPortfolio
+} = useSafePortfolio(() => props.address)
 const totalUsd = computed(() =>
-  portfolio.isIncomplete.value ? 'Incomplete' : formatUsd(portfolio.totalUsd.value)
+  isIncomplete.value ? 'Incomplete' : formatUsd(portfolioTotalUsd.value)
 )
 const totalLocal = computed(() =>
   formatCurrency(
-    portfolio.totalUsd.value === undefined
+    portfolioTotalUsd.value === undefined
       ? undefined
       : currency.value.code === 'USD'
-        ? portfolio.totalUsd.value
+        ? portfolioTotalUsd.value
         : balance.value?.total.usd.value
-          ? (portfolio.totalUsd.value * balance.value.total.local.value) /
+          ? (portfolioTotalUsd.value * balance.value.total.local.value) /
             balance.value.total.usd.value
           : undefined,
     { currency: currency.value.code }
@@ -247,8 +258,7 @@ const initialTransferDataValue = (): TransferModel => {
 const transferData: Ref<TransferModel> = ref(initialTransferDataValue())
 
 const retryOverview = () => {
-  void refetchBalance()
-  void portfolio.refetch()
+  void refetchPortfolio()
   void refetchSafeInfo()
 }
 
