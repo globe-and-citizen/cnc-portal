@@ -7,7 +7,10 @@
     :ignore-non-keyboard-focus="false"
     :ui="{ content: 'max-w-sm break-words' }"
   >
-    <button
+    <UButton
+      color="neutral"
+      variant="link"
+      :ui="{ base: 'p-0 text-inherit font-normal' }"
       type="button"
       class="focus-visible:ring-primary min-h-6 rounded whitespace-nowrap underline decoration-dotted underline-offset-4 hover:decoration-solid focus-visible:ring-2 focus-visible:outline-none"
       :aria-label="`${label}: ${detail}`"
@@ -18,7 +21,7 @@
       @keydown.esc="open = false"
     >
       {{ value }}
-    </button>
+    </UButton>
   </UTooltip>
   <span v-else>{{ value }}</span>
 </template>
