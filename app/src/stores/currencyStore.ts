@@ -1,4 +1,3 @@
-// import { useCustomFetch } from '@/composables'
 import { useStorage } from '@vueuse/core'
 import { defineStore } from 'pinia'
 import { LIST_CURRENCIES, SUPPORTED_TOKENS } from '@/constant'
@@ -7,6 +6,7 @@ import { useQuery } from '@tanstack/vue-query'
 import type { Ref } from 'vue'
 import { useTeamStore } from '@/stores/teamStore'
 import { computed, ref } from 'vue'
+import { externalReadPolicy, fetchMarketRead } from '@/lib/externalReads'
 
 export interface PriceResponse {
   market_data: {
@@ -42,16 +42,13 @@ export const useCurrencyStore = defineStore('currency', () => {
         decimals: 6,
         address: investorAddress
       })
-    } else {
-      console.warn('Investor contract address not found, Sher Token will not be included')
     }
     return tokens
   })
 
   // Fetch prices for all tokens
   async function fetchTokenPrice(coingeckoId: string) {
-    const res = await fetch(`https://api.coingecko.com/api/v3/coins/${coingeckoId}`)
-    if (!res.ok) throw new Error('Failed to fetch price')
+    const res = await fetchMarketRead(`https://api.coingecko.com/api/v3/coins/${coingeckoId}`)
     return res.json() as Promise<PriceResponse>
   }
   /**
@@ -79,8 +76,7 @@ export const useCurrencyStore = defineStore('currency', () => {
       const { data, isFetching } = useQuery({
         queryKey: ['price', token.coingeckoId],
         queryFn: () => fetchTokenPrice(token.coingeckoId),
-        retryDelay: 300_000,
-        gcTime: 1000 * 60 * 10
+        ...externalReadPolicy(300_000)
       })
       tokenStates.push({ id: token.id, data, loading: isFetching })
     }
@@ -91,7 +87,6 @@ export const useCurrencyStore = defineStore('currency', () => {
     if (found) {
       currency.value = found
     }
-    // refetchPrice()
   }
 
   /**
@@ -161,7 +156,6 @@ export const useCurrencyStore = defineStore('currency', () => {
     supportedTokens: supportedToken,
     tokenStates,
     getTokenPrice,
-    // getTokenPriceUSD,
     isTokenLoading,
     setCurrency,
     getTokenInfo
