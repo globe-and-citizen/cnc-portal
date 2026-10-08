@@ -1,11 +1,11 @@
 import { useQuery } from '@tanstack/vue-query'
 import { computed, toValue } from 'vue'
-import { isAddress, type Address } from 'viem'
+import { erc20Abi, isAddress, type Address } from 'viem'
 import { contractBalanceKeys } from '@/composables/useContractBalance'
-import externalApiClient from '@/lib/external.axios.ts'
+import { externalReadPolicy, getSafeRead, TOKEN_METADATA_FRESHNESS } from '@/lib/externalReads'
+import { queryClient } from './queryClient'
 import { normalizeSafeAddress } from '@/utils/safe/address'
 import { readContract } from '@wagmi/core'
-import { erc20Abi } from 'viem'
 import { config } from '@/wagmi.config'
 import type { SafeInfo, SafeTransaction } from '@/types/safe'
 import { TX_SERVICE_BY_CHAIN } from '@/types/safe'
@@ -46,7 +46,7 @@ async function fetchAllSafePages<T>(initialUrl: string, signal: AbortSignal): Pr
     visited.add(pageUrl)
 
     const currentUrl: string = pageUrl
-    const { data } = await externalApiClient.get<SafePage<T>>(currentUrl, { signal })
+    const { data } = await getSafeRead<SafePage<T>>(currentUrl, signal)
     results.push(...(data.results ?? []))
     pageUrl = data.next ? new URL(data.next, currentUrl).toString() : null
   }
@@ -78,13 +78,13 @@ export const safeKeys = {
   incomingTransfers: (safeAddress: string | undefined, limit?: number) =>
     [
       ...safeKeys.incomingTransferLists(),
-      { safeAddress: safeAddressKey(safeAddress), limit }
+      { safeAddress: safeAddressKey(safeAddress), ...(limit === undefined ? {} : { limit }) }
     ] as const,
   outgoingTransactionLists: () => [...safeKeys.all, 'outgoing-transactions'] as const,
   outgoingTransactions: (safeAddress: string | undefined, limit?: number) =>
     [
       ...safeKeys.outgoingTransactionLists(),
-      { safeAddress: safeAddressKey(safeAddress), limit }
+      { safeAddress: safeAddressKey(safeAddress), ...(limit === undefined ? {} : { limit }) }
     ] as const,
   /**
    * The Safe's token holdings — native and ERC-20 alike — live on the one key
@@ -132,26 +132,33 @@ export function useGetSafeTransfersQuery(params: GetSafeIncomingTransfersParams)
         [...missing].map(async ([tokenAddress, rows]) => {
           try {
             const token = tokenAddress as Address
-            const [decimals, symbol, name] = await Promise.all([
-              readContract(config, {
-                address: token,
-                abi: erc20Abi,
-                functionName: 'decimals',
-                chainId
-              }),
-              readContract(config, {
-                address: token,
-                abi: erc20Abi,
-                functionName: 'symbol',
-                chainId
-              }).catch(() => tokenAddress),
-              readContract(config, {
-                address: token,
-                abi: erc20Abi,
-                functionName: 'name',
-                chainId
-              }).catch(() => 'Unknown token')
-            ])
+            const [decimals, symbol, name] = await queryClient.fetchQuery({
+              queryKey: ['safe-token-metadata', chainId, tokenAddress],
+              ...externalReadPolicy(TOKEN_METADATA_FRESHNESS, false),
+              retry: false,
+              gcTime: TOKEN_METADATA_FRESHNESS,
+              queryFn: () =>
+                Promise.all([
+                  readContract(config, {
+                    address: token,
+                    abi: erc20Abi,
+                    functionName: 'decimals',
+                    chainId
+                  }),
+                  readContract(config, {
+                    address: token,
+                    abi: erc20Abi,
+                    functionName: 'symbol',
+                    chainId
+                  }).catch(() => tokenAddress),
+                  readContract(config, {
+                    address: token,
+                    abi: erc20Abi,
+                    functionName: 'name',
+                    chainId
+                  }).catch(() => 'Unknown token')
+                ])
+            })
             for (const row of rows)
               row.tokenInfo = {
                 type: 'ERC20',
@@ -172,8 +179,7 @@ export function useGetSafeTransfersQuery(params: GetSafeIncomingTransfersParams)
       )
       return transfers
     },
-    staleTime: 60_000,
-    refetchInterval: 60_000
+    ...externalReadPolicy(300_000)
   })
 }
 
@@ -196,17 +202,17 @@ export function useGetSafeInfoQuery(params: GetSafeInfoParams) {
   return useQuery<SafeInfo>({
     queryKey: computed(() => safeKeys.info(safeAddress.value)),
     enabled: computed(() => Boolean(safeAddress.value)),
-    queryFn: async () => {
+    queryFn: async ({ signal }) => {
       const address = requireSafeAddress(safeAddress.value)
       if (!txService) throw new Error(`Unsupported chainId: ${chainId}`)
 
-      const { data } = await externalApiClient.get<SafeInfo>(
-        `${txService.url}/api/v1/safes/${address}/`
+      const { data } = await getSafeRead<SafeInfo>(
+        `${txService.url}/api/v1/safes/${address}/`,
+        signal
       )
       return data
     },
-    staleTime: 300_000,
-    refetchInterval: 300_000
+    ...externalReadPolicy(300_000)
   })
 }
 
@@ -225,21 +231,27 @@ export function useGetSafeInfoQuery(params: GetSafeInfoParams) {
 export function useGetSafeTransactionsQuery(params: GetSafeTransactionsParams) {
   const { pathParams } = params
   const safeAddress = computed(() => toValue(pathParams.safeAddress))
+  const pendingReadPolicy = externalReadPolicy(60_000)
+  const idleInterval = externalReadPolicy(300_000).refetchInterval
 
   return useQuery<SafeTransaction[]>({
     queryKey: computed(() => safeKeys.transactions(safeAddress.value)),
     enabled: computed(() => Boolean(safeAddress.value)),
-    queryFn: async () => {
+    queryFn: async ({ signal }) => {
       const address = requireSafeAddress(safeAddress.value)
       if (!txService) throw new Error(`Unsupported chainId: ${chainId}`)
 
-      const { data } = await externalApiClient.get<{ results: SafeTransaction[] }>(
-        `${txService.url}/api/v1/safes/${address}/multisig-transactions`
+      const { data } = await getSafeRead<{ results: SafeTransaction[] }>(
+        `${txService.url}/api/v1/safes/${address}/multisig-transactions`,
+        signal
       )
       return data.results || []
     },
-    staleTime: 300_000,
-    refetchInterval: 300_000
+    ...pendingReadPolicy,
+    refetchInterval: (query) =>
+      query.state.data?.some((transaction) => !transaction.isExecuted)
+        ? pendingReadPolicy.refetchInterval
+        : idleInterval
   })
 }
 
@@ -259,21 +271,21 @@ export function useGetSafeTransactionQuery(params: GetSafeTransactionParams) {
   const { pathParams } = params
 
   return useQuery<SafeTransaction>({
-    queryKey: safeKeys.transaction(toValue(pathParams.safeTxHash)),
-    enabled: !!toValue(pathParams.safeTxHash),
-    queryFn: async () => {
+    queryKey: computed(() => safeKeys.transaction(toValue(pathParams.safeTxHash))),
+    enabled: computed(() => !!toValue(pathParams.safeTxHash)),
+    queryFn: async ({ signal }) => {
       const hash = toValue(pathParams.safeTxHash)
       if (!hash) throw new Error('Missing Safe transaction hash or chain ID')
 
       if (!txService) throw new Error(`Unsupported chainId: ${chainId}`)
 
-      const { data } = await externalApiClient.get<SafeTransaction>(
-        `${txService.url}/api/v1/multisig-transactions/${hash}/`
+      const { data } = await getSafeRead<SafeTransaction>(
+        `${txService.url}/api/v1/multisig-transactions/${hash}/`,
+        signal
       )
       return data
     },
-    staleTime: 300_000,
-    gcTime: 300_000
+    ...externalReadPolicy(300_000, false)
   })
 }
 
@@ -312,8 +324,7 @@ export function useGetSafeIncomingTransfersQuery(params: GetSafeIncomingTransfer
         signal
       )
     },
-    staleTime: 300_000,
-    refetchInterval: 300_000
+    ...externalReadPolicy(300_000)
   })
 }
 
@@ -342,7 +353,6 @@ export function useGetSafeOutgoingTransactionsQuery(params: GetSafeOutgoingTrans
         signal
       )
     },
-    staleTime: 300_000,
-    refetchInterval: 300_000
+    ...externalReadPolicy(300_000)
   })
 }

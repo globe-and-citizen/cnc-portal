@@ -2,6 +2,7 @@
 import type { QueryClient } from '@tanstack/vue-query'
 import type { AssetMetadata } from '@/utils/tokens/assets'
 import { assetLogoUri } from '@/utils/tokens/assets'
+import { externalReadPolicy, fetchMarketRead, TOKEN_METADATA_FRESHNESS } from '@/lib/externalReads'
 
 const PLATFORMS: Readonly<Record<number, string>> = {
   1: 'ethereum',
@@ -23,13 +24,14 @@ type Request = (
 export async function fetchAssetMarket(
   client: QueryClient,
   asset: Pick<AssetMetadata, 'chainId' | 'address'>,
-  request: Request = globalThis.fetch
+  request: Request = fetchMarketRead
 ): Promise<AssetMarket> {
   const platform = PLATFORMS[asset.chainId]
   if (!platform) throw new Error('Asset market network unavailable')
   return client.fetchQuery({
     queryKey: ['asset-market', asset.chainId, asset.address.toLowerCase()],
-    staleTime: 60_000,
+    ...externalReadPolicy(300_000, false),
+    retry: false,
     queryFn: async ({ signal }) => {
       const response = await request(
         `https://api.coingecko.com/api/v3/coins/${platform}/contract/${encodeURIComponent(asset.address.toLowerCase())}`,
@@ -66,7 +68,9 @@ export async function fetchAssetCoinId(client: QueryClient, token: string): Prom
   if (!address) throw new Error('Asset contract unavailable')
   return client.fetchQuery({
     queryKey: ['asset-coin-id', Number(chain), address.toLowerCase()],
-    staleTime: Infinity,
+    ...externalReadPolicy(TOKEN_METADATA_FRESHNESS, false),
+    retry: false,
+    gcTime: TOKEN_METADATA_FRESHNESS,
     queryFn: async () =>
       (await fetchAssetMarket(client, { chainId: Number(chain), address })).coinId
   })

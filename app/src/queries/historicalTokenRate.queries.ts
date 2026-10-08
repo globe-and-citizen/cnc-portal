@@ -11,6 +11,7 @@ import {
   type UsdRateOfRecord
 } from '@/utils/accounting/toUsd'
 import { queryClient } from './queryClient'
+import { externalReadPolicy, fetchMarketRead } from '@/lib/externalReads'
 
 interface ResolvedHistoricalRateTarget extends HistoricalRateTarget {
   coinId: string
@@ -67,11 +68,12 @@ export async function fetchHistoricalTokenRate(
   client: QueryClient,
   coinId: string,
   date: string,
-  request: HistoricalRateFetcher = globalThis.fetch
+  request: HistoricalRateFetcher = fetchMarketRead
 ): Promise<number> {
   return client.fetchQuery({
     queryKey: historicalTokenRateKeys.rate(coinId, date),
-    staleTime: Infinity,
+    ...externalReadPolicy(Infinity, false),
+    retry: false,
     gcTime: Infinity,
     queryFn: async ({ signal }) => {
       const url = new URL(
@@ -111,7 +113,7 @@ export function useHistoricalTokenRatesQuery(
   const query = useQuery<HistoricalRateMap>({
     queryKey: computed(() => historicalTokenRateKeys.set(requested.value)),
     enabled: computed(() => toValue(enabled) && requested.value.length > 0),
-    refetchInterval: 60_000,
+    ...externalReadPolicy(300_000),
     queryFn: async () => {
       const pairs = await Promise.all(
         requested.value.map(async (target) => {
