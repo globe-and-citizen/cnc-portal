@@ -114,7 +114,8 @@ export async function exerciseArchivedSafeSetup(page: Page, fixture: SafeE2EFixt
 
 export async function exerciseSafeInfoRecovery(page: Page, fixture: SafeE2EFixture) {
   await sendToken(fixture.usdc, fixture.safe, '2')
-  await openSafeAccount(page, fixture, { failSafeInfoRequests: 3, incomingTransfers: [] })
+  // Fail the initial read and its single automatic retry; the manual retry can then recover.
+  await openSafeAccount(page, fixture, { failSafeInfoRequests: 2, incomingTransfers: [] })
   await expect(page.locator('[data-test="safe-deposits-empty"]')).toBeVisible()
   await expect(page.locator('[data-test="safe-overview-error"]')).toBeVisible({ timeout: 15_000 })
   await expect(page.locator('[data-test="safe-total-usd"]')).toHaveText('$2.00')
