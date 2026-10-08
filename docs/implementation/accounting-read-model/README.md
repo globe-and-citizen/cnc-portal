@@ -70,16 +70,20 @@ flowchart LR
 ```
 
 `useCNCAccounting` calls the on-chain, Safe, and portal queries directly and owns their reactive state. It exposes only the journal, a
-grouped status, and a refresh operation. `useAccountingStatus` projects each applicable source into `loading`, `ready`, `partial`, or
-`failed`; a source that does not apply is `not-applicable`. A fatal company failure takes precedence, then loading, then partial evidence.
-Contract event feeds retain their domain events and completeness gaps together as `{ events, gaps, timestampGaps }` in the standard TanStack
-query `data`. Only `ready` mounts the nested reports, so a balanced subset cannot be mistaken for final books. Typed diagnostics identify
-source errors, contract-scan gaps, unavailable block timestamps, orphan fees, receipt failures, unavailable rates, and asset classification
-or basis gaps. The parent Accounting route remains mounted while its report child changes, so the shared context prevents those reports from
-independently fetching and assembling the same books. The team workspace gives that route owner a stable key within one team and a new key
-when the team identifier changes. Its three pure runtime stages are `buildCncJournalEntryDrafts(CncAccountingInput)`,
-`applyHistoricalRates(drafts, rateOfRecord)`, and `assembleWithAccountEvidence(drafts, deploymentAccounts, evidence, accountAssignments)`,
-which returns the journal and reconciliation diagnostics without Vue or network I/O.
+grouped status, and a refresh operation. Pure [generation resolution](../../../app/src/utils/accounting/contractGenerations.ts) owns
+contract grouping, current-generation preference, and scan boundaries;
+[source-status utilities](../../../app/src/utils/accounting/sourceStatus.ts) own source definitions and availability projection. The
+composables own computed dependencies and query orchestration. `useAccountingStatus` projects each applicable source into `loading`,
+`ready`, `partial`, or `failed`; a source that does not apply is `not-applicable`. A fatal company failure takes precedence, then loading,
+then partial evidence. Contract event feeds retain their domain events and completeness gaps together as `{ events, gaps, timestampGaps }`
+in the standard TanStack query `data`. Only `ready` mounts the nested reports, so a balanced subset cannot be mistaken for final books.
+Typed diagnostics identify source errors, contract-scan gaps, unavailable block timestamps, orphan fees, receipt failures, unavailable
+rates, and asset classification or basis gaps. The parent Accounting route remains mounted while its report child changes, so the shared
+context prevents those reports from independently fetching and assembling the same books. The team workspace gives that route owner a stable
+key within one team and a new key when the team identifier changes. Its three pure runtime stages are
+`buildCncJournalEntryDrafts(CncAccountingInput)`, `applyHistoricalRates(drafts, rateOfRecord)`, and
+`assembleWithAccountEvidence(drafts, deploymentAccounts, evidence, accountAssignments)`, which returns the journal and reconciliation
+diagnostics without Vue or network I/O.
 
 Community Credit offer IDs and lifecycle balances are scoped by FixedReturn contract address because IDs restart after redeployment. The
 creation event supplies each generation's token and fixed-return basis points; Accounting does not borrow current-contract terms for old
@@ -103,11 +107,12 @@ refetching successful dates. It never falls back to the current market price. St
 under its separate multiplier realization policy.
 
 Safe histories now refresh approximately every five minutes while retaining complete pagination and stable transfer identities. Missing
-historical rates are retried on the same cadence; successful immutable date snapshots are reused. Current contract markets use a five-minute
-cache, and verified coin identities and recovered token metadata use a 24-hour cache. Safe and CoinGecko reads pass through separate paced
-browser queues with provider-wide pauses within the session after HTTP 429. This changes loading and recovery cadence, not source inclusion,
-exchange classification, precision, or rate-of-record policy. A failed later Safe page never publishes a partial replacement feed. See
-[Client Data Access](../client-data-access/README.md#browser-request-coordination) for the session-only boundary.
+historical rates are retried once a day for an unchanged target set, or on explicit Accounting refresh; successful immutable date snapshots
+are reused. Current contract markets use a five-minute cache, and verified coin identities and recovered token metadata use a 24-hour cache.
+Safe and CoinGecko reads pass through separate paced browser queues with provider-wide pauses within the session after HTTP 429. This
+changes loading and recovery cadence, not source inclusion, exchange classification, precision, or rate-of-record policy. A failed later
+Safe page never publishes a partial replacement feed. See [Client Data Access](../client-data-access/README.md#browser-request-coordination)
+for the session-only boundary.
 
 Each contract-event query is also keyed by its normalized generation targets: lowercase address plus effective deployment `fromBlock`,
 sorted independently of API order. A later or asynchronously resolved boundary therefore selects a distinct history range. Duplicate
@@ -119,15 +124,16 @@ ordering, and `InvestorV1` is used only when no current `Investor` exists.
 
 ### Safe assets and exchanges
 
-The authoritative Safe source is `/transfers/`, paginated to exhaustion, deduplicated by service `transferId`, and refreshed every minute.
-It includes real ERC-20 `transferFrom` settlements that cannot be inferred from the Safe multisig call's top-level calldata. Missing token
-metadata is read from its contract when possible. Metadata must match the transfer's contract address; unsupported or absent decimals retain
-raw movements with a completeness diagnostic. The exact monetary layer currently supports token precision from zero through 18 decimals. A
-larger precision remains unavailable rather than being silently rounded or interpreted as native.
+The authoritative Safe source is `/transfers/`, paginated to exhaustion, deduplicated by service `transferId`, and refreshed approximately
+every five minutes. It includes real ERC-20 `transferFrom` settlements that cannot be inferred from the Safe multisig call's top-level
+calldata. Missing token metadata is read from its contract when possible. Metadata must match the transfer's contract address; unsupported
+or absent decimals retain raw movements with a completeness diagnostic. The exact monetary layer currently supports token precision from
+zero through 18 decimals. A larger precision remains unavailable rather than being silently rounded or interpreted as native.
 
 Dynamic assets carry an `erc20:<chainId>:<contractAddress>` identity and per-movement metadata. The fixed CNC payment allowlist is
-unchanged. Contract-address market discovery resolves the provider coin identity before historical snapshots are requested. Missing market
-coverage or rate limits remain retryable gaps; current prices are used only in the Safe portfolio.
+unchanged. Contract-address market discovery on Polygon resolves the provider coin identity before historical snapshots are requested. Local
+and test-network assets retain their own identities and cannot borrow Polygon market evidence. Missing market coverage or rate limits remain
+retryable gaps; current prices are used only in the Safe portfolio.
 
 `SAFE-SWAP` matches opposing different-asset movements with the same transaction and external counterparty. Complex or unmatched multi-asset
 operations are flagged for classification instead of treating their receipts as service revenue. Token mints in the same transaction are
@@ -153,7 +159,8 @@ inspection; the rounding and logo metadata do not alter source movements, accoun
 Implementation: [asset identity](../../../app/src/utils/tokens/assets.ts),
 [exchange carrying-value replay](../../../app/src/utils/accounting/safeExchanges.ts),
 [contract market discovery](../../../app/src/queries/assetMarket.queries.ts),
-[Safe portfolio](../../../app/src/composables/safe/useSafePortfolio.ts), and
+[Safe portfolio](../../../app/src/composables/safe/useSafePortfolio.ts),
+[discovered balance query](../../../app/src/queries/safePortfolio.queries.ts), and
 [exchange regression tests](../../../app/src/utils/accounting/__tests__/safeExchanges.spec.ts) and
 [market-rate regressions](../../../app/src/utils/accounting/__tests__/safeExchanges.marketRates.spec.ts).
 
@@ -684,7 +691,7 @@ because deposits and company-pocket transfers are not manual assignment targets.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `f5294816472dea0d1966d24752f544aa71bc48a7`
+**Implementation evidence reviewed against:** `54c4b55f0b713ec1f1fb108865138bbcf1e68479`
 
 - [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts),
   [source-status projection](../../../app/src/composables/accounting/useAccountingStatus.ts),

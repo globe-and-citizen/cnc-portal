@@ -1131,7 +1131,7 @@ movement across the participating stories.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `f5294816472dea0d1966d24752f544aa71bc48a7`
+**Implementation evidence reviewed against:** `54c4b55f0b713ec1f1fb108865138bbcf1e68479`
 
 - [Bank deposit modal](../../../app/src/components/sections/BankView/forms/DepositModal.vue),
   [Bank transfer modal](../../../app/src/components/sections/BankView/forms/TransferModal.vue),
@@ -1228,12 +1228,13 @@ token's decimals. Their raw transfer objects retain the contract address and tra
 the indexed event sender, not proof of who signed the outer transaction. Incoming assets do not require Safe signer approval, and a
 displayed name or symbol does not establish a token's authenticity.
 
-The original `Token Holding` presentation is retained, with `RANK`, `Token`, `Amount`, `Coin Price`, and `Balance` columns. Additional
-assets use the same compact valuation format and unit-price suffix as the supported currencies. Token identities show their symbol on one
-line (for example, DAI), with the full name and contract address available on hover. Amounts show up to four decimal places with trailing
-zeros trimmed; the exact quantity remains available on hover. A positive quantity below the displayed precision reads `<0.0001` rather than
-zero. The three base currencies keep their existing logos; additional tokens use the logo from matching Safe metadata or verified
-contract-based market metadata. Missing or failed images use a neutral initial.
+Bank, Payroll, Expense Account, and Safe use the same presentation-only holdings component. Their pages pass prepared rows and loading
+state; Safe also passes valuation completeness. The original `Token Holding` presentation is retained, with `RANK`, `Token`, `Amount`,
+`Coin Price`, and `Balance` columns. Additional assets use the same compact valuation format and unit-price suffix as the supported
+currencies. Token identities show their symbol on one line (for example, DAI), with the full name and contract address available on hover.
+Amounts show up to four decimal places with trailing zeros trimmed; the exact quantity remains available on hover. A positive quantity below
+the displayed precision reads `<0.0001` rather than zero. The three base currencies keep their existing logos; additional tokens use the
+logo from matching Safe metadata or verified contract-based market metadata. Missing or failed images use a neutral initial.
 
 Each holding retains its currency, exact quantity, contract identity, and available current valuation in the selected display currency
 independently of the tokens allowed in CNC payment forms. An unavailable balance or price remains explicit, including while the first
@@ -1253,19 +1254,20 @@ browser cache for 30 minutes. Small randomized offsets spread periodic requests;
 polling. Safe and market reads are paced separately in the browser and pause after HTTP 429 responses. See
 [Client Data Access](../../implementation/client-data-access/README.md#browser-request-coordination) for recovery and session boundaries.
 
-Confirmed Safe transaction execution and directly executed transfers invalidate supported and discovered balances together, plus the
-complete incoming, outgoing, and settlement-transfer histories. A proposal refreshes the transaction queue without treating it as a
-completed transfer. Histories can remain behind the chain until the Safe Transaction Service indexes the operation; periodic refreshes
-continue to reconcile them. Existing balance invalidations also reach the discovered portfolio because both use the canonical balance-key
-prefix. Other account surfaces retain their existing balance cadence.
+Confirmed Safe transaction execution and directly executed transfers use one invalidation helper for all Safe service queries and the wallet
+balance prefix shared by supported and discovered holdings. A proposal refreshes the transaction queue without treating it as a completed
+transfer. Histories can remain behind the chain until the Safe Transaction Service indexes the operation; periodic refreshes continue to
+reconcile them. Existing balance invalidations also reach the discovered portfolio because both use the canonical balance-key prefix. Other
+account surfaces retain their existing balance cadence.
 
-Executable evidence: [discovered holdings tests](../../../app/src/components/sections/SafeView/__tests__/SafeAssetHoldings.spec.ts),
+Executable evidence: [discovered holdings tests](../../../app/src/components/ui/__tests__/TokenHoldingsSection.safe.spec.ts),
 [overview tests](../../../app/src/components/sections/SafeView/__tests__/SafeBalanceSection.rendering.spec.ts), and
 [portfolio query tests](../../../app/src/composables/safe/__tests__/useSafePortfolio.spec.ts).
 
 Implementation: [Safe portfolio](../../../app/src/composables/safe/useSafePortfolio.ts),
+[discovered-asset query](../../../app/src/queries/safePortfolio.queries.ts),
 [shared balance reads](../../../app/src/composables/useContractBalance.ts),
-[unified asset holdings](../../../app/src/components/sections/SafeView/SafeAssetHoldings.vue),
+[unified asset holdings](../../../app/src/components/ui/TokenHoldingsSection.vue),
 [holdings presentation](../../../app/src/utils/safe/portfolio.ts),
 [holdings presentation tests](../../../app/src/utils/safe/__tests__/portfolio.spec.ts), and
 [contract asset identities](../../../app/src/utils/tokens/assets.ts). Human validation of external swaps remains pending.

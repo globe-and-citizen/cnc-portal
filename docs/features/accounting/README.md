@@ -788,13 +788,14 @@ applicable stories `Done`.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `f5294816472dea0d1966d24752f544aa71bc48a7`
+**Implementation evidence reviewed against:** `54c4b55f0b713ec1f1fb108865138bbcf1e68479`
 
 - [Accounting page](../../../app/src/components/sections/AccountingView/AccountingPage.vue),
   [team routes](../../../app/src/router/index.ts), and [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts)
 - [Source completeness](../../../app/src/utils/accounting/accountingCompleteness.ts),
   [block timestamps](../../../app/src/queries/blockTimestamp.queries.ts), and
-  [historical valuation](../../../app/src/queries/historicalTokenRate.queries.ts)
+  [historical valuation](../../../app/src/queries/historicalTokenRate.queries.ts) (successful date snapshots are immutable; unchanged
+  missing-date sets retry daily or on explicit refresh)
 - [Accounting assembly](../../../app/src/utils/accounting/assemble.ts),
   [journal finalization](../../../app/src/utils/accounting/journalEntry.ts), and
   [General Ledger presenter](../../../app/src/utils/accounting/journalLedgerPresenter.ts)

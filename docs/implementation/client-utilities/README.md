@@ -75,11 +75,24 @@ flowchart LR
 ### Read-only asset identities
 
 [Asset identities and metadata](../../../app/src/utils/tokens/assets.ts) distinguish the fixed payment `TokenId` allowlist from arbitrary
-ERC-20 assets observed by Safe. Unknown contracts retain their network/address identity, and missing decimals remain explicit. Optional
-display logos retain only HTTPS URLs without embedded credentials from metadata matching the contract address. Accounting carries metadata
-with its raw movements and uses exact carrying values for Safe exchanges; it never reuses native metadata for an unknown ERC-20. The
-canonical `formatExactNumber` formatter preserves all decimal token digits through display without a JavaScript floating-point conversion.
-See the [Accounting read model](../accounting-read-model/README.md) for carrying-basis and classification boundaries.
+ERC-20 assets observed by Safe. Read-only discovery always keys a contract as `erc20:<chainId>:<lowercase-address>`; names and symbols never
+establish identity. The fixed payment `TokenId` resolver recognizes configured contracts separately. Discovery excludes only contracts
+already covered by the supported-balance reader: a recognized USDT/USDT0 contract outside that reader still appears as a discovered holding.
+The same address on Hardhat and Polygon represents two different assets.
+
+Missing precision is an evidence state, not an assumption that normal ERC-20 tokens have no decimals. The Safe service can return null
+`tokenInfo`, metadata for another address, or noninteger/out-of-range decimals. Matching-contract metadata is recovered with an on-chain
+`decimals()` read; a reverted call, non-ERC-20 contract, unavailable RPC, or precision above the current 18-decimal accounting limit leaves
+precision unavailable. Zero decimals is valid. Raw amounts and contract identities remain visible, without assuming 18 or native units.
+Optional display logos retain only HTTPS URLs without embedded credentials from metadata matching the contract address. Accounting carries
+metadata with its raw movements and uses exact carrying values for Safe exchanges; it never reuses native metadata for an unknown ERC-20.
+The canonical `formatExactNumber` formatter preserves all decimal token digits through display without a JavaScript floating-point
+conversion. See the [Accounting read model](../accounting-read-model/README.md) for carrying-basis and classification boundaries.
+
+[Shared holdings rows](../../../app/src/utils/tokens/holdings.ts) shape supported balances for the presentation-only
+[holdings table](../../../app/src/components/ui/TokenHoldingsSection.vue). Bank, Payroll, and Expense fetch their balances in the page; Safe
+prepares combined portfolio rows in its page. The table owns display, sorting, and failed-image fallback, with no balance query.
+[Safe asset discovery](../../../app/src/utils/safe/assetDiscovery.ts) deduplicates contract metadata without reactive dependencies.
 
 [Safe holdings presentation](../../../app/src/utils/safe/portfolio.ts) combines the fixed supported currencies with discovered holdings.
 Supported currencies retain their configured order and remain present at zero or unavailable balance. Additional holdings are deduplicated
@@ -98,7 +111,7 @@ post-confirmation balance invalidations reach both. [Currency prices](../../../a
 currency payload and conversions while adopting the five-minute market cache and paced browser reads described in
 [Client Data Access](../client-data-access/README.md#browser-request-coordination).
 
-**Implementation evidence reviewed against:** `f5294816472dea0d1966d24752f544aa71bc48a7`
+**Implementation evidence reviewed against:** `54c4b55f0b713ec1f1fb108865138bbcf1e68479`
 
 - [Utility ownership map and domain implementations](../../../app/src/utils/)
 - [Shared Accounting domain contracts](../../../app/src/utils/accounting/types.ts)

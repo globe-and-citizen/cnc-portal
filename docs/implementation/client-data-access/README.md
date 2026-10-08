@@ -34,11 +34,13 @@ flowchart LR
 ### Contract-based asset markets
 
 [Asset market discovery](../../../app/src/queries/assetMarket.queries.ts) verifies the provider platform and contract address before
-returning an asset's coin identity, current USD price, or optional display logo. Valid HTTPS image URLs come from that same verified
-contract response and remain available even when its price is missing. Safe metadata logos survive matching-contract RPC metadata
-enrichment. Coin identity is cached independently from periodically refreshed prices. Historical rates continue to use immutable coin/date
-snapshots. Safe transfer history is paginated and deduplicated using the service transfer identity; later-page failures reject the whole
-history. The read-only Safe portfolio is independent of CNC payment allowlists.
+returning an asset's coin identity, current USD price, or optional display logo. Contract market lookup supports Polygon (137) only;
+Hardhat, Amoy, Sepolia, and other networks fail explicitly before sending a provider request. Test contracts never inherit Polygon prices by
+address or symbol. Valid HTTPS image URLs come from that same verified contract response and remain available even when its price is
+missing. Safe metadata logos survive matching-contract RPC metadata enrichment. Coin identity is cached independently from periodically
+refreshed prices. Historical rates continue to use immutable coin/date snapshots. Safe transfer history is paginated and deduplicated using
+the service transfer identity; later-page failures reject the whole history. The read-only Safe portfolio is independent of CNC payment
+allowlists.
 
 Incoming deposits retain the service's raw transfer objects. An ERC-20 deposit without `tokenInfo` displays `Token amount unavailable`; the
 raw object retains the token contract, transaction hash, and value. Missing metadata does not establish token reputation or identify the
@@ -61,16 +63,27 @@ the same cadence, do not poll in background tabs, and do not refetch on window f
 trigger automatic retries. Safe reads and supported-price observers allow one delayed retry for transient failures; imperative market,
 historical and token-metadata reads recover on a subsequent refresh instead of retrying each failed request.
 
-Historical target sets retry missing snapshots every five minutes without requesting already successful dates again. Full Safe pagination is
-retained on each history refresh; this change does not implement incremental synchronization. A later-page failure leaves the previous
-successful query result in cache and rejects the incomplete replacement.
+Unchanged historical target sets retry missing snapshots once a day, with daily cache retention and no window-focus refresh, without
+requesting already successful dates again. A newly required date is fetched when its target set changes; an explicit Accounting refresh can
+retry unavailable dates immediately. Full Safe pagination is retained on each history refresh; this change does not implement incremental
+synchronization. A later-page failure leaves the previous successful query result in cache and rejects the incomplete replacement.
+
+External reads remain necessary on this runtime: Safe history and CoinGecko market data are HTTP provider resources, while ERC-20 balances
+are RPC contract reads. A balance read cannot replace transfer pagination or market prices. The current backend exposes no replacement
+provider-read routes; currency prices, contract markets, and historical snapshots therefore share the browser coordination utility. It
+prevents each consumer from implementing its own pacing and 429 handling.
+
+[Discovered Safe balance queries](../../../app/src/queries/safePortfolio.queries.ts) expose standard TanStack state and delegate their async
+reads to `fetchSafePortfolioAssets`. The portfolio composable combines that query with supported balances and complete history. Confirmed
+operations use [one Safe invalidation helper](../../../app/src/queries/safe.mutations.ts) for the entire Safe service prefix and the
+affected wallet's on-chain balance prefix. Proposals refresh only pending transactions until execution.
 
 The queues and caches belong to one browser session. They do not coordinate separate users, tabs, devices, or backend instances, and do not
 guarantee that provider quotas can absorb concurrent users.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `f5294816472dea0d1966d24752f544aa71bc48a7`
+**Implementation evidence reviewed against:** `54c4b55f0b713ec1f1fb108865138bbcf1e68479`
 
 - [Query barrel](../../../app/src/queries/index.ts), [query factory](../../../app/src/queries/queryFactory.ts), and
   [single-file upload query](../../../app/src/queries/file.queries.ts)
