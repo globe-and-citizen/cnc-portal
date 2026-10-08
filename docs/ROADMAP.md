@@ -35,7 +35,7 @@ deployment automation and monitoring), with full-scale launch in Q3 2026 (M9).
 
 ## 4. Milestone Deep-Dives
 
-> M1–M4 are fully complete. See [Implementation Status](./03_IMPLEMENTATION_STATUS.md) for the full feature-level breakdown.
+> Feature-level product status belongs in the [Product Feature Inventory](./features/README.md) and its canonical feature READMEs.
 
 ---
 
@@ -206,7 +206,7 @@ corporation.
 
 | Document                                               | Purpose                                     |
 | ------------------------------------------------------ | ------------------------------------------- |
-| [Implementation Status](./03_IMPLEMENTATION_STATUS.md) | Feature-level delivery tracking             |
+| [Product Feature Inventory](./features/README.md) | Current user-accessible capabilities and canonical feature documentation |
 | [Project Charter](./01_PROJECT_CHARTER.md)             | Vision, objectives, business rules          |
 | [Security Audit](../contract/SECURITY_AUDIT.md)        | Full findings with remediation code samples |
 | [Architecture Overview](./platform/architecture.md)    | System components and tech stack            |

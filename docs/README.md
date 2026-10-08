@@ -12,8 +12,8 @@ rules belong in platform guides, and code and tests remain executable evidence.
 5. [Feature Documentation Guide](./platform/feature-specification-guide.md) — authoring and human review contract.
 6. [Contribution Guide](../CONTRIBUTION.md) — repository workflow and validation.
 
-The [Implementation Status](./03_IMPLEMENTATION_STATUS.md) and [Roadmap](./ROADMAP.md) are dated planning snapshots. Verify current delivery
-in the relevant feature README, code, tests, and GitHub state before relying on a status claim.
+The [Roadmap](./ROADMAP.md) describes strategic direction. Use the relevant feature README for product status and GitHub issues and pull
+requests for current delivery state.
 
 ## Documentation Ownership
 
