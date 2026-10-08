@@ -55,14 +55,8 @@ app/.env.production
 /reviews/
 /archi-update.md
 
-# Generated acceptance-criterion coverage reports (local only)
-/reports/acceptance-coverage/
-
-# Local agent planning scratchpad (never committed)
-/reports/planning.md
-
-# Generated autonomous-agent audit reports (published as workflow artifacts or GitHub issues)
-/reports/agent-audits/
+# Local reports and agent planning scratchpads (never committed)
+/reports/
 
 # Keep .claude local (settings, worktrees, …) but share committed agent skills
 .claude/*
