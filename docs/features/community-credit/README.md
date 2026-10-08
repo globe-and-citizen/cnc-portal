@@ -20,6 +20,10 @@ Deposits remain in the Credit Account while a round is raising. Reaching the tar
 the principal to the company Bank. Refunds and repayments are pushed to every lender by an issuer transaction; lenders do not claim them
 individually. The round name and purpose are stored off-chain, while its financial terms and settlement state remain on-chain.
 
+The [direct asset movement product contract](../accounting/direct-movement-policy.md) defines company custody, unsolicited receipts,
+historical coverage, classification, and reconciliation across domains. Its target behaviour remains pending implementation; new ACs are
+unchecked.
+
 ## Lifecycle
 
 ```mermaid
@@ -58,7 +62,7 @@ reference has the expected layer label.
 
 | User Story | Main Journey  | Coverage Target | Gaps                                                                                                                                                                                                                                                                                                                              |
 | ---------- | ------------- | --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| US-CC-001  | ✅ Integrated | ❌ 0/7 met      | `AC-US-CC-001-01–07`                                                                                                                                                                                                                                                                                                              |
+| US-CC-001  | ✅ Integrated | ❌ 0/9 met      | `AC-US-CC-001-01`, `AC-US-CC-001-02`, `AC-US-CC-001-03`, `AC-US-CC-001-04`, `AC-US-CC-001-05`, `AC-US-CC-001-06`, `AC-US-CC-001-07`, `AC-US-CC-001-08`, `AC-US-CC-001-09`                                                                                                                                                         |
 | US-CC-002  | ✅ Integrated | ⚠️ 2/18         | `AC-US-CC-002-01`, `AC-US-CC-002-02`, `AC-US-CC-002-03`, `AC-US-CC-002-04`, `AC-US-CC-002-05`, `AC-US-CC-002-06`, `AC-US-CC-002-07`, `AC-US-CC-002-08`, `AC-US-CC-002-09`, `AC-US-CC-002-10`, `AC-US-CC-002-11`, `AC-US-CC-002-12`, `AC-US-CC-002-16`, `AC-US-CC-002-13`, `AC-US-CC-002-14`, `AC-US-CC-002-15`                    |
 | US-CC-003  | ✅ Integrated | ❌ 0/12         | `AC-US-CC-003-01`, `AC-US-CC-003-02`, `AC-US-CC-003-03`, `AC-US-CC-003-04`, `AC-US-CC-003-05`, `AC-US-CC-003-06`, `AC-US-CC-003-07`, `AC-US-CC-003-08`, `AC-US-CC-003-09`, `AC-US-CC-003-10`, `AC-US-CC-003-12`, `AC-US-CC-003-11`                                                                                                |
 | US-CC-004  | ✅ Integrated | ❌ 0/8          | `AC-US-CC-004-01`, `AC-US-CC-004-02`, `AC-US-CC-004-03`, `AC-US-CC-004-04`, `AC-US-CC-004-05`, `AC-US-CC-004-06`, `AC-US-CC-004-07`, `AC-US-CC-004-08`                                                                                                                                                                            |
@@ -82,12 +86,15 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 - [x] `AC-US-CC-001-01` Each round exposes its purpose, token, target, amount raised, flat rate, access mode, dates, and current status.
 - [ ] `AC-US-CC-001-02` A lender can distinguish their own deposited and expected-return positions from the issuer's total debt figures.
 - [x] `AC-US-CC-001-03` An opened round exposes its lender breakdown, settlement progress, and matching on-chain activity.
+- [ ] `AC-US-CC-001-08` A member can inspect direct FixedReturn asset movements and unallocated holdings with the same evidence as
+      Accounting.
 
 #### Business Rules
 
 - [ ] `AC-US-CC-001-04` Rounds that still require an issuer action remain accessible separately from settled rounds.
 - [x] `AC-US-CC-001-05` Account-level statistics (outstanding principal, interest due, lifetime raised, lifetime repaid) are grouped and
       displayed per token; amounts from different tokens are never summed into a single figure.
+- [ ] `AC-US-CC-001-09` A transfer without credit-round evidence changes neither a lender position nor a round's funded or repaid amount.
 
 #### Edge & Error Cases
 
@@ -106,6 +113,20 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 | `AC-US-CC-001-05`    | `PS-FRONTEND`              | Frontend         | ⚠️ Insufficient |
 | `AC-US-CC-001-06`    | `PS-BROWSER`               | None linked      | ❌ Missing      |
 | `AC-US-CC-001-07`    | `PS-BROWSER`               | Frontend         | ⚠️ Insufficient |
+| `AC-US-CC-001-08`    | `PS-BACKEND`               | None linked      | ❌ Missing      |
+| `AC-US-CC-001-08`    | `PS-FULL-STACK-INTEGRATED` | None linked      | ❌ Missing      |
+| `AC-US-CC-001-09`    | `PS-BACKEND`               | None linked      | ❌ Missing      |
+| `AC-US-CC-001-09`    | `PS-CONTRACT`              | None linked      | ❌ Missing      |
+| `AC-US-CC-001-09`    | `PS-FULL-STACK-INTEGRATED` | None linked      | ❌ Missing      |
+
+### Direct Movement Scenarios
+
+Target behaviour follows the [direct movement policy](../accounting/direct-movement-policy.md). Each row represents the same evidenced
+movement across the participating stories.
+
+| Scenario                                                                                                                                                                                                        | This story owns                                    | Related stories and roles                                                                                                                                                                                                                              |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| External tokens reach FixedReturn without a credit-round operation or established purpose. [UC-TREASURY-002](../accounting/journal-entry-catalogue.md#uc-treasury-002--external-receipt-pending-classification) | Separates unallocated holdings from credit rounds. | [US-ACCT-007](../accounting/README.md#us-acct-007-review-direct-treasury-movements) — owns movement evidence and identity; [US-ACCT-010](../accounting/README.md#us-acct-010-classify-direct-external-receipts) — owns eligible receipt classification |
 
 ## US-CC-002: Publish a Credit Call
 
@@ -365,6 +386,9 @@ transaction remain one General Ledger entry.
 
 ## Known Gaps
 
+- Direct ERC-20 receipts outside a credit call are absent from the round-event-driven history and Accounting feed. Unallocated holdings,
+  their custody classification, and their separation from protocol obligations need representative integrated proof (`AC-US-CC-001-08–09`).
+
 The following verified gaps have technical evidence and remediation directions in the
 [detailed flow and implementation analysis](./user-flow-analysis.md#8-findings).
 
@@ -397,9 +421,9 @@ The following verified gaps have technical evidence and remediation directions i
 - [Credit round read states](../../../app/src/components/sections/CommunityCreditView/CreditRoundReadState.vue)
 - [Community Credit store](../../../app/src/stores/communityCredit.ts)
 - [Community Credit reads](../../../app/src/composables/fixedReturn/reads.ts)
-- [FixedReturn query-key factory](../../../app/src/composables/fixedReturn/keys.ts)
+- [FixedReturn query-key factory](../../../app/src/composables/fixedReturn/reads.ts)
 - [FixedReturn mutation cache invalidation](../../../app/src/composables/fixedReturn/invalidation.ts)
-- [Connected lender's live offering derivation](../../../app/src/composables/fixedReturn/useMyLenderOffering.ts)
+- [Connected lender position reads](../../../app/src/composables/fixedReturn/reads.ts)
 - [Bank reads (owner and paused state, gating repayment)](../../../app/src/composables/bank/reads.ts)
 - [Repayment amount validation](../../../app/src/types/communityCredit.schemas.ts)
 - [Repayment lifecycle status](../../../app/src/utils/communityCredit/roundStatus.ts)

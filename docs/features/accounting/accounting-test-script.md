@@ -1,9 +1,9 @@
 # Accounting Model — Manual Validation Script
 
-Use this script to run concrete examples from the [journal-entry catalogue](./journal-entry-catalogue.md#use-case-to-story-map): identify
-the economic use case from the situation, locate its related user stories, and check the applicable rules and entry. The `UC-<DOMAIN>-<NNN>`
-and `RULE-*` identifiers are proposed names, not current runtime values. Run these checks against a build that implements the proposed
-model; until then, record each affected case as **Blocked**.
+Use this script to run concrete examples from the [use-case overview](./journal-entry-catalogue.md#use-case-overview): identify the economic
+use case from the situation, open its section, match the scenario and all its participating user stories, and check the applicable rules and
+entry. The `UC-<DOMAIN>-<NNN>` and `RULE-*` identifiers are proposed names, not current runtime values. Run these checks against a build
+that implements the proposed model; until then, record each affected case as **Blocked**.
 
 USD values below are illustrative. Use the same token for both sides of each example, confirm its rate of record, and record the actual
 transaction hash and displayed General Ledger entry.
@@ -142,7 +142,9 @@ Compare the Safe-to-Payroll transfer in Scenario 1 with Bank funding Payroll and
 
 - [ ] Each pure internal pocket movement uses `UC-TREASURY-001` and applies `RULE-INTERNAL`.
 - [ ] Each entry names its actual source and destination deployment accounts while keeping the same accounting meaning.
-- [ ] The stories remain separately traceable to their own transaction hashes.
+- [ ] For each shared movement, all participating stories refer to the same transaction hash and the same complete journal entry.
+- [ ] The UC scenario row lists the initiating and receiving stories together; each canonical story links to the shared scenario and the
+      other participating story.
 
 ## Domain Examples
 
@@ -257,6 +259,38 @@ balanced entry:
 - [ ] The release and forfeiture amounts remain separately traceable within the operation.
 - [ ] A stop with only one non-zero outcome posts only that outcome; a stop with neither creates no cancellation or release lines.
 - [ ] Matching Investor mint evidence does not create a duplicate share issuance.
+
+## Direct Movement Coverage
+
+These are target scenarios for [US-ACCT-007–010](README.md#us-acct-007-review-direct-treasury-movements) and the
+[contract/domain inventory](direct-movement-policy.md#contract-and-domain-coverage). Record them as **Blocked** until implemented. Use a
+representative real chain operation and reload the resulting domain history, ledger, and reports; a mocked feed is not source-to-book proof.
+
+| Scenario                                                                                                                | Required observable result                                                                                                                            |
+| ----------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| External native receipt at Bank, Safe, Payroll, Expense, Investor, or Campaign where accepted                           | One detected movement, correct deployment and quantity, no assumed Bank source or domain allocation; unknown purpose selects UC-TREASURY-002.         |
+| Plain ERC-20 receipt at each inventory destination, including Credit, Router, Vesting and a company governance contract | Same movement in domain/contract history and Accounting; unallocated/restricted holdings remain distinct from available funds and domain obligations. |
+| Native send rejected by a nonpayable destination                                                                        | No receipt or journal entry is created for the failed attempt.                                                                                        |
+| Native balance change without a business event                                                                          | Use sufficient chain evidence when available; otherwise show incomplete coverage and a quantity difference without inventing a transfer.              |
+| Supported-token removal followed by history refresh                                                                     | Historical movements and balances remain attributable; current spending eligibility remains separate.                                                 |
+| Unknown ERC-20, own-company SHER, NFT, or missing price                                                                 | Preserve discovered identity/quantity and the applicable exclusion or missing valuation; do not invent cash value or completeness.                    |
+| Two direct transfers of the same token in one transaction                                                               | Keep two movement identities and independent receipt classification; repeating sync creates neither a duplicate nor a dropped movement.               |
+| A business event and its raw transfer describe one movement                                                             | Retain one posting under the specific economic UC; preserve all evidence links.                                                                       |
+| Router receives tokens directly, then owner recovers them to Safe                                                       | No SHER is minted by the direct receipt; recovery is UC-TREASURY-001, retains receipt traceability, and creates no second external receipt.           |
+| Direct Credit, Investor, Campaign, or Vesting receipt                                                                   | No loan subscription, shares, dividend distribution, campaign budget, or vesting entitlement is fabricated from the receipt.                          |
+| Receipt at shared FeeCollector or infrastructure                                                                        | No company custody is inferred; only a confirmed company fee is attached to its parent operation.                                                     |
+| Previous generation receives funds after replacement                                                                    | Correct historical deployment identity; same transaction evidence after refresh, without reassignment to the current contract.                        |
+| Owner reviews a receipt, selects an eligible default, or changes one classification                                     | Permissions, account allowlist, pending/automatic modes, audit fields, original valuation and cash leg are preserved.                                 |
+| Member or invalid-account classification attempt                                                                        | Reject without changing the policy or journal.                                                                                                        |
+| Enable new policy with existing Service Revenue entries                                                                 | Preserve earlier classifications; explicit owner reclassification retains the previous account and reason.                                            |
+| Off-platform deposit, failed refresh, and retry                                                                         | Discover at next requested sync; retain the last complete snapshot on failure, expose freshness, and converge once without duplicates.                |
+| Same-block quantity reconciliation                                                                                      | Compare each deployment and asset; identify bounded divergence, restricted holdings, and missing evidence; create no automatic balancing entry.       |
+| Chain revision invalidates a classified receipt                                                                         | Invalidate dependent classification and completeness, retain audit history, and verify replacement evidence before final reporting.                   |
+| Plain Bank receipt without facture evidence                                                                             | Bank and Accounting retain the movement; Payment Gate creates no invoice association.                                                                 |
+
+For each shared scenario, inspect every participating story from the UC table. Record the same source operation and movement identifiers,
+complete journal entry, original asset quantity, verified block, and classification state across their views. Ordinary business operations
+with missing canonical posting rules remain separate gaps rather than being forced into these fallback cases.
 
 ## Reconcile the Reports
 
