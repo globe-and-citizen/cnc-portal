@@ -41,11 +41,8 @@ import { useGetSafeTransfersQuery } from '@/queries/safe.queries'
 import { useGetTeamWeeklyClaimsQuery } from '@/queries/weeklyClaim.queries'
 import { useHistoricalTokenRatesQuery } from '@/queries/historicalTokenRate.queries'
 import { useTransactionEvidence } from './useTransactionEvidence'
-import {
-  accountingEventSource,
-  accountingQuerySource,
-  useAccountingStatus
-} from './useAccountingStatus'
+import { useAccountingStatus } from './useAccountingStatus'
+import { accountingEventSource, accountingQuerySource } from '@/utils/accounting/sourceStatus'
 import {
   assembleWithAccountEvidence,
   buildCncJournalEntryDrafts,
