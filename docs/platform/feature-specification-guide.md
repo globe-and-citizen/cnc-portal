@@ -75,7 +75,8 @@ source operation across feeds so that it does not create duplicate accounting en
 
 For a Bank transfer to Expense or Payroll, `US-BANK-002` owns the transfer and its fee. The destination funding story owns the account
 balance and spendability. A direct wallet deposit has no Bank initiation story, so the destination funding story owns that path. The
-[treasury flow map](../features/accounts/treasury-flow-map.md) records these links as a concrete example.
+[internal-transfer UC scenarios](../features/accounting/journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer) record
+these links as a concrete example, with reciprocal references in each participating story.
 
 ## Location and Naming
 

@@ -2,7 +2,7 @@
 
 **Scope:** Economic use cases that produce company accounting entries, with selection conditions, related user stories, and posting rules
 
-**Status:** Proposed catalogue model; current-runtime correspondence is documented separately below
+**Status:** Target product catalogue; runtime implementation and human validation remain pending
 
 **Last reviewed:** Not yet reviewed
 
@@ -11,7 +11,7 @@ This catalogue covers **events that produce accounting entries**. Identify the e
 document owns their accounting interpretation. The [Accounting Read Model](../../implementation/accounting-read-model/README.md) owns shared
 implementation mechanics.
 
-The `UC-<DOMAIN>-<NNN>` and `RULE-*` identifiers below define the proposed model, not current runtime values. Domain posting examples
+The `UC-<DOMAIN>-<NNN>` and `RULE-*` identifiers below define the target product model, not current runtime values. Domain posting examples
 preserve existing behaviour unless a change is explicitly identified. Separating use cases from reusable rules and introducing suspense
 accounts require a runtime migration. See
 [Runtime Correspondence and Migration Boundaries](#runtime-correspondence-and-migration-boundaries) before interpreting these examples as
@@ -41,6 +41,19 @@ workflow status have no use case here unless they produce an accounting entry. C
 
 Examples use illustrative USD values. Each monetary line also retains original currency, quantity, and rate of record. A cash pocket is a
 company-controlled account with an evidenced deployment identity; a member's personal wallet is not a company pocket.
+
+## Direct Movement Coverage
+
+The [direct asset movement policy](./direct-movement-policy.md) defines the complete contract/domain inventory, custody and asset
+boundaries, receipt defaults, historical classification, and source completeness. All current and historical company-held deployments are
+candidates, including FixedReturn, Investor, SafeDepositRouter, Campaign, Vesting, and auxiliary contracts. Use their own deployment
+account; the target `Assets — Other company contracts` family covers verified auxiliary holdings. Shared FeeCollector and infrastructure
+balances are outside company custody unless a separate company claim is evidenced.
+
+An unsolicited transfer does not execute a domain operation. A plain Router receipt mints no SHER; a plain FixedReturn receipt funds no
+round; a plain Campaign receipt increases no recorded campaign budget. Proven business evidence takes precedence over these fallback use
+cases. Known business activity lacking a posting rule remains an explicit gap. Token discovery does not make an asset spendable,
+recoverable, or eligible for cash valuation.
 
 ## Identifier Convention
 
@@ -84,45 +97,46 @@ Domains describe economic meaning, not the emitting contract. Sequences are loca
 
 `RULE-INTERNAL`, `RULE-EXTERNAL`, and `RULE-FEE` define reusable treasury treatments within a use case's posting rules. Each use case also
 specifies its account recognition or settlement rule: wage accrual, interest recognition, share issuance, grant recognition, release, or
-cancellation. The mapping below names the rules that generate the entry, rather than using cash movement as the inclusion criterion.
+cancellation. Each use-case section names the rules that generate the entry, rather than using cash movement as the inclusion criterion.
 
-## Use-Case-to-Story Map
+## Use-Case Overview
 
-Start with the operation's economic evidence and posting moment to identify the applicable UC, then use the linked stories to locate the
-user action and its observable results. Each row describes one proposed UC and its selection condition. A story can appear in several rows;
-its ID alone does not select the accounting treatment.
+Start with the operation's economic evidence and posting moment to identify the applicable UC. Follow its link for the condition, posting
+rules, and scenario table. Each row describes one scenario and lists all participating user stories with their roles. Stories in the same
+row participate in that scenario together; separate rows describe alternative scenarios. A story ID alone does not select the accounting
+treatment. Shared scenarios are also linked from each participating canonical story.
 
-`fee?` means `RULE-FEE` only when a Bank outflow has a confirmed fee in the same operation. The posting-rule column identifies the
-applicable movement treatment and/or the account recognition or settlement rule defined by the use case. Principal and fixed return can
-combine `UC-CREDIT-001` and `UC-CREDIT-002`; a Vesting stop can combine `UC-VESTING-002` and `UC-VESTING-003`. Other alternatives for the
-same movement follow the precedence rules below.
+| Accounting use case                                                            | Selection condition / posting moment                                                                                                                                                        |
+| ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [`UC-TREASURY-001`](#uc-treasury-001--internal-company-pocket-transfer)        | Confirmed movement between company pockets without a more specific business event: funding, transfer, sweep into Bank, or return to the source generation's Bank.                           |
+| [`UC-TREASURY-002`](#uc-treasury-002--external-receipt-pending-classification) | External assets reach a verified company-held address without established business-purpose evidence.                                                                                        |
+| [`UC-TREASURY-003`](#uc-treasury-003--external-payment-pending-classification) | External payment from a verified company-held address without established purpose, including the final payment of a Bank cash-out journey.                                                  |
+| [`UC-PAYROLL-001`](#uc-payroll-001--weekly-wage-accrual)                       | The work week containing submitted daily claims ends while eligible. Claim status determines eligibility; a status change creates no separate entry.                                        |
+| [`UC-PAYROLL-002`](#uc-payroll-002--wage-settlement)                           | A confirmed withdrawal settles cash wages and/or SHER wages for an approved weekly claim.                                                                                                   |
+| [`UC-EXPENSE-001`](#uc-expense-001--operating-expense-payment)                 | Approved Expense Account payout to an external recipient, or external Bank/Safe payment with valid operating-expense evidence or classification, including the final Bank cash-out payment. |
+| [`UC-CREDIT-001`](#uc-credit-001--funded-principal)                            | A credit round becomes funded, or a positive partial raise is accepted; recognize funded principal.                                                                                         |
+| [`UC-CREDIT-002`](#uc-credit-002--fixed-return-recognized)                     | The same funding or accepted partial raise establishes a non-zero fixed return; recognize interest alongside `UC-CREDIT-001`.                                                               |
+| [`UC-CREDIT-003`](#uc-credit-003--principal-and-interest-repaid)               | Confirmed repayment settles lender principal and/or interest.                                                                                                                               |
+| [`UC-EQUITY-001`](#uc-equity-001--investor-contribution)                       | Confirmed router investment backs a SHER mint.                                                                                                                                              |
+| [`UC-EQUITY-002`](#uc-equity-002--dividend-paid)                               | Confirmed dividend payments reach shareholders.                                                                                                                                             |
+| [`UC-EQUITY-003`](#uc-equity-003--direct-sher-issuance)                        | Direct SHER mint not owned by investment, Payroll, or Vesting.                                                                                                                              |
+| [`UC-VESTING-001`](#uc-vesting-001--vesting-grant)                             | A restricted-stock Vesting grant is created.                                                                                                                                                |
+| [`UC-VESTING-002`](#uc-vesting-002--vested-sher-released)                      | Accrued shares are released directly or during a stop operation.                                                                                                                            |
+| [`UC-VESTING-003`](#uc-vesting-003--unvested-grant-cancelled)                  | A stop operation cancels an unvested remainder; it can also release accrued shares through `UC-VESTING-002`.                                                                                |
 
-| Accounting use case | Selection condition / posting moment                                                                                                                                                        | Related user stories                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | Posting rules                                         |
-| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------- |
-| `UC-TREASURY-001`   | Confirmed movement between company pockets without a more specific business event: funding, transfer, sweep into Bank, or return to the source generation's Bank.                           | [US-BANK-001](../accounts/README.md#us-bank-001-fund-the-bank), [US-BANK-002](../accounts/README.md#us-bank-002-transfer-bank-funds), [US-BANK-004](../accounts/README.md#us-bank-004-cash-out-available-treasury-funds), [US-EXP-002](../accounts/README.md#us-exp-002-spend-from-the-expense-account), [US-EXP-005](../accounts/README.md#us-exp-005-fund-the-expense-account), [US-EXP-006](../accounts/README.md#us-exp-006-return-expense-account-funds-to-bank), [US-SAFE-003](../accounts/README.md#us-safe-003-manage-safe-funds), [US-PAYROLL-003](../payroll/README.md#us-payroll-003-fund-the-payroll-contract), [US-PAYROLL-014](../payroll/README.md#us-payroll-014-return-payroll-funds-to-bank) | `RULE-INTERNAL`, fee? for Bank                        |
-| `UC-TREASURY-002`   | External cash reaches Bank or Safe without established business-purpose evidence.                                                                                                           | [US-BANK-001](../accounts/README.md#us-bank-001-fund-the-bank), [US-SAFE-003](../accounts/README.md#us-safe-003-manage-safe-funds)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             | `RULE-EXTERNAL` in                                    |
-| `UC-TREASURY-003`   | External payment from Bank or Safe without established purpose, including the final payment of a Bank cash-out journey.                                                                     | [US-BANK-002](../accounts/README.md#us-bank-002-transfer-bank-funds), [US-BANK-004](../accounts/README.md#us-bank-004-cash-out-available-treasury-funds), [US-SAFE-003](../accounts/README.md#us-safe-003-manage-safe-funds)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   | `RULE-EXTERNAL` out, fee? for Bank                    |
-| `UC-PAYROLL-001`    | The work week containing submitted daily claims ends while eligible. Claim status determines eligibility; a status change creates no separate entry.                                        | [US-PAYROLL-005](../payroll/README.md#us-payroll-005-submit-a-daily-claim), [US-PAYROLL-009](../payroll/README.md#us-payroll-009-disable-or-re-enable-a-signed-weekly-claim)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   | Wage accrual                                          |
-| `UC-PAYROLL-002`    | A confirmed withdrawal settles cash wages and/or SHER wages for an approved weekly claim.                                                                                                   | [US-PAYROLL-010](../payroll/README.md#us-payroll-010-withdraw-an-approved-weekly-claim)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        | `RULE-EXTERNAL` out for cash; share issuance for SHER |
-| `UC-EXPENSE-001`    | Approved Expense Account payout to an external recipient, or external Bank/Safe payment with valid operating-expense evidence or classification, including the final Bank cash-out payment. | [US-BANK-002](../accounts/README.md#us-bank-002-transfer-bank-funds), [US-BANK-004](../accounts/README.md#us-bank-004-cash-out-available-treasury-funds), [US-EXP-002](../accounts/README.md#us-exp-002-spend-from-the-expense-account), [US-SAFE-003](../accounts/README.md#us-safe-003-manage-safe-funds)                                                                                                                                                                                                                                                                                                                                                                                                    | `RULE-EXTERNAL` out, fee? for Bank                    |
-| `UC-CREDIT-001`     | A credit round becomes funded, or a positive partial raise is accepted; recognize funded principal.                                                                                         | [US-CC-003](../community-credit/README.md#us-cc-003-lend-to-an-open-round), [US-CC-004](../community-credit/README.md#us-cc-004-resolve-a-stalled-round)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | `RULE-EXTERNAL` in for principal                      |
-| `UC-CREDIT-002`     | The same funding or accepted partial raise establishes a non-zero fixed return; recognize interest alongside `UC-CREDIT-001`.                                                               | [US-CC-003](../community-credit/README.md#us-cc-003-lend-to-an-open-round), [US-CC-004](../community-credit/README.md#us-cc-004-resolve-a-stalled-round)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | Interest recognition                                  |
-| `UC-CREDIT-003`     | Confirmed repayment settles lender principal and/or interest.                                                                                                                               | [US-CC-005](../community-credit/README.md#us-cc-005-repay-lenders)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             | `RULE-EXTERNAL` out; principal/interest settlement    |
-| `UC-EQUITY-001`     | Confirmed router investment backs a SHER mint.                                                                                                                                              | [US-SHER-001](../shareholder-management/README.md#us-sher-001-invest-in-the-safe-and-receive-sher)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             | `RULE-EXTERNAL` in; investor contribution             |
-| `UC-EQUITY-002`     | Confirmed dividend payments reach shareholders.                                                                                                                                             | [US-SHER-002](../shareholder-management/README.md#us-sher-002-distribute-dividends-to-shareholders)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            | `RULE-EXTERNAL` out; dividend posting                 |
-| `UC-EQUITY-003`     | Direct SHER mint not owned by investment, Payroll, or Vesting.                                                                                                                              | [US-SHER-004](../shareholder-management/README.md#us-sher-004-issue-sher-to-a-shareholder)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     | Share issuance                                        |
-| `UC-VESTING-001`    | A restricted-stock Vesting grant is created.                                                                                                                                                | [US-VESTING-001](../vesting/README.md#us-vesting-001-create-a-minute-precise-vesting-schedule)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | Grant recognition                                     |
-| `UC-VESTING-002`    | Accrued shares are released directly or during a stop operation.                                                                                                                            | [US-VESTING-003](../vesting/README.md#us-vesting-003-release-accrued-shares), [US-VESTING-004](../vesting/README.md#us-vesting-004-stop-an-active-vesting-schedule)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            | Vesting release                                       |
-| `UC-VESTING-003`    | A stop operation cancels an unvested remainder; it can also release accrued shares through `UC-VESTING-002`.                                                                                | [US-VESTING-004](../vesting/README.md#us-vesting-004-stop-an-active-vesting-schedule)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          | Grant cancellation                                    |
+One story can relate to alternative use cases depending on its operation evidence. A specific business event takes precedence over a
+pending-classification use case: a router-backed Safe receipt belongs to `UC-EQUITY-001`, not also `UC-TREASURY-002`; an evidenced expense
+replaces `UC-TREASURY-003` with `UC-EXPENSE-001` for the same cash movement. Account assignments alone do not prove a Payroll settlement,
+loan repayment, or dividend: those use cases require their own business evidence. Do not force an unsupported purpose into a supported use
+case.
+
+Some use cases apply together to distinct economic effects in one operation. Principal and fixed return can combine `UC-CREDIT-001` and
+`UC-CREDIT-002`; a Vesting stop can combine `UC-VESTING-002` and `UC-VESTING-003`. Compatible postings share one journal entry. Add
+`RULE-FEE` only when a Bank outflow has a confirmed fee in the same operation.
 
 For Bank → Payroll funding, `UC-TREASURY-001` links both `US-BANK-002` (transfer authorization, amount, and fee) and `US-PAYROLL-003`
 (credited balance and payment availability). These stories describe the initiating and receiving sides of one movement, not two entries. The
-[treasury flow map](../accounts/treasury-flow-map.md) records the canonical acceptance owners.
-
-A specific business event takes precedence over a pending-classification use case. A router-backed Safe receipt belongs to `UC-EQUITY-001`,
-not also `UC-TREASURY-002`. An evidenced expense replaces `UC-TREASURY-003` with `UC-EXPENSE-001` for the same cash movement. Account
-assignments alone do not prove a Payroll settlement, loan repayment, or dividend: those use cases require their own business evidence. Do
-not force an unsupported purpose into a supported use case.
+[internal-transfer scenarios](#uc-treasury-001--internal-company-pocket-transfer) link their canonical acceptance owners.
 
 ### Events Without Accounting Entries
 
@@ -142,11 +156,33 @@ it produces an entry.
 
 ### `UC-TREASURY-001` — Internal Company-Pocket Transfer
 
-**Source stories:** `US-BANK-001`, `US-BANK-002`, `US-BANK-004`, `US-EXP-002`, `US-EXP-005`, `US-EXP-006`, `US-SAFE-003`, `US-PAYROLL-003`,
-and `US-PAYROLL-014`; links and conditions appear in the use-case-to-story map above.
+**Condition:** Confirmed movement between company pockets without a more specific business event: funding, transfer, sweep into Bank, or
+return to the source generation's Bank.
 
-- **Trigger and evidence:** Confirmed cash moves between two company pockets, with no more specific business event owning that movement.
-- **Rules:** `RULE-INTERNAL`; add `RULE-FEE` only for an independently confirmed Bank fee.
+**Posting rules:** `RULE-INTERNAL`; add `RULE-FEE` only for an independently confirmed Bank fee.
+
+**Scenarios and related user stories:**
+
+| Scenario                                                                      | Related user stories and roles                                                                                                                                                                                                                                                                                                                                                                             |
+| ----------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Bank funds Payroll.                                                           | [US-BANK-002](../accounts/README.md#us-bank-002-transfer-bank-funds) — initiates the transfer and owns Bank authorization, amount, and fee; [US-PAYROLL-003](../payroll/README.md#us-payroll-003-fund-the-payroll-contract) — owns the credited Payroll balance and payment availability                                                                                                                   |
+| Bank funds the Expense Account.                                               | [US-BANK-002](../accounts/README.md#us-bank-002-transfer-bank-funds) — initiates the transfer and owns Bank authorization, amount, and fee; [US-EXP-005](../accounts/README.md#us-exp-005-fund-the-expense-account) — owns the credited Expense balance and spending availability                                                                                                                          |
+| Bank funds Safe.                                                              | [US-BANK-002](../accounts/README.md#us-bank-002-transfer-bank-funds) — initiates the transfer and owns the Bank fee; [US-SAFE-003](../accounts/README.md#us-safe-003-manage-safe-funds) — receives the Safe funding                                                                                                                                                                                        |
+| A direct Bank transfer funds another known Bank generation.                   | [US-BANK-002](../accounts/README.md#us-bank-002-transfer-bank-funds) — initiates the transfer; [US-BANK-001](../accounts/README.md#us-bank-001-fund-the-bank) — receives the funding in the destination Bank                                                                                                                                                                                               |
+| Safe funds Bank.                                                              | [US-SAFE-003](../accounts/README.md#us-safe-003-manage-safe-funds) — initiates the Safe transfer; [US-BANK-001](../accounts/README.md#us-bank-001-fund-the-bank) — receives the Bank funding                                                                                                                                                                                                               |
+| Safe funds Payroll.                                                           | [US-SAFE-003](../accounts/README.md#us-safe-003-manage-safe-funds) — initiates the Safe transfer; [US-PAYROLL-003](../payroll/README.md#us-payroll-003-fund-the-payroll-contract) — owns the credited Payroll balance and payment availability                                                                                                                                                             |
+| Safe funds the Expense Account.                                               | [US-SAFE-003](../accounts/README.md#us-safe-003-manage-safe-funds) — initiates the Safe transfer; [US-EXP-005](../accounts/README.md#us-exp-005-fund-the-expense-account) — owns the credited Expense balance and spending availability                                                                                                                                                                    |
+| An approved Expense payout reaches Bank.                                      | [US-EXP-002](../accounts/README.md#us-exp-002-spend-from-the-expense-account) — executes the approved payout to a company pocket; [US-BANK-001](../accounts/README.md#us-bank-001-fund-the-bank) — receives the Bank funding                                                                                                                                                                               |
+| An approved Expense payout reaches Payroll.                                   | [US-EXP-002](../accounts/README.md#us-exp-002-spend-from-the-expense-account) — executes the approved payout to a company pocket; [US-PAYROLL-003](../payroll/README.md#us-payroll-003-fund-the-payroll-contract) — owns the credited Payroll balance and payment availability                                                                                                                             |
+| An approved Expense payout reaches Safe.                                      | [US-EXP-002](../accounts/README.md#us-exp-002-spend-from-the-expense-account) — executes the approved payout to a company pocket; [US-SAFE-003](../accounts/README.md#us-safe-003-manage-safe-funds) — receives the Safe funding                                                                                                                                                                           |
+| An approved Expense payout reaches another known Expense deployment.          | [US-EXP-002](../accounts/README.md#us-exp-002-spend-from-the-expense-account) — executes the approved payout from the source deployment; [US-EXP-005](../accounts/README.md#us-exp-005-fund-the-expense-account) — owns the credited balance and spending availability in the destination deployment                                                                                                       |
+| Expense funds return directly to their generation's Bank.                     | [US-EXP-006](../accounts/README.md#us-exp-006-return-expense-account-funds-to-bank) — initiates the source-account return; [US-BANK-003](../accounts/README.md#us-bank-003-review-the-bank-position-and-history) — owns the receiving Bank balance and history                                                                                                                                             |
+| Payroll funds return directly to their generation's Bank.                     | [US-PAYROLL-014](../payroll/README.md#us-payroll-014-return-payroll-funds-to-bank) — initiates the source-account return; [US-BANK-003](../accounts/README.md#us-bank-003-review-the-bank-position-and-history) — owns the receiving Bank balance and history                                                                                                                                              |
+| A cash-out run returns Expense funds to their generation's Bank.              | [US-BANK-004](../accounts/README.md#us-bank-004-cash-out-available-treasury-funds) — orchestrates the step and owns sequence recovery; [US-EXP-006](../accounts/README.md#us-exp-006-return-expense-account-funds-to-bank) — owns the source-account return; [US-BANK-003](../accounts/README.md#us-bank-003-review-the-bank-position-and-history) — owns the receiving Bank balance and history           |
+| A cash-out run returns Payroll funds to their generation's Bank.              | [US-BANK-004](../accounts/README.md#us-bank-004-cash-out-available-treasury-funds) — orchestrates the step and owns sequence recovery; [US-PAYROLL-014](../payroll/README.md#us-payroll-014-return-payroll-funds-to-bank) — owns the source-account return; [US-BANK-003](../accounts/README.md#us-bank-003-review-the-bank-position-and-history) — owns the receiving Bank balance and history            |
+| A historical-generation cash-out run forwards Bank funds to the current Bank. | [US-BANK-004](../accounts/README.md#us-bank-004-cash-out-available-treasury-funds) — orchestrates the forwarding step; [US-BANK-002](../accounts/README.md#us-bank-002-transfer-bank-funds) — owns the Bank transfer and fee; [US-BANK-003](../accounts/README.md#us-bank-003-review-the-bank-position-and-history) — owns the receiving Bank balance and history                                          |
+| Owner-authorized Router recovery moves held tokens to the same company Safe.  | [US-SHER-003](../shareholder-management/README.md#us-sher-003-review-shareholder-position-and-activity) — traces the Router receipt and recovery; [US-SAFE-002](../accounts/README.md#us-safe-002-inspect-safe-details) — owns receiving Safe history; [US-ACCT-007](README.md#us-acct-007-review-direct-treasury-movements) — correlates source and destination without a second receipt or SHER issuance |
+
 - **Domain posting:** Actual source/destination deployments determine the cash accounts. Bank, Safe, Payroll, and Expense share the same
   economic interpretation; complementary movement evidence is deduplicated.
 - **Journal result:** One internal-transfer entry. The transfer itself has no income-statement effect; a confirmed fee remains an expense.
@@ -168,15 +204,32 @@ For $100 received by Payroll from Bank with a confirmed $1 fee:
 
 ### `UC-TREASURY-002` — External Receipt Pending Classification
 
-**Source stories:** [US-BANK-001](../accounts/README.md#us-bank-001-fund-the-bank) and
-[US-SAFE-003](../accounts/README.md#us-safe-003-manage-safe-funds).
+**Condition:** External assets reach a verified company-held address without established business-purpose evidence.
 
-- **Trigger and evidence:** External cash reaches Bank or Safe without evidence establishing a supported business purpose.
-- **Rules:** `RULE-EXTERNAL`, direction `in`.
-- **Domain posting:** Credit the proposed Unclassified Receipts account until evidence supplies a business use case and counter-account.
-  Sender member/founder role alone establishes neither revenue nor capital.
+**Posting rules:** `RULE-EXTERNAL`, direction `in`.
+
+**Scenarios and related user stories:**
+
+| Scenario                                                                                                         | Related user stories and roles                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| ---------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| External wallet funds Bank without established purpose or facture evidence.                                      | [US-BANK-001](../accounts/README.md#us-bank-001-fund-the-bank) — owns received funding; [US-BANK-003](../accounts/README.md#us-bank-003-review-the-bank-position-and-history) — owns Bank history; [US-PAYGATE-004](../payment-gate/README.md#us-paygate-004-review-payment-history) — keeps unmatched receipts outside invoice history; [US-ACCT-007](README.md#us-acct-007-review-direct-treasury-movements) — owns movement evidence and identity; [US-ACCT-010](README.md#us-acct-010-classify-direct-external-receipts) — owns eligible receipt classification |
+| External wallet funds Safe without established purpose or investment evidence.                                   | [US-SAFE-003](../accounts/README.md#us-safe-003-manage-safe-funds) — owns funding; [US-SAFE-002](../accounts/README.md#us-safe-002-inspect-safe-details) — owns Safe asset history; [US-ACCT-007](README.md#us-acct-007-review-direct-treasury-movements) — owns movement evidence and identity; [US-ACCT-010](README.md#us-acct-010-classify-direct-external-receipts) — owns eligible receipt classification                                                                                                                                                      |
+| External wallet funds Payroll without established business purpose.                                              | [US-PAYROLL-003](../payroll/README.md#us-payroll-003-fund-the-payroll-contract) — owns received funding and payment availability; [US-PAYROLL-013](../payroll/README.md#us-payroll-013-review-the-payroll-account-position) — owns Payroll position and history; [US-ACCT-007](README.md#us-acct-007-review-direct-treasury-movements) — owns movement evidence and identity; [US-ACCT-010](README.md#us-acct-010-classify-direct-external-receipts) — owns eligible receipt classification                                                                         |
+| External wallet funds Expense without established business purpose.                                              | [US-EXP-005](../accounts/README.md#us-exp-005-fund-the-expense-account) — owns received funding and spending availability; [US-EXP-004](../accounts/README.md#us-exp-004-review-the-expense-account-and-its-history) — owns Expense position and history; [US-ACCT-007](README.md#us-acct-007-review-direct-treasury-movements) — owns movement evidence and identity; [US-ACCT-010](README.md#us-acct-010-classify-direct-external-receipts) — owns eligible receipt classification                                                                                |
+| External tokens reach FixedReturn without a credit-round operation or established purpose.                       | [US-CC-001](../community-credit/README.md#us-cc-001-inspect-the-credit-account) — separates unallocated holdings from credit rounds; [US-ACCT-007](README.md#us-acct-007-review-direct-treasury-movements) — owns movement evidence and identity; [US-ACCT-010](README.md#us-acct-010-classify-direct-external-receipts) — owns eligible receipt classification                                                                                                                                                                                                     |
+| External assets reach Investor or SafeDepositRouter without an investment, distribution, or established purpose. | [US-SHER-003](../shareholder-management/README.md#us-sher-003-review-shareholder-position-and-activity) — separates direct holdings from shares and dividends; [US-CONTRACT-001](../contract-management/README.md#us-contract-001-review-the-current-contract-suite) — exposes custody and recovery limits; [US-ACCT-007](README.md#us-acct-007-review-direct-treasury-movements) — owns movement evidence and identity; [US-ACCT-010](README.md#us-acct-010-classify-direct-external-receipts) — owns eligible receipt classification                              |
+| External assets reach AdCampaignManager without a campaign operation or established purpose.                     | [US-CONTRACT-003](../contract-management/README.md#us-contract-003-manage-advertising-campaigns) — separates unallocated holdings from campaign budgets; [US-ACCT-007](README.md#us-acct-007-review-direct-treasury-movements) — owns movement evidence and identity; [US-ACCT-010](README.md#us-acct-010-classify-direct-external-receipts) — owns eligible receipt classification                                                                                                                                                                                 |
+| External tokens reach Vesting without a grant operation or established purpose.                                  | [US-VESTING-002](../vesting/README.md#us-vesting-002-view-schedules-and-aggregate-totals) — separates holdings from granted and claimable shares; [US-CONTRACT-001](../contract-management/README.md#us-contract-001-review-the-current-contract-suite) — exposes custody and recovery limits; [US-ACCT-007](README.md#us-acct-007-review-direct-treasury-movements) — owns movement evidence and identity; [US-ACCT-010](README.md#us-acct-010-classify-direct-external-receipts) — owns eligible receipt classification                                           |
+| External tokens reach another verified company-held contract without an established purpose.                     | [US-CONTRACT-001](../contract-management/README.md#us-contract-001-review-the-current-contract-suite) — owns auxiliary contract inspection; [US-ACCT-007](README.md#us-acct-007-review-direct-treasury-movements) — owns movement evidence and identity; [US-ACCT-010](README.md#us-acct-010-classify-direct-external-receipts) — owns eligible receipt classification                                                                                                                                                                                              |
+
+- **Domain posting:** Debit the evidenced receiving asset account and credit Unclassified Receipts until reliable business evidence or an
+  eligible owner classification supplies the counter-account. Receipt defaults and historical entries follow the
+  [direct movement policy](./direct-movement-policy.md#receipt-classification-and-historical-entries). Sender member/founder role alone
+  establishes neither revenue nor capital.
 - **Journal result:** One receipt pending classification; later classification reuses its cash movement instead of duplicating it.
-- **Implementation boundary:** Suspense treatment is proposed. Current direct external receipts credit Service Revenue.
+- **Implementation boundary:** Current detected Bank/Safe external receipts credit Service Revenue. Raw Bank ERC-20 rows are absent from
+  journal assembly; Payroll/Expense deposits assume internal funding; auxiliary receipt classification is not implemented. The target
+  suspense rule and owner classification in [US-ACCT-010](README.md#us-acct-010-classify-direct-external-receipts) replace these gaps.
 
 For an unidentified $100 external Bank receipt:
 
@@ -187,12 +240,20 @@ For an unidentified $100 external Bank receipt:
 
 ### `UC-TREASURY-003` — External Payment Pending Classification
 
-**Source stories:** [US-BANK-002](../accounts/README.md#us-bank-002-transfer-bank-funds),
-[US-BANK-004](../accounts/README.md#us-bank-004-cash-out-available-treasury-funds), and
-[US-SAFE-003](../accounts/README.md#us-safe-003-manage-safe-funds).
+**Condition:** External payment from a verified company-held address without established purpose, including the final payment of a Bank
+cash-out journey.
 
-- **Trigger and evidence:** Cash leaves Bank or Safe for an external recipient without evidence establishing a supported business purpose.
-- **Rules:** `RULE-EXTERNAL`, direction `out`; add `RULE-FEE` only for a confirmed Bank fee.
+**Posting rules:** `RULE-EXTERNAL`, direction `out`; add `RULE-FEE` only for a confirmed Bank fee.
+
+**Scenarios and related user stories:**
+
+| Scenario                                                                                                 | Related user stories and roles                                                                                                                                                                                                                            |
+| -------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| A standalone Bank transfer pays an external recipient without evidence establishing the payment purpose. | [US-BANK-002](../accounts/README.md#us-bank-002-transfer-bank-funds) — source action                                                                                                                                                                      |
+| A cash-out run makes its final external Bank payment without an established purpose.                     | [US-BANK-004](../accounts/README.md#us-bank-004-cash-out-available-treasury-funds) — orchestrates the final payment; [US-BANK-002](../accounts/README.md#us-bank-002-transfer-bank-funds) — owns the Bank transfer, authorization, amount, and fee        |
+| Safe pays an external recipient without evidence establishing the payment purpose.                       | [US-SAFE-003](../accounts/README.md#us-safe-003-manage-safe-funds) — source action                                                                                                                                                                        |
+| A verified auxiliary company contract makes an evidenced external payment without established purpose.   | [US-CONTRACT-001](../contract-management/README.md#us-contract-001-review-the-current-contract-suite) — exposes the contract movement; [US-ACCT-007](README.md#us-acct-007-review-direct-treasury-movements) — owns evidence and pending-payment identity |
+
 - **Domain posting:** Debit the proposed Unclassified Payments account until evidence supplies a business use case and counter-account.
 - **Journal result:** One pending-classification payment with any matched fee. Classification does not duplicate the cash movement.
 - **Implementation boundary:** Current unassigned payments provisionally debit Operating Expense. Suspense accounts and their classification
@@ -209,11 +270,18 @@ For an unidentified $80 Safe payment:
 
 ### `UC-PAYROLL-001` — Weekly Wage Accrual
 
-**Source stories:** [US-PAYROLL-005](../payroll/README.md#us-payroll-005-submit-a-daily-claim) and
-[US-PAYROLL-009](../payroll/README.md#us-payroll-009-disable-or-re-enable-a-signed-weekly-claim).
+**Condition:** The work week containing submitted daily claims ends while eligible. Claim status determines eligibility; a status change
+creates no separate entry.
 
-- **Rules:** The domain accrual rule recognizes earned cash wages against Wage Payable and earned SHER wages against SHERS To Be Issued
-  without moving cash.
+**Posting rules:** The domain accrual rule recognizes earned cash wages against Wage Payable and earned SHER wages against SHERS To Be
+Issued without moving cash.
+
+**Scenarios and related user stories:**
+
+| Scenario                                                                   | Related user stories and roles                                                                                                                                                                                                                                                                             |
+| -------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| A work week ends with submitted daily claims and an eligible weekly claim. | [US-PAYROLL-005](../payroll/README.md#us-payroll-005-submit-a-daily-claim) — supplies the daily claims used to calculate accrual; [US-PAYROLL-009](../payroll/README.md#us-payroll-009-disable-or-re-enable-a-signed-weekly-claim) — controls claim eligibility; changing status creates no separate entry |
+
 - **Input:** An ended weekly claim, its daily hours, applicable wage terms, overtime policy, and current eligibility status.
 - **Processing:** Accounting calculates the canonical weekly amount at the week-end timestamp. A disabled claim is excluded; signing is not
   the accrual trigger. The entry is synthetic and has no transaction hash.
@@ -232,10 +300,17 @@ Edits or deletions made before the week ends change the source amount; they do n
 
 ### `UC-PAYROLL-002` — Wage Settlement
 
-**Source story:** [US-PAYROLL-010](../payroll/README.md#us-payroll-010-withdraw-an-approved-weekly-claim).
+**Condition:** A confirmed withdrawal settles cash wages and/or SHER wages for an approved weekly claim.
 
-- **Rules:** `RULE-EXTERNAL`, direction `out`, for cash wages. The share-issuance rule settles promised shares into Investor Equity. Do not
-  expense wages again.
+**Posting rules:** `RULE-EXTERNAL`, direction `out`, for cash wages. The share-issuance rule settles promised shares into Investor Equity.
+Do not expense wages again.
+
+**Scenarios and related user stories:**
+
+| Scenario                                                                                            | Related user stories and roles                                                                          |
+| --------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| A confirmed withdrawal of an approved weekly claim settles the accrued cash and/or SHER obligation. | [US-PAYROLL-010](../payroll/README.md#us-payroll-010-withdraw-an-approved-weekly-claim) — source action |
+
 - **Input:** A Payroll withdrawal event enriched with the matching weekly claim.
 - **Processing:** Cash and SHER settlement paths are distinguished by currency. Portions in the same transaction share one entry; separate
   withdrawals remain separate operations. A matching Investor mint from SHER settlement is removed as duplicate evidence.
@@ -252,14 +327,21 @@ For settlement of $80 in cash wages and $20 in SHER wages in one operation:
 
 ### `UC-EXPENSE-001` — Operating Expense Payment
 
-**Source stories:** [US-EXP-002](../accounts/README.md#us-exp-002-spend-from-the-expense-account); also
-[US-BANK-002](../accounts/README.md#us-bank-002-transfer-bank-funds),
-[US-BANK-004](../accounts/README.md#us-bank-004-cash-out-available-treasury-funds), and
-[US-SAFE-003](../accounts/README.md#us-safe-003-manage-safe-funds) when their payment has valid operating-expense evidence or
-classification.
+**Condition:** Approved Expense Account payout to an external recipient, or external Bank/Safe payment with valid operating-expense evidence
+or classification, including the final Bank cash-out payment.
 
-- **Rules:** `RULE-EXTERNAL`, direction `out`; add `RULE-FEE` only for a confirmed Bank fee. The domain rule debits Operating Expense when
-  supported business evidence identifies the payment.
+**Posting rules:** `RULE-EXTERNAL`, direction `out`; add `RULE-FEE` only for a confirmed Bank fee. The domain rule debits Operating Expense
+when supported business evidence identifies the payment.
+
+**Scenarios and related user stories:**
+
+| Scenario                                                                                                               | Related user stories and roles                                                                                                                                                                                                                     |
+| ---------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| A standalone Bank transfer pays an external recipient with valid operating-expense evidence or classification.         | [US-BANK-002](../accounts/README.md#us-bank-002-transfer-bank-funds) — source action                                                                                                                                                               |
+| A cash-out run makes its final external Bank payment with valid operating-expense evidence or classification.          | [US-BANK-004](../accounts/README.md#us-bank-004-cash-out-available-treasury-funds) — orchestrates the final payment; [US-BANK-002](../accounts/README.md#us-bank-002-transfer-bank-funds) — owns the Bank transfer, authorization, amount, and fee |
+| An approved Expense Account payout reaches an external recipient; a company-pocket destination uses `UC-TREASURY-001`. | [US-EXP-002](../accounts/README.md#us-exp-002-spend-from-the-expense-account) — source action                                                                                                                                                      |
+| Safe pays an external recipient with valid operating-expense evidence or classification.                               | [US-SAFE-003](../accounts/README.md#us-safe-003-manage-safe-funds) — source action                                                                                                                                                                 |
+
 - **Input:** An Expense Account transfer to an external recipient and its approved portal budget when available, or a Bank/Safe external
   payment validly classified as an operating expense.
 - **Processing:** For approved Expense payouts, the mapper reconstructs the approval cap and remaining amount for the operation. When
@@ -292,11 +374,18 @@ journal entry.
 
 ### `UC-CREDIT-001` — Funded Principal
 
-**Source stories:** [US-CC-003](../community-credit/README.md#us-cc-003-lend-to-an-open-round) and
-[US-CC-004](../community-credit/README.md#us-cc-004-resolve-a-stalled-round).
+**Condition:** A credit round becomes funded, or a positive partial raise is accepted; recognize funded principal.
 
-- **Rules:** `RULE-EXTERNAL`, direction `in`. Lender funds are external financing even if delivered through the credit contract; do not also
-  book their delivery to Bank as a generic pocket transfer.
+**Posting rules:** `RULE-EXTERNAL`, direction `in`. Lender funds are external financing even if delivered through the credit contract; do
+not also book their delivery to Bank as a generic pocket transfer.
+
+**Scenarios and related user stories:**
+
+| Scenario                                                                                                                      | Related user stories and roles                                                               |
+| ----------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| The round becomes funded and its accepted lender contributions establish the principal; open-round contributions do not post. | [US-CC-003](../community-credit/README.md#us-cc-003-lend-to-an-open-round) — source action   |
+| Accepting a positive partial raise establishes funded principal; cancelling or refunding an unfunded round does not post.     | [US-CC-004](../community-credit/README.md#us-cc-004-resolve-a-stalled-round) — source action |
+
 - **Input:** A funded-round event, lender contributions, creation terms, and token identity.
 - **Processing:** `FundsLent` events are held as contribution evidence while funds remain in the round. When the round funds or a partial
   raise is accepted, contributions are grouped by funding operation. A missing token or creation record produces memo-only evidence rather
@@ -315,11 +404,18 @@ A published, open, refunded, or not-yet-funded round does not change the company
 
 ### `UC-CREDIT-002` — Fixed Return Recognized
 
-**Source stories:** [US-CC-003](../community-credit/README.md#us-cc-003-lend-to-an-open-round) and
-[US-CC-004](../community-credit/README.md#us-cc-004-resolve-a-stalled-round).
+**Condition:** The same funding or accepted partial raise establishes a non-zero fixed return; recognize interest alongside `UC-CREDIT-001`.
 
-- **Rules:** The domain interest-accrual rule debits Interest Expense and credits Interest Payable when funded. Fixed return is not
-  `RULE-FEE`; zero interest creates no interest lines.
+**Posting rules:** The domain interest-accrual rule debits Interest Expense and credits Interest Payable when funded. Fixed return is not
+`RULE-FEE`; zero interest creates no interest lines.
+
+**Scenarios and related user stories:**
+
+| Scenario                                                                                                           | Related user stories and roles                                                               |
+| ------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------- |
+| Completed round funding establishes a non-zero fixed return alongside the principal in `UC-CREDIT-001`.            | [US-CC-003](../community-credit/README.md#us-cc-003-lend-to-an-open-round) — source action   |
+| An accepted positive partial raise establishes a non-zero fixed return alongside the principal in `UC-CREDIT-001`. | [US-CC-004](../community-credit/README.md#us-cc-004-resolve-a-stalled-round) — source action |
+
 - **Input:** The funded principal and the offer's flat-interest terms.
 - **Processing:** Accounting calculates each lender's fixed return when the round becomes funded. This synthetic obligation is grouped by
   lender but remains traceable to the funded offer.
@@ -335,10 +431,17 @@ For a $10 fixed return recognized when the round funds:
 
 ### `UC-CREDIT-003` — Principal and Interest Repaid
 
-**Source story:** [US-CC-005](../community-credit/README.md#us-cc-005-repay-lenders).
+**Condition:** Confirmed repayment settles lender principal and/or interest.
 
-- **Rules:** `RULE-EXTERNAL`, direction `out`. The domain settlement rule selects Loan Payable, Interest Payable, or Interest Expense from
-  the recognized obligations.
+**Posting rules:** `RULE-EXTERNAL`, direction `out`. The domain settlement rule selects Loan Payable, Interest Payable, or Interest Expense
+from the recognized obligations.
+
+**Scenarios and related user stories:**
+
+| Scenario                                                                     | Related user stories and roles                                                     |
+| ---------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| A confirmed repayment reaches lenders and settles principal and/or interest. | [US-CC-005](../community-credit/README.md#us-cc-005-repay-lenders) — source action |
+
 - **Input:** Lender repayment events and the principal and interest already recognized for the offer.
 - **Processing:** Payments settle principal first, then recognized interest. Any interest not covered by a prior accrual is recognized as
   `Interest Expense` in the repayment operation. Multiple lender events from one transaction are grouped.
@@ -359,10 +462,17 @@ If interest was not recognized earlier because its valuation evidence was unavai
 
 ### `UC-EQUITY-001` — Investor Contribution
 
-**Source story:** [US-SHER-001](../shareholder-management/README.md#us-sher-001-invest-in-the-safe-and-receive-sher).
+**Condition:** Confirmed router investment backs a SHER mint.
 
-- **Rules:** `RULE-EXTERNAL`, direction `in`. Investment evidence establishes Investor Equity as the counter-account, rather than revenue or
-  an unidentified receipt.
+**Posting rules:** `RULE-EXTERNAL`, direction `in`. Investment evidence establishes Investor Equity as the counter-account, rather than
+revenue or an unidentified receipt.
+
+**Scenarios and related user stories:**
+
+| Scenario                                                                                                                 | Related user stories and roles                                                                                     |
+| ------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------ |
+| A confirmed SafeDepositRouter investment produces the Safe receipt and its backed SHER mint as one accounting operation. | [US-SHER-001](../shareholder-management/README.md#us-sher-001-invest-in-the-safe-and-receive-sher) — source action |
+
 - **Input:** A SafeDepositRouter deposit, its Safe receipt, and the matching Investor mint.
 - **Processing:** The router operation owns the accounting entry. Matching Safe transfer and Investor mint evidence are removed so the
   investment is neither revenue nor a second share issuance.
@@ -377,10 +487,17 @@ For a router investment valued at $100:
 
 ### `UC-EQUITY-002` — Dividend Paid
 
-**Source story:** [US-SHER-002](../shareholder-management/README.md#us-sher-002-distribute-dividends-to-shareholders).
+**Condition:** Confirmed dividend payments reach shareholders.
 
-- **Rules:** `RULE-EXTERNAL`, direction `out`. Preserve the current Dividend Expense counter-account; this refactor does not change the
-  dividend accounting policy.
+**Posting rules:** `RULE-EXTERNAL`, direction `out`. Preserve the current Dividend Expense counter-account; this refactor does not change
+the dividend accounting policy.
+
+**Scenarios and related user stories:**
+
+| Scenario                                                                                                   | Related user stories and roles                                                                                      |
+| ---------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| Confirmed dividend payments reach shareholders; the triggering Bank summary does not create another entry. | [US-SHER-002](../shareholder-management/README.md#us-sher-002-distribute-dividends-to-shareholders) — source action |
+
 - **Input:** Per-shareholder `DividendPaid` events emitted by Investor.
 - **Processing:** Bank's distribution-trigger summary is ignored to avoid double counting. Compatible shareholder payments in the same
   transaction are aggregated.
@@ -396,9 +513,16 @@ For a $100 dividend distribution:
 
 ### `UC-EQUITY-003` — Direct SHER Issuance
 
-**Source story:** [US-SHER-004](../shareholder-management/README.md#us-sher-004-issue-sher-to-a-shareholder).
+**Condition:** Direct SHER mint not owned by investment, Payroll, or Vesting.
 
-- **Rules:** The domain issuance rule debits SHERS To Be Issued and credits Investor Equity for the issued shares.
+**Posting rules:** The domain issuance rule debits SHERS To Be Issued and credits Investor Equity for the issued shares.
+
+**Scenarios and related user stories:**
+
+| Scenario                                                                                          | Related user stories and roles                                                                             |
+| ------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| Direct issuance mints SHER without a matching investment, Payroll settlement, or Vesting release. | [US-SHER-004](../shareholder-management/README.md#us-sher-004-issue-sher-to-a-shareholder) — source action |
+
 - **Input:** An Investor `Minted` event not matched to a router investment, Payroll settlement, or Vesting release.
 - **Processing:** Known backed mint paths are removed first. Only the remaining direct mint uses this default rule.
 - **General Ledger:** Label `Share issuance`; activity links to the shareholder journey.
@@ -414,10 +538,17 @@ Shareholder migration claims are ownership migration evidence, not new issuance,
 
 ### `UC-VESTING-001` — Vesting Grant
 
-**Source story:** [US-VESTING-001](../vesting/README.md#us-vesting-001-create-a-minute-precise-vesting-schedule).
+**Condition:** A restricted-stock Vesting grant is created.
 
-- **Rules:** The domain grant rule recognizes the full restricted-stock commitment in Deferred SHER Compensation and SHERS To Be Issued
-  without minting.
+**Posting rules:** The domain grant rule recognizes the full restricted-stock commitment in Deferred SHER Compensation and SHERS To Be
+Issued without minting.
+
+**Scenarios and related user stories:**
+
+| Scenario                                                                                                   | Related user stories and roles                                                                                 |
+| ---------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| Creating a restricted-stock schedule establishes the full grant commitment before any shares are released. | [US-VESTING-001](../vesting/README.md#us-vesting-001-create-a-minute-precise-vesting-schedule) — source action |
+
 - **Input:** A vesting-schedule creation event with beneficiary, grant, and schedule identity.
 - **Processing:** The full restricted-stock commitment is recognized when defined; no shares are minted at this point.
 - **General Ledger:** Label `Vesting grant`; activity links to Vesting. The entry affects equity accounts, not profit.
@@ -431,10 +562,17 @@ For a restricted-stock grant valued at $100:
 
 ### `UC-VESTING-002` — Vested SHER Released
 
-**Source stories:** [US-VESTING-003](../vesting/README.md#us-vesting-003-release-accrued-shares) and
-[US-VESTING-004](../vesting/README.md#us-vesting-004-stop-an-active-vesting-schedule).
+**Condition:** Accrued shares are released directly or during a stop operation.
 
-- **Rules:** The domain release rule settles SHERS To Be Issued into Investor Equity for the released shares.
+**Posting rules:** The domain release rule settles SHERS To Be Issued into Investor Equity for the released shares.
+
+**Scenarios and related user stories:**
+
+| Scenario                                                                                                                      | Related user stories and roles                                                                        |
+| ----------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| A direct release delivers accrued shares and settles the corresponding grant commitment.                                      | [US-VESTING-003](../vesting/README.md#us-vesting-003-release-accrued-shares) — source action          |
+| Stopping the schedule releases accrued shares; any unvested cancellation also applies `UC-VESTING-003` in the same operation. | [US-VESTING-004](../vesting/README.md#us-vesting-004-stop-an-active-vesting-schedule) — source action |
+
 - **Input:** A vesting release event and its matching Investor mint.
 - **Processing:** The Vesting event owns the entry; the matching Investor mint is removed. A stop may release accrued shares in the same
   transaction.
@@ -449,10 +587,17 @@ For released SHER valued at $40:
 
 ### `UC-VESTING-003` — Unvested Grant Cancelled
 
-**Source story:** [US-VESTING-004](../vesting/README.md#us-vesting-004-stop-an-active-vesting-schedule).
+**Condition:** A stop operation cancels an unvested remainder; it can also release accrued shares through `UC-VESTING-002`.
 
-- **Rules:** The domain cancellation rule reverses only the unvested remainder into Deferred SHER Compensation; same-operation releases are
-  not reversed twice.
+**Posting rules:** The domain cancellation rule reverses only the unvested remainder into Deferred SHER Compensation; same-operation
+releases are not reversed twice.
+
+**Scenarios and related user stories:**
+
+| Scenario                                                                                                                              | Related user stories and roles                                                                        |
+| ------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| Stopping the schedule cancels a non-zero unvested remainder; any accrued release also applies `UC-VESTING-002` in the same operation. | [US-VESTING-004](../vesting/README.md#us-vesting-004-stop-an-active-vesting-schedule) — source action |
+
 - **Input:** A vesting stop event and the schedule's unvested remainder.
 - **Processing:** Accounting reverses only the stopped schedule's unvested quantity. If nothing remains, no cancellation lines are posted.
   Any same-transaction accrued release is grouped with `UC-VESTING-002`.
@@ -506,8 +651,9 @@ hash. The current entry label comes from its primary non-fee draft while every c
 
 ## Runtime Correspondence and Migration Boundaries
 
-The current runtime `UseCase` type mixes economic events, generic movements, and fees. This map and the compatibility sections below retain
-their actual meaning and existing documentation anchors. They do not prove that the target identifiers or rule association are deployed.
+The current runtime `UseCase` type mixes economic events, generic movements, and fees. The correspondence table and compatibility sections
+below retain their actual meaning and existing documentation anchors. They do not prove that the target identifiers or rule association are
+deployed.
 
 | Current emitted identifier               | Target use case / rule                                              | Boundary                                                                          |
 | ---------------------------------------- | ------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
@@ -526,9 +672,9 @@ their actual meaning and existing documentation anchors. They do not prove that 
 | `DEFAULT-D`                              | `UC-EQUITY-003`, share-issuance rule                                | Preserve direct issuance after backed mints are removed                           |
 | `UC-VEST-01`, `UC-VEST-02`, `UC-VEST-03` | `UC-VESTING-001`, `UC-VESTING-002`, `UC-VESTING-003`                | Preserve grant, release, and cancellation                                         |
 
-Migration must introduce the new identifiers and rule associations, define suspense accounts and supported classification flows, and align
-labels, action categories, activity destinations, and representative tests. This documentation refactor changes no runtime or story
-acceptance status. Target suspense scenarios remain blocked for manual validation until implemented.
+Migration must introduce the new identifiers, auxiliary asset and suspense accounts, shared movement discovery, and supported classification
+flows; align labels, activity destinations, and representative tests. The canonical product stories now define that target, with new
+criteria unchecked. No runtime change is delivered here. Target scenarios remain blocked for manual validation until implemented.
 
 ### `UC-BANK-02` — External Cash Receipt
 
@@ -542,7 +688,8 @@ Current Bank funding debits destination cash and credits Bank cash, labelled `Tr
 
 Bank-origin funding serves `US-BANK-002`, `US-EXP-005`, and `US-PAYROLL-003`. Direct wallet funding of Expense Account or Payroll still
 requires complete source discovery and classification; a wallet outside the company's pockets must not be treated as an internal source. The
-[treasury flow map](../accounts/treasury-flow-map.md) records these receiving-story boundaries and the discovery gaps.
+[direct movement policy](./direct-movement-policy.md#contract-and-domain-coverage) records these receiving-story boundaries and the
+discovery gaps.
 
 ### `INTERNAL` — Other Company-Pocket Transfer
 
@@ -551,7 +698,7 @@ the same economic identity as Bank funding; Safe movements generate no Bank prot
 
 Source-account returns in `US-EXP-006` and `US-PAYROLL-014` belong to this treatment once source discovery is complete. Their
 direct-movement discovery and reconciliation remain planned in [#2878](https://github.com/globe-and-citizen/cnc-portal/issues/2878); the
-target use-case-to-story map does not establish implemented coverage.
+target scenario tables do not establish implemented coverage.
 
 ### `CASH-OUT` — External Bank or Safe Payment
 

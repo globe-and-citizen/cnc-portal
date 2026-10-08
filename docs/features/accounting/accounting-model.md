@@ -12,6 +12,10 @@ This guide uses two reading levels:
 The technical view is the canonical implementation reference. The business view is a smaller projection of the same current behaviour, not
 an alternative model.
 
+The next product contract for direct movements across all company-held contracts is defined in the
+[direct movement policy](./direct-movement-policy.md). It includes auxiliary holdings, pending receipt classification, synchronization, and
+quantity reconciliation. Those target guarantees are not evidence that the runtime explanations below already implement them.
+
 ## 1. Where Can the Company's Money Sit and Move?
 
 ### Business Overview

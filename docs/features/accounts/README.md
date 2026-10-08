@@ -15,7 +15,8 @@ These acceptance criteria follow the
 - **Expense Account** lets the current contract owner grant signed spending approvals. A recipient spends against the approval without
   receiving custody of the whole account.
 - A wallet can fund an account directly, while a Bank-origin payment is initiated under the Bank transfer story. The destination account
-  owns the credited balance and its availability. These relationships are indexed in the [treasury flow map](treasury-flow-map.md).
+  owns the credited balance and its availability. The [Accounting UC scenarios](../accounting/journal-entry-catalogue.md#use-case-overview)
+  link all participating stories and their roles.
 - Bank and Expense Account actions use the current contracts selected for the company. Safe actions use the Safe registered to the company
   on the active network.
 - A Bank transfer with a positive `BANK` fee sends that fee to the FeeCollector deployed for its contract generation. Native transfers
@@ -26,6 +27,19 @@ These acceptance criteria follow the
   current Bank.
 - Token administration, dividends, payroll, and community-credit repayments are owned by their respective features even when funds move
   through an account.
+
+The [direct asset movement product contract](../accounting/direct-movement-policy.md) defines company custody, unsolicited receipts,
+historical coverage, classification, and reconciliation across domains. Its target behaviour remains pending implementation; new ACs are
+unchecked.
+
+### Proposed token expansion
+
+Treat token onboarding as a shared capability with a per-network eligibility matrix. For each proposed asset, record its address, decimals,
+symbol, pricing source, and whether Bank, Expense, Payroll, and Accounting can each handle it. A contract's `getSupportedTokens()` result
+controls its current on-chain eligibility; the product catalogue supplies trusted display and amount metadata. New approval or transfer
+choices require both. A token becomes available in a journey only after its destination contract, write path, balance and activity views,
+and Accounting classification have representative proof. Roll out each network and domain explicitly rather than assuming that adding a
+token to one contract enables it everywhere. This is a proposal for product review; no additional token is enabled by this document.
 
 ## Lifecycle
 
@@ -65,11 +79,11 @@ flowchart LR
 | US-EXP-001  | Grant a signed spending approval           | Expense Account owner      | 🧪 Validation  |
 | US-EXP-002  | Spend from the Expense Account             | Approved recipient         | 🚧 In Progress |
 | US-EXP-003  | Deactivate or reactivate an approval       | Expense Account owner      | 🧪 Validation  |
-| US-EXP-004  | Review the Expense Account and its history | Company member / recipient | 🧪 Validation  |
+| US-EXP-004  | Review the Expense Account and its history | Company member / recipient | 🚧 In Progress |
 | US-EXP-005  | Fund the Expense Account                   | Account funder             | 🚧 In Progress |
 | US-EXP-006  | Return Expense Account funds to Bank       | Authorized treasury actor  | 🚧 In Progress |
 | US-SAFE-001 | Set up a Safe                              | Company owner              | 🧪 Validation  |
-| US-SAFE-002 | Inspect Safe details                       | Company member             | 🧪 Validation  |
+| US-SAFE-002 | Inspect Safe details                       | Company member             | 🚧 In Progress |
 | US-SAFE-003 | Manage Safe funds                          | Safe owner                 | 🧪 Validation  |
 | US-SAFE-004 | Manage Safe signers and threshold          | Safe owner                 | 🧪 Validation  |
 | US-SAFE-005 | Review Safe transactions                   | Company member             | 🧪 Validation  |
@@ -88,16 +102,16 @@ mocked browser path for the external Safe Transaction Service boundary.
 | ----------- | ------------- | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
 | US-BANK-001 | ✅ Integrated | ⚠️ 9/10         | `AC-US-BANK-001-03`                                                                                                                        |
 | US-BANK-002 | ✅ Integrated | ⚠️ 11/13        | `AC-US-BANK-002-01`, `AC-US-BANK-002-02`                                                                                                   |
-| US-BANK-003 | ✅ Integrated | ⚠️ 7/8          | 1 — `AC-US-BANK-003-08`                                                                                                                    |
+| US-BANK-003 | ✅ Integrated | ⚠️ 7/9 met      | `AC-US-BANK-003-08`, `AC-US-BANK-003-09`                                                                                                   |
 | US-BANK-004 | 🚧 Partial    | ⚠️ 6/8          | `AC-US-BANK-004-01`, `AC-US-BANK-004-02`                                                                                                   |
 | US-EXP-001  | ✅ Integrated | ⚠️ 13/15        | `AC-US-EXP-001-01`, `AC-US-EXP-001-02`                                                                                                     |
 | US-EXP-002  | 🚧 Partial    | ⚠️ 12/16        | `AC-US-EXP-002-01`, `AC-US-EXP-002-02`, `AC-US-EXP-002-07`, `AC-US-EXP-002-09`                                                             |
 | US-EXP-003  | ✅ Integrated | ✅ 9/9          | —                                                                                                                                          |
-| US-EXP-004  | ✅ Integrated | ✅ 12/12        | —                                                                                                                                          |
+| US-EXP-004  | ✅ Integrated | ⚠️ 12/13 met    | `AC-US-EXP-004-13`                                                                                                                         |
 | US-EXP-005  | 🚧 Partial    | ⚠️ 3/7          | `AC-US-EXP-005-03`, `AC-US-EXP-005-04`, `AC-US-EXP-005-06`, `AC-US-EXP-005-07`                                                             |
 | US-EXP-006  | 🚧 Partial    | ⚠️ 1/8          | `AC-US-EXP-006-01`, `AC-US-EXP-006-02`, `AC-US-EXP-006-03`, `AC-US-EXP-006-04`, `AC-US-EXP-006-05`, `AC-US-EXP-006-07`, `AC-US-EXP-006-08` |
 | US-SAFE-001 | 🚧 Partial    | ⚠️ 8/11         | `AC-US-SAFE-001-02`, `AC-US-SAFE-001-03`, `AC-US-SAFE-001-06`                                                                              |
-| US-SAFE-002 | 🧪 Mocked     | ⚠️ 6/8          | 2 — `AC-US-SAFE-002-01`, `AC-US-SAFE-002-02`                                                                                               |
+| US-SAFE-002 | 🧪 Mocked     | ⚠️ 6/9 met      | `AC-US-SAFE-002-01`, `AC-US-SAFE-002-02`, `AC-US-SAFE-002-09`                                                                              |
 | US-SAFE-003 | 📋 Planned    | ⚠️ 4/9          | 5 — `AC-US-SAFE-003-01`, `AC-US-SAFE-003-02`, `AC-US-SAFE-003-03`, `AC-US-SAFE-003-06`, `AC-US-SAFE-003-07`                                |
 | US-SAFE-004 | 📋 Planned    | ⚠️ 4/9          | 5 — `AC-US-SAFE-004-01`, `AC-US-SAFE-004-02`, `AC-US-SAFE-004-03`, `AC-US-SAFE-004-04`, `AC-US-SAFE-004-07`                                |
 | US-SAFE-005 | 🧪 Mocked     | ✅ 9/9          | —                                                                                                                                          |
@@ -155,6 +169,26 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 A receipt from another known company pocket is an internal transfer instead.
 
 **Dependencies:** Current Bank contract and a connected wallet
+
+**Shared accounting scenarios:**
+
+Each row identifies the responsibilities shared with other stories for one accounting operation. Existing acceptance and evidence statuses
+remain as recorded above.
+
+| Scenario and accounting use case                                                                                                                                          | This story's responsibility                   | Other participating stories                                                                                 |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| A direct Bank transfer funds another known Bank generation. [UC-TREASURY-001](../accounting/journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer) | Receives the funding in the destination Bank. | [US-BANK-002](#us-bank-002-transfer-bank-funds) — initiates the transfer                                    |
+| Safe funds Bank. [UC-TREASURY-001](../accounting/journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer)                                            | Receives the Bank funding.                    | [US-SAFE-003](#us-safe-003-manage-safe-funds) — initiates the Safe transfer                                 |
+| An approved Expense payout reaches Bank. [UC-TREASURY-001](../accounting/journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer)                    | Receives the Bank funding.                    | [US-EXP-002](#us-exp-002-spend-from-the-expense-account) — executes the approved payout to a company pocket |
+
+### Direct Movement Scenarios
+
+Target behaviour follows the [direct movement policy](../accounting/direct-movement-policy.md). Each row represents the same evidenced
+movement across the participating stories.
+
+| Scenario                                                                                                                                                                                         | This story owns        | Related stories and roles                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| External wallet funds Bank without established purpose or facture evidence. [UC-TREASURY-002](../accounting/journal-entry-catalogue.md#uc-treasury-002--external-receipt-pending-classification) | Owns received funding. | [US-BANK-003](README.md#us-bank-003-review-the-bank-position-and-history) — owns Bank history; [US-PAYGATE-004](../payment-gate/README.md#us-paygate-004-review-payment-history) — keeps unmatched receipts outside invoice history; [US-ACCT-007](../accounting/README.md#us-acct-007-review-direct-treasury-movements) — owns movement evidence and identity; [US-ACCT-010](../accounting/README.md#us-acct-010-classify-direct-external-receipts) — owns eligible receipt classification |
 
 ## US-BANK-002: Transfer Bank Funds
 
@@ -222,6 +256,21 @@ through [`FEE`](../accounting/journal-entry-catalogue.md#fee--transaction-fee-co
 **Cross-domain relationship:** A transfer into Expense or Payroll is a handoff to `US-EXP-005` or `US-PAYROLL-003`. This story owns the
 source authorization, transfer amount, and fee; each destination story owns the credited and usable funds.
 
+**Shared accounting scenarios:**
+
+Each row identifies the responsibilities shared with other stories for one accounting operation. Existing acceptance and evidence statuses
+remain as recorded above.
+
+| Scenario and accounting use case                                                                                                                                                                                   | This story's responsibility                                          | Other participating stories                                                                                                                                                                                      |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Bank funds Payroll. [UC-TREASURY-001](../accounting/journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer)                                                                                  | Initiates the transfer and owns Bank authorization, amount, and fee. | [US-PAYROLL-003](../payroll/README.md#us-payroll-003-fund-the-payroll-contract) — owns the credited Payroll balance and payment availability                                                                     |
+| Bank funds the Expense Account. [UC-TREASURY-001](../accounting/journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer)                                                                      | Initiates the transfer and owns Bank authorization, amount, and fee. | [US-EXP-005](#us-exp-005-fund-the-expense-account) — owns the credited Expense balance and spending availability                                                                                                 |
+| Bank funds Safe. [UC-TREASURY-001](../accounting/journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer)                                                                                     | Initiates the transfer and owns the Bank fee.                        | [US-SAFE-003](#us-safe-003-manage-safe-funds) — receives the Safe funding                                                                                                                                        |
+| A direct Bank transfer funds another known Bank generation. [UC-TREASURY-001](../accounting/journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer)                                          | Initiates the transfer.                                              | [US-BANK-001](#us-bank-001-fund-the-bank) — receives the funding in the destination Bank                                                                                                                         |
+| A historical-generation cash-out run forwards Bank funds to the current Bank. [UC-TREASURY-001](../accounting/journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer)                        | Owns the Bank transfer and fee.                                      | [US-BANK-004](#us-bank-004-cash-out-available-treasury-funds) — orchestrates the forwarding step; [US-BANK-003](#us-bank-003-review-the-bank-position-and-history) — owns the receiving Bank balance and history |
+| A cash-out run makes its final external Bank payment without an established purpose. [UC-TREASURY-003](../accounting/journal-entry-catalogue.md#uc-treasury-003--external-payment-pending-classification)          | Owns the Bank transfer, authorization, amount, and fee.              | [US-BANK-004](#us-bank-004-cash-out-available-treasury-funds) — orchestrates the final payment                                                                                                                   |
+| A cash-out run makes its final external Bank payment with valid operating-expense evidence or classification. [UC-EXPENSE-001](../accounting/journal-entry-catalogue.md#uc-expense-001--operating-expense-payment) | Owns the Bank transfer, authorization, amount, and fee.              | [US-BANK-004](#us-bank-004-cash-out-available-treasury-funds) — orchestrates the final payment                                                                                                                   |
+
 ## US-BANK-003: Review the Bank Position and History
 
 **As a** company member\
@@ -235,6 +284,8 @@ source authorization, transfer amount, and fee; each destination story owns the 
 - [x] `AC-US-BANK-003-01` A company member can inspect the Bank address, native balance, token holdings, and local-currency value.
 - [x] `AC-US-BANK-003-02` Bank history exposes each transaction's date, type, counterparty, value, and transaction hash when available.
 - [x] `AC-US-BANK-003-03` A company member can filter Bank history by date and transaction type.
+- [ ] `AC-US-BANK-003-09` Bank history includes evidenced direct native movements without a Bank event and exposes their shared Accounting
+      movement reference.
 
 #### Business Rules
 
@@ -251,18 +302,42 @@ source authorization, transfer amount, and fee; each destination story owns the 
 
 ### Test Coverage
 
-| Acceptance Criterion | Proof Strategy        | Current Evidence          | Status     |
-| -------------------- | --------------------- | ------------------------- | ---------- |
-| `AC-US-BANK-003-01`  | `PS-CHAIN-INTEGRATED` | Integrated E2E + Frontend | ✅ Met     |
-| `AC-US-BANK-003-02`  | `PS-CHAIN-INTEGRATED` | Integrated E2E + Frontend | ✅ Met     |
-| `AC-US-BANK-003-03`  | `PS-BROWSER`          | Mocked browser + Frontend | ✅ Met     |
-| `AC-US-BANK-003-04`  | `PS-BROWSER`          | Mocked browser            | ✅ Met     |
-| `AC-US-BANK-003-05`  | `PS-FRONTEND`         | Frontend                  | ✅ Met     |
-| `AC-US-BANK-003-06`  | `PS-FRONTEND`         | Mocked browser + Frontend | ✅ Met     |
-| `AC-US-BANK-003-07`  | `PS-BROWSER`          | Mocked browser            | ✅ Met     |
-| `AC-US-BANK-003-08`  | `PS-BROWSER`          | None linked               | ❌ Missing |
+| Acceptance Criterion | Proof Strategy             | Current Evidence          | Status     |
+| -------------------- | -------------------------- | ------------------------- | ---------- |
+| `AC-US-BANK-003-01`  | `PS-CHAIN-INTEGRATED`      | Integrated E2E + Frontend | ✅ Met     |
+| `AC-US-BANK-003-02`  | `PS-CHAIN-INTEGRATED`      | Integrated E2E + Frontend | ✅ Met     |
+| `AC-US-BANK-003-03`  | `PS-BROWSER`               | Mocked browser + Frontend | ✅ Met     |
+| `AC-US-BANK-003-04`  | `PS-BROWSER`               | Mocked browser            | ✅ Met     |
+| `AC-US-BANK-003-05`  | `PS-FRONTEND`              | Frontend                  | ✅ Met     |
+| `AC-US-BANK-003-06`  | `PS-FRONTEND`              | Mocked browser + Frontend | ✅ Met     |
+| `AC-US-BANK-003-07`  | `PS-BROWSER`               | Mocked browser            | ✅ Met     |
+| `AC-US-BANK-003-08`  | `PS-BROWSER`               | None linked               | ❌ Missing |
+| `AC-US-BANK-003-09`  | `PS-BACKEND`               | None linked               | ❌ Missing |
+| `AC-US-BANK-003-09`  | `PS-FULL-STACK-INTEGRATED` | None linked               | ❌ Missing |
 
 **Dependencies:** Current Bank contract and an available chain event provider
+
+**Shared accounting scenarios:**
+
+Each row identifies the responsibilities shared with other stories for one accounting operation. Existing acceptance and evidence statuses
+remain as recorded above.
+
+| Scenario and accounting use case                                                                                                                                                            | This story's responsibility                  | Other participating stories                                                                                                                                                                                                           |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Expense funds return directly to their generation's Bank. [UC-TREASURY-001](../accounting/journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer)                     | Owns the receiving Bank balance and history. | [US-EXP-006](#us-exp-006-return-expense-account-funds-to-bank) — initiates the source-account return                                                                                                                                  |
+| Payroll funds return directly to their generation's Bank. [UC-TREASURY-001](../accounting/journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer)                     | Owns the receiving Bank balance and history. | [US-PAYROLL-014](../payroll/README.md#us-payroll-014-return-payroll-funds-to-bank) — initiates the source-account return                                                                                                              |
+| A cash-out run returns Expense funds to their generation's Bank. [UC-TREASURY-001](../accounting/journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer)              | Owns the receiving Bank balance and history. | [US-BANK-004](#us-bank-004-cash-out-available-treasury-funds) — orchestrates the step and owns sequence recovery; [US-EXP-006](#us-exp-006-return-expense-account-funds-to-bank) — owns the source-account return                     |
+| A cash-out run returns Payroll funds to their generation's Bank. [UC-TREASURY-001](../accounting/journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer)              | Owns the receiving Bank balance and history. | [US-BANK-004](#us-bank-004-cash-out-available-treasury-funds) — orchestrates the step and owns sequence recovery; [US-PAYROLL-014](../payroll/README.md#us-payroll-014-return-payroll-funds-to-bank) — owns the source-account return |
+| A historical-generation cash-out run forwards Bank funds to the current Bank. [UC-TREASURY-001](../accounting/journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer) | Owns the receiving Bank balance and history. | [US-BANK-004](#us-bank-004-cash-out-available-treasury-funds) — orchestrates the forwarding step; [US-BANK-002](#us-bank-002-transfer-bank-funds) — owns the Bank transfer and fee                                                    |
+
+### Direct Movement Scenarios
+
+Target behaviour follows the [direct movement policy](../accounting/direct-movement-policy.md). Each row represents the same evidenced
+movement across the participating stories.
+
+| Scenario                                                                                                                                                                                         | This story owns    | Related stories and roles                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| External wallet funds Bank without established purpose or facture evidence. [UC-TREASURY-002](../accounting/journal-entry-catalogue.md#uc-treasury-002--external-receipt-pending-classification) | Owns bank history. | [US-BANK-001](README.md#us-bank-001-fund-the-bank) — owns received funding; [US-PAYGATE-004](../payment-gate/README.md#us-paygate-004-review-payment-history) — keeps unmatched receipts outside invoice history; [US-ACCT-007](../accounting/README.md#us-acct-007-review-direct-treasury-movements) — owns movement evidence and identity; [US-ACCT-010](../accounting/README.md#us-acct-010-classify-direct-external-receipts) — owns eligible receipt classification |
 
 ## US-BANK-004: Cash Out Available Treasury Funds
 
@@ -327,6 +402,19 @@ The final wallet payment is [`CASH-OUT`](../accounting/journal-entry-catalogue.m
 
 **Cross-domain relationship:** This journey orchestrates the direct source-account returns in `US-EXP-006` and `US-PAYROLL-014` before the
 Bank's final wallet transfer. Its retry and partial-failure criteria apply to the sequence as a whole.
+
+**Shared accounting scenarios:**
+
+Each row identifies the responsibilities shared with other stories for one accounting operation. Existing acceptance and evidence statuses
+remain as recorded above.
+
+| Scenario and accounting use case                                                                                                                                                                                   | This story's responsibility                       | Other participating stories                                                                                                                                                                                                         |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| A cash-out run returns Expense funds to their generation's Bank. [UC-TREASURY-001](../accounting/journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer)                                     | Orchestrates the step and owns sequence recovery. | [US-EXP-006](#us-exp-006-return-expense-account-funds-to-bank) — owns the source-account return; [US-BANK-003](#us-bank-003-review-the-bank-position-and-history) — owns the receiving Bank balance and history                     |
+| A cash-out run returns Payroll funds to their generation's Bank. [UC-TREASURY-001](../accounting/journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer)                                     | Orchestrates the step and owns sequence recovery. | [US-PAYROLL-014](../payroll/README.md#us-payroll-014-return-payroll-funds-to-bank) — owns the source-account return; [US-BANK-003](#us-bank-003-review-the-bank-position-and-history) — owns the receiving Bank balance and history |
+| A historical-generation cash-out run forwards Bank funds to the current Bank. [UC-TREASURY-001](../accounting/journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer)                        | Orchestrates the forwarding step.                 | [US-BANK-002](#us-bank-002-transfer-bank-funds) — owns the Bank transfer and fee; [US-BANK-003](#us-bank-003-review-the-bank-position-and-history) — owns the receiving Bank balance and history                                    |
+| A cash-out run makes its final external Bank payment without an established purpose. [UC-TREASURY-003](../accounting/journal-entry-catalogue.md#uc-treasury-003--external-payment-pending-classification)          | Orchestrates the final payment.                   | [US-BANK-002](#us-bank-002-transfer-bank-funds) — owns the Bank transfer, authorization, amount, and fee                                                                                                                            |
+| A cash-out run makes its final external Bank payment with valid operating-expense evidence or classification. [UC-EXPENSE-001](../accounting/journal-entry-catalogue.md#uc-expense-001--operating-expense-payment) | Orchestrates the final payment.                   | [US-BANK-002](#us-bank-002-transfer-bank-funds) — owns the Bank transfer, authorization, amount, and fee                                                                                                                            |
 
 ## US-EXP-001: Grant a Signed Spending Approval
 
@@ -453,6 +541,18 @@ a transfer to another known company pocket is
 
 **Dependencies:** US-EXP-001 and US-EXP-005
 
+**Shared accounting scenarios:**
+
+Each row identifies the responsibilities shared with other stories for one accounting operation. Existing acceptance and evidence statuses
+remain as recorded above.
+
+| Scenario and accounting use case                                                                                                                                                   | This story's responsibility                              | Other participating stories                                                                                                                  |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| An approved Expense payout reaches Bank. [UC-TREASURY-001](../accounting/journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer)                             | Executes the approved payout to a company pocket.        | [US-BANK-001](#us-bank-001-fund-the-bank) — receives the Bank funding                                                                        |
+| An approved Expense payout reaches Payroll. [UC-TREASURY-001](../accounting/journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer)                          | Executes the approved payout to a company pocket.        | [US-PAYROLL-003](../payroll/README.md#us-payroll-003-fund-the-payroll-contract) — owns the credited Payroll balance and payment availability |
+| An approved Expense payout reaches Safe. [UC-TREASURY-001](../accounting/journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer)                             | Executes the approved payout to a company pocket.        | [US-SAFE-003](#us-safe-003-manage-safe-funds) — receives the Safe funding                                                                    |
+| An approved Expense payout reaches another known Expense deployment. [UC-TREASURY-001](../accounting/journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer) | Executes the approved payout from the source deployment. | [US-EXP-005](#us-exp-005-fund-the-expense-account) — owns the credited balance and spending availability in the destination deployment       |
+
 ## US-EXP-003: Deactivate or Reactivate an Approval
 
 **As an** Expense Account owner\
@@ -516,6 +616,8 @@ a transfer to another known company pocket is
 - [x] `AC-US-EXP-004-03` A company member can inspect company approvals and their current enabled, disabled, expired, or exhausted state.
 - [x] `AC-US-EXP-004-04` Expense history exposes transaction dates, types, counterparties, values, and transaction hashes when available.
 - [x] `AC-US-EXP-004-05` A company member can filter Expense history by date and transaction type.
+- [ ] `AC-US-EXP-004-13` Expense history includes direct native-token and ERC-20 movements without an Expense business event, using the same
+      movement evidence as Accounting.
 
 #### Business Rules
 
@@ -533,23 +635,34 @@ a transfer to another known company pocket is
 
 ### Test Coverage
 
-| Acceptance Criterion | Proof Strategy        | Current Evidence          | Status |
-| -------------------- | --------------------- | ------------------------- | ------ |
-| `AC-US-EXP-004-01`   | `PS-CHAIN-INTEGRATED` | Integrated E2E + Frontend | ✅ Met |
-| `AC-US-EXP-004-02`   | `PS-CHAIN-INTEGRATED` | Integrated E2E            | ✅ Met |
-| `AC-US-EXP-004-03`   | `PS-BROWSER`          | Mocked browser + Frontend | ✅ Met |
-| `AC-US-EXP-004-03`   | `PS-FRONTEND`         | Mocked browser + Frontend | ✅ Met |
-| `AC-US-EXP-004-04`   | `PS-CHAIN-INTEGRATED` | Integrated E2E + Frontend | ✅ Met |
-| `AC-US-EXP-004-05`   | `PS-BROWSER`          | Mocked browser            | ✅ Met |
-| `AC-US-EXP-004-06`   | `PS-BROWSER`          | Mocked browser            | ✅ Met |
-| `AC-US-EXP-004-07`   | `PS-FRONTEND`         | Frontend                  | ✅ Met |
-| `AC-US-EXP-004-08`   | `PS-BROWSER`          | Mocked browser            | ✅ Met |
-| `AC-US-EXP-004-09`   | `PS-FRONTEND`         | Frontend                  | ✅ Met |
-| `AC-US-EXP-004-10`   | `PS-FRONTEND`         | Frontend                  | ✅ Met |
-| `AC-US-EXP-004-11`   | `PS-FRONTEND`         | Frontend                  | ✅ Met |
-| `AC-US-EXP-004-12`   | `PS-FRONTEND`         | Frontend                  | ✅ Met |
+| Acceptance Criterion | Proof Strategy             | Current Evidence          | Status     |
+| -------------------- | -------------------------- | ------------------------- | ---------- |
+| `AC-US-EXP-004-01`   | `PS-CHAIN-INTEGRATED`      | Integrated E2E + Frontend | ✅ Met     |
+| `AC-US-EXP-004-02`   | `PS-CHAIN-INTEGRATED`      | Integrated E2E            | ✅ Met     |
+| `AC-US-EXP-004-03`   | `PS-BROWSER`               | Mocked browser + Frontend | ✅ Met     |
+| `AC-US-EXP-004-03`   | `PS-FRONTEND`              | Mocked browser + Frontend | ✅ Met     |
+| `AC-US-EXP-004-04`   | `PS-CHAIN-INTEGRATED`      | Integrated E2E + Frontend | ✅ Met     |
+| `AC-US-EXP-004-05`   | `PS-BROWSER`               | Mocked browser            | ✅ Met     |
+| `AC-US-EXP-004-06`   | `PS-BROWSER`               | Mocked browser            | ✅ Met     |
+| `AC-US-EXP-004-07`   | `PS-FRONTEND`              | Frontend                  | ✅ Met     |
+| `AC-US-EXP-004-08`   | `PS-BROWSER`               | Mocked browser            | ✅ Met     |
+| `AC-US-EXP-004-09`   | `PS-FRONTEND`              | Frontend                  | ✅ Met     |
+| `AC-US-EXP-004-10`   | `PS-FRONTEND`              | Frontend                  | ✅ Met     |
+| `AC-US-EXP-004-11`   | `PS-FRONTEND`              | Frontend                  | ✅ Met     |
+| `AC-US-EXP-004-12`   | `PS-FRONTEND`              | Frontend                  | ✅ Met     |
+| `AC-US-EXP-004-13`   | `PS-BACKEND`               | None linked               | ❌ Missing |
+| `AC-US-EXP-004-13`   | `PS-FULL-STACK-INTEGRATED` | None linked               | ❌ Missing |
 
 **Dependencies:** Current Expense Account contract and available API and chain providers
+
+### Direct Movement Scenarios
+
+Target behaviour follows the [direct movement policy](../accounting/direct-movement-policy.md). Each row represents the same evidenced
+movement across the participating stories.
+
+| Scenario                                                                                                                                                                                 | This story owns                    | Related stories and roles                                                                                                                                                                                                                                                                                                                                             |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| External wallet funds Expense without established business purpose. [UC-TREASURY-002](../accounting/journal-entry-catalogue.md#uc-treasury-002--external-receipt-pending-classification) | Owns expense position and history. | [US-EXP-005](README.md#us-exp-005-fund-the-expense-account) — owns received funding and spending availability; [US-ACCT-007](../accounting/README.md#us-acct-007-review-direct-treasury-movements) — owns movement evidence and identity; [US-ACCT-010](../accounting/README.md#us-acct-010-classify-direct-external-receipts) — owns eligible receipt classification |
 
 ## US-EXP-005: Fund the Expense Account
 
@@ -599,6 +712,26 @@ rules remain in `US-BANK-002`; this story owns the receiving account's result.
 story. [Accounting #2878](https://github.com/globe-and-citizen/cnc-portal/issues/2878) owns direct-movement discovery and reconciliation.
 
 **Dependencies:** Current Expense Account contract, connected wallet or `US-BANK-002`, and `US-EXP-001` for approved spending
+
+**Shared accounting scenarios:**
+
+Each row identifies the responsibilities shared with other stories for one accounting operation. Existing acceptance and evidence statuses
+remain as recorded above.
+
+| Scenario and accounting use case                                                                                                                                                   | This story's responsibility                                                        | Other participating stories                                                                                           |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| Bank funds the Expense Account. [UC-TREASURY-001](../accounting/journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer)                                      | Owns the credited Expense balance and spending availability.                       | [US-BANK-002](#us-bank-002-transfer-bank-funds) — initiates the transfer and owns Bank authorization, amount, and fee |
+| Safe funds the Expense Account. [UC-TREASURY-001](../accounting/journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer)                                      | Owns the credited Expense balance and spending availability.                       | [US-SAFE-003](#us-safe-003-manage-safe-funds) — initiates the Safe transfer                                           |
+| An approved Expense payout reaches another known Expense deployment. [UC-TREASURY-001](../accounting/journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer) | Owns the credited balance and spending availability in the destination deployment. | [US-EXP-002](#us-exp-002-spend-from-the-expense-account) — executes the approved payout from the source deployment    |
+
+### Direct Movement Scenarios
+
+Target behaviour follows the [direct movement policy](../accounting/direct-movement-policy.md). Each row represents the same evidenced
+movement across the participating stories.
+
+| Scenario                                                                                                                                                                                 | This story owns                                  | Related stories and roles                                                                                                                                                                                                                                                                                                                                                 |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| External wallet funds Expense without established business purpose. [UC-TREASURY-002](../accounting/journal-entry-catalogue.md#uc-treasury-002--external-receipt-pending-classification) | Owns received funding and spending availability. | [US-EXP-004](README.md#us-exp-004-review-the-expense-account-and-its-history) — owns Expense position and history; [US-ACCT-007](../accounting/README.md#us-acct-007-review-direct-treasury-movements) — owns movement evidence and identity; [US-ACCT-010](../accounting/README.md#us-acct-010-classify-direct-external-receipts) — owns eligible receipt classification |
 
 ## US-EXP-006: Return Expense Account Funds to Bank
 
@@ -654,6 +787,16 @@ movement, not an operating expense.
 wallet transfer, while this story owns the source-account return.
 
 **Dependencies:** Current or eligible historical Expense Account, its generation's Bank, and a connected authorized wallet
+
+**Shared accounting scenarios:**
+
+Each row identifies the responsibilities shared with other stories for one accounting operation. Existing acceptance and evidence statuses
+remain as recorded above.
+
+| Scenario and accounting use case                                                                                                                                               | This story's responsibility          | Other participating stories                                                                                                                                                                                                      |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Expense funds return directly to their generation's Bank. [UC-TREASURY-001](../accounting/journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer)        | Initiates the source-account return. | [US-BANK-003](#us-bank-003-review-the-bank-position-and-history) — owns the receiving Bank balance and history                                                                                                                   |
+| A cash-out run returns Expense funds to their generation's Bank. [UC-TREASURY-001](../accounting/journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer) | Owns the source-account return.      | [US-BANK-004](#us-bank-004-cash-out-available-treasury-funds) — orchestrates the step and owns sequence recovery; [US-BANK-003](#us-bank-003-review-the-bank-position-and-history) — owns the receiving Bank balance and history |
 
 ## US-SAFE-001: Set Up a Safe
 
@@ -717,6 +860,8 @@ wallet transfer, while this story owns the source-account return.
 - [x] `AC-US-SAFE-002-01` A company member can inspect the Safe address, balances, token holdings, owners, and signature threshold.
 - [x] `AC-US-SAFE-002-02` A company member can inspect incoming native-token, ERC-20, and ERC-721 transfers.
 - [x] `AC-US-SAFE-002-03` Safe information refreshes after an account action succeeds.
+- [ ] `AC-US-SAFE-002-09` Safe asset history includes actual outgoing native-token and ERC-20 movements, including movements inside executed
+      multi-action transactions, using the same evidence as Accounting.
 
 #### Business Rules
 
@@ -731,18 +876,30 @@ wallet transfer, while this story owns the source-account return.
 
 ### Test Coverage
 
-| Acceptance Criterion | Proof Strategy        | Current Evidence          | Status          |
-| -------------------- | --------------------- | ------------------------- | --------------- |
-| `AC-US-SAFE-002-01`  | `PS-CHAIN-INTEGRATED` | Mocked browser + Frontend | ⚠️ Insufficient |
-| `AC-US-SAFE-002-02`  | `PS-CHAIN-INTEGRATED` | Mocked browser + Frontend | ⚠️ Insufficient |
-| `AC-US-SAFE-002-03`  | `PS-BROWSER`          | Mocked browser            | ✅ Met          |
-| `AC-US-SAFE-002-04`  | `PS-BROWSER`          | Mocked browser            | ✅ Met          |
-| `AC-US-SAFE-002-05`  | `PS-FRONTEND`         | Frontend                  | ✅ Met          |
-| `AC-US-SAFE-002-06`  | `PS-BROWSER`          | Mocked browser            | ✅ Met          |
-| `AC-US-SAFE-002-07`  | `PS-BROWSER`          | Mocked browser            | ✅ Met          |
-| `AC-US-SAFE-002-08`  | `PS-BROWSER`          | Mocked browser            | ✅ Met          |
+| Acceptance Criterion | Proof Strategy             | Current Evidence          | Status          |
+| -------------------- | -------------------------- | ------------------------- | --------------- |
+| `AC-US-SAFE-002-01`  | `PS-CHAIN-INTEGRATED`      | Mocked browser + Frontend | ⚠️ Insufficient |
+| `AC-US-SAFE-002-02`  | `PS-CHAIN-INTEGRATED`      | Mocked browser + Frontend | ⚠️ Insufficient |
+| `AC-US-SAFE-002-03`  | `PS-BROWSER`               | Mocked browser            | ✅ Met          |
+| `AC-US-SAFE-002-04`  | `PS-BROWSER`               | Mocked browser            | ✅ Met          |
+| `AC-US-SAFE-002-05`  | `PS-FRONTEND`              | Frontend                  | ✅ Met          |
+| `AC-US-SAFE-002-06`  | `PS-BROWSER`               | Mocked browser            | ✅ Met          |
+| `AC-US-SAFE-002-07`  | `PS-BROWSER`               | Mocked browser            | ✅ Met          |
+| `AC-US-SAFE-002-08`  | `PS-BROWSER`               | Mocked browser            | ✅ Met          |
+| `AC-US-SAFE-002-09`  | `PS-BACKEND`               | None linked               | ❌ Missing      |
+| `AC-US-SAFE-002-09`  | `PS-FULL-STACK-INTEGRATED` | None linked               | ❌ Missing      |
 
 **Dependencies:** US-SAFE-001
+
+### Direct Movement Scenarios
+
+Target behaviour follows the [direct movement policy](../accounting/direct-movement-policy.md). Each row represents the same evidenced
+movement across the participating stories.
+
+| Scenario                                                                                                                                                                                            | This story owns              | Related stories and roles                                                                                                                                                                                                                                                                                                     |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| External wallet funds Safe without established purpose or investment evidence. [UC-TREASURY-002](../accounting/journal-entry-catalogue.md#uc-treasury-002--external-receipt-pending-classification) | Owns safe asset history.     | [US-SAFE-003](README.md#us-safe-003-manage-safe-funds) — owns funding; [US-ACCT-007](../accounting/README.md#us-acct-007-review-direct-treasury-movements) — owns movement evidence and identity; [US-ACCT-010](../accounting/README.md#us-acct-010-classify-direct-external-receipts) — owns eligible receipt classification |
+| Owner-authorized Router recovery moves held tokens to the same company Safe. [UC-TREASURY-001](../accounting/journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer)          | Owns receiving safe history. | [US-SHER-003](../shareholder-management/README.md#us-sher-003-review-shareholder-position-and-activity) — traces the Router receipt and recovery; [US-ACCT-007](../accounting/README.md#us-acct-007-review-direct-treasury-movements) — correlates source and destination without a second receipt or SHER issuance           |
 
 ## US-SAFE-003: Manage Safe Funds
 
@@ -794,6 +951,28 @@ Bank transfers can incur the Bank's configured protocol fee; Accounting adds a m
 [Accounting test script](../accounting/accounting-test-script.md#treasury-scenarios).
 
 **Dependencies:** US-SAFE-001 and US-SAFE-006
+
+**Shared accounting scenarios:**
+
+Each row identifies the responsibilities shared with other stories for one accounting operation. Existing acceptance and evidence statuses
+remain as recorded above.
+
+| Scenario and accounting use case                                                                                                                       | This story's responsibility  | Other participating stories                                                                                                                  |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| Bank funds Safe. [UC-TREASURY-001](../accounting/journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer)                         | Receives the Safe funding.   | [US-BANK-002](#us-bank-002-transfer-bank-funds) — initiates the transfer and owns the Bank fee                                               |
+| Safe funds Bank. [UC-TREASURY-001](../accounting/journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer)                         | Initiates the Safe transfer. | [US-BANK-001](#us-bank-001-fund-the-bank) — receives the Bank funding                                                                        |
+| Safe funds Payroll. [UC-TREASURY-001](../accounting/journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer)                      | Initiates the Safe transfer. | [US-PAYROLL-003](../payroll/README.md#us-payroll-003-fund-the-payroll-contract) — owns the credited Payroll balance and payment availability |
+| Safe funds the Expense Account. [UC-TREASURY-001](../accounting/journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer)          | Initiates the Safe transfer. | [US-EXP-005](#us-exp-005-fund-the-expense-account) — owns the credited Expense balance and spending availability                             |
+| An approved Expense payout reaches Safe. [UC-TREASURY-001](../accounting/journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer) | Receives the Safe funding.   | [US-EXP-002](#us-exp-002-spend-from-the-expense-account) — executes the approved payout to a company pocket                                  |
+
+### Direct Movement Scenarios
+
+Target behaviour follows the [direct movement policy](../accounting/direct-movement-policy.md). Each row represents the same evidenced
+movement across the participating stories.
+
+| Scenario                                                                                                                                                                                            | This story owns | Related stories and roles                                                                                                                                                                                                                                                                                                                   |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| External wallet funds Safe without established purpose or investment evidence. [UC-TREASURY-002](../accounting/journal-entry-catalogue.md#uc-treasury-002--external-receipt-pending-classification) | Owns funding.   | [US-SAFE-002](README.md#us-safe-002-inspect-safe-details) — owns Safe asset history; [US-ACCT-007](../accounting/README.md#us-acct-007-review-direct-treasury-movements) — owns movement evidence and identity; [US-ACCT-010](../accounting/README.md#us-acct-010-classify-direct-external-receipts) — owns eligible receipt classification |
 
 ## US-SAFE-004: Manage Safe Signers and Threshold
 
@@ -925,6 +1104,9 @@ Bank transfers can incur the Bank's configured protocol fee; Accounting adds a m
 **Dependencies:** US-SAFE-001
 
 ## Known Gaps
+
+- New Bank, Expense, and Safe movement-history criteria require shared direct-movement evidence and eventless movement coverage. Existing
+  history criteria and their test references retain their current scope; the new criteria have no representative proof yet.
 
 - Bank history does not distinguish a failed event read from a successfully loaded empty history (`US-BANK-003`).
 - A one-time Expense approval can spend an unsupported ERC-20 token held by the contract (`US-EXP-002`).

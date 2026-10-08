@@ -22,6 +22,10 @@ These acceptance criteria follow the
 - **No backend exists for this capability.** Payment history is read directly from the Bank contract's deposit events (see
   `US-PAYGATE-004`); recalling a payment by facture ID (`US-PAYGATE-005`) has no implemented mechanism yet, on-chain or off-chain.
 
+The [direct asset movement product contract](../accounting/direct-movement-policy.md) defines company custody, unsolicited receipts,
+historical coverage, classification, and reconciliation across domains. Its target behaviour remains pending implementation; new ACs are
+unchecked.
+
 ## Lifecycle
 
 1. The merchant selects the token the widget will accept on the Setup page and gets a copyable HTML/JavaScript, Vue 3, or React embed
@@ -52,7 +56,7 @@ widget-payment paths are planned; a source-only widget assertion is not integrat
 | US-PAYGATE-001 | ⬜ Planned   | ⚠️ 1/3 met      | `AC-US-PAYGATE-001-01–02`                                                                                                                                              |
 | US-PAYGATE-002 | ⬜ Planned   | ⚠️ 2/6 met      | `AC-US-PAYGATE-002-01–03`, `06`                                                                                                                                        |
 | US-PAYGATE-003 | ⬜ Planned   | ⚠️ 6/13         | `AC-US-PAYGATE-003-02`, `AC-US-PAYGATE-003-03`, `AC-US-PAYGATE-003-04`, `AC-US-PAYGATE-003-06`, `AC-US-PAYGATE-003-08`, `AC-US-PAYGATE-003-09`, `AC-US-PAYGATE-003-12` |
-| US-PAYGATE-004 | ⬜ Planned   | ❌ 0/6          | `AC-US-PAYGATE-004-01`, `AC-US-PAYGATE-004-02`, `AC-US-PAYGATE-004-03`, `AC-US-PAYGATE-004-04`, `AC-US-PAYGATE-004-05`, `AC-US-PAYGATE-004-06`                         |
+| US-PAYGATE-004 | ⬜ Planned   | ❌ 0/6 met      | `AC-US-PAYGATE-004-01`, `AC-US-PAYGATE-004-02`, `AC-US-PAYGATE-004-03`, `AC-US-PAYGATE-004-04`, `AC-US-PAYGATE-004-05`, `AC-US-PAYGATE-004-06`                         |
 | US-PAYGATE-005 | 📝 Draft     | 📝 Not assessed | Authoritative facture-ID lookup boundary undecided                                                                                                                     |
 
 Proof obligations use the [shared proof-strategy registry](../../testing/proof-strategies.md). Multiple IDs for one AC are cumulative.
@@ -243,6 +247,20 @@ token\
 | `AC-US-PAYGATE-004-06` | `PS-FRONTEND`         | None linked      | ❌ Missing      |
 
 **Dependencies:** US-PAYGATE-003
+
+**Shared policy:** A plain Bank receipt without facture evidence remains excluded by `AC-US-PAYGATE-004-04`.
+[US-ACCT-007](../accounting/README.md#us-acct-007-review-direct-treasury-movements) retains its asset movement, while
+[US-ACCT-010](../accounting/README.md#us-acct-010-classify-direct-external-receipts) owns eligible receipt classification. The shared
+movement does not establish an invoice payment from amount, sender, or timing alone.
+
+### Direct Movement Scenarios
+
+Target behaviour follows the [direct movement policy](../accounting/direct-movement-policy.md). Each row represents the same evidenced
+movement across the participating stories.
+
+| Scenario                                                                                                                                                                                         | This story owns                                   | Related stories and roles                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| External wallet funds Bank without established purpose or facture evidence. [UC-TREASURY-002](../accounting/journal-entry-catalogue.md#uc-treasury-002--external-receipt-pending-classification) | Keeps unmatched receipts outside invoice history. | [US-BANK-001](../accounts/README.md#us-bank-001-fund-the-bank) — owns received funding; [US-BANK-003](../accounts/README.md#us-bank-003-review-the-bank-position-and-history) — owns Bank history; [US-ACCT-007](../accounting/README.md#us-acct-007-review-direct-treasury-movements) — owns movement evidence and identity; [US-ACCT-010](../accounting/README.md#us-acct-010-classify-direct-external-receipts) — owns eligible receipt classification |
 
 ## US-PAYGATE-005: Recall a Payment's Status by Facture ID
 
