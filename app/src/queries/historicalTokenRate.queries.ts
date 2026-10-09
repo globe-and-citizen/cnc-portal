@@ -11,7 +11,7 @@ import {
   type UsdRateOfRecord
 } from '@/utils/accounting/toUsd'
 import { queryClient } from './queryClient'
-import { externalReadPolicy, fetchMarketRead } from '@/lib/externalReads'
+import { getMarketRead } from '@/lib/externalReads'
 
 interface ResolvedHistoricalRateTarget extends HistoricalRateTarget {
   coinId: string
@@ -26,9 +26,9 @@ interface HistoricalRateResponse {
 }
 
 type HistoricalRateFetcher = (
-  input: string,
-  init?: RequestInit
-) => Promise<{ ok: boolean; json: () => Promise<unknown> }>
+  url: string,
+  signal?: AbortSignal
+) => Promise<{ data: HistoricalRateResponse }>
 
 type HistoricalRateMap = Readonly<Record<string, number>>
 
@@ -68,11 +68,11 @@ export async function fetchHistoricalTokenRate(
   client: QueryClient,
   coinId: string,
   date: string,
-  request: HistoricalRateFetcher = fetchMarketRead
+  request: HistoricalRateFetcher = getMarketRead
 ): Promise<number> {
   return client.fetchQuery({
     queryKey: historicalTokenRateKeys.rate(coinId, date),
-    ...externalReadPolicy(Infinity, false),
+    staleTime: Infinity,
     retry: false,
     gcTime: Infinity,
     queryFn: async ({ signal }) => {
@@ -81,10 +81,7 @@ export async function fetchHistoricalTokenRate(
       )
       url.searchParams.set('date', date)
       url.searchParams.set('localization', 'false')
-      const response = await request(url.toString(), { signal })
-      if (!response.ok) throw new Error(`Historical USD rate unavailable for ${coinId} on ${date}`)
-
-      const body = (await response.json()) as HistoricalRateResponse
+      const { data: body } = await request(url.toString(), signal)
       const rate = body.market_data?.current_price?.usd
       if (typeof rate !== 'number' || !Number.isFinite(rate) || rate <= 0) {
         throw new Error(`Historical USD rate unavailable for ${coinId} on ${date}`)
@@ -113,7 +110,11 @@ export function useHistoricalTokenRatesQuery(
   const query = useQuery<HistoricalRateMap>({
     queryKey: computed(() => historicalTokenRateKeys.set(requested.value)),
     enabled: computed(() => toValue(enabled) && requested.value.length > 0),
-    ...externalReadPolicy(24 * 60 * 60_000),
+    staleTime: 24 * 60 * 60_000,
+    refetchInterval: 24 * 60 * 60_000,
+    refetchIntervalInBackground: false,
+    refetchOnWindowFocus: false,
+    retry: false,
     gcTime: 24 * 60 * 60_000,
     queryFn: async () => {
       const pairs = await Promise.all(

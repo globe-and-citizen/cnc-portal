@@ -5,7 +5,7 @@ import { useContractBalance } from '@/composables/useContractBalance'
 import { useGetSafeTransfersQuery } from '@/queries/safe.queries'
 import { currentChainId } from '@/constant'
 import { normalizeSafeAddress } from '@/utils/safe/address'
-import { externalReadPolicy } from '@/lib/externalReads'
+import { failureDetails } from '@/lib/externalReads'
 
 import { discoverSafeAssets } from '@/utils/safe/assetDiscovery'
 import { useGetSafePortfolioAssetsQuery } from '@/queries/safePortfolio.queries'
@@ -15,7 +15,18 @@ export function useSafePortfolio(address: MaybeRefOrGetter<Address | undefined>)
     const value = toValue(address)
     return value ? normalizeSafeAddress(value) : undefined
   })
-  const supported = useContractBalance(safeAddress, externalReadPolicy(60_000))
+  const supported = useContractBalance(safeAddress, {
+    staleTime: 60_000,
+    gcTime: 30 * 60_000,
+    refetchInterval: 60_000,
+    refetchIntervalInBackground: false,
+    refetchOnWindowFocus: false,
+    retry: (failureCount, error) => {
+      const { status } = failureDetails(error)
+      return failureCount < 1 && (status === undefined || status >= 500)
+    },
+    retryDelay: 5000
+  })
   const transfers = useGetSafeTransfersQuery({ pathParams: { safeAddress: address } })
   const discovered = computed(() => discoverSafeAssets(transfers.data.value ?? [], currentChainId))
   const assets = useGetSafePortfolioAssetsQuery(

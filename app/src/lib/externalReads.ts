@@ -9,7 +9,7 @@ export class ExternalReadError extends Error {
   }
 }
 
-function failureDetails(error: unknown): { status?: number; retryAfter?: string | null } {
+export function failureDetails(error: unknown): { status?: number; retryAfter?: string | null } {
   const visited = new Set<unknown>()
   while (error && typeof error === 'object' && !visited.has(error)) {
     visited.add(error)
@@ -84,36 +84,6 @@ export function getSafeRead<T>(url: string, signal?: AbortSignal) {
   return safeReads(() => externalApiClient.get<T>(url, { signal }), signal)
 }
 
-export function fetchMarketRead(input: string, init?: RequestInit): Promise<Response> {
-  return marketReads(async () => {
-    const timeout = AbortSignal.timeout(15_000)
-    const signal = init?.signal ? AbortSignal.any([init.signal, timeout]) : timeout
-    const response = await fetch(input, { ...init, signal })
-    if (!response.ok)
-      throw new ExternalReadError(response.status, response.headers.get('retry-after'))
-    return response
-  }, init?.signal ?? undefined)
-}
-
-export const READ_CACHE_RETENTION = 30 * 60_000
-export const TOKEN_METADATA_FRESHNESS = 24 * 60 * 60_000
-
-/** One jitter value per cadence keeps observers of the same query on the same schedule. */
-const intervals = new Map<number, number>()
-
-export function externalReadPolicy(staleTime: number, poll = true) {
-  if (poll && !intervals.has(staleTime))
-    intervals.set(staleTime, staleTime + Math.floor(Math.random() * staleTime * 0.1))
-  return {
-    staleTime,
-    gcTime: READ_CACHE_RETENTION,
-    refetchInterval: poll ? intervals.get(staleTime)! : (false as const),
-    refetchIntervalInBackground: false,
-    refetchOnWindowFocus: false,
-    retry: (failureCount: number, error: unknown) => {
-      const { status } = failureDetails(error)
-      return failureCount < 1 && (status === undefined || status >= 500)
-    },
-    retryDelay: 5000
-  }
+export function getMarketRead<T>(url: string, signal?: AbortSignal) {
+  return marketReads(() => externalApiClient.get<T>(url, { signal }), signal)
 }

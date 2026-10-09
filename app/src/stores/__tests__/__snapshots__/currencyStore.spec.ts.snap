@@ -1,28 +1,5 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`Currency Store > fetchTokenPrice queryFn throws on fetch error 1`] = `
-{
-  "code": "GO",
-  "id": "native",
-  "name": "GO",
-  "prices": [
-    {
-      "code": "USD",
-      "id": "local",
-      "price": null,
-      "symbol": "$",
-    },
-    {
-      "code": "USD",
-      "id": "usd",
-      "price": null,
-      "symbol": "$",
-    },
-  ],
-  "symbol": "GO",
-}
-`;
-
 exports[`Currency Store > fetches and returns token prices and info 1`] = `
 {
   "code": "GO",
@@ -66,5 +43,28 @@ exports[`Currency Store > fetches and returns token prices and info 2`] = `
     },
   ],
   "symbol": "USDC",
+}
+`;
+
+exports[`Currency Store > preserves unavailable prices when the Axios market request fails 1`] = `
+{
+  "code": "GO",
+  "id": "native",
+  "name": "GO",
+  "prices": [
+    {
+      "code": "USD",
+      "id": "local",
+      "price": null,
+      "symbol": "$",
+    },
+    {
+      "code": "USD",
+      "id": "usd",
+      "price": null,
+      "symbol": "$",
+    },
+  ],
+  "symbol": "GO",
 }
 `;

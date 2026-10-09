@@ -7,7 +7,7 @@ import { erc20Abi, formatUnits, type Address } from 'viem'
 import { config } from '@/wagmi.config'
 import { currentChainId } from '@/constant'
 import { contractBalanceKeys } from '@/composables/useContractBalance'
-import { externalReadPolicy, TOKEN_METADATA_FRESHNESS } from '@/lib/externalReads'
+import { failureDetails } from '@/lib/externalReads'
 import type { AssetMetadata } from '@/utils/tokens/assets'
 import type { SafePortfolioAsset } from '@/utils/safe/portfolio'
 import { fetchAssetMarket } from './assetMarket.queries'
@@ -39,9 +39,9 @@ export async function fetchSafePortfolioAssets(
         if (asset.decimals === null) {
           const decimals = await client.fetchQuery({
             queryKey: ['safe-token-decimals', network.id, asset.address.toLowerCase()],
-            ...externalReadPolicy(TOKEN_METADATA_FRESHNESS, false),
+            staleTime: 24 * 60 * 60_000,
+            gcTime: 24 * 60 * 60_000,
             retry: false,
-            gcTime: TOKEN_METADATA_FRESHNESS,
             queryFn: () =>
               readContract(config, {
                 address: asset.address as Address,
@@ -92,7 +92,16 @@ export function useGetSafePortfolioAssetsQuery(
       { assets: toValue(sources) }
     ]),
     enabled: computed(() => Boolean(toValue(address)) && toValue(enabled)),
-    ...externalReadPolicy(60_000),
+    staleTime: 60_000,
+    gcTime: 30 * 60_000,
+    refetchInterval: 60_000,
+    refetchIntervalInBackground: false,
+    refetchOnWindowFocus: false,
+    retry: (failureCount, error) => {
+      const { status } = failureDetails(error)
+      return failureCount < 1 && (status === undefined || status >= 500)
+    },
+    retryDelay: 5000,
     queryFn: () =>
       fetchSafePortfolioAssets(queryClient, toValue(sources), toValue(address)!, chainId.value)
   })

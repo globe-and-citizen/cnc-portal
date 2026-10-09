@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/vue-query'
 import { computed, toValue } from 'vue'
 import { erc20Abi, isAddress, type Address } from 'viem'
 import { contractBalanceKeys } from '@/composables/useContractBalance'
-import { externalReadPolicy, getSafeRead, TOKEN_METADATA_FRESHNESS } from '@/lib/externalReads'
+import { failureDetails, getSafeRead } from '@/lib/externalReads'
 import { queryClient } from './queryClient'
 import { normalizeSafeAddress } from '@/utils/safe/address'
 import { readContract } from '@wagmi/core'
@@ -134,9 +134,9 @@ export function useGetSafeTransfersQuery(params: GetSafeIncomingTransfersParams)
             const token = tokenAddress as Address
             const [decimals, symbol, name] = await queryClient.fetchQuery({
               queryKey: ['safe-token-metadata', chainId, tokenAddress],
-              ...externalReadPolicy(TOKEN_METADATA_FRESHNESS, false),
+              staleTime: 24 * 60 * 60_000,
+              gcTime: 24 * 60 * 60_000,
               retry: false,
-              gcTime: TOKEN_METADATA_FRESHNESS,
               queryFn: () =>
                 Promise.all([
                   readContract(config, {
@@ -179,7 +179,14 @@ export function useGetSafeTransfersQuery(params: GetSafeIncomingTransfersParams)
       )
       return transfers
     },
-    ...externalReadPolicy(300_000)
+    staleTime: 300_000,
+    gcTime: 30 * 60_000,
+    refetchInterval: 300_000,
+    refetchIntervalInBackground: false,
+    refetchOnWindowFocus: false,
+    retry: (failureCount, error) =>
+      failureCount < 1 && (failureDetails(error).status ?? 500) >= 500,
+    retryDelay: 5000
   })
 }
 
@@ -196,8 +203,7 @@ export function useGetSafeTransfersQuery(params: GetSafeIncomingTransfersParams)
  * @body none
  */
 export function useGetSafeInfoQuery(params: GetSafeInfoParams) {
-  const { pathParams } = params
-  const safeAddress = computed(() => toValue(pathParams.safeAddress))
+  const safeAddress = computed(() => toValue(params.pathParams.safeAddress))
 
   return useQuery<SafeInfo>({
     queryKey: computed(() => safeKeys.info(safeAddress.value)),
@@ -212,7 +218,14 @@ export function useGetSafeInfoQuery(params: GetSafeInfoParams) {
       )
       return data
     },
-    ...externalReadPolicy(300_000)
+    staleTime: 300_000,
+    gcTime: 30 * 60_000,
+    refetchInterval: 300_000,
+    refetchIntervalInBackground: false,
+    refetchOnWindowFocus: false,
+    retry: (failureCount, error) =>
+      failureCount < 1 && (failureDetails(error).status ?? 500) >= 500,
+    retryDelay: 5000
   })
 }
 
@@ -229,10 +242,7 @@ export function useGetSafeInfoQuery(params: GetSafeInfoParams) {
  * @body none
  */
 export function useGetSafeTransactionsQuery(params: GetSafeTransactionsParams) {
-  const { pathParams } = params
-  const safeAddress = computed(() => toValue(pathParams.safeAddress))
-  const pendingReadPolicy = externalReadPolicy(60_000)
-  const idleInterval = externalReadPolicy(300_000).refetchInterval
+  const safeAddress = computed(() => toValue(params.pathParams.safeAddress))
 
   return useQuery<SafeTransaction[]>({
     queryKey: computed(() => safeKeys.transactions(safeAddress.value)),
@@ -247,11 +257,15 @@ export function useGetSafeTransactionsQuery(params: GetSafeTransactionsParams) {
       )
       return data.results || []
     },
-    ...pendingReadPolicy,
+    staleTime: 60_000,
+    gcTime: 30 * 60_000,
+    refetchIntervalInBackground: false,
+    refetchOnWindowFocus: false,
+    retry: (failureCount, error) =>
+      failureCount < 1 && (failureDetails(error).status ?? 500) >= 500,
+    retryDelay: 5000,
     refetchInterval: (query) =>
-      query.state.data?.some((transaction) => !transaction.isExecuted)
-        ? pendingReadPolicy.refetchInterval
-        : idleInterval
+      query.state.data?.some((transaction) => !transaction.isExecuted) ? 60_000 : 300_000
   })
 }
 
@@ -285,7 +299,14 @@ export function useGetSafeTransactionQuery(params: GetSafeTransactionParams) {
       )
       return data
     },
-    ...externalReadPolicy(300_000, false)
+    staleTime: 300_000,
+    gcTime: 30 * 60_000,
+    refetchInterval: false,
+    refetchIntervalInBackground: false,
+    refetchOnWindowFocus: false,
+    retry: (failureCount, error) =>
+      failureCount < 1 && (failureDetails(error).status ?? 500) >= 500,
+    retryDelay: 5000
   })
 }
 
@@ -314,9 +335,7 @@ export function useGetSafeIncomingTransfersQuery(params: GetSafeIncomingTransfer
 
       // Only use limit parameter
       const params = new URLSearchParams()
-      if (queryParams?.limit) {
-        params.append('limit', queryParams.limit.toString())
-      }
+      if (queryParams?.limit) params.append('limit', queryParams.limit.toString())
 
       const queryString = params.toString() ? `?${params.toString()}` : ''
       return fetchAllSafePages<SafeIncomingTransfer>(
@@ -324,7 +343,14 @@ export function useGetSafeIncomingTransfersQuery(params: GetSafeIncomingTransfer
         signal
       )
     },
-    ...externalReadPolicy(300_000)
+    staleTime: 300_000,
+    gcTime: 30 * 60_000,
+    refetchInterval: 300_000,
+    refetchIntervalInBackground: false,
+    refetchOnWindowFocus: false,
+    retry: (failureCount, error) =>
+      failureCount < 1 && (failureDetails(error).status ?? 500) >= 500,
+    retryDelay: 5000
   })
 }
 
@@ -344,15 +370,20 @@ export function useGetSafeOutgoingTransactionsQuery(params: GetSafeOutgoingTrans
       if (!txService) throw new Error(`Unsupported chainId: ${chainId}`)
 
       const qp = new URLSearchParams({ executed: 'true' })
-      if (queryParams?.limit) {
-        qp.append('limit', queryParams.limit.toString())
-      }
+      if (queryParams?.limit) qp.append('limit', queryParams.limit.toString())
 
       return fetchAllSafePages<SafeTransaction>(
         `${txService.url}/api/v1/safes/${address}/multisig-transactions/?${qp.toString()}`,
         signal
       )
     },
-    ...externalReadPolicy(300_000)
+    staleTime: 300_000,
+    gcTime: 30 * 60_000,
+    refetchInterval: 300_000,
+    refetchIntervalInBackground: false,
+    refetchOnWindowFocus: false,
+    retry: (failureCount, error) =>
+      failureCount < 1 && (failureDetails(error).status ?? 500) >= 500,
+    retryDelay: 5000
   })
 }

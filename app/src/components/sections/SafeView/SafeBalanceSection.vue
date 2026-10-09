@@ -174,20 +174,14 @@ import { useSafeSignerRole } from '@/composables/safe/useSafeSignerRole'
 import { formatCurrency, formatUsd } from '@/utils/format'
 import { signerRoleCopy } from '@/utils/safe/signerRole'
 import { useSafePortfolio } from '@/composables/safe/useSafePortfolio'
-import { useContractBalance } from '@/composables/useContractBalance'
-import { externalReadPolicy } from '@/lib/externalReads'
-import { normalizeSafeAddress } from '@/utils/safe/address'
 
 const props = defineProps<{ address: Address }>()
 const chainId = useChainId()
 const currency = useStorage('currency', { code: 'USD', name: 'US Dollar', symbol: '$' })
 const { isWriteDisabled } = useTeamWriteGuard()
 
-const { data: balance, error: balanceError } = useContractBalance(
-  () => normalizeSafeAddress(props.address),
-  externalReadPolicy(60_000)
-)
 const {
+  supported: { data: balance, error: balanceError },
   totalUsd: portfolioTotalUsd,
   isIncomplete,
   isLoading,

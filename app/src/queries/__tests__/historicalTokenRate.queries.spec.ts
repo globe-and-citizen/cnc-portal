@@ -1,6 +1,7 @@
 import { QueryClient } from '@tanstack/vue-query'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ref, toValue, type MaybeRefOrGetter } from 'vue'
+import externalApiClient from '@/lib/external.axios'
 import { useQueryFn } from '@/tests/mocks/composables.mock'
 import { queryClient as sharedQueryClient } from '../queryClient'
 import {
@@ -9,9 +10,8 @@ import {
   useHistoricalTokenRatesQuery
 } from '../historicalTokenRate.queries'
 
-const response = (usd: unknown, ok = true) => ({
-  ok,
-  json: async () => ({ market_data: { current_price: { usd } } })
+const response = (usd: unknown) => ({
+  data: { market_data: { current_price: { usd } } }
 })
 
 const queryClient = () => new QueryClient({ defaultOptions: { queries: { retry: false } } })
@@ -28,6 +28,20 @@ const capturedQuery = (): CapturedHistoricalRateQuery =>
 describe('historical token rate queries', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+  })
+
+  it('reads the historical snapshot through Axios with the query cancellation signal', async () => {
+    const get = vi.spyOn(externalApiClient, 'get').mockResolvedValueOnce(response(0.5))
+    try {
+      await expect(fetchHistoricalTokenRate(queryClient(), 'asset', '2026-03-13')).resolves.toBe(
+        0.5
+      )
+      expect(get).toHaveBeenCalledWith(expect.stringContaining('/coins/asset/history'), {
+        signal: expect.any(AbortSignal)
+      })
+    } finally {
+      get.mockRestore()
+    }
   })
 
   it('keys immutable rates by provider coin id, UTC date, and currency', () => {
@@ -77,8 +91,7 @@ describe('historical token rate queries', () => {
     useHistoricalTokenRatesQuery([{ token: 'native', date: '2026-03-13' }])
     const query = useQueryFn.mock.calls.at(-1)![0]
     expect(query.staleTime).toBe(24 * 60 * 60_000)
-    expect(query.refetchInterval).toBeGreaterThanOrEqual(24 * 60 * 60_000)
-    expect(query.refetchInterval).toBeLessThan(1.1 * 24 * 60 * 60_000)
+    expect(query.refetchInterval).toBe(24 * 60 * 60_000)
     expect(query.refetchOnWindowFocus).toBe(false)
   })
 
@@ -121,7 +134,7 @@ describe('historical token rate queries', () => {
     const client = queryClient()
     const request = vi
       .fn()
-      .mockResolvedValueOnce(response(undefined, false))
+      .mockResolvedValueOnce(response(undefined))
       .mockResolvedValueOnce(response(0.8))
 
     await expect(

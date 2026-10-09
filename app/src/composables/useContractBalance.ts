@@ -1,13 +1,21 @@
 import { computed, toValue, type MaybeRefOrGetter } from 'vue'
 import { useChainId } from '@wagmi/vue'
-import { useQuery } from '@tanstack/vue-query'
+import { useQuery, type QueryObserverOptions } from '@tanstack/vue-query'
 import type { Address } from 'viem'
 import { config as wagmiConfig } from '@/wagmi.config'
 import { useCurrencyStore } from '@/stores'
 import { SUPPORTED_TOKENS, type TokenId } from '@/constant'
 import { fetchTokenBalances, toContractBalances } from '@/lib/balances/tokenBalances'
 import type { ContractBalances } from '@/types'
-import type { externalReadPolicy } from '@/lib/externalReads'
+
+type BalanceQueryOptions = Pick<
+  QueryObserverOptions,
+  'gcTime' | 'refetchIntervalInBackground' | 'retry' | 'retryDelay'
+> & {
+  staleTime?: number
+  refetchInterval?: number | false
+  refetchOnWindowFocus?: boolean
+}
 
 export type { ContractBalances, TokenBalance, CurrencyPair, Money } from '@/types'
 
@@ -54,7 +62,7 @@ export const contractBalanceKeys = {
  */
 export function useContractBalance(
   address: MaybeRefOrGetter<Address | undefined>,
-  readPolicy?: ReturnType<typeof externalReadPolicy>
+  options?: BalanceQueryOptions
 ) {
   const chainId = useChainId()
   const currencyStore = useCurrencyStore()
@@ -64,7 +72,7 @@ export function useContractBalance(
     queryKey: computed(() => contractBalanceKeys.detail(contractAddress.value, chainId.value)),
     enabled: computed(() => !!contractAddress.value),
     refetchInterval: REFETCH_INTERVAL,
-    ...readPolicy,
+    ...options,
     queryFn: () =>
       fetchTokenBalances(wagmiConfig, {
         address: contractAddress.value as Address,

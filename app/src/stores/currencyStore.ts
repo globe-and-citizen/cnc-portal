@@ -6,7 +6,7 @@ import { useQuery } from '@tanstack/vue-query'
 import type { Ref } from 'vue'
 import { useTeamStore } from '@/stores/teamStore'
 import { computed, ref } from 'vue'
-import { externalReadPolicy, fetchMarketRead } from '@/lib/externalReads'
+import { failureDetails, getMarketRead } from '@/lib/externalReads'
 
 export interface PriceResponse {
   market_data: {
@@ -47,9 +47,12 @@ export const useCurrencyStore = defineStore('currency', () => {
   })
 
   // Fetch prices for all tokens
-  async function fetchTokenPrice(coingeckoId: string) {
-    const res = await fetchMarketRead(`https://api.coingecko.com/api/v3/coins/${coingeckoId}`)
-    return res.json() as Promise<PriceResponse>
+  async function fetchTokenPrice(coingeckoId: string, signal: AbortSignal) {
+    const { data } = await getMarketRead<PriceResponse>(
+      `https://api.coingecko.com/api/v3/coins/${coingeckoId}`,
+      signal
+    )
+    return data
   }
   /**
    * @dev For a dynamic supported token, Map is better than Array
@@ -75,8 +78,17 @@ export const useCurrencyStore = defineStore('currency', () => {
     } else {
       const { data, isFetching } = useQuery({
         queryKey: ['price', token.coingeckoId],
-        queryFn: () => fetchTokenPrice(token.coingeckoId),
-        ...externalReadPolicy(300_000)
+        queryFn: ({ signal }) => fetchTokenPrice(token.coingeckoId, signal),
+        staleTime: 300_000,
+        gcTime: 30 * 60_000,
+        refetchInterval: 300_000,
+        refetchIntervalInBackground: false,
+        refetchOnWindowFocus: false,
+        retry: (failureCount, error) => {
+          const { status } = failureDetails(error)
+          return failureCount < 1 && (status === undefined || status >= 500)
+        },
+        retryDelay: 5000
       })
       tokenStates.push({ id: token.id, data, loading: isFetching })
     }

@@ -1,10 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import {
-  createExternalReadQueue,
-  externalReadPolicy,
-  ExternalReadError,
-  READ_CACHE_RETENTION
-} from '../externalReads'
+import { createExternalReadQueue, getMarketRead, ExternalReadError } from '../externalReads'
+import externalApiClient from '../external.axios'
 
 describe('browser external read coordination', () => {
   beforeEach(() => {
@@ -79,18 +75,29 @@ describe('browser external read coordination', () => {
     await expect(market(async () => 'price')).resolves.toBe('price')
   })
 
-  it('does not retry rate limits or terminal client errors and bounds transient retries', () => {
-    const policy = externalReadPolicy(300_000)
-    expect(policy.retry(0, new ExternalReadError(429))).toBe(false)
-    expect(policy.retry(0, new Error('RPC read failed', { cause: { status: 429 } }))).toBe(false)
-    expect(policy.retry(0, new ExternalReadError(404))).toBe(false)
-    expect(policy.retry(0, new ExternalReadError(503))).toBe(true)
-    expect(policy.retry(1, new ExternalReadError(503))).toBe(false)
-    expect(policy.retry(0, new Error('Network unavailable'))).toBe(true)
-    expect(policy.refetchInterval).toBeGreaterThanOrEqual(300_000)
-    expect(policy.refetchInterval).toBeLessThan(330_000)
-    expect(policy.refetchOnWindowFocus).toBe(false)
-    expect(policy.gcTime).toBe(READ_CACHE_RETENTION)
-    expect(externalReadPolicy(300_000, false).refetchInterval).toBe(false)
+  it('uses Axios data, cancellation and Retry-After for coordinated market reads', async () => {
+    const signal = new AbortController().signal
+    const body = { market_data: { current_price: { usd: 2 } } }
+    const request = vi.spyOn(externalApiClient, 'get').mockResolvedValueOnce({ data: body })
+    try {
+      await expect(getMarketRead('https://market.example/coin', signal)).resolves.toEqual({
+        data: body
+      })
+      expect(request).toHaveBeenCalledWith('https://market.example/coin', { signal })
+      expect(externalApiClient.defaults.timeout).toBe(15_000)
+      await vi.advanceTimersByTimeAsync(2100)
+      const failure = { response: { status: 429, headers: { 'retry-after': '120' } } }
+      request.mockRejectedValueOnce(failure)
+      await expect(getMarketRead('https://market.example/other')).rejects.toBe(failure)
+      await expect(getMarketRead('https://market.example/next')).rejects.toMatchObject({
+        status: 429
+      })
+      expect(request).toHaveBeenCalledTimes(2)
+      await vi.advanceTimersByTimeAsync(120_000)
+      request.mockResolvedValueOnce({ data: body })
+      await expect(getMarketRead('https://market.example/next')).resolves.toEqual({ data: body })
+    } finally {
+      request.mockRestore()
+    }
   })
 })
