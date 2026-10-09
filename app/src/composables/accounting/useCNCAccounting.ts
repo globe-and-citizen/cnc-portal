@@ -38,7 +38,7 @@ import { useGetExpensesQuery } from '@/queries/expense.queries'
 import { useGetJournalAccountAssignmentsQuery } from '@/queries/journalAccountAssignment.queries'
 import { useGetSafeTransfersQuery } from '@/queries/safe.queries'
 import { useGetTeamWeeklyClaimsQuery } from '@/queries/weeklyClaim.queries'
-import { useHistoricalTokenRatesQuery } from '@/queries/historicalTokenRate.queries'
+import { useHistoricalTokenRatesQuery } from '@/queries/coingecko.queries'
 import { useTransactionEvidence } from './useTransactionEvidence'
 import { useAccountingStatus } from './useAccountingStatus'
 import { accountingEventSource, accountingQuerySource } from '@/utils/accounting/sourceStatus'
@@ -51,10 +51,10 @@ import {
 import { knownDeploymentAccounts } from '@/utils/accounting/accountInstances'
 import * as accountingValuation from '@/utils/accounting/toUsd'
 import {
-  accountingGenerations,
-  generationContracts,
-  generationScanTargets,
-  currentContractAddress
+  buildAccountingContractGenerations,
+  flattenAccountingGenerationContracts,
+  buildContractEventScanTargets,
+  findPreferredCurrentContractAddress
 } from '@/utils/accounting/contractGenerations'
 import { prepareSafeExchanges } from '@/utils/accounting/safeExchanges'
 
@@ -83,13 +83,13 @@ export function useCNCAccounting(
   })
 
   const generations = computed(() =>
-    accountingGenerations(contracts.value, officers.data.value ?? [])
+    buildAccountingContractGenerations(contracts.value, officers.data.value ?? [])
   )
-  const allContracts = computed(() => generationContracts(generations.value))
+  const allContracts = computed(() => flattenAccountingGenerationContracts(generations.value))
   const targetsOf = (...types: ContractType[]) =>
-    computed(() => generationScanTargets(generations.value, types))
+    computed(() => buildContractEventScanTargets(generations.value, types))
   const addressOf = (...types: ContractType[]) =>
-    computed(() => currentContractAddress(contracts.value, types))
+    computed(() => findPreferredCurrentContractAddress(contracts.value, types))
 
   const investorAddress = addressOf('Investor', 'InvestorV1')
   const routerAddress = addressOf('SafeDepositRouter')

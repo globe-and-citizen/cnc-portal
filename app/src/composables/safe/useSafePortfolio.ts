@@ -2,13 +2,12 @@
 import { computed, toValue, type MaybeRefOrGetter } from 'vue'
 import type { Address } from 'viem'
 import { useContractBalance } from '@/composables/useContractBalance'
-import { useGetSafeTransfersQuery } from '@/queries/safe.queries'
+import { useGetSafeTransfersQuery, useGetSafePortfolioAssetsQuery } from '@/queries/safe.queries'
 import { currentChainId } from '@/constant'
 import { normalizeSafeAddress } from '@/utils/safe/address'
 import { failureDetails } from '@/lib/externalReads'
 
 import { discoverSafeAssets } from '@/utils/safe/assetDiscovery'
-import { useGetSafePortfolioAssetsQuery } from '@/queries/safePortfolio.queries'
 
 export function useSafePortfolio(address: MaybeRefOrGetter<Address | undefined>) {
   const safeAddress = computed(() => {
