@@ -1,20 +1,49 @@
-/** Pure presentation of supported and discovered Safe balances. */
+/** Pure presentation of the Safe Client Gateway holdings response. */
 import { formatUnits } from 'viem'
 import { currentChainId, SUPPORTED_TOKENS } from '@/constant'
-import type { ContractBalances } from '@/types'
+import type { TokenOption } from '@/types'
+import type { SafeClientBalance, SafeClientBalances } from '@/types/safe'
 import { formatExactNumber, formatNumber } from '@/utils/format'
 import { formatCurrencyShort } from '@/utils/currency/display'
-import { assetId, type AssetMetadata } from '@/utils/tokens/assets'
-import EthereumIcon from '@/assets/Ethereum.png'
-import USDCIcon from '@/assets/usdc.png'
-import MaticIcon from '@/assets/matic-logo.png'
+import { assetId, assetLogoUri } from '@/utils/tokens/assets'
+import { getConfirmedSafeSpam } from './confirmedSpam'
 
-export interface SafePortfolioAsset {
-  asset: AssetMetadata
-  raw: bigint | null
-  quantity: string | null
-  priceUsd: number | null
-  valueUsd: number | null
+function numericValue(value: string | null): number | null {
+  if (value === null || !value.trim()) return null
+  const number = Number(value)
+  return Number.isFinite(number) && number >= 0 ? number : null
+}
+
+function nativeToken(item: SafeClientBalance): boolean {
+  return item.tokenInfo.type === 'NATIVE_TOKEN' || item.tokenInfo.type === 'ETHER'
+}
+
+function admittedItems(data: SafeClientBalances | undefined, chainId: number) {
+  const unique = new Map<string, SafeClientBalance>()
+  for (const item of data?.items ?? []) {
+    if (
+      !nativeToken(item) &&
+      getConfirmedSafeSpam(
+        { type: 'ERC20_TRANSFER', tokenAddress: item.tokenInfo.address },
+        chainId
+      )
+    )
+      continue
+    const id = nativeToken(item) ? `native:${chainId}` : assetId(item.tokenInfo.address, chainId)
+    if (!unique.has(id)) unique.set(id, item)
+  }
+  return [...unique.values()]
+}
+
+function exactQuantity(item: SafeClientBalance): string | null {
+  const { decimals } = item.tokenInfo
+  return item.balance !== null &&
+    /^\d+$/.test(item.balance) &&
+    Number.isInteger(decimals) &&
+    decimals >= 0 &&
+    decimals <= 18
+    ? formatUnits(BigInt(item.balance), decimals)
+    : null
 }
 
 function holdingAmountLabel(quantity: string | null) {
@@ -23,90 +52,75 @@ function holdingAmountLabel(quantity: string | null) {
   return Number(quantity) > 0 && formatted === '0' ? `<${formatNumber(0.0001)}` : formatted
 }
 
+/** Keep provider order and returned zero balances; absent currencies are never synthesized. */
 export function safePortfolioRows(
-  assets: readonly SafePortfolioAsset[],
-  supported?: ContractBalances,
-  currencyCode = 'USD'
+  data?: SafeClientBalances,
+  currencyCode = 'USD',
+  chainId = currentChainId
 ) {
-  const supportedIds = new Set(
-    SUPPORTED_TOKENS.map((token) => assetId(token.address, currentChainId))
-  )
-  const pricedBalance = supported?.balances.find(
-    (row) =>
-      Number.isFinite(row.price.usd.value) &&
-      row.price.usd.value > 0 &&
-      Number.isFinite(row.price.local.value) &&
-      row.price.local.value > 0
-  )
-  const localRate =
-    currencyCode === 'USD'
-      ? 1
-      : pricedBalance
-        ? pricedBalance.price.local.value / pricedBalance.price.usd.value
-        : null
-  const fixedRows = SUPPORTED_TOKENS.map((token) => {
-    const balance = supported?.balances.find((entry) => entry.token.id === token.id)
-    const localPrice = balance?.price.local.value
-    const hasPrice = localPrice !== undefined && Number.isFinite(localPrice) && localPrice > 0
+  return admittedItems(data, chainId).map((item, index) => {
+    const quantity = exactQuantity(item)
+    const conversion = numericValue(item.fiatConversion)
+    const price = conversion !== null && conversion > 0 ? conversion : null
+    const balance =
+      quantity === '0'
+        ? 0
+        : quantity !== null && price !== null
+          ? numericValue(item.fiatBalance)
+          : null
     return {
-      id: assetId(token.address, currentChainId),
-      name: token.name,
-      symbol: token.symbol,
-      address: token.id === 'native' ? null : token.address,
-      icon:
-        token.id !== 'native'
-          ? USDCIcon
-          : token.symbol === 'POL'
-            ? MaticIcon
-            : token.symbol === 'ETH'
-              ? EthereumIcon
-              : null,
-      quantity: balance
-        ? formatExactNumber(formatUnits(balance.raw, token.decimals))
-        : 'Balance unavailable',
-      amountLabel: holdingAmountLabel(balance ? formatUnits(balance.raw, token.decimals) : null),
-      amount: balance?.amount ?? null,
-      price: hasPrice ? localPrice : null,
-      priceLabel: hasPrice ? balance!.price.local.formatted : 'Price unavailable',
-      balance: balance?.raw === 0n ? 0 : balance && hasPrice ? balance.value.local.value : null,
+      id: nativeToken(item) ? `native:${chainId}` : assetId(item.tokenInfo.address, chainId),
+      name: item.tokenInfo.name,
+      symbol: item.tokenInfo.symbol,
+      address: nativeToken(item) ? null : item.tokenInfo.address,
+      icon: assetLogoUri(item.tokenInfo.logoUri) ?? null,
+      quantity: quantity === null ? 'Balance unavailable' : formatExactNumber(quantity),
+      amountLabel: holdingAmountLabel(quantity),
+      amount: quantity === null ? null : Number(quantity),
+      price,
+      priceLabel: price === null ? 'Price unavailable' : formatCurrencyShort(price, currencyCode),
+      balance,
       balanceLabel:
-        balance?.raw === 0n
-          ? formatCurrencyShort(0, currencyCode)
-          : balance && hasPrice
-            ? balance.value.local.formatted
-            : 'Value unavailable'
+        balance === null ? 'Value unavailable' : formatCurrencyShort(balance, currencyCode),
+      token: { name: item.tokenInfo.name, symbol: item.tokenInfo.symbol },
+      rank: index + 1
     }
   })
-  const discovered = new Map<string, SafePortfolioAsset>()
-  for (const row of assets) {
-    const id = assetId(row.asset.address, row.asset.chainId)
-    if (!supportedIds.has(id)) discovered.set(id, row)
-  }
-  const discoveredRows = [...discovered.values()]
-    .filter((row) => row.raw !== 0n)
-    .sort((a, b) => a.asset.id.localeCompare(b.asset.id))
-    .map((row) => {
-      const price = row.priceUsd !== null && localRate !== null ? row.priceUsd * localRate : null
-      const balance = row.valueUsd !== null && localRate !== null ? row.valueUsd * localRate : null
-      return {
-        id: assetId(row.asset.address, row.asset.chainId),
-        name: row.asset.name,
-        symbol: row.asset.symbol,
-        address: row.asset.address,
-        icon: row.asset.logoUri ?? null,
-        quantity: row.quantity === null ? 'Balance unavailable' : formatExactNumber(row.quantity),
-        amountLabel: holdingAmountLabel(row.quantity),
-        amount: row.quantity === null ? null : Number(row.quantity),
-        price,
-        priceLabel: price === null ? 'Price unavailable' : formatCurrencyShort(price, currencyCode),
-        balance,
-        balanceLabel:
-          balance === null ? 'Value unavailable' : formatCurrencyShort(balance, currencyCode)
-      }
-    })
-  return [...fixedRows, ...discoveredRows].map((row, index) => ({
-    ...row,
-    token: { name: row.name, symbol: row.symbol },
-    rank: index + 1
-  }))
+}
+
+/** A missing quantity or a nonzero unpriced holding keeps the total unavailable. */
+export function safeBalancesTotal(
+  data?: SafeClientBalances,
+  chainId = currentChainId
+): number | undefined {
+  if (!data) return undefined
+  const rows = safePortfolioRows(data, 'USD', chainId)
+  if (rows.some((row) => row.balance === null)) return undefined
+  if (rows.length === 0) return 0
+  if (rows.length === data.items.length) return numericValue(data.fiatTotal) ?? undefined
+  return rows.reduce((sum, row) => sum + row.balance!, 0)
+}
+
+/** Match the configured CNC payment allowlist by identity, never by provider symbol. */
+export function safeTransferTokens(data?: SafeClientBalances): TokenOption[] {
+  if (!data) return []
+  const items = admittedItems(data, currentChainId)
+  return SUPPORTED_TOKENS.map((token) => {
+    const item = items.find((entry) =>
+      token.id === 'native'
+        ? nativeToken(entry)
+        : !nativeToken(entry) &&
+          entry.tokenInfo.address.toLowerCase() === token.address.toLowerCase()
+    )
+    const quantity = item && item.tokenInfo.decimals === token.decimals ? exactQuantity(item) : null
+    const price = item ? (numericValue(item.fiatConversion) ?? 0) : 0
+    return {
+      symbol: token.symbol,
+      tokenId: token.id,
+      name: token.name,
+      balance: quantity === null ? 0 : Number(quantity),
+      price,
+      code: token.code
+    }
+  })
 }

@@ -189,7 +189,7 @@ import AddressTooltip from '@/components/ui/AddressTooltip.vue'
 import SafeBalanceSection from '@/components/sections/SafeView/SafeBalanceSection.vue'
 import SafeOwnersCard from '@/components/sections/SafeView/SafeOwnersCard.vue'
 import TokenHoldingsSection from '@/components/ui/TokenHoldingsSection.vue'
-import { useSafePortfolio } from '@/composables/safe/useSafePortfolio'
+import { useGetSafeBalancesQuery } from '@/queries/safeClient.queries'
 import { safePortfolioRows } from '@/utils/safe/portfolio'
 import { useStorage } from '@vueuse/core'
 import SafeTransactions from '@/components/sections/SafeView/SafeTransactions.vue'
@@ -227,15 +227,17 @@ const safeAddress = computed(
   () => teamStore.getContractAddressByType('Safe') || deployedSafeAddress.value
 )
 
-const {
-  assets,
-  supported,
-  isLoading: isLoadingHoldings,
-  isIncomplete
-} = useSafePortfolio(safeAddress)
 const currency = useStorage('currency', { code: 'USD', name: 'US Dollar', symbol: '$' })
-const holdingRows = computed(() =>
-  safePortfolioRows(assets.data.value ?? [], supported.data.value, currency.value.code)
+const {
+  data: balances,
+  error: balancesError,
+  isLoading: isLoadingHoldings
+} = useGetSafeBalancesQuery({
+  pathParams: { safeAddress, fiatCode: () => currency.value.code }
+})
+const holdingRows = computed(() => safePortfolioRows(balances.value, currency.value.code))
+const isIncomplete = computed(
+  () => Boolean(balancesError.value) || holdingRows.value.some((row) => row.balance === null)
 )
 
 const isResolvingSafe = computed(() => teamStore.currentTeamMeta.isPending || isLoadingSafe.value)
