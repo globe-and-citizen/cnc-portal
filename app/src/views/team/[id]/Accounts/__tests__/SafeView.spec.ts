@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { shallowMount } from '@vue/test-utils'
 import SafeView from '../SafeView.vue'
 import { mockTeamData, mockTeamStore } from '@/tests/mocks'
+import { mockUseContractBalance, makeTokenBalance } from '@/tests/mocks/composables.mock'
 
 describe('[US-SAFE-001] [US-SAFE-002] SafeView.vue', () => {
   it('keeps the loading state visible while the team Safe is being resolved', () => {
@@ -34,6 +35,9 @@ describe('[US-SAFE-001] [US-SAFE-002] SafeView.vue', () => {
   })
 
   it('[AC-US-SAFE-002-05] uses the registered Safe address for wallet reporting', () => {
+    mockUseContractBalance.balances.value = [
+      makeTokenBalance({ token: { name: 'Polygon', symbol: 'POL' }, amount: 0, usdPrice: 0.2 })
+    ]
     const safeAddress = '0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB'
     mockTeamStore.getContractAddressByType.mockReturnValue(safeAddress)
 
@@ -43,7 +47,9 @@ describe('[US-SAFE-001] [US-SAFE-002] SafeView.vue', () => {
     expect(wrapper.find('[data-test="safe-setup-view"]').exists()).toBe(false)
     expect(wrapper.findComponent({ name: 'SafeBalanceSection' }).props('address')).toBe(safeAddress)
     expect(wrapper.findComponent({ name: 'TokenHoldingsSection' }).props('compact')).toBe(true)
-    expect(wrapper.findComponent({ name: 'TokenHoldingsSection' }).props('rows')).toHaveLength(3)
+    const rows = wrapper.findComponent({ name: 'TokenHoldingsSection' }).props('rows')
+    expect(rows).toHaveLength(1)
+    expect(rows[0]).toMatchObject({ token: { name: 'Polygon', symbol: 'POL' }, quantity: '0' })
     expect(wrapper.findComponent({ name: 'SafeOwnersCard' }).props('address')).toBe(safeAddress)
   })
 })
