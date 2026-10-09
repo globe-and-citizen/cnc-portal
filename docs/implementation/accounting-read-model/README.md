@@ -111,12 +111,14 @@ successful dates. It never falls back to the current market price. Stablecoins r
 separate multiplier realization policy.
 
 Safe histories now refresh approximately every five minutes while retaining complete pagination and stable transfer identities. Missing
-historical rates are retried once a day for an unchanged target set, or on explicit Accounting refresh; successful immutable date snapshots
-are reused. Current contract markets use a five-minute cache, and verified coin identities and recovered token metadata use a 24-hour cache.
-Safe and CoinGecko reads pass through separate paced browser queues with provider-wide pauses within the session after HTTP 429. This
-changes loading and recovery cadence, not source inclusion, exchange classification, precision, or rate-of-record policy. A failed later
-Safe page never publishes a partial replacement feed. See [Client Data Access](../client-data-access/README.md#browser-request-coordination)
-for the session-only boundary.
+historical rates with terminal errors or unavailable prices are checked once a day for an unchanged target set, or on explicit Accounting
+refresh; successful immutable date snapshots are reused. Historical dates load sequentially. Throttling, server or transport failure stops
+the batch and schedules active-tab recovery after at least a minute, honoring a longer `Retry-After`; pending dates remain valuation gaps
+until recovered. Current contract markets inherit one-minute freshness from the moderate preset; verified coin identities and recovered
+token metadata use the once preset with 24-hour retention. Safe and CoinGecko query modules call the external Axios client directly.
+Independent reads run concurrently; HTTP 429 is handled by each query without a shared provider pause. Source inclusion, exchange
+classification, precision and rate-of-record policy remain unchanged. A failed later Safe page never publishes a partial replacement feed.
+See [Client Data Access](../client-data-access/README.md#browser-request-coordination) for the session-only boundary.
 
 Each contract-event query is also keyed by its normalized generation targets: lowercase address plus effective deployment `fromBlock`,
 sorted independently of API order. A later or asynchronously resolved boundary therefore selects a distinct history range. Duplicate
@@ -699,7 +701,7 @@ because deposits and company-pocket transfers are not manual assignment targets.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `6b2bad88aa003fa26cb87861b8e19b7c5462b266`
+**Implementation evidence reviewed against:** `22058afcf7c39f6320537c622bcb33b74dbc9ec9`
 
 - [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts),
   [source-status projection](../../../app/src/composables/accounting/useAccountingStatus.ts),

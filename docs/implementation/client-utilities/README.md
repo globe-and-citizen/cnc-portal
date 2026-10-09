@@ -99,24 +99,26 @@ transfer projection. Safe queries own its application and retain raw cached even
 [Client Data Access](../client-data-access/README.md#confirmed-safe-spam) for the exclusion boundary and
 [policy regressions](../../../app/src/utils/safe/__tests__/confirmedSpam.spec.ts) for chain, event-type and mixed-transaction guarantees.
 
-[Safe holdings presentation](../../../app/src/utils/safe/portfolio.ts) combines the fixed supported currencies with discovered holdings.
-Supported currencies retain their configured order and remain present at zero or unavailable balance. Additional holdings are deduplicated
-by network and contract, omit confirmed zero balances, and retain explicit unavailable balance and valuation states. Quantities use raw
-token units or exact decimal strings through the canonical formatter. Compact amount labels use the canonical four-decimal number format,
-retain the exact quantity separately, and identify positive sub-precision balances as `<0.0001`. Supported valuations retain the existing
-local-currency labels; discovered USD valuations use a local/USD price ratio from a supported currency and the same compact formatter. An
-unavailable conversion rate leaves local prices and values explicitly unavailable. Numeric sort values remain separate from exact quantity
-and currency labels.
+[Safe holdings presentation](../../../app/src/utils/safe/portfolio.ts) shapes the Safe Client Gateway response in provider order, including
+returned zero balances, without inserting absent configured currencies. Holdings are deduplicated by network and contract and exclude only
+confirmed spam. Exact base-unit quantities pass through the canonical formatter; compact labels use four decimals, retain the complete
+quantity separately and identify positive sub-precision balances as `<0.0001`. Current prices and values come directly from the requested
+fiat response. Missing quantities and nonzero unpriced holdings keep totals unavailable; exclusions or duplicates require recalculating the
+total from admitted items. CNC transfer options match only configured payment contracts, independently of provider names and symbols.
+
+[CoinGecko response interpretation](../../../app/src/utils/tokens/coingecko.ts) verifies the Polygon contract before accepting coin
+identity, price or logo, and checks the existing six-decimal historical-rate precision. It also interprets seconds/HTTP-date `Retry-After`
+with a one-minute minimum. Query modules retain HTTP requests, cache ownership and recovery scheduling.
 
 ## Implementation Evidence
 
 [Shared balance reads](../../../app/src/composables/useContractBalance.ts) accept caller-supplied query options while preserving the
 existing default cadence for other consumers. Supported and discovered Safe balances share a normalized balance-key prefix so existing
 post-confirmation balance invalidations reach both. [Currency prices](../../../app/src/stores/currencyStore.ts) retain their existing
-currency payload and conversions while consuming the centralized CoinGecko price query, whose five-minute options and paced Axios reads are
-described in [Client Data Access](../client-data-access/README.md#browser-request-coordination).
+currency payload and conversions while consuming the centralized CoinGecko price query, whose preset freshness, polling and direct Axios
+reads are described in [Client Data Access](../client-data-access/README.md#browser-request-coordination).
 
-**Implementation evidence reviewed against:** `6b2bad88aa003fa26cb87861b8e19b7c5462b266`
+**Implementation evidence reviewed against:** `22058afcf7c39f6320537c622bcb33b74dbc9ec9`
 
 - [Utility ownership map and domain implementations](../../../app/src/utils/)
 - [Shared Accounting domain contracts](../../../app/src/utils/accounting/types.ts)

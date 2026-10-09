@@ -795,14 +795,15 @@ remains in the browser query cache. See
 [cached and paginated query-to-accounting tests](../../../app/src/queries/__tests__/safe.queries.integration.spec.ts). Live product review
 of this exclusion remains pending.
 
-**Implementation evidence reviewed against:** `0972d19f7a8226e5923f6f8472ffc954dcf088d8`
+**Implementation evidence reviewed against:** `22058afcf7c39f6320537c622bcb33b74dbc9ec9`
 
 - [Accounting page](../../../app/src/components/sections/AccountingView/AccountingPage.vue),
   [team routes](../../../app/src/router/index.ts), and [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts)
 - [Source completeness](../../../app/src/utils/accounting/accountingCompleteness.ts),
   [block timestamps](../../../app/src/queries/blockTimestamp.queries.ts), and
   [historical valuation](../../../app/src/queries/coingecko.queries.ts) (successful date snapshots are immutable; unchanged missing-date
-  sets retry daily or on explicit refresh)
+  sets with unavailable prices retry daily or on explicit refresh; throttled batches stop and resume after at least one minute), with
+  [pure contract and historical-response validation](../../../app/src/utils/tokens/coingecko.ts)
 - [Accounting assembly](../../../app/src/utils/accounting/assemble.ts),
   [journal finalization](../../../app/src/utils/accounting/journalEntry.ts), and
   [General Ledger presenter](../../../app/src/utils/accounting/journalLedgerPresenter.ts)

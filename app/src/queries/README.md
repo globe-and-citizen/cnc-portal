@@ -37,6 +37,12 @@ This folder contains all TanStack Query hooks for API interactions in the CNC Po
 - Create one query or mutation hook per HTTP method and endpoint. Actions that differ only by request data or query parameters reuse that
   hook at the call site; do not create `useArchiveXxxMutation` and `useUnarchiveXxxMutation` when both update the same resource.
 - Query data is the server-state source of truth. Do not mirror it into a Pinia store merely to make it easier to consume.
+- External CoinGecko, Safe Transaction Service and Safe Client Gateway requests live in their query modules and use the external Axios
+  client with the query cancellation signal. Pure response interpretation belongs in utilities; observer cache, polling and retry settings
+  remain with the queries.
+- External queries inherit freshness from `queryPresets.moderate` or `queryPresets.once` without local `staleTime` overrides.
+  `refetchInterval` is the observer polling cadence, and `retryDelay` waits between failed attempts only when `retry` permits one. These
+  values do not limit the initial number of provider requests.
 
 ## Full Documentation
 

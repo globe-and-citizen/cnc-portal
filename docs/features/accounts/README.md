@@ -1131,7 +1131,7 @@ movement across the participating stories.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `6b2bad88aa003fa26cb87861b8e19b7c5462b266`
+**Implementation evidence reviewed against:** `22058afcf7c39f6320537c622bcb33b74dbc9ec9`
 
 - [Bank deposit modal](../../../app/src/components/sections/BankView/forms/DepositModal.vue),
   [Bank transfer modal](../../../app/src/components/sections/BankView/forms/TransferModal.vue),
@@ -1255,11 +1255,11 @@ holdings. The overview retains its USD total, so a non-USD display uses an addit
 
 Safe balances refresh approximately every minute while their page is active. Complete transfer histories and Safe information refresh
 approximately every five minutes; pending transactions refresh every minute when the queue contains an unexecuted transaction and every five
-minutes otherwise. Other current-price queries remain fresh for five minutes and recovered historical-transfer token metadata for 24 hours;
-unused regular query data stays in the browser cache for 30 minutes. Each query configures its own refresh and retry options; background
-tabs and window focus do not trigger extra polling. Safe and market reads are paced separately in the browser and pause after HTTP 429
-responses. See [Client Data Access](../../implementation/client-data-access/README.md#browser-request-coordination) for recovery and session
-boundaries.
+minutes otherwise. Safe and current-price queries inherit one-minute freshness from the moderate preset; verified historical-transfer token
+metadata uses the once preset with 24-hour retention; unused regular query data stays in the browser cache for 30 minutes. Each query
+configures its own refresh and retry options; background tabs and window focus do not trigger extra polling. Safe and market query modules
+call the external Axios client directly; HTTP 429 fails the affected request without blocking independent reads. See
+[Client Data Access](../../implementation/client-data-access/README.md#browser-request-coordination) for recovery and session boundaries.
 
 Confirmed Safe transaction execution and directly executed transfers use one invalidation helper for all Safe service queries and the wallet
 balance prefix shared by Gateway holdings in every queried fiat currency. A proposal refreshes the transaction queue without treating it as
