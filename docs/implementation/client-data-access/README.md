@@ -52,16 +52,17 @@ available metadata.
 [External read coordination](../../../app/src/lib/externalReads.ts) serializes Safe GETs and CoinGecko reads in separate browser-session
 queues. Safe starts are spaced by at least 250 ms; CoinGecko starts by at least 2.1 seconds. A provider's HTTP 429 pauses its entire queue
 for the supplied `Retry-After` duration (seconds or HTTP date), with a 30-second minimum, or one minute when that header is unavailable.
-Calls during the pause fail without contacting the provider. CoinGecko requests have a 15-second timeout, and cancelled queued reads do not
-send a request. Writes are outside these queues and are never automatically replayed by this coordination.
+Calls during the pause fail without contacting the provider. Safe and CoinGecko GETs use the existing external Axios client, including its
+15-second timeout and query cancellation signal. Cancelled queued reads do not send a request. Writes are outside these queues and are never
+automatically replayed by this coordination.
 
 Safe information and complete transfer histories are fresh for five minutes. The transaction queue polls every minute while a pending
 transaction exists and every five minutes otherwise; a single transaction detail does not poll. Prices use a five-minute cache, and
 successful token metadata and coin identities use a 24-hour cache. Unused regular query data is retained for 30 minutes; successful
-historical price snapshots remain immutable in the session cache. Periodic intervals include up to ten percent jitter shared by observers of
-the same cadence, do not poll in background tabs, and do not refetch on window focus. Rate limits and terminal HTTP client errors do not
-trigger automatic retries. Safe reads and supported-price observers allow one delayed retry for transient failures; imperative market,
-historical and token-metadata reads recover on a subsequent refresh instead of retrying each failed request.
+historical price snapshots remain immutable in the session cache. Each query declares its own freshness, retention, polling and retry
+options. Periodic observers use their declared cadence, do not poll in background tabs, and do not refetch on window focus. Rate limits and
+terminal HTTP client errors do not trigger automatic retries. Safe reads and supported-price observers allow one delayed retry for transient
+failures; imperative market, historical and token-metadata reads recover on a subsequent refresh instead of retrying each failed request.
 
 Unchanged historical target sets retry missing snapshots once a day, with daily cache retention and no window-focus refresh, without
 requesting already successful dates again. A newly required date is fetched when its target set changes; an explicit Accounting refresh can
@@ -83,13 +84,15 @@ guarantee that provider quotas can absorb concurrent users.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `54c4b55f0b713ec1f1fb108865138bbcf1e68479`
+**Implementation evidence reviewed against:** `ac9229f7b43dbbcca9ee1c39a8a013642e2ff464`
 
 - [Query barrel](../../../app/src/queries/index.ts), [query factory](../../../app/src/queries/queryFactory.ts), and
   [single-file upload query](../../../app/src/queries/file.queries.ts)
 - [Profile image consumer](../../../app/src/components/forms/ProfileImageUpload.vue) and
   [pure upload/query tests](../../../app/src/queries/__tests__/file.queries.spec.ts)
-- [HTTP client tests](../../../app/src/lib/__tests__/axios.spec.ts)
+- [HTTP client tests](../../../app/src/lib/__tests__/axios.spec.ts),
+  [coordinated Axios transport tests](../../../app/src/lib/__tests__/externalReads.spec.ts), and
+  [per-query Safe refresh and recovery tests](../../../app/src/queries/__tests__/safe.queries.refresh.spec.ts)
 
 ## Related Documentation
 

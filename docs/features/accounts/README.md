@@ -1131,7 +1131,7 @@ movement across the participating stories.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `54c4b55f0b713ec1f1fb108865138bbcf1e68479`
+**Implementation evidence reviewed against:** `ac9229f7b43dbbcca9ee1c39a8a013642e2ff464`
 
 - [Bank deposit modal](../../../app/src/components/sections/BankView/forms/DepositModal.vue),
   [Bank transfer modal](../../../app/src/components/sections/BankView/forms/TransferModal.vue),
@@ -1250,7 +1250,7 @@ selected currency; an unavailable conversion keeps that displayed valuation expl
 Safe balances refresh approximately every minute while their page is active. Complete transfer histories and Safe information refresh
 approximately every five minutes; pending transactions refresh every minute when the queue contains an unexecuted transaction and every five
 minutes otherwise. Prices remain fresh for five minutes, recovered token metadata for 24 hours, and unused regular query data stays in the
-browser cache for 30 minutes. Small randomized offsets spread periodic requests; background tabs and window focus do not trigger extra
+browser cache for 30 minutes. Each query configures its own refresh and retry options; background tabs and window focus do not trigger extra
 polling. Safe and market reads are paced separately in the browser and pause after HTTP 429 responses. See
 [Client Data Access](../../implementation/client-data-access/README.md#browser-request-coordination) for recovery and session boundaries.
 
