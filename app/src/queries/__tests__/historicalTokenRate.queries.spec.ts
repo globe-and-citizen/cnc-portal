@@ -8,7 +8,7 @@ import {
   fetchHistoricalTokenRate,
   historicalTokenRateKeys,
   useHistoricalTokenRatesQuery
-} from '../historicalTokenRate.queries'
+} from '../coingecko.queries'
 
 const response = (usd: unknown) => ({
   data: { market_data: { current_price: { usd } } }

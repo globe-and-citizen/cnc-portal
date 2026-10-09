@@ -1,7 +1,7 @@
 import { QueryClient } from '@tanstack/vue-query'
 import { describe, expect, it, vi } from 'vitest'
 import externalApiClient from '@/lib/external.axios'
-import { fetchAssetMarket } from '../assetMarket.queries'
+import { fetchAssetMarket } from '../coingecko.queries'
 
 const address = '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
 const client = () => new QueryClient({ defaultOptions: { queries: { retry: false } } })

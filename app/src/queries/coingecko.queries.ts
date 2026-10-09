@@ -1,34 +1,78 @@
-/** Immutable transaction-date token prices shared through the TanStack Query cache. */
+/** All CoinGecko query/cache boundaries; HTTP reads live in lib/coingecko.ts. */
 import { computed, toValue, type MaybeRefOrGetter } from 'vue'
 import { useQuery, type QueryClient } from '@tanstack/vue-query'
 import { SUPPORTED_TOKENS } from '@/constant'
-import type { AssetId } from '@/utils/tokens/assets'
-import { fetchAssetCoinId } from './assetMarket.queries'
+import type { AssetId, AssetMetadata } from '@/utils/tokens/assets'
 import {
-  round6,
   utcRateDate,
   type HistoricalRateTarget,
   type UsdRateOfRecord
 } from '@/utils/accounting/toUsd'
+import {
+  COINGECKO_POLYGON_CHAIN_ID,
+  getCoinGeckoAssetMarket,
+  getCoinGeckoHistoricalRate,
+  getCoinGeckoTokenPrice,
+  type AssetMarket,
+  type AssetMarketFetcher,
+  type HistoricalRateFetcher
+} from '@/lib/coingecko'
+import { failureDetails } from '@/lib/externalReads'
 import { queryClient } from './queryClient'
-import { getMarketRead } from '@/lib/externalReads'
+import { queryPresets } from './queryFactory'
+
+/** Current supported-token prices retain their five-minute recovery cadence. */
+export function useGetTokenPriceQuery(coinId: string) {
+  return useQuery({
+    ...queryPresets.moderate,
+    queryKey: ['price', coinId],
+    queryFn: ({ signal }) => getCoinGeckoTokenPrice(coinId, signal),
+    staleTime: 300_000,
+    gcTime: 30 * 60_000,
+    refetchInterval: 300_000,
+    refetchIntervalInBackground: false,
+    retry: (failureCount, error) => {
+      const { status } = failureDetails(error)
+      return failureCount < 1 && (status === undefined || status >= 500)
+    },
+    retryDelay: 5000
+  })
+}
+
+export async function fetchAssetMarket(
+  client: QueryClient,
+  asset: Pick<AssetMetadata, 'chainId' | 'address'>,
+  request?: AssetMarketFetcher
+): Promise<AssetMarket> {
+  if (asset.chainId !== COINGECKO_POLYGON_CHAIN_ID)
+    throw new Error('Asset market network unavailable')
+  return client.fetchQuery({
+    queryKey: ['asset-market', asset.chainId, asset.address.toLowerCase()],
+    ...queryPresets.moderate,
+    staleTime: 300_000,
+    gcTime: 30 * 60_000,
+    retry: false,
+    queryFn: ({ signal }) => getCoinGeckoAssetMarket(asset, signal, request)
+  })
+}
+
+export async function fetchAssetCoinId(client: QueryClient, token: string): Promise<string> {
+  const [, chain, address] = token.split(':')
+  if (!address) throw new Error('Asset contract unavailable')
+  return client.fetchQuery({
+    ...queryPresets.once,
+    queryKey: ['asset-coin-id', Number(chain), address.toLowerCase()],
+    staleTime: 24 * 60 * 60_000,
+    gcTime: 24 * 60 * 60_000,
+    retry: false,
+    queryFn: async () =>
+      (await fetchAssetMarket(client, { chainId: Number(chain), address })).coinId
+  })
+}
 
 interface ResolvedHistoricalRateTarget extends HistoricalRateTarget {
   coinId: string
 }
-
-interface HistoricalRateResponse {
-  market_data?: {
-    current_price?: {
-      usd?: unknown
-    }
-  }
-}
-
-type HistoricalRateFetcher = (
-  url: string,
-  signal?: AbortSignal
-) => Promise<{ data: HistoricalRateResponse }>
 
 type HistoricalRateMap = Readonly<Record<string, number>>
 
@@ -68,30 +112,15 @@ export async function fetchHistoricalTokenRate(
   client: QueryClient,
   coinId: string,
   date: string,
-  request: HistoricalRateFetcher = getMarketRead
+  request?: HistoricalRateFetcher
 ): Promise<number> {
   return client.fetchQuery({
+    ...queryPresets.once,
     queryKey: historicalTokenRateKeys.rate(coinId, date),
     staleTime: Infinity,
     retry: false,
     gcTime: Infinity,
-    queryFn: async ({ signal }) => {
-      const url = new URL(
-        `https://api.coingecko.com/api/v3/coins/${encodeURIComponent(coinId)}/history`
-      )
-      url.searchParams.set('date', date)
-      url.searchParams.set('localization', 'false')
-      const { data: body } = await request(url.toString(), signal)
-      const rate = body.market_data?.current_price?.usd
-      if (typeof rate !== 'number' || !Number.isFinite(rate) || rate <= 0) {
-        throw new Error(`Historical USD rate unavailable for ${coinId} on ${date}`)
-      }
-      const rounded = round6(rate)
-      if (rounded <= 0 || !Number.isSafeInteger(Math.round(rounded * 1e6))) {
-        throw new Error(`Historical USD rate precision unavailable for ${coinId} on ${date}`)
-      }
-      return rounded
-    }
+    queryFn: ({ signal }) => getCoinGeckoHistoricalRate(coinId, date, signal, request)
   })
 }
 
@@ -108,6 +137,7 @@ export function useHistoricalTokenRatesQuery(
 ) {
   const requested = computed(() => resolvedTargets(toValue(targets)))
   const query = useQuery<HistoricalRateMap>({
+    ...queryPresets.moderate,
     queryKey: computed(() => historicalTokenRateKeys.set(requested.value)),
     enabled: computed(() => toValue(enabled) && requested.value.length > 0),
     staleTime: 24 * 60 * 60_000,
