@@ -16,8 +16,8 @@
  * retained. Accounting completeness reports the missing rate explicitly.
  */
 import { formatUnits } from 'viem'
-import type { TokenId } from '@/constant'
-import { getTokenDecimals } from '@/utils/tokens/metadata'
+import type { AssetId, AssetMetadata } from '@/utils/tokens/assets'
+import { assetDecimals } from '@/utils/tokens/assets'
 import type { JournalEntryDraft } from './journalEntryDraft'
 
 /** Round to the 6-decimal storage precision (spec §3) — never the 2-dp display. */
@@ -29,20 +29,20 @@ export function round6(value: number): number {
  * Resolves the USD price of one whole token at a given time — the
  * "rate of record" for that transaction.
  */
-export type UsdRateOfRecord = (tokenId: TokenId, at: Date) => number
+export type UsdRateOfRecord = (tokenId: AssetId, at: Date) => number
 
 /** One non-pegged token/date pair that needs an immutable market snapshot. */
 export interface HistoricalRateTarget {
-  token: TokenId
+  token: AssetId
   /** UTC calendar date in `YYYY-MM-DD` format. */
   date: string
 }
 
 /** Tokens pinned to a $1.00 USD peg. */
-const USD_PEGGED_TOKENS: ReadonlySet<TokenId> = new Set<TokenId>(['usdc', 'usdc.e', 'usdt'])
+const USD_PEGGED_TOKENS: ReadonlySet<AssetId> = new Set<AssetId>(['usdc', 'usdc.e', 'usdt'])
 
 /** Whether a token is a USD-pegged stablecoin (valued at $1.00). */
-export function isUsdPegged(tokenId: TokenId): boolean {
+export function isUsdPegged(tokenId: AssetId): boolean {
   return USD_PEGGED_TOKENS.has(tokenId)
 }
 
@@ -65,7 +65,8 @@ export function historicalRateTargets(
       (entry.debit === null && entry.credit === null) ||
       BigInt(entry.rawAmount) === 0n ||
       isUsdPegged(entry.token) ||
-      entry.token === 'sher'
+      entry.token === 'sher' ||
+      (entry.carryingAmount !== undefined && entry.carryingAmount > 0n)
     ) {
       continue
     }
@@ -100,7 +101,7 @@ const requireRateOfRecord: UsdRateOfRecord = (tokenId) => {
  * rate that values the entry is the one shown in the ledger's "Rate" column.
  */
 export function tokenUsdRate(
-  tokenId: TokenId,
+  tokenId: AssetId,
   at: Date,
   rateOfRecord: UsdRateOfRecord = requireRateOfRecord
 ): number {
@@ -108,8 +109,14 @@ export function tokenUsdRate(
 }
 
 /** Whole-token quantity (spec §2 "Quantité") of a raw base-unit amount. */
-export function wholeTokenAmount(amount: bigint, tokenId: TokenId): number {
-  return Number(formatUnits(amount, getTokenDecimals(tokenId)))
+export function wholeTokenAmount(
+  amount: bigint,
+  tokenId: AssetId,
+  metadata?: AssetMetadata
+): number {
+  const decimals = assetDecimals(tokenId, metadata)
+  if (decimals === null) throw new Error('Asset decimals unavailable')
+  return Number(formatUnits(amount, decimals))
 }
 
 /** Stamp market-valued entries without changing stablecoin or SHER valuation policy. */
@@ -142,7 +149,7 @@ export function applyHistoricalRates(
  */
 export function toUsd(
   amount: bigint,
-  tokenId: TokenId,
+  tokenId: AssetId,
   at: Date,
   rateOfRecord: UsdRateOfRecord = requireRateOfRecord
 ): number {

@@ -35,14 +35,15 @@ const {
 }))
 
 // Mock external dependencies
-vi.mock('@/composables/safe', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@/composables/safe')>()
+vi.mock('@/utils/safe/model', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/utils/safe/model')>()
   return {
     ...actual,
-    getSafeHomeUrl: mockGetSafeHomeUrl,
-    openSafeAppUrl: mockOpenSafeAppUrl
+    getSafeHomeUrl: mockGetSafeHomeUrl
   }
 })
+
+vi.mock('@/lib/safe/browser', () => ({ openSafeAppUrl: mockOpenSafeAppUrl }))
 
 vi.mock('@/queries/safe.queries', () => ({
   useGetSafeInfoQuery: mockuseGetSafeInfoQuery

@@ -7,7 +7,7 @@
  * Keep every import here type-only so this remains an acyclic runtime boundary.
  */
 import type { Address } from 'viem'
-import type { TokenId } from '@/constant'
+import type { AssetId, AssetMetadata } from '@/utils/tokens/assets'
 import type { AccountFamily, AccountName } from './chartOfAccounts'
 import type { UseCase } from './journalEntryDraft'
 
@@ -34,6 +34,7 @@ export type AccountingSourceId =
   | 'safe-deposit-router-events'
   | 'safe-incoming-transfers'
   | 'safe-outgoing-transactions'
+  | 'safe-transfers'
   | 'weekly-claims'
   | 'expenses'
   | 'account-assignments'
@@ -64,7 +65,14 @@ export type AccountingDiagnostic =
     }
   | { kind: 'orphan-bank-fee'; txHash: string }
   | { kind: 'receipt-unavailable'; txHash: string }
-  | { kind: 'rate-unavailable'; token: TokenId }
+  | { kind: 'rate-unavailable'; token: AssetId }
+  | {
+      kind:
+        | 'asset-metadata-unavailable'
+        | 'exchange-basis-unavailable'
+        | 'unclassified-asset-movement'
+      txHash: string
+    }
 
 /** Whether a deployment-specific account could be resolved from source evidence. */
 type AccountResolution = 'resolved' | 'unresolved'
@@ -94,11 +102,12 @@ export interface AccountRegistry {
 /** The token movement evidenced by one monetary journal line. */
 interface JournalEntryLineMovement {
   /** Token transferred on the source operation. */
-  token: TokenId
+  token: AssetId
+  asset?: AssetMetadata
   /** Token base units transferred on the source operation. */
   rawAmount: bigint
   /** Decimal places used by the token's base unit. */
-  decimals: number
+  decimals: number | null
   /** USD-per-whole-token rate of record used to value this movement. */
   rate: UsdRate
 }

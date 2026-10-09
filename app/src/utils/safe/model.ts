@@ -112,6 +112,7 @@ export const formatSafeTransactionValue = (
           const formattedAmount = formatEtherUtil(BigInt(transferAmount), tokenAddress)
           return formatToken(formattedAmount, symbol, { maxDecimals: 4 })
         }
+        return 'Token transfer (metadata unavailable)'
       }
     }
     // Handle native token transfers or fallback
@@ -176,6 +177,7 @@ export const formatSafeTransferAmount = (transfer: SafeIncomingTransfer): string
     const amount = formatUnits(BigInt(transfer.value), transfer.tokenInfo.decimals)
     return formatToken(amount, transfer.tokenInfo.symbol, { maxDecimals: 4 })
   }
+  if (transfer.type === 'ERC20_TRANSFER') return 'Token amount unavailable'
   // ETHER_TRANSFER - Use existing formatEtherUtil from constantUtil
   const formatted = formatEtherUtil(BigInt(transfer.value), zeroAddress)
   return formatToken(formatted, NETWORK.currencySymbol, { maxDecimals: 6 })

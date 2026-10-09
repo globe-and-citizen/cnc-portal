@@ -12,6 +12,9 @@ describe('chart of accounts', () => {
     expect(
       Object.fromEntries(ACCOUNT_FAMILIES.map((family) => [family.name, family.accountClass]))
     ).toEqual({
+      'Asset Exchange Gain': 'INCOME',
+      'Asset Exchange Loss': 'EXPENSE',
+      'Unclassified Receipts': 'LIABILITY',
       'Cash — Bank': 'ASSET',
       'Cash — Safe': 'ASSET',
       'Cash — Payroll': 'ASSET',

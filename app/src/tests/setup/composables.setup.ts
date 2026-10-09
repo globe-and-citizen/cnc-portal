@@ -19,6 +19,7 @@ import {
   resetDeployState,
   resetUploadFileState
 } from '@/tests/mocks/composables.mock'
+import { mockUseSafePortfolio, resetSafePortfolioMock } from '@/tests/mocks/safePortfolio.mock'
 import { mockGetFileUrlApi, mockUploadFileApi } from '@/tests/mocks/api.mock'
 import {
   mockGetBalance,
@@ -32,11 +33,16 @@ import { mockRouter, mockRoute, resetMockRoute } from '@/tests/mocks/router.mock
 // `beforeEach` hooks run BEFORE spec-level ones, so per-test setup still wins.
 beforeEach(() => {
   resetComposableMocks()
+  resetSafePortfolioMock()
   resetDeployState()
   resetUploadFileState()
   resetNotificationsMock()
   resetMockRoute()
 })
+
+vi.mock('@/composables/safe/useSafePortfolio', () => ({
+  useSafePortfolio: vi.fn(() => mockUseSafePortfolio)
+}))
 
 declare global {
   var __mockFetch: ReturnType<typeof vi.fn> | undefined

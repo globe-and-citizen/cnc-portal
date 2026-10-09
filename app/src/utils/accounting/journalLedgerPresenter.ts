@@ -6,12 +6,12 @@
  * therefore an ordinary `Transaction Fee Expense` line within its source
  * operation, never a second transaction or a special filter category.
  */
-import { formatNumber } from '@/utils/format'
+import { formatNumber, formatExactNumber } from '@/utils/format'
+import { formatUnits } from 'viem'
 import { activityDestinationOf, type ActivityDestination } from './activityDestination'
 import { activityOf, entryLabel, type ActivityCell } from './describeEntry'
 import { badgeClassOf, categoryLabelOf } from './ledgerCategory'
 import { currencySymbol, filterByPeriod, formatUnixDateTime, money, periodLabel } from './presenter'
-import { wholeTokenAmount } from './toUsd'
 import { creditOf, debitOf } from './journalEntry'
 import { ZERO_USD_AMOUNT, usdRateToNumber } from './monetaryAmount'
 import type { Account, JournalEntry, JournalEntryLine, UsdAmount } from './types'
@@ -49,8 +49,10 @@ export interface LedgerRow {
   creditAmount?: UsdAmount
   /** The posting's currency (spec §2 "Devise"), e.g. `POL` / `USDC`. */
   currency: string
-  /** Whole-token quantity moved (spec §2 "Quantité"), 6-dp, e.g. `0.070352`. */
+  /** Complete whole-token quantity for inspection and exports; never calculation input. */
   quantity: string
+  /** Compact table quantity, up to six decimals with positive sub-precision values explicit. */
+  quantityDisplay?: string
   /** USD rate of record (spec §2 "Taux"), up to 6-dp with trailing zeros trimmed, e.g. `$0.08` / `$1`. */
   rate: string
   /** Running balance of the drilled account after this posting (see
@@ -67,6 +69,10 @@ interface JournalAccountFilterOption {
 /** The empty activity carried by all but the first line of a journal entry. */
 const NO_ACTIVITY: ActivityCell = { kind: 'plain', text: '' }
 const NO_MOVEMENT = { currency: '', quantity: '', rate: '' }
+/** Shown in place of a quantity or rate that cannot be computed from source evidence. */
+const UNAVAILABLE = 'Unavailable'
+/** Smallest quantity the compact table column renders exactly, below which it shows `<` this value. */
+const MIN_DISPLAYED_QUANTITY = formatNumber(0.000001, { maxDecimals: 6 })
 
 /** A deterministic label index for concrete accounts, matching Trial Balance numbering. */
 function accountLabels(entries: readonly JournalEntry[]): Map<string, string> {
@@ -129,7 +135,7 @@ export function journalLedgerCurrencies(entries: readonly JournalEntry[]): strin
   const currencies = new Set<string>()
   for (const entry of entries) {
     for (const line of entry.lines) {
-      if (line.movement) currencies.add(currencySymbol(line.movement.token))
+      if (line.movement) currencies.add(currencySymbol(line.movement.token, line.movement.asset))
     }
   }
   return [...currencies].sort()
@@ -142,7 +148,10 @@ export function filterJournalLedgerByCurrency(
 ): JournalEntry[] {
   const wanted = new Set(currencies)
   return entries.filter((entry) =>
-    entry.lines.some((line) => line.movement && wanted.has(currencySymbol(line.movement.token)))
+    entry.lines.some(
+      (line) =>
+        line.movement && wanted.has(currencySymbol(line.movement.token, line.movement.asset))
+    )
   )
 }
 
@@ -158,18 +167,27 @@ export function filterJournalLedgerEntries(
 }
 
 /** The Devise / Quantité / Taux columns of one journal line's token movement. */
-function movementOf(line: JournalEntryLine): Pick<LedgerRow, 'currency' | 'quantity' | 'rate'> {
+function movementOf(
+  line: JournalEntryLine
+): Pick<LedgerRow, 'currency' | 'quantity' | 'quantityDisplay' | 'rate'> {
   if (!line.movement) return NO_MOVEMENT
-  let whole = 0
-  try {
-    whole = wholeTokenAmount(line.movement.rawAmount, line.movement.token)
-  } catch {
-    // A malformed raw amount does not alter the validated reporting amount.
-  }
+  const quantity =
+    line.movement.decimals === null
+      ? null
+      : formatUnits(line.movement.rawAmount, line.movement.decimals)
+  const roundedQuantity =
+    quantity === null ? UNAVAILABLE : formatNumber(quantity, { maxDecimals: 6 })
   return {
-    currency: currencySymbol(line.movement.token),
-    quantity: formatNumber(whole, { maxDecimals: 6 }),
-    rate: `$${formatNumber(usdRateToNumber(line.movement.rate), { maxDecimals: 6 })}`
+    currency: currencySymbol(line.movement.token, line.movement.asset),
+    quantity: quantity === null ? UNAVAILABLE : formatExactNumber(quantity),
+    quantityDisplay:
+      line.movement.rawAmount > 0n && roundedQuantity === '0'
+        ? `<${MIN_DISPLAYED_QUANTITY}`
+        : roundedQuantity,
+    rate:
+      line.movement.rate === 0n
+        ? UNAVAILABLE
+        : `$${formatNumber(usdRateToNumber(line.movement.rate), { maxDecimals: 6 })}`
   }
 }
 

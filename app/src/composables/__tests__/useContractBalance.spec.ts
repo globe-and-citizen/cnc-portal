@@ -155,4 +155,25 @@ describe('useContractBalance', () => {
 
     mockUseChainId.value = 1
   })
+
+  it('applies caller query options while keeping the supported-token RPC reads', async () => {
+    mockUseChainId.value = 31337
+    mockWagmiCore.getBalance.mockResolvedValue({ value: 0n })
+    mockWagmiCore.readContract.mockResolvedValue(0n)
+
+    useContractBalance(ADDRESS, { staleTime: 60_000, refetchInterval: 60_000 })
+    expect(captured.refetchInterval).toBe(60_000)
+    await captured.queryFn()
+    expect(mockWagmiCore.readContract).toHaveBeenCalledTimes(erc20Tokens.length)
+    for (const token of erc20Tokens) {
+      expect(mockWagmiCore.readContract).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({
+          address: token.address,
+          functionName: 'balanceOf',
+          chainId: 31337
+        })
+      )
+    }
+  })
 })

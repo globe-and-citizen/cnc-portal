@@ -112,7 +112,7 @@ mocked browser path for the external Safe Transaction Service boundary.
 | US-EXP-006  | 🚧 Partial    | ⚠️ 1/8          | `AC-US-EXP-006-01`, `AC-US-EXP-006-02`, `AC-US-EXP-006-03`, `AC-US-EXP-006-04`, `AC-US-EXP-006-05`, `AC-US-EXP-006-07`, `AC-US-EXP-006-08` |
 | US-SAFE-001 | 🚧 Partial    | ⚠️ 8/11         | `AC-US-SAFE-001-02`, `AC-US-SAFE-001-03`, `AC-US-SAFE-001-06`                                                                              |
 | US-SAFE-002 | 🧪 Mocked     | ⚠️ 6/9 met      | `AC-US-SAFE-002-01`, `AC-US-SAFE-002-02`, `AC-US-SAFE-002-09`                                                                              |
-| US-SAFE-003 | 📋 Planned    | ⚠️ 4/9          | 5 — `AC-US-SAFE-003-01`, `AC-US-SAFE-003-02`, `AC-US-SAFE-003-03`, `AC-US-SAFE-003-06`, `AC-US-SAFE-003-07`                                |
+| US-SAFE-003 | 📋 Planned    | ⚠️ 6/11         | 5 — `AC-US-SAFE-003-01`, `AC-US-SAFE-003-02`, `AC-US-SAFE-003-03`, `AC-US-SAFE-003-06`, `AC-US-SAFE-003-07`                                |
 | US-SAFE-004 | 📋 Planned    | ⚠️ 4/9          | 5 — `AC-US-SAFE-004-01`, `AC-US-SAFE-004-02`, `AC-US-SAFE-004-03`, `AC-US-SAFE-004-04`, `AC-US-SAFE-004-07`                                |
 | US-SAFE-005 | 🧪 Mocked     | ✅ 9/9          | —                                                                                                                                          |
 | US-SAFE-006 | 🧪 Mocked     | ✅ 10/10        | —                                                                                                                                          |
@@ -920,12 +920,15 @@ movement across the participating stories.
 - [x] `AC-US-SAFE-003-04` Only a current Safe owner can propose an outgoing Safe transfer.
 - [x] `AC-US-SAFE-003-05` Company membership alone does not grant Safe signer permission.
 - [x] `AC-US-SAFE-003-06` An outgoing transfer follows the Safe's current approval threshold.
+- [x] `AC-US-SAFE-003-10` Assets acquired outside CNC retain their contract identity, currency and exact quantity in Safe holdings without
+      expanding CNC payment permissions.
 
 #### Edge & Error Cases
 
 - [x] `AC-US-SAFE-003-07` A proposal below the approval threshold remains pending without moving funds.
 - [x] `AC-US-SAFE-003-08` A rejected or failed proposal leaves Safe balances unchanged.
 - [x] `AC-US-SAFE-003-09` An archived company cannot initiate a Safe deposit or transfer.
+- [x] `AC-US-SAFE-003-11` An unavailable discovered balance or valuation keeps the wallet total explicitly incomplete.
 
 ### Test Coverage
 
@@ -941,6 +944,8 @@ movement across the participating stories.
 | `AC-US-SAFE-003-07`  | `PS-CHAIN-INTEGRATED` | Mocked browser            | ⚠️ Insufficient |
 | `AC-US-SAFE-003-08`  | `PS-BROWSER`          | Mocked browser            | ✅ Met          |
 | `AC-US-SAFE-003-09`  | `PS-BROWSER`          | Mocked browser            | ✅ Met          |
+| `AC-US-SAFE-003-10`  | `PS-FRONTEND`         | Frontend                  | ✅ Met          |
+| `AC-US-SAFE-003-11`  | `PS-FRONTEND`         | Frontend                  | ✅ Met          |
 
 **Accounting:** A confirmed transfer is classified as
 [`UC-BANK-02`](../accounting/journal-entry-catalogue.md#uc-bank-02--external-cash-receipt),
@@ -949,6 +954,9 @@ movement across the participating stories.
 between Safe and known company contracts such as Bank, Payroll, and Expense are internal movements and do not incur a Safe protocol fee.
 Bank transfers can incur the Bank's configured protocol fee; Accounting adds a matched fee to the Bank journal entry. See the
 [Accounting test script](../accounting/accounting-test-script.md#treasury-scenarios).
+
+Evidenced external exchanges use [`SAFE-SWAP`](../accounting/journal-entry-catalogue.md#safe-swap--evidenced-safe-asset-exchange); ambiguous
+movements remain incomplete until classified. See the [Safe exchange review script](../accounting/safe-swap-test-script.md).
 
 **Dependencies:** US-SAFE-001 and US-SAFE-006
 
@@ -1123,7 +1131,7 @@ movement across the participating stories.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `977d73f7c042253f4a107f632798fbbddbc8f4d4`
+**Implementation evidence reviewed against:** `0972d19f7a8226e5923f6f8472ffc954dcf088d8`
 
 - [Bank deposit modal](../../../app/src/components/sections/BankView/forms/DepositModal.vue),
   [Bank transfer modal](../../../app/src/components/sections/BankView/forms/TransferModal.vue),
@@ -1201,6 +1209,68 @@ movement across the participating stories.
 - [Expense calendar-period tests](../../../contract/test/ExpenseAccountEIP712V2.calendarBasedPeriods.spec.ts),
   [Expense custom-frequency tests](../../../contract/test/ExpenseAccountEIP712V2.customFrequency.spec.ts), and
   [Expense period-boundary tests](../../../contract/test/ExpenseAccountEIP712V2.isNewPeriod.spec.ts)
+
+## Discovered Safe assets
+
+The Safe account displays supported currencies and ERC-20 assets discovered from its transfer history in one holdings table, including
+assets acquired outside CNC such as WETH. USDC, USDCe, and the configured network's native currency (POL on Polygon) remain first and
+visible even at zero balance. Additional assets appear when held and disappear when their confirmed current balance becomes zero; historical
+tokens remain discoverable for future refreshes. Contract identity is preserved by network and address rather than symbol, so WETH and AWETH
+remain separate assets.
+
+Discovery excludes only currencies already displayed by the fixed supported-token balance reader, matching network and contract address
+case-insensitively. A token recognized elsewhere in CNC but absent from that fixed list, such as USDT/USDT0, remains a discovered holding.
+Its actual contract metadata supplies the displayed symbol and decimals; a missing market price does not hide a held token. This read-only
+display does not add that token to payment allowlists or change its Accounting identity.
+
+Deposits without ERC-20 metadata remain visible as `Token amount unavailable`: the raw value cannot be converted reliably without the
+token's decimals. Their raw transfer objects retain the contract address and transaction hash for inspection. The transfer's `from` field is
+the indexed event sender, not proof of who signed the outer transaction. Incoming assets do not require Safe signer approval, and a
+displayed name or symbol does not establish a token's authenticity.
+
+Bank, Payroll, Expense Account, and Safe use the same presentation-only holdings component. Their pages pass prepared rows and loading
+state; Safe also passes valuation completeness. The original `Token Holding` presentation is retained, with `RANK`, `Token`, `Amount`,
+`Coin Price`, and `Balance` columns. Additional assets use the same compact valuation format and unit-price suffix as the supported
+currencies. Token identities show their symbol on one line (for example, DAI), with the full name and contract address available on hover.
+Amounts show up to four decimal places with trailing zeros trimmed; the exact quantity remains available on hover. A positive quantity below
+the displayed precision reads `<0.0001` rather than zero. The three base currencies keep their existing logos; additional tokens use the
+logo from matching Safe metadata or verified contract-based market metadata. Missing or failed images use a neutral initial.
+
+Each holding retains its currency, exact quantity, contract identity, and available current valuation in the selected display currency
+independently of the tokens allowed in CNC payment forms. An unavailable balance or price remains explicit, including while the first
+balance read is pending. A missing USD price for a held supported or discovered asset makes the wallet total incomplete. A confirmed zero
+balance has zero value without requiring a price. Token discovery does not enable an asset for payroll, deposits, or transfers proposed by
+CNC.
+
+The portfolio refreshes periodically; the holdings section has no manual refresh button. Provider failures remain retryable. Unknown or
+untrusted assets do not receive an invented price. Discovered USD market values use the supported currency prices for conversion to another
+selected currency; an unavailable conversion keeps that displayed valuation explicitly unavailable. See the
+[Accounting read model](../../implementation/accounting-read-model/README.md) for swap treatment.
+
+Safe balances refresh approximately every minute while their page is active. Complete transfer histories and Safe information refresh
+approximately every five minutes; pending transactions refresh every minute when the queue contains an unexecuted transaction and every five
+minutes otherwise. Prices remain fresh for five minutes, recovered token metadata for 24 hours, and unused regular query data stays in the
+browser cache for 30 minutes. Each query configures its own refresh and retry options; background tabs and window focus do not trigger extra
+polling. Safe and market reads are paced separately in the browser and pause after HTTP 429 responses. See
+[Client Data Access](../../implementation/client-data-access/README.md#browser-request-coordination) for recovery and session boundaries.
+
+Confirmed Safe transaction execution and directly executed transfers use one invalidation helper for all Safe service queries and the wallet
+balance prefix shared by supported and discovered holdings. A proposal refreshes the transaction queue without treating it as a completed
+transfer. Histories can remain behind the chain until the Safe Transaction Service indexes the operation; periodic refreshes continue to
+reconcile them. Existing balance invalidations also reach the discovered portfolio because both use the canonical balance-key prefix. Other
+account surfaces retain their existing balance cadence.
+
+Executable evidence: [discovered holdings tests](../../../app/src/components/ui/__tests__/TokenHoldingsSection.safe.spec.ts),
+[overview tests](../../../app/src/components/sections/SafeView/__tests__/SafeBalanceSection.rendering.spec.ts), and
+[portfolio query tests](../../../app/src/composables/safe/__tests__/useSafePortfolio.spec.ts).
+
+Implementation: [Safe portfolio](../../../app/src/composables/safe/useSafePortfolio.ts),
+[discovered-asset query](../../../app/src/queries/safe.queries.ts),
+[shared balance reads](../../../app/src/composables/useContractBalance.ts),
+[unified asset holdings](../../../app/src/components/ui/TokenHoldingsSection.vue),
+[holdings presentation](../../../app/src/utils/safe/portfolio.ts),
+[holdings presentation tests](../../../app/src/utils/safe/__tests__/portfolio.spec.ts), and
+[contract asset identities](../../../app/src/utils/tokens/assets.ts). Human validation of external swaps remains pending.
 
 ## Related Documentation
 

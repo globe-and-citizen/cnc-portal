@@ -44,7 +44,7 @@ const { feeds, historicalRates, useHistoricalRatesQuery } = vi.hoisted(() => {
     }
   }
 })
-vi.mock('@/queries/historicalTokenRate.queries', () => ({
+vi.mock('@/queries/coingecko.queries', () => ({
   useHistoricalTokenRatesQuery: useHistoricalRatesQuery
 }))
 vi.mock('@/composables/bank/useBankEventsViaLogs', () => ({

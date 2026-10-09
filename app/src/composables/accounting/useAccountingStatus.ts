@@ -1,84 +1,23 @@
 /** Reactive completeness and typed diagnostics for the Accounting source registry. */
 import { computed, type ComputedRef } from 'vue'
-import { isUsdPegged } from '@/utils/accounting/toUsd'
 import { accountingCompletenessOf } from '@/utils/accounting/accountingCompleteness'
 import type { JournalEntryDraft } from '@/utils/accounting/journalEntryDraft'
-import type {
-  AccountingDiagnostic,
-  AccountingSourceId,
-  AccountingSourceStatus
-} from '@/utils/accounting/types'
-import type { TokenId } from '@/constant'
+import type { AccountingDiagnostic, AccountingSourceStatus } from '@/utils/accounting/types'
 
-interface ReactiveValue<T> {
-  readonly value: T
-}
-
-interface QueryAvailability {
-  loading?: ReactiveValue<boolean>
-  isLoading?: ReactiveValue<boolean>
-  isPending?: ReactiveValue<boolean>
-  error?: ReactiveValue<unknown>
-  refetch?: () => Promise<unknown>
-}
-
-interface EventGap {
-  address: string
-}
-
-interface TimestampGap {
-  transactionHash: string | null
-  blockNumber: bigint | null
-}
-
-interface EventFeedData {
-  gaps: readonly EventGap[]
-  timestampGaps: readonly TimestampGap[]
-}
-
-interface EventFeedAvailability extends QueryAvailability {
-  data?: ReactiveValue<EventFeedData | undefined>
-}
-
-export interface AccountingSourceDefinition {
-  source: AccountingSourceId
-  label: string
-  applicable: () => boolean
-  query: QueryAvailability
-  fatal?: boolean
-  partialReason?: () => string | undefined
-}
-
-export interface AccountingEventSourceDefinition extends Omit<
-  AccountingSourceDefinition,
-  'query' | 'partialReason'
-> {
-  query: EventFeedAvailability
-}
-
-export function accountingQuerySource(
-  source: AccountingSourceId,
-  label: string,
-  applicable: () => boolean,
-  query: QueryAvailability,
-  policy: Pick<AccountingSourceDefinition, 'fatal' | 'partialReason'> = {}
-): AccountingSourceDefinition {
-  return { source, label, applicable, query, ...policy }
-}
-
-export function accountingEventSource(
-  source: AccountingSourceId,
-  label: string,
-  targets: ReactiveValue<readonly unknown[]>,
-  query: EventFeedAvailability
-): AccountingEventSourceDefinition {
-  return { source, label, applicable: () => targets.value.length > 0, query }
-}
+import {
+  availabilityOf,
+  eventPartialReason,
+  monetaryNonPeggedTokens,
+  type ReactiveValue,
+  type AccountingSourceDefinition,
+  type AccountingEventSourceDefinition
+} from '@/utils/accounting/sourceStatus'
 
 interface AccountingStatusInput {
   sources: readonly AccountingSourceDefinition[]
   eventSources: readonly AccountingEventSourceDefinition[]
   reconciliation: {
+    assetDiagnostics?: ReactiveValue<readonly AccountingDiagnostic[]>
     unmatchedFeeOperationIds: ReactiveValue<readonly string[]>
     unavailableReceiptOperationIds: ReactiveValue<readonly string[]>
   }
@@ -97,51 +36,6 @@ export interface AccountingStatus {
   diagnostics: ComputedRef<readonly AccountingDiagnostic[]>
   /** True while any applicable material source is still loading. */
   isLoading: ComputedRef<boolean>
-}
-
-function availabilityOf(definition: AccountingSourceDefinition): AccountingSourceStatus {
-  const { source, label } = definition
-  if (!definition.applicable()) return { source, label, state: 'not-applicable' }
-
-  const loading =
-    definition.query.loading?.value ||
-    definition.query.isLoading?.value ||
-    definition.query.isPending?.value
-  if (loading) return { source, label, state: 'loading' }
-
-  if (definition.query.error?.value) {
-    return {
-      source,
-      label,
-      state: definition.fatal ? 'failed' : 'partial',
-      reason: `${label} could not be loaded.`
-    }
-  }
-
-  const partialReason = definition.partialReason?.()
-  return partialReason
-    ? { source, label, state: 'partial', reason: partialReason }
-    : { source, label, state: 'ready' }
-}
-
-function eventPartialReason(feed: EventFeedAvailability): string | undefined {
-  const gaps = (feed.data?.value?.gaps.length ?? 0) + (feed.data?.value?.timestampGaps.length ?? 0)
-  return gaps ? `${gaps} event evidence gap${gaps === 1 ? '' : 's'} detected.` : undefined
-}
-
-function monetaryNonPeggedTokens(entries: readonly JournalEntryDraft[]): TokenId[] {
-  return [
-    ...new Set(
-      entries
-        .filter(
-          (entry) =>
-            (entry.debit !== null || entry.credit !== null) &&
-            BigInt(entry.rawAmount) !== 0n &&
-            !isUsdPegged(entry.token)
-        )
-        .map((entry) => entry.token)
-    )
-  ]
 }
 
 /** Derive one source-of-truth status object without loading or remapping source data. */
@@ -173,10 +67,25 @@ export function useAccountingStatus(input: AccountingStatusInput): AccountingSta
               reason: 'One or more token rates are unavailable.'
             }
           : { source: 'token-rates', label: 'Token USD rates', state: 'ready' }
-    return [...statuses, rateStatus]
+    const assetGaps = input.reconciliation.assetDiagnostics?.value ?? []
+    return [
+      ...statuses,
+      rateStatus,
+      ...(assetGaps.length
+        ? [
+            {
+              source: 'safe-transfers' as const,
+              label: 'Safe asset reconciliation',
+              state: 'partial' as const,
+              reason: 'Asset identity, carrying basis, or classification needs verification.'
+            }
+          ]
+        : [])
+    ]
   })
 
   const diagnostics = computed<readonly AccountingDiagnostic[]>(() => [
+    ...(input.reconciliation.assetDiagnostics?.value ?? []),
     ...definitions
       .filter((definition) => definition.applicable() && Boolean(definition.query.error?.value))
       .map(

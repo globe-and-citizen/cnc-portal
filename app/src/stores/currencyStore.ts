@@ -1,25 +1,13 @@
-// import { useCustomFetch } from '@/composables'
 import { useStorage } from '@vueuse/core'
 import { defineStore } from 'pinia'
 import { LIST_CURRENCIES, SUPPORTED_TOKENS } from '@/constant'
 import type { TokenId } from '@/constant'
-import { useQuery } from '@tanstack/vue-query'
 import type { Ref } from 'vue'
 import { useTeamStore } from '@/stores/teamStore'
 import { computed, ref } from 'vue'
-
-export interface PriceResponse {
-  market_data: {
-    current_price: {
-      [key: string]: number // Add index signature for dynamic currency codes
-      usd: number
-      cad: number
-      eur: number
-      idr: number
-      inr: number
-    }
-  }
-}
+import { useGetTokenPriceQuery } from '@/queries/coingecko.queries'
+import type { TokenPriceResponse as PriceResponse } from '@/lib/coingecko'
+export type { TokenPriceResponse as PriceResponse } from '@/lib/coingecko'
 
 export const useCurrencyStore = defineStore('currency', () => {
   const currency = useStorage('currency', {
@@ -42,18 +30,10 @@ export const useCurrencyStore = defineStore('currency', () => {
         decimals: 6,
         address: investorAddress
       })
-    } else {
-      console.warn('Investor contract address not found, Sher Token will not be included')
     }
     return tokens
   })
 
-  // Fetch prices for all tokens
-  async function fetchTokenPrice(coingeckoId: string) {
-    const res = await fetch(`https://api.coingecko.com/api/v3/coins/${coingeckoId}`)
-    if (!res.ok) throw new Error('Failed to fetch price')
-    return res.json() as Promise<PriceResponse>
-  }
   /**
    * @dev For a dynamic supported token, Map is better than Array
    */
@@ -76,12 +56,7 @@ export const useCurrencyStore = defineStore('currency', () => {
         loading: ref(false)
       })
     } else {
-      const { data, isFetching } = useQuery({
-        queryKey: ['price', token.coingeckoId],
-        queryFn: () => fetchTokenPrice(token.coingeckoId),
-        retryDelay: 300_000,
-        gcTime: 1000 * 60 * 10
-      })
+      const { data, isFetching } = useGetTokenPriceQuery(token.coingeckoId)
       tokenStates.push({ id: token.id, data, loading: isFetching })
     }
   })
@@ -91,7 +66,6 @@ export const useCurrencyStore = defineStore('currency', () => {
     if (found) {
       currency.value = found
     }
-    // refetchPrice()
   }
 
   /**
@@ -161,7 +135,6 @@ export const useCurrencyStore = defineStore('currency', () => {
     supportedTokens: supportedToken,
     tokenStates,
     getTokenPrice,
-    // getTokenPriceUSD,
     isTokenLoading,
     setCurrency,
     getTokenInfo

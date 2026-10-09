@@ -1,12 +1,21 @@
 import { computed, toValue, type MaybeRefOrGetter } from 'vue'
 import { useChainId } from '@wagmi/vue'
-import { useQuery } from '@tanstack/vue-query'
+import { useQuery, type QueryObserverOptions } from '@tanstack/vue-query'
 import type { Address } from 'viem'
 import { config as wagmiConfig } from '@/wagmi.config'
 import { useCurrencyStore } from '@/stores'
 import { SUPPORTED_TOKENS, type TokenId } from '@/constant'
 import { fetchTokenBalances, toContractBalances } from '@/lib/balances/tokenBalances'
 import type { ContractBalances } from '@/types'
+
+type BalanceQueryOptions = Pick<
+  QueryObserverOptions,
+  'gcTime' | 'refetchIntervalInBackground' | 'retry' | 'retryDelay'
+> & {
+  staleTime?: number
+  refetchInterval?: number | false
+  refetchOnWindowFocus?: boolean
+}
 
 export type { ContractBalances, TokenBalance, CurrencyPair, Money } from '@/types'
 
@@ -51,7 +60,10 @@ export const contractBalanceKeys = {
  * `address` may be a ref/getter — the query re-keys and refetches when it
  * changes, and stays disabled while it is undefined.
  */
-export function useContractBalance(address: MaybeRefOrGetter<Address | undefined>) {
+export function useContractBalance(
+  address: MaybeRefOrGetter<Address | undefined>,
+  options?: BalanceQueryOptions
+) {
   const chainId = useChainId()
   const currencyStore = useCurrencyStore()
   const contractAddress = computed(() => toValue(address))
@@ -60,6 +72,7 @@ export function useContractBalance(address: MaybeRefOrGetter<Address | undefined
     queryKey: computed(() => contractBalanceKeys.detail(contractAddress.value, chainId.value)),
     enabled: computed(() => !!contractAddress.value),
     refetchInterval: REFETCH_INTERVAL,
+    ...options,
     queryFn: () =>
       fetchTokenBalances(wagmiConfig, {
         address: contractAddress.value as Address,

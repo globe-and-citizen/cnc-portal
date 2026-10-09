@@ -1,4 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { tokenHoldingRows } from '@/utils/tokens/holdings'
+import { mockUseContractBalance } from '@/tests/mocks/composables.mock'
 import { shallowMount } from '@vue/test-utils'
 import PayrollView from '../Accounts/PayrollView.vue'
 import { createTestingPinia } from '@pinia/testing'
@@ -26,8 +28,8 @@ describe('[US-PAYROLL-008] [US-PAYROLL-013] PayrollView.vue', () => {
     })
 
     expect(genericTokenHoldingSection.exists()).toBeTruthy()
-    expect(genericTokenHoldingSection.props('address')).toBe(
-      '0x6666666666666666666666666666666666666666'
+    expect(genericTokenHoldingSection.props('rows')).toEqual(
+      tokenHoldingRows(mockUseContractBalance.data.value)
     )
   })
 

@@ -28,7 +28,11 @@
         />
       </div>
     </div>
-    <TokenHoldingsSection v-if="cashRemunerationAddress" :address="cashRemunerationAddress" />
+    <TokenHoldingsSection
+      v-if="cashRemunerationAddress"
+      :rows="holdingRows"
+      :is-loading="isLoadingHoldings"
+    />
 
     <MemberSection />
 
@@ -42,6 +46,8 @@ import { useTeamStore } from '@/stores'
 import AddressTooltip from '@/components/ui/AddressTooltip.vue'
 import ContractOwnerCard from '@/components/ui/ContractOwnerCard.vue'
 
+import { useContractBalance } from '@/composables/useContractBalance'
+import { tokenHoldingRows } from '@/utils/tokens/holdings'
 import TokenHoldingsSection from '@/components/ui/TokenHoldingsSection.vue'
 import CashRemunerationOverview from '@/components/sections/CashRemunerationView/CashRemunerationOverview.vue'
 import OwnerTreasuryWithdrawAction from '@/components/sections/OwnerTreasuryWithdrawAction.vue'
@@ -60,4 +66,6 @@ const showMigrationBanner = computed(() => {
   const team = teamStore.currentTeamMeta.data
   return team !== undefined && team !== null && team.isMigrated === false
 })
+const { data: holdings, isLoading: isLoadingHoldings } = useContractBalance(cashRemunerationAddress)
+const holdingRows = computed(() => tokenHoldingRows(holdings.value))
 </script>

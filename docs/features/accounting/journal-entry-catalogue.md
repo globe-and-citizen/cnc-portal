@@ -655,22 +655,23 @@ The current runtime `UseCase` type mixes economic events, generic movements, and
 below retain their actual meaning and existing documentation anchors. They do not prove that the target identifiers or rule association are
 deployed.
 
-| Current emitted identifier               | Target use case / rule                                              | Boundary                                                                          |
-| ---------------------------------------- | ------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
-| `UC-BANK-02`                             | `UC-TREASURY-002` + `RULE-EXTERNAL` in when purpose is unidentified | Current direct receipts credit Service Revenue; target suspense changes behaviour |
-| `UC-BANK-03`, `INTERNAL`                 | `UC-TREASURY-001` + `RULE-INTERNAL`                                 | Source-independent economic identity is proposed                                  |
-| `CASH-OUT`                               | `UC-TREASURY-003` or an evidenced domain UC + `RULE-EXTERNAL` out   | Current fallback debits Operating Expense; proposed fallback uses suspense        |
-| `FEE`                                    | `RULE-FEE` within the parent use case                               | Current finalization already attaches matched fees and withholds orphans          |
-| `UC-CASH-02`                             | `UC-PAYROLL-001`, wage-accrual rule                                 | Preserve ended-week eligibility and compensation obligations                      |
-| `UC-CASH-03`                             | `UC-PAYROLL-002`, cash-out and/or share-issuance rule               | Preserve settlement and backed-mint deduplication                                 |
-| `UC-EXP-01`                              | `UC-EXPENSE-001` + `RULE-EXTERNAL` out                              | Bank/Safe expense classifications currently remain `CASH-OUT`                     |
-| `UC-CREDIT-01`                           | `UC-CREDIT-001` + `RULE-EXTERNAL` in                                | Preserve funded principal                                                         |
-| `UC-CREDIT-05`                           | `UC-CREDIT-002`, interest-recognition rule                          | Preserve fixed return owed                                                        |
-| `UC-CREDIT-03`                           | `UC-CREDIT-003` + `RULE-EXTERNAL` out                               | Preserve principal/interest repayment                                             |
-| `UC-SDR-01`                              | `UC-EQUITY-001` + `RULE-EXTERNAL` in                                | Preserve ownership of investment evidence                                         |
-| `UC-INV-01`                              | `UC-EQUITY-002` + `RULE-EXTERNAL` out                               | Preserve current dividend policy                                                  |
-| `DEFAULT-D`                              | `UC-EQUITY-003`, share-issuance rule                                | Preserve direct issuance after backed mints are removed                           |
-| `UC-VEST-01`, `UC-VEST-02`, `UC-VEST-03` | `UC-VESTING-001`, `UC-VESTING-002`, `UC-VESTING-003`                | Preserve grant, release, and cancellation                                         |
+| Current emitted identifier               | Target use case / rule                                                  | Boundary                                                                                             |
+| ---------------------------------------- | ----------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `UC-BANK-02`                             | `UC-TREASURY-002` + `RULE-EXTERNAL` in when purpose is unidentified     | Known-token direct receipts credit Service Revenue; discovered Safe assets use Unclassified Receipts |
+| `SAFE-SWAP`                              | Evidenced asset exchange; proposed catalogue extension remains separate | Current exchange preserves both asset quantities and realizes gain/loss from carrying basis          |
+| `UC-BANK-03`, `INTERNAL`                 | `UC-TREASURY-001` + `RULE-INTERNAL`                                     | Source-independent economic identity is proposed                                                     |
+| `CASH-OUT`                               | `UC-TREASURY-003` or an evidenced domain UC + `RULE-EXTERNAL` out       | Current fallback debits Operating Expense; proposed fallback uses suspense                           |
+| `FEE`                                    | `RULE-FEE` within the parent use case                                   | Current finalization already attaches matched fees and withholds orphans                             |
+| `UC-CASH-02`                             | `UC-PAYROLL-001`, wage-accrual rule                                     | Preserve ended-week eligibility and compensation obligations                                         |
+| `UC-CASH-03`                             | `UC-PAYROLL-002`, cash-out and/or share-issuance rule                   | Preserve settlement and backed-mint deduplication                                                    |
+| `UC-EXP-01`                              | `UC-EXPENSE-001` + `RULE-EXTERNAL` out                                  | Bank/Safe expense classifications currently remain `CASH-OUT`                                        |
+| `UC-CREDIT-01`                           | `UC-CREDIT-001` + `RULE-EXTERNAL` in                                    | Preserve funded principal                                                                            |
+| `UC-CREDIT-05`                           | `UC-CREDIT-002`, interest-recognition rule                              | Preserve fixed return owed                                                                           |
+| `UC-CREDIT-03`                           | `UC-CREDIT-003` + `RULE-EXTERNAL` out                                   | Preserve principal/interest repayment                                                                |
+| `UC-SDR-01`                              | `UC-EQUITY-001` + `RULE-EXTERNAL` in                                    | Preserve ownership of investment evidence                                                            |
+| `UC-INV-01`                              | `UC-EQUITY-002` + `RULE-EXTERNAL` out                                   | Preserve current dividend policy                                                                     |
+| `DEFAULT-D`                              | `UC-EQUITY-003`, share-issuance rule                                    | Preserve direct issuance after backed mints are removed                                              |
+| `UC-VEST-01`, `UC-VEST-02`, `UC-VEST-03` | `UC-VESTING-001`, `UC-VESTING-002`, `UC-VESTING-003`                    | Preserve grant, release, and cancellation                                                            |
 
 Migration must introduce the new identifiers, auxiliary asset and suspense accounts, shared movement discovery, and supported classification
 flows; align labels, activity destinations, and representative tests. The canonical product stories now define that target, with new
@@ -678,8 +679,36 @@ criteria unchecked. No runtime change is delivered here. Target scenarios remain
 
 ### `UC-BANK-02` — External Cash Receipt
 
-Current direct Bank/Safe receipts debit receiving cash and credit Service Revenue, labelled `Service revenue`. Router-backed receipts are
-removed because `UC-SDR-01` owns them. Target `UC-TREASURY-002` suspense treatment changes this behaviour.
+Current known-token direct Bank/Safe receipts debit receiving cash and credit Service Revenue, labelled `Service revenue`. Evidenced Safe
+exchanges bypass this fallback. Discovered-asset receipts, mints, and ambiguous multi-asset settlements credit `Unclassified Receipts` and
+keep Accounting partial until classified. Router-backed receipts are removed because `UC-SDR-01` owns them. Target `UC-TREASURY-002`
+suspense treatment extends pending classification to other unidentified receipts; sender role alone does not classify them.
+
+### `SAFE-SWAP` — Evidenced Safe Asset Exchange
+
+**Source story:** [US-SAFE-003](../accounts/README.md#us-safe-003-manage-safe-funds).
+
+- **Input:** Opposing movements of different assets sharing one transaction and an external settlement counterparty.
+- **Processing:** Preserve asset identity by network and contract, exact raw quantity and decimals. Debit the acquired asset at its own
+  historical market rate and credit the disposed asset at its full-history weighted-average carrying value. Recognize the difference as an
+  exchange gain or loss; do not infer fees from that difference.
+- **General Ledger:** Label `Asset exchange`, category `Swap`. The receipt's quantity times its historical rate determines its USD value;
+  stablecoin paid never sets the receipt's unit price. Missing market evidence keeps the operation partial. Current portfolio prices do not
+  rewrite the books.
+
+For an asset acquired for $20 and later sold for 30.658984 USDC, the sale is:
+
+| Account             | Currency       | Debit (USD) | Credit (USD) |
+| ------------------- | -------------- | ----------: | -----------: |
+| Cash — Safe         | USDC           |   30.658984 |              |
+| Cash — Safe         | Acquired asset |             |           20 |
+| Asset Exchange Gain | USD            |             |    10.658984 |
+
+Ancillary mints remain separate unclassified evidence. Missing decimals, acquisition basis or valuation keeps reports incomplete; complex
+batches and different-counterparty settlements need further evidence before automatic classification. Network fees are not inferred from the
+difference between proceeds and carrying value. See the
+[read model](../../implementation/accounting-read-model/README.md#safe-assets-and-exchanges) and
+[regression evidence](../../../app/src/utils/accounting/__tests__/safeExchanges.spec.ts).
 
 ### `UC-BANK-03` — Bank Funds a Company Pocket
 
@@ -773,7 +802,7 @@ cases.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `f3144ed5dc47f4b21801535a79fd157177a3a545`
+**Implementation evidence reviewed against:** `6eebae66bffc134e6c8b51d03046c29da401a0f5`
 
 These sources support current-runtime correspondence and preserved domain postings, not implementation of proposed identifiers or suspense
 accounts.
@@ -791,6 +820,8 @@ accounts.
 - [General Ledger presenter](../../../app/src/utils/accounting/journalLedgerPresenter.ts),
   [ledger action categories](../../../app/src/utils/accounting/ledgerCategory.ts), and
   [activity destinations](../../../app/src/composables/accounting/useActivityDestination.ts)
+- [Safe exchange assembly](../../../app/src/utils/accounting/safeExchanges.ts) and
+  [exchange regression tests](../../../app/src/utils/accounting/__tests__/safeExchanges.spec.ts)
 - [Accounting rule tests](../../../app/src/utils/accounting/__tests__/) and
   [contract-generation accounting tests](../../../app/src/composables/accounting/__tests__/useCNCAccounting.migration.spec.ts)
 

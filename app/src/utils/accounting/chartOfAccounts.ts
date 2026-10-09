@@ -41,6 +41,27 @@ interface AccountFamilyDefinition {
  */
 export const ACCOUNT_FAMILIES = [
   {
+    id: 'asset-exchange-gain',
+    name: 'Asset Exchange Gain',
+    accountClass: 'INCOME',
+    normalBalance: 'credit',
+    deploymentScoped: false
+  },
+  {
+    id: 'asset-exchange-loss',
+    name: 'Asset Exchange Loss',
+    accountClass: 'EXPENSE',
+    normalBalance: 'debit',
+    deploymentScoped: false
+  },
+  {
+    id: 'unclassified-receipts',
+    name: 'Unclassified Receipts',
+    accountClass: 'LIABILITY',
+    normalBalance: 'credit',
+    deploymentScoped: false
+  },
+  {
     id: 'cash-bank',
     name: 'Cash — Bank',
     accountClass: 'ASSET',

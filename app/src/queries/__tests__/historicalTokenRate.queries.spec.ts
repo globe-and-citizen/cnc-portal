@@ -1,17 +1,17 @@
 import { QueryClient } from '@tanstack/vue-query'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ref, toValue, type MaybeRefOrGetter } from 'vue'
+import externalApiClient from '@/lib/external.axios'
 import { useQueryFn } from '@/tests/mocks/composables.mock'
 import { queryClient as sharedQueryClient } from '../queryClient'
 import {
   fetchHistoricalTokenRate,
   historicalTokenRateKeys,
   useHistoricalTokenRatesQuery
-} from '../historicalTokenRate.queries'
+} from '../coingecko.queries'
 
-const response = (usd: unknown, ok = true) => ({
-  ok,
-  json: async () => ({ market_data: { current_price: { usd } } })
+const response = (usd: unknown) => ({
+  data: { market_data: { current_price: { usd } } }
 })
 
 const queryClient = () => new QueryClient({ defaultOptions: { queries: { retry: false } } })
@@ -28,6 +28,20 @@ const capturedQuery = (): CapturedHistoricalRateQuery =>
 describe('historical token rate queries', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+  })
+
+  it('reads the historical snapshot through Axios with the query cancellation signal', async () => {
+    const get = vi.spyOn(externalApiClient, 'get').mockResolvedValueOnce(response(0.5))
+    try {
+      await expect(fetchHistoricalTokenRate(queryClient(), 'asset', '2026-03-13')).resolves.toBe(
+        0.5
+      )
+      expect(get).toHaveBeenCalledWith(expect.stringContaining('/coins/asset/history'), {
+        signal: expect.any(AbortSignal)
+      })
+    } finally {
+      get.mockRestore()
+    }
   })
 
   it('keys immutable rates by provider coin id, UTC date, and currency', () => {
@@ -56,6 +70,29 @@ describe('historical token rate queries', () => {
     expect(concurrent).toBe(first)
     expect(cached).toBe(first)
     expect(request).toHaveBeenCalledTimes(1)
+  })
+
+  it('keeps successful snapshots immutable beyond the daily refresh interval', async () => {
+    vi.useFakeTimers()
+    const cache = queryClient()
+    const request = vi.fn(async () => response(0.5))
+    try {
+      await fetchHistoricalTokenRate(cache, 'asset', '2026-03-13', request)
+      await vi.advanceTimersByTimeAsync(2 * 24 * 60 * 60_000)
+      await fetchHistoricalTokenRate(cache, 'asset', '2026-03-13', request)
+      expect(request).toHaveBeenCalledTimes(1)
+    } finally {
+      cache.clear()
+      vi.useRealTimers()
+    }
+  })
+
+  it('checks an unchanged historical target set once a day with no focus refresh', () => {
+    useHistoricalTokenRatesQuery([{ token: 'native', date: '2026-03-13' }])
+    const query = useQueryFn.mock.calls.at(-1)![0]
+    expect(query.staleTime).toBe(24 * 60 * 60_000)
+    expect(query.refetchInterval).toBe(24 * 60 * 60_000)
+    expect(query.refetchOnWindowFocus).toBe(false)
   })
 
   it('requests the exact historical UTC date without localization data', async () => {
@@ -97,7 +134,7 @@ describe('historical token rate queries', () => {
     const client = queryClient()
     const request = vi
       .fn()
-      .mockResolvedValueOnce(response(undefined, false))
+      .mockResolvedValueOnce(response(undefined))
       .mockResolvedValueOnce(response(0.8))
 
     await expect(
@@ -108,6 +145,15 @@ describe('historical token rate queries', () => {
     ).resolves.toBe(0.8)
     expect(request).toHaveBeenCalledTimes(2)
   })
+
+  it.each([1e-10, 1e15])(
+    'rejects a price outside the exact six-decimal rate range: %s',
+    async (rate) => {
+      await expect(
+        fetchHistoricalTokenRate(queryClient(), 'asset', '2026-03-13', async () => response(rate))
+      ).rejects.toThrow('Historical USD rate precision unavailable')
+    }
+  )
 
   it('normalizes target sets and exposes reactive query state', async () => {
     const data = ref<Record<string, number>>()

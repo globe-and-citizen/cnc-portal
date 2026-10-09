@@ -1,12 +1,21 @@
 import { useQuery } from '@tanstack/vue-query'
-import { computed, toValue } from 'vue'
+import { computed, toValue, type MaybeRefOrGetter } from 'vue'
 import { isAddress, type Address } from 'viem'
 import { contractBalanceKeys } from '@/composables/useContractBalance'
-import externalApiClient from '@/lib/external.axios.ts'
+import { failureDetails, getSafeRead } from '@/lib/externalReads'
+import { queryClient } from './queryClient'
 import { normalizeSafeAddress } from '@/utils/safe/address'
 import type { SafeInfo, SafeTransaction } from '@/types/safe'
 import { TX_SERVICE_BY_CHAIN } from '@/types/safe'
 import { currentChainId } from '@/constant/index'
+import { useChainId } from '@wagmi/vue'
+import type { AssetMetadata } from '@/utils/tokens/assets'
+import {
+  fetchAllSafePages,
+  fetchSafeAssetTransfers,
+  fetchSafePortfolioAssets
+} from '@/lib/safeReads'
+import { queryPresets } from './queryFactory'
 import type {
   GetSafeTransactionParams,
   GetSafeInfoParams,
@@ -19,11 +28,6 @@ import type {
 const chainId = currentChainId
 const txService = TX_SERVICE_BY_CHAIN[chainId]
 
-interface SafePage<T> {
-  next: string | null
-  results: T[]
-}
-
 const safeAddressKey = (address: string | undefined): string | undefined =>
   address && isAddress(address.trim()) ? normalizeSafeAddress(address) : address
 
@@ -32,29 +36,16 @@ function requireSafeAddress(address: string | undefined): Address {
   return normalizeSafeAddress(address)
 }
 
-/** Load every page in service order; a repeated next link is an invalid partial response. */
-async function fetchAllSafePages<T>(initialUrl: string, signal: AbortSignal): Promise<T[]> {
-  const visited = new Set<string>()
-  const results: T[] = []
-  let pageUrl: string | null = initialUrl
-
-  while (pageUrl) {
-    if (visited.has(pageUrl)) throw new Error('Safe pagination returned a repeated page')
-    visited.add(pageUrl)
-
-    const currentUrl: string = pageUrl
-    const { data } = await externalApiClient.get<SafePage<T>>(currentUrl, { signal })
-    results.push(...(data.results ?? []))
-    pageUrl = data.next ? new URL(data.next, currentUrl).toString() : null
-  }
-
-  return results
-}
-
 /**
  * Query key factory for safe-related queries
  */
 export const safeKeys = {
+  transfers: (safeAddress: string | undefined, networkId: number) =>
+    [
+      'safe',
+      'asset-transfers',
+      { safeAddress: safeAddressKey(safeAddress), chainId: networkId }
+    ] as const,
   all: ['safe'] as const,
   infos: () => [...safeKeys.all, 'info'] as const,
   info: (safeAddress: string | undefined) =>
@@ -69,13 +60,13 @@ export const safeKeys = {
   incomingTransfers: (safeAddress: string | undefined, limit?: number) =>
     [
       ...safeKeys.incomingTransferLists(),
-      { safeAddress: safeAddressKey(safeAddress), limit }
+      { safeAddress: safeAddressKey(safeAddress), ...(limit === undefined ? {} : { limit }) }
     ] as const,
   outgoingTransactionLists: () => [...safeKeys.all, 'outgoing-transactions'] as const,
   outgoingTransactions: (safeAddress: string | undefined, limit?: number) =>
     [
       ...safeKeys.outgoingTransactionLists(),
-      { safeAddress: safeAddressKey(safeAddress), limit }
+      { safeAddress: safeAddressKey(safeAddress), ...(limit === undefined ? {} : { limit }) }
     ] as const,
   /**
    * The Safe's token holdings — native and ERC-20 alike — live on the one key
@@ -83,6 +74,35 @@ export const safeKeys = {
    */
   balance: (address: string | undefined, chainId: number | undefined) =>
     contractBalanceKeys.detail(safeAddressKey(address) as Address | undefined, chainId)
+}
+
+/** All real native/ERC-20 movements; swap settlement can happen outside a direct Safe call. */
+export function useGetSafeTransfersQuery(params: GetSafeIncomingTransfersParams) {
+  const safeAddress = computed(() => toValue(params.pathParams.safeAddress))
+  return useQuery<SafeIncomingTransfer[]>({
+    ...queryPresets.moderate,
+    queryKey: computed(() => safeKeys.transfers(safeAddress.value, chainId)),
+    enabled: computed(() => Boolean(safeAddress.value)),
+    queryFn: async ({ signal }) => {
+      if (!txService) throw new Error(`Unsupported chainId: ${chainId}`)
+      const address = requireSafeAddress(safeAddress.value)
+      return fetchSafeAssetTransfers(
+        queryClient,
+        address,
+        chainId,
+        params.queryParams?.limit ?? 500,
+        signal
+      )
+    },
+    staleTime: 300_000,
+    gcTime: 30 * 60_000,
+    refetchInterval: 300_000,
+    refetchIntervalInBackground: false,
+    refetchOnWindowFocus: false,
+    retry: (failureCount, error) =>
+      failureCount < 1 && (failureDetails(error).status ?? 500) >= 500,
+    retryDelay: 5000
+  })
 }
 
 // ============================================================================
@@ -98,23 +118,30 @@ export const safeKeys = {
  * @body none
  */
 export function useGetSafeInfoQuery(params: GetSafeInfoParams) {
-  const { pathParams } = params
-  const safeAddress = computed(() => toValue(pathParams.safeAddress))
+  const safeAddress = computed(() => toValue(params.pathParams.safeAddress))
 
   return useQuery<SafeInfo>({
+    ...queryPresets.moderate,
     queryKey: computed(() => safeKeys.info(safeAddress.value)),
     enabled: computed(() => Boolean(safeAddress.value)),
-    queryFn: async () => {
+    queryFn: async ({ signal }) => {
       const address = requireSafeAddress(safeAddress.value)
       if (!txService) throw new Error(`Unsupported chainId: ${chainId}`)
 
-      const { data } = await externalApiClient.get<SafeInfo>(
-        `${txService.url}/api/v1/safes/${address}/`
+      const { data } = await getSafeRead<SafeInfo>(
+        `${txService.url}/api/v1/safes/${address}/`,
+        signal
       )
       return data
     },
     staleTime: 300_000,
-    refetchInterval: 300_000
+    gcTime: 30 * 60_000,
+    refetchInterval: 300_000,
+    refetchIntervalInBackground: false,
+    refetchOnWindowFocus: false,
+    retry: (failureCount, error) =>
+      failureCount < 1 && (failureDetails(error).status ?? 500) >= 500,
+    retryDelay: 5000
   })
 }
 
@@ -131,23 +158,31 @@ export function useGetSafeInfoQuery(params: GetSafeInfoParams) {
  * @body none
  */
 export function useGetSafeTransactionsQuery(params: GetSafeTransactionsParams) {
-  const { pathParams } = params
-  const safeAddress = computed(() => toValue(pathParams.safeAddress))
+  const safeAddress = computed(() => toValue(params.pathParams.safeAddress))
 
   return useQuery<SafeTransaction[]>({
+    ...queryPresets.moderate,
     queryKey: computed(() => safeKeys.transactions(safeAddress.value)),
     enabled: computed(() => Boolean(safeAddress.value)),
-    queryFn: async () => {
+    queryFn: async ({ signal }) => {
       const address = requireSafeAddress(safeAddress.value)
       if (!txService) throw new Error(`Unsupported chainId: ${chainId}`)
 
-      const { data } = await externalApiClient.get<{ results: SafeTransaction[] }>(
-        `${txService.url}/api/v1/safes/${address}/multisig-transactions`
+      const { data } = await getSafeRead<{ results: SafeTransaction[] }>(
+        `${txService.url}/api/v1/safes/${address}/multisig-transactions`,
+        signal
       )
       return data.results || []
     },
-    staleTime: 300_000,
-    refetchInterval: 300_000
+    staleTime: 60_000,
+    gcTime: 30 * 60_000,
+    refetchIntervalInBackground: false,
+    refetchOnWindowFocus: false,
+    retry: (failureCount, error) =>
+      failureCount < 1 && (failureDetails(error).status ?? 500) >= 500,
+    retryDelay: 5000,
+    refetchInterval: (query) =>
+      query.state.data?.some((transaction) => !transaction.isExecuted) ? 60_000 : 300_000
   })
 }
 
@@ -167,21 +202,29 @@ export function useGetSafeTransactionQuery(params: GetSafeTransactionParams) {
   const { pathParams } = params
 
   return useQuery<SafeTransaction>({
-    queryKey: safeKeys.transaction(toValue(pathParams.safeTxHash)),
-    enabled: !!toValue(pathParams.safeTxHash),
-    queryFn: async () => {
+    ...queryPresets.moderate,
+    queryKey: computed(() => safeKeys.transaction(toValue(pathParams.safeTxHash))),
+    enabled: computed(() => !!toValue(pathParams.safeTxHash)),
+    queryFn: async ({ signal }) => {
       const hash = toValue(pathParams.safeTxHash)
       if (!hash) throw new Error('Missing Safe transaction hash or chain ID')
 
       if (!txService) throw new Error(`Unsupported chainId: ${chainId}`)
 
-      const { data } = await externalApiClient.get<SafeTransaction>(
-        `${txService.url}/api/v1/multisig-transactions/${hash}/`
+      const { data } = await getSafeRead<SafeTransaction>(
+        `${txService.url}/api/v1/multisig-transactions/${hash}/`,
+        signal
       )
       return data
     },
     staleTime: 300_000,
-    gcTime: 300_000
+    gcTime: 30 * 60_000,
+    refetchInterval: false,
+    refetchIntervalInBackground: false,
+    refetchOnWindowFocus: false,
+    retry: (failureCount, error) =>
+      failureCount < 1 && (failureDetails(error).status ?? 500) >= 500,
+    retryDelay: 5000
   })
 }
 
@@ -202,6 +245,7 @@ export function useGetSafeIncomingTransfersQuery(params: GetSafeIncomingTransfer
   const safeAddress = computed(() => toValue(pathParams.safeAddress))
 
   return useQuery<SafeIncomingTransfer[]>({
+    ...queryPresets.moderate,
     queryKey: computed(() => safeKeys.incomingTransfers(safeAddress.value, queryParams?.limit)),
     enabled: computed(() => Boolean(safeAddress.value)),
     queryFn: async ({ signal }) => {
@@ -210,9 +254,7 @@ export function useGetSafeIncomingTransfersQuery(params: GetSafeIncomingTransfer
 
       // Only use limit parameter
       const params = new URLSearchParams()
-      if (queryParams?.limit) {
-        params.append('limit', queryParams.limit.toString())
-      }
+      if (queryParams?.limit) params.append('limit', queryParams.limit.toString())
 
       const queryString = params.toString() ? `?${params.toString()}` : ''
       return fetchAllSafePages<SafeIncomingTransfer>(
@@ -221,7 +263,13 @@ export function useGetSafeIncomingTransfersQuery(params: GetSafeIncomingTransfer
       )
     },
     staleTime: 300_000,
-    refetchInterval: 300_000
+    gcTime: 30 * 60_000,
+    refetchInterval: 300_000,
+    refetchIntervalInBackground: false,
+    refetchOnWindowFocus: false,
+    retry: (failureCount, error) =>
+      failureCount < 1 && (failureDetails(error).status ?? 500) >= 500,
+    retryDelay: 5000
   })
 }
 
@@ -234,6 +282,7 @@ export function useGetSafeOutgoingTransactionsQuery(params: GetSafeOutgoingTrans
   const safeAddress = computed(() => toValue(pathParams.safeAddress))
 
   return useQuery<SafeTransaction[]>({
+    ...queryPresets.moderate,
     queryKey: computed(() => safeKeys.outgoingTransactions(safeAddress.value, queryParams?.limit)),
     enabled: computed(() => Boolean(safeAddress.value)),
     queryFn: async ({ signal }) => {
@@ -241,9 +290,7 @@ export function useGetSafeOutgoingTransactionsQuery(params: GetSafeOutgoingTrans
       if (!txService) throw new Error(`Unsupported chainId: ${chainId}`)
 
       const qp = new URLSearchParams({ executed: 'true' })
-      if (queryParams?.limit) {
-        qp.append('limit', queryParams.limit.toString())
-      }
+      if (queryParams?.limit) qp.append('limit', queryParams.limit.toString())
 
       return fetchAllSafePages<SafeTransaction>(
         `${txService.url}/api/v1/safes/${address}/multisig-transactions/?${qp.toString()}`,
@@ -251,6 +298,41 @@ export function useGetSafeOutgoingTransactionsQuery(params: GetSafeOutgoingTrans
       )
     },
     staleTime: 300_000,
-    refetchInterval: 300_000
+    gcTime: 30 * 60_000,
+    refetchInterval: 300_000,
+    refetchIntervalInBackground: false,
+    refetchOnWindowFocus: false,
+    retry: (failureCount, error) =>
+      failureCount < 1 && (failureDetails(error).status ?? 500) >= 500,
+    retryDelay: 5000
+  })
+}
+
+export function useGetSafePortfolioAssetsQuery(
+  address: MaybeRefOrGetter<Address | undefined>,
+  sources: MaybeRefOrGetter<readonly AssetMetadata[]>,
+  enabled: MaybeRefOrGetter<boolean>
+) {
+  const chainId = useChainId()
+  return useQuery({
+    ...queryPresets.moderate,
+    queryKey: computed(() => [
+      ...contractBalanceKeys.detail(toValue(address), chainId.value),
+      'safe-portfolio',
+      { assets: toValue(sources) }
+    ]),
+    enabled: computed(() => Boolean(toValue(address)) && toValue(enabled)),
+    staleTime: 60_000,
+    gcTime: 30 * 60_000,
+    refetchInterval: 60_000,
+    refetchIntervalInBackground: false,
+    refetchOnWindowFocus: false,
+    retry: (failureCount, error) => {
+      const { status } = failureDetails(error)
+      return failureCount < 1 && (status === undefined || status >= 500)
+    },
+    retryDelay: 5000,
+    queryFn: () =>
+      fetchSafePortfolioAssets(queryClient, toValue(sources), toValue(address)!, chainId.value)
   })
 }

@@ -15,6 +15,9 @@ These acceptance criteria follow the
   debit and credit context is never lost.
 - Monetary lines retain their original currency and exact quantity. Reports use a rate of record and aggregate exact fixed-scale USD values
   before display rounding.
+- Ledger quantities and recorded rates display up to six decimals with trailing zeros trimmed. Complete quantities and recorded rates remain
+  inspectable by hover, keyboard focus, or tap; positive quantities that would display as zero are identified as below display precision.
+  Display formatting does not change journal calculations or the existing export quantities.
 - Payroll is accrued when an eligible work week ends. Expense Account spending is recognized when cash moves. Transfers between known
   company pockets are not revenue or expense.
 - Accounting includes every known contract generation. Each deployment remains a distinct cash account even when report totals aggregate the
@@ -31,8 +34,25 @@ These acceptance criteria follow the
   source-independent pocket transfers, evidence-based treatment of external cash, fee composition, and report reconciliation. Its proposed
   identifiers remain illustrative until the runtime migration is implemented.
 
-The [direct asset movement product contract](./direct-movement-policy.md) defines company custody, unsolicited receipts, historical
-coverage, classification, and reconciliation across domains. Its target behaviour remains pending implementation; new ACs are unchecked.
+## External Safe Asset Exchanges
+
+Accounting uses complete Safe transfer history to recognize actual assets received and disposed, including allowance-driven settlements. An
+ERC-20 is identified by its network and contract address; its original currency and exact quantity remain on the journal lines. Token
+discovery does not expand the tokens allowed in CNC payment forms.
+
+A simple exchange requires opposing different-asset legs sharing a transaction and external settlement counterparty. The acquired asset is
+debited at its own historical market rate and the disposed asset credited at its weighted-average carrying value. The difference is an
+`Asset Exchange Gain` or `Asset Exchange Loss`, never `Service Revenue`. Stablecoin spent does not set the acquired asset's unit price or
+hide an exchange loss in its carrying value. Current portfolio prices never replace historical accounting evidence.
+
+Ancillary mints and ambiguous batches require classification. Missing decimals, rate, or acquisition basis keeps Accounting incomplete.
+Cross-transaction intents and arbitrary DeFi actions need additional protocol evidence. See the
+[Accounting Read Model](../../implementation/accounting-read-model/README.md#safe-assets-and-exchanges) for these boundaries and the
+[exchange regression suite](../../../app/src/utils/accounting/__tests__/safeExchanges.spec.ts) and
+[market-rate regressions](../../../app/src/utils/accounting/__tests__/safeExchanges.marketRates.spec.ts) for current executable evidence.
+Human validation of external swap journeys remains pending. Use the [manual Safe exchange checks](./safe-swap-test-script.md). The
+[direct asset movement product contract](./direct-movement-policy.md) defines company custody, unsolicited receipts, historical coverage,
+classification, and reconciliation across domains. Its target behaviour remains pending implementation; new ACs are unchecked.
 
 ### Product Transition
 
@@ -80,7 +100,7 @@ insufficient; the detailed evidence distribution remains available in the genera
 | User Story  | Main Journey  | Coverage Target | Gaps                                                                                                                                                                                                                                                                                                                                                                                                          |
 | ----------- | ------------- | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | US-ACCT-001 | ✅ Integrated | ⚠️ 11/12 met    | `AC-US-ACCT-001-08`                                                                                                                                                                                                                                                                                                                                                                                           |
-| US-ACCT-002 | ✅ Integrated | ✅ 12/12        | —                                                                                                                                                                                                                                                                                                                                                                                                             |
+| US-ACCT-002 | ✅ Integrated | ✅ 13/13        | —                                                                                                                                                                                                                                                                                                                                                                                                             |
 | US-ACCT-003 | ✅ Integrated | ✅ 11/11        | —                                                                                                                                                                                                                                                                                                                                                                                                             |
 | US-ACCT-004 | ✅ Integrated | ✅ 9/9          | —                                                                                                                                                                                                                                                                                                                                                                                                             |
 | US-ACCT-005 | ✅ Integrated | ✅ 13/13 met    | —                                                                                                                                                                                                                                                                                                                                                                                                             |
@@ -97,14 +117,14 @@ The story matrix tracks user-visible acceptance criteria. This table links the a
 exercise representative company operations, not every rule. The catalogue's declared inactive identifiers are intentionally not counted as
 implemented use cases.
 
-| Use-Case Family        | Active Rules                                              | Representative Tests                                                                                                                                                                                                                                                                                                                                                                                                          |
-| ---------------------- | --------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Treasury and Safe cash | `UC-BANK-02`, `UC-BANK-03`, `INTERNAL`, `CASH-OUT`, `FEE` | [bank.spec.ts](../../../app/src/utils/accounting/__tests__/bank.spec.ts), [safe.spec.ts](../../../app/src/utils/accounting/__tests__/safe.spec.ts), [bankFeeAssembly.spec.ts](../../../app/src/utils/accounting/__tests__/bankFeeAssembly.spec.ts), [internalAddresses.spec.ts](../../../app/src/utils/accounting/__tests__/internalAddresses.spec.ts)                                                                        |
-| Payroll                | `UC-CASH-02`, `UC-CASH-03`                                | [payrollAccrual.spec.ts](../../../app/src/utils/accounting/__tests__/payrollAccrual.spec.ts), [payroll.spec.ts](../../../app/src/utils/accounting/__tests__/payroll.spec.ts), [sherAccrualRate.spec.ts](../../../app/src/utils/accounting/__tests__/sherAccrualRate.spec.ts), [sherIssuance.spec.ts](../../../app/src/utils/accounting/__tests__/sherIssuance.spec.ts)                                                        |
-| Expense payout         | `UC-EXP-01`                                               | [expenseAccount.spec.ts](../../../app/src/utils/accounting/__tests__/expenseAccount.spec.ts), [enrichment.spec.ts](../../../app/src/utils/accounting/__tests__/enrichment.spec.ts), [orchestrator.spec.ts](../../../app/src/utils/accounting/__tests__/orchestrator.spec.ts)                                                                                                                                                  |
-| Community Credit       | `UC-CREDIT-01`, `UC-CREDIT-03`, `UC-CREDIT-05`            | [fixedReturn.spec.ts](../../../app/src/utils/accounting/__tests__/fixedReturn.spec.ts), [fixedReturn.interest.spec.ts](../../../app/src/utils/accounting/__tests__/fixedReturn.interest.spec.ts), [assemble.fixedReturn.spec.ts](../../../app/src/utils/accounting/__tests__/assemble.fixedReturn.spec.ts), [generation migration spec](../../../app/src/composables/accounting/__tests__/useCNCAccounting.migration.spec.ts) |
-| Investor               | `UC-SDR-01`, `UC-INV-01`, `DEFAULT-D`                     | [safeDepositRouter.spec.ts](../../../app/src/utils/accounting/__tests__/safeDepositRouter.spec.ts), [investor.spec.ts](../../../app/src/utils/accounting/__tests__/investor.spec.ts), [sherIssuance.spec.ts](../../../app/src/utils/accounting/__tests__/sherIssuance.spec.ts)                                                                                                                                                |
-| Vesting                | `UC-VEST-01`, `UC-VEST-02`, `UC-VEST-03`                  | [vesting.spec.ts](../../../app/src/utils/accounting/__tests__/vesting.spec.ts), [sherIssuance.spec.ts](../../../app/src/utils/accounting/__tests__/sherIssuance.spec.ts)                                                                                                                                                                                                                                                      |
+| Use-Case Family        | Active Rules                                                           | Representative Tests                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| ---------------------- | ---------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Treasury and Safe cash | `UC-BANK-02`, `UC-BANK-03`, `INTERNAL`, `CASH-OUT`, `FEE`, `SAFE-SWAP` | [bank.spec.ts](../../../app/src/utils/accounting/__tests__/bank.spec.ts), [safe.spec.ts](../../../app/src/utils/accounting/__tests__/safe.spec.ts), [bankFeeAssembly.spec.ts](../../../app/src/utils/accounting/__tests__/bankFeeAssembly.spec.ts), [internalAddresses.spec.ts](../../../app/src/utils/accounting/__tests__/internalAddresses.spec.ts), [safeExchanges.spec.ts](../../../app/src/utils/accounting/__tests__/safeExchanges.spec.ts) |
+| Payroll                | `UC-CASH-02`, `UC-CASH-03`                                             | [payrollAccrual.spec.ts](../../../app/src/utils/accounting/__tests__/payrollAccrual.spec.ts), [payroll.spec.ts](../../../app/src/utils/accounting/__tests__/payroll.spec.ts), [sherAccrualRate.spec.ts](../../../app/src/utils/accounting/__tests__/sherAccrualRate.spec.ts), [sherIssuance.spec.ts](../../../app/src/utils/accounting/__tests__/sherIssuance.spec.ts)                                                                             |
+| Expense payout         | `UC-EXP-01`                                                            | [expenseAccount.spec.ts](../../../app/src/utils/accounting/__tests__/expenseAccount.spec.ts), [enrichment.spec.ts](../../../app/src/utils/accounting/__tests__/enrichment.spec.ts), [orchestrator.spec.ts](../../../app/src/utils/accounting/__tests__/orchestrator.spec.ts)                                                                                                                                                                       |
+| Community Credit       | `UC-CREDIT-01`, `UC-CREDIT-03`, `UC-CREDIT-05`                         | [fixedReturn.spec.ts](../../../app/src/utils/accounting/__tests__/fixedReturn.spec.ts), [fixedReturn.interest.spec.ts](../../../app/src/utils/accounting/__tests__/fixedReturn.interest.spec.ts), [assemble.fixedReturn.spec.ts](../../../app/src/utils/accounting/__tests__/assemble.fixedReturn.spec.ts), [generation migration spec](../../../app/src/composables/accounting/__tests__/useCNCAccounting.migration.spec.ts)                      |
+| Investor               | `UC-SDR-01`, `UC-INV-01`, `DEFAULT-D`                                  | [safeDepositRouter.spec.ts](../../../app/src/utils/accounting/__tests__/safeDepositRouter.spec.ts), [investor.spec.ts](../../../app/src/utils/accounting/__tests__/investor.spec.ts), [sherIssuance.spec.ts](../../../app/src/utils/accounting/__tests__/sherIssuance.spec.ts)                                                                                                                                                                     |
+| Vesting                | `UC-VEST-01`, `UC-VEST-02`, `UC-VEST-03`                               | [vesting.spec.ts](../../../app/src/utils/accounting/__tests__/vesting.spec.ts), [sherIssuance.spec.ts](../../../app/src/utils/accounting/__tests__/sherIssuance.spec.ts)                                                                                                                                                                                                                                                                           |
 
 The real-operation evidence is in the [Accounting journey](../../../app/test/e2e/accounting/accounting-journey.integrated.spec.ts) and
 [contract-generation journey](../../../app/test/e2e/accounting/accounting-generations.integrated.spec.ts). Their current execution status is
@@ -132,7 +152,8 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 
 - [x] `AC-US-ACCT-001-04` Every posted journal entry balances.
 - [x] `AC-US-ACCT-001-05` USD-pegged tokens use a one-dollar rate, native tokens use their immutable transaction-date snapshot, and SHER
-      uses its compensation valuation policy.
+      uses its compensation valuation policy. Discovered assets use their own contract-based historical price source; exchange consideration
+      never substitutes for a missing market rate.
 - [x] `AC-US-ACCT-001-06` Payroll obligations are recognized when an eligible work week ends, before settlement.
 - [x] `AC-US-ACCT-001-07` Transfers between known company accounts do not change revenue or expenses.
 - [ ] `AC-US-ACCT-001-08` Closing cash balances are reconciled with the corresponding on-chain balances.
@@ -188,6 +209,8 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 - [x] `AC-US-ACCT-002-07` Internal transfers identify both concrete deployment accounts without creating revenue or expense.
 - [x] `AC-US-ACCT-002-08` Pagination changes visible rows, not filtered totals.
 - [x] `AC-US-ACCT-002-09` Labels and accounts follow the canonical [Accounting rule catalogue](./journal-entry-catalogue.md).
+- [x] `AC-US-ACCT-002-13` An evidenced Safe asset exchange preserves both asset quantities and realizes the difference from carrying basis
+      without creating service revenue.
 
 #### Edge & Error Cases
 
@@ -202,7 +225,7 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 | `AC-US-ACCT-002-01`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E + Frontend | ✅ Met |
 | `AC-US-ACCT-002-02`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E + Frontend | ✅ Met |
 | `AC-US-ACCT-002-03`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E + Frontend | ✅ Met |
-| `AC-US-ACCT-002-04`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E            | ✅ Met |
+| `AC-US-ACCT-002-04`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E + Frontend | ✅ Met |
 | `AC-US-ACCT-002-05`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
 | `AC-US-ACCT-002-06`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E + Frontend | ✅ Met |
 | `AC-US-ACCT-002-07`  | `PS-FRONTEND-INTEGRATED` | Integrated E2E            | ✅ Met |
@@ -211,6 +234,7 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 | `AC-US-ACCT-002-10`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
 | `AC-US-ACCT-002-11`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
 | `AC-US-ACCT-002-12`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
+| `AC-US-ACCT-002-13`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
 
 **Dependencies:** US-ACCT-001
 
@@ -764,13 +788,14 @@ applicable stories `Done`.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `d9a236b9df4c1709dcd431f3fb5d333d26090ae4`
+**Implementation evidence reviewed against:** `0972d19f7a8226e5923f6f8472ffc954dcf088d8`
 
 - [Accounting page](../../../app/src/components/sections/AccountingView/AccountingPage.vue),
   [team routes](../../../app/src/router/index.ts), and [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts)
 - [Source completeness](../../../app/src/utils/accounting/accountingCompleteness.ts),
   [block timestamps](../../../app/src/queries/blockTimestamp.queries.ts), and
-  [historical valuation](../../../app/src/queries/historicalTokenRate.queries.ts)
+  [historical valuation](../../../app/src/queries/coingecko.queries.ts) (successful date snapshots are immutable; unchanged missing-date
+  sets retry daily or on explicit refresh)
 - [Accounting assembly](../../../app/src/utils/accounting/assemble.ts),
   [journal finalization](../../../app/src/utils/accounting/journalEntry.ts), and
   [General Ledger presenter](../../../app/src/utils/accounting/journalLedgerPresenter.ts)
