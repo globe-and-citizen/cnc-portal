@@ -2,24 +2,12 @@ import { useStorage } from '@vueuse/core'
 import { defineStore } from 'pinia'
 import { LIST_CURRENCIES, SUPPORTED_TOKENS } from '@/constant'
 import type { TokenId } from '@/constant'
-import { useQuery } from '@tanstack/vue-query'
 import type { Ref } from 'vue'
 import { useTeamStore } from '@/stores/teamStore'
 import { computed, ref } from 'vue'
-import { failureDetails, getMarketRead } from '@/lib/externalReads'
-
-export interface PriceResponse {
-  market_data: {
-    current_price: {
-      [key: string]: number // Add index signature for dynamic currency codes
-      usd: number
-      cad: number
-      eur: number
-      idr: number
-      inr: number
-    }
-  }
-}
+import { useGetTokenPriceQuery } from '@/queries/coingecko.queries'
+import type { TokenPriceResponse as PriceResponse } from '@/lib/coingecko'
+export type { TokenPriceResponse as PriceResponse } from '@/lib/coingecko'
 
 export const useCurrencyStore = defineStore('currency', () => {
   const currency = useStorage('currency', {
@@ -46,14 +34,6 @@ export const useCurrencyStore = defineStore('currency', () => {
     return tokens
   })
 
-  // Fetch prices for all tokens
-  async function fetchTokenPrice(coingeckoId: string, signal: AbortSignal) {
-    const { data } = await getMarketRead<PriceResponse>(
-      `https://api.coingecko.com/api/v3/coins/${coingeckoId}`,
-      signal
-    )
-    return data
-  }
   /**
    * @dev For a dynamic supported token, Map is better than Array
    */
@@ -76,20 +56,7 @@ export const useCurrencyStore = defineStore('currency', () => {
         loading: ref(false)
       })
     } else {
-      const { data, isFetching } = useQuery({
-        queryKey: ['price', token.coingeckoId],
-        queryFn: ({ signal }) => fetchTokenPrice(token.coingeckoId, signal),
-        staleTime: 300_000,
-        gcTime: 30 * 60_000,
-        refetchInterval: 300_000,
-        refetchIntervalInBackground: false,
-        refetchOnWindowFocus: false,
-        retry: (failureCount, error) => {
-          const { status } = failureDetails(error)
-          return failureCount < 1 && (status === undefined || status >= 500)
-        },
-        retryDelay: 5000
-      })
+      const { data, isFetching } = useGetTokenPriceQuery(token.coingeckoId)
       tokenStates.push({ id: token.id, data, loading: isFetching })
     }
   })

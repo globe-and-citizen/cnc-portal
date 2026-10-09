@@ -7,7 +7,12 @@ export interface ContractGeneration {
   contracts: { address: string; type: string; deployer?: string }[]
 }
 
-export function accountingGenerations(
+/**
+ * Keep every historical Officer deployment in the accounting scope, then add
+ * current contracts absent from that history (for example an independent Safe).
+ * Without Officer history, scan all current contracts without a deployment bound.
+ */
+export function buildAccountingContractGenerations(
   current: ContractGeneration['contracts'],
   officers: readonly ContractGeneration[]
 ): ContractGeneration[] {
@@ -24,7 +29,14 @@ export function accountingGenerations(
   return generations
 }
 
-export function generationContracts(generations: readonly ContractGeneration[]): TeamContract[] {
+/**
+ * Flatten all generations into the deployment identities used by accounting
+ * mappers. Missing deployers fall back to the contract address; these records
+ * describe accounting identity, not authoritative admin permissions.
+ */
+export function flattenAccountingGenerationContracts(
+  generations: readonly ContractGeneration[]
+): TeamContract[] {
   return generations.flatMap(({ contracts }) =>
     contracts.map((contract) => ({
       address: contract.address as Address,
@@ -35,7 +47,12 @@ export function generationContracts(generations: readonly ContractGeneration[]):
   )
 }
 
-export function generationScanTargets(
+/**
+ * Select event-scan addresses by contract type across all generations. Each
+ * Officer deployment block is the lower scan bound; absent bounds stay undefined
+ * so the log reader can choose its own fallback rather than omit earlier history.
+ */
+export function buildContractEventScanTargets(
   generations: readonly ContractGeneration[],
   types: readonly ContractType[]
 ) {
@@ -50,8 +67,12 @@ export function generationScanTargets(
   )
 }
 
-/** Caller-supplied preference order wins over backend row order. */
-export function currentContractAddress(
+/**
+ * Resolve a current contract for live reads, using the caller's contract-type
+ * preference (for example Investor before InvestorV1) rather than backend order.
+ * Return an empty string when absent so callers can disable the read.
+ */
+export function findPreferredCurrentContractAddress(
   contracts: ContractGeneration['contracts'],
   types: readonly ContractType[]
 ): string {
