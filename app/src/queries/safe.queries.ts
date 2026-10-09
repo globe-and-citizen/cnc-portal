@@ -1,20 +1,15 @@
 import { useQuery } from '@tanstack/vue-query'
-import { computed, toValue, type MaybeRefOrGetter } from 'vue'
+import { computed, toValue } from 'vue'
 import { isAddress, type Address } from 'viem'
 import { contractBalanceKeys } from '@/composables/useContractBalance'
 import { failureDetails, getSafeRead } from '@/lib/externalReads'
 import { queryClient } from './queryClient'
 import { normalizeSafeAddress } from '@/utils/safe/address'
+import { excludeConfirmedSafeSpam } from '@/utils/safe/confirmedSpam'
 import type { SafeInfo, SafeTransaction } from '@/types/safe'
 import { TX_SERVICE_BY_CHAIN } from '@/types/safe'
 import { currentChainId } from '@/constant/index'
-import { useChainId } from '@wagmi/vue'
-import type { AssetMetadata } from '@/utils/tokens/assets'
-import {
-  fetchAllSafePages,
-  fetchSafeAssetTransfers,
-  fetchSafePortfolioAssets
-} from '@/lib/safeReads'
+import { fetchAllSafePages, fetchSafeAssetTransfers } from '@/lib/safeReads'
 import { queryPresets } from './queryFactory'
 import type {
   GetSafeTransactionParams,
@@ -69,8 +64,8 @@ export const safeKeys = {
       { safeAddress: safeAddressKey(safeAddress), ...(limit === undefined ? {} : { limit }) }
     ] as const,
   /**
-   * The Safe's token holdings — native and ERC-20 alike — live on the one key
-   * `useContractBalance` owns, so this delegates rather than restating it.
+   * Delegate the canonical wallet balance prefix. Gateway holdings append their
+   * provider and fiat currency, so existing operation invalidations reach them too.
    */
   balance: (address: string | undefined, chainId: number | undefined) =>
     contractBalanceKeys.detail(safeAddressKey(address) as Address | undefined, chainId)
@@ -83,6 +78,7 @@ export function useGetSafeTransfersQuery(params: GetSafeIncomingTransfersParams)
     ...queryPresets.moderate,
     queryKey: computed(() => safeKeys.transfers(safeAddress.value, chainId)),
     enabled: computed(() => Boolean(safeAddress.value)),
+    select: (transfers) => excludeConfirmedSafeSpam(transfers, chainId),
     queryFn: async ({ signal }) => {
       if (!txService) throw new Error(`Unsupported chainId: ${chainId}`)
       const address = requireSafeAddress(safeAddress.value)
@@ -248,6 +244,7 @@ export function useGetSafeIncomingTransfersQuery(params: GetSafeIncomingTransfer
     ...queryPresets.moderate,
     queryKey: computed(() => safeKeys.incomingTransfers(safeAddress.value, queryParams?.limit)),
     enabled: computed(() => Boolean(safeAddress.value)),
+    select: (transfers) => excludeConfirmedSafeSpam(transfers, chainId),
     queryFn: async ({ signal }) => {
       const address = requireSafeAddress(safeAddress.value)
       if (!txService) throw new Error(`Unsupported chainId: ${chainId}`)
@@ -305,34 +302,5 @@ export function useGetSafeOutgoingTransactionsQuery(params: GetSafeOutgoingTrans
     retry: (failureCount, error) =>
       failureCount < 1 && (failureDetails(error).status ?? 500) >= 500,
     retryDelay: 5000
-  })
-}
-
-export function useGetSafePortfolioAssetsQuery(
-  address: MaybeRefOrGetter<Address | undefined>,
-  sources: MaybeRefOrGetter<readonly AssetMetadata[]>,
-  enabled: MaybeRefOrGetter<boolean>
-) {
-  const chainId = useChainId()
-  return useQuery({
-    ...queryPresets.moderate,
-    queryKey: computed(() => [
-      ...contractBalanceKeys.detail(toValue(address), chainId.value),
-      'safe-portfolio',
-      { assets: toValue(sources) }
-    ]),
-    enabled: computed(() => Boolean(toValue(address)) && toValue(enabled)),
-    staleTime: 60_000,
-    gcTime: 30 * 60_000,
-    refetchInterval: 60_000,
-    refetchIntervalInBackground: false,
-    refetchOnWindowFocus: false,
-    retry: (failureCount, error) => {
-      const { status } = failureDetails(error)
-      return failureCount < 1 && (status === undefined || status >= 500)
-    },
-    retryDelay: 5000,
-    queryFn: () =>
-      fetchSafePortfolioAssets(queryClient, toValue(sources), toValue(address)!, chainId.value)
   })
 }

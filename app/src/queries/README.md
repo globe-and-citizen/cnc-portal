@@ -18,6 +18,7 @@ This folder contains all TanStack Query hooks for API interactions in the CNC Po
 | `notification.queries.ts`        | Notifications | User notifications                      |
 | `queryClient.ts`                 | Shared cache  | Application-wide query client           |
 | `safe.queries.ts`                | Safe          | Gnosis Safe operations                  |
+| `safeClient.queries.ts`          | Safe holdings | Gateway balances and fiat valuations    |
 | `team.queries.ts`                | Teams         | Team CRUD operations                    |
 | `user.queries.ts`                | Users         | User profile management                 |
 | `wage.queries.ts`                | Wages         | Member wage settings                    |
