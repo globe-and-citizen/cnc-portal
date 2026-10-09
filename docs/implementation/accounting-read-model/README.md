@@ -128,6 +128,12 @@ ordering, and `InvestorV1` is used only when no current `Investor` exists.
 
 ### Safe assets and exchanges
 
+The Safe query excludes only registry-confirmed counterfeit ERC-20 events before source mapping and historical-rate target construction. The
+[shared policy](../client-data-access/README.md#confirmed-safe-spam) preserves raw cached evidence and other legs of the same transaction.
+Unknown assets, missing prices and real asset outflows retain their existing completeness and accounting rules. The exclusion itself cannot
+certify complete books when unrelated evidence is missing. Executable evidence:
+[cached and paginated query-to-accounting tests](../../../app/src/queries/__tests__/safe.queries.integration.spec.ts).
+
 The authoritative Safe source is `/transfers/`, paginated to exhaustion, deduplicated by service `transferId`, and refreshed approximately
 every five minutes. It includes real ERC-20 `transferFrom` settlements that cannot be inferred from the Safe multisig call's top-level
 calldata. Missing token metadata is read from its contract when possible. Metadata must match the transfer's contract address; unsupported
@@ -154,24 +160,22 @@ other payment rules remain unchanged. Network/DEX fees are not inferred from an 
 necessary. Cross-transaction swap intents and arbitrary DeFi operations require additional protocol evidence and remain a boundary of
 automatic classification.
 
-The read-only Safe portfolio combines supported balances with discovered ERC-20 balances for current wallet valuation. A nonzero supported
-holding with a missing, nonpositive, or nonfinite USD price keeps the total incomplete, just as unavailable discovered valuations do. A
-confirmed zero holding does not require a price. These current-price completeness checks do not change historical journal valuation.
-Optional contract-matched logo metadata is display-only. Safe holdings use compact amount labels while preserving the exact quantity for
-inspection; the rounding and logo metadata do not alter source movements, accounting classification, carrying values, or historical rates.
+The read-only Safe holdings use the Safe Client Gateway balance response for current wallet valuation. A nonzero supported holding with a
+missing, nonpositive, or nonfinite USD price keeps the total incomplete, just as unavailable discovered valuations do. A confirmed zero
+holding does not require a price. These current-price completeness checks do not change historical journal valuation. Optional
+contract-matched logo metadata is display-only. Safe holdings use compact amount labels while preserving the exact quantity for inspection;
+the rounding and logo metadata do not alter source movements, accounting classification, carrying values, or historical rates.
 
 Implementation: [asset identity](../../../app/src/utils/tokens/assets.ts),
 [exchange carrying-value replay](../../../app/src/utils/accounting/safeExchanges.ts),
 [contract market discovery](../../../app/src/queries/coingecko.queries.ts),
-[Safe portfolio](../../../app/src/composables/safe/useSafePortfolio.ts),
-[discovered balance query](../../../app/src/queries/safe.queries.ts), and
-[exchange regression tests](../../../app/src/utils/accounting/__tests__/safeExchanges.spec.ts) and
+[Safe Client balances](../../../app/src/queries/safeClient.queries.ts), [Safe movement queries](../../../app/src/queries/safe.queries.ts),
+and [exchange regression tests](../../../app/src/utils/accounting/__tests__/safeExchanges.spec.ts) and
 [market-rate regressions](../../../app/src/utils/accounting/__tests__/safeExchanges.marketRates.spec.ts).
 
-The Safe portfolio's discovery exclusion is based on the fixed supported-currency balance reader, not the global known-token resolver.
-USDT/USDT0 and other recognized contracts outside the fixed holdings list remain visible as discovered ERC-20s. The global token resolver
-continues to supply existing Accounting identities and stablecoin valuation rules; the holdings correction does not remap journal entries or
-broaden payment allowlists.
+Gateway holdings are keyed by chain and token contract and show only returned balances, including zero balances. No configured base-currency
+rows are inserted. Provider metadata and order are retained. The global token resolver continues to supply existing Accounting identities
+and stablecoin valuation rules; the holdings correction does not remap journal entries or broaden payment allowlists.
 
 ### Runtime Export Boundary
 

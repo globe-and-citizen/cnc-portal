@@ -94,6 +94,11 @@ conversion. See the [Accounting read model](../accounting-read-model/README.md) 
 prepares combined portfolio rows in its page. The table owns display, sorting, and failed-image fallback, with no balance query.
 [Safe asset discovery](../../../app/src/utils/safe/assetDiscovery.ts) deduplicates contract metadata without reactive dependencies.
 
+[Confirmed Safe spam](../../../app/src/utils/safe/confirmedSpam.ts) supplies a pure, evidence-backed registry lookup and a nonmutating
+transfer projection. Safe queries own its application and retain raw cached events. See
+[Client Data Access](../client-data-access/README.md#confirmed-safe-spam) for the exclusion boundary and
+[policy regressions](../../../app/src/utils/safe/__tests__/confirmedSpam.spec.ts) for chain, event-type and mixed-transaction guarantees.
+
 [Safe holdings presentation](../../../app/src/utils/safe/portfolio.ts) combines the fixed supported currencies with discovered holdings.
 Supported currencies retain their configured order and remain present at zero or unavailable balance. Additional holdings are deduplicated
 by network and contract, omit confirmed zero balances, and retain explicit unavailable balance and valuation states. Quantities use raw

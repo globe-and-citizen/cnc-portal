@@ -1212,16 +1212,22 @@ movement across the participating stories.
 
 ## Discovered Safe assets
 
-The Safe account displays supported currencies and ERC-20 assets discovered from its transfer history in one holdings table, including
-assets acquired outside CNC such as WETH. USDC, USDCe, and the configured network's native currency (POL on Polygon) remain first and
-visible even at zero balance. Additional assets appear when held and disappear when their confirmed current balance becomes zero; historical
-tokens remain discoverable for future refreshes. Contract identity is preserved by network and address rather than symbol, so WETH and AWETH
-remain separate assets.
+Registry-confirmed counterfeit token events are excluded from incoming history and holdings discovery. The current registry covers two
+audited USDC imitations on Polygon; other tokens retain their existing behaviour, including unavailable balances or prices. Raw events
+remain in the browser query cache for inspection. The
+[shared confirmed-spam policy](../../implementation/client-data-access/README.md#confirmed-safe-spam) also protects Accounting and preserves
+other movements in the same transaction. Evidence: [policy tests](../../../app/src/utils/safe/__tests__/confirmedSpam.spec.ts) and
+[cached and paginated query tests](../../../app/src/queries/__tests__/safe.queries.integration.spec.ts). Live product review remains
+pending.
 
-Discovery excludes only currencies already displayed by the fixed supported-token balance reader, matching network and contract address
-case-insensitively. A token recognized elsewhere in CNC but absent from that fixed list, such as USDT/USDT0, remains a discovered holding.
-Its actual contract metadata supplies the displayed symbol and decimals; a missing market price does not hide a held token. This read-only
-display does not add that token to payment allowlists or change its Accounting identity.
+The Safe account displays only the balances returned by the Safe Client Gateway in one holdings table, including assets acquired outside CNC
+such as WETH. Provider order, token names, symbols, decimals and logos are retained. Returned zero balances remain visible; absent tokens
+are not inserted from the CNC supported-token list. Before a response is available, no placeholder currencies are shown; an empty response
+produces an empty holdings table. Contract identity is preserved by network and address rather than symbol, so WETH and AWETH remain
+separate assets.
+
+A token recognized elsewhere in CNC, such as USDT/USDT0, appears only when returned by the Gateway. A missing market price does not hide a
+returned token. This read-only display does not add that token to payment allowlists or change its Accounting identity.
 
 Deposits without ERC-20 metadata remain visible as `Token amount unavailable`: the raw value cannot be converted reliably without the
 token's decimals. Their raw transfer objects retain the contract address and transaction hash for inspection. The transfer's `from` field is
@@ -1233,39 +1239,41 @@ state; Safe also passes valuation completeness. The original `Token Holding` pre
 `Coin Price`, and `Balance` columns. Additional assets use the same compact valuation format and unit-price suffix as the supported
 currencies. Token identities show their symbol on one line (for example, DAI), with the full name and contract address available on hover.
 Amounts show up to four decimal places with trailing zeros trimmed; the exact quantity remains available on hover. A positive quantity below
-the displayed precision reads `<0.0001` rather than zero. The three base currencies keep their existing logos; additional tokens use the
-logo from matching Safe metadata or verified contract-based market metadata. Missing or failed images use a neutral initial.
+the displayed precision reads `<0.0001` rather than zero. All tokens use logos from Safe Client metadata. Missing or failed images use a
+neutral initial.
 
 Each holding retains its currency, exact quantity, contract identity, and available current valuation in the selected display currency
 independently of the tokens allowed in CNC payment forms. An unavailable balance or price remains explicit, including while the first
-balance read is pending. A missing USD price for a held supported or discovered asset makes the wallet total incomplete. A confirmed zero
-balance has zero value without requiring a price. Token discovery does not enable an asset for payroll, deposits, or transfers proposed by
-CNC.
+balance read is pending. A missing or zero provider price for a nonzero holding makes its fiat total incomplete. A confirmed zero balance
+has zero value without requiring a price. Token discovery does not enable an asset for payroll, deposits, or transfers proposed by CNC.
 
-The portfolio refreshes periodically; the holdings section has no manual refresh button. Provider failures remain retryable. Unknown or
-untrusted assets do not receive an invented price. Discovered USD market values use the supported currency prices for conversion to another
-selected currency; an unavailable conversion keeps that displayed valuation explicitly unavailable. See the
+The portfolio refreshes periodically; the holdings section has no manual refresh button. Provider failures remain retryable. The Safe Client
+Gateway supplies token quantities, current prices and values directly in the selected fiat currency. A nonzero holding with a zero or
+missing provider price remains explicitly unpriced; no value is invented. Provider spam filtering and reviewed contract exclusions apply to
+holdings. The overview retains its USD total, so a non-USD display uses an additional fiat query. See the
 [Accounting read model](../../implementation/accounting-read-model/README.md) for swap treatment.
 
 Safe balances refresh approximately every minute while their page is active. Complete transfer histories and Safe information refresh
 approximately every five minutes; pending transactions refresh every minute when the queue contains an unexecuted transaction and every five
-minutes otherwise. Prices remain fresh for five minutes, recovered token metadata for 24 hours, and unused regular query data stays in the
-browser cache for 30 minutes. Each query configures its own refresh and retry options; background tabs and window focus do not trigger extra
-polling. Safe and market reads are paced separately in the browser and pause after HTTP 429 responses. See
-[Client Data Access](../../implementation/client-data-access/README.md#browser-request-coordination) for recovery and session boundaries.
+minutes otherwise. Other current-price queries remain fresh for five minutes and recovered historical-transfer token metadata for 24 hours;
+unused regular query data stays in the browser cache for 30 minutes. Each query configures its own refresh and retry options; background
+tabs and window focus do not trigger extra polling. Safe and market reads are paced separately in the browser and pause after HTTP 429
+responses. See [Client Data Access](../../implementation/client-data-access/README.md#browser-request-coordination) for recovery and session
+boundaries.
 
 Confirmed Safe transaction execution and directly executed transfers use one invalidation helper for all Safe service queries and the wallet
-balance prefix shared by supported and discovered holdings. A proposal refreshes the transaction queue without treating it as a completed
-transfer. Histories can remain behind the chain until the Safe Transaction Service indexes the operation; periodic refreshes continue to
-reconcile them. Existing balance invalidations also reach the discovered portfolio because both use the canonical balance-key prefix. Other
-account surfaces retain their existing balance cadence.
+balance prefix shared by Gateway holdings in every queried fiat currency. A proposal refreshes the transaction queue without treating it as
+a completed transfer. Histories can remain behind the chain until the Safe Transaction Service indexes the operation, and Gateway holdings
+can lag until its balance provider updates; periodic refreshes continue to reconcile them. Existing balance invalidations also reach Gateway
+holdings through the canonical balance-key prefix. Other account surfaces retain their existing balance cadence.
 
 Executable evidence: [discovered holdings tests](../../../app/src/components/ui/__tests__/TokenHoldingsSection.safe.spec.ts),
 [overview tests](../../../app/src/components/sections/SafeView/__tests__/SafeBalanceSection.rendering.spec.ts), and
-[portfolio query tests](../../../app/src/composables/safe/__tests__/useSafePortfolio.spec.ts).
+[Gateway query tests](../../../app/src/queries/__tests__/safeClient.queries.spec.ts) and
+[cache-sharing tests](../../../app/src/queries/__tests__/safeClient.queries.integration.spec.ts).
 
-Implementation: [Safe portfolio](../../../app/src/composables/safe/useSafePortfolio.ts),
-[discovered-asset query](../../../app/src/queries/safe.queries.ts),
+Implementation: [Safe Client balances](../../../app/src/queries/safeClient.queries.ts),
+[Safe movement queries](../../../app/src/queries/safe.queries.ts),
 [shared balance reads](../../../app/src/composables/useContractBalance.ts),
 [unified asset holdings](../../../app/src/components/ui/TokenHoldingsSection.vue),
 [holdings presentation](../../../app/src/utils/safe/portfolio.ts),

@@ -52,6 +52,28 @@ raw object retains the token contract, transaction hash, and value. Missing meta
 transaction signer. The complete asset-transfer query can recover metadata independently, so holdings and deposits may have different
 available metadata.
 
+### Confirmed Safe spam
+
+The complete asset-transfer and incoming-transfer queries apply the same
+[confirmed-spam policy](../../../app/src/utils/safe/confirmedSpam.ts) through TanStack `select`. The registry currently excludes only two
+audited counterfeit USDC contracts on Polygon: `0x9251cf87c36a02b741ff2127817be4d79eadc05b` and
+`0x0ce89273aadcb0f297a32d957cbd459ed06848ea`. Each entry records its reason, confirmation date and public transaction evidence. Matching
+uses the chain ID and the ERC-20 event's emitting contract, case-insensitively; symbols, sender resemblance, missing metadata, provider
+trust flags and unavailable prices do not create exclusions.
+
+Raw events remain in their existing query cache, including their transaction and transfer identities. The read functions skip metadata
+recovery for confirmed spam; observers exclude those events before discovery, holdings, current or historical prices, and Accounting
+mapping. The policy also applies to already cached histories. Each event is filtered independently, preserving admitted incoming and
+outgoing legs in the same transaction. Real assets and their outflows retain their existing processing and completeness rules.
+
+This is a reviewed registry, with no automatic detection, user classification interface, or persistent quarantine. Raw evidence remains
+available for the existing browser-cache lifetime and can be fetched again from the provider. Adding an exclusion requires reviewed evidence
+and a source change. The same address on another network is outside the exclusion.
+
+Executable evidence: [policy regressions](../../../app/src/utils/safe/__tests__/confirmedSpam.spec.ts) and
+[cached and paginated query-to-accounting tests](../../../app/src/queries/__tests__/safe.queries.integration.spec.ts). These tests use
+mocked provider responses and real TanStack observers; live browser validation remains pending.
+
 ### Browser request coordination
 
 [External read coordination](../../../app/src/lib/externalReads.ts) serializes Safe GETs and CoinGecko reads in separate browser-session
@@ -74,17 +96,30 @@ requesting already successful dates again. A newly required date is fetched when
 retry unavailable dates immediately. Full Safe pagination is retained on each history refresh; this change does not implement incremental
 synchronization. A later-page failure leaves the previous successful query result in cache and rejects the incomplete replacement.
 
-External reads remain necessary on this runtime: Safe history and CoinGecko market data are HTTP provider resources, while ERC-20 balances
-are RPC contract reads. A balance read cannot replace transfer pagination or market prices. The current backend exposes no replacement
-provider-read routes; currency prices, contract markets, and historical snapshots therefore share the browser coordination utility. It
-prevents each consumer from implementing its own pacing and 429 handling.
+[Safe Client balance queries](../../../app/src/queries/safeClient.queries.ts) fetch native and ERC-20 holdings, exact base-unit quantities,
+token metadata, current unit prices and fiat values in one request to the Safe Client Gateway. The raw Gateway response stays in TanStack
+Query; [pure holdings presentation](../../../app/src/utils/safe/portfolio.ts) preserves token identity, decimal precision, provider order,
+metadata and returned zero balances. It never adds absent configured currencies and supplements provider spam filtering with the reviewed
+contract registry. Zero or missing prices for nonzero holdings keep values and totals explicitly incomplete, including the Gateway's
+zero-price fallback. The provider's fiat total is used only for a complete, unfiltered response; excluded or duplicate contracts require a
+total from admitted items. The response contract is defined in [Safe types](../../../app/src/types/safe.ts).
 
-[Discovered Safe balance queries](../../../app/src/queries/safe.queries.ts) live with the other Safe queries, expose standard TanStack state
-and delegate their async reads to `fetchSafePortfolioAssets` in [the Safe read functions](../../../app/src/lib/safeReads.ts). The same
-request module owns complete page loading, transfer deduplication and contract metadata recovery; query observer options remain in the Safe
-query module. The portfolio composable combines that query with supported balances and complete history. Confirmed operations use
-[one Safe invalidation helper](../../../app/src/queries/safe.mutations.ts) for the entire Safe service prefix and the affected wallet's
-on-chain balance prefix. Proposals refresh only pending transactions until execution.
+Address, configured chain and uppercase fiat code identify each balance cache entry. The overview and holdings share one USD request; a
+selected non-USD currency has its own Gateway request while the overview retains its USD total. No transfer-history, RPC balance or
+CoinGecko current-price reads are required to populate these holdings. The query refreshes every minute in active tabs, retains unused data
+for 30 minutes, propagates cancellation and allows one delayed transient-error retry. Both Gateway and Transaction Service GETs use the
+existing Safe browser queue. A failed request retains its cached response while exposing the error; the UI marks the total incomplete.
+
+[Safe read functions](../../../app/src/lib/safeReads.ts) own the Gateway HTTP request separately from complete transfer pagination,
+deduplication and contract metadata recovery. Accounting keeps its Transaction Service movement feeds and historical market snapshots; other
+account surfaces keep their RPC balances and existing price queries. Gateway discovery does not expand CNC transfer currencies. Confirmed
+operations use [one Safe invalidation helper](../../../app/src/queries/safe.mutations.ts) for the entire Safe service prefix and the
+affected wallet's balance prefix, which also reaches all Gateway fiat entries. Proposals refresh only pending transactions until execution.
+Direct hosted Gateway access is a runtime dependency; mocked query tests do not establish an availability guarantee.
+
+Executable evidence: [Gateway request tests](../../../app/src/queries/__tests__/safeClient.queries.spec.ts),
+[shared observer and invalidation tests](../../../app/src/queries/__tests__/safeClient.queries.integration.spec.ts), and
+[holdings presentation tests](../../../app/src/utils/safe/__tests__/portfolio.spec.ts).
 
 The queues and caches belong to one browser session. They do not coordinate separate users, tabs, devices, or backend instances, and do not
 guarantee that provider quotas can absorb concurrent users.

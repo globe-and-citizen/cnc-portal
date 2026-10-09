@@ -788,6 +788,13 @@ applicable stories `Done`.
 
 ## Implementation Evidence
 
+Safe history applies the [confirmed-spam policy](../../implementation/client-data-access/README.md#confirmed-safe-spam) before accounting
+mapping and historical valuation requests. Confirmed counterfeit events cannot create journal movements or valuation gaps; real movements in
+the same transaction remain included. Unknown tokens and unavailable prices keep their existing completeness rules. Raw spam evidence
+remains in the browser query cache. See
+[cached and paginated query-to-accounting tests](../../../app/src/queries/__tests__/safe.queries.integration.spec.ts). Live product review
+of this exclusion remains pending.
+
 **Implementation evidence reviewed against:** `0972d19f7a8226e5923f6f8472ffc954dcf088d8`
 
 - [Accounting page](../../../app/src/components/sections/AccountingView/AccountingPage.vue),
