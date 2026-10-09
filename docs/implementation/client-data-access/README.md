@@ -33,14 +33,19 @@ flowchart LR
 
 ### Contract-based asset markets
 
-[Asset market discovery](../../../app/src/queries/assetMarket.queries.ts) verifies the provider platform and contract address before
-returning an asset's coin identity, current USD price, or optional display logo. Contract market lookup supports Polygon (137) only;
-Hardhat, Amoy, Sepolia, and other networks fail explicitly before sending a provider request. Test contracts never inherit Polygon prices by
-address or symbol. Valid HTTPS image URLs come from that same verified contract response and remain available even when its price is
-missing. Safe metadata logos survive matching-contract RPC metadata enrichment. Coin identity is cached independently from periodically
-refreshed prices. Historical rates continue to use immutable coin/date snapshots. Safe transfer history is paginated and deduplicated using
-the service transfer identity; later-page failures reject the whole history. The read-only Safe portfolio is independent of CNC payment
-allowlists.
+[CoinGecko queries](../../../app/src/queries/coingecko.queries.ts) centralize supported-token prices, contract market discovery, coin
+identities and historical snapshots. Their HTTP functions live separately in [the CoinGecko client](../../../app/src/lib/coingecko.ts),
+which owns URL construction, response validation and cancellation forwarding. The currency store consumes the price query instead of
+declaring its own provider request. Queries reuse `queryPresets.moderate` or `queryPresets.once` with explicit endpoint-specific overrides;
+the authenticated CNC query factory is not used for external provider requests.
+
+Asset market discovery verifies the provider platform and contract address before returning an asset's coin identity, current USD price, or
+optional display logo. Contract market lookup supports Polygon (137) only; Hardhat, Amoy, Sepolia, and other networks fail explicitly before
+sending a provider request. Test contracts never inherit Polygon prices by address or symbol. Valid HTTPS image URLs come from that same
+verified contract response and remain available even when its price is missing. Safe metadata logos survive matching-contract RPC metadata
+enrichment. Coin identity is cached independently from periodically refreshed prices. Historical rates continue to use immutable coin/date
+snapshots. Safe transfer history is paginated and deduplicated using the service transfer identity; later-page failures reject the whole
+history. The read-only Safe portfolio is independent of CNC payment allowlists.
 
 Incoming deposits retain the service's raw transfer objects. An ERC-20 deposit without `tokenInfo` displays `Token amount unavailable`; the
 raw object retains the token contract, transaction hash, and value. Missing metadata does not establish token reputation or identify the
@@ -74,10 +79,12 @@ are RPC contract reads. A balance read cannot replace transfer pagination or mar
 provider-read routes; currency prices, contract markets, and historical snapshots therefore share the browser coordination utility. It
 prevents each consumer from implementing its own pacing and 429 handling.
 
-[Discovered Safe balance queries](../../../app/src/queries/safePortfolio.queries.ts) expose standard TanStack state and delegate their async
-reads to `fetchSafePortfolioAssets`. The portfolio composable combines that query with supported balances and complete history. Confirmed
-operations use [one Safe invalidation helper](../../../app/src/queries/safe.mutations.ts) for the entire Safe service prefix and the
-affected wallet's on-chain balance prefix. Proposals refresh only pending transactions until execution.
+[Discovered Safe balance queries](../../../app/src/queries/safe.queries.ts) live with the other Safe queries, expose standard TanStack state
+and delegate their async reads to `fetchSafePortfolioAssets` in [the Safe read functions](../../../app/src/lib/safeReads.ts). The same
+request module owns complete page loading, transfer deduplication and contract metadata recovery; query observer options remain in the Safe
+query module. The portfolio composable combines that query with supported balances and complete history. Confirmed operations use
+[one Safe invalidation helper](../../../app/src/queries/safe.mutations.ts) for the entire Safe service prefix and the affected wallet's
+on-chain balance prefix. Proposals refresh only pending transactions until execution.
 
 The queues and caches belong to one browser session. They do not coordinate separate users, tabs, devices, or backend instances, and do not
 guarantee that provider quotas can absorb concurrent users.

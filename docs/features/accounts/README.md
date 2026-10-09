@@ -1265,7 +1265,7 @@ Executable evidence: [discovered holdings tests](../../../app/src/components/ui/
 [portfolio query tests](../../../app/src/composables/safe/__tests__/useSafePortfolio.spec.ts).
 
 Implementation: [Safe portfolio](../../../app/src/composables/safe/useSafePortfolio.ts),
-[discovered-asset query](../../../app/src/queries/safePortfolio.queries.ts),
+[discovered-asset query](../../../app/src/queries/safe.queries.ts),
 [shared balance reads](../../../app/src/composables/useContractBalance.ts),
 [unified asset holdings](../../../app/src/components/ui/TokenHoldingsSection.vue),
 [holdings presentation](../../../app/src/utils/safe/portfolio.ts),

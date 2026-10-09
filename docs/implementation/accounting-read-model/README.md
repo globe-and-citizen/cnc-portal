@@ -71,7 +71,11 @@ flowchart LR
 
 `useCNCAccounting` calls the on-chain, Safe, and portal queries directly and owns their reactive state. It exposes only the journal, a
 grouped status, and a refresh operation. Pure [generation resolution](../../../app/src/utils/accounting/contractGenerations.ts) owns
-contract grouping, current-generation preference, and scan boundaries;
+contract grouping, current-generation preference, and scan boundaries. `buildAccountingContractGenerations` retains every Officer deployment
+and current contracts absent from its history; `flattenAccountingGenerationContracts` shapes their deployment identities;
+`buildContractEventScanTargets` pairs each selected address with its own deployment block; `findPreferredCurrentContractAddress` selects the
+current address by the caller's contract-type preference for live reads. Missing deployment blocks leave the scan fallback to the log
+reader, and flattened administrative fields do not supply permission evidence;
 [source-status utilities](../../../app/src/utils/accounting/sourceStatus.ts) own source definitions and availability projection. The
 composables own computed dependencies and query orchestration. `useAccountingStatus` projects each applicable source into `loading`,
 `ready`, `partial`, or `failed`; a source that does not apply is `not-applicable`. A fatal company failure takes precedence, then loading,
@@ -99,12 +103,12 @@ by network and block number with infinite staleness and garbage-collection time 
 and later refetches therefore share one block read. A failed block read or a decoded log without a block number does not receive a synthetic
 timestamp: the event is withheld and emitted as a typed source diagnostic, which keeps the Accounting route out of `ready`.
 
-The provisional draft feed derives one unique non-pegged asset target per required UTC transaction date. `historicalTokenRate.queries.ts`
-resolves each target through the shared TanStack Query client using an atomic `coinId + date + USD` identity. A successful snapshot has
-infinite staleness and garbage-collection time because it is the immutable rate of record; concurrent operations and later refreshes reuse
-it. The aggregate target-set query remains retryable, so a failed or not-yet-published date can resolve on Accounting refresh without
-refetching successful dates. It never falls back to the current market price. Stablecoins retain their one-dollar peg, and SHER remains
-under its separate multiplier realization policy.
+The provisional draft feed derives one unique non-pegged asset target per required UTC transaction date. `coingecko.queries.ts` resolves
+each target through the shared TanStack Query client using an atomic `coinId + date + USD` identity. A successful snapshot has infinite
+staleness and garbage-collection time because it is the immutable rate of record; concurrent operations and later refreshes reuse it. The
+aggregate target-set query remains retryable, so a failed or not-yet-published date can resolve on Accounting refresh without refetching
+successful dates. It never falls back to the current market price. Stablecoins retain their one-dollar peg, and SHER remains under its
+separate multiplier realization policy.
 
 Safe histories now refresh approximately every five minutes while retaining complete pagination and stable transfer identities. Missing
 historical rates are retried once a day for an unchanged target set, or on explicit Accounting refresh; successful immutable date snapshots
@@ -158,9 +162,9 @@ inspection; the rounding and logo metadata do not alter source movements, accoun
 
 Implementation: [asset identity](../../../app/src/utils/tokens/assets.ts),
 [exchange carrying-value replay](../../../app/src/utils/accounting/safeExchanges.ts),
-[contract market discovery](../../../app/src/queries/assetMarket.queries.ts),
+[contract market discovery](../../../app/src/queries/coingecko.queries.ts),
 [Safe portfolio](../../../app/src/composables/safe/useSafePortfolio.ts),
-[discovered balance query](../../../app/src/queries/safePortfolio.queries.ts), and
+[discovered balance query](../../../app/src/queries/safe.queries.ts), and
 [exchange regression tests](../../../app/src/utils/accounting/__tests__/safeExchanges.spec.ts) and
 [market-rate regressions](../../../app/src/utils/accounting/__tests__/safeExchanges.marketRates.spec.ts).
 
@@ -711,7 +715,7 @@ because deposits and company-pocket transfers are not manual assignment targets.
   [block timestamp cache tests](../../../app/src/queries/__tests__/blockTimestamp.queries.spec.ts),
   [event-query identity tests](../../../app/src/composables/__tests__/eventsViaLogs.spec.ts), and
   [Investor source-resolution tests](../../../app/src/composables/accounting/__tests__/useCNCAccounting.spec.ts)
-- [Immutable historical token-rate query](../../../app/src/queries/historicalTokenRate.queries.ts),
+- [Immutable historical token-rate query](../../../app/src/queries/coingecko.queries.ts),
   [valuation utilities](../../../app/src/utils/accounting/toUsd.ts),
   [historical rate cache tests](../../../app/src/queries/__tests__/historicalTokenRate.queries.spec.ts), and
   [valuation and missing-rate retention tests](../../../app/src/utils/accounting/__tests__/toUsd.spec.ts)
