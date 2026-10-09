@@ -19,7 +19,9 @@ const queryClient = () => new QueryClient({ defaultOptions: { queries: { retry: 
 interface CapturedHistoricalRateQuery {
   queryKey: MaybeRefOrGetter<readonly unknown[]>
   enabled: MaybeRefOrGetter<boolean>
-  queryFn: () => Promise<Record<string, number>>
+  queryFn: (context: {
+    signal: AbortSignal
+  }) => Promise<{ rates: Record<string, number>; retryAfterMs?: number }>
 }
 
 const capturedQuery = (): CapturedHistoricalRateQuery =>
@@ -90,8 +92,8 @@ describe('historical token rate queries', () => {
   it('checks an unchanged historical target set once a day with no focus refresh', () => {
     useHistoricalTokenRatesQuery([{ token: 'native', date: '2026-03-13' }])
     const query = useQueryFn.mock.calls.at(-1)![0]
-    expect(query.staleTime).toBe(24 * 60 * 60_000)
-    expect(query.refetchInterval).toBe(24 * 60 * 60_000)
+    expect(query.staleTime).toBe(60_000)
+    expect(query.refetchInterval({ state: { data: undefined } })).toBe(24 * 60 * 60_000)
     expect(query.refetchOnWindowFocus).toBe(false)
   })
 
@@ -156,7 +158,7 @@ describe('historical token rate queries', () => {
   )
 
   it('normalizes target sets and exposes reactive query state', async () => {
-    const data = ref<Record<string, number>>()
+    const data = ref<{ rates: Record<string, number> }>()
     const isLoading = ref(false)
     const isFetching = ref(false)
     const refetch = vi.fn().mockResolvedValue({ data: { 'native:2026-03-13': 0.5 } })
@@ -174,7 +176,7 @@ describe('historical token rate queries', () => {
 
     expect(toValue(query.queryKey)).toEqual([
       'historical-token-rate',
-      'set',
+      'batch',
       [
         { token: 'native', coinId: 'ethereum', date: '2026-03-13' },
         { token: 'native', coinId: 'ethereum', date: '2026-03-14' }
@@ -185,7 +187,7 @@ describe('historical token rate queries', () => {
     expect(toValue(query.enabled)).toBe(true)
     expect(rates.rateOfRecord('native', new Date('2026-03-13T23:59:59Z'))).toBe(0)
 
-    data.value = { 'native:2026-03-13': 0.5 }
+    data.value = { rates: { 'native:2026-03-13': 0.5 } }
     expect(rates.rateOfRecord('native', new Date('2026-03-13T23:59:59Z'))).toBe(0.5)
     expect(rates.isLoading.value).toBe(false)
     isLoading.value = true
@@ -198,7 +200,7 @@ describe('historical token rate queries', () => {
 
   it('keeps unavailable targets explicit while retaining successful snapshots', async () => {
     useQueryFn.mockReturnValue({
-      data: ref<Record<string, number>>(),
+      data: ref<{ rates: Record<string, number> }>(),
       isLoading: ref(false),
       isFetching: ref(false)
     })
@@ -212,9 +214,10 @@ describe('historical token rate queries', () => {
       { token: 'native', date: '2026-03-14' }
     ])
 
-    await expect(capturedQuery().queryFn()).resolves.toEqual({
-      'native:2026-03-13': 0.5,
-      'native:2026-03-14': 0
+    await expect(
+      capturedQuery().queryFn({ signal: new AbortController().signal })
+    ).resolves.toEqual({
+      rates: { 'native:2026-03-13': 0.5, 'native:2026-03-14': 0 }
     })
     await expect(rates.refetch()).resolves.toBeUndefined()
     expect(fetchQuery).toHaveBeenCalledTimes(2)

@@ -28,7 +28,7 @@ describe('contract asset market discovery', () => {
     }
   })
 
-  it('shares the price for five minutes across concurrent and later callers', async () => {
+  it('shares the price for the preset minute across concurrent and later callers', async () => {
     vi.useFakeTimers()
     const cache = client()
     const request = vi.fn(async () => ({
@@ -43,7 +43,7 @@ describe('contract asset market discovery', () => {
         fetchAssetMarket(cache, { chainId: 137, address }, request),
         fetchAssetMarket(cache, { chainId: 137, address: address.toUpperCase() }, request)
       ])
-      await vi.advanceTimersByTimeAsync(299_999)
+      await vi.advanceTimersByTimeAsync(59_999)
       await fetchAssetMarket(cache, { chainId: 137, address }, request)
       expect(request).toHaveBeenCalledTimes(1)
       await vi.advanceTimersByTimeAsync(1)

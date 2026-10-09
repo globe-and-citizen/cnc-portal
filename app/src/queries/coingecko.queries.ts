@@ -1,7 +1,14 @@
-/** All CoinGecko query/cache boundaries; HTTP reads live in lib/coingecko.ts. */
+/** CoinGecko HTTP requests and query/cache boundaries. */
+import { isAxiosError, type AxiosError } from 'axios'
 import { computed, toValue, type MaybeRefOrGetter } from 'vue'
 import { useQuery, type QueryClient } from '@tanstack/vue-query'
 import { SUPPORTED_TOKENS } from '@/constant'
+import externalApiClient from '@/lib/external.axios'
+import type {
+  TokenPriceResponse,
+  CoinGeckoAssetMarketResponse,
+  CoinGeckoHistoricalResponse
+} from '@/types/coingecko'
 import type { AssetId, AssetMetadata } from '@/utils/tokens/assets'
 import {
   utcRateDate,
@@ -10,16 +17,56 @@ import {
 } from '@/utils/accounting/toUsd'
 import {
   COINGECKO_POLYGON_CHAIN_ID,
-  getCoinGeckoAssetMarket,
-  getCoinGeckoHistoricalRate,
-  getCoinGeckoTokenPrice,
-  type AssetMarket,
-  type AssetMarketFetcher,
-  type HistoricalRateFetcher
-} from '@/lib/coingecko'
-import { failureDetails } from '@/lib/externalReads'
+  assetMarketFromResponse,
+  historicalRateFromResponse,
+  retryAfterDelay,
+  type AssetMarket
+} from '@/utils/tokens/coingecko'
 import { queryClient } from './queryClient'
 import { queryPresets } from './queryFactory'
+
+const COINGECKO_API_URL = 'https://api.coingecko.com/api/v3'
+type AssetMarketFetcher = (
+  url: string,
+  signal?: AbortSignal
+) => Promise<{ data: CoinGeckoAssetMarketResponse }>
+type HistoricalRateFetcher = (
+  url: string,
+  signal?: AbortSignal
+) => Promise<{ data: CoinGeckoHistoricalResponse }>
+
+/** Fetch the unmodified current-price response for a configured provider coin. */
+export async function getCoinGeckoTokenPrice(coinId: string, signal?: AbortSignal) {
+  const { data } = await externalApiClient.get<TokenPriceResponse>(
+    `${COINGECKO_API_URL}/coins/${encodeURIComponent(coinId)}`,
+    { signal }
+  )
+  return data
+}
+
+/** Fetch the unmodified Polygon contract-market response. */
+export async function getCoinGeckoAssetMarket(address: string, signal?: AbortSignal) {
+  const { data } = await externalApiClient.get<CoinGeckoAssetMarketResponse>(
+    `${COINGECKO_API_URL}/coins/polygon-pos/contract/${encodeURIComponent(address.toLowerCase())}`,
+    { signal }
+  )
+  return data
+}
+
+/** Fetch the unmodified historical response for one provider coin and UTC date. */
+export async function getCoinGeckoHistoricalRate(
+  coinId: string,
+  date: string,
+  signal?: AbortSignal
+) {
+  const url = new URL(`${COINGECKO_API_URL}/coins/${encodeURIComponent(coinId)}/history`)
+  url.searchParams.set('date', date)
+  url.searchParams.set('localization', 'false')
+  const { data } = await externalApiClient.get<CoinGeckoHistoricalResponse>(url.toString(), {
+    signal
+  })
+  return data
+}
 
 /** Current supported-token prices retain their five-minute recovery cadence. */
 export function useGetTokenPriceQuery(coinId: string) {
@@ -27,15 +74,16 @@ export function useGetTokenPriceQuery(coinId: string) {
     ...queryPresets.moderate,
     queryKey: ['price', coinId],
     queryFn: ({ signal }) => getCoinGeckoTokenPrice(coinId, signal),
-    staleTime: 300_000,
     gcTime: 30 * 60_000,
     refetchInterval: 300_000,
     refetchIntervalInBackground: false,
+    refetchOnWindowFocus: false,
     retry: (failureCount, error) => {
-      const { status } = failureDetails(error)
+      const failure = error as AxiosError
+      const status = failure.response?.status ?? failure.status
       return failureCount < 1 && (status === undefined || status >= 500)
     },
-    retryDelay: 5000
+    retryDelay: 5000 // One transient-error retry; HTTP 429 is not retried here.
   })
 }
 
@@ -47,12 +95,21 @@ export async function fetchAssetMarket(
   if (asset.chainId !== COINGECKO_POLYGON_CHAIN_ID)
     throw new Error('Asset market network unavailable')
   return client.fetchQuery({
-    queryKey: ['asset-market', asset.chainId, asset.address.toLowerCase()],
     ...queryPresets.moderate,
-    staleTime: 300_000,
+    queryKey: ['asset-market', asset.chainId, asset.address.toLowerCase()],
     gcTime: 30 * 60_000,
     retry: false,
-    queryFn: ({ signal }) => getCoinGeckoAssetMarket(asset, signal, request)
+    queryFn: async ({ signal }) => {
+      const body = request
+        ? (
+            await request(
+              `${COINGECKO_API_URL}/coins/polygon-pos/contract/${encodeURIComponent(asset.address.toLowerCase())}`,
+              signal
+            )
+          ).data
+        : await getCoinGeckoAssetMarket(asset.address, signal)
+      return assetMarketFromResponse(body, asset.address)
+    }
   })
 }
 
@@ -62,7 +119,6 @@ export async function fetchAssetCoinId(client: QueryClient, token: string): Prom
   return client.fetchQuery({
     ...queryPresets.once,
     queryKey: ['asset-coin-id', Number(chain), address.toLowerCase()],
-    staleTime: 24 * 60 * 60_000,
     gcTime: 24 * 60 * 60_000,
     retry: false,
     queryFn: async () =>
@@ -76,6 +132,12 @@ interface ResolvedHistoricalRateTarget extends HistoricalRateTarget {
 
 type HistoricalRateMap = Readonly<Record<string, number>>
 
+interface HistoricalRateSet {
+  rates: HistoricalRateMap
+  /** Present only while a provider/transport failure needs delayed recovery. */
+  retryAfterMs?: number
+}
+
 export const historicalTokenRateKeys = {
   all: ['historical-token-rate'] as const,
   rate: (coinId: string, date: string) =>
@@ -83,7 +145,7 @@ export const historicalTokenRateKeys = {
   set: (targets: readonly ResolvedHistoricalRateTarget[]) =>
     [
       ...historicalTokenRateKeys.all,
-      'set',
+      'batch',
       targets.map(({ token, coinId, date }) => ({ token, coinId, date }))
     ] as const
 }
@@ -117,55 +179,87 @@ export async function fetchHistoricalTokenRate(
   return client.fetchQuery({
     ...queryPresets.once,
     queryKey: historicalTokenRateKeys.rate(coinId, date),
-    staleTime: Infinity,
     retry: false,
     gcTime: Infinity,
-    queryFn: ({ signal }) => getCoinGeckoHistoricalRate(coinId, date, signal, request)
+    queryFn: async ({ signal }) => {
+      let body: CoinGeckoHistoricalResponse
+      if (request) {
+        const url = new URL(`${COINGECKO_API_URL}/coins/${encodeURIComponent(coinId)}/history`)
+        url.searchParams.set('date', date)
+        url.searchParams.set('localization', 'false')
+        body = (await request(url.toString(), signal)).data
+      } else {
+        body = await getCoinGeckoHistoricalRate(coinId, date, signal)
+      }
+      return historicalRateFromResponse(body, coinId, date)
+    }
   })
 }
 
 /**
  * Load all transaction-date snapshots needed by the current raw feed.
  *
- * The aggregate query remains retryable. Each successful atomic snapshot stays
- * immutable forever; failed snapshots resolve to zero here so the journal can
- * retain the movement and expose `rate-unavailable` instead of disappearing.
+ * Successful snapshots remain immutable. Stop the batch on throttling or transport
+ * failures and recover after at least one minute; terminal/missing rates stay
+ * explicit gaps and are checked daily or on an explicit Accounting refresh.
  */
 export function useHistoricalTokenRatesQuery(
   targets: MaybeRefOrGetter<readonly HistoricalRateTarget[]>,
   enabled: MaybeRefOrGetter<boolean> = true
 ) {
   const requested = computed(() => resolvedTargets(toValue(targets)))
-  const query = useQuery<HistoricalRateMap>({
+  const query = useQuery<HistoricalRateSet>({
     ...queryPresets.moderate,
     queryKey: computed(() => historicalTokenRateKeys.set(requested.value)),
     enabled: computed(() => toValue(enabled) && requested.value.length > 0),
-    staleTime: 24 * 60 * 60_000,
-    refetchInterval: 24 * 60 * 60_000,
+    refetchInterval: (query) => query.state.data?.retryAfterMs ?? 24 * 60 * 60_000,
     refetchIntervalInBackground: false,
     refetchOnWindowFocus: false,
     retry: false,
     gcTime: 24 * 60 * 60_000,
-    queryFn: async () => {
-      const pairs = await Promise.all(
-        requested.value.map(async (target) => {
-          try {
-            const coinId = target.token.startsWith('erc20:')
-              ? await fetchAssetCoinId(queryClient, target.token)
-              : target.coinId
-            const rate = await fetchHistoricalTokenRate(queryClient, coinId, target.date)
-            return [recordKey(target.token, target.date), rate] as const
-          } catch {
-            return [recordKey(target.token, target.date), 0] as const
-          }
-        })
+    queryFn: async ({ signal }) => {
+      const targets = requested.value
+      const previous = queryClient.getQueryData<HistoricalRateSet>(
+        historicalTokenRateKeys.set(targets)
+      )?.rates
+      const rates: Record<string, number> = Object.fromEntries(
+        targets.map((target) => [
+          recordKey(target.token, target.date),
+          previous?.[recordKey(target.token, target.date)] ?? 0
+        ])
       )
-      return Object.fromEntries(pairs)
+      for (const target of targets) {
+        signal?.throwIfAborted()
+        if (rates[recordKey(target.token, target.date)]! > 0) continue
+        try {
+          const coinId = target.token.startsWith('erc20:')
+            ? await fetchAssetCoinId(queryClient, target.token)
+            : target.coinId
+          rates[recordKey(target.token, target.date)] = await fetchHistoricalTokenRate(
+            queryClient,
+            coinId,
+            target.date
+          )
+        } catch (error) {
+          const failure = error as AxiosError
+          const status = failure.response?.status ?? failure.status
+          if (
+            status === 429 ||
+            (status !== undefined && status >= 500) ||
+            (isAxiosError(error) && !error.response)
+          )
+            return {
+              rates,
+              retryAfterMs: retryAfterDelay(failure.response?.headers?.['retry-after'], Date.now())
+            }
+        }
+      }
+      return { rates }
     }
   })
 
   const rateOfRecord: UsdRateOfRecord = (token, at) =>
-    toValue(query.data)?.[recordKey(token, utcRateDate(at))] ?? 0
+    toValue(query.data)?.rates[recordKey(token, utcRateDate(at))] ?? 0
 
   return {
     rateOfRecord,
