@@ -64,7 +64,8 @@ describe('safe queries', () => {
     const cache = queryClient.getQueryCache().find({
       queryKey: ['safe-token-metadata', 137, SECOND_LOWERCASE_SAFE_ADDRESS]
     })
-    expect(cache?.options.staleTime).toBe(24 * 60 * 60_000)
+    expect(cache?.options.staleTime).toBe(Infinity)
+    expect(cache?.options.gcTime).toBe(24 * 60 * 60_000)
   })
   it('recovers missing ERC-20 metadata from the actual contract and preserves an explicit untrusted flag', async () => {
     const row = {

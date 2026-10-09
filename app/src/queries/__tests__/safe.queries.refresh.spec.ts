@@ -13,11 +13,11 @@ describe('Safe query refresh and recovery', () => {
     ['incoming transfers', safeQueries.useGetSafeIncomingTransfersQuery],
     ['outgoing transactions', safeQueries.useGetSafeOutgoingTransactionsQuery]
   ])(
-    'refreshes %s every five minutes and retries only one transient failure',
+    'uses preset minute freshness, refreshes %s every five minutes and retries one transient failure',
     (_name, useQuery) => {
       useQuery({ pathParams: { safeAddress: LOWERCASE_SAFE_ADDRESS } })
       const options = useQueryFn.mock.calls.at(-1)![0]
-      expect(options.staleTime).toBe(300_000)
+      expect(options.staleTime).toBe(60_000)
       expect(options.refetchInterval).toBe(300_000)
       expect(options.refetchIntervalInBackground).toBe(false)
       expect(options.refetchOnWindowFocus).toBe(false)
