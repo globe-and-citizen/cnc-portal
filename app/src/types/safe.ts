@@ -15,6 +15,28 @@ export interface SafeFiatTotal {
   formatedPrice: string
 }
 
+/** Safe Client Gateway balances: quantities are integer strings in token base units. */
+export interface SafeClientBalance {
+  tokenInfo: {
+    type: 'NATIVE_TOKEN' | 'ETHER' | 'ERC20'
+    address: string
+    decimals: number
+    symbol: string
+    name: string
+    logoUri?: string | null
+  }
+  balance: string | null
+  fiatConversion: string | null
+  fiatBalance: string | null
+}
+
+export interface SafeClientBalances {
+  fiatTotal: string
+  items: SafeClientBalance[]
+}
+
+export const SAFE_CLIENT_URL = 'https://safe-client.safe.global'
+
 export interface SafeInfo {
   address: string
   chain: string
