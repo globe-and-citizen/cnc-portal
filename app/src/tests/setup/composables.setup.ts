@@ -9,6 +9,7 @@ import {
   mockUseClipboard,
   useQueryClientFn,
   useQueryFn,
+  useQueriesFn,
   useMutationFn,
   mockUseFetch,
   mockUseSubmitRestriction,
@@ -63,6 +64,7 @@ vi.mock('@tanstack/vue-query', async () => {
     ...actual,
     useQueryClient: useQueryClientFn,
     useQuery: useQueryFn,
+    useQueries: useQueriesFn,
     useMutation: useMutationFn
   }
 })
