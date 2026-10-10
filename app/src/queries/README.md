@@ -47,6 +47,9 @@ This folder contains all TanStack Query hooks for API interactions in the CNC Po
   forwards cancellation and exposes its own error; `retry: false` avoids automatic retries. The existing Accounting data layer consumes
   those queries directly, resolves rates through pure utilities and refreshes failed observers, preserving successful immutable date
   snapshots.
+- Safe Transaction Service queries use the moderate preset directly, declare their polling cadence, and disable automatic retries. Axios
+  owns the production GET credential header and error redaction. Local pagination and asset-transfer helpers preserve complete histories,
+  stable identities and cached metadata recovery; there is no separate request scheduler or provider-wide pause.
 
 ## Full Documentation
 

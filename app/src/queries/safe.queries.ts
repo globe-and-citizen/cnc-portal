@@ -1,12 +1,10 @@
-import { useQuery, type QueryClient } from '@tanstack/vue-query'
-import type { AxiosError } from 'axios'
+import { useQuery, useQueryClient, type QueryClient } from '@tanstack/vue-query'
 import { readContract } from '@wagmi/core'
 import { computed, toValue } from 'vue'
 import { erc20Abi, isAddress, type Address } from 'viem'
 import { config } from '@/wagmi.config'
 import { contractBalanceKeys } from '@/composables/useContractBalance'
-import { getSafeServiceResponse } from './safe.requests'
-import { queryClient } from './queryClient'
+import externalApiClient from '@/lib/external.axios'
 import { normalizeSafeAddress } from '@/utils/safe/address'
 import { excludeConfirmedSafeSpam, getConfirmedSafeSpam } from '@/utils/safe/confirmedSpam'
 import type { SafeInfo, SafeTransaction } from '@/types/safe'
@@ -24,19 +22,6 @@ import type {
 
 const chainId = currentChainId
 const txService = TX_SERVICE_BY_CHAIN[chainId]
-
-const safeServiceOptions = {
-  ...queryPresets.moderate,
-  gcTime: 30 * 60_000,
-  refetchInterval: 300_000,
-  refetchIntervalInBackground: false,
-  refetchOnWindowFocus: false,
-  retry: (failureCount: number, error: Error) => {
-    const failure = error as AxiosError
-    return failureCount < 1 && (failure.response?.status ?? failure.status ?? 500) >= 500
-  },
-  retryDelay: 5000 // One transient-error retry; HTTP 429 waits for the normal refresh.
-}
 
 const safeAddressKey = (address: string | undefined): string | undefined =>
   address && isAddress(address.trim()) ? normalizeSafeAddress(address) : address
@@ -88,22 +73,19 @@ export const safeKeys = {
 
 /** All real native/ERC-20 movements; swap settlement can happen outside a direct Safe call. */
 export function useGetSafeTransfersQuery(params: GetSafeIncomingTransfersParams) {
+  const queryClient = useQueryClient()
   const safeAddress = computed(() => toValue(params.pathParams.safeAddress))
   return useQuery<SafeIncomingTransfer[]>({
-    ...safeServiceOptions,
+    ...queryPresets.moderate,
+    retry: false,
+    refetchInterval: 300_000,
     queryKey: computed(() => safeKeys.transfers(safeAddress.value, chainId)),
     enabled: computed(() => Boolean(safeAddress.value)),
     select: (transfers) => excludeConfirmedSafeSpam(transfers, chainId),
     queryFn: async ({ signal }) => {
       if (!txService) throw new Error(`Unsupported chainId: ${chainId}`)
       const address = requireSafeAddress(safeAddress.value)
-      return fetchSafeAssetTransfers(
-        queryClient,
-        address,
-        chainId,
-        params.queryParams?.limit ?? 500,
-        signal
-      )
+      return fetchSafeAssetTransfers(queryClient, address, params.queryParams?.limit ?? 500, signal)
     }
   })
 }
@@ -124,16 +106,18 @@ export function useGetSafeInfoQuery(params: GetSafeInfoParams) {
   const safeAddress = computed(() => toValue(params.pathParams.safeAddress))
 
   return useQuery<SafeInfo>({
-    ...safeServiceOptions,
+    ...queryPresets.moderate,
+    retry: false,
+    refetchInterval: 300_000,
     queryKey: computed(() => safeKeys.info(safeAddress.value)),
     enabled: computed(() => Boolean(safeAddress.value)),
     queryFn: async ({ signal }) => {
       const address = requireSafeAddress(safeAddress.value)
       if (!txService) throw new Error(`Unsupported chainId: ${chainId}`)
 
-      const data = await getSafeServiceResponse<SafeInfo>(
+      const { data } = await externalApiClient.get<SafeInfo>(
         `${txService.url}/api/v1/safes/${address}/`,
-        signal
+        { signal }
       )
       return data
     }
@@ -156,16 +140,17 @@ export function useGetSafeTransactionsQuery(params: GetSafeTransactionsParams) {
   const safeAddress = computed(() => toValue(params.pathParams.safeAddress))
 
   return useQuery<SafeTransaction[]>({
-    ...safeServiceOptions,
+    ...queryPresets.moderate,
+    retry: false,
     queryKey: computed(() => safeKeys.transactions(safeAddress.value)),
     enabled: computed(() => Boolean(safeAddress.value)),
     queryFn: async ({ signal }) => {
       const address = requireSafeAddress(safeAddress.value)
       if (!txService) throw new Error(`Unsupported chainId: ${chainId}`)
 
-      const data = await getSafeServiceResponse<{ results: SafeTransaction[] }>(
+      const { data } = await externalApiClient.get<{ results: SafeTransaction[] }>(
         `${txService.url}/api/v1/safes/${address}/multisig-transactions/`,
-        signal
+        { signal }
       )
       return data.results || []
     },
@@ -190,7 +175,8 @@ export function useGetSafeTransactionQuery(params: GetSafeTransactionParams) {
   const { pathParams } = params
 
   return useQuery<SafeTransaction>({
-    ...safeServiceOptions,
+    ...queryPresets.moderate,
+    retry: false,
     queryKey: computed(() => safeKeys.transaction(toValue(pathParams.safeTxHash))),
     enabled: computed(() => !!toValue(pathParams.safeTxHash)),
     queryFn: async ({ signal }) => {
@@ -199,9 +185,9 @@ export function useGetSafeTransactionQuery(params: GetSafeTransactionParams) {
 
       if (!txService) throw new Error(`Unsupported chainId: ${chainId}`)
 
-      const data = await getSafeServiceResponse<SafeTransaction>(
+      const { data } = await externalApiClient.get<SafeTransaction>(
         `${txService.url}/api/v1/multisig-transactions/${hash}/`,
-        signal
+        { signal }
       )
       return data
     },
@@ -226,7 +212,9 @@ export function useGetSafeIncomingTransfersQuery(params: GetSafeIncomingTransfer
   const safeAddress = computed(() => toValue(pathParams.safeAddress))
 
   return useQuery<SafeIncomingTransfer[]>({
-    ...safeServiceOptions,
+    ...queryPresets.moderate,
+    retry: false,
+    refetchInterval: 300_000,
     queryKey: computed(() => safeKeys.incomingTransfers(safeAddress.value, queryParams?.limit)),
     enabled: computed(() => Boolean(safeAddress.value)),
     select: (transfers) => excludeConfirmedSafeSpam(transfers, chainId),
@@ -256,7 +244,9 @@ export function useGetSafeOutgoingTransactionsQuery(params: GetSafeOutgoingTrans
   const safeAddress = computed(() => toValue(pathParams.safeAddress))
 
   return useQuery<SafeTransaction[]>({
-    ...safeServiceOptions,
+    ...queryPresets.moderate,
+    retry: false,
+    refetchInterval: 300_000,
     queryKey: computed(() => safeKeys.outgoingTransactions(safeAddress.value, queryParams?.limit)),
     enabled: computed(() => Boolean(safeAddress.value)),
     queryFn: async ({ signal }) => {
@@ -290,7 +280,7 @@ async function fetchAllSafePages<T>(initialUrl: string, signal: AbortSignal): Pr
     visited.add(pageUrl)
 
     const currentUrl: string = pageUrl
-    const data = await getSafeServiceResponse<SafePage<T>>(currentUrl, signal)
+    const { data } = await externalApiClient.get<SafePage<T>>(currentUrl, { signal })
     results.push(...(data.results ?? []))
     pageUrl = data.next ? new URL(data.next, currentUrl).toString() : null
   }
@@ -302,11 +292,9 @@ async function fetchAllSafePages<T>(initialUrl: string, signal: AbortSignal): Pr
 async function fetchSafeAssetTransfers(
   client: QueryClient,
   address: Address,
-  chainId: typeof currentChainId,
   limit: number,
   signal: AbortSignal
 ): Promise<SafeIncomingTransfer[]> {
-  const txService = TX_SERVICE_BY_CHAIN[chainId]
   if (!txService) throw new Error(`Unsupported chainId: ${chainId}`)
   const rows = await fetchAllSafePages<SafeIncomingTransfer>(
     `${txService.url}/api/v1/safes/${address}/transfers/?limit=${limit}`,
@@ -317,55 +305,49 @@ async function fetchSafeAssetTransfers(
     if (!row.transferId) throw new Error('Safe transfer identity unavailable')
     unique.set(row.transferId, row)
   }
-  const transfers = [...unique.values()]
-  const missing = new Map<string, SafeIncomingTransfer[]>()
-  for (const row of transfers) {
-    if (getConfirmedSafeSpam(row, chainId)) continue
-    if (row.type !== 'ERC20_TRANSFER' || !row.tokenAddress || !isAddress(row.tokenAddress)) continue
-    if (
-      row.tokenInfo?.address?.toLowerCase() === row.tokenAddress.toLowerCase() &&
-      Number.isInteger(row.tokenInfo.decimals) &&
-      row.tokenInfo.decimals >= 0 &&
-      row.tokenInfo.decimals <= 18
-    )
-      continue
-    const bucket = missing.get(row.tokenAddress.toLowerCase()) ?? []
-    bucket.push(row)
-    missing.set(row.tokenAddress.toLowerCase(), bucket)
-  }
-  await Promise.all(
-    [...missing].map(async ([tokenAddress, rows]) => {
+  return Promise.all(
+    [...unique.values()].map(async (row) => {
+      if (getConfirmedSafeSpam(row, chainId)) return row
+      if (row.type !== 'ERC20_TRANSFER' || !row.tokenAddress || !isAddress(row.tokenAddress))
+        return row
+      const tokenAddress = row.tokenAddress.toLowerCase() as Address
+      if (
+        row.tokenInfo?.address?.toLowerCase() === tokenAddress &&
+        Number.isInteger(row.tokenInfo.decimals) &&
+        row.tokenInfo.decimals >= 0 &&
+        row.tokenInfo.decimals <= 18
+      )
+        return row
       try {
-        const token = tokenAddress as Address
         const [decimals, symbol, name] = await client.fetchQuery({
           ...queryPresets.once,
           queryKey: ['safe-token-metadata', chainId, tokenAddress],
           gcTime: 24 * 60 * 60_000,
-          retry: false,
           queryFn: () =>
             Promise.all([
               readContract(config, {
-                address: token,
+                address: tokenAddress,
                 abi: erc20Abi,
                 functionName: 'decimals',
                 chainId
               }),
               readContract(config, {
-                address: token,
+                address: tokenAddress,
                 abi: erc20Abi,
                 functionName: 'symbol',
                 chainId
               }).catch(() => tokenAddress),
               readContract(config, {
-                address: token,
+                address: tokenAddress,
                 abi: erc20Abi,
                 functionName: 'name',
                 chainId
               }).catch(() => 'Unknown token')
             ])
         })
-        for (const row of rows)
-          row.tokenInfo = {
+        return {
+          ...row,
+          tokenInfo: {
             type: 'ERC20',
             address: tokenAddress,
             name,
@@ -377,10 +359,11 @@ async function fetchSafeAssetTransfers(
               : {}),
             ...(row.tokenInfo?.trusted === false ? { trusted: false } : {})
           }
+        }
       } catch {
         /* Retain raw movements with an explicit metadata diagnostic. */
+        return row
       }
     })
   )
-  return transfers
 }
