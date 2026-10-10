@@ -173,7 +173,7 @@ import { useSafeSignerRole } from '@/composables/safe/useSafeSignerRole'
 import { formatCurrency, formatUsd } from '@/utils/format'
 import { signerRoleCopy } from '@/utils/safe/signerRole'
 import { useGetSafeBalancesQuery } from '@/queries/safeClient.queries'
-import { safeBalancesTotal, safeTransferTokens } from '@/utils/safe/portfolio'
+import { getSafeFiatTotal, toSafeTransferTokens } from '@/utils/safe/portfolio'
 
 const props = defineProps<{ address: Address }>()
 const chainId = useChainId()
@@ -194,13 +194,13 @@ const {
   pathParams: { safeAddress: () => props.address, fiatCode: () => currency.value.code }
 })
 const totalUsd = computed(() => {
-  const total = safeBalancesTotal(balances.value)
+  const total = getSafeFiatTotal(balances.value)
   return balanceError.value || (total === undefined && balances.value)
     ? 'Incomplete'
     : formatUsd(total)
 })
 const totalLocal = computed(() =>
-  formatCurrency(safeBalancesTotal(localBalances.value), { currency: currency.value.code })
+  formatCurrency(getSafeFiatTotal(localBalances.value), { currency: currency.value.code })
 )
 const {
   data: safeInfo,
@@ -209,7 +209,7 @@ const {
   refetch: refetchSafeInfo
 } = useGetSafeInfoQuery({ pathParams: { safeAddress: props.address } })
 
-const tokens = computed(() => safeTransferTokens(balances.value))
+const tokens = computed(() => toSafeTransferTokens(balances.value))
 
 const { isConnectedUserOwner } = useSafeSignerRole(safeInfo)
 const roleCopy = computed(() =>

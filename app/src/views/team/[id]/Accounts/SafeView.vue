@@ -190,7 +190,7 @@ import SafeBalanceSection from '@/components/sections/SafeView/SafeBalanceSectio
 import SafeOwnersCard from '@/components/sections/SafeView/SafeOwnersCard.vue'
 import TokenHoldingsSection from '@/components/ui/TokenHoldingsSection.vue'
 import { useGetSafeBalancesQuery } from '@/queries/safeClient.queries'
-import { safePortfolioRows } from '@/utils/safe/portfolio'
+import { toSafeHoldingRows } from '@/utils/safe/portfolio'
 import { useStorage } from '@vueuse/core'
 import SafeTransactions from '@/components/sections/SafeView/SafeTransactions.vue'
 import SafeIncomingTransactions from '@/components/sections/SafeView/SafeIncomingTransactions.vue'
@@ -235,7 +235,7 @@ const {
 } = useGetSafeBalancesQuery({
   pathParams: { safeAddress, fiatCode: () => currency.value.code }
 })
-const holdingRows = computed(() => safePortfolioRows(balances.value, currency.value.code))
+const holdingRows = computed(() => toSafeHoldingRows(balances.value, currency.value.code))
 const isIncomplete = computed(
   () => Boolean(balancesError.value) || holdingRows.value.some((row) => row.balance === null)
 )

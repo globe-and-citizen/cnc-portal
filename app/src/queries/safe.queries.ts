@@ -6,7 +6,6 @@ import { config } from '@/wagmi.config'
 import { contractBalanceKeys } from '@/composables/useContractBalance'
 import externalApiClient from '@/lib/external.axios'
 import { normalizeSafeAddress } from '@/utils/safe/address'
-import { excludeConfirmedSafeSpam, getConfirmedSafeSpam } from '@/utils/safe/confirmedSpam'
 import type { SafeInfo, SafeTransaction } from '@/types/safe'
 import { TX_SERVICE_BY_CHAIN } from '@/types/safe'
 import { currentChainId } from '@/constant/index'
@@ -81,7 +80,6 @@ export function useGetSafeTransfersQuery(params: GetSafeIncomingTransfersParams)
     refetchInterval: 300_000,
     queryKey: computed(() => safeKeys.transfers(safeAddress.value, chainId)),
     enabled: computed(() => Boolean(safeAddress.value)),
-    select: (transfers) => excludeConfirmedSafeSpam(transfers, chainId),
     queryFn: async ({ signal }) => {
       if (!txService) throw new Error(`Unsupported chainId: ${chainId}`)
       const address = requireSafeAddress(safeAddress.value)
@@ -217,7 +215,6 @@ export function useGetSafeIncomingTransfersQuery(params: GetSafeIncomingTransfer
     refetchInterval: 300_000,
     queryKey: computed(() => safeKeys.incomingTransfers(safeAddress.value, queryParams?.limit)),
     enabled: computed(() => Boolean(safeAddress.value)),
-    select: (transfers) => excludeConfirmedSafeSpam(transfers, chainId),
     queryFn: async ({ signal }) => {
       const address = requireSafeAddress(safeAddress.value)
       if (!txService) throw new Error(`Unsupported chainId: ${chainId}`)
@@ -307,7 +304,6 @@ async function fetchSafeAssetTransfers(
   }
   return Promise.all(
     [...unique.values()].map(async (row) => {
-      if (getConfirmedSafeSpam(row, chainId)) return row
       if (row.type !== 'ERC20_TRANSFER' || !row.tokenAddress || !isAddress(row.tokenAddress))
         return row
       const tokenAddress = row.tokenAddress.toLowerCase() as Address
