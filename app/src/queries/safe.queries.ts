@@ -5,7 +5,7 @@ import { computed, toValue } from 'vue'
 import { erc20Abi, isAddress, type Address } from 'viem'
 import { config } from '@/wagmi.config'
 import { contractBalanceKeys } from '@/composables/useContractBalance'
-import externalApiClient from '@/lib/external.axios'
+import { getSafeServiceResponse } from './safe.requests'
 import { queryClient } from './queryClient'
 import { normalizeSafeAddress } from '@/utils/safe/address'
 import { excludeConfirmedSafeSpam, getConfirmedSafeSpam } from '@/utils/safe/confirmedSpam'
@@ -131,9 +131,9 @@ export function useGetSafeInfoQuery(params: GetSafeInfoParams) {
       const address = requireSafeAddress(safeAddress.value)
       if (!txService) throw new Error(`Unsupported chainId: ${chainId}`)
 
-      const { data } = await externalApiClient.get<SafeInfo>(
+      const data = await getSafeServiceResponse<SafeInfo>(
         `${txService.url}/api/v1/safes/${address}/`,
-        { signal }
+        signal
       )
       return data
     }
@@ -163,9 +163,9 @@ export function useGetSafeTransactionsQuery(params: GetSafeTransactionsParams) {
       const address = requireSafeAddress(safeAddress.value)
       if (!txService) throw new Error(`Unsupported chainId: ${chainId}`)
 
-      const { data } = await externalApiClient.get<{ results: SafeTransaction[] }>(
-        `${txService.url}/api/v1/safes/${address}/multisig-transactions`,
-        { signal }
+      const data = await getSafeServiceResponse<{ results: SafeTransaction[] }>(
+        `${txService.url}/api/v1/safes/${address}/multisig-transactions/`,
+        signal
       )
       return data.results || []
     },
@@ -199,9 +199,9 @@ export function useGetSafeTransactionQuery(params: GetSafeTransactionParams) {
 
       if (!txService) throw new Error(`Unsupported chainId: ${chainId}`)
 
-      const { data } = await externalApiClient.get<SafeTransaction>(
+      const data = await getSafeServiceResponse<SafeTransaction>(
         `${txService.url}/api/v1/multisig-transactions/${hash}/`,
-        { signal }
+        signal
       )
       return data
     },
@@ -290,7 +290,7 @@ async function fetchAllSafePages<T>(initialUrl: string, signal: AbortSignal): Pr
     visited.add(pageUrl)
 
     const currentUrl: string = pageUrl
-    const { data } = await externalApiClient.get<SafePage<T>>(currentUrl, { signal })
+    const data = await getSafeServiceResponse<SafePage<T>>(currentUrl, signal)
     results.push(...(data.results ?? []))
     pageUrl = data.next ? new URL(data.next, currentUrl).toString() : null
   }

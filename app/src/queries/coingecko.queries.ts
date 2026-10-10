@@ -24,8 +24,31 @@ import {
 } from '@/utils/tokens/coingecko'
 import { queryClient } from './queryClient'
 import { queryPresets } from './queryFactory'
+import {
+  CoinGeckoPausedError,
+  waitForCoinGeckoRequest,
+  pauseCoinGeckoRequests
+} from './coingecko.request-policy'
 
 const COINGECKO_API_URL = 'https://api.coingecko.com/api/v3'
+
+/** Keep the raw HTTP boundary in this module; a 429 pauses subsequent admissions. */
+async function getCoinGeckoResponse<T>(url: string, signal?: AbortSignal): Promise<T> {
+  const release = await waitForCoinGeckoRequest(signal)
+  try {
+    const { data } = await externalApiClient.get<T>(url, { signal })
+    return data
+  } catch (error) {
+    const failure = error as AxiosError
+    if ((failure.response?.status ?? failure.status) === 429) {
+      pauseCoinGeckoRequests(failure.response?.headers?.['retry-after'])
+    }
+    throw error
+  } finally {
+    release()
+  }
+}
+
 type AssetMarketFetcher = (
   url: string,
   signal?: AbortSignal
@@ -37,20 +60,18 @@ type HistoricalRateFetcher = (
 
 /** Fetch the unmodified current-price response for a configured provider coin. */
 export async function getCoinGeckoTokenPrice(coinId: string, signal?: AbortSignal) {
-  const { data } = await externalApiClient.get<TokenPriceResponse>(
+  return getCoinGeckoResponse<TokenPriceResponse>(
     `${COINGECKO_API_URL}/coins/${encodeURIComponent(coinId)}`,
-    { signal }
+    signal
   )
-  return data
 }
 
 /** Fetch the unmodified Polygon contract-market response. */
 export async function getCoinGeckoAssetMarket(address: string, signal?: AbortSignal) {
-  const { data } = await externalApiClient.get<CoinGeckoAssetMarketResponse>(
+  return getCoinGeckoResponse<CoinGeckoAssetMarketResponse>(
     `${COINGECKO_API_URL}/coins/polygon-pos/contract/${encodeURIComponent(address.toLowerCase())}`,
-    { signal }
+    signal
   )
-  return data
 }
 
 /** Fetch the unmodified historical response for one provider coin and UTC date. */
@@ -62,10 +83,7 @@ export async function getCoinGeckoHistoricalRate(
   const url = new URL(`${COINGECKO_API_URL}/coins/${encodeURIComponent(coinId)}/history`)
   url.searchParams.set('date', date)
   url.searchParams.set('localization', 'false')
-  const { data } = await externalApiClient.get<CoinGeckoHistoricalResponse>(url.toString(), {
-    signal
-  })
-  return data
+  return getCoinGeckoResponse<CoinGeckoHistoricalResponse>(url.toString(), signal)
 }
 
 /** Current supported-token prices retain their five-minute recovery cadence. */
@@ -79,6 +97,7 @@ export function useGetTokenPriceQuery(coinId: string) {
     refetchIntervalInBackground: false,
     refetchOnWindowFocus: false,
     retry: (failureCount, error) => {
+      if (error instanceof CoinGeckoPausedError) return false
       const failure = error as AxiosError
       const status = failure.response?.status ?? failure.status
       return failureCount < 1 && (status === undefined || status >= 500)
@@ -241,6 +260,9 @@ export function useHistoricalTokenRatesQuery(
             target.date
           )
         } catch (error) {
+          signal?.throwIfAborted()
+          if (error instanceof CoinGeckoPausedError)
+            return { rates, retryAfterMs: error.retryAfterMs }
           const failure = error as AxiosError
           const status = failure.response?.status ?? failure.status
           if (

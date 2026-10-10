@@ -144,18 +144,18 @@ const E2E_TX_SERVICE_BY_CHAIN: Record<number, SafeChainConfig> =
 export const TX_SERVICE_BY_CHAIN: Record<number, SafeChainConfig> = {
   137: {
     chain: 'polygon',
-    url: 'https://safe-transaction-polygon.safe.global',
+    url: 'https://api.safe.global/tx-service/pol',
     nativeSymbol: 'POL'
   },
   11155111: {
     chain: 'sepolia',
-    url: 'https://safe-transaction-sepolia.safe.global',
+    url: 'https://api.safe.global/tx-service/sep',
     nativeSymbol: 'ETH'
   },
   80002: { chain: 'amoy', url: 'https://safe-transaction-amoy.safe.global', nativeSymbol: 'MATIC' },
   42161: {
     chain: 'arbitrum',
-    url: 'https://safe-transaction-arbitrum.safe.global',
+    url: 'https://api.safe.global/tx-service/arb1',
     nativeSymbol: 'ETH'
   },
   ...E2E_TX_SERVICE_BY_CHAIN

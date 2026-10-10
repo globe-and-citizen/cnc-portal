@@ -40,6 +40,7 @@ export default defineConfig(async (env) =>
           : false
       },
       env: {
+        VITE_APP_SAFE_API_KEY: '',
         VITE_APP_NETWORK_ALIAS: 'hardhat'
       },
       globals: true
