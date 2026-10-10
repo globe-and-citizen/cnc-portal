@@ -1,112 +1,103 @@
-/** Pure presentation of supported and discovered Safe balances. */
+/** Pure adapters for the Safe Client Gateway response. */
 import { formatUnits } from 'viem'
-import { currentChainId, SUPPORTED_TOKENS } from '@/constant'
-import type { ContractBalances } from '@/types'
+import { SUPPORTED_TOKENS } from '@/constant'
+import type { TokenOption } from '@/types'
+import type { SafeClientBalance, SafeClientBalances } from '@/types/safe'
+import type { TokenHoldingRow } from '@/utils/tokens/holdings'
 import { formatExactNumber, formatNumber } from '@/utils/format'
 import { formatCurrencyShort } from '@/utils/currency/display'
-import { assetId, type AssetMetadata } from '@/utils/tokens/assets'
-import EthereumIcon from '@/assets/Ethereum.png'
-import USDCIcon from '@/assets/usdc.png'
-import MaticIcon from '@/assets/matic-logo.png'
+import { assetLogoUri } from '@/utils/tokens/assets'
 
-export interface SafePortfolioAsset {
-  asset: AssetMetadata
-  raw: bigint | null
-  quantity: string | null
-  priceUsd: number | null
-  valueUsd: number | null
+function parseFiatAmount(value: string | null): number | null {
+  if (value === null || !value.trim()) return null
+  const number = Number(value)
+  return Number.isFinite(number) && number >= 0 ? number : null
 }
 
-function holdingAmountLabel(quantity: string | null) {
-  if (quantity === null) return 'Balance unavailable'
-  const formatted = formatNumber(quantity)
-  return Number(quantity) > 0 && formatted === '0' ? `<${formatNumber(0.0001)}` : formatted
+function getTokenQuantity(item: SafeClientBalance): string | null {
+  const { decimals } = item.tokenInfo
+  return item.balance !== null &&
+    /^\d+$/.test(item.balance) &&
+    Number.isInteger(decimals) &&
+    decimals >= 0 &&
+    decimals <= 18
+    ? formatUnits(BigInt(item.balance), decimals)
+    : null
 }
 
-export function safePortfolioRows(
-  assets: readonly SafePortfolioAsset[],
-  supported?: ContractBalances,
+/** One provider item becomes one table row, in the same order. */
+export function toSafeHoldingRows(
+  data?: SafeClientBalances,
   currencyCode = 'USD'
-) {
-  const supportedIds = new Set(
-    SUPPORTED_TOKENS.map((token) => assetId(token.address, currentChainId))
-  )
-  const pricedBalance = supported?.balances.find(
-    (row) =>
-      Number.isFinite(row.price.usd.value) &&
-      row.price.usd.value > 0 &&
-      Number.isFinite(row.price.local.value) &&
-      row.price.local.value > 0
-  )
-  const localRate =
-    currencyCode === 'USD'
-      ? 1
-      : pricedBalance
-        ? pricedBalance.price.local.value / pricedBalance.price.usd.value
-        : null
-  const fixedRows = SUPPORTED_TOKENS.map((token) => {
-    const balance = supported?.balances.find((entry) => entry.token.id === token.id)
-    const localPrice = balance?.price.local.value
-    const hasPrice = localPrice !== undefined && Number.isFinite(localPrice) && localPrice > 0
+): TokenHoldingRow[] {
+  return (data?.items ?? []).map((item, index) => {
+    const { tokenInfo } = item
+    const quantity = getTokenQuantity(item)
+    const amountLabel = quantity === null ? 'Balance unavailable' : formatNumber(quantity)
+    const conversion = parseFiatAmount(item.fiatConversion)
+    const price = conversion !== null && conversion > 0 ? conversion : null
+    const balance =
+      quantity === '0'
+        ? 0
+        : quantity !== null && price !== null
+          ? parseFiatAmount(item.fiatBalance)
+          : null
     return {
-      id: assetId(token.address, currentChainId),
-      name: token.name,
-      symbol: token.symbol,
-      address: token.id === 'native' ? null : token.address,
-      icon:
-        token.id !== 'native'
-          ? USDCIcon
-          : token.symbol === 'POL'
-            ? MaticIcon
-            : token.symbol === 'ETH'
-              ? EthereumIcon
-              : null,
-      quantity: balance
-        ? formatExactNumber(formatUnits(balance.raw, token.decimals))
-        : 'Balance unavailable',
-      amountLabel: holdingAmountLabel(balance ? formatUnits(balance.raw, token.decimals) : null),
-      amount: balance?.amount ?? null,
-      price: hasPrice ? localPrice : null,
-      priceLabel: hasPrice ? balance!.price.local.formatted : 'Price unavailable',
-      balance: balance?.raw === 0n ? 0 : balance && hasPrice ? balance.value.local.value : null,
+      rank: index + 1,
+      token: { name: tokenInfo.name, symbol: tokenInfo.symbol },
+      name: tokenInfo.name,
+      address: tokenInfo.type === 'ERC20' ? tokenInfo.address : null,
+      icon: assetLogoUri(tokenInfo.logoUri) ?? null,
+      quantity: quantity === null ? 'Balance unavailable' : formatExactNumber(quantity),
+      amountLabel:
+        quantity !== null && Number(quantity) > 0 && amountLabel === '0'
+          ? '<' + formatNumber(0.0001)
+          : amountLabel,
+      amount: quantity === null ? null : Number(quantity),
+      price,
+      priceLabel: price === null ? 'Price unavailable' : formatCurrencyShort(price, currencyCode),
+      balance,
       balanceLabel:
-        balance?.raw === 0n
-          ? formatCurrencyShort(0, currencyCode)
-          : balance && hasPrice
-            ? balance.value.local.formatted
-            : 'Value unavailable'
+        balance === null ? 'Value unavailable' : formatCurrencyShort(balance, currencyCode)
     }
   })
-  const discovered = new Map<string, SafePortfolioAsset>()
-  for (const row of assets) {
-    const id = assetId(row.asset.address, row.asset.chainId)
-    if (!supportedIds.has(id)) discovered.set(id, row)
-  }
-  const discoveredRows = [...discovered.values()]
-    .filter((row) => row.raw !== 0n)
-    .sort((a, b) => a.asset.id.localeCompare(b.asset.id))
-    .map((row) => {
-      const price = row.priceUsd !== null && localRate !== null ? row.priceUsd * localRate : null
-      const balance = row.valueUsd !== null && localRate !== null ? row.valueUsd * localRate : null
-      return {
-        id: assetId(row.asset.address, row.asset.chainId),
-        name: row.asset.name,
-        symbol: row.asset.symbol,
-        address: row.asset.address,
-        icon: row.asset.logoUri ?? null,
-        quantity: row.quantity === null ? 'Balance unavailable' : formatExactNumber(row.quantity),
-        amountLabel: holdingAmountLabel(row.quantity),
-        amount: row.quantity === null ? null : Number(row.quantity),
-        price,
-        priceLabel: price === null ? 'Price unavailable' : formatCurrencyShort(price, currencyCode),
-        balance,
-        balanceLabel:
-          balance === null ? 'Value unavailable' : formatCurrencyShort(balance, currencyCode)
-      }
-    })
-  return [...fixedRows, ...discoveredRows].map((row, index) => ({
-    ...row,
-    token: { name: row.name, symbol: row.symbol },
-    rank: index + 1
-  }))
+}
+
+/** Read the provider total only when every returned holding can be valued. */
+export function getSafeFiatTotal(data?: SafeClientBalances): number | undefined {
+  if (!data) return undefined
+  if (data.items.length === 0) return 0
+  const complete = data.items.every((item) => {
+    const quantity = getTokenQuantity(item)
+    const price = parseFiatAmount(item.fiatConversion)
+    return (
+      quantity !== null &&
+      (quantity === '0' ||
+        (price !== null && price > 0 && parseFiatAmount(item.fiatBalance) !== null))
+    )
+  })
+  return complete ? (parseFiatAmount(data.fiatTotal) ?? undefined) : undefined
+}
+
+/** Transfer choices remain restricted to configured payment contracts. */
+export function toSafeTransferTokens(data?: SafeClientBalances): TokenOption[] {
+  if (!data) return []
+  return SUPPORTED_TOKENS.map((token) => {
+    const item = data.items.find(({ tokenInfo }) =>
+      token.id === 'native'
+        ? tokenInfo.type === 'NATIVE_TOKEN' || tokenInfo.type === 'ETHER'
+        : tokenInfo.type === 'ERC20' &&
+          tokenInfo.address.toLowerCase() === token.address.toLowerCase()
+    )
+    const quantity =
+      item && item.tokenInfo.decimals === token.decimals ? getTokenQuantity(item) : null
+    return {
+      symbol: token.symbol,
+      tokenId: token.id,
+      name: token.name,
+      balance: quantity === null ? 0 : Number(quantity),
+      price: item ? (parseFiatAmount(item.fiatConversion) ?? 0) : 0,
+      code: token.code
+    }
+  })
 }

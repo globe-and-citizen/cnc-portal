@@ -3,7 +3,7 @@ import { ref, toValue, type MaybeRefOrGetter } from 'vue'
 import { contractBalanceKeys } from '@/composables/useContractBalance'
 import externalApiClient from '@/lib/external.axios'
 import type { SafeIncomingTransfer, SafeTransaction } from '@/types/safe'
-import { useQueryFn } from '@/tests/mocks/composables.mock'
+import { useQueryFn, useQueryClientFn } from '@/tests/mocks/composables.mock'
 import { mockWagmiCore } from '@/tests/mocks/wagmi.vue.mock'
 import { queryClient } from '../queryClient'
 
@@ -36,6 +36,7 @@ describe('safe queries', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     queryClient.clear()
+    useQueryClientFn.mockReturnValue(queryClient as unknown as ReturnType<typeof useQueryClientFn>)
   })
 
   it('reuses recovered contract metadata across complete history refreshes', async () => {
@@ -47,7 +48,9 @@ describe('safe queries', () => {
         tokenInfo: null
       }) as SafeIncomingTransfer
     vi.spyOn(externalApiClient, 'get')
-      .mockResolvedValueOnce({ data: { next: null, results: [makeRow()] } })
+      .mockResolvedValueOnce({
+        data: { next: null, results: [makeRow(), { ...makeRow(), transferId: 'same-token' }] }
+      })
       .mockResolvedValueOnce({ data: { next: null, results: [makeRow()] } })
     mockWagmiCore.readContract
       .mockReset()
@@ -60,11 +63,13 @@ describe('safe queries', () => {
     const first = await query.queryFn(context)
     const next = await query.queryFn(context)
     expect(first[0]?.tokenInfo).toEqual(next[0]?.tokenInfo)
+    expect(first[1]?.tokenInfo).toEqual(first[0]?.tokenInfo)
     expect(mockWagmiCore.readContract).toHaveBeenCalledTimes(3)
     const cache = queryClient.getQueryCache().find({
       queryKey: ['safe-token-metadata', 137, SECOND_LOWERCASE_SAFE_ADDRESS]
     })
-    expect(cache?.options.staleTime).toBe(24 * 60 * 60_000)
+    expect(cache?.options.staleTime).toBe(Infinity)
+    expect(cache?.options.gcTime).toBe(24 * 60 * 60_000)
   })
   it('recovers missing ERC-20 metadata from the actual contract and preserves an explicit untrusted flag', async () => {
     const row = {
@@ -96,6 +101,7 @@ describe('safe queries', () => {
       trusted: false,
       logoUri: 'https://assets.example/token.png'
     })
+    expect(row.tokenInfo).not.toHaveProperty('decimals')
     expect(mockWagmiCore.readContract).toHaveBeenCalledWith(
       expect.anything(),
       expect.objectContaining({

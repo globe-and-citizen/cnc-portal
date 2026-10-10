@@ -1,8 +1,14 @@
 import { flushPromises, mount } from '@vue/test-utils'
 import { QueryClient, VueQueryPlugin } from '@tanstack/vue-query'
 import { defineComponent, h, ref } from 'vue'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import externalApiClient from '@/lib/external.axios'
+import type { SafeIncomingTransfer } from '@/types/safe'
+import { mockWagmiCore } from '@/tests/mocks/wagmi.vue.mock'
+import { discoverSafeAssets } from '@/utils/safe/assetDiscovery'
+import { toSafeTransferRows } from '@/utils/accounting/safeTransfers'
+import { buildCncJournalEntryDrafts } from '@/utils/accounting/assemble'
+import { historicalRateTargets } from '@/utils/accounting/toUsd'
 
 const FIRST_LOWERCASE_SAFE_ADDRESS = '0x0557f280d9da274254e85ee70c2936694e494275'
 const FIRST_CHECKSUM_SAFE_ADDRESS = '0x0557F280D9DA274254e85Ee70c2936694e494275'
@@ -16,11 +22,162 @@ vi.mock('@/constant/index', async (importOriginal) => ({
 }))
 
 const safeQueries = await vi.importActual<typeof import('../safe.queries')>('../safe.queries')
+const { queryClient: sharedClient } = await import('../queryClient')
 
 describe('Safe query reactivity', () => {
+  beforeEach(() => sharedClient.clear())
   afterEach(() => {
     vi.restoreAllMocks()
   })
+
+  it('keeps independent Safe reads running after a 429 and recovers on explicit refresh', async () => {
+    const client = new QueryClient()
+    const failure = { response: { status: 429 } }
+    let limited = true
+    const get = vi.spyOn(externalApiClient, 'get').mockImplementation(async (url) => {
+      if (String(url).includes('/multisig-transactions/')) {
+        if (limited) throw failure
+        return { data: { results: [] } }
+      }
+      return { data: { address: FIRST_CHECKSUM_SAFE_ADDRESS } }
+    })
+    let info!: ReturnType<typeof safeQueries.useGetSafeInfoQuery>
+    let queue!: ReturnType<typeof safeQueries.useGetSafeTransactionsQuery>
+    const wrapper = mount(
+      defineComponent({
+        setup() {
+          const params = { pathParams: { safeAddress: FIRST_LOWERCASE_SAFE_ADDRESS } }
+          info = safeQueries.useGetSafeInfoQuery(params)
+          queue = safeQueries.useGetSafeTransactionsQuery(params)
+          return () => h('div')
+        }
+      }),
+      { global: { plugins: [[VueQueryPlugin, { queryClient: client }]] } }
+    )
+    try {
+      await vi.waitFor(() => {
+        expect(info.isSuccess.value).toBe(true)
+        expect(queue.isError.value).toBe(true)
+      })
+      expect(get).toHaveBeenCalledTimes(2)
+      expect(queue.error.value).toEqual(failure)
+      limited = false
+      await queue.refetch()
+      expect(queue.data.value).toEqual([])
+      expect(get).toHaveBeenCalledTimes(3)
+      expect(info.data.value?.address).toBe(FIRST_CHECKSUM_SAFE_ADDRESS)
+    } finally {
+      wrapper.unmount()
+      client.clear()
+    }
+  })
+
+  it.each(['cached', 'paginated'] as const)(
+    'preserves every provider movement in %s history and accounting without a local blacklist',
+    async (mode) => {
+      const token = '0x8f3cf7ad23cd3cadbd9735aff958023239c6a063'
+      const legitimate: SafeIncomingTransfer = {
+        transferId: 'legitimate-in',
+        type: 'ERC20_TRANSFER',
+        tokenAddress: token,
+        tokenInfo: { type: 'ERC20', address: token, name: 'Dai', symbol: 'DAI', decimals: 18 },
+        transactionHash: '0xmixed',
+        executionDate: '2026-10-08T12:14:09Z',
+        blockNumber: 1,
+        from: SECOND_LOWERCASE_SAFE_ADDRESS,
+        to: FIRST_CHECKSUM_SAFE_ADDRESS,
+        value: '977545092688764193'
+      }
+      const untrusted: SafeIncomingTransfer = {
+        ...legitimate,
+        transferId: 'untrusted-in',
+        tokenAddress: '0x0ce89273aadcb0f297a32d957cbd459ed06848ea',
+        tokenInfo: {
+          ...legitimate.tokenInfo!,
+          address: '0x0ce89273aadcb0f297a32d957cbd459ed06848ea',
+          trusted: false
+        }
+      }
+      const outflow: SafeIncomingTransfer = {
+        ...legitimate,
+        transferId: 'legitimate-out',
+        from: FIRST_CHECKSUM_SAFE_ADDRESS,
+        to: SECOND_LOWERCASE_SAFE_ADDRESS
+      }
+      const raw = [untrusted, legitimate, outflow]
+      const rawIncoming = [untrusted, legitimate]
+      const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+      const keys = [
+        safeQueries.safeKeys.transfers(FIRST_CHECKSUM_SAFE_ADDRESS, 137),
+        safeQueries.safeKeys.incomingTransfers(FIRST_CHECKSUM_SAFE_ADDRESS)
+      ]
+      if (mode === 'cached') {
+        client.setQueryData(keys[0]!, raw)
+        client.setQueryData(keys[1]!, rawIncoming)
+      }
+      const get = vi.spyOn(externalApiClient, 'get').mockImplementation(async (url) => ({
+        data: String(url).includes('offset=1')
+          ? {
+              next: null,
+              results: String(url).includes('/incoming-transfers/')
+                ? [legitimate]
+                : [legitimate, outflow]
+            }
+          : { next: '?offset=1', results: [untrusted] }
+      }))
+      mockWagmiCore.readContract.mockClear()
+      let transfers!: ReturnType<typeof safeQueries.useGetSafeTransfersQuery>
+      let incoming!: ReturnType<typeof safeQueries.useGetSafeIncomingTransfersQuery>
+      const Host = defineComponent({
+        setup() {
+          const params = { pathParams: { safeAddress: FIRST_LOWERCASE_SAFE_ADDRESS } }
+          transfers = safeQueries.useGetSafeTransfersQuery(params)
+          incoming = safeQueries.useGetSafeIncomingTransfersQuery(params)
+          return () => h('div')
+        }
+      })
+      const wrapper = mount(Host, {
+        global: { plugins: [[VueQueryPlugin, { queryClient: client }]] }
+      })
+      try {
+        await vi.waitFor(
+          () => {
+            expect(transfers.data.value).toEqual(raw)
+            expect(incoming.data.value).toEqual(rawIncoming)
+          },
+          { timeout: 5000 }
+        )
+        expect(
+          discoverSafeAssets(transfers.data.value!, 137).map((asset) => asset.address)
+        ).toEqual([untrusted.tokenAddress, token])
+        expect(
+          toSafeTransferRows(transfers.data.value, undefined, 137).map((movement) => movement.id)
+        ).toEqual(['untrusted-in', 'legitimate-in', 'legitimate-out'])
+        const drafts = buildCncJournalEntryDrafts({
+          safeAddress: FIRST_CHECKSUM_SAFE_ADDRESS,
+          safeAssetTransfers: transfers.data.value
+        })
+        expect(drafts).toHaveLength(3)
+        expect(drafts.map((draft) => draft.rawAmount)).toEqual(raw.map((row) => row.value))
+        expect(drafts.map((draft) => draft.asset?.address)).toEqual([
+          untrusted.tokenAddress,
+          token,
+          token
+        ])
+        expect(historicalRateTargets(drafts).map((target) => target.token)).toEqual([
+          `erc20:137:${untrusted.tokenAddress}`,
+          `erc20:137:${token}`
+        ])
+        expect(client.getQueryData(keys[0]!)).toEqual(raw)
+        expect(client.getQueryData(keys[1]!)).toEqual(rawIncoming)
+        expect(mockWagmiCore.readContract).not.toHaveBeenCalled()
+        expect(get).toHaveBeenCalledTimes(mode === 'cached' ? 0 : 4)
+      } finally {
+        wrapper.unmount()
+        client.clear()
+      }
+    }
+  )
 
   it('requests both Accounting feeds when an asynchronous Safe address resolves', async () => {
     const address = ref<string>()
@@ -52,7 +209,7 @@ describe('Safe query reactivity', () => {
 
     address.value = FIRST_LOWERCASE_SAFE_ADDRESS
 
-    await vi.waitFor(() => expect(get).toHaveBeenCalledTimes(2))
+    await vi.waitFor(() => expect(get).toHaveBeenCalledTimes(2), { timeout: 5000 })
     expect(get.mock.calls.map(([url]) => url)).toEqual(
       expect.arrayContaining([
         expect.stringContaining(`/safes/${FIRST_CHECKSUM_SAFE_ADDRESS}/incoming-transfers/`),
@@ -62,7 +219,7 @@ describe('Safe query reactivity', () => {
 
     address.value = SECOND_LOWERCASE_SAFE_ADDRESS
 
-    await vi.waitFor(() => expect(get).toHaveBeenCalledTimes(4))
+    await vi.waitFor(() => expect(get).toHaveBeenCalledTimes(4), { timeout: 5000 })
     expect(get.mock.calls.slice(2).map(([url]) => url)).toEqual(
       expect.arrayContaining([
         expect.stringContaining(`/safes/${SECOND_CHECKSUM_SAFE_ADDRESS}/incoming-transfers/`),

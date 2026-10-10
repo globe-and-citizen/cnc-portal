@@ -13,20 +13,16 @@ describe('Safe query refresh and recovery', () => {
     ['incoming transfers', safeQueries.useGetSafeIncomingTransfersQuery],
     ['outgoing transactions', safeQueries.useGetSafeOutgoingTransactionsQuery]
   ])(
-    'refreshes %s every five minutes and retries only one transient failure',
+    'uses preset minute freshness and refreshes %s every five minutes without automatic retries',
     (_name, useQuery) => {
       useQuery({ pathParams: { safeAddress: LOWERCASE_SAFE_ADDRESS } })
       const options = useQueryFn.mock.calls.at(-1)![0]
-      expect(options.staleTime).toBe(300_000)
+      expect(options.staleTime).toBe(60_000)
       expect(options.refetchInterval).toBe(300_000)
-      expect(options.refetchIntervalInBackground).toBe(false)
+      expect(options.gcTime).toBe(120_000)
       expect(options.refetchOnWindowFocus).toBe(false)
-      expect(options.retry(0, { response: { status: 429 } })).toBe(false)
-      expect(options.retry(0, { response: { status: 404 } })).toBe(false)
-      expect(options.retry(0, { response: { status: 503 } })).toBe(true)
-      expect(options.retry(1, { response: { status: 503 } })).toBe(false)
-      expect(options.retry(0, new Error('Network unavailable'))).toBe(true)
-      expect(options.retryDelay).toBe(5000)
+      expect(options.retry).toBe(false)
+      expect(options.retryDelay).toBeUndefined()
     }
   )
 

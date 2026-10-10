@@ -6,8 +6,8 @@ import type { Ref } from 'vue'
 import { useTeamStore } from '@/stores/teamStore'
 import { computed, ref } from 'vue'
 import { useGetTokenPriceQuery } from '@/queries/coingecko.queries'
-import type { TokenPriceResponse as PriceResponse } from '@/lib/coingecko'
-export type { TokenPriceResponse as PriceResponse } from '@/lib/coingecko'
+import type { TokenPriceResponse as PriceResponse } from '@/types/coingecko'
+export type { TokenPriceResponse as PriceResponse } from '@/types/coingecko'
 
 export const useCurrencyStore = defineStore('currency', () => {
   const currency = useStorage('currency', {

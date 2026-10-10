@@ -22,7 +22,8 @@ describe('Safe confirmed-operation cache refresh', () => {
       safeKeys.transactions(address),
       safeKeys.transaction('0xsafehash'),
       [...safeKeys.all, 'future-read', { safeAddress: address }],
-      [...safeKeys.balance(address, chainId), 'safe-portfolio', { assets: [] }],
+      [...safeKeys.balance(address, chainId), 'safe-client', 'USD'],
+      [...safeKeys.balance(address, chainId), 'safe-client', 'EUR'],
       safeKeys.transfers(address, chainId),
       safeKeys.incomingTransfers(address, 500),
       safeKeys.outgoingTransactions(address, 500)

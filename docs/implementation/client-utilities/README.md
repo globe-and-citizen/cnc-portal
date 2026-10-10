@@ -91,27 +91,32 @@ conversion. See the [Accounting read model](../accounting-read-model/README.md) 
 
 [Shared holdings rows](../../../app/src/utils/tokens/holdings.ts) shape supported balances for the presentation-only
 [holdings table](../../../app/src/components/ui/TokenHoldingsSection.vue). Bank, Payroll, and Expense fetch their balances in the page; Safe
-prepares combined portfolio rows in its page. The table owns display, sorting, and failed-image fallback, with no balance query.
-[Safe asset discovery](../../../app/src/utils/safe/assetDiscovery.ts) deduplicates contract metadata without reactive dependencies.
+converts Gateway items directly to typed table rows in its page. The table owns display, sorting, and failed-image fallback, with no balance
+query. [Safe asset discovery](../../../app/src/utils/safe/assetDiscovery.ts) deduplicates contract metadata without reactive dependencies.
 
-[Safe holdings presentation](../../../app/src/utils/safe/portfolio.ts) combines the fixed supported currencies with discovered holdings.
-Supported currencies retain their configured order and remain present at zero or unavailable balance. Additional holdings are deduplicated
-by network and contract, omit confirmed zero balances, and retain explicit unavailable balance and valuation states. Quantities use raw
-token units or exact decimal strings through the canonical formatter. Compact amount labels use the canonical four-decimal number format,
-retain the exact quantity separately, and identify positive sub-precision balances as `<0.0001`. Supported valuations retain the existing
-local-currency labels; discovered USD valuations use a local/USD price ratio from a supported currency and the same compact formatter. An
-unavailable conversion rate leaves local prices and values explicitly unavailable. Numeric sort values remain separate from exact quantity
-and currency labels.
+[Safe holdings presentation](../../../app/src/utils/safe/portfolio.ts) exposes three focused adapters: `toSafeHoldingRows` maps each Gateway
+item to one `TokenHoldingRow`; `getSafeFiatTotal` validates completeness and reads the raw provider total without building formatted rows;
+`toSafeTransferTokens` matches the configured payment contracts independently of provider names and symbols. Two private helpers share
+fiat-number validation and exact base-unit conversion. The table mapping preserves provider order and returned zero balances, with no
+insertion, filtering or regrouping. Exact quantities pass through the canonical formatter; compact labels retain four decimals and identify
+positive sub-precision balances as `<0.0001`. Missing quantities and nonzero unpriced holdings keep totals unavailable. Provider-side
+filtering and the absence of a local blacklist are documented in
+[Client Data Access](../client-data-access/README.md#safe-provider-filtering).
+
+[CoinGecko response interpretation](../../../app/src/utils/tokens/coingecko.ts) verifies the Polygon contract before accepting coin
+identity, price or logo, normalizes Accounting's provider targets, and checks the existing six-decimal historical-rate precision. The
+existing Accounting data layer consumes reactive query results; pure utilities build provider targets and resolve rates by token/date.
+Queries retain raw validated provider responses and HTTP ownership. Provider retry scheduling belongs to the query options.
 
 ## Implementation Evidence
 
 [Shared balance reads](../../../app/src/composables/useContractBalance.ts) accept caller-supplied query options while preserving the
 existing default cadence for other consumers. Supported and discovered Safe balances share a normalized balance-key prefix so existing
 post-confirmation balance invalidations reach both. [Currency prices](../../../app/src/stores/currencyStore.ts) retain their existing
-currency payload and conversions while consuming the centralized CoinGecko price query, whose five-minute options and paced Axios reads are
-described in [Client Data Access](../client-data-access/README.md#browser-request-coordination).
+currency payload and conversions while consuming the centralized CoinGecko price query, whose preset freshness, polling and direct Axios
+reads are described in [Client Data Access](../client-data-access/README.md#browser-request-coordination).
 
-**Implementation evidence reviewed against:** `0972d19f7a8226e5923f6f8472ffc954dcf088d8`
+**Implementation evidence reviewed against:** `22058afcf7c39f6320537c622bcb33b74dbc9ec9`
 
 - [Utility ownership map and domain implementations](../../../app/src/utils/)
 - [Shared Accounting domain contracts](../../../app/src/utils/accounting/types.ts)
