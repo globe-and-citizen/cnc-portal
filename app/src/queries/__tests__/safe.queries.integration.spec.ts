@@ -30,6 +30,48 @@ describe('Safe query reactivity', () => {
     vi.restoreAllMocks()
   })
 
+  it('keeps independent Safe reads running after a 429 and recovers on explicit refresh', async () => {
+    const client = new QueryClient()
+    const failure = { response: { status: 429 } }
+    let limited = true
+    const get = vi.spyOn(externalApiClient, 'get').mockImplementation(async (url) => {
+      if (String(url).includes('/multisig-transactions/')) {
+        if (limited) throw failure
+        return { data: { results: [] } }
+      }
+      return { data: { address: FIRST_CHECKSUM_SAFE_ADDRESS } }
+    })
+    let info!: ReturnType<typeof safeQueries.useGetSafeInfoQuery>
+    let queue!: ReturnType<typeof safeQueries.useGetSafeTransactionsQuery>
+    const wrapper = mount(
+      defineComponent({
+        setup() {
+          const params = { pathParams: { safeAddress: FIRST_LOWERCASE_SAFE_ADDRESS } }
+          info = safeQueries.useGetSafeInfoQuery(params)
+          queue = safeQueries.useGetSafeTransactionsQuery(params)
+          return () => h('div')
+        }
+      }),
+      { global: { plugins: [[VueQueryPlugin, { queryClient: client }]] } }
+    )
+    try {
+      await vi.waitFor(() => {
+        expect(info.isSuccess.value).toBe(true)
+        expect(queue.isError.value).toBe(true)
+      })
+      expect(get).toHaveBeenCalledTimes(2)
+      expect(queue.error.value).toEqual(failure)
+      limited = false
+      await queue.refetch()
+      expect(queue.data.value).toEqual([])
+      expect(get).toHaveBeenCalledTimes(3)
+      expect(info.data.value?.address).toBe(FIRST_CHECKSUM_SAFE_ADDRESS)
+    } finally {
+      wrapper.unmount()
+      client.clear()
+    }
+  })
+
   it.each(['cached', 'paginated'] as const)(
     'filters confirmed spam from %s holdings, incoming history and accounting while retaining raw cache evidence',
     async (mode) => {
