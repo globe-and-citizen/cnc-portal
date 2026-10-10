@@ -80,7 +80,17 @@ mocked provider responses and real TanStack observers; live browser validation r
 
 Safe and CoinGecko HTTP requests live in their query modules and use the existing
 [external Axios client](../../../app/src/lib/external.axios.ts), including its 15-second timeout and query cancellation signal. Independent
-reads can run concurrently; an HTTP 429 rejects that request without pausing other provider reads. Query caches deduplicate requests with
+Transaction Service reads use [Safe request admission](../../../app/src/queries/safe.requests.ts): one HTTP request in flight and starts at
+least one second apart. HTTP 429 pauses queued reads and explicit retries for at least one minute or the longer `Retry-After`. Aborted reads
+are withheld before HTTP admission. Direct `api.safe.global/tx-service` URLs avoid cross-origin redirects; `VITE_APP_SAFE_API_KEY` is sent
+only to that production Transaction Service, never to Gateway or other providers. A production key must come from `developer.safe.global`;
+staging keys from `developer.5afe.dev` do not establish a production quota. Service writes retain their explicit mutation path and are not
+queued or replayed by this read policy. Gateway keeps its own balance query cadence.
+
+The [CoinGecko request policy](../../../app/src/queries/coingecko.request-policy.ts) shares a session-cache window and starts requests at
+least six seconds apart across supported prices, contract discovery and historical dates, with one HTTP request in flight at a time. HTTP
+429 pauses subsequent CoinGecko reads for at least one minute, or the longer provider `Retry-After`; changing target sets and explicit
+refresh cannot bypass this pause. Waiting requests honor cancellation before contacting the provider. Query caches deduplicate requests with
 the same identity. Retry and polling remain explicit observer options; writes are never automatically replayed by read recovery.
 
 Safe information, complete transfer histories, Gateway holdings and current prices inherit the moderate preset's one-minute freshness. Safe
@@ -97,7 +107,8 @@ Historical target sets load one date at a time. The first HTTP 429, server error
 rates remain cached and unrequested dates remain explicit valuation gaps. Active-tab recovery waits at least one minute and honors a longer
 provider `Retry-After` header before resuming missing dates. This is a batch recovery interval, not a five-second HTTP retry. Terminal
 client errors and missing/malformed prices retain daily recovery or explicit Accounting refresh. New target sets are fetched when required;
-obsolete batches stop before their next date. There is no browser-wide queue or quota guarantee across sessions or concurrent users.
+obsolete batches stop before their next date. This admission window is shared only by the current JavaScript session; it does not guarantee
+provider quota across tabs, sessions or concurrent users. A throttled provider can still reject the first request.
 
 The aggregate uses a distinct batch cache key for its rates and recovery metadata; immutable coin/date snapshot keys remain unchanged.
 

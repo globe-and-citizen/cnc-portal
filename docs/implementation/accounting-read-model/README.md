@@ -115,10 +115,14 @@ historical rates with terminal errors or unavailable prices are checked once a d
 refresh; successful immutable date snapshots are reused. Historical dates load sequentially. Throttling, server or transport failure stops
 the batch and schedules active-tab recovery after at least a minute, honoring a longer `Retry-After`; pending dates remain valuation gaps
 until recovered. Current contract markets inherit one-minute freshness from the moderate preset; verified coin identities and recovered
-token metadata use the once preset with 24-hour retention. Safe and CoinGecko query modules call the external Axios client directly.
-Independent reads run concurrently; HTTP 429 is handled by each query without a shared provider pause. Source inclusion, exchange
-classification, precision and rate-of-record policy remain unchanged. A failed later Safe page never publishes a partial replacement feed.
-See [Client Data Access](../client-data-access/README.md#browser-request-coordination) for the session-only boundary.
+token metadata use the once preset with 24-hour retention. Safe and CoinGecko query modules call the external Axios client directly. The
+[CoinGecko request policy](../../../app/src/queries/coingecko.request-policy.ts) starts requests at least six seconds apart and shares a
+provider pause after HTTP 429, including when newly loaded sources change the historical target set or Accounting is explicitly refreshed.
+Safe Transaction Service reads use [shared admission](../../../app/src/queries/safe.requests.ts) with one request in flight, one-second
+start spacing and a provider-wide 429 pause. Production URLs use the optional configured production API key; complete pagination and
+unchanged snapshot semantics are preserved. Source inclusion, exchange classification, precision and rate-of-record policy remain unchanged.
+A failed later Safe page never publishes a partial replacement feed. See
+[Client Data Access](../client-data-access/README.md#browser-request-coordination) for the session-only boundary.
 
 Each contract-event query is also keyed by its normalized generation targets: lowercase address plus effective deployment `fromBlock`,
 sorted independently of API order. A later or asynchronously resolved boundary therefore selects a distinct history range. Duplicate
