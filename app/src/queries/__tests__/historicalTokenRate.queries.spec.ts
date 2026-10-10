@@ -1,226 +1,67 @@
-import { QueryClient } from '@tanstack/vue-query'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { ref, toValue, type MaybeRefOrGetter } from 'vue'
+import { ref, toValue } from 'vue'
 import externalApiClient from '@/lib/external.axios'
-import { useQueryFn } from '@/tests/mocks/composables.mock'
-import { queryClient as sharedQueryClient } from '../queryClient'
+import { useQueriesFn, useQueryFn } from '@/tests/mocks/composables.mock'
 import {
-  fetchHistoricalTokenRate,
   historicalTokenRateKeys,
-  useHistoricalTokenRatesQuery
+  useGetHistoricalTokenRatesQuery,
+  useGetTokenPriceQuery
 } from '../coingecko.queries'
 
-const response = (usd: unknown) => ({
-  data: { market_data: { current_price: { usd } } }
-})
+const capturedQueries = () => toValue(useQueriesFn.mock.calls.at(-1)![0].queries)
 
-const queryClient = () => new QueryClient({ defaultOptions: { queries: { retry: false } } })
+describe('CoinGecko endpoint queries', () => {
+  beforeEach(() => vi.clearAllMocks())
 
-interface CapturedHistoricalRateQuery {
-  queryKey: MaybeRefOrGetter<readonly unknown[]>
-  enabled: MaybeRefOrGetter<boolean>
-  queryFn: (context: {
-    signal: AbortSignal
-  }) => Promise<{ rates: Record<string, number>; retryAfterMs?: number }>
-}
-
-const capturedQuery = (): CapturedHistoricalRateQuery =>
-  useQueryFn.mock.calls.at(-1)?.[0] as CapturedHistoricalRateQuery
-
-describe('historical token rate queries', () => {
-  beforeEach(() => {
-    vi.clearAllMocks()
-  })
-
-  it('reads the historical snapshot through Axios with the query cancellation signal', async () => {
-    const get = vi.spyOn(externalApiClient, 'get').mockResolvedValueOnce(response(0.5))
+  it('forwards current prices unchanged with the query cancellation signal', async () => {
+    const body = { market_data: { current_price: { usd: 1, eur: 0.9 } } }
+    const get = vi.spyOn(externalApiClient, 'get').mockResolvedValueOnce({ data: body })
+    useGetTokenPriceQuery('usd-coin')
+    const query = useQueryFn.mock.calls.at(-1)![0]
+    const signal = new AbortController().signal
     try {
-      await expect(fetchHistoricalTokenRate(queryClient(), 'asset', '2026-03-13')).resolves.toBe(
-        0.5
-      )
-      expect(get).toHaveBeenCalledWith(expect.stringContaining('/coins/asset/history'), {
-        signal: expect.any(AbortSignal)
+      expect(await query.queryFn({ signal })).toBe(body)
+      expect(get).toHaveBeenCalledWith('https://api.coingecko.com/api/v3/coins/usd-coin', {
+        signal
       })
+      expect(query.refetchInterval).toBe(300_000)
+      expect(query.retry).toBe(false)
     } finally {
       get.mockRestore()
     }
   })
 
-  it('keys immutable rates by provider coin id, UTC date, and currency', () => {
-    expect(historicalTokenRateKeys.rate('polygon-ecosystem-token', '2026-03-13')).toEqual([
-      'historical-token-rate',
-      { coinId: 'polygon-ecosystem-token', date: '2026-03-13', currency: 'usd' }
-    ])
-  })
-
-  it('shares one immutable snapshot across concurrent and later callers', async () => {
-    const client = queryClient()
-    const request = vi.fn(async () => response(0.123456789))
-
-    const [first, concurrent] = await Promise.all([
-      fetchHistoricalTokenRate(client, 'polygon-ecosystem-token', '2026-03-13', request),
-      fetchHistoricalTokenRate(client, 'polygon-ecosystem-token', '2026-03-13', request)
-    ])
-    const cached = await fetchHistoricalTokenRate(
-      client,
-      'polygon-ecosystem-token',
-      '2026-03-13',
-      request
-    )
-
-    expect(first).toBe(0.123457)
-    expect(concurrent).toBe(first)
-    expect(cached).toBe(first)
-    expect(request).toHaveBeenCalledTimes(1)
-  })
-
-  it('keeps successful snapshots immutable beyond the daily refresh interval', async () => {
-    vi.useFakeTimers()
-    const cache = queryClient()
-    const request = vi.fn(async () => response(0.5))
+  it('keys raw historical snapshots by provider coin, exact UTC date and USD', async () => {
+    const body = { market_data: { current_price: { usd: 0.123456789 } } }
+    const get = vi.spyOn(externalApiClient, 'get').mockResolvedValueOnce({ data: body })
+    useGetHistoricalTokenRatesQuery([{ coinId: 'ethereum', date: '2026-03-13' }])
+    const query = capturedQueries()[0]!
+    const signal = new AbortController().signal
     try {
-      await fetchHistoricalTokenRate(cache, 'asset', '2026-03-13', request)
-      await vi.advanceTimersByTimeAsync(2 * 24 * 60 * 60_000)
-      await fetchHistoricalTokenRate(cache, 'asset', '2026-03-13', request)
-      expect(request).toHaveBeenCalledTimes(1)
+      expect(query.queryKey).toEqual(historicalTokenRateKeys.rate('ethereum', '2026-03-13'))
+      expect(await query.queryFn({ signal })).toBe(body)
+      expect(get).toHaveBeenCalledWith('https://api.coingecko.com/api/v3/coins/ethereum/history', {
+        signal,
+        params: { date: '2026-03-13', localization: false }
+      })
+      expect(query.staleTime).toBe(Infinity)
+      expect(query.gcTime).toBe(Infinity)
+      expect(query.retry).toBe(false)
     } finally {
-      cache.clear()
-      vi.useRealTimers()
+      get.mockRestore()
     }
   })
 
-  it('checks an unchanged historical target set once a day with no focus refresh', () => {
-    useHistoricalTokenRatesQuery([{ token: 'native', date: '2026-03-13' }])
-    const query = useQueryFn.mock.calls.at(-1)![0]
-    expect(query.staleTime).toBe(60_000)
-    expect(query.refetchInterval({ state: { data: undefined } })).toBe(24 * 60 * 60_000)
-    expect(query.refetchOnWindowFocus).toBe(false)
-  })
-
-  it('requests the exact historical UTC date without localization data', async () => {
-    const request = vi.fn(async () => response(0.5))
-
-    await fetchHistoricalTokenRate(queryClient(), 'polygon-ecosystem-token', '2026-03-13', request)
-
-    const url = new URL(String(request.mock.calls[0]?.[0]))
-    expect(url.pathname).toBe('/api/v3/coins/polygon-ecosystem-token/history')
-    expect(url.searchParams.get('date')).toBe('2026-03-13')
-    expect(url.searchParams.get('localization')).toBe('false')
-  })
-
-  it('does not share rates across different dates', async () => {
-    const client = queryClient()
-    const request = vi
-      .fn()
-      .mockResolvedValueOnce(response(0.5))
-      .mockResolvedValueOnce(response(0.75))
-
-    await expect(
-      fetchHistoricalTokenRate(client, 'polygon-ecosystem-token', '2026-03-13', request)
-    ).resolves.toBe(0.5)
-    await expect(
-      fetchHistoricalTokenRate(client, 'polygon-ecosystem-token', '2026-03-14', request)
-    ).resolves.toBe(0.75)
-    expect(request).toHaveBeenCalledTimes(2)
-  })
-
-  it('rejects an absent or invalid USD rate instead of inventing a valuation', async () => {
-    await expect(
-      fetchHistoricalTokenRate(queryClient(), 'polygon-ecosystem-token', '2026-03-13', async () =>
-        response(undefined)
-      )
-    ).rejects.toThrow('Historical USD rate unavailable')
-  })
-
-  it('retries a previously unavailable date on the next explicit fetch', async () => {
-    const client = queryClient()
-    const request = vi
-      .fn()
-      .mockResolvedValueOnce(response(undefined))
-      .mockResolvedValueOnce(response(0.8))
-
-    await expect(
-      fetchHistoricalTokenRate(client, 'polygon-ecosystem-token', '2026-03-13', request)
-    ).rejects.toThrow('Historical USD rate unavailable')
-    await expect(
-      fetchHistoricalTokenRate(client, 'polygon-ecosystem-token', '2026-03-13', request)
-    ).resolves.toBe(0.8)
-    expect(request).toHaveBeenCalledTimes(2)
-  })
-
-  it.each([1e-10, 1e15])(
-    'rejects a price outside the exact six-decimal rate range: %s',
-    async (rate) => {
-      await expect(
-        fetchHistoricalTokenRate(queryClient(), 'asset', '2026-03-13', async () => response(rate))
-      ).rejects.toThrow('Historical USD rate precision unavailable')
-    }
-  )
-
-  it('normalizes target sets and exposes reactive query state', async () => {
-    const data = ref<{ rates: Record<string, number> }>()
-    const isLoading = ref(false)
-    const isFetching = ref(false)
-    const refetch = vi.fn().mockResolvedValue({ data: { 'native:2026-03-13': 0.5 } })
-    useQueryFn.mockReturnValue({ data, isLoading, isFetching, refetch })
+  it('reacts to changing dates and respects the caller enabled state', () => {
+    const targets = ref([{ coinId: 'ethereum', date: '2026-03-13' }])
     const enabled = ref(false)
-    const targets = ref([
-      { token: 'native' as const, date: '2026-03-14' },
-      { token: 'sher' as const, date: '2026-03-13' },
-      { token: 'native' as const, date: '2026-03-13' },
-      { token: 'native' as const, date: '2026-03-14' }
-    ])
-
-    const rates = useHistoricalTokenRatesQuery(targets, enabled)
-    const query = capturedQuery()
-
-    expect(toValue(query.queryKey)).toEqual([
-      'historical-token-rate',
-      'batch',
-      [
-        { token: 'native', coinId: 'ethereum', date: '2026-03-13' },
-        { token: 'native', coinId: 'ethereum', date: '2026-03-14' }
-      ]
-    ])
-    expect(toValue(query.enabled)).toBe(false)
+    useGetHistoricalTokenRatesQuery(targets, enabled)
+    expect(capturedQueries()[0]!.enabled).toBe(false)
+    targets.value = [{ coinId: 'ethereum', date: '2026-03-14' }]
     enabled.value = true
-    expect(toValue(query.enabled)).toBe(true)
-    expect(rates.rateOfRecord('native', new Date('2026-03-13T23:59:59Z'))).toBe(0)
-
-    data.value = { rates: { 'native:2026-03-13': 0.5 } }
-    expect(rates.rateOfRecord('native', new Date('2026-03-13T23:59:59Z'))).toBe(0.5)
-    expect(rates.isLoading.value).toBe(false)
-    isLoading.value = true
-    expect(rates.isLoading.value).toBe(true)
-    isLoading.value = false
-    isFetching.value = true
-    expect(rates.isLoading.value).toBe(true)
-    await expect(rates.refetch()).resolves.toEqual({ data: { 'native:2026-03-13': 0.5 } })
-  })
-
-  it('keeps unavailable targets explicit while retaining successful snapshots', async () => {
-    useQueryFn.mockReturnValue({
-      data: ref<{ rates: Record<string, number> }>(),
-      isLoading: ref(false),
-      isFetching: ref(false)
-    })
-    const fetchQuery = vi
-      .spyOn(sharedQueryClient, 'fetchQuery')
-      .mockResolvedValueOnce(0.5)
-      .mockRejectedValueOnce(new Error('rate unavailable'))
-
-    const rates = useHistoricalTokenRatesQuery([
-      { token: 'native', date: '2026-03-13' },
-      { token: 'native', date: '2026-03-14' }
-    ])
-
-    await expect(
-      capturedQuery().queryFn({ signal: new AbortController().signal })
-    ).resolves.toEqual({
-      rates: { 'native:2026-03-13': 0.5, 'native:2026-03-14': 0 }
-    })
-    await expect(rates.refetch()).resolves.toBeUndefined()
-    expect(fetchQuery).toHaveBeenCalledTimes(2)
-    fetchQuery.mockRestore()
+    expect(capturedQueries()[0]!.enabled).toBe(true)
+    expect(capturedQueries()[0]!.queryKey).toEqual(
+      historicalTokenRateKeys.rate('ethereum', '2026-03-14')
+    )
   })
 })
