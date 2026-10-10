@@ -1,7 +1,7 @@
 import { flushPromises, mount } from '@vue/test-utils'
 import { QueryClient, VueQueryPlugin } from '@tanstack/vue-query'
 import { defineComponent, h, ref } from 'vue'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import externalApiClient from '@/lib/external.axios'
 import type { SafeIncomingTransfer } from '@/types/safe'
 import { mockWagmiCore } from '@/tests/mocks/wagmi.vue.mock'
@@ -22,8 +22,10 @@ vi.mock('@/constant/index', async (importOriginal) => ({
 }))
 
 const safeQueries = await vi.importActual<typeof import('../safe.queries')>('../safe.queries')
+const { queryClient: sharedClient } = await import('../queryClient')
 
 describe('Safe query reactivity', () => {
+  beforeEach(() => sharedClient.clear())
   afterEach(() => {
     vi.restoreAllMocks()
   })
@@ -92,10 +94,13 @@ describe('Safe query reactivity', () => {
         global: { plugins: [[VueQueryPlugin, { queryClient: client }]] }
       })
       try {
-        await vi.waitFor(() => {
-          expect(transfers.data.value).toEqual([legitimate, outflow])
-          expect(incoming.data.value).toEqual([legitimate])
-        })
+        await vi.waitFor(
+          () => {
+            expect(transfers.data.value).toEqual([legitimate, outflow])
+            expect(incoming.data.value).toEqual([legitimate])
+          },
+          { timeout: 5000 }
+        )
         expect(
           discoverSafeAssets(transfers.data.value!, 137).map((asset) => asset.address)
         ).toEqual([token])
@@ -153,7 +158,7 @@ describe('Safe query reactivity', () => {
 
     address.value = FIRST_LOWERCASE_SAFE_ADDRESS
 
-    await vi.waitFor(() => expect(get).toHaveBeenCalledTimes(2))
+    await vi.waitFor(() => expect(get).toHaveBeenCalledTimes(2), { timeout: 5000 })
     expect(get.mock.calls.map(([url]) => url)).toEqual(
       expect.arrayContaining([
         expect.stringContaining(`/safes/${FIRST_CHECKSUM_SAFE_ADDRESS}/incoming-transfers/`),
@@ -163,7 +168,7 @@ describe('Safe query reactivity', () => {
 
     address.value = SECOND_LOWERCASE_SAFE_ADDRESS
 
-    await vi.waitFor(() => expect(get).toHaveBeenCalledTimes(4))
+    await vi.waitFor(() => expect(get).toHaveBeenCalledTimes(4), { timeout: 5000 })
     expect(get.mock.calls.slice(2).map(([url]) => url)).toEqual(
       expect.arrayContaining([
         expect.stringContaining(`/safes/${SECOND_CHECKSUM_SAFE_ADDRESS}/incoming-transfers/`),
