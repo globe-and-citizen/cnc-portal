@@ -91,26 +91,22 @@ conversion. See the [Accounting read model](../accounting-read-model/README.md) 
 
 [Shared holdings rows](../../../app/src/utils/tokens/holdings.ts) shape supported balances for the presentation-only
 [holdings table](../../../app/src/components/ui/TokenHoldingsSection.vue). Bank, Payroll, and Expense fetch their balances in the page; Safe
-prepares combined portfolio rows in its page. The table owns display, sorting, and failed-image fallback, with no balance query.
-[Safe asset discovery](../../../app/src/utils/safe/assetDiscovery.ts) deduplicates contract metadata without reactive dependencies.
+converts Gateway items directly to typed table rows in its page. The table owns display, sorting, and failed-image fallback, with no balance
+query. [Safe asset discovery](../../../app/src/utils/safe/assetDiscovery.ts) deduplicates contract metadata without reactive dependencies.
 
-[Confirmed Safe spam](../../../app/src/utils/safe/confirmedSpam.ts) supplies a pure, evidence-backed registry lookup and a nonmutating
-transfer projection. Safe queries own its application and retain raw cached events. See
-[Client Data Access](../client-data-access/README.md#confirmed-safe-spam) for the exclusion boundary and
-[policy regressions](../../../app/src/utils/safe/__tests__/confirmedSpam.spec.ts) for chain, event-type and mixed-transaction guarantees.
-
-[Safe holdings presentation](../../../app/src/utils/safe/portfolio.ts) shapes the Safe Client Gateway response in provider order, including
-returned zero balances, without inserting absent configured currencies. Holdings are deduplicated by network and contract and exclude only
-confirmed spam. Exact base-unit quantities pass through the canonical formatter; compact labels use four decimals, retain the complete
-quantity separately and identify positive sub-precision balances as `<0.0001`. Current prices and values come directly from the requested
-fiat response. Missing quantities and nonzero unpriced holdings keep totals unavailable; exclusions or duplicates require recalculating the
-total from admitted items. CNC transfer options match only configured payment contracts, independently of provider names and symbols.
+[Safe holdings presentation](../../../app/src/utils/safe/portfolio.ts) exposes three focused adapters: `toSafeHoldingRows` maps each Gateway
+item to one `TokenHoldingRow`; `getSafeFiatTotal` validates completeness and reads the raw provider total without building formatted rows;
+`toSafeTransferTokens` matches the configured payment contracts independently of provider names and symbols. Two private helpers share
+fiat-number validation and exact base-unit conversion. The table mapping preserves provider order and returned zero balances, with no
+insertion, filtering or regrouping. Exact quantities pass through the canonical formatter; compact labels retain four decimals and identify
+positive sub-precision balances as `<0.0001`. Missing quantities and nonzero unpriced holdings keep totals unavailable. Provider-side
+filtering and the absence of a local blacklist are documented in
+[Client Data Access](../client-data-access/README.md#safe-provider-filtering).
 
 [CoinGecko response interpretation](../../../app/src/utils/tokens/coingecko.ts) verifies the Polygon contract before accepting coin
 identity, price or logo, normalizes Accounting's provider targets, and checks the existing six-decimal historical-rate precision. The
 existing Accounting data layer consumes reactive query results; pure utilities build provider targets and resolve rates by token/date.
-Queries retain raw validated provider responses and HTTP ownership. The shared `Retry-After` interpreter remains available for Safe's read
-policy with a one-minute minimum.
+Queries retain raw validated provider responses and HTTP ownership. Provider retry scheduling belongs to the query options.
 
 ## Implementation Evidence
 

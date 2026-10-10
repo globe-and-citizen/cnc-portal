@@ -1212,11 +1212,10 @@ movement across the participating stories.
 
 ## Discovered Safe assets
 
-Registry-confirmed counterfeit token events are excluded from incoming history and holdings discovery. The current registry covers two
-audited USDC imitations on Polygon; other tokens retain their existing behaviour, including unavailable balances or prices. Raw events
-remain in the browser query cache for inspection. The
-[shared confirmed-spam policy](../../implementation/client-data-access/README.md#confirmed-safe-spam) also protects Accounting and preserves
-other movements in the same transaction. Evidence: [policy tests](../../../app/src/utils/safe/__tests__/confirmedSpam.spec.ts) and
+Safe balances request the Gateway's spam filter with `exclude_spam=true&trusted=false`. Every returned balance remains visible; the frontend
+has no manual contract blacklist. Transaction Service histories retain the provider's movements, including unknown or untrusted contracts.
+These can also reach Accounting or leave explicit metadata and valuation gaps. See
+[provider filtering](../../implementation/client-data-access/README.md#safe-provider-filtering) and
 [cached and paginated query tests](../../../app/src/queries/__tests__/safe.queries.integration.spec.ts). Live product review remains
 pending.
 
@@ -1249,9 +1248,9 @@ has zero value without requiring a price. Token discovery does not enable an ass
 
 The portfolio refreshes periodically; the holdings section has no manual refresh button. Provider failures remain retryable. The Safe Client
 Gateway supplies token quantities, current prices and values directly in the selected fiat currency. A nonzero holding with a zero or
-missing provider price remains explicitly unpriced; no value is invented. Provider spam filtering and reviewed contract exclusions apply to
-holdings. The overview retains its USD total, so a non-USD display uses an additional fiat query. See the
-[Accounting read model](../../implementation/accounting-read-model/README.md) for swap treatment.
+missing provider price remains explicitly unpriced; no value is invented. One Gateway item becomes one table row, and the overview reads the
+provider total after checking completeness, without rebuilding display rows. The overview retains its USD total, so a non-USD display uses
+an additional fiat query. See the [Accounting read model](../../implementation/accounting-read-model/README.md) for swap treatment.
 
 Safe balances refresh approximately every minute while their page is active. Complete transfer histories and Safe information refresh
 approximately every five minutes; pending transactions refresh every minute when the queue contains an unexecuted transaction and every five

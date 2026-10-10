@@ -134,10 +134,11 @@ ordering, and `InvestorV1` is used only when no current `Investor` exists.
 
 ### Safe assets and exchanges
 
-The Safe query excludes only registry-confirmed counterfeit ERC-20 events before source mapping and historical-rate target construction. The
-[shared policy](../client-data-access/README.md#confirmed-safe-spam) preserves raw cached evidence and other legs of the same transaction.
-Unknown assets, missing prices and real asset outflows retain their existing completeness and accounting rules. The exclusion itself cannot
-certify complete books when unrelated evidence is missing. Executable evidence:
+Safe queries retain provider movements without local contract exclusions before source mapping and historical-rate target construction.
+Unknown, untrusted and spam-like events may therefore enter the existing mapping or create explicit completeness gaps. The Gateway's balance
+spam filter does not apply to this Transaction Service feed. See
+[provider filtering](../client-data-access/README.md#safe-provider-filtering). Existing exchange classification, missing-metadata and
+historical-valuation rules apply to every retained movement. Executable evidence:
 [cached and paginated query-to-accounting tests](../../../app/src/queries/__tests__/safe.queries.integration.spec.ts).
 
 The authoritative Safe source is `/transfers/`, paginated to exhaustion, deduplicated by service `transferId`, and refreshed approximately

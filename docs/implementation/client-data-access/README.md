@@ -54,27 +54,18 @@ raw object retains the token contract, transaction hash, and value. Missing meta
 transaction signer. The complete asset-transfer query can recover metadata independently, so holdings and deposits may have different
 available metadata.
 
-### Confirmed Safe spam
+### Safe provider filtering
 
-The complete asset-transfer and incoming-transfer queries apply the same
-[confirmed-spam policy](../../../app/src/utils/safe/confirmedSpam.ts) through TanStack `select`. The registry currently excludes only two
-audited counterfeit USDC contracts on Polygon: `0x9251cf87c36a02b741ff2127817be4d79eadc05b` and
-`0x0ce89273aadcb0f297a32d957cbd459ed06848ea`. Each entry records its reason, confirmation date and public transaction evidence. Matching
-uses the chain ID and the ERC-20 event's emitting contract, case-insensitively; symbols, sender resemblance, missing metadata, provider
-trust flags and unavailable prices do not create exclusions.
+The Safe Client Gateway balance request uses `exclude_spam=true&trusted=false`. The frontend displays every returned item and has no local
+contract blacklist. Provider symbols or trust flags do not expand CNC's configured payment allowlist.
 
-Raw events remain in their existing query cache, including their transaction and transfer identities. The read functions skip metadata
-recovery for confirmed spam; observers exclude those events before discovery, holdings, current or historical prices, and Accounting
-mapping. The policy also applies to already cached histories. Each event is filtered independently, preserving admitted incoming and
-outgoing legs in the same transaction. Real assets and their outflows retain their existing processing and completeness rules.
+Transaction Service histories retain every returned movement, including unknown and untrusted contracts, before the existing Accounting
+mapping and completeness checks. Metadata recovery uses the event's contract address. There is no client-side spam classification or
+quarantine; provider history can include spam-like events, which may reach Accounting or leave explicit metadata and valuation gaps.
 
-This is a reviewed registry, with no automatic detection, user classification interface, or persistent quarantine. Raw evidence remains
-available for the existing browser-cache lifetime and can be fetched again from the provider. Adding an exclusion requires reviewed evidence
-and a source change. The same address on another network is outside the exclusion.
-
-Executable evidence: [policy regressions](../../../app/src/utils/safe/__tests__/confirmedSpam.spec.ts) and
-[cached and paginated query-to-accounting tests](../../../app/src/queries/__tests__/safe.queries.integration.spec.ts). These tests use
-mocked provider responses and real TanStack observers; live browser validation remains pending.
+Executable evidence: [Gateway request tests](../../../app/src/queries/__tests__/safeClient.queries.spec.ts) and
+[cached and paginated query-to-accounting tests](../../../app/src/queries/__tests__/safe.queries.integration.spec.ts). These use mocked
+provider responses and real TanStack observers; live browser validation remains pending.
 
 ### Browser request coordination
 
@@ -116,11 +107,11 @@ previous successful query result in cache and rejects the incomplete replacement
 
 [Safe Client balance queries](../../../app/src/queries/safeClient.queries.ts) fetch native and ERC-20 holdings, exact base-unit quantities,
 token metadata, current unit prices and fiat values in one request to the Safe Client Gateway. The raw Gateway response stays in TanStack
-Query; [pure holdings presentation](../../../app/src/utils/safe/portfolio.ts) preserves token identity, decimal precision, provider order,
-metadata and returned zero balances. It never adds absent configured currencies and supplements provider spam filtering with the reviewed
-contract registry. Zero or missing prices for nonzero holdings keep values and totals explicitly incomplete, including the Gateway's
-zero-price fallback. The provider's fiat total is used only for a complete, unfiltered response; excluded or duplicate contracts require a
-total from admitted items. The response contract is defined in [Safe types](../../../app/src/types/safe.ts).
+Query; [pure holdings presentation](../../../app/src/utils/safe/portfolio.ts) maps each returned item directly to one typed table row,
+preserving metadata, exact quantity, provider order and zero balances. It does not insert, filter or regroup currencies. Zero or missing
+prices for nonzero holdings keep values and totals explicitly incomplete, including the Gateway's zero-price fallback. The summary checks
+completeness against raw items and reads `fiatTotal` directly, without formatting table rows or recalculating a total from them. The
+response contract is defined in [Safe types](../../../app/src/types/safe.ts).
 
 Address, configured chain and uppercase fiat code identify each balance cache entry. The overview and holdings share one USD request; a
 selected non-USD currency has its own Gateway request while the overview retains its USD total. No transfer-history, RPC balance or
@@ -146,6 +137,9 @@ Executable evidence: [Gateway request tests](../../../app/src/queries/__tests__/
 Direct Transaction Service reads are covered by [pagination and metadata tests](../../../app/src/queries/__tests__/safe.queries.spec.ts),
 [independent error recovery tests](../../../app/src/queries/__tests__/safe.queries.integration.spec.ts), and
 [Axios authentication and cancellation tests](../../../app/src/lib/__tests__/external.axios.spec.ts).
+
+[Gateway observer tests](../../../app/src/queries/__tests__/safeClient.queries.integration.spec.ts) verify shared cache entries, reactive
+address/currency keys, cancellation of obsolete currency requests and protection against late responses overwriting displayed holdings.
 
 The caches belong to one browser session. They do not coordinate separate users, tabs, devices, or backend instances, and do not guarantee
 that provider quotas can absorb concurrent users.

@@ -788,12 +788,12 @@ applicable stories `Done`.
 
 ## Implementation Evidence
 
-Safe history applies the [confirmed-spam policy](../../implementation/client-data-access/README.md#confirmed-safe-spam) before accounting
-mapping and historical valuation requests. Confirmed counterfeit events cannot create journal movements or valuation gaps; real movements in
-the same transaction remain included. Unknown tokens and unavailable prices keep their existing completeness rules. Raw spam evidence
-remains in the browser query cache. See
+Safe history retains Transaction Service movements without a client-side contract blacklist before accounting mapping and historical
+valuation requests. Unknown, untrusted or spam-like provider events may reach the books or leave explicit metadata and valuation gaps; the
+existing completeness rules still apply. Gateway balance filtering does not filter this separate history feed. See
+[provider filtering](../../implementation/client-data-access/README.md#safe-provider-filtering) and
 [cached and paginated query-to-accounting tests](../../../app/src/queries/__tests__/safe.queries.integration.spec.ts). Live product review
-of this exclusion remains pending.
+remains pending.
 
 **Implementation evidence reviewed against:** `0bc2609d26711fab5422985ba93c4512a3e12ca8`
 
