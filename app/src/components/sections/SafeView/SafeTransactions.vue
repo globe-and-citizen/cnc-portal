@@ -18,6 +18,7 @@
 
     <SafeTransactionFeedback
       :has-error="!!error"
+      :error="error"
       :is-loading="isLoading"
       :is-empty="displayedTransactionRows.length === 0"
       :selected-status="selectedStatus"

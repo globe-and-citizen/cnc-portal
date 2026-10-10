@@ -10,7 +10,11 @@
       <div>
         <p class="text-sm font-medium text-red-800 dark:text-red-200">Approval queue unavailable</p>
         <p class="mt-0.5 text-sm text-red-700 dark:text-red-300">
-          Check your connection and try loading the transactions again.
+          {{
+            errorStatus === 429
+              ? 'Safe is limiting requests. Please wait before trying again.'
+              : 'The Safe transaction service could not load the queue. Please try again.'
+          }}
         </p>
       </div>
     </div>
@@ -72,9 +76,12 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
+import type { AxiosError } from 'axios'
 import type { SafeTransactionStatusFilter } from '@/utils/safe/transactionState'
 
 interface Props {
+  error?: unknown
   hasError: boolean
   isLoading: boolean
   isEmpty: boolean
@@ -82,7 +89,11 @@ interface Props {
   emptyDescription: string
 }
 
-defineProps<Props>()
+const props = defineProps<Props>()
+const errorStatus = computed(() => {
+  const failure = props.error as AxiosError | null
+  return failure?.response?.status ?? failure?.status
+})
 
 const emit = defineEmits<{
   retry: []
