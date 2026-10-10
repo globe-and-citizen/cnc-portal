@@ -801,10 +801,9 @@ of this exclusion remains pending.
   [team routes](../../../app/src/router/index.ts), and [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts)
 - [Source completeness](../../../app/src/utils/accounting/accountingCompleteness.ts),
   [block timestamps](../../../app/src/queries/blockTimestamp.queries.ts), and
-  [historical valuation](../../../app/src/queries/coingecko.queries.ts) (the
-  [CoinGecko request policy](../../../app/src/queries/coingecko.request-policy.ts) shares six-second admission spacing and a 429 pause that
-  survives new source dates and explicit refresh; successful date snapshots are immutable; unchanged missing-date sets with unavailable
-  prices retry daily or on explicit refresh; throttled batches stop and resume after at least one minute), with
+  [historical valuation queries](../../../app/src/queries/coingecko.queries.ts) and the
+  [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts) (successful date snapshots are immutable; independent
+  failed or malformed dates remain valuation gaps and recover on explicit refresh), with
   [pure contract and historical-response validation](../../../app/src/utils/tokens/coingecko.ts)
 - [Accounting assembly](../../../app/src/utils/accounting/assemble.ts),
   [journal finalization](../../../app/src/utils/accounting/journalEntry.ts), and

@@ -107,8 +107,10 @@ fiat response. Missing quantities and nonzero unpriced holdings keep totals unav
 total from admitted items. CNC transfer options match only configured payment contracts, independently of provider names and symbols.
 
 [CoinGecko response interpretation](../../../app/src/utils/tokens/coingecko.ts) verifies the Polygon contract before accepting coin
-identity, price or logo, and checks the existing six-decimal historical-rate precision. It also interprets seconds/HTTP-date `Retry-After`
-with a one-minute minimum. Query modules retain HTTP requests, cache ownership and recovery scheduling.
+identity, price or logo, normalizes Accounting's provider targets, and checks the existing six-decimal historical-rate precision. The
+existing Accounting data layer consumes reactive query results; pure utilities build provider targets and resolve rates by token/date.
+Queries retain raw validated provider responses and HTTP ownership. The shared `Retry-After` interpreter remains available for Safe's read
+policy with a one-minute minimum.
 
 ## Implementation Evidence
 

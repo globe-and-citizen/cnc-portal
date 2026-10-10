@@ -103,26 +103,25 @@ by network and block number with infinite staleness and garbage-collection time 
 and later refetches therefore share one block read. A failed block read or a decoded log without a block number does not receive a synthetic
 timestamp: the event is withheld and emitted as a typed source diagnostic, which keeps the Accounting route out of `ready`.
 
-The provisional draft feed derives one unique non-pegged asset target per required UTC transaction date. `coingecko.queries.ts` resolves
-each target through the shared TanStack Query client using an atomic `coinId + date + USD` identity. A successful snapshot has infinite
-staleness and garbage-collection time because it is the immutable rate of record; concurrent operations and later refreshes reuse it. The
-aggregate target-set query remains retryable, so a failed or not-yet-published date can resolve on Accounting refresh without refetching
-successful dates. It never falls back to the current market price. Stablecoins retain their one-dollar peg, and SHER remains under its
-separate multiplier realization policy.
+The provisional draft feed derives one unique non-pegged asset target per required UTC transaction date. The
+[Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts) uses pure utilities to resolve configured coin
+identities and verified Polygon contract metadata, then consumes the independent raw snapshot queries in `coingecko.queries.ts` directly.
+Each snapshot uses an atomic `coinId + date + USD` identity, with infinite staleness and garbage-collection time. Concurrent consumers and
+later refreshes reuse successful snapshots. Pure response interpretation retains the existing six-decimal rate precision; malformed or
+missing prices stay explicit valuation gaps. Explicit Accounting refresh retries failed provider queries without refetching successful
+dates. It never falls back to the current market price. Stablecoins retain their one-dollar peg, and SHER remains under its separate
+multiplier realization policy.
 
-Safe histories now refresh approximately every five minutes while retaining complete pagination and stable transfer identities. Missing
-historical rates with terminal errors or unavailable prices are checked once a day for an unchanged target set, or on explicit Accounting
-refresh; successful immutable date snapshots are reused. Historical dates load sequentially. Throttling, server or transport failure stops
-the batch and schedules active-tab recovery after at least a minute, honoring a longer `Retry-After`; pending dates remain valuation gaps
-until recovered. Current contract markets inherit one-minute freshness from the moderate preset; verified coin identities and recovered
-token metadata use the once preset with 24-hour retention. Safe and CoinGecko query modules call the external Axios client directly. The
-[CoinGecko request policy](../../../app/src/queries/coingecko.request-policy.ts) starts requests at least six seconds apart and shares a
-provider pause after HTTP 429, including when newly loaded sources change the historical target set or Accounting is explicitly refreshed.
-Safe Transaction Service reads use [shared admission](../../../app/src/queries/safe.requests.ts) with one request in flight, one-second
-start spacing and a provider-wide 429 pause. Production URLs use the optional configured production API key; complete pagination and
-unchanged snapshot semantics are preserved. Source inclusion, exchange classification, precision and rate-of-record policy remain unchanged.
-A failed later Safe page never publishes a partial replacement feed. See
-[Client Data Access](../client-data-access/README.md#browser-request-coordination) for the session-only boundary.
+Safe histories now refresh approximately every five minutes while retaining complete pagination and stable transfer identities. CoinGecko
+queries use ordinary Axios/TanStack observers with cancellation and no automatic retries. Distinct historical dates can load concurrently;
+one failed date does not block others. Historical errors recover on explicit refresh rather than automatic polling, and there is no custom
+request queue or provider-wide 429 pause. Current supported-token prices retain the moderate preset and five-minute polling; verified
+contract identities and recovered token metadata use the once preset with 24-hour retention. Safe Transaction Service reads use
+[shared admission](../../../app/src/queries/safe.requests.ts) with one request in flight, one-second start spacing and a provider-wide 429
+pause. Production URLs use the optional configured production API key; complete pagination and unchanged snapshot semantics are preserved.
+Source inclusion, exchange classification, precision and rate-of-record policy remain unchanged. A failed later Safe page never publishes a
+partial replacement feed. See [Client Data Access](../client-data-access/README.md#browser-request-coordination) for the session-only
+boundary.
 
 Each contract-event query is also keyed by its normalized generation targets: lowercase address plus effective deployment `fromBlock`,
 sorted independently of API order. A later or asynchronously resolved boundary therefore selects a distinct history range. Duplicate
@@ -726,8 +725,10 @@ because deposits and company-pocket transfers are not manual assignment targets.
   [event-query identity tests](../../../app/src/composables/__tests__/eventsViaLogs.spec.ts), and
   [Investor source-resolution tests](../../../app/src/composables/accounting/__tests__/useCNCAccounting.spec.ts)
 - [Immutable historical token-rate query](../../../app/src/queries/coingecko.queries.ts),
+  [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts),
   [valuation utilities](../../../app/src/utils/accounting/toUsd.ts),
-  [historical rate cache tests](../../../app/src/queries/__tests__/historicalTokenRate.queries.spec.ts), and
+  [historical endpoint tests](../../../app/src/queries/__tests__/historicalTokenRate.queries.spec.ts),
+  [real observer cache and recovery tests](../../../app/src/queries/__tests__/coingecko.queries.integration.spec.ts), and
   [valuation and missing-rate retention tests](../../../app/src/utils/accounting/__tests__/toUsd.spec.ts)
 - [Accounting source contracts](../../../app/src/utils/accounting/types.ts),
   [pure completeness projection](../../../app/src/utils/accounting/accountingCompleteness.ts), and
