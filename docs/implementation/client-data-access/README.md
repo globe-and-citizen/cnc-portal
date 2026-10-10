@@ -148,7 +148,7 @@ that provider quotas can absorb concurrent users.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `22058afcf7c39f6320537c622bcb33b74dbc9ec9`
+**Implementation evidence reviewed against:** `797fed20b7b30559623db8c12631b8341b75b5ed`
 
 - [Query barrel](../../../app/src/queries/index.ts), [query factory](../../../app/src/queries/queryFactory.ts), and
   [single-file upload query](../../../app/src/queries/file.queries.ts)

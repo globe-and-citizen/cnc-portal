@@ -795,7 +795,7 @@ remains in the browser query cache. See
 [cached and paginated query-to-accounting tests](../../../app/src/queries/__tests__/safe.queries.integration.spec.ts). Live product review
 of this exclusion remains pending.
 
-**Implementation evidence reviewed against:** `22058afcf7c39f6320537c622bcb33b74dbc9ec9`
+**Implementation evidence reviewed against:** `797fed20b7b30559623db8c12631b8341b75b5ed`
 
 - [Accounting page](../../../app/src/components/sections/AccountingView/AccountingPage.vue),
   [team routes](../../../app/src/router/index.ts), and [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts)
