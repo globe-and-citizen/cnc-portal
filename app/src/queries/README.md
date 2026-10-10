@@ -43,10 +43,10 @@ This folder contains all TanStack Query hooks for API interactions in the CNC Po
 - External queries inherit freshness from `queryPresets.moderate` or `queryPresets.once` without local `staleTime` overrides.
   `refetchInterval` is the observer polling cadence, and `retryDelay` waits between failed attempts only when `retry` permits one. These
   values do not limit the initial number of provider requests.
-- CoinGecko HTTP admissions share a session-cache window: one request is in flight at a time, departures are at least six seconds apart, and
-  HTTP 429 pauses subsequent requests for at least one minute or the longer provider `Retry-After`. A new historical target set or explicit
-  refresh preserves this pause; query cancellation stops waiting requests before HTTP admission. The window does not coordinate separate
-  tabs or users.
+- CoinGecko endpoints use ordinary `useQuery` or `useQueries` observers with direct Axios calls and raw cached responses. Each query
+  forwards cancellation and exposes its own error; `retry: false` avoids automatic retries. The existing Accounting data layer consumes
+  those queries directly, resolves rates through pure utilities and refreshes failed observers, preserving successful immutable date
+  snapshots.
 
 ## Full Documentation
 
