@@ -116,12 +116,13 @@ Safe histories now refresh approximately every five minutes while retaining comp
 queries use ordinary Axios/TanStack observers with cancellation and no automatic retries. Distinct historical dates can load concurrently;
 one failed date does not block others. Historical errors recover on explicit refresh rather than automatic polling, and there is no custom
 request queue or provider-wide 429 pause. Current supported-token prices retain the moderate preset and five-minute polling; verified
-contract identities and recovered token metadata use the once preset with 24-hour retention. Safe Transaction Service reads use
-[shared admission](../../../app/src/queries/safe.requests.ts) with one request in flight, one-second start spacing and a provider-wide 429
-pause. Production URLs use the optional configured production API key; complete pagination and unchanged snapshot semantics are preserved.
-Source inclusion, exchange classification, precision and rate-of-record policy remain unchanged. A failed later Safe page never publishes a
-partial replacement feed. See [Client Data Access](../client-data-access/README.md#browser-request-coordination) for the session-only
-boundary.
+contract identities and recovered token metadata use the once preset with 24-hour retention. Safe Transaction Service reads use direct Axios
+requests, disable automatic retries, and expose independent errors without a shared queue or 429 pause. Their unused history cache inherits
+the moderate preset's two-minute retention. Production GETs use the optional configured API key through Axios. Complete pagination and
+stable transfer identities are preserved; metadata recovery shares the observer's TanStack client and copies enriched rows without mutating
+provider objects. Source inclusion, exchange classification, precision and rate-of-record policy remain unchanged. A failed later Safe page
+never publishes a partial replacement feed. See [Client Data Access](../client-data-access/README.md#browser-request-coordination) for the
+session-only boundary.
 
 Each contract-event query is also keyed by its normalized generation targets: lowercase address plus effective deployment `fromBlock`,
 sorted independently of API order. A later or asynchronously resolved boundary therefore selects a distinct history range. Duplicate

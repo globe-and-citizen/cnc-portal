@@ -80,12 +80,12 @@ mocked provider responses and real TanStack observers; live browser validation r
 
 Safe and CoinGecko HTTP requests live in their query modules and use the existing
 [external Axios client](../../../app/src/lib/external.axios.ts), including its 15-second timeout and query cancellation signal. Independent
-Transaction Service reads use [Safe request admission](../../../app/src/queries/safe.requests.ts): one HTTP request in flight and starts at
-least one second apart. HTTP 429 pauses queued reads and explicit retries for at least one minute or the longer `Retry-After`. Aborted reads
-are withheld before HTTP admission. Direct `api.safe.global/tx-service` URLs avoid cross-origin redirects; `VITE_APP_SAFE_API_KEY` is sent
-only to that production Transaction Service, never to Gateway or other providers. A production key must come from `developer.safe.global`;
-staging keys from `developer.5afe.dev` do not establish a production quota. Service writes retain their explicit mutation path and are not
-queued or replayed by this read policy. Gateway keeps its own balance query cadence.
+Transaction Service reads run directly through Axios and TanStack Query without a shared admission queue or provider-wide pause. A 429 is
+reported by the affected query; unrelated queries keep running, and explicit refresh remains available. The existing Axios client's request
+interceptor attaches `VITE_APP_SAFE_API_KEY` only to GET requests under `https://api.safe.global/tx-service/`; its error interceptor removes
+authorization headers from propagated diagnostics. Gateway and other providers receive no Safe credential. Direct production URLs avoid
+cross-origin redirects. A production key must come from `developer.safe.global`; staging keys from `developer.5afe.dev` do not establish a
+production quota. Service writes retain their explicit mutation path. Gateway keeps its own balance query cadence.
 
 CoinGecko requests use standard TanStack cache identities and independent query error states. Queries for the same identity share one
 request; distinct identities can run concurrently. There is no custom admission queue, shared pause or batch recovery state. All CoinGecko
@@ -96,11 +96,12 @@ unrelated queries.
 Safe information, complete transfer histories, Gateway holdings and current prices inherit the moderate preset's one-minute freshness. Safe
 information, histories and current-price observers poll every five minutes; Gateway balances poll every minute. The transaction queue polls
 every minute while a pending transaction exists and every five minutes otherwise; a single transaction detail does not poll. Successful
-token metadata and verified coin identities use the once preset with 24-hour retention. Unused regular query data is retained for 30
-minutes; successful historical price snapshots remain immutable in the session cache. Each query inherits freshness and declares retention,
-polling and retry options. Periodic observers use their declared cadence, do not poll in background tabs, and do not refetch on window
-focus. Rate limits and terminal HTTP client errors do not trigger automatic retries. Safe reads allow one delayed retry for transient
-failures; CoinGecko and token-metadata reads recover on a subsequent refresh instead of retrying each failed request.
+token metadata and verified coin identities use the once preset with 24-hour retention. Transaction Service queries inherit the moderate
+preset's two-minute unused-cache retention; Gateway balances and current prices retain unused data for 30 minutes. Successful historical
+price snapshots remain immutable in the session cache. Each query inherits freshness and declares its polling cadence. Periodic observers do
+not poll in background tabs or refetch on window focus. Transaction Service queries disable automatic retries and recover on the next
+periodic or explicit refresh. Gateway alone retains one delayed transient-error retry; CoinGecko and token-metadata reads also disable
+automatic retries.
 
 Accounting deduplicates contract discovery and coin/date targets, then consumes their independent observers. Missing, malformed or failed
 rates remain explicit valuation gaps without a current-price fallback. The existing Accounting refresh retries failed query observers;
@@ -128,16 +129,23 @@ for 30 minutes, propagates cancellation and allows one delayed transient-error r
 external Axios client directly. A failed request retains its cached response while exposing the error; the UI marks the total incomplete.
 
 [Gateway queries](../../../app/src/queries/safeClient.queries.ts) own the balance HTTP request and reject malformed response bodies.
-[Safe movement queries](../../../app/src/queries/safe.queries.ts) own complete transfer pagination, deduplication and contract metadata
-recovery. Accounting keeps its Transaction Service movement feeds and historical market snapshots; other account surfaces keep their RPC
-balances and existing price queries. Gateway discovery does not expand CNC transfer currencies. Confirmed operations use
-[one Safe invalidation helper](../../../app/src/queries/safe.mutations.ts) for the entire Safe service prefix and the affected wallet's
-balance prefix, which also reaches all Gateway fiat entries. Proposals refresh only pending transactions until execution. Direct hosted
-Gateway access is a runtime dependency; mocked query tests do not establish an availability guarantee.
+[Safe movement queries](../../../app/src/queries/safe.queries.ts) retain one local pagination helper shared by the three complete-history
+reads. The asset-transfer helper deduplicates stable transfer identities and recovers missing contract metadata through the calling
+observer's TanStack client. Concurrent rows for one contract share its metadata query; enriched rows are copied without modifying provider
+objects. Failed metadata reads retain the original movement and its completeness diagnostic. Accounting keeps its Transaction Service
+movement feeds and historical market snapshots; other account surfaces keep their RPC balances and existing price queries. Gateway discovery
+does not expand CNC transfer currencies. Confirmed operations use [one Safe invalidation helper](../../../app/src/queries/safe.mutations.ts)
+for the entire Safe service prefix and the affected wallet's balance prefix, which also reaches all Gateway fiat entries. Proposals refresh
+only pending transactions until execution. Direct hosted Gateway access is a runtime dependency; mocked query tests do not establish an
+availability guarantee.
 
 Executable evidence: [Gateway request tests](../../../app/src/queries/__tests__/safeClient.queries.spec.ts),
 [shared observer and invalidation tests](../../../app/src/queries/__tests__/safeClient.queries.integration.spec.ts), and
 [holdings presentation tests](../../../app/src/utils/safe/__tests__/portfolio.spec.ts).
+
+Direct Transaction Service reads are covered by [pagination and metadata tests](../../../app/src/queries/__tests__/safe.queries.spec.ts),
+[independent error recovery tests](../../../app/src/queries/__tests__/safe.queries.integration.spec.ts), and
+[Axios authentication and cancellation tests](../../../app/src/lib/__tests__/external.axios.spec.ts).
 
 The caches belong to one browser session. They do not coordinate separate users, tabs, devices, or backend instances, and do not guarantee
 that provider quotas can absorb concurrent users.

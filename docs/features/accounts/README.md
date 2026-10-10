@@ -1256,13 +1256,14 @@ holdings. The overview retains its USD total, so a non-USD display uses an addit
 Safe balances refresh approximately every minute while their page is active. Complete transfer histories and Safe information refresh
 approximately every five minutes; pending transactions refresh every minute when the queue contains an unexecuted transaction and every five
 minutes otherwise. Safe and current-price queries inherit one-minute freshness from the moderate preset; verified historical-transfer token
-metadata uses the once preset with 24-hour retention; unused regular query data stays in the browser cache for 30 minutes. Each query
-configures its own refresh and retry options; background tabs and window focus do not trigger extra polling. Safe and market query modules
-call the external Axios client. [Safe request admission](../../../app/src/queries/safe.requests.ts) serializes Transaction Service reads
-with at least one second between starts and shares a pause after HTTP 429, honoring at least one minute or a longer `Retry-After` even on
-manual retry. These requests use the direct production service and send the optional `VITE_APP_SAFE_API_KEY` only to that service. Keys must
-be issued by `developer.safe.global`; staging keys do not establish a production quota. The approval queue identifies rate limiting instead
-of reporting a connection problem. Gateway keeps its own balance cadence. See
+metadata uses the once preset with 24-hour retention. Unused Transaction Service data follows the moderate preset's two-minute retention;
+Gateway balances and current prices retain unused data for 30 minutes. Each query configures its refresh cadence; background tabs and window
+focus do not trigger extra polling. Safe and market query modules call the external Axios client directly. Transaction Service errors,
+including HTTP 429, affect the individual query; queries recover on periodic or explicit refresh without automatic retries or a shared
+request queue. Complete history pagination and contract metadata recovery are retained. The Axios client sends the optional
+`VITE_APP_SAFE_API_KEY` only to GET requests on the direct production Transaction Service. Keys must be issued by `developer.safe.global`;
+staging keys do not establish a production quota. The approval queue identifies rate limiting instead of reporting a connection problem.
+Gateway keeps its own balance cadence. See
 [Client Data Access](../../implementation/client-data-access/README.md#browser-request-coordination) for recovery and session boundaries.
 
 Confirmed Safe transaction execution and directly executed transfers use one invalidation helper for all Safe service queries and the wallet
