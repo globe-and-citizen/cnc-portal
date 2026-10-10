@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { shallowMount } from '@vue/test-utils'
+import { flushPromises, shallowMount } from '@vue/test-utils'
 import SafeView from '../SafeView.vue'
 import { mockTeamData, mockTeamStore } from '@/tests/mocks'
 import { mockUseContractBalance, makeTokenBalance } from '@/tests/mocks/composables.mock'
@@ -51,5 +51,26 @@ describe('[US-SAFE-001] [US-SAFE-002] SafeView.vue', () => {
     expect(rows).toHaveLength(1)
     expect(rows[0]).toMatchObject({ token: { name: 'Polygon', symbol: 'POL' }, quantity: '0' })
     expect(wrapper.findComponent({ name: 'SafeOwnersCard' }).props('address')).toBe(safeAddress)
+  })
+
+  it('updates the existing holdings table when query data changes after mounting', async () => {
+    mockTeamStore.getContractAddressByType.mockReturnValue(
+      '0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB'
+    )
+    mockUseContractBalance.balances.value = [
+      makeTokenBalance({ token: { name: 'Polygon', symbol: 'POL' }, amount: 1, usdPrice: 0.2 })
+    ]
+    const wrapper = shallowMount(SafeView)
+    const table = wrapper.findComponent({ name: 'TokenHoldingsSection' })
+    expect(table.props('rows')[0]).toMatchObject({ quantity: '1', balance: 0.2 })
+    mockUseContractBalance.balances.value = [
+      makeTokenBalance({ token: { name: 'Polygon', symbol: 'POL' }, amount: 2, usdPrice: 0.2 })
+    ]
+    await flushPromises()
+    expect(table.props('rows')[0]).toMatchObject({ quantity: '2', balance: 0.4 })
+    mockUseContractBalance.balances.value = []
+    await flushPromises()
+    expect(table.props('rows')).toEqual([])
+    wrapper.unmount()
   })
 })

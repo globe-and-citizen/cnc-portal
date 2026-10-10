@@ -5,7 +5,7 @@ import { assetMetadata } from '@/utils/tokens/assets'
 import { SUPPORTED_TOKENS } from '@/constant'
 import { makeTokenBalance, mockUseContractBalance } from '@/tests/mocks/composables.mock'
 import TokenHoldingsSection from '@/components/ui/TokenHoldingsSection.vue'
-import { safePortfolioRows } from '@/utils/safe/portfolio'
+import { toSafeHoldingRows } from '@/utils/safe/portfolio'
 import { tokenHoldingRows } from '@/utils/tokens/holdings'
 
 const token = '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
@@ -16,7 +16,7 @@ const asset = assetMetadata(token, 137, {
   decimals: 18
 })
 
-const rows = () => safePortfolioRows(mockUseSafeBalances.query().data.value)
+const rows = () => toSafeHoldingRows(mockUseSafeBalances.query().data.value)
 const renderHoldings = () =>
   renderWithProviders(TokenHoldingsSection, {
     props: {

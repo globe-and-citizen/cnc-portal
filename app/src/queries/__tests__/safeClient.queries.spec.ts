@@ -4,7 +4,7 @@ import externalApiClient from '@/lib/external.axios'
 import { useQueryFn } from '@/tests/mocks/composables.mock'
 import { mockWagmiCore } from '@/tests/mocks/wagmi.vue.mock'
 import type { SafeClientBalances } from '@/types/safe'
-import { safeBalancesTotal } from '@/utils/safe/portfolio'
+import { getSafeFiatTotal } from '@/utils/safe/portfolio'
 import { safeKeys } from '../safe.queries'
 
 const { useGetSafeBalancesQuery, safeClientKeys } =
@@ -62,7 +62,7 @@ describe('Safe Client balances query', () => {
     )
   })
 
-  it('keeps raw confirmed-spam evidence in the response while omitting it from the valued total', async () => {
+  it('retains the provider response and total without applying a local contract blacklist', async () => {
     const payload: SafeClientBalances = {
       fiatTotal: '999',
       items: [
@@ -84,7 +84,7 @@ describe('Safe Client balances query', () => {
     useGetSafeBalancesQuery({ pathParams: { safeAddress: address, chainId: 137 } })
     const data = await capture().queryFn({ signal: new AbortController().signal })
     expect(data.items).toHaveLength(1)
-    expect(safeBalancesTotal(data, 137)).toBe(0)
+    expect(getSafeFiatTotal(data)).toBe(999)
   })
 
   it('uses active-tab minute refreshes and retries transient errors once without retrying client errors', () => {

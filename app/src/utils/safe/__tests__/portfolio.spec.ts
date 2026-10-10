@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { zeroAddress } from 'viem'
-import { currentChainId, SUPPORTED_TOKENS } from '@/constant'
+import { SUPPORTED_TOKENS } from '@/constant'
 import type { SafeClientBalance, SafeClientBalances } from '@/types/safe'
-import { safeBalancesTotal, safePortfolioRows, safeTransferTokens } from '../portfolio'
+import { getSafeFiatTotal, toSafeHoldingRows, toSafeTransferTokens } from '../portfolio'
 
 const token = '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
 const heldAsset = (overrides: Partial<SafeClientBalance> = {}): SafeClientBalance => ({
@@ -42,9 +42,9 @@ describe('Safe Gateway holdings presentation', () => {
     })
     const data = response([heldAsset(), returned])
     const before = structuredClone(data)
-    const rows = safePortfolioRows(data)
+    const rows = toSafeHoldingRows(data)
     expect(rows).toHaveLength(2)
-    expect(rows.map((row) => row.symbol)).toEqual(['WETH', 'Provider USDC'])
+    expect(rows.map((row) => row.token.symbol)).toEqual(['WETH', 'Provider USDC'])
     expect(rows[1]).toMatchObject({
       name: 'Provider token name',
       icon: 'https://assets.example/provider-usdc.png',
@@ -55,8 +55,8 @@ describe('Safe Gateway holdings presentation', () => {
     expect(data).toEqual(before)
   })
   it('renders only the returned holding with exact quantity and provider valuation', () => {
-    const rows = safePortfolioRows(response([heldAsset()]))
-    expect(rows.map((row) => row.symbol)).toEqual(['WETH'])
+    const rows = toSafeHoldingRows(response([heldAsset()]))
+    expect(rows.map((row) => row.token.symbol)).toEqual(['WETH'])
     expect(rows[0]).toMatchObject({
       quantity: '0.011371464599721321',
       amountLabel: '0.0114',
@@ -65,7 +65,7 @@ describe('Safe Gateway holdings presentation', () => {
       balanceLabel: '$22.74',
       icon: 'https://assets.example/weth.png'
     })
-    expect(safeBalancesTotal(response([heldAsset()]))).toBe(22.742929199442642)
+    expect(getSafeFiatTotal(response([heldAsset()]))).toBe(22.742929199442642)
   })
 
   it('preserves native base-unit precision and labels a dust quantity without showing zero', () => {
@@ -81,70 +81,70 @@ describe('Safe Gateway holdings presentation', () => {
       fiatConversion: '0.2',
       fiatBalance: '0.0000000000000000002'
     })
-    const row = safePortfolioRows(response([native])).find((item) => item.address === null)
+    const row = toSafeHoldingRows(response([native])).find((item) => item.address === null)
     expect(row).toMatchObject({ quantity: '0.000000000000000001', amountLabel: '<0.0001' })
   })
 
-  it('keeps identically named contracts distinct and deduplicates case variants', () => {
+  it('maps each returned item without regrouping contracts or recalculating the provider total', () => {
     const second = heldAsset({
       tokenInfo: { ...heldAsset().tokenInfo, address: '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb' }
     })
     const duplicate = heldAsset({
       tokenInfo: { ...heldAsset().tokenInfo, address: token.toUpperCase().replace('0X', '0x') }
     })
-    expect(safePortfolioRows(response([heldAsset(), duplicate, second]))).toHaveLength(2)
-    expect(safeBalancesTotal(response([heldAsset(), duplicate, second]))).toBeCloseTo(
-      45.485858398885284
-    )
+    const data = response([heldAsset(), duplicate, second], '68.23')
+    expect(toSafeHoldingRows(data).map((row) => row.address)).toEqual([
+      token,
+      duplicate.tokenInfo.address,
+      second.tokenInfo.address
+    ])
+    expect(getSafeFiatTotal(data)).toBe(68.23)
   })
 
   it.each([null, '0', '', 'NaN', '-1'])(
     'keeps an unavailable market price %s explicit despite a zero fallback from Safe',
     (price) => {
       const data = response([heldAsset({ fiatConversion: price, fiatBalance: '0' })], '0')
-      expect(safePortfolioRows(data)[0]).toMatchObject({
+      expect(toSafeHoldingRows(data)[0]).toMatchObject({
         quantity: '0.011371464599721321',
         priceLabel: 'Price unavailable',
         balanceLabel: 'Value unavailable'
       })
-      expect(safeBalancesTotal(data)).toBeUndefined()
+      expect(getSafeFiatTotal(data)).toBeUndefined()
     }
   )
 
   it('distinguishes a missing response and unreadable amount from confirmed zero holdings', () => {
-    expect(safePortfolioRows()).toEqual([])
-    expect(safePortfolioRows(response([], '0'))).toEqual([])
-    expect(safeBalancesTotal(undefined)).toBeUndefined()
-    expect(safeBalancesTotal(response([], '0'))).toBe(0)
+    expect(toSafeHoldingRows()).toEqual([])
+    expect(toSafeHoldingRows(response([], '0'))).toEqual([])
+    expect(getSafeFiatTotal(undefined)).toBeUndefined()
+    expect(getSafeFiatTotal(response([], '0'))).toBe(0)
     const data = response([heldAsset({ balance: null })])
-    expect(safePortfolioRows(data)[0]?.amountLabel).toBe('Balance unavailable')
-    expect(safeBalancesTotal(data)).toBeUndefined()
+    expect(toSafeHoldingRows(data)[0]?.amountLabel).toBe('Balance unavailable')
+    expect(getSafeFiatTotal(data)).toBeUndefined()
     expect(
-      safePortfolioRows(response([heldAsset({ balance: '0', fiatConversion: null })], '0'))
+      toSafeHoldingRows(response([heldAsset({ balance: '0', fiatConversion: null })], '0'))
     ).toHaveLength(1)
   })
 
   it('uses the requested fiat prices directly without calculating an exchange rate from another token', () => {
-    const rows = safePortfolioRows(
+    const rows = toSafeHoldingRows(
       response([heldAsset({ fiatConversion: '1800', fiatBalance: '20.468636279498378' })]),
       'EUR'
     )
     expect(rows[0]).toMatchObject({ price: 1800, priceLabel: '€1.8K', balanceLabel: '€20.47' })
   })
 
-  it('excludes a confirmed counterfeit by chain and contract without mutating the raw response or trusting fiatTotal', () => {
-    const spam = heldAsset({
+  it('keeps provider-returned contracts without a local blacklist or response mutation', () => {
+    const returned = heldAsset({
       tokenInfo: { ...heldAsset().tokenInfo, address: '0x0ce89273aadcb0f297a32d957cbd459ed06848ea' }
     })
-    const data = response([spam, heldAsset()], '9999')
+    const data = response([returned, heldAsset()], '9999')
     const before = structuredClone(data)
-    expect(
-      safePortfolioRows(data, 'USD', 137).some((row) => row.address === spam.tokenInfo.address)
-    ).toBe(false)
-    expect(safeBalancesTotal(data, 137)).toBe(22.742929199442642)
-    expect(
-      safePortfolioRows(data, 'USD', 1).some((row) => row.address === spam.tokenInfo.address)
-    ).toBe(true)
+    expect(toSafeHoldingRows(data).some((row) => row.address === returned.tokenInfo.address)).toBe(
+      true
+    )
+    expect(getSafeFiatTotal(data)).toBe(9999)
     expect(data).toEqual(before)
   })
 
@@ -162,10 +162,10 @@ describe('Safe Gateway holdings presentation', () => {
         balance: '1234567'
       })
     ])
-    const tokens = safeTransferTokens(data)
+    const tokens = toSafeTransferTokens(data)
     expect(tokens.map((item) => item.tokenId)).toEqual(SUPPORTED_TOKENS.map((item) => item.id))
     expect(tokens[0]).toMatchObject({ symbol: supported.symbol, balance: 1.234567 })
-    expect(safeTransferTokens(undefined)).toEqual([])
-    expect(safePortfolioRows(data, 'USD', currentChainId)[1]?.symbol).toBe('Spoofed symbol')
+    expect(toSafeTransferTokens(undefined)).toEqual([])
+    expect(toSafeHoldingRows(data)[1]?.token.symbol).toBe('Spoofed symbol')
   })
 })

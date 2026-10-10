@@ -73,7 +73,7 @@ describe('Safe query reactivity', () => {
   })
 
   it.each(['cached', 'paginated'] as const)(
-    'filters confirmed spam from %s holdings, incoming history and accounting while retaining raw cache evidence',
+    'preserves every provider movement in %s history and accounting without a local blacklist',
     async (mode) => {
       const token = '0x8f3cf7ad23cd3cadbd9735aff958023239c6a063'
       const legitimate: SafeIncomingTransfer = {
@@ -88,11 +88,15 @@ describe('Safe query reactivity', () => {
         to: FIRST_CHECKSUM_SAFE_ADDRESS,
         value: '977545092688764193'
       }
-      const spam: SafeIncomingTransfer = {
+      const untrusted: SafeIncomingTransfer = {
         ...legitimate,
-        transferId: 'counterfeit',
+        transferId: 'untrusted-in',
         tokenAddress: '0x0ce89273aadcb0f297a32d957cbd459ed06848ea',
-        tokenInfo: undefined
+        tokenInfo: {
+          ...legitimate.tokenInfo!,
+          address: '0x0ce89273aadcb0f297a32d957cbd459ed06848ea',
+          trusted: false
+        }
       }
       const outflow: SafeIncomingTransfer = {
         ...legitimate,
@@ -100,8 +104,8 @@ describe('Safe query reactivity', () => {
         from: FIRST_CHECKSUM_SAFE_ADDRESS,
         to: SECOND_LOWERCASE_SAFE_ADDRESS
       }
-      const raw = [spam, legitimate, outflow]
-      const rawIncoming = [spam, legitimate]
+      const raw = [untrusted, legitimate, outflow]
+      const rawIncoming = [untrusted, legitimate]
       const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
       const keys = [
         safeQueries.safeKeys.transfers(FIRST_CHECKSUM_SAFE_ADDRESS, 137),
@@ -119,7 +123,7 @@ describe('Safe query reactivity', () => {
                 ? [legitimate]
                 : [legitimate, outflow]
             }
-          : { next: '?offset=1', results: [spam] }
+          : { next: '?offset=1', results: [untrusted] }
       }))
       mockWagmiCore.readContract.mockClear()
       let transfers!: ReturnType<typeof safeQueries.useGetSafeTransfersQuery>
@@ -138,25 +142,30 @@ describe('Safe query reactivity', () => {
       try {
         await vi.waitFor(
           () => {
-            expect(transfers.data.value).toEqual([legitimate, outflow])
-            expect(incoming.data.value).toEqual([legitimate])
+            expect(transfers.data.value).toEqual(raw)
+            expect(incoming.data.value).toEqual(rawIncoming)
           },
           { timeout: 5000 }
         )
         expect(
           discoverSafeAssets(transfers.data.value!, 137).map((asset) => asset.address)
-        ).toEqual([token])
+        ).toEqual([untrusted.tokenAddress, token])
         expect(
           toSafeTransferRows(transfers.data.value, undefined, 137).map((movement) => movement.id)
-        ).toEqual(['legitimate-in', 'legitimate-out'])
+        ).toEqual(['untrusted-in', 'legitimate-in', 'legitimate-out'])
         const drafts = buildCncJournalEntryDrafts({
           safeAddress: FIRST_CHECKSUM_SAFE_ADDRESS,
           safeAssetTransfers: transfers.data.value
         })
-        expect(drafts).toHaveLength(2)
-        expect(drafts.map((draft) => draft.rawAmount)).toEqual([legitimate.value, outflow.value])
-        expect(drafts.every((draft) => draft.asset?.address === token)).toBe(true)
+        expect(drafts).toHaveLength(3)
+        expect(drafts.map((draft) => draft.rawAmount)).toEqual(raw.map((row) => row.value))
+        expect(drafts.map((draft) => draft.asset?.address)).toEqual([
+          untrusted.tokenAddress,
+          token,
+          token
+        ])
         expect(historicalRateTargets(drafts).map((target) => target.token)).toEqual([
+          `erc20:137:${untrusted.tokenAddress}`,
           `erc20:137:${token}`
         ])
         expect(client.getQueryData(keys[0]!)).toEqual(raw)
