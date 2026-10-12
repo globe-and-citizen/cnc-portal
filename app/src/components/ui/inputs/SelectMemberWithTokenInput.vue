@@ -76,12 +76,12 @@ const emit = defineEmits(['selectMember'])
 defineProps<{
   tokenOptions: Array<{ value: string; label: string }>
 }>()
-const input = defineModel({
-  default: {
+const input = defineModel<{ name: string; address: string; token: string }>({
+  default: () => ({
     name: '',
     address: '',
     token: ''
-  }
+  })
 })
 const teamStore = useTeamStore()
 const showDropdown = ref(false)

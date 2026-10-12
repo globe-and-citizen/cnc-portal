@@ -19,7 +19,7 @@ describe('App', () => {
           SidebarLayout: { template: '<div data-test="sidebar-layout" />' },
           TeamSelectMenu: { template: '<div data-test="team-select" />' },
           NavBar: { template: '<div data-test="navbar" />' },
-          VueQueryDevtools: { template: '<div data-test="query-devtools" />' },
+          Devtools: { template: '<div data-test="query-devtools" />' },
           LockScreen: { template: '<div data-test="lock-screen" />' },
           RouterView: { template: '<div data-test="router-view" />' }
         }
