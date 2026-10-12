@@ -3,7 +3,7 @@
 **Scope:** The shared client-side selection of one or more users across team setup, member administration, elections, Safe signers,
 ownership transfers, and Vesting beneficiaries
 
-**Last verified:** 2026-08-30
+**Last verified:** 2026-10-12
 
 This capability provides the common selection behaviour used by several product journeys. Product permissions and outcomes remain owned by
 their feature documentation; this document owns only the shared selection boundary.
@@ -35,6 +35,7 @@ flowchart LR
 - A caller chooses one named scope: all users, current team members, or users who are not already team members. It cannot combine
   conflicting team restrictions.
 - A user already selected in a multi-select field is not offered again.
+- Each selector instance creates its own empty model value, so a default selection cannot leak between forms.
 - A current team member cannot be selected when the scope excludes team members.
 - A current Safe owner cannot be selected as a new signer.
 - Team-member scope reads the current team members; the other scopes use the user-search query.
@@ -43,7 +44,7 @@ flowchart LR
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `8a3e58b97250117c479651ca1cb8c490204d44bd`
+**Implementation evidence reviewed against:** `a1531796c2de33c4261baca8aad967a04b6853c2`
 
 - [Shared user identity](../../../app/src/components/ui/UserIdentity.vue),
   [contract member selector](../../../app/src/components/ui/inputs/SelectMemberContractsInput.vue), and
