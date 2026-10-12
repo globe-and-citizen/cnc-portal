@@ -29,6 +29,7 @@ import {
   safeTransactionHash,
   type SafeE2EFixture
 } from './safe-chain'
+import { stubSafeClientGateway } from './safe-client-gateway'
 import { stubSafeTransactionService } from './safe-transaction-service'
 import { transaction } from './safe-transaction'
 
@@ -94,7 +95,8 @@ export async function openSafeAccount(
       incomingTransfers: options.incomingTransfers,
       transactions: options.transactions,
       user
-    })
+    }),
+    stubSafeClientGateway(page)
   ])
   await signInAndOpenFirstTeam(page)
   await openAccountFromSidebar(
@@ -114,8 +116,8 @@ export async function exerciseArchivedSafeSetup(page: Page, fixture: SafeE2EFixt
 
 export async function exerciseSafeInfoRecovery(page: Page, fixture: SafeE2EFixture) {
   await sendToken(fixture.usdc, fixture.safe, '2')
-  // Fail the initial read and its single automatic retry; the manual retry can then recover.
-  await openSafeAccount(page, fixture, { failSafeInfoRequests: 2, incomingTransfers: [] })
+  // Transaction Service reads do not retry automatically, so the manual retry recovers.
+  await openSafeAccount(page, fixture, { failSafeInfoRequests: 1, incomingTransfers: [] })
   await expect(page.locator('[data-test="safe-deposits-empty"]')).toBeVisible()
   await expect(page.locator('[data-test="safe-overview-error"]')).toBeVisible({ timeout: 15_000 })
   await expect(page.locator('[data-test="safe-total-usd"]')).toHaveText('$2.00')
