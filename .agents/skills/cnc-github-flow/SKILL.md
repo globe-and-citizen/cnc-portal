@@ -52,19 +52,26 @@ or Goal issues solely to normalize older title variants.
 
 ## Propagate issue changes through the hierarchy
 
-When an issue's scope, plan, status, blocker, validation evidence, or completion changes:
+When an issue's scope, plan, status, blocker, validation evidence, or completion changes, distinguish routine delivery progress from a
+concrete impact on the hierarchy:
 
 1. Read the changed issue, its descendants, its native parent, and each ancestor. At each ancestor, inspect the other child branches for a
-   shared dependency, assumption, scope, acceptance criterion, sequence, or validation claim affected by the change. Record the change on
-   the immediate parent in the same workflow, even when no other branch is affected.
-2. Use a concise comment for dated progress or decisions; edit an issue's description or checklist when its durable plan, scope,
-   dependencies, or completion criteria change. Propagate through relevant sibling branches and their descendants, then reassess their
-   parents and affected ancestors. Stop at branches with no concrete impact; do not copy status or checklist changes mechanically. Track
-   visited issues so a branch is updated once per change. Link the originating issue and evidence in each affected update.
-3. Reconcile a moved issue with both its old and new parent chains. Keep each parent's summary consistent with its native children and
-   evidence; do not check off a task, claim validation, or close a parent solely because a child or PR closed. Reassess each affected
-   issue's Project status against its own exit criteria and update it when warranted.
-4. Read back updated descriptions, comments, checklists, native relationships, and project statuses. Leave unresolved decisions or missing
+   shared dependency, assumption, scope, acceptance criterion, sequence, or validation claim affected by the change. A native parent link
+   alone does not justify a progress update on every ancestor.
+2. Record routine PR publication, new commits, CI results, and test progress on the delivery issue, or use a concise comment on its
+   immediate Goal when that Goal needs the update. Edit an issue's description or checklist when its durable plan, scope, dependencies, or
+   completion criteria change. Propagate concrete impacts through relevant sibling branches and their descendants, then reassess affected
+   ancestors. Stop at branches with no concrete impact; do not copy status or checklist changes mechanically. Track visited issues so a
+   branch is updated once per change. Link the originating issue and evidence in each affected update.
+3. Apply the Sprint-root boundary even when the Sprint is the immediate parent. Update its body, comments, checklist, or manual Project
+   status only for a change to agreed objectives or scope, a major Sprint-level blocker, or a verified Goal outcome. A PR opening, new
+   commit, CI or test result, or PR merge alone does not meet that threshold. Keep commit hashes, validation logs, and per-PR progress on
+   the delivery issue or relevant immediate Goal. Do not add or restore a technical progress section in the Sprint plan under `Notes`,
+   `Corrective delivery status`, or another heading.
+4. Reconcile a moved issue with both its old and new parent chains. Update parent summaries only for concrete scope, dependency, blocker, or
+   outcome changes, applying the Sprint-root boundary above. Do not check off a task, claim validation, or close a parent solely because a
+   child or PR closed. Reassess each affected issue's Project status against its own exit criteria and update it when warranted.
+5. Read back updated descriptions, comments, checklists, native relationships, and project statuses. Leave unresolved decisions or missing
    evidence visible rather than presenting an affected issue as complete.
 
 ## Publish a branch
