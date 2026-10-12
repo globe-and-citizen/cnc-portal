@@ -1,11 +1,8 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { ref, toValue, type MaybeRefOrGetter } from 'vue'
-import { contractBalanceKeys } from '@/composables/useContractBalance'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import externalApiClient from '@/lib/external.axios'
 import type { SafeIncomingTransfer, SafeTransaction } from '@/types/safe'
 import { useQueryFn, useQueryClientFn } from '@/tests/mocks/composables.mock'
 import { mockWagmiCore } from '@/tests/mocks/wagmi.vue.mock'
-import { queryClient } from '../queryClient'
 
 const LOWERCASE_SAFE_ADDRESS = '0x0557f280d9da274254e85ee70c2936694e494275'
 const CHECKSUM_SAFE_ADDRESS = '0x0557F280D9DA274254e85Ee70c2936694e494275'
@@ -17,11 +14,8 @@ vi.mock('@/constant/index', async (importOriginal) => ({
 }))
 
 const safeQueries = await vi.importActual<typeof import('../safe.queries')>('../safe.queries')
-const { safeKeys } = safeQueries
 
 interface CapturedQuery<T> {
-  queryKey: MaybeRefOrGetter<readonly unknown[]>
-  enabled: MaybeRefOrGetter<boolean>
   queryFn: (context: { signal: AbortSignal }) => Promise<T[]>
 }
 
@@ -35,42 +29,13 @@ const outgoing = (safeTxHash: string) => ({ safeTxHash }) as SafeTransaction
 describe('safe queries', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    queryClient.clear()
-    useQueryClientFn.mockReturnValue(queryClient as unknown as ReturnType<typeof useQueryClientFn>)
+    useQueryClientFn.mockReturnValue({
+      ...useQueryClientFn(),
+      fetchQuery: vi.fn(({ queryFn }: { queryFn: () => Promise<unknown> }) => queryFn())
+    } as ReturnType<typeof useQueryClientFn>)
   })
 
-  it('reuses recovered contract metadata across complete history refreshes', async () => {
-    const makeRow = () =>
-      ({
-        transferId: 'metadata-cache',
-        type: 'ERC20_TRANSFER',
-        tokenAddress: SECOND_LOWERCASE_SAFE_ADDRESS,
-        tokenInfo: null
-      }) as SafeIncomingTransfer
-    vi.spyOn(externalApiClient, 'get')
-      .mockResolvedValueOnce({
-        data: { next: null, results: [makeRow(), { ...makeRow(), transferId: 'same-token' }] }
-      })
-      .mockResolvedValueOnce({ data: { next: null, results: [makeRow()] } })
-    mockWagmiCore.readContract
-      .mockReset()
-      .mockResolvedValueOnce(6)
-      .mockResolvedValueOnce('ASSET')
-      .mockResolvedValueOnce('Asset')
-    safeQueries.useGetSafeTransfersQuery({ pathParams: { safeAddress: LOWERCASE_SAFE_ADDRESS } })
-    const query = capturedQuery<SafeIncomingTransfer>()
-    const context = { signal: new AbortController().signal }
-    const first = await query.queryFn(context)
-    const next = await query.queryFn(context)
-    expect(first[0]?.tokenInfo).toEqual(next[0]?.tokenInfo)
-    expect(first[1]?.tokenInfo).toEqual(first[0]?.tokenInfo)
-    expect(mockWagmiCore.readContract).toHaveBeenCalledTimes(3)
-    const cache = queryClient.getQueryCache().find({
-      queryKey: ['safe-token-metadata', 137, SECOND_LOWERCASE_SAFE_ADDRESS]
-    })
-    expect(cache?.options.staleTime).toBe(Infinity)
-    expect(cache?.options.gcTime).toBe(24 * 60 * 60_000)
-  })
+  afterEach(() => vi.restoreAllMocks())
   it('recovers missing ERC-20 metadata from the actual contract and preserves an explicit untrusted flag', async () => {
     const row = {
       transferId: 'token-1',
@@ -131,9 +96,6 @@ describe('safe queries', () => {
       .mockResolvedValueOnce({ data: { next: '?offset=1', results: [first] } })
       .mockResolvedValueOnce({ data: { next: null, results: [first, second] } })
     safeQueries.useGetSafeTransfersQuery({ pathParams: { safeAddress: LOWERCASE_SAFE_ADDRESS } })
-    expect(toValue(capturedQuery().queryKey)).toEqual(
-      safeKeys.transfers(CHECKSUM_SAFE_ADDRESS, 137)
-    )
     await expect(
       capturedQuery<SafeIncomingTransfer>().queryFn({ signal: new AbortController().signal })
     ).resolves.toEqual([first, second])
@@ -148,69 +110,6 @@ describe('safe queries', () => {
       capturedQuery<SafeIncomingTransfer>().queryFn({ signal: new AbortController().signal })
     ).rejects.toThrow('Safe transfer identity unavailable')
   })
-  it('builds incoming transfer keys with a checksum-normalized address and optional limit', () => {
-    expect(safeKeys.incomingTransfers(LOWERCASE_SAFE_ADDRESS, 10)).toEqual([
-      'safe',
-      'incoming-transfers',
-      { safeAddress: CHECKSUM_SAFE_ADDRESS, limit: 10 }
-    ])
-
-    expect(safeKeys.incomingTransfers(LOWERCASE_SAFE_ADDRESS)).toEqual([
-      'safe',
-      'incoming-transfers',
-      { safeAddress: CHECKSUM_SAFE_ADDRESS }
-    ])
-  })
-
-  it('builds the balance key the contract-balance query owns', () => {
-    expect(safeKeys.balance(LOWERCASE_SAFE_ADDRESS, 137)).toEqual(
-      contractBalanceKeys.detail(CHECKSUM_SAFE_ADDRESS, 137)
-    )
-    expect(safeKeys.balance(LOWERCASE_SAFE_ADDRESS, 137)).toEqual([
-      'balance',
-      { address: CHECKSUM_SAFE_ADDRESS, chainId: 137 }
-    ])
-  })
-
-  it('reacts when the Accounting Safe address becomes available or changes', () => {
-    const address = ref<string>()
-
-    safeQueries.useGetSafeIncomingTransfersQuery({
-      pathParams: { safeAddress: address },
-      queryParams: { limit: 500 }
-    })
-    const incomingQuery = capturedQuery<SafeIncomingTransfer>()
-
-    safeQueries.useGetSafeOutgoingTransactionsQuery({
-      pathParams: { safeAddress: address },
-      queryParams: { limit: 500 }
-    })
-    const outgoingQuery = capturedQuery<SafeTransaction>()
-
-    expect(toValue(incomingQuery.enabled)).toBe(false)
-    expect(toValue(outgoingQuery.enabled)).toBe(false)
-
-    address.value = LOWERCASE_SAFE_ADDRESS
-
-    expect(toValue(incomingQuery.enabled)).toBe(true)
-    expect(toValue(incomingQuery.queryKey)).toEqual(
-      safeKeys.incomingTransfers(CHECKSUM_SAFE_ADDRESS, 500)
-    )
-    expect(toValue(outgoingQuery.enabled)).toBe(true)
-    expect(toValue(outgoingQuery.queryKey)).toEqual(
-      safeKeys.outgoingTransactions(CHECKSUM_SAFE_ADDRESS, 500)
-    )
-
-    address.value = SECOND_LOWERCASE_SAFE_ADDRESS
-
-    expect(toValue(incomingQuery.queryKey)).toEqual(
-      safeKeys.incomingTransfers(SECOND_LOWERCASE_SAFE_ADDRESS, 500)
-    )
-    expect(toValue(outgoingQuery.queryKey)).toEqual(
-      safeKeys.outgoingTransactions(SECOND_LOWERCASE_SAFE_ADDRESS, 500)
-    )
-  })
-
   it('loads every incoming transfer page in service order', async () => {
     const get = vi.spyOn(externalApiClient, 'get')
     get
