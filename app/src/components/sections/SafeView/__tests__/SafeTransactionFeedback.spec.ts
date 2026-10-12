@@ -11,6 +11,14 @@ const defaultProps = {
 }
 
 describe('[US-SAFE-005] SafeTransactionFeedback', () => {
+  it('identifies a provider rate limit instead of blaming the connection', () => {
+    const wrapper = mount(SafeTransactionFeedback, {
+      props: { ...defaultProps, hasError: true, error: { response: { status: 429 } } }
+    })
+    expect(wrapper.get('[data-test="safe-transactions-error"]').text()).toContain(
+      'Safe is limiting requests'
+    )
+  })
   /**
    * Covers:
    * - [AC-US-SAFE-005-08]

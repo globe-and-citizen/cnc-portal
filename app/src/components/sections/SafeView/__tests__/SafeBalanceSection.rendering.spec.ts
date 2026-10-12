@@ -11,7 +11,7 @@ import {
   useQueryClientFn
 } from '@/tests/mocks'
 import { mockUserStore } from '@/tests/mocks/store.mock'
-import { mockUseSafePortfolio } from '@/tests/mocks/safePortfolio.mock'
+import { mockUseSafeBalances } from '@/tests/mocks/safeBalances.mock'
 
 // Mock @iconify/vue
 vi.mock('@iconify/vue', () => ({
@@ -207,7 +207,7 @@ describe('[US-SAFE-002] SafeBalanceSection rendering', () => {
 
   describe('Component Rendering', () => {
     it('[AC-US-SAFE-003-11] marks the wallet total incomplete when a discovered holding cannot be valued', () => {
-      mockUseSafePortfolio.isIncomplete.value = true
+      mockUseSafeBalances.isIncomplete.value = true
       wrapper = createWrapper()
       expect(wrapper.get('[data-test="safe-total-usd"]').text()).toBe('Incomplete')
     })
@@ -269,8 +269,8 @@ describe('[US-SAFE-002] SafeBalanceSection rendering', () => {
       expect(wrapper.find('[data-test="transfer-modal"]').exists()).toBe(false)
     })
 
-    it('renders no token rows when the token list is empty', async () => {
-      mockUseContractBalance.balances.value = [] as typeof mockUseContractBalance.balances.value
+    it('uses an empty transfer selection before the balances response is available', async () => {
+      mockUseContractBalance.hasData.value = false
       wrapper = createWrapper()
 
       await wrapper.find('[data-test="transfer-button"]').trigger('click')

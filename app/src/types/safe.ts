@@ -15,6 +15,28 @@ export interface SafeFiatTotal {
   formatedPrice: string
 }
 
+/** Safe Client Gateway balances: quantities are integer strings in token base units. */
+export interface SafeClientBalance {
+  tokenInfo: {
+    type: 'NATIVE_TOKEN' | 'ETHER' | 'ERC20'
+    address: string
+    decimals: number
+    symbol: string
+    name: string
+    logoUri?: string | null
+  }
+  balance: string | null
+  fiatConversion: string | null
+  fiatBalance: string | null
+}
+
+export interface SafeClientBalances {
+  fiatTotal: string
+  items: SafeClientBalance[]
+}
+
+export const SAFE_CLIENT_URL = 'https://safe-client.safe.global'
+
 export interface SafeInfo {
   address: string
   chain: string
@@ -122,18 +144,18 @@ const E2E_TX_SERVICE_BY_CHAIN: Record<number, SafeChainConfig> =
 export const TX_SERVICE_BY_CHAIN: Record<number, SafeChainConfig> = {
   137: {
     chain: 'polygon',
-    url: 'https://safe-transaction-polygon.safe.global',
+    url: 'https://api.safe.global/tx-service/pol',
     nativeSymbol: 'POL'
   },
   11155111: {
     chain: 'sepolia',
-    url: 'https://safe-transaction-sepolia.safe.global',
+    url: 'https://api.safe.global/tx-service/sep',
     nativeSymbol: 'ETH'
   },
   80002: { chain: 'amoy', url: 'https://safe-transaction-amoy.safe.global', nativeSymbol: 'MATIC' },
   42161: {
     chain: 'arbitrum',
-    url: 'https://safe-transaction-arbitrum.safe.global',
+    url: 'https://api.safe.global/tx-service/arb1',
     nativeSymbol: 'ETH'
   },
   ...E2E_TX_SERVICE_BY_CHAIN

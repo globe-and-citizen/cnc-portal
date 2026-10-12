@@ -9,6 +9,7 @@ import {
   mockUseClipboard,
   useQueryClientFn,
   useQueryFn,
+  useQueriesFn,
   useMutationFn,
   mockUseFetch,
   mockUseSubmitRestriction,
@@ -19,7 +20,7 @@ import {
   resetDeployState,
   resetUploadFileState
 } from '@/tests/mocks/composables.mock'
-import { mockUseSafePortfolio, resetSafePortfolioMock } from '@/tests/mocks/safePortfolio.mock'
+import { mockUseSafeBalances, resetSafeBalancesMock } from '@/tests/mocks/safeBalances.mock'
 import { mockGetFileUrlApi, mockUploadFileApi } from '@/tests/mocks/api.mock'
 import {
   mockGetBalance,
@@ -33,15 +34,15 @@ import { mockRouter, mockRoute, resetMockRoute } from '@/tests/mocks/router.mock
 // `beforeEach` hooks run BEFORE spec-level ones, so per-test setup still wins.
 beforeEach(() => {
   resetComposableMocks()
-  resetSafePortfolioMock()
+  resetSafeBalancesMock()
   resetDeployState()
   resetUploadFileState()
   resetNotificationsMock()
   resetMockRoute()
 })
 
-vi.mock('@/composables/safe/useSafePortfolio', () => ({
-  useSafePortfolio: vi.fn(() => mockUseSafePortfolio)
+vi.mock('@/queries/safeClient.queries', () => ({
+  useGetSafeBalancesQuery: vi.fn((params) => mockUseSafeBalances.query(params))
 }))
 
 declare global {
@@ -63,6 +64,7 @@ vi.mock('@tanstack/vue-query', async () => {
     ...actual,
     useQueryClient: useQueryClientFn,
     useQuery: useQueryFn,
+    useQueries: useQueriesFn,
     useMutation: useMutationFn
   }
 })

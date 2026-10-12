@@ -199,7 +199,7 @@ describe('[US-SAFE-003] SafeBalanceSection transfers', () => {
             options: {
               to: '0x3333333333333333333333333333333333333333',
               amount: '1',
-              tokenId: 'native'
+              tokenId: 'usdc'
             }
           }
         },

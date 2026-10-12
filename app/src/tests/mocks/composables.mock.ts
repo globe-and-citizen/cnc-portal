@@ -372,6 +372,8 @@ export const useQueryFn = vi.fn(() => ({
   error: vi.fn()
 }))
 
+export const useQueriesFn = vi.fn(() => ref([]))
+
 /**
  * Stable spy for `queryClient.invalidateQueries` — opt-in.
  *
