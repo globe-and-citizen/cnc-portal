@@ -96,7 +96,7 @@
     "siwe": "^3.0.0",
     "stream-browserify": "^3.0.0",
     "viem": "2.47.6",
-    "vue": "^3.4.15",
+    "vue": "3.5.43",
     "vue-echarts": "^8.0.1",
     "vue-router": "^4.2.5",
     "vue-sonner": "^2.0.9",
