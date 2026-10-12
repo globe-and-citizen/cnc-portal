@@ -45,7 +45,7 @@ const input = ref('')
 
 const teamMembers = defineModel<Array<User>>({
   required: true,
-  default: []
+  default: () => []
 })
 
 const addMember = (member: User) => {
