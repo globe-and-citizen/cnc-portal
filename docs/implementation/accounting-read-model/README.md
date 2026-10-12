@@ -139,7 +139,8 @@ Unknown, untrusted and spam-like events may therefore enter the existing mapping
 spam filter does not apply to this Transaction Service feed. See
 [provider filtering](../client-data-access/README.md#safe-provider-filtering). Existing exchange classification, missing-metadata and
 historical-valuation rules apply to every retained movement. Executable evidence:
-[cached and paginated query-to-accounting tests](../../../app/src/queries/__tests__/safe.queries.integration.spec.ts).
+[Safe pagination and metadata unit tests](../../../app/src/queries/__tests__/safe.queries.spec.ts) and
+[Safe source-mapping tests](../../../app/src/utils/accounting/__tests__/safe.spec.ts).
 
 The authoritative Safe source is `/transfers/`, paginated to exhaustion, deduplicated by service `transferId`, and refreshed approximately
 every five minutes. It includes real ERC-20 `transferFrom` settlements that cannot be inferred from the Safe multisig call's top-level
@@ -712,8 +713,7 @@ because deposits and company-pocket transfers are not manual assignment targets.
   [source-status projection](../../../app/src/composables/accounting/useAccountingStatus.ts),
   [shared accounting context](../../../app/src/composables/accounting/useAccountingContext.ts),
   [reactive paginated Safe history queries](../../../app/src/queries/safe.queries.ts),
-  [Safe query behaviour tests](../../../app/src/queries/__tests__/safe.queries.spec.ts), and
-  [Safe address reactivity test](../../../app/src/queries/__tests__/safe.queries.integration.spec.ts)
+  [Safe pagination and metadata unit tests](../../../app/src/queries/__tests__/safe.queries.spec.ts)
 - [Persistent Accounting route](../../../app/src/router/index.ts),
   [team route-owner lifetime](../../../app/src/views/team/%5Bid%5D/ShowIndex.vue), and
   [Accounting report route views](../../../app/src/views/team/%5Bid%5D/Accounting/)
@@ -729,8 +729,7 @@ because deposits and company-pocket transfers are not manual assignment targets.
 - [Immutable historical token-rate query](../../../app/src/queries/coingecko.queries.ts),
   [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts),
   [valuation utilities](../../../app/src/utils/accounting/toUsd.ts),
-  [historical endpoint tests](../../../app/src/queries/__tests__/historicalTokenRate.queries.spec.ts),
-  [real observer cache and recovery tests](../../../app/src/queries/__tests__/coingecko.queries.integration.spec.ts), and
+  [CoinGecko endpoint unit tests](../../../app/src/queries/__tests__/coingecko.queries.spec.ts), and
   [valuation and missing-rate retention tests](../../../app/src/utils/accounting/__tests__/toUsd.spec.ts)
 - [Accounting source contracts](../../../app/src/utils/accounting/types.ts),
   [pure completeness projection](../../../app/src/utils/accounting/accountingCompleteness.ts), and

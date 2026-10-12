@@ -64,8 +64,8 @@ mapping and completeness checks. Metadata recovery uses the event's contract add
 quarantine; provider history can include spam-like events, which may reach Accounting or leave explicit metadata and valuation gaps.
 
 Executable evidence: [Gateway request tests](../../../app/src/queries/__tests__/safeClient.queries.spec.ts) and
-[cached and paginated query-to-accounting tests](../../../app/src/queries/__tests__/safe.queries.integration.spec.ts). These use mocked
-provider responses and real TanStack observers; live browser validation remains pending.
+[pagination and metadata unit tests](../../../app/src/queries/__tests__/safe.queries.spec.ts). These invoke request functions with mocked
+provider responses and query dependencies; live browser validation remains pending.
 
 ### Browser request coordination
 
@@ -130,16 +130,14 @@ for the entire Safe service prefix and the affected wallet's balance prefix, whi
 only pending transactions until execution. Direct hosted Gateway access is a runtime dependency; mocked query tests do not establish an
 availability guarantee.
 
-Executable evidence: [Gateway request tests](../../../app/src/queries/__tests__/safeClient.queries.spec.ts),
-[shared observer and invalidation tests](../../../app/src/queries/__tests__/safeClient.queries.integration.spec.ts), and
+Executable evidence: [Gateway request tests](../../../app/src/queries/__tests__/safeClient.queries.spec.ts) and
 [holdings presentation tests](../../../app/src/utils/safe/__tests__/portfolio.spec.ts).
 
-Direct Transaction Service reads are covered by [pagination and metadata tests](../../../app/src/queries/__tests__/safe.queries.spec.ts),
-[independent error recovery tests](../../../app/src/queries/__tests__/safe.queries.integration.spec.ts), and
+Direct Transaction Service reads are covered by [pagination and metadata tests](../../../app/src/queries/__tests__/safe.queries.spec.ts) and
 [Axios authentication and cancellation tests](../../../app/src/lib/__tests__/external.axios.spec.ts).
 
-[Gateway observer tests](../../../app/src/queries/__tests__/safeClient.queries.integration.spec.ts) verify shared cache entries, reactive
-address/currency keys, cancellation of obsolete currency requests and protection against late responses overwriting displayed holdings.
+The query unit tests cover request parameters, response validation, pagination and propagated errors. TanStack observers are mocked; these
+tests do not establish cache sharing, refresh or observer lifecycle behaviour.
 
 The caches belong to one browser session. They do not coordinate separate users, tabs, devices, or backend instances, and do not guarantee
 that provider quotas can absorb concurrent users.
@@ -153,11 +151,10 @@ that provider quotas can absorb concurrent users.
 - [Profile image consumer](../../../app/src/components/forms/ProfileImageUpload.vue) and
   [pure upload/query tests](../../../app/src/queries/__tests__/file.queries.spec.ts)
 - [HTTP client tests](../../../app/src/lib/__tests__/axios.spec.ts),
-  [contract market request tests](../../../app/src/queries/__tests__/assetMarket.queries.spec.ts),
-  [historical snapshot tests](../../../app/src/queries/__tests__/historicalTokenRate.queries.spec.ts), and
-  [per-query Safe refresh and recovery tests](../../../app/src/queries/__tests__/safe.queries.refresh.spec.ts)
+  [CoinGecko endpoint unit tests](../../../app/src/queries/__tests__/coingecko.queries.spec.ts), and
+  [Safe pagination and metadata unit tests](../../../app/src/queries/__tests__/safe.queries.spec.ts)
 - [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts) and
-  [real observer cache and explicit recovery tests](../../../app/src/queries/__tests__/coingecko.queries.integration.spec.ts)
+  [Accounting composition tests](../../../app/src/composables/accounting/__tests__/useCNCAccounting.spec.ts)
 
 ## Related Documentation
 

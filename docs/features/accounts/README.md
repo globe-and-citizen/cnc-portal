@@ -1216,8 +1216,7 @@ Safe balances request the Gateway's spam filter with `exclude_spam=true&trusted=
 has no manual contract blacklist. Transaction Service histories retain the provider's movements, including unknown or untrusted contracts.
 These can also reach Accounting or leave explicit metadata and valuation gaps. See
 [provider filtering](../../implementation/client-data-access/README.md#safe-provider-filtering) and
-[cached and paginated query tests](../../../app/src/queries/__tests__/safe.queries.integration.spec.ts). Live product review remains
-pending.
+[Safe pagination and metadata unit tests](../../../app/src/queries/__tests__/safe.queries.spec.ts). Live product review remains pending.
 
 The Safe account displays only the balances returned by the Safe Client Gateway in one holdings table, including assets acquired outside CNC
 such as WETH. Provider order, token names, symbols, decimals and logos are retained. Returned zero balances remain visible; absent tokens
@@ -1273,8 +1272,7 @@ holdings through the canonical balance-key prefix. Other account surfaces retain
 
 Executable evidence: [discovered holdings tests](../../../app/src/components/ui/__tests__/TokenHoldingsSection.safe.spec.ts),
 [overview tests](../../../app/src/components/sections/SafeView/__tests__/SafeBalanceSection.rendering.spec.ts), and
-[Gateway query tests](../../../app/src/queries/__tests__/safeClient.queries.spec.ts) and
-[cache-sharing tests](../../../app/src/queries/__tests__/safeClient.queries.integration.spec.ts).
+[Gateway request unit tests](../../../app/src/queries/__tests__/safeClient.queries.spec.ts).
 
 Implementation: [Safe Client balances](../../../app/src/queries/safeClient.queries.ts),
 [Safe movement queries](../../../app/src/queries/safe.queries.ts),
