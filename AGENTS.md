@@ -77,10 +77,13 @@ artifacts; after changing a contract interface, run `npm run generate-abi` in `c
 
 - Every work issue must have a native GitHub parent; only explicit hierarchy roots, such as Sprint or backlog planning issues, may be
   parentless. Planned Sprint outcomes follow Sprint → Goal → optional coordinator → delivery. Work outside those outcomes belongs under the
-  Sprint's separate bugs and perf sub-issue, not in the original Goal checklist. Reconcile concrete scope, dependency, blocker, or outcome
-  changes with the parent and affected branches. Keep routine PR, commit, CI, and test progress on the delivery issue or its relevant
-  immediate Goal. Update the Sprint root only when agreed objectives or scope, major Sprint-level blockers, or verified Goal outcomes
-  change. Follow the [GitHub flow](./.agents/skills/cnc-github-flow/SKILL.md) for attachment, propagation boundaries, and readback.
+  Sprint's separate bugs and perf sub-issue, not in the original Goal checklist. Reconcile concrete impacts at the appropriate level:
+  coordination and dependencies for an ordinary parent, expected results and exit criteria for a Goal, agreed commitments and major blockers
+  for the Sprint. Keep routine PR, commit, CI, and test progress on the delivery issue or PR. Update the Sprint root only when agreed
+  objectives or scope, major Sprint-level blockers, or verified Goal outcomes change. After closing an issue, reassess its native parent and
+  close it when its own scope, exit criteria, and required validations are satisfied; repeat upward while eligible. A child closure or PR
+  merge alone does not establish parent completion or human acceptance. Follow the [GitHub flow](./.agents/skills/cnc-github-flow/SKILL.md)
+  for attachment, propagation, closure, and readback.
 - Apply the [Development Relationship Validation](./docs/development-guide/relationship-validation.md) checklist at issue scoping,
   implementation and review readiness, independent PR review, and final validation before merge. Inspect affected consumers even when their
   files are unchanged; record applicability, evidence, and completion proposals in the issue/PR using that guide's result contract.

@@ -52,27 +52,63 @@ or Goal issues solely to normalize older title variants.
 
 ## Propagate issue changes through the hierarchy
 
-When an issue's scope, plan, status, blocker, validation evidence, or completion changes, distinguish routine delivery progress from a
-concrete impact on the hierarchy:
+Each level owns a different contract. Classify an issue by its role and agreed scope, not merely by the presence of children:
+
+| Level                          | Information it owns                                                                                       | When an update is warranted                                                                                  |
+| ------------------------------ | --------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| Ordinary parent or coordinator | Delivery lots, dependencies, sequence, integration milestones, remaining work and technical blockers.     | A child changes a coordinated deliverable, dependency, milestone or blocker.                                 |
+| Sprint Goal                    | Expected outcome, exit criteria, required evidence, owner/validator acceptance and risks to that outcome. | A result or criterion is achieved, becomes blocked, needs a decision, or lacks required proof or acceptance. |
+| Sprint plan                    | Agreed objectives and scope, major Sprint-level blockers, arbitrations and verified Goal outcomes.        | Commitments change, a major blocker needs Sprint-level action, or a Goal outcome is verified.                |
+
+Goals may be Product, Quality, Technical, Documentation, or another agreed outcome type. Do not force technical or coordination outcomes
+into product User Stories. Routine PR publication, commits, CI runs and test logs belong on the delivery issue or PR.
+
+When an issue's scope, plan, status, blocker, validation evidence, or completion changes:
 
 1. Read the changed issue, its descendants, its native parent, and each ancestor. At each ancestor, inspect the other child branches for a
    shared dependency, assumption, scope, acceptance criterion, sequence, or validation claim affected by the change. A native parent link
    alone does not justify a progress update on every ancestor.
-2. Record routine PR publication, new commits, CI results, and test progress on the delivery issue, or use a concise comment on its
-   immediate Goal when that Goal needs the update. Edit an issue's description or checklist when its durable plan, scope, dependencies, or
-   completion criteria change. Propagate concrete impacts through relevant sibling branches and their descendants, then reassess affected
-   ancestors. Stop at branches with no concrete impact; do not copy status or checklist changes mechanically. Track visited issues so a
-   branch is updated once per change. Link the originating issue and evidence in each affected update.
+2. Apply the receiving issue's contract from the table above. Edit its body for durable scope, plan, dependency, or criterion changes; use a
+   concise comment for a significant decision or milestone; check only criteria that this issue owns and that the evidence satisfies. Link
+   the originating issue and evidence without copying its execution log. Propagate concrete impacts through relevant sibling branches and
+   their descendants, then reassess affected ancestors. Stop updates at branches with no concrete impact; do not copy status or checklist
+   changes mechanically. Track visited issues so each affected branch is updated once per change.
 3. Apply the Sprint-root boundary even when the Sprint is the immediate parent. Update its body, comments, checklist, or manual Project
    status only for a change to agreed objectives or scope, a major Sprint-level blocker, or a verified Goal outcome. A PR opening, new
    commit, CI or test result, or PR merge alone does not meet that threshold. Keep commit hashes, validation logs, and per-PR progress on
-   the delivery issue or relevant immediate Goal. Do not add or restore a technical progress section in the Sprint plan under `Notes`,
+   the delivery issue or PR. Do not add or restore a technical progress section in the Sprint plan under `Notes`,
    `Corrective delivery status`, or another heading.
 4. Reconcile a moved issue with both its old and new parent chains. Update parent summaries only for concrete scope, dependency, blocker, or
-   outcome changes, applying the Sprint-root boundary above. Do not check off a task, claim validation, or close a parent solely because a
-   child or PR closed. Reassess each affected issue's Project status against its own exit criteria and update it when warranted.
+   outcome changes, applying each level's contract. Reassess each affected issue's Project status against its own exit criteria and update
+   it when warranted. After a closure, apply the parent-closure procedure below.
 5. Read back updated descriptions, comments, checklists, native relationships, and project statuses. Leave unresolved decisions or missing
    evidence visible rather than presenting an affected issue as complete.
+
+## Reassess and close parents after delivery
+
+Closing a child triggers a completion assessment of its native parent. Within the authorized work, perform eligible parent closures; do not
+stop at a recommendation or request the same authorization again.
+
+1. Read the parent's current body, native children and complete scoped descendant tree, linked delivery PRs, required evidence, and
+   owner/validator decisions. A closed child, including one closed as `not planned`, is not proof that its deliverable was completed.
+2. Apply the parent's own closure contract:
+   - Ordinary parent or coordinator: all promised delivery lots, integration milestones and required validations are complete, with no
+     remaining work or blocker in its agreed scope.
+   - Sprint Goal: its expected outcome and exit criteria are satisfied with the required proof and acceptance from its named validator.
+     Technical delivery or green CI does not substitute for required human Product/QA acceptance.
+   - Sprint plan: all agreed commitments, including approved scope changes and corrective work, are resolved and required Sprint review or
+     acceptance is recorded. Explicitly accepted deferrals may resolve scope, but must remain identified as deferred rather than delivered.
+     The end date or closure of one Goal does not complete a Sprint.
+3. If a required child, deliverable, blocker, proof, or validation remains unresolved, leave the parent open and record the specific gap at
+   the appropriate level. Do not weaken criteria, invent acceptance, or remove/reparent unfinished work merely to permit closure. Open-ended
+   backlog or coordination roots need an explicitly completed scope before they can close.
+4. When eligible, reconcile the parent's own checklist and record a concise closure rationale with the relevant outcome evidence. Close the
+   parent as completed, align its Project status with completion when applicable, and independently read back its body, issue state, native
+   relationships and Project fields. Preserve canonical product-validation status unless its own acceptance was recorded.
+5. After verifying the closure, repeat the assessment for the next native parent. Stop the closure sequence at the first ineligible parent
+   or at a root. Continue propagating concrete dependencies, risks or scope changes when needed under the level-specific rules; stopping a
+   closure does not suppress a real impact higher in the hierarchy. A verified Goal closure warrants a concise Sprint outcome update,
+   without a technical progress journal.
 
 ## Publish a branch
 
