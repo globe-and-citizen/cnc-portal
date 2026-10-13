@@ -30,6 +30,7 @@ import healthRoutes from '../routes/healthRoutes';
 import featureRoutes from '../routes/featureRoutes';
 import officerVersionRoutes from '../routes/officerVersionRoutes';
 import sentryTunnelRoute from '../routes/sentryTunnelRoute';
+import coingeckoRoute from '../routes/coingeckoRoute';
 
 //#endregion routing modules
 
@@ -199,6 +200,7 @@ class Server {
   private routes() {
     // Public health check endpoint (no auth required)
     this.app.use(this.paths.health, healthRoutes);
+    this.app.use('/api/coingecko', coingeckoRoute);
 
     // Sentry tunnel — public, proxies browser events to Sentry bypassing ad-blockers
     this.app.use(this.paths.sentryTunnel, sentryTunnelRoute);
