@@ -20,10 +20,24 @@
           </span>
         </template>
         <template #price-cell="{ row: { original: row } }">
-          {{ row.priceLabel }} / {{ row.token.symbol }}
+          <span
+            :title="row.priceDetails"
+            :aria-label="row.priceDetails"
+            :tabindex="row.priceDetails ? 0 : undefined"
+            data-test="safe-holding-price"
+          >
+            {{ row.priceLabel }} / {{ row.token.symbol }}
+          </span>
         </template>
         <template #balance-cell="{ row: { original: row } }">
-          {{ row.balanceLabel }}
+          <span
+            :title="row.balanceDetails"
+            :aria-label="row.balanceDetails"
+            :tabindex="row.balanceDetails ? 0 : undefined"
+            data-test="safe-holding-value"
+          >
+            {{ row.balanceLabel }}
+          </span>
         </template>
         <template #token-cell="{ row: { original: row } }">
           <div
