@@ -293,6 +293,8 @@ Proof obligations use the [shared proof-strategy registry](../../../testing/proo
 
 ## Implementation Evidence
 
+**Implementation evidence reviewed against:** `8bb7376a908abee0cdd59621ba7ee5cfcc153de6`
+
 Dashboard token prices use the backend's [shared Redis market cache](../../../implementation/market-data-cache/README.md) through the
 [price adapter](../../../../dashboard/app/api/coingecko.ts). Statistics authorization still applies to administrator statistics routes;
 public market reads also support client currency display before login.
