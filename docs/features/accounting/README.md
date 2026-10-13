@@ -788,6 +788,10 @@ applicable stories `Done`.
 
 ## Implementation Evidence
 
+CoinGecko valuation reads use the backend's [shared Redis market cache](../../implementation/market-data-cache/README.md), retaining
+coin/date identity, raw response precision and explicit unavailable-rate gaps. The backend coordinates cache misses, request admission and
+provider cooldown across clients; Accounting retains its existing explicit refresh of failed date queries.
+
 Safe history retains Transaction Service movements without a client-side contract blacklist before accounting mapping and historical
 valuation requests. Unknown, untrusted or spam-like provider events may reach the books or leave explicit metadata and valuation gaps; the
 existing completeness rules still apply. Gateway balance filtering does not filter this separate history feed. See

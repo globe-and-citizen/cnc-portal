@@ -1256,9 +1256,10 @@ approximately every five minutes; pending transactions refresh every minute when
 minutes otherwise. Safe and current-price queries inherit one-minute freshness from the moderate preset; verified historical-transfer token
 metadata uses the once preset with 24-hour retention. Unused Transaction Service data follows the moderate preset's two-minute retention;
 Gateway balances and current prices retain unused data for 30 minutes. Each query configures its refresh cadence; background tabs and window
-focus do not trigger extra polling. Safe and market query modules call the external Axios client directly. Transaction Service errors,
-including HTTP 429, affect the individual query; queries recover on periodic or explicit refresh without automatic retries or a shared
-request queue. Complete history pagination and contract metadata recovery are retained. The Axios client sends the optional
+focus do not trigger extra polling. Safe queries call their providers directly through the external Axios client; CoinGecko market queries
+use that client to call the backend's [shared Redis market cache](../../implementation/market-data-cache/README.md). Transaction Service
+errors, including HTTP 429, affect the individual query; queries recover on periodic or explicit refresh without automatic retries or a
+shared request queue. Complete history pagination and contract metadata recovery are retained. The Axios client sends the optional
 `VITE_APP_SAFE_API_KEY` only to GET requests on the direct production Transaction Service. Keys must be issued by `developer.safe.global`;
 staging keys do not establish a production quota. The approval queue identifies rate limiting instead of reporting a connection problem.
 Gateway keeps its own balance cadence. See

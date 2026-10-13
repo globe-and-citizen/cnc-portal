@@ -34,12 +34,15 @@ flowchart LR
 ### Contract-based asset markets
 
 [CoinGecko queries](../../../app/src/queries/coingecko.queries.ts) provide ordinary `useQuery` and `useQueries` observers for
-supported-token prices, Polygon contract metadata and historical snapshots. Each query calls the external Axios client directly, forwards
-cancellation, validates contract identity or historical precision through [pure utilities](../../../app/src/utils/tokens/coingecko.ts), and
-caches the unchanged valid provider response. The [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts)
-consumes those queries directly and uses the pure utilities to resolve a token's transaction-date rate. The currency store consumes the
-price query. Current prices use `queryPresets.moderate` for one-minute freshness; contract identity and historical snapshots use
-`queryPresets.once`, without local `staleTime` overrides. The authenticated CNC query factory is not used for external provider requests.
+supported-token prices, Polygon contract metadata and historical snapshots. Each query uses the external Axios client to call the configured
+CNC backend's public market routes and forwards cancellation, validates contract identity or historical precision through
+[pure utilities](../../../app/src/utils/tokens/coingecko.ts), and caches the unchanged valid provider response. The
+[Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts) consumes those queries directly and uses the pure
+utilities to resolve a token's transaction-date rate. The currency store consumes the price query. Current prices use
+`queryPresets.moderate` for one-minute freshness; contract identity and historical snapshots use `queryPresets.once`, without local
+`staleTime` overrides. The authenticated CNC query factory is not used for these reads because its HTTP retry interceptor would override the
+CoinGecko query retry policy. Provider HTTP, shared Redis caching and cross-instance admission belong to
+[Shared Market Data Cache](../market-data-cache/README.md).
 
 Asset market discovery verifies the provider platform and contract address before returning an asset's coin identity, current USD price, or
 optional display logo. Contract market lookup supports Polygon (137) only; Hardhat, Amoy, Sepolia, and other networks remain unavailable
@@ -79,10 +82,11 @@ cross-origin redirects. A production key must come from `developer.safe.global`;
 production quota. Service writes retain their explicit mutation path. Gateway keeps its own balance query cadence.
 
 CoinGecko requests use standard TanStack cache identities and independent query error states. Queries for the same identity share one
-request; distinct identities can run concurrently. There is no custom admission queue, shared pause or batch recovery state. All CoinGecko
-queries disable automatic retries. Current prices still poll every five minutes; contract discovery and historical snapshots are requested
-when needed and unavailable results can be retried by explicit Accounting refresh. A 429 remains a failed provider read and does not block
-unrelated queries.
+browser request; distinct identities can reach the backend concurrently. The backend shares validated responses, miss leases, provider
+admission and 429 cooldown through Redis, as described in [Shared Market Data Cache](../market-data-cache/README.md). All CoinGecko queries
+disable automatic retries. Current prices still poll every five minutes; contract discovery and historical snapshots are requested when
+needed and unavailable results can be retried by explicit Accounting refresh. During provider cooldown, valid shared cache hits remain
+available and uncached reads fail with 429 and the remaining retry window.
 
 Safe information, complete transfer histories, Gateway holdings and current prices inherit the moderate preset's one-minute freshness. Safe
 information, histories and current-price observers poll every five minutes; Gateway balances poll every minute. The transaction queue polls
@@ -98,8 +102,9 @@ disable automatic retries.
 Accounting deduplicates contract discovery and coin/date targets, then consumes their independent observers. Missing, malformed or failed
 rates remain explicit valuation gaps without a current-price fallback. The existing Accounting refresh retries failed query observers;
 dependent historical dates start when verified contract metadata becomes available. Successful snapshots are reused. A disabled valuation
-consumer sends no requests, including on refresh. There is no automatic historical polling or provider-wide rate-limit guarantee across
-identities, tabs or users.
+consumer sends no requests, including on refresh. There is no automatic historical polling. Backend admission coordinates CoinGecko reads
+across users and instances sharing Redis; it does not guarantee quota for arbitrary numbers of distinct cold snapshots or external clients
+using the same provider credential.
 
 `staleTime` describes successful-cache freshness, `refetchInterval` schedules observer refreshes, and `retryDelay` applies only when `retry`
 permits another failed request. Successful historical snapshots remain immutable; `retry: false` disables per-request retries. Full Safe
@@ -145,8 +150,8 @@ Direct Transaction Service reads are covered by [pagination and metadata tests](
 The query unit tests cover request parameters, response validation, pagination and propagated errors. TanStack observers are mocked; these
 tests do not establish cache sharing, refresh or observer lifecycle behaviour.
 
-The caches belong to one browser session. They do not coordinate separate users, tabs, devices, or backend instances, and do not guarantee
-that provider quotas can absorb concurrent users.
+TanStack caches belong to one browser session. The additional backend Redis cache coordinates CoinGecko across users, tabs, devices and
+backend instances. Safe provider requests retain their browser-only coordination boundary.
 
 ## Implementation Evidence
 

@@ -293,6 +293,10 @@ Proof obligations use the [shared proof-strategy registry](../../../testing/proo
 
 ## Implementation Evidence
 
+Dashboard token prices use the backend's [shared Redis market cache](../../../implementation/market-data-cache/README.md) through the
+[price adapter](../../../../dashboard/app/api/coingecko.ts). Statistics authorization still applies to administrator statistics routes;
+public market reads also support client currency display before login.
+
 - [Dashboard navigation](../../../../dashboard/app/layouts/default.vue),
   [administrator route guard](../../../../dashboard/app/middleware/auth.global.ts), and
   [dashboard overview](../../../../dashboard/app/pages/index.vue)
