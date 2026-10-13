@@ -94,13 +94,15 @@ conversion. See the [Accounting read model](../accounting-read-model/README.md) 
 converts Gateway items directly to typed table rows in its page. The table owns display, sorting, and failed-image fallback, with no balance
 query. [Safe asset discovery](../../../app/src/utils/safe/assetDiscovery.ts) deduplicates contract metadata without reactive dependencies.
 
-[Safe holdings presentation](../../../app/src/utils/safe/portfolio.ts) exposes three focused adapters: `toSafeHoldingRows` maps each Gateway
-item to one `TokenHoldingRow`; `getSafeFiatTotal` validates completeness and reads the raw provider total without building formatted rows;
-`toSafeTransferTokens` matches the configured payment contracts independently of provider names and symbols. Two private helpers share
+[Safe holdings presentation](../../../app/src/utils/safe/portfolio.ts) exposes focused adapters: `toSafeHoldingRows` maps each Gateway item
+to one `TokenHoldingRow`; `getSafeFiatTotal` validates completeness and reads the raw provider total without building formatted rows;
+`getSafeValuedFiatTotal` reads the known provider valuation for Company summaries, including partially priced portfolios;
+`toSafeTransferTokens` matches the configured payment contracts independently of provider names and symbols. Private helpers share
 fiat-number validation and exact base-unit conversion. The table mapping preserves provider order and returned zero balances, with no
 insertion, filtering or regrouping. Exact quantities pass through the canonical formatter; compact labels retain four decimals and identify
-positive sub-precision balances as `<0.0001`. Missing quantities and nonzero unpriced holdings keep totals unavailable. Provider-side
-filtering and the absence of a local blacklist are documented in
+positive sub-precision balances as `<0.0001`. Precise price and value details accompany rounded labels; positive fiat values that round to
+zero display as less than one cent. Missing quantities and nonzero unpriced holdings keep the Safe completeness-checked total unavailable.
+Provider-side filtering and the absence of a local blacklist are documented in
 [Client Data Access](../client-data-access/README.md#safe-provider-filtering).
 
 [CoinGecko response interpretation](../../../app/src/utils/tokens/coingecko.ts) verifies the Polygon contract before accepting coin

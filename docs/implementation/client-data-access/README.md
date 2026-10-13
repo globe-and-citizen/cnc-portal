@@ -89,10 +89,11 @@ information, histories and current-price observers poll every five minutes; Gate
 every minute while a pending transaction exists and every five minutes otherwise; a single transaction detail does not poll. Successful
 token metadata and verified coin identities use the once preset with 24-hour retention. Transaction Service queries inherit the moderate
 preset's two-minute unused-cache retention; Gateway balances and current prices retain unused data for 30 minutes. Successful historical
-price snapshots remain immutable in the session cache. Each query inherits freshness and declares its polling cadence. Periodic observers do
-not poll in background tabs or refetch on window focus. Transaction Service queries disable automatic retries and recover on the next
-periodic or explicit refresh. Gateway alone retains one delayed transient-error retry; CoinGecko and token-metadata reads also disable
-automatic retries.
+price snapshots use the once preset, remain fresh without polling, and retain unused cache entries for 24 hours. This explicitly disables
+the shared query client's polling interval for historical reads. Each query inherits freshness and declares its polling cadence. Periodic
+observers do not poll in background tabs or refetch on window focus. Transaction Service queries disable automatic retries and recover on
+the next periodic or explicit refresh. Gateway alone retains one delayed transient-error retry; CoinGecko and token-metadata reads also
+disable automatic retries.
 
 Accounting deduplicates contract discovery and coin/date targets, then consumes their independent observers. Missing, malformed or failed
 rates remain explicit valuation gaps without a current-price fallback. The existing Accounting refresh retries failed query observers;
@@ -112,6 +113,11 @@ preserving metadata, exact quantity, provider order and zero balances. It does n
 prices for nonzero holdings keep values and totals explicitly incomplete, including the Gateway's zero-price fallback. The summary checks
 completeness against raw items and reads `fiatTotal` directly, without formatting table rows or recalculating a total from them. The
 response contract is defined in [Safe types](../../../app/src/types/safe.ts).
+
+Company and Companies list summaries consume the provider's valued `fiatTotal`, keeping the known valuation even when another holding lacks
+a price. The Companies list creates one observer per unique Safe with the same balance options, address, configured chain and selected fiat
+currency as Safe Account, so it reuses the existing cache rather than re-reading the Safe through the restricted payment-token RPC batch.
+Holdings expose precise price and value details without deriving balances from rounded display labels.
 
 Address, configured chain and uppercase fiat code identify each balance cache entry. The overview and holdings share one USD request; a
 selected non-USD currency has its own Gateway request while the overview retains its USD total. No transfer-history, RPC balance or

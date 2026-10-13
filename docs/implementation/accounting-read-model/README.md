@@ -106,11 +106,11 @@ timestamp: the event is withheld and emitted as a typed source diagnostic, which
 The provisional draft feed derives one unique non-pegged asset target per required UTC transaction date. The
 [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts) uses pure utilities to resolve configured coin
 identities and verified Polygon contract metadata, then consumes the independent raw snapshot queries in `coingecko.queries.ts` directly.
-Each snapshot uses an atomic `coinId + date + USD` identity, with infinite staleness and garbage-collection time. Concurrent consumers and
-later refreshes reuse successful snapshots. Pure response interpretation retains the existing six-decimal rate precision; malformed or
-missing prices stay explicit valuation gaps. Explicit Accounting refresh retries failed provider queries without refetching successful
-dates. It never falls back to the current market price. Stablecoins retain their one-dollar peg, and SHER remains under its separate
-multiplier realization policy.
+Each snapshot uses an atomic `coinId + date + USD` identity and the once preset: successful data stays fresh without polling, and unused
+cache entries are retained for 24 hours. Concurrent consumers and later refreshes reuse successful snapshots. Pure response interpretation
+retains the existing six-decimal rate precision; malformed or missing prices stay explicit valuation gaps. Explicit Accounting refresh
+retries failed provider queries without refetching successful dates. It never falls back to the current market price. Stablecoins retain
+their one-dollar peg, and SHER remains under its separate multiplier realization policy.
 
 Safe histories now refresh approximately every five minutes while retaining complete pagination and stable transfer identities. CoinGecko
 queries use ordinary Axios/TanStack observers with cancellation and no automatic retries. Distinct historical dates can load concurrently;
@@ -174,6 +174,10 @@ holding does not require a price. These current-price completeness checks do not
 contract-matched logo metadata is display-only. Safe holdings use compact amount labels while preserving the exact quantity for inspection;
 the rounding and logo metadata do not alter source movements, accounting classification, carrying values, or historical rates.
 
+Company summaries share the Gateway balance observers and read the known provider fiat total independently of holdings completeness. Price
+and value details preserve provider precision behind rounded table labels; these summary and display adapters do not change journal
+valuation.
+
 Implementation: [asset identity](../../../app/src/utils/tokens/assets.ts),
 [exchange carrying-value replay](../../../app/src/utils/accounting/safeExchanges.ts),
 [contract market discovery](../../../app/src/queries/coingecko.queries.ts),
@@ -181,9 +185,9 @@ Implementation: [asset identity](../../../app/src/utils/tokens/assets.ts),
 and [exchange regression tests](../../../app/src/utils/accounting/__tests__/safeExchanges.spec.ts) and
 [market-rate regressions](../../../app/src/utils/accounting/__tests__/safeExchanges.marketRates.spec.ts).
 
-Gateway holdings are keyed by chain and token contract and show only returned balances, including zero balances. No configured base-currency
-rows are inserted. Provider metadata and order are retained. The global token resolver continues to supply existing Accounting identities
-and stablecoin valuation rules; the holdings correction does not remap journal entries or broaden payment allowlists.
+Gateway balance responses are cached by Safe address, chain and fiat currency and show only returned balances, including zero balances. No
+configured base-currency rows are inserted. Provider metadata and order are retained. The global token resolver continues to supply existing
+Accounting identities and stablecoin valuation rules; the holdings correction does not remap journal entries or broaden payment allowlists.
 
 ### Runtime Export Boundary
 

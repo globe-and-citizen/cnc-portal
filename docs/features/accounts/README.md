@@ -1282,6 +1282,10 @@ Implementation: [Safe Client balances](../../../app/src/queries/safeClient.queri
 [holdings presentation tests](../../../app/src/utils/safe/__tests__/portfolio.spec.ts), and
 [contract asset identities](../../../app/src/utils/tokens/assets.ts). Human validation of external swaps remains pending.
 
+Company and Companies list summaries reuse the Gateway cache and its valued fiat total, including tokens outside the CNC payment-token list.
+They keep the known provider valuation when another returned token has no price. Holdings keep exact quantities on hover and expose precise
+unit prices and fiat values alongside the rounded display. Positive values below cent precision are shown as less than one cent.
+
 ## Related Documentation
 
 - [Client Navigation implementation](../../implementation/client-navigation/README.md)

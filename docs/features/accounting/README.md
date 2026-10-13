@@ -802,9 +802,9 @@ existing completeness rules still apply. Gateway balance filtering does not filt
 - [Source completeness](../../../app/src/utils/accounting/accountingCompleteness.ts),
   [block timestamps](../../../app/src/queries/blockTimestamp.queries.ts), and
   [historical valuation queries](../../../app/src/queries/coingecko.queries.ts) and the
-  [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts) (successful date snapshots are immutable; independent
-  failed or malformed dates remain valuation gaps and recover on explicit refresh), with
-  [pure contract and historical-response validation](../../../app/src/utils/tokens/coingecko.ts)
+  [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts) (successful date snapshots remain fresh without
+  polling and retain unused cache entries for 24 hours; independent failed or malformed dates remain valuation gaps and recover on explicit
+  refresh), with [pure contract and historical-response validation](../../../app/src/utils/tokens/coingecko.ts)
 - [Accounting assembly](../../../app/src/utils/accounting/assemble.ts),
   [journal finalization](../../../app/src/utils/accounting/journalEntry.ts), and
   [General Ledger presenter](../../../app/src/utils/accounting/journalLedgerPresenter.ts)
