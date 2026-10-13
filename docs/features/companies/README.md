@@ -455,7 +455,9 @@ This validation does not attest to a live on-chain Officer deployment.
 - [Company workspace treasury overview](../../../app/src/components/sections/DashboardView/CompanyOverview.vue) reuses the
   [Safe balance query](../../../app/src/queries/safeClient.queries.ts) for its Safe contribution; its
   [component tests](../../../app/src/components/sections/DashboardView/__tests__/CompanyOverview.spec.ts) cover other-token valuation,
-  aggregate totals, reactive balance and currency changes, loading, and numeric fallbacks.
+  aggregate totals, reactive balance and currency changes, loading, and numeric fallbacks. These shared Gateway observers automatically
+  retry temporary provider failures up to three times, including 404 after deployment and HTTP 429 with `Retry-After` respected. Recovery
+  updates the existing summary without reloading the page.
 - [Workspace route and unavailable-state handling](../../../app/src/views/team/%5Bid%5D/ShowIndex.vue),
   [company queries](../../../app/src/queries/team.queries.ts), [company endpoints](../../../backend/src/routes/teamRoutes.ts), and
   [company controller](../../../backend/src/controllers/teamController.ts)

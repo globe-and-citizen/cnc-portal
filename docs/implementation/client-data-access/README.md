@@ -96,8 +96,12 @@ preset's two-minute unused-cache retention; Gateway balances and current prices 
 price snapshots use the once preset, remain fresh without polling, and retain unused cache entries for the lifetime of the query client.
 This explicitly disables the shared query client's polling interval for historical reads. Each query inherits freshness and declares its
 polling cadence. Periodic observers do not poll in background tabs or refetch on window focus. Transaction Service queries inherit the
-shared query client's three automatic retries and also recover on periodic or explicit refresh. Gateway keeps one delayed transient-error
-retry; CoinGecko and token-metadata reads disable automatic retries.
+Safe-specific bounded retries and also recover on periodic or explicit refresh. Gateway and Transaction Service queries retry temporary 404,
+408, 425, 429, server and network failures up to three times. The interval stays fixed at five seconds for ordinary transient failures and
+thirty seconds for HTTP 429, and waits longer when the provider's numeric or HTTP-date `Retry-After` requires it. Initial reads remain
+pending through recovery, so successful responses update the mounted UI without a reload. Cancellation, other client errors, malformed
+responses and an explicit monthly-quota-exceeded response do not retry automatically. CoinGecko and token-metadata reads disable automatic
+retries.
 
 Accounting deduplicates contract discovery and coin/date targets, then consumes their independent observers. Missing, malformed or failed
 rates remain explicit valuation gaps without a current-price fallback. The existing Accounting refresh retries failed query observers;
@@ -127,7 +131,7 @@ Holdings expose precise price and value details without deriving balances from r
 Address, configured chain and uppercase fiat code identify each balance cache entry. The overview and holdings share one USD request; a
 selected non-USD currency has its own Gateway request while the overview retains its USD total. No transfer-history, RPC balance or
 CoinGecko current-price reads are required to populate these holdings. The query refreshes every minute in active tabs, retains unused data
-for 30 minutes, propagates cancellation and allows one delayed transient-error retry. Both Gateway and Transaction Service GETs use the
+for 30 minutes, propagates cancellation and uses the bounded recovery described above. Both Gateway and Transaction Service GETs use the
 external Axios client directly. A failed request retains its cached response while exposing the error; the UI marks the total incomplete.
 
 [Gateway queries](../../../app/src/queries/safeClient.queries.ts) own the balance HTTP request and reject malformed response bodies.
@@ -143,6 +147,10 @@ availability guarantee.
 
 Executable evidence: [Gateway request tests](../../../app/src/queries/__tests__/safeClient.queries.spec.ts) and
 [holdings presentation tests](../../../app/src/utils/safe/__tests__/portfolio.spec.ts).
+
+[Safe recovery tests](../../../app/src/queries/__tests__/safe.recovery.spec.ts) execute the configured queries with a real TanStack cache
+and simulated provider responses, verifying recovery without a reload, shared balance reads, retry deadlines and persistent-error
+visibility.
 
 Direct Transaction Service reads are covered by [pagination and metadata tests](../../../app/src/queries/__tests__/safe.queries.spec.ts) and
 [Axios authentication and cancellation tests](../../../app/src/lib/__tests__/external.axios.spec.ts).

@@ -94,6 +94,10 @@ conversion. See the [Accounting read model](../accounting-read-model/README.md) 
 converts Gateway items directly to typed table rows in its page. The table owns display, sorting, and failed-image fallback, with no balance
 query. [Safe asset discovery](../../../app/src/utils/safe/assetDiscovery.ts) deduplicates contract metadata without reactive dependencies.
 
+The holdings table accepts separate request-error and incomplete-valuation states. A failed Safe balance request shows a loading-error
+message; the valuation warning appears only for returned holdings with unavailable values. When both states exist, the request error takes
+precedence. Other account tables retain their existing behaviour when no request-error state is supplied.
+
 [Safe holdings presentation](../../../app/src/utils/safe/portfolio.ts) exposes focused adapters: `toSafeHoldingRows` maps each Gateway item
 to one `TokenHoldingRow`; `getSafeFiatTotal` validates completeness and reads the raw provider total without building formatted rows;
 `getSafeValuedFiatTotal` reads the known provider valuation for Company summaries, including partially priced portfolios;

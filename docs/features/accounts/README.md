@@ -1245,7 +1245,8 @@ independently of the tokens allowed in CNC payment forms. An unavailable balance
 balance read is pending. A missing or zero provider price for a nonzero holding makes its fiat total incomplete. A confirmed zero balance
 has zero value without requiring a price. Token discovery does not enable an asset for payroll, deposits, or transfers proposed by CNC.
 
-The portfolio refreshes periodically; the holdings section has no manual refresh button. Provider failures remain retryable. The Safe Client
+The portfolio refreshes periodically; the holdings section has no manual refresh button. Failed balance reads show a loading-error message;
+the valuation warning is reserved for returned holdings whose values are unavailable. Provider failures remain retryable. The Safe Client
 Gateway supplies token quantities, current prices and values directly in the selected fiat currency. A nonzero holding with a zero or
 missing provider price remains explicitly unpriced; no value is invented. One Gateway item becomes one table row, and the overview reads the
 provider total after checking completeness, without rebuilding display rows. The overview retains its USD total, so a non-USD display uses
@@ -1258,11 +1259,14 @@ metadata uses the once preset with 24-hour retention. Unused Transaction Service
 Gateway balances and current prices retain unused data for 30 minutes. Each query configures its refresh cadence; background tabs and window
 focus do not trigger extra polling. Safe queries call their providers directly through the external Axios client; CoinGecko market queries
 use that client to call the backend's [shared Redis market cache](../../implementation/market-data-cache/README.md). Transaction Service
-errors, including HTTP 429, affect the individual query; these reads inherit the shared query client's three automatic retries and can
-recover on periodic or explicit refresh. They have no shared request queue or provider-wide cooldown. Complete history pagination and
-contract metadata recovery are retained. The Axios client sends the optional `VITE_APP_SAFE_API_KEY` only to GET requests on the direct
-production Transaction Service. Keys must be issued by `developer.safe.global`; staging keys do not establish a production quota. The
-approval queue identifies rate limiting instead of reporting a connection problem. Gateway keeps its own balance cadence. See
+errors affect the individual query. Gateway and Transaction Service reads retry temporary 404, 408, 425, 429, server and network failures up
+to three times. Ordinary retries wait five seconds between attempts; rate-limit retries wait thirty seconds, or longer when `Retry-After`
+requires it. Initial reads remain loading during recovery and update without a page reload. Other client errors, cancellation, malformed
+responses and an explicit monthly-quota-exceeded response are not automatically retried. Periodic and explicit refresh remain available.
+There is no shared request queue or provider-wide cooldown. Complete history pagination and contract metadata recovery are retained. The
+Axios client sends the optional `VITE_APP_SAFE_API_KEY` only to GET requests on the direct production Transaction Service. Keys must be
+issued by `developer.safe.global`; staging keys do not establish a production quota. The approval queue identifies rate limiting instead of
+reporting a connection problem. Gateway keeps its own balance cadence. See
 [Client Data Access](../../implementation/client-data-access/README.md#browser-request-coordination) for recovery and session boundaries.
 
 Confirmed Safe transaction execution and directly executed transfers use one invalidation helper for all Safe service queries and the wallet
@@ -1274,6 +1278,9 @@ holdings through the canonical balance-key prefix. Other account surfaces retain
 Executable evidence: [discovered holdings tests](../../../app/src/components/ui/__tests__/TokenHoldingsSection.safe.spec.ts),
 [overview tests](../../../app/src/components/sections/SafeView/__tests__/SafeBalanceSection.rendering.spec.ts), and
 [Gateway request unit tests](../../../app/src/queries/__tests__/safeClient.queries.spec.ts).
+
+[Safe recovery tests](../../../app/src/queries/__tests__/safe.recovery.spec.ts) verify the bounded 404/429 recovery and shared cache with
+real TanStack queries and simulated provider responses. The live post-creation provider journey remains to be confirmed.
 
 Implementation: [Safe Client balances](../../../app/src/queries/safeClient.queries.ts),
 [Safe movement queries](../../../app/src/queries/safe.queries.ts),
