@@ -76,7 +76,6 @@ export function useGetSafeTransfersQuery(params: GetSafeIncomingTransfersParams)
   const safeAddress = computed(() => toValue(params.pathParams.safeAddress))
   return useQuery<SafeIncomingTransfer[]>({
     ...queryPresets.moderate,
-    retry: false,
     refetchInterval: 300_000,
     queryKey: computed(() => safeKeys.transfers(safeAddress.value, chainId)),
     enabled: computed(() => Boolean(safeAddress.value)),
@@ -105,7 +104,6 @@ export function useGetSafeInfoQuery(params: GetSafeInfoParams) {
 
   return useQuery<SafeInfo>({
     ...queryPresets.moderate,
-    retry: false,
     refetchInterval: 300_000,
     queryKey: computed(() => safeKeys.info(safeAddress.value)),
     enabled: computed(() => Boolean(safeAddress.value)),
@@ -139,7 +137,7 @@ export function useGetSafeTransactionsQuery(params: GetSafeTransactionsParams) {
 
   return useQuery<SafeTransaction[]>({
     ...queryPresets.moderate,
-    retry: false,
+
     queryKey: computed(() => safeKeys.transactions(safeAddress.value)),
     enabled: computed(() => Boolean(safeAddress.value)),
     queryFn: async ({ signal }) => {
@@ -174,7 +172,7 @@ export function useGetSafeTransactionQuery(params: GetSafeTransactionParams) {
 
   return useQuery<SafeTransaction>({
     ...queryPresets.moderate,
-    retry: false,
+
     queryKey: computed(() => safeKeys.transaction(toValue(pathParams.safeTxHash))),
     enabled: computed(() => !!toValue(pathParams.safeTxHash)),
     queryFn: async ({ signal }) => {
@@ -211,7 +209,7 @@ export function useGetSafeIncomingTransfersQuery(params: GetSafeIncomingTransfer
 
   return useQuery<SafeIncomingTransfer[]>({
     ...queryPresets.moderate,
-    retry: false,
+
     refetchInterval: 300_000,
     queryKey: computed(() => safeKeys.incomingTransfers(safeAddress.value, queryParams?.limit)),
     enabled: computed(() => Boolean(safeAddress.value)),
@@ -242,7 +240,7 @@ export function useGetSafeOutgoingTransactionsQuery(params: GetSafeOutgoingTrans
 
   return useQuery<SafeTransaction[]>({
     ...queryPresets.moderate,
-    retry: false,
+
     refetchInterval: 300_000,
     queryKey: computed(() => safeKeys.outgoingTransactions(safeAddress.value, queryParams?.limit)),
     enabled: computed(() => Boolean(safeAddress.value)),
