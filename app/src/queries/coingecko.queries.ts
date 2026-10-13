@@ -2,6 +2,7 @@
 import { useQueries, useQuery } from '@tanstack/vue-query'
 import { computed, toValue, type MaybeRefOrGetter } from 'vue'
 import externalApiClient from '@/lib/external.axios'
+import { BACKEND_URL } from '@/constant'
 import type {
   TokenPriceResponse,
   CoinGeckoAssetMarketResponse,
@@ -19,7 +20,7 @@ export interface CoinGeckoHistoricalTarget {
   date: string
 }
 
-const COINGECKO_API_URL = 'https://api.coingecko.com/api/v3'
+const COINGECKO_API_URL = `${BACKEND_URL}/api/coingecko`
 
 export const historicalTokenRateKeys = {
   all: ['historical-token-rate'] as const,

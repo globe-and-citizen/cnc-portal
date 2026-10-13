@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { toValue } from 'vue'
 import externalApiClient from '@/lib/external.axios'
+import { BACKEND_URL } from '@/constant'
 import { useQueriesFn, useQueryFn } from '@/tests/mocks/composables.mock'
 import {
   useGetAssetMarketsQuery,
@@ -8,7 +9,7 @@ import {
   useGetTokenPriceQuery
 } from '../coingecko.queries'
 
-const apiUrl = 'https://api.coingecko.com/api/v3'
+const apiUrl = `${BACKEND_URL}/api/coingecko`
 const address = '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
 const capturedQuery = () => useQueryFn.mock.calls.at(-1)![0]
 const capturedQueries = () => toValue(useQueriesFn.mock.calls.at(-1)![0].queries)
