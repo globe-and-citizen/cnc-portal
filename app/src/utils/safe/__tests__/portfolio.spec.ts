@@ -2,7 +2,12 @@ import { describe, expect, it } from 'vitest'
 import { zeroAddress } from 'viem'
 import { SUPPORTED_TOKENS } from '@/constant'
 import type { SafeClientBalance, SafeClientBalances } from '@/types/safe'
-import { getSafeFiatTotal, toSafeHoldingRows, toSafeTransferTokens } from '../portfolio'
+import {
+  getSafeFiatTotal,
+  getSafeValuedFiatTotal,
+  toSafeHoldingRows,
+  toSafeTransferTokens
+} from '../portfolio'
 
 const token = '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
 const heldAsset = (overrides: Partial<SafeClientBalance> = {}): SafeClientBalance => ({
@@ -25,6 +30,35 @@ const response = (
 ): SafeClientBalances => ({ items, fiatTotal })
 
 describe('Safe Gateway holdings presentation', () => {
+  it('keeps precise provider prices and valuations available behind rounded labels', () => {
+    const data = response(
+      [heldAsset({ fiatConversion: '0.99984321', fiatBalance: '0.088585632' })],
+      '0.088585632'
+    )
+    const row = toSafeHoldingRows(data)[0]!
+    expect(row.priceLabel).toBe('$1')
+    expect(row.priceDetails).toBe('USD 0.99984321 / WETH')
+    expect(row.balanceLabel).toBe('$0.09')
+    expect(row.balanceDetails).toBe('USD 0.088585632')
+    expect(row.balance).toBe(0.088585632)
+  })
+
+  it('does not display a positive tiny fiat value as zero', () => {
+    const row = toSafeHoldingRows(response([heldAsset({ fiatBalance: '0.002' })]))[0]!
+    expect(row.balanceLabel).toBe('<$0.01')
+    expect(row.balanceDetails).toBe('USD 0.002')
+  })
+
+  it('keeps the known total separately from completeness when another holding is unpriced', () => {
+    const data = response(
+      [heldAsset(), heldAsset({ fiatConversion: null, fiatBalance: null })],
+      '22.742929199442642'
+    )
+    expect(getSafeFiatTotal(data)).toBeUndefined()
+    expect(getSafeValuedFiatTotal(data)).toBe(22.742929199442642)
+    expect(getSafeValuedFiatTotal()).toBeUndefined()
+    expect(getSafeValuedFiatTotal(response([], 'invalid'))).toBeUndefined()
+  })
   it('preserves response order, metadata and returned zero balances without inserting configured tokens', () => {
     const usdc = SUPPORTED_TOKENS[0]!
     const returned = heldAsset({

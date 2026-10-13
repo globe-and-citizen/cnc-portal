@@ -17,8 +17,10 @@ export interface TokenHoldingRow {
   amount: number | null
   price: number | null
   priceLabel: string
+  priceDetails?: string
   balance: number | null
   balanceLabel: string
+  balanceDetails?: string
 }
 
 export function tokenHoldingIcon(symbol: string): string | null {

@@ -1,5 +1,5 @@
 import type { Address } from 'viem'
-import type { ContractBalances, Team } from '@/types'
+import type { Team } from '@/types'
 import { EMPTY_VALUE, formatCurrency, formatPercent } from '@/utils/format'
 
 type TreasuryContractType = 'Bank' | 'Safe' | 'ExpenseAccountEIP712' | 'CashRemunerationEIP712'
@@ -55,7 +55,7 @@ export function getTeamTreasuryAddresses(team: Team): Address[] {
  */
 export function buildTeamTreasuryDisplay(
   team: Team,
-  balancesByAddress: Readonly<Record<string, ContractBalances>>,
+  amountsByAddress: Readonly<Record<string, number>>,
   isLoading: boolean,
   currency: string
 ): TeamTreasuryDisplay {
@@ -63,12 +63,12 @@ export function buildTeamTreasuryDisplay(
     const address = team.teamContracts?.find(
       (contract) => contract.type === definition.contractType
     )?.address
-    const balance = address ? balancesByAddress[addressKey(address)] : undefined
+    const amount = address ? amountsByAddress[addressKey(address)] : undefined
 
     return {
       ...definition,
       address,
-      amount: balance?.total.local.value
+      amount
     }
   })
   const hasTreasuryAccount = accounts.some((account) => account.address)
@@ -100,7 +100,10 @@ export function buildTeamTreasuryDisplay(
 
   return {
     state: 'ready',
-    formattedTotal: formatCurrency(total, { currency }),
+    formattedTotal:
+      total > 0 && formatCurrency(total, { currency }) === formatCurrency(0, { currency })
+        ? '<' + formatCurrency(0.01, { currency })
+        : formatCurrency(total, { currency }),
     accountShares
   }
 }

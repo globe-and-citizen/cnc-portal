@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { Address } from 'viem'
-import type { ContractBalances, Team } from '@/types'
+import type { Team } from '@/types'
 import { buildTeamTreasuryDisplay, getTeamTreasuryAddresses } from '@/utils/teams/treasury'
 
 const BANK = '0x1111111111111111111111111111111111111111' as Address
@@ -23,15 +23,6 @@ const makeTeam = (overrides: Partial<Team> = {}): Team =>
     ] as Team['teamContracts'],
     ...overrides
   }) as Team
-
-const balance = (value: number): ContractBalances =>
-  ({
-    balances: [],
-    total: {
-      usd: { value, formatted: `$${value}` },
-      local: { value, formatted: `$${value}` }
-    }
-  }) as ContractBalances
 
 describe('teamTreasury', () => {
   it('selects only the accounts that contribute to a company treasury', () => {
@@ -57,7 +48,7 @@ describe('teamTreasury', () => {
   it('keeps a read zero balance distinct from an unavailable balance', () => {
     const treasury = buildTeamTreasuryDisplay(
       makeTeam(),
-      { [BANK.toLowerCase()]: balance(0), [SAFE.toLowerCase()]: balance(0) },
+      { [BANK.toLowerCase()]: 0, [SAFE.toLowerCase()]: 0 },
       false,
       'USD'
     )
@@ -72,7 +63,7 @@ describe('teamTreasury', () => {
   it('totals successful account reads and retains their relative weights', () => {
     const treasury = buildTeamTreasuryDisplay(
       makeTeam(),
-      { [BANK.toLowerCase()]: balance(100), [SAFE.toLowerCase()]: balance(300) },
+      { [BANK.toLowerCase()]: 100, [SAFE.toLowerCase()]: 300 },
       false,
       'USD'
     )
@@ -83,5 +74,18 @@ describe('teamTreasury', () => {
       { label: 'Bank', barClass: 'bg-primary/40', percent: 25, percentLabel: '25%' },
       { label: 'Safe', barClass: 'bg-primary', percent: 75, percentLabel: '75%' }
     ])
+  })
+
+  it('uses unrounded values for account shares and keeps positive dust visible', () => {
+    const treasury = buildTeamTreasuryDisplay(
+      makeTeam(),
+      { [BANK]: 0.002, [SAFE]: 0.001 },
+      false,
+      'USD'
+    )
+    expect(treasury.formattedTotal).toBe('<$0.01')
+    expect(treasury.accountShares[0]?.percent).toBeCloseTo(66.666666)
+    expect(treasury.accountShares[1]?.percent).toBeCloseTo(33.333333)
+    expect(treasury.accountShares.map((share) => share.percentLabel)).toEqual(['67%', '33%'])
   })
 })

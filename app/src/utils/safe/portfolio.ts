@@ -4,7 +4,7 @@ import { SUPPORTED_TOKENS } from '@/constant'
 import type { TokenOption } from '@/types'
 import type { SafeClientBalance, SafeClientBalances } from '@/types/safe'
 import type { TokenHoldingRow } from '@/utils/tokens/holdings'
-import { formatExactNumber, formatNumber } from '@/utils/format'
+import { formatCurrency, formatExactNumber, formatNumber } from '@/utils/format'
 import { formatCurrencyShort } from '@/utils/currency/display'
 import { assetLogoUri } from '@/utils/tokens/assets'
 
@@ -23,6 +23,18 @@ function getTokenQuantity(item: SafeClientBalance): string | null {
     decimals <= 18
     ? formatUnits(BigInt(item.balance), decimals)
     : null
+}
+
+function formatFiatValue(value: number, currency: string): string {
+  const label = formatCurrencyShort(value, currency)
+  return value > 0 && label === formatCurrencyShort(0, currency)
+    ? '<' + formatCurrency(0.01, { currency })
+    : label
+}
+
+/** Known provider valuation, including portfolios with other unpriced holdings. */
+export function getSafeValuedFiatTotal(data?: SafeClientBalances): number | undefined {
+  return data ? (parseFiatAmount(data.fiatTotal) ?? undefined) : undefined
 }
 
 /** One provider item becomes one table row, in the same order. */
@@ -55,10 +67,17 @@ export function toSafeHoldingRows(
           : amountLabel,
       amount: quantity === null ? null : Number(quantity),
       price,
-      priceLabel: price === null ? 'Price unavailable' : formatCurrencyShort(price, currencyCode),
+      priceLabel: price === null ? 'Price unavailable' : formatFiatValue(price, currencyCode),
+      priceDetails:
+        price === null
+          ? undefined
+          : `${currencyCode} ${formatExactNumber(item.fiatConversion!)} / ${tokenInfo.symbol}`,
       balance,
-      balanceLabel:
-        balance === null ? 'Value unavailable' : formatCurrencyShort(balance, currencyCode)
+      balanceLabel: balance === null ? 'Value unavailable' : formatFiatValue(balance, currencyCode),
+      balanceDetails:
+        balance === null
+          ? undefined
+          : `${currencyCode} ${quantity === '0' ? '0' : formatExactNumber(item.fiatBalance!)}`
     }
   })
 }
@@ -76,7 +95,7 @@ export function getSafeFiatTotal(data?: SafeClientBalances): number | undefined 
         (price !== null && price > 0 && parseFiatAmount(item.fiatBalance) !== null))
     )
   })
-  return complete ? (parseFiatAmount(data.fiatTotal) ?? undefined) : undefined
+  return complete ? getSafeValuedFiatTotal(data) : undefined
 }
 
 /** Transfer choices remain restricted to configured payment contracts. */
