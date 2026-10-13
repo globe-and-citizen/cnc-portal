@@ -4,7 +4,7 @@ import { mkdir, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 
 const COVERAGE_DIR = join(process.cwd(), 'coverage', 'e2e', '.tmp')
-const TOKEN_PRICE_ROUTE = 'https://api.coingecko.com/api/v3/coins/**'
+const TOKEN_PRICE_ROUTE = '**/api/coingecko/coins/**'
 const TOKEN_PRICE_RESPONSE = {
   market_data: { current_price: { usd: 1, cad: 1, eur: 1, idr: 1, inr: 1 } }
 }
