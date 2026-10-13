@@ -799,7 +799,7 @@ existing completeness rules still apply. Gateway balance filtering does not filt
 [Safe pagination and metadata unit tests](../../../app/src/queries/__tests__/safe.queries.spec.ts) and
 [Safe source-mapping tests](../../../app/src/utils/accounting/__tests__/safe.spec.ts). Live product review remains pending.
 
-**Implementation evidence reviewed against:** `0bc2609d26711fab5422985ba93c4512a3e12ca8`
+**Implementation evidence reviewed against:** `8bb7376a908abee0cdd59621ba7ee5cfcc153de6`
 
 - [Accounting page](../../../app/src/components/sections/AccountingView/AccountingPage.vue),
   [team routes](../../../app/src/router/index.ts), and [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts)
@@ -807,8 +807,8 @@ existing completeness rules still apply. Gateway balance filtering does not filt
   [block timestamps](../../../app/src/queries/blockTimestamp.queries.ts), and
   [historical valuation queries](../../../app/src/queries/coingecko.queries.ts) and the
   [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts) (successful date snapshots remain fresh without
-  polling and retain unused cache entries for 24 hours; independent failed or malformed dates remain valuation gaps and recover on explicit
-  refresh), with [pure contract and historical-response validation](../../../app/src/utils/tokens/coingecko.ts)
+  polling and retain unused cache entries for the lifetime of the query client; independent failed or malformed dates remain valuation gaps
+  and recover on explicit refresh), with [pure contract and historical-response validation](../../../app/src/utils/tokens/coingecko.ts)
 - [Accounting assembly](../../../app/src/utils/accounting/assemble.ts),
   [journal finalization](../../../app/src/utils/accounting/journalEntry.ts), and
   [General Ledger presenter](../../../app/src/utils/accounting/journalLedgerPresenter.ts)

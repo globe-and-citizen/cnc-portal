@@ -107,10 +107,10 @@ The provisional draft feed derives one unique non-pegged asset target per requir
 [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts) uses pure utilities to resolve configured coin
 identities and verified Polygon contract metadata, then consumes the independent raw snapshot queries in `coingecko.queries.ts` directly.
 Each snapshot uses an atomic `coinId + date + USD` identity and the once preset: successful data stays fresh without polling, and unused
-cache entries are retained for 24 hours. Concurrent consumers and later refreshes reuse successful snapshots. Pure response interpretation
-retains the existing six-decimal rate precision; malformed or missing prices stay explicit valuation gaps. Explicit Accounting refresh
-retries failed provider queries without refetching successful dates. It never falls back to the current market price. Stablecoins retain
-their one-dollar peg, and SHER remains under its separate multiplier realization policy.
+cache entries are retained for the lifetime of the query client. Concurrent consumers and later refreshes reuse successful snapshots. Pure
+response interpretation retains the existing six-decimal rate precision; malformed or missing prices stay explicit valuation gaps. Explicit
+Accounting refresh retries failed provider queries without refetching successful dates. It never falls back to the current market price.
+Stablecoins retain their one-dollar peg, and SHER remains under its separate multiplier realization policy.
 
 Safe histories now refresh approximately every five minutes while retaining complete pagination and stable transfer identities. CoinGecko
 queries use ordinary Axios/TanStack observers calling the CNC backend, with cancellation and no automatic retries. The backend's
@@ -118,11 +118,11 @@ queries use ordinary Axios/TanStack observers calling the CNC backend, with canc
 429 cooldown while continuing to serve valid cache hits. Distinct historical dates keep independent error states. Historical errors recover
 on explicit refresh rather than automatic polling. Current supported-token prices retain the moderate preset and five-minute polling;
 verified contract identities and recovered token metadata use the once preset with 24-hour retention. Safe Transaction Service reads use
-direct Axios requests, disable automatic retries, and expose independent errors without a shared queue or 429 pause. Their unused history
-cache inherits the moderate preset's two-minute retention. Production GETs use the optional configured API key through Axios. Complete
-pagination and stable transfer identities are preserved; metadata recovery shares the observer's TanStack client and copies enriched rows
-without mutating provider objects. Source inclusion, exchange classification, precision and rate-of-record policy remain unchanged. A failed
-later Safe page never publishes a partial replacement feed. See
+direct Axios requests, inherit the shared query client's three automatic retries, and expose independent errors without a shared queue or
+429 pause. Their unused history cache inherits the moderate preset's two-minute retention. Production GETs use the optional configured API
+key through Axios. Complete pagination and stable transfer identities are preserved; metadata recovery shares the observer's TanStack client
+and copies enriched rows without mutating provider objects. Source inclusion, exchange classification, precision and rate-of-record policy
+remain unchanged. A failed later Safe page never publishes a partial replacement feed. See
 [Client Data Access](../client-data-access/README.md#browser-request-coordination) for the browser and shared-backend boundaries.
 
 Each contract-event query is also keyed by its normalized generation targets: lowercase address plus effective deployment `fromBlock`,
@@ -712,7 +712,7 @@ because deposits and company-pocket transfers are not manual assignment targets.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `7fcee7ce09f38a81c8069ece22273ef56d6217d0`
+**Implementation evidence reviewed against:** `8bb7376a908abee0cdd59621ba7ee5cfcc153de6`
 
 - [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts),
   [source-status projection](../../../app/src/composables/accounting/useAccountingStatus.ts),

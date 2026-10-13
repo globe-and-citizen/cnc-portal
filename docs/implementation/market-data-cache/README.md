@@ -77,7 +77,7 @@ provider quota for an arbitrary number of distinct uncached historical dates; ex
 
 ## Implementation Evidence
 
-The local source changes must be committed before their immutable documentation attestation can be recorded.
+**Implementation evidence reviewed against:** `8bb7376a908abee0cdd59621ba7ee5cfcc153de6`
 
 - [Market route](../../../backend/src/routes/coingeckoRoute.ts), [controller](../../../backend/src/controllers/coingeckoController.ts), and
   [request validation](../../../backend/src/validation/schemas/coingecko.ts)

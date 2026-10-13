@@ -1131,7 +1131,7 @@ movement across the participating stories.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `2333263f9c6b2b46f2e9e4343c62acc393f81f4b`
+**Implementation evidence reviewed against:** `8bb7376a908abee0cdd59621ba7ee5cfcc153de6`
 
 - [Bank deposit modal](../../../app/src/components/sections/BankView/forms/DepositModal.vue),
   [Bank transfer modal](../../../app/src/components/sections/BankView/forms/TransferModal.vue),
@@ -1258,11 +1258,11 @@ metadata uses the once preset with 24-hour retention. Unused Transaction Service
 Gateway balances and current prices retain unused data for 30 minutes. Each query configures its refresh cadence; background tabs and window
 focus do not trigger extra polling. Safe queries call their providers directly through the external Axios client; CoinGecko market queries
 use that client to call the backend's [shared Redis market cache](../../implementation/market-data-cache/README.md). Transaction Service
-errors, including HTTP 429, affect the individual query; queries recover on periodic or explicit refresh without automatic retries or a
-shared request queue. Complete history pagination and contract metadata recovery are retained. The Axios client sends the optional
-`VITE_APP_SAFE_API_KEY` only to GET requests on the direct production Transaction Service. Keys must be issued by `developer.safe.global`;
-staging keys do not establish a production quota. The approval queue identifies rate limiting instead of reporting a connection problem.
-Gateway keeps its own balance cadence. See
+errors, including HTTP 429, affect the individual query; these reads inherit the shared query client's three automatic retries and can
+recover on periodic or explicit refresh. They have no shared request queue or provider-wide cooldown. Complete history pagination and
+contract metadata recovery are retained. The Axios client sends the optional `VITE_APP_SAFE_API_KEY` only to GET requests on the direct
+production Transaction Service. Keys must be issued by `developer.safe.global`; staging keys do not establish a production quota. The
+approval queue identifies rate limiting instead of reporting a connection problem. Gateway keeps its own balance cadence. See
 [Client Data Access](../../implementation/client-data-access/README.md#browser-request-coordination) for recovery and session boundaries.
 
 Confirmed Safe transaction execution and directly executed transfers use one invalidation helper for all Safe service queries and the wallet

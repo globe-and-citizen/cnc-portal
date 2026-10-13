@@ -51,6 +51,7 @@ flowchart LR
 
 ## Invariants and Failure Behaviour
 
+- Event-feed queries inherit the shared query client's three automatic retries unless the observer overrides that policy.
 - RPC logs are the only client-side source for these contract event feeds.
 - A decoded event has the stable identity `<txHash>-<logIndex>`; duplicate scans collapse on that identity.
 - Contract generations scan from their deployment boundary whenever it is known.
@@ -72,7 +73,7 @@ flowchart LR
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `43907f7271b790fdccc63abdf7f9d80dcae4dbd6`
+**Implementation evidence reviewed against:** `8bb7376a908abee0cdd59621ba7ee5cfcc153de6`
 
 - [Shared RPC log scanner](../../../app/src/composables/eventsViaLogs.ts),
   [immutable block timestamp query](../../../app/src/queries/blockTimestamp.queries.ts), and

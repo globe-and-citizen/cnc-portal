@@ -93,11 +93,11 @@ information, histories and current-price observers poll every five minutes; Gate
 every minute while a pending transaction exists and every five minutes otherwise; a single transaction detail does not poll. Successful
 token metadata and verified coin identities use the once preset with 24-hour retention. Transaction Service queries inherit the moderate
 preset's two-minute unused-cache retention; Gateway balances and current prices retain unused data for 30 minutes. Successful historical
-price snapshots use the once preset, remain fresh without polling, and retain unused cache entries for 24 hours. This explicitly disables
-the shared query client's polling interval for historical reads. Each query inherits freshness and declares its polling cadence. Periodic
-observers do not poll in background tabs or refetch on window focus. Transaction Service queries disable automatic retries and recover on
-the next periodic or explicit refresh. Gateway alone retains one delayed transient-error retry; CoinGecko and token-metadata reads also
-disable automatic retries.
+price snapshots use the once preset, remain fresh without polling, and retain unused cache entries for the lifetime of the query client.
+This explicitly disables the shared query client's polling interval for historical reads. Each query inherits freshness and declares its
+polling cadence. Periodic observers do not poll in background tabs or refetch on window focus. Transaction Service queries inherit the
+shared query client's three automatic retries and also recover on periodic or explicit refresh. Gateway keeps one delayed transient-error
+retry; CoinGecko and token-metadata reads disable automatic retries.
 
 Accounting deduplicates contract discovery and coin/date targets, then consumes their independent observers. Missing, malformed or failed
 rates remain explicit valuation gaps without a current-price fallback. The existing Accounting refresh retries failed query observers;
@@ -155,7 +155,7 @@ backend instances. Safe provider requests retain their browser-only coordination
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `7fcee7ce09f38a81c8069ece22273ef56d6217d0`
+**Implementation evidence reviewed against:** `8bb7376a908abee0cdd59621ba7ee5cfcc153de6`
 
 - [Query barrel](../../../app/src/queries/index.ts), [query factory](../../../app/src/queries/queryFactory.ts), and
   [single-file upload query](../../../app/src/queries/file.queries.ts)
