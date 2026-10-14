@@ -31,6 +31,12 @@ jobs:
       - name: 📝 Lint Markdown
         run: npm run lint:md
 
+      - name: ✅ Test Markdown table warnings
+        run: npm run test:docs-tables
+
+      - name: 📏 Warn about dense Markdown tables
+        run: npm run warn:docs-tables
+
       - name: 💄 Check Markdown formatting
         run: npm run format:md:check
 

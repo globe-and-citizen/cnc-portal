@@ -98,24 +98,26 @@ insufficient; the detailed evidence distribution remains available in the genera
 The main-journey column distinguishes a complete integrated path, a partial integrated path, a planned integrated path, and a deliberately
 mocked browser path for the external Safe Transaction Service boundary.
 
-| User Story  | Main Journey  | Coverage Target | Gaps                                                                                                                                       |
-| ----------- | ------------- | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| US-BANK-001 | ✅ Integrated | ⚠️ 9/10         | `AC-US-BANK-001-03`                                                                                                                        |
-| US-BANK-002 | ✅ Integrated | ⚠️ 11/13        | `AC-US-BANK-002-01`, `AC-US-BANK-002-02`                                                                                                   |
-| US-BANK-003 | ✅ Integrated | ⚠️ 7/9 met      | `AC-US-BANK-003-08`, `AC-US-BANK-003-09`                                                                                                   |
-| US-BANK-004 | 🚧 Partial    | ⚠️ 6/8          | `AC-US-BANK-004-01`, `AC-US-BANK-004-02`                                                                                                   |
-| US-EXP-001  | ✅ Integrated | ⚠️ 13/15        | `AC-US-EXP-001-01`, `AC-US-EXP-001-02`                                                                                                     |
-| US-EXP-002  | 🚧 Partial    | ⚠️ 12/16        | `AC-US-EXP-002-01`, `AC-US-EXP-002-02`, `AC-US-EXP-002-07`, `AC-US-EXP-002-09`                                                             |
-| US-EXP-003  | ✅ Integrated | ✅ 9/9          | —                                                                                                                                          |
-| US-EXP-004  | ✅ Integrated | ⚠️ 12/13 met    | `AC-US-EXP-004-13`                                                                                                                         |
-| US-EXP-005  | 🚧 Partial    | ⚠️ 3/7          | `AC-US-EXP-005-03`, `AC-US-EXP-005-04`, `AC-US-EXP-005-06`, `AC-US-EXP-005-07`                                                             |
-| US-EXP-006  | 🚧 Partial    | ⚠️ 1/8          | `AC-US-EXP-006-01`, `AC-US-EXP-006-02`, `AC-US-EXP-006-03`, `AC-US-EXP-006-04`, `AC-US-EXP-006-05`, `AC-US-EXP-006-07`, `AC-US-EXP-006-08` |
-| US-SAFE-001 | 🚧 Partial    | ⚠️ 8/11         | `AC-US-SAFE-001-02`, `AC-US-SAFE-001-03`, `AC-US-SAFE-001-06`                                                                              |
-| US-SAFE-002 | 🧪 Mocked     | ⚠️ 7/10 met     | `AC-US-SAFE-002-01`, `AC-US-SAFE-002-02`, `AC-US-SAFE-002-09`                                                                              |
-| US-SAFE-003 | 📋 Planned    | ⚠️ 6/11         | 5 — `AC-US-SAFE-003-01`, `AC-US-SAFE-003-02`, `AC-US-SAFE-003-03`, `AC-US-SAFE-003-06`, `AC-US-SAFE-003-07`                                |
-| US-SAFE-004 | 📋 Planned    | ⚠️ 4/9          | 5 — `AC-US-SAFE-004-01`, `AC-US-SAFE-004-02`, `AC-US-SAFE-004-03`, `AC-US-SAFE-004-04`, `AC-US-SAFE-004-07`                                |
-| US-SAFE-005 | 🧪 Mocked     | ✅ 9/9          | —                                                                                                                                          |
-| US-SAFE-006 | 🧪 Mocked     | ✅ 10/10        | —                                                                                                                                          |
+Runs of at least three consecutive missing criteria use inclusive ranges with full AC IDs at both endpoints.
+
+| User Story  | Main Journey  | Coverage Target | Gaps                                                                              |
+| ----------- | ------------- | --------------- | --------------------------------------------------------------------------------- |
+| US-BANK-001 | ✅ Integrated | ⚠️ 9/10         | `AC-US-BANK-001-03`                                                               |
+| US-BANK-002 | ✅ Integrated | ⚠️ 11/13        | `AC-US-BANK-002-01`, `AC-US-BANK-002-02`                                          |
+| US-BANK-003 | ✅ Integrated | ⚠️ 7/9 met      | `AC-US-BANK-003-08`, `AC-US-BANK-003-09`                                          |
+| US-BANK-004 | 🚧 Partial    | ⚠️ 6/8          | `AC-US-BANK-004-01`, `AC-US-BANK-004-02`                                          |
+| US-EXP-001  | ✅ Integrated | ⚠️ 13/15        | `AC-US-EXP-001-01`, `AC-US-EXP-001-02`                                            |
+| US-EXP-002  | 🚧 Partial    | ⚠️ 12/16        | `AC-US-EXP-002-01`, `AC-US-EXP-002-02`, `AC-US-EXP-002-07`, `AC-US-EXP-002-09`    |
+| US-EXP-003  | ✅ Integrated | ✅ 9/9          | —                                                                                 |
+| US-EXP-004  | ✅ Integrated | ⚠️ 12/13 met    | `AC-US-EXP-004-13`                                                                |
+| US-EXP-005  | 🚧 Partial    | ⚠️ 3/7          | `AC-US-EXP-005-03`, `AC-US-EXP-005-04`, `AC-US-EXP-005-06`, `AC-US-EXP-005-07`    |
+| US-EXP-006  | 🚧 Partial    | ⚠️ 1/8          | `AC-US-EXP-006-01`–`AC-US-EXP-006-05`, `AC-US-EXP-006-07`, `AC-US-EXP-006-08`     |
+| US-SAFE-001 | 🚧 Partial    | ⚠️ 8/11         | `AC-US-SAFE-001-02`, `AC-US-SAFE-001-03`, `AC-US-SAFE-001-06`                     |
+| US-SAFE-002 | 🧪 Mocked     | ⚠️ 7/10 met     | `AC-US-SAFE-002-01`, `AC-US-SAFE-002-02`, `AC-US-SAFE-002-09`                     |
+| US-SAFE-003 | 📋 Planned    | ⚠️ 6/11         | `AC-US-SAFE-003-01`–`AC-US-SAFE-003-03`, `AC-US-SAFE-003-06`, `AC-US-SAFE-003-07` |
+| US-SAFE-004 | 📋 Planned    | ⚠️ 4/9          | `AC-US-SAFE-004-01`–`AC-US-SAFE-004-04`, `AC-US-SAFE-004-07`                      |
+| US-SAFE-005 | 🧪 Mocked     | ✅ 9/9          | —                                                                                 |
+| US-SAFE-006 | 🧪 Mocked     | ✅ 10/10        | —                                                                                 |
 
 Proof obligations use the [shared proof-strategy registry](../../testing/proof-strategies.md). Multiple IDs for one AC are cumulative.
 

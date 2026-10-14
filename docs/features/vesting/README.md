@@ -71,13 +71,15 @@ Coverage targets compare each criterion with its required representative evidenc
 generated coverage report and CI retain file-level and execution evidence. Known assertion gaps remain insufficient even when a static
 reference has the expected layer label.
 
-| User Story     | Main Journey | Coverage Target | Gaps                                                                                                                                                                                                                                                                                           |
-| -------------- | ------------ | --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| US-VESTING-001 | ⬜ Planned   | ⚠️ 3/14         | `AC-US-VESTING-001-01`, `AC-US-VESTING-001-02`, `AC-US-VESTING-001-03`, `AC-US-VESTING-001-04`, `AC-US-VESTING-001-07`, `AC-US-VESTING-001-08`, `AC-US-VESTING-001-09`, `AC-US-VESTING-001-10`, `AC-US-VESTING-001-11`, `AC-US-VESTING-001-13`, `AC-US-VESTING-001-14`                         |
-| US-VESTING-002 | ⬜ Planned   | ❌ 0/12 met     | `AC-US-VESTING-002-01`, `AC-US-VESTING-002-02`, `AC-US-VESTING-002-03`, `AC-US-VESTING-002-04`, `AC-US-VESTING-002-05`, `AC-US-VESTING-002-06`, `AC-US-VESTING-002-07`, `AC-US-VESTING-002-08`, `AC-US-VESTING-002-09`, `AC-US-VESTING-002-10`, `AC-US-VESTING-002-11`, `AC-US-VESTING-002-12` |
-| US-VESTING-003 | ⬜ Planned   | ⚠️ 2/11         | `AC-US-VESTING-003-01`, `AC-US-VESTING-003-02`, `AC-US-VESTING-003-03`, `AC-US-VESTING-003-04`, `AC-US-VESTING-003-05`, `AC-US-VESTING-003-08`, `AC-US-VESTING-003-09`, `AC-US-VESTING-003-10`, `AC-US-VESTING-003-11`                                                                         |
-| US-VESTING-004 | ⬜ Planned   | ❌ 0/10         | `AC-US-VESTING-004-01`, `AC-US-VESTING-004-02`, `AC-US-VESTING-004-03`, `AC-US-VESTING-004-04`, `AC-US-VESTING-004-05`, `AC-US-VESTING-004-06`, `AC-US-VESTING-004-07`, `AC-US-VESTING-004-08`, `AC-US-VESTING-004-09`, `AC-US-VESTING-004-10`                                                 |
-| US-VESTING-005 | ⬜ Planned   | ⚠️ 2/8          | `AC-US-VESTING-005-01`, `AC-US-VESTING-005-02`, `AC-US-VESTING-005-03`, `AC-US-VESTING-005-04`, `AC-US-VESTING-005-05`, `AC-US-VESTING-005-06`                                                                                                                                                 |
+Runs of at least three consecutive missing criteria use inclusive ranges with full AC IDs at both endpoints.
+
+| User Story     | Main Journey | Coverage Target | Gaps                                                                                                                                         |
+| -------------- | ------------ | --------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| US-VESTING-001 | ⬜ Planned   | ⚠️ 3/14         | `AC-US-VESTING-001-01`–`AC-US-VESTING-001-04`, `AC-US-VESTING-001-07`–`AC-US-VESTING-001-11`, `AC-US-VESTING-001-13`, `AC-US-VESTING-001-14` |
+| US-VESTING-002 | ⬜ Planned   | ❌ 0/12 met     | `AC-US-VESTING-002-01`–`AC-US-VESTING-002-12`                                                                                                |
+| US-VESTING-003 | ⬜ Planned   | ⚠️ 2/11         | `AC-US-VESTING-003-01`–`AC-US-VESTING-003-05`, `AC-US-VESTING-003-08`–`AC-US-VESTING-003-11`                                                 |
+| US-VESTING-004 | ⬜ Planned   | ❌ 0/10         | `AC-US-VESTING-004-01`–`AC-US-VESTING-004-10`                                                                                                |
+| US-VESTING-005 | ⬜ Planned   | ⚠️ 2/8          | `AC-US-VESTING-005-01`–`AC-US-VESTING-005-06`                                                                                                |
 
 Proof obligations use the [shared proof-strategy registry](../../testing/proof-strategies.md). Multiple IDs for one AC are cumulative.
 
