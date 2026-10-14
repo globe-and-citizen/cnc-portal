@@ -170,7 +170,7 @@ export interface SafeTransferOptions {
 export const SAFE_VERSION = '1.4.1'
 
 export const CHAIN_NAMES: Record<number, string> = {
-  137: 'polygon',
+  137: 'matic',
   11155111: 'sepolia',
   80002: 'amoy',
   42161: 'arbitrum'
