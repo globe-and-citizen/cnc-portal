@@ -285,7 +285,10 @@ speculative proof target before the responsible implementation layer is decided.
   browser crosses every boundary required by that path; a seeded, stubbed, or snapshot-provided dependency is not a validated user action.
 - `Coverage Target` counts each criterion once, and only when all of its required proof obligations are met, against the story's complete
   criterion count. Do not mark a story partial merely because intentionally mocked or layer-specific criteria are not integrated.
-- `Gaps` lists criteria whose required proof is absent or insufficient. Use `—` when every target is met.
+- `Gaps` identifies criteria whose required proof is absent or insufficient. Keep their full `AC-US-*` IDs. For a run of at least three
+  consecutive missing criteria, show an inclusive range with full IDs at both ends, such as `AC-US-FEATURE-001-02`–`AC-US-FEATURE-001-05`.
+  List isolated criteria and shorter runs as individual full IDs, in ascending order. Use `—` when every target is met, and state the
+  unresolved decision directly for a draft story.
 - Store the evidence distribution, owning `E2E-PATH-*`, detailed test-file mapping, latest pass/fail result, and run artifacts in the
   generated coverage report, CI, or a test-run record rather than duplicating them in this durable summary.
 
