@@ -14,7 +14,6 @@ function visibleCell(inline) {
 
   for (const token of inline.children ?? []) {
     if (['text', 'code_inline', 'image'].includes(token.type)) text += token.content
-    if (token.type === 'html_inline') text += token.content.replace(/<[^>]*>/gu, '')
     if (['softbreak', 'hardbreak'].includes(token.type)) text += ' '
     if (token.type === 'link_open') links += 1
   }
