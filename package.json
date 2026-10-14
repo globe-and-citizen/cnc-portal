@@ -11,6 +11,8 @@
     "report:acceptance-coverage": "node scripts/report-acceptance-criteria-coverage.mjs",
     "lint:docs-freshness": "node scripts/validate-documentation-freshness.mjs",
     "lint:md": "markdownlint-cli2",
+    "warn:docs-tables": "node scripts/check-markdown-table-readability.mjs",
+    "test:docs-tables": "node --test scripts/check-markdown-table-readability.test.mjs",
     "test:acceptance-traceability": "node --test scripts/acceptance-criteria-traceability.test.mjs",
     "test:docs-freshness": "node --test scripts/documentation-freshness.test.mjs",
     "test:ui-ux-review-contract": "node --test scripts/ui-ux-review-contract.test.mjs",
@@ -29,6 +31,7 @@
     "husky": "^9.1.7",
     "knip": "^6.34.0",
     "lint-staged": "^17.0.5",
+    "markdown-it": "^15.0.1",
     "markdownlint-cli2": "^0.23.3",
     "prettier": "^3.9.6",
     "typescript": "^5.9.3"

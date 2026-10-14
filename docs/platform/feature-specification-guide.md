@@ -534,6 +534,11 @@ relationships under a descriptive heading as prose or a list. A single narrative
 Preserve every stable ID, relationship, and evidence link when moving detail out of a table. Review the rendered layout rather than setting
 a hard source-line limit: Markdown link destinations can make a short visible cell look long in source.
 
+Run `npm run warn:docs-tables` to locate dense tables in tracked Markdown files. It warns once per table when a row has a cell over 120
+visible characters, over 260 visible characters across cells, or more than five links. Link destinations do not count toward visible length.
+The thresholds are review prompts, not formatting rules: inspect the rendered table and decide whether a list or section makes the
+relationships easier to follow. The warning does not fail CI.
+
 Do not duplicate platform security, testing, deployment, formatting, or architecture standards. Reference their canonical guides.
 
 ## Diagram Format
