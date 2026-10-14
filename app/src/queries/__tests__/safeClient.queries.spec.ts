@@ -9,7 +9,7 @@ const { fetchSafeClientBalances, useGetSafeBalancesQuery } =
   await vi.importActual<typeof import('../safeClient.queries')>('../safeClient.queries')
 const address = '0x0557f280d9da274254e85ee70c2936694e494275'
 const checksum = '0x0557F280D9DA274254e85Ee70c2936694e494275'
-const capturedQuery = () => useQueryFn.mock.calls.at(-1)![0]
+const capturedQuery = () => toValue(useQueryFn.mock.calls.at(-1)![0])
 
 beforeEach(() => vi.clearAllMocks())
 afterEach(() => vi.restoreAllMocks())

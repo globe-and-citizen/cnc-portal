@@ -106,23 +106,24 @@ timestamp: the event is withheld and emitted as a typed source diagnostic, which
 The provisional draft feed derives one unique non-pegged asset target per required UTC transaction date. The
 [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts) uses pure utilities to resolve configured coin
 identities and verified Polygon contract metadata, then consumes the independent raw snapshot queries in `coingecko.queries.ts` directly.
-Each snapshot uses an atomic `coinId + date + USD` identity, with infinite staleness and garbage-collection time. Concurrent consumers and
-later refreshes reuse successful snapshots. Pure response interpretation retains the existing six-decimal rate precision; malformed or
-missing prices stay explicit valuation gaps. Explicit Accounting refresh retries failed provider queries without refetching successful
-dates. It never falls back to the current market price. Stablecoins retain their one-dollar peg, and SHER remains under its separate
-multiplier realization policy.
+Each snapshot uses an atomic `coinId + date + USD` identity and the once preset: successful data stays fresh without polling, and unused
+cache entries are retained for the lifetime of the query client. Concurrent consumers and later refreshes reuse successful snapshots. Pure
+response interpretation retains the existing six-decimal rate precision; malformed or missing prices stay explicit valuation gaps. Explicit
+Accounting refresh retries failed provider queries without refetching successful dates. It never falls back to the current market price.
+Stablecoins retain their one-dollar peg, and SHER remains under its separate multiplier realization policy.
 
 Safe histories now refresh approximately every five minutes while retaining complete pagination and stable transfer identities. CoinGecko
-queries use ordinary Axios/TanStack observers with cancellation and no automatic retries. Distinct historical dates can load concurrently;
-one failed date does not block others. Historical errors recover on explicit refresh rather than automatic polling, and there is no custom
-request queue or provider-wide 429 pause. Current supported-token prices retain the moderate preset and five-minute polling; verified
-contract identities and recovered token metadata use the once preset with 24-hour retention. Safe Transaction Service reads use direct Axios
-requests, disable automatic retries, and expose independent errors without a shared queue or 429 pause. Their unused history cache inherits
-the moderate preset's two-minute retention. Production GETs use the optional configured API key through Axios. Complete pagination and
-stable transfer identities are preserved; metadata recovery shares the observer's TanStack client and copies enriched rows without mutating
-provider objects. Source inclusion, exchange classification, precision and rate-of-record policy remain unchanged. A failed later Safe page
-never publishes a partial replacement feed. See [Client Data Access](../client-data-access/README.md#browser-request-coordination) for the
-session-only boundary.
+queries use ordinary Axios/TanStack observers calling the CNC backend, with cancellation and no automatic retries. The backend's
+[shared Redis market cache](../market-data-cache/README.md) preserves raw responses, coordinates misses and provider admission, and shares a
+429 cooldown while continuing to serve valid cache hits. Distinct historical dates keep independent error states. Historical errors recover
+on explicit refresh rather than automatic polling. Current supported-token prices retain the moderate preset and five-minute polling;
+verified contract identities and recovered token metadata use the once preset with 24-hour retention. Safe Transaction Service reads use
+direct Axios requests, apply the bounded Safe-specific retry policy, and expose independent errors without a shared request queue or
+provider-wide cooldown. Their unused history cache inherits the moderate preset's two-minute retention. Production GETs use the optional
+configured API key through Axios. Complete pagination and stable transfer identities are preserved; metadata recovery shares the observer's
+TanStack client and copies enriched rows without mutating provider objects. Source inclusion, exchange classification, precision and
+rate-of-record policy remain unchanged. A failed later Safe page never publishes a partial replacement feed. See
+[Client Data Access](../client-data-access/README.md#browser-request-coordination) for the browser and shared-backend boundaries.
 
 Each contract-event query is also keyed by its normalized generation targets: lowercase address plus effective deployment `fromBlock`,
 sorted independently of API order. A later or asynchronously resolved boundary therefore selects a distinct history range. Duplicate
@@ -147,6 +148,12 @@ every five minutes. It includes real ERC-20 `transferFrom` settlements that cann
 calldata. Missing token metadata is read from its contract when possible. Metadata must match the transfer's contract address; unsupported
 or absent decimals retain raw movements with a completeness diagnostic. The exact monetary layer currently supports token precision from
 zero through 18 decimals. A larger precision remains unavailable rather than being silently rounded or interpreted as native.
+
+Safe provider reads retry temporary 404, 408, 425, 429, server and network failures up to three times at fixed intervals. Rate-limit
+recovery respects `Retry-After`; cancellation, other client errors, malformed responses and an explicit monthly-quota-exceeded response do
+not retry automatically. A failed history read still rejects the entire replacement, preserving previously cached complete history. Gateway
+holdings and Safe information use the same recovery, except that a 404 for a newly deployed Safe keeps retrying for about three and a half
+minutes while Safe services index it. Neither changes journal classification or historical valuation.
 
 Dynamic assets carry an `erc20:<chainId>:<contractAddress>` identity and per-movement metadata. The fixed CNC payment allowlist is
 unchanged. Contract-address market discovery on Polygon resolves the provider coin identity before historical snapshots are requested. Local
@@ -174,6 +181,10 @@ holding does not require a price. These current-price completeness checks do not
 contract-matched logo metadata is display-only. Safe holdings use compact amount labels while preserving the exact quantity for inspection;
 the rounding and logo metadata do not alter source movements, accounting classification, carrying values, or historical rates.
 
+Company summaries share the Gateway balance observers and read the known provider fiat total independently of holdings completeness. Price
+and value details preserve provider precision behind rounded table labels; these summary and display adapters do not change journal
+valuation.
+
 Implementation: [asset identity](../../../app/src/utils/tokens/assets.ts),
 [exchange carrying-value replay](../../../app/src/utils/accounting/safeExchanges.ts),
 [contract market discovery](../../../app/src/queries/coingecko.queries.ts),
@@ -181,9 +192,9 @@ Implementation: [asset identity](../../../app/src/utils/tokens/assets.ts),
 and [exchange regression tests](../../../app/src/utils/accounting/__tests__/safeExchanges.spec.ts) and
 [market-rate regressions](../../../app/src/utils/accounting/__tests__/safeExchanges.marketRates.spec.ts).
 
-Gateway holdings are keyed by chain and token contract and show only returned balances, including zero balances. No configured base-currency
-rows are inserted. Provider metadata and order are retained. The global token resolver continues to supply existing Accounting identities
-and stablecoin valuation rules; the holdings correction does not remap journal entries or broaden payment allowlists.
+Gateway balance responses are cached by Safe address, chain and fiat currency and show only returned balances, including zero balances. No
+configured base-currency rows are inserted. Provider metadata and order are retained. The global token resolver continues to supply existing
+Accounting identities and stablecoin valuation rules; the holdings correction does not remap journal entries or broaden payment allowlists.
 
 ### Runtime Export Boundary
 
@@ -707,7 +718,7 @@ because deposits and company-pocket transfers are not manual assignment targets.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `7fcee7ce09f38a81c8069ece22273ef56d6217d0`
+**Implementation evidence reviewed against:** `008826d0d841f19c967c8ff477a7e9c452ee7398`
 
 - [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts),
   [source-status projection](../../../app/src/composables/accounting/useAccountingStatus.ts),

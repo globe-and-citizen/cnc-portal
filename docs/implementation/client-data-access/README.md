@@ -34,12 +34,15 @@ flowchart LR
 ### Contract-based asset markets
 
 [CoinGecko queries](../../../app/src/queries/coingecko.queries.ts) provide ordinary `useQuery` and `useQueries` observers for
-supported-token prices, Polygon contract metadata and historical snapshots. Each query calls the external Axios client directly, forwards
-cancellation, validates contract identity or historical precision through [pure utilities](../../../app/src/utils/tokens/coingecko.ts), and
-caches the unchanged valid provider response. The [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts)
-consumes those queries directly and uses the pure utilities to resolve a token's transaction-date rate. The currency store consumes the
-price query. Current prices use `queryPresets.moderate` for one-minute freshness; contract identity and historical snapshots use
-`queryPresets.once`, without local `staleTime` overrides. The authenticated CNC query factory is not used for external provider requests.
+supported-token prices, Polygon contract metadata and historical snapshots. Each query uses the external Axios client to call the configured
+CNC backend's public market routes and forwards cancellation, validates contract identity or historical precision through
+[pure utilities](../../../app/src/utils/tokens/coingecko.ts), and caches the unchanged valid provider response. The
+[Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts) consumes those queries directly and uses the pure
+utilities to resolve a token's transaction-date rate. The currency store consumes the price query. Current prices use
+`queryPresets.moderate` for one-minute freshness; contract identity and historical snapshots use `queryPresets.once`, without local
+`staleTime` overrides. The authenticated CNC query factory is not used for these reads because its HTTP retry interceptor would override the
+CoinGecko query retry policy. Provider HTTP, shared Redis caching and cross-instance admission belong to
+[Shared Market Data Cache](../market-data-cache/README.md).
 
 Asset market discovery verifies the provider platform and contract address before returning an asset's coin identity, current USD price, or
 optional display logo. Contract market lookup supports Polygon (137) only; Hardhat, Amoy, Sepolia, and other networks remain unavailable
@@ -79,26 +82,37 @@ cross-origin redirects. A production key must come from `developer.safe.global`;
 production quota. Service writes retain their explicit mutation path. Gateway keeps its own balance query cadence.
 
 CoinGecko requests use standard TanStack cache identities and independent query error states. Queries for the same identity share one
-request; distinct identities can run concurrently. There is no custom admission queue, shared pause or batch recovery state. All CoinGecko
-queries disable automatic retries. Current prices still poll every five minutes; contract discovery and historical snapshots are requested
-when needed and unavailable results can be retried by explicit Accounting refresh. A 429 remains a failed provider read and does not block
-unrelated queries.
+browser request; distinct identities can reach the backend concurrently. The backend shares validated responses, miss leases, provider
+admission and 429 cooldown through Redis, as described in [Shared Market Data Cache](../market-data-cache/README.md). All CoinGecko queries
+disable automatic retries. Current prices still poll every five minutes; contract discovery and historical snapshots are requested when
+needed and unavailable results can be retried by explicit Accounting refresh. During provider cooldown, valid shared cache hits remain
+available and uncached reads fail with 429 and the remaining retry window.
 
 Safe information, complete transfer histories, Gateway holdings and current prices inherit the moderate preset's one-minute freshness. Safe
 information, histories and current-price observers poll every five minutes; Gateway balances poll every minute. The transaction queue polls
 every minute while a pending transaction exists and every five minutes otherwise; a single transaction detail does not poll. Successful
 token metadata and verified coin identities use the once preset with 24-hour retention. Transaction Service queries inherit the moderate
 preset's two-minute unused-cache retention; Gateway balances and current prices retain unused data for 30 minutes. Successful historical
-price snapshots remain immutable in the session cache. Each query inherits freshness and declares its polling cadence. Periodic observers do
-not poll in background tabs or refetch on window focus. Transaction Service queries disable automatic retries and recover on the next
-periodic or explicit refresh. Gateway alone retains one delayed transient-error retry; CoinGecko and token-metadata reads also disable
-automatic retries.
+price snapshots use the once preset, remain fresh without polling, and retain unused cache entries for the lifetime of the query client.
+This explicitly disables the shared query client's polling interval for historical reads. Each query inherits freshness and declares its
+polling cadence. Periodic observers do not poll in background tabs or refetch on window focus. Transaction Service queries inherit the
+Safe-specific bounded retries and also recover on periodic or explicit refresh. Gateway and Transaction Service queries retry temporary 404,
+408, 425, 429, server and network failures up to three times. The interval stays fixed at five seconds for ordinary transient failures and
+thirty seconds for HTTP 429, and waits longer when the provider's numeric or HTTP-date `Retry-After` requires it. Safe information and
+Gateway balances answer HTTP 404 until Safe services index a newly deployed Safe, and the Gateway caches a not-found answer for 30 seconds ±
+10 %. Those two reads therefore treat 404 as an indexing wait: they retry after 5, 10 and 20 seconds, then every 35 seconds, for about three
+and a half minutes, so every later attempt reaches the indexer again. Other Safe reads keep the three-retry bound for 404. The
+[shared recovery policy](../../../app/src/queries/safe.recovery.ts) owns both schedules; a pure Safe model utility classifies the
+not-indexed answer for the queries and the Safe overview notice. Initial reads remain pending through recovery, so successful responses
+update the mounted UI without a reload. Cancellation, other client errors, malformed responses and an explicit monthly-quota-exceeded
+response do not retry automatically. CoinGecko and token-metadata reads disable automatic retries.
 
 Accounting deduplicates contract discovery and coin/date targets, then consumes their independent observers. Missing, malformed or failed
 rates remain explicit valuation gaps without a current-price fallback. The existing Accounting refresh retries failed query observers;
 dependent historical dates start when verified contract metadata becomes available. Successful snapshots are reused. A disabled valuation
-consumer sends no requests, including on refresh. There is no automatic historical polling or provider-wide rate-limit guarantee across
-identities, tabs or users.
+consumer sends no requests, including on refresh. There is no automatic historical polling. Backend admission coordinates CoinGecko reads
+across users and instances sharing Redis; it does not guarantee quota for arbitrary numbers of distinct cold snapshots or external clients
+using the same provider credential.
 
 `staleTime` describes successful-cache freshness, `refetchInterval` schedules observer refreshes, and `retryDelay` applies only when `retry`
 permits another failed request. Successful historical snapshots remain immutable; `retry: false` disables per-request retries. Full Safe
@@ -113,10 +127,15 @@ prices for nonzero holdings keep values and totals explicitly incomplete, includ
 completeness against raw items and reads `fiatTotal` directly, without formatting table rows or recalculating a total from them. The
 response contract is defined in [Safe types](../../../app/src/types/safe.ts).
 
+Company and Companies list summaries consume the provider's valued `fiatTotal`, keeping the known valuation even when another holding lacks
+a price. The Companies list creates one observer per unique Safe with the same balance options, address, configured chain and selected fiat
+currency as Safe Account, so it reuses the existing cache rather than re-reading the Safe through the restricted payment-token RPC batch.
+Holdings expose precise price and value details without deriving balances from rounded display labels.
+
 Address, configured chain and uppercase fiat code identify each balance cache entry. The overview and holdings share one USD request; a
 selected non-USD currency has its own Gateway request while the overview retains its USD total. No transfer-history, RPC balance or
 CoinGecko current-price reads are required to populate these holdings. The query refreshes every minute in active tabs, retains unused data
-for 30 minutes, propagates cancellation and allows one delayed transient-error retry. Both Gateway and Transaction Service GETs use the
+for 30 minutes, propagates cancellation and uses the bounded recovery described above. Both Gateway and Transaction Service GETs use the
 external Axios client directly. A failed request retains its cached response while exposing the error; the UI marks the total incomplete.
 
 [Gateway queries](../../../app/src/queries/safeClient.queries.ts) own the balance HTTP request and reject malformed response bodies.
@@ -133,18 +152,22 @@ availability guarantee.
 Executable evidence: [Gateway request tests](../../../app/src/queries/__tests__/safeClient.queries.spec.ts) and
 [holdings presentation tests](../../../app/src/utils/safe/__tests__/portfolio.spec.ts).
 
+[Safe recovery tests](../../../app/src/queries/__tests__/safe.recovery.spec.ts) execute the configured queries with a real TanStack cache
+and simulated provider responses, verifying recovery without a reload, shared balance reads, retry deadlines, the indexing window through
+the Gateway's cached 404 and persistent-error visibility.
+
 Direct Transaction Service reads are covered by [pagination and metadata tests](../../../app/src/queries/__tests__/safe.queries.spec.ts) and
 [Axios authentication and cancellation tests](../../../app/src/lib/__tests__/external.axios.spec.ts).
 
 The query unit tests cover request parameters, response validation, pagination and propagated errors. TanStack observers are mocked; these
 tests do not establish cache sharing, refresh or observer lifecycle behaviour.
 
-The caches belong to one browser session. They do not coordinate separate users, tabs, devices, or backend instances, and do not guarantee
-that provider quotas can absorb concurrent users.
+TanStack caches belong to one browser session. The additional backend Redis cache coordinates CoinGecko across users, tabs, devices and
+backend instances. Safe provider requests retain their browser-only coordination boundary.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `7fcee7ce09f38a81c8069ece22273ef56d6217d0`
+**Implementation evidence reviewed against:** `008826d0d841f19c967c8ff477a7e9c452ee7398`
 
 - [Query barrel](../../../app/src/queries/index.ts), [query factory](../../../app/src/queries/queryFactory.ts), and
   [single-file upload query](../../../app/src/queries/file.queries.ts)

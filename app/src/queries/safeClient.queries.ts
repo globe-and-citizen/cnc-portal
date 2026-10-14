@@ -1,5 +1,4 @@
 import { useQuery } from '@tanstack/vue-query'
-import type { AxiosError } from 'axios'
 import { computed, toValue, type MaybeRefOrGetter } from 'vue'
 import { isAddress } from 'viem'
 import { currentChainId } from '@/constant'
@@ -7,6 +6,7 @@ import { SAFE_CLIENT_URL, type SafeClientBalances } from '@/types/safe'
 import externalApiClient from '@/lib/external.axios'
 import { normalizeSafeAddress } from '@/utils/safe/address'
 import { safeKeys } from './safe.queries'
+import { retrySafeIndexingRead, safeIndexingRetryDelay } from './safe.recovery'
 import { queryPresets } from './queryFactory'
 
 export interface GetSafeBalancesParams {
@@ -42,24 +42,34 @@ export async function fetchSafeClientBalances(
  * @endpoint GET /v1/chains/{chainId}/safes/{safeAddress}/balances/{fiatCode}
  * @queryParams trusted=false, exclude_spam=true
  */
-export function useGetSafeBalancesQuery(params: GetSafeBalancesParams) {
-  const address = computed(() => toValue(params.pathParams.safeAddress))
-  const chainId = computed(() => toValue(params.pathParams.chainId) ?? currentChainId)
-  const fiatCode = computed(() => (toValue(params.pathParams.fiatCode) ?? 'USD').toUpperCase())
-  return useQuery<SafeClientBalances>({
+export function safeBalancesQueryOptions(
+  address: string | undefined,
+  chainId: number,
+  fiatCode: string
+) {
+  return {
     ...queryPresets.moderate,
-    queryKey: computed(() => safeClientKeys.balances(address.value, chainId.value, fiatCode.value)),
-    enabled: computed(() => Boolean(address.value && isAddress(address.value))),
-    queryFn: ({ signal }) =>
-      fetchSafeClientBalances(address.value!, chainId.value, fiatCode.value, signal),
+    queryKey: safeClientKeys.balances(address, chainId, fiatCode),
+    enabled: Boolean(address && isAddress(address)),
+    queryFn: ({ signal }: { signal: AbortSignal }) =>
+      fetchSafeClientBalances(address!, chainId, fiatCode, signal),
     gcTime: 30 * 60_000,
     refetchInterval: 60_000,
     refetchIntervalInBackground: false,
     refetchOnWindowFocus: false,
-    retry: (failureCount, error) => {
-      const failure = error as AxiosError
-      return failureCount < 1 && (failure.response?.status ?? failure.status ?? 500) >= 500
-    },
-    retryDelay: 5000 // One transient-error retry; HTTP 429 waits for the normal refresh.
-  })
+    retry: retrySafeIndexingRead,
+    retryDelay: safeIndexingRetryDelay
+  }
+}
+
+export function useGetSafeBalancesQuery(params: GetSafeBalancesParams) {
+  return useQuery(
+    computed(() =>
+      safeBalancesQueryOptions(
+        toValue(params.pathParams.safeAddress),
+        toValue(params.pathParams.chainId) ?? currentChainId,
+        (toValue(params.pathParams.fiatCode) ?? 'USD').toUpperCase()
+      )
+    )
+  )
 }

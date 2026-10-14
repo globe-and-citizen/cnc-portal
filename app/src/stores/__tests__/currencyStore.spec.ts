@@ -6,6 +6,7 @@ vi.unmock('@/stores/currencyStore')
 import { nextTick, ref } from 'vue'
 import { useQueryFn } from '@/tests/mocks'
 import externalApiClient from '@/lib/external.axios'
+import { BACKEND_URL } from '@/constant'
 
 // @tanstack/vue-query is mocked globally via composables.setup.ts
 // useQueryFn is exported from composables.mock.ts and used as the useQuery implementation
@@ -124,7 +125,12 @@ describe('Currency Store', () => {
     expect(capturedQueryFn).toBeDefined()
     const signal = new AbortController().signal
     await expect(capturedQueryFn!({ signal })).rejects.toBe(failure)
-    expect(get).toHaveBeenCalledWith(expect.stringContaining('/api/v3/coins/'), { signal })
+    expect(get).toHaveBeenCalledWith(
+      expect.stringContaining(`${BACKEND_URL}/api/coingecko/coins/`),
+      {
+        signal
+      }
+    )
     get.mockRestore()
     // getTokenInfo should return null prices
     const native = store.getTokenInfo('native')

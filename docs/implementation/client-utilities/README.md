@@ -93,14 +93,22 @@ conversion. See the [Accounting read model](../accounting-read-model/README.md) 
 [holdings table](../../../app/src/components/ui/TokenHoldingsSection.vue). Bank, Payroll, and Expense fetch their balances in the page; Safe
 converts Gateway items directly to typed table rows in its page. The table owns display, sorting, and failed-image fallback, with no balance
 query. [Safe asset discovery](../../../app/src/utils/safe/assetDiscovery.ts) deduplicates contract metadata without reactive dependencies.
+[Safe model helpers](../../../app/src/utils/safe/model.ts) classify the HTTP 404 that Safe services return before they index a Safe, using a
+type-only Axios contract; the Safe queries own the resulting retry window and the overview owns its notice.
 
-[Safe holdings presentation](../../../app/src/utils/safe/portfolio.ts) exposes three focused adapters: `toSafeHoldingRows` maps each Gateway
-item to one `TokenHoldingRow`; `getSafeFiatTotal` validates completeness and reads the raw provider total without building formatted rows;
-`toSafeTransferTokens` matches the configured payment contracts independently of provider names and symbols. Two private helpers share
+The holdings table accepts separate request-error and incomplete-valuation states. A failed Safe balance request shows a loading-error
+message; the valuation warning appears only for returned holdings with unavailable values. When both states exist, the request error takes
+precedence. Other account tables retain their existing behaviour when no request-error state is supplied.
+
+[Safe holdings presentation](../../../app/src/utils/safe/portfolio.ts) exposes focused adapters: `toSafeHoldingRows` maps each Gateway item
+to one `TokenHoldingRow`; `getSafeFiatTotal` validates completeness and reads the raw provider total without building formatted rows;
+`getSafeValuedFiatTotal` reads the known provider valuation for Company summaries, including partially priced portfolios;
+`toSafeTransferTokens` matches the configured payment contracts independently of provider names and symbols. Private helpers share
 fiat-number validation and exact base-unit conversion. The table mapping preserves provider order and returned zero balances, with no
 insertion, filtering or regrouping. Exact quantities pass through the canonical formatter; compact labels retain four decimals and identify
-positive sub-precision balances as `<0.0001`. Missing quantities and nonzero unpriced holdings keep totals unavailable. Provider-side
-filtering and the absence of a local blacklist are documented in
+positive sub-precision balances as `<0.0001`. Precise price and value details accompany rounded labels; positive fiat values that round to
+zero display as less than one cent. Missing quantities and nonzero unpriced holdings keep the Safe completeness-checked total unavailable.
+Provider-side filtering and the absence of a local blacklist are documented in
 [Client Data Access](../client-data-access/README.md#safe-provider-filtering).
 
 [CoinGecko response interpretation](../../../app/src/utils/tokens/coingecko.ts) verifies the Polygon contract before accepting coin
@@ -116,7 +124,7 @@ post-confirmation balance invalidations reach both. [Currency prices](../../../a
 currency payload and conversions while consuming the centralized CoinGecko price query, whose preset freshness, polling and direct Axios
 reads are described in [Client Data Access](../client-data-access/README.md#browser-request-coordination).
 
-**Implementation evidence reviewed against:** `22058afcf7c39f6320537c622bcb33b74dbc9ec9`
+**Implementation evidence reviewed against:** `008826d0d841f19c967c8ff477a7e9c452ee7398`
 
 - [Utility ownership map and domain implementations](../../../app/src/utils/)
 - [Shared Accounting domain contracts](../../../app/src/utils/accounting/types.ts)

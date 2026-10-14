@@ -140,6 +140,7 @@ describe('[US-SAFE-003] SafeBalanceSection transfers', () => {
       data: mockSafeInfo,
       isLoading: ref(false),
       error: ref(null),
+      failureReason: ref(null),
       refetch: vi.fn()
     })
 

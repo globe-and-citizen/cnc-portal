@@ -22,7 +22,7 @@
       variant="soft"
       icon="i-lucide-circle-alert"
       title="Some wallet details are unavailable"
-      description="The Safe address remains available. Check your connection and retry the balance and signer details."
+      description="Wallet data could not be loaded. Wait a moment, then try again. The Safe address remains available."
       data-test="safe-overview-error"
     >
       <template #actions>
@@ -36,6 +36,16 @@
         />
       </template>
     </UAlert>
+    <UAlert
+      v-else-if="isIndexing"
+      class="mb-5"
+      color="info"
+      variant="soft"
+      icon="i-lucide-hourglass"
+      title="Safe services are indexing this wallet"
+      description="Balances and signers appear here automatically once indexing finishes, which can take a few minutes after deployment."
+      data-test="safe-indexing-notice"
+    />
 
     <div class="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
       <div class="min-w-0">
@@ -161,7 +171,7 @@ import type { Address } from 'viem'
 import { useStorage } from '@vueuse/core'
 import { useToast } from '@nuxt/ui/composables'
 import AddressTooltip from '@/components/ui/AddressTooltip.vue'
-import { getSafeHomeUrl } from '@/utils/safe/model'
+import { getSafeHomeUrl, isSafeNotIndexedError } from '@/utils/safe/model'
 import { openSafeAppUrl } from '@/lib/safe/browser'
 import { useGetSafeInfoQuery } from '@/queries/safe.queries'
 import TransferForm, { type TransferModel } from '@/components/forms/TransferForm.vue'
@@ -183,6 +193,7 @@ const { isWriteDisabled } = useTeamWriteGuard()
 const {
   data: balances,
   error: balanceError,
+  failureReason: balanceFailure,
   isLoading,
   refetch: refetchBalances
 } = useGetSafeBalancesQuery({ pathParams: { safeAddress: () => props.address } })
@@ -206,8 +217,14 @@ const {
   data: safeInfo,
   isLoading: isSafeInfoLoading,
   error: safeInfoError,
+  failureReason: safeInfoFailure,
   refetch: refetchSafeInfo
 } = useGetSafeInfoQuery({ pathParams: { safeAddress: props.address } })
+const isIndexing = computed(
+  () =>
+    (isLoading.value && isSafeNotIndexedError(balanceFailure.value)) ||
+    (isSafeInfoLoading.value && isSafeNotIndexedError(safeInfoFailure.value))
+)
 
 const tokens = computed(() => toSafeTransferTokens(balances.value))
 

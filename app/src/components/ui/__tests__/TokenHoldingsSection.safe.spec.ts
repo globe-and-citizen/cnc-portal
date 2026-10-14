@@ -191,4 +191,34 @@ describe('Safe holdings', () => {
     expect(rows()).toEqual([])
     expect(wrapper.text()).not.toContain('USDC')
   })
+
+  it('exposes precise prices and balances for rounded values through accessible cells', () => {
+    const rows = toSafeHoldingRows({
+      fiatTotal: '0.088585632',
+      items: [
+        {
+          tokenInfo: {
+            type: 'ERC20',
+            address: token,
+            name: 'USD Tether',
+            symbol: 'USDT0',
+            decimals: 6
+          },
+          balance: '88586',
+          fiatConversion: '0.99984321',
+          fiatBalance: '0.088585632'
+        }
+      ]
+    })
+    const wrapper = renderWithProviders(TokenHoldingsSection, { props: { rows, compact: true } })
+    const price = wrapper.get('[data-test="safe-holding-price"]')
+    const value = wrapper.get('[data-test="safe-holding-value"]')
+    expect(price.text()).toBe('$1 / USDT0')
+    expect(price.attributes('title')).toBe('USD 0.99984321 / USDT0')
+    expect(price.attributes('aria-label')).toBe('USD 0.99984321 / USDT0')
+    expect(price.attributes('tabindex')).toBe('0')
+    expect(value.text()).toBe('$0.09')
+    expect(value.attributes('title')).toBe('USD 0.088585632')
+    expect(value.attributes('aria-label')).toBe('USD 0.088585632')
+  })
 })

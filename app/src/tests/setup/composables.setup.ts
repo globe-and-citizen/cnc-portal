@@ -41,7 +41,8 @@ beforeEach(() => {
   resetMockRoute()
 })
 
-vi.mock('@/queries/safeClient.queries', () => ({
+vi.mock('@/queries/safeClient.queries', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/queries/safeClient.queries')>()),
   useGetSafeBalancesQuery: vi.fn((params) => mockUseSafeBalances.query(params))
 }))
 

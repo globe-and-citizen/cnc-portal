@@ -104,7 +104,7 @@ const contractBalanceState = {
   total: ref(defaultContractTotal()),
   hasData: ref(true),
   isLoading: ref(false),
-  error: ref(null),
+  error: ref<Error | null>(null),
   isFetching: ref(false),
   refetch: vi.fn()
 }

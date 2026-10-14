@@ -16,6 +16,7 @@ interface FixtureAsset {
 /** Keep existing balance fixtures usable while exercising the Gateway response contract. */
 export const mockUseSafeBalances = {
   assets: { data: ref<FixtureAsset[]>([]) },
+  failureReason: ref<Error | null>(null),
   isIncomplete: ref(false),
   isLoading: computed(() => mockUseContractBalance.isLoading.value),
   refetch: vi.fn().mockResolvedValue(undefined),
@@ -62,12 +63,14 @@ export const mockUseSafeBalances = {
       data,
       isLoading: mockUseSafeBalances.isLoading,
       error: mockUseContractBalance.error,
+      failureReason: mockUseSafeBalances.failureReason,
       refetch: mockUseSafeBalances.refetch
     }
   }
 }
 
 export function resetSafeBalancesMock() {
+  mockUseSafeBalances.failureReason.value = null
   mockUseSafeBalances.isIncomplete.value = false
   mockUseSafeBalances.assets.data.value = []
   mockUseSafeBalances.refetch.mockClear()

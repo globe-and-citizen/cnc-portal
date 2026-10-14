@@ -34,6 +34,8 @@ flowchart LR
   utilities[Client Utilities] --> client
   utilities --> reports
   dataAccess[Client Data Access] --> client
+  marketCache[Shared Market Data Cache] --> dataAccess
+  marketCache --> backoffice
   creditReadModel[Community Credit Read Model] --> client
   contractInteractions[Contract Interactions] --> client
   campaignData[Campaign Data Access] --> client
@@ -54,6 +56,7 @@ flowchart LR
 | [Contract Owner Resolution](./contract-owner-resolution/README.md)       | Resolves and presents a contract owner                                  | Accounts, shareholder management            | 2026-08-30    |
 | [Client Utilities](./client-utilities/README.md)                         | Pure, explicit client data-shaping boundaries                           | All client product surfaces                 | 2026-09-01    |
 | [Client Data Access](./client-data-access/README.md)                     | Focused client HTTP query and mutation boundaries                       | Client product features                     | 2026-09-01    |
+| [Shared Market Data Cache](./market-data-cache/README.md)                | Shared Redis cache, provider admission and cooldown for CoinGecko       | Client currency and Accounting, dashboard   | 2026-10-13    |
 | [Accounting Read Model](./accounting-read-model/README.md)               | Consolidated postings, canonical journal, and report boundaries         | Accounting feature                          | 2026-09-04    |
 | [Request Validation](./request-validation/README.md)                     | Parses and normalizes backend request sections                          | Backend API routes                          | 2026-09-09    |
 | [File Storage](./file-storage/README.md)                                 | Validated uploads and time-limited attachment access                    | User Profile, Payroll                       | 2026-09-09    |

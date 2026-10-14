@@ -6,10 +6,15 @@ import { config } from '@/wagmi.config'
 import { contractBalanceKeys } from '@/composables/useContractBalance'
 import externalApiClient from '@/lib/external.axios'
 import { normalizeSafeAddress } from '@/utils/safe/address'
-import type { SafeInfo, SafeTransaction } from '@/types/safe'
-import { TX_SERVICE_BY_CHAIN } from '@/types/safe'
+import { TX_SERVICE_BY_CHAIN, type SafeInfo, type SafeTransaction } from '@/types/safe'
 import { currentChainId } from '@/constant/index'
 import { queryPresets } from './queryFactory'
+import {
+  retrySafeIndexingRead,
+  retrySafeRead,
+  safeIndexingRetryDelay,
+  safeReadRetryDelay
+} from './safe.recovery'
 import type {
   GetSafeTransactionParams,
   GetSafeInfoParams,
@@ -76,7 +81,8 @@ export function useGetSafeTransfersQuery(params: GetSafeIncomingTransfersParams)
   const safeAddress = computed(() => toValue(params.pathParams.safeAddress))
   return useQuery<SafeIncomingTransfer[]>({
     ...queryPresets.moderate,
-    retry: false,
+    retry: retrySafeRead,
+    retryDelay: safeReadRetryDelay,
     refetchInterval: 300_000,
     queryKey: computed(() => safeKeys.transfers(safeAddress.value, chainId)),
     enabled: computed(() => Boolean(safeAddress.value)),
@@ -105,7 +111,8 @@ export function useGetSafeInfoQuery(params: GetSafeInfoParams) {
 
   return useQuery<SafeInfo>({
     ...queryPresets.moderate,
-    retry: false,
+    retry: retrySafeIndexingRead,
+    retryDelay: safeIndexingRetryDelay,
     refetchInterval: 300_000,
     queryKey: computed(() => safeKeys.info(safeAddress.value)),
     enabled: computed(() => Boolean(safeAddress.value)),
@@ -139,7 +146,9 @@ export function useGetSafeTransactionsQuery(params: GetSafeTransactionsParams) {
 
   return useQuery<SafeTransaction[]>({
     ...queryPresets.moderate,
-    retry: false,
+    retry: retrySafeRead,
+    retryDelay: safeReadRetryDelay,
+
     queryKey: computed(() => safeKeys.transactions(safeAddress.value)),
     enabled: computed(() => Boolean(safeAddress.value)),
     queryFn: async ({ signal }) => {
@@ -174,7 +183,9 @@ export function useGetSafeTransactionQuery(params: GetSafeTransactionParams) {
 
   return useQuery<SafeTransaction>({
     ...queryPresets.moderate,
-    retry: false,
+    retry: retrySafeRead,
+    retryDelay: safeReadRetryDelay,
+
     queryKey: computed(() => safeKeys.transaction(toValue(pathParams.safeTxHash))),
     enabled: computed(() => !!toValue(pathParams.safeTxHash)),
     queryFn: async ({ signal }) => {
@@ -211,8 +222,10 @@ export function useGetSafeIncomingTransfersQuery(params: GetSafeIncomingTransfer
 
   return useQuery<SafeIncomingTransfer[]>({
     ...queryPresets.moderate,
-    retry: false,
+
     refetchInterval: 300_000,
+    retry: retrySafeRead,
+    retryDelay: safeReadRetryDelay,
     queryKey: computed(() => safeKeys.incomingTransfers(safeAddress.value, queryParams?.limit)),
     enabled: computed(() => Boolean(safeAddress.value)),
     queryFn: async ({ signal }) => {
@@ -242,8 +255,10 @@ export function useGetSafeOutgoingTransactionsQuery(params: GetSafeOutgoingTrans
 
   return useQuery<SafeTransaction[]>({
     ...queryPresets.moderate,
-    retry: false,
+
     refetchInterval: 300_000,
+    retry: retrySafeRead,
+    retryDelay: safeReadRetryDelay,
     queryKey: computed(() => safeKeys.outgoingTransactions(safeAddress.value, queryParams?.limit)),
     enabled: computed(() => Boolean(safeAddress.value)),
     queryFn: async ({ signal }) => {

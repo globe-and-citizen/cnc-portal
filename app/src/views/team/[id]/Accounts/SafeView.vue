@@ -80,6 +80,7 @@
             :rows="holdingRows"
             :is-loading="isLoadingHoldings"
             :is-incomplete="isIncomplete"
+            :has-error="!!balancesError"
             compact
             class="h-full"
           />
@@ -236,9 +237,7 @@ const {
   pathParams: { safeAddress, fiatCode: () => currency.value.code }
 })
 const holdingRows = computed(() => toSafeHoldingRows(balances.value, currency.value.code))
-const isIncomplete = computed(
-  () => Boolean(balancesError.value) || holdingRows.value.some((row) => row.balance === null)
-)
+const isIncomplete = computed(() => holdingRows.value.some((row) => row.balance === null))
 
 const isResolvingSafe = computed(() => teamStore.currentTeamMeta.isPending || isLoadingSafe.value)
 

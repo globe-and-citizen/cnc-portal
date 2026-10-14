@@ -12,10 +12,10 @@
         <div class="flex items-center justify-between">
           <div>
             <p class="text-sm text-gray-500 dark:text-gray-400">Total Balance</p>
-            <p v-if="isLoadingBalances" class="mt-1">
+            <p v-if="isLoadingBalances" class="mt-1" data-test="company-total-loading">
               <USkeleton class="h-8 w-40" />
             </p>
-            <p v-else class="text-3xl font-bold">
+            <p v-else class="text-3xl font-bold" data-test="company-total-balance">
               {{ totalBalance }}
             </p>
           </div>
@@ -30,6 +30,7 @@
         <UCard
           v-for="account in accountBalances"
           :key="account.label"
+          :data-test="`company-${account.to.name}-card`"
           class="cursor-pointer transition-shadow hover:shadow-lg"
           @click="$router.push(account.to)"
         >
@@ -39,10 +40,12 @@
             </div>
             <div class="min-w-0 flex-1">
               <p class="text-sm text-gray-500 dark:text-gray-400">{{ account.label }}</p>
-              <p v-if="account.isLoading" class="mt-0.5">
+              <p v-if="account.isLoading" class="mt-0.5" data-test="account-balance-loading">
                 <USkeleton class="h-5 w-24" />
               </p>
-              <p v-else class="truncate font-semibold">{{ account.formattedBalance }}</p>
+              <p v-else class="truncate font-semibold" data-test="account-balance">
+                {{ account.formattedBalance }}
+              </p>
             </div>
           </div>
         </UCard>
@@ -127,9 +130,12 @@ import { useTeamStore } from '@/stores/teamStore'
 import { useCurrencyStore } from '@/stores'
 import { computed } from 'vue'
 import { useContractBalance } from '@/composables/useContractBalance'
+import { useGetSafeBalancesQuery } from '@/queries/safeClient.queries'
+import { getSafeValuedFiatTotal } from '@/utils/safe/portfolio'
 import CashOutAllAction from '@/components/sections/DashboardView/CashOutAllAction.vue'
 import type { Address } from 'viem'
 import { formatCurrency } from '@/utils/format'
+import { formatCurrencyShort } from '@/utils/currency/display'
 
 const teamStore = useTeamStore()
 const currencyStore = useCurrencyStore()
@@ -142,9 +148,13 @@ const cashRemAddress = computed(() => teamStore.getContractAddressByType('CashRe
 
 // Balances
 const bankBalance = useContractBalance(bankAddress as unknown as Address)
-const safeBalance = useContractBalance(safeAddress as unknown as Address)
+const safeBalance = useGetSafeBalancesQuery({
+  pathParams: { safeAddress, fiatCode: () => currencyStore.localCurrency.code }
+})
 const expenseBalance = useContractBalance(expenseAddress as unknown as Address)
 const cashRemBalance = useContractBalance(cashRemAddress as unknown as Address)
+
+const safeTotal = computed(() => getSafeValuedFiatTotal(safeBalance.data.value) ?? 0)
 
 const isLoadingBalances = computed(
   () =>
@@ -165,7 +175,7 @@ function getRawTotal(balance: ReturnType<typeof useContractBalance>) {
 const totalBalance = computed(() => {
   const sum =
     getRawTotal(bankBalance) +
-    getRawTotal(safeBalance) +
+    safeTotal.value +
     getRawTotal(expenseBalance) +
     getRawTotal(cashRemBalance)
   return formatCurrency(sum, { currency: currencyStore.localCurrency.code })
@@ -184,7 +194,7 @@ const accountBalances = computed(() => {
     {
       label: 'Safe Account',
       icon: 'heroicons:shield-check',
-      formattedBalance: getFormattedTotal(safeBalance),
+      formattedBalance: formatCurrencyShort(safeTotal.value, currencyStore.localCurrency.code),
       isLoading: safeBalance.isLoading.value,
       to: { name: 'safe-account', params: { id, address: safeAddress.value || '0x' } }
     },
