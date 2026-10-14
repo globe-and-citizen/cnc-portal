@@ -20,9 +20,7 @@ const CHECKSUM_SAFE_ADDRESS = '0x0557F280D9DA274254e85Ee70c2936694e494275'
 
 describe('safe utils', () => {
   it('builds Safe home URLs with chain fallback', () => {
-    expect(getSafeHomeUrl(137, LOWERCASE_SAFE_ADDRESS)).toContain(
-      `polygon:${CHECKSUM_SAFE_ADDRESS}`
-    )
+    expect(getSafeHomeUrl(137, LOWERCASE_SAFE_ADDRESS)).toContain(`matic:${CHECKSUM_SAFE_ADDRESS}`)
     expect(getSafeHomeUrl(999999, LOWERCASE_SAFE_ADDRESS)).toContain(
       `ethereum:${CHECKSUM_SAFE_ADDRESS}`
     )
