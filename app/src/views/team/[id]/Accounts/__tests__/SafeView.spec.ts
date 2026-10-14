@@ -5,6 +5,27 @@ import { mockTeamData, mockTeamStore } from '@/tests/mocks'
 import { mockUseContractBalance, makeTokenBalance } from '@/tests/mocks/composables.mock'
 
 describe('[US-SAFE-001] [US-SAFE-002] SafeView.vue', () => {
+  it('reports a failed balance read separately and clears it when the existing query recovers', async () => {
+    mockTeamStore.getContractAddressByType.mockReturnValue(
+      '0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB'
+    )
+    mockUseContractBalance.hasData.value = false
+    mockUseContractBalance.error.value = new Error('Safe Gateway unavailable')
+    const wrapper = shallowMount(SafeView)
+    const table = wrapper.findComponent({ name: 'TokenHoldingsSection' })
+
+    expect(table.props('rows')).toEqual([])
+    expect(table.props('hasError')).toBe(true)
+    expect(table.props('isIncomplete')).toBe(false)
+
+    mockUseContractBalance.error.value = null
+    mockUseContractBalance.hasData.value = true
+    await flushPromises()
+    expect(table.props('hasError')).toBe(false)
+    expect(table.props('rows').length).toBeGreaterThan(0)
+    wrapper.unmount()
+  })
+
   it('keeps the loading state visible while the team Safe is being resolved', () => {
     mockTeamStore.currentTeamId = mockTeamData.id
     mockTeamStore.currentTeamMeta = {
