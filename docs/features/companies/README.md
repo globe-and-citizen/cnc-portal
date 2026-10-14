@@ -456,8 +456,9 @@ This validation does not attest to a live on-chain Officer deployment.
   [Safe balance query](../../../app/src/queries/safeClient.queries.ts) for its Safe contribution; its
   [component tests](../../../app/src/components/sections/DashboardView/__tests__/CompanyOverview.spec.ts) cover other-token valuation,
   aggregate totals, reactive balance and currency changes, loading, and numeric fallbacks. These shared Gateway observers automatically
-  retry temporary provider failures up to three times, including 404 after deployment and HTTP 429 with `Retry-After` respected. Recovery
-  updates the existing summary without reloading the page.
+  retry temporary provider failures up to three times, with HTTP 429 `Retry-After` respected. A 404 for a newly deployed Safe that Safe
+  services have not indexed yet keeps the Safe contribution loading for up to about three and a half minutes. Recovery updates the existing
+  summary without reloading the page.
 - [Workspace route and unavailable-state handling](../../../app/src/views/team/%5Bid%5D/ShowIndex.vue),
   [company queries](../../../app/src/queries/team.queries.ts), [company endpoints](../../../backend/src/routes/teamRoutes.ts), and
   [company controller](../../../backend/src/controllers/teamController.ts)

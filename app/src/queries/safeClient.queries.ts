@@ -5,7 +5,8 @@ import { currentChainId } from '@/constant'
 import { SAFE_CLIENT_URL, type SafeClientBalances } from '@/types/safe'
 import externalApiClient from '@/lib/external.axios'
 import { normalizeSafeAddress } from '@/utils/safe/address'
-import { retrySafeRead, safeKeys, safeReadRetryDelay } from './safe.queries'
+import { safeKeys } from './safe.queries'
+import { retrySafeIndexingRead, safeIndexingRetryDelay } from './safe.recovery'
 import { queryPresets } from './queryFactory'
 
 export interface GetSafeBalancesParams {
@@ -56,8 +57,8 @@ export function safeBalancesQueryOptions(
     refetchInterval: 60_000,
     refetchIntervalInBackground: false,
     refetchOnWindowFocus: false,
-    retry: retrySafeRead,
-    retryDelay: safeReadRetryDelay
+    retry: retrySafeIndexingRead,
+    retryDelay: safeIndexingRetryDelay
   }
 }
 

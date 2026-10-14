@@ -111,7 +111,7 @@ mocked browser path for the external Safe Transaction Service boundary.
 | US-EXP-005  | 🚧 Partial    | ⚠️ 3/7          | `AC-US-EXP-005-03`, `AC-US-EXP-005-04`, `AC-US-EXP-005-06`, `AC-US-EXP-005-07`                                                             |
 | US-EXP-006  | 🚧 Partial    | ⚠️ 1/8          | `AC-US-EXP-006-01`, `AC-US-EXP-006-02`, `AC-US-EXP-006-03`, `AC-US-EXP-006-04`, `AC-US-EXP-006-05`, `AC-US-EXP-006-07`, `AC-US-EXP-006-08` |
 | US-SAFE-001 | 🚧 Partial    | ⚠️ 8/11         | `AC-US-SAFE-001-02`, `AC-US-SAFE-001-03`, `AC-US-SAFE-001-06`                                                                              |
-| US-SAFE-002 | 🧪 Mocked     | ⚠️ 6/9 met      | `AC-US-SAFE-002-01`, `AC-US-SAFE-002-02`, `AC-US-SAFE-002-09`                                                                              |
+| US-SAFE-002 | 🧪 Mocked     | ⚠️ 7/10 met     | `AC-US-SAFE-002-01`, `AC-US-SAFE-002-02`, `AC-US-SAFE-002-09`                                                                              |
 | US-SAFE-003 | 📋 Planned    | ⚠️ 6/11         | 5 — `AC-US-SAFE-003-01`, `AC-US-SAFE-003-02`, `AC-US-SAFE-003-03`, `AC-US-SAFE-003-06`, `AC-US-SAFE-003-07`                                |
 | US-SAFE-004 | 📋 Planned    | ⚠️ 4/9          | 5 — `AC-US-SAFE-004-01`, `AC-US-SAFE-004-02`, `AC-US-SAFE-004-03`, `AC-US-SAFE-004-04`, `AC-US-SAFE-004-07`                                |
 | US-SAFE-005 | 🧪 Mocked     | ✅ 9/9          | —                                                                                                                                          |
@@ -873,6 +873,8 @@ remain as recorded above.
 - [x] `AC-US-SAFE-002-06` A Safe with no incoming transfers returns an empty deposit history.
 - [x] `AC-US-SAFE-002-07` A failed Safe information read is reported without hiding unaffected Safe information.
 - [x] `AC-US-SAFE-002-08` A failed Safe information read can be retried without registering another Safe.
+- [x] `AC-US-SAFE-002-10` While Safe services have not yet indexed a newly deployed Safe, the overview explains the wait instead of
+      reporting a failure, and its balances and signers load without a page reload once indexing finishes.
 
 ### Test Coverage
 
@@ -888,6 +890,7 @@ remain as recorded above.
 | `AC-US-SAFE-002-08`  | `PS-BROWSER`               | Mocked browser            | ✅ Met          |
 | `AC-US-SAFE-002-09`  | `PS-BACKEND`               | None linked               | ❌ Missing      |
 | `AC-US-SAFE-002-09`  | `PS-FULL-STACK-INTEGRATED` | None linked               | ❌ Missing      |
+| `AC-US-SAFE-002-10`  | `PS-FRONTEND`              | Frontend                  | ✅ Met          |
 
 **Dependencies:** US-SAFE-001
 
@@ -1261,12 +1264,15 @@ focus do not trigger extra polling. Safe queries call their providers directly t
 use that client to call the backend's [shared Redis market cache](../../implementation/market-data-cache/README.md). Transaction Service
 errors affect the individual query. Gateway and Transaction Service reads retry temporary 404, 408, 425, 429, server and network failures up
 to three times. Ordinary retries wait five seconds between attempts; rate-limit retries wait thirty seconds, or longer when `Retry-After`
-requires it. Initial reads remain loading during recovery and update without a page reload. Other client errors, cancellation, malformed
-responses and an explicit monthly-quota-exceeded response are not automatically retried. Periodic and explicit refresh remain available.
-There is no shared request queue or provider-wide cooldown. Complete history pagination and contract metadata recovery are retained. The
-Axios client sends the optional `VITE_APP_SAFE_API_KEY` only to GET requests on the direct production Transaction Service. Keys must be
-issued by `developer.safe.global`; staging keys do not establish a production quota. The approval queue identifies rate limiting instead of
-reporting a connection problem. Gateway keeps its own balance cadence. See
+requires it. Safe information and Gateway balances answer HTTP 404 until Safe services index a newly deployed Safe, and the Gateway caches
+that answer for about 30 seconds. These two reads therefore keep retrying a 404 for about three and a half minutes: after 5, 10 and 20
+seconds, then every 35 seconds. Meanwhile the overview shows an indexing notice instead of an error; it reports a failure only if the Safe
+is still unknown when that window ends. Initial reads remain loading during recovery and update without a page reload. Other client errors,
+cancellation, malformed responses and an explicit monthly-quota-exceeded response are not automatically retried. Periodic and explicit
+refresh remain available. There is no shared request queue or provider-wide cooldown. Complete history pagination and contract metadata
+recovery are retained. The Axios client sends the optional `VITE_APP_SAFE_API_KEY` only to GET requests on the direct production Transaction
+Service. Keys must be issued by `developer.safe.global`; staging keys do not establish a production quota. The approval queue identifies
+rate limiting instead of reporting a connection problem. Gateway keeps its own balance cadence. See
 [Client Data Access](../../implementation/client-data-access/README.md#browser-request-coordination) for recovery and session boundaries.
 
 Confirmed Safe transaction execution and directly executed transfers use one invalidation helper for all Safe service queries and the wallet
@@ -1279,11 +1285,12 @@ Executable evidence: [discovered holdings tests](../../../app/src/components/ui/
 [overview tests](../../../app/src/components/sections/SafeView/__tests__/SafeBalanceSection.rendering.spec.ts), and
 [Gateway request unit tests](../../../app/src/queries/__tests__/safeClient.queries.spec.ts).
 
-[Safe recovery tests](../../../app/src/queries/__tests__/safe.recovery.spec.ts) verify the bounded 404/429 recovery and shared cache with
-real TanStack queries and simulated provider responses. The live post-creation provider journey remains to be confirmed.
+[Safe recovery tests](../../../app/src/queries/__tests__/safe.recovery.spec.ts) verify the bounded 404/429 recovery, the indexing window for
+a newly deployed Safe and the shared cache with real TanStack queries and simulated provider responses. The live post-creation provider
+journey remains to be confirmed.
 
 Implementation: [Safe Client balances](../../../app/src/queries/safeClient.queries.ts),
-[Safe movement queries](../../../app/src/queries/safe.queries.ts),
+[Safe movement queries](../../../app/src/queries/safe.queries.ts), [Safe read recovery policy](../../../app/src/queries/safe.recovery.ts),
 [shared balance reads](../../../app/src/composables/useContractBalance.ts),
 [unified asset holdings](../../../app/src/components/ui/TokenHoldingsSection.vue),
 [holdings presentation](../../../app/src/utils/safe/portfolio.ts),

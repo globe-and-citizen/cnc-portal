@@ -93,6 +93,8 @@ conversion. See the [Accounting read model](../accounting-read-model/README.md) 
 [holdings table](../../../app/src/components/ui/TokenHoldingsSection.vue). Bank, Payroll, and Expense fetch their balances in the page; Safe
 converts Gateway items directly to typed table rows in its page. The table owns display, sorting, and failed-image fallback, with no balance
 query. [Safe asset discovery](../../../app/src/utils/safe/assetDiscovery.ts) deduplicates contract metadata without reactive dependencies.
+[Safe model helpers](../../../app/src/utils/safe/model.ts) classify the HTTP 404 that Safe services return before they index a Safe, using a
+type-only Axios contract; the Safe queries own the resulting retry window and the overview owns its notice.
 
 The holdings table accepts separate request-error and incomplete-valuation states. A failed Safe balance request shows a loading-error
 message; the valuation warning appears only for returned holdings with unavailable values. When both states exist, the request error takes

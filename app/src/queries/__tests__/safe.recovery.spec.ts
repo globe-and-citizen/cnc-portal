@@ -4,7 +4,7 @@ import { toValue } from 'vue'
 import { QueryClient, QueryObserver, type FetchQueryOptions } from '@tanstack/vue-query'
 import externalApiClient from '@/lib/external.axios'
 import { useQueryFn } from '@/tests/mocks/composables.mock'
-import type { SafeInfo } from '@/types/safe'
+import type { SafeInfo, SafeTransaction } from '@/types/safe'
 
 vi.mock('@/constant/index', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/constant/index')>()),
@@ -13,7 +13,7 @@ vi.mock('@/constant/index', async (importOriginal) => ({
 
 const { safeBalancesQueryOptions } =
   await vi.importActual<typeof import('../safeClient.queries')>('../safeClient.queries')
-const { useGetSafeInfoQuery } =
+const { useGetSafeInfoQuery, useGetSafeTransactionQuery } =
   await vi.importActual<typeof import('../safe.queries')>('../safe.queries')
 
 const address = '0x0557f280d9da274254e85ee70c2936694e494275'
@@ -31,6 +31,11 @@ function httpFailure(status: number, retryAfter?: string, detail?: string) {
 function infoOptions() {
   useGetSafeInfoQuery({ pathParams: { safeAddress: address } })
   return toValue(useQueryFn.mock.calls.at(-1)![0]) as FetchQueryOptions<SafeInfo>
+}
+
+function transactionOptions() {
+  useGetSafeTransactionQuery({ pathParams: { safeTxHash: `0x${'a'.repeat(64)}` } })
+  return toValue(useQueryFn.mock.calls.at(-1)![0]) as FetchQueryOptions<SafeTransaction>
 }
 
 describe('Safe automatic read recovery', () => {
@@ -121,7 +126,7 @@ describe('Safe automatic read recovery', () => {
   )
 
   it('stops recovery after three retries and keeps a persistent failure visible', async () => {
-    const error = httpFailure(404)
+    const error = httpFailure(503)
     const get = vi.spyOn(externalApiClient, 'get').mockRejectedValue(error)
     const options = safeBalancesQueryOptions(address, 137, 'USD')
     const failure = expect(client.fetchQuery(options)).rejects.toBe(error)
@@ -130,6 +135,61 @@ describe('Safe automatic read recovery', () => {
 
     expect(get).toHaveBeenCalledTimes(4)
     expect(client.getQueryState(options.queryKey)).toMatchObject({ status: 'error', error })
+  })
+
+  it('keeps a new Safe balance read pending while the Gateway still serves its cached 404', async () => {
+    const get = vi
+      .spyOn(externalApiClient, 'get')
+      .mockRejectedValueOnce(httpFailure(404))
+      .mockRejectedValueOnce(httpFailure(404))
+      .mockRejectedValueOnce(httpFailure(404))
+      .mockResolvedValueOnce({ data: balances })
+    const options = safeBalancesQueryOptions(address, 137, 'USD')
+    const result = client.fetchQuery(options)
+    await vi.advanceTimersByTimeAsync(34_999)
+
+    expect(get).toHaveBeenCalledTimes(3)
+    expect(client.getQueryState(options.queryKey)).toMatchObject({ status: 'pending', error: null })
+    await vi.advanceTimersByTimeAsync(1)
+    await expect(result).resolves.toEqual(balances)
+    expect(get).toHaveBeenCalledTimes(4)
+  })
+
+  it('reports a Safe that stays unindexed after about three and a half minutes', async () => {
+    const error = httpFailure(404)
+    const get = vi.spyOn(externalApiClient, 'get').mockRejectedValue(error)
+    const options = safeBalancesQueryOptions(address, 137, 'USD')
+    const failure = expect(client.fetchQuery(options)).rejects.toBe(error)
+    await vi.advanceTimersByTimeAsync(209_999)
+
+    expect(get).toHaveBeenCalledTimes(8)
+    expect(client.getQueryState(options.queryKey)).toMatchObject({ status: 'pending', error: null })
+    await vi.advanceTimersByTimeAsync(1)
+    await failure
+    expect(get).toHaveBeenCalledTimes(9)
+    expect(client.getQueryState(options.queryKey)).toMatchObject({ status: 'error', error })
+  })
+
+  it('keeps Safe information pending through the indexing window', async () => {
+    const get = vi.spyOn(externalApiClient, 'get')
+    for (let attempt = 0; attempt < 4; attempt++) get.mockRejectedValueOnce(httpFailure(404))
+    get.mockResolvedValueOnce({ data: info })
+    const result = client.fetchQuery(infoOptions())
+    await vi.advanceTimersByTimeAsync(69_999)
+
+    expect(get).toHaveBeenCalledTimes(4)
+    await vi.advanceTimersByTimeAsync(1)
+    await expect(result).resolves.toEqual(info)
+  })
+
+  it('keeps the three-retry bound when a Safe transaction detail is missing', async () => {
+    const error = httpFailure(404)
+    const get = vi.spyOn(externalApiClient, 'get').mockRejectedValue(error)
+    const failure = expect(client.fetchQuery(transactionOptions())).rejects.toBe(error)
+    await vi.advanceTimersByTimeAsync(15_000)
+    await failure
+
+    expect(get).toHaveBeenCalledTimes(4)
   })
 
   it('retries successive server failures at the same five-second interval', async () => {
@@ -150,9 +210,9 @@ describe('Safe automatic read recovery', () => {
   it('keeps the initial loader active between fixed-interval attempts until balances arrive', async () => {
     const get = vi
       .spyOn(externalApiClient, 'get')
-      .mockRejectedValueOnce(httpFailure(404))
-      .mockRejectedValueOnce(httpFailure(404))
-      .mockRejectedValueOnce(httpFailure(404))
+      .mockRejectedValueOnce(httpFailure(503))
+      .mockRejectedValueOnce(httpFailure(503))
+      .mockRejectedValueOnce(httpFailure(503))
       .mockResolvedValueOnce({ data: balances })
     const observer = new QueryObserver(client, safeBalancesQueryOptions(address, 137, 'USD'))
     const stop = observer.subscribe(() => {})

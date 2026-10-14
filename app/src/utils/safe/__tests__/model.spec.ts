@@ -1,8 +1,10 @@
 import { describe, it, expect } from 'vitest'
+import { AxiosError, type AxiosResponse } from 'axios'
 import { zeroAddress } from 'viem'
 import { NETWORK, USDC_ADDRESS } from '@/constant'
 import {
   getSafeHomeUrl,
+  isSafeNotIndexedError,
   formatSafeTransactionValue,
   getExecutedErc20TransferTokenAddress,
   getSafeTransactionMethod,
@@ -23,6 +25,27 @@ describe('safe utils', () => {
     )
     expect(getSafeHomeUrl(999999, LOWERCASE_SAFE_ADDRESS)).toContain(
       `ethereum:${CHECKSUM_SAFE_ADDRESS}`
+    )
+  })
+
+  describe('isSafeNotIndexedError', () => {
+    const httpFailure = (status: number) =>
+      new AxiosError('Safe provider failure', 'ERR_BAD_REQUEST', undefined, undefined, {
+        status
+      } as AxiosResponse)
+
+    it('recognises the 404 Safe services return before indexing a Safe', () => {
+      expect(isSafeNotIndexedError(httpFailure(404))).toBe(true)
+      expect(isSafeNotIndexedError(Object.assign(new Error('Not found'), { status: 404 }))).toBe(
+        true
+      )
+    })
+
+    it.each([httpFailure(503), httpFailure(429), new Error('Network Error'), null, undefined])(
+      'rejects any other failure: %s',
+      (error) => {
+        expect(isSafeNotIndexedError(error)).toBe(false)
+      }
     )
   })
 

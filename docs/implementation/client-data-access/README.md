@@ -98,10 +98,14 @@ This explicitly disables the shared query client's polling interval for historic
 polling cadence. Periodic observers do not poll in background tabs or refetch on window focus. Transaction Service queries inherit the
 Safe-specific bounded retries and also recover on periodic or explicit refresh. Gateway and Transaction Service queries retry temporary 404,
 408, 425, 429, server and network failures up to three times. The interval stays fixed at five seconds for ordinary transient failures and
-thirty seconds for HTTP 429, and waits longer when the provider's numeric or HTTP-date `Retry-After` requires it. Initial reads remain
-pending through recovery, so successful responses update the mounted UI without a reload. Cancellation, other client errors, malformed
-responses and an explicit monthly-quota-exceeded response do not retry automatically. CoinGecko and token-metadata reads disable automatic
-retries.
+thirty seconds for HTTP 429, and waits longer when the provider's numeric or HTTP-date `Retry-After` requires it. Safe information and
+Gateway balances answer HTTP 404 until Safe services index a newly deployed Safe, and the Gateway caches a not-found answer for 30 seconds ±
+10 %. Those two reads therefore treat 404 as an indexing wait: they retry after 5, 10 and 20 seconds, then every 35 seconds, for about three
+and a half minutes, so every later attempt reaches the indexer again. Other Safe reads keep the three-retry bound for 404. The
+[shared recovery policy](../../../app/src/queries/safe.recovery.ts) owns both schedules; a pure Safe model utility classifies the
+not-indexed answer for the queries and the Safe overview notice. Initial reads remain pending through recovery, so successful responses
+update the mounted UI without a reload. Cancellation, other client errors, malformed responses and an explicit monthly-quota-exceeded
+response do not retry automatically. CoinGecko and token-metadata reads disable automatic retries.
 
 Accounting deduplicates contract discovery and coin/date targets, then consumes their independent observers. Missing, malformed or failed
 rates remain explicit valuation gaps without a current-price fallback. The existing Accounting refresh retries failed query observers;
@@ -149,8 +153,8 @@ Executable evidence: [Gateway request tests](../../../app/src/queries/__tests__/
 [holdings presentation tests](../../../app/src/utils/safe/__tests__/portfolio.spec.ts).
 
 [Safe recovery tests](../../../app/src/queries/__tests__/safe.recovery.spec.ts) execute the configured queries with a real TanStack cache
-and simulated provider responses, verifying recovery without a reload, shared balance reads, retry deadlines and persistent-error
-visibility.
+and simulated provider responses, verifying recovery without a reload, shared balance reads, retry deadlines, the indexing window through
+the Gateway's cached 404 and persistent-error visibility.
 
 Direct Transaction Service reads are covered by [pagination and metadata tests](../../../app/src/queries/__tests__/safe.queries.spec.ts) and
 [Axios authentication and cancellation tests](../../../app/src/lib/__tests__/external.axios.spec.ts).
