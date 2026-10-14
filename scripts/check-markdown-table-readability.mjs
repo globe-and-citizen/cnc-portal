@@ -77,14 +77,35 @@ function githubProperty(value) {
   return value.replaceAll('%', '%25').replaceAll('\r', '%0D').replaceAll('\n', '%0A').replaceAll(',', '%2C')
 }
 
-export function formatWarning(result) {
+export function formatWarning(result, github = false) {
   const message =
     `Table starting at line ${result.tableLine} has ${result.flaggedRows} dense row(s); ` +
     `example row: ${result.visible} visible chars, longest cell ${result.maxCell}, ${result.links} links. ` +
     'Consider a short comparison table plus a list or section for details; preserve IDs and links.'
-  return process.env.GITHUB_ACTIONS === 'true'
+  return github
     ? `::warning file=${githubProperty(result.file)},line=${result.line},title=Markdown table readability::${message}`
     : `${result.file}:${result.line}: warning: ${message}`
+}
+
+export function selectAnnotations(results, max = 10) {
+  const severity = (result) =>
+    Math.max(result.maxCell / limits.cell, result.visible / limits.row, result.links / limits.links)
+  const ranked = [...results].sort((left, right) => severity(right) - severity(left) || left.file.localeCompare(right.file))
+  const selected = []
+  const files = new Set()
+
+  for (const result of ranked) {
+    if (selected.length === max) break
+    if (files.has(result.file)) continue
+    selected.push(result)
+    files.add(result.file)
+  }
+  for (const result of ranked) {
+    if (selected.length === max) break
+    if (!selected.includes(result)) selected.push(result)
+  }
+
+  return selected
 }
 
 function main() {
@@ -94,7 +115,13 @@ function main() {
   const results = files.flatMap((file) => inspectTables(readFileSync(file, 'utf8'), file))
 
   for (const result of results) console.log(formatWarning(result))
-  console.log(`Markdown table readability: ${results.length} table(s) to review across ${files.length} tracked files. Advisory only.`)
+  if (process.env.GITHUB_ACTIONS === 'true') {
+    for (const result of selectAnnotations(results)) console.log(formatWarning(result, true))
+  }
+  console.log(
+    `Markdown table readability: ${results.length} table(s) to review across ${files.length} tracked files. ` +
+      'Advisory only; CI annotates up to 10 files and keeps the full list in this log.',
+  )
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) main()

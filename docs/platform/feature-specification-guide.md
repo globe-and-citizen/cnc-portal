@@ -537,7 +537,8 @@ a hard source-line limit: Markdown link destinations can make a short visible ce
 Run `npm run warn:docs-tables` to locate dense tables in tracked Markdown files. It warns once per table when a row has a cell over 120
 visible characters, over 260 visible characters across cells, or more than five links. Link destinations do not count toward visible length.
 The thresholds are review prompts, not formatting rules: inspect the rendered table and decide whether a list or section makes the
-relationships easier to follow. The warning does not fail CI.
+relationships easier to follow. The warning does not fail CI. The CI log contains every finding; it annotates up to ten representative
+tables across different files.
 
 Do not duplicate platform security, testing, deployment, formatting, or architecture standards. Reference their canonical guides.
 

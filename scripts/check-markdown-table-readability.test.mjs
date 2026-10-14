@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { inspectTables } from './check-markdown-table-readability.mjs'
+import { inspectTables, selectAnnotations } from './check-markdown-table-readability.mjs'
 
 const header = '| Item | Detail |\n| --- | --- |\n'
 
@@ -41,4 +41,13 @@ test('checks table headings as well as body cells', () => {
   const result = inspectTables(source, 'guide.md')[0]
   assert.equal(result.line, 1)
   assert.equal(result.maxCell, 121)
+})
+
+test('spreads limited CI annotations across files by severity', () => {
+  const findings = [
+    { file: 'a.md', maxCell: 300, visible: 300, links: 0 },
+    { file: 'a.md', maxCell: 290, visible: 290, links: 0 },
+    { file: 'b.md', maxCell: 200, visible: 200, links: 0 },
+  ]
+  assert.deepEqual(selectAnnotations(findings, 2), [findings[0], findings[2]])
 })
