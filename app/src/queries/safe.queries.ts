@@ -1,4 +1,5 @@
 import { useQuery, useQueryClient, type QueryClient } from '@tanstack/vue-query'
+import { AxiosHeaders, isAxiosError } from 'axios'
 import { readContract } from '@wagmi/core'
 import { computed, toValue } from 'vue'
 import { erc20Abi, isAddress, type Address } from 'viem'
@@ -6,8 +7,7 @@ import { config } from '@/wagmi.config'
 import { contractBalanceKeys } from '@/composables/useContractBalance'
 import externalApiClient from '@/lib/external.axios'
 import { normalizeSafeAddress } from '@/utils/safe/address'
-import type { SafeInfo, SafeTransaction } from '@/types/safe'
-import { TX_SERVICE_BY_CHAIN } from '@/types/safe'
+import { TX_SERVICE_BY_CHAIN, type SafeInfo, type SafeTransaction } from '@/types/safe'
 import { currentChainId } from '@/constant/index'
 import { queryPresets } from './queryFactory'
 import type {
@@ -21,6 +21,32 @@ import type {
 
 const chainId = currentChainId
 const txService = TX_SERVICE_BY_CHAIN[chainId]
+
+/** Bounded recovery for newly deployed Safes and transient provider failures. */
+export function retrySafeRead(failureCount: number, error: Error): boolean {
+  if (failureCount >= 3 || !isAxiosError<{ detail?: string }>(error)) return false
+  if (error.code === 'ERR_CANCELED') return false
+  const status = error.response?.status ?? error.status
+  if (status === 429 && error.response?.data?.detail === 'Monthly quota exceeded.') return false
+  if (status === undefined) return true
+  return [404, 408, 425, 429].includes(status) || (status >= 500 && status < 600)
+}
+
+/** Fixed interval between attempts, extended when the provider asks us to wait. */
+export function safeReadRetryDelay(_attempt: number, error: Error): number {
+  const failure = isAxiosError(error) ? error : undefined
+  const status = failure?.response?.status ?? failure?.status
+  const interval = status === 429 ? 30_000 : 5000
+  const headers = failure?.response?.headers
+  const header =
+    headers instanceof AxiosHeaders
+      ? headers.get('Retry-After')
+      : (headers?.['retry-after'] ?? headers?.['Retry-After'])
+  if (typeof header !== 'string' && typeof header !== 'number') return interval
+  const value = String(header).trim()
+  const wait = /^\d+(\.\d+)?$/.test(value) ? Number(value) * 1000 : Date.parse(value) - Date.now()
+  return Number.isFinite(wait) ? Math.max(interval, wait) : interval
+}
 
 const safeAddressKey = (address: string | undefined): string | undefined =>
   address && isAddress(address.trim()) ? normalizeSafeAddress(address) : address
@@ -76,6 +102,8 @@ export function useGetSafeTransfersQuery(params: GetSafeIncomingTransfersParams)
   const safeAddress = computed(() => toValue(params.pathParams.safeAddress))
   return useQuery<SafeIncomingTransfer[]>({
     ...queryPresets.moderate,
+    retry: retrySafeRead,
+    retryDelay: safeReadRetryDelay,
     refetchInterval: 300_000,
     queryKey: computed(() => safeKeys.transfers(safeAddress.value, chainId)),
     enabled: computed(() => Boolean(safeAddress.value)),
@@ -104,6 +132,8 @@ export function useGetSafeInfoQuery(params: GetSafeInfoParams) {
 
   return useQuery<SafeInfo>({
     ...queryPresets.moderate,
+    retry: retrySafeRead,
+    retryDelay: safeReadRetryDelay,
     refetchInterval: 300_000,
     queryKey: computed(() => safeKeys.info(safeAddress.value)),
     enabled: computed(() => Boolean(safeAddress.value)),
@@ -137,6 +167,8 @@ export function useGetSafeTransactionsQuery(params: GetSafeTransactionsParams) {
 
   return useQuery<SafeTransaction[]>({
     ...queryPresets.moderate,
+    retry: retrySafeRead,
+    retryDelay: safeReadRetryDelay,
 
     queryKey: computed(() => safeKeys.transactions(safeAddress.value)),
     enabled: computed(() => Boolean(safeAddress.value)),
@@ -172,6 +204,8 @@ export function useGetSafeTransactionQuery(params: GetSafeTransactionParams) {
 
   return useQuery<SafeTransaction>({
     ...queryPresets.moderate,
+    retry: retrySafeRead,
+    retryDelay: safeReadRetryDelay,
 
     queryKey: computed(() => safeKeys.transaction(toValue(pathParams.safeTxHash))),
     enabled: computed(() => !!toValue(pathParams.safeTxHash)),
@@ -211,6 +245,8 @@ export function useGetSafeIncomingTransfersQuery(params: GetSafeIncomingTransfer
     ...queryPresets.moderate,
 
     refetchInterval: 300_000,
+    retry: retrySafeRead,
+    retryDelay: safeReadRetryDelay,
     queryKey: computed(() => safeKeys.incomingTransfers(safeAddress.value, queryParams?.limit)),
     enabled: computed(() => Boolean(safeAddress.value)),
     queryFn: async ({ signal }) => {
@@ -242,6 +278,8 @@ export function useGetSafeOutgoingTransactionsQuery(params: GetSafeOutgoingTrans
     ...queryPresets.moderate,
 
     refetchInterval: 300_000,
+    retry: retrySafeRead,
+    retryDelay: safeReadRetryDelay,
     queryKey: computed(() => safeKeys.outgoingTransactions(safeAddress.value, queryParams?.limit)),
     enabled: computed(() => Boolean(safeAddress.value)),
     queryFn: async ({ signal }) => {

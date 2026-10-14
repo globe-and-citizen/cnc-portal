@@ -49,10 +49,11 @@ This folder contains all TanStack Query hooks for API interactions in the CNC Po
   forwards cancellation and exposes its own error; `retry: false` avoids automatic retries. The existing Accounting data layer consumes
   those queries directly, resolves rates through pure utilities and refreshes failed observers, preserving successful immutable date
   snapshots.
-- Safe Transaction Service queries use the moderate preset directly, declare their polling cadence, and inherit the shared query client's
-  three automatic retries. Axios owns the production GET credential header and error redaction. Local pagination and asset-transfer helpers
-  preserve complete histories, stable identities and cached metadata recovery; there is no separate request scheduler or provider-wide
-  pause.
+- Safe Transaction Service and Gateway queries use the moderate preset directly, declare their polling cadence, and retry temporary provider
+  failures up to three times at fixed intervals. HTTP 404 can recover after deployment; HTTP 429 uses a longer interval and respects
+  `Retry-After`. Cancellation, other client errors, malformed responses and an explicit monthly-quota-exceeded response are not retried
+  automatically. Axios owns the production GET credential header and error redaction. Local pagination and asset-transfer helpers preserve
+  complete histories, stable identities and cached metadata recovery; there is no separate request scheduler or provider-wide pause.
 
 ## Full Documentation
 

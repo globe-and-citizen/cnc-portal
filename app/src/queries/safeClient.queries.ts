@@ -1,12 +1,11 @@
 import { useQuery } from '@tanstack/vue-query'
-import type { AxiosError } from 'axios'
 import { computed, toValue, type MaybeRefOrGetter } from 'vue'
 import { isAddress } from 'viem'
 import { currentChainId } from '@/constant'
 import { SAFE_CLIENT_URL, type SafeClientBalances } from '@/types/safe'
 import externalApiClient from '@/lib/external.axios'
 import { normalizeSafeAddress } from '@/utils/safe/address'
-import { safeKeys } from './safe.queries'
+import { retrySafeRead, safeKeys, safeReadRetryDelay } from './safe.queries'
 import { queryPresets } from './queryFactory'
 
 export interface GetSafeBalancesParams {
@@ -57,11 +56,8 @@ export function safeBalancesQueryOptions(
     refetchInterval: 60_000,
     refetchIntervalInBackground: false,
     refetchOnWindowFocus: false,
-    retry: (failureCount: number, error: Error) => {
-      const failure = error as AxiosError
-      return failureCount < 1 && (failure.response?.status ?? failure.status ?? 500) >= 500
-    },
-    retryDelay: 5000 // One transient-error retry; HTTP 429 waits for the normal refresh.
+    retry: retrySafeRead,
+    retryDelay: safeReadRetryDelay
   }
 }
 
