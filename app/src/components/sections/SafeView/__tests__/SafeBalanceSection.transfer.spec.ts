@@ -140,6 +140,7 @@ describe('[US-SAFE-003] SafeBalanceSection transfers', () => {
       data: mockSafeInfo,
       isLoading: ref(false),
       error: ref(null),
+      failureReason: ref(null),
       refetch: vi.fn()
     })
 
@@ -199,7 +200,7 @@ describe('[US-SAFE-003] SafeBalanceSection transfers', () => {
             options: {
               to: '0x3333333333333333333333333333333333333333',
               amount: '1',
-              tokenId: 'native'
+              tokenId: 'usdc'
             }
           }
         },

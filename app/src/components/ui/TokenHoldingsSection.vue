@@ -20,10 +20,24 @@
           </span>
         </template>
         <template #price-cell="{ row: { original: row } }">
-          {{ row.priceLabel }} / {{ row.token.symbol }}
+          <span
+            :title="row.priceDetails"
+            :aria-label="row.priceDetails"
+            :tabindex="row.priceDetails ? 0 : undefined"
+            data-test="safe-holding-price"
+          >
+            {{ row.priceLabel }} / {{ row.token.symbol }}
+          </span>
         </template>
         <template #balance-cell="{ row: { original: row } }">
-          {{ row.balanceLabel }}
+          <span
+            :title="row.balanceDetails"
+            :aria-label="row.balanceDetails"
+            :tabindex="row.balanceDetails ? 0 : undefined"
+            data-test="safe-holding-value"
+          >
+            {{ row.balanceLabel }}
+          </span>
         </template>
         <template #token-cell="{ row: { original: row } }">
           <div
@@ -50,7 +64,15 @@
       </UTable>
     </UCard>
     <UAlert
-      v-if="isIncomplete"
+      v-if="hasError"
+      color="error"
+      title="Wallet assets are unavailable"
+      description="Asset balances could not be loaded. Try again from the wallet overview."
+      data-test="safe-asset-load-error"
+      class="mt-4"
+    />
+    <UAlert
+      v-else-if="isIncomplete"
       color="warning"
       title="Some asset values are unavailable"
       description="Unpriced assets are retained. The wallet total is incomplete until every held asset can be valued."
@@ -67,6 +89,7 @@ defineProps<{
   rows: TokenHoldingRow[]
   isLoading?: boolean
   isIncomplete?: boolean
+  hasError?: boolean
   compact?: boolean
 }>()
 const failedIcons = ref(new Set<string>())

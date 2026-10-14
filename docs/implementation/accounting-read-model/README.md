@@ -103,20 +103,27 @@ by network and block number with infinite staleness and garbage-collection time 
 and later refetches therefore share one block read. A failed block read or a decoded log without a block number does not receive a synthetic
 timestamp: the event is withheld and emitted as a typed source diagnostic, which keeps the Accounting route out of `ready`.
 
-The provisional draft feed derives one unique non-pegged asset target per required UTC transaction date. `coingecko.queries.ts` resolves
-each target through the shared TanStack Query client using an atomic `coinId + date + USD` identity. A successful snapshot has infinite
-staleness and garbage-collection time because it is the immutable rate of record; concurrent operations and later refreshes reuse it. The
-aggregate target-set query remains retryable, so a failed or not-yet-published date can resolve on Accounting refresh without refetching
-successful dates. It never falls back to the current market price. Stablecoins retain their one-dollar peg, and SHER remains under its
-separate multiplier realization policy.
+The provisional draft feed derives one unique non-pegged asset target per required UTC transaction date. The
+[Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts) uses pure utilities to resolve configured coin
+identities and verified Polygon contract metadata, then consumes the independent raw snapshot queries in `coingecko.queries.ts` directly.
+Each snapshot uses an atomic `coinId + date + USD` identity and the once preset: successful data stays fresh without polling, and unused
+cache entries are retained for the lifetime of the query client. Concurrent consumers and later refreshes reuse successful snapshots. Pure
+response interpretation retains the existing six-decimal rate precision; malformed or missing prices stay explicit valuation gaps. Explicit
+Accounting refresh retries failed provider queries without refetching successful dates. It never falls back to the current market price.
+Stablecoins retain their one-dollar peg, and SHER remains under its separate multiplier realization policy.
 
-Safe histories now refresh approximately every five minutes while retaining complete pagination and stable transfer identities. Missing
-historical rates are retried once a day for an unchanged target set, or on explicit Accounting refresh; successful immutable date snapshots
-are reused. Current contract markets use a five-minute cache, and verified coin identities and recovered token metadata use a 24-hour cache.
-Safe and CoinGecko reads pass through separate paced browser queues with provider-wide pauses within the session after HTTP 429. This
-changes loading and recovery cadence, not source inclusion, exchange classification, precision, or rate-of-record policy. A failed later
-Safe page never publishes a partial replacement feed. See [Client Data Access](../client-data-access/README.md#browser-request-coordination)
-for the session-only boundary.
+Safe histories now refresh approximately every five minutes while retaining complete pagination and stable transfer identities. CoinGecko
+queries use ordinary Axios/TanStack observers calling the CNC backend, with cancellation and no automatic retries. The backend's
+[shared Redis market cache](../market-data-cache/README.md) preserves raw responses, coordinates misses and provider admission, and shares a
+429 cooldown while continuing to serve valid cache hits. Distinct historical dates keep independent error states. Historical errors recover
+on explicit refresh rather than automatic polling. Current supported-token prices retain the moderate preset and five-minute polling;
+verified contract identities and recovered token metadata use the once preset with 24-hour retention. Safe Transaction Service reads use
+direct Axios requests, apply the bounded Safe-specific retry policy, and expose independent errors without a shared request queue or
+provider-wide cooldown. Their unused history cache inherits the moderate preset's two-minute retention. Production GETs use the optional
+configured API key through Axios. Complete pagination and stable transfer identities are preserved; metadata recovery shares the observer's
+TanStack client and copies enriched rows without mutating provider objects. Source inclusion, exchange classification, precision and
+rate-of-record policy remain unchanged. A failed later Safe page never publishes a partial replacement feed. See
+[Client Data Access](../client-data-access/README.md#browser-request-coordination) for the browser and shared-backend boundaries.
 
 Each contract-event query is also keyed by its normalized generation targets: lowercase address plus effective deployment `fromBlock`,
 sorted independently of API order. A later or asynchronously resolved boundary therefore selects a distinct history range. Duplicate
@@ -128,11 +135,25 @@ ordering, and `InvestorV1` is used only when no current `Investor` exists.
 
 ### Safe assets and exchanges
 
+Safe queries retain provider movements without local contract exclusions before source mapping and historical-rate target construction.
+Unknown, untrusted and spam-like events may therefore enter the existing mapping or create explicit completeness gaps. The Gateway's balance
+spam filter does not apply to this Transaction Service feed. See
+[provider filtering](../client-data-access/README.md#safe-provider-filtering). Existing exchange classification, missing-metadata and
+historical-valuation rules apply to every retained movement. Executable evidence:
+[Safe pagination and metadata unit tests](../../../app/src/queries/__tests__/safe.queries.spec.ts) and
+[Safe source-mapping tests](../../../app/src/utils/accounting/__tests__/safe.spec.ts).
+
 The authoritative Safe source is `/transfers/`, paginated to exhaustion, deduplicated by service `transferId`, and refreshed approximately
 every five minutes. It includes real ERC-20 `transferFrom` settlements that cannot be inferred from the Safe multisig call's top-level
 calldata. Missing token metadata is read from its contract when possible. Metadata must match the transfer's contract address; unsupported
 or absent decimals retain raw movements with a completeness diagnostic. The exact monetary layer currently supports token precision from
 zero through 18 decimals. A larger precision remains unavailable rather than being silently rounded or interpreted as native.
+
+Safe provider reads retry temporary 404, 408, 425, 429, server and network failures up to three times at fixed intervals. Rate-limit
+recovery respects `Retry-After`; cancellation, other client errors, malformed responses and an explicit monthly-quota-exceeded response do
+not retry automatically. A failed history read still rejects the entire replacement, preserving previously cached complete history. Gateway
+holdings and Safe information use the same recovery, except that a 404 for a newly deployed Safe keeps retrying for about three and a half
+minutes while Safe services index it. Neither changes journal classification or historical valuation.
 
 Dynamic assets carry an `erc20:<chainId>:<contractAddress>` identity and per-movement metadata. The fixed CNC payment allowlist is
 unchanged. Contract-address market discovery on Polygon resolves the provider coin identity before historical snapshots are requested. Local
@@ -154,24 +175,26 @@ other payment rules remain unchanged. Network/DEX fees are not inferred from an 
 necessary. Cross-transaction swap intents and arbitrary DeFi operations require additional protocol evidence and remain a boundary of
 automatic classification.
 
-The read-only Safe portfolio combines supported balances with discovered ERC-20 balances for current wallet valuation. A nonzero supported
-holding with a missing, nonpositive, or nonfinite USD price keeps the total incomplete, just as unavailable discovered valuations do. A
-confirmed zero holding does not require a price. These current-price completeness checks do not change historical journal valuation.
-Optional contract-matched logo metadata is display-only. Safe holdings use compact amount labels while preserving the exact quantity for
-inspection; the rounding and logo metadata do not alter source movements, accounting classification, carrying values, or historical rates.
+The read-only Safe holdings use the Safe Client Gateway balance response for current wallet valuation. A nonzero supported holding with a
+missing, nonpositive, or nonfinite USD price keeps the total incomplete, just as unavailable discovered valuations do. A confirmed zero
+holding does not require a price. These current-price completeness checks do not change historical journal valuation. Optional
+contract-matched logo metadata is display-only. Safe holdings use compact amount labels while preserving the exact quantity for inspection;
+the rounding and logo metadata do not alter source movements, accounting classification, carrying values, or historical rates.
+
+Company summaries share the Gateway balance observers and read the known provider fiat total independently of holdings completeness. Price
+and value details preserve provider precision behind rounded table labels; these summary and display adapters do not change journal
+valuation.
 
 Implementation: [asset identity](../../../app/src/utils/tokens/assets.ts),
 [exchange carrying-value replay](../../../app/src/utils/accounting/safeExchanges.ts),
 [contract market discovery](../../../app/src/queries/coingecko.queries.ts),
-[Safe portfolio](../../../app/src/composables/safe/useSafePortfolio.ts),
-[discovered balance query](../../../app/src/queries/safe.queries.ts), and
-[exchange regression tests](../../../app/src/utils/accounting/__tests__/safeExchanges.spec.ts) and
+[Safe Client balances](../../../app/src/queries/safeClient.queries.ts), [Safe movement queries](../../../app/src/queries/safe.queries.ts),
+and [exchange regression tests](../../../app/src/utils/accounting/__tests__/safeExchanges.spec.ts) and
 [market-rate regressions](../../../app/src/utils/accounting/__tests__/safeExchanges.marketRates.spec.ts).
 
-The Safe portfolio's discovery exclusion is based on the fixed supported-currency balance reader, not the global known-token resolver.
-USDT/USDT0 and other recognized contracts outside the fixed holdings list remain visible as discovered ERC-20s. The global token resolver
-continues to supply existing Accounting identities and stablecoin valuation rules; the holdings correction does not remap journal entries or
-broaden payment allowlists.
+Gateway balance responses are cached by Safe address, chain and fiat currency and show only returned balances, including zero balances. No
+configured base-currency rows are inserted. Provider metadata and order are retained. The global token resolver continues to supply existing
+Accounting identities and stablecoin valuation rules; the holdings correction does not remap journal entries or broaden payment allowlists.
 
 ### Runtime Export Boundary
 
@@ -695,14 +718,13 @@ because deposits and company-pocket transfers are not manual assignment targets.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `0972d19f7a8226e5923f6f8472ffc954dcf088d8`
+**Implementation evidence reviewed against:** `008826d0d841f19c967c8ff477a7e9c452ee7398`
 
 - [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts),
   [source-status projection](../../../app/src/composables/accounting/useAccountingStatus.ts),
   [shared accounting context](../../../app/src/composables/accounting/useAccountingContext.ts),
   [reactive paginated Safe history queries](../../../app/src/queries/safe.queries.ts),
-  [Safe query behaviour tests](../../../app/src/queries/__tests__/safe.queries.spec.ts), and
-  [Safe address reactivity test](../../../app/src/queries/__tests__/safe.queries.integration.spec.ts)
+  [Safe pagination and metadata unit tests](../../../app/src/queries/__tests__/safe.queries.spec.ts)
 - [Persistent Accounting route](../../../app/src/router/index.ts),
   [team route-owner lifetime](../../../app/src/views/team/%5Bid%5D/ShowIndex.vue), and
   [Accounting report route views](../../../app/src/views/team/%5Bid%5D/Accounting/)
@@ -716,8 +738,9 @@ because deposits and company-pocket transfers are not manual assignment targets.
   [event-query identity tests](../../../app/src/composables/__tests__/eventsViaLogs.spec.ts), and
   [Investor source-resolution tests](../../../app/src/composables/accounting/__tests__/useCNCAccounting.spec.ts)
 - [Immutable historical token-rate query](../../../app/src/queries/coingecko.queries.ts),
+  [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts),
   [valuation utilities](../../../app/src/utils/accounting/toUsd.ts),
-  [historical rate cache tests](../../../app/src/queries/__tests__/historicalTokenRate.queries.spec.ts), and
+  [CoinGecko endpoint unit tests](../../../app/src/queries/__tests__/coingecko.queries.spec.ts), and
   [valuation and missing-rate retention tests](../../../app/src/utils/accounting/__tests__/toUsd.spec.ts)
 - [Accounting source contracts](../../../app/src/utils/accounting/types.ts),
   [pure completeness projection](../../../app/src/utils/accounting/accountingCompleteness.ts), and

@@ -38,7 +38,15 @@ import { useGetExpensesQuery } from '@/queries/expense.queries'
 import { useGetJournalAccountAssignmentsQuery } from '@/queries/journalAccountAssignment.queries'
 import { useGetSafeTransfersQuery } from '@/queries/safe.queries'
 import { useGetTeamWeeklyClaimsQuery } from '@/queries/weeklyClaim.queries'
-import { useHistoricalTokenRatesQuery } from '@/queries/coingecko.queries'
+import {
+  useGetAssetMarketsQuery,
+  useGetHistoricalTokenRatesQuery
+} from '@/queries/coingecko.queries'
+import {
+  COINGECKO_POLYGON_CHAIN_ID,
+  coinGeckoRateTargets,
+  coinGeckoRateOfRecord
+} from '@/utils/tokens/coingecko'
 import { useTransactionEvidence } from './useTransactionEvidence'
 import { useAccountingStatus } from './useAccountingStatus'
 import { accountingEventSource, accountingQuerySource } from '@/utils/accounting/sourceStatus'
@@ -173,10 +181,19 @@ export function useCNCAccounting(
   const historicalTargets = computed(() =>
     accountingValuation.historicalRateTargets(provisionalDrafts.value)
   )
-  const historicalRates = useHistoricalTokenRatesQuery(
-    historicalTargets,
+  const assetMarkets = useGetAssetMarketsQuery(
+    () => coinGeckoRateTargets(historicalTargets.value).assets,
     () => !options.rateOfRecord
   )
+  const marketTargets = computed(() =>
+    coinGeckoRateTargets(historicalTargets.value, assetMarkets.value)
+  )
+  const historicalRates = useGetHistoricalTokenRatesQuery(
+    () => marketTargets.value.requests,
+    () => !options.rateOfRecord
+  )
+  const rateOfRecord: accountingValuation.UsdRateOfRecord = (token, at) =>
+    coinGeckoRateOfRecord(marketTargets.value.targets, historicalRates.value, token, at)
 
   // Native (POL/ETH) is valued from the immutable UTC transaction-date snapshot.
   // Stablecoins retain their $1 peg and SHER retains the multiplier policy applied
@@ -188,10 +205,7 @@ export function useCNCAccounting(
   const drafts = computed(() =>
     options.rateOfRecord
       ? provisionalDrafts.value
-      : accountingValuation.applyHistoricalRates(
-          provisionalDrafts.value,
-          historicalRates.rateOfRecord
-        )
+      : accountingValuation.applyHistoricalRates(provisionalDrafts.value, rateOfRecord)
   )
   const deploymentAccounts = computed(() => knownDeploymentAccounts(allContracts.value))
   const transactionEvidence = useTransactionEvidence(drafts, deploymentAccounts)
@@ -270,14 +284,25 @@ export function useCNCAccounting(
       drafts: computed(() =>
         prepareSafeExchanges(drafts.value).filter((entry) => entry.carryingAmount === undefined)
       ),
-      isLoading: historicalRates.isLoading
+      isLoading: computed(
+        () =>
+          assetMarkets.value.some((query) => query.isFetching) ||
+          historicalRates.value.some((query) => query.isFetching)
+      )
     }
   })
 
   const refetch = (): Promise<unknown> =>
     Promise.allSettled([
       ...[...sourceDefinitions, ...eventSources].map(({ query }) => query.refetch?.()),
-      historicalRates.refetch()
+      ...(!options.rateOfRecord
+        ? [
+            ...assetMarkets.value.filter(
+              (query) => query.isError && query.chainId === COINGECKO_POLYGON_CHAIN_ID
+            ),
+            ...historicalRates.value.filter((query) => query.isError)
+          ].map((query) => query.refetch())
+        : [])
     ])
 
   return { journal: computed(() => accounting.value.journal), status, refetch }

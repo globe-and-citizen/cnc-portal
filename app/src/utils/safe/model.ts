@@ -1,3 +1,4 @@
+import type { AxiosError } from 'axios'
 import { type Address, zeroAddress, formatUnits, isAddress } from 'viem'
 import type { SafeMultisigConfirmationResponse, SignatureType } from '@safe-global/types-kit'
 import { CHAIN_NAMES, TX_SERVICE_BY_CHAIN } from '@/types/safe'
@@ -24,6 +25,15 @@ export function getTxServiceUrl(chainId: number): string {
   }
 
   return txService.url
+}
+
+/**
+ * Safe information and Gateway balances answer HTTP 404 until Safe services index the wallet,
+ * such as a Safe deployed moments ago.
+ */
+export function isSafeNotIndexedError(error: unknown): boolean {
+  const failure = error as AxiosError | null | undefined
+  return (failure?.response?.status ?? failure?.status) === 404
 }
 
 /**

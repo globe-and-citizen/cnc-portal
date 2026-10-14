@@ -43,7 +43,7 @@ export const json = (body: unknown, status = 200): StubResponse => ({
 })
 
 function commonResponse(pathname: string, stub: BackendStub): StubResponse | undefined {
-  if (pathname.startsWith('/api/v3/coins/')) {
+  if (pathname.startsWith('/api/coingecko/coins/')) {
     return json({ market_data: { current_price: { usd: 1, cad: 1, eur: 1, idr: 1, inr: 1 } } })
   }
   if (pathname.startsWith('/api/user/nonce/')) return json({ nonce: NONCE })

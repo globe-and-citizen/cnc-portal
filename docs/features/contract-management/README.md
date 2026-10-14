@@ -64,13 +64,15 @@ Coverage targets compare each criterion with its required representative evidenc
 generated coverage report and CI retain file-level and execution evidence. Known assertion gaps remain insufficient even when a static
 reference has the expected layer label.
 
-| User Story      | Main Journey | Coverage Target | Gaps                                                                                                                                                                                                                                                                              |
-| --------------- | ------------ | --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| US-CONTRACT-001 | ⬜ Planned   | ⚠️ 5/12 met     | `AC-US-CONTRACT-001-01`, `AC-US-CONTRACT-001-03`, `AC-US-CONTRACT-001-04`, `AC-US-CONTRACT-001-06`, `AC-US-CONTRACT-001-07`, `AC-US-CONTRACT-001-11`, `AC-US-CONTRACT-001-12`                                                                                                     |
-| US-CONTRACT-002 | ⬜ Planned   | ⚠️ 2/12         | `AC-US-CONTRACT-002-01`, `AC-US-CONTRACT-002-02`, `AC-US-CONTRACT-002-03`, `AC-US-CONTRACT-002-04`, `AC-US-CONTRACT-002-05`, `AC-US-CONTRACT-002-06`, `AC-US-CONTRACT-002-07`, `AC-US-CONTRACT-002-08`, `AC-US-CONTRACT-002-09`, `AC-US-CONTRACT-002-10`                          |
-| US-CONTRACT-003 | ⬜ Planned   | ⚠️ 1/8 met      | `AC-US-CONTRACT-003-02`, `AC-US-CONTRACT-003-03`, `AC-US-CONTRACT-003-04`, `AC-US-CONTRACT-003-05`, `AC-US-CONTRACT-003-06`, `AC-US-CONTRACT-003-07`, `AC-US-CONTRACT-003-08`                                                                                                     |
-| US-CONTRACT-004 | ⬜ Planned   | ⚠️ 2/10 met     | `AC-US-CONTRACT-004-01`, `AC-US-CONTRACT-004-02`, `AC-US-CONTRACT-004-03`, `AC-US-CONTRACT-004-04`, `AC-US-CONTRACT-004-06`, `AC-US-CONTRACT-004-07`, `AC-US-CONTRACT-004-09`, `AC-US-CONTRACT-004-10`                                                                            |
-| US-CONTRACT-005 | ⬜ Planned   | ❌ 0/11         | `AC-US-CONTRACT-005-01`, `AC-US-CONTRACT-005-02`, `AC-US-CONTRACT-005-03`, `AC-US-CONTRACT-005-04`, `AC-US-CONTRACT-005-05`, `AC-US-CONTRACT-005-06`, `AC-US-CONTRACT-005-07`, `AC-US-CONTRACT-005-08`, `AC-US-CONTRACT-005-09`, `AC-US-CONTRACT-005-10`, `AC-US-CONTRACT-005-11` |
+Runs of at least three consecutive missing criteria use inclusive ranges with full AC IDs at both endpoints.
+
+| User Story      | Main Journey | Coverage Target | Gaps                                                                                                                                                                          |
+| --------------- | ------------ | --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| US-CONTRACT-001 | ⬜ Planned   | ⚠️ 5/12 met     | `AC-US-CONTRACT-001-01`, `AC-US-CONTRACT-001-03`, `AC-US-CONTRACT-001-04`, `AC-US-CONTRACT-001-06`, `AC-US-CONTRACT-001-07`, `AC-US-CONTRACT-001-11`, `AC-US-CONTRACT-001-12` |
+| US-CONTRACT-002 | ⬜ Planned   | ⚠️ 2/12         | `AC-US-CONTRACT-002-01`–`AC-US-CONTRACT-002-10`                                                                                                                               |
+| US-CONTRACT-003 | ⬜ Planned   | ⚠️ 1/8 met      | `AC-US-CONTRACT-003-02`–`AC-US-CONTRACT-003-08`                                                                                                                               |
+| US-CONTRACT-004 | ⬜ Planned   | ⚠️ 2/10 met     | `AC-US-CONTRACT-004-01`–`AC-US-CONTRACT-004-04`, `AC-US-CONTRACT-004-06`, `AC-US-CONTRACT-004-07`, `AC-US-CONTRACT-004-09`, `AC-US-CONTRACT-004-10`                           |
+| US-CONTRACT-005 | ⬜ Planned   | ❌ 0/11         | `AC-US-CONTRACT-005-01`–`AC-US-CONTRACT-005-11`                                                                                                                               |
 
 Proof obligations use the [shared proof-strategy registry](../../testing/proof-strategies.md). Multiple IDs for one AC are cumulative.
 
