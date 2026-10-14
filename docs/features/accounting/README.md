@@ -113,19 +113,55 @@ three consecutive missing criteria use inclusive ranges with full AC IDs at both
 
 ### Accounting Use-Case Test Evidence
 
-The story matrix tracks user-visible acceptance criteria. This table links the active accounting rules in the
+The story matrix tracks user-visible acceptance criteria. The list below links the active accounting rules in the
 [rule catalogue](./journal-entry-catalogue.md) to their representative mapper tests. These are frontend unit tests; the integrated journeys
 exercise representative company operations, not every rule. The catalogue's declared inactive identifiers are intentionally not counted as
 implemented use cases.
 
-| Use-Case Family        | Active Rules                                                           | Representative Tests                                                                                                                                                                                                                                                                                                                                                                                                                               |
-| ---------------------- | ---------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Treasury and Safe cash | `UC-BANK-02`, `UC-BANK-03`, `INTERNAL`, `CASH-OUT`, `FEE`, `SAFE-SWAP` | [bank.spec.ts](../../../app/src/utils/accounting/__tests__/bank.spec.ts), [safe.spec.ts](../../../app/src/utils/accounting/__tests__/safe.spec.ts), [bankFeeAssembly.spec.ts](../../../app/src/utils/accounting/__tests__/bankFeeAssembly.spec.ts), [internalAddresses.spec.ts](../../../app/src/utils/accounting/__tests__/internalAddresses.spec.ts), [safeExchanges.spec.ts](../../../app/src/utils/accounting/__tests__/safeExchanges.spec.ts) |
-| Payroll                | `UC-CASH-02`, `UC-CASH-03`                                             | [payrollAccrual.spec.ts](../../../app/src/utils/accounting/__tests__/payrollAccrual.spec.ts), [payroll.spec.ts](../../../app/src/utils/accounting/__tests__/payroll.spec.ts), [sherAccrualRate.spec.ts](../../../app/src/utils/accounting/__tests__/sherAccrualRate.spec.ts), [sherIssuance.spec.ts](../../../app/src/utils/accounting/__tests__/sherIssuance.spec.ts)                                                                             |
-| Expense payout         | `UC-EXP-01`                                                            | [expenseAccount.spec.ts](../../../app/src/utils/accounting/__tests__/expenseAccount.spec.ts), [enrichment.spec.ts](../../../app/src/utils/accounting/__tests__/enrichment.spec.ts), [orchestrator.spec.ts](../../../app/src/utils/accounting/__tests__/orchestrator.spec.ts)                                                                                                                                                                       |
-| Community Credit       | `UC-CREDIT-01`, `UC-CREDIT-03`, `UC-CREDIT-05`                         | [fixedReturn.spec.ts](../../../app/src/utils/accounting/__tests__/fixedReturn.spec.ts), [fixedReturn.interest.spec.ts](../../../app/src/utils/accounting/__tests__/fixedReturn.interest.spec.ts), [assemble.fixedReturn.spec.ts](../../../app/src/utils/accounting/__tests__/assemble.fixedReturn.spec.ts), [generation migration spec](../../../app/src/composables/accounting/__tests__/useCNCAccounting.migration.spec.ts)                      |
-| Investor               | `UC-SDR-01`, `UC-INV-01`, `DEFAULT-D`                                  | [safeDepositRouter.spec.ts](../../../app/src/utils/accounting/__tests__/safeDepositRouter.spec.ts), [investor.spec.ts](../../../app/src/utils/accounting/__tests__/investor.spec.ts), [sherIssuance.spec.ts](../../../app/src/utils/accounting/__tests__/sherIssuance.spec.ts)                                                                                                                                                                     |
-| Vesting                | `UC-VEST-01`, `UC-VEST-02`, `UC-VEST-03`                               | [vesting.spec.ts](../../../app/src/utils/accounting/__tests__/vesting.spec.ts), [sherIssuance.spec.ts](../../../app/src/utils/accounting/__tests__/sherIssuance.spec.ts)                                                                                                                                                                                                                                                                           |
+- **Treasury and Safe cash**
+  - Active rules: `UC-BANK-02`, `UC-BANK-03`, `INTERNAL`, `CASH-OUT`, `FEE`, `SAFE-SWAP`
+  - Representative tests:
+    - [bank.spec.ts](../../../app/src/utils/accounting/__tests__/bank.spec.ts)
+    - [safe.spec.ts](../../../app/src/utils/accounting/__tests__/safe.spec.ts)
+    - [bankFeeAssembly.spec.ts](../../../app/src/utils/accounting/__tests__/bankFeeAssembly.spec.ts)
+    - [internalAddresses.spec.ts](../../../app/src/utils/accounting/__tests__/internalAddresses.spec.ts)
+    - [safeExchanges.spec.ts](../../../app/src/utils/accounting/__tests__/safeExchanges.spec.ts)
+
+- **Payroll**
+  - Active rules: `UC-CASH-02`, `UC-CASH-03`
+  - Representative tests:
+    - [payrollAccrual.spec.ts](../../../app/src/utils/accounting/__tests__/payrollAccrual.spec.ts)
+    - [payroll.spec.ts](../../../app/src/utils/accounting/__tests__/payroll.spec.ts)
+    - [sherAccrualRate.spec.ts](../../../app/src/utils/accounting/__tests__/sherAccrualRate.spec.ts)
+    - [sherIssuance.spec.ts](../../../app/src/utils/accounting/__tests__/sherIssuance.spec.ts)
+
+- **Expense payout**
+  - Active rules: `UC-EXP-01`
+  - Representative tests:
+    - [expenseAccount.spec.ts](../../../app/src/utils/accounting/__tests__/expenseAccount.spec.ts)
+    - [enrichment.spec.ts](../../../app/src/utils/accounting/__tests__/enrichment.spec.ts)
+    - [orchestrator.spec.ts](../../../app/src/utils/accounting/__tests__/orchestrator.spec.ts)
+
+- **Community Credit**
+  - Active rules: `UC-CREDIT-01`, `UC-CREDIT-03`, `UC-CREDIT-05`
+  - Representative tests:
+    - [fixedReturn.spec.ts](../../../app/src/utils/accounting/__tests__/fixedReturn.spec.ts)
+    - [fixedReturn.interest.spec.ts](../../../app/src/utils/accounting/__tests__/fixedReturn.interest.spec.ts)
+    - [assemble.fixedReturn.spec.ts](../../../app/src/utils/accounting/__tests__/assemble.fixedReturn.spec.ts)
+    - [generation migration spec](../../../app/src/composables/accounting/__tests__/useCNCAccounting.migration.spec.ts)
+
+- **Investor**
+  - Active rules: `UC-SDR-01`, `UC-INV-01`, `DEFAULT-D`
+  - Representative tests:
+    - [safeDepositRouter.spec.ts](../../../app/src/utils/accounting/__tests__/safeDepositRouter.spec.ts)
+    - [investor.spec.ts](../../../app/src/utils/accounting/__tests__/investor.spec.ts)
+    - [sherIssuance.spec.ts](../../../app/src/utils/accounting/__tests__/sherIssuance.spec.ts)
+
+- **Vesting**
+  - Active rules: `UC-VEST-01`, `UC-VEST-02`, `UC-VEST-03`
+  - Representative tests:
+    - [vesting.spec.ts](../../../app/src/utils/accounting/__tests__/vesting.spec.ts)
+    - [sherIssuance.spec.ts](../../../app/src/utils/accounting/__tests__/sherIssuance.spec.ts)
 
 The real-operation evidence is in the [Accounting journey](../../../app/test/e2e/accounting/accounting-journey.integrated.spec.ts) and
 [contract-generation journey](../../../app/test/e2e/accounting/accounting-generations.integrated.spec.ts). Their current execution status is
@@ -532,22 +568,98 @@ first change and for the current router when no change event exists.
 
 ### Direct Movement Scenarios
 
-Target behaviour follows the [direct movement policy](direct-movement-policy.md). Each row represents the same evidenced movement across the
-participating stories.
+Target behaviour follows the [direct movement policy](direct-movement-policy.md). Each scenario represents the same evidenced movement
+across the participating stories.
 
-| Scenario                                                                                                                                                                                                                | This story owns                                                              | Related stories and roles                                                                                                                                                                                                                                                                                                                                                                                                                              |
-| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| External wallet funds Bank without established purpose or facture evidence. [UC-TREASURY-002](journal-entry-catalogue.md#uc-treasury-002--external-receipt-pending-classification)                                      | Owns movement evidence and identity.                                         | [US-BANK-001](../accounts/README.md#us-bank-001-fund-the-bank) — owns received funding; [US-BANK-003](../accounts/README.md#us-bank-003-review-the-bank-position-and-history) — owns Bank history; [US-PAYGATE-004](../payment-gate/README.md#us-paygate-004-review-payment-history) — keeps unmatched receipts outside invoice history; [US-ACCT-010](README.md#us-acct-010-classify-direct-external-receipts) — owns eligible receipt classification |
-| External wallet funds Safe without established purpose or investment evidence. [UC-TREASURY-002](journal-entry-catalogue.md#uc-treasury-002--external-receipt-pending-classification)                                   | Owns movement evidence and identity.                                         | [US-SAFE-003](../accounts/README.md#us-safe-003-manage-safe-funds) — owns funding; [US-SAFE-002](../accounts/README.md#us-safe-002-inspect-safe-details) — owns Safe asset history; [US-ACCT-010](README.md#us-acct-010-classify-direct-external-receipts) — owns eligible receipt classification                                                                                                                                                      |
-| External wallet funds Payroll without established business purpose. [UC-TREASURY-002](journal-entry-catalogue.md#uc-treasury-002--external-receipt-pending-classification)                                              | Owns movement evidence and identity.                                         | [US-PAYROLL-003](../payroll/README.md#us-payroll-003-fund-the-payroll-contract) — owns received funding and payment availability; [US-PAYROLL-013](../payroll/README.md#us-payroll-013-review-the-payroll-account-position) — owns Payroll position and history; [US-ACCT-010](README.md#us-acct-010-classify-direct-external-receipts) — owns eligible receipt classification                                                                         |
-| External wallet funds Expense without established business purpose. [UC-TREASURY-002](journal-entry-catalogue.md#uc-treasury-002--external-receipt-pending-classification)                                              | Owns movement evidence and identity.                                         | [US-EXP-005](../accounts/README.md#us-exp-005-fund-the-expense-account) — owns received funding and spending availability; [US-EXP-004](../accounts/README.md#us-exp-004-review-the-expense-account-and-its-history) — owns Expense position and history; [US-ACCT-010](README.md#us-acct-010-classify-direct-external-receipts) — owns eligible receipt classification                                                                                |
-| External tokens reach FixedReturn without a credit-round operation or established purpose. [UC-TREASURY-002](journal-entry-catalogue.md#uc-treasury-002--external-receipt-pending-classification)                       | Owns movement evidence and identity.                                         | [US-CC-001](../community-credit/README.md#us-cc-001-inspect-the-credit-account) — separates unallocated holdings from credit rounds; [US-ACCT-010](README.md#us-acct-010-classify-direct-external-receipts) — owns eligible receipt classification                                                                                                                                                                                                     |
-| External assets reach Investor or SafeDepositRouter without an investment, distribution, or established purpose. [UC-TREASURY-002](journal-entry-catalogue.md#uc-treasury-002--external-receipt-pending-classification) | Owns movement evidence and identity.                                         | [US-SHER-003](../shareholder-management/README.md#us-sher-003-review-shareholder-position-and-activity) — separates direct holdings from shares and dividends; [US-CONTRACT-001](../contract-management/README.md#us-contract-001-review-the-current-contract-suite) — exposes custody and recovery limits; [US-ACCT-010](README.md#us-acct-010-classify-direct-external-receipts) — owns eligible receipt classification                              |
-| External assets reach AdCampaignManager without a campaign operation or established purpose. [UC-TREASURY-002](journal-entry-catalogue.md#uc-treasury-002--external-receipt-pending-classification)                     | Owns movement evidence and identity.                                         | [US-CONTRACT-003](../contract-management/README.md#us-contract-003-manage-advertising-campaigns) — separates unallocated holdings from campaign budgets; [US-ACCT-010](README.md#us-acct-010-classify-direct-external-receipts) — owns eligible receipt classification                                                                                                                                                                                 |
-| External tokens reach Vesting without a grant operation or established purpose. [UC-TREASURY-002](journal-entry-catalogue.md#uc-treasury-002--external-receipt-pending-classification)                                  | Owns movement evidence and identity.                                         | [US-VESTING-002](../vesting/README.md#us-vesting-002-view-schedules-and-aggregate-totals) — separates holdings from granted and claimable shares; [US-CONTRACT-001](../contract-management/README.md#us-contract-001-review-the-current-contract-suite) — exposes custody and recovery limits; [US-ACCT-010](README.md#us-acct-010-classify-direct-external-receipts) — owns eligible receipt classification                                           |
-| External tokens reach another verified company-held contract without an established purpose. [UC-TREASURY-002](journal-entry-catalogue.md#uc-treasury-002--external-receipt-pending-classification)                     | Owns movement evidence and identity.                                         | [US-CONTRACT-001](../contract-management/README.md#us-contract-001-review-the-current-contract-suite) — owns auxiliary contract inspection; [US-ACCT-010](README.md#us-acct-010-classify-direct-external-receipts) — owns eligible receipt classification                                                                                                                                                                                              |
-| Owner-authorized Router recovery moves held tokens to the same company Safe. [UC-TREASURY-001](journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer)                                            | Correlates source and destination without a second receipt or sher issuance. | [US-SHER-003](../shareholder-management/README.md#us-sher-003-review-shareholder-position-and-activity) — traces the Router receipt and recovery; [US-SAFE-002](../accounts/README.md#us-safe-002-inspect-safe-details) — owns receiving Safe history                                                                                                                                                                                                  |
-| A verified auxiliary company contract makes an evidenced external payment without established purpose. [UC-TREASURY-003](journal-entry-catalogue.md#uc-treasury-003--external-payment-pending-classification)           | Owns evidence and pending-payment identity.                                  | [US-CONTRACT-001](../contract-management/README.md#us-contract-001-review-the-current-contract-suite) — exposes the contract movement                                                                                                                                                                                                                                                                                                                  |
+- **Scenario:** External wallet funds Bank without established purpose or facture evidence.
+  [UC-TREASURY-002](journal-entry-catalogue.md#uc-treasury-002--external-receipt-pending-classification)
+  - **Accounting role:** Movement evidence and identity.
+  - **Related stories and roles:**
+    - [US-BANK-001](../accounts/README.md#us-bank-001-fund-the-bank) — owns received funding
+    - [US-BANK-003](../accounts/README.md#us-bank-003-review-the-bank-position-and-history) — owns Bank history
+    - [US-PAYGATE-004](../payment-gate/README.md#us-paygate-004-review-payment-history) — keeps unmatched receipts outside invoice history
+    - [US-ACCT-010](README.md#us-acct-010-classify-direct-external-receipts) — owns eligible receipt classification
+
+- **Scenario:** External wallet funds Safe without established purpose or investment evidence.
+  [UC-TREASURY-002](journal-entry-catalogue.md#uc-treasury-002--external-receipt-pending-classification)
+  - **Accounting role:** Movement evidence and identity.
+  - **Related stories and roles:**
+    - [US-SAFE-003](../accounts/README.md#us-safe-003-manage-safe-funds) — owns funding
+    - [US-SAFE-002](../accounts/README.md#us-safe-002-inspect-safe-details) — owns Safe asset history
+    - [US-ACCT-010](README.md#us-acct-010-classify-direct-external-receipts) — owns eligible receipt classification
+
+- **Scenario:** External wallet funds Payroll without established business purpose.
+  [UC-TREASURY-002](journal-entry-catalogue.md#uc-treasury-002--external-receipt-pending-classification)
+  - **Accounting role:** Movement evidence and identity.
+  - **Related stories and roles:**
+    - [US-PAYROLL-003](../payroll/README.md#us-payroll-003-fund-the-payroll-contract) — owns received funding and payment availability
+    - [US-PAYROLL-013](../payroll/README.md#us-payroll-013-review-the-payroll-account-position) — owns Payroll position and history
+    - [US-ACCT-010](README.md#us-acct-010-classify-direct-external-receipts) — owns eligible receipt classification
+
+- **Scenario:** External wallet funds Expense without established business purpose.
+  [UC-TREASURY-002](journal-entry-catalogue.md#uc-treasury-002--external-receipt-pending-classification)
+  - **Accounting role:** Movement evidence and identity.
+  - **Related stories and roles:**
+    - [US-EXP-005](../accounts/README.md#us-exp-005-fund-the-expense-account) — owns received funding and spending availability
+    - [US-EXP-004](../accounts/README.md#us-exp-004-review-the-expense-account-and-its-history) — owns Expense position and history
+    - [US-ACCT-010](README.md#us-acct-010-classify-direct-external-receipts) — owns eligible receipt classification
+
+- **Scenario:** External tokens reach FixedReturn without a credit-round operation or established purpose.
+  [UC-TREASURY-002](journal-entry-catalogue.md#uc-treasury-002--external-receipt-pending-classification)
+  - **Accounting role:** Movement evidence and identity.
+  - **Related stories and roles:**
+    - [US-CC-001](../community-credit/README.md#us-cc-001-inspect-the-credit-account) — separates unallocated holdings from credit rounds
+    - [US-ACCT-010](README.md#us-acct-010-classify-direct-external-receipts) — owns eligible receipt classification
+
+- **Scenario:** External assets reach Investor or SafeDepositRouter without an investment, distribution, or established purpose.
+  [UC-TREASURY-002](journal-entry-catalogue.md#uc-treasury-002--external-receipt-pending-classification)
+  - **Accounting role:** Movement evidence and identity.
+  - **Related stories and roles:**
+    - [US-SHER-003](../shareholder-management/README.md#us-sher-003-review-shareholder-position-and-activity) — separates direct holdings
+      from shares and dividends
+    - [US-CONTRACT-001](../contract-management/README.md#us-contract-001-review-the-current-contract-suite) — exposes custody and recovery
+      limits
+    - [US-ACCT-010](README.md#us-acct-010-classify-direct-external-receipts) — owns eligible receipt classification
+
+- **Scenario:** External assets reach AdCampaignManager without a campaign operation or established purpose.
+  [UC-TREASURY-002](journal-entry-catalogue.md#uc-treasury-002--external-receipt-pending-classification)
+  - **Accounting role:** Movement evidence and identity.
+  - **Related stories and roles:**
+    - [US-CONTRACT-003](../contract-management/README.md#us-contract-003-manage-advertising-campaigns) — separates unallocated holdings from
+      campaign budgets
+    - [US-ACCT-010](README.md#us-acct-010-classify-direct-external-receipts) — owns eligible receipt classification
+
+- **Scenario:** External tokens reach Vesting without a grant operation or established purpose.
+  [UC-TREASURY-002](journal-entry-catalogue.md#uc-treasury-002--external-receipt-pending-classification)
+  - **Accounting role:** Movement evidence and identity.
+  - **Related stories and roles:**
+    - [US-VESTING-002](../vesting/README.md#us-vesting-002-view-schedules-and-aggregate-totals) — separates holdings from granted and
+      claimable shares
+    - [US-CONTRACT-001](../contract-management/README.md#us-contract-001-review-the-current-contract-suite) — exposes custody and recovery
+      limits
+    - [US-ACCT-010](README.md#us-acct-010-classify-direct-external-receipts) — owns eligible receipt classification
+
+- **Scenario:** External tokens reach another verified company-held contract without an established purpose.
+  [UC-TREASURY-002](journal-entry-catalogue.md#uc-treasury-002--external-receipt-pending-classification)
+  - **Accounting role:** Movement evidence and identity.
+  - **Related stories and roles:**
+    - [US-CONTRACT-001](../contract-management/README.md#us-contract-001-review-the-current-contract-suite) — owns auxiliary contract
+      inspection
+    - [US-ACCT-010](README.md#us-acct-010-classify-direct-external-receipts) — owns eligible receipt classification
+
+- **Scenario:** Owner-authorized Router recovery moves held tokens to the same company Safe.
+  [UC-TREASURY-001](journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer)
+  - **Accounting role:** Correlates source and destination without a second receipt or sher issuance.
+  - **Related stories and roles:**
+    - [US-SHER-003](../shareholder-management/README.md#us-sher-003-review-shareholder-position-and-activity) — traces the Router receipt
+      and recovery
+    - [US-SAFE-002](../accounts/README.md#us-safe-002-inspect-safe-details) — owns receiving Safe history
+
+- **Scenario:** A verified auxiliary company contract makes an evidenced external payment without established purpose.
+  [UC-TREASURY-003](journal-entry-catalogue.md#uc-treasury-003--external-payment-pending-classification)
+  - **Accounting role:** Evidence and pending-payment identity.
+  - **Related stories and roles:**
+    - [US-CONTRACT-001](../contract-management/README.md#us-contract-001-review-the-current-contract-suite) — exposes the contract movement
 
 ## US-ACCT-008: Access Synchronized Company Books
 

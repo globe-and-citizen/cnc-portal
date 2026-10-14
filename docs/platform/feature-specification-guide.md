@@ -525,6 +525,15 @@ Move a subject into a focused sibling document when it needs extensive examples,
 and a link in the parent story. For example, Payroll owns its full reviewable journey in `README.md`; a focused sibling is justified only
 when detailed rules would otherwise obscure that journey.
 
+### Table Readability
+
+Use a table when readers need to compare the same short fields across several rows. Keep overview cells to an identifier, a short label, a
+status or count, and a link to the detailed section when needed. If a cell needs several sentences or many linked stories, present those
+relationships under a descriptive heading as prose or a list. A single narrative row usually reads better without a table.
+
+Preserve every stable ID, relationship, and evidence link when moving detail out of a table. Review the rendered layout rather than setting
+a hard source-line limit: Markdown link destinations can make a short visible cell look long in source.
+
 Do not duplicate platform security, testing, deployment, formatting, or architecture standards. Reference their canonical guides.
 
 ## Diagram Format
