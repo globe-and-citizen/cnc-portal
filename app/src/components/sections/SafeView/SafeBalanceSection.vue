@@ -22,7 +22,7 @@
       variant="soft"
       icon="i-lucide-circle-alert"
       title="Some wallet details are unavailable"
-      description="The Safe address remains available. Check your connection and retry the balance and signer details."
+      description="Wallet data could not be loaded. Wait a moment, then try again. The Safe address remains available."
       data-test="safe-overview-error"
     >
       <template #actions>
