@@ -342,13 +342,12 @@ function hasSkipMarker(src) {
   return /\b(describe|it|test)\.skip\b/.test(src)
 }
 
-function findUsages(composableName, corpus, composableFile) {
+function findUsages(composableName, corpus) {
   const usages = []
   const re = new RegExp(`\\b${composableName}\\s*\\(`)
   const importRe = new RegExp(`\\b${composableName}\\b`)
   for (const [file, content] of corpus) {
-    // Skip the composable definition file + its __tests__
-    if (file.endsWith(composableFile.replace(/^app\//, 'app/'))) continue
+    // Skip composable definitions and test files.
     if (file.includes('/composables/')) continue
     if (file.includes('/__tests__/') || file.includes('/tests/')) continue
     if (!importRe.test(content)) continue
@@ -414,7 +413,7 @@ function auditContract(slug, info, corpus, formatAbiItem) {
         }
       : { tested: false, files: [] }
 
-    const usages = composable ? findUsages(composable.name, corpus, composable.file) : []
+    const usages = composable ? findUsages(composable.name, corpus) : []
 
     // Derive status
     let status = 'ok'
@@ -629,80 +628,175 @@ const HTML_TEMPLATE = /* html */ `<!doctype html>
     'Generated ' + report.generatedAt + ' · ' + report.contracts.length + ' contract(s)';
 
   const sel = document.getElementById('contract-select');
-  sel.innerHTML = '<option value="__all__">(all contracts)</option>' +
-    report.contracts.map(c => '<option value="' + c.slug + '">' + c.slug + ' (' + c.counts.ok + '/' + c.counts.totalFunctions + ')</option>').join('');
+  const allOption = document.createElement('option');
+  allOption.value = '__all__';
+  allOption.textContent = '(all contracts)';
+  sel.append(allOption);
+  for (const contract of report.contracts) {
+    const option = document.createElement('option');
+    option.value = contract.slug;
+    option.textContent = contract.slug + ' (' + contract.counts.ok + '/' + contract.counts.totalFunctions + ')';
+    sel.append(option);
+  }
   const status = document.getElementById('status-filter');
   const search = document.getElementById('search');
   const content = document.getElementById('content');
 
-  function mark(ok) { return ok ? '<span class="mark ok">✓</span>' : '<span class="mark bad">✗</span>'; }
-  function esc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\\"":"&quot;"}[c])); }
+  function node(tag, className, value) {
+    const result = document.createElement(tag);
+    if (className) result.className = className;
+    if (value !== undefined) result.textContent = String(value ?? '');
+    return result;
+  }
 
-  function renderContract(c, filters) {
-    const fns = c.functions.filter(f => {
-      if (filters.status === 'ok' && f.status !== 'ok') return false;
-      if (filters.status === 'partial' && f.status !== 'partial') return false;
-      if (filters.status === 'missing' && f.status !== 'missing') return false;
-      if (filters.status === 'not-ok' && f.status === 'ok') return false;
-      if (filters.search && !f.name.toLowerCase().includes(filters.search)) return false;
+  function append(parent, ...children) {
+    parent.append(...children);
+    return parent;
+  }
+
+  function cell(...children) {
+    return append(node('td'), ...children);
+  }
+
+  function mark(present) {
+    return node('span', present ? 'mark ok' : 'mark bad', present ? '✓' : '✗');
+  }
+
+  function pill(value, allowed) {
+    const result = node('span', 'pill', value);
+    if (allowed.includes(value)) result.classList.add(value);
+    return result;
+  }
+
+  function muted(value) {
+    return node('div', 'muted', value);
+  }
+
+  function markedCell(present, detail) {
+    const result = cell(mark(present));
+    if (detail) result.append(muted(detail));
+    return result;
+  }
+
+  function usagesCell(usages) {
+    if (!usages.length) return cell(node('span', 'muted', '—'));
+    const details = node('details');
+    details.append(node('summary', '', usages.length + ' usage(s)'));
+    const list = node('ul', 'usage-list');
+    for (const usage of usages) {
+      const tagClass = !usage.hasTest ? 'no-test' : usage.skipped ? 'skip' : 'tested';
+      const tagText = !usage.hasTest ? 'no test' : usage.skipped ? 'skipped' : 'tested';
+      list.append(append(node('li'), node('code', '', usage.file), node('span', 'tag ' + tagClass, tagText)));
+    }
+    details.append(list);
+    return cell(details);
+  }
+
+  function renderRow(fn) {
+    const name = append(node('td'), node('strong', '', fn.name));
+    name.append(append(node('div', 'muted'), node('code', '', fn.signature)));
+    return append(node('tr'),
+      name,
+      cell(pill(fn.kind, ['read', 'write'])),
+      markedCell(!!fn.composable, fn.composable?.name),
+      markedCell(fn.mock.present, fn.mock.key),
+      markedCell(fn.setup.present),
+      markedCell(fn.composableTest.tested, fn.composableTest.files[0]),
+      usagesCell(fn.usages || []),
+      cell(pill(fn.status, ['ok', 'partial', 'missing']))
+    );
+  }
+
+  function renderStat(label, count, color) {
+    const value = node('div', 'v', count);
+    if (color) value.style.color = color;
+    return append(node('div', 'stat'), value, node('div', 'l', label));
+  }
+
+  function renderOrphans(orphans) {
+    const details = node('details');
+    details.style.marginTop = '12px';
+    details.append(append(node('summary'),
+      node('strong', '', 'Orphans'),
+      ' (composables/mocks/setup entries not tied to an ABI function)'
+    ));
+    const body = node('div');
+    body.style.marginTop = '8px';
+    body.style.fontSize = '12px';
+    if (orphans.composablesWithoutFunction.length) {
+      const paragraph = append(node('p'), node('strong', '', 'Composables without contract fn:'), ' ');
+      orphans.composablesWithoutFunction.forEach((orphan, index) => {
+        if (index) paragraph.append(', ');
+        paragraph.append(String(orphan.name));
+        if (orphan.contractFn) paragraph.append(' → ', node('code', '', orphan.contractFn));
+      });
+      body.append(paragraph);
+    }
+    if (orphans.mocksWithoutComposable.length) {
+      body.append(append(node('p'),
+        node('strong', '', 'Mocks without matching fn:'),
+        ' ' + orphans.mocksWithoutComposable.join(', ')
+      ));
+    }
+    if (orphans.setupEntriesWithoutComposable.length) {
+      body.append(append(node('p'),
+        node('strong', '', 'Setup entries without composable:'),
+        ' ' + orphans.setupEntriesWithoutComposable.join(', ')
+      ));
+    }
+    details.append(body);
+    return details;
+  }
+
+  function renderContract(contract, filters) {
+    const functions = contract.functions.filter(fn => {
+      if (filters.status === 'ok' && fn.status !== 'ok') return false;
+      if (filters.status === 'partial' && fn.status !== 'partial') return false;
+      if (filters.status === 'missing' && fn.status !== 'missing') return false;
+      if (filters.status === 'not-ok' && fn.status === 'ok') return false;
+      if (filters.search && !fn.name.toLowerCase().includes(filters.search)) return false;
       return true;
     });
 
-    const rows = fns.map(f => {
-      const usages = (f.usages || []).map(u => {
-        const tag = !u.hasTest ? '<span class="tag no-test">no test</span>'
-                  : u.skipped ? '<span class="tag skip">skipped</span>'
-                  : '<span class="tag tested">tested</span>';
-        return '<li><code>' + esc(u.file) + '</code>' + tag + '</li>';
-      }).join('');
-      return \`
-      <tr>
-        <td><strong>\${esc(f.name)}</strong><div class="muted"><code>\${esc(f.signature)}</code></div></td>
-        <td><span class="pill \${f.kind}">\${f.kind}</span></td>
-        <td>\${mark(!!f.composable)}\${f.composable ? '<div class="muted">' + esc(f.composable.name) + '</div>' : ''}</td>
-        <td>\${mark(f.mock.present)}\${f.mock.key ? '<div class="muted">' + esc(f.mock.key) + '</div>' : ''}</td>
-        <td>\${mark(f.setup.present)}</td>
-        <td>\${mark(f.composableTest.tested)}\${f.composableTest.files.length ? '<div class="muted">' + esc(f.composableTest.files[0]) + '</div>' : ''}</td>
-        <td>\${(f.usages||[]).length === 0 ? '<span class="muted">—</span>' : '<details><summary>' + f.usages.length + ' usage(s)</summary><ul class="usage-list">' + usages + '</ul></details>'}</td>
-        <td><span class="pill \${f.status}">\${f.status}</span></td>
-      </tr>\`;
-    }).join('');
+    const card = node('div', 'card');
+    const heading = append(node('h2'), String(contract.slug) + ' ',
+      node('span', 'muted', '· ' + (contract.abiFile || '?')));
+    heading.style.cssText = 'margin:0 0 10px;font-size:16px';
+    card.append(heading);
+    card.append(append(node('div', 'stats'),
+      renderStat('Functions', contract.counts.totalFunctions),
+      renderStat('OK', contract.counts.ok, 'var(--ok)'),
+      renderStat('Partial', contract.counts.partial, 'var(--partial)'),
+      renderStat('Missing', contract.counts.missing, 'var(--missing)')
+    ));
 
-    const orphans = c.orphans;
-    const hasOrphans = orphans.composablesWithoutFunction.length || orphans.mocksWithoutComposable.length || orphans.setupEntriesWithoutComposable.length;
-
-    return \`
-    <div class="card">
-      <h2 style="margin:0 0 10px;font-size:16px;">\${esc(c.slug)} <span class="muted">· \${esc(c.abiFile || '?')}</span></h2>
-      <div class="stats">
-        <div class="stat"><div class="v">\${c.counts.totalFunctions}</div><div class="l">Functions</div></div>
-        <div class="stat"><div class="v" style="color:var(--ok)">\${c.counts.ok}</div><div class="l">OK</div></div>
-        <div class="stat"><div class="v" style="color:var(--partial)">\${c.counts.partial}</div><div class="l">Partial</div></div>
-        <div class="stat"><div class="v" style="color:var(--missing)">\${c.counts.missing}</div><div class="l">Missing</div></div>
-      </div>
-      <table>
-        <thead><tr>
-          <th>Function</th><th>Kind</th><th>Composable</th><th>Mock</th><th>Setup</th><th>Comp. test</th><th>Used in</th><th>Status</th>
-        </tr></thead>
-        <tbody>\${rows || '<tr><td colspan="8" class="muted">No functions match filter.</td></tr>'}</tbody>
-      </table>
-      \${hasOrphans ? \`
-      <details style="margin-top:12px">
-        <summary><strong>Orphans</strong> (composables/mocks/setup entries not tied to an ABI function)</summary>
-        <div style="margin-top:8px; font-size:12px;">
-          \${orphans.composablesWithoutFunction.length ? '<p><strong>Composables without contract fn:</strong> ' + orphans.composablesWithoutFunction.map(o=>esc(o.name)+(o.contractFn?' → <code>'+esc(o.contractFn)+'</code>':'')).join(', ') + '</p>' : ''}
-          \${orphans.mocksWithoutComposable.length ? '<p><strong>Mocks without matching fn:</strong> ' + orphans.mocksWithoutComposable.map(esc).join(', ') + '</p>' : ''}
-          \${orphans.setupEntriesWithoutComposable.length ? '<p><strong>Setup entries without composable:</strong> ' + orphans.setupEntriesWithoutComposable.map(esc).join(', ') + '</p>' : ''}
-        </div>
-      </details>\` : ''}
-    </div>\`;
+    const table = node('table');
+    const header = node('tr');
+    for (const label of ['Function', 'Kind', 'Composable', 'Mock', 'Setup', 'Comp. test', 'Used in', 'Status']) {
+      header.append(node('th', '', label));
+    }
+    table.append(append(node('thead'), header));
+    const body = node('tbody');
+    if (functions.length) {
+      body.append(...functions.map(renderRow));
+    } else {
+      const message = node('td', 'muted', 'No functions match filter.');
+      message.colSpan = 8;
+      body.append(append(node('tr'), message));
+    }
+    table.append(body);
+    card.append(table);
+    const orphans = contract.orphans;
+    if (orphans.composablesWithoutFunction.length || orphans.mocksWithoutComposable.length || orphans.setupEntriesWithoutComposable.length) {
+      card.append(renderOrphans(orphans));
+    }
+    return card;
   }
 
   function render() {
-    const slug = sel.value;
     const filters = { status: status.value, search: search.value.toLowerCase().trim() };
-    const list = slug === '__all__' ? report.contracts : report.contracts.filter(c => c.slug === slug);
-    content.innerHTML = list.map(c => renderContract(c, filters)).join('');
+    const contracts = sel.value === '__all__' ? report.contracts : report.contracts.filter(contract => contract.slug === sel.value);
+    content.replaceChildren(...contracts.map(contract => renderContract(contract, filters)));
   }
   sel.addEventListener('change', render);
   status.addEventListener('change', render);
