@@ -7,6 +7,9 @@ import { E2E_MEMBER_PRIVATE_KEY, ownerAccount, publicClient } from '../e2e-chain
 import { openAccountFromSidebar } from '../e2e-page'
 import {
   approveExpenseSpending,
+  depositUsdcToBank,
+  fundContractFromBank,
+  spendFromExpenseAccount,
   redeployContractsThroughUi
 } from '../accounting/accounting-operations'
 import { authenticateIntegratedAccount, requestIntegratedApi } from '../integrated-api'
@@ -15,6 +18,7 @@ interface ExpenseApprovalRecord {
   id: number
   signature: Hex
   status: string
+  sourceGeneration: 'current' | 'previous' | 'unknown'
   balances: { 0: string; 1: string } | null
   data: { signedAgainstContractAddress: Address; chainId: number }
 }
@@ -25,7 +29,7 @@ test.describe(
   () => {
     test.setTimeout(360_000)
 
-    test('[AC-US-EXP-004-14] retains an old approval as non-spendable history after redeployment', async ({
+    test('[AC-US-EXP-004-14] spends from and retires an older approval after redeployment', async ({
       authenticatedPage: ownerPage,
       walletPage,
       operationalTeam
@@ -38,6 +42,8 @@ test.describe(
       expect(oldContract).toMatch(/^0x[0-9a-fA-F]{40}$/)
 
       await ownerPage.goto(`/teams/${teamId}`)
+      await depositUsdcToBank(ownerPage, teamId, '10')
+      await fundContractFromBank(ownerPage, teamId, 'ExpenseAccountEIP712', '2')
       await approveExpenseSpending(ownerPage, teamId, '5')
       const token = await authenticateIntegratedAccount(ownerAccount)
       const approvals = () =>
@@ -70,8 +76,13 @@ test.describe(
       )?.address
       expect(newContract?.toLowerCase()).not.toBe(oldContract.toLowerCase())
 
-      const [historical] = await approvals()
-      expect(historical).toMatchObject({ id: approval!.id, status: 'historical', balances: null })
+      const [previous] = await approvals()
+      expect(previous).toMatchObject({
+        id: approval!.id,
+        status: 'disabled',
+        sourceGeneration: 'previous',
+        balances: { 1: '0' }
+      })
       const newBalance = (await publicClient.readContract({
         address: newContract as Address,
         abi: expenseAccountEip712Abi,
@@ -84,28 +95,44 @@ test.describe(
       await expect(
         ownerPage
           .locator('[data-test="claims-table"] table')
-          .getByText('historical', { exact: true })
+          .getByText('Previous version', { exact: true })
       ).toBeVisible()
       await expect(ownerPage.locator('[data-test="disable-button"]')).toHaveCount(0)
-      await expect(ownerPage.locator('[data-test="enable-button"]')).toHaveCount(0)
+      await expect(ownerPage.locator('[data-test="enable-button"]')).toBeVisible()
+      await expect(ownerPage.locator('[data-test="previous-approvals-notice"]')).toBeVisible()
+      await ownerPage.locator('[data-test="enable-button"]').click()
+      await expect(ownerPage.getByText('Approval activated', { exact: true })).toBeVisible({
+        timeout: 30_000
+      })
+      await expect.poll(async () => (await approvals())[0]?.status).toBe('enabled')
       await ownerPage.reload()
       await expect(
         ownerPage
           .locator('[data-test="claims-table"] table')
-          .getByText('historical', { exact: true })
+          .getByText('Previous version', { exact: true })
       ).toBeVisible()
 
       const memberPage = await walletPage(E2E_MEMBER_PRIVATE_KEY)
       await memberPage.goto(`/teams/${teamId}/accounts/expense-account`)
       const memberHistory = memberPage.locator('[data-test="my-approved-expenses"]')
-      await expect(memberHistory.getByText('historical', { exact: true })).toBeVisible()
-      await expect(
-        memberHistory.locator('[data-test="historical-expense-unavailable"]')
-      ).toBeVisible()
-      await expect(memberHistory.locator('[data-test="transfer-button"]')).toHaveCount(0)
+      await expect(memberHistory.getByText('Previous version', { exact: true })).toBeVisible()
+      await expect(memberHistory.locator('[data-test="transfer-button"]')).toBeVisible()
+      await spendFromExpenseAccount(memberPage, teamId, '1')
+      await expect.poll(async () => (await approvals())[0]?.balances?.[1]).toBe('1')
       await memberPage.reload()
-      await expect(memberHistory.getByText('historical', { exact: true })).toBeVisible()
-      await expect(memberHistory.locator('[data-test="transfer-button"]')).toHaveCount(0)
+      await expect(memberHistory.getByText('Previous version', { exact: true })).toBeVisible()
+      await expect(memberHistory.locator('[data-test="transfer-button"]')).toBeVisible()
+
+      await ownerPage.getByRole('link', { name: 'Manage older contracts' }).click()
+      await expect(ownerPage).toHaveURL(
+        new RegExp(`/teams/${teamId}/contract-management\\?tab=history`)
+      )
+      await ownerPage.getByText('Officer generation', { exact: true }).click()
+      await ownerPage.locator('[data-test="legacy-withdraw-button"]').click({ timeout: 15_000 })
+      await expect(ownerPage.locator('[data-test="legacy-approval-warning"]')).toBeVisible()
+      await expect(
+        ownerPage.getByRole('link', { name: 'Review spending approvals' })
+      ).toHaveAttribute('href', `/teams/${teamId}/accounts/expense-account`)
     })
   }
 )
