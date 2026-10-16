@@ -565,14 +565,16 @@ remain as recorded above.
 
 #### Happy Path
 
-- [x] `AC-US-EXP-003-01` The current Expense Account owner can deactivate an enabled approval.
-- [x] `AC-US-EXP-003-02` The current Expense Account owner can reactivate a disabled approval.
+- [x] `AC-US-EXP-003-01` The owner of the Expense Account that signed an approval can deactivate it, including after a new generation is
+      deployed.
+- [x] `AC-US-EXP-003-02` The owner of that signing Expense Account can reactivate a disabled approval.
 - [x] `AC-US-EXP-003-03` A successful state change is reflected in the company and recipient approval records.
 
 #### Business Rules
 
-- [x] `AC-US-EXP-003-04` Only the current Expense Account owner can change an approval's active state.
-- [x] `AC-US-EXP-003-05` A deactivated approval cannot authorize a spend. _(contract)_
+- [x] `AC-US-EXP-003-04` Only the owner of the approval's signing Expense Account can change its active state.
+- [x] `AC-US-EXP-003-05` A deactivated approval cannot authorize a spend when its deployed Expense Account implementation enforces inactive
+      state (2.0.2 or later). _(contract)_
 - [x] `AC-US-EXP-003-06` Reactivation preserves the approval's original signed limits and expiry.
 
 #### Edge & Error Cases
@@ -624,9 +626,12 @@ remain as recorded above.
 #### Business Rules
 
 - [x] `AC-US-EXP-004-06` Approval availability reflects on-chain usage, current time, and active-state synchronization.
-- [x] `AC-US-EXP-004-14` An approval signed for an earlier Expense Account contract or network remains visible to company members and its
-      recipient as historical, but cannot be spent or changed as a current approval; an approval without verifiable signing provenance is
-      visible but unavailable until its origin is established.
+- [x] `AC-US-EXP-004-14` An approval signed on a registered earlier Expense Account on the supported network remains visible with a
+      previous-version label, source-contract usage and effective availability. The recipient can spend from that source while its
+      signature, limits, token support and balance permit. The owner can record deactivation when the source contract enforces it; earlier
+      versions that ignore inactive state remain reported as spendable with a warning and an option to move their funds. The owner is
+      directed to the older-generation funds workflow and told that moving funds does not revoke approvals. An approval with missing,
+      wrong-network or unregistered signing provenance remains visible but unavailable until its origin can be verified.
 - [x] `AC-US-EXP-004-07` One recipient sees only approvals issued to their connected wallet in their personal approval scope.
 - [x] `AC-US-EXP-004-08` Every company member can inspect the shared Expense Account history.
 
@@ -661,7 +666,7 @@ remain as recorded above.
 | `AC-US-EXP-004-14`   | `PS-FRONTEND`              | Integrated E2E + Frontend + Backend | ✅ Met     |
 | `AC-US-EXP-004-14`   | `PS-FULL-STACK-INTEGRATED` | Integrated E2E + Frontend + Backend | ✅ Met     |
 
-**Dependencies:** Current Expense Account contract and available API and chain providers
+**Dependencies:** Current and registered earlier Expense Account contracts on the supported network, and available API and chain providers
 
 ### Direct Movement Scenarios
 
@@ -748,7 +753,11 @@ movement across the participating stories.
 **So that** the company can manage unused liquidity in its treasury
 
 This direct account action is distinct from the multi-account `US-BANK-004` cash-out run. A Board member can propose the action, while only
-the Expense Account owner executes the contract write directly or after approved governance.
+the Expense Account owner executes the contract write directly or after approved governance. Before moving an earlier generation's funds,
+the owner can deactivate active approvals if that source implementation enforces inactive state. Older implementations may record a
+deactivation without blocking a spend. The return moves funds through that generation's Bank and does not revoke signatures. If the older
+account receives funds again, approvals left active can still authorize spending. A recipient who needs access to the new Expense Account
+needs a fresh approval signed for that contract.
 
 ### Acceptance Criteria
 
@@ -763,7 +772,7 @@ the Expense Account owner executes the contract write directly or after approved
 
 - [x] `AC-US-EXP-006-05` Only the Expense Account owner can execute a direct return. _(contract)_
 - [x] `AC-US-EXP-006-06` Before confirmation, the actor is informed that existing spending approvals remain valid but may lack funds after
-      the return.
+      the return, and that older implementations may record deactivation without enforcing it.
 
 #### Edge & Error Cases
 
@@ -1142,7 +1151,7 @@ movement across the participating stories.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `92cc11e6bc959f0efebebef8d174ebbed6e81921`
+**Implementation evidence reviewed against:** `78e9c03ce5c8803c9ec8cb0f1aee2ca815b2e04b`
 
 - [Bank deposit modal](../../../app/src/components/sections/BankView/forms/DepositModal.vue),
   [Bank transfer modal](../../../app/src/components/sections/BankView/forms/TransferModal.vue),
@@ -1194,8 +1203,15 @@ movement across the participating stories.
   [Safe conflict warning tests](../../../app/src/components/sections/SafeView/__tests__/SafeTransactionsWarning.spec.ts)
 - [Expense Account page](../../../app/src/views/team/%5Bid%5D/Accounts/ExpenseAccountView.vue),
   [expense approval form](../../../app/src/components/sections/ExpenseAccountView/forms/ApproveUsersEIP712Form.vue),
+  [approval table](../../../app/src/components/sections/ExpenseAccountView/ExpenseAccountTable.vue),
+  [previous-version notice](../../../app/src/components/sections/ExpenseAccountView/PreviousApprovalNotice.vue),
+  [recipient approvals](../../../app/src/components/sections/ExpenseAccountView/MyApprovedExpenseSection.vue),
+  [recipient spend action](../../../app/src/components/sections/ExpenseAccountView/TransferAction.vue),
   [member and token selector](../../../app/src/components/ui/inputs/SelectMemberWithTokenInput.vue),
   [Expense support-set read](../../../app/src/composables/expenseAccount/reads.ts),
+  [Expense approval writes](../../../app/src/composables/expenseAccount/writes.ts),
+  [source-owner check](../../../app/src/composables/expenseAccount/approvalOwner.ts),
+  [older-generation retirement warning](../../../app/src/components/sections/ContractManagementView/LegacyApprovalWarning.vue),
   [approval token policy](../../../app/src/utils/expenses/tokenPolicy.ts),
   [approval token amounts and balances](../../../app/src/utils/expenses/model.ts),
   [Expense API controller](../../../backend/src/controllers/expenseController.ts), and
