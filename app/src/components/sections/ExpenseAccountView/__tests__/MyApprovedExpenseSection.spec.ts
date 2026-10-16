@@ -63,19 +63,21 @@ describe('MyApprovedExpenseSection', () => {
     expect(createWrapper().find('[data-test="my-expenses-empty"]').exists()).toBe(true)
   })
 
-  it('[AC-US-EXP-004-14] shows historical approvals without a spend action or invented usage', () => {
+  it('[AC-US-EXP-004-14] shows historical and unknown-origin approvals without a spend action or invented usage', () => {
     vi.mocked(useGetExpensesQuery).mockReturnValue(
       createMockQueryResponse([
         expense({ status: 'historical', balances: null }),
-        expense({ id: 2, signature: '0xcurrent' })
+        expense({ id: 2, signature: '0xunknown', status: 'unavailable', balances: null }),
+        expense({ id: 3, signature: '0xcurrent' })
       ])
     )
 
     const wrapper = createWrapper()
 
     expect(wrapper.text()).toContain('historical')
+    expect(wrapper.text()).toContain('unavailable')
     expect(wrapper.text()).toContain('—/100')
-    expect(wrapper.findAll('[data-test="historical-expense-unavailable"]')).toHaveLength(1)
+    expect(wrapper.findAll('[data-test="historical-expense-unavailable"]')).toHaveLength(2)
     expect(wrapper.findAll('[data-test="transfer-action"]')).toHaveLength(1)
   })
 })
