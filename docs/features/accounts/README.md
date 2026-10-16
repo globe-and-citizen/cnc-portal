@@ -109,7 +109,7 @@ Runs of at least three consecutive missing criteria use inclusive ranges with fu
 | US-EXP-001  | ✅ Integrated | ⚠️ 13/15        | `AC-US-EXP-001-01`, `AC-US-EXP-001-02`                                            |
 | US-EXP-002  | 🚧 Partial    | ⚠️ 12/16        | `AC-US-EXP-002-01`, `AC-US-EXP-002-02`, `AC-US-EXP-002-07`, `AC-US-EXP-002-09`    |
 | US-EXP-003  | ✅ Integrated | ✅ 9/9          | —                                                                                 |
-| US-EXP-004  | ✅ Integrated | ⚠️ 12/13 met    | `AC-US-EXP-004-13`                                                                |
+| US-EXP-004  | ✅ Integrated | ⚠️ 12/14 met    | `AC-US-EXP-004-13`, `AC-US-EXP-004-14`                                            |
 | US-EXP-005  | 🚧 Partial    | ⚠️ 3/7          | `AC-US-EXP-005-03`, `AC-US-EXP-005-04`, `AC-US-EXP-005-06`, `AC-US-EXP-005-07`    |
 | US-EXP-006  | 🚧 Partial    | ⚠️ 1/8          | `AC-US-EXP-006-01`–`AC-US-EXP-006-05`, `AC-US-EXP-006-07`, `AC-US-EXP-006-08`     |
 | US-SAFE-001 | 🚧 Partial    | ⚠️ 8/11         | `AC-US-SAFE-001-02`, `AC-US-SAFE-001-03`, `AC-US-SAFE-001-06`                     |
@@ -624,6 +624,9 @@ remain as recorded above.
 #### Business Rules
 
 - [x] `AC-US-EXP-004-06` Approval availability reflects on-chain usage, current time, and active-state synchronization.
+- [ ] `AC-US-EXP-004-14` An approval signed for an earlier Expense Account contract or network remains visible to company members and its
+      recipient as historical, but cannot be spent or changed as a current approval; an approval without verifiable signing provenance is
+      visible but unavailable until its origin is established.
 - [x] `AC-US-EXP-004-07` One recipient sees only approvals issued to their connected wallet in their personal approval scope.
 - [x] `AC-US-EXP-004-08` Every company member can inspect the shared Expense Account history.
 
@@ -654,6 +657,8 @@ remain as recorded above.
 | `AC-US-EXP-004-12`   | `PS-FRONTEND`              | Frontend                  | ✅ Met     |
 | `AC-US-EXP-004-13`   | `PS-BACKEND`               | None linked               | ❌ Missing |
 | `AC-US-EXP-004-13`   | `PS-FULL-STACK-INTEGRATED` | None linked               | ❌ Missing |
+| `AC-US-EXP-004-14`   | `PS-BACKEND`               | None linked               | ❌ Missing |
+| `AC-US-EXP-004-14`   | `PS-FRONTEND`              | None linked               | ❌ Missing |
 
 **Dependencies:** Current Expense Account contract and available API and chain providers
 
