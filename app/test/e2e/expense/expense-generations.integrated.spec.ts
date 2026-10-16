@@ -37,6 +37,7 @@ test.describe(
       )?.address as Address
       expect(oldContract).toMatch(/^0x[0-9a-fA-F]{40}$/)
 
+      await ownerPage.goto(`/teams/${teamId}`)
       await approveExpenseSpending(ownerPage, teamId, '5')
       const token = await authenticateIntegratedAccount(ownerAccount)
       const approvals = () =>
@@ -81,18 +82,21 @@ test.describe(
 
       await openAccountFromSidebar(ownerPage, `/teams/${teamId}/accounts/expense-account`)
       await expect(
-        ownerPage.locator('[data-test="claims-table"]').getByText('historical', { exact: true })
+        ownerPage
+          .locator('[data-test="claims-table"] table')
+          .getByText('historical', { exact: true })
       ).toBeVisible()
       await expect(ownerPage.locator('[data-test="disable-button"]')).toHaveCount(0)
       await expect(ownerPage.locator('[data-test="enable-button"]')).toHaveCount(0)
       await ownerPage.reload()
       await expect(
-        ownerPage.locator('[data-test="claims-table"]').getByText('historical', { exact: true })
+        ownerPage
+          .locator('[data-test="claims-table"] table')
+          .getByText('historical', { exact: true })
       ).toBeVisible()
 
       const memberPage = await walletPage(E2E_MEMBER_PRIVATE_KEY)
-      await memberPage.goto(`/teams/${teamId}`)
-      await openAccountFromSidebar(memberPage, `/teams/${teamId}/accounts/expense-account`)
+      await memberPage.goto(`/teams/${teamId}/accounts/expense-account`)
       const memberHistory = memberPage.locator('[data-test="my-approved-expenses"]')
       await expect(memberHistory.getByText('historical', { exact: true })).toBeVisible()
       await expect(
