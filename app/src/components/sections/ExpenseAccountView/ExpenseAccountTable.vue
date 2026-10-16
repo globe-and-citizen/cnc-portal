@@ -56,7 +56,13 @@
           variant="outline"
           class="rounded-full"
           :color="
-            row.status === 'enabled' ? 'success' : row.status === 'disabled' ? 'info' : 'error'
+            row.status === 'enabled'
+              ? 'success'
+              : row.status === 'disabled'
+                ? 'info'
+                : row.status === 'historical' || row.status === 'unavailable'
+                  ? 'neutral'
+                  : 'error'
           "
         />
       </template>
@@ -68,7 +74,9 @@
         }}</span>
       </template>
       <template #amountTransferred-cell="{ row: { original: row } }">
-        <span>{{ row.balances[1] }}/{{ row.amount }} {{ tokenSymbol(row.tokenAddress) }}</span>
+        <span
+          >{{ row.balances?.[1] ?? '—' }}/{{ row.amount }} {{ tokenSymbol(row.tokenAddress) }}</span
+        >
       </template>
       <template #empty>
         <div
@@ -116,7 +124,7 @@ const { isWriteDisabled, archivedTooltip } = useTeamWriteGuard()
 const toast = useToast()
 const userDataStore = useUserDataStore()
 const queryClient = useQueryClient()
-const statuses = ['all', 'disabled', 'enabled', 'expired']
+const statuses = ['all', 'disabled', 'enabled', 'expired', 'historical', 'unavailable']
 const selectedRadio = ref('all')
 const signatureToUpdate = ref('')
 const isLoadingSetStatus = ref(false)
@@ -146,6 +154,8 @@ const expenseAccountEip712Address = computed(() =>
 const statusIcon = (status: string): string => {
   if (status === 'enabled') return 'i-lucide-circle-check'
   if (status === 'disabled') return 'i-lucide-circle-x'
+  if (status === 'historical') return 'i-lucide-archive'
+  if (status === 'unavailable') return 'i-lucide-circle-alert'
   return 'i-lucide-clock'
 }
 const columns = [

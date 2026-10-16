@@ -61,7 +61,7 @@ export interface ExpenseResponse {
   balances: {
     0: string
     1: string
-  }
+  } | null
   status: string
   teamId: number
   id: number

@@ -263,5 +263,22 @@ describe('[US-EXP-003] [US-EXP-004] ExpenseAccountTable - Actions and Loading', 
       expect(wrapper.find('[data-test="enable-button"]').exists()).toBe(false)
       expect(wrapper.find('[data-test="disable-button"]').exists()).toBe(false)
     })
+
+    it('[AC-US-EXP-004-14] retains earlier-generation and unknown-origin rows without active actions', () => {
+      vi.mocked(useGetExpensesQuery).mockReturnValue(
+        createMockQueryResponse([
+          { ...mockApprovals[0], status: 'historical', balances: null },
+          { ...mockApprovals[1], status: 'unavailable', balances: null }
+        ]) as ReturnType<typeof useGetExpensesQuery>
+      )
+
+      const wrapper = createComponent()
+
+      expect(wrapper.text()).toContain('historical')
+      expect(wrapper.text()).toContain('unavailable')
+      expect(wrapper.text()).toContain('—/150')
+      expect(wrapper.find('[data-test="enable-button"]').exists()).toBe(false)
+      expect(wrapper.find('[data-test="disable-button"]').exists()).toBe(false)
+    })
   })
 })
