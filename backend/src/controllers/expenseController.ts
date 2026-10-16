@@ -137,14 +137,8 @@ export const getExpenses = async (req: Request, res: Response) => {
   try {
     // authz enforced by requireTeamMember middleware
 
-    // Build where clause based on status
-    const whereClause: { teamId: number; status?: string } = { teamId };
-    if (status !== 'all') {
-      whereClause.status = status;
-    }
-
     const expenses = await prisma.expense.findMany({
-      where: whereClause,
+      where: { teamId },
       orderBy: { createdAt: 'desc' },
       include: {
         user: {
@@ -157,36 +151,60 @@ export const getExpenses = async (req: Request, res: Response) => {
       },
     });
 
-    const _expenses = await Promise.all(
+    const syncedExpenses = await Promise.all(
       expenses.map(async (expense) => await syncExpenseStatus(expense))
     );
-    // TODO: for each expense, check the status and update it
 
-    return res.status(200).json(_expenses);
+    return res
+      .status(200)
+      .json(
+        status === 'all'
+          ? syncedExpenses
+          : syncedExpenses.filter((expense) => expense.status === status)
+      );
   } catch (error) {
     return errorResponse(500, error, res);
   }
 };
 
 const syncExpenseStatus = async (expense: Expense) => {
-  // TODO: implement the logic to get the current status of the expense
+  const data = (expense.data ?? {}) as BudgetLimit;
+  const currentContract = await getCurrentExpenseAccountContract(expense.teamId);
+  const signedAgainstContractAddress = data.signedAgainstContractAddress;
+  const signedChainId = data.chainId;
+  const hasSigningDomain =
+    typeof signedAgainstContractAddress === 'string' &&
+    isAddress(signedAgainstContractAddress) &&
+    typeof signedChainId === 'number' &&
+    Number.isInteger(signedChainId) &&
+    signedChainId > 0;
+
+  // Only the approval's own signing domain can establish current spendability.
+  // An old or unknown domain must never inherit a new contract's zero usage.
+  if (!currentContract || !hasSigningDomain) {
+    return { ...expense, status: 'unavailable', balances: null };
+  }
+
+  if (
+    signedAgainstContractAddress!.toLowerCase() !== currentContract.address.toLowerCase() ||
+    signedChainId !== publicClient.chain.id
+  ) {
+    return { ...expense, status: 'historical', balances: null };
+  }
+
   if (
     expense.status === 'expired' ||
-    (expense.status === 'limit-reached' && (expense.data as BudgetLimit)?.frequencyType === 0)
+    (expense.status === 'limit-reached' && data.frequencyType === 0)
   ) {
     return {
       ...expense,
       status: expense.status,
-      balances: (expense.data as BudgetLimit)?.balances,
+      balances: data.balances ?? null,
     };
   }
 
-  const expenseAccountEip712Address = await getCurrentExpenseAccountContract(expense.teamId);
-
-  const data = expense.data as BudgetLimit;
-
   const balance = (await publicClient.readContract({
-    address: expenseAccountEip712Address?.address as Address,
+    address: currentContract.address as Address,
     abi: ABI,
     functionName: 'getExpenseBalance',
     args: [keccak256(expense.signature as Address)],
@@ -198,7 +216,7 @@ const syncExpenseStatus = async (expense: Expense) => {
   };
 
   const isNewPeriod = await publicClient.readContract({
-    address: expenseAccountEip712Address?.address as Address,
+    address: currentContract.address as Address,
     abi: ABI,
     functionName: 'isNewPeriod',
     args: [buildContractBudgetLimit(data), keccak256(expense.signature as Address)],

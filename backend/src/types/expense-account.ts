@@ -8,4 +8,7 @@ export type BudgetLimit = Prisma.JsonObject & {
   startDate: number;
   endDate: number;
   tokenAddress: string;
+  signedAgainstContractAddress?: string;
+  chainId?: number;
+  balances?: { 0: string; 1: string };
 };
