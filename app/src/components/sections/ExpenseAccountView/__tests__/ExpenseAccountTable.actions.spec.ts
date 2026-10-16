@@ -6,6 +6,7 @@ import { createTestingPinia } from '@pinia/testing'
 import { USDC_ADDRESS } from '@/constant'
 import { zeroAddress } from 'viem'
 import { log } from '@/lib/logging'
+import { readContract } from '@wagmi/core'
 import {
   createMockQueryResponse,
   mockExpenseAccountWrites,
@@ -264,21 +265,53 @@ describe('[US-EXP-003] [US-EXP-004] ExpenseAccountTable - Actions and Loading', 
       expect(wrapper.find('[data-test="disable-button"]').exists()).toBe(false)
     })
 
-    it('[AC-US-EXP-004-14] retains earlier-generation and unknown-origin rows without active actions', () => {
+    it('[AC-US-EXP-004-14] identifies previous approvals and offers owner retirement', async () => {
+      const oldContract = '0x6666666666666666666666666666666666666666'
+      vi.mocked(readContract).mockResolvedValueOnce(mockUserStore.address as never)
       vi.mocked(useGetExpensesQuery).mockReturnValue(
         createMockQueryResponse([
-          { ...mockApprovals[0], status: 'historical', balances: null },
+          {
+            ...mockApprovals[0],
+            signature: '0x1234',
+            sourceGeneration: 'previous',
+            data: { signedAgainstContractAddress: oldContract }
+          },
           { ...mockApprovals[1], status: 'unavailable', balances: null }
         ]) as ReturnType<typeof useGetExpensesQuery>
       )
 
       const wrapper = createComponent()
 
-      expect(wrapper.text()).toContain('historical')
+      expect(wrapper.text()).toContain('Previous version')
+      expect(wrapper.text()).toContain('Manage older contracts')
       expect(wrapper.text()).toContain('unavailable')
-      expect(wrapper.text()).toContain('—/150')
+      expect(wrapper.text()).toContain('50/150')
       expect(wrapper.find('[data-test="enable-button"]').exists()).toBe(false)
+      await wrapper.find('[data-test="disable-button"]').trigger('click')
+      await flushPromises()
+      expect(readContract).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({ address: oldContract, functionName: 'owner' })
+      )
+      expect(mockExpenseAccountWrites.deactivateApproval.mutate).toHaveBeenCalled()
+    })
+
+    it('[AC-US-EXP-004-14] does not offer ineffective Disable on an unsafe previous runtime', () => {
+      vi.mocked(useGetExpensesQuery).mockReturnValue(
+        createMockQueryResponse([
+          {
+            ...mockApprovals[0],
+            sourceGeneration: 'previous',
+            sourceEnforcesDisabled: false
+          }
+        ]) as ReturnType<typeof useGetExpensesQuery>
+      )
+
+      const wrapper = createComponent()
+      expect(wrapper.text()).toContain('Disable unsupported')
+      expect(wrapper.find('[data-test="legacy-disable-unsupported"]').exists()).toBe(true)
       expect(wrapper.find('[data-test="disable-button"]').exists()).toBe(false)
+      expect(wrapper.text()).toContain('Manage older contracts')
     })
   })
 })

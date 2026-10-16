@@ -63,10 +63,10 @@ describe('MyApprovedExpenseSection', () => {
     expect(createWrapper().find('[data-test="my-expenses-empty"]').exists()).toBe(true)
   })
 
-  it('[AC-US-EXP-004-14] shows historical and unknown-origin approvals without a spend action or invented usage', () => {
+  it('[AC-US-EXP-004-14] keeps a previous version spendable and an unknown origin unavailable', () => {
     vi.mocked(useGetExpensesQuery).mockReturnValue(
       createMockQueryResponse([
-        expense({ status: 'historical', balances: null }),
+        expense({ sourceGeneration: 'previous' }),
         expense({ id: 2, signature: '0xunknown', status: 'unavailable', balances: null }),
         expense({ id: 3, signature: '0xcurrent' })
       ])
@@ -74,10 +74,22 @@ describe('MyApprovedExpenseSection', () => {
 
     const wrapper = createWrapper()
 
-    expect(wrapper.text()).toContain('historical')
+    expect(wrapper.text()).toContain('Previous version')
     expect(wrapper.text()).toContain('unavailable')
     expect(wrapper.text()).toContain('—/100')
-    expect(wrapper.findAll('[data-test="historical-expense-unavailable"]')).toHaveLength(2)
-    expect(wrapper.findAll('[data-test="transfer-action"]')).toHaveLength(1)
+    expect(wrapper.findAll('[data-test="expense-unavailable"]')).toHaveLength(1)
+    expect(wrapper.findAll('[data-test="transfer-action"]')).toHaveLength(2)
+  })
+
+  it('[AC-US-EXP-004-14] warns when an old inactive record cannot block spending', () => {
+    vi.mocked(useGetExpensesQuery).mockReturnValue(
+      createMockQueryResponse([
+        expense({ sourceGeneration: 'previous', sourceEnforcesDisabled: false })
+      ])
+    )
+
+    const wrapper = createWrapper()
+    expect(wrapper.text()).toContain('Disable unsupported')
+    expect(wrapper.find('[data-test="transfer-action"]').exists()).toBe(true)
   })
 })

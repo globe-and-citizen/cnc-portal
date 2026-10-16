@@ -3,16 +3,28 @@
     <template #header>My Approved Expense</template>
     <UTable :data="myExpenses" :columns="columns" :loading="isLoading">
       <template #action-cell="{ row: { original: row } }">
-        <span
-          v-if="row.status === 'historical' || row.status === 'unavailable'"
-          data-test="historical-expense-unavailable"
-        >
+        <span v-if="row.status === 'unavailable'" data-test="expense-unavailable">
           Unavailable to spend
         </span>
         <TransferAction v-else :row="row" />
       </template>
       <template #status-cell="{ row: { original: row } }">
         <span>{{ row.status }}</span>
+        <UBadge
+          v-if="row.sourceGeneration === 'previous'"
+          label="Previous version"
+          color="warning"
+          variant="soft"
+          class="ml-2"
+          data-test="previous-version-badge"
+        />
+        <UBadge
+          v-if="row.sourceGeneration === 'previous' && row.sourceEnforcesDisabled === false"
+          label="Disable unsupported"
+          color="error"
+          variant="soft"
+          class="ml-2"
+        />
       </template>
       <template #startDate-cell="{ row: { original: row } }">
         <span>{{ formatDateTime(fromUnix(Number(row.data.startDate))) }}</span>
