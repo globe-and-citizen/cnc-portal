@@ -109,7 +109,7 @@ Runs of at least three consecutive missing criteria use inclusive ranges with fu
 | US-EXP-001  | ✅ Integrated | ⚠️ 13/15        | `AC-US-EXP-001-01`, `AC-US-EXP-001-02`                                            |
 | US-EXP-002  | 🚧 Partial    | ⚠️ 12/16        | `AC-US-EXP-002-01`, `AC-US-EXP-002-02`, `AC-US-EXP-002-07`, `AC-US-EXP-002-09`    |
 | US-EXP-003  | ✅ Integrated | ✅ 9/9          | —                                                                                 |
-| US-EXP-004  | ✅ Integrated | ⚠️ 12/14 met    | `AC-US-EXP-004-13`, `AC-US-EXP-004-14`                                            |
+| US-EXP-004  | ✅ Integrated | ⚠️ 13/14 met    | `AC-US-EXP-004-13`                                                                |
 | US-EXP-005  | 🚧 Partial    | ⚠️ 3/7          | `AC-US-EXP-005-03`, `AC-US-EXP-005-04`, `AC-US-EXP-005-06`, `AC-US-EXP-005-07`    |
 | US-EXP-006  | 🚧 Partial    | ⚠️ 1/8          | `AC-US-EXP-006-01`–`AC-US-EXP-006-05`, `AC-US-EXP-006-07`, `AC-US-EXP-006-08`     |
 | US-SAFE-001 | 🚧 Partial    | ⚠️ 8/11         | `AC-US-SAFE-001-02`, `AC-US-SAFE-001-03`, `AC-US-SAFE-001-06`                     |
@@ -624,7 +624,7 @@ remain as recorded above.
 #### Business Rules
 
 - [x] `AC-US-EXP-004-06` Approval availability reflects on-chain usage, current time, and active-state synchronization.
-- [ ] `AC-US-EXP-004-14` An approval signed for an earlier Expense Account contract or network remains visible to company members and its
+- [x] `AC-US-EXP-004-14` An approval signed for an earlier Expense Account contract or network remains visible to company members and its
       recipient as historical, but cannot be spent or changed as a current approval; an approval without verifiable signing provenance is
       visible but unavailable until its origin is established.
 - [x] `AC-US-EXP-004-07` One recipient sees only approvals issued to their connected wallet in their personal approval scope.
@@ -640,25 +640,26 @@ remain as recorded above.
 
 ### Test Coverage
 
-| Acceptance Criterion | Proof Strategy             | Current Evidence          | Status     |
-| -------------------- | -------------------------- | ------------------------- | ---------- |
-| `AC-US-EXP-004-01`   | `PS-CHAIN-INTEGRATED`      | Integrated E2E + Frontend | ✅ Met     |
-| `AC-US-EXP-004-02`   | `PS-CHAIN-INTEGRATED`      | Integrated E2E            | ✅ Met     |
-| `AC-US-EXP-004-03`   | `PS-BROWSER`               | Mocked browser + Frontend | ✅ Met     |
-| `AC-US-EXP-004-03`   | `PS-FRONTEND`              | Mocked browser + Frontend | ✅ Met     |
-| `AC-US-EXP-004-04`   | `PS-CHAIN-INTEGRATED`      | Integrated E2E + Frontend | ✅ Met     |
-| `AC-US-EXP-004-05`   | `PS-BROWSER`               | Mocked browser            | ✅ Met     |
-| `AC-US-EXP-004-06`   | `PS-BROWSER`               | Mocked browser            | ✅ Met     |
-| `AC-US-EXP-004-07`   | `PS-FRONTEND`              | Frontend                  | ✅ Met     |
-| `AC-US-EXP-004-08`   | `PS-BROWSER`               | Mocked browser            | ✅ Met     |
-| `AC-US-EXP-004-09`   | `PS-FRONTEND`              | Frontend                  | ✅ Met     |
-| `AC-US-EXP-004-10`   | `PS-FRONTEND`              | Frontend                  | ✅ Met     |
-| `AC-US-EXP-004-11`   | `PS-FRONTEND`              | Frontend                  | ✅ Met     |
-| `AC-US-EXP-004-12`   | `PS-FRONTEND`              | Frontend                  | ✅ Met     |
-| `AC-US-EXP-004-13`   | `PS-BACKEND`               | None linked               | ❌ Missing |
-| `AC-US-EXP-004-13`   | `PS-FULL-STACK-INTEGRATED` | None linked               | ❌ Missing |
-| `AC-US-EXP-004-14`   | `PS-BACKEND`               | None linked               | ❌ Missing |
-| `AC-US-EXP-004-14`   | `PS-FRONTEND`              | None linked               | ❌ Missing |
+| Acceptance Criterion | Proof Strategy             | Current Evidence                    | Status     |
+| -------------------- | -------------------------- | ----------------------------------- | ---------- |
+| `AC-US-EXP-004-01`   | `PS-CHAIN-INTEGRATED`      | Integrated E2E + Frontend           | ✅ Met     |
+| `AC-US-EXP-004-02`   | `PS-CHAIN-INTEGRATED`      | Integrated E2E                      | ✅ Met     |
+| `AC-US-EXP-004-03`   | `PS-BROWSER`               | Mocked browser + Frontend           | ✅ Met     |
+| `AC-US-EXP-004-03`   | `PS-FRONTEND`              | Mocked browser + Frontend           | ✅ Met     |
+| `AC-US-EXP-004-04`   | `PS-CHAIN-INTEGRATED`      | Integrated E2E + Frontend           | ✅ Met     |
+| `AC-US-EXP-004-05`   | `PS-BROWSER`               | Mocked browser                      | ✅ Met     |
+| `AC-US-EXP-004-06`   | `PS-BROWSER`               | Mocked browser                      | ✅ Met     |
+| `AC-US-EXP-004-07`   | `PS-FRONTEND`              | Frontend                            | ✅ Met     |
+| `AC-US-EXP-004-08`   | `PS-BROWSER`               | Mocked browser                      | ✅ Met     |
+| `AC-US-EXP-004-09`   | `PS-FRONTEND`              | Frontend                            | ✅ Met     |
+| `AC-US-EXP-004-10`   | `PS-FRONTEND`              | Frontend                            | ✅ Met     |
+| `AC-US-EXP-004-11`   | `PS-FRONTEND`              | Frontend                            | ✅ Met     |
+| `AC-US-EXP-004-12`   | `PS-FRONTEND`              | Frontend                            | ✅ Met     |
+| `AC-US-EXP-004-13`   | `PS-BACKEND`               | None linked                         | ❌ Missing |
+| `AC-US-EXP-004-13`   | `PS-FULL-STACK-INTEGRATED` | None linked                         | ❌ Missing |
+| `AC-US-EXP-004-14`   | `PS-BACKEND`               | Integrated E2E + Frontend + Backend | ✅ Met     |
+| `AC-US-EXP-004-14`   | `PS-FRONTEND`              | Integrated E2E + Frontend + Backend | ✅ Met     |
+| `AC-US-EXP-004-14`   | `PS-FULL-STACK-INTEGRATED` | Integrated E2E + Frontend + Backend | ✅ Met     |
 
 **Dependencies:** Current Expense Account contract and available API and chain providers
 
@@ -1141,7 +1142,7 @@ movement across the participating stories.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `008826d0d841f19c967c8ff477a7e9c452ee7398`
+**Implementation evidence reviewed against:** `92cc11e6bc959f0efebebef8d174ebbed6e81921`
 
 - [Bank deposit modal](../../../app/src/components/sections/BankView/forms/DepositModal.vue),
   [Bank transfer modal](../../../app/src/components/sections/BankView/forms/TransferModal.vue),
@@ -1200,8 +1201,9 @@ movement across the participating stories.
   [Expense API controller](../../../backend/src/controllers/expenseController.ts), and
   [Expense Account contract](../../../contract/contracts/expense-account/ExpenseAccountEIP712.sol)
 - [Expense component tests](../../../app/src/components/sections/ExpenseAccountView/__tests__),
-  [Expense API tests](../../../backend/src/controllers/__tests__/expenseController.test.ts), and
-  [Expense contract tests](../../../contract/test/ExpenseAccountEIP712.spec.ts) and
+  [Expense API tests](../../../backend/src/controllers/__tests__/expenseController.test.ts),
+  [Expense generation integrated scenario](../../../app/test/e2e/expense/expense-generations.integrated.spec.ts),
+  [Expense contract tests](../../../contract/test/ExpenseAccountEIP712.spec.ts), and
   [Expense lifecycle tests](../../../contract/test/ExpenseAccountEIP712V2.spec.ts)
 - [Payroll account page](../../../app/src/views/team/%5Bid%5D/Accounts/PayrollView.vue)
 
