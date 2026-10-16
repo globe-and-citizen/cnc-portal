@@ -63,6 +63,9 @@ export interface ExpenseResponse {
     1: string
   } | null
   status: string
+  sourceGeneration: 'current' | 'previous' | 'unknown'
+  sourceEnforcesDisabled?: boolean | null
+  deactivationRecordedButUnenforced?: boolean
   teamId: number
   id: number
   userAddress: string

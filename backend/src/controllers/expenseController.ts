@@ -179,32 +179,52 @@ const syncExpenseStatus = async (expense: Expense) => {
     Number.isInteger(signedChainId) &&
     signedChainId > 0;
 
-  // Only the approval's own signing domain can establish current spendability.
-  // An old or unknown domain must never inherit a new contract's zero usage.
+  // An approval can only be read from the contract and chain in its signature.
   if (!currentContract || !hasSigningDomain) {
-    return { ...expense, status: 'unavailable', balances: null };
+    return { ...expense, status: 'unavailable', balances: null, sourceGeneration: 'unknown' };
   }
 
-  if (
-    signedAgainstContractAddress!.toLowerCase() !== currentContract.address.toLowerCase() ||
-    signedChainId !== publicClient.chain.id
-  ) {
-    return { ...expense, status: 'historical', balances: null };
+  if (signedChainId !== publicClient.chain.id) {
+    return { ...expense, status: 'unavailable', balances: null, sourceGeneration: 'unknown' };
   }
 
-  if (
-    expense.status === 'expired' ||
-    (expense.status === 'limit-reached' && data.frequencyType === 0)
-  ) {
-    return {
-      ...expense,
-      status: expense.status,
-      balances: data.balances ?? null,
-    };
+  const isCurrent =
+    signedAgainstContractAddress!.toLowerCase() === currentContract.address.toLowerCase();
+  // A stored address alone is not authority to read or write an arbitrary
+  // contract. Earlier sources must still belong to this team's registry.
+  const sourceContract = isCurrent
+    ? currentContract
+    : await prisma.teamContract.findFirst({
+        where: {
+          teamId: expense.teamId,
+          type: 'ExpenseAccountEIP712',
+          address: { equals: signedAgainstContractAddress!, mode: 'insensitive' },
+        },
+      });
+  if (!sourceContract) {
+    return { ...expense, status: 'unavailable', balances: null, sourceGeneration: 'unknown' };
+  }
+
+  // Earlier frozen implementations may write Inactive without consulting that
+  // state in transfer. Only 2.0.2+ is known to enforce the inactive guard.
+  let sourceEnforcesDisabled: boolean | null = null;
+  if (!isCurrent) {
+    try {
+      const version = (await publicClient.readContract({
+        address: sourceContract.address as Address,
+        abi: ABI,
+        functionName: 'version',
+      })) as string;
+      const match = /^(\d+)\.(\d+)\.(\d+)$/.exec(version);
+      const [major, minor, patch] = match ? match.slice(1).map(Number) : [0, 0, 0];
+      sourceEnforcesDisabled = major > 2 || (major === 2 && (minor > 0 || patch >= 2));
+    } catch {
+      sourceEnforcesDisabled = false;
+    }
   }
 
   const balance = (await publicClient.readContract({
-    address: currentContract.address as Address,
+    address: sourceContract.address as Address,
     abi: ABI,
     functionName: 'getExpenseBalance',
     args: [keccak256(expense.signature as Address)],
@@ -216,7 +236,7 @@ const syncExpenseStatus = async (expense: Expense) => {
   };
 
   const isNewPeriod = await publicClient.readContract({
-    address: currentContract.address as Address,
+    address: sourceContract.address as Address,
     abi: ABI,
     functionName: 'isNewPeriod',
     args: [buildContractBudgetLimit(data), keccak256(expense.signature as Address)],
@@ -241,6 +261,9 @@ const syncExpenseStatus = async (expense: Expense) => {
 
   const formattedExpense = {
     ...expense,
+    sourceGeneration: isCurrent ? 'current' : 'previous',
+    sourceEnforcesDisabled,
+    deactivationRecordedButUnenforced: balance.state === 2 && sourceEnforcesDisabled === false,
     balances: {
       0: `${balance.lastWithdrawnDate}`,
       1: amountTransferred,
@@ -249,7 +272,7 @@ const syncExpenseStatus = async (expense: Expense) => {
       ? 'expired'
       : isLimitReached
         ? 'limit-reached'
-        : balance.state === 2
+        : balance.state === 2 && sourceEnforcesDisabled !== false
           ? 'disabled'
           : 'enabled',
   };

@@ -367,18 +367,21 @@ describe('Expense Controller', () => {
       });
     });
 
-    it('[AC-US-EXP-004-14] keeps prior-generation approvals in history without reading current usage for them', async () => {
+    it('[AC-US-EXP-004-14] reads an older approval from its registered contract', async () => {
       const oldContract = '0x3333333333333333333333333333333333333333';
       vi.mocked(prisma.team.findFirst).mockResolvedValue(mockTeam);
-      vi.mocked(prisma.teamContract.findFirst).mockResolvedValue({
-        address: mockExpenseContractAddress,
-      } as never);
+      vi.mocked(prisma.teamContract.findFirst).mockImplementation(
+        async ({ where }) =>
+          ({
+            address: 'address' in where! ? oldContract : mockExpenseContractAddress,
+          }) as never
+      );
       vi.mocked(prisma.expense.findMany).mockResolvedValue([
         {
           ...mockExpense,
           id: 1,
           signature: '0x1234',
-          status: 'expired',
+          status: 'enabled',
           data: { ...mockExpenseData, signedAgainstContractAddress: oldContract, chainId: 1 },
         },
         {
@@ -392,13 +395,14 @@ describe('Expense Controller', () => {
           },
         },
       ]);
-      vi.mocked(publicClient.readContract).mockImplementation(async ({ functionName }) => {
+      vi.mocked(publicClient.readContract).mockImplementation(async ({ address, functionName }) => {
+        if (functionName === 'version') return '2.0.2' as never;
         if (functionName === 'getExpenseBalance') {
           return {
             lastWithdrawnDate: 1n,
-            totalWithdrawn: 8_000_000n,
+            totalWithdrawn: address === oldContract ? 8_000_000n : 0n,
             lastWithdrawnPeriod: 0n,
-            state: 1,
+            state: address === oldContract ? 2 : 1,
           } as never;
         }
         return false as never;
@@ -411,18 +415,77 @@ describe('Expense Controller', () => {
       const response = await request(app).get('/').query({ teamId: 1 });
 
       expect(response.status).toBe(200);
-      expect(response.body[0]).toMatchObject({ id: 1, status: 'historical', balances: null });
-      expect(response.body[1]).toMatchObject({ id: 2, status: 'enabled', balances: { 1: '8' } });
-      expect(publicClient.readContract).toHaveBeenCalledTimes(2);
-      expect(prisma.expense.update).toHaveBeenCalledTimes(1);
+      expect(response.body[0]).toMatchObject({
+        id: 1,
+        status: 'disabled',
+        sourceGeneration: 'previous',
+        balances: { 1: '8' },
+      });
+      expect(response.body[1]).toMatchObject({
+        id: 2,
+        status: 'enabled',
+        sourceGeneration: 'current',
+        balances: { 1: '0' },
+      });
+      expect(publicClient.readContract).toHaveBeenCalledTimes(5);
+      expect(prisma.expense.update).toHaveBeenCalledTimes(2);
       expect(
         vi
           .mocked(publicClient.readContract)
-          .mock.calls.every(([call]) => call.address === mockExpenseContractAddress)
-      ).toBe(true);
+          .mock.calls.map(([call]) => call.address)
+          .sort()
+      ).toEqual(
+        [
+          oldContract,
+          oldContract,
+          oldContract,
+          mockExpenseContractAddress,
+          mockExpenseContractAddress,
+        ].sort()
+      );
 
-      const historical = await request(app).get('/').query({ teamId: 1, status: 'historical' });
-      expect(historical.body.map((row: { id: number }) => row.id)).toEqual([1]);
+      const disabled = await request(app).get('/').query({ teamId: 1, status: 'disabled' });
+      expect(disabled.body.map((row: { id: number }) => row.id)).toEqual([1]);
+    });
+
+    it('[AC-US-EXP-004-14] exposes an old inactive record that its runtime does not enforce', async () => {
+      const oldContract = '0x3333333333333333333333333333333333333333';
+      vi.mocked(prisma.team.findFirst).mockResolvedValue(mockTeam);
+      vi.mocked(prisma.teamContract.findFirst).mockImplementation(
+        async ({ where }) =>
+          ({ address: 'address' in where! ? oldContract : mockExpenseContractAddress }) as never
+      );
+      vi.mocked(prisma.expense.findMany).mockResolvedValue([
+        {
+          ...mockExpense,
+          data: { ...mockExpenseData, signedAgainstContractAddress: oldContract, chainId: 1 },
+        },
+      ]);
+      vi.mocked(publicClient.readContract).mockImplementation(async ({ functionName }) => {
+        if (functionName === 'version') return '2.0.1' as never;
+        if (functionName === 'getExpenseBalance') {
+          return {
+            lastWithdrawnDate: 0n,
+            totalWithdrawn: 0n,
+            lastWithdrawnPeriod: 0n,
+            state: 2,
+          } as never;
+        }
+        return false as never;
+      });
+      vi.mocked(publicClient.getBlock).mockResolvedValue({
+        timestamp: BigInt(START_DATE),
+      } as never);
+      vi.mocked(prisma.expense.update).mockResolvedValue(mockExpense);
+
+      const response = await request(app).get('/').query({ teamId: 1 });
+
+      expect(response.body[0]).toMatchObject({
+        status: 'enabled',
+        sourceGeneration: 'previous',
+        sourceEnforcesDisabled: false,
+        deactivationRecordedButUnenforced: true,
+      });
     });
 
     it('[AC-US-EXP-004-14] leaves missing or wrong-network signing provenance unavailable to spend', async () => {
@@ -448,10 +511,45 @@ describe('Expense Controller', () => {
       expect(response.status).toBe(200);
       expect(response.body).toMatchObject([
         { id: 1, status: 'unavailable', balances: null },
-        { id: 2, status: 'historical', balances: null },
+        { id: 2, status: 'unavailable', balances: null },
       ]);
       expect(publicClient.readContract).not.toHaveBeenCalled();
       expect(prisma.expense.update).not.toHaveBeenCalled();
+    });
+
+    it('[AC-US-EXP-004-14] rejects an older signing address absent from this team registry', async () => {
+      const unregisteredContract = '0x3333333333333333333333333333333333333333';
+      vi.mocked(prisma.team.findFirst).mockResolvedValue(mockTeam);
+      vi.mocked(prisma.teamContract.findFirst)
+        .mockResolvedValueOnce({ address: mockExpenseContractAddress } as never)
+        .mockResolvedValueOnce(null);
+      vi.mocked(prisma.expense.findMany).mockResolvedValue([
+        {
+          ...mockExpense,
+          data: {
+            ...mockExpenseData,
+            signedAgainstContractAddress: unregisteredContract,
+            chainId: 1,
+          },
+        },
+      ]);
+
+      const response = await request(app).get('/').query({ teamId: 1 });
+
+      expect(response.status).toBe(200);
+      expect(response.body[0]).toMatchObject({
+        status: 'unavailable',
+        sourceGeneration: 'unknown',
+        balances: null,
+      });
+      expect(prisma.teamContract.findFirst).toHaveBeenLastCalledWith({
+        where: {
+          teamId: 1,
+          type: 'ExpenseAccountEIP712',
+          address: { equals: unregisteredContract, mode: 'insensitive' },
+        },
+      });
+      expect(publicClient.readContract).not.toHaveBeenCalled();
     });
 
     it('returns 500 if there is a server error', async () => {
