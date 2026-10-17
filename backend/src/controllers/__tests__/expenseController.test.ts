@@ -1,5 +1,6 @@
 import request from 'supertest';
 import express, { Request, Response, NextFunction } from 'express';
+import rateLimit from 'express-rate-limit';
 import { prisma } from '../../utils';
 import { describe, it, beforeEach, expect, vi } from 'vitest';
 import { Expense, Team } from '@prisma/client';
@@ -63,6 +64,7 @@ vi.mock('../../utils/viem.config', () => ({
 
 const app = express();
 app.use(express.json());
+app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 100000 }));
 app.use('/', authorizeUser, expenseRoutes);
 
 const START_DATE = Math.floor(Date.now() / 1000) + 3600;
