@@ -1,21 +1,31 @@
 <template>
+  <PreviousApprovalNotice v-if="hasPreviousApprovals" :team-id="teamStore.currentTeamId" />
   <URadioGroup v-model="selectedRadio" :items="statuses" orientation="horizontal" />
   <div class="bg-default w-full">
     <UTable :data="filteredApprovals" :columns="columns" :loading="isFetchingExpenseData">
       <template #action-cell="{ row: { original: row } }">
+        <span
+          v-if="row.sourceGeneration === 'previous' && row.sourceEnforcesDisabled === false"
+          data-test="legacy-disable-unsupported"
+          >Disable is not enforced by this version. Move funds to retire it.</span
+        >
         <UTooltip :text="archivedTooltip">
           <UButton
-            v-if="row.status == 'enabled'"
+            v-if="row.status == 'enabled' && row.sourceEnforcesDisabled !== false"
             color="error"
             data-test="disable-button"
             size="sm"
             :loading="isLoadingSetStatus && signatureToUpdate === row.signature"
-            :disabled="isWriteDisabled || !(contractOwnerAddress === userDataStore.address)"
+            :disabled="
+              isWriteDisabled ||
+              (row.sourceGeneration !== 'previous' &&
+                !(contractOwnerAddress === userDataStore.address))
+            "
             @click="
               () => {
                 isLoadingSetStatus = true
                 signatureToUpdate = row.signature
-                deactivateApproval(row.signature as `0x{string}`)
+                deactivateApproval(row)
               }
             "
             label="Disable"
@@ -28,12 +38,16 @@
             data-test="enable-button"
             size="sm"
             :loading="isLoadingSetStatus && signatureToUpdate === row.signature"
-            :disabled="isWriteDisabled || !(contractOwnerAddress === userDataStore.address)"
+            :disabled="
+              isWriteDisabled ||
+              (row.sourceGeneration !== 'previous' &&
+                !(contractOwnerAddress === userDataStore.address))
+            "
             @click="
               () => {
                 isLoadingSetStatus = true
                 signatureToUpdate = row.signature
-                activateApproval(row.signature as `0x{string}`)
+                activateApproval(row)
               }
             "
             label="Enable"
@@ -56,8 +70,29 @@
           variant="outline"
           class="rounded-full"
           :color="
-            row.status === 'enabled' ? 'success' : row.status === 'disabled' ? 'info' : 'error'
+            row.status === 'enabled'
+              ? 'success'
+              : row.status === 'disabled'
+                ? 'info'
+                : row.status === 'historical' || row.status === 'unavailable'
+                  ? 'neutral'
+                  : 'error'
           "
+        />
+        <UBadge
+          v-if="row.sourceGeneration === 'previous'"
+          label="Previous version"
+          color="warning"
+          variant="soft"
+          class="ml-2"
+          data-test="previous-version-badge"
+        />
+        <UBadge
+          v-if="row.sourceGeneration === 'previous' && row.sourceEnforcesDisabled === false"
+          label="Disable unsupported"
+          color="error"
+          variant="soft"
+          class="ml-2"
         />
       </template>
       <template #frequencyType-cell="{ row: { original: row } }">
@@ -68,7 +103,9 @@
         }}</span>
       </template>
       <template #amountTransferred-cell="{ row: { original: row } }">
-        <span>{{ row.balances[1] }}/{{ row.amount }} {{ tokenSymbol(row.tokenAddress) }}</span>
+        <span
+          >{{ row.balances?.[1] ?? '—' }}/{{ row.amount }} {{ tokenSymbol(row.tokenAddress) }}</span
+        >
       </template>
       <template #empty>
         <div
@@ -96,8 +133,9 @@ import { log } from '@/lib/logging'
 import { tokenSymbol } from '@/utils/tokens/metadata'
 import { useTransactionPresentation } from '@/composables/transactions/useTransactionPresentation'
 import { useUserDataStore, useTeamStore } from '@/stores'
-import { keccak256 } from 'viem'
+import { isAddress, keccak256, type Address } from 'viem'
 import { useReadContract } from '@wagmi/vue'
+import { isExpenseApprovalOwner } from '@/composables/expenseAccount/approvalOwner'
 import { expenseAccountEip712Abi } from '@/artifacts/abi/generated'
 import {
   useExpenseAccountActivateApproval,
@@ -109,6 +147,7 @@ import { useGetExpensesQuery, expenseKeys } from '@/queries'
 import { getFrequencyType, getCustomFrequency } from '@/utils/expenses/model'
 import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
 import { formatDateTime, fromUnix } from '@/utils/format'
+import PreviousApprovalNotice from './PreviousApprovalNotice.vue'
 
 const teamStore = useTeamStore()
 const { resolveUser } = useTransactionPresentation()
@@ -116,7 +155,7 @@ const { isWriteDisabled, archivedTooltip } = useTeamWriteGuard()
 const toast = useToast()
 const userDataStore = useUserDataStore()
 const queryClient = useQueryClient()
-const statuses = ['all', 'disabled', 'enabled', 'expired']
+const statuses = ['all', 'disabled', 'enabled', 'expired', 'limit-reached', 'unavailable']
 const selectedRadio = ref('all')
 const signatureToUpdate = ref('')
 const isLoadingSetStatus = ref(false)
@@ -129,23 +168,21 @@ const {
   queryParams: { teamId: computed(() => teamStore.currentTeamId) }
 })
 
-const formattedExpenseData = computed(() => {
-  return expenseData.value?.map((expense) => {
-    return {
-      ...expense.data,
-      ...expense
-    }
-  })
-})
+const formattedExpenseData = computed(() =>
+  expenseData.value?.map((expense) => ({ ...expense.data, ...expense }))
+)
+const hasPreviousApprovals = computed(
+  () => formattedExpenseData.value?.some((row) => row.sourceGeneration === 'previous') ?? false
+)
 
 const expenseAccountEip712Address = computed(() =>
   teamStore.getContractAddressByType('ExpenseAccountEIP712')
 )
 
-// Pairs each status with an icon so it is not conveyed by color alone.
 const statusIcon = (status: string): string => {
   if (status === 'enabled') return 'i-lucide-circle-check'
   if (status === 'disabled') return 'i-lucide-circle-x'
+  if (status === 'unavailable') return 'i-lucide-circle-alert'
   return 'i-lucide-clock'
 }
 const columns = [
@@ -192,30 +229,43 @@ const { data: contractOwnerAddress, error: errorGetOwner } = useReadContract({
   abi: expenseAccountEip712Abi
 })
 
-const { mutate: executeDeactivateApproval } = useExpenseAccountDeactivateApproval()
-const { mutate: executeActivateApproval } = useExpenseAccountActivateApproval()
+const actionSourceAddress = computed(() => {
+  const row = formattedExpenseData.value?.find((item) => item.signature === signatureToUpdate.value)
+  const address = row?.data?.signedAgainstContractAddress ?? row?.signedAgainstContractAddress
+  if (typeof address === 'string' && isAddress(address)) return address as Address
+  return row?.sourceGeneration === 'previous'
+    ? undefined
+    : (expenseAccountEip712Address.value as Address | undefined)
+})
+const { mutate: executeDeactivateApproval } =
+  useExpenseAccountDeactivateApproval(actionSourceAddress)
+const { mutate: executeActivateApproval } = useExpenseAccountActivateApproval(actionSourceAddress)
 //#region
 
-const filteredApprovals = computed(() => {
-  if (selectedRadio.value === 'all') {
-    return formattedExpenseData.value
-  } else {
-    return (formattedExpenseData.value ?? []).filter(
-      (approval) => approval.status === selectedRadio.value
-    )
-  }
-})
+const filteredApprovals = computed(() =>
+  selectedRadio.value === 'all'
+    ? formattedExpenseData.value
+    : formattedExpenseData.value?.filter((approval) => approval.status === selectedRadio.value)
+)
 
 //#region Functions
-const deactivateApproval = (signature: `0x{string}`) => {
-  if (!expenseAccountEip712Address.value) {
+const verifyPreviousOwner = async (row: NonNullable<typeof formattedExpenseData.value>[number]) => {
+  if (row.sourceGeneration !== 'previous') return true
+  const address = row.data.signedAgainstContractAddress
+  if (!address || !isAddress(address)) return false
+  return isExpenseApprovalOwner(address, userDataStore.address)
+}
+
+const deactivateApproval = async (row: NonNullable<typeof formattedExpenseData.value>[number]) => {
+  if (!actionSourceAddress.value || !(await verifyPreviousOwner(row))) {
+    isLoadingSetStatus.value = false
+    log.error('Expense approval source is unavailable or wallet does not own it')
     toast.add({ title: 'Failed to deactivate approval', color: 'error' })
-    log.error('ExpenseAccountEip712Address is undefined')
     return
   }
 
   executeDeactivateApproval(
-    { args: [keccak256(signature)] },
+    { args: [keccak256(row.signature as `0x${string}`)] },
     {
       onSuccess: () => {
         signatureToUpdate.value = ''
@@ -232,15 +282,16 @@ const deactivateApproval = (signature: `0x{string}`) => {
   )
 }
 
-const activateApproval = (signature: `0x{string}`) => {
-  if (!expenseAccountEip712Address.value) {
+const activateApproval = async (row: NonNullable<typeof formattedExpenseData.value>[number]) => {
+  if (!actionSourceAddress.value || !(await verifyPreviousOwner(row))) {
+    isLoadingSetStatus.value = false
+    log.error('Expense approval source is unavailable or wallet does not own it')
     toast.add({ title: 'Failed to activate approval', color: 'error' })
-    log.error('ExpenseAccountEip712Address is undefined')
     return
   }
 
   executeActivateApproval(
-    { args: [keccak256(signature)] },
+    { args: [keccak256(row.signature as `0x${string}`)] },
     {
       onSuccess: () => {
         signatureToUpdate.value = ''

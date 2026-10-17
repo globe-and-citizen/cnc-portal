@@ -58,7 +58,7 @@ flowchart LR
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `2f18ee2a59ff7163dc4d54f2a66530f2eac74c3f`
+**Implementation evidence reviewed against:** `92cc11e6bc959f0efebebef8d174ebbed6e81921`
 
 - [Validation middleware](../../../backend/src/validation/middleware/validate.ts) and
   [middleware tests](../../../backend/src/validation/middleware/__tests__/validate.test.ts)
