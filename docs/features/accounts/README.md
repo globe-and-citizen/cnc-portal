@@ -630,8 +630,10 @@ remain as recorded above.
       previous-version label, source-contract usage and effective availability. The recipient can spend from that source while its
       signature, limits, token support and balance permit. The owner can record deactivation when the source contract enforces it; earlier
       versions that ignore inactive state remain reported as spendable with a warning and an option to move their funds. The owner is
-      directed to the older-generation funds workflow and told that moving funds does not revoke approvals. An approval with missing,
-      wrong-network or unregistered signing provenance remains visible but unavailable until its origin can be verified.
+      directed to the older-generation funds workflow and told that moving funds does not revoke approvals. The spending warning appears
+      only while at least one earlier approval is effectively enabled; the older-contracts link remains visible when earlier approvals are
+      disabled, expired or exhausted. An approval with missing, wrong-network or unregistered signing provenance remains visible but
+      unavailable until its origin can be verified.
 - [x] `AC-US-EXP-004-07` One recipient sees only approvals issued to their connected wallet in their personal approval scope.
 - [x] `AC-US-EXP-004-08` Every company member can inspect the shared Expense Account history.
 
@@ -1151,7 +1153,7 @@ movement across the participating stories.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `78e9c03ce5c8803c9ec8cb0f1aee2ca815b2e04b`
+**Implementation evidence reviewed against:** `1826eec146761b9bdf8a4615bb8ba810967352b3`
 
 - [Bank deposit modal](../../../app/src/components/sections/BankView/forms/DepositModal.vue),
   [Bank transfer modal](../../../app/src/components/sections/BankView/forms/TransferModal.vue),
