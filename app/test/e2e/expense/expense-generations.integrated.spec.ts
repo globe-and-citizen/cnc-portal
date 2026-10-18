@@ -99,12 +99,14 @@ test.describe(
       ).toBeVisible()
       await expect(ownerPage.locator('[data-test="disable-button"]')).toHaveCount(0)
       await expect(ownerPage.locator('[data-test="enable-button"]')).toBeVisible()
-      await expect(ownerPage.locator('[data-test="previous-approvals-notice"]')).toBeVisible()
+      await expect(ownerPage.locator('[data-test="previous-approvals-notice"]')).toHaveCount(0)
+      await expect(ownerPage.getByRole('link', { name: 'Manage older contracts' })).toBeVisible()
       await ownerPage.locator('[data-test="enable-button"]').click()
       await expect(ownerPage.getByText('Approval activated', { exact: true })).toBeVisible({
         timeout: 30_000
       })
       await expect.poll(async () => (await approvals())[0]?.status).toBe('enabled')
+      await expect(ownerPage.locator('[data-test="previous-approvals-notice"]')).toBeVisible()
       await ownerPage.reload()
       await expect(
         ownerPage

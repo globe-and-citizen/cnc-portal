@@ -1,5 +1,5 @@
 <template>
-  <PreviousApprovalNotice v-if="hasPreviousApprovals" :team-id="teamStore.currentTeamId" />
+  <PreviousApprovalNotice :team-id="teamStore.currentTeamId" :approvals="formattedExpenseData" />
   <URadioGroup v-model="selectedRadio" :items="statuses" orientation="horizontal" />
   <div class="bg-default w-full">
     <UTable :data="filteredApprovals" :columns="columns" :loading="isFetchingExpenseData">
@@ -171,10 +171,6 @@ const {
 const formattedExpenseData = computed(() =>
   expenseData.value?.map((expense) => ({ ...expense.data, ...expense }))
 )
-const hasPreviousApprovals = computed(
-  () => formattedExpenseData.value?.some((row) => row.sourceGeneration === 'previous') ?? false
-)
-
 const expenseAccountEip712Address = computed(() =>
   teamStore.getContractAddressByType('ExpenseAccountEIP712')
 )
