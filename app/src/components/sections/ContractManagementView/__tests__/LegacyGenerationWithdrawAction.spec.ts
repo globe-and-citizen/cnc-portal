@@ -234,6 +234,8 @@ describe('LegacyGenerationWithdrawAction', () => {
     await wrapper.get(BUTTON).trigger('click')
 
     expect(wrapper.find('[data-test="legacy-withdraw-review"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="legacy-approval-warning"]').exists()).toBe(true)
+    expect(wrapper.text()).toContain('Review spending approvals')
     expect(wrapper.find('[data-test="legacy-withdraw-review-cashRemuneration"]').exists()).toBe(
       true
     )

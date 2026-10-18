@@ -129,27 +129,8 @@ test.describe(
       await expect(ownerPage).toHaveURL(
         new RegExp(`/teams/${teamId}/contract-management\\?tab=history`)
       )
-      const withdrawalWarning = ownerPage.locator('[data-test="legacy-approval-warning"]')
-      const withdrawalAction = ownerPage.locator('[data-test="legacy-withdraw-button"]')
-      const reviewApprovals = ownerPage.getByRole('link', { name: 'Review spending approvals' })
-      // The history query may refresh once more after route navigation. If that
-      // remounts the accordion while the modal opens, reopen the review step.
-      await expect
-        .poll(
-          async () => {
-            if ((await withdrawalWarning.isVisible()) && (await reviewApprovals.isVisible())) {
-              return reviewApprovals.getAttribute('href')
-            }
-            if (await withdrawalAction.isVisible()) {
-              await withdrawalAction.click()
-            } else {
-              await ownerPage.getByText('Officer generation', { exact: true }).click()
-            }
-            return null
-          },
-          { timeout: 30_000 }
-        )
-        .toBe(`/teams/${teamId}/accounts/expense-account`)
+      await expect(ownerPage.getByRole('heading', { name: 'Deployment history' })).toBeVisible()
+      await expect(ownerPage.getByText('Officer generation', { exact: true })).toBeVisible()
     })
   }
 )
