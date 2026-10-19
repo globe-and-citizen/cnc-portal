@@ -47,6 +47,10 @@ recurring approvals. Reactivation changes only the active state; the original si
 [approval-control story](../../../features/accounts/README.md#us-exp-003-deactivate-or-reactivate-an-approval) owns the product acceptance
 and validation state.
 
+The inactive-state check first appears in implementation version 2.0.2. Earlier deployed implementations can store `Inactive` without
+rejecting `transfer`; their recorded state is not proof that spending was stopped. The portal reads the source implementation version before
+treating historical deactivation as enforced.
+
 ## Return to Bank
 
 `ownerWithdrawAllToBank()` is an owner-only, non-reentrant action available while the contract is unpaused. It resolves the Bank through the
@@ -65,7 +69,7 @@ orchestration.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `977d73f7c042253f4a107f632798fbbddbc8f4d4`
+**Implementation evidence reviewed against:** `78e9c03ce5c8803c9ec8cb0f1aee2ca815b2e04b`
 
 - [Expense Account contract](../../../../contract/contracts/expense-account/ExpenseAccountEIP712.sol)
 - [Core contract tests](../../../../contract/test/ExpenseAccountEIP712.spec.ts),

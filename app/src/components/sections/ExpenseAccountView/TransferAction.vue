@@ -3,13 +3,16 @@
     <TeamArchivedTooltip v-slot="{ disabled: archivedDisabled }">
       <UButton
         color="success"
-        :disabled="row.status !== 'enabled' || archivedDisabled"
+        :disabled="row.status !== 'enabled' || archivedDisabled || wrongNetwork"
         @click="showModal = { mount: true, show: true }"
         data-test="transfer-button"
       >
         Spend
       </UButton>
     </TeamArchivedTooltip>
+    <span v-if="wrongNetwork" class="text-xs text-amber-600"
+      >Switch to the approval network to spend</span
+    >
 
     <UModal
       v-if="showModal.mount"
@@ -25,6 +28,18 @@
       }"
     >
       <template #body>
+        <UAlert
+          v-if="row.sourceGeneration === 'previous'"
+          color="warning"
+          variant="soft"
+          title="Previous contract version"
+          :description="
+            row.sourceEnforcesDisabled === false
+              ? 'This older contract may still accept spending after Disable. Its owner can move the remaining funds to retire this balance.'
+              : 'This spend uses the older Expense Account and its own balance. The owner can retire its approvals and move its remaining funds.'
+          "
+          class="mb-4"
+        />
         <UAlert
           v-if="errorMessage"
           color="error"
@@ -103,6 +118,7 @@ import {
   parseEther,
   parseUnits,
   recoverTypedDataAddress,
+  isAddress,
   zeroAddress,
   type Address,
   type Hex
@@ -123,11 +139,12 @@ const teamStore = useTeamStore()
 const toast = useToast()
 const chainId = useChainId()
 
-// A getter, not `ref(teamStore.getContractAddressByType(...))`: the address comes
-// from the team query, and this row can mount before that query resolves. A ref
-// would snapshot `undefined` and leave the balance query disabled forever.
-const expenseAccountEip712Address = computed(() =>
-  teamStore.getContractAddressByType('ExpenseAccountEIP712')
+const expenseAccountEip712Address = computed(() => {
+  const source = props.row.data.signedAgainstContractAddress
+  return typeof source === 'string' && isAddress(source) ? (source as Address) : undefined
+})
+const wrongNetwork = computed(
+  () => typeof props.row.data.chainId === 'number' && props.row.data.chainId !== chainId.value
 )
 
 const {
@@ -179,7 +196,7 @@ const spendableBalanceLabel = computed(() => {
   return `Spendable balance: ${token.spendableBalance ?? token.balance} ${token.symbol}`
 })
 
-const transferMutation = useExpenseAccountTransfer()
+const transferMutation = useExpenseAccountTransfer(expenseAccountEip712Address)
 
 const transferFromExpenseAccount = async (to: string, amount: string) => {
   errorMessage.value = ''
@@ -196,25 +213,25 @@ const transferFromExpenseAccount = async (to: string, amount: string) => {
 }
 
 const verifyApprovalSignature = async (budgetLimit: BudgetLimit) => {
-  const currentContract = expenseAccountEip712Address.value
-  if (!currentContract) return false
+  const sourceContract = expenseAccountEip712Address.value
+  if (!sourceContract || !budgetLimit.signedAgainstContractAddress || !budgetLimit.chainId) {
+    errorMessage.value = 'Approval signing contract or network is unavailable'
+    return false
+  }
 
-  if (
-    budgetLimit.signedAgainstContractAddress &&
-    budgetLimit.signedAgainstContractAddress.toLowerCase() !== currentContract.toLowerCase()
-  ) {
+  if (budgetLimit.signedAgainstContractAddress.toLowerCase() !== sourceContract.toLowerCase()) {
     errorMessage.value = 'Signature issued for a different ExpenseAccount contract'
     return false
   }
 
-  if (budgetLimit.chainId && budgetLimit.chainId !== chainId.value) {
+  if (budgetLimit.chainId !== chainId.value) {
     errorMessage.value = 'Signature issued for a different network'
     return false
   }
 
   try {
     const owner = (await readContract(config, {
-      address: currentContract,
+      address: sourceContract,
       abi: expenseAccountEip712Abi,
       functionName: 'owner'
     })) as Address
@@ -224,7 +241,7 @@ const verifyApprovalSignature = async (budgetLimit: BudgetLimit) => {
         name: 'CNCExpenseAccount',
         version: '1',
         chainId: chainId.value,
-        verifyingContract: currentContract
+        verifyingContract: sourceContract
       },
       types: budgetLimitTypes,
       primaryType: 'BudgetLimit',

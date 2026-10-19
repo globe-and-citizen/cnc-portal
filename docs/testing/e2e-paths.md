@@ -607,14 +607,17 @@ path individually. These path checks do not close the separate feature acceptanc
     - [x] `US-EXP-004` Reload and verify the balances.
     - [x] `US-EXP-004` Reload and verify the approval state.
     - [x] `US-EXP-004` Reload and verify the transaction history.
-  - Separate variants: overspending, invalid signatures, unauthorized actions, and insufficient funds.
+  - Separate variants: overspending, invalid signatures, unauthorized actions, insufficient funds, and approval history after Expense
+    Account redeployment. The redeployment variant compares the old disabled state with the new contract's state, then verifies
+    source-contract API classification, owner reactivation, recipient spending, and owner/recipient readback after reload.
   - Expected result: one allowance remains auditable across its complete active and inactive lifecycle.
   - Status: Integrated covered — the owner grants and deactivates one persisted approval; the member spends, sees the disabled Spend
     control, and the same signed transfer is rejected by the deployed contract without moving funds or changing usage. After reactivation,
     the member spends again. Reloaded owner and member views show the final balances and active approval; reloaded history shows both
     successful transfers. Invalid signatures, overspending, authorization failures, and insufficient-fund variants remain browser acceptance
     or lower-layer coverage.
-  - Evidence: [integrated Accounts test](../../app/test/e2e/accounts.integrated.spec.ts).
+  - Evidence: [integrated Accounts test](../../app/test/e2e/accounts.integrated.spec.ts) and
+    [integrated Expense generation test](../../app/test/e2e/expense/expense-generations.integrated.spec.ts).
 
 ## G7 — Cross-Feature Accounting Verification
 

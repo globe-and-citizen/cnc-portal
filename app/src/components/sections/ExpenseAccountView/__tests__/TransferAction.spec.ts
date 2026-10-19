@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount, flushPromises, type VueWrapper } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
-import { nextTick, ref, toValue } from 'vue'
+import { ref, toValue } from 'vue'
 import { readContract, estimateGas } from '@wagmi/core'
 import { recoverTypedDataAddress } from 'viem'
 import TransferAction from '../TransferAction.vue'
@@ -117,23 +117,15 @@ describe('TransferAction.vue', () => {
       await flushPromises()
     }
 
-    it('keys the balance query on a live address, not one read at setup', async () => {
-      // The address comes from the team query, which routinely resolves after
-      // this row has mounted. Passing `ref(store.getContractAddressByType(...))`
-      // froze `undefined` in place, leaving the query disabled forever: no
-      // balance, a spendable balance of 0, and no transfer form. The ref here
-      // stands in for the query data the real store reads.
-      const teamAddress = ref<string | undefined>(undefined)
-      mockTeamStore.getContractAddressByType = vi.fn(() => teamAddress.value)
-      createComponent()
+    it('[AC-US-EXP-004-14] keys the balance query on the signed source contract', async () => {
+      mockTeamStore.getContractAddressByType = vi.fn(() => CURRENT_EXPENSE_ACCOUNT)
+      createComponent({
+        ...ERC20_BUDGET,
+        signedAgainstContractAddress: '0x6666666666666666666666666666666666666666'
+      })
 
       const [addressSource] = useContractBalanceSpy.mock.calls[0]!
-      expect(toValue(addressSource)).toBeUndefined()
-
-      teamAddress.value = CURRENT_EXPENSE_ACCOUNT
-      await nextTick()
-
-      expect(toValue(addressSource)).toBe(CURRENT_EXPENSE_ACCOUNT)
+      expect(toValue(addressSource)).toBe('0x6666666666666666666666666666666666666666')
     })
 
     it('explains itself while the balance is still loading', async () => {
@@ -250,14 +242,23 @@ describe('TransferAction.vue', () => {
     expect(wrapper.text()).toContain('Failed to verify expense approval signature')
   })
 
-  it('[AC-US-EXP-002-05] blocks transfers when the approval was signed for another expense account', async () => {
+  it('[AC-US-EXP-002-05] rejects a signature that is not owned by the source contract', async () => {
+    vi.mocked(readContract).mockResolvedValueOnce(OWNER_ADDRESS)
+    vi.mocked(recoverTypedDataAddress).mockResolvedValueOnce(
+      '0x6666666666666666666666666666666666666666'
+    )
     const wrapper = createComponent({
       ...ERC20_BUDGET,
       signedAgainstContractAddress: '0x6666666666666666666666666666666666666666'
     })
     await submitTransfer(wrapper)
 
-    expect(readContract).not.toHaveBeenCalled()
+    expect(readContract).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        address: '0x6666666666666666666666666666666666666666'
+      })
+    )
     expect(transfer.mutate).not.toHaveBeenCalled()
     expect(wrapper.text()).toContain('Signature issued for a different ExpenseAccount contract')
   })
