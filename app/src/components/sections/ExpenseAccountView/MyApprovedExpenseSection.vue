@@ -1,9 +1,30 @@
 <template>
-  <UCard>
+  <UCard data-test="my-approved-expenses">
     <template #header>My Approved Expense</template>
     <UTable :data="myExpenses" :columns="columns" :loading="isLoading">
       <template #action-cell="{ row: { original: row } }">
-        <TransferAction :row="row" />
+        <span v-if="row.status === 'unavailable'" data-test="expense-unavailable">
+          Unavailable to spend
+        </span>
+        <TransferAction v-else :row="row" />
+      </template>
+      <template #status-cell="{ row: { original: row } }">
+        <span>{{ row.status }}</span>
+        <UBadge
+          v-if="row.sourceGeneration === 'previous'"
+          label="Previous version"
+          color="warning"
+          variant="soft"
+          class="ml-2"
+          data-test="previous-version-badge"
+        />
+        <UBadge
+          v-if="row.sourceGeneration === 'previous' && row.sourceEnforcesDisabled === false"
+          label="Disable unsupported"
+          color="error"
+          variant="soft"
+          class="ml-2"
+        />
       </template>
       <template #startDate-cell="{ row: { original: row } }">
         <span>{{ formatDateTime(fromUnix(Number(row.data.startDate))) }}</span>
@@ -22,7 +43,7 @@
       </template>
       <template #amountTransferred-cell="{ row: { original: row } }">
         <span
-          >{{ row.balances[1] }}/{{ row.data.amount }}
+          >{{ row.balances?.[1] ?? '—' }}/{{ row.data.amount }}
           {{ tokenSymbol(row.data.tokenAddress) }}</span
         >
       </template>
@@ -77,6 +98,11 @@ const columns = [
   {
     accessorKey: 'amountTransferred',
     header: 'Max Amount',
+    enableSorting: false
+  },
+  {
+    accessorKey: 'status',
+    header: 'Status',
     enableSorting: false
   },
   {
