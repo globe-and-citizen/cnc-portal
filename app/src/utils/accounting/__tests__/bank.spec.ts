@@ -72,6 +72,43 @@ describe('mapBankEvents', () => {
     })
   })
 
+  it('[AC-US-ACCT-005-04] sweeps an old Bank into its replacement as an internal move', () => {
+    // A redeployment leaves two Bank generations, both mapping to Cash — Bank.
+    const REPLACEMENT_BANK = '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'
+    const generations = [ADDR.bank, REPLACEMENT_BANK]
+    const migrating = makeCtx({
+      internalAddresses: new Set(generations as Address[]),
+      pocketOf: (address) =>
+        address && generations.includes(address.toLowerCase()) ? 'Cash — Bank' : null
+    })
+
+    const [entry] = mapBankEvents(
+      {
+        transfers: [
+          {
+            id: 'sweep',
+            contractAddress: ADDR.bank,
+            sender: ADDR.bank,
+            to: REPLACEMENT_BANK,
+            amount: '9000000',
+            timestamp: 100
+          }
+        ]
+      },
+      migrating
+    )
+
+    expect(entry).toMatchObject({
+      useCase: 'UC-BANK-03',
+      debit: 'Cash — Bank',
+      credit: 'Cash — Bank',
+      internal: true
+    })
+    // Each leg stays on the deployment that actually held the cash.
+    expect(entry!.debitInstance?.toLowerCase()).toBe(REPLACEMENT_BANK)
+    expect(entry!.creditInstance?.toLowerCase()).toBe(ADDR.bank)
+  })
+
   it('flags an external transfer out for an off-chain account assignment', () => {
     const [entry] = mapBankEvents(
       {

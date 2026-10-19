@@ -4,7 +4,7 @@ import CashRemunerationUpgradeModule from '../ignition/modules/upgrades/v2.0.1/C
 import ExpenseAccountUpgradeModule from '../ignition/modules/upgrades/v2.0.1/ExpenseAccountUpgradeModule.js'
 import InvestorUpgradeModule from '../ignition/modules/upgrades/v2.0.1/InvestorUpgradeModule.js'
 import OfficerUpgradeModule from '../ignition/modules/upgrades/v2.0.1/OfficerUpgradeModule.js'
-import { verifyV201Upgrade } from './lib/v201-upgrade-verification.js'
+import { verifyBeaconUpgrade } from './lib/beacon-upgrade-verification.js'
 
 function requireReleaseGuards(): string {
   if (process.env.CNC_CONFIRM_POLYGON_V201_UPGRADE !== 'upgrade-polygon-v2.0.1') {
@@ -33,7 +33,7 @@ async function main() {
   const connection = await hre.network.getOrCreate()
 
   console.log('Verifying beacon ownership and recording rollback inputs...')
-  await verifyV201Upgrade(connection, {
+  await verifyBeaconUpgrade(connection, {
     expectedVersions: ['2.0.0', '2.0.1'],
     manifestPath
   })
@@ -44,7 +44,7 @@ async function main() {
   }
 
   async function verifyTarget(target: string) {
-    await verifyV201Upgrade(connection, {
+    await verifyBeaconUpgrade(connection, {
       target,
       expectedVersions: ['2.0.1']
     })
@@ -67,7 +67,7 @@ async function main() {
   await verifyTarget('Officer')
 
   console.log('Verifying the complete Polygon 2.0.1 implementation set...')
-  await verifyV201Upgrade(connection, { expectedVersions: ['2.0.1'] })
+  await verifyBeaconUpgrade(connection, { expectedVersions: ['2.0.1'] })
   console.log(
     `Upgrade complete. Pre-upgrade implementation addresses are stored in ${manifestPath}`
   )

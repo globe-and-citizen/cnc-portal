@@ -44,7 +44,7 @@ describe('ExpenseAccount (EIP712) - Administrative Tests', () => {
   })
 
   describe('Native Token Management', () => {
-    it('allows owner to deposit native tokens', async () => {
+    it('[AC-US-EXP-005-01] credits native tokens sent from a wallet', async () => {
       const amount = ethers.parseEther('100')
       const tx = await owner.sendTransaction({
         to: await expenseAccount.getAddress(),
@@ -180,7 +180,7 @@ describe('ExpenseAccount (EIP712) - Administrative Tests', () => {
         .approve(await expenseAccount.getAddress(), ethers.parseEther('1000'))
     })
 
-    it('allows token deposits', async () => {
+    it('[AC-US-EXP-005-02] credits supported ERC-20 deposits', async () => {
       const amount = ethers.parseEther('100')
 
       const tx = await expenseAccount
@@ -241,7 +241,7 @@ describe('ExpenseAccount (EIP712) - Administrative Tests', () => {
     })
 
     describe('Token Management Restrictions', () => {
-      it('does not allow deposits with unsupported tokens', async () => {
+      it('[AC-US-EXP-005-05] rejects unsupported token deposits', async () => {
         const amount = ethers.parseEther('100')
         const unsupportedToken = '0x9876543210987654321098765432109876543210'
 
@@ -250,7 +250,7 @@ describe('ExpenseAccount (EIP712) - Administrative Tests', () => {
         ).to.be.revertedWithCustomError(expenseAccount, 'ExpenseAccountEIP712__TokenNotSupported')
       })
 
-      it('does not allow zero amount deposits', async () => {
+      it('[AC-US-EXP-005-05] rejects zero amount deposits', async () => {
         await expect(
           expenseAccount.connect(owner).depositToken(await mockUSDT.getAddress(), 0)
         ).to.be.revertedWithCustomError(expenseAccount, 'ExpenseAccountEIP712__ZeroAmount')

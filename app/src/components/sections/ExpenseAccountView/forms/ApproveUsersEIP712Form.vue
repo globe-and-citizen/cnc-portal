@@ -17,9 +17,16 @@
 
     <!-- Member + Token -->
     <div>
-      <SelectMemberWithTokenInput v-model="state.input" />
+      <SelectMemberWithTokenInput v-model="state.input" :token-options="tokenOptions" />
       <UFormField name="input.address" data-test="address-error" />
       <UFormField name="input.token" />
+      <UAlert
+        v-if="supportedTokensError"
+        color="warning"
+        variant="soft"
+        data-test="token-support-error"
+        description="ERC-20 token support could not be loaded. Native currency remains available."
+      />
     </div>
 
     <!-- Budget Amount -->
@@ -132,12 +139,14 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, shallowRef } from 'vue'
+import { computed, reactive, shallowRef, watch } from 'vue'
 import { isAddress } from 'viem'
 import { z } from 'zod'
 import type { User } from '@/types'
 import { today, getLocalTimeZone, type CalendarDate } from '@internationalized/date'
 import SelectMemberWithTokenInput from '@/components/ui/inputs/SelectMemberWithTokenInput.vue'
+import { useExpenseAccountSupportedTokens } from '@/composables/expenseAccount/reads'
+import { expenseApprovalTokens, isExpenseApprovalTokenAllowed } from '@/utils/expenses/tokenPolicy'
 
 const props = defineProps<{
   loadingApprove: boolean
@@ -158,6 +167,28 @@ const state = reactive({
   amount: 0,
   frequencyType: 0,
   customFrequencyDays: 7
+})
+
+const { data: supportedTokens, error: supportedTokensError } = useExpenseAccountSupportedTokens()
+const supportedTokenAddresses = computed(() =>
+  Array.isArray(supportedTokens.value)
+    ? supportedTokens.value.filter((address): address is string => typeof address === 'string')
+    : undefined
+)
+const tokenOptions = computed(() =>
+  expenseApprovalTokens(supportedTokenAddresses.value).map((token) => ({
+    value: token.address,
+    label: token.symbol === 'SepoliaETH' ? 'SepETH' : token.symbol
+  }))
+)
+
+watch(supportedTokenAddresses, () => {
+  if (
+    state.input.token &&
+    !isExpenseApprovalTokenAllowed(state.input.token, supportedTokenAddresses.value)
+  ) {
+    state.input.token = ''
+  }
 })
 
 // UForm :state needs all schema keys present for error binding.
@@ -182,7 +213,13 @@ const schema = computed(() =>
         .string()
         .min(1, 'Address is required')
         .refine((v) => isAddress(v), 'Invalid wallet address'),
-      token: z.string().min(1, 'Token is required')
+      token: z
+        .string()
+        .min(1, 'Token is required')
+        .refine(
+          (token) => !token || isExpenseApprovalTokenAllowed(token, supportedTokenAddresses.value),
+          'Token is not supported by this Expense Account'
+        )
     }),
     description: z
       .string()

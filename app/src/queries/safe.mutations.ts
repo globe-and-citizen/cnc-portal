@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from '@tanstack/vue-query'
+import { useMutation, useQueryClient, type QueryClient } from '@tanstack/vue-query'
 import { useChainId, useConnection } from '@wagmi/vue'
 import { isAddress } from 'viem'
 import externalApiClient from '@/lib/external.axios.ts'
@@ -23,6 +23,14 @@ import {
 import { getTxServiceUrl, transformToSafeMultisigResponse } from '@/utils/safe/model'
 import { getConnectedSigner } from '@/utils/wallet/address'
 import { safeKeys } from './safe.queries'
+
+/** Refresh all Safe service reads and this wallet's on-chain balance groups. */
+export function invalidateSafeQueries(client: QueryClient, safeAddress: string, chainId: number) {
+  return Promise.all([
+    client.invalidateQueries({ queryKey: safeKeys.all }),
+    client.invalidateQueries({ queryKey: safeKeys.balance(safeAddress, chainId) })
+  ])
+}
 
 // ============================================================================
 // POST /api/v1/multisig-transactions/{safeTxHash}/confirmations/ - Approve
@@ -112,19 +120,7 @@ export function useExecuteTransactionMutation() {
     onSuccess: async (_, variables) => {
       const chainId = variables.queryParams.chainId
 
-      // One balance key per Safe now covers native and every ERC-20 it holds,
-      // so an executed transfer needs no per-token invalidation.
-      await Promise.all([
-        queryClient.invalidateQueries({
-          queryKey: safeKeys.info(variables.pathParams.safeAddress)
-        }),
-        queryClient.invalidateQueries({
-          queryKey: safeKeys.transactions(variables.pathParams.safeAddress)
-        }),
-        queryClient.invalidateQueries({
-          queryKey: safeKeys.balance(variables.pathParams.safeAddress, chainId)
-        })
-      ])
+      await invalidateSafeQueries(queryClient, variables.pathParams.safeAddress, chainId)
     }
   })
 }
@@ -267,11 +263,7 @@ export function useTransferFromSafeMutation() {
         return
       }
 
-      // Covers the transferred token whichever it was: native and ERC-20
-      // amounts share the Safe's single balance query.
-      await queryClient.invalidateQueries({
-        queryKey: safeKeys.balance(variables.pathParams.safeAddress, chainId.value)
-      })
+      await invalidateSafeQueries(queryClient, variables.pathParams.safeAddress, chainId.value)
     }
   })
 }

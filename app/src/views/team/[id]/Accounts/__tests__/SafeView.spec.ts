@@ -1,9 +1,31 @@
 import { describe, expect, it } from 'vitest'
-import { shallowMount } from '@vue/test-utils'
+import { flushPromises, shallowMount } from '@vue/test-utils'
 import SafeView from '../SafeView.vue'
 import { mockTeamData, mockTeamStore } from '@/tests/mocks'
+import { mockUseContractBalance, makeTokenBalance } from '@/tests/mocks/composables.mock'
 
 describe('[US-SAFE-001] [US-SAFE-002] SafeView.vue', () => {
+  it('reports a failed balance read separately and clears it when the existing query recovers', async () => {
+    mockTeamStore.getContractAddressByType.mockReturnValue(
+      '0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB'
+    )
+    mockUseContractBalance.hasData.value = false
+    mockUseContractBalance.error.value = new Error('Safe Gateway unavailable')
+    const wrapper = shallowMount(SafeView)
+    const table = wrapper.findComponent({ name: 'TokenHoldingsSection' })
+
+    expect(table.props('rows')).toEqual([])
+    expect(table.props('hasError')).toBe(true)
+    expect(table.props('isIncomplete')).toBe(false)
+
+    mockUseContractBalance.error.value = null
+    mockUseContractBalance.hasData.value = true
+    await flushPromises()
+    expect(table.props('hasError')).toBe(false)
+    expect(table.props('rows').length).toBeGreaterThan(0)
+    wrapper.unmount()
+  })
+
   it('keeps the loading state visible while the team Safe is being resolved', () => {
     mockTeamStore.currentTeamId = mockTeamData.id
     mockTeamStore.currentTeamMeta = {
@@ -34,6 +56,9 @@ describe('[US-SAFE-001] [US-SAFE-002] SafeView.vue', () => {
   })
 
   it('[AC-US-SAFE-002-05] uses the registered Safe address for wallet reporting', () => {
+    mockUseContractBalance.balances.value = [
+      makeTokenBalance({ token: { name: 'Polygon', symbol: 'POL' }, amount: 0, usdPrice: 0.2 })
+    ]
     const safeAddress = '0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB'
     mockTeamStore.getContractAddressByType.mockReturnValue(safeAddress)
 
@@ -42,9 +67,31 @@ describe('[US-SAFE-001] [US-SAFE-002] SafeView.vue', () => {
     expect(wrapper.find('[data-test="safe-wallet-view"]').exists()).toBe(true)
     expect(wrapper.find('[data-test="safe-setup-view"]').exists()).toBe(false)
     expect(wrapper.findComponent({ name: 'SafeBalanceSection' }).props('address')).toBe(safeAddress)
-    expect(wrapper.findComponent({ name: 'TokenHoldingsSection' }).props('address')).toBe(
-      safeAddress
-    )
+    expect(wrapper.findComponent({ name: 'TokenHoldingsSection' }).props('compact')).toBe(true)
+    const rows = wrapper.findComponent({ name: 'TokenHoldingsSection' }).props('rows')
+    expect(rows).toHaveLength(1)
+    expect(rows[0]).toMatchObject({ token: { name: 'Polygon', symbol: 'POL' }, quantity: '0' })
     expect(wrapper.findComponent({ name: 'SafeOwnersCard' }).props('address')).toBe(safeAddress)
+  })
+
+  it('updates the existing holdings table when query data changes after mounting', async () => {
+    mockTeamStore.getContractAddressByType.mockReturnValue(
+      '0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB'
+    )
+    mockUseContractBalance.balances.value = [
+      makeTokenBalance({ token: { name: 'Polygon', symbol: 'POL' }, amount: 1, usdPrice: 0.2 })
+    ]
+    const wrapper = shallowMount(SafeView)
+    const table = wrapper.findComponent({ name: 'TokenHoldingsSection' })
+    expect(table.props('rows')[0]).toMatchObject({ quantity: '1', balance: 0.2 })
+    mockUseContractBalance.balances.value = [
+      makeTokenBalance({ token: { name: 'Polygon', symbol: 'POL' }, amount: 2, usdPrice: 0.2 })
+    ]
+    await flushPromises()
+    expect(table.props('rows')[0]).toMatchObject({ quantity: '2', balance: 0.4 })
+    mockUseContractBalance.balances.value = []
+    await flushPromises()
+    expect(table.props('rows')).toEqual([])
+    wrapper.unmount()
   })
 })

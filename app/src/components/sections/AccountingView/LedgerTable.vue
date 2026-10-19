@@ -109,13 +109,27 @@
 
     <template #quantity-cell="{ row: { original: row } }">
       <div v-if="!row.isTotal" class="text-muted text-right text-sm tabular-nums">
-        {{ row.quantity }}
+        <LedgerPrecisionCell
+          :value="row.quantityDisplay ?? row.quantity"
+          label="Exact quantity"
+          :detail="
+            row.currency && row.quantity !== 'Unavailable'
+              ? `${row.quantity} ${row.currency}`
+              : undefined
+          "
+        />
       </div>
     </template>
 
     <template #rate-cell="{ row: { original: row } }">
       <div v-if="!row.isTotal" class="text-muted text-right text-sm tabular-nums">
-        {{ row.rate }}
+        <LedgerPrecisionCell
+          :value="row.rate"
+          label="Recorded rate"
+          :detail="
+            row.currency && row.rate !== 'Unavailable' ? `${row.rate} / ${row.currency}` : undefined
+          "
+        />
       </div>
     </template>
 
@@ -154,6 +168,7 @@ import { computed } from 'vue'
 import type { TableColumn } from '@nuxt/ui'
 import LedgerActivityCell from './LedgerActivityCell.vue'
 import LedgerColumnHeader from './LedgerColumnHeader.vue'
+import LedgerPrecisionCell from './LedgerPrecisionCell.vue'
 import { useActivityDestination } from '@/composables/accounting/useActivityDestination'
 import { NETWORK } from '@/constant'
 import { formatTxHash } from '@/utils/format'

@@ -12,14 +12,15 @@ rules belong in platform guides, and code and tests remain executable evidence.
 5. [Feature Documentation Guide](./platform/feature-specification-guide.md) — authoring and human review contract.
 6. [Contribution Guide](../CONTRIBUTION.md) — repository workflow and validation.
 
-The [Implementation Status](./03_IMPLEMENTATION_STATUS.md) and [Roadmap](./ROADMAP.md) are dated planning snapshots. Verify current delivery
-in the relevant feature README, code, tests, and GitHub state before relying on a status claim.
+The [Roadmap](./ROADMAP.md) describes strategic direction and links current planning. Use the relevant feature README for product status and
+GitHub issues and pull requests for delivery state.
 
 ## Documentation Ownership
 
 | Question                                         | Source of truth                                            |
 | ------------------------------------------------ | ---------------------------------------------------------- |
 | Why does CNC Portal exist?                       | [Project Charter](./01_PROJECT_CHARTER.md)                 |
+| Which outcomes are being considered next?        | [Roadmap](./ROADMAP.md) and GitHub planning issues         |
 | Which product capabilities can users reach?      | [Product Feature Inventory](./features/README.md)          |
 | What should a user be able to do in one feature? | `docs/features/<feature>/README.md`                        |
 | Has that behaviour passed human review?          | Feature status, review date, and validation statement      |

@@ -4,7 +4,27 @@
 journal, including the persisted counter-account assignments it consumes. Accounting report projections consume that journal on demand. This
 model does not create or persist manual journal entries.
 
-**Last verified:** 2026-09-12
+**Last verified:** 2026-10-07
+
+## Target Product Contract
+
+The [direct movement policy](../../features/accounting/direct-movement-policy.md) and canonical
+[US-ACCT-007–010](../../features/accounting/README.md#us-acct-007-review-direct-treasury-movements) define the next product boundary across
+all verified company-held contracts. They require shared, incrementally synchronized evidence; stable movement identity across domain
+histories and books; owner classification of eligible receipts; and reconciliation of asset quantities at a common block. Auxiliary holdings
+retain a distinct deployment account and explicit spendability restrictions. Shared infrastructure is not automatically company custody. The
+policy inventory records the inspected receivers and missing consumers.
+
+These requirements are not implemented by the client-side runtime described below. In particular, `rawContractTokenTransfers` reaches Bank
+history but is not consumed by `toJournalEntrySources`; Payroll and Expense eventless wallet receipts are missing; their deposit mappers
+assume internal funding; and Investor, Router, Campaign, Vesting, and governance holdings lack complete direct-movement discovery. Resolving
+an unknown source to an unresolved Bank account does not establish an internal transfer.
+
+The target shared backend snapshot must retain per-deployment and asset coverage, last verified block, source movement evidence,
+classification audit, and revision/completeness state. Domain views and every Accounting projection consume the same verified journal
+version. A requested sync discovers off-platform transfers; notification alone does not. Native evidence unavailable from the selected
+provider remains an explicit gap. Detailed provider, storage, and delivery choices belong to the bounded implementation work under
+[#2878](https://github.com/globe-and-citizen/cnc-portal/issues/2878); this product-definition change selects no new provider or runtime API.
 
 ## Consumers
 
@@ -32,7 +52,7 @@ flowchart LR
     feeds --> input
     assignments --> input
     input --> mapped[Pure JournalEntryDraft mapping]
-    mapped --> rateTargets[Native token and UTC date targets]
+    mapped --> rateTargets[Asset and UTC date targets]
     rateTargets --> rateCache[Immutable historical rate cache]
     rateCache --> valued[Rate-stamped drafts]
     mapped --> valued
@@ -50,33 +70,60 @@ flowchart LR
 ```
 
 `useCNCAccounting` calls the on-chain, Safe, and portal queries directly and owns their reactive state. It exposes only the journal, a
-grouped status, and a refresh operation. `useAccountingStatus` projects each applicable source into `loading`, `ready`, `partial`, or
-`failed`; a source that does not apply is `not-applicable`. A fatal company failure takes precedence, then loading, then partial evidence.
-Contract event feeds retain their domain events and completeness gaps together as `{ events, gaps, timestampGaps }` in the standard TanStack
-query `data`. Only `ready` mounts the nested reports, so a balanced subset cannot be mistaken for final books. Typed diagnostics identify
-source errors, contract-scan gaps, unavailable block timestamps, orphan fees, receipt failures, and unavailable rates. The parent Accounting
-route remains mounted while its report child changes, so the shared context prevents those reports from independently fetching and
-assembling the same books. The team workspace gives that route owner a stable key within one team and a new key when the team identifier
-changes. Its three pure runtime stages are `buildCncJournalEntryDrafts(CncAccountingInput)`, `applyHistoricalRates(drafts, rateOfRecord)`,
-and `assembleWithAccountEvidence(drafts, deploymentAccounts, evidence, accountAssignments)`, which returns the journal and reconciliation
+grouped status, and a refresh operation. Pure [generation resolution](../../../app/src/utils/accounting/contractGenerations.ts) owns
+contract grouping, current-generation preference, and scan boundaries. `buildAccountingContractGenerations` retains every Officer deployment
+and current contracts absent from its history; `flattenAccountingGenerationContracts` shapes their deployment identities;
+`buildContractEventScanTargets` pairs each selected address with its own deployment block; `findPreferredCurrentContractAddress` selects the
+current address by the caller's contract-type preference for live reads. Missing deployment blocks leave the scan fallback to the log
+reader, and flattened administrative fields do not supply permission evidence;
+[source-status utilities](../../../app/src/utils/accounting/sourceStatus.ts) own source definitions and availability projection. The
+composables own computed dependencies and query orchestration. `useAccountingStatus` projects each applicable source into `loading`,
+`ready`, `partial`, or `failed`; a source that does not apply is `not-applicable`. A fatal company failure takes precedence, then loading,
+then partial evidence. Contract event feeds retain their domain events and completeness gaps together as `{ events, gaps, timestampGaps }`
+in the standard TanStack query `data`. Only `ready` mounts the nested reports, so a balanced subset cannot be mistaken for final books.
+Typed diagnostics identify source errors, contract-scan gaps, unavailable block timestamps, orphan fees, receipt failures, unavailable
+rates, and asset classification or basis gaps. The parent Accounting route remains mounted while its report child changes, so the shared
+context prevents those reports from independently fetching and assembling the same books. The team workspace gives that route owner a stable
+key within one team and a new key when the team identifier changes. Its three pure runtime stages are
+`buildCncJournalEntryDrafts(CncAccountingInput)`, `applyHistoricalRates(drafts, rateOfRecord)`, and
+`assembleWithAccountEvidence(drafts, deploymentAccounts, evidence, accountAssignments)`, which returns the journal and reconciliation
 diagnostics without Vue or network I/O.
 
-The incoming-transfer and executed-transaction Safe queries remain disabled until the reactive company Safe address resolves. Once enabled,
-the address is checksum-normalized before it enters the query key or Transaction Service request. Each query then follows the service's
-`next` links to exhaustion before publishing its array to Accounting. The configured `limit` controls the request page size rather than the
-total history returned. A later-page failure rejects the whole query instead of publishing a silently partial Safe history.
+Community Credit offer IDs and lifecycle balances are scoped by FixedReturn contract address because IDs restart after redeployment. The
+creation event supplies each generation's token and fixed-return basis points; Accounting does not borrow current-contract terms for old
+rounds. SHER multiplier-change events from every known SafeDepositRouter generation feed the date-ordered valuation timeline.
+
+The actual-transfer Safe query remains disabled until the reactive company Safe address resolves. Once enabled, the address is
+checksum-normalized before it enters the query key or Transaction Service request. The query follows the service's `next` links to
+exhaustion before publishing its array to Accounting. The configured `limit` controls the request page size rather than the total history
+returned. A later-page failure rejects the whole query instead of publishing a silently partial Safe history.
 
 Contract logs do not carry timestamps. `eventsViaLogs` resolves every distinct mined block through the shared TanStack Query client, keyed
 by network and block number with infinite staleness and garbage-collection time because a mined block is immutable. Concurrent event feeds
 and later refetches therefore share one block read. A failed block read or a decoded log without a block number does not receive a synthetic
 timestamp: the event is withheld and emitted as a typed source diagnostic, which keeps the Accounting route out of `ready`.
 
-The provisional draft feed derives one unique native-token target per UTC transaction date. `historicalTokenRate.queries.ts` resolves each
-target through the shared TanStack Query client using an atomic `coinId + date + USD` identity. A successful snapshot has infinite staleness
-and garbage-collection time because it is the immutable rate of record; concurrent operations and later refreshes reuse it. The aggregate
-target-set query remains retryable, so a failed or not-yet-published date can resolve on Accounting refresh without refetching successful
-dates. It never falls back to the current market price. Stablecoins retain their one-dollar peg, and SHER remains under its separate
-multiplier realization policy.
+The provisional draft feed derives one unique non-pegged asset target per required UTC transaction date. The
+[Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts) uses pure utilities to resolve configured coin
+identities and verified Polygon contract metadata, then consumes the independent raw snapshot queries in `coingecko.queries.ts` directly.
+Each snapshot uses an atomic `coinId + date + USD` identity and the once preset: successful data stays fresh without polling, and unused
+cache entries are retained for the lifetime of the query client. Concurrent consumers and later refreshes reuse successful snapshots. Pure
+response interpretation retains the existing six-decimal rate precision; malformed or missing prices stay explicit valuation gaps. Explicit
+Accounting refresh retries failed provider queries without refetching successful dates. It never falls back to the current market price.
+Stablecoins retain their one-dollar peg, and SHER remains under its separate multiplier realization policy.
+
+Safe histories now refresh approximately every five minutes while retaining complete pagination and stable transfer identities. CoinGecko
+queries use ordinary Axios/TanStack observers calling the CNC backend, with cancellation and no automatic retries. The backend's
+[shared Redis market cache](../market-data-cache/README.md) preserves raw responses, coordinates misses and provider admission, and shares a
+429 cooldown while continuing to serve valid cache hits. Distinct historical dates keep independent error states. Historical errors recover
+on explicit refresh rather than automatic polling. Current supported-token prices retain the moderate preset and five-minute polling;
+verified contract identities and recovered token metadata use the once preset with 24-hour retention. Safe Transaction Service reads use
+direct Axios requests, apply the bounded Safe-specific retry policy, and expose independent errors without a shared request queue or
+provider-wide cooldown. Their unused history cache inherits the moderate preset's two-minute retention. Production GETs use the optional
+configured API key through Axios. Complete pagination and stable transfer identities are preserved; metadata recovery shares the observer's
+TanStack client and copies enriched rows without mutating provider objects. Source inclusion, exchange classification, precision and
+rate-of-record policy remain unchanged. A failed later Safe page never publishes a partial replacement feed. See
+[Client Data Access](../client-data-access/README.md#browser-request-coordination) for the browser and shared-backend boundaries.
 
 Each contract-event query is also keyed by its normalized generation targets: lowercase address plus effective deployment `fromBlock`,
 sorted independently of API order. A later or asynchronously resolved boundary therefore selects a distinct history range. Duplicate
@@ -85,6 +132,69 @@ addresses retain the earliest boundary so no known portion of that deployment's 
 Investor history still scans both `InvestorV1` and current `Investor` deployments. Live SHER identity is separate from that historical
 collection: the current `Investor` address always takes precedence when both types exist in the current contract set, regardless of API
 ordering, and `InvestorV1` is used only when no current `Investor` exists.
+
+### Safe assets and exchanges
+
+Safe queries retain provider movements without local contract exclusions before source mapping and historical-rate target construction.
+Unknown, untrusted and spam-like events may therefore enter the existing mapping or create explicit completeness gaps. The Gateway's balance
+spam filter does not apply to this Transaction Service feed. See
+[provider filtering](../client-data-access/README.md#safe-provider-filtering). Existing exchange classification, missing-metadata and
+historical-valuation rules apply to every retained movement. Executable evidence:
+[Safe pagination and metadata unit tests](../../../app/src/queries/__tests__/safe.queries.spec.ts) and
+[Safe source-mapping tests](../../../app/src/utils/accounting/__tests__/safe.spec.ts).
+
+The authoritative Safe source is `/transfers/`, paginated to exhaustion, deduplicated by service `transferId`, and refreshed approximately
+every five minutes. It includes real ERC-20 `transferFrom` settlements that cannot be inferred from the Safe multisig call's top-level
+calldata. Missing token metadata is read from its contract when possible. Metadata must match the transfer's contract address; unsupported
+or absent decimals retain raw movements with a completeness diagnostic. The exact monetary layer currently supports token precision from
+zero through 18 decimals. A larger precision remains unavailable rather than being silently rounded or interpreted as native.
+
+Safe provider reads retry temporary 404, 408, 425, 429, server and network failures up to three times at fixed intervals. Rate-limit
+recovery respects `Retry-After`; cancellation, other client errors, malformed responses and an explicit monthly-quota-exceeded response do
+not retry automatically. A failed history read still rejects the entire replacement, preserving previously cached complete history. Gateway
+holdings and Safe information use the same recovery, except that a 404 for a newly deployed Safe keeps retrying for about three and a half
+minutes while Safe services index it. Neither changes journal classification or historical valuation.
+
+Dynamic assets carry an `erc20:<chainId>:<contractAddress>` identity and per-movement metadata. The fixed CNC payment allowlist is
+unchanged. Contract-address market discovery on Polygon resolves the provider coin identity before historical snapshots are requested. Local
+and test-network assets retain their own identities and cannot borrow Polygon market evidence. Missing market coverage or rate limits remain
+retryable gaps; current prices are used only in the Safe portfolio.
+
+`SAFE-SWAP` matches opposing different-asset movements with the same transaction and external counterparty. Complex or unmatched multi-asset
+operations are flagged for classification instead of treating their receipts as service revenue. Token mints in the same transaction are
+retained separately in `Unclassified Receipts`; their economic nature is not inferred from mint evidence alone.
+
+Journal finalization replays the full Safe history using weighted-average carrying basis. Acquired assets use their own contract-resolved
+historical market rate and exact received quantity; the stablecoin spent never implies their unit price or suppresses historical-rate
+requests. The provider snapshot is for the UTC transaction date, not a tick at the exact transaction second. Outgoing exchange lines remove
+the evidenced carrying amount; their displayed unit rate is carrying cost per unit, and exact carrying amounts avoid six-decimal
+rate-rounding residues. Incoming market valuations and realized differences balance the operation through `Asset Exchange Gain` or
+`Asset Exchange Loss`. Missing acquisition history or valuation produces zero-valued movement evidence and a partial status, never an
+invented basis. A prior non-exchange payment depleted at a different transaction-price valuation invalidates later automatic swap basis;
+other payment rules remain unchanged. Network/DEX fees are not inferred from an unexplained difference; standalone fee evidence remains
+necessary. Cross-transaction swap intents and arbitrary DeFi operations require additional protocol evidence and remain a boundary of
+automatic classification.
+
+The read-only Safe holdings use the Safe Client Gateway balance response for current wallet valuation. A nonzero supported holding with a
+missing, nonpositive, or nonfinite USD price keeps the total incomplete, just as unavailable discovered valuations do. A confirmed zero
+holding does not require a price. These current-price completeness checks do not change historical journal valuation. Optional
+contract-matched logo metadata is display-only. Safe holdings use compact amount labels while preserving the exact quantity for inspection;
+the rounding and logo metadata do not alter source movements, accounting classification, carrying values, or historical rates.
+
+Company summaries share the Gateway balance observers and read the known provider fiat total independently of holdings completeness. Price
+and value details preserve provider precision behind rounded table labels; these summary and display adapters do not change journal
+valuation.
+
+Implementation: [asset identity](../../../app/src/utils/tokens/assets.ts),
+[exchange carrying-value replay](../../../app/src/utils/accounting/safeExchanges.ts),
+[contract market discovery](../../../app/src/queries/coingecko.queries.ts),
+[Safe Client balances](../../../app/src/queries/safeClient.queries.ts), [Safe movement queries](../../../app/src/queries/safe.queries.ts),
+and [exchange regression tests](../../../app/src/utils/accounting/__tests__/safeExchanges.spec.ts) and
+[market-rate regressions](../../../app/src/utils/accounting/__tests__/safeExchanges.marketRates.spec.ts).
+
+Gateway balance responses are cached by Safe address, chain and fiat currency and show only returned balances, including zero balances. No
+configured base-currency rows are inserted. Provider metadata and order are retained. The global token resolver continues to supply existing
+Accounting identities and stablecoin valuation rules; the holdings correction does not remap journal entries or broaden payment allowlists.
 
 ### Runtime Export Boundary
 
@@ -274,7 +384,7 @@ assembled, records a typed gap, and keeps the report gate out of `ready`.
 flowchart LR
     input[CncAccountingInput] --> context[JournalEntrySources and MapperContext]
     context --> mapped[Mapped JournalEntryDraft evidence]
-    mapped --> rateTargets[Native token and UTC date targets]
+    mapped --> rateTargets[Asset and UTC date targets]
     rateTargets --> rateCache[Immutable historical rate cache]
     rateCache --> drafts[Rate-resolved JournalEntryDraft evidence]
     mapped --> drafts
@@ -472,6 +582,8 @@ it to an earlier or later deployment based on activity order.
 - Trial Balance grouping uses `AccountId`, not a display label or a contract-generation order.
 - Balance Sheet account lines reuse the Trial Balance grouping by `AccountId`. The account's family supplies its account class and normal
   balance; a later deployment or unresolved account never merges into another deployment before the report line and drill-down are selected.
+  Selecting the account label, Details indicator, or row opens the matching line by its stable account ID, including when the table wraps
+  account objects in reactive proxies.
 - Earnings to date is calculated from the same Trial Balance income and expense rows. The supporting rows remain concrete and drillable;
   their signed contributions are the only temporary-account aggregate added to total equity.
 - A deployment-specific instance is resolved only when it is a known company deployment of the matching family, either named directly by the
@@ -530,15 +642,20 @@ separate fee entry in this projection. Ledger action and transaction labels are 
 source use-case evidence; no persisted presentation category participates. The General Ledger renders the transaction hash once on the
 entry's first line and preserves its full value in PDF and spreadsheet exports; synthetic operations have no transaction-hash value. A
 transaction-backed hash links to the configured network block explorer in a separate tab. Activity narration and exported activity text
-reuse the canonical address and duration formatters rather than maintaining Accounting-specific display rules. Every visible General Ledger
-column, including the account drill-down Balance column, has bounded widths and supports pointer, touch, and keyboard resizing; a
-double-click restores its default width. JournalEntry assembly groups source postings and withholds a `FeePaid` source without matching
-Bank-outflow evidence, returning it as a reconciliation gap. Bank fees are collected from each supported generation: V0/V0.1 local events
-infer an ERC-20 currency only from the next movement in the same transaction and Bank, while V1/V2 query their version-specific
-FeeCollectors by payer. Those protocol FeeCollectors are not part of the company's internal-pocket registry. Account and statement
-drill-downs select complete JournalEntry records by a concrete Account or account family, then flatten their validated lines for display and
-exports. Their running balances update only on lines posted to the selected account; an aggregate statement line has no single running
-balance. A fee remains an ordinary line of the source operation in every drill-down.
+reuse the canonical address and duration formatters rather than maintaining Accounting-specific display rules. Quantity cells use a separate
+six-decimal display label while their complete decimal-string quantity remains available for inspection and export. Positive quantities that
+would round to zero display `<0.000001`. Rate cells retain the recorded six-decimal rate with trailing zeros trimmed; their details identify
+the recorded USD price per token rather than claiming precision beyond the journal's rate scale. Both cells expose details through a hover
+tooltip, keyboard focus, or a tap-generated click, with Escape and focus loss dismissing the detail. Unavailable and absent movements remain
+plain text. No formatted label participates in valuation, debit/credit sums, or running balances. Every visible General Ledger column,
+including the account drill-down Balance column, has bounded widths and supports pointer, touch, and keyboard resizing; a double-click
+restores its default width. JournalEntry assembly groups source postings and withholds a `FeePaid` source without matching Bank-outflow
+evidence, returning it as a reconciliation gap. Bank fees are collected from each supported generation: V0/V0.1 local events infer an ERC-20
+currency only from the next movement in the same transaction and Bank, while V1/V2 query their version-specific FeeCollectors by payer.
+Those protocol FeeCollectors are not part of the company's internal-pocket registry. Account and statement drill-downs select complete
+JournalEntry records by a concrete Account or account family, then flatten their validated lines for display and exports. Their running
+balances update only on lines posted to the selected account; an aggregate statement line has no single running balance. A fee remains an
+ordinary line of the source operation in every drill-down.
 
 All report identities, totals, and drill-down running balances above use the exact fixed-scale journal integers. Presenters and exporters
 convert those values to numbers and apply human-readable rounding only after the selected snapshot and its aggregates have been calculated;
@@ -601,14 +718,13 @@ because deposits and company-pocket transfers are not manual assignment targets.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `006685cb46c8408101e785b258482092a1e63f70`
+**Implementation evidence reviewed against:** `008826d0d841f19c967c8ff477a7e9c452ee7398`
 
 - [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts),
   [source-status projection](../../../app/src/composables/accounting/useAccountingStatus.ts),
   [shared accounting context](../../../app/src/composables/accounting/useAccountingContext.ts),
   [reactive paginated Safe history queries](../../../app/src/queries/safe.queries.ts),
-  [Safe query behaviour tests](../../../app/src/queries/__tests__/safe.queries.spec.ts), and
-  [Safe address reactivity test](../../../app/src/queries/__tests__/safe.queries.integration.spec.ts)
+  [Safe pagination and metadata unit tests](../../../app/src/queries/__tests__/safe.queries.spec.ts)
 - [Persistent Accounting route](../../../app/src/router/index.ts),
   [team route-owner lifetime](../../../app/src/views/team/%5Bid%5D/ShowIndex.vue), and
   [Accounting report route views](../../../app/src/views/team/%5Bid%5D/Accounting/)
@@ -621,9 +737,10 @@ because deposits and company-pocket transfers are not manual assignment targets.
   [block timestamp cache tests](../../../app/src/queries/__tests__/blockTimestamp.queries.spec.ts),
   [event-query identity tests](../../../app/src/composables/__tests__/eventsViaLogs.spec.ts), and
   [Investor source-resolution tests](../../../app/src/composables/accounting/__tests__/useCNCAccounting.spec.ts)
-- [Immutable historical token-rate query](../../../app/src/queries/historicalTokenRate.queries.ts),
+- [Immutable historical token-rate query](../../../app/src/queries/coingecko.queries.ts),
+  [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts),
   [valuation utilities](../../../app/src/utils/accounting/toUsd.ts),
-  [historical rate cache tests](../../../app/src/queries/__tests__/historicalTokenRate.queries.spec.ts), and
+  [CoinGecko endpoint unit tests](../../../app/src/queries/__tests__/coingecko.queries.spec.ts), and
   [valuation and missing-rate retention tests](../../../app/src/utils/accounting/__tests__/toUsd.spec.ts)
 - [Accounting source contracts](../../../app/src/utils/accounting/types.ts),
   [pure completeness projection](../../../app/src/utils/accounting/accountingCompleteness.ts), and
@@ -657,7 +774,8 @@ because deposits and company-pocket transfers are not manual assignment targets.
   [statement presenter](../../../app/src/utils/accounting/presenter.ts), and
   [Balance Sheet route view](../../../app/src/views/team/%5Bid%5D/Accounting/BalanceSheetView.vue),
   [Balance Sheet table](../../../app/src/components/sections/AccountingView/BalanceSheetTable.vue), and
-  [Balance Sheet tests](../../../app/src/utils/accounting/__tests__/balanceSheet.spec.ts)
+  [Balance Sheet tests](../../../app/src/utils/accounting/__tests__/balanceSheet.spec.ts) and
+  [Balance Sheet drill-down tests](../../../app/src/views/team/%5Bid%5D/Accounting/__tests__/BalanceSheetDrilldown.spec.ts)
 - [Chart of accounts](../../../app/src/utils/accounting/chartOfAccounts.ts) and
   [concrete account registry](../../../app/src/utils/accounting/accountRegistry.ts), and
   [account-instance evidence resolver](../../../app/src/utils/accounting/accountInstances.ts)
@@ -672,6 +790,7 @@ because deposits and company-pocket transfers are not manual assignment targets.
   [General Ledger journal presenter](../../../app/src/utils/accounting/journalLedgerPresenter.ts)
 - [General Ledger route view](../../../app/src/views/team/%5Bid%5D/Accounting/GeneralLedgerView.vue),
   [General Ledger table](../../../app/src/components/sections/AccountingView/LedgerTable.vue),
+  [precision detail cell](../../../app/src/components/sections/AccountingView/LedgerPrecisionCell.vue),
   [drill-down modal](../../../app/src/components/sections/AccountingView/LedgerDrilldownModal.vue),
   [drill-down composable](../../../app/src/composables/accounting/useLedgerDrilldown.ts), and
   [account drill-down utilities](../../../app/src/utils/accounting/accountLedger.ts),
@@ -690,6 +809,8 @@ because deposits and company-pocket transfers are not manual assignment targets.
   [transaction evidence tests](../../../app/src/composables/accounting/__tests__/useTransactionEvidence.spec.ts),
   [account-registry tests](../../../app/src/utils/accounting/__tests__/accountRegistry.spec.ts),
   [General Ledger table tests](../../../app/src/components/sections/AccountingView/__tests__/LedgerRedeployLabel.spec.ts),
+  [precision detail tests](../../../app/src/components/sections/AccountingView/__tests__/LedgerPrecisionCell.spec.ts),
+  [export quantity regressions](../../../app/src/lib/accounting/__tests__/generalLedgerPrecision.spec.ts),
   [journal General Ledger tests](../../../app/src/utils/accounting/__tests__/journalLedgerPresenter.spec.ts), and
   [journal and Trial Balance tests](../../../app/src/utils/accounting/__tests__/generalLedger.spec.ts), and
   [journal statement-projection tests](../../../app/src/utils/accounting/__tests__/journalAssembly.spec.ts), and

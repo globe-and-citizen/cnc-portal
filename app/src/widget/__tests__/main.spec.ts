@@ -1,5 +1,9 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 
+// Styles are verified by the widget build; these tests exercise its runtime API
+// and rendered states without compiling the full Tailwind stylesheet on import.
+vi.mock('../style.css?inline', () => ({ default: '' }))
+
 // `main.ts` reads its config off the widget's own <script data-bank> tag and
 // assigns `window.CncPay` as a side effect of being imported — so each case
 // needs a fresh module instance with its own DOM state set up beforehand.

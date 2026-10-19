@@ -104,7 +104,7 @@ const contractBalanceState = {
   total: ref(defaultContractTotal()),
   hasData: ref(true),
   isLoading: ref(false),
-  error: ref(null),
+  error: ref<Error | null>(null),
   isFetching: ref(false),
   refetch: vi.fn()
 }
@@ -371,6 +371,8 @@ export const useQueryFn = vi.fn(() => ({
   isLoading: vi.fn(),
   error: vi.fn()
 }))
+
+export const useQueriesFn = vi.fn(() => ref([]))
 
 /**
  * Stable spy for `queryClient.invalidateQueries` — opt-in.

@@ -8,6 +8,8 @@ import type { SafeIncomingTransfer, SafeTransaction } from '@/types/safe'
 import type { SafeDepositRow } from '@/types/contract-events/investor'
 import { transactionHashOf } from '@/utils/accounting/journalEntryDraft'
 import type { SafeTransferRow } from '@/utils/accounting/mappers/safe'
+import { currentChainId } from '@/constant'
+import { assetMetadata } from '@/utils/tokens/assets'
 
 /** A SHER value transfer carries no cash; skip NFT moves entirely. */
 function isMonetaryTransfer(t: SafeIncomingTransfer): boolean {
@@ -43,7 +45,8 @@ function routerDepositTransactions(
  */
 export function toSafeTransferRows(
   transfers: readonly SafeIncomingTransfer[] | null | undefined,
-  routerDeposits?: readonly SafeDepositRow[] | null
+  routerDeposits?: readonly SafeDepositRow[] | null,
+  chainId = currentChainId
 ): SafeTransferRow[] {
   const routedTransactions = routerDepositTransactions(routerDeposits)
   const rows: SafeTransferRow[] = []
@@ -51,10 +54,13 @@ export function toSafeTransferRows(
     if (!isMonetaryTransfer(t)) return
     if (routedTransactions.has(t.transactionHash.toLowerCase())) return
     rows.push({
-      id: `${t.transactionHash}-${index}`,
+      id: t.transferId ?? `${t.transactionHash}-${index}`,
       from: t.from,
       to: t.to,
-      token: t.type === 'ERC20_TRANSFER' ? (t.tokenAddress ?? null) : null,
+      token: t.type === 'ERC20_TRANSFER' ? (t.tokenAddress ?? 'unknown') : null,
+      ...(t.type === 'ERC20_TRANSFER'
+        ? { asset: assetMetadata(t.tokenAddress ?? 'unknown', chainId, t.tokenInfo) }
+        : {}),
       amount: t.value,
       timestamp: Math.floor(new Date(t.executionDate).getTime() / 1000),
       txHash: t.transactionHash

@@ -96,7 +96,7 @@ describe('buildBalanceSheet', () => {
     expect(balance.balanced).toBe(true)
   })
 
-  it('keeps later and unresolved Bank accounts separate and drillable', () => {
+  it('[AC-US-ACCT-003-08] keeps later and unresolved Bank accounts separate and drillable', () => {
     const bank1 = '0x1111111111111111111111111111111111111111'
     const bank2 = '0x2222222222222222222222222222222222222222'
     const journal = finalizeJournal([

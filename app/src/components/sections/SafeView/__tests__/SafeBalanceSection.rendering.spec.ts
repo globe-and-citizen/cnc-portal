@@ -11,6 +11,7 @@ import {
   useQueryClientFn
 } from '@/tests/mocks'
 import { mockUserStore } from '@/tests/mocks/store.mock'
+import { mockUseSafeBalances } from '@/tests/mocks/safeBalances.mock'
 
 // Mock @iconify/vue
 vi.mock('@iconify/vue', () => ({
@@ -45,14 +46,15 @@ const {
 }))
 
 // Mock external dependencies
-vi.mock('@/composables/safe', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@/composables/safe')>()
+vi.mock('@/utils/safe/model', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/utils/safe/model')>()
   return {
     ...actual,
-    getSafeHomeUrl: mockGetSafeHomeUrl,
-    openSafeAppUrl: mockOpenSafeAppUrl
+    getSafeHomeUrl: mockGetSafeHomeUrl
   }
 })
+
+vi.mock('@/lib/safe/browser', () => ({ openSafeAppUrl: mockOpenSafeAppUrl }))
 
 vi.mock('@/queries/safe.queries', () => ({
   useGetSafeInfoQuery: mockuseGetSafeInfoQuery
@@ -136,6 +138,10 @@ describe('[US-SAFE-002] SafeBalanceSection rendering', () => {
   let wrapper: VueWrapper
   const mockCurrency = ref(MOCK_DATA.defaultCurrency)
   const mockSafeInfo = ref<typeof MOCK_DATA.safeInfo | null>(MOCK_DATA.safeInfo)
+  const mockSafeInfoLoading = ref(false)
+  const mockSafeInfoFailure = ref<Error | null>(null)
+  const notIndexed = () =>
+    Object.assign(new Error('Safe not indexed'), { response: { status: 404 } })
 
   const createWrapper = (props = {}) =>
     mount(SafeBalanceSection, {
@@ -163,8 +169,9 @@ describe('[US-SAFE-002] SafeBalanceSection rendering', () => {
 
     mockuseGetSafeInfoQuery.mockReturnValue({
       data: mockSafeInfo,
-      isLoading: ref(false),
+      isLoading: mockSafeInfoLoading,
       error: ref(null),
+      failureReason: mockSafeInfoFailure,
       refetch: vi.fn()
     })
 
@@ -197,6 +204,8 @@ describe('[US-SAFE-002] SafeBalanceSection rendering', () => {
 
     // Reset reactive values
     mockSafeInfo.value = MOCK_DATA.safeInfo
+    mockSafeInfoLoading.value = false
+    mockSafeInfoFailure.value = null
   })
 
   afterEach(() => {
@@ -204,6 +213,11 @@ describe('[US-SAFE-002] SafeBalanceSection rendering', () => {
   })
 
   describe('Component Rendering', () => {
+    it('[AC-US-SAFE-003-11] marks the wallet total incomplete when a discovered holding cannot be valued', () => {
+      mockUseSafeBalances.isIncomplete.value = true
+      wrapper = createWrapper()
+      expect(wrapper.get('[data-test="safe-total-usd"]').text()).toBe('Incomplete')
+    })
     it('[AC-US-SAFE-002-01] renders Safe holdings and their local-currency value', () => {
       wrapper = createWrapper()
 
@@ -216,6 +230,45 @@ describe('[US-SAFE-002] SafeBalanceSection rendering', () => {
       wrapper = createWrapper()
 
       expect(wrapper.find('[data-test="safe-balance-loading"]').exists()).toBe(true)
+    })
+
+    it('[AC-US-SAFE-002-10] explains a not-yet-indexed Safe instead of reporting a failure', () => {
+      mockUseContractBalance.isLoading.value = true
+      mockUseSafeBalances.failureReason.value = notIndexed()
+      wrapper = createWrapper()
+
+      expect(wrapper.find('[data-test="safe-indexing-notice"]').exists()).toBe(true)
+      expect(wrapper.find('[data-test="safe-overview-error"]').exists()).toBe(false)
+      expect(wrapper.find('[data-test="safe-balance-loading"]').exists()).toBe(true)
+    })
+
+    it('shows the indexing notice while Safe information waits for indexing', () => {
+      mockSafeInfo.value = null
+      mockSafeInfoLoading.value = true
+      mockSafeInfoFailure.value = notIndexed()
+      wrapper = createWrapper()
+
+      expect(wrapper.find('[data-test="safe-indexing-notice"]').exists()).toBe(true)
+    })
+
+    it('keeps the plain loader while another temporary failure is retried', () => {
+      mockUseContractBalance.isLoading.value = true
+      mockUseSafeBalances.failureReason.value = Object.assign(new Error('Unavailable'), {
+        response: { status: 503 }
+      })
+      wrapper = createWrapper()
+
+      expect(wrapper.find('[data-test="safe-indexing-notice"]').exists()).toBe(false)
+      expect(wrapper.find('[data-test="safe-balance-loading"]').exists()).toBe(true)
+    })
+
+    it('reports the failure once indexing recovery ends', () => {
+      mockUseSafeBalances.failureReason.value = notIndexed()
+      mockUseContractBalance.error.value = notIndexed()
+      wrapper = createWrapper()
+
+      expect(wrapper.find('[data-test="safe-overview-error"]').exists()).toBe(true)
+      expect(wrapper.find('[data-test="safe-indexing-notice"]').exists()).toBe(false)
     })
 
     it('shows fallback values when safeInfo is null', () => {
@@ -262,8 +315,8 @@ describe('[US-SAFE-002] SafeBalanceSection rendering', () => {
       expect(wrapper.find('[data-test="transfer-modal"]').exists()).toBe(false)
     })
 
-    it('renders no token rows when the token list is empty', async () => {
-      mockUseContractBalance.balances.value = [] as typeof mockUseContractBalance.balances.value
+    it('uses an empty transfer selection before the balances response is available', async () => {
+      mockUseContractBalance.hasData.value = false
       wrapper = createWrapper()
 
       await wrapper.find('[data-test="transfer-button"]').trigger('click')

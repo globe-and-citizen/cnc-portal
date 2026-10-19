@@ -1,4 +1,5 @@
 import { execFileSync, spawnSync } from 'node:child_process'
+import { existsSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 
 function git(args) {
@@ -7,7 +8,7 @@ function git(args) {
 
 const markdownFiles = git(['ls-files', '-z'])
   .split('\0')
-  .filter((file) => file.endsWith('.md'))
+  .filter((file) => file.endsWith('.md') && existsSync(file))
 
 if (markdownFiles.length === 0) {
   console.log('No tracked Markdown files to format-check.')

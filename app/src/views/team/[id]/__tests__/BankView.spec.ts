@@ -1,4 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest'
+import { tokenHoldingRows } from '@/utils/tokens/holdings'
+import { mockUseContractBalance } from '@/tests/mocks/composables.mock'
 import { shallowMount } from '@vue/test-utils'
 import type { VueWrapper } from '@vue/test-utils'
 import type { ComponentPublicInstance } from 'vue'
@@ -30,10 +32,10 @@ describe('[US-BANK-003] BankView', () => {
       )
     })
 
-    it('passes bankBalanceSection ref to TokenHoldingsSection', () => {
+    it('passes priced balance rows to TokenHoldingsSection', () => {
       const tokenHoldingsSection = wrapper.findComponent({ name: 'TokenHoldingsSection' })
-      expect(tokenHoldingsSection.props('address')).toBe(
-        mockTeamStore.getContractAddressByType('Bank')
+      expect(tokenHoldingsSection.props('rows')).toEqual(
+        tokenHoldingRows(mockUseContractBalance.data.value)
       )
     })
 

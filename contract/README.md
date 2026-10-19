@@ -113,7 +113,8 @@ Track every deployed change in [`CHANGELOG.md`](./CHANGELOG.md).
 The prepared four-contract Polygon 2.0.1 release is documented in [`releases/polygon-v2.0.1.md`](./releases/polygon-v2.0.1.md). Its guarded
 script validates and upgrades CashRemunerationEIP712, ExpenseAccountEIP712, Investor, and Officer sequentially; it never deploys replacement
 proxies or beacons. It intentionally targets Polygon only: fresh local deployments already receive the current implementations through
-`deploy.sh`. See the [upgrade-module guide](./ignition/modules/README.md) to prepare a later contract upgrade.
+`deploy.sh`. The targeted [Expense Account 2.0.2 release](./releases/polygon-v2.0.2.md) uses its own guarded recipe and version checks. See
+the [upgrade-module guide](./ignition/modules/README.md) to prepare a later contract upgrade.
 
 ## Security review
 

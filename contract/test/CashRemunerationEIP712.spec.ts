@@ -125,6 +125,15 @@ describe('CashRemuneration*** (EIP712)', () => {
           .withArgs(employer.address, amount)
       })
 
+      it('[AC-US-PAYROLL-003-04] credits a supported ERC-20 sent directly from a wallet', async () => {
+        const amount = ethers.parseUnits('12', 18)
+        const before = await mockUSDC.balanceOf(verifyingContract)
+        await mockUSDC.mint(employer.address, amount)
+        await mockUSDC.connect(employer).transfer(verifyingContract, amount)
+
+        expect(await mockUSDC.balanceOf(verifyingContract)).to.equal(before + amount)
+      })
+
       it('Then I can get the contract balance', async () => {
         const balance = await cashRemunerationProxy.getBalance()
         expect(balance).to.be.equal(ethers.parseEther('5000'))

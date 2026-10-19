@@ -1,8 +1,10 @@
 import { describe, it, expect } from 'vitest'
+import { AxiosError, type AxiosResponse } from 'axios'
 import { zeroAddress } from 'viem'
 import { NETWORK, USDC_ADDRESS } from '@/constant'
 import {
   getSafeHomeUrl,
+  isSafeNotIndexedError,
   formatSafeTransactionValue,
   getExecutedErc20TransferTokenAddress,
   getSafeTransactionMethod,
@@ -18,11 +20,30 @@ const CHECKSUM_SAFE_ADDRESS = '0x0557F280D9DA274254e85Ee70c2936694e494275'
 
 describe('safe utils', () => {
   it('builds Safe home URLs with chain fallback', () => {
-    expect(getSafeHomeUrl(137, LOWERCASE_SAFE_ADDRESS)).toContain(
-      `polygon:${CHECKSUM_SAFE_ADDRESS}`
-    )
+    expect(getSafeHomeUrl(137, LOWERCASE_SAFE_ADDRESS)).toContain(`matic:${CHECKSUM_SAFE_ADDRESS}`)
     expect(getSafeHomeUrl(999999, LOWERCASE_SAFE_ADDRESS)).toContain(
       `ethereum:${CHECKSUM_SAFE_ADDRESS}`
+    )
+  })
+
+  describe('isSafeNotIndexedError', () => {
+    const httpFailure = (status: number) =>
+      new AxiosError('Safe provider failure', 'ERR_BAD_REQUEST', undefined, undefined, {
+        status
+      } as AxiosResponse)
+
+    it('recognises the 404 Safe services return before indexing a Safe', () => {
+      expect(isSafeNotIndexedError(httpFailure(404))).toBe(true)
+      expect(isSafeNotIndexedError(Object.assign(new Error('Not found'), { status: 404 }))).toBe(
+        true
+      )
+    })
+
+    it.each([httpFailure(503), httpFailure(429), new Error('Network Error'), null, undefined])(
+      'rejects any other failure: %s',
+      (error) => {
+        expect(isSafeNotIndexedError(error)).toBe(false)
+      }
     )
   })
 
@@ -55,7 +76,7 @@ describe('safe utils', () => {
       expect(result).toBe('1 USDC')
     })
 
-    it('falls back to native symbol when token is unknown or invalid value', () => {
+    it('keeps unknown ERC-20 transfers distinct from native amounts', () => {
       const unknown = formatSafeTransactionValue(
         '0',
         {
@@ -67,7 +88,7 @@ describe('safe utils', () => {
         } as never,
         '0xUnknownToken'
       )
-      expect(unknown).toContain(NETWORK.currencySymbol)
+      expect(unknown).toBe('Token transfer (metadata unavailable)')
 
       expect(formatSafeTransactionValue('not-a-number')).toBe(`0 ${NETWORK.currencySymbol}`)
     })

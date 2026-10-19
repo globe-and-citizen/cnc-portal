@@ -33,6 +33,43 @@ function posting(
 }
 
 describe('journalLedgerPresenter', () => {
+  it('compacts token quantities without changing journal amounts or export quantities', () => {
+    const journal = finalizeJournal([
+      posting({
+        id: 'fractional-native',
+        token: 'native',
+        rawAmount: '381862376267664',
+        rate: 2698.41899
+      })
+    ])
+    const original = structuredClone(journal)
+    const rows = journalLedgerRows(journal)
+
+    expect(rows[0]).toMatchObject({
+      quantity: '0.000381862376267664',
+      quantityDisplay: '0.000382',
+      rate: '$2,698.41899'
+    })
+    expect(rows[1]!.quantityDisplay).toBe('0.000382')
+    expect(journal).toEqual(original)
+  })
+
+  it('trims padding zeros and identifies positive quantities below display precision', () => {
+    const journal = finalizeJournal([
+      posting({ id: 'tiny-native', token: 'native', rawAmount: '1' }),
+      posting({ id: 'whole-usdc', rawAmount: '1000000' }),
+      posting({ id: 'fractional-native', token: 'native', rawAmount: '286595379927822735' })
+    ])
+    const quantities = journalLedgerRows(journal).map((row) => row.quantityDisplay)
+
+    expect(quantities).toContain('<0.000001')
+    expect(quantities).toContain('1')
+    expect(quantities).toContain('0.286595')
+    expect(
+      journalLedgerRows(journal).find((row) => row.quantityDisplay === '<0.000001')!.quantity
+    ).toBe('0.000000000000000001')
+  })
+
   it('keeps a multi-currency wage in one journal entry when either currency is selected', () => {
     const txHash = `0x${'c'.repeat(64)}`
     const usdc = posting({

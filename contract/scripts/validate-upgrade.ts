@@ -2,6 +2,7 @@ import hre from 'hardhat'
 import { upgrades as createUpgrades } from '@openzeppelin/hardhat-upgrades'
 import fs from 'node:fs'
 import path from 'node:path'
+import { assertImplementationVersion } from './lib/implementation-version.js'
 
 type ContractConfig = {
   name: string
@@ -262,6 +263,15 @@ async function validateContract(
   const contractName = config.name
   const errors: string[] = []
   const warnings: string[] = []
+  const expectedVersion = process.env.CNC_EXPECTED_IMPLEMENTATION_VERSION
+  if (expectedVersion) {
+    await assertImplementationVersion(
+      connection,
+      contractName,
+      expectedVersion,
+      config.constructorArgs
+    )
+  }
 
   try {
     const Factory = await connection.ethers.getContractFactory(contractName)

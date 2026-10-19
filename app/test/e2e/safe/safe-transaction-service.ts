@@ -16,6 +16,7 @@ export interface SafeTransactionServiceOptions {
   failConfirmationRequests?: number
   failSafeInfoRequests?: number
   incomingTransfers?: SafeIncomingTransfer[]
+  assetTransfers?: SafeIncomingTransfer[]
   transactions?: SafeTransaction[]
   user: E2EUser
 }
@@ -194,6 +195,18 @@ export async function stubSafeTransactionService(
     }
     if (method === 'GET' && pathname.endsWith('/incoming-transfers/')) {
       const results = incomingTransfers.filter((transfer) => sameAddress(transfer.to, safeAddress))
+      return json({ next: null, results })
+    }
+    if (method === 'GET' && pathname.endsWith('/transfers/')) {
+      const results = (options.assetTransfers ?? incomingTransfers)
+        .filter(
+          (transfer) =>
+            sameAddress(transfer.to, safeAddress) || sameAddress(transfer.from, safeAddress)
+        )
+        .map((transfer, index) => ({
+          ...transfer,
+          transferId: transfer.transferId ?? `${transfer.transactionHash}-${index}`
+        }))
       return json({ next: null, results })
     }
     if (method === 'POST' && pathname.endsWith('/multisig-transactions/')) {

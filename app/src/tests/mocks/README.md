@@ -17,7 +17,7 @@ This directory contains centralized mock definitions that provide consistent tes
 import {
   mockERC20Reads,
   mockERC20Writes,
-  mockToastStore,
+  mockToast,
   resetERC20Mocks,
 } from "@/tests/mocks";
 
@@ -27,7 +27,7 @@ beforeEach(() => {
 
 it("should handle token operations", () => {
   mockERC20Reads.allowance.data.value = 1000n;
-  mockERC20Writes.approve.executeWrite.mockResolvedValue(undefined);
+  mockERC20Writes.approve.mutateAsync.mockResolvedValue(undefined);
   // Test component...
 });
 ```
@@ -39,4 +39,4 @@ it("should handle token operations", () => {
 ## Complete Documentation
 
 👉 **For comprehensive usage guide, examples, and best practices:**  
-**[Global Mock System Documentation](../../../../docs/MOCK_SYSTEM.md)**
+**[Global Mock System Documentation](../../../../docs/testing/MOCK_SYSTEM.md)**

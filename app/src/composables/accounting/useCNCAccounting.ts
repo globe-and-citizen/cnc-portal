@@ -8,7 +8,7 @@
  *     Expense, FixedReturn (Community Credit), Investor and SafeDepositRouter
  *     contracts, reconstructed from the RPC via the shared `use*EventsViaLogs`
  *     composables (no indexer dependency).
- *   - **Safe** — the team Safe's incoming native / ERC-20 transfers (spec §3.1).
+ *   - **Safe** — complete actual native / ERC-20 incoming and outgoing movements.
  *   - **Backend DB** — the team's contracts, signed weekly claims and approved
  *     expenses, the off-chain accrual and journal account-assignment context
  *     (spec §3.2).
@@ -24,13 +24,11 @@ import { type Address } from 'viem'
 import { safeDepositRouterAbi } from '@/artifacts/abi/generated'
 import { formatSafeDepositRouterMultiplier } from '@/utils/safeDepositRouter/model'
 import { normalizeSafeAddress } from '@/utils/safe/address'
-import type { ContractType, TeamContract } from '@/types/teamContract'
-import type { ScanTarget } from '@/composables/eventsViaLogs'
+import type { ContractType } from '@/types/teamContract'
 import { useBankEventsViaLogs } from '@/composables/bank/useBankEventsViaLogs'
 import { useCashRemunerationEventsViaLogs } from '@/composables/cashRemuneration/useCashRemunerationEventsViaLogs'
 import { useExpenseEventsViaLogs } from '@/composables/expense/useExpenseEventsViaLogs'
 import { useFixedReturnEventsViaLogs } from '@/composables/fixedReturn/useFixedReturnEventsViaLogs'
-import { useFixedReturnAllOffers } from '@/composables/fixedReturn/reads'
 import { useInvestorEventsViaLogs } from '@/composables/investor/useInvestorEventsViaLogs'
 import { useVestingEventsViaLogs } from '@/composables/vesting/useVestingEventsViaLogs'
 import { useSafeDepositRouterEventsViaLogs } from '@/composables/investor/useSafeDepositRouterEventsViaLogs'
@@ -38,18 +36,20 @@ import { useGetTeamQuery } from '@/queries/team.queries'
 import { useGetTeamOfficersQuery } from '@/queries/contract.queries'
 import { useGetExpensesQuery } from '@/queries/expense.queries'
 import { useGetJournalAccountAssignmentsQuery } from '@/queries/journalAccountAssignment.queries'
-import {
-  useGetSafeIncomingTransfersQuery,
-  useGetSafeOutgoingTransactionsQuery
-} from '@/queries/safe.queries'
+import { useGetSafeTransfersQuery } from '@/queries/safe.queries'
 import { useGetTeamWeeklyClaimsQuery } from '@/queries/weeklyClaim.queries'
-import { useHistoricalTokenRatesQuery } from '@/queries/historicalTokenRate.queries'
-import { useTransactionEvidence } from './useTransactionEvidence'
 import {
-  accountingEventSource,
-  accountingQuerySource,
-  useAccountingStatus
-} from './useAccountingStatus'
+  useGetAssetMarketsQuery,
+  useGetHistoricalTokenRatesQuery
+} from '@/queries/coingecko.queries'
+import {
+  COINGECKO_POLYGON_CHAIN_ID,
+  coinGeckoRateTargets,
+  coinGeckoRateOfRecord
+} from '@/utils/tokens/coingecko'
+import { useTransactionEvidence } from './useTransactionEvidence'
+import { useAccountingStatus } from './useAccountingStatus'
+import { accountingEventSource, accountingQuerySource } from '@/utils/accounting/sourceStatus'
 import {
   assembleWithAccountEvidence,
   buildCncJournalEntryDrafts,
@@ -57,8 +57,14 @@ import {
   type CncAccountingInput
 } from '@/utils/accounting/assemble'
 import { knownDeploymentAccounts } from '@/utils/accounting/accountInstances'
-import type { CreditOfferTerms } from '@/utils/accounting/mappers/creditTimeline'
 import * as accountingValuation from '@/utils/accounting/toUsd'
+import {
+  buildAccountingContractGenerations,
+  flattenAccountingGenerationContracts,
+  buildContractEventScanTargets,
+  findPreferredCurrentContractAddress
+} from '@/utils/accounting/contractGenerations'
+import { prepareSafeExchanges } from '@/utils/accounting/safeExchanges'
 
 /** Safe Transaction Service page size; every page is loaded before assembly. */
 const SAFE_PAGE_SIZE = 500
@@ -84,81 +90,15 @@ export function useCNCAccounting(
     queryParams: { teamId: computed(() => toValue(teamId) ?? '') }
   })
 
-  /** One deployment generation: its contracts and the deploy block to scan from. */
-  interface Generation {
-    deployBlockNumber: string | null
-    contracts: { address: string; type: string; deployer?: string }[]
-  }
-
-  const generations = computed<Generation[]>(() => {
-    const officerList = officers.data.value ?? []
-    // No Officer history (older data): treat the current contracts as a single
-    // boundary-less generation so the books still load.
-    if (!officerList.length) {
-      return [{ deployBlockNumber: null, contracts: contracts.value }]
-    }
-    const gens: Generation[] = officerList.map((officer) => ({
-      deployBlockNumber: officer.deployBlockNumber,
-      contracts: officer.contracts
-    }))
-    // Officer-less pockets (Safe / SafeDepositRouter) survive redeploys and are
-    // governed by no Officer; add them once as a boundary-less generation.
-    const governed = new Set(
-      officerList.flatMap((officer) =>
-        officer.contracts.map((contract) => contract.address.toLowerCase())
-      )
-    )
-    const officerless = contracts.value.filter(
-      (contract) => !governed.has(contract.address.toLowerCase())
-    )
-    if (officerless.length) gens.push({ deployBlockNumber: null, contracts: officerless })
-    return gens
-  })
-
-  const allContracts = computed<TeamContract[]>(() =>
-    generations.value.flatMap((generation) =>
-      generation.contracts.map((contract) => ({
-        address: contract.address as Address,
-        type: contract.type as ContractType,
-        deployer: (contract.deployer ?? contract.address) as Address,
-        admins: []
-      }))
-    )
+  const generations = computed(() =>
+    buildAccountingContractGenerations(contracts.value, officers.data.value ?? [])
   )
-
-  /** Scan targets for a contract type across every generation, each with its deploy block. */
+  const allContracts = computed(() => flattenAccountingGenerationContracts(generations.value))
   const targetsOf = (...types: ContractType[]) =>
-    computed<ScanTarget[]>(() => {
-      const wanted = new Set<string>(types)
-      const targets: ScanTarget[] = []
-      for (const generation of generations.value) {
-        const fromBlock = generation.deployBlockNumber
-          ? BigInt(generation.deployBlockNumber)
-          : undefined
-        for (const contract of generation.contracts) {
-          if (wanted.has(contract.type)) {
-            targets.push({ address: contract.address.toLowerCase(), fromBlock })
-          }
-        }
-      }
-      return targets
-    })
-
-  /**
-   * Current-generation address for reads that reflect live contract state.
-   * Types are checked in preference order so API result ordering cannot select
-   * a legacy deployment over its current replacement.
-   */
+    computed(() => buildContractEventScanTargets(generations.value, types))
   const addressOf = (...types: ContractType[]) =>
-    computed<string>(() => {
-      for (const type of types) {
-        const address = contracts.value.find((contract) => contract.type === type)?.address
-        if (address) return address.toLowerCase()
-      }
-      return ''
-    })
+    computed(() => findPreferredCurrentContractAddress(contracts.value, types))
 
-  const fixedReturnAddress = addressOf('FixedReturn')
   const investorAddress = addressOf('Investor', 'InvestorV1')
   const routerAddress = addressOf('SafeDepositRouter')
   const safeAddress = computed(() => {
@@ -204,32 +144,13 @@ export function useCNCAccounting(
     return Number.isFinite(whole) && whole > 0 ? whole : null
   })
 
-  // ── Contract read: each Community Credit round's rate. It does not reach the
-  // mapper through the event feed, and without it the fixed return can only be
-  // expensed on the day it is paid — so the offer structs are read straight from
-  // FixedReturn and handed to the mapper, which recognises the whole fee when the
-  // round funds (see mappers/creditTimeline). A failed read simply leaves the list
-  // empty and the books fall back to the cash-basis treatment. ──
-  const fixedReturnOffers = useFixedReturnAllOffers(fixedReturnAddress)
-
-  const fixedReturnOfferTerms = computed<CreditOfferTerms[]>(() =>
-    (fixedReturnOffers.data.value ?? []).map(({ offerId, offer }) => ({
-      offerId: String(offerId),
-      interestRateBps: Number(offer.interestRateBps)
-    }))
-  )
-
   // ── Backend DB: off-chain enrichment and JournalEntry account assignments ──
   const weeklyClaims = useGetTeamWeeklyClaimsQuery({ queryParams: { teamId } })
   const expenses = useGetExpensesQuery({ queryParams: { teamId } })
   const accountAssignments = useGetJournalAccountAssignmentsQuery({ queryParams: { teamId } })
 
-  // ── Safe service: incoming + outgoing transfers (optional / flaky — never blocks) ──
-  const safeTransfers = useGetSafeIncomingTransfersQuery({
-    pathParams: { safeAddress },
-    queryParams: { limit: SAFE_PAGE_SIZE }
-  })
-  const safeOutgoing = useGetSafeOutgoingTransactionsQuery({
+  // Safe history includes actual settlements; a failed feed makes reports incomplete.
+  const safeAssetTransfers = useGetSafeTransfersQuery({
     pathParams: { safeAddress },
     queryParams: { limit: SAFE_PAGE_SIZE }
   })
@@ -247,12 +168,10 @@ export function useCNCAccounting(
     cashRemunerationEvents: cashRem.data.value?.events,
     expenseEvents: expense.data.value?.events,
     fixedReturnEvents: fixedReturn.data.value?.events,
-    fixedReturnOfferTerms: fixedReturnOfferTerms.value,
     investorEvents: investor.data.value?.events,
     vestingEvents: vesting.data.value?.events,
     safeDepositRouterEvents: router.data.value?.events,
-    safeTransfers: safeTransfers.data.value,
-    safeOutgoingTransactions: safeOutgoing.data.value,
+    safeAssetTransfers: safeAssetTransfers.data.value ?? [],
     weeklyClaims: weeklyClaims.data.value?.data,
     expenses: expenses.data.value,
     accountAssignments: accountAssignments.data.value
@@ -262,10 +181,19 @@ export function useCNCAccounting(
   const historicalTargets = computed(() =>
     accountingValuation.historicalRateTargets(provisionalDrafts.value)
   )
-  const historicalRates = useHistoricalTokenRatesQuery(
-    historicalTargets,
+  const assetMarkets = useGetAssetMarketsQuery(
+    () => coinGeckoRateTargets(historicalTargets.value).assets,
     () => !options.rateOfRecord
   )
+  const marketTargets = computed(() =>
+    coinGeckoRateTargets(historicalTargets.value, assetMarkets.value)
+  )
+  const historicalRates = useGetHistoricalTokenRatesQuery(
+    () => marketTargets.value.requests,
+    () => !options.rateOfRecord
+  )
+  const rateOfRecord: accountingValuation.UsdRateOfRecord = (token, at) =>
+    coinGeckoRateOfRecord(marketTargets.value.targets, historicalRates.value, token, at)
 
   // Native (POL/ETH) is valued from the immutable UTC transaction-date snapshot.
   // Stablecoins retain their $1 peg and SHER retains the multiplier policy applied
@@ -277,10 +205,7 @@ export function useCNCAccounting(
   const drafts = computed(() =>
     options.rateOfRecord
       ? provisionalDrafts.value
-      : accountingValuation.applyHistoricalRates(
-          provisionalDrafts.value,
-          historicalRates.rateOfRecord
-        )
+      : accountingValuation.applyHistoricalRates(provisionalDrafts.value, rateOfRecord)
   )
   const deploymentAccounts = computed(() => knownDeploymentAccounts(allContracts.value))
   const transactionEvidence = useTransactionEvidence(drafts, deploymentAccounts)
@@ -317,25 +242,8 @@ export function useCNCAccounting(
   const hasSafe = () => Boolean(safeAddress.value)
   const sourceDefinitions = [
     accountingQuerySource('company', 'Company', hasTeamId, team, { fatal: true }),
+    accountingQuerySource('safe-transfers', 'Safe asset movements', hasSafe, safeAssetTransfers),
     accountingQuerySource('contract-history', 'Contract deployment history', hasTeamId, officers),
-    accountingQuerySource(
-      'credit-terms',
-      'Community Credit terms',
-      () => Boolean(fixedReturnAddress.value),
-      fixedReturnOffers
-    ),
-    accountingQuerySource(
-      'safe-incoming-transfers',
-      'Safe incoming transfers',
-      hasSafe,
-      safeTransfers
-    ),
-    accountingQuerySource(
-      'safe-outgoing-transactions',
-      'Safe outgoing transactions',
-      hasSafe,
-      safeOutgoing
-    ),
     accountingQuerySource('weekly-claims', 'Weekly claims', hasTeamId, weeklyClaims),
     accountingQuerySource('expenses', 'Approved expenses', hasTeamId, expenses),
     accountingQuerySource(
@@ -368,19 +276,33 @@ export function useCNCAccounting(
     sources: sourceDefinitions,
     eventSources,
     reconciliation: {
+      assetDiagnostics: computed(() => accounting.value.assetDiagnostics ?? []),
       unmatchedFeeOperationIds: computed(() => accounting.value.unmatchedFeeOperationIds),
       unavailableReceiptOperationIds: transactionEvidence.unavailableOperationIds
     },
     rates: {
-      drafts,
-      isLoading: historicalRates.isLoading
+      drafts: computed(() =>
+        prepareSafeExchanges(drafts.value).filter((entry) => entry.carryingAmount === undefined)
+      ),
+      isLoading: computed(
+        () =>
+          assetMarkets.value.some((query) => query.isFetching) ||
+          historicalRates.value.some((query) => query.isFetching)
+      )
     }
   })
 
   const refetch = (): Promise<unknown> =>
     Promise.allSettled([
       ...[...sourceDefinitions, ...eventSources].map(({ query }) => query.refetch?.()),
-      historicalRates.refetch()
+      ...(!options.rateOfRecord
+        ? [
+            ...assetMarkets.value.filter(
+              (query) => query.isError && query.chainId === COINGECKO_POLYGON_CHAIN_ID
+            ),
+            ...historicalRates.value.filter((query) => query.isError)
+          ].map((query) => query.refetch())
+        : [])
     ])
 
   return { journal: computed(() => accounting.value.journal), status, refetch }

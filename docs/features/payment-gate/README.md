@@ -22,6 +22,10 @@ These acceptance criteria follow the
 - **No backend exists for this capability.** Payment history is read directly from the Bank contract's deposit events (see
   `US-PAYGATE-004`); recalling a payment by facture ID (`US-PAYGATE-005`) has no implemented mechanism yet, on-chain or off-chain.
 
+The [direct asset movement product contract](../accounting/direct-movement-policy.md) defines company custody, unsolicited receipts,
+historical coverage, classification, and reconciliation across domains. Its target behaviour remains pending implementation; new ACs are
+unchecked.
+
 ## Lifecycle
 
 1. The merchant selects the token the widget will accept on the Setup page and gets a copyable HTML/JavaScript, Vue 3, or React embed
@@ -42,6 +46,23 @@ These acceptance criteria follow the
 | US-PAYGATE-004 | Review Payment History                  | Merchant        | 🧪 Validation  |
 | US-PAYGATE-005 | Recall a Payment's Status by Facture ID | Merchant        | 📝 Draft       |
 
+## Test Coverage Overview
+
+Coverage targets compare required proof with direct representative `AC-US-*` references, not with the latest test run. The merchant-page and
+widget-payment paths are planned; a source-only widget assertion is not integrated payment evidence.
+
+Runs of at least three consecutive missing criteria use inclusive ranges with full AC IDs at both endpoints.
+
+| User Story     | Main Journey | Coverage Target | Gaps                                                                                                                                          |
+| -------------- | ------------ | --------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| US-PAYGATE-001 | ⬜ Planned   | ⚠️ 1/3 met      | `AC-US-PAYGATE-001-01`, `AC-US-PAYGATE-001-02`                                                                                                |
+| US-PAYGATE-002 | ⬜ Planned   | ⚠️ 2/6 met      | `AC-US-PAYGATE-002-01`–`AC-US-PAYGATE-002-03`, `AC-US-PAYGATE-002-06`                                                                         |
+| US-PAYGATE-003 | ⬜ Planned   | ⚠️ 6/13         | `AC-US-PAYGATE-003-02`–`AC-US-PAYGATE-003-04`, `AC-US-PAYGATE-003-06`, `AC-US-PAYGATE-003-08`, `AC-US-PAYGATE-003-09`, `AC-US-PAYGATE-003-12` |
+| US-PAYGATE-004 | ⬜ Planned   | ❌ 0/6 met      | `AC-US-PAYGATE-004-01`–`AC-US-PAYGATE-004-06`                                                                                                 |
+| US-PAYGATE-005 | 📝 Draft     | 📝 Not assessed | Authoritative facture-ID lookup boundary undecided                                                                                            |
+
+Proof obligations use the [shared proof-strategy registry](../../testing/proof-strategies.md). Multiple IDs for one AC are cumulative.
+
 ## US-PAYGATE-001: Configure the Widget's Accepted Token
 
 **As a** merchant\
@@ -57,8 +78,21 @@ These acceptance criteria follow the
 
 #### Business Rules
 
-- [x] `AC-US-PAYGATE-001-02` No product element other than the accepted token is configurable in this version — style and layout are fixed.
+- [x] `AC-US-PAYGATE-001-02` The accepted token is the merchant's only configurable payment parameter in this version.
 - [x] `AC-US-PAYGATE-001-03` Only tokens the widget can actually accept payment in are offered as selectable options.
+
+#### Edge & Error Cases
+
+Unsupported payment-token configurations are handled by `AC-US-PAYGATE-003-04`; no separate token-selection failure outcome is currently
+specified for this story.
+
+### Test Coverage
+
+| Acceptance Criterion   | Proof Strategy | Current Evidence | Status     |
+| ---------------------- | -------------- | ---------------- | ---------- |
+| `AC-US-PAYGATE-001-01` | `PS-FRONTEND`  | None linked      | ❌ Missing |
+| `AC-US-PAYGATE-001-02` | `PS-FRONTEND`  | None linked      | ❌ Missing |
+| `AC-US-PAYGATE-001-03` | `PS-FRONTEND`  | Frontend         | ✅ Met     |
 
 **Dependencies:** none — this is the capability's entry point
 
@@ -91,6 +125,17 @@ token\
       a snippet built around a placeholder address.
 - [x] `AC-US-PAYGATE-002-05` When the widget's script URL isn't configured for this deployment, the Setup page shows an explicit
       "unavailable" state instead of a snippet whose script tag would never actually load a widget.
+
+### Test Coverage
+
+| Acceptance Criterion   | Proof Strategy           | Current Evidence | Status          |
+| ---------------------- | ------------------------ | ---------------- | --------------- |
+| `AC-US-PAYGATE-002-01` | `PS-FRONTEND`            | None linked      | ❌ Missing      |
+| `AC-US-PAYGATE-002-02` | `PS-FRONTEND-INTEGRATED` | Frontend         | ⚠️ Insufficient |
+| `AC-US-PAYGATE-002-03` | `PS-CHAIN-INTEGRATED`    | None linked      | ❌ Missing      |
+| `AC-US-PAYGATE-002-04` | `PS-FRONTEND`            | Frontend         | ✅ Met          |
+| `AC-US-PAYGATE-002-05` | `PS-FRONTEND`            | Frontend         | ✅ Met          |
+| `AC-US-PAYGATE-002-06` | `PS-FRONTEND-INTEGRATED` | Frontend         | ⚠️ Insufficient |
 
 **Dependencies:** US-PAYGATE-001 and a company with a deployed Bank contract
 
@@ -143,6 +188,26 @@ token\
       attribute, the customer sees an explicit "payment unavailable" message instead of a payment form built around bad data, and the
       merchant gets a console diagnostic naming exactly what's wrong.
 
+### Test Coverage
+
+| Acceptance Criterion   | Proof Strategy        | Current Evidence | Status          |
+| ---------------------- | --------------------- | ---------------- | --------------- |
+| `AC-US-PAYGATE-003-01` | `PS-FRONTEND`         | Frontend         | ✅ Met          |
+| `AC-US-PAYGATE-003-02` | `PS-CHAIN-INTEGRATED` | None linked      | ❌ Missing      |
+| `AC-US-PAYGATE-003-02` | `PS-CONTRACT`         | None linked      | ❌ Missing      |
+| `AC-US-PAYGATE-003-03` | `PS-CHAIN-INTEGRATED` | None linked      | ❌ Missing      |
+| `AC-US-PAYGATE-003-04` | `PS-FRONTEND`         | None linked      | ❌ Missing      |
+| `AC-US-PAYGATE-003-05` | `PS-FRONTEND`         | Frontend         | ✅ Met          |
+| `AC-US-PAYGATE-003-06` | `PS-FRONTEND`         | None linked      | ❌ Missing      |
+| `AC-US-PAYGATE-003-07` | `PS-FRONTEND`         | Frontend         | ✅ Met          |
+| `AC-US-PAYGATE-003-08` | `PS-CHAIN-INTEGRATED` | None linked      | ❌ Missing      |
+| `AC-US-PAYGATE-003-08` | `PS-FRONTEND`         | None linked      | ❌ Missing      |
+| `AC-US-PAYGATE-003-09` | `PS-CHAIN-INTEGRATED` | Frontend         | ⚠️ Insufficient |
+| `AC-US-PAYGATE-003-10` | `PS-FRONTEND`         | Frontend         | ✅ Met          |
+| `AC-US-PAYGATE-003-11` | `PS-FRONTEND`         | Frontend         | ✅ Met          |
+| `AC-US-PAYGATE-003-12` | `PS-BROWSER`          | None linked      | ❌ Missing      |
+| `AC-US-PAYGATE-003-13` | `PS-FRONTEND`         | Frontend         | ✅ Met          |
+
 **Dependencies:** US-PAYGATE-002, a connected wallet, and a sufficient token balance
 
 ## US-PAYGATE-004: Review Payment History
@@ -171,7 +236,33 @@ token\
 - [x] `AC-US-PAYGATE-004-05` An empty history is shown as an explicit empty state, not an empty table with no explanation.
 - [x] `AC-US-PAYGATE-004-06` A failed history read is shown as an explicit error instead of a silently empty or stale table.
 
+### Test Coverage
+
+| Acceptance Criterion   | Proof Strategy        | Current Evidence | Status          |
+| ---------------------- | --------------------- | ---------------- | --------------- |
+| `AC-US-PAYGATE-004-01` | `PS-CHAIN-INTEGRATED` | None linked      | ❌ Missing      |
+| `AC-US-PAYGATE-004-02` | `PS-CHAIN-INTEGRATED` | None linked      | ❌ Missing      |
+| `AC-US-PAYGATE-004-03` | `PS-CHAIN-INTEGRATED` | None linked      | ❌ Missing      |
+| `AC-US-PAYGATE-004-04` | `PS-CHAIN-INTEGRATED` | Frontend         | ⚠️ Insufficient |
+| `AC-US-PAYGATE-004-04` | `PS-FRONTEND`         | Frontend         | ⚠️ Insufficient |
+| `AC-US-PAYGATE-004-05` | `PS-FRONTEND`         | None linked      | ❌ Missing      |
+| `AC-US-PAYGATE-004-06` | `PS-FRONTEND`         | None linked      | ❌ Missing      |
+
 **Dependencies:** US-PAYGATE-003
+
+**Shared policy:** A plain Bank receipt without facture evidence remains excluded by `AC-US-PAYGATE-004-04`.
+[US-ACCT-007](../accounting/README.md#us-acct-007-review-direct-treasury-movements) retains its asset movement, while
+[US-ACCT-010](../accounting/README.md#us-acct-010-classify-direct-external-receipts) owns eligible receipt classification. The shared
+movement does not establish an invoice payment from amount, sender, or timing alone.
+
+### Direct Movement Scenarios
+
+Target behaviour follows the [direct movement policy](../accounting/direct-movement-policy.md). Each row represents the same evidenced
+movement across the participating stories.
+
+| Scenario                                                                                                                                                                                         | This story owns                                   | Related stories and roles                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| External wallet funds Bank without established purpose or facture evidence. [UC-TREASURY-002](../accounting/journal-entry-catalogue.md#uc-treasury-002--external-receipt-pending-classification) | Keeps unmatched receipts outside invoice history. | [US-BANK-001](../accounts/README.md#us-bank-001-fund-the-bank) — owns received funding; [US-BANK-003](../accounts/README.md#us-bank-003-review-the-bank-position-and-history) — owns Bank history; [US-ACCT-007](../accounting/README.md#us-acct-007-review-direct-treasury-movements) — owns movement evidence and identity; [US-ACCT-010](../accounting/README.md#us-acct-010-classify-direct-external-receipts) — owns eligible receipt classification |
 
 ## US-PAYGATE-005: Recall a Payment's Status by Facture ID
 
@@ -187,13 +278,20 @@ token\
 
 #### Business Rules
 
-- [ ] `AC-US-PAYGATE-005-02` The mechanism linking a facture ID to its on-chain transaction — a contract-level record or a database record —
-      is decided and implemented.
+- [ ] `AC-US-PAYGATE-005-02` The same facture ID and Bank address resolve to the corresponding payment status even if the merchant page did
+      not receive the widget callback.
+
+#### Edge & Error Cases
+
+Unknown or ambiguous facture IDs, as well as the authoritative lookup mechanism, remain product and implementation decisions for this draft
+story; no error outcome is claimed as implemented.
 
 **Dependencies:** US-PAYGATE-003
 
 ## Known Gaps
 
+- The frontend test marked `AC-US-PAYGATE-004-04` rejects plain deposit calldata, but does not assert that the payment-history list excludes
+  the resulting event. Its focused frontend proof remains insufficient.
 - A payment is reported to the customer as successful whenever the transaction receipt's status is `success`, without confirming the Bank's
   deposit event actually appears in that receipt. A transaction sent to an address with no contract code — a stale or misconfigured Bank
   address — is treated by the EVM as a no-op value transfer and can report a false success (`US-PAYGATE-003`).

@@ -103,7 +103,8 @@ export const mockCashRemunerationWrites = {
  * ExpenseAccountEIP712 Contract Mocks
  */
 export const mockExpenseAccountReads = {
-  owner: createContractReadMock('0x742d35Cc6bF8C55C6C2e013e5492D2b6637e0886')
+  owner: createContractReadMock('0x742d35Cc6bF8C55C6C2e013e5492D2b6637e0886'),
+  supportedTokens: createContractReadMock<string[] | undefined>([])
 }
 
 export const mockExpenseAccountWrites = {

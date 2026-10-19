@@ -45,6 +45,17 @@ export interface UsdOptions {
   decimals?: number
 }
 
+/** Preserve every digit of a decimal token quantity without a floating-point conversion. */
+export function formatExactNumber(value: string): string {
+  const match = /^(-?)(\d+)(?:\.(\d+))?$/.exec(value)
+  if (!match) return EMPTY_VALUE
+  const integer = BigInt(match[2]!)
+  const fraction = (match[3] ?? '').replace(/0+$/, '')
+  const sign = match[1] && (integer !== 0n || fraction) ? '-' : ''
+  const grouped = new Intl.NumberFormat(FORMAT_LOCALE, { maximumFractionDigits: 0 }).format(integer)
+  return `${sign}${grouped}${fraction ? `.${fraction}` : ''}`
+}
+
 /**
  * `1234.5` → `$1,234.50`, `-12.3` → `-$12.30`.
  *

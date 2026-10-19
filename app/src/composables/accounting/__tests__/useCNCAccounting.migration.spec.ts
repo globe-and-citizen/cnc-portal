@@ -47,6 +47,10 @@ const NEW_BANK = '0x2222222222222222222222222222222222222222'
 const SAFE = '0x3333333333333333333333333333333333333333'
 const INVESTOR_V1 = '0x4444444444444444444444444444444444444444'
 const INVESTOR_V2 = '0x5555555555555555555555555555555555555555'
+const OLD_FIXED_RETURN = '0x6666666666666666666666666666666666666666'
+const NEW_FIXED_RETURN = '0x7777777777777777777777777777777777777777'
+const OLD_ROUTER = '0x8888888888888888888888888888888888888888'
+const NEW_ROUTER = '0x9999999999999999999999999999999999999999'
 const OWNER = '0x0000000000000000000000000000000000000001'
 
 const contract = (address: string, type = 'Bank') => ({
@@ -115,6 +119,37 @@ describe('useCNCAccounting — contract migration', () => {
     expect(toValue(captured.investor)).toEqual([
       { address: INVESTOR_V1, fromBlock: 300n },
       { address: INVESTOR_V2, fromBlock: 400n }
+    ])
+  })
+
+  it('[AC-US-ACCT-005-10] scans historical Credit and SHER sources at their own boundaries', () => {
+    setTeam([contract(NEW_FIXED_RETURN, 'FixedReturn'), contract(NEW_ROUTER, 'SafeDepositRouter')])
+    setOfficers([
+      {
+        deployBlockNumber: '500',
+        contracts: [
+          contract(OLD_FIXED_RETURN, 'FixedReturn'),
+          contract(OLD_ROUTER, 'SafeDepositRouter')
+        ]
+      },
+      {
+        deployBlockNumber: '600',
+        contracts: [
+          contract(NEW_FIXED_RETURN, 'FixedReturn'),
+          contract(NEW_ROUTER, 'SafeDepositRouter')
+        ]
+      }
+    ])
+
+    useCNCAccounting('1')
+
+    expect(toValue(captured.fixedReturn)).toEqual([
+      { address: OLD_FIXED_RETURN, fromBlock: 500n },
+      { address: NEW_FIXED_RETURN, fromBlock: 600n }
+    ])
+    expect(toValue(captured.router)).toEqual([
+      { address: OLD_ROUTER, fromBlock: 500n },
+      { address: NEW_ROUTER, fromBlock: 600n }
     ])
   })
 })

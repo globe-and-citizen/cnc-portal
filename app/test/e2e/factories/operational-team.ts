@@ -4,15 +4,14 @@ import type { Address, Hex } from 'viem'
 import { privateKeyToAccount } from 'viem/accounts'
 import type { Team } from '../../../src/types/team'
 import type { ContractType } from '../../../src/types/teamContract'
-import { E2E_RPC_URL } from '../../../src/e2e/chain.ts'
+import { E2E_RPC_URL } from '../e2e-chain'
 import { E2E_OWNER, ownerAccount, publicClient } from '../e2e-chain'
 import { authenticateIntegratedAccount, requestIntegratedApi } from '../integrated-api'
 import {
   assertAddressHasCode,
-  buildBeaconConfigs,
+  assertIntegratedInfrastructure,
   buildDeploymentConfigs,
   deployOfficer,
-  requiredAddress,
   type DeployedOfficer,
   type DeploymentAddressManifest
 } from './operational-team-deployment'
@@ -86,22 +85,7 @@ export async function createOperationalTeamFixture(
   }
 
   const manifest = await loadDeploymentAddresses()
-  const officerFactory = requiredAddress(manifest, 'Officer#FactoryBeacon')
-  await assertAddressHasCode(officerFactory, 'the Officer factory')
-
-  const beaconConfigs = buildBeaconConfigs(manifest)
-  await Promise.all(
-    beaconConfigs.map(({ beaconAddress }) =>
-      assertAddressHasCode(beaconAddress, 'an Officer beacon')
-    )
-  )
-
-  const tokenAddresses = [
-    requiredAddress(manifest, 'MockTokens#USDC'),
-    requiredAddress(manifest, 'MockTokens#USDCe'),
-    requiredAddress(manifest, 'MockTokens#USDT')
-  ]
-  await Promise.all(tokenAddresses.map((address) => assertAddressHasCode(address, 'a mock token')))
+  await assertIntegratedInfrastructure(manifest)
 
   const investorInput = {
     name: options.investorName ?? 'E2E Shares',

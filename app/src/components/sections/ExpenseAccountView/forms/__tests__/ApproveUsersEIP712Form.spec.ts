@@ -1,7 +1,9 @@
 import { flushPromises } from '@vue/test-utils'
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { getLocalTimeZone, parseDate, today, type CalendarDate } from '@internationalized/date'
 import { renderWithProviders } from '@/tests/mocks'
+import { mockExpenseAccountReads } from '@/tests/mocks'
+import { USDC_ADDRESS, USDC_E_ADDRESS } from '@/constant'
 
 // USelect is auto-imported by @nuxt/ui/vite, so config.global.stubs cannot catch it —
 // vi.mock on the resolved module is the reliable hook. Reuse the shared <select> stub,
@@ -45,7 +47,7 @@ const makeValidState = () => ({
   input: {
     name: 'Alice',
     address: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
-    token: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92267'
+    token: USDC_ADDRESS
   },
   description: 'Budget for monthly expenses',
   amount: 1500,
@@ -62,7 +64,7 @@ const createWrapper = (props = {}) =>
         // app-level member input needs a local stub.
         SelectMemberWithTokenInput: {
           name: 'SelectMemberWithTokenInput',
-          props: ['modelValue'],
+          props: ['modelValue', 'tokenOptions'],
           emits: ['update:modelValue'],
           template: '<div data-test="member-input" />'
         }
@@ -74,6 +76,11 @@ const createWrapper = (props = {}) =>
 const getVm = (wrapper: ReturnType<typeof createWrapper>) => wrapper.vm as unknown as ApproveUsersVm
 
 describe('ApproveUsersEIP712Form.vue', () => {
+  beforeEach(() => {
+    mockExpenseAccountReads.supportedTokens.data.value = [USDC_ADDRESS]
+    mockExpenseAccountReads.supportedTokens.error.value = null
+  })
+
   it('renders default fields and toggles bod and custom frequency sections', async () => {
     const wrapper = createWrapper()
 
@@ -127,7 +134,7 @@ describe('ApproveUsersEIP712Form.vue', () => {
       .vm.$emit('update:modelValue', {
         name: 'Alice',
         address: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
-        token: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92267'
+        token: USDC_ADDRESS
       })
     await wrapper.find('[data-test="amount-input"]').setValue('1500')
     calendars[0].vm.$emit('update:modelValue', startDate)
@@ -144,7 +151,7 @@ describe('ApproveUsersEIP712Form.vue', () => {
       customFrequency: 0,
       startDate: Math.floor(startDate.toDate(getLocalTimeZone()).getTime() / 1000),
       endDate: Math.floor(endDate.toDate(getLocalTimeZone()).getTime() / 1000),
-      tokenAddress: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92267'
+      tokenAddress: USDC_ADDRESS
     })
 
     await wrapper.find('[data-test="frequency-select"]').setValue('4')
@@ -179,6 +186,38 @@ describe('ApproveUsersEIP712Form.vue', () => {
         'Amount must be greater than zero'
       ])
     )
+  })
+
+  it('[AC-US-EXP-001-14] derives the selectable assets from current contract support', async () => {
+    mockExpenseAccountReads.supportedTokens.data.value = [USDC_E_ADDRESS]
+    const wrapper = createWrapper()
+    const selector = wrapper.findComponent({ name: 'SelectMemberWithTokenInput' })
+    const options = selector.props('tokenOptions') as Array<{ value: string; label: string }>
+
+    expect(options.map((option) => option.value)).toContain(USDC_E_ADDRESS)
+    expect(options.map((option) => option.value)).not.toContain(USDC_ADDRESS)
+    expect(options).toHaveLength(2) // Native currency and the enabled product ERC-20.
+  })
+
+  it('[AC-US-EXP-001-15] rejects ERC-20 approval when the support read is unavailable', () => {
+    mockExpenseAccountReads.supportedTokens.data.value = undefined
+    mockExpenseAccountReads.supportedTokens.error.value = new Error('RPC unavailable')
+    const wrapper = createWrapper()
+    const vm = getVm(wrapper)
+    const { startDate, endDate } = makeValidDates()
+    vm.startDate = startDate
+
+    const result = vm.schema.safeParse({
+      ...makeValidState(),
+      startDate,
+      endDate
+    })
+
+    expect(result.success).toBe(false)
+    expect(result.error?.issues.map((issue) => issue.message)).toContain(
+      'Token is not supported by this Expense Account'
+    )
+    expect(wrapper.get('[data-test="token-support-error"]').text()).toContain('could not be loaded')
   })
 
   it('[AC-US-EXP-001-13] validates custom frequency and required dates', () => {
@@ -282,7 +321,7 @@ describe('ApproveUsersEIP712Form.vue', () => {
       .vm.$emit('update:modelValue', {
         name: 'Alice',
         address: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
-        token: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92267'
+        token: USDC_ADDRESS
       })
     await wrapper.vm.$nextTick()
 

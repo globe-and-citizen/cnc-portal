@@ -62,4 +62,34 @@ describe('MyApprovedExpenseSection', () => {
   it('[AC-US-EXP-004-09] shows an empty state when the user has no approvals', () => {
     expect(createWrapper().find('[data-test="my-expenses-empty"]').exists()).toBe(true)
   })
+
+  it('[AC-US-EXP-004-14] keeps a previous version spendable and an unknown origin unavailable', () => {
+    vi.mocked(useGetExpensesQuery).mockReturnValue(
+      createMockQueryResponse([
+        expense({ sourceGeneration: 'previous' }),
+        expense({ id: 2, signature: '0xunknown', status: 'unavailable', balances: null }),
+        expense({ id: 3, signature: '0xcurrent' })
+      ])
+    )
+
+    const wrapper = createWrapper()
+
+    expect(wrapper.text()).toContain('Previous version')
+    expect(wrapper.text()).toContain('unavailable')
+    expect(wrapper.text()).toContain('—/100')
+    expect(wrapper.findAll('[data-test="expense-unavailable"]')).toHaveLength(1)
+    expect(wrapper.findAll('[data-test="transfer-action"]')).toHaveLength(2)
+  })
+
+  it('[AC-US-EXP-004-14] warns when an old inactive record cannot block spending', () => {
+    vi.mocked(useGetExpensesQuery).mockReturnValue(
+      createMockQueryResponse([
+        expense({ sourceGeneration: 'previous', sourceEnforcesDisabled: false })
+      ])
+    )
+
+    const wrapper = createWrapper()
+    expect(wrapper.text()).toContain('Disable unsupported')
+    expect(wrapper.find('[data-test="transfer-action"]').exists()).toBe(true)
+  })
 })

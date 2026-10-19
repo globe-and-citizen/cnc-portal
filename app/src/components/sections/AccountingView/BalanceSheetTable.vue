@@ -23,6 +23,7 @@
           <span v-else class="font-semibold">{{ row.label }}</span>
           <span
             v-if="isDrillable(row)"
+            :data-test="`${dataTest}-details-${rowKey(row)}`"
             class="bg-neutral/10 text-neutral inline-flex flex-shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold opacity-0 transition-opacity duration-150 group-focus-within:opacity-100 group-hover:opacity-100"
           >
             <UIcon name="i-heroicons-magnifying-glass" class="size-3.5" />
@@ -92,7 +93,7 @@ const columns: TableColumn<BalanceTableRow>[] = [
   { accessorKey: 'value', header: 'Balance', meta: { class: { th: 'w-[18%]' } } }
 ]
 
-function rowKey(row: BalanceTableRow): string {
+function rowKey(row: BalanceLineView): string {
   return typeof row.account === 'object' ? row.account.id : (row.account ?? 'earnings-to-date')
 }
 
@@ -111,9 +112,8 @@ function onRowSelect(_event: Event, row: TableRow<BalanceTableRow>): void {
 }
 
 function openDrilldown(row: BalanceTableRow): void {
-  const line = props.rows.find(
-    (candidate) => candidate.label === row.label && candidate.account === row.account
-  )
+  // UTable wraps its rows in reactive proxies; concrete account IDs remain stable.
+  const line = props.rows.find((candidate) => rowKey(candidate) === rowKey(row))
   if (line) emit('drilldown', line)
 }
 </script>

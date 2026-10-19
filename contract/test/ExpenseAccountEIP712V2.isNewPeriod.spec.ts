@@ -145,7 +145,7 @@ describe('[US-EXP-002] ExpenseAccountEIP712V2 period detection', function () {
       expect(isNewPeriod).to.equal(true)
     })
 
-    it('returns true when entering a new weekly period', async function () {
+    it('[AC-US-EXP-002-14] detects a new weekly period on Monday', async function () {
       const { expenseAccount, owner, approvedAddress, recipient } = await loadFixture(
         deployExpenseAccountFixture
       )
@@ -182,7 +182,7 @@ describe('[US-EXP-002] ExpenseAccountEIP712V2 period detection', function () {
       expect(isNewPeriod).to.equal(true)
     })
 
-    it('returns true when entering a new monthly period', async function () {
+    it('[AC-US-EXP-002-15] detects a new monthly period on the first', async function () {
       const { expenseAccount, owner, approvedAddress, recipient } = await loadFixture(
         deployExpenseAccountFixture
       )
@@ -221,7 +221,7 @@ describe('[US-EXP-002] ExpenseAccountEIP712V2 period detection', function () {
       expect(isNewPeriod).to.equal(true)
     })
 
-    it('handles daily frequency periods', async function () {
+    it('[AC-US-EXP-002-13] detects a new daily period after 24 hours', async function () {
       const { expenseAccount, owner, approvedAddress, recipient } = await loadFixture(
         deployExpenseAccountFixture
       )
@@ -254,7 +254,7 @@ describe('[US-EXP-002] ExpenseAccountEIP712V2 period detection', function () {
       expect(isNewPeriod).to.equal(true)
     })
 
-    it('handles custom frequency periods', async function () {
+    it('[AC-US-EXP-002-16] detects a new custom interval', async function () {
       const { expenseAccount, owner, approvedAddress, recipient } = await loadFixture(
         deployExpenseAccountFixture
       )

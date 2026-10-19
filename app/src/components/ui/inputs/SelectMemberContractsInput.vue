@@ -67,11 +67,11 @@ import { filterDirectoryItems } from '@/utils/teams/search'
 const props = defineProps<{ disabled?: boolean }>()
 
 const emit = defineEmits(['selectItem'])
-const input = defineModel({
-  default: {
+const input = defineModel<{ name: string; address: string }>({
+  default: () => ({
     name: '',
     address: ''
-  }
+  })
 })
 
 const teamStore = useTeamStore()

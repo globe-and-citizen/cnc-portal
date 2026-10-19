@@ -26,9 +26,24 @@ export const addExpenseBodySchema = z.object({
 export const getExpensesQuerySchema = z.object({
   teamId: teamIdSchema,
   status: z
-    .enum(['all', 'pending', 'approved', 'rejected', 'disabled', 'enabled', 'signed'], {
-      message: 'Invalid status parameter',
-    })
+    .enum(
+      [
+        'all',
+        'pending',
+        'approved',
+        'rejected',
+        'disabled',
+        'enabled',
+        'expired',
+        'limit-reached',
+        'signed',
+        'historical',
+        'unavailable',
+      ],
+      {
+        message: 'Invalid status parameter',
+      }
+    )
     .default('all'),
 });
 

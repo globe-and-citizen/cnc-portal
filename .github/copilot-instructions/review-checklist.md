@@ -4,6 +4,12 @@
 
 Before submitting code for review, ensure the following items are completed:
 
+### Relationship Validation
+
+Follow [Development Relationship Validation](../../docs/development-guide/relationship-validation.md). The author supplies the scoped
+relationship results and evidence; the reviewer independently checks applicability, affected consumers, guarantees, and proof. Reassess the
+affected results against the exact head and current target revision before merge. Required missing guarantees or proof remain blockers.
+
 ### UI/UX Reviewer Journey
 
 For every pull request, select one impact level and complete the applicable review material in the PR description. Follow the

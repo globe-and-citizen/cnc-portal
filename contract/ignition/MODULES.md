@@ -82,6 +82,12 @@ Use [`../deploy-upgrade-v2.0.1.sh`](../deploy-upgrade-v2.0.1.sh) through the npm
 already use the current implementations. Its live orchestrator reuses one Hardhat connection for the four sequential module deployments and
 their readbacks so the production keystore is unlocked once. Do not invoke Officer before Investor.
 
+## Expense Account 2.0.2 Upgrade Module
+
+[`ExpenseAccountUpgradeModule`](./modules/upgrades/v2.0.2/ExpenseAccountUpgradeModule.ts) upgrades the existing
+`ExpenseAccountEIP712Module#FactoryBeacon` of the current V2 generation. It uses new `V202` future IDs and leaves other beacons untouched.
+The guarded commands and release-specific checks are owned by the [2.0.2 runbook](../releases/polygon-v2.0.2.md).
+
 ## Adding New Contracts
 
 Modules for **planned** or **speculative** contracts should **not** be committed. Instead:

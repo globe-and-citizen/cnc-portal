@@ -147,7 +147,7 @@ describe('scanContractLogs', () => {
     expect(out.timestampGaps).toEqual([])
   })
 
-  it('withholds an event whose block timestamp cannot be resolved', async () => {
+  it('[AC-US-ACCT-001-11] withholds an event whose block timestamp cannot be resolved', async () => {
     const client = makeClient({
       [OLD]: [log({ transactionHash: '0x1', logIndex: 0, blockNumber: 10n })]
     })
@@ -171,7 +171,7 @@ describe('scanContractLogs', () => {
     ])
   })
 
-  it('withholds an event that has no block number instead of assigning timestamp zero', async () => {
+  it('[AC-US-ACCT-001-11] withholds an event that has no block number instead of assigning timestamp zero', async () => {
     const client = makeClient({
       [OLD]: [log({ transactionHash: '0x1', logIndex: 0, blockNumber: null })]
     })
@@ -188,7 +188,7 @@ describe('scanContractLogs', () => {
     ])
   })
 
-  it('preserves the loaded generations when another returns no logs', async () => {
+  it('[AC-US-ACCT-005-12] preserves the loaded generations when another returns no logs', async () => {
     const client = makeClient({
       [OLD]: [log({ transactionHash: '0x1', logIndex: 0, blockNumber: 10n })],
       [NEW]: []
@@ -203,7 +203,7 @@ describe('scanContractLogs', () => {
     expect(out.events.items.map((i) => i.id)).toEqual(['0x1-0'])
   })
 
-  it('records a gap and keeps the other generations when one scan fails', async () => {
+  it('[AC-US-ACCT-005-12] records a gap and keeps the other generations when one scan fails', async () => {
     const client = {
       getLogs: vi.fn(async ({ address }: { address: string; fromBlock: bigint }) => {
         if (address.toLowerCase() === OLD) throw new Error('RPC boom')
@@ -284,7 +284,7 @@ describe('useContractEventsViaLogs query identity', () => {
     expect(query).not.toHaveProperty('loading')
   })
 
-  it('is stable across target order and address casing', () => {
+  it('[AC-US-ACCT-005-06] keys event feeds by normalized deployment addresses and boundaries', () => {
     useTestEventFeed([
       { address: NEW, fromBlock: 20n },
       { address: OLD.toUpperCase(), fromBlock: 10n }
@@ -308,7 +308,7 @@ describe('useContractEventsViaLogs query identity', () => {
     ])
   })
 
-  it('uses the earliest effective boundary when an address is repeated', () => {
+  it('[AC-US-ACCT-005-06] uses the earliest effective boundary when an address is repeated', () => {
     useTestEventFeed([
       { address: OLD, fromBlock: 30n },
       { address: OLD.toUpperCase(), fromBlock: 10n },
@@ -326,7 +326,7 @@ describe('useContractEventsViaLogs query identity', () => {
     ])
   })
 
-  it('reacts when a deployment boundary becomes available or changes', () => {
+  it('[AC-US-ACCT-005-06] reacts when a deployment boundary becomes available or changes', () => {
     const targets = ref<ScanTarget[]>([{ address: OLD }])
     useTestEventFeed(targets)
     const query = capturedQuery()

@@ -2,6 +2,10 @@
 
 ## How to contribute
 
+Follow [Development Relationship Validation](./docs/development-guide/relationship-validation.md) at issue scoping, implementation,
+independent review, and final validation before merge. Include the affected relationships, evidence, and completion proposals in the
+issue/PR templates; inspect consumers outside the changed files when their guarantees may be affected.
+
 1. Fork the repository
 2. Clone the repository
 3. Create a new branch

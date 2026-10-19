@@ -5,8 +5,7 @@
  * smallest supported token unit (18 decimals for the native token) therefore
  * needs 24 decimal places to preserve every digit without division or rounding.
  */
-import type { TokenId } from '@/constant'
-import { getTokenDecimals } from '@/utils/tokens/metadata'
+import { assetDecimals, type AssetId, type AssetMetadata } from '@/utils/tokens/assets'
 import type { UsdAmount, UsdRate } from './types'
 
 /** Decimal places retained for a USD price of one whole token. */
@@ -44,8 +43,14 @@ export function usdRateToNumber(rate: UsdRate): number {
  *
  * The result has a common 24-decimal scale regardless of the source token.
  */
-export function usdAmountFromToken(rawAmount: bigint, tokenId: TokenId, rate: UsdRate): UsdAmount {
-  const tokenDecimals = getTokenDecimals(tokenId)
+export function usdAmountFromToken(
+  rawAmount: bigint,
+  tokenId: AssetId,
+  rate: UsdRate,
+  metadata?: AssetMetadata
+): UsdAmount {
+  const tokenDecimals = assetDecimals(tokenId, metadata)
+  if (tokenDecimals === null) return ZERO_USD_AMOUNT
   const scaleDelta = USD_AMOUNT_DECIMALS - tokenDecimals - USD_RATE_DECIMALS
   if (scaleDelta < 0) {
     throw new Error(

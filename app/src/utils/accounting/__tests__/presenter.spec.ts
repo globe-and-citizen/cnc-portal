@@ -227,6 +227,37 @@ describe('presentJournalLedger', () => {
   })
 })
 
+describe('point-in-time statements', () => {
+  /**
+   * The sample book credits its revenue at ts=100 and pays the expense at
+   * ts=200, so an "as of" date between them must read as if the payout had not
+   * happened yet — not merely hide its line.
+   */
+  it('[AC-US-ACCT-003-10] excludes entries posted after the as-of date', () => {
+    const journal = books().journal
+    const asOf = new Date(150_000)
+
+    const balance = presentBalance(journal, asOf)
+    expect(balance.assetLines.map((line) => [line.label, line.value])).toEqual([
+      ['Cash — Bank', '$100.00']
+    ])
+    expect(balance.equityLines.at(-1)).toMatchObject({
+      label: 'Earnings to date',
+      value: '$100.00'
+    })
+    expect(balance.earningsLines.map((line) => line.label)).toEqual(['Service Revenue'])
+
+    const trial = presentTrial(journal, asOf)
+    expect(trial.balanced).toBe(true)
+    expect(trial.rows.map((row) => row.account.family.name)).not.toContain('Operating Expense')
+
+    // The same books read in full still carry the later payout.
+    expect(presentTrial(journal).rows.map((row) => row.account.family.name)).toContain(
+      'Operating Expense'
+    )
+  })
+})
+
 describe('filterByPeriod', () => {
   const entries = books().journal
   it('keeps entries inside an inclusive window', () => {

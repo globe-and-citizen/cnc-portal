@@ -35,14 +35,15 @@ const {
 }))
 
 // Mock external dependencies
-vi.mock('@/composables/safe', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@/composables/safe')>()
+vi.mock('@/utils/safe/model', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/utils/safe/model')>()
   return {
     ...actual,
-    getSafeHomeUrl: mockGetSafeHomeUrl,
-    openSafeAppUrl: mockOpenSafeAppUrl
+    getSafeHomeUrl: mockGetSafeHomeUrl
   }
 })
+
+vi.mock('@/lib/safe/browser', () => ({ openSafeAppUrl: mockOpenSafeAppUrl }))
 
 vi.mock('@/queries/safe.queries', () => ({
   useGetSafeInfoQuery: mockuseGetSafeInfoQuery
@@ -139,6 +140,7 @@ describe('[US-SAFE-003] SafeBalanceSection transfers', () => {
       data: mockSafeInfo,
       isLoading: ref(false),
       error: ref(null),
+      failureReason: ref(null),
       refetch: vi.fn()
     })
 
@@ -198,7 +200,7 @@ describe('[US-SAFE-003] SafeBalanceSection transfers', () => {
             options: {
               to: '0x3333333333333333333333333333333333333333',
               amount: '1',
-              tokenId: 'native'
+              tokenId: 'usdc'
             }
           }
         },

@@ -2162,6 +2162,7 @@ export const expenseAccountEip712Abi = [
     ],
     name: 'ExpenseAccountEIP712__ApprovalExpired'
   },
+  { type: 'error', inputs: [], name: 'ExpenseAccountEIP712__ApprovalInactive' },
   {
     type: 'error',
     inputs: [

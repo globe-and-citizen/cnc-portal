@@ -71,7 +71,7 @@ describe('Polygon 2.0.1 deployment script', function () {
       fakeNpx,
       [
         '#!/usr/bin/env bash',
-        'printf "%s|baseline=%s|contracts=%s|target=%s|polygon_url=%s|private_key=%s\\n" "$*" "${CNC_STORAGE_BASELINE_NETWORK:-}" "${CONTRACTS:-}" "${CNC_UPGRADE_TARGET:-}" "${POLYGON_URL-unset}" "${PRIVATE_KEY-unset}" >> "$CNC_COMMAND_LOG"'
+        'printf "%s|baseline=%s|contracts=%s|target=%s|expected=%s|polygon_url=%s|private_key=%s\\n" "$*" "${CNC_STORAGE_BASELINE_NETWORK:-}" "${CONTRACTS:-}" "${CNC_UPGRADE_TARGET:-}" "${CNC_EXPECTED_IMPLEMENTATION_VERSION:-}" "${POLYGON_URL-unset}" "${PRIVATE_KEY-unset}" >> "$CNC_COMMAND_LOG"'
       ].join('\n')
     )
     chmodSync(fakeNpx, 0o755)
@@ -96,8 +96,8 @@ describe('Polygon 2.0.1 deployment script', function () {
 
       expect(result.status, result.stderr).to.equal(0)
       expect(readFileSync(commandLog, 'utf8').trim().split('\n')).to.deep.equal([
-        'hardhat run scripts/validate-upgrade.ts --network hardhat|baseline=polygon|contracts=CashRemunerationEIP712,ExpenseAccountEIP712,Investor,Officer|target=|polygon_url=unset|private_key=unset',
-        'hardhat run scripts/deploy-v201-upgrade.ts --network polygon|baseline=|contracts=|target=|polygon_url=must-not-reach-static-validation|private_key=must-not-reach-static-validation'
+        'hardhat run scripts/validate-upgrade.ts --network hardhat|baseline=polygon|contracts=CashRemunerationEIP712,ExpenseAccountEIP712,Investor,Officer|target=|expected=2.0.1|polygon_url=unset|private_key=unset',
+        'hardhat run scripts/deploy-v201-upgrade.ts --network polygon|baseline=|contracts=|target=|expected=|polygon_url=must-not-reach-static-validation|private_key=must-not-reach-static-validation'
       ])
     } finally {
       rmSync(fakeBin, { recursive: true, force: true })

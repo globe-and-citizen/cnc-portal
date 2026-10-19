@@ -41,7 +41,7 @@ describe('the fixed return owed', () => {
     expect(owed).toHaveLength(1)
     expect(owed[0]).toMatchObject({
       // Stable id: the round and the lender, so the row never changes identity.
-      id: `credit-interest-1-${ADDR.lender}`,
+      id: `credit-interest-${ADDR.credit}-1-${ADDR.lender}`,
       debit: 'Interest Expense',
       credit: 'Interest Payable',
       token: 'usdc',
@@ -51,6 +51,46 @@ describe('the fixed return owed', () => {
     })
     expect(draftUsdValue(owed[0]!)).toBe(12)
     expect(owed[0]?.counterparty?.toLowerCase()).toBe(ADDR.lender)
+  })
+
+  it('[AC-US-ACCT-005-10] resolves repeated offer ids from each historical FixedReturn generation', () => {
+    const legacy = '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+    const current = ADDR.credit
+    const entries = mapFixedReturnEvents(
+      {
+        lendingOfferCreateds: [
+          { ...offer('1', jan1 - 200), contractAddress: legacy, interestRateBps: '500' },
+          { ...offer('1', jan1 - 100), contractAddress: current, interestRateBps: '1500' }
+        ],
+        fundsLents: [
+          {
+            id: 'legacy-lent',
+            contractAddress: legacy,
+            offerId: '1',
+            lender: ADDR.lender,
+            amount: '100000000',
+            timestamp: jan1 - 20
+          },
+          {
+            id: 'current-lent',
+            contractAddress: current,
+            offerId: '1',
+            lender: ADDR.client,
+            amount: '100000000',
+            timestamp: jan1 - 10
+          }
+        ],
+        lendingOfferFundeds: [
+          { id: 'legacy-funded', contractAddress: legacy, offerId: '1', timestamp: jan1 },
+          { id: 'current-funded', contractAddress: current, offerId: '1', timestamp: jan1 }
+        ]
+      },
+      ctx
+    )
+
+    expect(entries.filter((entry) => entry.useCase === 'UC-CREDIT-05').map(draftUsdValue)).toEqual([
+      5, 15
+    ])
   })
 
   it('names each lender on their own share of the fee', () => {

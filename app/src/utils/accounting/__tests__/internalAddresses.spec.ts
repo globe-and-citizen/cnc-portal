@@ -39,7 +39,7 @@ describe('collectInternalAddresses', () => {
   // After a migration a team owns several Bank generations; both must be internal
   // so a treasury sweep from the old Bank to its replacement reads as an internal
   // move, never revenue or expense (issue #2456).
-  it('treats every generation of a contract type as internal', () => {
+  it('[AC-US-ACCT-005-07] treats every generation of a contract type as internal', () => {
     const OLD_BANK = '0x6666666666666666666666666666666666666666'
     const NEW_BANK = '0x7777777777777777777777777777777777777777'
     const set = collectInternalAddresses([contract('Bank', OLD_BANK), contract('Bank', NEW_BANK)])

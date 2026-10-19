@@ -405,6 +405,56 @@ describe('ExpenseAccountEIP712V2', function () {
       ).to.be.revertedWithCustomError(expenseAccount, 'ExpenseAccountEIP712__TokenNotSupported')
     })
 
+    for (const [frequencyType, label] of [
+      [0, 'one-time'],
+      [2, 'weekly']
+    ] as const) {
+      it(`[AC-US-EXP-003-05] rejects a disabled ${label} approval without moving funds`, async function () {
+        const { expenseAccount, owner, approvedAddress, recipient, usdc } = await loadFixture(
+          deployExpenseAccountFixture
+        )
+        const budgetLimit = createBudgetLimit({
+          amount: ethers.parseEther('1'),
+          frequencyType,
+          tokenAddress: await usdc.getAddress(),
+          approvedAddress: approvedAddress.address
+        })
+        const signature = await createSignature(owner, budgetLimit, expenseAccount)
+        const signatureHash = ethers.keccak256(signature)
+        const amount = ethers.parseEther('0.25')
+
+        if (frequencyType === 2) {
+          await expenseAccount
+            .connect(approvedAddress)
+            .transfer(recipient.address, amount, budgetLimit, signature)
+        }
+
+        await expenseAccount.deactivateApproval(signatureHash)
+        const recipientBefore = await usdc.balanceOf(recipient.address)
+        const contractBefore = await usdc.balanceOf(await expenseAccount.getAddress())
+        const usageBefore = await expenseAccount.getExpenseBalance(signatureHash)
+        expect(usageBefore.state).to.equal(2)
+
+        await expect(
+          expenseAccount
+            .connect(approvedAddress)
+            .transfer(recipient.address, amount, budgetLimit, signature)
+        ).to.be.revertedWithCustomError(expenseAccount, 'ExpenseAccountEIP712__ApprovalInactive')
+
+        expect(await usdc.balanceOf(recipient.address)).to.equal(recipientBefore)
+        expect(await usdc.balanceOf(await expenseAccount.getAddress())).to.equal(contractBefore)
+        const usageAfter = await expenseAccount.getExpenseBalance(signatureHash)
+        expect(usageAfter.state).to.equal(usageBefore.state)
+        expect(usageAfter.totalWithdrawn).to.equal(usageBefore.totalWithdrawn)
+
+        await expenseAccount.activateApproval(signatureHash)
+        await expenseAccount
+          .connect(approvedAddress)
+          .transfer(recipient.address, amount, budgetLimit, signature)
+        expect(await usdc.balanceOf(recipient.address)).to.equal(recipientBefore + amount)
+      })
+    }
+
     it('[AC-US-EXP-003-06] preserves signed limits and expiry after reactivation', async function () {
       const { expenseAccount, owner, approvedAddress, recipient } = await loadFixture(
         deployExpenseAccountFixture

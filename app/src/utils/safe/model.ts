@@ -1,3 +1,4 @@
+import type { AxiosError } from 'axios'
 import { type Address, zeroAddress, formatUnits, isAddress } from 'viem'
 import type { SafeMultisigConfirmationResponse, SignatureType } from '@safe-global/types-kit'
 import { CHAIN_NAMES, TX_SERVICE_BY_CHAIN } from '@/types/safe'
@@ -24,6 +25,15 @@ export function getTxServiceUrl(chainId: number): string {
   }
 
   return txService.url
+}
+
+/**
+ * Safe information and Gateway balances answer HTTP 404 until Safe services index the wallet,
+ * such as a Safe deployed moments ago.
+ */
+export function isSafeNotIndexedError(error: unknown): boolean {
+  const failure = error as AxiosError | null | undefined
+  return (failure?.response?.status ?? failure?.status) === 404
 }
 
 /**
@@ -112,6 +122,7 @@ export const formatSafeTransactionValue = (
           const formattedAmount = formatEtherUtil(BigInt(transferAmount), tokenAddress)
           return formatToken(formattedAmount, symbol, { maxDecimals: 4 })
         }
+        return 'Token transfer (metadata unavailable)'
       }
     }
     // Handle native token transfers or fallback
@@ -176,6 +187,7 @@ export const formatSafeTransferAmount = (transfer: SafeIncomingTransfer): string
     const amount = formatUnits(BigInt(transfer.value), transfer.tokenInfo.decimals)
     return formatToken(amount, transfer.tokenInfo.symbol, { maxDecimals: 4 })
   }
+  if (transfer.type === 'ERC20_TRANSFER') return 'Token amount unavailable'
   // ETHER_TRANSFER - Use existing formatEtherUtil from constantUtil
   const formatted = formatEtherUtil(BigInt(transfer.value), zeroAddress)
   return formatToken(formatted, NETWORK.currencySymbol, { maxDecimals: 6 })

@@ -20,10 +20,13 @@ Behavior over implementation. Tests should fail when the user-visible contract b
 - **Unit & component**: Vitest
 - **Test utilities**: `@vue/test-utils`
 - **Mocking**: Vitest (`vi.hoisted`, `vi.mock`)
-- **E2E**: Playwright (+ Synpress for wallet flows)
+- **E2E**: Playwright with the app's in-browser wagmi mock connector for deterministic wallet flows
 - **Coverage**: Vitest istanbul
 
 ## File layout
+
+The current browser-acceptance and integrated profiles, fixture ownership, and local setup commands are documented in the
+[testing guide](../../docs/testing/README.md) and the [application E2E guide](../../app/test/README.md).
 
 Co-locate tests with the code they cover, in `__tests__/`:
 

@@ -16,13 +16,13 @@
     </template>
 
     <UAlert
-      v-if="balanceError || safeInfoError"
+      v-if="balanceError || localBalanceError || safeInfoError"
       class="mb-5"
       color="error"
       variant="soft"
       icon="i-lucide-circle-alert"
       title="Some wallet details are unavailable"
-      description="The Safe address remains available. Check your connection and retry the balance and signer details."
+      description="Wallet data could not be loaded. Wait a moment, then try again. The Safe address remains available."
       data-test="safe-overview-error"
     >
       <template #actions>
@@ -36,6 +36,16 @@
         />
       </template>
     </UAlert>
+    <UAlert
+      v-else-if="isIndexing"
+      class="mb-5"
+      color="info"
+      variant="soft"
+      icon="i-lucide-hourglass"
+      title="Safe services are indexing this wallet"
+      description="Balances and signers appear here automatically once indexing finishes, which can take a few minutes after deployment."
+      data-test="safe-indexing-notice"
+    />
 
     <div class="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
       <div class="min-w-0">
@@ -161,11 +171,10 @@ import type { Address } from 'viem'
 import { useStorage } from '@vueuse/core'
 import { useToast } from '@nuxt/ui/composables'
 import AddressTooltip from '@/components/ui/AddressTooltip.vue'
-import { getSafeHomeUrl, openSafeAppUrl } from '@/composables/safe'
-import { useContractBalance } from '@/composables/useContractBalance'
+import { getSafeHomeUrl, isSafeNotIndexedError } from '@/utils/safe/model'
+import { openSafeAppUrl } from '@/lib/safe/browser'
 import { useGetSafeInfoQuery } from '@/queries/safe.queries'
 import TransferForm, { type TransferModel } from '@/components/forms/TransferForm.vue'
-import type { TokenOption } from '@/types'
 import { useTransferFromSafeMutation } from '@/queries/safe.mutations'
 import DepositSafeForm from '@/components/sections/SafeView/forms/DepositSafeForm.vue'
 import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
@@ -173,6 +182,8 @@ import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
 import { useSafeSignerRole } from '@/composables/safe/useSafeSignerRole'
 import { formatCurrency, formatUsd } from '@/utils/format'
 import { signerRoleCopy } from '@/utils/safe/signerRole'
+import { useGetSafeBalancesQuery } from '@/queries/safeClient.queries'
+import { getSafeFiatTotal, toSafeTransferTokens } from '@/utils/safe/portfolio'
 
 const props = defineProps<{ address: Address }>()
 const chainId = useChainId()
@@ -180,34 +191,42 @@ const currency = useStorage('currency', { code: 'USD', name: 'US Dollar', symbol
 const { isWriteDisabled } = useTeamWriteGuard()
 
 const {
-  data: balance,
-  isLoading,
+  data: balances,
   error: balanceError,
-  refetch: refetchBalance
-} = useContractBalance(props.address)
-const totalUsd = computed(() => formatUsd(balance.value?.total.usd.value))
+  failureReason: balanceFailure,
+  isLoading,
+  refetch: refetchBalances
+} = useGetSafeBalancesQuery({ pathParams: { safeAddress: () => props.address } })
+const {
+  data: localBalances,
+  error: localBalanceError,
+  refetch: refetchLocalBalances
+} = useGetSafeBalancesQuery({
+  pathParams: { safeAddress: () => props.address, fiatCode: () => currency.value.code }
+})
+const totalUsd = computed(() => {
+  const total = getSafeFiatTotal(balances.value)
+  return balanceError.value || (total === undefined && balances.value)
+    ? 'Incomplete'
+    : formatUsd(total)
+})
 const totalLocal = computed(() =>
-  formatCurrency(balance.value?.total.local.value, { currency: currency.value.code })
+  formatCurrency(getSafeFiatTotal(localBalances.value), { currency: currency.value.code })
 )
 const {
   data: safeInfo,
   isLoading: isSafeInfoLoading,
   error: safeInfoError,
+  failureReason: safeInfoFailure,
   refetch: refetchSafeInfo
 } = useGetSafeInfoQuery({ pathParams: { safeAddress: props.address } })
-
-const tokens = computed<TokenOption[]>(() =>
-  (balance.value?.balances ?? [])
-    .map((item) => ({
-      symbol: item.token.symbol,
-      balance: item.amount,
-      tokenId: item.token.id,
-      price: item.price.usd.value,
-      name: item.token.name,
-      code: item.token.code
-    }))
-    .filter((item) => item.tokenId !== 'sher')
+const isIndexing = computed(
+  () =>
+    (isLoading.value && isSafeNotIndexedError(balanceFailure.value)) ||
+    (isSafeInfoLoading.value && isSafeNotIndexedError(safeInfoFailure.value))
 )
+
+const tokens = computed(() => toSafeTransferTokens(balances.value))
 
 const { isConnectedUserOwner } = useSafeSignerRole(safeInfo)
 const roleCopy = computed(() =>
@@ -238,7 +257,8 @@ const initialTransferDataValue = (): TransferModel => {
 const transferData: Ref<TransferModel> = ref(initialTransferDataValue())
 
 const retryOverview = () => {
-  void refetchBalance()
+  void refetchBalances()
+  if (currency.value.code !== 'USD') void refetchLocalBalances()
   void refetchSafeInfo()
 }
 

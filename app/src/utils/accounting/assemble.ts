@@ -40,7 +40,7 @@ import type { AccountName } from '@/utils/accounting/chartOfAccounts'
 import { applyJournalAccountAssignments } from '@/utils/accounting/journalAccountAssignment'
 import { finalizeJournalEntryDrafts } from '@/utils/accounting/journalEntry'
 import type { JournalEntryDraft } from '@/utils/accounting/journalEntryDraft'
-import type { JournalEntry } from '@/utils/accounting/types'
+import type { AccountingDiagnostic, JournalEntry } from '@/utils/accounting/types'
 import { tokenUsdRate, type UsdRateOfRecord } from '@/utils/accounting/toUsd'
 import {
   buildSherMultiplierTimeline,
@@ -77,6 +77,8 @@ export interface CncAccountingInput {
   vestingEvents?: VestingEventFeed | null
   safeDepositRouterEvents?: SafeDepositRouterEventFeed | null
   safeTransfers?: readonly SafeIncomingTransfer[] | null
+  /** Authoritative actual movements, including route/allowance-driven ERC-20 outflows. */
+  safeAssetTransfers?: readonly SafeIncomingTransfer[] | null
   /** Executed multisig transactions — outflows from the Safe. */
   safeOutgoingTransactions?: readonly SafeTransaction[] | null
   // ── portal DB rows (off-chain enrichment context, spec §3.2) ──
@@ -88,6 +90,7 @@ export interface CncAccountingInput {
 
 /** The canonical journal and reconciliation diagnostics resolved for a team's books. */
 export interface CncAccounting {
+  assetDiagnostics?: AccountingDiagnostic[]
   /** The validated, ordered double-entry journal built once after consolidation. */
   journal: JournalEntry[]
   /** Fee logs withheld because their Bank outflow counterpart is missing. */
@@ -187,18 +190,20 @@ function toJournalEntrySources(input: CncAccountingInput): JournalEntrySources {
   }
 
   if (input.safeAddress) {
-    const incomingRows = toSafeTransferRows(
-      input.safeTransfers,
-      input.safeDepositRouterEvents?.safeDeposits?.items
-    )
-    const outgoingRows = toSafeOutgoingTransferRows(
-      input.safeOutgoingTransactions,
-      input.safeAddress
-    )
-    sources.safe = {
-      safeAddress: input.safeAddress,
-      transfers: [...incomingRows, ...outgoingRows]
-    }
+    const transfers =
+      input.safeAssetTransfers !== undefined
+        ? toSafeTransferRows(
+            input.safeAssetTransfers,
+            input.safeDepositRouterEvents?.safeDeposits?.items
+          )
+        : [
+            ...toSafeTransferRows(
+              input.safeTransfers,
+              input.safeDepositRouterEvents?.safeDeposits?.items
+            ),
+            ...toSafeOutgoingTransferRows(input.safeOutgoingTransactions, input.safeAddress)
+          ]
+    sources.safe = { safeAddress: input.safeAddress, transfers }
   }
 
   return sources
@@ -286,7 +291,8 @@ function assembleFromDrafts(
 
   return {
     journal,
-    unmatchedFeeOperationIds: finalized.unmatchedFeeOperationIds
+    unmatchedFeeOperationIds: finalized.unmatchedFeeOperationIds,
+    assetDiagnostics: finalized.assetDiagnostics
   }
 }
 

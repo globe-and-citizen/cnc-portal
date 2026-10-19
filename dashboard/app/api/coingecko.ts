@@ -1,5 +1,3 @@
-const COINGECKO_API = 'https://api.coingecko.com/api/v3'
-
 /**
  * Token Prices Response from CoinGecko API
  */
@@ -31,9 +29,11 @@ export interface TokenPrices {
  * console.log(prices.ethereum) // 2500
  */
 export const fetchTokenPrices = async (tokenIds: string): Promise<TokenPrices> => {
-  const url = `${COINGECKO_API}/simple/price`
+  const config = useRuntimeConfig()
+  const url = `${config.public.backendUrl}/api/coingecko/simple/price`
 
   const response = await $fetch<TokenPricesResponse>(url, {
+    retry: 0,
     params: {
       ids: tokenIds,
       vs_currencies: 'usd'

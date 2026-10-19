@@ -23,6 +23,9 @@ Use the focused guides instead of re-deriving local patterns.
 
 ## Implement
 
+- Apply [Development Relationship Validation](../../../docs/development-guide/relationship-validation.md) from scoping through review
+  readiness. Follow changed API/chain boundaries, shared consumers, receiving domains, and accounting consequences where applicable; record
+  evidence and completion proposals in the issue/PR.
 - Reuse an existing utility, composable, query hook, and formatter before creating a new one.
 - Keep server state in its query cache. A mutation is a pure request function wrapped by one `useXxxMutation` composable; actions sharing
   one endpoint reuse that hook.

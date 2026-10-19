@@ -84,7 +84,13 @@ function diagnosticMessage(diagnostic: AccountingDiagnostic): string {
     case 'receipt-unavailable':
       return `Transaction receipt ${formatTxHash(diagnostic.txHash)} could not be loaded.`
     case 'rate-unavailable':
-      return `${diagnostic.token.toUpperCase()} movements were withheld because their USD rate is unavailable.`
+      return `${diagnostic.token.toUpperCase()} has no available historical USD rate.`
+    case 'asset-metadata-unavailable':
+      return `Token metadata is unavailable for ${formatTxHash(diagnostic.txHash)}.`
+    case 'exchange-basis-unavailable':
+      return `Asset exchange ${formatTxHash(diagnostic.txHash)} needs complete acquisition and valuation evidence.`
+    case 'unclassified-asset-movement':
+      return `Asset movement ${formatTxHash(diagnostic.txHash)} needs accounting classification.`
     default: {
       const exhaustive: never = diagnostic
       return exhaustive

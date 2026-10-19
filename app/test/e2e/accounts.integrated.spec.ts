@@ -1,6 +1,5 @@
 import type { Address } from 'viem'
-import { parseEther, parseUnits } from 'viem'
-import type { Locator, Page } from '@playwright/test'
+import { keccak256, parseUnits, type Hex } from 'viem'
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { expect, test } from './fixtures/integrated'
@@ -9,19 +8,21 @@ import {
   E2E_MEMBER_PRIVATE_KEY,
   E2E_OWNER,
   E2E_OWNER_PRIVATE_KEY,
-  nativeBalance,
+  memberAccount,
+  publicClient,
   tokenBalance
 } from './e2e-chain'
-import { dialogAmount, openAccountFromSidebar, selectToken } from './e2e-page'
+import { dialogAmount, openAccountFromSidebar } from './e2e-page'
 import { grossForNet } from './bank/bank-chain'
+import { addressFrom, depositUsdc } from './bank/bank-integrated-helpers'
 import { completeCashOut, transferBankToContract } from './bank/bank-page'
 import {
   addRealCompanyMember,
   createOperationalCompany,
-  deleteCompanyThroughUi,
-  deploySafeThroughUi
+  deleteCompanyThroughUi
 } from './company/real-company-page'
 import { chooseApprovalDate } from './expense/expense-page'
+import { expenseAccountEip712Abi } from '../../src/artifacts/abi/generated'
 
 const deploymentManifest = JSON.parse(
   readFileSync(
@@ -34,116 +35,6 @@ const deploymentManifest = JSON.parse(
 const usdc = deploymentManifest['MockTokens#USDC'] as Address
 const feeCollector = deploymentManifest['FeeCollectorModule#FeeCollector'] as Address
 const bankFeeBps = 50n
-
-const addressFrom = async (selector: Locator) => {
-  const text = await selector.textContent()
-  const [address] = text?.match(/0x[a-fA-F0-9]{40}/) ?? []
-  if (!address) throw new Error('Expected a contract address in the account view')
-  return address as Address
-}
-
-async function depositUsdc(page: Page, amount: string) {
-  await page.getByRole('button', { name: 'Deposit', exact: true }).click()
-  const deposit = page.getByRole('dialog', { name: 'Deposit to Bank Contract' })
-  await selectToken(page, deposit, 'USDC')
-  await dialogAmount(deposit).fill(amount)
-  await deposit.locator('[data-test="deposit-button"]').click()
-  await expect(page.getByText('USDC deposited successfully', { exact: true })).toBeVisible({
-    timeout: 30_000
-  })
-}
-
-test.describe(
-  '[US-SAFE-001/US-BANK-001/002/003] Integrated treasury readiness',
-  {
-    tag: ['@US-SAFE-001', '@US-BANK-001', '@US-BANK-002', '@US-BANK-003', '@integrated']
-  },
-  () => {
-    test.setTimeout(240_000)
-
-    /**
-     * Covers:
-     * - [AC-US-SAFE-001-01]
-     * - [AC-US-SAFE-001-03]
-     * - [AC-US-SAFE-001-05]
-     * - [AC-US-BANK-001-01]
-     * - [AC-US-BANK-001-02]
-     * - [AC-US-BANK-001-03]
-     * - [AC-US-BANK-002-01]
-     * - [AC-US-BANK-002-03]
-     * - [AC-US-BANK-002-09]
-     * - [AC-US-BANK-003-01]
-     * - [AC-US-BANK-003-02]
-     */
-    test('deploys the company Safe and funds the Bank through the product UI', async ({ page }) => {
-      const company = await createOperationalCompany(page)
-
-      try {
-        const safe = await deploySafeThroughUi(page, company.teamId)
-        expect(safe.type).toBe('Safe')
-
-        await openAccountFromSidebar(
-          page,
-          `/teams/${company.teamId}/accounts/safe-account/${safe.address}`
-        )
-        await expect(page.locator('[data-test="safe-wallet-view"]')).toBeVisible()
-        await expect(page.locator('[data-test="safe-threshold-summary"]')).toHaveText(
-          '1 of 1 signers'
-        )
-
-        await openAccountFromSidebar(page, `/teams/${company.teamId}/accounts/bank-account`)
-        const bank = await addressFrom(page.locator('[data-test="bank-contract-address"]'))
-        await page.getByRole('button', { name: 'Deposit', exact: true }).click()
-        const nativeDeposit = page.getByRole('dialog', { name: 'Deposit to Bank Contract' })
-        await dialogAmount(nativeDeposit).fill('1')
-        await nativeDeposit.locator('[data-test="deposit-button"]').click()
-        await expect(page.getByText('GO deposited successfully', { exact: true })).toBeVisible({
-          timeout: 30_000
-        })
-        await expect.poll(() => nativeBalance(bank)).toBe(parseEther('1'))
-
-        await depositUsdc(page, '2')
-        await expect.poll(() => tokenBalance(usdc, bank)).toBe(parseUnits('2', 6))
-        const history = page.locator('[data-test="bank-transactions"]')
-        await expect(history.getByText('Deposit', { exact: true })).toBeVisible({
-          timeout: 30_000
-        })
-        await expect(history.getByText('Token deposit', { exact: true })).toBeVisible()
-        await expect(history.getByText('Date', { exact: true })).toBeVisible()
-        await expect(history.getByText('Counterparty', { exact: true })).toBeVisible()
-        await expect(history.getByText('Value (USD)', { exact: true })).toBeVisible()
-        await expect(history.getByText('Tx Hash', { exact: true })).toBeVisible()
-        await history.locator('[data-test="bank-transaction-detail-button"]').first().click()
-        const transactionDetail = page.getByRole('dialog', { name: 'Transaction detail' })
-        await expect(transactionDetail.getByText('Tx hash', { exact: true })).toBeVisible()
-        await expect(transactionDetail.getByText('Timestamp', { exact: true })).toBeVisible()
-        await expect(transactionDetail.getByText('Amount', { exact: true })).toBeVisible()
-        await transactionDetail.getByRole('button', { name: 'Close', exact: true }).last().click()
-
-        await openAccountFromSidebar(page, `/teams/${company.teamId}/accounts/expense-account`)
-        const expense = await addressFrom(page.locator('[data-test="expense-account-address"]'))
-        const expenseBefore = await nativeBalance(expense)
-        await openAccountFromSidebar(page, `/teams/${company.teamId}/accounts/bank-account`)
-        const collectorBefore = await nativeBalance(feeCollector)
-        const requestedNet = parseEther('0.25')
-        const transferGross = grossForNet(requestedNet, bankFeeBps)
-        await transferBankToContract(page, 'ExpenseAccountEIP712', '0.25', 'GO')
-        await expect.poll(() => nativeBalance(expense)).toBe(expenseBefore + requestedNet)
-        await expect.poll(() => nativeBalance(bank)).toBe(parseEther('1') - transferGross)
-        await expect
-          .poll(() => nativeBalance(feeCollector))
-          .toBe(collectorBefore + transferGross - requestedNet)
-        await expect(history.getByText('Transfer', { exact: true })).toBeVisible({
-          timeout: 30_000
-        })
-      } finally {
-        if (!page.isClosed()) {
-          await deleteCompanyThroughUi(page, company.teamId, company.team.name)
-        }
-      }
-    })
-  }
-)
 
 test.describe(
   '[US-BANK-002/004/US-EXP-001/002/003/004] Integrated expense allowance',
@@ -171,6 +62,7 @@ test.describe(
      * - [AC-US-EXP-003-01]
      * - [AC-US-EXP-003-02]
      * - [AC-US-EXP-003-03]
+     * - [AC-US-EXP-003-05]
      * - [AC-US-EXP-004-01]
      * - [AC-US-EXP-004-02]
      * - [AC-US-EXP-004-04]
@@ -233,9 +125,11 @@ test.describe(
         expect(approvalResponse.ok()).toBe(true)
         const approvalRecord = (await approvalResponse.json()) as {
           userAddress: string
+          signature: Hex
           data: {
             amount: number
             frequencyType: number
+            customFrequency: number
             startDate: number
             endDate: number
             tokenAddress: string
@@ -296,6 +190,56 @@ test.describe(
         await openAccountFromSidebar(page, `/teams/${company.teamId}/accounts/bank-account`)
         await openAccountFromSidebar(page, `/teams/${company.teamId}/accounts/expense-account`)
         await expect(page.locator('[data-test="enable-button"]')).toBeVisible()
+        await memberPage.reload()
+        await expect(memberPage.locator('[data-test="transfer-button"]')).toBeDisabled()
+
+        const recipientWhileDisabled = await tokenBalance(usdc, E2E_MEMBER)
+        const expenseWhileDisabled = await tokenBalance(usdc, expense)
+        const signatureHash = keccak256(approvalRecord.signature)
+        const usageWhileDisabled = (await publicClient.readContract({
+          address: expense,
+          abi: expenseAccountEip712Abi,
+          functionName: 'getExpenseBalance',
+          args: [signatureHash]
+        })) as { totalWithdrawn: bigint; state: number }
+        expect(Number(usageWhileDisabled.state)).toBe(2)
+
+        // The browser hides Spend for a disabled approval. Exercise the same
+        // signed request at the real contract boundary so the UI cannot mask
+        // a missing on-chain authorization check.
+        await expect(
+          publicClient.simulateContract({
+            account: memberAccount,
+            address: expense,
+            abi: expenseAccountEip712Abi,
+            functionName: 'transfer',
+            args: [
+              E2E_MEMBER,
+              parseUnits('1', 6),
+              {
+                amount: parseUnits(String(approvalRecord.data.amount), 6),
+                frequencyType: approvalRecord.data.frequencyType,
+                customFrequency: BigInt(approvalRecord.data.customFrequency),
+                startDate: BigInt(approvalRecord.data.startDate),
+                endDate: BigInt(approvalRecord.data.endDate),
+                tokenAddress: usdc,
+                approvedAddress: E2E_MEMBER
+              },
+              approvalRecord.signature
+            ]
+          })
+        ).rejects.toThrow('ExpenseAccountEIP712__ApprovalInactive')
+        expect(await tokenBalance(usdc, E2E_MEMBER)).toBe(recipientWhileDisabled)
+        expect(await tokenBalance(usdc, expense)).toBe(expenseWhileDisabled)
+        const usageAfterRejectedSpend = (await publicClient.readContract({
+          address: expense,
+          abi: expenseAccountEip712Abi,
+          functionName: 'getExpenseBalance',
+          args: [signatureHash]
+        })) as { totalWithdrawn: bigint; state: number }
+        expect(usageAfterRejectedSpend.totalWithdrawn).toBe(usageWhileDisabled.totalWithdrawn)
+        expect(usageAfterRejectedSpend.state).toBe(usageWhileDisabled.state)
+
         await page.locator('[data-test="enable-button"]').click()
         await expect(page.getByText('Approval activated', { exact: true })).toBeVisible({
           timeout: 30_000
@@ -304,17 +248,53 @@ test.describe(
         await openAccountFromSidebar(page, `/teams/${company.teamId}/accounts/expense-account`)
         await expect(page.locator('[data-test="disable-button"]')).toBeVisible()
 
+        await memberPage.reload()
+        await expect(memberPage.locator('[data-test="transfer-button"]')).toBeEnabled()
+        await memberPage.locator('[data-test="transfer-button"]').click()
+        const secondSpend = memberPage.getByRole('dialog', {
+          name: 'Transfer from Expenses Contract'
+        })
+        await secondSpend.getByPlaceholder('Address').fill(E2E_MEMBER)
+        await secondSpend.locator('[data-test="user-row"]').click()
+        await dialogAmount(secondSpend).fill('1')
+        await secondSpend.locator('[data-test="transferButton"]').click()
+        await expect(memberPage.getByText('Transfer Successful', { exact: true })).toBeVisible({
+          timeout: 30_000
+        })
+        await expect
+          .poll(() => tokenBalance(usdc, E2E_MEMBER))
+          .toBe(memberBefore + parseUnits('4', 6))
+        await expect.poll(() => tokenBalance(usdc, expense)).toBe(parseUnits('4', 6))
+
+        await page.reload()
+        await expect(page.locator('[data-test="expense-account-balance"]')).toContainText('$4.00')
+        await expect(page.locator('[data-test="disable-button"]')).toBeVisible()
+        await memberPage.reload()
+        await expect(memberPage.locator('[data-test="expense-account-balance"]')).toContainText(
+          '$4.00'
+        )
+        await expect(memberPage.locator('[data-test="transfer-button"]')).toBeEnabled()
+        const finalUsage = (await publicClient.readContract({
+          address: expense,
+          abi: expenseAccountEip712Abi,
+          functionName: 'getExpenseBalance',
+          args: [signatureHash]
+        })) as { totalWithdrawn: bigint; state: number }
+        expect(finalUsage.totalWithdrawn).toBe(parseUnits('4', 6))
+        expect(Number(finalUsage.state)).not.toBe(2)
+
         const reviewPage = await walletPage(E2E_OWNER_PRIVATE_KEY)
         await reviewPage.goto(`/teams/${company.teamId}`)
         await openAccountFromSidebar(
           reviewPage,
           `/teams/${company.teamId}/accounts/expense-account`
         )
+        await reviewPage.reload()
         await expect(
           reviewPage
             .locator('[data-test="expense-transactions"]')
             .getByText('Token transfer', { exact: true })
-        ).toBeVisible({ timeout: 30_000 })
+        ).toHaveCount(2, { timeout: 30_000 })
 
         const ownerBeforeCashOut = await tokenBalance(usdc, E2E_OWNER)
         await page.goto(`/teams/${company.teamId}`)

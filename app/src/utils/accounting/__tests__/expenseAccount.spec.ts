@@ -307,4 +307,17 @@ describe('mapExpense portal fallback', () => {
     expect(entries).toHaveLength(1)
     expect(entries[0].id).toBe('expense-drawn-12')
   })
+
+  it('does not invent a portal fallback for historical usage that was not read', () => {
+    const historical = { ...partlyDrawn(), status: 'historical', balances: null }
+
+    expect(mapExpense({}, ctx, [historical])).toEqual([])
+    const [indexedPayout] = mapExpense(
+      { tokenTransfers: [draw('historical-payout', 3, 100)] },
+      ctx,
+      [historical]
+    )
+    expect(indexedPayout.useCase).toBe('UC-EXP-01')
+    expect(draftUsdValue(indexedPayout)).toBe(3)
+  })
 })

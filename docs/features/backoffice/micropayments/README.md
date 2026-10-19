@@ -1,7 +1,7 @@
 # Backoffice Micropayments — User Stories
 
-**Scope:** Administrator access to the versioned global FeeCollector deployments at `/micropayments`, including read-only inspection and
-owner-controlled fee management
+**Scope:** Administrator access to versioned global FeeCollector deployments at `/micropayments`, including the available V1 management
+panel and historical V0/V0.1 panels; the registry's current V2 deployment is not yet supported by this route
 
 **Last reviewed:** Not yet reviewed
 
@@ -14,9 +14,10 @@ These acceptance criteria follow the
   company.
 - An authenticated `ROLE_ADMIN` or `ROLE_SUPER_ADMIN` user can enter the dashboard route. FeeCollector writes require the connected wallet
   to be the owner of the selected deployment; dashboard administrator access alone does not grant on-chain control.
-- The version selector defaults to the registry's current deployment and can select the historical V0 and V0.1 deployments. Each panel binds
-  its reads and writes to that version's ABI and deployment rather than adapting one ABI at runtime.
-- The current V1 panel shows an approximate USD total of the recognized holdings, the owner, the fee beneficiary, token holdings, and fee
+- The version selector defaults to the registry's current V2 deployment, but the route renders panels only for V1, V0, and V0.1. Its
+  FeeCollector resolver has no V2 ABI or address mapping. Thus selecting the default does not provide a current-generation management
+  journey; the V1 criteria below describe the available V1 panel, not the current deployment.
+- The V1 panel shows an approximate USD total of the recognized holdings, the owner, the fee beneficiary, token holdings, and fee
   configurations. The displayed beneficiary is the owner when the stored beneficiary is unset.
 - V1 withdrawals sweep the native balance and every supported ERC-20 balance to the configured beneficiary, or to the owner when no
   beneficiary is configured. A withdrawal has no per-token or partial-amount control.
@@ -36,7 +37,7 @@ flowchart LR
     Version --> Inspect[Inspect balances, owner, and fee configuration]
     Inspect --> Owner{Connected wallet owns selected collector?}
     Owner -->|No| ReadOnly[Read-only inspection]
-    Owner -->|Yes, V1| Current[Manage current fee collector]
+    Owner -->|Yes, V1| Current[Manage V1 fee collector]
     Current --> FeesConfig[Set fee configuration]
     Current --> Tokens[Manage token support]
     Current --> Recipient[Set beneficiary or transfer ownership]
@@ -47,15 +48,33 @@ flowchart LR
 
 ## Status Overview
 
-| User Story           | Title                                        | Actor                  | Status         |
-| -------------------- | -------------------------------------------- | ---------------------- | -------------- |
-| US-MICROPAYMENTS-001 | Inspect FeeCollector deployments             | Platform administrator | 🧪 Validation  |
-| US-MICROPAYMENTS-002 | Configure current FeeCollector fees          | FeeCollector owner     | 🧪 Validation  |
-| US-MICROPAYMENTS-003 | Manage current FeeCollector token support    | FeeCollector owner     | 🚧 In Progress |
-| US-MICROPAYMENTS-004 | Set the current FeeCollector fee beneficiary | FeeCollector owner     | 🧪 Validation  |
-| US-MICROPAYMENTS-005 | Transfer current FeeCollector ownership      | FeeCollector owner     | 🧪 Validation  |
-| US-MICROPAYMENTS-006 | Withdraw current FeeCollector funds          | FeeCollector owner     | 🧪 Validation  |
-| US-MICROPAYMENTS-007 | Manage a legacy FeeCollector deployment      | FeeCollector owner     | 🧪 Validation  |
+| User Story           | Title                                   | Actor                  | Status         |
+| -------------------- | --------------------------------------- | ---------------------- | -------------- |
+| US-MICROPAYMENTS-001 | Inspect FeeCollector deployments        | Platform administrator | 🚧 In Progress |
+| US-MICROPAYMENTS-002 | Configure V1 FeeCollector fees          | FeeCollector owner     | 🧪 Validation  |
+| US-MICROPAYMENTS-003 | Manage V1 FeeCollector token support    | FeeCollector owner     | 🚧 In Progress |
+| US-MICROPAYMENTS-004 | Set the V1 FeeCollector fee beneficiary | FeeCollector owner     | 🧪 Validation  |
+| US-MICROPAYMENTS-005 | Transfer V1 FeeCollector ownership      | FeeCollector owner     | 🧪 Validation  |
+| US-MICROPAYMENTS-006 | Withdraw V1 FeeCollector funds          | FeeCollector owner     | 🧪 Validation  |
+| US-MICROPAYMENTS-007 | Manage a legacy FeeCollector deployment | FeeCollector owner     | 🧪 Validation  |
+
+## Test Coverage Overview
+
+Coverage targets compare each criterion with its required representative evidence. Static references are not a current passing run; the
+generated coverage report and CI retain file-level and execution evidence. Known assertion gaps remain insufficient even when a static
+reference has the expected layer label.
+
+| User Story           | Main Journey | Coverage Target | Gaps                            |
+| -------------------- | ------------ | --------------- | ------------------------------- |
+| US-MICROPAYMENTS-001 | ⬜ Planned   | ❌ 0/12 met     | `AC-US-MICROPAYMENTS-001-01–12` |
+| US-MICROPAYMENTS-002 | ⬜ Planned   | ❌ 0/9 met      | `AC-US-MICROPAYMENTS-002-01–09` |
+| US-MICROPAYMENTS-003 | ⬜ Planned   | ❌ 0/9 met      | `AC-US-MICROPAYMENTS-003-01–09` |
+| US-MICROPAYMENTS-004 | ⬜ Planned   | ❌ 0/8 met      | `AC-US-MICROPAYMENTS-004-01–08` |
+| US-MICROPAYMENTS-005 | ⬜ Planned   | ❌ 0/7 met      | `AC-US-MICROPAYMENTS-005-01–07` |
+| US-MICROPAYMENTS-006 | ⬜ Planned   | ❌ 0/9 met      | `AC-US-MICROPAYMENTS-006-01–09` |
+| US-MICROPAYMENTS-007 | ⬜ Planned   | ❌ 0/9 met      | `AC-US-MICROPAYMENTS-007-01–09` |
+
+Proof obligations use the [shared proof-strategy registry](../../../testing/proof-strategies.md). Multiple IDs for one AC are cumulative.
 
 ## US-MICROPAYMENTS-001: Inspect FeeCollector Deployments
 
@@ -95,11 +114,29 @@ flowchart LR
       empty values.
 - [x] `AC-US-MICROPAYMENTS-001-12` A FeeCollector with no fee configurations shows an explicit empty state.
 
+### Test Coverage
+
+| Acceptance Criterion         | Proof Strategy | Current Evidence | Status     |
+| ---------------------------- | -------------- | ---------------- | ---------- |
+| `AC-US-MICROPAYMENTS-001-01` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-MICROPAYMENTS-001-02` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-MICROPAYMENTS-001-03` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-MICROPAYMENTS-001-04` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-MICROPAYMENTS-001-05` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-MICROPAYMENTS-001-06` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-MICROPAYMENTS-001-07` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-MICROPAYMENTS-001-07` | `PS-CONTRACT`  | None linked      | ❌ Missing |
+| `AC-US-MICROPAYMENTS-001-08` | `PS-CONTRACT`  | None linked      | ❌ Missing |
+| `AC-US-MICROPAYMENTS-001-09` | `PS-CONTRACT`  | None linked      | ❌ Missing |
+| `AC-US-MICROPAYMENTS-001-10` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-MICROPAYMENTS-001-11` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-MICROPAYMENTS-001-12` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+
 **Dependencies:** Dashboard authentication, administrator roles, and the selected FeeCollector deployment
 
-## US-MICROPAYMENTS-002: Configure Current FeeCollector Fees
+## US-MICROPAYMENTS-002: Configure V1 FeeCollector Fees
 
-**As the** current FeeCollector owner\
+**As the** V1 FeeCollector owner\
 **I want to** add or update its fee configuration by contract type\
 **So that** supported fee-paying contracts apply the intended fee policy
 
@@ -114,7 +151,7 @@ flowchart LR
 #### Business Rules
 
 - [x] `AC-US-MICROPAYMENTS-002-04` Only the on-chain FeeCollector owner can set a fee. _(contract)_
-- [x] `AC-US-MICROPAYMENTS-002-05` The current panel accepts fees from 0% through 100% in 0.01% increments and submits their basis-point
+- [x] `AC-US-MICROPAYMENTS-002-05` The V1 panel accepts fees from 0% through 100% in 0.01% increments and submits their basis-point
       equivalent.
 - [x] `AC-US-MICROPAYMENTS-002-06` The add form excludes contract types already configured; the contract updates an existing entry rather
       than creating a duplicate.
@@ -126,11 +163,27 @@ flowchart LR
 - [x] `AC-US-MICROPAYMENTS-002-08` Cancelling the form leaves the current configuration unchanged.
 - [x] `AC-US-MICROPAYMENTS-002-09` A rejected fee transaction is reported in the form rather than treated as a successful update.
 
+### Test Coverage
+
+| Acceptance Criterion         | Proof Strategy | Current Evidence | Status     |
+| ---------------------------- | -------------- | ---------------- | ---------- |
+| `AC-US-MICROPAYMENTS-002-01` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-MICROPAYMENTS-002-01` | `PS-CONTRACT`  | None linked      | ❌ Missing |
+| `AC-US-MICROPAYMENTS-002-02` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-MICROPAYMENTS-002-03` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-MICROPAYMENTS-002-04` | `PS-CONTRACT`  | None linked      | ❌ Missing |
+| `AC-US-MICROPAYMENTS-002-05` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-MICROPAYMENTS-002-06` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-MICROPAYMENTS-002-06` | `PS-CONTRACT`  | None linked      | ❌ Missing |
+| `AC-US-MICROPAYMENTS-002-07` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-MICROPAYMENTS-002-08` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-MICROPAYMENTS-002-09` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+
 **Dependencies:** US-MICROPAYMENTS-001 and ownership of V1
 
-## US-MICROPAYMENTS-003: Manage Current FeeCollector Token Support
+## US-MICROPAYMENTS-003: Manage V1 FeeCollector Token Support
 
-**As the** current FeeCollector owner\
+**As the** V1 FeeCollector owner\
 **I want to** manage the ERC-20 tokens supported by the FeeCollector\
 **So that** fee-paying contracts can use supported tokens and withdrawals sweep the intended assets
 
@@ -156,11 +209,29 @@ flowchart LR
       cancellation leaves support unchanged.
 - [x] `AC-US-MICROPAYMENTS-003-09` Failed support-change transactions are surfaced in the corresponding modal.
 
+### Test Coverage
+
+| Acceptance Criterion         | Proof Strategy | Current Evidence | Status          |
+| ---------------------------- | -------------- | ---------------- | --------------- |
+| `AC-US-MICROPAYMENTS-003-01` | `PS-DASHBOARD` | None linked      | ❌ Missing      |
+| `AC-US-MICROPAYMENTS-003-01` | `PS-CONTRACT`  | None linked      | ❌ Missing      |
+| `AC-US-MICROPAYMENTS-003-02` | `PS-DASHBOARD` | None linked      | ❌ Missing      |
+| `AC-US-MICROPAYMENTS-003-02` | `PS-CONTRACT`  | None linked      | ❌ Missing      |
+| `AC-US-MICROPAYMENTS-003-03` | `PS-DASHBOARD` | None linked      | ❌ Missing      |
+| `AC-US-MICROPAYMENTS-003-03` | `PS-CONTRACT`  | None linked      | ❌ Missing      |
+| `AC-US-MICROPAYMENTS-003-04` | `PS-CONTRACT`  | None linked      | ❌ Missing      |
+| `AC-US-MICROPAYMENTS-003-05` | `PS-CONTRACT`  | Contract         | ⚠️ Insufficient |
+| `AC-US-MICROPAYMENTS-003-06` | `PS-DASHBOARD` | None linked      | ❌ Missing      |
+| `AC-US-MICROPAYMENTS-003-06` | `PS-CONTRACT`  | None linked      | ❌ Missing      |
+| `AC-US-MICROPAYMENTS-003-07` | `PS-DASHBOARD` | None linked      | ❌ Missing      |
+| `AC-US-MICROPAYMENTS-003-08` | `PS-DASHBOARD` | None linked      | ❌ Missing      |
+| `AC-US-MICROPAYMENTS-003-09` | `PS-DASHBOARD` | None linked      | ❌ Missing      |
+
 **Dependencies:** US-MICROPAYMENTS-001 and ownership of V1
 
-## US-MICROPAYMENTS-004: Set the Current FeeCollector Fee Beneficiary
+## US-MICROPAYMENTS-004: Set the V1 FeeCollector Fee Beneficiary
 
-**As the** current FeeCollector owner\
+**As the** V1 FeeCollector owner\
 **I want to** set the address that receives swept fees\
 **So that** collected funds reach the intended recipient
 
@@ -184,11 +255,26 @@ flowchart LR
 - [x] `AC-US-MICROPAYMENTS-004-07` Cancelling the modal leaves the configured beneficiary unchanged.
 - [x] `AC-US-MICROPAYMENTS-004-08` A rejected beneficiary transaction is reported in the modal.
 
+### Test Coverage
+
+| Acceptance Criterion         | Proof Strategy | Current Evidence | Status          |
+| ---------------------------- | -------------- | ---------------- | --------------- |
+| `AC-US-MICROPAYMENTS-004-01` | `PS-DASHBOARD` | None linked      | ❌ Missing      |
+| `AC-US-MICROPAYMENTS-004-01` | `PS-CONTRACT`  | None linked      | ❌ Missing      |
+| `AC-US-MICROPAYMENTS-004-02` | `PS-DASHBOARD` | Contract         | ⚠️ Insufficient |
+| `AC-US-MICROPAYMENTS-004-02` | `PS-CONTRACT`  | Contract         | ✅ Met          |
+| `AC-US-MICROPAYMENTS-004-03` | `PS-DASHBOARD` | None linked      | ❌ Missing      |
+| `AC-US-MICROPAYMENTS-004-04` | `PS-CONTRACT`  | Contract         | ⚠️ Insufficient |
+| `AC-US-MICROPAYMENTS-004-05` | `PS-CONTRACT`  | None linked      | ❌ Missing      |
+| `AC-US-MICROPAYMENTS-004-06` | `PS-DASHBOARD` | None linked      | ❌ Missing      |
+| `AC-US-MICROPAYMENTS-004-07` | `PS-DASHBOARD` | None linked      | ❌ Missing      |
+| `AC-US-MICROPAYMENTS-004-08` | `PS-DASHBOARD` | None linked      | ❌ Missing      |
+
 **Dependencies:** US-MICROPAYMENTS-001 and ownership of V1
 
-## US-MICROPAYMENTS-005: Transfer Current FeeCollector Ownership
+## US-MICROPAYMENTS-005: Transfer V1 FeeCollector Ownership
 
-**As the** current FeeCollector owner\
+**As the** V1 FeeCollector owner\
 **I want to** transfer on-chain ownership to another address\
 **So that** fee configuration and withdrawal control can be handed over deliberately
 
@@ -212,12 +298,25 @@ flowchart LR
 - [x] `AC-US-MICROPAYMENTS-005-06` Cancelling the modal does not request a transfer.
 - [x] `AC-US-MICROPAYMENTS-005-07` A rejected ownership-transfer transaction is reported in the modal.
 
+### Test Coverage
+
+| Acceptance Criterion         | Proof Strategy | Current Evidence | Status     |
+| ---------------------------- | -------------- | ---------------- | ---------- |
+| `AC-US-MICROPAYMENTS-005-01` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-MICROPAYMENTS-005-01` | `PS-CONTRACT`  | None linked      | ❌ Missing |
+| `AC-US-MICROPAYMENTS-005-02` | `PS-CONTRACT`  | None linked      | ❌ Missing |
+| `AC-US-MICROPAYMENTS-005-03` | `PS-CONTRACT`  | None linked      | ❌ Missing |
+| `AC-US-MICROPAYMENTS-005-04` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-MICROPAYMENTS-005-05` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-MICROPAYMENTS-005-06` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-MICROPAYMENTS-005-07` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+
 **Dependencies:** US-MICROPAYMENTS-001 and ownership of V1
 
-## US-MICROPAYMENTS-006: Withdraw Current FeeCollector Funds
+## US-MICROPAYMENTS-006: Withdraw V1 FeeCollector Funds
 
-**As the** current FeeCollector owner\
-**I want to** sweep collected current-version funds\
+**As the** V1 FeeCollector owner\
+**I want to** sweep collected V1 funds\
 **So that** the configured beneficiary receives every available supported balance
 
 ### Acceptance Criteria
@@ -242,6 +341,21 @@ flowchart LR
 - [x] `AC-US-MICROPAYMENTS-006-07` The confirmation lists an explicit empty state when there is no recognized balance to withdraw.
 - [x] `AC-US-MICROPAYMENTS-006-08` Cancelling the confirmation does not submit a withdrawal.
 - [x] `AC-US-MICROPAYMENTS-006-09` A failed withdrawal transaction is surfaced in the confirmation modal.
+
+### Test Coverage
+
+| Acceptance Criterion         | Proof Strategy | Current Evidence | Status          |
+| ---------------------------- | -------------- | ---------------- | --------------- |
+| `AC-US-MICROPAYMENTS-006-01` | `PS-DASHBOARD` | None linked      | ❌ Missing      |
+| `AC-US-MICROPAYMENTS-006-02` | `PS-CONTRACT`  | Contract         | ⚠️ Insufficient |
+| `AC-US-MICROPAYMENTS-006-03` | `PS-DASHBOARD` | None linked      | ❌ Missing      |
+| `AC-US-MICROPAYMENTS-006-04` | `PS-CONTRACT`  | Contract         | ⚠️ Insufficient |
+| `AC-US-MICROPAYMENTS-006-05` | `PS-CONTRACT`  | None linked      | ❌ Missing      |
+| `AC-US-MICROPAYMENTS-006-06` | `PS-DASHBOARD` | Contract         | ⚠️ Insufficient |
+| `AC-US-MICROPAYMENTS-006-06` | `PS-CONTRACT`  | Contract         | ✅ Met          |
+| `AC-US-MICROPAYMENTS-006-07` | `PS-DASHBOARD` | None linked      | ❌ Missing      |
+| `AC-US-MICROPAYMENTS-006-08` | `PS-DASHBOARD` | None linked      | ❌ Missing      |
+| `AC-US-MICROPAYMENTS-006-09` | `PS-DASHBOARD` | None linked      | ❌ Missing      |
 
 **Dependencies:** US-MICROPAYMENTS-001 and ownership of V1
 
@@ -275,10 +389,34 @@ flowchart LR
 - [x] `AC-US-MICROPAYMENTS-007-08` Cancelling an open legacy action leaves the historical deployment unchanged.
 - [x] `AC-US-MICROPAYMENTS-007-09` A rejected legacy transaction is shown in the action modal.
 
+### Test Coverage
+
+| Acceptance Criterion         | Proof Strategy | Current Evidence | Status     |
+| ---------------------------- | -------------- | ---------------- | ---------- |
+| `AC-US-MICROPAYMENTS-007-01` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-MICROPAYMENTS-007-01` | `PS-CONTRACT`  | None linked      | ❌ Missing |
+| `AC-US-MICROPAYMENTS-007-02` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-MICROPAYMENTS-007-03` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-MICROPAYMENTS-007-03` | `PS-CONTRACT`  | None linked      | ❌ Missing |
+| `AC-US-MICROPAYMENTS-007-04` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-MICROPAYMENTS-007-05` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-MICROPAYMENTS-007-06` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-MICROPAYMENTS-007-06` | `PS-CONTRACT`  | None linked      | ❌ Missing |
+| `AC-US-MICROPAYMENTS-007-07` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-MICROPAYMENTS-007-08` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-MICROPAYMENTS-007-09` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+
 **Dependencies:** US-MICROPAYMENTS-001, ownership of V0 or V0.1, and the selected historical deployment
 
 ## Known Gaps
 
+- The registry selects V2 by default, while the page has no V2 panel and its resolver has no V2 ABI/address mapping. V1 management is
+  available only after choosing the V1 version; it must not be counted as the current-generation journey. The six direct contract markers
+  target current Solidity source rather than the V1 dashboard deployment, so none establishes a V1 browser outcome by itself.
+- The marked owner-guard and sweep tests exercise current Solidity source, not a V1 deployment. `003-05` also omits a marked zero-address
+  assertion, `004-04` and `006-04` check rejection without the full owner outcome, and `006-02` lacks the configured-beneficiary branch.
+- The V1 fee list can display its empty state after a failed configuration read, contrary to the full failure distinction in
+  `AC-US-MICROPAYMENTS-001-11`.
 - The V1 panel only renders the native token and ERC-20s known to its local token registry. It detects supported ERC-20 addresses outside
   that registry but does not show them in the holdings table, so an owner cannot inspect or remove every supported token from the dashboard
   (`US-MICROPAYMENTS-003`).

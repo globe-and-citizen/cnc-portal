@@ -24,6 +24,13 @@ These acceptance criteria follow the
   suite, and registers the resulting Officer generation with the company.
 - The owner may defer Officer setup or Safe setup. Safe deployment and import are documented by
   [US-SAFE-001](../accounts/README.md#us-safe-001-set-up-a-safe).
+- The Company workspace's **Treasury Overview** includes the registered Safe's Gateway fiat total, including its other valued token
+  holdings. All account contributions use the selected display currency, which defaults to USD. The Safe contribution shares its cached
+  balance query and refresh rules with Safe Account. It keeps the numeric display and counts the provider's valued total even when another
+  returned token has no price; an absent or invalid total falls back to zero.
+- Companies list cards use that same Safe valuation alongside the other registered treasury accounts. Their account proportions use the
+  underlying values before display rounding. A positive treasury value below the displayed cent precision is shown as less than one cent, so
+  a funded account is not presented as an empty treasury.
 - The shared `/teams/:id/...` route namespace also hosts feature-specific child routes. Community Credit's optional round-view segment is
   specified in the [Community Credit documentation](../community-credit/README.md).
 
@@ -71,30 +78,18 @@ Coverage targets compare each criterion's required evidence with direct `AC-US-*
 latest pass/fail result, which belongs to CI or the generated local report. Gaps identify criteria whose required evidence is missing or
 insufficient; the detailed evidence distribution remains available in the generated report instead of being repeated here.
 
-| User Story       | Main Journey  | Coverage Target | Gaps |
-| ---------------- | ------------- | --------------- | ---- |
-| US-COMPANIES-001 | ✅ Integrated | ✅ 8/8          | —    |
-| US-COMPANIES-002 | ✅ Integrated | ✅ 8/8          | —    |
-| US-COMPANIES-003 | ✅ Integrated | ✅ 12/12        | —    |
-| US-COMPANIES-004 | ✅ Integrated | ✅ 6/6          | —    |
-| US-COMPANIES-005 | ✅ Integrated | ✅ 10/10        | —    |
-| US-COMPANIES-006 | ✅ Integrated | ✅ 7/7          | —    |
-| US-COMPANIES-007 | ✅ Integrated | ✅ 6/6          | —    |
-| US-COMPANIES-008 | ✅ Integrated | ✅ 6/6          | —    |
+| User Story       | Main Journey  | Coverage Target | Gaps                                                                         |
+| ---------------- | ------------- | --------------- | ---------------------------------------------------------------------------- |
+| US-COMPANIES-001 | ✅ Integrated | ⚠️ 7/8          | `AC-US-COMPANIES-001-03`                                                     |
+| US-COMPANIES-002 | ✅ Integrated | ⚠️ 7/8          | `AC-US-COMPANIES-002-02`                                                     |
+| US-COMPANIES-003 | ✅ Integrated | ✅ 12/12        | —                                                                            |
+| US-COMPANIES-004 | ✅ Integrated | ⚠️ 5/6          | `AC-US-COMPANIES-004-01`                                                     |
+| US-COMPANIES-005 | ✅ Integrated | ⚠️ 8/10         | `AC-US-COMPANIES-005-02`, `AC-US-COMPANIES-005-03`                           |
+| US-COMPANIES-006 | ✅ Integrated | ⚠️ 4/7          | `AC-US-COMPANIES-006-01`, `AC-US-COMPANIES-006-02`, `AC-US-COMPANIES-006-03` |
+| US-COMPANIES-007 | ✅ Integrated | ⚠️ 5/6          | `AC-US-COMPANIES-007-01`                                                     |
+| US-COMPANIES-008 | ✅ Integrated | ⚠️ 4/6          | `AC-US-COMPANIES-008-01`, `AC-US-COMPANIES-008-04`                           |
 
-## Proof Strategy Reference
-
-Each acceptance criterion references one reusable strategy instead of repeating the same responsibility, evidence, and rationale text.
-
-| Strategy                 | Responsibilities              | Required Evidence        | Proof Rationale                                                                     |
-| ------------------------ | ----------------------------- | ------------------------ | ----------------------------------------------------------------------------------- |
-| `PS-FRONTEND`            | Frontend                      | Frontend                 | The frontend owns this deterministic validation, derivation, or interaction state.  |
-| `PS-FRONTEND-INTEGRATED` | Frontend                      | Integrated E2E           | The browser behavior must remain proven inside the real primary journey.            |
-| `PS-BROWSER`             | Frontend                      | Mocked browser           | The user interaction needs browser-level proof with controlled dependency outcomes. |
-| `PS-BACKEND`             | Backend                       | Backend                  | The backend owns this API authorization, validation, or persistence rule.           |
-| `PS-BROWSER-BACKEND`     | Frontend + Backend            | Mocked browser + Backend | The controlled browser branch and backend rule can fail independently.              |
-| `PS-API`                 | Frontend + Backend            | Integrated E2E           | The browser/API hand-off and persisted user-visible state must work together.       |
-| `PS-FULL-STACK`          | Frontend + Backend + Contract | Integrated E2E           | Deployment, registration, and the resulting browser state must work as one journey. |
+Proof obligations use the [shared proof-strategy registry](../../testing/proof-strategies.md). Multiple IDs for one AC are cumulative.
 
 ## US-COMPANIES-001: Create a Company Workspace
 
@@ -124,16 +119,17 @@ Each acceptance criterion references one reusable strategy instead of repeating 
 
 ### Test Coverage
 
-| Acceptance Criterion     | Proof Strategy           | Current Evidence         | Status |
-| ------------------------ | ------------------------ | ------------------------ | ------ |
-| `AC-US-COMPANIES-001-01` | `PS-FRONTEND-INTEGRATED` | Integrated E2E           | ✅ Met |
-| `AC-US-COMPANIES-001-02` | `PS-FRONTEND-INTEGRATED` | Integrated E2E           | ✅ Met |
-| `AC-US-COMPANIES-001-03` | `PS-API`                 | Integrated E2E + Backend | ✅ Met |
-| `AC-US-COMPANIES-001-04` | `PS-BROWSER`             | Mocked browser           | ✅ Met |
-| `AC-US-COMPANIES-001-05` | `PS-BROWSER`             | Mocked browser           | ✅ Met |
-| `AC-US-COMPANIES-001-06` | `PS-BACKEND`             | Backend                  | ✅ Met |
-| `AC-US-COMPANIES-001-07` | `PS-BROWSER`             | Mocked browser           | ✅ Met |
-| `AC-US-COMPANIES-001-08` | `PS-BROWSER`             | Mocked browser           | ✅ Met |
+| Acceptance Criterion     | Proof Strategy           | Current Evidence         | Status          |
+| ------------------------ | ------------------------ | ------------------------ | --------------- |
+| `AC-US-COMPANIES-001-01` | `PS-FRONTEND-INTEGRATED` | Integrated E2E           | ✅ Met          |
+| `AC-US-COMPANIES-001-02` | `PS-FRONTEND-INTEGRATED` | Integrated E2E           | ✅ Met          |
+| `AC-US-COMPANIES-001-03` | `PS-API-INTEGRATED`      | Integrated E2E + Backend | ✅ Met          |
+| `AC-US-COMPANIES-001-03` | `PS-BACKEND`             | Integrated E2E + Backend | ⚠️ Insufficient |
+| `AC-US-COMPANIES-001-04` | `PS-BROWSER`             | Mocked browser           | ✅ Met          |
+| `AC-US-COMPANIES-001-05` | `PS-BROWSER`             | Mocked browser           | ✅ Met          |
+| `AC-US-COMPANIES-001-06` | `PS-BACKEND`             | Backend                  | ✅ Met          |
+| `AC-US-COMPANIES-001-07` | `PS-BROWSER`             | Mocked browser           | ✅ Met          |
+| `AC-US-COMPANIES-001-08` | `PS-BROWSER`             | Mocked browser           | ✅ Met          |
 
 **Dependencies:** Connected user with a portal account
 
@@ -164,16 +160,18 @@ Each acceptance criterion references one reusable strategy instead of repeating 
 
 ### Test Coverage
 
-| Acceptance Criterion     | Proof Strategy           | Current Evidence | Status |
-| ------------------------ | ------------------------ | ---------------- | ------ |
-| `AC-US-COMPANIES-002-01` | `PS-FRONTEND-INTEGRATED` | Integrated E2E   | ✅ Met |
-| `AC-US-COMPANIES-002-02` | `PS-FULL-STACK`          | Integrated E2E   | ✅ Met |
-| `AC-US-COMPANIES-002-03` | `PS-FULL-STACK`          | Integrated E2E   | ✅ Met |
-| `AC-US-COMPANIES-002-04` | `PS-BROWSER`             | Mocked browser   | ✅ Met |
-| `AC-US-COMPANIES-002-05` | `PS-BACKEND`             | Backend          | ✅ Met |
-| `AC-US-COMPANIES-002-06` | `PS-BROWSER`             | Mocked browser   | ✅ Met |
-| `AC-US-COMPANIES-002-07` | `PS-BROWSER`             | Mocked browser   | ✅ Met |
-| `AC-US-COMPANIES-002-08` | `PS-FRONTEND`            | Frontend         | ✅ Met |
+| Acceptance Criterion     | Proof Strategy             | Current Evidence | Status          |
+| ------------------------ | -------------------------- | ---------------- | --------------- |
+| `AC-US-COMPANIES-002-01` | `PS-FRONTEND-INTEGRATED`   | Integrated E2E   | ✅ Met          |
+| `AC-US-COMPANIES-002-02` | `PS-FULL-STACK-INTEGRATED` | Integrated E2E   | ✅ Met          |
+| `AC-US-COMPANIES-002-02` | `PS-BACKEND`               | Integrated E2E   | ⚠️ Insufficient |
+| `AC-US-COMPANIES-002-02` | `PS-CONTRACT`              | Integrated E2E   | ⚠️ Insufficient |
+| `AC-US-COMPANIES-002-03` | `PS-FULL-STACK-INTEGRATED` | Integrated E2E   | ✅ Met          |
+| `AC-US-COMPANIES-002-04` | `PS-BROWSER`               | Mocked browser   | ✅ Met          |
+| `AC-US-COMPANIES-002-05` | `PS-BACKEND`               | Backend          | ✅ Met          |
+| `AC-US-COMPANIES-002-06` | `PS-BROWSER`               | Mocked browser   | ✅ Met          |
+| `AC-US-COMPANIES-002-07` | `PS-BROWSER`               | Mocked browser   | ✅ Met          |
+| `AC-US-COMPANIES-002-08` | `PS-FRONTEND`              | Frontend         | ✅ Met          |
 
 **Dependencies:** US-COMPANIES-001, a connected wallet, and the active network
 
@@ -212,20 +210,20 @@ Each acceptance criterion references one reusable strategy instead of repeating 
 
 ### Test Coverage
 
-| Acceptance Criterion     | Proof Strategy | Current Evidence | Status |
-| ------------------------ | -------------- | ---------------- | ------ |
-| `AC-US-COMPANIES-003-01` | `PS-API`       | Integrated E2E   | ✅ Met |
-| `AC-US-COMPANIES-003-02` | `PS-API`       | Integrated E2E   | ✅ Met |
-| `AC-US-COMPANIES-003-03` | `PS-BROWSER`   | Mocked browser   | ✅ Met |
-| `AC-US-COMPANIES-003-04` | `PS-BACKEND`   | Backend          | ✅ Met |
-| `AC-US-COMPANIES-003-05` | `PS-BACKEND`   | Backend          | ✅ Met |
-| `AC-US-COMPANIES-003-06` | `PS-BROWSER`   | Mocked browser   | ✅ Met |
-| `AC-US-COMPANIES-003-07` | `PS-BACKEND`   | Backend          | ✅ Met |
-| `AC-US-COMPANIES-003-08` | `PS-BACKEND`   | Backend          | ✅ Met |
-| `AC-US-COMPANIES-003-09` | `PS-BACKEND`   | Backend          | ✅ Met |
-| `AC-US-COMPANIES-003-10` | `PS-FRONTEND`  | Frontend         | ✅ Met |
-| `AC-US-COMPANIES-003-11` | `PS-FRONTEND`  | Frontend         | ✅ Met |
-| `AC-US-COMPANIES-003-12` | `PS-FRONTEND`  | Frontend         | ✅ Met |
+| Acceptance Criterion     | Proof Strategy      | Current Evidence         | Status |
+| ------------------------ | ------------------- | ------------------------ | ------ |
+| `AC-US-COMPANIES-003-01` | `PS-API-INTEGRATED` | Integrated E2E           | ✅ Met |
+| `AC-US-COMPANIES-003-02` | `PS-API-INTEGRATED` | Integrated E2E           | ✅ Met |
+| `AC-US-COMPANIES-003-03` | `PS-BROWSER`        | Mocked browser           | ✅ Met |
+| `AC-US-COMPANIES-003-04` | `PS-BACKEND`        | Backend                  | ✅ Met |
+| `AC-US-COMPANIES-003-05` | `PS-BACKEND`        | Integrated E2E + Backend | ✅ Met |
+| `AC-US-COMPANIES-003-06` | `PS-BROWSER`        | Mocked browser           | ✅ Met |
+| `AC-US-COMPANIES-003-07` | `PS-BACKEND`        | Backend                  | ✅ Met |
+| `AC-US-COMPANIES-003-08` | `PS-BACKEND`        | Backend                  | ✅ Met |
+| `AC-US-COMPANIES-003-09` | `PS-BACKEND`        | Backend                  | ✅ Met |
+| `AC-US-COMPANIES-003-10` | `PS-FRONTEND`       | Frontend                 | ✅ Met |
+| `AC-US-COMPANIES-003-11` | `PS-FRONTEND`       | Frontend                 | ✅ Met |
+| `AC-US-COMPANIES-003-12` | `PS-FRONTEND`       | Frontend                 | ✅ Met |
 
 **Dependencies:** Connected user with a portal account
 
@@ -254,14 +252,16 @@ Each acceptance criterion references one reusable strategy instead of repeating 
 
 ### Test Coverage
 
-| Acceptance Criterion     | Proof Strategy       | Current Evidence         | Status |
-| ------------------------ | -------------------- | ------------------------ | ------ |
-| `AC-US-COMPANIES-004-01` | `PS-API`             | Integrated E2E           | ✅ Met |
-| `AC-US-COMPANIES-004-02` | `PS-BACKEND`         | Backend                  | ✅ Met |
-| `AC-US-COMPANIES-004-03` | `PS-BROWSER`         | Mocked browser           | ✅ Met |
-| `AC-US-COMPANIES-004-04` | `PS-BROWSER-BACKEND` | Mocked browser + Backend | ✅ Met |
-| `AC-US-COMPANIES-004-05` | `PS-BROWSER`         | Mocked browser           | ✅ Met |
-| `AC-US-COMPANIES-004-06` | `PS-BACKEND`         | Backend                  | ✅ Met |
+| Acceptance Criterion     | Proof Strategy      | Current Evidence         | Status          |
+| ------------------------ | ------------------- | ------------------------ | --------------- |
+| `AC-US-COMPANIES-004-01` | `PS-API-INTEGRATED` | Integrated E2E           | ✅ Met          |
+| `AC-US-COMPANIES-004-01` | `PS-BACKEND`        | Integrated E2E           | ⚠️ Insufficient |
+| `AC-US-COMPANIES-004-02` | `PS-BACKEND`        | Backend                  | ✅ Met          |
+| `AC-US-COMPANIES-004-03` | `PS-BROWSER`        | Mocked browser           | ✅ Met          |
+| `AC-US-COMPANIES-004-04` | `PS-BROWSER`        | Mocked browser + Backend | ✅ Met          |
+| `AC-US-COMPANIES-004-04` | `PS-BACKEND`        | Mocked browser + Backend | ✅ Met          |
+| `AC-US-COMPANIES-004-05` | `PS-BROWSER`        | Mocked browser           | ✅ Met          |
+| `AC-US-COMPANIES-004-06` | `PS-BACKEND`        | Backend                  | ✅ Met          |
 
 **Dependencies:** US-COMPANIES-003
 
@@ -294,18 +294,20 @@ Each acceptance criterion references one reusable strategy instead of repeating 
 
 ### Test Coverage
 
-| Acceptance Criterion     | Proof Strategy | Current Evidence         | Status |
-| ------------------------ | -------------- | ------------------------ | ------ |
-| `AC-US-COMPANIES-005-01` | `PS-API`       | Integrated E2E           | ✅ Met |
-| `AC-US-COMPANIES-005-02` | `PS-API`       | Integrated E2E + Backend | ✅ Met |
-| `AC-US-COMPANIES-005-03` | `PS-API`       | Integrated E2E + Backend | ✅ Met |
-| `AC-US-COMPANIES-005-04` | `PS-BACKEND`   | Backend                  | ✅ Met |
-| `AC-US-COMPANIES-005-05` | `PS-BACKEND`   | Backend                  | ✅ Met |
-| `AC-US-COMPANIES-005-06` | `PS-BACKEND`   | Backend                  | ✅ Met |
-| `AC-US-COMPANIES-005-07` | `PS-BACKEND`   | Backend                  | ✅ Met |
-| `AC-US-COMPANIES-005-08` | `PS-BACKEND`   | Backend                  | ✅ Met |
-| `AC-US-COMPANIES-005-09` | `PS-BACKEND`   | Backend                  | ✅ Met |
-| `AC-US-COMPANIES-005-10` | `PS-BACKEND`   | Backend                  | ✅ Met |
+| Acceptance Criterion     | Proof Strategy      | Current Evidence         | Status          |
+| ------------------------ | ------------------- | ------------------------ | --------------- |
+| `AC-US-COMPANIES-005-01` | `PS-API-INTEGRATED` | Integrated E2E           | ✅ Met          |
+| `AC-US-COMPANIES-005-02` | `PS-API-INTEGRATED` | Integrated E2E + Backend | ✅ Met          |
+| `AC-US-COMPANIES-005-02` | `PS-BACKEND`        | Integrated E2E + Backend | ⚠️ Insufficient |
+| `AC-US-COMPANIES-005-03` | `PS-API-INTEGRATED` | Integrated E2E + Backend | ✅ Met          |
+| `AC-US-COMPANIES-005-03` | `PS-BACKEND`        | Integrated E2E + Backend | ⚠️ Insufficient |
+| `AC-US-COMPANIES-005-04` | `PS-BACKEND`        | Backend                  | ✅ Met          |
+| `AC-US-COMPANIES-005-05` | `PS-BACKEND`        | Backend                  | ✅ Met          |
+| `AC-US-COMPANIES-005-06` | `PS-BACKEND`        | Backend                  | ✅ Met          |
+| `AC-US-COMPANIES-005-07` | `PS-BACKEND`        | Backend                  | ✅ Met          |
+| `AC-US-COMPANIES-005-08` | `PS-BACKEND`        | Backend                  | ✅ Met          |
+| `AC-US-COMPANIES-005-09` | `PS-BACKEND`        | Backend                  | ✅ Met          |
+| `AC-US-COMPANIES-005-10` | `PS-BACKEND`        | Backend                  | ✅ Met          |
 
 **Dependencies:** US-COMPANIES-003
 
@@ -338,15 +340,20 @@ Each acceptance criterion references one reusable strategy instead of repeating 
 
 ### Test Coverage
 
-| Acceptance Criterion     | Proof Strategy       | Current Evidence         | Status |
-| ------------------------ | -------------------- | ------------------------ | ------ |
-| `AC-US-COMPANIES-006-01` | `PS-API`             | Integrated E2E + Backend | ✅ Met |
-| `AC-US-COMPANIES-006-02` | `PS-API`             | Integrated E2E           | ✅ Met |
-| `AC-US-COMPANIES-006-03` | `PS-API`             | Integrated E2E           | ✅ Met |
-| `AC-US-COMPANIES-006-04` | `PS-BROWSER`         | Mocked browser           | ✅ Met |
-| `AC-US-COMPANIES-006-05` | `PS-BACKEND`         | Backend                  | ✅ Met |
-| `AC-US-COMPANIES-006-06` | `PS-BROWSER-BACKEND` | Mocked browser + Backend | ✅ Met |
-| `AC-US-COMPANIES-006-07` | `PS-BROWSER-BACKEND` | Mocked browser + Backend | ✅ Met |
+| Acceptance Criterion     | Proof Strategy      | Current Evidence         | Status          |
+| ------------------------ | ------------------- | ------------------------ | --------------- |
+| `AC-US-COMPANIES-006-01` | `PS-API-INTEGRATED` | Integrated E2E + Backend | ✅ Met          |
+| `AC-US-COMPANIES-006-01` | `PS-BACKEND`        | Integrated E2E + Backend | ⚠️ Insufficient |
+| `AC-US-COMPANIES-006-02` | `PS-API-INTEGRATED` | Integrated E2E           | ✅ Met          |
+| `AC-US-COMPANIES-006-02` | `PS-BACKEND`        | Integrated E2E           | ⚠️ Insufficient |
+| `AC-US-COMPANIES-006-03` | `PS-API-INTEGRATED` | Integrated E2E           | ✅ Met          |
+| `AC-US-COMPANIES-006-03` | `PS-BACKEND`        | Integrated E2E           | ⚠️ Insufficient |
+| `AC-US-COMPANIES-006-04` | `PS-BROWSER`        | Mocked browser           | ✅ Met          |
+| `AC-US-COMPANIES-006-05` | `PS-BACKEND`        | Backend                  | ✅ Met          |
+| `AC-US-COMPANIES-006-06` | `PS-BROWSER`        | Mocked browser + Backend | ✅ Met          |
+| `AC-US-COMPANIES-006-06` | `PS-BACKEND`        | Mocked browser + Backend | ✅ Met          |
+| `AC-US-COMPANIES-006-07` | `PS-BROWSER`        | Mocked browser + Backend | ✅ Met          |
+| `AC-US-COMPANIES-006-07` | `PS-BACKEND`        | Mocked browser + Backend | ✅ Met          |
 
 **Dependencies:** US-COMPANIES-003
 
@@ -375,14 +382,17 @@ Each acceptance criterion references one reusable strategy instead of repeating 
 
 ### Test Coverage
 
-| Acceptance Criterion     | Proof Strategy       | Current Evidence         | Status |
-| ------------------------ | -------------------- | ------------------------ | ------ |
-| `AC-US-COMPANIES-007-01` | `PS-API`             | Integrated E2E           | ✅ Met |
-| `AC-US-COMPANIES-007-02` | `PS-API`             | Integrated E2E + Backend | ✅ Met |
-| `AC-US-COMPANIES-007-03` | `PS-BROWSER`         | Mocked browser           | ✅ Met |
-| `AC-US-COMPANIES-007-04` | `PS-BROWSER-BACKEND` | Mocked browser + Backend | ✅ Met |
-| `AC-US-COMPANIES-007-05` | `PS-BACKEND`         | Backend                  | ✅ Met |
-| `AC-US-COMPANIES-007-06` | `PS-BACKEND`         | Backend                  | ✅ Met |
+| Acceptance Criterion     | Proof Strategy      | Current Evidence                          | Status          |
+| ------------------------ | ------------------- | ----------------------------------------- | --------------- |
+| `AC-US-COMPANIES-007-01` | `PS-API-INTEGRATED` | Integrated E2E                            | ✅ Met          |
+| `AC-US-COMPANIES-007-01` | `PS-BACKEND`        | Integrated E2E                            | ⚠️ Insufficient |
+| `AC-US-COMPANIES-007-02` | `PS-API-INTEGRATED` | Integrated E2E + Backend                  | ✅ Met          |
+| `AC-US-COMPANIES-007-02` | `PS-BACKEND`        | Integrated E2E + Backend                  | ✅ Met          |
+| `AC-US-COMPANIES-007-03` | `PS-BROWSER`        | Integrated E2E + Mocked browser           | ✅ Met          |
+| `AC-US-COMPANIES-007-04` | `PS-BROWSER`        | Integrated E2E + Mocked browser + Backend | ✅ Met          |
+| `AC-US-COMPANIES-007-04` | `PS-BACKEND`        | Integrated E2E + Mocked browser + Backend | ✅ Met          |
+| `AC-US-COMPANIES-007-05` | `PS-BACKEND`        | Backend                                   | ✅ Met          |
+| `AC-US-COMPANIES-007-06` | `PS-BACKEND`        | Backend                                   | ✅ Met          |
 
 **Dependencies:** US-COMPANIES-003
 
@@ -412,14 +422,16 @@ Each acceptance criterion references one reusable strategy instead of repeating 
 
 ### Test Coverage
 
-| Acceptance Criterion     | Proof Strategy           | Current Evidence | Status |
-| ------------------------ | ------------------------ | ---------------- | ------ |
-| `AC-US-COMPANIES-008-01` | `PS-API`                 | Integrated E2E   | ✅ Met |
-| `AC-US-COMPANIES-008-02` | `PS-BACKEND`             | Backend          | ✅ Met |
-| `AC-US-COMPANIES-008-03` | `PS-BROWSER`             | Mocked browser   | ✅ Met |
-| `AC-US-COMPANIES-008-04` | `PS-API`                 | Integrated E2E   | ✅ Met |
-| `AC-US-COMPANIES-008-05` | `PS-FRONTEND-INTEGRATED` | Integrated E2E   | ✅ Met |
-| `AC-US-COMPANIES-008-06` | `PS-BROWSER`             | Mocked browser   | ✅ Met |
+| Acceptance Criterion     | Proof Strategy           | Current Evidence | Status          |
+| ------------------------ | ------------------------ | ---------------- | --------------- |
+| `AC-US-COMPANIES-008-01` | `PS-API-INTEGRATED`      | Integrated E2E   | ✅ Met          |
+| `AC-US-COMPANIES-008-01` | `PS-BACKEND`             | Integrated E2E   | ⚠️ Insufficient |
+| `AC-US-COMPANIES-008-02` | `PS-BACKEND`             | Backend          | ✅ Met          |
+| `AC-US-COMPANIES-008-03` | `PS-BROWSER`             | Mocked browser   | ✅ Met          |
+| `AC-US-COMPANIES-008-04` | `PS-API-INTEGRATED`      | Integrated E2E   | ✅ Met          |
+| `AC-US-COMPANIES-008-04` | `PS-BACKEND`             | Integrated E2E   | ⚠️ Insufficient |
+| `AC-US-COMPANIES-008-05` | `PS-FRONTEND-INTEGRATED` | Integrated E2E   | ✅ Met          |
+| `AC-US-COMPANIES-008-06` | `PS-BROWSER`             | Mocked browser   | ✅ Met          |
 
 **Dependencies:** US-COMPANIES-003
 
@@ -430,7 +442,7 @@ This validation does not attest to a live on-chain Officer deployment.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `f9473a935eb099c84119860d9129989abde1638f`
+**Implementation evidence reviewed against:** `008826d0d841f19c967c8ff477a7e9c452ee7398`
 
 - [Member deletion](../../../app/src/components/sections/DashboardView/DeleteMemberModal.vue),
   [team state](../../../app/src/stores/teamStore.ts), and
@@ -440,6 +452,13 @@ This validation does not attest to a live on-chain Officer deployment.
   [company-card display model](../../../app/src/utils/teams/treasury.ts),
   [company card permissions](../../../app/src/components/sections/TeamView/TeamCard.vue), and
   [list action tests](../../../app/src/views/team/__tests__/ListIndex.actions.spec.ts)
+- [Company workspace treasury overview](../../../app/src/components/sections/DashboardView/CompanyOverview.vue) reuses the
+  [Safe balance query](../../../app/src/queries/safeClient.queries.ts) for its Safe contribution; its
+  [component tests](../../../app/src/components/sections/DashboardView/__tests__/CompanyOverview.spec.ts) cover other-token valuation,
+  aggregate totals, reactive balance and currency changes, loading, and numeric fallbacks. These shared Gateway observers automatically
+  retry temporary provider failures up to three times, with HTTP 429 `Retry-After` respected. A 404 for a newly deployed Safe that Safe
+  services have not indexed yet keeps the Safe contribution loading for up to about three and a half minutes. Recovery updates the existing
+  summary without reloading the page.
 - [Workspace route and unavailable-state handling](../../../app/src/views/team/%5Bid%5D/ShowIndex.vue),
   [company queries](../../../app/src/queries/team.queries.ts), [company endpoints](../../../backend/src/routes/teamRoutes.ts), and
   [company controller](../../../backend/src/controllers/teamController.ts)
@@ -462,8 +481,9 @@ This validation does not attest to a live on-chain Officer deployment.
   [archived-workspace action tests](../../../app/src/components/sections/DashboardView/__tests__/TeamMetaActions.archived.spec.ts)
 - [Archived-workspace authorization](../../../backend/src/middleware/teamAuthzMiddleware.ts) and
   [company-controller tests](../../../backend/src/controllers/__tests__/teamController.test.ts)
-- [Integrated company lifecycle E2E](../../../app/test/e2e/company/company.integrated.spec.ts), which exercises only user-accessible actions
-  against externally prepared backend, database, and chain infrastructure
+- [Integrated company lifecycle E2E](../../../app/test/e2e/company/company.integrated.spec.ts) and
+  [integrated member visibility and archive lifecycle](../../../app/test/e2e/company/company-access.integrated.spec.ts), which exercise
+  user-accessible actions against externally prepared backend, database, and chain infrastructure
 - [Mocked company browser variants](../../../app/test/e2e/company/company.mocked.spec.ts), which cover validation and injected failures
   without being counted as integrated E2E evidence
 - Mocked lifecycle browser variants: [details update](../../../app/test/e2e/company/company-update.spec.ts),
@@ -496,5 +516,12 @@ This validation does not attest to a live on-chain Officer deployment.
 - [Contract Management](../contract-management/README.md)
 - [Community Credit](../community-credit/README.md)
 - [Product feature inventory](../README.md)
+
+## Known Gaps
+
+- Focused backend evidence for `AC-US-COMPANIES-001-03` checks the response status and name, but not owner/member persistence. The marked
+  add/remove-member tests for `AC-US-COMPANIES-005-02` and `AC-US-COMPANIES-005-03` do not assert the saved membership change. The marked
+  `AC-US-COMPANIES-006-01` backend test covers restoration but not archiving. These ACs retain integrated evidence; their backend
+  obligations remain insufficient until representative assertions cover the full owned results.
 
 _[← Back to feature inventory](../README.md)_

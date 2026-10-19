@@ -21,6 +21,7 @@ import type { JournalEntry } from './types'
  * the "Transaction" column and for entries with no actor (catalogue §5 / spec §4).
  */
 const ENTRY_LABEL: Record<UseCase, string> = {
+  'SAFE-SWAP': 'Asset exchange',
   'UC-BANK-02': 'Service revenue',
   'UC-BANK-03': 'Treasury funding',
   'UC-SDR-01': 'Investor contribution',

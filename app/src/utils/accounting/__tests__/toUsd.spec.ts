@@ -27,7 +27,7 @@ describe('isUsdPegged', () => {
 })
 
 describe('toUsd', () => {
-  it('normalizes stablecoins by their 6 decimals at the $1 peg, ignoring the resolver', () => {
+  it('[AC-US-ACCT-001-05] normalizes stablecoins by their 6 decimals at the $1 peg, ignoring the resolver', () => {
     const rate = vi.fn<UsdRateOfRecord>()
     expect(toUsd(1_000_000n, 'usdc', AT, rate)).toBe(1)
     expect(toUsd(2_500_000n, 'usdt', AT, rate)).toBe(2.5)
@@ -35,13 +35,13 @@ describe('toUsd', () => {
     expect(rate).not.toHaveBeenCalled()
   })
 
-  it('normalizes native (POL/ETH) by 18 decimals times the rate of record', () => {
+  it('[AC-US-ACCT-001-05] normalizes native (POL/ETH) by 18 decimals times the rate of record', () => {
     const rate: UsdRateOfRecord = () => 0.5
     // 22 POL at $0.5 → $11
     expect(toUsd(22_000000000000000000n, 'native', AT, rate)).toBeCloseTo(11, 10)
   })
 
-  it('normalizes SHER by 6 decimals times the agreed mint price', () => {
+  it('[AC-US-ACCT-001-05] normalizes SHER by 6 decimals times the agreed mint price', () => {
     const mintPrice: UsdRateOfRecord = () => 1
     // 10 SHER at $1 → $10
     expect(toUsd(10_000_000n, 'sher', AT, mintPrice)).toBe(10)

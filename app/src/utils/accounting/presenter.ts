@@ -2,7 +2,8 @@ import type { AccountClass, AccountName } from './chartOfAccounts'
 import { buildGeneralLedger } from './generalLedger'
 import { buildIncomeStatement } from './incomeStatement'
 import { buildBalanceSheet } from './balanceSheet'
-import { NETWORK, type TokenId } from '@/constant'
+import { NETWORK } from '@/constant'
+import type { AssetId, AssetMetadata } from '@/utils/tokens/assets'
 import { formatDate, formatDateTime, formatUsd, fromUnix } from '@/utils/format'
 import { usdAmountToNumber } from './monetaryAmount'
 import type { Account, BalanceSheet, JournalEntry, UsdAmount } from './types'
@@ -188,7 +189,8 @@ export function presentIncome(
 }
 
 /** Ledger token id → display symbol (native uses the chain's currency symbol). */
-export function currencySymbol(token: TokenId): string {
+export function currencySymbol(token: AssetId, asset?: AssetMetadata): string {
+  if (token.startsWith('erc20:')) return asset?.symbol ?? token
   if (token === 'native') return NETWORK.currencySymbol || 'POL'
   if (token === 'usdc.e') return 'USDC.e'
   return token.toUpperCase() // usdc → USDC, usdt → USDT, sher → SHER

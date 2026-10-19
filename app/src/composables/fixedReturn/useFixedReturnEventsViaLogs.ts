@@ -49,6 +49,7 @@ const mapEvent = ({
         offerId: str(args.offerId),
         token: args.token,
         fundingTarget: str(args.fundingTarget),
+        interestRateBps: str(args.interestRateBps),
         timestamp
       })
       break

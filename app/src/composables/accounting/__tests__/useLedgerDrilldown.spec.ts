@@ -36,7 +36,7 @@ describe('useLedgerDrilldown', () => {
     })
   })
 
-  it('exports the same journal account selection and statement total', () => {
+  it('[AC-US-ACCT-004-03] exports the same journal account selection and statement total', () => {
     const drilldown = useLedgerDrilldown(entries, bounds)
     drilldown.openFor('Investor Equity', '$1.00')
     drilldown.onExport('excel', ['activity', 'dr'])

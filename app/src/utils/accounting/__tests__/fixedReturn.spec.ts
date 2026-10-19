@@ -154,8 +154,8 @@ describe('mapFixedReturnEvents', () => {
       ctx
     )
     expect(entries.map((e) => e.id)).toEqual([
-      `credit-principal-1-${ADDR.lender}`,
-      `credit-principal-1-${ADDR.client}`
+      `credit-principal-${ADDR.credit}-1-${ADDR.lender}`,
+      `credit-principal-${ADDR.credit}-1-${ADDR.client}`
     ])
     expect(entries.reduce((sum, e) => sum + Number(e.rawAmount), 0)).toBe(10000000)
   })
@@ -169,12 +169,32 @@ describe('mapFixedReturnEvents', () => {
     // the trial balance is untouched by a round nobody could value.
     expect(entries).toHaveLength(1)
     expect(entries[0]).toMatchObject({
-      id: 'credit-unvalued-1',
+      id: `credit-unvalued-${ADDR.credit}-1`,
       debit: null,
       credit: null,
       enrichment: 'needs-off-chain-data'
     })
     expect(entries[0]?.memo).toContain('could not be valued')
+  })
+
+  it('keeps missing creation evidence separate when offer ids repeat across generations', () => {
+    const legacy = '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+    const entries = mapFixedReturnEvents(
+      {
+        fundsLents: [
+          { ...lent('legacy-lent', '4000000', 200), contractAddress: legacy },
+          { ...lent('current-lent', '5000000', 300), contractAddress: ADDR.credit }
+        ]
+      },
+      ctx
+    )
+
+    expect(entries).toHaveLength(2)
+    expect(entries.map((entry) => entry.id)).toEqual([
+      `credit-unvalued-${legacy}-1`,
+      `credit-unvalued-${ADDR.credit}-1`
+    ])
+    expect(entries.every((entry) => entry.enrichment === 'needs-off-chain-data')).toBe(true)
   })
 
   it('keeps two offers independent', () => {

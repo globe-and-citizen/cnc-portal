@@ -7,7 +7,7 @@ export const queryClient = new QueryClient({
       // Refetch every 200 seconds (200,000 ms).
       refetchInterval: 200_000,
       refetchOnWindowFocus: true,
-      retry: 2
+      retry: 3
     }
   }
 })

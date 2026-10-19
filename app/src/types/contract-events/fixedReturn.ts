@@ -4,6 +4,7 @@ export type FixedReturnLendingOfferCreatedRow = {
   offerId: string
   token: string
   fundingTarget: string
+  interestRateBps?: string
   timestamp: number
 }
 

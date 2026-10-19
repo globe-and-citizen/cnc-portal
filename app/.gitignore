@@ -32,8 +32,6 @@ coverage
 .env
 .env.production
 
-# Synpress
-.cache-synpress
 test-results
 playwright-report
 blob-report

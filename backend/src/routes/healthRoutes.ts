@@ -1,8 +1,34 @@
 import express from 'express';
-import { healthCheck } from '../controllers/healthController';
+import { healthCheck, readinessCheck } from '../controllers/healthController';
 import { validateQuery, healthCheckQuerySchema } from '../validation';
 
 const healthRoutes = express.Router();
+
+/**
+ * @openapi
+ * /health/readiness:
+ *   get:
+ *     summary: Dependency readiness endpoint
+ *     description: |
+ *       Verifies that the backend can reach its database and configured chain.
+ *       The endpoint is public so local orchestration and integrated E2E checks can
+ *       fail before a functional journey starts. Dependency error details are not exposed.
+ *     tags: [Health]
+ *     responses:
+ *       200:
+ *         description: Required dependencies are ready
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ReadinessCheckResponse'
+ *       503:
+ *         description: One or more required dependencies are not ready
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ReadinessCheckResponse'
+ */
+healthRoutes.get('/readiness', validateQuery(healthCheckQuerySchema), readinessCheck);
 
 /**
  * @openapi
@@ -28,6 +54,34 @@ const healthRoutes = express.Router();
  *           type: string
  *           description: Name of the service being checked
  *           example: "backend"
+ *     ReadinessCheckResponse:
+ *       type: object
+ *       properties:
+ *         success:
+ *           type: boolean
+ *         status:
+ *           type: string
+ *           enum: [ready, not_ready]
+ *         checks:
+ *           type: object
+ *           properties:
+ *             database:
+ *               type: string
+ *               enum: [ready, unready]
+ *             chain:
+ *               type: string
+ *               enum: [ready, unready]
+ *         chainId:
+ *           type: integer
+ *           nullable: true
+ *         expectedChainId:
+ *           type: integer
+ *           nullable: true
+ *         timestamp:
+ *           type: string
+ *           format: date-time
+ *         service:
+ *           type: string
  *     ErrorResponse:
  *       type: object
  *       properties:

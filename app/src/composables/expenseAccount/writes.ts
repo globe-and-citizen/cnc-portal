@@ -37,14 +37,14 @@ export function useOwnerWithdrawAllToBank(address?: ExpenseAccountAddressOverrid
   return useExpenseAccountContractWrite('ownerWithdrawAllToBank', address)
 }
 
-export function useExpenseAccountTransfer() {
-  return useExpenseAccountContractWrite('transfer')
+export function useExpenseAccountTransfer(address?: ExpenseAccountAddressOverride) {
+  return useExpenseAccountContractWrite('transfer', address)
 }
 
-export function useExpenseAccountActivateApproval() {
-  return useExpenseAccountContractWrite('activateApproval')
+export function useExpenseAccountActivateApproval(address?: ExpenseAccountAddressOverride) {
+  return useExpenseAccountContractWrite('activateApproval', address)
 }
 
-export function useExpenseAccountDeactivateApproval() {
-  return useExpenseAccountContractWrite('deactivateApproval')
+export function useExpenseAccountDeactivateApproval(address?: ExpenseAccountAddressOverride) {
+  return useExpenseAccountContractWrite('deactivateApproval', address)
 }

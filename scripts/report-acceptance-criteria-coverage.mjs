@@ -327,7 +327,9 @@ const technicalDocuments = readDocuments(technicalDocumentPaths)
 const testDocuments = readDocuments(testPaths)
 const result = validateAcceptanceCriteriaTraceability({
   featureDocuments,
-  testDocuments
+  testDocuments,
+  proofStrategyDocument: readDocuments(['docs/testing/proof-strategies.md'])[0],
+  enforceFeatureCoverage: true
 })
 
 if (result.errors.length > 0) {

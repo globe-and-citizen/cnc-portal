@@ -10,7 +10,7 @@ actions while the expected backend, database, and blockchain state remains consi
 ## Required Inputs
 
 - canonical feature journeys and acceptance criteria;
-- [`../../testing/e2e-paths.md`](../../testing/e2e-paths.md) and the relevant G0-G7 paths;
+- [`../../testing/e2e-paths.md`](../../testing/e2e-paths.md), its G0 technical gate, and the relevant G1-G8 business paths;
 - routes, navigation, guards, components, mutations, backend endpoints, contracts, and persistence used by the path;
 - browser-acceptance and integrated E2E evidence;
 - user-visible error, loading, empty, retry, refresh, and permission states.

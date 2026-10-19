@@ -25,6 +25,7 @@ const EXPENSE_ADDRESS = '0x5555555555555555555555555555555555555555'
 const BUTTON = '[data-test="owner-withdraw-button"]'
 const CONFIRM = '[data-test="owner-withdraw-modal-confirm-button"]'
 const WARNING = '[data-test="owner-withdraw-modal-warning"]'
+const OBLIGATION_WARNING = '[data-test="outstanding-obligation-warning"]'
 
 const makeBalance = (amount: number) => makeTokenBalance({ amount, usdPrice: 1 })
 
@@ -112,6 +113,20 @@ describe('OwnerTreasuryWithdrawAction', () => {
     expect(wrapper.find(CONFIRM).exists()).toBe(false)
   })
 
+  it('[AC-US-PAYROLL-014-06] warns that signed claims may remain unfunded', async () => {
+    const wrapper = createWrapper('CashRemunerationEIP712')
+    await openModal(wrapper)
+    expect(wrapper.get(OBLIGATION_WARNING).text()).toContain('signed payroll claims')
+    expect(wrapper.get(OBLIGATION_WARNING).text()).toContain('other token balances may remain')
+  })
+
+  it('[AC-US-EXP-006-06] warns that spending approvals may remain unfunded', async () => {
+    const wrapper = createWrapper('ExpenseAccountEIP712')
+    await openModal(wrapper)
+    expect(wrapper.get(OBLIGATION_WARNING).text()).toContain('spending approvals')
+    expect(wrapper.get(OBLIGATION_WARNING).text()).toContain('other token balances may remain')
+  })
+
   it('closes the modal when a BOD action is added', async () => {
     mockBodIsBodAction.isBodAction.value = true
     const wrapper = createWrapper()
@@ -147,7 +162,7 @@ describe('OwnerTreasuryWithdrawAction', () => {
     expect(mockCashRemunerationWrites.ownerWithdrawAllToBank.mutateAsync).not.toHaveBeenCalled()
   })
 
-  it('routes ExpenseAccountEIP712 withdrawals through BOD action creation', async () => {
+  it('[AC-US-EXP-006-03] routes ExpenseAccountEIP712 withdrawals through BOD action creation', async () => {
     mockBodIsBodAction.isBodAction.value = true
     mockUserStore.address = NON_OWNER_ADDRESS
     mockBodAddAction.executeAddAction.mockResolvedValue(undefined)
@@ -165,7 +180,7 @@ describe('OwnerTreasuryWithdrawAction', () => {
     expect(mockExpenseAccountWrites.ownerWithdrawAllToBank.mutateAsync).not.toHaveBeenCalled()
   })
 
-  it('routes CashRemunerationEIP712 withdrawals through BOD action creation', async () => {
+  it('[AC-US-PAYROLL-014-03] routes CashRemunerationEIP712 withdrawals through BOD action creation', async () => {
     mockBodIsBodAction.isBodAction.value = true
     mockUserStore.address = NON_OWNER_ADDRESS
     mockBodAddAction.executeAddAction.mockResolvedValue(undefined)

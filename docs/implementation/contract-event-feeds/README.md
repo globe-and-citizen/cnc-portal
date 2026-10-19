@@ -46,13 +46,18 @@ flowchart LR
 6. The domain mapper returns its source-neutral event feed for a transaction history or Accounting assembly.
 7. The Bank feed maps V0/V0.1 Bank-emitted fees and queries the V1/V2 FeeCollectors by paying Bank. For legacy ERC-20 fees, it takes the
    currency only from the next transfer event in the same transaction and Bank generation; native and unmatched fees remain tokenless.
-8. Incoming Bank token transfers use every known Officer-generation Bank target, so a later Bank deployment does not hide prior transfers.
+8. Incoming Bank token transfers use every known Officer-generation Bank target and decode the indexed token address and transferred amount
+   from each Bank event, so a later Bank deployment does not hide prior transfers or their value.
 
 ## Invariants and Failure Behaviour
 
+- Event-feed queries inherit the shared query client's three automatic retries unless the observer overrides that policy.
 - RPC logs are the only client-side source for these contract event feeds.
 - A decoded event has the stable identity `<txHash>-<logIndex>`; duplicate scans collapse on that identity.
 - Contract generations scan from their deployment boundary whenever it is known.
+- FixedReturn `LendingOfferCreated` rows preserve the offer token and fixed-return basis points, allowing Accounting to value historical
+  rounds from the contract generation that emitted them. SafeDepositRouter multiplier-change rows retain their emitter address and timestamp
+  for historical SHER valuation.
 - Equivalent target sets share one deterministic event-query identity regardless of input order or address casing. Changing an address or
   its effective deployment boundary changes that identity.
 - A failed generation scan leaves the remaining generations available and records a scan gap for consumers that surface reconciliation
@@ -68,7 +73,7 @@ flowchart LR
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `006685cb46c8408101e785b258482092a1e63f70`
+**Implementation evidence reviewed against:** `8bb7376a908abee0cdd59621ba7ee5cfcc153de6`
 
 - [Shared RPC log scanner](../../../app/src/composables/eventsViaLogs.ts),
   [immutable block timestamp query](../../../app/src/queries/blockTimestamp.queries.ts), and

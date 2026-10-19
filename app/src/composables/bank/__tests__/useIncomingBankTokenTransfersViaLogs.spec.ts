@@ -1,5 +1,9 @@
 import { ref } from 'vue'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { decodeEventLog, encodeAbiParameters, encodeEventTopics, type Address } from 'viem'
+import { bankAbi } from '@/artifacts/abi/V2/generated'
+import type { IncomingBankTokenTransferFeed } from '@/types/contract-events/bank'
+import type { EventsViaLogsOptions } from '@/composables/eventsViaLogs'
 import { useGetTeamOfficersQuery, type TeamOfficerWithContracts } from '@/queries/contract.queries'
 import {
   bankScanTargets,
@@ -18,6 +22,7 @@ vi.mock('@/composables/eventsViaLogs', async (importOriginal) => {
 const FIRST_BANK = '0x1111111111111111111111111111111111111111'
 const SECOND_BANK = '0x2222222222222222222222222222222222222222'
 const USER = '0x3333333333333333333333333333333333333333'
+const USDC = '0x4444444444444444444444444444444444444444'
 
 const officerHistory = [
   {
@@ -76,6 +81,42 @@ describe('bankScanTargets', () => {
 })
 
 describe('useIncomingBankTokenTransfersViaLogs', () => {
+  it('decodes a real Bank token transfer into its recipient, token, and amount', () => {
+    setupQueries()
+    useIncomingBankTokenTransfersViaLogs('1', USER, SECOND_BANK)
+    const options = mockUseContractEventsViaLogs.mock
+      .calls[0]?.[0] as EventsViaLogsOptions<IncomingBankTokenTransferFeed>
+    const topics = encodeEventTopics({
+      abi: bankAbi,
+      eventName: 'TokenTransfer',
+      args: { sender: FIRST_BANK, to: USER, token: USDC }
+    })
+    const data = encodeAbiParameters([{ type: 'uint256' }], [3_000_000n])
+    const decoded = decodeEventLog({ abi: options.eventAbi, data, topics })
+    const out: IncomingBankTokenTransferFeed = { bankTokenTransfers: { items: [] } }
+
+    options.mapEvent({
+      out,
+      id: '0xtransfer-0',
+      timestamp: 1_700_000_000,
+      contract: SECOND_BANK as Address,
+      eventName: decoded.eventName,
+      args: decoded.args,
+      log: {
+        address: SECOND_BANK,
+        blockNumber: 1n,
+        transactionHash: '0xtransfer',
+        logIndex: 0,
+        eventName: decoded.eventName,
+        args: decoded.args
+      }
+    })
+
+    expect(out.bankTokenTransfers.items).toEqual([
+      expect.objectContaining({ to: USER, token: USDC, amount: '3000000' })
+    ])
+  })
+
   it('exposes the event query and combines both pending states reactively', () => {
     const { eventQuery, officerQuery } = setupQueries()
     const query = useIncomingBankTokenTransfersViaLogs('1', USER, SECOND_BANK)
