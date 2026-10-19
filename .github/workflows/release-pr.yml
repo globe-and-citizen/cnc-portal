@@ -5,19 +5,18 @@ on:
     types: [closed]
     branches:
       - main
-  push:
-    branches:
-      - main
 
 jobs:
   release-from-pr:
     if: |
-      (github.event_name == 'pull_request' && 
-       github.event.pull_request.merged == true && 
-       startsWith(github.event.pull_request.head.ref, 'release/')) ||
-      (github.event_name == 'push' && 
-       contains(github.event.head_commit.message, 'Merge pull request') &&
-       contains(github.event.head_commit.message, '/release/'))
+      github.event.pull_request.merged == true &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      startsWith(github.event.pull_request.head.ref, 'release/')
+
+    # Serialise reruns for the same merged PR so the later run sees its tag.
+    concurrency:
+      group: release-${{ github.event.pull_request.merge_commit_sha || github.sha }}
+      cancel-in-progress: false
 
     permissions:
       contents: write
@@ -39,96 +38,74 @@ jobs:
 
       - name: Extract version information
         id: version
+        env:
+          RELEASE_BRANCH: ${{ github.event.pull_request.head.ref }}
+          SOURCE_PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
-          if [ "${{ github.event_name }}" == "pull_request" ]; then
-            # Version depuis le nom de la branche PR
-            VERSION="${{ github.event.pull_request.head.ref }}"
-            VERSION=$(echo $VERSION | sed 's/release\///')
-            PR_TITLE="${{ github.event.pull_request.title }}"
-            PR_NUMBER="${{ github.event.pull_request.number }}"
-            echo "Source: PR #$PR_NUMBER ($PR_TITLE)"
-          else
-            # Version depuis le message de commit (push après merge PR)
-            COMMIT_MSG="${{ github.event.head_commit.message }}"
-            echo "Commit message: $COMMIT_MSG"
-            
-            # Extraire depuis "Merge pull request #123 from org/release/v1.2.3"
-            if echo "$COMMIT_MSG" | grep -E "from .*/release/"; then
-              VERSION=$(echo "$COMMIT_MSG" | sed -n 's/.*from .*\/release\/\([^[:space:]]*\).*/\1/p')
-            else
-              echo "❌ Could not extract version from commit message"
-              exit 1
-            fi
-            
-            PR_NUMBER=$(echo "$COMMIT_MSG" | sed -n 's/Merge pull request #\([0-9]*\).*/\1/p')
-            echo "Source: Merged PR #$PR_NUMBER"
-          fi
+          # Version depuis le nom de la branche PR
+          VERSION="${RELEASE_BRANCH#release/}"
+          PR_NUMBER="$SOURCE_PR_NUMBER"
+          echo "Source: PR #$PR_NUMBER"
 
-          # Nettoyer et valider la version
-          VERSION=$(echo $VERSION | sed 's/^v//')
-          if [ -z "$VERSION" ]; then
-            echo "❌ Could not extract version"
+          # Reject unexpected values before they can become a tag, step output, or file name.
+          semver_pattern='^v?(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?$'
+          if [[ ! "$VERSION" =~ $semver_pattern || ! "$PR_NUMBER" =~ ^[0-9]+$ ]]; then
+            echo "❌ Invalid release version or PR number"
             exit 1
           fi
 
-          # S'assurer que la version commence par 'v'
-          if [[ ! $VERSION =~ ^v ]]; then
-            VERSION="v$VERSION"
-          fi
+          VERSION="v${VERSION#v}"
 
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "pr_number=${PR_NUMBER:-unknown}" >> $GITHUB_OUTPUT
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "pr_number=$PR_NUMBER" >> "$GITHUB_OUTPUT"
           echo "✅ Extracted version: $VERSION"
 
       - name: Validate version format
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
         run: |
-          VERSION="${{ steps.version.outputs.version }}"
-          # Vérifier le format semver (basique)
-          if [[ ! $VERSION =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.-]+)?$ ]]; then
-            echo "⚠️  Version format seems unusual: $VERSION"
-            echo "Expected format: vX.Y.Z or vX.Y.Z-suffix"
-          else
-            echo "✅ Version format valid: $VERSION"
+          semver_pattern='^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?$'
+          if [[ ! "$VERSION" =~ $semver_pattern ]]; then
+            echo "❌ Invalid release version"
+            exit 1
           fi
+          echo "✅ Version format valid: $VERSION"
 
       - name: Check if tag already exists
         id: check_tag
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
         run: |
-          VERSION="${{ steps.version.outputs.version }}"
-          if git rev-parse "$VERSION" >/dev/null 2>&1; then
-            echo "tag_exists=true" >> $GITHUB_OUTPUT
+          if git show-ref --verify --quiet "refs/tags/$VERSION"; then
+            echo "tag_exists=true" >> "$GITHUB_OUTPUT"
             echo "⚠️  Tag $VERSION already exists"
           else
-            echo "tag_exists=false" >> $GITHUB_OUTPUT
+            echo "tag_exists=false" >> "$GITHUB_OUTPUT"
             echo "✅ Tag $VERSION is new"
           fi
 
       - name: Create annotated tag
         if: steps.check_tag.outputs.tag_exists == 'false'
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          PR_NUMBER: ${{ steps.version.outputs.pr_number }}
         run: |
-          VERSION="${{ steps.version.outputs.version }}"
-          PR_NUMBER="${{ steps.version.outputs.pr_number }}"
-
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
 
           # Message de tag avec référence à la PR
-          if [ "$PR_NUMBER" != "unknown" ]; then
-            TAG_MESSAGE="Release $VERSION (from PR #$PR_NUMBER)"
-          else
-            TAG_MESSAGE="Release $VERSION"
-          fi
+          TAG_MESSAGE="Release $VERSION (from PR #$PR_NUMBER)"
 
           git tag -a "$VERSION" -m "$TAG_MESSAGE"
-          git push origin "$VERSION"
+          git push origin "refs/tags/$VERSION"
           echo "✅ Created and pushed tag: $VERSION"
 
       - name: Generate comprehensive changelog
         if: steps.check_tag.outputs.tag_exists == 'false'
         id: changelog
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
         run: |
-          VERSION="${{ steps.version.outputs.version }}"
-
           # Trouver le tag précédent
           PREV_TAG=$(git describe --tags --abbrev=0 HEAD~1 2>/dev/null || echo "")
 
@@ -137,7 +114,7 @@ jobs:
             COMMITS=$(git log --pretty=format:"* %s (%h)" --no-merges | head -50)
           else
             echo "📝 Generating changelog from $PREV_TAG to $VERSION"
-            COMMITS=$(git log $PREV_TAG..HEAD --pretty=format:"* %s (%h)" --no-merges)
+            COMMITS=$(git log "$PREV_TAG..HEAD" --pretty=format:"* %s (%h)" --no-merges)
           fi
 
           # Compter les commits
@@ -223,8 +200,9 @@ jobs:
 
       - name: Build and upload artifacts
         if: steps.check_tag.outputs.tag_exists == 'false'
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
         run: |
-          VERSION="${{ steps.version.outputs.version }}"
           echo "🏗️  Building artifacts for $VERSION"
 
           # Build App (Vue.js)
@@ -233,7 +211,7 @@ jobs:
           npm ci --prefer-offline
           npm run build
           cd ..
-          tar -czf cnc-portal-app-$VERSION.tar.gz -C app/dist .
+          tar -czf "cnc-portal-app-$VERSION.tar.gz" -C app/dist .
 
           # Build Backend (Express.js)  
           echo "Building backend..."
@@ -242,7 +220,7 @@ jobs:
           npm run build 2>/dev/null || echo "Backend build not available"
           cd ..
           if [ -d "backend/dist" ]; then
-            tar -czf cnc-portal-backend-$VERSION.tar.gz -C backend dist package*.json
+            tar -czf "cnc-portal-backend-$VERSION.tar.gz" -C backend dist package*.json
           fi
 
           # Build Contracts (Hardhat)
@@ -251,7 +229,7 @@ jobs:
           npm ci --prefer-offline
           npm run compile
           cd ..
-          tar -czf cnc-portal-contracts-$VERSION.tar.gz -C contract artifacts cache typechain-types
+          tar -czf "cnc-portal-contracts-$VERSION.tar.gz" -C contract artifacts cache typechain-types
 
           # Build Dashboard (Nuxt.js)
           echo "Building dashboard..."
@@ -260,7 +238,7 @@ jobs:
           npm run build 2>/dev/null || echo "Dashboard build not available"
           cd ..
           if [ -d "dashboard/.output" ]; then
-            tar -czf cnc-portal-dashboard-$VERSION.tar.gz -C dashboard .output
+            tar -czf "cnc-portal-dashboard-$VERSION.tar.gz" -C dashboard .output
           fi
 
           echo "✅ All artifacts built"
@@ -286,21 +264,18 @@ jobs:
 
       - name: Success notification
         if: steps.check_tag.outputs.tag_exists == 'false'
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          PR_NUMBER: ${{ steps.version.outputs.pr_number }}
         run: |
-          VERSION="${{ steps.version.outputs.version }}"
-          PR_NUMBER="${{ steps.version.outputs.pr_number }}"
-
           echo "🎉 Release $VERSION created successfully!"
           echo "📁 Artifacts built and uploaded"
-          echo "🔗 Release URL: https://github.com/${{ github.repository }}/releases/tag/$VERSION"
-
-          if [ "$PR_NUMBER" != "unknown" ]; then
-            echo "📋 Source: PR #$PR_NUMBER"
-          fi
+          echo "🔗 Release URL: https://github.com/$GITHUB_REPOSITORY/releases/tag/$VERSION"
+          echo "📋 Source: PR #$PR_NUMBER"
 
       - name: Failure notification
         if: failure()
         run: |
           echo "❌ Release process failed!"
           echo "Check the logs above for details"
-          echo "📋 Workflow: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          echo "📋 Workflow: https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
