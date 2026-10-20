@@ -1,4 +1,5 @@
 import axios, { type AxiosError } from 'axios'
+import { captureAxiosError } from '@/lib/sentry'
 
 /**
  * Generic external API client without base URL
@@ -28,11 +29,12 @@ externalApiClient.interceptors.request.use((request) => {
 })
 
 externalApiClient.interceptors.response.use(undefined, (error: AxiosError) => {
-  // Query consumers can log errors without exposing request credentials.
+  // Query consumers and Sentry can inspect failures without exposing request credentials.
   if (error.config?.headers) {
     delete error.config.headers.Authorization
     delete error.config.headers.authorization
   }
+  captureAxiosError(error, 'external')
   return Promise.reject(error)
 })
 

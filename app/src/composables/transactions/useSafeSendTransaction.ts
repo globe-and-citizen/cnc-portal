@@ -10,6 +10,7 @@ import { getAddress, type Address } from 'viem'
 import { config as wagmiConfig, type config as wagmiConfigType } from '@/wagmi.config'
 import { contractBalanceKeys } from '@/composables/useContractBalance'
 import { log, parseErrorV2 } from '@/lib/logging'
+import { captureWeb3Error } from '@/lib/sentry'
 
 type WagmiConfig = typeof wagmiConfigType
 type WaitParams = WaitForTransactionReceiptParameters<WagmiConfig>
@@ -109,6 +110,12 @@ export function useSafeSendTransaction(cfg: SendTransactionConfig) {
       })
     },
     onError: (error) => {
+      captureWeb3Error(error, {
+        operation: 'native-transfer',
+        force: true,
+        contractAddress: unref(cfg.to),
+        chainId: unref(cfg.chainId)
+      })
       if (shouldLog.value) {
         log.error('useSafeSendTransaction failed:\n', parseErrorV2(error))
       }

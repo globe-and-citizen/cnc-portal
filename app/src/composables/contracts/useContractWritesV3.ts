@@ -16,6 +16,7 @@ import {
 } from 'viem'
 import { config as wagmiConfig, type config as wagmiConfigType } from '@/wagmi.config'
 import { log, parseErrorV2 } from '@/lib/logging'
+import { captureWeb3Error } from '@/lib/sentry'
 
 type WagmiConfig = typeof wagmiConfigType
 type SimulateParams = SimulateContractParameters<Abi, string, readonly unknown[], WagmiConfig>
@@ -196,7 +197,16 @@ export async function executeContractWrite(
         } satisfies SimulateParams)
       } catch (replayErr) {
         if (replayErr instanceof BaseError) revertCause = replayErr
-        else onReplayError?.(replayErr)
+        else {
+          captureWeb3Error(replayErr, {
+            operation: 'contract-write-replay',
+            force: true,
+            contractAddress: address,
+            functionName,
+            chainId: params.chainId
+          })
+          onReplayError?.(replayErr)
+        }
       }
     }
     throw new ContractWriteRevertedError({ hash, receipt, simulation, cause: revertCause })
@@ -294,6 +304,13 @@ export function useContractWritesV3<const abi extends Abi, fn extends WriteFunct
       })
     },
     onError: (error, variables) => {
+      captureWeb3Error(error, {
+        operation: 'contract-write',
+        force: true,
+        contractAddress: unref(cfg.contractAddress),
+        functionName: cfg.functionName,
+        chainId: unref(cfg.chainId)
+      })
       if (shouldLog) {
         log.error(`useContractWritesV3(${cfg.functionName}) failed:\n`, parseErrorV2(error))
       }
