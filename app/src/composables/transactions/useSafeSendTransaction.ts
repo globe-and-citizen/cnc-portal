@@ -10,6 +10,7 @@ import { getAddress, type Address } from 'viem'
 import { config as wagmiConfig, type config as wagmiConfigType } from '@/wagmi.config'
 import { contractBalanceKeys } from '@/composables/useContractBalance'
 import { log, parseErrorV2 } from '@/lib/logging'
+import { captureWeb3Error } from '@/lib/sentry'
 
 type WagmiConfig = typeof wagmiConfigType
 type WaitParams = WaitForTransactionReceiptParameters<WagmiConfig>
@@ -52,33 +53,43 @@ export async function executeSendTransaction(
 ): Promise<ExecuteSendTransactionResult> {
   const { to, value, data, chainId, skipGasEstimation } = params
 
-  // 1) Gas estimation (optional pre-check)
-  if (!skipGasEstimation) {
-    await estimateGas(wagmiConfig, {
+  try {
+    // 1) Gas estimation (optional pre-check)
+    if (!skipGasEstimation) {
+      await estimateGas(wagmiConfig, {
+        to,
+        value,
+        ...(data !== undefined ? { data } : {})
+      })
+    }
+
+    // 2) Send transaction
+    const hash = await sendTransaction(wagmiConfig, {
       to,
       value,
       ...(data !== undefined ? { data } : {})
     })
+
+    // 3) Wait for receipt
+    const receipt = await waitForTransactionReceipt(wagmiConfig, {
+      hash,
+      chainId
+    } as WaitParams)
+
+    if (receipt.status !== 'success') {
+      throw new Error(`Transaction reverted on-chain (hash: ${hash})`)
+    }
+
+    return { hash, receipt }
+  } catch (error) {
+    captureWeb3Error(error, {
+      operation: 'native-transfer',
+      force: true,
+      contractAddress: to,
+      chainId
+    })
+    throw error
   }
-
-  // 2) Send transaction
-  const hash = await sendTransaction(wagmiConfig, {
-    to,
-    value,
-    ...(data !== undefined ? { data } : {})
-  })
-
-  // 3) Wait for receipt
-  const receipt = await waitForTransactionReceipt(wagmiConfig, {
-    hash,
-    chainId
-  } as WaitParams)
-
-  if (receipt.status !== 'success') {
-    throw new Error(`Transaction reverted on-chain (hash: ${hash})`)
-  }
-
-  return { hash, receipt }
 }
 
 /**
