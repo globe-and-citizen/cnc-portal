@@ -70,7 +70,7 @@ accepted the event. The Sentry dashboard and a controlled smoke test remain requ
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `b36c0be5eaf6fbd54ca4a6deeb2c1323a85fcf68`
+**Implementation evidence reviewed against:** `4c39d4db8bd37392c86db9da664fc293ff485fe5`
 
 - [Backend capture helper](../../../backend/src/utils/sentry.ts), [central error response](../../../backend/src/utils/utils.ts), and
   [Sentry initialization](../../../backend/src/instrument.ts)
