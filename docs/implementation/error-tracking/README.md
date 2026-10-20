@@ -44,8 +44,9 @@ the fallback for errors that are not handled by a controller.
 The frontend's internal API client and external provider client share the Axios capture helper. Internal API retries are allowed to finish
 before one final failure is captured, while external provider failures are captured at the response interceptor. Vue's global error
 instrumentation remains responsible for uncaught JavaScript, promise, and Vue component failures. The shared TanStack Query and Mutation
-caches capture handled Wagmi/viem failures from reads and mutations; the contract-write and native-transfer mutation handlers add operation,
-contract, function, and chain tags at their Web3 boundaries.
+caches capture handled Wagmi/viem failures from reads and mutations; the MutationCache remains a fallback for mutations without a
+specialized Web3 boundary. Contract-write and native-transfer mutations mark their boundaries so their handlers capture once with operation,
+contract, function, and chain tags before the generic fallback can run.
 
 ## Invariants and Failure Behaviour
 
@@ -56,6 +57,8 @@ contract, function, and chain tags at their Web3 boundaries.
 - Frontend network failures, timeouts, `429`, and `5xx` responses are captured; expected `401`/`404` responses and cancellations are not.
 - Wagmi/viem RPC failures, receipt failures, transaction reverts, and unexpected Web3 errors are captured with `runtime:frontend`,
   `error.source:wagmi`, operation, and error-category tags.
+- Specialized contract-write and native-transfer boundaries take capture priority over the shared MutationCache, preserving their Web3
+  context without removing the original TanStack mutation error.
 - Explicit wallet rejections, wrong-chain states, disconnected accounts, and missing wallet providers remain UI states and are not captured
   as Sentry exceptions.
 - Authorization headers are removed before Axios errors are sent to Sentry.
@@ -70,7 +73,7 @@ accepted the event. The Sentry dashboard and a controlled smoke test remain requ
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `4c39d4db8bd37392c86db9da664fc293ff485fe5`
+**Implementation evidence reviewed against:** `5edff61619fd6c9d762a6e6f4b9613b38717121d`
 
 - [Backend capture helper](../../../backend/src/utils/sentry.ts), [central error response](../../../backend/src/utils/utils.ts), and
   [Sentry initialization](../../../backend/src/instrument.ts)
@@ -89,6 +92,9 @@ accepted the event. The Sentry dashboard and a controlled smoke test remain requ
 - [Frontend Axios capture tests](../../../app/src/lib/__tests__/axios.spec.ts) and
   [external Axios capture tests](../../../app/src/lib/__tests__/external.axios.spec.ts)
 - [Frontend Web3 capture tests](../../../app/src/lib/__tests__/sentry.spec.ts)
+- [Shared mutation-cache capture tests](../../../app/src/queries/__tests__/queryClient.spec.ts),
+  [contract-write boundary tests](../../../app/src/composables/contracts/__tests__/useContractWritesV3.spec.ts), and
+  [native-transfer boundary tests](../../../app/src/composables/transactions/__tests__/useSafeSendTransaction.spec.ts)
 
 ## Related Documentation
 
