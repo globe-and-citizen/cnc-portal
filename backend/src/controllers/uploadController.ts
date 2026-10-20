@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { getPresignedDownloadUrl, uploadFiles } from '../services/storageService';
+import { captureBackendException } from '../utils';
 
 function extractMulterFiles(req: Request): Express.Multer.File[] {
   const maybeFiles = (req as Request & { files?: unknown }).files;
@@ -43,6 +44,11 @@ export const uploadManyFiles = async (req: Request, res: Response) => {
       count: uploadedFiles.length,
     });
   } catch (err: unknown) {
+    captureBackendException(err, {
+      operation: 'uploadManyFiles',
+      source: 'uploadController',
+      status: 500,
+    });
     const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
     return res.status(500).json({
       error: 'Failed to upload files',
