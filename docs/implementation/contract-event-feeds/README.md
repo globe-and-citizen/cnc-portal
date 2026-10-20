@@ -73,7 +73,7 @@ flowchart LR
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `b36c0be5eaf6fbd54ca4a6deeb2c1323a85fcf68`
+**Implementation evidence reviewed against:** `5edff61619fd6c9d762a6e6f4b9613b38717121d`
 
 - [Shared RPC log scanner](../../../app/src/composables/eventsViaLogs.ts),
   [immutable block timestamp query](../../../app/src/queries/blockTimestamp.queries.ts), and
