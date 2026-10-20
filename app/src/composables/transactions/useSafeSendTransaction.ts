@@ -53,43 +53,33 @@ export async function executeSendTransaction(
 ): Promise<ExecuteSendTransactionResult> {
   const { to, value, data, chainId, skipGasEstimation } = params
 
-  try {
-    // 1) Gas estimation (optional pre-check)
-    if (!skipGasEstimation) {
-      await estimateGas(wagmiConfig, {
-        to,
-        value,
-        ...(data !== undefined ? { data } : {})
-      })
-    }
-
-    // 2) Send transaction
-    const hash = await sendTransaction(wagmiConfig, {
+  // 1) Gas estimation (optional pre-check)
+  if (!skipGasEstimation) {
+    await estimateGas(wagmiConfig, {
       to,
       value,
       ...(data !== undefined ? { data } : {})
     })
-
-    // 3) Wait for receipt
-    const receipt = await waitForTransactionReceipt(wagmiConfig, {
-      hash,
-      chainId
-    } as WaitParams)
-
-    if (receipt.status !== 'success') {
-      throw new Error(`Transaction reverted on-chain (hash: ${hash})`)
-    }
-
-    return { hash, receipt }
-  } catch (error) {
-    captureWeb3Error(error, {
-      operation: 'native-transfer',
-      force: true,
-      contractAddress: to,
-      chainId
-    })
-    throw error
   }
+
+  // 2) Send transaction
+  const hash = await sendTransaction(wagmiConfig, {
+    to,
+    value,
+    ...(data !== undefined ? { data } : {})
+  })
+
+  // 3) Wait for receipt
+  const receipt = await waitForTransactionReceipt(wagmiConfig, {
+    hash,
+    chainId
+  } as WaitParams)
+
+  if (receipt.status !== 'success') {
+    throw new Error(`Transaction reverted on-chain (hash: ${hash})`)
+  }
+
+  return { hash, receipt }
 }
 
 /**
@@ -120,6 +110,12 @@ export function useSafeSendTransaction(cfg: SendTransactionConfig) {
       })
     },
     onError: (error) => {
+      captureWeb3Error(error, {
+        operation: 'native-transfer',
+        force: true,
+        contractAddress: unref(cfg.to),
+        chainId: unref(cfg.chainId)
+      })
       if (shouldLog.value) {
         log.error('useSafeSendTransaction failed:\n', parseErrorV2(error))
       }

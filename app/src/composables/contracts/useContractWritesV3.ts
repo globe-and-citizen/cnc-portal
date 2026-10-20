@@ -158,72 +158,61 @@ export async function executeContractWrite(
   const { address, abi, functionName, args = [], value, onReplayError } = params
   const chainId = params.chainId as AppChainId
 
-  try {
-    const simulateInput = {
-      address,
-      abi,
-      functionName,
-      args,
-      chainId,
-      ...(value !== undefined ? { value } : {})
-    } satisfies SimulateParams
+  const simulateInput = {
+    address,
+    abi,
+    functionName,
+    args,
+    chainId,
+    ...(value !== undefined ? { value } : {})
+  } satisfies SimulateParams
 
-    // 1) Simulate
-    const simulation = await simulateContract(wagmiConfig, simulateInput)
+  // 1) Simulate
+  const simulation = await simulateContract(wagmiConfig, simulateInput)
 
-    // 2) Write — reuse the validated request from the simulation
-    const hash = await writeContract(wagmiConfig, simulation.request)
+  // 2) Write — reuse the validated request from the simulation
+  const hash = await writeContract(wagmiConfig, simulation.request)
 
-    // 3) Wait for receipt — throw on reverted so callers only see genuine success
-    const receipt = await waitForTransactionReceipt(wagmiConfig, {
-      hash,
-      chainId
-    } satisfies WaitParams)
+  // 3) Wait for receipt — throw on reverted so callers only see genuine success
+  const receipt = await waitForTransactionReceipt(wagmiConfig, {
+    hash,
+    chainId
+  } satisfies WaitParams)
 
-    if (receipt.status !== 'success') {
-      // Replay at the block just before mining to recover the ABI-decoded
-      // revert reason (receipts don't carry it). viem will throw a
-      // BaseError containing a ContractFunctionRevertedError in its chain.
-      //
-      // Skip when blockNumber is 0n: receipt.blockNumber - 1n would underflow
-      // to -1n and crash the RPC call, which is meaningless on a fresh chain
-      // (Anvil/Hardhat fixtures start at block 0). Genesis-block reverts lose
-      // the decoded cause — acceptable for a near-impossible production edge case.
-      let revertCause: BaseError | undefined
-      if (receipt.blockNumber > 0n) {
-        try {
-          await simulateContract(wagmiConfig, {
-            ...simulateInput,
-            blockNumber: receipt.blockNumber - 1n
-          } satisfies SimulateParams)
-        } catch (replayErr) {
-          if (replayErr instanceof BaseError) revertCause = replayErr
-          else {
-            captureWeb3Error(replayErr, {
-              operation: 'contract-write-replay',
-              force: true,
-              contractAddress: address,
-              functionName,
-              chainId: params.chainId
-            })
-            onReplayError?.(replayErr)
-          }
+  if (receipt.status !== 'success') {
+    // Replay at the block just before mining to recover the ABI-decoded
+    // revert reason (receipts don't carry it). viem will throw a
+    // BaseError containing a ContractFunctionRevertedError in its chain.
+    //
+    // Skip when blockNumber is 0n: receipt.blockNumber - 1n would underflow
+    // to -1n and crash the RPC call, which is meaningless on a fresh chain
+    // (Anvil/Hardhat fixtures start at block 0). Genesis-block reverts lose
+    // the decoded cause — acceptable for a near-impossible production edge case.
+    let revertCause: BaseError | undefined
+    if (receipt.blockNumber > 0n) {
+      try {
+        await simulateContract(wagmiConfig, {
+          ...simulateInput,
+          blockNumber: receipt.blockNumber - 1n
+        } satisfies SimulateParams)
+      } catch (replayErr) {
+        if (replayErr instanceof BaseError) revertCause = replayErr
+        else {
+          captureWeb3Error(replayErr, {
+            operation: 'contract-write-replay',
+            force: true,
+            contractAddress: address,
+            functionName,
+            chainId: params.chainId
+          })
+          onReplayError?.(replayErr)
         }
       }
-      throw new ContractWriteRevertedError({ hash, receipt, simulation, cause: revertCause })
     }
-
-    return { hash, receipt, simulation }
-  } catch (error) {
-    captureWeb3Error(error, {
-      operation: 'contract-write',
-      force: true,
-      contractAddress: address,
-      functionName,
-      chainId: params.chainId
-    })
-    throw error
+    throw new ContractWriteRevertedError({ hash, receipt, simulation, cause: revertCause })
   }
+
+  return { hash, receipt, simulation }
 }
 
 /**
@@ -315,6 +304,13 @@ export function useContractWritesV3<const abi extends Abi, fn extends WriteFunct
       })
     },
     onError: (error, variables) => {
+      captureWeb3Error(error, {
+        operation: 'contract-write',
+        force: true,
+        contractAddress: unref(cfg.contractAddress),
+        functionName: cfg.functionName,
+        chainId: unref(cfg.chainId)
+      })
       if (shouldLog) {
         log.error(`useContractWritesV3(${cfg.functionName}) failed:\n`, parseErrorV2(error))
       }

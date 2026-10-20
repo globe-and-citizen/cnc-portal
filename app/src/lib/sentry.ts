@@ -63,6 +63,8 @@ const WEB3_ERROR_NAMES = new Set([
   'UserRejectedRequestError'
 ])
 
+const capturedWeb3Errors = new WeakSet<object>()
+
 /** Capture actionable Wagmi/viem failures while ignoring expected wallet UX. */
 export function captureWeb3Error(error: unknown, context: Web3ErrorContext): void {
   const classification = classifyError(error)
@@ -71,6 +73,11 @@ export function captureWeb3Error(error: unknown, context: Web3ErrorContext): voi
     classification.category === 'chain_mismatch' ||
     hasErrorName(error, EXPECTED_WEB3_ERROR_NAMES)
   if (isExpected || (!context.force && !shouldCaptureWeb3Error(error))) return
+
+  if (typeof error === 'object' && error !== null) {
+    if (capturedWeb3Errors.has(error)) return
+    capturedWeb3Errors.add(error)
+  }
 
   Sentry.withScope((scope) => {
     scope.setTag('runtime', 'frontend')

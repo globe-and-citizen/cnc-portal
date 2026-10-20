@@ -44,7 +44,7 @@ the fallback for errors that are not handled by a controller.
 The frontend's internal API client and external provider client share the Axios capture helper. Internal API retries are allowed to finish
 before one final failure is captured, while external provider failures are captured at the response interceptor. Vue's global error
 instrumentation remains responsible for uncaught JavaScript, promise, and Vue component failures. The shared TanStack Query and Mutation
-caches capture handled Wagmi/viem failures from reads and mutations; the contract-write and native-transfer primitives add operation,
+caches capture handled Wagmi/viem failures from reads and mutations; the contract-write and native-transfer mutation handlers add operation,
 contract, function, and chain tags at their Web3 boundaries.
 
 ## Invariants and Failure Behaviour
@@ -77,8 +77,8 @@ accepted the event. The Sentry dashboard and a controlled smoke test remain requ
 - [Frontend Axios capture helper](../../../app/src/lib/sentry.ts), [internal API client](../../../app/src/lib/axios.ts), and
   [external API client](../../../app/src/lib/external.axios.ts)
 - [Frontend Web3 capture helper](../../../app/src/lib/sentry.ts), [shared Query/Mutation caches](../../../app/src/queries/queryClient.ts),
-  [contract writes](../../../app/src/composables/contracts/useContractWritesV3.ts), and
-  [native transfers](../../../app/src/composables/transactions/useSafeSendTransaction.ts)
+  [contract-write mutation](../../../app/src/composables/contracts/useContractWritesV3.ts), and
+  [native-transfer mutation](../../../app/src/composables/transactions/useSafeSendTransaction.ts)
 - [Express Sentry handler registration](../../../backend/src/config/serverConfig.ts)
 - [CoinGecko controller](../../../backend/src/controllers/coingeckoController.ts),
   [storage controller](../../../backend/src/controllers/storageController.ts),

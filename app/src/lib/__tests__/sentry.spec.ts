@@ -64,4 +64,13 @@ describe('Web3 Sentry capture', () => {
     expect(sentryMocks.captureException).toHaveBeenCalledWith(error)
     expect(sentryMocks.setTag).toHaveBeenCalledWith('error.operation', 'native-transfer')
   })
+
+  it('captures the same error instance only once across Web3 boundaries', () => {
+    const error = new BaseError('RPC unavailable')
+
+    captureWeb3Error(error, { operation: 'contract-write', force: true })
+    captureWeb3Error(error, { operation: 'mutation' })
+
+    expect(sentryMocks.captureException).toHaveBeenCalledTimes(1)
+  })
 })
