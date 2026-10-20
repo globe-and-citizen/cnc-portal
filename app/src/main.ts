@@ -34,6 +34,7 @@ export function setupApp() {
   Sentry.init({
     app,
     dsn: import.meta.env.VITE_APP_SENTRY_DSN,
+    environment: import.meta.env.VITE_APP_SENTRY_ENVIRONMENT ?? import.meta.env.MODE,
     // Route Sentry events through our own backend to bypass ad-blockers
     // (Brave Shields, uBlock Origin, etc. block direct requests to ingest.sentry.io).
     // Reference: https://docs.sentry.io/platforms/javascript/troubleshooting/#dealing-with-ad-blockers

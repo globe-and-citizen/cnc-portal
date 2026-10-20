@@ -54,6 +54,8 @@ sequenceDiagram
 - At most ten valid files are accepted by one `uploadFiles` call, and each file is checked against the shared type and size limits.
 - Stored metadata contains the generated object key, MIME type, and size; the original filename is not used as the stored key.
 - A storage upload failure becomes a per-file failure result rather than an unhandled exception.
+- Unexpected upload and presigned-URL controller failures that return `5xx` are captured by the backend error-tracking capability without
+  adding file contents or credentials to the event.
 - A failed attachment URL refresh preserves the original attachment entry.
 - Attachment cleanup accepts legacy entries with only a non-empty object key and continues when an individual delete fails.
 - Download URLs are time-limited and are generated from stored object keys.
@@ -64,7 +66,7 @@ sequenceDiagram
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `d00841d56e8b39d35226b80fb7cac3839aa6c058`
+**Implementation evidence reviewed against:** `95d9e12dd696864913e37ad6e20222587b223591`
 
 - [Upload route](../../../backend/src/routes/uploadRoute.ts) and [upload controller](../../../backend/src/controllers/uploadController.ts)
 - [Upload middleware](../../../backend/src/utils/upload.ts) and [middleware tests](../../../backend/src/utils/__tests__/upload.test.ts)
