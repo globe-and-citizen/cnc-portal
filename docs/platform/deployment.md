@@ -823,7 +823,8 @@ import * as Sentry from "@sentry/node";
 
 Sentry.init({
   dsn: process.env.SENTRY_DSN,
-  environment: process.env.SENTRY_ENVIRONMENT ?? process.env.NODE_ENV ?? "development",
+  environment:
+    process.env.SENTRY_ENVIRONMENT ?? process.env.NODE_ENV ?? "development",
   tracesSampleRate: 0.1,
   sendDefaultPii: true,
 });
@@ -837,12 +838,20 @@ import * as Sentry from "@sentry/vue";
 Sentry.init({
   app,
   dsn: import.meta.env.VITE_APP_SENTRY_DSN,
-  environment: import.meta.env.VITE_APP_SENTRY_ENVIRONMENT ?? import.meta.env.MODE,
+  environment:
+    import.meta.env.VITE_APP_SENTRY_ENVIRONMENT ?? import.meta.env.MODE,
   tunnel: `${import.meta.env.VITE_APP_BACKEND_URL}/api/sentry-tunnel`,
   tracesSampleRate: 0.1,
   replaysOnErrorSampleRate: 1.0,
 });
 ```
+
+Backend controller failures are captured centrally when they produce a `5xx` response through `backend/src/utils/utils.ts#errorResponse`.
+Controllers that have a dedicated `5xx` response path use the same capture helper, and the CoinGecko controller adds the provider operation
+and HTTP status as Sentry tags. Client errors (`4xx`), expected rate limits, health-check dependency failures, and Sentry tunnel forwarding
+failures are not reported as exceptions to avoid noisy or recursive events. Filter backend events by the configured Sentry environment and
+the `runtime:backend` tag. The complete runtime contract is documented in the
+[Backend Error Tracking capability](../implementation/error-tracking/README.md).
 
 **Source maps** are generated as `hidden` in production builds (not served to browsers) and uploaded to Sentry automatically by
 `@sentry/vite-plugin` during `npm run build` (frontend) and by `sentry-cli sourcemaps` during `npm run build` (backend).
