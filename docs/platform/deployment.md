@@ -788,18 +788,33 @@ gcloud logging read "resource.type=cloudsql_database" --limit=50
 ### Error Tracking
 
 Sentry is configured at two levels — frontend (Vue) and backend (Node.js) — with separate Sentry projects sharing the same organisation.
+Each project uses the same environment names so events can be filtered consistently across local development, staging, and production.
+
+For Railway, set the environment value separately in each Railway environment:
+
+| Railway environment | Sentry environment |
+| ------------------- | ------------------ |
+| Local development   | `development`      |
+| Staging             | `staging`          |
+| Production          | `production`       |
 
 **Required environment variables:**
 
-| Variable                     | Where              | Purpose                                           |
-| ---------------------------- | ------------------ | ------------------------------------------------- |
-| `VITE_APP_SENTRY_DSN`        | frontend (browser) | Frontend Sentry project DSN                       |
-| `SENTRY_DSN`                 | backend (Node.js)  | Backend Sentry project DSN                        |
-| `SENTRY_FRONTEND_DSN`        | backend (Node.js)  | Frontend DSN used by the tunnel route             |
-| `SENTRY_FRONTEND_PROJECT_ID` | backend (Node.js)  | Project ID extracted from the frontend DSN        |
-| `SENTRY_AUTH_TOKEN`          | build-time only    | Upload source maps to Sentry                      |
-| `SENTRY_ORG`                 | build-time only    | Sentry organisation slug                          |
-| `SENTRY_PROJECT`             | build-time only    | Frontend project slug (default: `cnc-portal-app`) |
+| Variable                      | Where              | Timing           | Purpose                                    |
+| ----------------------------- | ------------------ | ---------------- | ------------------------------------------ |
+| `VITE_APP_SENTRY_DSN`         | frontend (browser) | build-time       | Frontend Sentry project DSN                |
+| `VITE_APP_SENTRY_ENVIRONMENT` | frontend (browser) | build-time       | `development`, `staging`, or `production`  |
+| `SENTRY_DSN`                  | backend (Node.js)  | runtime          | Backend Sentry project DSN                 |
+| `SENTRY_ENVIRONMENT`          | backend (Node.js)  | runtime          | `development`, `staging`, or `production`  |
+| `SENTRY_FRONTEND_DSN`         | backend (Node.js)  | runtime          | Frontend DSN used by the tunnel route      |
+| `SENTRY_FRONTEND_PROJECT_ID`  | backend (Node.js)  | runtime          | Project ID extracted from the frontend DSN |
+| `SENTRY_AUTH_TOKEN`           | build-time only    | source-map build | Upload source maps to Sentry               |
+| `SENTRY_ORG`                  | build-time only    | source-map build | Sentry organisation slug                   |
+| `SENTRY_PROJECT`              | build-time only    | source-map build | Sentry project slug for source-map uploads |
+
+`VITE_*` values are compiled into the frontend bundle, so changing a frontend Sentry environment requires a new Railway deployment. Backend
+Sentry environment values are read when the Node.js service starts. Keep `SENTRY_AUTH_TOKEN` server-side and use it only during the
+source-map build; it must never be exposed through a `VITE_*` variable.
 
 **Backend** (`backend/src/instrument.ts`) — must be the first import in the server:
 
@@ -808,7 +823,7 @@ import * as Sentry from "@sentry/node";
 
 Sentry.init({
   dsn: process.env.SENTRY_DSN,
-  environment: process.env.NODE_ENV ?? "development",
+  environment: process.env.SENTRY_ENVIRONMENT ?? process.env.NODE_ENV ?? "development",
   tracesSampleRate: 0.1,
   sendDefaultPii: true,
 });
@@ -822,6 +837,7 @@ import * as Sentry from "@sentry/vue";
 Sentry.init({
   app,
   dsn: import.meta.env.VITE_APP_SENTRY_DSN,
+  environment: import.meta.env.VITE_APP_SENTRY_ENVIRONMENT ?? import.meta.env.MODE,
   tunnel: `${import.meta.env.VITE_APP_BACKEND_URL}/api/sentry-tunnel`,
   tracesSampleRate: 0.1,
   replaysOnErrorSampleRate: 1.0,
