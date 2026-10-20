@@ -1,6 +1,14 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import type { AxiosAdapter, AxiosError } from 'axios'
 
+const sentryMocks = vi.hoisted(() => ({
+  captureException: vi.fn(),
+  setTag: vi.fn(),
+  withScope: vi.fn()
+}))
+
+vi.mock('@sentry/vue', () => sentryMocks)
+
 // Opt out of the global mock — we need the real apiClient with its interceptors.
 vi.unmock('@/lib/axios')
 
@@ -9,6 +17,9 @@ describe('apiClient retry interceptor', () => {
 
   beforeEach(async () => {
     vi.useFakeTimers()
+    sentryMocks.captureException.mockClear()
+    sentryMocks.setTag.mockClear()
+    sentryMocks.withScope.mockImplementation((callback) => callback({ setTag: sentryMocks.setTag }))
     vi.resetModules()
     apiClient = (await vi.importActual<typeof import('@/lib/axios')>('@/lib/axios')).default
   })
@@ -45,6 +56,7 @@ describe('apiClient retry interceptor', () => {
     await vi.runAllTimersAsync()
     const res = await promise
     expect(res.data).toEqual({ ok: 3 })
+    expect(sentryMocks.captureException).not.toHaveBeenCalled()
   })
 
   it('retries on a network error (no response)', async () => {
@@ -53,6 +65,7 @@ describe('apiClient retry interceptor', () => {
     await vi.runAllTimersAsync()
     const res = await promise
     expect(res.data).toEqual({ ok: 2 })
+    expect(sentryMocks.captureException).not.toHaveBeenCalled()
   })
 
   it('does NOT retry on 401 (non-retriable status)', async () => {
@@ -64,6 +77,7 @@ describe('apiClient retry interceptor', () => {
     await vi.runAllTimersAsync()
     await promise
     expect(adapter).toHaveBeenCalledTimes(1)
+    expect(sentryMocks.captureException).not.toHaveBeenCalled()
   })
 
   it('gives up after 3 retries (4 total attempts) on persistent 502', async () => {
@@ -76,5 +90,21 @@ describe('apiClient retry interceptor', () => {
     const err = (await promise) as AxiosError
     expect(err.response?.status).toBe(502)
     expect(adapter).toHaveBeenCalledTimes(4)
+    expect(sentryMocks.captureException).toHaveBeenCalledTimes(1)
+    expect(sentryMocks.setTag).toHaveBeenCalledWith('runtime', 'frontend')
+    expect(sentryMocks.setTag).toHaveBeenCalledWith('error.source', 'axios.api')
+    expect(sentryMocks.setTag).toHaveBeenCalledWith('http.status_code', '502')
+  })
+
+  it('captures a non-retriable network failure', async () => {
+    const adapter = vi.fn(async (config) => {
+      throw Object.assign(new Error('network down'), fakeError(undefined), { config })
+    })
+    apiClient.defaults.adapter = adapter as unknown as AxiosAdapter
+    const promise = apiClient.get('test').catch((e) => e)
+    await vi.runAllTimersAsync()
+    await promise
+
+    expect(sentryMocks.captureException).toHaveBeenCalledTimes(1)
   })
 })

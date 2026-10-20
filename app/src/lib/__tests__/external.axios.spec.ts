@@ -1,9 +1,23 @@
 import { AxiosError, CanceledError, type AxiosAdapter } from 'axios'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+
+const sentryMocks = vi.hoisted(() => ({
+  captureException: vi.fn(),
+  setTag: vi.fn(),
+  withScope: vi.fn()
+}))
+
+vi.mock('@sentry/vue', () => sentryMocks)
+
 import externalApiClient from '../external.axios'
 
 describe('external Axios Safe authentication', () => {
-  beforeEach(() => vi.stubEnv('VITE_APP_SAFE_API_KEY', ' test-safe-key '))
+  beforeEach(() => {
+    vi.stubEnv('VITE_APP_SAFE_API_KEY', ' test-safe-key ')
+    sentryMocks.captureException.mockClear()
+    sentryMocks.setTag.mockClear()
+    sentryMocks.withScope.mockImplementation((callback) => callback({ setTag: sentryMocks.setTag }))
+  })
   afterEach(() => vi.unstubAllEnvs())
 
   it.each([
@@ -46,6 +60,9 @@ describe('external Axios Safe authentication', () => {
       externalApiClient.get('https://api.safe.global/tx-service/pol/', { adapter })
     ).rejects.toMatchObject({ response: { status: 429 } })
     expect(JSON.stringify(failure)).not.toContain('test-safe-key')
+    expect(sentryMocks.captureException).toHaveBeenCalledTimes(1)
+    expect(sentryMocks.setTag).toHaveBeenCalledWith('error.source', 'axios.external')
+    expect(sentryMocks.setTag).toHaveBeenCalledWith('http.status_code', '429')
   })
 
   it('cancels an aborted request before sending it', async () => {
@@ -59,5 +76,23 @@ describe('external Axios Safe authentication', () => {
       })
     ).rejects.toBeInstanceOf(CanceledError)
     expect(adapter).not.toHaveBeenCalled()
+    expect(sentryMocks.captureException).not.toHaveBeenCalled()
+  })
+
+  it('does not capture expected client failures', async () => {
+    const adapter: AxiosAdapter = async (config) => {
+      throw new AxiosError('Not found', 'ERR_BAD_REQUEST', config, undefined, {
+        data: {},
+        status: 404,
+        statusText: 'Not found',
+        headers: {},
+        config
+      })
+    }
+
+    await expect(
+      externalApiClient.get('https://safe-client.safe.global/v1/chains/137/', { adapter })
+    ).rejects.toMatchObject({ response: { status: 404 } })
+    expect(sentryMocks.captureException).not.toHaveBeenCalled()
   })
 })
