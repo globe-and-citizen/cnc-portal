@@ -9,6 +9,7 @@ import {
   useQueryClientFn
 } from '@/tests/mocks/composables.mock'
 import { mockLog } from '@/tests/mocks/utils.mock'
+import { SENTRY_WEB3_BOUNDARY_META_KEY } from '@/lib/sentry'
 import {
   executeContractWrite,
   useContractWritesV3,
@@ -227,6 +228,16 @@ describe('useContractWritesV3 — input validation & logging', () => {
     const m = useContractWritesV3(baseConfig({ config: { log: false } }))
     await expect(m.mutateAsync({})).rejects.toBe(err)
     expect(mockLog.error).not.toHaveBeenCalled()
+  })
+
+  it('marks the mutation as a specialized Web3 Sentry boundary', () => {
+    useContractWritesV3(baseConfig())
+
+    const options = vi.mocked(useMutationFn).mock.calls[0]?.[0] as {
+      meta?: Record<string, unknown>
+    }
+
+    expect(options.meta).toEqual({ [SENTRY_WEB3_BOUNDARY_META_KEY]: true })
   })
 
   it('does not pass an onReplayError callback when logging is disabled', async () => {

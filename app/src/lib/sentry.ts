@@ -15,6 +15,9 @@ export interface Web3ErrorContext {
   queryName?: string
 }
 
+/** TanStack mutation metadata key used to give specialized Web3 boundaries capture priority. */
+export const SENTRY_WEB3_BOUNDARY_META_KEY = 'sentryWeb3Boundary' as const
+
 const CAPTURED_STATUS_CODES = new Set([408, 429])
 
 /** Capture actionable Axios failures without reporting expected client errors. */
