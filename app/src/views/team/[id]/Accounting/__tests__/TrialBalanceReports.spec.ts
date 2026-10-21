@@ -48,9 +48,7 @@ describe('TrialBalanceView', () => {
       .find((row) => row.text().includes('Safe Market Value Adjustment'))!
       .findAll('td')
     expect(adjustment.map((cell) => cell.text()).slice(-2)).toEqual(['—', '$52.43'])
-    expect(rows.find((row) => row.includes('Unrealized Loss on Digital Assets'))).toContain(
-      '$52.43'
-    )
+    expect(rows.find((row) => row.includes('Unrealized P&L'))).toContain('$52.43')
     expect(wrapper.find('[data-test="market-revaluation-note"]').text()).toContain(
       'Safe shown at market value: $476.64 (cost $529.07, unrealized -$52.43)'
     )

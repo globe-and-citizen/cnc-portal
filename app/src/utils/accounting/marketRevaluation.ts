@@ -1,7 +1,8 @@
 /**
  * Report-date market revaluation of the Safe. The journal keeps historical cost; a report
  * adds adjusting entries so the Safe shows its market value at the report's date. The
- * difference goes to `Safe Market Value Adjustment` and an unrealized gain or loss. These
+ * difference goes to `Safe Market Value Adjustment` and `Unrealized P&L`: a loss is a debit
+ * of `Unrealized P&L`, a gain a credit. These
  * entries are computed for each report and are never stored or posted on-chain.
  */
 import { assetDecimals, type AssetId, type AssetMetadata } from '@/utils/tokens/assets'
@@ -90,9 +91,7 @@ export function revaluationEntries(points: readonly RevaluationPoint[]): Journal
       } as JournalEntryLine
       const resultLine = {
         id: `${id}:result`,
-        account: accountFor(
-          gain ? 'Unrealized Gain on Digital Assets' : 'Unrealized Loss on Digital Assets'
-        ),
+        account: accountFor('Unrealized P&L'),
         ...(gain ? { credit: amount } : { debit: amount })
       } as JournalEntryLine
       return [

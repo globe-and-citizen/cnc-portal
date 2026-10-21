@@ -33,7 +33,7 @@ describe('Safe market revaluation', () => {
     expect(
       balanceOf(revalued, 'Cash — Safe') + balanceOf(revalued, 'Safe Market Value Adjustment')
     ).toBe(usd(18))
-    expect(balanceOf(revalued, 'Unrealized Loss on Digital Assets')).toBe(usd(2))
+    expect(balanceOf(revalued, 'Unrealized P&L')).toBe(usd(2))
     const trial = presentTrial(revalued, new Date(at * 1000))
     expect(trial.balanced).toBe(true)
     expect(trial.rows.find((row) => row.label === 'Safe Market Value Adjustment')).toMatchObject({
@@ -43,6 +43,22 @@ describe('Safe market revaluation', () => {
     expect(trial.total).toBe('$22.00')
     expect(safePositionsAt(revalued, at)).toEqual(safePositionsAt(books, at))
   })
+  it('shows a market gain with the adjustment as a debit and Unrealized P&L as a credit', () => {
+    const books = journal()
+    const at = end(books)
+    const revalued = [...books, ...revaluationEntries([{ timestamp: at, adjustment: usd(5) }])]
+    const trial = presentTrial(revalued, new Date(at * 1000))
+    expect(trial.balanced).toBe(true)
+    expect(trial.rows.find((row) => row.label === 'Safe Market Value Adjustment')).toMatchObject({
+      dr: '$5.00',
+      cr: '—'
+    })
+    expect(trial.rows.find((row) => row.label === 'Unrealized P&L')).toMatchObject({
+      dr: '—',
+      cr: '$5.00'
+    })
+    expect(trial.total).toBe('$25.00')
+  })
   it('posts only each period’s change, so a later gain reverses an earlier loss', () => {
     const [opening, closing] = revaluationEntries([
       { timestamp: 200, adjustment: usd(3) },
@@ -51,14 +67,14 @@ describe('Safe market revaluation', () => {
     expect(
       opening!.lines.map((line) => [line.account.family.name, line.debit, line.credit])
     ).toEqual([
-      ['Unrealized Loss on Digital Assets', usd(2), undefined],
+      ['Unrealized P&L', usd(2), undefined],
       ['Safe Market Value Adjustment', undefined, usd(2)]
     ])
     expect(
       closing!.lines.map((line) => [line.account.family.name, line.debit, line.credit])
     ).toEqual([
       ['Safe Market Value Adjustment', usd(5), undefined],
-      ['Unrealized Gain on Digital Assets', undefined, usd(5)]
+      ['Unrealized P&L', undefined, usd(5)]
     ])
     expect(balanceOf([opening!, closing!], 'Safe Market Value Adjustment')).toBe(usd(3))
     expect(revaluationEntries([{ timestamp: 100, adjustment: 0n }])).toEqual([])

@@ -58,13 +58,13 @@ rewritten.
 
 The journal keeps the Safe at historical cost. Every report then shows the Safe at market value on its own date through a market revaluation
 adjusting entry: the gap between market value and cost goes to `Safe Market Value Adjustment` (an asset line under `Cash — Safe`) and to
-`Unrealized Gain on Digital Assets` or `Unrealized Loss on Digital Assets`. Cash — Safe plus the adjustment equals the Safe's market value,
-so today's Balance Sheet and Trial Balance show the same total as Safe Account's Total wallet value, and swap fees plus unrealized results
-equal Safe Account's total P&L. Today uses the same Safe Gateway prices as Safe Account; a past date uses CoinGecko's daily snapshot at the
-end of that UTC day, with stablecoins at their peg. An Income Statement or General Ledger period shows only the change in market value
-within the period. The adjustment is computed for each report and its export, never stored or posted on-chain. When a price, the history or
-the wallet quantities are missing, the report stays at cost and says so. Closed positions retain their realized swap result; capital flows
-and operating income are not treasury trading profit.
+`Unrealized P&L` (debited for a loss, credited for a gain). Cash — Safe plus the adjustment equals the Safe's market value, so today's
+Balance Sheet and Trial Balance show the same total as Safe Account's Total wallet value, and swap fees plus unrealized results equal Safe
+Account's total P&L. Today uses the same Safe Gateway prices as Safe Account; a past date uses CoinGecko's daily snapshot at the end of that
+UTC day, with stablecoins at their peg. An Income Statement or General Ledger period shows only the change in market value within the
+period. The adjustment is computed for each report and its export, never stored or posted on-chain. When a price, the history or the wallet
+quantities are missing, the report stays at cost and says so. Closed positions retain their realized swap result; capital flows and
+operating income are not treasury trading profit.
 
 Ancillary mints and ambiguous batches require classification. Missing decimals, rate or acquisition basis keeps Accounting incomplete. A
 swap whose fee cannot be verified keeps that fee inside the acquired asset cost: the books stay complete, total P&L is unchanged and only

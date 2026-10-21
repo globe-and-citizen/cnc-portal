@@ -62,17 +62,10 @@ export const ACCOUNT_FAMILIES = [
     deploymentScoped: false
   },
   {
-    id: 'unrealized-digital-asset-gain',
-    name: 'Unrealized Gain on Digital Assets',
+    id: 'unrealized-pnl',
+    name: 'Unrealized P&L',
     accountClass: 'INCOME',
     normalBalance: 'credit',
-    deploymentScoped: false
-  },
-  {
-    id: 'unrealized-digital-asset-loss',
-    name: 'Unrealized Loss on Digital Assets',
-    accountClass: 'EXPENSE',
-    normalBalance: 'debit',
     deploymentScoped: false
   },
   {

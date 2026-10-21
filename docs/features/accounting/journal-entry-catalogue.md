@@ -731,20 +731,27 @@ difference between proceeds and carrying value. See the
 
 - **Input:** The Safe's non-pegged positions and carrying cost on a report date, and a market price for each: today's Safe Account
   valuation, or CoinGecko's daily snapshot at the end of a past UTC day.
-- **Processing:** Market value less carrying cost is the cumulative adjustment. A loss debits `Unrealized Loss on Digital Assets` and
-  credits `Safe Market Value Adjustment`; a gain debits the adjustment and credits `Unrealized Gain on Digital Assets`. A period receives an
-  opening entry before its start and an entry at its end carrying only its change.
+- **Processing:** Market value less carrying cost is the cumulative adjustment. A loss debits `Unrealized P&L` and credits
+  `Safe Market Value Adjustment`; a gain debits the adjustment and credits `Unrealized P&L`. A period receives an opening entry before its
+  start and an entry at its end carrying only its change.
 - **General Ledger:** Label `Market revaluation`, category `Revaluation`. The entry is computed for each report and export, never stored and
   never posted on-chain. Without a complete price it is omitted and the report stays at cost.
 
-For WETH bought at a net cost of 529.073756 USD and worth 476.64 USD today:
+For WETH bought at a net cost of 529.073756 USD and worth 476.64 USD today (a loss):
 
-| Account                           | Debit (USD) | Credit (USD) |
-| --------------------------------- | ----------: | -----------: |
-| Unrealized Loss on Digital Assets |       52.43 |              |
-| Safe Market Value Adjustment      |             |        52.43 |
+| Account                      | Debit (USD) | Credit (USD) |
+| ---------------------------- | ----------: | -----------: |
+| Unrealized P&L               |       52.43 |              |
+| Safe Market Value Adjustment |             |        52.43 |
 
-Cash — Safe (529.07) plus the adjustment (−52.43) equals the 476.64 USD Total wallet value shown on Safe Account. See the
+If the same WETH were worth 579.07 USD (a gain):
+
+| Account                      | Debit (USD) | Credit (USD) |
+| ---------------------------- | ----------: | -----------: |
+| Safe Market Value Adjustment |       50.00 |              |
+| Unrealized P&L               |             |        50.00 |
+
+Cash — Safe (529.07) plus the adjustment equals the Total wallet value shown on Safe Account: 476.64 USD or 579.07 USD. See the
 [read model](../../implementation/accounting-read-model/README.md#report-date-market-revaluation).
 
 ### `UC-BANK-03` — Bank Funds a Company Pocket

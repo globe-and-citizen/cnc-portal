@@ -202,8 +202,8 @@ Wallet overview exposes the fee total in place of separate realized/unrealized c
 Reports show the Safe at market value without rewriting the cost-based journal.
 [Market revaluation](../../../app/src/utils/accounting/marketRevaluation.ts) reads each non-pegged Safe position and its carrying cost from
 `Cash — Safe` lines up to a report time, values it at a price, and builds `MARKET-REVALUATION` adjusting entries:
-`Safe Market Value Adjustment` against `Unrealized Gain on Digital Assets` or `Unrealized Loss on Digital Assets`. Entries are incremental,
-so a period `[from, to]` gets one entry before `from` carrying the opening adjustment and one at `to` carrying only the period's change.
+`Safe Market Value Adjustment` against the single income account `Unrealized P&L`. Entries are incremental, so a period `[from, to]` gets
+one entry before `from` carrying the opening adjustment and one at `to` carrying only the period's change.
 [The revaluation composable](../../../app/src/composables/accounting/useMarketRevaluation.ts) prices today with the Safe treasury projection
 (the Gateway valuation shown on Safe Account, so market minus cost equals its unrealized result) and a past date with CoinGecko's daily
 snapshot at the end of that UTC day. If any required price, the accounting history or the Gateway quantities are missing, no entry is added
