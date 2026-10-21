@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { encodeAbiParameters, encodeEventTopics, parseAbi, type TransactionReceipt } from 'viem'
+import {
+  encodeAbiParameters,
+  encodeEventTopics,
+  parseAbi,
+  zeroAddress,
+  type TransactionReceipt
+} from 'viem'
 import { cowTradesFromReceipt, verifyCowFees } from '../cowSettlement'
 import { swapFeeFixture, SETTLEMENT } from '@/utils/accounting/__tests__/swapFeeFixtures'
 import { ADDR } from '@/utils/accounting/__tests__/fixtures'
@@ -113,6 +119,19 @@ describe('CoW fee verification', () => {
     expect(verifyCowFees(target, { ...execution, cowTrades: [] }, [], []).reason).toContain(
       'unavailable'
     )
+  })
+  it('matches a native-currency receipt that CoW reports with its 0xEeee… marker', () => {
+    const { target, execution, order, trade } = swapFeeFixture()
+    const native = '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee'
+    const buyTrade = { ...trade, buyToken: native }
+    execution.cowTrades = [{ ...execution.cowTrades[0]!, buyToken: native }]
+    order.buyToken = native
+    target.assets = target.assets.map((asset) =>
+      asset.side === 'received' ? { ...asset, address: zeroAddress, token: 'native' } : asset
+    )
+    expect(verifyCowFees(target, execution, [order], [buyTrade]).fees).toEqual([
+      { tokenAddress: order.executedFeeToken, rawAmount: '3870494' }
+    ])
   })
   it('keeps unrelated settlement owners out and totals each order only once across same-transaction fills', () => {
     const { target, execution, order, trade } = swapFeeFixture()

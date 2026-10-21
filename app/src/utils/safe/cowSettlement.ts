@@ -1,5 +1,5 @@
 /** CoW settlement evidence: receipt Trade logs, provider records and their exact match. */
-import { decodeEventLog, parseAbi, type TransactionReceipt } from 'viem'
+import { decodeEventLog, parseAbi, zeroAddress, type TransactionReceipt } from 'viem'
 import { z } from 'zod'
 import type {
   CowTradeExecution,
@@ -9,6 +9,9 @@ import type {
 } from '@/types/swapFees'
 
 const SETTLEMENT = '0x9008d19f58aabd9ed0d60971565aa8510560ab41'
+/** CoW's marker for the native currency; Safe movements and fees use the zero address. */
+const COW_NATIVE = '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee'
+const movementAddress = (token: string) => (token === COW_NATIVE ? zeroAddress : token)
 const tradeAbi = parseAbi([
   'event Trade(address indexed owner, address sellToken, address buyToken, uint256 sellAmount, uint256 buyAmount, uint256 feeAmount, bytes orderUid)'
 ])
@@ -175,8 +178,8 @@ export function verifyCowFees(
   )
   const executed = totalsOf(
     logs.flatMap((log) => [
-      [`spent:${log.sellToken}`, log.sellAmount] as const,
-      [`received:${log.buyToken}`, log.buyAmount] as const
+      [`spent:${movementAddress(log.sellToken)}`, log.sellAmount] as const,
+      [`received:${movementAddress(log.buyToken)}`, log.buyAmount] as const
     ])
   )
   if (
@@ -193,7 +196,7 @@ export function verifyCowFees(
   }
   const protocolFees = matched.flatMap((trade) =>
     (trade.executedProtocolFees ?? []).map((fee) => ({
-      tokenAddress: fee.token,
+      tokenAddress: movementAddress(fee.token),
       rawAmount: fee.amount,
       policy: fee.policy
     }))
@@ -218,10 +221,8 @@ export function verifyCowFees(
         protocolFees,
         reason: 'The provider total also covers other fills. Only this swap’s breakdown is shown.'
       }
-    fees.set(
-      order.executedFeeToken,
-      (fees.get(order.executedFeeToken) ?? 0n) + BigInt(order.executedFee)
-    )
+    const feeToken = movementAddress(order.executedFeeToken)
+    fees.set(feeToken, (fees.get(feeToken) ?? 0n) + BigInt(order.executedFee))
   }
   return {
     fees: [...fees].map(([tokenAddress, amount]) => ({

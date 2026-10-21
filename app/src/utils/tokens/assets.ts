@@ -73,3 +73,8 @@ export function knownAssetId(address: string | null): TokenId | null {
   if (!isAddress(address) || address.toLowerCase() === zeroAddress) return null
   return resolveTokenIdByAddress(address)
 }
+
+/** The asset behind a token address: a supported token, otherwise its ERC-20 id; no address is native. */
+export function assetIdOfAddress(address: string | null | undefined, chainId: number): AssetId {
+  return address ? (knownAssetId(address) ?? assetId(address, chainId)) : 'native'
+}

@@ -7,8 +7,10 @@ import {
 import { coinGeckoRateOfRecord, coinGeckoRateTargets } from '@/utils/tokens/coingecko'
 import { utcRateDate } from '@/utils/accounting/toUsd'
 import {
+  closingRateDate,
   revaluationEntries,
   revaluationOf,
+  safeCostAt,
   safePositionsAt
 } from '@/utils/accounting/marketRevaluation'
 import type { UsdAmount } from '@/utils/accounting/types'
@@ -27,7 +29,8 @@ export interface MarketRevaluationSummary {
 /**
  * Adjusting entries that show the Safe at market value on each report date (`null` = now).
  * Today uses the Safe Gateway valuation shown on Safe Account; a past date uses CoinGecko's
- * daily snapshot at the end of that UTC day, with stablecoins at their peg. Without complete
+ * daily snapshot that closes that calendar day (00:00 UTC of the next day), the same for every
+ * viewer's timezone, with stablecoins at their peg. Without complete
  * evidence for every date the report stays at historical cost and `status` says why.
  */
 export function useMarketRevaluation(dates: MaybeRefOrGetter<readonly (Date | null)[]>) {
@@ -39,20 +42,20 @@ export function useMarketRevaluation(dates: MaybeRefOrGetter<readonly (Date | nu
     () => accounting.status.state.value === 'ready',
     safeAddress
   )
-  const now = Math.floor(Date.now() / 1000)
-  const startOfToday = Math.floor(new Date().setHours(0, 0, 0, 0) / 1000)
-  const points = computed(() =>
-    toValue(dates).map((date) => {
+  const points = computed(() => {
+    const now = Math.floor(Date.now() / 1000)
+    const startOfToday = Math.floor(new Date().setHours(0, 0, 0, 0) / 1000)
+    return toValue(dates).map((date) => {
       const at = date ? Math.floor(date.getTime() / 1000) : now
       return at >= startOfToday
         ? { at: Math.min(at, now), rateAt: undefined, positions: [] }
         : {
             at,
-            rateAt: new Date((at + 1) * 1000),
+            rateAt: closingRateDate(at),
             positions: safePositionsAt(accounting.journal.value, at)
           }
     })
-  )
+  })
   const targets = computed(() =>
     points.value.flatMap(({ rateAt, positions }) =>
       rateAt
@@ -63,13 +66,6 @@ export function useMarketRevaluation(dates: MaybeRefOrGetter<readonly (Date | nu
   const assetMarkets = useGetAssetMarketsQuery(() => coinGeckoRateTargets(targets.value).assets)
   const marketTargets = computed(() => coinGeckoRateTargets(targets.value, assetMarkets.value))
   const rates = useGetHistoricalTokenRatesQuery(() => marketTargets.value.requests)
-  const safeCostAt = (at: number) =>
-    accounting.journal.value
-      .filter((entry) => entry.timestamp <= at)
-      .flatMap((entry) => entry.lines)
-      .filter((line) => line.account.family.name === 'Cash — Safe')
-      .reduce((sum, line) => sum + (line.debit ?? 0n) - (line.credit ?? 0n), 0n)
-
   const summaries = computed<(MarketRevaluationSummary | null)[]>(() =>
     points.value.map((point) => {
       const rateAt = point.rateAt
@@ -85,7 +81,7 @@ export function useMarketRevaluation(dates: MaybeRefOrGetter<readonly (Date | nu
         coinGeckoRateOfRecord(marketTargets.value.targets, rates.value, token, rateAt)
       )
       if (adjustment === null) return null
-      const cost = safeCostAt(point.at)
+      const cost = safeCostAt(accounting.journal.value, point.at)
       return { at: point.at, source: 'daily', cost, market: cost + adjustment, adjustment }
     })
   )
