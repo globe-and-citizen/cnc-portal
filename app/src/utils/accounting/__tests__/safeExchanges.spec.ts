@@ -153,6 +153,38 @@ describe('Safe asset exchange accounting', () => {
     expect(line.debit).toBe(usd('20'))
     expect(line.movement!.rate).toBe(20000000000000000000000000n)
   })
+  it('shares a batch’s stablecoin cost between the assets received, by their market value', () => {
+    const second = '0xcccccccccccccccccccccccccccccccccccccccc'
+    const otherRouter = '0xdddddddddddddddddddddddddddddddddddddddd'
+    const received = transfer(2, 3, otherRouter, ADDR.safe, second, '20400000000000000')
+    received.tokenInfo = {
+      ...received.tokenInfo!,
+      address: second,
+      name: 'Other',
+      symbol: 'OTHER',
+      decimals: 18
+    }
+    const rows = [
+      transfer(1, 0, ADDR.client, ADDR.safe, USDC_ADDRESS, '100000000'),
+      transfer(2, 0, ADDR.safe, ROUTER, USDC_ADDRESS, '60000000'),
+      transfer(2, 1, ROUTER, ADDR.safe, TOKEN, '30000000000000000'),
+      transfer(2, 2, ADDR.safe, otherRouter, USDC_ADDRESS, '40000000'),
+      received
+    ]
+    const result = finalizeJournalEntryDrafts(drafts(rows))
+    expect(result.assetDiagnostics).toEqual([])
+    const swap = result.journal.find((entry) => entry.useCase === 'SAFE-SWAP')!
+    const acquired = swap.lines.filter(
+      (line) => line.debit !== undefined && line.account.family.name === 'Cash — Safe'
+    )
+    expect(acquired.reduce((sum, line) => sum + line.debit!, 0n)).toBe(usd('100'))
+    expect(acquired.find((line) => line.movement?.asset?.symbol === 'AWETH')?.debit).toBe(
+      (usd('100') * usd('60')) / usd('100.8')
+    )
+    expect(swap.lines.some((line) => line.account.family.name.startsWith('Asset Exchange'))).toBe(
+      false
+    )
+  })
   it('requires further basis evidence after a payment depleted the holding at a different valuation', () => {
     const rows = history().slice(0, 3)
     rows.push(

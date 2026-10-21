@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import { finalizeJournalEntryDrafts } from '../journalEntry'
-import { revaluationEntries, revaluationOf, safePositionsAt } from '../marketRevaluation'
+import {
+  closingRateDate,
+  revaluationEntries,
+  revaluationOf,
+  safeCostAt,
+  safePositionsAt
+} from '../marketRevaluation'
 import { presentTrial } from '../presenter'
 import { drafts, history, TOKEN } from './safeExchangeFixtures'
 import { usd } from './fixtures'
@@ -78,5 +84,19 @@ describe('Safe market revaluation', () => {
     ])
     expect(balanceOf([opening!, closing!], 'Safe Market Value Adjustment')).toBe(usd(3))
     expect(revaluationEntries([{ timestamp: 100, adjustment: 0n }])).toEqual([])
+  })
+  it('keeps historical cost when the history holds less than zero of a token', () => {
+    const [position] = safePositionsAt(journal(), end(journal()))
+    expect(revaluationOf([{ ...position!, quantity: -position!.quantity }], () => 1800)).toBeNull()
+  })
+  it('reads the whole Safe cost, stablecoins included', () => {
+    const books = journal()
+    expect(safeCostAt(books, end(books))).toBe(balanceOf(books, 'Cash — Safe'))
+  })
+  it('values a past day at the snapshot closing that calendar day, whatever the timezone', () => {
+    const endOfDay = Math.floor(new Date(2026, 9, 20, 23, 59, 59).getTime() / 1000)
+    expect(closingRateDate(endOfDay).toISOString()).toBe('2026-10-21T00:00:00.000Z')
+    const startOfDay = Math.floor(new Date(2026, 9, 20).getTime() / 1000)
+    expect(closingRateDate(startOfDay).toISOString()).toBe('2026-10-21T00:00:00.000Z')
   })
 })
