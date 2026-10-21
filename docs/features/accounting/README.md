@@ -41,12 +41,35 @@ ERC-20 is identified by its network and contract address; its original currency 
 discovery does not expand the tokens allowed in CNC payment forms.
 
 A simple exchange requires opposing different-asset legs sharing a transaction and external settlement counterparty. The acquired asset is
-debited at its own historical market rate and the disposed asset credited at its weighted-average carrying value. The difference is an
-`Asset Exchange Gain` or `Asset Exchange Loss`, never `Service Revenue`. Stablecoin spent does not set the acquired asset's unit price or
-hide an exchange loss in its carrying value. Current portfolio prices never replace historical accounting evidence.
+debited at the fixed executed consideration less verified swap fees, and the disposed asset credited at its weighted-average carrying value.
+For a USD-stablecoin purchase, gross spend equals net asset cost plus `Transaction Fee Expense`. The actual token quantities remain
+unchanged. A separate market quote for the acquired asset never changes this cost or creates an exchange loss. When the receipt is a
+recognized USD stablecoin, retain its actual net amount; gross proceeds are that receipt plus the separately expensed fee. Otherwise the
+outgoing quantity determines consideration, using a recorded USD reference when it is non-pegged. Gross proceeds less disposed carrying
+value is an `Asset Exchange Gain` or `Asset Exchange Loss`, never `Service Revenue`. Net P&L includes the fee expense exactly once.
 
-Ancillary mints and ambiguous batches require classification. Missing decimals, rate, or acquisition basis keeps Accounting incomplete.
-Cross-transaction intents and arbitrary DeFi actions need additional protocol evidence. See the
+The General Ledger exposes the executed quote-token ratio and fixed acquisition unit cost separately from weighted-average disposal cost.
+USD-stablecoin purchases and sales require no crypto market reference. Crypto-to-crypto consideration uses the same UTC transaction-date
+snapshot as every other non-pegged posting, so the books keep a single rate policy. Movements mined in the same block replay in their
+on-chain log order. Separate network fees require their own debit evidence and are excluded from this swap calculation; an unexplained
+market difference is never labeled a fee. Earlier reconstructed journals valued receipts at their own market reference. Replaying them now
+applies the executed-consideration policy and can move that apparent exchange loss into unrealized P&L; existing exported files are not
+rewritten.
+
+The journal keeps the Safe at historical cost. Every report then shows the Safe at market value on its own date through a market revaluation
+adjusting entry: the gap between market value and cost goes to `Safe Market Value Adjustment` (an asset line under `Cash — Safe`) and to
+`Unrealized Gain on Digital Assets` or `Unrealized Loss on Digital Assets`. Cash — Safe plus the adjustment equals the Safe's market value,
+so today's Balance Sheet and Trial Balance show the same total as Safe Account's Total wallet value, and swap fees plus unrealized results
+equal Safe Account's total P&L. Today uses the same Safe Gateway prices as Safe Account; a past date uses CoinGecko's daily snapshot at the
+end of that UTC day, with stablecoins at their peg. An Income Statement or General Ledger period shows only the change in market value
+within the period. The adjustment is computed for each report and its export, never stored or posted on-chain. When a price, the history or
+the wallet quantities are missing, the report stays at cost and says so. Closed positions retain their realized swap result; capital flows
+and operating income are not treasury trading profit.
+
+Ancillary mints and ambiguous batches require classification. Missing decimals, rate or acquisition basis keeps Accounting incomplete. A
+swap whose fee cannot be verified keeps that fee inside the acquired asset cost: the books stay complete, total P&L is unchanged and only
+the separate fee line is absent. Unsupported or missing fee evidence is never posted as a fee. Cross-transaction intents and arbitrary DeFi
+actions need additional protocol evidence. See the
 [Accounting Read Model](../../implementation/accounting-read-model/README.md#safe-assets-and-exchanges) for these boundaries and the
 [exchange regression suite](../../../app/src/utils/accounting/__tests__/safeExchanges.spec.ts) and
 [market-rate regressions](../../../app/src/utils/accounting/__tests__/safeExchanges.marketRates.spec.ts) for current executable evidence.
@@ -100,8 +123,8 @@ insufficient; the detailed evidence distribution remains available in the genera
 | User Story  | Main Journey  | Coverage Target | Gaps                                                                                                                                                                                                                                                                                                                                                                                                          |
 | ----------- | ------------- | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | US-ACCT-001 | ✅ Integrated | ⚠️ 11/12 met    | `AC-US-ACCT-001-08`                                                                                                                                                                                                                                                                                                                                                                                           |
-| US-ACCT-002 | ✅ Integrated | ✅ 13/13        | —                                                                                                                                                                                                                                                                                                                                                                                                             |
-| US-ACCT-003 | ✅ Integrated | ✅ 11/11        | —                                                                                                                                                                                                                                                                                                                                                                                                             |
+| US-ACCT-002 | ✅ Integrated | ✅ 15/15        | —                                                                                                                                                                                                                                                                                                                                                                                                             |
+| US-ACCT-003 | ✅ Integrated | ✅ 12/12        | —                                                                                                                                                                                                                                                                                                                                                                                                             |
 | US-ACCT-004 | ✅ Integrated | ✅ 9/9          | —                                                                                                                                                                                                                                                                                                                                                                                                             |
 | US-ACCT-005 | ✅ Integrated | ✅ 13/13 met    | —                                                                                                                                                                                                                                                                                                                                                                                                             |
 | US-ACCT-006 | ✅ Integrated | ⚠️ 6/11 met     | `AC-US-ACCT-006-01`, `AC-US-ACCT-006-02`, `AC-US-ACCT-006-03`, `AC-US-ACCT-006-05`, `AC-US-ACCT-006-09`                                                                                                                                                                                                                                                                                                       |
@@ -151,9 +174,9 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 #### Business Rules
 
 - [x] `AC-US-ACCT-001-04` Every posted journal entry balances.
-- [x] `AC-US-ACCT-001-05` USD-pegged tokens use a one-dollar rate, native tokens use their immutable transaction-date snapshot, and SHER
-      uses its compensation valuation policy. Discovered assets use their own contract-based historical price source; exchange consideration
-      never substitutes for a missing market rate.
+- [x] `AC-US-ACCT-001-05` USD-pegged tokens use a one-dollar rate. Safe swaps use executed consideration as fixed acquisition cost; only
+      non-pegged consideration requires a persisted execution-time reference. Other native-token postings use their transaction-date
+      snapshot, and SHER uses its compensation valuation policy. Discovered assets needing a market reference resolve it by contract.
 - [x] `AC-US-ACCT-001-06` Payroll obligations are recognized when an eligible work week ends, before settlement.
 - [x] `AC-US-ACCT-001-07` Transfers between known company accounts do not change revenue or expenses.
 - [ ] `AC-US-ACCT-001-08` Closing cash balances are reconciled with the corresponding on-chain balances.
@@ -205,12 +228,21 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 
 - [x] `AC-US-ACCT-002-01` One source operation produces at most one ledger entry, even when several events or recipient payments support it.
 - [x] `AC-US-ACCT-002-02` Account and currency filters retain every line of each matching `JournalEntry`.
-- [x] `AC-US-ACCT-002-03` A Bank fee appears as `Transaction Fee Expense` inside its matched Bank outflow, never as an orphan fee entry.
+- [x] `AC-US-ACCT-002-03` A Bank fee appears as `Transaction Fee Expense` inside its matched Bank outflow, never as an orphan fee entry. In
+      the ledger, principal debits appear first, followed by fee debits and then credits; transaction labels stay on the first line.
 - [x] `AC-US-ACCT-002-07` Internal transfers identify both concrete deployment accounts without creating revenue or expense.
 - [x] `AC-US-ACCT-002-08` Pagination changes visible rows, not filtered totals.
 - [x] `AC-US-ACCT-002-09` Labels and accounts follow the canonical [Accounting rule catalogue](./journal-entry-catalogue.md).
 - [x] `AC-US-ACCT-002-13` An evidenced Safe asset exchange preserves both asset quantities and realizes the difference from carrying basis
       without creating service revenue.
+- [x] `AC-US-ACCT-002-14` A member can distinguish the executed exchange ratio, fixed acquisition cost, weighted-average disposal cost and
+      any required USD market reference. A quote refresh never changes an established acquisition cost.
+- [x] `AC-US-ACCT-002-15` A confirmed Polygon CoW swap exposes execution-matched fee totals and original currencies in Safe Activity
+      details. The General Ledger shows its fee expense between principal debits and credits, with no Swap fees disclosure in the
+      Transaction column. Cumulative order fees are withheld when other fills exist. Verified fees are separated into Transaction Fee
+      Expense and net asset cost; received quantities and stablecoin sale receipts are never reduced again. Total P&L counts fees once; a
+      fee that cannot be verified stays inside the asset cost without blocking the books. Included fee breakdowns and settlement gas paid by
+      another wallet do not create additional expenses.
 
 #### Edge & Error Cases
 
@@ -235,6 +267,8 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 | `AC-US-ACCT-002-11`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
 | `AC-US-ACCT-002-12`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
 | `AC-US-ACCT-002-13`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
+| `AC-US-ACCT-002-14`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
+| `AC-US-ACCT-002-15`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
 
 **Dependencies:** US-ACCT-001
 
@@ -261,6 +295,9 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 - [x] `AC-US-ACCT-003-07` `Earnings to date` equals income less expenses through the selected date and remains distinct from posted equity
       accounts.
 - [x] `AC-US-ACCT-003-08` Redeployed and unresolved accounts remain separate rows and preserve their own drill-down scope.
+- [x] `AC-US-ACCT-003-12` Reports and their exports show the Safe at market value on the report date through a market revaluation adjusting
+      entry, so today's Trial Balance and Balance Sheet match Safe Account's Total wallet value. The journal itself keeps historical cost;
+      an unavailable price leaves the report at cost with an explicit notice.
 
 #### Edge & Error Cases
 
@@ -283,6 +320,7 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 | `AC-US-ACCT-003-09`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
 | `AC-US-ACCT-003-10`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
 | `AC-US-ACCT-003-11`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
+| `AC-US-ACCT-003-12`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
 
 **Dependencies:** US-ACCT-001 and US-ACCT-002
 
@@ -788,6 +826,11 @@ applicable stories `Done`.
 
 ## Implementation Evidence
 
+- [Swap settlement and fee queries](../../../app/src/queries/swapFees.queries.ts),
+  [fee evidence orchestration](../../../app/src/composables/accounting/useSwapFeeEvidence.ts),
+  [Safe P&L projection](../../../app/src/utils/accounting/safePnl.ts), and
+  [P&L regression tests](../../../app/src/utils/accounting/__tests__/safePnl.spec.ts)
+
 CoinGecko valuation reads use the backend's [shared Redis market cache](../../implementation/market-data-cache/README.md), retaining
 coin/date identity, raw response precision and explicit unavailable-rate gaps. The backend coordinates cache misses, request admission and
 provider cooldown across clients; Accounting retains its existing explicit refresh of failed date queries.
@@ -861,3 +904,16 @@ existing completeness rules still apply. Gateway balance filtering does not filt
 - [Vesting](../vesting/README.md)
 
 _[← Back to feature inventory](../README.md)_
+
+Executed swap fee inspection is available in Safe Activity's **Swap costs** section: the included total is visible immediately, with
+initially closed fee and network disclosures and an explicit exact-amount option. Network gas remains separate and identifies its payer. The
+General Ledger retains execution details in the Transaction column and shows the fee as an ordinary account line between principal debits
+and credits. See the [ledger ordering tests](../../../app/src/utils/accounting/__tests__/journalLedgerPresenter.spec.ts),
+[ledger interaction tests](../../../app/src/views/team/%5Bid%5D/Accounting/__tests__/GeneralLedgerInteractions.spec.ts),
+[fee matching tests](../../../app/src/utils/safe/__tests__/cowSettlement.spec.ts),
+[fee presentation tests](../../../app/src/utils/accounting/__tests__/swapPresenter.spec.ts),
+[fee UI tests](../../../app/src/components/sections/SafeView/__tests__/SwapFeesDetails.spec.ts) and the
+[manual swap validation](./safe-swap-test-script.md). The total, valued from fixed executed consideration, determines the fee expense;
+included protocol breakdowns and third-party settlement gas remain informational. The
+[fee accounting regressions](../../../app/src/utils/accounting/__tests__/swapFees.spec.ts) cover purchases, partial and full sales,
+unverified fees kept inside cost, unchanged token quantities and total P&L.

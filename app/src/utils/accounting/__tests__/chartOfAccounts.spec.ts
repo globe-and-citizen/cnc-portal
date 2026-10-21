@@ -14,6 +14,9 @@ describe('chart of accounts', () => {
     ).toEqual({
       'Asset Exchange Gain': 'INCOME',
       'Asset Exchange Loss': 'EXPENSE',
+      'Safe Market Value Adjustment': 'ASSET',
+      'Unrealized Gain on Digital Assets': 'INCOME',
+      'Unrealized Loss on Digital Assets': 'EXPENSE',
       'Unclassified Receipts': 'LIABILITY',
       'Cash — Bank': 'ASSET',
       'Cash — Safe': 'ASSET',

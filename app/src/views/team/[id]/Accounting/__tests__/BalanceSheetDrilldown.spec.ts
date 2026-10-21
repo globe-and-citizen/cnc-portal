@@ -10,7 +10,10 @@ import { finalizeJournal } from '@/utils/accounting/__tests__/assembleAccounting
 import type { StatementLineView } from '@/utils/accounting/presenter'
 import type { JournalEntry } from '@/utils/accounting/types'
 
-const accountingContext = vi.hoisted(() => ({ journal: { value: [] as JournalEntry[] } }))
+const accountingContext = vi.hoisted(() => ({
+  journal: { value: [] as JournalEntry[] },
+  status: { state: { value: 'ready' } }
+}))
 vi.mock('@/composables/accounting/useAccountingContext', () => ({
   useAccountingContext: () => accountingContext
 }))

@@ -103,14 +103,15 @@ by network and block number with infinite staleness and garbage-collection time 
 and later refetches therefore share one block read. A failed block read or a decoded log without a block number does not receive a synthetic
 timestamp: the event is withheld and emitted as a typed source diagnostic, which keeps the Accounting route out of `ready`.
 
-The provisional draft feed derives one unique non-pegged asset target per required UTC transaction date. The
-[Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts) uses pure utilities to resolve configured coin
-identities and verified Polygon contract metadata, then consumes the independent raw snapshot queries in `coingecko.queries.ts` directly.
-Each snapshot uses an atomic `coinId + date + USD` identity and the once preset: successful data stays fresh without polling, and unused
-cache entries are retained for the lifetime of the query client. Concurrent consumers and later refreshes reuse successful snapshots. Pure
-response interpretation retains the existing six-decimal rate precision; malformed or missing prices stay explicit valuation gaps. Explicit
-Accounting refresh retries failed provider queries without refetching successful dates. It never falls back to the current market price.
-Stablecoins retain their one-dollar peg, and SHER remains under its separate multiplier realization policy.
+The provisional draft feed derives non-pegged asset targets per required UTC transaction date, or per confirmed execution second for Safe
+swaps. The [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts) uses pure utilities to resolve configured
+coin identities and verified Polygon contract metadata, then consumes the independent raw snapshot queries in `coingecko.queries.ts`
+directly. Each snapshot uses `coinId + date + USD`, or `coinId + execution time + USD + policy` for a swap, and the once preset: successful
+data stays fresh without polling, and unused cache entries are retained for the lifetime of the query client. Concurrent consumers and later
+refreshes reuse successful snapshots. Pure response interpretation retains the existing six-decimal rate precision; malformed or missing
+prices stay explicit valuation gaps. Explicit Accounting refresh retries failed provider queries without refetching successful dates. It
+never falls back to the current market price. Stablecoins retain their one-dollar peg, and SHER remains under its separate multiplier
+realization policy.
 
 Safe histories now refresh approximately every five minutes while retaining complete pagination and stable transfer identities. CoinGecko
 queries use ordinary Axios/TanStack observers calling the CNC backend, with cancellation and no automatic retries. The backend's
@@ -164,16 +165,58 @@ retryable gaps; current prices are used only in the Safe portfolio.
 operations are flagged for classification instead of treating their receipts as service revenue. Token mints in the same transaction are
 retained separately in `Unclassified Receipts`; their economic nature is not inferred from mint evidence alone.
 
-Journal finalization replays the full Safe history using weighted-average carrying basis. Acquired assets use their own contract-resolved
-historical market rate and exact received quantity; the stablecoin spent never implies their unit price or suppresses historical-rate
-requests. The provider snapshot is for the UTC transaction date, not a tick at the exact transaction second. Outgoing exchange lines remove
-the evidenced carrying amount; their displayed unit rate is carrying cost per unit, and exact carrying amounts avoid six-decimal
-rate-rounding residues. Incoming market valuations and realized differences balance the operation through `Asset Exchange Gain` or
-`Asset Exchange Loss`. Missing acquisition history or valuation produces zero-valued movement evidence and a partial status, never an
-invented basis. A prior non-exchange payment depleted at a different transaction-price valuation invalidates later automatic swap basis;
-other payment rules remain unchanged. Network/DEX fees are not inferred from an unexplained difference; standalone fee evidence remains
-necessary. Cross-transaction swap intents and arbitrary DeFi operations require additional protocol evidence and remain a boundary of
-automatic classification.
+Journal finalization replays the full Safe history using weighted-average carrying basis. For purchases, acquired cost is executed
+consideration less verified swap fees, allocated to the unchanged net received quantities. The fee is a separate Transaction Fee Expense
+line in the same operation. For recognized USD-stablecoin receipts, retain actual net receipt and recover gross disposal proceeds by adding
+the fee; never deduct it from the receipt again. Otherwise the outgoing asset determines consideration. USD-stablecoin purchases and sales
+need no crypto market snapshot. Crypto-to-crypto consideration uses the outgoing quantity and the same UTC transaction-date snapshot as
+every other non-pegged posting; the acquired asset's own quote never determines acquisition cost. No swap-specific rate is stored. Separate
+network fee importing is outside this projection.
+
+Safe transfers carry the mined block time from the Transaction Service, and token transfers carry their block-wide log index, parsed from
+the `transferId`. [Replay order](../../../app/src/utils/accounting/journalEntryDraft.ts) sorts by time, then log index, then id, so a
+deposit and a swap mined in the same block replay in on-chain order without extra RPC reads. Swap fee and exchange-result lines inherit the
+swap's log index. Proposal and signature times are not used. Raw quantities independently determine the executed quote-token ratio. Incoming
+unit rates display fixed acquisition cost per unit; outgoing unit rates display weighted-average cost. Exact bigint carrying amounts,
+allocated with the remainder on the final same-asset receipt, avoid unit-rate rounding residues. The difference between gross proceeds and
+disposed carrying value balances through `Asset Exchange Gain` or `Asset Exchange Loss`. Missing acquisition history or required
+consideration valuation produces zero-valued movement evidence and a partial status, never an invented basis. A prior non-exchange payment
+depleted at a different transaction-price valuation invalidates later automatic swap basis; other payment rules remain unchanged.
+Cross-transaction swap intents and arbitrary DeFi operations require additional protocol evidence and remain a boundary of automatic
+classification.
+
+The [treasury P&L projection](../../../app/src/utils/accounting/safePnl.ts) sums canonical Safe carrying amounts, exchange results and swap
+fees, then requires exact base-unit agreement with Gateway holdings before calculating unrealized P&L. It retains closed positions and
+attributes exchange results to the disposed token. Fees belong to the acquired asset, or to the disposed asset for stablecoin receipts, and
+enter its realized result once. Missing evidence, non-pegged internal transfer cost and inconsistent non-exchange depletion leave the result
+unavailable. The same projection feeds Safe overview/holdings and today's market revaluation in the reports (see below); it never changes
+the stored journal. Historical reconstruction now applies fixed consideration cost instead of the former acquisition-at-market policy, so
+pre-change PDFs can differ. For example, spending 532.94425 USD with a verified 3.870494 USD fee on tokens currently worth 530 USD produces
+529.073756 USD net remaining cost, -3.870494 USD realized fee expense and +0.926244 USD unrealized P&L. Total P&L remains -2.94425 USD;
+without a verified fee the cost stays 532.94425 USD and the total is the same. The acquired token's market quote cannot move that cost.
+Wallet overview exposes the fee total in place of separate realized/unrealized cards. Safe Account builds this projection with a
+`scope: 'safe'` read model that loads only Safe transfers and routed Safe deposits; the Accounting route keeps the full company books.
+
+### Report-date market revaluation
+
+Reports show the Safe at market value without rewriting the cost-based journal.
+[Market revaluation](../../../app/src/utils/accounting/marketRevaluation.ts) reads each non-pegged Safe position and its carrying cost from
+`Cash — Safe` lines up to a report time, values it at a price, and builds `MARKET-REVALUATION` adjusting entries:
+`Safe Market Value Adjustment` against `Unrealized Gain on Digital Assets` or `Unrealized Loss on Digital Assets`. Entries are incremental,
+so a period `[from, to]` gets one entry before `from` carrying the opening adjustment and one at `to` carrying only the period's change.
+[The revaluation composable](../../../app/src/composables/accounting/useMarketRevaluation.ts) prices today with the Safe treasury projection
+(the Gateway valuation shown on Safe Account, so market minus cost equals its unrealized result) and a past date with CoinGecko's daily
+snapshot at the end of that UTC day. If any required price, the accounting history or the Gateway quantities are missing, no entry is added
+and the report states that the Safe is shown at cost.
+
+Trial Balance and Balance Sheet use their as-of date; Income Statement and General Ledger use their period; Summary uses now. Each view
+passes the same entries to its drill-downs and, through `SectionSpec.adjustments`, to the PDF and Excel builders, so exports match the
+screen. A [revaluation note](../../../app/src/components/sections/AccountingView/MarketRevaluationNote.vue) under each report states the
+market value, cost, unrealized result and price source, or that the Safe is shown at cost. The entries are never stored, never posted
+on-chain and excluded from the position reading itself. Evidence:
+[revaluation tests](../../../app/src/utils/accounting/__tests__/marketRevaluation.spec.ts),
+[Trial Balance tests](../../../app/src/views/team/%5Bid%5D/Accounting/__tests__/TrialBalanceReports.spec.ts) and
+[export tests](../../../app/src/lib/accounting/__tests__/pdf.spec.ts).
 
 The read-only Safe holdings use the Safe Client Gateway balance response for current wallet valuation. A nonzero supported holding with a
 missing, nonpositive, or nonfinite USD price keeps the total incomplete, just as unavailable discovered valuations do. A confirmed zero
@@ -505,7 +548,7 @@ not store or replace journal amounts.
 | `JournalAccountAssignment` | One owner-selected counter-account family for a transaction-backed `JournalEntry`, uniquely identified by company and lowercase transaction hash. It contains no debit, credit, quantity, rate, or fee.                                                                |
 | `UsdAmount`                | USD value stored as a `bigint` with a shared 24-decimal scale throughout journal validation and report calculations.                                                                                                                                                   |
 | `UsdRate`                  | USD price of one whole token stored as a `bigint` with the source rate's six-decimal scale.                                                                                                                                                                            |
-| `TrialBalanceRow`          | Projection grouped by `AccountId`; the balance follows the family normal side.                                                                                                                                                                                         |
+| `TrialBalanceRow`          | Projection grouped by `AccountId`; the balance follows the family normal side. The presented Trial Balance shows a balance against that side, such as a market value adjustment after a loss, as a positive amount in the other column.                                |
 | `BalanceSheetAccountLine`  | A Trial Balance account row classified for the Balance Sheet, with its normal-side balance and signed section contribution.                                                                                                                                            |
 | Earnings to date           | Current income-account contributions minus expense-account contributions through the selected date; it does not rename or replace a posted `Retained Earnings` account.                                                                                                |
 | `accountLabel`             | Human-readable display text. It may include a deployment number or unresolved marker but must not be used for identity or filtering.                                                                                                                                   |
@@ -638,24 +681,26 @@ in parallel with the journal. Internal-transfer narration reads the source and d
 `JournalEntryLine` accounts, so later deployments and unresolved accounts remain explicit rather than being inferred from family-level event
 text. Every transaction-backed journal group uses its transaction hash as its identity; a raw `<txHash>-<logIndex>` value remains
 traceability evidence. A fee is an ordinary `Transaction Fee Expense` line in its source operation; there is no `Fee` pseudo-category or
-separate fee entry in this projection. Ledger action and transaction labels are derived from the entry's assigned or inferred accounts and
-source use-case evidence; no persisted presentation category participates. The General Ledger renders the transaction hash once on the
-entry's first line and preserves its full value in PDF and spreadsheet exports; synthetic operations have no transaction-hash value. A
-transaction-backed hash links to the configured network block explorer in a separate tab. Activity narration and exported activity text
-reuse the canonical address and duration formatters rather than maintaining Accounting-specific display rules. Quantity cells use a separate
-six-decimal display label while their complete decimal-string quantity remains available for inspection and export. Positive quantities that
-would round to zero display `<0.000001`. Rate cells retain the recorded six-decimal rate with trailing zeros trimmed; their details identify
-the recorded USD price per token rather than claiming precision beyond the journal's rate scale. Both cells expose details through a hover
-tooltip, keyboard focus, or a tap-generated click, with Escape and focus loss dismissing the detail. Unavailable and absent movements remain
-plain text. No formatted label participates in valuation, debit/credit sums, or running balances. Every visible General Ledger column,
-including the account drill-down Balance column, has bounded widths and supports pointer, touch, and keyboard resizing; a double-click
-restores its default width. JournalEntry assembly groups source postings and withholds a `FeePaid` source without matching Bank-outflow
-evidence, returning it as a reconciliation gap. Bank fees are collected from each supported generation: V0/V0.1 local events infer an ERC-20
-currency only from the next movement in the same transaction and Bank, while V1/V2 query their version-specific FeeCollectors by payer.
-Those protocol FeeCollectors are not part of the company's internal-pocket registry. Account and statement drill-downs select complete
-JournalEntry records by a concrete Account or account family, then flatten their validated lines for display and exports. Their running
-balances update only on lines posted to the selected account; an aggregate statement line has no single running balance. A fee remains an
-ordinary line of the source operation in every drill-down.
+separate fee entry in this projection. Ledger presentation stably orders each entry's principal debits, fee debits, then credits without
+mutating the source journal or its amounts; the first displayed principal line carries the transaction metadata. The Transaction column
+retains execution details; fee inspection panels are available in Safe Activity. Ledger action and transaction labels are derived from the
+entry's assigned or inferred accounts and source use-case evidence; no persisted presentation category participates. The General Ledger
+renders the transaction hash once on the entry's first line and preserves its full value in PDF and spreadsheet exports; synthetic
+operations have no transaction-hash value. A transaction-backed hash links to the configured network block explorer in a separate tab.
+Activity narration and exported activity text reuse the canonical address and duration formatters rather than maintaining
+Accounting-specific display rules. Quantity cells use a separate six-decimal display label while their complete decimal-string quantity
+remains available for inspection and export. Positive quantities that would round to zero display `<0.000001`. Rate cells retain the
+recorded six-decimal rate with trailing zeros trimmed; their details identify the recorded USD price per token rather than claiming
+precision beyond the journal's rate scale. Both cells expose details through a hover tooltip, keyboard focus, or a tap-generated click, with
+Escape and focus loss dismissing the detail. Unavailable and absent movements remain plain text. No formatted label participates in
+valuation, debit/credit sums, or running balances. Every visible General Ledger column, including the account drill-down Balance column, has
+bounded widths and supports pointer, touch, and keyboard resizing; a double-click restores its default width. JournalEntry assembly groups
+source postings and withholds a `FeePaid` source without matching Bank-outflow evidence, returning it as a reconciliation gap. Bank fees are
+collected from each supported generation: V0/V0.1 local events infer an ERC-20 currency only from the next movement in the same transaction
+and Bank, while V1/V2 query their version-specific FeeCollectors by payer. Those protocol FeeCollectors are not part of the company's
+internal-pocket registry. Account and statement drill-downs select complete JournalEntry records by a concrete Account or account family,
+then flatten their validated lines for display and exports. Their running balances update only on lines posted to the selected account; an
+aggregate statement line has no single running balance. A fee remains an ordinary line of the source operation in every drill-down.
 
 All report identities, totals, and drill-down running balances above use the exact fixed-scale journal integers. Presenters and exporters
 convert those values to numbers and apply human-readable rounding only after the selected snapshot and its aggregates have been calculated;
@@ -822,6 +867,47 @@ because deposits and company-pocket transfers are not manual assignment targets.
   [accounting export-projection test suite](../../../app/src/lib/accounting/__tests__/),
   [accounting domain test suite](../../../app/src/utils/accounting/__tests__/), and
   [accounting route-view test suite](../../../app/src/views/team/%5Bid%5D/Accounting/__tests__/)
+
+## Executed Swap Fee Accounting and Inspection
+
+Fee evidence flows one way: drafts → lookup targets → verification → journal.
+[Swap fee targets](../../../app/src/utils/accounting/swapFees.ts) are read directly from `SAFE-SWAP` drafts grouped by transaction, so the
+journal is finalized only once. [Fee evidence orchestration](../../../app/src/composables/accounting/useSwapFeeEvidence.ts) reads each
+swap's settlement receipt once (never polled), then CoW orders and complete order trades, and verifies them per swap. Only a settled
+single-token fee is attached to the drafts as `swapFee`. Missing, unsupported, failed or multi-token fee evidence attaches nothing: the fee
+stays inside the acquired asset cost, the books stay complete and total P&L is unchanged. The read model returns the per-swap evidence as
+`swapFees`, which Safe Activity renders without querying again.
+
+[CoW settlement verification](../../../app/src/utils/safe/cowSettlement.ts) is pure. It matches authenticated settlement logs, the drafts'
+exact token movements and CoW order/trade evidence, and returns base-unit amounts or a reason; it formats nothing. Order totals are kept
+only if all fills belong to the selected transaction and aggregate executed amounts agree. Trade protocol fee lines remain a breakdown,
+never an additional debit. Receipt gas is the entire settlement cost paid by its sender; it is not evidence of an extra Safe payment.
+Separate approval transactions and Safe reimbursements require their own evidence and are outside this adapter.
+
+The [swap presenter](../../../app/src/utils/accounting/swapPresenter.ts) turns verification into display rows and owns the ledger's swap
+execution details. The fee total and separate gas summary are visible without expanding either disclosure. Fee-policy explanations and
+network transaction identities have independent, initially closed disclosures; switching swaps resets these and the exact-amount choice.
+Provider failures hide unavailable fee totals and offer retry without hiding receipt-derived gas. No display choice changes journal entries
+or P&L.
+
+[Fee valuation](../../../app/src/utils/accounting/swapFees.ts) uses only the executed consideration and exact raw amounts. For outgoing
+consideration value `V`, spent quantity `S`, received quantity `R` and fee quantity `F`, an outgoing-token fee is `V × F / S`; a
+received-token fee is `V × F / (R + F)`. When a stablecoin receipt anchors `V`, an outgoing-token fee is `V × F / (S − F)` and a
+received-token fee is `V × F / R`. These are fixed execution equivalents, not fresh market quotes. A third-currency fee, or one larger than
+the movement it came from, values to zero and stays inside the cost. The posting has no extra token movement and the protocol breakdown is
+not added to its total.
+
+Implementation: [fee evidence orchestration](../../../app/src/composables/accounting/useSwapFeeEvidence.ts),
+[settlement and CoW queries](../../../app/src/queries/swapFees.queries.ts),
+[draft targets, attachment and valuation](../../../app/src/utils/accounting/swapFees.ts),
+[shared fee panel](../../../app/src/components/sections/SafeView/SwapFeesDetails.vue),
+[Safe history section](../../../app/src/components/sections/SafeView/SafeSwapFeesSection.vue), and
+[fee contracts](../../../app/src/types/swapFees.ts). Evidence:
+[exact matching tests](../../../app/src/utils/safe/__tests__/cowSettlement.spec.ts),
+[presentation tests](../../../app/src/utils/accounting/__tests__/swapPresenter.spec.ts),
+[fee rendering, retry and pagination tests](../../../app/src/components/sections/SafeView/__tests__/SwapFeesDetails.spec.ts), plus
+[net accounting and P&L regressions](../../../app/src/utils/accounting/__tests__/swapFees.spec.ts) and
+[read-model integration](../../../app/src/composables/accounting/__tests__/useCNCAccounting.safe.spec.ts).
 
 ## Related Documentation
 

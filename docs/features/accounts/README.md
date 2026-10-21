@@ -111,7 +111,7 @@ mocked browser path for the external Safe Transaction Service boundary.
 | US-EXP-005  | 🚧 Partial    | ⚠️ 3/7          | `AC-US-EXP-005-03`, `AC-US-EXP-005-04`, `AC-US-EXP-005-06`, `AC-US-EXP-005-07`                                                             |
 | US-EXP-006  | 🚧 Partial    | ⚠️ 1/8          | `AC-US-EXP-006-01`, `AC-US-EXP-006-02`, `AC-US-EXP-006-03`, `AC-US-EXP-006-04`, `AC-US-EXP-006-05`, `AC-US-EXP-006-07`, `AC-US-EXP-006-08` |
 | US-SAFE-001 | 🚧 Partial    | ⚠️ 8/11         | `AC-US-SAFE-001-02`, `AC-US-SAFE-001-03`, `AC-US-SAFE-001-06`                                                                              |
-| US-SAFE-002 | 🧪 Mocked     | ⚠️ 7/10 met     | `AC-US-SAFE-002-01`, `AC-US-SAFE-002-02`, `AC-US-SAFE-002-09`                                                                              |
+| US-SAFE-002 | 🧪 Mocked     | ⚠️ 10/13 met    | `AC-US-SAFE-002-01`, `AC-US-SAFE-002-02`, `AC-US-SAFE-002-09`                                                                              |
 | US-SAFE-003 | 📋 Planned    | ⚠️ 6/11         | 5 — `AC-US-SAFE-003-01`, `AC-US-SAFE-003-02`, `AC-US-SAFE-003-03`, `AC-US-SAFE-003-06`, `AC-US-SAFE-003-07`                                |
 | US-SAFE-004 | 📋 Planned    | ⚠️ 4/9          | 5 — `AC-US-SAFE-004-01`, `AC-US-SAFE-004-02`, `AC-US-SAFE-004-03`, `AC-US-SAFE-004-04`, `AC-US-SAFE-004-07`                                |
 | US-SAFE-005 | 🧪 Mocked     | ✅ 9/9          | —                                                                                                                                          |
@@ -867,12 +867,20 @@ remain as recorded above.
 
 - [x] `AC-US-SAFE-002-04` Inspecting Safe details does not require Safe signer permission.
 - [x] `AC-US-SAFE-002-05` The registered Safe address identifies the wallet whose balances, owners, and threshold are reported.
+- [x] `AC-US-SAFE-002-11` A member can inspect per-asset and total USD treasury P&L and retain results after a position closes. Wallet
+      overview shows net asset cost, market value, swap fees and total P&L. Verified fees are separated from acquisition cost and included
+      once in total P&L; current prices change only unrealized results.
+- [x] `AC-US-SAFE-002-13` A member can inspect executed Polygon CoW swap fee totals in Wallet overview and Safe Activity, including exact
+      amounts and currencies, the included protocol breakdown and the separate settlement gas payer. Missing or mismatched evidence is
+      unavailable rather than zero and keeps the fee inside the asset cost; inspecting fees never adds another expense.
 
 #### Edge & Error Cases
 
 - [x] `AC-US-SAFE-002-06` A Safe with no incoming transfers returns an empty deposit history.
 - [x] `AC-US-SAFE-002-07` A failed Safe information read is reported without hiding unaffected Safe information.
 - [x] `AC-US-SAFE-002-08` A failed Safe information read can be retried without registering another Safe.
+- [x] `AC-US-SAFE-002-12` Missing cost evidence, incomplete history or a mismatch between recorded and current quantities withholds the
+      affected P&L and total rather than showing zero profit.
 - [x] `AC-US-SAFE-002-10` While Safe services have not yet indexed a newly deployed Safe, the overview explains the wait instead of
       reporting a failure, and its balances and signers load without a page reload once indexing finishes.
 
@@ -891,6 +899,9 @@ remain as recorded above.
 | `AC-US-SAFE-002-09`  | `PS-BACKEND`               | None linked               | ❌ Missing      |
 | `AC-US-SAFE-002-09`  | `PS-FULL-STACK-INTEGRATED` | None linked               | ❌ Missing      |
 | `AC-US-SAFE-002-10`  | `PS-FRONTEND`              | Frontend                  | ✅ Met          |
+| `AC-US-SAFE-002-11`  | `PS-FRONTEND`              | Frontend                  | ✅ Met          |
+| `AC-US-SAFE-002-12`  | `PS-FRONTEND`              | Frontend                  | ✅ Met          |
+| `AC-US-SAFE-002-13`  | `PS-FRONTEND`              | Frontend                  | ✅ Met          |
 
 **Dependencies:** US-SAFE-001
 
@@ -1297,6 +1308,24 @@ Implementation: [Safe Client balances](../../../app/src/queries/safeClient.queri
 [holdings presentation tests](../../../app/src/utils/safe/__tests__/portfolio.spec.ts), and
 [contract asset identities](../../../app/src/utils/tokens/assets.ts). Human validation of external swaps remains pending.
 
+Safe Account adds all-time USD treasury performance to Wallet overview and a per-token P&L column to Token Holding. The overview shows net
+asset cost, market value, swap fees and total P&L instead of separate realized/unrealized cards. Token details retain that distinction.
+Realized exchange gains belong to the disposed asset; fees belong to the acquired asset, or to the disposed asset when receiving
+stablecoins. Closed positions retain their result. Deposits and withdrawals are not profit, and separate network gas is excluded. Verified
+swap fees are separated from acquisition cost and expensed once; actual received token quantities remain unchanged. This uses the canonical
+Accounting journal and the Gateway USD cache; changing current prices updates only unrealized P&L. A mismatch or missing history leaves
+results unavailable and offers explicit retry; an unverified swap fee stays inside the asset cost and leaves total P&L unchanged. Non-pegged
+internal transfers and payments whose carrying cost cannot be reconciled remain incomplete. See the
+[Accounting valuation contract](../accounting/README.md#external-safe-asset-exchanges) for consideration valuation and historical policy
+transition. The default amount and balance columns retain the selected display currency; P&L remains explicitly USD.
+
+Implementation and proof: [P&L data adapter](../../../app/src/composables/accounting/useSafePnl.ts),
+[P&L projection](../../../app/src/utils/accounting/safePnl.ts),
+[overview summary](../../../app/src/components/sections/SafeView/SafePnlSummary.vue),
+[summary tests](../../../app/src/components/sections/SafeView/__tests__/SafePnlSummary.spec.ts), and
+[purchase/disposal tests](../../../app/src/utils/accounting/__tests__/safePnl.spec.ts). Configured browser and human review remain separate
+from these mocked and pure tests.
+
 Company and Companies list summaries reuse the Gateway cache and its valued fiat total, including tokens outside the CNC payment-token list.
 They keep the known provider valuation when another returned token has no price. Holdings keep exact quantities on hover and expose precise
 unit prices and fiat values alongside the rounded display. Positive values below cent precision are shown as less than one cent.
@@ -1315,3 +1344,22 @@ unit prices and fiat values alongside the rounded display. Positive values below
 - [Community Credit](../community-credit/README.md)
 
 _[← Back to feature inventory](../README.md)_
+
+## Executed Swap Fees
+
+Safe Activity's **Swap costs** section lists five confirmed swaps per page. Each swap immediately shows its reported fee total with the
+explanation that it is already included in the exchange. **What makes up this fee?** starts closed and reveals each included commission with
+a short explanation. **Show exact amounts** switches rounded quantities to the original precision and exposes token addresses; positive fees
+too small for the rounded view use a less-than bound rather than zero. Unknown token decimals remain explicit base units.
+
+Network gas has a separate summary identifying payment by the Safe, another wallet, or an unavailable payer. **Network transaction details**
+starts closed and retains the exact network amount, full transaction hash and known payer, even when swap fee evidence is unavailable. It
+describes the whole settlement's gas, which may cover other swaps; another wallet's gas payment is not an additional evidenced Safe debit.
+Both disclosures and the precision choice reset when the selected swap changes. Opening details is not required to load fee summaries or
+Wallet overview's USD aggregate from the shared journal. Missing or mismatched data is unavailable, with retry for failed reads; the fee
+then stays inside the asset cost, and inspection never subtracts fees from P&L again. Other providers and networks remain explicitly
+unsupported.
+
+Implementation and proof: [fee history](../../../app/src/components/sections/SafeView/SafeSwapFeesSection.vue),
+[shared fee panel](../../../app/src/components/sections/SafeView/SwapFeesDetails.vue), and
+[fee UI tests](../../../app/src/components/sections/SafeView/__tests__/SwapFeesDetails.spec.ts).

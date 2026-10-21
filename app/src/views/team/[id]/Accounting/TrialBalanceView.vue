@@ -105,6 +105,11 @@
           </div>
         </template>
       </UTable>
+      <MarketRevaluationNote
+        class="mt-3"
+        :summary="revaluation.summary.value"
+        :status="revaluation.status.value"
+      />
     </UCard>
 
     <LedgerDrilldownModal
@@ -112,7 +117,7 @@
       :account="drilldownLine?.label ?? ''"
       :total="drilldownLine?.total ?? ''"
       :entries="drilldownEntries"
-      :all-entries="accounting.journal.value"
+      :all-entries="revaluation.journal.value"
       :balance="drilldownBalance"
       columns-storage-key="cnc-accounting-drilldown-columns-v1"
       @export="onDrilldownExport"
@@ -133,6 +138,8 @@ import { useSectionExport } from '@/composables/accounting/useSectionExport'
 import { useLedgerDrilldown } from '@/composables/accounting/useLedgerDrilldown'
 import type { Account } from '@/utils/accounting/types'
 import { presentTrial } from '@/utils/accounting/presenter'
+import { useMarketRevaluation } from '@/composables/accounting/useMarketRevaluation'
+import MarketRevaluationNote from '@/components/sections/AccountingView/MarketRevaluationNote.vue'
 
 interface TrialTableRow {
   /** Canonical concrete account. Absent only on the total row. */
@@ -162,7 +169,8 @@ const REDEPLOY_HINT =
 const asOf = ref<Date>(defaultValueForMode('date') as Date)
 
 const accounting = useAccountingContext()
-const trial = computed(() => presentTrial(accounting.journal.value, asOf.value))
+const revaluation = useMarketRevaluation(() => [asOf.value])
+const trial = computed(() => presentTrial(revaluation.journal.value, asOf.value))
 
 const tableRows = computed<TrialTableRow[]>(() => [
   ...trial.value.rows.map((row) => ({ ...row, isTotal: false })),
@@ -207,7 +215,7 @@ const {
   drilldownEntries,
   openFor,
   onExport: onDrilldownExport
-} = useLedgerDrilldown(accounting.journal, () => ({ from: null, to: asOf.value }))
+} = useLedgerDrilldown(revaluation.journal, () => ({ from: null, to: asOf.value }))
 
 function openDrilldown(row: TrialTableRow): void {
   if (!row.account) return
@@ -265,6 +273,7 @@ watch(
 // "as of" date so a stack of exports stays distinguishable.
 const { onExport, onPrint } = useSectionExport('Trial balance', () => ({
   key: 'trial',
-  asOf: asOf.value
+  asOf: asOf.value,
+  adjustments: revaluation.entries.value
 }))
 </script>

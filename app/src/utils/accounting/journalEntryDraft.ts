@@ -43,6 +43,8 @@ export function sourceOperationIdOf(eventId: string): string {
  */
 export type UseCase =
   | 'SAFE-SWAP'
+  /** Report-date market revaluation of Safe assets; computed per report, never stored. */
+  | 'MARKET-REVALUATION'
   /** Direct external deposit into a treasury pocket → Service Revenue. */
   | 'UC-BANK-02'
   /** Fund payroll/expense pockets from Bank — internal move. */

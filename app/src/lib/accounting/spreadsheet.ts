@@ -17,7 +17,7 @@ import {
   balanceExportTitle,
   trialExportTitle
 } from '@/utils/accounting/presenter'
-import type { SectionKey, SectionSpec } from '@/utils/accounting/exportSpec'
+import { sectionBooks, type SectionKey, type SectionSpec } from '@/utils/accounting/exportSpec'
 import { generalLedgerSheetRows } from './generalLedgerSheet'
 
 type Cell = string | number
@@ -157,7 +157,7 @@ export function buildSheets(
   specs: readonly SectionSpec[],
   resolveName?: ResolveName
 ): AccountingSheet[] {
-  return specs.map((spec) => sectionSheet(books, spec, resolveName))
+  return specs.map((spec) => sectionSheet(sectionBooks(books, spec), spec, resolveName))
 }
 
 function downloadBlob(blob: Blob, filename: string): void {

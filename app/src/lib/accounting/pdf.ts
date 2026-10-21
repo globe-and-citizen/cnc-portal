@@ -20,7 +20,7 @@ import {
   balanceExportTitle,
   trialExportTitle
 } from '@/utils/accounting/presenter'
-import type { SectionSpec } from '@/utils/accounting/exportSpec'
+import { sectionBooks, type SectionSpec } from '@/utils/accounting/exportSpec'
 import { formatDateTime } from '@/utils/format'
 import { generalLedgerPdfTable } from './generalLedgerPdfTable'
 
@@ -158,7 +158,7 @@ export function buildTables(
   specs: readonly SectionSpec[],
   resolveName?: ResolveName
 ): AccountingPdfTable[] {
-  return specs.map((spec) => sectionTable(books, spec, resolveName))
+  return specs.map((spec) => sectionTable(sectionBooks(books, spec), spec, resolveName))
 }
 
 // Sober palette: slate-600 header on white, slate-100 zebra stripe.

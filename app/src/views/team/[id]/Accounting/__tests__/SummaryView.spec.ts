@@ -17,7 +17,9 @@ vi.mock('@/composables/accounting/useAccountingContext', async () => {
   const { ref } = await vi.importActual<typeof import('vue')>('vue')
   state.journal = ref([])
   // No raw entries: the count must depend on the journal, just like the exports.
-  return { useAccountingContext: () => ({ journal: state.journal }) }
+  return {
+    useAccountingContext: () => ({ journal: state.journal, status: { state: { value: 'ready' } } })
+  }
 })
 
 vi.mock('@/composables/accounting/useAccountingExport', () => ({

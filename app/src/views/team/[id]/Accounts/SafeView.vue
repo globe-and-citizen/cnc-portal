@@ -61,7 +61,11 @@
           Know what is available
         </h2>
       </div>
-      <SafeBalanceSection :key="safeAddress" :address="safeAddress" />
+      <SafeBalanceSection :key="safeAddress" :address="safeAddress">
+        <template #pnl>
+          <SafePnlSummary :pnl="pnl.data.value" fees-href="#safe-swap-costs" @retry="refreshPnl" />
+        </template>
+      </SafeBalanceSection>
     </section>
 
     <section id="safe-funds" class="scroll-mt-4" aria-labelledby="safe-funds-heading">
@@ -207,8 +211,11 @@ import SafeDeploymentCard from '@/components/sections/SafeView/SafeDeploymentCar
 import SafeImportCard from '@/components/sections/SafeView/SafeImportCard.vue'
 import { useTeamStore, useUserDataStore } from '@/stores'
 import { normalizeSafeAddress } from '@/utils/safe/address'
+import SafePnlSummary from '@/components/sections/SafeView/SafePnlSummary.vue'
 import SafeSwapFeesSection from '@/components/sections/SafeView/SafeSwapFeesSection.vue'
 import { useCNCAccounting } from '@/composables/accounting/useCNCAccounting'
+import { useSafePnl } from '@/composables/accounting/useSafePnl'
+import { withSafePnlRows } from '@/utils/accounting/safePnlPresenter'
 
 const route = useRoute()
 const router = useRouter()
@@ -250,7 +257,15 @@ const accounting = useCNCAccounting(
   () => (safeAddress.value ? String(teamStore.currentTeamId) : null),
   { scope: 'safe' }
 )
-const holdingRows = computed(() => toSafeHoldingRows(balances.value, currency.value.code))
+const pnl = useSafePnl(
+  () => accounting.journal.value,
+  () => accounting.status.state.value === 'ready',
+  safeAddress
+)
+const refreshPnl = () => Promise.allSettled([accounting.refetch(), pnl.refetch()])
+const holdingRows = computed(() =>
+  withSafePnlRows(toSafeHoldingRows(balances.value, currency.value.code), pnl.data.value)
+)
 const isIncomplete = computed(() => holdingRows.value.some((row) => row.balance === null))
 
 const isResolvingSafe = computed(() => teamStore.currentTeamMeta.isPending || isLoadingSafe.value)

@@ -65,6 +65,10 @@
         <div class="text-dimmed mt-1 text-[11px] leading-snug">{{ card.sub }}</div>
       </div>
     </div>
+    <MarketRevaluationNote
+      :summary="revaluation.summary.value"
+      :status="revaluation.status.value"
+    />
   </div>
 </template>
 
@@ -77,10 +81,13 @@ import { useAccountingContext } from '@/composables/accounting/useAccountingCont
 import { useAccountingExport } from '@/composables/accounting/useAccountingExport'
 import { presentSummary } from '@/utils/accounting/presenter'
 import type { SectionKey, SectionSpec } from '@/utils/accounting/exportSpec'
+import { useMarketRevaluation } from '@/composables/accounting/useMarketRevaluation'
+import MarketRevaluationNote from '@/components/sections/AccountingView/MarketRevaluationNote.vue'
 
 const accounting = useAccountingContext()
+const revaluation = useMarketRevaluation([null])
 
-const summary = computed(() => presentSummary(accounting.journal.value))
+const summary = computed(() => presentSummary(revaluation.journal.value))
 const summaryCards = computed(() => summary.value.cards)
 const banner = computed(() => summary.value.banner)
 
@@ -106,7 +113,7 @@ const ledgerEntryCount = computed(() => accounting.journal.value.length)
 const { exportPdf, exportExcel } = useAccountingExport()
 
 function onGenerate({ format, keys }: { format: ExportFormat; keys: SectionKey[] }): void {
-  const specs = keys.map((key): SectionSpec => ({ key }))
+  const specs = keys.map((key): SectionSpec => ({ key, adjustments: revaluation.entries.value }))
   if (format === 'pdf') {
     exportPdf(
       specs,

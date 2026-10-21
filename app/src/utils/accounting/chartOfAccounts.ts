@@ -55,6 +55,27 @@ export const ACCOUNT_FAMILIES = [
     deploymentScoped: false
   },
   {
+    id: 'safe-market-value-adjustment',
+    name: 'Safe Market Value Adjustment',
+    accountClass: 'ASSET',
+    normalBalance: 'debit',
+    deploymentScoped: false
+  },
+  {
+    id: 'unrealized-digital-asset-gain',
+    name: 'Unrealized Gain on Digital Assets',
+    accountClass: 'INCOME',
+    normalBalance: 'credit',
+    deploymentScoped: false
+  },
+  {
+    id: 'unrealized-digital-asset-loss',
+    name: 'Unrealized Loss on Digital Assets',
+    accountClass: 'EXPENSE',
+    normalBalance: 'debit',
+    deploymentScoped: false
+  },
+  {
     id: 'unclassified-receipts',
     name: 'Unclassified Receipts',
     accountClass: 'LIABILITY',

@@ -12,9 +12,11 @@ type LedgerCategory =
   | 'Dividend'
   | 'Memo'
   | 'Swap'
+  | 'Revaluation'
 
 const CATEGORY_BADGE: Record<LedgerCategory, string> = {
   Swap: 'bg-info/10 text-info',
+  Revaluation: 'bg-muted text-toned',
   Investment: 'bg-secondary/10 text-secondary',
   Credit: 'bg-accent/10 text-accent',
   Revenue: 'bg-success/10 text-success',
@@ -43,6 +45,7 @@ const TRADING_ACCOUNTS = new Set(['trading-account', 'trading-gain', 'trading-lo
 /** Derive the reporting/action family from journal-line accounts, never a category field. */
 function categoryOf(entry: JournalEntry): LedgerCategory {
   if (entry.useCase === 'SAFE-SWAP') return 'Swap'
+  if (entry.useCase === 'MARKET-REVALUATION') return 'Revaluation'
   if (entry.kind === 'memo') {
     return entry.useCase === 'DEFAULT-D' || entry.useCase.startsWith('UC-VEST-')
       ? 'Investment'

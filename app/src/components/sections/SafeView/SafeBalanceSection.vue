@@ -161,6 +161,7 @@
         />
       </template>
     </UModal>
+    <slot name="pnl" />
   </UCard>
 </template>
 

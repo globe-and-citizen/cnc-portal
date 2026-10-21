@@ -7,6 +7,7 @@ import USDCIcon from '@/assets/usdc.png'
 import MaticIcon from '@/assets/matic-logo.png'
 
 export interface TokenHoldingRow {
+  pnl?: { label: string; details: string; positive: boolean; negative: boolean }
   rank: number
   token: { name: string; symbol: string }
   name: string

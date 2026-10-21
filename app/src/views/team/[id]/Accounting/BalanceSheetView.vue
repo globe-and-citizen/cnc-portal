@@ -58,6 +58,10 @@
             balance.liabilitiesPlusEquity
           }}</span>
         </div>
+        <MarketRevaluationNote
+          :summary="revaluation.summary.value"
+          :status="revaluation.status.value"
+        />
       </div>
     </UCard>
 
@@ -66,7 +70,7 @@
       :account="drilldownLine?.label ?? ''"
       :total="drilldownLine?.total ?? ''"
       :entries="drilldownEntries"
-      :all-entries="accounting.journal.value"
+      :all-entries="revaluation.journal.value"
       :balance="drilldownBalance"
       columns-storage-key="cnc-accounting-balance-drilldown-columns-v1"
       @export="onDrilldownExport"
@@ -81,16 +85,17 @@ import AccountingExportBar from '@/components/sections/AccountingView/Accounting
 import BalanceSheetTable from '@/components/sections/AccountingView/BalanceSheetTable.vue'
 import LedgerDrilldownModal from '@/components/sections/AccountingView/LedgerDrilldownModal.vue'
 import { defaultValueForMode } from '@/utils/dates/picker'
-import { useAccountingContext } from '@/composables/accounting/useAccountingContext'
 import { useSectionExport } from '@/composables/accounting/useSectionExport'
 import { useLedgerDrilldown } from '@/composables/accounting/useLedgerDrilldown'
 import { presentBalance, type StatementLineView } from '@/utils/accounting/presenter'
+import { useMarketRevaluation } from '@/composables/accounting/useMarketRevaluation'
+import MarketRevaluationNote from '@/components/sections/AccountingView/MarketRevaluationNote.vue'
 
 // Point-in-time "as of" date (date mode) — defaults to end of today.
 const asOf = ref<Date>(defaultValueForMode('date') as Date)
 
-const accounting = useAccountingContext()
-const balance = computed(() => presentBalance(accounting.journal.value, asOf.value))
+const revaluation = useMarketRevaluation(() => [asOf.value])
+const balance = computed(() => presentBalance(revaluation.journal.value, asOf.value))
 
 // Per-line drill-down — over the same as-of slice the balance sheet is built from.
 const {
@@ -100,7 +105,7 @@ const {
   drilldownEntries,
   openFor,
   onExport: onDrilldownExport
-} = useLedgerDrilldown(accounting.journal, () => ({ from: null, to: asOf.value }))
+} = useLedgerDrilldown(revaluation.journal, () => ({ from: null, to: asOf.value }))
 
 function openDrilldown(line: StatementLineView): void {
   // Earnings to date is the only aggregate: it opens every contributing income
@@ -113,6 +118,7 @@ function openDrilldown(line: StatementLineView): void {
 // "as of" date so a stack of exports stays distinguishable.
 const { onExport, onPrint } = useSectionExport('Balance sheet', () => ({
   key: 'balance',
-  asOf: asOf.value
+  asOf: asOf.value,
+  adjustments: revaluation.entries.value
 }))
 </script>

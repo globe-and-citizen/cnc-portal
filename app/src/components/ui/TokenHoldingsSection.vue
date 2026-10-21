@@ -10,10 +10,21 @@
           { accessorKey: 'token', header: 'Token', enableSorting: true },
           { accessorKey: 'amount', header: 'Amount', enableSorting: true },
           { accessorKey: 'price', header: 'Coin Price', enableSorting: true },
-          { accessorKey: 'balance', header: 'Balance', enableSorting: true }
+          { accessorKey: 'balance', header: 'Balance', enableSorting: true },
+          ...(rows.some((row) => row.pnl) ? [{ id: 'pnl', header: 'P&L (USD)' }] : [])
         ]"
         data-test="safe-asset-table"
       >
+        <template #pnl-cell="{ row: { original: row } }">
+          <span
+            :title="row.pnl?.details"
+            :aria-label="row.pnl?.details"
+            tabindex="0"
+            :class="{ 'text-green-700': row.pnl?.positive, 'text-red-700': row.pnl?.negative }"
+            data-test="safe-holding-pnl"
+            >{{ row.pnl?.label }}</span
+          >
+        </template>
         <template #amount-cell="{ row: { original: row } }">
           <span :title="row.quantity" data-test="safe-holding-amount">
             {{ row.amountLabel }} {{ row.token.symbol }}

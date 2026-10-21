@@ -41,4 +41,14 @@ export interface SectionSpec {
   journalAccountLabel?: string
   /** Statement-line balance shown in a drill-down export. */
   journalAccountTotal?: string
+  /** Report-date adjusting entries the section shows on screen, e.g. the Safe market revaluation. */
+  adjustments?: readonly JournalEntry[]
+}
+
+/** The books one section is built from: the journal plus that section's adjusting entries. */
+export function sectionBooks(
+  books: AccountingExportSnapshot,
+  spec: SectionSpec
+): AccountingExportSnapshot {
+  return spec.adjustments?.length ? { journal: [...books.journal, ...spec.adjustments] } : books
 }
