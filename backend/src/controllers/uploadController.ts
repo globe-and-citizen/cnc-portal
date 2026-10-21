@@ -1,5 +1,9 @@
 import { Request, Response } from 'express';
-import { getPresignedDownloadUrl, uploadFiles } from '../services/storageService';
+import {
+  getPresignedDownloadUrl,
+  isStorageConfigured,
+  uploadFiles,
+} from '../services/storageService';
 import { captureBackendException } from '../utils';
 
 function extractMulterFiles(req: Request): Express.Multer.File[] {
@@ -15,6 +19,9 @@ export const uploadManyFiles = async (req: Request, res: Response) => {
 
     if (files.length === 0) {
       return res.status(400).json({ error: 'No files provided' });
+    }
+    if (!isStorageConfigured()) {
+      return res.status(500).json({ error: 'Storage not configured' });
     }
 
     const uploadResults = await uploadFiles(files, 'uploads');

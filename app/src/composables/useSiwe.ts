@@ -131,7 +131,16 @@ export function useSiweMutation() {
       const { accessToken } = await siweAuth({ message, signature })
       storageToken.value = accessToken
 
-      const user = await getUser(address)
+      let user: Awaited<ReturnType<typeof getUser>>
+      try {
+        user = await getUser(address)
+      } catch (error) {
+        storageToken.value = ''
+        if (typeof window !== 'undefined') {
+          window.localStorage.removeItem('authToken')
+        }
+        throw error
+      }
       return { user }
     },
     onSuccess: ({ user }) => {
