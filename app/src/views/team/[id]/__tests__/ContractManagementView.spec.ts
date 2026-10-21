@@ -102,6 +102,21 @@ describe('ContractManagementView.vue', () => {
     expect(wrapper.find('[data-test="current-panel"]').exists()).toBe(true)
   })
 
+  it('[AC-US-CONTRACT-001-07] keeps current contracts visible when Officer history fails', () => {
+    vi.mocked(useGetTeamOfficersQuery).mockReturnValue({
+      data: ref([]),
+      isPending: ref(false),
+      isError: ref(true),
+      refetch: vi.fn()
+    } as unknown as ReturnType<typeof useGetTeamOfficersQuery>)
+
+    const wrapper = renderWithProviders(ContractManagementView, { pinia: false })
+
+    expect(wrapper.text()).toContain('Contract history could not be loaded')
+    expect(wrapper.text()).toContain('Current team contracts remain available')
+    expect(wrapper.find('[data-test="current-panel"]').exists()).toBe(true)
+  })
+
   it('falls back to the current team Officer when history is empty', () => {
     vi.mocked(useGetTeamOfficersQuery).mockReturnValue({
       data: ref([]),

@@ -27,6 +27,14 @@ vi.mock('../../utils', async () => {
   };
 });
 
+vi.mock('../../utils/dependenciesUtil', async () => {
+  const actual = await vi.importActual('../../utils/dependenciesUtil');
+  return {
+    ...actual,
+    prisma: mockPrisma,
+  };
+});
+
 // Set up test environment variables
 process.env.SECRET_KEY = 'test-secret-key-for-testing';
 
@@ -79,15 +87,6 @@ const invalidSiweScenarios = [
     expectedStatus: 400,
     expectedMessage: 'Invalid request body',
   },
-  {
-    body: {
-      message: createSiweMessage('0x70997970C51812dc3A010C7d01b50e0d17dc79C8'),
-      signature: VALID_SIGNATURE,
-    },
-    description: 'SIWE verification fails',
-    expectedStatus: 401,
-    expectedMessage: 'Signature does not match address of the message.',
-  },
 ];
 
 const invalidTokenScenarios = [
@@ -135,7 +134,7 @@ describe('authController', () => {
       });
     });
 
-    it('authenticates an existing user', async () => {
+    it('[AC-US-AUTH-001-06] rotates the nonce and issues a 24-hour JWT for an existing user', async () => {
       const mockUser = createMockUser();
       mockPrisma.user.findUnique.mockResolvedValue(mockUser);
       mockPrisma.user.update.mockResolvedValue({
@@ -151,6 +150,44 @@ describe('authController', () => {
       expect(response.status).toBe(200);
       expect(response.body).toHaveProperty('accessToken');
       expect(typeof response.body.accessToken).toBe('string');
+      expect(mockPrisma.user.update).toHaveBeenCalledWith({
+        where: { address: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266' },
+        data: { nonce: expect.any(String) },
+      });
+
+      const payload = jwt.decode(response.body.accessToken) as { iat: number; exp: number };
+      expect(payload.exp - payload.iat).toBe(24 * 60 * 60);
+    });
+
+    it('[AC-US-AUTH-001-05] rejects a SIWE message with a stale nonce', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue(createMockUser({ nonce: 'different-nonce' }));
+
+      const response = await request(app).post('/siwe').send({
+        message: createSiweMessage(),
+        signature: VALID_SIGNATURE,
+      });
+
+      expect(response.status).toBe(401);
+      expect(mockPrisma.user.create).not.toHaveBeenCalled();
+      expect(mockPrisma.user.update).not.toHaveBeenCalled();
+    });
+
+    it('[AC-US-AUTH-001-09] rejects a mismatched SIWE signature without authenticating the user', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue(null);
+
+      const response = await request(app)
+        .post('/siwe')
+        .send({
+          message: createSiweMessage('0x70997970C51812dc3A010C7d01b50e0d17dc79C8'),
+          signature: VALID_SIGNATURE,
+        });
+
+      expect(response.status).toBe(401);
+      expect(response.body).toEqual({
+        message: 'Signature does not match address of the message.',
+      });
+      expect(mockPrisma.user.create).not.toHaveBeenCalled();
+      expect(mockPrisma.user.update).not.toHaveBeenCalled();
     });
 
     it('[AC-US-AUTH-001-02] authenticates and creates a new user', async () => {
@@ -217,7 +254,7 @@ describe('authController', () => {
   describe('GET: /token', () => {
     // Parameterized tests for invalid token scenarios
     invalidTokenScenarios.forEach(({ headers, description, expectedMessage }) => {
-      it.skip(`returns 401 if ${description}`, async () => {
+      it(`returns 401 if ${description}`, async () => {
         const response = await request(app).get('/token').set(headers);
 
         expect(response.status).toBe(401);
@@ -227,12 +264,13 @@ describe('authController', () => {
       });
     });
 
-    it.skip('returns 200 if authorization successful', async () => {
+    it('returns 200 if authorization successful', async () => {
       // Create a valid JWT token for testing
       const testToken = jwt.sign(
         { address: TEST_ADDRESS },
         process.env.SECRET_KEY || 'test-secret-key'
       );
+      mockPrisma.user.findUnique.mockResolvedValue(createMockUser());
 
       const response = await request(app).get('/token').set('Authorization', `Bearer ${testToken}`);
 

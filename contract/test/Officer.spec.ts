@@ -332,7 +332,7 @@ describe('Officer Contract', function () {
       expect(await officerContract.getContractBeacon('TestBeacon2')).to.equal(addr2.address)
     })
 
-    it('initializes and deploy contracts in one transaction when isDeployAllContracts is true', async function () {
+    it('[AC-US-CONTRACT-005-11] initializes the Investor authority boundary during one-transaction deployment', async function () {
       const bankBeaconAddr = await bankAccountBeacon.getAddress()
       const electionsBeaconAddr = await electionsBeacon.getAddress()
       const bodBeaconAddr = await bodBeacon.getAddress()
