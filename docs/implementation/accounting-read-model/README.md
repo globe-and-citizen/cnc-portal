@@ -763,7 +763,7 @@ because deposits and company-pocket transfers are not manual assignment targets.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `008826d0d841f19c967c8ff477a7e9c452ee7398`
+**Implementation evidence reviewed against:** `6abaa75451256f23c251dbd03e39afa0ae7cddcb`
 
 - [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts),
   [source-status projection](../../../app/src/composables/accounting/useAccountingStatus.ts),

@@ -187,7 +187,7 @@ availability and the authenticated live browser journey require separate verific
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `008826d0d841f19c967c8ff477a7e9c452ee7398`
+**Implementation evidence reviewed against:** `6abaa75451256f23c251dbd03e39afa0ae7cddcb`
 
 - [Query barrel](../../../app/src/queries/index.ts), [query factory](../../../app/src/queries/queryFactory.ts), and
   [single-file upload query](../../../app/src/queries/file.queries.ts)

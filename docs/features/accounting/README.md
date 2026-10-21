@@ -842,7 +842,7 @@ existing completeness rules still apply. Gateway balance filtering does not filt
 [Safe pagination and metadata unit tests](../../../app/src/queries/__tests__/safe.queries.spec.ts) and
 [Safe source-mapping tests](../../../app/src/utils/accounting/__tests__/safe.spec.ts). Live product review remains pending.
 
-**Implementation evidence reviewed against:** `8bb7376a908abee0cdd59621ba7ee5cfcc153de6`
+**Implementation evidence reviewed against:** `6abaa75451256f23c251dbd03e39afa0ae7cddcb`
 
 - [Accounting page](../../../app/src/components/sections/AccountingView/AccountingPage.vue),
   [team routes](../../../app/src/router/index.ts), and [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts)
