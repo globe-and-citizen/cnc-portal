@@ -169,9 +169,10 @@ Journal finalization replays the full Safe history using weighted-average carryi
 consideration less verified swap fees, allocated to the unchanged net received quantities. The fee is a separate Transaction Fee Expense
 line in the same operation. For recognized USD-stablecoin receipts, retain actual net receipt and recover gross disposal proceeds by adding
 the fee; never deduct it from the receipt again. Otherwise the outgoing asset determines consideration. USD-stablecoin purchases and sales
-need no crypto market snapshot. Crypto-to-crypto consideration uses the outgoing quantity and the same UTC transaction-date snapshot as
-every other non-pegged posting; the acquired asset's own quote never determines acquisition cost. No swap-specific rate is stored. Separate
-network fee importing is outside this projection.
+need no crypto market snapshot. When one transaction batches several swaps, the stablecoin side is the consideration and the assets received
+share it by their market value of that day; without a stablecoin side, each asset received is valued at that market value. Crypto-to-crypto
+consideration uses the outgoing quantity and the same UTC transaction-date snapshot as every other non-pegged posting; the acquired asset's
+own quote never determines acquisition cost. No swap-specific rate is stored. Separate network fee importing is outside this projection.
 
 Safe transfers carry the mined block time from the Transaction Service, and token transfers carry their block-wide log index, parsed from
 the `transferId`. [Replay order](../../../app/src/utils/accounting/journalEntryDraft.ts) sorts by time, then log index, then id, so a
@@ -206,8 +207,9 @@ Reports show the Safe at market value without rewriting the cost-based journal.
 one entry before `from` carrying the opening adjustment and one at `to` carrying only the period's change.
 [The revaluation composable](../../../app/src/composables/accounting/useMarketRevaluation.ts) prices today with the Safe treasury projection
 (the Gateway valuation shown on Safe Account, so market minus cost equals its unrealized result) and a past date with CoinGecko's daily
-snapshot at the end of that UTC day. If any required price, the accounting history or the Gateway quantities are missing, no entry is added
-and the report states that the Safe is shown at cost.
+snapshot that closes that calendar day: 00:00 UTC of the next day, so every timezone reads the same price. If any required price, the
+accounting history or the Gateway quantities are missing, or the history holds less than zero of a token, no entry is added and the report
+states that the Safe is shown at cost.
 
 Trial Balance and Balance Sheet use their as-of date; Income Statement and General Ledger use their period; Summary uses now. Each view
 passes the same entries to its drill-downs and, through `SectionSpec.adjustments`, to the PDF and Excel builders, so exports match the
