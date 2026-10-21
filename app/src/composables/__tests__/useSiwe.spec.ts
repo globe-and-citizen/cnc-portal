@@ -30,9 +30,12 @@ import * as wagmiCore from '@wagmi/core'
 const mockRouterPush = vi.mocked(router.push)
 const ADDRESS = '0x1234567890123456789012345678901234567890'
 
-const makeAxiosError = (url: string) => {
+const makeAxiosError = (url: string, status?: number) => {
   const err = new AxiosError('boom')
   err.config = { url, headers: new AxiosHeaders() }
+  if (status !== undefined) {
+    err.response = { status } as AxiosError['response']
+  }
   return err
 }
 
@@ -193,11 +196,21 @@ describe('useSiweMutation', () => {
     )
   })
 
-  it('[AC-US-AUTH-003-06] removes the issued access token when getUser fails after auth', async () => {
+  it('[AC-US-AUTH-003-06] keeps the issued access token after a recoverable profile network failure', async () => {
     vi.mocked(userApi.getUser).mockRejectedValueOnce(makeAxiosError('/api/user/profile'))
     const { mutateAsync } = useSiweMutation()
     await expect(mutateAsync()).rejects.toBeInstanceOf(AxiosError)
-    expect(localStorage.getItem('authToken')).not.toBe('jwt.token')
+    expect(localStorage.getItem('authToken')).toBe('jwt.token')
+    expect(mockToast.add).toHaveBeenCalledWith(
+      expect.objectContaining({ title: 'Failed to fetch user data' })
+    )
+  })
+
+  it('[AC-US-AUTH-003-06] removes the issued access token after a terminal profile failure', async () => {
+    vi.mocked(userApi.getUser).mockRejectedValueOnce(makeAxiosError('/api/user/profile', 401))
+    const { mutateAsync } = useSiweMutation()
+    await expect(mutateAsync()).rejects.toBeInstanceOf(AxiosError)
+    expect(localStorage.getItem('authToken')).toBe('')
     expect(mockToast.add).toHaveBeenCalledWith(
       expect.objectContaining({ title: 'Failed to fetch user data' })
     )
