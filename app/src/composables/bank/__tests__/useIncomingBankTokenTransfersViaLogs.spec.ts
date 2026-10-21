@@ -42,15 +42,17 @@ function setupQueries() {
   const eventQuery = {
     data: ref(undefined),
     isPending: ref(false),
+    isRefetching: ref(false),
     error: ref<Error | null>(null),
-    refetch: vi.fn()
+    refetch: vi.fn().mockResolvedValue(undefined)
   }
   const officerQuery = {
     data: ref<TeamOfficerWithContracts[]>([]),
     isPending: ref(false),
+    isRefetching: ref(false),
     isError: ref(false),
     error: ref<Error | null>(null),
-    refetch: vi.fn()
+    refetch: vi.fn().mockResolvedValue(undefined)
   }
   mockUseContractEventsViaLogs.mockReturnValue(eventQuery)
   vi.mocked(useGetTeamOfficersQuery).mockReturnValue(
@@ -117,12 +119,11 @@ describe('useIncomingBankTokenTransfersViaLogs', () => {
     ])
   })
 
-  it('exposes the event query and combines both pending states reactively', () => {
+  it('exposes the event query and combines both pending states reactively', async () => {
     const { eventQuery, officerQuery } = setupQueries()
     const query = useIncomingBankTokenTransfersViaLogs('1', USER, SECOND_BANK)
 
     expect(query.data).toBe(eventQuery.data)
-    expect(query.refetch).toBe(eventQuery.refetch)
     expect(query.isPending.value).toBe(false)
 
     eventQuery.isPending.value = true
@@ -131,6 +132,12 @@ describe('useIncomingBankTokenTransfersViaLogs', () => {
     eventQuery.isPending.value = false
     officerQuery.isPending.value = true
     expect(query.isPending.value).toBe(true)
+
+    eventQuery.isPending.value = false
+    officerQuery.isPending.value = false
+    await query.refetch()
+    expect(officerQuery.refetch).toHaveBeenCalledTimes(1)
+    expect(eventQuery.refetch).toHaveBeenCalledTimes(1)
   })
 
   it('prefers the event error and otherwise exposes the Officer query error', () => {

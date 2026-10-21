@@ -99,7 +99,11 @@ export function useIncomingBankTokenTransfersViaLogs(
   return {
     ...events,
     isPending: computed(() => events.isPending.value || officers.isPending.value),
+    isRefetching: computed(() => events.isRefetching.value || officers.isRefetching.value),
     error: computed(() => events.error.value ?? officers.error.value),
-    refetch: events.refetch
+    refetch: async () => {
+      await officers.refetch()
+      return events.refetch()
+    }
   }
 }

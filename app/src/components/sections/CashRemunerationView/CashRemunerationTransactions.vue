@@ -21,6 +21,13 @@
       </div>
     </template>
 
+    <TransactionHistoryStatusAlert
+      :status="eventFeedStatus"
+      data-test="cash-remuneration-transaction-history-status"
+      :is-retrying="cashRemunerationRefetching || incomingTokenTransfersRefetching"
+      @retry="retryHistory"
+    />
+
     <UTable
       v-model:expanded="expandedRows"
       :data="displayedTransactions"
@@ -157,7 +164,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, watch } from 'vue'
+import { computed } from 'vue'
 import { useTransactionTable } from '@/composables/transactions/useTransactionTable'
 import { useTransactionInline } from '@/composables/transactions/useTransactionInline'
 import { useTransactionPresentation } from '@/composables/transactions/useTransactionPresentation'
@@ -182,11 +189,12 @@ import {
 import { formatCryptoAmount, formatCurrencyShort } from '@/utils/currency/display'
 import { formatEtherUtil, tokenSymbol } from '@/utils/tokens/metadata'
 import { parseBigIntOrZero, getTransactionSummary } from '@/utils/transactions/history'
-import { log } from '@/lib/logging'
 import { formatDateRelative, formatDateUTC } from '@/utils/dates/calendar'
 import { useCashRemunerationEventsViaLogs } from '@/composables/cashRemuneration/useCashRemunerationEventsViaLogs'
 import { useIncomingBankTokenTransfersViaLogs } from '@/composables/bank/useIncomingBankTokenTransfersViaLogs'
 import { useTeamStore } from '@/stores'
+import TransactionHistoryStatusAlert from '@/components/sections/TransactionHistoryStatusAlert.vue'
+import { combineEventFeedStatuses, getEventFeedStatus } from '@/composables/eventsViaLogs'
 
 const props = defineProps<{
   cashRemunerationAddress: Address
@@ -201,13 +209,17 @@ const currentBankAddress = computed(() => teamStore.getContractAddressByType('Ba
 const {
   data: cashRemunerationData,
   error,
-  isPending: cashRemunerationLoading
+  isPending: cashRemunerationLoading,
+  isRefetching: cashRemunerationRefetching,
+  refetch: refetchCashRemuneration
 } = useCashRemunerationEventsViaLogs(contractAddress)
 
 const {
   data: incomingTokenTransfersData,
   error: incomingTokenTransfersError,
-  isPending: incomingTokenTransfersLoading
+  isPending: incomingTokenTransfersLoading,
+  isRefetching: incomingTokenTransfersRefetching,
+  refetch: refetchIncomingTokenTransfers
 } = useIncomingBankTokenTransfersViaLogs(
   () => teamStore.currentTeamId,
   contractAddress,
@@ -215,6 +227,27 @@ const {
 )
 
 const loading = computed(() => cashRemunerationLoading.value || incomingTokenTransfersLoading.value)
+
+const eventFeedStatus = computed(() =>
+  combineEventFeedStatuses([
+    getEventFeedStatus({
+      data: cashRemunerationData.value,
+      error: error.value,
+      isPending: cashRemunerationLoading.value,
+      enabled: Boolean(contractAddress.value)
+    }),
+    getEventFeedStatus({
+      data: incomingTokenTransfersData.value,
+      error: incomingTokenTransfersError.value,
+      isPending: incomingTokenTransfersLoading.value,
+      enabled: Boolean(contractAddress.value && teamStore.currentTeamId)
+    })
+  ])
+)
+
+const retryHistory = () => {
+  void Promise.all([refetchCashRemuneration(), refetchIncomingTokenTransfers()])
+}
 
 const rawTransactions = computed(() =>
   buildRawCashRemunerationTransactions(
@@ -282,13 +315,4 @@ const columns = computed(() => [
   },
   { accessorKey: 'tx', header: 'Tx Hash' }
 ])
-
-watch([error, incomingTokenTransfersError], ([newError, newIncomingTransfersError]) => {
-  if (newError || newIncomingTransfersError) {
-    log.error(
-      'RPC log cash remuneration transaction query error:',
-      newError ?? newIncomingTransfersError
-    )
-  }
-})
 </script>
