@@ -6,7 +6,7 @@ import {
   type JournalEntryDraft
 } from './journalEntryDraft'
 import { usdAmountFromToken, usdRateFromNumber } from './monetaryAmount'
-import { swapConsiderationEntries } from './toUsd'
+import { swapConsiderationEntries, swapNeedsReceivedRates } from './toUsd'
 import { executedFeeUsd } from './swapFees'
 
 interface Holding {
@@ -48,7 +48,8 @@ function setCarryingValue(
  * a later swap, so it marks that holding incomplete.
  *
  * A swap is valued at its executed consideration, read before the disposed asset is
- * replaced by its historic cost. A verified fee is split out as Transaction Fee Expense;
+ * replaced by its historic cost. Several assets received share it by their market value of
+ * the day. A verified fee is split out as Transaction Fee Expense;
  * without one the fee stays inside the acquired asset cost. Returns drafts in replay order.
  */
 export function prepareSafeExchanges(drafts: readonly JournalEntryDraft[]): JournalEntryDraft[] {
@@ -112,10 +113,12 @@ export function prepareSafeExchanges(drafts: readonly JournalEntryDraft[]): Jour
     const netReceived = receiptAnchored ? received : received - fee
     const proceeds = receiptAnchored ? received + fee : received
     let basis = 0n
+    const weighted = swapNeedsReceivedRates(exchange)
     let complete =
       consideration.length > 0 &&
       netReceived > 0n &&
       consideration.every((entry) => (entry.rate ?? 0) > 0) &&
+      (!weighted || incoming.every((entry) => marketAmount(entry) > 0n)) &&
       exchange.every(
         (entry) =>
           BigInt(entry.rawAmount) > 0n &&
@@ -135,13 +138,15 @@ export function prepareSafeExchanges(drafts: readonly JournalEntryDraft[]): Jour
         entry.carryingAmount = 0n
       }
     } else {
-      const quantity = incoming.reduce((sum, entry) => sum + BigInt(entry.rawAmount), 0n)
+      const weightOf = (entry: JournalEntryDraft) =>
+        weighted ? marketAmount(entry) : BigInt(entry.rawAmount)
+      const weights = incoming.reduce((sum, entry) => sum + weightOf(entry), 0n)
       let allocated = 0n
       incoming.forEach((entry, index) => {
         const amount =
           index === incoming.length - 1
             ? netReceived - allocated
-            : (netReceived * BigInt(entry.rawAmount)) / quantity
+            : (netReceived * weightOf(entry)) / weights
         allocated += amount
         setCarryingValue(entry, amount, 'swap-consideration')
       })

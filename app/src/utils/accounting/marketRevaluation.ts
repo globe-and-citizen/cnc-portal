@@ -25,15 +25,23 @@ export interface RevaluationPoint {
   adjustment: UsdAmount
 }
 
-/** Non-pegged Safe holdings and their carrying cost at a time, read from the journal alone. */
-export function safePositionsAt(journal: readonly JournalEntry[], at: number): SafePosition[] {
+/**
+ * Snapshot instant that closes the report's calendar day: 00:00 UTC of the next day. The
+ * calendar day is the one the viewer picked, so every timezone reads the same snapshot.
+ */
+export function closingRateDate(at: number): Date {
+  const day = new Date(at * 1000)
+  return new Date(Date.UTC(day.getFullYear(), day.getMonth(), day.getDate() + 1))
+}
+
+/** Every Safe holding and its carrying cost at a time, read from the journal alone. */
+export function safeHoldingsAt(journal: readonly JournalEntry[], at: number): SafePosition[] {
   const positions = new Map<AssetId, SafePosition>()
   for (const entry of journal) {
     if (entry.timestamp > at || entry.useCase === 'MARKET-REVALUATION') continue
     for (const line of entry.lines) {
       const movement = line.movement
-      if (line.account.family.name !== 'Cash — Safe' || !movement || isUsdPegged(movement.token))
-        continue
+      if (line.account.family.name !== 'Cash — Safe' || !movement) continue
       const position = positions.get(movement.token) ?? {
         token: movement.token,
         ...(movement.asset ? { asset: movement.asset } : {}),
@@ -48,13 +56,27 @@ export function safePositionsAt(journal: readonly JournalEntry[], at: number): S
   return [...positions.values()].filter((position) => position.quantity !== 0n || position.cost)
 }
 
-/** Market value less cost of every position; null when a held token has no usable price. */
+/** Non-pegged Safe holdings, the only ones whose market value can differ from their cost. */
+export function safePositionsAt(journal: readonly JournalEntry[], at: number): SafePosition[] {
+  return safeHoldingsAt(journal, at).filter((position) => !isUsdPegged(position.token))
+}
+
+/** Carrying cost of the whole Safe at a time, stablecoins included. */
+export function safeCostAt(journal: readonly JournalEntry[], at: number): UsdAmount {
+  return safeHoldingsAt(journal, at).reduce((sum, position) => sum + position.cost, 0n)
+}
+
+/**
+ * Market value less cost of every position; null when a held token has no usable price, or
+ * when the history holds less than zero of a token, which only a missing movement explains.
+ */
 export function revaluationOf(
   positions: readonly SafePosition[],
   priceOf: (token: AssetId) => number
 ): UsdAmount | null {
   let total = 0n
   for (const position of positions) {
+    if (position.quantity < 0n) return null
     if (position.quantity === 0n) {
       total -= position.cost
       continue

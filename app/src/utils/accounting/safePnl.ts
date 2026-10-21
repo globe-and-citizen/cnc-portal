@@ -2,7 +2,7 @@
 import { parseUnits } from 'viem'
 import type { SafeClientBalances } from '@/types/safe'
 import { currentChainId } from '@/constant'
-import { assetId, knownAssetId, type AssetId, type AssetMetadata } from '@/utils/tokens/assets'
+import { assetIdOfAddress, type AssetId, type AssetMetadata } from '@/utils/tokens/assets'
 import { currencySymbol } from './presenter'
 import type { JournalEntry } from './types'
 import { isUsdPegged } from './toUsd'
@@ -115,9 +115,7 @@ export function safeTreasuryPnl(
   const observed = new Map<AssetId, SafeClientBalances['items'][number]>()
   for (const item of balances?.items ?? []) {
     const token =
-      item.tokenInfo.type === 'ERC20'
-        ? (knownAssetId(item.tokenInfo.address) ?? assetId(item.tokenInfo.address, chainId))
-        : 'native'
+      item.tokenInfo.type === 'ERC20' ? assetIdOfAddress(item.tokenInfo.address, chainId) : 'native'
     if (observed.has(token)) attributable = false
     observed.set(token, item)
     const row = position(token)

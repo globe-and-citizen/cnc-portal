@@ -1,6 +1,6 @@
 /** Display labels for the Safe P&L and its per-token column in the holdings table. */
 import { currentChainId } from '@/constant'
-import { assetId, knownAssetId, type AssetId } from '@/utils/tokens/assets'
+import { assetIdOfAddress, type AssetId } from '@/utils/tokens/assets'
 import type { TokenHoldingRow } from '@/utils/tokens/holdings'
 import { money } from './presenter'
 import type { SafePnl, SafePnlPosition } from './safePnl'
@@ -26,9 +26,7 @@ function positionPnl(position?: SafePnlPosition): NonNullable<TokenHoldingRow['p
 export function withSafePnlRows(rows: TokenHoldingRow[], pnl: SafePnl): TokenHoldingRow[] {
   const represented = new Set<AssetId>()
   const result = rows.map((row) => {
-    const token = row.address
-      ? (knownAssetId(row.address) ?? assetId(row.address, currentChainId))
-      : 'native'
+    const token = assetIdOfAddress(row.address, currentChainId)
     represented.add(token)
     const position = pnl.positions.find((position) => position.token === token)
     return { ...row, pnl: positionPnl(position) }

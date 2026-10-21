@@ -49,19 +49,28 @@ export function isUsdPegged(tokenId: AssetId): boolean {
   return USD_PEGGED_TOKENS.has(tokenId)
 }
 
-/** One-sided execution consideration: stable receipts first, otherwise the asset spent. */
+/**
+ * One-sided execution consideration: stable receipts first, then stablecoins spent, then a
+ * single asset spent for a single asset received. A swap with several assets on a side and
+ * no stable side has no exact consideration, so each asset received is its own, at market.
+ */
 export function swapConsiderationEntries(
   entries: readonly JournalEntryDraft[]
 ): JournalEntryDraft[] {
   const incoming = entries.filter((entry) => entry.debit === 'Cash — Safe')
   const outgoing = entries.filter((entry) => entry.credit === 'Cash — Safe')
-  if (
-    new Set(incoming.map((entry) => entry.token)).size !== 1 ||
-    new Set(outgoing.map((entry) => entry.token)).size !== 1 ||
-    incoming[0]!.token === outgoing[0]!.token
-  )
-    return []
-  return isUsdPegged(incoming[0]!.token) ? incoming : outgoing
+  const received = new Set(incoming.map((entry) => entry.token))
+  const spent = new Set(outgoing.map((entry) => entry.token))
+  if (!received.size || !spent.size || [...received].some((token) => spent.has(token))) return []
+  if ([...received].every(isUsdPegged)) return incoming
+  if ([...spent].every(isUsdPegged) || (spent.size === 1 && received.size === 1)) return outgoing
+  return incoming
+}
+
+/** Several assets received share the consideration by their market value. */
+export function swapNeedsReceivedRates(entries: readonly JournalEntryDraft[]): boolean {
+  const incoming = entries.filter((entry) => entry.debit === 'Cash — Safe')
+  return new Set(incoming.map((entry) => entry.token)).size > 1
 }
 
 /** Only the execution consideration needs a USD reference, never the asset acquired with it. */
@@ -75,9 +84,12 @@ function swapRateIds(entries: readonly JournalEntryDraft[]): Set<string> {
     groups.set(key, group)
   }
   return new Set(
-    [...groups.values()].flatMap((group) =>
-      swapConsiderationEntries(group).map((entry) => entry.id)
-    )
+    [...groups.values()].flatMap((group) => [
+      ...swapConsiderationEntries(group).map((entry) => entry.id),
+      ...(swapNeedsReceivedRates(group)
+        ? group.filter((entry) => entry.debit === 'Cash — Safe').map((entry) => entry.id)
+        : [])
+    ])
   )
 }
 

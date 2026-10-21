@@ -218,16 +218,25 @@ export interface JournalEntryDraft {
   enrichment: EnrichmentStatus
 }
 
+/** The log position of an indexed event id (`<txHash>-<logIndex>[-suffix]`). */
+const EVENT_ID_LOG_INDEX = /^0x[0-9a-fA-F]{64}-(\d+)(?:-|$)/
+
+type DraftOrderKey = Pick<JournalEntryDraft, 'timestamp' | 'logIndex' | 'id'>
+
+const logPositionOf = (draft: DraftOrderKey): number => {
+  if (draft.logIndex !== undefined) return draft.logIndex
+  const match = EVENT_ID_LOG_INDEX.exec(draft.id)
+  return match ? Number(match[1]) : -1
+}
+
 /**
  * Chronological replay order. Equal block timestamps mean the same block, where the
- * mined log position decides; drafts without one keep their stable id order.
+ * mined log position decides, read from `logIndex` or the indexed event id. Only drafts
+ * with no log at all (native transfers) lead the block, in stable id order.
  */
-export function compareDraftOrder(
-  a: Pick<JournalEntryDraft, 'timestamp' | 'logIndex' | 'id'>,
-  b: Pick<JournalEntryDraft, 'timestamp' | 'logIndex' | 'id'>
-): number {
+export function compareDraftOrder(a: DraftOrderKey, b: DraftOrderKey): number {
   return (
-    a.timestamp - b.timestamp || (a.logIndex ?? -1) - (b.logIndex ?? -1) || a.id.localeCompare(b.id)
+    a.timestamp - b.timestamp || logPositionOf(a) - logPositionOf(b) || a.id.localeCompare(b.id)
   )
 }
 
