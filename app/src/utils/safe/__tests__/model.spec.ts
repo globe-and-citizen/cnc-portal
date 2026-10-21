@@ -1,7 +1,8 @@
 import { describe, it, expect } from 'vitest'
 import { AxiosError, type AxiosResponse } from 'axios'
 import { zeroAddress } from 'viem'
-import { NETWORK, USDC_ADDRESS } from '@/constant'
+import { NETWORK, USDC_ADDRESS, currentChainId } from '@/constant'
+import { assetIdOfAddress } from '@/utils/tokens/assets'
 import {
   getSafeHomeUrl,
   isSafeNotIndexedError,
@@ -10,6 +11,7 @@ import {
   getSafeTransactionMethod,
   formatSafeTransferAmount,
   formatSafeTransferType,
+  safeTransferTokenLabel,
   transformToSafeMultisigResponse
 } from '../model'
 import type { SafeTransaction } from '@/types/safe'
@@ -162,6 +164,26 @@ describe('safe utils', () => {
     expect(formatSafeTransferType('ERC20_TRANSFER')).toBe('ERC20')
     expect(formatSafeTransferType('ERC721_TRANSFER')).toBe('NFT')
     expect(formatSafeTransferType('CUSTOM_TYPE')).toBe('CUSTOM_TYPE')
+  })
+
+  it('names an unswapped deposited contract by its address, never its self-declared symbol', () => {
+    const airdrop = {
+      type: 'ERC20_TRANSFER',
+      value: '5555',
+      tokenAddress: '0x7525A2c3E099F451830E31684736bB1B92C16D34',
+      tokenInfo: { decimals: 0, symbol: 'SWAP ✅ t .me/s/sol_shiba' }
+    } as SafeIncomingTransfer
+    const usdc = {
+      type: 'ERC20_TRANSFER',
+      value: '1000000',
+      tokenAddress: USDC_ADDRESS,
+      tokenInfo: { decimals: 6, symbol: 'USDC' }
+    } as SafeIncomingTransfer
+    expect(safeTransferTokenLabel(airdrop)).toBe('0x7525...6D34')
+    expect(formatSafeTransferAmount(airdrop)).toBe('5,555 0x7525...6D34')
+    expect(safeTransferTokenLabel(usdc)).toBe('USDC')
+    const swapped = new Set([assetIdOfAddress(airdrop.tokenAddress, currentChainId)])
+    expect(safeTransferTokenLabel(airdrop, swapped)).toBe('SWAP ✅ t .me/s/sol_shiba')
   })
 
   describe('transformToSafeMultisigResponse', () => {

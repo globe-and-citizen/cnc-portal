@@ -62,16 +62,28 @@ available metadata.
 
 ### Safe provider filtering
 
-The Safe Client Gateway balance request uses `exclude_spam=true&trusted=false`. The frontend displays every returned item and has no local
-contract blacklist. Provider symbols or trust flags do not expand CNC's configured payment allowlist.
+The Safe Client Gateway balance request uses `exclude_spam=true&trusted=false`. The provider filter does not catch every unsolicited
+airdrop, and anyone can send any token to a public wallet, so receiving a token proves nothing. The frontend therefore applies one
+[asset acceptance rule](../../../app/src/utils/tokens/assetRecognition.ts) instead of a contract blacklist or a spam detector: native and
+configured tokens are always accepted, and any other contract is accepted only when the Safe acquired it through one of its own swaps. A
+swap needs the Safe to give up another asset, which requires the owners' signatures, so an outsider cannot fabricate one. Provider names,
+prices and trust flags play no part in the decision and do not expand CNC's configured payment allowlist. This implements the unsolicited
+asset outside the recognized catalogue in the [direct asset movement policy](../../features/accounting/direct-movement-policy.md).
 
-Transaction Service histories retain every returned movement, including unknown and untrusted contracts, before the existing Accounting
-mapping and completeness checks. Metadata recovery uses the event's contract address. There is no client-side spam classification or
-quarantine; provider history can include spam-like events, which may reach Accounting or leave explicit metadata and valuation gaps.
+The swapped set comes from the Safe history (`useCNCAccounting().swappedAssets`). For balances, other contracts are listed apart as
+unrecognized tokens and their provider value is removed from the wallet total. Until that history is available, only an unconfigured
+contract the Gateway prices at exactly zero is listed apart, so a swapped asset never disappears while history loads. Accounting sets aside
+every Safe movement of an unaccepted contract. Zero-value transfers, the usual address-poisoning vector, are skipped by the Accounting
+adapter and hidden from the Deposits list, which names an unaccepted contract by its address rather than its self-declared symbol.
 
-Executable evidence: [Gateway request tests](../../../app/src/queries/__tests__/safeClient.queries.spec.ts) and
-[pagination and metadata unit tests](../../../app/src/queries/__tests__/safe.queries.spec.ts). These invoke request functions with mocked
-provider responses and query dependencies; live browser validation remains pending.
+Executable evidence: [Gateway request tests](../../../app/src/queries/__tests__/safeClient.queries.spec.ts),
+[pagination and metadata unit tests](../../../app/src/queries/__tests__/safe.queries.spec.ts),
+[asset acceptance tests](../../../app/src/utils/tokens/__tests__/assetRecognition.spec.ts),
+[Safe portfolio tests](../../../app/src/utils/safe/__tests__/portfolio.spec.ts),
+[deposit label tests](../../../app/src/utils/safe/__tests__/model.spec.ts),
+[Safe transfer adapter tests](../../../app/src/utils/accounting/__tests__/toSafeTransferRows.spec.ts) and
+[unrecognized movement tests](../../../app/src/utils/accounting/__tests__/unrecognizedAssets.spec.ts). These invoke pure functions and
+request functions with mocked provider responses and query dependencies.
 
 ### Browser request coordination
 

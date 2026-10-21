@@ -950,11 +950,14 @@ coin/date identity, raw response precision and explicit unavailable-rate gaps. T
 provider cooldown across clients; Accounting retains its existing explicit refresh of failed date queries.
 
 Safe history retains Transaction Service movements without a client-side contract blacklist before accounting mapping and historical
-valuation requests. Unknown, untrusted or spam-like provider events may reach the books or leave explicit metadata and valuation gaps; the
-existing completeness rules still apply. Gateway balance filtering does not filter this separate history feed. See
-[provider filtering](../../implementation/client-data-access/README.md#safe-provider-filtering) and
-[Safe pagination and metadata unit tests](../../../app/src/queries/__tests__/safe.queries.spec.ts) and
-[Safe source-mapping tests](../../../app/src/utils/accounting/__tests__/safe.spec.ts). Live product review remains pending.
+valuation requests. Anyone can send a token to the Safe, so only configured tokens and tokens the Safe acquired through one of its own swaps
+are company assets. Movements of any other token, such as an unsolicited airdrop, are left out of the books instead of withholding every
+report, and ready reports show how many movements were left out. Zero-value transfers, used for address poisoning, are skipped. The SHER
+multiplier is required only when the company has SHER activity. See
+[provider filtering](../../implementation/client-data-access/README.md#safe-provider-filtering),
+[Safe pagination and metadata unit tests](../../../app/src/queries/__tests__/safe.queries.spec.ts),
+[Safe source-mapping tests](../../../app/src/utils/accounting/__tests__/safe.spec.ts) and
+[unrecognized movement tests](../../../app/src/utils/accounting/__tests__/unrecognizedAssets.spec.ts).
 
 **Implementation evidence reviewed against:** `6abaa75451256f23c251dbd03e39afa0ae7cddcb`
 

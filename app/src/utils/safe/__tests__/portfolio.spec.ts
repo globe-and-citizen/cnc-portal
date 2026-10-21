@@ -1,10 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import { zeroAddress } from 'viem'
-import { SUPPORTED_TOKENS } from '@/constant'
+import { SUPPORTED_TOKENS, currentChainId } from '@/constant'
+import { assetIdOfAddress } from '@/utils/tokens/assets'
 import type { SafeClientBalance, SafeClientBalances } from '@/types/safe'
 import {
   getSafeFiatTotal,
   getSafeValuedFiatTotal,
+  isUnrecognizedSafeHolding,
+  partitionSafeHoldings,
   toSafeHoldingRows,
   toSafeTransferTokens
 } from '../portfolio'
@@ -135,7 +138,7 @@ describe('Safe Gateway holdings presentation', () => {
     expect(getSafeFiatTotal(data)).toBe(68.23)
   })
 
-  it.each([null, '0', '', 'NaN', '-1'])(
+  it.each([null, '', 'NaN', '-1'])(
     'keeps an unavailable market price %s explicit despite a zero fallback from Safe',
     (price) => {
       const data = response([heldAsset({ fiatConversion: price, fiatBalance: '0' })], '0')
@@ -144,9 +147,72 @@ describe('Safe Gateway holdings presentation', () => {
         priceLabel: 'Price unavailable',
         balanceLabel: 'Value unavailable'
       })
+      expect(isUnrecognizedSafeHolding(data.items[0]!)).toBe(false)
       expect(getSafeFiatTotal(data)).toBeUndefined()
     }
   )
+
+  it('sets apart an unknown contract the Gateway prices at zero without blocking the total', () => {
+    const airdrop = heldAsset({
+      tokenInfo: {
+        type: 'ERC20',
+        address: '0x7525A2c3E099F451830E31684736bB1B92C16D34',
+        decimals: 0,
+        symbol: 'SWAP ✅ t .me/s/sol_shiba',
+        name: 'Claim your SHIB reward'
+      },
+      balance: '1',
+      fiatConversion: '0',
+      fiatBalance: '0'
+    })
+    const data = response([heldAsset(), airdrop])
+    expect(isUnrecognizedSafeHolding(airdrop)).toBe(true)
+    expect(partitionSafeHoldings(data)).toEqual({
+      holdings: response([heldAsset()]),
+      unrecognized: [airdrop]
+    })
+    expect(getSafeFiatTotal(data)).toBe(22.742929199442642)
+    expect(partitionSafeHoldings()).toEqual({ unrecognized: [] })
+  })
+
+  it('never sets apart a configured token or the native asset priced at zero', () => {
+    const usdc = SUPPORTED_TOKENS[0]!
+    const configured = heldAsset({
+      tokenInfo: { ...heldAsset().tokenInfo, address: usdc.address, decimals: usdc.decimals },
+      fiatConversion: '0'
+    })
+    const native = heldAsset({
+      tokenInfo: {
+        type: 'NATIVE_TOKEN',
+        address: zeroAddress,
+        decimals: 18,
+        symbol: 'POL',
+        name: 'POL'
+      },
+      fiatConversion: '0'
+    })
+    expect(isUnrecognizedSafeHolding(configured)).toBe(false)
+    expect(isUnrecognizedSafeHolding(native)).toBe(false)
+    expect(isUnrecognizedSafeHolding(configured, new Set())).toBe(false)
+    expect(getSafeFiatTotal(response([configured, native]))).toBeUndefined()
+  })
+
+  it('[AC-US-SAFE-003-12] once the Safe history is known, keeps only contracts the Safe acquired through a swap', () => {
+    const weth = assetIdOfAddress(token, currentChainId)
+    const pricedScam = heldAsset({
+      tokenInfo: {
+        ...heldAsset().tokenInfo,
+        address: '0xcccccccccccccccccccccccccccccccccccccccc'
+      },
+      fiatConversion: '3',
+      fiatBalance: '7.5'
+    })
+    const data = response([heldAsset(), pricedScam], '30.242929199442642')
+    expect(partitionSafeHoldings(data, new Set([weth])).unrecognized).toEqual([pricedScam])
+    expect(getSafeFiatTotal(data, new Set([weth]))).toBeCloseTo(22.742929199442642)
+    expect(partitionSafeHoldings(data, new Set()).unrecognized).toEqual([heldAsset(), pricedScam])
+    expect(getSafeFiatTotal(data)).toBe(30.242929199442642)
+  })
 
   it('distinguishes a missing response and unreadable amount from confirmed zero holdings', () => {
     expect(toSafeHoldingRows()).toEqual([])

@@ -8,11 +8,13 @@ import {
   type SafeTransaction
 } from '@/types/safe'
 
-import { NETWORK } from '@/constant'
+import { NETWORK, currentChainId } from '@/constant'
 import { formatEtherUtil, tokenSymbol } from '@/utils/tokens/metadata'
+import { assetIdOfAddress, type AssetId } from '@/utils/tokens/assets'
+import { isAcceptedAsset } from '@/utils/tokens/assetRecognition'
 import { type DecodedCall } from '@/types'
 import type { SafeIncomingTransfer } from '@/types'
-import { formatToken } from '@/utils/format'
+import { formatAddress, formatToken } from '@/utils/format'
 import { normalizeSafeAddress } from '@/utils/safe/address'
 
 /**
@@ -179,13 +181,32 @@ export const getExecutedErc20TransferTokenAddress = (
   }
 }
 
-export const formatSafeTransferAmount = (transfer: SafeIncomingTransfer): string => {
+/**
+ * The token a deposit names. A contract the Safe never acquired through a swap is
+ * shown by its address: its self-declared name is untrusted and often a phishing lure.
+ */
+export const safeTransferTokenLabel = (
+  transfer: SafeIncomingTransfer,
+  swapped: ReadonlySet<AssetId> = new Set(),
+  chainId = currentChainId
+): string | undefined => {
+  if (transfer.type !== 'ERC20_TRANSFER' || !transfer.tokenInfo) return undefined
+  return transfer.tokenAddress &&
+    !isAcceptedAsset(assetIdOfAddress(transfer.tokenAddress, chainId), swapped)
+    ? formatAddress(transfer.tokenAddress)
+    : transfer.tokenInfo.symbol
+}
+
+export const formatSafeTransferAmount = (
+  transfer: SafeIncomingTransfer,
+  swapped?: ReadonlySet<AssetId>
+): string => {
   if (transfer.type === 'ERC721_TRANSFER') {
     return 'NFT'
   }
   if (transfer.type === 'ERC20_TRANSFER' && transfer.tokenInfo) {
     const amount = formatUnits(BigInt(transfer.value), transfer.tokenInfo.decimals)
-    return formatToken(amount, transfer.tokenInfo.symbol, { maxDecimals: 4 })
+    return formatToken(amount, safeTransferTokenLabel(transfer, swapped)!, { maxDecimals: 4 })
   }
   if (transfer.type === 'ERC20_TRANSFER') return 'Token amount unavailable'
   // ETHER_TRANSFER - Use existing formatEtherUtil from constantUtil

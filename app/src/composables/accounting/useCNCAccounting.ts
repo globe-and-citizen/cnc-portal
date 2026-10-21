@@ -67,6 +67,8 @@ import {
 import { prepareSafeExchanges } from '@/utils/accounting/safeExchanges'
 import { attachSwapFees, swapFeeTargets } from '@/utils/accounting/swapFees'
 import { useSwapFeeEvidence } from './useSwapFeeEvidence'
+import { withoutUnrecognizedMovements } from '@/utils/accounting/unrecognizedAssets'
+import { swappedAssets } from '@/utils/tokens/assetRecognition'
 
 /** Safe Transaction Service page size; every page is loaded before assembly. */
 const SAFE_PAGE_SIZE = 500
@@ -189,9 +191,12 @@ export function useCNCAccounting(
   }))
 
   const provisionalDrafts = computed(() => buildCncJournalEntryDrafts(baseInput.value))
+  const recognized = computed(() =>
+    withoutUnrecognizedMovements(provisionalDrafts.value, safeAddress.value)
+  )
   const swapFees = useSwapFeeEvidence(() => swapFeeTargets(provisionalDrafts.value))
   const historicalTargets = computed(() =>
-    accountingValuation.historicalRateTargets(provisionalDrafts.value)
+    accountingValuation.historicalRateTargets(recognized.value.drafts)
   )
   const assetMarkets = useGetAssetMarketsQuery(
     () => coinGeckoRateTargets(historicalTargets.value).assets,
@@ -210,15 +215,16 @@ export function useCNCAccounting(
   // Native (POL/ETH) is valued from the immutable UTC transaction-date snapshot.
   // Stablecoins retain their $1 peg and SHER retains the multiplier policy applied
   // by `buildCncJournalEntryDrafts`. Missing market data stamps a zero rate but never
-  // removes the evidenced token movement; completeness reports the gap.
+  // removes the evidenced movement of an accepted asset; completeness reports the gap.
+  // Safe movements of contracts never acquired through a Safe swap are set aside.
   // Mapper-provided instances are accepted only when they name a known company
   // deployment. Receipt Transfer logs may complete a missing instance; activity
   // order and unrelated historical deployments are never used as a fallback.
   const drafts = computed(() =>
     attachSwapFees(
       options.rateOfRecord
-        ? provisionalDrafts.value
-        : accountingValuation.applyHistoricalRates(provisionalDrafts.value, rateOfRecord),
+        ? recognized.value.drafts
+        : accountingValuation.applyHistoricalRates(recognized.value.drafts, rateOfRecord),
       swapFees.verifiedFees.value
     )
   )
@@ -271,7 +277,9 @@ export function useCNCAccounting(
     accountingQuerySource(
       'sher-multiplier',
       'SHER multiplier',
-      () => Boolean(routerAddress.value),
+      () =>
+        Boolean(routerAddress.value) &&
+        provisionalDrafts.value.some((entry) => entry.token === 'sher'),
       routerMultiplier
     ),
     accountingQuerySource(
@@ -325,6 +333,11 @@ export function useCNCAccounting(
 
   return {
     journal: computed(() => accounting.value.journal),
+    ignoredMovements: computed(() => recognized.value.ignored),
+    /** Assets the Safe acquired through its own swaps; unset until the Safe history loads. */
+    swappedAssets: computed(() =>
+      safeAssetTransfers.data.value ? swappedAssets(provisionalDrafts.value) : undefined
+    ),
     status,
     refetch,
     swapFees: swapFees.data,

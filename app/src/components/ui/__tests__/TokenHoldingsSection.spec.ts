@@ -21,6 +21,27 @@ describe('TokenHoldingsSection', () => {
     wrapper.unmount()
   })
 
+  it('lists unrecognized tokens apart by contract without showing their self-declared name', () => {
+    const [row] = tokenHoldingRows(mockUseContractBalance.data.value)
+    const airdrop = {
+      ...row!,
+      name: 'Claim your SHIB reward',
+      token: { name: 'Claim your SHIB reward', symbol: 'SWAP ✅ t .me/s/sol_shiba' },
+      address: '0x7525A2c3E099F451830E31684736bB1B92C16D34',
+      quantity: '1'
+    }
+    const wrapper = mount(TokenHoldingsSection, {
+      props: { rows: [], unrecognizedRows: [airdrop] }
+    })
+
+    const section = wrapper.get('[data-test="safe-unrecognized-assets"]')
+    expect(section.text()).toContain('Unrecognized tokens (1)')
+    expect(section.text()).toContain(airdrop.address)
+    expect(section.text()).not.toContain('sol_shiba')
+    expect(wrapper.find('[data-test="safe-asset-valuation-warning"]').exists()).toBe(false)
+    wrapper.unmount()
+  })
+
   it('renders table with a USDC row and correct values', () => {
     const wrapper = mount(TokenHoldingsSection, {
       props: { rows: tokenHoldingRows(mockUseContractBalance.data.value) },

@@ -114,7 +114,7 @@ Runs of at least three consecutive missing criteria use inclusive ranges with fu
 | US-EXP-006  | 🚧 Partial    | ⚠️ 1/8          | `AC-US-EXP-006-01`–`AC-US-EXP-006-05`, `AC-US-EXP-006-07`, `AC-US-EXP-006-08`     |
 | US-SAFE-001 | 🚧 Partial    | ⚠️ 8/11         | `AC-US-SAFE-001-02`, `AC-US-SAFE-001-03`, `AC-US-SAFE-001-06`                     |
 | US-SAFE-002 | 🧪 Mocked     | ⚠️ 10/13 met    | `AC-US-SAFE-002-01`, `AC-US-SAFE-002-02`, `AC-US-SAFE-002-09`                     |
-| US-SAFE-003 | 📋 Planned    | ⚠️ 6/11         | `AC-US-SAFE-003-01`–`AC-US-SAFE-003-03`, `AC-US-SAFE-003-06`, `AC-US-SAFE-003-07` |
+| US-SAFE-003 | 📋 Planned    | ⚠️ 7/12         | `AC-US-SAFE-003-01`–`AC-US-SAFE-003-03`, `AC-US-SAFE-003-06`, `AC-US-SAFE-003-07` |
 | US-SAFE-004 | 📋 Planned    | ⚠️ 4/9          | `AC-US-SAFE-004-01`–`AC-US-SAFE-004-04`, `AC-US-SAFE-004-07`                      |
 | US-SAFE-005 | 🧪 Mocked     | ✅ 9/9          | —                                                                                 |
 | US-SAFE-006 | 🧪 Mocked     | ✅ 10/10        | —                                                                                 |
@@ -962,6 +962,8 @@ movement across the participating stories.
 - [x] `AC-US-SAFE-003-08` A rejected or failed proposal leaves Safe balances unchanged.
 - [x] `AC-US-SAFE-003-09` An archived company cannot initiate a Safe deposit or transfer.
 - [x] `AC-US-SAFE-003-11` An unavailable discovered balance or valuation keeps the wallet total explicitly incomplete.
+- [x] `AC-US-SAFE-003-12` A token the Safe did not acquire through one of its own swaps, such as an unsolicited airdrop, is listed apart by
+      contract address and excluded from the wallet total, the Safe P&L and the books; zero-value transfers are ignored.
 
 ### Test Coverage
 
@@ -979,6 +981,7 @@ movement across the participating stories.
 | `AC-US-SAFE-003-09`  | `PS-BROWSER`          | Mocked browser            | ✅ Met          |
 | `AC-US-SAFE-003-10`  | `PS-FRONTEND`         | Frontend                  | ✅ Met          |
 | `AC-US-SAFE-003-11`  | `PS-FRONTEND`         | Frontend                  | ✅ Met          |
+| `AC-US-SAFE-003-12`  | `PS-FRONTEND`         | Frontend                  | ✅ Met          |
 
 **Accounting:** A confirmed transfer is classified as
 [`UC-BANK-02`](../accounting/journal-entry-catalogue.md#uc-bank-02--external-cash-receipt),
@@ -1254,16 +1257,19 @@ movement across the participating stories.
 ## Discovered Safe assets
 
 Safe balances request the Gateway's spam filter with `exclude_spam=true&trusted=false`. Every returned balance remains visible; the frontend
-has no manual contract blacklist. Transaction Service histories retain the provider's movements, including unknown or untrusted contracts.
-These can also reach Accounting or leave explicit metadata and valuation gaps. See
+has no manual contract blacklist. Anyone can still send any token to the Safe, so only configured tokens and tokens the Safe acquired
+through one of its own swaps count as company assets. Any other token, such as an unsolicited airdrop, is listed apart under a collapsed
+`Unrecognized tokens` section that shows only its contract address and quantity, never its self-declared name, and warns not to interact
+with it. Such a token is excluded from the wallet total, the Safe P&L and the books. The Deposits list hides zero-value transfers used for
+address poisoning and names an unrecognized token by its contract address. See
 [provider filtering](../../implementation/client-data-access/README.md#safe-provider-filtering) and
-[Safe pagination and metadata unit tests](../../../app/src/queries/__tests__/safe.queries.spec.ts). Live product review remains pending.
+[Safe portfolio tests](../../../app/src/utils/safe/__tests__/portfolio.spec.ts).
 
-The Safe account displays only the balances returned by the Safe Client Gateway in one holdings table, including assets acquired outside CNC
-such as WETH. Provider order, token names, symbols, decimals and logos are retained. Returned zero balances remain visible; absent tokens
-are not inserted from the CNC supported-token list. Before a response is available, no placeholder currencies are shown; an empty response
-produces an empty holdings table. Contract identity is preserved by network and address rather than symbol, so WETH and AWETH remain
-separate assets.
+The Safe account displays only the balances returned by the Safe Client Gateway in one holdings table, including assets the Safe acquired
+through swaps outside CNC, such as WETH. Provider order, token names, symbols, decimals and logos are retained. Returned zero balances
+remain visible; absent tokens are not inserted from the CNC supported-token list. Before a response is available, no placeholder currencies
+are shown; an empty response produces an empty holdings table. Contract identity is preserved by network and address rather than symbol, so
+WETH and AWETH remain separate assets.
 
 A token recognized elsewhere in CNC, such as USDT/USDT0, appears only when returned by the Gateway. A missing market price does not hide a
 returned token. This read-only display does not add that token to payment allowlists or change its Accounting identity.
@@ -1283,15 +1289,17 @@ neutral initial.
 
 Each holding retains its currency, exact quantity, contract identity, and available current valuation in the selected display currency
 independently of the tokens allowed in CNC payment forms. An unavailable balance or price remains explicit, including while the first
-balance read is pending. A missing or zero provider price for a nonzero holding makes its fiat total incomplete. A confirmed zero balance
-has zero value without requiring a price. Token discovery does not enable an asset for payroll, deposits, or transfers proposed by CNC.
+balance read is pending. A missing or zero provider price for a nonzero company holding makes its fiat total incomplete; an unrecognized
+token is listed apart instead and never valued. A confirmed zero balance has zero value without requiring a price. Token discovery does not
+enable an asset for payroll, deposits, or transfers proposed by CNC.
 
 The portfolio refreshes periodically; the holdings section has no manual refresh button. Failed balance reads show a loading-error message;
 the valuation warning is reserved for returned holdings whose values are unavailable. Provider failures remain retryable. The Safe Client
-Gateway supplies token quantities, current prices and values directly in the selected fiat currency. A nonzero holding with a zero or
-missing provider price remains explicitly unpriced; no value is invented. One Gateway item becomes one table row, and the overview reads the
-provider total after checking completeness, without rebuilding display rows. The overview retains its USD total, so a non-USD display uses
-an additional fiat query. See the [Accounting read model](../../implementation/accounting-read-model/README.md) for swap treatment.
+Gateway supplies token quantities, current prices and values directly in the selected fiat currency. A nonzero recognized holding with a
+zero or missing provider price remains explicitly unpriced; no value is invented. One Gateway item becomes one table row, and the overview
+reads the provider total after checking completeness, without rebuilding display rows. The overview retains its USD total, so a non-USD
+display uses an additional fiat query. See the [Accounting read model](../../implementation/accounting-read-model/README.md) for swap
+treatment.
 
 Safe balances refresh approximately every minute while their page is active. Complete transfer histories and Safe information refresh
 approximately every five minutes; pending transactions refresh every minute when the queue contains an unexecuted transaction and every five

@@ -61,7 +61,11 @@
           Know what is available
         </h2>
       </div>
-      <SafeBalanceSection :key="safeAddress" :address="safeAddress">
+      <SafeBalanceSection
+        :key="safeAddress"
+        :address="safeAddress"
+        :swapped-assets="accounting.swappedAssets.value"
+      >
         <template #pnl>
           <SafePnlSummary :pnl="pnl.data.value" fees-href="#safe-swap-costs" @retry="refreshPnl" />
         </template>
@@ -83,6 +87,7 @@
         <div class="min-w-0 xl:col-span-3">
           <TokenHoldingsSection
             :rows="holdingRows"
+            :unrecognized-rows="unrecognizedRows"
             :is-loading="isLoadingHoldings"
             :is-incomplete="isIncomplete"
             :has-error="!!balancesError"
@@ -115,7 +120,10 @@
       </div>
       <div class="space-y-6">
         <SafeTransactions :address="safeAddress" />
-        <SafeIncomingTransactions :address="safeAddress" />
+        <SafeIncomingTransactions
+          :address="safeAddress"
+          :swapped-assets="accounting.swappedAssets.value"
+        />
       </div>
     </section>
   </main>
@@ -203,7 +211,7 @@ import SafeBalanceSection from '@/components/sections/SafeView/SafeBalanceSectio
 import SafeOwnersCard from '@/components/sections/SafeView/SafeOwnersCard.vue'
 import TokenHoldingsSection from '@/components/ui/TokenHoldingsSection.vue'
 import { useGetSafeBalancesQuery } from '@/queries/safeClient.queries'
-import { toSafeHoldingRows } from '@/utils/safe/portfolio'
+import { partitionSafeHoldings, toSafeHoldingRows } from '@/utils/safe/portfolio'
 import { useStorage } from '@vueuse/core'
 import SafeTransactions from '@/components/sections/SafeView/SafeTransactions.vue'
 import SafeIncomingTransactions from '@/components/sections/SafeView/SafeIncomingTransactions.vue'
@@ -263,8 +271,14 @@ const pnl = useSafePnl(
   safeAddress
 )
 const refreshPnl = () => Promise.allSettled([accounting.refetch(), pnl.refetch()])
+const holdings = computed(() =>
+  partitionSafeHoldings(balances.value, accounting.swappedAssets.value)
+)
 const holdingRows = computed(() =>
-  withSafePnlRows(toSafeHoldingRows(balances.value, currency.value.code), pnl.data.value)
+  withSafePnlRows(toSafeHoldingRows(holdings.value.holdings, currency.value.code), pnl.data.value)
+)
+const unrecognizedRows = computed(() =>
+  toSafeHoldingRows({ fiatTotal: '0', items: holdings.value.unrecognized })
 )
 const isIncomplete = computed(() => holdingRows.value.some((row) => row.balance === null))
 

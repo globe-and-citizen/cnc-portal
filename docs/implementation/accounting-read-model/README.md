@@ -136,13 +136,22 @@ ordering, and `InvestorV1` is used only when no current `Investor` exists.
 
 ### Safe assets and exchanges
 
-Safe queries retain provider movements without local contract exclusions before source mapping and historical-rate target construction.
-Unknown, untrusted and spam-like events may therefore enter the existing mapping or create explicit completeness gaps. The Gateway's balance
-spam filter does not apply to this Transaction Service feed. See
-[provider filtering](../client-data-access/README.md#safe-provider-filtering). Existing exchange classification, missing-metadata and
-historical-valuation rules apply to every retained movement. Executable evidence:
-[Safe pagination and metadata unit tests](../../../app/src/queries/__tests__/safe.queries.spec.ts) and
-[Safe source-mapping tests](../../../app/src/utils/accounting/__tests__/safe.spec.ts).
+Safe queries retain provider movements without local contract exclusions before source mapping and historical-rate target construction. The
+Gateway's balance spam filter does not apply to this Transaction Service feed. The adapter skips zero-value transfers, which move nothing
+and are the usual address-poisoning vector. The data layer then passes the provisional drafts through
+[`withoutUnrecognizedMovements`](../../../app/src/utils/accounting/unrecognizedAssets.ts) before historical-rate targets, receipt evidence
+and assembly: a Safe-sourced movement of a contract that the Safe never acquired through one of its own `SAFE-SWAP` exchanges is set aside.
+Native and configured tokens are always kept, and other sources only emit their own contracts' movements. An airdrop therefore creates no
+rate request, rate gap or classification gap. `useCNCAccounting` exposes the set-aside drafts as `ignoredMovements`, which the Accounting
+route counts in a note above ready reports, and the swapped set as `swappedAssets`, unset until the Safe history loads. See
+[provider filtering](../client-data-access/README.md#safe-provider-filtering). Executable evidence:
+[Safe pagination and metadata unit tests](../../../app/src/queries/__tests__/safe.queries.spec.ts),
+[Safe source-mapping tests](../../../app/src/utils/accounting/__tests__/safe.spec.ts),
+[Safe transfer adapter tests](../../../app/src/utils/accounting/__tests__/toSafeTransferRows.spec.ts) and
+[unrecognized movement tests](../../../app/src/utils/accounting/__tests__/unrecognizedAssets.spec.ts).
+
+The SHER multiplier read is a material source only when a SafeDepositRouter is configured and the provisional drafts contain a SHER
+movement. A team without SHER activity therefore does not wait on a router read that cannot affect any posting.
 
 The authoritative Safe source is `/transfers/`, paginated to exhaustion, deduplicated by service `transferId`, and refreshed approximately
 every five minutes. It includes real ERC-20 `transferFrom` settlements that cannot be inferred from the Safe multisig call's top-level

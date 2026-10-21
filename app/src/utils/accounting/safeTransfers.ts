@@ -17,9 +17,12 @@ function logIndexOf(transferId: string | undefined): number | undefined {
   return match ? Number(match[1]) : undefined
 }
 
-/** A SHER value transfer carries no cash; skip NFT moves entirely. */
+/**
+ * A SHER value transfer carries no cash; skip NFT moves entirely. A zero-value
+ * transfer moves nothing and is the usual address-poisoning vector, so it is skipped too.
+ */
 function isMonetaryTransfer(t: SafeIncomingTransfer): boolean {
-  return t.type === 'ETHER_TRANSFER' || t.type === 'ERC20_TRANSFER'
+  return (t.type === 'ETHER_TRANSFER' || t.type === 'ERC20_TRANSFER') && !/^0+$/.test(t.value)
 }
 
 /**

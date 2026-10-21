@@ -40,6 +40,16 @@
       </template>
     </UAlert>
 
+    <UAlert
+      v-if="state === 'ready' && ignoredMovements.length"
+      color="neutral"
+      variant="soft"
+      icon="i-heroicons-information-circle"
+      :title="`${ignoredMovements.length} unrecognized token movement${ignoredMovements.length === 1 ? '' : 's'} left out of the books`"
+      description="Tokens the Safe received without acquiring them through one of its own swaps, such as unsolicited airdrops, are not company assets."
+      data-test="accounting-ignored-assets"
+    />
+
     <RouterView v-if="state === 'ready'" />
   </div>
 </template>
@@ -59,6 +69,7 @@ const route = useRoute()
 const accounting = provideAccounting(() => (route.params.id as string) ?? null)
 const state = computed(() => accounting.status.state.value)
 const diagnostics = computed(() => accounting.status.diagnostics.value)
+const ignoredMovements = computed(() => accounting.ignoredMovements.value)
 const sourceLabels = computed(
   () => new Map(accounting.status.sources.value.map(({ source, label }) => [source, label]))
 )

@@ -115,7 +115,10 @@ fiat-number validation and exact base-unit conversion. The table mapping preserv
 insertion, filtering or regrouping. Exact quantities pass through the canonical formatter; compact labels retain four decimals and identify
 positive sub-precision balances as `<0.0001`. Precise price and value details accompany rounded labels; positive fiat values that round to
 zero display as less than one cent. Missing quantities and nonzero unpriced holdings keep the Safe completeness-checked total unavailable.
-Provider-side filtering and the absence of a local blacklist are documented in
+`isUnrecognizedSafeHolding` applies the shared asset acceptance rule to one Gateway item given the Safe's swapped assets,
+`partitionSafeHoldings` splits the response into holdings and unrecognized tokens, and `getSafeFiatTotal` checks completeness on company
+holdings only and removes unrecognized provider values from the total. The holdings component takes the unrecognized rows separately and
+lists them by contract address and quantity only. Provider-side filtering and the acceptance rule are documented in
 [Client Data Access](../client-data-access/README.md#safe-provider-filtering).
 
 [CoinGecko response interpretation](../../../app/src/utils/tokens/coingecko.ts) verifies the Polygon contract before accepting coin

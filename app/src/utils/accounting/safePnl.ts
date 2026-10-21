@@ -3,6 +3,8 @@ import { parseUnits } from 'viem'
 import type { SafeClientBalances } from '@/types/safe'
 import { currentChainId } from '@/constant'
 import { assetIdOfAddress, type AssetId, type AssetMetadata } from '@/utils/tokens/assets'
+import { isUnrecognizedSafeHolding } from '@/utils/safe/portfolio'
+import { swappedAssets } from '@/utils/tokens/assetRecognition'
 import { currencySymbol } from './presenter'
 import type { JournalEntry } from './types'
 import { isUsdPegged } from './toUsd'
@@ -113,7 +115,15 @@ export function safeTreasuryPnl(
     else if (fee !== 0n) attributable = false
   }
   const observed = new Map<AssetId, SafeClientBalances['items'][number]>()
+  const swapped = swappedAssets(
+    journal.flatMap((entry) =>
+      entry.lines.flatMap((line) =>
+        line.movement ? [{ useCase: entry.useCase, token: line.movement.token }] : []
+      )
+    )
+  )
   for (const item of balances?.items ?? []) {
+    if (isUnrecognizedSafeHolding(item, ready ? swapped : undefined, chainId)) continue
     const token =
       item.tokenInfo.type === 'ERC20' ? assetIdOfAddress(item.tokenInfo.address, chainId) : 'native'
     if (observed.has(token)) attributable = false

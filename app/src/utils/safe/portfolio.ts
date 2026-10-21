@@ -1,12 +1,13 @@
 /** Pure adapters for the Safe Client Gateway response. */
 import { formatUnits } from 'viem'
-import { SUPPORTED_TOKENS } from '@/constant'
+import { SUPPORTED_TOKENS, currentChainId } from '@/constant'
 import type { TokenOption } from '@/types'
 import type { SafeClientBalance, SafeClientBalances } from '@/types/safe'
 import type { TokenHoldingRow } from '@/utils/tokens/holdings'
 import { formatCurrency, formatExactNumber, formatNumber } from '@/utils/format'
 import { formatCurrencyShort } from '@/utils/currency/display'
-import { assetLogoUri } from '@/utils/tokens/assets'
+import { assetIdOfAddress, assetLogoUri, type AssetId } from '@/utils/tokens/assets'
+import { isAcceptedAsset } from '@/utils/tokens/assetRecognition'
 
 function parseFiatAmount(value: string | null): number | null {
   if (value === null || !value.trim()) return null
@@ -30,6 +31,36 @@ function formatFiatValue(value: number, currency: string): string {
   return value > 0 && label === formatCurrencyShort(0, currency)
     ? '<' + formatCurrency(0.01, { currency })
     : label
+}
+
+/**
+ * A held contract the Safe never acquired through a swap is not a company asset.
+ * Until the Safe history is known, only a contract the Gateway prices at exactly
+ * zero is set apart, so a swapped asset never disappears while history loads.
+ */
+export function isUnrecognizedSafeHolding(
+  item: SafeClientBalance,
+  swapped?: ReadonlySet<AssetId>,
+  chainId = currentChainId
+): boolean {
+  const { tokenInfo } = item
+  if (tokenInfo.type !== 'ERC20') return false
+  const token = assetIdOfAddress(tokenInfo.address, chainId)
+  if (swapped) return !isAcceptedAsset(token, swapped)
+  return !isAcceptedAsset(token, new Set()) && parseFiatAmount(item.fiatConversion) === 0
+}
+
+/** Wallet holdings and unrecognized tokens, which are shown apart and never valued. */
+export function partitionSafeHoldings(
+  data?: SafeClientBalances,
+  swapped?: ReadonlySet<AssetId>
+): { holdings?: SafeClientBalances; unrecognized: SafeClientBalance[] } {
+  if (!data) return { unrecognized: [] }
+  const unrecognized = data.items.filter((item) => isUnrecognizedSafeHolding(item, swapped))
+  return {
+    holdings: { ...data, items: data.items.filter((item) => !unrecognized.includes(item)) },
+    unrecognized
+  }
 }
 
 /** Known provider valuation, including portfolios with other unpriced holdings. */
@@ -82,11 +113,15 @@ export function toSafeHoldingRows(
   })
 }
 
-/** Read the provider total only when every returned holding can be valued. */
-export function getSafeFiatTotal(data?: SafeClientBalances): number | undefined {
+/** The provider total without unrecognized tokens, only when every company holding can be valued. */
+export function getSafeFiatTotal(
+  data?: SafeClientBalances,
+  swapped?: ReadonlySet<AssetId>
+): number | undefined {
   if (!data) return undefined
   if (data.items.length === 0) return 0
-  const complete = data.items.every((item) => {
+  const { holdings, unrecognized } = partitionSafeHoldings(data, swapped)
+  const complete = holdings!.items.every((item) => {
     const quantity = getTokenQuantity(item)
     const price = parseFiatAmount(item.fiatConversion)
     return (
@@ -95,7 +130,10 @@ export function getSafeFiatTotal(data?: SafeClientBalances): number | undefined 
         (price !== null && price > 0 && parseFiatAmount(item.fiatBalance) !== null))
     )
   })
-  return complete ? getSafeValuedFiatTotal(data) : undefined
+  const total = complete ? getSafeValuedFiatTotal(data) : undefined
+  return total === undefined
+    ? undefined
+    : unrecognized.reduce((sum, item) => sum - (parseFiatAmount(item.fiatBalance) ?? 0), total)
 }
 
 /** Transfer choices remain restricted to configured payment contracts. */

@@ -185,8 +185,10 @@ import { formatCurrency, formatUsd } from '@/utils/format'
 import { signerRoleCopy } from '@/utils/safe/signerRole'
 import { useGetSafeBalancesQuery } from '@/queries/safeClient.queries'
 import { getSafeFiatTotal, toSafeTransferTokens } from '@/utils/safe/portfolio'
+import type { AssetId } from '@/utils/tokens/assets'
 
-const props = defineProps<{ address: Address }>()
+/** `swappedAssets`: assets the Safe acquired through its own swaps; others stay out of the total. */
+const props = defineProps<{ address: Address; swappedAssets?: ReadonlySet<AssetId> }>()
 const chainId = useChainId()
 const currency = useStorage('currency', { code: 'USD', name: 'US Dollar', symbol: '$' })
 const { isWriteDisabled } = useTeamWriteGuard()
@@ -205,14 +207,14 @@ const {
 } = useGetSafeBalancesQuery({
   pathParams: { safeAddress: () => props.address, fiatCode: () => currency.value.code }
 })
-const totalUsd = computed(() => {
-  const total = getSafeFiatTotal(balances.value)
-  return balanceError.value || (total === undefined && balances.value)
+const companyTotal = (data = balances.value) => getSafeFiatTotal(data, props.swappedAssets)
+const totalUsd = computed(() =>
+  balanceError.value || (companyTotal() === undefined && balances.value)
     ? 'Incomplete'
-    : formatUsd(total)
-})
+    : formatUsd(companyTotal())
+)
 const totalLocal = computed(() =>
-  formatCurrency(getSafeFiatTotal(localBalances.value), { currency: currency.value.code })
+  formatCurrency(companyTotal(localBalances.value), { currency: currency.value.code })
 )
 const {
   data: safeInfo,

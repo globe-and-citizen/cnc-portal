@@ -106,6 +106,27 @@ describe('Safe treasury P&L from canonical postings', () => {
     expect(up.realized).toBe(0n)
     expect(up.basis).toBe(usd(20))
   })
+  it('ignores an unsolicited token held by the Safe that no price source knows', () => {
+    const journal = finalizeJournalEntryDrafts(drafts(history().slice(0, 3), 2000)).journal
+    const data = balances('0.01', '20')
+    data.items.push({
+      tokenInfo: {
+        type: 'ERC20',
+        address: '0x7525A2c3E099F451830E31684736bB1B92C16D34',
+        name: 'Claim your SHIB reward',
+        symbol: 'SWAP ✅ t .me/s/sol_shiba',
+        decimals: 0,
+        logoUri: null
+      },
+      balance: '1',
+      fiatConversion: '0',
+      fiatBalance: '0'
+    })
+    const result = safeTreasuryPnl(journal, data, true)
+    expect(result.complete).toBe(true)
+    expect(result.total).toBe(0n)
+    expect(result.positions.some((row) => row.symbol.startsWith('SWAP'))).toBe(false)
+  })
   it('[AC-US-SAFE-002-12] withholds totals on quantity mismatch, missing rates and incomplete history', () => {
     const journal = finalizeJournalEntryDrafts(drafts(history().slice(0, 3), 2000)).journal
     for (const result of [
