@@ -2,7 +2,7 @@
 
 **Scope:** Shared client-side filtering, pagination, and transaction-detail presentation for account, credit, and shareholder histories.
 
-**Last verified:** 2026-09-27
+**Last verified:** 2026-10-21
 
 ## Consumers
 
@@ -17,6 +17,9 @@
 ```mermaid
 flowchart LR
   views[Feature views] --> histories[Transaction history sections]
+  feeds[Contract event feeds] --> histories
+  feeds --> completeness[Completeness status and retry]
+  completeness --> histories
   histories --> dateFilter[DatePicker range filter]
   histories --> tableState[useTransactionTable]
   tableState --> pagination[Route-bound pagination]
@@ -29,6 +32,10 @@ flowchart LR
 
 - History sections retain ownership of their query data; `useTransactionTable` only derives filtered, grouped, and paginated rows.
 - Contract activity reaches history sections through the shared RPC-log feeds; table filtering does not choose or replace that source.
+- Bank, Cash Remuneration, and Credit history sections consume the feed's `gaps` and `timestampGaps` alongside query errors. They show an
+  explicit incomplete or unavailable state and expose a scoped retry action instead of treating missing events as an empty history.
+- A partial feed keeps the successfully loaded rows visible while warning that the displayed history may be incomplete. A refresh failure
+  with cached rows does not erase those rows.
 - History sections bind the shared `DatePicker` directly to a `{ start, end } | undefined` range. Their stable storage keys and date-filter
   test selectors are retained.
 - The `All time` preset bypasses date filtering instead of imposing an end-of-browser-day cutoff. This keeps the full ledger visible when a
@@ -43,7 +50,7 @@ flowchart LR
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `bbaee0ff26342858a52d616f26443cbbf3b4bcfc`
+**Implementation evidence reviewed against:** `e7a2bedd81eef36d7c1c7ff14910680358638157`
 
 - [Shared table state](../../../app/src/composables/transactions/useTransactionTable.ts)
 - [Shared table-state tests](../../../app/src/composables/transactions/__tests__/useTransactionTable.spec.ts)
@@ -55,6 +62,10 @@ flowchart LR
   [Cash Remuneration history](../../../app/src/components/sections/CashRemunerationView/CashRemunerationTransactions.vue)
 - [Credit Account history](../../../app/src/components/sections/CommunityCreditView/CreditAccountTransactions.vue) and
   [investor history](../../../app/src/components/sections/SherTokenView/InvestorsTransactions.vue)
+- [Transaction history availability alert](../../../app/src/components/sections/TransactionHistoryStatusAlert.vue)
+- [Bank, Cash Remuneration, and Credit history tests](../../../app/src/components/sections/BankView/__tests__/BankTransactions.spec.ts),
+  [Cash Remuneration tests](../../../app/src/components/sections/CashRemunerationView/__tests__/CashRemunerationTransactions.spec.ts), and
+  [Credit history tests](../../../app/src/components/sections/CommunityCreditView/__tests__/CreditAccountTransactions.spec.ts)
 - [Investor history integration tests](../../../app/src/components/sections/SherTokenView/__tests__/InvestorsTransaction.spec.ts) and
   [investor history fallback tests](../../../app/src/components/sections/SherTokenView/__tests__/InvestorsTransaction.advanced.spec.ts)
 - [Shared transaction detail slide-over](../../../app/src/components/ui/TransactionDetailSlideover.vue)

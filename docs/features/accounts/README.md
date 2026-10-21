@@ -300,7 +300,7 @@ remain as recorded above.
 #### Edge & Error Cases
 
 - [x] `AC-US-BANK-003-07` A history filter with no matching events returns an empty result.
-- [ ] `AC-US-BANK-003-08` A failed history read is distinguishable from a successfully loaded empty history.
+- [x] `AC-US-BANK-003-08` A failed history read is distinguishable from a successfully loaded empty history.
 
 ### Test Coverage
 
@@ -1138,7 +1138,6 @@ movement across the participating stories.
 - New Bank, Expense, and Safe movement-history criteria require shared direct-movement evidence and eventless movement coverage. Existing
   history criteria and their test references retain their current scope; the new criteria have no representative proof yet.
 
-- Bank history does not distinguish a failed event read from a successfully loaded empty history (`US-BANK-003`).
 - A one-time Expense approval can spend an unsupported ERC-20 token held by the contract (`US-EXP-002`).
 - Pausing the Expense Account does not prevent spending (`US-EXP-002`).
 - A wallet-origin direct ERC-20 transfer to Expense emits no Expense deposit event and is absent from the current incoming-transfer feed,
@@ -1153,7 +1152,7 @@ movement across the participating stories.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `5edff61619fd6c9d762a6e6f4b9613b38717121d`
+**Implementation evidence reviewed against:** `e7a2bedd81eef36d7c1c7ff14910680358638157`
 
 - [Bank deposit modal](../../../app/src/components/sections/BankView/forms/DepositModal.vue),
   [Bank transfer modal](../../../app/src/components/sections/BankView/forms/TransferModal.vue),

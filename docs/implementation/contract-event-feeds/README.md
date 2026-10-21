@@ -3,7 +3,7 @@
 **Scope:** Shared client runtime for reconstructing Bank, Expense, Payroll, Community Credit, Investor, Safe Deposit Router, and Vesting
 activity directly from on-chain RPC logs.
 
-**Last verified:** 2026-09-11
+**Last verified:** 2026-10-21
 
 ## Consumers
 
@@ -28,6 +28,7 @@ flowchart LR
   feeds --> histories[Transaction histories]
   feeds --> accounting[Accounting assembly]
   gaps --> accounting
+  gaps --> histories
 ```
 
 ## Main Flow
@@ -64,6 +65,8 @@ flowchart LR
   state.
 - A mined block timestamp is immutable and cached by network plus block number. Event feeds never substitute zero when that timestamp cannot
   be resolved; they withhold the affected log and expose its transaction hash, block number, and failure reason as a timestamp gap.
+- Standalone transaction histories expose scan and timestamp gaps as an incomplete-history warning with a scoped retry action; they do not
+  present a partial feed as a confirmed complete history.
 - An unavailable public client fails the event query instead of returning an empty feed that is indistinguishable from a successful scan.
 - The current Bank remains a fallback target for companies without Officer history.
 - Every supported Bank generation contributes its fees: V0/V0.1 through local `FeePaid` events and V1/V2 through their version-specific
@@ -73,7 +76,7 @@ flowchart LR
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `5edff61619fd6c9d762a6e6f4b9613b38717121d`
+**Implementation evidence reviewed against:** `e7a2bedd81eef36d7c1c7ff14910680358638157`
 
 - [Shared RPC log scanner](../../../app/src/composables/eventsViaLogs.ts),
   [immutable block timestamp query](../../../app/src/queries/blockTimestamp.queries.ts), and
@@ -90,7 +93,8 @@ flowchart LR
 - [Bank-generation target tests](../../../app/src/composables/bank/__tests__/useIncomingBankTokenTransfersViaLogs.spec.ts) and
   [Bank event-feed tests](../../../app/src/composables/bank/__tests__/useBankEventsViaLogs.spec.ts),
   [Bank event-query tests](../../../app/src/composables/bank/__tests__/useBankEventsViaLogs.query.spec.ts), and
-  [shared scanner tests](../../../app/src/composables/__tests__/eventsViaLogs.spec.ts)
+  [shared scanner tests](../../../app/src/composables/__tests__/eventsViaLogs.spec.ts) and
+  [event-feed completeness tests](../../../app/src/composables/__tests__/eventFeedStatus.spec.ts)
 
 ## Related Documentation
 
