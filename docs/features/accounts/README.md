@@ -304,18 +304,18 @@ remain as recorded above.
 
 ### Test Coverage
 
-| Acceptance Criterion | Proof Strategy             | Current Evidence          | Status     |
-| -------------------- | -------------------------- | ------------------------- | ---------- |
-| `AC-US-BANK-003-01`  | `PS-CHAIN-INTEGRATED`      | Integrated E2E + Frontend | ✅ Met     |
-| `AC-US-BANK-003-02`  | `PS-CHAIN-INTEGRATED`      | Integrated E2E + Frontend | ✅ Met     |
-| `AC-US-BANK-003-03`  | `PS-BROWSER`               | Mocked browser + Frontend | ✅ Met     |
-| `AC-US-BANK-003-04`  | `PS-BROWSER`               | Mocked browser            | ✅ Met     |
-| `AC-US-BANK-003-05`  | `PS-FRONTEND`              | Frontend                  | ✅ Met     |
-| `AC-US-BANK-003-06`  | `PS-FRONTEND`              | Mocked browser + Frontend | ✅ Met     |
-| `AC-US-BANK-003-07`  | `PS-BROWSER`               | Mocked browser            | ✅ Met     |
-| `AC-US-BANK-003-08`  | `PS-BROWSER`               | None linked               | ❌ Missing |
-| `AC-US-BANK-003-09`  | `PS-BACKEND`               | None linked               | ❌ Missing |
-| `AC-US-BANK-003-09`  | `PS-FULL-STACK-INTEGRATED` | None linked               | ❌ Missing |
+| Acceptance Criterion | Proof Strategy             | Current Evidence          | Status          |
+| -------------------- | -------------------------- | ------------------------- | --------------- |
+| `AC-US-BANK-003-01`  | `PS-CHAIN-INTEGRATED`      | Integrated E2E + Frontend | ✅ Met          |
+| `AC-US-BANK-003-02`  | `PS-CHAIN-INTEGRATED`      | Integrated E2E + Frontend | ✅ Met          |
+| `AC-US-BANK-003-03`  | `PS-BROWSER`               | Mocked browser + Frontend | ✅ Met          |
+| `AC-US-BANK-003-04`  | `PS-BROWSER`               | Mocked browser            | ✅ Met          |
+| `AC-US-BANK-003-05`  | `PS-FRONTEND`              | Frontend                  | ✅ Met          |
+| `AC-US-BANK-003-06`  | `PS-FRONTEND`              | Mocked browser + Frontend | ✅ Met          |
+| `AC-US-BANK-003-07`  | `PS-BROWSER`               | Mocked browser            | ✅ Met          |
+| `AC-US-BANK-003-08`  | `PS-BROWSER`               | Frontend                  | ⚠️ Insufficient |
+| `AC-US-BANK-003-09`  | `PS-BACKEND`               | None linked               | ❌ Missing      |
+| `AC-US-BANK-003-09`  | `PS-FULL-STACK-INTEGRATED` | None linked               | ❌ Missing      |
 
 **Dependencies:** Current Bank contract and an available chain event provider
 
