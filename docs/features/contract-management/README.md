@@ -2,7 +2,7 @@
 
 **Scope:** The current-contract, campaign-management, and deployment-history journeys exposed by the portal
 
-**Last reviewed:** Not yet reviewed
+**Last reviewed:** 2026-10-21
 
 These acceptance criteria follow the
 [feature documentation review contract](../../platform/feature-specification-guide.md#human-review-contract).
@@ -375,7 +375,7 @@ Historical deployments preserve the same per-domain scenarios and UC selection a
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `5edff61619fd6c9d762a6e6f4b9613b38717121d`
+**Implementation evidence reviewed against:** `e411eba76955743b2c71538b1e47f77f56d780d8`
 
 - [Board reads](../../../app/src/composables/bod/reads.ts), [Board writes](../../../app/src/composables/bod/writes.ts),
   [shared contract reads](../../../app/src/composables/contracts/useContractReadData.ts), and
