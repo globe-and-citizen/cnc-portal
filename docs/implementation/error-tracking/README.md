@@ -2,7 +2,7 @@
 
 **Status:** Current
 
-**Last verified:** 2026-10-20
+**Last verified:** 2026-10-21
 
 **Scope:** Capture actionable frontend and backend failures in Sentry while keeping expected client responses and cancellations out of
 exception tracking.
@@ -73,7 +73,7 @@ accepted the event. The Sentry dashboard and a controlled smoke test remain requ
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `5edff61619fd6c9d762a6e6f4b9613b38717121d`
+**Implementation evidence reviewed against:** `df0531a4fa761fb1803004371c5bdcb14570b984`
 
 - [Backend capture helper](../../../backend/src/utils/sentry.ts), [central error response](../../../backend/src/utils/utils.ts), and
   [Sentry initialization](../../../backend/src/instrument.ts)

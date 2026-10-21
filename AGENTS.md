@@ -64,6 +64,10 @@ artifacts; after changing a contract interface, run `npm run generate-abi` in `c
   diagrams.
 - Use the [query guide](./app/src/queries/README.md) for frontend API queries and mutations. In particular, mutations are pure async
   functions wrapped by a `useXxxMutation` composable, and one hook serves one endpoint rather than each UI action.
+- For TanStack Query failures, prefer the query/mutation lifecycle (`onError`, `onSettled`, configured retries, and reactive error/status
+  state) over local `try`/`catch` blocks for notifications, state transitions, rollback, and retry policy. Let errors propagate from the
+  async function; reserve `try`/`catch` for narrow error translation or resource cleanup that the lifecycle cannot own. Follow the
+  [TanStack Query error-handling standard](./docs/platform/QUERY_STANDARDS.md#error-handling).
 - Use the [Vue component standards](./.github/copilot-instructions/vue-component-standards.md) when editing Vue components: components
   describe UI, utilities own pure shaping, composables own reactive logic, and server state remains in its query cache.
 - All feature on-chain writes use `useContractWritesV3`. Read the [contract-write guide](./app/src/composables/contracts/README.md) before

@@ -117,18 +117,33 @@ describe('RedeployOfficerModal', () => {
   })
 
   it('[AC-US-CONTRACT-005-05] rejects whitespace-only share names and symbols', async () => {
-    const wrapper = mountModal({ open: true })
+    const invalidNameWrapper = mountModal({ open: true })
     await flushPromises()
 
-    await wrapper.find('[data-test="redeploy-share-name-input"]').setValue('   ')
-    await wrapper.find('[data-test="redeploy-share-symbol-input"]').setValue('SHR')
+    await invalidNameWrapper.find('[data-test="redeploy-share-name-input"]').setValue('   ')
+    await invalidNameWrapper.find('[data-test="redeploy-share-symbol-input"]').setValue('SHR')
 
     expect(
-      wrapper.findComponent('[data-test="confirm-redeploy-contracts"]').props('disabled')
+      invalidNameWrapper.findComponent('[data-test="confirm-redeploy-contracts"]').props('disabled')
     ).toBe(true)
 
-    await wrapper.find('form').trigger('submit')
+    await invalidNameWrapper.find('form').trigger('submit')
 
+    const invalidSymbolWrapper = mountModal({ open: true })
+    await flushPromises()
+
+    await invalidSymbolWrapper
+      .find('[data-test="redeploy-share-name-input"]')
+      .setValue('New Co SHER')
+    await invalidSymbolWrapper.find('[data-test="redeploy-share-symbol-input"]').setValue('   ')
+
+    expect(
+      invalidSymbolWrapper
+        .findComponent('[data-test="confirm-redeploy-contracts"]')
+        .props('disabled')
+    ).toBe(true)
+
+    await invalidSymbolWrapper.find('form').trigger('submit')
     expect(mockRedeployState.redeploy).not.toHaveBeenCalled()
   })
 

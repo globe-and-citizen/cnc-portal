@@ -2,7 +2,9 @@
 
 **Scope:** Shared backend and dashboard authorization based on persisted user roles
 
-**Last verified:** 2026-08-21
+**Last verified:** 2026-10-21
+
+**Implementation evidence reviewed against:** `df0531a4fa761fb1803004371c5bdcb14570b984`
 
 **Consumers:** [Backoffice features](../../features/backoffice/README.md) and every backend route protected by an administrator role
 
