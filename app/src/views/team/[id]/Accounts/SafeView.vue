@@ -71,7 +71,8 @@
           Review assets and approval rules
         </h2>
         <p class="mt-1 text-sm text-gray-500">
-          Holdings show what the Safe controls. Owners and threshold show who must approve actions.
+          Holdings show what the Safe controls and what swaps cost. Owners and threshold show who
+          must approve actions.
         </p>
       </div>
       <div class="grid grid-cols-1 gap-6 xl:grid-cols-5">
@@ -89,6 +90,13 @@
           <SafeOwnersCard :address="safeAddress" />
         </div>
       </div>
+      <SafeSwapFeesSection
+        class="mt-6"
+        :swaps="accounting.swapFees.value"
+        :journal="accounting.journal.value"
+        :incomplete="accounting.status.state.value !== 'ready'"
+        @retry="accounting.refetchSwapFees"
+      />
     </section>
 
     <section id="safe-activity" class="scroll-mt-4" aria-labelledby="safe-activity-heading">
@@ -199,6 +207,8 @@ import SafeDeploymentCard from '@/components/sections/SafeView/SafeDeploymentCar
 import SafeImportCard from '@/components/sections/SafeView/SafeImportCard.vue'
 import { useTeamStore, useUserDataStore } from '@/stores'
 import { normalizeSafeAddress } from '@/utils/safe/address'
+import SafeSwapFeesSection from '@/components/sections/SafeView/SafeSwapFeesSection.vue'
+import { useCNCAccounting } from '@/composables/accounting/useCNCAccounting'
 
 const route = useRoute()
 const router = useRouter()
@@ -236,6 +246,10 @@ const {
 } = useGetSafeBalancesQuery({
   pathParams: { safeAddress, fiatCode: () => currency.value.code }
 })
+const accounting = useCNCAccounting(
+  () => (safeAddress.value ? String(teamStore.currentTeamId) : null),
+  { scope: 'safe' }
+)
 const holdingRows = computed(() => toSafeHoldingRows(balances.value, currency.value.code))
 const isIncomplete = computed(() => holdingRows.value.some((row) => row.balance === null))
 

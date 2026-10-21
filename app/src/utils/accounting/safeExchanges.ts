@@ -7,6 +7,7 @@ import {
 } from './journalEntryDraft'
 import { usdAmountFromToken, usdRateFromNumber } from './monetaryAmount'
 import { swapConsiderationEntries } from './toUsd'
+import { executedFeeUsd } from './swapFees'
 
 interface Holding {
   quantity: bigint
@@ -47,7 +48,8 @@ function setCarryingValue(
  * a later swap, so it marks that holding incomplete.
  *
  * A swap is valued at its executed consideration, read before the disposed asset is
- * replaced by its historic cost. Returns drafts in replay order.
+ * replaced by its historic cost. A verified fee is split out as Transaction Fee Expense;
+ * without one the fee stays inside the acquired asset cost. Returns drafts in replay order.
  */
 export function prepareSafeExchanges(drafts: readonly JournalEntryDraft[]): JournalEntryDraft[] {
   const holdings = new Map<AssetId, Holding>()
@@ -105,10 +107,14 @@ export function prepareSafeExchanges(drafts: readonly JournalEntryDraft[]): Jour
     const outgoing = exchange.filter((entry) => entry.credit === 'Cash — Safe')
     const consideration = swapConsiderationEntries(exchange)
     const received = consideration.reduce((sum, entry) => sum + marketAmount(entry), 0n)
+    const fee = executedFeeUsd(exchange)
+    const receiptAnchored = consideration[0]?.debit === 'Cash — Safe'
+    const netReceived = receiptAnchored ? received : received - fee
+    const proceeds = receiptAnchored ? received + fee : received
     let basis = 0n
     let complete =
       consideration.length > 0 &&
-      received > 0n &&
+      netReceived > 0n &&
       consideration.every((entry) => (entry.rate ?? 0) > 0) &&
       exchange.every(
         (entry) =>
@@ -134,12 +140,32 @@ export function prepareSafeExchanges(drafts: readonly JournalEntryDraft[]): Jour
       incoming.forEach((entry, index) => {
         const amount =
           index === incoming.length - 1
-            ? received - allocated
-            : (received * BigInt(entry.rawAmount)) / quantity
+            ? netReceived - allocated
+            : (netReceived * BigInt(entry.rawAmount)) / quantity
         allocated += amount
         setCarryingValue(entry, amount, 'swap-consideration')
       })
-      const delta = received - basis
+      if (fee > 0n) {
+        const primary = incoming[0]!
+        group.push(
+          makeJournalEntryDraft({
+            id: `${primary.id}-swap-fee`,
+            txHash: primary.txHash,
+            ...(primary.logIndex !== undefined ? { logIndex: primary.logIndex } : {}),
+            sourceOperationId: primary.sourceOperationId,
+            timestamp: primary.timestamp,
+            useCase: 'SAFE-SWAP',
+            debit: 'Transaction Fee Expense',
+            credit: null,
+            token: 'usdc',
+            rawAmount: '0',
+            rate: 1,
+            carryingAmount: fee,
+            memo: 'Executed swap fee'
+          })
+        )
+      }
+      const delta = proceeds - basis
       if (delta !== 0n) {
         const primary = incoming[0]!
         group.push(

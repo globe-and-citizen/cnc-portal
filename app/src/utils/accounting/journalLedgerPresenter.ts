@@ -237,6 +237,12 @@ function activityOfJournalEntry(
   }
 }
 
+/** Principal debits lead the transaction, followed by fee debits and then credits. */
+function ledgerLineOrder(line: JournalEntryLine): number {
+  if (line.credit !== undefined) return 2
+  return line.account.family.name === 'Transaction Fee Expense' ? 1 : 0
+}
+
 /** Flatten whole JournalEntry records into the rows consumed by LedgerTable. */
 export function journalLedgerRows(
   entries: readonly JournalEntry[],
@@ -245,7 +251,8 @@ export function journalLedgerRows(
   const labels = accountLabels(labelEntries)
   const rows: LedgerRow[] = []
   for (const entry of entries) {
-    entry.lines.forEach((line, index) => {
+    const lines = entry.lines.slice().sort((a, b) => ledgerLineOrder(a) - ledgerLineOrder(b))
+    lines.forEach((line, index) => {
       const isFirst = index === 0
       const accountLabel = labels.get(line.account.id) ?? line.account.family.name
       rows.push({

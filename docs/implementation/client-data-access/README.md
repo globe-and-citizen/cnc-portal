@@ -165,6 +165,26 @@ tests do not establish cache sharing, refresh or observer lifecycle behaviour.
 TanStack caches belong to one browser session. The additional backend Redis cache coordinates CoinGecko across users, tabs, devices and
 backend instances. Safe provider requests retain their browser-only coordination boundary.
 
+## Executed Swap Fee Reads
+
+[Swap fee queries](../../../app/src/queries/swapFees.queries.ts) own three reads. The settlement receipt of each Safe swap comes from the
+chain RPC, keyed by network and transaction hash; a mined receipt never changes, so it is read once, never polled, and reverted executions
+are rejected. Polygon transaction orders and complete paginated order trades come from the public CoW orderbook API through the external
+Axios client. Each endpoint has one query hook and a pure request function with cancellation and validated responses. Network and
+transaction/order identities isolate cache keys. The once preset keeps completed evidence; there is no periodic polling or automatic retry.
+Only swaps are read: other Safe movements take their block time and log order from the Transaction Service. Unsupported networks/providers
+report unavailable without issuing CoW requests.
+
+[Fee evidence orchestration](../../../app/src/composables/accounting/useSwapFeeEvidence.ts) first matches orders to the Safe's confirmed
+receipt logs before requesting trades. Complete pagination avoids misassigning an order-wide total to a partial fill. Duplicate trade
+identities or foreign order records reject the response. No quoted fee, current market price or estimated settlement gas allocation
+substitutes for executed fees. A verified single-token fee feeds the journal's net acquisition cost and Transaction Fee Expense once.
+Missing or failed evidence keeps the fee inside the asset cost and never makes Accounting partial; a manual retry re-reads provider records
+and failed receipts. Safe Activity renders the same evidence from the read model without issuing its own queries. See
+[query tests](../../../app/src/queries/__tests__/swapFees.queries.spec.ts) and the
+[CoW API reference](https://docs.cow.fi/cow-protocol/reference/apis/orderbook). Automated query mocks establish request contracts; provider
+availability and the authenticated live browser journey require separate verification.
+
 ## Implementation Evidence
 
 **Implementation evidence reviewed against:** `008826d0d841f19c967c8ff477a7e9c452ee7398`

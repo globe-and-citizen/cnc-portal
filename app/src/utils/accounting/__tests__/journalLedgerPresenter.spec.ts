@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import { finalizeJournal } from '@/utils/accounting/__tests__/assembleAccounting'
+import { accountFor } from '../accountRegistry'
+import { createJournalEntry } from '../journalEntry'
+import { swapFeeFixture } from './swapFeeFixtures'
+import { usd } from './fixtures'
 import type { JournalEntryDraft } from '@/utils/accounting/journalEntryDraft'
 import {
   filterJournalLedgerByAccount,
@@ -33,6 +37,37 @@ function posting(
 }
 
 describe('journalLedgerPresenter', () => {
+  it('keeps swap fees between principal debits and credits even when the source fee is first', () => {
+    const { journal: swap } = swapFeeFixture()
+    const spent = swap.lines.find((line) => line.credit !== undefined)!
+    const received = swap.lines.find((line) => line.debit !== undefined)!
+    const journal = createJournalEntry({
+      ...swap,
+      lines: [
+        {
+          id: 'swap-fee',
+          account: accountFor('Transaction Fee Expense'),
+          debit: usd('3.870494')
+        },
+        { ...received, debit: usd('529.073756') },
+        spent
+      ]
+    })
+    const before = structuredClone(journal)
+    const rows = journalLedgerRows([journal])
+
+    expect(rows.map((row) => [row.account, row.currency, row.dr, row.cr])).toEqual([
+      ['Cash — Safe', 'WETH', '$529.07', ''],
+      ['Transaction Fee Expense', '', '$3.87', ''],
+      ['Cash — Safe', 'USDC', '', '$532.94']
+    ])
+    expect(rows.map((row) => row.isFirst)).toEqual([true, false, false])
+    expect(rows.map((row) => row.txHash)).toEqual([swap.txHash, undefined, undefined])
+    expect(rows[0]!.swapDetails).toBeTruthy()
+    expect(journalLedgerTotal([journal])).toBe('$532.94')
+    expect(journal).toEqual(before)
+  })
+
   it('compacts token quantities without changing journal amounts or export quantities', () => {
     const journal = finalizeJournal([
       posting({

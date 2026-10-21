@@ -14,6 +14,7 @@ import { getAddress, isAddress, type Address } from 'viem'
 import type { AssetId, AssetMetadata } from '@/utils/tokens/assets'
 import type { UsdAmount } from './types'
 import type { AccountName } from './chartOfAccounts'
+import type { SwapFeeAmount } from '@/types/swapFees'
 
 /** The transaction-hash head of an indexed event id (`<txHash>-<logIndex>`). */
 const EVENT_ID_TRANSACTION_HASH = /^(0x[0-9a-fA-F]{64})(?:-|$)/
@@ -96,6 +97,8 @@ export type UseCase =
 type EnrichmentStatus = 'enriched' | 'not-applicable' | 'needs-off-chain-data'
 
 export interface JournalEntryDraft {
+  /** Verified fee of a Safe swap; absent keeps the fee inside the acquired asset cost. */
+  swapFee?: SwapFeeAmount
   /** Exact six-decimal unit cost derived from consideration, without a floating-point round trip. */
   carryingRate?: bigint
   valuationMethod?: 'swap-consideration' | 'weighted-average'
