@@ -738,8 +738,8 @@ browser-driven.
     - [ ] `US-AUTH-003` Verify the backend accepts the fresh SIWE signature and issues the user's session.
     - [ ] `US-AUTH-003` Reload a protected route and verify the recovered session remains usable.
   - Separate variants: network-switch rejection, nonce failure, invalid signature, and profile-load failure; none is evidence of a completed
-    recovery until the affected boundary is exercised and observed. Client token cleanup after a failed profile request remains unchecked in
-    `AC-US-AUTH-003-06`.
+    recovery until the affected boundary is exercised and observed. Client token cleanup after a terminal profile failure remains unchecked
+    in `AC-US-AUTH-003-06`.
   - Expected result: a failed attempt does not authenticate the user, while a fresh attempt succeeds without manual state repair.
   - Status: Planned — no integrated recovery path is currently linked.
 

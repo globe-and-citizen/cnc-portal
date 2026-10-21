@@ -35,6 +35,10 @@ This folder contains all TanStack Query hooks for API interactions in the CNC Po
 
 - A mutation is a pure async request function wrapped by one `useXxxMutation` composable. Components use its callbacks and reactive state
   rather than orchestrating request state with local `try`/`catch` blocks.
+- Mutation failures should propagate to TanStack Query so `onError`, `onSettled`, configured retries, and the reactive mutation error/status
+  state can own recovery and user-facing handling. Use a local `try`/`catch` only for narrow error translation or cleanup that cannot be
+  expressed through the mutation lifecycle; see the
+  [TanStack Query error-handling standard](../../../docs/platform/QUERY_STANDARDS.md#error-handling).
 - Create one query or mutation hook per HTTP method and endpoint. Actions that differ only by request data or query parameters reuse that
   hook at the call site; do not create `useArchiveXxxMutation` and `useUnarchiveXxxMutation` when both update the same resource.
 - Query data is the server-state source of truth. Do not mirror it into a Pinia store merely to make it easier to consume.

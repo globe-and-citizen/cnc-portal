@@ -55,13 +55,15 @@ sequenceDiagram
 
 - Wallet connection, chain switching, signature rejection, nonce retrieval, authentication, and profile retrieval produce distinct client
   errors where the surface supports them.
+- The client keeps the issued token during recoverable profile transport or server failures; the SIWE mutation `onError` clears it only for
+  terminal profile responses (`401`, `403`, or `404`) and resets the local user state.
 - Invalid SIWE payloads or signatures are rejected by the backend.
 - Missing, invalid, or incomplete JWT payloads are rejected before protected handlers run.
 - Dashboard role rejection leads to the access-denied page rather than a protected module.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `df0531a4fa761fb1803004371c5bdcb14570b984`
+**Implementation evidence reviewed against:** `fd2316082d3bf3d957a624952561fe62920cebbe`
 
 - [Client lock screen](../../../app/src/components/layout/LockScreen.vue) and
   [client authentication state](../../../app/src/composables/useAuth.ts)

@@ -159,7 +159,9 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 - [x] `AC-US-AUTH-003-04` The client classifies wallet connection, network switching, signature, and backend failures separately.
 - [x] `AC-US-AUTH-003-05` The backoffice classifies rejected signatures, network mismatches, backend failures, and connectivity failures
       separately.
-- [x] `AC-US-AUTH-003-06` The client removes an issued access token when the following profile request fails.
+- [x] `AC-US-AUTH-003-06` The client removes an issued access token when the following profile request returns a terminal authentication or
+      profile error (`401`, `403`, or `404`), while recoverable network and server failures keep the login mutation retryable without
+      resetting the wallet session.
 
 #### Edge & Error Cases
 
@@ -189,7 +191,7 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `df0531a4fa761fb1803004371c5bdcb14570b984`
+**Implementation evidence reviewed against:** `fd2316082d3bf3d957a624952561fe62920cebbe`
 
 - [Client login page](../../../app/src/views/LoginView.vue)
 - [Client SIWE orchestration](../../../app/src/composables/useSiwe.ts)
