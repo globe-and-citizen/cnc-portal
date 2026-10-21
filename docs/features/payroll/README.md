@@ -77,22 +77,24 @@ Coverage targets compare each criterion's required proof with direct `AC-US-*` r
 pass/fail result, which belongs to CI or the generated local report. The per-story tables show the required layer, linked evidence, and any
 missing or insufficient proof.
 
-| User Story     | Main Journey  | Coverage Target | Gaps                                                                                                                                                                   |
-| -------------- | ------------- | --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| US-PAYROLL-001 | ✅ Integrated | ⚠️ 23/27        | `AC-US-PAYROLL-001-01`, `AC-US-PAYROLL-001-02`, `AC-US-PAYROLL-001-18`, `AC-US-PAYROLL-001-19`                                                                         |
-| US-PAYROLL-002 | ✅ Integrated | ⚠️ 11/12        | `AC-US-PAYROLL-002-03`                                                                                                                                                 |
-| US-PAYROLL-003 | 🚧 Partial    | ⚠️ 3/8          | `AC-US-PAYROLL-003-01`, `AC-US-PAYROLL-003-02`, `AC-US-PAYROLL-003-07`, `AC-US-PAYROLL-003-06`, `AC-US-PAYROLL-003-08`                                                 |
-| US-PAYROLL-004 | ✅ Integrated | ⚠️ 10/11        | `AC-US-PAYROLL-004-01`                                                                                                                                                 |
-| US-PAYROLL-005 | ✅ Integrated | ⚠️ 24/25        | `AC-US-PAYROLL-005-01`                                                                                                                                                 |
-| US-PAYROLL-006 | ✅ Integrated | ⚠️ 12/13        | `AC-US-PAYROLL-006-01`                                                                                                                                                 |
-| US-PAYROLL-007 | ✅ Integrated | ⚠️ 7/8          | `AC-US-PAYROLL-007-01`                                                                                                                                                 |
-| US-PAYROLL-008 | ✅ Integrated | ⚠️ 15/16        | `AC-US-PAYROLL-008-01`                                                                                                                                                 |
-| US-PAYROLL-009 | ✅ Integrated | ⚠️ 4/8          | `AC-US-PAYROLL-009-01`, `AC-US-PAYROLL-009-02`, `AC-US-PAYROLL-009-03`, `AC-US-PAYROLL-009-04`                                                                         |
-| US-PAYROLL-010 | ✅ Integrated | ⚠️ 13/17        | `AC-US-PAYROLL-010-01`, `AC-US-PAYROLL-010-02`, `AC-US-PAYROLL-010-03`, `AC-US-PAYROLL-010-04`                                                                         |
-| US-PAYROLL-011 | ✅ Integrated | ⚠️ 11/12        | `AC-US-PAYROLL-011-01`                                                                                                                                                 |
-| US-PAYROLL-012 | ✅ Integrated | ✅ 13/13        | —                                                                                                                                                                      |
-| US-PAYROLL-013 | ✅ Integrated | ⚠️ 6/7 met      | `AC-US-PAYROLL-013-07`                                                                                                                                                 |
-| US-PAYROLL-014 | 🚧 Partial    | ⚠️ 1/8          | `AC-US-PAYROLL-014-01`, `AC-US-PAYROLL-014-02`, `AC-US-PAYROLL-014-03`, `AC-US-PAYROLL-014-04`, `AC-US-PAYROLL-014-05`, `AC-US-PAYROLL-014-07`, `AC-US-PAYROLL-014-08` |
+Runs of at least three consecutive missing criteria use inclusive ranges with full AC IDs at both endpoints.
+
+| User Story     | Main Journey  | Coverage Target | Gaps                                                                                           |
+| -------------- | ------------- | --------------- | ---------------------------------------------------------------------------------------------- |
+| US-PAYROLL-001 | ✅ Integrated | ⚠️ 23/27        | `AC-US-PAYROLL-001-01`, `AC-US-PAYROLL-001-02`, `AC-US-PAYROLL-001-18`, `AC-US-PAYROLL-001-19` |
+| US-PAYROLL-002 | ✅ Integrated | ⚠️ 11/12        | `AC-US-PAYROLL-002-03`                                                                         |
+| US-PAYROLL-003 | 🚧 Partial    | ⚠️ 3/8          | `AC-US-PAYROLL-003-01`, `AC-US-PAYROLL-003-02`, `AC-US-PAYROLL-003-06`–`AC-US-PAYROLL-003-08`  |
+| US-PAYROLL-004 | ✅ Integrated | ⚠️ 10/11        | `AC-US-PAYROLL-004-01`                                                                         |
+| US-PAYROLL-005 | ✅ Integrated | ⚠️ 24/25        | `AC-US-PAYROLL-005-01`                                                                         |
+| US-PAYROLL-006 | ✅ Integrated | ⚠️ 12/13        | `AC-US-PAYROLL-006-01`                                                                         |
+| US-PAYROLL-007 | ✅ Integrated | ⚠️ 7/8          | `AC-US-PAYROLL-007-01`                                                                         |
+| US-PAYROLL-008 | ✅ Integrated | ⚠️ 15/16        | `AC-US-PAYROLL-008-01`                                                                         |
+| US-PAYROLL-009 | ✅ Integrated | ⚠️ 4/8          | `AC-US-PAYROLL-009-01`–`AC-US-PAYROLL-009-04`                                                  |
+| US-PAYROLL-010 | ✅ Integrated | ⚠️ 13/17        | `AC-US-PAYROLL-010-01`–`AC-US-PAYROLL-010-04`                                                  |
+| US-PAYROLL-011 | ✅ Integrated | ⚠️ 11/12        | `AC-US-PAYROLL-011-01`                                                                         |
+| US-PAYROLL-012 | ✅ Integrated | ✅ 13/13        | —                                                                                              |
+| US-PAYROLL-013 | ✅ Integrated | ⚠️ 6/7 met      | `AC-US-PAYROLL-013-07`                                                                         |
+| US-PAYROLL-014 | 🚧 Partial    | ⚠️ 1/8          | `AC-US-PAYROLL-014-01`–`AC-US-PAYROLL-014-05`, `AC-US-PAYROLL-014-07`, `AC-US-PAYROLL-014-08`  |
 
 Proof obligations use the [shared proof-strategy registry](../../testing/proof-strategies.md). Multiple IDs for one AC are cumulative.
 

@@ -285,7 +285,10 @@ speculative proof target before the responsible implementation layer is decided.
   browser crosses every boundary required by that path; a seeded, stubbed, or snapshot-provided dependency is not a validated user action.
 - `Coverage Target` counts each criterion once, and only when all of its required proof obligations are met, against the story's complete
   criterion count. Do not mark a story partial merely because intentionally mocked or layer-specific criteria are not integrated.
-- `Gaps` lists criteria whose required proof is absent or insufficient. Use `—` when every target is met.
+- `Gaps` identifies criteria whose required proof is absent or insufficient. Keep their full `AC-US-*` IDs. For a run of at least three
+  consecutive missing criteria, show an inclusive range with full IDs at both ends, such as `AC-US-FEATURE-001-02`–`AC-US-FEATURE-001-05`.
+  List isolated criteria and shorter runs as individual full IDs, in ascending order. Use `—` when every target is met, and state the
+  unresolved decision directly for a draft story.
 - Store the evidence distribution, owning `E2E-PATH-*`, detailed test-file mapping, latest pass/fail result, and run artifacts in the
   generated coverage report, CI, or a test-run record rather than duplicating them in this durable summary.
 
@@ -521,6 +524,21 @@ There is no line-count target. A feature README is as short as possible while st
 Move a subject into a focused sibling document when it needs extensive examples, data shapes, or edge-case explanation. Keep a short rule
 and a link in the parent story. For example, Payroll owns its full reviewable journey in `README.md`; a focused sibling is justified only
 when detailed rules would otherwise obscure that journey.
+
+### Table Readability
+
+Use a table when readers need to compare the same short fields across several rows. Keep overview cells to an identifier, a short label, a
+status or count, and a link to the detailed section when needed. If a cell needs several sentences or many linked stories, present those
+relationships under a descriptive heading as prose or a list. A single narrative row usually reads better without a table.
+
+Preserve every stable ID, relationship, and evidence link when moving detail out of a table. Review the rendered layout rather than setting
+a hard source-line limit: Markdown link destinations can make a short visible cell look long in source.
+
+Run `npm run warn:docs-tables` to locate dense tables in tracked Markdown files. It warns once per table when a row has a cell over 120
+visible characters, over 260 visible characters across cells, or more than five links. Link destinations do not count toward visible length.
+The thresholds are review prompts, not formatting rules: inspect the rendered table and decide whether a list or section makes the
+relationships easier to follow. The warning does not fail CI. The CI log contains every finding; it annotates up to ten representative
+tables across different files.
 
 Do not duplicate platform security, testing, deployment, formatting, or architecture standards. Reference their canonical guides.
 

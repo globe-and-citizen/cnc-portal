@@ -1,5 +1,10 @@
 import { Request, Response } from 'express';
-import { getPresignedDownloadUrl, uploadFiles } from '../services/storageService';
+import {
+  getPresignedDownloadUrl,
+  isStorageConfigured,
+  uploadFiles,
+} from '../services/storageService';
+import { captureBackendException } from '../utils';
 
 function extractMulterFiles(req: Request): Express.Multer.File[] {
   const maybeFiles = (req as Request & { files?: unknown }).files;
@@ -14,6 +19,9 @@ export const uploadManyFiles = async (req: Request, res: Response) => {
 
     if (files.length === 0) {
       return res.status(400).json({ error: 'No files provided' });
+    }
+    if (!isStorageConfigured()) {
+      return res.status(500).json({ error: 'Storage not configured' });
     }
 
     const uploadResults = await uploadFiles(files, 'uploads');
@@ -43,6 +51,11 @@ export const uploadManyFiles = async (req: Request, res: Response) => {
       count: uploadedFiles.length,
     });
   } catch (err: unknown) {
+    captureBackendException(err, {
+      operation: 'uploadManyFiles',
+      source: 'uploadController',
+      status: 500,
+    });
     const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
     return res.status(500).json({
       error: 'Failed to upload files',

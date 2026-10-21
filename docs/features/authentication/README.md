@@ -2,7 +2,7 @@
 
 **Scope:** Wallet-based sign-in and protected entry for the client and administrator dashboard
 
-**Last reviewed:** Not yet reviewed
+**Last reviewed:** 2026-10-21
 
 These acceptance criteria follow the
 [feature documentation review contract](../../platform/feature-specification-guide.md#human-review-contract).
@@ -46,11 +46,13 @@ flowchart TB
 Coverage targets compare each criterion's required evidence with direct representative `AC-US-*` references. They do not describe the latest
 test run. The integrated client sign-in exists; recovery and backoffice journeys remain separate targets.
 
-| User Story  | Main Journey  | Coverage Target | Gaps                                                                                                                                                                   |
-| ----------- | ------------- | --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| US-AUTH-001 | ✅ Integrated | ⚠️ 3/9          | `AC-US-AUTH-001-01`, `AC-US-AUTH-001-04`, `AC-US-AUTH-001-05`, `AC-US-AUTH-001-06`, `AC-US-AUTH-001-08`, `AC-US-AUTH-001-09`                                           |
-| US-AUTH-002 | ⬜ Planned    | ❌ 0/8 met      | All `AC-US-AUTH-002-*` criteria                                                                                                                                        |
-| US-AUTH-003 | ⬜ Planned    | ⚠️ 1/9          | `AC-US-AUTH-003-01`, `AC-US-AUTH-003-02`, `AC-US-AUTH-003-03`, `AC-US-AUTH-003-04`, `AC-US-AUTH-003-05`, `AC-US-AUTH-003-06`, `AC-US-AUTH-003-07`, `AC-US-AUTH-003-08` |
+Runs of at least three consecutive missing criteria use inclusive ranges with full AC IDs at both endpoints.
+
+| User Story  | Main Journey  | Coverage Target | Gaps                                                          |
+| ----------- | ------------- | --------------- | ------------------------------------------------------------- |
+| US-AUTH-001 | ✅ Integrated | ⚠️ 6/9          | `AC-US-AUTH-001-01`, `AC-US-AUTH-001-04`, `AC-US-AUTH-001-08` |
+| US-AUTH-002 | ⬜ Planned    | ❌ 0/8 met      | `AC-US-AUTH-002-01`–`AC-US-AUTH-002-08`                       |
+| US-AUTH-003 | ⬜ Planned    | ⚠️ 1/9          | `AC-US-AUTH-003-01`–`AC-US-AUTH-003-08`                       |
 
 Proof obligations use the [shared proof-strategy registry](../../testing/proof-strategies.md). Multiple IDs for one AC are cumulative.
 
@@ -89,13 +91,13 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 | `AC-US-AUTH-001-01`  | `PS-BACKEND`        | Integrated E2E + Frontend | ⚠️ Insufficient |
 | `AC-US-AUTH-001-02`  | `PS-BACKEND`        | Backend                   | ✅ Met          |
 | `AC-US-AUTH-001-03`  | `PS-FRONTEND`       | Frontend                  | ✅ Met          |
-| `AC-US-AUTH-001-04`  | `PS-FRONTEND`       | None linked               | ❌ Missing      |
-| `AC-US-AUTH-001-04`  | `PS-BACKEND`        | None linked               | ❌ Missing      |
-| `AC-US-AUTH-001-05`  | `PS-BACKEND`        | None linked               | ❌ Missing      |
-| `AC-US-AUTH-001-06`  | `PS-BACKEND`        | None linked               | ❌ Missing      |
+| `AC-US-AUTH-001-04`  | `PS-FRONTEND`       | Frontend                  | ✅ Met          |
+| `AC-US-AUTH-001-04`  | `PS-BACKEND`        | Frontend                  | ⚠️ Insufficient |
+| `AC-US-AUTH-001-05`  | `PS-BACKEND`        | Backend                   | ✅ Met          |
+| `AC-US-AUTH-001-06`  | `PS-BACKEND`        | Backend                   | ✅ Met          |
 | `AC-US-AUTH-001-07`  | `PS-API-INTEGRATED` | Integrated E2E            | ✅ Met          |
 | `AC-US-AUTH-001-08`  | `PS-FRONTEND`       | None linked               | ❌ Missing      |
-| `AC-US-AUTH-001-09`  | `PS-BACKEND`        | None linked               | ❌ Missing      |
+| `AC-US-AUTH-001-09`  | `PS-BACKEND`        | Backend                   | ✅ Met          |
 
 ## US-AUTH-002: Sign in to the Backoffice
 
@@ -157,7 +159,9 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 - [x] `AC-US-AUTH-003-04` The client classifies wallet connection, network switching, signature, and backend failures separately.
 - [x] `AC-US-AUTH-003-05` The backoffice classifies rejected signatures, network mismatches, backend failures, and connectivity failures
       separately.
-- [ ] `AC-US-AUTH-003-06` The client removes an issued access token when the following profile request fails.
+- [x] `AC-US-AUTH-003-06` The client removes an issued access token when the following profile request returns a terminal authentication or
+      profile error (`401`, `403`, or `404`), while recoverable network and server failures keep the login mutation retryable without
+      resetting the wallet session.
 
 #### Edge & Error Cases
 
@@ -168,26 +172,26 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 
 ### Test Coverage
 
-| Acceptance Criterion | Proof Strategy      | Current Evidence | Status     |
-| -------------------- | ------------------- | ---------------- | ---------- |
-| `AC-US-AUTH-003-01`  | `PS-API-INTEGRATED` | None linked      | ❌ Missing |
-| `AC-US-AUTH-003-02`  | `PS-BROWSER`        | None linked      | ❌ Missing |
-| `AC-US-AUTH-003-03`  | `PS-BROWSER`        | None linked      | ❌ Missing |
-| `AC-US-AUTH-003-04`  | `PS-BROWSER`        | None linked      | ❌ Missing |
-| `AC-US-AUTH-003-05`  | `PS-DASHBOARD`      | None linked      | ❌ Missing |
-| `AC-US-AUTH-003-06`  | `PS-BROWSER`        | None linked      | ❌ Missing |
-| `AC-US-AUTH-003-07`  | `PS-BROWSER`        | None linked      | ❌ Missing |
-| `AC-US-AUTH-003-08`  | `PS-API-INTEGRATED` | None linked      | ❌ Missing |
-| `AC-US-AUTH-003-08`  | `PS-BACKEND`        | None linked      | ❌ Missing |
-| `AC-US-AUTH-003-09`  | `PS-FRONTEND`       | Frontend         | ✅ Met     |
+| Acceptance Criterion | Proof Strategy      | Current Evidence | Status          |
+| -------------------- | ------------------- | ---------------- | --------------- |
+| `AC-US-AUTH-003-01`  | `PS-API-INTEGRATED` | None linked      | ❌ Missing      |
+| `AC-US-AUTH-003-02`  | `PS-BROWSER`        | None linked      | ❌ Missing      |
+| `AC-US-AUTH-003-03`  | `PS-BROWSER`        | None linked      | ❌ Missing      |
+| `AC-US-AUTH-003-04`  | `PS-BROWSER`        | None linked      | ❌ Missing      |
+| `AC-US-AUTH-003-05`  | `PS-DASHBOARD`      | None linked      | ❌ Missing      |
+| `AC-US-AUTH-003-06`  | `PS-BROWSER`        | Frontend         | ⚠️ Insufficient |
+| `AC-US-AUTH-003-07`  | `PS-BROWSER`        | None linked      | ❌ Missing      |
+| `AC-US-AUTH-003-08`  | `PS-API-INTEGRATED` | None linked      | ❌ Missing      |
+| `AC-US-AUTH-003-08`  | `PS-BACKEND`        | None linked      | ❌ Missing      |
+| `AC-US-AUTH-003-09`  | `PS-FRONTEND`       | Frontend         | ✅ Met          |
 
 ## Known Gaps
 
-- The client persists the issued access token if the following profile request fails, although the local authentication state remains false.
+- The client unit proof for `AC-US-AUTH-003-06` is complete, but the required mocked-browser proof remains pending.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `8b231a2e0ccf81bf988ee73a26f8a53512d15f18`
+**Implementation evidence reviewed against:** `fd2316082d3bf3d957a624952561fe62920cebbe`
 
 - [Client login page](../../../app/src/views/LoginView.vue)
 - [Client SIWE orchestration](../../../app/src/composables/useSiwe.ts)

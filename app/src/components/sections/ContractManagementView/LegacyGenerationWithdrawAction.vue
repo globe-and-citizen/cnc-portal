@@ -26,6 +26,7 @@
     <template #body>
       <!-- Review phase -->
       <div v-if="phase === 'review'" class="space-y-4" data-test="legacy-withdraw-review">
+        <LegacyApprovalWarning :team-id="teamStore.currentTeamId" />
         <UAlert
           v-if="canSweepSources"
           color="warning"
@@ -168,6 +169,7 @@ import {
 import { useOfficerBeaconFolderQuery } from '@/composables/contracts/useOfficerBeaconFolder'
 import { TEAM_ARCHIVED_TOOLTIP, useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
 import { useCurrencyStore, useTeamStore, useUserDataStore } from '@/stores'
+import LegacyApprovalWarning from './LegacyApprovalWarning.vue'
 import { formatCurrencyShort } from '@/utils/currency/display'
 
 /**
@@ -273,7 +275,6 @@ const cashOut = useCashOutAll({
 const modal = ref({ mount: false, show: false })
 const phase = ref<'review' | 'progress'>('review')
 
-/** The source accounts, whether or not this generation can sweep them. */
 const sourceRows = computed(() => {
   const rows: { key: string; label: string; value: string; amount: number }[] = []
   if (balancesFiat.value.cashRemuneration > 0)
@@ -293,7 +294,6 @@ const sourceRows = computed(() => {
   return rows
 })
 
-/** What this run moves — the Bank always, the source accounts when sweepable. */
 const reviewRows = computed(() => {
   const rows = canSweepSources.value ? [...sourceRows.value] : []
   if (balancesFiat.value.bank > 0)
@@ -306,7 +306,6 @@ const reviewRows = computed(() => {
   return rows
 })
 
-/** What this run leaves on-chain, so a green "complete" is never misread. */
 const strandedRows = computed(() => (canSweepSources.value ? [] : sourceRows.value))
 
 const completionDescription = computed(() =>

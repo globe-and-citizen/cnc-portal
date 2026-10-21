@@ -51,13 +51,15 @@ unchecked.
 Coverage targets compare required proof with direct representative `AC-US-*` references, not with the latest test run. The merchant-page and
 widget-payment paths are planned; a source-only widget assertion is not integrated payment evidence.
 
-| User Story     | Main Journey | Coverage Target | Gaps                                                                                                                                                                   |
-| -------------- | ------------ | --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| US-PAYGATE-001 | ⬜ Planned   | ⚠️ 1/3 met      | `AC-US-PAYGATE-001-01–02`                                                                                                                                              |
-| US-PAYGATE-002 | ⬜ Planned   | ⚠️ 2/6 met      | `AC-US-PAYGATE-002-01–03`, `06`                                                                                                                                        |
-| US-PAYGATE-003 | ⬜ Planned   | ⚠️ 6/13         | `AC-US-PAYGATE-003-02`, `AC-US-PAYGATE-003-03`, `AC-US-PAYGATE-003-04`, `AC-US-PAYGATE-003-06`, `AC-US-PAYGATE-003-08`, `AC-US-PAYGATE-003-09`, `AC-US-PAYGATE-003-12` |
-| US-PAYGATE-004 | ⬜ Planned   | ❌ 0/6 met      | `AC-US-PAYGATE-004-01`, `AC-US-PAYGATE-004-02`, `AC-US-PAYGATE-004-03`, `AC-US-PAYGATE-004-04`, `AC-US-PAYGATE-004-05`, `AC-US-PAYGATE-004-06`                         |
-| US-PAYGATE-005 | 📝 Draft     | 📝 Not assessed | Authoritative facture-ID lookup boundary undecided                                                                                                                     |
+Runs of at least three consecutive missing criteria use inclusive ranges with full AC IDs at both endpoints.
+
+| User Story     | Main Journey | Coverage Target | Gaps                                                                                                                                          |
+| -------------- | ------------ | --------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| US-PAYGATE-001 | ⬜ Planned   | ⚠️ 1/3 met      | `AC-US-PAYGATE-001-01`, `AC-US-PAYGATE-001-02`                                                                                                |
+| US-PAYGATE-002 | ⬜ Planned   | ⚠️ 2/6 met      | `AC-US-PAYGATE-002-01`–`AC-US-PAYGATE-002-03`, `AC-US-PAYGATE-002-06`                                                                         |
+| US-PAYGATE-003 | ⬜ Planned   | ⚠️ 6/13         | `AC-US-PAYGATE-003-02`–`AC-US-PAYGATE-003-04`, `AC-US-PAYGATE-003-06`, `AC-US-PAYGATE-003-08`, `AC-US-PAYGATE-003-09`, `AC-US-PAYGATE-003-12` |
+| US-PAYGATE-004 | ⬜ Planned   | ❌ 0/6 met      | `AC-US-PAYGATE-004-01`–`AC-US-PAYGATE-004-06`                                                                                                 |
+| US-PAYGATE-005 | 📝 Draft     | 📝 Not assessed | Authoritative facture-ID lookup boundary undecided                                                                                            |
 
 Proof obligations use the [shared proof-strategy registry](../../testing/proof-strategies.md). Multiple IDs for one AC are cumulative.
 

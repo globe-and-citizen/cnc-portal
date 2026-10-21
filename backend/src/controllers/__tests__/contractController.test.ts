@@ -154,7 +154,7 @@ describe('contractController', () => {
       expect(response.body.message).toContain('Unauthorized: Caller is not the owner of the team');
     });
 
-    it.skip('returns 400 if no contracts are created', async () => {
+    it('returns 400 if no contracts are created', async () => {
       vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(mockTeam);
       // mock readContract
       vi.spyOn(publicClient, 'readContract').mockResolvedValue([]);
@@ -240,11 +240,14 @@ describe('contractController', () => {
       expect(response.body).toEqual({ count: 2 });
     });
 
-    it.skip('returns 200 if contracts are found', async () => {
+    it('returns 200 if contracts are found', async () => {
       vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(mockTeam);
       // mock readContract
       vi.spyOn(publicClient, 'readContract').mockResolvedValue([
-        { contractType: 'Voting', contractAddress: '0x123' },
+        {
+          contractType: 'Voting',
+          contractAddress: '0xABCDEF1234567890123456789012345678901234',
+        },
       ]);
       // mock createMany
       vi.spyOn(prisma.teamContract, 'createMany').mockResolvedValue({
@@ -265,10 +268,10 @@ describe('contractController', () => {
   });
 
   describe('GET: /', () => {
-    it.skip('returns 400 if teamId is invalid', async () => {
+    it('returns 400 if teamId is invalid', async () => {
       const response = await request(app).get('/').query({ teamId: 'abc' });
       expect(response.status).toBe(400);
-      expect(response.body.message).toBe('Invalid or missing teamId');
+      expect(response.body.message).toBe('Invalid query parameters - teamId: Must be a number');
     });
 
     it('returns 404 if no contracts are found', async () => {

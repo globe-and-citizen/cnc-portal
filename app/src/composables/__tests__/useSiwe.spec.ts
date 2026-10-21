@@ -30,9 +30,12 @@ import * as wagmiCore from '@wagmi/core'
 const mockRouterPush = vi.mocked(router.push)
 const ADDRESS = '0x1234567890123456789012345678901234567890'
 
-const makeAxiosError = (url: string) => {
+const makeAxiosError = (url: string, status?: number) => {
   const err = new AxiosError('boom')
   err.config = { url, headers: new AxiosHeaders() }
+  if (status !== undefined) {
+    err.response = { status } as AxiosError['response']
+  }
   return err
 }
 
@@ -65,6 +68,7 @@ const disconnectedReturn = {
 describe('useSiweMutation', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
+    localStorage.removeItem('authToken')
     useMutationFn.mockImplementation(smartUseMutation)
     vi.mocked(wagmiCore.getConnection).mockReturnValue(connectedReturn)
     vi.mocked(wagmiCore.connect).mockResolvedValue(undefined as never)
@@ -81,6 +85,7 @@ describe('useSiweMutation', () => {
   })
 
   afterEach(() => {
+    localStorage.removeItem('authToken')
     vi.clearAllMocks()
   })
 
@@ -102,6 +107,20 @@ describe('useSiweMutation', () => {
     })
     expect(userApi.getUser).toHaveBeenCalledWith(ADDRESS)
     expect(mockRouterPush).toHaveBeenCalledWith('/teams')
+  })
+
+  it('[AC-US-AUTH-001-04] binds the wallet address, nonce, chain, domain, URI and version', async () => {
+    const { mutateAsync } = useSiweMutation()
+    await mutateAsync()
+    await flushPromises()
+
+    const authRequest = vi.mocked(authApi.siweAuth).mock.calls[0]?.[0]
+    expect(authRequest?.message).toContain(ADDRESS)
+    expect(authRequest?.message).toContain(window.location.host)
+    expect(authRequest?.message).toContain(`URI: ${window.location.origin}`)
+    expect(authRequest?.message).toContain('Version: 1')
+    expect(authRequest?.message).toContain('Chain ID: 1')
+    expect(authRequest?.message).toContain('Nonce: abcdef1234567890')
   })
 
   it('[AC-US-AUTH-001-03] calls connect first when the wallet is not yet connected', async () => {
@@ -177,10 +196,21 @@ describe('useSiweMutation', () => {
     )
   })
 
-  it('toasts "Failed to fetch user data" when getUser fails after auth', async () => {
+  it('[AC-US-AUTH-003-06] keeps the issued access token after a recoverable profile network failure', async () => {
     vi.mocked(userApi.getUser).mockRejectedValueOnce(makeAxiosError('/api/user/profile'))
     const { mutateAsync } = useSiweMutation()
     await expect(mutateAsync()).rejects.toBeInstanceOf(AxiosError)
+    expect(localStorage.getItem('authToken')).toBe('jwt.token')
+    expect(mockToast.add).toHaveBeenCalledWith(
+      expect.objectContaining({ title: 'Failed to fetch user data' })
+    )
+  })
+
+  it('[AC-US-AUTH-003-06] removes the issued access token after a terminal profile failure', async () => {
+    vi.mocked(userApi.getUser).mockRejectedValueOnce(makeAxiosError('/api/user/profile', 401))
+    const { mutateAsync } = useSiweMutation()
+    await expect(mutateAsync()).rejects.toBeInstanceOf(AxiosError)
+    expect(localStorage.getItem('authToken')).toBe('')
     expect(mockToast.add).toHaveBeenCalledWith(
       expect.objectContaining({ title: 'Failed to fetch user data' })
     )

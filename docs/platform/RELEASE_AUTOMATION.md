@@ -10,8 +10,7 @@ Main workflow for your process: `release/*` branch → PR to `main` → merge �
 
 **Triggers:**
 
-- Closed (merged) PR from `release/*` branches to `main`
-- Push to `main` containing a release merge
+- Closed and merged PR from a repository-owned `release/*` branch to `main`
 
 **Actions:**
 
@@ -151,7 +150,7 @@ npm run build
 ### Useful Logs
 Workflows log:
 - Detected version
-- Analyzed commit messages
+- Validated release branch version
 - Created tags
 - Build errors
 
@@ -165,13 +164,13 @@ Workflows log:
 ```
 **Solution:** Use a new version or delete the existing tag
 
-#### Version not detected
+#### Invalid release version
 ```
 
-❌ Could not extract version from commit message
+❌ Invalid release version or PR number
 
 ```
-**Solution:** Check commit message format or use manual trigger
+**Solution:** Use a `release/<version>` branch with a supported version format before merging the PR.
 
 #### Tests fail
 ```
@@ -225,7 +224,6 @@ Workflows log:
 - ✅ **Traceability**: Automatic and detailed changelog
 - ✅ **Artifacts**: Automatic builds attached to each release
 - ✅ **Git-flow compatible**: Integrates perfectly with git-flow
-- ✅ **Manual fallback**: Ability to trigger manually if needed
 - ✅ **Automatic testing**: Validation before each release
 
 It's now fully automated! 🎉

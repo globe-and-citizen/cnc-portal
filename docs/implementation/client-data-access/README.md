@@ -28,6 +28,9 @@ flowchart LR
 
 - A mutation keeps its HTTP request in a pure async function and exposes one focused TanStack mutation hook for callers.
 - A caller owns user-visible success callbacks and renders mutation failures reactively in its own context.
+- Mutation failures propagate to the TanStack lifecycle: `onError` owns boundary-specific notifications and state transitions, `onSettled`
+  owns outcome-independent cleanup, and retry policy belongs to the query or mutation configuration. Local `try`/`catch` is reserved for
+  narrow error translation or rollback/resource cleanup that the lifecycle cannot own.
 - `uploadSingleFile` returns the first uploaded file URL and throws when the backend response does not contain one.
 - The `@/queries` barrel re-exports focused query modules; it does not combine their endpoint behaviour or server state.
 

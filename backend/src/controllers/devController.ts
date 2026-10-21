@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { privateKeyToAccount } from 'viem/accounts';
 import { SiweMessage } from 'siwe';
-import { errorResponse } from '../utils/utils';
+import { captureBackendException, errorResponse } from '../utils';
 import { DevSignatureRequest, DevSignatureResponse } from '../types';
 
 /**
@@ -97,6 +97,11 @@ export const generateSiweSignature = async (req: Request, res: Response) => {
 
     return res.status(200).json(response);
   } catch (error) {
+    captureBackendException(error, {
+      operation: 'generateSiweSignature',
+      source: 'devController',
+      status: 500,
+    });
     console.error('Error generating SIWE signature:', error);
 
     const response: DevSignatureResponse = {

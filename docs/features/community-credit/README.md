@@ -60,13 +60,15 @@ Coverage targets compare each criterion with its required representative evidenc
 generated coverage report and CI retain file-level and execution evidence. Known assertion gaps remain insufficient even when a static
 reference has the expected layer label.
 
-| User Story | Main Journey  | Coverage Target | Gaps                                                                                                                                                                                                                                                                                                                              |
-| ---------- | ------------- | --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| US-CC-001  | ✅ Integrated | ❌ 0/9 met      | `AC-US-CC-001-01`, `AC-US-CC-001-02`, `AC-US-CC-001-03`, `AC-US-CC-001-04`, `AC-US-CC-001-05`, `AC-US-CC-001-06`, `AC-US-CC-001-07`, `AC-US-CC-001-08`, `AC-US-CC-001-09`                                                                                                                                                         |
-| US-CC-002  | ✅ Integrated | ⚠️ 2/18         | `AC-US-CC-002-01`, `AC-US-CC-002-02`, `AC-US-CC-002-03`, `AC-US-CC-002-04`, `AC-US-CC-002-05`, `AC-US-CC-002-06`, `AC-US-CC-002-07`, `AC-US-CC-002-08`, `AC-US-CC-002-09`, `AC-US-CC-002-10`, `AC-US-CC-002-11`, `AC-US-CC-002-12`, `AC-US-CC-002-16`, `AC-US-CC-002-13`, `AC-US-CC-002-14`, `AC-US-CC-002-15`                    |
-| US-CC-003  | ✅ Integrated | ❌ 0/12         | `AC-US-CC-003-01`, `AC-US-CC-003-02`, `AC-US-CC-003-03`, `AC-US-CC-003-04`, `AC-US-CC-003-05`, `AC-US-CC-003-06`, `AC-US-CC-003-07`, `AC-US-CC-003-08`, `AC-US-CC-003-09`, `AC-US-CC-003-10`, `AC-US-CC-003-12`, `AC-US-CC-003-11`                                                                                                |
-| US-CC-004  | ✅ Integrated | ❌ 0/8          | `AC-US-CC-004-01`, `AC-US-CC-004-02`, `AC-US-CC-004-03`, `AC-US-CC-004-04`, `AC-US-CC-004-05`, `AC-US-CC-004-06`, `AC-US-CC-004-07`, `AC-US-CC-004-08`                                                                                                                                                                            |
-| US-CC-005  | ✅ Integrated | ❌ 0/17         | `AC-US-CC-005-01`, `AC-US-CC-005-02`, `AC-US-CC-005-03`, `AC-US-CC-005-04`, `AC-US-CC-005-05`, `AC-US-CC-005-06`, `AC-US-CC-005-07`, `AC-US-CC-005-08`, `AC-US-CC-005-09`, `AC-US-CC-005-10`, `AC-US-CC-005-11`, `AC-US-CC-005-12`, `AC-US-CC-005-13`, `AC-US-CC-005-14`, `AC-US-CC-005-15`, `AC-US-CC-005-16`, `AC-US-CC-005-17` |
+Runs of at least three consecutive missing criteria use inclusive ranges with full AC IDs at both endpoints.
+
+| User Story | Main Journey  | Coverage Target | Gaps                                |
+| ---------- | ------------- | --------------- | ----------------------------------- |
+| US-CC-001  | ✅ Integrated | ❌ 0/9 met      | `AC-US-CC-001-01`–`AC-US-CC-001-09` |
+| US-CC-002  | ✅ Integrated | ⚠️ 2/18         | `AC-US-CC-002-01`–`AC-US-CC-002-16` |
+| US-CC-003  | ✅ Integrated | ❌ 0/12         | `AC-US-CC-003-01`–`AC-US-CC-003-12` |
+| US-CC-004  | ✅ Integrated | ❌ 0/8          | `AC-US-CC-004-01`–`AC-US-CC-004-08` |
+| US-CC-005  | ✅ Integrated | ❌ 0/17         | `AC-US-CC-005-01`–`AC-US-CC-005-17` |
 
 The integrated main journeys belong to [E2E-PATH-09 and E2E-PATH-10](../../testing/e2e-paths.md#g4--community-credit-lifecycle). They do not
 prove every criterion or replace direct, assertion-reviewed AC evidence.

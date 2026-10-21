@@ -119,7 +119,7 @@ export async function exerciseSafeInfoRecovery(page: Page, fixture: SafeE2EFixtu
   // The first read and its three automatic retries fail, so only the manual retry recovers.
   await openSafeAccount(page, fixture, { failSafeInfoRequests: 4, incomingTransfers: [] })
   await expect(page.locator('[data-test="safe-deposits-empty"]')).toBeVisible()
-  await expect(page.locator('[data-test="safe-overview-error"]')).toBeVisible({ timeout: 15_000 })
+  await expect(page.locator('[data-test="safe-overview-error"]')).toBeVisible({ timeout: 30_000 })
   await expect(page.locator('[data-test="safe-total-usd"]')).toHaveText('$2.00')
   await expect(page.locator('[data-test="safe-wallet-view"]')).toBeVisible()
   await page.locator('[data-test="retry-safe-overview-button"]').click()

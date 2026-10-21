@@ -70,6 +70,9 @@ docs/implementation/<kebab-case-capability>/
 Only add `details.md` when the verified runtime map, invariants, failures, or evidence would make the README difficult to scan. Existing
 specialised filenames may remain when they have a clear audience and the README routes readers to them.
 
+Apply the [table readability rule](./feature-specification-guide.md#table-readability) to technical documentation too: keep comparison cells
+short and move long dependency or evidence lists under a descriptive heading.
+
 ### Required README Content
 
 1. **Title and scope** — name the system guarantee and its boundaries.

@@ -146,7 +146,7 @@ describe('uploadRoute', () => {
       });
     });
 
-    it.skip('returns 500 if storage is not configured', async () => {
+    it('returns 500 if storage is not configured', async () => {
       mockIsStorageConfigured.mockReturnValue(false);
 
       const response = await request(app).post('/').send({ hasFiles: true });
