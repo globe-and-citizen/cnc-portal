@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { buildPaymentGateSnippet } from '../widgetSnippet'
+import {
+  PAYMENT_GATE_RESULT_SNIPPET,
+  buildPaymentGateListenSnippet,
+  buildPaymentGateSnippet
+} from '../widgetSnippet'
 
 const config = {
   widgetScriptUrl: 'https://widget.example/widget.js',
@@ -65,5 +69,29 @@ describe('buildPaymentGateSnippet', () => {
     expect(usage.code).toContain("import { CncPayCheckout } from './CncPayCheckout'")
     expect(usage.code).toContain("const amount = '128.00'")
     expect(usage.code).toContain('<CncPayCheckout factureId={factureId} amount={amount} />')
+  })
+})
+
+describe('payment result snippets', () => {
+  it("[AC-US-PAYGATE-006-01] forwards the hash and facture ID to the merchant's own endpoint", () => {
+    expect(PAYMENT_GATE_RESULT_SNIPPET).toContain('CncPay.setOnStatus((status, details) => {')
+    expect(PAYMENT_GATE_RESULT_SNIPPET).toContain('details = { hash, factureId }')
+    expect(PAYMENT_GATE_RESULT_SNIPPET).toContain('not a CNC Pay API')
+    expect(PAYMENT_GATE_RESULT_SNIPPET).toContain(
+      'JSON.stringify({ factureId: details.factureId, txHash: details.hash })'
+    )
+    expect(PAYMENT_GATE_RESULT_SNIPPET).toContain('details = { factureId, error }')
+  })
+
+  it("[AC-US-PAYGATE-006-02] watches the Bank's TokenDeposited events and decodes the facture ID", () => {
+    const code = buildPaymentGateListenSnippet(config.bankAddress)
+
+    expect(code).toContain(`address: '${config.bankAddress}'`)
+    expect(code).toContain(
+      "'event TokenDeposited(address indexed depositor, address indexed token, uint256 amount)'"
+    )
+    expect(code).toContain('if (size(input) <= 70) continue')
+    expect(code).toContain('const length = hexToNumber(slice(input, 68, 70))')
+    expect(code).toContain('const factureId = hexToString(slice(input, 70, 70 + length))')
   })
 })

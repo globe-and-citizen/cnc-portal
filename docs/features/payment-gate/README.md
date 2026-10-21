@@ -34,17 +34,20 @@ unchecked.
    `CncPay.setFactureId`/`setAmount`/`show()` with that order's real ID and amount.
 3. The widget shows a payment recap (amount and facture ID), then the customer pays.
 4. The widget reports the outcome — success or failure, with the facture ID — to the merchant's page through the `onStatus` callback.
-5. Confirmed payments become visible on the merchant's History page, read directly from their Bank contract.
+5. The merchant's own server confirms the payment on-chain, from the hash the page forwards or by listening to the Bank's deposit events
+   (`US-PAYGATE-006`, [backend integration guide](./backend-integration.md)).
+6. Confirmed payments become visible on the merchant's History page, read directly from their Bank contract.
 
 ## Status Overview
 
-| User Story     | Title                                   | Actor           | Status         |
-| -------------- | --------------------------------------- | --------------- | -------------- |
-| US-PAYGATE-001 | Configure the Widget's Accepted Token   | Merchant        | 🧪 Validation  |
-| US-PAYGATE-002 | Embed the Widget on the Merchant's Page | Merchant        | 🧪 Validation  |
-| US-PAYGATE-003 | Pay Through the Widget                  | Layer8 customer | 🚧 In Progress |
-| US-PAYGATE-004 | Review Payment History                  | Merchant        | 🧪 Validation  |
-| US-PAYGATE-005 | Recall a Payment's Status by Facture ID | Merchant        | 📝 Draft       |
+| User Story     | Title                                      | Actor           | Status         |
+| -------------- | ------------------------------------------ | --------------- | -------------- |
+| US-PAYGATE-001 | Configure the Widget's Accepted Token      | Merchant        | 🧪 Validation  |
+| US-PAYGATE-002 | Embed the Widget on the Merchant's Page    | Merchant        | 🧪 Validation  |
+| US-PAYGATE-003 | Pay Through the Widget                     | Layer8 customer | 🚧 In Progress |
+| US-PAYGATE-004 | Review Payment History                     | Merchant        | 🧪 Validation  |
+| US-PAYGATE-005 | Recall a Payment's Status by Facture ID    | Merchant        | 📝 Draft       |
+| US-PAYGATE-006 | Confirm a Payment on the Merchant's Server | Merchant        | 🧪 Validation  |
 
 ## Test Coverage Overview
 
@@ -60,6 +63,7 @@ Runs of at least three consecutive missing criteria use inclusive ranges with fu
 | US-PAYGATE-003 | ⬜ Planned   | ⚠️ 6/13         | `AC-US-PAYGATE-003-02`–`AC-US-PAYGATE-003-04`, `AC-US-PAYGATE-003-06`, `AC-US-PAYGATE-003-08`, `AC-US-PAYGATE-003-09`, `AC-US-PAYGATE-003-12` |
 | US-PAYGATE-004 | ⬜ Planned   | ❌ 0/6 met      | `AC-US-PAYGATE-004-01`–`AC-US-PAYGATE-004-06`                                                                                                 |
 | US-PAYGATE-005 | 📝 Draft     | 📝 Not assessed | Authoritative facture-ID lookup boundary undecided                                                                                            |
+| US-PAYGATE-006 | ⬜ Planned   | ✅ 2/2 met      | —                                                                                                                                             |
 
 Proof obligations use the [shared proof-strategy registry](../../testing/proof-strategies.md). Multiple IDs for one AC are cumulative.
 
@@ -288,6 +292,46 @@ story; no error outcome is claimed as implemented.
 
 **Dependencies:** US-PAYGATE-003
 
+## US-PAYGATE-006: Confirm a Payment on the Merchant's Server
+
+**As a** merchant\
+**I want to** know how my own server gets each widget payment's result\
+**So that** I mark an order as paid only once the payment is confirmed on-chain
+
+### How It Works
+
+The Setup page adds two steps after the embed snippet. Step 3 forwards the widget's `success` outcome from the merchant's page to the
+merchant's own server, which checks the transaction on-chain. Step 4 has the server listen to the Bank's `TokenDeposited` events directly,
+which also catches payments whose callback never reached it. The [backend integration guide](./backend-integration.md) expands both.
+
+### Acceptance Criteria
+
+#### Happy Path
+
+- [x] `AC-US-PAYGATE-006-01` The merchant can view and copy a sample that forwards the widget's success outcome — transaction hash and
+      facture ID — from their page to an endpoint on their own server, with the failure outcome's facture ID and error documented.
+- [x] `AC-US-PAYGATE-006-02` The merchant can view and copy a server-side sample, built around the company's Bank address, that listens to
+      the Bank's deposit events and recovers each widget payment's facture ID while skipping plain deposits.
+
+#### Business Rules
+
+The sample endpoint belongs to the merchant; CNC Pay exposes no payment API or webhook. Both samples share the Setup page's no-Bank and
+no-widget-URL states (`AC-US-PAYGATE-002-04`, `AC-US-PAYGATE-002-05`).
+
+#### Edge & Error Cases
+
+No separate failure outcome is specified for this story; a payment whose callback never reaches the merchant's server is covered by the
+listening sample in `AC-US-PAYGATE-006-02`.
+
+### Test Coverage
+
+| Acceptance Criterion   | Proof Strategy | Current Evidence | Status |
+| ---------------------- | -------------- | ---------------- | ------ |
+| `AC-US-PAYGATE-006-01` | `PS-FRONTEND`  | Frontend         | ✅ Met |
+| `AC-US-PAYGATE-006-02` | `PS-FRONTEND`  | Frontend         | ✅ Met |
+
+**Dependencies:** US-PAYGATE-002 and US-PAYGATE-003
+
 ## Known Gaps
 
 - The frontend test marked `AC-US-PAYGATE-004-04` rejects plain deposit calldata, but does not assert that the payment-history list excludes
@@ -297,19 +341,21 @@ story; no error outcome is claimed as implemented.
   address — is treated by the EVM as a no-op value transfer and can report a false success (`US-PAYGATE-003`).
 - Payment history offers no filtering or pagination; a company with a long payment history sees every confirmed payment in one unbounded
   table (`US-PAYGATE-004`).
+- The Setup page's result and listening samples (`US-PAYGATE-006`) are asserted as text only. The listening sample's compilation and
+  facture-ID decoding were checked manually against viem-encoded widget calldata; no automated test runs it against a chain.
 - Recall/recheck by facture ID (`US-PAYGATE-005`) has no implementation and no decided mechanism. The Reference page is a static
   illustration of the intended request/response shape only.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `1daa77697140c8a60b30053f3d40f5ef29e9f7f5`
+**Implementation evidence reviewed against:** `15de0a406f5f0caf332afa03ae8161e9c57f1f60`
 
 - [Setup page](../../../app/src/views/team/[id]/PaymentGate/IntegrationView.vue), combining
   [Bank address + embed snippet, with a snippet format selector and explicit no-Bank/no-widget-URL states](../../../app/src/components/sections/PaymentGateView/IntegrationCard.vue),
-  [HTML / Vue 3 / React snippet builders](../../../app/src/utils/paymentGate/widgetSnippet.ts),
+  [HTML / Vue 3 / React snippet builders, plus the payment-result and listening samples](../../../app/src/utils/paymentGate/widgetSnippet.ts),
   [accepted-token configuration](../../../app/src/components/sections/PaymentGateView/TokenConfigCard.vue), a
   [live widget preview](../../../app/src/components/sections/PaymentGateView/WidgetPreviewCard.vue), and their shared
-  [pane markup](../../../app/src/components/sections/PaymentGateView/PaymentGateWidgetView.vue) (`US-PAYGATE-001`, `002`).
+  [pane markup](../../../app/src/components/sections/PaymentGateView/PaymentGateWidgetView.vue) (`US-PAYGATE-001`, `002`, `006`).
 - [Widget entry point](../../../app/src/widget/main.ts) — including its
   [misconfigured-embed fallback](../../../app/src/widget/WidgetMisconfigured.vue) for a `<script>` tag missing `data-bank`/`data-token` —
   [payment flow](../../../app/src/widget/payment.ts), [widget root component](../../../app/src/widget/WidgetApp.vue), and the
@@ -337,6 +383,7 @@ story; no error outcome is claimed as implemented.
 
 ## Related Documentation
 
+- [CNC Pay backend integration guide](./backend-integration.md)
 - [Bank contract behaviour](../../contracts/features/bank/README.md)
 - [Transaction History implementation](../../implementation/transaction-history/README.md)
 - [Product feature inventory](../README.md)
