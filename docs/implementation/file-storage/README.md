@@ -2,7 +2,7 @@
 
 **Status:** Current
 
-**Last verified:** 2026-09-09
+**Last verified:** 2026-10-21
 
 **Scope:** Own the backend boundary for validating uploads, storing file objects, issuing time-limited download URLs, and refreshing or
 deleting persisted attachment references. This capability does not own the product rules that decide when a profile image or claim
@@ -53,6 +53,8 @@ sequenceDiagram
 
 - At most ten valid files are accepted by one `uploadFiles` call, and each file is checked against the shared type and size limits.
 - Stored metadata contains the generated object key, MIME type, and size; the original filename is not used as the stored key.
+- The upload controller rejects file uploads with `Storage not configured` before calling the storage service when required storage
+  credentials are unavailable.
 - A storage upload failure becomes a per-file failure result rather than an unhandled exception.
 - Unexpected upload and presigned-URL controller failures that return `5xx` are captured by the backend error-tracking capability without
   adding file contents or credentials to the event.
@@ -66,7 +68,7 @@ sequenceDiagram
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `95d9e12dd696864913e37ad6e20222587b223591`
+**Implementation evidence reviewed against:** `df0531a4fa761fb1803004371c5bdcb14570b984`
 
 - [Upload route](../../../backend/src/routes/uploadRoute.ts) and [upload controller](../../../backend/src/controllers/uploadController.ts)
 - [Upload middleware](../../../backend/src/utils/upload.ts) and [middleware tests](../../../backend/src/utils/__tests__/upload.test.ts)

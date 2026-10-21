@@ -2,7 +2,7 @@
 
 **Scope:** Shared SIWE authentication, JWT session issuance, and protected-route entry
 
-**Last verified:** 2026-08-21
+**Last verified:** 2026-10-21
 
 **Consumers:** [Authentication user journey](../../features/authentication/README.md), the Vue client, the administrator dashboard, and
 every authenticated backend route
@@ -61,7 +61,7 @@ sequenceDiagram
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `8b231a2e0ccf81bf988ee73a26f8a53512d15f18`
+**Implementation evidence reviewed against:** `df0531a4fa761fb1803004371c5bdcb14570b984`
 
 - [Client lock screen](../../../app/src/components/layout/LockScreen.vue) and
   [client authentication state](../../../app/src/composables/useAuth.ts)

@@ -72,7 +72,7 @@ Runs of at least three consecutive missing criteria use inclusive ranges with fu
 | US-CONTRACT-002 | ⬜ Planned   | ⚠️ 2/12         | `AC-US-CONTRACT-002-01`–`AC-US-CONTRACT-002-10`                                                                                                                               |
 | US-CONTRACT-003 | ⬜ Planned   | ⚠️ 1/8 met      | `AC-US-CONTRACT-003-02`–`AC-US-CONTRACT-003-08`                                                                                                                               |
 | US-CONTRACT-004 | ⬜ Planned   | ⚠️ 2/10 met     | `AC-US-CONTRACT-004-01`–`AC-US-CONTRACT-004-04`, `AC-US-CONTRACT-004-06`, `AC-US-CONTRACT-004-07`, `AC-US-CONTRACT-004-09`, `AC-US-CONTRACT-004-10`                           |
-| US-CONTRACT-005 | ⬜ Planned   | ❌ 0/11         | `AC-US-CONTRACT-005-01`–`AC-US-CONTRACT-005-11`                                                                                                                               |
+| US-CONTRACT-005 | ⬜ Planned   | ⚠️ 2/11         | `AC-US-CONTRACT-005-01`–`AC-US-CONTRACT-005-04`, `AC-US-CONTRACT-005-06`–`AC-US-CONTRACT-005-10`                                                                              |
 
 Proof obligations use the [shared proof-strategy registry](../../testing/proof-strategies.md). Multiple IDs for one AC are cumulative.
 
@@ -116,22 +116,22 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 
 ### Test Coverage
 
-| Acceptance Criterion    | Proof Strategy             | Current Evidence | Status     |
-| ----------------------- | -------------------------- | ---------------- | ---------- |
-| `AC-US-CONTRACT-001-01` | `PS-API-INTEGRATED`        | None linked      | ❌ Missing |
-| `AC-US-CONTRACT-001-02` | `PS-FRONTEND`              | Frontend         | ✅ Met     |
-| `AC-US-CONTRACT-001-03` | `PS-CHAIN-INTEGRATED`      | None linked      | ❌ Missing |
-| `AC-US-CONTRACT-001-04` | `PS-FRONTEND`              | None linked      | ❌ Missing |
-| `AC-US-CONTRACT-001-05` | `PS-FRONTEND`              | Frontend         | ✅ Met     |
-| `AC-US-CONTRACT-001-06` | `PS-BROWSER`               | None linked      | ❌ Missing |
-| `AC-US-CONTRACT-001-07` | `PS-BROWSER`               | None linked      | ❌ Missing |
-| `AC-US-CONTRACT-001-08` | `PS-FRONTEND`              | Frontend         | ✅ Met     |
-| `AC-US-CONTRACT-001-09` | `PS-FRONTEND`              | Frontend         | ✅ Met     |
-| `AC-US-CONTRACT-001-10` | `PS-FRONTEND`              | Frontend         | ✅ Met     |
-| `AC-US-CONTRACT-001-11` | `PS-BACKEND`               | None linked      | ❌ Missing |
-| `AC-US-CONTRACT-001-11` | `PS-FULL-STACK-INTEGRATED` | None linked      | ❌ Missing |
-| `AC-US-CONTRACT-001-12` | `PS-BACKEND`               | None linked      | ❌ Missing |
-| `AC-US-CONTRACT-001-12` | `PS-FULL-STACK-INTEGRATED` | None linked      | ❌ Missing |
+| Acceptance Criterion    | Proof Strategy             | Current Evidence | Status          |
+| ----------------------- | -------------------------- | ---------------- | --------------- |
+| `AC-US-CONTRACT-001-01` | `PS-API-INTEGRATED`        | None linked      | ❌ Missing      |
+| `AC-US-CONTRACT-001-02` | `PS-FRONTEND`              | Frontend         | ✅ Met          |
+| `AC-US-CONTRACT-001-03` | `PS-CHAIN-INTEGRATED`      | None linked      | ❌ Missing      |
+| `AC-US-CONTRACT-001-04` | `PS-FRONTEND`              | None linked      | ❌ Missing      |
+| `AC-US-CONTRACT-001-05` | `PS-FRONTEND`              | Frontend         | ✅ Met          |
+| `AC-US-CONTRACT-001-06` | `PS-BROWSER`               | None linked      | ❌ Missing      |
+| `AC-US-CONTRACT-001-07` | `PS-BROWSER`               | Frontend         | ⚠️ Insufficient |
+| `AC-US-CONTRACT-001-08` | `PS-FRONTEND`              | Frontend         | ✅ Met          |
+| `AC-US-CONTRACT-001-09` | `PS-FRONTEND`              | Frontend         | ✅ Met          |
+| `AC-US-CONTRACT-001-10` | `PS-FRONTEND`              | Frontend         | ✅ Met          |
+| `AC-US-CONTRACT-001-11` | `PS-BACKEND`               | None linked      | ❌ Missing      |
+| `AC-US-CONTRACT-001-11` | `PS-FULL-STACK-INTEGRATED` | None linked      | ❌ Missing      |
+| `AC-US-CONTRACT-001-12` | `PS-BACKEND`               | None linked      | ❌ Missing      |
+| `AC-US-CONTRACT-001-12` | `PS-FULL-STACK-INTEGRATED` | None linked      | ❌ Missing      |
 
 **Dependencies:** Current company and its active Officer generation
 
@@ -361,7 +361,7 @@ Historical deployments preserve the same per-domain scenarios and UC selection a
 | `AC-US-CONTRACT-005-03` | `PS-CONTRACT`              | Integrated E2E   | ⚠️ Insufficient |
 | `AC-US-CONTRACT-005-04` | `PS-BROWSER`               | None linked      | ❌ Missing      |
 | `AC-US-CONTRACT-005-04` | `PS-BACKEND`               | None linked      | ❌ Missing      |
-| `AC-US-CONTRACT-005-05` | `PS-FRONTEND`              | Frontend         | ⚠️ Insufficient |
+| `AC-US-CONTRACT-005-05` | `PS-FRONTEND`              | Frontend         | ✅ Met          |
 | `AC-US-CONTRACT-005-06` | `PS-FULL-STACK-INTEGRATED` | None linked      | ❌ Missing      |
 | `AC-US-CONTRACT-005-06` | `PS-BACKEND`               | None linked      | ❌ Missing      |
 | `AC-US-CONTRACT-005-07` | `PS-FULL-STACK-INTEGRATED` | None linked      | ❌ Missing      |
@@ -369,7 +369,7 @@ Historical deployments preserve the same per-domain scenarios and UC selection a
 | `AC-US-CONTRACT-005-08` | `PS-FRONTEND`              | None linked      | ❌ Missing      |
 | `AC-US-CONTRACT-005-09` | `PS-FRONTEND`              | None linked      | ❌ Missing      |
 | `AC-US-CONTRACT-005-10` | `PS-FRONTEND`              | None linked      | ❌ Missing      |
-| `AC-US-CONTRACT-005-11` | `PS-CONTRACT`              | None linked      | ❌ Missing      |
+| `AC-US-CONTRACT-005-11` | `PS-CONTRACT`              | Contract         | ✅ Met          |
 
 **Dependencies:** US-CONTRACT-001, a current company owner, a connected wallet, and an active Officer generation
 
