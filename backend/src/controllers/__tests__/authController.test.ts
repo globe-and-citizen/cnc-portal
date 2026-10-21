@@ -150,10 +150,16 @@ describe('authController', () => {
       expect(response.status).toBe(200);
       expect(response.body).toHaveProperty('accessToken');
       expect(typeof response.body.accessToken).toBe('string');
-      expect(mockPrisma.user.update).toHaveBeenCalledWith({
+
+      const updateCall = mockPrisma.user.update.mock.calls[0]?.[0] as
+        | { where?: { address?: string }; data?: { nonce?: string } }
+        | undefined;
+      expect(updateCall).toEqual({
         where: { address: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266' },
         data: { nonce: expect.any(String) },
       });
+      expect(updateCall?.data?.nonce).not.toBe(mockUser.nonce);
+      expect(updateCall?.data?.nonce).not.toBe(VALID_NONCE);
 
       const payload = jwt.decode(response.body.accessToken) as { iat: number; exp: number };
       expect(payload.exp - payload.iat).toBe(24 * 60 * 60);
