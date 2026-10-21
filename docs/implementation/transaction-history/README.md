@@ -50,7 +50,7 @@ flowchart LR
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `e7a2bedd81eef36d7c1c7ff14910680358638157`
+**Implementation evidence reviewed against:** `5bf92928370ff6fe8af9cd1a560f0eb4db915390`
 
 - [Shared table state](../../../app/src/composables/transactions/useTransactionTable.ts)
 - [Shared table-state tests](../../../app/src/composables/transactions/__tests__/useTransactionTable.spec.ts)
