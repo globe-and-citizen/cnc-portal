@@ -72,8 +72,11 @@ describe('Safe exchanges in the Accounting data layer', () => {
       const accounting = useCNCAccounting('1', {
         rateOfRecord: (asset) => (asset.startsWith('erc20:') ? marketRate.value : 1)
       })
-      expect(accounting.status.state.value).toBe('partial')
+      // Stablecoin execution amounts establish cost even without a crypto market quote.
+      expect(accounting.status.state.value).toBe('ready')
+      const fixedJournal = accounting.journal.value
       marketRate.value = 1800
+      expect(accounting.journal.value).toEqual(fixedJournal)
       expect(
         accounting.journal.value.filter((entry) => entry.useCase === 'SAFE-SWAP')
       ).toHaveLength(2)
@@ -82,10 +85,10 @@ describe('Safe exchanges in the Accounting data layer', () => {
       )!
       expect(
         purchase.lines.find((line) => line.movement?.asset?.symbol === 'AWETH')?.movement?.rate
-      ).toBe(1800000000n)
+      ).toBe(2000000000n)
       expect(
         purchase.lines.some((line) => line.account.family.name === 'Asset Exchange Loss')
-      ).toBe(true)
+      ).toBe(false)
       expect(accounting.status.state.value).toBe('ready')
       await accounting.refetch()
       expect(refetch).toHaveBeenCalledOnce()

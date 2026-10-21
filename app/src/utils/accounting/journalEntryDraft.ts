@@ -96,6 +96,11 @@ export type UseCase =
 type EnrichmentStatus = 'enriched' | 'not-applicable' | 'needs-off-chain-data'
 
 export interface JournalEntryDraft {
+  /** Exact six-decimal unit cost derived from consideration, without a floating-point round trip. */
+  carryingRate?: bigint
+  valuationMethod?: 'swap-consideration' | 'weighted-average'
+  /** Block-wide log position; orders Safe movements mined in the same block. */
+  logIndex?: number
   /** Stable id — the source row id, suffixed when one event yields several entries. */
   id: string
   /**
@@ -206,6 +211,19 @@ export interface JournalEntryDraft {
   expenseRemainingUsd?: number
   /** Off-chain enrichment status. */
   enrichment: EnrichmentStatus
+}
+
+/**
+ * Chronological replay order. Equal block timestamps mean the same block, where the
+ * mined log position decides; drafts without one keep their stable id order.
+ */
+export function compareDraftOrder(
+  a: Pick<JournalEntryDraft, 'timestamp' | 'logIndex' | 'id'>,
+  b: Pick<JournalEntryDraft, 'timestamp' | 'logIndex' | 'id'>
+): number {
+  return (
+    a.timestamp - b.timestamp || (a.logIndex ?? -1) - (b.logIndex ?? -1) || a.id.localeCompare(b.id)
+  )
 }
 
 /** Checksum-normalize an address, returning `undefined` for invalid input. */

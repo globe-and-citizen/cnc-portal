@@ -11,6 +11,9 @@
  * - **Stablecoins** (USDC, USDC.e, USDT) are valued at their **$1.00 peg**.
  * - **Native (POL/ETH)** uses the immutable UTC transaction-date market snapshot.
  * - **SHER** uses the compensation multiplier in force for the source operation.
+ * - **Safe swaps** use executed consideration: a recognized USD-stablecoin receipt,
+ *   otherwise the asset spent. A non-pegged consideration uses the same daily snapshot.
+ *   Exchange replay assigns that fixed cost to the net acquired quantity.
  *
  * An unavailable non-pegged rate remains zero-valued but the source movement is
  * retained. Accounting completeness reports the missing rate explicitly.
@@ -46,6 +49,38 @@ export function isUsdPegged(tokenId: AssetId): boolean {
   return USD_PEGGED_TOKENS.has(tokenId)
 }
 
+/** One-sided execution consideration: stable receipts first, otherwise the asset spent. */
+export function swapConsiderationEntries(
+  entries: readonly JournalEntryDraft[]
+): JournalEntryDraft[] {
+  const incoming = entries.filter((entry) => entry.debit === 'Cash — Safe')
+  const outgoing = entries.filter((entry) => entry.credit === 'Cash — Safe')
+  if (
+    new Set(incoming.map((entry) => entry.token)).size !== 1 ||
+    new Set(outgoing.map((entry) => entry.token)).size !== 1 ||
+    incoming[0]!.token === outgoing[0]!.token
+  )
+    return []
+  return isUsdPegged(incoming[0]!.token) ? incoming : outgoing
+}
+
+/** Only the execution consideration needs a USD reference, never the asset acquired with it. */
+function swapRateIds(entries: readonly JournalEntryDraft[]): Set<string> {
+  const groups = new Map<string, JournalEntryDraft[]>()
+  for (const entry of entries) {
+    if (entry.useCase !== 'SAFE-SWAP') continue
+    const key = entry.txHash?.toLowerCase() ?? entry.sourceOperationId ?? entry.id
+    const group = groups.get(key) ?? []
+    group.push(entry)
+    groups.set(key, group)
+  }
+  return new Set(
+    [...groups.values()].flatMap((group) =>
+      swapConsiderationEntries(group).map((entry) => entry.id)
+    )
+  )
+}
+
 /** Canonical UTC calendar date used by historical rate query identities. */
 export function utcRateDate(at: Date): string {
   if (!Number.isFinite(at.getTime())) throw new Error('Historical rate requires a valid date')
@@ -60,8 +95,10 @@ export function historicalRateTargets(
   entries: readonly JournalEntryDraft[]
 ): HistoricalRateTarget[] {
   const targets = new Map<string, HistoricalRateTarget>()
+  const swapRates = swapRateIds(entries)
   for (const entry of entries) {
     if (
+      (entry.useCase === 'SAFE-SWAP' && !swapRates.has(entry.id)) ||
       (entry.debit === null && entry.credit === null) ||
       BigInt(entry.rawAmount) === 0n ||
       isUsdPegged(entry.token) ||
@@ -124,8 +161,14 @@ export function applyHistoricalRates(
   entries: readonly JournalEntryDraft[],
   rateOfRecord: UsdRateOfRecord
 ): JournalEntryDraft[] {
+  const swapRates = swapRateIds(entries)
   return entries.map((entry) => {
-    if (isUsdPegged(entry.token) || entry.token === 'sher' || BigInt(entry.rawAmount) === 0n) {
+    if (
+      isUsdPegged(entry.token) ||
+      entry.token === 'sher' ||
+      BigInt(entry.rawAmount) === 0n ||
+      (entry.useCase === 'SAFE-SWAP' && !swapRates.has(entry.id))
+    ) {
       return entry
     }
 

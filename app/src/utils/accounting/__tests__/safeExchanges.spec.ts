@@ -77,6 +77,9 @@ describe('Safe asset exchange accounting', () => {
     expect(result.journal[0]!.lines.some((line) => line.movement?.asset?.symbol === 'AWETH')).toBe(
       true
     )
+    expect(journalLedgerRows(result.journal)[0]!.swapDetails).toContain(
+      'Acquisition cost: Unavailable'
+    )
   })
   it('retains a same-operation mint separately and flags its classification', () => {
     const rows = history()
@@ -139,14 +142,16 @@ describe('Safe asset exchange accounting', () => {
     const result = finalizeJournalEntryDrafts(drafts([row]))
     expect(journalLedgerRows(result.journal)[0]!.quantity).toBe('0.011371464599721321')
   })
-  it('values a tiny receipt without inventing an unrepresentable consideration-based unit rate', () => {
+  it('retains exact acquisition cost for a one-atom receipt without overflowing the unit rate', () => {
     const rows = history().slice(0, 3)
     rows[2]!.value = '1'
     const result = finalizeJournalEntryDrafts(drafts(rows))
     expect(result.assetDiagnostics).toEqual([])
-    expect(journalLedgerRows(result.journal).find((row) => row.currency === 'AWETH')?.rate).toBe(
-      '$2,000'
-    )
+    const line = result.journal
+      .find((entry) => entry.useCase === 'SAFE-SWAP')!
+      .lines.find((line) => line.debit !== undefined)!
+    expect(line.debit).toBe(usd('20'))
+    expect(line.movement!.rate).toBe(20000000000000000000000000n)
   })
   it('requires further basis evidence after a payment depleted the holding at a different valuation', () => {
     const rows = history().slice(0, 3)

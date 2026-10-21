@@ -32,6 +32,8 @@ export interface SafeTransferRow {
   amount: string
   timestamp: number
   txHash?: string
+  /** Block-wide log position of a token transfer. */
+  logIndex?: number
   asset?: AssetMetadata
 }
 
@@ -130,7 +132,8 @@ function inferInflow(
     ...erc20AssetFields(tokenId, row.asset),
     rawAmount: row.amount,
     counterparty: row.from,
-    txHash: row.txHash
+    txHash: row.txHash,
+    ...(row.logIndex !== undefined ? { logIndex: row.logIndex } : {})
   }
   const sourcePocket = ctx.pocketOf(row.from)
   if (sourcePocket) {
@@ -171,7 +174,8 @@ function inferOutflow(
     ...erc20AssetFields(tokenId, row.asset),
     rawAmount: row.amount,
     counterparty: row.to,
-    txHash: row.txHash
+    txHash: row.txHash,
+    ...(row.logIndex !== undefined ? { logIndex: row.logIndex } : {})
   }
   const destPocket = ctx.pocketOf(row.to)
   if (destPocket) {
@@ -228,6 +232,7 @@ export function mapSafeTransfers(input: SafeMapperInput, ctx: MapperContext): Jo
           id: row.id,
           timestamp: row.timestamp,
           txHash: row.txHash,
+          ...(row.logIndex !== undefined ? { logIndex: row.logIndex } : {}),
           sourceContract: input.safeAddress,
           useCase: 'SAFE-SWAP',
           debit: incoming ? SAFE : null,

@@ -101,6 +101,8 @@ export interface AccountRegistry {
 
 /** The token movement evidenced by one monetary journal line. */
 interface JournalEntryLineMovement {
+  /** How a Safe swap line got its USD amount, instead of the market rate. */
+  valuationMethod?: 'swap-consideration' | 'weighted-average'
   /** Token transferred on the source operation. */
   token: AssetId
   asset?: AssetMetadata

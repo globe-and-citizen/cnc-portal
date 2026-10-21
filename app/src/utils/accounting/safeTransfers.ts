@@ -11,6 +11,12 @@ import type { SafeTransferRow } from '@/utils/accounting/mappers/safe'
 import { currentChainId } from '@/constant'
 import { assetMetadata } from '@/utils/tokens/assets'
 
+/** Token transfer ids are `e` + transaction hash + block-wide log index; native ones have none. */
+function logIndexOf(transferId: string | undefined): number | undefined {
+  const match = transferId?.match(/^e(?:0x)?[\da-f]{64}(\d+)$/i)
+  return match ? Number(match[1]) : undefined
+}
+
 /** A SHER value transfer carries no cash; skip NFT moves entirely. */
 function isMonetaryTransfer(t: SafeIncomingTransfer): boolean {
   return t.type === 'ETHER_TRANSFER' || t.type === 'ERC20_TRANSFER'
@@ -53,6 +59,7 @@ export function toSafeTransferRows(
   transfers?.forEach((t, index) => {
     if (!isMonetaryTransfer(t)) return
     if (routedTransactions.has(t.transactionHash.toLowerCase())) return
+    const logIndex = logIndexOf(t.transferId)
     rows.push({
       id: t.transferId ?? `${t.transactionHash}-${index}`,
       from: t.from,
@@ -63,7 +70,8 @@ export function toSafeTransferRows(
         : {}),
       amount: t.value,
       timestamp: Math.floor(new Date(t.executionDate).getTime() / 1000),
-      txHash: t.transactionHash
+      txHash: t.transactionHash,
+      ...(logIndex !== undefined ? { logIndex } : {})
     })
   })
   return rows

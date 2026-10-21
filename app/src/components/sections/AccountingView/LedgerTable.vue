@@ -26,6 +26,14 @@
     <template #transaction-cell="{ row: { original: row } }">
       <span v-if="row.isTotal" class="font-extrabold">Total movements</span>
       <span v-else-if="row.isFirst" class="text-sm font-semibold">{{ row.label }}</span>
+      <details
+        v-if="row.isFirst && row.swapDetails"
+        class="mt-1 max-w-sm text-xs"
+        data-test="swap-execution-details"
+      >
+        <summary class="cursor-pointer" data-test="show-swap-execution">Execution details</summary>
+        <p class="mt-1">{{ row.swapDetails }}</p>
+      </details>
     </template>
 
     <template
@@ -127,7 +135,10 @@
           :value="row.rate"
           label="Recorded rate"
           :detail="
-            row.currency && row.rate !== 'Unavailable' ? `${row.rate} / ${row.currency}` : undefined
+            row.rateDetails ??
+            (row.currency && row.rate !== 'Unavailable'
+              ? `${row.rate} / ${row.currency}`
+              : undefined)
           "
         />
       </div>
