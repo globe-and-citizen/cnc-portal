@@ -1024,8 +1024,8 @@ _[← Back to feature inventory](../README.md)_
 
 Executed swap fee inspection is available in Safe Activity's **Swap costs** section: the included total is visible immediately, with
 initially closed fee and network disclosures and an explicit exact-amount option. Network gas remains separate and identifies its payer. The
-General Ledger retains execution details in the Transaction column and shows the fee as an ordinary account line between principal debits
-and credits. See the [ledger ordering tests](../../../app/src/utils/accounting/__tests__/journalLedgerPresenter.spec.ts),
+General Ledger shows the fee as an ordinary account line between principal debits and credits. See the
+[ledger ordering tests](../../../app/src/utils/accounting/__tests__/journalLedgerPresenter.spec.ts),
 [ledger interaction tests](../../../app/src/views/team/%5Bid%5D/Accounting/__tests__/GeneralLedgerInteractions.spec.ts),
 [fee matching tests](../../../app/src/utils/safe/__tests__/cowSettlement.spec.ts),
 [fee presentation tests](../../../app/src/utils/accounting/__tests__/swapPresenter.spec.ts),

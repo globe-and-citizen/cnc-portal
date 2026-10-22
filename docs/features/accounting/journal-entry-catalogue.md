@@ -707,8 +707,8 @@ For 532.944250 USDC spent with a verified 3.870494 USDC fee, the purchase is:
 | Transaction Fee Expense | USD valuation  |    3.870494 |              |
 | Cash — Safe             | USDC           |             |   532.944250 |
 
-The received quantity is already net on-chain and is not reduced again. Original fee denomination and amount remain inspectable in the
-execution details. The fee expense is a valuation allocation, not another token transfer.
+The received quantity is already net on-chain and is not reduced again. Original fee denomination and amount remain inspectable in Safe
+Activity's **Swap costs** section. The fee expense is a valuation allocation, not another token transfer.
 
 For an asset with a $20 net carrying cost later sold for a net 30.658984 USDC, with a verified $1 sale fee, the sale is:
 

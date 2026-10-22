@@ -32,11 +32,12 @@ Use a disposable Safe and verified ERC-20 contracts. Do not run test swaps on th
    precision and token addresses; switching back restores rounded values. Network gas stays visible separately and distinguishes payment by
    the Safe, another wallet or an unavailable payer; transaction details retain the full hash and known payer. On the same General Ledger
    operation, verify that the principal debit appears first, followed by Transaction Fee Expense, then the credit; the Transaction column
-   keeps **Execution details** and has no **Swap fees** disclosure. Compare exact amounts and original currencies. The total comes from the
-   executed order, while protocol lines are included details, not additional charges. Network gas shows the entire settlement's native-token
-   amount and transaction sender; solver gas must not become a Safe expense. Journal debits, credits, net acquisition cost and P&L must
-   remain identical before and after opening the panel once fee evidence has loaded. For the recorded 532.944250 USD purchase with 3.870494
-   USD fees, net asset cost is 529.073756 USD. At a 530 USD market value, total P&L is -2.944250 USD, not that result minus fees again.
+   shows only the entry label, with no **Execution details** or **Swap fees** disclosure. Compare exact amounts and original currencies. The
+   total comes from the executed order, while protocol lines are included details, not additional charges. Network gas shows the entire
+   settlement's native-token amount and transaction sender; solver gas must not become a Safe expense. Journal debits, credits, net
+   acquisition cost and P&L must remain identical before and after opening the panel once fee evidence has loaded. For the recorded
+   532.944250 USD purchase with 3.870494 USD fees, net asset cost is 529.073756 USD. At a 530 USD market value, total P&L is -2.944250 USD,
+   not that result minus fees again.
 7. Compare provider evidence with the receipt's Safe owner, token pair, amounts, block, transaction and log index. An order filled in other
    transactions must not assign its cumulative total to this one swap. An unsupported provider, missing evidence or mismatched records must
    show unavailable rather than zero. The swap then keeps its fee inside the acquired asset cost (532.944250 USD in the example), shows no

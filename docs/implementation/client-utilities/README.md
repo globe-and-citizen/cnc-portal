@@ -143,15 +143,15 @@ Missing, mixed-denomination or third-currency evidence values to zero, so the fe
 and holdings column live in the [P&L presenter](../../../app/src/utils/accounting/safePnlPresenter.ts).
 
 The [swap presenter](../../../app/src/utils/accounting/swapPresenter.ts) uses canonical exact-number and token helpers. It keeps exact
-quantities alongside rounded display amounts and short fee-policy explanations, and owns the ledger's swap execution details. Main totals
-use two decimals for quantities of at least one token and retain up to eight below one; breakdowns retain up to eight and network gas up to
-four. A positive quantity below display precision uses a less-than bound; unknown denomination metadata displays contract identity and base
-units rather than assuming decimals. Total and breakdown are not summed; native settlement gas and its sender are informational. The shared
-contracts are [swap fee types](../../../app/src/types/swapFees.ts).
-[Settlement tests](../../../app/src/utils/safe/__tests__/cowSettlement.spec.ts) cover spoofed emitters, inconsistent records, partial fills
-and unavailable evidence; [presenter tests](../../../app/src/utils/accounting/__tests__/swapPresenter.spec.ts) cover exact precision and
-nonmutating presentation. [Net fee accounting tests](../../../app/src/utils/accounting/__tests__/swapFees.spec.ts) cover fee denomination
-conversion, unverified fees kept inside cost, unchanged receipts, weighted-average partial/full disposals and total P&L.
+quantities alongside rounded display amounts and short fee-policy explanations. Main totals use two decimals for quantities of at least one
+token and retain up to eight below one; breakdowns retain up to eight and network gas up to four. A positive quantity below display
+precision uses a less-than bound; unknown denomination metadata displays contract identity and base units rather than assuming decimals.
+Total and breakdown are not summed; native settlement gas and its sender are informational. The shared contracts are
+[swap fee types](../../../app/src/types/swapFees.ts). [Settlement tests](../../../app/src/utils/safe/__tests__/cowSettlement.spec.ts) cover
+spoofed emitters, inconsistent records, partial fills and unavailable evidence;
+[presenter tests](../../../app/src/utils/accounting/__tests__/swapPresenter.spec.ts) cover exact precision and nonmutating presentation.
+[Net fee accounting tests](../../../app/src/utils/accounting/__tests__/swapFees.spec.ts) cover fee denomination conversion, unverified fees
+kept inside cost, unchanged receipts, weighted-average partial/full disposals and total P&L.
 
 ## Implementation Evidence
 

@@ -693,17 +693,15 @@ in parallel with the journal. Internal-transfer narration reads the source and d
 text. Every transaction-backed journal group uses its transaction hash as its identity; a raw `<txHash>-<logIndex>` value remains
 traceability evidence. A fee is an ordinary `Transaction Fee Expense` line in its source operation; there is no `Fee` pseudo-category or
 separate fee entry in this projection. Ledger presentation stably orders each entry's principal debits, fee debits, then credits without
-mutating the source journal or its amounts; the first displayed principal line carries the transaction metadata. The Transaction column
-retains execution details; fee inspection panels are available in Safe Activity. Ledger action and transaction labels are derived from the
-entry's assigned or inferred accounts and source use-case evidence; no persisted presentation category participates. The General Ledger
-renders the transaction hash once on the entry's first line and preserves its full value in PDF and spreadsheet exports; synthetic
-operations have no transaction-hash value. A transaction-backed hash links to the configured network block explorer in a separate tab.
-Activity narration and exported activity text reuse the canonical address and duration formatters rather than maintaining
-Accounting-specific display rules. Quantity cells use a separate six-decimal display label while their complete decimal-string quantity
-remains available for inspection and export. Positive quantities that would round to zero display `<0.000001`. Rate cells retain the
-recorded six-decimal rate with trailing zeros trimmed; their details identify the recorded USD price per token rather than claiming
-precision beyond the journal's rate scale. Both cells expose details through a hover tooltip, keyboard focus, or a tap-generated click, with
-Escape and focus loss dismissing the detail. Unavailable and absent movements remain plain text. No formatted label participates in
+mutating the source journal or its amounts; the first displayed principal line carries the transaction metadata. Fee inspection panels are
+available in Safe Activity. Ledger action and transaction labels are derived from the entry's assigned or inferred accounts and source
+use-case evidence; no persisted presentation category participates. The General Ledger renders the transaction hash once on the entry's
+first line and preserves its full value in PDF and spreadsheet exports; synthetic operations have no transaction-hash value. A
+transaction-backed hash links to the configured network block explorer in a separate tab. Activity narration and exported activity text
+reuse the canonical address and duration formatters rather than maintaining Accounting-specific display rules. Quantity cells show a
+six-decimal display label as plain text while the complete decimal-string quantity is preserved for export. Positive quantities that would
+round to zero display `<0.000001`. Rate cells show the recorded six-decimal USD price per token with trailing zeros trimmed, without
+claiming precision beyond the journal's rate scale. Unavailable and absent movements remain plain text. No formatted label participates in
 valuation, debit/credit sums, or running balances. Every visible General Ledger column, including the account drill-down Balance column, has
 bounded widths and supports pointer, touch, and keyboard resizing; a double-click restores its default width. JournalEntry assembly groups
 source postings and withholds a `FeePaid` source without matching Bank-outflow evidence, returning it as a reconciliation gap. Bank fees are
@@ -774,7 +772,7 @@ because deposits and company-pocket transfers are not manual assignment targets.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `87a1d0262d192a9bf6195d619806a1c7e74d6754`
+**Implementation evidence reviewed against:** `ea6056fd4b1310c977ecc9e76a2835c409b83f98`
 
 - [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts),
   [source-status projection](../../../app/src/composables/accounting/useAccountingStatus.ts),
@@ -846,7 +844,6 @@ because deposits and company-pocket transfers are not manual assignment targets.
   [General Ledger journal presenter](../../../app/src/utils/accounting/journalLedgerPresenter.ts)
 - [General Ledger route view](../../../app/src/views/team/%5Bid%5D/Accounting/GeneralLedgerView.vue),
   [General Ledger table](../../../app/src/components/sections/AccountingView/LedgerTable.vue),
-  [precision detail cell](../../../app/src/components/sections/AccountingView/LedgerPrecisionCell.vue),
   [drill-down modal](../../../app/src/components/sections/AccountingView/LedgerDrilldownModal.vue),
   [drill-down composable](../../../app/src/composables/accounting/useLedgerDrilldown.ts), and
   [account drill-down utilities](../../../app/src/utils/accounting/accountLedger.ts),
@@ -865,7 +862,6 @@ because deposits and company-pocket transfers are not manual assignment targets.
   [transaction evidence tests](../../../app/src/composables/accounting/__tests__/useTransactionEvidence.spec.ts),
   [account-registry tests](../../../app/src/utils/accounting/__tests__/accountRegistry.spec.ts),
   [General Ledger table tests](../../../app/src/components/sections/AccountingView/__tests__/LedgerRedeployLabel.spec.ts),
-  [precision detail tests](../../../app/src/components/sections/AccountingView/__tests__/LedgerPrecisionCell.spec.ts),
   [export quantity regressions](../../../app/src/lib/accounting/__tests__/generalLedgerPrecision.spec.ts),
   [journal General Ledger tests](../../../app/src/utils/accounting/__tests__/journalLedgerPresenter.spec.ts), and
   [journal and Trial Balance tests](../../../app/src/utils/accounting/__tests__/generalLedger.spec.ts), and
@@ -895,11 +891,10 @@ only if all fills belong to the selected transaction and aggregate executed amou
 never an additional debit. Receipt gas is the entire settlement cost paid by its sender; it is not evidence of an extra Safe payment.
 Separate approval transactions and Safe reimbursements require their own evidence and are outside this adapter.
 
-The [swap presenter](../../../app/src/utils/accounting/swapPresenter.ts) turns verification into display rows and owns the ledger's swap
-execution details. The fee total and separate gas summary are visible without expanding either disclosure. Fee-policy explanations and
-network transaction identities have independent, initially closed disclosures; switching swaps resets these and the exact-amount choice.
-Provider failures hide unavailable fee totals and offer retry without hiding receipt-derived gas. No display choice changes journal entries
-or P&L.
+The [swap presenter](../../../app/src/utils/accounting/swapPresenter.ts) turns verification into display rows. The fee total and separate
+gas summary are visible without expanding either disclosure. Fee-policy explanations and network transaction identities have independent,
+initially closed disclosures; switching swaps resets these and the exact-amount choice. Provider failures hide unavailable fee totals and
+offer retry without hiding receipt-derived gas. No display choice changes journal entries or P&L.
 
 [Fee valuation](../../../app/src/utils/accounting/swapFees.ts) uses only the executed consideration and exact raw amounts. For outgoing
 consideration value `V`, spent quantity `S`, received quantity `R` and fee quantity `F`, an outgoing-token fee is `V × F / S`; a
