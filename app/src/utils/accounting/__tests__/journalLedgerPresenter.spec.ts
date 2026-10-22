@@ -88,6 +88,20 @@ describe('journalLedgerPresenter', () => {
     expect(journal).toEqual(original)
   })
 
+  it('[AC-US-ACCT-002-04] exposes date, activity, accounts, currency, quantity, rate, debit, credit and hash', () => {
+    const txHash = `0x${'a'.repeat(64)}`
+    const rows = journalLedgerRows(finalizeJournal([posting({ id: 'funding', txHash })]))
+
+    expect(rows).toHaveLength(2)
+    for (const row of rows) {
+      expect(row).toMatchObject({ currency: 'USDC', quantity: '100', rate: '$1' })
+    }
+    expect(rows[0]).toMatchObject({ account: 'Cash — Payroll', dr: '$100.00', cr: '', txHash })
+    expect(rows[0]!.date).not.toBe('')
+    expect(rows[0]!.activity).toBeDefined()
+    expect(rows[1]).toMatchObject({ account: 'Cash — Bank', dr: '', cr: '$100.00' })
+  })
+
   it('trims padding zeros and identifies positive quantities below display precision', () => {
     const journal = finalizeJournal([
       posting({ id: 'tiny-native', token: 'native', rawAmount: '1' }),
