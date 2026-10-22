@@ -26,14 +26,6 @@
     <template #transaction-cell="{ row: { original: row } }">
       <span v-if="row.isTotal" class="font-extrabold">Total movements</span>
       <span v-else-if="row.isFirst" class="text-sm font-semibold">{{ row.label }}</span>
-      <details
-        v-if="row.isFirst && row.swapDetails"
-        class="mt-1 max-w-sm text-xs"
-        data-test="swap-execution-details"
-      >
-        <summary class="cursor-pointer" data-test="show-swap-execution">Execution details</summary>
-        <p class="mt-1">{{ row.swapDetails }}</p>
-      </details>
     </template>
 
     <template
@@ -117,30 +109,13 @@
 
     <template #quantity-cell="{ row: { original: row } }">
       <div v-if="!row.isTotal" class="text-muted text-right text-sm tabular-nums">
-        <LedgerPrecisionCell
-          :value="row.quantityDisplay ?? row.quantity"
-          label="Exact quantity"
-          :detail="
-            row.currency && row.quantity !== 'Unavailable'
-              ? `${row.quantity} ${row.currency}`
-              : undefined
-          "
-        />
+        {{ row.quantityDisplay ?? row.quantity }}
       </div>
     </template>
 
     <template #rate-cell="{ row: { original: row } }">
       <div v-if="!row.isTotal" class="text-muted text-right text-sm tabular-nums">
-        <LedgerPrecisionCell
-          :value="row.rate"
-          label="Recorded rate"
-          :detail="
-            row.rateDetails ??
-            (row.currency && row.rate !== 'Unavailable'
-              ? `${row.rate} / ${row.currency}`
-              : undefined)
-          "
-        />
+        {{ row.rate }}
       </div>
     </template>
 
@@ -179,7 +154,6 @@ import { computed } from 'vue'
 import type { TableColumn } from '@nuxt/ui'
 import LedgerActivityCell from './LedgerActivityCell.vue'
 import LedgerColumnHeader from './LedgerColumnHeader.vue'
-import LedgerPrecisionCell from './LedgerPrecisionCell.vue'
 import { useActivityDestination } from '@/composables/accounting/useActivityDestination'
 import { NETWORK } from '@/constant'
 import { formatTxHash } from '@/utils/format'

@@ -13,10 +13,8 @@ describe('Safe swap executed consideration valuation', () => {
       (entry) => entry.txHash === tx(2)
     )!
     const rows = journalLedgerRows([purchase])
-    expect(rows[0]!.swapDetails).toContain('2,000 USDC / AWETH')
     const reference = rows.find((row) => row.currency === 'AWETH')!
     expect(reference.rate).toBe('$2,000')
-    expect(reference.rateDetails).toContain('What the swap actually paid')
   })
   it('replays same-block movements in mined log order, never transaction-hash order', () => {
     const rows = history().slice(0, 3)

@@ -63,7 +63,6 @@ describe('journalLedgerPresenter', () => {
     ])
     expect(rows.map((row) => row.isFirst)).toEqual([true, false, false])
     expect(rows.map((row) => row.txHash)).toEqual([swap.txHash, undefined, undefined])
-    expect(rows[0]!.swapDetails).toBeTruthy()
     expect(journalLedgerTotal([journal])).toBe('$532.94')
     expect(journal).toEqual(before)
   })

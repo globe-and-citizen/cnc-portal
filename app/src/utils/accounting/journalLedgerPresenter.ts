@@ -14,13 +14,10 @@ import { badgeClassOf, categoryLabelOf } from './ledgerCategory'
 import { currencySymbol, filterByPeriod, formatUnixDateTime, money, periodLabel } from './presenter'
 import { creditOf, debitOf } from './journalEntry'
 import { ZERO_USD_AMOUNT, usdRateToNumber } from './monetaryAmount'
-import { swapExecutionDetails } from './swapPresenter'
 import type { Account, JournalEntry, JournalEntryLine, UsdAmount } from './types'
 
 /** Display-ready journal line shared by the ledger, drill-downs and exporters. */
 export interface LedgerRow {
-  swapDetails?: string
-  rateDetails?: string
   isFirst: boolean
   date: string
   /** The generic accounting-entry label (the "Transaction" column), e.g. "Wage accrual". */
@@ -169,18 +166,10 @@ export function filterJournalLedgerEntries(
     .sort((a, b) => b.timestamp - a.timestamp || b.id.localeCompare(a.id))
 }
 
-type ValuationMethod = NonNullable<NonNullable<JournalEntryLine['movement']>['valuationMethod']>
-
-const VALUATION_DETAILS: Record<ValuationMethod, string> = {
-  'swap-consideration':
-    'What the swap actually paid for these tokens. Market prices only change the P&L.',
-  'weighted-average': 'Average cost of the tokens given up.'
-}
-
 /** The Devise / Quantité / Taux columns of one journal line's token movement. */
 function movementOf(
   line: JournalEntryLine
-): Pick<LedgerRow, 'currency' | 'quantity' | 'quantityDisplay' | 'rate' | 'rateDetails'> {
+): Pick<LedgerRow, 'currency' | 'quantity' | 'quantityDisplay' | 'rate'> {
   if (!line.movement) return NO_MOVEMENT
   const quantity =
     line.movement.decimals === null
@@ -189,9 +178,6 @@ function movementOf(
   const roundedQuantity =
     quantity === null ? UNAVAILABLE : formatNumber(quantity, { maxDecimals: 6 })
   return {
-    ...(line.movement.valuationMethod
-      ? { rateDetails: VALUATION_DETAILS[line.movement.valuationMethod] }
-      : {}),
     currency: currencySymbol(line.movement.token, line.movement.asset),
     quantity: quantity === null ? UNAVAILABLE : formatExactNumber(quantity),
     quantityDisplay:
@@ -257,7 +243,6 @@ export function journalLedgerRows(
       const accountLabel = labels.get(line.account.id) ?? line.account.family.name
       rows.push({
         isFirst,
-        ...(isFirst ? { swapDetails: swapExecutionDetails(entry) } : {}),
         date: isFirst ? formatUnixDateTime(entry.timestamp) : '',
         label: isFirst ? entryLabel(entry) : '',
         ...(isFirst && entry.txHash ? { txHash: entry.txHash } : {}),

@@ -108,17 +108,13 @@ describe('General Ledger account filter', () => {
 })
 
 describe('General Ledger table controls', () => {
-  it('keeps swap execution details without a Swap fees disclosure in the Transaction column', () => {
+  it('shows no swap disclosure in the Transaction column', () => {
     const { journal } = swapFeeFixture()
     const wrapper = renderWithProviders(LedgerTable, {
       props: { rows: journalLedgerRows([journal]), total: journalLedgerTotal([journal]) }
     })
 
-    expect(wrapper.get('[data-test="show-swap-execution"]').text()).toBe('Execution details')
-    expect(wrapper.find('[data-test="show-swap-fees"]').exists()).toBe(false)
-    expect(wrapper.findAll('summary').map((summary) => summary.text())).toEqual([
-      'Execution details'
-    ])
+    expect(wrapper.findAll('summary')).toHaveLength(0)
     wrapper.unmount()
   })
 

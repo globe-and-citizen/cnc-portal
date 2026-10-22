@@ -3,7 +3,6 @@ import { parseUnits } from 'viem'
 import { assetId } from '@/utils/tokens/assets'
 import type { SafeClientBalances, SafeIncomingTransfer } from '@/types/safe'
 import { safeTreasuryPnl } from '../safePnl'
-import { swapExecutionDetails } from '../swapPresenter'
 import { finalizeJournalEntryDrafts } from '../journalEntry'
 import { drafts, history, TOKEN, transfer, ROUTER, tx } from './safeExchangeFixtures'
 import { swapFeeInput, SWAP_AMOUNT, SWAP_QUANTITY } from './swapFeeFixtures'
@@ -56,9 +55,6 @@ describe('Safe treasury P&L from canonical postings', () => {
         recovered
       )
     }
-    expect(swapExecutionDetails(journal.find((entry) => entry.useCase === 'SAFE-SWAP')!)).toContain(
-      '2,742.385525 USDC / AWETH'
-    )
   })
   it('[AC-US-SAFE-002-11] keeps realized profits after the token position is closed', () => {
     const journal = finalizeJournalEntryDrafts(drafts(history(), 2000)).journal

@@ -77,9 +77,6 @@ describe('Safe asset exchange accounting', () => {
     expect(result.journal[0]!.lines.some((line) => line.movement?.asset?.symbol === 'AWETH')).toBe(
       true
     )
-    expect(journalLedgerRows(result.journal)[0]!.swapDetails).toContain(
-      'Acquisition cost: Unavailable'
-    )
   })
   it('retains a same-operation mint separately and flags its classification', () => {
     const rows = history()
