@@ -452,10 +452,10 @@ For 1,000 USDC swapped for 0.5 WETH with no WETH price:
 
 The canonical attestation for these sources is held by the [Accounts implementation evidence](./README.md#implementation-evidence).
 
-- [Swap detection and P&L](../../../app/src/utils/safe/swapPnl.ts) — `RULE-SWAP-DETECT`, `RULE-SWAP-GIVEN`, `RULE-SWAP-CURRENT`,
-  `RULE-SWAP-PNL`, `RULE-SWAP-GAP`
+- [Swap P&L calculation](../../../app/src/utils/safe/swapPnl.ts) — `RULE-SWAP-GIVEN`, `RULE-SWAP-CURRENT`, `RULE-SWAP-PNL`, `RULE-SWAP-GAP`
 - [Swap valuation and CoW fees](../../../app/src/utils/safe/swapValuation.ts) — price sources, `RULE-SWAP-PEG`, `RULE-SWAP-FEE`
-- [Swap P&L composable](../../../app/src/composables/safe/useSafeSwapPnl.ts) — source loading and `UC-SWAP-014`
+- [Swap P&L composable](../../../app/src/composables/safe/useSafeSwapPnl.ts) — original transfer and balance filtering, `RULE-SWAP-DETECT`,
+  source loading and `UC-SWAP-014`
 - [CoW order query](../../../app/src/queries/cow.queries.ts) and [CoW order fields](../../../app/src/types/cow.ts)
 - [Wallet overview swap figures](../../../app/src/components/sections/SafeView/SafeSwapPnlCard.vue)
 - [Use-case scenario tests](../../../app/src/utils/safe/__tests__/swapPnl.integration.spec.ts) — `UC-SWAP-001` to `UC-SWAP-013`

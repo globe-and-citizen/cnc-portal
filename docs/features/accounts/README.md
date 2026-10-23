@@ -1219,7 +1219,7 @@ condition, related criteria, and a worked example:
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `05babb809d0da6c7eb9898da72289cd49bff2638`
+**Implementation evidence reviewed against:** `ad5f4c17bfc71fa6457ed0f778d870db169eaecb`
 
 - [Bank deposit modal](../../../app/src/components/sections/BankView/forms/DepositModal.vue),
   [Bank transfer modal](../../../app/src/components/sections/BankView/forms/TransferModal.vue),
@@ -1392,8 +1392,9 @@ Implementation: [Safe Client balances](../../../app/src/queries/safeClient.queri
 
 The swap P&L in the Wallet overview reads the Safe transfer history, the Gateway USD balances, daily CoinGecko quotes through the backend,
 and the CoW Protocol orders of each swap transaction. A CoW lookup that fails or returns no order leaves the fee unreported and never hides
-the other figures. Implementation: [swap detection and P&L](../../../app/src/utils/safe/swapPnl.ts),
-[swap valuation and CoW fees](../../../app/src/utils/safe/swapValuation.ts),
+the other figures. The composable filters the original transfer and balance rows without replacing their response types or objects;
+timestamps, metadata and raw amount strings remain available. Refunds are netted in base units during valuation. Implementation:
+[swap P&L calculation](../../../app/src/utils/safe/swapPnl.ts), [swap valuation and CoW fees](../../../app/src/utils/safe/swapValuation.ts),
 [swap P&L composable](../../../app/src/composables/safe/useSafeSwapPnl.ts), [CoW order query](../../../app/src/queries/cow.queries.ts),
 [CoW order fields](../../../app/src/types/cow.ts), and
 [overview swap figures](../../../app/src/components/sections/SafeView/SafeSwapPnlCard.vue). Executable evidence:
