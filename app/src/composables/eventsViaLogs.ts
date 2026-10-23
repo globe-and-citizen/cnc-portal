@@ -62,6 +62,78 @@ export interface ScanResult<T> {
   timestampGaps: TimestampGap[]
 }
 
+export type EventFeedState = 'loading' | 'complete' | 'partial' | 'unavailable'
+
+export interface EventFeedStatus {
+  state: EventFeedState
+  gapCount: number
+  timestampGapCount: number
+  queryErrorCount: number
+}
+
+interface EventFeedStatusInput<T> {
+  data: ScanResult<T> | undefined
+  error: unknown
+  isPending: boolean
+  enabled?: boolean
+}
+
+/**
+ * Project a standard TanStack event-feed query into a user-visible completeness
+ * state. A scan gap is a successful partial result, not a query failure.
+ */
+export function getEventFeedStatus<T>({
+  data,
+  error,
+  isPending,
+  enabled = true
+}: EventFeedStatusInput<T>): EventFeedStatus {
+  const gapCount = data?.gaps.length ?? 0
+  const timestampGapCount = data?.timestampGaps.length ?? 0
+  const queryErrorCount = error ? 1 : 0
+
+  if (!enabled || (isPending && !data)) {
+    return { state: 'loading', gapCount, timestampGapCount, queryErrorCount }
+  }
+
+  if (!data) {
+    return { state: 'unavailable', gapCount, timestampGapCount, queryErrorCount }
+  }
+
+  if (queryErrorCount > 0 || gapCount > 0 || timestampGapCount > 0) {
+    return { state: 'partial', gapCount, timestampGapCount, queryErrorCount }
+  }
+
+  return { state: 'complete', gapCount, timestampGapCount, queryErrorCount }
+}
+
+/** Combine the completeness of multiple feeds that form one visible history. */
+export function combineEventFeedStatuses(statuses: readonly EventFeedStatus[]): EventFeedStatus {
+  const relevant = statuses.filter((status) => status.state !== 'loading')
+  const gapCount = statuses.reduce((total, status) => total + status.gapCount, 0)
+  const timestampGapCount = statuses.reduce((total, status) => total + status.timestampGapCount, 0)
+  const queryErrorCount = statuses.reduce((total, status) => total + status.queryErrorCount, 0)
+
+  if (relevant.length === 0) {
+    return { state: 'loading', gapCount, timestampGapCount, queryErrorCount }
+  }
+
+  if (relevant.some((status) => status.state === 'partial')) {
+    return { state: 'partial', gapCount, timestampGapCount, queryErrorCount }
+  }
+
+  const unavailableCount = relevant.filter((status) => status.state === 'unavailable').length
+  if (unavailableCount === relevant.length) {
+    return { state: 'unavailable', gapCount, timestampGapCount, queryErrorCount }
+  }
+
+  if (unavailableCount > 0) {
+    return { state: 'partial', gapCount, timestampGapCount, queryErrorCount }
+  }
+
+  return { state: 'complete', gapCount, timestampGapCount, queryErrorCount }
+}
+
 /** A decoded event withheld because its immutable block time was unavailable. */
 export interface TimestampGap {
   transactionHash: string | null

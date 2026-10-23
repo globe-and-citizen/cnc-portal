@@ -21,6 +21,13 @@
       </div>
     </template>
 
+    <TransactionHistoryStatusAlert
+      :status="eventFeedStatus"
+      data-test="credit-transaction-history-status"
+      :is-retrying="isRefetching"
+      @retry="retryHistory"
+    />
+
     <UTable
       v-model:expanded="expandedRows"
       :data="displayedTransactions"
@@ -210,6 +217,8 @@ import {
 } from '@/utils/transactions/history'
 
 import { formatDateRelative, formatDateUTC } from '@/utils/dates/calendar'
+import TransactionHistoryStatusAlert from '@/components/sections/TransactionHistoryStatusAlert.vue'
+import { getEventFeedStatus } from '@/composables/eventsViaLogs'
 
 const props = defineProps<{
   fixedReturnAddress: Address
@@ -223,7 +232,26 @@ const currencyStore = useCurrencyStore()
 const { resolveUser, enrichTransaction } = useTransactionPresentation()
 const contractAddress = computed(() => props.fixedReturnAddress.toLowerCase())
 
-const { data, error, isPending: loading } = useFixedReturnEventsViaLogs(contractAddress)
+const {
+  data,
+  error,
+  isPending: loading,
+  isRefetching,
+  refetch
+} = useFixedReturnEventsViaLogs(contractAddress)
+
+const eventFeedStatus = computed(() =>
+  getEventFeedStatus({
+    data: data.value,
+    error: error.value,
+    isPending: loading.value,
+    enabled: Boolean(contractAddress.value)
+  })
+)
+
+const retryHistory = () => {
+  void refetch()
+}
 
 const rawTransactions = computed(() => {
   const rows = buildRawFixedReturnTransactions(data.value?.events)

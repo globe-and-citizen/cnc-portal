@@ -26,6 +26,13 @@ const UCardStub = defineComponent({
   template: '<div><slot name="header" /><slot /></div>'
 })
 
+const UAlertStub = defineComponent({
+  name: 'UAlert',
+  props: ['title', 'description'],
+  template:
+    '<div v-bind="$attrs"><strong>{{ title }}</strong><span>{{ description }}</span><slot name="actions" /></div>'
+})
+
 const UTableStub = defineComponent({
   name: 'UTable',
   props: {
@@ -159,6 +166,7 @@ export const createWrapper = (bankAddress: Address = BANK_ADDRESS): VueWrapper =
     global: {
       stubs: {
         UCard: UCardStub,
+        UAlert: UAlertStub,
         UTable: UTableStub,
         USelect: USelectStub,
         UBadge: UBadgeStub,
