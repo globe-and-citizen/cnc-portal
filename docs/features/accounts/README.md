@@ -88,6 +88,7 @@ flowchart LR
 | US-SAFE-004 | Manage Safe signers and threshold          | Safe owner                 | 🧪 Validation  |
 | US-SAFE-005 | Review Safe transactions                   | Company member             | 🧪 Validation  |
 | US-SAFE-006 | Approve and execute a Safe transaction     | Safe owner                 | 🧪 Validation  |
+| US-SAFE-007 | Review the Safe swap P&L                   | Company member             | 🧪 Validation  |
 
 ## Test Coverage Overview
 
@@ -118,6 +119,7 @@ Runs of at least three consecutive missing criteria use inclusive ranges with fu
 | US-SAFE-004 | 📋 Planned    | ⚠️ 4/9          | `AC-US-SAFE-004-01`–`AC-US-SAFE-004-04`, `AC-US-SAFE-004-07`                      |
 | US-SAFE-005 | 🧪 Mocked     | ✅ 9/9          | —                                                                                 |
 | US-SAFE-006 | 🧪 Mocked     | ✅ 10/10        | —                                                                                 |
+| US-SAFE-007 | 📋 Planned    | ⚠️ 8/9 met      | `AC-US-SAFE-007-01`                                                               |
 
 Proof obligations use the [shared proof-strategy registry](../../testing/proof-strategies.md). Multiple IDs for one AC are cumulative.
 
@@ -1133,6 +1135,71 @@ movement across the participating stories.
 
 **Dependencies:** US-SAFE-001
 
+## US-SAFE-007: Review the Safe Swap P&L
+
+**As a** company member\
+**I want to** see what the Safe's swaps gave up, what the assets received are worth today, the resulting profit or loss, and the fees\
+**So that** I know whether converting treasury assets created or lost value
+
+The Wallet overview shows four figures, in this order, once the Safe has at least one swap. Values are in USD.
+
+- **Swapped value** — what the swaps gave up, at the USD price of each swap's day.
+- **Current value swap** — what the assets received are worth today.
+- **Fees** — the fees CoW Protocol reports for the Safe's orders. They are already part of the swapped value, so they are not deducted a
+  second time.
+- **P&L** — current value swap minus swapped value, with the percentage of the swapped value.
+
+### Use Cases
+
+The [Safe swap P&L use-case catalogue](./safe-swap-pnl-use-cases.md) defines the calculation rules and fourteen use cases, each with its
+condition, related criteria, and a worked example:
+
+- buying, selling, and exchanging volatile assets or stablecoins (`UC-SWAP-001`–`UC-SWAP-005`);
+- assets spent since the swap and several swaps over time (`UC-SWAP-006`, `UC-SWAP-007`);
+- reported, unreported, and partly reported fees (`UC-SWAP-008`–`UC-SWAP-010`);
+- refunds, missing prices, Safes without swaps, and unavailable sources (`UC-SWAP-011`–`UC-SWAP-014`).
+
+### Acceptance Criteria
+
+#### Happy Path
+
+- [x] `AC-US-SAFE-007-01` Once the Safe has swapped, the Wallet overview shows the number of swaps, then the swapped value, the current
+      value swap, the fees, and the P&L in USD and as a percentage.
+
+#### Business Rules
+
+- [x] `AC-US-SAFE-007-02` A swap is a transaction in which the Safe sends fungible assets and receives different ones. Deposits,
+      withdrawals, NFTs, transfers to itself, and a refund of the sold asset in the same transaction are not counted as separate trades.
+- [x] `AC-US-SAFE-007-03` The swapped value uses the USD price of each asset given up on the UTC day of its swap.
+- [x] `AC-US-SAFE-007-04` The current value swap uses the asset's current price from the Safe balances, or today's daily quote when the Safe
+      no longer holds it.
+- [x] `AC-US-SAFE-007-05` The P&L equals the current value swap minus the swapped value and is marked as a gain or a loss.
+- [x] `AC-US-SAFE-007-06` USD stablecoins are valued at $1.
+- [x] `AC-US-SAFE-007-07` Fees come only from the Safe's own fulfilled CoW Protocol orders, valued at the swap day's price; the overview
+      says when no swap or only some swaps report a fee.
+
+#### Edge & Error Cases
+
+- [x] `AC-US-SAFE-007-08` A missing price marks the figures as incomplete and names the asset instead of counting it as zero silently.
+- [x] `AC-US-SAFE-007-09` Without a swap, or while the history, balances, or prices are unavailable, the swap figures stay hidden.
+
+### Test Coverage
+
+| Acceptance Criterion | Proof Strategy      | Current Evidence | Status          |
+| -------------------- | ------------------- | ---------------- | --------------- |
+| `AC-US-SAFE-007-01`  | `PS-FRONTEND`       | Frontend         | ✅ Met          |
+| `AC-US-SAFE-007-01`  | `PS-API-INTEGRATED` | Frontend         | ⚠️ Insufficient |
+| `AC-US-SAFE-007-02`  | `PS-FRONTEND`       | Frontend         | ✅ Met          |
+| `AC-US-SAFE-007-03`  | `PS-FRONTEND`       | Frontend         | ✅ Met          |
+| `AC-US-SAFE-007-04`  | `PS-FRONTEND`       | Frontend         | ✅ Met          |
+| `AC-US-SAFE-007-05`  | `PS-FRONTEND`       | Frontend         | ✅ Met          |
+| `AC-US-SAFE-007-06`  | `PS-FRONTEND`       | Frontend         | ✅ Met          |
+| `AC-US-SAFE-007-07`  | `PS-FRONTEND`       | Frontend         | ✅ Met          |
+| `AC-US-SAFE-007-08`  | `PS-FRONTEND`       | Frontend         | ✅ Met          |
+| `AC-US-SAFE-007-09`  | `PS-FRONTEND`       | Frontend         | ✅ Met          |
+
+**Dependencies:** US-SAFE-002
+
 ## Known Gaps
 
 - New Bank, Expense, and Safe movement-history criteria require shared direct-movement evidence and eventless movement coverage. Existing
@@ -1152,7 +1219,7 @@ movement across the participating stories.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `5bf92928370ff6fe8af9cd1a560f0eb4db915390`
+**Implementation evidence reviewed against:** `05babb809d0da6c7eb9898da72289cd49bff2638`
 
 - [Bank deposit modal](../../../app/src/components/sections/BankView/forms/DepositModal.vue),
   [Bank transfer modal](../../../app/src/components/sections/BankView/forms/TransferModal.vue),
@@ -1322,6 +1389,20 @@ Implementation: [Safe Client balances](../../../app/src/queries/safeClient.queri
 [holdings presentation](../../../app/src/utils/safe/portfolio.ts),
 [holdings presentation tests](../../../app/src/utils/safe/__tests__/portfolio.spec.ts), and
 [contract asset identities](../../../app/src/utils/tokens/assets.ts). Human validation of external swaps remains pending.
+
+The swap P&L in the Wallet overview reads the Safe transfer history, the Gateway USD balances, daily CoinGecko quotes through the backend,
+and the CoW Protocol orders of each swap transaction. A CoW lookup that fails or returns no order leaves the fee unreported and never hides
+the other figures. Implementation: [swap detection and P&L](../../../app/src/utils/safe/swapPnl.ts),
+[swap valuation and CoW fees](../../../app/src/utils/safe/swapValuation.ts),
+[swap P&L composable](../../../app/src/composables/safe/useSafeSwapPnl.ts), [CoW order query](../../../app/src/queries/cow.queries.ts),
+[CoW order fields](../../../app/src/types/cow.ts), and
+[overview swap figures](../../../app/src/components/sections/SafeView/SafeSwapPnlCard.vue). Executable evidence:
+[swap P&L tests](../../../app/src/utils/safe/__tests__/swapPnl.spec.ts),
+[swap valuation tests](../../../app/src/utils/safe/__tests__/swapValuation.spec.ts),
+[use-case scenario tests](../../../app/src/utils/safe/__tests__/swapPnl.integration.spec.ts) for the
+[use-case catalogue](./safe-swap-pnl-use-cases.md), [composable tests](../../../app/src/composables/safe/__tests__/useSafeSwapPnl.spec.ts),
+and [overview swap figure tests](../../../app/src/components/sections/SafeView/__tests__/SafeSwapPnlCard.spec.ts). The figures have not been
+checked against a live Safe yet.
 
 Company and Companies list summaries reuse the Gateway cache and its valued fiat total, including tokens outside the CNC payment-token list.
 They keep the known provider valuation when another returned token has no price. Holdings keep exact quantities on hover and expose precise
