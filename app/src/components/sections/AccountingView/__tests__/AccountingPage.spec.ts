@@ -19,12 +19,10 @@ const sources: AccountingSourceStatus[] = [
 
 function setAccountingState(
   state: AccountingCompleteness,
-  diagnostics: AccountingDiagnostic[] = [],
-  ignoredMovements: unknown[] = []
+  diagnostics: AccountingDiagnostic[] = []
 ): void {
   vi.mocked(provideAccounting).mockReturnValue({
     journal: ref([]),
-    ignoredMovements: ref(ignoredMovements),
     status: {
       state: ref(state),
       sources: ref(sources),
@@ -47,18 +45,6 @@ describe('AccountingPage', () => {
     expect(wrapper.text()).toContain('Accounting')
     expect(wrapper.find('[data-test="router-view"]').exists()).toBe(true)
     expect(wrapper.find('[data-test="accounting-error"]').exists()).toBe(false)
-    expect(wrapper.find('[data-test="accounting-ignored-assets"]').exists()).toBe(false)
-  })
-
-  it('shows reports with a note when unrecognized token movements were left out', () => {
-    setAccountingState('ready', [], [{ id: 'airdrop' }])
-
-    const wrapper = renderWithProviders(AccountingPage)
-
-    expect(wrapper.find('[data-test="router-view"]').exists()).toBe(true)
-    expect(wrapper.find('[data-test="accounting-ignored-assets"]').text()).toContain(
-      '1 unrecognized token movement left out of the books'
-    )
   })
 
   it('[AC-US-ACCT-001-10] withholds reports while material sources are loading', () => {

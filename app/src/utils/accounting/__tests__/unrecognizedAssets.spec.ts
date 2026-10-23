@@ -20,26 +20,25 @@ const draft = (
   }) as JournalEntryDraft
 
 describe('unrecognized Safe movements', () => {
-  it('[AC-US-SAFE-003-12] sets aside a Safe airdrop of a contract the Safe never swapped', () => {
+  it('[AC-US-SAFE-003-12] drops a Safe airdrop of a contract the Safe never swapped', () => {
     const cash = draft('usdc')
     const airdrop = draft(AIRDROP)
     const outflow = draft(AIRDROP, { useCase: 'CASH-OUT' })
-    expect(withoutUnrecognizedMovements([cash, airdrop, outflow], SAFE.toLowerCase())).toEqual({
-      drafts: [cash],
-      ignored: [airdrop, outflow]
-    })
+    expect(withoutUnrecognizedMovements([cash, airdrop, outflow], SAFE.toLowerCase())).toEqual([
+      cash
+    ])
   })
 
   it('keeps every movement of a contract acquired through a Safe swap', () => {
     const paid = draft('usdc', { useCase: 'SAFE-SWAP' })
     const bought = draft(WETH, { useCase: 'SAFE-SWAP' })
     const sold = draft(WETH, { useCase: 'CASH-OUT' })
-    expect(withoutUnrecognizedMovements([paid, bought, sold], SAFE).ignored).toEqual([])
+    expect(withoutUnrecognizedMovements([paid, bought, sold], SAFE)).toEqual([paid, bought, sold])
   })
 
   it('leaves other sources and an unresolved Safe untouched', () => {
     const bankToken = draft(AIRDROP, { sourceContract: BANK })
-    expect(withoutUnrecognizedMovements([bankToken], SAFE).ignored).toEqual([])
-    expect(withoutUnrecognizedMovements([draft(AIRDROP)], undefined).ignored).toEqual([])
+    expect(withoutUnrecognizedMovements([bankToken], SAFE)).toEqual([bankToken])
+    expect(withoutUnrecognizedMovements([draft(AIRDROP)], undefined)).toHaveLength(1)
   })
 })

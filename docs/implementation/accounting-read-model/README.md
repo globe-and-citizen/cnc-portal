@@ -140,12 +140,11 @@ Safe queries retain provider movements without local contract exclusions before 
 Gateway's balance spam filter does not apply to this Transaction Service feed. The adapter skips zero-value transfers, which move nothing
 and are the usual address-poisoning vector. The data layer then passes the provisional drafts through
 [`withoutUnrecognizedMovements`](../../../app/src/utils/accounting/unrecognizedAssets.ts) before historical-rate targets, receipt evidence
-and assembly: a Safe-sourced movement of a contract that the Safe never acquired through one of its own `SAFE-SWAP` exchanges is set aside.
+and assembly: a Safe-sourced movement of a contract that the Safe never acquired through one of its own `SAFE-SWAP` exchanges is dropped.
 Native and configured tokens are always kept, and other sources only emit their own contracts' movements. An airdrop therefore creates no
-rate request, rate gap or classification gap. `useCNCAccounting` exposes the set-aside drafts as `ignoredMovements`, which the Accounting
-route counts in a note above ready reports, and the swapped set as `swappedAssets`, unset until the Safe history loads. See
-[provider filtering](../client-data-access/README.md#safe-provider-filtering). Executable evidence:
-[Safe pagination and metadata unit tests](../../../app/src/queries/__tests__/safe.queries.spec.ts),
+rate request, rate gap or classification gap. `useCNCAccounting` exposes the swapped set as `swappedAssets`, unset until the Safe history
+loads, so Safe Account applies the same rule. See [provider filtering](../client-data-access/README.md#safe-provider-filtering). Executable
+evidence: [Safe pagination and metadata unit tests](../../../app/src/queries/__tests__/safe.queries.spec.ts),
 [Safe source-mapping tests](../../../app/src/utils/accounting/__tests__/safe.spec.ts),
 [Safe transfer adapter tests](../../../app/src/utils/accounting/__tests__/toSafeTransferRows.spec.ts) and
 [unrecognized movement tests](../../../app/src/utils/accounting/__tests__/unrecognizedAssets.spec.ts).

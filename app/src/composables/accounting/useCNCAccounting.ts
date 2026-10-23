@@ -196,7 +196,7 @@ export function useCNCAccounting(
   )
   const swapFees = useSwapFeeEvidence(() => swapFeeTargets(provisionalDrafts.value))
   const historicalTargets = computed(() =>
-    accountingValuation.historicalRateTargets(recognized.value.drafts)
+    accountingValuation.historicalRateTargets(recognized.value)
   )
   const assetMarkets = useGetAssetMarketsQuery(
     () => coinGeckoRateTargets(historicalTargets.value).assets,
@@ -223,8 +223,8 @@ export function useCNCAccounting(
   const drafts = computed(() =>
     attachSwapFees(
       options.rateOfRecord
-        ? recognized.value.drafts
-        : accountingValuation.applyHistoricalRates(recognized.value.drafts, rateOfRecord),
+        ? recognized.value
+        : accountingValuation.applyHistoricalRates(recognized.value, rateOfRecord),
       swapFees.verifiedFees.value
     )
   )
@@ -333,7 +333,6 @@ export function useCNCAccounting(
 
   return {
     journal: computed(() => accounting.value.journal),
-    ignoredMovements: computed(() => recognized.value.ignored),
     /** Assets the Safe acquired through its own swaps; unset until the Safe history loads. */
     swappedAssets: computed(() =>
       safeAssetTransfers.data.value ? swappedAssets(provisionalDrafts.value) : undefined
