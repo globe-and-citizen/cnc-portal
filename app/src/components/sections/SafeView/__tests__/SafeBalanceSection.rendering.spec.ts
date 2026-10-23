@@ -152,7 +152,8 @@ describe('[US-SAFE-002] SafeBalanceSection rendering', () => {
       global: {
         stubs: {
           AddressTooltip: AddressTooltipStub,
-          TransferForm: TransferFormStub
+          TransferForm: TransferFormStub,
+          SafeSwapPnlCard: true
         }
       }
     })
@@ -223,6 +224,13 @@ describe('[US-SAFE-002] SafeBalanceSection rendering', () => {
 
       expect(wrapper.get('[data-test="safe-total-usd"]').text()).toBe('$4,500.00')
       expect(wrapper.text()).toContain('$4,500.00 USD')
+    })
+    it('[AC-US-SAFE-007-01] places the swap figures of the registered Safe in the overview', () => {
+      wrapper = createWrapper()
+
+      expect(wrapper.findComponent({ name: 'SafeSwapPnlCard' }).props('address')).toBe(
+        MOCK_DATA.safeAddress
+      )
     })
 
     it('shows loading spinner when isLoading is true', () => {
