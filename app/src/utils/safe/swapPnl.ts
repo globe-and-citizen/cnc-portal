@@ -5,22 +5,6 @@ import type { SafeIncomingTransfer } from '@/types/safe'
 /** Key of the chain's native coin; ERC-20 assets are keyed by lower-case contract address. */
 export const SAFE_NATIVE_ASSET = 'native'
 
-export interface SafeSwapLeg {
-  asset: string
-  symbol: string
-  decimals: number
-  quantity: number
-}
-
-/** A transaction in which the Safe sent some assets and received different ones. */
-export interface SafeSwap {
-  txHash: string
-  /** UTC day of execution, `YYYY-MM-DD`. */
-  date: string
-  given: SafeSwapLeg[]
-  received: SafeSwapLeg[]
-}
-
 export interface SafeSwapPnl {
   count: number
   /** USD value of the assets given up, at the price of each swap's day. */
@@ -45,72 +29,15 @@ export interface SafeSwapPrices {
   now: (asset: string) => number | undefined
 }
 
-/** Fee of one swap, expressed as a quantity of one of the assets it gave up. */
-export type SafeSwapFeeOf = (swap: SafeSwap) => Omit<SafeSwapLeg, 'decimals'> | undefined
-
-const TOLERANCE = 1e-12
-
-/**
- * Find the Safe's swaps in its transfer history: every transaction that both sends and receives
- * fungible assets. Legs of the same asset are netted, so a refund of the sold asset is not a trade.
- */
-export function toSafeSwaps(
-  transfers: readonly SafeIncomingTransfer[],
-  safeAddress: string
-): SafeSwap[] {
-  const safe = safeAddress.toLowerCase()
-  const transactions = new Map<
-    string,
-    { date: string; block: number; legs: Map<string, SafeSwapLeg> }
-  >()
-  for (const transfer of transfers) {
-    const leg = legOf(transfer, safe)
-    if (!leg) continue
-    const transaction = transactions.get(transfer.transactionHash) ?? {
-      date: new Date(transfer.executionDate).toISOString().slice(0, 10),
-      block: transfer.blockNumber,
-      legs: new Map<string, SafeSwapLeg>()
-    }
-    const known = transaction.legs.get(leg.asset)
-    transaction.legs.set(
-      leg.asset,
-      known ? { ...known, quantity: known.quantity + leg.quantity } : leg
-    )
-    transactions.set(transfer.transactionHash, transaction)
-  }
-  return [...transactions.entries()]
-    .sort(([, left], [, right]) => left.block - right.block)
-    .flatMap(([txHash, { date, legs }]) => {
-      const all = [...legs.values()]
-      const given = all
-        .filter(({ quantity }) => quantity < -TOLERANCE)
-        .map((leg) => ({ ...leg, quantity: -leg.quantity }))
-      const received = all.filter(({ quantity }) => quantity > TOLERANCE)
-      return given.length && received.length ? [{ txHash, date, given, received }] : []
-    })
-}
-
-function legOf(transfer: SafeIncomingTransfer, safe: string): SafeSwapLeg | undefined {
-  const incoming = transfer.to.toLowerCase() === safe
-  const outgoing = transfer.from.toLowerCase() === safe
-  if (transfer.type === 'ERC721_TRANSFER' || incoming === outgoing) return undefined
-  const native = transfer.type === 'ETHER_TRANSFER'
-  const asset = native ? SAFE_NATIVE_ASSET : transfer.tokenAddress?.toLowerCase()
-  const decimals = native ? 18 : transfer.tokenInfo?.decimals
-  if (!asset || decimals === undefined || !/^\d+$/.test(transfer.value)) return undefined
-  const amount = Number(formatUnits(BigInt(transfer.value), decimals))
-  if (!(amount > 0)) return undefined
-  return {
-    asset,
-    symbol: native ? NETWORK.currencySymbol : (transfer.tokenInfo?.symbol ?? 'Unknown'),
-    decimals,
-    quantity: incoming ? amount : -amount
-  }
-}
+/** Fee of one transaction, expressed as a quantity of an asset it gave up. */
+export type SafeSwapFeeOf = (
+  transfers: readonly SafeIncomingTransfer[]
+) => { asset: string; symbol: string; quantity: number } | undefined
 
 /** Compare what the swaps gave up, valued on their day, with what the assets received are worth today. */
 export function computeSafeSwapPnl(
-  swaps: readonly SafeSwap[],
+  transfers: readonly SafeIncomingTransfer[],
+  safeAddress: string,
   prices: SafeSwapPrices,
   feeOf: SafeSwapFeeOf
 ): SafeSwapPnl {
@@ -123,19 +50,45 @@ export function computeSafeSwapPnl(
   let currentUsd = 0
   let feesUsd = 0
   let feesReported = 0
-  for (const swap of swaps) {
-    for (const leg of swap.given)
-      swappedUsd += leg.quantity * priced(leg.symbol, prices.on(leg.asset, swap.date))
-    for (const leg of swap.received)
-      currentUsd += leg.quantity * priced(leg.symbol, prices.now(leg.asset))
-    const fee = feeOf(swap)
+  let count = 0
+  const safe = safeAddress.toLowerCase()
+  for (const txHash of new Set(transfers.map(({ transactionHash }) => transactionHash))) {
+    const rows = transfers.filter(({ transactionHash }) => transactionHash === txHash)
+    const amounts = new Map<string, bigint>()
+    for (const row of rows) {
+      const asset =
+        row.type === 'ETHER_TRANSFER' ? SAFE_NATIVE_ASSET : row.tokenAddress!.toLowerCase()
+      const amount = BigInt(row.value) * (row.to.toLowerCase() === safe ? 1n : -1n)
+      amounts.set(asset, (amounts.get(asset) ?? 0n) + amount)
+    }
+    const net = [...amounts.values()]
+    if (!net.some((amount) => amount < 0n) || !net.some((amount) => amount > 0n)) continue
+    count += 1
+    const date = new Date(rows[0]!.executionDate).toISOString().slice(0, 10)
+    for (const [asset, amount] of amounts) {
+      if (amount === 0n) continue
+      const row = rows.find(
+        (transfer) =>
+          (transfer.type === 'ETHER_TRANSFER'
+            ? SAFE_NATIVE_ASSET
+            : transfer.tokenAddress!.toLowerCase()) === asset
+      )!
+      const native = row.type === 'ETHER_TRANSFER'
+      const symbol = native ? NETWORK.currencySymbol : (row.tokenInfo?.symbol ?? 'Unknown')
+      const quantity = Number(
+        formatUnits(amount < 0n ? -amount : amount, native ? 18 : row.tokenInfo!.decimals)
+      )
+      if (amount < 0n) swappedUsd += quantity * priced(symbol, prices.on(asset, date))
+      else currentUsd += quantity * priced(symbol, prices.now(asset))
+    }
+    const fee = feeOf(rows)
     if (!fee) continue
     feesReported += 1
-    feesUsd += fee.quantity * priced(fee.symbol, prices.on(fee.asset, swap.date))
+    feesUsd += fee.quantity * priced(fee.symbol, prices.on(fee.asset, date))
   }
   const pnlUsd = currentUsd - swappedUsd
   return {
-    count: swaps.length,
+    count,
     swappedUsd,
     currentUsd,
     pnlUsd,

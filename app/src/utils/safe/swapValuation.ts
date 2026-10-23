@@ -2,9 +2,9 @@ import { formatUnits, zeroAddress } from 'viem'
 import { SUPPORTED_TOKENS } from '@/constant'
 import type { CoinGeckoAssetMarketResponse, CoinGeckoHistoricalResponse } from '@/types/coingecko'
 import type { CowOrder } from '@/types/cow'
-import type { SafeClientBalances } from '@/types/safe'
+import type { SafeClientBalance, SafeIncomingTransfer } from '@/types/safe'
 import { assetMarketFromResponse, historicalRateFromResponse } from '@/utils/tokens/coingecko'
-import { SAFE_NATIVE_ASSET, computeSafeSwapPnl, type SafeSwap, type SafeSwapPnl } from './swapPnl'
+import { SAFE_NATIVE_ASSET, computeSafeSwapPnl, type SafeSwapPnl } from './swapPnl'
 
 /** CoinGecko identities valued at their $1 peg instead of a market quote. */
 const STABLE_COIN_IDS = new Set(['usd-coin', 'tether', 'dai'])
@@ -21,30 +21,21 @@ export interface SafeSwapValuationSources {
   /** UTC day used for today's quote, `YYYY-MM-DD`. */
   today: string
   coinIds: ReadonlyMap<string, string>
-  /** Current USD price of each asset the Safe holds. */
-  heldPrices: ReadonlyMap<string, number>
+  /** Original Gateway balance rows with a current USD price. */
+  heldBalances: readonly SafeClientBalance[]
   rates: readonly { coinId: string; date: string; data?: CoinGeckoHistoricalResponse }[]
   orders: readonly { txHash: string; data?: CowOrder[] }[]
 }
 
-/** Current USD price of every held asset the Gateway values. */
-export function safeHeldPrices(data?: SafeClientBalances): Map<string, number> {
-  const prices = new Map<string, number>()
-  for (const { tokenInfo, fiatConversion } of data?.items ?? []) {
-    const price = Number(fiatConversion)
-    if (fiatConversion === null || !Number.isFinite(price) || price <= 0) continue
-    const native = tokenInfo.type !== 'ERC20' || tokenInfo.address === zeroAddress
-    prices.set(native ? SAFE_NATIVE_ASSET : tokenInfo.address.toLowerCase(), price)
-  }
-  return prices
-}
-
 /** ERC-20 contracts of the swaps that need a market identity lookup. */
-export function safeSwapContracts(swaps: readonly SafeSwap[]): string[] {
-  const assets = swaps.flatMap(({ given, received }) => [...given, ...received])
-  return [...new Set(assets.map(({ asset }) => asset))].filter(
-    (asset) => asset !== SAFE_NATIVE_ASSET && !SUPPORTED_COIN_IDS.has(asset)
-  )
+export function safeSwapContracts(transfers: readonly SafeIncomingTransfer[]): string[] {
+  return [
+    ...new Set(
+      transfers
+        .filter(({ type }) => type === 'ERC20_TRANSFER')
+        .map(({ tokenAddress }) => tokenAddress!.toLowerCase())
+    )
+  ].filter((asset) => !SUPPORTED_COIN_IDS.has(asset))
 }
 
 /** Map every valued asset to its CoinGecko identity; a contract whose metadata does not match stays unvalued. */
@@ -68,9 +59,10 @@ export function safeSwapCoinIds(
  * asset the Safe no longer holds. Pegged stablecoins need none.
  */
 export function safeSwapRateRequests(
-  swaps: readonly SafeSwap[],
+  transfers: readonly SafeIncomingTransfer[],
+  safeAddress: string,
   coinIds: ReadonlyMap<string, string>,
-  heldPrices: ReadonlyMap<string, number>,
+  heldBalances: readonly SafeClientBalance[],
   today: string
 ): { coinId: string; date: string }[] {
   const requests = new Map<string, { coinId: string; date: string }>()
@@ -78,34 +70,73 @@ export function safeSwapRateRequests(
     const coinId = coinIds.get(asset)
     if (coinId && !STABLE_COIN_IDS.has(coinId)) requests.set(`${coinId}:${date}`, { coinId, date })
   }
-  for (const { date, given, received } of swaps) {
-    for (const { asset } of given) request(asset, date)
-    for (const { asset } of received) if (!heldPrices.has(asset)) request(asset, today)
+  const safe = safeAddress.toLowerCase()
+  for (const transfer of transfers) {
+    const asset =
+      transfer.type === 'ETHER_TRANSFER' ? SAFE_NATIVE_ASSET : transfer.tokenAddress!.toLowerCase()
+    const net = transfers
+      .filter(
+        (row) =>
+          row.transactionHash === transfer.transactionHash &&
+          (row.type === 'ETHER_TRANSFER' ? SAFE_NATIVE_ASSET : row.tokenAddress!.toLowerCase()) ===
+            asset
+      )
+      .reduce(
+        (sum, row) => sum + BigInt(row.value) * (row.to.toLowerCase() === safe ? 1n : -1n),
+        0n
+      )
+    if (net < 0n) request(asset, new Date(transfer.executionDate).toISOString().slice(0, 10))
+    else if (
+      net > 0n &&
+      !heldBalances.some(
+        ({ tokenInfo }) =>
+          (tokenInfo.type !== 'ERC20' || tokenInfo.address === zeroAddress
+            ? SAFE_NATIVE_ASSET
+            : tokenInfo.address.toLowerCase()) === asset
+      )
+    )
+      request(asset, today)
   }
   return [...requests.values()]
 }
 
 /** Fee CoW Protocol reports for the Safe's own orders in a swap, in the asset it sold. */
-function cowSwapFee(swap: SafeSwap, orders: readonly CowOrder[], safeAddress: string) {
+function cowSwapFee(
+  transfers: readonly SafeIncomingTransfer[],
+  orders: readonly CowOrder[],
+  safeAddress: string
+) {
   const safe = safeAddress.toLowerCase()
   let fee: { asset: string; symbol: string; quantity: number } | undefined
   for (const order of orders) {
     const token = order.executedFeeToken?.toLowerCase()
-    const leg = swap.given.find(({ asset }) => asset === token)
+    const transfer = transfers.find(
+      ({ type, tokenAddress, from }) =>
+        type === 'ERC20_TRANSFER' &&
+        tokenAddress?.toLowerCase() === token &&
+        from.toLowerCase() === safe
+    )
     if (order.owner.toLowerCase() !== safe || order.status !== 'fulfilled') continue
-    if (!leg || !order.executedFee || !/^\d+$/.test(order.executedFee)) continue
-    const quantity = Number(formatUnits(BigInt(order.executedFee), leg.decimals))
+    if (!transfer || !order.executedFee || !/^\d+$/.test(order.executedFee)) continue
+    const net = transfers
+      .filter(({ tokenAddress }) => tokenAddress?.toLowerCase() === token)
+      .reduce(
+        (sum, row) => sum + BigInt(row.value) * (row.to.toLowerCase() === safe ? 1n : -1n),
+        0n
+      )
+    if (net >= 0n) continue
+    const quantity = Number(formatUnits(BigInt(order.executedFee), transfer.tokenInfo!.decimals))
     fee =
-      fee && fee.asset === leg.asset
+      fee && fee.asset === token
         ? { ...fee, quantity: fee.quantity + quantity }
-        : (fee ?? { asset: leg.asset, symbol: leg.symbol, quantity })
+        : (fee ?? { asset: token!, symbol: transfer.tokenInfo?.symbol ?? 'Unknown', quantity })
   }
   return fee
 }
 
 /** Value the swaps from their sources; a missing quote or fee stays visible instead of reading as zero. */
 export function buildSafeSwapReport(
-  swaps: readonly SafeSwap[],
+  transfers: readonly SafeIncomingTransfer[],
   sources: SafeSwapValuationSources
 ): SafeSwapPnl {
   const priceOn = (asset: string, date: string) => {
@@ -120,15 +151,26 @@ export function buildSafeSwapReport(
       return undefined
     }
   }
-  const priceNow = (asset: string) =>
-    STABLE_COIN_IDS.has(sources.coinIds.get(asset) ?? '')
-      ? 1
-      : (sources.heldPrices.get(asset) ?? priceOn(asset, sources.today))
-  return computeSafeSwapPnl(swaps, { on: priceOn, now: priceNow }, (swap) =>
-    cowSwapFee(
-      swap,
-      sources.orders.find(({ txHash }) => txHash === swap.txHash)?.data ?? [],
-      sources.safeAddress
+  const priceNow = (asset: string) => {
+    if (STABLE_COIN_IDS.has(sources.coinIds.get(asset) ?? '')) return 1
+    const held = sources.heldBalances.find(
+      ({ tokenInfo }) =>
+        (tokenInfo.type !== 'ERC20' || tokenInfo.address === zeroAddress
+          ? SAFE_NATIVE_ASSET
+          : tokenInfo.address.toLowerCase()) === asset
     )
+    const price = Number(held?.fiatConversion)
+    return Number.isFinite(price) && price > 0 ? price : priceOn(asset, sources.today)
+  }
+  return computeSafeSwapPnl(
+    transfers,
+    sources.safeAddress,
+    { on: priceOn, now: priceNow },
+    (rows) =>
+      cowSwapFee(
+        rows,
+        sources.orders.find(({ txHash }) => txHash === rows[0]!.transactionHash)?.data ?? [],
+        sources.safeAddress
+      )
   )
 }

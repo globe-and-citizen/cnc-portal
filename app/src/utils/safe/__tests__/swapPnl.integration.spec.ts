@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { parseUnits } from 'viem'
+import { parseUnits, zeroAddress } from 'viem'
 import { SUPPORTED_TOKENS, USDC_ADDRESS, USDC_E_ADDRESS } from '@/constant'
 import type { CowOrder } from '@/types/cow'
 import type { SafeIncomingTransfer } from '@/types/safe'
-import { SAFE_NATIVE_ASSET, toSafeSwaps } from '../swapPnl'
+import { SAFE_NATIVE_ASSET } from '../swapPnl'
 import { buildSafeSwapReport, safeSwapCoinIds } from '../swapValuation'
 
 /**
@@ -74,13 +74,24 @@ interface Scenario {
   orders?: { txHash: string; data: CowOrder[] }[]
 }
 const overviewOf = ({ history, held = [], rates = [], orders = [] }: Scenario) =>
-  buildSafeSwapReport(toSafeSwaps(history, SAFE), {
+  buildSafeSwapReport(history, {
     safeAddress: SAFE,
     today: TODAY,
     coinIds: safeSwapCoinIds([
       { address: WETH, data: { id: 'weth', platforms: { 'polygon-pos': WETH } } }
     ]),
-    heldPrices: new Map(held),
+    heldBalances: held.map(([address, price]) => ({
+      tokenInfo: {
+        type: address === SAFE_NATIVE_ASSET ? 'NATIVE_TOKEN' : 'ERC20',
+        address: address === SAFE_NATIVE_ASSET ? zeroAddress : address,
+        decimals: 18,
+        symbol: 'Token',
+        name: 'Token'
+      },
+      balance: '1',
+      fiatConversion: String(price),
+      fiatBalance: '0'
+    })),
     rates,
     orders
   })

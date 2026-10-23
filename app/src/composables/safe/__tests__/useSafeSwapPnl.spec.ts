@@ -1,7 +1,9 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ref, toValue, type MaybeRefOrGetter } from 'vue'
 import { useSafeSwapPnl } from '../useSafeSwapPnl'
-import type { SafeIncomingTransfer } from '@/types/safe'
+import type { SafeClientBalance, SafeIncomingTransfer } from '@/types/safe'
+import { useGetSafeBalancesQuery } from '@/queries/safeClient.queries'
+import * as swapValuation from '@/utils/safe/swapValuation'
 
 const { mockTransfers, mockRates, requests } = vi.hoisted(() => ({
   mockTransfers: {
@@ -62,6 +64,8 @@ const swapLegs = [
 ]
 
 describe('[US-SAFE-007] useSafeSwapPnl', () => {
+  afterEach(() => vi.restoreAllMocks())
+
   beforeEach(() => {
     mockTransfers.data = ref(swapLegs)
     mockTransfers.isLoading = ref(false)
@@ -98,5 +102,82 @@ describe('[US-SAFE-007] useSafeSwapPnl', () => {
 
     expect(data.value).toBeUndefined()
     expect(requests.orders).toEqual([])
+  })
+
+  it('[AC-US-SAFE-007-02] filters swap transactions while retaining the original transfer objects', () => {
+    const report = vi.spyOn(swapValuation, 'buildSafeSwapReport')
+    const sent = Object.freeze({
+      ...swapLegs[1]!,
+      transferId: 'sent',
+      executionDate: '2026-06-01T10:00:00.123Z'
+    })
+    const received = Object.freeze({ ...swapLegs[0]!, transferId: 'received' })
+    const refund = Object.freeze({
+      ...swapLegs[1]!,
+      transferId: 'refund',
+      from: SETTLEMENT,
+      to: SAFE,
+      value: '1000'
+    })
+    mockTransfers.data.value = [
+      sent,
+      received,
+      refund,
+      leg({ transactionHash: '0xdeposit' }),
+      leg({ transactionHash: '0xpayment', from: SAFE, to: SETTLEMENT }),
+      leg({ transactionHash: '0xself', from: SAFE }),
+      leg({ transactionHash: '0xnft', type: 'ERC721_TRANSFER' })
+    ]
+
+    const { data } = useSafeSwapPnl(SAFE)
+    expect(data.value?.count).toBe(1)
+    const selected = report.mock.calls.at(-1)![0]
+    expect(selected).toEqual([sent, received, refund])
+    expect(selected[0]).toBe(sent)
+    expect(selected[1]).toBe(received)
+    expect(selected[2]).toBe(refund)
+    expect(requests.orders).toEqual(['0xswap'])
+  })
+
+  it('keeps original Gateway rows with a usable price and reacts when the query changes', () => {
+    const report = vi.spyOn(swapValuation, 'buildSafeSwapReport')
+    const held: SafeClientBalance = Object.freeze({
+      tokenInfo: Object.freeze({
+        type: 'NATIVE_TOKEN',
+        address: '0x0000000000000000000000000000000000000000',
+        decimals: 18,
+        symbol: 'POL',
+        name: 'Polygon',
+        logoUri: 'original-logo'
+      }),
+      balance: '1234567890123456789',
+      fiatConversion: '0.400123',
+      fiatBalance: '0.494'
+    })
+    const balances = ref({
+      fiatTotal: '0.494',
+      items: [
+        held,
+        ...[null, '', '0', '-1', 'invalid', 'Infinity'].map((fiatConversion) => ({
+          ...held,
+          fiatConversion
+        }))
+      ]
+    })
+    vi.mocked(useGetSafeBalancesQuery).mockReturnValueOnce({
+      data: balances,
+      isLoading: ref(false),
+      error: ref(null)
+    } as ReturnType<typeof useGetSafeBalancesQuery>)
+
+    const { data } = useSafeSwapPnl(SAFE)
+    expect(data.value?.count).toBe(1)
+    expect(data.value?.currentUsd).toBe(0.400123)
+    expect(report.mock.calls.at(-1)![1].heldBalances).toEqual([held])
+    expect(report.mock.calls.at(-1)![1].heldBalances[0]).toBe(held)
+
+    balances.value = { fiatTotal: '0', items: [] }
+    expect(data.value?.count).toBe(1)
+    expect(report.mock.calls.at(-1)![1].heldBalances).toEqual([])
   })
 })

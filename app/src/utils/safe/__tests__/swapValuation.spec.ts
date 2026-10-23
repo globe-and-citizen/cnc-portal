@@ -1,12 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { zeroAddress } from 'viem'
+import { parseUnits, zeroAddress } from 'viem'
 import { SUPPORTED_TOKENS, USDC_ADDRESS } from '@/constant'
 import type { CowOrder } from '@/types/cow'
-import type { SafeClientBalances } from '@/types/safe'
-import { SAFE_NATIVE_ASSET, type SafeSwap } from '../swapPnl'
+import type { SafeClientBalance, SafeIncomingTransfer } from '@/types/safe'
+import { SAFE_NATIVE_ASSET } from '../swapPnl'
 import {
   buildSafeSwapReport,
-  safeHeldPrices,
   safeSwapCoinIds,
   safeSwapContracts,
   safeSwapRateRequests,
@@ -28,12 +27,47 @@ const quote = (coinId: string, date: string, usd: number) => ({
   date,
   data: { market_data: { current_price: { usd } } }
 })
-const swap = (overrides: Partial<SafeSwap> = {}): SafeSwap => ({
-  txHash: '0xswap',
-  date: '2026-06-01',
-  given: [{ asset: USDC, symbol: 'USDC', decimals: 6, quantity: 1000 }],
-  received: [{ asset: WETH, symbol: 'WETH', decimals: 18, quantity: 0.5 }],
-  ...overrides
+const swap = ({
+  sell = USDC,
+  sellAmount = '1000',
+  buy = WETH,
+  buyAmount = '0.5',
+  txHash = '0xswap'
+} = {}): SafeIncomingTransfer[] =>
+  [
+    [sell, sellAmount],
+    [buy, buyAmount]
+  ].map(([asset, amount], index) => ({
+    type: asset === SAFE_NATIVE_ASSET ? 'ETHER_TRANSFER' : 'ERC20_TRANSFER',
+    executionDate: '2026-06-01T12:00:00Z',
+    blockNumber: 1,
+    transactionHash: txHash!,
+    from: index === 0 ? SAFE : '0xsettlement',
+    to: index === 0 ? '0xsettlement' : SAFE,
+    value: parseUnits(amount!, asset === USDC ? 6 : 18).toString(),
+    tokenAddress: asset === SAFE_NATIVE_ASSET ? null : asset,
+    tokenInfo:
+      asset === SAFE_NATIVE_ASSET
+        ? undefined
+        : {
+            type: 'ERC20',
+            address: asset!,
+            name: asset === USDC ? 'USDC' : 'WETH',
+            symbol: asset === USDC ? 'USDC' : 'WETH',
+            decimals: asset === USDC ? 6 : 18
+          }
+  }))
+const held = (address: string, price: number): SafeClientBalance => ({
+  tokenInfo: {
+    type: address === SAFE_NATIVE_ASSET ? 'NATIVE_TOKEN' : 'ERC20',
+    address: address === SAFE_NATIVE_ASSET ? zeroAddress : address,
+    decimals: address === USDC ? 6 : 18,
+    symbol: address === USDC ? 'USDC' : 'WETH',
+    name: 'Token'
+  },
+  balance: '1',
+  fiatConversion: String(price),
+  fiatBalance: '0'
 })
 const order = (overrides: Partial<CowOrder> = {}): CowOrder => ({
   owner: SAFE.toLowerCase(),
@@ -48,49 +82,15 @@ const sources = (overrides: Partial<SafeSwapValuationSources> = {}): SafeSwapVal
   safeAddress: SAFE,
   today: TODAY,
   coinIds: safeSwapCoinIds([wethMarket]),
-  heldPrices: new Map([[WETH, 2400]]),
+  heldBalances: [held(WETH, 2400)],
   rates: [],
   orders: [],
   ...overrides
 })
 
 describe('[US-SAFE-007] Safe swap valuation', () => {
-  it('reads the current USD price of every held asset the Gateway values', () => {
-    const balances: SafeClientBalances = {
-      fiatTotal: '0',
-      items: [
-        {
-          tokenInfo: {
-            type: 'NATIVE_TOKEN',
-            address: zeroAddress,
-            decimals: 18,
-            symbol: 'POL',
-            name: 'POL'
-          },
-          balance: '1',
-          fiatConversion: '0.4',
-          fiatBalance: '0'
-        },
-        {
-          tokenInfo: {
-            type: 'ERC20',
-            address: WETH.toUpperCase(),
-            decimals: 18,
-            symbol: 'WETH',
-            name: 'WETH'
-          },
-          balance: '1',
-          fiatConversion: null,
-          fiatBalance: null
-        }
-      ]
-    }
-
-    expect([...safeHeldPrices(balances)]).toEqual([[SAFE_NATIVE_ASSET, 0.4]])
-  })
-
   it('looks up market identities only for swap tokens outside the supported list', () => {
-    expect(safeSwapContracts([swap()])).toEqual([WETH])
+    expect(safeSwapContracts(swap())).toEqual([WETH])
   })
 
   it('accepts a market identity only when its metadata names the same contract', () => {
@@ -106,15 +106,26 @@ describe('[US-SAFE-007] Safe swap valuation', () => {
   it("[AC-US-SAFE-007-04] requests today's quote only for a received asset the Safe no longer holds", () => {
     const coinIds = safeSwapCoinIds([wethMarket])
     const sold = swap({
-      given: [{ asset: WETH, symbol: 'WETH', decimals: 18, quantity: 0.5 }],
-      received: [{ asset: USDC, symbol: 'USDC', decimals: 6, quantity: 1200 }]
+      sell: WETH,
+      sellAmount: '0.5',
+      buy: USDC,
+      buyAmount: '1200',
+      txHash: '0xsold'
     })
 
-    expect(safeSwapRateRequests([swap(), sold], coinIds, new Map(), TODAY)).toEqual([
+    expect(safeSwapRateRequests([...swap(), ...sold], SAFE, coinIds, [], TODAY)).toEqual([
       { coinId: 'weth', date: TODAY },
       { coinId: 'weth', date: '2026-06-01' }
     ])
-    expect(safeSwapRateRequests([swap()], coinIds, new Map([[WETH, 1]]), TODAY)).toEqual([])
+    expect(safeSwapRateRequests(swap(), SAFE, coinIds, [held(WETH, 1)], TODAY)).toEqual([])
+  })
+
+  it('does not request a current quote for a refund of the asset sold', () => {
+    const sold = swap({ sell: WETH, sellAmount: '1', buy: USDC, buyAmount: '2000' })
+    const refund = { ...sold[0]!, from: sold[0]!.to, to: SAFE, value: '10000000000000000' }
+    expect(
+      safeSwapRateRequests([...sold, refund], SAFE, safeSwapCoinIds([wethMarket]), [], TODAY)
+    ).toEqual([{ coinId: 'weth', date: '2026-06-01' }])
   })
 
   it('[AC-US-SAFE-007-07] reads the CoW fee of the Safe’s own fulfilled order in the asset it sold', () => {
@@ -126,7 +137,7 @@ describe('[US-SAFE-007] Safe swap valuation', () => {
     ]
 
     const feesOf = (data: CowOrder[]) =>
-      buildSafeSwapReport([swap()], sources({ orders: [{ txHash: '0xswap', data }] }))
+      buildSafeSwapReport(swap(), sources({ orders: [{ txHash: '0xswap', data }] }))
 
     expect(feesOf(orders)).toMatchObject({ feesUsd: 3.5, feesReported: 1 })
     expect(feesOf(orders.slice(1))).toMatchObject({ feesUsd: null, feesReported: 0 })
@@ -134,11 +145,7 @@ describe('[US-SAFE-007] Safe swap valuation', () => {
 
   it('[AC-US-SAFE-007-03] values the assets given up at the price of the swap day', () => {
     const report = buildSafeSwapReport(
-      [
-        swap({
-          given: [{ asset: SAFE_NATIVE_ASSET, symbol: 'POL', decimals: 18, quantity: 2000 }]
-        })
-      ],
+      swap({ sell: SAFE_NATIVE_ASSET, sellAmount: '2000' }),
       sources({ rates: [quote(NATIVE_COIN_ID, '2026-06-01', 0.25)] })
     )
 
@@ -146,10 +153,10 @@ describe('[US-SAFE-007] Safe swap valuation', () => {
   })
 
   it('[AC-US-SAFE-007-04] values a received asset at its held price, else at today’s quote', () => {
-    const held = buildSafeSwapReport([swap()], sources())
+    const held = buildSafeSwapReport(swap(), sources())
     const soldSince = buildSafeSwapReport(
-      [swap()],
-      sources({ heldPrices: new Map(), rates: [quote('weth', TODAY, 2200)] })
+      swap(),
+      sources({ heldBalances: [], rates: [quote('weth', TODAY, 2200)] })
     )
 
     expect(held.currentUsd).toBe(1200)
@@ -158,13 +165,8 @@ describe('[US-SAFE-007] Safe swap valuation', () => {
 
   it('[AC-US-SAFE-007-06] values USD stablecoins at their peg', () => {
     const report = buildSafeSwapReport(
-      [
-        swap({
-          given: [{ asset: WETH, symbol: 'WETH', decimals: 18, quantity: 1 }],
-          received: [{ asset: USDC, symbol: 'USDC', decimals: 6, quantity: 2990 }]
-        })
-      ],
-      sources({ heldPrices: new Map([[USDC, 0.9991]]), rates: [quote('weth', '2026-06-01', 3000)] })
+      swap({ sell: WETH, sellAmount: '1', buy: USDC, buyAmount: '2990' }),
+      sources({ heldBalances: [held(USDC, 0.9991)], rates: [quote('weth', '2026-06-01', 3000)] })
     )
 
     expect(report).toMatchObject({ swappedUsd: 3000, currentUsd: 2990, missingPrices: [] })
@@ -173,7 +175,7 @@ describe('[US-SAFE-007] Safe swap valuation', () => {
 
   it('[AC-US-SAFE-007-07] values the reported fee in USD on the swap day', () => {
     const report = buildSafeSwapReport(
-      [swap()],
+      swap(),
       sources({ orders: [{ txHash: '0xswap', data: [order()] }] })
     )
 
@@ -182,7 +184,7 @@ describe('[US-SAFE-007] Safe swap valuation', () => {
 
   it('[AC-US-SAFE-007-08] reports a failed or empty quote as a missing price', () => {
     const report = buildSafeSwapReport(
-      [swap({ given: [{ asset: WETH, symbol: 'WETH', decimals: 18, quantity: 1 }] })],
+      swap({ sell: WETH, sellAmount: '1', buy: USDC, buyAmount: '2990' }),
       sources({ rates: [{ coinId: 'weth', date: '2026-06-01', data: { market_data: {} } }] })
     )
 

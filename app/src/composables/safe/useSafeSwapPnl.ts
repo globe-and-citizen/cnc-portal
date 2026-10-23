@@ -7,10 +7,8 @@ import {
   useGetHistoricalTokenRatesQuery
 } from '@/queries/coingecko.queries'
 import { useGetCowTransactionOrdersQuery } from '@/queries/cow.queries'
-import { toSafeSwaps } from '@/utils/safe/swapPnl'
 import {
   buildSafeSwapReport,
-  safeHeldPrices,
   safeSwapCoinIds,
   safeSwapContracts,
   safeSwapRateRequests
@@ -27,18 +25,60 @@ export function useSafeSwapPnl(safeAddress: MaybeRefOrGetter<string | undefined>
   const balances = useGetSafeBalancesQuery({ pathParams: { safeAddress, fiatCode: 'USD' } })
 
   const swaps = computed(() => {
-    const address = toValue(safeAddress)
-    return address && transfers.data.value ? toSafeSwaps(transfers.data.value, address) : []
+    const address = toValue(safeAddress)?.toLowerCase()
+    if (!address) return []
+    const movements = (transfers.data.value ?? []).filter(
+      ({ type, from, to, value, tokenAddress, tokenInfo }) =>
+        type !== 'ERC721_TRANSFER' &&
+        (from.toLowerCase() === address) !== (to.toLowerCase() === address) &&
+        (type === 'ETHER_TRANSFER' || (!!tokenAddress && tokenInfo?.decimals !== undefined)) &&
+        /^\d+$/.test(value) &&
+        BigInt(value) > 0n
+    )
+    const swapHashes = new Set(
+      movements
+        .filter(
+          (sent) =>
+            sent.from.toLowerCase() === address &&
+            movements.some(
+              (received) =>
+                received.transactionHash === sent.transactionHash &&
+                received.to.toLowerCase() === address &&
+                (received.type === 'ETHER_TRANSFER'
+                  ? null
+                  : received.tokenAddress?.toLowerCase()) !==
+                  (sent.type === 'ETHER_TRANSFER' ? null : sent.tokenAddress?.toLowerCase())
+            )
+        )
+        .map(({ transactionHash }) => transactionHash)
+    )
+    return movements.filter(({ transactionHash }) => swapHashes.has(transactionHash))
   })
-  const heldPrices = computed(() => safeHeldPrices(balances.data.value))
+
+  const heldBalances = computed(() =>
+    (balances.data.value?.items ?? []).filter(({ fiatConversion }) => {
+      const price = Number(fiatConversion)
+      return Number.isFinite(price) && price > 0
+    })
+  )
+
   const markets = useGetAssetMarketsQuery(() =>
     safeSwapContracts(swaps.value).map((address) => ({ chainId: currentChainId, address }))
   )
+
   const coinIds = computed(() => safeSwapCoinIds(markets.value))
   const rates = useGetHistoricalTokenRatesQuery(() =>
-    safeSwapRateRequests(swaps.value, coinIds.value, heldPrices.value, today)
+    safeSwapRateRequests(
+      swaps.value,
+      toValue(safeAddress) ?? '',
+      coinIds.value,
+      heldBalances.value,
+      today
+    )
   )
-  const orders = useGetCowTransactionOrdersQuery(() => swaps.value.map(({ txHash }) => txHash))
+  const orders = useGetCowTransactionOrdersQuery(() => [
+    ...new Set(swaps.value.map(({ transactionHash }) => transactionHash))
+  ])
 
   const isLoading = computed(
     () =>
@@ -56,7 +96,7 @@ export function useSafeSwapPnl(safeAddress: MaybeRefOrGetter<string | undefined>
       safeAddress: safeAddressValue,
       today,
       coinIds: coinIds.value,
-      heldPrices: heldPrices.value,
+      heldBalances: heldBalances.value,
       rates: rates.value,
       orders: orders.value
     })
