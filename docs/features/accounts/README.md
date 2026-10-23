@@ -1219,7 +1219,7 @@ condition, related criteria, and a worked example:
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `ad5f4c17bfc71fa6457ed0f778d870db169eaecb`
+**Implementation evidence reviewed against:** `0a949c24db85e21ecdb2d0a15b70a3703193ef97`
 
 - [Bank deposit modal](../../../app/src/components/sections/BankView/forms/DepositModal.vue),
   [Bank transfer modal](../../../app/src/components/sections/BankView/forms/TransferModal.vue),
@@ -1389,6 +1389,9 @@ Implementation: [Safe Client balances](../../../app/src/queries/safeClient.queri
 [holdings presentation](../../../app/src/utils/safe/portfolio.ts),
 [holdings presentation tests](../../../app/src/utils/safe/__tests__/portfolio.spec.ts), and
 [contract asset identities](../../../app/src/utils/tokens/assets.ts). Human validation of external swaps remains pending.
+
+The Safe Client query module also exposes a raw Gateway transaction-history page with transaction and date-label entries, pagination links,
+and reactive cursor, timezone, trust and imitation filters. The query preserves the provider response and propagates read failures.
 
 The swap P&L in the Wallet overview reads the Safe transfer history, the Gateway USD balances, daily CoinGecko quotes through the backend,
 and the CoW Protocol orders of each swap transaction. A CoW lookup that fails or returns no order leaves the fee unreported and never hides
