@@ -4,6 +4,7 @@ import { useSafeSwapPnl } from '../useSafeSwapPnl'
 import type { SafeClientBalance, SafeIncomingTransfer } from '@/types/safe'
 import { useGetSafeBalancesQuery } from '@/queries/safeClient.queries'
 import * as swapValuation from '@/utils/safe/swapValuation'
+import { currentChainId, USDC_ADDRESS } from '@/constant'
 
 const { mockTransfers, mockRates, requests } = vi.hoisted(() => ({
   mockTransfers: {
@@ -12,14 +13,17 @@ const { mockTransfers, mockRates, requests } = vi.hoisted(() => ({
     error: undefined as unknown as { value: Error | null }
   },
   mockRates: { value: [] as { coinId: string; date: string; isLoading: boolean }[] },
-  requests: { rates: [] as unknown[], orders: [] as unknown[] }
+  requests: { rates: [] as unknown[], orders: [] as unknown[], markets: [] as unknown[] }
 }))
 
 vi.mock('@/queries/safe.queries', () => ({
   useGetSafeTransfersQuery: () => mockTransfers
 }))
 vi.mock('@/queries/coingecko.queries', () => ({
-  useGetAssetMarketsQuery: () => ({ value: [] }),
+  useGetAssetMarketsQuery: (assets: MaybeRefOrGetter<unknown[]>) => {
+    requests.markets = toValue(assets)
+    return { value: [] }
+  },
   useGetHistoricalTokenRatesQuery: (targets: MaybeRefOrGetter<unknown[]>) => {
     requests.rates = toValue(targets)
     return mockRates
@@ -79,6 +83,19 @@ describe('[US-SAFE-007] useSafeSwapPnl', () => {
     expect(isLoading.value).toBe(false)
     expect(data.value?.count).toBe(1)
     expect(requests.orders).toEqual(['0xswap'])
+  })
+
+  it('requests each unknown ERC-20 market once and skips configured tokens and native transfers', () => {
+    const token = swapLegs[1]!
+    mockTransfers.data.value = [
+      ...swapLegs,
+      { ...token, tokenAddress: token.tokenAddress!.toUpperCase() },
+      { ...token, tokenAddress: USDC_ADDRESS }
+    ]
+    useSafeSwapPnl(SAFE)
+    expect(requests.markets).toEqual([
+      { chainId: currentChainId, address: token.tokenAddress!.toLowerCase() }
+    ])
   })
 
   it('waits for the daily quotes before reporting', () => {

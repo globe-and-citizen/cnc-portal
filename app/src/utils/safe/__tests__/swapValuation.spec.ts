@@ -7,7 +7,6 @@ import { SAFE_NATIVE_ASSET } from '../swapPnl'
 import {
   buildSafeSwapReport,
   safeSwapCoinIds,
-  safeSwapContracts,
   safeSwapRateRequests,
   type SafeSwapValuationSources
 } from '../swapValuation'
@@ -89,10 +88,6 @@ const sources = (overrides: Partial<SafeSwapValuationSources> = {}): SafeSwapVal
 })
 
 describe('[US-SAFE-007] Safe swap valuation', () => {
-  it('looks up market identities only for swap tokens outside the supported list', () => {
-    expect(safeSwapContracts(swap())).toEqual([WETH])
-  })
-
   it('accepts a market identity only when its metadata names the same contract', () => {
     const coinIds = safeSwapCoinIds([
       wethMarket,

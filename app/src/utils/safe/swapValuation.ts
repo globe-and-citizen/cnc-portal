@@ -27,17 +27,6 @@ export interface SafeSwapValuationSources {
   orders: readonly { txHash: string; data?: CowOrder[] }[]
 }
 
-/** ERC-20 contracts of the swaps that need a market identity lookup. */
-export function safeSwapContracts(transfers: readonly SafeIncomingTransfer[]): string[] {
-  return [
-    ...new Set(
-      transfers
-        .filter(({ type }) => type === 'ERC20_TRANSFER')
-        .map(({ tokenAddress }) => tokenAddress!.toLowerCase())
-    )
-  ].filter((asset) => !SUPPORTED_COIN_IDS.has(asset))
-}
-
 /** Map every valued asset to its CoinGecko identity; a contract whose metadata does not match stays unvalued. */
 export function safeSwapCoinIds(
   markets: readonly { address: string; data?: CoinGeckoAssetMarketResponse }[]

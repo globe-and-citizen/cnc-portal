@@ -1,5 +1,5 @@
 import { computed, toValue, type MaybeRefOrGetter } from 'vue'
-import { currentChainId } from '@/constant'
+import { currentChainId, SUPPORTED_TOKENS } from '@/constant'
 import { useGetSafeTransfersQuery } from '@/queries/safe.queries'
 import { useGetSafeBalancesQuery } from '@/queries/safeClient.queries'
 import {
@@ -10,7 +10,6 @@ import { useGetCowTransactionOrdersQuery } from '@/queries/cow.queries'
 import {
   buildSafeSwapReport,
   safeSwapCoinIds,
-  safeSwapContracts,
   safeSwapRateRequests
 } from '@/utils/safe/swapValuation'
 
@@ -63,7 +62,20 @@ export function useSafeSwapPnl(safeAddress: MaybeRefOrGetter<string | undefined>
   )
 
   const markets = useGetAssetMarketsQuery(() =>
-    safeSwapContracts(swaps.value).map((address) => ({ chainId: currentChainId, address }))
+    [
+      ...new Set(
+        swaps.value
+          .filter(({ type }) => type === 'ERC20_TRANSFER')
+          .map(({ tokenAddress }) => tokenAddress!.toLowerCase())
+      )
+    ]
+      .filter(
+        (address) =>
+          !SUPPORTED_TOKENS.some(
+            (token) => token.address.toLowerCase() === address && token.coingeckoId !== 'unknown'
+          )
+      )
+      .map((address) => ({ chainId: currentChainId, address }))
   )
 
   const coinIds = computed(() => safeSwapCoinIds(markets.value))
