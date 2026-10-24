@@ -19,7 +19,7 @@ This folder contains all TanStack Query hooks for API interactions in the CNC Po
 | `queryClient.ts`                 | Shared cache  | Application-wide query client           |
 | `safe.queries.ts`                | Safe          | Gnosis Safe operations                  |
 | `safe.recovery.ts`               | Safe          | Shared Safe read retry policy           |
-| `safeClient.queries.ts`          | Safe holdings | Gateway balances and fiat valuations    |
+| `safeClient.queries.ts`          | Safe Client   | Gateway balances and history            |
 | `team.queries.ts`                | Teams         | Team CRUD operations                    |
 | `user.queries.ts`                | Users         | User profile management                 |
 | `wage.queries.ts`                | Wages         | Member wage settings                    |
@@ -42,6 +42,9 @@ This folder contains all TanStack Query hooks for API interactions in the CNC Po
 - Create one query or mutation hook per HTTP method and endpoint. Actions that differ only by request data or query parameters reuse that
   hook at the call site; do not create `useArchiveXxxMutation` and `useUnarchiveXxxMutation` when both update the same resource.
 - Query data is the server-state source of truth. Do not mirror it into a Pinia store merely to make it easier to consume.
+- `useGetSafeTransactionHistoryQuery` returns one unmodified Gateway history page, including date-label entries and pagination links. Its
+  optional `queryParams` object or getter accepts `cursor`, `timezone`, `trusted`, and `imitation`; these values participate in the cache
+  identity. Pagination remains explicit rather than silently flattening the history.
 - CoinGecko requests live in their query module and use the configured CNC backend's public market routes, backed by the
   [shared Redis market cache](../../../docs/implementation/market-data-cache/README.md). Safe Transaction Service and Safe Client Gateway
   requests remain direct provider reads. All three use the external Axios client with the query cancellation signal, avoiding the

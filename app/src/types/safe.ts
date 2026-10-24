@@ -35,6 +35,34 @@ export interface SafeClientBalances {
   items: SafeClientBalance[]
 }
 
+/** Gateway transaction fields; provider-specific details keep their original shape. */
+export interface SafeClientTransaction {
+  id: string
+  txHash?: string | null
+  timestamp: number
+  txStatus: string
+  txInfo: {
+    type: string
+    humanDescription?: string | null
+    [key: string]: unknown
+  }
+  executionInfo?: ({ type: 'MULTISIG' | 'MODULE' } & Record<string, unknown>) | null
+  safeAppInfo?: { id: number; name: string; url: string; logoUri?: string | null } | null
+  note?: string | null
+}
+
+export type SafeClientTransactionHistoryItem =
+  | { type: 'TRANSACTION'; transaction: SafeClientTransaction; conflictType: string }
+  | { type: 'DATE_LABEL'; timestamp: number }
+
+/** A single Gateway page, including its date labels and pagination links. */
+export interface SafeClientTransactionHistory {
+  count?: number | null
+  next?: string | null
+  previous?: string | null
+  results: SafeClientTransactionHistoryItem[]
+}
+
 export const SAFE_CLIENT_URL = 'https://safe-client.safe.global'
 
 export interface SafeInfo {

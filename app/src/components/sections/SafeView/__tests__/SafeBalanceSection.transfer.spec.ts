@@ -121,7 +121,8 @@ describe('[US-SAFE-003] SafeBalanceSection transfers', () => {
       global: {
         stubs: {
           AddressTooltip: AddressTooltipStub,
-          TransferForm: TransferFormStub
+          TransferForm: TransferFormStub,
+          SafeSwapPnlCard: true
         }
       }
     })

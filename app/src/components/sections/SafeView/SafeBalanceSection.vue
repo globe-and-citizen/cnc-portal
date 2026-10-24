@@ -78,6 +78,8 @@
             </p>
           </div>
         </div>
+
+        <SafeSwapPnlCard v-if="address" :address="address" />
       </div>
 
       <div class="w-full lg:max-w-xl">
@@ -135,7 +137,7 @@
       description="Send supported assets to the team Safe. Deposits do not require signer approval."
       :close="{ onClick: () => closeDepositModal() }"
       data-test="deposit-modal"
-      @update:open="handleDepositModalOpen"
+      @update:open="(open: boolean) => open || closeDepositModal()"
     >
       <template #body>
         <DepositSafeForm v-if="address" :safe-address="address" @close-modal="closeDepositModal" />
@@ -149,7 +151,7 @@
       :description="`Current wallet balance: ${transferData.token.balance} ${transferData.token.symbol}`"
       :close="{ onClick: () => resetTransferValues() }"
       data-test="transfer-modal"
-      @update:open="handleTransferModalOpen"
+      @update:open="(open: boolean) => open || resetTransferValues()"
     >
       <template #body>
         <TransferForm
@@ -178,6 +180,7 @@ import { useGetSafeInfoQuery } from '@/queries/safe.queries'
 import TransferForm, { type TransferModel } from '@/components/forms/TransferForm.vue'
 import { useTransferFromSafeMutation } from '@/queries/safe.mutations'
 import DepositSafeForm from '@/components/sections/SafeView/forms/DepositSafeForm.vue'
+import SafeSwapPnlCard from '@/components/sections/SafeView/SafeSwapPnlCard.vue'
 import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
 import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
 import { useSafeSignerRole } from '@/composables/safe/useSafeSignerRole'
@@ -315,12 +318,4 @@ const handleTransfer = (model: TransferModel) => {
 }
 
 const closeDepositModal = () => void (depositModal.value = { mount: false, show: false })
-
-const handleDepositModalOpen = (open: boolean) => {
-  if (!open) closeDepositModal()
-}
-
-const handleTransferModalOpen = (open: boolean) => {
-  if (!open) resetTransferValues()
-}
 </script>
