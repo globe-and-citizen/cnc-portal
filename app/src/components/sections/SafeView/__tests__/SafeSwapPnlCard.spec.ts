@@ -44,16 +44,17 @@ describe('[US-SAFE-007] SafeSwapPnlCard', () => {
   const createWrapper = () => (wrapper = mount(SafeSwapPnlCard, { props: { address: SAFE } }))
   const text = (key: string) => wrapper.get(`[data-test="safe-swap-${key}"]`).text()
 
-  it('[AC-US-SAFE-007-01] shows the swapped value, the current value, the fees, then the P&L', () => {
+  it('[AC-US-SAFE-007-01] shows the swapped value, the current value, the P&L, then the fees apart', () => {
     createWrapper()
 
     expect(mockSwapPnl.address).toHaveBeenCalledWith(SAFE)
     expect(wrapper.findAll('dt').map((label) => label.text())).toEqual([
       'Swapped value',
       'Current value swap',
-      'Fees',
-      'P&L'
+      'P&L',
+      'Transaction fees'
     ])
+    expect(wrapper.find('[title]').exists()).toBe(false)
     expect(text('pnl')).toContain('2 swaps')
     expect(text('swapped')).toContain('$1,000.00')
     expect(text('current')).toContain('$1,200.00')
@@ -75,19 +76,11 @@ describe('[US-SAFE-007] SafeSwapPnlCard', () => {
     )
   })
 
-  it('[AC-US-SAFE-007-07] says when fees are unreported or only partly reported', async () => {
+  it('[AC-US-SAFE-007-07] shows the fees as unavailable when no swap reports one', () => {
     mockSwapPnl.data.value = report({ feesUsd: null, feesReported: 0 })
     createWrapper()
-    expect(text('fees')).toContain('—')
-    expect(wrapper.get('[data-test="safe-swap-fees"]').attributes('title')).toContain(
-      'No fee reported'
-    )
 
-    mockSwapPnl.data.value = report({ feesReported: 1 })
-    await wrapper.vm.$nextTick()
-    expect(wrapper.get('[data-test="safe-swap-fees"]').attributes('title')).toContain(
-      '1 of 2 swaps'
-    )
+    expect(text('fees')).toContain('—')
   })
 
   it('[AC-US-SAFE-007-08] flags the figures as incomplete when a price is missing', () => {

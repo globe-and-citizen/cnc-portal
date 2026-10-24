@@ -7,14 +7,18 @@ export const SAFE_NATIVE_ASSET = 'native'
 
 export interface SafeSwapPnl {
   count: number
-  /** USD value of the assets given up, at the price of each swap's day. */
+  /** USD value of the assets given up, at the price of each swap's day, less the reported fees. */
   swappedUsd: number
   /** USD value today of the assets received. */
   currentUsd: number
+  /** Market result of the swaps, excluding the reported fees. */
   pnlUsd: number
   /** P&L divided by the swapped value; null when nothing was valued. */
   pnlRatio: number | null
-  /** Total of the reported swap fees; null when no swap reports its fee. */
+  /**
+   * Total of the reported swap fees, kept apart from the P&L like the Transaction Fee Expense
+   * account; null when no swap reports its fee.
+   */
   feesUsd: number | null
   /** Number of swaps whose fee is reported. */
   feesReported: number
@@ -34,7 +38,10 @@ export type SafeSwapFeeOf = (
   transfers: readonly SafeIncomingTransfer[]
 ) => { asset: string; symbol: string; quantity: number } | undefined
 
-/** Compare what the swaps gave up, valued on their day, with what the assets received are worth today. */
+/**
+ * Compare what the swaps gave up, valued on their day, with what the assets received are worth
+ * today. A reported fee is taken out of the amount given up so the P&L excludes it.
+ */
 export function computeSafeSwapPnl(
   transfers: readonly SafeIncomingTransfer[],
   safeAddress: string,
@@ -83,8 +90,10 @@ export function computeSafeSwapPnl(
     }
     const fee = feeOf(rows)
     if (!fee) continue
+    const feeUsd = fee.quantity * priced(fee.symbol, prices.on(fee.asset, date))
     feesReported += 1
-    feesUsd += fee.quantity * priced(fee.symbol, prices.on(fee.asset, date))
+    feesUsd += feeUsd
+    swappedUsd -= feeUsd
   }
   const pnlUsd = currentUsd - swappedUsd
   return {

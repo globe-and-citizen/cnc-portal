@@ -182,14 +182,15 @@ describe('[US-SAFE-007] Safe swap P&L use cases', () => {
   })
 
   describe('fees', () => {
-    it('UC-SWAP-008 shows the fee CoW Protocol reports for the Safe’s order', () => {
+    it('UC-SWAP-008 keeps the fee CoW Protocol reports for the Safe’s order apart from the P&L', () => {
       const overview = overviewOf({
         history: buyWeth(),
         held: [[WETH, 2400]],
         orders: [{ txHash: '0xbuy', data: [cowOrder('3.5')] }]
       })
 
-      expect(overview).toMatchObject({ feesUsd: 3.5, feesReported: 1, pnlUsd: 200 })
+      expect(overview).toMatchObject({ feesUsd: 3.5, feesReported: 1 })
+      expect(overview).toMatchObject({ swappedUsd: 996.5, currentUsd: 1200, pnlUsd: 203.5 })
     })
 
     it('UC-SWAP-009 reports no fee for a swap the provider does not know', () => {
@@ -209,7 +210,12 @@ describe('[US-SAFE-007] Safe swap P&L use cases', () => {
         orders: [{ txHash: '0xcow', data: [cowOrder('3.5')] }]
       })
 
-      expect(overview).toMatchObject({ count: 2, swappedUsd: 2000, feesUsd: 3.5, feesReported: 1 })
+      expect(overview).toMatchObject({
+        count: 2,
+        swappedUsd: 1996.5,
+        feesUsd: 3.5,
+        feesReported: 1
+      })
     })
   })
 

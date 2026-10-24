@@ -6,7 +6,6 @@
     <dl class="mt-2 flex flex-wrap gap-3">
       <div
         class="rounded-lg bg-gray-50 px-3 py-2 dark:bg-gray-800/60"
-        title="Value of the assets given up, at the USD price of each swap's day."
         data-test="safe-swap-swapped"
       >
         <dt class="text-xs text-gray-500">Swapped value</dt>
@@ -14,19 +13,10 @@
       </div>
       <div
         class="rounded-lg bg-gray-50 px-3 py-2 dark:bg-gray-800/60"
-        title="What the assets received are worth today."
         data-test="safe-swap-current"
       >
         <dt class="text-xs text-gray-500">Current value swap</dt>
         <dd class="mt-1 font-semibold">{{ formatUsd(report.currentUsd) }}</dd>
-      </div>
-      <div
-        class="rounded-lg bg-gray-50 px-3 py-2 dark:bg-gray-800/60"
-        :title="feesHint"
-        data-test="safe-swap-fees"
-      >
-        <dt class="text-xs text-gray-500">Fees</dt>
-        <dd class="mt-1 font-semibold">{{ formatUsd(report.feesUsd) }}</dd>
       </div>
       <div
         class="rounded-lg bg-gray-50 px-3 py-2 dark:bg-gray-800/60"
@@ -39,6 +29,10 @@
             ({{ formatPercent(report.pnlRatio, { signed: true }) }})
           </span>
         </dd>
+      </div>
+      <div class="rounded-lg bg-gray-50 px-3 py-2 dark:bg-gray-800/60" data-test="safe-swap-fees">
+        <dt class="text-xs text-gray-500">Transaction fees</dt>
+        <dd class="mt-1 font-semibold">{{ formatUsd(report.feesUsd) }}</dd>
       </div>
     </dl>
     <p
@@ -67,14 +61,5 @@ const TREND_CLASS: Record<Trend, string> = { gain: 'text-success', loss: 'text-e
 const trend = computed<Trend>(() => {
   const value = report.value?.pnlUsd ?? 0
   return Math.abs(value) < 0.005 ? 'flat' : value > 0 ? 'gain' : 'loss'
-})
-
-const feesHint = computed(() => {
-  if (!report.value) return undefined
-  const { feesReported, count } = report.value
-  if (!feesReported) return 'No fee reported by the swap provider.'
-  return feesReported < count
-    ? `Fees reported by CoW Protocol for ${feesReported} of ${count} swaps.`
-    : 'Fees reported by CoW Protocol, included in the swapped value.'
 })
 </script>
