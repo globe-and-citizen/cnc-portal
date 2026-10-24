@@ -905,9 +905,9 @@ CoinGecko valuation reads use the backend's [shared Redis market cache](../../im
 coin/date identity, raw response precision and explicit unavailable-rate gaps. The backend coordinates cache misses, request admission and
 provider cooldown across clients; Accounting retains its existing explicit refresh of failed date queries.
 
-Safe history retains Transaction Service movements without a client-side contract blacklist before accounting mapping and historical
-valuation requests. Unknown, untrusted or spam-like provider events may reach the books or leave explicit metadata and valuation gaps; the
-existing completeness rules still apply. Gateway balance filtering does not filter this separate history feed. See
+Safe history retains Transaction Service movements without a client-side contract blacklist. Accounting books a Safe movement only when its
+token is a CNC token or one Safe marks trusted; a fake token anyone sent to the Safe address never reaches the books and never leaves a
+valuation gap. The existing completeness rules apply to every booked movement. See
 [provider filtering](../../implementation/client-data-access/README.md#safe-provider-filtering) and
 [Safe pagination and metadata unit tests](../../../app/src/queries/__tests__/safe.queries.spec.ts) and
 [Safe source-mapping tests](../../../app/src/utils/accounting/__tests__/safe.spec.ts). Live product review remains pending.

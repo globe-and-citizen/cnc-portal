@@ -62,16 +62,22 @@ available metadata.
 
 ### Safe provider filtering
 
-The Safe Client Gateway balance request uses `exclude_spam=true&trusted=false`. The frontend displays every returned item and has no local
-contract blacklist. Provider symbols or trust flags do not expand CNC's configured payment allowlist.
+Anyone can send tokens to a Safe address, so Safe's own token trust list decides which contracts count. The Safe Client Gateway balance
+request uses `exclude_spam=true&trusted=true`: holdings, the wallet total and the company overview contain only the native coin and tokens
+Safe marks trusted. An untrusted token sent to the Safe never appears there and never makes the total incomplete. The frontend keeps no
+local contract blacklist, and provider symbols or trust flags do not expand CNC's configured payment allowlist.
 
-Transaction Service histories retain every returned movement, including unknown and untrusted contracts, before the existing Accounting
-mapping and completeness checks. Metadata recovery uses the event's contract address. There is no client-side spam classification or
-quarantine; provider history can include spam-like events, which may reach Accounting or leave explicit metadata and valuation gaps.
+Transaction Service histories retain every returned movement, including unknown and untrusted contracts; metadata recovery uses the event's
+contract address. The [Safe accounting mapper](../../../app/src/utils/accounting/mappers/safe.ts) then ignores a movement whose contract is
+neither a CNC token (native, configured payment tokens, SHER) nor marked `trusted` by the Transaction Service, including a movement without
+token information. Such a movement creates no ledger entry, no valuation request and no completeness gap. The deposit list still shows the
+raw provider history.
 
-Executable evidence: [Gateway request tests](../../../app/src/queries/__tests__/safeClient.queries.spec.ts) and
-[pagination and metadata unit tests](../../../app/src/queries/__tests__/safe.queries.spec.ts). These invoke request functions with mocked
-provider responses and query dependencies; live browser validation remains pending.
+Executable evidence: [Gateway request tests](../../../app/src/queries/__tests__/safeClient.queries.spec.ts),
+[pagination and metadata unit tests](../../../app/src/queries/__tests__/safe.queries.spec.ts),
+[Safe source-mapping tests](../../../app/src/utils/accounting/__tests__/safe.spec.ts) and
+[Safe exchange tests](../../../app/src/utils/accounting/__tests__/safeExchanges.spec.ts). These invoke request functions and mappers with
+mocked provider responses; live browser validation remains pending.
 
 ### Browser request coordination
 
@@ -172,7 +178,7 @@ backend instances. Safe provider requests retain their browser-only coordination
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `1f472cfff2f44ff015f0197f3bf4416cbd2d7caa`
+**Implementation evidence reviewed against:** `73bf27a00c594e97f5c6755d1bdc76da84d94c99`
 
 - [Query barrel](../../../app/src/queries/index.ts), [query factory](../../../app/src/queries/queryFactory.ts), and
   [single-file upload query](../../../app/src/queries/file.queries.ts)

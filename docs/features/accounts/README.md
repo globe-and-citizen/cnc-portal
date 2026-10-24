@@ -1223,7 +1223,7 @@ condition, related criteria, and a worked example:
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `1f472cfff2f44ff015f0197f3bf4416cbd2d7caa`
+**Implementation evidence reviewed against:** `73bf27a00c594e97f5c6755d1bdc76da84d94c99`
 
 - [Bank deposit modal](../../../app/src/components/sections/BankView/forms/DepositModal.vue),
   [Bank transfer modal](../../../app/src/components/sections/BankView/forms/TransferModal.vue),
@@ -1312,11 +1312,12 @@ condition, related criteria, and a worked example:
 
 ## Discovered Safe assets
 
-Safe balances request the Gateway's spam filter with `exclude_spam=true&trusted=false`. Every returned balance remains visible; the frontend
-has no manual contract blacklist. Transaction Service histories retain the provider's movements, including unknown or untrusted contracts.
-These can also reach Accounting or leave explicit metadata and valuation gaps. See
+Anyone can send tokens to the Safe address. Safe balances request the Gateway with `exclude_spam=true&trusted=true`, so holdings and the
+wallet total show only the native coin and tokens Safe trusts; a fake token never makes the total incomplete. The frontend has no manual
+contract blacklist. Transaction Service histories retain the provider's movements, and the deposit list still shows them, but Accounting
+ignores a token that is neither a CNC token nor trusted by Safe. See
 [provider filtering](../../implementation/client-data-access/README.md#safe-provider-filtering) and
-[Safe pagination and metadata unit tests](../../../app/src/queries/__tests__/safe.queries.spec.ts). Live product review remains pending.
+[Safe source-mapping tests](../../../app/src/utils/accounting/__tests__/safe.spec.ts). Live product review remains pending.
 
 The Safe account displays only the balances returned by the Safe Client Gateway in one holdings table, including assets acquired outside CNC
 such as WETH. Provider order, token names, symbols, decimals and logos are retained. Returned zero balances remain visible; absent tokens
