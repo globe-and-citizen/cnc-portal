@@ -61,6 +61,13 @@ flowchart LR
   transitional JavaScript `number`.
 - Every Accounting presenter accepts a `JournalEntry` collection directly, so components and exporters do not compose lower-level filtering
   and report builders or synchronize parallel report objects to obtain display values.
+- [Safe treasury P&L](../../../app/src/utils/accounting/safePnl.ts) projects the same journal into remaining cost and realized results,
+  reconciles exact quantities against current Gateway evidence, and derives unrealized results without inserting valuation postings.
+- [Swap consideration selection](../../../app/src/utils/accounting/toUsd.ts) requests a historical reference only for the consideration leg
+  when non-pegged. [Exchange replay](../../../app/src/utils/accounting/safeExchanges.ts) fixes incoming cost from executed consideration,
+  less verified fees posted to Transaction Fee Expense, removes weighted-average disposal cost and realizes the difference. Actual
+  stablecoin sale receipts remain net and are not reduced again. Exact bigint amounts are independent of rounded display unit rates;
+  same-token receipt splits allocate the remainder once. Changing the acquired asset's quote cannot change cost.
 - The General Ledger presenter keeps a complete decimal-string quantity for inspection and existing export consumers alongside a separate
   six-decimal table label. A positive quantity below display precision is explicit; labels never feed journal calculations or running
   balances.
@@ -108,13 +115,43 @@ fiat-number validation and exact base-unit conversion. The table mapping preserv
 insertion, filtering or regrouping. Exact quantities pass through the canonical formatter; compact labels retain four decimals and identify
 positive sub-precision balances as `<0.0001`. Precise price and value details accompany rounded labels; positive fiat values that round to
 zero display as less than one cent. Missing quantities and nonzero unpriced holdings keep the Safe completeness-checked total unavailable.
-Provider-side filtering and the absence of a local blacklist are documented in
+`isUnrecognizedSafeHolding` applies the shared asset acceptance rule to one Gateway item given the Safe's swapped assets,
+`partitionSafeHoldings` splits the response into holdings and unrecognized tokens, and `getSafeFiatTotal` checks completeness on company
+holdings only and removes unrecognized provider values from the total. The holdings component takes the unrecognized rows separately and
+lists them by contract address and quantity only. Provider-side filtering and the acceptance rule are documented in
 [Client Data Access](../client-data-access/README.md#safe-provider-filtering).
 
 [CoinGecko response interpretation](../../../app/src/utils/tokens/coingecko.ts) verifies the Polygon contract before accepting coin
 identity, price or logo, normalizes Accounting's provider targets, and checks the existing six-decimal historical-rate precision. The
 existing Accounting data layer consumes reactive query results; pure utilities build provider targets and resolve rates by token/date.
 Queries retain raw validated provider responses and HTTP ownership. Provider retry scheduling belongs to the query options.
+
+## Swap Fee Evidence and Presentation
+
+Verification, accounting and presentation are separate utilities; display labels and rounded amounts never become accounting inputs.
+
+[CoW settlement evidence](../../../app/src/utils/safe/cowSettlement.ts) decodes Trade logs only from the known Polygon CoW settlement
+contract. Order and trade schemas retain exact integer amounts and validated identities. Its pure verification checks the Safe
+owner/receiver, both token directions, complete raw movement totals, block, transaction and log index, then returns base-unit fee totals,
+the protocol breakdown and a reason when something is missing. An order spanning other transactions keeps its verified per-execution
+protocol breakdown but withholds its cumulative fee total.
+
+[Draft fee logic](../../../app/src/utils/accounting/swapFees.ts) reads lookup targets straight from `SAFE-SWAP` drafts, attaches a verified
+single-token fee and values it from the fixed executed consideration, separating net asset cost and expense without changing raw quantities.
+Missing, mixed-denomination or third-currency evidence values to zero, so the fee stays inside the asset cost. The
+[P&L projection](../../../app/src/utils/accounting/safePnl.ts) includes the expense once and exposes a separate fee aggregate; its labels
+and holdings column live in the [P&L presenter](../../../app/src/utils/accounting/safePnlPresenter.ts).
+
+The [swap presenter](../../../app/src/utils/accounting/swapPresenter.ts) uses canonical exact-number and token helpers. It keeps exact
+quantities alongside rounded display amounts and short fee-policy explanations. Main totals use two decimals for quantities of at least one
+token and retain up to eight below one; breakdowns retain up to eight and network gas up to four. A positive quantity below display
+precision uses a less-than bound; unknown denomination metadata displays contract identity and base units rather than assuming decimals.
+Total and breakdown are not summed; native settlement gas and its sender are informational. The shared contracts are
+[swap fee types](../../../app/src/types/swapFees.ts). [Settlement tests](../../../app/src/utils/safe/__tests__/cowSettlement.spec.ts) cover
+spoofed emitters, inconsistent records, partial fills and unavailable evidence;
+[presenter tests](../../../app/src/utils/accounting/__tests__/swapPresenter.spec.ts) cover exact precision and nonmutating presentation.
+[Net fee accounting tests](../../../app/src/utils/accounting/__tests__/swapFees.spec.ts) cover fee denomination conversion, unverified fees
+kept inside cost, unchanged receipts, weighted-average partial/full disposals and total P&L.
 
 ## Implementation Evidence
 
@@ -124,7 +161,7 @@ post-confirmation balance invalidations reach both. [Currency prices](../../../a
 currency payload and conversions while consuming the centralized CoinGecko price query, whose preset freshness, polling and direct Axios
 reads are described in [Client Data Access](../client-data-access/README.md#browser-request-coordination).
 
-**Implementation evidence reviewed against:** `008826d0d841f19c967c8ff477a7e9c452ee7398`
+**Implementation evidence reviewed against:** `87a1d0262d192a9bf6195d619806a1c7e74d6754`
 
 - [Utility ownership map and domain implementations](../../../app/src/utils/)
 - [Shared Accounting domain contracts](../../../app/src/utils/accounting/types.ts)

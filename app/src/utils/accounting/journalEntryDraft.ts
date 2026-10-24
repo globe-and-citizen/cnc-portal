@@ -14,6 +14,7 @@ import { getAddress, isAddress, type Address } from 'viem'
 import type { AssetId, AssetMetadata } from '@/utils/tokens/assets'
 import type { UsdAmount } from './types'
 import type { AccountName } from './chartOfAccounts'
+import type { SwapFeeAmount } from '@/types/swapFees'
 
 /** The transaction-hash head of an indexed event id (`<txHash>-<logIndex>`). */
 const EVENT_ID_TRANSACTION_HASH = /^(0x[0-9a-fA-F]{64})(?:-|$)/
@@ -42,6 +43,8 @@ export function sourceOperationIdOf(eventId: string): string {
  */
 export type UseCase =
   | 'SAFE-SWAP'
+  /** Report-date market revaluation of Safe assets; computed per report, never stored. */
+  | 'MARKET-REVALUATION'
   /** Direct external deposit into a treasury pocket → Service Revenue. */
   | 'UC-BANK-02'
   /** Fund payroll/expense pockets from Bank — internal move. */
@@ -96,6 +99,13 @@ export type UseCase =
 type EnrichmentStatus = 'enriched' | 'not-applicable' | 'needs-off-chain-data'
 
 export interface JournalEntryDraft {
+  /** Verified fee of a Safe swap; absent keeps the fee inside the acquired asset cost. */
+  swapFee?: SwapFeeAmount
+  /** Exact six-decimal unit cost derived from consideration, without a floating-point round trip. */
+  carryingRate?: bigint
+  valuationMethod?: 'swap-consideration' | 'weighted-average'
+  /** Block-wide log position; orders Safe movements mined in the same block. */
+  logIndex?: number
   /** Stable id — the source row id, suffixed when one event yields several entries. */
   id: string
   /**
@@ -206,6 +216,28 @@ export interface JournalEntryDraft {
   expenseRemainingUsd?: number
   /** Off-chain enrichment status. */
   enrichment: EnrichmentStatus
+}
+
+/** The log position of an indexed event id (`<txHash>-<logIndex>[-suffix]`). */
+const EVENT_ID_LOG_INDEX = /^0x[0-9a-fA-F]{64}-(\d+)(?:-|$)/
+
+type DraftOrderKey = Pick<JournalEntryDraft, 'timestamp' | 'logIndex' | 'id'>
+
+const logPositionOf = (draft: DraftOrderKey): number => {
+  if (draft.logIndex !== undefined) return draft.logIndex
+  const match = EVENT_ID_LOG_INDEX.exec(draft.id)
+  return match ? Number(match[1]) : -1
+}
+
+/**
+ * Chronological replay order. Equal block timestamps mean the same block, where the
+ * mined log position decides, read from `logIndex` or the indexed event id. Only drafts
+ * with no log at all (native transfers) lead the block, in stable id order.
+ */
+export function compareDraftOrder(a: DraftOrderKey, b: DraftOrderKey): number {
+  return (
+    a.timestamp - b.timestamp || logPositionOf(a) - logPositionOf(b) || a.id.localeCompare(b.id)
+  )
 }
 
 /** Checksum-normalize an address, returning `undefined` for invalid input. */

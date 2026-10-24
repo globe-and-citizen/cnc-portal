@@ -71,7 +71,7 @@ import AccountFilterSelect from '@/components/sections/AccountingView/AccountFil
 import { usePagination } from '@/composables/usePagination'
 import { useFacetFilter } from '@/composables/useFacetFilter'
 import { defaultValueForMode, isAllTimeRange, type Range } from '@/utils/dates/picker'
-import { useAccountingContext } from '@/composables/accounting/useAccountingContext'
+import { useMarketRevaluation } from '@/composables/accounting/useMarketRevaluation'
 import { useSectionExport } from '@/composables/accounting/useSectionExport'
 import { periodLabel } from '@/utils/accounting/presenter'
 import {
@@ -97,7 +97,14 @@ const visibleColumns = useLocalStorage<LedgerColumnKey[]>(
 // Reporting period (range mode) — defaults to "All time" (whole book).
 const period = ref<Range>(defaultValueForMode('range') as Range)
 
-const accounting = useAccountingContext()
+// A real date window is in play only when the picker isn't on "All time" (whose
+// bounds are epoch → today, not a user choice).
+const dateSelected = computed(() => !isAllTimeRange(period.value))
+
+// The ledger shows the period's market revaluation, matching the statements.
+const revaluation = useMarketRevaluation(() =>
+  dateSelected.value ? [new Date(period.value.start.getTime() - 1000), period.value.end] : [null]
+)
 
 const route = useRoute()
 const router = useRouter()
@@ -120,7 +127,7 @@ function openInTrialBalance(account: string, instance?: string, accountId?: stri
 // then flatten the current page for the table. The gross movement total remains
 // the total of every selected journal entry, not merely the current page.
 const filtered = computed(() =>
-  filterJournalLedgerEntries(accounting.journal.value, period.value.start, period.value.end)
+  filterJournalLedgerEntries(revaluation.journal.value, period.value.start, period.value.end)
 )
 
 // Account then currency, each narrowing the feed the next one derives its options
@@ -162,12 +169,8 @@ watch([period, selectedAccounts, selectedCurrencies], reset, { deep: true })
 const pageRows = computed(() => {
   const start = (page.value - 1) * pageSize.value
   const slice = filteredByCurrency.value.slice(start, start + pageSize.value)
-  return journalLedgerRows(slice, accounting.journal.value)
+  return journalLedgerRows(slice, revaluation.journal.value)
 })
-
-// A real date window is in play only when the picker isn't on "All time" (whose
-// bounds are epoch → today, not a user choice).
-const dateSelected = computed(() => !isAllTimeRange(period.value))
 
 // Export the exact selected JournalEntry scope: period, concrete accounts,
 // currencies and visible columns. The context line under the buttons mirrors it.
@@ -187,6 +190,7 @@ const { onExport, onPrint } = useSectionExport('General ledger', () => ({
   from: dateSelected.value ? period.value.start : null,
   to: dateSelected.value ? period.value.end : null,
   columns: visibleColumns.value,
+  adjustments: revaluation.entries.value,
   ...(activeAccounts.value ? { journalAccounts: activeAccounts.value } : {}),
   ...(activeCurrencies.value ? { currencies: activeCurrencies.value } : {})
 }))

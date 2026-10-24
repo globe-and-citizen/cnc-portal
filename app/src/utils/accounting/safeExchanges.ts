@@ -1,8 +1,13 @@
 /** Replay Safe carrying values and balance evidenced asset exchanges without creating service revenue. */
 import { assetDecimals, type AssetId } from '@/utils/tokens/assets'
-import { makeJournalEntryDraft, type JournalEntryDraft } from './journalEntryDraft'
-import { usdAmountFromToken, usdRateFromNumber, usdAmountToNumber } from './monetaryAmount'
-import { round6, wholeTokenAmount } from './toUsd'
+import {
+  compareDraftOrder,
+  makeJournalEntryDraft,
+  type JournalEntryDraft
+} from './journalEntryDraft'
+import { usdAmountFromToken, usdRateFromNumber } from './monetaryAmount'
+import { swapConsiderationEntries, swapNeedsReceivedRates } from './toUsd'
+import { executedFeeUsd } from './swapFees'
 
 interface Holding {
   quantity: bigint
@@ -19,6 +24,21 @@ function marketAmount(entry: JournalEntryDraft): bigint {
   )
 }
 
+/** Keep the amount exact; the derived six-decimal unit rate is presentation evidence only. */
+function setCarryingValue(
+  entry: JournalEntryDraft,
+  amount: bigint,
+  method: NonNullable<JournalEntryDraft['valuationMethod']>
+) {
+  entry.carryingAmount = amount
+  entry.valuationMethod = method
+  const decimals = assetDecimals(entry.token, entry.asset)
+  const quantity = BigInt(entry.rawAmount)
+  if (decimals === null || quantity <= 0n) return
+  const divisor = quantity * 10n ** 18n
+  entry.carryingRate = (amount * 10n ** BigInt(decimals) + divisor / 2n) / divisor
+}
+
 /**
  * Full-history weighted-average carrying basis, replayed on every source/rate refresh.
  *
@@ -26,13 +46,16 @@ function marketAmount(entry: JournalEntryDraft): bigint {
  * first as ordinary evidence — never as another swap receipt. A non-exchange depletion
  * that disagrees with its market price cannot establish a weighted acquisition basis for
  * a later swap, so it marks that holding incomplete.
+ *
+ * A swap is valued at its executed consideration, read before the disposed asset is
+ * replaced by its historic cost. Several assets received share it by their market value of
+ * the day. A verified fee is split out as Transaction Fee Expense;
+ * without one the fee stays inside the acquired asset cost. Returns drafts in replay order.
  */
 export function prepareSafeExchanges(drafts: readonly JournalEntryDraft[]): JournalEntryDraft[] {
   const holdings = new Map<AssetId, Holding>()
   const operations = new Map<string, JournalEntryDraft[]>()
-  for (const entry of [...drafts].sort(
-    (a, b) => a.timestamp - b.timestamp || a.id.localeCompare(b.id)
-  )) {
+  for (const entry of [...drafts].sort(compareDraftOrder)) {
     const key = entry.txHash?.toLowerCase() ?? entry.sourceOperationId ?? entry.id
     const group = operations.get(key) ?? []
     group.push({ ...entry })
@@ -47,7 +70,7 @@ export function prepareSafeExchanges(drafts: readonly JournalEntryDraft[]): Jour
     holding.amount += amount
     holding.complete &&=
       BigInt(entry.rawAmount) === 0n ||
-      ((entry.rate ?? 0) > 0 &&
+      (((entry.rate ?? 0) > 0 || entry.valuationMethod !== undefined) &&
         assetDecimals(entry.token, entry.asset) !== null &&
         entry.accountingIssue !== 'exchange-basis-unavailable')
     holdings.set(entry.token, holding)
@@ -60,9 +83,7 @@ export function prepareSafeExchanges(drafts: readonly JournalEntryDraft[]): Jour
       holding && holding.complete && holding.quantity >= quantity && holding.quantity > 0n
     const amount = evidenced ? (holding.amount * quantity) / holding.quantity : null
     if (exchange && amount !== null) {
-      entry.carryingAmount = amount
-      const units = wholeTokenAmount(quantity, entry.token, entry.asset)
-      if (units > 0) entry.rate = round6(usdAmountToNumber(amount) / units)
+      setCarryingValue(entry, amount, 'weighted-average')
     }
     if (holding) {
       holding.quantity -= quantity
@@ -85,14 +106,28 @@ export function prepareSafeExchanges(drafts: readonly JournalEntryDraft[]): Jour
     }
     const incoming = exchange.filter((entry) => entry.debit === 'Cash — Safe')
     const outgoing = exchange.filter((entry) => entry.credit === 'Cash — Safe')
+    const consideration = swapConsiderationEntries(exchange)
+    const received = consideration.reduce((sum, entry) => sum + marketAmount(entry), 0n)
+    const fee = executedFeeUsd(exchange)
+    const receiptAnchored = consideration[0]?.debit === 'Cash — Safe'
+    const netReceived = receiptAnchored ? received : received - fee
+    const proceeds = receiptAnchored ? received + fee : received
     let basis = 0n
-    let complete = incoming.every(
-      (entry) =>
-        (entry.rate ?? 0) > 0 &&
-        assetDecimals(entry.token, entry.asset) !== null &&
-        entry.asset?.trusted !== false
-    )
+    const weighted = swapNeedsReceivedRates(exchange)
+    let complete =
+      consideration.length > 0 &&
+      netReceived > 0n &&
+      consideration.every((entry) => (entry.rate ?? 0) > 0) &&
+      (!weighted || incoming.every((entry) => marketAmount(entry) > 0n)) &&
+      exchange.every(
+        (entry) =>
+          BigInt(entry.rawAmount) > 0n &&
+          assetDecimals(entry.token, entry.asset) !== null &&
+          entry.asset?.trusted !== false &&
+          !entry.accountingIssue
+      )
     for (const entry of outgoing) {
+      if (entry.accountingIssue) complete = false
       const amount = remove(entry, true)
       if (amount === null) complete = false
       else basis += amount
@@ -103,17 +138,46 @@ export function prepareSafeExchanges(drafts: readonly JournalEntryDraft[]): Jour
         entry.carryingAmount = 0n
       }
     } else {
-      const received = incoming.reduce(
-        (sum, entry) => sum + (entry.carryingAmount ?? marketAmount(entry)),
-        0n
-      )
-      const delta = received - basis
+      const weightOf = (entry: JournalEntryDraft) =>
+        weighted ? marketAmount(entry) : BigInt(entry.rawAmount)
+      const weights = incoming.reduce((sum, entry) => sum + weightOf(entry), 0n)
+      let allocated = 0n
+      incoming.forEach((entry, index) => {
+        const amount =
+          index === incoming.length - 1
+            ? netReceived - allocated
+            : (netReceived * weightOf(entry)) / weights
+        allocated += amount
+        setCarryingValue(entry, amount, 'swap-consideration')
+      })
+      if (fee > 0n) {
+        const primary = incoming[0]!
+        group.push(
+          makeJournalEntryDraft({
+            id: `${primary.id}-swap-fee`,
+            txHash: primary.txHash,
+            ...(primary.logIndex !== undefined ? { logIndex: primary.logIndex } : {}),
+            sourceOperationId: primary.sourceOperationId,
+            timestamp: primary.timestamp,
+            useCase: 'SAFE-SWAP',
+            debit: 'Transaction Fee Expense',
+            credit: null,
+            token: 'usdc',
+            rawAmount: '0',
+            rate: 1,
+            carryingAmount: fee,
+            memo: 'Executed swap fee'
+          })
+        )
+      }
+      const delta = proceeds - basis
       if (delta !== 0n) {
         const primary = incoming[0]!
         group.push(
           makeJournalEntryDraft({
             id: `${primary.id}-exchange-result`,
             txHash: primary.txHash,
+            ...(primary.logIndex !== undefined ? { logIndex: primary.logIndex } : {}),
             sourceOperationId: primary.sourceOperationId,
             timestamp: primary.timestamp,
             useCase: 'SAFE-SWAP',
@@ -131,5 +195,5 @@ export function prepareSafeExchanges(drafts: readonly JournalEntryDraft[]): Jour
     for (const entry of incoming) add(entry)
     result.push(...group)
   }
-  return result
+  return result.sort(compareDraftOrder)
 }

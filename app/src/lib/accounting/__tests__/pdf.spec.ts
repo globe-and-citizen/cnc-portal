@@ -5,6 +5,8 @@ import { periodLabel } from '@/utils/accounting/presenter'
 import type { CncAccounting } from '@/utils/accounting/assemble'
 import { assembleAccounting } from '@/utils/accounting/__tests__/assembleAccounting'
 import { USDC_ADDRESS } from '@/constant'
+import { revaluationEntries } from '@/utils/accounting/marketRevaluation'
+import { usd } from '@/utils/accounting/__tests__/fixtures'
 
 const BANK = '0x1111111111111111111111111111111111111111'
 const CLIENT = '0x7777777777777777777777777777777777777777'
@@ -134,6 +136,18 @@ describe('buildTables (section selection)', () => {
   it('builds only the requested sections, in the given order', () => {
     const tables = buildTables(sampleBooks(), [{ key: 'ledger' }, { key: 'summary' }])
     expect(tables.map((t) => t.title)).toEqual(['General Ledger', 'Summary'])
+  })
+
+  it('[AC-US-ACCT-003-12] carries a section’s market revaluation into its exported table only', () => {
+    const adjustments = revaluationEntries([{ timestamp: 4_000_000_000, adjustment: -usd(2) }])
+    const [revalued, plain] = buildTables(sampleBooks(), [
+      { key: 'trial', adjustments },
+      { key: 'trial' }
+    ])
+    expect(revalued!.body.find((row) => row[0] === 'Safe Market Value Adjustment')?.[3]).toBe(
+      '$2.00'
+    )
+    expect(plain!.body.some((row) => row[0] === 'Safe Market Value Adjustment')).toBe(false)
   })
 
   it('exposes a Summary section (absent from the classic tabs)', () => {

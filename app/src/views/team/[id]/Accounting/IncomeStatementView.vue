@@ -69,6 +69,10 @@
             >{{ income.netIncome }}</span
           >
         </div>
+        <MarketRevaluationNote
+          :summary="revaluation.summary.value"
+          :status="revaluation.status.value"
+        />
       </div>
     </UCard>
 
@@ -77,7 +81,7 @@
       :account="drilldownLine?.label ?? ''"
       :total="drilldownLine?.total ?? ''"
       :entries="drilldownEntries"
-      :all-entries="accounting.journal.value"
+      :all-entries="revaluation.journal.value"
       :balance="drilldownBalance"
       columns-storage-key="cnc-accounting-income-drilldown-columns-v1"
       @export="onDrilldownExport"
@@ -92,22 +96,26 @@ import AccountingExportBar from '@/components/sections/AccountingView/Accounting
 import StatementLine from '@/components/sections/AccountingView/StatementLine.vue'
 import LedgerDrilldownModal from '@/components/sections/AccountingView/LedgerDrilldownModal.vue'
 import { defaultValueForMode, isAllTimeRange, type Range } from '@/utils/dates/picker'
-import { useAccountingContext } from '@/composables/accounting/useAccountingContext'
 import { useSectionExport } from '@/composables/accounting/useSectionExport'
 import { useLedgerDrilldown } from '@/composables/accounting/useLedgerDrilldown'
 import { presentIncome, type StatementLineView } from '@/utils/accounting/presenter'
+import { useMarketRevaluation } from '@/composables/accounting/useMarketRevaluation'
+import MarketRevaluationNote from '@/components/sections/AccountingView/MarketRevaluationNote.vue'
 
 // Reporting period (range mode) — defaults to "All time".
 const period = ref<Range>(defaultValueForMode('range') as Range)
 
-const accounting = useAccountingContext()
-const income = computed(() =>
-  presentIncome(accounting.journal.value, period.value.start, period.value.end)
-)
-
 // A real date window is in play only when the picker isn't on "All time" (whose
 // bounds are epoch → today, not a user choice); "All time" drills the whole book.
 const dateSelected = computed(() => !isAllTimeRange(period.value))
+
+// The period's unrealized result is the market change between its opening and its end.
+const revaluation = useMarketRevaluation(() =>
+  dateSelected.value ? [new Date(period.value.start.getTime() - 1000), period.value.end] : [null]
+)
+const income = computed(() =>
+  presentIncome(revaluation.journal.value, period.value.start, period.value.end)
+)
 
 // Per-line drill-down — over the same reporting period the statement shows.
 const {
@@ -117,7 +125,7 @@ const {
   drilldownEntries,
   openFor,
   onExport: onDrilldownExport
-} = useLedgerDrilldown(accounting.journal, () => ({
+} = useLedgerDrilldown(revaluation.journal, () => ({
   from: dateSelected.value ? period.value.start : null,
   to: dateSelected.value ? period.value.end : null
 }))
@@ -132,6 +140,7 @@ function openDrilldown(line: StatementLineView): void {
 const { onExport, onPrint } = useSectionExport('Income statement', () => ({
   key: 'income',
   from: dateSelected.value ? period.value.start : null,
-  to: dateSelected.value ? period.value.end : null
+  to: dateSelected.value ? period.value.end : null,
+  adjustments: revaluation.entries.value
 }))
 </script>

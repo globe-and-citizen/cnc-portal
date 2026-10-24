@@ -689,26 +689,70 @@ suspense treatment extends pending classification to other unidentified receipts
 **Source story:** [US-SAFE-003](../accounts/README.md#us-safe-003-manage-safe-funds).
 
 - **Input:** Opposing movements of different assets sharing one transaction and an external settlement counterparty.
-- **Processing:** Preserve asset identity by network and contract, exact raw quantity and decimals. Debit the acquired asset at its own
-  historical market rate and credit the disposed asset at its full-history weighted-average carrying value. Recognize the difference as an
-  exchange gain or loss; do not infer fees from that difference.
-- **General Ledger:** Label `Asset exchange`, category `Swap`. The receipt's quantity times its historical rate determines its USD value;
-  stablecoin paid never sets the receipt's unit price. Missing market evidence keeps the operation partial. Current portfolio prices do not
-  rewrite the books.
+- **Processing:** Preserve asset identity by network and contract, exact raw quantity and decimals. Debit the acquired asset at fixed
+  executed consideration less verified fees, debit Transaction Fee Expense for those fees, and credit the disposed asset at its full-history
+  weighted-average carrying value. For recognized USD-stablecoin receipts, preserve the actual net receipt and recover gross proceeds by
+  adding the fee. Otherwise use the outgoing amount, valued at the daily transaction-date rate only for non-pegged consideration. Recognize
+  gross proceeds less disposed carrying value as an exchange gain or loss; the fee expense yields the net result.
+- **General Ledger:** Label `Asset exchange`, category `Swap`. Gross spend less verified fee, divided by the unchanged received quantity,
+  determines purchase unit cost. Current portfolio prices affect unrealized P&L and never rewrite this cost. Missing required consideration
+  keeps the operation partial; an unverified fee stays inside the acquired asset cost without a fee line. No acquired-token market quote is
+  required for a stablecoin purchase.
 
-For an asset acquired for $20 and later sold for 30.658984 USDC, the sale is:
+For 532.944250 USDC spent with a verified 3.870494 USDC fee, the purchase is:
 
-| Account             | Currency       | Debit (USD) | Credit (USD) |
-| ------------------- | -------------- | ----------: | -----------: |
-| Cash — Safe         | USDC           |   30.658984 |              |
-| Cash — Safe         | Acquired asset |             |           20 |
-| Asset Exchange Gain | USD            |             |    10.658984 |
+| Account                 | Currency       | Debit (USD) | Credit (USD) |
+| ----------------------- | -------------- | ----------: | -----------: |
+| Cash — Safe             | Acquired asset |  529.073756 |              |
+| Transaction Fee Expense | USD valuation  |    3.870494 |              |
+| Cash — Safe             | USDC           |             |   532.944250 |
+
+The received quantity is already net on-chain and is not reduced again. Original fee denomination and amount remain inspectable in Safe
+Activity's **Swap costs** section. The fee expense is a valuation allocation, not another token transfer.
+
+For an asset with a $20 net carrying cost later sold for a net 30.658984 USDC, with a verified $1 sale fee, the sale is:
+
+| Account                 | Currency       | Debit (USD) | Credit (USD) |
+| ----------------------- | -------------- | ----------: | -----------: |
+| Cash — Safe             | USDC           |   30.658984 |              |
+| Transaction Fee Expense | USD valuation  |           1 |              |
+| Cash — Safe             | Acquired asset |             |           20 |
+| Asset Exchange Gain     | USD            |             |    11.658984 |
+
+This sale's net result is 10.658984 USD; fees are not deducted from the stablecoin receipt a second time.
 
 Ancillary mints remain separate unclassified evidence. Missing decimals, acquisition basis or valuation keeps reports incomplete; complex
 batches and different-counterparty settlements need further evidence before automatic classification. Network fees are not inferred from the
 difference between proceeds and carrying value. See the
 [read model](../../implementation/accounting-read-model/README.md#safe-assets-and-exchanges) and
 [regression evidence](../../../app/src/utils/accounting/__tests__/safeExchanges.spec.ts).
+
+### `MARKET-REVALUATION` — Report-Date Safe Market Revaluation
+
+- **Input:** The Safe's non-pegged positions and carrying cost on a report date, and a market price for each: today's Safe Account
+  valuation, or CoinGecko's daily snapshot at the end of a past UTC day.
+- **Processing:** Market value less carrying cost is the cumulative adjustment. A loss debits `Unrealized P&L` and credits
+  `Safe Market Value Adjustment`; a gain debits the adjustment and credits `Unrealized P&L`. A period receives an opening entry before its
+  start and an entry at its end carrying only its change.
+- **General Ledger:** Label `Market revaluation`, category `Revaluation`. The entry is computed for each report and export, never stored and
+  never posted on-chain. Without a complete price it is omitted and the report stays at cost.
+
+For WETH bought at a net cost of 529.073756 USD and worth 476.64 USD today (a loss):
+
+| Account                      | Debit (USD) | Credit (USD) |
+| ---------------------------- | ----------: | -----------: |
+| Unrealized P&L               |       52.43 |              |
+| Safe Market Value Adjustment |             |        52.43 |
+
+If the same WETH were worth 579.07 USD (a gain):
+
+| Account                      | Debit (USD) | Credit (USD) |
+| ---------------------------- | ----------: | -----------: |
+| Safe Market Value Adjustment |       50.00 |              |
+| Unrealized P&L               |             |        50.00 |
+
+Cash — Safe (529.07) plus the adjustment equals the Total wallet value shown on Safe Account: 476.64 USD or 579.07 USD. See the
+[read model](../../implementation/accounting-read-model/README.md#report-date-market-revaluation).
 
 ### `UC-BANK-03` — Bank Funds a Company Pocket
 

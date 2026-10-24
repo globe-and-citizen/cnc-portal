@@ -16,7 +16,9 @@ const ctx = vi.hoisted(() => ({
 vi.mock('@/composables/accounting/useAccountingContext', async () => {
   const { ref } = await vi.importActual<typeof import('vue')>('vue')
   ctx.journal = ref<JournalEntry[]>([])
-  return { useAccountingContext: () => ({ journal: ctx.journal }) }
+  return {
+    useAccountingContext: () => ({ journal: ctx.journal, status: { state: { value: 'ready' } } })
+  }
 })
 
 // Stop exports at the composable boundary: the real writers end on a browser

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  compareDraftOrder,
   makeJournalEntryDraft,
   sourceOperationIdOf,
   transactionHashOf
@@ -61,5 +62,23 @@ describe('transaction-backed journal draft identity', () => {
   it('keeps a synthetic operation identity intact', () => {
     expect(transactionHashOf('credit-interest-1-lender')).toBeUndefined()
     expect(sourceOperationIdOf('credit-interest-1-lender')).toBe('credit-interest-1-lender')
+  })
+})
+
+describe('compareDraftOrder', () => {
+  it('orders a block by mined log position, read from the indexed event id when no logIndex is set', () => {
+    const at = { timestamp: 100 }
+    const ordered = [
+      { ...at, id: `${TX_HASH}-7` },
+      { ...at, id: 'i-native', logIndex: undefined },
+      { ...at, id: 'z-safe', logIndex: 3 },
+      { ...at, id: `${TX_HASH}-12-fee` }
+    ].sort(compareDraftOrder)
+    expect(ordered.map((draft) => draft.id)).toEqual([
+      'i-native',
+      'z-safe',
+      `${TX_HASH}-7`,
+      `${TX_HASH}-12-fee`
+    ])
   })
 })

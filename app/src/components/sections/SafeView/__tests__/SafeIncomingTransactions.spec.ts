@@ -31,7 +31,8 @@ vi.mock('@/utils/safe/model', () => ({
       return `${transfer.value} ${transfer.tokenInfo.symbol}`
     }
     return `${transfer.value} POL`
-  })
+  }),
+  safeTransferTokenLabel: vi.fn((transfer: SafeIncomingTransfer) => transfer.tokenInfo?.symbol)
 }))
 
 vi.mock('@/utils/dates/calendar', () => ({

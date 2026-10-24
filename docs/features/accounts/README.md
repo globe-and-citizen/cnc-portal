@@ -114,8 +114,8 @@ Runs of at least three consecutive missing criteria use inclusive ranges with fu
 | US-EXP-005  | 🚧 Partial    | ⚠️ 3/7          | `AC-US-EXP-005-03`, `AC-US-EXP-005-04`, `AC-US-EXP-005-06`, `AC-US-EXP-005-07`    |
 | US-EXP-006  | 🚧 Partial    | ⚠️ 1/8          | `AC-US-EXP-006-01`–`AC-US-EXP-006-05`, `AC-US-EXP-006-07`, `AC-US-EXP-006-08`     |
 | US-SAFE-001 | 🚧 Partial    | ⚠️ 8/11         | `AC-US-SAFE-001-02`, `AC-US-SAFE-001-03`, `AC-US-SAFE-001-06`                     |
-| US-SAFE-002 | 🧪 Mocked     | ⚠️ 7/10 met     | `AC-US-SAFE-002-01`, `AC-US-SAFE-002-02`, `AC-US-SAFE-002-09`                     |
-| US-SAFE-003 | 📋 Planned    | ⚠️ 6/11         | `AC-US-SAFE-003-01`–`AC-US-SAFE-003-03`, `AC-US-SAFE-003-06`, `AC-US-SAFE-003-07` |
+| US-SAFE-002 | 🧪 Mocked     | ⚠️ 10/13 met    | `AC-US-SAFE-002-01`, `AC-US-SAFE-002-02`, `AC-US-SAFE-002-09`                     |
+| US-SAFE-003 | 📋 Planned    | ⚠️ 7/12         | `AC-US-SAFE-003-01`–`AC-US-SAFE-003-03`, `AC-US-SAFE-003-06`, `AC-US-SAFE-003-07` |
 | US-SAFE-004 | 📋 Planned    | ⚠️ 4/9          | `AC-US-SAFE-004-01`–`AC-US-SAFE-004-04`, `AC-US-SAFE-004-07`                      |
 | US-SAFE-005 | 🧪 Mocked     | ✅ 9/9          | —                                                                                 |
 | US-SAFE-006 | 🧪 Mocked     | ✅ 10/10        | —                                                                                 |
@@ -888,12 +888,20 @@ remain as recorded above.
 
 - [x] `AC-US-SAFE-002-04` Inspecting Safe details does not require Safe signer permission.
 - [x] `AC-US-SAFE-002-05` The registered Safe address identifies the wallet whose balances, owners, and threshold are reported.
+- [x] `AC-US-SAFE-002-11` A member can inspect per-asset and total USD treasury P&L and retain results after a position closes. Wallet
+      overview shows net asset cost, market value, swap fees and total P&L. Verified fees are separated from acquisition cost and included
+      once in total P&L; current prices change only unrealized results.
+- [x] `AC-US-SAFE-002-13` A member can inspect executed Polygon CoW swap fee totals in Wallet overview and Safe Activity, including exact
+      amounts and currencies, the included protocol breakdown and the separate settlement gas payer. Missing or mismatched evidence is
+      unavailable rather than zero and keeps the fee inside the asset cost; inspecting fees never adds another expense.
 
 #### Edge & Error Cases
 
 - [x] `AC-US-SAFE-002-06` A Safe with no incoming transfers returns an empty deposit history.
 - [x] `AC-US-SAFE-002-07` A failed Safe information read is reported without hiding unaffected Safe information.
 - [x] `AC-US-SAFE-002-08` A failed Safe information read can be retried without registering another Safe.
+- [x] `AC-US-SAFE-002-12` Missing cost evidence, incomplete history or a mismatch between recorded and current quantities withholds the
+      affected P&L and total rather than showing zero profit.
 - [x] `AC-US-SAFE-002-10` While Safe services have not yet indexed a newly deployed Safe, the overview explains the wait instead of
       reporting a failure, without retrying the 404, and its balances and signers load when the user tries again or at the next five-minute
       refresh of the Safe information.
@@ -913,6 +921,9 @@ remain as recorded above.
 | `AC-US-SAFE-002-09`  | `PS-BACKEND`               | None linked               | ❌ Missing      |
 | `AC-US-SAFE-002-09`  | `PS-FULL-STACK-INTEGRATED` | None linked               | ❌ Missing      |
 | `AC-US-SAFE-002-10`  | `PS-FRONTEND`              | Frontend                  | ✅ Met          |
+| `AC-US-SAFE-002-11`  | `PS-FRONTEND`              | Frontend                  | ✅ Met          |
+| `AC-US-SAFE-002-12`  | `PS-FRONTEND`              | Frontend                  | ✅ Met          |
+| `AC-US-SAFE-002-13`  | `PS-FRONTEND`              | Frontend                  | ✅ Met          |
 
 **Dependencies:** US-SAFE-001
 
@@ -954,6 +965,8 @@ movement across the participating stories.
 - [x] `AC-US-SAFE-003-08` A rejected or failed proposal leaves Safe balances unchanged.
 - [x] `AC-US-SAFE-003-09` An archived company cannot initiate a Safe deposit or transfer.
 - [x] `AC-US-SAFE-003-11` An unavailable discovered balance or valuation keeps the wallet total explicitly incomplete.
+- [x] `AC-US-SAFE-003-12` A token the Safe did not acquire through one of its own swaps, such as an unsolicited airdrop, is listed apart by
+      contract address and excluded from the wallet total, the Safe P&L and the books; zero-value transfers are ignored.
 
 ### Test Coverage
 
@@ -971,6 +984,7 @@ movement across the participating stories.
 | `AC-US-SAFE-003-09`  | `PS-BROWSER`          | Mocked browser            | ✅ Met          |
 | `AC-US-SAFE-003-10`  | `PS-FRONTEND`         | Frontend                  | ✅ Met          |
 | `AC-US-SAFE-003-11`  | `PS-FRONTEND`         | Frontend                  | ✅ Met          |
+| `AC-US-SAFE-003-12`  | `PS-FRONTEND`         | Frontend                  | ✅ Met          |
 
 **Accounting:** A confirmed transfer is classified as
 [`UC-BANK-02`](../accounting/journal-entry-catalogue.md#uc-bank-02--external-cash-receipt),
@@ -1223,7 +1237,7 @@ condition, related criteria, and a worked example:
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `1f472cfff2f44ff015f0197f3bf4416cbd2d7caa`
+**Implementation evidence reviewed against:** `713beb115d502312b73d7486ef41c19254efeddc`
 
 - [Bank deposit modal](../../../app/src/components/sections/BankView/forms/DepositModal.vue),
   [Bank transfer modal](../../../app/src/components/sections/BankView/forms/TransferModal.vue),
@@ -1313,16 +1327,19 @@ condition, related criteria, and a worked example:
 ## Discovered Safe assets
 
 Safe balances request the Gateway's spam filter with `exclude_spam=true&trusted=false`. Every returned balance remains visible; the frontend
-has no manual contract blacklist. Transaction Service histories retain the provider's movements, including unknown or untrusted contracts.
-These can also reach Accounting or leave explicit metadata and valuation gaps. See
+has no manual contract blacklist. Anyone can still send any token to the Safe, so only configured tokens and tokens the Safe acquired
+through one of its own swaps count as company assets. Any other token, such as an unsolicited airdrop, is listed apart under a collapsed
+`Unrecognized tokens` section that shows only its contract address and quantity, never its self-declared name, and warns not to interact
+with it. Such a token is excluded from the wallet total, the Safe P&L and the books. The Deposits list hides zero-value transfers used for
+address poisoning and names an unrecognized token by its contract address. See
 [provider filtering](../../implementation/client-data-access/README.md#safe-provider-filtering) and
-[Safe pagination and metadata unit tests](../../../app/src/queries/__tests__/safe.queries.spec.ts). Live product review remains pending.
+[Safe portfolio tests](../../../app/src/utils/safe/__tests__/portfolio.spec.ts).
 
-The Safe account displays only the balances returned by the Safe Client Gateway in one holdings table, including assets acquired outside CNC
-such as WETH. Provider order, token names, symbols, decimals and logos are retained. Returned zero balances remain visible; absent tokens
-are not inserted from the CNC supported-token list. Before a response is available, no placeholder currencies are shown; an empty response
-produces an empty holdings table. Contract identity is preserved by network and address rather than symbol, so WETH and AWETH remain
-separate assets.
+The Safe account displays only the balances returned by the Safe Client Gateway in one holdings table, including assets the Safe acquired
+through swaps outside CNC, such as WETH. Provider order, token names, symbols, decimals and logos are retained. Returned zero balances
+remain visible; absent tokens are not inserted from the CNC supported-token list. Before a response is available, no placeholder currencies
+are shown; an empty response produces an empty holdings table. Contract identity is preserved by network and address rather than symbol, so
+WETH and AWETH remain separate assets.
 
 A token recognized elsewhere in CNC, such as USDT/USDT0, appears only when returned by the Gateway. A missing market price does not hide a
 returned token. This read-only display does not add that token to payment allowlists or change its Accounting identity.
@@ -1342,15 +1359,17 @@ neutral initial.
 
 Each holding retains its currency, exact quantity, contract identity, and available current valuation in the selected display currency
 independently of the tokens allowed in CNC payment forms. An unavailable balance or price remains explicit, including while the first
-balance read is pending. A missing or zero provider price for a nonzero holding makes its fiat total incomplete. A confirmed zero balance
-has zero value without requiring a price. Token discovery does not enable an asset for payroll, deposits, or transfers proposed by CNC.
+balance read is pending. A missing or zero provider price for a nonzero company holding makes its fiat total incomplete; an unrecognized
+token is listed apart instead and never valued. A confirmed zero balance has zero value without requiring a price. Token discovery does not
+enable an asset for payroll, deposits, or transfers proposed by CNC.
 
 The portfolio refreshes periodically; the holdings section has no manual refresh button. Failed balance reads show a loading-error message;
 the valuation warning is reserved for returned holdings whose values are unavailable. Provider failures remain retryable. The Safe Client
-Gateway supplies token quantities, current prices and values directly in the selected fiat currency. A nonzero holding with a zero or
-missing provider price remains explicitly unpriced; no value is invented. One Gateway item becomes one table row, and the overview reads the
-provider total after checking completeness, without rebuilding display rows. The overview retains its USD total, so a non-USD display uses
-an additional fiat query. See the [Accounting read model](../../implementation/accounting-read-model/README.md) for swap treatment.
+Gateway supplies token quantities, current prices and values directly in the selected fiat currency. A nonzero recognized holding with a
+zero or missing provider price remains explicitly unpriced; no value is invented. One Gateway item becomes one table row, and the overview
+reads the provider total after checking completeness, without rebuilding display rows. The overview retains its USD total, so a non-USD
+display uses an additional fiat query. See the [Accounting read model](../../implementation/accounting-read-model/README.md) for swap
+treatment.
 
 Safe balances refresh approximately every minute while their page is active. Complete transfer histories and Safe information refresh
 approximately every five minutes; pending transactions refresh every minute when the queue contains an unexecuted transaction and every five
@@ -1394,6 +1413,24 @@ Implementation: [Safe Client balances](../../../app/src/queries/safeClient.queri
 [holdings presentation tests](../../../app/src/utils/safe/__tests__/portfolio.spec.ts), and
 [contract asset identities](../../../app/src/utils/tokens/assets.ts). Human validation of external swaps remains pending.
 
+Safe Account adds all-time USD treasury performance to Wallet overview and a per-token P&L column to Token Holding. The overview shows net
+asset cost, market value, swap fees and total P&L instead of separate realized/unrealized cards. Token details retain that distinction.
+Realized exchange gains belong to the disposed asset; fees belong to the acquired asset, or to the disposed asset when receiving
+stablecoins. Closed positions retain their result. Deposits and withdrawals are not profit, and separate network gas is excluded. Verified
+swap fees are separated from acquisition cost and expensed once; actual received token quantities remain unchanged. This uses the canonical
+Accounting journal and the Gateway USD cache; changing current prices updates only unrealized P&L. A mismatch or missing history leaves
+results unavailable and offers explicit retry; an unverified swap fee stays inside the asset cost and leaves total P&L unchanged. Non-pegged
+internal transfers and payments whose carrying cost cannot be reconciled remain incomplete. See the
+[Accounting valuation contract](../accounting/README.md#external-safe-asset-exchanges) for consideration valuation and historical policy
+transition. The default amount and balance columns retain the selected display currency; P&L remains explicitly USD.
+
+Implementation and proof: [P&L data adapter](../../../app/src/composables/accounting/useSafePnl.ts),
+[P&L projection](../../../app/src/utils/accounting/safePnl.ts),
+[overview summary](../../../app/src/components/sections/SafeView/SafePnlSummary.vue),
+[summary tests](../../../app/src/components/sections/SafeView/__tests__/SafePnlSummary.spec.ts), and
+[purchase/disposal tests](../../../app/src/utils/accounting/__tests__/safePnl.spec.ts). Configured browser and human review remain separate
+from these mocked and pure tests.
+
 The Safe Client query module also exposes a raw Gateway transaction-history page with transaction and date-label entries, pagination links,
 and reactive cursor, timezone, trust and imitation filters. The query preserves the provider response and propagates read failures.
 
@@ -1430,3 +1467,22 @@ unit prices and fiat values alongside the rounded display. Positive values below
 - [Community Credit](../community-credit/README.md)
 
 _[← Back to feature inventory](../README.md)_
+
+## Executed Swap Fees
+
+Safe Activity's **Swap costs** section lists five confirmed swaps per page. Each swap immediately shows its reported fee total with the
+explanation that it is already included in the exchange. **What makes up this fee?** starts closed and reveals each included commission with
+a short explanation. **Show exact amounts** switches rounded quantities to the original precision and exposes token addresses; positive fees
+too small for the rounded view use a less-than bound rather than zero. Unknown token decimals remain explicit base units.
+
+Network gas has a separate summary identifying payment by the Safe, another wallet, or an unavailable payer. **Network transaction details**
+starts closed and retains the exact network amount, full transaction hash and known payer, even when swap fee evidence is unavailable. It
+describes the whole settlement's gas, which may cover other swaps; another wallet's gas payment is not an additional evidenced Safe debit.
+Both disclosures and the precision choice reset when the selected swap changes. Opening details is not required to load fee summaries or
+Wallet overview's USD aggregate from the shared journal. Missing or mismatched data is unavailable, with retry for failed reads; the fee
+then stays inside the asset cost, and inspection never subtracts fees from P&L again. Other providers and networks remain explicitly
+unsupported.
+
+Implementation and proof: [fee history](../../../app/src/components/sections/SafeView/SafeSwapFeesSection.vue),
+[shared fee panel](../../../app/src/components/sections/SafeView/SwapFeesDetails.vue), and
+[fee UI tests](../../../app/src/components/sections/SafeView/__tests__/SwapFeesDetails.spec.ts).

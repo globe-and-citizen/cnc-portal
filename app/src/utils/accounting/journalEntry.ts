@@ -130,11 +130,12 @@ function linesOf(entry: JournalEntryDraft, accounts: AccountRegistry): JournalEn
   if (typeof entry.rate !== 'number') {
     throw new Error(`Journal entry draft "${entry.id}" requires a rate before finalization`)
   }
-  const rate = usdRateFromNumber(entry.rate)
+  const rate = entry.carryingRate ?? usdRateFromNumber(entry.rate)
   const rawAmount = BigInt(entry.rawAmount)
   const amount =
     entry.carryingAmount ?? usdAmountFromToken(rawAmount, entry.token, rate, entry.asset)
   const movement = {
+    ...(entry.valuationMethod ? { valuationMethod: entry.valuationMethod } : {}),
     token: entry.token,
     rawAmount,
     decimals: assetDecimals(entry.token, entry.asset),
@@ -310,15 +311,13 @@ export interface JournalFinalization {
 
 /**
  * Reconcile source evidence, resolve concrete accounts, and validate each final
- * JournalEntry exactly once.
+ * JournalEntry exactly once. Operations sharing a timestamp keep their replay order.
  */
 export function finalizeJournalEntryDrafts(
   drafts: readonly JournalEntryDraft[]
 ): JournalFinalization {
   const reconciliation = reconcileDrafts(drafts)
-  const reconciled = prepareSafeExchanges(
-    reconcileMirroredInternalDrafts(reconciliation.entries)
-  ).sort((a, b) => a.timestamp - b.timestamp || a.id.localeCompare(b.id))
+  const reconciled = prepareSafeExchanges(reconcileMirroredInternalDrafts(reconciliation.entries))
   const accounts = buildAccountRegistry(reconciled)
   const byOperation = new Map<string, JournalEntryDraft[]>()
   for (const draft of reconciled) {
@@ -336,7 +335,7 @@ export function finalizeJournalEntryDrafts(
     ),
     journal: [...byOperation.entries()]
       .map(([operationId, entries]) => finalizeOperation(entries, accounts, operationId))
-      .sort((a, b) => a.timestamp - b.timestamp || a.id.localeCompare(b.id)),
+      .sort((a, b) => a.timestamp - b.timestamp),
     unmatchedFeeOperationIds: reconciliation.unmatchedFeeOperationIds
   }
 }

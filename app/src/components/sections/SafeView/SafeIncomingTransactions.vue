@@ -72,7 +72,7 @@
                 class="text-xs text-gray-500"
                 data-test="safe-deposit-token-symbol"
               >
-                {{ row.tokenInfo.symbol }}
+                {{ safeTransferTokenLabel(row, swappedAssets) }}
               </span>
             </div>
           </template>
@@ -80,7 +80,7 @@
             <TransferSenderCell :address="row.from" />
           </template>
           <template #amount-cell="{ row: { original: row } }">
-            <span class="font-medium">{{ formatSafeTransferAmount(row) }}</span>
+            <span class="font-medium">{{ formatSafeTransferAmount(row, swappedAssets) }}</span>
           </template>
           <template #executionDate-cell="{ row: { original: row } }">
             <span class="text-sm text-gray-600">{{ formatDateShort(row.executionDate) }}</span>
@@ -99,7 +99,7 @@
         >
           <div class="flex items-start justify-between gap-3">
             <div>
-              <p class="font-semibold">{{ formatSafeTransferAmount(transfer) }}</p>
+              <p class="font-semibold">{{ formatSafeTransferAmount(transfer, swappedAssets) }}</p>
               <p class="mt-1 text-xs text-gray-500">
                 {{ formatDateShort(transfer.executionDate) }}
               </p>
@@ -128,12 +128,19 @@ import type { UBadgeColor } from '@/types/ui'
 import AddressTooltip from '@/components/ui/AddressTooltip.vue'
 import TransferSenderCell from './TransferSenderCell.vue'
 import { useGetSafeIncomingTransfersQuery } from '@/queries/safe.queries'
-import { formatSafeTransferType, formatSafeTransferAmount } from '@/utils/safe/model'
+import {
+  formatSafeTransferType,
+  formatSafeTransferAmount,
+  safeTransferTokenLabel
+} from '@/utils/safe/model'
+import type { AssetId } from '@/utils/tokens/assets'
 import { formatDateShort } from '@/utils/dates/calendar'
 import type { SafeIncomingTransfer } from '@/types'
 
 interface Props {
   address: Address
+  /** Assets the Safe acquired through its own swaps; other contracts show only their address. */
+  swappedAssets?: ReadonlySet<AssetId>
 }
 
 const props = defineProps<Props>()
@@ -154,7 +161,7 @@ const transferTypeColor = (type: SafeIncomingTransfer['type']): UBadgeColor => {
 }
 
 const {
-  data: incomingTransfers,
+  data: transfers,
   isLoading,
   error,
   refetch
@@ -162,6 +169,10 @@ const {
   pathParams: { safeAddress: computed(() => props.address) },
   queryParams: { limit: 50 }
 })
+/** Zero-value transfers move nothing and are the usual address-poisoning vector. */
+const incomingTransfers = computed(() =>
+  transfers.value?.filter((transfer) => !/^0+$/.test(transfer.value))
+)
 
 const retryDeposits = () => {
   void refetch()

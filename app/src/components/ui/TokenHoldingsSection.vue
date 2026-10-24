@@ -10,10 +10,21 @@
           { accessorKey: 'token', header: 'Token', enableSorting: true },
           { accessorKey: 'amount', header: 'Amount', enableSorting: true },
           { accessorKey: 'price', header: 'Coin Price', enableSorting: true },
-          { accessorKey: 'balance', header: 'Balance', enableSorting: true }
+          { accessorKey: 'balance', header: 'Balance', enableSorting: true },
+          ...(rows.some((row) => row.pnl) ? [{ id: 'pnl', header: 'P&L (USD)' }] : [])
         ]"
         data-test="safe-asset-table"
       >
+        <template #pnl-cell="{ row: { original: row } }">
+          <span
+            :title="row.pnl?.details"
+            :aria-label="row.pnl?.details"
+            tabindex="0"
+            :class="{ 'text-green-700': row.pnl?.positive, 'text-red-700': row.pnl?.negative }"
+            data-test="safe-holding-pnl"
+            >{{ row.pnl?.label }}</span
+          >
+        </template>
         <template #amount-cell="{ row: { original: row } }">
           <span :title="row.quantity" data-test="safe-holding-amount">
             {{ row.amountLabel }} {{ row.token.symbol }}
@@ -63,6 +74,31 @@
         </template>
       </UTable>
     </UCard>
+    <details
+      v-if="unrecognizedRows?.length"
+      class="mt-4 rounded-md border border-gray-200 p-3 text-sm"
+      data-test="safe-unrecognized-assets"
+    >
+      <summary class="cursor-pointer font-medium">
+        Unrecognized tokens ({{ unrecognizedRows.length }})
+      </summary>
+      <p class="mt-2 text-gray-500">
+        Tokens the Safe received without acquiring them through one of its own swaps, such as
+        unsolicited airdrops. They are left out of the wallet total and the books. Do not interact
+        with them.
+      </p>
+      <ul class="mt-2 space-y-1">
+        <li
+          v-for="row in unrecognizedRows"
+          :key="row.address ?? row.rank"
+          class="flex justify-between gap-2 font-mono text-xs"
+          data-test="safe-unrecognized-asset"
+        >
+          <span class="truncate">{{ row.address }}</span>
+          <span>{{ row.quantity }}</span>
+        </li>
+      </ul>
+    </details>
     <UAlert
       v-if="hasError"
       color="error"
@@ -87,6 +123,8 @@ import type { TokenHoldingRow } from '@/utils/tokens/holdings'
 
 defineProps<{
   rows: TokenHoldingRow[]
+  /** Unsolicited tokens kept out of the table, the wallet total and the books. */
+  unrecognizedRows?: TokenHoldingRow[]
   isLoading?: boolean
   isIncomplete?: boolean
   hasError?: boolean

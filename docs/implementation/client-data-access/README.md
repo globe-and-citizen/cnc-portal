@@ -62,16 +62,28 @@ available metadata.
 
 ### Safe provider filtering
 
-The Safe Client Gateway balance request uses `exclude_spam=true&trusted=false`. The frontend displays every returned item and has no local
-contract blacklist. Provider symbols or trust flags do not expand CNC's configured payment allowlist.
+The Safe Client Gateway balance request uses `exclude_spam=true&trusted=false`. The provider filter does not catch every unsolicited
+airdrop, and anyone can send any token to a public wallet, so receiving a token proves nothing. The frontend therefore applies one
+[asset acceptance rule](../../../app/src/utils/tokens/assetRecognition.ts) instead of a contract blacklist or a spam detector: native and
+configured tokens are always accepted, and any other contract is accepted only when the Safe acquired it through one of its own swaps. A
+swap needs the Safe to give up another asset, which requires the owners' signatures, so an outsider cannot fabricate one. Provider names,
+prices and trust flags play no part in the decision and do not expand CNC's configured payment allowlist. This implements the unsolicited
+asset outside the recognized catalogue in the [direct asset movement policy](../../features/accounting/direct-movement-policy.md).
 
-Transaction Service histories retain every returned movement, including unknown and untrusted contracts, before the existing Accounting
-mapping and completeness checks. Metadata recovery uses the event's contract address. There is no client-side spam classification or
-quarantine; provider history can include spam-like events, which may reach Accounting or leave explicit metadata and valuation gaps.
+The swapped set comes from the Safe history (`useCNCAccounting().swappedAssets`). For balances, other contracts are listed apart as
+unrecognized tokens and their provider value is removed from the wallet total. Until that history is available, only an unconfigured
+contract the Gateway prices at exactly zero is listed apart, so a swapped asset never disappears while history loads. Accounting sets aside
+every Safe movement of an unaccepted contract. Zero-value transfers, the usual address-poisoning vector, are skipped by the Accounting
+adapter and hidden from the Deposits list, which names an unaccepted contract by its address rather than its self-declared symbol.
 
-Executable evidence: [Gateway request tests](../../../app/src/queries/__tests__/safeClient.queries.spec.ts) and
-[pagination and metadata unit tests](../../../app/src/queries/__tests__/safe.queries.spec.ts). These invoke request functions with mocked
-provider responses and query dependencies; live browser validation remains pending.
+Executable evidence: [Gateway request tests](../../../app/src/queries/__tests__/safeClient.queries.spec.ts),
+[pagination and metadata unit tests](../../../app/src/queries/__tests__/safe.queries.spec.ts),
+[asset acceptance tests](../../../app/src/utils/tokens/__tests__/assetRecognition.spec.ts),
+[Safe portfolio tests](../../../app/src/utils/safe/__tests__/portfolio.spec.ts),
+[deposit label tests](../../../app/src/utils/safe/__tests__/model.spec.ts),
+[Safe transfer adapter tests](../../../app/src/utils/accounting/__tests__/toSafeTransferRows.spec.ts) and
+[unrecognized movement tests](../../../app/src/utils/accounting/__tests__/unrecognizedAssets.spec.ts). These invoke pure functions and
+request functions with mocked provider responses and query dependencies.
 
 ### Browser request coordination
 
@@ -170,9 +182,29 @@ tests do not establish cache sharing, refresh or observer lifecycle behaviour.
 TanStack caches belong to one browser session. The additional backend Redis cache coordinates CoinGecko across users, tabs, devices and
 backend instances. Safe provider requests retain their browser-only coordination boundary.
 
+## Executed Swap Fee Reads
+
+[Swap fee queries](../../../app/src/queries/swapFees.queries.ts) own three reads. The settlement receipt of each Safe swap comes from the
+chain RPC, keyed by network and transaction hash; a mined receipt never changes, so it is read once, never polled, and reverted executions
+are rejected. Polygon transaction orders and complete paginated order trades come from the public CoW orderbook API through the external
+Axios client. Each endpoint has one query hook and a pure request function with cancellation and validated responses. Network and
+transaction/order identities isolate cache keys. The once preset keeps completed evidence; there is no periodic polling or automatic retry.
+Only swaps are read: other Safe movements take their block time and log order from the Transaction Service. Unsupported networks/providers
+report unavailable without issuing CoW requests.
+
+[Fee evidence orchestration](../../../app/src/composables/accounting/useSwapFeeEvidence.ts) first matches orders to the Safe's confirmed
+receipt logs before requesting trades. Complete pagination avoids misassigning an order-wide total to a partial fill. Duplicate trade
+identities or foreign order records reject the response. No quoted fee, current market price or estimated settlement gas allocation
+substitutes for executed fees. A verified single-token fee feeds the journal's net acquisition cost and Transaction Fee Expense once.
+Missing or failed evidence keeps the fee inside the asset cost and never makes Accounting partial; a manual retry re-reads provider records
+and failed receipts. Safe Activity renders the same evidence from the read model without issuing its own queries. See
+[query tests](../../../app/src/queries/__tests__/swapFees.queries.spec.ts) and the
+[CoW API reference](https://docs.cow.fi/cow-protocol/reference/apis/orderbook). Automated query mocks establish request contracts; provider
+availability and the authenticated live browser journey require separate verification.
+
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `1f472cfff2f44ff015f0197f3bf4416cbd2d7caa`
+**Implementation evidence reviewed against:** `713beb115d502312b73d7486ef41c19254efeddc`
 
 - [Query barrel](../../../app/src/queries/index.ts), [query factory](../../../app/src/queries/queryFactory.ts), and
   [single-file upload query](../../../app/src/queries/file.queries.ts)

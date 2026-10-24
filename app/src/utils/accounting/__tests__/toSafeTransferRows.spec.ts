@@ -60,6 +60,11 @@ describe('toSafeTransferRows', () => {
     expect(toSafeTransferRows(null)).toEqual([])
   })
 
+  it('[AC-US-SAFE-003-12] skips zero-value address-poisoning transfers of a real token', () => {
+    const poisoned = transfers.map((transfer) => ({ ...transfer, value: '0' }))
+    expect(toSafeTransferRows(poisoned)).toEqual([])
+  })
+
   it('excludes an inflow in the same transaction as a router deposit', () => {
     const investorDeposit: SafeIncomingTransfer = {
       type: 'ERC20_TRANSFER',

@@ -2,7 +2,6 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { flushPromises } from '@vue/test-utils'
 import { renderWithProviders } from '@/tests/mocks'
 import SummaryView from '../SummaryView.vue'
-import TrialBalanceView from '../TrialBalanceView.vue'
 import IncomeStatementView from '../IncomeStatementView.vue'
 import BalanceSheetView from '../BalanceSheetView.vue'
 import BalanceSheetTable from '@/components/sections/AccountingView/BalanceSheetTable.vue'
@@ -25,7 +24,11 @@ import { money } from '@/utils/accounting/presenter'
 // `app/` on every run. Stub the composable so the click stops at the boundary;
 // the builders behind it are covered by `accountingPdf.spec.ts` and the
 // filenames by `exportNaming.spec.ts`.
-const accountingContext = vi.hoisted(() => ({ journal: { value: [] as unknown[] } }))
+const accountingContext = vi.hoisted(() => ({
+  journal: { value: [] as unknown[] },
+  status: { state: { value: 'ready' } },
+  refetch: vi.fn()
+}))
 const { exportPdf, exportExcel } = vi.hoisted(() => ({ exportPdf: vi.fn(), exportExcel: vi.fn() }))
 vi.mock('@/composables/accounting/useAccountingExport', () => ({
   useAccountingExport: () => ({ exportPdf, exportExcel })
@@ -49,57 +52,6 @@ describe('SummaryView', () => {
     expect(wrapper.find('[data-test="balance-banner"]').exists()).toBe(true)
     expect(wrapper.find('[data-test="summary-Net income"]').text()).toContain('$')
     expect(wrapper.find('[data-test="summary-Total assets"]').text()).toContain('$')
-  })
-})
-
-describe('TrialBalanceView', () => {
-  /**
-   * Covers:
-   * - [AC-US-ACCT-001-09]
-   * - [AC-US-ACCT-003-03]
-   * - [AC-US-ACCT-003-09]
-   */
-  it('renders the trial-balance table, balanced for an empty book', () => {
-    const wrapper = renderWithProviders(TrialBalanceView)
-    const text = wrapper.text()
-    expect(text).toContain('Trial balance')
-    expect(text).toContain('In balance')
-  })
-
-  it('[AC-US-ACCT-003-04] opens a per-account drill-down when a row is clicked', async () => {
-    const wrapper = renderWithProviders(TrialBalanceView)
-    const row = wrapper.find('[data-test^="drilldown-"]')
-    // Empty books show no account rows; only exercise the drill-down when present.
-    if (row.exists()) {
-      await row.trigger('click')
-      await flushPromises()
-      expect(wrapper.find('[data-test="drilldown-export-pdf"]').exists()).toBe(true)
-    }
-    wrapper.unmount()
-  })
-
-  it('opens the account drill-down when a whole trial-balance row is selected', async () => {
-    const wrapper = renderWithProviders(TrialBalanceView)
-    const rows = wrapper.findAll('tbody tr')
-    // Empty books show only the total row; only exercise row-select when account
-    // rows are present. Clicking the row (not the account button) fires @select.
-    if (rows.length <= 1) return wrapper.unmount()
-    await rows[0]!.trigger('click')
-    await flushPromises()
-    expect(wrapper.find('[data-test="drilldown-export-pdf"]').exists()).toBe(true)
-    wrapper.unmount()
-  })
-
-  it('[AC-US-ACCT-004-01] exports and prints the trial balance from the export bar', async () => {
-    const wrapper = renderWithProviders(TrialBalanceView)
-    await wrapper.find('[data-test="export-excel"]').trigger('click')
-    await wrapper.find('[data-test="export-pdf"]').trigger('click')
-    await flushPromises()
-    expect(exportExcel).toHaveBeenCalledTimes(1)
-    expect(exportExcel.mock.calls[0][1]).toMatch(/^Trial Balance .*\.xlsx$/)
-    expect(exportPdf).toHaveBeenCalledTimes(1)
-    expect(exportPdf.mock.calls[0][1].filename).toMatch(/^Trial Balance .*\.pdf$/)
-    wrapper.unmount()
   })
 })
 

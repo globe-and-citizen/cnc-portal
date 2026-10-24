@@ -61,7 +61,15 @@
           Know what is available
         </h2>
       </div>
-      <SafeBalanceSection :key="safeAddress" :address="safeAddress" />
+      <SafeBalanceSection
+        :key="safeAddress"
+        :address="safeAddress"
+        :swapped-assets="accounting.swappedAssets.value"
+      >
+        <template #pnl>
+          <SafePnlSummary :pnl="pnl.data.value" fees-href="#safe-swap-costs" @retry="refreshPnl" />
+        </template>
+      </SafeBalanceSection>
     </section>
 
     <section id="safe-funds" class="scroll-mt-4" aria-labelledby="safe-funds-heading">
@@ -71,13 +79,15 @@
           Review assets and approval rules
         </h2>
         <p class="mt-1 text-sm text-gray-500">
-          Holdings show what the Safe controls. Owners and threshold show who must approve actions.
+          Holdings show what the Safe controls and what swaps cost. Owners and threshold show who
+          must approve actions.
         </p>
       </div>
       <div class="grid grid-cols-1 gap-6 xl:grid-cols-5">
         <div class="min-w-0 xl:col-span-3">
           <TokenHoldingsSection
             :rows="holdingRows"
+            :unrecognized-rows="unrecognizedRows"
             :is-loading="isLoadingHoldings"
             :is-incomplete="isIncomplete"
             :has-error="!!balancesError"
@@ -89,6 +99,13 @@
           <SafeOwnersCard :address="safeAddress" />
         </div>
       </div>
+      <SafeSwapFeesSection
+        class="mt-6"
+        :swaps="accounting.swapFees.value"
+        :journal="accounting.journal.value"
+        :incomplete="accounting.status.state.value !== 'ready'"
+        @retry="accounting.refetchSwapFees"
+      />
     </section>
 
     <section id="safe-activity" class="scroll-mt-4" aria-labelledby="safe-activity-heading">
@@ -103,7 +120,10 @@
       </div>
       <div class="space-y-6">
         <SafeTransactions :address="safeAddress" />
-        <SafeIncomingTransactions :address="safeAddress" />
+        <SafeIncomingTransactions
+          :address="safeAddress"
+          :swapped-assets="accounting.swappedAssets.value"
+        />
       </div>
     </section>
   </main>
@@ -191,7 +211,7 @@ import SafeBalanceSection from '@/components/sections/SafeView/SafeBalanceSectio
 import SafeOwnersCard from '@/components/sections/SafeView/SafeOwnersCard.vue'
 import TokenHoldingsSection from '@/components/ui/TokenHoldingsSection.vue'
 import { useGetSafeBalancesQuery } from '@/queries/safeClient.queries'
-import { toSafeHoldingRows } from '@/utils/safe/portfolio'
+import { partitionSafeHoldings, toSafeHoldingRows } from '@/utils/safe/portfolio'
 import { useStorage } from '@vueuse/core'
 import SafeTransactions from '@/components/sections/SafeView/SafeTransactions.vue'
 import SafeIncomingTransactions from '@/components/sections/SafeView/SafeIncomingTransactions.vue'
@@ -199,6 +219,11 @@ import SafeDeploymentCard from '@/components/sections/SafeView/SafeDeploymentCar
 import SafeImportCard from '@/components/sections/SafeView/SafeImportCard.vue'
 import { useTeamStore, useUserDataStore } from '@/stores'
 import { normalizeSafeAddress } from '@/utils/safe/address'
+import SafePnlSummary from '@/components/sections/SafeView/SafePnlSummary.vue'
+import SafeSwapFeesSection from '@/components/sections/SafeView/SafeSwapFeesSection.vue'
+import { useCNCAccounting } from '@/composables/accounting/useCNCAccounting'
+import { useSafePnl } from '@/composables/accounting/useSafePnl'
+import { withSafePnlRows } from '@/utils/accounting/safePnlPresenter'
 
 const route = useRoute()
 const router = useRouter()
@@ -236,7 +261,25 @@ const {
 } = useGetSafeBalancesQuery({
   pathParams: { safeAddress, fiatCode: () => currency.value.code }
 })
-const holdingRows = computed(() => toSafeHoldingRows(balances.value, currency.value.code))
+const accounting = useCNCAccounting(
+  () => (safeAddress.value ? String(teamStore.currentTeamId) : null),
+  { scope: 'safe' }
+)
+const pnl = useSafePnl(
+  () => accounting.journal.value,
+  () => accounting.status.state.value === 'ready',
+  safeAddress
+)
+const refreshPnl = () => Promise.allSettled([accounting.refetch(), pnl.refetch()])
+const holdings = computed(() =>
+  partitionSafeHoldings(balances.value, accounting.swappedAssets.value)
+)
+const holdingRows = computed(() =>
+  withSafePnlRows(toSafeHoldingRows(holdings.value.holdings, currency.value.code), pnl.data.value)
+)
+const unrecognizedRows = computed(() =>
+  toSafeHoldingRows({ fiatTotal: '0', items: holdings.value.unrecognized })
+)
 const isIncomplete = computed(() => holdingRows.value.some((row) => row.balance === null))
 
 const isResolvingSafe = computed(() => teamStore.currentTeamMeta.isPending || isLoadingSafe.value)

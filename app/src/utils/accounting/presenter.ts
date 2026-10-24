@@ -5,7 +5,7 @@ import { buildBalanceSheet } from './balanceSheet'
 import { NETWORK } from '@/constant'
 import type { AssetId, AssetMetadata } from '@/utils/tokens/assets'
 import { formatDate, formatDateTime, formatUsd, fromUnix } from '@/utils/format'
-import { usdAmountToNumber } from './monetaryAmount'
+import { ZERO_USD_AMOUNT, usdAmountToNumber } from './monetaryAmount'
 import type { Account, BalanceSheet, JournalEntry, UsdAmount } from './types'
 
 // The summary display model lives in its own module — see ./summaryCards.
@@ -234,7 +234,11 @@ export function presentBalance(entries: readonly JournalEntry[], asOf?: Date | n
   }
 }
 
-/** Build and present the Trial Balance directly from the canonical journal. */
+/**
+ * Build and present the Trial Balance directly from the canonical journal. A balance against
+ * an account's normal side, such as a market value adjustment after a loss, is shown as a
+ * positive amount in the other column; the column totals include it on that side.
+ */
 export function presentTrial(
   entries: readonly JournalEntry[],
   asOf?: Date | null
@@ -245,8 +249,11 @@ export function presentTrial(
 } {
   const scopedEntries = filterByPeriod(entries, null, asOf)
   const ledger = buildGeneralLedger(scopedEntries)
+  let debitTotal = ZERO_USD_AMOUNT
   const rows: TrialRow[] = ledger.trialBalance.map((row) => {
-    const debitSide = row.account.family.normalBalance === 'debit'
+    const onDebit = (row.account.family.normalBalance === 'debit') === row.balance >= 0n
+    const amount = row.balance < 0n ? -row.balance : row.balance
+    if (onDebit) debitTotal += amount
     return {
       account: row.account,
       label: row.accountLabel,
@@ -255,11 +262,11 @@ export function presentTrial(
       isPrimaryInstance: row.isPrimaryInstance,
       nature: natureOf(row.account),
       natureClass: NATURE_BADGE[natureOf(row.account)],
-      dr: debitSide ? money(row.balance) : '—',
-      cr: debitSide ? '—' : money(row.balance),
-      drMuted: !debitSide,
-      crMuted: debitSide
+      dr: onDebit ? money(amount) : '—',
+      cr: onDebit ? '—' : money(amount),
+      drMuted: !onDebit,
+      crMuted: onDebit
     }
   })
-  return { rows, total: money(ledger.debitBalanceTotal), balanced: ledger.balanced }
+  return { rows, total: money(debitTotal), balanced: ledger.balanced }
 }

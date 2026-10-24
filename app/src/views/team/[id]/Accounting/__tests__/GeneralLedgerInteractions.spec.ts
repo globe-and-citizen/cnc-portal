@@ -5,12 +5,19 @@ import GeneralLedgerView from '../GeneralLedgerView.vue'
 import TrialBalanceView from '../TrialBalanceView.vue'
 import TablePagination from '@/components/ui/TablePagination.vue'
 import ColumnVisibilitySelect from '@/components/sections/AccountingView/ColumnVisibilitySelect.vue'
+import LedgerTable from '@/components/sections/AccountingView/LedgerTable.vue'
+import { journalLedgerRows, journalLedgerTotal } from '@/utils/accounting/journalLedgerPresenter'
+import { swapFeeFixture } from '@/utils/accounting/__tests__/swapFeeFixtures'
 import { mockRouterPush, mockRouterReplace } from '@/tests/mocks/router.mock'
 import { catalogueLedger } from '@/utils/accounting/__tests__/catalogueLedger'
 import { finalizeJournal } from '@/utils/accounting/__tests__/assembleAccounting'
 
 const { accountingContext } = vi.hoisted(() => ({
-  accountingContext: { journal: { value: [] as unknown[] } }
+  accountingContext: {
+    journal: { value: [] as unknown[] },
+    status: { state: { value: 'ready' } },
+    refetch: vi.fn()
+  }
 }))
 vi.mock('@/composables/accounting/useAccountingContext', () => ({
   useAccountingContext: () => accountingContext
@@ -101,6 +108,16 @@ describe('General Ledger account filter', () => {
 })
 
 describe('General Ledger table controls', () => {
+  it('shows no swap disclosure in the Transaction column', () => {
+    const { journal } = swapFeeFixture()
+    const wrapper = renderWithProviders(LedgerTable, {
+      props: { rows: journalLedgerRows([journal]), total: journalLedgerTotal([journal]) }
+    })
+
+    expect(wrapper.findAll('summary')).toHaveLength(0)
+    wrapper.unmount()
+  })
+
   it('[AC-US-ACCT-002-08] flows page changes through the pagination footer', async () => {
     const wrapper = renderWithProviders(GeneralLedgerView)
     const pagination = wrapper.findComponent(TablePagination)
