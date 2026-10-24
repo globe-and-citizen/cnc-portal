@@ -149,11 +149,11 @@ calldata. Missing token metadata is read from its contract when possible. Metada
 or absent decimals retain raw movements with a completeness diagnostic. The exact monetary layer currently supports token precision from
 zero through 18 decimals. A larger precision remains unavailable rather than being silently rounded or interpreted as native.
 
-Safe provider reads retry temporary 404, 408, 425, 429, server and network failures up to three times at fixed intervals. Rate-limit
-recovery respects `Retry-After`; cancellation, other client errors, malformed responses and an explicit monthly-quota-exceeded response do
-not retry automatically. A failed history read still rejects the entire replacement, preserving previously cached complete history. Gateway
-holdings and Safe information use the same recovery, except that a 404 for a newly deployed Safe keeps retrying for about three and a half
-minutes while Safe services index it. Neither changes journal classification or historical valuation.
+Safe provider reads retry temporary 408, 425, 429, server and network failures up to three times at fixed intervals. Rate-limit recovery
+respects `Retry-After`; cancellation, other client errors, malformed responses and an explicit monthly-quota-exceeded response do not retry
+automatically. A failed history read still rejects the entire replacement, preserving previously cached complete history. A 404 is never
+retried; Gateway holdings also stop polling while they answer 404, and Safe information keeps its five-minute refresh. Neither changes
+journal classification or historical valuation.
 
 Dynamic assets carry an `erc20:<chainId>:<contractAddress>` identity and per-movement metadata. The fixed CNC payment allowlist is
 unchanged. Contract-address market discovery on Polygon resolves the provider coin identity before historical snapshots are requested. Local
@@ -718,7 +718,7 @@ because deposits and company-pocket transfers are not manual assignment targets.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `4b1a0e74f36db93a132b3876b95a6b65eae30ad3`
+**Implementation evidence reviewed against:** `1f472cfff2f44ff015f0197f3bf4416cbd2d7caa`
 
 - [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts),
   [source-status projection](../../../app/src/composables/accounting/useAccountingStatus.ts),
