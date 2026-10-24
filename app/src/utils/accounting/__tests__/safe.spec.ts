@@ -1,5 +1,7 @@
 import { describe, it, expect } from 'vitest'
+import { USDC_ADDRESS } from '@/constant'
 import { mapSafeTransfers } from '@/utils/accounting/mappers/safe'
+import { assetMetadata } from '@/utils/tokens/assets'
 import { makeCtx, ADDR } from './fixtures'
 
 const ctx = makeCtx()
@@ -89,6 +91,45 @@ describe('mapSafeTransfers', () => {
       credit: 'Cash — Safe',
       enrichment: 'needs-off-chain-data'
     })
+  })
+
+  it('books CNC tokens and trusted assets but ignores tokens Safe does not trust', () => {
+    const fake = '0x000000000000000000000000000000000000dEaD'
+    const info = { address: fake, symbol: 'FAKE', name: 'Fake', decimals: 18 }
+    const entries = mapSafeTransfers(
+      {
+        safeAddress: ADDR.safe,
+        transfers: [
+          {
+            ...base,
+            id: 'f1',
+            token: fake,
+            from: ADDR.client,
+            to: ADDR.safe,
+            asset: assetMetadata(fake, 137, { ...info, trusted: false })
+          },
+          {
+            ...base,
+            id: 'f2',
+            token: fake,
+            from: ADDR.client,
+            to: ADDR.safe,
+            asset: assetMetadata(fake, 137, info)
+          },
+          {
+            ...base,
+            id: 't1',
+            token: fake,
+            from: ADDR.client,
+            to: ADDR.safe,
+            asset: assetMetadata(fake, 137, { ...info, trusted: true })
+          },
+          { ...base, id: 'u1', token: USDC_ADDRESS, from: ADDR.client, to: ADDR.safe }
+        ]
+      },
+      ctx
+    )
+    expect(entries.map((entry) => entry.id)).toEqual(['t1', 'u1'])
   })
 
   it('skips a transfer that touches neither side of the Safe', () => {

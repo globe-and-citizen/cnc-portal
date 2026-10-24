@@ -4,8 +4,9 @@
  * The Safe emits no bespoke accounting events, so its moves arrive as generic
  * token transfers (native or ERC-20) interpreted relative to the Safe address:
  *
+ * - Contracts outside the CNC tokens that Safe does not trust are ignored (fake airdrops).
  * - Evidenced different-asset settlement pairs become SAFE-SWAP.
- * - Unknown assets, mints and ambiguous multi-asset receipts remain unclassified.
+ * - Trusted discovered assets, mints and ambiguous multi-asset receipts remain unclassified.
  * - **Other inflow** (to the Safe):
  *   - from an internal pocket → internal move (Dr Cash — Safe · Cr that pocket)
  *   - from anyone external    → UC-BANK-02 (Dr Cash — Safe · Cr Service Revenue)
@@ -100,6 +101,14 @@ function exchangeRowIds(input: SafeMapperInput, ctx: MapperContext): Set<string>
 
 function sameAddress(a: string, b: string): boolean {
   return isAddress(a) && isAddress(b) && getAddress(a) === getAddress(b)
+}
+
+/**
+ * Anyone can send tokens to the Safe address. A contract outside the CNC tokens counts only
+ * when the Safe Transaction Service marks it trusted, so fake airdrops never reach the books.
+ */
+function isTrustedTransfer(row: SafeTransferRow, ctx: MapperContext): boolean {
+  return !tokenOf(row, ctx).startsWith('erc20:') || row.asset?.trusted === true
 }
 
 /** The `asset`/`accountingIssue` fields a draft carries only when its token is an ERC-20. */
@@ -197,13 +206,14 @@ function inferOutflow(
   })
 }
 
-/** Map every Safe transfer to a ledger entry, skipping ones that miss the Safe. */
+/** Map every trusted Safe transfer to a ledger entry, skipping ones that miss the Safe. */
 export function mapSafeTransfers(input: SafeMapperInput, ctx: MapperContext): JournalEntryDraft[] {
+  const transfers = (input.transfers ?? []).filter((row) => isTrustedTransfer(row, ctx))
   const entries: JournalEntryDraft[] = []
-  const exchanges = exchangeRowIds(input, ctx)
+  const exchanges = exchangeRowIds({ ...input, transfers }, ctx)
   const mixedOperations = new Set<string>()
   const byTransaction = new Map<string, SafeTransferRow[]>()
-  for (const row of input.transfers ?? []) {
+  for (const row of transfers) {
     if (!row.txHash) continue
     const key = row.txHash.toLowerCase()
     const group = byTransaction.get(key) ?? []
@@ -218,7 +228,7 @@ export function mapSafeTransfers(input: SafeMapperInput, ctx: MapperContext): Jo
     )
       mixedOperations.add(hash)
   }
-  for (const row of input.transfers ?? []) {
+  for (const row of transfers) {
     if (sameAddress(row.to, input.safeAddress) && sameAddress(row.from, input.safeAddress)) continue
     if (exchanges.has(row.id)) {
       const token = tokenOf(row, ctx)

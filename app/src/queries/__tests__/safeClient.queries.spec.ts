@@ -24,7 +24,7 @@ describe('fetchSafeClientBalances', () => {
 
     await expect(fetchSafeClientBalances(address, 137, 'usd', signal)).resolves.toBe(payload)
     expect(get).toHaveBeenCalledExactlyOnceWith(
-      `https://safe-client.safe.global/v1/chains/137/safes/${checksum}/balances/USD?exclude_spam=true&trusted=false`,
+      `https://safe-client.safe.global/v1/chains/137/safes/${checksum}/balances/USD?exclude_spam=true&trusted=true`,
       { signal }
     )
     expect(mockWagmiCore.readContract).not.toHaveBeenCalled()
@@ -81,7 +81,7 @@ describe('useGetSafeBalancesQuery', () => {
 
     await expect(capturedQuery().queryFn({ signal })).resolves.toBe(payload)
     expect(get).toHaveBeenCalledExactlyOnceWith(
-      `https://safe-client.safe.global/v1/chains/1/safes/${checksum}/balances/EUR?exclude_spam=true&trusted=false`,
+      `https://safe-client.safe.global/v1/chains/1/safes/${checksum}/balances/EUR?exclude_spam=true&trusted=true`,
       { signal }
     )
   })
