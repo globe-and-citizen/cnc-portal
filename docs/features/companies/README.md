@@ -442,7 +442,7 @@ This validation does not attest to a live on-chain Officer deployment.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `8e4a43781cfd286c04afcc16d350805db9be7d85`
+**Implementation evidence reviewed against:** `73bf27a00c594e97f5c6755d1bdc76da84d94c99`
 
 - [Member deletion](../../../app/src/components/sections/DashboardView/DeleteMemberModal.vue),
   [team state](../../../app/src/stores/teamStore.ts), and
@@ -457,7 +457,8 @@ This validation does not attest to a live on-chain Officer deployment.
   [component tests](../../../app/src/components/sections/DashboardView/__tests__/CompanyOverview.spec.ts) cover other-token valuation,
   aggregate totals, reactive balance and currency changes, loading, and numeric fallbacks. These shared Gateway observers automatically
   retry temporary provider failures up to three times, with HTTP 429 `Retry-After` respected. A 404 for a Safe that Safe services do not
-  know is not retried, and the Safe contribution stops polling until the query is refreshed.
+  know is not retried, and the Safe contribution stops polling until the query is refreshed. The Safe contribution counts only the native
+  coin and tokens Safe trusts, so a fake token sent to the Safe address never leaves the overview total incomplete.
 - [Workspace route and unavailable-state handling](../../../app/src/views/team/%5Bid%5D/ShowIndex.vue),
   [company queries](../../../app/src/queries/team.queries.ts), [company endpoints](../../../backend/src/routes/teamRoutes.ts), and
   [company controller](../../../backend/src/controllers/teamController.ts)

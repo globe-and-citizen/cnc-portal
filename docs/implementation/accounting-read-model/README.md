@@ -135,9 +135,9 @@ ordering, and `InvestorV1` is used only when no current `Investor` exists.
 
 ### Safe assets and exchanges
 
-Safe queries retain provider movements without local contract exclusions before source mapping and historical-rate target construction.
-Unknown, untrusted and spam-like events may therefore enter the existing mapping or create explicit completeness gaps. The Gateway's balance
-spam filter does not apply to this Transaction Service feed. See
+Safe queries retain provider movements without local contract exclusions. The Safe source mapper then ignores a movement whose contract is
+neither a CNC token nor marked `trusted` by the Transaction Service, before exchange matching, mapping and historical-rate target
+construction. A fake token sent to the Safe therefore creates no entry and no completeness gap. See
 [provider filtering](../client-data-access/README.md#safe-provider-filtering). Existing exchange classification, missing-metadata and
 historical-valuation rules apply to every retained movement. Executable evidence:
 [Safe pagination and metadata unit tests](../../../app/src/queries/__tests__/safe.queries.spec.ts) and
@@ -718,7 +718,7 @@ because deposits and company-pocket transfers are not manual assignment targets.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `1f472cfff2f44ff015f0197f3bf4416cbd2d7caa`
+**Implementation evidence reviewed against:** `73bf27a00c594e97f5c6755d1bdc76da84d94c99`
 
 - [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts),
   [source-status projection](../../../app/src/composables/accounting/useAccountingStatus.ts),
