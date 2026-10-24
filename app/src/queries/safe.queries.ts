@@ -9,12 +9,8 @@ import { normalizeSafeAddress } from '@/utils/safe/address'
 import { TX_SERVICE_BY_CHAIN, type SafeInfo, type SafeTransaction } from '@/types/safe'
 import { currentChainId } from '@/constant/index'
 import { queryPresets } from './queryFactory'
-import {
-  retrySafeIndexingRead,
-  retrySafeRead,
-  safeIndexingRetryDelay,
-  safeReadRetryDelay
-} from './safe.recovery'
+import { isSafeNotIndexedError } from '@/utils/safe/model'
+import { retrySafeRead, safeReadRetryDelay } from './safe.recovery'
 import type {
   GetSafeTransactionParams,
   GetSafeInfoParams,
@@ -111,9 +107,9 @@ export function useGetSafeInfoQuery(params: GetSafeInfoParams) {
 
   return useQuery<SafeInfo>({
     ...queryPresets.moderate,
-    retry: retrySafeIndexingRead,
-    retryDelay: safeIndexingRetryDelay,
-    refetchInterval: 300_000,
+    retry: retrySafeRead,
+    retryDelay: safeReadRetryDelay,
+    refetchInterval: (query) => (isSafeNotIndexedError(query.state.error) ? false : 300_000),
     queryKey: computed(() => safeKeys.info(safeAddress.value)),
     enabled: computed(() => Boolean(safeAddress.value)),
     queryFn: async ({ signal }) => {
