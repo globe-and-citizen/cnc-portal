@@ -96,6 +96,16 @@ describe('useGetSafeBalancesQuery', () => {
 
     expect(toValue(capturedQuery().enabled)).toBe(expected)
   })
+
+  it('stops refreshing while Safe services answer not found', () => {
+    useGetSafeBalancesQuery({ pathParams: { safeAddress: address } })
+    const { refetchInterval } = capturedQuery()
+    const notFound = Object.assign(new Error('Not found'), { status: 404 })
+
+    expect(refetchInterval({ state: { error: notFound } })).toBe(false)
+    expect(refetchInterval({ state: { error: new Error('Gateway unavailable') } })).toBe(60_000)
+    expect(refetchInterval({ state: { error: null } })).toBe(60_000)
+  })
 })
 
 describe('useGetSafeTransactionHistoryQuery', () => {
