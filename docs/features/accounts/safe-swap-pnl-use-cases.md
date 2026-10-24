@@ -19,11 +19,12 @@ booking of the same exchange.
 | User story       | What does the company member see?      | Wallet overview figures, their order, and acceptance criteria       |
 | Swap use case    | Which kind of swap happened?           | Condition read from the Safe history, rules applied, worked example |
 | Calculation rule | How is a figure computed?              | Price source, quantity, and treatment shared by several use cases   |
-| Overview figure  | What does the Wallet overview display? | Swapped value, Current value swap, Fees, and P&L, in that order     |
+| Overview figure  | What does the Wallet overview display? | Swapped value, Current value swap, P&L, and Transaction fees        |
 
 - Every figure is in USD. Quantities come from the Safe history in token units, with each token's decimals.
 - The figures add up all swaps since the Safe's first transaction. A swap is never split between periods.
-- Fees are already part of what each swap gave up. They are shown for information and are never subtracted a second time.
+- A reported fee is a transaction cost, not a market result. Like the Transaction Fee Expense account in Accounting, it is taken out of the
+  swapped value and shown apart, so the P&L excludes it.
 - A figure that cannot be fully priced stays visible and is marked incomplete, never silently treated as complete.
 
 Examples use illustrative prices. The swap day is `2026-06-01` and today is `2026-10-23` unless a use case says otherwise.
@@ -52,8 +53,9 @@ flowchart LR
   held --> current["RULE-SWAP-CURRENT<br/>Current value swap"]
   quotes --> current
   detect --> current
-  orders --> fee["RULE-SWAP-FEE<br/>Fees"]
+  orders --> fee["RULE-SWAP-FEE<br/>Transaction fees"]
   quotes --> fee
+  fee --> given
   given --> pnl["RULE-SWAP-PNL<br/>P&L"]
   current --> pnl
   pnl --> overview["Wallet overview"]
@@ -74,9 +76,10 @@ flowchart LR
 
 ### `RULE-SWAP-GIVEN` — Swapped Value
 
-`Swapped value = Σ quantity given × USD price of that asset on the swap's UTC day`
+`Swapped value = Σ quantity given × USD price of that asset on the swap's UTC day − Σ reported fees in USD`
 
-The price is the CoinGecko daily quote for that day. A USD stablecoin uses `RULE-SWAP-PEG` instead.
+The price is the CoinGecko daily quote for that day. A USD stablecoin uses `RULE-SWAP-PEG` instead. Each fee from `RULE-SWAP-FEE` is
+subtracted from the swap that reports it. A swap without a reported fee keeps its whole amount given, because its fee cannot be separated.
 
 ### `RULE-SWAP-CURRENT` — Current Value Swap
 
@@ -98,11 +101,12 @@ or a loss.
 - For each swap, read the CoW Protocol orders settled by that transaction.
 - Keep only the orders owned by the Safe, fulfilled, and whose fee token is an asset the Safe gave up in that swap.
 - `Fee quantity = executedFee ÷ 10^decimals`, then `Fee in USD = fee quantity × price of the fee token on the swap day`.
-- `Fees = Σ fee in USD` over the swaps that report one. The overview says how many swaps report a fee; with none, it shows `—`.
+- `Transaction fees = Σ fee in USD` over the swaps that report one; with none, it shows `—`.
+- Each fee in USD is also taken out of the swapped value of its swap (`RULE-SWAP-GIVEN`), so the P&L excludes it.
 
 ### `RULE-SWAP-PNL` — Profit and Loss
 
-- `P&L = Current value swap − Swapped value`
+- `P&L = Current value swap − Swapped value`; since the swapped value excludes the reported fees, so does the P&L.
 - `P&L % = P&L ÷ Swapped value`; there is no percentage while the swapped value is zero.
 - A P&L that rounds to zero cents is neither a gain nor a loss. A positive P&L is shown as a gain and a negative one as a loss.
 
@@ -113,22 +117,22 @@ missing when the token has no verified market identity, or when a daily quote ca
 
 ## Use-Case Overview
 
-| Use case      | Title                                     | Rules applied                    | Wallet overview result                         |
-| ------------- | ----------------------------------------- | -------------------------------- | ---------------------------------------------- |
-| `UC-SWAP-001` | Buy a volatile asset, price rises         | DETECT, GIVEN, CURRENT, PEG, PNL | Gain                                           |
-| `UC-SWAP-002` | Buy a volatile asset, price falls         | DETECT, GIVEN, CURRENT, PEG, PNL | Loss                                           |
-| `UC-SWAP-003` | Sell a volatile asset for a stablecoin    | DETECT, GIVEN, CURRENT, PEG, PNL | P&L fixed while the stablecoin is held         |
-| `UC-SWAP-004` | Exchange two volatile assets              | DETECT, GIVEN, CURRENT, PNL      | P&L follows the asset received                 |
-| `UC-SWAP-005` | Exchange two stablecoins                  | DETECT, GIVEN, CURRENT, PEG, PNL | Only the amount lost in the swap               |
-| `UC-SWAP-006` | Received asset spent since                | DETECT, GIVEN, CURRENT, PNL      | Valued at today's quote as if kept             |
-| `UC-SWAP-007` | Several swaps on different days           | DETECT, GIVEN, CURRENT, PEG, PNL | Totals and a percentage on the total           |
-| `UC-SWAP-008` | CoW Protocol swap                         | DETECT, FEE                      | Fees in USD                                    |
-| `UC-SWAP-009` | Swap the provider does not report         | DETECT, FEE                      | Fees `—`                                       |
-| `UC-SWAP-010` | Only some swaps report a fee              | DETECT, FEE                      | Fees for the reporting swaps, with their count |
-| `UC-SWAP-011` | Refund of the sold asset in the same swap | DETECT, GIVEN, CURRENT, PNL      | Only the net amount counts                     |
-| `UC-SWAP-012` | A price cannot be found                   | GAP                              | Figures marked incomplete                      |
-| `UC-SWAP-013` | History without any swap                  | DETECT                           | Swap figures hidden                            |
-| `UC-SWAP-014` | History or balances unavailable           | —                                | Swap figures hidden                            |
+| Use case      | Title                                     | Rules applied                    | Wallet overview result                 |
+| ------------- | ----------------------------------------- | -------------------------------- | -------------------------------------- |
+| `UC-SWAP-001` | Buy a volatile asset, price rises         | DETECT, GIVEN, CURRENT, PEG, PNL | Gain                                   |
+| `UC-SWAP-002` | Buy a volatile asset, price falls         | DETECT, GIVEN, CURRENT, PEG, PNL | Loss                                   |
+| `UC-SWAP-003` | Sell a volatile asset for a stablecoin    | DETECT, GIVEN, CURRENT, PEG, PNL | P&L fixed while the stablecoin is held |
+| `UC-SWAP-004` | Exchange two volatile assets              | DETECT, GIVEN, CURRENT, PNL      | P&L follows the asset received         |
+| `UC-SWAP-005` | Exchange two stablecoins                  | DETECT, GIVEN, CURRENT, PEG, PNL | Only the amount lost in the swap       |
+| `UC-SWAP-006` | Received asset spent since                | DETECT, GIVEN, CURRENT, PNL      | Valued at today's quote as if kept     |
+| `UC-SWAP-007` | Several swaps on different days           | DETECT, GIVEN, CURRENT, PEG, PNL | Totals and a percentage on the total   |
+| `UC-SWAP-008` | CoW Protocol swap                         | DETECT, GIVEN, FEE, PNL          | Fees in USD, kept out of the P&L       |
+| `UC-SWAP-009` | Swap the provider does not report         | DETECT, FEE                      | Fees `—`                               |
+| `UC-SWAP-010` | Only some swaps report a fee              | DETECT, GIVEN, FEE               | Fees for the reporting swaps only      |
+| `UC-SWAP-011` | Refund of the sold asset in the same swap | DETECT, GIVEN, CURRENT, PNL      | Only the net amount counts             |
+| `UC-SWAP-012` | A price cannot be found                   | GAP                              | Figures marked incomplete              |
+| `UC-SWAP-013` | History without any swap                  | DETECT                           | Swap figures hidden                    |
+| `UC-SWAP-014` | History or balances unavailable           | —                                | Swap figures hidden                    |
 
 ### Transactions That Are Not Swaps
 
@@ -162,9 +166,9 @@ For 1,000 USDC swapped for 0.5 WETH, with WETH now at $2,400 in the Safe balance
 | ------------------ | ------------------ | ----------: |
 | Swapped value      | 1,000 USDC × $1.00 |    1,000.00 |
 | Current value swap | 0.5 WETH × $2,400  |    1,200.00 |
-| Fees               | No fee reported    |           — |
 | P&L                | 1,200 − 1,000      |      200.00 |
 | P&L %              | 200 ÷ 1,000        |     +20.00% |
+| Transaction fees   | No fee reported    |           — |
 
 ### `UC-SWAP-002` — Buy a Volatile Asset, Price Falls
 
@@ -248,7 +252,8 @@ For 2,000 POL at $0.25 on the swap day, swapped for 0.2 WETH now at $2,600:
 | -------------------------------------- | ------------------------------------------------------------------------------------ |
 | The treasury converts USDC into USDCe. | [US-SAFE-007](./README.md#us-safe-007-review-the-safe-swap-pl) — `AC-US-SAFE-007-06` |
 
-- **Result:** Both sides are worth $1.00 per unit, so the P&L is exactly the quantity lost in the swap: fees, price impact, and slippage.
+- **Result:** Both sides are worth $1.00 per unit, so the P&L is exactly the quantity lost in the swap: price impact, slippage, and any fee
+  that is not reported. A reported fee is kept apart (`UC-SWAP-008`).
 
 For 1,000 USDC swapped for 998.5 USDCe:
 
@@ -314,22 +319,27 @@ For a June swap of 1,000 USDC for 0.5 WETH, and a July swap of 1 WETH (worth $2,
 
 **Condition:** CoW Protocol reports a fulfilled order owned by the Safe for the swap transaction.
 
-**Calculation rules:** `RULE-SWAP-DETECT`, `RULE-SWAP-FEE`.
+**Calculation rules:** `RULE-SWAP-DETECT`, `RULE-SWAP-GIVEN`, `RULE-SWAP-FEE`, `RULE-SWAP-PNL`.
 
 **Scenarios and related user stories:**
 
-| Scenario                                 | Related user stories and criteria                                                    |
-| ---------------------------------------- | ------------------------------------------------------------------------------------ |
-| The treasury swaps through CoW Protocol. | [US-SAFE-007](./README.md#us-safe-007-review-the-safe-swap-pl) — `AC-US-SAFE-007-07` |
+| Scenario                                 | Related user stories and criteria                                                                         |
+| ---------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| The treasury swaps through CoW Protocol. | [US-SAFE-007](./README.md#us-safe-007-review-the-safe-swap-pl) — `AC-US-SAFE-007-07`, `AC-US-SAFE-007-10` |
 
-- **Result:** Fees show the reported amount in USD. The P&L is unchanged, because the fee was already taken from what the Safe gave up.
+- **Result:** Transaction fees show the reported amount in USD. That amount is taken out of the swapped value, so the P&L shows only the
+  market result, as Accounting does with its Transaction Fee Expense account.
 
-For a 1,000 USDC swap whose order reports `executedFee = 3500000` in USDC (6 decimals):
+For the `UC-SWAP-001` swap of 1,000 USDC, whose order reports `executedFee = 3500000` in USDC (6 decimals):
 
-| Figure | Calculation                         | Value (USD) |
-| ------ | ----------------------------------- | ----------: |
-| Fees   | 3,500,000 ÷ 10^6 = 3.5 USDC × $1.00 |        3.50 |
-| P&L    | Same as `UC-SWAP-001`               |      200.00 |
+| Figure             | Calculation                         | Value (USD) |
+| ------------------ | ----------------------------------- | ----------: |
+| Swapped value      | 1,000 USDC × $1.00 − 3.50           |      996.50 |
+| Current value swap | 0.5 WETH × $2,400                   |    1,200.00 |
+| P&L                | 1,200 − 996.5                       |      203.50 |
+| Transaction fees   | 3,500,000 ÷ 10^6 = 3.5 USDC × $1.00 |        3.50 |
+
+The P&L minus the fee still equals what the swap changed in value: 203.50 − 3.50 = 200.00.
 
 ### `UC-SWAP-009` — Swap the Provider Does Not Report
 
@@ -343,29 +353,29 @@ For a 1,000 USDC swap whose order reports `executedFee = 3500000` in USDC (6 dec
 | ---------------------------------------------------- | ------------------------------------------------------------------------------------ |
 | The treasury swaps through a decentralized exchange. | [US-SAFE-007](./README.md#us-safe-007-review-the-safe-swap-pl) — `AC-US-SAFE-007-07` |
 
-- **Result:** Fees show `—` and their tooltip says no fee is reported. The other figures are unaffected. A failed CoW lookup behaves the
-  same way.
+- **Result:** Transaction fees show `—`. The swapped value keeps the whole amount given, so any fee hidden in it stays in the P&L. A failed
+  CoW lookup behaves the same way.
 
 ### `UC-SWAP-010` — Only Some Swaps Report a Fee
 
 **Condition:** At least one swap reports a CoW Protocol fee and at least one does not.
 
-**Calculation rules:** `RULE-SWAP-DETECT`, `RULE-SWAP-FEE`.
+**Calculation rules:** `RULE-SWAP-DETECT`, `RULE-SWAP-GIVEN`, `RULE-SWAP-FEE`.
 
 **Scenarios and related user stories:**
 
-| Scenario                                                      | Related user stories and criteria                                                    |
-| ------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| One swap goes through CoW Protocol and another through a DEX. | [US-SAFE-007](./README.md#us-safe-007-review-the-safe-swap-pl) — `AC-US-SAFE-007-07` |
+| Scenario                                                      | Related user stories and criteria                                                                         |
+| ------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| One swap goes through CoW Protocol and another through a DEX. | [US-SAFE-007](./README.md#us-safe-007-review-the-safe-swap-pl) — `AC-US-SAFE-007-07`, `AC-US-SAFE-007-10` |
 
-- **Result:** Fees add up the reported fees only, and their tooltip says how many swaps they cover.
+- **Result:** Transaction fees add up the reported fees only. Only the reported fee is taken out of the swapped value.
 
 For two 1,000 USDC swaps, one reporting a 3.5 USDC fee:
 
-| Figure        | Calculation                    | Value (USD) |
-| ------------- | ------------------------------ | ----------: |
-| Swapped value | 1,000 + 1,000                  |    2,000.00 |
-| Fees          | 3.5 USDC × $1.00, 1 of 2 swaps |        3.50 |
+| Figure           | Calculation                    | Value (USD) |
+| ---------------- | ------------------------------ | ----------: |
+| Swapped value    | 1,000 + 1,000 − 3.50           |    1,996.50 |
+| Transaction fees | 3.5 USDC × $1.00, 1 of 2 swaps |        3.50 |
 
 ## Edge-Case Use Cases
 
@@ -445,6 +455,7 @@ For 1,000 USDC swapped for 0.5 WETH with no WETH price:
 
 - Daily quotes are the CoinGecko price of the swap's UTC day, not the exact price at the second of execution.
 - Only CoW Protocol fees are read. Fees of other protocols are not reported, and network gas paid by another wallet is never counted.
+- A fee that is not reported cannot be separated: it stays in the swapped value, so the P&L of that swap still bears it.
 - Current value swap values the quantity received, not the quantity still held, by design (`UC-SWAP-006`).
 - The figures have not been checked against a live Safe that swapped through CoW Protocol yet.
 

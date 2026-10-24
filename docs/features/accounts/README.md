@@ -119,7 +119,7 @@ Runs of at least three consecutive missing criteria use inclusive ranges with fu
 | US-SAFE-004 | 📋 Planned    | ⚠️ 4/9          | `AC-US-SAFE-004-01`–`AC-US-SAFE-004-04`, `AC-US-SAFE-004-07`                      |
 | US-SAFE-005 | 🧪 Mocked     | ✅ 9/9          | —                                                                                 |
 | US-SAFE-006 | 🧪 Mocked     | ✅ 10/10        | —                                                                                 |
-| US-SAFE-007 | 📋 Planned    | ⚠️ 8/9 met      | `AC-US-SAFE-007-01`                                                               |
+| US-SAFE-007 | 📋 Planned    | ⚠️ 9/10 met     | `AC-US-SAFE-007-01`                                                               |
 
 Proof obligations use the [shared proof-strategy registry](../../testing/proof-strategies.md). Multiple IDs for one AC are cumulative.
 
@@ -1143,11 +1143,11 @@ movement across the participating stories.
 
 The Wallet overview shows four figures, in this order, once the Safe has at least one swap. Values are in USD.
 
-- **Swapped value** — what the swaps gave up, at the USD price of each swap's day.
+- **Swapped value** — what the swaps gave up, at the USD price of each swap's day, less the fees reported for them.
 - **Current value swap** — what the assets received are worth today.
-- **Fees** — the fees CoW Protocol reports for the Safe's orders. They are already part of the swapped value, so they are not deducted a
-  second time.
-- **P&L** — current value swap minus swapped value, with the percentage of the swapped value.
+- **P&L** — current value swap minus swapped value, with the percentage of the swapped value. It shows the market result only.
+- **Transaction fees** — the fees CoW Protocol reports for the Safe's orders. Like the Transaction Fee Expense account in Accounting, they
+  are a cost of their own, kept apart from the P&L.
 
 ### Use Cases
 
@@ -1156,15 +1156,15 @@ condition, related criteria, and a worked example:
 
 - buying, selling, and exchanging volatile assets or stablecoins (`UC-SWAP-001`–`UC-SWAP-005`);
 - assets spent since the swap and several swaps over time (`UC-SWAP-006`, `UC-SWAP-007`);
-- reported, unreported, and partly reported fees (`UC-SWAP-008`–`UC-SWAP-010`);
+- reported, unreported, and partly reported fees, kept apart from the P&L (`UC-SWAP-008`–`UC-SWAP-010`);
 - refunds, missing prices, Safes without swaps, and unavailable sources (`UC-SWAP-011`–`UC-SWAP-014`).
 
 ### Acceptance Criteria
 
 #### Happy Path
 
-- [x] `AC-US-SAFE-007-01` Once the Safe has swapped, the Wallet overview shows the number of swaps, then the swapped value, the current
-      value swap, the fees, and the P&L in USD and as a percentage.
+- [x] `AC-US-SAFE-007-01` Once the Safe has swapped, the Wallet overview shows the number of swaps, the swapped value, the current value
+      swap, the P&L in USD and as a percentage, and the transaction fees.
 
 #### Business Rules
 
@@ -1175,8 +1175,10 @@ condition, related criteria, and a worked example:
       no longer holds it.
 - [x] `AC-US-SAFE-007-05` The P&L equals the current value swap minus the swapped value and is marked as a gain or a loss.
 - [x] `AC-US-SAFE-007-06` USD stablecoins are valued at $1.
-- [x] `AC-US-SAFE-007-07` Fees come only from the Safe's own fulfilled CoW Protocol orders, valued at the swap day's price; the overview
-      says when no swap or only some swaps report a fee.
+- [x] `AC-US-SAFE-007-07` Fees come only from the Safe's own fulfilled CoW Protocol orders, valued at the swap day's price; when no swap
+      reports a fee, the fees show as unavailable.
+- [x] `AC-US-SAFE-007-10` A reported fee is taken out of the swapped value of its swap, so the P&L excludes it; a fee that is not reported
+      stays in the swapped value.
 
 #### Edge & Error Cases
 
@@ -1197,6 +1199,7 @@ condition, related criteria, and a worked example:
 | `AC-US-SAFE-007-07`  | `PS-FRONTEND`       | Frontend         | ✅ Met          |
 | `AC-US-SAFE-007-08`  | `PS-FRONTEND`       | Frontend         | ✅ Met          |
 | `AC-US-SAFE-007-09`  | `PS-FRONTEND`       | Frontend         | ✅ Met          |
+| `AC-US-SAFE-007-10`  | `PS-FRONTEND`       | Frontend         | ✅ Met          |
 
 **Dependencies:** US-SAFE-002
 
