@@ -59,11 +59,11 @@ This folder contains all TanStack Query hooks for API interactions in the CNC Po
   snapshots.
 - Safe Transaction Service and Gateway queries use the moderate preset directly, declare their polling cadence, and share the retry policy
   in `safe.recovery.ts`. Temporary provider failures retry up to three times at fixed intervals; HTTP 429 uses a longer interval and
-  respects `Retry-After`. HTTP 404 means Safe services do not know the resource and is never retried; Safe information and Gateway balances
-  also stop polling while they answer 404, so a Safe not indexed yet loads when the user tries again. Cancellation, other client errors,
-  malformed responses and an explicit monthly-quota-exceeded response are not retried automatically. Axios owns the production GET
-  credential header and error redaction. Local pagination and asset-transfer helpers preserve complete histories, stable identities and
-  cached metadata recovery; there is no separate request scheduler or provider-wide pause.
+  respects `Retry-After`. HTTP 404 means Safe services do not know the resource and is never retried; Gateway balances also stop polling
+  while they answer 404, while Safe information keeps its five-minute refresh, so a Safe not indexed yet loads when the user tries again.
+  Cancellation, other client errors, malformed responses and an explicit monthly-quota-exceeded response are not retried automatically.
+  Axios owns the production GET credential header and error redaction. Local pagination and asset-transfer helpers preserve complete
+  histories, stable identities and cached metadata recovery; there is no separate request scheduler or provider-wide pause.
 
 ## Full Documentation
 

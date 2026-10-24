@@ -86,6 +86,25 @@ describe('Safe automatic read recovery', () => {
     }
   })
 
+  it('refreshes Safe information once every five minutes while Safe services answer 404', async () => {
+    const get = vi.spyOn(externalApiClient, 'get').mockRejectedValue(httpFailure(404))
+    const options = infoOptions()
+    const observer = new QueryObserver(client, {
+      ...options,
+      queryKey: toValue(options.queryKey),
+      enabled: true
+    })
+    const stop = observer.subscribe(() => {})
+    try {
+      await vi.advanceTimersByTimeAsync(299_999)
+      expect(get).toHaveBeenCalledTimes(1)
+      await vi.advanceTimersByTimeAsync(1)
+      expect(get).toHaveBeenCalledTimes(2)
+    } finally {
+      stop()
+    }
+  })
+
   it('waits for the numeric Retry-After before retrying rate-limited Gateway balances', async () => {
     const get = vi
       .spyOn(externalApiClient, 'get')

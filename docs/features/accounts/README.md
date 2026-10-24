@@ -895,7 +895,8 @@ remain as recorded above.
 - [x] `AC-US-SAFE-002-07` A failed Safe information read is reported without hiding unaffected Safe information.
 - [x] `AC-US-SAFE-002-08` A failed Safe information read can be retried without registering another Safe.
 - [x] `AC-US-SAFE-002-10` While Safe services have not yet indexed a newly deployed Safe, the overview explains the wait instead of
-      reporting a failure, without retrying or polling the 404, and its balances and signers load when the user tries again.
+      reporting a failure, without retrying the 404, and its balances and signers load when the user tries again or at the next five-minute
+      refresh of the Safe information.
 
 ### Test Coverage
 
@@ -1360,14 +1361,15 @@ focus do not trigger extra polling. Safe queries call their providers directly t
 use that client to call the backend's [shared Redis market cache](../../implementation/market-data-cache/README.md). Transaction Service
 errors affect the individual query. Gateway and Transaction Service reads retry temporary 408, 425, 429, server and network failures up to
 three times. Ordinary retries wait five seconds between attempts; rate-limit retries wait thirty seconds, or longer when `Retry-After`
-requires it. A 404 is never retried. Safe information and Gateway balances answer 404 until Safe services index a newly deployed Safe; they
-then stop polling and the overview shows an indexing notice with a Try again button instead of an error, so the Safe loads when the user
-tries again. Initial reads remain loading during recovery and update without a page reload. Other client errors, cancellation, malformed
-responses and an explicit monthly-quota-exceeded response are not automatically retried. Periodic and explicit refresh remain available.
-There is no shared request queue or provider-wide cooldown. Complete history pagination and contract metadata recovery are retained. The
-Axios client sends the optional `VITE_APP_SAFE_API_KEY` only to GET requests on the direct production Transaction Service. Keys must be
-issued by `developer.safe.global`; staging keys do not establish a production quota. The approval queue identifies rate limiting instead of
-reporting a connection problem. Gateway keeps its own balance cadence. See
+requires it. A 404 is never retried. Safe information and Gateway balances answer 404 until Safe services index a newly deployed Safe;
+balances then stop polling, Safe information keeps its five-minute refresh with a single request each time, and the overview shows an
+indexing notice with a Try again button instead of an error, so the Safe loads when the user tries again. Initial reads remain loading
+during recovery and update without a page reload. Other client errors, cancellation, malformed responses and an explicit
+monthly-quota-exceeded response are not automatically retried. Periodic and explicit refresh remain available. There is no shared request
+queue or provider-wide cooldown. Complete history pagination and contract metadata recovery are retained. The Axios client sends the
+optional `VITE_APP_SAFE_API_KEY` only to GET requests on the direct production Transaction Service. Keys must be issued by
+`developer.safe.global`; staging keys do not establish a production quota. The approval queue identifies rate limiting instead of reporting
+a connection problem. Gateway keeps its own balance cadence. See
 [Client Data Access](../../implementation/client-data-access/README.md#browser-request-coordination) for recovery and session boundaries.
 
 Confirmed Safe transaction execution and directly executed transfers use one invalidation helper for all Safe service queries and the wallet
@@ -1380,9 +1382,9 @@ Executable evidence: [discovered holdings tests](../../../app/src/components/ui/
 [overview tests](../../../app/src/components/sections/SafeView/__tests__/SafeBalanceSection.rendering.spec.ts), and
 [Gateway request unit tests](../../../app/src/queries/__tests__/safeClient.queries.spec.ts).
 
-[Safe recovery tests](../../../app/src/queries/__tests__/safe.recovery.spec.ts) verify the bounded 429 recovery, the absence of retries and
-polling on 404 and the shared cache with real TanStack queries and simulated provider responses. The live post-creation provider journey
-remains to be confirmed.
+[Safe recovery tests](../../../app/src/queries/__tests__/safe.recovery.spec.ts) verify the bounded 429 recovery, the absence of retries on
+404, the absence of balance polling on 404 and the shared cache with real TanStack queries and simulated provider responses. The live
+post-creation provider journey remains to be confirmed.
 
 Implementation: [Safe Client balances](../../../app/src/queries/safeClient.queries.ts),
 [Safe movement queries](../../../app/src/queries/safe.queries.ts), [Safe read recovery policy](../../../app/src/queries/safe.recovery.ts),
