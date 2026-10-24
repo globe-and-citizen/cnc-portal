@@ -53,36 +53,56 @@ describe('Safe automatic read recovery', () => {
     vi.useRealTimers()
   })
 
-  it('keeps a new Safe balance read pending through a 404 and shares the successful recovery', async () => {
-    const get = vi
-      .spyOn(externalApiClient, 'get')
-      .mockRejectedValueOnce(httpFailure(404))
-      .mockResolvedValueOnce({ data: balances })
+  it('reports a Safe balance 404 at once without retrying', async () => {
+    const error = httpFailure(404)
+    const get = vi.spyOn(externalApiClient, 'get').mockRejectedValue(error)
     const options = safeBalancesQueryOptions(address, 137, 'USD')
-    const first = client.fetchQuery(options)
-    const second = client.fetchQuery(options)
-    await vi.advanceTimersByTimeAsync(4999)
+    await expect(client.fetchQuery(options)).rejects.toBe(error)
+    await vi.advanceTimersByTimeAsync(120_000)
 
     expect(get).toHaveBeenCalledTimes(1)
-    expect(client.getQueryState(options.queryKey)).toMatchObject({ status: 'pending', error: null })
-    await vi.advanceTimersByTimeAsync(1)
-    await expect(first).resolves.toEqual(balances)
-    await expect(second).resolves.toEqual(balances)
-    expect(get).toHaveBeenCalledTimes(2)
-    expect(client.getQueryState(options.queryKey)).toMatchObject({ status: 'success', error: null })
+    expect(client.getQueryState(options.queryKey)).toMatchObject({ status: 'error', error })
   })
 
-  it('recovers Safe information after a temporary deployment 404 without remounting', async () => {
-    const get = vi
-      .spyOn(externalApiClient, 'get')
-      .mockRejectedValueOnce(httpFailure(404))
-      .mockResolvedValueOnce({ data: info })
-    const options = infoOptions()
-    const result = client.fetchQuery(options)
-    await vi.advanceTimersByTimeAsync(5000)
+  it('reports a Safe information 404 at once without retrying', async () => {
+    const error = httpFailure(404)
+    const get = vi.spyOn(externalApiClient, 'get').mockRejectedValue(error)
+    await expect(client.fetchQuery(infoOptions())).rejects.toBe(error)
+    await vi.advanceTimersByTimeAsync(120_000)
 
-    await expect(result).resolves.toEqual(info)
-    expect(get).toHaveBeenCalledTimes(2)
+    expect(get).toHaveBeenCalledTimes(1)
+  })
+
+  it('stops polling Safe balances while Safe services answer 404', async () => {
+    const get = vi.spyOn(externalApiClient, 'get').mockRejectedValue(httpFailure(404))
+    const observer = new QueryObserver(client, safeBalancesQueryOptions(address, 137, 'USD'))
+    const stop = observer.subscribe(() => {})
+    try {
+      await vi.advanceTimersByTimeAsync(300_000)
+      expect(get).toHaveBeenCalledTimes(1)
+      expect(observer.getCurrentResult()).toMatchObject({ isError: true })
+    } finally {
+      stop()
+    }
+  })
+
+  it('refreshes Safe information once every five minutes while Safe services answer 404', async () => {
+    const get = vi.spyOn(externalApiClient, 'get').mockRejectedValue(httpFailure(404))
+    const options = infoOptions()
+    const observer = new QueryObserver(client, {
+      ...options,
+      queryKey: toValue(options.queryKey),
+      enabled: true
+    })
+    const stop = observer.subscribe(() => {})
+    try {
+      await vi.advanceTimersByTimeAsync(299_999)
+      expect(get).toHaveBeenCalledTimes(1)
+      await vi.advanceTimersByTimeAsync(1)
+      expect(get).toHaveBeenCalledTimes(2)
+    } finally {
+      stop()
+    }
   })
 
   it('waits for the numeric Retry-After before retrying rate-limited Gateway balances', async () => {
@@ -137,59 +157,13 @@ describe('Safe automatic read recovery', () => {
     expect(client.getQueryState(options.queryKey)).toMatchObject({ status: 'error', error })
   })
 
-  it('keeps a new Safe balance read pending while the Gateway still serves its cached 404', async () => {
-    const get = vi
-      .spyOn(externalApiClient, 'get')
-      .mockRejectedValueOnce(httpFailure(404))
-      .mockRejectedValueOnce(httpFailure(404))
-      .mockRejectedValueOnce(httpFailure(404))
-      .mockResolvedValueOnce({ data: balances })
-    const options = safeBalancesQueryOptions(address, 137, 'USD')
-    const result = client.fetchQuery(options)
-    await vi.advanceTimersByTimeAsync(34_999)
-
-    expect(get).toHaveBeenCalledTimes(3)
-    expect(client.getQueryState(options.queryKey)).toMatchObject({ status: 'pending', error: null })
-    await vi.advanceTimersByTimeAsync(1)
-    await expect(result).resolves.toEqual(balances)
-    expect(get).toHaveBeenCalledTimes(4)
-  })
-
-  it('reports a Safe that stays unindexed after about three and a half minutes', async () => {
+  it('does not retry a missing Safe transaction detail', async () => {
     const error = httpFailure(404)
     const get = vi.spyOn(externalApiClient, 'get').mockRejectedValue(error)
-    const options = safeBalancesQueryOptions(address, 137, 'USD')
-    const failure = expect(client.fetchQuery(options)).rejects.toBe(error)
-    await vi.advanceTimersByTimeAsync(209_999)
+    await expect(client.fetchQuery(transactionOptions())).rejects.toBe(error)
+    await vi.advanceTimersByTimeAsync(120_000)
 
-    expect(get).toHaveBeenCalledTimes(8)
-    expect(client.getQueryState(options.queryKey)).toMatchObject({ status: 'pending', error: null })
-    await vi.advanceTimersByTimeAsync(1)
-    await failure
-    expect(get).toHaveBeenCalledTimes(9)
-    expect(client.getQueryState(options.queryKey)).toMatchObject({ status: 'error', error })
-  })
-
-  it('keeps Safe information pending through the indexing window', async () => {
-    const get = vi.spyOn(externalApiClient, 'get')
-    for (let attempt = 0; attempt < 4; attempt++) get.mockRejectedValueOnce(httpFailure(404))
-    get.mockResolvedValueOnce({ data: info })
-    const result = client.fetchQuery(infoOptions())
-    await vi.advanceTimersByTimeAsync(69_999)
-
-    expect(get).toHaveBeenCalledTimes(4)
-    await vi.advanceTimersByTimeAsync(1)
-    await expect(result).resolves.toEqual(info)
-  })
-
-  it('keeps the three-retry bound when a Safe transaction detail is missing', async () => {
-    const error = httpFailure(404)
-    const get = vi.spyOn(externalApiClient, 'get').mockRejectedValue(error)
-    const failure = expect(client.fetchQuery(transactionOptions())).rejects.toBe(error)
-    await vi.advanceTimersByTimeAsync(15_000)
-    await failure
-
-    expect(get).toHaveBeenCalledTimes(4)
+    expect(get).toHaveBeenCalledTimes(1)
   })
 
   it('retries successive server failures at the same five-second interval', async () => {

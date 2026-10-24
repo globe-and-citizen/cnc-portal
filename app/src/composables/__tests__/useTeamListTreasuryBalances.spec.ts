@@ -145,7 +145,7 @@ describe('useTeamListTreasuryBalances', () => {
     expect(queries).toHaveLength(1)
     expect(queries[0].queryKey).toContain('safe-client')
     expect(queries[0].queryKey.at(-1)).toBe('USD')
-    expect(queries[0].refetchInterval).toBe(60000)
+    expect(queries[0].refetchInterval({ state: { error: null } })).toBe(60000)
 
     currency.code = 'EUR'
     safeResults.value[0]!.data = { fiatTotal: '1.05624', items: [] }
