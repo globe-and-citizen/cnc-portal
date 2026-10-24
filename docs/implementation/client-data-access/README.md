@@ -141,7 +141,9 @@ CoinGecko current-price reads are required to populate these holdings. The query
 for 30 minutes, propagates cancellation and uses the bounded recovery described above. Both Gateway and Transaction Service GETs use the
 external Axios client directly. A failed request retains its cached response while exposing the error; the UI marks the total incomplete.
 
-[Gateway queries](../../../app/src/queries/safeClient.queries.ts) own the balance HTTP request and reject malformed response bodies.
+[Gateway queries](../../../app/src/queries/safeClient.queries.ts) own the balance and transaction-history HTTP requests and reject malformed
+response bodies. The history query returns one raw page with date labels and pagination links. Its reactive cursor, timezone, trust and
+imitation filters participate in cache identity, beneath the existing Safe transaction invalidation prefix.
 [Safe movement queries](../../../app/src/queries/safe.queries.ts) retain one local pagination helper shared by the three complete-history
 reads. The asset-transfer helper deduplicates stable transfer identities and recovers missing contract metadata through the calling
 observer's TanStack client. Concurrent rows for one contract share its metadata query; enriched rows are copied without modifying provider
@@ -170,7 +172,7 @@ backend instances. Safe provider requests retain their browser-only coordination
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `008826d0d841f19c967c8ff477a7e9c452ee7398`
+**Implementation evidence reviewed against:** `4b1a0e74f36db93a132b3876b95a6b65eae30ad3`
 
 - [Query barrel](../../../app/src/queries/index.ts), [query factory](../../../app/src/queries/queryFactory.ts), and
   [single-file upload query](../../../app/src/queries/file.queries.ts)
