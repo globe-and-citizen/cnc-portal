@@ -237,7 +237,7 @@ Proof obligations use the [shared proof-strategy registry](../../../testing/proo
 Shared server registration also exposes public [market cache routes](../../../implementation/market-data-cache/README.md). Administrator
 authorization on Officer operations remains required.
 
-**Implementation evidence reviewed against:** `8bb7376a908abee0cdd59621ba7ee5cfcc153de6`
+**Implementation evidence reviewed against:** `0027826e4fbb8dfb3ac9686ea23106f5d12aaa5c`
 
 - [Dashboard navigation](../../../../dashboard/app/layouts/default.vue),
   [administrator route guard](../../../../dashboard/app/middleware/auth.global.ts),
