@@ -114,7 +114,7 @@ Runs of at least three consecutive missing criteria use inclusive ranges with fu
 | US-EXP-005  | 🚧 Partial    | ⚠️ 3/7          | `AC-US-EXP-005-03`, `AC-US-EXP-005-04`, `AC-US-EXP-005-06`, `AC-US-EXP-005-07`    |
 | US-EXP-006  | 🚧 Partial    | ⚠️ 1/8          | `AC-US-EXP-006-01`–`AC-US-EXP-006-05`, `AC-US-EXP-006-07`, `AC-US-EXP-006-08`     |
 | US-SAFE-001 | 🚧 Partial    | ⚠️ 8/11         | `AC-US-SAFE-001-02`, `AC-US-SAFE-001-03`, `AC-US-SAFE-001-06`                     |
-| US-SAFE-002 | 🧪 Mocked     | ⚠️ 7/10 met     | `AC-US-SAFE-002-01`, `AC-US-SAFE-002-02`, `AC-US-SAFE-002-09`                     |
+| US-SAFE-002 | 🧪 Mocked     | ⚠️ 8/11 met     | `AC-US-SAFE-002-01`, `AC-US-SAFE-002-02`, `AC-US-SAFE-002-09`                     |
 | US-SAFE-003 | 📋 Planned    | ⚠️ 6/11         | `AC-US-SAFE-003-01`–`AC-US-SAFE-003-03`, `AC-US-SAFE-003-06`, `AC-US-SAFE-003-07` |
 | US-SAFE-004 | 📋 Planned    | ⚠️ 4/9          | `AC-US-SAFE-004-01`–`AC-US-SAFE-004-04`, `AC-US-SAFE-004-07`                      |
 | US-SAFE-005 | 🧪 Mocked     | ✅ 9/9          | —                                                                                 |
@@ -897,6 +897,9 @@ remain as recorded above.
 - [x] `AC-US-SAFE-002-10` While Safe services have not yet indexed a newly deployed Safe, the overview explains the wait instead of
       reporting a failure, without retrying the 404, and its balances and signers load when the user tries again or at the next five-minute
       refresh of the Safe information.
+- [x] `AC-US-SAFE-002-11` When no contract exists at the registered Safe address on the configured network, the Safe page reports that no
+      Safe exists at that address instead of an indexing wait, no longer presents the wallet as active or requests its balances, signers and
+      transactions, including right after a page reload, and the check can be repeated without registering another Safe.
 
 ### Test Coverage
 
@@ -913,6 +916,7 @@ remain as recorded above.
 | `AC-US-SAFE-002-09`  | `PS-BACKEND`               | None linked               | ❌ Missing      |
 | `AC-US-SAFE-002-09`  | `PS-FULL-STACK-INTEGRATED` | None linked               | ❌ Missing      |
 | `AC-US-SAFE-002-10`  | `PS-FRONTEND`              | Frontend                  | ✅ Met          |
+| `AC-US-SAFE-002-11`  | `PS-FRONTEND`              | Frontend                  | ✅ Met          |
 
 **Dependencies:** US-SAFE-001
 
@@ -1364,13 +1368,16 @@ errors affect the individual query. Gateway and Transaction Service reads retry 
 three times. Ordinary retries wait five seconds between attempts; rate-limit retries wait thirty seconds, or longer when `Retry-After`
 requires it. A 404 is never retried. Safe information and Gateway balances answer 404 until Safe services index a newly deployed Safe;
 balances then stop polling, Safe information keeps its five-minute refresh with a single request each time, and the overview shows an
-indexing notice with a Try again button instead of an error, so the Safe loads when the user tries again. Initial reads remain loading
-during recovery and update without a page reload. Other client errors, cancellation, malformed responses and an explicit
-monthly-quota-exceeded response are not automatically retried. Periodic and explicit refresh remain available. There is no shared request
-queue or provider-wide cooldown. Complete history pagination and contract metadata recovery are retained. The Axios client sends the
-optional `VITE_APP_SAFE_API_KEY` only to GET requests on the direct production Transaction Service. Keys must be issued by
-`developer.safe.global`; staging keys do not establish a production quota. The approval queue identifies rate limiting instead of reporting
-a connection problem. Gateway keeps its own balance cadence. See
+indexing notice with a Try again button instead of an error, so the Safe loads when the user tries again. Because a 404 alone cannot tell an
+unindexed Safe from an address with no contract, the Safe page first reads the address code on the configured chain and starts its sections
+only after that answer: with code they load as above, without code one notice that no Safe exists at the address replaces them and no Safe
+service request is made for them. Like the other queries, that answer lives in the in-memory query cache, so a reload reads the chain again
+before any section starts. Initial reads remain loading during recovery and update without a page reload. Other client errors, cancellation,
+malformed responses and an explicit monthly-quota-exceeded response are not automatically retried. Periodic and explicit refresh remain
+available. There is no shared request queue or provider-wide cooldown. Complete history pagination and contract metadata recovery are
+retained. The Axios client sends the optional `VITE_APP_SAFE_API_KEY` only to GET requests on the direct production Transaction Service.
+Keys must be issued by `developer.safe.global`; staging keys do not establish a production quota. The approval queue identifies rate
+limiting instead of reporting a connection problem. Gateway keeps its own balance cadence. See
 [Client Data Access](../../implementation/client-data-access/README.md#browser-request-coordination) for recovery and session boundaries.
 
 Confirmed Safe transaction execution and directly executed transfers use one invalidation helper for all Safe service queries and the wallet
@@ -1380,7 +1387,8 @@ can lag until its balance provider updates; periodic refreshes continue to recon
 holdings through the canonical balance-key prefix. Other account surfaces retain their existing balance cadence.
 
 Executable evidence: [discovered holdings tests](../../../app/src/components/ui/__tests__/TokenHoldingsSection.safe.spec.ts),
-[overview tests](../../../app/src/components/sections/SafeView/__tests__/SafeBalanceSection.rendering.spec.ts), and
+[overview tests](../../../app/src/components/sections/SafeView/__tests__/SafeBalanceSection.rendering.spec.ts),
+[Safe page tests](../../../app/src/views/team/[id]/Accounts/__tests__/SafeView.spec.ts) for a Safe missing on-chain, and
 [Gateway request unit tests](../../../app/src/queries/__tests__/safeClient.queries.spec.ts).
 
 [Safe recovery tests](../../../app/src/queries/__tests__/safe.recovery.spec.ts) verify the bounded 429 recovery, the absence of retries on

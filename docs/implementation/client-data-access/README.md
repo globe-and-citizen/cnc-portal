@@ -111,7 +111,9 @@ seconds for HTTP 429, and waits longer when the provider's numeric or HTTP-date 
 not know the resource and is never retried. Gateway balances also stop polling while they answer 404, and Safe information keeps its
 five-minute refresh with a single request each time, so a Safe not indexed yet does not trigger an endless series of retries; it loads when
 the user tries again or at the next Safe information refresh. The [shared recovery policy](../../../app/src/queries/safe.recovery.ts) owns
-the retry schedule; a pure Safe model utility classifies the 404 answer for the queries and the Safe overview notice. Initial reads remain
+the retry schedule; a pure Safe model utility classifies the 404 answer for the queries and the Safe overview notice. Because a 404 cannot
+tell an unindexed Safe from an address with no contract, the Safe page first reads the address code on the configured chain through
+`useGetSafeBytecodeQuery` and mounts its Safe service readers only once a contract is confirmed or that read fails. Initial reads remain
 pending through recovery, so successful responses update the mounted UI without a reload. Cancellation, other client errors, malformed
 responses and an explicit monthly-quota-exceeded response do not retry automatically. CoinGecko and token-metadata reads disable automatic
 retries.
