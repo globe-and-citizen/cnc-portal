@@ -117,7 +117,7 @@ describe('Safe asset exchange accounting', () => {
   })
   it('never treats missing ERC-20 metadata as the native currency', () => {
     const row = transfer(1, 0, ADDR.client, ADDR.safe, TOKEN, '12345')
-    delete row.tokenInfo
+    row.tokenInfo = { ...row.tokenInfo!, decimals: 99 }
     const source = drafts([row])
     expect(source[0]!.token.startsWith('erc20:')).toBe(true)
     const result = finalizeJournalEntryDrafts(source)
@@ -126,6 +126,15 @@ describe('Safe asset exchange accounting', () => {
       txHash: tx(1)
     })
     expect(journalLedgerRows(result.journal)[0]!.quantity).toBe('Unavailable')
+  })
+  it('ignores a token sent to the Safe that Safe does not trust', () => {
+    const fake = transfer(1, 0, ADDR.client, ADDR.safe, TOKEN, '12345')
+    fake.tokenInfo = { ...fake.tokenInfo!, trusted: false }
+    const unknown = transfer(2, 0, ADDR.client, ADDR.safe, TOKEN, '12345')
+    delete unknown.tokenInfo
+    const result = finalizeJournalEntryDrafts(drafts([fake, unknown]))
+    expect(result.journal).toEqual([])
+    expect(result.assetDiagnostics).toEqual([])
   })
   it('preserves six-decimal assets and does not peg a token merely named USDC', () => {
     const row = transfer(1, 0, ADDR.client, ADDR.safe, TOKEN, '1234567')

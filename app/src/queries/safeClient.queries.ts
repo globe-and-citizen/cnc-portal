@@ -54,14 +54,17 @@ export const safeClientKeys = {
     ] as const
 }
 
-/** Fetch the Gateway holdings response, rejecting malformed bodies rather than inventing an empty wallet. */
+/**
+ * Fetch the Gateway holdings response, rejecting malformed bodies rather than inventing an empty wallet.
+ * Only tokens Safe trusts are returned, so a fake token sent to the Safe address never blocks the total.
+ */
 export async function fetchSafeClientBalances(
   address: string,
   chainId: number,
   fiatCode: string,
   signal?: AbortSignal
 ): Promise<SafeClientBalances> {
-  const url = `${SAFE_CLIENT_URL}/v1/chains/${chainId}/safes/${normalizeSafeAddress(address)}/balances/${encodeURIComponent(fiatCode.toUpperCase())}?exclude_spam=true&trusted=false`
+  const url = `${SAFE_CLIENT_URL}/v1/chains/${chainId}/safes/${normalizeSafeAddress(address)}/balances/${encodeURIComponent(fiatCode.toUpperCase())}?exclude_spam=true&trusted=true`
   const { data } = await externalApiClient.get<SafeClientBalances>(url, { signal })
   if (!data || !Array.isArray(data.items) || typeof data.fiatTotal !== 'string')
     throw new Error('Safe balances response unavailable')
@@ -71,7 +74,7 @@ export async function fetchSafeClientBalances(
 /**
  * Read native/ERC-20 holdings and current fiat valuations in one Gateway request.
  * @endpoint GET /v1/chains/{chainId}/safes/{safeAddress}/balances/{fiatCode}
- * @queryParams trusted=false, exclude_spam=true
+ * @queryParams trusted=true, exclude_spam=true
  */
 export function safeBalancesQueryOptions(
   address: string | undefined,
