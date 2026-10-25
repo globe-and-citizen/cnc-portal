@@ -6,12 +6,14 @@ import {
   addContract,
   getTeamOfficers,
   createOfficer,
+  replaceSafe,
 } from '../controllers/contractController';
 import { rejectIfArchived, requireTeamOwner } from '../middleware/teamAuthzMiddleware';
 import {
   validateBody,
   validateQuery,
   addContractBodySchema,
+  replaceSafeBodySchema,
   syncContractsBodySchema,
   getContractsQuerySchema,
   createOfficerBodySchema,
@@ -114,6 +116,59 @@ contractRoutes.post(
   requireTeamOwner('body.teamId'),
   rejectIfArchived('body.teamId'),
   addContract
+);
+
+/**
+ * @openapi
+ * /contract/safe:
+ *  put:
+ *   summary: Replace a team Safe that has no contract on-chain
+ *   tags: [Contracts]
+ *   security:
+ *     - bearerAuth: []
+ *   description: Points the team's registered Safe at a new address. Refused
+ *     while a contract exists at the registered address, so a working Safe
+ *     is never swapped out. Retrying with the address already registered
+ *     returns the Safe unchanged.
+ *   requestBody:
+ *     required: true
+ *     content:
+ *       application/json:
+ *         schema:
+ *           type: object
+ *           required: [teamId, contractAddress]
+ *           properties:
+ *             teamId:
+ *               type: integer
+ *               minimum: 1
+ *             contractAddress:
+ *               type: string
+ *               description: The address of the new Safe
+ *   responses:
+ *     200:
+ *       description: Safe replaced
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/Contract'
+ *     400:
+ *       description: Bad request
+ *     403:
+ *       description: Caller is not the team owner
+ *     404:
+ *       description: Team not found, or the team has no Safe to replace
+ *     409:
+ *       description: The team is archived, the current Safe exists on-chain,
+ *         or the new address is already registered
+ *     500:
+ *       description: Internal server error
+ */
+contractRoutes.put(
+  '/safe',
+  validateBody(replaceSafeBodySchema),
+  requireTeamOwner('body.teamId'),
+  rejectIfArchived('body.teamId'),
+  replaceSafe
 );
 
 /**

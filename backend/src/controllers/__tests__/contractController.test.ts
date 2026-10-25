@@ -32,6 +32,7 @@ vi.mock('../../utils', async () => {
         findMany: vi.fn(),
         findFirst: vi.fn(),
         create: vi.fn(),
+        update: vi.fn(),
       },
       teamOfficer: {
         upsert: vi.fn(),
@@ -48,6 +49,7 @@ vi.mock('../../utils/viem.config', () => ({
   default: {
     readContract: vi.fn(),
     getChainId: vi.fn(),
+    getCode: vi.fn(),
   },
 }));
 
@@ -547,6 +549,156 @@ describe('contractController', () => {
 
       expect(response.status).toBe(200);
       expect(response.body).toMatchObject({ id: concurrentSafe.id });
+    });
+  });
+
+  describe('PUT: /safe', () => {
+    const brokenSafeAddress = '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
+    const newSafeAddress = getAddress('0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb');
+    const brokenSafe = {
+      id: 7,
+      teamId: mockTeam.id,
+      address: brokenSafeAddress,
+      type: 'Safe',
+      deployer: mockTeam.ownerAddress,
+      officerId: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    const replaceSafe = (body: object = { teamId: mockTeam.id, contractAddress: newSafeAddress }) =>
+      request(app).put('/safe').send(body);
+
+    beforeEach(() => {
+      vi.mocked(prisma.team.findUnique).mockResolvedValue(mockTeam);
+      vi.mocked(publicClient.getCode).mockResolvedValue(undefined);
+      vi.mocked(prisma.teamContract.findFirst)
+        .mockReset()
+        .mockResolvedValue(null)
+        .mockResolvedValueOnce(brokenSafe as never);
+      vi.mocked(prisma.teamContract.update)
+        .mockReset()
+        .mockImplementation((args: any) => ({ ...brokenSafe, ...args.data }) as never);
+    });
+
+    it('[AC-US-SAFE-001-12] replaces a Safe that has no contract on-chain', async () => {
+      const response = await replaceSafe();
+
+      expect(response.status).toBe(200);
+      expect(publicClient.getCode).toHaveBeenCalledWith({ address: getAddress(brokenSafeAddress) });
+      expect(prisma.teamContract.update).toHaveBeenCalledWith({
+        where: { id: brokenSafe.id, address: brokenSafeAddress },
+        data: { address: newSafeAddress.toLowerCase(), deployer: mockTeam.ownerAddress },
+      });
+      expect(response.body).toMatchObject({
+        id: brokenSafe.id,
+        address: newSafeAddress.toLowerCase(),
+      });
+    });
+
+    it('treats an empty bytecode answer as no contract', async () => {
+      vi.mocked(publicClient.getCode).mockResolvedValue('0x');
+
+      const response = await replaceSafe();
+
+      expect(response.status).toBe(200);
+      expect(prisma.teamContract.update).toHaveBeenCalled();
+    });
+
+    it('[AC-US-SAFE-001-13] refuses to replace a Safe that exists on-chain', async () => {
+      vi.mocked(publicClient.getCode).mockResolvedValue('0x6080');
+
+      const response = await replaceSafe();
+
+      expect(response.status).toBe(409);
+      expect(response.body.message).toContain(
+        'The team Safe exists on-chain and cannot be replaced'
+      );
+      expect(prisma.teamContract.update).not.toHaveBeenCalled();
+    });
+
+    it('refuses the replacement when the chain cannot be read', async () => {
+      vi.mocked(publicClient.getCode).mockRejectedValue(new Error('RPC down'));
+
+      const response = await replaceSafe();
+
+      expect(response.status).toBe(500);
+      expect(prisma.teamContract.update).not.toHaveBeenCalled();
+    });
+
+    it('[AC-US-SAFE-001-12] returns 403 when the caller is not the team owner', async () => {
+      vi.mocked(prisma.team.findUnique).mockResolvedValue({ ...mockTeam, ownerAddress: '0x456' });
+
+      const response = await replaceSafe();
+
+      expect(response.status).toBe(403);
+      expect(prisma.teamContract.update).not.toHaveBeenCalled();
+    });
+
+    it('returns 409 when the team is archived', async () => {
+      vi.mocked(prisma.team.findUnique).mockResolvedValue({ ...mockTeam, isArchived: true });
+
+      const response = await replaceSafe();
+
+      expect(response.status).toBe(409);
+      expect(response.body.message).toContain('Team is archived');
+      expect(prisma.teamContract.update).not.toHaveBeenCalled();
+    });
+
+    it('returns 400 for an invalid Safe address', async () => {
+      const response = await replaceSafe({ teamId: mockTeam.id, contractAddress: '0x123' });
+
+      expect(response.status).toBe(400);
+      expect(response.body.message).toContain('Invalid request body');
+    });
+
+    it('returns 404 when the team has no Safe to replace', async () => {
+      vi.mocked(prisma.teamContract.findFirst).mockReset().mockResolvedValue(null);
+
+      const response = await replaceSafe();
+
+      expect(response.status).toBe(404);
+      expect(response.body.message).toContain('Team has no Safe to replace');
+    });
+
+    it('returns the Safe unchanged when the replacement is retried', async () => {
+      vi.mocked(prisma.teamContract.findFirst)
+        .mockReset()
+        .mockResolvedValue({ ...brokenSafe, address: newSafeAddress.toLowerCase() } as never);
+
+      const response = await replaceSafe();
+
+      expect(response.status).toBe(200);
+      expect(publicClient.getCode).not.toHaveBeenCalled();
+      expect(prisma.teamContract.update).not.toHaveBeenCalled();
+    });
+
+    it('[AC-US-SAFE-001-13] refuses an address already registered to another team', async () => {
+      vi.mocked(prisma.teamContract.findFirst)
+        .mockReset()
+        .mockResolvedValueOnce(brokenSafe as never)
+        .mockResolvedValueOnce({
+          ...brokenSafe,
+          id: 8,
+          teamId: 2,
+          address: newSafeAddress,
+        } as never);
+
+      const response = await replaceSafe();
+
+      expect(response.status).toBe(409);
+      expect(response.body.message).toContain('Safe address is already assigned to another team');
+      expect(prisma.teamContract.update).not.toHaveBeenCalled();
+    });
+
+    it.each(['P2002', 'P2025'])('returns 409 when a concurrent write wins (%s)', async (code) => {
+      vi.mocked(prisma.teamContract.update).mockRejectedValue(
+        new Prisma.PrismaClientKnownRequestError('Conflict', { code, clientVersion: '6.0.0' })
+      );
+
+      const response = await replaceSafe();
+
+      expect(response.status).toBe(409);
+      expect(response.body.message).toContain('Safe replacement conflict');
     });
   });
 

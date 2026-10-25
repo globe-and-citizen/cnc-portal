@@ -29,6 +29,13 @@ export const addContractBodySchema = z.object({
   }),
 });
 
+// Replace team Safe request body — the new address takes the place of a
+// registered Safe that has no contract on-chain.
+export const replaceSafeBodySchema = z.object({
+  teamId: teamIdSchema,
+  contractAddress: addressSchema,
+});
+
 // Sync contracts request body
 export const syncContractsBodySchema = z.object({
   teamId: teamIdSchema,
