@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { zeroAddress } from 'viem'
 import { useGetTeamQuery } from '@/queries/team.queries'
 import * as safeQueries from '@/queries/safe.queries'
+import * as cowQueries from '@/queries/cow.queries'
 import { USDC_ADDRESS } from '@/constant'
 import type { SafeIncomingTransfer } from '@/types/safe'
 import { mockTeamData } from '@/tests/mocks'
@@ -56,6 +57,21 @@ describe('Safe exchanges in the Accounting data layer', () => {
       error: ref(null),
       refetch
     } as unknown as ReturnType<typeof safeQueries.useGetSafeTransfersQuery>)
+    const cowFee = {
+      owner: safe,
+      status: 'fulfilled',
+      sellToken: USDC_ADDRESS,
+      buyToken: token,
+      executedFee: '1000000',
+      executedFeeToken: USDC_ADDRESS
+    }
+    const orders = vi
+      .spyOn(cowQueries, 'useGetCowTransactionOrdersQuery')
+      .mockReturnValue(
+        ref([{ txHash: data.value[1]!.transactionHash, data: [cowFee] }]) as unknown as ReturnType<
+          typeof cowQueries.useGetCowTransactionOrdersQuery
+        >
+      )
     vi.mocked(useGetTeamQuery).mockReturnValue({
       data: ref({
         ...mockTeamData,
@@ -83,9 +99,11 @@ describe('Safe exchanges in the Accounting data layer', () => {
       expect(
         purchase.lines.find((line) => line.movement?.asset?.symbol === 'AWETH')?.movement?.rate
       ).toBe(1800000000n)
-      expect(
-        purchase.lines.some((line) => line.account.family.name === 'Asset Exchange Loss')
-      ).toBe(true)
+      const lineOf = (account: string) =>
+        purchase.lines.find((line) => line.account.family.name === account)
+      // $20 USDC for $18 of AWETH: the $1 CoW fee is a transaction fee, the rest an exchange loss.
+      expect(lineOf('Transaction Fee Expense')?.debit).toBe(10n ** 24n)
+      expect(lineOf('Asset Exchange Loss')?.debit).toBe(10n ** 24n)
       expect(accounting.status.state.value).toBe('ready')
       await accounting.refetch()
       expect(refetch).toHaveBeenCalledOnce()
@@ -99,6 +117,7 @@ describe('Safe exchanges in the Accounting data layer', () => {
       ).toBe(true)
     } finally {
       feed.mockRestore()
+      orders.mockRestore()
     }
   })
 })

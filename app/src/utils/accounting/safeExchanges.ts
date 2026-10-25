@@ -19,8 +19,37 @@ function marketAmount(entry: JournalEntryDraft): bigint {
   )
 }
 
+/** A USD-only line of a swap's operation: its fee or its exchange result. */
+function resultDraft(
+  primary: JournalEntryDraft,
+  suffix: string,
+  debit: JournalEntryDraft['debit'],
+  credit: JournalEntryDraft['credit'],
+  amount: bigint,
+  memo: string
+): JournalEntryDraft {
+  return makeJournalEntryDraft({
+    id: `${primary.id}-${suffix}`,
+    txHash: primary.txHash,
+    sourceOperationId: primary.sourceOperationId,
+    timestamp: primary.timestamp,
+    useCase: 'SAFE-SWAP',
+    debit,
+    credit,
+    token: 'usdc',
+    rawAmount: '0',
+    rate: 1,
+    carryingAmount: amount,
+    memo
+  })
+}
+
 /**
  * Full-history weighted-average carrying basis, replayed on every source/rate refresh.
+ *
+ * A fee CoW Protocol reports is valued at the sold token's market rate and booked as
+ * Transaction Fee Expense, so the exchange gain or loss excludes it like the Safe's swap
+ * overview does; together they still equal proceeds less carrying value.
  *
  * Within one operation, non-exchange entries (e.g. a same-operation mint) are applied
  * first as ordinary evidence — never as another swap receipt. A non-exchange depletion
@@ -85,6 +114,10 @@ export function prepareSafeExchanges(drafts: readonly JournalEntryDraft[]): Jour
     }
     const incoming = exchange.filter((entry) => entry.debit === 'Cash — Safe')
     const outgoing = exchange.filter((entry) => entry.credit === 'Cash — Safe')
+    const fee = outgoing.reduce(
+      (sum, entry) => sum + marketAmount({ ...entry, rawAmount: entry.feeRawAmount ?? '0' }),
+      0n
+    )
     let basis = 0n
     let complete = incoming.every(
       (entry) =>
@@ -107,26 +140,29 @@ export function prepareSafeExchanges(drafts: readonly JournalEntryDraft[]): Jour
         (sum, entry) => sum + (entry.carryingAmount ?? marketAmount(entry)),
         0n
       )
-      const delta = received - basis
-      if (delta !== 0n) {
-        const primary = incoming[0]!
+      const delta = received + fee - basis
+      if (fee > 0n)
         group.push(
-          makeJournalEntryDraft({
-            id: `${primary.id}-exchange-result`,
-            txHash: primary.txHash,
-            sourceOperationId: primary.sourceOperationId,
-            timestamp: primary.timestamp,
-            useCase: 'SAFE-SWAP',
-            debit: delta < 0n ? 'Asset Exchange Loss' : null,
-            credit: delta > 0n ? 'Asset Exchange Gain' : null,
-            token: 'usdc',
-            rawAmount: '0',
-            rate: 1,
-            carryingAmount: delta < 0n ? -delta : delta,
-            memo: 'Asset exchange proceeds less weighted-average carrying value'
-          })
+          resultDraft(
+            incoming[0]!,
+            'transaction-fee',
+            'Transaction Fee Expense',
+            null,
+            fee,
+            'Transaction fee CoW Protocol took from the asset given up'
+          )
         )
-      }
+      if (delta !== 0n)
+        group.push(
+          resultDraft(
+            incoming[0]!,
+            'exchange-result',
+            delta < 0n ? 'Asset Exchange Loss' : null,
+            delta > 0n ? 'Asset Exchange Gain' : null,
+            delta < 0n ? -delta : delta,
+            'Asset exchange proceeds less weighted-average carrying value, excluding the fee'
+          )
+        )
     }
     for (const entry of incoming) add(entry)
     result.push(...group)

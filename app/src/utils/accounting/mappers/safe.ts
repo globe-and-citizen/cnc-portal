@@ -5,7 +5,8 @@
  * token transfers (native or ERC-20) interpreted relative to the Safe address:
  *
  * - Contracts outside the CNC tokens that Safe does not trust are ignored (fake airdrops).
- * - Evidenced different-asset settlement pairs become SAFE-SWAP.
+ * - Evidenced different-asset settlement pairs become SAFE-SWAP; the fee CoW Protocol
+ *   reports rides on the sold leg so it is booked as Transaction Fee Expense.
  * - Trusted discovered assets, mints and ambiguous multi-asset receipts remain unclassified.
  * - **Other inflow** (to the Safe):
  *   - from an internal pocket → internal move (Dr Cash — Safe · Cr that pocket)
@@ -36,10 +37,20 @@ export interface SafeTransferRow {
   asset?: AssetMetadata
 }
 
+/** A fee CoW Protocol reports for one swap, taken from the token the Safe sold. */
+export interface SafeSwapFeeRow {
+  txHash: string
+  /** ERC-20 contract the fee was taken from. */
+  token: string
+  /** Fee in the token's base units (stringified bigint). */
+  amount: string
+}
+
 export interface SafeMapperInput {
   /** The team's Safe address — classifies each transfer as inflow vs outflow. */
   safeAddress: string
   transfers?: readonly SafeTransferRow[]
+  swapFees?: readonly SafeSwapFeeRow[]
 }
 
 const SAFE = 'Cash — Safe' as const
@@ -206,11 +217,32 @@ function inferOutflow(
   })
 }
 
+/**
+ * Take the reported fee of a swap's sold token once, capped at the amount sold, so it lands
+ * on a single outgoing leg of that token.
+ */
+function takeSwapFee(
+  fees: Map<string, bigint>,
+  row: SafeTransferRow
+): Pick<JournalEntryDraft, 'feeRawAmount'> {
+  const key = `${row.txHash?.toLowerCase()}:${row.token?.toLowerCase()}`
+  const fee = fees.get(key)
+  if (!fee) return {}
+  fees.delete(key)
+  const amount = BigInt(row.amount)
+  return { feeRawAmount: String(fee < amount ? fee : amount) }
+}
+
 /** Map every trusted Safe transfer to a ledger entry, skipping ones that miss the Safe. */
 export function mapSafeTransfers(input: SafeMapperInput, ctx: MapperContext): JournalEntryDraft[] {
   const transfers = (input.transfers ?? []).filter((row) => isTrustedTransfer(row, ctx))
   const entries: JournalEntryDraft[] = []
   const exchanges = exchangeRowIds({ ...input, transfers }, ctx)
+  const swapFees = new Map<string, bigint>()
+  for (const fee of input.swapFees ?? []) {
+    const key = `${fee.txHash.toLowerCase()}:${fee.token.toLowerCase()}`
+    swapFees.set(key, (swapFees.get(key) ?? 0n) + BigInt(fee.amount))
+  }
   const mixedOperations = new Set<string>()
   const byTransaction = new Map<string, SafeTransferRow[]>()
   for (const row of transfers) {
@@ -247,6 +279,7 @@ export function mapSafeTransfers(input: SafeMapperInput, ctx: MapperContext): Jo
           token,
           ...erc20AssetFields(token, row.asset),
           rawAmount: row.amount,
+          ...(incoming ? {} : takeSwapFee(swapFees, row)),
           counterparty: incoming ? row.from : row.to,
           memo: 'Safe asset exchange'
         })

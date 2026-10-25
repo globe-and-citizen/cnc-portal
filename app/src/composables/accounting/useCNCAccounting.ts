@@ -37,6 +37,7 @@ import { useGetTeamOfficersQuery } from '@/queries/contract.queries'
 import { useGetExpensesQuery } from '@/queries/expense.queries'
 import { useGetJournalAccountAssignmentsQuery } from '@/queries/journalAccountAssignment.queries'
 import { useGetSafeTransfersQuery } from '@/queries/safe.queries'
+import { useGetCowTransactionOrdersQuery } from '@/queries/cow.queries'
 import { useGetTeamWeeklyClaimsQuery } from '@/queries/weeklyClaim.queries'
 import {
   useGetAssetMarketsQuery,
@@ -65,6 +66,7 @@ import {
   findPreferredCurrentContractAddress
 } from '@/utils/accounting/contractGenerations'
 import { prepareSafeExchanges } from '@/utils/accounting/safeExchanges'
+import { safeSwapTransactionHashes } from '@/utils/accounting/safeTransfers'
 
 /** Safe Transaction Service page size; every page is loaded before assembly. */
 const SAFE_PAGE_SIZE = 500
@@ -154,6 +156,9 @@ export function useCNCAccounting(
     pathParams: { safeAddress },
     queryParams: { limit: SAFE_PAGE_SIZE }
   })
+  const safeSwapOrders = useGetCowTransactionOrdersQuery(() =>
+    safeSwapTransactionHashes(safeAssetTransfers.data.value, safeAddress.value)
+  )
 
   // Source feeds are first mapped with the explicit override when supplied, or
   // with the zero-rate gap. This produces the token/date request set without
@@ -172,6 +177,7 @@ export function useCNCAccounting(
     vestingEvents: vesting.data.value?.events,
     safeDepositRouterEvents: router.data.value?.events,
     safeAssetTransfers: safeAssetTransfers.data.value ?? [],
+    safeSwapOrders: safeSwapOrders.value,
     weeklyClaims: weeklyClaims.data.value?.data,
     expenses: expenses.data.value,
     accountAssignments: accountAssignments.data.value

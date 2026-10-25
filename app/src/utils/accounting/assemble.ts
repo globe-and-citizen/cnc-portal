@@ -18,6 +18,7 @@ import type { TeamContract } from '@/types/teamContract'
 import type { WeeklyClaim } from '@/types/cash-remuneration'
 import type { ExpenseResponse } from '@/types/expense-account'
 import type { SafeIncomingTransfer, SafeTransaction } from '@/types/safe'
+import type { CowOrder } from '@/types/cow'
 import type { JournalAccountAssignmentRecord } from '@/types/journal-account-assignment'
 import type { BankEventFeed } from '@/types/contract-events/bank'
 import type { CashRemunerationEventFeed } from '@/types/contract-events/cash-remuneration'
@@ -49,7 +50,11 @@ import {
 } from '@/utils/accounting/sherRate'
 import { settleWithdrawnSher } from '@/utils/accounting/sherIssuance'
 import { atDate } from '@/utils/accounting/mappers/context'
-import { toSafeTransferRows, toSafeOutgoingTransferRows } from '@/utils/accounting/safeTransfers'
+import {
+  toSafeTransferRows,
+  toSafeOutgoingTransferRows,
+  toSafeSwapFeeRows
+} from '@/utils/accounting/safeTransfers'
 
 /** The raw feeds for one team, as fetched by {@link useCNCAccounting}. */
 export interface CncAccountingInput {
@@ -81,6 +86,8 @@ export interface CncAccountingInput {
   safeAssetTransfers?: readonly SafeIncomingTransfer[] | null
   /** Executed multisig transactions — outflows from the Safe. */
   safeOutgoingTransactions?: readonly SafeTransaction[] | null
+  /** CoW Protocol orders settled by each Safe swap transaction — the swap fee evidence. */
+  safeSwapOrders?: readonly { txHash: string; data?: readonly CowOrder[] }[] | null
   // ── portal DB rows (off-chain enrichment context, spec §3.2) ──
   weeklyClaims?: readonly WeeklyClaim[]
   expenses?: readonly ExpenseResponse[]
@@ -203,7 +210,11 @@ function toJournalEntrySources(input: CncAccountingInput): JournalEntrySources {
             ),
             ...toSafeOutgoingTransferRows(input.safeOutgoingTransactions, input.safeAddress)
           ]
-    sources.safe = { safeAddress: input.safeAddress, transfers }
+    sources.safe = {
+      safeAddress: input.safeAddress,
+      transfers,
+      swapFees: toSafeSwapFeeRows(input.safeSwapOrders, input.safeAddress)
+    }
   }
 
   return sources

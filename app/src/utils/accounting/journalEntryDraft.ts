@@ -128,6 +128,11 @@ export interface JournalEntryDraft {
   asset?: AssetMetadata
   /** Exact carrying value on exchange/disposal lines; market-rate evidence stays separate. */
   carryingAmount?: UsdAmount
+  /**
+   * Part of an asset given up in a Safe swap that CoW Protocol reports as its fee, in the
+   * same base units as {@link rawAmount}; booked as Transaction Fee Expense.
+   */
+  feeRawAmount?: string
   /** Reconciliation gaps that prevent complete books. */
   accountingIssue?:
     | 'asset-metadata-unavailable'

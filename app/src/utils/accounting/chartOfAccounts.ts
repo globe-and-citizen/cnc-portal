@@ -9,7 +9,8 @@
  * Scope notes (spec §5–§6):
  * - `Infrastructure Expense` and `Network Fee Expense` are intentionally absent:
  *   no accounting data feed exists for either yet.
- * - The Bank protocol fee (`FeePaid`) is booked as `Transaction Fee Expense`.
+ * - The Bank protocol fee (`FeePaid`) is booked as `Transaction Fee Expense`, and so is
+ *   the fee CoW Protocol reports on a Safe swap.
  * - SHER wages are a non-cash equity transaction: `Deferred SHER Compensation`
  *   (contra-equity) and `SHERS To Be Issued` (equity), not an expense.
  */
