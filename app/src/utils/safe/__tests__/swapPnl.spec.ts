@@ -110,3 +110,37 @@ describe('[US-SAFE-007] computeSafeSwapPnl', () => {
     expect(computeSafeSwapPnl([], SAFE, prices(1), () => undefined).pnlRatio).toBeNull()
   })
 })
+
+describe('[US-SAFE-008] computeSafeSwapPnl swap rows', () => {
+  it('[AC-US-SAFE-008-01] lists each swap with the tokens sold and received and their values', () => {
+    const fee = { asset: USDC, symbol: 'USDC', quantity: 3.5 }
+    const { swaps } = computeSafeSwapPnl(swap(), SAFE, prices(2400), () => fee)
+
+    expect(swaps).toEqual([
+      {
+        txHash: '0xswap',
+        executionDate: '2026-06-01T23:30:00Z',
+        given: [{ asset: USDC, symbol: 'USDC', quantity: 1000, usd: 1000 }],
+        received: [{ asset: WETH, symbol: 'WETH', quantity: 0.5, usd: 1200 }],
+        swappedUsd: 996.5,
+        currentUsd: 1200,
+        pnlUsd: 203.5,
+        fee: { symbol: 'USDC', quantity: 3.5, usd: 3.5 }
+      }
+    ])
+  })
+
+  it('[AC-US-SAFE-008-02] orders the swaps newest first', () => {
+    const later = swap('0xlater').map((row) => ({ ...row, executionDate: '2026-07-01T00:00:00Z' }))
+    const { swaps } = computeSafeSwapPnl([...swap(), ...later], SAFE, prices(2400), () => undefined)
+
+    expect(swaps.map(({ txHash }) => txHash)).toEqual(['0xlater', '0xswap'])
+  })
+
+  it('[AC-US-SAFE-008-03] leaves a value unavailable when a token of the swap is unpriced', () => {
+    const [row] = computeSafeSwapPnl(swap(), SAFE, prices(undefined), () => undefined).swaps
+
+    expect(row).toMatchObject({ swappedUsd: 1000, currentUsd: null, pnlUsd: null, fee: null })
+    expect(row!.received[0]!.usd).toBeNull()
+  })
+})

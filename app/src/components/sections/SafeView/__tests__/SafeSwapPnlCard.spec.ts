@@ -22,6 +22,7 @@ const SAFE = '0x5AFE00000000000000000000000000000000cafe'
 
 const report = (overrides: Partial<SafeSwapPnl> = {}): SafeSwapPnl => ({
   count: 2,
+  swaps: [],
   swappedUsd: 1000,
   currentUsd: 1200,
   pnlUsd: 200,

@@ -140,6 +140,7 @@
           </p>
         </div>
         <div class="space-y-6">
+          <SafeSwapsTable :address="safeAddress" />
           <SafeTransactions :address="safeAddress" />
           <SafeIncomingTransactions :address="safeAddress" />
         </div>
@@ -233,6 +234,7 @@ import { useGetSafeBalancesQuery } from '@/queries/safeClient.queries'
 import { toSafeHoldingRows } from '@/utils/safe/portfolio'
 import { useStorage } from '@vueuse/core'
 import SafeTransactions from '@/components/sections/SafeView/SafeTransactions.vue'
+import SafeSwapsTable from '@/components/sections/SafeView/SafeSwapsTable.vue'
 import SafeIncomingTransactions from '@/components/sections/SafeView/SafeIncomingTransactions.vue'
 import SafeDeploymentCard from '@/components/sections/SafeView/SafeDeploymentCard.vue'
 import SafeImportCard from '@/components/sections/SafeView/SafeImportCard.vue'
