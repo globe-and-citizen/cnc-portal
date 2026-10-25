@@ -95,7 +95,7 @@ import { isAddress, type Address } from 'viem'
 import { useTeamStore, useUserDataStore } from '@/stores'
 
 import { useDeploySafe } from '@/composables/safe/useSafeDeployment'
-import { useCreateContractMutation } from '@/queries/contract.queries'
+import { useCreateContractMutation, useReplaceSafeMutation } from '@/queries/contract.queries'
 import { log } from '@/lib/logging'
 import { NETWORK } from '@/constant'
 import { useToast } from '@nuxt/ui/composables'
@@ -105,6 +105,8 @@ import AddressTooltip from '@/components/ui/AddressTooltip.vue'
 interface Props {
   teamId: number
   teamOwnerAddress?: string
+  /** Registers the deployed Safe in place of the team's Safe that has no contract. */
+  replace?: boolean
 }
 
 const props = defineProps<Props>()
@@ -118,7 +120,9 @@ const teamStore = useTeamStore()
 const userDataStore = useUserDataStore()
 
 const { mutate: deploySafe, isPending: isDeploying } = useDeploySafe()
-const { mutate: createContract, isPending: isRegistering } = useCreateContractMutation()
+const { mutate: createContract, isPending: isCreating } = useCreateContractMutation()
+const { mutate: replaceSafe, isPending: isReplacing } = useReplaceSafeMutation()
+const isRegistering = computed(() => isCreating.value || isReplacing.value)
 const registrationRetryAddress = ref<Address>()
 
 const canDeploy = computed(
@@ -149,6 +153,27 @@ const showDeploySuccess = (safeAddress: Address) => {
 }
 
 function registerSafe(safeAddress: Address) {
+  const callbacks = {
+    onSuccess: () => {
+      registrationRetryAddress.value = undefined
+      showDeploySuccess(safeAddress)
+    },
+    onError: (err: unknown) => {
+      registrationRetryAddress.value = safeAddress
+      const message = err instanceof Error ? err.message : 'Failed to register Safe contract'
+      toast.add({
+        title: 'Registration pending',
+        description: `Safe deployed on-chain, but registration failed: ${message}`,
+        color: 'warning'
+      })
+      log.error('Safe registration failed:', err)
+    }
+  }
+
+  if (props.replace) {
+    replaceSafe({ body: { teamId: props.teamId, contractAddress: safeAddress } }, callbacks)
+    return
+  }
   createContract(
     {
       body: {
@@ -158,22 +183,7 @@ function registerSafe(safeAddress: Address) {
         deployer: userDataStore.address!
       }
     },
-    {
-      onSuccess: () => {
-        registrationRetryAddress.value = undefined
-        showDeploySuccess(safeAddress)
-      },
-      onError: (err) => {
-        registrationRetryAddress.value = safeAddress
-        const message = err instanceof Error ? err.message : 'Failed to register Safe contract'
-        toast.add({
-          title: 'Registration pending',
-          description: `Safe deployed on-chain, but registration failed: ${message}`,
-          color: 'warning'
-        })
-        log.error('Safe registration failed:', err)
-      }
-    }
+    callbacks
   )
 }
 

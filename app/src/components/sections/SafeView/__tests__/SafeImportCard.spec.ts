@@ -27,11 +27,20 @@ vi.mock('@/composables/safe/useSafeImport', () => ({
   useInspectSafe: vi.fn(() => mockInspection)
 }))
 
+const mockReplaceSafe = {
+  mutate: vi.fn(),
+  error: ref<Error>(),
+  isPending: ref(false)
+}
+
 vi.mock('@/queries/contract.queries', () => ({
-  useCreateContractMutation: vi.fn(() => mockCreateContract)
+  useCreateContractMutation: vi.fn(() => mockCreateContract),
+  useReplaceSafeMutation: vi.fn(() => mockReplaceSafe)
 }))
 
-function mountCard(props: Partial<{ teamId: number; teamOwnerAddress: string }> = {}) {
+function mountCard(
+  props: Partial<{ teamId: number; teamOwnerAddress: string; replace: boolean }> = {}
+) {
   return mount(SafeImportCard, {
     props: { teamId: Number(mockTeamData.id), ...props }
   })
@@ -102,6 +111,32 @@ describe('[US-SAFE-001] SafeImportCard', () => {
     expect(mockToast.add).toHaveBeenCalledWith(
       expect.objectContaining({ title: 'Success', color: 'success' })
     )
+  })
+
+  it('[AC-US-SAFE-001-12] registers the inspected Safe in place of the missing one', async () => {
+    mockReplaceSafe.mutate.mockImplementation(
+      (_params: unknown, options?: { onSuccess?: () => void }) => options?.onSuccess?.()
+    )
+    const wrapper = mountCard({ replace: true })
+    await wrapper.find('[data-test="safe-import-address-input"]').setValue(SAFE_ADDRESS)
+    await wrapper.find('[data-test="inspect-safe-button"]').trigger('click')
+    await flushPromises()
+    await wrapper.find('[data-test="confirm-safe-import-button"]').trigger('click')
+
+    expect(mockReplaceSafe.mutate).toHaveBeenCalledWith(
+      { body: { teamId: Number(mockTeamData.id), contractAddress: SAFE_ADDRESS } },
+      expect.any(Object)
+    )
+    expect(mockCreateContract.mutate).not.toHaveBeenCalled()
+    expect(wrapper.emitted('safe-imported')).toEqual([[SAFE_ADDRESS]])
+  })
+
+  it('shows a refused replacement as an import error', async () => {
+    mockReplaceSafe.error.value = new Error('The team Safe exists on-chain and cannot be replaced')
+    const wrapper = mountCard({ replace: true })
+
+    expect(wrapper.find('[data-test="safe-import-error"]').text()).toContain('cannot be replaced')
+    mockReplaceSafe.error.value = undefined
   })
 
   it('uses the team owner passed by the creation flow to authorize an import', async () => {

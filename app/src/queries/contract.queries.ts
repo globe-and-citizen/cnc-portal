@@ -187,3 +187,29 @@ export const useCreateOfficerMutation = createMutationHook<
   endpoint: 'contract/officer',
   invalidateKeys: [contractKeys.all, teamKeys.all]
 })
+
+// ============================================================================
+// PUT /contract/safe - Replace a team Safe that has no contract on-chain
+// ============================================================================
+
+export interface ReplaceSafeParams {
+  body: {
+    /** Team ID */
+    teamId: string | number
+    /** Address of the Safe that takes the place of the missing one */
+    contractAddress: string
+  }
+}
+
+/**
+ * Replace the team's registered Safe with a new one. The backend refuses while a
+ * contract exists at the registered address, so only a missing Safe is replaced.
+ *
+ * @endpoint PUT /contract/safe
+ * @body { teamId, contractAddress }
+ */
+export const useReplaceSafeMutation = createMutationHook<unknown, ReplaceSafeParams>({
+  method: 'PUT',
+  endpoint: 'contract/safe',
+  invalidateKeys: [teamKeys.all]
+})

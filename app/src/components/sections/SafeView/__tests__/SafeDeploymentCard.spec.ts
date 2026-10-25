@@ -28,13 +28,16 @@ vi.mock('@/composables/safe/useSafeDeployment', () => ({
   useDeploySafe: vi.fn(() => mockDeploySafeMutation)
 }))
 
+const mockReplaceSafeMutation = { mutate: vi.fn(), isPending: ref(false) }
+
 vi.mock('@/queries/contract.queries', () => ({
-  useCreateContractMutation: vi.fn(() => mockCreateContractMutation)
+  useCreateContractMutation: vi.fn(() => mockCreateContractMutation),
+  useReplaceSafeMutation: vi.fn(() => mockReplaceSafeMutation)
 }))
 
 const SAFE_ADDRESS = '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
 
-function mountCard(props: { teamId?: number; teamOwnerAddress?: string } = {}) {
+function mountCard(props: { teamId?: number; teamOwnerAddress?: string; replace?: boolean } = {}) {
   return mount(SafeDeploymentCard, {
     props: { teamId: Number(mockTeamData.id), ...props }
   })
@@ -122,6 +125,25 @@ describe('SafeDeploymentCard', () => {
     expect(mockToast.add).toHaveBeenCalledWith(
       expect.objectContaining({ title: 'Success', color: 'success' })
     )
+    expect(wrapper.emitted('safeDeployed')).toEqual([[SAFE_ADDRESS]])
+  })
+
+  it('[AC-US-SAFE-001-12] registers the deployed Safe in place of the missing one', async () => {
+    mockUserStore.address = mockTeamData.ownerAddress
+    mockTeamStore.currentTeam = mockTeamData
+    mockReplaceSafeMutation.mutate.mockImplementation(
+      (_vars: unknown, opts?: { onSuccess?: () => void }) => opts?.onSuccess?.()
+    )
+
+    const wrapper = mountCard({ replace: true })
+    await wrapper.find('[data-test="deploy-safe-button"]').trigger('click')
+    await flushPromises()
+
+    expect(mockReplaceSafeMutation.mutate).toHaveBeenCalledWith(
+      { body: { teamId: Number(mockTeamData.id), contractAddress: SAFE_ADDRESS } },
+      expect.any(Object)
+    )
+    expect(mockCreateContractMutation.mutate).not.toHaveBeenCalled()
     expect(wrapper.emitted('safeDeployed')).toEqual([[SAFE_ADDRESS]])
   })
 

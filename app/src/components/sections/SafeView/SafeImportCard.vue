@@ -158,7 +158,7 @@ import { isAddress, type Address } from 'viem'
 import { useToast } from '@nuxt/ui/composables'
 import { useUserDataStore, useTeamStore } from '@/stores'
 import { useInspectSafe } from '@/composables/safe/useSafeImport'
-import { useCreateContractMutation } from '@/queries/contract.queries'
+import { useCreateContractMutation, useReplaceSafeMutation } from '@/queries/contract.queries'
 import { NETWORK } from '@/constant'
 import AddressTooltip from '@/components/ui/AddressTooltip.vue'
 import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
@@ -166,6 +166,8 @@ import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
 interface Props {
   teamId: number
   teamOwnerAddress?: string
+  /** Registers the imported Safe in place of the team's Safe that has no contract. */
+  replace?: boolean
 }
 
 const props = defineProps<Props>()
@@ -187,9 +189,15 @@ const {
 } = useInspectSafe()
 const {
   mutate: createContract,
-  isPending: isRegistering,
-  error: registrationError
+  isPending: isCreating,
+  error: createError
 } = useCreateContractMutation()
+const {
+  mutate: replaceSafe,
+  isPending: isReplacing,
+  error: replaceError
+} = useReplaceSafeMutation()
+const isRegistering = computed(() => isCreating.value || isReplacing.value)
 
 const canManageSafe = computed(
   () =>
@@ -219,7 +227,7 @@ const importPermissionHint = computed(() => {
 })
 
 const inspectionError = computed(
-  () => inspectError.value?.message || registrationError.value?.message
+  () => inspectError.value?.message || createError.value?.message || replaceError.value?.message
 )
 
 function handleInspect() {
@@ -238,21 +246,28 @@ function resetInspection() {
 function handleImport() {
   if (!inspectedSafe.value || !userDataStore.address) return
 
+  const safeAddress = inspectedSafe.value.address
+  const callbacks = {
+    onSuccess: () => {
+      toast.add({ title: 'Success', description: 'Safe imported successfully', color: 'success' })
+      emit('safe-imported', safeAddress)
+    }
+  }
+
+  if (props.replace) {
+    replaceSafe({ body: { teamId: props.teamId, contractAddress: safeAddress } }, callbacks)
+    return
+  }
   createContract(
     {
       body: {
         teamId: String(props.teamId),
-        contractAddress: inspectedSafe.value.address,
+        contractAddress: safeAddress,
         contractType: 'Safe',
         deployer: userDataStore.address
       }
     },
-    {
-      onSuccess: () => {
-        toast.add({ title: 'Success', description: 'Safe imported successfully', color: 'success' })
-        emit('safe-imported', inspectedSafe.value!.address)
-      }
-    }
+    callbacks
   )
 }
 </script>

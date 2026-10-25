@@ -63,6 +63,7 @@
           data-test="safe-missing-retry"
           @click="refetchBytecode()"
         />
+        <SafeReplaceModal v-if="canManageSafe" @safe-replaced="handleSafeRegistered" />
       </template>
     </UAlert>
 
@@ -236,6 +237,7 @@ import SafeTransactions from '@/components/sections/SafeView/SafeTransactions.vu
 import SafeIncomingTransactions from '@/components/sections/SafeView/SafeIncomingTransactions.vue'
 import SafeDeploymentCard from '@/components/sections/SafeView/SafeDeploymentCard.vue'
 import SafeImportCard from '@/components/sections/SafeView/SafeImportCard.vue'
+import SafeReplaceModal from '@/components/sections/SafeView/SafeReplaceModal.vue'
 import { useGetSafeBytecodeQuery } from '@/queries/safe.queries'
 import { useTeamStore, useUserDataStore } from '@/stores'
 import { normalizeSafeAddress } from '@/utils/safe/address'
