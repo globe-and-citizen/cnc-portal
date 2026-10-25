@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient, type QueryClient } from '@tanstack/vue-query'
-import { readContract } from '@wagmi/core'
+import { getBytecode, readContract } from '@wagmi/core'
 import { computed, toValue } from 'vue'
 import { erc20Abi, isAddress, type Address } from 'viem'
 import { config } from '@/wagmi.config'
@@ -44,6 +44,8 @@ export const safeKeys = {
   infos: () => [...safeKeys.all, 'info'] as const,
   info: (safeAddress: string | undefined) =>
     [...safeKeys.infos(), { safeAddress: safeAddressKey(safeAddress) }] as const,
+  bytecode: (safeAddress: string | undefined) =>
+    [...safeKeys.all, 'bytecode', { safeAddress: safeAddressKey(safeAddress), chainId }] as const,
   transactionLists: () => [...safeKeys.all, 'transactions'] as const,
   transactions: (safeAddress: string | undefined) =>
     [...safeKeys.transactionLists(), { safeAddress: safeAddressKey(safeAddress) }] as const,
@@ -120,6 +122,33 @@ export function useGetSafeInfoQuery(params: GetSafeInfoParams) {
         { signal }
       )
       return data
+    }
+  })
+}
+
+// ============================================================================
+// eth_getCode - Read the contract code deployed at the Safe address
+// ============================================================================
+
+/**
+ * Read the code deployed at the Safe address on the configured chain. `0x`
+ * means no contract exists there, whatever Safe services answer.
+ *
+ * @endpoint eth_getCode on the configured chain RPC
+ * @pathParams { safeAddress: string }
+ * @queryParams none
+ * @body none
+ */
+export function useGetSafeBytecodeQuery(params: GetSafeInfoParams) {
+  const safeAddress = computed(() => toValue(params.pathParams.safeAddress))
+
+  return useQuery<string>({
+    ...queryPresets.moderate,
+    queryKey: computed(() => safeKeys.bytecode(safeAddress.value)),
+    enabled: computed(() => Boolean(safeAddress.value)),
+    queryFn: async () => {
+      const address = requireSafeAddress(safeAddress.value)
+      return (await getBytecode(config, { address, chainId })) ?? '0x'
     }
   })
 }

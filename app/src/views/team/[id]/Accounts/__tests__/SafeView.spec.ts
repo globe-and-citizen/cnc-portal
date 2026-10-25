@@ -1,10 +1,91 @@
-import { describe, expect, it } from 'vitest'
-import { flushPromises, shallowMount } from '@vue/test-utils'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { flushPromises, mount, shallowMount } from '@vue/test-utils'
 import SafeView from '../SafeView.vue'
 import { mockTeamData, mockTeamStore } from '@/tests/mocks'
 import { mockUseContractBalance, makeTokenBalance } from '@/tests/mocks/composables.mock'
+import { toValue } from 'vue'
+import { useGetSafeBalancesQuery } from '@/queries/safeClient.queries'
+
+const safeQueries = await vi.hoisted(async () => {
+  const { ref } = await import('vue')
+  return {
+    bytecode: ref<string | undefined>(undefined),
+    isLoading: ref(false),
+    refetch: vi.fn()
+  }
+})
+
+vi.mock('@/queries/safe.queries', () => ({
+  useGetSafeBytecodeQuery: () => ({
+    data: safeQueries.bytecode,
+    isLoading: safeQueries.isLoading,
+    refetch: safeQueries.refetch
+  })
+}))
 
 describe('[US-SAFE-001] [US-SAFE-002] SafeView.vue', () => {
+  beforeEach(() => {
+    safeQueries.bytecode.value = undefined
+    safeQueries.isLoading.value = false
+  })
+
+  it('[AC-US-SAFE-002-11] replaces the Safe sections with one notice when no contract exists at the address', () => {
+    mockTeamStore.getContractAddressByType.mockReturnValue(
+      '0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB'
+    )
+    safeQueries.bytecode.value = '0x'
+    const wrapper = shallowMount(SafeView)
+
+    expect(wrapper.find('[data-test="safe-missing-notice"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="safe-status-badge"]').attributes('color')).toBe('error')
+    expect(wrapper.find('[data-test="safe-section-navigation"]').exists()).toBe(false)
+    for (const name of ['SafeBalanceSection', 'SafeOwnersCard', 'SafeTransactions']) {
+      expect(wrapper.findComponent({ name }).exists()).toBe(false)
+    }
+    const balanceParams = vi.mocked(useGetSafeBalancesQuery).mock.calls.at(-1)![0]
+    expect(toValue(balanceParams.pathParams.safeAddress)).toBeUndefined()
+    wrapper.unmount()
+  })
+
+  it('checks the chain again on retry', async () => {
+    mockTeamStore.getContractAddressByType.mockReturnValue(
+      '0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB'
+    )
+    safeQueries.bytecode.value = '0x'
+    const wrapper = mount(SafeView, { global: { stubs: { AddressTooltip: true } } })
+
+    await wrapper.find('[data-test="safe-missing-retry"]').trigger('click')
+    await flushPromises()
+
+    expect(safeQueries.refetch).toHaveBeenCalledOnce()
+    wrapper.unmount()
+  })
+
+  it('holds the Safe sections until the chain answers, so no Safe service request starts first', () => {
+    mockTeamStore.getContractAddressByType.mockReturnValue(
+      '0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB'
+    )
+    safeQueries.isLoading.value = true
+    const wrapper = shallowMount(SafeView)
+
+    expect(wrapper.find('[data-test="safe-contract-loading"]').exists()).toBe(true)
+    expect(wrapper.findComponent({ name: 'SafeBalanceSection' }).exists()).toBe(false)
+    wrapper.unmount()
+  })
+
+  it('keeps the Safe sections when a contract exists at the address', () => {
+    mockTeamStore.getContractAddressByType.mockReturnValue(
+      '0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB'
+    )
+    safeQueries.bytecode.value = '0x6080'
+    const wrapper = shallowMount(SafeView)
+
+    expect(wrapper.find('[data-test="safe-missing-notice"]').exists()).toBe(false)
+    expect(wrapper.find('[data-test="safe-status-badge"]').attributes('color')).toBe('success')
+    expect(wrapper.findComponent({ name: 'SafeBalanceSection' }).exists()).toBe(true)
+    wrapper.unmount()
+  })
+
   it('reports a failed balance read separately and clears it when the existing query recovers', async () => {
     mockTeamStore.getContractAddressByType.mockReturnValue(
       '0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB'

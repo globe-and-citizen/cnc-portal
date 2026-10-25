@@ -212,4 +212,25 @@ describe('safe queries', () => {
     ).rejects.toThrow('Safe pagination returned a repeated page')
     expect(get).toHaveBeenCalledTimes(2)
   })
+
+  it('reads the Safe address code on the configured chain and reports an empty account as 0x', async () => {
+    mockWagmiCore.getBytecode.mockResolvedValueOnce(undefined)
+
+    safeQueries.useGetSafeBytecodeQuery({ pathParams: { safeAddress: LOWERCASE_SAFE_ADDRESS } })
+    const query = useQueryFn.mock.calls.at(-1)?.[0] as unknown as {
+      queryKey: { value: unknown }
+      queryFn: () => Promise<string>
+    }
+
+    await expect(query.queryFn()).resolves.toBe('0x')
+    expect(query.queryKey.value).toEqual([
+      'safe',
+      'bytecode',
+      { safeAddress: CHECKSUM_SAFE_ADDRESS, chainId: 137 }
+    ])
+    expect(mockWagmiCore.getBytecode).toHaveBeenCalledWith(expect.anything(), {
+      address: CHECKSUM_SAFE_ADDRESS,
+      chainId: 137
+    })
+  })
 })
