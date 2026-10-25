@@ -89,6 +89,7 @@ flowchart LR
 | US-SAFE-005 | Review Safe transactions                   | Company member             | 🧪 Validation  |
 | US-SAFE-006 | Approve and execute a Safe transaction     | Safe owner                 | 🧪 Validation  |
 | US-SAFE-007 | Review the Safe swap P&L                   | Company member             | 🧪 Validation  |
+| US-SAFE-008 | Review the Safe swaps                      | Company member             | 🧪 Validation  |
 
 ## Test Coverage Overview
 
@@ -120,6 +121,7 @@ Runs of at least three consecutive missing criteria use inclusive ranges with fu
 | US-SAFE-005 | 🧪 Mocked     | ✅ 9/9          | —                                                                                 |
 | US-SAFE-006 | 🧪 Mocked     | ✅ 10/10        | —                                                                                 |
 | US-SAFE-007 | 📋 Planned    | ⚠️ 9/10 met     | `AC-US-SAFE-007-01`                                                               |
+| US-SAFE-008 | 🧪 Mocked     | ✅ 4/4          | —                                                                                 |
 
 Proof obligations use the [shared proof-strategy registry](../../testing/proof-strategies.md). Multiple IDs for one AC are cumulative.
 
@@ -1207,6 +1209,44 @@ condition, related criteria, and a worked example:
 | `AC-US-SAFE-007-10`  | `PS-FRONTEND`       | Frontend         | ✅ Met          |
 
 **Dependencies:** US-SAFE-002
+
+## US-SAFE-008: Review the Safe Swaps
+
+**As a** company member\
+**I want to** see each swap the Safe made, with the tokens it sold and the tokens it received\
+**So that** I can tell which conversions produced the Safe's swap P&L
+
+At the top of the Activity section, a table lists the Safe's swaps, newest first. Each row uses the same valuation rules as the swap P&L
+(`US-SAFE-007`): the swapped value is priced on the swap's day less its reported fee, and the current value is priced today.
+
+### Acceptance Criteria
+
+#### Happy Path
+
+- [x] `AC-US-SAFE-008-01` Each swap shows its date, the tokens sold and the tokens received with their quantities, the swapped value, the
+      current value, the P&L, the reported fee, and the on-chain transaction.
+
+#### Business Rules
+
+- [x] `AC-US-SAFE-008-02` Swaps are listed newest first.
+
+#### Edge & Error Cases
+
+- [x] `AC-US-SAFE-008-03` When a token of a swap cannot be priced, the affected values show as unavailable and the unpriced tokens are
+      named; the P&L is not marked as a gain or a loss.
+- [x] `AC-US-SAFE-008-04` Without a swap the table explains that none exists yet; it shows a loading state while the figures settle and an
+      error when the history or balances cannot be loaded.
+
+### Test Coverage
+
+| Acceptance Criterion | Proof Strategy | Current Evidence | Status |
+| -------------------- | -------------- | ---------------- | ------ |
+| `AC-US-SAFE-008-01`  | `PS-FRONTEND`  | Frontend         | ✅ Met |
+| `AC-US-SAFE-008-02`  | `PS-FRONTEND`  | Frontend         | ✅ Met |
+| `AC-US-SAFE-008-03`  | `PS-FRONTEND`  | Frontend         | ✅ Met |
+| `AC-US-SAFE-008-04`  | `PS-FRONTEND`  | Frontend         | ✅ Met |
+
+**Dependencies:** US-SAFE-007
 
 ## Known Gaps
 
