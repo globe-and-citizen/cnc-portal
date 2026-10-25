@@ -23,7 +23,7 @@ booking of the same exchange.
 
 - Every figure is in USD. Quantities come from the Safe history in token units, with each token's decimals.
 - The figures add up all swaps since the Safe's first transaction. A swap is never split between periods.
-- A reported fee is a transaction cost, not a market result. Like the Transaction Fee Expense account in Accounting, it is taken out of the
+- A reported fee is a transaction cost, not a market result. Accounting books it as Transaction Fee Expense; here it is taken out of the
   swapped value and shown apart, so the P&L excludes it.
 - A figure that cannot be fully priced stays visible and is marked incomplete, never silently treated as complete.
 

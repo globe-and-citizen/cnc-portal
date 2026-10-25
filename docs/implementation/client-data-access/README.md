@@ -73,6 +73,11 @@ neither a CNC token (native, configured payment tokens, SHER) nor marked `truste
 token information. Such a movement creates no ledger entry, no valuation request and no completeness gap. The deposit list still shows the
 raw provider history.
 
+For each transaction in which the Safe both sent and received a token, Accounting reuses the
+[CoW Protocol order query](../../../app/src/queries/cow.queries.ts) that the Safe swap overview reads. A fee reported for the Safe's own
+fulfilled order is booked as `Transaction Fee Expense`; a missing or failed answer keeps the fee inside the exchange result and never makes
+Accounting partial.
+
 Executable evidence: [Gateway request tests](../../../app/src/queries/__tests__/safeClient.queries.spec.ts),
 [pagination and metadata unit tests](../../../app/src/queries/__tests__/safe.queries.spec.ts),
 [Safe source-mapping tests](../../../app/src/utils/accounting/__tests__/safe.spec.ts) and

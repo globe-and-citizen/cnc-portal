@@ -1151,8 +1151,8 @@ The Wallet overview shows four figures, in this order, once the Safe has at leas
 - **Swapped value** — what the swaps gave up, at the USD price of each swap's day, less the fees reported for them.
 - **Current value swap** — what the assets received are worth today.
 - **P&L** — current value swap minus swapped value, with the percentage of the swapped value. It shows the market result only.
-- **Transaction fees** — the fees CoW Protocol reports for the Safe's orders. Like the Transaction Fee Expense account in Accounting, they
-  are a cost of their own, kept apart from the P&L.
+- **Transaction fees** — the fees CoW Protocol reports for the Safe's orders. Accounting books the same fees as Transaction Fee Expense;
+  they are a cost of their own, kept apart from the P&L.
 
 ### Use Cases
 

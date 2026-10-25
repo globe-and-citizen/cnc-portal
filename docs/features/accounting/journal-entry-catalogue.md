@@ -690,8 +690,9 @@ suspense treatment extends pending classification to other unidentified receipts
 
 - **Input:** Opposing movements of different assets sharing one transaction and an external settlement counterparty.
 - **Processing:** Preserve asset identity by network and contract, exact raw quantity and decimals. Debit the acquired asset at its own
-  historical market rate and credit the disposed asset at its full-history weighted-average carrying value. Recognize the difference as an
-  exchange gain or loss; do not infer fees from that difference.
+  historical market rate and credit the disposed asset at its full-history weighted-average carrying value. A fee CoW Protocol reports for
+  the Safe's own fulfilled order is valued at the disposed asset's market rate and debited to `Transaction Fee Expense`. Recognize the rest
+  of the difference as an exchange gain or loss; without a reported fee, do not infer one from that difference.
 - **General Ledger:** Label `Asset exchange`, category `Swap`. The receipt's quantity times its historical rate determines its USD value;
   stablecoin paid never sets the receipt's unit price. Missing market evidence keeps the operation partial. Current portfolio prices do not
   rewrite the books.
@@ -704,11 +705,21 @@ For an asset acquired for $20 and later sold for 30.658984 USDC, the sale is:
 | Cash — Safe         | Acquired asset |             |           20 |
 | Asset Exchange Gain | USD            |             |    10.658984 |
 
+If CoW Protocol reports a fee of 0.0001 of the sold asset, worth $0.20 that day, the same sale is:
+
+| Account                 | Currency       | Debit (USD) | Credit (USD) |
+| ----------------------- | -------------- | ----------: | -----------: |
+| Cash — Safe             | USDC           |   30.658984 |              |
+| Transaction Fee Expense | USD            |        0.20 |              |
+| Cash — Safe             | Acquired asset |             |           20 |
+| Asset Exchange Gain     | USD            |             |    10.858984 |
+
 Ancillary mints remain separate unclassified evidence. Missing decimals, acquisition basis or valuation keeps reports incomplete; complex
-batches and different-counterparty settlements need further evidence before automatic classification. Network fees are not inferred from the
-difference between proceeds and carrying value. See the
+batches and different-counterparty settlements need further evidence before automatic classification. Fees CoW Protocol does not report are
+not inferred from the difference between proceeds and carrying value. See the
 [read model](../../implementation/accounting-read-model/README.md#safe-assets-and-exchanges) and
-[regression evidence](../../../app/src/utils/accounting/__tests__/safeExchanges.spec.ts).
+[regression evidence](../../../app/src/utils/accounting/__tests__/safeExchanges.spec.ts) and its
+[fee regressions](../../../app/src/utils/accounting/__tests__/safeExchanges.fees.spec.ts).
 
 ### `UC-BANK-03` — Bank Funds a Company Pocket
 

@@ -171,9 +171,11 @@ the evidenced carrying amount; their displayed unit rate is carrying cost per un
 rate-rounding residues. Incoming market valuations and realized differences balance the operation through `Asset Exchange Gain` or
 `Asset Exchange Loss`. Missing acquisition history or valuation produces zero-valued movement evidence and a partial status, never an
 invented basis. A prior non-exchange payment depleted at a different transaction-price valuation invalidates later automatic swap basis;
-other payment rules remain unchanged. Network/DEX fees are not inferred from an unexplained difference; standalone fee evidence remains
-necessary. Cross-transaction swap intents and arbitrary DeFi operations require additional protocol evidence and remain a boundary of
-automatic classification.
+other payment rules remain unchanged. A fee CoW Protocol reports for the Safe's own fulfilled order in the swap transaction rides on the
+sold leg (`feeRawAmount`), is valued at that asset's market rate, and is booked as `Transaction Fee Expense`, so the exchange result
+excludes it. The order lookup never makes Accounting partial: without it, the fee stays inside the exchange result. Network/DEX fees are not
+inferred from an unexplained difference. Cross-transaction swap intents and arbitrary DeFi operations require additional protocol evidence
+and remain a boundary of automatic classification.
 
 The read-only Safe holdings use the Safe Client Gateway balance response for current wallet valuation. A nonzero supported holding with a
 missing, nonpositive, or nonfinite USD price keeps the total incomplete, just as unavailable discovered valuations do. A confirmed zero

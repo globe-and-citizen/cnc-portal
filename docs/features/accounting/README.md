@@ -45,6 +45,10 @@ debited at its own historical market rate and the disposed asset credited at its
 `Asset Exchange Gain` or `Asset Exchange Loss`, never `Service Revenue`. Stablecoin spent does not set the acquired asset's unit price or
 hide an exchange loss in its carrying value. Current portfolio prices never replace historical accounting evidence.
 
+A fee CoW Protocol reports for the Safe's own fulfilled order is a `Transaction Fee Expense` of that exchange, valued at the sold asset's
+market rate, so the exchange gain or loss excludes it, as in the Safe's swap overview. Without a reported fee, no fee is inferred and the
+whole difference stays an exchange gain or loss.
+
 Ancillary mints and ambiguous batches require classification. Missing decimals, rate, or acquisition basis keeps Accounting incomplete.
 Cross-transaction intents and arbitrary DeFi actions need additional protocol evidence. See the
 [Accounting Read Model](../../implementation/accounting-read-model/README.md#safe-assets-and-exchanges) for these boundaries and the
@@ -101,7 +105,7 @@ three consecutive missing criteria use inclusive ranges with full AC IDs at both
 | User Story  | Main Journey  | Coverage Target | Gaps                                                                              |
 | ----------- | ------------- | --------------- | --------------------------------------------------------------------------------- |
 | US-ACCT-001 | ✅ Integrated | ⚠️ 11/12 met    | `AC-US-ACCT-001-08`                                                               |
-| US-ACCT-002 | ✅ Integrated | ✅ 13/13        | —                                                                                 |
+| US-ACCT-002 | ✅ Integrated | ✅ 14/14        | —                                                                                 |
 | US-ACCT-003 | ✅ Integrated | ✅ 11/11        | —                                                                                 |
 | US-ACCT-004 | ✅ Integrated | ✅ 9/9          | —                                                                                 |
 | US-ACCT-005 | ✅ Integrated | ✅ 13/13 met    | —                                                                                 |
@@ -126,6 +130,7 @@ implemented use cases.
     - [bankFeeAssembly.spec.ts](../../../app/src/utils/accounting/__tests__/bankFeeAssembly.spec.ts)
     - [internalAddresses.spec.ts](../../../app/src/utils/accounting/__tests__/internalAddresses.spec.ts)
     - [safeExchanges.spec.ts](../../../app/src/utils/accounting/__tests__/safeExchanges.spec.ts)
+    - [safeExchanges.fees.spec.ts](../../../app/src/utils/accounting/__tests__/safeExchanges.fees.spec.ts)
 
 - **Payroll**
   - Active rules: `UC-CASH-02`, `UC-CASH-03`
@@ -248,6 +253,9 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 - [x] `AC-US-ACCT-002-09` Labels and accounts follow the canonical [Accounting rule catalogue](./journal-entry-catalogue.md).
 - [x] `AC-US-ACCT-002-13` An evidenced Safe asset exchange preserves both asset quantities and realizes the difference from carrying basis
       without creating service revenue.
+- [x] `AC-US-ACCT-002-14` A fee CoW Protocol reports for the Safe's own fulfilled order in an evidenced Safe asset exchange is booked as
+      `Transaction Fee Expense` in that exchange, and its exchange gain or loss excludes the fee; without a reported fee, the whole
+      difference stays an exchange gain or loss.
 
 #### Edge & Error Cases
 
@@ -272,6 +280,7 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 | `AC-US-ACCT-002-11`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
 | `AC-US-ACCT-002-12`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
 | `AC-US-ACCT-002-13`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
+| `AC-US-ACCT-002-14`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
 
 **Dependencies:** US-ACCT-001
 
