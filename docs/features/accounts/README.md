@@ -1267,7 +1267,7 @@ At the top of the Activity section, a table lists the Safe's swaps, newest first
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `35488db2fdd139cf6c9d0b0dddef97d7534a7ed7`
+**Implementation evidence reviewed against:** `7ea893eba3ed118ac0be24daa4fcf470ab7683cd`
 
 - [Bank deposit modal](../../../app/src/components/sections/BankView/forms/DepositModal.vue),
   [Bank transfer modal](../../../app/src/components/sections/BankView/forms/TransferModal.vue),
