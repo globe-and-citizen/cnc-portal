@@ -39,6 +39,7 @@ export const mockWagmiCore = {
   writeContract: vi.fn(),
   readContract: vi.fn(),
   getBalance: vi.fn(),
+  getBytecode: vi.fn(),
   getWalletClient: vi.fn(),
   estimateGas: vi.fn(),
   getPublicClient: vi.fn(),

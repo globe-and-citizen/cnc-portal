@@ -15,7 +15,13 @@
             <div>
               <div class="flex flex-wrap items-center gap-2">
                 <h1 class="text-2xl font-semibold text-gray-950 dark:text-white">Team Safe</h1>
-                <UBadge color="success" variant="soft">Active</UBadge>
+                <UBadge
+                  :color="isSafeMissing ? 'error' : 'success'"
+                  variant="soft"
+                  data-test="safe-status-badge"
+                >
+                  {{ isSafeMissing ? 'Not found' : 'Active' }}
+                </UBadge>
               </div>
               <p class="mt-1 text-sm text-gray-600 dark:text-gray-300">
                 Shared treasury protected by signer approvals.
@@ -39,73 +45,106 @@
       </div>
     </header>
 
-    <nav
-      class="flex gap-2 overflow-x-auto rounded-xl border bg-white p-2 dark:border-gray-800 dark:bg-gray-950"
-      aria-label="Safe wallet sections"
-      data-test="safe-section-navigation"
+    <UAlert
+      v-if="isSafeMissing"
+      color="error"
+      variant="soft"
+      icon="i-lucide-circle-x"
+      title="No Safe exists at this address"
+      :description="`The address registered for this team has no contract on ${NETWORK.networkName}. The Safe was probably never deployed, or it was deployed on another network, so its balances, signers and transactions cannot be shown.`"
+      data-test="safe-missing-notice"
     >
-      <a
-        v-for="item in sectionLinks"
-        :key="item.href"
-        :href="item.href"
-        class="focus-visible:ring-primary shrink-0 rounded-lg px-3 py-2 text-sm font-medium text-gray-600 transition hover:bg-gray-50 hover:text-gray-950 focus-visible:ring-2 focus-visible:outline-none dark:text-gray-300 dark:hover:bg-gray-900 dark:hover:text-white"
+      <template #actions>
+        <UButton
+          color="error"
+          variant="outline"
+          size="xs"
+          label="Check again"
+          data-test="safe-missing-retry"
+          @click="refetchBytecode()"
+        />
+      </template>
+    </UAlert>
+
+    <div
+      v-else-if="isCheckingContract"
+      class="flex justify-center p-8"
+      role="status"
+      data-test="safe-contract-loading"
+    >
+      <UIcon name="i-lucide-loader-circle" class="text-primary h-8 w-8 animate-spin" />
+    </div>
+
+    <template v-else>
+      <nav
+        class="flex gap-2 overflow-x-auto rounded-xl border bg-white p-2 dark:border-gray-800 dark:bg-gray-950"
+        aria-label="Safe wallet sections"
+        data-test="safe-section-navigation"
       >
-        {{ item.label }}
-      </a>
-    </nav>
+        <a
+          v-for="item in sectionLinks"
+          :key="item.href"
+          :href="item.href"
+          class="focus-visible:ring-primary shrink-0 rounded-lg px-3 py-2 text-sm font-medium text-gray-600 transition hover:bg-gray-50 hover:text-gray-950 focus-visible:ring-2 focus-visible:outline-none dark:text-gray-300 dark:hover:bg-gray-900 dark:hover:text-white"
+        >
+          {{ item.label }}
+        </a>
+      </nav>
 
-    <section id="safe-overview" class="scroll-mt-4" aria-labelledby="safe-overview-heading">
-      <div class="mb-4">
-        <p class="text-primary text-sm font-semibold">1 · Overview</p>
-        <h2 id="safe-overview-heading" class="mt-1 text-xl font-semibold">
-          Know what is available
-        </h2>
-      </div>
-      <SafeBalanceSection :key="safeAddress" :address="safeAddress" />
-    </section>
-
-    <section id="safe-funds" class="scroll-mt-4" aria-labelledby="safe-funds-heading">
-      <div class="mb-4">
-        <p class="text-primary text-sm font-semibold">2 · Funds and control</p>
-        <h2 id="safe-funds-heading" class="mt-1 text-xl font-semibold">
-          Review assets and approval rules
-        </h2>
-        <p class="mt-1 text-sm text-gray-500">
-          Holdings show what the Safe controls. Owners and threshold show who must approve actions.
-        </p>
-      </div>
-      <div class="grid grid-cols-1 gap-6 xl:grid-cols-5">
-        <div class="min-w-0 xl:col-span-3">
-          <TokenHoldingsSection
-            :rows="holdingRows"
-            :is-loading="isLoadingHoldings"
-            :is-incomplete="isIncomplete"
-            :has-error="!!balancesError"
-            compact
-            class="h-full"
-          />
+      <section id="safe-overview" class="scroll-mt-4" aria-labelledby="safe-overview-heading">
+        <div class="mb-4">
+          <p class="text-primary text-sm font-semibold">1 · Overview</p>
+          <h2 id="safe-overview-heading" class="mt-1 text-xl font-semibold">
+            Know what is available
+          </h2>
         </div>
-        <div id="safe-control" class="min-w-0 scroll-mt-4 xl:col-span-2">
-          <SafeOwnersCard :address="safeAddress" />
-        </div>
-      </div>
-    </section>
+        <SafeBalanceSection :key="safeAddress" :address="safeAddress" />
+      </section>
 
-    <section id="safe-activity" class="scroll-mt-4" aria-labelledby="safe-activity-heading">
-      <div class="mb-4">
-        <p class="text-primary text-sm font-semibold">3 · Activity</p>
-        <h2 id="safe-activity-heading" class="mt-1 text-xl font-semibold">
-          Move proposals to completion
-        </h2>
-        <p class="mt-1 text-sm text-gray-500">
-          Pending Safe actions need signer approvals before they can be executed.
-        </p>
-      </div>
-      <div class="space-y-6">
-        <SafeTransactions :address="safeAddress" />
-        <SafeIncomingTransactions :address="safeAddress" />
-      </div>
-    </section>
+      <section id="safe-funds" class="scroll-mt-4" aria-labelledby="safe-funds-heading">
+        <div class="mb-4">
+          <p class="text-primary text-sm font-semibold">2 · Funds and control</p>
+          <h2 id="safe-funds-heading" class="mt-1 text-xl font-semibold">
+            Review assets and approval rules
+          </h2>
+          <p class="mt-1 text-sm text-gray-500">
+            Holdings show what the Safe controls. Owners and threshold show who must approve
+            actions.
+          </p>
+        </div>
+        <div class="grid grid-cols-1 gap-6 xl:grid-cols-5">
+          <div class="min-w-0 xl:col-span-3">
+            <TokenHoldingsSection
+              :rows="holdingRows"
+              :is-loading="isLoadingHoldings"
+              :is-incomplete="isIncomplete"
+              :has-error="!!balancesError"
+              compact
+              class="h-full"
+            />
+          </div>
+          <div id="safe-control" class="min-w-0 scroll-mt-4 xl:col-span-2">
+            <SafeOwnersCard :address="safeAddress" />
+          </div>
+        </div>
+      </section>
+
+      <section id="safe-activity" class="scroll-mt-4" aria-labelledby="safe-activity-heading">
+        <div class="mb-4">
+          <p class="text-primary text-sm font-semibold">3 · Activity</p>
+          <h2 id="safe-activity-heading" class="mt-1 text-xl font-semibold">
+            Move proposals to completion
+          </h2>
+          <p class="mt-1 text-sm text-gray-500">
+            Pending Safe actions need signer approvals before they can be executed.
+          </p>
+        </div>
+        <div class="space-y-6">
+          <SafeTransactions :address="safeAddress" />
+          <SafeIncomingTransactions :address="safeAddress" />
+        </div>
+      </section>
+    </template>
   </main>
 
   <div
@@ -197,8 +236,10 @@ import SafeTransactions from '@/components/sections/SafeView/SafeTransactions.vu
 import SafeIncomingTransactions from '@/components/sections/SafeView/SafeIncomingTransactions.vue'
 import SafeDeploymentCard from '@/components/sections/SafeView/SafeDeploymentCard.vue'
 import SafeImportCard from '@/components/sections/SafeView/SafeImportCard.vue'
+import { useGetSafeBytecodeQuery } from '@/queries/safe.queries'
 import { useTeamStore, useUserDataStore } from '@/stores'
 import { normalizeSafeAddress } from '@/utils/safe/address'
+import { NETWORK } from '@/constant'
 
 const route = useRoute()
 const router = useRouter()
@@ -228,13 +269,29 @@ const safeAddress = computed(
   () => teamStore.getContractAddressByType('Safe') || deployedSafeAddress.value
 )
 
+const {
+  data: bytecode,
+  isLoading: isCheckingContract,
+  refetch: refetchBytecode
+} = useGetSafeBytecodeQuery({ pathParams: { safeAddress } })
+
+/**
+ * An address without code on-chain will never answer as a Safe, so its sections, which
+ * would all fail, wait for the chain and are replaced by one notice.
+ */
+const isSafeMissing = computed(() => bytecode.value === '0x')
+
 const currency = useStorage('currency', { code: 'USD', name: 'US Dollar', symbol: '$' })
 const {
   data: balances,
   error: balancesError,
   isLoading: isLoadingHoldings
 } = useGetSafeBalancesQuery({
-  pathParams: { safeAddress, fiatCode: () => currency.value.code }
+  pathParams: {
+    safeAddress: () =>
+      isSafeMissing.value || isCheckingContract.value ? undefined : safeAddress.value,
+    fiatCode: () => currency.value.code
+  }
 })
 const holdingRows = computed(() => toSafeHoldingRows(balances.value, currency.value.code))
 const isIncomplete = computed(() => holdingRows.value.some((row) => row.balance === null))
