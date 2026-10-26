@@ -241,7 +241,7 @@ flowchart LR
     feeCollector[CNC protocol FeeCollector]
 
     subgraph books[Company-owned pockets in one journal]
-        safe[Safe shared across redeployments]
+        safe[Each company Safe, shared across redeployments]
 
         subgraph archived[Archived Officer generation]
             oldBank[Bank G1]
@@ -277,8 +277,11 @@ flowchart LR
     oldBank -.-> feeCollector
 ```
 
-Every known Bank, Payroll, Expense, Credit, and Safe address participates in company-pocket classification. Bank, Payroll, Expense, and
-Credit are deployment-scoped; Safe is one shared account because it survives Officer redeployments. A transfer whose source and destination
+Every known Bank, Payroll, Expense, Credit, and Safe address participates in company-pocket classification. Bank, Payroll, Expense, Credit,
+and Safe are deployment-scoped. A Safe survives Officer redeployments, but a company can register several Safes over time (`safes` on the
+team payload, removed ones included), and each one is its own numbered `Cash — Safe` account. Every registered Safe's transfer feed is read;
+a move between two company Safes is booked once, from the sending Safe, and a SafeDepositRouter deposit is booked in the Safe whose feed
+holds its transaction. The router itself holds no balance and is never a `Cash — Safe` instance. A transfer whose source and destination
 are both known company pockets is internal even when the addresses belong to different generations. The FeeCollector is deliberately absent
 from the internal-address registry: its receipt is CNC protocol revenue, while the paying company's matched Bank operation includes a
 `Transaction Fee Expense` line.
