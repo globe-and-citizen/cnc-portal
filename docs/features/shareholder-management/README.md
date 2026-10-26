@@ -23,7 +23,7 @@ SHER token.
 - Investor administrators can review current role holders and grant or revoke `MINTER_ROLE`. The portal reconstructs candidates from role
   events, verifies their current state with `hasRole`, and labels incomplete RPC evidence instead of presenting it as an empty role set.
   Current and previous Officer generations are identified as company contracts for inspection but are not eligible for a new minter grant.
-- The **Safe Deposit Router** is the investment integration: it accepts supported deposits into the registered Safe and calls the Investor
+- The **Safe Deposit Router** is the investment integration: it accepts supported deposits into the company's default Safe and calls the Investor
   contract to issue SHER at its configured multiplier.
 - The **Bank** is the dividend integration: the Bank owner executes a payout directly, or an eligible Board member creates the Bank action.
   The Investor contract distributes the funded amount proportionally to shareholders.
@@ -333,14 +333,14 @@ movement across the participating stories.
 
 #### Happy Path
 
-- [x] `AC-US-SHER-005-01` The router owner can set the company's registered Safe as the router's Safe when it is not already synchronized.
+- [x] `AC-US-SHER-005-01` The router owner can set the company's default Safe as the router's Safe when it is not already synchronized.
 - [x] `AC-US-SHER-005-02` The router owner can enable or disable deposits after the router points to the company Safe.
 - [x] `AC-US-SHER-005-03` The router owner can set the SHER multiplier used to calculate investment issuance.
 
 #### Business Rules
 
 - [x] `AC-US-SHER-005-04` Only the Safe Deposit Router owner can change its Safe address, deposit state, or multiplier.
-- [x] `AC-US-SHER-005-05` Deposits cannot be enabled while the router Safe does not match the company's registered Safe.
+- [x] `AC-US-SHER-005-05` Deposits cannot be enabled while the router Safe does not match the company's default Safe.
 - [x] `AC-US-SHER-005-06` A multiplier must be a valid number within the configured range and at least one.
 - [x] `AC-US-SHER-005-07` An archived company cannot start a router configuration write.
 
@@ -547,7 +547,7 @@ the redeployment and migration-root commit. Shareholder Management exposes the m
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `0027826e4fbb8dfb3ac9686ea23106f5d12aaa5c`
+**Implementation evidence reviewed against:** `bf3b24fc0f684e3eee05d1be05cf2d639b074939`
 
 - [Shareholder Management route](../../../app/src/views/team/%5Bid%5D/SherTokenView.vue) and
   [Investor overview](../../../app/src/components/sections/SherTokenView/InvestorsHeader.vue)

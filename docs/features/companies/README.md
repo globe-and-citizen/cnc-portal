@@ -23,8 +23,8 @@ These acceptance criteria follow the
 - Initial **Officer-contract setup** is separate from company creation. The owner supplies the SHER name and symbol, deploys the Officer
   suite, and registers the resulting Officer generation with the company.
 - The owner may defer Officer setup or Safe setup. Safe deployment and import are documented by
-  [US-SAFE-001](../accounts/README.md#us-safe-001-set-up-a-safe).
-- The Company workspace's **Treasury Overview** includes the registered Safe's Gateway fiat total, including its other valued token
+  [US-SAFE-001](../accounts/README.md#us-safe-001-set-up-and-manage-the-company-safes).
+- The Company workspace's **Treasury Overview** includes the default Safe's Gateway fiat total, including its other valued token
   holdings. All account contributions use the selected display currency, which defaults to USD. The Safe contribution shares its cached
   balance query and refresh rules with Safe Account. It keeps the numeric display and counts the provider's valued total even when another
   returned token has no price; an absent or invalid total falls back to zero.
@@ -442,7 +442,7 @@ This validation does not attest to a live on-chain Officer deployment.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `73bf27a00c594e97f5c6755d1bdc76da84d94c99`
+**Implementation evidence reviewed against:** `bf3b24fc0f684e3eee05d1be05cf2d639b074939`
 
 - [Member deletion](../../../app/src/components/sections/DashboardView/DeleteMemberModal.vue),
   [team state](../../../app/src/stores/teamStore.ts), and

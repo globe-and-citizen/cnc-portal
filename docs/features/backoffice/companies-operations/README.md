@@ -219,6 +219,11 @@ or detail view; `AC-US-TEAM-OPS-001-03` and `AC-US-TEAM-OPS-003-04` still need f
 
 ## Implementation Evidence
 
+The company payload keeps only the company's default Safe among its live contracts, so the profile and balance recap count that Safe; every
+Safe the company registered is listed separately in its Safe history.
+
+**Implementation evidence reviewed against:** `bf3b24fc0f684e3eee05d1be05cf2d639b074939`
+
 - [Dashboard navigation](../../../../dashboard/app/layouts/default.vue),
   [administrator route guard](../../../../dashboard/app/middleware/auth.global.ts), and
   [Companies operations entry page](../../../../dashboard/app/pages/teams/index.vue)
