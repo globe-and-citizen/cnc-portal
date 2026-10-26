@@ -625,7 +625,7 @@ describe('contractController', () => {
       expect(prisma.teamContract.update).not.toHaveBeenCalled();
     });
 
-    it('[AC-US-SAFE-001-12] returns 403 when the caller is not the team owner', async () => {
+    it('[AC-US-SAFE-001-14] returns 403 when the caller is not the team owner', async () => {
       vi.mocked(prisma.team.findUnique).mockResolvedValue({ ...mockTeam, ownerAddress: '0x456' });
 
       const response = await replaceSafe();
@@ -672,7 +672,7 @@ describe('contractController', () => {
       expect(prisma.teamContract.update).not.toHaveBeenCalled();
     });
 
-    it('[AC-US-SAFE-001-13] refuses an address already registered to another team', async () => {
+    it('[AC-US-SAFE-001-15] refuses an address already registered to another team', async () => {
       vi.mocked(prisma.teamContract.findFirst)
         .mockReset()
         .mockResolvedValueOnce(brokenSafe as never)
