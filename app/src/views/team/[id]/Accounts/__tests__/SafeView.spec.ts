@@ -85,7 +85,7 @@ describe('[US-SAFE-001] [US-SAFE-002] SafeView.vue', () => {
     wrapper.unmount()
   })
 
-  it('shows a member who is not the owner the missing Safe notice without replacement', () => {
+  it('[AC-US-SAFE-001-14] shows a member who is not the owner the missing Safe notice without replacement', () => {
     mockTeamStore.getContractAddressByType.mockReturnValue(
       '0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB'
     )

@@ -113,7 +113,7 @@ Runs of at least three consecutive missing criteria use inclusive ranges with fu
 | US-EXP-004  | ✅ Integrated | ⚠️ 13/14 met    | `AC-US-EXP-004-13`                                                                |
 | US-EXP-005  | 🚧 Partial    | ⚠️ 3/7          | `AC-US-EXP-005-03`, `AC-US-EXP-005-04`, `AC-US-EXP-005-06`, `AC-US-EXP-005-07`    |
 | US-EXP-006  | 🚧 Partial    | ⚠️ 1/8          | `AC-US-EXP-006-01`–`AC-US-EXP-006-05`, `AC-US-EXP-006-07`, `AC-US-EXP-006-08`     |
-| US-SAFE-001 | 🚧 Partial    | ⚠️ 10/13        | `AC-US-SAFE-001-02`, `AC-US-SAFE-001-03`, `AC-US-SAFE-001-06`                     |
+| US-SAFE-001 | 🚧 Partial    | ⚠️ 12/15        | `AC-US-SAFE-001-02`, `AC-US-SAFE-001-03`, `AC-US-SAFE-001-06`                     |
 | US-SAFE-002 | 🧪 Mocked     | ⚠️ 8/11 met     | `AC-US-SAFE-002-01`, `AC-US-SAFE-002-02`, `AC-US-SAFE-002-09`                     |
 | US-SAFE-003 | 📋 Planned    | ⚠️ 6/11         | `AC-US-SAFE-003-01`–`AC-US-SAFE-003-03`, `AC-US-SAFE-003-06`, `AC-US-SAFE-003-07` |
 | US-SAFE-004 | 📋 Planned    | ⚠️ 4/9          | `AC-US-SAFE-004-01`–`AC-US-SAFE-004-04`, `AC-US-SAFE-004-07`                      |
@@ -848,9 +848,10 @@ remain as recorded above.
 - [x] `AC-US-SAFE-001-10` If registration fails after deployment, the deployed Safe remains available for a registration retry.
 - [x] `AC-US-SAFE-001-11` An archived company cannot deploy, import, or retry Safe registration.
 - [x] `AC-US-SAFE-001-12` When no contract exists at the registered Safe address, the company owner can deploy or import a new Safe that
-      replaces it, and the Safe page then shows the new Safe; other members cannot replace it.
-- [x] `AC-US-SAFE-001-13` A registered Safe whose address has a contract on the active network is never replaced, and an address registered
-      to another company cannot replace it.
+      replaces it, and the Safe page then shows the new Safe.
+- [x] `AC-US-SAFE-001-13` A registered Safe whose address has a contract on the active network is never replaced.
+- [x] `AC-US-SAFE-001-14` Only the company owner can replace a Safe that has no contract.
+- [x] `AC-US-SAFE-001-15` An address registered to another company cannot replace the company's Safe.
 
 ### Test Coverage
 
@@ -872,6 +873,9 @@ remain as recorded above.
 | `AC-US-SAFE-001-12`  | `PS-FRONTEND`         | Frontend + Backend                         | ✅ Met          |
 | `AC-US-SAFE-001-12`  | `PS-BACKEND`          | Frontend + Backend                         | ✅ Met          |
 | `AC-US-SAFE-001-13`  | `PS-BACKEND`          | Backend                                    | ✅ Met          |
+| `AC-US-SAFE-001-14`  | `PS-FRONTEND`         | Frontend + Backend                         | ✅ Met          |
+| `AC-US-SAFE-001-14`  | `PS-BACKEND`          | Frontend + Backend                         | ✅ Met          |
+| `AC-US-SAFE-001-15`  | `PS-BACKEND`          | Backend                                    | ✅ Met          |
 
 **Dependencies:** Current company and active network
 
