@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises, mount, shallowMount } from '@vue/test-utils'
 import SafeView from '../SafeView.vue'
-import { mockRouterReplace, mockTeamData, mockTeamStore, mockUserStore } from '@/tests/mocks'
+import { mockTeamData, mockTeamStore, mockUserStore } from '@/tests/mocks'
 import { mockUseContractBalance, makeTokenBalance } from '@/tests/mocks/composables.mock'
 import { toValue } from 'vue'
 import { useGetSafeBalancesQuery } from '@/queries/safeClient.queries'
@@ -61,7 +61,7 @@ describe('[US-SAFE-001] [US-SAFE-002] SafeView.vue', () => {
     wrapper.unmount()
   })
 
-  it('[AC-US-SAFE-001-12] offers the team owner a replacement and opens the new Safe once it is registered', async () => {
+  it('[AC-US-SAFE-001-12] offers the team owner a new Safe on the missing Safe notice', () => {
     mockTeamStore.getContractAddressByType.mockReturnValue(
       '0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB'
     )
@@ -69,23 +69,15 @@ describe('[US-SAFE-001] [US-SAFE-002] SafeView.vue', () => {
     mockTeamStore.currentTeam = mockTeamData
     safeQueries.bytecode.value = '0x'
     const wrapper = mount(SafeView, {
-      global: { stubs: { AddressTooltip: true, SafeReplaceModal: true } }
+      global: { stubs: { AddressTooltip: true, SafeAddModal: true, SafeHistoryCard: true } }
     })
-    const replaceModal = wrapper.findComponent({ name: 'SafeReplaceModal' })
+    const notice = wrapper.find('[data-test="safe-missing-notice"]')
 
-    expect(replaceModal.exists()).toBe(true)
-    replaceModal.vm.$emit('safe-replaced', '0xcccccccccccccccccccccccccccccccccccccccc')
-    await flushPromises()
-
-    const [target] = mockRouterReplace.mock.calls.at(-1) as unknown as [
-      { name: string; params: { id: string; address: string } }
-    ]
-    expect(target).toMatchObject({ name: 'safe-account', params: { id: '1' } })
-    expect(target.params.address.toLowerCase()).toBe('0xcccccccccccccccccccccccccccccccccccccccc')
+    expect(notice.findComponent({ name: 'SafeAddModal' }).props('inNotice')).toBe(true)
     wrapper.unmount()
   })
 
-  it('[AC-US-SAFE-001-14] shows a member who is not the owner the missing Safe notice without replacement', () => {
+  it('[AC-US-SAFE-001-14] shows a member who is not the owner the missing Safe notice without a new Safe action', () => {
     mockTeamStore.getContractAddressByType.mockReturnValue(
       '0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB'
     )
@@ -93,11 +85,11 @@ describe('[US-SAFE-001] [US-SAFE-002] SafeView.vue', () => {
     mockTeamStore.currentTeam = mockTeamData
     safeQueries.bytecode.value = '0x'
     const wrapper = mount(SafeView, {
-      global: { stubs: { AddressTooltip: true, SafeReplaceModal: true } }
+      global: { stubs: { AddressTooltip: true, SafeAddModal: true } }
     })
 
     expect(wrapper.find('[data-test="safe-missing-notice"]').exists()).toBe(true)
-    expect(wrapper.findComponent({ name: 'SafeReplaceModal' }).exists()).toBe(false)
+    expect(wrapper.findComponent({ name: 'SafeAddModal' }).exists()).toBe(false)
     wrapper.unmount()
   })
 

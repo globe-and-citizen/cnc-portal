@@ -189,26 +189,28 @@ export const useCreateOfficerMutation = createMutationHook<
 })
 
 // ============================================================================
-// PUT /contract/safe - Replace a team Safe that has no contract on-chain
+// PUT /contract/safe - Make a team Safe the default, or remove it
 // ============================================================================
 
-export interface ReplaceSafeParams {
+export interface UpdateTeamSafeParams {
   body: {
     /** Team ID */
     teamId: string | number
-    /** Address of the Safe that takes the place of the missing one */
+    /** Address of one of the team's Safes */
     contractAddress: string
+    /** `default` makes it the team default again; `remove` takes it out of use */
+    action: 'default' | 'remove'
   }
 }
 
 /**
- * Replace the team's registered Safe with a new one. The backend refuses while a
- * contract exists at the registered address, so only a missing Safe is replaced.
+ * Make one of the team's Safes its default, or remove it. A removed Safe stays in
+ * the team's Safe history, and the default falls back to the previous Safe in use.
  *
  * @endpoint PUT /contract/safe
- * @body { teamId, contractAddress }
+ * @body { teamId, contractAddress, action }
  */
-export const useReplaceSafeMutation = createMutationHook<unknown, ReplaceSafeParams>({
+export const useUpdateTeamSafeMutation = createMutationHook<unknown, UpdateTeamSafeParams>({
   method: 'PUT',
   endpoint: 'contract/safe',
   invalidateKeys: [teamKeys.all]
