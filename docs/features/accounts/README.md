@@ -851,8 +851,8 @@ remain as recorded above.
 - [x] `AC-US-SAFE-001-11` An archived company cannot deploy, import, or retry Safe registration.
 - [x] `AC-US-SAFE-001-12` A company that already has a Safe, including one with no contract at its address, can deploy or import another
       Safe. The new Safe becomes the company's default Safe and the previous one stays in its Safe history.
-- [x] `AC-US-SAFE-001-13` A Safe address is registered only once: an address already in the company's Safe history or registered to
-      another company is refused.
+- [x] `AC-US-SAFE-001-13` A Safe address is registered only once: an address already in the company's Safe history or registered to another
+      company is refused.
 - [x] `AC-US-SAFE-001-14` Only the company owner can add, switch, or remove a Safe, and an archived company cannot.
 - [x] `AC-US-SAFE-001-15` The company owner and members can review the Safe history: every Safe the company registered, marked as default,
       previous, or removed.

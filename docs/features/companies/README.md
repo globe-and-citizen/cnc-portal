@@ -24,10 +24,10 @@ These acceptance criteria follow the
   suite, and registers the resulting Officer generation with the company.
 - The owner may defer Officer setup or Safe setup. Safe deployment and import are documented by
   [US-SAFE-001](../accounts/README.md#us-safe-001-set-up-and-manage-the-company-safes).
-- The Company workspace's **Treasury Overview** includes the default Safe's Gateway fiat total, including its other valued token
-  holdings. All account contributions use the selected display currency, which defaults to USD. The Safe contribution shares its cached
-  balance query and refresh rules with Safe Account. It keeps the numeric display and counts the provider's valued total even when another
-  returned token has no price; an absent or invalid total falls back to zero.
+- The Company workspace's **Treasury Overview** includes the default Safe's Gateway fiat total, including its other valued token holdings.
+  All account contributions use the selected display currency, which defaults to USD. The Safe contribution shares its cached balance query
+  and refresh rules with Safe Account. It keeps the numeric display and counts the provider's valued total even when another returned token
+  has no price; an absent or invalid total falls back to zero.
 - Companies list cards use that same Safe valuation alongside the other registered treasury accounts. Their account proportions use the
   underlying values before display rounding. A positive treasury value below the displayed cent precision is shown as less than one cent, so
   a funded account is not presented as an empty treasury.

@@ -23,8 +23,8 @@ SHER token.
 - Investor administrators can review current role holders and grant or revoke `MINTER_ROLE`. The portal reconstructs candidates from role
   events, verifies their current state with `hasRole`, and labels incomplete RPC evidence instead of presenting it as an empty role set.
   Current and previous Officer generations are identified as company contracts for inspection but are not eligible for a new minter grant.
-- The **Safe Deposit Router** is the investment integration: it accepts supported deposits into the company's default Safe and calls the Investor
-  contract to issue SHER at its configured multiplier.
+- The **Safe Deposit Router** is the investment integration: it accepts supported deposits into the company's default Safe and calls the
+  Investor contract to issue SHER at its configured multiplier.
 - The **Bank** is the dividend integration: the Bank owner executes a payout directly, or an eligible Board member creates the Bank action.
   The Investor contract distributes the funded amount proportionally to shareholders.
 - After an Officer redeployment, the new Investor contract can commit a frozen shareholder snapshot. Shareholders self-claim their new

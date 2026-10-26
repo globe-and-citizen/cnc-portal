@@ -153,15 +153,15 @@ external Axios client directly. A failed request retains its cached response whi
 response bodies. The history query returns one raw page with date labels and pagination links. Its reactive cursor, timezone, trust and
 imitation filters participate in cache identity, beneath the existing Safe transaction invalidation prefix.
 [Safe movement queries](../../../app/src/queries/safe.queries.ts) share one
-[pagination and asset-transfer loader](../../../app/src/queries/safe.fetch.ts) across the three complete-history reads, and one cache
-entry per Safe between the single-Safe and every-Safe transfer queries. The asset-transfer helper deduplicates stable transfer identities and recovers missing contract metadata through the calling
-observer's TanStack client. Concurrent rows for one contract share its metadata query; enriched rows are copied without modifying provider
-objects. Failed metadata reads retain the original movement and its completeness diagnostic. Accounting keeps its Transaction Service
-movement feeds and historical market snapshots; other account surfaces keep their RPC balances and existing price queries. Gateway discovery
-does not expand CNC transfer currencies. Confirmed operations use [one Safe invalidation helper](../../../app/src/queries/safe.mutations.ts)
-for the entire Safe service prefix and the affected wallet's balance prefix, which also reaches all Gateway fiat entries. Proposals refresh
-only pending transactions until execution. Direct hosted Gateway access is a runtime dependency; mocked query tests do not establish an
-availability guarantee.
+[pagination and asset-transfer loader](../../../app/src/queries/safe.fetch.ts) across the three complete-history reads, and one cache entry
+per Safe between the single-Safe and every-Safe transfer queries. The asset-transfer helper deduplicates stable transfer identities and
+recovers missing contract metadata through the calling observer's TanStack client. Concurrent rows for one contract share its metadata
+query; enriched rows are copied without modifying provider objects. Failed metadata reads retain the original movement and its completeness
+diagnostic. Accounting keeps its Transaction Service movement feeds and historical market snapshots; other account surfaces keep their RPC
+balances and existing price queries. Gateway discovery does not expand CNC transfer currencies. Confirmed operations use
+[one Safe invalidation helper](../../../app/src/queries/safe.mutations.ts) for the entire Safe service prefix and the affected wallet's
+balance prefix, which also reaches all Gateway fiat entries. Proposals refresh only pending transactions until execution. Direct hosted
+Gateway access is a runtime dependency; mocked query tests do not establish an availability guarantee.
 
 Executable evidence: [Gateway request tests](../../../app/src/queries/__tests__/safeClient.queries.spec.ts) and
 [holdings presentation tests](../../../app/src/utils/safe/__tests__/portfolio.spec.ts).
