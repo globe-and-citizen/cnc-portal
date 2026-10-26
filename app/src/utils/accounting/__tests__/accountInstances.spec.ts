@@ -16,6 +16,7 @@ const PAYROLL = '0x3333333333333333333333333333333333333333' as Address
 const EXPENSE = '0x4444444444444444444444444444444444444444' as Address
 const CREDIT = '0x5555555555555555555555555555555555555555' as Address
 const SAFE = '0x6666666666666666666666666666666666666666' as Address
+const ROUTER = '0x7777777777777777777777777777777777777777' as Address
 const EXTERNAL = '0x7777777777777777777777777777777777777777' as Address
 
 const HASH_BANK_IN = `0x${'a'.repeat(64)}`
@@ -30,7 +31,8 @@ const contracts: TeamContract[] = [
   { address: PAYROLL, type: 'CashRemunerationEIP712', deployer: EXTERNAL, admins: [] },
   { address: EXPENSE, type: 'ExpenseAccountEIP712', deployer: EXTERNAL, admins: [] },
   { address: CREDIT, type: 'FixedReturn', deployer: EXTERNAL, admins: [] },
-  { address: SAFE, type: 'Safe', deployer: EXTERNAL, admins: [] }
+  { address: SAFE, type: 'Safe', deployer: EXTERNAL, admins: [] },
+  { address: ROUTER, type: 'SafeDepositRouter', deployer: EXTERNAL, admins: [] }
 ]
 
 function posting(
@@ -57,15 +59,16 @@ const topicFor = (address: Address): Hex => `0x${address.slice(2).padStart(64, '
 describe('deployment account evidence', () => {
   const accounts = knownDeploymentAccounts(contracts)
 
-  it('indexes every and only deployment-scoped cash family', () => {
+  it('[AC-US-SAFE-001-20] indexes every deployment-scoped cash family, each Safe included', () => {
     expect([...accounts.entries()]).toEqual([
       [BANK.toLowerCase(), 'Cash — Bank'],
       [BANK_2.toLowerCase(), 'Cash — Bank'],
       [PAYROLL.toLowerCase(), 'Cash — Payroll'],
       [EXPENSE.toLowerCase(), 'Cash — Expense'],
-      [CREDIT.toLowerCase(), 'Cash — Credit']
+      [CREDIT.toLowerCase(), 'Cash — Credit'],
+      [SAFE.toLowerCase(), 'Cash — Safe']
     ])
-    expect(accounts.has(SAFE.toLowerCase())).toBe(false)
+    expect(accounts.has(ROUTER.toLowerCase())).toBe(false)
   })
 
   it('decodes ERC-20 Transfer directions without treating unrelated receipt logs as evidence', () => {

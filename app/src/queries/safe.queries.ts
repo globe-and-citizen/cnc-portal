@@ -1,7 +1,7 @@
-import { useQuery, useQueryClient, type QueryClient } from '@tanstack/vue-query'
-import { getBytecode, readContract } from '@wagmi/core'
-import { computed, toValue } from 'vue'
-import { erc20Abi, isAddress, type Address } from 'viem'
+import { useQueries, useQuery, useQueryClient, type QueryClient } from '@tanstack/vue-query'
+import { getBytecode } from '@wagmi/core'
+import { computed, toValue, type MaybeRefOrGetter } from 'vue'
+import { isAddress, type Address } from 'viem'
 import { config } from '@/wagmi.config'
 import { contractBalanceKeys } from '@/composables/useContractBalance'
 import externalApiClient from '@/lib/external.axios'
@@ -10,6 +10,7 @@ import { TX_SERVICE_BY_CHAIN, type SafeInfo, type SafeTransaction } from '@/type
 import { currentChainId } from '@/constant/index'
 import { queryPresets } from './queryFactory'
 import { retrySafeRead, safeReadRetryDelay } from './safe.recovery'
+import { fetchAllSafePages, fetchSafeAssetTransfers } from './safe.fetch'
 import type {
   GetSafeTransactionParams,
   GetSafeInfoParams,
@@ -72,22 +73,52 @@ export const safeKeys = {
     contractBalanceKeys.detail(safeAddressKey(address) as Address | undefined, chainId)
 }
 
-/** All real native/ERC-20 movements; swap settlement can happen outside a direct Safe call. */
-export function useGetSafeTransfersQuery(params: GetSafeIncomingTransfersParams) {
-  const queryClient = useQueryClient()
-  const safeAddress = computed(() => toValue(params.pathParams.safeAddress))
-  return useQuery<SafeIncomingTransfer[]>({
+/** One Safe's movements query, shared by the single-Safe and every-Safe hooks. */
+function safeTransfersQueryOptions(
+  queryClient: QueryClient,
+  safeAddress: string | undefined,
+  limit = 500
+) {
+  return {
     ...queryPresets.moderate,
     retry: retrySafeRead,
     retryDelay: safeReadRetryDelay,
     refetchInterval: 300_000,
-    queryKey: computed(() => safeKeys.transfers(safeAddress.value, chainId)),
-    enabled: computed(() => Boolean(safeAddress.value)),
-    queryFn: async ({ signal }) => {
+    queryKey: safeKeys.transfers(safeAddress, chainId),
+    enabled: Boolean(safeAddress),
+    queryFn: async ({ signal }: { signal: AbortSignal }): Promise<SafeIncomingTransfer[]> => {
       if (!txService) throw new Error(`Unsupported chainId: ${chainId}`)
-      const address = requireSafeAddress(safeAddress.value)
-      return fetchSafeAssetTransfers(queryClient, address, params.queryParams?.limit ?? 500, signal)
+      return fetchSafeAssetTransfers(queryClient, requireSafeAddress(safeAddress), limit, signal)
     }
+  }
+}
+
+/** All real native/ERC-20 movements; swap settlement can happen outside a direct Safe call. */
+export function useGetSafeTransfersQuery(params: GetSafeIncomingTransfersParams) {
+  const queryClient = useQueryClient()
+  return useQuery<SafeIncomingTransfer[]>(
+    computed(() =>
+      safeTransfersQueryOptions(
+        queryClient,
+        toValue(params.pathParams.safeAddress),
+        params.queryParams?.limit
+      )
+    )
+  )
+}
+
+/** The movements of several Safes, each in the same cache entry as its single-Safe query. */
+export function useGetSafesTransfersQuery(
+  safeAddresses: MaybeRefOrGetter<readonly string[]>,
+  limit?: number
+) {
+  const queryClient = useQueryClient()
+  return useQueries({
+    queries: computed(() =>
+      toValue(safeAddresses).map((address) =>
+        safeTransfersQueryOptions(queryClient, address, limit)
+      )
+    )
   })
 }
 
@@ -298,107 +329,4 @@ export function useGetSafeOutgoingTransactionsQuery(params: GetSafeOutgoingTrans
       )
     }
   })
-}
-
-interface SafePage<T> {
-  next: string | null
-  results: T[]
-}
-
-/** Load every page in service order; a repeated next link is an invalid partial response. */
-async function fetchAllSafePages<T>(initialUrl: string, signal: AbortSignal): Promise<T[]> {
-  const visited = new Set<string>()
-  const results: T[] = []
-  let pageUrl: string | null = initialUrl
-
-  while (pageUrl) {
-    if (visited.has(pageUrl)) throw new Error('Safe pagination returned a repeated page')
-    visited.add(pageUrl)
-
-    const currentUrl: string = pageUrl
-    const { data } = await externalApiClient.get<SafePage<T>>(currentUrl, { signal })
-    results.push(...(data.results ?? []))
-    pageUrl = data.next ? new URL(data.next, currentUrl).toString() : null
-  }
-
-  return results
-}
-
-/** Preserve transfer identity and recover missing contract metadata without dropping raw movements. */
-async function fetchSafeAssetTransfers(
-  client: QueryClient,
-  address: Address,
-  limit: number,
-  signal: AbortSignal
-): Promise<SafeIncomingTransfer[]> {
-  if (!txService) throw new Error(`Unsupported chainId: ${chainId}`)
-  const rows = await fetchAllSafePages<SafeIncomingTransfer>(
-    `${txService.url}/api/v1/safes/${address}/transfers/?limit=${limit}`,
-    signal
-  )
-  const unique = new Map<string, SafeIncomingTransfer>()
-  for (const row of rows) {
-    if (!row.transferId) throw new Error('Safe transfer identity unavailable')
-    unique.set(row.transferId, row)
-  }
-  return Promise.all(
-    [...unique.values()].map(async (row) => {
-      if (row.type !== 'ERC20_TRANSFER' || !row.tokenAddress || !isAddress(row.tokenAddress))
-        return row
-      const tokenAddress = row.tokenAddress.toLowerCase() as Address
-      if (
-        row.tokenInfo?.address?.toLowerCase() === tokenAddress &&
-        Number.isInteger(row.tokenInfo.decimals) &&
-        row.tokenInfo.decimals >= 0 &&
-        row.tokenInfo.decimals <= 18
-      )
-        return row
-      try {
-        const [decimals, symbol, name] = await client.fetchQuery({
-          ...queryPresets.once,
-          queryKey: ['safe-token-metadata', chainId, tokenAddress],
-          gcTime: 24 * 60 * 60_000,
-          queryFn: () =>
-            Promise.all([
-              readContract(config, {
-                address: tokenAddress,
-                abi: erc20Abi,
-                functionName: 'decimals',
-                chainId
-              }),
-              readContract(config, {
-                address: tokenAddress,
-                abi: erc20Abi,
-                functionName: 'symbol',
-                chainId
-              }).catch(() => tokenAddress),
-              readContract(config, {
-                address: tokenAddress,
-                abi: erc20Abi,
-                functionName: 'name',
-                chainId
-              }).catch(() => 'Unknown token')
-            ])
-        })
-        return {
-          ...row,
-          tokenInfo: {
-            type: 'ERC20',
-            address: tokenAddress,
-            name,
-            symbol,
-            decimals,
-            ...(row.tokenInfo?.address?.toLowerCase() === tokenAddress.toLowerCase() &&
-            row.tokenInfo.logoUri
-              ? { logoUri: row.tokenInfo.logoUri }
-              : {}),
-            ...(row.tokenInfo?.trusted === false ? { trusted: false } : {})
-          }
-        }
-      } catch {
-        /* Retain raw movements with an explicit metadata diagnostic. */
-        return row
-      }
-    })
-  )
 }
