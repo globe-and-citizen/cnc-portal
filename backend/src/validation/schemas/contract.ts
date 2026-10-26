@@ -29,10 +29,11 @@ export const addContractBodySchema = z.object({
   }),
 });
 
-// Replace team Safe request body
-export const replaceSafeBodySchema = z.object({
+// Make a team Safe the default, or remove it, request body
+export const updateTeamSafeBodySchema = z.object({
   teamId: teamIdSchema,
   contractAddress: addressSchema,
+  action: z.enum(['default', 'remove'], { message: 'Invalid Safe action' }),
 });
 
 // Sync contracts request body

@@ -32,6 +32,8 @@ const previousOfficerInclude = {
 // Safe and SafeDepositRouter are intentionally stored with officerId = NULL
 // because they survive Officer redeploys. Load them off the team relation
 // directly so they remain visible alongside the current Officer's contracts.
+// They come latest-activated first, so the team's default Safe is the first
+// Safe not removed.
 export const currentOfficerWithContractsInclude = {
   teamOfficers: {
     where: { nextOfficer: { is: null } },
@@ -40,6 +42,7 @@ export const currentOfficerWithContractsInclude = {
   },
   teamContracts: {
     where: { officerId: null },
+    orderBy: { activatedAt: 'desc' },
   },
 } as const;
 
@@ -77,16 +80,24 @@ const withCurrentOfficerAndContracts = <
 >(
   team: T
 ) => {
-  const { teamOfficers, teamContracts, ...rest } = team;
+  const { teamOfficers, teamContracts = [], ...rest } = team;
   const head = teamOfficers?.[0];
   const { contracts, ...headWithoutContracts } = head ?? { contracts: [] };
+  const safes = teamContracts.filter((contract) => contract.type === 'Safe');
+  const defaultSafe = safes.find((safe) => !safe.removedAt);
   return {
     ...rest,
     currentOfficer: serializeOfficer(head ? (headWithoutContracts as TeamOfficer) : null),
     isMigrated: deriveIsMigrated(head ?? null),
     // Merge the current Officer's contracts with officer-less contracts
-    // (Safe / SafeDepositRouter) so the client sees the full live set.
-    teamContracts: [...contracts, ...(teamContracts ?? [])],
+    // (SafeDepositRouter and the default Safe) so the client sees the live set.
+    teamContracts: [
+      ...contracts,
+      ...teamContracts.filter((contract) => contract.type !== 'Safe'),
+      ...(defaultSafe ? [defaultSafe] : []),
+    ],
+    // Every Safe the team registered, removed ones included, latest activated first.
+    safes,
   };
 };
 

@@ -9,13 +9,13 @@ import {
   addContractBodySchema,
   createOfficerBodySchema,
   getContractsQuerySchema,
-  replaceSafeBodySchema,
   syncContractsBodySchema,
+  updateTeamSafeBodySchema,
   z,
 } from '../validation';
 
 type AddContractBody = z.infer<typeof addContractBodySchema>;
-type ReplaceSafeBody = z.infer<typeof replaceSafeBodySchema>;
+type UpdateTeamSafeBody = z.infer<typeof updateTeamSafeBodySchema>;
 type SyncContractsBody = z.infer<typeof syncContractsBodySchema>;
 type CreateOfficerBody = z.infer<typeof createOfficerBodySchema>;
 type GetContractsQuery = z.infer<typeof getContractsQuerySchema>;
@@ -27,12 +27,6 @@ const findCurrentOfficer = (teamId: number) =>
   prisma.teamOfficer.findFirst({
     where: { teamId, nextOfficer: { is: null } },
     orderBy: [{ deployBlockNumber: { sort: 'desc', nulls: 'last' } }, { createdAt: 'desc' }],
-  });
-
-/** Finds the contract registered at a Safe address, whichever team it belongs to. */
-const findContractAtSafeAddress = (safeAddress: string) =>
-  prisma.teamContract.findFirst({
-    where: { address: { equals: safeAddress, mode: 'insensitive' } },
   });
 
 // Shared logic: upsert the TeamOfficer for the given address, read the
@@ -253,6 +247,11 @@ export const getContracts = async (req: Request, res: Response) => {
   }
 };
 
+/**
+ * POST /contract — registers a team contract. A new Safe joins the team's Safes and becomes
+ * its default; an address already registered is refused, except a retried registration of
+ * the team's current default Safe, which returns it unchanged.
+ */
 export const addContract = async (req: Request, res: Response) => {
   const callerAddress = req.address;
   const { teamId, contractAddress, contractType } = req.body as AddContractBody;
@@ -261,22 +260,22 @@ export const addContract = async (req: Request, res: Response) => {
     // authz + existence enforced by requireTeamOwner middleware
     if (contractType === 'Safe') {
       const normalizedSafeAddress = getAddress(contractAddress).toLowerCase();
-      const existingTeamSafe = await prisma.teamContract.findFirst({
-        where: { teamId, type: 'Safe' },
+      const registeredSafe = await prisma.teamContract.findFirst({
+        where: { address: { equals: normalizedSafeAddress, mode: 'insensitive' } },
       });
 
-      if (existingTeamSafe) {
-        if (existingTeamSafe.address.toLowerCase() === normalizedSafeAddress) {
-          return res.status(200).json(existingTeamSafe);
-        }
+      if (registeredSafe) {
+        const defaultSafe = await prisma.teamContract.findFirst({
+          where: { teamId, type: 'Safe', removedAt: null },
+          orderBy: { activatedAt: 'desc' },
+        });
+        if (defaultSafe?.id === registeredSafe.id) return res.status(200).json(defaultSafe);
 
-        return errorResponse(409, 'Team already has a Safe account', res);
-      }
-
-      const existingSafeAddress = await findContractAtSafeAddress(normalizedSafeAddress);
-
-      if (existingSafeAddress) {
-        return errorResponse(409, 'Safe address is already assigned to another team', res);
+        const message =
+          registeredSafe.teamId === teamId
+            ? "This Safe is already in the team's Safe history"
+            : 'Safe address is already assigned to another team';
+        return errorResponse(409, message, res);
       }
 
       try {
@@ -291,13 +290,6 @@ export const addContract = async (req: Request, res: Response) => {
         return res.status(200).json(safe);
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
-          const concurrentSafe = await prisma.teamContract.findFirst({
-            where: { teamId, type: 'Safe' },
-          });
-          if (concurrentSafe?.address.toLowerCase() === normalizedSafeAddress) {
-            return res.status(200).json(concurrentSafe);
-          }
-
           return errorResponse(409, 'Safe registration conflict. Refresh and retry.', res);
         }
         throw error;
@@ -320,54 +312,31 @@ export const addContract = async (req: Request, res: Response) => {
 };
 
 /**
- * PUT /contract/safe — points the team's Safe row at a new address, but only while the
- * registered address has no contract on-chain: a Safe that exists holds funds and history a
- * swap would leave behind. Repeating a replacement already done returns the Safe unchanged,
- * and the update matches the old address so a concurrent replacement fails (P2025) instead
- * of overwriting the first one.
+ * PUT /contract/safe — makes one of the team's Safes its default, or removes it. A removed
+ * Safe keeps its row, so its history stays readable; the default then falls back to the
+ * previous Safe not removed, or to none.
  */
-export const replaceSafe = async (req: Request, res: Response) => {
-  const callerAddress = req.address;
-  const { teamId, contractAddress } = req.body as ReplaceSafeBody;
-  const newSafeAddress = getAddress(contractAddress).toLowerCase();
+export const updateTeamSafe = async (req: Request, res: Response) => {
+  const { teamId, contractAddress, action } = req.body as UpdateTeamSafeBody;
 
   try {
-    const currentSafe = await prisma.teamContract.findFirst({
-      where: { teamId, type: 'Safe' },
+    const safe = await prisma.teamContract.findFirst({
+      where: {
+        teamId,
+        type: 'Safe',
+        address: { equals: getAddress(contractAddress), mode: 'insensitive' },
+      },
     });
-    if (!currentSafe) return errorResponse(404, 'Team has no Safe to replace', res);
+    if (!safe) return errorResponse(404, 'Safe not found in this team', res);
 
-    if (currentSafe.address.toLowerCase() === newSafeAddress) {
-      return res.status(200).json(currentSafe);
-    }
-
-    const currentCode = await publicClient.getCode({
-      address: getAddress(currentSafe.address),
+    const updated = await prisma.teamContract.update({
+      where: { id: safe.id },
+      data:
+        action === 'default'
+          ? { activatedAt: new Date(), removedAt: null }
+          : { removedAt: new Date() },
     });
-    if (currentCode && currentCode !== '0x') {
-      return errorResponse(409, 'The team Safe exists on-chain and cannot be replaced', res);
-    }
-
-    const existingSafeAddress = await findContractAtSafeAddress(newSafeAddress);
-    if (existingSafeAddress) {
-      return errorResponse(409, 'Safe address is already assigned to another team', res);
-    }
-
-    try {
-      const safe = await prisma.teamContract.update({
-        where: { id: currentSafe.id, address: currentSafe.address },
-        data: { address: newSafeAddress, deployer: callerAddress },
-      });
-      return res.status(200).json(safe);
-    } catch (error) {
-      if (
-        error instanceof Prisma.PrismaClientKnownRequestError &&
-        (error.code === 'P2002' || error.code === 'P2025')
-      ) {
-        return errorResponse(409, 'Safe replacement conflict. Refresh and retry.', res);
-      }
-      throw error;
-    }
+    return res.status(200).json(updated);
   } catch (error) {
     console.log('Error: ', error);
     return errorResponse(500, 'Internal server error', res);

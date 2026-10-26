@@ -6,14 +6,14 @@ import {
   addContract,
   getTeamOfficers,
   createOfficer,
-  replaceSafe,
+  updateTeamSafe,
 } from '../controllers/contractController';
 import { rejectIfArchived, requireTeamOwner } from '../middleware/teamAuthzMiddleware';
 import {
   validateBody,
   validateQuery,
   addContractBodySchema,
-  replaceSafeBodySchema,
+  updateTeamSafeBodySchema,
   syncContractsBodySchema,
   getContractsQuerySchema,
   createOfficerBodySchema,
@@ -103,6 +103,14 @@ const contractRoutes = express.Router();
  *         application/json:
  *           schema:
  *             $ref: '#/components/schemas/ErrorResponse'
+ *     409:
+ *       description: The team is archived, or a Safe address is already in this
+ *         team's Safe history or registered by another team. A new Safe becomes
+ *         the team default; registering the current default again returns it.
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/ErrorResponse'
  *     500:
  *       description: Internal server error
  *       content:
@@ -122,31 +130,34 @@ contractRoutes.post(
  * @openapi
  * /contract/safe:
  *  put:
- *   summary: Replace a team Safe that has no contract on-chain
+ *   summary: Make a team Safe the default, or remove it
  *   tags: [Contracts]
  *   security:
  *     - bearerAuth: []
- *   description: Points the team's registered Safe at a new address. Refused
- *     while a contract exists at the registered address, so a working Safe
- *     is never swapped out. Retrying with the address already registered
- *     returns the Safe unchanged.
+ *   description: A team keeps every Safe it registered. `default` makes the
+ *     Safe the team default again, restoring it if it was removed. `remove`
+ *     takes it out of use but keeps its history; the default then falls back
+ *     to the previous Safe still in use, if any.
  *   requestBody:
  *     required: true
  *     content:
  *       application/json:
  *         schema:
  *           type: object
- *           required: [teamId, contractAddress]
+ *           required: [teamId, contractAddress, action]
  *           properties:
  *             teamId:
  *               type: integer
  *               minimum: 1
  *             contractAddress:
  *               type: string
- *               description: The address of the new Safe
+ *               description: The address of one of the team's Safes
+ *             action:
+ *               type: string
+ *               enum: [default, remove]
  *   responses:
  *     200:
- *       description: Safe replaced
+ *       description: Safe updated
  *       content:
  *         application/json:
  *           schema:
@@ -156,19 +167,18 @@ contractRoutes.post(
  *     403:
  *       description: Caller is not the team owner
  *     404:
- *       description: Team not found, or the team has no Safe to replace
+ *       description: Team not found, or the Safe is not one of the team's Safes
  *     409:
- *       description: The team is archived, the current Safe exists on-chain,
- *         or the new address is already registered
+ *       description: The team is archived
  *     500:
  *       description: Internal server error
  */
 contractRoutes.put(
   '/safe',
-  validateBody(replaceSafeBodySchema),
+  validateBody(updateTeamSafeBodySchema),
   requireTeamOwner('body.teamId'),
   rejectIfArchived('body.teamId'),
-  replaceSafe
+  updateTeamSafe
 );
 
 /**
