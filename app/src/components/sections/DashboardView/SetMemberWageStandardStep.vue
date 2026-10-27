@@ -1,5 +1,6 @@
 <template>
   <UForm
+    ref="form"
     :schema="standardWageFormSchema"
     :state="wageData"
     class="space-y-4"
@@ -47,7 +48,7 @@
       </p>
     </div>
 
-    <UFormField name="ratePerHour">
+    <div>
       <div class="space-y-4">
         <h3 class="mb-4 text-lg font-semibold">Standard Hourly Rates</h3>
         <UFieldGroup
@@ -79,7 +80,8 @@
           </UFormField>
         </UFieldGroup>
       </div>
-    </UFormField>
+      <UFormField name="ratePerHour" data-test="rate-group-error" />
+    </div>
 
     <div class="border-muted border-t pt-4">
       <label
@@ -154,7 +156,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { NETWORK } from '@/constant'
 import { DEFAULT_MAXIMUM_HOURS_PER_DAY } from '@/utils/wages/model'
 import { standardWageFormSchema } from '@/utils/wages/validation'
@@ -183,6 +185,23 @@ watch(
     wageData.value.ratePerHour.forEach((rate, i) => {
       if (!enabled[i] && Number(rate.amount) !== 0) rate.amount = 0
     })
+  }
+)
+
+/**
+ * The "at least one rate" error belongs to the whole group, while UForm only re-validates
+ * the amount field being typed in. Re-check the group on any rate change once its error
+ * is showing, so it clears as soon as one enabled rate has a positive amount.
+ */
+const form = ref<{
+  getErrors: (name: string) => unknown[]
+  validate: (opts?: Record<string, unknown>) => Promise<unknown>
+} | null>(null)
+watch(
+  () => wageData.value.ratePerHour.map((rate) => [rate.enabled, rate.amount]),
+  () => {
+    if (!form.value?.getErrors('ratePerHour').length) return
+    form.value.validate({ name: 'ratePerHour', silent: true }).catch(() => {})
   }
 )
 </script>
