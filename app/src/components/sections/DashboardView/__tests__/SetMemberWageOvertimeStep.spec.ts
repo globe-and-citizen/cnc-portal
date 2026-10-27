@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { mount } from '@vue/test-utils'
+import { flushPromises, mount } from '@vue/test-utils'
 import { NETWORK } from '@/constant'
 import SetMemberWageOvertimeStep from '../SetMemberWageOvertimeStep.vue'
 import type { WageWithForm } from '../SetMemberWageModal.vue'
@@ -178,6 +178,32 @@ describe('[US-PAYROLL-001] SetMemberWageOvertimeStep.vue', () => {
 
     await overtimeAmountInputs[1]?.setValue('')
     expect(wageData.overtimeRatePerHour[0]?.enabled).toBe(true)
+  })
+
+  it('[AC-US-PAYROLL-001-12] clears the overtime rate error once an enabled rate has a positive amount', async () => {
+    const wrapper = createWrapper(
+      createWageData({
+        overtimeRatePerHour: [
+          { type: 'native', amount: 0, enabled: false },
+          { type: 'usdc', amount: 0, enabled: false },
+          { type: 'sher', amount: 0, enabled: false }
+        ]
+      })
+    )
+    const groupError = () => wrapper.get('[data-test="overtime-rate-group-error"]').text()
+
+    await wrapper.findAll('button[role="switch"]')[0]?.trigger('click')
+    await flushPromises()
+    expect(groupError()).toBe('')
+
+    await wrapper.get('[data-test="overtime-rules-step"]').trigger('submit')
+    await flushPromises()
+    expect(groupError()).toContain('Enable at least one overtime rate')
+
+    // Index 1: the overtime cap input comes first
+    await wrapper.findAll('input[type="number"]')[1]?.setValue('12')
+    await flushPromises()
+    expect(groupError()).toBe('')
   })
 
   it('auto-zeroes the overtime rate amount when the toggle is turned off', async () => {
