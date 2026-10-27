@@ -15,12 +15,16 @@ const requiredRateTypes: RatePerHour['type'][] = ['native', 'usdc', 'sher']
  */
 export const DEFAULT_MAXIMUM_HOURS_PER_DAY = 8
 
+/**
+ * Worked time in hours and minutes (`27h30min`, `8h`, `45min`). Hours never roll over
+ * into days, so a week of work reads as the total hours claimed.
+ */
 export const formatMinutesAsDuration = (totalMinutes: number): string => {
   const h = Math.floor(totalMinutes / 60)
   const m = totalMinutes % 60
   if (m === 0) return `${h}h`
   if (h === 0) return `${m}min`
-  return `${h}h ${m}min`
+  return `${h}h${m}min`
 }
 
 /**
