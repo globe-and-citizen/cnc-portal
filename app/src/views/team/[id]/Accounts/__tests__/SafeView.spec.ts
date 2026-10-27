@@ -1,8 +1,9 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises, mount, shallowMount } from '@vue/test-utils'
 import SafeView from '../SafeView.vue'
 import { mockTeamData, mockTeamStore, mockUserStore } from '@/tests/mocks'
 import { mockUseContractBalance, makeTokenBalance } from '@/tests/mocks/composables.mock'
+import { mockSafeDepositRouterReads } from '@/tests/mocks/safeDepositRouter.mock'
 import { toValue } from 'vue'
 import { useGetSafeBalancesQuery } from '@/queries/safeClient.queries'
 
@@ -73,7 +74,7 @@ describe('[US-SAFE-001] [US-SAFE-002] SafeView.vue', () => {
     })
     const notice = wrapper.find('[data-test="safe-missing-notice"]')
 
-    expect(notice.findComponent({ name: 'SafeAddModal' }).props('inNotice')).toBe(true)
+    expect(notice.findComponent({ name: 'SafeAddModal' }).exists()).toBe(true)
     wrapper.unmount()
   })
 
@@ -91,6 +92,77 @@ describe('[US-SAFE-001] [US-SAFE-002] SafeView.vue', () => {
     expect(wrapper.find('[data-test="safe-missing-notice"]').exists()).toBe(true)
     expect(wrapper.findComponent({ name: 'SafeAddModal' }).exists()).toBe(false)
     wrapper.unmount()
+  })
+
+  describe('with a Safe history', () => {
+    const SAFE = '0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB'
+    const OTHER_SAFE = '0xcccccccccccccccccccccccccccccccccccccccc'
+    const stubs = {
+      AddressTooltip: true,
+      SafeAddModal: true,
+      SafeBalanceSection: true,
+      SafeOwnersCard: true,
+      TokenHoldingsSection: true,
+      SafeTransactions: true,
+      SafeIncomingTransactions: true,
+      SetSafeAddressAction: true
+    }
+
+    beforeEach(() => {
+      mockTeamStore.getContractAddressByType.mockReturnValue(SAFE)
+      mockUserStore.address = mockTeamData.ownerAddress
+      mockTeamStore.currentTeam = {
+        ...mockTeamData,
+        safes: [
+          { address: SAFE.toLowerCase(), activatedAt: '2026-10-01T00:00:00Z', removedAt: null }
+        ]
+      }
+      mockSafeDepositRouterReads.safeAddress.data.value = OTHER_SAFE
+    })
+
+    afterEach(() => {
+      mockSafeDepositRouterReads.safeAddress.data.value = SAFE
+    })
+
+    it('offers a new Safe once, on the missing Safe notice, and hides the investments warning', () => {
+      safeQueries.bytecode.value = '0x'
+      const wrapper = mount(SafeView, { global: { stubs } })
+
+      expect(wrapper.findAllComponents({ name: 'SafeAddModal' })).toHaveLength(1)
+      expect(
+        wrapper
+          .find('[data-test="safe-missing-notice"]')
+          .findComponent({ name: 'SafeAddModal' })
+          .exists()
+      ).toBe(true)
+      expect(wrapper.find('[data-test="safe-router-out-of-sync"]').exists()).toBe(false)
+      wrapper.unmount()
+    })
+
+    it('[AC-US-SAFE-001-19] offers a new Safe in the Safe history and warns when investments go to another Safe', () => {
+      safeQueries.bytecode.value = '0x6080'
+      const wrapper = mount(SafeView, { global: { stubs } })
+
+      expect(wrapper.findAllComponents({ name: 'SafeAddModal' })).toHaveLength(1)
+      expect(
+        wrapper
+          .find('[data-test="safe-history-card"]')
+          .findComponent({ name: 'SafeAddModal' })
+          .exists()
+      ).toBe(true)
+      const warning = wrapper.find('[data-test="safe-router-out-of-sync"]')
+      expect(warning.findComponent({ name: 'SetSafeAddressAction' }).props('compact')).toBe(true)
+      wrapper.unmount()
+    })
+
+    it('shows no investments warning when the router already points at the default Safe', () => {
+      mockSafeDepositRouterReads.safeAddress.data.value = SAFE
+      safeQueries.bytecode.value = '0x6080'
+      const wrapper = mount(SafeView, { global: { stubs } })
+
+      expect(wrapper.find('[data-test="safe-router-out-of-sync"]').exists()).toBe(false)
+      wrapper.unmount()
+    })
   })
 
   it('holds the Safe sections until the chain answers, so no Safe service request starts first', () => {

@@ -860,8 +860,8 @@ remain as recorded above.
 - [x] `AC-US-SAFE-001-17` The company owner can remove a Safe, including the only one. A removed Safe keeps its history; the previous Safe
       still in use becomes the default, or the Safe setup page appears when none remains.
 - [x] `AC-US-SAFE-001-18` Before switching away from or removing the default Safe, the owner is warned when it still holds tokens.
-- [x] `AC-US-SAFE-001-19` When the deposit router still sends investments to a Safe other than the default one, the Safe page warns and
-      offers to point it at the default Safe.
+- [x] `AC-US-SAFE-001-19` When the deposit router still sends investments to a Safe other than the default one, and a Safe exists at the
+      default address, the Safe page warns and offers to point it at the default Safe.
 - [x] `AC-US-SAFE-001-20` Accounting books each company Safe as its own numbered `Cash — Safe` account, a move between two company Safes
       once as an internal move, and a router deposit in the Safe that received it.
 

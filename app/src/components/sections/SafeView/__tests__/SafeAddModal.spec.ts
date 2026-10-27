@@ -18,15 +18,15 @@ function mountModal() {
 describe('[US-SAFE-001] SafeAddModal', () => {
   afterEach(() => wrapper?.unmount())
 
-  it('renders small error buttons inside the missing Safe notice', () => {
-    mockTeamStore.currentTeamId = '1'
-    wrapper = mount(SafeAddModal, {
-      props: { inNotice: true },
-      global: { stubs: { SafeDeploymentCard: true, SafeImportCard: true } }
-    })
+  it('renders deploy as the main action and import as the secondary one', () => {
+    const modal = mountModal()
 
-    const deploy = wrapper.findComponent('[data-test="safe-add-deploy-button"]')
-    expect(deploy.props()).toMatchObject({ size: 'xs', color: 'error' })
+    expect(modal.findComponent('[data-test="safe-add-deploy-button"]').props('color')).toBe(
+      'primary'
+    )
+    expect(modal.findComponent('[data-test="safe-add-import-button"]').props('color')).toBe(
+      'secondary'
+    )
   })
 
   it('opens the deployment card for the current team', async () => {

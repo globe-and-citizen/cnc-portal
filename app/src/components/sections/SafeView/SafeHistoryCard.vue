@@ -8,26 +8,11 @@
             Every Safe this team registered. A removed Safe keeps its history.
           </p>
         </div>
-        <div v-if="canEdit" class="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-          <SafeAddModal />
+        <div v-if="$slots.actions" class="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+          <slot name="actions" />
         </div>
       </div>
     </template>
-
-    <UAlert
-      v-if="isRouterOutOfSync"
-      class="mb-4"
-      color="warning"
-      variant="soft"
-      icon="i-lucide-triangle-alert"
-      title="Investments still go to another Safe"
-      description="The deposit router sends new investments to a Safe that is not the team default. Point it at the default Safe."
-      data-test="safe-router-out-of-sync"
-    >
-      <template #actions>
-        <SetSafeAddressAction />
-      </template>
-    </UAlert>
 
     <ul class="divide-y divide-gray-200 dark:divide-gray-800">
       <li
@@ -47,8 +32,7 @@
           <template v-if="canEdit">
             <UButton
               v-if="safe.status !== 'Default'"
-              size="sm"
-              color="primary"
+              color="secondary"
               variant="outline"
               icon="i-lucide-star"
               label="Set as default"
@@ -57,7 +41,6 @@
             />
             <UButton
               v-if="safe.status !== 'Removed'"
-              size="sm"
               color="error"
               variant="outline"
               icon="i-lucide-trash-2"
@@ -115,11 +98,8 @@ import { computed, ref } from 'vue'
 import type { Address } from 'viem'
 import { useToast } from '@nuxt/ui/composables'
 import AddressTooltip from '@/components/ui/AddressTooltip.vue'
-import SafeAddModal from '@/components/sections/SafeView/SafeAddModal.vue'
-import SetSafeAddressAction from '@/components/sections/SherTokenView/InvestorActions/SetSafeAddressAction.vue'
 import { useUpdateTeamSafeMutation } from '@/queries/contract.queries'
 import { useGetSafeBalancesQuery } from '@/queries/safeClient.queries'
-import { useSafeDepositRouterSafeAddress } from '@/composables/safeDepositRouter/reads'
 import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
 import { useTeamStore } from '@/stores'
 import { formatDate } from '@/utils/format'
@@ -176,11 +156,6 @@ const rows = computed(() =>
       dateLabel: `Made default ${formatDate(safe.activatedAt)}`
     } as const
   })
-)
-
-const { data: routerSafe } = useSafeDepositRouterSafeAddress()
-const isRouterOutOfSync = computed(
-  () => !!routerSafe.value && !!defaultSafe.value && !isDefaultSafe(routerSafe.value as string)
 )
 
 const isConfirmOpen = ref(false)

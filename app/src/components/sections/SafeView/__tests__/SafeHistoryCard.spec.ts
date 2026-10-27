@@ -3,7 +3,6 @@ import { flushPromises, mount, type VueWrapper } from '@vue/test-utils'
 import SafeHistoryCard from '../SafeHistoryCard.vue'
 import { createMockMutationResponse, mockTeamData, mockTeamStore } from '@/tests/mocks'
 import { makeTokenBalance, mockUseContractBalance } from '@/tests/mocks/composables.mock'
-import { mockSafeDepositRouterReads } from '@/tests/mocks/safeDepositRouter.mock'
 import { useUpdateTeamSafeMutation } from '@/queries/contract.queries'
 
 const DEFAULT_SAFE = '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'
@@ -16,7 +15,7 @@ let mutation: ReturnType<typeof createMockMutationResponse>
 function mountCard(canManage = true) {
   wrapper = mount(SafeHistoryCard, {
     props: { canManage },
-    global: { stubs: { AddressTooltip: true, SafeAddModal: true, SetSafeAddressAction: true } }
+    global: { stubs: { AddressTooltip: true } }
   })
   return wrapper
 }
@@ -43,7 +42,6 @@ describe('[US-SAFE-001] SafeHistoryCard', () => {
     }
     mockTeamStore.currentTeamMeta.data.isArchived = false
     mockUseContractBalance.balances.value = []
-    mockSafeDepositRouterReads.safeAddress.data.value = DEFAULT_SAFE
   })
 
   afterEach(() => wrapper?.unmount())
@@ -54,7 +52,6 @@ describe('[US-SAFE-001] SafeHistoryCard', () => {
     expect(statuses(card)).toEqual(['Default', 'Previous', 'Removed'])
     expect(card.find('[data-test="safe-set-default-button"]').exists()).toBe(false)
     expect(card.find('[data-test="safe-remove-button"]').exists()).toBe(false)
-    expect(card.findComponent({ name: 'SafeAddModal' }).exists()).toBe(false)
   })
 
   it('[AC-US-SAFE-001-14] hides the owner actions when the team is archived', () => {
@@ -62,7 +59,6 @@ describe('[US-SAFE-001] SafeHistoryCard', () => {
     const card = mountCard()
 
     expect(card.find('[data-test="safe-set-default-button"]').exists()).toBe(false)
-    expect(card.findComponent({ name: 'SafeAddModal' }).exists()).toBe(false)
   })
 
   it('[AC-US-SAFE-001-16] makes a previous Safe the default after confirmation', async () => {
@@ -131,17 +127,13 @@ describe('[US-SAFE-001] SafeHistoryCard', () => {
     expect(card.find('[data-test="safe-held-tokens-warning"]').exists()).toBe(false)
   })
 
-  it('[AC-US-SAFE-001-19] warns when the deposit router still points at another Safe', () => {
-    mockSafeDepositRouterReads.safeAddress.data.value = PREVIOUS_SAFE
-    const card = mountCard()
+  it('shows the actions the page passes in its header', () => {
+    wrapper = mount(SafeHistoryCard, {
+      props: { canManage: true },
+      slots: { actions: '<button data-test="page-action">Add</button>' },
+      global: { stubs: { AddressTooltip: true } }
+    })
 
-    expect(card.find('[data-test="safe-router-out-of-sync"]').exists()).toBe(true)
-    expect(card.findComponent({ name: 'SetSafeAddressAction' }).exists()).toBe(true)
-  })
-
-  it('shows no router warning when the router already points at the default Safe', () => {
-    const card = mountCard()
-
-    expect(card.find('[data-test="safe-router-out-of-sync"]').exists()).toBe(false)
+    expect(wrapper.find('[data-test="page-action"]').exists()).toBe(true)
   })
 })

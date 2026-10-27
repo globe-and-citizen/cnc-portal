@@ -28,7 +28,10 @@
               </p>
             </div>
           </div>
-          <p class="mt-5 max-w-xl text-sm leading-6 text-gray-600 dark:text-gray-300">
+          <p
+            v-if="!isSafeMissing"
+            class="mt-5 max-w-xl text-sm leading-6 text-gray-600 dark:text-gray-300"
+          >
             Check the wallet, manage funds and signers, then follow every proposal from approval to
             execution.
           </p>
@@ -55,15 +58,16 @@
       data-test="safe-missing-notice"
     >
       <template #actions>
+        <SafeAddModal v-if="canAddSafe" />
         <UButton
-          color="error"
+          color="neutral"
           variant="outline"
-          size="xs"
+          icon="i-lucide-refresh-cw"
           label="Check again"
+          class="justify-center"
           data-test="safe-missing-retry"
           @click="refetchBytecode()"
         />
-        <SafeAddModal v-if="canAddSafe" in-notice />
       </template>
     </UAlert>
 
@@ -77,6 +81,20 @@
     </div>
 
     <template v-else>
+      <UAlert
+        v-if="isRouterOutOfSync"
+        color="warning"
+        variant="soft"
+        icon="i-lucide-triangle-alert"
+        title="New investments still go to another Safe"
+        description="Investor deposits are sent to a Safe that is not this team's default Safe. Point them to the default Safe so new investments arrive here."
+        data-test="safe-router-out-of-sync"
+      >
+        <template #actions>
+          <SetSafeAddressAction compact />
+        </template>
+      </UAlert>
+
       <nav
         class="flex gap-2 overflow-x-auto rounded-xl border bg-white p-2 dark:border-gray-800 dark:bg-gray-950"
         aria-label="Safe wallet sections"
@@ -147,7 +165,11 @@
       </section>
     </template>
 
-    <SafeHistoryCard :can-manage="canManageSafe" />
+    <SafeHistoryCard v-if="teamStore.currentTeam?.safes?.length" :can-manage="canManageSafe">
+      <template v-if="canAddSafe && !isSafeMissing && !isCheckingContract" #actions>
+        <SafeAddModal />
+      </template>
+    </SafeHistoryCard>
   </main>
 
   <div
@@ -184,6 +206,8 @@ import SafeIncomingTransactions from '@/components/sections/SafeView/SafeIncomin
 import SafeSetupSection from '@/components/sections/SafeView/SafeSetupSection.vue'
 import SafeAddModal from '@/components/sections/SafeView/SafeAddModal.vue'
 import SafeHistoryCard from '@/components/sections/SafeView/SafeHistoryCard.vue'
+import SetSafeAddressAction from '@/components/sections/SherTokenView/InvestorActions/SetSafeAddressAction.vue'
+import { useSafeDepositRouterSafeAddress } from '@/composables/safeDepositRouter/reads'
 import { useGetSafeBytecodeQuery } from '@/queries/safe.queries'
 import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
 import { useTeamStore, useUserDataStore } from '@/stores'
@@ -220,6 +244,14 @@ const {
  * would all fail, wait for the chain and are replaced by one notice.
  */
 const isSafeMissing = computed(() => bytecode.value === '0x')
+
+const { data: routerSafe } = useSafeDepositRouterSafeAddress()
+const isRouterOutOfSync = computed(
+  () =>
+    !!routerSafe.value &&
+    !!teamSafeAddress.value &&
+    (routerSafe.value as string).toLowerCase() !== teamSafeAddress.value.toLowerCase()
+)
 
 const currency = useStorage('currency', { code: 'USD', name: 'US Dollar', symbol: '$' })
 const {

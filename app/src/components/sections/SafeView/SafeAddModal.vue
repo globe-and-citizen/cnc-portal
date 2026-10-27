@@ -1,7 +1,6 @@
 <template>
   <UButton
-    :color="inNotice ? 'error' : 'primary'"
-    :size="inNotice ? 'xs' : undefined"
+    color="primary"
     icon="i-lucide-rocket"
     label="Deploy a new Safe"
     class="justify-center"
@@ -9,9 +8,7 @@
     @click="openWith('deploy')"
   />
   <UButton
-    :color="inNotice ? 'error' : 'secondary'"
-    :size="inNotice ? 'xs' : undefined"
-    variant="outline"
+    color="secondary"
     icon="i-lucide-download"
     label="Import an existing Safe"
     class="justify-center"
@@ -46,9 +43,6 @@ import { ref } from 'vue'
 import SafeDeploymentCard from '@/components/sections/SafeView/SafeDeploymentCard.vue'
 import SafeImportCard from '@/components/sections/SafeView/SafeImportCard.vue'
 import { useTeamStore } from '@/stores'
-
-/** `inNotice` renders small error buttons, like the missing Safe notice's own action. */
-defineProps<{ inNotice?: boolean }>()
 
 const teamStore = useTeamStore()
 const isOpen = ref(false)
