@@ -143,6 +143,77 @@ describe('[US-SAFE-001] SafeImportCard', () => {
     expect(wrapper.find('[data-test="safe-import-owners-toggle"]').text()).toContain('View 1 owner')
   })
 
+  describe('a Safe already in the team', () => {
+    const DEFAULT_SAFE = '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'
+    const REMOVED_SAFE = '0xcccccccccccccccccccccccccccccccccccccccc'
+
+    beforeEach(() => {
+      mockTeamStore.currentTeam = {
+        ...mockTeamData,
+        safes: [
+          { address: DEFAULT_SAFE, type: 'Safe', deployer: mockTeamData.ownerAddress, admins: [] },
+          {
+            address: REMOVED_SAFE,
+            type: 'Safe',
+            deployer: mockTeamData.ownerAddress,
+            admins: [],
+            removedAt: '2026-10-01T00:00:00.000Z'
+          }
+        ]
+      }
+    })
+
+    it('[AC-US-SAFE-001-13] says the pasted address is already the default Safe and blocks inspect and import', async () => {
+      const wrapper = mountCard()
+      await wrapper.find('[data-test="safe-import-address-input"]').setValue(DEFAULT_SAFE)
+
+      expect(wrapper.find('[data-test="safe-import-already-registered"]').text()).toContain(
+        "already this team's default Safe"
+      )
+      expect(wrapper.find('[data-test="inspect-safe-button"]').attributes('disabled')).toBeDefined()
+      expect(
+        wrapper.find('[data-test="confirm-safe-import-button"]').attributes('disabled')
+      ).toBeDefined()
+    })
+
+    it('[AC-US-SAFE-001-13] points a Safe from the history to Set as default instead of importing it', async () => {
+      const wrapper = mountCard()
+      await wrapper.find('[data-test="safe-import-address-input"]').setValue(REMOVED_SAFE)
+
+      expect(wrapper.find('[data-test="safe-import-already-registered"]').text()).toContain(
+        "already in this team's Safe history"
+      )
+      expect(wrapper.find('[data-test="inspect-safe-button"]').attributes('disabled')).toBeDefined()
+    })
+
+    it('[AC-US-SAFE-001-13] does not check the Safes of another team, such as the one left for the setup flow', async () => {
+      const wrapper = mountCard({ teamId: Number(mockTeamData.id) + 1 })
+      await wrapper.find('[data-test="safe-import-address-input"]').setValue(DEFAULT_SAFE)
+
+      expect(wrapper.find('[data-test="safe-import-already-registered"]').exists()).toBe(false)
+      expect(
+        wrapper.find('[data-test="inspect-safe-button"]').attributes('disabled')
+      ).toBeUndefined()
+    })
+  })
+
+  it('[AC-US-SAFE-001-13] shows the backend reason when the import is refused', async () => {
+    mockCreateContract.error.value = Object.assign(
+      new Error('Request failed with status code 409'),
+      {
+        response: {
+          status: 409,
+          data: { message: 'Safe address is already assigned to another team' }
+        }
+      }
+    )
+    const wrapper = mountCard()
+
+    expect(wrapper.find('[data-test="safe-import-error"]').text()).toContain(
+      'Safe address is already assigned to another team'
+    )
+  })
+
   it('clears the inspection when the user chooses another address', async () => {
     const wrapper = mountCard()
     await wrapper.find('[data-test="safe-import-address-input"]').setValue(SAFE_ADDRESS)

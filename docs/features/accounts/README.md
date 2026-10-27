@@ -852,7 +852,8 @@ remain as recorded above.
 - [x] `AC-US-SAFE-001-12` A company that already has a Safe, including one with no contract at its address, can deploy or import another
       Safe. The new Safe becomes the company's default Safe and the previous one stays in its Safe history.
 - [x] `AC-US-SAFE-001-13` A Safe address is registered only once: an address already in the company's Safe history or registered to another
-      company is refused.
+      company is refused. An address already in the company's Safe history is flagged as soon as it is entered, saying whether it is the
+      default Safe or one to set as default again from the history; a refusal for another company shows its reason.
 - [x] `AC-US-SAFE-001-14` Only the company owner can add, switch, or remove a Safe, and an archived company cannot.
 - [x] `AC-US-SAFE-001-15` The company owner and members can review the Safe history: every Safe the company registered, marked as default,
       previous, or removed.
@@ -884,7 +885,8 @@ remain as recorded above.
 | `AC-US-SAFE-001-11`  | `PS-BROWSER`          | Mocked browser                             | ✅ Met          |
 | `AC-US-SAFE-001-12`  | `PS-FRONTEND`         | Frontend + Backend                         | ✅ Met          |
 | `AC-US-SAFE-001-12`  | `PS-BACKEND`          | Frontend + Backend                         | ✅ Met          |
-| `AC-US-SAFE-001-13`  | `PS-BACKEND`          | Backend                                    | ✅ Met          |
+| `AC-US-SAFE-001-13`  | `PS-FRONTEND`         | Frontend + Backend                         | ✅ Met          |
+| `AC-US-SAFE-001-13`  | `PS-BACKEND`          | Frontend + Backend                         | ✅ Met          |
 | `AC-US-SAFE-001-14`  | `PS-FRONTEND`         | Frontend + Backend                         | ✅ Met          |
 | `AC-US-SAFE-001-14`  | `PS-BACKEND`          | Frontend + Backend                         | ✅ Met          |
 | `AC-US-SAFE-001-15`  | `PS-FRONTEND`         | Frontend + Backend                         | ✅ Met          |
