@@ -33,15 +33,15 @@ describe('activityOf — actor rows', () => {
   it('renders hours and minutes (never a decimal) and a wage settlement', () => {
     expect(
       activityOf(entry({ useCase: 'UC-CASH-02', counterparty: ALI, minutesWorked: 90 }))
-    ).toEqual({ kind: 'actor', actor: ALI, text: 'submitted 1h30min of work' })
+    ).toEqual({ kind: 'actor', actor: ALI, text: 'submitted 1h 30min of work' })
     // 20 h 50 min = 1250 min — must not read as decimal hours.
     expect(
       activityOf(entry({ useCase: 'UC-CASH-02', counterparty: ALI, minutesWorked: 1250 })).text
-    ).toBe('submitted 20h50min of work')
+    ).toBe('submitted 20h 50min of work')
     // A week past 24 h stays in hours — never rolled over into days.
     expect(
       activityOf(entry({ useCase: 'UC-CASH-02', counterparty: ALI, minutesWorked: 1650 })).text
-    ).toBe('submitted 27h30min of work')
+    ).toBe('submitted 27h 30min of work')
     // Under an hour shows minutes only; a whole hour drops the minutes.
     expect(
       activityOf(entry({ useCase: 'UC-CASH-02', counterparty: ALI, minutesWorked: 50 })).text
