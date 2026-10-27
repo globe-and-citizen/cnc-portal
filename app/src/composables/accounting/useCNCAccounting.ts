@@ -36,7 +36,7 @@ import { useGetTeamQuery } from '@/queries/team.queries'
 import { useGetTeamOfficersQuery } from '@/queries/contract.queries'
 import { useGetExpensesQuery } from '@/queries/expense.queries'
 import { useGetJournalAccountAssignmentsQuery } from '@/queries/journalAccountAssignment.queries'
-import { useGetSafeTransfersQuery, useGetSafesTransfersQuery } from '@/queries/safe.queries'
+import { useGetSafeTransfersQuery, useGetSafeTransfersQueries } from '@/queries/safe.queries'
 import { useGetTeamWeeklyClaimsQuery } from '@/queries/weeklyClaim.queries'
 import {
   useGetAssetMarketsQuery,
@@ -156,28 +156,34 @@ export function useCNCAccounting(
   })
 
   // Every Safe the team used before its default one keeps its own Cash — Safe account.
-  const bookContracts = computed(() => [...allContracts.value, ...(team.data.value?.safes ?? [])])
+  const contractsWithEverySafe = computed(() => [
+    ...allContracts.value,
+    ...(team.data.value?.safes ?? [])
+  ])
   const previousSafeAddresses = computed(() =>
     (team.data.value?.safes ?? [])
       .map((safe) => normalizeSafeAddress(safe.address))
       .filter((address) => address !== safeAddress.value)
   )
-  const previousSafeTransfers = useGetSafesTransfersQuery(previousSafeAddresses, SAFE_PAGE_SIZE)
-  const previousSafesQuery = {
-    isPending: computed(() => previousSafeTransfers.value.some((query) => query.isPending)),
-    error: computed(() => previousSafeTransfers.value.find((query) => query.error)?.error),
-    refetch: () => Promise.all(previousSafeTransfers.value.map((query) => query.refetch()))
+  const previousSafeTransferQueries = useGetSafeTransfersQueries(
+    previousSafeAddresses,
+    SAFE_PAGE_SIZE
+  )
+  const previousSafeTransfers = {
+    isPending: computed(() => previousSafeTransferQueries.value.some((query) => query.isPending)),
+    error: computed(() => previousSafeTransferQueries.value.find((query) => query.error)?.error),
+    refetch: () => Promise.all(previousSafeTransferQueries.value.map((query) => query.refetch()))
   }
 
   // Source feeds are first mapped with the explicit override when supplied, or
   // with the zero-rate gap. This produces the token/date request set without
   // running the source mappers twice.
   const baseInput = computed<CncAccountingInput>(() => ({
-    contracts: bookContracts.value,
+    contracts: contractsWithEverySafe.value,
     safeAddress: safeAddress.value,
     previousSafes: previousSafeAddresses.value.map((address, index) => ({
       safeAddress: address,
-      assetTransfers: previousSafeTransfers.value[index]?.data ?? []
+      assetTransfers: previousSafeTransferQueries.value[index]?.data ?? []
     })),
     sherTokenAddress: options.sherTokenAddress ?? (investorAddress.value || null),
     currentSherMultiplier: currentSherMultiplier.value,
@@ -225,7 +231,7 @@ export function useCNCAccounting(
       ? provisionalDrafts.value
       : accountingValuation.applyHistoricalRates(provisionalDrafts.value, rateOfRecord)
   )
-  const deploymentAccounts = computed(() => knownDeploymentAccounts(bookContracts.value))
+  const deploymentAccounts = computed(() => knownDeploymentAccounts(contractsWithEverySafe.value))
   const transactionEvidence = useTransactionEvidence(drafts, deploymentAccounts)
   const accounting = computed<CncAccounting>(() =>
     assembleWithAccountEvidence(
@@ -265,7 +271,7 @@ export function useCNCAccounting(
       'previous-safe-transfers',
       'Previous Safe asset movements',
       () => previousSafeAddresses.value.length > 0,
-      previousSafesQuery
+      previousSafeTransfers
     ),
     accountingQuerySource('contract-history', 'Contract deployment history', hasTeamId, officers),
     accountingQuerySource('weekly-claims', 'Weekly claims', hasTeamId, weeklyClaims),

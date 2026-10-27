@@ -43,12 +43,12 @@
     </UFormField>
 
     <UAlert
-      v-if="registeredSafeMessage"
+      v-if="alreadyRegisteredMessage"
       class="mt-4"
       color="warning"
       variant="soft"
       icon="i-lucide-circle-alert"
-      :description="registeredSafeMessage"
+      :description="alreadyRegisteredMessage"
       data-test="safe-import-already-registered"
     />
 
@@ -139,7 +139,7 @@
           variant="outline"
           :loading="isInspecting"
           :disabled="
-            isInspecting || isRegistering || !safeAddressInput.trim() || !!registeredSafeMessage
+            isInspecting || isRegistering || !safeAddressInput.trim() || !!alreadyRegisteredMessage
           "
           data-test="inspect-safe-button"
           @click="handleInspect"
@@ -222,7 +222,7 @@ const inspectedSafe = computed(() => {
 })
 
 /** The team's own Safe at the entered address; the team being created in the setup flow has none yet. */
-const registeredSafe = computed(() => {
+const alreadyRegisteredSafe = computed(() => {
   const input = safeAddressInput.value.trim()
   if (!isAddress(input) || String(teamStore.currentTeam?.id) !== String(props.teamId))
     return undefined
@@ -231,23 +231,23 @@ const registeredSafe = computed(() => {
   )
 })
 
-const registeredSafeMessage = computed(() => {
-  if (!registeredSafe.value) return undefined
-  return registeredSafe.value.address.toLowerCase() ===
+const alreadyRegisteredMessage = computed(() => {
+  if (!alreadyRegisteredSafe.value) return undefined
+  return alreadyRegisteredSafe.value.address.toLowerCase() ===
     teamStore.getContractAddressByType('Safe')?.toLowerCase()
     ? "This Safe is already this team's default Safe."
     : "This Safe is already in this team's Safe history. Use Set as default there to use it again."
 })
 
 const canImport = computed(
-  () => canManageSafe.value && !!inspectedSafe.value && !registeredSafeMessage.value
+  () => canManageSafe.value && !!inspectedSafe.value && !alreadyRegisteredMessage.value
 )
 const network = computed(() => NETWORK)
 
 const importPermissionHint = computed(() => {
   if (!userDataStore.address) return 'Connect the team owner wallet to import this Safe.'
   if (!canManageSafe.value) return 'Only the team owner can attach a Safe to this team.'
-  if (registeredSafeMessage.value) return registeredSafeMessage.value
+  if (alreadyRegisteredMessage.value) return alreadyRegisteredMessage.value
   if (!inspectedSafe.value) return 'Inspect and confirm a valid Safe before importing it.'
   return 'Register this existing Safe with the team without changing it on-chain.'
 })

@@ -16,7 +16,7 @@
 
     <ul class="divide-y divide-gray-200 dark:divide-gray-800">
       <li
-        v-for="safe in rows"
+        v-for="safe in safeRows"
         :key="safe.address"
         class="flex flex-wrap items-center justify-between gap-3 py-3"
         data-test="safe-history-row"
@@ -29,7 +29,7 @@
           <UBadge :color="STATUS_COLOR[safe.status]" variant="soft" data-test="safe-history-status">
             {{ safe.status }}
           </UBadge>
-          <template v-if="canEdit">
+          <template v-if="canChangeSafes">
             <UButton
               v-if="safe.status !== 'Default'"
               color="secondary"
@@ -37,7 +37,7 @@
               icon="i-lucide-star"
               label="Set as default"
               data-test="safe-set-default-button"
-              @click="openConfirm(safe.address, 'default')"
+              @click="askConfirmation(safe.address, 'default')"
             />
             <UButton
               v-if="safe.status !== 'Removed'"
@@ -46,7 +46,7 @@
               icon="i-lucide-trash-2"
               label="Remove"
               data-test="safe-remove-button"
-              @click="openConfirm(safe.address, 'remove')"
+              @click="askConfirmation(safe.address, 'remove')"
             />
           </template>
         </div>
@@ -80,12 +80,12 @@
             @click="isConfirmOpen = false"
           />
           <UButton
-            :color="pending?.action === 'remove' ? 'error' : 'primary'"
+            :color="actionToConfirm?.action === 'remove' ? 'error' : 'primary'"
             :icon="confirmCopy.icon"
             :label="confirmCopy.confirm"
             :loading="isPending"
             data-test="safe-action-confirm"
-            @click="submit"
+            @click="applyConfirmedAction"
           />
         </div>
       </template>
@@ -135,12 +135,12 @@ const toast = useToast()
 const { isWriteDisabled } = useTeamWriteGuard()
 const { mutate: updateTeamSafe, isPending } = useUpdateTeamSafeMutation()
 
-const canEdit = computed(() => props.canManage && !isWriteDisabled.value)
-const defaultSafe = computed(() => teamStore.getContractAddressByType('Safe'))
+const canChangeSafes = computed(() => props.canManage && !isWriteDisabled.value)
+const defaultSafeAddress = computed(() => teamStore.getContractAddressByType('Safe'))
 const isDefaultSafe = (address: string) =>
-  address.toLowerCase() === defaultSafe.value?.toLowerCase()
+  address.toLowerCase() === defaultSafeAddress.value?.toLowerCase()
 
-const rows = computed(() =>
+const safeRows = computed(() =>
   (teamStore.currentTeam?.safes ?? []).map((safe) => {
     const address = normalizeSafeAddress(safe.address)
     if (safe.removedAt) {
@@ -159,18 +159,18 @@ const rows = computed(() =>
 )
 
 const isConfirmOpen = ref(false)
-const pending = ref<{ address: Address; action: SafeAction }>()
-const confirmCopy = computed(() => CONFIRM_COPY[pending.value?.action ?? 'default'])
+const actionToConfirm = ref<{ address: Address; action: SafeAction }>()
+const confirmCopy = computed(() => CONFIRM_COPY[actionToConfirm.value?.action ?? 'default'])
 
 /** Switching, or removing the default Safe, stops the team from using the Safe holding its funds. */
 const isLeavingDefaultSafe = computed(
   () =>
-    pending.value?.action === 'default' ||
-    (pending.value?.action === 'remove' && isDefaultSafe(pending.value.address))
+    actionToConfirm.value?.action === 'default' ||
+    (actionToConfirm.value?.action === 'remove' && isDefaultSafe(actionToConfirm.value.address))
 )
 
 const { data: defaultSafeBalances } = useGetSafeBalancesQuery({
-  pathParams: { safeAddress: () => (isConfirmOpen.value ? defaultSafe.value : undefined) }
+  pathParams: { safeAddress: () => (isConfirmOpen.value ? defaultSafeAddress.value : undefined) }
 })
 const heldTokens = computed(() =>
   (defaultSafeBalances.value?.items ?? [])
@@ -178,14 +178,14 @@ const heldTokens = computed(() =>
     .map((item) => item.tokenInfo.symbol)
 )
 
-function openConfirm(address: Address, action: SafeAction) {
-  pending.value = { address, action }
+function askConfirmation(address: Address, action: SafeAction) {
+  actionToConfirm.value = { address, action }
   isConfirmOpen.value = true
 }
 
-function submit() {
-  if (!pending.value) return
-  const { address, action } = pending.value
+function applyConfirmedAction() {
+  if (!actionToConfirm.value) return
+  const { address, action } = actionToConfirm.value
   updateTeamSafe(
     { body: { teamId: Number(teamStore.currentTeamId), contractAddress: address, action } },
     {

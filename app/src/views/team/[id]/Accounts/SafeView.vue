@@ -82,7 +82,7 @@
 
     <template v-else>
       <UAlert
-        v-if="isRouterOutOfSync"
+        v-if="isRouterOnAnotherSafe"
         color="warning"
         variant="soft"
         icon="i-lucide-triangle-alert"
@@ -230,8 +230,8 @@ const sectionLinks = [
   { href: '#safe-activity', label: 'Transactions' }
 ]
 
-const teamSafeAddress = computed(() => teamStore.getContractAddressByType('Safe'))
-const safeAddress = computed(() => teamSafeAddress.value || deployedSafeAddress.value)
+const defaultSafeAddress = computed(() => teamStore.getContractAddressByType('Safe'))
+const safeAddress = computed(() => defaultSafeAddress.value || deployedSafeAddress.value)
 
 const {
   data: bytecode,
@@ -245,12 +245,12 @@ const {
  */
 const isSafeMissing = computed(() => bytecode.value === '0x')
 
-const { data: routerSafe } = useSafeDepositRouterSafeAddress()
-const isRouterOutOfSync = computed(
+const { data: routerSafeAddress } = useSafeDepositRouterSafeAddress()
+const isRouterOnAnotherSafe = computed(
   () =>
-    !!routerSafe.value &&
-    !!teamSafeAddress.value &&
-    (routerSafe.value as string).toLowerCase() !== teamSafeAddress.value.toLowerCase()
+    !!routerSafeAddress.value &&
+    !!defaultSafeAddress.value &&
+    (routerSafeAddress.value as string).toLowerCase() !== defaultSafeAddress.value.toLowerCase()
 )
 
 const currency = useStorage('currency', { code: 'USD', name: 'US Dollar', symbol: '$' })
@@ -283,7 +283,7 @@ const canManageSafe = computed(
 const canAddSafe = computed(() => canManageSafe.value && !isWriteDisabled.value)
 
 /** Keeps the page URL on the Safe it shows. */
-async function showSafeInRoute(address: Address) {
+async function syncUrlWithSafe(address: Address) {
   if (route.params.id && route.params.address !== address) {
     await router.replace({
       name: 'safe-account',
@@ -293,16 +293,16 @@ async function showSafeInRoute(address: Address) {
 }
 
 /** Follows the team default Safe once a registration, a switch or a removal is saved. */
-watch(teamSafeAddress, (address) => {
+watch(defaultSafeAddress, (address) => {
   deployedSafeAddress.value = undefined
   isLoadingSafe.value = false
-  if (address) void showSafeInRoute(address)
+  if (address) void syncUrlWithSafe(address)
 })
 
 const handleSafeRegistered = async (address: Address) => {
   const normalizedAddress = normalizeSafeAddress(address)
   deployedSafeAddress.value = normalizedAddress
   isLoadingSafe.value = true
-  await showSafeInRoute(normalizedAddress)
+  await syncUrlWithSafe(normalizedAddress)
 }
 </script>

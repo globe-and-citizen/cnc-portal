@@ -73,7 +73,7 @@ export const safeKeys = {
     contractBalanceKeys.detail(safeAddressKey(address) as Address | undefined, chainId)
 }
 
-/** One Safe's movements query, shared by the single-Safe and every-Safe hooks. */
+/** One Safe's movements query, shared by the one-Safe and the several-Safes hooks below. */
 function safeTransfersQueryOptions(
   queryClient: QueryClient,
   safeAddress: string | undefined,
@@ -108,7 +108,7 @@ export function useGetSafeTransfersQuery(params: GetSafeIncomingTransfersParams)
 }
 
 /** The movements of several Safes, each in the same cache entry as its single-Safe query. */
-export function useGetSafesTransfersQuery(
+export function useGetSafeTransfersQueries(
   safeAddresses: MaybeRefOrGetter<readonly string[]>,
   limit?: number
 ) {

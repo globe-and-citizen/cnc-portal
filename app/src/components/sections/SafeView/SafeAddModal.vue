@@ -5,7 +5,7 @@
     label="Deploy a new Safe"
     class="justify-center"
     data-test="safe-add-deploy-button"
-    @click="openWith('deploy')"
+    @click="openModal('deploy')"
   />
   <UButton
     color="secondary"
@@ -13,7 +13,7 @@
     label="Import an existing Safe"
     class="justify-center"
     data-test="safe-add-import-button"
-    @click="openWith('import')"
+    @click="openModal('import')"
   />
 
   <UModal
@@ -48,8 +48,8 @@ const teamStore = useTeamStore()
 const isOpen = ref(false)
 const mode = ref<'deploy' | 'import'>('deploy')
 
-function openWith(selected: 'deploy' | 'import') {
-  mode.value = selected
+function openModal(nextMode: 'deploy' | 'import') {
+  mode.value = nextMode
   isOpen.value = true
 }
 </script>

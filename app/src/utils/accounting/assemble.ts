@@ -50,7 +50,7 @@ import {
 import { settleWithdrawnSher } from '@/utils/accounting/sherIssuance'
 import { atDate } from '@/utils/accounting/mappers/context'
 import {
-  safesByTransaction,
+  receivingSafeByTxHash,
   toSafeTransferRows,
   toSafeOutgoingTransferRows,
   withoutSafeToSafeInflows
@@ -175,7 +175,7 @@ function toJournalEntrySources(input: CncAccountingInput): JournalEntrySources {
   if (input.safeDepositRouterEvents) {
     sources.safeDepositRouter = {
       deposits: items(input.safeDepositRouterEvents.safeDeposits),
-      safeByTxHash: safesByTransaction([
+      receivingSafeByTxHash: receivingSafeByTxHash([
         {
           safeAddress: input.safeAddress,
           assetTransfers: input.safeAssetTransfers ?? input.safeTransfers ?? []

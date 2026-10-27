@@ -49,7 +49,6 @@ vi.mock('../../utils/viem.config', () => ({
   default: {
     readContract: vi.fn(),
     getChainId: vi.fn(),
-    getCode: vi.fn(),
   },
 }));
 

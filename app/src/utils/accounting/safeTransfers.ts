@@ -137,7 +137,7 @@ export function withoutSafeToSafeInflows(safes: readonly SafeMapperInput[]): Saf
 }
 
 /** The team Safe that received funds in each transaction, keyed by lower-cased hash. */
-export function safesByTransaction(
+export function receivingSafeByTxHash(
   feeds: readonly { safeAddress?: string | null; assetTransfers: readonly SafeIncomingTransfer[] }[]
 ): ReadonlyMap<string, string> {
   const safes = new Map<string, string>()
