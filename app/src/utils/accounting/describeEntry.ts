@@ -12,7 +12,8 @@
  * unassigned cash) fall back to the generic per-use-case {@link entryLabel}.
  */
 import { money, formatUnixDate } from './presenter'
-import { formatAddress, formatDuration } from '@/utils/format'
+import { formatAddress } from '@/utils/format'
+import { formatMinutesAsDuration } from '@/utils/wages/model'
 import type { UseCase } from './journalEntryDraft'
 import type { JournalEntry } from './types'
 
@@ -122,7 +123,9 @@ function expensePredicate(entry: JournalEntry, amount: string): string {
 function predicate(entry: JournalEntry): string {
   const amount = money(entry.activityAmount)
   const hours =
-    entry.minutesWorked && entry.minutesWorked > 0 ? formatDuration(entry.minutesWorked) : null
+    entry.minutesWorked && entry.minutesWorked > 0
+      ? formatMinutesAsDuration(entry.minutesWorked)
+      : null
   const sher = entry.shares ? ` and got ${entry.shares} SHER` : ''
 
   switch (entry.useCase) {
