@@ -24,7 +24,7 @@ export const formatMinutesAsDuration = (totalMinutes: number): string => {
   const m = totalMinutes % 60
   if (m === 0) return `${h}h`
   if (h === 0) return `${m}min`
-  return `${h}h${m}min`
+  return `${h}h ${m}min`
 }
 
 /**
