@@ -889,8 +889,7 @@ remain as recorded above.
 | `AC-US-SAFE-001-13`  | `PS-BACKEND`          | Frontend + Backend                         | ✅ Met          |
 | `AC-US-SAFE-001-14`  | `PS-FRONTEND`         | Frontend + Backend                         | ✅ Met          |
 | `AC-US-SAFE-001-14`  | `PS-BACKEND`          | Frontend + Backend                         | ✅ Met          |
-| `AC-US-SAFE-001-15`  | `PS-FRONTEND`         | Frontend + Backend                         | ✅ Met          |
-| `AC-US-SAFE-001-15`  | `PS-BACKEND`          | Frontend + Backend                         | ✅ Met          |
+| `AC-US-SAFE-001-15`  | `PS-FRONTEND`         | Frontend                                   | ✅ Met          |
 | `AC-US-SAFE-001-16`  | `PS-FRONTEND`         | Frontend + Backend                         | ✅ Met          |
 | `AC-US-SAFE-001-16`  | `PS-BACKEND`          | Frontend + Backend                         | ✅ Met          |
 | `AC-US-SAFE-001-17`  | `PS-FRONTEND`         | Frontend + Backend                         | ✅ Met          |
