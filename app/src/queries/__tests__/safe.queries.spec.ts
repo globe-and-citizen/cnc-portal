@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { toValue } from 'vue'
 import externalApiClient from '@/lib/external.axios'
 import type { SafeIncomingTransfer, SafeTransaction } from '@/types/safe'
 import { useQueryFn, useQueryClientFn } from '@/tests/mocks/composables.mock'
@@ -20,7 +21,7 @@ interface CapturedQuery<T> {
 }
 
 const capturedQuery = <T>(): CapturedQuery<T> =>
-  useQueryFn.mock.calls.at(-1)?.[0] as CapturedQuery<T>
+  toValue(useQueryFn.mock.calls.at(-1)?.[0]) as CapturedQuery<T>
 
 const incoming = (transactionHash: string) => ({ transactionHash }) as SafeIncomingTransfer
 

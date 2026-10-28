@@ -28,7 +28,10 @@
               </p>
             </div>
           </div>
-          <p class="mt-5 max-w-xl text-sm leading-6 text-gray-600 dark:text-gray-300">
+          <p
+            v-if="!isSafeMissing"
+            class="mt-5 max-w-xl text-sm leading-6 text-gray-600 dark:text-gray-300"
+          >
             Check the wallet, manage funds and signers, then follow every proposal from approval to
             execution.
           </p>
@@ -55,11 +58,13 @@
       data-test="safe-missing-notice"
     >
       <template #actions>
+        <SafeAddModal v-if="canAddSafe" />
         <UButton
-          color="error"
+          color="neutral"
           variant="outline"
-          size="xs"
+          icon="i-lucide-refresh-cw"
           label="Check again"
+          class="justify-center"
           data-test="safe-missing-retry"
           @click="refetchBytecode()"
         />
@@ -76,6 +81,20 @@
     </div>
 
     <template v-else>
+      <UAlert
+        v-if="isRouterOnAnotherSafe"
+        color="warning"
+        variant="soft"
+        icon="i-lucide-triangle-alert"
+        title="New investments still go to another Safe"
+        description="Investor deposits are sent to a Safe that is not this team's default Safe. Point them to the default Safe so new investments arrive here."
+        data-test="safe-router-out-of-sync"
+      >
+        <template #actions>
+          <SetSafeAddressAction compact />
+        </template>
+      </UAlert>
+
       <nav
         class="flex gap-2 overflow-x-auto rounded-xl border bg-white p-2 dark:border-gray-800 dark:bg-gray-950"
         aria-label="Safe wallet sections"
@@ -145,6 +164,15 @@
         </div>
       </section>
     </template>
+
+    <SafeHistoryCard
+      v-if="teamSafes(teamStore.currentTeam?.teamContracts).length"
+      :can-manage="canManageSafe"
+    >
+      <template v-if="canAddSafe && !isSafeMissing && !isCheckingContract" #actions>
+        <SafeAddModal />
+      </template>
+    </SafeHistoryCard>
   </main>
 
   <div
@@ -161,63 +189,7 @@
   </div>
 
   <main v-else-if="canShowSafeSetup" class="w-full px-4 py-6 sm:p-8" data-test="safe-setup-view">
-    <section class="w-full" aria-labelledby="safe-setup-heading">
-      <div class="mb-7 max-w-3xl">
-        <p class="text-primary text-sm font-semibold">Team treasury</p>
-        <h1
-          id="safe-setup-heading"
-          class="mt-1 text-2xl font-semibold text-gray-900 dark:text-white"
-        >
-          Set up your team Safe
-        </h1>
-        <p class="mt-2 text-gray-500">
-          Choose how this team will connect its shared multi-signature wallet. You can deploy a new
-          Safe or register one the team already controls.
-        </p>
-      </div>
-
-      <ol class="mb-7 grid gap-3 md:grid-cols-3" aria-label="Safe setup steps">
-        <li
-          v-for="(step, index) in setupSteps"
-          :key="step.title"
-          class="rounded-xl border border-gray-200 p-4 dark:border-gray-800"
-        >
-          <div class="flex items-start gap-3">
-            <span
-              class="bg-primary/10 text-primary flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm font-semibold"
-            >
-              {{ index + 1 }}
-            </span>
-            <div>
-              <p class="font-medium">{{ step.title }}</p>
-              <p class="mt-1 text-sm text-gray-500">{{ step.description }}</p>
-            </div>
-          </div>
-        </li>
-      </ol>
-
-      <UAlert
-        v-if="!canManageSafe"
-        class="mb-6"
-        color="warning"
-        variant="soft"
-        icon="i-lucide-shield-alert"
-        title="Team owner action required"
-        description="Only the team owner can deploy or import a Safe. Ask the owner to complete setup, then return here to review the wallet."
-        data-test="safe-setup-owner-notice"
-      />
-
-      <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <SafeDeploymentCard
-          :team-id="Number(teamStore.currentTeamId)"
-          @safe-deployed="handleSafeRegistered"
-        />
-        <SafeImportCard
-          :team-id="Number(teamStore.currentTeamId)"
-          @safe-imported="handleSafeRegistered"
-        />
-      </div>
-    </section>
+    <SafeSetupSection :can-manage="canManageSafe" @safe-registered="handleSafeRegistered" />
   </main>
 </template>
 
@@ -234,17 +206,23 @@ import { toSafeHoldingRows } from '@/utils/safe/portfolio'
 import { useStorage } from '@vueuse/core'
 import SafeTransactions from '@/components/sections/SafeView/SafeTransactions.vue'
 import SafeIncomingTransactions from '@/components/sections/SafeView/SafeIncomingTransactions.vue'
-import SafeDeploymentCard from '@/components/sections/SafeView/SafeDeploymentCard.vue'
-import SafeImportCard from '@/components/sections/SafeView/SafeImportCard.vue'
+import SafeSetupSection from '@/components/sections/SafeView/SafeSetupSection.vue'
+import SafeAddModal from '@/components/sections/SafeView/SafeAddModal.vue'
+import SafeHistoryCard from '@/components/sections/SafeView/SafeHistoryCard.vue'
+import SetSafeAddressAction from '@/components/sections/SherTokenView/InvestorActions/SetSafeAddressAction.vue'
+import { useSafeDepositRouterSafeAddress } from '@/composables/safeDepositRouter/reads'
 import { useGetSafeBytecodeQuery } from '@/queries/safe.queries'
+import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
 import { useTeamStore, useUserDataStore } from '@/stores'
 import { normalizeSafeAddress } from '@/utils/safe/address'
+import { teamSafes } from '@/utils/safe/teamSafes'
 import { NETWORK } from '@/constant'
 
 const route = useRoute()
 const router = useRouter()
 const teamStore = useTeamStore()
 const userDataStore = useUserDataStore()
+const { isWriteDisabled } = useTeamWriteGuard()
 
 const isLoadingSafe = ref(false)
 const deployedSafeAddress = ref<Address>()
@@ -256,18 +234,8 @@ const sectionLinks = [
   { href: '#safe-activity', label: 'Transactions' }
 ]
 
-const setupSteps = [
-  { title: 'Choose a Safe', description: 'Deploy a new wallet or inspect an existing one.' },
-  {
-    title: 'Confirm as owner',
-    description: 'Only the team owner can attach the Safe to this team.'
-  },
-  { title: 'Start collaborating', description: 'Fund the wallet and collect signer approvals.' }
-]
-
-const safeAddress = computed(
-  () => teamStore.getContractAddressByType('Safe') || deployedSafeAddress.value
-)
+const defaultSafeAddress = computed(() => teamStore.getContractAddressByType('Safe'))
+const safeAddress = computed(() => defaultSafeAddress.value || deployedSafeAddress.value)
 
 const {
   data: bytecode,
@@ -280,6 +248,14 @@ const {
  * would all fail, wait for the chain and are replaced by one notice.
  */
 const isSafeMissing = computed(() => bytecode.value === '0x')
+
+const { data: routerSafeAddress } = useSafeDepositRouterSafeAddress()
+const isRouterOnAnotherSafe = computed(
+  () =>
+    !!routerSafeAddress.value &&
+    !!defaultSafeAddress.value &&
+    (routerSafeAddress.value as string).toLowerCase() !== defaultSafeAddress.value.toLowerCase()
+)
 
 const currency = useStorage('currency', { code: 'USD', name: 'US Dollar', symbol: '$' })
 const {
@@ -308,21 +284,29 @@ const canManageSafe = computed(
     isAddress(userDataStore.address) &&
     teamStore.currentTeam?.ownerAddress.toLowerCase() === userDataStore.address.toLowerCase()
 )
+const canAddSafe = computed(() => canManageSafe.value && !isWriteDisabled.value)
 
-watch(safeAddress, (address) => {
-  if (address) isLoadingSafe.value = false
+/** Keeps the page URL on the Safe it shows. */
+async function syncUrlWithSafe(address: Address) {
+  if (route.params.id && route.params.address !== address) {
+    await router.replace({
+      name: 'safe-account',
+      params: { id: route.params.id as string, address }
+    })
+  }
+}
+
+/** Follows the team default Safe once a registration, a switch or a removal is saved. */
+watch(defaultSafeAddress, (address) => {
+  deployedSafeAddress.value = undefined
+  isLoadingSafe.value = false
+  if (address) void syncUrlWithSafe(address)
 })
 
 const handleSafeRegistered = async (address: Address) => {
   const normalizedAddress = normalizeSafeAddress(address)
   deployedSafeAddress.value = normalizedAddress
   isLoadingSafe.value = true
-
-  if (route.params.id && route.params.address !== normalizedAddress) {
-    await router.replace({
-      name: 'safe-account',
-      params: { id: route.params.id as string, address: normalizedAddress }
-    })
-  }
+  await syncUrlWithSafe(normalizedAddress)
 }
 </script>

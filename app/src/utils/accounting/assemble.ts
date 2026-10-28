@@ -49,7 +49,19 @@ import {
 } from '@/utils/accounting/sherRate'
 import { settleWithdrawnSher } from '@/utils/accounting/sherIssuance'
 import { atDate } from '@/utils/accounting/mappers/context'
-import { toSafeTransferRows, toSafeOutgoingTransferRows } from '@/utils/accounting/safeTransfers'
+import {
+  receivingSafeByTxHash,
+  toSafeTransferRows,
+  toSafeOutgoingTransferRows,
+  withoutSafeToSafeInflows
+} from '@/utils/accounting/safeTransfers'
+import type { SafeMapperInput } from '@/utils/accounting/mappers/safe'
+
+/** A Safe the team used before its default one, booked as its own `Cash — Safe` account. */
+interface PreviousSafeFeed {
+  safeAddress: Address | string
+  assetTransfers: readonly SafeIncomingTransfer[]
+}
 
 /** The raw feeds for one team, as fetched by {@link useCNCAccounting}. */
 export interface CncAccountingInput {
@@ -81,6 +93,8 @@ export interface CncAccountingInput {
   safeAssetTransfers?: readonly SafeIncomingTransfer[] | null
   /** Executed multisig transactions — outflows from the Safe. */
   safeOutgoingTransactions?: readonly SafeTransaction[] | null
+  /** Every other Safe the team registered, removed ones included, with its own movements. */
+  previousSafes?: readonly PreviousSafeFeed[]
   // ── portal DB rows (off-chain enrichment context, spec §3.2) ──
   weeklyClaims?: readonly WeeklyClaim[]
   expenses?: readonly ExpenseResponse[]
@@ -155,8 +169,20 @@ function toJournalEntrySources(input: CncAccountingInput): JournalEntrySources {
     }
   }
 
+  const safes = toSafeMapperInputs(input)
+  if (safes.length) sources.safes = safes
+
   if (input.safeDepositRouterEvents) {
-    sources.safeDepositRouter = { deposits: items(input.safeDepositRouterEvents.safeDeposits) }
+    sources.safeDepositRouter = {
+      deposits: items(input.safeDepositRouterEvents.safeDeposits),
+      receivingSafeByTxHash: receivingSafeByTxHash([
+        {
+          safeAddress: input.safeAddress,
+          assetTransfers: input.safeAssetTransfers ?? input.safeTransfers ?? []
+        },
+        ...(input.previousSafes ?? [])
+      ])
+    }
   }
 
   if (input.vestingEvents) {
@@ -189,24 +215,27 @@ function toJournalEntrySources(input: CncAccountingInput): JournalEntrySources {
     }
   }
 
+  return sources
+}
+
+/** The default Safe and every previous Safe, each read relative to its own address. */
+function toSafeMapperInputs(input: CncAccountingInput): SafeMapperInput[] {
+  const routerDeposits = input.safeDepositRouterEvents?.safeDeposits?.items
+  const safes: SafeMapperInput[] = (input.previousSafes ?? []).map((safe) => ({
+    safeAddress: safe.safeAddress,
+    transfers: toSafeTransferRows(safe.assetTransfers, routerDeposits)
+  }))
   if (input.safeAddress) {
     const transfers =
       input.safeAssetTransfers !== undefined
-        ? toSafeTransferRows(
-            input.safeAssetTransfers,
-            input.safeDepositRouterEvents?.safeDeposits?.items
-          )
+        ? toSafeTransferRows(input.safeAssetTransfers, routerDeposits)
         : [
-            ...toSafeTransferRows(
-              input.safeTransfers,
-              input.safeDepositRouterEvents?.safeDeposits?.items
-            ),
+            ...toSafeTransferRows(input.safeTransfers, routerDeposits),
             ...toSafeOutgoingTransferRows(input.safeOutgoingTransactions, input.safeAddress)
           ]
-    sources.safe = { safeAddress: input.safeAddress, transfers }
+    safes.unshift({ safeAddress: input.safeAddress, transfers })
   }
-
-  return sources
+  return withoutSafeToSafeInflows(safes)
 }
 
 /**

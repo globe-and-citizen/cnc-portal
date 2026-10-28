@@ -55,8 +55,8 @@ export function cashAccountForContractType(type: ContractType): AccountName | un
 
 /**
  * Index the known company deployments that require their own concrete account.
- * Shared pockets such as Safe deliberately stay out of this index: their account
- * identity is not tied to a deployment address.
+ * Each team Safe is its own account. The SafeDepositRouter holds no balance, so it
+ * stays out: a deposit it routes belongs to the Safe that received it.
  */
 export function knownDeploymentAccounts(
   contracts: readonly TeamContract[] | undefined
@@ -64,7 +64,12 @@ export function knownDeploymentAccounts(
   const accounts = new Map<string, AccountName>()
   for (const contract of contracts ?? []) {
     const account = cashAccountForContractType(contract.type)
-    if (!account || !accountFamilyOf(account).deploymentScoped || !isAddress(contract.address)) {
+    if (
+      !account ||
+      contract.type === 'SafeDepositRouter' ||
+      !accountFamilyOf(account).deploymentScoped ||
+      !isAddress(contract.address)
+    ) {
       continue
     }
     accounts.set(getAddress(contract.address).toLowerCase(), account)

@@ -43,6 +43,16 @@
     </UFormField>
 
     <UAlert
+      v-if="alreadyRegisteredMessage"
+      class="mt-4"
+      color="warning"
+      variant="soft"
+      icon="i-lucide-circle-alert"
+      :description="alreadyRegisteredMessage"
+      data-test="safe-import-already-registered"
+    />
+
+    <UAlert
       v-if="inspectionError"
       class="mt-4"
       color="error"
@@ -128,7 +138,9 @@
           color="neutral"
           variant="outline"
           :loading="isInspecting"
-          :disabled="isInspecting || isRegistering || !safeAddressInput.trim()"
+          :disabled="
+            isInspecting || isRegistering || !safeAddressInput.trim() || !!alreadyRegisteredMessage
+          "
           data-test="inspect-safe-button"
           @click="handleInspect"
         >
@@ -160,8 +172,10 @@ import { useUserDataStore, useTeamStore } from '@/stores'
 import { useInspectSafe } from '@/composables/safe/useSafeImport'
 import { useCreateContractMutation } from '@/queries/contract.queries'
 import { NETWORK } from '@/constant'
+import { getAxiosErrorMessage } from '@/utils/errors/http'
 import AddressTooltip from '@/components/ui/AddressTooltip.vue'
 import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
+import { teamSafes } from '@/utils/safe/teamSafes'
 
 interface Props {
   teamId: number
@@ -208,18 +222,43 @@ const inspectedSafe = computed(() => {
     : undefined
 })
 
-const canImport = computed(() => canManageSafe.value && !!inspectedSafe.value)
+/** The team's own Safe at the entered address; the team being created in the setup flow has none yet. */
+const alreadyRegisteredSafe = computed(() => {
+  const input = safeAddressInput.value.trim()
+  if (!isAddress(input) || String(teamStore.currentTeam?.id) !== String(props.teamId))
+    return undefined
+  return teamSafes(teamStore.currentTeam?.teamContracts).find(
+    (safe) => safe.address.toLowerCase() === input.toLowerCase()
+  )
+})
+
+const alreadyRegisteredMessage = computed(() => {
+  if (!alreadyRegisteredSafe.value) return undefined
+  return alreadyRegisteredSafe.value.address.toLowerCase() ===
+    teamStore.getContractAddressByType('Safe')?.toLowerCase()
+    ? "This Safe is already this team's default Safe."
+    : "This Safe is already in this team's Safe history. Use Enable or Default there to use it again."
+})
+
+const canImport = computed(
+  () => canManageSafe.value && !!inspectedSafe.value && !alreadyRegisteredMessage.value
+)
 const network = computed(() => NETWORK)
 
 const importPermissionHint = computed(() => {
   if (!userDataStore.address) return 'Connect the team owner wallet to import this Safe.'
   if (!canManageSafe.value) return 'Only the team owner can attach a Safe to this team.'
+  if (alreadyRegisteredMessage.value) return alreadyRegisteredMessage.value
   if (!inspectedSafe.value) return 'Inspect and confirm a valid Safe before importing it.'
   return 'Register this existing Safe with the team without changing it on-chain.'
 })
 
 const inspectionError = computed(
-  () => inspectError.value?.message || registrationError.value?.message
+  () =>
+    inspectError.value?.message ||
+    (registrationError.value
+      ? getAxiosErrorMessage(registrationError.value, 'Safe import failed')
+      : undefined)
 )
 
 function handleInspect() {

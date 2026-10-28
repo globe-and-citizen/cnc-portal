@@ -178,16 +178,20 @@ model Notification {
 }
 
 model TeamContract {
-  id        Int          @id @default(autoincrement())
-  address   String       @unique
-  type      String
-  deployer  String
-  teamId    Int
-  team      Team         @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  officerId Int?
-  officer   TeamOfficer? @relation(fields: [officerId], references: [id], onDelete: SetNull)
-  createdAt DateTime     @default(now())
-  updatedAt DateTime     @updatedAt
+  id          Int          @id @default(autoincrement())
+  address     String       @unique
+  type        String
+  deployer    String
+  teamId      Int
+  team        Team         @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  officerId   Int?
+  officer     TeamOfficer? @relation(fields: [officerId], references: [id], onDelete: SetNull)
+  // A team keeps every Safe it registered. Its default Safe is the one not disabled
+  // with the latest activatedAt; making a Safe the default again refreshes that date.
+  activatedAt DateTime     @default(now())
+  removedAt   DateTime?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
 
   @@index([address])
   @@index([officerId])
