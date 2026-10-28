@@ -849,22 +849,18 @@ remain as recorded above.
 - [x] `AC-US-SAFE-001-09` The company owner can continue company creation without setting up a Safe.
 - [x] `AC-US-SAFE-001-10` If registration fails after deployment, the deployed Safe remains available for a registration retry.
 - [x] `AC-US-SAFE-001-11` An archived company cannot deploy, import, or retry Safe registration.
-- [x] `AC-US-SAFE-001-12` A company that already has a Safe, including one with no contract at its address, can deploy or import another
-      Safe. The new Safe becomes the company's default Safe and the previous one stays in its Safe history.
-- [x] `AC-US-SAFE-001-13` A Safe address is registered only once: an address already in the company's Safe history or registered to another
-      company is refused. An address already in the company's Safe history is flagged as soon as it is entered, saying whether it is the
-      default Safe or one to set as default again from the history; a refusal for another company shows its reason.
-- [x] `AC-US-SAFE-001-14` Only the company owner can add, switch, or remove a Safe, and an archived company cannot.
-- [x] `AC-US-SAFE-001-15` The company owner and members can review the Safe history: every Safe the company registered, marked as default,
-      previous, or removed.
-- [x] `AC-US-SAFE-001-16` The company owner can make a previous or removed Safe the default Safe again.
-- [x] `AC-US-SAFE-001-17` The company owner can remove a Safe, including the only one. A removed Safe keeps its history; the previous Safe
-      still in use becomes the default, or the Safe setup page appears when none remains.
-- [x] `AC-US-SAFE-001-18` Before switching away from or removing the default Safe, the owner is warned when it still holds tokens.
-- [x] `AC-US-SAFE-001-19` When the deposit router still sends investments to a Safe other than the default one, and a Safe exists at the
-      default address, the Safe page warns and offers to point it at the default Safe.
-- [x] `AC-US-SAFE-001-20` Accounting books each company Safe as its own numbered `Cash — Safe` account, a move between two company Safes
-      once as an internal move, and a router deposit in the Safe that received it.
+- [x] `AC-US-SAFE-001-12` A company can deploy or import another Safe, even if its current one has no contract. The new Safe becomes the
+      default; the old one stays in the history.
+- [x] `AC-US-SAFE-001-13` An address already in the company's Safe history, or registered to another company, is refused with its reason.
+- [x] `AC-US-SAFE-001-14` Only the owner can add, switch, or remove a Safe, and not once the company is archived.
+- [x] `AC-US-SAFE-001-15` The owner and members see every Safe the company registered, with its status: default, previous, or removed.
+- [x] `AC-US-SAFE-001-16` The owner can make a previous or removed Safe the default again.
+- [x] `AC-US-SAFE-001-17` The owner can remove any Safe, even the last one, without losing its history. The latest remaining Safe becomes
+      the default; with none left, Safe setup starts over.
+- [x] `AC-US-SAFE-001-18` The owner is warned before switching away from or removing a default Safe that still holds tokens.
+- [x] `AC-US-SAFE-001-19` When the deposit router still targets another Safe than the deployed default one, a warning offers to redirect it.
+- [x] `AC-US-SAFE-001-20` Accounting books each Safe in its own numbered `Cash — Safe` account, a move between two company Safes once as
+      internal, and a router deposit in the Safe that received it.
 
 ### Test Coverage
 
