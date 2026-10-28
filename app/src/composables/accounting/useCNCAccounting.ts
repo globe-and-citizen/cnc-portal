@@ -155,9 +155,6 @@ export function useCNCAccounting(
     pathParams: { safeAddress },
     queryParams: { limit: SAFE_PAGE_SIZE }
   })
-  const safeSwapOrders = useGetCowTransactionOrdersQuery(() =>
-    safeSwapTransactionHashes(safeAssetTransfers.data.value, safeAddress.value)
-  )
 
   // Every Safe the team used before its default one keeps its own Cash — Safe account.
   const previousSafeAddresses = computed(() =>
@@ -174,6 +171,14 @@ export function useCNCAccounting(
     error: computed(() => previousSafeTransferQueries.value.find((query) => query.error)?.error),
     refetch: () => Promise.all(previousSafeTransferQueries.value.map((query) => query.refetch()))
   }
+  const safeSwapOrders = useGetCowTransactionOrdersQuery(() => [
+    ...new Set([
+      ...safeSwapTransactionHashes(safeAssetTransfers.data.value, safeAddress.value),
+      ...previousSafeAddresses.value.flatMap((address, index) =>
+        safeSwapTransactionHashes(previousSafeTransferQueries.value[index]?.data, address)
+      )
+    ])
+  ])
 
   // Source feeds are first mapped with the explicit override when supplied, or
   // with the zero-rate gap. This produces the token/date request set without

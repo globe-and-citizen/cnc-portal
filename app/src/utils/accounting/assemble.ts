@@ -227,7 +227,8 @@ function toSafeMapperInputs(input: CncAccountingInput): SafeMapperInput[] {
   const routerDeposits = input.safeDepositRouterEvents?.safeDeposits?.items
   const safes: SafeMapperInput[] = (input.previousSafes ?? []).map((safe) => ({
     safeAddress: safe.safeAddress,
-    transfers: toSafeTransferRows(safe.assetTransfers, routerDeposits)
+    transfers: toSafeTransferRows(safe.assetTransfers, routerDeposits),
+    swapFees: toSafeSwapFeeRows(input.safeSwapOrders, safe.safeAddress)
   }))
   if (input.safeAddress) {
     const transfers =

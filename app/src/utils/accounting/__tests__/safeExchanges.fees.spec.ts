@@ -67,6 +67,20 @@ describe('Safe swap transaction fees', () => {
     expect(sale([order({ owner: ADDR.client })]).lines.length).toBe(sale([]).lines.length)
   })
 
+  it('books the CoW fee of a swap made by a previous team Safe', () => {
+    const entry = finalizeJournalEntryDrafts(
+      buildCncJournalEntryDrafts({
+        safeAddress: '0x4444444444444444444444444444444444444444',
+        safeAssetTransfers: [],
+        previousSafes: [{ safeAddress: ADDR.safe, assetTransfers: history() }],
+        safeSwapOrders: [{ txHash: tx(3), data: [order()] }],
+        rateOfRecord: () => 2000
+      })
+    ).journal.find((journal) => journal.txHash === tx(3))!
+    expect(amountOn(entry, 'Transaction Fee Expense')?.debit).toBe(usd('0.2'))
+    expect(amountOn(entry, 'Asset Exchange Gain')?.credit).toBe(usd('10.858984'))
+  })
+
   it('looks up only transactions where the Safe both sent and received', () => {
     expect(safeSwapTransactionHashes(history(), ADDR.safe)).toEqual([tx(2), tx(3)])
     expect(safeSwapTransactionHashes(history(), undefined)).toEqual([])
