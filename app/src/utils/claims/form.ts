@@ -5,7 +5,7 @@ import utc from 'dayjs/plugin/utc'
 import { z } from 'zod'
 import type { Claim, ClaimFormData, FileAttachment } from '@/types'
 import type { FilePreviewItem } from '@/types/file-preview'
-import { DEFAULT_MAXIMUM_HOURS_PER_DAY } from '@/utils/wages/model'
+import { DEFAULT_MAXIMUM_HOURS_PER_DAY, formatMinutesAsDuration } from '@/utils/wages/model'
 import { formatDateIso } from '@/utils/format'
 
 dayjs.extend(utc)
@@ -131,12 +131,6 @@ const alreadyClaimedForDay = (
     .filter((claim) => claim.dayWorked === dayWorked)
     .reduce((sum, claim) => sum + claim.minutesWorked, 0)
 
-const formatMinutes = (minutes: number): string => {
-  const hours = Math.floor(minutes / 60)
-  const remainder = minutes % 60
-  return remainder > 0 ? String(hours) + 'h' + String(remainder) + 'min' : String(hours) + 'h'
-}
-
 export const buildClaimFormSchema = (
   maximumHoursPerDay?: number,
   existingClaims?: Pick<Claim, 'minutesWorked' | 'dayWorked'>[]
@@ -189,11 +183,11 @@ export const buildClaimFormSchema = (
         message:
           'Daily limit would be exceeded. ' +
           'Allowance: ' +
-          formatMinutes(maxMinutes) +
+          formatMinutesAsDuration(maxMinutes) +
           '. Already claimed: ' +
-          formatMinutes(claimed) +
+          formatMinutesAsDuration(claimed) +
           '. Remaining: ' +
-          formatMinutes(remaining) +
+          formatMinutesAsDuration(remaining) +
           '.',
         path: ['hoursWorked']
       })
