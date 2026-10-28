@@ -198,14 +198,15 @@ export interface UpdateTeamSafeParams {
     teamId: string | number
     /** Address of one of the team's Safes */
     contractAddress: string
-    /** `default` makes it the team default again; `remove` takes it out of use */
-    action: 'default' | 'remove'
+    /** `default` makes it the team default; `disable` takes it out of use; `enable` puts it back */
+    action: 'default' | 'disable' | 'enable'
   }
 }
 
 /**
- * Make one of the team's Safes its default, or remove it. A removed Safe stays in
- * the team's Safe history, and the default falls back to the previous Safe in use.
+ * Make one of the team's Safes its default, disable it, or enable it again. A disabled
+ * Safe stays in the team's Safe history, and the default falls back to the previous Safe
+ * in use. An enabled Safe becomes the default again only if no Safe was made default after it.
  *
  * @endpoint PUT /contract/safe
  * @body { teamId, contractAddress, action }

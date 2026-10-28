@@ -1,13 +1,13 @@
 import type { TeamContract } from '@/types'
 
-/** Every Safe the team registered, removed ones included, latest activated first. */
+/** Every Safe the team registered, disabled ones included, latest activated first. */
 export function teamSafes(contracts: readonly TeamContract[] | undefined): TeamContract[] {
   return (contracts ?? [])
     .filter((contract) => contract.type === 'Safe')
     .sort((a, b) => Date.parse(b.activatedAt ?? '') - Date.parse(a.activatedAt ?? '') || 0)
 }
 
-/** The team's default Safe: the latest activated one not removed. */
+/** The team's default Safe: the latest activated one not disabled. */
 export function defaultTeamSafe(
   contracts: readonly TeamContract[] | undefined
 ): TeamContract | undefined {

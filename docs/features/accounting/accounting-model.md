@@ -124,7 +124,7 @@ flowchart TB
     history --> books[One consolidated set of books]
 ```
 
-A Safe is not part of an Officer generation. A company can still add another Safe, switch its default Safe, or remove one; every Safe it
+A Safe is not part of an Officer generation. A company can still add another Safe, switch its default Safe, or disable one; every Safe it
 registered keeps its own `Cash — Safe` account (`Cash — Safe`, `Cash — Safe 2`, …, numbered by first activity), and a move between two of
 its Safes is an internal transfer.
 

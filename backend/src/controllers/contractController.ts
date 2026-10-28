@@ -313,9 +313,20 @@ export const addContract = async (req: Request, res: Response) => {
 };
 
 /**
- * PUT /contract/safe — makes one of the team's Safes its default, or removes it. A removed
- * Safe keeps its row, so its history stays readable; the default then falls back to the
- * previous Safe not removed, or to none.
+ * What each Safe action writes. `disable` keeps the row, so the Safe's history stays readable.
+ * `enable` puts it back in use without touching its activation date, so it becomes the default
+ * again only if no Safe was made default after it.
+ */
+const SAFE_ACTION_DATA: Record<UpdateTeamSafeBody['action'], () => Prisma.TeamContractUpdateInput> =
+  {
+    default: () => ({ activatedAt: new Date(), removedAt: null }),
+    disable: () => ({ removedAt: new Date() }),
+    enable: () => ({ removedAt: null }),
+  };
+
+/**
+ * PUT /contract/safe — makes one of the team's Safes its default, disables it, or enables it
+ * again. The default is the latest activated Safe not disabled, or none.
  */
 export const updateTeamSafe = async (req: Request, res: Response) => {
   const { teamId, contractAddress, action } = req.body as UpdateTeamSafeBody;
@@ -332,10 +343,7 @@ export const updateTeamSafe = async (req: Request, res: Response) => {
 
     const updated = await prisma.teamContract.update({
       where: { id: safe.id },
-      data:
-        action === 'default'
-          ? { activatedAt: new Date(), removedAt: null }
-          : { removedAt: new Date() },
+      data: SAFE_ACTION_DATA[action](),
     });
     return res.status(200).json(updated);
   } catch (error) {

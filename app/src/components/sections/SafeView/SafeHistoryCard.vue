@@ -5,7 +5,7 @@
         <div>
           <h3 class="font-semibold">Safe history</h3>
           <p class="mt-1 text-sm text-gray-500">
-            Every Safe this team registered. A removed Safe keeps its history.
+            Every Safe this team registered. A disabled Safe keeps its history.
           </p>
         </div>
         <div v-if="$slots.actions" class="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
@@ -35,18 +35,27 @@
               color="secondary"
               variant="outline"
               icon="i-lucide-star"
-              label="Set as default"
-              data-test="safe-set-default-button"
-              @click="askConfirmation(safe.address, 'default')"
+              label="Default"
+              data-test="safe-default-button"
+              @click="askConfirmation(safe, 'default')"
             />
             <UButton
-              v-if="safe.status !== 'Removed'"
+              v-if="safe.status === 'Disabled'"
+              color="success"
+              variant="outline"
+              icon="i-lucide-power"
+              label="Enable"
+              data-test="safe-enable-button"
+              @click="askConfirmation(safe, 'enable')"
+            />
+            <UButton
+              v-else
               color="error"
               variant="outline"
-              icon="i-lucide-trash-2"
-              label="Remove"
-              data-test="safe-remove-button"
-              @click="askConfirmation(safe.address, 'remove')"
+              icon="i-lucide-power-off"
+              label="Disable"
+              data-test="safe-disable-button"
+              @click="askConfirmation(safe, 'disable')"
             />
           </template>
         </div>
@@ -80,7 +89,7 @@
             @click="isConfirmOpen = false"
           />
           <UButton
-            :color="actionToConfirm?.action === 'remove' ? 'error' : 'primary'"
+            :color="actionToConfirm?.action === 'disable' ? 'error' : 'primary'"
             :icon="confirmCopy.icon"
             :label="confirmCopy.confirm"
             :loading="isPending"
@@ -95,7 +104,6 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import type { Address } from 'viem'
 import { useToast } from '@nuxt/ui/composables'
 import AddressTooltip from '@/components/ui/AddressTooltip.vue'
 import { useUpdateTeamSafeMutation } from '@/queries/contract.queries'
@@ -106,9 +114,9 @@ import { formatDate } from '@/utils/format'
 import { normalizeSafeAddress } from '@/utils/safe/address'
 import { teamSafes } from '@/utils/safe/teamSafes'
 
-type SafeAction = 'default' | 'remove'
+type SafeAction = 'default' | 'disable' | 'enable'
 
-const STATUS_COLOR = { Default: 'success', Previous: 'neutral', Removed: 'error' } as const
+const STATUS_COLOR = { Default: 'success', Previous: 'neutral', Disabled: 'error' } as const
 
 const CONFIRM_COPY = {
   default: {
@@ -119,13 +127,21 @@ const CONFIRM_COPY = {
     confirm: 'Make default',
     success: 'Default Safe updated'
   },
-  remove: {
-    title: 'Remove this Safe?',
+  disable: {
+    title: 'Disable this Safe?',
     description:
-      'The Safe leaves the team but stays in the Safe history with all its transactions. The previous Safe still in use becomes the default.',
-    icon: 'i-lucide-trash-2',
-    confirm: 'Remove Safe',
-    success: 'Safe removed'
+      'The team stops using this Safe, but it stays in the Safe history with all its transactions. If it is the default, the previous Safe still in use becomes the default.',
+    icon: 'i-lucide-power-off',
+    confirm: 'Disable Safe',
+    success: 'Safe disabled'
+  },
+  enable: {
+    title: 'Enable this Safe?',
+    description:
+      'The team can use this Safe again. It becomes the default again if no Safe was made default after it.',
+    icon: 'i-lucide-power',
+    confirm: 'Enable Safe',
+    success: 'Safe enabled'
   }
 } as const
 
@@ -144,31 +160,40 @@ const isDefaultSafe = (address: string) =>
 const safeRows = computed(() =>
   teamSafes(teamStore.currentTeam?.teamContracts).map((safe) => {
     const address = normalizeSafeAddress(safe.address)
+    const activatedAt = Date.parse(safe.activatedAt ?? '')
     if (safe.removedAt) {
       return {
         address,
-        status: 'Removed',
-        dateLabel: `Removed ${formatDate(safe.removedAt)}`
+        activatedAt,
+        status: 'Disabled',
+        dateLabel: `Disabled ${formatDate(safe.removedAt)}`
       } as const
     }
     return {
       address,
+      activatedAt,
       status: isDefaultSafe(address) ? 'Default' : 'Previous',
       dateLabel: `Made default ${formatDate(safe.activatedAt)}`
     } as const
   })
 )
+type SafeRow = (typeof safeRows.value)[number]
 
 const isConfirmOpen = ref(false)
-const actionToConfirm = ref<{ address: Address; action: SafeAction }>()
+const actionToConfirm = ref<{ safe: SafeRow; action: SafeAction }>()
 const confirmCopy = computed(() => CONFIRM_COPY[actionToConfirm.value?.action ?? 'default'])
 
-/** Switching, or removing the default Safe, stops the team from using the Safe holding its funds. */
-const isLeavingDefaultSafe = computed(
-  () =>
-    actionToConfirm.value?.action === 'default' ||
-    (actionToConfirm.value?.action === 'remove' && isDefaultSafe(actionToConfirm.value.address))
-)
+/**
+ * Switching, disabling the default Safe, or enabling a Safe made default after it stops the
+ * team from using the Safe holding its funds.
+ */
+const isLeavingDefaultSafe = computed(() => {
+  const defaultRow = safeRows.value.find((row) => row.status === 'Default')
+  const { safe, action } = actionToConfirm.value ?? {}
+  if (!safe || !defaultRow) return false
+  if (action === 'disable') return safe.status === 'Default'
+  return action === 'default' || safe.activatedAt > defaultRow.activatedAt
+})
 
 const { data: defaultSafeBalances } = useGetSafeBalancesQuery({
   pathParams: { safeAddress: () => (isConfirmOpen.value ? defaultSafeAddress.value : undefined) }
@@ -179,16 +204,16 @@ const heldTokens = computed(() =>
     .map((item) => item.tokenInfo.symbol)
 )
 
-function askConfirmation(address: Address, action: SafeAction) {
-  actionToConfirm.value = { address, action }
+function askConfirmation(safe: SafeRow, action: SafeAction) {
+  actionToConfirm.value = { safe, action }
   isConfirmOpen.value = true
 }
 
 function applyConfirmedAction() {
   if (!actionToConfirm.value) return
-  const { address, action } = actionToConfirm.value
+  const { safe, action } = actionToConfirm.value
   updateTeamSafe(
-    { body: { teamId: Number(teamStore.currentTeamId), contractAddress: address, action } },
+    { body: { teamId: Number(teamStore.currentTeamId), contractAddress: safe.address, action } },
     {
       onSuccess: () => {
         isConfirmOpen.value = false

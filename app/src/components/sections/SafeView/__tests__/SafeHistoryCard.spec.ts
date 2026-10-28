@@ -8,7 +8,7 @@ import { useUpdateTeamSafeMutation } from '@/queries/contract.queries'
 
 const DEFAULT_SAFE = '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'
 const PREVIOUS_SAFE = '0xcccccccccccccccccccccccccccccccccccccccc'
-const REMOVED_SAFE = '0xdddddddddddddddddddddddddddddddddddddddd'
+const DISABLED_SAFE = '0xdddddddddddddddddddddddddddddddddddddddd'
 
 let wrapper: VueWrapper | undefined
 let mutation: ReturnType<typeof createMockMutationResponse>
@@ -42,7 +42,7 @@ describe('[US-SAFE-001] SafeHistoryCard', () => {
       ...mockTeamData,
       teamContracts: [
         ...mockTeamData.teamContracts,
-        safe(REMOVED_SAFE, '2025-06-01T00:00:00Z', '2025-12-01T00:00:00Z'),
+        safe(DISABLED_SAFE, '2025-06-01T00:00:00Z', '2025-12-01T00:00:00Z'),
         safe(DEFAULT_SAFE, '2026-10-01T00:00:00Z'),
         safe(PREVIOUS_SAFE, '2026-01-01T00:00:00Z')
       ]
@@ -56,22 +56,30 @@ describe('[US-SAFE-001] SafeHistoryCard', () => {
   it('[AC-US-SAFE-001-15] lists every Safe of the team with its status', () => {
     const card = mountCard(false)
 
-    expect(statuses(card)).toEqual(['Default', 'Previous', 'Removed'])
-    expect(card.find('[data-test="safe-set-default-button"]').exists()).toBe(false)
-    expect(card.find('[data-test="safe-remove-button"]').exists()).toBe(false)
+    expect(statuses(card)).toEqual(['Default', 'Previous', 'Disabled'])
+    expect(card.find('[data-test="safe-default-button"]').exists()).toBe(false)
+    expect(card.find('[data-test="safe-disable-button"]').exists()).toBe(false)
+    expect(card.find('[data-test="safe-enable-button"]').exists()).toBe(false)
+  })
+
+  it('offers Disable on every Safe in use and Enable on every disabled Safe', () => {
+    const card = mountCard()
+
+    expect(card.findAll('[data-test="safe-disable-button"]')).toHaveLength(2)
+    expect(card.findAll('[data-test="safe-enable-button"]')).toHaveLength(1)
   })
 
   it('[AC-US-SAFE-001-14] hides the owner actions when the team is archived', () => {
     mockTeamStore.currentTeamMeta.data.isArchived = true
     const card = mountCard()
 
-    expect(card.find('[data-test="safe-set-default-button"]').exists()).toBe(false)
+    expect(card.find('[data-test="safe-default-button"]').exists()).toBe(false)
   })
 
   it('[AC-US-SAFE-001-16] makes a previous Safe the default after confirmation', async () => {
     const card = mountCard()
 
-    await card.findAll('[data-test="safe-set-default-button"]')[0]!.trigger('click')
+    await card.findAll('[data-test="safe-default-button"]')[0]!.trigger('click')
     await flushPromises()
     await card.find('[data-test="safe-action-confirm"]').trigger('click')
 
@@ -87,10 +95,10 @@ describe('[US-SAFE-001] SafeHistoryCard', () => {
     )
   })
 
-  it('[AC-US-SAFE-001-17] removes the default Safe after confirmation', async () => {
+  it('[AC-US-SAFE-001-17] disables the default Safe after confirmation', async () => {
     const card = mountCard()
 
-    await card.findAll('[data-test="safe-remove-button"]')[0]!.trigger('click')
+    await card.findAll('[data-test="safe-disable-button"]')[0]!.trigger('click')
     await flushPromises()
     await card.find('[data-test="safe-action-confirm"]').trigger('click')
 
@@ -99,7 +107,26 @@ describe('[US-SAFE-001] SafeHistoryCard', () => {
         body: {
           teamId: 1,
           contractAddress: expect.stringMatching(new RegExp(DEFAULT_SAFE, 'i')),
-          action: 'remove'
+          action: 'disable'
+        }
+      },
+      expect.any(Object)
+    )
+  })
+
+  it('[AC-US-SAFE-001-21] enables a disabled Safe after confirmation', async () => {
+    const card = mountCard()
+
+    await card.find('[data-test="safe-enable-button"]').trigger('click')
+    await flushPromises()
+    await card.find('[data-test="safe-action-confirm"]').trigger('click')
+
+    expect(mutation.mutate).toHaveBeenCalledWith(
+      {
+        body: {
+          teamId: 1,
+          contractAddress: expect.stringMatching(new RegExp(DISABLED_SAFE, 'i')),
+          action: 'enable'
         }
       },
       expect.any(Object)
@@ -113,7 +140,7 @@ describe('[US-SAFE-001] SafeHistoryCard', () => {
     ]
     const card = mountCard()
 
-    await card.findAll('[data-test="safe-set-default-button"]')[0]!.trigger('click')
+    await card.findAll('[data-test="safe-default-button"]')[0]!.trigger('click')
     await flushPromises()
 
     const warning = card.find('[data-test="safe-held-tokens-warning"]')
@@ -122,16 +149,38 @@ describe('[US-SAFE-001] SafeHistoryCard', () => {
     expect(warning.text()).not.toContain('POL')
   })
 
-  it('does not warn when removing a Safe that is not the default', async () => {
+  it.each([
+    ['disabling a Safe that is not the default', 'safe-disable-button', 1],
+    ['enabling a Safe made default before the current one', 'safe-enable-button', 0]
+  ])('does not warn when %s', async (_case, button, index) => {
     mockUseContractBalance.balances.value = [
       makeTokenBalance({ token: { name: 'USD Coin', symbol: 'USDC' }, amount: 12, usdPrice: 1 })
     ]
     const card = mountCard()
 
-    await card.findAll('[data-test="safe-remove-button"]')[1]!.trigger('click')
+    await card.findAll(`[data-test="${button}"]`)[index]!.trigger('click')
     await flushPromises()
 
     expect(card.find('[data-test="safe-held-tokens-warning"]').exists()).toBe(false)
+  })
+
+  it('[AC-US-SAFE-001-18] warns when enabling a Safe takes the default back', async () => {
+    mockUseContractBalance.balances.value = [
+      makeTokenBalance({ token: { name: 'USD Coin', symbol: 'USDC' }, amount: 12, usdPrice: 1 })
+    ]
+    mockTeamStore.currentTeam = {
+      ...mockTeamData,
+      teamContracts: [
+        safe(DEFAULT_SAFE, '2026-10-01T00:00:00Z'),
+        safe(DISABLED_SAFE, '2026-10-15T00:00:00Z', '2026-10-20T00:00:00Z')
+      ]
+    }
+    const card = mountCard()
+
+    await card.find('[data-test="safe-enable-button"]').trigger('click')
+    await flushPromises()
+
+    expect(card.find('[data-test="safe-held-tokens-warning"]').exists()).toBe(true)
   })
 
   it('shows the actions the page passes in its header', () => {

@@ -219,8 +219,8 @@ or detail view; `AC-US-TEAM-OPS-001-03` and `AC-US-TEAM-OPS-003-04` still need f
 
 ## Implementation Evidence
 
-The company payload lists every Safe the company registered, removed ones included. The profile and balance recap keep only its default
-Safe, the latest activated one not removed, among the live contracts, so they count that Safe.
+The company payload lists every Safe the company registered, disabled ones included. The profile and balance recap keep only its default
+Safe, the latest activated one not disabled, among the live contracts, so they count that Safe.
 
 **Implementation evidence reviewed against:** `fdfcf810829fdcca8d0bfe429878b439e4fd4dfe`
 

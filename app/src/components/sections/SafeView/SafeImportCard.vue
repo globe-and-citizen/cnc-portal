@@ -237,7 +237,7 @@ const alreadyRegisteredMessage = computed(() => {
   return alreadyRegisteredSafe.value.address.toLowerCase() ===
     teamStore.getContractAddressByType('Safe')?.toLowerCase()
     ? "This Safe is already this team's default Safe."
-    : "This Safe is already in this team's Safe history. Use Set as default there to use it again."
+    : "This Safe is already in this team's Safe history. Use Enable or Default there to use it again."
 })
 
 const canImport = computed(

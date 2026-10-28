@@ -572,8 +572,8 @@ describe('contractController', () => {
       });
     });
 
-    it('[AC-US-SAFE-001-17] removes a Safe while keeping its row', async () => {
-      const response = await updateSafe('remove');
+    it('[AC-US-SAFE-001-17] disables a Safe while keeping its row', async () => {
+      const response = await updateSafe('disable');
 
       expect(response.status).toBe(200);
       expect(prisma.teamContract.update).toHaveBeenCalledWith({
@@ -581,6 +581,22 @@ describe('contractController', () => {
         data: { removedAt: expect.any(Date) },
       });
       expect(response.body.removedAt).toBeTruthy();
+    });
+
+    it('[AC-US-SAFE-001-21] enables a disabled Safe without changing its activation date', async () => {
+      vi.mocked(prisma.teamContract.findFirst).mockResolvedValue({
+        ...safe,
+        removedAt: new Date('2026-02-01'),
+      } as never);
+
+      const response = await updateSafe('enable');
+
+      expect(response.status).toBe(200);
+      expect(prisma.teamContract.update).toHaveBeenCalledWith({
+        where: { id: safe.id },
+        data: { removedAt: null },
+      });
+      expect(response.body.removedAt).toBeNull();
     });
 
     it('[AC-US-SAFE-001-14] returns 403 when the caller is not the team owner', async () => {
@@ -595,7 +611,7 @@ describe('contractController', () => {
     it('[AC-US-SAFE-001-14] returns 409 when the team is archived', async () => {
       vi.mocked(prisma.team.findUnique).mockResolvedValue({ ...mockTeam, isArchived: true });
 
-      const response = await updateSafe('remove');
+      const response = await updateSafe('disable');
 
       expect(response.status).toBe(409);
       expect(response.body.message).toContain('Team is archived');

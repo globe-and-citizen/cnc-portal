@@ -179,7 +179,7 @@ describe('[US-SAFE-001] SafeImportCard', () => {
       ).toBeDefined()
     })
 
-    it('[AC-US-SAFE-001-13] points a Safe from the history to Set as default instead of importing it', async () => {
+    it('[AC-US-SAFE-001-13] points a Safe from the history to its Enable or Default action instead of importing it', async () => {
       const wrapper = mountCard()
       await wrapper.find('[data-test="safe-import-address-input"]').setValue(REMOVED_SAFE)
 

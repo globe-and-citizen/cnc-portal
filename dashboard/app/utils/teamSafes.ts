@@ -2,7 +2,7 @@ import type { TeamContract } from '~/types'
 
 /**
  * A team's contracts in use: every contract that is not a Safe, plus its default Safe, the
- * latest activated one not removed. The team payload lists every Safe it registered.
+ * latest activated one not disabled. The team payload lists every Safe it registered.
  */
 export function contractsInUse(contracts: readonly TeamContract[] | undefined): TeamContract[] {
   const defaultSafe = (contracts ?? [])

@@ -130,14 +130,16 @@ contractRoutes.post(
  * @openapi
  * /contract/safe:
  *  put:
- *   summary: Make a team Safe the default, or remove it
+ *   summary: Make a team Safe the default, disable it, or enable it again
  *   tags: [Contracts]
  *   security:
  *     - bearerAuth: []
- *   description: A team keeps every Safe it registered. `default` makes the
- *     Safe the team default again, restoring it if it was removed. `remove`
- *     takes it out of use but keeps its history; the default then falls back
- *     to the previous Safe still in use, if any.
+ *   description: A team keeps every Safe it registered; its default is the
+ *     latest activated Safe not disabled. `default` makes the Safe the team
+ *     default, enabling it if it was disabled. `disable` takes it out of use but
+ *     keeps its history; the default then falls back to the previous Safe still
+ *     in use, if any. `enable` puts a disabled Safe back in use; it becomes the
+ *     default again only if no Safe was made default after it.
  *   requestBody:
  *     required: true
  *     content:
@@ -154,7 +156,7 @@ contractRoutes.post(
  *               description: The address of one of the team's Safes
  *             action:
  *               type: string
- *               enum: [default, remove]
+ *               enum: [default, disable, enable]
  *   responses:
  *     200:
  *       description: Safe updated
