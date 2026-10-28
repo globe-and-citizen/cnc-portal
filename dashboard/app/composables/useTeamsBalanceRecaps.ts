@@ -8,6 +8,7 @@ import { getTeam } from '~/api/teams'
 import { USDC_ADDRESS, USDC_E_ADDRESS, USDT_ADDRESS } from '~/constant'
 import type { Team } from '~/types'
 import { formatNumber } from '~/utils/format'
+import { contractsInUse } from '~/utils/teamSafes'
 
 const MULTICALL3 = '0xcA11bde05977b3631167028862bE2a173976CA11' as const
 const MULTICALL3_ABI = parseAbi(['function getEthBalance(address) view returns (uint256)'])
@@ -139,7 +140,7 @@ export const useTeamsBalanceRecaps = (teams: MaybeRefOrGetter<Team[]>) => {
   const sharedByTeam = computed(() => {
     const map = new Map<number, { address: Address, type: string }[]>()
     teamList.value.forEach((team, i) => {
-      const contracts = (teamDetailQueries.value[i]?.data?.teamContracts ?? [])
+      const contracts = contractsInUse(teamDetailQueries.value[i]?.data?.teamContracts)
         .filter(c => c.officerId === null && VALUE_HOLDING_TYPES.has(c.type))
         .map(c => ({ address: c.address as Address, type: c.type }))
       map.set(team.id, contracts)

@@ -187,3 +187,32 @@ export const useCreateOfficerMutation = createMutationHook<
   endpoint: 'contract/officer',
   invalidateKeys: [contractKeys.all, teamKeys.all]
 })
+
+// ============================================================================
+// PUT /contract/safe - Make a team Safe the default, or remove it
+// ============================================================================
+
+export interface UpdateTeamSafeParams {
+  body: {
+    /** Team ID */
+    teamId: string | number
+    /** Address of one of the team's Safes */
+    contractAddress: string
+    /** `default` makes it the team default; `disable` takes it out of use; `enable` puts it back */
+    action: 'default' | 'disable' | 'enable'
+  }
+}
+
+/**
+ * Make one of the team's Safes its default, disable it, or enable it again. A disabled
+ * Safe stays in the team's Safe history, and the default falls back to the previous Safe
+ * in use. An enabled Safe becomes the default again only if no Safe was made default after it.
+ *
+ * @endpoint PUT /contract/safe
+ * @body { teamId, contractAddress, action }
+ */
+export const useUpdateTeamSafeMutation = createMutationHook<unknown, UpdateTeamSafeParams>({
+  method: 'PUT',
+  endpoint: 'contract/safe',
+  invalidateKeys: [teamKeys.all]
+})

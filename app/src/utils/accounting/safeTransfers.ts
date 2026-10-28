@@ -7,7 +7,11 @@
 import type { SafeIncomingTransfer, SafeTransaction } from '@/types/safe'
 import type { SafeDepositRow } from '@/types/contract-events/investor'
 import { transactionHashOf } from '@/utils/accounting/journalEntryDraft'
-import type { SafeTransferRow } from '@/utils/accounting/mappers/safe'
+import {
+  sameAddress,
+  type SafeMapperInput,
+  type SafeTransferRow
+} from '@/utils/accounting/mappers/safe'
 import { currentChainId } from '@/constant'
 import { assetMetadata } from '@/utils/tokens/assets'
 
@@ -113,4 +117,37 @@ export function toSafeOutgoingTransferRows(
     }
   }
   return rows
+}
+
+/**
+ * A move between two of the team's Safes shows in both Safes' feeds. It is booked once,
+ * by the sending Safe's outflow, so the receiving Safe drops its matching inflow.
+ */
+export function withoutSafeToSafeInflows(safes: readonly SafeMapperInput[]): SafeMapperInput[] {
+  const isTeamSafe = (address: string) =>
+    safes.some((safe) => sameAddress(address, safe.safeAddress))
+  return safes.map((safe) => ({
+    ...safe,
+    transfers: (safe.transfers ?? []).filter((row) => {
+      const isInflow =
+        sameAddress(row.to, safe.safeAddress) && !sameAddress(row.from, safe.safeAddress)
+      return !(isInflow && isTeamSafe(row.from))
+    })
+  }))
+}
+
+/** The team Safe that received funds in each transaction, keyed by lower-cased hash. */
+export function receivingSafeByTxHash(
+  feeds: readonly { safeAddress?: string | null; assetTransfers: readonly SafeIncomingTransfer[] }[]
+): ReadonlyMap<string, string> {
+  const safes = new Map<string, string>()
+  for (const { safeAddress, assetTransfers } of feeds) {
+    if (!safeAddress) continue
+    for (const transfer of assetTransfers) {
+      if (transfer.transactionHash && sameAddress(transfer.to, safeAddress)) {
+        safes.set(transfer.transactionHash.toLowerCase(), safeAddress)
+      }
+    }
+  }
+  return safes
 }

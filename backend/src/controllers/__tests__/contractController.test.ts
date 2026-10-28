@@ -32,6 +32,7 @@ vi.mock('../../utils', async () => {
         findMany: vi.fn(),
         findFirst: vi.fn(),
         create: vi.fn(),
+        update: vi.fn(),
       },
       teamOfficer: {
         upsert: vi.fn(),
@@ -440,113 +441,208 @@ describe('contractController', () => {
       });
     });
 
-    it('returns the existing Safe when a registration is retried for the same team', async () => {
-      const existingSafe = {
+    describe('with an existing Safe history', () => {
+      const safeAddress = getAddress('0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa');
+      const buildSafe = (overrides: object = {}) => ({
         id: 1,
         teamId: mockTeam.id,
-        address: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+        address: safeAddress.toLowerCase(),
         type: 'Safe',
         deployer: mockTeam.ownerAddress,
+        officerId: null,
+        activatedAt: new Date(),
+        removedAt: null,
         createdAt: new Date(),
         updatedAt: new Date(),
-      };
-      vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(mockTeam);
-      vi.mocked(prisma.teamContract.findFirst).mockResolvedValueOnce(existingSafe as never);
+        ...overrides,
+      });
+      const registerSafe = () =>
+        request(app)
+          .post('/')
+          .send({ teamId: mockTeam.id, contractAddress: safeAddress, contractType: 'Safe' });
 
-      const response = await request(app)
-        .post('/')
-        .send({
-          teamId: mockTeam.id,
-          contractAddress: getAddress('0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'),
-          contractType: 'Safe',
-        });
-
-      expect(response.status).toBe(200);
-      expect(response.body).toMatchObject({ id: existingSafe.id });
-      expect(prisma.teamContract.create).not.toHaveBeenCalled();
-    });
-
-    it('rejects a second Safe for the same team', async () => {
-      vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(mockTeam);
-      vi.mocked(prisma.teamContract.findFirst).mockResolvedValueOnce({
-        id: 1,
-        teamId: mockTeam.id,
-        address: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
-        type: 'Safe',
-        deployer: mockTeam.ownerAddress,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      } as never);
-
-      const response = await request(app).post('/').send({
-        teamId: mockTeam.id,
-        contractAddress: '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
-        contractType: 'Safe',
+      beforeEach(() => {
+        vi.mocked(prisma.team.findUnique).mockResolvedValue(mockTeam);
       });
 
-      expect(response.status).toBe(409);
-      expect(response.body.message).toContain('Team already has a Safe account');
+      it('returns the default Safe when its registration is retried', async () => {
+        vi.mocked(prisma.teamContract.findFirst)
+          .mockResolvedValueOnce(buildSafe() as never)
+          .mockResolvedValueOnce(buildSafe() as never);
+
+        const response = await registerSafe();
+
+        expect(response.status).toBe(200);
+        expect(response.body).toMatchObject({ id: 1 });
+        expect(prisma.teamContract.create).not.toHaveBeenCalled();
+      });
+
+      it('[AC-US-SAFE-001-12] registers another Safe that becomes the default', async () => {
+        vi.mocked(prisma.teamContract.create).mockResolvedValue(buildSafe({ id: 2 }) as never);
+
+        const response = await registerSafe();
+
+        expect(response.status).toBe(200);
+        expect(prisma.teamContract.findFirst).toHaveBeenCalledTimes(1);
+        expect(prisma.teamContract.create).toHaveBeenCalledWith({
+          data: expect.objectContaining({ address: safeAddress.toLowerCase(), type: 'Safe' }),
+        });
+      });
+
+      it("[AC-US-SAFE-001-13] rejects a Safe already in the team's history", async () => {
+        vi.mocked(prisma.teamContract.findFirst)
+          .mockResolvedValueOnce(buildSafe({ removedAt: new Date() }) as never)
+          .mockResolvedValueOnce(buildSafe({ id: 2, address: '0xbb' }) as never);
+
+        const response = await registerSafe();
+
+        expect(response.status).toBe(409);
+        expect(response.body.message).toContain("already in the team's Safe history");
+        expect(prisma.teamContract.create).not.toHaveBeenCalled();
+      });
+
+      it('[AC-US-SAFE-001-13] rejects a Safe address assigned to another team', async () => {
+        vi.mocked(prisma.teamContract.findFirst).mockResolvedValueOnce(
+          buildSafe({ id: 2, teamId: 2 }) as never
+        );
+
+        const response = await registerSafe();
+
+        expect(response.status).toBe(409);
+        expect(response.body.message).toContain('Safe address is already assigned to another team');
+      });
+
+      it('returns 409 when a concurrent registration wins', async () => {
+        vi.mocked(prisma.teamContract.create).mockRejectedValue(
+          new Prisma.PrismaClientKnownRequestError('Unique constraint failed', {
+            code: 'P2002',
+            clientVersion: '5.0.0',
+          })
+        );
+
+        const response = await registerSafe();
+
+        expect(response.status).toBe(409);
+        expect(response.body.message).toContain('Safe registration conflict');
+      });
+    });
+  });
+
+  describe('PUT: /safe', () => {
+    const safeAddress = getAddress('0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa');
+    const safe = {
+      id: 7,
+      teamId: mockTeam.id,
+      address: safeAddress.toLowerCase(),
+      type: 'Safe',
+      deployer: mockTeam.ownerAddress,
+      officerId: null,
+      activatedAt: new Date('2026-01-01'),
+      removedAt: null,
+      createdAt: new Date('2026-01-01'),
+      updatedAt: new Date('2026-01-01'),
+    };
+    const updateSafe = (action: string, body: object = {}) =>
+      request(app)
+        .put('/safe')
+        .send({ teamId: mockTeam.id, contractAddress: safeAddress, action, ...body });
+
+    beforeEach(() => {
+      vi.mocked(prisma.team.findUnique).mockResolvedValue(mockTeam);
+      vi.mocked(prisma.teamContract.findFirst).mockResolvedValue(safe as never);
+      vi.mocked(prisma.teamContract.update)
+        .mockReset()
+        .mockImplementation((args: any) => ({ ...safe, ...args.data }) as never);
     });
 
-    it('rejects a Safe address assigned to another team', async () => {
-      vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(mockTeam);
-      vi.mocked(prisma.teamContract.findFirst)
-        .mockResolvedValueOnce(null)
-        .mockResolvedValueOnce({
-          id: 2,
-          teamId: 2,
-          address: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
-          type: 'Safe',
-          deployer: '0x2222222222222222222222222222222222222222',
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        } as never);
-
-      const response = await request(app)
-        .post('/')
-        .send({
-          teamId: mockTeam.id,
-          contractAddress: getAddress('0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'),
-          contractType: 'Safe',
-        });
-
-      expect(response.status).toBe(409);
-      expect(response.body.message).toContain('Safe address is already assigned to another team');
-    });
-
-    it('returns the registered Safe when concurrent registration retries after a conflict', async () => {
-      const address = '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
-      const concurrentSafe = {
-        id: 1,
-        teamId: mockTeam.id,
-        address,
-        type: 'Safe',
-        deployer: mockTeam.ownerAddress,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
-      vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(mockTeam);
-      vi.mocked(prisma.teamContract.findFirst)
-        .mockResolvedValueOnce(null)
-        .mockResolvedValueOnce(null)
-        .mockResolvedValueOnce(concurrentSafe as never);
-      vi.mocked(prisma.teamContract.create).mockRejectedValue(
-        new Prisma.PrismaClientKnownRequestError('Unique constraint failed', {
-          code: 'P2002',
-          clientVersion: '5.0.0',
-        })
-      );
-
-      const response = await request(app)
-        .post('/')
-        .send({
-          teamId: mockTeam.id,
-          contractAddress: getAddress(address),
-          contractType: 'Safe',
-        });
+    it('[AC-US-SAFE-001-16] makes a Safe of the team its default again', async () => {
+      const response = await updateSafe('default');
 
       expect(response.status).toBe(200);
-      expect(response.body).toMatchObject({ id: concurrentSafe.id });
+      expect(prisma.teamContract.findFirst).toHaveBeenCalledWith({
+        where: {
+          teamId: mockTeam.id,
+          type: 'Safe',
+          address: { equals: safeAddress, mode: 'insensitive' },
+        },
+      });
+      expect(prisma.teamContract.update).toHaveBeenCalledWith({
+        where: { id: safe.id },
+        data: { activatedAt: expect.any(Date), removedAt: null },
+      });
+    });
+
+    it('[AC-US-SAFE-001-17] disables a Safe while keeping its row', async () => {
+      const response = await updateSafe('disable');
+
+      expect(response.status).toBe(200);
+      expect(prisma.teamContract.update).toHaveBeenCalledWith({
+        where: { id: safe.id },
+        data: { removedAt: expect.any(Date) },
+      });
+      expect(response.body.removedAt).toBeTruthy();
+    });
+
+    it('[AC-US-SAFE-001-21] enables a disabled Safe without changing its activation date', async () => {
+      vi.mocked(prisma.teamContract.findFirst).mockResolvedValue({
+        ...safe,
+        removedAt: new Date('2026-02-01'),
+      } as never);
+
+      const response = await updateSafe('enable');
+
+      expect(response.status).toBe(200);
+      expect(prisma.teamContract.update).toHaveBeenCalledWith({
+        where: { id: safe.id },
+        data: { removedAt: null },
+      });
+      expect(response.body.removedAt).toBeNull();
+    });
+
+    it('[AC-US-SAFE-001-14] returns 403 when the caller is not the team owner', async () => {
+      vi.mocked(prisma.team.findUnique).mockResolvedValue({ ...mockTeam, ownerAddress: '0x456' });
+
+      const response = await updateSafe('default');
+
+      expect(response.status).toBe(403);
+      expect(prisma.teamContract.update).not.toHaveBeenCalled();
+    });
+
+    it('[AC-US-SAFE-001-14] returns 409 when the team is archived', async () => {
+      vi.mocked(prisma.team.findUnique).mockResolvedValue({ ...mockTeam, isArchived: true });
+
+      const response = await updateSafe('disable');
+
+      expect(response.status).toBe(409);
+      expect(response.body.message).toContain('Team is archived');
+      expect(prisma.teamContract.update).not.toHaveBeenCalled();
+    });
+
+    it.each([
+      ['an invalid Safe address', 'default', { contractAddress: '0x123' }],
+      ['an unknown action', 'replace', {}],
+    ])('returns 400 for %s', async (_case, action, body) => {
+      const response = await updateSafe(action, body);
+
+      expect(response.status).toBe(400);
+      expect(response.body.message).toContain('Invalid request body');
+    });
+
+    it('returns 404 when the Safe is not one of the team Safes', async () => {
+      vi.mocked(prisma.teamContract.findFirst).mockResolvedValue(null);
+
+      const response = await updateSafe('default');
+
+      expect(response.status).toBe(404);
+      expect(response.body.message).toContain('Safe not found in this team');
+    });
+
+    it('reports a persistence failure', async () => {
+      vi.mocked(prisma.teamContract.update).mockRejectedValue(new Error('db down'));
+
+      const response = await updateSafe('default');
+
+      expect(response.status).toBe(500);
     });
   });
 

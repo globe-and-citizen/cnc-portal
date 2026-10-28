@@ -17,8 +17,9 @@ These acceptance criteria follow the
 - A wallet can fund an account directly, while a Bank-origin payment is initiated under the Bank transfer story. The destination account
   owns the credited balance and its availability. The [Accounting UC scenarios](../accounting/journal-entry-catalogue.md#use-case-overview)
   link all participating stories and their roles.
-- Bank and Expense Account actions use the current contracts selected for the company. Safe actions use the Safe registered to the company
-  on the active network.
+- Bank and Expense Account actions use the current contracts selected for the company. Safe actions use the company's default Safe on the
+  active network. A company keeps every Safe it registers: the latest one added or made the default is the default Safe, and a disabled Safe
+  stays in the Safe history with its movements, which Accounting books as its own numbered `Cash — Safe` account.
 - A Bank transfer with a positive `BANK` fee sends that fee to the FeeCollector deployed for its contract generation. Native transfers
   assess the configured rate, while ERC-20 transfers are fee-bearing only when the token is supported by that FeeCollector. Activity feeds
   retain fees from every supported Bank generation for Accounting.
@@ -57,6 +58,7 @@ flowchart LR
     CashOut --> OwnerWallet[Connected owner wallet]
 
     Safe --> SetupSafe[Deploy or import]
+    SetupSafe --> ChangeSafe[Add, switch, disable, or enable a Safe]
     SetupSafe --> OperateSafe[Deposit, propose, approve, execute]
     Safe --> ReviewSafe[Review wallet and transactions]
 
@@ -82,7 +84,7 @@ flowchart LR
 | US-EXP-004  | Review the Expense Account and its history | Company member / recipient | 🚧 In Progress |
 | US-EXP-005  | Fund the Expense Account                   | Account funder             | 🚧 In Progress |
 | US-EXP-006  | Return Expense Account funds to Bank       | Authorized treasury actor  | 🚧 In Progress |
-| US-SAFE-001 | Set up a Safe                              | Company owner              | 🧪 Validation  |
+| US-SAFE-001 | Set up and manage the company Safes        | Company owner              | 🧪 Validation  |
 | US-SAFE-002 | Inspect Safe details                       | Company member             | 🚧 In Progress |
 | US-SAFE-003 | Manage Safe funds                          | Safe owner                 | 🧪 Validation  |
 | US-SAFE-004 | Manage Safe signers and threshold          | Safe owner                 | 🧪 Validation  |
@@ -114,7 +116,7 @@ Runs of at least three consecutive missing criteria use inclusive ranges with fu
 | US-EXP-004  | ✅ Integrated | ⚠️ 13/14 met    | `AC-US-EXP-004-13`                                                                |
 | US-EXP-005  | 🚧 Partial    | ⚠️ 3/7          | `AC-US-EXP-005-03`, `AC-US-EXP-005-04`, `AC-US-EXP-005-06`, `AC-US-EXP-005-07`    |
 | US-EXP-006  | 🚧 Partial    | ⚠️ 1/8          | `AC-US-EXP-006-01`–`AC-US-EXP-006-05`, `AC-US-EXP-006-07`, `AC-US-EXP-006-08`     |
-| US-SAFE-001 | 🚧 Partial    | ⚠️ 8/11         | `AC-US-SAFE-001-02`, `AC-US-SAFE-001-03`, `AC-US-SAFE-001-06`                     |
+| US-SAFE-001 | 🚧 Partial    | ⚠️ 18/21        | `AC-US-SAFE-001-02`, `AC-US-SAFE-001-03`, `AC-US-SAFE-001-06`                     |
 | US-SAFE-002 | 🧪 Mocked     | ⚠️ 8/11 met     | `AC-US-SAFE-002-01`, `AC-US-SAFE-002-02`, `AC-US-SAFE-002-09`                     |
 | US-SAFE-003 | 📋 Planned    | ⚠️ 6/11         | `AC-US-SAFE-003-01`–`AC-US-SAFE-003-03`, `AC-US-SAFE-003-06`, `AC-US-SAFE-003-07` |
 | US-SAFE-004 | 📋 Planned    | ⚠️ 4/9          | `AC-US-SAFE-004-01`–`AC-US-SAFE-004-04`, `AC-US-SAFE-004-07`                      |
@@ -821,11 +823,11 @@ remain as recorded above.
 | Expense funds return directly to their generation's Bank. [UC-TREASURY-001](../accounting/journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer)        | Initiates the source-account return. | [US-BANK-003](#us-bank-003-review-the-bank-position-and-history) — owns the receiving Bank balance and history                                                                                                                   |
 | A cash-out run returns Expense funds to their generation's Bank. [UC-TREASURY-001](../accounting/journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer) | Owns the source-account return.      | [US-BANK-004](#us-bank-004-cash-out-available-treasury-funds) — orchestrates the step and owns sequence recovery; [US-BANK-003](#us-bank-003-review-the-bank-position-and-history) — owns the receiving Bank balance and history |
 
-## US-SAFE-001: Set Up a Safe
+## US-SAFE-001: Set Up and Manage the Company Safes
 
 **As a** company owner\
-**I want to** deploy a new Safe or import an existing Safe\
-**So that** my company has a shared multi-signature wallet in CNC
+**I want to** deploy or import a Safe, then add another one, switch between them, or disable and enable one\
+**So that** my company always works from the right shared multi-signature wallet without losing any Safe's history
 
 ### Acceptance Criteria
 
@@ -849,6 +851,21 @@ remain as recorded above.
 - [x] `AC-US-SAFE-001-09` The company owner can continue company creation without setting up a Safe.
 - [x] `AC-US-SAFE-001-10` If registration fails after deployment, the deployed Safe remains available for a registration retry.
 - [x] `AC-US-SAFE-001-11` An archived company cannot deploy, import, or retry Safe registration.
+- [x] `AC-US-SAFE-001-12` A company can deploy or import another Safe, even if its current one has no contract. The new Safe becomes the
+      default; the old one stays in the history.
+- [x] `AC-US-SAFE-001-13` An address already in the company's Safe history, or registered to another company, is refused with its reason.
+- [x] `AC-US-SAFE-001-14` Only the owner can add, switch, disable, or enable a Safe, and not once the company is archived.
+- [x] `AC-US-SAFE-001-15` The owner and members see every Safe the company registered, with its status: default, previous, or disabled.
+- [x] `AC-US-SAFE-001-16` The owner can make a previous or disabled Safe the default again.
+- [x] `AC-US-SAFE-001-17` The owner can disable any Safe, even the last one, without losing its history. The latest remaining Safe becomes
+      the default; with none left, Safe setup starts over.
+- [x] `AC-US-SAFE-001-18` The owner is warned before switching away from, disabling, or enabling a Safe over a default Safe that still holds
+      tokens.
+- [x] `AC-US-SAFE-001-19` When the deposit router still targets another Safe than the deployed default one, a warning offers to redirect it.
+- [x] `AC-US-SAFE-001-20` Accounting books each Safe in its own numbered `Cash — Safe` account, a move between two company Safes once as
+      internal, and a router deposit in the Safe that received it.
+- [x] `AC-US-SAFE-001-21` The owner can enable a disabled Safe again. It becomes the default again only if no Safe was made default after
+      it.
 
 ### Test Coverage
 
@@ -867,6 +884,22 @@ remain as recorded above.
 | `AC-US-SAFE-001-09`  | `PS-FRONTEND`         | Frontend                                   | ✅ Met          |
 | `AC-US-SAFE-001-10`  | `PS-FRONTEND`         | Frontend                                   | ✅ Met          |
 | `AC-US-SAFE-001-11`  | `PS-BROWSER`          | Mocked browser                             | ✅ Met          |
+| `AC-US-SAFE-001-12`  | `PS-FRONTEND`         | Frontend + Backend                         | ✅ Met          |
+| `AC-US-SAFE-001-12`  | `PS-BACKEND`          | Frontend + Backend                         | ✅ Met          |
+| `AC-US-SAFE-001-13`  | `PS-FRONTEND`         | Frontend + Backend                         | ✅ Met          |
+| `AC-US-SAFE-001-13`  | `PS-BACKEND`          | Frontend + Backend                         | ✅ Met          |
+| `AC-US-SAFE-001-14`  | `PS-FRONTEND`         | Frontend + Backend                         | ✅ Met          |
+| `AC-US-SAFE-001-14`  | `PS-BACKEND`          | Frontend + Backend                         | ✅ Met          |
+| `AC-US-SAFE-001-15`  | `PS-FRONTEND`         | Frontend                                   | ✅ Met          |
+| `AC-US-SAFE-001-16`  | `PS-FRONTEND`         | Frontend + Backend                         | ✅ Met          |
+| `AC-US-SAFE-001-16`  | `PS-BACKEND`          | Frontend + Backend                         | ✅ Met          |
+| `AC-US-SAFE-001-17`  | `PS-FRONTEND`         | Frontend + Backend                         | ✅ Met          |
+| `AC-US-SAFE-001-17`  | `PS-BACKEND`          | Frontend + Backend                         | ✅ Met          |
+| `AC-US-SAFE-001-18`  | `PS-FRONTEND`         | Frontend                                   | ✅ Met          |
+| `AC-US-SAFE-001-19`  | `PS-FRONTEND`         | Frontend                                   | ✅ Met          |
+| `AC-US-SAFE-001-20`  | `PS-FRONTEND`         | Frontend                                   | ✅ Met          |
+| `AC-US-SAFE-001-21`  | `PS-FRONTEND`         | Frontend + Backend                         | ✅ Met          |
+| `AC-US-SAFE-001-21`  | `PS-BACKEND`          | Frontend + Backend                         | ✅ Met          |
 
 **Dependencies:** Current company and active network
 
@@ -889,7 +922,7 @@ remain as recorded above.
 #### Business Rules
 
 - [x] `AC-US-SAFE-002-04` Inspecting Safe details does not require Safe signer permission.
-- [x] `AC-US-SAFE-002-05` The registered Safe address identifies the wallet whose balances, owners, and threshold are reported.
+- [x] `AC-US-SAFE-002-05` The company's default Safe identifies the wallet whose balances, owners, and threshold are reported.
 
 #### Edge & Error Cases
 
@@ -1267,7 +1300,7 @@ At the top of the Activity section, a table lists the Safe's swaps, newest first
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `7ea893eba3ed118ac0be24daa4fcf470ab7683cd`
+**Implementation evidence reviewed against:** `83726950b667a394cf2c77bdb53557516c2a294b`
 
 - [Bank deposit modal](../../../app/src/components/sections/BankView/forms/DepositModal.vue),
   [Bank transfer modal](../../../app/src/components/sections/BankView/forms/TransferModal.vue),
@@ -1306,6 +1339,7 @@ At the top of the Activity section, a table lists the Safe's swaps, newest first
   [Safe transaction table](../../../app/src/components/sections/SafeView/SafeTransactionsTable.vue), and
   [Safe mobile transaction list](../../../app/src/components/sections/SafeView/SafeTransactionMobileList.vue),
   [Safe queries and cache keys](../../../app/src/queries/safe.queries.ts),
+  [Safe Transaction Service requests](../../../app/src/queries/safe.api.ts),
   [Safe transaction mutations](../../../app/src/queries/safe.mutations.ts),
   [Safe transaction state and conflict rules](../../../app/src/utils/safe/transactionState.ts), and
   [Safe conflict warning](../../../app/src/components/sections/SafeView/SafeTransactionsWarning.vue)
@@ -1313,6 +1347,15 @@ At the top of the Activity section, a table lists the Safe's swaps, newest first
   [Safe deployment tests](../../../app/src/composables/safe/__tests__/useSafeDeployment.spec.ts),
   [Safe import tests](../../../app/src/composables/safe/__tests__/useSafeImport.spec.ts), and
   [Safe signer-role tests](../../../app/src/composables/safe/__tests__/useSafeSignerRole.spec.ts)
+- [Safe registration and default Safe API](../../../backend/src/controllers/contractController.ts),
+  [contract routes](../../../backend/src/routes/contractRoutes.ts),
+  [contract request validation](../../../backend/src/validation/schemas/contract.ts),
+  [team payload with every registered Safe](../../../backend/src/controllers/teamController.ts), and
+  [contract API tests](../../../backend/src/controllers/__tests__/contractController.test.ts)
+- [default Safe and Safe history selection](../../../app/src/utils/safe/teamSafes.ts),
+  [Safe history card](../../../app/src/components/sections/SafeView/SafeHistoryCard.vue),
+  [add-a-Safe modal](../../../app/src/components/sections/SafeView/SafeAddModal.vue), and
+  [multi-Safe accounting tests](../../../app/src/utils/accounting/__tests__/assemble.multiSafe.spec.ts)
 - [Safe transaction queue tests](../../../app/src/components/sections/SafeView/__tests__/SafeTransactions.spec.ts),
   [Safe address normalization tests](../../../app/src/utils/safe/__tests__/address.spec.ts),
   [Safe transaction state tests](../../../app/src/utils/safe/__tests__/transactionState.spec.ts), and

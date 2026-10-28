@@ -20,9 +20,9 @@
     >
       <template #actions>
         <UButton
-          color="error"
+          color="neutral"
           variant="outline"
-          size="xs"
+          icon="i-lucide-refresh-cw"
           label="Try again"
           data-test="retry-safe-deposits-button"
           @click="retryDeposits"
