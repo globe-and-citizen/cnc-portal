@@ -7,7 +7,7 @@ import { ADDR, usd } from './fixtures'
 import { assembleAccounting } from './assembleAccounting'
 import { normalizeLegacyBankFeeTokens } from '@/composables/bank/bankFees'
 
-const LEGACY_BANK = '0x2222222222222222222222222222222222222222'
+const LEGACY_BANK = '0x2323232323232323232323232323232323232323'
 
 const CONTRACTS: TeamContract[] = [
   { type: 'Bank', address: ADDR.bank as Address, deployer: ADDR.founder as Address, admins: [] },

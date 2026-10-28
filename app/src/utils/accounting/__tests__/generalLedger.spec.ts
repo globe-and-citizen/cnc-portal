@@ -140,7 +140,7 @@ describe('buildGeneralLedger — catalogue worked example', () => {
     expect(gl2.balanced).toBe(true)
   })
 
-  it('does not split Safe — its address survives redeploys', () => {
+  it('[AC-US-SAFE-001-20] splits each team Safe into its own numbered account', () => {
     const safeLeg = (id: string, instance: string, amountUsd: number): JournalEntryDraft => ({
       id,
       timestamp: Number(id),
@@ -155,16 +155,15 @@ describe('buildGeneralLedger — catalogue worked example', () => {
       memo: '',
       enrichment: 'not-applicable'
     })
-    // Even with two different addresses stamped, Safe is not an instanced pocket,
-    // so it stays a single consolidated row.
+    // A team keeps every Safe it registered; each one is its own Cash — Safe account.
     const gl2 = generalLedger([
       safeLeg('1', '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', 10),
       safeLeg('2', '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb', 5)
     ])
     const safeRows = gl2.trialBalance.filter((r) => r.account.family.name === 'Cash — Safe')
-    expect(safeRows).toHaveLength(1)
-    expect(safeRows[0].accountLabel).toBe('Cash — Safe')
-    expect(usdNumber(safeRows[0].balance)).toBeCloseTo(15, 2)
+    expect(safeRows.map((row) => row.accountLabel)).toEqual(['Cash — Safe', 'Cash — Safe 2'])
+    expect(usdNumber(safeRows[0].balance)).toBeCloseTo(10, 2)
+    expect(usdNumber(safeRows[1].balance)).toBeCloseTo(5, 2)
   })
 
   it('keeps a single un-redeployed pocket as one un-suffixed row', () => {

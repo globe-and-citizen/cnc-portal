@@ -3,16 +3,17 @@ import { computed } from 'vue'
 import type { Address } from 'viem'
 import { useTeamQuery } from '~/queries/team.query'
 import { formatDate } from '~/utils/format'
+import { contractsInUse } from '~/utils/teamSafes'
 
 const route = useRoute()
 const teamId = computed(() => Number(route.params.id))
 
 const { data: team, isLoading, isError } = useTeamQuery(teamId)
 
-// Officer-less contracts (Safe, SafeDepositRouter) survive Officer redeploys and
+// Officer-less contracts (the default Safe, SafeDepositRouter) survive Officer redeploys and
 // aren't tied to a version generation — shown as their own group.
 const sharedContracts = computed(() =>
-  (team.value?.teamContracts ?? []).filter(c => c.officerId === null)
+  contractsInUse(team.value?.teamContracts).filter(c => c.officerId === null)
 )
 </script>
 

@@ -124,6 +124,10 @@ flowchart TB
     history --> books[One consolidated set of books]
 ```
 
+A Safe is not part of an Officer generation. A company can still add another Safe, switch its default Safe, or disable one; every Safe it
+registered keeps its own `Cash — Safe` account (`Cash — Safe`, `Cash — Safe 2`, …, numbered by first activity), and a move between two of
+its Safes is an internal transfer.
+
 Redeployment creates new contracts; it does not upgrade the balances held by an older Officer generation. V1 and later Payroll and Expense
 contracts can return all supported cash to the Bank of their own generation before that Bank transfers it to the current Bank. V0 and V0.1
 do not expose that source-to-Bank sweep; only their business-specific expense-budget or wage-claim payout paths remain. Their Bank can still

@@ -23,11 +23,11 @@ These acceptance criteria follow the
 - Initial **Officer-contract setup** is separate from company creation. The owner supplies the SHER name and symbol, deploys the Officer
   suite, and registers the resulting Officer generation with the company.
 - The owner may defer Officer setup or Safe setup. Safe deployment and import are documented by
-  [US-SAFE-001](../accounts/README.md#us-safe-001-set-up-a-safe).
-- The Company workspace's **Treasury Overview** includes the registered Safe's Gateway fiat total, including its other valued token
-  holdings. All account contributions use the selected display currency, which defaults to USD. The Safe contribution shares its cached
-  balance query and refresh rules with Safe Account. It keeps the numeric display and counts the provider's valued total even when another
-  returned token has no price; an absent or invalid total falls back to zero.
+  [US-SAFE-001](../accounts/README.md#us-safe-001-set-up-and-manage-the-company-safes).
+- The Company workspace's **Treasury Overview** includes the default Safe's Gateway fiat total, including its other valued token holdings.
+  All account contributions use the selected display currency, which defaults to USD. The Safe contribution shares its cached balance query
+  and refresh rules with Safe Account. It keeps the numeric display and counts the provider's valued total even when another returned token
+  has no price; an absent or invalid total falls back to zero.
 - Companies list cards use that same Safe valuation alongside the other registered treasury accounts. Their account proportions use the
   underlying values before display rounding. A positive treasury value below the displayed cent precision is shown as less than one cent, so
   a funded account is not presented as an empty treasury.
@@ -442,7 +442,7 @@ This validation does not attest to a live on-chain Officer deployment.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `73bf27a00c594e97f5c6755d1bdc76da84d94c99`
+**Implementation evidence reviewed against:** `fdfcf810829fdcca8d0bfe429878b439e4fd4dfe`
 
 - [Member deletion](../../../app/src/components/sections/DashboardView/DeleteMemberModal.vue),
   [team state](../../../app/src/stores/teamStore.ts), and

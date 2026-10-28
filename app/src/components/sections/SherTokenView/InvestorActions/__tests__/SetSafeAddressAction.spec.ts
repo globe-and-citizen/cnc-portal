@@ -49,6 +49,18 @@ describe('SetSafeAddressAction.vue', () => {
     })
   })
 
+  it('[AC-US-SAFE-001-19] renders a small alert button when compact', async () => {
+    const wrapper = renderWithProviders(SetSafeAddressAction, { props: { compact: true } })
+
+    expect(wrapper.findComponent({ name: 'ActionButton' }).exists()).toBe(false)
+    await wrapper.find('[data-test="set-safe-address-button"]').trigger('click')
+    await nextTick()
+
+    expect(mockSafeDepositRouterWrites.setSafeAddress.mutateAsync).toHaveBeenCalledWith({
+      args: [TEAM_SAFE_ADDRESS]
+    })
+  })
+
   it('[AC-US-SHER-005-04] blocks Safe configuration for a non-owner', async () => {
     mockUseConnection.address.value = '0x0000000000000000000000000000000000000001'
     const wrapper = createWrapper()

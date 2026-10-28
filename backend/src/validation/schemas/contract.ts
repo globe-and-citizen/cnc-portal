@@ -29,6 +29,13 @@ export const addContractBodySchema = z.object({
   }),
 });
 
+// Make a team Safe the default, disable it, or enable it again, request body
+export const updateTeamSafeBodySchema = z.object({
+  teamId: teamIdSchema,
+  contractAddress: addressSchema,
+  action: z.enum(['default', 'disable', 'enable'], { message: 'Invalid Safe action' }),
+});
+
 // Sync contracts request body
 export const syncContractsBodySchema = z.object({
   teamId: teamIdSchema,

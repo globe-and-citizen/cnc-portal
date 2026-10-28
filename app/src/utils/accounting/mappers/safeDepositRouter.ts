@@ -18,6 +18,8 @@ import type { MapperContext } from './context'
 
 export interface SafeDepositRouterMapperInput {
   deposits?: readonly SafeDepositRow[]
+  /** The team Safe that received each deposit, keyed by lower-cased transaction hash. */
+  receivingSafeByTxHash?: ReadonlyMap<string, string>
 }
 
 /** Map every SafeDepositRouter `Deposited` event to a UC-SDR-01 entry. */
@@ -33,6 +35,9 @@ export function mapSafeDepositRouterEvents(
       timestamp: row.timestamp,
       useCase: 'UC-SDR-01',
       debit: 'Cash — Safe',
+      debitInstance: row.txHash
+        ? input.receivingSafeByTxHash?.get(row.txHash.toLowerCase())
+        : undefined,
       credit: 'Investor Equity',
       token: tokenId,
       rawAmount: row.tokenAmount,

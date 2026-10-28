@@ -74,7 +74,7 @@ export const ACCOUNT_FAMILIES = [
     name: 'Cash — Safe',
     accountClass: 'ASSET',
     normalBalance: 'debit',
-    deploymentScoped: false
+    deploymentScoped: true
   },
   {
     id: 'cash-payroll',

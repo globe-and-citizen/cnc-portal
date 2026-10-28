@@ -110,7 +110,7 @@ function exchangeRowIds(input: SafeMapperInput, ctx: MapperContext): Set<string>
   return matched
 }
 
-function sameAddress(a: string, b: string): boolean {
+export function sameAddress(a: string, b: string): boolean {
   return isAddress(a) && isAddress(b) && getAddress(a) === getAddress(b)
 }
 
