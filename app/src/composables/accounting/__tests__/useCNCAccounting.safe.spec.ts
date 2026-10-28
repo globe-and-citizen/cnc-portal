@@ -65,12 +65,13 @@ describe('Safe exchanges in the Accounting data layer', () => {
       executedFee: '1000000',
       executedFeeToken: USDC_ADDRESS
     }
+    const swapOrders = ref<{ txHash: string; isLoading: boolean; data?: (typeof cowFee)[] }[]>([
+      { txHash: data.value[1]!.transactionHash, isLoading: true }
+    ])
     const orders = vi
       .spyOn(cowQueries, 'useGetCowTransactionOrdersQuery')
       .mockReturnValue(
-        ref([{ txHash: data.value[1]!.transactionHash, data: [cowFee] }]) as unknown as ReturnType<
-          typeof cowQueries.useGetCowTransactionOrdersQuery
-        >
+        swapOrders as unknown as ReturnType<typeof cowQueries.useGetCowTransactionOrdersQuery>
       )
     vi.mocked(useGetTeamQuery).mockReturnValue({
       data: ref({
@@ -88,6 +89,10 @@ describe('Safe exchanges in the Accounting data layer', () => {
       const accounting = useCNCAccounting('1', {
         rateOfRecord: (asset) => (asset.startsWith('erc20:') ? marketRate.value : 1)
       })
+      expect(accounting.status.state.value).toBe('loading')
+      swapOrders.value = [
+        { txHash: data.value[1]!.transactionHash, isLoading: false, data: [cowFee] }
+      ]
       expect(accounting.status.state.value).toBe('partial')
       marketRate.value = 1800
       expect(

@@ -7,3 +7,9 @@ export interface CowOrder {
   executedFee?: string | null
   executedFeeToken?: string | null
 }
+
+/** The CoW Protocol orders one transaction settled; `data` stays undefined until they are known. */
+export interface CowTransactionOrders {
+  txHash: string
+  data?: readonly CowOrder[]
+}

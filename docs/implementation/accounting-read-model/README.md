@@ -173,9 +173,10 @@ rate-rounding residues. Incoming market valuations and realized differences bala
 invented basis. A prior non-exchange payment depleted at a different transaction-price valuation invalidates later automatic swap basis;
 other payment rules remain unchanged. A fee CoW Protocol reports for the Safe's own fulfilled order in the swap transaction rides on the
 sold leg (`feeRawAmount`), is valued at that asset's market rate, and is booked as `Transaction Fee Expense`, so the exchange result
-excludes it. The order lookup never makes Accounting partial: without it, the fee stays inside the exchange result. Network/DEX fees are not
-inferred from an unexplained difference. Cross-transaction swap intents and arbitrary DeFi operations require additional protocol evidence
-and remain a boundary of automatic classification.
+excludes it. Reports wait for the order lookups to settle, so no report or export is shown without a fee that is still loading; a missing or
+failed lookup never makes Accounting partial, and the fee then stays inside the exchange result. Network/DEX fees are not inferred from an
+unexplained difference. Cross-transaction swap intents and arbitrary DeFi operations require additional protocol evidence and remain a
+boundary of automatic classification.
 
 The read-only Safe holdings use the Safe Client Gateway balance response for current wallet valuation. A nonzero supported holding with a
 missing, nonpositive, or nonfinite USD price keeps the total incomplete, just as unavailable discovered valuations do. A confirmed zero

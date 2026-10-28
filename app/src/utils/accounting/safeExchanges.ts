@@ -19,28 +19,42 @@ function marketAmount(entry: JournalEntryDraft): bigint {
   )
 }
 
-/** A USD-only line of a swap's operation: its fee or its exchange result. */
-function resultDraft(
+/**
+ * Market value of the fees CoW Protocol took from a swap's sold legs. Read it before the legs
+ * are re-rated at their carrying cost, so the fee keeps the swap day's market price.
+ */
+function swapFeeAmount(outgoing: readonly JournalEntryDraft[]): bigint {
+  return outgoing.reduce(
+    (sum, entry) =>
+      entry.feeRawAmount ? sum + marketAmount({ ...entry, rawAmount: entry.feeRawAmount }) : sum,
+    0n
+  )
+}
+
+/** A USD-only line added to a swap's operation: its transaction fee or its exchange result. */
+function swapUsdLineDraft(
   primary: JournalEntryDraft,
-  suffix: string,
-  debit: JournalEntryDraft['debit'],
-  credit: JournalEntryDraft['credit'],
-  amount: bigint,
-  memo: string
+  line: {
+    suffix: string
+    debit: JournalEntryDraft['debit']
+    credit: JournalEntryDraft['credit']
+    amount: bigint
+    memo: string
+  }
 ): JournalEntryDraft {
   return makeJournalEntryDraft({
-    id: `${primary.id}-${suffix}`,
+    id: `${primary.id}-${line.suffix}`,
     txHash: primary.txHash,
     sourceOperationId: primary.sourceOperationId,
     timestamp: primary.timestamp,
     useCase: 'SAFE-SWAP',
-    debit,
-    credit,
+    debit: line.debit,
+    credit: line.credit,
     token: 'usdc',
     rawAmount: '0',
     rate: 1,
-    carryingAmount: amount,
-    memo
+    carryingAmount: line.amount,
+    memo: line.memo
   })
 }
 
@@ -114,10 +128,7 @@ export function prepareSafeExchanges(drafts: readonly JournalEntryDraft[]): Jour
     }
     const incoming = exchange.filter((entry) => entry.debit === 'Cash — Safe')
     const outgoing = exchange.filter((entry) => entry.credit === 'Cash — Safe')
-    const fee = outgoing.reduce(
-      (sum, entry) => sum + marketAmount({ ...entry, rawAmount: entry.feeRawAmount ?? '0' }),
-      0n
-    )
+    const fee = swapFeeAmount(outgoing)
     let basis = 0n
     let complete = incoming.every(
       (entry) =>
@@ -143,25 +154,23 @@ export function prepareSafeExchanges(drafts: readonly JournalEntryDraft[]): Jour
       const delta = received + fee - basis
       if (fee > 0n)
         group.push(
-          resultDraft(
-            incoming[0]!,
-            'transaction-fee',
-            'Transaction Fee Expense',
-            null,
-            fee,
-            'Transaction fee CoW Protocol took from the asset given up'
-          )
+          swapUsdLineDraft(incoming[0]!, {
+            suffix: 'transaction-fee',
+            debit: 'Transaction Fee Expense',
+            credit: null,
+            amount: fee,
+            memo: 'Transaction fee CoW Protocol took from the asset given up'
+          })
         )
       if (delta !== 0n)
         group.push(
-          resultDraft(
-            incoming[0]!,
-            'exchange-result',
-            delta < 0n ? 'Asset Exchange Loss' : null,
-            delta > 0n ? 'Asset Exchange Gain' : null,
-            delta < 0n ? -delta : delta,
-            'Asset exchange proceeds less weighted-average carrying value, excluding the fee'
-          )
+          swapUsdLineDraft(incoming[0]!, {
+            suffix: 'exchange-result',
+            debit: delta < 0n ? 'Asset Exchange Loss' : null,
+            credit: delta > 0n ? 'Asset Exchange Gain' : null,
+            amount: delta < 0n ? -delta : delta,
+            memo: 'Asset exchange proceeds less weighted-average carrying value, excluding the fee'
+          })
         )
     }
     for (const entry of incoming) add(entry)

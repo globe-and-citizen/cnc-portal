@@ -4,7 +4,7 @@
  * adapters split out of {@link ./assemble} so that file stays focused on the
  * pipeline itself.
  */
-import type { CowOrder } from '@/types/cow'
+import type { CowTransactionOrders } from '@/types/cow'
 import type { SafeIncomingTransfer, SafeTransaction } from '@/types/safe'
 import type { SafeDepositRow } from '@/types/contract-events/investor'
 import { transactionHashOf } from '@/utils/accounting/journalEntryDraft'
@@ -16,6 +16,7 @@ import {
 } from '@/utils/accounting/mappers/safe'
 import { currentChainId } from '@/constant'
 import { assetMetadata } from '@/utils/tokens/assets'
+import { safeCowOrderFee } from '@/utils/safe/swapValuation'
 
 /** A SHER value transfer carries no cash; skip NFT moves entirely. */
 function isMonetaryTransfer(t: SafeIncomingTransfer): boolean {
@@ -121,42 +122,19 @@ export function toSafeOutgoingTransferRows(
   return rows
 }
 
-/** Transactions in which the Safe both sent and received a token — the ones that may be swaps. */
-export function safeSwapTransactionHashes(
-  transfers: readonly SafeIncomingTransfer[] | null | undefined,
-  safeAddress: string | null | undefined
-): string[] {
-  const safe = safeAddress?.toLowerCase()
-  if (!safe) return []
-  const sent = new Set<string>()
-  const received = new Set<string>()
-  for (const t of transfers ?? []) {
-    if (!isMonetaryTransfer(t)) continue
-    if (t.from.toLowerCase() === safe) sent.add(t.transactionHash)
-    if (t.to.toLowerCase() === safe) received.add(t.transactionHash)
-  }
-  return [...sent].filter((txHash) => received.has(txHash))
-}
-
 /**
  * Fees CoW Protocol reports for the Safe's own fulfilled orders, the same evidence the Safe's
  * swap overview shows as transaction fees. A missing or malformed answer yields no fee.
  */
 export function toSafeSwapFeeRows(
-  orders: readonly { txHash: string; data?: readonly CowOrder[] }[] | null | undefined,
+  orders: readonly CowTransactionOrders[] | null | undefined,
   safeAddress: string
 ): SafeSwapFeeRow[] {
-  const safe = safeAddress.toLowerCase()
   return (orders ?? []).flatMap(({ txHash, data }) =>
-    (data ?? []).flatMap((order) =>
-      order.owner.toLowerCase() === safe &&
-      order.status === 'fulfilled' &&
-      order.executedFeeToken &&
-      order.executedFee &&
-      /^\d+$/.test(order.executedFee)
-        ? [{ txHash, token: order.executedFeeToken, amount: order.executedFee }]
-        : []
-    )
+    (data ?? []).flatMap((order) => {
+      const fee = safeCowOrderFee(order, safeAddress)
+      return fee ? [{ txHash, ...fee }] : []
+    })
   )
 }
 

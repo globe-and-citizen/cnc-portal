@@ -18,7 +18,7 @@ import type { TeamContract } from '@/types/teamContract'
 import type { WeeklyClaim } from '@/types/cash-remuneration'
 import type { ExpenseResponse } from '@/types/expense-account'
 import type { SafeIncomingTransfer, SafeTransaction } from '@/types/safe'
-import type { CowOrder } from '@/types/cow'
+import type { CowTransactionOrders } from '@/types/cow'
 import type { JournalAccountAssignmentRecord } from '@/types/journal-account-assignment'
 import type { BankEventFeed } from '@/types/contract-events/bank'
 import type { CashRemunerationEventFeed } from '@/types/contract-events/cash-remuneration'
@@ -96,7 +96,7 @@ export interface CncAccountingInput {
   /** Executed multisig transactions — outflows from the Safe. */
   safeOutgoingTransactions?: readonly SafeTransaction[] | null
   /** CoW Protocol orders settled by each Safe swap transaction — the swap fee evidence. */
-  safeSwapOrders?: readonly { txHash: string; data?: readonly CowOrder[] }[] | null
+  safeSwapOrders?: readonly CowTransactionOrders[] | null
   /** Every other Safe the team registered, removed ones included, with its own movements. */
   previousSafes?: readonly PreviousSafeFeed[]
   // ── portal DB rows (off-chain enrichment context, spec §3.2) ──

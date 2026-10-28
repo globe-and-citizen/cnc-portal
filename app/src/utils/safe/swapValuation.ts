@@ -1,7 +1,7 @@
 import { formatUnits, zeroAddress } from 'viem'
 import { SUPPORTED_TOKENS } from '@/constant'
 import type { CoinGeckoAssetMarketResponse, CoinGeckoHistoricalResponse } from '@/types/coingecko'
-import type { CowOrder } from '@/types/cow'
+import type { CowOrder, CowTransactionOrders } from '@/types/cow'
 import type { SafeClientBalance, SafeIncomingTransfer } from '@/types/safe'
 import { assetMarketFromResponse, historicalRateFromResponse } from '@/utils/tokens/coingecko'
 import { SAFE_NATIVE_ASSET, computeSafeSwapPnl, type SafeSwapPnl } from './swapPnl'
@@ -24,7 +24,56 @@ export interface SafeSwapValuationSources {
   /** Original Gateway balance rows with a current USD price. */
   heldBalances: readonly SafeClientBalance[]
   rates: readonly { coinId: string; date: string; data?: CoinGeckoHistoricalResponse }[]
-  orders: readonly { txHash: string; data?: CowOrder[] }[]
+  orders: readonly CowTransactionOrders[]
+}
+
+/**
+ * The Safe's movements in its swaps: transactions in which it sent one asset and received
+ * another. NFT, self, zero and unknown-decimals movements are left out.
+ */
+export function safeSwapTransfers(
+  transfers: readonly SafeIncomingTransfer[] | null | undefined,
+  safeAddress: string | null | undefined
+): SafeIncomingTransfer[] {
+  const address = safeAddress?.toLowerCase()
+  if (!address) return []
+  const movements = (transfers ?? []).filter(
+    ({ type, from, to, value, tokenAddress, tokenInfo }) =>
+      type !== 'ERC721_TRANSFER' &&
+      (from.toLowerCase() === address) !== (to.toLowerCase() === address) &&
+      (type === 'ETHER_TRANSFER' || (!!tokenAddress && tokenInfo?.decimals !== undefined)) &&
+      /^\d+$/.test(value) &&
+      BigInt(value) > 0n
+  )
+  const swapHashes = new Set(
+    movements
+      .filter(
+        (sent) =>
+          sent.from.toLowerCase() === address &&
+          movements.some(
+            (received) =>
+              received.transactionHash === sent.transactionHash &&
+              received.to.toLowerCase() === address &&
+              (received.type === 'ETHER_TRANSFER' ? null : received.tokenAddress?.toLowerCase()) !==
+                (sent.type === 'ETHER_TRANSFER' ? null : sent.tokenAddress?.toLowerCase())
+          )
+      )
+      .map(({ transactionHash }) => transactionHash)
+  )
+  return movements.filter(({ transactionHash }) => swapHashes.has(transactionHash))
+}
+
+/** Fee CoW Protocol reports for a fulfilled order the Safe owns, in base units of the token it took. */
+export function safeCowOrderFee(
+  order: CowOrder,
+  safeAddress: string
+): { token: string; amount: string } | undefined {
+  if (order.owner.toLowerCase() !== safeAddress.toLowerCase() || order.status !== 'fulfilled')
+    return undefined
+  const { executedFee, executedFeeToken } = order
+  return executedFeeToken && executedFee && /^\d+$/.test(executedFee)
+    ? { token: executedFeeToken, amount: executedFee }
+    : undefined
 }
 
 /** Map every valued asset to its CoinGecko identity; a contract whose metadata does not match stays unvalued. */
@@ -98,15 +147,16 @@ function cowSwapFee(
   const safe = safeAddress.toLowerCase()
   let fee: { asset: string; symbol: string; quantity: number } | undefined
   for (const order of orders) {
-    const token = order.executedFeeToken?.toLowerCase()
+    const reported = safeCowOrderFee(order, safe)
+    if (!reported) continue
+    const token = reported.token.toLowerCase()
     const transfer = transfers.find(
       ({ type, tokenAddress, from }) =>
         type === 'ERC20_TRANSFER' &&
         tokenAddress?.toLowerCase() === token &&
         from.toLowerCase() === safe
     )
-    if (order.owner.toLowerCase() !== safe || order.status !== 'fulfilled') continue
-    if (!transfer || !order.executedFee || !/^\d+$/.test(order.executedFee)) continue
+    if (!transfer) continue
     const net = transfers
       .filter(({ tokenAddress }) => tokenAddress?.toLowerCase() === token)
       .reduce(
@@ -114,11 +164,11 @@ function cowSwapFee(
         0n
       )
     if (net >= 0n) continue
-    const quantity = Number(formatUnits(BigInt(order.executedFee), transfer.tokenInfo!.decimals))
+    const quantity = Number(formatUnits(BigInt(reported.amount), transfer.tokenInfo!.decimals))
     fee =
       fee && fee.asset === token
         ? { ...fee, quantity: fee.quantity + quantity }
-        : (fee ?? { asset: token!, symbol: transfer.tokenInfo?.symbol ?? 'Unknown', quantity })
+        : (fee ?? { asset: token, symbol: transfer.tokenInfo?.symbol ?? 'Unknown', quantity })
   }
   return fee
 }

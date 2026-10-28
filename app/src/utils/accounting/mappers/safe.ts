@@ -217,6 +217,11 @@ function inferOutflow(
   })
 }
 
+/** Lookup key of a swap fee: the transaction and the token the fee was taken from. */
+function swapFeeKey(txHash: string | null | undefined, token: string | null | undefined): string {
+  return `${txHash?.toLowerCase()}:${token?.toLowerCase()}`
+}
+
 /**
  * Take the reported fee of a swap's sold token once, capped at the amount sold, so it lands
  * on a single outgoing leg of that token.
@@ -225,7 +230,7 @@ function takeSwapFee(
   fees: Map<string, bigint>,
   row: SafeTransferRow
 ): Pick<JournalEntryDraft, 'feeRawAmount'> {
-  const key = `${row.txHash?.toLowerCase()}:${row.token?.toLowerCase()}`
+  const key = swapFeeKey(row.txHash, row.token)
   const fee = fees.get(key)
   if (!fee) return {}
   fees.delete(key)
@@ -240,7 +245,7 @@ export function mapSafeTransfers(input: SafeMapperInput, ctx: MapperContext): Jo
   const exchanges = exchangeRowIds({ ...input, transfers }, ctx)
   const swapFees = new Map<string, bigint>()
   for (const fee of input.swapFees ?? []) {
-    const key = `${fee.txHash.toLowerCase()}:${fee.token.toLowerCase()}`
+    const key = swapFeeKey(fee.txHash, fee.token)
     swapFees.set(key, (swapFees.get(key) ?? 0n) + BigInt(fee.amount))
   }
   const mixedOperations = new Set<string>()

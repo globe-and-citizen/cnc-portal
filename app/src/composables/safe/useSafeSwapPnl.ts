@@ -10,7 +10,8 @@ import { useGetCowTransactionOrdersQuery } from '@/queries/cow.queries'
 import {
   buildSafeSwapReport,
   safeSwapCoinIds,
-  safeSwapRateRequests
+  safeSwapRateRequests,
+  safeSwapTransfers
 } from '@/utils/safe/swapValuation'
 
 /**
@@ -23,36 +24,7 @@ export function useSafeSwapPnl(safeAddress: MaybeRefOrGetter<string | undefined>
   const transfers = useGetSafeTransfersQuery({ pathParams: { safeAddress } })
   const balances = useGetSafeBalancesQuery({ pathParams: { safeAddress, fiatCode: 'USD' } })
 
-  const swaps = computed(() => {
-    const address = toValue(safeAddress)?.toLowerCase()
-    if (!address) return []
-    const movements = (transfers.data.value ?? []).filter(
-      ({ type, from, to, value, tokenAddress, tokenInfo }) =>
-        type !== 'ERC721_TRANSFER' &&
-        (from.toLowerCase() === address) !== (to.toLowerCase() === address) &&
-        (type === 'ETHER_TRANSFER' || (!!tokenAddress && tokenInfo?.decimals !== undefined)) &&
-        /^\d+$/.test(value) &&
-        BigInt(value) > 0n
-    )
-    const swapHashes = new Set(
-      movements
-        .filter(
-          (sent) =>
-            sent.from.toLowerCase() === address &&
-            movements.some(
-              (received) =>
-                received.transactionHash === sent.transactionHash &&
-                received.to.toLowerCase() === address &&
-                (received.type === 'ETHER_TRANSFER'
-                  ? null
-                  : received.tokenAddress?.toLowerCase()) !==
-                  (sent.type === 'ETHER_TRANSFER' ? null : sent.tokenAddress?.toLowerCase())
-            )
-        )
-        .map(({ transactionHash }) => transactionHash)
-    )
-    return movements.filter(({ transactionHash }) => swapHashes.has(transactionHash))
-  })
+  const swaps = computed(() => safeSwapTransfers(transfers.data.value, toValue(safeAddress)))
 
   const heldBalances = computed(() =>
     (balances.data.value?.items ?? []).filter(({ fiatConversion }) => {

@@ -67,7 +67,8 @@ import {
   findPreferredCurrentContractAddress
 } from '@/utils/accounting/contractGenerations'
 import { prepareSafeExchanges } from '@/utils/accounting/safeExchanges'
-import { safeSwapTransactionHashes } from '@/utils/accounting/safeTransfers'
+import { safeSwapTransfers } from '@/utils/safe/swapValuation'
+import type { CowTransactionOrders } from '@/types/cow'
 
 /** Safe Transaction Service page size; every page is loaded before assembly. */
 const SAFE_PAGE_SIZE = 500
@@ -171,14 +172,22 @@ export function useCNCAccounting(
     error: computed(() => previousSafeTransferQueries.value.find((query) => query.error)?.error),
     refetch: () => Promise.all(previousSafeTransferQueries.value.map((query) => query.refetch()))
   }
-  const safeSwapOrders = useGetCowTransactionOrdersQuery(() => [
-    ...new Set([
-      ...safeSwapTransactionHashes(safeAssetTransfers.data.value, safeAddress.value),
-      ...previousSafeAddresses.value.flatMap((address, index) =>
-        safeSwapTransactionHashes(previousSafeTransferQueries.value[index]?.data, address)
-      )
-    ])
+  const safeSwapOrderQueries = useGetCowTransactionOrdersQuery(() => [
+    ...new Set(
+      [
+        ...safeSwapTransfers(safeAssetTransfers.data.value, safeAddress.value),
+        ...previousSafeAddresses.value.flatMap((address, index) =>
+          safeSwapTransfers(previousSafeTransferQueries.value[index]?.data, address)
+        )
+      ].map(({ transactionHash }) => transactionHash)
+    )
   ])
+  const safeSwapOrdersLoading = computed(() =>
+    safeSwapOrderQueries.value.some((query) => query.isLoading)
+  )
+  const settledSafeSwapOrders = computed<readonly CowTransactionOrders[] | undefined>((previous) =>
+    safeSwapOrdersLoading.value ? previous : safeSwapOrderQueries.value
+  )
 
   // Source feeds are first mapped with the explicit override when supplied, or
   // with the zero-rate gap. This produces the token/date request set without
@@ -201,7 +210,7 @@ export function useCNCAccounting(
     vestingEvents: vesting.data.value?.events,
     safeDepositRouterEvents: router.data.value?.events,
     safeAssetTransfers: safeAssetTransfers.data.value ?? [],
-    safeSwapOrders: safeSwapOrders.value,
+    safeSwapOrders: settledSafeSwapOrders.value,
     weeklyClaims: weeklyClaims.data.value?.data,
     expenses: expenses.data.value,
     accountAssignments: accountAssignments.data.value
@@ -278,6 +287,12 @@ export function useCNCAccounting(
       'Previous Safe asset movements',
       () => previousSafeAddresses.value.length > 0,
       previousSafeTransfers
+    ),
+    accountingQuerySource(
+      'safe-swap-fees',
+      'Safe swap fees',
+      () => safeSwapOrderQueries.value.length > 0,
+      { isLoading: safeSwapOrdersLoading }
     ),
     accountingQuerySource('contract-history', 'Contract deployment history', hasTeamId, officers),
     accountingQuerySource('weekly-claims', 'Weekly claims', hasTeamId, weeklyClaims),
