@@ -547,7 +547,7 @@ the redeployment and migration-root commit. Shareholder Management exposes the m
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `db52d9eb67c58e1981bb2bc9be12d480e9c6bf70`
+**Implementation evidence reviewed against:** `83726950b667a394cf2c77bdb53557516c2a294b`
 
 - [Shareholder Management route](../../../app/src/views/team/%5Bid%5D/SherTokenView.vue) and
   [Investor overview](../../../app/src/components/sections/SherTokenView/InvestorsHeader.vue)

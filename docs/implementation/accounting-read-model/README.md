@@ -279,10 +279,10 @@ flowchart LR
 
 Every known Bank, Payroll, Expense, Credit, and Safe address participates in company-pocket classification. Bank, Payroll, Expense, Credit,
 and Safe are deployment-scoped. A Safe survives Officer redeployments, but a company can register several Safes over time (every Safe row in
-the team's `teamContracts`, removed ones included), and each one is its own numbered `Cash — Safe` account. Every registered Safe's transfer
-feed is read; a move between two company Safes is booked once, from the sending Safe, and a SafeDepositRouter deposit is booked in the Safe
-whose feed holds its transaction. The router itself holds no balance and is never a `Cash — Safe` instance. A transfer whose source and
-destination are both known company pockets is internal even when the addresses belong to different generations. The FeeCollector is
+the team's `teamContracts`, disabled ones included), and each one is its own numbered `Cash — Safe` account. Every registered Safe's
+transfer feed is read; a move between two company Safes is booked once, from the sending Safe, and a SafeDepositRouter deposit is booked in
+the Safe whose feed holds its transaction. The router itself holds no balance and is never a `Cash — Safe` instance. A transfer whose source
+and destination are both known company pockets is internal even when the addresses belong to different generations. The FeeCollector is
 deliberately absent from the internal-address registry: its receipt is CNC protocol revenue, while the paying company's matched Bank
 operation includes a `Transaction Fee Expense` line.
 
@@ -721,7 +721,7 @@ because deposits and company-pocket transfers are not manual assignment targets.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `fdfcf810829fdcca8d0bfe429878b439e4fd4dfe`
+**Implementation evidence reviewed against:** `83726950b667a394cf2c77bdb53557516c2a294b`
 
 - [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts),
   [source-status projection](../../../app/src/composables/accounting/useAccountingStatus.ts),
