@@ -66,8 +66,6 @@ export interface Team {
   contractVersion?: FolderVersion
   safeAddress?: Address
   teamContracts: TeamContract[]
-  /** Every Safe the team registered, removed ones included, latest activated first. */
-  safes?: TeamContract[]
   _count?: { members: number }
   /**
    * The requesting user's own active wage on this team, or null when they have

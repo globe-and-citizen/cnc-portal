@@ -260,19 +260,20 @@ export const addContract = async (req: Request, res: Response) => {
     // authz + existence enforced by requireTeamOwner middleware
     if (contractType === 'Safe') {
       const normalizedSafeAddress = getAddress(contractAddress).toLowerCase();
-      const contractAtAddress = await prisma.teamContract.findFirst({
+      const alreadyRegisteredContract = await prisma.teamContract.findFirst({
         where: { address: { equals: normalizedSafeAddress, mode: 'insensitive' } },
       });
 
-      if (contractAtAddress) {
+      if (alreadyRegisteredContract) {
         const defaultSafe = await prisma.teamContract.findFirst({
           where: { teamId, type: 'Safe', removedAt: null },
           orderBy: { activatedAt: 'desc' },
         });
-        if (defaultSafe?.id === contractAtAddress.id) return res.status(200).json(defaultSafe);
+        if (defaultSafe?.id === alreadyRegisteredContract.id)
+          return res.status(200).json(defaultSafe);
 
         const message =
-          contractAtAddress.teamId === teamId
+          alreadyRegisteredContract.teamId === teamId
             ? "This Safe is already in the team's Safe history"
             : 'Safe address is already assigned to another team';
         return errorResponse(409, message, res);

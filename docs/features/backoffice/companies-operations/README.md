@@ -219,8 +219,8 @@ or detail view; `AC-US-TEAM-OPS-001-03` and `AC-US-TEAM-OPS-003-04` still need f
 
 ## Implementation Evidence
 
-The company payload keeps only the company's default Safe among its live contracts, so the profile and balance recap count that Safe; every
-Safe the company registered is listed separately in its Safe history.
+The company payload lists every Safe the company registered, removed ones included. The profile and balance recap keep only its default
+Safe, the latest activated one not removed, among the live contracts, so they count that Safe.
 
 **Implementation evidence reviewed against:** `bf3b24fc0f684e3eee05d1be05cf2d639b074939`
 
@@ -234,6 +234,7 @@ Safe the company registered is listed separately in its Safe history.
   [supported balance recap](../../../../dashboard/app/composables/useTeamsBalanceRecaps.ts)
 - [Company profile](../../../../dashboard/app/pages/teams/%5Bid%5D.vue),
   [Officer and contract grouping](../../../../dashboard/app/components/teams/TeamContractGroups.vue),
+  [default Safe selection](../../../../dashboard/app/utils/teamSafes.ts),
   [contract balances](../../../../dashboard/app/components/teams/ContractBalance.vue),
   [stablecoin balance query](../../../../dashboard/app/queries/contractTokenBalances.query.ts), and
   [contract logs](../../../../dashboard/app/components/teams/ContractLogs.vue)

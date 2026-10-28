@@ -71,6 +71,7 @@ import MainContractSection from '@/components/sections/ContractManagementView/Ma
 import { useGetTeamOfficersQuery } from '@/queries/contract.queries'
 import { useTeamStore } from '@/stores'
 import type { ContractGeneration } from '@/types/deployments'
+import { contractsInUse } from '@/utils/safe/teamSafes'
 
 type ContractManagementView = 'current' | 'campaigns' | 'history'
 
@@ -90,7 +91,7 @@ const generations = computed<ContractGeneration[]>(() => {
       officerAddress: officer.address,
       isCurrent: officer.isCurrent,
       contracts: officer.isCurrent
-        ? (teamStore.currentTeam?.teamContracts ?? [])
+        ? contractsInUse(teamStore.currentTeam?.teamContracts)
         : officer.contracts
     }))
   }
@@ -104,7 +105,7 @@ const generations = computed<ContractGeneration[]>(() => {
       version: currentOfficer.version,
       officerAddress: currentOfficer.address,
       isCurrent: true,
-      contracts: teamStore.currentTeam?.teamContracts ?? []
+      contracts: contractsInUse(teamStore.currentTeam?.teamContracts)
     }
   ]
 })

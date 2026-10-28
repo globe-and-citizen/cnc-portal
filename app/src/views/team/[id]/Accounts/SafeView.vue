@@ -165,7 +165,10 @@
       </section>
     </template>
 
-    <SafeHistoryCard v-if="teamStore.currentTeam?.safes?.length" :can-manage="canManageSafe">
+    <SafeHistoryCard
+      v-if="teamSafes(teamStore.currentTeam?.teamContracts).length"
+      :can-manage="canManageSafe"
+    >
       <template v-if="canAddSafe && !isSafeMissing && !isCheckingContract" #actions>
         <SafeAddModal />
       </template>
@@ -212,6 +215,7 @@ import { useGetSafeBytecodeQuery } from '@/queries/safe.queries'
 import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
 import { useTeamStore, useUserDataStore } from '@/stores'
 import { normalizeSafeAddress } from '@/utils/safe/address'
+import { teamSafes } from '@/utils/safe/teamSafes'
 import { NETWORK } from '@/constant'
 
 const route = useRoute()

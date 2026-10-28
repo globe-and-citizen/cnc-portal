@@ -24,6 +24,7 @@ import { type Address } from 'viem'
 import { safeDepositRouterAbi } from '@/artifacts/abi/generated'
 import { formatSafeDepositRouterMultiplier } from '@/utils/safeDepositRouter/model'
 import { normalizeSafeAddress } from '@/utils/safe/address'
+import { defaultTeamSafe, teamSafes } from '@/utils/safe/teamSafes'
 import type { ContractType } from '@/types/teamContract'
 import { useBankEventsViaLogs } from '@/composables/bank/useBankEventsViaLogs'
 import { useCashRemunerationEventsViaLogs } from '@/composables/cashRemuneration/useCashRemunerationEventsViaLogs'
@@ -102,9 +103,7 @@ export function useCNCAccounting(
   const investorAddress = addressOf('Investor', 'InvestorV1')
   const routerAddress = addressOf('SafeDepositRouter')
   const safeAddress = computed(() => {
-    const address =
-      team.data.value?.safeAddress ??
-      contracts.value.find((contract) => contract.type === 'Safe')?.address
+    const address = team.data.value?.safeAddress ?? defaultTeamSafe(contracts.value)?.address
 
     return address ? normalizeSafeAddress(address) : undefined
   })
@@ -156,12 +155,8 @@ export function useCNCAccounting(
   })
 
   // Every Safe the team used before its default one keeps its own Cash — Safe account.
-  const contractsWithEverySafe = computed(() => [
-    ...allContracts.value,
-    ...(team.data.value?.safes ?? [])
-  ])
   const previousSafeAddresses = computed(() =>
-    (team.data.value?.safes ?? [])
+    teamSafes(contracts.value)
       .map((safe) => normalizeSafeAddress(safe.address))
       .filter((address) => address !== safeAddress.value)
   )
@@ -179,7 +174,7 @@ export function useCNCAccounting(
   // with the zero-rate gap. This produces the token/date request set without
   // running the source mappers twice.
   const baseInput = computed<CncAccountingInput>(() => ({
-    contracts: contractsWithEverySafe.value,
+    contracts: allContracts.value,
     safeAddress: safeAddress.value,
     previousSafes: previousSafeAddresses.value.map((address, index) => ({
       safeAddress: address,
@@ -231,7 +226,7 @@ export function useCNCAccounting(
       ? provisionalDrafts.value
       : accountingValuation.applyHistoricalRates(provisionalDrafts.value, rateOfRecord)
   )
-  const deploymentAccounts = computed(() => knownDeploymentAccounts(contractsWithEverySafe.value))
+  const deploymentAccounts = computed(() => knownDeploymentAccounts(allContracts.value))
   const transactionEvidence = useTransactionEvidence(drafts, deploymentAccounts)
   const accounting = computed<CncAccounting>(() =>
     assembleWithAccountEvidence(

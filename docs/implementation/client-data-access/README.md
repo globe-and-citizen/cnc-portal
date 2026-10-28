@@ -153,7 +153,7 @@ external Axios client directly. A failed request retains its cached response whi
 response bodies. The history query returns one raw page with date labels and pagination links. Its reactive cursor, timezone, trust and
 imitation filters participate in cache identity, beneath the existing Safe transaction invalidation prefix.
 [Safe movement queries](../../../app/src/queries/safe.queries.ts) share one
-[pagination and asset-transfer loader](../../../app/src/queries/safe.fetch.ts) across the three complete-history reads, and one cache entry
+[pagination and asset-transfer loader](../../../app/src/queries/safe.api.ts) across the three complete-history reads, and one cache entry
 per Safe between the single-Safe and every-Safe transfer queries. The asset-transfer helper deduplicates stable transfer identities and
 recovers missing contract metadata through the calling observer's TanStack client. Concurrent rows for one contract share its metadata
 query; enriched rows are copied without modifying provider objects. Failed metadata reads retain the original movement and its completeness

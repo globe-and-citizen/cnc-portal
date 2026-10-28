@@ -13,7 +13,11 @@ import {
 import type { Team } from '@/types'
 import { safeBalancesQueryOptions } from '@/queries/safeClient.queries'
 import { getSafeValuedFiatTotal } from '@/utils/safe/portfolio'
-import { buildTeamTreasuryDisplay, getTeamTreasuryAddresses } from '@/utils/teams/treasury'
+import {
+  buildTeamTreasuryDisplay,
+  getTeamTreasuryAddresses,
+  getTreasuryContractAddress
+} from '@/utils/teams/treasury'
 
 const REFETCH_INTERVAL = 300_000
 
@@ -35,7 +39,7 @@ export function useTeamListTreasuryBalances(teams: MaybeRefOrGetter<Team[] | und
   const safeAddresses = computed(() => [
     ...new Map(
       (toValue(teams) ?? []).flatMap((team) => {
-        const address = team.teamContracts?.find((contract) => contract.type === 'Safe')?.address
+        const address = getTreasuryContractAddress(team, 'Safe')
         return address ? [[addressKey(address), address] as const] : []
       })
     ).values()
@@ -56,7 +60,7 @@ export function useTeamListTreasuryBalances(teams: MaybeRefOrGetter<Team[] | und
     const uniqueAddresses = new Map<string, Address>()
 
     for (const team of toValue(teams) ?? []) {
-      const safeAddress = team.teamContracts?.find((contract) => contract.type === 'Safe')?.address
+      const safeAddress = getTreasuryContractAddress(team, 'Safe')
       for (const address of getTeamTreasuryAddresses(team)) {
         if (safeAddress && addressKey(address) === addressKey(safeAddress)) continue
         uniqueAddresses.set(addressKey(address), address)

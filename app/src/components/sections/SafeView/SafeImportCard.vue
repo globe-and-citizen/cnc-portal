@@ -175,6 +175,7 @@ import { NETWORK } from '@/constant'
 import { getAxiosErrorMessage } from '@/utils/errors/http'
 import AddressTooltip from '@/components/ui/AddressTooltip.vue'
 import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
+import { teamSafes } from '@/utils/safe/teamSafes'
 
 interface Props {
   teamId: number
@@ -226,7 +227,7 @@ const alreadyRegisteredSafe = computed(() => {
   const input = safeAddressInput.value.trim()
   if (!isAddress(input) || String(teamStore.currentTeam?.id) !== String(props.teamId))
     return undefined
-  return teamStore.currentTeam?.safes?.find(
+  return teamSafes(teamStore.currentTeam?.teamContracts).find(
     (safe) => safe.address.toLowerCase() === input.toLowerCase()
   )
 })

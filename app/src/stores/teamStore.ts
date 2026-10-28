@@ -6,6 +6,7 @@ import type { Address } from 'viem'
 import { ref, watch } from 'vue'
 import { useGetTeamQuery } from '@/queries/team.queries'
 import { normalizeSafeAddress } from '@/utils/safe/address'
+import { defaultTeamSafe } from '@/utils/safe/teamSafes'
 
 export const useTeamStore = defineStore('team', () => {
   const currentTeamId = ref<string | null>(null)
@@ -32,11 +33,12 @@ export const useTeamStore = defineStore('team', () => {
   }
 
   const getContractAddressByType = (type: ContractType): Address | undefined => {
-    const address = currentTeamMeta.data.value?.teamContracts.find(
-      (contract) => contract.type === type
-    )?.address
-
-    return type === 'Safe' && address ? normalizeSafeAddress(address) : address
+    const contracts = currentTeamMeta.data.value?.teamContracts
+    if (type === 'Safe') {
+      const address = defaultTeamSafe(contracts)?.address
+      return address ? normalizeSafeAddress(address) : undefined
+    }
+    return contracts?.find((contract) => contract.type === type)?.address
   }
 
   // Auto-detect Investor address: V2 ('Investor') preferred, V1 ('InvestorV1') fallback

@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises, mount, shallowMount } from '@vue/test-utils'
+import type { Address } from 'viem'
 import SafeView from '../SafeView.vue'
 import { mockTeamData, mockTeamStore, mockUserStore } from '@/tests/mocks'
 import { mockUseContractBalance, makeTokenBalance } from '@/tests/mocks/composables.mock'
@@ -113,8 +114,16 @@ describe('[US-SAFE-001] [US-SAFE-002] SafeView.vue', () => {
       mockUserStore.address = mockTeamData.ownerAddress
       mockTeamStore.currentTeam = {
         ...mockTeamData,
-        safes: [
-          { address: SAFE.toLowerCase(), activatedAt: '2026-10-01T00:00:00Z', removedAt: null }
+        teamContracts: [
+          ...mockTeamData.teamContracts,
+          {
+            type: 'Safe',
+            address: SAFE.toLowerCase() as Address,
+            deployer: mockTeamData.ownerAddress,
+            admins: [],
+            activatedAt: '2026-10-01T00:00:00Z',
+            removedAt: null
+          }
         ]
       }
       mockSafeDepositRouterReads.safeAddress.data.value = OTHER_SAFE

@@ -278,13 +278,13 @@ flowchart LR
 ```
 
 Every known Bank, Payroll, Expense, Credit, and Safe address participates in company-pocket classification. Bank, Payroll, Expense, Credit,
-and Safe are deployment-scoped. A Safe survives Officer redeployments, but a company can register several Safes over time (`safes` on the
-team payload, removed ones included), and each one is its own numbered `Cash — Safe` account. Every registered Safe's transfer feed is read;
-a move between two company Safes is booked once, from the sending Safe, and a SafeDepositRouter deposit is booked in the Safe whose feed
-holds its transaction. The router itself holds no balance and is never a `Cash — Safe` instance. A transfer whose source and destination are
-both known company pockets is internal even when the addresses belong to different generations. The FeeCollector is deliberately absent from
-the internal-address registry: its receipt is CNC protocol revenue, while the paying company's matched Bank operation includes a
-`Transaction Fee Expense` line.
+and Safe are deployment-scoped. A Safe survives Officer redeployments, but a company can register several Safes over time (every Safe row in
+the team's `teamContracts`, removed ones included), and each one is its own numbered `Cash — Safe` account. Every registered Safe's transfer
+feed is read; a move between two company Safes is booked once, from the sending Safe, and a SafeDepositRouter deposit is booked in the Safe
+whose feed holds its transaction. The router itself holds no balance and is never a `Cash — Safe` instance. A transfer whose source and
+destination are both known company pockets is internal even when the addresses belong to different generations. The FeeCollector is
+deliberately absent from the internal-address registry: its receipt is CNC protocol revenue, while the paying company's matched Bank
+operation includes a `Transaction Fee Expense` line.
 
 Safe history is adapted from incoming transfers plus successfully executed outgoing multisig transactions. The outgoing adapter recognizes
 direct native value and Transaction Service calls decoded as ERC-20 `transfer(to, amount)`. It does not infer cash legs hidden inside

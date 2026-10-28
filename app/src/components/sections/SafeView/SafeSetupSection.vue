@@ -54,7 +54,7 @@
     </div>
 
     <SafeHistoryCard
-      v-if="teamStore.currentTeam?.safes?.length"
+      v-if="teamSafes(teamStore.currentTeam?.teamContracts).length"
       class="mt-6"
       :can-manage="canManage"
     />
@@ -67,6 +67,7 @@ import SafeDeploymentCard from '@/components/sections/SafeView/SafeDeploymentCar
 import SafeImportCard from '@/components/sections/SafeView/SafeImportCard.vue'
 import SafeHistoryCard from '@/components/sections/SafeView/SafeHistoryCard.vue'
 import { useTeamStore } from '@/stores'
+import { teamSafes } from '@/utils/safe/teamSafes'
 
 const SETUP_STEPS = [
   { title: 'Choose a Safe', description: 'Deploy a new wallet or inspect an existing one.' },

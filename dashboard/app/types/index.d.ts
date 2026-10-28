@@ -98,8 +98,9 @@ export interface TeamOfficer {
 }
 
 // A contract governed by a team (Bank, Voting, Campaign, …), as returned on the
-// team detail endpoint. Officer-less contracts (Safe, SafeDepositRouter) and the
-// current Officer's contracts are merged into `Team.teamContracts`.
+// team detail endpoint. Officer-less contracts (every Safe the team registered, removed
+// ones included, and SafeDepositRouter) and the current Officer's contracts are merged
+// into `Team.teamContracts`.
 export interface TeamContract {
   id: number
   address: string
@@ -107,6 +108,10 @@ export interface TeamContract {
   deployer: string
   teamId: number
   officerId: number | null
+  /** When a Safe last became the team default. */
+  activatedAt: string
+  /** When the owner removed this Safe from use; its history is kept. */
+  removedAt: string | null
   createdAt: string
   updatedAt: string
 }

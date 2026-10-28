@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises, mount, type VueWrapper } from '@vue/test-utils'
+import type { Address } from 'viem'
 import SafeHistoryCard from '../SafeHistoryCard.vue'
 import { createMockMutationResponse, mockTeamData, mockTeamStore } from '@/tests/mocks'
 import { makeTokenBalance, mockUseContractBalance } from '@/tests/mocks/composables.mock'
@@ -20,6 +21,15 @@ function mountCard(canManage = true) {
   return wrapper
 }
 
+const safe = (address: string, activatedAt: string, removedAt: string | null = null) => ({
+  address: address as Address,
+  type: 'Safe' as const,
+  deployer: mockTeamData.ownerAddress,
+  admins: [],
+  activatedAt,
+  removedAt
+})
+
 const statuses = (card: VueWrapper) =>
   card.findAll('[data-test="safe-history-status"]').map((badge) => badge.text())
 
@@ -30,14 +40,11 @@ describe('[US-SAFE-001] SafeHistoryCard', () => {
     mockTeamStore.currentTeamId = '1'
     mockTeamStore.currentTeam = {
       ...mockTeamData,
-      safes: [
-        { address: DEFAULT_SAFE, activatedAt: '2026-10-01T00:00:00Z', removedAt: null },
-        { address: PREVIOUS_SAFE, activatedAt: '2026-01-01T00:00:00Z', removedAt: null },
-        {
-          address: REMOVED_SAFE,
-          activatedAt: '2025-06-01T00:00:00Z',
-          removedAt: '2025-12-01T00:00:00Z'
-        }
+      teamContracts: [
+        ...mockTeamData.teamContracts,
+        safe(REMOVED_SAFE, '2025-06-01T00:00:00Z', '2025-12-01T00:00:00Z'),
+        safe(DEFAULT_SAFE, '2026-10-01T00:00:00Z'),
+        safe(PREVIOUS_SAFE, '2026-01-01T00:00:00Z')
       ]
     }
     mockTeamStore.currentTeamMeta.data.isArchived = false

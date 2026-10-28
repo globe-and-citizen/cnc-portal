@@ -394,33 +394,6 @@ describe('Team Controller', () => {
       // expect(response.body).toEqual(teamMockResolve);
     });
 
-    it('[AC-US-SAFE-001-15] keeps only the default Safe live and lists every Safe in its history', async () => {
-      const safe = (id: number, removedAt: Date | null = null) => ({
-        id,
-        type: 'Safe',
-        address: `0x${String(id).repeat(40)}`,
-        officerId: null,
-        removedAt,
-      });
-      const router = { id: 4, type: 'SafeDepositRouter', officerId: null, removedAt: null };
-      vi.spyOn(prisma.team, 'findUnique').mockResolvedValue({
-        ...teamMockResolve,
-        teamOfficers: [],
-        teamContracts: [safe(3, new Date()), router, safe(2), safe(1)],
-      } as never);
-      vi.spyOn(prisma.memberTeamsData, 'findUnique').mockResolvedValue({
-        isHidden: false,
-      } as never);
-
-      const response = await request(app).get('/1');
-
-      expect(response.status).toBe(200);
-      expect(response.body.teamContracts.map((contract: { id: number }) => contract.id)).toEqual([
-        4, 2,
-      ]);
-      expect(response.body.safes.map((contract: { id: number }) => contract.id)).toEqual([3, 2, 1]);
-    });
-
     it('exposes isMigrated=true when current officer matches the active network version', async () => {
       vi.spyOn(prisma.team, 'findUnique').mockResolvedValue({
         ...teamMockResolve,
@@ -573,7 +546,6 @@ describe('Team Controller', () => {
           isArchived: false,
           isHidden: false,
           teamContracts: [],
-          safes: [],
           callerWage: null,
         }))
       );
@@ -590,7 +562,7 @@ describe('Team Controller', () => {
               contracts: true,
             },
           },
-          teamContracts: { where: { officerId: null }, orderBy: { activatedAt: 'desc' } },
+          teamContracts: { where: { officerId: null } },
         },
       });
     });
@@ -660,7 +632,6 @@ describe('Team Controller', () => {
           isArchived: false,
           isHidden: false,
           teamContracts: [],
-          safes: [],
           callerWage: null,
         }))
       );
@@ -689,7 +660,7 @@ describe('Team Controller', () => {
               contracts: true,
             },
           },
-          teamContracts: { where: { officerId: null }, orderBy: { activatedAt: 'desc' } },
+          teamContracts: { where: { officerId: null } },
         },
       });
     });

@@ -104,6 +104,7 @@ import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
 import { useTeamStore } from '@/stores'
 import { formatDate } from '@/utils/format'
 import { normalizeSafeAddress } from '@/utils/safe/address'
+import { teamSafes } from '@/utils/safe/teamSafes'
 
 type SafeAction = 'default' | 'remove'
 
@@ -141,7 +142,7 @@ const isDefaultSafe = (address: string) =>
   address.toLowerCase() === defaultSafeAddress.value?.toLowerCase()
 
 const safeRows = computed(() =>
-  (teamStore.currentTeam?.safes ?? []).map((safe) => {
+  teamSafes(teamStore.currentTeam?.teamContracts).map((safe) => {
     const address = normalizeSafeAddress(safe.address)
     if (safe.removedAt) {
       return {

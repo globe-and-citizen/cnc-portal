@@ -1299,7 +1299,7 @@ condition, related criteria, and a worked example:
   [Safe transaction table](../../../app/src/components/sections/SafeView/SafeTransactionsTable.vue), and
   [Safe mobile transaction list](../../../app/src/components/sections/SafeView/SafeTransactionMobileList.vue),
   [Safe queries and cache keys](../../../app/src/queries/safe.queries.ts),
-  [Safe history page loader](../../../app/src/queries/safe.fetch.ts),
+  [Safe Transaction Service requests](../../../app/src/queries/safe.api.ts),
   [Safe transaction mutations](../../../app/src/queries/safe.mutations.ts),
   [Safe transaction state and conflict rules](../../../app/src/utils/safe/transactionState.ts), and
   [Safe conflict warning](../../../app/src/components/sections/SafeView/SafeTransactionsWarning.vue)
@@ -1310,9 +1310,10 @@ condition, related criteria, and a worked example:
 - [Safe registration and default Safe API](../../../backend/src/controllers/contractController.ts),
   [contract routes](../../../backend/src/routes/contractRoutes.ts),
   [contract request validation](../../../backend/src/validation/schemas/contract.ts),
-  [team payload with the Safe history](../../../backend/src/controllers/teamController.ts), and
+  [team payload with every registered Safe](../../../backend/src/controllers/teamController.ts), and
   [contract API tests](../../../backend/src/controllers/__tests__/contractController.test.ts)
-- [Safe history card](../../../app/src/components/sections/SafeView/SafeHistoryCard.vue),
+- [default Safe and Safe history selection](../../../app/src/utils/safe/teamSafes.ts),
+  [Safe history card](../../../app/src/components/sections/SafeView/SafeHistoryCard.vue),
   [add-a-Safe modal](../../../app/src/components/sections/SafeView/SafeAddModal.vue), and
   [multi-Safe accounting tests](../../../app/src/utils/accounting/__tests__/assemble.multiSafe.spec.ts)
 - [Safe transaction queue tests](../../../app/src/components/sections/SafeView/__tests__/SafeTransactions.spec.ts),

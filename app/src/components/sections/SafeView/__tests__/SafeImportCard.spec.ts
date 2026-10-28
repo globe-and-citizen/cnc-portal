@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
 import { ref } from 'vue'
+import type { Address } from 'viem'
 import SafeImportCard from '../SafeImportCard.vue'
 import { mockTeamData, mockTeamStore, mockToast, mockUserStore } from '@/tests/mocks'
 
@@ -146,19 +147,21 @@ describe('[US-SAFE-001] SafeImportCard', () => {
   describe('a Safe already in the team', () => {
     const DEFAULT_SAFE = '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'
     const REMOVED_SAFE = '0xcccccccccccccccccccccccccccccccccccccccc'
+    const safe = (address: string, removedAt: string | null = null) => ({
+      address: address as Address,
+      type: 'Safe' as const,
+      deployer: mockTeamData.ownerAddress,
+      admins: [],
+      removedAt
+    })
 
     beforeEach(() => {
       mockTeamStore.currentTeam = {
         ...mockTeamData,
-        safes: [
-          { address: DEFAULT_SAFE, type: 'Safe', deployer: mockTeamData.ownerAddress, admins: [] },
-          {
-            address: REMOVED_SAFE,
-            type: 'Safe',
-            deployer: mockTeamData.ownerAddress,
-            admins: [],
-            removedAt: '2026-10-01T00:00:00.000Z'
-          }
+        teamContracts: [
+          ...mockTeamData.teamContracts,
+          safe(DEFAULT_SAFE),
+          safe(REMOVED_SAFE, '2026-10-01T00:00:00.000Z')
         ]
       }
     })

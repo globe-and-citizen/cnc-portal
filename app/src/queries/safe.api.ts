@@ -1,23 +1,28 @@
 /**
- * Safe Transaction Service page loading, split out of {@link ./safe.queries} so the
- * query hooks stay focused on cache keys and options.
+ * Safe Transaction Service requests, called by the query hooks in
+ * {@link ./safe.queries} so those stay focused on cache keys and options.
  */
 import type { QueryClient } from '@tanstack/vue-query'
 import { readContract } from '@wagmi/core'
 import { erc20Abi, isAddress, type Address } from 'viem'
 import { config } from '@/wagmi.config'
 import externalApiClient from '@/lib/external.axios'
-import { TX_SERVICE_BY_CHAIN } from '@/types/safe'
+import { TX_SERVICE_BY_CHAIN, type SafeInfo, type SafeTransaction } from '@/types/safe'
 import { currentChainId } from '@/constant/index'
 import type { SafeIncomingTransfer } from '@/types'
 import { queryPresets } from './queryFactory'
 
 const chainId = currentChainId
-const txService = TX_SERVICE_BY_CHAIN[chainId]
 
 interface SafePage<T> {
   next: string | null
   results: T[]
+}
+
+function txServiceUrl(): string {
+  const txService = TX_SERVICE_BY_CHAIN[chainId]
+  if (!txService) throw new Error(`Unsupported chainId: ${chainId}`)
+  return txService.url
 }
 
 /** Load every page in service order; a repeated next link is an invalid partial response. */
@@ -39,16 +44,77 @@ export async function fetchAllSafePages<T>(initialUrl: string, signal: AbortSign
   return results
 }
 
+/** GET {txService}/api/v1/safes/{address}/ — the Safe's owners, threshold and nonce. */
+export async function getSafeInfo(address: Address, signal: AbortSignal): Promise<SafeInfo> {
+  const { data } = await externalApiClient.get<SafeInfo>(
+    `${txServiceUrl()}/api/v1/safes/${address}/`,
+    { signal }
+  )
+  return data
+}
+
+/** GET {txService}/api/v1/safes/{address}/multisig-transactions/ — the first page. */
+export async function getSafeTransactions(
+  address: Address,
+  signal: AbortSignal
+): Promise<SafeTransaction[]> {
+  const { data } = await externalApiClient.get<{ results: SafeTransaction[] }>(
+    `${txServiceUrl()}/api/v1/safes/${address}/multisig-transactions/`,
+    { signal }
+  )
+  return data.results || []
+}
+
+/** GET {txService}/api/v1/multisig-transactions/{hash}/ */
+export async function getSafeTransaction(
+  hash: string,
+  signal: AbortSignal
+): Promise<SafeTransaction> {
+  const { data } = await externalApiClient.get<SafeTransaction>(
+    `${txServiceUrl()}/api/v1/multisig-transactions/${hash}/`,
+    { signal }
+  )
+  return data
+}
+
+/** GET {txService}/api/v1/safes/{address}/incoming-transfers/ — every page. */
+export function getSafeIncomingTransfers(
+  address: Address,
+  limit: number | undefined,
+  signal: AbortSignal
+): Promise<SafeIncomingTransfer[]> {
+  const params = new URLSearchParams()
+  if (limit) params.append('limit', limit.toString())
+  const queryString = params.toString() ? `?${params.toString()}` : ''
+  return fetchAllSafePages<SafeIncomingTransfer>(
+    `${txServiceUrl()}/api/v1/safes/${address}/incoming-transfers/${queryString}`,
+    signal
+  )
+}
+
+/** GET {txService}/api/v1/safes/{address}/multisig-transactions/?executed=true — every page. */
+export function getSafeOutgoingTransactions(
+  address: Address,
+  limit: number | undefined,
+  signal: AbortSignal
+): Promise<SafeTransaction[]> {
+  const params = new URLSearchParams({ executed: 'true' })
+  if (limit) params.append('limit', limit.toString())
+  return fetchAllSafePages<SafeTransaction>(
+    `${txServiceUrl()}/api/v1/safes/${address}/multisig-transactions/?${params.toString()}`,
+    signal
+  )
+}
+
 /** Preserve transfer identity and recover missing contract metadata without dropping raw movements. */
-export async function fetchSafeAssetTransfers(
+export async function getSafeAssetTransfers(
   client: QueryClient,
   address: Address,
   limit: number,
   signal: AbortSignal
 ): Promise<SafeIncomingTransfer[]> {
-  if (!txService) throw new Error(`Unsupported chainId: ${chainId}`)
   const rows = await fetchAllSafePages<SafeIncomingTransfer>(
-    `${txService.url}/api/v1/safes/${address}/transfers/?limit=${limit}`,
+    `${txServiceUrl()}/api/v1/safes/${address}/transfers/?limit=${limit}`,
     signal
   )
   const unique = new Map<string, SafeIncomingTransfer>()
