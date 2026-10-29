@@ -940,6 +940,8 @@ valuation gap. The existing completeness rules apply to every booked movement. S
 
 - [Accounting page](../../../app/src/components/sections/AccountingView/AccountingPage.vue),
   [team routes](../../../app/src/router/index.ts), and [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts)
+- [Shared Safe P&L source](../../../app/src/composables/safe/useSafeSwapPnl.ts), consumed by the Accounting data layer, and
+  [exact exchange carrying-basis replay](../../../app/src/utils/accounting/safeExchanges.ts)
 - [Source completeness](../../../app/src/utils/accounting/accountingCompleteness.ts),
   [block timestamps](../../../app/src/queries/blockTimestamp.queries.ts), and
   [historical valuation queries](../../../app/src/queries/coingecko.queries.ts) and the

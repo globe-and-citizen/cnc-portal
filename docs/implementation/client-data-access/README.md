@@ -79,6 +79,11 @@ reports wait while these lookups load (the `Safe swap fees` source), then read e
 than once per answer. A fee reported for the Safe's own fulfilled order is booked as `Transaction Fee Expense`; a missing or failed answer
 keeps the fee inside the acquired asset's price and never makes Accounting partial.
 
+Swap selection, daily quote requests and valuation share
+[transaction grouping and exact asset netting](../../../app/src/utils/safe/swapTransfers.ts). Valuation indexes daily quotes, Gateway prices
+and CoW responses once per report. The [P&L composable](../../../app/src/composables/safe/useSafeSwapPnl.ts) keeps a settled report only
+while refreshing the same Safe; changing or clearing its address discards the previous report.
+
 Executable evidence: [Gateway request tests](../../../app/src/queries/__tests__/safeClient.queries.spec.ts),
 [pagination and metadata unit tests](../../../app/src/queries/__tests__/safe.queries.spec.ts),
 [Safe source-mapping tests](../../../app/src/utils/accounting/__tests__/safe.spec.ts) and
