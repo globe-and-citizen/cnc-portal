@@ -105,7 +105,7 @@ function withholdExchange(exchange: readonly JournalEntryDraft[]): void {
   }
 }
 
-/** A USD-only line a swap adds to its operation: its transaction fee or its Swap P&L. */
+/** A USD-only line a swap adds to its operation: its fee, Swap P&L or market value adjustment. */
 function swapUsdLineDraft(
   primary: JournalEntryDraft,
   line: {
@@ -143,47 +143,43 @@ function transactionFeeDraft(primary: JournalEntryDraft, amount: bigint): Journa
   })
 }
 
-/** The Swap P&L line of a swap that receives a USD stablecoin: the result it realizes. */
-function realizedSwapPnlDraft(primary: JournalEntryDraft, realized: bigint): JournalEntryDraft {
-  const isGain = realized > 0n
+/**
+ * The Swap P&L line of a swap: the Safe overview's P&L when the data layer attaches it, else
+ * the result a received USD stablecoin realizes.
+ */
+function swapPnlDraft(primary: JournalEntryDraft, pnl: bigint): JournalEntryDraft {
+  const isGain = pnl > 0n
   return swapUsdLineDraft(primary, {
     suffix: 'swap-pnl',
     debit: isGain ? null : 'Swap P&L',
     credit: isGain ? 'Swap P&L' : null,
-    amount: isGain ? realized : -realized,
-    memo: 'USD stablecoin received less the price paid for the asset given up'
+    amount: isGain ? pnl : -pnl,
+    memo: 'Assets received at their current value against the swap-day value given up'
   })
 }
 
 /**
- * The swap's revaluation, its own operation dated with the swap: the rest of the Safe
- * overview's P&L, booked to Swap P&L against Safe Market Value Adjustment so the swap and
- * its Cash — Safe lines keep the price paid. A gain debits the adjustment, a loss credits it.
+ * The part of the Swap P&L the Cash — Safe lines do not carry, so they keep the price paid.
+ * A gain debits Safe Market Value Adjustment, a loss credits it.
  */
-function swapRevaluationDraft(primary: JournalEntryDraft, gap: bigint): JournalEntryDraft {
+function marketValueAdjustmentDraft(primary: JournalEntryDraft, gap: bigint): JournalEntryDraft {
   const isGain = gap > 0n
-  const operationId = `swap-pnl-revaluation:${primary.txHash ?? primary.id}`
-  return makeJournalEntryDraft({
-    id: operationId,
-    sourceOperationId: operationId,
-    timestamp: primary.timestamp,
-    useCase: 'SAFE-SWAP-REVALUATION',
-    debit: isGain ? 'Safe Market Value Adjustment' : 'Swap P&L',
-    credit: isGain ? 'Swap P&L' : 'Safe Market Value Adjustment',
-    token: 'usdc',
-    rawAmount: '0',
-    rate: 1,
-    carryingAmount: isGain ? gap : -gap,
-    memo: 'Assets received at their current value against the CoinGecko swap-day value given up'
+  return swapUsdLineDraft(primary, {
+    suffix: 'market-value-adjustment',
+    debit: isGain ? 'Safe Market Value Adjustment' : null,
+    credit: isGain ? null : 'Safe Market Value Adjustment',
+    amount: isGain ? gap : -gap,
+    memo: 'Swap P&L the Cash — Safe lines do not carry, as they keep the price paid'
   })
 }
 
 /**
  * Book one exchange at the price actually paid: what was given up less the reported fee.
- * A received USD stablecoin realizes its gap from that price on the swap's Swap P&L line.
- * When the data layer attaches the Safe overview's P&L (`swapPnl`), a separate revaluation
- * books the rest, so Swap P&L totals that figure. Returns the drafts the exchange adds; an
- * exchange that cannot be booked is withheld instead.
+ * A received USD stablecoin realizes its gap from that price. When the data layer attaches
+ * the Safe overview's P&L (`swapPnl`), the swap's Swap P&L line books that figure and Safe
+ * Market Value Adjustment the part the cash lines do not carry, all in the swap's own
+ * posting. Returns the drafts the exchange adds; an exchange that cannot be booked is
+ * withheld instead.
  */
 function bookExchange(
   incoming: readonly JournalEntryDraft[],
@@ -200,11 +196,12 @@ function bookExchange(
     (entry) => entry.swapPnl !== undefined
   )?.swapPnl
   const realized = bookReceipts(incoming, given - fee)
-  const gap = (overviewPnl ?? realized) - realized
+  const pnl = overviewPnl ?? realized
+  const gap = pnl - realized
   return [
     ...(fee > 0n ? [transactionFeeDraft(primary, fee)] : []),
-    ...(realized !== 0n ? [realizedSwapPnlDraft(primary, realized)] : []),
-    ...(gap !== 0n ? [swapRevaluationDraft(primary, gap)] : [])
+    ...(pnl !== 0n ? [swapPnlDraft(primary, pnl)] : []),
+    ...(gap !== 0n ? [marketValueAdjustmentDraft(primary, gap)] : [])
   ]
 }
 
@@ -215,8 +212,8 @@ function bookExchange(
  * as Transaction Fee Expense at the carrying amount of the part it took, and the rest is the
  * price actually paid. A received asset carries that price for good; a received USD
  * stablecoin keeps its face value, realizing its gap on Swap P&L. A swap the data layer gives
- * the Safe overview's P&L (`swapPnl`) gets a separate revaluation for the rest, against Safe
- * Market Value Adjustment, so Cash — Safe never leaves the price paid.
+ * the Safe overview's P&L (`swapPnl`) books that figure on Swap P&L, with the rest against Safe
+ * Market Value Adjustment in the same posting, so Cash — Safe never leaves the price paid.
  *
  * Within one operation, non-exchange entries (e.g. a same-operation mint) are applied
  * first as ordinary evidence — never as another swap receipt. A non-exchange depletion

@@ -119,12 +119,7 @@ describe('Safe exchanges in the Accounting data layer', () => {
       expect(lineOf('Transaction Fee Expense')?.debit).toBe(10n ** 24n)
       expect(acquired?.debit).toBe(19n * 10n ** 24n)
       expect(acquired?.movement?.rate).toBe(1900000000n)
-      const revaluation = accounting.journal.value.find(
-        (entry) => entry.useCase === 'SAFE-SWAP-REVALUATION'
-      )!
-      expect(
-        revaluation.lines.find((line) => line.account.family.name === 'Swap P&L')?.credit
-      ).toBe(5n * 10n ** 24n)
+      expect(lineOf('Swap P&L')?.credit).toBe(5n * 10n ** 24n)
       await accounting.refetch()
       expect(refetch).toHaveBeenCalledOnce()
       const mint = movement(5, zeroAddress, safe, token, '1')

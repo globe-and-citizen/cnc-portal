@@ -694,10 +694,10 @@ suspense treatment extends pending classification to other unidentified receipts
   `Transaction Fee Expense` at the carrying value of the part of the disposed asset it took. Debit the acquired asset at the rest: the price
   actually paid. A received USD stablecoin keeps its $1.00 face value instead, which realizes its difference from the price paid.
 - **Swap P&L:** That realized result is the swap's `Swap P&L` line, credited for a gain and debited for a loss. For a swap of the default
-  Safe, a separate `SAFE-SWAP-REVALUATION` operation dated with the swap, labelled `Swap P&L revaluation`, books the rest of its
-  [Safe swap P&L](../accounts/safe-swap-pnl-use-cases.md) (current value of what it received against the CoinGecko swap-day value of what it
-  gave up, less the reported fee): a gain debits `Safe Market Value Adjustment` and credits `Swap P&L`; a loss does the reverse.
-  `Cash — Safe` never leaves the price paid, and `Swap P&L` totals the Safe overview figure.
+  Safe, that line books instead its [Safe swap P&L](../accounts/safe-swap-pnl-use-cases.md) (current value of what it received against the
+  CoinGecko swap-day value of what it gave up, less the reported fee), and a `Safe Market Value Adjustment` line in the same posting books
+  the part the cash lines do not carry: debited when the swap gains, credited when it loses. `Cash — Safe` never leaves the price paid, and
+  `Swap P&L` totals the Safe overview figure.
 - **Statements:** A net `Swap P&L` gain is a revenue line and a trial-balance credit; a net loss is an expense line and a trial-balance
   debit. Amounts are always positive.
 - **General Ledger:** Label `Asset exchange`, category `Swap`. The receipt's rate is its price paid divided by its quantity, or $1.00 for a

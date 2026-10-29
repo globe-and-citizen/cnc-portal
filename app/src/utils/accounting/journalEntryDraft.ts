@@ -42,8 +42,6 @@ export function sourceOperationIdOf(eventId: string): string {
  */
 export type UseCase =
   | 'SAFE-SWAP'
-  /** The rest of a swap's Safe overview P&L: Swap P&L against Safe Market Value Adjustment. */
-  | 'SAFE-SWAP-REVALUATION'
   /** Direct external deposit into a treasury pocket → Service Revenue. */
   | 'UC-BANK-02'
   /** Fund payroll/expense pockets from Bank — internal move. */
