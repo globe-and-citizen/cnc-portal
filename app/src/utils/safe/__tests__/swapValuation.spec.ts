@@ -3,11 +3,12 @@ import { parseUnits, zeroAddress } from 'viem'
 import { SUPPORTED_TOKENS, USDC_ADDRESS } from '@/constant'
 import type { CowOrder } from '@/types/cow'
 import type { SafeClientBalance, SafeIncomingTransfer } from '@/types/safe'
-import { SAFE_NATIVE_ASSET } from '../swapPnl'
+import { SAFE_NATIVE_ASSET } from '../swapTransfers'
 import {
   buildSafeSwapReport,
   safeSwapCoinIds,
   safeSwapRateRequests,
+  safeSwapTransfers,
   type SafeSwapValuationSources
 } from '../swapValuation'
 
@@ -123,6 +124,17 @@ describe('[US-SAFE-007] Safe swap valuation', () => {
     ).toEqual([{ coinId: 'weth', date: '2026-06-01' }])
   })
 
+  it('retains interleaved swap rows in source order and leaves same-asset round trips out', () => {
+    const first = swap({ txHash: '0xfirst' })
+    const second = swap({ txHash: '0xsecond', sell: WETH, buy: USDC })
+    const roundTrip = swap({ txHash: '0xround', buy: USDC })
+    const rows = [first[0]!, second[0]!, roundTrip[0]!, second[1]!, first[1]!, roundTrip[1]!]
+    const selected = safeSwapTransfers(rows, SAFE)
+
+    expect(selected).toEqual([first[0], second[0], second[1], first[1]])
+    selected.forEach((row) => expect(rows).toContain(row))
+  })
+
   it('[AC-US-SAFE-007-07] reads the CoW fee of the Safe’s own fulfilled order in the asset it sold', () => {
     const orders = [
       order(),
@@ -175,6 +187,17 @@ describe('[US-SAFE-007] Safe swap valuation', () => {
     )
 
     expect(report).toMatchObject({ feesUsd: 3.5, feesReported: 1 })
+  })
+
+  it('adds fees from several fulfilled orders after netting a sold-token refund', () => {
+    const rows = swap()
+    const refund = { ...rows[0]!, from: rows[0]!.to, to: SAFE, value: '10000000' }
+    const report = buildSafeSwapReport(
+      [...rows, refund],
+      sources({ orders: [{ txHash: '0xswap', data: [order(), order({ executedFee: '500000' })] }] })
+    )
+
+    expect(report).toMatchObject({ swappedUsd: 986, currentUsd: 1200, feesUsd: 4, pnlUsd: 214 })
   })
 
   it('[AC-US-SAFE-007-08] reports a failed or empty quote as a missing price', () => {

@@ -1,9 +1,7 @@
 import { formatUnits } from 'viem'
 import { NETWORK } from '@/constant'
 import type { SafeIncomingTransfer } from '@/types/safe'
-
-/** Key of the chain's native coin; ERC-20 assets are keyed by lower-case contract address. */
-export const SAFE_NATIVE_ASSET = 'native'
+import { groupSafeTransfers, netSafeTransfers } from './swapTransfers'
 
 export interface SafeSwapPnl {
   count: number
@@ -66,29 +64,15 @@ export function computeSafeSwapPnl(
   let feesReported = 0
   let count = 0
   const swaps: SafeSwapResult[] = []
-  const safe = safeAddress.toLowerCase()
-  for (const txHash of new Set(transfers.map(({ transactionHash }) => transactionHash))) {
-    const rows = transfers.filter(({ transactionHash }) => transactionHash === txHash)
-    const amounts = new Map<string, bigint>()
-    for (const row of rows) {
-      const asset =
-        row.type === 'ETHER_TRANSFER' ? SAFE_NATIVE_ASSET : row.tokenAddress!.toLowerCase()
-      const amount = BigInt(row.value) * (row.to.toLowerCase() === safe ? 1n : -1n)
-      amounts.set(asset, (amounts.get(asset) ?? 0n) + amount)
-    }
+  for (const [txHash, rows] of groupSafeTransfers(transfers)) {
+    const amounts = netSafeTransfers(rows, safeAddress)
     const net = [...amounts.values()]
-    if (!net.some((amount) => amount < 0n) || !net.some((amount) => amount > 0n)) continue
+    if (!net.some(({ amount }) => amount < 0n) || !net.some(({ amount }) => amount > 0n)) continue
     count += 1
     const date = new Date(rows[0]!.executionDate).toISOString().slice(0, 10)
     let swapPnlUsd = 0
-    for (const [asset, amount] of amounts) {
+    for (const [asset, { transfer: row, amount }] of amounts) {
       if (amount === 0n) continue
-      const row = rows.find(
-        (transfer) =>
-          (transfer.type === 'ETHER_TRANSFER'
-            ? SAFE_NATIVE_ASSET
-            : transfer.tokenAddress!.toLowerCase()) === asset
-      )!
       const native = row.type === 'ETHER_TRANSFER'
       const symbol = native ? NETWORK.currencySymbol : (row.tokenInfo?.symbol ?? 'Unknown')
       const quantity = Number(

@@ -71,6 +71,27 @@ describe('[US-SAFE-007] computeSafeSwapPnl', () => {
     expect(pnl.swappedUsd).toBe(0.000001)
   })
 
+  it('values interleaved swaps independently and nets a mixed-case token refund', () => {
+    const first = swap('0xfirst')
+    const second = swap('0xsecond')
+    const refund = erc20(usdc, '10000000', {
+      transactionHash: '0xfirst',
+      tokenAddress: USDC.toUpperCase()
+    })
+    const pnl = computeSafeSwapPnl(
+      [first[0]!, second[0]!, first[1]!, refund, second[1]!],
+      SAFE,
+      prices(2400),
+      () => undefined
+    )
+
+    expect(pnl).toMatchObject({ count: 2, swappedUsd: 1990, currentUsd: 2400, pnlUsd: 410 })
+    expect(pnl.swaps).toEqual([
+      { txHash: '0xfirst', pnlUsd: 210 },
+      { txHash: '0xsecond', pnlUsd: 200 }
+    ])
+  })
+
   it('[AC-US-SAFE-007-05] reports a gain when the assets received are worth more than what was given up', () => {
     const pnl = computeSafeSwapPnl(swap(), SAFE, prices(2400), () => undefined)
 
