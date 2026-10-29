@@ -8,6 +8,7 @@ Comprehensive guides for developing features in the CNC Portal project.
 
 - **[Development Relationship Validation](./relationship-validation.md)** - Required relationship checks from issue scoping through final
   merge validation, with evidence and completion proposals
+- **[Local Reports Workspace](./local-reports.md)** - Local artifact layout, navigation, producer-owned paths and history retention
 
 ### Database Tooling
 
@@ -17,7 +18,10 @@ Comprehensive guides for developing features in the CNC Portal project.
 
 - **[Knip unused-export analysis](./static-analysis.md)** - Read-only TypeScript export audit and triage process
 
-### Autonomous Agent Audits
+### Code and Autonomous Agent Audits
+
+- **[Code audits and finding follow-up](./code-audit.md)** - Scoped code audits with concrete correction proposals, decision history and
+  independently verified correction progress
 
 - **[Autonomous semantic audit contracts](./autonomous-audits/README.md)** - Shared evidence, reporting, issue, and remediation contract for
   recurring AI-agent audits

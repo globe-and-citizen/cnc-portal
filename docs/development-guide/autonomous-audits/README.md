@@ -65,23 +65,31 @@ Every audit run follows this sequence:
 
 Every finding must contain:
 
-| Field         | Requirement                                                                     |
-| ------------- | ------------------------------------------------------------------------------- |
-| `id`          | Stable fingerprint derived from audit, rule, scope, and affected behaviour      |
-| `title`       | Concise statement of the contradiction or missing guarantee                     |
-| `scope`       | Feature, capability, contract, layer, and affected user role                    |
-| `expectation` | Canonical behaviour or principle that should hold                               |
-| `observation` | What the agent verified in the current revision                                 |
-| `evidence`    | Exact documentation, source, tests, runtime output, and revision inspected      |
-| `impact`      | User, security, accounting, operational, or maintainability consequence         |
-| `severity`    | `critical`, `high`, `medium`, or `low`                                          |
-| `confidence`  | `high`, `medium`, or `low`, independent of severity                             |
-| `status`      | `confirmed`, `needs-decision`, `accepted-risk`, `false-positive`, or `resolved` |
-| `remediation` | `autonomous-pr`, `assisted-pr`, or `report-only`                                |
-| `validation`  | Checks and observable outcomes required to prove the remediation                |
+| Field          | Requirement                                                                              |
+| -------------- | ---------------------------------------------------------------------------------------- |
+| `id`           | Stable fingerprint derived from audit, rule, scope, and affected behaviour               |
+| `title`        | Concise statement of the contradiction or missing guarantee                              |
+| `scope`        | Feature, capability, contract, layer, and affected user role                             |
+| `expectation`  | Canonical behaviour or principle that should hold                                        |
+| `observation`  | What the agent verified in the current revision                                          |
+| `evidence`     | Exact documentation, source, tests, runtime output, and revision inspected               |
+| `impact`       | User, security, accounting, operational, or maintainability consequence                  |
+| `severity`     | `critical`, `high`, `medium`, or `low`                                                   |
+| `confidence`   | `high`, `medium`, or `low`, independent of severity                                      |
+| `status`       | `confirmed`, `needs-decision`, `accepted-risk`, `false-positive`, or `resolved`          |
+| `proposed_fix` | Concrete correction or options, affected owners/consumers, expected result and decisions |
+| `remediation`  | `autonomous-pr`, `assisted-pr`, or `report-only`                                         |
+| `validation`   | Checks and observable outcomes required to prove the remediation                         |
+| `follow_up`    | Decision, delivery, validation, owner, next action, links, last checked date and history |
 
 A file path, tool warning, code smell, missing test, or coverage percentage is not enough. The report must connect evidence to a concrete
 guarantee and explain the failure mode.
+
+Use the shared [correction proposal contract](../code-audit.md#correction-proposal) and
+[decision and correction tracking](../code-audit.md#decision-and-correction-tracking) for these fields. They define actionable
+recommendations, stable case identity and the distinction between an accepted decision, integrated code and a verified correction. Keep this
+protocol's severity, confidence, remediation modes and experimental rollout boundaries. Reusing the shared output contract grants no
+additional execution authority.
 
 ## Severity and Confidence
 
