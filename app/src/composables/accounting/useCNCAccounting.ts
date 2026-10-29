@@ -174,15 +174,14 @@ export function useCNCAccounting(
     error: computed(() => previousSafeTransferQueries.value.find((query) => query.error)?.error),
     refetch: () => Promise.all(previousSafeTransferQueries.value.map((query) => query.refetch()))
   }
-  const safeSwapOrderQueries = useGetCowTransactionOrdersQuery(() => [
-    ...new Set(
-      [
-        ...safeSwapTransfers(safeAssetTransfers.data.value, safeAddress.value),
-        ...previousSafeAddresses.value.flatMap((address, index) =>
-          safeSwapTransfers(previousSafeTransferQueries.value[index]?.data, address)
-        )
-      ].map(({ transactionHash }) => transactionHash)
+  const swapTransfers = computed(() => [
+    ...safeSwapTransfers(safeAssetTransfers.data.value, safeAddress.value),
+    ...previousSafeAddresses.value.flatMap((address, index) =>
+      safeSwapTransfers(previousSafeTransferQueries.value[index]?.data, address)
     )
+  ])
+  const safeSwapOrderQueries = useGetCowTransactionOrdersQuery(() => [
+    ...new Set(swapTransfers.value.map(({ transactionHash }) => transactionHash))
   ])
   const safeSwapOrdersLoading = computed(() =>
     safeSwapOrderQueries.value.some((query) => query.isLoading)

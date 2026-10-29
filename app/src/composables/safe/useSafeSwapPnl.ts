@@ -19,7 +19,8 @@ import type { SafeSwapPnl } from '@/utils/safe/swapPnl'
  * Swap P&L of a Safe in USD: what its swaps gave up, valued on their day, against what the
  * assets received are worth today, with the fees CoW Protocol reports. `data` stays undefined
  * until the history, balances, quotes and fee lookups have settled, then keeps its last
- * settled value while any of them reloads, so the figure never flickers or drops a fee.
+ * settled value for the same Safe while any of them reloads, so the figure never flickers
+ * or drops a fee. Switching or clearing the Safe discards that value immediately.
  */
 export function useSafeSwapPnl(safeAddress: MaybeRefOrGetter<string | undefined>) {
   const today = new Date().toISOString().slice(0, 10)
@@ -80,19 +81,24 @@ export function useSafeSwapPnl(safeAddress: MaybeRefOrGetter<string | undefined>
       (!!transfers.error.value && !transfers.data.value) ||
       (!!balances.error.value && !balances.data.value)
   )
-  const data = computed<SafeSwapPnl | undefined>((previous) => {
-    const safeAddressValue = toValue(safeAddress)
-    if (isLoading.value) return previous
-    if (isError.value || !safeAddressValue || !transfers.data.value) return undefined
-    return buildSafeSwapReport(swaps.value, {
-      safeAddress: safeAddressValue,
-      today,
-      coinIds: coinIds.value,
-      heldBalances: heldBalances.value,
-      rates: rates.value,
-      orders: orders.value
-    })
+  const settled = computed<{ address: string; report: SafeSwapPnl } | undefined>((previous) => {
+    const address = toValue(safeAddress)?.toLowerCase()
+    if (!address) return undefined
+    if (isLoading.value) return previous?.address === address ? previous : undefined
+    if (isError.value || !transfers.data.value) return undefined
+    return {
+      address,
+      report: buildSafeSwapReport(swaps.value, {
+        safeAddress: address,
+        today,
+        coinIds: coinIds.value,
+        heldBalances: heldBalances.value,
+        rates: rates.value,
+        orders: orders.value
+      })
+    }
   })
+  const data = computed(() => settled.value?.report)
 
   return { data, isLoading, isError }
 }

@@ -128,6 +128,29 @@ describe('[US-SAFE-007] useSafeSwapPnl', () => {
     expect(data.value?.count).toBe(1)
   })
 
+  it('discards the previous Safe report when the address changes or is cleared during loading', () => {
+    const address = ref<string | undefined>(SAFE)
+    const { data } = useSafeSwapPnl(address)
+    expect(data.value?.count).toBe(1)
+
+    mockTransfers.isLoading.value = true
+    const otherSafe = '0x00000000000000000000000000000000000000aa'
+    address.value = otherSafe
+    expect(data.value).toBeUndefined()
+    address.value = undefined
+    expect(data.value).toBeUndefined()
+    address.value = otherSafe
+
+    mockTransfers.data.value = swapLegs.map((row) => ({
+      ...row,
+      from: row.from === SAFE ? otherSafe : row.from,
+      to: row.to === SAFE ? otherSafe : row.to,
+      transactionHash: '0xother'
+    }))
+    mockTransfers.isLoading.value = false
+    expect(data.value?.swaps.map(({ txHash }) => txHash)).toEqual(['0xother'])
+  })
+
   it('UC-SWAP-014 reports nothing when the Safe history cannot be read', () => {
     mockTransfers.data.value = undefined
     mockTransfers.error.value = new Error('Safe service unavailable')
