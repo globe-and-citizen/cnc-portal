@@ -51,7 +51,8 @@ describe('presentIncome', () => {
     expect(income.revenueLines).toContainEqual({
       label: 'Service Revenue',
       value: '$100.00',
-      account: 'Service Revenue'
+      account: 'Service Revenue',
+      negative: false
     })
     expect(income.expenseLines).toContainEqual({
       label: 'Operating Expense',
