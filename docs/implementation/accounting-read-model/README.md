@@ -158,22 +158,34 @@ journal classification or historical valuation.
 Dynamic assets carry an `erc20:<chainId>:<contractAddress>` identity and per-movement metadata. The fixed CNC payment allowlist is
 unchanged. Contract-address market discovery on Polygon resolves the provider coin identity before historical snapshots are requested. Local
 and test-network assets retain their own identities and cannot borrow Polygon market evidence. Missing market coverage or rate limits remain
-retryable gaps; current prices are used only in the Safe portfolio.
+retryable gaps; current prices are used only in the Safe portfolio and in the Safe swap P&L that `Swap P&L` carries (below).
 
 `SAFE-SWAP` matches opposing different-asset movements with the same transaction and external counterparty. Complex or unmatched multi-asset
 operations are flagged for classification instead of treating their receipts as service revenue. Token mints in the same transaction are
 retained separately in `Unclassified Receipts`; their economic nature is not inferred from mint evidence alone.
 
-Journal finalization replays the full Safe history using weighted-average carrying basis. Acquired assets use their own contract-resolved
-historical market rate and exact received quantity; the stablecoin spent never implies their unit price or suppresses historical-rate
-requests. The provider snapshot is for the UTC transaction date, not a tick at the exact transaction second. Outgoing exchange lines remove
-the evidenced carrying amount; their displayed unit rate is carrying cost per unit, and exact carrying amounts avoid six-decimal
-rate-rounding residues. Incoming market valuations and realized differences balance the operation through `Asset Exchange Gain` or
-`Asset Exchange Loss`. Missing acquisition history or valuation produces zero-valued movement evidence and a partial status, never an
-invented basis. A prior non-exchange payment depleted at a different transaction-price valuation invalidates later automatic swap basis;
-other payment rules remain unchanged. Network/DEX fees are not inferred from an unexplained difference; standalone fee evidence remains
-necessary. Cross-transaction swap intents and arbitrary DeFi operations require additional protocol evidence and remain a boundary of
-automatic classification.
+Journal finalization replays the full Safe history using weighted-average carrying basis. Outgoing exchange lines remove the evidenced
+carrying amount. A fee CoW Protocol reports for the Safe's own fulfilled order in the swap transaction rides on the sold leg
+(`feeRawAmount`) and is booked as `Transaction Fee Expense` at the carrying value of the part it took. When the sold token has several
+outgoing transfers, they consume that reported fee in sequence, capped at the total sold; a smaller first transfer never drops the
+remainder. Acquired assets carry the rest, the price actually paid, split exactly across their legs by quantity; no historical market rate
+is requested for a swap. Each exchange line's displayed unit rate is its carrying amount per unit, unless that rate exceeds the six-decimal
+range; exact carrying amounts avoid rate-rounding residues. When every received leg is a USD stablecoin, each keeps its $1.00 face value
+instead, which realizes its difference from the price paid. Missing acquisition history produces zero-valued movement evidence and a partial
+status, never an invented basis.
+
+A realized result is posted as a USD-only `Swap P&L` line in the exchange's operation. Before assembly, the data layer attaches to the
+default Safe's swap legs (`swapPnl`) the Safe overview's P&L of each swap: the current value of what it received against the CoinGecko
+swap-day value of what it gave up, less the reported fee, from the same composable the overview uses. The exchange's `Swap P&L` line then
+books that figure, and a `Safe Market Value Adjustment` line in the same operation books the part the cash legs do not carry, so
+`Cash — Safe` and its carrying basis keep the price paid while `Swap P&L` totals the overview figure. A swap the overview does not value,
+such as a previous Safe's, keeps only its realized result. The composable waits for fee lookups and keeps its last settled value while
+sources reload or a refresh fails for the same Safe. Changing or clearing the Safe discards that settled report; reports wait for its first
+answer, and a read failure or an unpriced asset makes Accounting partial. A prior non-exchange payment depleted at a different
+transaction-price valuation invalidates later automatic swap basis; other payment rules remain unchanged. Reports wait for the order lookups
+to settle, so no report or export is shown without a fee that is still loading; a missing or failed lookup never makes Accounting partial,
+and the fee then stays inside the acquired asset's price. Network/DEX fees are not inferred. Cross-transaction swap intents and arbitrary
+DeFi operations require additional protocol evidence and remain a boundary of automatic classification.
 
 The read-only Safe holdings use the Safe Client Gateway balance response for current wallet valuation. A nonzero supported holding with a
 missing, nonpositive, or nonfinite USD price keeps the total incomplete, just as unavailable discovered valuations do. A confirmed zero
@@ -187,10 +199,14 @@ valuation.
 
 Implementation: [asset identity](../../../app/src/utils/tokens/assets.ts),
 [exchange carrying-value replay](../../../app/src/utils/accounting/safeExchanges.ts),
+[Safe swap P&L attachment](../../../app/src/utils/accounting/safeSwapPnl.ts) and its
+[data-layer adapter](../../../app/src/composables/accounting/useSafeSwapPnlEvidence.ts) of the
+[shared P&L source](../../../app/src/composables/safe/useSafeSwapPnl.ts), consumed by the
+[Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts),
 [contract market discovery](../../../app/src/queries/coingecko.queries.ts),
 [Safe Client balances](../../../app/src/queries/safeClient.queries.ts), [Safe movement queries](../../../app/src/queries/safe.queries.ts),
 and [exchange regression tests](../../../app/src/utils/accounting/__tests__/safeExchanges.spec.ts) and
-[market-rate regressions](../../../app/src/utils/accounting/__tests__/safeExchanges.marketRates.spec.ts).
+[price-paid regressions](../../../app/src/utils/accounting/__tests__/safeExchanges.pricePaid.spec.ts).
 
 Gateway balance responses are cached by Safe address, chain and fiat currency and show only returned balances, including zero balances. No
 configured base-currency rows are inserted. Provider metadata and order are retained. The global token resolver continues to supply existing
@@ -721,7 +737,7 @@ because deposits and company-pocket transfers are not manual assignment targets.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `83726950b667a394cf2c77bdb53557516c2a294b`
+**Implementation evidence reviewed against:** `3526c1933f72d1d8bf90914cb414f2b288ced50b`
 
 - [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts),
   [source-status projection](../../../app/src/composables/accounting/useAccountingStatus.ts),

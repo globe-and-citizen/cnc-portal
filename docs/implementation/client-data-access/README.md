@@ -73,6 +73,17 @@ neither a CNC token (native, configured payment tokens, SHER) nor marked `truste
 token information. Such a movement creates no ledger entry, no valuation request and no completeness gap. The deposit list still shows the
 raw provider history.
 
+For each transaction the Safe swap overview counts as a swap (the Safe sent one asset and received another), Accounting reuses the
+[CoW Protocol order query](../../../app/src/queries/cow.queries.ts) that the overview reads, with the same swap and fee rules. Accounting
+reports wait while these lookups load (the `Safe swap fees` source), then read every answer at once, so the books are rebuilt once rather
+than once per answer. A fee reported for the Safe's own fulfilled order is booked as `Transaction Fee Expense`; a missing or failed answer
+keeps the fee inside the acquired asset's price and never makes Accounting partial.
+
+Swap selection, daily quote requests and valuation share
+[transaction grouping and exact asset netting](../../../app/src/utils/safe/swapTransfers.ts). Valuation indexes daily quotes, Gateway prices
+and CoW responses once per report. The [P&L composable](../../../app/src/composables/safe/useSafeSwapPnl.ts) keeps a settled report only
+while refreshing the same Safe; changing or clearing its address discards the previous report.
+
 Executable evidence: [Gateway request tests](../../../app/src/queries/__tests__/safeClient.queries.spec.ts),
 [pagination and metadata unit tests](../../../app/src/queries/__tests__/safe.queries.spec.ts),
 [Safe source-mapping tests](../../../app/src/utils/accounting/__tests__/safe.spec.ts) and
@@ -181,7 +192,7 @@ backend instances. Safe provider requests retain their browser-only coordination
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `fdfcf810829fdcca8d0bfe429878b439e4fd4dfe`
+**Implementation evidence reviewed against:** `3526c1933f72d1d8bf90914cb414f2b288ced50b`
 
 - [Query barrel](../../../app/src/queries/index.ts), [query factory](../../../app/src/queries/queryFactory.ts), and
   [single-file upload query](../../../app/src/queries/file.queries.ts)

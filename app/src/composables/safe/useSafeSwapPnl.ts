@@ -10,49 +10,24 @@ import { useGetCowTransactionOrdersQuery } from '@/queries/cow.queries'
 import {
   buildSafeSwapReport,
   safeSwapCoinIds,
-  safeSwapRateRequests
+  safeSwapRateRequests,
+  safeSwapTransfers
 } from '@/utils/safe/swapValuation'
+import type { SafeSwapPnl } from '@/utils/safe/swapPnl'
 
 /**
  * Swap P&L of a Safe in USD: what its swaps gave up, valued on their day, against what the
  * assets received are worth today, with the fees CoW Protocol reports. `data` stays undefined
- * until the history, balances and quotes have settled; fee lookups never block it.
+ * until the history, balances, quotes and fee lookups have settled, then keeps its last
+ * settled value for the same Safe while any of them reloads, so the figure never flickers
+ * or drops a fee. Switching or clearing the Safe discards that value immediately.
  */
 export function useSafeSwapPnl(safeAddress: MaybeRefOrGetter<string | undefined>) {
   const today = new Date().toISOString().slice(0, 10)
   const transfers = useGetSafeTransfersQuery({ pathParams: { safeAddress } })
   const balances = useGetSafeBalancesQuery({ pathParams: { safeAddress, fiatCode: 'USD' } })
 
-  const swaps = computed(() => {
-    const address = toValue(safeAddress)?.toLowerCase()
-    if (!address) return []
-    const movements = (transfers.data.value ?? []).filter(
-      ({ type, from, to, value, tokenAddress, tokenInfo }) =>
-        type !== 'ERC721_TRANSFER' &&
-        (from.toLowerCase() === address) !== (to.toLowerCase() === address) &&
-        (type === 'ETHER_TRANSFER' || (!!tokenAddress && tokenInfo?.decimals !== undefined)) &&
-        /^\d+$/.test(value) &&
-        BigInt(value) > 0n
-    )
-    const swapHashes = new Set(
-      movements
-        .filter(
-          (sent) =>
-            sent.from.toLowerCase() === address &&
-            movements.some(
-              (received) =>
-                received.transactionHash === sent.transactionHash &&
-                received.to.toLowerCase() === address &&
-                (received.type === 'ETHER_TRANSFER'
-                  ? null
-                  : received.tokenAddress?.toLowerCase()) !==
-                  (sent.type === 'ETHER_TRANSFER' ? null : sent.tokenAddress?.toLowerCase())
-            )
-        )
-        .map(({ transactionHash }) => transactionHash)
-    )
-    return movements.filter(({ transactionHash }) => swapHashes.has(transactionHash))
-  })
+  const swaps = computed(() => safeSwapTransfers(transfers.data.value, toValue(safeAddress)))
 
   const heldBalances = computed(() =>
     (balances.data.value?.items ?? []).filter(({ fiatConversion }) => {
@@ -97,22 +72,33 @@ export function useSafeSwapPnl(safeAddress: MaybeRefOrGetter<string | undefined>
       transfers.isLoading.value ||
       balances.isLoading.value ||
       markets.value.some((market) => market.isLoading) ||
-      rates.value.some((rate) => rate.isLoading)
+      rates.value.some((rate) => rate.isLoading) ||
+      orders.value.some((order) => order.isLoading)
   )
-  const isError = computed(() => !!transfers.error.value || !!balances.error.value)
-  const data = computed(() => {
-    const safeAddressValue = toValue(safeAddress)
-    if (isLoading.value || isError.value || !safeAddressValue || !transfers.data.value)
-      return undefined
-    return buildSafeSwapReport(swaps.value, {
-      safeAddress: safeAddressValue,
-      today,
-      coinIds: coinIds.value,
-      heldBalances: heldBalances.value,
-      rates: rates.value,
-      orders: orders.value
-    })
+  /** A failed refresh keeps the last answer; only a source that never answered is an error. */
+  const isError = computed(
+    () =>
+      (!!transfers.error.value && !transfers.data.value) ||
+      (!!balances.error.value && !balances.data.value)
+  )
+  const settled = computed<{ address: string; report: SafeSwapPnl } | undefined>((previous) => {
+    const address = toValue(safeAddress)?.toLowerCase()
+    if (!address) return undefined
+    if (isLoading.value) return previous?.address === address ? previous : undefined
+    if (isError.value || !transfers.data.value) return undefined
+    return {
+      address,
+      report: buildSafeSwapReport(swaps.value, {
+        safeAddress: address,
+        today,
+        coinIds: coinIds.value,
+        heldBalances: heldBalances.value,
+        rates: rates.value,
+        orders: orders.value
+      })
+    }
   })
+  const data = computed(() => settled.value?.report)
 
   return { data, isLoading, isError }
 }

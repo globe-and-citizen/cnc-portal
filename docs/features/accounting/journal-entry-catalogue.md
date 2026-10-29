@@ -658,7 +658,7 @@ deployed.
 | Current emitted identifier               | Target use case / rule                                                  | Boundary                                                                                             |
 | ---------------------------------------- | ----------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
 | `UC-BANK-02`                             | `UC-TREASURY-002` + `RULE-EXTERNAL` in when purpose is unidentified     | Known-token direct receipts credit Service Revenue; discovered Safe assets use Unclassified Receipts |
-| `SAFE-SWAP`                              | Evidenced asset exchange; proposed catalogue extension remains separate | Current exchange preserves both asset quantities and realizes gain/loss from carrying basis          |
+| `SAFE-SWAP`                              | Evidenced asset exchange; proposed catalogue extension remains separate | Current exchange preserves both asset quantities and books the price paid; a stablecoin's gap is P&L |
 | `UC-BANK-03`, `INTERNAL`                 | `UC-TREASURY-001` + `RULE-INTERNAL`                                     | Source-independent economic identity is proposed                                                     |
 | `CASH-OUT`                               | `UC-TREASURY-003` or an evidenced domain UC + `RULE-EXTERNAL` out       | Current fallback debits Operating Expense; proposed fallback uses suspense                           |
 | `FEE`                                    | `RULE-FEE` within the parent use case                                   | Current finalization already attaches matched fees and withholds orphans                             |
@@ -689,26 +689,63 @@ suspense treatment extends pending classification to other unidentified receipts
 **Source story:** [US-SAFE-003](../accounts/README.md#us-safe-003-manage-safe-funds).
 
 - **Input:** Opposing movements of different assets sharing one transaction and an external settlement counterparty.
-- **Processing:** Preserve asset identity by network and contract, exact raw quantity and decimals. Debit the acquired asset at its own
-  historical market rate and credit the disposed asset at its full-history weighted-average carrying value. Recognize the difference as an
-  exchange gain or loss; do not infer fees from that difference.
-- **General Ledger:** Label `Asset exchange`, category `Swap`. The receipt's quantity times its historical rate determines its USD value;
-  stablecoin paid never sets the receipt's unit price. Missing market evidence keeps the operation partial. Current portfolio prices do not
-  rewrite the books.
+- **Processing:** Preserve asset identity by network and contract, exact raw quantity and decimals. Credit the disposed asset at its
+  full-history weighted-average carrying value. A fee CoW Protocol reports for the Safe's own fulfilled order is debited to
+  `Transaction Fee Expense` at the carrying value of the part of the disposed asset it took. Debit the acquired asset at the rest: the price
+  actually paid. A received USD stablecoin keeps its $1.00 face value instead, which realizes its difference from the price paid.
+- **Swap P&L:** That realized result is the swap's `Swap P&L` line, credited for a gain and debited for a loss. For a swap of the default
+  Safe, that line books instead its [Safe swap P&L](../accounts/safe-swap-pnl-use-cases.md) (current value of what it received against the
+  CoinGecko swap-day value of what it gave up, less the reported fee), and a `Safe Market Value Adjustment` line in the same posting books
+  the part the cash lines do not carry: debited when the swap gains, credited when it loses. `Cash — Safe` never leaves the price paid, and
+  `Swap P&L` totals the Safe overview figure.
+- **Statements:** A net `Swap P&L` gain is a revenue line and a trial-balance credit; a net loss is an expense line and a trial-balance
+  debit. Amounts are always positive.
+- **General Ledger:** Label `Asset exchange`, category `Swap`. The receipt's rate is its price paid divided by its quantity, or $1.00 for a
+  USD stablecoin, and never changes afterwards.
 
-For an asset acquired for $20 and later sold for 30.658984 USDC, the sale is:
+For 20 USDC exchanged for 0.01 of an asset, with a CoW Protocol fee of 0.20 USDC, the purchase is:
 
-| Account             | Currency       | Debit (USD) | Credit (USD) |
-| ------------------- | -------------- | ----------: | -----------: |
-| Cash — Safe         | USDC           |   30.658984 |              |
-| Cash — Safe         | Acquired asset |             |           20 |
-| Asset Exchange Gain | USD            |             |    10.658984 |
+| Account                 | Currency       | Rate (USD) | Debit (USD) | Credit (USD) |
+| ----------------------- | -------------- | ---------: | ----------: | -----------: |
+| Cash — Safe             | Acquired asset |      1,980 |       19.80 |              |
+| Transaction Fee Expense | USD            |            |        0.20 |              |
+| Cash — Safe             | USDC           |          1 |             |        20.00 |
 
-Ancillary mints remain separate unclassified evidence. Missing decimals, acquisition basis or valuation keeps reports incomplete; complex
-batches and different-counterparty settlements need further evidence before automatic classification. Network fees are not inferred from the
-difference between proceeds and carrying value. See the
-[read model](../../implementation/accounting-read-model/README.md#safe-assets-and-exchanges) and
-[regression evidence](../../../app/src/utils/accounting/__tests__/safeExchanges.spec.ts).
+Without a reported fee, the asset is debited the whole $20 at a rate of $2,000. Exchanging part of that asset for another asset moves the
+same proportion of its carrying value to the asset received.
+
+Selling that whole asset, acquired for $20, for 30.658984 USDC books its gain:
+
+| Account     | Currency       | Rate (USD) | Debit (USD) | Credit (USD) |
+| ----------- | -------------- | ---------: | ----------: | -----------: |
+| Cash — Safe | USDC           |          1 |   30.658984 |              |
+| Cash — Safe | Acquired asset |      2,000 |             |        20.00 |
+| Swap P&L    | USD            |            |             |    10.658984 |
+
+This is the realized result, kept when the Safe overview does not value the swap. A reported fee on the sale stays out of `Swap P&L`: with a
+CoW Protocol fee of 0.0001 of the asset, carried at $0.20, `Transaction Fee Expense` is debited $0.20 and `Swap P&L` is credited
+$10.858984.
+Exchanging 20 USDC for 19.50 USDT debits `Swap P&L` with the $0.50 lost.
+
+When the Safe overview values the $20 purchase without a fee at a $4 gain (the asset received is now worth $24), the purchase stays at
+$20
+and its revaluation is:
+
+| Account                      | Currency | Debit (USD) | Credit (USD) |
+| ---------------------------- | -------- | ----------: | -----------: |
+| Safe Market Value Adjustment | USD      |        4.00 |              |
+| Swap P&L                     | USD      |             |         4.00 |
+
+For a sale the overview values at $12, the sale keeps its realized $10.658984 and its revaluation credits `Swap P&L` the remaining
+$1.341016.
+
+Ancillary mints remain separate unclassified evidence. Missing decimals or acquisition basis keeps reports incomplete; complex batches and
+different-counterparty settlements need further evidence before automatic classification. Fees CoW Protocol does not report are not
+inferred. See the [read model](../../implementation/accounting-read-model/README.md#safe-assets-and-exchanges) and
+[regression evidence](../../../app/src/utils/accounting/__tests__/safeExchanges.spec.ts), its
+[fee regressions](../../../app/src/utils/accounting/__tests__/safeExchanges.fees.spec.ts), and its
+[Swap P&L regressions](../../../app/src/utils/accounting/__tests__/safeExchanges.swapPnl.spec.ts) and
+[Safe swap P&L regressions](../../../app/src/utils/accounting/__tests__/safeSwapPnl.spec.ts).
 
 ### `UC-BANK-03` — Bank Funds a Company Pocket
 

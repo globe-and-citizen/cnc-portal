@@ -25,17 +25,21 @@ export function buildIncomeStatement(entries: readonly JournalEntry[]): IncomeSt
   let totalRevenue = ZERO_USD_AMOUNT
   let totalExpenses = ZERO_USD_AMOUNT
 
-  // Walk the chart in declared order so lines read top-down and stay stable.
+  // Walk the chart in declared order so lines read top-down and stay stable. An account
+  // whose balance runs against its normal side (a Swap P&L loss) moves to the other
+  // section as a positive amount, so no line carries a minus sign.
   for (const account of ACCOUNT_NAMES) {
     const amount = net.get(account) ?? ZERO_USD_AMOUNT
-    if (amount === ZERO_USD_AMOUNT) continue
     const cls = classOf(account)
-    if (cls === 'INCOME') {
-      revenue.push({ account, amount })
-      totalRevenue += amount
-    } else if (cls === 'EXPENSE') {
-      expenses.push({ account, amount })
-      totalExpenses += amount
+    if (amount === ZERO_USD_AMOUNT || (cls !== 'INCOME' && cls !== 'EXPENSE')) continue
+    const isRevenue = (cls === 'INCOME') === amount > ZERO_USD_AMOUNT
+    const line = { account, amount: amount > ZERO_USD_AMOUNT ? amount : -amount }
+    if (isRevenue) {
+      revenue.push(line)
+      totalRevenue += line.amount
+    } else {
+      expenses.push(line)
+      totalExpenses += line.amount
     }
   }
 
