@@ -28,6 +28,7 @@ Operational guidance for AI coding agents working in this repository. Human cont
 Task-specific workflows are versioned under `.agents/skills/`. Use only the one that matches the work:
 
 - `cnc-work-orchestrator` — plan dependencies and bounded multi-agent work.
+- `cnc-code-audit` — audit a scoped checkout, propose concrete corrections, and track decisions, delivery, and verification.
 - `cnc-github-flow` — issues, Sprint hierarchy, PRs, reviews, and publishing.
 - `cnc-pr-review` — issue conformance and code-quality review.
 - `cnc-docs-governance` — agent and implementation documentation.

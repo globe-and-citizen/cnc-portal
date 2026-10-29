@@ -15,6 +15,7 @@ evidence.
    [Development Relationship Validation](../../../docs/development-guide/relationship-validation.md), including concrete completion
    proposals for missing relations.
 3. Select only the needed skills:
+   - Scoped codebase audit or finding follow-up → [cnc-code-audit](../cnc-code-audit/SKILL.md)
    - GitHub artifacts or publishing → `cnc-github-flow`
    - PR review → `cnc-pr-review`
    - Agent or implementation docs → `cnc-docs-governance`
@@ -26,7 +27,8 @@ evidence.
 
 - Delegate only bounded, independent investigation or review work. Good examples: trace a separate user journey, compare acceptance criteria
   to a diff, or inspect a distinct subsystem.
-- A delegated task states its exact scope, expected evidence, and whether it is read-only.
+- A delegated task states its exact scope, expected evidence, and whether it is read-only. For audits, include the shared
+  [finding, correction and follow-up contract](../../../docs/development-guide/code-audit.md#finding-contract).
 - Subagents do not edit shared files, stage changes, commit, push, create issues, or post reviews unless the user explicitly assigns that
   authority.
 - Do not delegate a task marked blocked, nor split a single coherent implementation merely to use more agents.
@@ -36,3 +38,7 @@ evidence.
 The primary agent evaluates all evidence, integrates the changes, runs the required checks, and owns commits and PR state. Mark the todo
 complete only after the agreed outcome and validation are complete. Maintain the relationship results through implementation and review;
 refresh affected evidence against the exact head and target revision before any authorized merge.
+
+For audits, verify each confirmed case has a concrete correction and validation proposal, a stable identity, and independent decision and
+delivery/proof states. Deliver the report and current register together; record gaps instead of equating an approved proposal, issue closure
+or merged PR with a verified correction.
