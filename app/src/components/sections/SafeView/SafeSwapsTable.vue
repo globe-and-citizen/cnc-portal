@@ -31,7 +31,7 @@
     </div>
 
     <div
-      v-else-if="!report.swaps.length"
+      v-else-if="!swaps.length"
       class="flex min-h-36 flex-col items-center justify-center rounded-lg border border-dashed p-6 text-center"
       data-test="safe-swaps-empty"
     >
@@ -42,7 +42,7 @@
 
     <template v-else>
       <div class="hidden overflow-x-auto md:block">
-        <UTable :data="report.swaps" :columns="columns" data-test="safe-swaps-table">
+        <UTable :data="swaps" :columns="columns" data-test="safe-swaps-table">
           <template #executionDate-cell="{ row: { original: swap } }">
             <span class="text-sm text-gray-600">{{ formatDateShort(swap.executionDate) }}</span>
           </template>
@@ -65,7 +65,7 @@
               :data-trend="trendOf(swap)"
               data-test="safe-swap-row-pnl"
             >
-              {{ formatUsd(swap.pnlUsd) }}
+              {{ formatUsd(knownPnlUsd(swap)) }}
             </span>
           </template>
           <template #fee-cell="{ row: { original: swap } }">
@@ -83,7 +83,7 @@
 
       <ul class="space-y-3 md:hidden" data-test="safe-swaps-mobile-list">
         <li
-          v-for="swap in report.swaps"
+          v-for="swap in swaps"
           :key="swap.txHash"
           class="rounded-xl border border-gray-200 p-4 dark:border-gray-800"
         >
@@ -94,7 +94,7 @@
               <SafeSwapLegs :legs="swap.received" />
             </div>
             <span class="font-semibold" :class="TREND_CLASS[trendOf(swap)]">
-              {{ formatUsd(swap.pnlUsd) }}
+              {{ formatUsd(knownPnlUsd(swap)) }}
             </span>
           </div>
           <div
@@ -118,6 +118,7 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import type { TableColumn } from '@nuxt/ui'
 import AddressTooltip from '@/components/ui/AddressTooltip.vue'
 import SafeSwapLegs from './SafeSwapLegs.vue'
@@ -129,6 +130,12 @@ import type { SafeSwap } from '@/utils/safe/swapPnl'
 const props = defineProps<{ address: string }>()
 
 const { data: report, isLoading, isError } = useSafeSwapPnl(() => props.address)
+
+const swaps = computed(() =>
+  [...(report.value?.swaps ?? [])].sort(
+    (a, b) => new Date(b.executionDate).getTime() - new Date(a.executionDate).getTime()
+  )
+)
 
 const columns: TableColumn<SafeSwap>[] = [
   { accessorKey: 'executionDate', header: 'Date' },
@@ -144,7 +151,13 @@ const columns: TableColumn<SafeSwap>[] = [
 type Trend = 'gain' | 'loss' | 'flat'
 const TREND_CLASS: Record<Trend, string> = { gain: 'text-success', loss: 'text-error', flat: '' }
 
+/** A swap's P&L is unknown as soon as one of its values is unpriced. */
+const knownPnlUsd = ({ swappedUsd, currentUsd, pnlUsd }: SafeSwap) =>
+  swappedUsd === null || currentUsd === null ? null : pnlUsd
+
 /** A P&L that is unknown or rounds to zero cents is neither a gain nor a loss. */
-const trendOf = ({ pnlUsd }: SafeSwap): Trend =>
-  pnlUsd === null || Math.abs(pnlUsd) < 0.005 ? 'flat' : pnlUsd > 0 ? 'gain' : 'loss'
+const trendOf = (swap: SafeSwap): Trend => {
+  const pnlUsd = knownPnlUsd(swap)
+  return pnlUsd === null || Math.abs(pnlUsd) < 0.005 ? 'flat' : pnlUsd > 0 ? 'gain' : 'loss'
+}
 </script>

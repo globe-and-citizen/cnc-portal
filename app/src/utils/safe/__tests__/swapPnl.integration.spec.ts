@@ -3,7 +3,7 @@ import { parseUnits, zeroAddress } from 'viem'
 import { SUPPORTED_TOKENS, USDC_ADDRESS, USDC_E_ADDRESS } from '@/constant'
 import type { CowOrder } from '@/types/cow'
 import type { SafeIncomingTransfer } from '@/types/safe'
-import { SAFE_NATIVE_ASSET } from '../swapPnl'
+import { SAFE_NATIVE_ASSET } from '../swapTransfers'
 import { buildSafeSwapReport, safeSwapCoinIds } from '../swapValuation'
 
 /**

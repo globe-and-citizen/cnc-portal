@@ -36,6 +36,8 @@ export type AccountingSourceId =
   | 'safe-outgoing-transactions'
   | 'safe-transfers'
   | 'previous-safe-transfers'
+  | 'safe-swap-fees'
+  | 'safe-swap-pnl'
   | 'weekly-claims'
   | 'expenses'
   | 'account-assignments'

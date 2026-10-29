@@ -1186,8 +1186,8 @@ The Wallet overview shows four figures, in this order, once the Safe has at leas
 - **Swapped value** — what the swaps gave up, at the USD price of each swap's day, less the fees reported for them.
 - **Current value swap** — what the assets received are worth today.
 - **P&L** — current value swap minus swapped value, with the percentage of the swapped value. It shows the market result only.
-- **Transaction fees** — the fees CoW Protocol reports for the Safe's orders. Like the Transaction Fee Expense account in Accounting, they
-  are a cost of their own, kept apart from the P&L.
+- **Transaction fees** — the fees CoW Protocol reports for the Safe's orders. Accounting books the same fees as Transaction Fee Expense;
+  they are a cost of their own, kept apart from the P&L.
 
 ### Use Cases
 
@@ -1300,7 +1300,7 @@ At the top of the Activity section, a table lists the Safe's swaps, newest first
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `2ab1828421d06effd97e328cd212729b612ab265`
+**Implementation evidence reviewed against:** `3526c1933f72d1d8bf90914cb414f2b288ced50b`
 
 - [Bank deposit modal](../../../app/src/components/sections/BankView/forms/DepositModal.vue),
   [Bank transfer modal](../../../app/src/components/sections/BankView/forms/TransferModal.vue),
@@ -1492,7 +1492,9 @@ and reactive cursor, timezone, trust and imitation filters. The query preserves 
 The swap P&L in the Wallet overview reads the Safe transfer history, the Gateway USD balances, daily CoinGecko quotes through the backend,
 and the CoW Protocol orders of each swap transaction. A CoW lookup that fails or returns no order leaves the fee unreported and never hides
 the other figures. The composable filters the original transfer and balance rows without replacing their response types or objects;
-timestamps, metadata and raw amount strings remain available. Refunds are netted in base units during valuation. Implementation:
+timestamps, metadata and raw amount strings remain available. Refunds are netted in base units during valuation. A settled report is
+retained only while refreshing the same Safe; switching or clearing the Safe hides the previous report immediately. Implementation:
+[shared transfer grouping and netting](../../../app/src/utils/safe/swapTransfers.ts),
 [swap P&L calculation](../../../app/src/utils/safe/swapPnl.ts), [swap valuation and CoW fees](../../../app/src/utils/safe/swapValuation.ts),
 [swap P&L composable](../../../app/src/composables/safe/useSafeSwapPnl.ts), [CoW order query](../../../app/src/queries/cow.queries.ts),
 [CoW order fields](../../../app/src/types/cow.ts), and
@@ -1503,6 +1505,11 @@ timestamps, metadata and raw amount strings remain available. Refunds are netted
 [use-case catalogue](./safe-swap-pnl-use-cases.md), [composable tests](../../../app/src/composables/safe/__tests__/useSafeSwapPnl.spec.ts),
 and [overview swap figure tests](../../../app/src/components/sections/SafeView/__tests__/SafeSwapPnlCard.spec.ts). The figures have not been
 checked against a live Safe yet.
+
+The [swaps table](../../../app/src/components/sections/SafeView/SafeSwapsTable.vue) uses the same report's detailed token legs and fees. It
+sorts a copy newest first, preserving the report order consumed by Accounting. When a swap's given or received value is unpriced, the table
+leaves its P&L unavailable rather than displaying the report's incomplete numeric result. Executable evidence:
+[swap table tests](../../../app/src/components/sections/SafeView/__tests__/SafeSwapsTable.spec.ts).
 
 Company and Companies list summaries reuse the Gateway cache and its valued fiat total, including tokens outside the CNC payment-token list.
 They keep the known provider valuation when another returned token has no price. Holdings keep exact quantities on hover and expose precise

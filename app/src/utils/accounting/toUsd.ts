@@ -54,7 +54,8 @@ export function utcRateDate(at: Date): string {
 
 /**
  * Derive the unique market-rate snapshots required by a raw Accounting feed.
- * Stablecoins and SHER already have domain-owned rates and require no market read.
+ * Stablecoins and SHER already have domain-owned rates, and a Safe swap carries the price
+ * actually paid, so none of them requires a market read.
  */
 export function historicalRateTargets(
   entries: readonly JournalEntryDraft[]
@@ -66,6 +67,7 @@ export function historicalRateTargets(
       BigInt(entry.rawAmount) === 0n ||
       isUsdPegged(entry.token) ||
       entry.token === 'sher' ||
+      entry.useCase === 'SAFE-SWAP' ||
       (entry.carryingAmount !== undefined && entry.carryingAmount > 0n)
     ) {
       continue

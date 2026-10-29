@@ -98,12 +98,33 @@ describe('[US-SAFE-008] SafeSwapsTable', () => {
     expect(table.text()).toContain('0xswap')
   })
 
+  it('[AC-US-SAFE-008-02] lists the swaps newest first', () => {
+    mockSwapPnl.data.value = report([
+      swap({ txHash: '0xolder', executionDate: '2026-05-01T10:00:00Z' }),
+      swap({ txHash: '0xnewer', executionDate: '2026-07-01T10:00:00Z' })
+    ])
+    createWrapper()
+
+    const rows = find('safe-swaps-table').findAll('tbody tr')
+    expect(rows.map((row) => row.text())).toEqual([
+      expect.stringContaining('0xnewer'),
+      expect.stringContaining('0xolder')
+    ])
+    expect(
+      find('safe-swaps-mobile-list')
+        .findAll('li')
+        .map((row) => row.text())
+    ).toEqual([expect.stringContaining('0xnewer'), expect.stringContaining('0xolder')])
+    expect(mockSwapPnl.data.value!.swaps.map(({ txHash }) => txHash)).toEqual([
+      '0xolder',
+      '0xnewer'
+    ])
+  })
+
   it('[AC-US-SAFE-008-03] marks a loss and leaves unknown values unavailable', () => {
     mockSwapPnl.data.value = report(
-      [swap({ pnlUsd: -50 }), swap({ txHash: '0xb', pnlUsd: null, fee: null })],
-      {
-        missingPrices: ['WETH']
-      }
+      [swap({ pnlUsd: -50 }), swap({ txHash: '0xb', currentUsd: null, pnlUsd: -996.5, fee: null })],
+      { missingPrices: ['WETH'] }
     )
     createWrapper()
 

@@ -8,9 +8,10 @@
 
 This catalogue covers **Safe transactions that exchange one asset for another**. Identify the use case from the Safe history, then find its
 **calculation rules, related user stories, and the figures it produces**. [US-SAFE-007](./README.md#us-safe-007-review-the-safe-swap-pl)
-owns the user-facing acceptance criteria. This document owns how each figure is calculated. The Safe swap P&L is a treasury indicator: it
-creates no journal entry, and [Accounting](../accounting/journal-entry-catalogue.md#safe-swap--evidenced-safe-asset-exchange) keeps its own
-booking of the same exchange.
+owns the user-facing acceptance criteria. This document owns how each figure is calculated. Accounting books the P&L of each swap on that
+swap's single [`Swap P&L` line](../accounting/journal-entry-catalogue.md#safe-swap--evidenced-safe-asset-exchange), so both show the same
+amount. The figures wait for the history, balances, daily quotes and fee lookups, then keep their last settled value while any of them
+reloads, so a refresh never drops a fee or blanks the figures.
 
 ## Reading the Catalogue
 
@@ -23,7 +24,7 @@ booking of the same exchange.
 
 - Every figure is in USD. Quantities come from the Safe history in token units, with each token's decimals.
 - The figures add up all swaps since the Safe's first transaction. A swap is never split between periods.
-- A reported fee is a transaction cost, not a market result. Like the Transaction Fee Expense account in Accounting, it is taken out of the
+- A reported fee is a transaction cost, not a market result. Accounting books it as Transaction Fee Expense; here it is taken out of the
   swapped value and shown apart, so the P&L excludes it.
 - A figure that cannot be fully priced stays visible and is marked incomplete, never silently treated as complete.
 

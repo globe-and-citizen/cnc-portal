@@ -18,6 +18,7 @@ import type { TeamContract } from '@/types/teamContract'
 import type { WeeklyClaim } from '@/types/cash-remuneration'
 import type { ExpenseResponse } from '@/types/expense-account'
 import type { SafeIncomingTransfer, SafeTransaction } from '@/types/safe'
+import type { CowTransactionOrders } from '@/types/cow'
 import type { JournalAccountAssignmentRecord } from '@/types/journal-account-assignment'
 import type { BankEventFeed } from '@/types/contract-events/bank'
 import type { CashRemunerationEventFeed } from '@/types/contract-events/cash-remuneration'
@@ -53,6 +54,7 @@ import {
   receivingSafeByTxHash,
   toSafeTransferRows,
   toSafeOutgoingTransferRows,
+  toSafeSwapFeeRows,
   withoutSafeToSafeInflows
 } from '@/utils/accounting/safeTransfers'
 import type { SafeMapperInput } from '@/utils/accounting/mappers/safe'
@@ -93,6 +95,8 @@ export interface CncAccountingInput {
   safeAssetTransfers?: readonly SafeIncomingTransfer[] | null
   /** Executed multisig transactions — outflows from the Safe. */
   safeOutgoingTransactions?: readonly SafeTransaction[] | null
+  /** CoW Protocol orders settled by each Safe swap transaction — the swap fee evidence. */
+  safeSwapOrders?: readonly CowTransactionOrders[] | null
   /** Every other Safe the team registered, removed ones included, with its own movements. */
   previousSafes?: readonly PreviousSafeFeed[]
   // ── portal DB rows (off-chain enrichment context, spec §3.2) ──
@@ -223,7 +227,8 @@ function toSafeMapperInputs(input: CncAccountingInput): SafeMapperInput[] {
   const routerDeposits = input.safeDepositRouterEvents?.safeDeposits?.items
   const safes: SafeMapperInput[] = (input.previousSafes ?? []).map((safe) => ({
     safeAddress: safe.safeAddress,
-    transfers: toSafeTransferRows(safe.assetTransfers, routerDeposits)
+    transfers: toSafeTransferRows(safe.assetTransfers, routerDeposits),
+    swapFees: toSafeSwapFeeRows(input.safeSwapOrders, safe.safeAddress)
   }))
   if (input.safeAddress) {
     const transfers =
@@ -233,7 +238,11 @@ function toSafeMapperInputs(input: CncAccountingInput): SafeMapperInput[] {
             ...toSafeTransferRows(input.safeTransfers, routerDeposits),
             ...toSafeOutgoingTransferRows(input.safeOutgoingTransactions, input.safeAddress)
           ]
-    safes.unshift({ safeAddress: input.safeAddress, transfers })
+    safes.unshift({
+      safeAddress: input.safeAddress,
+      transfers,
+      swapFees: toSafeSwapFeeRows(input.safeSwapOrders, input.safeAddress)
+    })
   }
   return withoutSafeToSafeInflows(safes)
 }

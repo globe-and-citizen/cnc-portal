@@ -4,16 +4,19 @@
  * adapters split out of {@link ./assemble} so that file stays focused on the
  * pipeline itself.
  */
+import type { CowTransactionOrders } from '@/types/cow'
 import type { SafeIncomingTransfer, SafeTransaction } from '@/types/safe'
 import type { SafeDepositRow } from '@/types/contract-events/investor'
 import { transactionHashOf } from '@/utils/accounting/journalEntryDraft'
 import {
   sameAddress,
   type SafeMapperInput,
+  type SafeSwapFeeRow,
   type SafeTransferRow
 } from '@/utils/accounting/mappers/safe'
 import { currentChainId } from '@/constant'
 import { assetMetadata } from '@/utils/tokens/assets'
+import { safeCowOrderFee } from '@/utils/safe/swapValuation'
 
 /** A SHER value transfer carries no cash; skip NFT moves entirely. */
 function isMonetaryTransfer(t: SafeIncomingTransfer): boolean {
@@ -117,6 +120,22 @@ export function toSafeOutgoingTransferRows(
     }
   }
   return rows
+}
+
+/**
+ * Fees CoW Protocol reports for the Safe's own fulfilled orders, the same evidence the Safe's
+ * swap overview shows as transaction fees. A missing or malformed answer yields no fee.
+ */
+export function toSafeSwapFeeRows(
+  orders: readonly CowTransactionOrders[] | null | undefined,
+  safeAddress: string
+): SafeSwapFeeRow[] {
+  return (orders ?? []).flatMap(({ txHash, data }) =>
+    (data ?? []).flatMap((order) => {
+      const fee = safeCowOrderFee(order, safeAddress)
+      return fee ? [{ txHash, ...fee }] : []
+    })
+  )
 }
 
 /**

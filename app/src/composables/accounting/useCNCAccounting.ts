@@ -38,6 +38,7 @@ import { useGetTeamOfficersQuery } from '@/queries/contract.queries'
 import { useGetExpensesQuery } from '@/queries/expense.queries'
 import { useGetJournalAccountAssignmentsQuery } from '@/queries/journalAccountAssignment.queries'
 import { useGetSafeTransfersQuery, useGetSafeTransfersQueries } from '@/queries/safe.queries'
+import { useGetCowTransactionOrdersQuery } from '@/queries/cow.queries'
 import { useGetTeamWeeklyClaimsQuery } from '@/queries/weeklyClaim.queries'
 import {
   useGetAssetMarketsQuery,
@@ -66,6 +67,10 @@ import {
   findPreferredCurrentContractAddress
 } from '@/utils/accounting/contractGenerations'
 import { prepareSafeExchanges } from '@/utils/accounting/safeExchanges'
+import { safeSwapTransfers } from '@/utils/safe/swapValuation'
+import { withSafeSwapPnl } from '@/utils/accounting/safeSwapPnl'
+import { useSafeSwapPnlEvidence } from './useSafeSwapPnlEvidence'
+import type { CowTransactionOrders } from '@/types/cow'
 
 /** Safe Transaction Service page size; every page is loaded before assembly. */
 const SAFE_PAGE_SIZE = 500
@@ -169,6 +174,21 @@ export function useCNCAccounting(
     error: computed(() => previousSafeTransferQueries.value.find((query) => query.error)?.error),
     refetch: () => Promise.all(previousSafeTransferQueries.value.map((query) => query.refetch()))
   }
+  const swapTransfers = computed(() => [
+    ...safeSwapTransfers(safeAssetTransfers.data.value, safeAddress.value),
+    ...previousSafeAddresses.value.flatMap((address, index) =>
+      safeSwapTransfers(previousSafeTransferQueries.value[index]?.data, address)
+    )
+  ])
+  const safeSwapOrderQueries = useGetCowTransactionOrdersQuery(() => [
+    ...new Set(swapTransfers.value.map(({ transactionHash }) => transactionHash))
+  ])
+  const safeSwapOrdersLoading = computed(() =>
+    safeSwapOrderQueries.value.some((query) => query.isLoading)
+  )
+  const settledSafeSwapOrders = computed<readonly CowTransactionOrders[] | undefined>((previous) =>
+    safeSwapOrdersLoading.value ? previous : safeSwapOrderQueries.value
+  )
 
   // Source feeds are first mapped with the explicit override when supplied, or
   // with the zero-rate gap. This produces the token/date request set without
@@ -191,6 +211,7 @@ export function useCNCAccounting(
     vestingEvents: vesting.data.value?.events,
     safeDepositRouterEvents: router.data.value?.events,
     safeAssetTransfers: safeAssetTransfers.data.value ?? [],
+    safeSwapOrders: settledSafeSwapOrders.value,
     weeklyClaims: weeklyClaims.data.value?.data,
     expenses: expenses.data.value,
     accountAssignments: accountAssignments.data.value
@@ -226,11 +247,12 @@ export function useCNCAccounting(
       ? provisionalDrafts.value
       : accountingValuation.applyHistoricalRates(provisionalDrafts.value, rateOfRecord)
   )
+  const safeSwapPnl = useSafeSwapPnlEvidence(safeAddress)
   const deploymentAccounts = computed(() => knownDeploymentAccounts(allContracts.value))
   const transactionEvidence = useTransactionEvidence(drafts, deploymentAccounts)
   const accounting = computed<CncAccounting>(() =>
     assembleWithAccountEvidence(
-      drafts.value,
+      withSafeSwapPnl(drafts.value, safeSwapPnl.swaps.value),
       deploymentAccounts.value,
       transactionEvidence.accountEvidence.value,
       baseInput.value.accountAssignments
@@ -268,6 +290,15 @@ export function useCNCAccounting(
       () => previousSafeAddresses.value.length > 0,
       previousSafeTransfers
     ),
+    accountingQuerySource(
+      'safe-swap-fees',
+      'Safe swap fees',
+      () => safeSwapOrderQueries.value.length > 0,
+      { isLoading: safeSwapOrdersLoading }
+    ),
+    accountingQuerySource('safe-swap-pnl', 'Safe swap P&L', hasSafe, safeSwapPnl.availability, {
+      partialReason: safeSwapPnl.partialReason
+    }),
     accountingQuerySource('contract-history', 'Contract deployment history', hasTeamId, officers),
     accountingQuerySource('weekly-claims', 'Weekly claims', hasTeamId, weeklyClaims),
     accountingQuerySource('expenses', 'Approved expenses', hasTeamId, expenses),
