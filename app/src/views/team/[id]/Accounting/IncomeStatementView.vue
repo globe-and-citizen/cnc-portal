@@ -25,7 +25,7 @@
           v-for="line in income.revenueLines"
           :key="line.label"
           :line="line"
-          value-class="text-success"
+          :value-class="line.negative ? 'text-error' : 'text-success'"
           data-test-prefix="income"
           @drilldown="openDrilldown"
         />

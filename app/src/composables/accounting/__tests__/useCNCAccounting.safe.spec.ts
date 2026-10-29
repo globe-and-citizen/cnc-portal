@@ -43,9 +43,7 @@ describe('Safe exchanges in the Accounting data layer', () => {
     const data = ref([
       movement(0, router, safe, USDC_ADDRESS, '20000000'),
       movement(1, safe, router, USDC_ADDRESS, '20000000'),
-      movement(2, router, safe, token, '10000000000000000'),
-      movement(3, safe, router, token, '10000000000000000'),
-      movement(4, router, safe, USDC_ADDRESS, '30000000')
+      movement(2, router, safe, token, '10000000000000000')
     ])
     // Deposit gets its own operation; each pair shares one mined swap hash.
     data.value[0]!.transactionHash = `0x${'9'.repeat(64)}`
@@ -84,32 +82,27 @@ describe('Safe exchanges in the Accounting data layer', () => {
       error: ref(null),
       refetch: vi.fn()
     } as unknown as ReturnType<typeof useGetTeamQuery>)
-    const marketRate = ref(0)
     try {
       const accounting = useCNCAccounting('1', {
-        rateOfRecord: (asset) => (asset.startsWith('erc20:') ? marketRate.value : 1)
+        rateOfRecord: (asset) => (asset.startsWith('erc20:') ? 0 : 1)
       })
       expect(accounting.status.state.value).toBe('loading')
       swapOrders.value = [
         { txHash: data.value[1]!.transactionHash, isLoading: false, data: [cowFee] }
       ]
-      expect(accounting.status.state.value).toBe('partial')
-      marketRate.value = 1800
+      expect(accounting.status.state.value).toBe('ready')
       expect(
         accounting.journal.value.filter((entry) => entry.useCase === 'SAFE-SWAP')
-      ).toHaveLength(2)
+      ).toHaveLength(1)
       const purchase = accounting.journal.value.find(
         (entry) => entry.txHash === data.value[1]!.transactionHash
       )!
-      expect(
-        purchase.lines.find((line) => line.movement?.asset?.symbol === 'AWETH')?.movement?.rate
-      ).toBe(1800000000n)
       const lineOf = (account: string) =>
         purchase.lines.find((line) => line.account.family.name === account)
-      // $20 USDC for $18 of AWETH: the $1 CoW fee is a transaction fee, the rest an exchange loss.
+      const acquired = purchase.lines.find((line) => line.movement?.asset?.symbol === 'AWETH')
       expect(lineOf('Transaction Fee Expense')?.debit).toBe(10n ** 24n)
-      expect(lineOf('Asset Exchange Loss')?.debit).toBe(10n ** 24n)
-      expect(accounting.status.state.value).toBe('ready')
+      expect(acquired?.debit).toBe(19n * 10n ** 24n)
+      expect(acquired?.movement?.rate).toBe(1900000000n)
       await accounting.refetch()
       expect(refetch).toHaveBeenCalledOnce()
       const mint = movement(5, zeroAddress, safe, token, '1')

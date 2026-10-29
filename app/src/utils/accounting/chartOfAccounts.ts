@@ -10,7 +10,9 @@
  * - `Infrastructure Expense` and `Network Fee Expense` are intentionally absent:
  *   no accounting data feed exists for either yet.
  * - The Bank protocol fee (`FeePaid`) is booked as `Transaction Fee Expense`, and so is
- *   the fee CoW Protocol reports on a Safe swap.
+ *   the fee CoW Protocol reports on a Safe swap. A Safe swap that receives a USD stablecoin
+ *   books the gap between its face value and the price paid to `Swap P&L` (a credit is a
+ *   gain, a debit a loss); any other swap carries the price paid and books no result.
  * - SHER wages are a non-cash equity transaction: `Deferred SHER Compensation`
  *   (contra-equity) and `SHERS To Be Issued` (equity), not an expense.
  */
@@ -41,20 +43,6 @@ interface AccountFamilyDefinition {
  * resolution vary at journal time.
  */
 export const ACCOUNT_FAMILIES = [
-  {
-    id: 'asset-exchange-gain',
-    name: 'Asset Exchange Gain',
-    accountClass: 'INCOME',
-    normalBalance: 'credit',
-    deploymentScoped: false
-  },
-  {
-    id: 'asset-exchange-loss',
-    name: 'Asset Exchange Loss',
-    accountClass: 'EXPENSE',
-    normalBalance: 'debit',
-    deploymentScoped: false
-  },
   {
     id: 'unclassified-receipts',
     name: 'Unclassified Receipts',
@@ -178,6 +166,13 @@ export const ACCOUNT_FAMILIES = [
   {
     id: 'trading-gain',
     name: 'Trading Gain',
+    accountClass: 'INCOME',
+    normalBalance: 'credit',
+    deploymentScoped: false
+  },
+  {
+    id: 'swap-pnl',
+    name: 'Swap P&L',
     accountClass: 'INCOME',
     normalBalance: 'credit',
     deploymentScoped: false

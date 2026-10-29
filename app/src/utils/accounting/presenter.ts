@@ -77,8 +77,13 @@ interface TrialRow {
   crMuted: boolean
 }
 
+/** A revenue line whose net balance can be a loss, like a Swap P&L debit. */
+interface RevenueLineView extends StatementLineView {
+  negative: boolean
+}
+
 interface IncomeView {
-  revenueLines: StatementLineView[]
+  revenueLines: RevenueLineView[]
   expenseLines: StatementLineView[]
   totalRevenue: string
   totalExpenses: string
@@ -174,7 +179,8 @@ export function presentIncome(
     revenueLines: income.revenue.map((line) => ({
       label: line.account,
       value: money(line.amount),
-      account: line.account
+      account: line.account,
+      negative: line.amount < 0n
     })),
     expenseLines: income.expenses.map((line) => ({
       label: line.account,

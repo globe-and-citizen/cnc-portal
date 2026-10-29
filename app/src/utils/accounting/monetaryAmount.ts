@@ -33,6 +33,11 @@ export function usdRateFromNumber(rate: number): UsdRate {
   return scaledSixDecimalInteger(rate, 'USD rate')
 }
 
+/** Whether a rate fits the exact six-decimal form {@link usdRateFromNumber} produces. */
+export function isRepresentableUsdRate(rate: number): boolean {
+  return Number.isFinite(rate) && rate >= 0 && Number.isSafeInteger(Math.round(rate * RATE_SCALE))
+}
+
 /** Convert an exact rate to a number only for display or transitional source metadata. */
 export function usdRateToNumber(rate: UsdRate): number {
   return Number(rate) / RATE_SCALE
