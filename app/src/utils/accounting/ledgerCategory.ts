@@ -42,7 +42,7 @@ const TRADING_ACCOUNTS = new Set(['trading-account', 'trading-gain', 'trading-lo
 
 /** Derive the reporting/action family from journal-line accounts, never a category field. */
 function categoryOf(entry: JournalEntry): LedgerCategory {
-  if (entry.useCase === 'SAFE-SWAP') return 'Swap'
+  if (entry.useCase === 'SAFE-SWAP' || entry.useCase === 'SAFE-SWAP-REVALUATION') return 'Swap'
   if (entry.kind === 'memo') {
     return entry.useCase === 'DEFAULT-D' || entry.useCase.startsWith('UC-VEST-')
       ? 'Investment'

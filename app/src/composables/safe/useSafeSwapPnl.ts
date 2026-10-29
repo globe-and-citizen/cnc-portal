@@ -13,11 +13,13 @@ import {
   safeSwapRateRequests,
   safeSwapTransfers
 } from '@/utils/safe/swapValuation'
+import type { SafeSwapPnl } from '@/utils/safe/swapPnl'
 
 /**
  * Swap P&L of a Safe in USD: what its swaps gave up, valued on their day, against what the
  * assets received are worth today, with the fees CoW Protocol reports. `data` stays undefined
- * until the history, balances and quotes have settled; fee lookups never block it.
+ * until the history, balances, quotes and fee lookups have settled, then keeps its last
+ * settled value while any of them reloads, so the figure never flickers or drops a fee.
  */
 export function useSafeSwapPnl(safeAddress: MaybeRefOrGetter<string | undefined>) {
   const today = new Date().toISOString().slice(0, 10)
@@ -69,13 +71,19 @@ export function useSafeSwapPnl(safeAddress: MaybeRefOrGetter<string | undefined>
       transfers.isLoading.value ||
       balances.isLoading.value ||
       markets.value.some((market) => market.isLoading) ||
-      rates.value.some((rate) => rate.isLoading)
+      rates.value.some((rate) => rate.isLoading) ||
+      orders.value.some((order) => order.isLoading)
   )
-  const isError = computed(() => !!transfers.error.value || !!balances.error.value)
-  const data = computed(() => {
+  /** A failed refresh keeps the last answer; only a source that never answered is an error. */
+  const isError = computed(
+    () =>
+      (!!transfers.error.value && !transfers.data.value) ||
+      (!!balances.error.value && !balances.data.value)
+  )
+  const data = computed<SafeSwapPnl | undefined>((previous) => {
     const safeAddressValue = toValue(safeAddress)
-    if (isLoading.value || isError.value || !safeAddressValue || !transfers.data.value)
-      return undefined
+    if (isLoading.value) return previous
+    if (isError.value || !safeAddressValue || !transfers.data.value) return undefined
     return buildSafeSwapReport(swaps.value, {
       safeAddress: safeAddressValue,
       today,

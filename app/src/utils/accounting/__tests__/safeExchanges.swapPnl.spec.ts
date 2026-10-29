@@ -80,19 +80,27 @@ describe('Safe Swap P&L', () => {
     expect(presentIncome(journal).revenueLines).toContainEqual({
       label: 'Swap P&L',
       value: '$10.66',
-      account: 'Swap P&L',
-      negative: false
+      account: 'Swap P&L'
     })
     expect(presentTrial(journal).rows.find((row) => row.label === 'Swap P&L')?.cr).toBe('$10.66')
     expect(journalLedgerRows(journal).find((row) => row.account === 'Swap P&L')?.cr).toBe('$10.66')
   })
 
-  it('marks a Swap P&L loss as a negative revenue line', () => {
-    expect(presentIncome(stablecoinSwap().journal).revenueLines).toContainEqual({
+  it('shows a Swap P&L loss as a positive expense and a trial-balance debit', () => {
+    const { journal } = stablecoinSwap()
+    const income = presentIncome(journal)
+    expect(income.revenueLines.some((line) => line.label === 'Swap P&L')).toBe(false)
+    expect(income.expenseLines).toContainEqual({
       label: 'Swap P&L',
-      value: '-$0.50',
-      account: 'Swap P&L',
-      negative: true
+      value: '$0.50',
+      account: 'Swap P&L'
     })
+    expect(income.totalExpenses).toBe('$0.50')
+    const trial = presentTrial(journal)
+    expect(trial.rows.find((row) => row.label === 'Swap P&L')).toMatchObject({
+      dr: '$0.50',
+      cr: '—'
+    })
+    expect(trial.balanced).toBe(true)
   })
 })

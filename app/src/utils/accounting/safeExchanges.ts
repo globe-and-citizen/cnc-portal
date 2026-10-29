@@ -70,21 +70,17 @@ function receivesUsdStablecoin(incoming: readonly JournalEntryDraft[]): boolean 
 }
 
 /**
- * Keep each received USD stablecoin at its face value. It cannot carry the price paid, so the
- * gap between the two is the swap's realized result, booked to Swap P&L.
+ * Give the received legs their carrying amount and return the result the swap realizes. A USD
+ * stablecoin keeps its face value, so its gap from the price paid is realized; any other asset
+ * carries the price paid and realizes nothing.
  */
-function bookAtFaceValue(
-  incoming: readonly JournalEntryDraft[],
-  pricePaid: bigint
-): JournalEntryDraft[] {
-  let faceValue = 0n
-  for (const entry of incoming) {
-    const amount = marketAmount(entry)
-    setCarryingAmount(entry, amount)
-    faceValue += amount
+function bookReceipts(incoming: readonly JournalEntryDraft[], pricePaid: bigint): bigint {
+  if (!receivesUsdStablecoin(incoming)) {
+    allocatePricePaid(incoming, pricePaid)
+    return 0n
   }
-  const result = faceValue - pricePaid
-  return result === 0n ? [] : [swapPnlDraft(incoming[0]!, result)]
+  for (const entry of incoming) setCarryingAmount(entry, marketAmount(entry))
+  return incoming.reduce((sum, entry) => sum + marketAmount(entry), 0n) - pricePaid
 }
 
 /** Split the price paid exactly across the received legs, in proportion to their quantities. */
@@ -147,23 +143,47 @@ function transactionFeeDraft(primary: JournalEntryDraft, amount: bigint): Journa
   })
 }
 
-/** The Swap P&L line of a swap: credited with a gain, debited with a loss. */
-function swapPnlDraft(primary: JournalEntryDraft, result: bigint): JournalEntryDraft {
-  const isGain = result > 0n
+/** The Swap P&L line of a swap that receives a USD stablecoin: the result it realizes. */
+function realizedSwapPnlDraft(primary: JournalEntryDraft, realized: bigint): JournalEntryDraft {
+  const isGain = realized > 0n
   return swapUsdLineDraft(primary, {
     suffix: 'swap-pnl',
     debit: isGain ? null : 'Swap P&L',
     credit: isGain ? 'Swap P&L' : null,
-    amount: isGain ? result : -result,
+    amount: isGain ? realized : -realized,
     memo: 'USD stablecoin received less the price paid for the asset given up'
   })
 }
 
 /**
+ * The swap's revaluation, its own operation dated with the swap: the rest of the Safe
+ * overview's P&L, booked to Swap P&L against Safe Market Value Adjustment so the swap and
+ * its Cash — Safe lines keep the price paid. A gain debits the adjustment, a loss credits it.
+ */
+function swapRevaluationDraft(primary: JournalEntryDraft, gap: bigint): JournalEntryDraft {
+  const isGain = gap > 0n
+  const operationId = `swap-pnl-revaluation:${primary.txHash ?? primary.id}`
+  return makeJournalEntryDraft({
+    id: operationId,
+    sourceOperationId: operationId,
+    timestamp: primary.timestamp,
+    useCase: 'SAFE-SWAP-REVALUATION',
+    debit: isGain ? 'Safe Market Value Adjustment' : 'Swap P&L',
+    credit: isGain ? 'Swap P&L' : 'Safe Market Value Adjustment',
+    token: 'usdc',
+    rawAmount: '0',
+    rate: 1,
+    carryingAmount: isGain ? gap : -gap,
+    memo: 'Assets received at their current value against the CoinGecko swap-day value given up'
+  })
+}
+
+/**
  * Book one exchange at the price actually paid: what was given up less the reported fee.
- * Received USD stablecoins keep their face value and the gap is booked to Swap P&L; any
- * other asset received carries the price paid, with no result. Returns the USD-only lines
- * the exchange adds; an exchange that cannot be booked is withheld instead.
+ * A received USD stablecoin realizes its gap from that price on the swap's Swap P&L line.
+ * When the data layer attaches the Safe overview's P&L (`swapPnl`), a separate revaluation
+ * books the rest, so Swap P&L totals that figure. Returns the drafts the exchange adds; an
+ * exchange that cannot be booked is withheld instead.
  */
 function bookExchange(
   incoming: readonly JournalEntryDraft[],
@@ -174,12 +194,18 @@ function bookExchange(
     withholdExchange([...incoming, ...outgoing])
     return []
   }
+  const primary = incoming[0]!
   const fee = outgoing.reduce((sum, entry) => sum + feeCarryingAmount(entry), 0n)
-  const pricePaid = given - fee
-  const feeLines = fee > 0n ? [transactionFeeDraft(incoming[0]!, fee)] : []
-  if (receivesUsdStablecoin(incoming)) return [...feeLines, ...bookAtFaceValue(incoming, pricePaid)]
-  allocatePricePaid(incoming, pricePaid)
-  return feeLines
+  const overviewPnl = [...incoming, ...outgoing].find(
+    (entry) => entry.swapPnl !== undefined
+  )?.swapPnl
+  const realized = bookReceipts(incoming, given - fee)
+  const gap = (overviewPnl ?? realized) - realized
+  return [
+    ...(fee > 0n ? [transactionFeeDraft(primary, fee)] : []),
+    ...(realized !== 0n ? [realizedSwapPnlDraft(primary, realized)] : []),
+    ...(gap !== 0n ? [swapRevaluationDraft(primary, gap)] : [])
+  ]
 }
 
 /**
@@ -187,9 +213,10 @@ function bookExchange(
  *
  * What a swap gives up leaves at its carrying amount. The fee CoW Protocol reports is booked
  * as Transaction Fee Expense at the carrying amount of the part it took, and the rest is the
- * price actually paid. A received asset carries that price for good, with no market price
- * and no result. A received USD stablecoin keeps its face value instead, and the gap from
- * the price paid is the swap's Swap P&L: a gain when the stablecoin is worth more.
+ * price actually paid. A received asset carries that price for good; a received USD
+ * stablecoin keeps its face value, realizing its gap on Swap P&L. A swap the data layer gives
+ * the Safe overview's P&L (`swapPnl`) gets a separate revaluation for the rest, against Safe
+ * Market Value Adjustment, so Cash — Safe never leaves the price paid.
  *
  * Within one operation, non-exchange entries (e.g. a same-operation mint) are applied
  * first as ordinary evidence — never as another swap receipt. A non-exchange depletion

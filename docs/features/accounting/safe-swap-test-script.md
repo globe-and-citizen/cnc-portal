@@ -20,9 +20,13 @@ Use a disposable Safe and verified ERC-20 contracts. Do not run test swaps on th
 5. Sell an acquired token for USDC at a price different from what it cost. Accounting must stay complete: the USDC is debited at its face
    value, the token is credited at its carrying amount, and the difference, less any reported fee, is credited to `Swap P&L` for a gain or
    debited for a loss. The same amount must appear on `Swap P&L` in the Income Statement, the Trial Balance, and the General Ledger.
-6. Review an asset with missing valuation, unsupported precision, or missing acquisition history. Preserve its identity and raw movement;
+6. Note the **P&L** of the Safe's Wallet overview, then open Accounting. `Swap P&L` must show the same amount in the Income Statement, the
+   Trial Balance, and the General Ledger, where a `Swap P&L revaluation` dated with each swap books it against
+   `Safe Market Value Adjustment`. The swap itself and `Cash — Safe` must keep the price paid. Reload both pages: the figure must not change
+   until a price moves, and must never drop a fee while it reloads.
+7. Review an asset with missing valuation, unsupported precision, or missing acquisition history. Preserve its identity and raw movement;
    expect an incomplete notice and no substituted POL price. Check the contract address when symbols are duplicated.
-7. Review a same-transaction mint or an ambiguous batch. Expect an explicit classification diagnostic; do not mark the accounts complete or
+8. Review a same-transaction mint or an ambiguous batch. Expect an explicit classification diagnostic; do not mark the accounts complete or
    interpret a mint as service revenue without further protocol evidence.
 
 The automated exchange, portfolio, and query suites cover these isolated rules. An integrated external-swap product review remains **Not

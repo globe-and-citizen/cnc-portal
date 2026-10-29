@@ -19,6 +19,7 @@ describe('chart of accounts', () => {
       'Cash — Expense': 'ASSET',
       'Cash — Credit': 'ASSET',
       'Cash — FeeCollector': 'ASSET',
+      'Safe Market Value Adjustment': 'ASSET',
       'Trading account': 'ASSET',
       'Wage Payable': 'LIABILITY',
       'Loan Payable': 'LIABILITY',

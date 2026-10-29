@@ -24,6 +24,13 @@ export interface SafeSwapPnl {
   feesReported: number
   /** Symbols that could not be priced, so the figures are incomplete. */
   missingPrices: string[]
+  /** Market result of each swap, excluding its reported fee, in chain order; they add up to the P&L. */
+  swaps: SafeSwapResult[]
+}
+
+export interface SafeSwapResult {
+  txHash: string
+  pnlUsd: number
 }
 
 export interface SafeSwapPrices {
@@ -58,6 +65,7 @@ export function computeSafeSwapPnl(
   let feesUsd = 0
   let feesReported = 0
   let count = 0
+  const swaps: SafeSwapResult[] = []
   const safe = safeAddress.toLowerCase()
   for (const txHash of new Set(transfers.map(({ transactionHash }) => transactionHash))) {
     const rows = transfers.filter(({ transactionHash }) => transactionHash === txHash)
@@ -72,6 +80,7 @@ export function computeSafeSwapPnl(
     if (!net.some((amount) => amount < 0n) || !net.some((amount) => amount > 0n)) continue
     count += 1
     const date = new Date(rows[0]!.executionDate).toISOString().slice(0, 10)
+    let swapPnlUsd = 0
     for (const [asset, amount] of amounts) {
       if (amount === 0n) continue
       const row = rows.find(
@@ -85,15 +94,23 @@ export function computeSafeSwapPnl(
       const quantity = Number(
         formatUnits(amount < 0n ? -amount : amount, native ? 18 : row.tokenInfo!.decimals)
       )
-      if (amount < 0n) swappedUsd += quantity * priced(symbol, prices.on(asset, date))
-      else currentUsd += quantity * priced(symbol, prices.now(asset))
+      const valueUsd =
+        amount < 0n
+          ? -quantity * priced(symbol, prices.on(asset, date))
+          : quantity * priced(symbol, prices.now(asset))
+      if (amount < 0n) swappedUsd -= valueUsd
+      else currentUsd += valueUsd
+      swapPnlUsd += valueUsd
     }
     const fee = feeOf(rows)
-    if (!fee) continue
-    const feeUsd = fee.quantity * priced(fee.symbol, prices.on(fee.asset, date))
-    feesReported += 1
-    feesUsd += feeUsd
-    swappedUsd -= feeUsd
+    if (fee) {
+      const feeUsd = fee.quantity * priced(fee.symbol, prices.on(fee.asset, date))
+      feesReported += 1
+      feesUsd += feeUsd
+      swappedUsd -= feeUsd
+      swapPnlUsd += feeUsd
+    }
+    swaps.push({ txHash, pnlUsd: swapPnlUsd })
   }
   const pnlUsd = currentUsd - swappedUsd
   return {
@@ -104,6 +121,7 @@ export function computeSafeSwapPnl(
     pnlRatio: swappedUsd > 0 ? pnlUsd / swappedUsd : null,
     feesUsd: feesReported ? feesUsd : null,
     feesReported,
-    missingPrices: [...missing].sort()
+    missingPrices: [...missing].sort(),
+    swaps
   }
 }

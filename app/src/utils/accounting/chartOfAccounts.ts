@@ -13,6 +13,8 @@
  *   the fee CoW Protocol reports on a Safe swap. A Safe swap that receives a USD stablecoin
  *   books the gap between its face value and the price paid to `Swap P&L` (a credit is a
  *   gain, a debit a loss); any other swap carries the price paid and books no result.
+ * - The rest of the Safe overview's swap P&L is booked to `Swap P&L` against
+ *   `Safe Market Value Adjustment`, so `Cash — Safe` always keeps the price paid.
  * - SHER wages are a non-cash equity transaction: `Deferred SHER Compensation`
  *   (contra-equity) and `SHERS To Be Issued` (equity), not an expense.
  */
@@ -88,6 +90,13 @@ export const ACCOUNT_FAMILIES = [
   {
     id: 'cash-fee-collector',
     name: 'Cash — FeeCollector',
+    accountClass: 'ASSET',
+    normalBalance: 'debit',
+    deploymentScoped: false
+  },
+  {
+    id: 'safe-market-value-adjustment',
+    name: 'Safe Market Value Adjustment',
     accountClass: 'ASSET',
     normalBalance: 'debit',
     deploymentScoped: false

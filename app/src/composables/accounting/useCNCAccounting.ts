@@ -68,6 +68,8 @@ import {
 } from '@/utils/accounting/contractGenerations'
 import { prepareSafeExchanges } from '@/utils/accounting/safeExchanges'
 import { safeSwapTransfers } from '@/utils/safe/swapValuation'
+import { withSafeSwapPnl } from '@/utils/accounting/safeSwapPnl'
+import { useSafeSwapPnlEvidence } from './useSafeSwapPnlEvidence'
 import type { CowTransactionOrders } from '@/types/cow'
 
 /** Safe Transaction Service page size; every page is loaded before assembly. */
@@ -246,11 +248,12 @@ export function useCNCAccounting(
       ? provisionalDrafts.value
       : accountingValuation.applyHistoricalRates(provisionalDrafts.value, rateOfRecord)
   )
+  const safeSwapPnl = useSafeSwapPnlEvidence(safeAddress)
   const deploymentAccounts = computed(() => knownDeploymentAccounts(allContracts.value))
   const transactionEvidence = useTransactionEvidence(drafts, deploymentAccounts)
   const accounting = computed<CncAccounting>(() =>
     assembleWithAccountEvidence(
-      drafts.value,
+      withSafeSwapPnl(drafts.value, safeSwapPnl.swaps.value),
       deploymentAccounts.value,
       transactionEvidence.accountEvidence.value,
       baseInput.value.accountAssignments
@@ -294,6 +297,9 @@ export function useCNCAccounting(
       () => safeSwapOrderQueries.value.length > 0,
       { isLoading: safeSwapOrdersLoading }
     ),
+    accountingQuerySource('safe-swap-pnl', 'Safe swap P&L', hasSafe, safeSwapPnl.availability, {
+      partialReason: safeSwapPnl.partialReason
+    }),
     accountingQuerySource('contract-history', 'Contract deployment history', hasTeamId, officers),
     accountingQuerySource('weekly-claims', 'Weekly claims', hasTeamId, weeklyClaims),
     accountingQuerySource('expenses', 'Approved expenses', hasTeamId, expenses),

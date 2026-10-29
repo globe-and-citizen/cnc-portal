@@ -6,13 +6,14 @@ import { useGetSafeBalancesQuery } from '@/queries/safeClient.queries'
 import * as swapValuation from '@/utils/safe/swapValuation'
 import { currentChainId, USDC_ADDRESS } from '@/constant'
 
-const { mockTransfers, mockRates, requests } = vi.hoisted(() => ({
+const { mockTransfers, mockRates, mockOrders, requests } = vi.hoisted(() => ({
   mockTransfers: {
     data: undefined as unknown as { value: SafeIncomingTransfer[] | undefined },
     isLoading: undefined as unknown as { value: boolean },
     error: undefined as unknown as { value: Error | null }
   },
   mockRates: { value: [] as { coinId: string; date: string; isLoading: boolean }[] },
+  mockOrders: { value: [] as { txHash: string; isLoading: boolean }[] },
   requests: { rates: [] as unknown[], orders: [] as unknown[], markets: [] as unknown[] }
 }))
 
@@ -32,7 +33,7 @@ vi.mock('@/queries/coingecko.queries', () => ({
 vi.mock('@/queries/cow.queries', () => ({
   useGetCowTransactionOrdersQuery: (txHashes: MaybeRefOrGetter<unknown[]>) => {
     requests.orders = toValue(txHashes)
-    return { value: [] }
+    return mockOrders
   }
 }))
 
@@ -75,6 +76,7 @@ describe('[US-SAFE-007] useSafeSwapPnl', () => {
     mockTransfers.isLoading = ref(false)
     mockTransfers.error = ref(null)
     mockRates.value = []
+    mockOrders.value = []
   })
 
   it('values the swaps found in the history and asks CoW for their fees', () => {
@@ -106,7 +108,28 @@ describe('[US-SAFE-007] useSafeSwapPnl', () => {
     expect(data.value).toBeUndefined()
   })
 
+  it('waits for the CoW fee lookups before reporting, so no fee is dropped', () => {
+    mockOrders.value = [{ txHash: '0xswap', isLoading: true }]
+    const { data, isLoading } = useSafeSwapPnl(SAFE)
+
+    expect(isLoading.value).toBe(true)
+    expect(data.value).toBeUndefined()
+  })
+
+  it('keeps the last settled report while a source reloads or a refresh fails', () => {
+    const { data } = useSafeSwapPnl(SAFE)
+    const settled = data.value
+    expect(settled?.count).toBe(1)
+
+    mockTransfers.isLoading.value = true
+    expect(data.value).toBe(settled)
+    mockTransfers.isLoading.value = false
+    mockTransfers.error.value = new Error('Refresh failed')
+    expect(data.value?.count).toBe(1)
+  })
+
   it('UC-SWAP-014 reports nothing when the Safe history cannot be read', () => {
+    mockTransfers.data.value = undefined
     mockTransfers.error.value = new Error('Safe service unavailable')
     const { data, isError } = useSafeSwapPnl(SAFE)
 

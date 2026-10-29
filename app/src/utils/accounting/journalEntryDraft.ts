@@ -42,6 +42,8 @@ export function sourceOperationIdOf(eventId: string): string {
  */
 export type UseCase =
   | 'SAFE-SWAP'
+  /** The rest of a swap's Safe overview P&L: Swap P&L against Safe Market Value Adjustment. */
+  | 'SAFE-SWAP-REVALUATION'
   /** Direct external deposit into a treasury pocket → Service Revenue. */
   | 'UC-BANK-02'
   /** Fund payroll/expense pockets from Bank — internal move. */
@@ -133,6 +135,11 @@ export interface JournalEntryDraft {
    * same base units as {@link rawAmount}; booked as Transaction Fee Expense.
    */
   feeRawAmount?: string
+  /**
+   * The Safe overview's P&L of the swap this leg belongs to (current value of what it received
+   * against the CoinGecko swap-day value of what it gave up, fee excluded); booked to Swap P&L.
+   */
+  swapPnl?: UsdAmount
   /** Reconciliation gaps that prevent complete books. */
   accountingIssue?:
     | 'asset-metadata-unavailable'

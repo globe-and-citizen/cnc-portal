@@ -23,6 +23,7 @@ import type { JournalEntry } from './types'
  */
 const ENTRY_LABEL: Record<UseCase, string> = {
   'SAFE-SWAP': 'Asset exchange',
+  'SAFE-SWAP-REVALUATION': 'Swap P&L revaluation',
   'UC-BANK-02': 'Service revenue',
   'UC-BANK-03': 'Treasury funding',
   'UC-SDR-01': 'Investor contribution',

@@ -66,6 +66,14 @@ export function usdAmountFromToken(
   return absoluteAmount * rate * 10n ** BigInt(scaleDelta)
 }
 
+/** Convert a signed USD figure computed outside the journal, kept to six decimals. */
+export function usdAmountFromNumber(amount: number): UsdAmount {
+  return (
+    scaledSixDecimalInteger(amount, 'USD amount') *
+    10n ** BigInt(USD_AMOUNT_DECIMALS - USD_RATE_DECIMALS)
+  )
+}
+
 /** Convert an exact amount to a number only at a presentation or export boundary. */
 export function usdAmountToNumber(amount: UsdAmount): number {
   return Number(amount) / 10 ** USD_AMOUNT_DECIMALS

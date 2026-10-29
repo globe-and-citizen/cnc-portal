@@ -9,6 +9,22 @@ import type { SafeIncomingTransfer } from '@/types/safe'
 import { mockTeamData } from '@/tests/mocks'
 import { useCNCAccounting } from '../useCNCAccounting'
 
+/** The Safe overview reports a $5 P&L on the purchase: the AWETH bought is now worth $24, not $19. */
+vi.mock('@/composables/safe/useSafeSwapPnl', () => ({
+  useSafeSwapPnl: () => ({
+    data: {
+      value: {
+        count: 1,
+        pnlUsd: 5,
+        missingPrices: [],
+        swaps: [{ txHash: `0x${'1'.padStart(64, '0')}`, pnlUsd: 5 }]
+      }
+    },
+    isLoading: { value: false },
+    isError: { value: false }
+  })
+}))
+
 describe('Safe exchanges in the Accounting data layer', () => {
   beforeEach(() => vi.clearAllMocks())
   it('refreshes discovered Safe exchanges into the shared journal and flags an ancillary mint', async () => {
@@ -103,6 +119,12 @@ describe('Safe exchanges in the Accounting data layer', () => {
       expect(lineOf('Transaction Fee Expense')?.debit).toBe(10n ** 24n)
       expect(acquired?.debit).toBe(19n * 10n ** 24n)
       expect(acquired?.movement?.rate).toBe(1900000000n)
+      const revaluation = accounting.journal.value.find(
+        (entry) => entry.useCase === 'SAFE-SWAP-REVALUATION'
+      )!
+      expect(
+        revaluation.lines.find((line) => line.account.family.name === 'Swap P&L')?.credit
+      ).toBe(5n * 10n ** 24n)
       await accounting.refetch()
       expect(refetch).toHaveBeenCalledOnce()
       const mint = movement(5, zeroAddress, safe, token, '1')

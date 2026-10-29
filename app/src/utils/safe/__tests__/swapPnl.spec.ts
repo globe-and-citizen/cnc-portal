@@ -103,6 +103,19 @@ describe('[US-SAFE-007] computeSafeSwapPnl', () => {
     expect(pnl).toMatchObject({ swappedUsd: 1996.5, currentUsd: 2400, pnlUsd: 403.5, feesUsd: 3.5 })
   })
 
+  it('reports the P&L of each swap, fee excluded, adding up to the total', () => {
+    const fee = { asset: USDC, symbol: 'USDC', quantity: 3.5 }
+    const pnl = computeSafeSwapPnl([...swap(), ...swap('0xother')], SAFE, prices(2400), (found) =>
+      found[0]!.transactionHash === '0xswap' ? fee : undefined
+    )
+
+    expect(pnl.swaps).toEqual([
+      { txHash: '0xswap', pnlUsd: 203.5 },
+      { txHash: '0xother', pnlUsd: 200 }
+    ])
+    expect(pnl.swaps.reduce((sum, swap) => sum + swap.pnlUsd, 0)).toBe(pnl.pnlUsd)
+  })
+
   it('[AC-US-SAFE-007-08] names the assets that cannot be priced', () => {
     const pnl = computeSafeSwapPnl(swap(), SAFE, prices(undefined), () => undefined)
 

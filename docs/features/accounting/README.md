@@ -47,16 +47,19 @@ value less the reported fee. That price stays fixed; no market price revalues it
 A fee CoW Protocol reports for the Safe's own fulfilled order is a `Transaction Fee Expense` of that exchange, valued at the carrying value
 of the part of the disposed asset it took. Without a reported fee, no fee is inferred and the whole price paid stays on the acquired asset.
 
-A received USD stablecoin keeps its $1.00 face value instead. The difference between that face value and the price paid, as in a sale of an
-asset for a stablecoin or an exchange between two stablecoins with slippage, is the swap's realized result, booked to the `Swap P&L` income
-account: credited with a gain, debited with a loss. An exchange whose received asset carries the price paid books no `Swap P&L`. This
-realized result differs from the [Safe swap P&L](../accounts/safe-swap-pnl-use-cases.md) indicator, which compares swap-day and current
-market prices. Ancillary mints and ambiguous batches require classification. Missing decimals or acquisition basis keeps Accounting
-incomplete. Cross-transaction intents and arbitrary DeFi actions need additional protocol evidence. See the
-[Accounting Read Model](../../implementation/accounting-read-model/README.md#safe-assets-and-exchanges) for these boundaries and the
-[exchange regression suite](../../../app/src/utils/accounting/__tests__/safeExchanges.spec.ts) and
-[price-paid regressions](../../../app/src/utils/accounting/__tests__/safeExchanges.pricePaid.spec.ts) and
-[Swap P&L regressions](../../../app/src/utils/accounting/__tests__/safeExchanges.swapPnl.spec.ts) for current executable evidence. Human
+A received USD stablecoin keeps its $1.00 face value instead, which realizes its difference from the price paid, as in a sale of an asset
+for a stablecoin or an exchange between two stablecoins with slippage, on the swap's `Swap P&L` line. For each swap of the default Safe, a
+separate `Swap P&L revaluation`, dated with the swap, books the rest of that swap's [Safe swap P&L](../accounts/safe-swap-pnl-use-cases.md)
+(the current value of what it received against the CoinGecko value, on the swap day, of what it gave up, less the reported fee) between
+`Swap P&L` and the `Safe Market Value Adjustment` asset account. `Cash — Safe` keeps the price paid; the swapped assets' current value is
+`Cash — Safe` plus that adjustment, and `Swap P&L` totals the Safe overview figure. A `Swap P&L` gain reads as revenue and a trial-balance
+credit; a loss reads as an expense and a debit, never as a negative amount. Ancillary mints and ambiguous batches require classification.
+Missing decimals or acquisition basis keeps Accounting incomplete. Cross-transaction intents and arbitrary DeFi actions need additional
+protocol evidence. See the [Accounting Read Model](../../implementation/accounting-read-model/README.md#safe-assets-and-exchanges) for these
+boundaries and the [exchange regression suite](../../../app/src/utils/accounting/__tests__/safeExchanges.spec.ts) and
+[price-paid regressions](../../../app/src/utils/accounting/__tests__/safeExchanges.pricePaid.spec.ts),
+[Swap P&L regressions](../../../app/src/utils/accounting/__tests__/safeExchanges.swapPnl.spec.ts), and
+[Safe swap P&L regressions](../../../app/src/utils/accounting/__tests__/safeSwapPnl.spec.ts) for current executable evidence. Human
 validation of external swap journeys remains pending. Use the [manual Safe exchange checks](./safe-swap-test-script.md). The
 [direct asset movement product contract](./direct-movement-policy.md) defines company custody, unsolicited receipts, historical coverage,
 classification, and reconciliation across domains. Its target behaviour remains pending implementation; new ACs are unchecked.
@@ -108,7 +111,7 @@ three consecutive missing criteria use inclusive ranges with full AC IDs at both
 | User Story  | Main Journey  | Coverage Target | Gaps                                                                              |
 | ----------- | ------------- | --------------- | --------------------------------------------------------------------------------- |
 | US-ACCT-001 | ✅ Integrated | ⚠️ 11/12 met    | `AC-US-ACCT-001-08`                                                               |
-| US-ACCT-002 | ✅ Integrated | ✅ 15/15        | —                                                                                 |
+| US-ACCT-002 | ✅ Integrated | ✅ 16/16        | —                                                                                 |
 | US-ACCT-003 | ✅ Integrated | ✅ 11/11        | —                                                                                 |
 | US-ACCT-004 | ✅ Integrated | ✅ 9/9          | —                                                                                 |
 | US-ACCT-005 | ✅ Integrated | ✅ 13/13 met    | —                                                                                 |
@@ -263,6 +266,9 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
       stays on the acquired asset.
 - [x] `AC-US-ACCT-002-15` An evidenced Safe asset exchange that receives a USD stablecoin keeps it at its $1.00 face value and books the
       difference from the price paid, excluding any reported fee, to `Swap P&L`: a credit for a gain, a debit for a loss.
+- [x] `AC-US-ACCT-002-16` Each swap of the default Safe gets a separate revaluation, dated with the swap, that books the rest of its Safe
+      swap P&L (current value of what it received against the CoinGecko swap-day value of what it gave up, less the reported fee) between
+      `Swap P&L` and `Safe Market Value Adjustment`; `Cash — Safe` keeps the price paid and `Swap P&L` totals the Safe overview figure.
 
 #### Edge & Error Cases
 
@@ -289,6 +295,7 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 | `AC-US-ACCT-002-13`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
 | `AC-US-ACCT-002-14`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
 | `AC-US-ACCT-002-15`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
+| `AC-US-ACCT-002-16`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
 
 **Dependencies:** US-ACCT-001
 

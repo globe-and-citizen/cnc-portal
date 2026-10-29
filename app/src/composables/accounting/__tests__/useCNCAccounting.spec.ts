@@ -66,6 +66,8 @@ vi.mock('@/composables/vesting/useVestingEventsViaLogs', () => ({
 vi.mock('@/composables/investor/useSafeDepositRouterEventsViaLogs', () => ({
   useSafeDepositRouterEventsViaLogs: () => feeds.router
 }))
+// No Safe swap P&L to revalue: the report stays undefined and settled.
+vi.mock('@/composables/safe/useSafeSwapPnl', () => ({ useSafeSwapPnl: () => ({ data: {} }) }))
 
 import { useCNCAccounting } from '../useCNCAccounting'
 
@@ -148,18 +150,8 @@ describe('useCNCAccounting', () => {
       data: ref({
         ...mockTeamData,
         teamContracts: [
-          {
-            address: INVESTOR_V1,
-            type: 'InvestorV1',
-            deployer: INVESTOR_V1,
-            admins: []
-          },
-          {
-            address: INVESTOR_V2,
-            type: 'Investor',
-            deployer: INVESTOR_V2,
-            admins: []
-          }
+          { address: INVESTOR_V1, type: 'InvestorV1', deployer: INVESTOR_V1, admins: [] },
+          { address: INVESTOR_V2, type: 'Investor', deployer: INVESTOR_V2, admins: [] }
         ]
       }),
       isLoading: ref(false),
