@@ -65,6 +65,23 @@ describe('Safe swap transaction fees', () => {
     expect(assetLine(entry, 'AWETH')?.debit).toBe(usd('20'))
   })
 
+  it('books the entire fee once when the sold amount is split across several transfers', () => {
+    const rows = history().slice(0, 3)
+    const sold = rows[1]!
+    sold.value = '3000000'
+    rows.splice(2, 0, { ...sold, transferId: `${tx(2)}-2`, value: '17000000' })
+
+    const entry = swapAt(tx(2), [order({ executedFee: '4000000' })], rows)
+    expect(lineOf(entry, 'Transaction Fee Expense')?.debit).toBe(usd('4'))
+    expect(
+      entry.lines.filter((line) => line.account.family.name === 'Transaction Fee Expense')
+    ).toHaveLength(1)
+    expect(assetLine(entry, 'AWETH')?.debit).toBe(usd('16'))
+    expect(
+      entry.lines.reduce((sum, line) => sum + (line.debit ?? 0n) - (line.credit ?? 0n), 0n)
+    ).toBe(0n)
+  })
+
   it('values a fee taken from a volatile asset at its carrying cost, not its market price', () => {
     const received = transfer(3, 1, ROUTER, ADDR.safe, OTHER_TOKEN, '5000000000000000000')
     received.tokenInfo = {

@@ -223,8 +223,8 @@ function swapFeeKey(txHash: string | null | undefined, token: string | null | un
 }
 
 /**
- * Take the reported fee of a swap's sold token once, capped at the amount sold, so it lands
- * on a single outgoing leg of that token.
+ * Consume the reported fee across the sold token's outgoing legs, capped at the total sold.
+ * Keep any remainder for the next leg instead of dropping it when the first leg is smaller.
  */
 function takeSwapFee(
   fees: Map<string, bigint>,
@@ -233,9 +233,11 @@ function takeSwapFee(
   const key = swapFeeKey(row.txHash, row.token)
   const fee = fees.get(key)
   if (!fee) return {}
-  fees.delete(key)
   const amount = BigInt(row.amount)
-  return { feeRawAmount: String(fee < amount ? fee : amount) }
+  const taken = fee < amount ? fee : amount
+  if (taken === fee) fees.delete(key)
+  else fees.set(key, fee - taken)
+  return { feeRawAmount: String(taken) }
 }
 
 /** Map every trusted Safe transfer to a ledger entry, skipping ones that miss the Safe. */

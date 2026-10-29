@@ -50,23 +50,10 @@ function isBookableReceipt(entry: JournalEntryDraft): boolean {
   return assetDecimals(entry.token, entry.asset) !== null && entry.asset?.trusted !== false
 }
 
-/** Total of the carrying amounts given up, or null when any of them is unavailable. */
-function evidencedTotal(amounts: readonly (bigint | null)[]): bigint | null {
-  return amounts.reduce<bigint | null>(
-    (sum, amount) => (sum === null || amount === null ? null : sum + amount),
-    0n
-  )
-}
-
 /** Carrying amount of the part of a sold leg that CoW Protocol reports as its fee. */
 function feeCarryingAmount(entry: JournalEntryDraft): bigint {
   if (!entry.feeRawAmount || entry.carryingAmount === undefined) return 0n
   return (entry.carryingAmount * BigInt(entry.feeRawAmount)) / BigInt(entry.rawAmount)
-}
-
-/** Whether every asset a swap received is a USD stablecoin, which keeps its $1.00 face value. */
-function receivesUsdStablecoin(incoming: readonly JournalEntryDraft[]): boolean {
-  return incoming.every((entry) => isUsdPegged(entry.token))
 }
 
 /**
@@ -75,12 +62,17 @@ function receivesUsdStablecoin(incoming: readonly JournalEntryDraft[]): boolean 
  * carries the price paid and realizes nothing.
  */
 function bookReceipts(incoming: readonly JournalEntryDraft[], pricePaid: bigint): bigint {
-  if (!receivesUsdStablecoin(incoming)) {
+  if (!incoming.every((entry) => isUsdPegged(entry.token))) {
     allocatePricePaid(incoming, pricePaid)
     return 0n
   }
-  for (const entry of incoming) setCarryingAmount(entry, marketAmount(entry))
-  return incoming.reduce((sum, entry) => sum + marketAmount(entry), 0n) - pricePaid
+  let received = 0n
+  for (const entry of incoming) {
+    const amount = marketAmount(entry)
+    setCarryingAmount(entry, amount)
+    received += amount
+  }
+  return received - pricePaid
 }
 
 /** Split the price paid exactly across the received legs, in proportion to their quantities. */
@@ -132,47 +124,6 @@ function swapUsdLineDraft(
   })
 }
 
-/** The Transaction Fee Expense line of a swap, at the carrying amount of what the fee took. */
-function transactionFeeDraft(primary: JournalEntryDraft, amount: bigint): JournalEntryDraft {
-  return swapUsdLineDraft(primary, {
-    suffix: 'transaction-fee',
-    debit: 'Transaction Fee Expense',
-    credit: null,
-    amount,
-    memo: 'Transaction fee CoW Protocol took from the asset given up'
-  })
-}
-
-/**
- * The Swap P&L line of a swap: the Safe overview's P&L when the data layer attaches it, else
- * the result a received USD stablecoin realizes.
- */
-function swapPnlDraft(primary: JournalEntryDraft, pnl: bigint): JournalEntryDraft {
-  const isGain = pnl > 0n
-  return swapUsdLineDraft(primary, {
-    suffix: 'swap-pnl',
-    debit: isGain ? null : 'Swap P&L',
-    credit: isGain ? 'Swap P&L' : null,
-    amount: isGain ? pnl : -pnl,
-    memo: 'Assets received at their current value against the swap-day value given up'
-  })
-}
-
-/**
- * The part of the Swap P&L the Cash — Safe lines do not carry, so they keep the price paid.
- * A gain debits Safe Market Value Adjustment, a loss credits it.
- */
-function marketValueAdjustmentDraft(primary: JournalEntryDraft, gap: bigint): JournalEntryDraft {
-  const isGain = gap > 0n
-  return swapUsdLineDraft(primary, {
-    suffix: 'market-value-adjustment',
-    debit: isGain ? 'Safe Market Value Adjustment' : null,
-    credit: isGain ? null : 'Safe Market Value Adjustment',
-    amount: isGain ? gap : -gap,
-    memo: 'Swap P&L the Cash — Safe lines do not carry, as they keep the price paid'
-  })
-}
-
 /**
  * Book one exchange at the price actually paid: what was given up less the reported fee.
  * A received USD stablecoin realizes its gap from that price. When the data layer attaches
@@ -192,17 +143,44 @@ function bookExchange(
   }
   const primary = incoming[0]!
   const fee = outgoing.reduce((sum, entry) => sum + feeCarryingAmount(entry), 0n)
-  const overviewPnl = [...incoming, ...outgoing].find(
-    (entry) => entry.swapPnl !== undefined
-  )?.swapPnl
+  const overviewPnl =
+    incoming.find((entry) => entry.swapPnl !== undefined)?.swapPnl ??
+    outgoing.find((entry) => entry.swapPnl !== undefined)?.swapPnl
   const realized = bookReceipts(incoming, given - fee)
   const pnl = overviewPnl ?? realized
   const gap = pnl - realized
-  return [
-    ...(fee > 0n ? [transactionFeeDraft(primary, fee)] : []),
-    ...(pnl !== 0n ? [swapPnlDraft(primary, pnl)] : []),
-    ...(gap !== 0n ? [marketValueAdjustmentDraft(primary, gap)] : [])
-  ]
+  const lines: JournalEntryDraft[] = []
+  if (fee > 0n)
+    lines.push(
+      swapUsdLineDraft(primary, {
+        suffix: 'transaction-fee',
+        debit: 'Transaction Fee Expense',
+        credit: null,
+        amount: fee,
+        memo: 'Transaction fee CoW Protocol took from the asset given up'
+      })
+    )
+  if (pnl !== 0n)
+    lines.push(
+      swapUsdLineDraft(primary, {
+        suffix: 'swap-pnl',
+        debit: pnl > 0n ? null : 'Swap P&L',
+        credit: pnl > 0n ? 'Swap P&L' : null,
+        amount: pnl > 0n ? pnl : -pnl,
+        memo: 'Assets received at their current value against the swap-day value given up'
+      })
+    )
+  if (gap !== 0n)
+    lines.push(
+      swapUsdLineDraft(primary, {
+        suffix: 'market-value-adjustment',
+        debit: gap > 0n ? 'Safe Market Value Adjustment' : null,
+        credit: gap > 0n ? null : 'Safe Market Value Adjustment',
+        amount: gap > 0n ? gap : -gap,
+        memo: 'Swap P&L the Cash — Safe lines do not carry, as they keep the price paid'
+      })
+    )
+  return lines
 }
 
 /**
@@ -236,10 +214,11 @@ export function prepareSafeExchanges(drafts: readonly JournalEntryDraft[]): Jour
     if (entry.debit !== 'Cash — Safe') return
     const holding = holdings.get(entry.token) ?? { quantity: 0n, amount: 0n, complete: true }
     const amount = entry.carryingAmount ?? marketAmount(entry)
-    holding.quantity += BigInt(entry.rawAmount)
+    const quantity = BigInt(entry.rawAmount)
+    holding.quantity += quantity
     holding.amount += amount
     holding.complete &&=
-      BigInt(entry.rawAmount) === 0n ||
+      quantity === 0n ||
       (hasEvidencedValue(entry) && assetDecimals(entry.token, entry.asset) !== null)
     holdings.set(entry.token, holding)
   }
@@ -252,29 +231,36 @@ export function prepareSafeExchanges(drafts: readonly JournalEntryDraft[]): Jour
     const amount = evidenced ? (holding.amount * quantity) / holding.quantity : null
     if (exchange && amount !== null) setCarryingAmount(entry, amount)
     if (holding) {
+      const depletion = exchange && amount !== null ? amount : marketAmount(entry)
       holding.quantity -= quantity
-      holding.amount -= exchange && amount !== null ? amount : marketAmount(entry)
-      if (!exchange && (amount === null || amount !== marketAmount(entry))) holding.complete = false
+      holding.amount -= depletion
+      if (!exchange && amount !== depletion) holding.complete = false
       if (holding.quantity < 0n || holding.amount < 0n) holding.complete = false
     }
     return amount
   }
   for (const group of operations.values()) {
-    const exchange = group.filter((entry) => entry.useCase === 'SAFE-SWAP')
-    const other = group.filter((entry) => entry.useCase !== 'SAFE-SWAP')
-    for (const entry of other) {
-      add(entry)
-      remove(entry, false)
+    const incoming: JournalEntryDraft[] = []
+    const outgoing: JournalEntryDraft[] = []
+    for (const entry of group) {
+      if (entry.useCase === 'SAFE-SWAP') {
+        if (entry.debit === 'Cash — Safe') incoming.push(entry)
+        if (entry.credit === 'Cash — Safe') outgoing.push(entry)
+      } else {
+        add(entry)
+        remove(entry, false)
+      }
     }
-    if (!exchange.length) {
-      result.push(...group)
-      continue
+    if (incoming.length || outgoing.length) {
+      let given: bigint | null = 0n
+      for (const entry of outgoing) {
+        // Every outflow must deplete its holding, even after another leg lacks a basis.
+        const amount = remove(entry, true)
+        given = given === null || amount === null ? null : given + amount
+      }
+      group.push(...bookExchange(incoming, outgoing, given))
+      for (const entry of incoming) add(entry)
     }
-    const incoming = exchange.filter((entry) => entry.debit === 'Cash — Safe')
-    const outgoing = exchange.filter((entry) => entry.credit === 'Cash — Safe')
-    const given = evidencedTotal(outgoing.map((entry) => remove(entry, true)))
-    group.push(...bookExchange(incoming, outgoing, given))
-    for (const entry of incoming) add(entry)
     result.push(...group)
   }
   return result
