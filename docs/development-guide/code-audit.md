@@ -84,6 +84,8 @@ assumptions and confidence separately. A finding count is not a quality score or
 
 ## Decision and Correction Tracking
 
+Organize local artifacts using the [Local Reports Workspace guide](./local-reports.md), keeping its index and producer-owned paths intact.
+
 Maintain a current summary and dated case history, not only a static diagnostic report. A row has separate fields for decision, delivery and
 validation. A closed issue or merged PR does not automatically establish that the observed defect was corrected or accepted.
 

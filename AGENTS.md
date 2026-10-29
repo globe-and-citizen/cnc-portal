@@ -14,6 +14,8 @@ Operational guidance for AI coding agents working in this repository. Human cont
 
 - At the start of every agent session, read `reports/planning.md` when it exists. It is a local, Git-ignored work log for commitments made
   during agent conversations; never stage or commit it.
+- Before creating or reorganizing local reports, use the local `reports/README.md` index and follow the
+  [Local Reports Workspace guide](./docs/development-guide/local-reports.md). Keep producer-owned paths and historical evidence intact.
 - When a concrete action is agreed during a conversation, add it to `Actions ouvertes` with a priority, status, next action, and concise
   context or evidence. Keep statuses current: `À faire`, `En cours`, `Bloqué`, or `À vérifier`.
 - Do not treat the scratchpad as canonical product or implementation documentation. Durable decisions, acceptance criteria, issue status,
