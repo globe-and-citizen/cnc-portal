@@ -77,7 +77,7 @@ For each transaction the Safe swap overview counts as a swap (the Safe sent one 
 [CoW Protocol order query](../../../app/src/queries/cow.queries.ts) that the overview reads, with the same swap and fee rules. Accounting
 reports wait while these lookups load (the `Safe swap fees` source), then read every answer at once, so the books are rebuilt once rather
 than once per answer. A fee reported for the Safe's own fulfilled order is booked as `Transaction Fee Expense`; a missing or failed answer
-keeps the fee inside the exchange result and never makes Accounting partial.
+keeps the fee inside the acquired asset's price and never makes Accounting partial.
 
 Executable evidence: [Gateway request tests](../../../app/src/queries/__tests__/safeClient.queries.spec.ts),
 [pagination and metadata unit tests](../../../app/src/queries/__tests__/safe.queries.spec.ts),

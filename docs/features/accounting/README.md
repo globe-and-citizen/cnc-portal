@@ -40,21 +40,24 @@ Accounting uses complete Safe transfer history to recognize actual assets receiv
 ERC-20 is identified by its network and contract address; its original currency and exact quantity remain on the journal lines. Token
 discovery does not expand the tokens allowed in CNC payment forms.
 
-A simple exchange requires opposing different-asset legs sharing a transaction and external settlement counterparty. The acquired asset is
-debited at its own historical market rate and the disposed asset credited at its weighted-average carrying value. The difference is an
-`Asset Exchange Gain` or `Asset Exchange Loss`, never `Service Revenue`. Stablecoin spent does not set the acquired asset's unit price or
-hide an exchange loss in its carrying value. Current portfolio prices never replace historical accounting evidence.
+A simple exchange requires opposing different-asset legs sharing a transaction and external settlement counterparty. An exchange is booked
+at the price actually paid: the disposed asset is credited at its weighted-average carrying value, and the acquired asset is debited at that
+value less the reported fee. That price stays fixed; no market price revalues it, and an exchange never records `Service Revenue`.
 
-A fee CoW Protocol reports for the Safe's own fulfilled order is a `Transaction Fee Expense` of that exchange, valued at the sold asset's
-market rate, so the exchange gain or loss excludes it, as in the Safe's swap overview. Without a reported fee, no fee is inferred and the
-whole difference stays an exchange gain or loss.
+A fee CoW Protocol reports for the Safe's own fulfilled order is a `Transaction Fee Expense` of that exchange, valued at the carrying value
+of the part of the disposed asset it took. Without a reported fee, no fee is inferred and the whole price paid stays on the acquired asset.
 
-Ancillary mints and ambiguous batches require classification. Missing decimals, rate, or acquisition basis keeps Accounting incomplete.
-Cross-transaction intents and arbitrary DeFi actions need additional protocol evidence. See the
+A received USD stablecoin keeps its $1.00 face value instead. The difference between that face value and the price paid, as in a sale of an
+asset for a stablecoin or an exchange between two stablecoins with slippage, is the swap's realized result, booked to the `Swap P&L` income
+account: credited with a gain, debited with a loss. An exchange whose received asset carries the price paid books no `Swap P&L`. This
+realized result differs from the [Safe swap P&L](../accounts/safe-swap-pnl-use-cases.md) indicator, which compares swap-day and current
+market prices. Ancillary mints and ambiguous batches require classification. Missing decimals or acquisition basis keeps Accounting
+incomplete. Cross-transaction intents and arbitrary DeFi actions need additional protocol evidence. See the
 [Accounting Read Model](../../implementation/accounting-read-model/README.md#safe-assets-and-exchanges) for these boundaries and the
 [exchange regression suite](../../../app/src/utils/accounting/__tests__/safeExchanges.spec.ts) and
-[market-rate regressions](../../../app/src/utils/accounting/__tests__/safeExchanges.marketRates.spec.ts) for current executable evidence.
-Human validation of external swap journeys remains pending. Use the [manual Safe exchange checks](./safe-swap-test-script.md). The
+[price-paid regressions](../../../app/src/utils/accounting/__tests__/safeExchanges.pricePaid.spec.ts) and
+[Swap P&L regressions](../../../app/src/utils/accounting/__tests__/safeExchanges.swapPnl.spec.ts) for current executable evidence. Human
+validation of external swap journeys remains pending. Use the [manual Safe exchange checks](./safe-swap-test-script.md). The
 [direct asset movement product contract](./direct-movement-policy.md) defines company custody, unsolicited receipts, historical coverage,
 classification, and reconciliation across domains. Its target behaviour remains pending implementation; new ACs are unchecked.
 
@@ -105,7 +108,7 @@ three consecutive missing criteria use inclusive ranges with full AC IDs at both
 | User Story  | Main Journey  | Coverage Target | Gaps                                                                              |
 | ----------- | ------------- | --------------- | --------------------------------------------------------------------------------- |
 | US-ACCT-001 | ✅ Integrated | ⚠️ 11/12 met    | `AC-US-ACCT-001-08`                                                               |
-| US-ACCT-002 | ✅ Integrated | ✅ 14/14        | —                                                                                 |
+| US-ACCT-002 | ✅ Integrated | ✅ 15/15        | —                                                                                 |
 | US-ACCT-003 | ✅ Integrated | ✅ 11/11        | —                                                                                 |
 | US-ACCT-004 | ✅ Integrated | ✅ 9/9          | —                                                                                 |
 | US-ACCT-005 | ✅ Integrated | ✅ 13/13 met    | —                                                                                 |
@@ -130,6 +133,8 @@ implemented use cases.
     - [bankFeeAssembly.spec.ts](../../../app/src/utils/accounting/__tests__/bankFeeAssembly.spec.ts)
     - [internalAddresses.spec.ts](../../../app/src/utils/accounting/__tests__/internalAddresses.spec.ts)
     - [safeExchanges.spec.ts](../../../app/src/utils/accounting/__tests__/safeExchanges.spec.ts)
+    - [safeExchanges.pricePaid.spec.ts](../../../app/src/utils/accounting/__tests__/safeExchanges.pricePaid.spec.ts)
+    - [safeExchanges.swapPnl.spec.ts](../../../app/src/utils/accounting/__tests__/safeExchanges.swapPnl.spec.ts)
     - [safeExchanges.fees.spec.ts](../../../app/src/utils/accounting/__tests__/safeExchanges.fees.spec.ts)
 
 - **Payroll**
@@ -194,8 +199,8 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 
 - [x] `AC-US-ACCT-001-04` Every posted journal entry balances.
 - [x] `AC-US-ACCT-001-05` USD-pegged tokens use a one-dollar rate, native tokens use their immutable transaction-date snapshot, and SHER
-      uses its compensation valuation policy. Discovered assets use their own contract-based historical price source; exchange consideration
-      never substitutes for a missing market rate.
+      uses its compensation valuation policy. Discovered assets use their own contract-based historical price source, except an asset
+      received in a Safe swap, which carries the price actually paid.
 - [x] `AC-US-ACCT-001-06` Payroll obligations are recognized when an eligible work week ends, before settlement.
 - [x] `AC-US-ACCT-001-07` Transfers between known company accounts do not change revenue or expenses.
 - [ ] `AC-US-ACCT-001-08` Closing cash balances are reconciled with the corresponding on-chain balances.
@@ -251,11 +256,13 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 - [x] `AC-US-ACCT-002-07` Internal transfers identify both concrete deployment accounts without creating revenue or expense.
 - [x] `AC-US-ACCT-002-08` Pagination changes visible rows, not filtered totals.
 - [x] `AC-US-ACCT-002-09` Labels and accounts follow the canonical [Accounting rule catalogue](./journal-entry-catalogue.md).
-- [x] `AC-US-ACCT-002-13` An evidenced Safe asset exchange preserves both asset quantities and realizes the difference from carrying basis
-      without creating service revenue.
+- [x] `AC-US-ACCT-002-13` An evidenced Safe asset exchange preserves both asset quantities and books the acquired asset at the price
+      actually paid, without any `Swap P&L` or service revenue.
 - [x] `AC-US-ACCT-002-14` A fee CoW Protocol reports for the Safe's own fulfilled order in an evidenced Safe asset exchange is booked as
-      `Transaction Fee Expense` in that exchange, and its exchange gain or loss excludes the fee; without a reported fee, the whole
-      difference stays an exchange gain or loss.
+      `Transaction Fee Expense` in that exchange and left out of the acquired asset's price; without a reported fee, the whole price paid
+      stays on the acquired asset.
+- [x] `AC-US-ACCT-002-15` An evidenced Safe asset exchange that receives a USD stablecoin keeps it at its $1.00 face value and books the
+      difference from the price paid, excluding any reported fee, to `Swap P&L`: a credit for a gain, a debit for a loss.
 
 #### Edge & Error Cases
 
@@ -281,6 +288,7 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 | `AC-US-ACCT-002-12`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
 | `AC-US-ACCT-002-13`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
 | `AC-US-ACCT-002-14`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
+| `AC-US-ACCT-002-15`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
 
 **Dependencies:** US-ACCT-001
 

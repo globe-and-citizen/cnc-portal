@@ -10,7 +10,8 @@ This catalogue covers **Safe transactions that exchange one asset for another**.
 **calculation rules, related user stories, and the figures it produces**. [US-SAFE-007](./README.md#us-safe-007-review-the-safe-swap-pl)
 owns the user-facing acceptance criteria. This document owns how each figure is calculated. The Safe swap P&L is a treasury indicator: it
 creates no journal entry, and [Accounting](../accounting/journal-entry-catalogue.md#safe-swap--evidenced-safe-asset-exchange) keeps its own
-booking of the same exchange.
+booking of the same exchange. Accounting records a realized `Swap P&L` only when a swap receives a USD stablecoin, measured from the price
+paid rather than from market prices, so its amount differs from the figures below.
 
 ## Reading the Catalogue
 
