@@ -187,7 +187,7 @@ backend instances. Safe provider requests retain their browser-only coordination
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `963057e2b8b21dc19eb8790662381a590944e17a`
+**Implementation evidence reviewed against:** `5e7ce0d699fda47f5921ce7e9e4b28a23cf92e73`
 
 - [Query barrel](../../../app/src/queries/index.ts), [query factory](../../../app/src/queries/queryFactory.ts), and
   [single-file upload query](../../../app/src/queries/file.queries.ts)
