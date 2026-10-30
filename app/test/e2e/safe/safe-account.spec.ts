@@ -243,6 +243,7 @@ test.describe('Safe Account', { tag: ['@browser', '@mocked'] }, () => {
       await expect.poll(() => safeOwners(fixture.safe)).not.toContain(E2E_MEMBER)
 
       await addSigner()
+      await expect(memberOwner).toBeVisible({ timeout: 30_000 })
       await page.locator('[data-test="update-threshold-button"]').click()
       const threshold = page.getByRole('dialog', { name: 'Update Threshold' })
       await threshold.locator('[data-test="threshold-input"]').fill('2')

@@ -11,6 +11,11 @@ vi.mock('@/constant/index', async (importOriginal) => ({
   currentChainId: 137
 }))
 
+/** Retry timing is asserted on its own; the read queue's spacing has its own spec. */
+vi.mock('../safe.readQueue', () => ({
+  queueSafeRead: <T>(read: () => Promise<T>) => read()
+}))
+
 const { safeBalancesQueryOptions } =
   await vi.importActual<typeof import('../safeClient.queries')>('../safeClient.queries')
 const { useGetSafeInfoQuery, useGetSafeTransactionQuery } =

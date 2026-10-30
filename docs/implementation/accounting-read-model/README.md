@@ -112,18 +112,19 @@ response interpretation retains the existing six-decimal rate precision; malform
 Accounting refresh retries failed provider queries without refetching successful dates. It never falls back to the current market price.
 Stablecoins retain their one-dollar peg, and SHER remains under its separate multiplier realization policy.
 
-Safe histories now refresh approximately every five minutes while retaining complete pagination and stable transfer identities. CoinGecko
-queries use ordinary Axios/TanStack observers calling the CNC backend, with cancellation and no automatic retries. The backend's
-[shared Redis market cache](../market-data-cache/README.md) preserves raw responses, coordinates misses and provider admission, and shares a
-429 cooldown while continuing to serve valid cache hits. Distinct historical dates keep independent error states. Historical errors recover
-on explicit refresh rather than automatic polling. Current supported-token prices retain the moderate preset and five-minute polling;
-verified contract identities and recovered token metadata use the once preset with 24-hour retention. Safe Transaction Service reads use
-direct Axios requests, apply the bounded Safe-specific retry policy, and expose independent errors without a shared request queue or
-provider-wide cooldown. Their unused history cache inherits the moderate preset's two-minute retention. Production GETs use the optional
-configured API key through Axios. Complete pagination and stable transfer identities are preserved; metadata recovery shares the observer's
-TanStack client and copies enriched rows without mutating provider objects. Source inclusion, exchange classification, precision and
-rate-of-record policy remain unchanged. A failed later Safe page never publishes a partial replacement feed. See
-[Client Data Access](../client-data-access/README.md#browser-request-coordination) for the browser and shared-backend boundaries.
+Safe transfer histories refresh approximately every minute and when the tab regains focus, like the Safe balance, while retaining complete
+pagination and stable transfer identities. CoinGecko queries use ordinary Axios/TanStack observers calling the CNC backend, with
+cancellation and no automatic retries. The backend's [shared Redis market cache](../market-data-cache/README.md) preserves raw responses,
+coordinates misses and provider admission, and shares a 429 cooldown while continuing to serve valid cache hits. Distinct historical dates
+keep independent error states. Historical errors recover on explicit refresh rather than automatic polling. Current supported-token prices
+retain the moderate preset and five-minute polling; verified contract identities and recovered token metadata use the once preset with
+24-hour retention. Safe Transaction Service reads use direct Axios requests, apply the bounded Safe-specific retry policy, and expose
+independent errors without a shared request queue or provider-wide cooldown. Their unused history cache inherits the moderate preset's
+two-minute retention. Production GETs use the optional configured API key through Axios. Complete pagination and stable transfer identities
+are preserved; metadata recovery shares the observer's TanStack client and copies enriched rows without mutating provider objects. Source
+inclusion, exchange classification, precision and rate-of-record policy remain unchanged. A failed later Safe page never publishes a partial
+replacement feed. See [Client Data Access](../client-data-access/README.md#browser-request-coordination) for the browser and shared-backend
+boundaries.
 
 Each contract-event query is also keyed by its normalized generation targets: lowercase address plus effective deployment `fromBlock`,
 sorted independently of API order. A later or asynchronously resolved boundary therefore selects a distinct history range. Duplicate
@@ -144,10 +145,11 @@ historical-valuation rules apply to every retained movement. Executable evidence
 [Safe source-mapping tests](../../../app/src/utils/accounting/__tests__/safe.spec.ts).
 
 The authoritative Safe source is `/transfers/`, paginated to exhaustion, deduplicated by service `transferId`, and refreshed approximately
-every five minutes. It includes real ERC-20 `transferFrom` settlements that cannot be inferred from the Safe multisig call's top-level
-calldata. Missing token metadata is read from its contract when possible. Metadata must match the transfer's contract address; unsupported
-or absent decimals retain raw movements with a completeness diagnostic. The exact monetary layer currently supports token precision from
-zero through 18 decimals. A larger precision remains unavailable rather than being silently rounded or interpreted as native.
+every minute and on window focus, together with the Safe balance. It includes real ERC-20 `transferFrom` settlements that cannot be inferred
+from the Safe multisig call's top-level calldata. Missing token metadata is read from its contract when possible. Metadata must match the
+transfer's contract address; unsupported or absent decimals retain raw movements with a completeness diagnostic. The exact monetary layer
+currently supports token precision from zero through 18 decimals. A larger precision remains unavailable rather than being silently rounded
+or interpreted as native.
 
 Safe provider reads retry temporary 408, 425, 429, server and network failures up to three times at fixed intervals. Rate-limit recovery
 respects `Retry-After`; cancellation, other client errors, malformed responses and an explicit monthly-quota-exceeded response do not retry
@@ -737,7 +739,7 @@ because deposits and company-pocket transfers are not manual assignment targets.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `3526c1933f72d1d8bf90914cb414f2b288ced50b`
+**Implementation evidence reviewed against:** `63674d851d658adb4edded4b654efdf111991390`
 
 - [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts),
   [source-status projection](../../../app/src/composables/accounting/useAccountingStatus.ts),
