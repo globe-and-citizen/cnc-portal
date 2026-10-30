@@ -28,6 +28,15 @@ import type {
 
 const chainId = currentChainId
 
+/**
+ * Safe movements refresh as often as the Gateway balance, and again when the tab regains focus,
+ * so the Safe page and the Accounting books show a new movement together.
+ */
+export const safeMovementsRefresh = {
+  refetchInterval: 60_000,
+  refetchOnWindowFocus: true
+} as const
+
 const safeAddressKey = (address: string | undefined): string | undefined =>
   address && isAddress(address.trim()) ? normalizeSafeAddress(address) : address
 
@@ -86,9 +95,9 @@ function safeTransfersQueryOptions(
 ) {
   return {
     ...queryPresets.moderate,
+    ...safeMovementsRefresh,
     retry: retrySafeRead,
     retryDelay: safeReadRetryDelay,
-    refetchInterval: 300_000,
     queryKey: safeKeys.transfers(safeAddress, chainId),
     enabled: Boolean(safeAddress),
     queryFn: ({ signal }: { signal: AbortSignal }): Promise<SafeIncomingTransfer[]> =>
@@ -255,8 +264,7 @@ export function useGetSafeIncomingTransfersQuery(params: GetSafeIncomingTransfer
 
   return useQuery<SafeIncomingTransfer[]>({
     ...queryPresets.moderate,
-
-    refetchInterval: 300_000,
+    ...safeMovementsRefresh,
     retry: retrySafeRead,
     retryDelay: safeReadRetryDelay,
     queryKey: computed(() => safeKeys.incomingTransfers(safeAddress.value, queryParams?.limit)),

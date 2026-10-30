@@ -214,6 +214,18 @@ describe('safe queries', () => {
     expect(get).toHaveBeenCalledTimes(2)
   })
 
+  it.each([
+    ['all movements', () => safeQueries.useGetSafeTransfersQuery],
+    ['incoming transfers', () => safeQueries.useGetSafeIncomingTransfersQuery]
+  ])('refreshes %s every minute and when the tab regains focus', (_, hook) => {
+    hook()({ pathParams: { safeAddress: LOWERCASE_SAFE_ADDRESS } })
+
+    expect(toValue(useQueryFn.mock.calls.at(-1)?.[0])).toMatchObject({
+      refetchInterval: 60_000,
+      refetchOnWindowFocus: true
+    })
+  })
+
   it('reads the Safe address code on the configured chain and reports an empty account as 0x', async () => {
     mockWagmiCore.getBytecode.mockResolvedValueOnce(undefined)
 
