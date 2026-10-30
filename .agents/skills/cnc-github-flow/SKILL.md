@@ -7,13 +7,14 @@ description: Manage CNC Portal GitHub issues, Sprint hierarchy, pull requests, r
 
 Use `gh`, not the GitHub MCP. Keep GitHub text in English and follow the title conventions and public-repository hygiene from `AGENTS.md`.
 
-## Sprint and Goal issue titles
+## Sprint, Goal and Release issue titles
 
-Sprint planning and Sprint Goal issues use their own titles without a Conventional Commit type or gitmoji:
+Sprint planning, Sprint Goal and release issues use their own titles without a Conventional Commit type or gitmoji:
 
 - Sprint root: `[Sprint] Sprint <number> plan — <date range>`.
 - Planned Goal: `[Goals] <outcome> — Sprint <number>`.
 - Catch-all Goal: `[Goals] Sprint <number> Bug and perf`.
+- Release: `[Release] vX.Y.Z`, for example `[Release] v0.17.0`.
 
 Keep Conventional Commit titles for ordinary delivery and coordination issues, commits, and pull requests. Do not rename historical Sprint
 or Goal issues solely to normalize older title variants.
@@ -141,6 +142,16 @@ stop at a recommendation or request the same authorization again.
    the artifact complete.
 5. Verify the tracking issue's kanban membership and fields against the current implementation stage, including its actual dates. A
    published PR or successful CI does not establish issue setup, required acceptance, or Project completion.
+
+## Release preparation and follow-up
+
+For a repository release, follow the canonical [release procedure](../../../docs/platform/RELEASE_AUTOMATION.md). Create or reuse its
+tracking issue from the [release issue template](../../../.github/ISSUE_TEMPLATE/release.md), complete native hierarchy and Project setup,
+and use the [release PR template](../../../.github/PULL_REQUEST_TEMPLATE/release.md) for promotion from `release/vX.Y.Z` to `main`.
+
+Assess combined-release relationships and record exact revisions, applicable evidence, independent review and required human decisions.
+After merge, verify publication and the need for `main` → `develop` synchronization under the guide. Keep the issue open, or reopen it,
+while its required publication or follow-up evidence is missing; a closing keyword or workflow success does not establish its completion.
 
 ## Review routing
 
