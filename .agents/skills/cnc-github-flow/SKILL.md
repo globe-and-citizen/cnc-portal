@@ -46,9 +46,27 @@ or Goal issues solely to normalize older title variants.
 5. Create every Sprint Goal from [the Sprint Goal template](../../../.github/ISSUE_TEMPLATE/sprint_goal.md). Its preset title is for a
    planned outcome; change it to `[Goals] Sprint <number> Bug and perf` for the separate catch-all Goal. Complete the Goal type, expected
    outcome, exit criteria, product story impact, canonical references, owner and validator, scope boundary, and relationship plan for either
-   kind. Match its Project Sprint Iteration to the Sprint root and classify its Size as `Goals`. Keep the root's original Goal checklist
-   limited to planned outcomes.
-6. Read back the child's native parent and the parent's sub-issue list. Resolve any mismatch before treating the issue as placed.
+   kind. Keep the root's original Goal checklist limited to planned outcomes.
+6. Add the issue to the CNC Kanban Board and initialize every applicable field using the
+   [Kanban Project field contract](../../../docs/development-guide/kanban-project.md). Inspect live field options and iterations, set Size,
+   Status and Priority, resolve Sprint Iteration from agreed scope, and assess Blocking and actual implementation dates. This also applies
+   to reused issues and cross-repository children. Do not rely on auto-add workflows or native parent attachment to populate the card.
+7. Read back the child's native parent, the parent's sub-issue list, and the exact Project item with all applicable fields. Resolve any
+   mismatch before treating issue setup as complete; report unavailable access or missing evidence explicitly.
+
+## Maintain the issue's kanban card
+
+1. Before implementation, verify the tracking issue's membership and fields under the
+   [field contract](../../../docs/development-guide/kanban-project.md). When implementation actually begins, set Start date and the
+   appropriate Status. Preserve an earlier evidenced Start date when resuming work.
+2. At implementation completion, set End date to the actual finish date and move to Implementation Done or Validation as appropriate.
+   Required review or acceptance remains pending under the issue's own criteria.
+3. On an agreed scope, Sprint, priority, blocker or lifecycle change, reconcile the affected card fields. Reopening implementation clears
+   its current End date while preserving the previous completion evidence and original Start date.
+4. At closure and any eligible parent closure, reconcile each issue's own fields and required validation; do not copy a child's dates or
+   completion status into its parent.
+5. Read back the exact Project item after each update. Check the lifecycle's required values and justified blanks before reporting success;
+   preserve unrelated Project cards and manual values unless the authorized change requires correcting them.
 
 ## Propagate issue changes through the hierarchy
 
@@ -80,7 +98,7 @@ When an issue's scope, plan, status, blocker, validation evidence, or completion
    `Corrective delivery status`, or another heading.
 4. Reconcile a moved issue with both its old and new parent chains. Update parent summaries only for concrete scope, dependency, blocker, or
    outcome changes, applying each level's contract. Reassess each affected issue's Project status against its own exit criteria and update
-   it when warranted. After a closure, apply the parent-closure procedure below.
+   it when warranted. Reconcile affected kanban fields under the field contract. After a closure, apply the parent-closure procedure below.
 5. Read back updated descriptions, comments, checklists, native relationships, and project statuses. Leave unresolved decisions or missing
    evidence visible rather than presenting an affected issue as complete.
 
@@ -121,6 +139,8 @@ stop at a recommendation or request the same authorization again.
    Keep unresolved required guarantees visible in drafts and resolve them before requesting review. Write multiline Markdown to a body file
    and pass it through `--body-file`; do not pass escaped `\n` in a shell `--body` string. Read the published body back before considering
    the artifact complete.
+5. Verify the tracking issue's kanban membership and fields against the current implementation stage, including its actual dates. A
+   published PR or successful CI does not establish issue setup, required acceptance, or Project completion.
 
 ## Review routing
 
