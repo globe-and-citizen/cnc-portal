@@ -1,7 +1,7 @@
 ---
 name: Release
 about: Prepare, validate and track a repository release and its follow-up
-title: "chore: 🔧 release vX.Y.Z"
+title: "[Release] vX.Y.Z"
 labels: ""
 assignees: ""
 ---

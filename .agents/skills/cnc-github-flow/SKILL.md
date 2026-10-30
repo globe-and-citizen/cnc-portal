@@ -7,13 +7,14 @@ description: Manage CNC Portal GitHub issues, Sprint hierarchy, pull requests, r
 
 Use `gh`, not the GitHub MCP. Keep GitHub text in English and follow the title conventions and public-repository hygiene from `AGENTS.md`.
 
-## Sprint and Goal issue titles
+## Sprint, Goal and Release issue titles
 
-Sprint planning and Sprint Goal issues use their own titles without a Conventional Commit type or gitmoji:
+Sprint planning, Sprint Goal and release issues use their own titles without a Conventional Commit type or gitmoji:
 
 - Sprint root: `[Sprint] Sprint <number> plan — <date range>`.
 - Planned Goal: `[Goals] <outcome> — Sprint <number>`.
 - Catch-all Goal: `[Goals] Sprint <number> Bug and perf`.
+- Release: `[Release] vX.Y.Z`, for example `[Release] v0.17.0`.
 
 Keep Conventional Commit titles for ordinary delivery and coordination issues, commits, and pull requests. Do not rename historical Sprint
 or Goal issues solely to normalize older title variants.

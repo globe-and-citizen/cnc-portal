@@ -6,11 +6,12 @@ contract upgrades require their own explicitly scoped work and evidence.
 
 ## Entry points and responsibilities
 
-- Create the tracking issue from the [release issue template](../../.github/ISSUE_TEMPLATE/release.md).
+- Create the tracking issue from the [release issue template](../../.github/ISSUE_TEMPLATE/release.md), titled `[Release] vX.Y.Z`.
 - Prepare the promotion PR using the [release PR template](../../.github/PULL_REQUEST_TEMPLATE/release.md).
 - Follow [AGENTS.md](../../AGENTS.md) and the [GitHub flow skill](../../.agents/skills/cnc-github-flow/SKILL.md) for assignment, native
   hierarchy, Kanban fields, review and publication. Follow [commit conventions](../../.github/copilot-instructions/commit-conventions.md)
-  for English issue/PR titles, for example `chore: 🔧 release vX.Y.Z`.
+  for English commit/PR titles, for example `chore: 🔧 release vX.Y.Z`. Release issues follow the
+  [dedicated issue title rules](../../.agents/skills/cnc-github-flow/SKILL.md#sprint-goal-and-release-issue-titles).
 
 The issue records a release owner, independent technical reviewer, final release decision owner and applicable Product/QA validator. It
 links the baseline, included deliveries, canonical expectations, validation, blockers and follow-up. Technical checks, human acceptance,
