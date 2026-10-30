@@ -109,25 +109,26 @@ needed and unavailable results can be retried by explicit Accounting refresh. Du
 available and uncached reads fail with 429 and the remaining retry window.
 
 Safe information, complete transfer histories, Gateway holdings and current prices inherit the moderate preset's one-minute freshness. Safe
-information, histories and current-price observers poll every five minutes; Gateway balances poll every minute. The transaction queue polls
-every minute while a pending transaction exists and every five minutes otherwise; a single transaction detail does not poll. Successful
-token metadata and verified coin identities use the once preset with 24-hour retention. Transaction Service queries inherit the moderate
-preset's two-minute unused-cache retention; Gateway balances and current prices retain unused data for 30 minutes. Successful historical
-price snapshots use the once preset, remain fresh without polling, and retain unused cache entries for the lifetime of the query client.
-This explicitly disables the shared query client's polling interval for historical reads. Each query inherits freshness and declares its
-polling cadence. Periodic observers do not poll in background tabs or refetch on window focus. Transaction Service queries inherit the
-Safe-specific bounded retries and also recover on periodic or explicit refresh. Gateway and Transaction Service queries retry temporary 408,
-425, 429, server and network failures up to three times. The interval stays fixed at five seconds for ordinary transient failures and thirty
-seconds for HTTP 429, and waits longer when the provider's numeric or HTTP-date `Retry-After` requires it. HTTP 404 means Safe services do
-not know the resource and is never retried. Gateway balances also stop polling while they answer 404, and Safe information keeps its
-five-minute refresh with a single request each time, so a Safe not indexed yet does not trigger an endless series of retries; it loads when
-the user tries again or at the next Safe information refresh. The [shared recovery policy](../../../app/src/queries/safe.recovery.ts) owns
-the retry schedule; a pure Safe model utility classifies the 404 answer for the queries and the Safe overview notice. Because a 404 cannot
-tell an unindexed Safe from an address with no contract, the Safe page first reads the address code on the configured chain through
-`useGetSafeBytecodeQuery` and mounts its Safe service readers only once a contract is confirmed or that read fails. Initial reads remain
-pending through recovery, so successful responses update the mounted UI without a reload. Cancellation, other client errors, malformed
-responses and an explicit monthly-quota-exceeded response do not retry automatically. CoinGecko and token-metadata reads disable automatic
-retries.
+information, multisig histories and current-price observers poll every five minutes; Gateway balances and the Safe transfer and
+incoming-transfer histories poll every minute and refetch when the tab regains focus, so a new movement reaches the Safe page and the
+Accounting books together. The transaction queue polls every minute while a pending transaction exists and every five minutes otherwise; a
+single transaction detail does not poll. Successful token metadata and verified coin identities use the once preset with 24-hour retention.
+Transaction Service queries inherit the moderate preset's two-minute unused-cache retention; Gateway balances and current prices retain
+unused data for 30 minutes. Successful historical price snapshots use the once preset, remain fresh without polling, and retain unused cache
+entries for the lifetime of the query client. This explicitly disables the shared query client's polling interval for historical reads. Each
+query inherits freshness and declares its polling cadence. Periodic observers do not poll in background tabs; apart from those Safe balances
+and movements, they do not refetch on window focus. Transaction Service queries inherit the Safe-specific bounded retries and also recover
+on periodic or explicit refresh. Gateway and Transaction Service queries retry temporary 408, 425, 429, server and network failures up to
+three times. The interval stays fixed at five seconds for ordinary transient failures and thirty seconds for HTTP 429, and waits longer when
+the provider's numeric or HTTP-date `Retry-After` requires it. HTTP 404 means Safe services do not know the resource and is never retried.
+Gateway balances also stop polling while they answer 404, and Safe information keeps its five-minute refresh with a single request each
+time, so a Safe not indexed yet does not trigger an endless series of retries; it loads when the user tries again or at the next Safe
+information refresh. The [shared recovery policy](../../../app/src/queries/safe.recovery.ts) owns the retry schedule; a pure Safe model
+utility classifies the 404 answer for the queries and the Safe overview notice. Because a 404 cannot tell an unindexed Safe from an address
+with no contract, the Safe page first reads the address code on the configured chain through `useGetSafeBytecodeQuery` and mounts its Safe
+service readers only once a contract is confirmed or that read fails. Initial reads remain pending through recovery, so successful responses
+update the mounted UI without a reload. Cancellation, other client errors, malformed responses and an explicit monthly-quota-exceeded
+response do not retry automatically. CoinGecko and token-metadata reads disable automatic retries.
 
 Accounting deduplicates contract discovery and coin/date targets, then consumes their independent observers. Missing, malformed or failed
 rates remain explicit valuation gaps without a current-price fallback. The existing Accounting refresh retries failed query observers;
@@ -188,11 +189,15 @@ The query unit tests cover request parameters, response validation, pagination a
 tests do not establish cache sharing, refresh or observer lifecycle behaviour.
 
 TanStack caches belong to one browser session. The additional backend Redis cache coordinates CoinGecko across users, tabs, devices and
-backend instances. Safe provider requests retain their browser-only coordination boundary.
+backend instances. Safe provider requests retain their browser-only coordination boundary. Within one browser session, every Transaction
+Service read waits its turn in the [Safe read queue](../../../app/src/queries/safe.readQueue.ts): reads start one after another, at least
+500 ms apart, because simultaneous reads (one per team Safe on the Accounting pages) trip the provider's per-second limit and would
+otherwise wait out the 30-second HTTP 429 retry interval. Executable evidence:
+[read queue tests](../../../app/src/queries/__tests__/safe.readQueue.spec.ts).
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `3526c1933f72d1d8bf90914cb414f2b288ced50b`
+**Implementation evidence reviewed against:** `6941f23caa235a389e3143dcf12ba32bb5a5b01f`
 
 - [Query barrel](../../../app/src/queries/index.ts), [query factory](../../../app/src/queries/queryFactory.ts), and
   [single-file upload query](../../../app/src/queries/file.queries.ts)
@@ -201,6 +206,8 @@ backend instances. Safe provider requests retain their browser-only coordination
 - [HTTP client tests](../../../app/src/lib/__tests__/axios.spec.ts),
   [CoinGecko endpoint unit tests](../../../app/src/queries/__tests__/coingecko.queries.spec.ts), and
   [Safe pagination and metadata unit tests](../../../app/src/queries/__tests__/safe.queries.spec.ts)
+- [Safe read queue](../../../app/src/queries/safe.readQueue.ts) and
+  [read queue tests](../../../app/src/queries/__tests__/safe.readQueue.spec.ts)
 - [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts) and
   [Accounting composition tests](../../../app/src/composables/accounting/__tests__/useCNCAccounting.spec.ts)
 
