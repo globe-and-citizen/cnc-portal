@@ -4,6 +4,7 @@ import externalApiClient from '@/lib/external.axios'
 import type { SafeIncomingTransfer, SafeTransaction } from '@/types/safe'
 import { useQueryFn, useQueryClientFn } from '@/tests/mocks/composables.mock'
 import { mockWagmiCore } from '@/tests/mocks/wagmi.vue.mock'
+import { queueSafeRead } from '../safe.readQueue'
 
 const LOWERCASE_SAFE_ADDRESS = '0x0557f280d9da274254e85ee70c2936694e494275'
 const CHECKSUM_SAFE_ADDRESS = '0x0557F280D9DA274254e85Ee70c2936694e494275'
@@ -245,5 +246,23 @@ describe('safe queries', () => {
       address: CHECKSUM_SAFE_ADDRESS,
       chainId: 137
     })
+  })
+
+  it('reads Safe information without waiting behind a pending movement read', async () => {
+    let releaseMovementRead!: () => void
+    const pendingMovementRead = new Promise<void>((resolve) => (releaseMovementRead = resolve))
+    void queueSafeRead(() => pendingMovementRead)
+    const get = vi.spyOn(externalApiClient, 'get').mockResolvedValueOnce({ data: { threshold: 1 } })
+
+    safeQueries.useGetSafeInfoQuery({ pathParams: { safeAddress: LOWERCASE_SAFE_ADDRESS } })
+    const query = toValue(useQueryFn.mock.calls.at(-1)?.[0]) as unknown as {
+      queryFn: (context: { signal: AbortSignal }) => Promise<unknown>
+    }
+
+    await expect(query.queryFn({ signal: new AbortController().signal })).resolves.toEqual({
+      threshold: 1
+    })
+    expect(get).toHaveBeenCalledOnce()
+    releaseMovementRead()
   })
 })

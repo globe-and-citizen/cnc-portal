@@ -26,12 +26,14 @@ function txServiceUrl(): string {
   return txService.url
 }
 
-/** Every Transaction Service read waits its turn in the Safe read queue. */
-function getFromTxService<T>(url: string, signal: AbortSignal): Promise<T> {
-  return queueSafeRead(async () => {
-    const { data } = await externalApiClient.get<T>(url, { signal })
-    return data
-  })
+async function getFromTxService<T>(url: string, signal: AbortSignal): Promise<T> {
+  const { data } = await externalApiClient.get<T>(url, { signal })
+  return data
+}
+
+/** Movement and transaction reads wait their turn in the Safe read queue. */
+function getQueuedFromTxService<T>(url: string, signal: AbortSignal): Promise<T> {
+  return queueSafeRead(() => getFromTxService<T>(url, signal))
 }
 
 /** Load every page in service order; a repeated next link is an invalid partial response. */
@@ -45,7 +47,7 @@ export async function fetchAllSafePages<T>(initialUrl: string, signal: AbortSign
     visited.add(pageUrl)
 
     const currentUrl: string = pageUrl
-    const data = await getFromTxService<SafePage<T>>(currentUrl, signal)
+    const data = await getQueuedFromTxService<SafePage<T>>(currentUrl, signal)
     results.push(...(data.results ?? []))
     pageUrl = data.next ? new URL(data.next, currentUrl).toString() : null
   }
@@ -53,7 +55,11 @@ export async function fetchAllSafePages<T>(initialUrl: string, signal: AbortSign
   return results
 }
 
-/** GET {txService}/api/v1/safes/{address}/ — the Safe's owners, threshold and nonce. */
+/**
+ * GET {txService}/api/v1/safes/{address}/ — the Safe's owners, threshold and nonce.
+ * It skips the read queue: a single read per Safe page, and the signer list must update right after a
+ * signer change instead of waiting behind the movement reads that the same change refreshes.
+ */
 export function getSafeInfo(address: Address, signal: AbortSignal): Promise<SafeInfo> {
   return getFromTxService<SafeInfo>(`${txServiceUrl()}/api/v1/safes/${address}/`, signal)
 }
@@ -63,7 +69,7 @@ export async function getSafeTransactions(
   address: Address,
   signal: AbortSignal
 ): Promise<SafeTransaction[]> {
-  const data = await getFromTxService<{ results: SafeTransaction[] }>(
+  const data = await getQueuedFromTxService<{ results: SafeTransaction[] }>(
     `${txServiceUrl()}/api/v1/safes/${address}/multisig-transactions/`,
     signal
   )
@@ -72,7 +78,7 @@ export async function getSafeTransactions(
 
 /** GET {txService}/api/v1/multisig-transactions/{hash}/ */
 export function getSafeTransaction(hash: string, signal: AbortSignal): Promise<SafeTransaction> {
-  return getFromTxService<SafeTransaction>(
+  return getQueuedFromTxService<SafeTransaction>(
     `${txServiceUrl()}/api/v1/multisig-transactions/${hash}/`,
     signal
   )
