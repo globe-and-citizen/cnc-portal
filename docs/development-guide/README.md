@@ -6,6 +6,8 @@ Comprehensive guides for developing features in the CNC Portal project.
 
 ### Development Workflow
 
+- **[Kanban Project fields](./kanban-project.md)** - Required issue placement, field meanings, actual implementation dates and lifecycle
+  readback
 - **[Development Relationship Validation](./relationship-validation.md)** - Required relationship checks from issue scoping through final
   merge validation, with evidence and completion proposals
 - **[Local Reports Workspace](./local-reports.md)** - Local artifact layout, navigation, producer-owned paths and history retention

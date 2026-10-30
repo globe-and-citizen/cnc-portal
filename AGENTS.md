@@ -82,6 +82,11 @@ artifacts; after changing a contract interface, run `npm run generate-abi` in `c
 
 ## Workflow and public hygiene
 
+- Every agent-created or reused work issue must be on the [CNC Kanban Board](https://github.com/orgs/globe-and-citizen/projects/13).
+  Maintain its applicable Project fields at creation, implementation start/end, scope or Sprint changes, reopening, and closure. Verify
+  membership and field values by readback before reporting the operation complete. Follow the
+  [Kanban Project field contract](./docs/development-guide/kanban-project.md) for Size, Sprint Iteration, Status, Priority, Blocking, actual
+  implementation dates, and justified empty fields. Issue creation alone does not complete issue setup.
 - Every work issue must have a native GitHub parent; only explicit hierarchy roots, such as Sprint or backlog planning issues, may be
   parentless. Planned Sprint outcomes follow Sprint → Goal → optional coordinator → delivery. Work outside those outcomes belongs under the
   Sprint's separate bugs and perf sub-issue, not in the original Goal checklist. Reconcile concrete impacts at the appropriate level:
