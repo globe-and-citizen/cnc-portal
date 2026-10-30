@@ -190,14 +190,16 @@ tests do not establish cache sharing, refresh or observer lifecycle behaviour.
 
 TanStack caches belong to one browser session. The additional backend Redis cache coordinates CoinGecko across users, tabs, devices and
 backend instances. Safe provider requests retain their browser-only coordination boundary. Within one browser session, every Transaction
-Service read waits its turn in the [Safe read queue](../../../app/src/queries/safe.readQueue.ts): reads start one after another, at least
-500 ms apart, because simultaneous reads (one per team Safe on the Accounting pages) trip the provider's per-second limit and would
-otherwise wait out the 30-second HTTP 429 retry interval. Executable evidence:
-[read queue tests](../../../app/src/queries/__tests__/safe.readQueue.spec.ts).
+Service movement and transaction read waits its turn in the [Safe read queue](../../../app/src/queries/safe.readQueue.ts): reads start one
+after another, at least 500 ms apart, because simultaneous reads (one per team Safe on the Accounting pages) trip the provider's per-second
+limit and would otherwise wait out the 30-second HTTP 429 retry interval. The Safe information read (owners, threshold) is a single read per
+Safe page and skips the queue, so the signer list updates right after a signer change instead of waiting behind the movement reads that
+change refreshes. Executable evidence: [read queue tests](../../../app/src/queries/__tests__/safe.readQueue.spec.ts) and
+[Safe query tests](../../../app/src/queries/__tests__/safe.queries.spec.ts).
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `6941f23caa235a389e3143dcf12ba32bb5a5b01f`
+**Implementation evidence reviewed against:** `63674d851d658adb4edded4b654efdf111991390`
 
 - [Query barrel](../../../app/src/queries/index.ts), [query factory](../../../app/src/queries/queryFactory.ts), and
   [single-file upload query](../../../app/src/queries/file.queries.ts)

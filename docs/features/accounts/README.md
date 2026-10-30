@@ -1260,7 +1260,7 @@ condition, related criteria, and a worked example:
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `6941f23caa235a389e3143dcf12ba32bb5a5b01f`
+**Implementation evidence reviewed against:** `63674d851d658adb4edded4b654efdf111991390`
 
 - [Bank deposit modal](../../../app/src/components/sections/BankView/forms/DepositModal.vue),
   [Bank transfer modal](../../../app/src/components/sections/BankView/forms/TransferModal.vue),
@@ -1406,24 +1406,24 @@ pending transactions refresh every minute when the queue contains an unexecuted 
 current-price queries inherit one-minute freshness from the moderate preset; verified historical-transfer token metadata uses the once
 preset with 24-hour retention. Unused Transaction Service data follows the moderate preset's two-minute retention; Gateway balances and
 current prices retain unused data for 30 minutes. Each query configures its refresh cadence; background tabs do not poll, and window focus
-refreshes only the Safe balances and transfer histories. Transaction Service reads start one after another, at least half a second apart, so
-several Safes read together stay within the provider's per-second limit. Safe queries call their providers directly through the external
-Axios client; CoinGecko market queries use that client to call the backend's
-[shared Redis market cache](../../implementation/market-data-cache/README.md). Transaction Service errors affect the individual query.
-Gateway and Transaction Service reads retry temporary 408, 425, 429, server and network failures up to three times. Ordinary retries wait
-five seconds between attempts; rate-limit retries wait thirty seconds, or longer when `Retry-After` requires it. A 404 is never retried.
-Safe information and Gateway balances answer 404 until Safe services index a newly deployed Safe; balances then stop polling, Safe
-information keeps its five-minute refresh with a single request each time, and the overview shows an indexing notice with a Try again button
-instead of an error, so the Safe loads when the user tries again. Because a 404 alone cannot tell an unindexed Safe from an address with no
-contract, the Safe page first reads the address code on the configured chain and starts its sections only after that answer: with code they
-load as above, without code one notice that no Safe exists at the address replaces them and no Safe service request is made for them. Like
-the other queries, that answer lives in the in-memory query cache, so a reload reads the chain again before any section starts. Initial
-reads remain loading during recovery and update without a page reload. Other client errors, cancellation, malformed responses and an
-explicit monthly-quota-exceeded response are not automatically retried. Periodic and explicit refresh remain available. There is no shared
-request queue or provider-wide cooldown. Complete history pagination and contract metadata recovery are retained. The Axios client sends the
-optional `VITE_APP_SAFE_API_KEY` only to GET requests on the direct production Transaction Service. Keys must be issued by
-`developer.safe.global`; staging keys do not establish a production quota. The approval queue identifies rate limiting instead of reporting
-a connection problem. Gateway keeps its own balance cadence. See
+refreshes only the Safe balances and transfer histories. Transaction Service movement reads start one after another, at least half a second
+apart, so several Safes read together stay within the provider's per-second limit; the signer list is read right away so it updates as soon
+as a signer change is confirmed. Safe queries call their providers directly through the external Axios client; CoinGecko market queries use
+that client to call the backend's [shared Redis market cache](../../implementation/market-data-cache/README.md). Transaction Service errors
+affect the individual query. Gateway and Transaction Service reads retry temporary 408, 425, 429, server and network failures up to three
+times. Ordinary retries wait five seconds between attempts; rate-limit retries wait thirty seconds, or longer when `Retry-After` requires
+it. A 404 is never retried. Safe information and Gateway balances answer 404 until Safe services index a newly deployed Safe; balances then
+stop polling, Safe information keeps its five-minute refresh with a single request each time, and the overview shows an indexing notice with
+a Try again button instead of an error, so the Safe loads when the user tries again. Because a 404 alone cannot tell an unindexed Safe from
+an address with no contract, the Safe page first reads the address code on the configured chain and starts its sections only after that
+answer: with code they load as above, without code one notice that no Safe exists at the address replaces them and no Safe service request
+is made for them. Like the other queries, that answer lives in the in-memory query cache, so a reload reads the chain again before any
+section starts. Initial reads remain loading during recovery and update without a page reload. Other client errors, cancellation, malformed
+responses and an explicit monthly-quota-exceeded response are not automatically retried. Periodic and explicit refresh remain available.
+There is no shared request queue or provider-wide cooldown. Complete history pagination and contract metadata recovery are retained. The
+Axios client sends the optional `VITE_APP_SAFE_API_KEY` only to GET requests on the direct production Transaction Service. Keys must be
+issued by `developer.safe.global`; staging keys do not establish a production quota. The approval queue identifies rate limiting instead of
+reporting a connection problem. Gateway keeps its own balance cadence. See
 [Client Data Access](../../implementation/client-data-access/README.md#browser-request-coordination) for recovery and session boundaries.
 
 Confirmed Safe transaction execution and directly executed transfers use one invalidation helper for all Safe service queries and the wallet
