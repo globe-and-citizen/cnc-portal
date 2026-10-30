@@ -11,6 +11,8 @@ Comprehensive guides for developing features in the CNC Portal project.
 - **[Development Relationship Validation](./relationship-validation.md)** - Required relationship checks from issue scoping through final
   merge validation, with evidence and completion proposals
 - **[Local Reports Workspace](./local-reports.md)** - Local artifact layout, navigation, producer-owned paths and history retention
+- **[Release procedure and automation](../platform/RELEASE_AUTOMATION.md)** - Release issue/PR templates, validation, publication limits and
+  post-release synchronization
 
 ### Database Tooling
 

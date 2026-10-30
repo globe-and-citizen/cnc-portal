@@ -142,6 +142,16 @@ stop at a recommendation or request the same authorization again.
 5. Verify the tracking issue's kanban membership and fields against the current implementation stage, including its actual dates. A
    published PR or successful CI does not establish issue setup, required acceptance, or Project completion.
 
+## Release preparation and follow-up
+
+For a repository release, follow the canonical [release procedure](../../../docs/platform/RELEASE_AUTOMATION.md). Create or reuse its
+tracking issue from the [release issue template](../../../.github/ISSUE_TEMPLATE/release.md), complete native hierarchy and Project setup,
+and use the [release PR template](../../../.github/PULL_REQUEST_TEMPLATE/release.md) for promotion from `release/vX.Y.Z` to `main`.
+
+Assess combined-release relationships and record exact revisions, applicable evidence, independent review and required human decisions.
+After merge, verify publication and the need for `main` → `develop` synchronization under the guide. Keep the issue open, or reopen it,
+while its required publication or follow-up evidence is missing; a closing keyword or workflow success does not establish its completion.
+
 ## Review routing
 
 Use `cnc-pr-review` for a full PR review. Post genuine findings inline through the reviews API, use `REQUEST_CHANGES` for real bugs or unmet
