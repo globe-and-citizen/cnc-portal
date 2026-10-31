@@ -4,7 +4,7 @@ const address = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'
 
 test.describe(
   '[US-AUTH-004] Wallet network recovery',
-  { tag: ['@browser', '@parallel-safe'] },
+  { tag: ['@browser', '@mocked', '@parallel-safe'] },
   () => {
     /**
      * Covers:
