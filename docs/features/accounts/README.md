@@ -1325,7 +1325,7 @@ payments stay in the Safe's transaction lists below.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `b1413ceffb88105873722d8a31175b3509227020`
+**Implementation evidence reviewed against:** `07e739b663ef53b14340b641a3fc4027f1d566a1`
 
 - [Bank deposit modal](../../../app/src/components/sections/BankView/forms/DepositModal.vue),
   [Bank transfer modal](../../../app/src/components/sections/BankView/forms/TransferModal.vue),
