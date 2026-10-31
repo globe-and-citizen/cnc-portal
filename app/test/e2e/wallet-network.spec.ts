@@ -1,4 +1,5 @@
 import { expect, test } from './fixtures/mocked'
+import { changeWalletNetwork } from './e2e-page'
 
 const address = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'
 
@@ -6,17 +7,7 @@ test.describe(
   '[US-AUTH-004] Wallet network recovery',
   { tag: ['@browser', '@mocked', '@parallel-safe'] },
   () => {
-    /**
-     * Covers:
-     * - [AC-US-AUTH-004-01]
-     * - [AC-US-AUTH-004-02]
-     * - [AC-US-AUTH-004-03]
-     * - [AC-US-AUTH-004-04]
-     * - [AC-US-AUTH-004-06]
-     */
-    test('locks the workspace and resumes the same session after a rejected switch and retry', async ({
-      page
-    }) => {
+    test.beforeEach(async ({ page }) => {
       await page.route(/\/\/[^/]+(?::\d+)?\/api\//, async (route) => {
         const { pathname } = new URL(route.request().url())
         const body = pathname.startsWith('/api/user/nonce/')
@@ -34,6 +25,19 @@ test.describe(
       await page.getByTestId('sign-in').click()
       await expect(page).toHaveURL(/\/teams$/)
       await expect(page.locator('[data-test="team-list"]')).toBeVisible()
+    })
+
+    /**
+     * Covers:
+     * - [AC-US-AUTH-004-01]
+     * - [AC-US-AUTH-004-02]
+     * - [AC-US-AUTH-004-03]
+     * - [AC-US-AUTH-004-04]
+     * - [AC-US-AUTH-004-06]
+     */
+    test('locks the workspace and resumes the same session after a rejected switch and retry', async ({
+      page
+    }) => {
       await page.locator('[data-test="add-team-card"]').click()
       await expect(page.getByRole('dialog')).toBeVisible()
 
@@ -78,6 +82,28 @@ test.describe(
       expect(
         await page.evaluate(() => localStorage.getItem('wallet-network-test-submissions'))
       ).toBe('0')
+    })
+
+    /**
+     * Covers:
+     * - [AC-US-AUTH-004-01]
+     * - [AC-US-AUTH-004-03]
+     */
+    test('keeps the wallet network across reloads while locked and after recovery', async ({
+      page
+    }) => {
+      await changeWalletNetwork(page, 1)
+      await expect(page.locator('[data-test="network-lock-screen"]')).toBeVisible()
+      await page.reload()
+      await expect(page.locator('[data-test="network-lock-screen"]')).toBeVisible()
+      await expect(page.locator('[data-test="team-list"]')).toHaveCount(0)
+
+      await changeWalletNetwork(page, 31337)
+      await expect(page.locator('[data-test="team-list"]')).toBeVisible()
+      await page.reload()
+      await expect(page.locator('[data-test="team-list"]')).toBeVisible()
+      await expect(page.locator('[data-test="network-lock-screen"]')).toHaveCount(0)
+      expect(await page.evaluate(() => localStorage.getItem('isAuth'))).toBe('true')
     })
   }
 )

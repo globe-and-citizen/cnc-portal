@@ -28,6 +28,17 @@ const E2E_PRIVATE_KEY: Hex = '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efc
 const PRIVATE_KEY_STORAGE_KEY = 'cnc-e2e-private-key'
 const REJECT_NEXT_TRANSACTION_STORAGE_KEY = 'cnc-e2e-reject-next-transaction'
 const REJECT_NEXT_SWITCH_STORAGE_KEY = 'cnc-e2e-reject-next-chain-switch'
+const CHAIN_STORAGE_KEY = 'cnc-e2e-chain-id'
+
+const storedChainId = (): number => {
+  try {
+    const value = Number(globalThis.localStorage?.getItem(CHAIN_STORAGE_KEY))
+    if (Number.isSafeInteger(value) && value > 0) return value
+  } catch {
+    // A wallet without browser storage still starts on its actual test chain.
+  }
+  return hardhat.id
+}
 
 const configuredPrivateKey = (): Hex => {
   try {
@@ -78,7 +89,16 @@ export function e2eMockConnector() {
     // approved. Starting authorized prevents Wagmi's initial reconnect from
     // racing the SIWE login and replacing its newly-established connection.
     let connected = true
-    let currentChainId = config.chains[0].id
+    let currentChainId = storedChainId()
+
+    const setChainId = (chainId: number) => {
+      currentChainId = chainId
+      try {
+        globalThis.localStorage?.setItem(CHAIN_STORAGE_KEY, String(chainId))
+      } catch {
+        // Storage availability must not prevent changing the test wallet network.
+      }
+    }
 
     const switchNetwork = (chainId: number) => {
       if (consumeRejection(REJECT_NEXT_SWITCH_STORAGE_KEY)) {
@@ -86,7 +106,7 @@ export function e2eMockConnector() {
       }
       const chain = config.chains.find((c) => c.id === chainId)
       if (!chain) throw new SwitchChainError(new Error(`Chain ${chainId} is not configured`))
-      currentChainId = chainId
+      setChainId(chainId)
       config.emitter.emit('change', { chainId })
       return chain
     }
@@ -156,7 +176,7 @@ export function e2eMockConnector() {
       type: 'mock',
       async connect({ chainId }: { chainId?: number } = {}) {
         connected = true
-        if (chainId) currentChainId = chainId
+        if (chainId) setChainId(chainId)
         // `as never` matches wagmi's own mock connector: the connector type
         // expects a `withCapabilities`-conditional account shape we don't use.
         return { accounts: [account.address] as never, chainId: currentChainId }
@@ -181,7 +201,7 @@ export function e2eMockConnector() {
       },
       onAccountsChanged() {},
       onChainChanged(chainId: string) {
-        currentChainId = Number(chainId)
+        setChainId(Number(chainId))
       },
       onDisconnect() {
         connected = false
