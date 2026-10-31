@@ -242,7 +242,7 @@ governance, Contract Management and Safe. Each domain retains its operation, aut
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `635eb92ec16d0fa5fca930d458b0e35453af94d2`
+**Implementation evidence reviewed against:** `067bacd724783de1a8449ffd61299434d04d404c`
 
 - [Network lock screen](../../../app/src/components/layout/NetworkLockScreen.vue),
   [network-lock tests](../../../app/src/components/layout/__tests__/NetworkLockScreen.spec.ts),
