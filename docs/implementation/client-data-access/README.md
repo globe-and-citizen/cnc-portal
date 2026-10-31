@@ -201,7 +201,7 @@ change refreshes. Executable evidence: [read queue tests](../../../app/src/queri
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `07e739b663ef53b14340b641a3fc4027f1d566a1`
+**Implementation evidence reviewed against:** `9214325dd63d1a31fb9be0a1495a2d2fc7df3313`
 
 - [Query barrel](../../../app/src/queries/index.ts), [query factory](../../../app/src/queries/queryFactory.ts), and
   [single-file upload query](../../../app/src/queries/file.queries.ts)
