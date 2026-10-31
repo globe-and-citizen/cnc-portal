@@ -2,6 +2,7 @@
   <UApp>
     <div class="bg-muted min-h-screen">
       <LockScreen v-if="lock" :user="{ address: userStore.address }" />
+      <NetworkLockScreen v-else-if="networkLocked" />
       <template v-else>
         <RouterView name="login" />
         <div v-if="userStore.isAuth">
@@ -51,11 +52,12 @@
 
 <script setup lang="ts">
 import { VueQueryDevtools } from '@tanstack/vue-query-devtools'
-import { useChainId, useConnection, useConnectionEffect, useSwitchChain } from '@wagmi/vue'
-import { computed, watch } from 'vue'
+import { useConnection, useConnectionEffect } from '@wagmi/vue'
+import { computed } from 'vue'
 import { RouterView, useRoute } from 'vue-router'
 
 import LockScreen from '@/components/layout/LockScreen.vue'
+import NetworkLockScreen from '@/components/layout/NetworkLockScreen.vue'
 import NavBar from '@/components/layout/NavBar.vue'
 import NavBreadcrumb from '@/components/layout/NavBreadcrumb.vue'
 import TeamSelectMenu from '@/components/layout/TeamSelectMenu.vue'
@@ -64,27 +66,21 @@ import SidebarLayout from '@/components/ui/SidebarLayout.vue'
 import { useAuth } from '@/composables/useAuth'
 import { useBackendWake } from '@/composables/useBackendWake'
 
-import { NETWORK } from '@/constant/index'
+import { configuredChainId } from '@/lib/walletNetwork'
 import { useUserDataStore } from '@/stores/index'
 
 const route = useRoute()
 
 const connection = useConnection()
-const switchChain = useSwitchChain()
-
-const networkChainId = parseInt(NETWORK.chainId)
-const chainId = useChainId()
-watch(chainId, (val) => {
-  if (val === undefined) return
-
-  switchChain.mutate({ chainId: networkChainId })
-})
 useBackendWake()
 
 const toast = useToast()
 const { logout } = useAuth()
 
 const userStore = useUserDataStore()
+const networkLocked = computed(
+  () => userStore.isAuth && connection.chainId.value !== configuredChainId
+)
 
 const lock = computed(() => {
   if (
