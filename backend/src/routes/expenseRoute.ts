@@ -1,13 +1,10 @@
 import express from 'express';
-import { addExpense, getExpenses, updateExpense } from '../controllers/expenseController';
+import { addExpense, getExpenses } from '../controllers/expenseController';
 import { rejectIfArchived, requireTeamMember } from '../middleware/teamAuthzMiddleware';
 import {
   addExpenseBodySchema,
   getExpensesQuerySchema,
-  updateExpenseBodySchema,
-  updateExpenseParamsSchema,
   validateBody,
-  validateBodyAndParams,
   validateQuery,
 } from '../validation';
 
@@ -82,49 +79,6 @@ expenseRoutes.get(
   validateQuery(getExpensesQuerySchema),
   requireTeamMember('query.teamId'),
   getExpenses
-);
-
-/**
- * @openapi
- * /expense/{id}:
- *  patch:
- *   summary: Update an expense
- *   tags: [Expenses]
- *   security:
- *     - bearerAuth: []
- *   parameters:
- *     - in: path
- *       name: id
- *       required: true
- *       schema:
- *         type: integer
- *         description: The ID of the expense
- *   requestBody:
- *     required: true
- *     content:
- *       application/json:
- *         schema:
- *           type: object
- *           properties:
- *             status:
- *               type: string
- *               enum: [disable, expired, limitReached]
- *               description: The new status of the expense
- *   responses:
- *     200:
- *       description: Expense updated successfully
- *     400:
- *       description: Bad request
- *     403:
- *       description: Caller is not authorized
- *     500:
- *       description: Internal server error
- */
-expenseRoutes.patch(
-  '/:id',
-  validateBodyAndParams(updateExpenseBodySchema, updateExpenseParamsSchema),
-  rejectIfArchived('params.expenseId'),
-  updateExpense
 );
 
 export default expenseRoutes;

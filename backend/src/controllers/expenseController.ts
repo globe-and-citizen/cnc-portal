@@ -20,18 +20,10 @@ import { Expense } from '@prisma/client';
 import ABI from '../artifacts/expense-account-eip712.json';
 import { BudgetLimit } from '../types';
 import { getCurrentExpenseAccountContract } from '../utils/expenseAccountUtil';
-import {
-  addExpenseBodySchema,
-  getExpensesQuerySchema,
-  updateExpenseBodySchema,
-  updateExpenseParamsSchema,
-  z,
-} from '../validation';
+import { addExpenseBodySchema, getExpensesQuerySchema, z } from '../validation';
 
 type AddExpenseBody = z.infer<typeof addExpenseBodySchema>;
 type GetExpensesQuery = z.infer<typeof getExpensesQuerySchema>;
-type UpdateExpenseBody = z.infer<typeof updateExpenseBodySchema>;
-type UpdateExpenseParams = z.infer<typeof updateExpenseParamsSchema>;
 
 const BUDGET_LIMIT_TYPES = {
   BudgetLimit: [
@@ -297,39 +289,4 @@ const syncExpenseStatus = async (expense: Expense) => {
   });
 
   return formattedExpense;
-};
-
-export const updateExpense = async (req: Request, res: Response) => {
-  const { id: expenseId } = req.params as unknown as UpdateExpenseParams;
-  const callerAddress = req.address;
-  const { status } = req.body as UpdateExpenseBody;
-
-  // TODO: logic to check if the status is already expired or limit reached
-
-  // check if the user is the owner of the team
-
-  try {
-    if (status === 'disable') {
-      const expense = await prisma.expense.findUnique({
-        where: {
-          id: expenseId,
-          team: {
-            ownerAddress: callerAddress,
-          },
-        },
-      });
-
-      if (!expense) {
-        return errorResponse(403, 'Caller is not the owner of the team', res);
-      }
-    }
-    const updatedExpense = await prisma.expense.update({
-      where: { id: expenseId },
-      data: { status: status },
-    });
-    return res.status(200).json(updatedExpense);
-  } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Internal Server Error';
-    return errorResponse(500, message, res);
-  }
 };

@@ -169,19 +169,6 @@ describe('archived team guard on write routes', () => {
     });
   });
 
-  describe('PATCH /expense/:id', () => {
-    const app = mount(expenseRoutes);
-
-    it('rejects expense updates for an archived company', async () => {
-      vi.mocked(prisma.expense.findUnique).mockResolvedValue({ teamId: 1 } as never);
-      mockTeamArchiveLookups(true);
-
-      const response = await request(app).patch('/1').send({ status: 'disable' });
-
-      expect(response.status).toBe(409);
-    });
-  });
-
   describe('POST /expense', () => {
     const app = mount(expenseRoutes);
 

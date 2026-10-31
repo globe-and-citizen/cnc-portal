@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { addressSchema, teamIdSchema, positiveIntegerSchema } from './common';
+import { addressSchema, teamIdSchema } from './common';
 
 /**
  * Expense-related validation schemas
@@ -45,16 +45,4 @@ export const getExpensesQuerySchema = z.object({
       }
     )
     .default('all'),
-});
-
-// Update expense request body
-export const updateExpenseBodySchema = z.object({
-  status: z.enum(['disable', 'expired', 'limitReached'], {
-    message: 'Invalid status. Allowed values: disable, expired, limitReached',
-  }),
-});
-
-// Update expense path parameters
-export const updateExpenseParamsSchema = z.object({
-  id: positiveIntegerSchema,
 });
