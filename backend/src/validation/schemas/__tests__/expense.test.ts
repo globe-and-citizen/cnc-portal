@@ -1,10 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  addExpenseBodySchema,
-  getExpensesQuerySchema,
-  updateExpenseBodySchema,
-  updateExpenseParamsSchema,
-} from '../expense';
+import { addExpenseBodySchema, getExpensesQuerySchema } from '../expense';
 
 describe('expense schemas', () => {
   describe('addExpenseBodySchema', () => {
@@ -131,51 +126,6 @@ describe('expense schemas', () => {
     it('throws error for invalid status', () => {
       const query = { teamId: '1', status: 'invalid' };
       expect(() => getExpensesQuerySchema.parse(query)).toThrow('Invalid status parameter');
-    });
-  });
-
-  describe('updateExpenseBodySchema', () => {
-    it('validates update with disable status', () => {
-      const body = { status: 'disable' };
-      const result = updateExpenseBodySchema.parse(body);
-      expect(result.status).toBe('disable');
-    });
-
-    it('validates update with expired status', () => {
-      const body = { status: 'expired' };
-      const result = updateExpenseBodySchema.parse(body);
-      expect(result.status).toBe('expired');
-    });
-
-    it('validates update with limitReached status', () => {
-      const body = { status: 'limitReached' };
-      const result = updateExpenseBodySchema.parse(body);
-      expect(result.status).toBe('limitReached');
-    });
-
-    it('throws error for invalid status', () => {
-      const body = { status: 'invalid' };
-      expect(() => updateExpenseBodySchema.parse(body)).toThrow(
-        'Invalid status. Allowed values: disable, expired, limitReached'
-      );
-    });
-  });
-
-  describe('updateExpenseParamsSchema', () => {
-    it('validates positive integer ID', () => {
-      const params = { id: '123' };
-      const result = updateExpenseParamsSchema.parse(params);
-      expect(result.id).toBe(123);
-    });
-
-    it('throws error for non-positive ID', () => {
-      const params = { id: '0' };
-      expect(() => updateExpenseParamsSchema.parse(params)).toThrow();
-    });
-
-    it('throws error for negative ID', () => {
-      const params = { id: '-1' };
-      expect(() => updateExpenseParamsSchema.parse(params)).toThrow();
     });
   });
 });

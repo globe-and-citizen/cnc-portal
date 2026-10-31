@@ -31,6 +31,10 @@ routes.
 Daily-claim creation uses a strict body schema. Unknown fields, including caller-supplied member identities, return HTTP 400 before the
 controller or persistence layer runs; the authenticated session supplies claim ownership.
 
+Expense request validation covers approval creation and list queries. The legacy status-update endpoint and its body/path schemas are
+removed. Authenticated requests to `PATCH /expense/:id` return HTTP 404 without reaching an Expense controller or persistence; owner state
+changes use the signing contract, and list reads synchronize status from chain state and time.
+
 ## Main Flow
 
 ```mermaid
@@ -58,7 +62,7 @@ flowchart LR
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `92cc11e6bc959f0efebebef8d174ebbed6e81921`
+**Implementation evidence reviewed against:** `aff3dec02163df97ad7ada9e60a6f3781765a1eb`
 
 - [Validation middleware](../../../backend/src/validation/middleware/validate.ts) and
   [middleware tests](../../../backend/src/validation/middleware/__tests__/validate.test.ts)

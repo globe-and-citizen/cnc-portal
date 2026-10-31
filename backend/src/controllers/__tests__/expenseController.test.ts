@@ -328,6 +328,54 @@ describe('Expense Controller', () => {
       expect(response.status).toBe(200);
     });
 
+    it('[AC-US-EXP-003-03] synchronizes on-chain activation changes into approval records', async () => {
+      const expense = {
+        ...mockExpense,
+        signature: '0x1234',
+        status: 'enabled',
+        data: {
+          ...mockExpenseData,
+          signedAgainstContractAddress: mockExpenseContractAddress,
+          chainId: 1,
+        },
+      };
+      vi.mocked(prisma.team.findFirst).mockResolvedValue(mockTeam);
+      vi.mocked(prisma.teamContract.findFirst).mockResolvedValue({
+        address: mockExpenseContractAddress,
+      } as never);
+      vi.mocked(prisma.expense.findMany).mockResolvedValue([expense]);
+      vi.mocked(prisma.expense.update).mockResolvedValue(expense);
+      vi.mocked(publicClient.getBlock).mockResolvedValue({
+        timestamp: BigInt(START_DATE + 60),
+      } as never);
+
+      for (const [state, status] of [
+        [2, 'disabled'],
+        [1, 'enabled'],
+      ] as const) {
+        vi.mocked(publicClient.readContract).mockImplementation(async ({ functionName }) => {
+          if (functionName === 'getExpenseBalance') {
+            return {
+              lastWithdrawnDate: 0n,
+              totalWithdrawn: 0n,
+              lastWithdrawnPeriod: 0n,
+              state,
+            } as never;
+          }
+          return false as never;
+        });
+
+        const response = await request(app).get('/').query({ teamId: 1 });
+
+        expect(response.status).toBe(200);
+        expect(response.body).toMatchObject([{ id: expense.id, status }]);
+        expect(prisma.expense.update).toHaveBeenLastCalledWith({
+          where: { id: expense.id },
+          data: { status },
+        });
+      }
+    });
+
     it('filters expenses by status when status is provided', async () => {
       vi.spyOn(prisma.team, 'findFirst').mockResolvedValue(mockTeam);
       vi.spyOn(prisma.expense, 'findMany').mockResolvedValue([
@@ -564,64 +612,137 @@ describe('Expense Controller', () => {
     });
   });
 
-  describe('PUT: /expense/:id', () => {
-    it('returns 400 if expense ID is invalid', async () => {
-      const response = await request(app).patch('/abc').send({ status: 'disable' });
+  describe('retired PATCH /expense/:id', () => {
+    describe.each([
+      { actor: 'the current owner', address: mockTeam.ownerAddress },
+      { actor: 'an unrelated wallet', address: '0x9999999999999999999999999999999999999999' },
+    ])('requests from $actor', ({ address }) => {
+      it.each(['disable', 'expired', 'limitReached'])(
+        '[AC-US-EXP-003-04] rejects a direct %s status write without changing persistence',
+        async (status) => {
+          vi.mocked(authorizeUser).mockImplementationOnce((req, _res, next) => {
+            req.address = address;
+            next();
+          });
+          vi.mocked(prisma.expense.findUnique).mockResolvedValue(mockExpense);
+          vi.mocked(prisma.expense.update).mockResolvedValue(mockExpense);
 
-      expect(response.status).toBe(400);
-      expect(response.body.message).toBe('Invalid path parameters - id: Must be a number');
+          const response = await request(app).patch('/1').send({ status });
+
+          expect(response.status).toBe(404);
+          expect(prisma.expense.findUnique).not.toHaveBeenCalled();
+          expect(prisma.expense.update).not.toHaveBeenCalled();
+          expect(publicClient.readContract).not.toHaveBeenCalled();
+        }
+      );
     });
 
-    it('returns 400 if status is missing', async () => {
-      const response = await request(app).patch('/1').send({});
+    it.each([
+      {
+        requested: 'expired',
+        stored: 'expired',
+        state: 1,
+        withdrawn: 2_000_000n,
+        expired: false,
+        expected: 'enabled',
+      },
+      {
+        requested: 'limitReached',
+        stored: 'limitReached',
+        state: 1,
+        withdrawn: 2_000_000n,
+        expired: false,
+        expected: 'enabled',
+      },
+      {
+        requested: 'disable',
+        stored: 'disable',
+        state: 2,
+        withdrawn: 2_000_000n,
+        expired: false,
+        expected: 'disabled',
+      },
+      {
+        requested: 'expired',
+        stored: 'enabled',
+        state: 1,
+        withdrawn: 2_000_000n,
+        expired: true,
+        expected: 'expired',
+      },
+      {
+        requested: 'limitReached',
+        stored: 'enabled',
+        state: 1,
+        withdrawn: 150_000_000n,
+        expired: false,
+        expected: 'limit-reached',
+      },
+    ])(
+      '[AC-US-EXP-004-06] reads $expected from chain state after rejecting $requested with stored $stored',
+      async ({ requested, stored, state, withdrawn, expired, expected }) => {
+        const expense = {
+          ...mockExpense,
+          signature: '0x1234',
+          status: stored,
+          data: {
+            ...mockExpenseData,
+            signedAgainstContractAddress: mockExpenseContractAddress,
+            chainId: 1,
+          },
+        };
+        vi.mocked(prisma.expense.findUnique).mockResolvedValue(expense);
+        vi.mocked(prisma.expense.update).mockResolvedValue(expense);
 
-      expect(response.status).toBe(400);
-      expect(response.body.message).toContain('Invalid request body');
-    });
+        const rejected = await request(app).patch('/1').send({ status: requested });
 
-    it('returns 400 if status is invalid', async () => {
-      const response = await request(app).patch('/1').send({ status: 'invalidStatus' });
+        expect(rejected.status).toBe(404);
+        expect(prisma.expense.update).not.toHaveBeenCalled();
 
-      expect(response.status).toBe(400);
-      expect(response.body.message).toContain('Invalid request body');
-    });
+        vi.mocked(prisma.team.findFirst).mockResolvedValue(mockTeam);
+        vi.mocked(prisma.teamContract.findFirst).mockResolvedValue({
+          address: mockExpenseContractAddress,
+        } as never);
+        vi.mocked(prisma.expense.findMany).mockResolvedValue([expense]);
+        vi.mocked(publicClient.readContract).mockImplementation(async ({ functionName }) => {
+          if (functionName === 'getExpenseBalance') {
+            return {
+              lastWithdrawnDate: BigInt(START_DATE),
+              totalWithdrawn: withdrawn,
+              lastWithdrawnPeriod: 0n,
+              state,
+            } as never;
+          }
+          return false as never;
+        });
+        vi.mocked(publicClient.getBlock).mockResolvedValue({
+          timestamp: BigInt(expired ? END_DATE + 1 : START_DATE + 60),
+        } as never);
 
-    it('[AC-US-EXP-003-04] rejects a status change from a non-owner', async () => {
-      // First call resolves the teamId for the rejectIfArchived middleware,
-      // second call is the controller owner check which fails (not owner).
-      vi.spyOn(prisma.expense, 'findUnique')
-        .mockResolvedValueOnce(mockExpense)
-        .mockResolvedValueOnce(null);
+        const readback = await request(app).get('/').query({ teamId: 1 });
 
-      const response = await request(app).patch('/1').send({ status: 'disable' });
-
-      expect(response.status).toBe(403);
-      expect(response.body.message).toBe('Caller is not the owner of the team');
-    });
-
-    it('[AC-US-EXP-003-03] persists the updated approval status', async () => {
-      // rejectIfArchived middleware resolves the teamId from the expense.
-      vi.spyOn(prisma.expense, 'findUnique').mockResolvedValue(mockExpense);
-      vi.spyOn(prisma.expense, 'update').mockResolvedValue({
-        ...mockExpense,
-        status: 'expired',
-      });
-
-      const response = await request(app).patch('/1').send({ status: 'expired' });
-
-      expect(response.status).toBe(200);
-      expect(response.body.status).toBe('expired');
-    });
-
-    it('returns 500 if there is a server error', async () => {
-      // rejectIfArchived middleware resolves the teamId from the expense.
-      vi.spyOn(prisma.expense, 'findUnique').mockResolvedValue(mockExpense);
-      vi.spyOn(prisma.expense, 'update').mockRejectedValue('Server error');
-
-      const response = await request(app).patch('/1').send({ status: 'expired' });
-
-      expect(response.status).toBe(500);
-      expect(response.body.message).toBe('Internal server error has occured');
-    });
+        expect(readback.status).toBe(200);
+        expect(readback.body).toMatchObject([
+          {
+            id: expense.id,
+            status: expected,
+            sourceGeneration: 'current',
+            balances: { 1: String(Number(withdrawn) / 1e6) },
+          },
+        ]);
+        expect(publicClient.readContract).toHaveBeenCalledWith(
+          expect.objectContaining({
+            address: mockExpenseContractAddress,
+            functionName: 'getExpenseBalance',
+            args: [viem.keccak256(expense.signature as `0x${string}`)],
+          })
+        );
+        expect(publicClient.getBlock).toHaveBeenCalledOnce();
+        expect(prisma.expense.update).toHaveBeenCalledExactlyOnceWith({
+          where: { id: expense.id },
+          data: expect.objectContaining({ status: expected }),
+        });
+      }
+    );
   });
 });
