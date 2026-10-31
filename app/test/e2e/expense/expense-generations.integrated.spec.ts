@@ -4,7 +4,7 @@ import type { Team } from '../../../src/types/team'
 import { expenseAccountEip712Abi } from '../../../src/artifacts/abi/generated'
 import { expect, test } from '../fixtures/integrated'
 import { E2E_MEMBER_PRIVATE_KEY, ownerAccount, publicClient } from '../e2e-chain'
-import { openAccountFromSidebar } from '../e2e-page'
+import { changeWalletNetwork, openAccountFromSidebar } from '../e2e-page'
 import {
   approveExpenseSpending,
   depositUsdcToBank,
@@ -29,7 +29,14 @@ test.describe(
   () => {
     test.setTimeout(360_000)
 
-    test('[AC-US-EXP-004-14] spends from and retires an older approval after redeployment', async ({
+    /**
+     * Covers:
+     * - [AC-US-EXP-004-14]
+     * - [AC-US-AUTH-004-01]
+     * - [AC-US-AUTH-004-03]
+     * - [AC-US-AUTH-004-04]
+     */
+    test('spends from and retires an older approval after network recovery and redeployment', async ({
       authenticatedPage: ownerPage,
       walletPage,
       operationalTeam
@@ -101,6 +108,22 @@ test.describe(
       await expect(ownerPage.locator('[data-test="enable-button"]')).toBeVisible()
       await expect(ownerPage.locator('[data-test="previous-approvals-notice"]')).toHaveCount(0)
       await expect(ownerPage.getByRole('link', { name: 'Manage older contracts' })).toBeVisible()
+
+      await changeWalletNetwork(ownerPage, 1)
+      await expect(ownerPage.locator('[data-test="network-lock-screen"]')).toBeVisible()
+      await expect(ownerPage.locator('[data-test="enable-button"]')).toHaveCount(0)
+      const stillDisabled = await publicClient.readContract({
+        address: oldContract,
+        abi: expenseAccountEip712Abi,
+        functionName: 'getExpenseBalance',
+        args: [approvalHash]
+      })
+      expect(Number(stillDisabled.state)).toBe(2)
+      await ownerPage.locator('[data-test="switch-network"]').click()
+      await expect(ownerPage.locator('[data-test="network-lock-screen"]')).toHaveCount(0)
+      await expect(ownerPage.locator('[data-test="enable-button"]')).toBeVisible()
+      await expect.poll(async () => (await approvals())[0]?.status).toBe('disabled')
+
       await ownerPage.locator('[data-test="enable-button"]').click()
       await expect(ownerPage.getByText('Approval activated', { exact: true })).toBeVisible({
         timeout: 30_000

@@ -27,6 +27,18 @@ import { hardhat } from 'viem/chains'
 const E2E_PRIVATE_KEY: Hex = '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80'
 const PRIVATE_KEY_STORAGE_KEY = 'cnc-e2e-private-key'
 const REJECT_NEXT_TRANSACTION_STORAGE_KEY = 'cnc-e2e-reject-next-transaction'
+const REJECT_NEXT_SWITCH_STORAGE_KEY = 'cnc-e2e-reject-next-chain-switch'
+const CHAIN_STORAGE_KEY = 'cnc-e2e-chain-id'
+
+const storedChainId = (): number => {
+  try {
+    const value = Number(globalThis.localStorage?.getItem(CHAIN_STORAGE_KEY))
+    if (Number.isSafeInteger(value) && value > 0) return value
+  } catch {
+    // A wallet without browser storage still starts on its actual test chain.
+  }
+  return hardhat.id
+}
 
 const configuredPrivateKey = (): Hex => {
   try {
@@ -37,12 +49,12 @@ const configuredPrivateKey = (): Hex => {
   }
 }
 
-const shouldRejectNextTransaction = (): boolean => {
+const consumeRejection = (key: string): boolean => {
   try {
-    if (globalThis.localStorage?.getItem(REJECT_NEXT_TRANSACTION_STORAGE_KEY) !== 'true') {
+    if (globalThis.localStorage?.getItem(key) !== 'true') {
       return false
     }
-    globalThis.localStorage.removeItem(REJECT_NEXT_TRANSACTION_STORAGE_KEY)
+    globalThis.localStorage.removeItem(key)
     return true
   } catch {
     return false
@@ -77,7 +89,27 @@ export function e2eMockConnector() {
     // approved. Starting authorized prevents Wagmi's initial reconnect from
     // racing the SIWE login and replacing its newly-established connection.
     let connected = true
-    let currentChainId = config.chains[0].id
+    let currentChainId = storedChainId()
+
+    const setChainId = (chainId: number) => {
+      currentChainId = chainId
+      try {
+        globalThis.localStorage?.setItem(CHAIN_STORAGE_KEY, String(chainId))
+      } catch {
+        // Storage availability must not prevent changing the test wallet network.
+      }
+    }
+
+    const switchNetwork = (chainId: number) => {
+      if (consumeRejection(REJECT_NEXT_SWITCH_STORAGE_KEY)) {
+        throw new UserRejectedRequestError(new Error('E2E network switch rejected'))
+      }
+      const chain = config.chains.find((c) => c.id === chainId)
+      if (!chain) throw new SwitchChainError(new Error(`Chain ${chainId} is not configured`))
+      setChainId(chainId)
+      config.emitter.emit('change', { chainId })
+      return chain
+    }
 
     const provider = {
       async request({ method, params = [] }: RpcRequest): Promise<unknown> {
@@ -99,11 +131,14 @@ export function e2eMockConnector() {
             const [, typedData] = params as [string, string]
             return account.signTypedData(JSON.parse(typedData))
           }
-          case 'wallet_switchEthereumChain':
+          case 'wallet_switchEthereumChain': {
+            const [request] = params as [{ chainId: Hex }]
+            switchNetwork(Number(request.chainId))
             return null
+          }
           case 'eth_sendTransaction':
           case 'wallet_sendTransaction': {
-            if (shouldRejectNextTransaction()) {
+            if (consumeRejection(REJECT_NEXT_TRANSACTION_STORAGE_KEY)) {
               throw new UserRejectedRequestError(new Error('E2E wallet request rejected'))
             }
             const [request] = params as [RpcTransaction]
@@ -141,7 +176,7 @@ export function e2eMockConnector() {
       type: 'mock',
       async connect({ chainId }: { chainId?: number } = {}) {
         connected = true
-        if (chainId) currentChainId = chainId
+        if (chainId) setChainId(chainId)
         // `as never` matches wagmi's own mock connector: the connector type
         // expects a `withCapabilities`-conditional account shape we don't use.
         return { accounts: [account.address] as never, chainId: currentChainId }
@@ -162,15 +197,11 @@ export function e2eMockConnector() {
         return connected
       },
       async switchChain({ chainId }: { chainId: number }) {
-        const chain = config.chains.find((c) => c.id === chainId)
-        if (!chain) throw new SwitchChainError(new Error(`Chain ${chainId} is not configured`))
-        currentChainId = chainId
-        config.emitter.emit('change', { chainId })
-        return chain
+        return switchNetwork(chainId)
       },
       onAccountsChanged() {},
       onChainChanged(chainId: string) {
-        currentChainId = Number(chainId)
+        setChainId(Number(chainId))
       },
       onDisconnect() {
         connected = false

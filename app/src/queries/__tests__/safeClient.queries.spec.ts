@@ -106,6 +106,12 @@ describe('useGetSafeBalancesQuery', () => {
     expect(refetchInterval({ state: { error: new Error('Gateway unavailable') } })).toBe(60_000)
     expect(refetchInterval({ state: { error: null } })).toBe(60_000)
   })
+
+  it('refreshes when the tab regains focus, like the Safe movements', () => {
+    useGetSafeBalancesQuery({ pathParams: { safeAddress: address } })
+
+    expect(capturedQuery().refetchOnWindowFocus).toBe(true)
+  })
 })
 
 describe('useGetSafeTransactionHistoryQuery', () => {

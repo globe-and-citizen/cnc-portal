@@ -373,9 +373,13 @@ Historical deployments preserve the same per-domain scenarios and UC selection a
 
 **Dependencies:** US-CONTRACT-001, a current company owner, a connected wallet, and an active Officer generation
 
+The [shared network-session recovery policy](../authentication/README.md#us-auth-004-resume-after-a-wallet-network-change) governs this
+workspace and deployment actions. Officer and Safe factory deployment use the shared write executor; Campaign deployment requests a wallet
+client and tracks its receipt on the configured chain.
+
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `fdfcf810829fdcca8d0bfe429878b439e4fd4dfe`
+**Implementation evidence reviewed against:** `635eb92ec16d0fa5fca930d458b0e35453af94d2`
 
 - [Board reads](../../../app/src/composables/bod/reads.ts), [Board writes](../../../app/src/composables/bod/writes.ts),
   [shared contract reads](../../../app/src/composables/contracts/useContractReadData.ts), and

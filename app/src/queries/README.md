@@ -64,8 +64,13 @@ This folder contains all TanStack Query hooks for API interactions in the CNC Po
   `useGetSafeBytecodeQuery` reads the address code on the configured chain so the Safe page can tell an unindexed Safe from an address with
   no contract before its sections start. Cancellation, other client errors, malformed responses and an explicit monthly-quota-exceeded
   response are not retried automatically. Axios owns the production GET credential header and error redaction. Local pagination and
-  asset-transfer helpers preserve complete histories, stable identities and cached metadata recovery; there is no separate request scheduler
-  or provider-wide pause.
+  asset-transfer helpers preserve complete histories, stable identities and cached metadata recovery. Every Transaction Service movement and
+  transaction read goes through `safe.readQueue.ts`: reads start one after another, at least 500 ms apart, because simultaneous reads (one
+  per team Safe on the Accounting pages) trip the provider's per-second limit and would otherwise wait out the 30-second 429 interval. The
+  Safe information read (owners, threshold) skips the queue so the signer list updates right after a signer change.
+- The Gateway balance and the Transaction Service movements (`transfers`, `incoming-transfers`) share `safeMovementsRefresh`: they refresh
+  every minute while the tab is visible and again when it regains focus, so the Safe page and the Accounting books show a new movement at
+  the same time instead of the balance moving minutes before the ledger.
 
 ## Full Documentation
 

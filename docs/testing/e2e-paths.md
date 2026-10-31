@@ -609,7 +609,11 @@ path individually. These path checks do not close the separate feature acceptanc
     - [x] `US-EXP-004` Reload and verify the transaction history.
   - Separate variants: overspending, invalid signatures, unauthorized actions, insufficient funds, and approval history after Expense
     Account redeployment. The redeployment variant compares the old disabled state with the new contract's state, then verifies
-    source-contract API classification, owner reactivation, recipient spending, and owner/recipient readback after reload.
+    source-contract API classification, owner reactivation, recipient spending, and owner/recipient readback after reload. Its
+    shared-session variant switches the owner wallet away from the configured chain, verifies that the global lock removes the Enable action
+    while the source approval remains disabled, then returns to the expected network before a deliberate reactivation. This consumes
+    `US-AUTH-004`; Expense does not own the network policy. The controlled lock/rejected-switch/retry journey is also covered by the
+    [browser network-recovery test](../../app/test/e2e/wallet-network.spec.ts).
   - Expected result: one allowance remains auditable across its complete active and inactive lifecycle.
   - Status: Integrated covered — the owner grants and deactivates one persisted approval; the member spends, sees the disabled Spend
     control, and the same signed transfer is rejected by the deployed contract without moving funds or changing usage. After reactivation,

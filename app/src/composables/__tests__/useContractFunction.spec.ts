@@ -61,6 +61,13 @@ describe('deployContract', () => {
     })
 
     expect(address).toBe('0xDEADBEEF')
+    expect(mockWagmiCore.getWalletClient).toHaveBeenCalledWith(expect.anything(), {
+      chainId: 31337
+    })
+    expect(mockWagmiCore.waitForTransactionReceipt).toHaveBeenCalledWith(expect.anything(), {
+      hash: '0xHASH',
+      chainId: 31337
+    })
   })
 
   it('throws when the wallet is not connected', async () => {

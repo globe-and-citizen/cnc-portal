@@ -1,4 +1,17 @@
 import type { Eip1193Provider } from '@safe-global/protocol-kit'
+import { assertConfiguredChain } from '@/lib/walletNetwork'
+
+const walletWriteMethods = new Set([
+  'eth_sendTransaction',
+  'wallet_sendTransaction',
+  'eth_sendRawTransaction',
+  'eth_signTransaction',
+  'eth_sign',
+  'personal_sign',
+  'eth_signTypedData',
+  'eth_signTypedData_v3',
+  'eth_signTypedData_v4'
+])
 
 export function getInjectedProvider(): Eip1193Provider {
   // @ts-expect-error - TypeScript may not recognize window.ethereum as Eip1193Provider
@@ -12,7 +25,22 @@ export function getInjectedProvider(): Eip1193Provider {
     throw new Error('Injected provider does not implement EIP-1193 request method')
   }
 
-  return provider as Eip1193Provider
+  const injected = provider as Eip1193Provider
+  // Cached SDK instances keep this boundary: check at the request, not at SDK creation.
+  return new Proxy(injected, {
+    get(target, key) {
+      if (key === 'request') {
+        return async (args: Parameters<Eip1193Provider['request']>[0]) => {
+          if (walletWriteMethods.has(args.method)) {
+            assertConfiguredChain(await target.request({ method: 'eth_chainId' }))
+          }
+          return target.request(args)
+        }
+      }
+      const value = Reflect.get(target, key, target)
+      return typeof value === 'function' ? value.bind(target) : value
+    }
+  })
 }
 
 export function randomSaltNonce(): string {

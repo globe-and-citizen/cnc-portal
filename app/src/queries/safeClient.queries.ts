@@ -9,7 +9,7 @@ import {
 } from '@/types/safe'
 import externalApiClient from '@/lib/external.axios'
 import { normalizeSafeAddress } from '@/utils/safe/address'
-import { safeKeys } from './safe.queries'
+import { safeKeys, safeMovementsRefresh } from './safe.queries'
 import { isSafeNotIndexedError } from '@/utils/safe/model'
 import { retrySafeRead, safeReadRetryDelay } from './safe.recovery'
 import { queryPresets } from './queryFactory'
@@ -89,9 +89,9 @@ export function safeBalancesQueryOptions(
       fetchSafeClientBalances(address!, chainId, fiatCode, signal),
     gcTime: 30 * 60_000,
     refetchInterval: (query: { state: { error: Error | null } }) =>
-      isSafeNotIndexedError(query.state.error) ? false : 60_000,
+      isSafeNotIndexedError(query.state.error) ? false : safeMovementsRefresh.refetchInterval,
     refetchIntervalInBackground: false,
-    refetchOnWindowFocus: false,
+    refetchOnWindowFocus: safeMovementsRefresh.refetchOnWindowFocus,
     retry: retrySafeRead,
     retryDelay: safeReadRetryDelay
   }
