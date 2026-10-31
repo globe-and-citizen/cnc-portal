@@ -81,8 +81,10 @@ keeps the fee inside the acquired asset's price and never makes Accounting parti
 
 Swap selection, daily quote requests and valuation share
 [transaction grouping and exact asset netting](../../../app/src/utils/safe/swapTransfers.ts). Valuation indexes daily quotes, Gateway prices
-and CoW responses once per report. The [P&L composable](../../../app/src/composables/safe/useSafeSwapPnl.ts) keeps a settled report only
-while refreshing the same Safe; changing or clearing its address discards the previous report.
+and CoW responses once per report. The [P&L composable](../../../app/src/composables/safe/useSafeSwapPnl.ts) returns the per-swap report
+Accounting books and the [average-cost tracking](../../../app/src/utils/safe/costBasis.ts) the Safe page shows, both from one set of
+sources; it requests the daily quotes either one reads. It keeps settled results only while refreshing the same Safe; changing or clearing
+its address discards them.
 
 Executable evidence: [Gateway request tests](../../../app/src/queries/__tests__/safeClient.queries.spec.ts),
 [pagination and metadata unit tests](../../../app/src/queries/__tests__/safe.queries.spec.ts),

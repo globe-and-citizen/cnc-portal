@@ -122,8 +122,8 @@ Runs of at least three consecutive missing criteria use inclusive ranges with fu
 | US-SAFE-004 | 📋 Planned    | ⚠️ 4/9          | `AC-US-SAFE-004-01`–`AC-US-SAFE-004-04`, `AC-US-SAFE-004-07`                      |
 | US-SAFE-005 | 🧪 Mocked     | ✅ 9/9          | —                                                                                 |
 | US-SAFE-006 | 🧪 Mocked     | ✅ 10/10        | —                                                                                 |
-| US-SAFE-007 | 📋 Planned    | ⚠️ 9/10 met     | `AC-US-SAFE-007-01`                                                               |
-| US-SAFE-008 | 🧪 Mocked     | ✅ 4/4          | —                                                                                 |
+| US-SAFE-007 | 📋 Planned    | ⚠️ 11/12 met    | `AC-US-SAFE-007-01`                                                               |
+| US-SAFE-008 | 🧪 Mocked     | ✅ 6/6          | —                                                                                 |
 
 Proof obligations use the [shared proof-strategy registry](../../testing/proof-strategies.md). Multiple IDs for one AC are cumulative.
 
@@ -1178,21 +1178,31 @@ movement across the participating stories.
 ## US-SAFE-007: Review the Safe Swap P&L
 
 **As a** company member\
-**I want to** see what the Safe's swaps gave up, what the assets received are worth today, the resulting profit or loss, and the fees\
+**I want to** see the profit or loss on the tokens the Safe's swaps touched, and the fees\
 **So that** I know whether converting treasury assets created or lost value
 
-The Wallet overview shows four figures, in this order, once the Safe has at least one swap. Values are in USD.
+Once the Safe has at least one swap, the Wallet overview shows the number of swaps, the P&L in USD with its percentage of the swaps' value,
+and the transaction fees. Each token a swap gave or received is tracked at its weighted average cost through every movement of that token in
+the Safe:
 
-- **Swapped value** — what the swaps gave up, at the USD price of each swap's day, less the fees reported for them.
-- **Current value swap** — what the assets received are worth today.
-- **P&L** — current value swap minus swapped value, with the percentage of the swapped value. It shows the market result only.
-- **Transaction fees** — the fees CoW Protocol reports for the Safe's orders. Accounting books the same fees as Transaction Fee Expense;
-  they are a cost of their own, kept apart from the P&L.
+- **Entry** — a token received in a swap costs the exchange's value; a deposit costs its quantity at that day's price. The average cost is
+  the total cost divided by the quantity held.
+- **Exchange value** — the stablecoin side of the swap when there is one, otherwise the side given, valued on the swap's UTC day with the
+  reported fee taken out. Several tokens received share it by their worth that day.
+- **Exit** — a swap, a payment, or a transfer out fixes a result of quantity × (price that day − average cost) and leaves the average cost
+  unchanged. Once a position is emptied, its average cost starts again from the next entry.
+- **Still held** — the quantity held is valued at today's price against its average cost.
+- **P&L** — the sum of every token's fixed and current results. USD stablecoins are worth $1 and keep a $1 average cost. The transaction
+  fees CoW Protocol reports are a cost of their own: Accounting books them as Transaction Fee Expense and they stay out of the P&L.
+
+Accounting does not book this P&L. Its `Swap P&L` line keeps the per-swap valuation of the
+[use-case catalogue](./safe-swap-pnl-use-cases.md), which values what each swap received at today's price. Both agree while the tokens
+received are still held; they differ once a received token is spent or bought again.
 
 ### Use Cases
 
-The [Safe swap P&L use-case catalogue](./safe-swap-pnl-use-cases.md) defines the calculation rules and fourteen use cases, each with its
-condition, related criteria, and a worked example:
+The [Safe swap P&L use-case catalogue](./safe-swap-pnl-use-cases.md) defines the per-swap valuation Accounting books and fourteen use cases,
+each with its condition, related criteria, and a worked example:
 
 - buying, selling, and exchanging volatile assets or stablecoins (`UC-SWAP-001`–`UC-SWAP-005`);
 - assets spent since the swap and several swaps over time (`UC-SWAP-006`, `UC-SWAP-007`);
@@ -1203,26 +1213,31 @@ condition, related criteria, and a worked example:
 
 #### Happy Path
 
-- [x] `AC-US-SAFE-007-01` Once the Safe has swapped, the Wallet overview shows the number of swaps, the swapped value, the current value
-      swap, the P&L in USD and as a percentage, and the transaction fees.
+- [x] `AC-US-SAFE-007-01` Once the Safe has swapped, the Wallet overview shows the number of swaps, the P&L in USD and as a percentage of
+      the swaps' value, and the transaction fees.
 
 #### Business Rules
 
 - [x] `AC-US-SAFE-007-02` A swap is a transaction in which the Safe sends fungible assets and receives different ones. Deposits,
       withdrawals, NFTs, transfers to itself, and a refund of the sold asset in the same transaction are not counted as separate trades.
-- [x] `AC-US-SAFE-007-03` The swapped value uses the USD price of each asset given up on the UTC day of its swap.
-- [x] `AC-US-SAFE-007-04` The current value swap uses the asset's current price from the Safe balances, or today's daily quote when the Safe
-      no longer holds it.
-- [x] `AC-US-SAFE-007-05` The P&L equals the current value swap minus the swapped value and is marked as a gain or a loss.
-- [x] `AC-US-SAFE-007-06` USD stablecoins are valued at $1.
+- [x] `AC-US-SAFE-007-03` Each token a swap gave or received is tracked at its weighted average cost through all its movements in the Safe,
+      including deposits and payments; a deposit enters at the price of its UTC day.
+- [x] `AC-US-SAFE-007-04` What leaves the Safe fixes its result at the price of the day it leaves; what the Safe still holds is valued at
+      its current price from the Safe balances, or today's daily quote.
+- [x] `AC-US-SAFE-007-05` The P&L is the sum of the tokens' results and is marked as a gain or a loss.
+- [x] `AC-US-SAFE-007-06` USD stablecoins are valued at $1 and keep a $1 average cost.
 - [x] `AC-US-SAFE-007-07` Fees come only from the Safe's own fulfilled CoW Protocol orders, valued at the swap day's price; when no swap
       reports a fee, the fees show as unavailable.
-- [x] `AC-US-SAFE-007-10` A reported fee is taken out of the swapped value of its swap, so the P&L excludes it; a fee that is not reported
-      stays in the swapped value.
+- [x] `AC-US-SAFE-007-10` A reported fee stays out of the P&L: it is taken out of the exchange's value, and the tokens it consumed leave at
+      their average cost without a result.
+- [x] `AC-US-SAFE-007-11` An exchange is valued on its day by its stablecoin side, or else by the side given; several tokens received share
+      that value by their worth that day.
+- [x] `AC-US-SAFE-007-12` Once a token's position is emptied, its average cost starts again from its next entry.
 
 #### Edge & Error Cases
 
-- [x] `AC-US-SAFE-007-08` A missing price marks the figures as incomplete and names the asset instead of counting it as zero silently.
+- [x] `AC-US-SAFE-007-08` A missing price, or a history in which a token leaves more than it held, leaves that token unvalued; the P&L is
+      marked incomplete and names it instead of counting it as zero.
 - [x] `AC-US-SAFE-007-09` Without a swap, or while the history, balances, or prices are unavailable, the swap figures stay hidden.
 
 ### Test Coverage
@@ -1240,24 +1255,32 @@ condition, related criteria, and a worked example:
 | `AC-US-SAFE-007-08`  | `PS-FRONTEND`       | Frontend         | ✅ Met          |
 | `AC-US-SAFE-007-09`  | `PS-FRONTEND`       | Frontend         | ✅ Met          |
 | `AC-US-SAFE-007-10`  | `PS-FRONTEND`       | Frontend         | ✅ Met          |
+| `AC-US-SAFE-007-11`  | `PS-FRONTEND`       | Frontend         | ✅ Met          |
+| `AC-US-SAFE-007-12`  | `PS-FRONTEND`       | Frontend         | ✅ Met          |
 
 **Dependencies:** US-SAFE-002
 
 ## US-SAFE-008: Review the Safe Swaps
 
 **As a** company member\
-**I want to** see each swap the Safe made, with the tokens it sold and the tokens it received\
-**So that** I can tell which conversions produced the Safe's swap P&L
+**I want to** see each token the Safe's swaps touched and each swap it made\
+**So that** I can tell which tokens and conversions produced the Safe's swap P&L
 
-At the top of the Activity section, a table lists the Safe's swaps, newest first. Each row uses the same valuation rules as the swap P&L
-(`US-SAFE-007`): the swapped value is priced on the swap's day less its reported fee, and the current value is priced today.
+At the top of the Activity section, the Safe's swaps are detailed by token and by swap, with the valuation rules of the swap P&L
+(`US-SAFE-007`). For each token, what it held before a swap, the swap, and its fee show where its cost and P&L come from; its deposits and
+payments stay in the Safe's transaction lists below.
 
 ### Acceptance Criteria
 
 #### Happy Path
 
-- [x] `AC-US-SAFE-008-01` Each swap shows its date, the tokens sold and the tokens received with their quantities, the swapped value, the
-      current value, the P&L, the reported fee, and the on-chain transaction.
+- [x] `AC-US-SAFE-008-01` Each swap shows its date, the tokens given and the tokens received with their quantities, fee excluded, the value
+      of the exchange on its day, the reported fee, and the on-chain transaction.
+- [x] `AC-US-SAFE-008-05` Each token a swap touched shows the quantity the Safe still holds, its average buy price, the cost of what is
+      held, today's price, and its P&L; a token the Safe no longer holds is identified as such and keeps only its P&L.
+- [x] `AC-US-SAFE-008-06` A token's history lists, for each swap, the quantity held just before it, the quantity the swap exchanged, and the
+      quantity its fee took; the exchange and the fee show the token price they were valued at, and the exchange its result. What the Safe
+      still holds is valued at today's price. Deposits and payments are left out of the history.
 
 #### Business Rules
 
@@ -1265,9 +1288,9 @@ At the top of the Activity section, a table lists the Safe's swaps, newest first
 
 #### Edge & Error Cases
 
-- [x] `AC-US-SAFE-008-03` When a token of a swap cannot be priced, the affected values show as unavailable and the unpriced tokens are
-      named; the P&L is not marked as a gain or a loss.
-- [x] `AC-US-SAFE-008-04` Without a swap the table explains that none exists yet; it shows a loading state while the figures settle and an
+- [x] `AC-US-SAFE-008-03` When a token cannot be valued, its unknown values show as unavailable and the token is named; its P&L is not
+      marked as a gain or a loss.
+- [x] `AC-US-SAFE-008-04` Without a swap the section explains that none exists yet; it shows a loading state while the figures settle and an
       error when the history or balances cannot be loaded.
 
 ### Test Coverage
@@ -1278,6 +1301,8 @@ At the top of the Activity section, a table lists the Safe's swaps, newest first
 | `AC-US-SAFE-008-02`  | `PS-FRONTEND`  | Frontend         | ✅ Met |
 | `AC-US-SAFE-008-03`  | `PS-FRONTEND`  | Frontend         | ✅ Met |
 | `AC-US-SAFE-008-04`  | `PS-FRONTEND`  | Frontend         | ✅ Met |
+| `AC-US-SAFE-008-05`  | `PS-FRONTEND`  | Frontend         | ✅ Met |
+| `AC-US-SAFE-008-06`  | `PS-FRONTEND`  | Frontend         | ✅ Met |
 
 **Dependencies:** US-SAFE-007
 
@@ -1506,10 +1531,15 @@ retained only while refreshing the same Safe; switching or clearing the Safe hid
 and [overview swap figure tests](../../../app/src/components/sections/SafeView/__tests__/SafeSwapPnlCard.spec.ts). The figures have not been
 checked against a live Safe yet.
 
-The [swaps table](../../../app/src/components/sections/SafeView/SafeSwapsTable.vue) uses the same report's detailed token legs and fees. It
-sorts a copy newest first, preserving the report order consumed by Accounting. When a swap's given or received value is unpriced, the table
-leaves its P&L unavailable rather than displaying the report's incomplete numeric result. Executable evidence:
-[swap table tests](../../../app/src/components/sections/SafeView/__tests__/SafeSwapsTable.spec.ts).
+The same composable returns two results from one set of sources. The per-swap report keeps the order and numeric results Accounting books.
+The [average-cost tracking](../../../app/src/utils/safe/costBasis.ts) reads every movement of the tokens the swaps touched, oldest first by
+block, and feeds the Wallet overview and the Activity swaps. Its daily quotes are requested by running the calculation once without quotes
+and collecting every quote it reads, so the requests cannot drift from the rules. Executable evidence:
+[average-cost tests](../../../app/src/utils/safe/__tests__/costBasis.spec.ts).
+
+The [Activity swaps](../../../app/src/components/sections/SafeView/SafeSwapsTable.vue) list the tokens, a token's history, and the swaps,
+which they sort as a copy newest first. Executable evidence:
+[swaps tests](../../../app/src/components/sections/SafeView/__tests__/SafeSwapsTable.spec.ts).
 
 Company and Companies list summaries reuse the Gateway cache and its valued fiat total, including tokens outside the CNC payment-token list.
 They keep the known provider valuation when another returned token has no price. Holdings keep exact quantities on hover and expose precise
