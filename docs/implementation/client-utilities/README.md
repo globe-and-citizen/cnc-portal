@@ -116,6 +116,11 @@ identity, price or logo, normalizes Accounting's provider targets, and checks th
 existing Accounting data layer consumes reactive query results; pure utilities build provider targets and resolve rates by token/date.
 Queries retain raw validated provider responses and HTTP ownership. Provider retry scheduling belongs to the query options.
 
+The Safe browser-provider boundary checks the configured wallet network immediately before transaction or signing requests, including
+requests from a cached SDK instance after a wallet network change. Read-only provider requests remain available. The
+[shared session policy](../../features/authentication/README.md#us-auth-004-resume-after-a-wallet-network-change) owns the global lock and
+recovery journey.
+
 ## Implementation Evidence
 
 [Shared balance reads](../../../app/src/composables/useContractBalance.ts) accept caller-supplied query options while preserving the
@@ -124,7 +129,7 @@ post-confirmation balance invalidations reach both. [Currency prices](../../../a
 currency payload and conversions while consuming the centralized CoinGecko price query, whose preset freshness, polling and direct Axios
 reads are described in [Client Data Access](../client-data-access/README.md#browser-request-coordination).
 
-**Implementation evidence reviewed against:** `008826d0d841f19c967c8ff477a7e9c452ee7398`
+**Implementation evidence reviewed against:** `635eb92ec16d0fa5fca930d458b0e35453af94d2`
 
 - [Utility ownership map and domain implementations](../../../app/src/utils/)
 - [Shared Accounting domain contracts](../../../app/src/utils/accounting/types.ts)

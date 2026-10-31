@@ -29,9 +29,13 @@
 - **Protections:** `PausableUpgradeable` (despite not being proxy-upgradeable), `ReentrancyGuard`
 - **Note:** Not upgradeable — no proxy; owner deploys and configures directly
 
+The client deployment boundary requests the configured chain and tracks the deployment receipt on that same chain. The
+[shared wallet-session policy](../../../features/authentication/README.md#us-auth-004-resume-after-a-wallet-network-change) owns network
+recovery; no contract invariant is changed by that client policy.
+
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `787921e5cf9dd1cf46fd0f69f651dba7d8785374`
+**Implementation evidence reviewed against:** `635eb92ec16d0fa5fca930d458b0e35453af94d2`
 
 - [Campaign manager setup form](../../../../app/src/components/sections/ContractManagementView/forms/CreateAddCampaign.vue)
 - [Campaign Manager deployment mutation](../../../../app/src/composables/useContractFunctions.ts)

@@ -37,7 +37,10 @@ flowchart LR
 
 1. Vue Router resolves the browser location. The root location redirects to the Companies route and team routes resolve under a team ID.
 2. The guard redirects an unauthenticated visitor to Login and redirects an authenticated visitor away from Login to Companies.
-3. The application shell renders the named login view or, for an authenticated session, the team workspace and its default route view.
+3. The application shell renders the named login view or, for an authenticated session, the team workspace and its default route view. An
+   account mismatch retains the account lock. Otherwise, an unexpected or unknown wallet network replaces the workspace with the
+   [shared network lock](../../features/authentication/README.md#us-auth-004-resume-after-a-wallet-network-change), unmounting its dialogs.
+   Returning to the configured network renders the same route without navigation or another login.
 4. The sidebar derives its entries, disabled state, active section, and active child from the current route plus the current team and user.
 5. Accounting report and account-assignment routes render below one persistent Accounting parent route. Moving between children replaces
    only the nested view; changing the team replaces the parent and its team-scoped journal.
@@ -56,7 +59,7 @@ flowchart LR
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `722692bad36db94c22ce1918c03e59a1e0f2dd65`
+**Implementation evidence reviewed against:** `635eb92ec16d0fa5fca930d458b0e35453af94d2`
 
 - [Team selection menu](../../../app/src/components/layout/TeamSelectMenu.vue)
 - [Router definition and authentication guard](../../../app/src/router/index.ts)

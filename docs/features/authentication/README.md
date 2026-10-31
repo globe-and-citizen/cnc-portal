@@ -1,6 +1,6 @@
 # Authentication — User Stories
 
-**Scope:** Wallet-based sign-in and protected entry for the client and administrator dashboard
+**Scope:** Wallet-based sign-in, protected entry, and client wallet-session recovery
 
 **Last reviewed:** 2026-10-21
 
@@ -14,6 +14,10 @@ not submit an on-chain transaction and does not consume gas.
 
 The client accepts an authenticated portal user. The dashboard additionally requires a persisted administrator role. Authentication proves
 wallet ownership; authorization decides which product surface the user may enter.
+
+The authenticated client locks its workspace when the connected wallet is on another or an unknown network. The user can request the
+configured network and resume the same session after a successful switch. Production targets Polygon. This session policy is shared by all
+client features; signature-domain validation remains with its API and contract owners.
 
 ## Lifecycle
 
@@ -35,11 +39,12 @@ flowchart TB
 
 ## Status Overview
 
-| User Story  | Title                             | Actor                  | Status         |
-| ----------- | --------------------------------- | ---------------------- | -------------- |
-| US-AUTH-001 | Sign in to the client             | Portal user            | 🧪 Validation  |
-| US-AUTH-002 | Sign in to the backoffice         | Platform administrator | 🧪 Validation  |
-| US-AUTH-003 | Recover from an interrupted login | Portal user            | 🚧 In Progress |
+| User Story  | Title                                | Actor                     | Status         |
+| ----------- | ------------------------------------ | ------------------------- | -------------- |
+| US-AUTH-001 | Sign in to the client                | Portal user               | 🧪 Validation  |
+| US-AUTH-002 | Sign in to the backoffice            | Platform administrator    | 🧪 Validation  |
+| US-AUTH-003 | Recover from an interrupted login    | Portal user               | 🚧 In Progress |
+| US-AUTH-004 | Resume after a wallet network change | Authenticated portal user | 🧪 Validation  |
 
 ## Test Coverage Overview
 
@@ -53,6 +58,7 @@ Runs of at least three consecutive missing criteria use inclusive ranges with fu
 | US-AUTH-001 | ✅ Integrated | ⚠️ 6/9          | `AC-US-AUTH-001-01`, `AC-US-AUTH-001-04`, `AC-US-AUTH-001-08` |
 | US-AUTH-002 | ⬜ Planned    | ❌ 0/8 met      | `AC-US-AUTH-002-01`–`AC-US-AUTH-002-08`                       |
 | US-AUTH-003 | ⬜ Planned    | ⚠️ 1/9          | `AC-US-AUTH-003-01`–`AC-US-AUTH-003-08`                       |
+| US-AUTH-004 | ✅ Browser    | ✅ 7/7          | None                                                          |
 
 Proof obligations use the [shared proof-strategy registry](../../testing/proof-strategies.md). Multiple IDs for one AC are cumulative.
 
@@ -185,14 +191,63 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 | `AC-US-AUTH-003-08`  | `PS-BACKEND`        | None linked      | ❌ Missing      |
 | `AC-US-AUTH-003-09`  | `PS-FRONTEND`       | Frontend         | ✅ Met          |
 
+## US-AUTH-004: Resume after a Wallet Network Change
+
+**As a** portal user with an authenticated session\
+**I want to** return my wallet to the application's network after a network change\
+**So that** I can resume my company session on the intended network
+
+### Acceptance Criteria
+
+#### Happy Path
+
+- [x] `AC-US-AUTH-004-01` Returning the connected wallet to the configured network restores the same authenticated route without requiring
+      another login.
+- [x] `AC-US-AUTH-004-02` A user can request the configured network from the locked session.
+
+#### Business Rules
+
+- [x] `AC-US-AUTH-004-03` An authenticated session on another or an unknown wallet network cannot interact with the protected workspace,
+      including open transaction dialogs.
+- [x] `AC-US-AUTH-004-04` Network recovery does not automatically submit or replay a transaction.
+- [x] `AC-US-AUTH-004-05` A wallet-account mismatch retains the existing account-lock behavior, and disconnecting retains the existing
+      logout behavior.
+
+#### Edge & Error Cases
+
+- [x] `AC-US-AUTH-004-06` A rejected, failed or unsupported network switch keeps the session locked and allows a deliberate retry without
+      repeated automatic requests.
+- [x] `AC-US-AUTH-004-07` Transaction requests still being prepared when the wallet changes network are bound to the configured chain or
+      rejected before submission; already submitted wallet requests are not cancelled by the screen lock.
+
+### Test Coverage
+
+| Acceptance Criterion | Proof Strategy | Current Evidence                           | Status |
+| -------------------- | -------------- | ------------------------------------------ | ------ |
+| `AC-US-AUTH-004-01`  | `PS-BROWSER`   | Integrated E2E + Mocked browser + Frontend | ✅ Met |
+| `AC-US-AUTH-004-02`  | `PS-BROWSER`   | Mocked browser + Frontend                  | ✅ Met |
+| `AC-US-AUTH-004-03`  | `PS-BROWSER`   | Integrated E2E + Mocked browser + Frontend | ✅ Met |
+| `AC-US-AUTH-004-04`  | `PS-BROWSER`   | Integrated E2E + Mocked browser + Frontend | ✅ Met |
+| `AC-US-AUTH-004-05`  | `PS-FRONTEND`  | Frontend                                   | ✅ Met |
+| `AC-US-AUTH-004-06`  | `PS-BROWSER`   | Mocked browser + Frontend                  | ✅ Met |
+| `AC-US-AUTH-004-07`  | `PS-FRONTEND`  | Frontend                                   | ✅ Met |
+
+**Cross-domain relationship:** This is a shared session policy consumed by every authenticated client route, including Accounts, Payroll,
+governance, Contract Management and Safe. Each domain retains its operation, authorization and signature rules. The
+[shared contract-interaction owner](../../implementation/contract-interactions/README.md) documents submission boundaries and exceptions.
+
 ## Known Gaps
 
 - The client unit proof for `AC-US-AUTH-003-06` is complete, but the required mocked-browser proof remains pending.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `fd2316082d3bf3d957a624952561fe62920cebbe`
+**Implementation evidence reviewed against:** `635eb92ec16d0fa5fca930d458b0e35453af94d2`
 
+- [Network lock screen](../../../app/src/components/layout/NetworkLockScreen.vue),
+  [network-lock tests](../../../app/src/components/layout/__tests__/NetworkLockScreen.spec.ts),
+  [browser network-recovery journey](../../../app/test/e2e/wallet-network.spec.ts), and
+  [E2E wallet network fixture](../../../app/src/e2e/mockConnector.ts)
 - [Client login page](../../../app/src/views/LoginView.vue)
 - [Client SIWE orchestration](../../../app/src/composables/useSiwe.ts)
 - [Client SIWE tests](../../../app/src/composables/__tests__/useSiwe.spec.ts)
