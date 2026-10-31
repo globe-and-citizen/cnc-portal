@@ -1,26 +1,28 @@
 # Safe Swap P&L Use Cases and Calculation Rules
 
-**Scope:** Swaps made by the company Safe, the four figures the Wallet overview shows for them, and the rules that compute each figure
+**Scope:** Swaps made by the company Safe, the per-swap valuation Accounting books for them, and the rules that compute each figure
 
 **Status:** Implemented in the client; every use case has a frontend scenario test; validation on a live Safe remains pending
 
 **Last reviewed:** Not yet reviewed
 
 This catalogue covers **Safe transactions that exchange one asset for another**. Identify the use case from the Safe history, then find its
-**calculation rules, related user stories, and the figures it produces**. [US-SAFE-007](./README.md#us-safe-007-review-the-safe-swap-pl)
-owns the user-facing acceptance criteria. This document owns how each figure is calculated. Accounting books the P&L of each swap on that
-swap's single [`Swap P&L` line](../accounting/journal-entry-catalogue.md#safe-swap--evidenced-safe-asset-exchange), so both show the same
-amount. The figures wait for the history, balances, daily quotes and fee lookups, then keep their last settled value while any of them
-reloads, so a refresh never drops a fee or blanks the figures.
+**calculation rules, related user stories, and the figures it produces**. This document owns how each figure is calculated. Accounting books
+the P&L of each swap on that swap's single
+[`Swap P&L` line](../accounting/journal-entry-catalogue.md#safe-swap--evidenced-safe-asset-exchange). The Wallet overview no longer shows
+these figures: [US-SAFE-007](./README.md#us-safe-007-review-the-safe-swap-pl) tracks each token at its weighted average cost instead, which
+gives the same P&L while the assets received are still held and differs once one is spent (`UC-SWAP-006`) or bought again. The figures wait
+for the history, balances, daily quotes and fee lookups, then keep their last settled value while any of them reloads, so a refresh never
+drops a fee or blanks the figures.
 
 ## Reading the Catalogue
 
 | Concept          | Question answered                      | Responsibility                                                      |
 | ---------------- | -------------------------------------- | ------------------------------------------------------------------- |
-| User story       | What does the company member see?      | Wallet overview figures, their order, and acceptance criteria       |
+| User story       | What does the company member see?      | Wallet overview P&L and the acceptance criteria                     |
 | Swap use case    | Which kind of swap happened?           | Condition read from the Safe history, rules applied, worked example |
 | Calculation rule | How is a figure computed?              | Price source, quantity, and treatment shared by several use cases   |
-| Overview figure  | What does the Wallet overview display? | Swapped value, Current value swap, P&L, and Transaction fees        |
+| Report figure    | What does the per-swap report compute? | Swapped value, Current value swap, P&L, and Transaction fees        |
 
 - Every figure is in USD. Quantities come from the Safe history in token units, with each token's decimals.
 - The figures add up all swaps since the Safe's first transaction. A swap is never split between periods.
@@ -457,7 +459,8 @@ For 1,000 USDC swapped for 0.5 WETH with no WETH price:
 - Daily quotes are the CoinGecko price of the swap's UTC day, not the exact price at the second of execution.
 - Only CoW Protocol fees are read. Fees of other protocols are not reported, and network gas paid by another wallet is never counted.
 - A fee that is not reported cannot be separated: it stays in the swapped value, so the P&L of that swap still bears it.
-- Current value swap values the quantity received, not the quantity still held, by design (`UC-SWAP-006`).
+- Current value swap values the quantity received, not the quantity still held (`UC-SWAP-006`); the Wallet overview's average-cost P&L
+  (`US-SAFE-007`) fixes a spent quantity at the price of the day it left instead.
 - The figures have not been checked against a live Safe that swapped through CoW Protocol yet.
 
 ## Implementation Evidence

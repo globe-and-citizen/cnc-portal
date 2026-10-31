@@ -92,14 +92,14 @@ describe('[US-SAFE-007] computeSafeSwapPnl', () => {
     ])
   })
 
-  it('[AC-US-SAFE-007-05] reports a gain when the assets received are worth more than what was given up', () => {
+  it('reports a gain when the assets received are worth more than what was given up', () => {
     const pnl = computeSafeSwapPnl(swap(), SAFE, prices(2400), () => undefined)
 
     expect(pnl).toMatchObject({ count: 1, swappedUsd: 1000, currentUsd: 1200, pnlUsd: 200 })
     expect(pnl.pnlRatio).toBeCloseTo(0.2)
   })
 
-  it('[AC-US-SAFE-007-05] reports a loss when the assets received lost value', () => {
+  it('reports a loss when the assets received lost value', () => {
     const pnl = computeSafeSwapPnl(swap(), SAFE, prices(1800), () => undefined)
 
     expect(pnl).toMatchObject({ currentUsd: 900, pnlUsd: -100 })
@@ -115,7 +115,7 @@ describe('[US-SAFE-007] computeSafeSwapPnl', () => {
     expect(computeSafeSwapPnl(swap(), SAFE, prices(2000), () => undefined).feesUsd).toBeNull()
   })
 
-  it('[AC-US-SAFE-007-10] takes a reported fee out of the swapped value so the P&L excludes it', () => {
+  it('takes a reported fee out of the swapped value so the P&L excludes it', () => {
     const fee = { asset: USDC, symbol: 'USDC', quantity: 3.5 }
     const pnl = computeSafeSwapPnl([...swap(), ...swap('0xother')], SAFE, prices(2400), (found) =>
       found[0]!.transactionHash === '0xswap' ? fee : undefined
@@ -137,7 +137,7 @@ describe('[US-SAFE-007] computeSafeSwapPnl', () => {
     expect(pnl.swaps.reduce((sum, swap) => sum + swap.pnlUsd, 0)).toBe(pnl.pnlUsd)
   })
 
-  it('[AC-US-SAFE-007-08] names the assets that cannot be priced', () => {
+  it('names the assets that cannot be priced', () => {
     const pnl = computeSafeSwapPnl(swap(), SAFE, prices(undefined), () => undefined)
 
     expect(pnl.missingPrices).toEqual(['WETH'])

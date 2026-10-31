@@ -1,7 +1,5 @@
-import { formatUnits } from 'viem'
-import { NETWORK } from '@/constant'
 import type { SafeIncomingTransfer } from '@/types/safe'
-import { groupSafeTransfers, netSafeTransfers } from './swapTransfers'
+import { groupSafeTransfers, safeDayOf, safeTransactionLegs } from './swapTransfers'
 
 export interface SafeSwapPnl {
   count: number
@@ -65,25 +63,18 @@ export function computeSafeSwapPnl(
   let count = 0
   const swaps: SafeSwapResult[] = []
   for (const [txHash, rows] of groupSafeTransfers(transfers)) {
-    const amounts = netSafeTransfers(rows, safeAddress)
-    const net = [...amounts.values()]
-    if (!net.some(({ amount }) => amount < 0n) || !net.some(({ amount }) => amount > 0n)) continue
+    const legs = safeTransactionLegs(rows, safeAddress)
+    if (!legs.some(({ isReceived }) => !isReceived) || !legs.some(({ isReceived }) => isReceived))
+      continue
     count += 1
-    const date = new Date(rows[0]!.executionDate).toISOString().slice(0, 10)
+    const date = safeDayOf(rows[0]!.executionDate)
     let swapPnlUsd = 0
-    for (const [asset, { transfer: row, amount }] of amounts) {
-      if (amount === 0n) continue
-      const native = row.type === 'ETHER_TRANSFER'
-      const symbol = native ? NETWORK.currencySymbol : (row.tokenInfo?.symbol ?? 'Unknown')
-      const quantity = Number(
-        formatUnits(amount < 0n ? -amount : amount, native ? 18 : row.tokenInfo!.decimals)
-      )
-      const valueUsd =
-        amount < 0n
-          ? -quantity * priced(symbol, prices.on(asset, date))
-          : quantity * priced(symbol, prices.now(asset))
-      if (amount < 0n) swappedUsd -= valueUsd
-      else currentUsd += valueUsd
+    for (const { asset, symbol, quantity, isReceived } of legs) {
+      const valueUsd = isReceived
+        ? quantity * priced(symbol, prices.now(asset))
+        : -quantity * priced(symbol, prices.on(asset, date))
+      if (isReceived) currentUsd += valueUsd
+      else swappedUsd -= valueUsd
       swapPnlUsd += valueUsd
     }
     const fee = feeOf(rows)
