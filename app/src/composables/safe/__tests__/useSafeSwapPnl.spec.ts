@@ -4,7 +4,7 @@ import { useSafeSwapPnl } from '../useSafeSwapPnl'
 import type { SafeClientBalance, SafeIncomingTransfer } from '@/types/safe'
 import { useGetSafeBalancesQuery } from '@/queries/safeClient.queries'
 import * as swapValuation from '@/utils/safe/swapValuation'
-import { currentChainId, USDC_ADDRESS } from '@/constant'
+import { currentChainId, SUPPORTED_TOKENS, USDC_ADDRESS } from '@/constant'
 
 const { mockTransfers, mockRates, mockOrders, requests } = vi.hoisted(() => ({
   mockTransfers: {
@@ -39,6 +39,7 @@ vi.mock('@/queries/cow.queries', () => ({
 
 const SAFE = '0x5AFE00000000000000000000000000000000cafe'
 const SETTLEMENT = '0x9008d19f58aabd9ed0d60971565aa8510560ab41'
+const NATIVE_COIN_ID = SUPPORTED_TOKENS.find(({ id }) => id === 'native')!.coingeckoId
 
 const leg = (overrides: Partial<SafeIncomingTransfer>): SafeIncomingTransfer => ({
   type: 'ETHER_TRANSFER',
@@ -85,6 +86,24 @@ describe('[US-SAFE-007] useSafeSwapPnl', () => {
     expect(isLoading.value).toBe(false)
     expect(data.value?.count).toBe(1)
     expect(requests.orders).toEqual(['0xswap'])
+  })
+
+  it('[AC-US-SAFE-007-03] tracks every movement of the swapped tokens and requests the quotes it needs', () => {
+    const costBasis = vi.spyOn(swapValuation, 'buildSafeCostBasis')
+    const payment = leg({
+      transactionHash: '0xpayment',
+      executionDate: '2026-07-01T10:00:00Z',
+      blockNumber: 2,
+      from: SAFE,
+      to: SETTLEMENT
+    })
+    mockTransfers.data.value = [payment, ...swapLegs]
+
+    const { costBasis: basis } = useSafeSwapPnl(SAFE)
+
+    expect(basis.value?.count).toBe(1)
+    expect(costBasis.mock.calls.at(-1)![0]).toEqual([payment, ...swapLegs])
+    expect(requests.rates).toContainEqual({ coinId: NATIVE_COIN_ID, date: '2026-07-01' })
   })
 
   it('requests each unknown ERC-20 market once and skips configured tokens and native transfers', () => {

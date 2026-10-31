@@ -106,6 +106,7 @@ describe('[US-SAFE-001] [US-SAFE-002] SafeView.vue', () => {
       TokenHoldingsSection: true,
       SafeTransactions: true,
       SafeIncomingTransactions: true,
+      SafeSwapsTable: true,
       SetSafeAddressAction: true
     }
 

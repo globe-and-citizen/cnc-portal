@@ -52,10 +52,12 @@ for a stablecoin or an exchange between two stablecoins with slippage, on the sw
 that line books instead the swap's [Safe swap P&L](../accounts/safe-swap-pnl-use-cases.md) (the current value of what it received against
 the CoinGecko value, on the swap day, of what it gave up, less the reported fee), and a `Safe Market Value Adjustment` line in the same
 posting books the part the cash lines do not carry. `Cash — Safe` keeps the price paid; the swapped assets' current value is `Cash — Safe`
-plus that adjustment, and `Swap P&L` totals the Safe overview figure. A `Swap P&L` gain reads as revenue and a trial-balance credit; a loss
-reads as an expense and a debit, never as a negative amount. Ancillary mints and ambiguous batches require classification. Missing decimals
-or acquisition basis keeps Accounting incomplete. Cross-transaction intents and arbitrary DeFi actions need additional protocol evidence.
-See the [Accounting Read Model](../../implementation/accounting-read-model/README.md#safe-assets-and-exchanges) for these boundaries and the
+plus that adjustment, and `Swap P&L` totals the per-swap report. The Safe Wallet overview shows an average-cost P&L instead; both agree
+while the assets received are still held and differ once one is spent or bought again. A `Swap P&L` gain reads as revenue and a
+trial-balance credit; a loss reads as an expense and a debit, never as a negative amount. Ancillary mints and ambiguous batches require
+classification. Missing decimals or acquisition basis keeps Accounting incomplete. Cross-transaction intents and arbitrary DeFi actions need
+additional protocol evidence. See the
+[Accounting Read Model](../../implementation/accounting-read-model/README.md#safe-assets-and-exchanges) for these boundaries and the
 [exchange regression suite](../../../app/src/utils/accounting/__tests__/safeExchanges.spec.ts) and
 [price-paid regressions](../../../app/src/utils/accounting/__tests__/safeExchanges.pricePaid.spec.ts),
 [Swap P&L regressions](../../../app/src/utils/accounting/__tests__/safeExchanges.swapPnl.spec.ts), and
@@ -936,7 +938,7 @@ valuation gap. The existing completeness rules apply to every booked movement. S
 [Safe pagination and metadata unit tests](../../../app/src/queries/__tests__/safe.queries.spec.ts) and
 [Safe source-mapping tests](../../../app/src/utils/accounting/__tests__/safe.spec.ts). Live product review remains pending.
 
-**Implementation evidence reviewed against:** `3526c1933f72d1d8bf90914cb414f2b288ced50b`
+**Implementation evidence reviewed against:** `07e739b663ef53b14340b641a3fc4027f1d566a1`
 
 - [Accounting page](../../../app/src/components/sections/AccountingView/AccountingPage.vue),
   [team routes](../../../app/src/router/index.ts), and [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts)
