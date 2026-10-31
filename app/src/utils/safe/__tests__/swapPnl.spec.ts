@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { SafeIncomingTransfer } from '@/types/safe'
-import { computeSafeSwapPnl, type SafeSwapPnl } from '../swapPnl'
+import { computeSafeSwapPnl } from '../swapPnl'
 
 const SAFE = '0x5AFE00000000000000000000000000000000cafe'
 const SETTLEMENT = '0x9008d19f58aabd9ed0d60971565aa8510560ab41'
@@ -35,8 +35,6 @@ const prices = (now: number | undefined) => ({
   on: (asset: string) => (asset === USDC ? 1 : undefined),
   now: (asset: string) => (asset === WETH ? now : 1)
 })
-
-const results = (pnl: SafeSwapPnl) => pnl.swaps.map(({ txHash, pnlUsd }) => ({ txHash, pnlUsd }))
 
 describe('[US-SAFE-007] computeSafeSwapPnl', () => {
   it('nets a refund before valuing the assets given up', () => {
@@ -88,20 +86,20 @@ describe('[US-SAFE-007] computeSafeSwapPnl', () => {
     )
 
     expect(pnl).toMatchObject({ count: 2, swappedUsd: 1990, currentUsd: 2400, pnlUsd: 410 })
-    expect(results(pnl)).toEqual([
+    expect(pnl.swaps).toEqual([
       { txHash: '0xfirst', pnlUsd: 210 },
       { txHash: '0xsecond', pnlUsd: 200 }
     ])
   })
 
-  it('[AC-US-SAFE-007-05] reports a gain when the assets received are worth more than what was given up', () => {
+  it('reports a gain when the assets received are worth more than what was given up', () => {
     const pnl = computeSafeSwapPnl(swap(), SAFE, prices(2400), () => undefined)
 
     expect(pnl).toMatchObject({ count: 1, swappedUsd: 1000, currentUsd: 1200, pnlUsd: 200 })
     expect(pnl.pnlRatio).toBeCloseTo(0.2)
   })
 
-  it('[AC-US-SAFE-007-05] reports a loss when the assets received lost value', () => {
+  it('reports a loss when the assets received lost value', () => {
     const pnl = computeSafeSwapPnl(swap(), SAFE, prices(1800), () => undefined)
 
     expect(pnl).toMatchObject({ currentUsd: 900, pnlUsd: -100 })
@@ -117,7 +115,7 @@ describe('[US-SAFE-007] computeSafeSwapPnl', () => {
     expect(computeSafeSwapPnl(swap(), SAFE, prices(2000), () => undefined).feesUsd).toBeNull()
   })
 
-  it('[AC-US-SAFE-007-10] takes a reported fee out of the swapped value so the P&L excludes it', () => {
+  it('takes a reported fee out of the swapped value so the P&L excludes it', () => {
     const fee = { asset: USDC, symbol: 'USDC', quantity: 3.5 }
     const pnl = computeSafeSwapPnl([...swap(), ...swap('0xother')], SAFE, prices(2400), (found) =>
       found[0]!.transactionHash === '0xswap' ? fee : undefined
@@ -132,44 +130,17 @@ describe('[US-SAFE-007] computeSafeSwapPnl', () => {
       found[0]!.transactionHash === '0xswap' ? fee : undefined
     )
 
-    expect(results(pnl)).toEqual([
+    expect(pnl.swaps).toEqual([
       { txHash: '0xswap', pnlUsd: 203.5 },
       { txHash: '0xother', pnlUsd: 200 }
     ])
     expect(pnl.swaps.reduce((sum, swap) => sum + swap.pnlUsd, 0)).toBe(pnl.pnlUsd)
   })
 
-  it('[AC-US-SAFE-007-08] names the assets that cannot be priced', () => {
+  it('names the assets that cannot be priced', () => {
     const pnl = computeSafeSwapPnl(swap(), SAFE, prices(undefined), () => undefined)
 
     expect(pnl.missingPrices).toEqual(['WETH'])
     expect(computeSafeSwapPnl([], SAFE, prices(1), () => undefined).pnlRatio).toBeNull()
-  })
-})
-
-describe('[US-SAFE-008] computeSafeSwapPnl swap rows', () => {
-  it('[AC-US-SAFE-008-01] lists each swap with the tokens sold and received and their values', () => {
-    const fee = { asset: USDC, symbol: 'USDC', quantity: 3.5 }
-    const { swaps } = computeSafeSwapPnl(swap(), SAFE, prices(2400), () => fee)
-
-    expect(swaps).toEqual([
-      {
-        txHash: '0xswap',
-        pnlUsd: 203.5,
-        executionDate: '2026-06-01T23:30:00Z',
-        given: [{ asset: USDC, symbol: 'USDC', quantity: 1000, usd: 1000 }],
-        received: [{ asset: WETH, symbol: 'WETH', quantity: 0.5, usd: 1200 }],
-        swappedUsd: 996.5,
-        currentUsd: 1200,
-        fee: { symbol: 'USDC', quantity: 3.5, usd: 3.5 }
-      }
-    ])
-  })
-
-  it('[AC-US-SAFE-008-03] leaves a value unavailable when a token of the swap is unpriced', () => {
-    const [row] = computeSafeSwapPnl(swap(), SAFE, prices(undefined), () => undefined).swaps
-
-    expect(row).toMatchObject({ swappedUsd: 1000, currentUsd: null, fee: null })
-    expect(row!.received[0]!.usd).toBeNull()
   })
 })

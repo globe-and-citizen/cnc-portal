@@ -4,11 +4,15 @@ import type { CoinGeckoAssetMarketResponse, CoinGeckoHistoricalResponse } from '
 import type { CowOrder, CowTransactionOrders } from '@/types/cow'
 import type { SafeClientBalance, SafeIncomingTransfer } from '@/types/safe'
 import { assetMarketFromResponse, historicalRateFromResponse } from '@/utils/tokens/coingecko'
-import { computeSafeSwapPnl, type SafeSwapPnl } from './swapPnl'
+import { computeSafeCostBasis, type SafeCostBasis } from './costBasis'
+import { computeSafeSwapPnl, type SafeSwapFeeOf, type SafeSwapPnl } from './swapPnl'
 import {
   SAFE_NATIVE_ASSET,
   groupSafeTransfers,
   netSafeTransfers,
+  safeDayOf,
+  safeMovements,
+  safeSwapHashes,
   safeTransferAsset
 } from './swapTransfers'
 
@@ -40,41 +44,14 @@ function balanceAsset({ tokenInfo }: SafeClientBalance): string {
     : tokenInfo.address.toLowerCase()
 }
 
-/**
- * The Safe's movements in its swaps: transactions in which it sent one asset and received
- * another. NFT, self, zero and unknown-decimals movements are left out.
- */
+/** The Safe's movements in its swaps: transactions in which it sent one asset and received another. */
 export function safeSwapTransfers(
   transfers: readonly SafeIncomingTransfer[] | null | undefined,
   safeAddress: string | null | undefined
 ): SafeIncomingTransfer[] {
-  const address = safeAddress?.toLowerCase()
-  if (!address) return []
-  const movements = (transfers ?? []).filter(
-    ({ type, from, to, value, tokenAddress, tokenInfo }) =>
-      type !== 'ERC721_TRANSFER' &&
-      (from.toLowerCase() === address) !== (to.toLowerCase() === address) &&
-      (type === 'ETHER_TRANSFER' || (!!tokenAddress && tokenInfo?.decimals !== undefined)) &&
-      /^\d+$/.test(value) &&
-      BigInt(value) > 0n
-  )
-  const swapHashes = new Set<string>()
-  for (const [hash, rows] of groupSafeTransfers(movements)) {
-    const sent = new Set<string>()
-    const received = new Set<string>()
-    for (const row of rows) {
-      const direction = row.from.toLowerCase() === address ? sent : received
-      direction.add(safeTransferAsset(row))
-    }
-    if (
-      sent.size &&
-      received.size &&
-      (sent.size > 1 ||
-        received.size > 1 ||
-        sent.values().next().value !== received.values().next().value)
-    )
-      swapHashes.add(hash)
-  }
+  const movements = safeMovements(transfers, safeAddress)
+  if (!movements.length) return []
+  const swapHashes = safeSwapHashes(movements, safeAddress!)
   return movements.filter(({ transactionHash }) => swapHashes.has(transactionHash))
 }
 
@@ -126,7 +103,7 @@ export function safeSwapRateRequests(
   const heldAssets = new Set(heldBalances.map(balanceAsset))
   for (const rows of groupSafeTransfers(transfers).values()) {
     for (const [asset, { transfer, amount }] of netSafeTransfers(rows, safeAddress)) {
-      if (amount < 0n) request(asset, new Date(transfer.executionDate).toISOString().slice(0, 10))
+      if (amount < 0n) request(asset, safeDayOf(transfer.executionDate))
       else if (amount > 0n && !heldAssets.has(asset)) request(asset, today)
     }
   }
@@ -167,6 +144,49 @@ export function buildSafeSwapReport(
   transfers: readonly SafeIncomingTransfer[],
   sources: SafeSwapValuationSources
 ): SafeSwapPnl {
+  const { prices, feeOf } = safeSwapPricing(sources)
+  return computeSafeSwapPnl(transfers, sources.safeAddress, prices, feeOf)
+}
+
+/** Value every token the swaps touched at its weighted average cost, through all its movements. */
+export function buildSafeCostBasis(
+  movements: readonly SafeIncomingTransfer[],
+  sources: SafeSwapValuationSources
+): SafeCostBasis {
+  return computeSafeCostBasis(movements, {
+    safeAddress: sources.safeAddress,
+    swapHashes: safeSwapHashes(movements, sources.safeAddress),
+    ...safeSwapPricing(sources)
+  })
+}
+
+/**
+ * Daily quotes the cost basis needs. It runs once without quotes and requests every quote it
+ * reads, so the requests always match the calculation. Pegged stablecoins need none.
+ */
+export function safeCostBasisRateRequests(
+  movements: readonly SafeIncomingTransfer[],
+  sources: Omit<SafeSwapValuationSources, 'rates'>
+): { coinId: string; date: string }[] {
+  const requests = new Map<string, { coinId: string; date: string }>()
+  const request = (asset: string, date: string) => {
+    const coinId = sources.coinIds.get(asset)
+    if (coinId) requests.set(`${coinId}:${date}`, { coinId, date })
+    return undefined
+  }
+  const { prices, isStable, feeOf } = safeSwapPricing({ ...sources, rates: [] })
+  computeSafeCostBasis(movements, {
+    safeAddress: sources.safeAddress,
+    swapHashes: safeSwapHashes(movements, sources.safeAddress),
+    isStable,
+    feeOf,
+    prices: { on: request, now: (asset) => prices.now(asset) ?? request(asset, sources.today) }
+  })
+  return [...requests.values()]
+}
+
+/** Price and fee lookups read from the settled sources; a missing quote stays undefined. */
+function safeSwapPricing(sources: SafeSwapValuationSources) {
   const rates = new Map<string, CoinGeckoHistoricalResponse | undefined>()
   for (const { coinId, date, data } of sources.rates) {
     const key = `${coinId}:${date}`
@@ -193,15 +213,13 @@ export function buildSafeSwapReport(
       return undefined
     }
   }
+  const isStable = (asset: string) => STABLE_COIN_IDS.has(sources.coinIds.get(asset) ?? '')
   const priceNow = (asset: string) => {
-    if (STABLE_COIN_IDS.has(sources.coinIds.get(asset) ?? '')) return 1
+    if (isStable(asset)) return 1
     const price = Number(balances.get(asset)?.fiatConversion)
     return Number.isFinite(price) && price > 0 ? price : priceOn(asset, sources.today)
   }
-  return computeSafeSwapPnl(
-    transfers,
-    sources.safeAddress,
-    { on: priceOn, now: priceNow },
-    (rows) => cowSwapFee(rows, orders.get(rows[0]!.transactionHash) ?? [], sources.safeAddress)
-  )
+  const feeOf: SafeSwapFeeOf = (rows) =>
+    cowSwapFee(rows, orders.get(rows[0]!.transactionHash) ?? [], sources.safeAddress)
+  return { prices: { on: priceOn, now: priceNow }, isStable, feeOf }
 }
