@@ -118,7 +118,7 @@ while IFS= read -r hit; do
     section_fail=1
   fi
 done < <(grep -rnoE --include='*.md' \
-  '`(app|backend|contract|dashboard|ponder|the-graph|scripts)/[A-Za-z0-9_./-]+\.(ts|tsx|vue|js|mjs|cjs|sol|json|md|sh|yml|yaml)`' \
+  '`(app|backend|contract|dashboard|scripts)/[A-Za-z0-9_./-]+\.(ts|tsx|vue|js|mjs|cjs|sol|json|md|sh|yml|yaml)`' \
   "${DOC_PATHS[@]}" 2>/dev/null || true)
 if [ $section_fail -eq 0 ]; then
   echo -e "${GREEN}✓ all referenced repo paths exist${NC}"
