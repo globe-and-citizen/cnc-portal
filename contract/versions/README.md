@@ -19,7 +19,7 @@ Version names stay short (`V0`, `V0.1`, `V1`, `V2`); they are **four distinct fu
 | `V1`    | `0x91EB…F1dE`         | `0xa90C…4615`    | `9613f0882`   | 2026-04 |
 | `V2`    | `0xF426…0FFc`         | `0x870BF…82a3bA` | `026a2377b`   | 2026-07 |
 
-`current` in `registry.json` = `V2` (the factory beacon live on `develop`). `0x0205…` (V0.1) is the one Ponder pins as the prod factory.
+`current` in `registry.json` = `V2` (the factory beacon live on `develop`).
 
 V2 also renamed the Investor beacon (`InvestorsV1BeaconModule` → `InvestorBeaconModule`, dropping the "V1" suffix — see
 `contract/UPGRADE_STRATEGY.md`), converted `Vesting` from a transparent proxy to a beacon (`VestingBeaconModule`), and added `FixedReturn`
@@ -35,9 +35,8 @@ app/src/artifacts/abi/<version>/generated.ts   # typed frontend module generated
 ```
 
 `contract/versions/<version>/abi` is the only canonical historical ABI archive. The app receives one typed `generated.ts` module per version
-and does not package duplicate ABI JSON files. Dashboard and ponder still receive their per-version JSON ABIs through their own runtime
-paths; backend gets its six hand-named raw-ABI files. Distribute with `node contract/scripts/distribute-versions.mjs` after
-`contract/versions/` changes.
+and does not package duplicate ABI JSON files. The dashboard receives its per-version JSON ABIs through its runtime paths; the backend gets
+its six hand-named raw-ABI files. Distribute with `node contract/scripts/distribute-versions.mjs` after `contract/versions/` changes.
 
 Historical Solidity is not copied into parallel source directories. The immutable commit recorded in `registry.json` owns the source,
 compiler configuration, and dependency lockfile for that generation. `regenerate-version.sh` checks out that commit in an isolated clone
@@ -68,10 +67,10 @@ selects only the contracts consumed by the app, so older versions correctly omit
   commit still showed `0x2d92` (V0) — the two files disagreed.
 - **V2's `contract/versions/V2/` folder was reconstructed from the app copy** (`app/src/artifacts/{abi,deployed_addresses}/V2/`), not via
   `regenerate-version.sh` — the app copy was added ad hoc (`Add V2 ABIs …`) before `026a2377b` finalized the Polygon addresses, and
-  `registry.json` was never updated to register it. The `dashboard`/`ponder` copies of `deployed_addresses/V2/chain-137.json` had also
-  silently drifted to hold V1 addresses (a stale re-freeze); `distribute-versions.mjs` re-synced them from the canonical `V2/` folder. If
-  you need a from-scratch, recompiled-at-commit V2 snapshot later, use `regenerate-version.sh V2 026a2377b` and re-run the two scripts
-  above.
+  `registry.json` was never updated to register it. The historical `dashboard` and retired-indexer copies of
+  `deployed_addresses/V2/chain-137.json` had also silently drifted to hold V1 addresses (a stale re-freeze); `distribute-versions.mjs`
+  re-synced them from the canonical `V2/` folder. If you need a from-scratch, recompiled-at-commit V2 snapshot later, use
+  `regenerate-version.sh V2 026a2377b` and re-run the two scripts above.
 - `registry.json` `beacons`/`implementations` are derived from each version's own addresses, so a contract absent from a generation is
   correctly missing, and `Vesting` appears only under `implementations` (transparent proxy) for V0/V0.1/V1 — V2 beaconized it, so it appears
   under `beacons` too (see `implOverride` in `build-version-registry.mjs`).

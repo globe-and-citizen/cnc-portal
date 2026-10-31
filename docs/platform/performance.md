@@ -101,7 +101,7 @@ All API endpoints should meet these response time targets:
 **Read Operations:**
 
 - Use multicall for batch reads
-- Implement subgraph for complex queries
+- Bound RPC log scan ranges and reuse cached event queries
 - Cache contract state client-side
 
 ## Load Testing Requirements

@@ -45,7 +45,7 @@ Slither cannot catch everything. Confirm each of these by hand:
 
 - [ ] **Client ABI regenerated.** Run `npm run generate-abi` for the current contracts and `npm run generate-versioned-abi` for historical
       snapshots. Commit the refreshed `app/src/artifacts/abi/**/generated.ts` files. Contract CI rejects current or versioned modules that
-      are stale. Review Ponder artifacts through their separate change path.
+      are stale. Review dashboard and backend artifacts when their consumers are affected.
 - [ ] **`CHANGELOG.md` updated** for any deployed change.
 
 ## Local commands

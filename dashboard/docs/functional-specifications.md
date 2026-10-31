@@ -20,7 +20,7 @@ The admin dashboard provides **centralized monitoring and analytics** for the CN
 
 - **Read-only**: No contract interactions or state modifications
 - **Super Admin Only**: Single role with full view access
-- **Minimal Backend Changes**: Leverage existing backend APIs and The Graph subgraph data
+- **Data Sources**: Use backend APIs and explicitly scoped RPC reads; new analytics require their own validated data-source design
 - **Analytics Focus**: Emphasis on insights and data visualization
 
 ---
@@ -660,42 +660,18 @@ _Reports:_
 - Generate custom report: `/api/admin/reports/custom` (POST)
 - Download generated report: `/api/admin/reports/:id/download`
 
-### 4.2 The Graph Subgraph Queries
+### 4.2 Blockchain Data Sources
 
-**Leverage existing subgraph for blockchain data:**
+Ponder and The Graph have been retired from this repository. The analytics below remain proposals until their own backend or RPC data
+source, completeness guarantees, and validation are defined:
 
-**Team Analytics Query:**
+- Team analytics: contribution totals, token distributions, and vesting schedules.
+- Platform statistics: treasury value and transfer volume.
+- Contract activity: event identity, caller, block timestamp, and transaction details.
 
-- Query team data by team ID
-- Retrieved data includes:
-  - Team ID and name
-  - Member count
-  - Total contributions count
-  - Total value distributed
-  - Contract addresses (Member Management, Cash Remuneration, Vesting Manager)
-  - List of contributions with ID, amount, token, timestamp, and contributor
-  - List of vesting schedules with ID, amount, released amount, and status
-
-**Platform Statistics Query:**
-
-- Query platform-wide statistics
-- Retrieved data includes:
-  - Total number of teams
-  - Total number of members
-  - Total number of contributions
-  - Total value locked
-  - List of tokens with address, symbol, and total volume
-
-**Contract Events Query:**
-
-- Query contract interaction events by contract address
-- Retrieved data includes:
-  - Event ID
-  - Function name that was called
-  - Caller's address
-  - Timestamp
-  - Gas used
-- Results are ordered by timestamp in descending order (most recent first)
+The portal's existing contract histories and Accounting use shared
+[RPC event feeds](../../docs/implementation/contract-event-feeds/README.md). Their presence does not establish that these proposed dashboard
+aggregations are implemented. New dashboard analytics must state their own query boundaries, caching, and incomplete-history behaviour.
 
 ---
 
@@ -884,7 +860,7 @@ _Reports:_
 - [ ] Financial analytics
 - [ ] Chart components and visualizations
 - [ ] Advanced filtering
-- [ ] The Graph integration
+- [ ] Validate data sources and completeness for financial analytics
 
 ### Phase 4: Contracts & Reports (Week 7-8)
 

@@ -12,7 +12,7 @@ states beyond what compiler, unit coverage, and static-analysis tools can establ
 - canonical contract-feature and linked product documentation;
 - Solidity source, interfaces, inherited storage, deployment modules, version registry, and upgrade strategy;
 - frontend and backend transaction construction and receipt handling;
-- events consumed by Accounting, Ponder, The Graph, and user histories;
+- events consumed by Accounting, RPC event feeds, and user histories;
 - unit, property, invariant, upgrade, gas, and integrated journey evidence;
 - static-analysis findings as supporting leads.
 
