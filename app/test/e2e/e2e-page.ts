@@ -85,6 +85,21 @@ export async function rejectNextWalletRequest(page: Page): Promise<void> {
   )
 }
 
+/** Change the E2E wallet itself, so the application receives its normal chain-change event. */
+export async function changeWalletNetwork(page: Page, chainId: number): Promise<void> {
+  await page.evaluate(async (chainId) => {
+    const provider = (
+      window as unknown as {
+        ethereum: { request: (args: { method: string; params: unknown[] }) => Promise<unknown> }
+      }
+    ).ethereum
+    await provider.request({
+      method: 'wallet_switchEthereumChain',
+      params: [{ chainId: `0x${chainId.toString(16)}` }]
+    })
+  }, chainId)
+}
+
 export async function signInAndOpenFirstTeam(page: Page): Promise<void> {
   await page.goto('/')
   await page.getByTestId('sign-in').click()

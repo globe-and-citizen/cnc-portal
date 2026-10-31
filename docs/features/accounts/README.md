@@ -1258,9 +1258,14 @@ condition, related criteria, and a worked example:
 - The selected approval end date is currently sent as local midnight. The product decision about whether that date includes the whole day
   remains open; the confirmed period-reset rules do not decide this separately signed expiry instant.
 
+The [shared network-session recovery policy](../authentication/README.md#us-auth-004-resume-after-a-wallet-network-change) applies to
+account actions, including historical Expense approvals and Safe operations. The global lock prevents workspace interaction on another
+wallet network; account-specific authorization and signature-domain checks remain separate. Shared submission boundaries retain the
+configured target for operations already being prepared.
+
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `63674d851d658adb4edded4b654efdf111991390`
+**Implementation evidence reviewed against:** `635eb92ec16d0fa5fca930d458b0e35453af94d2`
 
 - [Bank deposit modal](../../../app/src/components/sections/BankView/forms/DepositModal.vue),
   [Bank transfer modal](../../../app/src/components/sections/BankView/forms/TransferModal.vue),

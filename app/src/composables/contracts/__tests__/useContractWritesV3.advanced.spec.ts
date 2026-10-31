@@ -50,8 +50,10 @@ describe('useContractWritesV3 — onSuccess invalidation predicate', () => {
   }
 
   it('matches readContract queries with the same address', async () => {
-    const predicate = await captureInvalidationPredicate(baseConfig({ chainId: 1 }))
-    expect(predicate({ queryKey: ['readContract', { address: ADDRESS, chainId: 1 }] })).toBe(true)
+    const predicate = await captureInvalidationPredicate(baseConfig({ chainId: 31337 }))
+    expect(predicate({ queryKey: ['readContract', { address: ADDRESS, chainId: 31337 }] })).toBe(
+      true
+    )
   })
 
   it('ignores queries that do not start with "readContract"', async () => {

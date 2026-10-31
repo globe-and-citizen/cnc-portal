@@ -16,6 +16,7 @@ import {
 } from 'viem'
 import { config as wagmiConfig, type config as wagmiConfigType } from '@/wagmi.config'
 import { log, parseErrorV2 } from '@/lib/logging'
+import { assertConfiguredChain, configuredChainId } from '@/lib/walletNetwork'
 import { captureWeb3Error, SENTRY_WEB3_BOUNDARY_META_KEY } from '@/lib/sentry'
 
 type WagmiConfig = typeof wagmiConfigType
@@ -156,7 +157,8 @@ export async function executeContractWrite(
   params: ExecuteContractWriteParams
 ): Promise<ExecuteContractWriteResult> {
   const { address, abi, functionName, args = [], value, onReplayError } = params
-  const chainId = params.chainId as AppChainId
+  const chainId = (params.chainId ?? configuredChainId) as AppChainId
+  assertConfiguredChain(chainId)
 
   const simulateInput = {
     address,
@@ -260,9 +262,9 @@ export function contractReadsOfAddress(address: Address, chainId?: number) {
  *
  * ## Behaviour notes
  *
- * - **chainId resolution.** When `cfg.chainId` is omitted, wagmi resolves the
- *   chain from the connected wallet at call time. There is no explicit
- *   `useChainId()` fallback (this is a deliberate divergence from V2).
+ * - **chainId resolution.** Omitted targets use the configured application
+ *   chain. Other targets are rejected; wallet submission checks that chain
+ *   again even if the view was unmounted by the global network lock.
  * - **Type safety on `args`.** `abi` is widened to `Abi` and `functionName`
  *   to `string` inside this composable, so `variables.args` is **not**
  *   structurally checked against the ABI signature. Callers wanting compile-

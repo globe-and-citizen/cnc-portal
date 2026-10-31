@@ -71,9 +71,13 @@ contract, function, and chain tags before the generic fallback can run.
 The tunnel deliberately acknowledges forwarding failures, so a successful browser request to the tunnel does not by itself prove that Sentry
 accepted the event. The Sentry dashboard and a controlled smoke test remain required for end-to-end ingestion validation.
 
+Shared transaction boundaries retain the configured application chain. A rejected network target uses the existing chain-mismatch
+classification, so it remains an expected wallet condition rather than an unexpected application failure. Session recovery is owned by the
+[Authentication network-lock story](../../features/authentication/README.md#us-auth-004-resume-after-a-wallet-network-change).
+
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `df0531a4fa761fb1803004371c5bdcb14570b984`
+**Implementation evidence reviewed against:** `635eb92ec16d0fa5fca930d458b0e35453af94d2`
 
 - [Backend capture helper](../../../backend/src/utils/sentry.ts), [central error response](../../../backend/src/utils/utils.ts), and
   [Sentry initialization](../../../backend/src/instrument.ts)
