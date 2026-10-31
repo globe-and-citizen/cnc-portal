@@ -605,6 +605,11 @@ remain as recorded above.
 | `AC-US-EXP-003-08`   | `PS-BROWSER`          | Mocked browser                       | ✅ Met |
 | `AC-US-EXP-003-09`   | `PS-FRONTEND`         | Frontend                             | ✅ Met |
 
+Owner activation and deactivation are transactions on the approval's signing Expense Account. The API creates signed approvals and reads
+back their state; it does not accept a direct status update. The retired `PATCH /expense/:id` endpoint returns HTTP 404 for authenticated
+callers, including the owner. Availability is derived from the registered signing contract's usage and active state together with chain
+time, so a stale stored terminal status does not override current readback.
+
 **Accounting:** Changing an approval's active state moves no money and creates no journal entry.
 
 **Dependencies:** US-EXP-001
@@ -659,7 +664,8 @@ remain as recorded above.
 | `AC-US-EXP-004-03`   | `PS-FRONTEND`              | Mocked browser + Frontend           | ✅ Met     |
 | `AC-US-EXP-004-04`   | `PS-CHAIN-INTEGRATED`      | Integrated E2E + Frontend           | ✅ Met     |
 | `AC-US-EXP-004-05`   | `PS-BROWSER`               | Mocked browser                      | ✅ Met     |
-| `AC-US-EXP-004-06`   | `PS-BROWSER`               | Mocked browser                      | ✅ Met     |
+| `AC-US-EXP-004-06`   | `PS-BROWSER`               | Mocked browser + Backend            | ✅ Met     |
+| `AC-US-EXP-004-06`   | `PS-BACKEND`               | Mocked browser + Backend            | ✅ Met     |
 | `AC-US-EXP-004-07`   | `PS-FRONTEND`              | Frontend                            | ✅ Met     |
 | `AC-US-EXP-004-08`   | `PS-BROWSER`               | Mocked browser                      | ✅ Met     |
 | `AC-US-EXP-004-09`   | `PS-FRONTEND`              | Frontend                            | ✅ Met     |
@@ -1265,7 +1271,7 @@ configured target for operations already being prepared.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `635eb92ec16d0fa5fca930d458b0e35453af94d2`
+**Implementation evidence reviewed against:** `aff3dec02163df97ad7ada9e60a6f3781765a1eb`
 
 - [Bank deposit modal](../../../app/src/components/sections/BankView/forms/DepositModal.vue),
   [Bank transfer modal](../../../app/src/components/sections/BankView/forms/TransferModal.vue),
@@ -1338,7 +1344,8 @@ configured target for operations already being prepared.
   [older-generation retirement warning](../../../app/src/components/sections/ContractManagementView/LegacyApprovalWarning.vue),
   [approval token policy](../../../app/src/utils/expenses/tokenPolicy.ts),
   [approval token amounts and balances](../../../app/src/utils/expenses/model.ts),
-  [Expense API controller](../../../backend/src/controllers/expenseController.ts), and
+  [Expense API controller](../../../backend/src/controllers/expenseController.ts),
+  [Expense API routes](../../../backend/src/routes/expenseRoute.ts), and
   [Expense Account contract](../../../contract/contracts/expense-account/ExpenseAccountEIP712.sol)
 - [Expense component tests](../../../app/src/components/sections/ExpenseAccountView/__tests__),
   [Expense API tests](../../../backend/src/controllers/__tests__/expenseController.test.ts),
