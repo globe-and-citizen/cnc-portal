@@ -39,6 +39,7 @@ export const mockWagmiCore = {
   writeContract: vi.fn(),
   readContract: vi.fn(),
   getBalance: vi.fn(),
+  getBytecode: vi.fn(),
   getWalletClient: vi.fn(),
   estimateGas: vi.fn(),
   getPublicClient: vi.fn(),
@@ -58,6 +59,7 @@ export const mockWagmiCore = {
 // Mock useConnection composable
 export const mockUseConnection = {
   address: ref('0x1234567890123456789012345678901234567890'),
+  chainId: ref<number | undefined>(31337),
   status: ref('connected'),
   isConnected: ref(true)
 }
@@ -82,7 +84,7 @@ export const mockUseSwitchChain = {
   mutate: vi.fn(),
   mutateAsync: vi.fn().mockResolvedValue(undefined),
   isPending: ref(false),
-  error: ref(null),
+  error: ref<Error | null>(null),
   switchChain: vi.fn()
 }
 
@@ -135,6 +137,10 @@ export const useAccountFn = vi.fn(() => ({ ...mockUseAccount }))
  * @wagmi/core action spies are reset too.
  */
 export const resetWagmiVueMocks = () => {
+  mockUseConnection.chainId.value = 31337
+  mockUseSwitchChain.isPending.value = false
+  mockUseSwitchChain.error.value = null
+  mockUseSwitchChain.mutate.mockReset()
   transferHash.value = undefined
   mockUseWriteContract.isPending.value = false
   mockUseWriteContract.error.value = null

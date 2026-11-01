@@ -28,8 +28,15 @@ flowchart LR
 
 - A mutation keeps its HTTP request in a pure async function and exposes one focused TanStack mutation hook for callers.
 - A caller owns user-visible success callbacks and renders mutation failures reactively in its own context.
+- Mutation failures propagate to the TanStack lifecycle: `onError` owns boundary-specific notifications and state transitions, `onSettled`
+  owns outcome-independent cleanup, and retry policy belongs to the query or mutation configuration. Local `try`/`catch` is reserved for
+  narrow error translation or rollback/resource cleanup that the lifecycle cannot own.
 - `uploadSingleFile` returns the first uploaded file URL and throws when the backend response does not contain one.
 - The `@/queries` barrel re-exports focused query modules; it does not combine their endpoint behaviour or server state.
+- Query-factory reads can declare `notFound: 'expected'` only when absence is part of the owning endpoint's normal contract. The request
+  carries that policy as Axios `sentryNotFound`, including when it fails inside a larger mutation. Safe reads use `initially-expected` for
+  indexing absence. The shared cache applies [contextual HTTP 404 monitoring](../error-tracking/README.md#handled-http-404-responses) after
+  retries, without replacing the original error, cached data or recovery behavior.
 
 ### Contract-based asset markets
 
@@ -59,16 +66,35 @@ available metadata.
 
 ### Safe provider filtering
 
-The Safe Client Gateway balance request uses `exclude_spam=true&trusted=false`. The frontend displays every returned item and has no local
-contract blacklist. Provider symbols or trust flags do not expand CNC's configured payment allowlist.
+Anyone can send tokens to a Safe address, so Safe's own token trust list decides which contracts count. The Safe Client Gateway balance
+request uses `exclude_spam=true&trusted=true`: holdings, the wallet total and the company overview contain only the native coin and tokens
+Safe marks trusted. An untrusted token sent to the Safe never appears there and never makes the total incomplete. The frontend keeps no
+local contract blacklist, and provider symbols or trust flags do not expand CNC's configured payment allowlist.
 
-Transaction Service histories retain every returned movement, including unknown and untrusted contracts, before the existing Accounting
-mapping and completeness checks. Metadata recovery uses the event's contract address. There is no client-side spam classification or
-quarantine; provider history can include spam-like events, which may reach Accounting or leave explicit metadata and valuation gaps.
+Transaction Service histories retain every returned movement, including unknown and untrusted contracts; metadata recovery uses the event's
+contract address. The [Safe accounting mapper](../../../app/src/utils/accounting/mappers/safe.ts) then ignores a movement whose contract is
+neither a CNC token (native, configured payment tokens, SHER) nor marked `trusted` by the Transaction Service, including a movement without
+token information. Such a movement creates no ledger entry, no valuation request and no completeness gap. The deposit list still shows the
+raw provider history.
 
-Executable evidence: [Gateway request tests](../../../app/src/queries/__tests__/safeClient.queries.spec.ts) and
-[pagination and metadata unit tests](../../../app/src/queries/__tests__/safe.queries.spec.ts). These invoke request functions with mocked
-provider responses and query dependencies; live browser validation remains pending.
+For each transaction the Safe swap overview counts as a swap (the Safe sent one asset and received another), Accounting reuses the
+[CoW Protocol order query](../../../app/src/queries/cow.queries.ts) that the overview reads, with the same swap and fee rules. Accounting
+reports wait while these lookups load (the `Safe swap fees` source), then read every answer at once, so the books are rebuilt once rather
+than once per answer. A fee reported for the Safe's own fulfilled order is booked as `Transaction Fee Expense`; a missing or failed answer
+keeps the fee inside the acquired asset's price and never makes Accounting partial.
+
+Swap selection, daily quote requests and valuation share
+[transaction grouping and exact asset netting](../../../app/src/utils/safe/swapTransfers.ts). Valuation indexes daily quotes, Gateway prices
+and CoW responses once per report. The [P&L composable](../../../app/src/composables/safe/useSafeSwapPnl.ts) returns the per-swap report
+Accounting books and the [average-cost tracking](../../../app/src/utils/safe/costBasis.ts) the Safe page shows, both from one set of
+sources; it requests the daily quotes either one reads. It keeps settled results only while refreshing the same Safe; changing or clearing
+its address discards them.
+
+Executable evidence: [Gateway request tests](../../../app/src/queries/__tests__/safeClient.queries.spec.ts),
+[pagination and metadata unit tests](../../../app/src/queries/__tests__/safe.queries.spec.ts),
+[Safe source-mapping tests](../../../app/src/utils/accounting/__tests__/safe.spec.ts) and
+[Safe exchange tests](../../../app/src/utils/accounting/__tests__/safeExchanges.spec.ts). These invoke request functions and mappers with
+mocked provider responses; live browser validation remains pending.
 
 ### Browser request coordination
 
@@ -89,21 +115,24 @@ needed and unavailable results can be retried by explicit Accounting refresh. Du
 available and uncached reads fail with 429 and the remaining retry window.
 
 Safe information, complete transfer histories, Gateway holdings and current prices inherit the moderate preset's one-minute freshness. Safe
-information, histories and current-price observers poll every five minutes; Gateway balances poll every minute. The transaction queue polls
-every minute while a pending transaction exists and every five minutes otherwise; a single transaction detail does not poll. Successful
-token metadata and verified coin identities use the once preset with 24-hour retention. Transaction Service queries inherit the moderate
-preset's two-minute unused-cache retention; Gateway balances and current prices retain unused data for 30 minutes. Successful historical
-price snapshots use the once preset, remain fresh without polling, and retain unused cache entries for the lifetime of the query client.
-This explicitly disables the shared query client's polling interval for historical reads. Each query inherits freshness and declares its
-polling cadence. Periodic observers do not poll in background tabs or refetch on window focus. Transaction Service queries inherit the
-Safe-specific bounded retries and also recover on periodic or explicit refresh. Gateway and Transaction Service queries retry temporary 404,
-408, 425, 429, server and network failures up to three times. The interval stays fixed at five seconds for ordinary transient failures and
-thirty seconds for HTTP 429, and waits longer when the provider's numeric or HTTP-date `Retry-After` requires it. Safe information and
-Gateway balances answer HTTP 404 until Safe services index a newly deployed Safe, and the Gateway caches a not-found answer for 30 seconds ±
-10 %. Those two reads therefore treat 404 as an indexing wait: they retry after 5, 10 and 20 seconds, then every 35 seconds, for about three
-and a half minutes, so every later attempt reaches the indexer again. Other Safe reads keep the three-retry bound for 404. The
-[shared recovery policy](../../../app/src/queries/safe.recovery.ts) owns both schedules; a pure Safe model utility classifies the
-not-indexed answer for the queries and the Safe overview notice. Initial reads remain pending through recovery, so successful responses
+information, multisig histories and current-price observers poll every five minutes; Gateway balances and the Safe transfer and
+incoming-transfer histories poll every minute and refetch when the tab regains focus, so a new movement reaches the Safe page and the
+Accounting books together. The transaction queue polls every minute while a pending transaction exists and every five minutes otherwise; a
+single transaction detail does not poll. Successful token metadata and verified coin identities use the once preset with 24-hour retention.
+Transaction Service queries inherit the moderate preset's two-minute unused-cache retention; Gateway balances and current prices retain
+unused data for 30 minutes. Successful historical price snapshots use the once preset, remain fresh without polling, and retain unused cache
+entries for the lifetime of the query client. This explicitly disables the shared query client's polling interval for historical reads. Each
+query inherits freshness and declares its polling cadence. Periodic observers do not poll in background tabs; apart from those Safe balances
+and movements, they do not refetch on window focus. Transaction Service queries inherit the Safe-specific bounded retries and also recover
+on periodic or explicit refresh. Gateway and Transaction Service queries retry temporary 408, 425, 429, server and network failures up to
+three times. The interval stays fixed at five seconds for ordinary transient failures and thirty seconds for HTTP 429, and waits longer when
+the provider's numeric or HTTP-date `Retry-After` requires it. HTTP 404 means Safe services do not know the resource and is never retried.
+Gateway balances also stop polling while they answer 404, and Safe information keeps its five-minute refresh with a single request each
+time, so a Safe not indexed yet does not trigger an endless series of retries; it loads when the user tries again or at the next Safe
+information refresh. The [shared recovery policy](../../../app/src/queries/safe.recovery.ts) owns the retry schedule; a pure Safe model
+utility classifies the 404 answer for the queries and the Safe overview notice. Because a 404 cannot tell an unindexed Safe from an address
+with no contract, the Safe page first reads the address code on the configured chain through `useGetSafeBytecodeQuery` and mounts its Safe
+service readers only once a contract is confirmed or that read fails. Initial reads remain pending through recovery, so successful responses
 update the mounted UI without a reload. Cancellation, other client errors, malformed responses and an explicit monthly-quota-exceeded
 response do not retry automatically. CoinGecko and token-metadata reads disable automatic retries.
 
@@ -138,23 +167,26 @@ CoinGecko current-price reads are required to populate these holdings. The query
 for 30 minutes, propagates cancellation and uses the bounded recovery described above. Both Gateway and Transaction Service GETs use the
 external Axios client directly. A failed request retains its cached response while exposing the error; the UI marks the total incomplete.
 
-[Gateway queries](../../../app/src/queries/safeClient.queries.ts) own the balance HTTP request and reject malformed response bodies.
-[Safe movement queries](../../../app/src/queries/safe.queries.ts) retain one local pagination helper shared by the three complete-history
-reads. The asset-transfer helper deduplicates stable transfer identities and recovers missing contract metadata through the calling
-observer's TanStack client. Concurrent rows for one contract share its metadata query; enriched rows are copied without modifying provider
-objects. Failed metadata reads retain the original movement and its completeness diagnostic. Accounting keeps its Transaction Service
-movement feeds and historical market snapshots; other account surfaces keep their RPC balances and existing price queries. Gateway discovery
-does not expand CNC transfer currencies. Confirmed operations use [one Safe invalidation helper](../../../app/src/queries/safe.mutations.ts)
-for the entire Safe service prefix and the affected wallet's balance prefix, which also reaches all Gateway fiat entries. Proposals refresh
-only pending transactions until execution. Direct hosted Gateway access is a runtime dependency; mocked query tests do not establish an
-availability guarantee.
+[Gateway queries](../../../app/src/queries/safeClient.queries.ts) own the balance and transaction-history HTTP requests and reject malformed
+response bodies. The history query returns one raw page with date labels and pagination links. Its reactive cursor, timezone, trust and
+imitation filters participate in cache identity, beneath the existing Safe transaction invalidation prefix.
+[Safe movement queries](../../../app/src/queries/safe.queries.ts) share one
+[pagination and asset-transfer loader](../../../app/src/queries/safe.api.ts) across the three complete-history reads, and one cache entry
+per Safe between the single-Safe and every-Safe transfer queries. The asset-transfer helper deduplicates stable transfer identities and
+recovers missing contract metadata through the calling observer's TanStack client. Concurrent rows for one contract share its metadata
+query; enriched rows are copied without modifying provider objects. Failed metadata reads retain the original movement and its completeness
+diagnostic. Accounting keeps its Transaction Service movement feeds and historical market snapshots; other account surfaces keep their RPC
+balances and existing price queries. Gateway discovery does not expand CNC transfer currencies. Confirmed operations use
+[one Safe invalidation helper](../../../app/src/queries/safe.mutations.ts) for the entire Safe service prefix and the affected wallet's
+balance prefix, which also reaches all Gateway fiat entries. Proposals refresh only pending transactions until execution. Direct hosted
+Gateway access is a runtime dependency; mocked query tests do not establish an availability guarantee.
 
 Executable evidence: [Gateway request tests](../../../app/src/queries/__tests__/safeClient.queries.spec.ts) and
 [holdings presentation tests](../../../app/src/utils/safe/__tests__/portfolio.spec.ts).
 
 [Safe recovery tests](../../../app/src/queries/__tests__/safe.recovery.spec.ts) execute the configured queries with a real TanStack cache
-and simulated provider responses, verifying recovery without a reload, shared balance reads, retry deadlines, the indexing window through
-the Gateway's cached 404 and persistent-error visibility.
+and simulated provider responses, verifying recovery without a reload, retry deadlines, the absence of retries on 404, the absence of
+balance polling on 404 and persistent-error visibility.
 
 Direct Transaction Service reads are covered by [pagination and metadata tests](../../../app/src/queries/__tests__/safe.queries.spec.ts) and
 [Axios authentication and cancellation tests](../../../app/src/lib/__tests__/external.axios.spec.ts).
@@ -163,11 +195,17 @@ The query unit tests cover request parameters, response validation, pagination a
 tests do not establish cache sharing, refresh or observer lifecycle behaviour.
 
 TanStack caches belong to one browser session. The additional backend Redis cache coordinates CoinGecko across users, tabs, devices and
-backend instances. Safe provider requests retain their browser-only coordination boundary.
+backend instances. Safe provider requests retain their browser-only coordination boundary. Within one browser session, every Transaction
+Service movement and transaction read waits its turn in the [Safe read queue](../../../app/src/queries/safe.readQueue.ts): reads start one
+after another, at least 500 ms apart, because simultaneous reads (one per team Safe on the Accounting pages) trip the provider's per-second
+limit and would otherwise wait out the 30-second HTTP 429 retry interval. The Safe information read (owners, threshold) is a single read per
+Safe page and skips the queue, so the signer list updates right after a signer change instead of waiting behind the movement reads that
+change refreshes. Executable evidence: [read queue tests](../../../app/src/queries/__tests__/safe.readQueue.spec.ts) and
+[Safe query tests](../../../app/src/queries/__tests__/safe.queries.spec.ts).
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `008826d0d841f19c967c8ff477a7e9c452ee7398`
+**Implementation evidence reviewed against:** `f15dccbe52468b554ce87b92f5db48411b921bb9`
 
 - [Query barrel](../../../app/src/queries/index.ts), [query factory](../../../app/src/queries/queryFactory.ts), and
   [single-file upload query](../../../app/src/queries/file.queries.ts)
@@ -176,6 +214,8 @@ backend instances. Safe provider requests retain their browser-only coordination
 - [HTTP client tests](../../../app/src/lib/__tests__/axios.spec.ts),
   [CoinGecko endpoint unit tests](../../../app/src/queries/__tests__/coingecko.queries.spec.ts), and
   [Safe pagination and metadata unit tests](../../../app/src/queries/__tests__/safe.queries.spec.ts)
+- [Safe read queue](../../../app/src/queries/safe.readQueue.ts) and
+  [read queue tests](../../../app/src/queries/__tests__/safe.readQueue.spec.ts)
 - [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts) and
   [Accounting composition tests](../../../app/src/composables/accounting/__tests__/useCNCAccounting.spec.ts)
 

@@ -26,7 +26,7 @@ export interface JournalEntrySources {
   fixedReturn?: FixedReturnMapperInput
   investor?: InvestorMapperInput
   vesting?: VestingMapperInput
-  safe?: SafeMapperInput
+  safes?: SafeMapperInput[]
   safeDepositRouter?: SafeDepositRouterMapperInput
 }
 
@@ -55,7 +55,7 @@ function mapAllSources(
   if (sources.fixedReturn) entries.push(...mapFixedReturnEvents(sources.fixedReturn, ctx))
   if (sources.investor) entries.push(...mapInvestorEvents(sources.investor, ctx))
   if (sources.vesting) entries.push(...mapVestingEvents(sources.vesting))
-  if (sources.safe) entries.push(...mapSafeTransfers(sources.safe, ctx))
+  for (const safe of sources.safes ?? []) entries.push(...mapSafeTransfers(safe, ctx))
   if (sources.safeDepositRouter) {
     entries.push(...mapSafeDepositRouterEvents(sources.safeDepositRouter, ctx))
   }

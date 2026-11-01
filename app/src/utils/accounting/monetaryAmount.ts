@@ -33,6 +33,11 @@ export function usdRateFromNumber(rate: number): UsdRate {
   return scaledSixDecimalInteger(rate, 'USD rate')
 }
 
+/** Whether a rate fits the exact six-decimal form {@link usdRateFromNumber} produces. */
+export function isRepresentableUsdRate(rate: number): boolean {
+  return Number.isFinite(rate) && rate >= 0 && Number.isSafeInteger(Math.round(rate * RATE_SCALE))
+}
+
 /** Convert an exact rate to a number only for display or transitional source metadata. */
 export function usdRateToNumber(rate: UsdRate): number {
   return Number(rate) / RATE_SCALE
@@ -59,6 +64,14 @@ export function usdAmountFromToken(
   }
   const absoluteAmount = rawAmount < 0n ? -rawAmount : rawAmount
   return absoluteAmount * rate * 10n ** BigInt(scaleDelta)
+}
+
+/** Convert a signed USD figure computed outside the journal, kept to six decimals. */
+export function usdAmountFromNumber(amount: number): UsdAmount {
+  return (
+    scaledSixDecimalInteger(amount, 'USD amount') *
+    10n ** BigInt(USD_AMOUNT_DECIMALS - USD_RATE_DECIMALS)
+  )
 }
 
 /** Convert an exact amount to a number only at a presentation or export boundary. */

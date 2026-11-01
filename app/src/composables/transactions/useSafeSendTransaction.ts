@@ -10,6 +10,8 @@ import { getAddress, type Address } from 'viem'
 import { config as wagmiConfig, type config as wagmiConfigType } from '@/wagmi.config'
 import { contractBalanceKeys } from '@/composables/useContractBalance'
 import { log, parseErrorV2 } from '@/lib/logging'
+import { assertConfiguredChain, configuredChainId } from '@/lib/walletNetwork'
+import { captureWeb3Error, SENTRY_WEB3_BOUNDARY_META_KEY } from '@/lib/sentry'
 
 type WagmiConfig = typeof wagmiConfigType
 type WaitParams = WaitForTransactionReceiptParameters<WagmiConfig>
@@ -50,11 +52,14 @@ export type ExecuteSendTransactionResult = {
 export async function executeSendTransaction(
   params: ExecuteSendTransactionParams
 ): Promise<ExecuteSendTransactionResult> {
-  const { to, value, data, chainId, skipGasEstimation } = params
+  const { to, value, data, skipGasEstimation } = params
+  const chainId = (params.chainId ?? configuredChainId) as WaitParams['chainId']
+  assertConfiguredChain(chainId)
 
   // 1) Gas estimation (optional pre-check)
   if (!skipGasEstimation) {
     await estimateGas(wagmiConfig, {
+      chainId,
       to,
       value,
       ...(data !== undefined ? { data } : {})
@@ -63,6 +68,7 @@ export async function executeSendTransaction(
 
   // 2) Send transaction
   const hash = await sendTransaction(wagmiConfig, {
+    chainId,
     to,
     value,
     ...(data !== undefined ? { data } : {})
@@ -96,6 +102,7 @@ export function useSafeSendTransaction(cfg: SendTransactionConfig) {
   const shouldLog = computed(() => cfg.config?.log ?? true)
 
   const mutation = useMutation({
+    meta: { [SENTRY_WEB3_BOUNDARY_META_KEY]: true },
     mutationFn: async (variables: SendTransactionVariables) => {
       const to = unref(cfg.to)
       if (!to) throw new Error('Recipient address (to) is undefined')
@@ -109,6 +116,12 @@ export function useSafeSendTransaction(cfg: SendTransactionConfig) {
       })
     },
     onError: (error) => {
+      captureWeb3Error(error, {
+        operation: 'native-transfer',
+        force: true,
+        contractAddress: unref(cfg.to),
+        chainId: unref(cfg.chainId)
+      })
       if (shouldLog.value) {
         log.error('useSafeSendTransaction failed:\n', parseErrorV2(error))
       }

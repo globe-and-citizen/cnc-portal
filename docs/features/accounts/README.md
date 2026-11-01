@@ -17,8 +17,9 @@ These acceptance criteria follow the
 - A wallet can fund an account directly, while a Bank-origin payment is initiated under the Bank transfer story. The destination account
   owns the credited balance and its availability. The [Accounting UC scenarios](../accounting/journal-entry-catalogue.md#use-case-overview)
   link all participating stories and their roles.
-- Bank and Expense Account actions use the current contracts selected for the company. Safe actions use the Safe registered to the company
-  on the active network.
+- Bank and Expense Account actions use the current contracts selected for the company. Safe actions use the company's default Safe on the
+  active network. A company keeps every Safe it registers: the latest one added or made the default is the default Safe, and a disabled Safe
+  stays in the Safe history with its movements, which Accounting books as its own numbered `Cash — Safe` account.
 - A Bank transfer with a positive `BANK` fee sends that fee to the FeeCollector deployed for its contract generation. Native transfers
   assess the configured rate, while ERC-20 transfers are fee-bearing only when the token is supported by that FeeCollector. Activity feeds
   retain fees from every supported Bank generation for Accounting.
@@ -57,6 +58,7 @@ flowchart LR
     CashOut --> OwnerWallet[Connected owner wallet]
 
     Safe --> SetupSafe[Deploy or import]
+    SetupSafe --> ChangeSafe[Add, switch, disable, or enable a Safe]
     SetupSafe --> OperateSafe[Deposit, propose, approve, execute]
     Safe --> ReviewSafe[Review wallet and transactions]
 
@@ -82,12 +84,14 @@ flowchart LR
 | US-EXP-004  | Review the Expense Account and its history | Company member / recipient | 🚧 In Progress |
 | US-EXP-005  | Fund the Expense Account                   | Account funder             | 🚧 In Progress |
 | US-EXP-006  | Return Expense Account funds to Bank       | Authorized treasury actor  | 🚧 In Progress |
-| US-SAFE-001 | Set up a Safe                              | Company owner              | 🧪 Validation  |
+| US-SAFE-001 | Set up and manage the company Safes        | Company owner              | 🧪 Validation  |
 | US-SAFE-002 | Inspect Safe details                       | Company member             | 🚧 In Progress |
 | US-SAFE-003 | Manage Safe funds                          | Safe owner                 | 🧪 Validation  |
 | US-SAFE-004 | Manage Safe signers and threshold          | Safe owner                 | 🧪 Validation  |
 | US-SAFE-005 | Review Safe transactions                   | Company member             | 🧪 Validation  |
 | US-SAFE-006 | Approve and execute a Safe transaction     | Safe owner                 | 🧪 Validation  |
+| US-SAFE-007 | Review the Safe swap P&L                   | Company member             | 🧪 Validation  |
+| US-SAFE-008 | Review the Safe swaps                      | Company member             | 🧪 Validation  |
 
 ## Test Coverage Overview
 
@@ -112,12 +116,14 @@ Runs of at least three consecutive missing criteria use inclusive ranges with fu
 | US-EXP-004  | ✅ Integrated | ⚠️ 13/14 met    | `AC-US-EXP-004-13`                                                                |
 | US-EXP-005  | 🚧 Partial    | ⚠️ 3/7          | `AC-US-EXP-005-03`, `AC-US-EXP-005-04`, `AC-US-EXP-005-06`, `AC-US-EXP-005-07`    |
 | US-EXP-006  | 🚧 Partial    | ⚠️ 1/8          | `AC-US-EXP-006-01`–`AC-US-EXP-006-05`, `AC-US-EXP-006-07`, `AC-US-EXP-006-08`     |
-| US-SAFE-001 | 🚧 Partial    | ⚠️ 8/11         | `AC-US-SAFE-001-02`, `AC-US-SAFE-001-03`, `AC-US-SAFE-001-06`                     |
-| US-SAFE-002 | 🧪 Mocked     | ⚠️ 7/10 met     | `AC-US-SAFE-002-01`, `AC-US-SAFE-002-02`, `AC-US-SAFE-002-09`                     |
+| US-SAFE-001 | 🚧 Partial    | ⚠️ 18/21        | `AC-US-SAFE-001-02`, `AC-US-SAFE-001-03`, `AC-US-SAFE-001-06`                     |
+| US-SAFE-002 | 🧪 Mocked     | ⚠️ 8/11 met     | `AC-US-SAFE-002-01`, `AC-US-SAFE-002-02`, `AC-US-SAFE-002-09`                     |
 | US-SAFE-003 | 📋 Planned    | ⚠️ 6/11         | `AC-US-SAFE-003-01`–`AC-US-SAFE-003-03`, `AC-US-SAFE-003-06`, `AC-US-SAFE-003-07` |
 | US-SAFE-004 | 📋 Planned    | ⚠️ 4/9          | `AC-US-SAFE-004-01`–`AC-US-SAFE-004-04`, `AC-US-SAFE-004-07`                      |
 | US-SAFE-005 | 🧪 Mocked     | ✅ 9/9          | —                                                                                 |
 | US-SAFE-006 | 🧪 Mocked     | ✅ 10/10        | —                                                                                 |
+| US-SAFE-007 | 📋 Planned    | ⚠️ 11/12 met    | `AC-US-SAFE-007-01`                                                               |
+| US-SAFE-008 | 🧪 Mocked     | ✅ 6/6          | —                                                                                 |
 
 Proof obligations use the [shared proof-strategy registry](../../testing/proof-strategies.md). Multiple IDs for one AC are cumulative.
 
@@ -300,22 +306,22 @@ remain as recorded above.
 #### Edge & Error Cases
 
 - [x] `AC-US-BANK-003-07` A history filter with no matching events returns an empty result.
-- [ ] `AC-US-BANK-003-08` A failed history read is distinguishable from a successfully loaded empty history.
+- [x] `AC-US-BANK-003-08` A failed history read is distinguishable from a successfully loaded empty history.
 
 ### Test Coverage
 
-| Acceptance Criterion | Proof Strategy             | Current Evidence          | Status     |
-| -------------------- | -------------------------- | ------------------------- | ---------- |
-| `AC-US-BANK-003-01`  | `PS-CHAIN-INTEGRATED`      | Integrated E2E + Frontend | ✅ Met     |
-| `AC-US-BANK-003-02`  | `PS-CHAIN-INTEGRATED`      | Integrated E2E + Frontend | ✅ Met     |
-| `AC-US-BANK-003-03`  | `PS-BROWSER`               | Mocked browser + Frontend | ✅ Met     |
-| `AC-US-BANK-003-04`  | `PS-BROWSER`               | Mocked browser            | ✅ Met     |
-| `AC-US-BANK-003-05`  | `PS-FRONTEND`              | Frontend                  | ✅ Met     |
-| `AC-US-BANK-003-06`  | `PS-FRONTEND`              | Mocked browser + Frontend | ✅ Met     |
-| `AC-US-BANK-003-07`  | `PS-BROWSER`               | Mocked browser            | ✅ Met     |
-| `AC-US-BANK-003-08`  | `PS-BROWSER`               | None linked               | ❌ Missing |
-| `AC-US-BANK-003-09`  | `PS-BACKEND`               | None linked               | ❌ Missing |
-| `AC-US-BANK-003-09`  | `PS-FULL-STACK-INTEGRATED` | None linked               | ❌ Missing |
+| Acceptance Criterion | Proof Strategy             | Current Evidence          | Status          |
+| -------------------- | -------------------------- | ------------------------- | --------------- |
+| `AC-US-BANK-003-01`  | `PS-CHAIN-INTEGRATED`      | Integrated E2E + Frontend | ✅ Met          |
+| `AC-US-BANK-003-02`  | `PS-CHAIN-INTEGRATED`      | Integrated E2E + Frontend | ✅ Met          |
+| `AC-US-BANK-003-03`  | `PS-BROWSER`               | Mocked browser + Frontend | ✅ Met          |
+| `AC-US-BANK-003-04`  | `PS-BROWSER`               | Mocked browser            | ✅ Met          |
+| `AC-US-BANK-003-05`  | `PS-FRONTEND`              | Frontend                  | ✅ Met          |
+| `AC-US-BANK-003-06`  | `PS-FRONTEND`              | Mocked browser + Frontend | ✅ Met          |
+| `AC-US-BANK-003-07`  | `PS-BROWSER`               | Mocked browser            | ✅ Met          |
+| `AC-US-BANK-003-08`  | `PS-BROWSER`               | Frontend                  | ⚠️ Insufficient |
+| `AC-US-BANK-003-09`  | `PS-BACKEND`               | None linked               | ❌ Missing      |
+| `AC-US-BANK-003-09`  | `PS-FULL-STACK-INTEGRATED` | None linked               | ❌ Missing      |
 
 **Dependencies:** Current Bank contract and an available chain event provider
 
@@ -817,11 +823,11 @@ remain as recorded above.
 | Expense funds return directly to their generation's Bank. [UC-TREASURY-001](../accounting/journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer)        | Initiates the source-account return. | [US-BANK-003](#us-bank-003-review-the-bank-position-and-history) — owns the receiving Bank balance and history                                                                                                                   |
 | A cash-out run returns Expense funds to their generation's Bank. [UC-TREASURY-001](../accounting/journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer) | Owns the source-account return.      | [US-BANK-004](#us-bank-004-cash-out-available-treasury-funds) — orchestrates the step and owns sequence recovery; [US-BANK-003](#us-bank-003-review-the-bank-position-and-history) — owns the receiving Bank balance and history |
 
-## US-SAFE-001: Set Up a Safe
+## US-SAFE-001: Set Up and Manage the Company Safes
 
 **As a** company owner\
-**I want to** deploy a new Safe or import an existing Safe\
-**So that** my company has a shared multi-signature wallet in CNC
+**I want to** deploy or import a Safe, then add another one, switch between them, or disable and enable one\
+**So that** my company always works from the right shared multi-signature wallet without losing any Safe's history
 
 ### Acceptance Criteria
 
@@ -845,6 +851,21 @@ remain as recorded above.
 - [x] `AC-US-SAFE-001-09` The company owner can continue company creation without setting up a Safe.
 - [x] `AC-US-SAFE-001-10` If registration fails after deployment, the deployed Safe remains available for a registration retry.
 - [x] `AC-US-SAFE-001-11` An archived company cannot deploy, import, or retry Safe registration.
+- [x] `AC-US-SAFE-001-12` A company can deploy or import another Safe, even if its current one has no contract. The new Safe becomes the
+      default; the old one stays in the history.
+- [x] `AC-US-SAFE-001-13` An address already in the company's Safe history, or registered to another company, is refused with its reason.
+- [x] `AC-US-SAFE-001-14` Only the owner can add, switch, disable, or enable a Safe, and not once the company is archived.
+- [x] `AC-US-SAFE-001-15` The owner and members see every Safe the company registered, with its status: default, previous, or disabled.
+- [x] `AC-US-SAFE-001-16` The owner can make a previous or disabled Safe the default again.
+- [x] `AC-US-SAFE-001-17` The owner can disable any Safe, even the last one, without losing its history. The latest remaining Safe becomes
+      the default; with none left, Safe setup starts over.
+- [x] `AC-US-SAFE-001-18` The owner is warned before switching away from, disabling, or enabling a Safe over a default Safe that still holds
+      tokens.
+- [x] `AC-US-SAFE-001-19` When the deposit router still targets another Safe than the deployed default one, a warning offers to redirect it.
+- [x] `AC-US-SAFE-001-20` Accounting books each Safe in its own numbered `Cash — Safe` account, a move between two company Safes once as
+      internal, and a router deposit in the Safe that received it.
+- [x] `AC-US-SAFE-001-21` The owner can enable a disabled Safe again. It becomes the default again only if no Safe was made default after
+      it.
 
 ### Test Coverage
 
@@ -863,6 +884,22 @@ remain as recorded above.
 | `AC-US-SAFE-001-09`  | `PS-FRONTEND`         | Frontend                                   | ✅ Met          |
 | `AC-US-SAFE-001-10`  | `PS-FRONTEND`         | Frontend                                   | ✅ Met          |
 | `AC-US-SAFE-001-11`  | `PS-BROWSER`          | Mocked browser                             | ✅ Met          |
+| `AC-US-SAFE-001-12`  | `PS-FRONTEND`         | Frontend + Backend                         | ✅ Met          |
+| `AC-US-SAFE-001-12`  | `PS-BACKEND`          | Frontend + Backend                         | ✅ Met          |
+| `AC-US-SAFE-001-13`  | `PS-FRONTEND`         | Frontend + Backend                         | ✅ Met          |
+| `AC-US-SAFE-001-13`  | `PS-BACKEND`          | Frontend + Backend                         | ✅ Met          |
+| `AC-US-SAFE-001-14`  | `PS-FRONTEND`         | Frontend + Backend                         | ✅ Met          |
+| `AC-US-SAFE-001-14`  | `PS-BACKEND`          | Frontend + Backend                         | ✅ Met          |
+| `AC-US-SAFE-001-15`  | `PS-FRONTEND`         | Frontend                                   | ✅ Met          |
+| `AC-US-SAFE-001-16`  | `PS-FRONTEND`         | Frontend + Backend                         | ✅ Met          |
+| `AC-US-SAFE-001-16`  | `PS-BACKEND`          | Frontend + Backend                         | ✅ Met          |
+| `AC-US-SAFE-001-17`  | `PS-FRONTEND`         | Frontend + Backend                         | ✅ Met          |
+| `AC-US-SAFE-001-17`  | `PS-BACKEND`          | Frontend + Backend                         | ✅ Met          |
+| `AC-US-SAFE-001-18`  | `PS-FRONTEND`         | Frontend                                   | ✅ Met          |
+| `AC-US-SAFE-001-19`  | `PS-FRONTEND`         | Frontend                                   | ✅ Met          |
+| `AC-US-SAFE-001-20`  | `PS-FRONTEND`         | Frontend                                   | ✅ Met          |
+| `AC-US-SAFE-001-21`  | `PS-FRONTEND`         | Frontend + Backend                         | ✅ Met          |
+| `AC-US-SAFE-001-21`  | `PS-BACKEND`          | Frontend + Backend                         | ✅ Met          |
 
 **Dependencies:** Current company and active network
 
@@ -885,7 +922,7 @@ remain as recorded above.
 #### Business Rules
 
 - [x] `AC-US-SAFE-002-04` Inspecting Safe details does not require Safe signer permission.
-- [x] `AC-US-SAFE-002-05` The registered Safe address identifies the wallet whose balances, owners, and threshold are reported.
+- [x] `AC-US-SAFE-002-05` The company's default Safe identifies the wallet whose balances, owners, and threshold are reported.
 
 #### Edge & Error Cases
 
@@ -893,7 +930,11 @@ remain as recorded above.
 - [x] `AC-US-SAFE-002-07` A failed Safe information read is reported without hiding unaffected Safe information.
 - [x] `AC-US-SAFE-002-08` A failed Safe information read can be retried without registering another Safe.
 - [x] `AC-US-SAFE-002-10` While Safe services have not yet indexed a newly deployed Safe, the overview explains the wait instead of
-      reporting a failure, and its balances and signers load without a page reload once indexing finishes.
+      reporting a failure, without retrying the 404, and its balances and signers load when the user tries again or at the next five-minute
+      refresh of the Safe information.
+- [x] `AC-US-SAFE-002-11` When no contract exists at the registered Safe address on the configured network, the Safe page reports that no
+      Safe exists at that address instead of an indexing wait, no longer presents the wallet as active or requests its balances, signers and
+      transactions, including right after a page reload, and the check can be repeated without registering another Safe.
 
 ### Test Coverage
 
@@ -910,6 +951,7 @@ remain as recorded above.
 | `AC-US-SAFE-002-09`  | `PS-BACKEND`               | None linked               | ❌ Missing      |
 | `AC-US-SAFE-002-09`  | `PS-FULL-STACK-INTEGRATED` | None linked               | ❌ Missing      |
 | `AC-US-SAFE-002-10`  | `PS-FRONTEND`              | Frontend                  | ✅ Met          |
+| `AC-US-SAFE-002-11`  | `PS-FRONTEND`              | Frontend                  | ✅ Met          |
 
 **Dependencies:** US-SAFE-001
 
@@ -1133,12 +1175,142 @@ movement across the participating stories.
 
 **Dependencies:** US-SAFE-001
 
+## US-SAFE-007: Review the Safe Swap P&L
+
+**As a** company member\
+**I want to** see the profit or loss on the tokens the Safe's swaps touched, and the fees\
+**So that** I know whether converting treasury assets created or lost value
+
+Once the Safe has at least one swap, the Wallet overview shows the number of swaps, the P&L in USD with its percentage of the swaps' value,
+and the transaction fees. Each token a swap gave or received is tracked at its weighted average cost through every movement of that token in
+the Safe:
+
+- **Entry** — a token received in a swap costs the exchange's value; a deposit costs its quantity at that day's price. The average cost is
+  the total cost divided by the quantity held.
+- **Exchange value** — the stablecoin side of the swap when there is one, otherwise the side given, valued on the swap's UTC day with the
+  reported fee taken out. Several tokens received share it by their worth that day.
+- **Exit** — a swap, a payment, or a transfer out fixes a result of quantity × (price that day − average cost) and leaves the average cost
+  unchanged. Once a position is emptied, its average cost starts again from the next entry.
+- **Still held** — the quantity held is valued at today's price against its average cost.
+- **P&L** — the sum of every token's fixed and current results. USD stablecoins are worth $1 and keep a $1 average cost. The transaction
+  fees CoW Protocol reports are a cost of their own: Accounting books them as Transaction Fee Expense and they stay out of the P&L.
+
+Accounting does not book this P&L. Its `Swap P&L` line keeps the per-swap valuation of the
+[use-case catalogue](./safe-swap-pnl-use-cases.md), which values what each swap received at today's price. Both agree while the tokens
+received are still held; they differ once a received token is spent or bought again.
+
+### Use Cases
+
+The [Safe swap P&L use-case catalogue](./safe-swap-pnl-use-cases.md) defines the per-swap valuation Accounting books and fourteen use cases,
+each with its condition, related criteria, and a worked example:
+
+- buying, selling, and exchanging volatile assets or stablecoins (`UC-SWAP-001`–`UC-SWAP-005`);
+- assets spent since the swap and several swaps over time (`UC-SWAP-006`, `UC-SWAP-007`);
+- reported, unreported, and partly reported fees, kept apart from the P&L (`UC-SWAP-008`–`UC-SWAP-010`);
+- refunds, missing prices, Safes without swaps, and unavailable sources (`UC-SWAP-011`–`UC-SWAP-014`).
+
+### Acceptance Criteria
+
+#### Happy Path
+
+- [x] `AC-US-SAFE-007-01` Once the Safe has swapped, the Wallet overview shows the number of swaps, the P&L in USD and as a percentage of
+      the swaps' value, and the transaction fees.
+
+#### Business Rules
+
+- [x] `AC-US-SAFE-007-02` A swap is a transaction in which the Safe sends fungible assets and receives different ones. Deposits,
+      withdrawals, NFTs, transfers to itself, and a refund of the sold asset in the same transaction are not counted as separate trades.
+- [x] `AC-US-SAFE-007-03` Each token a swap gave or received is tracked at its weighted average cost through all its movements in the Safe,
+      including deposits and payments; a deposit enters at the price of its UTC day.
+- [x] `AC-US-SAFE-007-04` What leaves the Safe fixes its result at the price of the day it leaves; what the Safe still holds is valued at
+      its current price from the Safe balances, or today's daily quote.
+- [x] `AC-US-SAFE-007-05` The P&L is the sum of the tokens' results and is marked as a gain or a loss.
+- [x] `AC-US-SAFE-007-06` USD stablecoins are valued at $1 and keep a $1 average cost.
+- [x] `AC-US-SAFE-007-07` Fees come only from the Safe's own fulfilled CoW Protocol orders, valued at the swap day's price; when no swap
+      reports a fee, the fees show as unavailable.
+- [x] `AC-US-SAFE-007-10` A reported fee stays out of the P&L: it is taken out of the exchange's value, and the tokens it consumed leave at
+      their average cost without a result.
+- [x] `AC-US-SAFE-007-11` An exchange is valued on its day by its stablecoin side, or else by the side given; several tokens received share
+      that value by their worth that day.
+- [x] `AC-US-SAFE-007-12` Once a token's position is emptied, its average cost starts again from its next entry.
+
+#### Edge & Error Cases
+
+- [x] `AC-US-SAFE-007-08` A missing price, or a history in which a token leaves more than it held, leaves that token unvalued; the P&L is
+      marked incomplete and names it instead of counting it as zero.
+- [x] `AC-US-SAFE-007-09` Without a swap, or while the history, balances, or prices are unavailable, the swap figures stay hidden.
+
+### Test Coverage
+
+| Acceptance Criterion | Proof Strategy      | Current Evidence | Status          |
+| -------------------- | ------------------- | ---------------- | --------------- |
+| `AC-US-SAFE-007-01`  | `PS-FRONTEND`       | Frontend         | ✅ Met          |
+| `AC-US-SAFE-007-01`  | `PS-API-INTEGRATED` | Frontend         | ⚠️ Insufficient |
+| `AC-US-SAFE-007-02`  | `PS-FRONTEND`       | Frontend         | ✅ Met          |
+| `AC-US-SAFE-007-03`  | `PS-FRONTEND`       | Frontend         | ✅ Met          |
+| `AC-US-SAFE-007-04`  | `PS-FRONTEND`       | Frontend         | ✅ Met          |
+| `AC-US-SAFE-007-05`  | `PS-FRONTEND`       | Frontend         | ✅ Met          |
+| `AC-US-SAFE-007-06`  | `PS-FRONTEND`       | Frontend         | ✅ Met          |
+| `AC-US-SAFE-007-07`  | `PS-FRONTEND`       | Frontend         | ✅ Met          |
+| `AC-US-SAFE-007-08`  | `PS-FRONTEND`       | Frontend         | ✅ Met          |
+| `AC-US-SAFE-007-09`  | `PS-FRONTEND`       | Frontend         | ✅ Met          |
+| `AC-US-SAFE-007-10`  | `PS-FRONTEND`       | Frontend         | ✅ Met          |
+| `AC-US-SAFE-007-11`  | `PS-FRONTEND`       | Frontend         | ✅ Met          |
+| `AC-US-SAFE-007-12`  | `PS-FRONTEND`       | Frontend         | ✅ Met          |
+
+**Dependencies:** US-SAFE-002
+
+## US-SAFE-008: Review the Safe Swaps
+
+**As a** company member\
+**I want to** see each token the Safe's swaps touched and each swap it made\
+**So that** I can tell which tokens and conversions produced the Safe's swap P&L
+
+At the top of the Activity section, the Safe's swaps are detailed by token and by swap, with the valuation rules of the swap P&L
+(`US-SAFE-007`). For each token, what it held before a swap, the swap, and its fee show where its cost and P&L come from; its deposits and
+payments stay in the Safe's transaction lists below.
+
+### Acceptance Criteria
+
+#### Happy Path
+
+- [x] `AC-US-SAFE-008-01` Each swap shows its date, the tokens given and the tokens received with their quantities, fee excluded, the value
+      of the exchange on its day, the reported fee, and the on-chain transaction.
+- [x] `AC-US-SAFE-008-05` Each token a swap touched shows the quantity the Safe still holds, its average buy price, the cost of what is
+      held, today's price, and its P&L; a token the Safe no longer holds is identified as such and keeps only its P&L.
+- [x] `AC-US-SAFE-008-06` A token's history lists, for each swap, the quantity held just before it, the quantity the swap exchanged, and the
+      quantity its fee took; the exchange and the fee show the token price they were valued at, and the exchange its result. What the Safe
+      still holds is valued at today's price. Deposits and payments are left out of the history.
+
+#### Business Rules
+
+- [x] `AC-US-SAFE-008-02` Swaps are listed newest first.
+
+#### Edge & Error Cases
+
+- [x] `AC-US-SAFE-008-03` When a token cannot be valued, its unknown values show as unavailable and the token is named; its P&L is not
+      marked as a gain or a loss.
+- [x] `AC-US-SAFE-008-04` Without a swap the section explains that none exists yet; it shows a loading state while the figures settle and an
+      error when the history or balances cannot be loaded.
+
+### Test Coverage
+
+| Acceptance Criterion | Proof Strategy | Current Evidence | Status |
+| -------------------- | -------------- | ---------------- | ------ |
+| `AC-US-SAFE-008-01`  | `PS-FRONTEND`  | Frontend         | ✅ Met |
+| `AC-US-SAFE-008-02`  | `PS-FRONTEND`  | Frontend         | ✅ Met |
+| `AC-US-SAFE-008-03`  | `PS-FRONTEND`  | Frontend         | ✅ Met |
+| `AC-US-SAFE-008-04`  | `PS-FRONTEND`  | Frontend         | ✅ Met |
+| `AC-US-SAFE-008-05`  | `PS-FRONTEND`  | Frontend         | ✅ Met |
+| `AC-US-SAFE-008-06`  | `PS-FRONTEND`  | Frontend         | ✅ Met |
+
+**Dependencies:** US-SAFE-007
+
 ## Known Gaps
 
 - New Bank, Expense, and Safe movement-history criteria require shared direct-movement evidence and eventless movement coverage. Existing
   history criteria and their test references retain their current scope; the new criteria have no representative proof yet.
 
-- Bank history does not distinguish a failed event read from a successfully loaded empty history (`US-BANK-003`).
 - A one-time Expense approval can spend an unsupported ERC-20 token held by the contract (`US-EXP-002`).
 - Pausing the Expense Account does not prevent spending (`US-EXP-002`).
 - A wallet-origin direct ERC-20 transfer to Expense emits no Expense deposit event and is absent from the current incoming-transfer feed,
@@ -1151,9 +1323,14 @@ movement across the participating stories.
 - The selected approval end date is currently sent as local midnight. The product decision about whether that date includes the whole day
   remains open; the confirmed period-reset rules do not decide this separately signed expiry instant.
 
+The [shared network-session recovery policy](../authentication/README.md#us-auth-004-resume-after-a-wallet-network-change) applies to
+account actions, including historical Expense approvals and Safe operations. The global lock prevents workspace interaction on another
+wallet network; account-specific authorization and signature-domain checks remain separate. Shared submission boundaries retain the
+configured target for operations already being prepared.
+
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `1826eec146761b9bdf8a4615bb8ba810967352b3`
+**Implementation evidence reviewed against:** `f15dccbe52468b554ce87b92f5db48411b921bb9`
 
 - [Bank deposit modal](../../../app/src/components/sections/BankView/forms/DepositModal.vue),
   [Bank transfer modal](../../../app/src/components/sections/BankView/forms/TransferModal.vue),
@@ -1192,6 +1369,7 @@ movement across the participating stories.
   [Safe transaction table](../../../app/src/components/sections/SafeView/SafeTransactionsTable.vue), and
   [Safe mobile transaction list](../../../app/src/components/sections/SafeView/SafeTransactionMobileList.vue),
   [Safe queries and cache keys](../../../app/src/queries/safe.queries.ts),
+  [Safe Transaction Service requests](../../../app/src/queries/safe.api.ts),
   [Safe transaction mutations](../../../app/src/queries/safe.mutations.ts),
   [Safe transaction state and conflict rules](../../../app/src/utils/safe/transactionState.ts), and
   [Safe conflict warning](../../../app/src/components/sections/SafeView/SafeTransactionsWarning.vue)
@@ -1199,6 +1377,15 @@ movement across the participating stories.
   [Safe deployment tests](../../../app/src/composables/safe/__tests__/useSafeDeployment.spec.ts),
   [Safe import tests](../../../app/src/composables/safe/__tests__/useSafeImport.spec.ts), and
   [Safe signer-role tests](../../../app/src/composables/safe/__tests__/useSafeSignerRole.spec.ts)
+- [Safe registration and default Safe API](../../../backend/src/controllers/contractController.ts),
+  [contract routes](../../../backend/src/routes/contractRoutes.ts),
+  [contract request validation](../../../backend/src/validation/schemas/contract.ts),
+  [team payload with every registered Safe](../../../backend/src/controllers/teamController.ts), and
+  [contract API tests](../../../backend/src/controllers/__tests__/contractController.test.ts)
+- [default Safe and Safe history selection](../../../app/src/utils/safe/teamSafes.ts),
+  [Safe history card](../../../app/src/components/sections/SafeView/SafeHistoryCard.vue),
+  [add-a-Safe modal](../../../app/src/components/sections/SafeView/SafeAddModal.vue), and
+  [multi-Safe accounting tests](../../../app/src/utils/accounting/__tests__/assemble.multiSafe.spec.ts)
 - [Safe transaction queue tests](../../../app/src/components/sections/SafeView/__tests__/SafeTransactions.spec.ts),
   [Safe address normalization tests](../../../app/src/utils/safe/__tests__/address.spec.ts),
   [Safe transaction state tests](../../../app/src/utils/safe/__tests__/transactionState.spec.ts), and
@@ -1242,11 +1429,12 @@ movement across the participating stories.
 
 ## Discovered Safe assets
 
-Safe balances request the Gateway's spam filter with `exclude_spam=true&trusted=false`. Every returned balance remains visible; the frontend
-has no manual contract blacklist. Transaction Service histories retain the provider's movements, including unknown or untrusted contracts.
-These can also reach Accounting or leave explicit metadata and valuation gaps. See
+Anyone can send tokens to the Safe address. Safe balances request the Gateway with `exclude_spam=true&trusted=true`, so holdings and the
+wallet total show only the native coin and tokens Safe trusts; a fake token never makes the total incomplete. The frontend has no manual
+contract blacklist. Transaction Service histories retain the provider's movements, and the deposit list still shows them, but Accounting
+ignores a token that is neither a CNC token nor trusted by Safe. See
 [provider filtering](../../implementation/client-data-access/README.md#safe-provider-filtering) and
-[Safe pagination and metadata unit tests](../../../app/src/queries/__tests__/safe.queries.spec.ts). Live product review remains pending.
+[Safe source-mapping tests](../../../app/src/utils/accounting/__tests__/safe.spec.ts). Live product review remains pending.
 
 The Safe account displays only the balances returned by the Safe Client Gateway in one holdings table, including assets acquired outside CNC
 such as WETH. Provider order, token names, symbols, decimals and logos are retained. Returned zero balances remain visible; absent tokens
@@ -1282,24 +1470,30 @@ missing provider price remains explicitly unpriced; no value is invented. One Ga
 provider total after checking completeness, without rebuilding display rows. The overview retains its USD total, so a non-USD display uses
 an additional fiat query. See the [Accounting read model](../../implementation/accounting-read-model/README.md) for swap treatment.
 
-Safe balances refresh approximately every minute while their page is active. Complete transfer histories and Safe information refresh
-approximately every five minutes; pending transactions refresh every minute when the queue contains an unexecuted transaction and every five
-minutes otherwise. Safe and current-price queries inherit one-minute freshness from the moderate preset; verified historical-transfer token
-metadata uses the once preset with 24-hour retention. Unused Transaction Service data follows the moderate preset's two-minute retention;
-Gateway balances and current prices retain unused data for 30 minutes. Each query configures its refresh cadence; background tabs and window
-focus do not trigger extra polling. Safe queries call their providers directly through the external Axios client; CoinGecko market queries
-use that client to call the backend's [shared Redis market cache](../../implementation/market-data-cache/README.md). Transaction Service
-errors affect the individual query. Gateway and Transaction Service reads retry temporary 404, 408, 425, 429, server and network failures up
-to three times. Ordinary retries wait five seconds between attempts; rate-limit retries wait thirty seconds, or longer when `Retry-After`
-requires it. Safe information and Gateway balances answer HTTP 404 until Safe services index a newly deployed Safe, and the Gateway caches
-that answer for about 30 seconds. These two reads therefore keep retrying a 404 for about three and a half minutes: after 5, 10 and 20
-seconds, then every 35 seconds. Meanwhile the overview shows an indexing notice instead of an error; it reports a failure only if the Safe
-is still unknown when that window ends. Initial reads remain loading during recovery and update without a page reload. Other client errors,
-cancellation, malformed responses and an explicit monthly-quota-exceeded response are not automatically retried. Periodic and explicit
-refresh remain available. There is no shared request queue or provider-wide cooldown. Complete history pagination and contract metadata
-recovery are retained. The Axios client sends the optional `VITE_APP_SAFE_API_KEY` only to GET requests on the direct production Transaction
-Service. Keys must be issued by `developer.safe.global`; staging keys do not establish a production quota. The approval queue identifies
-rate limiting instead of reporting a connection problem. Gateway keeps its own balance cadence. See
+Safe balances and complete transfer histories refresh approximately every minute while their page is active, and again when the tab regains
+focus, so a new movement appears in the balance and in the history together. Safe information refreshes approximately every five minutes;
+pending transactions refresh every minute when the queue contains an unexecuted transaction and every five minutes otherwise. Safe and
+current-price queries inherit one-minute freshness from the moderate preset; verified historical-transfer token metadata uses the once
+preset with 24-hour retention. Unused Transaction Service data follows the moderate preset's two-minute retention; Gateway balances and
+current prices retain unused data for 30 minutes. Each query configures its refresh cadence; background tabs do not poll, and window focus
+refreshes only the Safe balances and transfer histories. Transaction Service movement reads start one after another, at least half a second
+apart, so several Safes read together stay within the provider's per-second limit; the signer list is read right away so it updates as soon
+as a signer change is confirmed. Safe queries call their providers directly through the external Axios client; CoinGecko market queries use
+that client to call the backend's [shared Redis market cache](../../implementation/market-data-cache/README.md). Transaction Service errors
+affect the individual query. Gateway and Transaction Service reads retry temporary 408, 425, 429, server and network failures up to three
+times. Ordinary retries wait five seconds between attempts; rate-limit retries wait thirty seconds, or longer when `Retry-After` requires
+it. A 404 is never retried. Safe information and Gateway balances answer 404 until Safe services index a newly deployed Safe; balances then
+stop polling, Safe information keeps its five-minute refresh with a single request each time, and the overview shows an indexing notice with
+a Try again button instead of an error, so the Safe loads when the user tries again. Because a 404 alone cannot tell an unindexed Safe from
+an address with no contract, the Safe page first reads the address code on the configured chain and starts its sections only after that
+answer: with code they load as above, without code one notice that no Safe exists at the address replaces them and no Safe service request
+is made for them. Like the other queries, that answer lives in the in-memory query cache, so a reload reads the chain again before any
+section starts. Initial reads remain loading during recovery and update without a page reload. Other client errors, cancellation, malformed
+responses and an explicit monthly-quota-exceeded response are not automatically retried. Periodic and explicit refresh remain available.
+There is no shared request queue or provider-wide cooldown. Complete history pagination and contract metadata recovery are retained. The
+Axios client sends the optional `VITE_APP_SAFE_API_KEY` only to GET requests on the direct production Transaction Service. Keys must be
+issued by `developer.safe.global`; staging keys do not establish a production quota. The approval queue identifies rate limiting instead of
+reporting a connection problem. Gateway keeps its own balance cadence. See
 [Client Data Access](../../implementation/client-data-access/README.md#browser-request-coordination) for recovery and session boundaries.
 
 Confirmed Safe transaction execution and directly executed transfers use one invalidation helper for all Safe service queries and the wallet
@@ -1309,12 +1503,13 @@ can lag until its balance provider updates; periodic refreshes continue to recon
 holdings through the canonical balance-key prefix. Other account surfaces retain their existing balance cadence.
 
 Executable evidence: [discovered holdings tests](../../../app/src/components/ui/__tests__/TokenHoldingsSection.safe.spec.ts),
-[overview tests](../../../app/src/components/sections/SafeView/__tests__/SafeBalanceSection.rendering.spec.ts), and
+[overview tests](../../../app/src/components/sections/SafeView/__tests__/SafeBalanceSection.rendering.spec.ts),
+[Safe page tests](../../../app/src/views/team/[id]/Accounts/__tests__/SafeView.spec.ts) for a Safe missing on-chain, and
 [Gateway request unit tests](../../../app/src/queries/__tests__/safeClient.queries.spec.ts).
 
-[Safe recovery tests](../../../app/src/queries/__tests__/safe.recovery.spec.ts) verify the bounded 404/429 recovery, the indexing window for
-a newly deployed Safe and the shared cache with real TanStack queries and simulated provider responses. The live post-creation provider
-journey remains to be confirmed.
+[Safe recovery tests](../../../app/src/queries/__tests__/safe.recovery.spec.ts) verify the bounded 429 recovery, the absence of retries on
+404, the absence of balance polling on 404 and the shared cache with real TanStack queries and simulated provider responses. The live
+post-creation provider journey remains to be confirmed.
 
 Implementation: [Safe Client balances](../../../app/src/queries/safeClient.queries.ts),
 [Safe movement queries](../../../app/src/queries/safe.queries.ts), [Safe read recovery policy](../../../app/src/queries/safe.recovery.ts),
@@ -1323,6 +1518,36 @@ Implementation: [Safe Client balances](../../../app/src/queries/safeClient.queri
 [holdings presentation](../../../app/src/utils/safe/portfolio.ts),
 [holdings presentation tests](../../../app/src/utils/safe/__tests__/portfolio.spec.ts), and
 [contract asset identities](../../../app/src/utils/tokens/assets.ts). Human validation of external swaps remains pending.
+
+The Safe Client query module also exposes a raw Gateway transaction-history page with transaction and date-label entries, pagination links,
+and reactive cursor, timezone, trust and imitation filters. The query preserves the provider response and propagates read failures.
+
+The swap P&L in the Wallet overview reads the Safe transfer history, the Gateway USD balances, daily CoinGecko quotes through the backend,
+and the CoW Protocol orders of each swap transaction. A CoW lookup that fails or returns no order leaves the fee unreported and never hides
+the other figures. The composable filters the original transfer and balance rows without replacing their response types or objects;
+timestamps, metadata and raw amount strings remain available. Refunds are netted in base units during valuation. A settled report is
+retained only while refreshing the same Safe; switching or clearing the Safe hides the previous report immediately. Implementation:
+[shared transfer grouping and netting](../../../app/src/utils/safe/swapTransfers.ts),
+[swap P&L calculation](../../../app/src/utils/safe/swapPnl.ts), [swap valuation and CoW fees](../../../app/src/utils/safe/swapValuation.ts),
+[swap P&L composable](../../../app/src/composables/safe/useSafeSwapPnl.ts), [CoW order query](../../../app/src/queries/cow.queries.ts),
+[CoW order fields](../../../app/src/types/cow.ts), and
+[overview swap figures](../../../app/src/components/sections/SafeView/SafeSwapPnlCard.vue). Executable evidence:
+[swap P&L tests](../../../app/src/utils/safe/__tests__/swapPnl.spec.ts),
+[swap valuation tests](../../../app/src/utils/safe/__tests__/swapValuation.spec.ts),
+[use-case scenario tests](../../../app/src/utils/safe/__tests__/swapPnl.integration.spec.ts) for the
+[use-case catalogue](./safe-swap-pnl-use-cases.md), [composable tests](../../../app/src/composables/safe/__tests__/useSafeSwapPnl.spec.ts),
+and [overview swap figure tests](../../../app/src/components/sections/SafeView/__tests__/SafeSwapPnlCard.spec.ts). The figures have not been
+checked against a live Safe yet.
+
+The same composable returns two results from one set of sources. The per-swap report keeps the order and numeric results Accounting books.
+The [average-cost tracking](../../../app/src/utils/safe/costBasis.ts) reads every movement of the tokens the swaps touched, oldest first by
+block, and feeds the Wallet overview and the Activity swaps. Its daily quotes are requested by running the calculation once without quotes
+and collecting every quote it reads, so the requests cannot drift from the rules. Executable evidence:
+[average-cost tests](../../../app/src/utils/safe/__tests__/costBasis.spec.ts).
+
+The [Activity swaps](../../../app/src/components/sections/SafeView/SafeSwapsTable.vue) list the tokens, a token's history, and the swaps,
+which they sort as a copy newest first. Executable evidence:
+[swaps tests](../../../app/src/components/sections/SafeView/__tests__/SafeSwapsTable.spec.ts).
 
 Company and Companies list summaries reuse the Gateway cache and its valued fiat total, including tokens outside the CNC payment-token list.
 They keep the known provider valuation when another returned token has no price. Holdings keep exact quantities on hover and expose precise

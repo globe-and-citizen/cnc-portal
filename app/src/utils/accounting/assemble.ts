@@ -18,6 +18,7 @@ import type { TeamContract } from '@/types/teamContract'
 import type { WeeklyClaim } from '@/types/cash-remuneration'
 import type { ExpenseResponse } from '@/types/expense-account'
 import type { SafeIncomingTransfer, SafeTransaction } from '@/types/safe'
+import type { CowTransactionOrders } from '@/types/cow'
 import type { JournalAccountAssignmentRecord } from '@/types/journal-account-assignment'
 import type { BankEventFeed } from '@/types/contract-events/bank'
 import type { CashRemunerationEventFeed } from '@/types/contract-events/cash-remuneration'
@@ -49,7 +50,20 @@ import {
 } from '@/utils/accounting/sherRate'
 import { settleWithdrawnSher } from '@/utils/accounting/sherIssuance'
 import { atDate } from '@/utils/accounting/mappers/context'
-import { toSafeTransferRows, toSafeOutgoingTransferRows } from '@/utils/accounting/safeTransfers'
+import {
+  receivingSafeByTxHash,
+  toSafeTransferRows,
+  toSafeOutgoingTransferRows,
+  toSafeSwapFeeRows,
+  withoutSafeToSafeInflows
+} from '@/utils/accounting/safeTransfers'
+import type { SafeMapperInput } from '@/utils/accounting/mappers/safe'
+
+/** A Safe the team used before its default one, booked as its own `Cash — Safe` account. */
+interface PreviousSafeFeed {
+  safeAddress: Address | string
+  assetTransfers: readonly SafeIncomingTransfer[]
+}
 
 /** The raw feeds for one team, as fetched by {@link useCNCAccounting}. */
 export interface CncAccountingInput {
@@ -81,6 +95,10 @@ export interface CncAccountingInput {
   safeAssetTransfers?: readonly SafeIncomingTransfer[] | null
   /** Executed multisig transactions — outflows from the Safe. */
   safeOutgoingTransactions?: readonly SafeTransaction[] | null
+  /** CoW Protocol orders settled by each Safe swap transaction — the swap fee evidence. */
+  safeSwapOrders?: readonly CowTransactionOrders[] | null
+  /** Every other Safe the team registered, removed ones included, with its own movements. */
+  previousSafes?: readonly PreviousSafeFeed[]
   // ── portal DB rows (off-chain enrichment context, spec §3.2) ──
   weeklyClaims?: readonly WeeklyClaim[]
   expenses?: readonly ExpenseResponse[]
@@ -155,8 +173,20 @@ function toJournalEntrySources(input: CncAccountingInput): JournalEntrySources {
     }
   }
 
+  const safes = toSafeMapperInputs(input)
+  if (safes.length) sources.safes = safes
+
   if (input.safeDepositRouterEvents) {
-    sources.safeDepositRouter = { deposits: items(input.safeDepositRouterEvents.safeDeposits) }
+    sources.safeDepositRouter = {
+      deposits: items(input.safeDepositRouterEvents.safeDeposits),
+      receivingSafeByTxHash: receivingSafeByTxHash([
+        {
+          safeAddress: input.safeAddress,
+          assetTransfers: input.safeAssetTransfers ?? input.safeTransfers ?? []
+        },
+        ...(input.previousSafes ?? [])
+      ])
+    }
   }
 
   if (input.vestingEvents) {
@@ -189,24 +219,32 @@ function toJournalEntrySources(input: CncAccountingInput): JournalEntrySources {
     }
   }
 
+  return sources
+}
+
+/** The default Safe and every previous Safe, each read relative to its own address. */
+function toSafeMapperInputs(input: CncAccountingInput): SafeMapperInput[] {
+  const routerDeposits = input.safeDepositRouterEvents?.safeDeposits?.items
+  const safes: SafeMapperInput[] = (input.previousSafes ?? []).map((safe) => ({
+    safeAddress: safe.safeAddress,
+    transfers: toSafeTransferRows(safe.assetTransfers, routerDeposits),
+    swapFees: toSafeSwapFeeRows(input.safeSwapOrders, safe.safeAddress)
+  }))
   if (input.safeAddress) {
     const transfers =
       input.safeAssetTransfers !== undefined
-        ? toSafeTransferRows(
-            input.safeAssetTransfers,
-            input.safeDepositRouterEvents?.safeDeposits?.items
-          )
+        ? toSafeTransferRows(input.safeAssetTransfers, routerDeposits)
         : [
-            ...toSafeTransferRows(
-              input.safeTransfers,
-              input.safeDepositRouterEvents?.safeDeposits?.items
-            ),
+            ...toSafeTransferRows(input.safeTransfers, routerDeposits),
             ...toSafeOutgoingTransferRows(input.safeOutgoingTransactions, input.safeAddress)
           ]
-    sources.safe = { safeAddress: input.safeAddress, transfers }
+    safes.unshift({
+      safeAddress: input.safeAddress,
+      transfers,
+      swapFees: toSafeSwapFeeRows(input.safeSwapOrders, input.safeAddress)
+    })
   }
-
-  return sources
+  return withoutSafeToSafeInflows(safes)
 }
 
 /**

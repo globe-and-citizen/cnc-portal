@@ -20,4 +20,8 @@ export interface TeamContract {
   deployer: Address
   admins: string[]
   imageUrl?: string
+  /** When a Safe last became the team default; the latest one not disabled is the default. */
+  activatedAt?: string
+  /** When the owner disabled this Safe; its history is kept. */
+  removedAt?: string | null
 }

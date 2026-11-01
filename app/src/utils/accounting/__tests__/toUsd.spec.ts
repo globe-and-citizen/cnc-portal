@@ -132,6 +132,7 @@ describe('historical Accounting valuation', () => {
         posting({ id: 'next-day', timestamp: Date.parse('2026-03-14T00:00:00Z') / 1000 }),
         posting({ id: 'stable', token: 'usdc', rawAmount: '1000000', rate: 1 }),
         posting({ id: 'sher', token: 'sher', rawAmount: '1000000', rate: 0.5 }),
+        posting({ id: 'swap', useCase: 'SAFE-SWAP', credit: null }),
         posting({ id: 'zero', rawAmount: '0' }),
         posting({ id: 'memo', debit: null, credit: null })
       ])

@@ -36,6 +36,9 @@ const authorizeUser = async (req: Request, res: Response, next: NextFunction) =>
     }
 
     const decodedPayload = payload as { address: Address; roles?: UserRole[] };
+    if (!decodedPayload.address) {
+      return errorResponse(401, 'Unauthorized: Missing jwt payload', res);
+    }
     // Find user by address in the database
 
     const user = await prisma.user.findUnique({

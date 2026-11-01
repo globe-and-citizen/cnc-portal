@@ -1,4 +1,5 @@
 import { config } from '@/wagmi.config'
+import { configuredChainId } from '@/lib/walletNetwork'
 import { getWalletClient, readContract, waitForTransactionReceipt } from '@wagmi/core'
 import { parseUnits, formatUnits } from 'viem/utils'
 import { useMutation } from '@tanstack/vue-query'
@@ -21,7 +22,7 @@ export async function deployContract(
   contractByteCode: `0x${string}`,
   { bankAddress, costPerClick, costPerImpression }: DeployContractArgs
 ): Promise<Address> {
-  const walletClient = await getWalletClient(config)
+  const walletClient = await getWalletClient(config, { chainId: configuredChainId })
   if (!walletClient) throw new Error('Wallet not connected')
 
   const click = parseUnits(String(costPerClick), 18)
@@ -34,7 +35,10 @@ export async function deployContract(
     account: walletClient.account.address
   })
 
-  const receipt = await waitForTransactionReceipt(config, { hash: txHash })
+  const receipt = await waitForTransactionReceipt(config, {
+    hash: txHash,
+    chainId: configuredChainId
+  })
   if (!receipt.contractAddress) {
     throw new Error('Deployment confirmed but no contract address was returned')
   }

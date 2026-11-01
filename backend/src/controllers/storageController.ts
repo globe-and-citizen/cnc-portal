@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { getPresignedDownloadUrl, PRESIGNED_URL_EXPIRATION } from '../services/storageService';
+import { captureBackendException } from '../utils';
 
 export const getFileUrl = async (req: Request, res: Response) => {
   try {
@@ -18,6 +19,11 @@ export const getFileUrl = async (req: Request, res: Response) => {
       expiresIn: expirationSeconds,
     });
   } catch (err: unknown) {
+    captureBackendException(err, {
+      operation: 'getFileUrl',
+      source: 'storageController',
+      status: 500,
+    });
     const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
     console.error('Error generating presigned URL:', err);
     res.status(500).json({

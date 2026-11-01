@@ -63,6 +63,7 @@ import SelectMemberResults from '@/components/ui/inputs/SelectMemberResults.vue'
 import SelectContractResults from '@/components/ui/inputs/SelectContractResults.vue'
 import type { Member, TeamContract } from '@/types'
 import { filterDirectoryItems } from '@/utils/teams/search'
+import { contractsInUse } from '@/utils/safe/teamSafes'
 
 const props = defineProps<{ disabled?: boolean }>()
 
@@ -87,12 +88,11 @@ const addressInput = useTemplateRef<HTMLInputElement>('addressInput')
 
 const isFetching = computed(() => teamStore.currentTeamMeta.isPending)
 const members = computed(() => teamStore.currentTeamMeta?.data?.members ?? [])
-const contracts = computed(
-  () =>
-    teamStore.currentTeamMeta?.data?.teamContracts.map((contract) => ({
-      ...contract,
-      imageUrl: 'https://api.dicebear.com/9.x/bottts/svg?seed'
-    })) ?? []
+const contracts = computed(() =>
+  contractsInUse(teamStore.currentTeamMeta?.data?.teamContracts).map((contract) => ({
+    ...contract,
+    imageUrl: 'https://api.dicebear.com/9.x/bottts/svg?seed'
+  }))
 )
 
 const filteredMembers = computed(() => {

@@ -139,7 +139,7 @@ describe('[US-SAFE-002] SafeBalanceSection rendering', () => {
   const mockCurrency = ref(MOCK_DATA.defaultCurrency)
   const mockSafeInfo = ref<typeof MOCK_DATA.safeInfo | null>(MOCK_DATA.safeInfo)
   const mockSafeInfoLoading = ref(false)
-  const mockSafeInfoFailure = ref<Error | null>(null)
+  const mockSafeInfoError = ref<Error | null>(null)
   const notIndexed = () =>
     Object.assign(new Error('Safe not indexed'), { response: { status: 404 } })
 
@@ -152,7 +152,8 @@ describe('[US-SAFE-002] SafeBalanceSection rendering', () => {
       global: {
         stubs: {
           AddressTooltip: AddressTooltipStub,
-          TransferForm: TransferFormStub
+          TransferForm: TransferFormStub,
+          SafeSwapPnlCard: true
         }
       }
     })
@@ -170,8 +171,7 @@ describe('[US-SAFE-002] SafeBalanceSection rendering', () => {
     mockuseGetSafeInfoQuery.mockReturnValue({
       data: mockSafeInfo,
       isLoading: mockSafeInfoLoading,
-      error: ref(null),
-      failureReason: mockSafeInfoFailure,
+      error: mockSafeInfoError,
       refetch: vi.fn()
     })
 
@@ -205,7 +205,7 @@ describe('[US-SAFE-002] SafeBalanceSection rendering', () => {
     // Reset reactive values
     mockSafeInfo.value = MOCK_DATA.safeInfo
     mockSafeInfoLoading.value = false
-    mockSafeInfoFailure.value = null
+    mockSafeInfoError.value = null
   })
 
   afterEach(() => {
@@ -224,6 +224,13 @@ describe('[US-SAFE-002] SafeBalanceSection rendering', () => {
       expect(wrapper.get('[data-test="safe-total-usd"]').text()).toBe('$4,500.00')
       expect(wrapper.text()).toContain('$4,500.00 USD')
     })
+    it('[AC-US-SAFE-007-01] places the swap figures of the registered Safe in the overview', () => {
+      wrapper = createWrapper()
+
+      expect(wrapper.findComponent({ name: 'SafeSwapPnlCard' }).props('address')).toBe(
+        MOCK_DATA.safeAddress
+      )
+    })
 
     it('shows loading spinner when isLoading is true', () => {
       mockUseContractBalance.isLoading.value = true
@@ -232,39 +239,28 @@ describe('[US-SAFE-002] SafeBalanceSection rendering', () => {
       expect(wrapper.find('[data-test="safe-balance-loading"]').exists()).toBe(true)
     })
 
-    it('[AC-US-SAFE-002-10] explains a not-yet-indexed Safe instead of reporting a failure', () => {
-      mockUseContractBalance.isLoading.value = true
-      mockUseSafeBalances.failureReason.value = notIndexed()
+    it('[AC-US-SAFE-002-10] explains a not-yet-indexed Safe instead of reporting a failure', async () => {
+      mockUseContractBalance.error.value = notIndexed()
       wrapper = createWrapper()
 
       expect(wrapper.find('[data-test="safe-indexing-notice"]').exists()).toBe(true)
       expect(wrapper.find('[data-test="safe-overview-error"]').exists()).toBe(false)
-      expect(wrapper.find('[data-test="safe-balance-loading"]').exists()).toBe(true)
+      await wrapper.get('[data-test="retry-safe-overview-button"]').trigger('click')
+      expect(mockUseSafeBalances.refetch).toHaveBeenCalled()
     })
 
-    it('shows the indexing notice while Safe information waits for indexing', () => {
+    it('shows the indexing notice when Safe information answers 404', () => {
       mockSafeInfo.value = null
-      mockSafeInfoLoading.value = true
-      mockSafeInfoFailure.value = notIndexed()
+      mockSafeInfoError.value = notIndexed()
       wrapper = createWrapper()
 
       expect(wrapper.find('[data-test="safe-indexing-notice"]').exists()).toBe(true)
     })
 
-    it('keeps the plain loader while another temporary failure is retried', () => {
-      mockUseContractBalance.isLoading.value = true
-      mockUseSafeBalances.failureReason.value = Object.assign(new Error('Unavailable'), {
+    it('reports any other failure as an error', () => {
+      mockUseContractBalance.error.value = Object.assign(new Error('Unavailable'), {
         response: { status: 503 }
       })
-      wrapper = createWrapper()
-
-      expect(wrapper.find('[data-test="safe-indexing-notice"]').exists()).toBe(false)
-      expect(wrapper.find('[data-test="safe-balance-loading"]').exists()).toBe(true)
-    })
-
-    it('reports the failure once indexing recovery ends', () => {
-      mockUseSafeBalances.failureReason.value = notIndexed()
-      mockUseContractBalance.error.value = notIndexed()
       wrapper = createWrapper()
 
       expect(wrapper.find('[data-test="safe-overview-error"]').exists()).toBe(true)

@@ -128,6 +128,32 @@ describe('CashRemunerationTransactions', () => {
     expect(tableLoading(wrapper)).toBe(true)
   })
 
+  it('shows a partial warning when one history feed has a gap', () => {
+    mockCashRemQuery.data.value!.gaps = [
+      { address: CONTRACT_ADDRESS, error: new Error('RPC scan failed') }
+    ]
+
+    wrapper = createWrapper()
+
+    expect(
+      wrapper.get('[data-test="cash-remuneration-transaction-history-status"]').text()
+    ).toContain('Transaction history is incomplete')
+  })
+
+  it('retries both feeds from the history warning', async () => {
+    mockCashRemQuery.data.value!.gaps = [
+      { address: CONTRACT_ADDRESS, error: new Error('RPC scan failed') }
+    ]
+
+    wrapper = createWrapper()
+    await wrapper
+      .get('[data-test="cash-remuneration-transaction-history-status-retry"]')
+      .trigger('click')
+
+    expect(mockCashRemQuery.refetch).toHaveBeenCalledTimes(1)
+    expect(incomingTransfersQuery.refetch).toHaveBeenCalledTimes(1)
+  })
+
   // Covers: AC-US-PAYROLL-013-04
   it('[AC-US-PAYROLL-013-04] filters displayed rows by selected type', async () => {
     wrapper = createWrapper()

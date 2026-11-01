@@ -1,5 +1,6 @@
 <template>
   <UForm
+    ref="form"
     :schema="overtimeWageFormSchema"
     :state="wageData"
     class="space-y-4"
@@ -36,7 +37,7 @@
       </UInput>
     </UFormField>
 
-    <UFormField name="overtimeRatePerHour">
+    <div>
       <div class="space-y-4">
         <h3 class="mb-4 text-lg font-semibold">Overtime Hourly Rates</h3>
         <UFieldGroup
@@ -67,7 +68,8 @@
           </UFormField>
         </UFieldGroup>
       </div>
-    </UFormField>
+      <UFormField name="overtimeRatePerHour" data-test="overtime-rate-group-error" />
+    </div>
 
     <div class="grid gap-4 md:grid-cols-2">
       <div
@@ -133,7 +135,7 @@
 </template>
 
 <script setup lang="ts">
-import { watch } from 'vue'
+import { ref, watch } from 'vue'
 import { NETWORK } from '@/constant'
 import type { WageWithForm } from '@/types'
 import RateDotList from '@/components/ui/RateDotList.vue'
@@ -154,6 +156,22 @@ watch(
     wageData.value.overtimeRatePerHour.forEach((rate, i) => {
       if (!enabled[i] && Number(rate.amount) !== 0) rate.amount = 0
     })
+  }
+)
+
+/**
+ * Same group re-check as the standard step: clear the "at least one rate" error as soon
+ * as an enabled overtime rate has a positive amount.
+ */
+const form = ref<{
+  getErrors: (name: string) => unknown[]
+  validate: (opts?: Record<string, unknown>) => Promise<unknown>
+} | null>(null)
+watch(
+  () => wageData.value.overtimeRatePerHour.map((rate) => [rate.enabled, rate.amount]),
+  () => {
+    if (!form.value?.getErrors('overtimeRatePerHour').length) return
+    form.value.validate({ name: 'overtimeRatePerHour', silent: true }).catch(() => {})
   }
 )
 </script>

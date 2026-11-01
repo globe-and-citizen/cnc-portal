@@ -92,6 +92,30 @@ describe('BankTransactions', () => {
     expect(tableLoading(wrapper)).toBe(true)
   })
 
+  it('[AC-US-BANK-003-08] distinguishes an incomplete history from a confirmed empty history', () => {
+    mockBankQuery.data.value!.gaps = [
+      { address: BANK_ADDRESS, error: new Error('RPC scan failed') }
+    ]
+
+    wrapper = createWrapper()
+
+    expect(wrapper.get('[data-test="bank-transaction-history-status"]').text()).toContain(
+      'Transaction history is incomplete'
+    )
+    expect(tableData(wrapper)).toHaveLength(2)
+  })
+
+  it('retries an incomplete history from its warning', async () => {
+    mockBankQuery.data.value!.gaps = [
+      { address: BANK_ADDRESS, error: new Error('RPC scan failed') }
+    ]
+
+    wrapper = createWrapper()
+    await wrapper.get('[data-test="bank-transaction-history-status-retry"]').trigger('click')
+
+    expect(mockBankQuery.refetch).toHaveBeenCalledTimes(1)
+  })
+
   // Covers: AC-US-BANK-003-03
   it('[AC-US-BANK-003-03] filters displayed rows by selected type', async () => {
     wrapper = createWrapper()

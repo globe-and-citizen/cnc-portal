@@ -19,7 +19,7 @@ This folder contains all TanStack Query hooks for API interactions in the CNC Po
 | `queryClient.ts`                 | Shared cache  | Application-wide query client           |
 | `safe.queries.ts`                | Safe          | Gnosis Safe operations                  |
 | `safe.recovery.ts`               | Safe          | Shared Safe read retry policy           |
-| `safeClient.queries.ts`          | Safe holdings | Gateway balances and fiat valuations    |
+| `safeClient.queries.ts`          | Safe Client   | Gateway balances and history            |
 | `team.queries.ts`                | Teams         | Team CRUD operations                    |
 | `user.queries.ts`                | Users         | User profile management                 |
 | `wage.queries.ts`                | Wages         | Member wage settings                    |
@@ -35,9 +35,21 @@ This folder contains all TanStack Query hooks for API interactions in the CNC Po
 
 - A mutation is a pure async request function wrapped by one `useXxxMutation` composable. Components use its callbacks and reactive state
   rather than orchestrating request state with local `try`/`catch` blocks.
+- Mutation failures should propagate to TanStack Query so `onError`, `onSettled`, configured retries, and the reactive mutation error/status
+  state can own recovery and user-facing handling. Use a local `try`/`catch` only for narrow error translation or cleanup that cannot be
+  expressed through the mutation lifecycle; see the
+  [TanStack Query error-handling standard](../../../docs/platform/QUERY_STANDARDS.md#error-handling).
 - Create one query or mutation hook per HTTP method and endpoint. Actions that differ only by request data or query parameters reuse that
   hook at the call site; do not create `useArchiveXxxMutation` and `useUnarchiveXxxMutation` when both update the same resource.
 - Query data is the server-state source of truth. Do not mirror it into a Pinia store merely to make it easier to consume.
+- Required reads and mutations report unexpected final HTTP 404s through the shared cache lifecycle. An owning read may opt into
+  `notFound: 'expected'` in the query factory, or Axios `sentryNotFound: 'expected'`, for a normal missing-resource state. Safe indexing
+  reads use `sentryNotFound: 'initially-expected'`; preserve the
+  [monitoring policy](../../../docs/implementation/error-tracking/README.md#handled-http-404-responses) rather than catching errors locally
+  or suppressing every provider 404.
+- `useGetSafeTransactionHistoryQuery` returns one unmodified Gateway history page, including date-label entries and pagination links. Its
+  optional `queryParams` object or getter accepts `cursor`, `timezone`, `trusted`, and `imitation`; these values participate in the cache
+  identity. Pagination remains explicit rather than silently flattening the history.
 - CoinGecko requests live in their query module and use the configured CNC backend's public market routes, backed by the
   [shared Redis market cache](../../../docs/implementation/market-data-cache/README.md). Safe Transaction Service and Safe Client Gateway
   requests remain direct provider reads. All three use the external Axios client with the query cancellation signal, avoiding the
@@ -52,11 +64,18 @@ This folder contains all TanStack Query hooks for API interactions in the CNC Po
   snapshots.
 - Safe Transaction Service and Gateway queries use the moderate preset directly, declare their polling cadence, and share the retry policy
   in `safe.recovery.ts`. Temporary provider failures retry up to three times at fixed intervals; HTTP 429 uses a longer interval and
-  respects `Retry-After`. Safe information and Gateway balances treat HTTP 404 as a Safe not indexed yet and keep retrying for about three
-  and a half minutes, with gaps that outlast the Gateway's 30-second cache of not-found answers. Cancellation, other client errors,
-  malformed responses and an explicit monthly-quota-exceeded response are not retried automatically. Axios owns the production GET
-  credential header and error redaction. Local pagination and asset-transfer helpers preserve complete histories, stable identities and
-  cached metadata recovery; there is no separate request scheduler or provider-wide pause.
+  respects `Retry-After`. HTTP 404 means Safe services do not know the resource and is never retried; Gateway balances also stop polling
+  while they answer 404, while Safe information keeps its five-minute refresh, so a Safe not indexed yet loads when the user tries again.
+  `useGetSafeBytecodeQuery` reads the address code on the configured chain so the Safe page can tell an unindexed Safe from an address with
+  no contract before its sections start. Cancellation, other client errors, malformed responses and an explicit monthly-quota-exceeded
+  response are not retried automatically. Axios owns the production GET credential header and error redaction. Local pagination and
+  asset-transfer helpers preserve complete histories, stable identities and cached metadata recovery. Every Transaction Service movement and
+  transaction read goes through `safe.readQueue.ts`: reads start one after another, at least 500 ms apart, because simultaneous reads (one
+  per team Safe on the Accounting pages) trip the provider's per-second limit and would otherwise wait out the 30-second 429 interval. The
+  Safe information read (owners, threshold) skips the queue so the signer list updates right after a signer change.
+- The Gateway balance and the Transaction Service movements (`transfers`, `incoming-transfers`) share `safeMovementsRefresh`: they refresh
+  every minute while the tab is visible and again when it regains focus, so the Safe page and the Accounting books show a new movement at
+  the same time instead of the balance moving minutes before the ledger.
 
 ## Full Documentation
 

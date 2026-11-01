@@ -112,18 +112,19 @@ response interpretation retains the existing six-decimal rate precision; malform
 Accounting refresh retries failed provider queries without refetching successful dates. It never falls back to the current market price.
 Stablecoins retain their one-dollar peg, and SHER remains under its separate multiplier realization policy.
 
-Safe histories now refresh approximately every five minutes while retaining complete pagination and stable transfer identities. CoinGecko
-queries use ordinary Axios/TanStack observers calling the CNC backend, with cancellation and no automatic retries. The backend's
-[shared Redis market cache](../market-data-cache/README.md) preserves raw responses, coordinates misses and provider admission, and shares a
-429 cooldown while continuing to serve valid cache hits. Distinct historical dates keep independent error states. Historical errors recover
-on explicit refresh rather than automatic polling. Current supported-token prices retain the moderate preset and five-minute polling;
-verified contract identities and recovered token metadata use the once preset with 24-hour retention. Safe Transaction Service reads use
-direct Axios requests, apply the bounded Safe-specific retry policy, and expose independent errors without a shared request queue or
-provider-wide cooldown. Their unused history cache inherits the moderate preset's two-minute retention. Production GETs use the optional
-configured API key through Axios. Complete pagination and stable transfer identities are preserved; metadata recovery shares the observer's
-TanStack client and copies enriched rows without mutating provider objects. Source inclusion, exchange classification, precision and
-rate-of-record policy remain unchanged. A failed later Safe page never publishes a partial replacement feed. See
-[Client Data Access](../client-data-access/README.md#browser-request-coordination) for the browser and shared-backend boundaries.
+Safe transfer histories refresh approximately every minute and when the tab regains focus, like the Safe balance, while retaining complete
+pagination and stable transfer identities. CoinGecko queries use ordinary Axios/TanStack observers calling the CNC backend, with
+cancellation and no automatic retries. The backend's [shared Redis market cache](../market-data-cache/README.md) preserves raw responses,
+coordinates misses and provider admission, and shares a 429 cooldown while continuing to serve valid cache hits. Distinct historical dates
+keep independent error states. Historical errors recover on explicit refresh rather than automatic polling. Current supported-token prices
+retain the moderate preset and five-minute polling; verified contract identities and recovered token metadata use the once preset with
+24-hour retention. Safe Transaction Service reads use direct Axios requests, apply the bounded Safe-specific retry policy, and expose
+independent errors without a shared request queue or provider-wide cooldown. Their unused history cache inherits the moderate preset's
+two-minute retention. Production GETs use the optional configured API key through Axios. Complete pagination and stable transfer identities
+are preserved; metadata recovery shares the observer's TanStack client and copies enriched rows without mutating provider objects. Source
+inclusion, exchange classification, precision and rate-of-record policy remain unchanged. A failed later Safe page never publishes a partial
+replacement feed. See [Client Data Access](../client-data-access/README.md#browser-request-coordination) for the browser and shared-backend
+boundaries.
 
 Each contract-event query is also keyed by its normalized generation targets: lowercase address plus effective deployment `fromBlock`,
 sorted independently of API order. A later or asynchronously resolved boundary therefore selects a distinct history range. Duplicate
@@ -135,45 +136,58 @@ ordering, and `InvestorV1` is used only when no current `Investor` exists.
 
 ### Safe assets and exchanges
 
-Safe queries retain provider movements without local contract exclusions before source mapping and historical-rate target construction.
-Unknown, untrusted and spam-like events may therefore enter the existing mapping or create explicit completeness gaps. The Gateway's balance
-spam filter does not apply to this Transaction Service feed. See
+Safe queries retain provider movements without local contract exclusions. The Safe source mapper then ignores a movement whose contract is
+neither a CNC token nor marked `trusted` by the Transaction Service, before exchange matching, mapping and historical-rate target
+construction. A fake token sent to the Safe therefore creates no entry and no completeness gap. See
 [provider filtering](../client-data-access/README.md#safe-provider-filtering). Existing exchange classification, missing-metadata and
 historical-valuation rules apply to every retained movement. Executable evidence:
 [Safe pagination and metadata unit tests](../../../app/src/queries/__tests__/safe.queries.spec.ts) and
 [Safe source-mapping tests](../../../app/src/utils/accounting/__tests__/safe.spec.ts).
 
 The authoritative Safe source is `/transfers/`, paginated to exhaustion, deduplicated by service `transferId`, and refreshed approximately
-every five minutes. It includes real ERC-20 `transferFrom` settlements that cannot be inferred from the Safe multisig call's top-level
-calldata. Missing token metadata is read from its contract when possible. Metadata must match the transfer's contract address; unsupported
-or absent decimals retain raw movements with a completeness diagnostic. The exact monetary layer currently supports token precision from
-zero through 18 decimals. A larger precision remains unavailable rather than being silently rounded or interpreted as native.
+every minute and on window focus, together with the Safe balance. It includes real ERC-20 `transferFrom` settlements that cannot be inferred
+from the Safe multisig call's top-level calldata. Missing token metadata is read from its contract when possible. Metadata must match the
+transfer's contract address; unsupported or absent decimals retain raw movements with a completeness diagnostic. The exact monetary layer
+currently supports token precision from zero through 18 decimals. A larger precision remains unavailable rather than being silently rounded
+or interpreted as native.
 
-Safe provider reads retry temporary 404, 408, 425, 429, server and network failures up to three times at fixed intervals. Rate-limit
-recovery respects `Retry-After`; cancellation, other client errors, malformed responses and an explicit monthly-quota-exceeded response do
-not retry automatically. A failed history read still rejects the entire replacement, preserving previously cached complete history. Gateway
-holdings and Safe information use the same recovery, except that a 404 for a newly deployed Safe keeps retrying for about three and a half
-minutes while Safe services index it. Neither changes journal classification or historical valuation.
+Safe provider reads retry temporary 408, 425, 429, server and network failures up to three times at fixed intervals. Rate-limit recovery
+respects `Retry-After`; cancellation, other client errors, malformed responses and an explicit monthly-quota-exceeded response do not retry
+automatically. A failed history read still rejects the entire replacement, preserving previously cached complete history. A 404 is never
+retried; Gateway holdings also stop polling while they answer 404, and Safe information keeps its five-minute refresh. Neither changes
+journal classification or historical valuation.
 
 Dynamic assets carry an `erc20:<chainId>:<contractAddress>` identity and per-movement metadata. The fixed CNC payment allowlist is
 unchanged. Contract-address market discovery on Polygon resolves the provider coin identity before historical snapshots are requested. Local
 and test-network assets retain their own identities and cannot borrow Polygon market evidence. Missing market coverage or rate limits remain
-retryable gaps; current prices are used only in the Safe portfolio.
+retryable gaps; current prices are used only in the Safe portfolio and in the Safe swap P&L that `Swap P&L` carries (below).
 
 `SAFE-SWAP` matches opposing different-asset movements with the same transaction and external counterparty. Complex or unmatched multi-asset
 operations are flagged for classification instead of treating their receipts as service revenue. Token mints in the same transaction are
 retained separately in `Unclassified Receipts`; their economic nature is not inferred from mint evidence alone.
 
-Journal finalization replays the full Safe history using weighted-average carrying basis. Acquired assets use their own contract-resolved
-historical market rate and exact received quantity; the stablecoin spent never implies their unit price or suppresses historical-rate
-requests. The provider snapshot is for the UTC transaction date, not a tick at the exact transaction second. Outgoing exchange lines remove
-the evidenced carrying amount; their displayed unit rate is carrying cost per unit, and exact carrying amounts avoid six-decimal
-rate-rounding residues. Incoming market valuations and realized differences balance the operation through `Asset Exchange Gain` or
-`Asset Exchange Loss`. Missing acquisition history or valuation produces zero-valued movement evidence and a partial status, never an
-invented basis. A prior non-exchange payment depleted at a different transaction-price valuation invalidates later automatic swap basis;
-other payment rules remain unchanged. Network/DEX fees are not inferred from an unexplained difference; standalone fee evidence remains
-necessary. Cross-transaction swap intents and arbitrary DeFi operations require additional protocol evidence and remain a boundary of
-automatic classification.
+Journal finalization replays the full Safe history using weighted-average carrying basis. Outgoing exchange lines remove the evidenced
+carrying amount. A fee CoW Protocol reports for the Safe's own fulfilled order in the swap transaction rides on the sold leg
+(`feeRawAmount`) and is booked as `Transaction Fee Expense` at the carrying value of the part it took. When the sold token has several
+outgoing transfers, they consume that reported fee in sequence, capped at the total sold; a smaller first transfer never drops the
+remainder. Acquired assets carry the rest, the price actually paid, split exactly across their legs by quantity; no historical market rate
+is requested for a swap. Each exchange line's displayed unit rate is its carrying amount per unit, unless that rate exceeds the six-decimal
+range; exact carrying amounts avoid rate-rounding residues. When every received leg is a USD stablecoin, each keeps its $1.00 face value
+instead, which realizes its difference from the price paid. Missing acquisition history produces zero-valued movement evidence and a partial
+status, never an invented basis.
+
+A realized result is posted as a USD-only `Swap P&L` line in the exchange's operation. Before assembly, the data layer attaches to the
+default Safe's swap legs (`swapPnl`) the Safe overview's P&L of each swap: the current value of what it received against the CoinGecko
+swap-day value of what it gave up, less the reported fee, from the same composable the overview uses. The exchange's `Swap P&L` line then
+books that figure, and a `Safe Market Value Adjustment` line in the same operation books the part the cash legs do not carry, so
+`Cash — Safe` and its carrying basis keep the price paid while `Swap P&L` totals the overview figure. A swap the overview does not value,
+such as a previous Safe's, keeps only its realized result. The composable waits for fee lookups and keeps its last settled value while
+sources reload or a refresh fails for the same Safe. Changing or clearing the Safe discards that settled report; reports wait for its first
+answer, and a read failure or an unpriced asset makes Accounting partial. A prior non-exchange payment depleted at a different
+transaction-price valuation invalidates later automatic swap basis; other payment rules remain unchanged. Reports wait for the order lookups
+to settle, so no report or export is shown without a fee that is still loading; a missing or failed lookup never makes Accounting partial,
+and the fee then stays inside the acquired asset's price. Network/DEX fees are not inferred. Cross-transaction swap intents and arbitrary
+DeFi operations require additional protocol evidence and remain a boundary of automatic classification.
 
 The read-only Safe holdings use the Safe Client Gateway balance response for current wallet valuation. A nonzero supported holding with a
 missing, nonpositive, or nonfinite USD price keeps the total incomplete, just as unavailable discovered valuations do. A confirmed zero
@@ -187,10 +201,14 @@ valuation.
 
 Implementation: [asset identity](../../../app/src/utils/tokens/assets.ts),
 [exchange carrying-value replay](../../../app/src/utils/accounting/safeExchanges.ts),
+[Safe swap P&L attachment](../../../app/src/utils/accounting/safeSwapPnl.ts) and its
+[data-layer adapter](../../../app/src/composables/accounting/useSafeSwapPnlEvidence.ts) of the
+[shared P&L source](../../../app/src/composables/safe/useSafeSwapPnl.ts), consumed by the
+[Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts),
 [contract market discovery](../../../app/src/queries/coingecko.queries.ts),
 [Safe Client balances](../../../app/src/queries/safeClient.queries.ts), [Safe movement queries](../../../app/src/queries/safe.queries.ts),
 and [exchange regression tests](../../../app/src/utils/accounting/__tests__/safeExchanges.spec.ts) and
-[market-rate regressions](../../../app/src/utils/accounting/__tests__/safeExchanges.marketRates.spec.ts).
+[price-paid regressions](../../../app/src/utils/accounting/__tests__/safeExchanges.pricePaid.spec.ts).
 
 Gateway balance responses are cached by Safe address, chain and fiat currency and show only returned balances, including zero balances. No
 configured base-currency rows are inserted. Provider metadata and order are retained. The global token resolver continues to supply existing
@@ -241,7 +259,7 @@ flowchart LR
     feeCollector[CNC protocol FeeCollector]
 
     subgraph books[Company-owned pockets in one journal]
-        safe[Safe shared across redeployments]
+        safe[Each company Safe, shared across redeployments]
 
         subgraph archived[Archived Officer generation]
             oldBank[Bank G1]
@@ -277,11 +295,14 @@ flowchart LR
     oldBank -.-> feeCollector
 ```
 
-Every known Bank, Payroll, Expense, Credit, and Safe address participates in company-pocket classification. Bank, Payroll, Expense, and
-Credit are deployment-scoped; Safe is one shared account because it survives Officer redeployments. A transfer whose source and destination
-are both known company pockets is internal even when the addresses belong to different generations. The FeeCollector is deliberately absent
-from the internal-address registry: its receipt is CNC protocol revenue, while the paying company's matched Bank operation includes a
-`Transaction Fee Expense` line.
+Every known Bank, Payroll, Expense, Credit, and Safe address participates in company-pocket classification. Bank, Payroll, Expense, Credit,
+and Safe are deployment-scoped. A Safe survives Officer redeployments, but a company can register several Safes over time (every Safe row in
+the team's `teamContracts`, disabled ones included), and each one is its own numbered `Cash — Safe` account. Every registered Safe's
+transfer feed is read; a move between two company Safes is booked once, from the sending Safe, and a SafeDepositRouter deposit is booked in
+the Safe whose feed holds its transaction. The router itself holds no balance and is never a `Cash — Safe` instance. A transfer whose source
+and destination are both known company pockets is internal even when the addresses belong to different generations. The FeeCollector is
+deliberately absent from the internal-address registry: its receipt is CNC protocol revenue, while the paying company's matched Bank
+operation includes a `Transaction Fee Expense` line.
 
 Safe history is adapted from incoming transfers plus successfully executed outgoing multisig transactions. The outgoing adapter recognizes
 direct native value and Transaction Service calls decoded as ERC-20 `transfer(to, amount)`. It does not infer cash legs hidden inside
@@ -718,7 +739,7 @@ because deposits and company-pocket transfers are not manual assignment targets.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `008826d0d841f19c967c8ff477a7e9c452ee7398`
+**Implementation evidence reviewed against:** `f15dccbe52468b554ce87b92f5db48411b921bb9`
 
 - [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts),
   [source-status projection](../../../app/src/composables/accounting/useAccountingStatus.ts),

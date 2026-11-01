@@ -53,6 +53,8 @@ cancellation stops its client observer; the shared backend read may still finish
   missing required prices are not stored as successful data.
 - Missing, unreachable or failed Redis returns sanitized 503; the backend does not bypass the cache and flood CoinGecko. Redis connection
   and command waits are bounded, offline command buffering is disabled, and later requests may reconnect.
+- Provider, cache, and admission failures that return `5xx` are captured by the backend error-tracking capability with the market operation
+  and HTTP status as Sentry tags. Expected provider rate limits remain outside exception tracking.
 - The public route has a per-process, per-IP limit of 120 requests per minute. Shared provider admission remains independent of this local
   HTTP limit. Responses use `Cache-Control: no-store`; Redis and the existing frontend query cache own freshness.
 - CoinGecko credentials and Redis connection details stay in backend environment variables. They are never returned in market responses or
@@ -77,7 +79,7 @@ provider quota for an arbitrary number of distinct uncached historical dates; ex
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `8bb7376a908abee0cdd59621ba7ee5cfcc153de6`
+**Implementation evidence reviewed against:** `95d9e12dd696864913e37ad6e20222587b223591`
 
 - [Market route](../../../backend/src/routes/coingeckoRoute.ts), [controller](../../../backend/src/controllers/coingeckoController.ts), and
   [request validation](../../../backend/src/validation/schemas/coingecko.ts)

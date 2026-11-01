@@ -28,9 +28,25 @@ flowchart LR
   selector[Member or contract selector] --> surface
 ```
 
+## Wallet Network Policy
+
+The [client session recovery story](../../features/authentication/README.md#us-auth-004-resume-after-a-wallet-network-change) owns the
+global network lock. Its configured chain is authoritative, independently of the network selected in the wallet. The application shell
+removes protected route content and dialogs while the session is locked; recovery is explicit and never replays an operation.
+
+The shared write executor covers Bank, Expense, Payroll, governance, Community Credit, Vesting, Officer deployment/redeployment and Safe
+factory deployment. Native funding and Campaign deployment have separate send boundaries. Safe Protocol Kit uses an injected-provider
+boundary for transaction and signing requests. These boundaries must retain the configured chain when an already-started operation outlives
+its view. The standalone Payment Gate widget runs outside the authenticated shell and already pins its own configured chain; its policy
+remains with Payment Gate.
+
+The screen cannot cancel a request already handed to the wallet or a transaction already broadcast. Receipt tracking retains the original
+submission chain. API signature-network validation is a separate responsibility.
+
 ## Invariants and Failure Behaviour
 
-- Writes simulate before wallet submission, return the transaction result, and propagate rejection or decoded revert errors.
+- Writes reject a target outside the configured application chain, simulate on that chain, and retain it through wallet submission and
+  receipt tracking. They return the transaction result and propagate rejection or decoded revert errors.
 - Successful writes invalidate reads for the written address and configured chain before caller success handling completes.
 - Parameterless contract reads retain successful values when sibling reads fail and expose total failure separately.
 - Shared recipient selection emits an explicit member or contract selection and remains disabled while its source is unavailable.
@@ -42,8 +58,10 @@ flowchart LR
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `272d6bd8d455cf09e681192f3b9c6c284b63b4fa`
+**Implementation evidence reviewed against:** `635eb92ec16d0fa5fca930d458b0e35453af94d2`
 
+- [Configured wallet network policy](../../../app/src/lib/walletNetwork.ts) and
+  [contract write executor](../../../app/src/composables/contracts/useContractWritesV3.ts)
 - [Contract write guide](../../../app/src/composables/contracts/README.md),
   [contract write tests](../../../app/src/composables/contracts/__tests__/useContractWritesV3.spec.ts), and
   [advanced invalidation tests](../../../app/src/composables/contracts/__tests__/useContractWritesV3.advanced.spec.ts)

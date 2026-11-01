@@ -1,8 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { toValue } from 'vue'
 import externalApiClient from '@/lib/external.axios'
 import type { SafeIncomingTransfer, SafeTransaction } from '@/types/safe'
 import { useQueryFn, useQueryClientFn } from '@/tests/mocks/composables.mock'
 import { mockWagmiCore } from '@/tests/mocks/wagmi.vue.mock'
+import { queueSafeRead } from '../safe.readQueue'
 
 const LOWERCASE_SAFE_ADDRESS = '0x0557f280d9da274254e85ee70c2936694e494275'
 const CHECKSUM_SAFE_ADDRESS = '0x0557F280D9DA274254e85Ee70c2936694e494275'
@@ -20,7 +22,7 @@ interface CapturedQuery<T> {
 }
 
 const capturedQuery = <T>(): CapturedQuery<T> =>
-  useQueryFn.mock.calls.at(-1)?.[0] as CapturedQuery<T>
+  toValue(useQueryFn.mock.calls.at(-1)?.[0]) as CapturedQuery<T>
 
 const incoming = (transactionHash: string) => ({ transactionHash }) as SafeIncomingTransfer
 
@@ -139,8 +141,14 @@ describe('safe queries', () => {
     expect(get.mock.calls[0]?.[0]).toContain(`/safes/${CHECKSUM_SAFE_ADDRESS}/`)
     expect(get.mock.calls[0]?.[0]).toContain('/incoming-transfers/?limit=2')
     expect(get.mock.calls[1]?.[0]).toContain('/incoming-transfers/?limit=2&offset=2')
-    expect(get).toHaveBeenNthCalledWith(1, expect.any(String), { signal })
-    expect(get).toHaveBeenNthCalledWith(2, expect.any(String), { signal })
+    expect(get).toHaveBeenNthCalledWith(1, expect.any(String), {
+      signal,
+      sentryNotFound: 'initially-expected'
+    })
+    expect(get).toHaveBeenNthCalledWith(2, expect.any(String), {
+      signal,
+      sentryNotFound: 'initially-expected'
+    })
   })
 
   it('loads every executed outgoing transaction page in service order', async () => {
@@ -211,5 +219,56 @@ describe('safe queries', () => {
       capturedQuery<SafeIncomingTransfer>().queryFn({ signal: new AbortController().signal })
     ).rejects.toThrow('Safe pagination returned a repeated page')
     expect(get).toHaveBeenCalledTimes(2)
+  })
+
+  it.each([
+    ['all movements', () => safeQueries.useGetSafeTransfersQuery],
+    ['incoming transfers', () => safeQueries.useGetSafeIncomingTransfersQuery]
+  ])('refreshes %s every minute and when the tab regains focus', (_, hook) => {
+    hook()({ pathParams: { safeAddress: LOWERCASE_SAFE_ADDRESS } })
+
+    expect(toValue(useQueryFn.mock.calls.at(-1)?.[0])).toMatchObject({
+      refetchInterval: 60_000,
+      refetchOnWindowFocus: true
+    })
+  })
+
+  it('reads the Safe address code on the configured chain and reports an empty account as 0x', async () => {
+    mockWagmiCore.getBytecode.mockResolvedValueOnce(undefined)
+
+    safeQueries.useGetSafeBytecodeQuery({ pathParams: { safeAddress: LOWERCASE_SAFE_ADDRESS } })
+    const query = useQueryFn.mock.calls.at(-1)?.[0] as unknown as {
+      queryKey: { value: unknown }
+      queryFn: () => Promise<string>
+    }
+
+    await expect(query.queryFn()).resolves.toBe('0x')
+    expect(query.queryKey.value).toEqual([
+      'safe',
+      'bytecode',
+      { safeAddress: CHECKSUM_SAFE_ADDRESS, chainId: 137 }
+    ])
+    expect(mockWagmiCore.getBytecode).toHaveBeenCalledWith(expect.anything(), {
+      address: CHECKSUM_SAFE_ADDRESS,
+      chainId: 137
+    })
+  })
+
+  it('reads Safe information without waiting behind a pending movement read', async () => {
+    let releaseMovementRead!: () => void
+    const pendingMovementRead = new Promise<void>((resolve) => (releaseMovementRead = resolve))
+    void queueSafeRead(() => pendingMovementRead)
+    const get = vi.spyOn(externalApiClient, 'get').mockResolvedValueOnce({ data: { threshold: 1 } })
+
+    safeQueries.useGetSafeInfoQuery({ pathParams: { safeAddress: LOWERCASE_SAFE_ADDRESS } })
+    const query = toValue(useQueryFn.mock.calls.at(-1)?.[0]) as unknown as {
+      queryFn: (context: { signal: AbortSignal }) => Promise<unknown>
+    }
+
+    await expect(query.queryFn({ signal: new AbortController().signal })).resolves.toEqual({
+      threshold: 1
+    })
+    expect(get).toHaveBeenCalledOnce()
+    releaseMovementRead()
   })
 })

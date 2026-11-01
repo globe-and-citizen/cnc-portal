@@ -23,11 +23,11 @@ These acceptance criteria follow the
 - Initial **Officer-contract setup** is separate from company creation. The owner supplies the SHER name and symbol, deploys the Officer
   suite, and registers the resulting Officer generation with the company.
 - The owner may defer Officer setup or Safe setup. Safe deployment and import are documented by
-  [US-SAFE-001](../accounts/README.md#us-safe-001-set-up-a-safe).
-- The Company workspace's **Treasury Overview** includes the registered Safe's Gateway fiat total, including its other valued token
-  holdings. All account contributions use the selected display currency, which defaults to USD. The Safe contribution shares its cached
-  balance query and refresh rules with Safe Account. It keeps the numeric display and counts the provider's valued total even when another
-  returned token has no price; an absent or invalid total falls back to zero.
+  [US-SAFE-001](../accounts/README.md#us-safe-001-set-up-and-manage-the-company-safes).
+- The Company workspace's **Treasury Overview** includes the default Safe's Gateway fiat total, including its other valued token holdings.
+  All account contributions use the selected display currency, which defaults to USD. The Safe contribution shares its cached balance query
+  and refresh rules with Safe Account. It keeps the numeric display and counts the provider's valued total even when another returned token
+  has no price; an absent or invalid total falls back to zero.
 - Companies list cards use that same Safe valuation alongside the other registered treasury accounts. Their account proportions use the
   underlying values before display rounding. A positive treasury value below the displayed cent precision is shown as less than one cent, so
   a funded account is not presented as an empty treasury.
@@ -442,7 +442,7 @@ This validation does not attest to a live on-chain Officer deployment.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `008826d0d841f19c967c8ff477a7e9c452ee7398`
+**Implementation evidence reviewed against:** `f15dccbe52468b554ce87b92f5db48411b921bb9`
 
 - [Member deletion](../../../app/src/components/sections/DashboardView/DeleteMemberModal.vue),
   [team state](../../../app/src/stores/teamStore.ts), and
@@ -456,9 +456,9 @@ This validation does not attest to a live on-chain Officer deployment.
   [Safe balance query](../../../app/src/queries/safeClient.queries.ts) for its Safe contribution; its
   [component tests](../../../app/src/components/sections/DashboardView/__tests__/CompanyOverview.spec.ts) cover other-token valuation,
   aggregate totals, reactive balance and currency changes, loading, and numeric fallbacks. These shared Gateway observers automatically
-  retry temporary provider failures up to three times, with HTTP 429 `Retry-After` respected. A 404 for a newly deployed Safe that Safe
-  services have not indexed yet keeps the Safe contribution loading for up to about three and a half minutes. Recovery updates the existing
-  summary without reloading the page.
+  retry temporary provider failures up to three times, with HTTP 429 `Retry-After` respected. A 404 for a Safe that Safe services do not
+  know is not retried, and the Safe contribution stops polling until the query is refreshed. The Safe contribution counts only the native
+  coin and tokens Safe trusts, so a fake token sent to the Safe address never leaves the overview total incomplete.
 - [Workspace route and unavailable-state handling](../../../app/src/views/team/%5Bid%5D/ShowIndex.vue),
   [company queries](../../../app/src/queries/team.queries.ts), [company endpoints](../../../backend/src/routes/teamRoutes.ts), and
   [company controller](../../../backend/src/controllers/teamController.ts)

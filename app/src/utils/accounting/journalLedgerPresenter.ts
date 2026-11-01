@@ -221,6 +221,20 @@ function activityOfJournalEntry(
   }
 }
 
+/**
+ * A swap's lines in reading order: its Safe Market Value Adjustment sits right above its
+ * Swap P&L, the figure it explains.
+ */
+function displayOrderOf(lines: readonly JournalEntryLine[]): readonly JournalEntryLine[] {
+  const isAdjustment = (line: JournalEntryLine) =>
+    line.account.family.name === 'Safe Market Value Adjustment'
+  const adjustment = lines.find(isAdjustment)
+  const others = lines.filter((line) => !isAdjustment(line))
+  const pnlPosition = others.findIndex((line) => line.account.family.name === 'Swap P&L')
+  if (!adjustment || pnlPosition < 0) return lines
+  return [...others.slice(0, pnlPosition), adjustment, ...others.slice(pnlPosition)]
+}
+
 /** Flatten whole JournalEntry records into the rows consumed by LedgerTable. */
 export function journalLedgerRows(
   entries: readonly JournalEntry[],
@@ -229,7 +243,7 @@ export function journalLedgerRows(
   const labels = accountLabels(labelEntries)
   const rows: LedgerRow[] = []
   for (const entry of entries) {
-    entry.lines.forEach((line, index) => {
+    displayOrderOf(entry.lines).forEach((line, index) => {
       const isFirst = index === 0
       const accountLabel = labels.get(line.account.id) ?? line.account.family.name
       rows.push({

@@ -1,11 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { toValue } from 'vue'
+import { ref, toValue } from 'vue'
 import externalApiClient from '@/lib/external.axios'
 import { useQueryFn } from '@/tests/mocks/composables.mock'
 import { mockWagmiCore } from '@/tests/mocks/wagmi.vue.mock'
-import type { SafeClientBalances } from '@/types/safe'
+import type { SafeClientBalances, SafeClientTransactionHistory } from '@/types/safe'
+import { currentChainId } from '@/constant'
+import { safeKeys } from '../safe.queries'
 
-const { fetchSafeClientBalances, useGetSafeBalancesQuery } =
+const { fetchSafeClientBalances, useGetSafeBalancesQuery, useGetSafeTransactionHistoryQuery } =
   await vi.importActual<typeof import('../safeClient.queries')>('../safeClient.queries')
 const address = '0x0557f280d9da274254e85ee70c2936694e494275'
 const checksum = '0x0557F280D9DA274254e85Ee70c2936694e494275'
@@ -22,8 +24,8 @@ describe('fetchSafeClientBalances', () => {
 
     await expect(fetchSafeClientBalances(address, 137, 'usd', signal)).resolves.toBe(payload)
     expect(get).toHaveBeenCalledExactlyOnceWith(
-      `https://safe-client.safe.global/v1/chains/137/safes/${checksum}/balances/USD?exclude_spam=true&trusted=false`,
-      { signal }
+      `https://safe-client.safe.global/v1/chains/137/safes/${checksum}/balances/USD?exclude_spam=true&trusted=true`,
+      { signal, sentryNotFound: 'initially-expected' }
     )
     expect(mockWagmiCore.readContract).not.toHaveBeenCalled()
   })
@@ -79,8 +81,8 @@ describe('useGetSafeBalancesQuery', () => {
 
     await expect(capturedQuery().queryFn({ signal })).resolves.toBe(payload)
     expect(get).toHaveBeenCalledExactlyOnceWith(
-      `https://safe-client.safe.global/v1/chains/1/safes/${checksum}/balances/EUR?exclude_spam=true&trusted=false`,
-      { signal }
+      `https://safe-client.safe.global/v1/chains/1/safes/${checksum}/balances/EUR?exclude_spam=true&trusted=true`,
+      { signal, sentryNotFound: 'initially-expected' }
     )
   })
 
@@ -93,5 +95,145 @@ describe('useGetSafeBalancesQuery', () => {
     useGetSafeBalancesQuery({ pathParams: { safeAddress } })
 
     expect(toValue(capturedQuery().enabled)).toBe(expected)
+  })
+
+  it('stops refreshing while Safe services answer not found', () => {
+    useGetSafeBalancesQuery({ pathParams: { safeAddress: address } })
+    const { refetchInterval } = capturedQuery()
+    const notFound = Object.assign(new Error('Not found'), { status: 404 })
+
+    expect(refetchInterval({ state: { error: notFound } })).toBe(false)
+    expect(refetchInterval({ state: { error: new Error('Gateway unavailable') } })).toBe(60_000)
+    expect(refetchInterval({ state: { error: null } })).toBe(60_000)
+  })
+
+  it('refreshes when the tab regains focus, like the Safe movements', () => {
+    useGetSafeBalancesQuery({ pathParams: { safeAddress: address } })
+
+    expect(capturedQuery().refetchOnWindowFocus).toBe(true)
+  })
+})
+
+describe('useGetSafeTransactionHistoryQuery', () => {
+  it('preserves the raw history page, date labels and transaction details', async () => {
+    const payload: SafeClientTransactionHistory = {
+      count: null,
+      next: 'https://safe-client.safe.global/next-page',
+      previous: null,
+      results: [
+        { type: 'DATE_LABEL', timestamp: 1780315200000 },
+        {
+          type: 'TRANSACTION',
+          conflictType: 'None',
+          transaction: {
+            id: 'multisig_0xswap',
+            txHash: '0xswap',
+            timestamp: 1780315200000,
+            txStatus: 'SUCCESS',
+            txInfo: { type: 'Swap', humanDescription: null, sellAmount: '123456789012345678901' },
+            executionInfo: { type: 'MULTISIG', nonce: 7 },
+            safeAppInfo: null,
+            note: 'Original note'
+          }
+        }
+      ]
+    }
+    const get = vi.spyOn(externalApiClient, 'get').mockResolvedValueOnce({ data: payload })
+    const signal = new AbortController().signal
+    const queryParams = {
+      cursor: 'opaque-cursor',
+      timezone: 'Africa/Lome',
+      trusted: false,
+      imitation: false
+    }
+    useGetSafeTransactionHistoryQuery({
+      pathParams: { safeAddress: address, chainId: 1 },
+      queryParams
+    })
+
+    await expect(capturedQuery().queryFn({ signal })).resolves.toBe(payload)
+    expect(get).toHaveBeenCalledExactlyOnceWith(
+      `https://safe-client.safe.global/v1/chains/1/safes/${checksum}/transactions/history`,
+      { signal, params: queryParams, sentryNotFound: 'initially-expected' }
+    )
+  })
+
+  it('uses the current chain by default and shares transaction-list invalidations', () => {
+    useGetSafeTransactionHistoryQuery({ pathParams: { safeAddress: address } })
+    const key = capturedQuery().queryKey
+    expect(key.slice(0, 3)).toEqual(safeKeys.transactions(address))
+    expect(key.at(-1)).toEqual({ chainId: currentChainId })
+
+    useGetSafeTransactionHistoryQuery({ pathParams: { safeAddress: checksum } })
+    expect(capturedQuery().queryKey).toEqual(key)
+  })
+
+  it('updates the request and cache identity when reactive parameters change', async () => {
+    const safeAddress = ref(address)
+    const chainId = ref(137)
+    const cursor = ref('first')
+    const get = vi.spyOn(externalApiClient, 'get').mockResolvedValueOnce({ data: { results: [] } })
+    const signal = new AbortController().signal
+    useGetSafeTransactionHistoryQuery({
+      pathParams: { safeAddress, chainId },
+      queryParams: () => ({ cursor: cursor.value })
+    })
+    const originalKey = capturedQuery().queryKey
+    safeAddress.value = '0x0000000000000000000000000000000000000001'
+    chainId.value = 1
+    cursor.value = 'next'
+
+    expect(capturedQuery().queryKey).not.toEqual(originalKey)
+    await capturedQuery().queryFn({ signal })
+    expect(get).toHaveBeenCalledExactlyOnceWith(
+      `https://safe-client.safe.global/v1/chains/1/safes/${safeAddress.value}/transactions/history`,
+      { signal, params: { cursor: 'next' }, sentryNotFound: 'initially-expected' }
+    )
+  })
+
+  it('keeps pages and presentation filters in distinct cache entries', () => {
+    const filters = [
+      {},
+      { cursor: 'next' },
+      { timezone: 'Africa/Lome' },
+      { trusted: false },
+      { imitation: false }
+    ]
+    const keys = filters.map((queryParams) => {
+      useGetSafeTransactionHistoryQuery({
+        pathParams: { safeAddress: address, chainId: 137 },
+        queryParams
+      })
+      return JSON.stringify(capturedQuery().queryKey)
+    })
+    expect(new Set(keys).size).toBe(filters.length)
+  })
+
+  it.each([undefined, '', 'invalid-address'])(
+    'disables the query for address %s',
+    (safeAddress) => {
+      useGetSafeTransactionHistoryQuery({ pathParams: { safeAddress } })
+      expect(capturedQuery().enabled).toBe(false)
+    }
+  )
+
+  it.each([null, {}, { results: null }, { results: {} }])(
+    'rejects malformed history: %j',
+    async (payload) => {
+      vi.spyOn(externalApiClient, 'get').mockResolvedValueOnce({ data: payload })
+      useGetSafeTransactionHistoryQuery({ pathParams: { safeAddress: address } })
+      await expect(
+        capturedQuery().queryFn({ signal: new AbortController().signal })
+      ).rejects.toThrow('Safe transaction history response unavailable')
+    }
+  )
+
+  it('propagates provider failures instead of returning an empty history', async () => {
+    const error = new Error('Safe history unavailable')
+    vi.spyOn(externalApiClient, 'get').mockRejectedValueOnce(error)
+    useGetSafeTransactionHistoryQuery({ pathParams: { safeAddress: address } })
+    await expect(capturedQuery().queryFn({ signal: new AbortController().signal })).rejects.toBe(
+      error
+    )
   })
 })

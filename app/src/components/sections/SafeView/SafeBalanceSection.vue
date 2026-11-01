@@ -18,34 +18,20 @@
     <UAlert
       v-if="balanceError || localBalanceError || safeInfoError"
       class="mb-5"
-      color="error"
+      v-bind="overviewNotice"
       variant="soft"
-      icon="i-lucide-circle-alert"
-      title="Some wallet details are unavailable"
-      description="Wallet data could not be loaded. Wait a moment, then try again. The Safe address remains available."
-      data-test="safe-overview-error"
     >
       <template #actions>
         <UButton
-          color="error"
+          color="neutral"
           variant="outline"
-          size="xs"
+          icon="i-lucide-refresh-cw"
           label="Try again"
           data-test="retry-safe-overview-button"
           @click="retryOverview"
         />
       </template>
     </UAlert>
-    <UAlert
-      v-else-if="isIndexing"
-      class="mb-5"
-      color="info"
-      variant="soft"
-      icon="i-lucide-hourglass"
-      title="Safe services are indexing this wallet"
-      description="Balances and signers appear here automatically once indexing finishes, which can take a few minutes after deployment."
-      data-test="safe-indexing-notice"
-    />
 
     <div class="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
       <div class="min-w-0">
@@ -78,6 +64,8 @@
             </p>
           </div>
         </div>
+
+        <SafeSwapPnlCard v-if="address" :address="address" />
       </div>
 
       <div class="w-full lg:max-w-xl">
@@ -177,6 +165,7 @@ import { useGetSafeInfoQuery } from '@/queries/safe.queries'
 import TransferForm, { type TransferModel } from '@/components/forms/TransferForm.vue'
 import { useTransferFromSafeMutation } from '@/queries/safe.mutations'
 import DepositSafeForm from '@/components/sections/SafeView/forms/DepositSafeForm.vue'
+import SafeSwapPnlCard from '@/components/sections/SafeView/SafeSwapPnlCard.vue'
 import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
 import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
 import { useSafeSignerRole } from '@/composables/safe/useSafeSignerRole'
@@ -193,7 +182,6 @@ const { isWriteDisabled } = useTeamWriteGuard()
 const {
   data: balances,
   error: balanceError,
-  failureReason: balanceFailure,
   isLoading,
   refetch: refetchBalances
 } = useGetSafeBalancesQuery({ pathParams: { safeAddress: () => props.address } })
@@ -217,13 +205,25 @@ const {
   data: safeInfo,
   isLoading: isSafeInfoLoading,
   error: safeInfoError,
-  failureReason: safeInfoFailure,
   refetch: refetchSafeInfo
 } = useGetSafeInfoQuery({ pathParams: { safeAddress: props.address } })
-const isIndexing = computed(
-  () =>
-    (isLoading.value && isSafeNotIndexedError(balanceFailure.value)) ||
-    (isSafeInfoLoading.value && isSafeNotIndexedError(safeInfoFailure.value))
+const overviewNotice = computed(() =>
+  isSafeNotIndexedError(balanceError.value) || isSafeNotIndexedError(safeInfoError.value)
+    ? {
+        color: 'info' as const,
+        icon: 'i-lucide-hourglass',
+        title: 'Safe services have not indexed this wallet yet',
+        description: 'A newly deployed Safe usually appears within a few minutes. Try again then.',
+        'data-test': 'safe-indexing-notice'
+      }
+    : {
+        color: 'error' as const,
+        icon: 'i-lucide-circle-alert',
+        title: 'Some wallet details are unavailable',
+        description:
+          'Wallet data could not be loaded. Wait a moment, then try again. The Safe address remains available.',
+        'data-test': 'safe-overview-error'
+      }
 )
 
 const tokens = computed(() => toSafeTransferTokens(balances.value))

@@ -1,0 +1,4 @@
+interface:
+  display_name: "CNC Code Audit"
+  short_description: "Audit code with concrete fixes and decision tracking."
+  default_prompt: "Use $cnc-code-audit to audit the requested code scope and track each finding, correction proposal, decision, and verification."

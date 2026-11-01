@@ -19,9 +19,9 @@
       </div>
     </div>
     <UButton
-      color="error"
+      color="neutral"
       variant="outline"
-      size="xs"
+      icon="i-lucide-refresh-cw"
       label="Try again"
       class="self-start sm:self-auto"
       data-test="retry-safe-transactions-button"
@@ -67,7 +67,6 @@
       v-if="selectedStatus !== 'all'"
       color="neutral"
       variant="outline"
-      size="sm"
       label="Show all transactions"
       data-test="clear-safe-transaction-filter"
       @click="emit('clear')"

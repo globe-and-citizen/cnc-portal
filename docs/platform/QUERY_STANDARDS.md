@@ -9,6 +9,7 @@ This document defines the standards for TanStack Query hooks in the CNC Portal f
 - [Naming Conventions](#naming-conventions)
 - [Parameter Structure](#parameter-structure)
 - [Reactivity](#reactivity)
+- [Error Handling](#error-handling)
 - [Query Key Factories](#query-key-factories)
 - [Examples](#examples)
 
@@ -221,6 +222,23 @@ export const useGetTeamQuery = (params: GetTeamParams) => {
   });
 };
 ```
+
+## Error Handling
+
+TanStack Query owns the lifecycle of query and mutation failures. Let the async request function reject and use the query or mutation
+callbacks and reactive state for recovery:
+
+- Prefer `onError` for user-facing notifications and domain state transitions that belong to the mutation boundary.
+- Prefer `onSettled` for cleanup that must run after either outcome, and configure `retry`/`retryDelay` at the query or mutation boundary
+  for recoverable failures.
+- Expose `mutation.error`, `mutation.status`, and related reactive state to components instead of wrapping `mutateAsync` in local
+  `try`/`catch` blocks only to render an error.
+- Use `try`/`catch` inside an async function only when it adds narrow domain context, performs a compensating rollback or resource cleanup
+  that the lifecycle cannot own, or deliberately converts a low-level error into a typed domain error. Always rethrow after that work.
+- Classify transport, server, authorization, validation, and user-rejected errors separately. A transient network or server failure must not
+  trigger terminal session cleanup unless the product contract explicitly requires it.
+
+This keeps request code composable and makes error behaviour observable through the standard TanStack mutation state.
 
 ---
 

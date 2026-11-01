@@ -5,7 +5,7 @@ import { buildBalanceSheet } from './balanceSheet'
 import { NETWORK } from '@/constant'
 import type { AssetId, AssetMetadata } from '@/utils/tokens/assets'
 import { formatDate, formatDateTime, formatUsd, fromUnix } from '@/utils/format'
-import { usdAmountToNumber } from './monetaryAmount'
+import { usdAmountToNumber, ZERO_USD_AMOUNT } from './monetaryAmount'
 import type { Account, BalanceSheet, JournalEntry, UsdAmount } from './types'
 
 // The summary display model lives in its own module — see ./summaryCards.
@@ -234,7 +234,11 @@ export function presentBalance(entries: readonly JournalEntry[], asOf?: Date | n
   }
 }
 
-/** Build and present the Trial Balance directly from the canonical journal. */
+/**
+ * Build and present the Trial Balance directly from the canonical journal. Each balance sits
+ * on the side its debits and credits net to, so it never reads negative: a Swap P&L gain is a
+ * credit and a loss a debit.
+ */
 export function presentTrial(
   entries: readonly JournalEntry[],
   asOf?: Date | null
@@ -245,8 +249,12 @@ export function presentTrial(
 } {
   const scopedEntries = filterByPeriod(entries, null, asOf)
   const ledger = buildGeneralLedger(scopedEntries)
+  let debitTotal = ZERO_USD_AMOUNT
   const rows: TrialRow[] = ledger.trialBalance.map((row) => {
-    const debitSide = row.account.family.normalBalance === 'debit'
+    const net = row.totalDebit - row.totalCredit
+    const debitSide = net > ZERO_USD_AMOUNT
+    const amount = debitSide ? net : -net
+    if (debitSide) debitTotal += amount
     return {
       account: row.account,
       label: row.accountLabel,
@@ -255,11 +263,11 @@ export function presentTrial(
       isPrimaryInstance: row.isPrimaryInstance,
       nature: natureOf(row.account),
       natureClass: NATURE_BADGE[natureOf(row.account)],
-      dr: debitSide ? money(row.balance) : '—',
-      cr: debitSide ? '—' : money(row.balance),
+      dr: debitSide ? money(amount) : '—',
+      cr: debitSide ? '—' : money(amount),
       drMuted: !debitSide,
       crMuted: debitSide
     }
   })
-  return { rows, total: money(ledger.debitBalanceTotal), balanced: ledger.balanced }
+  return { rows, total: money(debitTotal), balanced: ledger.balanced }
 }

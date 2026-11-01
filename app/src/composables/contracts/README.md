@@ -76,8 +76,12 @@ Rules of thumb:
   behind one composable — callers need independent `isPending` / `error` states per call site.
 - **Pass refs, not values, for addresses.** `useContractWritesV3` accepts `MaybeRef` for `contractAddress` and `chainId`. Keep the address
   reactive so the mutation tracks store updates. `abi` and `functionName` are plain values — see below.
-- **Pin `chainId` only when you mean it.** Omitting `chainId` lets wagmi resolve the chain from the connected wallet at call time and
-  invalidates reads across every chain in the cache. Pin it when the contract is single- chain and you want narrow invalidation.
+- **Use the configured application chain.** An omitted `chainId` defaults to that chain; an explicitly different target is rejected.
+  Simulation, submission and receipt tracking retain this target if the wallet changes network while an operation is being prepared. An
+  omitted `chainId` still invalidates matching address reads across every chain in the cache; providing the configured ID narrows cache
+  invalidation. The
+  [global network lock](../../../../docs/features/authentication/README.md#us-auth-004-resume-after-a-wallet-network-change) owns session
+  recovery, independently of each feature.
 - **No `args` / `value` at composable construction.** They are per-call:
 
   ```ts

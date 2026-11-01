@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { CoinGeckoRequest, getCoinGeckoData, MarketDataError } from '../services/coingeckoService';
+import { captureBackendException } from '../utils';
 
 async function respond(res: Response, request: CoinGeckoRequest) {
   res.set('Cache-Control', 'no-store');
@@ -10,6 +11,13 @@ async function respond(res: Response, request: CoinGeckoRequest) {
       error instanceof MarketDataError
         ? error
         : new MarketDataError(503, 'Market data is unavailable');
+    if (failure.status >= 500) {
+      captureBackendException(error, {
+        operation: request.kind,
+        source: 'coingeckoController',
+        status: failure.status,
+      });
+    }
     if (failure.retryAfter) res.set('Retry-After', String(failure.retryAfter));
     res.status(failure.status).json({ message: failure.message });
   }

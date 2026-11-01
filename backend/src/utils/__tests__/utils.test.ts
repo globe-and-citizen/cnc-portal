@@ -2,11 +2,27 @@ import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { Response } from 'express';
 import { errorResponse, extractAddressAndNonce } from '../utils';
 
+const sentryMocks = vi.hoisted(() => ({
+  captureException: vi.fn(),
+  captureMessage: vi.fn(),
+  setTag: vi.fn(),
+  withScope: vi.fn(),
+}));
+
+vi.mock('@sentry/node', () => ({
+  captureException: sentryMocks.captureException,
+  captureMessage: sentryMocks.captureMessage,
+  withScope: sentryMocks.withScope,
+}));
+
 describe('utils', () => {
   let mockResponse: Partial<Response>;
 
   beforeEach(() => {
     vi.clearAllMocks();
+    sentryMocks.withScope.mockImplementation((callback: (scope: unknown) => void) =>
+      callback({ setTag: sentryMocks.setTag })
+    );
     mockResponse = {
       status: vi.fn().mockReturnThis(),
       json: vi.fn().mockReturnThis(),
@@ -14,6 +30,12 @@ describe('utils', () => {
   });
 
   describe('errorResponse', () => {
+    it('does not capture client errors', () => {
+      errorResponse(400, 'Bad request', mockResponse as Response);
+
+      expect(sentryMocks.withScope).not.toHaveBeenCalled();
+    });
+
     it('returns error message for non-500 string error', () => {
       errorResponse(400, 'Bad request', mockResponse as Response);
 
@@ -47,11 +69,21 @@ describe('utils', () => {
       const error = new Error('Database connection failed');
       errorResponse(500, error, mockResponse as Response);
 
+      expect(sentryMocks.captureException).toHaveBeenCalledWith(error);
+      expect(sentryMocks.setTag).toHaveBeenCalledWith('runtime', 'backend');
+      expect(sentryMocks.setTag).toHaveBeenCalledWith('error.source', 'errorResponse');
+      expect(sentryMocks.setTag).toHaveBeenCalledWith('http.status_code', '500');
       expect(mockResponse.status).toHaveBeenCalledWith(500);
       expect(mockResponse.json).toHaveBeenCalledWith({
         message: 'Internal server error has occured',
         error: 'Database connection failed',
       });
+    });
+
+    it('captures a non-Error server failure as a Sentry message', () => {
+      errorResponse(503, 'Provider unavailable', mockResponse as Response);
+
+      expect(sentryMocks.captureMessage).toHaveBeenCalledWith('Provider unavailable', 'error');
     });
 
     it('logs error stack in non-test environment', () => {

@@ -9,6 +9,7 @@ import {
   useQueryClientFn
 } from '@/tests/mocks/composables.mock'
 import { mockLog } from '@/tests/mocks/utils.mock'
+import { SENTRY_WEB3_BOUNDARY_META_KEY } from '@/lib/sentry'
 import {
   executeContractWrite,
   useContractWritesV3,
@@ -38,6 +39,14 @@ beforeEach(() => {
 })
 
 describe('executeContractWrite (standalone)', () => {
+  it('[AC-US-AUTH-004-07] rejects a different target chain before simulation or submission', async () => {
+    await expect(
+      executeContractWrite({ address: ADDRESS, abi: ABI, functionName: 'foo', chainId: 1 })
+    ).rejects.toThrow('not connected to the requested chain')
+    expect(simulateContract).not.toHaveBeenCalled()
+    expect(writeContract).not.toHaveBeenCalled()
+  })
+
   it('returns hash, receipt, and simulation on success', async () => {
     vi.mocked(simulateContract).mockResolvedValueOnce(okSimulation)
     vi.mocked(writeContract).mockResolvedValueOnce(HASH)
@@ -53,6 +62,14 @@ describe('executeContractWrite (standalone)', () => {
     expect(result.hash).toBe(HASH)
     expect(result.simulation).toBe(okSimulation)
     expect(simulateContract).toHaveBeenCalledTimes(1)
+    expect(simulateContract).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ chainId: 31337 })
+    )
+    expect(waitForTransactionReceipt).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ chainId: 31337 })
+    )
     // The write reuses the validated simulation request.
     expect(writeContract).toHaveBeenCalledWith(expect.anything(), okSimulation.request)
   })
@@ -227,6 +244,16 @@ describe('useContractWritesV3 — input validation & logging', () => {
     const m = useContractWritesV3(baseConfig({ config: { log: false } }))
     await expect(m.mutateAsync({})).rejects.toBe(err)
     expect(mockLog.error).not.toHaveBeenCalled()
+  })
+
+  it('marks the mutation as a specialized Web3 Sentry boundary', () => {
+    useContractWritesV3(baseConfig())
+
+    const options = vi.mocked(useMutationFn).mock.calls[0]?.[0] as {
+      meta?: Record<string, unknown>
+    }
+
+    expect(options.meta).toEqual({ [SENTRY_WEB3_BOUNDARY_META_KEY]: true })
   })
 
   it('does not pass an onReplayError callback when logging is disabled', async () => {

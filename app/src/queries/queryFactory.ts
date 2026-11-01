@@ -68,6 +68,9 @@ export interface QueryConfig<TResponse, TParams extends BaseQueryParams> {
   /** Base endpoint URL (can include {param} placeholders) */
   endpoint: string | ((params: TParams) => string)
 
+  /** Explicit absence policy owned by this read; all other 404s remain unexpected. */
+  notFound?: AxiosRequestConfig['sentryNotFound']
+
   /** Function to generate query key */
   queryKey: (params: TParams) => QueryKey
 
@@ -202,7 +205,9 @@ export function createQueryHook<TResponse, TParams extends BaseQueryParams>(
       queryKey: reactiveQueryKey,
       queryFn: async () => {
         const url = buildEndpoint(config.endpoint, params)
-        const requestConfig = buildRequestConfig(params)
+        const requestConfig = config.notFound
+          ? { ...buildRequestConfig(params), sentryNotFound: config.notFound }
+          : buildRequestConfig(params)
         const { data } = await apiClient.get<TResponse>(url, requestConfig)
         return config.transformResponse ? config.transformResponse(data) : data
       },

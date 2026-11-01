@@ -77,6 +77,7 @@ export interface GetUserParams {
  */
 export const useGetUserQuery = createQueryHook<Partial<User>, GetUserParams>({
   endpoint: (params) => `user/${toValue(params.pathParams.address)}`,
+  notFound: 'expected',
   queryKey: (params) => userKeys.detail(toValue(params.pathParams.address)),
   enabled: (params) => !!toValue(params.pathParams.address),
   options: {

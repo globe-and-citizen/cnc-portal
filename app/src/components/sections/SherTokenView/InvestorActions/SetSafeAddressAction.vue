@@ -1,7 +1,18 @@
 <template>
   <div v-if="safeDepositRouterAddress">
     <UTooltip :text="safeAddressTooltip">
+      <UButton
+        v-if="compact"
+        color="primary"
+        icon="i-lucide-link"
+        label="Point to the default Safe"
+        :loading="isLoading"
+        :disabled="isDisabled"
+        data-test="set-safe-address-button"
+        @click="handleSetSafeAddress"
+      />
       <ActionButton
+        v-else
         icon="heroicons:link"
         icon-bg="bg-indigo-50 dark:bg-indigo-950"
         icon-color="text-indigo-700 dark:text-indigo-400"
@@ -9,7 +20,7 @@
         tone-class="border-indigo-200 bg-indigo-50/60 hover:border-indigo-300 hover:bg-indigo-100/70 disabled:border-indigo-200 disabled:bg-indigo-50/50 dark:border-indigo-900 dark:bg-indigo-950/30 dark:hover:border-indigo-800 dark:hover:bg-indigo-900/40 dark:disabled:border-indigo-900 dark:disabled:bg-indigo-950/30"
         :badge="isSafeAddressSynced ? 'Set' : undefined"
         :loading="isLoading"
-        :disabled="isWriteDisabled || !canManageSafeAddress || isSafeAddressSynced || isLoading"
+        :disabled="isDisabled"
         data-test="set-safe-address-button"
         @click="handleSetSafeAddress"
       />
@@ -32,6 +43,9 @@ import { useTeamStore } from '@/stores'
 import { classifyError } from '@/utils/errors/classifyContractError'
 import { log } from '@/lib/logging'
 import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
+
+/** `compact` renders a regular page button instead of the SHER page action tile. */
+defineProps<{ compact?: boolean }>()
 
 const teamStore = useTeamStore()
 const { isWriteDisabled, archivedTooltip } = useTeamWriteGuard()
@@ -63,6 +77,14 @@ const isSafeAddressSynced = computed(() => {
   if (!contractSafeAddress.value || !teamSafeAddress.value) return false
   return (contractSafeAddress.value as string).toLowerCase() === teamSafeAddress.value.toLowerCase()
 })
+
+const isDisabled = computed(
+  () =>
+    isWriteDisabled.value ||
+    !canManageSafeAddress.value ||
+    isSafeAddressSynced.value ||
+    isLoading.value
+)
 
 const safeAddressTooltip = computed(() => {
   if (archivedTooltip.value) return archivedTooltip.value

@@ -14,6 +14,8 @@ Operational guidance for AI coding agents working in this repository. Human cont
 
 - At the start of every agent session, read `reports/planning.md` when it exists. It is a local, Git-ignored work log for commitments made
   during agent conversations; never stage or commit it.
+- Before creating or reorganizing local reports, use the local `reports/README.md` index and follow the
+  [Local Reports Workspace guide](./docs/development-guide/local-reports.md). Keep producer-owned paths and historical evidence intact.
 - When a concrete action is agreed during a conversation, add it to `Actions ouvertes` with a priority, status, next action, and concise
   context or evidence. Keep statuses current: `À faire`, `En cours`, `Bloqué`, or `À vérifier`.
 - Do not treat the scratchpad as canonical product or implementation documentation. Durable decisions, acceptance criteria, issue status,
@@ -28,6 +30,7 @@ Operational guidance for AI coding agents working in this repository. Human cont
 Task-specific workflows are versioned under `.agents/skills/`. Use only the one that matches the work:
 
 - `cnc-work-orchestrator` — plan dependencies and bounded multi-agent work.
+- `cnc-code-audit` — audit a scoped checkout, propose concrete corrections, and track decisions, delivery, and verification.
 - `cnc-github-flow` — issues, Sprint hierarchy, PRs, reviews, and publishing.
 - `cnc-pr-review` — issue conformance and code-quality review.
 - `cnc-docs-governance` — agent and implementation documentation.
@@ -64,6 +67,10 @@ artifacts; after changing a contract interface, run `npm run generate-abi` in `c
   diagrams.
 - Use the [query guide](./app/src/queries/README.md) for frontend API queries and mutations. In particular, mutations are pure async
   functions wrapped by a `useXxxMutation` composable, and one hook serves one endpoint rather than each UI action.
+- For TanStack Query failures, prefer the query/mutation lifecycle (`onError`, `onSettled`, configured retries, and reactive error/status
+  state) over local `try`/`catch` blocks for notifications, state transitions, rollback, and retry policy. Let errors propagate from the
+  async function; reserve `try`/`catch` for narrow error translation or resource cleanup that the lifecycle cannot own. Follow the
+  [TanStack Query error-handling standard](./docs/platform/QUERY_STANDARDS.md#error-handling).
 - Use the [Vue component standards](./.github/copilot-instructions/vue-component-standards.md) when editing Vue components: components
   describe UI, utilities own pure shaping, composables own reactive logic, and server state remains in its query cache.
 - All feature on-chain writes use `useContractWritesV3`. Read the [contract-write guide](./app/src/composables/contracts/README.md) before
@@ -75,6 +82,11 @@ artifacts; after changing a contract interface, run `npm run generate-abi` in `c
 
 ## Workflow and public hygiene
 
+- Every agent-created or reused work issue must be on the [CNC Kanban Board](https://github.com/orgs/globe-and-citizen/projects/13).
+  Maintain its applicable Project fields at creation, implementation start/end, scope or Sprint changes, reopening, and closure. Verify
+  membership and field values by readback before reporting the operation complete. Follow the
+  [Kanban Project field contract](./docs/development-guide/kanban-project.md) for Size, Sprint Iteration, Status, Priority, Blocking, actual
+  implementation dates, and justified empty fields. Issue creation alone does not complete issue setup.
 - Every work issue must have a native GitHub parent; only explicit hierarchy roots, such as Sprint or backlog planning issues, may be
   parentless. Planned Sprint outcomes follow Sprint → Goal → optional coordinator → delivery. Work outside those outcomes belongs under the
   Sprint's separate bugs and perf sub-issue, not in the original Goal checklist. Reconcile concrete impacts at the appropriate level:
@@ -87,9 +99,9 @@ artifacts; after changing a contract interface, run `npm run generate-abi` in `c
 - Apply the [Development Relationship Validation](./docs/development-guide/relationship-validation.md) checklist at issue scoping,
   implementation and review readiness, independent PR review, and final validation before merge. Inspect affected consumers even when their
   files are unchanged; record applicability, evidence, and completion proposals in the issue/PR using that guide's result contract.
-- Use Conventional Commits with the matching gitmoji for commits, pull requests, and ordinary issue titles. Sprint plan and Sprint Goal
-  issue titles use the dedicated [Sprint title rules](./.agents/skills/cnc-github-flow/SKILL.md#sprint-and-goal-issue-titles) instead. Keep
-  commits atomic. GitHub artifacts and user-facing UI strings are in English; see
+- Use Conventional Commits with the matching gitmoji for commits, pull requests, and ordinary issue titles. Sprint plan, Sprint Goal and
+  release issue titles use the dedicated [issue title rules](./.agents/skills/cnc-github-flow/SKILL.md#sprint-goal-and-release-issue-titles)
+  instead. Keep commits atomic. GitHub artifacts and user-facing UI strings are in English; see
   [commit conventions](./.github/copilot-instructions/commit-conventions.md).
 - Before opening a PR, search for a suitable issue or create one, assign it to the current authenticated GitHub user unless the task names
   another owner, and use `Closes #N` or `Fixes #N` in the PR body.

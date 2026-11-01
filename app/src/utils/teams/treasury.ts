@@ -1,6 +1,7 @@
 import type { Address } from 'viem'
 import type { Team } from '@/types'
 import { EMPTY_VALUE, formatCurrency, formatPercent } from '@/utils/format'
+import { defaultTeamSafe } from '@/utils/safe/teamSafes'
 
 type TreasuryContractType = 'Bank' | 'Safe' | 'ExpenseAccountEIP712' | 'CashRemunerationEIP712'
 
@@ -37,13 +38,22 @@ interface ReadTreasuryAccount extends TreasuryAccountDefinition {
 
 const addressKey = (address: Address) => address.toLowerCase()
 
+/** The team's contract of a treasury type; for a Safe, its default one. */
+export function getTreasuryContractAddress(
+  team: Team,
+  contractType: TreasuryContractType
+): Address | undefined {
+  if (contractType === 'Safe') return defaultTeamSafe(team.teamContracts)?.address
+  return team.teamContracts?.find((contract) => contract.type === contractType)?.address
+}
+
 /**
  * Returns the money-holding contract addresses that contribute to one company's
  * list-card summary. The list query uses this to deduplicate reads across cards.
  */
 export function getTeamTreasuryAddresses(team: Team): Address[] {
   return TREASURY_ACCOUNTS.flatMap(({ contractType }) => {
-    const address = team.teamContracts?.find((contract) => contract.type === contractType)?.address
+    const address = getTreasuryContractAddress(team, contractType)
     return address ? [address] : []
   })
 }
@@ -60,9 +70,7 @@ export function buildTeamTreasuryDisplay(
   currency: string
 ): TeamTreasuryDisplay {
   const accounts = TREASURY_ACCOUNTS.map((definition) => {
-    const address = team.teamContracts?.find(
-      (contract) => contract.type === definition.contractType
-    )?.address
+    const address = getTreasuryContractAddress(team, definition.contractType)
     const amount = address ? amountsByAddress[addressKey(address)] : undefined
 
     return {

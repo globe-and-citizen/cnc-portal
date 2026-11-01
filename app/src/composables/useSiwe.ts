@@ -17,6 +17,8 @@ import type { Address } from 'viem'
 // The wagmi config narrows chainId to a union of its configured chain ids.
 type AppChainId = (typeof config)['chains'][number]['id']
 
+const TERMINAL_PROFILE_FAILURE_STATUSES = new Set([401, 403, 404])
+
 /**
  * Distinct subclasses for the three places where the user can reject a wallet
  * prompt. Everything else (network failures, axios errors, viem errors) is
@@ -88,6 +90,23 @@ export function useSiweMutation() {
   const userDataStore = useUserDataStore()
   const storageToken = useStorage('authToken', '')
 
+  const clearStoredToken = () => {
+    storageToken.value = ''
+    if (typeof window !== 'undefined') {
+      window.localStorage.removeItem('authToken')
+    }
+  }
+
+  const isTerminalProfileFailure = (err: unknown) => {
+    if (!(err instanceof AxiosError)) return false
+
+    const url = err.config?.url ?? ''
+    const status = err.response?.status
+    return (
+      url.includes('user') && status !== undefined && TERMINAL_PROFILE_FAILURE_STATUSES.has(status)
+    )
+  }
+
   // Connector is owned by `wagmi.config.ts` (e2e mock in tests, `injected()`
   // for browser-installed wallets in dev/prod).
   const connector = config.connectors[0]
@@ -146,6 +165,14 @@ export function useSiweMutation() {
     },
     onError: (err) => {
       log.error('siwe error', err)
+
+      // Only terminal profile failures invalidate the newly-issued session.
+      // Transport failures and transient server errors remain recoverable and
+      // must not reset the user's wallet session.
+      if (isTerminalProfileFailure(err)) {
+        clearStoredToken()
+        userDataStore.clearUserData()
+      }
 
       // 1. User-rejected prompts — each step has its own subclass.
       if (err instanceof WalletConnectRejectedError) {

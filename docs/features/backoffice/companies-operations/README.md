@@ -219,6 +219,11 @@ or detail view; `AC-US-TEAM-OPS-001-03` and `AC-US-TEAM-OPS-003-04` still need f
 
 ## Implementation Evidence
 
+The company payload lists every Safe the company registered, disabled ones included. The profile and balance recap keep only its default
+Safe, the latest activated one not disabled, among the live contracts, so they count that Safe.
+
+**Implementation evidence reviewed against:** `fdfcf810829fdcca8d0bfe429878b439e4fd4dfe`
+
 - [Dashboard navigation](../../../../dashboard/app/layouts/default.vue),
   [administrator route guard](../../../../dashboard/app/middleware/auth.global.ts), and
   [Companies operations entry page](../../../../dashboard/app/pages/teams/index.vue)
@@ -229,6 +234,7 @@ or detail view; `AC-US-TEAM-OPS-001-03` and `AC-US-TEAM-OPS-003-04` still need f
   [supported balance recap](../../../../dashboard/app/composables/useTeamsBalanceRecaps.ts)
 - [Company profile](../../../../dashboard/app/pages/teams/%5Bid%5D.vue),
   [Officer and contract grouping](../../../../dashboard/app/components/teams/TeamContractGroups.vue),
+  [default Safe selection](../../../../dashboard/app/utils/teamSafes.ts),
   [contract balances](../../../../dashboard/app/components/teams/ContractBalance.vue),
   [stablecoin balance query](../../../../dashboard/app/queries/contractTokenBalances.query.ts), and
   [contract logs](../../../../dashboard/app/components/teams/ContractLogs.vue)
