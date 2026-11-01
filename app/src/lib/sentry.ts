@@ -5,6 +5,66 @@ import { classifyError } from '@/utils/errors/classifyContractError'
 
 export type AxiosErrorSource = 'api' | 'external'
 
+declare module 'axios' {
+  interface AxiosRequestConfig {
+    /** Missing resources are unexpected unless the owning read explicitly allows absence. */
+    sentryNotFound?: 'expected' | 'initially-expected'
+  }
+}
+
+const NOT_FOUND_GRACE_MS = 5 * 60_000
+const missingResources = new WeakMap<object, { firstSeen: number; reported: boolean }>()
+
+/** Reset telemetry-only outage state when the cache boundary recovers. */
+export function resetHttpNotFound(boundary: object): void {
+  missingResources.delete(boundary)
+}
+
+/** Capture final 404 failures once per cache boundary, leaving expected absence diagnostic. */
+export function captureHttpNotFound(
+  error: unknown,
+  boundary: object,
+  context: { operation: 'query' | 'mutation'; queryName?: string; hasData?: boolean }
+): void {
+  if (!axios.isAxiosError(error) || axios.isCancel(error) || error.response?.status !== 404) return
+
+  const expectation = error.config?.sentryNotFound
+  let outage = missingResources.get(boundary)
+  if (!outage) {
+    outage = { firstSeen: Date.now(), reported: false }
+    missingResources.set(boundary, outage)
+    Sentry.addBreadcrumb({
+      category: 'http.not_found',
+      level: 'info',
+      message: 'HTTP resource not found',
+      data: {
+        operation: context.operation,
+        queryName: context.queryName,
+        method: error.config?.method?.toUpperCase(),
+        expectation: expectation ?? 'unexpected'
+      }
+    })
+  }
+
+  if (expectation === 'expected' || outage.reported) return
+  const initialAbsence = expectation === 'initially-expected' && !context.hasData
+  if (initialAbsence && Date.now() - outage.firstSeen < NOT_FOUND_GRACE_MS) return
+
+  outage.reported = true
+  redactAuthorizationHeader(error)
+  Sentry.withScope((scope) => {
+    scope.setLevel(initialAbsence ? 'warning' : 'error')
+    scope.setTag('runtime', 'frontend')
+    scope.setTag('error.source', 'axios')
+    scope.setTag('error.operation', context.operation)
+    scope.setTag('http.status_code', '404')
+    scope.setTag('http.not_found_reason', initialAbsence ? 'persistent-absence' : 'unexpected')
+    if (error.config?.method) scope.setTag('http.request.method', error.config.method.toUpperCase())
+    if (context.queryName) scope.setTag('query.name', context.queryName)
+    Sentry.captureException(error)
+  })
+}
+
 export interface Web3ErrorContext {
   operation: string
   /** Use only at a known Web3 boundary that can throw a plain Error. */
@@ -20,7 +80,7 @@ export const SENTRY_WEB3_BOUNDARY_META_KEY = 'sentryWeb3Boundary' as const
 
 const CAPTURED_STATUS_CODES = new Set([408, 429])
 
-/** Capture actionable Axios failures without reporting expected client errors. */
+/** Capture transport failures; the query/mutation lifecycle classifies final 404 responses. */
 export function captureAxiosError(error: unknown, source: AxiosErrorSource): void {
   if (!shouldCaptureAxiosError(error)) return
 

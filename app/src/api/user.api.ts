@@ -25,6 +25,8 @@ export const getUserNonce = async (address: Address): Promise<UserNonceResponse>
  * consumers should prefer `useGetUserQuery` for reactive reads.
  */
 export const getUser = async (address: Address): Promise<Partial<User>> => {
-  const { data } = await apiClient.get<Partial<User>>(`user/${address}`)
+  const { data } = await apiClient.get<Partial<User>>(`user/${address}`, {
+    sentryNotFound: 'expected'
+  })
   return data
 }

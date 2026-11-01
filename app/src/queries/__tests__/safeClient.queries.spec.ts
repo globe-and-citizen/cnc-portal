@@ -25,7 +25,7 @@ describe('fetchSafeClientBalances', () => {
     await expect(fetchSafeClientBalances(address, 137, 'usd', signal)).resolves.toBe(payload)
     expect(get).toHaveBeenCalledExactlyOnceWith(
       `https://safe-client.safe.global/v1/chains/137/safes/${checksum}/balances/USD?exclude_spam=true&trusted=true`,
-      { signal }
+      { signal, sentryNotFound: 'initially-expected' }
     )
     expect(mockWagmiCore.readContract).not.toHaveBeenCalled()
   })
@@ -82,7 +82,7 @@ describe('useGetSafeBalancesQuery', () => {
     await expect(capturedQuery().queryFn({ signal })).resolves.toBe(payload)
     expect(get).toHaveBeenCalledExactlyOnceWith(
       `https://safe-client.safe.global/v1/chains/1/safes/${checksum}/balances/EUR?exclude_spam=true&trusted=true`,
-      { signal }
+      { signal, sentryNotFound: 'initially-expected' }
     )
   })
 
@@ -154,7 +154,7 @@ describe('useGetSafeTransactionHistoryQuery', () => {
     await expect(capturedQuery().queryFn({ signal })).resolves.toBe(payload)
     expect(get).toHaveBeenCalledExactlyOnceWith(
       `https://safe-client.safe.global/v1/chains/1/safes/${checksum}/transactions/history`,
-      { signal, params: queryParams }
+      { signal, params: queryParams, sentryNotFound: 'initially-expected' }
     )
   })
 
@@ -187,7 +187,7 @@ describe('useGetSafeTransactionHistoryQuery', () => {
     await capturedQuery().queryFn({ signal })
     expect(get).toHaveBeenCalledExactlyOnceWith(
       `https://safe-client.safe.global/v1/chains/1/safes/${safeAddress.value}/transactions/history`,
-      { signal, params: { cursor: 'next' } }
+      { signal, params: { cursor: 'next' }, sentryNotFound: 'initially-expected' }
     )
   })
 

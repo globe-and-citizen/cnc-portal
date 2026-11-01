@@ -65,7 +65,10 @@ export async function fetchSafeClientBalances(
   signal?: AbortSignal
 ): Promise<SafeClientBalances> {
   const url = `${SAFE_CLIENT_URL}/v1/chains/${chainId}/safes/${normalizeSafeAddress(address)}/balances/${encodeURIComponent(fiatCode.toUpperCase())}?exclude_spam=true&trusted=true`
-  const { data } = await externalApiClient.get<SafeClientBalances>(url, { signal })
+  const { data } = await externalApiClient.get<SafeClientBalances>(url, {
+    signal,
+    sentryNotFound: 'initially-expected'
+  })
   if (!data || !Array.isArray(data.items) || typeof data.fiatTotal !== 'string')
     throw new Error('Safe balances response unavailable')
   return data
@@ -128,7 +131,7 @@ export function useGetSafeTransactionHistoryQuery(params: GetSafeTransactionHist
           if (!address) throw new Error('Missing Safe address')
           const { data } = await externalApiClient.get<SafeClientTransactionHistory>(
             `${SAFE_CLIENT_URL}/v1/chains/${chainId}/safes/${normalizeSafeAddress(address)}/transactions/history`,
-            { signal, params: queryParams }
+            { signal, params: queryParams, sentryNotFound: 'initially-expected' }
           )
           if (!data || !Array.isArray(data.results))
             throw new Error('Safe transaction history response unavailable')
