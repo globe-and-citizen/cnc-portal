@@ -58,7 +58,7 @@ function copyFiles(src: string, dest: string, filter: (f: string) => boolean): s
 }
 
 // Freeze an ABI dir that holds a flat `json/` folder + sibling wrapper `.ts`
-// files (dashboard and ponder). Wrappers are copied verbatim: their relative
+// files (dashboard). Wrappers are copied verbatim: their relative
 // `./json/*.json` imports stay valid because json/ is copied alongside them.
 // An existing index.ts (a resolver barrel) is intentionally not re-copied — the
 // resolver owns it per version.
@@ -106,10 +106,6 @@ freezeAddressDir(path.join(repoRoot, 'app/src/artifacts/deployed_addresses'))
 // dashboard
 freezeAbiDir(path.join(repoRoot, 'dashboard/app/artifacts/abi'))
 freezeAddressDir(path.join(repoRoot, 'dashboard/app/artifacts/deployed_addresses'))
-
-// ponder
-freezeAbiDir(path.join(repoRoot, 'ponder/abis'))
-freezeAddressDir(path.join(repoRoot, 'ponder/artifacts/deployed_addresses'))
 
 // backend: 6 hand-maintained raw-array ABI JSONs (no wrappers, no json/ subdir).
 // version-registry.json also lives here (synced by moveConstants) — it is NOT an

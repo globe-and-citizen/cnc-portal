@@ -26,7 +26,7 @@ repository paths from canonical documents. It treats a linked file or directory 
 | Dashboard pages, components, queries, middleware, and stores              | `docs/features/backoffice/**/README.md`                                      |
 | Backend controllers, routes, services, middleware, validation, and schema | The owning feature README or a shared capability README                      |
 | Solidity contract behaviour                                               | `docs/contracts/features/**/README.md` and any linked product feature README |
-| Shared client, dashboard, backend, indexer, or subgraph runtime           | `docs/implementation/**/README.md` and any linked feature README             |
+| Shared client, dashboard, or backend runtime                              | `docs/implementation/**/README.md` and any linked feature README             |
 
 Test-only changes are outside this gate. They still need the normal test review and may require a documentation change when they reveal a
 user-visible rule or gap.

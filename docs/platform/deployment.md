@@ -7,9 +7,10 @@ The CNC Portal is a multi-component application consisting of four main parts th
 1. **Frontend App** (Vue.js 3) - User-facing web application
 2. **Backend API** (Express.js) - RESTful API server
 3. **Smart Contracts** (Hardhat/Solidity) - Ethereum blockchain contracts
-4. **Subgraph** (The Graph) - Blockchain data indexing
+4. **Dashboard** (Nuxt) - Administrative application; see [dashboard setup](../../dashboard/README.md)
 
-This guide covers deployment procedures for each component in both development and production environments.
+This guide covers frontend, backend, and contract deployment. The dashboard owns its separate setup instructions. Contract activity is read
+through the shared [RPC event feeds](../implementation/contract-event-feeds/README.md).
 
 ## Architecture
 
@@ -27,7 +28,6 @@ graph TB
     subgraph "Data Layer"
         DB[(PostgreSQL<br/>Port 5432)]
         Contracts[Smart Contracts<br/>Ethereum Network]
-        Subgraph[The Graph<br/>Subgraph]
     end
 
     Browser --> Frontend
@@ -35,8 +35,6 @@ graph TB
     Frontend --> Contracts
     API --> DB
     API --> Contracts
-    Contracts --> Subgraph
-    Subgraph --> Frontend
 ```
 
 ## Prerequisites
@@ -54,7 +52,6 @@ graph TB
 - **Google Cloud Platform** account (for Cloud Run deployment)
 - **Alchemy** or **Infura** account (for Ethereum RPC access)
 - **Etherscan** API key (for contract verification)
-- **The Graph** hosted service account (for subgraph deployment)
 - **Domain registrar** access (for custom domain setup)
 
 ### Access Requirements
@@ -156,31 +153,6 @@ GAS_LIMIT=8000000
 FACTORY_BEACON_ADDRESS=0x...
 ```
 
-### Subgraph Environment Variables
-
-Update `/the-graph/networks.json`:
-
-```json
-{
-  "sepolia": {
-    "FactoryBeacon": {
-      "address": "0x...",
-      "startBlock": 1234567
-    },
-    "BankBeacon": {
-      "address": "0x...",
-      "startBlock": 1234567
-    }
-  },
-  "mainnet": {
-    "FactoryBeacon": {
-      "address": "0x...",
-      "startBlock": 7891011
-    }
-  }
-}
-```
-
 ## Deployment Procedures
 
 ### 1. Smart Contracts Deployment
@@ -240,7 +212,6 @@ Update contract addresses in:
 
 - `/app/.env.production` (frontend environment)
 - `/backend/.env.production` (backend environment)
-- `/the-graph/networks.json` (subgraph configuration)
 
 #### Production Deployment
 
@@ -433,63 +404,6 @@ gcloud run domain-mappings create \
 
 # Configure DNS records (in your domain registrar)
 # Add CNAME record: www.cnc-portal.com -> ghs.googlehosted.com
-```
-
-### 4. Subgraph Deployment
-
-#### Step 1: Update Configuration
-
-```bash
-cd the-graph/
-
-# Update networks.json with deployed contract addresses
-# Update subgraph.yaml with correct network and start blocks
-```
-
-#### Step 2: Generate Types
-
-```bash
-# Install dependencies
-npm install
-
-# Generate AssemblyScript types
-npm run codegen
-```
-
-#### Step 3: Build Subgraph
-
-```bash
-# Build subgraph
-npm run build
-
-# Verify build output in /build directory
-```
-
-#### Step 4: Deploy to The Graph
-
-```bash
-# Authenticate with The Graph
-graph auth --product hosted-service YOUR_ACCESS_TOKEN
-
-# Deploy to hosted service
-npm run deploy
-
-# Or deploy to decentralized network
-graph deploy --node https://api.thegraph.com/deploy/ \
-  --ipfs https://api.thegraph.com/ipfs/ \
-  cnc-portal/mainnet
-```
-
-#### Step 5: Verify Deployment
-
-```bash
-# Check subgraph status
-curl https://api.thegraph.com/subgraphs/name/cnc-portal/mainnet
-
-# Test query
-curl -X POST https://api.thegraph.com/subgraphs/name/cnc-portal/mainnet \
-  -H "Content-Type: application/json" \
-  -d '{"query":"{ factoryBeacons { id address } }"}'
 ```
 
 ## Docker Deployment
@@ -742,15 +656,6 @@ curl -I https://cnc-portal.com
 cast code $FACTORY_BEACON_ADDRESS --rpc-url $RPC_URL
 
 # Should return bytecode (not 0x)
-```
-
-#### Subgraph Sync Status
-
-```bash
-# Check subgraph indexing status
-curl https://api.thegraph.com/index-node/graphql \
-  -X POST \
-  -d '{"query": "{ indexingStatusForCurrentVersion(subgraphName: \"cnc-portal/mainnet\") { synced health fatalError { message } } }"}'
 ```
 
 ### Logging
@@ -1008,7 +913,6 @@ Before deploying to production, verify:
 - [ ] Verify database connectivity
 - [ ] Test wallet connection
 - [ ] Verify contract interactions
-- [ ] Check subgraph syncing
 - [ ] Verify API endpoints
 - [ ] Test authentication flow
 - [ ] Monitor error rates
@@ -1129,7 +1033,6 @@ gcloud run domain-mappings create \
 
 - [Google Cloud Run Documentation](https://cloud.google.com/run/docs)
 - [Hardhat Deployment](https://hardhat.org/hardhat-runner/docs/guides/deploying)
-- [The Graph Deployment](https://thegraph.com/docs/en/deploying/deploying-a-subgraph-to-hosted/)
 - [Docker Documentation](https://docs.docker.com/)
 - [Prisma Migrations](https://www.prisma.io/docs/concepts/components/prisma-migrate)
 - [Nginx Configuration](https://nginx.org/en/docs/)

@@ -2,7 +2,7 @@
 
 **Status:** Current
 
-**Last verified:** 2026-09-23
+**Last verified:** 2026-10-31
 
 **Scope:** Resolve contract generations, deploy and register a replacement Officer, retain prior generations, and recover the optional
 shareholder-migration step.
@@ -47,7 +47,7 @@ flowchart LR
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `272d6bd8d455cf09e681192f3b9c6c284b63b4fa`
+**Implementation evidence reviewed against:** `e83ea33ee86b938fceaa3166dadaa9e455c26479`
 
 - [Artifact registry tests](../../../app/src/artifacts/__tests__/registry.spec.ts) and
   [contract-version tests](../../../app/src/composables/contracts/__tests__/useContractVersion.spec.ts)
@@ -70,7 +70,6 @@ flowchart LR
   [Officer behavior tests](../../../contract/test/Officer.spec.ts),
   [Officer upgrade tests](../../../contract/test/OfficerUpgradeModule.spec.ts), [proposal tests](../../../contract/test/Proposals.spec.ts),
   and [Safe infrastructure tests](../../../contract/test/SafeInfraDeployment.spec.ts)
-- [Officer subgraph tests](../../../the-graph/tests/officer.test.ts)
 
 ## Related Documentation
 
