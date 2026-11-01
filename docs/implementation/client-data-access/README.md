@@ -33,6 +33,10 @@ flowchart LR
   narrow error translation or rollback/resource cleanup that the lifecycle cannot own.
 - `uploadSingleFile` returns the first uploaded file URL and throws when the backend response does not contain one.
 - The `@/queries` barrel re-exports focused query modules; it does not combine their endpoint behaviour or server state.
+- Query-factory reads can declare `notFound: 'expected'` only when absence is part of the owning endpoint's normal contract. The request
+  carries that policy as Axios `sentryNotFound`, including when it fails inside a larger mutation. Safe reads use `initially-expected` for
+  indexing absence. The shared cache applies [contextual HTTP 404 monitoring](../error-tracking/README.md#handled-http-404-responses) after
+  retries, without replacing the original error, cached data or recovery behavior.
 
 ### Contract-based asset markets
 
@@ -201,7 +205,7 @@ change refreshes. Executable evidence: [read queue tests](../../../app/src/queri
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `9214325dd63d1a31fb9be0a1495a2d2fc7df3313`
+**Implementation evidence reviewed against:** `f15dccbe52468b554ce87b92f5db48411b921bb9`
 
 - [Query barrel](../../../app/src/queries/index.ts), [query factory](../../../app/src/queries/queryFactory.ts), and
   [single-file upload query](../../../app/src/queries/file.queries.ts)
