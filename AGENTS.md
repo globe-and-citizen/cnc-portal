@@ -1,166 +1,89 @@
 # AGENTS.md
 
-Operational guidance for AI coding agents working in this repository. Human contributors should start with [README.md](./README.md) and
+Additional operating instructions for AI coding agents working in this repository. Human developers start with [README.md](./README.md) and
 [CONTRIBUTION.md](./CONTRIBUTION.md).
+
+Agents must first follow the [shared contribution contract](./CONTRIBUTION.md#shared-contribution-contract), including its implementation,
+security, documentation, GitHub and review requirements. This file adds agent execution procedures; it does not replace the shared contract
+or grant authority to make product decisions, merge, deploy or record human acceptance.
 
 ## Start here
 
 1. Read the gitignored root `todolist.md`. Keep it accurate while working; use `(in_progress)` for active work and `[x]` only when it is
    complete. Do not commit it. Do not start work marked `(blocked by: …)` until its blocker is complete.
-2. Work in the subproject you touch. This monorepo has no workspace tool: each subproject owns its `package.json` and dependencies.
-3. Read the specialised guide for the affected area. Do not treat this file as a replacement for the implementation guides.
+2. Read `reports/planning.md` when it exists and maintain it under the scratchpad rules below.
+3. Read the [applicable implementation standards](./CONTRIBUTION.md#implementation-standards) and the repository skill for the requested
+   task. Use the [shared validation commands](./CONTRIBUTION.md#required-validation-before-pushing) for each affected subproject.
 
 ## Agent planning scratchpad
 
-- At the start of every agent session, read `reports/planning.md` when it exists. It is a local, Git-ignored work log for commitments made
-  during agent conversations; never stage or commit it.
+- `reports/planning.md` is a local, Git-ignored work log for commitments made during agent conversations; never stage or commit it.
 - Before creating or reorganizing local reports, use the local `reports/README.md` index and follow the
   [Local Reports Workspace guide](./docs/development-guide/local-reports.md). Keep producer-owned paths and historical evidence intact.
-- When a concrete action is agreed during a conversation, add it to `Actions ouvertes` with a priority, status, next action, and concise
-  context or evidence. Keep statuses current: `À faire`, `En cours`, `Bloqué`, or `À vérifier`.
-- Do not treat the scratchpad as canonical product or implementation documentation. Durable decisions, acceptance criteria, issue status,
-  and delivery evidence belong in their canonical documentation or GitHub issue/PR.
-- When an action is verified as complete, move it to `Historique terminé` with the completion date, result, and evidence. Never delete a
+- When a concrete action is agreed during a conversation, add it to `Actions ouvertes` with a priority, status, next action and concise
+  context or evidence. Keep statuses current: `À faire`, `En cours`, `Bloqué` or `À vérifier`.
+- Do not treat the scratchpad as canonical product or implementation documentation. Durable decisions, acceptance criteria, issue status and
+  delivery evidence belong in their canonical documentation or GitHub issue/PR.
+- When an action is verified as complete, move it to `Historique terminé` with the completion date, result and evidence. Never delete a
   completed action automatically; preserve the trace unless the user explicitly requests an archival purge.
 - At the end of a task, update the scratchpad so unfinished work and blockers remain visible for the next agent. Do not mark an item
-  complete without executable, CI, or explicit manual evidence appropriate to the work.
+  complete without executable, CI or explicit manual evidence appropriate to the work.
 
 ## Repository skills
 
-Task-specific workflows are versioned under `.agents/skills/`. Use only the one that matches the work:
+Task-specific agent workflows are versioned under `.agents/skills/`. Use only the one that matches the work:
 
 - `cnc-work-orchestrator` — plan dependencies and bounded multi-agent work.
-- `cnc-code-audit` — audit a scoped checkout, propose concrete corrections, and track decisions, delivery, and verification.
-- `cnc-github-flow` — issues, Sprint hierarchy, PRs, reviews, and publishing.
+- `cnc-code-audit` — audit a scoped checkout, propose concrete corrections, and track decisions, delivery and verification.
+- `cnc-github-flow` — issues, Sprint hierarchy, PRs, reviews and publishing.
 - `cnc-pr-review` — issue conformance and code-quality review.
 - `cnc-docs-governance` — agent and implementation documentation.
 - `cnc-feature-documentation` — implementation-backed product feature stories and acceptance.
 - `cnc-frontend-change` — Vue client and Nuxt dashboard changes.
 - `cnc-contract-change` — Solidity and ABI changes.
 
-`AGENTS.md` remains the universal contract. Skills contain procedures; detailed standards remain in their specialised guides.
+`CONTRIBUTION.md` owns shared contribution requirements. `AGENTS.md` owns additional agent execution rules. Skills contain task-specific
+procedures; detailed implementation standards remain in their specialised guides.
 
 Recurring AI-agent audits follow the [Autonomous Semantic Audit Contracts](./docs/development-guide/autonomous-audits/README.md). These
 audits require contextual reasoning beyond deterministic CI output and may create tracked draft remediation PRs only within their documented
 confidence and safety boundaries.
 
-## Repository map
+## Tool procedures
 
-- `app/` — Vue 3 SPA, the main product.
-- `dashboard/` — separate Nuxt statistics dashboard.
-- `backend/` — Express API and Prisma.
-- `contract/` — Hardhat and Solidity contracts.
-- `ponder/` and `the-graph/` — indexers.
+- Use `gh` for GitHub operations rather than the GitHub MCP. Human contributors are not required to use the CLI.
+- For code generation, setup, configuration or library/API documentation, use Context7 to resolve library IDs and retrieve documentation.
+  This includes implementation patterns and version-specific compatibility checks; do not wait for a separate user request to consult it.
+- Write multiline GitHub Markdown to a body file and pass it through `--body-file`. Never pass escaped `\n` in a shell `--body` string.
+- After creating or updating an issue or PR, read it back with `gh issue view` or `gh pr view`; verify headings, Markdown spacing, links and
+  the PR's closing keyword before reporting publication complete.
 
-The frontend uses REST for backend data and wagmi/viem for chain interactions. Contract deployment addresses are mirrored into the frontend
-artifacts; after changing a contract interface, run `npm run generate-abi` in `contract/` and commit the generated frontend ABI.
+## Issue and Project execution
 
-## Implementation rules
-
-- Keep a change scoped to the requested outcome. Report adjacent drift that materially affects correctness, security, or the edited
-  behaviour; track it separately unless it blocks the current work.
-- Treat documentation as part of every behavioural change. Before editing a product, contract, or shared-runtime source, identify and update
-  every canonical owner required by the [Documentation Freshness Policy](./docs/platform/documentation-freshness-policy.md). The CI gate
-  rejects changed behavioural sources that have no owner or whose owner was not updated in the same pull request.
-- Write every documentation diagram in Mermaid. Follow the
-  [diagram format rule](./docs/platform/feature-specification-guide.md#diagram-format); do not add ASCII, PlantUML, Draw.io, or image-only
-  diagrams.
-- Use the [query guide](./app/src/queries/README.md) for frontend API queries and mutations. In particular, mutations are pure async
-  functions wrapped by a `useXxxMutation` composable, and one hook serves one endpoint rather than each UI action.
-- For TanStack Query failures, prefer the query/mutation lifecycle (`onError`, `onSettled`, configured retries, and reactive error/status
-  state) over local `try`/`catch` blocks for notifications, state transitions, rollback, and retry policy. Let errors propagate from the
-  async function; reserve `try`/`catch` for narrow error translation or resource cleanup that the lifecycle cannot own. Follow the
-  [TanStack Query error-handling standard](./docs/platform/QUERY_STANDARDS.md#error-handling).
-- Use the [Vue component standards](./.github/copilot-instructions/vue-component-standards.md) when editing Vue components: components
-  describe UI, utilities own pure shaping, composables own reactive logic, and server state remains in its query cache.
-- All feature on-chain writes use `useContractWritesV3`. Read the [contract-write guide](./app/src/composables/contracts/README.md) before
-  adding or changing a write.
-- Read the [testing overview](./.github/copilot-instructions/testing-overview.md) before adding frontend tests; its global mocks must be
-  reused, not re-declared in individual specs.
-- All display formatting goes through the canonical modules documented in
-  [formatting standards](./.github/copilot-instructions/formatting-standards.md).
-
-## Workflow and public hygiene
-
+- Before opening a PR, find or create its tracking issue and assign the authenticated user unless the task names another owner.
 - Every agent-created or reused work issue must be on the [CNC Kanban Board](https://github.com/orgs/globe-and-citizen/projects/13).
-  Maintain its applicable Project fields at creation, implementation start/end, scope or Sprint changes, reopening, and closure. Verify
-  membership and field values by readback before reporting the operation complete. Follow the
+  Maintain applicable Project fields at creation, implementation start/end, scope or Sprint changes, reopening and closure. Follow the
   [Kanban Project field contract](./docs/development-guide/kanban-project.md) for Size, Sprint Iteration, Status, Priority, Blocking, actual
-  implementation dates, and justified empty fields. Issue creation alone does not complete issue setup.
-- Every work issue must have a native GitHub parent; only explicit hierarchy roots, such as Sprint or backlog planning issues, may be
-  parentless. Planned Sprint outcomes follow Sprint → Goal → optional coordinator → delivery. Work outside those outcomes belongs under the
-  Sprint's separate bugs and perf sub-issue, not in the original Goal checklist. Reconcile concrete impacts at the appropriate level:
-  coordination and dependencies for an ordinary parent, expected results and exit criteria for a Goal, agreed commitments and major blockers
-  for the Sprint. Keep routine PR, commit, CI, and test progress on the delivery issue or PR. Update the Sprint root only when agreed
-  objectives or scope, major Sprint-level blockers, or verified Goal outcomes change. After closing an issue, reassess its native parent and
-  close it when its own scope, exit criteria, and required validations are satisfied; repeat upward while eligible. A child closure or PR
-  merge alone does not establish parent completion or human acceptance. Follow the [GitHub flow](./.agents/skills/cnc-github-flow/SKILL.md)
-  for attachment, propagation, closure, and readback.
-- Apply the [Development Relationship Validation](./docs/development-guide/relationship-validation.md) checklist at issue scoping,
-  implementation and review readiness, independent PR review, and final validation before merge. Inspect affected consumers even when their
-  files are unchanged; record applicability, evidence, and completion proposals in the issue/PR using that guide's result contract.
-- Use Conventional Commits with the matching gitmoji for commits, pull requests, and ordinary issue titles. Sprint plan, Sprint Goal and
-  release issue titles use the dedicated [issue title rules](./.agents/skills/cnc-github-flow/SKILL.md#sprint-goal-and-release-issue-titles)
-  instead. Keep commits atomic. GitHub artifacts and user-facing UI strings are in English; see
-  [commit conventions](./.github/copilot-instructions/commit-conventions.md).
-- Before opening a PR, search for a suitable issue or create one, assign it to the current authenticated GitHub user unless the task names
-  another owner, and use `Closes #N` or `Fixes #N` in the PR body.
-- Create every GitHub issue and PR from its repository template. After publishing, read it back with `gh issue view` or `gh pr view` and
-  confirm its headings, Markdown spacing, links, and closing keyword rendered as intended before treating the artifact as complete.
-- For multiline GitHub Markdown, write a body file and pass it with `gh issue|pr ... --body-file`. Never pass escaped `\n` in a shell
-  `--body` string. Verify the raw body contains real line breaks before considering the rendered artifact valid.
-- Treat all repository text as public. Never include infrastructure identifiers or connection strings in commits, issues, PRs, reviews, or
-  committed documentation. Refer to a managed provider or a placeholder instead.
+  implementation dates and justified empty fields. Verify membership and values by readback; issue creation alone does not complete setup.
+- Apply the shared native-parent and Sprint-placement rules through the [GitHub flow skill](./.agents/skills/cnc-github-flow/SKILL.md).
+  Reconcile coordination and dependencies at ordinary parents, expected results and exit criteria at Goals, and agreed commitments and major
+  blockers at Sprint roots. Keep routine PR, commit, CI and test progress on the delivery issue or PR.
+- Update the Sprint root only when agreed objectives or scope, major Sprint-level blockers or verified Goal outcomes change. After closing
+  an issue, reassess its native parent against its own scope, exit criteria and required validations; close eligible parents and repeat
+  upward within the authorized work. A child closure or PR merge alone does not establish parent completion or human acceptance.
+- Execute [Development Relationship Validation](./docs/development-guide/relationship-validation.md) at every required stage. Inspect
+  affected consumers outside the diff and record applicability, evidence and concrete completion proposals in the issue/PR.
 
-## Required validation before pushing
+## Publishing and evidence
 
-Run every applicable check in each subproject you changed, and fix failures before pushing.
-
-Before every GitHub push, agents must also run `npm run lint:docs-freshness` from the repository root. The Husky pre-push hook repeats this
-validation and blocks a push when a behavioural change has no current canonical documentation owner or its owner was not reviewed in the
-same change. Do not bypass the hook with `--no-verify`; update the affected documentation and rerun the validator instead.
-
-### `app/`
-
-```bash
-cd app
-npm run lint
-npm run format-check
-npm run type-check
-npm run test:unit -- --run
-```
-
-### `backend/`
-
-```bash
-cd backend
-npm run lint
-npm run format:check
-npx prisma generate # when prisma/schema.prisma changed
-npm run test:unit -- --run
-```
-
-### `contract/`
-
-```bash
-cd contract
-npm run lint
-npm run format-check
-npm run compile
-npm run test
-```
-
-For `dashboard/`, `ponder/`, and `the-graph/`, run every relevant lint, format, type-check, build, and test script exposed by that
-subproject. Contract PRs also require the [Solidity audit checklist](./.github/copilot-instructions/solidity-audit-checklist.md). When
-changing agent-instruction Markdown, run:
-
-```bash
-npm run lint:md
-# Markdown style lives in .prettier-markdown.json. Checks all tracked Markdown files; subproject format checks exclude Markdown.
-npm run format:md:check
-npm run test:acceptance-traceability
-npm run lint:acceptance-traceability
-npm run test:docs-freshness
-npm run lint:docs-freshness
-bash scripts/audit-doc-drift.sh
-```
+- Inspect the exact diff and keep unrelated work out of each atomic commit. Follow the GitHub flow skill for branch publication and draft PR
+  creation. Push committed requested work on its feature branch; never auto-push to `main`, `master` or `develop`, force-push without
+  authorization, or push unreviewed autonomous-loop commits.
+- Run every applicable [shared validation check](./CONTRIBUTION.md#required-validation-before-pushing), including
+  `npm run lint:docs-freshness` before every push. Do not bypass the pre-push hook.
+- Post review findings inline through the PR reviews API, with the overall summary in the review body. Use `REQUEST_CHANGES` for real bugs
+  and `COMMENT` for observations; never auto-`APPROVE`. Explain the problem, impact and transferable principle; leave the rewrite to the
+  author unless asked to implement it.
+- Distinguish prepared work, implemented behaviour, executed tests, deployment and human acceptance. Keep unavailable evidence and required
+  decisions visible. Perform only authorized merges, releases and deployments; required human Product/QA acceptance must be explicitly
+  recorded by its validator.
