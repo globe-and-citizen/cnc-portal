@@ -27,7 +27,10 @@ function txServiceUrl(): string {
 }
 
 async function getFromTxService<T>(url: string, signal: AbortSignal): Promise<T> {
-  const { data } = await externalApiClient.get<T>(url, { signal })
+  const { data } = await externalApiClient.get<T>(url, {
+    signal,
+    sentryNotFound: 'initially-expected'
+  })
   return data
 }
 

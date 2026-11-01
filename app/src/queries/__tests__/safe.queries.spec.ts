@@ -141,8 +141,14 @@ describe('safe queries', () => {
     expect(get.mock.calls[0]?.[0]).toContain(`/safes/${CHECKSUM_SAFE_ADDRESS}/`)
     expect(get.mock.calls[0]?.[0]).toContain('/incoming-transfers/?limit=2')
     expect(get.mock.calls[1]?.[0]).toContain('/incoming-transfers/?limit=2&offset=2')
-    expect(get).toHaveBeenNthCalledWith(1, expect.any(String), { signal })
-    expect(get).toHaveBeenNthCalledWith(2, expect.any(String), { signal })
+    expect(get).toHaveBeenNthCalledWith(1, expect.any(String), {
+      signal,
+      sentryNotFound: 'initially-expected'
+    })
+    expect(get).toHaveBeenNthCalledWith(2, expect.any(String), {
+      signal,
+      sentryNotFound: 'initially-expected'
+    })
   })
 
   it('loads every executed outgoing transaction page in service order', async () => {

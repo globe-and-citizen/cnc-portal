@@ -34,7 +34,12 @@ describe('[US-PROFILE-001] user.api', () => {
 
       const result = await getUser('0xabc0000000000000000000000000000000000000')
 
-      expect(apiClient.get).toHaveBeenCalledWith('user/0xabc0000000000000000000000000000000000000')
+      expect(apiClient.get).toHaveBeenCalledWith(
+        'user/0xabc0000000000000000000000000000000000000',
+        {
+          sentryNotFound: 'expected'
+        }
+      )
       expect(result).toEqual(user)
     })
   })

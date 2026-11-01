@@ -3,6 +3,8 @@ import { BaseError } from 'viem'
 import { SENTRY_WEB3_BOUNDARY_META_KEY } from '@/lib/sentry'
 
 const sentryMocks = vi.hoisted(() => ({
+  captureHttpNotFound: vi.fn(),
+  resetHttpNotFound: vi.fn(),
   captureWeb3Error: vi.fn(),
   SENTRY_WEB3_BOUNDARY_META_KEY: 'sentryWeb3Boundary'
 }))

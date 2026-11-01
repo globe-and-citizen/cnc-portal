@@ -42,6 +42,11 @@ This folder contains all TanStack Query hooks for API interactions in the CNC Po
 - Create one query or mutation hook per HTTP method and endpoint. Actions that differ only by request data or query parameters reuse that
   hook at the call site; do not create `useArchiveXxxMutation` and `useUnarchiveXxxMutation` when both update the same resource.
 - Query data is the server-state source of truth. Do not mirror it into a Pinia store merely to make it easier to consume.
+- Required reads and mutations report unexpected final HTTP 404s through the shared cache lifecycle. An owning read may opt into
+  `notFound: 'expected'` in the query factory, or Axios `sentryNotFound: 'expected'`, for a normal missing-resource state. Safe indexing
+  reads use `sentryNotFound: 'initially-expected'`; preserve the
+  [monitoring policy](../../../docs/implementation/error-tracking/README.md#handled-http-404-responses) rather than catching errors locally
+  or suppressing every provider 404.
 - `useGetSafeTransactionHistoryQuery` returns one unmodified Gateway history page, including date-label entries and pagination links. Its
   optional `queryParams` object or getter accepts `cursor`, `timezone`, `trusted`, and `imitation`; these values participate in the cache
   identity. Pagination remains explicit rather than silently flattening the history.

@@ -77,6 +77,7 @@ export interface GetTeamParams {
  */
 export const useGetTeamQuery = createQueryHook<Team, GetTeamParams>({
   endpoint: 'teams/{teamId}',
+  notFound: 'expected',
   queryKey: (params) => teamKeys.detail(toValue(params.pathParams.teamId)),
   enabled: (params) => !!toValue(params.pathParams.teamId),
   options: {
