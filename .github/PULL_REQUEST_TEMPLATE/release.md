@@ -1,3 +1,8 @@
+<!--
+PR title: [Release] vX.Y.Z (for example, [Release] v0.17.0).
+Use the same title and version as the tracking release issue, without a Conventional Commit type or gitmoji.
+-->
+
 # Summary
 
 Promote `release/vX.Y.Z` to `main` as the next repository release line.

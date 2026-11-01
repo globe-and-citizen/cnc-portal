@@ -7,11 +7,13 @@ contract upgrades require their own explicitly scoped work and evidence.
 ## Entry points and responsibilities
 
 - Create the tracking issue from the [release issue template](../../.github/ISSUE_TEMPLATE/release.md), titled `[Release] vX.Y.Z`.
-- Prepare the promotion PR using the [release PR template](../../.github/PULL_REQUEST_TEMPLATE/release.md).
+- Prepare the promotion PR using the [release PR template](../../.github/PULL_REQUEST_TEMPLATE/release.md), with the same `[Release] vX.Y.Z`
+  title as its tracking issue.
 - Follow [AGENTS.md](../../AGENTS.md) and the [GitHub flow skill](../../.agents/skills/cnc-github-flow/SKILL.md) for assignment, native
   hierarchy, Kanban fields, review and publication. Follow [commit conventions](../../.github/copilot-instructions/commit-conventions.md)
-  for English commit/PR titles, for example `chore: 🔧 release vX.Y.Z`. Release issues follow the
-  [dedicated issue title rules](../../.agents/skills/cnc-github-flow/SKILL.md#sprint-goal-and-release-issue-titles).
+  for English commit and ordinary PR titles. Release issues and promotion PRs follow the
+  [dedicated title rules](../../.agents/skills/cnc-github-flow/SKILL.md#sprint-goal-and-release-issue-titles), without a Conventional Commit
+  type or gitmoji; release commits still use Conventional Commits, for example `chore: 🔧 prepare release vX.Y.Z`.
 
 The issue records a release owner, independent technical reviewer, final release decision owner and applicable Product/QA validator. It
 links the baseline, included deliveries, canonical expectations, validation, blockers and follow-up. Technical checks, human acceptance,
@@ -31,8 +33,8 @@ merge, tag/Release publication and deployment each need their own evidence.
    [Development Relationship Validation](../development-guide/relationship-validation.md) across the combined release and inspect affected
    consumers even when their files are unchanged. Reuse valid delivery evidence when guarantees and dependencies remain unchanged; target
    new validation at integration risks. Aggregation alone does not make relationships non-applicable.
-5. Push the release branch and open a draft PR to `main` using the release PR template, an English Conventional Commit title with gitmoji,
-   and a closing reference to its tracking issue. For CLI publication, prepare a real multiline body file and pass `--body-file`; read the
+5. Push the release branch and open a draft PR to `main` using the release PR template, the same `[Release] vX.Y.Z` title as its tracking
+   issue, and a closing reference to that issue. For CLI publication, prepare a real multiline body file and pass `--body-file`; read the
    published body back. Record actual checks, exact head/base, review scope, limitations and required acceptance.
 6. Before an authorized merge, recheck the exact PR head and current `main` revision, synchronization, required CI, unresolved review
    findings and required human decisions. Refresh evidence affected by intervening changes. A green source PR or a mergeable release PR
