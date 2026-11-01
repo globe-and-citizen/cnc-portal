@@ -2,7 +2,7 @@
 
 **Status:** Current
 
-**Last updated:** 2026-08-30
+**Last updated:** 2026-11-01
 
 **Purpose:** Keep current-behaviour documentation aligned with product and technical changes made by humans or AI agents
 
@@ -12,8 +12,9 @@ Documentation is part of a behavioural change, not a follow-up task. Before edit
 documentation owner. In the same pull request, update that owner when the verified behaviour, journey, rules, boundaries, failures,
 evidence, or validation state changes.
 
-An AI agent performs this update as part of its implementation work. Continuous integration does not generate product claims on the agent's
-behalf; it blocks a pull request when the required review and documentation update are absent.
+The contributor performs this update as part of implementation work, whether a human developer or an AI agent. Continuous integration does
+not generate product claims on the contributor's behalf; it blocks a pull request when the required review and documentation update are
+absent.
 
 ## Enforced Scope
 
@@ -46,7 +47,7 @@ owning document in the same pull request.
 For every changed behavioural path, the validator requires both conditions below:
 
 1. At least one canonical owner currently links that source file or directory as implementation evidence. A previously undocumented path
-   therefore fails until the agent creates or completes the relevant documentation.
+   therefore fails until the contributor creates or completes the relevant documentation.
 2. Every canonical document that owns the changed path carries a current implementation-evidence attestation:
 
    ```markdown
@@ -62,7 +63,7 @@ only when the whole directory belongs to the same documented behaviour. Update t
 state when behaviour changes. When those statements remain current, refresh only the attestation; do not add review-history prose to a
 product README merely to satisfy the validator.
 
-## Agent Workflow
+## Contributor Workflow
 
 1. Classify the changed behaviour with the Feature or Implementation Documentation Guide.
 2. Locate every canonical README that already links its source path.
