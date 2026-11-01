@@ -1,11 +1,12 @@
-# GitHub Copilot Instructions for CNC Portal
+# Development Standards for CNC Portal
 
-This directory contains comprehensive coding guidelines and instructions for the CNC Portal project. Each file focuses on specific aspects
-of development to maintain consistency and quality.
+This directory contains shared coding, testing, formatting and review standards for human developers and AI agents. The directory name is
+retained for existing tool integrations; it does not make these technical standards agent-only.
 
 ## Project Overview
 
-> Repo-wide orientation lives in [`AGENTS.md`](../../AGENTS.md). This folder holds deeper area-specific guides.
+> [`README.md`](../../README.md) owns setup; [`CONTRIBUTION.md`](../../CONTRIBUTION.md) owns the shared contribution contract and validation
+> commands. [`AGENTS.md`](../../AGENTS.md) adds AI-agent execution procedures. This folder holds deeper area-specific standards.
 
 CNC Portal is a Crypto Native Corporation Portal built with:
 
@@ -36,18 +37,6 @@ Ask `@/utils/format` (app) / `~/utils/format` (dashboard) for a named style. ESL
 
 For Date Manipulation, always use dayjs library — and for _displaying_ a date, through the named helpers in
 [`formatting-standards.md`](./formatting-standards.md) rather than a pattern string at the call site.
-
-### Context7 MCP Integration
-
-Always use Context7 when you need code generation, setup or configuration steps, or library/API documentation. This means you should
-automatically use the Context7 MCP tools to resolve library IDs and get library documentation without requiring explicit requests.
-
-**When to use Context7:**
-
-- Generating code examples or implementation patterns
-- Setting up project configurations or dependencies
-- Retrieving current API documentation for libraries
-- Checking for library compatibility or version-specific features
 
 ### Security
 
@@ -114,8 +103,8 @@ Make all interfaces accessible for everyone, including users with disabilities
 
 ## Usage
 
-When working on the CNC Portal project, GitHub Copilot will automatically reference these instructions to provide contextually appropriate
-suggestions that follow the established patterns and best practices.
+Human developers read the standards relevant to their change from the contribution guide. AI tools can load them as context, but must also
+follow AGENTS for local planning, documentation lookup tools, delivery operations and evidence readback.
 
 ## Contributing
 

@@ -60,7 +60,7 @@ Naming:
 ## Acceptance traceability in test names
 
 Use acceptance identifiers only on representative tests whose assertions directly prove the criterion. Follow the complete traceability
-contract in the [Feature Documentation Guide](../../docs/platform/feature-specification-guide.md#acceptance-criteria-and-traceability).
+contract in the [Feature Documentation Guide](../../docs/platform/feature-specification-guide.md#acceptance-criterion-traceability).
 
 - When a test represents exactly one canonical ID, put it in the title rather than a comment. Prefer the most specific ID: prefix the test
   title with its single AC, or the enclosing suite title with its single US. Example:
@@ -140,8 +140,9 @@ the contract.
 
 ## Local quality gate
 
-Before pushing, run the per-subproject lint / type-check / test commands documented in [`AGENTS.md`](../../AGENTS.md). The repo does not
-configure a commit-message linting hook, so this gate is enforced manually plus by CI on PRs.
+Before pushing, run the applicable checks in the shared
+[required validation commands](../../CONTRIBUTION.md#required-validation-before-pushing), regardless of the contributor. The repo does not
+configure a commit-message linting hook, so the commit convention is enforced manually plus by review.
 
 ## Performance hygiene
 

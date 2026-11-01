@@ -181,32 +181,7 @@ npm run start
 
 ## Contribution guidelines
 
-Make sure you run the following commands before submitting your PR:
+Human developers: follow [CONTRIBUTION.md](./CONTRIBUTION.md) for the shared contribution contract, development workflow and required
+validation commands.
 
-- /app
-
-```bash
-npm run build
-npm run test
-npm run test:unit
-npm run type-check
-npm run lint
-npm run format
-```
-
-- /backend
-
-```bash
-npm run build
-npm run test
-npm run lint
-npm run format
-```
-
-- /contract
-
-```bash
-npm run test
-npm run lint
-npm run format
-```
+AI agents: start with [AGENTS.md](./AGENTS.md), which adds agent execution procedures to the same shared contribution contract.

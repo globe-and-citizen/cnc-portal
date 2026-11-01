@@ -5,19 +5,14 @@ description: Manage CNC Portal GitHub issues, Sprint hierarchy, pull requests, r
 
 # CNC GitHub flow
 
-Use `gh`, not the GitHub MCP. Keep GitHub text in English and follow the title conventions and public-repository hygiene from `AGENTS.md`.
+Use `gh`, not the GitHub MCP, under `AGENTS.md`. Keep GitHub text in English and follow the shared title conventions and public-repository
+hygiene in [CONTRIBUTION.md](../../../CONTRIBUTION.md#github-and-review).
 
 ## Sprint, Goal and Release issue titles
 
-Sprint planning, Sprint Goal and release issues use their own titles without a Conventional Commit type or gitmoji:
-
-- Sprint root: `[Sprint] Sprint <number> plan — <date range>`.
-- Planned Goal: `[Goals] <outcome> — Sprint <number>`.
-- Catch-all Goal: `[Goals] Sprint <number> Bug and perf`.
-- Release: `[Release] vX.Y.Z`, for example `[Release] v0.17.0`.
-
-Keep Conventional Commit titles for ordinary delivery and coordination issues, commits, and pull requests. Do not rename historical Sprint
-or Goal issues solely to normalize older title variants.
+Follow the shared
+[Sprint, Goal and release issue title rules](../../../.github/copilot-instructions/commit-conventions.md#sprint-goal-and-release-issue-titles).
+That guide owns the formats for every contributor; this section retains the existing navigation anchor.
 
 ## Create or organize an issue
 
@@ -132,7 +127,8 @@ stop at a recommendation or request the same authorization again.
 ## Publish a branch
 
 1. Confirm the branch is `feature/<slug>` and inspect the exact diff before staging. Do not stage unrelated work.
-2. Run the validation listed in `AGENTS.md` for every touched subproject.
+2. Run the [shared validation](../../../CONTRIBUTION.md#required-validation-before-pushing) for every touched subproject, plus any
+   applicable agent execution checks.
 3. Commit each logical change atomically, then push the feature branch. Never push directly to `main`, `master`, or `develop`; never
    force-push without explicit approval.
 4. Open a draft PR against `develop` unless the user asks for review-ready status. Use `.github/pull_request_template.md`, describe user or
