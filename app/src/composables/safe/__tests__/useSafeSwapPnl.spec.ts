@@ -179,6 +179,33 @@ describe('[US-SAFE-007] useSafeSwapPnl', () => {
     expect(data.value).toBeUndefined()
   })
 
+  it('reports an empty P&L when no Safe exists at the address', () => {
+    mockTransfers.data.value = []
+    vi.mocked(useGetSafeBalancesQuery).mockReturnValueOnce({
+      data: ref(undefined),
+      isLoading: ref(false),
+      error: ref(Object.assign(new Error('Not found'), { status: 404 }))
+    } as unknown as ReturnType<typeof useGetSafeBalancesQuery>)
+
+    const { data, isError } = useSafeSwapPnl(SAFE)
+
+    expect(isError.value).toBe(false)
+    expect(data.value?.count).toBe(0)
+  })
+
+  it('reports an error when the Safe balances are unavailable', () => {
+    vi.mocked(useGetSafeBalancesQuery).mockReturnValueOnce({
+      data: ref(undefined),
+      isLoading: ref(false),
+      error: ref(Object.assign(new Error('Gateway down'), { status: 503 }))
+    } as unknown as ReturnType<typeof useGetSafeBalancesQuery>)
+
+    const { data, isError } = useSafeSwapPnl(SAFE)
+
+    expect(isError.value).toBe(true)
+    expect(data.value).toBeUndefined()
+  })
+
   it('looks nothing up without a Safe address', () => {
     const { data } = useSafeSwapPnl(undefined)
 
