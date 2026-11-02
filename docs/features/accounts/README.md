@@ -1331,7 +1331,7 @@ configured target for operations already being prepared.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `53676dc102c47e48928821e23c097f915bc73115`
+**Implementation evidence reviewed against:** `67d32226ed532ad508b7b352a609d519dc3a14e6`
 
 - [Bank deposit modal](../../../app/src/components/sections/BankView/forms/DepositModal.vue),
   [Bank transfer modal](../../../app/src/components/sections/BankView/forms/TransferModal.vue),
@@ -1525,9 +1525,10 @@ and reactive cursor, timezone, trust and imitation filters. The query preserves 
 
 The swap P&L in the Wallet overview reads the Safe transfer history, the Gateway USD balances, daily CoinGecko quotes through the backend,
 and the CoW Protocol orders of each swap transaction. A CoW lookup that fails or returns no order leaves the fee unreported and never hides
-the other figures. The composable filters the original transfer and balance rows without replacing their response types or objects;
-timestamps, metadata and raw amount strings remain available. Refunds are netted in base units during valuation. A settled report is
-retained only while refreshing the same Safe; switching or clearing the Safe hides the previous report immediately. Implementation:
+the other figures. A Gateway balances 404 means no Safe exists at the address: the report is empty rather than failed. The composable
+filters the original transfer and balance rows without replacing their response types or objects; timestamps, metadata and raw amount
+strings remain available. Refunds are netted in base units during valuation. A settled report is retained only while refreshing the same
+Safe; switching or clearing the Safe hides the previous report immediately. Implementation:
 [shared transfer grouping and netting](../../../app/src/utils/safe/swapTransfers.ts),
 [swap P&L calculation](../../../app/src/utils/safe/swapPnl.ts), [swap valuation and CoW fees](../../../app/src/utils/safe/swapValuation.ts),
 [swap P&L composable](../../../app/src/composables/safe/useSafeSwapPnl.ts), [CoW order query](../../../app/src/queries/cow.queries.ts),

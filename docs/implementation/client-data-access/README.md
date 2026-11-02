@@ -88,7 +88,9 @@ Swap selection, daily quote requests and valuation share
 and CoW responses once per report. The [P&L composable](../../../app/src/composables/safe/useSafeSwapPnl.ts) returns the per-swap report
 Accounting books and the [average-cost tracking](../../../app/src/utils/safe/costBasis.ts) the Safe page shows, both from one set of
 sources; it requests the daily quotes either one reads. It keeps settled results only while refreshing the same Safe; changing or clearing
-its address discards them.
+its address discards them. A Gateway balances 404 means no Safe exists at the address, so the composable reports an empty P&L rather than an
+error: a team whose default Safe was never deployed, or was deployed on another network, still gets its Accounting reports. Other balance
+failures remain errors and keep the `Safe swap P&L` source partial.
 
 Executable evidence: [Gateway request tests](../../../app/src/queries/__tests__/safeClient.queries.spec.ts),
 [pagination and metadata unit tests](../../../app/src/queries/__tests__/safe.queries.spec.ts),
@@ -205,7 +207,7 @@ change refreshes. Executable evidence: [read queue tests](../../../app/src/queri
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `f15dccbe52468b554ce87b92f5db48411b921bb9`
+**Implementation evidence reviewed against:** `67d32226ed532ad508b7b352a609d519dc3a14e6`
 
 - [Query barrel](../../../app/src/queries/index.ts), [query factory](../../../app/src/queries/queryFactory.ts), and
   [single-file upload query](../../../app/src/queries/file.queries.ts)

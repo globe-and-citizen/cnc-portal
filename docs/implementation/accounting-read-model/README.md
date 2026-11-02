@@ -183,11 +183,12 @@ books that figure, and a `Safe Market Value Adjustment` line in the same operati
 `Cash — Safe` and its carrying basis keep the price paid while `Swap P&L` totals the overview figure. A swap the overview does not value,
 such as a previous Safe's, keeps only its realized result. The composable waits for fee lookups and keeps its last settled value while
 sources reload or a refresh fails for the same Safe. Changing or clearing the Safe discards that settled report; reports wait for its first
-answer, and a read failure or an unpriced asset makes Accounting partial. A prior non-exchange payment depleted at a different
-transaction-price valuation invalidates later automatic swap basis; other payment rules remain unchanged. Reports wait for the order lookups
-to settle, so no report or export is shown without a fee that is still loading; a missing or failed lookup never makes Accounting partial,
-and the fee then stays inside the acquired asset's price. Network/DEX fees are not inferred. Cross-transaction swap intents and arbitrary
-DeFi operations require additional protocol evidence and remain a boundary of automatic classification.
+answer, and a read failure or an unpriced asset makes Accounting partial. A Gateway balances 404 is not a read failure: no Safe exists at
+the address, so the report is empty and the reports are not withheld. A prior non-exchange payment depleted at a different transaction-price
+valuation invalidates later automatic swap basis; other payment rules remain unchanged. Reports wait for the order lookups to settle, so no
+report or export is shown without a fee that is still loading; a missing or failed lookup never makes Accounting partial, and the fee then
+stays inside the acquired asset's price. Network/DEX fees are not inferred. Cross-transaction swap intents and arbitrary DeFi operations
+require additional protocol evidence and remain a boundary of automatic classification.
 
 The read-only Safe holdings use the Safe Client Gateway balance response for current wallet valuation. A nonzero supported holding with a
 missing, nonpositive, or nonfinite USD price keeps the total incomplete, just as unavailable discovered valuations do. A confirmed zero
@@ -739,7 +740,7 @@ because deposits and company-pocket transfers are not manual assignment targets.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `f15dccbe52468b554ce87b92f5db48411b921bb9`
+**Implementation evidence reviewed against:** `67d32226ed532ad508b7b352a609d519dc3a14e6`
 
 - [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts),
   [source-status projection](../../../app/src/composables/accounting/useAccountingStatus.ts),

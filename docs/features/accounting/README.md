@@ -55,8 +55,9 @@ posting books the part the cash lines do not carry. `Cash — Safe` keeps the pr
 plus that adjustment, and `Swap P&L` totals the per-swap report. The Safe Wallet overview shows an average-cost P&L instead; both agree
 while the assets received are still held and differ once one is spent or bought again. A `Swap P&L` gain reads as revenue and a
 trial-balance credit; a loss reads as an expense and a debit, never as a negative amount. Ancillary mints and ambiguous batches require
-classification. Missing decimals or acquisition basis keeps Accounting incomplete. Cross-transaction intents and arbitrary DeFi actions need
-additional protocol evidence. See the
+classification. Missing decimals or acquisition basis keeps Accounting incomplete. A default Safe that does not exist on the network (never
+deployed, or deployed elsewhere) has no swaps to value and does not withhold the reports. Cross-transaction intents and arbitrary DeFi
+actions need additional protocol evidence. See the
 [Accounting Read Model](../../implementation/accounting-read-model/README.md#safe-assets-and-exchanges) for these boundaries and the
 [exchange regression suite](../../../app/src/utils/accounting/__tests__/safeExchanges.spec.ts) and
 [price-paid regressions](../../../app/src/utils/accounting/__tests__/safeExchanges.pricePaid.spec.ts),
@@ -938,7 +939,7 @@ valuation gap. The existing completeness rules apply to every booked movement. S
 [Safe pagination and metadata unit tests](../../../app/src/queries/__tests__/safe.queries.spec.ts) and
 [Safe source-mapping tests](../../../app/src/utils/accounting/__tests__/safe.spec.ts). Live product review remains pending.
 
-**Implementation evidence reviewed against:** `07e739b663ef53b14340b641a3fc4027f1d566a1`
+**Implementation evidence reviewed against:** `67d32226ed532ad508b7b352a609d519dc3a14e6`
 
 - [Accounting page](../../../app/src/components/sections/AccountingView/AccountingPage.vue),
   [team routes](../../../app/src/router/index.ts), and [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts)
