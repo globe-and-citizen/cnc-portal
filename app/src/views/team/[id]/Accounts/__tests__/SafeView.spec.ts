@@ -106,8 +106,7 @@ describe('[US-SAFE-001] [US-SAFE-002] SafeView.vue', () => {
       TokenHoldingsSection: true,
       SafeTransactions: true,
       SafeIncomingTransactions: true,
-      SafeSwapsTable: true,
-      SetSafeAddressAction: true
+      SafeSwapsTable: true
     }
 
     beforeEach(() => {
@@ -134,7 +133,7 @@ describe('[US-SAFE-001] [US-SAFE-002] SafeView.vue', () => {
       mockSafeDepositRouterReads.safeAddress.data.value = SAFE
     })
 
-    it('offers a new Safe once, on the missing Safe notice, and hides the investments warning', () => {
+    it('offers a new Safe once, on the missing Safe notice', () => {
       safeQueries.bytecode.value = '0x'
       const wrapper = mount(SafeView, { global: { stubs } })
 
@@ -145,11 +144,10 @@ describe('[US-SAFE-001] [US-SAFE-002] SafeView.vue', () => {
           .findComponent({ name: 'SafeAddModal' })
           .exists()
       ).toBe(true)
-      expect(wrapper.find('[data-test="safe-router-out-of-sync"]').exists()).toBe(false)
       wrapper.unmount()
     })
 
-    it('[AC-US-SAFE-001-19] offers a new Safe in the Safe history and warns when investments go to another Safe', () => {
+    it('[AC-US-SAFE-001-19] offers a new Safe in the Safe history and leaves the deposit router setting to the SHER Token page', () => {
       safeQueries.bytecode.value = '0x6080'
       const wrapper = mount(SafeView, { global: { stubs } })
 
@@ -160,17 +158,8 @@ describe('[US-SAFE-001] [US-SAFE-002] SafeView.vue', () => {
           .findComponent({ name: 'SafeAddModal' })
           .exists()
       ).toBe(true)
-      const warning = wrapper.find('[data-test="safe-router-out-of-sync"]')
-      expect(warning.findComponent({ name: 'SetSafeAddressAction' }).props('compact')).toBe(true)
-      wrapper.unmount()
-    })
-
-    it('shows no investments warning when the router already points at the default Safe', () => {
-      mockSafeDepositRouterReads.safeAddress.data.value = SAFE
-      safeQueries.bytecode.value = '0x6080'
-      const wrapper = mount(SafeView, { global: { stubs } })
-
-      expect(wrapper.find('[data-test="safe-router-out-of-sync"]').exists()).toBe(false)
+      expect(wrapper.findComponent({ name: 'SetSafeAddressAction' }).exists()).toBe(false)
+      expect(wrapper.text()).not.toContain('Point to the default Safe')
       wrapper.unmount()
     })
   })
