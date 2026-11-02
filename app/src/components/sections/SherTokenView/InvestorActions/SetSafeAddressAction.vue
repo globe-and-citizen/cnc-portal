@@ -1,18 +1,7 @@
 <template>
   <div v-if="safeDepositRouterAddress">
     <UTooltip :text="safeAddressTooltip">
-      <UButton
-        v-if="compact"
-        color="primary"
-        icon="i-lucide-link"
-        label="Point to the default Safe"
-        :loading="isLoading"
-        :disabled="isDisabled"
-        data-test="set-safe-address-button"
-        @click="handleSetSafeAddress"
-      />
       <ActionButton
-        v-else
         icon="heroicons:link"
         icon-bg="bg-indigo-50 dark:bg-indigo-950"
         icon-color="text-indigo-700 dark:text-indigo-400"
@@ -43,9 +32,6 @@ import { useTeamStore } from '@/stores'
 import { classifyError } from '@/utils/errors/classifyContractError'
 import { log } from '@/lib/logging'
 import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
-
-/** `compact` renders a regular page button instead of the SHER page action tile. */
-defineProps<{ compact?: boolean }>()
 
 const teamStore = useTeamStore()
 const { isWriteDisabled, archivedTooltip } = useTeamWriteGuard()
