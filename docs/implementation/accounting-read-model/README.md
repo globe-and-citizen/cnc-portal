@@ -15,8 +15,9 @@ histories and books; owner classification of eligible receipts; and reconciliati
 retain a distinct deployment account and explicit spendability restrictions. Shared infrastructure is not automatically company custody. The
 policy inventory records the inspected receivers and missing consumers.
 
-These requirements are not implemented by the client-side runtime described below. In particular, `rawContractTokenTransfers` reaches Bank
-history but is not consumed by `toJournalEntrySources`; Payroll and Expense eventless wallet receipts are missing; their deposit mappers
+These requirements are not implemented by the client-side runtime described below. In particular, `toJournalEntrySources` consumes
+`rawContractTokenTransfers` only for an incoming Bank transfer from outside the company that no Bank event accounts for, booked as
+`UC-BANK-02`; eventless Bank outflows are not booked; Payroll and Expense eventless wallet receipts are missing; their deposit mappers
 assume internal funding; and Investor, Router, Campaign, Vesting, and governance holdings lack complete direct-movement discovery. Resolving
 an unknown source to an unresolved Bank account does not establish an internal transfer.
 
@@ -676,8 +677,9 @@ evidence, returning it as a reconciliation gap. Bank fees are collected from eac
 currency only from the next movement in the same transaction and Bank, while V1/V2 query their version-specific FeeCollectors by payer.
 Those protocol FeeCollectors are not part of the company's internal-pocket registry. Account and statement drill-downs select complete
 JournalEntry records by a concrete Account or account family, then flatten their validated lines for display and exports. Their running
-balances update only on lines posted to the selected account; an aggregate statement line has no single running balance. A fee remains an
-ordinary line of the source operation in every drill-down.
+balances update only on lines posted to the selected account; an aggregate statement line has no single running balance. Their "Total
+movements" row, on screen and in exports, sums the selected account's own debits and credits in the window; an aggregate line repeats its
+statement figure in both columns. A fee remains an ordinary line of the source operation in every drill-down.
 
 All report identities, totals, and drill-down running balances above use the exact fixed-scale journal integers. Presenters and exporters
 convert those values to numbers and apply human-readable rounding only after the selected snapshot and its aggregates have been calculated;
@@ -740,7 +742,7 @@ because deposits and company-pocket transfers are not manual assignment targets.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `67d32226ed532ad508b7b352a609d519dc3a14e6`
+**Implementation evidence reviewed against:** `4e41f6b7dc10c9cfc87aaafb7ecc735da1e7beff`
 
 - [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts),
   [source-status projection](../../../app/src/composables/accounting/useAccountingStatus.ts),

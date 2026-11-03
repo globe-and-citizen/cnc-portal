@@ -300,8 +300,8 @@ remain as recorded above.
 - [x] `AC-US-BANK-003-04` Every company member can inspect Bank balances and history regardless of transfer permission.
 - [x] `AC-US-BANK-003-05` Grouped events from one transaction remain attributable to the same transaction hash.
 - [x] `AC-US-BANK-003-06` Bank history surfaces money that arrives at or leaves the Bank by a direct token transfer, even when the Bank
-      emitted no event of its own — for example, the funds swept in when a Community Credit round is funded. A movement a Bank event already
-      records is not shown a second time.
+      emitted no event of its own — for example, the funds swept in when a Community Credit round is funded, or a stablecoin sent straight
+      to a first-generation Bank. A movement a Bank event already records is not shown a second time.
 
 #### Edge & Error Cases
 
@@ -1331,7 +1331,7 @@ configured target for operations already being prepared.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `67d32226ed532ad508b7b352a609d519dc3a14e6`
+**Implementation evidence reviewed against:** `4e41f6b7dc10c9cfc87aaafb7ecc735da1e7beff`
 
 - [Bank deposit modal](../../../app/src/components/sections/BankView/forms/DepositModal.vue),
   [Bank transfer modal](../../../app/src/components/sections/BankView/forms/TransferModal.vue),
