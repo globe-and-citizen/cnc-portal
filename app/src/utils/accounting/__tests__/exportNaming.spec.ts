@@ -70,6 +70,10 @@ describe('exportFilename', () => {
   it('names the summary export generically', () => {
     expect(filenameBase({ key: 'summary' })).toBe('Accounting Report')
   })
+
+  it('names the account assignments export after its section', () => {
+    expect(filenameBase({ key: 'assignments' })).toBe('Account Assignments')
+  })
 })
 
 describe('exportFilename extension and sanitization', () => {

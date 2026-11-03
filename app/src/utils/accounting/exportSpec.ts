@@ -13,7 +13,7 @@ export interface AccountingExportSnapshot {
 }
 
 /** The exportable accounting sections, in display order. */
-export type SectionKey = 'summary' | 'income' | 'balance' | 'trial' | 'ledger'
+export type SectionKey = 'summary' | 'income' | 'balance' | 'trial' | 'ledger' | 'assignments'
 
 /**
  * A section to export, plus the filter state that section is currently showing.
