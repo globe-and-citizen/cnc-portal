@@ -16,8 +16,9 @@ Sprint planning, Sprint Goal and release issues use their own titles without a C
 - Catch-all Goal: `[Goals] Sprint <number> Bug and perf`.
 - Release: `[Release] vX.Y.Z`, for example `[Release] v0.17.0`.
 
-Keep Conventional Commit titles for ordinary delivery and coordination issues, commits, and pull requests. Do not rename historical Sprint
-or Goal issues solely to normalize older title variants.
+Release promotion PRs use the same `[Release] vX.Y.Z` title as their tracking release issue, without a Conventional Commit type or gitmoji.
+Keep Conventional Commit titles for ordinary delivery and coordination issues, commits, and other pull requests. Do not rename historical
+Sprint or Goal issues solely to normalize older title variants.
 
 ## Create or organize an issue
 
@@ -147,7 +148,8 @@ stop at a recommendation or request the same authorization again.
 
 For a repository release, follow the canonical [release procedure](../../../docs/platform/RELEASE_AUTOMATION.md). Create or reuse its
 tracking issue from the [release issue template](../../../.github/ISSUE_TEMPLATE/release.md), complete native hierarchy and Project setup,
-and use the [release PR template](../../../.github/PULL_REQUEST_TEMPLATE/release.md) for promotion from `release/vX.Y.Z` to `main`.
+and use the [release PR template](../../../.github/PULL_REQUEST_TEMPLATE/release.md) for promotion from `release/vX.Y.Z` to `main`, with the
+same `[Release] vX.Y.Z` title as the tracking issue.
 
 Assess combined-release relationships and record exact revisions, applicable evidence, independent review and required human decisions.
 After merge, verify publication and the need for `main` → `develop` synchronization under the guide. Keep the issue open, or reopen it,

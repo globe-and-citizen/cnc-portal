@@ -16,6 +16,7 @@ import {
   safeSwapTransfers
 } from '@/utils/safe/swapValuation'
 import { safeMovements } from '@/utils/safe/swapTransfers'
+import { isSafeNotIndexedError } from '@/utils/safe/model'
 import type { SafeSwapPnl } from '@/utils/safe/swapPnl'
 import type { SafeCostBasis } from '@/utils/safe/costBasis'
 
@@ -89,11 +90,16 @@ export function useSafeSwapPnl(safeAddress: MaybeRefOrGetter<string | undefined>
       rates.value.some((rate) => rate.isLoading) ||
       orders.value.some((order) => order.isLoading)
   )
-  /** A failed refresh keeps the last answer; only a source that never answered is an error. */
+  /**
+   * A failed refresh keeps the last answer; only a source that never answered is an error.
+   * The Gateway answers 404 for an address with no Safe: it holds nothing, which is no error.
+   */
   const isError = computed(
     () =>
       (!!transfers.error.value && !transfers.data.value) ||
-      (!!balances.error.value && !balances.data.value)
+      (!!balances.error.value &&
+        !balances.data.value &&
+        !isSafeNotIndexedError(balances.error.value))
   )
   const settled = computed<
     { address: string; report: SafeSwapPnl; costBasis: SafeCostBasis } | undefined

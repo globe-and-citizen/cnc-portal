@@ -15,8 +15,9 @@
 - **Gitmoji is required**, paired with the type.
 - **Imperative, present tense** in the subject ("add", not "added").
 - **Subject ≤ 72 chars, no trailing period.**
-- The same format applies to **PR titles and ordinary issue titles**. Sprint plan, Sprint Goal and release issue titles follow the
-  [dedicated issue title rules](../../.agents/skills/cnc-github-flow/SKILL.md#sprint-goal-and-release-issue-titles) instead.
+- The same format applies to **ordinary PR titles and ordinary issue titles**. Sprint plan, Sprint Goal and release issue titles, plus
+  release promotion PR titles, follow the
+  [dedicated title rules](../../.agents/skills/cnc-github-flow/SKILL.md#sprint-goal-and-release-issue-titles) instead.
 
 ## Type → gitmoji mapping
 
