@@ -57,3 +57,36 @@ export function presentJournalAccountAssignments(journal: readonly JournalEntry[
   })
   return { rows, entryCount: entries.length }
 }
+
+export const ACCOUNT_ASSIGNMENTS_TITLE = 'Account Assignments'
+
+/** The Account Assignments columns, shared by the screen and both exporters. */
+export const ACCOUNT_ASSIGNMENT_COLUMNS = [
+  { value: 'date', label: 'Date' },
+  { value: 'transaction', label: 'Transaction' },
+  { value: 'txHash', label: 'Tx hash' },
+  { value: 'account', label: 'Account' },
+  { value: 'currency', label: 'Currency' },
+  { value: 'dr', label: 'Debit (USD)' },
+  { value: 'cr', label: 'Credit (USD)' },
+  { value: 'assignment', label: 'Account assignment' }
+] as const
+
+export const INFERRED_ASSIGNMENT = 'Inferred from source evidence'
+export const COMBINED_MOVEMENTS_NOTE =
+  'This journal entry combines movements and cannot receive one account assignment.'
+
+/**
+ * The printed "Account assignment" cell of a journal entry's first line: the saved
+ * account (and note), or that it was inferred, preceded by the read-only notice
+ * for a compound entry. Blank on the entry's follow-up lines, as on screen.
+ */
+export function assignmentStatus({
+  isFirst,
+  reviewRequired,
+  savedDecision
+}: Pick<JournalAccountAssignmentRow, 'isFirst' | 'reviewRequired' | 'savedDecision'>): string {
+  if (!isFirst) return ''
+  const decision = savedDecision ?? INFERRED_ASSIGNMENT
+  return reviewRequired ? `${COMBINED_MOVEMENTS_NOTE} ${decision}` : decision
+}

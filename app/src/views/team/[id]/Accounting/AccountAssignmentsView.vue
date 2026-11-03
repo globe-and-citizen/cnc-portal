@@ -96,10 +96,9 @@
           />
           <div v-else class="text-muted flex flex-col gap-1 text-xs">
             <span v-if="row.reviewRequired" data-test="assignment-readonly">
-              This journal entry combines movements and cannot receive one account assignment.
+              {{ COMBINED_MOVEMENTS_NOTE }}
             </span>
-            <span v-if="row.savedDecision">{{ row.savedDecision }}</span>
-            <span v-else>Inferred from source evidence</span>
+            <span>{{ row.savedDecision ?? INFERRED_ASSIGNMENT }}</span>
           </div>
         </template>
       </template>
@@ -118,6 +117,9 @@ import { useUserDataStore } from '@/stores/user'
 import { NETWORK } from '@/constant'
 import { formatTxHash } from '@/utils/format'
 import {
+  ACCOUNT_ASSIGNMENT_COLUMNS,
+  COMBINED_MOVEMENTS_NOTE,
+  INFERRED_ASSIGNMENT,
   presentJournalAccountAssignments,
   type JournalAccountAssignmentRow
 } from '@/utils/accounting/journalAccountAssignmentPresenter'
@@ -135,14 +137,7 @@ const isOwner = computed(() => {
 
 const view = computed(() => presentJournalAccountAssignments(accounting.journal.value))
 
-const columns: TableColumn<JournalAccountAssignmentRow>[] = [
-  { accessorKey: 'date', header: 'Date' },
-  { id: 'transaction', header: 'Transaction' },
-  { id: 'txHash', header: 'Tx hash' },
-  { id: 'account', header: 'Account' },
-  { id: 'currency', header: 'Currency' },
-  { id: 'dr', header: 'Debit (USD)' },
-  { id: 'cr', header: 'Credit (USD)' },
-  { id: 'assignment', header: 'Account assignment' }
-]
+const columns: TableColumn<JournalAccountAssignmentRow>[] = ACCOUNT_ASSIGNMENT_COLUMNS.map(
+  ({ value, label }) => ({ id: value, header: label })
+)
 </script>
