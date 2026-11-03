@@ -76,8 +76,19 @@ const CREDIT_BADGE: Partial<Record<JournalEntry['useCase'], string>> = {
   'UC-CREDIT-04': 'bg-slate-500/15 text-slate-600 dark:text-slate-300'
 }
 
+/**
+ * An accrued wage is yellow and a withdrawn wage blue, whatever its currency: a
+ * SHER-only accrual touches equity accounts alone and would otherwise read as an
+ * investment.
+ */
+const PAYROLL_BADGE: Partial<Record<JournalEntry['useCase'], string>> = {
+  'UC-CASH-02': CATEGORY_BADGE.Payroll,
+  'UC-CASH-03': 'bg-blue-500/10 text-blue-600 dark:text-blue-400'
+}
+
 /** Badge style for an account-derived JournalEntry category. */
 export function badgeClassOf(entry: JournalEntry): string {
-  if (entry.useCase === 'UC-CASH-03') return 'bg-accent/10 text-accent'
-  return CREDIT_BADGE[entry.useCase] ?? CATEGORY_BADGE[categoryOf(entry)]
+  return (
+    PAYROLL_BADGE[entry.useCase] ?? CREDIT_BADGE[entry.useCase] ?? CATEGORY_BADGE[categoryOf(entry)]
+  )
 }
