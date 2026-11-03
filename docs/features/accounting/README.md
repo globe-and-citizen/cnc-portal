@@ -17,7 +17,8 @@ These acceptance criteria follow the
   before display rounding.
 - Ledger quantities and recorded rates display up to six decimals with trailing zeros trimmed. Complete quantities and recorded rates remain
   inspectable by hover, keyboard focus, or tap; positive quantities that would display as zero are identified as below display precision.
-  Display formatting does not change journal calculations or the existing export quantities.
+  Display formatting does not change journal calculations. Excel exports keep the exact quantities; a PDF prints the ledger as the screen
+  shows it.
 - Payroll is accrued when an eligible work week ends. Expense Account spending is recognized when cash moves. Transfers between known
   company pockets are not revenue or expense.
 - Accounting includes every known contract generation. Each deployment remains a distinct cash account even when report totals aggregate the
@@ -361,13 +362,14 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 #### Happy Path
 
 - [x] `AC-US-ACCT-004-01` A member can export the General Ledger and each financial statement to Excel or PDF.
-- [x] `AC-US-ACCT-004-02` A summary export can include several selected sections.
+- [x] `AC-US-ACCT-004-02` A summary export can include several selected sections, including Account Assignments.
 - [x] `AC-US-ACCT-004-03` A statement or account drill-down can be exported independently.
 
 #### Business Rules
 
 - [x] `AC-US-ACCT-004-04` An export uses one snapshot of the current `JournalEntry` collection and the same filters as the reviewed report.
-- [x] `AC-US-ACCT-004-05` Ledger and drill-down exports retain complete matching entries and full transaction hashes.
+- [x] `AC-US-ACCT-004-05` Ledger and drill-down exports retain complete matching entries. Excel keeps full transaction hashes and exact
+      quantities; a PDF prints the shortened hashes and rounded quantities shown on screen, with columns sized in the screen's proportions.
 - [x] `AC-US-ACCT-004-06` Balance Sheet exports retain concrete account rows and the account contributions behind `Earnings to date`.
 - [x] `AC-US-ACCT-004-07` Monetary display conversion and rounding happen after exact journal and report totals are calculated.
 
@@ -939,7 +941,7 @@ valuation gap. The existing completeness rules apply to every booked movement. S
 [Safe pagination and metadata unit tests](../../../app/src/queries/__tests__/safe.queries.spec.ts) and
 [Safe source-mapping tests](../../../app/src/utils/accounting/__tests__/safe.spec.ts). Live product review remains pending.
 
-**Implementation evidence reviewed against:** `67d32226ed532ad508b7b352a609d519dc3a14e6`
+**Implementation evidence reviewed against:** `3e6580ca60c995860bf73d9e1d61857e3e49c92c`
 
 - [Accounting page](../../../app/src/components/sections/AccountingView/AccountingPage.vue),
   [team routes](../../../app/src/router/index.ts), and [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts)
@@ -960,7 +962,8 @@ valuation gap. The existing completeness rules apply to every booked movement. S
 - [Account assignment boundary](../../../app/src/utils/accounting/journalAccountAssignment.ts),
   [assignment route](../../../app/src/views/team/%5Bid%5D/Accounting/AccountAssignmentsView.vue), and
   [assignment API](../../../backend/src/controllers/journalAccountAssignmentController.ts)
-- [Accounting exports](../../../app/src/composables/accounting/useAccountingExport.ts) and
+- [Accounting exports](../../../app/src/composables/accounting/useAccountingExport.ts),
+  [report section picker](../../../app/src/components/sections/AccountingView/ExportReportModal.vue), and
   [journal export snapshot](../../../app/src/utils/accounting/exportSpec.ts)
 - [Report interaction tests](../../../app/src/views/team/%5Bid%5D/Accounting/__tests__/AccountingReports.spec.ts),
   [Balance Sheet drill-down tests](../../../app/src/views/team/%5Bid%5D/Accounting/__tests__/BalanceSheetDrilldown.spec.ts),
