@@ -3,10 +3,18 @@ import type { JournalAccountAssignmentRecord } from '@/types/journal-account-ass
 import { accountFor } from '../accountRegistry'
 import { finalizeJournal } from './assembleAccounting'
 import { applyJournalAccountAssignments } from '../journalAccountAssignment'
-import { presentJournalAccountAssignments } from '../journalAccountAssignmentPresenter'
+import {
+  COMBINED_MOVEMENTS_NOTE,
+  INFERRED_ASSIGNMENT,
+  assignmentStatus,
+  presentJournalAccountAssignments
+} from '../journalAccountAssignmentPresenter'
+import { buildTables } from '@/lib/accounting/pdf'
+import { buildSheets } from '@/lib/accounting/spreadsheet'
 import { journalLedgerRows } from '../journalLedgerPresenter'
 import { makeJournalEntryDraft, type JournalEntryDraft } from '../journalEntryDraft'
 import { ADDR } from './fixtures'
+import { formatTxHash } from '@/utils/format'
 
 const TX = `0x${'a'.repeat(64)}`
 const BANK2 = '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'
@@ -167,5 +175,43 @@ describe('JournalEntry account-assignment projection', () => {
     expect(view.rows).toHaveLength(4)
     expect(new Set(view.rows.map((row) => row.currency)).size).toBe(2)
     expect(view.rows[0]!.target).toBeUndefined()
+  })
+})
+
+describe('Account Assignments export', () => {
+  it('states an inferred assignment once per journal entry', () => {
+    const { rows } = presentJournalAccountAssignments(finalizeJournal([withdrawal()]))
+    expect(rows.map(assignmentStatus)).toEqual([INFERRED_ASSIGNMENT, ''])
+  })
+
+  it('prints the saved account and its note', () => {
+    const journal = applyJournalAccountAssignments(finalizeJournal([withdrawal()]), [
+      assignment('interest-expense', 'Pay the founder interest')
+    ])
+    const row = presentJournalAccountAssignments(journal).rows[0]!
+    expect(assignmentStatus(row)).toBe('Interest Expense — Pay the founder interest')
+  })
+
+  it('flags a compound withdrawal as read-only', () => {
+    const journal = finalizeJournal([withdrawal(), withdrawal({ id: `${TX}-9` })])
+    const row = presentJournalAccountAssignments(journal).rows[0]!
+    expect(assignmentStatus(row)).toBe(`${COMBINED_MOVEMENTS_NOTE} ${INFERRED_ASSIGNMENT}`)
+  })
+
+  it('prints a shortened hash in the PDF and keeps the full hash and amounts in Excel', () => {
+    const books = { journal: finalizeJournal([withdrawal()]) }
+    const [table] = buildTables(books, [{ key: 'assignments' }])
+    const [sheet] = buildSheets(books, [{ key: 'assignments' }])
+
+    expect(table!.title).toBe('Account Assignments')
+    expect(table!.body[0]!.slice(2, 7)).toEqual([
+      formatTxHash(TX),
+      'Operating Expense',
+      'USDC',
+      '$100.00',
+      ''
+    ])
+    expect(sheet!.name).toBe('Account Assignments')
+    expect(sheet!.rows[3]!.slice(2, 7)).toEqual([TX, 'Operating Expense', 'USDC', 100, ''])
   })
 })

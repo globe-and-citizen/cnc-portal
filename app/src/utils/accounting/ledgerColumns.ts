@@ -41,6 +41,24 @@ export const LEDGER_COLUMNS: ReadonlyArray<LedgerColumn> = [
 ]
 
 /**
+ * Default on-screen width (px) of each ledger column. The PDF splits the page in
+ * the same proportions, so the printed ledger keeps the screen's compaction.
+ */
+export const LEDGER_COLUMN_WIDTHS: Readonly<Record<LedgerColumnKey, number>> = {
+  date: 160,
+  action: 120,
+  transaction: 180,
+  txHash: 180,
+  activity: 320,
+  account: 200,
+  currency: 100,
+  quantity: 120,
+  rate: 100,
+  dr: 120,
+  cr: 120
+}
+
+/**
  * The visible ledger columns for an export, in canonical order — an empty or
  * absent selection means "all columns". Shared by the PDF and Excel exporters so
  * both honour the same order regardless of the order columns were toggled.

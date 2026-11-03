@@ -646,6 +646,8 @@ flowchart TB
     journal --> balance[Balance Sheet]
     journal --> drilldowns[Account and statement drill-downs]
     summary --> summaryExports[Summary exports]
+    journal --> assignments[Account Assignments]
+    assignments --> summaryExports
     income --> incomeExports[Income Statement PDF and Excel exports]
     balance --> balanceExports[Balance Sheet PDF and Excel exports]
     drilldowns --> drilldownExports[Drill-down PDF and Excel exports]
@@ -663,23 +665,24 @@ text. Every transaction-backed journal group uses its transaction hash as its id
 traceability evidence. A fee is an ordinary `Transaction Fee Expense` line in its source operation; there is no `Fee` pseudo-category or
 separate fee entry in this projection. Ledger action and transaction labels are derived from the entry's assigned or inferred accounts and
 source use-case evidence; no persisted presentation category participates. The General Ledger renders the transaction hash once on the
-entry's first line and preserves its full value in PDF and spreadsheet exports; synthetic operations have no transaction-hash value. A
-transaction-backed hash links to the configured network block explorer in a separate tab. Activity narration and exported activity text
-reuse the canonical address and duration formatters rather than maintaining Accounting-specific display rules. Quantity cells use a separate
-six-decimal display label while their complete decimal-string quantity remains available for inspection and export. Positive quantities that
-would round to zero display `<0.000001`. Rate cells retain the recorded six-decimal rate with trailing zeros trimmed; their details identify
-the recorded USD price per token rather than claiming precision beyond the journal's rate scale. Both cells expose details through a hover
-tooltip, keyboard focus, or a tap-generated click, with Escape and focus loss dismissing the detail. Unavailable and absent movements remain
-plain text. No formatted label participates in valuation, debit/credit sums, or running balances. Every visible General Ledger column,
-including the account drill-down Balance column, has bounded widths and supports pointer, touch, and keyboard resizing; a double-click
-restores its default width. JournalEntry assembly groups source postings and withholds a `FeePaid` source without matching Bank-outflow
-evidence, returning it as a reconciliation gap. Bank fees are collected from each supported generation: V0/V0.1 local events infer an ERC-20
-currency only from the next movement in the same transaction and Bank, while V1/V2 query their version-specific FeeCollectors by payer.
-Those protocol FeeCollectors are not part of the company's internal-pocket registry. Account and statement drill-downs select complete
-JournalEntry records by a concrete Account or account family, then flatten their validated lines for display and exports. Their running
-balances update only on lines posted to the selected account; an aggregate statement line has no single running balance. Their "Total
-movements" row, on screen and in exports, sums the selected account's own debits and credits in the window; an aggregate line repeats its
-statement figure in both columns. A fee remains an ordinary line of the source operation in every drill-down.
+entry's first line; the spreadsheet export keeps its full value and the PDF prints the shortened form shown on screen. Synthetic operations
+have no transaction-hash value. A transaction-backed hash links to the configured network block explorer in a separate tab. Activity
+narration and exported activity text reuse the canonical address and duration formatters rather than maintaining Accounting-specific display
+rules. Quantity cells use a separate six-decimal display label, also printed in the PDF, while their complete decimal-string quantity
+remains available for inspection and the spreadsheet export. The PDF splits the page width in the default on-screen column proportions.
+Positive quantities that would round to zero display `<0.000001`. Rate cells retain the recorded six-decimal rate with trailing zeros
+trimmed; their details identify the recorded USD price per token rather than claiming precision beyond the journal's rate scale. Both cells
+expose details through a hover tooltip, keyboard focus, or a tap-generated click, with Escape and focus loss dismissing the detail.
+Unavailable and absent movements remain plain text. No formatted label participates in valuation, debit/credit sums, or running balances.
+Every visible General Ledger column, including the account drill-down Balance column, has bounded widths and supports pointer, touch, and
+keyboard resizing; a double-click restores its default width. JournalEntry assembly groups source postings and withholds a `FeePaid` source
+without matching Bank-outflow evidence, returning it as a reconciliation gap. Bank fees are collected from each supported generation:
+V0/V0.1 local events infer an ERC-20 currency only from the next movement in the same transaction and Bank, while V1/V2 query their
+version-specific FeeCollectors by payer. Those protocol FeeCollectors are not part of the company's internal-pocket registry. Account and
+statement drill-downs select complete JournalEntry records by a concrete Account or account family, then flatten their validated lines for
+display and exports. Their running balances update only on lines posted to the selected account; an aggregate statement line has no single
+running balance. Their "Total movements" row, on screen and in exports, sums the selected account's own debits and credits in the window; an
+aggregate line repeats its statement figure in both columns. A fee remains an ordinary line of the source operation in every drill-down.
 
 All report identities, totals, and drill-down running balances above use the exact fixed-scale journal integers. Presenters and exporters
 convert those values to numbers and apply human-readable rounding only after the selected snapshot and its aggregates have been calculated;

@@ -5,6 +5,8 @@ import { periodLabel } from '@/utils/accounting/presenter'
 import type { CncAccounting } from '@/utils/accounting/assemble'
 import { assembleAccounting } from '@/utils/accounting/__tests__/assembleAccounting'
 import { USDC_ADDRESS } from '@/constant'
+import { formatTxHash } from '@/utils/format'
+import { LEDGER_COLUMN_WIDTHS } from '@/utils/accounting/ledgerColumns'
 
 const BANK = '0x1111111111111111111111111111111111111111'
 const CLIENT = '0x7777777777777777777777777777777777777777'
@@ -113,7 +115,7 @@ describe('buildTables (complete report selection)', () => {
     expect(totalRow[2]).toBe('Total movements')
     expect(totalRow[9]).toBe('$100.00') // Debit total
     expect(totalRow[10]).toBe('$100.00') // Credit total
-    expect(ledger.body[0]![3]).toBe(TX_HASH)
+    expect(ledger.body[0]![3]).toBe(formatTxHash(TX_HASH))
   })
 
   it('renders the Activity column via the supplied name resolver', () => {
@@ -314,6 +316,17 @@ describe('exportTablesPdf', () => {
     const tables = buildTables(sampleBooks(), [{ key: 'income' }])
     await exportTablesPdf(tables, { filename: 'income-statement.pdf' })
     expect(saveMock).toHaveBeenCalledWith('income-statement.pdf')
+  })
+
+  it('splits the page width across the ledger columns in the screen proportions', async () => {
+    const tables = buildTables(sampleBooks(), [{ key: 'ledger', columns: ['date', 'activity'] }])
+    await exportTablesPdf(tables, { filename: 'ledger.pdf' })
+
+    const { columnStyles } = autoTableMock.mock.calls[0][1]
+    const [date, activity] = [columnStyles[0].cellWidth, columnStyles[1].cellWidth]
+    // A4 landscape (842pt) minus the 40pt margins on each side.
+    expect(date + activity).toBeCloseTo(762)
+    expect(activity / date).toBeCloseTo(LEDGER_COLUMN_WIDTHS.activity / LEDGER_COLUMN_WIDTHS.date)
   })
 
   it('starts each section on a fresh page when pageBreak is set', async () => {

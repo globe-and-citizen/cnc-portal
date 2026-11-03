@@ -18,6 +18,12 @@ import {
   trialExportTitle
 } from '@/utils/accounting/presenter'
 import type { SectionKey, SectionSpec } from '@/utils/accounting/exportSpec'
+import {
+  ACCOUNT_ASSIGNMENTS_TITLE,
+  ACCOUNT_ASSIGNMENT_COLUMNS,
+  assignmentStatus,
+  presentJournalAccountAssignments
+} from '@/utils/accounting/journalAccountAssignmentPresenter'
 import { generalLedgerSheetRows } from './generalLedgerSheet'
 
 type Cell = string | number
@@ -111,13 +117,33 @@ function trialSheet(books: AccountingExportSnapshot, asOf?: Date | null): SheetR
   ]
 }
 
+function assignmentsSheet(books: AccountingExportSnapshot): SheetRows {
+  const { rows } = presentJournalAccountAssignments(books.journal)
+  return [
+    [ACCOUNT_ASSIGNMENTS_TITLE],
+    [],
+    ACCOUNT_ASSIGNMENT_COLUMNS.map((column) => column.label),
+    ...rows.map((row) => [
+      row.date,
+      row.label,
+      row.txHash ?? '',
+      row.accountLabel ?? row.account,
+      row.currency,
+      usd(row.dr),
+      usd(row.cr),
+      assignmentStatus(row)
+    ])
+  ]
+}
+
 /** The sheet name shown on a tab, per section. */
 const SHEET_NAME: Record<SectionKey, string> = {
   summary: 'Summary',
   income: 'Income Statement',
   balance: 'Balance Sheet',
   trial: 'Trial Balance',
-  ledger: 'General Ledger'
+  ledger: 'General Ledger',
+  assignments: ACCOUNT_ASSIGNMENTS_TITLE
 }
 
 /** Build a single section's sheet from its spec. */
@@ -146,6 +172,8 @@ function sectionSheet(
           journalAccountLabel: spec.journalAccountLabel,
           journalAccountMovements: spec.journalAccountMovements
         })
+      case 'assignments':
+        return assignmentsSheet(books)
     }
   })()
   return { name: SHEET_NAME[spec.key], rows }

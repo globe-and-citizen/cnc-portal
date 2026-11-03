@@ -112,3 +112,15 @@ describe('Summary journal export count', () => {
     expect(view.get('[data-test="section-ledger"]').text()).toContain('0 entries')
   })
 })
+
+describe('Summary export sections', () => {
+  it('offers Account Assignments and exports it with the other sections', async () => {
+    const view = await openExport()
+    expect(view.get('[data-test="section-assignments"]').text()).toContain('Account Assignments')
+
+    await view.get('[data-test="generate-pdf"]').trigger('click')
+
+    const specs = state.exportPdf.mock.calls[0]![0] as { key: string }[]
+    expect(specs.map((spec) => spec.key)).toContain('assignments')
+  })
+})
