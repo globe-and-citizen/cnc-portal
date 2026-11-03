@@ -14,6 +14,14 @@ import {
 } from '../useBankEventsViaLogs'
 import { feeCollectorAddressesForChain, normalizeLegacyBankFeeTokens } from '../bankFees'
 
+/** No chain stablecoin by default, so each test states the tokens it scans. */
+vi.mock('@/constant', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/constant')>()),
+  USDC_ADDRESS: '',
+  USDC_E_ADDRESS: '',
+  USDT_ADDRESS: ''
+}))
+
 const BANK = '0x1111111111111111111111111111111111111111'
 const USDC = '0xa3492d046095affe351cfac15de9b86425e235db'
 const USDT = '0xc5fa85b5c5f9c3a17f5a24b2b55b4516c3a4fa5b'
@@ -74,9 +82,17 @@ describe('supportedTokenAddresses', () => {
       ]
     })
 
-    const tokens = await supportedTokenAddresses(client as unknown as ChainClient, BANK)
+    const tokens = await supportedTokenAddresses(client as unknown as ChainClient, BANK, [])
 
     expect(tokens).toEqual([USDC.toLowerCase(), USDT.toLowerCase()])
+  })
+
+  it('scans the known stablecoins of a Bank that never logged TokenSupportAdded', async () => {
+    const client = makeClient({ supported: [] })
+
+    const tokens = await supportedTokenAddresses(client as unknown as ChainClient, BANK, [USDC])
+
+    expect(tokens).toEqual([USDC.toLowerCase()])
   })
 })
 

@@ -18,7 +18,7 @@
  */
 import { computed, type MaybeRefOrGetter } from 'vue'
 import { parseAbiItem, type Address } from 'viem'
-import { currentChainId } from '@/constant'
+import { currentChainId, USDC_ADDRESS, USDC_E_ADDRESS, USDT_ADDRESS } from '@/constant'
 import { bankAbi as bankV2Abi } from '@/artifacts/abi/V2/generated'
 import { bankAbi as bankV1Abi } from '@/artifacts/abi/V1/generated'
 import { bankAbi as bankV01Abi } from '@/artifacts/abi/V0.1/generated'
@@ -56,14 +56,25 @@ export const bankEventKeys = {
 }
 
 /**
+ * The chain's stablecoins. A first-generation Bank received its tokens through
+ * its initializer without a `TokenSupportAdded` log, and was funded by plain
+ * ERC-20 transfers, so these are always scanned.
+ */
+const CHAIN_STABLECOINS = [USDC_ADDRESS, USDC_E_ADDRESS, USDT_ADDRESS].filter(
+  (token): token is Address => !!token
+)
+
+/**
  * Every token the Bank has ever declared support for, from its
- * `TokenSupportAdded` logs. Removals are intentionally ignored: a token that
- * received a transfer while supported must still be scanned even if support was
- * later dropped, so the union of ever-added tokens is the complete set.
+ * `TokenSupportAdded` logs, plus the chain's stablecoins. Removals are
+ * intentionally ignored: a token that received a transfer while supported must
+ * still be scanned even if support was later dropped, so the union of ever-added
+ * tokens is the complete set.
  */
 export async function supportedTokenAddresses(
   client: ChainClient,
-  bank: Address
+  bank: Address,
+  knownTokens: readonly Address[] = CHAIN_STABLECOINS
 ): Promise<Address[]> {
   const logs = await client.getLogs({
     address: bank,
@@ -71,7 +82,7 @@ export async function supportedTokenAddresses(
     fromBlock: START_BLOCK,
     toBlock: 'latest'
   })
-  const tokens = new Set<string>()
+  const tokens = new Set<string>(knownTokens.map((token) => token.toLowerCase()))
   for (const log of logs) {
     const token = log.args?.tokenAddress
     if (token) tokens.add(token.toLowerCase())
