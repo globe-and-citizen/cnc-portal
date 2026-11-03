@@ -9,7 +9,8 @@ import {
 import {
   ledgerTotalRow,
   resolveLedgerColumns,
-  type LedgerColumnKey
+  type LedgerColumnKey,
+  type LedgerMovements
 } from '@/utils/accounting/ledgerColumns'
 import type { AccountingExportSnapshot } from '@/utils/accounting/exportSpec'
 import type { AccountingPdfTable, ResolveName } from './pdf'
@@ -25,7 +26,7 @@ interface GeneralLedgerPdfOptions {
   currencies?: string[]
   journalAccounts?: string[]
   journalAccountLabel?: string
-  journalAccountTotal?: string
+  journalAccountMovements?: LedgerMovements
 }
 
 /** How each ledger column renders in the PDF: alignment + cell value. */
@@ -59,12 +60,12 @@ export function generalLedgerPdfTable(
     opts.currencies,
     opts.journalAccounts
   )
-  const total = opts.journalAccountTotal ?? journal.total
+  const movements = opts.journalAccountMovements ?? { debit: journal.total, credit: journal.total }
   const columns = resolveLedgerColumns(opts.columns)
   const body = journal.rows.map((row) =>
     columns.map((column) => PDF_CELL[column.value].pick(row, resolveName))
   )
-  body.push(ledgerTotalRow(columns, total))
+  body.push(ledgerTotalRow(columns, movements))
   return {
     title: opts.journalAccountLabel
       ? accountLedgerTitle(opts.journalAccountLabel, opts.from, opts.to)

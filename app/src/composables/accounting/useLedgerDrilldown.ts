@@ -1,6 +1,7 @@
 import { computed, ref, type Ref } from 'vue'
 import { useAccountingExport } from './useAccountingExport'
 import {
+  accountMovements,
   accountNet,
   accountOpening,
   entriesForAccount,
@@ -9,7 +10,7 @@ import {
 } from '@/utils/accounting/accountLedger'
 import { exportFilename } from '@/utils/accounting/exportNaming'
 import { money } from '@/utils/accounting/presenter'
-import type { LedgerColumnKey } from '@/utils/accounting/ledgerColumns'
+import type { LedgerColumnKey, LedgerMovements } from '@/utils/accounting/ledgerColumns'
 import type { AccountName } from '@/utils/accounting/chartOfAccounts'
 import type { SectionSpec } from '@/utils/accounting/exportSpec'
 import type { Account, JournalEntry } from '@/utils/accounting/types'
@@ -38,6 +39,8 @@ export interface DrilldownBalance {
   account: SingleAccountSelection | null
   opening: AccountOpening
   closing: string
+  /** The account's own debits and credits in the window; an aggregate repeats its total. */
+  movements: LedgerMovements
 }
 
 /** The statement line currently shown in the drill-down modal. */
@@ -109,6 +112,13 @@ export function useLedgerDrilldown(
       : total.value
   )
 
+  /** The footer sums only the drilled account's lines; the other lines of its entries are context. */
+  const movements = computed<LedgerMovements>(() => {
+    if (!balanceAccount.value) return { debit: total.value, credit: total.value }
+    const { debits, credits } = accountMovements(drilldownEntries.value, balanceAccount.value)
+    return { debit: money(debits), credit: money(credits) }
+  })
+
   /** Open the popup for one concrete account, one chart family, or an aggregate. */
   function openFor(account: AccountSelection, lineValue: string, label?: string): void {
     target.value = account
@@ -132,7 +142,7 @@ export function useLedgerDrilldown(
       columns,
       journalAccounts: accountIdsForSelection(entries.value, line.accounts),
       journalAccountLabel: line.label,
-      journalAccountTotal: line.total
+      journalAccountMovements: movements.value
     }
     if (format === 'excel') {
       exportExcel([spec], exportFilename(spec, 'xlsx'), `${line.label} ledger exported to Excel`)
@@ -148,7 +158,8 @@ export function useLedgerDrilldown(
   const balance = computed<DrilldownBalance>(() => ({
     account: balanceAccount.value,
     opening: opening.value,
-    closing: closing.value
+    closing: closing.value,
+    movements: movements.value
   }))
 
   return { open, selectedLine, balance, drilldownEntries, openFor, onExport }

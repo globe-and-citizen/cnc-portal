@@ -185,12 +185,15 @@ describe('buildTables (section selection)', () => {
         key: 'ledger',
         journalAccounts: [accountId],
         journalAccountLabel: 'Cash — Bank',
-        journalAccountTotal: '$100.00'
+        journalAccountMovements: { debit: '$100.00', credit: '$0.00' }
       }
     ])
     expect(ledger.title).toBe('General Ledger — Cash — Bank')
-    // The $100 deposit posts a Cash — Bank leg; the total nets the account balance.
-    expect(ledger.body.at(-1)!.some((c) => c === '$100.00')).toBe(true)
+    // The $100 deposit debits Cash — Bank; nothing credits it.
+    expect(ledger.body.at(-1)!.filter((c) => String(c).startsWith('$'))).toEqual([
+      '$100.00',
+      '$0.00'
+    ])
   })
 
   it('drills an aggregate line with its label and supplied total (Earnings to date)', () => {
@@ -199,7 +202,7 @@ describe('buildTables (section selection)', () => {
         key: 'ledger',
         journalAccounts: [sampleBooks().journal[0]!.lines[1]!.account.id],
         journalAccountLabel: 'Earnings to date',
-        journalAccountTotal: '$100.00'
+        journalAccountMovements: { debit: '$100.00', credit: '$100.00' }
       }
     ])
     expect(ledger.title).toBe('General Ledger — Earnings to date')

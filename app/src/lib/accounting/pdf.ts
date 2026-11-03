@@ -147,7 +147,7 @@ function sectionTable(
         currencies: spec.currencies,
         journalAccounts: spec.journalAccounts,
         journalAccountLabel: spec.journalAccountLabel,
-        journalAccountTotal: spec.journalAccountTotal
+        journalAccountMovements: spec.journalAccountMovements
       })
   }
 }
