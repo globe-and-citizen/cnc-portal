@@ -4,7 +4,7 @@
  * is currently showing. Format-agnostic — it belongs to neither builder, so both
  * (and the view) depend on this module rather than on each other.
  */
-import type { LedgerColumnKey } from '@/utils/accounting/ledgerColumns'
+import type { LedgerColumnKey, LedgerMovements } from '@/utils/accounting/ledgerColumns'
 import type { JournalEntry } from './types'
 
 /** The canonical journal is the only Accounting data that crosses the export boundary. */
@@ -39,6 +39,6 @@ export interface SectionSpec {
   journalAccounts?: string[]
   /** Drill-down title while its rows remain a JournalEntry projection. */
   journalAccountLabel?: string
-  /** Statement-line balance shown in a drill-down export. */
-  journalAccountTotal?: string
+  /** The drilled account's own debit and credit totals for a drill-down export. */
+  journalAccountMovements?: LedgerMovements
 }

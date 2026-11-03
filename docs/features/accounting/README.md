@@ -115,10 +115,10 @@ three consecutive missing criteria use inclusive ranges with full AC IDs at both
 | User Story  | Main Journey  | Coverage Target | Gaps                                                                              |
 | ----------- | ------------- | --------------- | --------------------------------------------------------------------------------- |
 | US-ACCT-001 | ✅ Integrated | ⚠️ 11/12 met    | `AC-US-ACCT-001-08`                                                               |
-| US-ACCT-002 | ✅ Integrated | ✅ 16/16        | —                                                                                 |
+| US-ACCT-002 | ✅ Integrated | ✅ 18/18        | —                                                                                 |
 | US-ACCT-003 | ✅ Integrated | ✅ 11/11        | —                                                                                 |
 | US-ACCT-004 | ✅ Integrated | ✅ 9/9          | —                                                                                 |
-| US-ACCT-005 | ✅ Integrated | ✅ 13/13 met    | —                                                                                 |
+| US-ACCT-005 | ✅ Integrated | ✅ 15/15 met    | —                                                                                 |
 | US-ACCT-006 | ✅ Integrated | ⚠️ 6/11 met     | `AC-US-ACCT-006-01`–`AC-US-ACCT-006-03`, `AC-US-ACCT-006-05`, `AC-US-ACCT-006-09` |
 | US-ACCT-007 | ⬜ Planned    | ❌ 0/17 met     | `AC-US-ACCT-007-01`–`AC-US-ACCT-007-17`                                           |
 | US-ACCT-008 | ⬜ Planned    | ❌ 0/10 met     | `AC-US-ACCT-008-01`–`AC-US-ACCT-008-10`                                           |
@@ -273,6 +273,9 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 - [x] `AC-US-ACCT-002-16` Each swap of the default Safe books in its own posting the Safe swap P&L (current value of what it received
       against the CoinGecko swap-day value of what it gave up, less the reported fee) on `Swap P&L`, with the part the cash lines do not
       carry on `Safe Market Value Adjustment`; `Cash — Safe` keeps the price paid and `Swap P&L` totals the Safe overview figure.
+- [x] `AC-US-ACCT-002-17` An account drill-down's "Total movements" row shows that account's own debits and credits, so an expense account
+      shows no credit; an aggregate statement line shows its statement figure in both columns.
+- [x] `AC-US-ACCT-002-18` An accrued wage shows a yellow action badge and a withdrawn wage a blue one, whatever currency it was paid in.
 
 #### Edge & Error Cases
 
@@ -300,6 +303,8 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 | `AC-US-ACCT-002-14`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
 | `AC-US-ACCT-002-15`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
 | `AC-US-ACCT-002-16`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
+| `AC-US-ACCT-002-17`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
+| `AC-US-ACCT-002-18`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
 
 **Dependencies:** US-ACCT-001
 
@@ -420,6 +425,11 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 - [x] `AC-US-ACCT-005-10` Historical Community Credit terms resolve from their owning FixedReturn generation; SHER valuation replays
       timestamped multiplier changes and uses the current router's constructor multiplier when no change event exists. Resolving the
       constructor multiplier of a retired router with no change event is outside this criterion.
+- [x] `AC-US-ACCT-005-14` A wage withdrawn in the SHER of a previous Investor generation settles its liability like one withdrawn in the
+      current SHER.
+- [x] `AC-US-ACCT-005-15` A stablecoin sent straight to a Bank from outside the company, with no Bank deposit event, is booked as a receipt,
+      so a first-generation Bank funded this way never shows a negative balance; a transfer from a company contract is left to its own
+      event.
 
 #### Edge & Error Cases
 
@@ -444,6 +454,8 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 | `AC-US-ACCT-005-11`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
 | `AC-US-ACCT-005-12`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
 | `AC-US-ACCT-005-13`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
+| `AC-US-ACCT-005-14`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
+| `AC-US-ACCT-005-15`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
 
 **Representative regression tests for `AC-US-ACCT-005-10`:**
 [Community Credit generation terms](../../../app/src/utils/accounting/__tests__/fixedReturn.interest.spec.ts),

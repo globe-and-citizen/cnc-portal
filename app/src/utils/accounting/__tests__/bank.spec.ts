@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest'
+import { getAddress } from 'viem'
 import { mapBankEvents } from '@/utils/accounting/mappers/bank'
 import { makeCtx, ADDR, draftUsdValue } from './fixtures'
 
@@ -141,5 +142,42 @@ describe('mapBankEvents', () => {
       ctx
     )
     expect(entry?.counterparty).toBe('0x6666666666666666666666666666666666666666')
+  })
+})
+
+describe('mapBankEvents — plain token transfers into the Bank', () => {
+  const rawTransfer = (from: string, to: string = ADDR.bank) => ({
+    id: `0x${'ab'.repeat(32)}-3`,
+    tokenAddress: ADDR.usdcToken,
+    contractAddress: ADDR.bank,
+    direction: to === ADDR.bank ? 'in' : 'out',
+    from,
+    to,
+    amount: '200050000',
+    timestamp: 100
+  })
+  const ctxWithCredit = makeCtx({ internalAddresses: new Set([getAddress(ADDR.credit)]) })
+
+  it('books a plain transfer from outside the CNC as a UC-BANK-02 deposit', () => {
+    const [entry] = mapBankEvents({ rawTransfers: [rawTransfer(ADDR.founder)] }, ctxWithCredit)
+
+    expect(entry).toMatchObject({
+      useCase: 'UC-BANK-02',
+      debit: 'Cash — Bank',
+      debitInstance: ADDR.bank,
+      credit: 'Service Revenue',
+      token: 'usdc',
+      counterparty: ADDR.founder
+    })
+    expect(draftUsdValue(entry)).toBe(200.05)
+  })
+
+  it('leaves a transfer sent by a CNC contract to that contract’s own event', () => {
+    expect(mapBankEvents({ rawTransfers: [rawTransfer(ADDR.credit)] }, ctxWithCredit)).toEqual([])
+  })
+
+  it('ignores a plain transfer leaving the Bank', () => {
+    const outgoing = rawTransfer(ADDR.bank, ADDR.client)
+    expect(mapBankEvents({ rawTransfers: [outgoing] }, ctxWithCredit)).toEqual([])
   })
 })

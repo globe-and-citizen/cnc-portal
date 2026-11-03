@@ -69,21 +69,32 @@ export function resolveLedgerColumns(columns?: readonly LedgerColumnKey[]): Ledg
 }
 
 /**
+ * The Debit and Credit figures of a "Total movements" row: one account's own
+ * debits and credits in a drill-down, the balanced grand total in both columns
+ * for the whole ledger.
+ */
+export interface LedgerMovements<Amount = string> {
+  debit: Amount
+  credit: Amount
+}
+
+/**
  * The trailing "Total movements" row for an exported ledger, mirroring the
- * on-screen footer: the grand total in the Debit and Credit columns — as the
- * caller's already-rendered `amount` (a `$`-string for the PDF, a number for
+ * on-screen footer: the movements in the Debit and Credit columns — as the
+ * caller's already-rendered amounts (`$`-strings for the PDF, numbers for
  * Excel) — with the label in the Transaction column, or the first non-amount
  * column when Transaction is hidden.
  */
 export function ledgerTotalRow(
   columns: readonly LedgerColumn[],
-  amount: string | number
+  movements: LedgerMovements<string | number>
 ): (string | number)[] {
   const labelKey = columns.some((column) => column.value === 'transaction')
     ? 'transaction'
     : columns.find((column) => column.value !== 'dr' && column.value !== 'cr')?.value
   return columns.map((column) => {
-    if (column.value === 'dr' || column.value === 'cr') return amount
+    if (column.value === 'dr') return movements.debit
+    if (column.value === 'cr') return movements.credit
     if (column.value === labelKey) return 'Total movements'
     return ''
   })

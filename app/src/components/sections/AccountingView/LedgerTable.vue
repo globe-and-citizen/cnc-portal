@@ -175,13 +175,17 @@ import { formatTxHash } from '@/utils/format'
 import {
   LEDGER_COLUMNS,
   LEDGER_COLUMN_WIDTHS,
-  type LedgerColumnKey
+  type LedgerColumnKey,
+  type LedgerMovements
 } from '@/utils/accounting/ledgerColumns'
 import type { LedgerRow } from '@/utils/accounting/journalLedgerPresenter'
 
 const props = defineProps<{
   rows: LedgerRow[]
   total: string
+  /** The drilled account's own debits and credits for the footer; a balanced
+   *  ledger omits it and shows `total` in both columns. */
+  movements?: LedgerMovements
   /** Column keys to show; omit to show them all. */
   visibleColumns?: LedgerColumnKey[]
   /** Append the running "Balance" column after Credit (single-account ledgers). */
@@ -298,8 +302,8 @@ const tableRows = computed<LedgerTableRow[]>(() => [
     account: '',
     accountMuted: false,
     accountDimmed: false,
-    dr: props.total,
-    cr: props.total,
+    dr: props.movements?.debit ?? props.total,
+    cr: props.movements?.credit ?? props.total,
     currency: '',
     quantity: '',
     rate: '',

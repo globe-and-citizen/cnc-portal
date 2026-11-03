@@ -102,6 +102,22 @@ describe('badgeClassOf', () => {
     expect(refunded).toContain('slate')
   })
 
+  it('[AC-US-ACCT-002-18] shows an accrued wage in yellow and a withdrawn wage in blue', () => {
+    const accrual = entry('UC-CASH-02', { debit: 'Payroll Expense', credit: 'Wage Payable' })
+    const settlement = entry('UC-CASH-03', { debit: 'Wage Payable', credit: 'Cash — Payroll' })
+    expect(badgeClassOf(accrual)).toContain('warning')
+    expect(badgeClassOf(settlement)).toContain('blue')
+  })
+
+  it('keeps a SHER-only wage accrual yellow rather than the investment colour', () => {
+    const sherAccrual = entry('UC-CASH-02', {
+      debit: 'Deferred SHER Compensation',
+      credit: 'SHERS To Be Issued',
+      token: 'sher'
+    })
+    expect(badgeClassOf(sherAccrual)).toContain('warning')
+  })
+
   it('carries the phase colour onto the JournalEntry lead row', () => {
     const [lentRow] = journalLedgerRows(finalizeJournal([source('UC-CREDIT-01')]))
     const [repaidRow] = journalLedgerRows(

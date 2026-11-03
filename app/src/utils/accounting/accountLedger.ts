@@ -46,7 +46,7 @@ export function entriesForAccount(
 }
 
 /** The debit and credit totals posted to one selected account or family. */
-function accountMovements(
+export function accountMovements(
   entries: readonly JournalEntry[],
   selection: Exclude<AccountSelection, readonly AccountName[]>
 ): { debits: UsdAmount; credits: UsdAmount } {
