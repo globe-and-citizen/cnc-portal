@@ -33,6 +33,14 @@ function isBankFeeDraft(entry: JournalEntryDraft): boolean {
   return entry.debit === 'Transaction Fee Expense' && entry.credit === 'Cash — Bank'
 }
 
+/**
+ * A posting derived from another event of the same operation, which never leads it:
+ * the fixed return owed (UC-CREDIT-05) is recognised alongside the funding it rides on.
+ */
+function isCompanionDraft(entry: JournalEntryDraft): boolean {
+  return entry.useCase === 'UC-CREDIT-05'
+}
+
 /** A source posting that proves money left the Bank in this accounting operation. */
 function isBankOutflowPosting(entry: JournalEntryDraft): boolean {
   return !isBankFeeDraft(entry) && entry.debit !== null && entry.credit === 'Cash — Bank'
@@ -208,6 +216,7 @@ function finalizeOperation(
     .sort((a, b) => a.timestamp - b.timestamp || a.id.localeCompare(b.id))
   const primary =
     ordered.find((entry) => entry.useCase === 'SAFE-SWAP') ??
+    ordered.find((entry) => !isBankFeeDraft(entry) && !isCompanionDraft(entry)) ??
     ordered.find((entry) => !isBankFeeDraft(entry)) ??
     ordered[0]!
   const lineDrafts = [primary, ...ordered.filter((entry) => entry !== primary)]

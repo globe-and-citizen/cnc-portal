@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { activityOf, activityText, entryLabel } from '../describeEntry'
-import type { JournalEntryDraft } from '../journalEntryDraft'
+import type { JournalEntryDraft, UseCase } from '../journalEntryDraft'
+import type { AccountName } from '../chartOfAccounts'
+import { finalizeJournal } from './assembleAccounting'
 import { journalFixture } from './fixtures'
 
 const ALI = '0x1111111111111111111111111111111111111111'
@@ -34,6 +36,54 @@ describe('activityOf — community credit rows', () => {
     expect(narrate({ useCase: 'UC-CREDIT-05', amountUsd: 12.5 })).toBe(
       'is owed $12.50 of interest on their loan'
     )
+  })
+
+  const operation = `0x${'c'.repeat(64)}`
+  const leg = (
+    id: string,
+    useCase: UseCase,
+    debit: AccountName,
+    credit: AccountName,
+    usd: number
+  ): JournalEntryDraft => ({
+    id: `${operation}-${id}`,
+    timestamp: 1,
+    useCase,
+    debit,
+    credit,
+    token: 'usdc',
+    rawAmount: String(usd * 1e6),
+    rate: 1,
+    internal: false,
+    counterparty: ALI,
+    memo: '',
+    enrichment: 'not-applicable'
+  })
+  const narrateOperation = (legs: JournalEntryDraft[]) => {
+    const [journalEntry] = finalizeJournal(legs)
+    const cell = activityOf(journalEntry!) as { text: string }
+    return { useCase: journalEntry!.useCase, text: cell.text }
+  }
+
+  it('[AC-US-ACCT-002-20] names the principal and the interest of a funding at their own amounts', () => {
+    expect(
+      narrateOperation([
+        leg('0', 'UC-CREDIT-05', 'Interest Expense', 'Interest Payable', 0.2),
+        leg('1', 'UC-CREDIT-01', 'Cash — Bank', 'Loan Payable', 2)
+      ])
+    ).toEqual({
+      useCase: 'UC-CREDIT-01',
+      text: 'lent $2.00 to the community credit and is owed $0.20 of interest'
+    })
+  })
+
+  it('[AC-US-ACCT-002-20] names the principal and the interest of one installment at their own amounts', () => {
+    expect(
+      narrateOperation([
+        leg('0', 'UC-CREDIT-03', 'Interest Payable', 'Cash — Bank', 0.2),
+        leg('1', 'UC-CREDIT-03', 'Loan Payable', 'Cash — Bank', 2)
+      ]).text
+    ).toBe('was repaid $2.00 of loan principal and $0.20 of interest')
   })
 })
 
