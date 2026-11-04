@@ -382,7 +382,8 @@ client and tracks its receipt on the configured chain.
 Board-mediated requests use one observable mutation lifecycle for preparation, the confirmed contract write and required backend
 registration. Missing company/Board context, a failed action-count read and a rejected write remain errors; the request stays pending
 through registration. Ownership transfer keeps its form open and displays the Board error instead of treating a resolved empty result as
-success. Bank transfers, treasury returns and dividends use this same shared contract.
+success. Ownership error feedback follows the active direct or Board submission mode, so a previous Board failure cannot mask a new direct
+transfer error. Bank transfers, treasury returns and dividends use this same shared contract.
 
 If registration fails after the chain confirms, the error explicitly identifies the confirmed Board action and missing record. The workflow
 does not automatically retry the chain write; inspect Contract Management before submitting again. Board-member discovery and notification
@@ -391,7 +392,7 @@ when preparation begins.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `12b89744a080247ea8e4ca5047c639b9ae651b82`
+**Implementation evidence reviewed against:** `ba8f44a8e165ab465a09bae8b33c57a2ef7acd33`
 
 - [Real Board mutation lifecycle tests](../../../app/src/composables/bod/__tests__/writes.spec.ts)
 - [Board reads](../../../app/src/composables/bod/reads.ts), [Board writes](../../../app/src/composables/bod/writes.ts),
