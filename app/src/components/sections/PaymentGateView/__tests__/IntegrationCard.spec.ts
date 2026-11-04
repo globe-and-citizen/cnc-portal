@@ -106,4 +106,45 @@ describe('IntegrationCard', () => {
     expect(writeText.mock.calls[0][0]).toContain('useEffect(')
     expect(writeText.mock.calls[1][0]).toContain('<CncPayCheckout factureId={factureId}')
   })
+
+  it('[AC-US-PAYGATE-006-01] explains how the merchant gets the payment result and copies its sample', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined)
+    vi.stubGlobal('navigator', { clipboard: { writeText } })
+    mockTeamStore.getContractAddressByType = vi.fn(() => BANK_ADDRESS)
+    const IntegrationCard = await loadIntegrationCard('https://widget.example/widget.js')
+    const wrapper = mount(IntegrationCard, { props: { selectedToken: 'USDC' } })
+    const result = wrapper.find('[data-test="payment-gate-result"]')
+
+    expect(result.text()).toContain('Step 3 · Get the payment result')
+    expect(result.text()).toContain('{ hash, factureId }')
+    expect(result.find('[data-test="payment-gate-result-snippet"]').text()).toContain(
+      'CncPay.setOnStatus((status, details) => {'
+    )
+
+    await wrapper.find('[data-test="payment-gate-result-copy"]').trigger('click')
+
+    expect(writeText).toHaveBeenCalledWith(
+      wrapper.find('[data-test="payment-gate-result-snippet"]').text()
+    )
+  })
+
+  it('[AC-US-PAYGATE-006-02] shows a listening sample built around the Bank address and copies it', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined)
+    vi.stubGlobal('navigator', { clipboard: { writeText } })
+    mockTeamStore.getContractAddressByType = vi.fn(() => BANK_ADDRESS)
+    const IntegrationCard = await loadIntegrationCard('https://widget.example/widget.js')
+    const wrapper = mount(IntegrationCard, { props: { selectedToken: 'USDC' } })
+    const listen = wrapper.find('[data-test="payment-gate-listen"]')
+
+    expect(listen.text()).toContain('Step 4 · Listen to payments from your server')
+    expect(listen.find('[data-test="payment-gate-listen-snippet"]').text()).toContain(
+      `address: '${BANK_ADDRESS}'`
+    )
+
+    await wrapper.find('[data-test="payment-gate-listen-copy"]').trigger('click')
+
+    expect(writeText).toHaveBeenCalledWith(
+      wrapper.find('[data-test="payment-gate-listen-snippet"]').text()
+    )
+  })
 })

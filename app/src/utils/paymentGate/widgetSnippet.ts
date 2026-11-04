@@ -228,3 +228,50 @@ export function buildPaymentGateSnippet({
 }: PaymentGateSnippetParams): PaymentGateSnippet {
   return SNIPPET_BUILDERS[language](config)
 }
+
+/** Step 3: the merchant's page forwards the widget's result to the merchant's own server. */
+export const PAYMENT_GATE_RESULT_SNIPPET = `CncPay.setOnStatus((status, details) => {
+  if (status === 'success') {
+    // details = { hash, factureId }
+    // Send them to YOUR OWN backend: '/api/payments/cnc-pay' is an example
+    // endpoint you create, not a CNC Pay API. There, check on-chain that the
+    // transaction succeeded with the expected token and amount.
+    fetch('/api/payments/cnc-pay', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ factureId: details.factureId, txHash: details.hash })
+    })
+  }
+  if (status === 'failed') {
+    // details = { factureId, error }: no transaction hash
+  }
+})`
+
+/**
+ * Step 4: the merchant's server reads widget payments straight from the Bank.
+ * The facture-ID decoding mirrors `decodeFactureIdFromCalldata`
+ * (`factureCalldata.ts`), inlined so it runs without this codebase.
+ */
+export function buildPaymentGateListenSnippet(bankAddress: string): string {
+  return `// On your server (Node.js + viem)
+import { createPublicClient, hexToNumber, hexToString, http, parseAbiItem, size, slice } from 'viem'
+
+const client = createPublicClient({ transport: http(process.env.RPC_URL) })
+
+client.watchEvent({
+  address: '${bankAddress}',
+  event: parseAbiItem(
+    'event TokenDeposited(address indexed depositor, address indexed token, uint256 amount)'
+  ),
+  onLogs: async (logs) => {
+    for (const log of logs) {
+      const { input } = await client.getTransaction({ hash: log.transactionHash })
+      // The facture ID follows the depositToken call: 2-byte length, then the ID
+      if (size(input) <= 70) continue // a plain deposit, not a widget payment
+      const length = hexToNumber(slice(input, 68, 70))
+      const factureId = hexToString(slice(input, 70, 70 + length))
+      // log.args = { depositor, token, amount }: mark factureId as paid
+    }
+  }
+})`
+}

@@ -56,9 +56,9 @@
         <div>
           <label class="text-muted mb-1 block text-xs font-medium uppercase">Embed snippet</label>
           <p class="text-muted mb-2 text-xs">
-            Two steps: set the widget up once, then start a payment with each order's real
-            <code>factureId</code> and <code>amount</code>. Nothing to store, nothing to recreate
-            per order.
+            Set the widget up once, start a payment with each order's real
+            <code>factureId</code> and <code>amount</code>, then confirm the result on your server.
+            Nothing to store, nothing to recreate per order.
           </p>
           <UFieldGroup size="sm" class="mb-3" data-test="payment-gate-snippet-languages">
             <UButton
@@ -97,6 +97,54 @@
                 :data-test="`payment-gate-snippet-${part.key}`"
               ><code>{{ part.code }}</code></pre>
             </div>
+
+            <div data-test="payment-gate-result">
+              <div class="mb-1 flex items-center justify-between gap-2">
+                <p class="text-sm font-medium">Step 3 · Get the payment result</p>
+                <UButton
+                  color="neutral"
+                  variant="outline"
+                  size="sm"
+                  icon="i-lucide-copy"
+                  :label="copied === 'result' ? 'Copied' : 'Copy'"
+                  data-test="payment-gate-result-copy"
+                  @click="copy(PAYMENT_GATE_RESULT_SNIPPET, 'result')"
+                />
+              </div>
+              <p class="text-muted mb-2 text-xs">
+                On success, <code>onStatus</code> gives you <code>{ hash, factureId }</code>. Send
+                them to your own server and check there that the transaction succeeded with the
+                expected token and amount.
+              </p>
+              <pre
+                class="bg-elevated border-default overflow-x-auto rounded-md border p-3 text-xs"
+                data-test="payment-gate-result-snippet"
+              ><code>{{ PAYMENT_GATE_RESULT_SNIPPET }}</code></pre>
+            </div>
+
+            <div data-test="payment-gate-listen">
+              <div class="mb-1 flex items-center justify-between gap-2">
+                <p class="text-sm font-medium">Step 4 · Listen to payments from your server</p>
+                <UButton
+                  color="neutral"
+                  variant="outline"
+                  size="sm"
+                  icon="i-lucide-copy"
+                  :label="copied === 'listen' ? 'Copied' : 'Copy'"
+                  data-test="payment-gate-listen-copy"
+                  @click="copy(listenSnippet, 'listen')"
+                />
+              </div>
+              <p class="text-muted mb-2 text-xs">
+                Optional. Your server can also watch this Bank's <code>TokenDeposited</code> events
+                directly, which catches payments even when the customer closed the page before step
+                3 ran.
+              </p>
+              <pre
+                class="bg-elevated border-default overflow-x-auto rounded-md border p-3 text-xs"
+                data-test="payment-gate-listen-snippet"
+              ><code>{{ listenSnippet }}</code></pre>
+            </div>
           </div>
         </div>
       </div>
@@ -109,7 +157,9 @@ import { ref, computed } from 'vue'
 import { useTeamStore } from '@/stores'
 import { WIDGET_SCRIPT_URL } from '@/constant'
 import {
+  PAYMENT_GATE_RESULT_SNIPPET,
   PAYMENT_GATE_SNIPPET_LANGUAGES,
+  buildPaymentGateListenSnippet,
   buildPaymentGateSnippet,
   type PaymentGateSnippetLanguage,
   type PaymentGateToken
@@ -135,7 +185,9 @@ const snippetParts = computed(() => {
   ] as const
 })
 
-type CopyTarget = 'address' | 'setup' | 'usage'
+const listenSnippet = computed(() => buildPaymentGateListenSnippet(bankAddress.value ?? ''))
+
+type CopyTarget = 'address' | 'setup' | 'usage' | 'result' | 'listen'
 const copied = ref<CopyTarget | null>(null)
 
 async function copy(text: string, target: CopyTarget) {
