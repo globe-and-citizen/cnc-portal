@@ -1329,9 +1329,16 @@ account actions, including historical Expense approvals and Safe operations. The
 wallet network; account-specific authorization and signature-domain checks remain separate. Shared submission boundaries retain the
 configured target for operations already being prepared.
 
+## Board request failure feedback
+
+Board-mediated Bank transfers and Expense Account treasury returns keep their forms open when preparation, submission or registration fails,
+and expose the failure inline. Their loading state spans preparation and required registration. The
+[shared Board failure contract](../contract-management/README.md#board-action-failure-and-recovery) distinguishes an already-confirmed
+action with a missing backend record from a failed submission; notification failures do not undo success.
+
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `4e41f6b7dc10c9cfc87aaafb7ecc735da1e7beff`
+**Implementation evidence reviewed against:** `12b89744a080247ea8e4ca5047c639b9ae651b82`
 
 - [Bank deposit modal](../../../app/src/components/sections/BankView/forms/DepositModal.vue),
   [Bank transfer modal](../../../app/src/components/sections/BankView/forms/TransferModal.vue),
