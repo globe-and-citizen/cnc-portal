@@ -182,7 +182,7 @@ test.describe(
         const accrual = entryLabelled(opening.entries, 'Wage accrual')
         entryLabelled(opening.entries, 'Wage settlement')
         const spend = entryLabelled(opening.entries, 'Operating expense')
-        expect(entryAccounts(issuance)).toEqual(['SHERS To Be Issued', 'Investor Equity'])
+        expect(entryAccounts(issuance)).toEqual(['Deferred SHER Compensation', 'Investor Equity'])
         expect(entryAccounts(spend)).toContain('Operating Expense')
 
         // Funding the company's own contracts moves cash between pockets only —
