@@ -18,6 +18,12 @@
       :description="`Please input amount to divide to the shareholders. This will move funds from bank contract to shareholders based on their share percentage. Only the bank owner can pay dividends.`"
     >
       <template #body>
+        <UAlert
+          v-if="boardErrorMessage"
+          color="error"
+          :description="boardErrorMessage"
+          data-test="dividend-board-error"
+        />
         <PayDividendsForm
           v-if="modalState.show && currentTeam"
           :loading="isBankWriteLoading || isLoadingAddAction"
@@ -51,6 +57,7 @@ import { tokenSymbol as tokenSymbolUtils, tokenSymbolAddresses } from '@/utils/t
 import type { TokenId } from '@/constant'
 import { log } from '@/lib/logging'
 import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
+import { classifyError } from '@/utils/errors/classifyContractError'
 
 interface Props {
   tokenSymbol?: string
@@ -79,8 +86,9 @@ const isBankWriteLoading = computed(
 )
 
 const addActionComposable = useBodAddAction()
+const boardErrorMessage = ref('')
 const {
-  executeAddAction: addAction,
+  mutate: addAction,
   isPending: isLoadingAddAction,
   isSuccess: isActionAdded
 } = addActionComposable
@@ -126,6 +134,7 @@ const closeModal = () => {
 
 const handleSubmit = async (value: bigint, selectedTokenId: TokenId) => {
   if (value <= 0n) return
+  boardErrorMessage.value = ''
 
   if (isBodAction.value) {
     if (!props.bankAddress) return
@@ -144,11 +153,18 @@ const handleSubmit = async (value: bigint, selectedTokenId: TokenId) => {
       title: `Pay Dividends Request`
     })
 
-    await addAction({
-      targetAddress: props.bankAddress,
-      description,
-      data
-    })
+    addAction(
+      {
+        targetAddress: props.bankAddress,
+        description,
+        data
+      },
+      {
+        onError: (error) => {
+          boardErrorMessage.value = classifyError(error).userMessage
+        }
+      }
+    )
   } else {
     if (selectedTokenId === 'native') {
       await distributeNativeDividendsWrite.mutateAsync({ args: [value] })
