@@ -69,15 +69,18 @@ export function useContractOwnershipTransfer(
     if (isAdded) onTransferred()
   })
 
-  watch([transferMutation.error, addAction.error], ([directError, boardError]) => {
-    const error = boardError ?? directError
-    if (!error) return
-    log.error('errorTransferOwnership.value: ', error)
-    const classified = classifyError(error)
-    if (classified.category !== 'user_rejected') {
-      errorMessage.value = classified.userMessage
+  watch(
+    () => (isBodAction.value ? addAction.error.value : transferMutation.error.value),
+    (error) => {
+      errorMessage.value = ''
+      if (!error) return
+      log.error('errorTransferOwnership.value: ', error)
+      const classified = classifyError(error)
+      if (classified.category !== 'user_rejected') {
+        errorMessage.value = classified.userMessage
+      }
     }
-  })
+  )
 
   return {
     errorMessage,

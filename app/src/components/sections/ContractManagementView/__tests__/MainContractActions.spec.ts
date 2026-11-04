@@ -204,6 +204,17 @@ describe('MainContractActions.vue', () => {
     expect(wrapper.emitted('update:open')).toBeUndefined()
   })
 
+  it('shows the active direct-transfer error after a previous Board failure', async () => {
+    const wrapper = mountComponent({}, { open: 'transfer', isBodAction: true })
+    mockBodAddAction.error.value = new Error('Previous Board failure')
+    await flushPromises()
+    await wrapper.setProps({ isBodAction: false })
+    mutationByFn.transferOwnership.error.value = new Error('Current direct transfer failure')
+    await flushPromises()
+    expect(wrapper.text()).toContain('Current direct transfer failure')
+    expect(wrapper.text()).not.toContain('Previous Board failure')
+  })
+
   it('[AC-US-CONTRACT-002-10] logs a direct ownership-transfer error without closing the selected modal', async () => {
     const wrapper = mountComponent({ owner: mockUserStore.address }, { open: 'transfer' })
 
