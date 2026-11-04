@@ -392,7 +392,7 @@ when preparation begins.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `ba8f44a8e165ab465a09bae8b33c57a2ef7acd33`
+**Implementation evidence reviewed against:** `276c6731ae0291996f0565ccd98be9b468119a54`
 
 - [Real Board mutation lifecycle tests](../../../app/src/composables/bod/__tests__/writes.spec.ts)
 - [Board reads](../../../app/src/composables/bod/reads.ts), [Board writes](../../../app/src/composables/bod/writes.ts),
