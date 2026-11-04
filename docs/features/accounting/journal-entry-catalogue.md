@@ -821,7 +821,10 @@ Current `Dividend paid` corresponds to `UC-EQUITY-002`, retaining the Dividend E
 
 ### `DEFAULT-D` — Direct SHER Issuance
 
-Current `Share issuance` corresponds to `UC-EQUITY-003`. Backed mints and migrated ownership do not create additional issuance.
+Current `Share issuance` corresponds to `UC-EQUITY-003`. Backed mints and migrated ownership do not create additional issuance. A direct
+mint clears `SHERS To Be Issued` only up to the wage SHER the shareholder is still owed and had already earned by the mint's date; the
+excess is issued for no recorded consideration and posts Dr Deferred SHER Compensation · Cr Investor Equity, so `SHERS To Be Issued` never
+hides SHER that other members, or later wages, are still owed.
 
 ### `UC-VEST-01` — Vesting Grant
 

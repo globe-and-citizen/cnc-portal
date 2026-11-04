@@ -4,7 +4,7 @@
 journal, including the persisted counter-account assignments it consumes. Accounting report projections consume that journal on demand. This
 model does not create or persist manual journal entries.
 
-**Last verified:** 2026-10-07
+**Last verified:** 2026-11-04
 
 ## Target Product Contract
 
@@ -251,7 +251,8 @@ The mapper barrel publishes only the journal-draft orchestrator and its grouped 
 domain module directly. Context construction, credit timelines, expense periods, and the shared internal-transfer posting are support
 modules rather than source mappers. Account assignments apply only after journal construction, so source mappers remain responsible for
 evidence inference rather than owner decisions. SHER realization settlement runs after rate stamping and therefore lives at the Accounting
-assembly level, outside the mapper directory.
+assembly level, outside the mapper directory. So does the pass just before it, which re-books the part of a direct SHER mint that pays no
+owed wage against `Deferred SHER Compensation`.
 
 ## Treasury Boundary and Transfer Classification
 
@@ -602,7 +603,8 @@ it to an earlier or later deployment based on activity order.
   Interest Expense, and Dividend Expense.
 - A SafeDepositRouter operation that issues SHER owns the `Cash — Safe` and `Investor Equity` lines. Its Safe token transfer has the same
   transaction hash and is duplicate source evidence, so it cannot add `Service Revenue` or a second cash debit.
-- Trial Balance grouping uses `AccountId`, not a display label or a contract-generation order.
+- Trial Balance grouping uses `AccountId`, not a display label or a contract-generation order. Each row sits on the side its debits and
+  credits net to, a settled account shows no amount, and each total adds its own column.
 - Balance Sheet account lines reuse the Trial Balance grouping by `AccountId`. The account's family supplies its account class and normal
   balance; a later deployment or unresolved account never merges into another deployment before the report line and drill-down are selected.
   Selecting the account label, Details indicator, or row opens the matching line by its stable account ID, including when the table wraps
@@ -745,7 +747,7 @@ because deposits and company-pocket transfers are not manual assignment targets.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `b0df18442c3b5eaef42b799bec31d79dc3ac9d24`
+**Implementation evidence reviewed against:** `29de6c8ac3c71b2f75e7dd0fa681c9aaa77badb8`
 
 - [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts),
   [source-status projection](../../../app/src/composables/accounting/useAccountingStatus.ts),
@@ -777,6 +779,8 @@ because deposits and company-pocket transfers are not manual assignment targets.
   [Bank mapper](../../../app/src/utils/accounting/mappers/bank.ts), [Payroll mapper](../../../app/src/utils/accounting/mappers/payroll.ts),
   [Expense mapper](../../../app/src/utils/accounting/mappers/expenseAccount.ts),
   [SHER realization settlement](../../../app/src/utils/accounting/sherIssuance.ts),
+  [unbacked SHER issuance](../../../app/src/utils/accounting/unbackedIssuance.ts),
+  [internal-movement mirrors](../../../app/src/utils/accounting/internalMirrors.ts),
   [Safe transfer adapter](../../../app/src/utils/accounting/safeTransfers.ts),
   [SafeDepositRouter mapper](../../../app/src/utils/accounting/mappers/safeDepositRouter.ts), and
   [journal-draft model](../../../app/src/utils/accounting/journalEntryDraft.ts)
