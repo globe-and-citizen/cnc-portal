@@ -5,7 +5,7 @@ import { finalizeJournal } from './assembleAccounting'
 import { applyJournalAccountAssignments } from '../journalAccountAssignment'
 import {
   COMBINED_MOVEMENTS_NOTE,
-  INFERRED_ASSIGNMENT,
+  DEFAULT_ASSIGNMENT,
   assignmentStatus,
   presentJournalAccountAssignments
 } from '../journalAccountAssignmentPresenter'
@@ -179,9 +179,9 @@ describe('JournalEntry account-assignment projection', () => {
 })
 
 describe('Account Assignments export', () => {
-  it('states an inferred assignment once per journal entry', () => {
+  it('[AC-US-ACCT-006-12] states a default assignment once per journal entry', () => {
     const { rows } = presentJournalAccountAssignments(finalizeJournal([withdrawal()]))
-    expect(rows.map(assignmentStatus)).toEqual([INFERRED_ASSIGNMENT, ''])
+    expect(rows.map(assignmentStatus)).toEqual([DEFAULT_ASSIGNMENT, ''])
   })
 
   it('prints the saved account and its note', () => {
@@ -195,7 +195,7 @@ describe('Account Assignments export', () => {
   it('flags a compound withdrawal as read-only', () => {
     const journal = finalizeJournal([withdrawal(), withdrawal({ id: `${TX}-9` })])
     const row = presentJournalAccountAssignments(journal).rows[0]!
-    expect(assignmentStatus(row)).toBe(`${COMBINED_MOVEMENTS_NOTE} ${INFERRED_ASSIGNMENT}`)
+    expect(assignmentStatus(row)).toBe(`${COMBINED_MOVEMENTS_NOTE} ${DEFAULT_ASSIGNMENT}`)
   })
 
   it('prints a shortened hash in the PDF and keeps the full hash and amounts in Excel', () => {
