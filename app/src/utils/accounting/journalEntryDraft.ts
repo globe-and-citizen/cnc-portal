@@ -35,6 +35,15 @@ export function sourceOperationIdOf(eventId: string): string {
   return transactionHashOf(eventId) ?? eventId
 }
 
+/** The shared source-operation identity used to form one JournalEntry. */
+export function draftOperationIdOf(entry: {
+  id: string
+  txHash?: string
+  sourceOperationId?: string
+}): string {
+  return sourceOperationIdOf(entry.txHash ?? entry.sourceOperationId ?? entry.id)
+}
+
 /**
  * The use case (catalogue §5 / spec §4) a journal draft realises. The `UC-*`
  * codes match the money-flow catalogue; the lowercase codes cover moves the
