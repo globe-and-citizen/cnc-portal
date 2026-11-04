@@ -191,7 +191,17 @@ describe('MainContractActions.vue', () => {
     expect(vi.mocked(encodeFunctionData)).toHaveBeenCalledWith(
       expect.objectContaining({ functionName: 'transferOwnership' })
     )
-    expect(mockBodAddAction.executeAddAction).toHaveBeenCalled()
+    expect(mockBodAddAction.mutate).toHaveBeenCalled()
+  })
+
+  it('shows a failed Board ownership request without closing the transfer form', async () => {
+    const wrapper = mountComponent({}, { open: 'transfer', isBodAction: true })
+    await wrapper.get('[data-test="emit-transfer"]').trigger('click')
+    mockBodAddAction.error.value = new Error('Board preparation unavailable')
+    await flushPromises()
+    expect(wrapper.text()).toContain('Board preparation unavailable')
+    expect(wrapper.find('[data-test="transfer-ownership-form"]').exists()).toBe(true)
+    expect(wrapper.emitted('update:open')).toBeUndefined()
   })
 
   it('[AC-US-CONTRACT-002-10] logs a direct ownership-transfer error without closing the selected modal', async () => {

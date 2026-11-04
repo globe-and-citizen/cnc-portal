@@ -25,6 +25,7 @@ export function useContractOwnershipTransfer(
   })
 
   async function transferOwnership(address: Address) {
+    errorMessage.value = ''
     if (isBodAction.value) {
       const data = encodeFunctionData({
         abi: row.value.abi,
@@ -36,7 +37,7 @@ export function useContractOwnershipTransfer(
         title: 'Ownership Transfer Request'
       })
 
-      await addAction.executeAddAction({
+      addAction.mutate({
         targetAddress: row.value.address,
         description,
         data
@@ -68,7 +69,8 @@ export function useContractOwnershipTransfer(
     if (isAdded) onTransferred()
   })
 
-  watch(transferMutation.error, (error) => {
+  watch([transferMutation.error, addAction.error], ([directError, boardError]) => {
+    const error = boardError ?? directError
     if (!error) return
     log.error('errorTransferOwnership.value: ', error)
     const classified = classifyError(error)

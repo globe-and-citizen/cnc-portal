@@ -1,5 +1,5 @@
 import { computed, ref } from 'vue'
-import { useQueryClient } from '@tanstack/vue-query'
+import { useMutation, useQueryClient } from '@tanstack/vue-query'
 import { type Address } from 'viem'
 import { readContract } from '@wagmi/core'
 import { useTeamStore } from '@/stores'
@@ -15,112 +15,84 @@ import type { Action } from '@/types'
 type AddActionInput = Pick<Action, 'targetAddress' | 'description' | 'data'> & Partial<Action>
 import { BOD_FUNCTION_NAMES } from './reads'
 
-/**
- * Add a BOD action.
- *
- * The on-chain write is followed (in V3 `onSuccess`) by:
- *   1. creating the action in the backend DB,
- *   2. invalidating the `getBodActions` cache,
- *   3. notifying the other board members (best-effort).
- *
- * Consumers call `executeAddAction(partialAction)`; the wrapper reads
- * `actionCount` on-chain to build the action body before triggering the
- * mutation, and stashes that body in a closure ref for `onSuccess` to read.
- */
+/** Owns preparation, confirmation and required registration as one mutation. */
 export function useBodAddAction() {
   const teamStore = useTeamStore()
-  const toast = useToast()
-  const queryClient = useQueryClient()
-  const bodAddress = computed(() => teamStore.getContractAddressByType('BoardOfDirectors'))
-
   const createActionMutation = useCreateActionMutation()
   const { mutateAsync: addBulkNotifications } = useCreateBulkNotificationsMutation()
-
-  const action = ref<Partial<Action> | null>(null)
-
-  const mutation = useContractWritesV3({
-    contractAddress: bodAddress,
+  // This is an operation target, not a copy of server state. Keep it pinned until
+  // registration finishes so a team switch cannot redirect an in-flight write.
+  const writeAddress = ref<Address>()
+  const write = useContractWritesV3({
+    contractAddress: writeAddress,
     abi: boardOfDirectorsAbi,
-    functionName: BOD_FUNCTION_NAMES.ADD_ACTION,
-    onSuccess: async () => {
-      if (action.value) {
-        await createActionMutation.mutateAsync({ body: action.value })
-      }
+    functionName: BOD_FUNCTION_NAMES.ADD_ACTION
+  })
 
-      await queryClient.invalidateQueries({ queryKey: ['getBodActions'] })
+  const mutation = useMutation({
+    // Retrying the whole workflow could duplicate a confirmed on-chain action.
+    retry: false,
+    mutationFn: async (data: AddActionInput) => {
+      if (writeAddress.value) throw new Error('A Board action is already being submitted')
+      const address = teamStore.getContractAddressByType('BoardOfDirectors')
+      const teamId = teamStore.currentTeamId
+      if (!address) throw new Error('BOD address not found')
+      if (!teamId) throw new Error('No current team ID found')
 
+      writeAddress.value = address
       try {
-        const members = bodAddress.value
-          ? ((await readContract(config, {
-              address: bodAddress.value,
-              abi: boardOfDirectorsAbi,
-              functionName: 'getBoardOfDirectors'
-            })) as Address[])
-          : []
+        const actionId = await readContract(config, {
+          address,
+          functionName: 'getActionCount',
+          abi: boardOfDirectorsAbi
+        })
+        const action = { ...data, teamId: Number(teamId), actionId: Number(actionId) }
+        const result = await write.mutateAsync({
+          args: [data.targetAddress, data.description, data.data]
+        })
 
-        if (members.length > 0 && action.value) {
-          const recipients = members.filter(
-            (m) => m?.toLowerCase() !== (action.value?.userAddress || '').toLowerCase()
+        try {
+          await createActionMutation.mutateAsync({ body: action })
+        } catch (cause) {
+          throw Object.assign(
+            new Error(
+              'The Board action was confirmed, but its record could not be saved. Refresh Contract Management before submitting again.'
+            ),
+            { cause }
           )
-          await addBulkNotifications({
-            body: {
-              userIds: recipients,
-              message: 'New board action requires your approval',
-              subject: 'New Board Action Created',
-              author: action.value.userAddress ?? '',
-              resource: `teams/${teamStore.currentTeamId}/contract-management`
-            }
-          })
         }
-      } catch (err) {
-        log.error('Error creating notifications:', err)
+
+        try {
+          const members = await readContract(config, {
+            address,
+            abi: boardOfDirectorsAbi,
+            functionName: 'getBoardOfDirectors'
+          })
+          const recipients = members.filter(
+            (member) => member.toLowerCase() !== (action.userAddress ?? '').toLowerCase()
+          )
+          if (recipients.length) {
+            await addBulkNotifications({
+              body: {
+                userIds: recipients,
+                message: 'New board action requires your approval',
+                subject: 'New Board Action Created',
+                author: action.userAddress ?? '',
+                resource: `teams/${teamId}/contract-management`
+              }
+            })
+          }
+        } catch (error) {
+          log.error('Error creating notifications:', error)
+        }
+        return result
+      } finally {
+        writeAddress.value = undefined
       }
     }
   })
 
-  /**
-   * `targetAddress` / `description` / `data` are what `addAction` encodes, so
-   * they are required. They used to be optional (`Partial<Action>`) and the
-   * args tuple was cast to `readonly unknown[]`, so passing an incomplete
-   * action compiled — and viem encodes `undefined` without complaining, which
-   * would have submitted a governance action with an empty target and payload
-   * rather than failing. Every call site already passes all three.
-   */
-  const executeAddAction = async (data: AddActionInput) => {
-    try {
-      if (!bodAddress.value) {
-        toast.add({ title: 'BOD address not found', color: 'error' })
-        return
-      }
-      if (!teamStore.currentTeamId) {
-        toast.add({ title: 'No current team ID found', color: 'error' })
-        return
-      }
-
-      const actionId = (await readContract(config, {
-        address: bodAddress.value,
-        functionName: 'getActionCount',
-        abi: boardOfDirectorsAbi
-      })) as bigint
-
-      action.value = {
-        teamId: Number(teamStore.currentTeamId),
-        actionId: Number(actionId),
-        ...data
-      }
-
-      return await mutation.mutateAsync({
-        args: [data.targetAddress, data.description, data.data]
-      })
-    } catch (err) {
-      console.error(err)
-    }
-  }
-
-  return {
-    ...mutation,
-    executeAddAction
-  }
+  return { ...mutation, executeAddAction: mutation.mutateAsync }
 }
 
 /**
