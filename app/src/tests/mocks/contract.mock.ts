@@ -75,10 +75,7 @@ export const mockBodIsBodAction = {
   isBodAction: ref(false)
 }
 
-export const mockBodAddAction = {
-  ...createContractWriteV3Mock(),
-  executeAddAction: vi.fn()
-}
+export const mockBodAddAction = createContractWriteV3Mock()
 
 export const mockBodApproveAction = {
   ...createContractWriteV3Mock(),
@@ -286,9 +283,6 @@ export const resetContractMocks = () => {
     }
     if (vi.isMockFunction(mock.reset)) mock.reset.mockClear()
 
-    if ('executeAddAction' in mock && vi.isMockFunction(mock.executeAddAction)) {
-      mock.executeAddAction.mockClear()
-    }
     if ('executeApproveAction' in mock && vi.isMockFunction(mock.executeApproveAction)) {
       mock.executeApproveAction.mockClear()
     }

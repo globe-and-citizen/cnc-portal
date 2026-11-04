@@ -92,7 +92,7 @@ export function useBodAddAction() {
     }
   })
 
-  return { ...mutation, executeAddAction: mutation.mutateAsync }
+  return mutation
 }
 
 /**
