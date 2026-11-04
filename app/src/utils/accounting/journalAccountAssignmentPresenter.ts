@@ -72,13 +72,13 @@ export const ACCOUNT_ASSIGNMENT_COLUMNS = [
   { value: 'assignment', label: 'Account assignment' }
 ] as const
 
-export const INFERRED_ASSIGNMENT = 'Inferred from source evidence'
+export const DEFAULT_ASSIGNMENT = 'Default account — not yet reviewed'
 export const COMBINED_MOVEMENTS_NOTE =
   'This journal entry combines movements and cannot receive one account assignment.'
 
 /**
  * The printed "Account assignment" cell of a journal entry's first line: the saved
- * account (and note), or that it was inferred, preceded by the read-only notice
+ * account (and note), or that it still sits on its default, preceded by the read-only notice
  * for a compound entry. Blank on the entry's follow-up lines, as on screen.
  */
 export function assignmentStatus({
@@ -87,6 +87,6 @@ export function assignmentStatus({
   savedDecision
 }: Pick<JournalAccountAssignmentRow, 'isFirst' | 'reviewRequired' | 'savedDecision'>): string {
   if (!isFirst) return ''
-  const decision = savedDecision ?? INFERRED_ASSIGNMENT
+  const decision = savedDecision ?? DEFAULT_ASSIGNMENT
   return reviewRequired ? `${COMBINED_MOVEMENTS_NOTE} ${decision}` : decision
 }

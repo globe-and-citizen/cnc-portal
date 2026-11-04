@@ -140,7 +140,7 @@ function trialTable(books: AccountingExportSnapshot, asOf?: Date | null): Accoun
     align: ['left', 'left', 'right', 'right'],
     body: [
       ...trial.rows.map((t) => [t.label, t.nature, t.dr, t.cr]),
-      ['Total', '', trial.total, trial.total]
+      ['Total', '', trial.totalDebit, trial.totalCredit]
     ]
   }
 }
@@ -232,6 +232,21 @@ export interface ExportPdfOptions {
   /** Download filename (with `.pdf`). */
   filename: string
   pageBreak?: boolean
+  /** Team whose books these are, printed in the document title. */
+  teamName?: string
+  /** Span of activity the books record, printed under the title. */
+  coverage?: string | null
+}
+
+/** The document title and the line under it, naming whose books and which period. */
+export function documentHeading(
+  { teamName, coverage }: Pick<ExportPdfOptions, 'teamName' | 'coverage'>,
+  generatedAt: Date
+) {
+  return {
+    title: teamName ? `Accounting — ${teamName}` : 'Accounting',
+    subtitle: [coverage, `Generated ${formatDateTime(generatedAt)}`].filter(Boolean).join(' · ')
+  }
 }
 
 /** Render the given section tables to a PDF and download it. */
@@ -245,15 +260,15 @@ export async function exportTablesPdf(
   const doc = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' })
   const marginX = 40
 
-  // Document title on the first page.
+  const heading = documentHeading(opts, new Date())
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(18)
   doc.setTextColor(...TITLE_COLOR)
-  doc.text('Accounting', marginX, 46)
+  doc.text(heading.title, marginX, 46)
   doc.setFont('helvetica', 'normal')
   doc.setFontSize(9)
   doc.setTextColor(120, 120, 120)
-  doc.text(`Generated ${formatDateTime(new Date())}`, marginX, 62)
+  doc.text(heading.subtitle, marginX, 62)
 
   let cursorY = 84
   tables.forEach((table, index) => {

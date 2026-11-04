@@ -15,7 +15,8 @@ import { money, formatUnixDate } from './presenter'
 import { formatAddress } from '@/utils/format'
 import { formatMinutesAsDuration } from '@/utils/wages/model'
 import type { UseCase } from './journalEntryDraft'
-import type { JournalEntry } from './types'
+import { ZERO_USD_AMOUNT } from './monetaryAmount'
+import type { JournalEntry, UsdAmount } from './types'
 
 /**
  * Normalized accounting-entry label per use case — the generic fallback shown in
@@ -116,6 +117,46 @@ function expensePredicate(entry: JournalEntry, amount: string): string {
   return `withdrew ${amount} for an expense`
 }
 
+const INTEREST_ACCOUNTS: ReadonlySet<string> = new Set(['Interest Expense', 'Interest Payable'])
+
+/**
+ * Split a credit entry's lines into loan principal (the Loan Payable leg, whichever side
+ * it posts on) and interest (the debit that accrues or settles the fixed return), so a
+ * funding or an installment that carries both names each at its own amount.
+ */
+function loanAmounts(entry: JournalEntry): { principal: UsdAmount; interest: UsdAmount } {
+  let principal = ZERO_USD_AMOUNT
+  let interest = ZERO_USD_AMOUNT
+  for (const line of entry.lines) {
+    const account = line.account.family.name
+    if (account === 'Loan Payable') principal += line.debit ?? line.credit ?? ZERO_USD_AMOUNT
+    else if (INTEREST_ACCOUNTS.has(account)) interest += line.debit ?? ZERO_USD_AMOUNT
+  }
+  return { principal, interest }
+}
+
+/** Narrate a Community Credit funding or installment from its principal and interest legs. */
+function creditPredicate(entry: JournalEntry, amount: string): string {
+  const { principal, interest } = loanAmounts(entry)
+  const hasPrincipal = principal > ZERO_USD_AMOUNT
+  const hasBoth = hasPrincipal && interest > ZERO_USD_AMOUNT
+
+  if (entry.useCase === 'UC-CREDIT-03') {
+    if (hasBoth) {
+      return `was repaid ${money(principal)} of loan principal and ${money(interest)} of interest`
+    }
+    return hasPrincipal
+      ? `was repaid ${amount} of loan principal`
+      : `was paid ${amount} of interest on their loan`
+  }
+  if (hasBoth) {
+    return `lent ${money(principal)} to the community credit and is owed ${money(interest)} of interest`
+  }
+  return entry.useCase === 'UC-CREDIT-01'
+    ? `lent ${amount} to the community credit`
+    : `is owed ${amount} of interest on their loan`
+}
+
 /**
  * The name-less predicate shown after the actor's avatar (the avatar carries the
  * name). The "· N SHER" tail appears once the entry carries the share count.
@@ -141,19 +182,11 @@ function predicate(entry: JournalEntry): string {
     case 'UC-SDR-01':
       return `invested ${amount} in capital${sher}`
     case 'UC-CREDIT-01':
-      return `lent ${amount} to the community credit`
     case 'UC-CREDIT-03':
-      // The legs of one installment read differently — the debit is what marks the
-      // split (see the FixedReturn mapper): principal retires the loan, while both
-      // interest legs settle the fixed return, accrued or not.
-      return entry.lines.find((line) => line.debit !== undefined)?.account.family.name ===
-        'Loan Payable'
-        ? `was repaid ${amount} of loan principal`
-        : `was paid ${amount} of interest on their loan`
+    case 'UC-CREDIT-05':
+      return creditPredicate(entry, amount)
     case 'UC-CREDIT-04':
       return `was refunded ${amount} of lent principal`
-    case 'UC-CREDIT-05':
-      return `is owed ${amount} of interest on their loan`
     case 'UC-EXP-01':
       return expensePredicate(entry, amount)
     case 'UC-INV-01':

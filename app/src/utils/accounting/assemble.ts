@@ -50,6 +50,7 @@ import {
   currentSherUsdRate
 } from '@/utils/accounting/sherRate'
 import { settleWithdrawnSher } from '@/utils/accounting/sherIssuance'
+import { splitUnbackedIssuance } from '@/utils/accounting/unbackedIssuance'
 import { atDate } from '@/utils/accounting/mappers/context'
 import {
   receivingSafeByTxHash,
@@ -314,7 +315,9 @@ export function buildCncJournalEntryDrafts(input: CncAccountingInput): JournalEn
   // A Community Credit sweep has no Bank event that identifies its destination
   // generation. Keep that absence explicit; the canonical account registry turns
   // the Bank leg into an unresolved account instead of attributing it by timing.
-  return settleWithdrawnSher(stamped, currentRate).sort((a, b) => a.timestamp - b.timestamp)
+  return settleWithdrawnSher(splitUnbackedIssuance(stamped), currentRate).sort(
+    (a, b) => a.timestamp - b.timestamp
+  )
 }
 
 /**

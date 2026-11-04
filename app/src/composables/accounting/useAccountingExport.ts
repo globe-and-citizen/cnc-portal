@@ -13,9 +13,12 @@ import { log } from '@/lib/logging'
 import { buildTables, exportTablesPdf, type ExportPdfOptions } from '@/lib/accounting/pdf'
 import type { AccountingExportSnapshot, SectionSpec } from '@/utils/accounting/exportSpec'
 import { buildSheets, exportSheetsExcel } from '@/lib/accounting/spreadsheet'
+import { activityCoverageLabel } from '@/utils/accounting/presenter'
+import { useTeamStore } from '@/stores/teamStore'
 
 export function useAccountingExport() {
   const accounting = useAccountingContext()
+  const teamStore = useTeamStore()
   const toast = useToast()
   const { resolveUser } = useTransactionPresentation()
 
@@ -34,7 +37,12 @@ export function useAccountingExport() {
     successMessage = 'Exported to PDF'
   ): Promise<void> {
     try {
-      await exportTablesPdf(buildTables(snapshot(), specs, resolveName), opts)
+      const books = snapshot()
+      await exportTablesPdf(buildTables(books, specs, resolveName), {
+        ...opts,
+        teamName: teamStore.currentTeamMeta.data?.name,
+        coverage: activityCoverageLabel(books.journal)
+      })
       toast.add({ title: successMessage, color: 'success' })
     } catch (error) {
       log.error('Accounting PDF export failed', error)

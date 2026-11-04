@@ -282,9 +282,9 @@ export interface GeneralLedger {
   totalDebit: UsdAmount
   /** Sum of all gross credit lines. */
   totalCredit: UsdAmount
-  /** Sum of the debit-normal account balances. */
+  /** Sum of the account balances that net to a debit. */
   debitBalanceTotal: UsdAmount
-  /** Sum of the credit-normal account balances. */
+  /** Sum of the account balances that net to a credit. */
   creditBalanceTotal: UsdAmount
   /** True when both the gross and net identities hold exactly. */
   balanced: boolean

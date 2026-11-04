@@ -265,7 +265,7 @@ describe('accounting assembly boundary', () => {
     expect(balance.balanced).toBe(true)
   })
 
-  it('issues an unbacked direct mint into equity (Dr SHERS To Be Issued · Cr Investor Equity)', () => {
+  it('books a direct mint to a shareholder owed no wages against Deferred SHER Compensation', () => {
     const a = assembleAccounting({
       ...BASE,
       // No backing deposit/withdraw → the mint is a direct share issuance.
@@ -287,14 +287,14 @@ describe('accounting assembly boundary', () => {
       }
     })
 
-    // A real posting now (not a value-0 memo): it clears SHERS To Be Issued into
-    // equity at the SHER rate of record (60 SHER × $1.00 = $60) — Dr/Cr filled.
+    // No wage SHER is owed to the shareholder, so the mint is issued for no recorded
+    // consideration: Dr Deferred SHER Compensation · Cr Investor Equity (60 SHER × $1.00).
     const issued = a.journal.find((entry) => entry.useCase === 'DEFAULT-D')
     expect(issued).toMatchObject({
       shares: 60,
       lines: [
         {
-          account: { family: { name: 'SHERS To Be Issued' } },
+          account: { family: { name: 'Deferred SHER Compensation' } },
           debit: usd(60),
           movement: { token: 'sher' }
         },

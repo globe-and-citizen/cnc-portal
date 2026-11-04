@@ -98,7 +98,7 @@
             <span v-if="row.reviewRequired" data-test="assignment-readonly">
               {{ COMBINED_MOVEMENTS_NOTE }}
             </span>
-            <span>{{ row.savedDecision ?? INFERRED_ASSIGNMENT }}</span>
+            <span>{{ row.savedDecision ?? DEFAULT_ASSIGNMENT }}</span>
           </div>
         </template>
       </template>
@@ -119,7 +119,7 @@ import { formatTxHash } from '@/utils/format'
 import {
   ACCOUNT_ASSIGNMENT_COLUMNS,
   COMBINED_MOVEMENTS_NOTE,
-  INFERRED_ASSIGNMENT,
+  DEFAULT_ASSIGNMENT,
   presentJournalAccountAssignments,
   type JournalAccountAssignmentRow
 } from '@/utils/accounting/journalAccountAssignmentPresenter'

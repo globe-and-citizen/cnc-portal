@@ -75,6 +75,28 @@ describe('buildGeneralLedger — catalogue worked example', () => {
     expect(gl2.debitBalanceTotal).toBe(gl2.creditBalanceTotal)
   })
 
+  it('[AC-US-ACCT-003-12] totals an account on its abnormal side in the column it actually falls on', () => {
+    // A $10 revenue reversal nets Service Revenue to a debit; it must add to the debit
+    // total, not shrink the credit one, so the trial reads 10 = 10 like the table.
+    const gl2 = generalLedger([
+      {
+        id: 'reversal',
+        timestamp: 1,
+        useCase: 'UC-BANK-02',
+        debit: 'Service Revenue',
+        credit: 'Investor Equity',
+        token: 'usdc',
+        rawAmount: '10000000',
+        rate: 1,
+        internal: false,
+        memo: '',
+        enrichment: 'not-applicable'
+      }
+    ])
+    expect(usdNumber(gl2.debitBalanceTotal)).toBeCloseTo(10, 6)
+    expect(usdNumber(gl2.creditBalanceTotal)).toBeCloseTo(10, 6)
+  })
+
   it('[AC-US-ACCT-003-08] [AC-US-ACCT-005-13] keeps an unresolved redeployment leg separate from concrete Bank accounts', () => {
     // One team, two Bank contracts (a redeploy). Deposits before the redeploy hit
     // the first Bank; the deposit after it hits Bank #2 — which must carry only its
