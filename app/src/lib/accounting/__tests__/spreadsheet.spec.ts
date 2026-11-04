@@ -221,7 +221,7 @@ describe('buildSheets (section selection)', () => {
         key: 'ledger',
         journalAccounts: [accountId],
         journalAccountLabel: 'Cash — Bank',
-        journalAccountTotal: '$100.00'
+        journalAccountMovements: { debit: '$100.00', credit: '$0.00' }
       }
     ])
     expect(String(ledger.rows[0][0])).toBe('General Ledger — Cash — Bank')
@@ -235,7 +235,7 @@ describe('buildSheets (section selection)', () => {
         key: 'ledger',
         journalAccounts: [sampleBooks().journal[0]!.lines[1]!.account.id],
         journalAccountLabel: 'Earnings to date',
-        journalAccountTotal: '$100.00'
+        journalAccountMovements: { debit: '$100.00', credit: '$100.00' }
       }
     ])
     expect(String(ledger.rows[0][0])).toBe('General Ledger — Earnings to date')

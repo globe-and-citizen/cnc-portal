@@ -9,7 +9,8 @@ import {
 import {
   ledgerTotalRow,
   resolveLedgerColumns,
-  type LedgerColumnKey
+  type LedgerColumnKey,
+  type LedgerMovements
 } from '@/utils/accounting/ledgerColumns'
 import type { AccountingExportSnapshot } from '@/utils/accounting/exportSpec'
 import type { ResolveName } from './spreadsheet'
@@ -25,7 +26,7 @@ interface GeneralLedgerSheetOptions {
   currencies?: string[]
   journalAccounts?: string[]
   journalAccountLabel?: string
-  journalAccountTotal?: string
+  journalAccountMovements?: LedgerMovements
 }
 
 /** Convert one displayed amount to a spreadsheet number, preserving blank cells. */
@@ -63,7 +64,7 @@ export function generalLedgerSheetRows(
     opts.currencies,
     opts.journalAccounts
   )
-  const total = opts.journalAccountTotal ?? journal.total
+  const movements = opts.journalAccountMovements ?? { debit: journal.total, credit: journal.total }
   const columns = resolveLedgerColumns(opts.columns)
   return [
     [
@@ -76,6 +77,6 @@ export function generalLedgerSheetRows(
     ...journal.rows.map((row) =>
       columns.map((column) => SHEET_CELL[column.value](row, resolveName))
     ),
-    ledgerTotalRow(columns, usd(total))
+    ledgerTotalRow(columns, { debit: usd(movements.debit), credit: usd(movements.credit) })
   ]
 }

@@ -285,7 +285,8 @@ Issued without moving cash.
 - **Input:** An ended weekly claim, its daily hours, applicable wage terms, overtime policy, and current eligibility status.
 - **Processing:** Accounting calculates the canonical weekly amount at the week-end timestamp. A disabled claim is excluded; signing is not
   the accrual trigger. The entry is synthetic and has no transaction hash.
-- **General Ledger:** Label `Wage accrual`; activity `Payroll: Claim`; date is the end of the work week.
+- **General Ledger:** Label `Wage accrual`; activity `Payroll: Claim` in a yellow badge, a SHER-only wage included; date is the end of the
+  work week.
 
 For an ended eligible week with $80 of cash wages and $20 of SHER wages:
 
@@ -313,8 +314,10 @@ Do not expense wages again.
 
 - **Input:** A Payroll withdrawal event enriched with the matching weekly claim.
 - **Processing:** Cash and SHER settlement paths are distinguished by currency. Portions in the same transaction share one entry; separate
-  withdrawals remain separate operations. A matching Investor mint from SHER settlement is removed as duplicate evidence.
-- **General Ledger:** Label `Wage settlement`; activity `Payroll: Withdraw`; the transaction hash traces the settlement.
+  withdrawals remain separate operations. A matching Investor mint from SHER settlement is removed as duplicate evidence. The Investor
+  contract of every Officer generation counts as SHER, so a wage withdrawn in a previous generation's SHER still settles its liability.
+- **General Ledger:** Label `Wage settlement`; activity `Payroll: Withdraw` in a blue badge, so a withdrawn wage stands apart from a wage
+  still accrued; the transaction hash traces the settlement.
 
 For settlement of $80 in cash wages and $20 in SHER wages in one operation:
 
@@ -681,8 +684,10 @@ criteria unchecked. No runtime change is delivered here. Target scenarios remain
 
 Current known-token direct Bank/Safe receipts debit receiving cash and credit Service Revenue, labelled `Service revenue`. Evidenced Safe
 exchanges bypass this fallback. Discovered-asset receipts, mints, and ambiguous multi-asset settlements credit `Unclassified Receipts` and
-keep Accounting partial until classified. Router-backed receipts are removed because `UC-SDR-01` owns them. Target `UC-TREASURY-002`
-suspense treatment extends pending classification to other unidentified receipts; sender role alone does not classify them.
+keep Accounting partial until classified. Router-backed receipts are removed because `UC-SDR-01` owns them. A plain stablecoin transfer into
+a Bank from outside the CNC, with no Bank deposit event, is a receipt too: a first-generation Bank was funded this way. A transfer sent by a
+CNC contract stays with that contract's own event. Target `UC-TREASURY-002` suspense treatment extends pending classification to other
+unidentified receipts; sender role alone does not classify them.
 
 ### `SAFE-SWAP` — Evidenced Safe Asset Exchange
 
@@ -816,7 +821,10 @@ Current `Dividend paid` corresponds to `UC-EQUITY-002`, retaining the Dividend E
 
 ### `DEFAULT-D` — Direct SHER Issuance
 
-Current `Share issuance` corresponds to `UC-EQUITY-003`. Backed mints and migrated ownership do not create additional issuance.
+Current `Share issuance` corresponds to `UC-EQUITY-003`. Backed mints and migrated ownership do not create additional issuance. A direct
+mint clears `SHERS To Be Issued` only up to the wage SHER the shareholder is still owed and had already earned by the mint's date; the
+excess is issued for no recorded consideration and posts Dr Deferred SHER Compensation · Cr Investor Equity, so `SHERS To Be Issued` never
+hides SHER that other members, or later wages, are still owed.
 
 ### `UC-VEST-01` — Vesting Grant
 

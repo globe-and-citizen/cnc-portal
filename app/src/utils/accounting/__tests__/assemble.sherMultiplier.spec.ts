@@ -54,7 +54,7 @@ describe('SHER valuation during accounting assembly', () => {
     const issued = accounting.journal.find((entry) => entry.useCase === 'DEFAULT-D')
     expect(issued?.lines.map((line) => line.debit || line.credit)).toEqual([usd(0.5), usd(0.5)])
     expect(issued?.lines.map((line) => line.account.family.name)).toEqual([
-      'SHERS To Be Issued',
+      'Deferred SHER Compensation',
       'Investor Equity'
     ])
   })

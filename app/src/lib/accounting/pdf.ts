@@ -2,7 +2,7 @@
  * Print the accounting books to a downloadable PDF.
  *
  * Section tables — Summary, Income Statement, Balance Sheet, Trial Balance,
- * General Ledger — are built by pure, unit-tested functions that read the live
+ * General Ledger, Account Assignments — are built by pure, unit-tested functions that read the live
  * engine output ({@link AccountingExportSnapshot}) through the same presenters the view and
  * the Excel export use. {@link buildTables} builds the requested sections for
  * the Summary export modal and per-page exports. {@link exportTablesPdf}
@@ -22,7 +22,13 @@ import {
 } from '@/utils/accounting/presenter'
 import type { SectionSpec } from '@/utils/accounting/exportSpec'
 import { formatDateTime } from '@/utils/format'
-import { generalLedgerPdfTable } from './generalLedgerPdfTable'
+import {
+  ACCOUNT_ASSIGNMENTS_TITLE,
+  ACCOUNT_ASSIGNMENT_COLUMNS,
+  assignmentStatus,
+  presentJournalAccountAssignments
+} from '@/utils/accounting/journalAccountAssignmentPresenter'
+import { generalLedgerPdfTable, txHashCell } from './generalLedgerPdfTable'
 
 type Cell = string | number
 type Align = 'left' | 'right'
@@ -38,7 +44,22 @@ export interface AccountingPdfTable {
   body: Cell[][]
   /** Horizontal alignment per column (defaults to left). */
   align: Align[]
+  /**
+   * Relative width per column; the page width is split in these proportions.
+   * Without it autotable sizes columns from their content.
+   */
+  widths?: number[]
+  /** Text size and cell padding (defaults to {@link DEFAULT_TYPOGRAPHY}). */
+  typography?: PdfTableTypography
 }
+
+/** Text size and cell padding of a printed table, in points. */
+export interface PdfTableTypography {
+  fontSize: number
+  cellPadding: number
+}
+
+const DEFAULT_TYPOGRAPHY: PdfTableTypography = { fontSize: 10, cellPadding: 6 }
 
 /** A blank spacer row, used to separate sub-sections inside a statement. */
 const GAP: Cell[] = ['', '']
@@ -119,8 +140,28 @@ function trialTable(books: AccountingExportSnapshot, asOf?: Date | null): Accoun
     align: ['left', 'left', 'right', 'right'],
     body: [
       ...trial.rows.map((t) => [t.label, t.nature, t.dr, t.cr]),
-      ['Total', '', trial.total, trial.total]
+      ['Total', '', trial.totalDebit, trial.totalCredit]
     ]
+  }
+}
+
+function assignmentsTable(books: AccountingExportSnapshot): AccountingPdfTable {
+  const { rows } = presentJournalAccountAssignments(books.journal)
+  return {
+    title: ACCOUNT_ASSIGNMENTS_TITLE,
+    head: ACCOUNT_ASSIGNMENT_COLUMNS.map((column) => column.label),
+    align: ['left', 'left', 'left', 'left', 'left', 'right', 'right', 'left'],
+    widths: [160, 180, 150, 200, 100, 120, 120, 280],
+    body: rows.map((row) => [
+      row.date,
+      row.label,
+      txHashCell(row),
+      row.accountLabel ?? row.account,
+      row.currency,
+      row.dr,
+      row.cr,
+      assignmentStatus(row)
+    ])
   }
 }
 
@@ -147,8 +188,10 @@ function sectionTable(
         currencies: spec.currencies,
         journalAccounts: spec.journalAccounts,
         journalAccountLabel: spec.journalAccountLabel,
-        journalAccountTotal: spec.journalAccountTotal
+        journalAccountMovements: spec.journalAccountMovements
       })
+    case 'assignments':
+      return assignmentsTable(books)
   }
 }
 
@@ -189,6 +232,21 @@ export interface ExportPdfOptions {
   /** Download filename (with `.pdf`). */
   filename: string
   pageBreak?: boolean
+  /** Team whose books these are, printed in the document title. */
+  teamName?: string
+  /** Span of activity the books record, printed under the title. */
+  coverage?: string | null
+}
+
+/** The document title and the line under it, naming whose books and which period. */
+export function documentHeading(
+  { teamName, coverage }: Pick<ExportPdfOptions, 'teamName' | 'coverage'>,
+  generatedAt: Date
+) {
+  return {
+    title: teamName ? `Accounting — ${teamName}` : 'Accounting',
+    subtitle: [coverage, `Generated ${formatDateTime(generatedAt)}`].filter(Boolean).join(' · ')
+  }
 }
 
 /** Render the given section tables to a PDF and download it. */
@@ -202,15 +260,15 @@ export async function exportTablesPdf(
   const doc = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' })
   const marginX = 40
 
-  // Document title on the first page.
+  const heading = documentHeading(opts, new Date())
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(18)
   doc.setTextColor(...TITLE_COLOR)
-  doc.text('Accounting', marginX, 46)
+  doc.text(heading.title, marginX, 46)
   doc.setFont('helvetica', 'normal')
   doc.setFontSize(9)
   doc.setTextColor(120, 120, 120)
-  doc.text(`Generated ${formatDateTime(new Date())}`, marginX, 62)
+  doc.text(heading.subtitle, marginX, 62)
 
   let cursorY = 84
   tables.forEach((table, index) => {
@@ -229,10 +287,8 @@ export async function exportTablesPdf(
     doc.setTextColor(...TITLE_COLOR)
     doc.text(table.title, marginX, cursorY)
 
-    const columnStyles: Record<number, { halign: Align }> = {}
-    table.align.forEach((halign, col) => {
-      columnStyles[col] = { halign }
-    })
+    const { fontSize, cellPadding } = table.typography ?? DEFAULT_TYPOGRAPHY
+    const tableWidth = doc.internal.pageSize.getWidth() - 2 * marginX
 
     autoTable(doc, {
       startY: cursorY + 8,
@@ -240,18 +296,41 @@ export async function exportTablesPdf(
       head: [table.head],
       body: table.body,
       theme: 'striped',
-      styles: { fontSize: 10, cellPadding: 6, textColor: [30, 41, 59] },
+      styles: { fontSize, cellPadding, textColor: [30, 41, 59] },
       headStyles: {
         fillColor: HEADER_FILL,
         textColor: [255, 255, 255],
         fontStyle: 'bold',
-        fontSize: 10
+        fontSize
       },
       alternateRowStyles: { fillColor: ZEBRA_FILL },
-      columnStyles,
+      columnStyles: columnStylesOf(table, tableWidth),
       didDrawPage: () => drawWatermark(doc)
     })
   })
 
   doc.save(opts.filename)
+}
+
+/**
+ * Per-column autotable styles: the alignment, plus a fixed width when the table
+ * declares relative widths. Fixed widths keep one long unbreakable cell from
+ * starving its neighbours down to a letter per line.
+ */
+function columnStylesOf(
+  { align, widths }: AccountingPdfTable,
+  tableWidth: number
+): Record<number, { halign: Align; cellWidth?: number }> {
+  const totalWeight = widths?.reduce((sum, weight) => sum + weight, 0) ?? 0
+  return Object.fromEntries(
+    align.map((halign, col) => {
+      const weight = widths?.[col]
+      return [
+        col,
+        weight && totalWeight
+          ? { halign, cellWidth: (weight / totalWeight) * tableWidth }
+          : { halign }
+      ]
+    })
+  )
 }

@@ -42,12 +42,37 @@ function buildPocketIndex(
   return index
 }
 
+/** The Investor contract is the SHER token itself, in every generation it was deployed. */
+const SHER_TOKEN_CONTRACT_TYPES = new Set<string>(['Investor', 'InvestorV1'])
+
+/**
+ * Every SHER token the team ever issued: the explicit address plus the Investor
+ * contract of each generation, so a wage paid in a previous generation's SHER
+ * still resolves after the Officer redeploys its contracts.
+ */
+function collectSherTokens(
+  contracts: readonly TeamContract[] | undefined,
+  sherTokenAddress: Address | string | null | undefined
+): Set<Address> {
+  const candidates = [
+    sherTokenAddress,
+    ...(contracts ?? [])
+      .filter(({ type }) => SHER_TOKEN_CONTRACT_TYPES.has(type))
+      .map(({ address }) => address)
+  ]
+  return new Set(
+    candidates
+      .filter((address): address is string => !!address && isAddress(address))
+      .map((address) => getAddress(address))
+  )
+}
+
 interface BuildMapperContextInput {
   /** The team's `TeamContract` rows — resolve the internal pockets. */
   contracts: readonly TeamContract[] | undefined
   /** The set of internal addresses (from `collectInternalAddresses`). */
   internalAddresses: ReadonlySet<Address>
-  /** The on-chain SHER token address, so it resolves to the `sher` {@link TokenId}. */
+  /** The current SHER token address; every generation's Investor contract also resolves to `sher`. */
   sherTokenAddress?: Address | string | null
   /** FX resolver for non-pegged tokens (native, SHER) — see {@link toUsdUtil}. */
   rateOfRecord?: UsdRateOfRecord
@@ -61,16 +86,13 @@ interface BuildMapperContextInput {
  */
 export function buildMapperContext(input: BuildMapperContextInput): MapperContext {
   const pocketIndex = buildPocketIndex(input.contracts)
-  const sher =
-    input.sherTokenAddress && isAddress(input.sherTokenAddress)
-      ? getAddress(input.sherTokenAddress)
-      : null
+  const sherTokens = collectSherTokens(input.contracts, input.sherTokenAddress)
 
   const tokenIdOf = (tokenAddress: string | null | undefined): TokenId => {
     if (!tokenAddress || !isAddress(tokenAddress) || getAddress(tokenAddress) === zeroAddress) {
       return 'native'
     }
-    if (sher && getAddress(tokenAddress) === sher) return 'sher'
+    if (sherTokens.has(getAddress(tokenAddress))) return 'sher'
     const token = resolveTokenIdByAddress(tokenAddress)
     if (!token) throw new Error(`Unknown token contract: ${tokenAddress}`)
     return token

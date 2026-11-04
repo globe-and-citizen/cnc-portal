@@ -6,8 +6,10 @@
  *
  * - **Gross**: Σ of every journal debit line = Σ of every credit line
  *   (`totalDebit === totalCredit`) — the journal total, 678.10 in the worked example.
- * - **Net**: Σ of the debit-normal account balances = Σ of the credit-normal
- *   balances (`debitBalanceTotal === creditBalanceTotal`) — 253 in the worked example.
+ * - **Net**: Σ of the account balances that net to a debit = Σ of those that net to
+ *   a credit (`debitBalanceTotal === creditBalanceTotal`) — 253 in the worked
+ *   example. Each balance counts on the side it actually falls, so an account on its
+ *   abnormal side (a Swap P&L loss) is never subtracted from its normal column.
  *
  * Accounting assembly finalizes source drafts before this projection. The General
  * Ledger, Trial Balance, Summary, Income Statement, and Balance Sheet all consume
@@ -106,8 +108,8 @@ export function buildGeneralLedger(journal: readonly JournalEntry[]): GeneralLed
       totalCredit += credit
       const debitNormal = bucket.account.family.normalBalance === 'debit'
       const balance = debitNormal ? debit - credit : credit - debit
-      if (debitNormal) debitBalanceTotal += balance
-      else creditBalanceTotal += balance
+      if (debit > credit) debitBalanceTotal += debit - credit
+      else creditBalanceTotal += credit - debit
 
       trialBalance.push({
         account: bucket.account,

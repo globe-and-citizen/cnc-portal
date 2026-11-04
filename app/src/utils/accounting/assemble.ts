@@ -30,6 +30,7 @@ import type {
 } from '@/types/contract-events/investor'
 import type { VestingEventFeed } from '@/types/contract-events/vesting'
 import { collectInternalAddresses } from '@/utils/accounting/internalAddresses'
+import { unaccountedRawTokenTransfers } from '@/utils/transactions/bank'
 import { buildMapperContext } from '@/utils/accounting/mappers/context'
 import type { CreditOfferTerms } from '@/utils/accounting/mappers/creditTimeline'
 import { mapCncJournalEntryDrafts, type JournalEntrySources } from '@/utils/accounting/mappers'
@@ -49,6 +50,7 @@ import {
   currentSherUsdRate
 } from '@/utils/accounting/sherRate'
 import { settleWithdrawnSher } from '@/utils/accounting/sherIssuance'
+import { splitUnbackedIssuance } from '@/utils/accounting/unbackedIssuance'
 import { atDate } from '@/utils/accounting/mappers/context'
 import {
   receivingSafeByTxHash,
@@ -133,7 +135,8 @@ function toJournalEntrySources(input: CncAccountingInput): JournalEntrySources {
       tokenDeposits: items(input.bankEvents.bankTokenDeposits),
       transfers: items(input.bankEvents.bankTransfers),
       tokenTransfers: items(input.bankEvents.bankTokenTransfers),
-      fees: items(input.bankEvents.bankFeePaids)
+      fees: items(input.bankEvents.bankFeePaids),
+      rawTransfers: unaccountedRawTokenTransfers(input.bankEvents)
     }
   }
 
@@ -312,7 +315,9 @@ export function buildCncJournalEntryDrafts(input: CncAccountingInput): JournalEn
   // A Community Credit sweep has no Bank event that identifies its destination
   // generation. Keep that absence explicit; the canonical account registry turns
   // the Bank leg into an unresolved account instead of attributing it by timing.
-  return settleWithdrawnSher(stamped, currentRate).sort((a, b) => a.timestamp - b.timestamp)
+  return settleWithdrawnSher(splitUnbackedIssuance(stamped), currentRate).sort(
+    (a, b) => a.timestamp - b.timestamp
+  )
 }
 
 /**

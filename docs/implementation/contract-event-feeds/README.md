@@ -49,6 +49,8 @@ flowchart LR
    currency only from the next transfer event in the same transaction and Bank generation; native and unmatched fees remain tokenless.
 8. Incoming Bank token transfers use every known Officer-generation Bank target and decode the indexed token address and transferred amount
    from each Bank event, so a later Bank deployment does not hide prior transfers or their value.
+9. Raw ERC-20 transfers into and out of each Bank are read for every token its `TokenSupportAdded` logs name plus the chain's USDC, USDC.e,
+   and USDT. A first-generation Bank logs no `TokenSupportAdded` and was funded by plain transfers, so those stablecoins are always scanned.
 
 ## Invariants and Failure Behaviour
 
@@ -76,7 +78,7 @@ flowchart LR
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `f15dccbe52468b554ce87b92f5db48411b921bb9`
+**Implementation evidence reviewed against:** `4e41f6b7dc10c9cfc87aaafb7ecc735da1e7beff`
 
 - [Shared RPC log scanner](../../../app/src/composables/eventsViaLogs.ts),
   [immutable block timestamp query](../../../app/src/queries/blockTimestamp.queries.ts), and

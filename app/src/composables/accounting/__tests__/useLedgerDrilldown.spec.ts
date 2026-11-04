@@ -45,7 +45,7 @@ describe('useLedgerDrilldown', () => {
     expect(specs[0]).toMatchObject({
       key: 'ledger',
       journalAccountLabel: 'Investor Equity',
-      journalAccountTotal: drilldown.selectedLine.value?.total
+      journalAccountMovements: drilldown.balance.value.movements
     })
     expect(specs[0].journalAccounts.length).toBeGreaterThan(0)
     expect(specs[0].columns).toEqual(['activity', 'dr'])
@@ -63,6 +63,18 @@ describe('useLedgerDrilldown', () => {
     })
     expect(drilldown.drilldownEntries.value).toEqual(entriesForAccount(journal, accounts))
     expect(drilldown.balance.value.account).toBeNull()
+    expect(drilldown.balance.value.movements).toEqual({ debit: '-$50.00', credit: '-$50.00' })
+  })
+
+  it('[AC-US-ACCT-002-17] totals only the drilled account’s own debits and credits, not its entries’ other lines', () => {
+    const drilldown = useLedgerDrilldown(entries, bounds)
+    drilldown.openFor('Payroll Expense', '$0.00')
+
+    expect(drilldown.drilldownEntries.value.length).toBeGreaterThan(0)
+    expect(drilldown.balance.value.movements).toEqual({
+      debit: drilldown.selectedLine.value?.total,
+      credit: money(0n)
+    })
   })
 
   it('uses the concrete Account of a Trial Balance row for a running balance', () => {

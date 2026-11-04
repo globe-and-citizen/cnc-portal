@@ -5,6 +5,7 @@
  * - `Deposited` / `TokenDeposited` (cash in):
  *   - from an internal pocket → **internal funding move** (Dr Cash — Bank · Cr that pocket)
  *   - from anyone external     → **UC-BANK-02** (Dr Cash — Bank · Cr Service Revenue)
+ * - A plain token transfer in from anyone external, with no Bank event → **UC-BANK-02**
  * - `Transfer` / `TokenTransfer` (cash out):
  *   - to an internal pocket → **UC-BANK-03** funding move (Dr that pocket · Cr Cash — Bank)
  *   - to anyone else        → unassigned outflow, flagged `needs-off-chain-data`
@@ -20,7 +21,8 @@ import type {
   BankFeePaidRow,
   BankTokenDepositRow,
   BankTransferRow,
-  BankTokenTransferRow
+  BankTokenTransferRow,
+  RawContractTokenTransferRow
 } from '@/types/contract-events/bank'
 import {
   makeJournalEntryDraft,
@@ -36,6 +38,8 @@ export interface BankMapperInput {
   transfers?: readonly BankTransferRow[]
   tokenTransfers?: readonly BankTokenTransferRow[]
   fees?: readonly BankFeePaidRow[]
+  /** Raw ERC-20 transfers no Bank event accounts for. */
+  rawTransfers?: readonly RawContractTokenTransferRow[]
 }
 
 const BANK = 'Cash — Bank' as const
@@ -158,11 +162,26 @@ function mapFee(row: BankFeePaidRow, ctx: MapperContext): JournalEntryDraft {
   })
 }
 
+/**
+ * A plain token transfer into the Bank from outside the CNC is a deposit like any
+ * other. One sent by a CNC contract is already booked from that contract's own
+ * event (a credit sweep, a treasury withdrawal), so it is left to that source.
+ */
+function mapRawDeposits(
+  rows: readonly RawContractTokenTransferRow[],
+  ctx: MapperContext
+): JournalEntryDraft[] {
+  return rows
+    .filter((row) => row.direction === 'in' && !isInternalAddress(row.from, ctx.internalAddresses))
+    .map((row) => mapDeposit({ ...row, depositor: row.from }, row.tokenAddress, ctx))
+}
+
 /** Map every monetary Bank event, including its transaction-bound fees. */
 export function mapBankEvents(input: BankMapperInput, ctx: MapperContext): JournalEntryDraft[] {
   return [
     ...(input.deposits ?? []).map((row) => mapDeposit(row, null, ctx)),
     ...(input.tokenDeposits ?? []).map((row) => mapDeposit(row, row.token, ctx)),
+    ...mapRawDeposits(input.rawTransfers ?? [], ctx),
     ...(input.transfers ?? []).map((row) => mapTransfer(row, null, ctx)),
     ...(input.tokenTransfers ?? []).map((row) => mapTransfer(row, row.token, ctx)),
     ...(input.fees ?? []).map((row) => mapFee(row, ctx))

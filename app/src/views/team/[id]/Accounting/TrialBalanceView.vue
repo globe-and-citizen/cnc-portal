@@ -171,8 +171,8 @@ const tableRows = computed<TrialTableRow[]>(() => [
     split: false,
     nature: '',
     natureClass: '',
-    dr: trial.value.total,
-    cr: trial.value.total,
+    dr: trial.value.totalDebit,
+    cr: trial.value.totalCredit,
     drMuted: false,
     crMuted: false,
     isTotal: true

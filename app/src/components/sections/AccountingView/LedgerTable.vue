@@ -172,12 +172,20 @@ import LedgerPrecisionCell from './LedgerPrecisionCell.vue'
 import { useActivityDestination } from '@/composables/accounting/useActivityDestination'
 import { NETWORK } from '@/constant'
 import { formatTxHash } from '@/utils/format'
-import { LEDGER_COLUMNS, type LedgerColumnKey } from '@/utils/accounting/ledgerColumns'
+import {
+  LEDGER_COLUMNS,
+  LEDGER_COLUMN_WIDTHS,
+  type LedgerColumnKey,
+  type LedgerMovements
+} from '@/utils/accounting/ledgerColumns'
 import type { LedgerRow } from '@/utils/accounting/journalLedgerPresenter'
 
 const props = defineProps<{
   rows: LedgerRow[]
   total: string
+  /** The drilled account's own debits and credits for the footer; a balanced
+   *  ledger omits it and shows `total` in both columns. */
+  movements?: LedgerMovements
   /** Column keys to show; omit to show them all. */
   visibleColumns?: LedgerColumnKey[]
   /** Append the running "Balance" column after Credit (single-account ledgers). */
@@ -206,17 +214,17 @@ interface ColumnSize {
 }
 
 const COLUMN_SIZES: Record<ResizableColumnKey, ColumnSize> = {
-  date: { size: 160, minSize: 120, maxSize: 280 },
-  action: { size: 120, minSize: 90, maxSize: 220 },
-  transaction: { size: 180, minSize: 130, maxSize: 320 },
-  txHash: { size: 180, minSize: 140, maxSize: 480 },
-  activity: { size: 320, minSize: 180, maxSize: 640 },
-  account: { size: 200, minSize: 140, maxSize: 420 },
-  currency: { size: 100, minSize: 80, maxSize: 180 },
-  quantity: { size: 120, minSize: 90, maxSize: 240 },
-  rate: { size: 100, minSize: 80, maxSize: 200 },
-  dr: { size: 120, minSize: 90, maxSize: 240 },
-  cr: { size: 120, minSize: 90, maxSize: 240 },
+  date: { size: LEDGER_COLUMN_WIDTHS.date, minSize: 120, maxSize: 280 },
+  action: { size: LEDGER_COLUMN_WIDTHS.action, minSize: 90, maxSize: 220 },
+  transaction: { size: LEDGER_COLUMN_WIDTHS.transaction, minSize: 130, maxSize: 320 },
+  txHash: { size: LEDGER_COLUMN_WIDTHS.txHash, minSize: 140, maxSize: 480 },
+  activity: { size: LEDGER_COLUMN_WIDTHS.activity, minSize: 180, maxSize: 640 },
+  account: { size: LEDGER_COLUMN_WIDTHS.account, minSize: 140, maxSize: 420 },
+  currency: { size: LEDGER_COLUMN_WIDTHS.currency, minSize: 80, maxSize: 180 },
+  quantity: { size: LEDGER_COLUMN_WIDTHS.quantity, minSize: 90, maxSize: 240 },
+  rate: { size: LEDGER_COLUMN_WIDTHS.rate, minSize: 80, maxSize: 200 },
+  dr: { size: LEDGER_COLUMN_WIDTHS.dr, minSize: 90, maxSize: 240 },
+  cr: { size: LEDGER_COLUMN_WIDTHS.cr, minSize: 90, maxSize: 240 },
   balance: { size: 130, minSize: 100, maxSize: 280 }
 }
 
@@ -294,8 +302,8 @@ const tableRows = computed<LedgerTableRow[]>(() => [
     account: '',
     accountMuted: false,
     accountDimmed: false,
-    dr: props.total,
-    cr: props.total,
+    dr: props.movements?.debit ?? props.total,
+    cr: props.movements?.credit ?? props.total,
     currency: '',
     quantity: '',
     rate: '',

@@ -125,6 +125,92 @@ describe('enrichEntries', () => {
     expect(tenPaid.minutesWorked).toBe(600)
   })
 
+  it('[AC-US-ACCT-002-19] pairs an overtime settlement by the amount the contract paid, below the exact total', () => {
+    // 36h20 at 1 SHER/h up to 35h, then 7 SHER/h → exactly 44.333333 SHER. The claim
+    // is signed with the blended rate 1.220183 SHER/h (truncated), so the contract
+    // pays 2180 min × 1.220183 / 60 = 44.333315 SHER. The nearer 16h50 claim must
+    // not win the fallback.
+    const wage = {
+      ratePerHour: [{ type: 'sher', amount: 1 }],
+      overtimeRatePerHour: [{ type: 'sher', amount: 7 }],
+      maximumHoursPerWeek: 35
+    }
+    const overtimeWeek = {
+      memberAddress: ADDR.member,
+      weekStart: new Date(1_700_000_000 * 1000).toISOString(),
+      minutesWorked: 2180,
+      wage,
+      claims: []
+    } as unknown as WeeklyClaim
+    const nearerWeek = {
+      memberAddress: ADDR.member,
+      weekStart: new Date(1_700_600_000 * 1000).toISOString(),
+      minutesWorked: 1010,
+      wage,
+      claims: []
+    } as unknown as WeeklyClaim
+    const sherSettlement = makeJournalEntryDraft({
+      id: 'sher-paid',
+      timestamp: 1_700_650_000,
+      useCase: 'UC-CASH-03',
+      debit: 'SHERS To Be Issued',
+      credit: 'Investor Equity',
+      token: 'sher',
+      rawAmount: '44333315',
+      counterparty: ADDR.member,
+      memo: 'Wage paid in shares (SHER mint)',
+      enrichment: 'needs-off-chain-data'
+    })
+
+    const [entry] = enrichEntries([sherSettlement], { weeklyClaims: [nearerWeek, overtimeWeek] })
+
+    expect(entry.minutesWorked).toBe(2180)
+  })
+
+  it('[AC-US-ACCT-002-19] pairs the cash and SHER legs of one withdrawal to a single claim', () => {
+    const wage = {
+      ratePerHour: [
+        { type: 'usdc', amount: 10 },
+        { type: 'sher', amount: 10 }
+      ],
+      maximumHoursPerWeek: 40
+    }
+    const claimFor = (weekSeconds: number, minutesWorked: number) =>
+      ({
+        memberAddress: ADDR.member,
+        weekStart: new Date(weekSeconds * 1000).toISOString(),
+        minutesWorked,
+        wage,
+        claims: []
+      }) as unknown as WeeklyClaim
+    const settlement = (id: string, token: 'usdc' | 'sher', rawAmount: string) =>
+      makeJournalEntryDraft({
+        id,
+        timestamp: 1_701_000_000,
+        useCase: 'UC-CASH-03',
+        debit: token === 'sher' ? 'SHERS To Be Issued' : 'Wage Payable',
+        credit: token === 'sher' ? 'Investor Equity' : 'Cash — Payroll',
+        token,
+        rawAmount,
+        counterparty: ADDR.member,
+        memo: 'Wage withdrawal',
+        enrichment: 'needs-off-chain-data'
+      })
+    const firstTx = `0x${'a'.repeat(64)}`
+    const secondTx = `0x${'b'.repeat(64)}`
+
+    const entries = enrichEntries(
+      [
+        settlement(`${firstTx}-1`, 'usdc', '50000000'),
+        settlement(`${firstTx}-2`, 'sher', '50000000'),
+        settlement(`${secondTx}-1`, 'usdc', '100000000')
+      ],
+      { weeklyClaims: [claimFor(1_700_000_000, 300), claimFor(1_700_600_000, 600)] }
+    )
+
+    expect(entries.map((entry) => entry.minutesWorked)).toEqual([300, 300, 600])
+  })
+
   it('keeps the needs-off-chain-data flag when no portal record matches', () => {
     const [entry] = enrichEntries([payrollEntry()], { weeklyClaims: [] })
     expect(entry.enrichment).toBe('needs-off-chain-data')

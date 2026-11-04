@@ -5,7 +5,7 @@ import { finalizeJournal } from '@/utils/accounting/__tests__/assembleAccounting
 import { journalLedgerRows } from '@/utils/accounting/journalLedgerPresenter'
 
 describe('General Ledger export precision', () => {
-  it('exports the original quantity rather than the compact table label', () => {
+  it('prints the table quantity in the PDF and keeps the exact one in Excel', () => {
     const journal = finalizeJournal([
       {
         id: 'fractional-native',
@@ -26,7 +26,7 @@ describe('General Ledger export precision', () => {
 
     expect(journalLedgerRows(journal)[0]!.quantityDisplay).toBe('0.000382')
     expect(generalLedgerPdfTable({ journal }, undefined, { columns }).body[0]).toEqual([
-      '0.000381862376267664',
+      '0.000382',
       '$2,698.41899'
     ])
     expect(generalLedgerSheetRows({ journal }, undefined, { columns })[3]).toEqual([

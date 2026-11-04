@@ -19,7 +19,7 @@ import type { TokenId } from '@/constant'
 import type { Wage, WeeklyClaim } from '@/types/cash-remuneration'
 import type { ExpenseResponse } from '@/types/expense-account'
 import { buildClaimRatesWithOvertime } from '@/utils/wages/model'
-import type { JournalEntryDraft } from './journalEntryDraft'
+import { draftOperationIdOf, type JournalEntryDraft } from './journalEntryDraft'
 
 export interface EnrichmentSources {
   weeklyClaims?: readonly WeeklyClaim[]
@@ -61,22 +61,25 @@ function nearest<T>(
 }
 
 /**
- * The claim's signed payout total, in base units, for the token a withdrawal
- * settled — the reliable key for pairing a settlement to its claim. Reuses the
- * canonical wage calc (the one the claim is signed and paid with), so it equals
- * the on-chain amount exactly. `null` when the claim has no rate in that token.
+ * What the contract actually paid for the claim, in base units, in the token a
+ * withdrawal settled — the reliable key for pairing a settlement to its claim.
+ * The claim is signed with one blended hourly rate, truncated to the token's
+ * precision, and CashRemuneration pays `minutesWorked × hourlyRate / 60`; with
+ * overtime that lands a few base units below the claim's exact total, so we
+ * replay the contract's formula rather than compare against that total.
+ * `null` when the claim has no rate in that token.
  */
-function claimTokenTotal(claim: WeeklyClaim, token: JournalEntryDraft['token']): bigint | null {
+function claimTokenPayout(claim: WeeklyClaim, token: JournalEntryDraft['token']): bigint | null {
   const rates = claim.wage?.ratePerHour
   if (!rates?.length) return null
   try {
-    const totals = buildClaimRatesWithOvertime({
+    const signedRate = buildClaimRatesWithOvertime({
       totalMinutesWorked: claim.minutesWorked,
       maximumHoursPerWeek: claim.wage.maximumHoursPerWeek,
       ratePerHour: rates,
       overtimeRatePerHour: claim.wage.overtimeRatePerHour
-    })
-    return totals.find((total) => (total.type as TokenId) === token)?.totalAmount ?? null
+    }).find((rate) => (rate.type as TokenId) === token)
+    return signedRate ? (BigInt(claim.minutesWorked) * signedRate.hourlyRate) / 60n : null
   } catch {
     return null
   }
@@ -86,7 +89,7 @@ function claimTokenTotal(claim: WeeklyClaim, token: JournalEntryDraft['token']):
  * Take the claim that backs a payroll settlement out of the member's pool, so it
  * can never match a second withdrawal. Several claims often settle on the same
  * day, so date proximity alone collapses them onto the most recent one; we prefer
- * the claim whose signed total in the withdrawn token equals the amount actually
+ * the claim whose contract payout in the withdrawn token equals the amount actually
  * withdrawn, and only fall back to the nearest by week when no amount matches.
  */
 function takePayrollClaim(
@@ -102,7 +105,7 @@ function takePayrollClaim(
   }
   const exact =
     amount != null && amount > 0n
-      ? pool.filter((claim) => claimTokenTotal(claim, entry.token) === amount)
+      ? pool.filter((claim) => claimTokenPayout(claim, entry.token) === amount)
       : []
   const candidates = exact.length ? exact : pool
   const chosen = nearest(candidates, entry.timestamp, (claim) =>
@@ -158,7 +161,9 @@ function enrichExpense(
  * new array; entries that need no off-chain data pass through unchanged. When a
  * `tokenIdOf` resolver is supplied, expense candidates are narrowed to budgets in
  * the entry's own token before picking the nearest by date — a same-member budget
- * in another token can't be the payout's backing record.
+ * in another token can't be the payout's backing record. One withdrawal settles
+ * one claim even when it pays several tokens, so its cash and SHER legs share the
+ * single claim the first of them takes.
  */
 export function enrichEntries(
   entries: readonly JournalEntryDraft[],
@@ -167,6 +172,7 @@ export function enrichEntries(
 ): JournalEntryDraft[] {
   const claimsByMember = indexByAddress(sources.weeklyClaims, (claim) => claim.memberAddress)
   const expensesByUser = indexByAddress(sources.expenses, (expense) => expense.userAddress)
+  const claimsBySettlement = new Map<string, WeeklyClaim | undefined>()
 
   return entries.map((entry) => {
     if (entry.enrichment !== 'needs-off-chain-data') return entry
@@ -174,8 +180,11 @@ export function enrichEntries(
     if (!member) return entry
 
     if (entry.useCase === 'UC-CASH-03') {
-      const claim = takePayrollClaim(claimsByMember.get(member), entry)
-      return enrichPayroll(entry, claim)
+      const settlement = `${draftOperationIdOf(entry)}|${member}`
+      if (!claimsBySettlement.has(settlement)) {
+        claimsBySettlement.set(settlement, takePayrollClaim(claimsByMember.get(member), entry))
+      }
+      return enrichPayroll(entry, claimsBySettlement.get(settlement))
     }
     if (entry.useCase === 'UC-EXP-01') {
       const candidates = expensesByUser.get(member)
