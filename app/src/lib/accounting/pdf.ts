@@ -140,7 +140,7 @@ function trialTable(books: AccountingExportSnapshot, asOf?: Date | null): Accoun
     align: ['left', 'left', 'right', 'right'],
     body: [
       ...trial.rows.map((t) => [t.label, t.nature, t.dr, t.cr]),
-      ['Total', '', trial.total, trial.total]
+      ['Total', '', trial.totalDebit, trial.totalCredit]
     ]
   }
 }

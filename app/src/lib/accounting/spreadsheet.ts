@@ -113,7 +113,7 @@ function trialSheet(books: AccountingExportSnapshot, asOf?: Date | null): SheetR
     [],
     ['Account', 'Nature', 'Debit', 'Credit'],
     ...trial.rows.map((t) => [t.label, t.nature, usd(t.dr), usd(t.cr)]),
-    ['Total', '', usd(trial.total), usd(trial.total)]
+    ['Total', '', usd(trial.totalDebit), usd(trial.totalCredit)]
   ]
 }
 

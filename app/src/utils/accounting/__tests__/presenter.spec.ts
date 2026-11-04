@@ -15,6 +15,7 @@ import { presentJournalLedger } from '@/utils/accounting/journalLedgerPresenter'
 import { accountFor } from '@/utils/accounting/accountRegistry'
 import { finalizeJournal } from '@/utils/accounting/__tests__/assembleAccounting'
 import { categoryLabelOf } from '@/utils/accounting/ledgerCategory'
+import type { AccountName } from '@/utils/accounting/chartOfAccounts'
 import type { JournalEntryDraft } from '@/utils/accounting/journalEntryDraft'
 import { sampleBooks } from './fixtures'
 
@@ -159,6 +160,36 @@ describe('presentTrial', () => {
     expect(revenue?.nature).toBe('Income')
     expect(revenue?.cr).toBe('$100.00') // income is credit-normal
     expect(revenue?.dr).toBe('—')
+  })
+
+  it('[AC-US-ACCT-003-12] totals each column on its own', () => {
+    const trial = presentTrial(books().journal)
+    expect(trial.totalDebit).toBe('$130.00')
+    expect(trial.totalCredit).toBe('$130.00')
+  })
+
+  it('[AC-US-ACCT-003-03] shows a settled account as "—" on both sides', () => {
+    const settle = (id: string, debit: AccountName, credit: AccountName): JournalEntryDraft => ({
+      id,
+      timestamp: 1,
+      useCase: 'UC-BANK-02',
+      debit,
+      credit,
+      token: 'usdc',
+      rawAmount: '10000000',
+      rate: 1,
+      internal: false,
+      memo: '',
+      enrichment: 'not-applicable'
+    })
+    const trial = presentTrial(
+      finalizeJournal([
+        settle('in', 'Cash — Bank', 'Service Revenue'),
+        settle('out', 'Operating Expense', 'Cash — Bank')
+      ])
+    )
+    const bank = trial.rows.find((r) => r.account.family.name === 'Cash — Bank')
+    expect(bank).toMatchObject({ dr: '—', cr: '—' })
   })
 })
 
