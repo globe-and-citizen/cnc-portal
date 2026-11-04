@@ -105,6 +105,17 @@ import type { WriteFunctionArgs } from "@/composables/contracts/useContractWrite
 type TransferArgs = WriteFunctionArgs<typeof bankAbi, "transferToken">;
 ```
 
+### Board action workflow
+
+`useBodAddAction` wraps the V3 write in a separate workflow mutation because it also owns action-count preparation and required backend
+registration. Its public `isPending`, `error`, `isSuccess`, `mutate` and `mutateAsync` describe the complete operation; `executeAddAction`
+is a compatibility alias of `mutateAsync`. Event handlers use `mutate` and its lifecycle callbacks or reactive error state.
+
+The workflow pins its company and Board target, and refuses overlapping submissions on the same instance. Preparation and write failures
+propagate unchanged. A registration failure after confirmation is translated narrowly into an error identifying the confirmed action and
+missing record; automatic workflow retries are disabled to avoid resubmitting the write. Notification discovery/delivery is best-effort. The
+existing action-creation mutation owns backend action-list invalidation. The V3 write continues to own chain-read invalidation.
+
 ## 2. Error handling
 
 The convention is **reactive error + `classifyError` + `UAlert`**. Components keep their own `errorMessage` ref and a `UAlert` slot; the
