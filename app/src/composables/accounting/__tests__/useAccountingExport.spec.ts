@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ref } from 'vue'
 import { useAccountingExport } from '@/composables/accounting/useAccountingExport'
-import { mockToast } from '@/tests/mocks/store.mock'
+import { mockTeamStore, mockToast } from '@/tests/mocks/store.mock'
 import type { SectionSpec } from '@/utils/accounting/exportSpec'
 
 const { buildTables, exportTablesPdf, buildSheets, exportSheetsExcel, journal, resolveUser } =
@@ -38,7 +38,11 @@ describe('useAccountingExport', () => {
   it('[AC-US-ACCT-004-04] exports a PDF from a snapshot of the live books', async () => {
     await useAccountingExport().exportPdf(specs, { filename: 'ledger.pdf' })
     expect(buildTables).toHaveBeenCalledWith({ journal }, specs, expect.any(Function))
-    expect(exportTablesPdf).toHaveBeenCalledWith(['pdf-table'], { filename: 'ledger.pdf' })
+    expect(exportTablesPdf).toHaveBeenCalledWith(['pdf-table'], {
+      filename: 'ledger.pdf',
+      teamName: mockTeamStore.currentTeamMeta.data.name,
+      coverage: null
+    })
     expect(mockToast.add).toHaveBeenCalledWith({ title: 'Exported to PDF', color: 'success' })
   })
 
