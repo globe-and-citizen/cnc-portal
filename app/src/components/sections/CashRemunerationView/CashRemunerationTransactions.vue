@@ -137,7 +137,7 @@
             <div class="text-sm font-medium">
               {{ formatCryptoAmount(String(row.original.amount)) }} {{ row.original.token }}
             </div>
-            <div v-if="row.original.amountLocal" class="text-muted text-xs">
+            <div v-if="Number(row.original.amount) > 0" class="text-muted text-xs">
               {{ formatCurrencyShort(row.original.amountLocal, currencyStore.localCurrency.code) }}
             </div>
           </template>
@@ -164,6 +164,7 @@
 </template>
 
 <script setup lang="ts">
+import { sumFiatValues } from '@/utils/currency/valuation'
 import { computed } from 'vue'
 import { useTransactionTable } from '@/composables/transactions/useTransactionTable'
 import { useTransactionInline } from '@/composables/transactions/useTransactionInline'
@@ -302,7 +303,7 @@ const { getInlineUser, getValuePrefix, getValueClass } = useTransactionInline(co
 const allEvents = (row: TransactionEventValue & { subRows?: TransactionEventValue[] }) =>
   [row, ...(row.subRows ?? [])].filter((e) => Number(e.amount) > 0)
 const totalLocal = (row: TransactionEventValue & { subRows?: TransactionEventValue[] }) =>
-  [row, ...(row.subRows ?? [])].reduce((s, e) => s + (e.amountLocal ?? 0), 0)
+  sumFiatValues(allEvents(row).map((event) => event.amountLocal))
 
 const columns = computed(() => [
   { accessorKey: 'expand', header: '' },

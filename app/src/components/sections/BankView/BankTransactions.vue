@@ -157,7 +157,7 @@
             <div class="text-sm font-medium">
               {{ formatCryptoAmount(String(row.original.amount)) }} {{ row.original.token }}
             </div>
-            <div v-if="row.original.amountLocal" class="text-muted text-xs">
+            <div v-if="Number(row.original.amount) > 0" class="text-muted text-xs">
               {{ formatCurrencyShort(row.original.amountLocal, currencyStore.localCurrency.code) }}
             </div>
           </template>

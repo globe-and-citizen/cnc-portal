@@ -1,8 +1,8 @@
 import type { TokenConfig } from '@/constant'
 
-/** A monetary amount, with its display string precomputed. */
+/** A monetary amount; null means unavailable, with its display string precomputed. */
 export interface Money {
-  value: number
+  value: number | null
   /** `formatCurrencyShort(value, code)` — e.g. "$1.2K". */
   formatted: string
 }

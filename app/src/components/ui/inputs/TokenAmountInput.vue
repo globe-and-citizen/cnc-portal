@@ -88,6 +88,7 @@
 import { computed, watch } from 'vue'
 import { z } from 'zod'
 import { formatCurrencyShort } from '@/utils/currency/display'
+import { valueTokenAmount } from '@/utils/currency/valuation'
 import { useStorage } from '@vueuse/core'
 import type { TokenOption } from '@/types'
 import { type TokenId } from '@/constant'
@@ -149,11 +150,11 @@ const availableBalance = computed(() => {
 })
 
 const estimatedPrice = computed(() => {
-  const price = selectedToken.value?.price ?? 0
+  const price = selectedToken.value?.price ?? null
   const code = currency.value?.code ?? 'USD'
   // Template guards rendering with `amount && parseFloat(amount) > 0`,
   // so Number(amount.value) is always a positive number here.
-  const value = Number(amount.value) * price
+  const value = valueTokenAmount(Number(amount.value), price)
   return formatCurrencyShort(value, code)
 })
 

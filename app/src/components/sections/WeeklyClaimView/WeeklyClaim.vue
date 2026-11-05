@@ -146,6 +146,7 @@
 </template>
 
 <script setup lang="ts">
+import { sumFiatValues, valueTokenAmount } from '@/utils/currency/valuation'
 import RatePerHourList from '@/components/sections/WeeklyClaimView/RatePerHourList.vue'
 import RatePerHourTotalList from '@/components/sections/WeeklyClaimView/RatePerHourTotalList.vue'
 import type { TableColumn } from '@nuxt/ui'
@@ -230,9 +231,9 @@ type EnrichedWeeklyClaim = WeeklyClaim & {
     totalMinutes: number
     hasOvertime: boolean
     tokenAmounts: TokenAmount[]
-    totalInUserCurrency: number
-    hourlyRateInUserCurrency: number
-    overtimeHourlyRateInUserCurrency: number
+    totalInUserCurrency: number | null
+    hourlyRateInUserCurrency: number | null
+    overtimeHourlyRateInUserCurrency: number | null
   }
 }
 
@@ -277,12 +278,16 @@ const localCurrencyFormatOptions = computed(() => ({ currency: currencyStore.loc
 function sumInUserCurrency(
   amounts: Array<{ type: SupportedTokens; amount: number }>,
   tokenStore = currencyStore
-): number {
-  return amounts.reduce((total, { type, amount }) => {
-    const tokenInfo = tokenStore.getTokenInfo(type as TokenId)
-    const localPrice = tokenInfo?.prices.find((p) => p.id === 'local')?.price ?? 0
-    return total + amount * localPrice
-  }, 0)
+): number | null {
+  return sumFiatValues(
+    amounts.map(({ type, amount }) =>
+      valueTokenAmount(
+        amount,
+        tokenStore.getTokenInfo(type as TokenId)?.prices.find((price) => price.id === 'local')
+          ?.price
+      )
+    )
+  )
 }
 
 const columns = [
