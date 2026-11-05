@@ -29,6 +29,13 @@ Approval is an EIP-712 signature from the current Cash Remuneration contract own
 weekly claim on-chain to receive native tokens and supported ERC-20 assets; SHER compensation is minted when the current contract
 configuration supports it.
 
+Each token of a weekly claim pays what its wage defines: the regular rate for hours within the weekly allowance and the overtime rate for
+hours beyond it. A token without an overtime rate earns nothing for overtime hours, and a token rated only for overtime earns only for those
+hours. A wage with no overtime rate at all pays every hour at its regular rate. The contract pays one hourly rate per token for the whole
+week, so approval signs a blended rate that can pay a few base units under the weekly total and never above it. A signature matches only the
+rates it was issued for; a claim whose rates no longer match it is rejected before the wallet request and goes through the disable and
+re-sign flow.
+
 Daily-claim creation accepts only its documented request fields. The authenticated session determines the member; caller-supplied member
 identity fields are rejected. Product withdrawal requires a signed claim with a stored signature before any wallet request is made.
 
@@ -88,9 +95,9 @@ Runs of at least three consecutive missing criteria use inclusive ranges with fu
 | US-PAYROLL-005 | ✅ Integrated | ⚠️ 24/25        | `AC-US-PAYROLL-005-01`                                                                         |
 | US-PAYROLL-006 | ✅ Integrated | ⚠️ 12/13        | `AC-US-PAYROLL-006-01`                                                                         |
 | US-PAYROLL-007 | ✅ Integrated | ⚠️ 7/8          | `AC-US-PAYROLL-007-01`                                                                         |
-| US-PAYROLL-008 | ✅ Integrated | ⚠️ 15/16        | `AC-US-PAYROLL-008-01`                                                                         |
+| US-PAYROLL-008 | ✅ Integrated | ⚠️ 16/17        | `AC-US-PAYROLL-008-01`                                                                         |
 | US-PAYROLL-009 | ✅ Integrated | ⚠️ 4/8          | `AC-US-PAYROLL-009-01`–`AC-US-PAYROLL-009-04`                                                  |
-| US-PAYROLL-010 | ✅ Integrated | ⚠️ 13/17        | `AC-US-PAYROLL-010-01`–`AC-US-PAYROLL-010-04`                                                  |
+| US-PAYROLL-010 | ✅ Integrated | ⚠️ 14/18        | `AC-US-PAYROLL-010-01`–`AC-US-PAYROLL-010-04`                                                  |
 | US-PAYROLL-011 | ✅ Integrated | ⚠️ 11/12        | `AC-US-PAYROLL-011-01`                                                                         |
 | US-PAYROLL-012 | ✅ Integrated | ✅ 13/13        | —                                                                                              |
 | US-PAYROLL-013 | ✅ Integrated | ⚠️ 6/7 met      | `AC-US-PAYROLL-013-07`                                                                         |
@@ -562,6 +569,9 @@ remain as recorded above.
 - [x] `AC-US-PAYROLL-008-08` Re-signing a disabled current-contract claim re-enables its existing signature before storing the replacement.
 - [x] `AC-US-PAYROLL-008-09` _(API)_ The signed-against contract must match the company's current Cash Remuneration contract.
 - [x] `AC-US-PAYROLL-008-10` _(API)_ The recovered signer must match the caller.
+- [x] `AC-US-PAYROLL-008-17` The signed claim pays each token what the wage defines and the weekly claim displays: the regular rate for
+      regular hours, the overtime rate for overtime hours, and nothing for overtime hours in a token without an overtime rate. The
+      contract's single weekly rate can round the paid amount down by a few base units.
 
 #### Edge & Error Cases
 
@@ -593,6 +603,7 @@ remain as recorded above.
 | `AC-US-PAYROLL-008-14` | `PS-FRONTEND`              | Frontend           | ✅ Met          |
 | `AC-US-PAYROLL-008-15` | `PS-FRONTEND`              | Frontend           | ✅ Met          |
 | `AC-US-PAYROLL-008-16` | `PS-BACKEND`               | Backend            | ✅ Met          |
+| `AC-US-PAYROLL-008-17` | `PS-FRONTEND`              | Frontend           | ✅ Met          |
 
 **Accounting:** Signing authorizes settlement but does not trigger the wage accrual; `UC-CASH-02` is dated at the end of the eligible work
 week.
@@ -688,6 +699,8 @@ remain as recorded above.
 - [x] `AC-US-PAYROLL-010-15` _(contract)_ A claim reverts when the Cash Remuneration contract lacks the required balance.
 - [x] `AC-US-PAYROLL-010-16` _(contract)_ A withdrawal reverts while the Cash Remuneration contract is paused.
 - [x] `AC-US-PAYROLL-010-17` Cancelling the wallet transaction leaves the claim unpaid and its stored status unchanged.
+- [x] `AC-US-PAYROLL-010-18` _(contract)_ A claim funded with the weekly total of each asset pays in full, whichever of the native, ERC-20
+      and SHER rates it combines, and no asset pays more than its weekly total.
 
 ### Test Coverage
 
@@ -714,6 +727,7 @@ remain as recorded above.
 | `AC-US-PAYROLL-010-15` | `PS-CONTRACT`              | Contract           | ✅ Met          |
 | `AC-US-PAYROLL-010-16` | `PS-CONTRACT`              | Contract           | ✅ Met          |
 | `AC-US-PAYROLL-010-17` | `PS-FRONTEND`              | Frontend           | ✅ Met          |
+| `AC-US-PAYROLL-010-18` | `PS-CONTRACT`              | Contract           | ✅ Met          |
 
 **Accounting:** A successful withdrawal settles the obligation through
 [`UC-CASH-03`](../accounting/journal-entry-catalogue.md#uc-cash-03--wage-settlement). Cash credits Payroll cash; SHER moves promised shares
@@ -967,7 +981,7 @@ backend record could not be saved and prevents automatic chain resubmission. Not
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `12b89744a080247ea8e4ca5047c639b9ae651b82`
+**Implementation evidence reviewed against:** `631c851545f6331cc9aecdd4c217f27463d39d69`
 
 - [Cash Remuneration overview](../../../app/src/components/sections/CashRemunerationView/CashRemunerationOverview.vue),
   [monthly withdrawn summary](../../../app/src/components/sections/CashRemunerationView/CashRemunerationMonthlyClaim.vue),
@@ -992,6 +1006,8 @@ backend record could not be saved and prevents automatic chain resubmission. Not
 - [Claim history member selector](../../../app/src/components/sections/ClaimHistoryView/ClaimHistoryMemberHeader.vue)
 - [Daily claim form rules](../../../app/src/utils/claims/form.ts)
 - [Wage configuration validation](../../../app/src/utils/wages/validation.ts)
+- [Claim payout and signed rates](../../../app/src/utils/wages/model.ts) and
+  [their tests](../../../app/src/utils/wages/__tests__/model.spec.ts)
 - [Weekly goals](../../../app/src/components/sections/CashRemunerationView/SubmitWeeklyGoals.vue)
 - [Claim history](../../../app/src/components/sections/ClaimHistoryView/ClaimHistory.vue)
 - [Weekly claim actions](../../../app/src/components/sections/WeeklyClaimView/WeeklyClaimActionDropdown.vue)

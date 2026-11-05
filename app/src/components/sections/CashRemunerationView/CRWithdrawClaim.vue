@@ -165,10 +165,10 @@ const withdrawClaim = async () => {
 
       toast.add({
         title: sameContractAndChain
-          ? 'Signature no longer valid — contract ownership has changed'
+          ? 'Signature no longer valid for this claim'
           : 'Invalid signature for this contract',
         description: sameContractAndChain
-          ? `Signed by ${recovered}, current owner is ${contractOwner}. Please request a new signature from the current owner.`
+          ? `It does not match this claim and the current owner ${contractOwner}. Please request a new signature from the current owner.`
           : 'This signature was issued for a different contract or network. Please request a new signature.',
         color: 'error'
       })
