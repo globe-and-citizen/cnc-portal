@@ -146,6 +146,15 @@ independently owned. [Accounts](../../features/accounts/README.md), [Payroll](..
 [Companies](../../features/companies/README.md) and [Transaction History](../transaction-history/README.md) own their affected user
 surfaces.
 
+## Attachment gallery state and URL validity
+
+The [shared gallery composable](../../../app/src/composables/useFilePreviewGallery.ts) owns rendering results, modal selection and
+asynchronous-result lifetime. URL reuse and expiration stay with the existing [file URL helper](../../../app/src/composables/useFileUrl.ts);
+both galleries ask it again at use rather than inferring validity from a rendered URL. Persisted file keys survive the claim-preview utility
+and modal selection; local preview URLs need no signing request. The
+[File Storage contract](../file-storage/README.md#client-attachment-url-renewal) owns renewal, retry feedback and protected delayed
+downloads.
+
 ## Implementation Evidence
 
 [Shared balance reads](../../../app/src/composables/useContractBalance.ts) accept caller-supplied query options while preserving the
@@ -154,7 +163,7 @@ post-confirmation balance invalidations reach both. [Currency prices](../../../a
 currency payload and query-backed nullable conversions while consuming the centralized CoinGecko price query, whose preset freshness,
 polling and direct Axios reads are described in [Client Data Access](../client-data-access/README.md#browser-request-coordination).
 
-**Implementation evidence reviewed against:** `9e715cf332a5f36fe441a0fcfd8d5ba189c23f82`
+**Implementation evidence reviewed against:** `6a1619cd9446cad807bd019e34877639af6a6e72`
 
 - [Utility ownership map and domain implementations](../../../app/src/utils/)
 - [Shared Accounting domain contracts](../../../app/src/utils/accounting/types.ts)
