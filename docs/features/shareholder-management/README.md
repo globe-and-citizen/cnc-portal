@@ -545,9 +545,16 @@ the redeployment and migration-root commit. Shareholder Management exposes the m
   but `Investor.individualMint` still accepts a zero amount and emits `Minted`. Completing `AC-US-SHER-004-04` requires a future Investor
   implementation version rather than changing the deployed `2.0.1` behaviour in place.
 
+## Board request failure feedback
+
+A Board-mediated dividend request keeps its form open and exposes preparation, submission or registration failures inline. Another attempt
+clears the previous feedback; loading spans preparation and registration. The
+[shared Board failure contract](../contract-management/README.md#board-action-failure-and-recovery) identifies an already-confirmed action
+with a missing backend record; notification delivery does not determine submission success.
+
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `53676dc102c47e48928821e23c097f915bc73115`
+**Implementation evidence reviewed against:** `12b89744a080247ea8e4ca5047c639b9ae651b82`
 
 - [Shareholder Management route](../../../app/src/views/team/%5Bid%5D/SherTokenView.vue) and
   [Investor overview](../../../app/src/components/sections/SherTokenView/InvestorsHeader.vue)

@@ -377,10 +377,24 @@ The [shared network-session recovery policy](../authentication/README.md#us-auth
 workspace and deployment actions. Officer and Safe factory deployment use the shared write executor; Campaign deployment requests a wallet
 client and tracks its receipt on the configured chain.
 
+## Board action failure and recovery
+
+Board-mediated requests use one observable mutation lifecycle for preparation, the confirmed contract write and required backend
+registration. Missing company/Board context, a failed action-count read and a rejected write remain errors; the request stays pending
+through registration. Ownership transfer keeps its form open and displays the Board error instead of treating a resolved empty result as
+success. Ownership error feedback follows the active direct or Board submission mode, so a previous Board failure cannot mask a new direct
+transfer error. Bank transfers, treasury returns and dividends use this same shared contract.
+
+If registration fails after the chain confirms, the error explicitly identifies the confirmed Board action and missing record. The workflow
+does not automatically retry the chain write; inspect Contract Management before submitting again. Board-member discovery and notification
+delivery remain best-effort and cannot turn a registered action into failure. Each request retains the company and Board address captured
+when preparation begins.
+
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `635eb92ec16d0fa5fca930d458b0e35453af94d2`
+**Implementation evidence reviewed against:** `276c6731ae0291996f0565ccd98be9b468119a54`
 
+- [Real Board mutation lifecycle tests](../../../app/src/composables/bod/__tests__/writes.spec.ts)
 - [Board reads](../../../app/src/composables/bod/reads.ts), [Board writes](../../../app/src/composables/bod/writes.ts),
   [shared contract reads](../../../app/src/composables/contracts/useContractReadData.ts), and
   [shared contract writes](../../../app/src/composables/contracts/useContractWritesV3.ts)

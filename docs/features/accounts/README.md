@@ -1329,9 +1329,16 @@ account actions, including historical Expense approvals and Safe operations. The
 wallet network; account-specific authorization and signature-domain checks remain separate. Shared submission boundaries retain the
 configured target for operations already being prepared.
 
+## Board request failure feedback
+
+Board-mediated Bank transfers and Expense Account treasury returns keep their forms open when preparation, submission or registration fails,
+and expose the failure inline. Their loading state spans preparation and required registration. The
+[shared Board failure contract](../contract-management/README.md#board-action-failure-and-recovery) distinguishes an already-confirmed
+action with a missing backend record from a failed submission; notification failures do not undo success.
+
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `4e41f6b7dc10c9cfc87aaafb7ecc735da1e7beff`
+**Implementation evidence reviewed against:** `12b89744a080247ea8e4ca5047c639b9ae651b82`
 
 - [Bank deposit modal](../../../app/src/components/sections/BankView/forms/DepositModal.vue),
   [Bank transfer modal](../../../app/src/components/sections/BankView/forms/TransferModal.vue),
@@ -1423,6 +1430,11 @@ configured target for operations already being prepared.
   [owner-withdrawal tests](../../../app/src/components/sections/__tests__/OwnerTreasuryWithdrawAction.spec.ts),
   [Safe account view tests](../../../app/src/views/team/%5Bid%5D/Accounts/__tests__/), and
   [Bank view tests](../../../app/src/views/team/%5Bid%5D/__tests__/BankView.spec.ts)
+- [ERC20 producer tests](../../../app/src/composables/erc20/__tests__/writes.spec.ts) execute the real approve/transfer wrappers and V3
+  mutation against shared mocked wagmi effects; they verify token/method/arguments, reactive address resolution, confirmed results and
+  propagated failures. This is unit evidence, not a live token transaction.
+- The Bank view suite above verifies that reactive balance changes reach the holdings section as updated quantities/valuations or empty rows
+  and that loading state changes propagate. It does not claim balance-query acquisition or rendered formatting of the child table.
 - [Safe schema tests](../../../app/src/types/__tests__/safe.schemas.spec.ts)
 - [Expense calendar-period tests](../../../contract/test/ExpenseAccountEIP712V2.calendarBasedPeriods.spec.ts),
   [Expense custom-frequency tests](../../../contract/test/ExpenseAccountEIP712V2.customFrequency.spec.ts), and

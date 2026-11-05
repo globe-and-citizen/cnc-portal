@@ -7,18 +7,20 @@
  *
  * Every row here is a confirmed on-chain deposit event — there's no
  * pending/failed state to represent; a reverted or still-pending payment
- * never emitted the event this reads in the first place.
+ * never emitted the event this reads in the first place. Read availability is
+ * separate: unresolved calldata or event-source gaps keep history incomplete.
  *
  * Shaped as `TransactionHistoryItemRow` (plus `factureId`) so the history
  * card can render and link out to `TransactionDetailSlideover` exactly like
  * every other transaction table in the app.
  */
 import { computed, type MaybeRefOrGetter } from 'vue'
-import { useQuery } from '@tanstack/vue-query'
+import { useQueries } from '@tanstack/vue-query'
 import { getPublicClient } from '@wagmi/core'
-import { formatUnits, type Address, type Hex } from 'viem'
+import { formatUnits, isHex, type Address, type Hex } from 'viem'
 import { config } from '@/wagmi.config'
-import { SUPPORTED_TOKENS } from '@/constant'
+import { currentChainId, SUPPORTED_TOKENS } from '@/constant'
+import { getEventFeedStatus, type EventFeedState } from '@/composables/eventsViaLogs'
 import { decodeFactureIdFromCalldata } from '@/utils/paymentGate/factureCalldata'
 import { extractTxHashFromId } from '@/utils/transactions/raw'
 import { formatBankTransactionDate } from '@/utils/transactions/bank'
@@ -37,37 +39,40 @@ export function useFactureHistory(bankAddress: MaybeRefOrGetter<Address | undefi
     ...new Set(tokenDeposits.value.map((item) => extractTxHashFromId(item.id)))
   ])
 
-  // One raw-calldata lookup per deposit hash — the events feed only carries
-  // decoded args, not the calldata the facture ID rides in.
-  const calldataQuery = useQuery({
-    queryKey: ['payment-gate-facture-calldata', depositHashes],
-    enabled: computed(() => depositHashes.value.length > 0),
-    staleTime: Infinity,
-    queryFn: async (): Promise<Map<string, Hex>> => {
-      const client = getPublicClient(config)
-      if (!client) return new Map()
-      const settled = await Promise.allSettled(
-        depositHashes.value.map(async (hash) => {
+  // Successful transaction input is immutable and shared by chain/hash. A failed
+  // lookup remains an error in its own query, rather than a cached missing payment.
+  const calldataQueries = useQueries({
+    queries: computed(() =>
+      depositHashes.value.map((hash) => ({
+        queryKey: ['payment-gate-facture-calldata', currentChainId, hash] as const,
+        staleTime: Infinity,
+        retry: false,
+        queryFn: async () => {
+          const client = getPublicClient(config, { chainId: currentChainId })
+          if (!client) throw new Error('No public client is available for payment history')
           const tx = await client.getTransaction({ hash: hash as Hex })
-          return [hash, tx.input] as const
-        })
-      )
-      return new Map(
-        settled
-          .filter(
-            (r): r is PromiseFulfilledResult<readonly [string, Hex]> => r.status === 'fulfilled'
-          )
-          .map((r) => r.value)
-      )
-    }
+          if (!isHex(tx.input))
+            throw new Error('Transaction input is unavailable for payment history')
+          return { hash, input: tx.input }
+        }
+      }))
+    )
   })
-
+  const calldataByHash = computed(
+    () =>
+      new Map(
+        calldataQueries.value.flatMap(({ data }) =>
+          data ? [[data.hash, data.input] as const] : []
+        )
+      )
+  )
+  const unresolvedHashes = computed(() =>
+    depositHashes.value.filter((hash) => !calldataByHash.value.has(hash))
+  )
   const payments = computed<FacturePayment[]>(() => {
-    const calldataByHash = calldataQuery.data.value ?? new Map<string, Hex>()
-
     return tokenDeposits.value.flatMap((item): FacturePayment[] => {
       const txHash = extractTxHashFromId(item.id)
-      const calldata = calldataByHash.get(txHash)
+      const calldata = calldataByHash.value.get(txHash)
       const factureId = calldata && decodeFactureIdFromCalldata(calldata)
       if (!factureId) return []
 
@@ -92,9 +97,49 @@ export function useFactureHistory(bankAddress: MaybeRefOrGetter<Address | undefi
     })
   })
 
+  const sourceStatus = computed(() =>
+    getEventFeedStatus({
+      data: events.data.value,
+      error: events.error.value,
+      isPending: events.isPending.value
+    })
+  )
+  const status = computed(() => {
+    const queries = calldataQueries.value
+    let state: EventFeedState = sourceStatus.value.state
+    if (state === 'complete' && unresolvedHashes.value.length > 0) {
+      const hasResolved = queries.some(({ data }) => data !== undefined)
+      const initialLoading =
+        queries.some(({ isPending }) => isPending) && !queries.some(({ isError }) => isError)
+      state = initialLoading ? 'loading' : hasResolved ? 'partial' : 'unavailable'
+    }
+    return {
+      ...sourceStatus.value,
+      state,
+      queryErrorCount:
+        sourceStatus.value.queryErrorCount + queries.filter(({ isError }) => isError).length,
+      fetching:
+        events.isPending.value ||
+        events.isRefetching.value ||
+        queries.some(({ isFetching }) => isFetching),
+      error: events.error.value ?? queries.find(({ isError }) => isError)?.error ?? null
+    }
+  })
+  const refetch = () =>
+    Promise.all([
+      ...(sourceStatus.value.state === 'partial' || sourceStatus.value.state === 'unavailable'
+        ? [events.refetch({ cancelRefetch: false })]
+        : []),
+      ...calldataQueries.value
+        .filter(({ data, isFetching }) => data === undefined && !isFetching)
+        .map((query) => query.refetch({ cancelRefetch: false }))
+    ])
+
+  // This read model combines Bank-feed and calldata availability; each source's
+  // query remains the owner of its cache, errors and retries.
   return {
-    payments,
-    loading: computed(() => events.isPending.value || calldataQuery.isPending.value),
-    error: computed(() => events.error.value ?? calldataQuery.error.value)
+    data: computed(() => ({ payments: payments.value, unresolvedHashes: unresolvedHashes.value })),
+    status,
+    refetch
   }
 }

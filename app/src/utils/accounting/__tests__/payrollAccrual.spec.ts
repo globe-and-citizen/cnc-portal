@@ -87,6 +87,50 @@ describe('mapPayroll accruals', () => {
     expect(draftUsdValue(entry)).toBe(40)
   })
 
+  it('[AC-US-ACCT-001-13] accrues no overtime in a currency without an overtime rate', () => {
+    const entries = mapPayroll(
+      {
+        weeklyClaims: [
+          claim({
+            minutesWorked: 180, // 3h
+            wage: {
+              maximumHoursPerWeek: 2, // 2h regular, 1h overtime
+              ratePerHour: [
+                { type: 'usdc', amount: 9 },
+                { type: 'sher', amount: 1 }
+              ],
+              overtimeRatePerHour: [{ type: 'sher', amount: 5 }]
+            }
+          } as Partial<WeeklyClaim>)
+        ]
+      },
+      ctx
+    )
+
+    expect(entries.map(draftUsdValue)).toEqual([18, 3.5]) // 2h × 9 USDC; (2h × 1 + 1h × 5) SHER × $0.50
+  })
+
+  it('[AC-US-ACCT-001-13] accrues a currency that only the overtime rate pays', () => {
+    const entries = mapPayroll(
+      {
+        weeklyClaims: [
+          claim({
+            minutesWorked: 180, // 3h
+            wage: {
+              maximumHoursPerWeek: 2, // 2h regular, 1h overtime
+              ratePerHour: [{ type: 'usdc', amount: 9 }],
+              overtimeRatePerHour: [{ type: 'sher', amount: 5 }]
+            }
+          } as Partial<WeeklyClaim>)
+        ]
+      },
+      ctx
+    )
+
+    expect(entries.map((entry) => entry.credit)).toEqual(['Wage Payable', 'SHERS To Be Issued'])
+    expect(entries.map(draftUsdValue)).toEqual([18, 2.5]) // 2h × 9 USDC; 1h × 5 SHER × $0.50
+  })
+
   it('does not accrue a disabled (cancelled) claim', () => {
     expect(mapPayroll({ weeklyClaims: [claim({ status: 'disabled' })] }, ctx)).toHaveLength(0)
   })
