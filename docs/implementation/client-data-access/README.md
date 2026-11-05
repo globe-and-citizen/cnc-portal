@@ -1,6 +1,7 @@
 # Client Data Access
 
-**Scope:** Shared client HTTP query and mutation boundaries under `app/src/queries/`, including their central export surface
+**Scope:** Shared client HTTP query and mutation boundaries under `app/src/queries/`, including their central export surface, plus generic
+query-backed contract-owner reads
 
 **Last verified:** 2026-10-01
 
@@ -37,6 +38,15 @@ flowchart LR
   carries that policy as Axios `sentryNotFound`, including when it fails inside a larger mutation. Safe reads use `initially-expected` for
   indexing absence. The shared cache applies [contextual HTTP 404 monitoring](../error-tracking/README.md#handled-http-404-responses) after
   retries, without replacing the original error, cached data or recovery behavior.
+
+### Shared contract owner reads
+
+The [Ownable read](../../../app/src/composables/contracts/reads.ts) delegates RPC/cache state to wagmi's `useReadContract`, using the
+current valid address and chain. Its standard `readContract` key is reachable by the existing V3 address/chain invalidation predicate. The
+card renders query loading, unavailable and error/retry state; a failed refresh retains data with an explicit warning. Team member and Board
+metadata shape the displayed identity reactively rather than being copied into server state. The
+[Contract Owner Resolution owner](../contract-owner-resolution/README.md) defines the five consuming views and representative real-query
+proof. Existing retry/focus/polling policy is inherited; no component request loop, custom owner key or mirror cache is introduced.
 
 ### Contract-based asset markets
 
@@ -216,7 +226,7 @@ market query.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `9e715cf332a5f36fe441a0fcfd8d5ba189c23f82`
+**Implementation evidence reviewed against:** `24c8e67951fb0ac0213105ff7afad413433a7636`
 
 - [Query barrel](../../../app/src/queries/index.ts), [query factory](../../../app/src/queries/queryFactory.ts), and
   [single-file upload query](../../../app/src/queries/file.queries.ts)
