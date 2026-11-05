@@ -222,7 +222,7 @@ or detail view; `AC-US-TEAM-OPS-001-03` and `AC-US-TEAM-OPS-003-04` still need f
 The company payload lists every Safe the company registered, disabled ones included. The profile and balance recap keep only its default
 Safe, the latest activated one not disabled, among the live contracts, so they count that Safe.
 
-**Implementation evidence reviewed against:** `fdfcf810829fdcca8d0bfe429878b439e4fd4dfe`
+**Implementation evidence reviewed against:** `1955939a748a00287ff6dc446a519f84ec09267c`
 
 - [Dashboard navigation](../../../../dashboard/app/layouts/default.vue),
   [administrator route guard](../../../../dashboard/app/middleware/auth.global.ts), and
