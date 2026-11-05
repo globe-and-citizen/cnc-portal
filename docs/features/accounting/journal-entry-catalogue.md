@@ -283,8 +283,9 @@ Issued without moving cash.
 | A work week ends with submitted daily claims and an eligible weekly claim. | [US-PAYROLL-005](../payroll/README.md#us-payroll-005-submit-a-daily-claim) — supplies the daily claims used to calculate accrual; [US-PAYROLL-009](../payroll/README.md#us-payroll-009-disable-or-re-enable-a-signed-weekly-claim) — controls claim eligibility; changing status creates no separate entry |
 
 - **Input:** An ended weekly claim, its daily hours, applicable wage terms, overtime policy, and current eligibility status.
-- **Processing:** Accounting calculates the canonical weekly amount at the week-end timestamp. A disabled claim is excluded; signing is not
-  the accrual trigger. The entry is synthetic and has no transaction hash.
+- **Processing:** Accounting calculates the canonical weekly amount at the week-end timestamp: each currency accrues what the wage pays in
+  it, so a currency without an overtime rate accrues nothing for overtime hours. A disabled claim is excluded; signing is not the accrual
+  trigger. The entry is synthetic and has no transaction hash.
 - **General Ledger:** Label `Wage accrual`; activity `Payroll: Claim` in a yellow badge, a SHER-only wage included; date is the end of the
   work week.
 
@@ -315,7 +316,9 @@ Do not expense wages again.
 - **Input:** A Payroll withdrawal event enriched with the matching weekly claim.
 - **Processing:** Cash and SHER settlement paths are distinguished by currency. Portions in the same transaction share one entry; separate
   withdrawals remain separate operations. A matching Investor mint from SHER settlement is removed as duplicate evidence. The Investor
-  contract of every Officer generation counts as SHER, so a wage withdrawn in a previous generation's SHER still settles its liability.
+  contract of every Officer generation counts as SHER, so a wage withdrawn in a previous generation's SHER still settles its liability. The
+  contract pays one blended hourly rate per token, so a settlement can sit a few base units under its accrual. A week already withdrawn for
+  more than its wage defines settles what the contract really paid, which leaves that excess as a debit on Wage Payable.
 - **General Ledger:** Label `Wage settlement`; activity `Payroll: Withdraw` in a blue badge, so a withdrawn wage stands apart from a wage
   still accrued; the transaction hash traces the settlement.
 
@@ -847,7 +850,7 @@ cases.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `6eebae66bffc134e6c8b51d03046c29da401a0f5`
+**Implementation evidence reviewed against:** `c49c59adad6f1f9190be9501f520289551e190fb`
 
 These sources support current-runtime correspondence and preserved domain postings, not implementation of proposed identifiers or suspense
 accounts.

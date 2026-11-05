@@ -114,7 +114,7 @@ three consecutive missing criteria use inclusive ranges with full AC IDs at both
 
 | User Story  | Main Journey  | Coverage Target | Gaps                                                                              |
 | ----------- | ------------- | --------------- | --------------------------------------------------------------------------------- |
-| US-ACCT-001 | ✅ Integrated | ⚠️ 11/12 met    | `AC-US-ACCT-001-08`                                                               |
+| US-ACCT-001 | ✅ Integrated | ⚠️ 12/13 met    | `AC-US-ACCT-001-08`                                                               |
 | US-ACCT-002 | ✅ Integrated | ✅ 20/20        | —                                                                                 |
 | US-ACCT-003 | ✅ Integrated | ✅ 12/12        | —                                                                                 |
 | US-ACCT-004 | ✅ Integrated | ✅ 10/10        | —                                                                                 |
@@ -211,6 +211,8 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 - [x] `AC-US-ACCT-001-06` Payroll obligations are recognized when an eligible work week ends, before settlement.
 - [x] `AC-US-ACCT-001-07` Transfers between known company accounts do not change revenue or expenses.
 - [ ] `AC-US-ACCT-001-08` Closing cash balances are reconciled with the corresponding on-chain balances.
+- [x] `AC-US-ACCT-001-13` A weekly wage accrual books each currency at what the wage pays in it: a currency without an overtime rate accrues
+      nothing for overtime hours, and a currency rated only for overtime accrues for those hours.
 
 #### Edge & Error Cases
 
@@ -236,6 +238,7 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 | `AC-US-ACCT-001-10`  | `PS-FRONTEND`            | Frontend                  | ✅ Met     |
 | `AC-US-ACCT-001-11`  | `PS-FRONTEND`            | Frontend                  | ✅ Met     |
 | `AC-US-ACCT-001-12`  | `PS-FRONTEND`            | Frontend                  | ✅ Met     |
+| `AC-US-ACCT-001-13`  | `PS-FRONTEND`            | Frontend                  | ✅ Met     |
 
 **Dependencies:** Current company, accounting source providers, and valuation sources
 
@@ -969,7 +972,7 @@ valuation gap. The existing completeness rules apply to every booked movement. S
 [Safe pagination and metadata unit tests](../../../app/src/queries/__tests__/safe.queries.spec.ts) and
 [Safe source-mapping tests](../../../app/src/utils/accounting/__tests__/safe.spec.ts). Live product review remains pending.
 
-**Implementation evidence reviewed against:** `29de6c8ac3c71b2f75e7dd0fa681c9aaa77badb8`
+**Implementation evidence reviewed against:** `c49c59adad6f1f9190be9501f520289551e190fb`
 
 - [Accounting page](../../../app/src/components/sections/AccountingView/AccountingPage.vue),
   [team routes](../../../app/src/router/index.ts), and [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts)
