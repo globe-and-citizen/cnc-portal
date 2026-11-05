@@ -192,7 +192,9 @@ describe('claimFormUtil', () => {
       { fileType: 'application/pdf', fileUrl: 'https://example.com/incomplete.pdf' }
     ])
 
-    expect(previews).toEqual([expect.objectContaining({ fileName: 'proof.png', isImage: true })])
+    expect(previews).toEqual([
+      expect.objectContaining({ key: 'claims/1/proof.png', fileName: 'proof.png', isImage: true })
+    ])
     expect(getClaimDayFromCalendarValue({ start: undefined, end: undefined })).toBeUndefined()
     expect(getClaimDayFromCalendarValue({ year: 2024, month: 1, day: 11 })).toBe(
       '2024-01-11T00:00:00.000Z'
