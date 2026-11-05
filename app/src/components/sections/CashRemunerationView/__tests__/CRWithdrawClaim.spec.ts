@@ -14,7 +14,9 @@ import {
   mockTeamStore,
   mockGetBalance,
   mockWagmiCore,
-  mockSyncWeeklyClaimsMutation
+  mockSyncWeeklyClaimsMutation,
+  mockToast,
+  mockUseChainId
 } from '@/tests/mocks'
 import { mockLog } from '@/tests/mocks/utils.mock'
 import * as contractErrors from '@/utils/errors/classifyContractError'
@@ -432,6 +434,28 @@ describe('CRWithdrawClaim', () => {
     await clickWithdrawButton()
 
     expect(mockCashRemunerationWrites.withdraw.mutate).not.toHaveBeenCalled()
+  })
+
+  it('[AC-US-PAYROLL-010-07] asks for a new signature when a signature on the active contract no longer recovers the owner', async () => {
+    vi.spyOn(viem, 'recoverTypedDataAddress').mockResolvedValueOnce(
+      '0x3333333333333333333333333333333333333333' as Address
+    )
+    const claimOnActiveContract: WeeklyClaim = {
+      ...mockClaim,
+      data: {
+        ownerAddress: '0xOwnerAddress' as Address,
+        contractAddress: MOCK_CONTRACT_ADDRESS as Address,
+        chainId: mockUseChainId.value
+      }
+    }
+
+    createWrapper({ weeklyClaim: claimOnActiveContract })
+    await clickWithdrawButton()
+
+    expect(mockCashRemunerationWrites.withdraw.mutate).not.toHaveBeenCalled()
+    expect(mockToast.add).toHaveBeenCalledWith(
+      expect.objectContaining({ title: 'Signature no longer valid for this claim', color: 'error' })
+    )
   })
 
   it('allows withdraw for legacy claims with no data.contractAddress when recovery matches owner', async () => {
