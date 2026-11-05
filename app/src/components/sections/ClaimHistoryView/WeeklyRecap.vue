@@ -110,6 +110,8 @@
 </template>
 
 <script setup lang="ts">
+import type { TokenId } from '@/constant'
+import { sumFiatValues, valueTokenAmount } from '@/utils/currency/valuation'
 import { computed } from 'vue'
 import { useCurrencyStore } from '@/stores'
 import { formatCurrency } from '@/utils/format'
@@ -150,12 +152,16 @@ const overtimeMinutesWorked = computed(() => claimMinutes.value.overtimeMinutes)
 function getHourlyRateInUserCurrency(
   ratePerHour: RatePerHour[],
   tokenStore = currencyStore
-): number {
-  return ratePerHour.reduce((total: number, rate: RatePerHour) => {
-    const tokenInfo = tokenStore.getTokenInfo(rate.type)
-    const localPrice = tokenInfo?.prices.find((p) => p.id === 'local')?.price ?? 0
-    return total + rate.amount * localPrice
-  }, 0)
+): number | null {
+  return sumFiatValues(
+    ratePerHour.map((rate) =>
+      valueTokenAmount(
+        rate.amount,
+        tokenStore.getTokenInfo(rate.type as TokenId)?.prices.find((price) => price.id === 'local')
+          ?.price
+      )
+    )
+  )
 }
 
 const hourlyRateInUserCurrency = computed(() =>
@@ -175,8 +181,14 @@ const combinedTokenAmounts = computed(() =>
 )
 
 const totalAmount = computed(() => {
-  const regularTotal = (regularMinutesWorked.value / 60) * hourlyRateInUserCurrency.value
-  const overtimeTotal = (overtimeMinutesWorked.value / 60) * overtimeHourlyRateInUserCurrency.value
-  return regularTotal + overtimeTotal
+  const regularTotal = valueTokenAmount(
+    regularMinutesWorked.value / 60,
+    hourlyRateInUserCurrency.value
+  )
+  const overtimeTotal = valueTokenAmount(
+    overtimeMinutesWorked.value / 60,
+    overtimeHourlyRateInUserCurrency.value
+  )
+  return sumFiatValues([regularTotal, overtimeTotal])
 })
 </script>

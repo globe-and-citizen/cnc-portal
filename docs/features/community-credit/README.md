@@ -410,9 +410,16 @@ The following verified gaps have technical evidence and remediation directions i
   defaults (`002-01`, `03–05`). The `002-16` backend tests mock an upsert result rather than proving a persisted identical or edited retry;
   one purported retry performs only one request. These markers remain insufficient.
 
+## Current-price display availability
+
+The activity table preserves known token amounts while an absent current quote leaves its fiat estimate unavailable under the
+[shared quote policy](../../implementation/client-utilities/README.md#current-token-quote-and-fiat-availability). Numeric zero quotes remain
+zero and failed quote reads can be retried through the shared notice. This changes presentation availability only; principal, interest,
+funding, claimability, event completeness and Accounting posting policies retain their existing owners.
+
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `5bf92928370ff6fe8af9cd1a560f0eb4db915390`
+**Implementation evidence reviewed against:** `9e715cf332a5f36fe441a0fcfd8d5ba189c23f82`
 
 - [Credit Account page](../../../app/src/views/team/[id]/CommunityCredit/IndexView.vue)
 - [Credit-call wizard](../../../app/src/views/team/[id]/CommunityCredit/NewView.vue)

@@ -153,6 +153,7 @@
 </template>
 
 <script setup lang="ts">
+import { sumFiatValues } from '@/utils/currency/valuation'
 import { computed, ref } from 'vue'
 import type { Address } from 'viem'
 import { useToast } from '@nuxt/ui/composables'
@@ -219,7 +220,7 @@ const { data: bankOwner } = useBankOwner(bankAddress)
 
 const currencyCode = computed(() => currencyStore.localCurrency.code)
 const fiat = (balance: ReturnType<typeof useContractBalance>) =>
-  balance.data.value?.total.local.value ?? 0
+  balance.data.value?.total.local.value ?? null
 const fiatFormatted = (balance: ReturnType<typeof useContractBalance>) =>
   balance.data.value?.total.local.formatted ?? '—'
 
@@ -228,14 +229,23 @@ const isOwner = computed(() => {
   return String(bankOwner.value).toLowerCase() === userStore.address.toLowerCase()
 })
 
-const balancesFiat = computed(() => ({
-  cashRemuneration: cashRemAddress.value ? fiat(cashRemBalance) : 0,
-  expense: expenseAddress.value ? fiat(expenseBalance) : 0,
-  bank: fiat(bankBalance)
+const hasFunds = (balance: ReturnType<typeof useContractBalance>) =>
+  balance.data.value?.balances.some((token) => token.raw > 0n) ?? false
+const fundedAccounts = computed(() => ({
+  cashRemuneration: !!cashRemAddress.value && hasFunds(cashRemBalance),
+  expense: !!expenseAddress.value && hasFunds(expenseBalance),
+  bank: hasFunds(bankBalance)
 }))
 
 const plan = computed(() =>
-  buildLegacyWithdrawPlan(balancesFiat.value, { canSweepSources: canSweepSources.value })
+  buildLegacyWithdrawPlan(
+    {
+      cashRemuneration: fundedAccounts.value.cashRemuneration ? 1 : 0,
+      expense: fundedAccounts.value.expense ? 1 : 0,
+      bank: fundedAccounts.value.bank ? 1 : 0
+    },
+    { canSweepSources: canSweepSources.value }
+  )
 )
 const hasAnyBalance = computed(() => plan.value.length > 0)
 
@@ -275,36 +285,24 @@ const cashOut = useCashOutAll({
 const modal = ref({ mount: false, show: false })
 const phase = ref<'review' | 'progress'>('review')
 
-const sourceRows = computed(() => {
-  const rows: { key: string; label: string; value: string; amount: number }[] = []
-  if (balancesFiat.value.cashRemuneration > 0)
-    rows.push({
-      key: 'cashRemuneration',
-      label: 'Cash Remuneration',
-      value: fiatFormatted(cashRemBalance),
-      amount: balancesFiat.value.cashRemuneration
-    })
-  if (balancesFiat.value.expense > 0)
-    rows.push({
-      key: 'expense',
-      label: 'Expense Account',
-      value: fiatFormatted(expenseBalance),
-      amount: balancesFiat.value.expense
-    })
-  return rows
-})
-
-const reviewRows = computed(() => {
-  const rows = canSweepSources.value ? [...sourceRows.value] : []
-  if (balancesFiat.value.bank > 0)
-    rows.push({
-      key: 'bank',
-      label: 'Bank',
-      value: fiatFormatted(bankBalance),
-      amount: balancesFiat.value.bank
-    })
-  return rows
-})
+const accountRows = computed(() =>
+  [
+    { key: 'cashRemuneration' as const, label: 'Cash Remuneration', balance: cashRemBalance },
+    { key: 'expense' as const, label: 'Expense Account', balance: expenseBalance },
+    { key: 'bank' as const, label: 'Bank', balance: bankBalance }
+  ]
+    .filter(({ key }) => fundedAccounts.value[key])
+    .map(({ key, label, balance }) => ({
+      key,
+      label,
+      value: fiatFormatted(balance),
+      amount: fiat(balance)
+    }))
+)
+const sourceRows = computed(() => accountRows.value.filter(({ key }) => key !== 'bank'))
+const reviewRows = computed(() =>
+  accountRows.value.filter(({ key }) => key === 'bank' || canSweepSources.value)
+)
 
 const strandedRows = computed(() => (canSweepSources.value ? [] : sourceRows.value))
 
@@ -315,10 +313,7 @@ const completionDescription = computed(() =>
 )
 
 const projectedFormatted = computed(() =>
-  formatCurrencyShort(
-    reviewRows.value.reduce((total, row) => total + row.amount, 0),
-    currencyCode.value
-  )
+  formatCurrencyShort(sumFiatValues(reviewRows.value.map((row) => row.amount)), currencyCode.value)
 )
 
 const openModal = () => {

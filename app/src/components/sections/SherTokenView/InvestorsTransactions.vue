@@ -237,13 +237,8 @@ const safeDepositRouterAddress = computed(() => {
   return address ? address.toLowerCase() : ''
 })
 
-const getUsdPrice = (tokenId: TokenId | null): number => {
-  if (!tokenId) return 0
-  const livePrice = currencyStore.getTokenPrice(tokenId, false, 'USD')
-  if (livePrice > 0) return livePrice
-  if (tokenId === 'usdc' || tokenId === 'usdc.e' || tokenId === 'usdt') return 1
-  return 0
-}
+const getUsdPrice = (tokenId: TokenId | null): number | null =>
+  tokenId ? currencyStore.getTokenPrice(tokenId, false, 'USD') : null
 
 const {
   data: investorData,

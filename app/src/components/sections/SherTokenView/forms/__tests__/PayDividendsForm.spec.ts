@@ -123,6 +123,25 @@ describe('PayDividendsForm.vue', () => {
     expect(wrapper.find('[data-test="bank-empty-warning"]').exists()).toBe(false)
   })
 
+  it.each([1800, null])(
+    'passes the selected-currency quote %s without blocking exact dividends',
+    async (localPrice) => {
+      const balances = defaultBalances()
+      balances[0]!.price.local.value = localPrice
+      mockUseContractBalance.balances.value = balances
+      const wrapper = createComponent()
+
+      expect(wrapper.findComponent(TokenAmountInputStub).props('tokens')[0]).toMatchObject({
+        price: localPrice,
+        balance: 10
+      })
+      await wrapper.find('[data-test="amount-input"]').setValue('1.5')
+      await wrapper.find('[data-test="pay-dividends-submit-button"]').trigger('click')
+      expect(wrapper.emitted('submit')?.[0]).toEqual([1500000000000000000n, 'native'])
+      wrapper.unmount()
+    }
+  )
+
   it('[AC-US-SHER-002-01] submits a positive native amount within the Bank balance', async () => {
     mockUseContractBalance.balances.value = defaultBalances()
 

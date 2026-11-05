@@ -95,7 +95,7 @@ export function useTeamListTreasuryBalances(teams: MaybeRefOrGetter<Team[] | und
     }
   })
 
-  const amountsByAddress = computed<Readonly<Record<string, number>>>(() => {
+  const amountsByAddress = computed<Readonly<Record<string, number | null>>>(() => {
     const rawBalances = query.data.value ?? {}
 
     const amounts = Object.fromEntries(

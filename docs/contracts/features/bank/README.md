@@ -155,13 +155,14 @@
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `12b89744a080247ea8e4ca5047c639b9ae651b82`
+**Implementation evidence reviewed against:** `9e715cf332a5f36fe441a0fcfd8d5ba189c23f82`
 
 - [Bank deposit form](../../../../app/src/components/sections/BankView/forms/DepositBankForm.vue),
   [transfer form](../../../../app/src/components/sections/BankView/forms/TransferModal.vue), and
   [Bank event feed](../../../../app/src/composables/bank/useBankEventsViaLogs.ts). The transfer form sends the smallest gross amount whose
   floor-rounded fee still delivers the requested net amount to the recipient, and both forms invalidate the Bank event feed after a
-  successful direct Bank write so history reflects the receipt immediately.
+  successful direct Bank write so history reflects the receipt immediately. Transfer choices carry nullable selected-currency prices for
+  display estimates; quote availability does not change token amounts, fee calculation or permission checks.
 - [Chain-backed Bank Account E2E test](../../../../app/test/e2e/bank/bank-account.spec.ts) and
   [its deployment fixture](../../../../app/test/e2e/bank/bank-chain.ts)
 - [Bank beacon tests](../../../../contract/test/BankBeacon.spec.ts) and

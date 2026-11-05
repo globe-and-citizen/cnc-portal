@@ -194,13 +194,13 @@ describe('CompanyOverview Safe valuation', () => {
   })
 
   it.each(['invalid', '-1', 'Infinity'])(
-    'keeps numeric totals for an invalid provider total %s',
+    'keeps totals unavailable for an invalid provider total %s',
     (fiatTotal) => {
       safeData.value = { ...holdings(), fiatTotal }
       render()
 
-      expect(safeAmount()).toBe('$0')
-      expect(totalAmount()).toBe('$15.00')
+      expect(safeAmount()).toBe('—')
+      expect(totalAmount()).toBe('—')
     }
   )
 })

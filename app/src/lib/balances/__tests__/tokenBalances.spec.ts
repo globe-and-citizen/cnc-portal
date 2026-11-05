@@ -119,13 +119,13 @@ describe('toTokenBalances', () => {
     expect(balances[0]?.value.usd.value).toBe(0)
   })
 
-  it('treats an unpriced token as zero-valued without dropping it', () => {
+  it('keeps an unpriced holding unavailable without dropping its exact token amount', () => {
     const balances = toTokenBalances(TOKENS, { usdc: 12_500_000n }, () => null, codes)
 
     expect(balances).toHaveLength(2)
     expect(balances[0]?.amount).toBe(12.5)
-    expect(balances[0]?.value.usd.value).toBe(0)
-    expect(balances[0]?.price.usd.value).toBe(0)
+    expect(balances[0]?.value.usd.value).toBeNull()
+    expect(balances[0]?.price.usd.value).toBeNull()
   })
 })
 
@@ -184,5 +184,33 @@ describe('toContractBalances', () => {
       usd: { value: 0, formatted: '$0' },
       local: { value: 0, formatted: '$0' }
     })
+  })
+})
+
+describe('unavailable contract valuations', () => {
+  it('does not publish a partial total when a held token has no quote', () => {
+    const result = toContractBalances(TOKENS, { usdc: 1_000_000n, native: 10n ** 18n }, (id) =>
+      id === 'native' ? null : getTokenInfo(id)
+    )
+    expect(result.balances.map(({ amount }) => amount)).toEqual([1, 1])
+    expect(result.total.local.value).toBeNull()
+    expect(result.total.local.formatted).toBe('—')
+    expect(result.total.usd.value).toBeNull()
+  })
+  it('values zero holdings at zero while the quotes are unavailable', () => {
+    const result = toContractBalances(TOKENS, { usdc: 0n, native: 0n }, () => null)
+    expect(result.total.local.value).toBe(0)
+    expect(result.balances[0]?.price.local.value).toBeNull()
+    expect(result.balances[0]?.value.local.value).toBe(0)
+  })
+  it('preserves a genuine zero quote for nonzero holdings', () => {
+    const result = toContractBalances(TOKENS, { native: 10n ** 18n }, () => ({
+      prices: [
+        { id: 'usd', price: 0, code: 'USD', symbol: '$' },
+        { id: 'local', price: 0, code: 'USD', symbol: '$' }
+      ]
+    }))
+    expect(result.total.usd.value).toBe(0)
+    expect(result.balances[1]?.price.usd.value).toBe(0)
   })
 })

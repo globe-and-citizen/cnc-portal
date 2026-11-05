@@ -197,7 +197,7 @@ describe('BankTransactions', () => {
 
     expect(nativeRow?.amountLocal).toBe(3)
     expect(unknownRow?.amount).toBe('0')
-    expect(unknownRow?.amountLocal).toBe(0)
+    expect(unknownRow?.amountLocal).toBeNull()
     expect(unknownRow?.token).toBe('ERC20')
   })
 

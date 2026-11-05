@@ -121,15 +121,40 @@ requests from a cached SDK instance after a wallet network change. Read-only pro
 [shared session policy](../../features/authentication/README.md#us-auth-004-resume-after-a-wallet-network-change) owns the global lock and
 recovery journey.
 
+## Current token quote and fiat availability
+
+The currency store owns the viewer's currency preference and token metadata; current-price queries retain the authoritative quote data,
+errors, fetching state and refetch functions. `tokenStates` preserves those query observers rather than copying their data into a second
+cache. Both `getTokenPrice` and `getTokenInfo` use the same convention: a missing, negative or non-finite quote is `null`; a genuine zero is
+numeric zero. The existing SHER policy remains explicit local zero pricing when the team's SHER token is known, without a market request.
+
+The authenticated application shell shows one shared quote-status alert. Failed queries, stale cached errors and absent selected-currency
+quotes expose a scoped Try again action; successful retained quotes remain usable. Switching currency recomputes cached valuations without
+an additional quote request. The market query endpoints, polling and retry policy remain owned by
+[Client Data Access](../client-data-access/README.md); the alert refetches only unavailable/error observers and preserves their lifecycle.
+
+[Fiat valuation helpers](../../../app/src/utils/currency/valuation.ts) retain `null` through multiplication and totals. A zero token
+quantity has known value zero without a quote; any nonzero unpriced contribution makes its complete total unavailable. Overflow/invalid
+numeric inputs stay unavailable. [Contract balance shaping](../../../app/src/lib/balances/tokenBalances.ts) preserves exact raw amounts,
+per-token quotes/values and nullable aggregate values; formatting renders the canonical unavailable marker. Payroll, expense, treasury and
+grouped transaction totals use the same rule rather than silently summing a priced subset. Token input estimates remain optional display
+data; raw token quantities and permissions continue to govern writes and withdrawals.
+
+Current fiat estimates do not change Accounting rates of record, fixed-scale postings, Safe swap economic rules or token allowlists. Safe
+transfer choices retain a missing provider quote as null for the same shared amount-input contract; Safe portfolio valuation remains
+independently owned. [Accounts](../../features/accounts/README.md), [Payroll](../../features/payroll/README.md),
+[Companies](../../features/companies/README.md) and [Transaction History](../transaction-history/README.md) own their affected user
+surfaces.
+
 ## Implementation Evidence
 
 [Shared balance reads](../../../app/src/composables/useContractBalance.ts) accept caller-supplied query options while preserving the
 existing default cadence for other consumers. Supported and discovered Safe balances share a normalized balance-key prefix so existing
 post-confirmation balance invalidations reach both. [Currency prices](../../../app/src/stores/currencyStore.ts) retain their existing
-currency payload and conversions while consuming the centralized CoinGecko price query, whose preset freshness, polling and direct Axios
-reads are described in [Client Data Access](../client-data-access/README.md#browser-request-coordination).
+currency payload and query-backed nullable conversions while consuming the centralized CoinGecko price query, whose preset freshness,
+polling and direct Axios reads are described in [Client Data Access](../client-data-access/README.md#browser-request-coordination).
 
-**Implementation evidence reviewed against:** `635eb92ec16d0fa5fca930d458b0e35453af94d2`
+**Implementation evidence reviewed against:** `9e715cf332a5f36fe441a0fcfd8d5ba189c23f82`
 
 - [Utility ownership map and domain implementations](../../../app/src/utils/)
 - [Shared Accounting domain contracts](../../../app/src/utils/accounting/types.ts)
@@ -139,6 +164,16 @@ reads are described in [Client Data Access](../client-data-access/README.md#brow
   [SHER realization settlement](../../../app/src/utils/accounting/sherIssuance.ts)
 - [Utility boundary validator](../../../app/scripts/check-utility-boundaries.mjs) and
   [validator tests](../../../app/scripts/__tests__/check-utility-boundaries.node.mjs)
+- [Current quote/price recovery notice](../../../app/src/components/ui/TokenPriceStatusAlert.vue) and its
+  [application-shell integration](../../../app/src/App.vue)
+- [Nullable amount and total helpers](../../../app/src/utils/currency/valuation.ts),
+  [canonical compact currency formatting](../../../app/src/utils/currency/display.ts),
+  [contract-balance shaping](../../../app/src/lib/balances/tokenBalances.ts), and
+  [nullable balance contracts](../../../app/src/types/contract-balance.ts), [token choices](../../../app/src/types/token.ts) and
+  [transaction values](../../../app/src/types/transaction-history.ts)
+- [Real query/store/presentation/recovery tests](../../../app/src/stores/__tests__/currencyStore.lifecycle.spec.ts),
+  [fiat availability helper tests](../../../app/src/utils/currency/__tests__/valuation.spec.ts), and
+  [nullable transaction presentation tests](../../../app/src/utils/transactions/__tests__/presentation.spec.ts)
 - [Store-backed transaction presentation](../../../app/src/composables/transactions/useTransactionPresentation.ts) and
   [pure presentation model](../../../app/src/utils/transactions/presentation.ts)
 - [Safe Deposit Router amount-model tests](../../../app/src/utils/safeDepositRouter/__tests__/model.spec.ts),

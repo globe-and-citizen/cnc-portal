@@ -1,6 +1,6 @@
 import { formatCompact, formatNumber } from '@/utils/format'
 
-export function formatCurrencyShort(number: number, currency = 'USD') {
+export function formatCurrencyShort(number: number | null | undefined, currency = 'USD') {
   return formatCompact(number, { currency })
 }
 

@@ -205,9 +205,18 @@ Safe page and skips the queue, so the signer list updates right after a signer c
 change refreshes. Executable evidence: [read queue tests](../../../app/src/queries/__tests__/safe.readQueue.spec.ts) and
 [Safe query tests](../../../app/src/queries/__tests__/safe.queries.spec.ts).
 
+## Current-quote consumer availability
+
+The current-price observers remain the cache/error/retry owners. The currency adapter retains their complete query handles, applies the
+[shared nullable quote policy](../client-utilities/README.md#current-token-quote-and-fiat-availability) and recomputes selected-currency
+values from retained data. The application notice exposes failed/stale reads or a missing selected-currency quote and refetches only those
+observers. Existing valid data survives a failed refresh, with the error visible; no extra HTTP retry loop or shadow cache is introduced.
+Market endpoint routing, backend coordination and observer cadence remain unchanged. The explicit SHER local-price policy does not create a
+market query.
+
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `67d32226ed532ad508b7b352a609d519dc3a14e6`
+**Implementation evidence reviewed against:** `9e715cf332a5f36fe441a0fcfd8d5ba189c23f82`
 
 - [Query barrel](../../../app/src/queries/index.ts), [query factory](../../../app/src/queries/queryFactory.ts), and
   [single-file upload query](../../../app/src/queries/file.queries.ts)

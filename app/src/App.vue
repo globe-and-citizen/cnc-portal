@@ -37,6 +37,7 @@
 
               <template #body>
                 <UContainer :ui="{ base: 'px-0 sm:px-0 lg:px-0' }">
+                  <TokenPriceStatusAlert />
                   <RouterView />
                 </UContainer>
               </template>
@@ -61,6 +62,7 @@ import NetworkLockScreen from '@/components/layout/NetworkLockScreen.vue'
 import NavBar from '@/components/layout/NavBar.vue'
 import NavBreadcrumb from '@/components/layout/NavBreadcrumb.vue'
 import TeamSelectMenu from '@/components/layout/TeamSelectMenu.vue'
+import TokenPriceStatusAlert from '@/components/ui/TokenPriceStatusAlert.vue'
 import SidebarLayout from '@/components/ui/SidebarLayout.vue'
 
 import { useAuth } from '@/composables/useAuth'

@@ -158,6 +158,7 @@ describe('LegacyGenerationWithdrawAction', () => {
 
   it('blocks a non-sweeping generation whose Bank is already empty', () => {
     mockBeaconFolder.folder.value = 'V0'
+    mockUseContractBalance.balances.value = []
     mockUseContractBalance.total.value = {
       usd: { value: 0, formatted: '$0' },
       local: { value: 0, formatted: '$0' }
@@ -209,6 +210,7 @@ describe('LegacyGenerationWithdrawAction', () => {
   })
 
   it('blocks when the legacy contracts are empty', () => {
+    mockUseContractBalance.balances.value = []
     mockUseContractBalance.total.value = {
       usd: { value: 0, formatted: '$0' },
       local: { value: 0, formatted: '$0' }
@@ -227,6 +229,20 @@ describe('LegacyGenerationWithdrawAction', () => {
     const wrapper = createWrapper()
 
     expect(wrapper.get(BUTTON).attributes('disabled')).toBeDefined()
+  })
+
+  it('permits raw-balance recovery when the fiat valuation is unavailable', async () => {
+    mockUseContractBalance.total.value = {
+      usd: { value: null, formatted: '—' },
+      local: { value: null, formatted: '—' }
+    }
+    const wrapper = createWrapper()
+    expect(wrapper.get(BUTTON).attributes('disabled')).toBeUndefined()
+    expect(blockedReason(wrapper)).toBeUndefined()
+    await wrapper.get(BUTTON).trigger('click')
+    await flushPromises()
+    expect(wrapper.text()).toContain('—')
+    expect(mockCashOut.start).not.toHaveBeenCalled()
   })
 
   it('reviews each funded account before signing', async () => {

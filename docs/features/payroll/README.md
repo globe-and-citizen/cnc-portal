@@ -979,10 +979,22 @@ preparation and required registration. The
 [shared Board failure contract](../contract-management/README.md#board-action-failure-and-recovery) distinguishes a confirmed action whose
 backend record could not be saved and prevents automatic chain resubmission. Notification delivery remains best-effort.
 
+## Fiat display availability
+
+The local-currency wage, claim recap, monthly withdrawn/pending summaries and transaction totals use the
+[shared nullable quote policy](../../implementation/client-utilities/README.md#current-token-quote-and-fiat-availability). If any nonzero
+token contribution lacks a quote, the complete fiat estimate is unavailable; the known subset is not presented as a total. Zero quantities
+need no quote, numeric zero quotes remain zero, and token rates, worked minutes, signed payout quantities and the explicit SHER pricing
+policy remain unchanged. A currency change revalues retained data; quote failure/retry belongs to the shared query observers and application
+notice, not to wage or claim persistence. No payroll posting or signature rule changes.
+
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `631c851545f6331cc9aecdd4c217f27463d39d69`
+**Implementation evidence reviewed against:** `e9914a7bc0fc55d89395c02186b0bd5616b00b0f`
 
+- [Pending claim fiat summary](../../../app/src/components/sections/CashRemunerationView/CashRemunerationPendingClaim.vue),
+  [claim-week recap](../../../app/src/components/sections/ClaimHistoryView/WeeklyRecap.vue), and
+  [claim recap availability tests](../../../app/src/components/sections/ClaimHistoryView/__tests__/WeeklyRecap.spec.ts)
 - [Cash Remuneration overview](../../../app/src/components/sections/CashRemunerationView/CashRemunerationOverview.vue),
   [monthly withdrawn summary](../../../app/src/components/sections/CashRemunerationView/CashRemunerationMonthlyClaim.vue),
   [incoming Bank transfer feed](../../../app/src/composables/bank/useIncomingBankTokenTransfersViaLogs.ts),

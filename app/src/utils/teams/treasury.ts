@@ -65,7 +65,7 @@ export function getTeamTreasuryAddresses(team: Team): Address[] {
  */
 export function buildTeamTreasuryDisplay(
   team: Team,
-  amountsByAddress: Readonly<Record<string, number>>,
+  amountsByAddress: Readonly<Record<string, number | null>>,
   isLoading: boolean,
   currency: string
 ): TeamTreasuryDisplay {
@@ -85,8 +85,12 @@ export function buildTeamTreasuryDisplay(
     return { state: 'loading', formattedTotal: EMPTY_VALUE, accountShares: [] }
   }
 
+  if (accounts.some((account) => account.address && account.amount === null)) {
+    return { state: 'unavailable', formattedTotal: EMPTY_VALUE, accountShares: [] }
+  }
+
   const readAccounts = accounts.filter(
-    (account): account is ReadTreasuryAccount => account.amount !== undefined
+    (account): account is ReadTreasuryAccount => account.amount != null
   )
 
   if (readAccounts.length === 0) {

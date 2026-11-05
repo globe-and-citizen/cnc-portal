@@ -23,6 +23,7 @@
   </OverviewCard>
 </template>
 <script setup lang="ts">
+import { sumFiatValues, valueTokenAmount } from '@/utils/currency/valuation'
 import cartIcon from '@/assets/cart.svg'
 import uptrendIcon from '@/assets/uptrend.svg'
 import OverviewCard from '@/components/ui/OverviewCard.vue'
@@ -68,7 +69,9 @@ const transfersInRange = (
 }
 
 /** Sums `transfer` transactions, converted to the local currency. */
-const sumInLocalCurrency = (transactions: { amount: bigint; tokenAddress: string }[]): number => {
+const sumInLocalCurrency = (
+  transactions: { amount: bigint; tokenAddress: string }[]
+): number | null => {
   const spentByToken: Record<string, number> = {}
   for (const token of SUPPORTED_TOKENS) {
     spentByToken[token.id] = 0
@@ -82,13 +85,14 @@ const sumInLocalCurrency = (transactions: { amount: bigint; tokenAddress: string
     }
   })
 
-  let totalInLocal = 0
-  for (const token of SUPPORTED_TOKENS) {
-    const price =
-      currencyStore.getTokenInfo(token.id)?.prices.find((p) => p.id === 'local')?.price || 0
-    totalInLocal += (spentByToken[token.id] ?? 0) * price
-  }
-  return totalInLocal
+  return sumFiatValues(
+    SUPPORTED_TOKENS.map((token) =>
+      valueTokenAmount(
+        spentByToken[token.id] ?? 0,
+        currencyStore.getTokenInfo(token.id)?.prices.find((price) => price.id === 'local')?.price
+      )
+    )
+  )
 }
 
 const monthlySpentLocal = computed(() =>
@@ -105,7 +109,7 @@ const totalMonthlySpentAmount = computed(() =>
 const spendingDelta = computed<{ percent: string; direction: 'up' | 'down' } | null>(() => {
   const previous = prevMonthlySpentLocal.value
   // No baseline to compare against — hide the delta rather than show a fake one.
-  if (previous <= 0) return null
+  if (previous == null || monthlySpentLocal.value == null || previous <= 0) return null
   const change = ((monthlySpentLocal.value - previous) / previous) * 100
   return {
     percent: formatNumber(Math.abs(change), { minDecimals: 1, maxDecimals: 1 }),

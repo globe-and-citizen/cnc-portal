@@ -108,7 +108,7 @@ Runs of at least three consecutive missing criteria use inclusive ranges with fu
 | ----------- | ------------- | --------------- | --------------------------------------------------------------------------------- |
 | US-BANK-001 | ✅ Integrated | ⚠️ 9/10         | `AC-US-BANK-001-03`                                                               |
 | US-BANK-002 | ✅ Integrated | ⚠️ 11/13        | `AC-US-BANK-002-01`, `AC-US-BANK-002-02`                                          |
-| US-BANK-003 | ✅ Integrated | ⚠️ 7/9 met      | `AC-US-BANK-003-08`, `AC-US-BANK-003-09`                                          |
+| US-BANK-003 | ✅ Integrated | ⚠️ 8/10 met     | `AC-US-BANK-003-08`, `AC-US-BANK-003-09`                                          |
 | US-BANK-004 | 🚧 Partial    | ⚠️ 6/8          | `AC-US-BANK-004-01`, `AC-US-BANK-004-02`                                          |
 | US-EXP-001  | ✅ Integrated | ⚠️ 13/15        | `AC-US-EXP-001-01`, `AC-US-EXP-001-02`                                            |
 | US-EXP-002  | 🚧 Partial    | ⚠️ 12/16        | `AC-US-EXP-002-01`, `AC-US-EXP-002-02`, `AC-US-EXP-002-07`, `AC-US-EXP-002-09`    |
@@ -307,6 +307,8 @@ remain as recorded above.
 
 - [x] `AC-US-BANK-003-07` A history filter with no matching events returns an empty result.
 - [x] `AC-US-BANK-003-08` A failed history read is distinguishable from a successfully loaded empty history.
+- [x] `AC-US-BANK-003-10` An unavailable current token quote is distinguishable from a real zero: token quantities remain visible, affected
+      fiat values and totals stay unavailable, and a failed quote read offers retry.
 
 ### Test Coverage
 
@@ -320,6 +322,7 @@ remain as recorded above.
 | `AC-US-BANK-003-06`  | `PS-FRONTEND`              | Mocked browser + Frontend | ✅ Met          |
 | `AC-US-BANK-003-07`  | `PS-BROWSER`               | Mocked browser            | ✅ Met          |
 | `AC-US-BANK-003-08`  | `PS-BROWSER`               | Frontend                  | ⚠️ Insufficient |
+| `AC-US-BANK-003-10`  | `PS-FRONTEND`              | Frontend                  | ✅ Met          |
 | `AC-US-BANK-003-09`  | `PS-BACKEND`               | None linked               | ❌ Missing      |
 | `AC-US-BANK-003-09`  | `PS-FULL-STACK-INTEGRATED` | None linked               | ❌ Missing      |
 
@@ -1336,9 +1339,26 @@ and expose the failure inline. Their loading state spans preparation and require
 [shared Board failure contract](../contract-management/README.md#board-action-failure-and-recovery) distinguishes an already-confirmed
 action with a missing backend record from a failed submission; notification failures do not undo success.
 
+## Current fiat estimates and unavailable quotes
+
+Balances and histories retain exact token quantities when a current quote is missing. The affected fiat values and complete totals display
+the canonical unavailable marker instead of a fabricated zero or priced subset. A true zero quote remains zero; zero holdings contribute
+zero without requiring a price. Transfer and Expense token choices use the selected-currency quote even when USD remains available. Deposit
+and transfer amount inputs apply the same nullable estimate contract, including Safe provider quotes.
+[Shared quote recovery](../../implementation/client-utilities/README.md#current-token-quote-and-fiat-availability) exposes failed or stale
+reads with a targeted Try again action and preserves usable cached quotes.
+
+Current and historical-generation withdrawal actions determine available funds from raw token balances. Unknown or zero fiat estimates do
+not remove a funded account from the withdrawal plan; review estimates may remain unavailable while permissions and exact chain amounts
+retain their existing rules. The existing SHER zero-price policy is preserved. Safe portfolio totals and Accounting rates/postings remain
+independently owned; an invalid Safe total is unavailable to the combined company estimate rather than a zero contribution.
+
+Frontend proofs cover the store/query lifecycle, amount-input estimates, balance/history presentation, partial aggregate rejection and
+raw-balance withdrawal eligibility. They do not establish a live market-provider result, a new integrated chain journey or human acceptance.
+
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `12b89744a080247ea8e4ca5047c639b9ae651b82`
+**Implementation evidence reviewed against:** `9e715cf332a5f36fe441a0fcfd8d5ba189c23f82`
 
 - [Bank deposit modal](../../../app/src/components/sections/BankView/forms/DepositModal.vue),
   [Bank transfer modal](../../../app/src/components/sections/BankView/forms/TransferModal.vue),
@@ -1421,6 +1441,11 @@ action with a missing backend record from a failed submission; notification fail
 - [Payroll account page](../../../app/src/views/team/%5Bid%5D/Accounts/PayrollView.vue)
 
 ### Test-suite ownership
+
+- [Real quote/store/presentation/recovery tests](../../../app/src/stores/__tests__/currencyStore.lifecycle.spec.ts),
+  [nullable balance tests](../../../app/src/lib/balances/__tests__/tokenBalances.spec.ts),
+  [Bank balance display tests](../../../app/src/components/sections/BankView/__tests__/BankBalanceSection.spec.ts), and
+  [price-independent legacy withdrawal tests](../../../app/src/components/sections/ContractManagementView/__tests__/LegacyGenerationWithdrawAction.spec.ts)
 
 - [Bank write tests](../../../app/src/composables/bank/__tests__/bankWrites.spec.ts),
   [cash-out orchestration tests](../../../app/src/composables/cashOut/__tests__/useCashOutAll.spec.ts), and

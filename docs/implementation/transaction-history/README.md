@@ -48,9 +48,19 @@ flowchart LR
 - A selected row opens its detail in `TransactionDetailSlideover`; closing it does not alter the applied filters.
 - Date-range selection is documented by the [Date Picker capability](../date-picker/README.md).
 
+## Fiat estimate availability
+
+Current fiat estimates use the
+[shared nullable quote and total policy](../client-utilities/README.md#current-token-quote-and-fiat-availability). `amountLocal` and
+`amountUSD` may be null independently of the event's token quantity. Positive-amount rows and detail views show the canonical unavailable
+marker for missing estimates and retain genuine zero valuations. Grouped remuneration estimates are unavailable if any contributing nonzero
+event is unpriced; zero-amount configuration events do not require a quote. Current investor estimates no longer assume a stablecoin price
+when its quote is absent. Table pagination, grouping identity, event-source ownership and Accounting values are unchanged. Quote errors and
+recovery remain with the underlying queries and shared notice rather than being copied into table state.
+
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `5bf92928370ff6fe8af9cd1a560f0eb4db915390`
+**Implementation evidence reviewed against:** `9e715cf332a5f36fe441a0fcfd8d5ba189c23f82`
 
 - [Shared table state](../../../app/src/composables/transactions/useTransactionTable.ts)
 - [Shared table-state tests](../../../app/src/composables/transactions/__tests__/useTransactionTable.spec.ts)

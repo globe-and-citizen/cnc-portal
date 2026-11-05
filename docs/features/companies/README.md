@@ -440,9 +440,17 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 Validated on 2026-08-27 against the reviewed Companies journeys, role and archived-state boundaries, and the implementation evidence below.
 This validation does not attest to a live on-chain Officer deployment.
 
+## Fiat summary availability
+
+Company-card wage and treasury estimates follow the
+[shared quote policy](../../implementation/client-utilities/README.md#current-token-quote-and-fiat-availability). An unpriced nonzero wage
+component keeps the wage-status label without publishing a partial amount. A configured treasury whose held balance has a null valuation
+keeps the company-card total unavailable. The overview total also stays unavailable when a contributing account cannot be valued, including
+an invalid provider Safe total; a contract that is absent contributes known zero. Token quantities and account access are unaffected.
+
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `f15dccbe52468b554ce87b92f5db48411b921bb9`
+**Implementation evidence reviewed against:** `9e715cf332a5f36fe441a0fcfd8d5ba189c23f82`
 
 - [Member deletion](../../../app/src/components/sections/DashboardView/DeleteMemberModal.vue),
   [team state](../../../app/src/stores/teamStore.ts), and

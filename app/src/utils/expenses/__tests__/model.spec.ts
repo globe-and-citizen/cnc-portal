@@ -76,6 +76,17 @@ describe('getTokens', () => {
     expect(getTokens([expenseRow()], '0xSignature', [])).toEqual([])
   })
 
+  it.each([0.9, null])(
+    'uses the selected-currency quote %s independently of the spendable budget',
+    (localPrice) => {
+      const holding = heldUsdc(10)
+      holding.price.local.value = localPrice
+      const [token] = getTokens([expenseRow()], '0xSignature', [holding])
+
+      expect(token).toMatchObject({ price: localPrice, balance: 10, spendableBalance: 2 })
+    }
+  )
+
   it('exposes the balance and symbol alongside the spendable amount', () => {
     const [token] = getTokens([expenseRow()], '0xSignature', [heldUsdc(10)])
 
