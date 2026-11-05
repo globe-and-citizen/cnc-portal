@@ -9,18 +9,16 @@
       from the chain. No separate record to keep in sync.
     </p>
 
-    <UAlert
-      v-if="error"
-      color="error"
-      variant="subtle"
-      title="Couldn't load payment history"
-      :description="error.message"
+    <TransactionHistoryStatusAlert
+      :status="status"
+      :is-retrying="status.fetching"
+      data-test="payment-gate-history-warning"
+      @retry="refetch()"
     />
     <UTable
-      v-else
-      :data="payments"
+      :data="history.payments"
       :columns="columns"
-      :loading="loading"
+      :loading="status.state === 'loading'"
       data-test="payment-gate-history-table"
     >
       <template #date-cell="{ row }">
@@ -49,7 +47,15 @@
       </template>
 
       <template #empty>
-        <p class="text-muted py-6 text-center text-sm">No payments yet.</p>
+        <p class="text-muted py-6 text-center text-sm" data-test="payment-gate-history-empty">
+          {{
+            status.state === 'complete'
+              ? 'No payments yet.'
+              : status.state === 'loading'
+                ? 'Loading payment history…'
+                : 'Payment history is incomplete.'
+          }}
+        </p>
       </template>
     </UTable>
   </UCard>
@@ -69,12 +75,13 @@ import { formatTxHash } from '@/utils/transactions/registry'
 import { formatCryptoAmount } from '@/utils/currency/display'
 import { formatDateRelative, formatDateUTC } from '@/utils/dates/calendar'
 import TransactionDetailSlideover from '@/components/ui/TransactionDetailSlideover.vue'
+import TransactionHistoryStatusAlert from '@/components/sections/TransactionHistoryStatusAlert.vue'
 import { useFactureHistory, type FacturePayment } from '@/composables/paymentGate/useFactureHistory'
 
 const teamStore = useTeamStore()
 const bankAddress = computed(() => teamStore.getContractAddressByType('Bank'))
 
-const { payments, loading, error } = useFactureHistory(bankAddress)
+const { data: history, status, refetch } = useFactureHistory(bankAddress)
 
 const columns: TableColumn<FacturePayment>[] = [
   { accessorKey: 'factureId', header: 'Facture ID' },
