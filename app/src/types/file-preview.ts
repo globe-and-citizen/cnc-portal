@@ -34,6 +34,8 @@ export type FilePreviewContentType = 'pdf' | 'text' | 'other'
  * State for file preview modal
  */
 export interface FilePreviewModalState {
+  /** Stored file identity, retained when a signed URL changes. */
+  key?: string
   /** Type of modal currently open */
   type: FilePreviewModalType
   /** URL of the file being previewed */
