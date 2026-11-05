@@ -199,6 +199,48 @@ describe('Cash Remuneration - Withdraw SHER', function () {
     expect(await investorProxy.balanceOf(addr1.address)).to.be.equal(amountSher)
   })
 
+  it('[AC-US-PAYROLL-010-18] pays a week with overtime in POL, USDC and SHER from exactly its weekly total', async () => {
+    const MINUTES_26H30 = 1590
+    const POL_WEEKLY_TOTAL = 68_125_000_000_000_000_000n
+    const POL_SIGNED_RATE = 2_570_754_716_981_132_075n
+    const USDC_WEEKLY_TOTAL = 245_250_000n
+    const USDC_SIGNED_RATE = 9_254_716n
+    const SHER_WEEKLY_TOTAL = 32_500_000n
+    const SHER_SIGNED_RATE = 1_226_415n
+    const contractPays = (hourlyRate: bigint) => (BigInt(MINUTES_26H30) * hourlyRate) / 60n
+
+    const MockToken = await ethers.getContractFactory('MockERC20')
+    const usdc = await MockToken.deploy('USDC', 'USDC')
+    const usdcAddress = await usdc.getAddress()
+    await cashRemunerationEIP712Proxy.addTokenSupport(usdcAddress)
+    await usdc.mint(verifyingContract, USDC_WEEKLY_TOTAL)
+    await owner.sendTransaction({ to: verifyingContract, value: POL_WEEKLY_TOTAL })
+
+    const wageClaim = {
+      employeeAddress: addr1.address,
+      minutesWorked: MINUTES_26H30,
+      wages: [
+        { hourlyRate: POL_SIGNED_RATE, tokenAddress: ZeroAddress },
+        { hourlyRate: USDC_SIGNED_RATE, tokenAddress: usdcAddress },
+        { hourlyRate: SHER_SIGNED_RATE, tokenAddress: await investorProxy.getAddress() }
+      ],
+      date: Math.floor(Date.now() / 1000)
+    }
+    const signature = await owner.signTypedData(domain, types, wageClaim)
+
+    await cashRemunerationEIP712Proxy.connect(addr1).withdraw(wageClaim, signature)
+
+    expect(await ethers.provider.getBalance(verifyingContract)).to.equal(
+      POL_WEEKLY_TOTAL - contractPays(POL_SIGNED_RATE)
+    )
+    expect(await usdc.balanceOf(verifyingContract)).to.equal(
+      USDC_WEEKLY_TOTAL - contractPays(USDC_SIGNED_RATE)
+    )
+    expect(await usdc.balanceOf(addr1.address)).to.equal(contractPays(USDC_SIGNED_RATE))
+    expect(await investorProxy.balanceOf(addr1.address)).to.equal(contractPays(SHER_SIGNED_RATE))
+    expect(contractPays(SHER_SIGNED_RATE) <= SHER_WEEKLY_TOTAL).to.equal(true)
+  })
+
   it("reverts if address trying to mint doesn't have minter role", async () => {
     await expect(
       investorProxy.connect(addr1).individualMint(owner.address, 20 * 1e6)
