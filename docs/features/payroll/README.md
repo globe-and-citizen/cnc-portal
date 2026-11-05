@@ -979,6 +979,14 @@ preparation and required registration. The
 [shared Board failure contract](../contract-management/README.md#board-action-failure-and-recovery) distinguishes a confirmed action whose
 backend record could not be saved and prevents automatic chain resubmission. Notification delivery remains best-effort.
 
+## Attachment preview availability
+
+Claim-edit previews keep each stored file key. Attachment galleries resolve stored files on opening and downloading through the
+[File Storage URL owner](../../implementation/file-storage/README.md#client-attachment-url-renewal), so a long-open claim does not reuse an
+expired URL indefinitely. Local files keep their local previews. Renewal failures offer retryable feedback instead of opening a stale URL;
+removing a file, closing the preview or leaving the view prevents a delayed opening from restoring it. These display actions preserve claim
+editing rights, submission, signing and deletion rules.
+
 ## Fiat display availability
 
 The local-currency wage, claim recap, monthly withdrawn/pending summaries and transaction totals use the
@@ -990,7 +998,7 @@ notice, not to wage or claim persistence. No payroll posting or signature rule c
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `1955939a748a00287ff6dc446a519f84ec09267c`
+**Implementation evidence reviewed against:** `6a1619cd9446cad807bd019e34877639af6a6e72`
 
 - [Pending claim fiat summary](../../../app/src/components/sections/CashRemunerationView/CashRemunerationPendingClaim.vue),
   [claim-week recap](../../../app/src/components/sections/ClaimHistoryView/WeeklyRecap.vue), and
@@ -1010,6 +1018,7 @@ notice, not to wage or claim persistence. No payroll posting or signature rule c
 - [Member claim action alerts](../../../app/src/components/sections/ClaimHistoryView/ClaimHistoryActionAlerts.vue)
 - [Wage client query and mutations](../../../app/src/queries/wage.queries.ts)
 - [Daily claim form](../../../app/src/components/sections/CashRemunerationView/Form/ClaimForm.vue)
+- [Attachment gallery renewal tests](../../../app/src/components/sections/CashRemunerationView/Form/__tests__/FilePreviewGallery.lifecycle.spec.ts)
 - [Daily claim file upload](../../../app/src/components/sections/CashRemunerationView/Form/UploadFileDB.vue)
 - [Claim submission flow](../../../app/src/components/sections/CashRemunerationView/SubmitClaims.vue)
 - [Claim editing flow](../../../app/src/components/sections/CashRemunerationView/EditClaims.vue)

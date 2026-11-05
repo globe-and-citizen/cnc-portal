@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { formatContractFunctionLabel, getContractPresentation } from '../presentation'
+import {
+  formatContractFunctionLabel,
+  getContractPresentation,
+  getContractOwnerIdentity
+} from '../presentation'
 
 describe('getContractPresentation', () => {
   it.each([
@@ -23,5 +27,25 @@ describe('getContractPresentation', () => {
     expect(formatContractFunctionLabel('UPGRADE_INTERFACE_VERSION')).toBe(
       'UPGRADE INTERFACE VERSION'
     )
+  })
+})
+
+describe('getContractOwnerIdentity', () => {
+  const address = '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd' as const
+  it('compares Board/member addresses case-insensitively and gives the Board precedence', () => {
+    expect(
+      getContractOwnerIdentity(
+        address,
+        [{ address: address.toUpperCase(), name: 'Alice', imageUrl: 'alice.png' }],
+        address.toUpperCase()
+      )
+    ).toEqual({ name: 'Board of Directors', address })
+  })
+  it('preserves member matching with an empty-name and image fallback', () => {
+    expect(
+      getContractOwnerIdentity(address, [
+        { address: address.toUpperCase(), name: '', imageUrl: '' }
+      ])
+    ).toEqual({ name: address, address, imageUrl: undefined })
   })
 })

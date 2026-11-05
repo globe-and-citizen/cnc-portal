@@ -5,6 +5,16 @@
     @mouseenter="isExpanded = true"
     @mouseleave="isExpanded = false"
   >
+    <UAlert
+      v-if="error && !modalState.type"
+      color="error"
+      :description="error"
+      data-test="file-preview-error"
+    >
+      <template #actions
+        ><UButton label="Try again" data-test="file-preview-retry" @click="loadPresignedUrls()"
+      /></template>
+    </UAlert>
     <!-- Vue réduite -->
     <div v-show="!isExpanded" class="flex -space-x-6 rtl:space-x-reverse" data-test="avatar-stack">
       <div
@@ -43,7 +53,8 @@
         :key="preview.key || i"
         type="button"
         class="group relative h-16 w-16 overflow-hidden rounded-md border border-gray-200 hover:scale-105 hover:border-emerald-500 focus:ring-2 focus:ring-emerald-500 focus:outline-hidden"
-        @click="openPreview(i)"
+        @click="openModal(preview.isImage ? 'image' : 'document', preview)"
+        data-test="expanded-preview"
       >
         <img
           v-if="preview.isImage && preview.previewUrl"
@@ -71,7 +82,8 @@
     <!-- Lightbox -->
     <Teleport to="body">
       <div
-        v-if="modal.isOpen"
+        v-if="modalState.type"
+        data-test="expanded-preview-modal"
         class="bg-opacity-90 fixed inset-0 z-999 flex items-center justify-center bg-black p-4"
         @click="closeModal"
         @keydown.esc="closeModal"
@@ -89,6 +101,7 @@
               class="bg-opacity-60 hover:bg-opacity-80 bg-black text-white"
               icon="heroicons:x-mark"
               @click="closeModal"
+              data-test="expanded-preview-close"
             />
             <UButton
               variant="ghost"
@@ -96,10 +109,18 @@
               size="sm"
               class="bg-opacity-60 hover:bg-opacity-80 bg-black text-white"
               icon="heroicons:arrow-down-tray"
-              @click="downloadFile"
+              @click="downloadFile({ key: modalState.key, previewUrl: modalState.url })"
+              data-test="expanded-preview-download"
             />
           </div>
 
+          <UAlert
+            v-if="error"
+            color="error"
+            :description="error"
+            data-test="file-download-error"
+            class="mt-16 mb-2"
+          />
           <!-- Contenu -->
           <template v-if="current">
             <img
@@ -155,34 +176,27 @@ const props = defineProps<{
   previews: FilePreviewItem[]
 }>()
 
-// Use the shared composable for presigned URL caching and modal management
-const { resolvedPreviews, downloadFile: downloadCurrentFile } = useFilePreviewGallery(
-  toRef(props, 'previews')
-)
+const {
+  error,
+  resolvedPreviews,
+  modalState,
+  openModal,
+  closeModal,
+  downloadFile,
+  loadPresignedUrls
+} = useFilePreviewGallery(toRef(props, 'previews'))
 
 const isExpanded = ref(false)
-const modal = ref({ isOpen: false, index: 0 })
 const MAX_VISIBLE = 4
-
 const displayedPreviews = computed(() => resolvedPreviews.value.slice(0, MAX_VISIBLE))
 const remainingCount = computed(() => Math.max(0, resolvedPreviews.value.length - MAX_VISIBLE))
-const current = computed(
-  (): FilePreviewItem | null => resolvedPreviews.value[modal.value.index] ?? null
+const current = computed(() =>
+  modalState.value.type
+    ? {
+        previewUrl: modalState.value.url,
+        fileName: modalState.value.fileName,
+        isImage: modalState.value.type === 'image'
+      }
+    : null
 )
-
-const openPreview = (index: number) => {
-  modal.value = { isOpen: true, index }
-  document.body.style.overflow = 'hidden'
-}
-
-const closeModal = () => {
-  modal.value = { isOpen: false, index: 0 }
-  document.body.style.overflow = ''
-}
-
-const downloadFile = () => {
-  if (current.value?.previewUrl) {
-    downloadCurrentFile(current.value.previewUrl)
-  }
-}
 </script>

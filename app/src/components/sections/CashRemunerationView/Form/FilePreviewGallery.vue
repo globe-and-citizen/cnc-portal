@@ -1,8 +1,19 @@
 <template>
   <div v-if="resolvedPreviews.length > 0" class="mt-2" :class="gridClass">
+    <UAlert
+      v-if="error && !modalState.type"
+      color="error"
+      :description="error"
+      data-test="file-preview-error"
+      class="col-span-full"
+    >
+      <template #actions
+        ><UButton label="Try again" data-test="file-preview-retry" @click="loadPresignedUrls()"
+      /></template>
+    </UAlert>
     <div
       v-for="(preview, index) in resolvedPreviews"
-      :key="preview.previewUrl || preview.key || index"
+      :key="preview.key || preview.previewUrl || index"
       class="group relative"
       data-test="preview-item"
     >
@@ -110,11 +121,18 @@
             size="sm"
             icon="heroicons:arrow-down-tray"
             class="bg-opacity-60 hover:bg-opacity-80 bg-black text-white"
-            @click="downloadFile(modalState.url)"
+            @click="downloadFile({ key: modalState.key, previewUrl: modalState.url })"
             data-test="upload-lightbox-download"
             aria-label="Download image"
           />
         </div>
+        <UAlert
+          v-if="error"
+          color="error"
+          :description="error"
+          data-test="file-download-error"
+          class="mt-16 mb-2"
+        />
         <h2 id="lightbox-title" class="sr-only">{{ modalState.fileName }}</h2>
         <img
           :src="modalState.url"
@@ -162,12 +180,19 @@
               color="success"
               size="sm"
               label="Download"
-              @click="downloadFile(modalState.url)"
+              @click="downloadFile({ key: modalState.key, previewUrl: modalState.url })"
               data-test="upload-doc-download"
             />
           </div>
         </div>
 
+        <UAlert
+          v-if="error"
+          color="error"
+          :description="error"
+          data-test="file-download-error"
+          class="mb-2"
+        />
         <div class="flex-1 overflow-hidden rounded-sm border border-gray-200 bg-gray-50">
           <!-- PDF Preview -->
           <iframe
@@ -200,7 +225,7 @@
                 color="success"
                 icon="heroicons:arrow-down-tray"
                 label="Download to view"
-                @click="downloadFile(modalState.url)"
+                @click="downloadFile({ key: modalState.key, previewUrl: modalState.url })"
               />
             </div>
           </div>
@@ -242,7 +267,13 @@ const emit = defineEmits<{
 }>()
 
 // Use composable for gallery functionality
-const { modalState, resolvedPreviews, openModal, closeModal, downloadFile } = useFilePreviewGallery(
-  toRef(props, 'previews')
-)
+const {
+  error,
+  modalState,
+  resolvedPreviews,
+  openModal,
+  closeModal,
+  downloadFile,
+  loadPresignedUrls
+} = useFilePreviewGallery(toRef(props, 'previews'))
 </script>
