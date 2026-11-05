@@ -107,6 +107,7 @@
         @archive="openAction(team, 'archive')"
         @hide="openAction(team, 'hide')"
         @delete="openAction(team, 'delete')"
+        @toggle-favorite="toggleFavorite(team)"
       />
 
       <div class="flex" data-test="add-team-button">
@@ -160,6 +161,7 @@
 </template>
 
 <script setup lang="ts">
+import { useToast } from '@nuxt/ui/composables'
 import { useRouter, useRoute } from 'vue-router'
 import { useUserDataStore } from '@/stores'
 import AddTeamCard from '@/components/sections/TeamView/AddTeamCard.vue'
@@ -170,7 +172,7 @@ import TeamMetaDeleteModal from '@/components/sections/DashboardView/TeamMetaDel
 import TeamMetaUpdateModal from '@/components/sections/DashboardView/TeamMetaUpdateModal.vue'
 import TeamMetaVisibilityModal from '@/components/sections/DashboardView/TeamMetaVisibilityModal.vue'
 import { useTeamListTreasuryBalances } from '@/composables/useTeamListTreasuryBalances'
-import { useGetTeamsQuery } from '@/queries/team.queries'
+import { useGetTeamsQuery, useUpdateTeamMutation } from '@/queries/team.queries'
 import type { Team } from '@/types/team'
 import type { TeamTreasuryDisplay } from '@/utils/teams/treasury'
 import { EMPTY_VALUE } from '@/utils/format'
@@ -194,6 +196,20 @@ const {
     showArchived
   }
 })
+
+const toast = useToast()
+const { mutate: updateTeam } = useUpdateTeamMutation()
+
+const toggleFavorite = (team: Team) => {
+  updateTeam(
+    { pathParams: { id: String(team.id) }, body: { isFavorite: !team.isFavorite } },
+    {
+      onError: () => {
+        toast.add({ title: `Could not update the pin on ${team.name}`, color: 'error' })
+      }
+    }
+  )
+}
 
 const { treasuryByTeamId } = useTeamListTreasuryBalances(teams)
 const unavailableTreasury: TeamTreasuryDisplay = {

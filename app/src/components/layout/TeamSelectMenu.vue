@@ -111,6 +111,13 @@
                   class="shrink-0"
                   >{{ isOwner(t) ? 'Owner' : 'Employee' }}</UBadge
                 >
+                <UIcon
+                  v-if="t.isFavorite"
+                  name="i-heroicons-star-solid"
+                  class="text-warning size-3.5 shrink-0"
+                  aria-label="Pinned"
+                  :data-test="`team-favorite-${t.id}`"
+                />
               </span>
               <span class="text-muted block text-[11px]">{{ teamSubtitle(t) }}</span>
             </span>

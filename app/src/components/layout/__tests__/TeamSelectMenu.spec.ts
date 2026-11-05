@@ -52,6 +52,21 @@ describe('TeamSelectMenu', () => {
       expect(mountMenu().find('[data-test="team-option-1"]').text()).toContain('Owner')
     })
 
+    it('marks only the pinned teams', () => {
+      const teams = [
+        { ...mockTeamData, id: '1', isFavorite: false },
+        { ...mockTeamData, id: '2', isFavorite: true }
+      ]
+      vi.mocked(useGetTeamsQuery).mockReturnValueOnce(
+        createMockQueryResponse(teams) as ReturnType<typeof useGetTeamsQuery>
+      )
+
+      const wrapper = mountMenu()
+
+      expect(wrapper.find('[data-test="team-favorite-2"]').exists()).toBe(true)
+      expect(wrapper.find('[data-test="team-favorite-1"]').exists()).toBe(false)
+    })
+
     it('shows All companies and Create company actions', () => {
       const wrapper = mountMenu()
       expect(wrapper.find('[data-test="all-companies"]').exists()).toBe(true)
