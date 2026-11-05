@@ -1343,9 +1343,10 @@ action with a missing backend record from a failed submission; notification fail
 
 Balances and histories retain exact token quantities when a current quote is missing. The affected fiat values and complete totals display
 the canonical unavailable marker instead of a fabricated zero or priced subset. A true zero quote remains zero; zero holdings contribute
-zero without requiring a price. Deposit and transfer amount inputs apply the same nullable estimate contract, including Safe provider
-quotes. [Shared quote recovery](../../implementation/client-utilities/README.md#current-token-quote-and-fiat-availability) exposes failed or
-stale reads with a targeted Try again action and preserves usable cached quotes.
+zero without requiring a price. Transfer and Expense token choices use the selected-currency quote even when USD remains available. Deposit
+and transfer amount inputs apply the same nullable estimate contract, including Safe provider quotes.
+[Shared quote recovery](../../implementation/client-utilities/README.md#current-token-quote-and-fiat-availability) exposes failed or stale
+reads with a targeted Try again action and preserves usable cached quotes.
 
 Current and historical-generation withdrawal actions determine available funds from raw token balances. Unknown or zero fiat estimates do
 not remove a funded account from the withdrawal plan; review estimates may remain unavailable while permissions and exact chain amounts
@@ -1357,7 +1358,7 @@ raw-balance withdrawal eligibility. They do not establish a live market-provider
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `49664b0ebdff8a9ff81be1470381a3374544c0e6`
+**Implementation evidence reviewed against:** `9e715cf332a5f36fe441a0fcfd8d5ba189c23f82`
 
 - [Bank deposit modal](../../../app/src/components/sections/BankView/forms/DepositModal.vue),
   [Bank transfer modal](../../../app/src/components/sections/BankView/forms/TransferModal.vue),
