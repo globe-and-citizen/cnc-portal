@@ -86,7 +86,7 @@ export const getTokens = (
           balance: Number(balance),
           spendableBalance: spendableBalance,
           tokenId,
-          price: holding.price.usd.value,
+          price: holding.price.local.value,
           code: holding.token.code
         }
       ]

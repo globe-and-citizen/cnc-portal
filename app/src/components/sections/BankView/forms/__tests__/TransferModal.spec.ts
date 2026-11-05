@@ -248,6 +248,21 @@ describe('TransferModal', () => {
     ])
   })
 
+  it.each([1800, null])(
+    'passes the selected-currency quote %s without changing token holdings',
+    async (localPrice) => {
+      wrapper = mountComponent()
+      const balance = makeTokenBalance({ amount: 10, usdPrice: 2000 })
+      balance.price.local.value = localPrice
+      setBalances([balance])
+      await openModal(wrapper)
+
+      expect(transferForm(wrapper).props('tokens')).toEqual([
+        expect.objectContaining({ price: localPrice, balance: 10 })
+      ])
+    }
+  )
+
   it('[AC-US-BANK-002-02] uses the Board action path when Board mode is enabled', async () => {
     wrapper = mountComponent()
     mockBodIsBodAction.isBodAction.value = true
