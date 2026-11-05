@@ -97,6 +97,54 @@ const getRegularAndOvertimeHours = (
   }
 }
 
+/**
+ * Splits total minutes worked into regular vs overtime minutes for a given wage.
+ * Overtime only applies when the wage actually defines an overtime rate; otherwise
+ * every minute is treated as regular time.
+ */
+export const splitClaimMinutes = (
+  totalMinutesWorked: number,
+  wage?: {
+    overtimeRatePerHour?: RatePerHour[] | null
+    maximumHoursPerWeek?: number | null
+  } | null
+) => {
+  const hasOvertime =
+    Array.isArray(wage?.overtimeRatePerHour) && (wage?.overtimeRatePerHour.length ?? 0) > 0
+  return getRegularAndOvertimeHours(
+    totalMinutesWorked,
+    hasOvertime ? wage?.maximumHoursPerWeek : null
+  )
+}
+
+/**
+ * One entry per token the wage pays, pairing its regular and overtime hourly rates.
+ * A token the wage does not rate for one kind of time earns nothing for that time.
+ */
+const pairRatesByToken = (
+  ratePerHour: RatePerHour[],
+  overtimeRatePerHour?: RatePerHour[] | null
+) => {
+  const overtimeRates = overtimeRatePerHour ?? []
+  const amountOf = (rates: RatePerHour[], type: SupportedTokens) =>
+    rates.find((rate) => rate.type === type)?.amount ?? 0
+  const tokenTypes = new Set([...ratePerHour, ...overtimeRates].map((rate) => rate.type))
+
+  return [...tokenTypes].map((type) => ({
+    type,
+    regularRate: amountOf(ratePerHour, type),
+    overtimeRate: amountOf(overtimeRates, type)
+  }))
+}
+
+/**
+ * What a claim pays per token according to its wage, in base units. A token paid only
+ * in overtime is left out of a week without overtime, so it never reaches the contract.
+ *
+ * `hourlyRate` is the blended rate to sign, because the contract pays a single rate for
+ * the whole week: `minutesWorked * hourlyRate / 60`. It truncates to the token's
+ * precision, so the contract can pay a few base units under `totalAmount`.
+ */
 export const buildClaimRatesWithOvertime = ({
   totalMinutesWorked,
   maximumHoursPerWeek,
@@ -108,50 +156,25 @@ export const buildClaimRatesWithOvertime = ({
   ratePerHour: RatePerHour[]
   overtimeRatePerHour?: RatePerHour[] | null
 }): ClaimRateWithTotals[] => {
-  const { regularMinutes, overtimeMinutes, totalMinutes } = getRegularAndOvertimeHours(
-    totalMinutesWorked,
-    maximumHoursPerWeek
-  )
-
-  return ratePerHour.map((baseRate) => {
-    const baseRateWei = parseRateAmount(baseRate.amount, baseRate.type)
-    const overtimeRate = overtimeRatePerHour?.find((rate) => rate.type === baseRate.type)
-    const overtimeRateWei = overtimeRate
-      ? parseRateAmount(overtimeRate.amount, baseRate.type)
-      : baseRateWei
-
-    // totalAmount expected payout:
-    // (baseHourlyRate * regularMinutes + overtimeHourlyRate * overtimeMinutes) / 60
-    const totalAmount =
-      (baseRateWei * BigInt(regularMinutes) + overtimeRateWei * BigInt(overtimeMinutes)) / 60n
-
-    // Effective hourly rate for on-chain formula:
-    // amountToPay = minutesWorked * hourlyRate / 60
-    const hourlyRate = totalMinutes > 0 ? (totalAmount * 60n) / BigInt(totalMinutes) : baseRateWei
-
-    return {
-      type: baseRate.type,
-      hourlyRate,
-      totalAmount
-    }
+  const { regularMinutes, overtimeMinutes, totalMinutes } = splitClaimMinutes(totalMinutesWorked, {
+    maximumHoursPerWeek,
+    overtimeRatePerHour
   })
-}
 
-/**
- * Splits total minutes worked into regular vs overtime minutes for a given wage.
- * Overtime only applies when the wage actually defines an overtime rate; otherwise
- * every minute is treated as regular time.
- */
-export const splitClaimMinutes = (
-  totalMinutesWorked: number,
-  wage?: Pick<Wage, 'overtimeRatePerHour' | 'maximumHoursPerWeek'> | null
-) => {
-  const hasOvertime =
-    Array.isArray(wage?.overtimeRatePerHour) && (wage?.overtimeRatePerHour.length ?? 0) > 0
-  return getRegularAndOvertimeHours(
-    totalMinutesWorked,
-    hasOvertime ? wage?.maximumHoursPerWeek : null
-  )
+  return pairRatesByToken(ratePerHour, overtimeRatePerHour)
+    .map(({ type, regularRate, overtimeRate }) => {
+      const regularRateInBaseUnits = parseRateAmount(regularRate, type)
+      const overtimeRateInBaseUnits = parseRateAmount(overtimeRate, type)
+      const totalAmount =
+        (regularRateInBaseUnits * BigInt(regularMinutes) +
+          overtimeRateInBaseUnits * BigInt(overtimeMinutes)) /
+        60n
+      const hourlyRate =
+        totalMinutes > 0 ? (totalAmount * 60n) / BigInt(totalMinutes) : regularRateInBaseUnits
+
+      return { type, hourlyRate, totalAmount }
+    })
+    .filter(({ hourlyRate }) => hourlyRate > 0n)
 }
 
 /**
@@ -168,19 +191,13 @@ export const computeClaimTokenAmounts = (
   if (!wage) return []
 
   const { regularMinutes, overtimeMinutes } = splitClaimMinutes(totalMinutesWorked, wage)
-  const result = new Map<SupportedTokens, number>()
 
-  for (const rate of wage.ratePerHour ?? []) {
-    result.set(rate.type, (result.get(rate.type) ?? 0) + (rate.amount * regularMinutes) / 60)
-  }
-
-  if (Array.isArray(wage.overtimeRatePerHour) && wage.overtimeRatePerHour.length > 0) {
-    for (const rate of wage.overtimeRatePerHour) {
-      result.set(rate.type, (result.get(rate.type) ?? 0) + (rate.amount * overtimeMinutes) / 60)
-    }
-  }
-
-  return Array.from(result.entries()).map(([type, amount]) => ({ type, amount }))
+  return pairRatesByToken(wage.ratePerHour ?? [], wage.overtimeRatePerHour).map(
+    ({ type, regularRate, overtimeRate }) => ({
+      type,
+      amount: (regularRate * regularMinutes + overtimeRate * overtimeMinutes) / 60
+    })
+  )
 }
 
 export const buildWageClaimPayload = ({
