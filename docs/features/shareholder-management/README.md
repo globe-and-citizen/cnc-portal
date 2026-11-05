@@ -552,9 +552,16 @@ clears the previous feedback; loading spans preparation and registration. The
 [shared Board failure contract](../contract-management/README.md#board-action-failure-and-recovery) identifies an already-confirmed action
 with a missing backend record; notification delivery does not determine submission success.
 
+## Current-price display availability
+
+Investor activity's current USD estimates preserve missing quotes as unavailable under the
+[shared quote policy](../../implementation/client-utilities/README.md#current-token-quote-and-fiat-availability). A stablecoin does not
+receive an assumed USD 1 fallback when its current quote is absent; a genuine provider zero remains zero. The explicit local SHER zero-price
+policy is preserved. This display rule does not change share issuance, dividend quantities, multipliers or Accounting's historical rates.
+
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `12b89744a080247ea8e4ca5047c639b9ae651b82`
+**Implementation evidence reviewed against:** `49664b0ebdff8a9ff81be1470381a3374544c0e6`
 
 - [Shareholder Management route](../../../app/src/views/team/%5Bid%5D/SherTokenView.vue) and
   [Investor overview](../../../app/src/components/sections/SherTokenView/InvestorsHeader.vue)

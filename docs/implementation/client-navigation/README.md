@@ -59,7 +59,7 @@ flowchart LR
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `635eb92ec16d0fa5fca930d458b0e35453af94d2`
+**Implementation evidence reviewed against:** `49664b0ebdff8a9ff81be1470381a3374544c0e6`
 
 - [Team selection menu](../../../app/src/components/layout/TeamSelectMenu.vue)
 - [Router definition and authentication guard](../../../app/src/router/index.ts)

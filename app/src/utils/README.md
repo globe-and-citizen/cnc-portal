@@ -11,7 +11,7 @@ there is no global `@/utils` barrel.
 | `claims/`            | Daily-claim form rules and claim-history navigation                    |
 | `communityCredit/`   | Credit offer, round, whitelist, and wizard models                      |
 | `contracts/`         | ABI decoding plus contract deployment and action presentation          |
-| `currency/`          | Currency display models                                                |
+| `currency/`          | Currency formatting and nullable fiat valuation                        |
 | `dates/`             | Calendar and date-picker calculations                                  |
 | `errors/`            | HTTP and contract-error classification                                 |
 | `expenses/`          | Expense-account models and limits                                      |
