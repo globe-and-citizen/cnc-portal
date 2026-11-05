@@ -133,10 +133,10 @@ Legend — **A** built-in predicate · **B** hand-written · **C** left to stale
 
 ### BoardOfDirectors
 
-| Write       | Reads dirtied                                            | Covered by                                                                                                                                                                           |
-| ----------- | -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `addAction` | `isActionExecuted`, `getOwners`, **backend** action list | **A** ✅ · backend via `useCreateActionMutation` → `actionKeys.all` ✅ · the `['getBodActions']` call in [`bod/writes.ts:47`](../bod/writes.ts) is a **dead key** (no query uses it) |
-| `approve`   | `isActionExecuted`, `isMember`, **backend** action list  | **A** ✅ · backend only when the action crossed its threshold ⚠️ · same dead key at `writes.ts:164`                                                                                  |
+| Write       | Reads dirtied                                            | Covered by                                                                                                                             |
+| ----------- | -------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `addAction` | `isActionExecuted`, `getOwners`, **backend** action list | **A** ✅ · backend via `useCreateActionMutation` → `actionKeys.all` ✅; the Board workflow reports success after required registration |
+| `approve`   | `isActionExecuted`, `isMember`, **backend** action list  | **A** ✅ · backend only when the action crossed its threshold ⚠️ · dead key in the approval wrapper                                    |
 
 ### SafeDepositRouter
 
@@ -189,8 +189,8 @@ Covered separately in [`queries/safe.mutations.ts`](../../queries/safe.mutations
 5. **Cross-contract pairs with no invalidation:** ExpenseAccount/CashRemuneration `ownerWithdrawAllToBank` → Bank balances ·
    SafeDepositRouter `deposit` → Safe balance · Bank `fundFixedReturnRepayment` → both token balances. _(Elections `publishResults` → BoD
    membership is closed — see §6.)_
-6. **Dead keys** — `['getBodActions']` ([`bod/writes.ts:47`](../bod/writes.ts), `:164`) matches no query. Backend-side equivalents:
-   `['weekly-claims', teamId]` (`WeeklyClaimActionEnable.vue:68`, `WeeklyClaimActionDropdown.vue:253`) and `['team', {teamId}]`
+6. **Dead keys** — `['getBodActions']` in the Board approval wrapper ([`bod/writes.ts`](../bod/writes.ts)) matches no query. Backend-side
+   equivalents: `['weekly-claims', teamId]` (`WeeklyClaimActionEnable.vue:68`, `WeeklyClaimActionDropdown.vue:253`) and `['team', {teamId}]`
    (`CreateAddCampaign.vue:163`), plus the `undefined`-laden key from `useSyncWeeklyClaimsMutation`.
 7. **`ProposalsList.vue` / `ContractOwnerCard.vue` read outside the cache** — no invalidation strategy is even possible until they move to
    `useReadContract`.

@@ -972,9 +972,16 @@ return does not yet explain how signed claims may become unfunded, and unsupport
 sweep (`US-PAYROLL-014`). [#2878](https://github.com/globe-and-citizen/cnc-portal/issues/2878) plans direct-movement discovery and
 reconciliation. Other Payroll stories retain their existing implementation and human-validation status.
 
+## Board request failure feedback
+
+A Board-mediated Payroll return keeps its confirmation open and displays an inline error when the shared Board request fails. Loading covers
+preparation and required registration. The
+[shared Board failure contract](../contract-management/README.md#board-action-failure-and-recovery) distinguishes a confirmed action whose
+backend record could not be saved and prevents automatic chain resubmission. Notification delivery remains best-effort.
+
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `c49c59adad6f1f9190be9501f520289551e190fb`
+**Implementation evidence reviewed against:** `631c851545f6331cc9aecdd4c217f27463d39d69`
 
 - [Cash Remuneration overview](../../../app/src/components/sections/CashRemunerationView/CashRemunerationOverview.vue),
   [monthly withdrawn summary](../../../app/src/components/sections/CashRemunerationView/CashRemunerationMonthlyClaim.vue),

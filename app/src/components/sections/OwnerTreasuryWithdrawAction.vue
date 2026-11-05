@@ -173,19 +173,26 @@ const confirmWithdrawFromModal = async () => {
 
   try {
     if (isBodAction.value) {
-      await bodAddAction.executeAddAction({
-        targetAddress: contractAddress.value,
-        description: JSON.stringify({
-          text: 'Withdraw all funds to Bank',
-          title: 'Owner Treasury Withdraw All to Bank'
-        }),
-        data: encodeFunctionData({
-          abi: abi.value,
-          functionName: 'ownerWithdrawAllToBank',
-          args: []
-        }),
-        userAddress: userStore.address
-      })
+      bodAddAction.mutate(
+        {
+          targetAddress: contractAddress.value,
+          description: JSON.stringify({
+            text: 'Withdraw all funds to Bank',
+            title: 'Owner Treasury Withdraw All to Bank'
+          }),
+          data: encodeFunctionData({
+            abi: abi.value,
+            functionName: 'ownerWithdrawAllToBank',
+            args: []
+          }),
+          userAddress: userStore.address
+        },
+        {
+          onError: (error) => {
+            modalWarningMessage.value = classifyError(error).userMessage
+          }
+        }
+      )
       return
     }
 
