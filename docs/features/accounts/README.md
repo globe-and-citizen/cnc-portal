@@ -1430,6 +1430,11 @@ action with a missing backend record from a failed submission; notification fail
   [owner-withdrawal tests](../../../app/src/components/sections/__tests__/OwnerTreasuryWithdrawAction.spec.ts),
   [Safe account view tests](../../../app/src/views/team/%5Bid%5D/Accounts/__tests__/), and
   [Bank view tests](../../../app/src/views/team/%5Bid%5D/__tests__/BankView.spec.ts)
+- [ERC20 producer tests](../../../app/src/composables/erc20/__tests__/writes.spec.ts) execute the real approve/transfer wrappers and V3
+  mutation against shared mocked wagmi effects; they verify token/method/arguments, reactive address resolution, confirmed results and
+  propagated failures. This is unit evidence, not a live token transaction.
+- The Bank view suite above verifies that reactive balance changes reach the holdings section as updated quantities/valuations or empty rows
+  and that loading state changes propagate. It does not claim balance-query acquisition or rendered formatting of the child table.
 - [Safe schema tests](../../../app/src/types/__tests__/safe.schemas.spec.ts)
 - [Expense calendar-period tests](../../../contract/test/ExpenseAccountEIP712V2.calendarBasedPeriods.spec.ts),
   [Expense custom-frequency tests](../../../contract/test/ExpenseAccountEIP712V2.customFrequency.spec.ts), and
