@@ -60,7 +60,6 @@ describe('PayDividendsAction.vue', () => {
 
     mockBodIsBodAction.isBodAction.value = false
     mockBodAddAction.isSuccess.value = false
-    mockBodAddAction.executeAddAction.mockResolvedValue(undefined)
 
     mockBankWrites.distributeNativeDividends.mutateAsync.mockResolvedValue(undefined)
     mockBankWrites.distributeTokenDividends.mutateAsync.mockResolvedValue(undefined)
@@ -165,7 +164,7 @@ describe('PayDividendsAction.vue', () => {
     await nextTick()
 
     expect(mockBankWrites.distributeNativeDividends.mutateAsync).not.toHaveBeenCalled()
-    expect(mockBodAddAction.executeAddAction).not.toHaveBeenCalled()
+    expect(mockBodAddAction.mutate).not.toHaveBeenCalled()
   })
 
   it('[AC-US-SHER-002-09] blocks dividends for an archived company', async () => {
@@ -186,7 +185,7 @@ describe('PayDividendsAction.vue', () => {
     await wrapper.findComponent({ name: 'PayDividendsForm' }).vm.$emit('submit', 1n, 'native')
     await nextTick()
 
-    expect(mockBodAddAction.executeAddAction).not.toHaveBeenCalled()
+    expect(mockBodAddAction.mutate).not.toHaveBeenCalled()
   })
 
   it('[AC-US-SHER-002-03] creates a Board action for a native dividend', async () => {
@@ -198,10 +197,30 @@ describe('PayDividendsAction.vue', () => {
     await wrapper.findComponent({ name: 'PayDividendsForm' }).vm.$emit('submit', 2n, 'native')
     await nextTick()
 
-    expect(mockBodAddAction.executeAddAction).toHaveBeenCalledTimes(1)
-    expect(mockBodAddAction.executeAddAction).toHaveBeenCalledWith(
-      expect.objectContaining({ targetAddress: bankAddress })
+    expect(mockBodAddAction.mutate).toHaveBeenCalledTimes(1)
+    expect(mockBodAddAction.mutate).toHaveBeenCalledWith(
+      expect.objectContaining({ targetAddress: bankAddress }),
+      expect.objectContaining({ onError: expect.any(Function) })
     )
+  })
+
+  it('keeps a failed Board dividend open and clears its error on another attempt', async () => {
+    mockBodIsBodAction.isBodAction.value = true
+    mockBodAddAction.mutate.mockImplementationOnce((_variables, options) => {
+      options?.onError?.(new Error('Board preparation unavailable'))
+    })
+    const wrapper = createWrapper()
+    await wrapper.get('[data-test="pay-dividends-button"]').trigger('click')
+    const form = wrapper.findComponent({ name: 'PayDividendsForm' })
+    await form.vm.$emit('submit', 2n, 'native')
+    await nextTick()
+    expect(wrapper.get('[data-test="dividend-board-error"]').text()).toContain(
+      'Board preparation unavailable'
+    )
+    expect(form.exists()).toBe(true)
+    await form.vm.$emit('submit', 2n, 'native')
+    await nextTick()
+    expect(wrapper.find('[data-test="dividend-board-error"]').exists()).toBe(false)
   })
 
   it('in BOD mode creates token dividends action', async () => {
@@ -213,12 +232,13 @@ describe('PayDividendsAction.vue', () => {
     await wrapper.findComponent({ name: 'PayDividendsForm' }).vm.$emit('submit', 3n, 'usdc')
     await nextTick()
 
-    expect(mockBodAddAction.executeAddAction).toHaveBeenCalledTimes(1)
-    expect(mockBodAddAction.executeAddAction).toHaveBeenCalledWith(
+    expect(mockBodAddAction.mutate).toHaveBeenCalledTimes(1)
+    expect(mockBodAddAction.mutate).toHaveBeenCalledWith(
       expect.objectContaining({
         targetAddress: bankAddress,
         description: expect.stringContaining('Pay Dividends Request')
-      })
+      }),
+      expect.objectContaining({ onError: expect.any(Function) })
     )
   })
 

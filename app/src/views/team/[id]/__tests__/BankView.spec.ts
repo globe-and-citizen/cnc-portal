@@ -1,6 +1,7 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { tokenHoldingRows } from '@/utils/tokens/holdings'
-import { mockUseContractBalance } from '@/tests/mocks/composables.mock'
+import { nextTick } from 'vue'
+import { makeTokenBalance, mockUseContractBalance } from '@/tests/mocks/composables.mock'
 import { shallowMount } from '@vue/test-utils'
 import type { VueWrapper } from '@vue/test-utils'
 import type { ComponentPublicInstance } from 'vue'
@@ -17,6 +18,8 @@ describe('[US-BANK-003] BankView', () => {
       ComponentPublicInstance & typeof BankView
     >
   })
+
+  afterEach(() => wrapper.unmount())
 
   describe('Component Rendering', () => {
     it('renders all required sections', () => {
@@ -52,10 +55,37 @@ describe('[US-BANK-003] BankView', () => {
   })
 
   describe('Data Management', () => {
-    it('updates when balance is updated', async () => {
-      const bankBalanceSection = wrapper.findComponent({ name: 'BankBalanceSection' })
-      await bankBalanceSection.vm.$emit('balance-updated')
-      expect(wrapper.emitted()).toBeTruthy()
+    it('updates the holdings rows when the balance query changes', async () => {
+      const holdings = wrapper.findComponent({ name: 'TokenHoldingsSection' })
+      mockUseContractBalance.balances.value = [
+        makeTokenBalance({ amount: 2, usdPrice: 3, localPrice: 5 })
+      ]
+      await nextTick()
+      expect(holdings.props('rows')).toMatchObject([
+        { token: { symbol: 'ETH' }, quantity: '2', amount: 2, price: 5, balance: 10 }
+      ])
+
+      mockUseContractBalance.balances.value = [
+        makeTokenBalance({ amount: 7, usdPrice: 3, localPrice: 5 })
+      ]
+      await nextTick()
+      expect(holdings.props('rows')).toMatchObject([
+        { token: { symbol: 'ETH' }, quantity: '7', amount: 7, price: 5, balance: 35 }
+      ])
+
+      mockUseContractBalance.balances.value = []
+      await nextTick()
+      expect(holdings.props('rows')).toEqual([])
+    })
+
+    it('passes loading state changes to the holdings section', async () => {
+      const holdings = wrapper.findComponent({ name: 'TokenHoldingsSection' })
+      mockUseContractBalance.isLoading.value = true
+      await nextTick()
+      expect(holdings.props('isLoading')).toBe(true)
+      mockUseContractBalance.isLoading.value = false
+      await nextTick()
+      expect(holdings.props('isLoading')).toBe(false)
     })
   })
 })

@@ -28,6 +28,25 @@ list lives in [`app/eslint.config.js`](../../eslint.config.js) under `bannedGlob
 If you need to mock a module that **isn't** yet globally mocked but you're reaching for it across several specs, add it to
 `src/tests/setup/` and re-export the override hook from `src/tests/mocks/index.ts` rather than re-mocking it in each spec.
 
+## Testing a globally mocked producer
+
+A consumer test may use a shared composable double. The composable's own suite must execute its real implementation; configuring a shared
+mock and asserting that same configured result does not prove the producer's contract.
+
+Use `vi.importActual<typeof import('../writes')>('../writes')` for the subject while reusing the global mocks of its dependencies. For a
+mutation lifecycle assertion, use the real TanStack mutation through the shared `useMutationFn` override and mount the composable with a
+fresh QueryClient. Keep consumer mocks intact and release the mounted wrapper and client after each test.
+
+The [ERC20 producer suite](../composables/erc20/__tests__/writes.spec.ts) exercises the real approve and transfer wrappers and V3 mutation
+with shared wagmi mocks: method, ABI, current token address, arguments, confirmation result, and simulation/submission/confirmation
+failures. The [BOD producer suite](../composables/bod/__tests__/writes.spec.ts) covers the full Board action workflow using the same
+principle. These unit proofs simulate network effects; they do not establish a live-chain outcome.
+
+Component update tests should change the real input the component observes and assert its resulting output. The
+[Bank view suite](../views/team/%5Bid%5D/__tests__/BankView.spec.ts) changes shared reactive balance data and checks the rows and loading
+state passed to TokenHoldingsSection, including changed quantities and an empty result. Emitting an unhandled event and checking only that
+`wrapper.emitted()` is truthy cannot prove an update: even an empty event record is truthy.
+
 ## Mounting components: `renderWithProviders`
 
 `renderWithProviders` (from [`@/tests/mocks`](./mocks)) is the **default mounting path** for component specs. It is a drop-in for `mount`

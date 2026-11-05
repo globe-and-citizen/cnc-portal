@@ -58,7 +58,7 @@ Runs of at least three consecutive missing criteria use inclusive ranges with fu
 | US-PAYGATE-001 | ⬜ Planned   | ⚠️ 1/3 met      | `AC-US-PAYGATE-001-01`, `AC-US-PAYGATE-001-02`                                                                                                |
 | US-PAYGATE-002 | ⬜ Planned   | ⚠️ 2/6 met      | `AC-US-PAYGATE-002-01`–`AC-US-PAYGATE-002-03`, `AC-US-PAYGATE-002-06`                                                                         |
 | US-PAYGATE-003 | ⬜ Planned   | ⚠️ 6/13         | `AC-US-PAYGATE-003-02`–`AC-US-PAYGATE-003-04`, `AC-US-PAYGATE-003-06`, `AC-US-PAYGATE-003-08`, `AC-US-PAYGATE-003-09`, `AC-US-PAYGATE-003-12` |
-| US-PAYGATE-004 | ⬜ Planned   | ❌ 0/6 met      | `AC-US-PAYGATE-004-01`–`AC-US-PAYGATE-004-06`                                                                                                 |
+| US-PAYGATE-004 | ⬜ Planned   | ⚠️ 3/7 met      | `AC-US-PAYGATE-004-01`–`AC-US-PAYGATE-004-04`                                                                                                 |
 | US-PAYGATE-005 | 📝 Draft     | 📝 Not assessed | Authoritative facture-ID lookup boundary undecided                                                                                            |
 
 Proof obligations use the [shared proof-strategy registry](../../testing/proof-strategies.md). Multiple IDs for one AC are cumulative.
@@ -235,6 +235,9 @@ token\
 
 - [x] `AC-US-PAYGATE-004-05` An empty history is shown as an explicit empty state, not an empty table with no explanation.
 - [x] `AC-US-PAYGATE-004-06` A failed history read is shown as an explicit error instead of a silently empty or stale table.
+- [x] `AC-US-PAYGATE-004-07` When only part of history can be read, already resolved payments remain visible with an incompleteness notice.
+      The merchant can retry unresolved transaction reads or failed Bank-feed sources without rereading successful cached calldata; the
+      notice clears after all required reads recover.
 
 ### Test Coverage
 
@@ -244,9 +247,10 @@ token\
 | `AC-US-PAYGATE-004-02` | `PS-CHAIN-INTEGRATED` | None linked      | ❌ Missing      |
 | `AC-US-PAYGATE-004-03` | `PS-CHAIN-INTEGRATED` | None linked      | ❌ Missing      |
 | `AC-US-PAYGATE-004-04` | `PS-CHAIN-INTEGRATED` | Frontend         | ⚠️ Insufficient |
-| `AC-US-PAYGATE-004-04` | `PS-FRONTEND`         | Frontend         | ⚠️ Insufficient |
-| `AC-US-PAYGATE-004-05` | `PS-FRONTEND`         | None linked      | ❌ Missing      |
-| `AC-US-PAYGATE-004-06` | `PS-FRONTEND`         | None linked      | ❌ Missing      |
+| `AC-US-PAYGATE-004-04` | `PS-FRONTEND`         | Frontend         | ✅ Met          |
+| `AC-US-PAYGATE-004-05` | `PS-FRONTEND`         | Frontend         | ✅ Met          |
+| `AC-US-PAYGATE-004-06` | `PS-FRONTEND`         | Frontend         | ✅ Met          |
+| `AC-US-PAYGATE-004-07` | `PS-FRONTEND`         | Frontend         | ✅ Met          |
 
 **Dependencies:** US-PAYGATE-003
 
@@ -290,8 +294,9 @@ story; no error outcome is claimed as implemented.
 
 ## Known Gaps
 
-- The frontend test marked `AC-US-PAYGATE-004-04` rejects plain deposit calldata, but does not assert that the payment-history list excludes
-  the resulting event. Its focused frontend proof remains insufficient.
+- The history producer/card tests prove frontend classification and failure/recovery with simulated Bank/RPC effects. Real-chain evidence
+  for `AC-US-PAYGATE-004-01`–`AC-US-PAYGATE-004-04` remains missing or insufficient; this does not establish the full merchant history
+  journey on a deployed Bank.
 - A payment is reported to the customer as successful whenever the transaction receipt's status is `success`, without confirming the Bank's
   deposit event actually appears in that receipt. A transaction sent to an address with no contract code — a stale or misconfigured Bank
   address — is treated by the EVM as a no-op value transfer and can report a false success (`US-PAYGATE-003`).
@@ -302,7 +307,7 @@ story; no error outcome is claimed as implemented.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `1daa77697140c8a60b30053f3d40f5ef29e9f7f5`
+**Implementation evidence reviewed against:** `a9fcd3a571d8fb6cf3f8593b96b3b4940fbd21bc`
 
 - [Setup page](../../../app/src/views/team/[id]/PaymentGate/IntegrationView.vue), combining
   [Bank address + embed snippet, with a snippet format selector and explicit no-Bank/no-widget-URL states](../../../app/src/components/sections/PaymentGateView/IntegrationCard.vue),
@@ -330,8 +335,30 @@ story; no error outcome is claimed as implemented.
   [embed snippet builder tests](../../../app/src/utils/paymentGate/__tests__/widgetSnippet.spec.ts), and
   [Setup page integration-card tests](../../../app/src/components/sections/PaymentGateView/__tests__/IntegrationCard.spec.ts).
 
+### History availability and recovery
+
+The history read model combines the Bank event feed and individual transaction-calldata queries. Its `data` holds resolved payments and
+unresolved transaction hashes; `status` distinguishes loading, complete, partial and unavailable history, and `refetch` retries only
+unresolved calldata or a failed/partial Bank source. This is a multi-source read model rather than a second owner of query state: TanStack
+owns the underlying caches, errors and request lifecycle. The merchant card reuses the
+[transaction history availability alert](../../../app/src/components/sections/TransactionHistoryStatusAlert.vue) and keeps usable rows
+visible while showing an incomplete/error state and its `Try again` action.
+
+Successful raw calldata is cached by configured chain and transaction hash with infinite freshness while retained in the query cache. Adding
+a deposit or remounting the view reuses retained successes. Failed lookups remain query errors (`retry: false`) until a manual retry or a
+later observer starts a new attempt; they are never cached as confirmed absence of a facture. A successful plain deposit is excluded by the
+existing decoder, while missing or invalid transaction input remains unresolved. Bank scan gaps, timestamp gaps and refresh errors also keep
+history incomplete. A true `No payments yet.` state appears only after a complete read, including a successful classification of all
+candidate deposits.
+
+The [real history producer and merchant recovery tests](../../../app/src/composables/paymentGate/__tests__/useFactureHistory.spec.ts) mount
+actual Vue Query observers, the real facture decoder, the history card/table and shared availability alert; only Bank/RPC effects are
+simulated. They establish frontend failure/recovery guarantees, not a real-chain settlement result, deployed behavior or human acceptance.
+Existing chain-integrated history evidence gaps remain unchanged.
+
 ### Test-suite ownership
 
+- [History producer and recovery tests](../../../app/src/composables/paymentGate/__tests__/useFactureHistory.spec.ts)
 - [Token configuration card tests](../../../app/src/components/sections/PaymentGateView/__tests__/TokenConfigCard.spec.ts) and
   [transaction detail tests](../../../app/src/components/ui/__tests__/TransactionDetailSlideover.spec.ts)
 
