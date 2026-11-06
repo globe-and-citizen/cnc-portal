@@ -203,12 +203,11 @@ import { getUniqueSummary } from '@/utils/transactions/history'
 import {
   getTransactionTypeLabel,
   getTransactionCounterparty,
-  formatTxHash,
   DIVIDEND_TYPES
 } from '@/utils/transactions/registry'
 import { log } from '@/lib/logging'
 import { computed, watch } from 'vue'
-import { EMPTY_VALUE, formatPercent } from '@/utils/format'
+import { EMPTY_VALUE, formatPercent, formatTxHash } from '@/utils/format'
 import { useTransactionTable } from '@/composables/transactions/useTransactionTable'
 import { useTransactionInline } from '@/composables/transactions/useTransactionInline'
 import { useTransactionPresentation } from '@/composables/transactions/useTransactionPresentation'

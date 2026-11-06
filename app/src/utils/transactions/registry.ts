@@ -95,9 +95,6 @@ export const DIVIDEND_TYPES = new Set([
   'dividendPaymentFailed'
 ])
 
-export const formatTxHash = (hash: string): string =>
-  hash.length >= 10 ? `${hash.slice(0, 6)}…${hash.slice(-4)}` : hash
-
 export const getTransactionTypeLabel = (type: string): string =>
   TYPE_LABELS[type] ??
   type.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/^./, (c) => c.toUpperCase())
