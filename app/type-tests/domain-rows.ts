@@ -1,29 +1,31 @@
 /** Compiler canaries: included by the normal app type-check, never imported by the app. */
 import type { ExpenseApproval, ExpenseResponse, BudgetLimit } from '@/types/expense-account'
 import type { TableRow } from '@/types/table'
-import type { TeamContractReadModel } from '@/composables/contracts/readTeamContracts'
-import type { ManagedContractRow } from '@/components/sections/ContractManagementView/MainContractTable.types'
+import type { ManagedContractReadModel } from '@/composables/contracts/readManagedContracts'
+import type { ManagedContractRow } from '@/components/sections/ContractManagementView/ManagedContractsTable.types'
 import type { getTokens } from '@/utils/expenses/model'
 import type { useContractOwnershipTransfer } from '@/composables/contracts/useContractOwnershipTransfer'
 import type TransferAction from '@/components/sections/ExpenseAccountView/TransferAction.vue'
-import type MainContractActions from '@/components/sections/ContractManagementView/MainContractActions.vue'
+import type ManagedContractActionDialogs from '@/components/sections/ContractManagementView/ManagedContractActionDialogs.vue'
 
 type Assert<T extends true> = T
 type Fits<Value, Target> = [Value] extends [Target] ? true : false
 type SpendingRow = Parameters<typeof getTokens>[0][number]
 type ExpenseActionRow = InstanceType<typeof TransferAction>['$props']['row']
 type OwnershipTarget = NonNullable<Parameters<typeof useContractOwnershipTransfer>[0]['value']>
-type ContractActionRow = NonNullable<InstanceType<typeof MainContractActions>['$props']['row']>
+type ContractActionRow = NonNullable<
+  InstanceType<typeof ManagedContractActionDialogs>['$props']['row']
+>
 
 export type ResponseFitsSpending = Assert<Fits<ExpenseResponse, SpendingRow>>
 export type ApprovalFitsAction = Assert<Fits<ExpenseApproval, ExpenseActionRow>>
 export type MissingBalanceStillFits = Assert<
   Fits<Pick<ExpenseApproval, 'signature' | 'data'>, SpendingRow>
 >
-export type ModelFitsTable = Assert<Fits<TeamContractReadModel, ManagedContractRow>>
-export type ModelFitsAction = Assert<Fits<TeamContractReadModel, ContractActionRow>>
+export type ModelFitsTable = Assert<Fits<ManagedContractReadModel, ManagedContractRow>>
+export type ModelFitsAction = Assert<Fits<ManagedContractReadModel, ContractActionRow>>
 export type MinimalOwnershipFits = Assert<
-  Fits<Pick<TeamContractReadModel, 'address' | 'abi' | 'type'>, OwnershipTarget>
+  Fits<Pick<ManagedContractReadModel, 'address' | 'abi' | 'type'>, OwnershipTarget>
 >
 export type NullSelectionFits = Assert<
   Fits<null, Parameters<typeof useContractOwnershipTransfer>[0]['value']>
@@ -33,9 +35,9 @@ export type ManagedKeysAreExplicit = Assert<string extends keyof ManagedContract
 type NoSig = Omit<ExpenseApproval, 'signature'>
 type NoData = Omit<ExpenseApproval, 'data'>
 type NoToken = { signature: string; data: Omit<BudgetLimit, 'tokenAddress'> }
-type NoAddr = Omit<TeamContractReadModel, 'address'>
-type NoAbi = Omit<TeamContractReadModel, 'abi'>
-type NoKind = Omit<TeamContractReadModel, 'type'>
+type NoAddr = Omit<ManagedContractReadModel, 'address'>
+type NoAbi = Omit<ManagedContractReadModel, 'abi'>
+type NoKind = Omit<ManagedContractReadModel, 'type'>
 type TargetNoAddr = Omit<OwnershipTarget, 'address'>
 type TargetNoAbi = Omit<OwnershipTarget, 'abi'>
 type TargetNoKind = Omit<OwnershipTarget, 'type'>

@@ -2,14 +2,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
 import { ref } from 'vue'
 import { createTestingPinia } from '@pinia/testing'
-import MainContractActions from '../MainContractActions.vue'
+import ManagedContractActionDialogs from '../ManagedContractActionDialogs.vue'
 import { mockBodAddAction, mockBodApproveAction, mockToast, mockUserStore } from '@/tests/mocks'
 import { useQueryClientFn, mockInvalidateQueries } from '@/tests/mocks/composables.mock'
 import { mockLog } from '@/tests/mocks/utils.mock'
 import { encodeFunctionData } from 'viem'
 import { ownablePausableAbi } from '@/artifacts/abi/ownable-pausable'
-import type { ManagedContractRow } from '../MainContractTable.types'
-import type { FormattedAction } from '@/utils/contracts/management'
+import type { ManagedContractRow } from '../ManagedContractsTable.types'
+import type { FormattedBodActions } from '@/utils/contracts/bodActions'
 
 type MutationMock = {
   mutate: ReturnType<typeof vi.fn>
@@ -53,11 +53,11 @@ const DEFAULT_ROW: ManagedContractRow = {
 type ControllerProps = {
   isBodAction: boolean
   open: 'details' | 'transfer' | 'approval' | null
-  pendingActions: FormattedAction
-  statusChangeRequest: { id: number; paused: boolean } | null
+  pendingActions: FormattedBodActions
+  pauseToggleRequest: { id: number; paused: boolean } | null
 }
 
-const PENDING_ACTION: FormattedAction[number] = {
+const PENDING_ACTION: FormattedBodActions[number] = {
   id: 1,
   actionId: 1,
   targetAddress: DEFAULT_ROW.address,
@@ -81,8 +81,8 @@ const stubs = {
       '<button data-test="emit-transfer" @click="$emit(\'transfer-ownership\', \'0xNewOwner0000000000000000000000000001\')">Transfer</button>' +
       '</div>'
   },
-  PendingEventsList: {
-    name: 'PendingEventsList',
+  PendingBodActionsTable: {
+    name: 'PendingBodActionsTable',
     props: ['pendingActions'],
     emits: ['view-details'],
     template: '<div data-test="pending-events-list"></div>'
@@ -118,13 +118,13 @@ function mountComponent(
   rowOverrides: Partial<ManagedContractRow> = {},
   controllerProps: Partial<ControllerProps> = {}
 ) {
-  return mount(MainContractActions, {
+  return mount(ManagedContractActionDialogs, {
     props: {
       row: { ...DEFAULT_ROW, ...rowOverrides },
       isBodAction: false,
       open: null,
       pendingActions: [],
-      statusChangeRequest: null,
+      pauseToggleRequest: null,
       ...controllerProps
     },
     global: {
@@ -142,7 +142,7 @@ const resetMutationMocks = () => {
   })
 }
 
-describe('MainContractActions.vue', () => {
+describe('ManagedContractActionDialogs.vue', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     resetMutationMocks()
@@ -245,7 +245,7 @@ describe('MainContractActions.vue', () => {
 
     await wrapper.vm.$nextTick()
     await wrapper
-      .findComponent({ name: 'PendingEventsList' })
+      .findComponent({ name: 'PendingBodActionsTable' })
       .vm.$emit('view-details', PENDING_ACTION)
     await wrapper.find('[data-test="emit-approve"]').trigger('click')
 
@@ -257,7 +257,7 @@ describe('MainContractActions.vue', () => {
 
     await wrapper.vm.$nextTick()
     await wrapper
-      .findComponent({ name: 'PendingEventsList' })
+      .findComponent({ name: 'PendingBodActionsTable' })
       .vm.$emit('view-details', PENDING_ACTION)
     await wrapper.find('[data-test="emit-close"]').trigger('click')
 
@@ -292,13 +292,13 @@ describe('MainContractActions.vue', () => {
   })
 
   it('[AC-US-CONTRACT-002-02] runs the selected contract status write once for each request', async () => {
-    const active = mountComponent({}, { statusChangeRequest: { id: 1, paused: false } })
+    const active = mountComponent({}, { pauseToggleRequest: { id: 1, paused: false } })
     await flushPromises()
     expect(mutationByFn.pause.mutate).toHaveBeenCalledTimes(1)
 
     const paused = mountComponent(
       { pauseStatus: 'paused' },
-      { statusChangeRequest: { id: 2, paused: true } }
+      { pauseToggleRequest: { id: 2, paused: true } }
     )
     await flushPromises()
     expect(mutationByFn.unpause.mutate).toHaveBeenCalledTimes(1)
@@ -312,7 +312,7 @@ describe('MainContractActions.vue', () => {
     mutationByFn.pause.mutate.mockImplementationOnce((_value: unknown, options?: MutateOpts) =>
       options?.onSuccess?.()
     )
-    const pauseWrapper = mountComponent({}, { statusChangeRequest: { id: 1, paused: false } })
+    const pauseWrapper = mountComponent({}, { pauseToggleRequest: { id: 1, paused: false } })
     await flushPromises()
     expect(pauseWrapper.emitted('contract-status-changed')).toBeTruthy()
 
@@ -321,14 +321,14 @@ describe('MainContractActions.vue', () => {
     )
     const resumeWrapper = mountComponent(
       { pauseStatus: 'paused' },
-      { statusChangeRequest: { id: 2, paused: true } }
+      { pauseToggleRequest: { id: 2, paused: true } }
     )
     await flushPromises()
     expect(resumeWrapper.emitted('contract-status-changed')).toBeTruthy()
   })
 
   it('logs selected pause and resume errors', async () => {
-    const pauseWrapper = mountComponent({}, { statusChangeRequest: { id: 1, paused: false } })
+    const pauseWrapper = mountComponent({}, { pauseToggleRequest: { id: 1, paused: false } })
     mutationByFn.pause.error.value = new Error('pause failed')
     await flushPromises()
     expect(mockLog.error).toHaveBeenCalled()
@@ -336,7 +336,7 @@ describe('MainContractActions.vue', () => {
     mockLog.error.mockClear()
     const resumeWrapper = mountComponent(
       { pauseStatus: 'paused' },
-      { statusChangeRequest: { id: 2, paused: true } }
+      { pauseToggleRequest: { id: 2, paused: true } }
     )
     mutationByFn.unpause.error.value = new Error('unpause failed')
     await flushPromises()

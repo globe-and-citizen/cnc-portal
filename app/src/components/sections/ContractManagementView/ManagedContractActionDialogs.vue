@@ -90,20 +90,20 @@
 
     <UModal
       :open="isApprovalOpen"
-      :ui="{ content: modalWidth }"
+      :ui="{ content: approvalModalWidth }"
       title="Review Pending Actions"
       description="Approve or reject pending board actions before execution."
       @update:open="updateOpen($event ? 'approval' : null)"
     >
       <template #body>
-        <PendingEventsList
-          v-if="isApprovalOpen && currentStep === 1"
+        <PendingBodActionsTable
+          v-if="isApprovalOpen && approvalStep === 1"
           :pending-actions="pendingActions"
-          @view-details="viewPendingAction"
+          @view-details="openBodActionDetails"
         />
         <BodApprovalContent
-          v-if="isApprovalOpen && currentStep === 2"
-          :row="selectedAction"
+          v-if="isApprovalOpen && approvalStep === 2"
+          :row="selectedBodAction"
           :loading="isLoadingApproveAction"
           @approve-action="approveAction"
           @close="updateOpen(null)"
@@ -118,20 +118,20 @@ import { computed, ref, toRef, watch } from 'vue'
 import AddressTooltip from '@/components/ui/AddressTooltip.vue'
 import { useBodApproveAction } from '@/composables/bod/writes'
 import { useContractOwnershipTransfer } from '@/composables/contracts/useContractOwnershipTransfer'
-import { useContractStatusChange } from '@/composables/contracts/useContractStatusChange'
+import { useContractPauseToggle } from '@/composables/contracts/useContractPauseToggle'
 import type { TableRow } from '@/types/table'
-import type { ManagedContractRow } from './MainContractTable.types'
-import type { FormattedAction } from '@/utils/contracts/management'
+import type { ManagedContractRow } from './ManagedContractsTable.types'
+import type { FormattedBodActions } from '@/utils/contracts/bodActions'
 import { getContractPauseStatusPresentation } from '@/utils/contracts/pauseCapabilities'
 import { getContractPresentation } from '@/utils/contracts/presentation'
 import BodApprovalContent from './BodApprovalContent.vue'
 import ContractReadDataSection from './ContractReadDataSection.vue'
-import PendingEventsList from './PendingEventsList.vue'
+import PendingBodActionsTable from './PendingBodActionsTable.vue'
 import TransferOwnershipForm from './forms/TransferOwnershipForm.vue'
 
 type ContractActionSurface = 'details' | 'transfer' | 'approval' | null
 
-interface ContractStatusChangeRequest {
+interface ContractPauseToggleRequest {
   id: number
   paused: boolean
 }
@@ -139,10 +139,10 @@ interface ContractStatusChangeRequest {
 interface Props {
   row: ManagedContractRow | null
   version?: string | null
-  pendingActions: FormattedAction
+  pendingActions: FormattedBodActions
   isBodAction: boolean
   open: ContractActionSurface
-  statusChangeRequest: ContractStatusChangeRequest | null
+  pauseToggleRequest: ContractPauseToggleRequest | null
 }
 
 const props = defineProps<Props>()
@@ -152,9 +152,9 @@ const emit = defineEmits<{
 }>()
 
 const approveActionMutation = useBodApproveAction()
-const selectedAction = ref<TableRow>({})
-const currentStep = ref<0 | 1 | 2>(0)
-const handledStatusChangeRequest = ref<number | null>(null)
+const selectedBodAction = ref<TableRow>({})
+const approvalStep = ref<0 | 1 | 2>(0)
+const handledPauseToggleRequestId = ref<number | null>(null)
 const rowRef = toRef(props, 'row')
 const isBodActionRef = toRef(props, 'isBodAction')
 const presentation = computed(() => getContractPresentation(props.row?.type ?? ''))
@@ -170,8 +170,8 @@ const contractAddress = computed(() => props.row?.address)
 const isDetailsOpen = computed(() => props.open === 'details')
 const isTransferOpen = computed(() => props.open === 'transfer')
 const isApprovalOpen = computed(() => props.open === 'approval')
-const modalWidth = computed(() =>
-  currentStep.value === 1 ? 'w-full sm:max-w-4xl' : 'w-full sm:max-w-xl'
+const approvalModalWidth = computed(() =>
+  approvalStep.value === 1 ? 'w-full sm:max-w-4xl' : 'w-full sm:max-w-xl'
 )
 const isLoadingApproveAction = approveActionMutation.isPending
 const approveAction = approveActionMutation.executeApproveAction
@@ -180,15 +180,12 @@ const {
   isLoading: isLoadingTransfer,
   transferOwnership
 } = useContractOwnershipTransfer(rowRef, isBodActionRef, handleOwnershipTransferred)
-const { changeContractStatus } = useContractStatusChange(
-  contractAddress,
-  handleContractStatusChanged
-)
+const { toggleContractPause } = useContractPauseToggle(contractAddress, handleContractStatusChanged)
 
 watch(
   () => props.open,
   (surface) => {
-    if (surface === 'approval') currentStep.value = 1
+    if (surface === 'approval') approvalStep.value = 1
   },
   { immediate: true }
 )
@@ -198,12 +195,12 @@ watch(approveActionMutation.isSuccess, (isApproved) => {
 })
 
 watch(
-  [() => props.row?.address, () => props.statusChangeRequest],
+  [() => props.row?.address, () => props.pauseToggleRequest],
   ([address, request]) => {
-    if (!address || !request || request.id === handledStatusChangeRequest.value) return
+    if (!address || !request || request.id === handledPauseToggleRequestId.value) return
 
-    handledStatusChangeRequest.value = request.id
-    changeContractStatus(request.paused)
+    handledPauseToggleRequestId.value = request.id
+    toggleContractPause(request.paused)
   },
   { immediate: true }
 )
@@ -222,9 +219,9 @@ function handleApprovalComplete() {
   handleContractStatusChanged()
 }
 
-function viewPendingAction(action: TableRow) {
-  selectedAction.value = action
-  currentStep.value = 2
+function openBodActionDetails(action: TableRow) {
+  selectedBodAction.value = action
+  approvalStep.value = 2
 }
 
 function updateOpen(surface: ContractActionSurface) {

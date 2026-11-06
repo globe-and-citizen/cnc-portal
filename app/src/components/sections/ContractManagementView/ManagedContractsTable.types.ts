@@ -1,14 +1,14 @@
 import type { User } from '@/types'
-import type { TeamContractReadModel } from '@/composables/contracts/readTeamContracts'
+import type { ManagedContractReadModel } from '@/composables/contracts/readManagedContracts'
 
 export interface ContractActionState {
   pendingActionCount: number
   canManage: boolean
-  canChangeStatus: boolean
+  canTogglePause: boolean
   canReviewPendingActions: boolean
 }
 
-export type ManagedContractRow = TeamContractReadModel
+export type ManagedContractRow = ManagedContractReadModel
 
 export interface ContractTableRow {
   contract: ManagedContractRow

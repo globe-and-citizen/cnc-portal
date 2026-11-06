@@ -31,7 +31,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { DropdownMenuItem } from '@nuxt/ui'
-import type { ContractActionState, ManagedContractRow } from './MainContractTable.types'
+import type { ContractActionState, ManagedContractRow } from './ManagedContractsTable.types'
 
 interface Props {
   row: ManagedContractRow
@@ -45,7 +45,7 @@ const emit = defineEmits<{
   'open-in-explorer': []
   'review-pending-actions': []
   'transfer-ownership': []
-  'change-status': [paused: boolean]
+  'toggle-pause': [paused: boolean]
 }>()
 
 const statusMenuItem = computed<DropdownMenuItem | undefined>(() => {
@@ -58,8 +58,8 @@ const statusMenuItem = computed<DropdownMenuItem | undefined>(() => {
     label: paused ? 'Resume contract' : 'Pause contract',
     icon: paused ? 'i-lucide-play' : 'i-lucide-pause',
     color: paused ? 'success' : 'error',
-    disabled: !props.actionState.canChangeStatus,
-    onSelect: () => emit('change-status', paused)
+    disabled: !props.actionState.canTogglePause,
+    onSelect: () => emit('toggle-pause', paused)
   }
 })
 

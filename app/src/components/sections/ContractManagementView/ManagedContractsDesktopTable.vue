@@ -43,7 +43,7 @@
     </template>
 
     <template #balance-cell="{ row: { original: row } }">
-      <MainContractBalanceCell v-if="row.holdsValue" :address="row.contract.address" />
+      <ContractBalanceCell v-if="row.holdsValue" :address="row.contract.address" />
       <span v-else class="text-muted text-xs">No balance</span>
     </template>
 
@@ -52,7 +52,7 @@
     </template>
 
     <template #actions-cell="{ row: { original: row } }">
-      <MainContractActionMenu
+      <ManagedContractActionMenu
         v-if="row.actionState"
         :row="row.contract"
         :action-state="row.actionState"
@@ -61,7 +61,7 @@
         @open-in-explorer="emit('open-in-explorer', row.contract.address)"
         @review-pending-actions="emit('review-pending-actions', row.contract)"
         @transfer-ownership="emit('transfer-ownership', row.contract)"
-        @change-status="emit('change-status', row.contract, $event)"
+        @toggle-pause="emit('toggle-pause', row.contract, $event)"
       />
     </template>
   </UTable>
@@ -73,9 +73,9 @@ import AddressTooltip from '@/components/ui/AddressTooltip.vue'
 import UserIdentity from '@/components/ui/UserIdentity.vue'
 import { getContractPauseStatusPresentation } from '@/utils/contracts/pauseCapabilities'
 import { getContractPresentation } from '@/utils/contracts/presentation'
-import MainContractActionMenu from './MainContractActionMenu.vue'
-import MainContractBalanceCell from './MainContractBalanceCell.vue'
-import type { ContractTableRow } from './MainContractTable.types'
+import ManagedContractActionMenu from './ManagedContractActionMenu.vue'
+import ContractBalanceCell from './ContractBalanceCell.vue'
+import type { ContractTableRow } from './ManagedContractsTable.types'
 
 interface Props {
   rows: ContractTableRow[]
@@ -90,7 +90,7 @@ const emit = defineEmits<{
   'open-in-explorer': [address: string]
   'review-pending-actions': [row: ContractTableRow['contract']]
   'transfer-ownership': [row: ContractTableRow['contract']]
-  'change-status': [row: ContractTableRow['contract'], paused: boolean]
+  'toggle-pause': [row: ContractTableRow['contract'], paused: boolean]
 }>()
 
 const columns = computed(() => [

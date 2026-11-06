@@ -25,7 +25,7 @@
           type="number"
           min="0"
           step="any"
-          :model-value="draft.costPerClick"
+          :model-value="rateDraft.costPerClick"
           class="w-full"
           data-test="manager-cost-per-click"
           @update:model-value="updateCost('costPerClick', $event)"
@@ -43,7 +43,7 @@
           type="number"
           min="0"
           step="any"
-          :model-value="draft.costPerImpression"
+          :model-value="rateDraft.costPerImpression"
           class="w-full"
           data-test="manager-cost-per-impression"
           @update:model-value="updateCost('costPerImpression', $event)"
@@ -59,10 +59,10 @@
           color="primary"
           icon="i-lucide-save"
           label="Save changes"
-          :loading="isLoading"
-          :disabled="isLoading || !hasChanges || archivedDisabled"
+          :loading="isSavingRates"
+          :disabled="isSavingRates || !hasRateChanges || archivedDisabled"
           data-test="campaign-rate-save"
-          @click="submit"
+          @click="saveRates"
         />
       </TeamArchivedTooltip>
     </div>
@@ -85,44 +85,44 @@ type CampaignRates = Pick<CampaignManagerSettings, 'costPerClick' | 'costPerImpr
 
 const props = defineProps<{
   settings: CampaignManagerSettings
-  contractAddress: Address
+  managerAddress: Address
 }>()
 const emit = defineEmits<{
-  (event: 'closeContractDataDialog'): void
+  (event: 'close'): void
 }>()
 const toast = useToast()
-const pendingTransactions = ref(0)
-const draft = ref<CampaignRates>({
+const remainingRateConfirmations = ref(0)
+const rateDraft = ref<CampaignRates>({
   costPerClick: props.settings.costPerClick,
   costPerImpression: props.settings.costPerImpression
 })
-const originalRates = ref({
+const confirmedRates = ref({
   costPerClick: Number.parseFloat(props.settings.costPerClick || '0'),
   costPerImpression: Number.parseFloat(props.settings.costPerImpression || '0')
 })
-const campaignAddress = computed(() => props.contractAddress)
-const setCostPerClick = useSetCampaignCostPerClick(campaignAddress)
-const setCostPerImpression = useSetCampaignCostPerImpression(campaignAddress)
-const isLoading = computed(
+const managerAddressRef = computed(() => props.managerAddress)
+const setCostPerClick = useSetCampaignCostPerClick(managerAddressRef)
+const setCostPerImpression = useSetCampaignCostPerImpression(managerAddressRef)
+const isSavingRates = computed(
   () => setCostPerClick.isPending.value || setCostPerImpression.isPending.value
 )
 
-const hasChanges = computed(
+const hasRateChanges = computed(
   () =>
-    Number.parseFloat(draft.value.costPerClick || '0') !== originalRates.value.costPerClick ||
-    Number.parseFloat(draft.value.costPerImpression || '0') !==
-      originalRates.value.costPerImpression
+    Number.parseFloat(rateDraft.value.costPerClick || '0') !== confirmedRates.value.costPerClick ||
+    Number.parseFloat(rateDraft.value.costPerImpression || '0') !==
+      confirmedRates.value.costPerImpression
 )
 
 watch(
   () => props.settings,
   (settings) => {
-    if (hasChanges.value || isLoading.value) return
-    draft.value = {
+    if (hasRateChanges.value || isSavingRates.value) return
+    rateDraft.value = {
       costPerClick: settings.costPerClick,
       costPerImpression: settings.costPerImpression
     }
-    originalRates.value = {
+    confirmedRates.value = {
       costPerClick: Number.parseFloat(settings.costPerClick || '0'),
       costPerImpression: Number.parseFloat(settings.costPerImpression || '0')
     }
@@ -130,22 +130,22 @@ watch(
 )
 
 function updateCost(key: keyof CampaignRates, value: string | number) {
-  draft.value[key] = String(Math.abs(Number.parseFloat(String(value)) || 0))
+  rateDraft.value[key] = String(Math.abs(Number.parseFloat(String(value)) || 0))
 }
 
-function completeTransaction(key: 'costPerClick' | 'costPerImpression', value: number) {
-  pendingTransactions.value--
-  originalRates.value[key] = value
-  if (pendingTransactions.value === 0) emit('closeContractDataDialog')
+function confirmRateUpdate(key: 'costPerClick' | 'costPerImpression', value: number) {
+  remainingRateConfirmations.value--
+  confirmedRates.value[key] = value
+  if (remainingRateConfirmations.value === 0) emit('close')
 }
 
-function submit() {
-  const clickRate = Number.parseFloat(draft.value.costPerClick)
-  const impressionRate = Number.parseFloat(draft.value.costPerImpression)
+function saveRates() {
+  const clickRate = Number.parseFloat(rateDraft.value.costPerClick)
+  const impressionRate = Number.parseFloat(rateDraft.value.costPerImpression)
   if (!Number.isFinite(clickRate) || !Number.isFinite(impressionRate)) return
 
-  const clickChanged = originalRates.value.costPerClick !== clickRate
-  const impressionChanged = originalRates.value.costPerImpression !== impressionRate
+  const clickChanged = confirmedRates.value.costPerClick !== clickRate
+  const impressionChanged = confirmedRates.value.costPerImpression !== impressionRate
 
   if (clickChanged && clickRate <= 0) {
     toast.add({ title: 'Cost per click should be greater than 0', color: 'error' })
@@ -157,21 +157,21 @@ function submit() {
   }
 
   try {
-    pendingTransactions.value = Number(clickChanged) + Number(impressionChanged)
+    remainingRateConfirmations.value = Number(clickChanged) + Number(impressionChanged)
     if (clickChanged) {
       setCostPerClick.mutate(
         { args: [parseUnits(String(clickRate), 18)] },
-        { onSuccess: () => completeTransaction('costPerClick', clickRate) }
+        { onSuccess: () => confirmRateUpdate('costPerClick', clickRate) }
       )
     }
     if (impressionChanged) {
       setCostPerImpression.mutate(
         { args: [parseUnits(String(impressionRate), 18)] },
-        { onSuccess: () => completeTransaction('costPerImpression', impressionRate) }
+        { onSuccess: () => confirmRateUpdate('costPerImpression', impressionRate) }
       )
     }
   } catch (error) {
-    pendingTransactions.value = 0
+    remainingRateConfirmations.value = 0
     toast.add({
       title: 'An error occurred while updating the costs. Please try again.',
       color: 'error'

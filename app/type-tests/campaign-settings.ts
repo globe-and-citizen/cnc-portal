@@ -1,11 +1,11 @@
 /** The normal app type gate checks the settings form's production prop boundary. */
 import type { CampaignManagerSettings } from '@/composables/campaign/reads'
-import type TeamContractsDetail from '@/components/sections/ContractManagementView/TeamContractsDetail.vue'
+import type CampaignManagerRatesForm from '@/components/sections/ContractManagementView/forms/CampaignManagerRatesForm.vue'
 
 type Assert<T extends true> = T
 type Fits<Value, Target> = [Value] extends [Target] ? true : false
-type Settings = InstanceType<typeof TeamContractsDetail>['$props']['settings']
-type Props = InstanceType<typeof TeamContractsDetail>['$props']
+type Settings = InstanceType<typeof CampaignManagerRatesForm>['$props']['settings']
+type Props = InstanceType<typeof CampaignManagerRatesForm>['$props']
 type WithoutClick = Omit<CampaignManagerSettings, 'costPerClick'>
 type WithoutImpression = Omit<CampaignManagerSettings, 'costPerImpression'>
 type WithoutBank = Omit<CampaignManagerSettings, 'bankAddress'>

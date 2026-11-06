@@ -12,7 +12,7 @@ import {
   type ContractPauseStatus
 } from '@/utils/contracts/pauseCapabilities'
 
-export interface TeamContractReadModel extends Omit<TeamContract, 'admins' | 'type'> {
+export interface ManagedContractReadModel extends Omit<TeamContract, 'admins' | 'type'> {
   type: string
   admins?: string[]
   abi: Abi
@@ -43,10 +43,10 @@ const readPauseStatus = async (
   return paused ? 'paused' : 'active'
 }
 
-export const getTeamContracts = async (
+export const readManagedContracts = async (
   contracts: readonly DeploymentContract[],
   officerVersion?: string | null
-): Promise<TeamContractReadModel[] | undefined> => {
+): Promise<ManagedContractReadModel[] | undefined> => {
   try {
     return await Promise.all(
       contracts.map(async (contract) => {

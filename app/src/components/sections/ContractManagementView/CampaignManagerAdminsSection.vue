@@ -1,13 +1,13 @@
 <template>
   <h3 class="mb-4 text-lg font-bold">
-    Contract Admin List {{ range }}
+    Contract Admin List {{ managerNumber }}
     <UIcon v-if="isLoading" name="i-lucide-loader-circle" class="h-5 w-5 animate-spin" />
   </h3>
 
   <!-- Inline form to add new admin -->
   <TeamArchivedTooltip v-slot="{ disabled: archivedDisabled }">
     <form
-      @submit.prevent="handleAdminAction(newAdminAddress as `0x${string}`, 'addAdmin')"
+      @submit.prevent="submitAdminChange(newAdminAddress as `0x${string}`, 'addAdmin')"
       class="mb-4 flex items-center space-x-2"
     >
       <UInput
@@ -31,7 +31,7 @@
   <div id="admins-table" class="overflow-x-auto">
     <UTable
       :data="
-        adminsList.map((admin: Address, index: number) => ({
+        adminAddresses.map((admin: Address, index: number) => ({
           index: index + 1,
           address: admin,
           admin: admin
@@ -50,7 +50,7 @@
       <template #action-cell="{ row: { original: row } }">
         <TeamArchivedTooltip v-slot="{ disabled: archivedDisabled }">
           <UButton
-            @click="handleAdminAction(row.admin, 'removeAdmin')"
+            @click="submitAdminChange(row.admin, 'removeAdmin')"
             size="xs"
             color="error"
             label="Remove"
@@ -79,8 +79,8 @@ import type { Address } from 'viem'
 const toast = useToast()
 
 const props = defineProps<{
-  contract: TeamContract
-  range: number
+  manager: TeamContract
+  managerNumber: number
 }>()
 
 const isLoading = computed(() => loadingRemoveAdmin.value || loadingAddAdmin.value)
@@ -88,14 +88,14 @@ const isLoading = computed(() => loadingRemoveAdmin.value || loadingAddAdmin.val
 // State for new admin address
 const newAdminAddress = ref('')
 
-const contractAddress = computed(() => (props.contract?.address || '') as Address)
+const managerAddress = computed(() => (props.manager?.address || '') as Address)
 
 const {
   mutate: addAdmin,
   error: errorAddAdmin,
   isPending: loadingAddAdmin
 } = useContractWritesV3({
-  contractAddress,
+  contractAddress: managerAddress,
   abi: adCampaignManagerAbi,
   functionName: 'addAdmin'
 })
@@ -105,7 +105,7 @@ const {
   error: errorRemoveAdmin,
   isPending: loadingRemoveAdmin
 } = useContractWritesV3({
-  contractAddress,
+  contractAddress: managerAddress,
   abi: adCampaignManagerAbi,
   functionName: 'removeAdmin'
 })
@@ -116,11 +116,11 @@ const {
   error: errorGetAdminList
 } = useReadContract({
   functionName: 'getAdminList',
-  address: contractAddress,
+  address: managerAddress,
   abi: adCampaignManagerAbi
 })
 
-const adminsList = computed<Address[]>(() => {
+const adminAddresses = computed<Address[]>(() => {
   return Array.isArray(admins.value) ? (admins.value as Address[]) : []
 })
 
@@ -142,7 +142,7 @@ watch(errorRemoveAdmin, () => {
   }
 })
 
-function handleAdminAction(adminAddress: Address, action: string) {
+function submitAdminChange(adminAddress: Address, action: string) {
   if (action === 'removeAdmin') {
     removeAdmin(
       { args: [adminAddress] },

@@ -8,7 +8,7 @@
       <!-- Selectable Cards Container -->
       <div class="mt-6 flex gap-4">
         <!-- BOD Card -->
-        <TransferOptionCard
+        <OwnershipRecipientOptionCard
           label="Transfer to BOD"
           :isSelected="selectedOption === 'bod'"
           icon="heroicons:user-group-solid"
@@ -16,7 +16,7 @@
         />
 
         <!-- Member Card -->
-        <TransferOptionCard
+        <OwnershipRecipientOptionCard
           label="Transfer to Member"
           :isSelected="selectedOption === 'member'"
           icon="heroicons:user-solid"
@@ -102,7 +102,7 @@ import { ref, onMounted } from 'vue'
 import SelectMemberInput from '@/components/ui/inputs/SelectMemberInput.vue'
 import { onClickOutside } from '@vueuse/core'
 import { Icon as IconifyIcon } from '@iconify/vue'
-import TransferOptionCard from '../TransferOptionCard.vue'
+import OwnershipRecipientOptionCard from '../OwnershipRecipientOptionCard.vue'
 import { useTeamStore } from '@/stores'
 import { isAddress, type Address } from 'viem'
 import { z } from 'zod'

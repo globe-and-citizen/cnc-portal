@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { createTestingPinia } from '@pinia/testing'
 import { ref } from 'vue'
-import TeamContractAdmins from '@/components/sections/ContractManagementView/TeamContractAdmins.vue'
+import CampaignManagerAdminsSection from '@/components/sections/ContractManagementView/CampaignManagerAdminsSection.vue'
 import { useReadContractFn } from '@/tests/mocks'
 import type { TeamContract } from '@/types'
 
@@ -31,7 +31,7 @@ vi.mock('@/composables/contracts/useContractWritesV3', () => ({
   })
 }))
 
-describe('[US-CONTRACT-003] TeamContractAdmins.vue', () => {
+describe('[US-CONTRACT-003] CampaignManagerAdminsSection.vue', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     addAdminMutation.isPending.value = false
@@ -48,8 +48,8 @@ describe('[US-CONTRACT-003] TeamContractAdmins.vue', () => {
   function mountWithWritePending(pending: boolean) {
     addAdminMutation.isPending.value = pending
     removeAdminMutation.isPending.value = pending
-    return mount(TeamContractAdmins, {
-      props: { contract: contractProp, range: 1 },
+    return mount(CampaignManagerAdminsSection, {
+      props: { manager: contractProp, managerNumber: 1 },
       global: { plugins: [createTestingPinia({ createSpy: vi.fn })] }
     })
   }

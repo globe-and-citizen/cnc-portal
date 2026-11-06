@@ -1,7 +1,7 @@
 import { mount, flushPromises } from '@vue/test-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
-import TeamContractsDetail from '../TeamContractsDetail.vue'
+import CampaignManagerRatesForm from '../CampaignManagerRatesForm.vue'
 import type { CampaignManagerSettings } from '@/composables/campaign/reads'
 import { createContractWriteV3Mock } from '@/tests/mocks/erc20.mock'
 import { mockToast } from '@/tests/mocks'
@@ -18,11 +18,11 @@ const settings: CampaignManagerSettings = {
   costPerImpression: '0.5',
   bankAddress: '0x1111111111111111111111111111111111111111'
 }
-const contractAddress = '0xE55978c9f7B9bFc190B355d65e7F1dEc2F41D320'
+const managerAddress = '0xE55978c9f7B9bFc190B355d65e7F1dEc2F41D320'
 type SuccessOptions = { onSuccess?: () => void }
 
 function mountForm(values = settings) {
-  return mount(TeamContractsDetail, { props: { settings: { ...values }, contractAddress } })
+  return mount(CampaignManagerRatesForm, { props: { settings: { ...values }, managerAddress } })
 }
 
 describe('[US-CONTRACT-003] Campaign Manager rate draft', () => {
@@ -100,10 +100,10 @@ describe('[US-CONTRACT-003] Campaign Manager rate draft', () => {
     const impressionOptions = impression.mutate.mock.calls[0]![1] as SuccessOptions
     clickOptions.onSuccess?.()
     await flushPromises()
-    expect(wrapper.emitted('closeContractDataDialog')).toBeUndefined()
+    expect(wrapper.emitted('close')).toBeUndefined()
     impressionOptions.onSuccess?.()
     await flushPromises()
-    expect(wrapper.emitted('closeContractDataDialog')).toHaveLength(1)
+    expect(wrapper.emitted('close')).toHaveLength(1)
     expect(wrapper.get('[data-test="campaign-rate-save"]').attributes('disabled')).toBeDefined()
   })
 
@@ -119,13 +119,13 @@ describe('[US-CONTRACT-003] Campaign Manager rate draft', () => {
       title: 'Set cost per impression failed',
       color: 'error'
     })
-    expect(wrapper.emitted('closeContractDataDialog')).toBeUndefined()
+    expect(wrapper.emitted('close')).toBeUndefined()
     await wrapper.get('[data-test="campaign-rate-save"]').trigger('click')
     expect(click.mutate).toHaveBeenCalledTimes(1)
     expect(impression.mutate).toHaveBeenCalledTimes(2)
     ;(impression.mutate.mock.calls[1]![1] as SuccessOptions).onSuccess?.()
     await flushPromises()
-    expect(wrapper.emitted('closeContractDataDialog')).toHaveLength(1)
+    expect(wrapper.emitted('close')).toHaveLength(1)
   })
 
   it('adopts refreshed rates and baseline while the draft is still pristine', async () => {
@@ -170,6 +170,6 @@ describe('[US-CONTRACT-003] Campaign Manager rate draft', () => {
       title: 'Set cost per click failed',
       color: 'error'
     })
-    expect(wrapper.emitted('closeContractDataDialog')).toBeUndefined()
+    expect(wrapper.emitted('close')).toBeUndefined()
   })
 })

@@ -1,6 +1,6 @@
 import { mount } from '@vue/test-utils'
 import { describe, it, expect, beforeEach } from 'vitest'
-import TeamContractEventList from '@/components/sections/ContractManagementView/TeamContractEventList.vue'
+import CampaignEventsTable from '@/components/sections/ContractManagementView/CampaignEventsTable.vue'
 import type { EventsByCampaignCode } from '@/lib/campaign/events'
 
 // Mocked ExtendedEvent to align with the test data
@@ -15,7 +15,7 @@ type MockedExtendedEvent = {
 
 type MockedEventsByCampaignCode = Record<string, MockedExtendedEvent[]>
 
-describe('TeamContractEventList.vue', () => {
+describe('CampaignEventsTable.vue', () => {
   const eventsByCampaignCode: MockedEventsByCampaignCode = {
     '0xCampaign1': [
       {
@@ -66,7 +66,7 @@ describe('TeamContractEventList.vue', () => {
   let wrapper: ReturnType<typeof mount>
 
   beforeEach(() => {
-    wrapper = mount(TeamContractEventList, {
+    wrapper = mount(CampaignEventsTable, {
       props: { eventsByCampaignCode: eventsByCampaignCode as unknown as EventsByCampaignCode }
     })
   })

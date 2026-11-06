@@ -7,7 +7,7 @@ import { useContractWritesV3 } from '@/composables/contracts/useContractWritesV3
 import { createContractWriteV3Mock } from '@/tests/mocks/erc20.mock'
 import { USelectStub } from '@/tests/stubs/nuxt-ui.stubs'
 import type { CampaignManagerSettings } from '@/composables/campaign/reads'
-import TeamContracts from '@/components/sections/ContractManagementView/TeamContracts.vue'
+import CampaignManagersSection from '@/components/sections/ContractManagementView/CampaignManagersSection.vue'
 import { useCampaignManagerSettings } from '@/composables/campaign/reads'
 import { mockTeamStore } from '@/tests/mocks'
 import { useTeamStore } from '@/stores'
@@ -39,7 +39,7 @@ const initialSettings: CampaignManagerSettings = {
   bankAddress: '0x1111111111111111111111111111111111111111'
 }
 
-describe('TeamContracts.vue', () => {
+describe('CampaignManagersSection.vue', () => {
   const settingsEnabled = ref(false)
 
   beforeEach(() => {
@@ -77,7 +77,7 @@ describe('TeamContracts.vue', () => {
   })
 
   function mountComponent() {
-    return mount(TeamContracts, {
+    return mount(CampaignManagersSection, {
       global: {
         plugins: [createTestingPinia({ createSpy: vi.fn })],
         stubs: {
@@ -191,7 +191,7 @@ describe('TeamContracts.vue', () => {
       'value',
       '0.4'
     )
-    expect(wrapper.getComponent({ name: 'TeamContractsDetail' }).props('contractAddress')).toBe(
+    expect(wrapper.getComponent({ name: 'CampaignManagerRatesForm' }).props('managerAddress')).toBe(
       OTHER_MANAGER
     )
     await wrapper.get('[data-test="manager-cost-per-click"]').setValue('0.6')

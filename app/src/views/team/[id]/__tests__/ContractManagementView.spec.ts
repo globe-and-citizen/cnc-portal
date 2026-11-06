@@ -4,21 +4,21 @@ import { useGetTeamOfficersQuery, type TeamOfficerWithContracts } from '@/querie
 import { mockRouterReplace, mockTeamStore, renderWithProviders } from '@/tests/mocks'
 import ContractManagementView from '@/views/team/[id]/ContractManagementView.vue'
 
-vi.mock('@/components/sections/ContractManagementView/MainContractSection.vue', () => ({
+vi.mock('@/components/sections/ContractManagementView/CurrentOfficerContractsSection.vue', () => ({
   default: {
-    name: 'MainContractSection',
+    name: 'CurrentOfficerContractsSection',
     props: ['generation'],
     template: '<div data-test="current-panel">Current panel</div>'
   }
 }))
 
-vi.mock('@/components/sections/ContractManagementView/AdvertiseContractSection.vue', () => ({
+vi.mock('@/components/sections/ContractManagementView/AdvertisingCampaignsSection.vue', () => ({
   default: { template: '<div data-test="campaigns-panel">Campaigns panel</div>' }
 }))
 
-vi.mock('@/components/sections/ContractManagementView/DeploymentHistorySection.vue', () => ({
+vi.mock('@/components/sections/ContractManagementView/OfficerDeploymentHistorySection.vue', () => ({
   default: {
-    name: 'DeploymentHistorySection',
+    name: 'OfficerDeploymentHistorySection',
     props: ['generations'],
     template: '<div data-test="history-panel">History panel</div>'
   }
@@ -75,9 +75,9 @@ describe('ContractManagementView.vue', () => {
       route: { query: { tab: 'history' } }
     })
 
-    expect(wrapper.getComponent({ name: 'DeploymentHistorySection' }).props('generations')).toEqual(
-      [expect.objectContaining({ key: legacyOfficer.id, isCurrent: false })]
-    )
+    expect(
+      wrapper.getComponent({ name: 'OfficerDeploymentHistorySection' }).props('generations')
+    ).toEqual([expect.objectContaining({ key: legacyOfficer.id, isCurrent: false })])
   })
 
   it.each([
@@ -127,7 +127,9 @@ describe('ContractManagementView.vue', () => {
 
     const wrapper = renderWithProviders(ContractManagementView, { pinia: false })
 
-    expect(wrapper.getComponent({ name: 'MainContractSection' }).props('generation')).toEqual(
+    expect(
+      wrapper.getComponent({ name: 'CurrentOfficerContractsSection' }).props('generation')
+    ).toEqual(
       expect.objectContaining({
         key: mockTeamStore.currentTeam.currentOfficer?.id,
         officerAddress: mockTeamStore.currentTeam.currentOfficer?.address,

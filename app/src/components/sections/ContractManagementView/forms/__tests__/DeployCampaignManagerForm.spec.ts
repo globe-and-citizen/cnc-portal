@@ -1,15 +1,15 @@
 import { flushPromises, mount } from '@vue/test-utils'
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import CreateAddCampaign from '@/components/sections/ContractManagementView/forms/CreateAddCampaign.vue'
+import DeployCampaignManagerForm from '@/components/sections/ContractManagementView/forms/DeployCampaignManagerForm.vue'
 import { mockDeployState } from '@/tests/mocks/composables.mock'
 import { useCreateContractMutation } from '@/queries/contract.queries'
 import { useTeamStore } from '@/stores'
 import { mockTeamStore } from '@/tests/mocks/store.mock'
 import { createMockMutationResponse } from '@/tests/mocks/query.mock'
 
-const mountComponent = () => mount(CreateAddCampaign)
+const mountComponent = () => mount(DeployCampaignManagerForm)
 
-describe('[US-CONTRACT-003] CreateAddCampaign.vue', () => {
+describe('[US-CONTRACT-003] DeployCampaignManagerForm.vue', () => {
   beforeEach(() => {
     vi.clearAllMocks()
   })
@@ -214,7 +214,7 @@ describe('[US-CONTRACT-003] CreateAddCampaign.vue', () => {
         | { onSuccess?: () => unknown; onError?: (e: Error) => unknown }
         | undefined
 
-    it('emits closeAddCampaignModal and shows toast on successful contract creation', async () => {
+    it('emits close and shows toast on successful contract creation', async () => {
       const createContract = stubCreateContract()
       const wrapper = mountComponent()
       await replayDeploySuccess(wrapper)
@@ -222,7 +222,7 @@ describe('[US-CONTRACT-003] CreateAddCampaign.vue', () => {
       await lastCreateContractCallbacks(createContract)?.onSuccess?.()
       await flushPromises()
 
-      expect(wrapper.emitted('closeAddCampaignModal')).toBeTruthy()
+      expect(wrapper.emitted('close')).toBeTruthy()
     })
 
     it('stays open and shows error toast when createContract mutation fails', async () => {
@@ -233,7 +233,7 @@ describe('[US-CONTRACT-003] CreateAddCampaign.vue', () => {
       lastCreateContractCallbacks(createContract)?.onError?.(new Error('backend down'))
       await flushPromises()
 
-      expect(wrapper.emitted('closeAddCampaignModal')).toBeFalsy()
+      expect(wrapper.emitted('close')).toBeFalsy()
     })
 
     it('does nothing when the deployed address arrives but currentTeam is null', async () => {
@@ -244,7 +244,7 @@ describe('[US-CONTRACT-003] CreateAddCampaign.vue', () => {
 
       const wrapper = mountComponent()
       await replayDeploySuccess(wrapper)
-      expect(wrapper.emitted('closeAddCampaignModal')).toBeFalsy()
+      expect(wrapper.emitted('close')).toBeFalsy()
     })
   })
 

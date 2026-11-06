@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { Action, ActionResponse } from '@/types'
 import type { Address } from 'viem'
-import { filterAndFormatActions } from '../management'
+import { formatPendingBodActionsForContract } from '../bodActions'
 
 const contractAddress = '0x0000000000000000000000000000000000000001' as Address
 const userAddress = '0x0000000000000000000000000000000000000002' as Address
@@ -17,11 +17,11 @@ const makeAction = (description: string, id = 1): Action => ({
   teamId: 1
 })
 
-describe('filterAndFormatActions', () => {
+describe('formatPendingBodActionsForContract', () => {
   it('returns an empty list while the action payload has no data', () => {
     const incompleteResponse = {} as ActionResponse
 
-    expect(filterAndFormatActions('0xContract', incompleteResponse, [])).toEqual([])
+    expect(formatPendingBodActionsForContract('0xContract', incompleteResponse, [])).toEqual([])
   })
 
   it('formats a valid action description from its validated shape', () => {
@@ -31,7 +31,7 @@ describe('filterAndFormatActions', () => {
       total: 1
     }
 
-    expect(filterAndFormatActions(contractAddress, actions, [])).toMatchObject([
+    expect(formatPendingBodActionsForContract(contractAddress, actions, [])).toMatchObject([
       { title: 'Transfer ownership', description: 'Move ownership.' }
     ])
   })
@@ -47,7 +47,7 @@ describe('filterAndFormatActions', () => {
       total: 3
     }
 
-    expect(filterAndFormatActions(contractAddress, actions, [])).toMatchObject([
+    expect(formatPendingBodActionsForContract(contractAddress, actions, [])).toMatchObject([
       {
         title: 'Action details unavailable',
         description: 'The action description could not be read.'
