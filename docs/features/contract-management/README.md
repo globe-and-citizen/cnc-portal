@@ -406,7 +406,7 @@ action consumers remain outside this bounded migration.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `bc45b0d7e4e3a20f5a0a647739e7bc84ecca0c7e`
+**Implementation evidence reviewed against:** `cebdd8f58a2b3ae7a0d49012bcb16d731ca93604`
 
 - [Real Board mutation lifecycle tests](../../../app/src/composables/bod/__tests__/writes.spec.ts)
 - [Board reads](../../../app/src/composables/bod/reads.ts), [Board writes](../../../app/src/composables/bod/writes.ts),
