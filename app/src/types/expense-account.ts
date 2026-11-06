@@ -75,6 +75,10 @@ export interface ExpenseResponse {
   updatedAt: Date
 }
 
+/** Fields consumed when spending an approval; historical read metadata may be absent. */
+export type ExpenseApproval = Pick<ExpenseResponse, 'signature' | 'data' | 'status'> &
+  Partial<Pick<ExpenseResponse, 'balances' | 'sourceGeneration' | 'sourceEnforcesDisabled'>>
+
 export interface TransferData {
   address: {
     name: string

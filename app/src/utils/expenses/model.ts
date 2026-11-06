@@ -1,6 +1,11 @@
-import type { BudgetLimit, ExpenseResponse, TokenBalance, TokenOption } from '@/types'
+import type {
+  BudgetLimit,
+  ExpenseResponse,
+  ExpenseApproval,
+  TokenBalance,
+  TokenOption
+} from '@/types'
 import { parseUnits } from 'viem'
-import type { TableRow } from '@/types/table'
 import type { TokenId } from '@/constant'
 import { productExpenseToken } from './tokenPolicy'
 
@@ -63,7 +68,7 @@ export const getCurrentUserExpenses = (expenses: ExpenseResponse[], userAddress:
 }
 
 export const getTokens = (
-  expenses: TableRow[],
+  expenses: Pick<ExpenseApproval, 'signature' | 'data' | 'balances'>[],
   signature: string,
   balances: TokenBalance[]
 ): TokenOption[] => {
@@ -108,7 +113,10 @@ const findToken = (tokenId: TokenId, balances: TokenBalance[]) => {
  * @param contractBalance Contract holdings of the expense's token
  * @returns The remaining balance that can be spent, never negative
  */
-const getRemainingExpenseBalance = (expense: TableRow, contractBalance: number): number => {
+const getRemainingExpenseBalance = (
+  expense: Pick<ExpenseApproval, 'data' | 'balances'>,
+  contractBalance: number
+): number => {
   // Both are 0 on a never-used expense, and `balances` is absent on rows the
   // backend short-circuits. Truthiness checks here read those as "no budget"
   // and collapse the whole approval to 0 — coerce instead.
