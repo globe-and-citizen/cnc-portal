@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
+import { useChainId } from '@wagmi/vue'
 import type { Address } from 'viem'
 import { useTeamStore } from '@/stores'
 import type { TeamContract } from '@/types'
@@ -10,6 +11,7 @@ import TeamContractsDetail from './TeamContractsDetail.vue'
 import AdvertisingCampaignWorkspace from './AdvertisingCampaignWorkspace.vue'
 
 const teamStore = useTeamStore()
+const chainId = useChainId()
 const managers = computed(() =>
   (teamStore.currentTeam?.teamContracts ?? []).filter((contract) => contract.type === 'Campaign')
 )
@@ -39,21 +41,6 @@ const settingsOpen = ref(false)
 const managerSettings = useCampaignManagerSettings(selectedManagerAddress, {
   enabled: computed(() => settingsOpen.value)
 })
-const editableSettings = ref<Array<{ key: string; value: string }>>([])
-
-watch(
-  () => managerSettings.data.value,
-  (settings) => {
-    if (!settings) return
-    editableSettings.value = [
-      { key: 'costPerClick', value: settings.costPerClick },
-      { key: 'costPerImpression', value: settings.costPerImpression },
-      { key: 'bankAddress', value: settings.bankAddress }
-    ]
-  },
-  { immediate: true }
-)
-
 function openAdmins(manager: TeamContract) {
   selectedManagerAddress.value = manager.address
   adminsOpen.value = true
@@ -81,6 +68,7 @@ function openSettings(manager: TeamContract) {
         v-model="selectedManagerAddress"
         :items="managerOptions"
         aria-label="Select Campaign Manager"
+        data-test="campaign-manager-select"
         class="w-full sm:w-80"
       />
     </div>
@@ -119,6 +107,7 @@ function openSettings(manager: TeamContract) {
             variant="outline"
             icon="i-lucide-settings-2"
             label="Manager settings"
+            data-test="campaign-manager-settings"
             @click="openSettings(selectedManager)"
           />
         </div>
@@ -172,10 +161,10 @@ function openSettings(manager: TeamContract) {
           ]"
         />
         <TeamContractsDetail
-          v-else-if="selectedManagerAddress"
-          v-model:datas="editableSettings"
+          v-else-if="settingsOpen && selectedManagerAddress && managerSettings.data.value"
+          :key="`${chainId}:${selectedManagerAddress}`"
+          :settings="managerSettings.data.value"
           :contract-address="selectedManagerAddress"
-          :reset="!settingsOpen"
           @closeContractDataDialog="settingsOpen = false"
         />
       </template>

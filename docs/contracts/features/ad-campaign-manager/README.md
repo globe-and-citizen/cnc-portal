@@ -35,7 +35,7 @@ recovery; no contract invariant is changed by that client policy.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `635eb92ec16d0fa5fca930d458b0e35453af94d2`
+**Implementation evidence reviewed against:** `a15da820dbc6045c7ddff1da868a9884864397d4`
 
 - [Campaign manager setup form](../../../../app/src/components/sections/ContractManagementView/forms/CreateAddCampaign.vue)
 - [Campaign Manager deployment mutation](../../../../app/src/composables/useContractFunctions.ts)

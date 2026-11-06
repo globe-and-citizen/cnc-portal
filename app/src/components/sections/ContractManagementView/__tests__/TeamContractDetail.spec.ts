@@ -1,181 +1,175 @@
 import { mount, flushPromises } from '@vue/test-utils'
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
-import TeamContractsDetail from '@/components/sections/ContractManagementView/TeamContractsDetail.vue'
-import { ref } from 'vue'
+import TeamContractsDetail from '../TeamContractsDetail.vue'
+import type { CampaignManagerSettings } from '@/composables/campaign/reads'
+import { createContractWriteV3Mock } from '@/tests/mocks/erc20.mock'
+import { mockToast } from '@/tests/mocks'
 
-const setCostPerClickMock = vi.fn()
-const setCostPerImpressionMock = vi.fn()
-export const mockErrorSetCostPerClick = ref<Error | null>(null)
-export const mockErrorSetCostPerImpression = ref<Error | null>(null)
-const isPendingSetCostPerClick = ref(false)
-const isPendingSetCostPerImpression = ref(false)
-
+const click = createContractWriteV3Mock()
+const impression = createContractWriteV3Mock()
 vi.mock('@/composables/contracts/useContractWritesV3', () => ({
-  useContractWritesV3: vi.fn(({ functionName }: { functionName: string }) => {
-    if (functionName === 'setCostPerClick') {
-      return {
-        mutate: setCostPerClickMock,
-        error: mockErrorSetCostPerClick,
-        isPending: isPendingSetCostPerClick
-      }
-    }
-    return {
-      mutate: setCostPerImpressionMock,
-      error: mockErrorSetCostPerImpression,
-      isPending: isPendingSetCostPerImpression
-    }
-  })
+  useContractWritesV3: vi.fn(({ functionName }: { functionName: string }) =>
+    functionName === 'setCostPerClick' ? click : impression
+  )
 }))
+const settings: CampaignManagerSettings = {
+  costPerClick: '0.1',
+  costPerImpression: '0.5',
+  bankAddress: '0x1111111111111111111111111111111111111111'
+}
+const contractAddress = '0xE55978c9f7B9bFc190B355d65e7F1dEc2F41D320'
+type SuccessOptions = { onSuccess?: () => void }
 
-describe('[US-CONTRACT-003] TeamContractsDetail.vue', () => {
-  const contractAddress = '0xE55978c9f7B9bFc190B355d65e7F1dEc2F41D320'
-  const testData = [
-    { key: 'costPerClick', value: '0.1' },
-    { key: 'costPerImpression', value: '0.5' }
-  ]
+function mountForm(values = settings) {
+  return mount(TeamContractsDetail, { props: { settings: { ...values }, contractAddress } })
+}
 
-  const originalTestData = [
-    { key: 'costPerClick', value: '0.1' },
-    { key: 'costPerImpression', value: '0.5' }
-  ]
-
-  function getClonedTestData() {
-    return JSON.parse(JSON.stringify(originalTestData))
-  }
-
-  async function mountInitializedComponent(datas = getClonedTestData()) {
-    const wrapper = mount(TeamContractsDetail, {
-      props: {
-        datas: [],
-        contractAddress,
-        reset: false,
-        'onUpdate:datas': (updatedDatas: typeof datas) => {
-          void wrapper.setProps({ datas: updatedDatas })
-        }
-      }
-    })
-
-    await wrapper.setProps({ datas })
-    await flushPromises()
-    return wrapper
-  }
-
+describe('[US-CONTRACT-003] Campaign Manager rate draft', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
     vi.clearAllMocks()
-    mockErrorSetCostPerClick.value = null
-    mockErrorSetCostPerImpression.value = null
-    isPendingSetCostPerClick.value = false
-    isPendingSetCostPerImpression.value = false
+    click.mutate.mockReset()
+    impression.mutate.mockReset()
+    click.error.value = impression.error.value = null
+    click.isPending.value = impression.isPending.value = false
   })
 
-  it('renders business-friendly rate fields and the Bank destination', () => {
-    const datas = [
-      { key: 'costPerClick', value: '0.1' }, // should render input
-      { key: 'bankAddress', value: '0xABC' }, // should render AddressTooltip
-      { key: 'status', value: 'active' }
-    ]
-    const wrapper = mount(TeamContractsDetail, {
-      props: { datas, contractAddress, reset: true }
-    })
-    expect(wrapper.text()).toContain('Cost per click')
-    expect(wrapper.text()).toContain('Cost per impression')
-    expect(wrapper.text()).toContain('POL')
-    expect(wrapper.findAll('input[type="number"]')).toHaveLength(2)
-    const addressCell = wrapper.findComponent({ name: 'AddressTooltip' })
-    expect(addressCell.exists()).toBe(true)
-  })
-
-  it('keeps save disabled while rates match the persisted values', async () => {
-    const wrapper = await mountInitializedComponent()
-
-    expect(wrapper.find('button').attributes('disabled')).toBeDefined()
-    expect(setCostPerClickMock).not.toHaveBeenCalled()
-    expect(setCostPerImpressionMock).not.toHaveBeenCalled()
-  })
-
-  it('calls setCostPerClick and setCostPerImpression when save button is clicked with changed values', async () => {
-    const wrapper = await mountInitializedComponent()
-    // Modify input values to simulate user editing them
-    const inputCostPerClick = wrapper.findAll('input')[0]
-    await inputCostPerClick.setValue('0.2')
-    const inputCostPerImpression = wrapper.findAll('input')[1]
-    await inputCostPerImpression.setValue('0.4')
-    // Click the save button
-    await wrapper.find('button').trigger('click')
-    // Wait for Vue to process updates
-    await flushPromises()
-    // Check that the correct functions were called
-    expect(setCostPerClickMock).toHaveBeenCalledWith(
-      { args: [200000000000000000n] },
-      expect.any(Object)
+  it('renders both rates and the unchanged Bank destination with Save disabled', () => {
+    const wrapper = mountForm()
+    expect(wrapper.get('[data-test="manager-cost-per-click"]').element).toHaveProperty(
+      'value',
+      '0.1'
     )
-    expect(setCostPerImpressionMock).toHaveBeenCalledWith(
-      { args: [400000000000000000n] },
-      expect.any(Object)
+    expect(wrapper.get('[data-test="manager-cost-per-impression"]').element).toHaveProperty(
+      'value',
+      '0.5'
     )
-    // expect(setCostPerClickMock).toHaveBeenCalledWith(contractAddress, '0.2')
-    // expect(setCostPerImpressionMock).toHaveBeenCalledWith(contractAddress, '0.4')
+    expect(wrapper.getComponent({ name: 'AddressTooltip' }).props('address')).toBe(
+      settings.bankAddress
+    )
+    expect(wrapper.get('[data-test="campaign-rate-save"]').attributes('disabled')).toBeDefined()
   })
 
-  it('shows error toast and does not call setCostPerClick if costPerClick is zero or negative', async () => {
-    const wrapper = await mountInitializedComponent()
-    const inputCostPerClick = wrapper.findAll('input')[0]
-    await inputCostPerClick.setValue('0')
+  it('edits a local draft without mutating the query settings or relaying a parent update', async () => {
+    const wrapper = mountForm(settings)
+    await wrapper.get('[data-test="manager-cost-per-click"]').setValue('0.2')
+    expect(wrapper.get('[data-test="manager-cost-per-click"]').element).toHaveProperty(
+      'value',
+      '0.2'
+    )
+    expect(wrapper.props('settings')).toEqual(settings)
+    expect(wrapper.emitted('update:datas')).toBeUndefined()
+    expect(wrapper.get('[data-test="campaign-rate-save"]').attributes('disabled')).toBeUndefined()
+  })
+
+  it('normalizes negative input and disables Save after restoring the confirmed rate', async () => {
+    const wrapper = mountForm()
+    await wrapper.get('[data-test="manager-cost-per-click"]').setValue('-0.2')
+    expect(wrapper.get('[data-test="manager-cost-per-click"]').element).toHaveProperty(
+      'value',
+      '0.2'
+    )
+    await wrapper.get('[data-test="manager-cost-per-click"]').setValue('0.1')
+    expect(wrapper.get('[data-test="campaign-rate-save"]').attributes('disabled')).toBeDefined()
+  })
+
+  it.each([
+    ['click', 'manager-cost-per-click', 'Cost per click should be greater than 0'],
+    ['impression', 'manager-cost-per-impression', 'Cost per impression should be greater than 0']
+  ])('rejects a changed zero %s rate before either write', async (_kind, field, title) => {
+    const wrapper = mountForm()
+    await wrapper.get(`[data-test="${field}"]`).setValue('0')
+    await wrapper.get('[data-test="campaign-rate-save"]').trigger('click')
+    expect(click.mutate).not.toHaveBeenCalled()
+    expect(impression.mutate).not.toHaveBeenCalled()
+    expect(mockToast.add).toHaveBeenCalledWith({ title, color: 'error' })
+  })
+
+  it('submits both changed rates in exact 18-decimal base units and waits for both confirmations', async () => {
+    const wrapper = mountForm()
+    await wrapper.get('[data-test="manager-cost-per-click"]').setValue('0.2')
+    await wrapper.get('[data-test="manager-cost-per-impression"]').setValue('0.7')
+    await wrapper.get('[data-test="campaign-rate-save"]').trigger('click')
+    expect(click.mutate).toHaveBeenCalledWith({ args: [200000000000000000n] }, expect.anything())
+    expect(impression.mutate).toHaveBeenCalledWith(
+      { args: [700000000000000000n] },
+      expect.anything()
+    )
+    const clickOptions = click.mutate.mock.calls[0]![1] as SuccessOptions
+    const impressionOptions = impression.mutate.mock.calls[0]![1] as SuccessOptions
+    clickOptions.onSuccess?.()
     await flushPromises()
-    await wrapper.find('button').trigger('click')
+    expect(wrapper.emitted('closeContractDataDialog')).toBeUndefined()
+    impressionOptions.onSuccess?.()
     await flushPromises()
-    expect(setCostPerClickMock).not.toHaveBeenCalled()
+    expect(wrapper.emitted('closeContractDataDialog')).toHaveLength(1)
+    expect(wrapper.get('[data-test="campaign-rate-save"]').attributes('disabled')).toBeDefined()
   })
 
-  it('does not call update functions when values have not changed', async () => {
-    const wrapper = await mountInitializedComponent()
-
-    expect(wrapper.find('button').attributes('disabled')).toBeDefined()
-    expect(setCostPerClickMock).not.toHaveBeenCalled()
-    expect(setCostPerImpressionMock).not.toHaveBeenCalled()
-  })
-
-  it('emits update:datas when inputs are changed', async () => {
-    const wrapper = mount(TeamContractsDetail, {
-      props: {
-        datas: testData,
-        contractAddress,
-        reset: true
-      }
+  it('retries only the unsaved rate after the other field succeeds', async () => {
+    const wrapper = mountForm()
+    await wrapper.get('[data-test="manager-cost-per-click"]').setValue('0.2')
+    await wrapper.get('[data-test="manager-cost-per-impression"]').setValue('0.7')
+    await wrapper.get('[data-test="campaign-rate-save"]').trigger('click')
+    ;(click.mutate.mock.calls[0]![1] as SuccessOptions).onSuccess?.()
+    impression.error.value = new Error('reverted')
+    await flushPromises()
+    expect(mockToast.add).toHaveBeenCalledWith({
+      title: 'Set cost per impression failed',
+      color: 'error'
     })
-    const inputs = wrapper.findAll('input')
-    // Change first input
-    await inputs[0].setValue('0.2')
+    expect(wrapper.emitted('closeContractDataDialog')).toBeUndefined()
+    await wrapper.get('[data-test="campaign-rate-save"]').trigger('click')
+    expect(click.mutate).toHaveBeenCalledTimes(1)
+    expect(impression.mutate).toHaveBeenCalledTimes(2)
+    ;(impression.mutate.mock.calls[1]![1] as SuccessOptions).onSuccess?.()
     await flushPromises()
-    // Change second input
-    await inputs[1].setValue('0.6')
-    await flushPromises()
-    const emitted = wrapper.emitted('update:datas')
-    expect(emitted).toBeTruthy()
-    const firstEventData = emitted![0][0] as { key: string; value: string }[]
-    const secondEventData = emitted![1][0] as { key: string; value: string }[]
-    expect(firstEventData[0].value).toBe('0.2')
-    expect(secondEventData[1].value).toBe('0.6')
+    expect(wrapper.emitted('closeContractDataDialog')).toHaveLength(1)
   })
 
-  it('shows error toast and does not call setCostPerImpression if costPerImpression is zero or negative', async () => {
-    const wrapper = await mountInitializedComponent()
-    const inputCostPerImpression = wrapper.findAll('input')[1]
-    await inputCostPerImpression.setValue('0')
-    await flushPromises()
-    await wrapper.find('button').trigger('click')
-    await flushPromises()
-    expect(setCostPerImpressionMock).not.toHaveBeenCalled()
+  it('adopts refreshed rates and baseline while the draft is still pristine', async () => {
+    const wrapper = mountForm()
+    await wrapper.setProps({ settings: { ...settings, costPerClick: '0.3' } })
+    expect(wrapper.get('[data-test="manager-cost-per-click"]').element).toHaveProperty(
+      'value',
+      '0.3'
+    )
+    expect(wrapper.get('[data-test="campaign-rate-save"]').attributes('disabled')).toBeDefined()
+    await wrapper.get('[data-test="manager-cost-per-click"]').setValue('0.4')
+    await wrapper.get('[data-test="campaign-rate-save"]').trigger('click')
+    expect(click.mutate).toHaveBeenCalledWith({ args: [400000000000000000n] }, expect.anything())
+    expect(impression.mutate).not.toHaveBeenCalled()
   })
 
-  it('shows error toast if setCostPerClick returns failure status', async () => {
-    setCostPerClickMock.mockResolvedValueOnce({ status: 0 }) // simulate failure
-    const wrapper = await mountInitializedComponent()
-    await wrapper.findAll('input')[0].setValue('0.2')
-    await wrapper.find('button').trigger('click')
+  it('does not overwrite an in-progress draft or baseline during a settings refetch', async () => {
+    const wrapper = mountForm()
+    await wrapper.get('[data-test="manager-cost-per-click"]').setValue('0.2')
+    await wrapper.setProps({ settings: { ...settings, costPerClick: '0.3' } })
+    expect(wrapper.get('[data-test="manager-cost-per-click"]').element).toHaveProperty(
+      'value',
+      '0.2'
+    )
+    expect(wrapper.get('[data-test="campaign-rate-save"]').attributes('disabled')).toBeUndefined()
+  })
+
+  it('disables submission while either write is pending', async () => {
+    const wrapper = mountForm()
+    await wrapper.get('[data-test="manager-cost-per-click"]').setValue('0.2')
+    impression.isPending.value = true
     await flushPromises()
-    expect(setCostPerClickMock).toHaveBeenCalled()
+    expect(wrapper.get('[data-test="campaign-rate-save"]').attributes('disabled')).toBeDefined()
+    expect(click.mutate).not.toHaveBeenCalled()
+  })
+
+  it('reports a click failure without claiming confirmation', async () => {
+    const wrapper = mountForm()
+    click.error.value = new Error('reverted')
+    await flushPromises()
+    expect(mockToast.add).toHaveBeenCalledWith({
+      title: 'Set cost per click failed',
+      color: 'error'
+    })
+    expect(wrapper.emitted('closeContractDataDialog')).toBeUndefined()
   })
 })

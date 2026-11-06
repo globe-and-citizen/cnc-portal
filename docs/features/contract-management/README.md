@@ -404,9 +404,22 @@ success handling. A shared generation-metadata type connects current/archived pr
 These static contracts do not replace runtime authorization, schema validation or product acceptance; unrelated generic table and Board
 action consumers remain outside this bounded migration.
 
+## Campaign Manager settings draft
+
+Manager settings retain the typed `CampaignManagerSettings` read result through the settings form. The form owns a local draft of click and
+impression rates and a confirmed-rate baseline; it does not convert the model to generic string rows or send edits back into the query
+result. The Bank destination remains read-only. Input normalization, positive changed-rate validation, 18-decimal write arguments and the
+archived-company guard retain their existing rules.
+
+Opening the settings panel with loaded data mounts a fresh draft. Closing discards unsaved edits; reopening uses the latest loaded rates.
+Changing manager or chain replaces the form for that identity. A background settings refresh updates a pristine draft and its baseline but
+does not overwrite active edits. Each confirmed field advances its own baseline, so an unconfirmed field remains editable/retryable; the
+panel closes only after all writes submitted by that save have confirmed. These frontend tests use controlled query data and write
+callbacks, not real wallet transactions or product acceptance.
+
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `cebdd8f58a2b3ae7a0d49012bcb16d731ca93604`
+**Implementation evidence reviewed against:** `a15da820dbc6045c7ddff1da868a9884864397d4`
 
 - [Real Board mutation lifecycle tests](../../../app/src/composables/bod/__tests__/writes.spec.ts)
 - [Board reads](../../../app/src/composables/bod/reads.ts), [Board writes](../../../app/src/composables/bod/writes.ts),
@@ -430,6 +443,10 @@ action consumers remain outside this bounded migration.
 - [Pending Board-action data formatting](../../../app/src/utils/contracts/management.ts)
 - [Integrated Board dividend approval and quorum execution](../../../app/test/e2e/shareholder/shareholder-issuance-dividends.integrated.spec.ts),
   including persistence of the first zero-based Board action
+- [Campaign Manager selection and settings lifetime](../../../app/src/components/sections/ContractManagementView/TeamContracts.vue),
+  [typed rate form](../../../app/src/components/sections/ContractManagementView/TeamContractsDetail.vue),
+  [draft/confirmation tests](../../../app/src/components/sections/ContractManagementView/__tests__/TeamContractDetail.spec.ts), and
+  [parent/form lifetime tests](../../../app/src/components/sections/ContractManagementView/__tests__/TeamContracts.spec.ts)
 - [Campaign Management section](../../../app/src/components/sections/ContractManagementView/AdvertiseContractSection.vue)
 - [Advertising campaign workspace](../../../app/src/components/sections/ContractManagementView/AdvertisingCampaignWorkspace.vue)
 - [Campaign Manager setup form](../../../app/src/components/sections/ContractManagementView/forms/CreateAddCampaign.vue) and
@@ -475,9 +492,9 @@ action consumers remain outside this bounded migration.
   the active-generation entry point, and `005-05` checks a blank name but not a blank symbol.
 - Historic balance recovery overlaps the Bank account result in `AC-US-BANK-004-02`. Contract Management owns initiating recovery; Accounts
   owns verifying the receiving Bank balance. Their combined evidence must not be counted twice as separate completed transfers.
-- The legacy TeamContractDetailExtend suite duplicates the current manager-settings coverage with obsolete mocks and assertion-free cases,
-  while TeamContractEventList exercises a component that no current product surface imports. Both suites remain intentionally unmapped
-  pending cleanup or restoration of a reachable journey.
+- TeamContractEventList exercises a component that no current product surface imports. That suite remains intentionally unmapped pending
+  cleanup or restoration of a reachable journey. Manager-settings draft/confirmation coverage is consolidated in TeamContractDetail; parent
+  lifetime checks exercise the real form with controlled settings reads and shared mutation mocks.
 
 ## Related Documentation
 
