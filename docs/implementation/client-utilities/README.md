@@ -184,6 +184,11 @@ six history consumers documented by [Transaction History](../transaction-history
 registry retains type/counterparty metadata and does not re-export or implement display truncation. Full hashes remain domain values; short
 labels are never identifiers for requests, comparisons or writes.
 
+Workbook downloads use the active [Accounting exporter](../../../app/src/lib/accounting/spreadsheet.ts) and its
+[real-workbook tests](../../../app/src/lib/accounting/__tests__/spreadsheet.spec.ts). The unused generic exporter that created an empty Blob
+and its placeholder-only suite are not part of the client implementation. No dependency, active PDF/spreadsheet implementation or numeric
+conversion policy changes with that removal; live export semantics and their existing limitations remain owned by Accounting.
+
 ## Implementation Evidence
 
 [Shared balance reads](../../../app/src/composables/useContractBalance.ts) accept caller-supplied query options while preserving the
@@ -192,7 +197,7 @@ post-confirmation balance invalidations reach both. [Currency prices](../../../a
 currency payload and query-backed nullable conversions while consuming the centralized CoinGecko price query, whose preset freshness,
 polling and direct Axios reads are described in [Client Data Access](../client-data-access/README.md#browser-request-coordination).
 
-**Implementation evidence reviewed against:** `20b213c1c6c1903766d67725d2b430b95e156cdf`
+**Implementation evidence reviewed against:** `c747babbd0ecd64b8896a024af07685554cfaf64`
 
 - [Utility ownership map and domain implementations](../../../app/src/utils/)
 - [Shared Accounting domain contracts](../../../app/src/utils/accounting/types.ts)
@@ -223,7 +228,7 @@ polling and direct Axios reads are described in [Client Data Access](../client-d
   [contract-read tests](../../../app/src/composables/contracts/__tests__/readManagedContracts.spec.ts)
 - [Safe browser effects](../../../app/src/lib/safe/browser.ts), [Safe transaction effects](../../../app/src/lib/safe/transactions.ts),
   [logging](../../../app/src/lib/logging.ts), [accounting exports](../../../app/src/lib/accounting/), and
-  [file exports](../../../app/src/lib/files/)
+  [Accounting workbook exports](../../../app/src/lib/accounting/spreadsheet.ts)
 - [Overview-card tests](../../../app/src/components/ui/__tests__/OverviewCard.spec.ts),
   [address-presentation tests](../../../app/src/components/ui/__tests__/AddressTooltip.spec.ts),
   [token-holdings tests](../../../app/src/components/ui/__tests__/TokenHoldingsSection.spec.ts),
