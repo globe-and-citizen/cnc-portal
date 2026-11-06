@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { readContract } from '@wagmi/core'
 import type { DeploymentContract } from '@/types/deployments'
-import { getTeamContracts } from '../readTeamContracts'
+import { readManagedContracts } from '../readManagedContracts'
 
 const CONTRACTS: DeploymentContract[] = [
   {
@@ -23,7 +23,7 @@ const CONTRACTS: DeploymentContract[] = [
 
 const mockReadContract = vi.mocked(readContract)
 
-describe('getTeamContracts pause capability reads', () => {
+describe('readManagedContracts pause capability reads', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockReadContract.mockImplementation(async (_config, parameters) => {
@@ -36,7 +36,7 @@ describe('getTeamContracts pause capability reads', () => {
   })
 
   it('[AC-US-CONTRACT-001-05] distinguishes active, unsupported, and unknown contracts', async () => {
-    const result = await getTeamContracts(CONTRACTS, '2.0.1')
+    const result = await readManagedContracts(CONTRACTS, '2.0.1')
 
     expect(result?.map(({ pauseStatus }) => pauseStatus)).toEqual([
       'active',
@@ -57,7 +57,7 @@ describe('getTeamContracts pause capability reads', () => {
       throw new Error('Unexpected contract read')
     })
 
-    const result = await getTeamContracts([CONTRACTS[0]!], '2.0.1')
+    const result = await readManagedContracts([CONTRACTS[0]!], '2.0.1')
 
     expect(result?.[0]?.pauseStatus).toBe('paused')
   })
@@ -70,13 +70,13 @@ describe('getTeamContracts pause capability reads', () => {
       throw new Error('RPC unavailable')
     })
 
-    const result = await getTeamContracts([CONTRACTS[0]!], '2.0.1')
+    const result = await readManagedContracts([CONTRACTS[0]!], '2.0.1')
 
     expect(result?.[0]?.pauseStatus).toBe('unavailable')
   })
 
   it('[AC-US-CONTRACT-001-10] does not probe pause state for an unresolved generation', async () => {
-    const result = await getTeamContracts([CONTRACTS[0]!], 'unknown')
+    const result = await readManagedContracts([CONTRACTS[0]!], 'unknown')
 
     expect(result?.[0]?.pauseStatus).toBe('unavailable')
     expect(

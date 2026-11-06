@@ -56,7 +56,7 @@
             :contracts="generation.contracts"
           />
         </div>
-        <MainContractTable
+        <ManagedContractsTable
           :contracts="generation.contracts"
           :version="generation.version"
           :show-actions="false"
@@ -78,7 +78,7 @@ import { computed, ref, watch } from 'vue'
 import AddressTooltip from '@/components/ui/AddressTooltip.vue'
 import type { ContractGeneration } from '@/types/deployments'
 import LegacyGenerationWithdrawAction from './LegacyGenerationWithdrawAction.vue'
-import MainContractTable from './MainContractTable.vue'
+import ManagedContractsTable from './ManagedContractsTable.vue'
 
 const props = defineProps<{
   generations: ContractGeneration[]

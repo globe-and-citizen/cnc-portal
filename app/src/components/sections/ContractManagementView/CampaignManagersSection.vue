@@ -6,8 +6,8 @@ import { useTeamStore } from '@/stores'
 import type { TeamContract } from '@/types'
 import { useCampaignManagerSettings } from '@/composables/campaign/reads'
 import AddressTooltip from '@/components/ui/AddressTooltip.vue'
-import TeamContractAdmins from './TeamContractAdmins.vue'
-import TeamContractsDetail from './TeamContractsDetail.vue'
+import CampaignManagerAdminsSection from './CampaignManagerAdminsSection.vue'
+import CampaignManagerRatesForm from './forms/CampaignManagerRatesForm.vue'
 import AdvertisingCampaignWorkspace from './AdvertisingCampaignWorkspace.vue'
 
 const teamStore = useTeamStore()
@@ -125,10 +125,10 @@ function openSettings(manager: TeamContract) {
       description="Manage the addresses allowed to validate advertising spend."
     >
       <template #body>
-        <TeamContractAdmins
+        <CampaignManagerAdminsSection
           v-if="selectedManager"
-          :contract="selectedManager"
-          :range="managers.indexOf(selectedManager) + 1"
+          :manager="selectedManager"
+          :manager-number="managers.indexOf(selectedManager) + 1"
         />
       </template>
     </UModal>
@@ -160,12 +160,12 @@ function openSettings(manager: TeamContract) {
             }
           ]"
         />
-        <TeamContractsDetail
+        <CampaignManagerRatesForm
           v-else-if="settingsOpen && selectedManagerAddress && managerSettings.data.value"
           :key="`${chainId}:${selectedManagerAddress}`"
           :settings="managerSettings.data.value"
-          :contract-address="selectedManagerAddress"
-          @closeContractDataDialog="settingsOpen = false"
+          :manager-address="selectedManagerAddress"
+          @close="settingsOpen = false"
         />
       </template>
     </USlideover>

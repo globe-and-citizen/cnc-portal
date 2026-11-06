@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { mount } from '@vue/test-utils'
 import type { Component } from 'vue'
-import MainContractBalanceCell from '../MainContractBalanceCell.vue'
+import ContractBalanceCell from '../ContractBalanceCell.vue'
 import { makeTokenBalance, mockUseContractBalance } from '@/tests/mocks'
 
 const ADDRESS = '0x0000000000000000000000000000000000000001'
@@ -20,7 +20,7 @@ const PopoverStub = {
 }
 
 function mountComponent() {
-  return mount(MainContractBalanceCell, {
+  return mount(ContractBalanceCell, {
     props: { address: ADDRESS },
     global: {
       stubs: {
@@ -34,7 +34,7 @@ function mountComponent() {
   })
 }
 
-describe('MainContractBalanceCell', () => {
+describe('ContractBalanceCell', () => {
   beforeEach(() => {
     mockUseContractBalance.isLoading.value = false
     mockUseContractBalance.error.value = null

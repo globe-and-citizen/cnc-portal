@@ -29,26 +29,24 @@
                   :disabled="
                     teamStore.currentTeam?.ownerAddress != userStore.address || archivedDisabled
                   "
-                  data-test="createAddCampaign"
-                  @click="openAdCampaignModal"
+                  data-test="deploy-campaign-manager"
+                  @click="openManagerSetupModal"
                   label="Set up Campaign Manager"
                 />
               </TeamArchivedTooltip>
             </div>
           </div>
         </template>
-        <TeamContracts />
+        <CampaignManagersSection />
       </UCard>
       <UModal
-        v-if="showAdCampaignModal.mount"
-        v-model:open="showAdCampaignModal.show"
+        v-if="managerSetupModal.mount"
+        v-model:open="managerSetupModal.show"
         title="Set up Campaign Manager"
         description="Configure the on-chain service that creates and settles funded advertising campaigns."
       >
         <template #body>
-          <CreateAddCampaign
-            @closeAddCampaignModal="showAdCampaignModal = { mount: false, show: false }"
-          />
+          <DeployCampaignManagerForm @close="managerSetupModal = { mount: false, show: false }" />
         </template>
       </UModal>
     </div>
@@ -56,11 +54,11 @@
 </template>
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import TeamContracts from '@/components/sections/ContractManagementView/TeamContracts.vue'
+import CampaignManagersSection from '@/components/sections/ContractManagementView/CampaignManagersSection.vue'
 import { useUserDataStore } from '@/stores/user'
 import { useTeamStore } from '@/stores'
 
-import CreateAddCampaign from '@/components/sections/ContractManagementView/forms/CreateAddCampaign.vue'
+import DeployCampaignManagerForm from '@/components/sections/ContractManagementView/forms/DeployCampaignManagerForm.vue'
 import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
 import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
 
@@ -72,10 +70,10 @@ const hasCampaignManager = computed(() =>
   (teamStore.currentTeam?.teamContracts ?? []).some((contract) => contract.type === 'Campaign')
 )
 
-const showAdCampaignModal = ref({ mount: false, show: false })
+const managerSetupModal = ref({ mount: false, show: false })
 
-function openAdCampaignModal() {
+function openManagerSetupModal() {
   if (isWriteDisabled.value) return
-  showAdCampaignModal.value = { mount: true, show: true }
+  managerSetupModal.value = { mount: true, show: true }
 }
 </script>

@@ -1,19 +1,19 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import AdvertiseContractSection from '@/components/sections/ContractManagementView/AdvertiseContractSection.vue'
+import AdvertisingCampaignsSection from '@/components/sections/ContractManagementView/AdvertisingCampaignsSection.vue'
 import { useTeamStore } from '@/stores'
 import { mockTeamStore, renderWithProviders } from '@/tests/mocks'
 
-vi.mock('@/components/sections/ContractManagementView/TeamContracts.vue', () => ({
+vi.mock('@/components/sections/ContractManagementView/CampaignManagersSection.vue', () => ({
   default: { template: '<div data-test="team-contracts-stub" />' }
 }))
 
-vi.mock('@/components/sections/ContractManagementView/forms/CreateAddCampaign.vue', () => ({
+vi.mock('@/components/sections/ContractManagementView/forms/DeployCampaignManagerForm.vue', () => ({
   default: { template: '<div data-test="create-add-campaign-stub" />' }
 }))
 
-const mountSection = () => renderWithProviders(AdvertiseContractSection)
+const mountSection = () => renderWithProviders(AdvertisingCampaignsSection)
 
-describe('[US-CONTRACT-003] AdvertiseContractSection.vue', () => {
+describe('[US-CONTRACT-003] AdvertisingCampaignsSection.vue', () => {
   beforeEach(() => {
     vi.clearAllMocks()
   })
@@ -26,7 +26,7 @@ describe('[US-CONTRACT-003] AdvertiseContractSection.vue', () => {
 
     const wrapper = mountSection()
     expect(wrapper.find('[data-icon="i-lucide-loader-circle"]').exists()).toBe(true)
-    expect(wrapper.find('[data-test="createAddCampaign"]').exists()).toBe(false)
+    expect(wrapper.find('[data-test="deploy-campaign-manager"]').exists()).toBe(false)
   })
 
   it('renders the deploy card once team meta has resolved', () => {
@@ -37,7 +37,7 @@ describe('[US-CONTRACT-003] AdvertiseContractSection.vue', () => {
 
     const wrapper = mountSection()
     expect(wrapper.find('[data-icon="i-lucide-loader-circle"]').exists()).toBe(false)
-    expect(wrapper.find('[data-test="createAddCampaign"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="deploy-campaign-manager"]').exists()).toBe(true)
     expect(wrapper.text()).toContain('Advertising campaigns')
   })
 
@@ -58,6 +58,6 @@ describe('[US-CONTRACT-003] AdvertiseContractSection.vue', () => {
       }
     } as unknown as ReturnType<typeof useTeamStore>)
     const wrapper = mountSection()
-    expect(wrapper.find('[data-test="createAddCampaign"]').exists()).toBe(false)
+    expect(wrapper.find('[data-test="deploy-campaign-manager"]').exists()).toBe(false)
   })
 })

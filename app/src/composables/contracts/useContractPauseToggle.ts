@@ -5,9 +5,9 @@ import { useContractWritesV3 } from '@/composables/contracts/useContractWritesV3
 import { classifyError } from '@/utils/errors/classifyContractError'
 import { log } from '@/lib/logging'
 
-export function useContractStatusChange(
+export function useContractPauseToggle(
   contractAddress: Ref<Address | undefined>,
-  onStatusChanged: () => void
+  onPauseChanged: () => void
 ) {
   const toast = useToast()
   const pauseMutation = useContractWritesV3({
@@ -21,16 +21,18 @@ export function useContractStatusChange(
     functionName: 'unpause'
   })
 
-  function changeContractStatus(paused: boolean) {
-    const mutation = paused ? unpauseMutation : pauseMutation
-    const successTitle = paused ? 'Contract resumed successfully!' : 'Contract paused successfully!'
+  function toggleContractPause(currentlyPaused: boolean) {
+    const mutation = currentlyPaused ? unpauseMutation : pauseMutation
+    const successTitle = currentlyPaused
+      ? 'Contract resumed successfully!'
+      : 'Contract paused successfully!'
 
     mutation.mutate(
       { args: [] },
       {
         onSuccess: () => {
           toast.add({ title: successTitle, color: 'success' })
-          onStatusChanged()
+          onPauseChanged()
         }
       }
     )
@@ -50,6 +52,6 @@ export function useContractStatusChange(
   watchStatusError(unpauseMutation.error, 'errorUnpauseContract.value')
 
   return {
-    changeContractStatus
+    toggleContractPause
   }
 }

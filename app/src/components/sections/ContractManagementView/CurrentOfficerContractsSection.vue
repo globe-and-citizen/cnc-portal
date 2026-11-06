@@ -39,14 +39,14 @@
               :disabled="
                 teamStore.currentTeam?.ownerAddress !== userStore.address || archivedDisabled
               "
-              data-test="createAddCampaign"
+              data-test="redeploy-officer"
               @click="openRedeployModal"
             />
           </TeamArchivedTooltip>
         </div>
       </UCard>
 
-      <MainContractTable :contracts="currentContracts" :version="generation.version" />
+      <ManagedContractsTable :contracts="currentContracts" :version="generation.version" />
     </template>
 
     <UEmpty
@@ -56,7 +56,7 @@
       description="Deploy an Officer generation to manage contracts."
     />
 
-    <RedeployOfficerModal v-model:open="showModal" />
+    <RedeployOfficerModal v-model:open="isRedeployModalOpen" />
   </section>
 </template>
 
@@ -68,7 +68,7 @@ import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
 import { useTeamStore } from '@/stores'
 import { useUserDataStore } from '@/stores/user'
 import type { ContractGeneration } from '@/types/deployments'
-import MainContractTable from './MainContractTable.vue'
+import ManagedContractsTable from './ManagedContractsTable.vue'
 import RedeployOfficerModal from './RedeployOfficerModal.vue'
 
 const props = defineProps<{
@@ -78,13 +78,13 @@ const props = defineProps<{
 const teamStore = useTeamStore()
 const userStore = useUserDataStore()
 const { isWriteDisabled } = useTeamWriteGuard()
-const showModal = ref(false)
+const isRedeployModalOpen = ref(false)
 const currentContracts = computed(
   () => props.generation?.contracts.filter((contract) => contract.type !== 'Campaign') ?? []
 )
 
 function openRedeployModal() {
   if (isWriteDisabled.value) return
-  showModal.value = true
+  isRedeployModalOpen.value = true
 }
 </script>

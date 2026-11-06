@@ -24,7 +24,7 @@
       <div>
         <dt class="text-muted">Balance</dt>
         <dd class="text-default mt-1">
-          <MainContractBalanceCell v-if="row.holdsValue" :address="row.contract.address" />
+          <ContractBalanceCell v-if="row.holdsValue" :address="row.contract.address" />
           <span v-else>No balance</span>
         </dd>
       </div>
@@ -35,7 +35,7 @@
     </dl>
 
     <div v-if="row.actionState" class="border-default mt-4 border-t pt-3">
-      <MainContractActionMenu
+      <ManagedContractActionMenu
         :row="row.contract"
         :action-state="row.actionState"
         @view-details="emit('view-details', row.contract)"
@@ -43,7 +43,7 @@
         @open-in-explorer="emit('open-in-explorer', row.contract.address)"
         @review-pending-actions="emit('review-pending-actions', row.contract)"
         @transfer-ownership="emit('transfer-ownership', row.contract)"
-        @change-status="emit('change-status', row.contract, $event)"
+        @toggle-pause="emit('toggle-pause', row.contract, $event)"
       />
     </div>
   </article>
@@ -55,9 +55,9 @@ import AddressTooltip from '@/components/ui/AddressTooltip.vue'
 import UserIdentity from '@/components/ui/UserIdentity.vue'
 import { getContractPauseStatusPresentation } from '@/utils/contracts/pauseCapabilities'
 import { getContractPresentation } from '@/utils/contracts/presentation'
-import MainContractActionMenu from './MainContractActionMenu.vue'
-import MainContractBalanceCell from './MainContractBalanceCell.vue'
-import type { ContractTableRow } from './MainContractTable.types'
+import ManagedContractActionMenu from './ManagedContractActionMenu.vue'
+import ContractBalanceCell from './ContractBalanceCell.vue'
+import type { ContractTableRow } from './ManagedContractsTable.types'
 
 interface Props {
   row: ContractTableRow
@@ -70,7 +70,7 @@ const emit = defineEmits<{
   'open-in-explorer': [address: string]
   'review-pending-actions': [row: ContractTableRow['contract']]
   'transfer-ownership': [row: ContractTableRow['contract']]
-  'change-status': [row: ContractTableRow['contract'], paused: boolean]
+  'toggle-pause': [row: ContractTableRow['contract'], paused: boolean]
 }>()
 
 const presentation = computed(() => getContractPresentation(props.row.contract.type))

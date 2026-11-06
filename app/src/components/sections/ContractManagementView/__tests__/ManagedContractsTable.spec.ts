@@ -3,15 +3,15 @@ import { flushPromises, mount } from '@vue/test-utils'
 import type { Component } from 'vue'
 import { useBodIsMember } from '@/composables/bod/reads'
 import { useGetBodActionsQuery } from '@/queries'
-import * as contractReads from '@/composables/contracts/readTeamContracts'
+import * as contractReads from '@/composables/contracts/readManagedContracts'
 
 vi.mock('@nuxt/ui/components/Select.vue', async () => ({
   default: (await import('@/tests/stubs/nuxt-ui.stubs')).USelectStub
 }))
 
-import MainContractTable from '../MainContractTable.vue'
+import ManagedContractsTable from '../ManagedContractsTable.vue'
 
-const CONTRACTS: Pick<contractReads.TeamContractReadModel, 'address' | 'type' | 'deployer'>[] = [
+const CONTRACTS: Pick<contractReads.ManagedContractReadModel, 'address' | 'type' | 'deployer'>[] = [
   {
     address: '0x0000000000000000000000000000000000000001',
     type: 'Bank',
@@ -24,7 +24,7 @@ const CONTRACTS: Pick<contractReads.TeamContractReadModel, 'address' | 'type' | 
   }
 ]
 
-const ENRICHED_CONTRACTS: contractReads.TeamContractReadModel[] = CONTRACTS.map((contract) => ({
+const ENRICHED_CONTRACTS: contractReads.ManagedContractReadModel[] = CONTRACTS.map((contract) => ({
   ...contract,
   abi: [],
   owner: '0xOwner',
@@ -36,7 +36,7 @@ const ENRICHED_CONTRACTS: contractReads.TeamContractReadModel[] = CONTRACTS.map(
   }
 }))
 
-const CAPABILITY_CONTRACTS: contractReads.TeamContractReadModel[] = [
+const CAPABILITY_CONTRACTS: contractReads.ManagedContractReadModel[] = [
   ENRICHED_CONTRACTS[0]!,
   { ...ENRICHED_CONTRACTS[1]!, pauseStatus: 'paused' as const },
   {
@@ -68,7 +68,7 @@ const TableStub = {
 }
 
 const ActionMenuStub = {
-  name: 'MainContractActionMenu',
+  name: 'ManagedContractActionMenu',
   props: ['row'],
   emits: ['view-details'],
   template:
@@ -76,14 +76,14 @@ const ActionMenuStub = {
 }
 
 const ActionControllerStub = {
-  name: 'MainContractActions',
-  props: ['row', 'open', 'pendingActions', 'isBodAction', 'statusChangeRequest'],
+  name: 'ManagedContractActionDialogs',
+  props: ['row', 'open', 'pendingActions', 'isBodAction', 'pauseToggleRequest'],
   template:
     '<div data-test="contract-action-controller">{{ row?.address || \'none\' }} {{ open }}</div>'
 }
 
 function mountComponent() {
-  return mount(MainContractTable, {
+  return mount(ManagedContractsTable, {
     props: { contracts: CONTRACTS, version: '2.0.1' },
     global: {
       stubs: {
@@ -93,18 +93,18 @@ function mountComponent() {
         UTable: TableStub as Component,
         AddressTooltip: { template: '<span />' },
         UserIdentity: { template: '<span />' },
-        MainContractBalanceCell: { template: '<span />' },
-        MainContractActionMenu: ActionMenuStub as Component,
-        MainContractActions: ActionControllerStub as Component
+        ContractBalanceCell: { template: '<span />' },
+        ManagedContractActionMenu: ActionMenuStub as Component,
+        ManagedContractActionDialogs: ActionControllerStub as Component
       }
     }
   })
 }
 
-describe('[US-CONTRACT-001][US-CONTRACT-002] MainContractTable.vue', () => {
+describe('[US-CONTRACT-001][US-CONTRACT-002] ManagedContractsTable.vue', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.spyOn(contractReads, 'getTeamContracts').mockResolvedValue(ENRICHED_CONTRACTS as never)
+    vi.spyOn(contractReads, 'readManagedContracts').mockResolvedValue(ENRICHED_CONTRACTS as never)
   })
 
   it('uses one Board-action query and one selected-contract controller for both responsive triggers', async () => {
@@ -135,12 +135,14 @@ describe('[US-CONTRACT-001][US-CONTRACT-002] MainContractTable.vue', () => {
   })
 
   it('[AC-US-CONTRACT-001-02] filters only contracts with verified active or paused states', async () => {
-    vi.spyOn(contractReads, 'getTeamContracts').mockResolvedValueOnce(CAPABILITY_CONTRACTS as never)
+    vi.spyOn(contractReads, 'readManagedContracts').mockResolvedValueOnce(
+      CAPABILITY_CONTRACTS as never
+    )
     const wrapper = mountComponent()
     await flushPromises()
 
     const statusSelect = wrapper.getComponent({ name: 'USelect' })
-    const desktopTable = wrapper.getComponent({ name: 'MainContractDesktopTable' })
+    const desktopTable = wrapper.getComponent({ name: 'ManagedContractsDesktopTable' })
     expect(desktopTable.props('rows')).toHaveLength(4)
     statusSelect.vm.$emit('update:modelValue', 'active')
     await wrapper.vm.$nextTick()

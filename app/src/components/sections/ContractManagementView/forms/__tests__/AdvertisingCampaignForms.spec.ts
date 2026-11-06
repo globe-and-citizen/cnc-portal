@@ -2,8 +2,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
 import { ref } from 'vue'
 import { parseEther, type Address } from 'viem'
-import CreateAdvertisingCampaign from '@/components/sections/ContractManagementView/forms/CreateAdvertisingCampaign.vue'
-import WithdrawAdvertisingCampaign from '@/components/sections/ContractManagementView/forms/WithdrawAdvertisingCampaign.vue'
+import CreateAdvertisingCampaignForm from '@/components/sections/ContractManagementView/forms/CreateAdvertisingCampaignForm.vue'
+import WithdrawAdvertisingCampaignForm from '@/components/sections/ContractManagementView/forms/WithdrawAdvertisingCampaignForm.vue'
 import {
   useCreateAdvertisingCampaign,
   useWithdrawAdvertisingCampaign
@@ -35,7 +35,7 @@ describe('[US-CONTRACT-003] advertising campaign transaction forms', () => {
   })
 
   it('explains funding and submits the wallet value for a new campaign', async () => {
-    const wrapper = mount(CreateAdvertisingCampaign, { props: { managerAddress: MANAGER } })
+    const wrapper = mount(CreateAdvertisingCampaignForm, { props: { managerAddress: MANAGER } })
     expect(wrapper.text()).toContain('Your wallet funds this campaign')
     const state = wrapper.getCurrentComponent().setupState.state as { budget: string }
     state.budget = '2.5'
@@ -58,7 +58,7 @@ describe('[US-CONTRACT-003] advertising campaign transaction forms', () => {
       advertiser: ADVERTISER,
       status: 'active' as const
     }
-    const wrapper = mount(WithdrawAdvertisingCampaign, {
+    const wrapper = mount(WithdrawAdvertisingCampaignForm, {
       props: { managerAddress: MANAGER, campaign }
     })
     expect(wrapper.text()).toContain('This closes the campaign')

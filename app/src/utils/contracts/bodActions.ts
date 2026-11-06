@@ -2,7 +2,7 @@ import type { Action, ActionResponse, TeamContract, User } from '@/types'
 import { z } from 'zod'
 import { formatDate } from '@/utils/format'
 
-export type FormattedAction = (Action & {
+export type FormattedBodActions = (Action & {
   requestedBy: User
   dateCreated: string
   title: string
@@ -32,7 +32,7 @@ function parseActionDescription(value: unknown) {
   }
 }
 
-export const getUser = (
+export const resolveBodActionParty = (
   address: string,
   members: User[],
   bodAddress = '',
@@ -50,7 +50,7 @@ export const getUser = (
     )
 }
 
-export const filterAndFormatActions = (
+export const formatPendingBodActionsForContract = (
   address: string,
   actions: ActionResponse | undefined,
   members: User[]
@@ -63,7 +63,7 @@ export const filterAndFormatActions = (
 
       return {
         ...action,
-        requestedBy: getUser(action.userAddress, members),
+        requestedBy: resolveBodActionParty(action.userAddress, members),
         dateCreated: action.createdAt ? formatDate(action.createdAt) : '',
         description: description.description,
         title: description.title

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { mount } from '@vue/test-utils'
-import MainContractActionMenu from '../MainContractActionMenu.vue'
-import type { ManagedContractRow } from '../MainContractTable.types'
+import ManagedContractActionMenu from '../ManagedContractActionMenu.vue'
+import type { ManagedContractRow } from '../ManagedContractsTable.types'
 
 const DEFAULT_ROW: ManagedContractRow = {
   address: '0xContract000000000000000000000000000001',
@@ -23,13 +23,13 @@ function mountComponent(
   rowOverrides: Partial<ManagedContractRow> = {},
   props: Record<string, unknown> = {}
 ) {
-  return mount(MainContractActionMenu, {
+  return mount(ManagedContractActionMenu, {
     props: {
       row: { ...DEFAULT_ROW, ...rowOverrides },
       actionState: {
         pendingActionCount: 0,
         canManage: false,
-        canChangeStatus: false,
+        canTogglePause: false,
         canReviewPendingActions: false
       },
       ...props
@@ -48,7 +48,7 @@ function selectMenuItem(wrapper: ReturnType<typeof mountComponent>, label: strin
   item?.onSelect?.()
 }
 
-describe('MainContractActionMenu.vue', () => {
+describe('ManagedContractActionMenu.vue', () => {
   it('renders the contextual actions for active and paused contracts', () => {
     const active = mountComponent({ pauseStatus: 'active' })
     const paused = mountComponent({ pauseStatus: 'paused' })
@@ -96,7 +96,7 @@ describe('MainContractActionMenu.vue', () => {
         actionState: {
           pendingActionCount: 1,
           canManage: true,
-          canChangeStatus: true,
+          canTogglePause: true,
           canReviewPendingActions: true
         }
       }
@@ -114,7 +114,7 @@ describe('MainContractActionMenu.vue', () => {
     expect(wrapper.emitted('open-in-explorer')).toHaveLength(1)
     expect(wrapper.emitted('review-pending-actions')).toHaveLength(1)
     expect(wrapper.emitted('transfer-ownership')).toHaveLength(1)
-    expect(wrapper.emitted('change-status')).toEqual([[false]])
+    expect(wrapper.emitted('toggle-pause')).toEqual([[false]])
     expect(wrapper.findComponent({ name: 'UModal' }).exists()).toBe(false)
     expect(wrapper.findComponent({ name: 'USlideover' }).exists()).toBe(false)
   })

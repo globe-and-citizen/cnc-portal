@@ -22,14 +22,14 @@
   </UTable>
 </template>
 <script setup lang="ts">
-import type { FormattedAction } from '@/utils/contracts/management'
+import type { FormattedBodActions } from '@/utils/contracts/bodActions'
 import UserIdentity from '@/components/ui/UserIdentity.vue'
 import { useBodIsActionExecuted } from '@/composables/bod/reads'
 import { computed } from 'vue'
 
 const emits = defineEmits(['view-details'])
 
-const props = defineProps<{ pendingActions: FormattedAction }>()
+const props = defineProps<{ pendingActions: FormattedBodActions }>()
 
 const readers = props.pendingActions.map((a) => ({
   action: a,

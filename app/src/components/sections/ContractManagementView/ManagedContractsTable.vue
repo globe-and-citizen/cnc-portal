@@ -37,7 +37,7 @@
     </div>
 
     <UCard :ui="{ body: 'p-0 sm:p-0' }">
-      <MainContractDesktopTable
+      <ManagedContractsDesktopTable
         :rows="displayedContractRows"
         :is-refreshing="isRefreshing"
         :show-actions="showActions"
@@ -46,11 +46,11 @@
         @open-in-explorer="openContractInExplorer"
         @review-pending-actions="openContractAction($event, 'approval')"
         @transfer-ownership="openContractAction($event, 'transfer')"
-        @change-status="requestStatusChange"
+        @toggle-pause="requestPauseToggle"
       />
 
       <div v-if="displayedContracts.length" class="divide-default divide-y md:hidden">
-        <MainContractMobileCard
+        <ManagedContractMobileCard
           v-for="row in displayedContractRows"
           :key="row.contract.address"
           :row="row"
@@ -59,18 +59,18 @@
           @open-in-explorer="openContractInExplorer"
           @review-pending-actions="openContractAction($event, 'approval')"
           @transfer-ownership="openContractAction($event, 'transfer')"
-          @change-status="requestStatusChange"
+          @toggle-pause="requestPauseToggle"
         />
       </div>
 
-      <MainContractActions
+      <ManagedContractActionDialogs
         v-if="showActions"
         :row="selectedContract"
         :version="version"
         :pending-actions="selectedPendingActions"
         :is-bod-action="selectedIsBodAction"
         :open="selectedActionSurface"
-        :status-change-request="statusChangeRequest"
+        :pause-toggle-request="pauseToggleRequest"
         @update:open="selectedActionSurface = $event"
         @contract-status-changed="refresh"
       />
@@ -97,25 +97,25 @@ import { useGetBodActionsQuery } from '@/queries'
 import { useTeamStore, useUserDataStore } from '@/stores'
 import type { User } from '@/types'
 import type { DeploymentContract } from '@/types/deployments'
-import type { FormattedAction } from '@/utils/contracts/management'
-import { filterAndFormatActions } from '@/utils/contracts/management'
+import type { FormattedBodActions } from '@/utils/contracts/bodActions'
+import { formatPendingBodActionsForContract } from '@/utils/contracts/bodActions'
 import {
-  getTeamContracts,
-  type TeamContractReadModel
-} from '@/composables/contracts/readTeamContracts'
+  readManagedContracts,
+  type ManagedContractReadModel
+} from '@/composables/contracts/readManagedContracts'
 import { getContractPresentation } from '@/utils/contracts/presentation'
-import MainContractActions from './MainContractActions.vue'
-import MainContractDesktopTable from './MainContractDesktopTable.vue'
-import MainContractMobileCard from './MainContractMobileCard.vue'
+import ManagedContractActionDialogs from './ManagedContractActionDialogs.vue'
+import ManagedContractsDesktopTable from './ManagedContractsDesktopTable.vue'
+import ManagedContractMobileCard from './ManagedContractMobileCard.vue'
 import type {
   ContractActionState,
   ContractTableRow,
   ManagedContractRow
-} from './MainContractTable.types'
+} from './ManagedContractsTable.types'
 
 type ContractActionSurface = 'details' | 'transfer' | 'approval' | null
 
-interface ContractStatusChangeRequest {
+interface ContractPauseToggleRequest {
   id: number
   paused: boolean
 }
@@ -134,14 +134,14 @@ const userDataStore = useUserDataStore()
 const toast = useToast()
 const { copy } = useClipboard()
 const { isWriteDisabled } = useTeamWriteGuard()
-const enrichedContracts = ref<TeamContractReadModel[]>([])
+const enrichedContracts = ref<ManagedContractReadModel[]>([])
 const isRefreshing = ref(false)
 const statusFilter = ref<'all' | 'active' | 'paused'>('all')
 const sortOrder = ref<'contract' | 'status'>('contract')
-const selectedContract = ref<TeamContractReadModel | null>(null)
+const selectedContract = ref<ManagedContractReadModel | null>(null)
 const selectedActionSurface = ref<ContractActionSurface>(null)
-const statusChangeRequest = ref<ContractStatusChangeRequest | null>(null)
-const nextStatusChangeRequestId = ref(0)
+const pauseToggleRequest = ref<ContractPauseToggleRequest | null>(null)
+const nextPauseToggleRequestId = ref(0)
 const showActions = computed(() => props.showActions)
 const bodMemberAddress = computed<Address>(
   () => (showActions.value ? userDataStore.address : '') as Address
@@ -182,10 +182,10 @@ const pausedCount = computed(
 )
 const pendingActionsByContract = computed(
   () =>
-    new Map<string, FormattedAction>(
+    new Map<string, FormattedBodActions>(
       enrichedContracts.value.map((contract) => [
         contract.address,
-        filterAndFormatActions(
+        formatPendingBodActionsForContract(
           contract.address,
           bodActions.value,
           teamStore.currentTeam?.members || []
@@ -197,7 +197,7 @@ const selectedPendingActions = computed(() =>
   selectedContract.value ? pendingActionsFor(selectedContract.value) : []
 )
 const selectedIsBodAction = computed(() =>
-  selectedContract.value ? isBodAction(selectedContract.value) : false
+  selectedContract.value ? canSubmitBodAction(selectedContract.value) : false
 )
 
 const VALUE_HOLDING_TYPES = new Set([
@@ -208,28 +208,29 @@ const VALUE_HOLDING_TYPES = new Set([
 ])
 const holdsValue = (type: string) => VALUE_HOLDING_TYPES.has(type)
 const presentation = (type: string) => getContractPresentation(type)
-const pendingActionsFor = (contract: TeamContractReadModel): FormattedAction =>
+const pendingActionsFor = (contract: ManagedContractReadModel): FormattedBodActions =>
   pendingActionsByContract.value.get(contract.address) ?? []
-const isBodAction = (contract: TeamContractReadModel) =>
+const canSubmitBodAction = (contract: ManagedContractReadModel) =>
   contract.owner === teamStore.getContractAddressByType('BoardOfDirectors') &&
   isCurrentUserBodMember.value === true
-const canManage = (contract: TeamContractReadModel) =>
-  !isWriteDisabled.value && (contract.owner === userDataStore.address || isBodAction(contract))
-const canReviewPendingActions = (contract: TeamContractReadModel) =>
-  !isWriteDisabled.value && isBodAction(contract) && pendingActionsFor(contract).length > 0
-const actionStateFor = (contract: TeamContractReadModel): ContractActionState | undefined =>
+const canManage = (contract: ManagedContractReadModel) =>
+  !isWriteDisabled.value &&
+  (contract.owner === userDataStore.address || canSubmitBodAction(contract))
+const canReviewPendingActions = (contract: ManagedContractReadModel) =>
+  !isWriteDisabled.value && canSubmitBodAction(contract) && pendingActionsFor(contract).length > 0
+const actionStateFor = (contract: ManagedContractReadModel): ContractActionState | undefined =>
   showActions.value
     ? {
         pendingActionCount: pendingActionsFor(contract).length,
         canManage: canManage(contract),
-        canChangeStatus:
+        canTogglePause:
           canManage(contract) &&
           (contract.pauseStatus === 'active' || contract.pauseStatus === 'paused'),
         canReviewPendingActions: canReviewPendingActions(contract)
       }
     : undefined
 
-const getUser = (address: string | null): User => {
+const resolveContractOwnerIdentity = (address: string | null): User => {
   if (address && address === teamStore.getContractAddressByType('BoardOfDirectors')) {
     return { name: 'Board of Directors', address }
   }
@@ -244,7 +245,7 @@ const getUser = (address: string | null): User => {
 const displayedContractRows = computed<ContractTableRow[]>(() =>
   displayedContracts.value.map((contract) => ({
     contract,
-    owner: getUser(contract.owner),
+    owner: resolveContractOwnerIdentity(contract.owner),
     holdsValue: holdsValue(contract.type),
     actionState: actionStateFor(contract)
   }))
@@ -253,7 +254,7 @@ const displayedContractRows = computed<ContractTableRow[]>(() =>
 async function refresh() {
   isRefreshing.value = true
   try {
-    enrichedContracts.value = (await getTeamContracts(props.contracts, props.version)) || []
+    enrichedContracts.value = (await readManagedContracts(props.contracts, props.version)) || []
   } finally {
     isRefreshing.value = false
   }
@@ -264,14 +265,14 @@ function openContractAction(contract: ManagedContractRow, surface: ContractActio
   selectedActionSurface.value = surface
 }
 
-function requestStatusChange(contract: ManagedContractRow, paused: boolean) {
+function requestPauseToggle(contract: ManagedContractRow, paused: boolean) {
   if (contract.pauseStatus !== 'active' && contract.pauseStatus !== 'paused') return
 
   selectedContract.value = contract
   selectedActionSurface.value = null
-  nextStatusChangeRequestId.value += 1
-  statusChangeRequest.value = {
-    id: nextStatusChangeRequestId.value,
+  nextPauseToggleRequestId.value += 1
+  pauseToggleRequest.value = {
+    id: nextPauseToggleRequestId.value,
     paused
   }
 }

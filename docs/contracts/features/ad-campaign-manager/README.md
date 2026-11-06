@@ -35,11 +35,11 @@ recovery; no contract invariant is changed by that client policy.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `a15da820dbc6045c7ddff1da868a9884864397d4`
+**Implementation evidence reviewed against:** `ce6ae5493392f46869705f37900480ed34d0723c`
 
-- [Campaign manager setup form](../../../../app/src/components/sections/ContractManagementView/forms/CreateAddCampaign.vue)
+- [Campaign manager setup form](../../../../app/src/components/sections/ContractManagementView/forms/DeployCampaignManagerForm.vue)
 - [Campaign Manager deployment mutation](../../../../app/src/composables/useContractFunctions.ts)
-- [Campaign rate configuration](../../../../app/src/components/sections/ContractManagementView/TeamContractsDetail.vue)
+- [Campaign rate configuration](../../../../app/src/components/sections/ContractManagementView/forms/CampaignManagerRatesForm.vue)
 - [Campaign rate write hooks](../../../../app/src/composables/campaign/writes.ts) — one focused hook for each rate-setting contract function
 
 ---

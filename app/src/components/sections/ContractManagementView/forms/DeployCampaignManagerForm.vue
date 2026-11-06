@@ -13,7 +13,7 @@ import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
 import AddressTooltip from '@/components/ui/AddressTooltip.vue'
 import { formatToken } from '@/utils/format'
 
-const emit = defineEmits(['closeAddCampaignModal'])
+const emit = defineEmits(['close'])
 const toast = useToast()
 const teamStore = useTeamStore()
 const userDataStore = useUserDataStore()
@@ -40,7 +40,7 @@ const formSchema = z.object({
   costPerClick: positiveAmount,
   costPerImpression: positiveAmount
 })
-type CampaignFormSchema = z.output<typeof formSchema>
+type CampaignManagerDeploymentSchema = z.output<typeof formSchema>
 
 const submissionError = ref<string | null>(
   formState.bankAddress ? null : 'A Bank contract is required before setting up the manager.'
@@ -60,7 +60,7 @@ const errorMessage = computed(() => {
     : (message ?? 'Campaign Manager setup failed. Please retry.')
 })
 
-const registerDeployedContract = (contractAddress: Address) => {
+const registerCampaignManager = (contractAddress: Address) => {
   const team = teamStore.currentTeam
   if (!team) return
 
@@ -76,7 +76,7 @@ const registerDeployedContract = (contractAddress: Address) => {
     {
       onSuccess: () => {
         toast.add({ title: 'Campaign Manager is ready', color: 'success' })
-        emit('closeAddCampaignModal')
+        emit('close')
       },
       onError: () => {
         toast.add({
@@ -100,7 +100,7 @@ const rateSummary = computed(() => [
   }
 ])
 
-function deployCampaignManager(event: FormSubmitEvent<CampaignFormSchema>) {
+function deployCampaignManager(event: FormSubmitEvent<CampaignManagerDeploymentSchema>) {
   if (!event.data.bankAddress) {
     submissionError.value = 'A Bank contract is required before setting up the manager.'
     return
@@ -112,7 +112,7 @@ function deployCampaignManager(event: FormSubmitEvent<CampaignFormSchema>) {
       costPerClick: event.data.costPerClick,
       costPerImpression: event.data.costPerImpression
     },
-    { onSuccess: registerDeployedContract }
+    { onSuccess: registerCampaignManager }
   )
 }
 

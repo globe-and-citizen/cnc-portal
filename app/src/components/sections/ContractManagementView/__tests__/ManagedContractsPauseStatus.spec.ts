@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import { mount } from '@vue/test-utils'
 import type { Component } from 'vue'
-import MainContractDesktopTable from '../MainContractDesktopTable.vue'
-import MainContractMobileCard from '../MainContractMobileCard.vue'
+import ManagedContractsDesktopTable from '../ManagedContractsDesktopTable.vue'
+import ManagedContractMobileCard from '../ManagedContractMobileCard.vue'
 import type { ContractPauseStatus } from '@/utils/contracts/pauseCapabilities'
-import type { ContractTableRow } from '../MainContractTable.types'
+import type { ContractTableRow } from '../ManagedContractsTable.types'
 
 const STATUSES: ContractPauseStatus[] = ['active', 'paused', 'not-supported', 'unavailable']
 
@@ -40,13 +40,13 @@ const globalStubs = {
   UTable: TableStub as Component,
   AddressTooltip: { template: '<span />' },
   UserIdentity: { template: '<span />' },
-  MainContractBalanceCell: { template: '<span />' },
-  MainContractActionMenu: { template: '<span />' }
+  ContractBalanceCell: { template: '<span />' },
+  ManagedContractActionMenu: { template: '<span />' }
 }
 
 describe('Contract Management pause status presentation', () => {
   it('[AC-US-CONTRACT-001-05] labels every supported and degraded pause state on desktop', () => {
-    const wrapper = mount(MainContractDesktopTable, {
+    const wrapper = mount(ManagedContractsDesktopTable, {
       props: { rows, isRefreshing: false, showActions: false },
       global: { stubs: globalStubs }
     })
@@ -58,7 +58,7 @@ describe('Contract Management pause status presentation', () => {
   })
 
   it('[AC-US-CONTRACT-001-05] labels an unsupported pause capability on mobile', () => {
-    const wrapper = mount(MainContractMobileCard, {
+    const wrapper = mount(ManagedContractMobileCard, {
       props: { row: rows[2]! },
       global: { stubs: globalStubs }
     })

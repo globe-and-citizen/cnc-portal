@@ -245,7 +245,7 @@ The database uses Prisma ORM with the following core entities:
 **Relationships:**
 
 - Users ↔ Teams (many-to-many via MemberTeamsData)
-- Teams → TeamContracts (one-to-many)
+- Teams → CampaignManagersSection (one-to-many)
 - Users → Claims (one-to-many)
 - Teams → Expenses (one-to-many)
 - Teams → BoardOfDirectorActions (one-to-many)
