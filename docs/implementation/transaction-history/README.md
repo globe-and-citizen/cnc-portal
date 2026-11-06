@@ -58,9 +58,21 @@ event is unpriced; zero-amount configuration events do not require a quote. Curr
 when its quote is absent. Table pagination, grouping identity, event-source ownership and Accounting values are unchanged. Quote errors and
 recovery remain with the underlying queries and shared notice rather than being copied into table state.
 
+## Transaction hash display
+
+Bank, Expense, Cash Remuneration, Investor, Credit and merchant payment histories import `formatTxHash` from the canonical
+[display-format module](../../../app/src/utils/format/address.ts). The label keeps six leading characters (including `0x`) and four trailing
+characters, separated by three dots. Values of ten characters or fewer remain intact; the existing canonical missing-value behavior is
+unchanged. Accounting and the payment widget use the same owner.
+
+This shortening is display-only. Records, row selection, requests and explorer targets retain the complete hash. The transaction registry
+owns transaction-type metadata and counterparty rules; it no longer defines a second hash formatter. Quantities, grouping, filtering, dates
+and Accounting postings are unchanged. Canonical helper tests and the rendered merchant-history test establish local formatting proof; they
+do not constitute a new browser or chain-transaction validation.
+
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `9e715cf332a5f36fe441a0fcfd8d5ba189c23f82`
+**Implementation evidence reviewed against:** `20b213c1c6c1903766d67725d2b430b95e156cdf`
 
 - [Shared table state](../../../app/src/composables/transactions/useTransactionTable.ts)
 - [Shared table-state tests](../../../app/src/composables/transactions/__tests__/useTransactionTable.spec.ts)

@@ -179,6 +179,11 @@ resolve their parties. `FormattedBodActions` names the existing array shape; it 
 `readManagedContracts` and `ManagedContractReadModel`; pause/resume dispatch remains separate in `useContractPauseToggle`. These names
 identify the existing responsibility without changing cache keys, ABI methods or authorization.
 
+Transaction hash labels use the single `formatTxHash` owner in [display formatting](../../../app/src/utils/format/address.ts), including the
+six history consumers documented by [Transaction History](../transaction-history/README.md#transaction-hash-display). The transaction
+registry retains type/counterparty metadata and does not re-export or implement display truncation. Full hashes remain domain values; short
+labels are never identifiers for requests, comparisons or writes.
+
 ## Implementation Evidence
 
 [Shared balance reads](../../../app/src/composables/useContractBalance.ts) accept caller-supplied query options while preserving the
@@ -187,7 +192,7 @@ post-confirmation balance invalidations reach both. [Currency prices](../../../a
 currency payload and query-backed nullable conversions while consuming the centralized CoinGecko price query, whose preset freshness,
 polling and direct Axios reads are described in [Client Data Access](../client-data-access/README.md#browser-request-coordination).
 
-**Implementation evidence reviewed against:** `ce6ae5493392f46869705f37900480ed34d0723c`
+**Implementation evidence reviewed against:** `20b213c1c6c1903766d67725d2b430b95e156cdf`
 
 - [Utility ownership map and domain implementations](../../../app/src/utils/)
 - [Shared Accounting domain contracts](../../../app/src/utils/accounting/types.ts)

@@ -561,7 +561,7 @@ policy is preserved. This display rule does not change share issuance, dividend 
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `cebdd8f58a2b3ae7a0d49012bcb16d731ca93604`
+**Implementation evidence reviewed against:** `20b213c1c6c1903766d67725d2b430b95e156cdf`
 
 - [Shareholder Management route](../../../app/src/views/team/%5Bid%5D/SherTokenView.vue) and
   [Investor overview](../../../app/src/components/sections/SherTokenView/InvestorsHeader.vue)
