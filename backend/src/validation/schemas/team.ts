@@ -24,6 +24,7 @@ export const updateTeamBodySchema = z.object({
   description: z.string().optional(),
   isArchived: z.boolean().optional(),
   isHidden: z.boolean().optional(),
+  isFavorite: z.boolean().optional(),
 });
 
 const booleanQueryParamSchema = z.preprocess((value) => {
