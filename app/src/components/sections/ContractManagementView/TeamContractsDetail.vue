@@ -11,8 +11,8 @@
     <div class="border-default rounded-lg border p-3">
       <p class="text-muted text-xs">Advertising revenue destination</p>
       <AddressTooltip
-        v-if="bankAddress"
-        :address="bankAddress"
+        v-if="settings.bankAddress"
+        :address="settings.bankAddress"
         :slice="false"
         class="mt-1 text-sm"
       />
@@ -25,7 +25,7 @@
           type="number"
           min="0"
           step="any"
-          :model-value="costPerClick"
+          :model-value="draft.costPerClick"
           class="w-full"
           data-test="manager-cost-per-click"
           @update:model-value="updateCost('costPerClick', $event)"
@@ -43,7 +43,7 @@
           type="number"
           min="0"
           step="any"
-          :model-value="costPerImpression"
+          :model-value="draft.costPerImpression"
           class="w-full"
           data-test="manager-cost-per-impression"
           @update:model-value="updateCost('costPerImpression', $event)"
@@ -71,75 +71,51 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
+import { useToast } from '@nuxt/ui/composables'
 import { parseUnits, type Address } from 'viem'
 import AddressTooltip from '@/components/ui/AddressTooltip.vue'
 import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
+import type { CampaignManagerSettings } from '@/composables/campaign/reads'
 import {
   useSetCampaignCostPerClick,
   useSetCampaignCostPerImpression
 } from '@/composables/campaign/writes'
 
-interface CampaignContractDatum {
-  key: string
-  value: string
-}
+type CampaignRates = Pick<CampaignManagerSettings, 'costPerClick' | 'costPerImpression'>
 
 const props = defineProps<{
-  datas: CampaignContractDatum[]
-  contractAddress: string
-  reset: boolean
+  settings: CampaignManagerSettings
+  contractAddress: Address
 }>()
 const emit = defineEmits<{
-  (event: 'update:datas', value: CampaignContractDatum[]): void
   (event: 'closeContractDataDialog'): void
 }>()
 const toast = useToast()
-const initialized = ref(false)
 const pendingTransactions = ref(0)
-const originalRates = ref({ costPerClick: 0, costPerImpression: 0 })
-const campaignAddress = computed(() => props.contractAddress as Address)
+const draft = ref<CampaignRates>({
+  costPerClick: props.settings.costPerClick,
+  costPerImpression: props.settings.costPerImpression
+})
+const originalRates = ref({
+  costPerClick: Number.parseFloat(props.settings.costPerClick || '0'),
+  costPerImpression: Number.parseFloat(props.settings.costPerImpression || '0')
+})
+const campaignAddress = computed(() => props.contractAddress)
 const setCostPerClick = useSetCampaignCostPerClick(campaignAddress)
 const setCostPerImpression = useSetCampaignCostPerImpression(campaignAddress)
 const isLoading = computed(
   () => setCostPerClick.isPending.value || setCostPerImpression.isPending.value
 )
 
-const costPerClick = computed(
-  () => props.datas.find((data) => data.key === 'costPerClick')?.value ?? ''
-)
-const costPerImpression = computed(
-  () => props.datas.find((data) => data.key === 'costPerImpression')?.value ?? ''
-)
-const bankAddress = computed(
-  () => props.datas.find((data) => data.key === 'bankAddress')?.value ?? ''
-)
 const hasChanges = computed(
   () =>
-    Number.parseFloat(costPerClick.value || '0') !== originalRates.value.costPerClick ||
-    Number.parseFloat(costPerImpression.value || '0') !== originalRates.value.costPerImpression
+    Number.parseFloat(draft.value.costPerClick || '0') !== originalRates.value.costPerClick ||
+    Number.parseFloat(draft.value.costPerImpression || '0') !==
+      originalRates.value.costPerImpression
 )
 
-function updateCost(key: string, value: string | number) {
-  const updatedDatas = props.datas.map((data) =>
-    data.key === key
-      ? { ...data, value: String(Math.abs(Number.parseFloat(String(value)) || 0)) }
-      : data
-  )
-  emit('update:datas', updatedDatas)
-}
-
-function initializeRates(datas: CampaignContractDatum[]) {
-  if (initialized.value || !datas.length) return
-
-  originalRates.value = {
-    costPerClick: Number.parseFloat(
-      datas.find((data) => data.key === 'costPerClick')?.value || '0'
-    ),
-    costPerImpression: Number.parseFloat(
-      datas.find((data) => data.key === 'costPerImpression')?.value || '0'
-    )
-  }
-  initialized.value = true
+function updateCost(key: keyof CampaignRates, value: string | number) {
+  draft.value[key] = String(Math.abs(Number.parseFloat(String(value)) || 0))
 }
 
 function completeTransaction(key: 'costPerClick' | 'costPerImpression', value: number) {
@@ -149,8 +125,8 @@ function completeTransaction(key: 'costPerClick' | 'costPerImpression', value: n
 }
 
 function submit() {
-  const clickRate = Number.parseFloat(costPerClick.value)
-  const impressionRate = Number.parseFloat(costPerImpression.value)
+  const clickRate = Number.parseFloat(draft.value.costPerClick)
+  const impressionRate = Number.parseFloat(draft.value.costPerImpression)
   if (!Number.isFinite(clickRate) || !Number.isFinite(impressionRate)) return
 
   const clickChanged = originalRates.value.costPerClick !== clickRate
@@ -189,13 +165,6 @@ function submit() {
   }
 }
 
-watch(
-  () => props.reset,
-  (reset) => {
-    if (reset) initialized.value = false
-  }
-)
-watch(() => props.datas, initializeRates, { deep: true })
 watch(setCostPerClick.error, (error) => {
   if (error) toast.add({ title: 'Set cost per click failed', color: 'error' })
 })
