@@ -68,6 +68,26 @@ const mountCard = (team: Team = makeTeam(), treasury = makeTreasury()) =>
   })
 
 describe('TeamCard', () => {
+  describe('[US-COMPANIES-009] Pin', () => {
+    const findPin = (team: Team) => mountCard(team).find('[data-test="team-favorite"]')
+
+    it('offers to pin a company that is not pinned', () => {
+      expect(findPin(makeTeam()).attributes('aria-label')).toBe('Pin Team A')
+    })
+
+    it('offers to unpin a pinned company', () => {
+      expect(findPin(makeTeam({ isFavorite: true })).attributes('aria-label')).toBe('Unpin Team A')
+    })
+
+    it('[AC-US-COMPANIES-009-01] announces the toggle when the pin is clicked', async () => {
+      const wrapper = mountCard()
+
+      await wrapper.find('[data-test="team-favorite"]').trigger('click')
+
+      expect(wrapper.emitted('toggleFavorite')).toHaveLength(1)
+    })
+  })
+
   describe('Identity', () => {
     it('exposes the whole company card as an accessible router link', () => {
       const wrapper = mountCard()

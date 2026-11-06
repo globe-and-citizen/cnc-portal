@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { buildContractBudgetLimit, getTokens } from '../model'
 import { SUPPORTED_TOKENS, USDC_ADDRESS, USDC_E_ADDRESS } from '@/constant'
 import type { TokenBalance } from '@/types'
-import type { TableRow } from '@/types/table'
+import type { BudgetLimit, ExpenseApproval } from '@/types/expense-account'
 
 const usdcConfig = SUPPORTED_TOKENS.find((token) => token.id === 'usdc')!
 const bridgedUsdcConfig = SUPPORTED_TOKENS.find((token) => token.id === 'usdc.e')!
@@ -28,16 +28,30 @@ const heldBridgedUsdc = (amount: number): TokenBalance => ({
  * An expense row as the backend serialises it: `balances[1]` is the amount
  * already transferred in the current period, `data.amount` the approved budget.
  */
-const expenseRow = (overrides: Partial<TableRow> = {}): TableRow => ({
-  signature: '0xSignature',
-  status: 'enabled',
-  data: { amount: 2, tokenAddress: USDC_ADDRESS },
-  balances: { 0: '1700000000', 1: '0' },
-  ...overrides
-})
+const expenseRow = (
+  overrides: Partial<Omit<ExpenseApproval, 'data'>> & { data?: Partial<BudgetLimit> } = {}
+): ExpenseApproval => {
+  const { data, ...rest } = overrides
+  return {
+    signature: '0xSignature',
+    status: 'enabled',
+    balances: { 0: '1700000000', 1: '0' },
+    ...rest,
+    data: {
+      amount: 2,
+      tokenAddress: USDC_ADDRESS,
+      approvedAddress: USDC_ADDRESS,
+      frequencyType: 0,
+      customFrequency: 0,
+      startDate: 1,
+      endDate: 2,
+      ...data
+    }
+  }
+}
 
 describe('getTokens', () => {
-  const spendableOf = (row: TableRow, balances: TokenBalance[]) =>
+  const spendableOf = (row: ExpenseApproval, balances: TokenBalance[]) =>
     getTokens([row], row.signature, balances)[0]?.spendableBalance
 
   it('treats a never-spent expense as fully spendable', () => {
@@ -47,7 +61,10 @@ describe('getTokens', () => {
   })
 
   it('treats a numeric 0 transferred the same as the string the API returns', () => {
-    expect(spendableOf(expenseRow({ balances: { 0: '0', 1: 0 } }), [heldUsdc(10)])).toBe(2)
+    const row = expenseRow()
+    // Deliberately exercise a non-canonical numeric value received at runtime.
+    Reflect.set(row.balances!, '1', 0)
+    expect(spendableOf(row, [heldUsdc(10)])).toBe(2)
   })
 
   it('subtracts what has already been spent this period', () => {

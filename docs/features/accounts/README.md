@@ -1356,9 +1356,19 @@ independently owned; an invalid Safe total is unavailable to the combined compan
 Frontend proofs cover the store/query lifecycle, amount-input estimates, balance/history presentation, partial aggregate rejection and
 raw-balance withdrawal eligibility. They do not establish a live market-provider result, a new integrated chain journey or human acceptance.
 
+## Expense spending row boundary
+
+Expense spending requires the approval's signature, full budget and UI status. Optional balance reads and legacy signing metadata retain
+their existing unavailable/verification behavior. After the existing source-contract, network and owner checks, the action forwards the
+verified signature unchanged to native/ERC-20 transfer. A malformed hexadecimal signature is rejected before submission; budget hashing,
+token precision, spendable limits and authorization rules are unchanged.
+
+The frontend helper and action use the [domain row contract](../../implementation/client-utilities/README.md#domain-row-contracts), not a
+generic table dictionary. This is a compile-time boundary; it does not claim validation of arbitrary API JSON or new business acceptance.
+
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `9e715cf332a5f36fe441a0fcfd8d5ba189c23f82`
+**Implementation evidence reviewed against:** `cebdd8f58a2b3ae7a0d49012bcb16d731ca93604`
 
 - [Bank deposit modal](../../../app/src/components/sections/BankView/forms/DepositModal.vue),
   [Bank transfer modal](../../../app/src/components/sections/BankView/forms/TransferModal.vue),

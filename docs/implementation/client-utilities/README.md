@@ -155,6 +155,25 @@ and modal selection; local preview URLs need no signing request. The
 [File Storage contract](../file-storage/README.md#client-attachment-url-renewal) owns renewal, retry feedback and protected delayed
 downloads.
 
+## Domain row contracts
+
+- [Expense approval views](../../../app/src/types/expense-account.ts) derive required signature/budget/status from the existing response
+  model. Balance and legacy source metadata can be absent. The spending helper accepts the narrower signature/data/balance projection; the
+  action additionally requires its status and consumes the same approval.
+- [Generation contract metadata](../../../app/src/types/deployments.ts) supplies address, deployer and descriptive kind to both current and
+  historical producers. Unknown kinds remain representable without making their capabilities supported.
+- [Managed contract rows](../../../app/src/components/sections/ContractManagementView/MainContractTable.types.ts) alias the enriched read
+  model. [Ownership transfer](../../../app/src/composables/contracts/useContractOwnershipTransfer.ts) needs only address/ABI/kind and
+  explicitly accepts null selection; it does not fabricate a row to satisfy its parameter.
+- [Compiler contracts](../../../app/type-tests/domain-rows.ts) are included by
+  [the existing app TypeScript project](../../../app/tsconfig.app.json), so `npm run type-check` checks positive examples and expected
+  rejections for missing fields, wrong-domain rows and generic dictionaries. The fixture contains type-only imports/declarations and is not
+  imported by the application. Expected-error directives belong to these negative checks, not production suppression.
+
+The generic UI `TableRow` remains available to other consumers; it no longer describes these spending/ownership boundaries. No second type
+checker, schema framework, generic table rewrite or runtime API validation is introduced. The Expense action narrows and forwards the
+signature it actually verified rather than casting an arbitrary string at submission; signed data and economic rules remain unchanged.
+
 ## Implementation Evidence
 
 [Shared balance reads](../../../app/src/composables/useContractBalance.ts) accept caller-supplied query options while preserving the
@@ -163,7 +182,7 @@ post-confirmation balance invalidations reach both. [Currency prices](../../../a
 currency payload and query-backed nullable conversions while consuming the centralized CoinGecko price query, whose preset freshness,
 polling and direct Axios reads are described in [Client Data Access](../client-data-access/README.md#browser-request-coordination).
 
-**Implementation evidence reviewed against:** `6a1619cd9446cad807bd019e34877639af6a6e72`
+**Implementation evidence reviewed against:** `cebdd8f58a2b3ae7a0d49012bcb16d731ca93604`
 
 - [Utility ownership map and domain implementations](../../../app/src/utils/)
 - [Shared Accounting domain contracts](../../../app/src/utils/accounting/types.ts)

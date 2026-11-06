@@ -390,9 +390,23 @@ does not automatically retry the chain write; inspect Contract Management before
 delivery remain best-effort and cannot turn a registered action into failure. Each request retains the company and Board address captured
 when preparation begins.
 
+## Managed row and ownership-target boundaries
+
+The current and historical contract tables consume the actual enriched read model, including address, ABI, kind, deployer, owner and pause
+state. Desktop/mobile actions preserve that row rather than converting it to a generic dictionary. Generation metadata retains unknown
+contract kinds for inspection; that does not add pause support or management rights.
+
+An absent selection is represented as null. Action surfaces remain absent in that state, and ownership transfer requires an actual selected
+target. The transfer boundary consumes only its address, ABI and kind; direct and Board actions keep the same target, encoded method and
+success handling. A shared generation-metadata type connects current/archived producers without a broad row cast.
+
+[Compiler row checks](../../implementation/client-utilities/README.md#domain-row-contracts) reject missing fields and cross-domain rows.
+These static contracts do not replace runtime authorization, schema validation or product acceptance; unrelated generic table and Board
+action consumers remain outside this bounded migration.
+
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `276c6731ae0291996f0565ccd98be9b468119a54`
+**Implementation evidence reviewed against:** `cebdd8f58a2b3ae7a0d49012bcb16d731ca93604`
 
 - [Real Board mutation lifecycle tests](../../../app/src/composables/bod/__tests__/writes.spec.ts)
 - [Board reads](../../../app/src/composables/bod/reads.ts), [Board writes](../../../app/src/composables/bod/writes.ts),

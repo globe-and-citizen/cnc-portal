@@ -56,21 +56,23 @@ flowchart LR
     Archived --> Restore[Owner restores workspace]
     Restore --> Active
     Open --> Visibility[Member hides or shows workspace in own list]
+    Open --> Pin[Member pins or unpins workspace in own list]
     Open --> Delete[Owner permanently deletes workspace]
 ```
 
 ## Status Overview
 
-| User Story       | Title                                     | Actor           | Status  |
-| ---------------- | ----------------------------------------- | --------------- | ------- |
-| US-COMPANIES-001 | Create a company workspace                | Company creator | ✅ Done |
-| US-COMPANIES-002 | Deploy the initial Officer contract suite | Company owner   | ✅ Done |
-| US-COMPANIES-003 | Browse and open my companies              | Company member  | ✅ Done |
-| US-COMPANIES-004 | Update company details                    | Company owner   | ✅ Done |
-| US-COMPANIES-005 | Manage company members                    | Company owner   | ✅ Done |
-| US-COMPANIES-006 | Archive or restore a company              | Company owner   | ✅ Done |
-| US-COMPANIES-007 | Control my company-list visibility        | Company member  | ✅ Done |
-| US-COMPANIES-008 | Permanently delete a company              | Company owner   | ✅ Done |
+| User Story       | Title                                     | Actor           | Status        |
+| ---------------- | ----------------------------------------- | --------------- | ------------- |
+| US-COMPANIES-001 | Create a company workspace                | Company creator | ✅ Done       |
+| US-COMPANIES-002 | Deploy the initial Officer contract suite | Company owner   | ✅ Done       |
+| US-COMPANIES-003 | Browse and open my companies              | Company member  | ✅ Done       |
+| US-COMPANIES-004 | Update company details                    | Company owner   | ✅ Done       |
+| US-COMPANIES-005 | Manage company members                    | Company owner   | ✅ Done       |
+| US-COMPANIES-006 | Archive or restore a company              | Company owner   | ✅ Done       |
+| US-COMPANIES-007 | Control my company-list visibility        | Company member  | ✅ Done       |
+| US-COMPANIES-008 | Permanently delete a company              | Company owner   | ✅ Done       |
+| US-COMPANIES-009 | Pin a company in my lists                 | Company member  | 🧪 Validation |
 
 ## Test Coverage Overview
 
@@ -88,6 +90,7 @@ insufficient; the detailed evidence distribution remains available in the genera
 | US-COMPANIES-006 | ✅ Integrated | ⚠️ 4/7          | `AC-US-COMPANIES-006-01`, `AC-US-COMPANIES-006-02`, `AC-US-COMPANIES-006-03` |
 | US-COMPANIES-007 | ✅ Integrated | ⚠️ 5/6          | `AC-US-COMPANIES-007-01`                                                     |
 | US-COMPANIES-008 | ✅ Integrated | ⚠️ 4/6          | `AC-US-COMPANIES-008-01`, `AC-US-COMPANIES-008-04`                           |
+| US-COMPANIES-009 | ❌ Missing    | ✅ 7/7          | —                                                                            |
 
 Proof obligations use the [shared proof-strategy registry](../../testing/proof-strategies.md). Multiple IDs for one AC are cumulative.
 
@@ -435,6 +438,46 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 
 **Dependencies:** US-COMPANIES-003
 
+## US-COMPANIES-009: Pin a Company in My Lists
+
+**As a** company member\
+**I want to** pin a company as a favorite\
+**So that** the workspaces I use most are the first ones I find
+
+### Acceptance Criteria
+
+#### Happy Path
+
+- [x] `AC-US-COMPANIES-009-01` A member can pin a company and unpin it later, and the choice is still there on their next visit.
+- [x] `AC-US-COMPANIES-009-02` Pinned companies come first in the Companies list and in the team switcher.
+
+#### Business Rules
+
+- [x] `AC-US-COMPANIES-009-03` A pin applies only to the requesting member's relationship with the company.
+- [x] `AC-US-COMPANIES-009-04` Every current company member can pin or unpin a company, including an archived one.
+- [x] `AC-US-COMPANIES-009-05` A pin changes only the order of the companies listed, so a pinned company the member hid stays out of the
+      default list.
+
+#### Edge & Error Cases
+
+- [x] `AC-US-COMPANIES-009-06` A pin requested by someone who is not a member is rejected without changing anything.
+- [x] `AC-US-COMPANIES-009-07` A pin that fails to save is reported and the company keeps its previous state.
+
+### Test Coverage
+
+| Acceptance Criterion     | Proof Strategy | Current Evidence   | Status |
+| ------------------------ | -------------- | ------------------ | ------ |
+| `AC-US-COMPANIES-009-01` | `PS-FRONTEND`  | Frontend + Backend | ✅ Met |
+| `AC-US-COMPANIES-009-01` | `PS-BACKEND`   | Frontend + Backend | ✅ Met |
+| `AC-US-COMPANIES-009-02` | `PS-BACKEND`   | Backend            | ✅ Met |
+| `AC-US-COMPANIES-009-03` | `PS-BACKEND`   | Backend            | ✅ Met |
+| `AC-US-COMPANIES-009-04` | `PS-BACKEND`   | Backend            | ✅ Met |
+| `AC-US-COMPANIES-009-05` | `PS-BACKEND`   | Backend            | ✅ Met |
+| `AC-US-COMPANIES-009-06` | `PS-BACKEND`   | Backend            | ✅ Met |
+| `AC-US-COMPANIES-009-07` | `PS-FRONTEND`  | Frontend           | ✅ Met |
+
+**Dependencies:** US-COMPANIES-003, US-COMPANIES-007
+
 ## Human Validation
 
 Validated on 2026-08-27 against the reviewed Companies journeys, role and archived-state boundaries, and the implementation evidence below.
@@ -450,7 +493,7 @@ an invalid provider Safe total; a contract that is absent contributes known zero
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `9e715cf332a5f36fe441a0fcfd8d5ba189c23f82`
+**Implementation evidence reviewed against:** `1955939a748a00287ff6dc446a519f84ec09267c`
 
 - [Member deletion](../../../app/src/components/sections/DashboardView/DeleteMemberModal.vue),
   [team state](../../../app/src/stores/teamStore.ts), and

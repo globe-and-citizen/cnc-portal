@@ -6,14 +6,14 @@
     "src/**/*.vue",
     "src/**/*.ts",
     "auto-imports.d.ts",
-    "components.d.ts"
+    "components.d.ts",
+    "type-tests/**/*.ts"
   ],
   "exclude": ["src/**/__tests__/*", "src/**/*.spec.ts", "test/**/*"],
   "compilerOptions": {
     "target": "ES2022",
     "composite": true,
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
-
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],

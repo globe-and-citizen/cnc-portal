@@ -7,7 +7,9 @@ import { mockBodAddAction, mockBodApproveAction, mockToast, mockUserStore } from
 import { useQueryClientFn, mockInvalidateQueries } from '@/tests/mocks/composables.mock'
 import { mockLog } from '@/tests/mocks/utils.mock'
 import { encodeFunctionData } from 'viem'
-import type { TableRow } from '@/types/table'
+import { ownablePausableAbi } from '@/artifacts/abi/ownable-pausable'
+import type { ManagedContractRow } from '../MainContractTable.types'
+import type { FormattedAction } from '@/utils/contracts/management'
 
 type MutationMock = {
   mutate: ReturnType<typeof vi.fn>
@@ -34,19 +36,9 @@ vi.mock('@/composables/contracts/useContractWritesV3', () => ({
   })
 }))
 
-const DEFAULT_ROW: TableRow = {
+const DEFAULT_ROW: ManagedContractRow = {
   address: '0xContract000000000000000000000000000001',
-  abi: [
-    { name: 'pause', type: 'function', inputs: [], outputs: [], stateMutability: 'nonpayable' },
-    { name: 'unpause', type: 'function', inputs: [], outputs: [], stateMutability: 'nonpayable' },
-    {
-      name: 'transferOwnership',
-      type: 'function',
-      inputs: [{ name: 'newOwner', type: 'address' }],
-      outputs: [],
-      stateMutability: 'nonpayable'
-    }
-  ],
+  abi: ownablePausableAbi,
   pauseStatus: 'active',
   pauseCapability: {
     support: 'operations',
@@ -61,8 +53,22 @@ const DEFAULT_ROW: TableRow = {
 type ControllerProps = {
   isBodAction: boolean
   open: 'details' | 'transfer' | 'approval' | null
-  pendingActions: TableRow[]
+  pendingActions: FormattedAction
   statusChangeRequest: { id: number; paused: boolean } | null
+}
+
+const PENDING_ACTION: FormattedAction[number] = {
+  id: 1,
+  actionId: 1,
+  targetAddress: DEFAULT_ROW.address,
+  userAddress: '0x0000000000000000000000000000000000000001',
+  description: 'Transfer ownership',
+  title: 'Ownership',
+  requestedBy: { name: 'Owner' },
+  dateCreated: '',
+  data: '0x',
+  teamId: 1,
+  isExecuted: false
 }
 
 const stubs = {
@@ -109,7 +115,7 @@ const stubs = {
 }
 
 function mountComponent(
-  rowOverrides: Partial<TableRow> = {},
+  rowOverrides: Partial<ManagedContractRow> = {},
   controllerProps: Partial<ControllerProps> = {}
 ) {
   return mount(MainContractActions, {
@@ -158,6 +164,14 @@ describe('MainContractActions.vue', () => {
 
   afterEach(() => {
     vi.unstubAllGlobals()
+  })
+
+  it('removes action surfaces when there is no selected contract', async () => {
+    const wrapper = mountComponent({}, { open: 'transfer' })
+    await wrapper.setProps({ row: null })
+    expect(wrapper.find('[data-test="transfer-ownership-form"]').exists()).toBe(false)
+    expect(mutationByFn.transferOwnership.mutate).not.toHaveBeenCalled()
+    expect(mockBodAddAction.mutate).not.toHaveBeenCalled()
   })
 
   it('renders details for the selected contract only when requested', async () => {
@@ -227,27 +241,31 @@ describe('MainContractActions.vue', () => {
   })
 
   it('[AC-US-CONTRACT-002-03] opens a selected pending-actions flow and approves its chosen action', async () => {
-    const wrapper = mountComponent({}, { open: 'approval', pendingActions: [{ id: 1 }] })
+    const wrapper = mountComponent({}, { open: 'approval', pendingActions: [PENDING_ACTION] })
 
     await wrapper.vm.$nextTick()
-    await wrapper.findComponent({ name: 'PendingEventsList' }).vm.$emit('view-details', { id: 1 })
+    await wrapper
+      .findComponent({ name: 'PendingEventsList' })
+      .vm.$emit('view-details', PENDING_ACTION)
     await wrapper.find('[data-test="emit-approve"]').trigger('click')
 
     expect(mockBodApproveAction.executeApproveAction).toHaveBeenCalledWith(1, 2)
   })
 
   it('asks the table to close the pending-actions flow', async () => {
-    const wrapper = mountComponent({}, { open: 'approval', pendingActions: [{ id: 1 }] })
+    const wrapper = mountComponent({}, { open: 'approval', pendingActions: [PENDING_ACTION] })
 
     await wrapper.vm.$nextTick()
-    await wrapper.findComponent({ name: 'PendingEventsList' }).vm.$emit('view-details', { id: 1 })
+    await wrapper
+      .findComponent({ name: 'PendingEventsList' })
+      .vm.$emit('view-details', PENDING_ACTION)
     await wrapper.find('[data-test="emit-close"]').trigger('click')
 
     expect(wrapper.emitted('update:open')).toContainEqual([null])
   })
 
   it('notifies the table when a Board action or approval succeeds', async () => {
-    const wrapper = mountComponent({}, { open: 'approval', pendingActions: [{ id: 1 }] })
+    const wrapper = mountComponent({}, { open: 'approval', pendingActions: [PENDING_ACTION] })
 
     mockBodAddAction.isSuccess.value = true
     await wrapper.vm.$nextTick()

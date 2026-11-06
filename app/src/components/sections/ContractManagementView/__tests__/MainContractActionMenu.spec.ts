@@ -6,6 +6,8 @@ import type { ManagedContractRow } from '../MainContractTable.types'
 const DEFAULT_ROW: ManagedContractRow = {
   address: '0xContract000000000000000000000000000001',
   pauseStatus: 'active',
+  abi: [],
+  deployer: '0x0000000000000000000000000000000000000001',
   owner: '0xOwner0000000000000000000000000000000001',
   type: 'Treasury'
 }

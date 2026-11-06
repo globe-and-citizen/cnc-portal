@@ -24,6 +24,16 @@
       <div class="relative z-20 flex shrink-0 items-center gap-1.5">
         <UBadge v-if="isOwner" size="sm" color="primary" variant="solid">Owner</UBadge>
         <UBadge v-else size="sm" color="secondary" variant="solid">Employee</UBadge>
+        <UButton
+          :icon="team.isFavorite ? 'i-heroicons-star-solid' : 'i-heroicons-star'"
+          :color="team.isFavorite ? 'warning' : 'neutral'"
+          :aria-label="team.isFavorite ? `Unpin ${team.name}` : `Pin ${team.name}`"
+          :aria-pressed="team.isFavorite"
+          variant="ghost"
+          size="xs"
+          data-test="team-favorite"
+          @click.stop="emit('toggleFavorite')"
+        />
         <UDropdownMenu :items="menuItems" @click.stop>
           <UButton
             icon="i-heroicons-ellipsis-vertical"
@@ -161,6 +171,7 @@ const emit = defineEmits<{
   archive: []
   hide: []
   delete: []
+  toggleFavorite: []
 }>()
 
 const userStore = useUserDataStore()
