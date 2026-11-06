@@ -1,28 +1,25 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { readContract } from '@wagmi/core'
-import type { TeamContract } from '@/types'
+import type { DeploymentContract } from '@/types/deployments'
 import { getTeamContracts } from '../readTeamContracts'
 
-const CONTRACTS = [
+const CONTRACTS: DeploymentContract[] = [
   {
     address: '0x0000000000000000000000000000000000000001',
     type: 'Bank',
-    deployer: '0x0000000000000000000000000000000000000011',
-    admins: []
+    deployer: '0x0000000000000000000000000000000000000011'
   },
   {
     address: '0x0000000000000000000000000000000000000002',
     type: 'Proposals',
-    deployer: '0x0000000000000000000000000000000000000011',
-    admins: []
+    deployer: '0x0000000000000000000000000000000000000011'
   },
   {
     address: '0x0000000000000000000000000000000000000003',
     type: 'UnknownContract',
-    deployer: '0x0000000000000000000000000000000000000011',
-    admins: []
+    deployer: '0x0000000000000000000000000000000000000011'
   }
-] as unknown as TeamContract[]
+]
 
 const mockReadContract = vi.mocked(readContract)
 

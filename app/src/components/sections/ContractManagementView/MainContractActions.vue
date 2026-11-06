@@ -56,8 +56,8 @@
           <USeparator />
 
           <ContractReadDataSection
-            :address="contractAddress"
-            :abi="contractAbi"
+            :address="row.address"
+            :abi="row.abi"
             :contract-type="row.type"
             :enabled="isDetailsOpen"
           />
@@ -115,17 +115,14 @@
 
 <script setup lang="ts">
 import { computed, ref, toRef, watch } from 'vue'
-import type { Abi, Address } from 'viem'
 import AddressTooltip from '@/components/ui/AddressTooltip.vue'
 import { useBodApproveAction } from '@/composables/bod/writes'
 import { useContractOwnershipTransfer } from '@/composables/contracts/useContractOwnershipTransfer'
 import { useContractStatusChange } from '@/composables/contracts/useContractStatusChange'
 import type { TableRow } from '@/types/table'
+import type { ManagedContractRow } from './MainContractTable.types'
 import type { FormattedAction } from '@/utils/contracts/management'
-import {
-  getContractPauseStatusPresentation,
-  type ContractPauseStatus
-} from '@/utils/contracts/pauseCapabilities'
+import { getContractPauseStatusPresentation } from '@/utils/contracts/pauseCapabilities'
 import { getContractPresentation } from '@/utils/contracts/presentation'
 import BodApprovalContent from './BodApprovalContent.vue'
 import ContractReadDataSection from './ContractReadDataSection.vue'
@@ -140,7 +137,7 @@ interface ContractStatusChangeRequest {
 }
 
 interface Props {
-  row: TableRow | null
+  row: ManagedContractRow | null
   version?: string | null
   pendingActions: FormattedAction
   isBodAction: boolean
@@ -158,21 +155,18 @@ const approveActionMutation = useBodApproveAction()
 const selectedAction = ref<TableRow>({})
 const currentStep = ref<0 | 1 | 2>(0)
 const handledStatusChangeRequest = ref<number | null>(null)
-const rowRef = computed<TableRow>(() => props.row ?? {})
+const rowRef = toRef(props, 'row')
 const isBodActionRef = toRef(props, 'isBodAction')
 const presentation = computed(() => getContractPresentation(props.row?.type ?? ''))
 const pauseStatus = computed(() =>
-  getContractPauseStatusPresentation(
-    (props.row?.pauseStatus as ContractPauseStatus | undefined) ?? 'unavailable'
-  )
+  getContractPauseStatusPresentation(props.row?.pauseStatus ?? 'unavailable')
 )
 const pauseCapabilityDescription = computed(
   () =>
     props.row?.pauseCapability?.scope ??
     'Pause capability could not be verified for this contract generation.'
 )
-const contractAddress = computed(() => props.row?.address as Address)
-const contractAbi = computed<Abi>(() => props.row?.abi ?? [])
+const contractAddress = computed(() => props.row?.address)
 const isDetailsOpen = computed(() => props.open === 'details')
 const isTransferOpen = computed(() => props.open === 'transfer')
 const isApprovalOpen = computed(() => props.open === 'approval')

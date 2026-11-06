@@ -3,6 +3,7 @@ import type { Abi, Address } from 'viem'
 import { ownablePausableAbi } from '@/artifacts/abi/ownable-pausable'
 import { log } from '@/lib/logging'
 import type { TeamContract } from '@/types'
+import type { DeploymentContract } from '@/types/deployments'
 import { config } from '@/wagmi.config'
 import { CONTRACT_ABI_MAP } from '@/utils/contracts/abiDecode'
 import {
@@ -11,7 +12,8 @@ import {
   type ContractPauseStatus
 } from '@/utils/contracts/pauseCapabilities'
 
-export interface TeamContractReadModel extends Omit<TeamContract, 'admins'> {
+export interface TeamContractReadModel extends Omit<TeamContract, 'admins' | 'type'> {
+  type: string
   admins?: string[]
   abi: Abi
   owner: string | null
@@ -30,7 +32,7 @@ const readContractField = async (address: Address, functionName: 'owner' | 'paus
 }
 
 const readPauseStatus = async (
-  contract: TeamContract,
+  contract: DeploymentContract,
   capability?: ContractPauseCapability
 ): Promise<ContractPauseStatus> => {
   if (!capability) return 'unavailable'
@@ -42,7 +44,7 @@ const readPauseStatus = async (
 }
 
 export const getTeamContracts = async (
-  contracts: TeamContract[],
+  contracts: readonly DeploymentContract[],
   officerVersion?: string | null
 ): Promise<TeamContractReadModel[] | undefined> => {
   try {

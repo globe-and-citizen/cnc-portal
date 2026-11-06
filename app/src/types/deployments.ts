@@ -1,3 +1,8 @@
+import type { TeamContract } from './teamContract'
+
+/** Generation metadata can include contract kinds unknown to the current client. */
+export type DeploymentContract = Pick<TeamContract, 'address' | 'deployer'> & { type: string }
+
 export interface Deployment {
   contractType: string
   initializerData: `0x${string}`
@@ -9,5 +14,5 @@ export interface ContractGeneration {
   version: string | null
   officerAddress: string
   isCurrent: boolean
-  contracts: Array<{ address: string; type: string; deployer: string }>
+  contracts: DeploymentContract[]
 }
