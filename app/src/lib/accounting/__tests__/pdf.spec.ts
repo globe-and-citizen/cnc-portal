@@ -64,10 +64,10 @@ describe('buildTables (complete report selection)', () => {
     expect(revenueRow[1]).toBe('$100.00')
 
     const balance = byTitle('Balance Sheet').body
-    expect(balance.find((r) => r[0] === 'Cash — Bank')![1]).toBe('$100.00')
+    expect(balance.find((r) => r[0] === 'Cash — Bank')![2]).toBe('$100.00')
     expect(balance.find((r) => r[0] === 'Earnings to date calculation')).toBeTruthy()
-    expect(balance.find((r) => r[0] === 'Service Revenue')![1]).toBe('$100.00')
-    expect(balance.find((r) => r[0] === 'Earnings to date')![1]).toBe('$100.00')
+    expect(balance.find((r) => r[0] === 'Service Revenue')![2]).toBe('$100.00')
+    expect(balance.find((r) => r[0] === 'Earnings to date')![2]).toBe('$100.00')
   })
 
   it('right-aligns the amount columns', () => {
