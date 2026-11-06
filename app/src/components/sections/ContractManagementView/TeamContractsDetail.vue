@@ -114,6 +114,21 @@ const hasChanges = computed(
       originalRates.value.costPerImpression
 )
 
+watch(
+  () => props.settings,
+  (settings) => {
+    if (hasChanges.value || isLoading.value) return
+    draft.value = {
+      costPerClick: settings.costPerClick,
+      costPerImpression: settings.costPerImpression
+    }
+    originalRates.value = {
+      costPerClick: Number.parseFloat(settings.costPerClick || '0'),
+      costPerImpression: Number.parseFloat(settings.costPerImpression || '0')
+    }
+  }
+)
+
 function updateCost(key: keyof CampaignRates, value: string | number) {
   draft.value[key] = String(Math.abs(Number.parseFloat(String(value)) || 0))
 }

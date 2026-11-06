@@ -155,6 +155,20 @@ describe('TeamContracts.vue', () => {
     expect(wrapper.get('[data-test="campaign-rate-save"]').attributes('disabled')).toBeDefined()
   })
 
+  it('adopts the fresh query result after reopening on a cached settings result', async () => {
+    const wrapper = mountComponent()
+    await wrapper.get('[data-test="campaign-manager-settings"]').trigger('click')
+    await wrapper.get('[data-test="close-settings"]').trigger('click')
+    await wrapper.get('[data-test="campaign-manager-settings"]').trigger('click')
+    settings.value = { ...initialSettings, costPerClick: '0.9' }
+    await wrapper.vm.$nextTick()
+    expect(wrapper.get('[data-test="manager-cost-per-click"]').element).toHaveProperty(
+      'value',
+      '0.9'
+    )
+    expect(wrapper.get('[data-test="campaign-rate-save"]').attributes('disabled')).toBeDefined()
+  })
+
   it('recreates the draft for another manager and keeps its write target', async () => {
     const store = vi.mocked(useTeamStore)()
     store.currentTeam!.teamContracts.push({

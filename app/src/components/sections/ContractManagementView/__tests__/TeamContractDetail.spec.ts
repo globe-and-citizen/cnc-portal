@@ -128,6 +128,20 @@ describe('[US-CONTRACT-003] Campaign Manager rate draft', () => {
     expect(wrapper.emitted('closeContractDataDialog')).toHaveLength(1)
   })
 
+  it('adopts refreshed rates and baseline while the draft is still pristine', async () => {
+    const wrapper = mountForm()
+    await wrapper.setProps({ settings: { ...settings, costPerClick: '0.3' } })
+    expect(wrapper.get('[data-test="manager-cost-per-click"]').element).toHaveProperty(
+      'value',
+      '0.3'
+    )
+    expect(wrapper.get('[data-test="campaign-rate-save"]').attributes('disabled')).toBeDefined()
+    await wrapper.get('[data-test="manager-cost-per-click"]').setValue('0.4')
+    await wrapper.get('[data-test="campaign-rate-save"]').trigger('click')
+    expect(click.mutate).toHaveBeenCalledWith({ args: [400000000000000000n] }, expect.anything())
+    expect(impression.mutate).not.toHaveBeenCalled()
+  })
+
   it('does not overwrite an in-progress draft or baseline during a settings refetch', async () => {
     const wrapper = mountForm()
     await wrapper.get('[data-test="manager-cost-per-click"]').setValue('0.2')
