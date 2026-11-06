@@ -8,13 +8,10 @@ import { formatDate, formatDateTime, formatUsd, fromUnix } from '@/utils/format'
 import { usdAmountToNumber, ZERO_USD_AMOUNT } from './monetaryAmount'
 import type { Account, BalanceSheet, JournalEntry, UsdAmount } from './types'
 
+import { buildSummaryView, type SummaryView } from './summaryCards'
+
 // The summary display model lives in its own module — see ./summaryCards.
-export {
-  presentSummary,
-  type SummaryBanner,
-  type SummaryCard,
-  type SummaryView
-} from './summaryCards'
+export { type SummaryBanner, type SummaryCard, type SummaryView } from './summaryCards'
 
 type TrialNature = 'Asset' | 'Equity' | 'Contra-equity' | 'Income' | 'Liability' | 'Expense'
 
@@ -178,6 +175,15 @@ export function filterByPeriod<T extends { timestamp: number }>(
 }
 
 // ── Presenters ──────────────────────────────────────────────────────────────
+
+/** Summary figures: flows inside `[from, to]`, balances accumulated up to `to`. */
+export function presentSummary(
+  entries: readonly JournalEntry[],
+  from?: Date | null,
+  to?: Date | null
+): SummaryView {
+  return buildSummaryView(filterByPeriod(entries, from, to), filterByPeriod(entries, null, to))
+}
 
 /** Income-statement lines for a reporting period. */
 export function presentIncome(

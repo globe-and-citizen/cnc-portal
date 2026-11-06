@@ -3,8 +3,8 @@
  *
  * Split from {@link ./presenter} (which turns the statements into their line
  * views) the way {@link ./ledgerCategory} was split from the ledger presenter, so
- * each module stays focused. Pure and unit-testable; the presenter re-exports
- * everything here, so callers can keep importing from it.
+ * each module stays focused. Pure and unit-testable; the presenter scopes the
+ * journal to a period and exposes the result through `presentSummary`.
  */
 import { formatUsd } from '@/utils/format'
 import { buildAccountingSummary } from './accountingSummary'
@@ -12,7 +12,6 @@ import { buildBalanceSheet } from './balanceSheet'
 import { buildGeneralLedger } from './generalLedger'
 import { buildIncomeStatement } from './incomeStatement'
 import { ZERO_USD_AMOUNT, usdAmountToNumber } from './monetaryAmount'
-import { filterByPeriod } from './presenter'
 import type {
   AccountingSummary,
   BalanceSheet,
@@ -165,18 +164,14 @@ function summaryBanner(balance: BalanceSheet, ledger: GeneralLedger): SummaryBan
 }
 
 /**
- * Build the complete Summary display model from one canonical journal input.
- * Flows (revenue, expenses, fees, repayments) cover the `[from, to]` period, while
- * balances (assets, equity, debt, the balance checks) accumulate up to `to`, because
- * a balance carries everything recorded before the period starts.
+ * Build the complete Summary display model. Flows (revenue, expenses, fees, repayments)
+ * read the period's entries, while balances (assets, equity, debt, the balance checks)
+ * read every entry up to its end, because a balance carries what came before the period.
  */
-export function presentSummary(
-  entries: readonly JournalEntry[],
-  from?: Date | null,
-  to?: Date | null
+export function buildSummaryView(
+  entriesInPeriod: readonly JournalEntry[],
+  entriesToDate: readonly JournalEntry[]
 ): SummaryView {
-  const entriesInPeriod = filterByPeriod(entries, from, to)
-  const entriesToDate = filterByPeriod(entries, null, to)
   const summary = buildAccountingSummary(entriesInPeriod)
   const income = buildIncomeStatement(entriesInPeriod)
   const balance = buildBalanceSheet(entriesToDate)
