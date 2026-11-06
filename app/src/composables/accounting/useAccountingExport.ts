@@ -41,7 +41,7 @@ export function useAccountingExport() {
       await exportTablesPdf(buildTables(books, specs, resolveName), {
         ...opts,
         teamName: teamStore.currentTeamMeta.data?.name,
-        coverage: activityCoverageLabel(books.journal)
+        coverage: opts.coverage ?? activityCoverageLabel(books.journal)
       })
       toast.add({ title: successMessage, color: 'success' })
     } catch (error) {
