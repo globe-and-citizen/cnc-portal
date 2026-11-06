@@ -12,6 +12,7 @@ import { buildBalanceSheet } from './balanceSheet'
 import { buildGeneralLedger } from './generalLedger'
 import { buildIncomeStatement } from './incomeStatement'
 import { ZERO_USD_AMOUNT, usdAmountToNumber } from './monetaryAmount'
+import { filterByPeriod } from './presenter'
 import type {
   AccountingSummary,
   BalanceSheet,
@@ -163,12 +164,23 @@ function summaryBanner(balance: BalanceSheet, ledger: GeneralLedger): SummaryBan
   }
 }
 
-/** Build the complete Summary display model from one canonical journal input. */
-export function presentSummary(entries: readonly JournalEntry[]): SummaryView {
-  const summary = buildAccountingSummary(entries)
-  const income = buildIncomeStatement(entries)
-  const balance = buildBalanceSheet(entries)
-  const ledger = buildGeneralLedger(entries)
+/**
+ * Build the complete Summary display model from one canonical journal input.
+ * Flows (revenue, expenses, fees, repayments) cover the `[from, to]` period, while
+ * balances (assets, equity, debt, the balance checks) accumulate up to `to`, because
+ * a balance carries everything recorded before the period starts.
+ */
+export function presentSummary(
+  entries: readonly JournalEntry[],
+  from?: Date | null,
+  to?: Date | null
+): SummaryView {
+  const entriesInPeriod = filterByPeriod(entries, from, to)
+  const entriesToDate = filterByPeriod(entries, null, to)
+  const summary = buildAccountingSummary(entriesInPeriod)
+  const income = buildIncomeStatement(entriesInPeriod)
+  const balance = buildBalanceSheet(entriesToDate)
+  const ledger = buildGeneralLedger(entriesToDate)
 
   return {
     cards: summaryCards(summary, income, balance),
