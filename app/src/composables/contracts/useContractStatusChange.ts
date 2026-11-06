@@ -6,7 +6,7 @@ import { classifyError } from '@/utils/errors/classifyContractError'
 import { log } from '@/lib/logging'
 
 export function useContractStatusChange(
-  contractAddress: Ref<Address>,
+  contractAddress: Ref<Address | undefined>,
   onStatusChanged: () => void
 ) {
   const toast = useToast()

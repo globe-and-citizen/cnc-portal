@@ -4,19 +4,21 @@ import { encodeFunctionData, type Address } from 'viem'
 import { ownablePausableAbi } from '@/artifacts/abi/ownable-pausable'
 import { useBodAddAction } from '@/composables/bod/writes'
 import { useContractWritesV3 } from '@/composables/contracts/useContractWritesV3'
-import type { TableRow } from '@/types/table'
+import type { TeamContractReadModel } from './readTeamContracts'
 import { classifyError } from '@/utils/errors/classifyContractError'
 import { log } from '@/lib/logging'
 
+type OwnershipTarget = Pick<TeamContractReadModel, 'address' | 'abi' | 'type'>
+
 export function useContractOwnershipTransfer(
-  row: Ref<TableRow>,
+  row: Readonly<Ref<OwnershipTarget | null>>,
   isBodAction: Ref<boolean>,
   onTransferred: () => void
 ) {
   const queryClient = useQueryClient()
   const toast = useToast()
   const errorMessage = ref('')
-  const rowAddress = computed(() => row.value.address as Address)
+  const rowAddress = computed(() => row.value?.address)
   const addAction = useBodAddAction()
   const transferMutation = useContractWritesV3({
     contractAddress: rowAddress,
@@ -26,19 +28,24 @@ export function useContractOwnershipTransfer(
 
   async function transferOwnership(address: Address) {
     errorMessage.value = ''
+    const target = row.value
+    if (!target) {
+      errorMessage.value = 'Select a contract before transferring ownership'
+      return
+    }
     if (isBodAction.value) {
       const data = encodeFunctionData({
-        abi: row.value.abi,
+        abi: target.abi,
         functionName: 'transferOwnership',
         args: [address]
       })
       const description = JSON.stringify({
-        text: `Transfer ownership of ${row.value.type} to ${address}`,
+        text: `Transfer ownership of ${target.type} to ${address}`,
         title: 'Ownership Transfer Request'
       })
 
       addAction.mutate({
-        targetAddress: row.value.address,
+        targetAddress: target.address,
         description,
         data
       })

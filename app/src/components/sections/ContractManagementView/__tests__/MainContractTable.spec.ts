@@ -11,16 +11,20 @@ vi.mock('@nuxt/ui/components/Select.vue', async () => ({
 
 import MainContractTable from '../MainContractTable.vue'
 
-const CONTRACTS = [
-  { address: '0x0000000000000000000000000000000000000001', type: 'Bank', deployer: '0xDeployer' },
+const CONTRACTS: Pick<contractReads.TeamContractReadModel, 'address' | 'type' | 'deployer'>[] = [
+  {
+    address: '0x0000000000000000000000000000000000000001',
+    type: 'Bank',
+    deployer: '0x0000000000000000000000000000000000000011'
+  },
   {
     address: '0x0000000000000000000000000000000000000002',
     type: 'ExpenseAccountEIP712',
-    deployer: '0xDeployer'
+    deployer: '0x0000000000000000000000000000000000000011'
   }
 ]
 
-const ENRICHED_CONTRACTS = CONTRACTS.map((contract) => ({
+const ENRICHED_CONTRACTS: contractReads.TeamContractReadModel[] = CONTRACTS.map((contract) => ({
   ...contract,
   abi: [],
   owner: '0xOwner',
@@ -32,7 +36,7 @@ const ENRICHED_CONTRACTS = CONTRACTS.map((contract) => ({
   }
 }))
 
-const CAPABILITY_CONTRACTS = [
+const CAPABILITY_CONTRACTS: contractReads.TeamContractReadModel[] = [
   ENRICHED_CONTRACTS[0]!,
   { ...ENRICHED_CONTRACTS[1]!, pauseStatus: 'paused' as const },
   {

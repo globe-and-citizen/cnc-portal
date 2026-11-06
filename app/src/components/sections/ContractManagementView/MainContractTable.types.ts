@@ -1,9 +1,5 @@
 import type { User } from '@/types'
-import type { TableRow } from '@/types/table'
-import type {
-  ContractPauseCapability,
-  ContractPauseStatus
-} from '@/utils/contracts/pauseCapabilities'
+import type { TeamContractReadModel } from '@/composables/contracts/readTeamContracts'
 
 export interface ContractActionState {
   pendingActionCount: number
@@ -12,10 +8,7 @@ export interface ContractActionState {
   canReviewPendingActions: boolean
 }
 
-export interface ManagedContractRow extends TableRow {
-  pauseCapability?: ContractPauseCapability
-  pauseStatus: ContractPauseStatus
-}
+export type ManagedContractRow = TeamContractReadModel
 
 export interface ContractTableRow {
   contract: ManagedContractRow

@@ -95,7 +95,8 @@ import { useBodIsMember } from '@/composables/bod/reads'
 import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
 import { useGetBodActionsQuery } from '@/queries'
 import { useTeamStore, useUserDataStore } from '@/stores'
-import type { TeamContract, User } from '@/types'
+import type { User } from '@/types'
+import type { DeploymentContract } from '@/types/deployments'
 import type { FormattedAction } from '@/utils/contracts/management'
 import { filterAndFormatActions } from '@/utils/contracts/management'
 import {
@@ -121,7 +122,7 @@ interface ContractStatusChangeRequest {
 
 const props = withDefaults(
   defineProps<{
-    contracts: Array<{ address: string; type: string; deployer: string }>
+    contracts: DeploymentContract[]
     version: string | null
     showActions?: boolean
   }>(),
@@ -252,22 +253,21 @@ const displayedContractRows = computed<ContractTableRow[]>(() =>
 async function refresh() {
   isRefreshing.value = true
   try {
-    enrichedContracts.value =
-      (await getTeamContracts(props.contracts as TeamContract[], props.version)) || []
+    enrichedContracts.value = (await getTeamContracts(props.contracts, props.version)) || []
   } finally {
     isRefreshing.value = false
   }
 }
 
 function openContractAction(contract: ManagedContractRow, surface: ContractActionSurface) {
-  selectedContract.value = contract as TeamContractReadModel
+  selectedContract.value = contract
   selectedActionSurface.value = surface
 }
 
 function requestStatusChange(contract: ManagedContractRow, paused: boolean) {
   if (contract.pauseStatus !== 'active' && contract.pauseStatus !== 'paused') return
 
-  selectedContract.value = contract as TeamContractReadModel
+  selectedContract.value = contract
   selectedActionSurface.value = null
   nextStatusChangeRequestId.value += 1
   statusChangeRequest.value = {
