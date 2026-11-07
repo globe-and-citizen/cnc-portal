@@ -177,8 +177,12 @@ test.describe(
       await expect(memberPage.getByText('Your Vote', { exact: true })).toBeVisible()
 
       await advanceE2ETimeTo(createdElection[5] + 1n)
-      await page.clock.setFixedTime(new Date((await currentE2ETime()) * 1_000))
+      // Restore the session at real wall time. Only the election clock is
+      // advanced by the scenario; the API still issues JWTs in real time.
+      await page.clock.setFixedTime(new Date())
       await page.goto(`/teams/${company.teamId}/administration/bod-elections`)
+      await expect(page.locator('[data-test="profile"]')).toBeVisible()
+      await page.clock.setFixedTime(new Date((await currentE2ETime()) * 1_000))
       const publish = page.getByRole('button', { name: 'Publish Results' })
       await expect(publish).toBeEnabled({ timeout: 30_000 })
       await publish.click()
