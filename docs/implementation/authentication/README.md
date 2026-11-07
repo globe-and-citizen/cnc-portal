@@ -65,8 +65,8 @@ sequenceDiagram
 - Invalid SIWE payloads or signatures are rejected by the backend.
 - `GET /auth/token` responds with `200` after validating the bearer token and resolving its user. A missing, invalid, expired, or incomplete
   token, or a token for an unknown user, produces `401`. An internal verification failure produces `500`.
-- The portal clears the local session only when a `401` applies to the current bearer token. A late rejection of an older token leaves the
-  current session active.
+- For protected API responses, a `401` clears the local session when it applies to the current bearer token. A late rejection of an older
+  token leaves the current session active.
 - Network errors, timeouts and retryable HTTP responses during startup verification use the shared API client's retry policy. When retries
   are exhausted, the workspace stays hidden and the portal opens sign-in. The saved token can be checked again on reload.
 - On an authenticated feature request, `403` is a resource authorization failure. The request's query or mutation exposes it to the feature
