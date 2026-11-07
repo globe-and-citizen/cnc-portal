@@ -77,20 +77,20 @@ describe('TeamSelectMenu', () => {
   describe('actions', () => {
     it('selects a team and preserves the current team-scoped route', async () => {
       setMockRoute({
-        name: 'proposal-detail',
-        params: { id: '1', proposalId: '9' },
-        query: { tab: 'votes' },
-        hash: '#result',
-        path: '/teams/1/administration/bod-proposals/9'
+        name: 'contract-management',
+        params: { id: '1' },
+        query: {},
+        hash: '',
+        path: '/teams/1/contract-management'
       })
       const wrapper = mountMenu()
       await wrapper.find('[data-test="team-option-1"]').trigger('click')
       expect(mockTeamStore.setCurrentTeamId).toHaveBeenCalledWith('1')
       expect(mockRouterPush).toHaveBeenCalledWith({
-        name: 'proposal-detail',
-        params: { id: '1', proposalId: '9' },
-        query: { tab: 'votes' },
-        hash: '#result'
+        name: 'contract-management',
+        params: { id: '1' },
+        query: {},
+        hash: ''
       })
     })
 

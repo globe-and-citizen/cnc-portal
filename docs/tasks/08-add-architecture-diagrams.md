@@ -20,7 +20,7 @@ I need to add or improve visual diagrams in the CNC Portal architecture document
 
 Context:
 - Main architecture file: /Users/test/Documents/data/gc/cnc-portal/docs/platform/architecture.md
-- CNC Portal has 4 main components: Dashboard (Nuxt), Frontend App (Vue), Backend API (Express), Smart Contracts (Hardhat), Subgraph (The Graph)
+- CNC Portal has 4 main components: Dashboard (Nuxt), Frontend App (Vue), Backend API (Express), Smart Contracts (Hardhat)
 - Uses PostgreSQL database, JWT + SIWE authentication
 - Multi-tier architecture with Web3 integration
 
@@ -32,7 +32,6 @@ Please add Mermaid diagrams for:
    - Backend API (Express.js)
    - PostgreSQL Database
    - Smart Contracts (Ethereum)
-   - The Graph Subgraph
    - User interactions
 
 2. **Authentication Flow Diagram**: Visual representation of SIWE + JWT authentication
@@ -48,7 +47,7 @@ Please add Mermaid diagrams for:
    - Database operations
    - Smart contract interactions
    - Blockchain events
-   - Subgraph indexing
+   - Direct RPC event feeds
 
 4. **Deployment Architecture**: Production deployment structure
    - Frontend hosting
@@ -95,7 +94,6 @@ graph TB
 
     subgraph "Blockchain Layer"
         Contracts[Smart Contracts]
-        Subgraph[The Graph]
     end
 
     User([User]) --> Dashboard
@@ -104,8 +102,6 @@ graph TB
     App --> API
     API --> DB
     App --> Contracts
-    Contracts --> Subgraph
-    Subgraph --> App
     API --> Contracts
 ```
 

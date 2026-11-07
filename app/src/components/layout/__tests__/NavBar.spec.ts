@@ -1,9 +1,9 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest'
+import { mockUserStore } from '@/tests/mocks'
+import { describe, expect, it, vi } from 'vitest'
 
 import NavBar from '@/components/layout/NavBar.vue'
 import { mount } from '@vue/test-utils'
 import { createTestingPinia } from '@pinia/testing'
-import { mockUseAuth } from '@/tests/mocks/composables.mock'
 import { nextTick } from 'vue'
 import { latestDeployedVersionForChain } from '@/artifacts/registry'
 import { currentChainId, NETWORK } from '@/constant'
@@ -22,12 +22,6 @@ describe('NavBar', () => {
         }
       }
     })
-
-  beforeEach(() => {
-    if (vi.isMockFunction(mockUseAuth.logout)) {
-      mockUseAuth.logout.mockReset()
-    }
-  })
 
   describe('Render', () => {
     it('Renders the component', () => {
@@ -66,6 +60,6 @@ describe('NavBar', () => {
 
     items[1]?.onSelect?.()
 
-    expect(mockUseAuth.logout).toHaveBeenCalledTimes(1)
+    expect(mockUserStore.clearUserData).toHaveBeenCalledTimes(1)
   })
 })

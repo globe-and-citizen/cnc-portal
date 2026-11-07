@@ -13,7 +13,6 @@ effective governance tools.
 - **Frontend** (`app/`): Vue 3, TypeScript, Vite, Pinia, TanStack Query, wagmi/viem, Tailwind v4, Nuxt UI v4
 - **Backend** (`backend/`): Express.js, TypeScript, Prisma ORM, PostgreSQL, JWT authentication
 - **Contracts** (`contract/`): Hardhat, Solidity, TypeScript testing, Ethereum blockchain integration
-- **Subgraph** (`the-graph/`): The Graph Protocol
 
 **Component Relationships:**
 

@@ -30,3 +30,7 @@ jobs:
       - name: ⚙️ Run lint
         run: npm run lint
         working-directory: ./dashboard
+
+      - name: 🧪 Run unit tests
+        run: npm run test:unit
+        working-directory: ./dashboard
