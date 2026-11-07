@@ -56,12 +56,12 @@ test run. The integrated client sign-in exists; recovery and backoffice journeys
 
 Runs of at least three consecutive missing criteria use inclusive ranges with full AC IDs at both endpoints.
 
-| User Story  | Main Journey  | Coverage Target | Gaps                                                          |
-| ----------- | ------------- | --------------- | ------------------------------------------------------------- |
-| US-AUTH-001 | ✅ Integrated | ⚠️ 6/9          | `AC-US-AUTH-001-01`, `AC-US-AUTH-001-04`, `AC-US-AUTH-001-08` |
-| US-AUTH-002 | ⬜ Planned    | ❌ 0/8 met      | `AC-US-AUTH-002-01`–`AC-US-AUTH-002-08`                       |
-| US-AUTH-003 | ⬜ Planned    | ⚠️ 1/9          | `AC-US-AUTH-003-01`–`AC-US-AUTH-003-08`                       |
-| US-AUTH-004 | ✅ Browser    | ✅ 7/7          | None                                                          |
+| User Story  | Main Journey  | Coverage Target | Gaps                                                                                                   |
+| ----------- | ------------- | --------------- | ------------------------------------------------------------------------------------------------------ |
+| US-AUTH-001 | ✅ Integrated | ⚠️ 6/12         | `AC-US-AUTH-001-01`, `AC-US-AUTH-001-04`, `AC-US-AUTH-001-08`, `AC-US-AUTH-001-10`–`AC-US-AUTH-001-12` |
+| US-AUTH-002 | ⬜ Planned    | ❌ 0/8 met      | `AC-US-AUTH-002-01`–`AC-US-AUTH-002-08`                                                                |
+| US-AUTH-003 | ⬜ Planned    | ⚠️ 1/9          | `AC-US-AUTH-003-01`–`AC-US-AUTH-003-08`                                                                |
+| US-AUTH-004 | ✅ Browser    | ✅ 7/7          | None                                                                                                   |
 
 Proof obligations use the [shared proof-strategy registry](../../testing/proof-strategies.md). Multiple IDs for one AC are cumulative.
 
@@ -88,9 +88,16 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 
 #### Edge & Error Cases
 
-- [x] `AC-US-AUTH-001-08` Protected client routes, including parameterized detail routes, render only after the API confirms the session. If
-      verification fails, the user sees the login page on its own.
+- [x] `AC-US-AUTH-001-08` At startup, protected client routes, including parameterized detail routes, remain hidden while the saved session
+      is being verified. If the verification endpoint rejects the current token (`401`), the saved session is cleared and the user is
+      returned to sign-in.
 - [x] `AC-US-AUTH-001-09` An invalid SIWE message or signature is rejected without authenticating the user.
+- [x] `AC-US-AUTH-001-10` If session verification remains unavailable after retries, the user stays outside the workspace and sees sign-in.
+      The saved token is retained so reloading can retry verification without a new wallet signature.
+- [x] `AC-US-AUTH-001-11` When a signed-in user is denied access to a protected resource or action (`403`), the refusal stays within the
+      affected feature. The user stays signed in for other permitted actions.
+- [x] `AC-US-AUTH-001-12` During an active session, a protected API request that receives `401` for the current token ends the session and
+      returns the user to sign-in.
 
 ### Test Coverage
 
@@ -107,6 +114,9 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 | `AC-US-AUTH-001-07`  | `PS-API-INTEGRATED` | Integrated E2E            | ✅ Met          |
 | `AC-US-AUTH-001-08`  | `PS-FRONTEND`       | Mocked browser            | ⚠️ Insufficient |
 | `AC-US-AUTH-001-09`  | `PS-BACKEND`        | Backend                   | ✅ Met          |
+| `AC-US-AUTH-001-10`  | `PS-BROWSER`        | None linked               | ❌ Missing      |
+| `AC-US-AUTH-001-11`  | `PS-BROWSER`        | None linked               | ❌ Missing      |
+| `AC-US-AUTH-001-12`  | `PS-BROWSER`        | None linked               | ❌ Missing      |
 
 ## US-AUTH-002: Sign in to the Backoffice
 
@@ -241,6 +251,8 @@ governance, Contract Management and Safe. Each domain retains its operation, aut
 
 ## Known Gaps
 
+- Direct browser proof is pending for verification recovery after a temporary failure, session preservation after a resource refusal, and
+  sign-in after rejection of the current token during use (`AC-US-AUTH-001-10`–`AC-US-AUTH-001-12`).
 - The client unit proof for `AC-US-AUTH-003-06` is complete, but the required mocked-browser proof remains pending.
 
 ## Implementation Evidence
