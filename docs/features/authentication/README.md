@@ -2,7 +2,7 @@
 
 **Scope:** Wallet-based sign-in, protected entry, and client wallet-session recovery
 
-**Last reviewed:** 2026-10-21
+**Last reviewed:** 2026-11-07
 
 These acceptance criteria follow the
 [feature documentation review contract](../../platform/feature-specification-guide.md#human-review-contract).
@@ -44,16 +44,15 @@ flowchart TB
 
 | User Story  | Title                                | Actor                     | Status         |
 | ----------- | ------------------------------------ | ------------------------- | -------------- |
-| US-AUTH-001 | Sign in to the client                | Portal user               | 🧪 Validation  |
+| US-AUTH-001 | Sign in to the client                | Portal user               | ✅ Done        |
 | US-AUTH-002 | Sign in to the backoffice            | Platform administrator    | 🚧 In Progress |
-| US-AUTH-004 | Resume after a wallet network change | Authenticated portal user | 🧪 Validation  |
+| US-AUTH-004 | Resume after a wallet network change | Authenticated portal user | ✅ Done        |
 
 ## Test Coverage Overview
 
 Coverage targets compare each criterion's required evidence with direct representative `AC-US-*` references. They do not describe the latest
 test run. Client sign-in has an integrated path. Session recovery uses browser and focused tests, and the backoffice has focused tests for
-its sign-in and route guard. The client stories remain in Validation pending human product review. The backoffice still has a session
-freshness gap.
+its sign-in and route guard. The backoffice still has a session freshness gap.
 
 Runs of at least three consecutive missing criteria use inclusive ranges with full AC IDs at both endpoints.
 
@@ -227,6 +226,11 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 **Cross-domain relationship:** This is a shared session policy consumed by every authenticated client route, including Accounts, Payroll,
 governance, Contract Management and Safe. Each domain retains its operation, authorization and signature rules. The
 [shared contract-interaction owner](../../implementation/contract-interactions/README.md) documents submission boundaries and exceptions.
+
+## Human Validation
+
+Validated on 2026-11-07 by the product owner for US-AUTH-001 and US-AUTH-004. The review covered retry after a declined wallet signature,
+restoring a protected client page after reload, and resuming the same page after returning to the configured wallet network.
 
 ## Known Gaps
 
