@@ -16,12 +16,7 @@ import { nextTick } from 'vue'
  * through navigation but don't contain testable logic.
  */
 
-// Hoist mocks to ensure they're available during module initialization
-const { mockIsAuth } = vi.hoisted(() => {
-  const mockIsAuth = { value: false }
-  globalThis.__mockUseStorageValue = mockIsAuth
-  return { mockIsAuth }
-})
+import { mockUserStore } from '@/tests/mocks'
 
 // Mock all dynamic imports before importing router
 vi.mock('@/views/HomeView.vue', () => ({
@@ -125,7 +120,7 @@ import router from '@/router/index'
 describe('Router Configuration', () => {
   beforeEach(async () => {
     vi.clearAllMocks()
-    mockIsAuth.value = false
+    mockUserStore.isAuth = false
     // Push to login first to reset router state
     await router.push('/login')
     await nextTick()
@@ -223,7 +218,7 @@ describe('Router Configuration', () => {
     })
 
     it('loads components dynamically when routes are accessed', async () => {
-      mockIsAuth.value = true // Set authenticated for this test
+      mockUserStore.isAuth = true // Set authenticated for this test
 
       // Test home route component loading
       await router.push('/')
@@ -246,7 +241,7 @@ describe('Router Configuration', () => {
     })
 
     it('redirects /accounting to the summary page and loads each accounting view', async () => {
-      mockIsAuth.value = true
+      mockUserStore.isAuth = true
 
       await router.push('/teams/123/accounting')
       await nextTick()
@@ -281,7 +276,7 @@ describe('Router Configuration', () => {
   describe('Navigation Guards', () => {
     describe('Authentication Guard', () => {
       it('redirects to login when not authenticated and accessing protected routes', async () => {
-        mockIsAuth.value = false
+        mockUserStore.isAuth = false
 
         // Test accessing home when not authenticated
         await router.push('/')
@@ -289,21 +284,21 @@ describe('Router Configuration', () => {
       })
 
       it('redirects to login when accessing teams without authentication', async () => {
-        mockIsAuth.value = false
+        mockUserStore.isAuth = false
 
         await router.push('/teams')
         expect(router.currentRoute.value.name).toBe('login')
       })
 
       it('redirects to login when accessing team detail without authentication', async () => {
-        mockIsAuth.value = false
+        mockUserStore.isAuth = false
 
         await router.push('/teams/123')
         expect(router.currentRoute.value.name).toBe('login')
       })
 
       it('redirects to login when accessing nested team routes without authentication', async () => {
-        mockIsAuth.value = false
+        mockUserStore.isAuth = false
 
         await router.push('/teams/123/cash-remunerations')
         expect(router.currentRoute.value.name).toBe('login')
@@ -316,7 +311,7 @@ describe('Router Configuration', () => {
       })
 
       it('allows access to protected routes when authenticated', async () => {
-        mockIsAuth.value = true
+        mockUserStore.isAuth = true
 
         await router.push('/')
         expect(router.currentRoute.value.name).toBe('teams')
@@ -329,7 +324,7 @@ describe('Router Configuration', () => {
       })
 
       it('redirects to home when accessing login while authenticated', async () => {
-        mockIsAuth.value = true
+        mockUserStore.isAuth = true
 
         // Navigate to home first, then try to go to login
         await router.push('/')
@@ -341,14 +336,14 @@ describe('Router Configuration', () => {
       })
 
       it('allows access to login when not authenticated', async () => {
-        mockIsAuth.value = false
+        mockUserStore.isAuth = false
 
         await router.push('/login')
         expect(router.currentRoute.value.name).toBe('login')
       })
 
       it('handles route navigation with parameters', async () => {
-        mockIsAuth.value = true
+        mockUserStore.isAuth = true
 
         // Test with team ID
         await router.push('/teams/abc123')
@@ -368,22 +363,22 @@ describe('Router Configuration', () => {
       })
     })
 
-    describe('useStorage Integration', () => {
+    describe('Session state', () => {
       it('reacts to authentication state changes', async () => {
         // Start unauthenticated
-        mockIsAuth.value = false
+        mockUserStore.isAuth = false
         await router.push('/')
         expect(router.currentRoute.value.name).toBe('login')
 
         // Simulate authentication
-        mockIsAuth.value = true
+        mockUserStore.isAuth = true
         await router.push('/')
         expect(router.currentRoute.value.name).toBe('teams')
 
         // Simulate logout
-        mockIsAuth.value = false
-        await router.push('/teams')
-        expect(router.currentRoute.value.name).toBe('teams')
+        mockUserStore.isAuth = false
+        await router.push('/teams/123')
+        expect(router.currentRoute.value.name).toBe('login')
       })
     })
   })

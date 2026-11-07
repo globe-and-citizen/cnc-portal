@@ -4,6 +4,8 @@ import { flushPromises } from '@vue/test-utils'
 import { UserRejectedRequestError, SwitchChainError } from 'viem'
 import { AxiosError, AxiosHeaders } from 'axios'
 
+vi.unmock('@/stores/user')
+
 vi.mock('@/router', () => ({
   default: { push: vi.fn() }
 }))
@@ -32,7 +34,7 @@ const ADDRESS = '0x1234567890123456789012345678901234567890'
 
 const makeAxiosError = (url: string, status?: number) => {
   const err = new AxiosError('boom')
-  err.config = { url, headers: new AxiosHeaders() }
+  err.config = { url, headers: new AxiosHeaders({ Authorization: 'Bearer jwt.token' }) }
   if (status !== undefined) {
     err.response = { status } as AxiosError['response']
   }
@@ -105,7 +107,7 @@ describe('useSiweMutation', () => {
       message: expect.any(String),
       signature: '0xsignature'
     })
-    expect(userApi.getUser).toHaveBeenCalledWith(ADDRESS)
+    expect(userApi.getUser).toHaveBeenCalledWith(ADDRESS, 'jwt.token')
     expect(mockRouterPush).toHaveBeenCalledWith('/teams')
   })
 
@@ -210,7 +212,7 @@ describe('useSiweMutation', () => {
     vi.mocked(userApi.getUser).mockRejectedValueOnce(makeAxiosError('/api/user/profile', 401))
     const { mutateAsync } = useSiweMutation()
     await expect(mutateAsync()).rejects.toBeInstanceOf(AxiosError)
-    expect(localStorage.getItem('authToken')).toBe('')
+    expect(localStorage.getItem('authToken')).toBeNull()
     expect(mockToast.add).toHaveBeenCalledWith(
       expect.objectContaining({ title: 'Failed to fetch user data' })
     )
