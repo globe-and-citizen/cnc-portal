@@ -226,7 +226,7 @@ market query.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `24c8e67951fb0ac0213105ff7afad413433a7636`
+**Implementation evidence reviewed against:** `aef9c54644f938b4f8b1de3b80456f6b59a9a1a0`
 
 - [Query barrel](../../../app/src/queries/index.ts), [query factory](../../../app/src/queries/queryFactory.ts), and
   [single-file upload query](../../../app/src/queries/file.queries.ts)

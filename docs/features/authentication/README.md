@@ -19,11 +19,14 @@ The authenticated client locks its workspace when the connected wallet is on ano
 configured network and resume the same session after a successful switch. Production targets Polygon. This session policy is shared by all
 client features; signature-domain validation remains with its API and contract owners.
 
+The portal checks the saved session with the API before opening a protected page. While the check is pending, the workspace stays hidden. A
+rejected or unavailable session check leads to sign-in. Expiry while the portal is open also returns the user to sign-in.
+
 ## Lifecycle
 
 ```mermaid
 flowchart TB
-  start[Open protected CNC Portal surface] --> session{Valid local session?}
+  start[Open protected CNC Portal surface] --> session{Session verified by the API?}
   session -->|Yes| protected[Enter protected surface]
   session -->|No| login[Open login]
   login --> connect[Connect wallet and switch network]
@@ -85,8 +88,8 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 
 #### Edge & Error Cases
 
-- [x] `AC-US-AUTH-001-08` A portal user without a valid local session is redirected from protected client routes, including parameterized
-      detail routes, to login.
+- [x] `AC-US-AUTH-001-08` Protected client routes, including parameterized detail routes, render only after the API confirms the session. If
+      verification fails, the user sees the login page on its own.
 - [x] `AC-US-AUTH-001-09` An invalid SIWE message or signature is rejected without authenticating the user.
 
 ### Test Coverage
@@ -102,7 +105,7 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 | `AC-US-AUTH-001-05`  | `PS-BACKEND`        | Backend                   | ✅ Met          |
 | `AC-US-AUTH-001-06`  | `PS-BACKEND`        | Backend                   | ✅ Met          |
 | `AC-US-AUTH-001-07`  | `PS-API-INTEGRATED` | Integrated E2E            | ✅ Met          |
-| `AC-US-AUTH-001-08`  | `PS-FRONTEND`       | None linked               | ❌ Missing      |
+| `AC-US-AUTH-001-08`  | `PS-FRONTEND`       | Mocked browser            | ⚠️ Insufficient |
 | `AC-US-AUTH-001-09`  | `PS-BACKEND`        | Backend                   | ✅ Met          |
 
 ## US-AUTH-002: Sign in to the Backoffice
@@ -242,13 +245,14 @@ governance, Contract Management and Safe. Each domain retains its operation, aut
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `067bacd724783de1a8449ffd61299434d04d404c`
+**Implementation evidence reviewed against:** `aef9c54644f938b4f8b1de3b80456f6b59a9a1a0`
 
 - [Network lock screen](../../../app/src/components/layout/NetworkLockScreen.vue),
   [network-lock tests](../../../app/src/components/layout/__tests__/NetworkLockScreen.spec.ts),
   [browser network-recovery journey](../../../app/test/e2e/wallet-network.spec.ts), and
   [E2E wallet network fixture](../../../app/src/e2e/mockConnector.ts)
-- [Client login page](../../../app/src/views/LoginView.vue)
+- [Client login page](../../../app/src/views/LoginView.vue), [session guard](../../../app/src/router/index.ts), and
+  [browser session-restoration tests](../../../app/test/e2e/login.spec.ts)
 - [Client SIWE orchestration](../../../app/src/composables/useSiwe.ts)
 - [Client SIWE tests](../../../app/src/composables/__tests__/useSiwe.spec.ts)
 - [Dashboard login page](../../../dashboard/app/pages/login.vue)
