@@ -24,8 +24,9 @@ export const getUserNonce = async (address: Address): Promise<UserNonceResponse>
  * Used inside `useSiweMutation` after the JWT is in storage; component
  * consumers should prefer `useGetUserQuery` for reactive reads.
  */
-export const getUser = async (address: Address): Promise<Partial<User>> => {
+export const getUser = async (address: Address, token?: string): Promise<Partial<User>> => {
   const { data } = await apiClient.get<Partial<User>>(`user/${address}`, {
+    ...(token && { headers: { Authorization: `Bearer ${token}` } }),
     sentryNotFound: 'expected'
   })
   return data

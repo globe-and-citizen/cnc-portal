@@ -19,11 +19,14 @@ The authenticated client locks its workspace when the connected wallet is on ano
 configured network and resume the same session after a successful switch. Production targets Polygon. This session policy is shared by all
 client features; signature-domain validation remains with its API and contract owners.
 
+The portal checks the saved session with the API before opening a protected page. While the check is pending, the workspace stays hidden. A
+rejected or unavailable session check leads to sign-in. Expiry while the portal is open also returns the user to sign-in.
+
 ## Lifecycle
 
 ```mermaid
 flowchart TB
-  start[Open protected CNC Portal surface] --> session{Valid local session?}
+  start[Open protected CNC Portal surface] --> session{Session verified by the API?}
   session -->|Yes| protected[Enter protected surface]
   session -->|No| login[Open login]
   login --> connect[Connect wallet and switch network]
@@ -53,12 +56,12 @@ test run. The integrated client sign-in exists; recovery and backoffice journeys
 
 Runs of at least three consecutive missing criteria use inclusive ranges with full AC IDs at both endpoints.
 
-| User Story  | Main Journey  | Coverage Target | Gaps                                                          |
-| ----------- | ------------- | --------------- | ------------------------------------------------------------- |
-| US-AUTH-001 | ✅ Integrated | ⚠️ 6/9          | `AC-US-AUTH-001-01`, `AC-US-AUTH-001-04`, `AC-US-AUTH-001-08` |
-| US-AUTH-002 | ⬜ Planned    | ❌ 0/8 met      | `AC-US-AUTH-002-01`–`AC-US-AUTH-002-08`                       |
-| US-AUTH-003 | ⬜ Planned    | ⚠️ 1/9          | `AC-US-AUTH-003-01`–`AC-US-AUTH-003-08`                       |
-| US-AUTH-004 | ✅ Browser    | ✅ 7/7          | None                                                          |
+| User Story  | Main Journey  | Coverage Target | Gaps                                                                              |
+| ----------- | ------------- | --------------- | --------------------------------------------------------------------------------- |
+| US-AUTH-001 | ✅ Integrated | ⚠️ 7/12         | `AC-US-AUTH-001-01`, `AC-US-AUTH-001-04`, `AC-US-AUTH-001-10`–`AC-US-AUTH-001-12` |
+| US-AUTH-002 | ⬜ Planned    | ❌ 0/8 met      | `AC-US-AUTH-002-01`–`AC-US-AUTH-002-08`                                           |
+| US-AUTH-003 | ⬜ Planned    | ⚠️ 1/9          | `AC-US-AUTH-003-01`–`AC-US-AUTH-003-08`                                           |
+| US-AUTH-004 | ✅ Browser    | ✅ 7/7          | None                                                                              |
 
 Proof obligations use the [shared proof-strategy registry](../../testing/proof-strategies.md). Multiple IDs for one AC are cumulative.
 
@@ -85,9 +88,16 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 
 #### Edge & Error Cases
 
-- [x] `AC-US-AUTH-001-08` A portal user without a valid local session is redirected from protected client routes, including parameterized
-      detail routes, to login.
+- [x] `AC-US-AUTH-001-08` At startup, protected client routes, including parameterized detail routes, remain hidden while the saved session
+      is being verified. If the verification endpoint rejects the current token (`401`), the saved session is cleared and the user is
+      returned to sign-in.
 - [x] `AC-US-AUTH-001-09` An invalid SIWE message or signature is rejected without authenticating the user.
+- [x] `AC-US-AUTH-001-10` If session verification remains unavailable after retries, the user stays outside the workspace and sees sign-in.
+      The saved token is retained so reloading can retry verification without a new wallet signature.
+- [x] `AC-US-AUTH-001-11` When a signed-in user is denied access to a protected resource or action (`403`), the refusal stays within the
+      affected feature. The user stays signed in for other permitted actions.
+- [x] `AC-US-AUTH-001-12` During an active session, a protected API request that receives `401` for the current token ends the session and
+      returns the user to sign-in.
 
 ### Test Coverage
 
@@ -102,8 +112,11 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 | `AC-US-AUTH-001-05`  | `PS-BACKEND`        | Backend                   | ✅ Met          |
 | `AC-US-AUTH-001-06`  | `PS-BACKEND`        | Backend                   | ✅ Met          |
 | `AC-US-AUTH-001-07`  | `PS-API-INTEGRATED` | Integrated E2E            | ✅ Met          |
-| `AC-US-AUTH-001-08`  | `PS-FRONTEND`       | None linked               | ❌ Missing      |
+| `AC-US-AUTH-001-08`  | `PS-FRONTEND`       | Mocked browser + Frontend | ✅ Met          |
 | `AC-US-AUTH-001-09`  | `PS-BACKEND`        | Backend                   | ✅ Met          |
+| `AC-US-AUTH-001-10`  | `PS-BROWSER`        | None linked               | ❌ Missing      |
+| `AC-US-AUTH-001-11`  | `PS-BROWSER`        | None linked               | ❌ Missing      |
+| `AC-US-AUTH-001-12`  | `PS-BROWSER`        | None linked               | ❌ Missing      |
 
 ## US-AUTH-002: Sign in to the Backoffice
 
@@ -238,17 +251,20 @@ governance, Contract Management and Safe. Each domain retains its operation, aut
 
 ## Known Gaps
 
+- Direct browser proof is pending for verification recovery after a temporary failure, session preservation after a resource refusal, and
+  sign-in after rejection of the current token during use (`AC-US-AUTH-001-10`–`AC-US-AUTH-001-12`).
 - The client unit proof for `AC-US-AUTH-003-06` is complete, but the required mocked-browser proof remains pending.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `067bacd724783de1a8449ffd61299434d04d404c`
+**Implementation evidence reviewed against:** `8c7c2e2adf8516c8bb269320301c296ea2ce99c3`
 
 - [Network lock screen](../../../app/src/components/layout/NetworkLockScreen.vue),
   [network-lock tests](../../../app/src/components/layout/__tests__/NetworkLockScreen.spec.ts),
   [browser network-recovery journey](../../../app/test/e2e/wallet-network.spec.ts), and
   [E2E wallet network fixture](../../../app/src/e2e/mockConnector.ts)
-- [Client login page](../../../app/src/views/LoginView.vue)
+- [Client login page](../../../app/src/views/LoginView.vue), [session guard](../../../app/src/router/index.ts), and
+  [browser session-restoration tests](../../../app/test/e2e/login.spec.ts)
 - [Client SIWE orchestration](../../../app/src/composables/useSiwe.ts)
 - [Client SIWE tests](../../../app/src/composables/__tests__/useSiwe.spec.ts)
 - [Dashboard login page](../../../dashboard/app/pages/login.vue)

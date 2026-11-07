@@ -113,7 +113,9 @@ export const makeUserStore = (overrides: Partial<UserStoreData> = {}) => ({
   ...overrides,
   setUserData: vi.fn(),
   clearUserData: vi.fn(),
-  setAuthStatus: vi.fn()
+  token: '' as string | null,
+  setSessionToken: vi.fn(),
+  confirmSession: vi.fn()
 })
 
 /**
@@ -128,7 +130,9 @@ export const resetUserStoreMock = () => {
   Object.assign(mockUserStore, userStoreDataDefaults())
   mockUserStore.setUserData.mockClear()
   mockUserStore.clearUserData.mockClear()
-  mockUserStore.setAuthStatus.mockClear()
+  mockUserStore.token = null
+  mockUserStore.setSessionToken.mockClear()
+  mockUserStore.confirmSession.mockClear()
 }
 
 export const mockUseCurrencyStore = () => ({

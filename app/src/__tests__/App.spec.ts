@@ -4,7 +4,7 @@ import { nextTick } from 'vue'
 import App from '@/App.vue'
 import { mockUseConnection, mockUserStore } from '@/tests/mocks'
 import { mockUseConnectionEffect, mockUseSwitchChain } from '@/tests/mocks/wagmi.vue.mock'
-import { mockUseAuth } from '@/tests/mocks/composables.mock'
+import { setMockRoute } from '@/tests/mocks/router.mock'
 import { configuredChainId } from '@/lib/walletNetwork'
 
 describe('App', () => {
@@ -22,6 +22,8 @@ describe('App', () => {
           UDashboardSidebarCollapse: { template: '<div />' },
           SidebarLayout: { template: '<div data-test="sidebar-layout" />' },
           TeamSelectMenu: { template: '<div data-test="team-select" />' },
+          NavBreadcrumb: true,
+          TokenPriceStatusAlert: true,
           NavBar: { template: '<div data-test="navbar" />' },
           Devtools: { template: '<div data-test="query-devtools" />' },
           LockScreen: { template: '<div data-test="lock-screen" />' },
@@ -31,6 +33,7 @@ describe('App', () => {
     })
 
   beforeEach(() => {
+    setMockRoute({ name: 'teams' })
     mockUserStore.isAuth = true
     mockUserStore.address = '0x1234567890123456789012345678901234567890'
     mockUseConnection.address.value = '0x1234567890123456789012345678901234567890'
@@ -40,7 +43,7 @@ describe('App', () => {
     const wrapper = mountApp()
 
     expect(wrapper.find('[data-test="lock-screen"]').exists()).toBe(false)
-    expect(wrapper.find('[data-test="sidebar-layout"]').exists()).toBe(false)
+    expect(wrapper.find('[data-test="sidebar-layout"]').exists()).toBe(true)
   })
 
   it('[AC-US-AUTH-003-09] locks the app when the connected wallet differs from the session', () => {
@@ -101,6 +104,7 @@ describe('App', () => {
   })
 
   it('keeps login available before authentication on another network', () => {
+    setMockRoute({ name: 'login' })
     mockUserStore.isAuth = false
     mockUseConnection.chainId.value = 1
     const wrapper = mountApp()
@@ -114,7 +118,7 @@ describe('App', () => {
     const wrapper = mountApp()
     const effects = mockUseConnectionEffect.mock.calls.at(-1)?.[0] as { onDisconnect: () => void }
     effects.onDisconnect()
-    expect(mockUseAuth.logout).toHaveBeenCalledOnce()
+    expect(mockUserStore.clearUserData).toHaveBeenCalledOnce()
     wrapper.unmount()
   })
 })

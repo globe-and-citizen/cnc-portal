@@ -36,7 +36,8 @@ flowchart LR
 ## Main Flow
 
 1. Vue Router resolves the browser location. The root location redirects to the Companies route and team routes resolve under a team ID.
-2. The guard redirects an unauthenticated visitor to Login and redirects an authenticated visitor away from Login to Companies.
+2. The guard waits for the backend's response when restoring a saved session. It directs unauthenticated visitors to Login and redirects
+   authenticated visitors from Login to Companies.
 3. The application shell renders the named login view or, for an authenticated session, the team workspace and its default route view. An
    account mismatch retains the account lock. Otherwise, an unexpected or unknown wallet network replaces the workspace with the
    [shared network lock](../../features/authentication/README.md#us-auth-004-resume-after-a-wallet-network-change), unmounting its dialogs.
@@ -50,7 +51,7 @@ flowchart LR
 - Route records lazy-load their view components; the shared router owns their names, paths, redirects, and authentication redirect policy.
 - Board Proposals is suspended and has no active portal journey. Its routes and sidebar entry are removed. Election creation and Safe
   transaction proposals remain separate journeys.
-- The locked-session location bypasses the normal authentication redirect so the locked-session view can render.
+- Login, the wallet lock screens, and the protected workspace are mutually exclusive rendering branches.
 - Workspace navigation remains disabled until the URL or team store identifies a current team.
 - A parent menu section is active and initially open when its route-name group matches the current route. The sidebar keeps at most one
   manually expanded section open at a time.
@@ -65,7 +66,7 @@ observer with no side effect; removing that inert observer does not replace or a
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `b148d4a8eb4fa7f7b15cab99eae0d9fe37583750`
+**Implementation evidence reviewed against:** `8c7c2e2adf8516c8bb269320301c296ea2ce99c3`
 
 - [Team selection menu](../../../app/src/components/layout/TeamSelectMenu.vue)
 - [Router definition and authentication guard](../../../app/src/router/index.ts)

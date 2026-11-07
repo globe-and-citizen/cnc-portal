@@ -1,5 +1,6 @@
-import { createRouter, createWebHistory } from 'vue-router'
-import { useStorage } from '@vueuse/core'
+import { createRouter, createWebHistory, START_LOCATION } from 'vue-router'
+import { validateToken } from '@/api/auth.api'
+import { useUserDataStore } from '@/stores/user'
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
@@ -200,21 +201,26 @@ const router = createRouter({
     // }
   ]
 })
-const isAuth = useStorage('isAuth', false)
+let startupCheck: Promise<void> | undefined
 
-router.beforeEach(async (to) => {
-  // Skip auth redirects when visiting the locked session view
-  if (to.path === '/locked') {
-    return true
+router.beforeEach(async (to, from) => {
+  const userStore = useUserDataStore()
+  const token = userStore.token
+  if (from === START_LOCATION && !userStore.isAuth && token && userStore.address) {
+    startupCheck ??= validateToken(token).then(
+      () => {
+        userStore.confirmSession(token)
+      },
+      () => {
+        // The API interceptor clears rejected credentials. A transport failure
+        // also leaves the session unverified, so the router opens sign-in.
+      }
+    )
+    await startupCheck
   }
 
-  if (!isAuth.value && to.name !== 'login') {
-    return { name: 'login' }
-  }
-  // Redirect to teams page if logged in
-  if (to.name === 'login' && isAuth.value) {
-    return { name: 'teams' }
-  }
+  if (!userStore.isAuth && to.name !== 'login') return { name: 'login' }
+  if (userStore.isAuth && to.name === 'login') return { name: 'teams' }
 })
-// router.
+
 export default router

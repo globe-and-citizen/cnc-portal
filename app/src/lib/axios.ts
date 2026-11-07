@@ -1,6 +1,5 @@
 import axios, { type AxiosError, type InternalAxiosRequestConfig } from 'axios'
 import { BACKEND_URL } from '@/constant'
-import type { Router } from 'vue-router'
 import { useUserDataStore } from '@/stores/user'
 import { captureAxiosError } from '@/lib/sentry'
 
@@ -15,7 +14,7 @@ const apiClient = axios.create({
 apiClient.interceptors.request.use((config) => {
   const token = localStorage.getItem('authToken')
   if (token) {
-    config.headers.Authorization = `Bearer ${token}`
+    config.headers.set('Authorization', `Bearer ${token}`, false)
   }
 
   // Let the browser/axios set the correct multipart boundary
@@ -70,31 +69,20 @@ apiClient.interceptors.response.use(
   }
 )
 
-/**
- * Setup the 401 response interceptor
- * This should be called after app initialization to ensure router and Pinia are available
- */
-export const setupAuthInterceptor = (router: Router) => {
-  apiClient.interceptors.response.use(
-    (response) => response,
-    (error) => {
-      // Handle 401 errors globally - logout user
-      if (error.response?.status === 401) {
-        console.warn('Unauthorized request detected - logging out user')
-
-        // Use Pinia store to clear auth data (guaranteed to be available)
-        const userStore = useUserDataStore()
-        userStore.clearUserData()
-
-        // Redirect to login page
-        router.push({ name: 'login' }).catch(() => {
-          // Fallback to direct navigation if router push fails
-          window.location.href = '/login'
-        })
-      }
-      return Promise.reject(error)
+/** Install session invalidation for the portal after Pinia is available. */
+export const setupAuthInterceptor = () => {
+  apiClient.interceptors.response.use(undefined, (error: AxiosError) => {
+    const token = localStorage.getItem('authToken')
+    if (
+      token &&
+      error.response?.status === 401 &&
+      error.config?.url !== 'auth/siwe' &&
+      error.config?.headers.get('Authorization') === `Bearer ${token}`
+    ) {
+      useUserDataStore().clearUserData()
     }
-  )
+    return Promise.reject(error)
+  })
 }
 
 export default apiClient
