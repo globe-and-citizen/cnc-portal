@@ -50,7 +50,6 @@ confidence and safety boundaries.
 - `dashboard/` — separate Nuxt statistics dashboard.
 - `backend/` — Express API and Prisma.
 - `contract/` — Hardhat and Solidity contracts.
-- `ponder/` and `the-graph/` — indexers.
 
 The frontend uses REST for backend data and wagmi/viem for chain interactions. Contract deployment addresses are mirrored into the frontend
 artifacts; after changing a contract interface, run `npm run generate-abi` in `contract/` and commit the generated frontend ABI.
@@ -150,9 +149,8 @@ npm run compile
 npm run test
 ```
 
-For `dashboard/`, `ponder/`, and `the-graph/`, run every relevant lint, format, type-check, build, and test script exposed by that
-subproject. Contract PRs also require the [Solidity audit checklist](./.github/copilot-instructions/solidity-audit-checklist.md). When
-changing agent-instruction Markdown, run:
+For `dashboard/`, run every relevant lint, format, type-check, build, and test script exposed by that subproject. Contract PRs also require
+the [Solidity audit checklist](./.github/copilot-instructions/solidity-audit-checklist.md). When changing agent-instruction Markdown, run:
 
 ```bash
 npm run lint:md

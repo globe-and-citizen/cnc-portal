@@ -39,7 +39,6 @@ The CNC Portal addresses both problems by providing:
 | `dashboard/` | Nuxt admin dashboard — activity analytics, member management, backoffice operations       |
 | `backend/`   | Express.js REST API — authentication (SIWE/JWT), user data, platform statistics           |
 | `contract/`  | Hardhat smart contracts — wages, claims, expenses, vesting, proposals, board actions      |
-| `the-graph/` | Subgraph indexing for on-chain event consumption                                          |
 
 ✅ **Out of Scope**
 
@@ -393,7 +392,7 @@ Portal:
 - Dashboard: Nuxt 3 + TypeScript + Nuxt UI
 - Backend: Express.js + TypeScript + Prisma + PostgreSQL
 - Contracts: Solidity + Hardhat + TypeScript tests
-- Indexing: The Graph Protocol
+- Contract activity: direct RPC event feeds (see [Contract Event Feeds](./implementation/contract-event-feeds/README.md))
 
 ---
 
@@ -411,7 +410,7 @@ Portal:
 - Contributors are familiar with Web3 concepts (wallets, signing, on-chain transactions).
 - Teams operate on EVM-compatible networks supported by the platform.
 - PostgreSQL is available as the primary data store.
-- The Graph or an equivalent indexing solution is available for on-chain event queries.
+- RPC providers expose the historical contract logs required by the [event feeds](./implementation/contract-event-feeds/README.md).
 
 ### 8.3 Risks
 

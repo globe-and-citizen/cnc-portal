@@ -206,7 +206,7 @@ hard-codes it per network. Before touching Officer:
 - If you're changing Officer's logic or storage, run `validate-upgrade` and fight hard to keep it compatible. Use `__gap` slots. Do not
   rearrange parents.
 - Only redeploy Officer if the plugin refuses and there's no storage-compatible refactor — and in that case, every contract that references
-  Officer's address needs to be updated too (subgraph, frontend, other contracts).
+  Officer's address needs to be updated too (frontend, dashboard, backend, other contracts).
 
 ## 7. Checklist (copy into your PR description)
 

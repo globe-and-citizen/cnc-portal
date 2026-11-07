@@ -1,7 +1,7 @@
 # CNC Portal - System Architecture
 
 **Version:** 1.0.0  
-**Last Updated:** December 7, 2025
+**Last Updated:** October 31, 2026
 
 ---
 
@@ -12,31 +12,14 @@ projects and promotes effective governance tools.
 
 ## System Architecture
 
-```
-┌──────────────────────────────────────────────────────┐
-│                  CNC Portal Platform                  │
-├──────────────────────────────────────────────────────┤
-│                                                       │
-│  ┌─────────────┐  ┌──────────────┐  ┌────────────┐ │
-│  │   Vue App   │  │Nuxt Dashboard│  │  Contract  │ │
-│  │  (Frontend) │  │  (Frontend)  │  │ (Hardhat)  │ │
-│  └──────┬──────┘  └──────┬───────┘  └─────┬──────┘ │
-│         │                 │                 │        │
-│         └────────┬────────┘                 │        │
-│                  │ REST/JWT                 │        │
-│                  ▼                          │        │
-│         ┌────────────────┐                  │        │
-│         │  Express API   │                  │        │
-│         │   (Backend)    │◄─────────────────┘        │
-│         └────────┬───────┘      Web3                 │
-│                  │                                    │
-│                  ▼                                    │
-│         ┌────────────────┐                           │
-│         │   PostgreSQL   │                           │
-│         │   (Database)   │                           │
-│         └────────────────┘                           │
-│                                                       │
-└──────────────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    app[Vue App] -->|REST| api[Express API]
+    dashboard[Nuxt Dashboard] -->|REST| api
+    api --> db[(PostgreSQL)]
+    app -->|RPC reads, logs and writes| chain[Smart Contracts]
+    dashboard -->|RPC| chain
+    api -->|RPC| chain
 ```
 
 ## Technology Stack
@@ -83,13 +66,6 @@ projects and promotes effective governance tools.
 - TypeScript for tests and scripts
 - Beacon Proxy pattern for upgradeability
 - Ethers.js for blockchain interaction
-
-### Supporting Services
-
-**The Graph** (`/the-graph`)
-
-- GraphQL API for blockchain data indexing
-- Subgraph for querying contract events
 
 ## Component Communication
 
@@ -185,7 +161,8 @@ The platform uses a hybrid approach:
 
 - **Off-chain:** User interactions, claims, time tracking (fast, low cost)
 - **On-chain:** Financial transactions, governance, token management (transparent, immutable)
-- **Synchronization:** The Graph indexes blockchain events for efficient querying
+- **Contract activity:** The client reconstructs activity directly from RPC logs through the shared
+  [Contract Event Feeds](../implementation/contract-event-feeds/README.md); no repository-hosted indexer is required.
 
 ## Scalability Considerations
 
