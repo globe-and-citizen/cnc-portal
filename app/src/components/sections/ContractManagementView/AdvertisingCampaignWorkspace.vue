@@ -8,8 +8,8 @@ import {
 } from '@/composables/campaign/reads'
 import { formatTokenUnits } from '@/utils/format'
 import AddressTooltip from '@/components/ui/AddressTooltip.vue'
-import CreateAdvertisingCampaign from './forms/CreateAdvertisingCampaign.vue'
-import WithdrawAdvertisingCampaign from './forms/WithdrawAdvertisingCampaign.vue'
+import CreateAdvertisingCampaignForm from './forms/CreateAdvertisingCampaignForm.vue'
+import WithdrawAdvertisingCampaignForm from './forms/WithdrawAdvertisingCampaignForm.vue'
 import AdvertisingCampaignDetailsSlideover from './AdvertisingCampaignDetailsSlideover.vue'
 import AdvertisingCampaignSummary from './AdvertisingCampaignSummary.vue'
 const props = defineProps<{ managerAddress: Address }>()
@@ -266,7 +266,7 @@ function refresh() {
       description="Fund a new campaign through the selected Campaign Manager."
     >
       <template #body>
-        <CreateAdvertisingCampaign
+        <CreateAdvertisingCampaignForm
           :manager-address="managerAddress"
           @close="createDialogOpen = false"
           @created="refresh"
@@ -280,7 +280,7 @@ function refresh() {
       @update:open="(open: boolean) => !open && (withdrawCampaign = null)"
     >
       <template #body>
-        <WithdrawAdvertisingCampaign
+        <WithdrawAdvertisingCampaignForm
           v-if="withdrawCampaign"
           :manager-address="managerAddress"
           :campaign="withdrawCampaign"

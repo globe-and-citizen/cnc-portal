@@ -1,0 +1,290 @@
+<template>
+  <div class="space-y-4">
+    <UAlert
+      v-if="pausedCount"
+      color="warning"
+      variant="subtle"
+      icon="i-lucide-triangle-alert"
+      :title="`${pausedCount} ${pausedCount === 1 ? 'contract needs' : 'contracts need'} attention`"
+      :description="`${pausedCount === 1 ? 'It is' : 'They are'} currently paused. Open the contract actions menu to resume operations.`"
+    />
+
+    <div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+      <div>
+        <h2 class="text-highlighted text-lg font-semibold">Current contract suite</h2>
+        <p class="text-muted mt-1 text-sm">
+          Operational state, balances and ownership for the contracts connected to this Officer.
+        </p>
+      </div>
+      <div class="flex gap-2">
+        <USelect
+          v-model="statusFilter"
+          :items="statusOptions"
+          value-key="value"
+          size="sm"
+          aria-label="Filter contracts by status"
+          class="min-w-32"
+        />
+        <USelect
+          v-model="sortOrder"
+          :items="sortOptions"
+          value-key="value"
+          size="sm"
+          aria-label="Sort contracts"
+          class="min-w-36"
+        />
+      </div>
+    </div>
+
+    <UCard :ui="{ body: 'p-0 sm:p-0' }">
+      <ManagedContractsDesktopTable
+        :rows="displayedContractRows"
+        :is-refreshing="isRefreshing"
+        :show-actions="showActions"
+        @view-details="openContractAction($event, 'details')"
+        @copy-contract-address="copyContractAddress"
+        @open-in-explorer="openContractInExplorer"
+        @review-pending-actions="openContractAction($event, 'approval')"
+        @transfer-ownership="openContractAction($event, 'transfer')"
+        @toggle-pause="requestPauseToggle"
+      />
+
+      <div v-if="displayedContracts.length" class="divide-default divide-y md:hidden">
+        <ManagedContractMobileCard
+          v-for="row in displayedContractRows"
+          :key="row.contract.address"
+          :row="row"
+          @view-details="openContractAction($event, 'details')"
+          @copy-contract-address="copyContractAddress"
+          @open-in-explorer="openContractInExplorer"
+          @review-pending-actions="openContractAction($event, 'approval')"
+          @transfer-ownership="openContractAction($event, 'transfer')"
+          @toggle-pause="requestPauseToggle"
+        />
+      </div>
+
+      <ManagedContractActionDialogs
+        v-if="showActions"
+        :row="selectedContract"
+        :version="version"
+        :pending-actions="selectedPendingActions"
+        :is-bod-action="selectedIsBodAction"
+        :open="selectedActionSurface"
+        :pause-toggle-request="pauseToggleRequest"
+        @update:open="selectedActionSurface = $event"
+        @contract-status-changed="refresh"
+      />
+
+      <UEmpty
+        v-if="!displayedContracts.length && !isRefreshing"
+        variant="naked"
+        icon="i-lucide-file-search"
+        title="No contracts match this filter"
+        description="Choose another status to see the full suite."
+      />
+    </UCard>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { computed, ref, watch } from 'vue'
+import { useClipboard } from '@vueuse/core'
+import type { Address } from 'viem'
+import { NETWORK } from '@/constant'
+import { useBodIsMember } from '@/composables/bod/reads'
+import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
+import { useGetBodActionsQuery } from '@/queries'
+import { useTeamStore, useUserDataStore } from '@/stores'
+import type { User } from '@/types'
+import type { DeploymentContract } from '@/types/deployments'
+import type { FormattedBodActions } from '@/utils/contracts/bodActions'
+import { formatPendingBodActionsForContract } from '@/utils/contracts/bodActions'
+import {
+  readManagedContracts,
+  type ManagedContractReadModel
+} from '@/composables/contracts/readManagedContracts'
+import { getContractPresentation } from '@/utils/contracts/presentation'
+import ManagedContractActionDialogs from './ManagedContractActionDialogs.vue'
+import ManagedContractsDesktopTable from './ManagedContractsDesktopTable.vue'
+import ManagedContractMobileCard from './ManagedContractMobileCard.vue'
+import type {
+  ContractActionState,
+  ContractTableRow,
+  ManagedContractRow
+} from './ManagedContractsTable.types'
+
+type ContractActionSurface = 'details' | 'transfer' | 'approval' | null
+
+interface ContractPauseToggleRequest {
+  id: number
+  paused: boolean
+}
+
+const props = withDefaults(
+  defineProps<{
+    contracts: DeploymentContract[]
+    version: string | null
+    showActions?: boolean
+  }>(),
+  { showActions: true }
+)
+
+const teamStore = useTeamStore()
+const userDataStore = useUserDataStore()
+const toast = useToast()
+const { copy } = useClipboard()
+const { isWriteDisabled } = useTeamWriteGuard()
+const enrichedContracts = ref<ManagedContractReadModel[]>([])
+const isRefreshing = ref(false)
+const statusFilter = ref<'all' | 'active' | 'paused'>('all')
+const sortOrder = ref<'contract' | 'status'>('contract')
+const selectedContract = ref<ManagedContractReadModel | null>(null)
+const selectedActionSurface = ref<ContractActionSurface>(null)
+const pauseToggleRequest = ref<ContractPauseToggleRequest | null>(null)
+const nextPauseToggleRequestId = ref(0)
+const showActions = computed(() => props.showActions)
+const bodMemberAddress = computed<Address>(
+  () => (showActions.value ? userDataStore.address : '') as Address
+)
+const { data: isCurrentUserBodMember } = useBodIsMember(bodMemberAddress)
+const { data: bodActions } = useGetBodActionsQuery({
+  queryParams: {
+    teamId: computed(() => (showActions.value ? teamStore.currentTeamId : null)),
+    isExecuted: false
+  }
+})
+const statusOptions = [
+  { label: 'All statuses', value: 'all' },
+  { label: 'Active', value: 'active' },
+  { label: 'Paused', value: 'paused' }
+]
+const sortOptions = [
+  { label: 'Sort: Contract', value: 'contract' },
+  { label: 'Sort: Status', value: 'status' }
+]
+const displayedContracts = computed(() => {
+  const filtered = enrichedContracts.value.filter((contract) => {
+    if (statusFilter.value === 'paused') return contract.pauseStatus === 'paused'
+    if (statusFilter.value === 'active') return contract.pauseStatus === 'active'
+    return true
+  })
+
+  return [...filtered].sort((a, b) => {
+    if (sortOrder.value === 'status') {
+      const statusOrder = ['active', 'paused', 'not-supported', 'unavailable']
+      return statusOrder.indexOf(a.pauseStatus) - statusOrder.indexOf(b.pauseStatus)
+    }
+    return presentation(a.type).label.localeCompare(presentation(b.type).label)
+  })
+})
+const pausedCount = computed(
+  () => enrichedContracts.value.filter((contract) => contract.pauseStatus === 'paused').length
+)
+const pendingActionsByContract = computed(
+  () =>
+    new Map<string, FormattedBodActions>(
+      enrichedContracts.value.map((contract) => [
+        contract.address,
+        formatPendingBodActionsForContract(
+          contract.address,
+          bodActions.value,
+          teamStore.currentTeam?.members || []
+        )
+      ])
+    )
+)
+const selectedPendingActions = computed(() =>
+  selectedContract.value ? pendingActionsFor(selectedContract.value) : []
+)
+const selectedIsBodAction = computed(() =>
+  selectedContract.value ? canSubmitBodAction(selectedContract.value) : false
+)
+
+const VALUE_HOLDING_TYPES = new Set([
+  'Bank',
+  'ExpenseAccountEIP712',
+  'CashRemunerationEIP712',
+  'Safe'
+])
+const holdsValue = (type: string) => VALUE_HOLDING_TYPES.has(type)
+const presentation = (type: string) => getContractPresentation(type)
+const pendingActionsFor = (contract: ManagedContractReadModel): FormattedBodActions =>
+  pendingActionsByContract.value.get(contract.address) ?? []
+const canSubmitBodAction = (contract: ManagedContractReadModel) =>
+  contract.owner === teamStore.getContractAddressByType('BoardOfDirectors') &&
+  isCurrentUserBodMember.value === true
+const canManage = (contract: ManagedContractReadModel) =>
+  !isWriteDisabled.value &&
+  (contract.owner === userDataStore.address || canSubmitBodAction(contract))
+const canReviewPendingActions = (contract: ManagedContractReadModel) =>
+  !isWriteDisabled.value && canSubmitBodAction(contract) && pendingActionsFor(contract).length > 0
+const actionStateFor = (contract: ManagedContractReadModel): ContractActionState | undefined =>
+  showActions.value
+    ? {
+        pendingActionCount: pendingActionsFor(contract).length,
+        canManage: canManage(contract),
+        canTogglePause:
+          canManage(contract) &&
+          (contract.pauseStatus === 'active' || contract.pauseStatus === 'paused'),
+        canReviewPendingActions: canReviewPendingActions(contract)
+      }
+    : undefined
+
+const resolveContractOwnerIdentity = (address: string | null): User => {
+  if (address && address === teamStore.getContractAddressByType('BoardOfDirectors')) {
+    return { name: 'Board of Directors', address }
+  }
+  return (
+    teamStore.currentTeam?.members.find((member) => member.address === address) || {
+      name: 'Unknown',
+      address: address || ''
+    }
+  )
+}
+
+const displayedContractRows = computed<ContractTableRow[]>(() =>
+  displayedContracts.value.map((contract) => ({
+    contract,
+    owner: resolveContractOwnerIdentity(contract.owner),
+    holdsValue: holdsValue(contract.type),
+    actionState: actionStateFor(contract)
+  }))
+)
+
+async function refresh() {
+  isRefreshing.value = true
+  try {
+    enrichedContracts.value = (await readManagedContracts(props.contracts, props.version)) || []
+  } finally {
+    isRefreshing.value = false
+  }
+}
+
+function openContractAction(contract: ManagedContractRow, surface: ContractActionSurface) {
+  selectedContract.value = contract
+  selectedActionSurface.value = surface
+}
+
+function requestPauseToggle(contract: ManagedContractRow, paused: boolean) {
+  if (contract.pauseStatus !== 'active' && contract.pauseStatus !== 'paused') return
+
+  selectedContract.value = contract
+  selectedActionSurface.value = null
+  nextPauseToggleRequestId.value += 1
+  pauseToggleRequest.value = {
+    id: nextPauseToggleRequestId.value,
+    paused
+  }
+}
+
+function copyContractAddress(address: string) {
+  void copy(address)
+  toast.add({ title: 'Contract address copied', color: 'success', icon: 'i-lucide-check' })
+}
+
+function openContractInExplorer(address: string) {
+  window.open(`${NETWORK.blockExplorerUrl}/address/${address}`, '_blank')
+}
+
+watch(() => props.contracts, refresh, { immediate: true })
+</script>

@@ -59,12 +59,13 @@ controlled read results and shared chain/mutation mocks; they do not prove live 
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `a15da820dbc6045c7ddff1da868a9884864397d4`
+**Implementation evidence reviewed against:** `ce6ae5493392f46869705f37900480ed34d0723c`
 
-- [Settings parent](../../../app/src/components/sections/ContractManagementView/TeamContracts.vue),
-  [settings form](../../../app/src/components/sections/ContractManagementView/TeamContractsDetail.vue),
-  [draft/confirmation tests](../../../app/src/components/sections/ContractManagementView/__tests__/TeamContractDetail.spec.ts), and
-  [parent/form lifetime tests](../../../app/src/components/sections/ContractManagementView/__tests__/TeamContracts.spec.ts)
+- [Campaign Manager administrator section](../../../app/src/components/sections/ContractManagementView/CampaignManagerAdminsSection.vue)
+- [Settings parent](../../../app/src/components/sections/ContractManagementView/CampaignManagersSection.vue),
+  [settings form](../../../app/src/components/sections/ContractManagementView/forms/CampaignManagerRatesForm.vue),
+  [draft/confirmation tests](../../../app/src/components/sections/ContractManagementView/forms/__tests__/CampaignManagerRatesForm.spec.ts),
+  and [parent/form lifetime tests](../../../app/src/components/sections/ContractManagementView/__tests__/CampaignManagersSection.spec.ts)
 - [Campaign read tests](../../../app/src/composables/campaign/__tests__/reads.spec.ts),
   [campaign write tests](../../../app/src/composables/campaign/__tests__/writes.spec.ts), and
   [campaign event tests](../../../app/src/lib/campaign/__tests__/events.spec.ts)

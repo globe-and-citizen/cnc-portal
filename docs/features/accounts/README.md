@@ -1368,7 +1368,7 @@ generic table dictionary. This is a compile-time boundary; it does not claim val
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `cebdd8f58a2b3ae7a0d49012bcb16d731ca93604`
+**Implementation evidence reviewed against:** `20b213c1c6c1903766d67725d2b430b95e156cdf`
 
 - [Bank deposit modal](../../../app/src/components/sections/BankView/forms/DepositModal.vue),
   [Bank transfer modal](../../../app/src/components/sections/BankView/forms/TransferModal.vue),
@@ -1438,7 +1438,7 @@ generic table dictionary. This is a compile-time boundary; it does not claim val
   [Expense support-set read](../../../app/src/composables/expenseAccount/reads.ts),
   [Expense approval writes](../../../app/src/composables/expenseAccount/writes.ts),
   [source-owner check](../../../app/src/composables/expenseAccount/approvalOwner.ts),
-  [older-generation retirement warning](../../../app/src/components/sections/ContractManagementView/LegacyApprovalWarning.vue),
+  [older-generation retirement warning](../../../app/src/components/sections/ContractManagementView/LegacyExpenseApprovalWarning.vue),
   [approval token policy](../../../app/src/utils/expenses/tokenPolicy.ts),
   [approval token amounts and balances](../../../app/src/utils/expenses/model.ts),
   [Expense API controller](../../../backend/src/controllers/expenseController.ts), and

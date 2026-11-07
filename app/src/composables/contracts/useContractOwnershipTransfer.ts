@@ -4,11 +4,11 @@ import { encodeFunctionData, type Address } from 'viem'
 import { ownablePausableAbi } from '@/artifacts/abi/ownable-pausable'
 import { useBodAddAction } from '@/composables/bod/writes'
 import { useContractWritesV3 } from '@/composables/contracts/useContractWritesV3'
-import type { TeamContractReadModel } from './readTeamContracts'
+import type { ManagedContractReadModel } from './readManagedContracts'
 import { classifyError } from '@/utils/errors/classifyContractError'
 import { log } from '@/lib/logging'
 
-type OwnershipTarget = Pick<TeamContractReadModel, 'address' | 'abi' | 'type'>
+type OwnershipTarget = Pick<ManagedContractReadModel, 'address' | 'abi' | 'type'>
 
 export function useContractOwnershipTransfer(
   row: Readonly<Ref<OwnershipTarget | null>>,

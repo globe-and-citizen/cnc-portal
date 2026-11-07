@@ -191,7 +191,7 @@ Covered separately in [`queries/safe.mutations.ts`](../../queries/safe.mutations
    membership is closed — see §6.)_
 6. **Dead keys** — `['getBodActions']` in the Board approval wrapper ([`bod/writes.ts`](../bod/writes.ts)) matches no query. Backend-side
    equivalents: `['weekly-claims', teamId]` (`WeeklyClaimActionEnable.vue:68`, `WeeklyClaimActionDropdown.vue:253`) and `['team', {teamId}]`
-   (`CreateAddCampaign.vue:163`), plus the `undefined`-laden key from `useSyncWeeklyClaimsMutation`.
+   (`DeployCampaignManagerForm.vue:163`), plus the `undefined`-laden key from `useSyncWeeklyClaimsMutation`.
 7. **`ProposalsList.vue` / `useContractFunctions` read outside the cache** — these remaining reads are unreachable by cache invalidation.
    Board Proposals remains suspended under the existing product decision; this map does not reactivate it.
 

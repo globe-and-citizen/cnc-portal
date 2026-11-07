@@ -419,7 +419,7 @@ callbacks, not real wallet transactions or product acceptance.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `a15da820dbc6045c7ddff1da868a9884864397d4`
+**Implementation evidence reviewed against:** `ce6ae5493392f46869705f37900480ed34d0723c`
 
 - [Real Board mutation lifecycle tests](../../../app/src/composables/bod/__tests__/writes.spec.ts)
 - [Board reads](../../../app/src/composables/bod/reads.ts), [Board writes](../../../app/src/composables/bod/writes.ts),
@@ -427,44 +427,47 @@ callbacks, not real wallet transactions or product acceptance.
   [shared contract writes](../../../app/src/composables/contracts/useContractWritesV3.ts)
 - [Proposal creation](../../../app/src/components/sections/ProposalsView/forms/CreateProposalForm.vue)
 - [Contract Management page and Officer-generation derivation](../../../app/src/views/team/%5Bid%5D/ContractManagementView.vue)
-- [Current contract section](../../../app/src/components/sections/ContractManagementView/MainContractSection.vue)
-- [Current contract table and selected action boundary](../../../app/src/components/sections/ContractManagementView/MainContractTable.vue)
+- [Current contract section](../../../app/src/components/sections/ContractManagementView/CurrentOfficerContractsSection.vue)
+- [Current contract table and selected action boundary](../../../app/src/components/sections/ContractManagementView/ManagedContractsTable.vue)
 - [Version-aware pause capability policy](../../../app/src/utils/contracts/pauseCapabilities.ts) and
-  [capability-backed contract reads](../../../app/src/composables/contracts/readTeamContracts.ts)
-- [Current contract desktop table](../../../app/src/components/sections/ContractManagementView/MainContractDesktopTable.vue)
-- [Current contract action menu](../../../app/src/components/sections/ContractManagementView/MainContractActionMenu.vue)
-- [Current contract mobile card](../../../app/src/components/sections/ContractManagementView/MainContractMobileCard.vue)
-- [Current contract action surfaces](../../../app/src/components/sections/ContractManagementView/MainContractActions.vue)
-- [Current contract table row model](../../../app/src/components/sections/ContractManagementView/MainContractTable.types.ts)
+  [capability-backed contract reads](../../../app/src/composables/contracts/readManagedContracts.ts)
+- [Current contract desktop table](../../../app/src/components/sections/ContractManagementView/ManagedContractsDesktopTable.vue)
+- [Current contract action menu](../../../app/src/components/sections/ContractManagementView/ManagedContractActionMenu.vue)
+- [Current contract mobile card](../../../app/src/components/sections/ContractManagementView/ManagedContractMobileCard.vue)
+- [Current contract action surfaces](../../../app/src/components/sections/ContractManagementView/ManagedContractActionDialogs.vue)
+- [Current contract table row model](../../../app/src/components/sections/ContractManagementView/ManagedContractsTable.types.ts)
 - [Ownership recipient selection](../../../app/src/components/sections/ContractManagementView/forms/TransferOwnershipForm.vue)
 - [Ownership transfer behaviour](../../../app/src/composables/contracts/useContractOwnershipTransfer.ts)
-- [Contract-status behaviour](../../../app/src/composables/contracts/useContractStatusChange.ts)
-- [Pending Board-action behaviour](../../../app/src/components/sections/ContractManagementView/MainContractActions.vue)
+- [Contract-status behaviour](../../../app/src/composables/contracts/useContractPauseToggle.ts)
+- [Pending Board-action behaviour](../../../app/src/components/sections/ContractManagementView/ManagedContractActionDialogs.vue)
 - [Pending Board-action data formatting](../../../app/src/utils/contracts/management.ts)
 - [Integrated Board dividend approval and quorum execution](../../../app/test/e2e/shareholder/shareholder-issuance-dividends.integrated.spec.ts),
   including persistence of the first zero-based Board action
-- [Campaign Manager selection and settings lifetime](../../../app/src/components/sections/ContractManagementView/TeamContracts.vue),
-  [typed rate form](../../../app/src/components/sections/ContractManagementView/TeamContractsDetail.vue),
-  [draft/confirmation tests](../../../app/src/components/sections/ContractManagementView/__tests__/TeamContractDetail.spec.ts), and
-  [parent/form lifetime tests](../../../app/src/components/sections/ContractManagementView/__tests__/TeamContracts.spec.ts)
-- [Campaign Management section](../../../app/src/components/sections/ContractManagementView/AdvertiseContractSection.vue)
+- [Campaign Manager administrator controls](../../../app/src/components/sections/ContractManagementView/CampaignManagerAdminsSection.vue),
+  [pending Board action table](../../../app/src/components/sections/ContractManagementView/PendingBodActionsTable.vue), and
+  [Board action party details](../../../app/src/components/sections/ContractManagementView/BodApprovalDetails.vue)
+- [Campaign Manager selection and settings lifetime](../../../app/src/components/sections/ContractManagementView/CampaignManagersSection.vue),
+  [typed rate form](../../../app/src/components/sections/ContractManagementView/forms/CampaignManagerRatesForm.vue),
+  [draft/confirmation tests](../../../app/src/components/sections/ContractManagementView/forms/__tests__/CampaignManagerRatesForm.spec.ts),
+  and [parent/form lifetime tests](../../../app/src/components/sections/ContractManagementView/__tests__/CampaignManagersSection.spec.ts)
+- [Campaign Management section](../../../app/src/components/sections/ContractManagementView/AdvertisingCampaignsSection.vue)
 - [Advertising campaign workspace](../../../app/src/components/sections/ContractManagementView/AdvertisingCampaignWorkspace.vue)
-- [Campaign Manager setup form](../../../app/src/components/sections/ContractManagementView/forms/CreateAddCampaign.vue) and
+- [Campaign Manager setup form](../../../app/src/components/sections/ContractManagementView/forms/DeployCampaignManagerForm.vue) and
   [Campaign Manager deployment mutation](../../../app/src/composables/useContractFunctions.ts)
-- [Deployment history section](../../../app/src/components/sections/ContractManagementView/DeploymentHistorySection.vue)
-- [Officer redeploy entry point](../../../app/src/components/sections/ContractManagementView/MainContractSection.vue)
+- [Deployment history section](../../../app/src/components/sections/ContractManagementView/OfficerDeploymentHistorySection.vue)
+- [Officer redeploy entry point](../../../app/src/components/sections/ContractManagementView/CurrentOfficerContractsSection.vue)
 - [Officer redeploy form and recovery actions](../../../app/src/components/sections/ContractManagementView/RedeployOfficerModal.vue)
 - [Officer redeploy workflow](../../../app/src/composables/contracts/useOfficerRedeploy.ts)
 - [Integrated shareholder migration lifecycle](../../../app/test/e2e/shareholder/shareholder-migration.integrated.spec.ts), which reuses the
   Officer redeployment and migration-root commit journey for `AC-US-CONTRACT-005-03`
 - [Officer deployment authority cleanup](../../../contract/contracts/Officer.sol) and
   [Investor ownership authority transfer](../../../contract/contracts/Investor/Investor.sol)
-- [Current contract action tests](../../../app/src/components/sections/ContractManagementView/__tests__/MainContractActions.spec.ts)
-- [Current contract table tests](../../../app/src/components/sections/ContractManagementView/__tests__/MainContractTable.spec.ts)
-- [Current contract action-menu tests](../../../app/src/components/sections/ContractManagementView/__tests__/MainContractActionMenu.spec.ts)
+- [Current contract action tests](../../../app/src/components/sections/ContractManagementView/__tests__/ManagedContractActionDialogs.spec.ts)
+- [Current contract table tests](../../../app/src/components/sections/ContractManagementView/__tests__/ManagedContractsTable.spec.ts)
+- [Current contract action-menu tests](../../../app/src/components/sections/ContractManagementView/__tests__/ManagedContractActionMenu.spec.ts)
 - [Pause capability policy tests](../../../app/src/utils/contracts/__tests__/pauseCapabilities.spec.ts),
-  [pause-state read tests](../../../app/src/composables/contracts/__tests__/readTeamContracts.spec.ts), and
-  [pause-state presentation tests](../../../app/src/components/sections/ContractManagementView/__tests__/MainContractPauseStatus.spec.ts)
+  [pause-state read tests](../../../app/src/composables/contracts/__tests__/readManagedContracts.spec.ts), and
+  [pause-state presentation tests](../../../app/src/components/sections/ContractManagementView/__tests__/ManagedContractsPauseStatus.spec.ts)
 - [Officer redeploy form tests](../../../app/src/components/sections/ContractManagementView/__tests__/RedeployOfficerModal.spec.ts)
 - [Officer deployment tests](../../../contract/test/Officer.spec.ts) and [Investor authority tests](../../../contract/test/Investor.spec.ts)
 
@@ -492,9 +495,9 @@ callbacks, not real wallet transactions or product acceptance.
   the active-generation entry point, and `005-05` checks a blank name but not a blank symbol.
 - Historic balance recovery overlaps the Bank account result in `AC-US-BANK-004-02`. Contract Management owns initiating recovery; Accounts
   owns verifying the receiving Bank balance. Their combined evidence must not be counted twice as separate completed transfers.
-- TeamContractEventList exercises a component that no current product surface imports. That suite remains intentionally unmapped pending
-  cleanup or restoration of a reachable journey. Manager-settings draft/confirmation coverage is consolidated in TeamContractDetail; parent
-  lifetime checks exercise the real form with controlled settings reads and shared mutation mocks.
+- CampaignEventsTable exercises a component that no current product surface imports. That suite remains intentionally unmapped pending
+  cleanup or restoration of a reachable journey. Manager-settings draft/confirmation coverage is consolidated in CampaignManagerRatesForm;
+  parent lifetime checks exercise the real form with controlled settings reads and shared mutation mocks.
 
 ## Related Documentation
 

@@ -185,6 +185,7 @@
 </template>
 
 <script setup lang="ts">
+import { formatTxHash } from '@/utils/format'
 import { computed, watch } from 'vue'
 import { type Address } from 'viem'
 import { useFixedReturnEventsViaLogs } from '@/composables/fixedReturn/useFixedReturnEventsViaLogs'
@@ -204,8 +205,7 @@ import {
 import {
   getTransactionTypeColor,
   getTransactionTypeLabel,
-  getTransactionCounterparty,
-  formatTxHash
+  getTransactionCounterparty
 } from '@/utils/transactions/registry'
 import { formatCryptoAmount, formatCurrencyShort } from '@/utils/currency/display'
 import { formatEtherUtil, tokenSymbol } from '@/utils/tokens/metadata'

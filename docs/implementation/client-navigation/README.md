@@ -57,9 +57,13 @@ flowchart LR
 - Team-route outlet keys remain stable across sibling Accounting reports for one team and change with the team identifier. This preserves
   the Accounting read-model owner without allowing state to cross company boundaries.
 
+The team shell's active observers synchronize missing contract metadata and payroll once contracts are available. The routed Accounting
+owner remains keyed by company rather than by report navigation. These lifecycle owners do not rely on an additional route/Officer/count
+observer with no side effect; removing that inert observer does not replace or alter synchronization or route-owner rules.
+
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `1955939a748a00287ff6dc446a519f84ec09267c`
+**Implementation evidence reviewed against:** `c747babbd0ecd64b8896a024af07685554cfaf64`
 
 - [Team selection menu](../../../app/src/components/layout/TeamSelectMenu.vue)
 - [Router definition and authentication guard](../../../app/src/router/index.ts)

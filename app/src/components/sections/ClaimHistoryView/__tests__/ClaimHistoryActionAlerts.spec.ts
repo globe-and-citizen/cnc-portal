@@ -312,7 +312,7 @@ describe('ClaimHistoryActionAlerts', () => {
     })
 
     // Harness mount keeps `mount` so the typed `vm.child` ref survives — see
-    // CreateAddCampaign.spec.ts. renderWithProviders erases the component generic.
+    // DeployCampaignManagerForm.spec.ts. renderWithProviders erases the component generic.
     const wrapper = mount(ParentHarness, { global: makeGlobal() })
     wrapper.vm.child?.openSubmitClaimForDay(dayIso)
 
