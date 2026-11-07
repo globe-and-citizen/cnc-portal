@@ -731,19 +731,19 @@ browser-driven.
 ## G9 — Client Authentication Recovery and Profile Identity
 
 - `E2E-PATH-18` — Recover from an interrupted client sign-in
-  - Story validated: `US-AUTH-003` — recover from an interrupted login.
+  - Story validated: `US-AUTH-001` — sign in after an interrupted attempt.
   - Reused prerequisite: `US-AUTH-001` owns successful SIWE sign-in evidence in G1; this path owns recovery, not another copy of onboarding.
   - Actor: portal user.
   - Dependencies: a disposable user identity, the real client authentication backend, and a controllable wallet rejection in this scenario.
   - Main path:
-    - [ ] `US-AUTH-003` Start client sign-in and reject the wallet signature.
-    - [ ] `US-AUTH-003` Verify that no authenticated session or protected company access is granted.
-    - [ ] `US-AUTH-003` Retry sign-in with the same wallet.
-    - [ ] `US-AUTH-003` Verify the backend accepts the fresh SIWE signature and issues the user's session.
-    - [ ] `US-AUTH-003` Reload a protected route and verify the recovered session remains usable.
+    - [ ] `US-AUTH-001` Start client sign-in and reject the wallet signature.
+    - [ ] `US-AUTH-001` Verify that no authenticated session or protected company access is granted.
+    - [ ] `US-AUTH-001` Retry sign-in with the same wallet.
+    - [ ] `US-AUTH-001` Verify the backend accepts the fresh SIWE signature and issues the user's session.
+    - [ ] `US-AUTH-001` Reload a protected route and verify the recovered session remains usable.
   - Separate variants: network-switch rejection, nonce failure, invalid signature, and profile-load failure; none is evidence of a completed
     recovery until the affected boundary is exercised and observed. Client token cleanup after a terminal profile failure remains unchecked
-    in `AC-US-AUTH-003-06`.
+    in `AC-US-AUTH-001-17` and `AC-US-AUTH-001-18`.
   - Expected result: a failed attempt does not authenticate the user, while a fresh attempt succeeds without manual state repair.
   - Status: Planned — no integrated recovery path is currently linked.
 
