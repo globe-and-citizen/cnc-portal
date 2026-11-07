@@ -55,9 +55,6 @@ const teamOutletKey = computed(() => {
   if (typeof name === 'string' && name.startsWith('accounting')) {
     return `accounting:${String(route.params.id ?? '')}`
   }
-  if (name === 'bod-proposals' || name === 'proposal-detail') {
-    return route.fullPath
-  }
   return String(name ?? route.fullPath)
 })
 

@@ -261,11 +261,6 @@ export function useSidebarNavItems(): ComputedRef<NavigationMenuItem[][]> {
               label: 'Board Election',
               active: name === 'bod-elections' || name === 'bod-elections-details',
               to: { name: 'bod-elections', params: teamParams() }
-            },
-            {
-              label: 'Proposals',
-              active: name === 'bod-proposals' || name === 'proposal-detail',
-              to: { name: 'bod-proposals', params: teamParams() }
             }
           ]
         },

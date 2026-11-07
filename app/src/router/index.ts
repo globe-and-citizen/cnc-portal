@@ -92,18 +92,6 @@ const router = createRouter({
           component: () => import('@/views/team/[id]/BodElectionView.vue')
         },
         {
-          path: '/teams/:id/administration/bod-proposals',
-          name: 'bod-proposals',
-          meta: { name: 'Proposals' },
-          component: () => import('@/views/team/[id]/ProposalsView.vue')
-        },
-        {
-          path: '/teams/:id/administration/bod-proposals/:proposalId',
-          name: 'proposal-detail',
-          meta: { name: 'Proposals' },
-          component: () => import('@/views/team/[id]/ProposalsView.vue')
-        },
-        {
           path: '/teams/:id/administration/bod-elections-details',
           name: 'bod-elections-details',
           meta: { name: 'Board Election Details' },

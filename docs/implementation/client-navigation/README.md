@@ -49,6 +49,8 @@ flowchart LR
 ## Invariants and Failure Behaviour
 
 - Route records lazy-load their view components; the shared router owns their names, paths, redirects, and authentication redirect policy.
+- Board Proposals is suspended and has no active portal journey. Its routes and sidebar entry are removed. Election creation and Safe
+  transaction proposals remain separate journeys.
 - Login, the wallet lock screens, and the protected workspace are mutually exclusive rendering branches.
 - Workspace navigation remains disabled until the URL or team store identifies a current team.
 - A parent menu section is active and initially open when its route-name group matches the current route. The sidebar keeps at most one

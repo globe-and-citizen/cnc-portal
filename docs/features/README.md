@@ -77,8 +77,8 @@ top-level product features.
 - RBAC and runtime wake-up are architectural capabilities under `docs/implementation/`. Database seeding is development tooling. None is a
   direct user goal.
 - Login guards, access-denied pages, error pages, and development playgrounds are journey states or tooling, not standalone features.
-- Board Proposals is suspended and not in current product planning. Its route remains in the codebase, but it is not an active feature,
-  documentation target, or validation target until a maintained user journey is restored.
+- Board Proposals is suspended and not in current product planning. Its page, routes, navigation, and contract-write UI are removed. The
+  contract artifacts remain available for other contract integrations until a maintained product journey is scheduled again.
 - The dashboard's customer, inbox, profile, notification, and member-settings screens still use template or static fixture data. They are
   not CNC Portal features until a real product journey exposes them.
 - The dashboard `/contracts` landing page is a placeholder. The implemented history and Officer version-sync journeys are grouped as
