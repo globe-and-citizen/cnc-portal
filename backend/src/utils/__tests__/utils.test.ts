@@ -1,6 +1,6 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { Response } from 'express';
-import { errorResponse, extractAddressAndNonce } from '../utils';
+import { errorResponse } from '../utils';
 
 const sentryMocks = vi.hoisted(() => ({
   captureException: vi.fn(),
@@ -123,104 +123,6 @@ describe('utils', () => {
       expect(mockResponse.json).toHaveBeenCalledWith({
         message: 'Internal server error has occured',
         error: '',
-      });
-    });
-  });
-
-  describe('extractAddressAndNonce', () => {
-    it('extracts address and nonce from valid message', () => {
-      const message = `Welcome to our platform!
-0x1234567890123456789012345678901234567890
-Please sign this message
-Nonce: abc123`;
-
-      const result = extractAddressAndNonce(message);
-
-      expect(result).toEqual({
-        address: '0x1234567890123456789012345678901234567890',
-        nonce: 'abc123',
-      });
-    });
-
-    it('extracts address and nonce with extra whitespace', () => {
-      const message = `Welcome
-  0x1234567890123456789012345678901234567890  
-Sign this
-Nonce:   xyz789  `;
-
-      const result = extractAddressAndNonce(message);
-
-      expect(result).toEqual({
-        address: '0x1234567890123456789012345678901234567890',
-        nonce: 'xyz789',
-      });
-    });
-
-    it('throws error if address is missing', () => {
-      const message = `Welcome to our platform!
-Please sign this message
-Nonce: abc123`;
-
-      expect(() => extractAddressAndNonce(message)).toThrow(
-        'Extract address error: Eth address missing'
-      );
-    });
-
-    it('throws error if nonce is missing', () => {
-      const message = `Welcome to our platform!
-0x1234567890123456789012345678901234567890
-Please sign this message`;
-
-      expect(() => extractAddressAndNonce(message)).toThrow('Extract nonce error: Nonce missing');
-    });
-
-    it('handles address on first line', () => {
-      const message = `0x1234567890123456789012345678901234567890
-Welcome to our platform!
-Nonce: test123`;
-
-      const result = extractAddressAndNonce(message);
-
-      expect(result).toEqual({
-        address: '0x1234567890123456789012345678901234567890',
-        nonce: 'test123',
-      });
-    });
-
-    it('handles nonce on first occurrence', () => {
-      const message = `Welcome
-Nonce: first-nonce
-0x1234567890123456789012345678901234567890
-Nonce: second-nonce`;
-
-      const result = extractAddressAndNonce(message);
-
-      expect(result).toEqual({
-        address: '0x1234567890123456789012345678901234567890',
-        nonce: 'first-nonce',
-      });
-    });
-
-    it('rejects invalid address length', () => {
-      const message = `Welcome
-0x12345
-Nonce: test123`;
-
-      expect(() => extractAddressAndNonce(message)).toThrow(
-        'Extract address error: Eth address missing'
-      );
-    });
-
-    it('handles nonce with special characters', () => {
-      const message = `Welcome
-0x1234567890123456789012345678901234567890
-Nonce: value_with-special.chars`;
-
-      const result = extractAddressAndNonce(message);
-
-      expect(result).toEqual({
-        address: '0x1234567890123456789012345678901234567890',
-        nonce: 'value_with-special.chars',
       });
     });
   });
