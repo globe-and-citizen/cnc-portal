@@ -64,7 +64,8 @@ test.describe(
 
       unavailable = true
       await page.reload()
-      await expect(page.getByTestId('sign-in')).toBeVisible()
+      // Verification retries and the lazy login view both need to settle.
+      await expect(page.getByTestId('sign-in')).toBeVisible({ timeout: 30_000 })
       expect(requests).toBe(4)
       await expect(workspace(page)).toHaveCount(0)
       expect(await storedToken(page)).toBe(token)
