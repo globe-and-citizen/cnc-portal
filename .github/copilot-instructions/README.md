@@ -13,7 +13,6 @@ CNC Portal is a Crypto Native Corporation Portal built with:
 - **Backend**: Node.js + TypeScript + Prisma + PostgreSQL
 - **Smart Contracts**: Hardhat + Solidity
 - **Dashboard**: Nuxt 4 + Nuxt UI + TypeScript + Tailwind CSS
-- **Subgraph**: The Graph Protocol
 
 ## Instructions
 

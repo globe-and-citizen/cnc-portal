@@ -59,16 +59,6 @@
       ],
       "eslint": false,
       "nuxt": false
-    },
-    "ponder": {
-      "entry": [
-        "ponder.config.ts!",
-        "ponder.schema.ts!",
-        "src/index.ts!",
-        "src/api/**/*.ts!"
-      ],
-      "project": ["src/**/*.ts!", "scripts/**/*.ts!"],
-      "eslint": false
     }
   }
 }
