@@ -8,13 +8,10 @@ import { formatDate, formatDateTime, formatUsd, fromUnix } from '@/utils/format'
 import { usdAmountToNumber, ZERO_USD_AMOUNT } from './monetaryAmount'
 import type { Account, BalanceSheet, JournalEntry, UsdAmount } from './types'
 
+import { buildSummaryView, type SummaryView } from './summaryCards'
+
 // The summary display model lives in its own module — see ./summaryCards.
-export {
-  presentSummary,
-  type SummaryBanner,
-  type SummaryCard,
-  type SummaryView
-} from './summaryCards'
+export { type SummaryBanner, type SummaryCard, type SummaryView } from './summaryCards'
 
 type TrialNature = 'Asset' | 'Equity' | 'Contra-equity' | 'Income' | 'Liability' | 'Expense'
 
@@ -154,6 +151,10 @@ export function incomeExportTitle(from?: Date | null, to?: Date | null): string 
   return from || to ? `Income Statement — ${periodLabel(from, to)}` : 'Income Statement'
 }
 
+export function summaryExportTitle(from?: Date | null, to?: Date | null): string {
+  return from || to ? `Summary — ${periodLabel(from, to)}` : 'Summary'
+}
+
 export function balanceExportTitle(asOf?: Date | null): string {
   return asOf ? `Balance Sheet — As of ${dayLabel(asOf)}` : 'Balance Sheet'
 }
@@ -174,6 +175,15 @@ export function filterByPeriod<T extends { timestamp: number }>(
 }
 
 // ── Presenters ──────────────────────────────────────────────────────────────
+
+/** Summary figures: flows inside `[from, to]`, balances accumulated up to `to`. */
+export function presentSummary(
+  entries: readonly JournalEntry[],
+  from?: Date | null,
+  to?: Date | null
+): SummaryView {
+  return buildSummaryView(filterByPeriod(entries, from, to), filterByPeriod(entries, null, to))
+}
 
 /** Income-statement lines for a reporting period. */
 export function presentIncome(
@@ -244,6 +254,67 @@ export function presentBalance(entries: readonly JournalEntry[], asOf?: Date | n
     totalEquity: money(balance.totalEquity),
     liabilitiesPlusEquity: money(balance.totalLiabilitiesAndEquity)
   }
+}
+
+export type BalanceExportRowKind = 'section' | 'columns' | 'line' | 'total' | 'gap' | 'grandTotal'
+
+export interface BalanceExportRow {
+  kind: BalanceExportRowKind
+  account: string
+  nature: string
+  value: string
+}
+
+function balanceExportSection(
+  title: string,
+  lines: readonly BalanceLineView[],
+  total: Pick<BalanceExportRow, 'account' | 'value'>,
+  valueLabel = 'Balance'
+): BalanceExportRow[] {
+  return [
+    { kind: 'section', account: title, nature: '', value: '' },
+    { kind: 'columns', account: 'Account', nature: 'Nature', value: valueLabel },
+    ...lines.map(
+      (line): BalanceExportRow => ({
+        kind: 'line',
+        account: line.label,
+        nature: line.nature,
+        value: line.value
+      })
+    ),
+    { kind: 'total', nature: '', ...total },
+    { kind: 'gap', account: '', nature: '', value: '' }
+  ]
+}
+
+/** The Balance Sheet laid out as on screen, shared by the PDF and Excel exports. */
+export function balanceExportRows(balance: BalanceView): BalanceExportRow[] {
+  return [
+    ...balanceExportSection('Assets', balance.assetLines, {
+      account: 'Total assets',
+      value: balance.totalAssets
+    }),
+    ...balanceExportSection('Liabilities', balance.liabilityLines, {
+      account: 'Total liabilities',
+      value: balance.totalLiabilities
+    }),
+    ...balanceExportSection('Equity', balance.equityLines, {
+      account: 'Total equity',
+      value: balance.totalEquity
+    }),
+    ...balanceExportSection(
+      'Earnings to date calculation',
+      balance.earningsLines,
+      { account: 'Earnings to date', value: balance.earningsToDate },
+      'Contribution'
+    ),
+    {
+      kind: 'grandTotal',
+      account: 'Liabilities + Equity',
+      nature: '',
+      value: balance.liabilitiesPlusEquity
+    }
+  ]
 }
 
 /**

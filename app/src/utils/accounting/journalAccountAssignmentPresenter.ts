@@ -5,6 +5,7 @@ import {
   journalLedgerRows,
   type LedgerRow
 } from './journalLedgerPresenter'
+import { periodLabel } from './presenter'
 import type { AccountId, JournalEntry } from './types'
 
 export interface JournalAccountAssignmentTarget {
@@ -24,11 +25,15 @@ export interface JournalAccountAssignmentRow extends LedgerRow {
  * Reuse the exact journal lines shown by the General Ledger. Assignment metadata
  * controls only the editor and note; selected accounts already live on the lines.
  */
-export function presentJournalAccountAssignments(journal: readonly JournalEntry[]): {
+export function presentJournalAccountAssignments(
+  journal: readonly JournalEntry[],
+  from?: Date | null,
+  to?: Date | null
+): {
   rows: JournalAccountAssignmentRow[]
   entryCount: number
 } {
-  const entries = filterJournalLedgerEntries(journal).filter(
+  const entries = filterJournalLedgerEntries(journal, from, to).filter(
     (entry) => entry.kind === 'monetary' && entry.accountAssignment
   )
   const displayedLines = journalLedgerRows(entries, journal)
@@ -59,6 +64,12 @@ export function presentJournalAccountAssignments(journal: readonly JournalEntry[
 }
 
 export const ACCOUNT_ASSIGNMENTS_TITLE = 'Account Assignments'
+
+export function assignmentsExportTitle(from?: Date | null, to?: Date | null): string {
+  return from || to
+    ? `${ACCOUNT_ASSIGNMENTS_TITLE} — ${periodLabel(from, to)}`
+    : ACCOUNT_ASSIGNMENTS_TITLE
+}
 
 /** The Account Assignments columns, shared by the screen and both exporters. */
 export const ACCOUNT_ASSIGNMENT_COLUMNS = [

@@ -114,10 +114,10 @@ three consecutive missing criteria use inclusive ranges with full AC IDs at both
 
 | User Story  | Main Journey  | Coverage Target | Gaps                                                                              |
 | ----------- | ------------- | --------------- | --------------------------------------------------------------------------------- |
-| US-ACCT-001 | ✅ Integrated | ⚠️ 12/13 met    | `AC-US-ACCT-001-08`                                                               |
+| US-ACCT-001 | ✅ Integrated | ⚠️ 14/15 met    | `AC-US-ACCT-001-08`                                                               |
 | US-ACCT-002 | ✅ Integrated | ✅ 20/20        | —                                                                                 |
 | US-ACCT-003 | ✅ Integrated | ✅ 12/12        | —                                                                                 |
-| US-ACCT-004 | ✅ Integrated | ✅ 10/10        | —                                                                                 |
+| US-ACCT-004 | ✅ Integrated | ✅ 12/12        | —                                                                                 |
 | US-ACCT-005 | ✅ Integrated | ✅ 16/16 met    | —                                                                                 |
 | US-ACCT-006 | ✅ Integrated | ⚠️ 7/12 met     | `AC-US-ACCT-006-01`–`AC-US-ACCT-006-03`, `AC-US-ACCT-006-05`, `AC-US-ACCT-006-09` |
 | US-ACCT-007 | ⬜ Planned    | ❌ 0/17 met     | `AC-US-ACCT-007-01`–`AC-US-ACCT-007-17`                                           |
@@ -213,6 +213,8 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 - [ ] `AC-US-ACCT-001-08` Closing cash balances are reconciled with the corresponding on-chain balances.
 - [x] `AC-US-ACCT-001-13` A weekly wage accrual books each currency at what the wage pays in it: a currency without an overtime rate accrues
       nothing for overtime hours, and a currency rated only for overtime accrues for those hours.
+- [x] `AC-US-ACCT-001-14` The overview can cover a selected period: flows stay inside the period and balances are stated as of its end.
+- [x] `AC-US-ACCT-001-15` A selected Accounting date belongs to the company it was chosen on and does not carry over to another company.
 
 #### Edge & Error Cases
 
@@ -239,6 +241,8 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 | `AC-US-ACCT-001-11`  | `PS-FRONTEND`            | Frontend                  | ✅ Met     |
 | `AC-US-ACCT-001-12`  | `PS-FRONTEND`            | Frontend                  | ✅ Met     |
 | `AC-US-ACCT-001-13`  | `PS-FRONTEND`            | Frontend                  | ✅ Met     |
+| `AC-US-ACCT-001-14`  | `PS-FRONTEND`            | Frontend                  | ✅ Met     |
+| `AC-US-ACCT-001-15`  | `PS-FRONTEND`            | Frontend                  | ✅ Met     |
 
 **Dependencies:** Current company, accounting source providers, and valuation sources
 
@@ -387,9 +391,14 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 - [x] `AC-US-ACCT-004-04` An export uses one snapshot of the current `JournalEntry` collection and the same filters as the reviewed report.
 - [x] `AC-US-ACCT-004-05` Ledger and drill-down exports retain complete matching entries. Excel keeps full transaction hashes and exact
       quantities; a PDF prints the shortened hashes and rounded quantities shown on screen, with columns sized in the screen's proportions.
-- [x] `AC-US-ACCT-004-06` Balance Sheet exports retain concrete account rows and the account contributions behind `Earnings to date`.
+- [x] `AC-US-ACCT-004-06` Balance Sheet exports retain concrete account rows, their nature and balance as reviewed on screen, and the
+      account contributions behind `Earnings to date`.
 - [x] `AC-US-ACCT-004-07` Monetary display conversion and rounding happen after exact journal and report totals are calculated.
-- [x] `AC-US-ACCT-004-10` A PDF export names the team and the period of activity the books cover.
+- [x] `AC-US-ACCT-004-10` A PDF export names the team and the selected period, or the period of activity the books cover when none is
+      selected.
+- [x] `AC-US-ACCT-004-11` A summary export covers one selected period across all its sections: flows and entries stay inside the period,
+      balances are stated as of its end, and the other reports keep their own dates.
+- [x] `AC-US-ACCT-004-12` A summary export uses the period selected on the overview and states it before the member exports.
 
 #### Edge & Error Cases
 
@@ -410,6 +419,8 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 | `AC-US-ACCT-004-08`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
 | `AC-US-ACCT-004-09`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
 | `AC-US-ACCT-004-10`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
+| `AC-US-ACCT-004-11`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
+| `AC-US-ACCT-004-12`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
 
 **Dependencies:** US-ACCT-002 or US-ACCT-003
 
@@ -972,7 +983,7 @@ valuation gap. The existing completeness rules apply to every booked movement. S
 [Safe pagination and metadata unit tests](../../../app/src/queries/__tests__/safe.queries.spec.ts) and
 [Safe source-mapping tests](../../../app/src/utils/accounting/__tests__/safe.spec.ts). Live product review remains pending.
 
-**Implementation evidence reviewed against:** `8c7c2e2adf8516c8bb269320301c296ea2ce99c3`
+**Implementation evidence reviewed against:** `7f2404127cdcfab3ae59f85aa8052a4f3253d1a4`
 
 - [Accounting page](../../../app/src/components/sections/AccountingView/AccountingPage.vue),
   [team routes](../../../app/src/router/index.ts), and [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts)
