@@ -76,10 +76,6 @@ vi.mock('@/views/team/[id]/BodElectionView.vue', () => ({
   default: { name: 'BodElectionView', template: '<div>BoD Election</div>' }
 }))
 
-vi.mock('@/views/team/[id]/ProposalsView.vue', () => ({
-  default: { name: 'ProposalsView', template: '<div>Proposals</div>' }
-}))
-
 vi.mock('@/views/team/[id]/BodElectionDetailsView.vue', () => ({
   default: { name: 'BodElectionDetailsView', template: '<div>BoD Election Details</div>' }
 }))
@@ -165,8 +161,6 @@ describe('Router Configuration', () => {
         { name: 'bank-account', path: '/teams/:id/accounts/bank-account' },
         { name: 'contract-management', path: '/teams/:id/contract-management' },
         { name: 'bod-elections', path: '/teams/:id/administration/bod-elections' },
-        { name: 'bod-proposals', path: '/teams/:id/administration/bod-proposals' },
-        { name: 'proposal-detail', path: '/teams/:id/administration/bod-proposals/:proposalId' },
         { name: 'bod-elections-details', path: '/teams/:id/administration/bod-elections-details' },
         { name: 'sher-token', path: '/teams/:id/sher-token' }
       ]
@@ -194,8 +188,6 @@ describe('Router Configuration', () => {
         { name: 'bank-account', expectedMeta: { name: 'Bank Account' } },
         { name: 'contract-management', expectedMeta: { name: 'Contract Management' } },
         { name: 'bod-elections', expectedMeta: { name: 'Board Election' } },
-        { name: 'bod-proposals', expectedMeta: { name: 'Proposals' } },
-        { name: 'proposal-detail', expectedMeta: { name: 'Proposals' } },
         { name: 'bod-elections-details', expectedMeta: { name: 'Board Election Details' } },
         { name: 'sher-token', expectedMeta: { name: 'SHER Token' } }
       ]
@@ -361,10 +353,10 @@ describe('Router Configuration', () => {
         expect(router.currentRoute.value.params.id).toBe('abc123')
         expect(router.currentRoute.value.params.memberAddress).toBe('0x123456')
 
-        // Test with proposal ID
+        // Retired Board Proposals links return to the company overview.
         await router.push('/teams/abc123/administration/bod-proposals/prop123')
-        expect(router.currentRoute.value.name).toBe('proposal-detail')
-        expect(router.currentRoute.value.params.proposalId).toBe('prop123')
+        expect(router.currentRoute.value.name).toBe('show-team')
+        expect(router.currentRoute.value.params.id).toBe('abc123')
       })
     })
 
