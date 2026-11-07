@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import type { AxiosAdapter, AxiosError } from 'axios'
+import { mockUserStore } from '@/tests/mocks'
 
 const sentryMocks = vi.hoisted(() => ({
   captureException: vi.fn(),
@@ -14,6 +15,7 @@ vi.unmock('@/lib/axios')
 
 describe('apiClient retry interceptor', () => {
   let apiClient: typeof import('@/lib/axios').default
+  let setupAuthInterceptor: typeof import('@/lib/axios').setupAuthInterceptor
 
   beforeEach(async () => {
     vi.useFakeTimers()
@@ -21,10 +23,13 @@ describe('apiClient retry interceptor', () => {
     sentryMocks.setTag.mockClear()
     sentryMocks.withScope.mockImplementation((callback) => callback({ setTag: sentryMocks.setTag }))
     vi.resetModules()
-    apiClient = (await vi.importActual<typeof import('@/lib/axios')>('@/lib/axios')).default
+    const clientModule = await vi.importActual<typeof import('@/lib/axios')>('@/lib/axios')
+    apiClient = clientModule.default
+    setupAuthInterceptor = clientModule.setupAuthInterceptor
   })
 
   afterEach(() => {
+    localStorage.removeItem('authToken')
     vi.useRealTimers()
   })
 
@@ -107,4 +112,25 @@ describe('apiClient retry interceptor', () => {
 
     expect(sentryMocks.captureException).toHaveBeenCalledTimes(1)
   })
+
+  it.each([
+    { url: 'auth/token', status: 401, changed: false, clearsSession: true },
+    { url: 'teams', status: 401, changed: true, clearsSession: false },
+    { url: 'teams', status: 403, changed: false, clearsSession: false },
+    { url: 'auth/siwe', status: 401, changed: false, clearsSession: false }
+  ])(
+    'handles $status for $url with token replacement: $changed',
+    async ({ url, status, changed, clearsSession }) => {
+      localStorage.setItem('authToken', 'current-token')
+      setupAuthInterceptor()
+      apiClient.defaults.adapter = async (config) => {
+        expect(config.headers.get('Authorization')).toBe('Bearer current-token')
+        if (changed) localStorage.setItem('authToken', 'new-token')
+        throw Object.assign(new Error('Rejected'), fakeError(status), { config })
+      }
+
+      await expect(apiClient.get(url)).rejects.toMatchObject({ response: { status } })
+      expect(mockUserStore.clearUserData).toHaveBeenCalledTimes(clearsSession ? 1 : 0)
+    }
+  )
 })

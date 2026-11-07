@@ -56,12 +56,12 @@ test run. The integrated client sign-in exists; recovery and backoffice journeys
 
 Runs of at least three consecutive missing criteria use inclusive ranges with full AC IDs at both endpoints.
 
-| User Story  | Main Journey  | Coverage Target | Gaps                                                                                                   |
-| ----------- | ------------- | --------------- | ------------------------------------------------------------------------------------------------------ |
-| US-AUTH-001 | ✅ Integrated | ⚠️ 6/12         | `AC-US-AUTH-001-01`, `AC-US-AUTH-001-04`, `AC-US-AUTH-001-08`, `AC-US-AUTH-001-10`–`AC-US-AUTH-001-12` |
-| US-AUTH-002 | ⬜ Planned    | ❌ 0/8 met      | `AC-US-AUTH-002-01`–`AC-US-AUTH-002-08`                                                                |
-| US-AUTH-003 | ⬜ Planned    | ⚠️ 1/9          | `AC-US-AUTH-003-01`–`AC-US-AUTH-003-08`                                                                |
-| US-AUTH-004 | ✅ Browser    | ✅ 7/7          | None                                                                                                   |
+| User Story  | Main Journey  | Coverage Target | Gaps                                                                              |
+| ----------- | ------------- | --------------- | --------------------------------------------------------------------------------- |
+| US-AUTH-001 | ✅ Integrated | ⚠️ 7/12         | `AC-US-AUTH-001-01`, `AC-US-AUTH-001-04`, `AC-US-AUTH-001-10`–`AC-US-AUTH-001-12` |
+| US-AUTH-002 | ⬜ Planned    | ❌ 0/8 met      | `AC-US-AUTH-002-01`–`AC-US-AUTH-002-08`                                           |
+| US-AUTH-003 | ⬜ Planned    | ⚠️ 1/9          | `AC-US-AUTH-003-01`–`AC-US-AUTH-003-08`                                           |
+| US-AUTH-004 | ✅ Browser    | ✅ 7/7          | None                                                                              |
 
 Proof obligations use the [shared proof-strategy registry](../../testing/proof-strategies.md). Multiple IDs for one AC are cumulative.
 
@@ -112,7 +112,7 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 | `AC-US-AUTH-001-05`  | `PS-BACKEND`        | Backend                   | ✅ Met          |
 | `AC-US-AUTH-001-06`  | `PS-BACKEND`        | Backend                   | ✅ Met          |
 | `AC-US-AUTH-001-07`  | `PS-API-INTEGRATED` | Integrated E2E            | ✅ Met          |
-| `AC-US-AUTH-001-08`  | `PS-FRONTEND`       | Mocked browser            | ⚠️ Insufficient |
+| `AC-US-AUTH-001-08`  | `PS-FRONTEND`       | Mocked browser + Frontend | ✅ Met          |
 | `AC-US-AUTH-001-09`  | `PS-BACKEND`        | Backend                   | ✅ Met          |
 | `AC-US-AUTH-001-10`  | `PS-BROWSER`        | None linked               | ❌ Missing      |
 | `AC-US-AUTH-001-11`  | `PS-BROWSER`        | None linked               | ❌ Missing      |
