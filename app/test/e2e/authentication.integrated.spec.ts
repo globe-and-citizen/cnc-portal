@@ -43,4 +43,64 @@ test.describe('[US-AUTH-001] Integrated client authentication', { tag: '@integra
     })
     expect(Number.parseInt(String(browserChainId), 16)).toBe(chainId)
   })
+
+  test('[AC-US-AUTH-001-13] retries the same SIWE flow after a wallet signature rejection', async ({
+    page
+  }) => {
+    let exchanges = 0
+    page.on('request', (request) => {
+      if (request.method() === 'POST' && new URL(request.url()).pathname === '/api/auth/siwe') {
+        exchanges++
+      }
+    })
+
+    await page.goto('/login')
+    await page.evaluate(() => {
+      const provider = (
+        window as unknown as {
+          ethereum: { request: (args: { method: string; params?: unknown[] }) => Promise<unknown> }
+        }
+      ).ethereum
+      const request = provider.request.bind(provider)
+      provider.request = async (args) => {
+        if (args.method === 'personal_sign') {
+          provider.request = request
+          throw Object.assign(new Error('Signature declined'), { code: 4001 })
+        }
+        return request(args)
+      }
+    })
+
+    const signIn = page.getByTestId('sign-in')
+    await signIn.click()
+    await expect(
+      page.getByText(
+        'Message sign rejected: You need to sign the message to Sign in the CNC Portal',
+        { exact: true }
+      )
+    ).toBeVisible()
+    await expect(page.locator('[data-test="add-team-card"]')).toHaveCount(0)
+    expect(await page.evaluate(() => localStorage.getItem('authToken'))).toBeNull()
+    expect(exchanges).toBe(0)
+
+    const exchange = page.waitForResponse(
+      (response) =>
+        response.request().method() === 'POST' &&
+        new URL(response.url()).pathname === '/api/auth/siwe'
+    )
+    await signIn.click()
+    expect((await exchange).ok()).toBe(true)
+    await expect(page.locator('[data-test="add-team-card"]')).toBeVisible()
+    expect(exchanges).toBe(1)
+
+    const restored = page.waitForResponse(
+      (response) =>
+        response.request().method() === 'GET' &&
+        new URL(response.url()).pathname === '/api/auth/token'
+    )
+    await page.reload()
+    expect((await restored).ok()).toBe(true)
+    await expect(page.locator('[data-test="add-team-card"]')).toBeVisible()
+    expect(exchanges).toBe(1)
+  })
 })

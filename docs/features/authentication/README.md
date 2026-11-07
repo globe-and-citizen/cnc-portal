@@ -128,7 +128,8 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 | `AC-US-AUTH-001-10`  | `PS-BROWSER`        | Mocked browser                      | ✅ Met |
 | `AC-US-AUTH-001-11`  | `PS-BROWSER`        | Mocked browser                      | ✅ Met |
 | `AC-US-AUTH-001-12`  | `PS-BROWSER`        | Mocked browser                      | ✅ Met |
-| `AC-US-AUTH-001-13`  | `PS-BROWSER`        | Mocked browser                      | ✅ Met |
+| `AC-US-AUTH-001-13`  | `PS-API-INTEGRATED` | Integrated E2E + Mocked browser     | ✅ Met |
+| `AC-US-AUTH-001-13`  | `PS-BROWSER`        | Integrated E2E + Mocked browser     | ✅ Met |
 | `AC-US-AUTH-001-14`  | `PS-FRONTEND`       | Frontend                            | ✅ Met |
 | `AC-US-AUTH-001-15`  | `PS-BROWSER`        | Mocked browser                      | ✅ Met |
 | `AC-US-AUTH-001-16`  | `PS-FRONTEND`       | Frontend                            | ✅ Met |
