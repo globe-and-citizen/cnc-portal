@@ -170,6 +170,8 @@ describe('Router Configuration', () => {
         expect(route, `Route ${expectedRoute.name} should exist`).toBeDefined()
         expect(route?.path).toBe(expectedRoute.path)
       })
+
+      expect(routes.some((route) => route.path.includes('bod-proposals'))).toBe(false)
     })
 
     it('has correct route meta information', () => {
@@ -352,11 +354,6 @@ describe('Router Configuration', () => {
         expect(router.currentRoute.value.name).toBe('cash-remunerations-member')
         expect(router.currentRoute.value.params.id).toBe('abc123')
         expect(router.currentRoute.value.params.memberAddress).toBe('0x123456')
-
-        // Retired Board Proposals links return to the company overview.
-        await router.push('/teams/abc123/administration/bod-proposals/prop123')
-        expect(router.currentRoute.value.name).toBe('show-team')
-        expect(router.currentRoute.value.params.id).toBe('abc123')
       })
     })
 

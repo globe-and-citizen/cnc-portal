@@ -91,10 +91,6 @@ const router = createRouter({
           component: () => import('@/views/team/[id]/BodElectionView.vue')
         },
         {
-          path: '/teams/:id/administration/bod-proposals/:proposalId?',
-          redirect: (to) => ({ name: 'show-team', params: { id: to.params.id } })
-        },
-        {
           path: '/teams/:id/administration/bod-elections-details',
           name: 'bod-elections-details',
           meta: { name: 'Board Election Details' },
