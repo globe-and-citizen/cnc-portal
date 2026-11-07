@@ -7,6 +7,8 @@ import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { authenticateToken } from '../authController';
 import authRoutes from '../../routes/authRoutes';
+import { authorizeUser } from '../../middleware/authMiddleware';
+import { requireAdmin } from '../../middleware/roleMiddleware';
 
 // Hoisted mock variables for consistent mocking
 const { mockPrisma } = vi.hoisted(() => ({
@@ -48,6 +50,7 @@ const limiter = rateLimit({
 
 app.use(limiter);
 app.use('/', authRoutes);
+app.get('/admin-probe', authorizeUser, requireAdmin, (_req, res) => res.sendStatus(204));
 
 // Test constants
 const TEST_ADDRESS = '0x1234567890123456789012345678901234567890';
@@ -166,7 +169,7 @@ describe('authController', () => {
       expect(payload.exp - payload.iat).toBe(24 * 60 * 60);
     });
 
-    it('uses the signed account field as the JWT subject', async () => {
+    it('[AC-US-AUTH-001-01] uses the signed account field as the JWT subject', async () => {
       const signer = privateKeyToAccount(generatePrivateKey());
       const message = createSiweMessage(signer.address).replace(
         'Sign in with Ethereum to the app.',
@@ -187,6 +190,27 @@ describe('authController', () => {
         address: signer.address,
       });
     });
+
+    it.each([
+      ['URI: http://localhost:5173', 'URI: https://example.test'],
+      ['Chain ID: 1', 'Chain ID: 137'],
+      ['localhost:5173 wants you', 'example.test wants you'],
+    ])(
+      '[AC-US-AUTH-001-04] rejects a modified signed field (%s)',
+      async (original, replacement) => {
+        mockPrisma.user.findUnique.mockResolvedValue(createMockUser({ nonce: VALID_NONCE }));
+        const response = await request(app)
+          .post('/siwe')
+          .send({
+            message: createSiweMessage().replace(original, replacement),
+            signature: VALID_SIGNATURE,
+          });
+
+        expect(response.status).toBe(401);
+        expect(response.body).not.toHaveProperty('accessToken');
+        expect(mockPrisma.user.update).not.toHaveBeenCalled();
+      }
+    );
 
     it('[AC-US-AUTH-001-05] rejects a SIWE message with a stale nonce', async () => {
       mockPrisma.user.findUnique.mockResolvedValue(createMockUser({ nonce: 'different-nonce' }));
@@ -305,6 +329,34 @@ describe('authController', () => {
 
       expect(response.status).toBe(200);
       expect(response.headers['cache-control']).toBe('no-store');
+    });
+  });
+
+  describe('Authenticated administrator API boundary', () => {
+    /**
+     * Covers:
+     * - [AC-US-AUTH-002-01]
+     * - [AC-US-AUTH-002-03]
+     */
+    it.each(['ROLE_ADMIN', 'ROLE_SUPER_ADMIN'])(
+      'admits the persisted %s role with a valid bearer',
+      async (role) => {
+        mockPrisma.user.findUnique.mockResolvedValue({ ...createMockUser(), roles: [role] });
+        const token = jwt.sign({ address: TEST_ADDRESS }, process.env.SECRET_KEY!);
+
+        await request(app).get('/admin-probe').expect(401);
+        await request(app).get('/admin-probe').set('Authorization', `Bearer ${token}`).expect(204);
+      }
+    );
+
+    it('[AC-US-AUTH-002-07] denies a valid bearer without a persisted administrator role', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({ ...createMockUser(), roles: ['ROLE_USER'] });
+      const token = jwt.sign(
+        { address: TEST_ADDRESS, roles: ['ROLE_ADMIN'] },
+        process.env.SECRET_KEY!
+      );
+
+      await request(app).get('/admin-probe').set('Authorization', `Bearer ${token}`).expect(403);
     });
   });
 

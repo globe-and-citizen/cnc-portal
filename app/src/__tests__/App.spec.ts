@@ -46,7 +46,7 @@ describe('App', () => {
     expect(wrapper.find('[data-test="sidebar-layout"]').exists()).toBe(true)
   })
 
-  it('[AC-US-AUTH-003-09] locks the app when the connected wallet differs from the session', () => {
+  it('[AC-US-AUTH-004-05] locks the app when the connected wallet differs from the session', () => {
     mockUseConnection.address.value = '0x9999999999999999999999999999999999999999'
 
     const wrapper = mountApp()

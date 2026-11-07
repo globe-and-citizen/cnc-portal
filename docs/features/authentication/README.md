@@ -2,7 +2,7 @@
 
 **Scope:** Wallet-based sign-in, protected entry, and client wallet-session recovery
 
-**Last reviewed:** 2026-10-21
+**Last reviewed:** 2026-11-07
 
 These acceptance criteria follow the
 [feature documentation review contract](../../platform/feature-specification-guide.md#human-review-contract).
@@ -44,24 +44,23 @@ flowchart TB
 
 | User Story  | Title                                | Actor                     | Status         |
 | ----------- | ------------------------------------ | ------------------------- | -------------- |
-| US-AUTH-001 | Sign in to the client                | Portal user               | 🧪 Validation  |
-| US-AUTH-002 | Sign in to the backoffice            | Platform administrator    | 🧪 Validation  |
-| US-AUTH-003 | Recover from an interrupted login    | Portal user               | 🚧 In Progress |
-| US-AUTH-004 | Resume after a wallet network change | Authenticated portal user | 🧪 Validation  |
+| US-AUTH-001 | Sign in to the client                | Portal user               | ✅ Done        |
+| US-AUTH-002 | Sign in to the backoffice            | Platform administrator    | 🚧 In Progress |
+| US-AUTH-004 | Resume after a wallet network change | Authenticated portal user | ✅ Done        |
 
 ## Test Coverage Overview
 
 Coverage targets compare each criterion's required evidence with direct representative `AC-US-*` references. They do not describe the latest
-test run. The integrated client sign-in exists; recovery and backoffice journeys remain separate targets.
+test run. Client sign-in has an integrated path. Session recovery uses browser and focused tests, and the backoffice has focused tests for
+its sign-in and route guard. The backoffice still has a session freshness gap.
 
 Runs of at least three consecutive missing criteria use inclusive ranges with full AC IDs at both endpoints.
 
-| User Story  | Main Journey  | Coverage Target | Gaps                                                                              |
-| ----------- | ------------- | --------------- | --------------------------------------------------------------------------------- |
-| US-AUTH-001 | ✅ Integrated | ⚠️ 7/12         | `AC-US-AUTH-001-01`, `AC-US-AUTH-001-04`, `AC-US-AUTH-001-10`–`AC-US-AUTH-001-12` |
-| US-AUTH-002 | ⬜ Planned    | ❌ 0/8 met      | `AC-US-AUTH-002-01`–`AC-US-AUTH-002-08`                                           |
-| US-AUTH-003 | ⬜ Planned    | ⚠️ 1/9          | `AC-US-AUTH-003-01`–`AC-US-AUTH-003-08`                                           |
-| US-AUTH-004 | ✅ Browser    | ✅ 7/7          | None                                                                              |
+| User Story  | Main Journey  | Coverage Target | Gaps                |
+| ----------- | ------------- | --------------- | ------------------- |
+| US-AUTH-001 | ✅ Integrated | ✅ 18/18 met    | —                   |
+| US-AUTH-002 | ⬜ Planned    | ⚠️ 9/10         | `AC-US-AUTH-002-10` |
+| US-AUTH-004 | ✅ Browser    | ✅ 7/7 met      | —                   |
 
 Proof obligations use the [shared proof-strategy registry](../../testing/proof-strategies.md). Multiple IDs for one AC are cumulative.
 
@@ -99,24 +98,42 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 - [x] `AC-US-AUTH-001-12` During an active session, a protected API request that receives `401` for the current token ends the session and
       returns the user to sign-in.
 
+- [x] `AC-US-AUTH-001-13` After an unsuccessful sign-in, the user can start the same SIWE sign-in flow again.
+- [x] `AC-US-AUTH-001-14` A declined wallet connection, network switch, or signature request, or an unavailable wallet provider, leaves the
+      user signed out.
+- [x] `AC-US-AUTH-001-15` If nonce retrieval, signature verification, or profile loading fails, the sign-in attempt grants no access to
+      protected client routes.
+- [x] `AC-US-AUTH-001-16` A failed sign-in identifies whether the failure occurred at wallet connection, network switching, signing, or a
+      backend request so the user can retry.
+- [x] `AC-US-AUTH-001-17` During sign-in, a terminal profile response (`401`, `403`, or `404`) discards the newly issued token.
+- [x] `AC-US-AUTH-001-18` A transient profile failure keeps the wallet connected and the issued token available while sign-in remains
+      incomplete.
+
 ### Test Coverage
 
-| Acceptance Criterion | Proof Strategy      | Current Evidence          | Status          |
-| -------------------- | ------------------- | ------------------------- | --------------- |
-| `AC-US-AUTH-001-01`  | `PS-API-INTEGRATED` | Integrated E2E + Frontend | ✅ Met          |
-| `AC-US-AUTH-001-01`  | `PS-BACKEND`        | Integrated E2E + Frontend | ⚠️ Insufficient |
-| `AC-US-AUTH-001-02`  | `PS-BACKEND`        | Backend                   | ✅ Met          |
-| `AC-US-AUTH-001-03`  | `PS-FRONTEND`       | Frontend                  | ✅ Met          |
-| `AC-US-AUTH-001-04`  | `PS-FRONTEND`       | Frontend                  | ✅ Met          |
-| `AC-US-AUTH-001-04`  | `PS-BACKEND`        | Frontend                  | ⚠️ Insufficient |
-| `AC-US-AUTH-001-05`  | `PS-BACKEND`        | Backend                   | ✅ Met          |
-| `AC-US-AUTH-001-06`  | `PS-BACKEND`        | Backend                   | ✅ Met          |
-| `AC-US-AUTH-001-07`  | `PS-API-INTEGRATED` | Integrated E2E            | ✅ Met          |
-| `AC-US-AUTH-001-08`  | `PS-FRONTEND`       | Mocked browser + Frontend | ✅ Met          |
-| `AC-US-AUTH-001-09`  | `PS-BACKEND`        | Backend                   | ✅ Met          |
-| `AC-US-AUTH-001-10`  | `PS-BROWSER`        | None linked               | ❌ Missing      |
-| `AC-US-AUTH-001-11`  | `PS-BROWSER`        | None linked               | ❌ Missing      |
-| `AC-US-AUTH-001-12`  | `PS-BROWSER`        | None linked               | ❌ Missing      |
+| Acceptance Criterion | Proof Strategy      | Current Evidence                    | Status |
+| -------------------- | ------------------- | ----------------------------------- | ------ |
+| `AC-US-AUTH-001-01`  | `PS-API-INTEGRATED` | Integrated E2E + Frontend + Backend | ✅ Met |
+| `AC-US-AUTH-001-01`  | `PS-BACKEND`        | Integrated E2E + Frontend + Backend | ✅ Met |
+| `AC-US-AUTH-001-02`  | `PS-BACKEND`        | Backend                             | ✅ Met |
+| `AC-US-AUTH-001-03`  | `PS-FRONTEND`       | Frontend                            | ✅ Met |
+| `AC-US-AUTH-001-04`  | `PS-FRONTEND`       | Frontend + Backend                  | ✅ Met |
+| `AC-US-AUTH-001-04`  | `PS-BACKEND`        | Frontend + Backend                  | ✅ Met |
+| `AC-US-AUTH-001-05`  | `PS-BACKEND`        | Backend                             | ✅ Met |
+| `AC-US-AUTH-001-06`  | `PS-BACKEND`        | Backend                             | ✅ Met |
+| `AC-US-AUTH-001-07`  | `PS-API-INTEGRATED` | Integrated E2E                      | ✅ Met |
+| `AC-US-AUTH-001-08`  | `PS-FRONTEND`       | Mocked browser + Frontend           | ✅ Met |
+| `AC-US-AUTH-001-09`  | `PS-BACKEND`        | Backend                             | ✅ Met |
+| `AC-US-AUTH-001-10`  | `PS-BROWSER`        | Mocked browser                      | ✅ Met |
+| `AC-US-AUTH-001-11`  | `PS-BROWSER`        | Mocked browser                      | ✅ Met |
+| `AC-US-AUTH-001-12`  | `PS-BROWSER`        | Mocked browser                      | ✅ Met |
+| `AC-US-AUTH-001-13`  | `PS-API-INTEGRATED` | Integrated E2E + Mocked browser     | ✅ Met |
+| `AC-US-AUTH-001-13`  | `PS-BROWSER`        | Integrated E2E + Mocked browser     | ✅ Met |
+| `AC-US-AUTH-001-14`  | `PS-FRONTEND`       | Frontend                            | ✅ Met |
+| `AC-US-AUTH-001-15`  | `PS-BROWSER`        | Mocked browser                      | ✅ Met |
+| `AC-US-AUTH-001-16`  | `PS-FRONTEND`       | Frontend                            | ✅ Met |
+| `AC-US-AUTH-001-17`  | `PS-FRONTEND`       | Frontend                            | ✅ Met |
+| `AC-US-AUTH-001-18`  | `PS-FRONTEND`       | Frontend                            | ✅ Met |
 
 ## US-AUTH-002: Sign in to the Backoffice
 
@@ -142,67 +159,28 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 - [x] `AC-US-AUTH-002-06` A missing access token or wallet address redirects the user to login.
 - [x] `AC-US-AUTH-002-07` An authenticated user without an administrator role is denied access to protected backoffice capabilities.
 - [x] `AC-US-AUTH-002-08` A failed token or user validation clears the persisted backoffice session and redirects the user to login.
+- [x] `AC-US-AUTH-002-09` A failed backoffice sign-in distinguishes declined wallet prompts, network mismatch, backend rejection, and
+      connectivity problems.
+- [ ] `AC-US-AUTH-002-10` A saved administrator profile cannot grant entry to a protected backoffice route when the current token has
+      expired or been replaced by an unverified token.
 
 ### Test Coverage
 
-| Acceptance Criterion | Proof Strategy | Current Evidence | Status     |
-| -------------------- | -------------- | ---------------- | ---------- |
-| `AC-US-AUTH-002-01`  | `PS-DASHBOARD` | None linked      | ❌ Missing |
-| `AC-US-AUTH-002-01`  | `PS-BACKEND`   | None linked      | ❌ Missing |
-| `AC-US-AUTH-002-02`  | `PS-DASHBOARD` | None linked      | ❌ Missing |
-| `AC-US-AUTH-002-03`  | `PS-DASHBOARD` | None linked      | ❌ Missing |
-| `AC-US-AUTH-002-03`  | `PS-BACKEND`   | None linked      | ❌ Missing |
-| `AC-US-AUTH-002-04`  | `PS-DASHBOARD` | None linked      | ❌ Missing |
-| `AC-US-AUTH-002-05`  | `PS-DASHBOARD` | None linked      | ❌ Missing |
-| `AC-US-AUTH-002-06`  | `PS-DASHBOARD` | None linked      | ❌ Missing |
-| `AC-US-AUTH-002-07`  | `PS-DASHBOARD` | None linked      | ❌ Missing |
-| `AC-US-AUTH-002-07`  | `PS-BACKEND`   | None linked      | ❌ Missing |
-| `AC-US-AUTH-002-08`  | `PS-DASHBOARD` | None linked      | ❌ Missing |
-
-## US-AUTH-003: Recover from an Interrupted Login
-
-**As a** portal user\
-**I want to** understand which login step failed and retry safely\
-**So that** I can recover without an ambiguous or partially authenticated session
-
-### Acceptance Criteria
-
-#### Happy Path
-
-- [x] `AC-US-AUTH-003-01` A user can retry authentication after an unsuccessful login attempt.
-
-#### Business Rules
-
-- [x] `AC-US-AUTH-003-02` Rejecting wallet connection, network switching, or message signing does not authenticate the user.
-- [x] `AC-US-AUTH-003-03` A nonce, authentication, or profile request failure does not set the client authentication state.
-- [x] `AC-US-AUTH-003-04` The client classifies wallet connection, network switching, signature, and backend failures separately.
-- [x] `AC-US-AUTH-003-05` The backoffice classifies rejected signatures, network mismatches, backend failures, and connectivity failures
-      separately.
-- [x] `AC-US-AUTH-003-06` The client removes an issued access token when the following profile request returns a terminal authentication or
-      profile error (`401`, `403`, or `404`), while recoverable network and server failures keep the login mutation retryable without
-      resetting the wallet session.
-
-#### Edge & Error Cases
-
-- [x] `AC-US-AUTH-003-07` A missing wallet provider leaves the user unauthenticated.
-- [x] `AC-US-AUTH-003-08` An unsuccessful login attempt does not provide access to a protected product surface.
-- [x] `AC-US-AUTH-003-09` If the connected wallet differs from the authenticated address, the client locks the protected surface and lets
-      the user disconnect to restart authentication.
-
-### Test Coverage
-
-| Acceptance Criterion | Proof Strategy      | Current Evidence | Status          |
-| -------------------- | ------------------- | ---------------- | --------------- |
-| `AC-US-AUTH-003-01`  | `PS-API-INTEGRATED` | None linked      | ❌ Missing      |
-| `AC-US-AUTH-003-02`  | `PS-BROWSER`        | None linked      | ❌ Missing      |
-| `AC-US-AUTH-003-03`  | `PS-BROWSER`        | None linked      | ❌ Missing      |
-| `AC-US-AUTH-003-04`  | `PS-BROWSER`        | None linked      | ❌ Missing      |
-| `AC-US-AUTH-003-05`  | `PS-DASHBOARD`      | None linked      | ❌ Missing      |
-| `AC-US-AUTH-003-06`  | `PS-BROWSER`        | Frontend         | ⚠️ Insufficient |
-| `AC-US-AUTH-003-07`  | `PS-BROWSER`        | None linked      | ❌ Missing      |
-| `AC-US-AUTH-003-08`  | `PS-API-INTEGRATED` | None linked      | ❌ Missing      |
-| `AC-US-AUTH-003-08`  | `PS-BACKEND`        | None linked      | ❌ Missing      |
-| `AC-US-AUTH-003-09`  | `PS-FRONTEND`       | Frontend         | ✅ Met          |
+| Acceptance Criterion | Proof Strategy | Current Evidence    | Status     |
+| -------------------- | -------------- | ------------------- | ---------- |
+| `AC-US-AUTH-002-01`  | `PS-DASHBOARD` | Backend + Dashboard | ✅ Met     |
+| `AC-US-AUTH-002-01`  | `PS-BACKEND`   | Backend + Dashboard | ✅ Met     |
+| `AC-US-AUTH-002-02`  | `PS-DASHBOARD` | Dashboard           | ✅ Met     |
+| `AC-US-AUTH-002-03`  | `PS-DASHBOARD` | Backend + Dashboard | ✅ Met     |
+| `AC-US-AUTH-002-03`  | `PS-BACKEND`   | Backend + Dashboard | ✅ Met     |
+| `AC-US-AUTH-002-04`  | `PS-DASHBOARD` | Dashboard           | ✅ Met     |
+| `AC-US-AUTH-002-05`  | `PS-DASHBOARD` | Dashboard           | ✅ Met     |
+| `AC-US-AUTH-002-06`  | `PS-DASHBOARD` | Dashboard           | ✅ Met     |
+| `AC-US-AUTH-002-07`  | `PS-DASHBOARD` | Backend + Dashboard | ✅ Met     |
+| `AC-US-AUTH-002-07`  | `PS-BACKEND`   | Backend + Dashboard | ✅ Met     |
+| `AC-US-AUTH-002-08`  | `PS-DASHBOARD` | Dashboard           | ✅ Met     |
+| `AC-US-AUTH-002-09`  | `PS-DASHBOARD` | Dashboard           | ✅ Met     |
+| `AC-US-AUTH-002-10`  | `PS-DASHBOARD` | None linked         | ❌ Missing |
 
 ## US-AUTH-004: Resume after a Wallet Network Change
 
@@ -223,8 +201,8 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 - [x] `AC-US-AUTH-004-03` An authenticated session on another or an unknown wallet network cannot interact with the protected workspace,
       including open transaction dialogs.
 - [x] `AC-US-AUTH-004-04` Network recovery does not automatically submit or replay a transaction.
-- [x] `AC-US-AUTH-004-05` A wallet-account mismatch retains the existing account-lock behavior, and disconnecting retains the existing
-      logout behavior.
+- [x] `AC-US-AUTH-004-05` If the connected wallet differs from the authenticated account, the workspace locks. Disconnecting the wallet ends
+      the session so the user can sign in again.
 
 #### Edge & Error Cases
 
@@ -249,11 +227,23 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 governance, Contract Management and Safe. Each domain retains its operation, authorization and signature rules. The
 [shared contract-interaction owner](../../implementation/contract-interactions/README.md) documents submission boundaries and exceptions.
 
+## Human Validation
+
+Validated on 2026-11-07 by the product owner for US-AUTH-001 and US-AUTH-004. The review covered retry after a declined wallet signature,
+restoring a protected client page after reload, and resuming the same page after returning to the configured wallet network.
+
 ## Known Gaps
 
-- Direct browser proof is pending for verification recovery after a temporary failure, session preservation after a resource refusal, and
-  sign-in after rejection of the current token during use (`AC-US-AUTH-001-10`–`AC-US-AUTH-001-12`).
-- The client unit proof for `AC-US-AUTH-003-06` is complete, but the required mocked-browser proof remains pending.
+- `AC-US-AUTH-002-10`: the backoffice guard can reuse an address-keyed profile across tokens. The role and rejection tests exercise a fresh
+  profile check. Closing this gap requires a test that changes or expires the token after caching the administrator profile and verifies
+  that the next protected navigation requires confirmation.
+
+### Retired story
+
+`US-AUTH-003` described recovery inside the existing sign-in flow. Its client criteria moved to `AC-US-AUTH-001-13`–`AC-US-AUTH-001-18`.
+Former criteria `003-03` and `003-08` are consolidated under `001-15`, and `003-07` is included in `001-14`. The backoffice error criterion
+`003-05` moved to `002-09`, and the wallet-account mismatch criterion `003-09` is covered by `004-05`. The retired story ID remains
+reserved.
 
 ## Implementation Evidence
 
@@ -264,13 +254,15 @@ governance, Contract Management and Safe. Each domain retains its operation, aut
   [browser network-recovery journey](../../../app/test/e2e/wallet-network.spec.ts), and
   [E2E wallet network fixture](../../../app/src/e2e/mockConnector.ts)
 - [Client login page](../../../app/src/views/LoginView.vue), [session guard](../../../app/src/router/index.ts), and
-  [browser session-restoration tests](../../../app/test/e2e/login.spec.ts)
+  [browser session-restoration tests](../../../app/test/e2e/login.spec.ts), and
+  [browser session failure and recovery tests](../../../app/test/e2e/auth-session.spec.ts)
 - [Client SIWE orchestration](../../../app/src/composables/useSiwe.ts)
 - [Client SIWE tests](../../../app/src/composables/__tests__/useSiwe.spec.ts)
 - [Dashboard login page](../../../dashboard/app/pages/login.vue)
 - [Dashboard SIWE orchestration](../../../dashboard/app/composables/useSiwe.ts)
 - [Dashboard route guard](../../../dashboard/app/middleware/auth.global.ts)
-- [Dashboard login error classification](../../../dashboard/app/utils/loginError.ts)
+- [Dashboard login error classification](../../../dashboard/app/utils/loginError.ts) and
+  [backoffice authentication tests](../../../dashboard/test/authentication.spec.ts)
 - [Backend SIWE controller](../../../backend/src/controllers/authController.ts)
 - [Backend authentication middleware](../../../backend/src/middleware/authMiddleware.ts)
 - [Backend authentication tests](../../../backend/src/controllers/__tests__/authController.test.ts)
