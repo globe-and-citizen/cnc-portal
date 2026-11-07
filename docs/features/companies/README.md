@@ -493,7 +493,7 @@ an invalid provider Safe total; a contract that is absent contributes known zero
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `c747babbd0ecd64b8896a024af07685554cfaf64`
+**Implementation evidence reviewed against:** `4625eec36c03bc224cf5681be6511c044e230d36`
 
 - [Member deletion](../../../app/src/components/sections/DashboardView/DeleteMemberModal.vue),
   [team state](../../../app/src/stores/teamStore.ts), and
