@@ -1,8 +1,8 @@
 # Board Elections — User Stories
 
 **Scope:** Board-election creation, voting, result publication, Board of Directors visibility, and election history in the client portal.
-Board proposals are a separate journey and are outside this document's scope. Their frontend page and navigation are currently retired; the
-Board Proposals contract integration is not exposed as a portal journey until that functionality is scheduled again.
+Board proposals are a separate journey and are outside this document's scope. Their frontend page, routes, and navigation are removed while
+the functionality is unscheduled. The Board Proposals contract integration is not exposed as a portal journey until that work is scheduled.
 
 **Last reviewed:** Not yet reviewed
 

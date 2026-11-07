@@ -1368,7 +1368,7 @@ generic table dictionary. This is a compile-time boundary; it does not claim val
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `4625eec36c03bc224cf5681be6511c044e230d36`
+**Implementation evidence reviewed against:** `b148d4a8eb4fa7f7b15cab99eae0d9fe37583750`
 
 - [Bank deposit modal](../../../app/src/components/sections/BankView/forms/DepositModal.vue),
   [Bank transfer modal](../../../app/src/components/sections/BankView/forms/TransferModal.vue),

@@ -48,8 +48,8 @@ flowchart LR
 ## Invariants and Failure Behaviour
 
 - Route records lazy-load their view components; the shared router owns their names, paths, redirects, and authentication redirect policy.
-- Board Proposals is suspended and has no active portal journey. Its former routes redirect to the company overview, and its sidebar entry
-  is removed. Election creation and Safe transaction proposals remain separate journeys.
+- Board Proposals is suspended and has no active portal journey. Its routes and sidebar entry are removed. Election creation and Safe
+  transaction proposals remain separate journeys.
 - The locked-session location bypasses the normal authentication redirect so the locked-session view can render.
 - Workspace navigation remains disabled until the URL or team store identifies a current team.
 - A parent menu section is active and initially open when its route-name group matches the current route. The sidebar keeps at most one
@@ -65,7 +65,7 @@ observer with no side effect; removing that inert observer does not replace or a
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `4625eec36c03bc224cf5681be6511c044e230d36`
+**Implementation evidence reviewed against:** `b148d4a8eb4fa7f7b15cab99eae0d9fe37583750`
 
 - [Team selection menu](../../../app/src/components/layout/TeamSelectMenu.vue)
 - [Router definition and authentication guard](../../../app/src/router/index.ts)
