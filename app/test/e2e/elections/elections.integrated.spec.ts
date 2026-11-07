@@ -44,6 +44,17 @@ async function openRealBoardElections(page: Page, teamId: string): Promise<Team>
   return teamReadback.json() as Promise<Team>
 }
 
+async function reloadBoardElectionsAtChainTime(page: Page): Promise<void> {
+  // The API issues JWTs at real wall time. Restore the session before advancing
+  // the browser's election clock to match the chain.
+  await page.clock.setFixedTime(new Date())
+  await page.reload()
+  await expect(page.getByText('Current Board of Directors', { exact: true })).toBeVisible({
+    timeout: 30_000
+  })
+  await page.clock.setFixedTime(new Date((await currentE2ETime()) * 1_000))
+}
+
 async function selectRealElectionCandidates(page: Page): Promise<void> {
   const input = page.getByPlaceholder('Search by name or address')
   for (const address of [E2E_OWNER, E2E_MEMBER, E2E_NEW_SIGNER]) {
@@ -177,12 +188,7 @@ test.describe(
       await expect(memberPage.getByText('Your Vote', { exact: true })).toBeVisible()
 
       await advanceE2ETimeTo(createdElection[5] + 1n)
-      // Restore the session at real wall time. Only the election clock is
-      // advanced by the scenario; the API still issues JWTs in real time.
-      await page.clock.setFixedTime(new Date())
-      await page.goto(`/teams/${company.teamId}/administration/bod-elections`)
-      await expect(page.locator('[data-test="profile"]')).toBeVisible()
-      await page.clock.setFixedTime(new Date((await currentE2ETime()) * 1_000))
+      await reloadBoardElectionsAtChainTime(page)
       const publish = page.getByRole('button', { name: 'Publish Results' })
       await expect(publish).toBeEnabled({ timeout: 30_000 })
       await publish.click()
@@ -207,10 +213,7 @@ test.describe(
       }
       await expect(page.getByText('Past Elections', { exact: true })).toBeVisible()
 
-      await page.reload()
-      await expect(page.getByText('Current Board of Directors', { exact: true })).toBeVisible({
-        timeout: 30_000
-      })
+      await reloadBoardElectionsAtChainTime(page)
       await expect(page.getByText('Integrated Board Election', { exact: true })).toBeVisible()
       await page.getByRole('button', { name: 'View Results', exact: true }).click()
       await expect(page).toHaveURL(
