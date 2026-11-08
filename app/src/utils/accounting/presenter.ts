@@ -56,6 +56,7 @@ export function formatUnixDateTime(timestamp: number): string {
 export interface StatementLineView {
   label: string
   value: string
+  amount?: UsdAmount
   account?: Account | AccountName
   accounts?: AccountName[]
 }
@@ -73,6 +74,8 @@ interface TrialRow {
   natureClass: string
   dr: string
   cr: string
+  debitAmount: UsdAmount | null
+  creditAmount: UsdAmount | null
   drMuted: boolean
   crMuted: boolean
 }
@@ -83,6 +86,7 @@ interface IncomeView {
   totalRevenue: string
   totalExpenses: string
   netIncome: string
+  amounts: { totalRevenue: UsdAmount; totalExpenses: UsdAmount; netIncome: UsdAmount }
   netNegative: boolean
 }
 
@@ -96,6 +100,13 @@ interface BalanceView {
   earningsToDate: string
   totalEquity: string
   liabilitiesPlusEquity: string
+  amounts: {
+    totalAssets: UsdAmount
+    totalLiabilities: UsdAmount
+    earningsToDate: UsdAmount
+    totalEquity: UsdAmount
+    liabilitiesPlusEquity: UsdAmount
+  }
 }
 
 export interface BalanceLineView extends StatementLineView {
@@ -186,16 +197,23 @@ export function presentIncome(
     revenueLines: income.revenue.map((line) => ({
       label: line.account,
       value: money(line.amount),
+      amount: line.amount,
       account: line.account
     })),
     expenseLines: income.expenses.map((line) => ({
       label: line.account,
       value: money(line.amount),
+      amount: line.amount,
       account: line.account
     })),
     totalRevenue: money(income.totalRevenue),
     totalExpenses: money(income.totalExpenses),
     netIncome: money(income.netIncome),
+    amounts: {
+      totalRevenue: income.totalRevenue,
+      totalExpenses: income.totalExpenses,
+      netIncome: income.netIncome
+    },
     netNegative: income.netIncome < 0n
   }
 }
@@ -217,6 +235,7 @@ export function presentBalance(entries: readonly JournalEntry[], asOf?: Date | n
     return {
       label: line.accountLabel,
       value: money(line.contribution),
+      amount: line.contribution,
       account: line.account,
       nature,
       natureClass: NATURE_BADGE[nature]
@@ -228,6 +247,7 @@ export function presentBalance(entries: readonly JournalEntry[], asOf?: Date | n
     {
       label: 'Earnings to date',
       value: money(balance.earningsToDate),
+      amount: balance.earningsToDate,
       accounts: earningsAccounts,
       nature: 'Equity',
       natureClass: NATURE_BADGE.Equity
@@ -242,6 +262,13 @@ export function presentBalance(entries: readonly JournalEntry[], asOf?: Date | n
     totalLiabilities: money(balance.totalLiabilities),
     earningsToDate: money(balance.earningsToDate),
     totalEquity: money(balance.totalEquity),
+    amounts: {
+      totalAssets: balance.totalAssets,
+      totalLiabilities: balance.totalLiabilities,
+      earningsToDate: balance.earningsToDate,
+      totalEquity: balance.totalEquity,
+      liabilitiesPlusEquity: balance.totalLiabilitiesAndEquity
+    },
     liabilitiesPlusEquity: money(balance.totalLiabilitiesAndEquity)
   }
 }
@@ -260,6 +287,7 @@ export function presentTrial(
   totalDebit: string
   totalCredit: string
   balanced: boolean
+  amounts: { totalDebit: UsdAmount; totalCredit: UsdAmount }
 } {
   const scopedEntries = filterByPeriod(entries, null, asOf)
   const ledger = buildGeneralLedger(scopedEntries)
@@ -277,6 +305,8 @@ export function presentTrial(
       natureClass: NATURE_BADGE[natureOf(row.account)],
       dr: debitSide ? money(net) : '—',
       cr: creditSide ? money(-net) : '—',
+      debitAmount: debitSide ? net : null,
+      creditAmount: creditSide ? -net : null,
       drMuted: !debitSide,
       crMuted: !creditSide
     }
@@ -285,6 +315,7 @@ export function presentTrial(
     rows,
     totalDebit: money(ledger.debitBalanceTotal),
     totalCredit: money(ledger.creditBalanceTotal),
-    balanced: ledger.balanced
+    balanced: ledger.balanced,
+    amounts: { totalDebit: ledger.debitBalanceTotal, totalCredit: ledger.creditBalanceTotal }
   }
 }

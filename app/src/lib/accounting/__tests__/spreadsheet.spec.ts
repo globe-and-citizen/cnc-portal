@@ -2,7 +2,10 @@ import { describe, it, expect, vi, afterEach } from 'vitest'
 import type { Address } from 'viem'
 import { buildSheets, exportSheetsExcel } from '../spreadsheet'
 import type { CncAccounting } from '@/utils/accounting/assemble'
-import { assembleAccounting } from '@/utils/accounting/__tests__/assembleAccounting'
+import {
+  assembleAccounting,
+  finalizeJournal
+} from '@/utils/accounting/__tests__/assembleAccounting'
 import { USDC_ADDRESS } from '@/constant'
 
 const BANK = '0x1111111111111111111111111111111111111111'
@@ -221,7 +224,7 @@ describe('buildSheets (section selection)', () => {
         key: 'ledger',
         journalAccounts: [accountId],
         journalAccountLabel: 'Cash — Bank',
-        journalAccountMovements: { debit: '$100.00', credit: '$0.00' }
+        journalAccountAmounts: { debit: 100n * 10n ** 24n, credit: 0n }
       }
     ])
     expect(String(ledger.rows[0][0])).toBe('General Ledger — Cash — Bank')
@@ -235,7 +238,7 @@ describe('buildSheets (section selection)', () => {
         key: 'ledger',
         journalAccounts: [sampleBooks().journal[0]!.lines[1]!.account.id],
         journalAccountLabel: 'Earnings to date',
-        journalAccountMovements: { debit: '$100.00', credit: '$100.00' }
+        journalAccountAmounts: { debit: 100n * 10n ** 24n, credit: 100n * 10n ** 24n }
       }
     ])
     expect(String(ledger.rows[0][0])).toBe('General Ledger — Earnings to date')
@@ -328,5 +331,17 @@ describe('exportSheetsExcel', () => {
     // First bytes of a .xlsx are the ZIP signature "PK".
     const bytes = new Uint8Array(captured!.parts[0] as ArrayBuffer)
     expect([bytes[0], bytes[1]]).toEqual([0x50, 0x4b])
+    const XLSX = await import('xlsx-js-style')
+    const workbook = XLSX.read(bytes, { type: 'array' })
+    const income = workbook.Sheets['Income Statement']!
+    const row = XLSX.utils
+      .sheet_to_json<(string | number)[]>(income, { header: 1 })
+      .find((r) => r[0] === 'Total revenue')!
+    expect(row[1]).toBe(100)
+    expect(
+      Object.values(income).some(
+        (cell) => typeof cell === 'object' && cell?.t === 'n' && cell.v === 100
+      )
+    ).toBe(true)
   })
 })

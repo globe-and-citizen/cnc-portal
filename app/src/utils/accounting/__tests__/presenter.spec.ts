@@ -50,16 +50,20 @@ describe('formatters', () => {
 describe('presentIncome', () => {
   it('lists revenue and expense lines for the full period', () => {
     const income = presentIncome(books().journal)
-    expect(income.revenueLines).toContainEqual({
-      label: 'Service Revenue',
-      value: '$100.00',
-      account: 'Service Revenue'
-    })
-    expect(income.expenseLines).toContainEqual({
-      label: 'Operating Expense',
-      value: '$30.00',
-      account: 'Operating Expense'
-    })
+    expect(income.revenueLines).toContainEqual(
+      expect.objectContaining({
+        label: 'Service Revenue',
+        value: '$100.00',
+        account: 'Service Revenue'
+      })
+    )
+    expect(income.expenseLines).toContainEqual(
+      expect.objectContaining({
+        label: 'Operating Expense',
+        value: '$30.00',
+        account: 'Operating Expense'
+      })
+    )
     expect(income.netIncome).toBe('$70.00')
   })
 

@@ -5,7 +5,7 @@ import { finalizeJournal } from '@/utils/accounting/__tests__/assembleAccounting
 import { journalLedgerRows } from '@/utils/accounting/journalLedgerPresenter'
 
 describe('General Ledger export precision', () => {
-  it('prints the table quantity in the PDF and keeps the exact one in Excel', () => {
+  it('prints the same rounded table quantity in PDF and Excel', () => {
     const journal = finalizeJournal([
       {
         id: 'fractional-native',
@@ -30,7 +30,27 @@ describe('General Ledger export precision', () => {
       '$2,698.41899'
     ])
     expect(generalLedgerSheetRows({ journal }, undefined, { columns })[3]).toEqual([
-      0.000381862376267664, 2698.41899
+      0.000382, 2698.41899
     ])
+  })
+
+  it('preserves the screen threshold and reports missing valuation explicitly', () => {
+    const journal = finalizeJournal([
+      {
+        id: 'tiny',
+        timestamp: 100,
+        useCase: 'CASH-IN',
+        debit: 'Cash — Bank',
+        credit: 'Service Revenue',
+        token: 'native',
+        rawAmount: '1',
+        rate: 0,
+        internal: false,
+        memo: '',
+        enrichment: 'not-applicable'
+      }
+    ])
+    const rows = generalLedgerSheetRows({ journal }, undefined, { columns: ['quantity', 'rate'] })
+    expect(rows[3]).toEqual(['<0.000001', 'Unavailable'])
   })
 })
