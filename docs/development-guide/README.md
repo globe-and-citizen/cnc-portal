@@ -2,6 +2,14 @@
 
 Comprehensive guides for developing features in the CNC Portal project.
 
+## Choose your entry point
+
+- **Human developer:** start with [CONTRIBUTION.md](../../CONTRIBUTION.md) for shared responsibilities, workflow and validation.
+- **AI agent:** follow the same contribution contract plus [AGENTS.md](../../AGENTS.md) for local planning, tools, delivery operations and
+  evidence readback.
+- **Both:** use the specialised guides below and the [development standards index](../../.github/copilot-instructions/README.md) for the
+  affected area. Product acceptance remains with the designated human validator.
+
 ## Contents
 
 ### Development Workflow
