@@ -10,16 +10,11 @@
 import type { AccountingExportSnapshot } from '@/utils/accounting/exportSpec'
 import {
   presentIncome,
-  presentBalance,
   presentTrial,
   presentSummary,
   summaryExportTitle,
   incomeExportTitle,
-  balanceExportTitle,
-  trialExportTitle,
-  balanceExportRows,
-  type BalanceExportRow,
-  type BalanceExportRowKind
+  trialExportTitle
 } from '@/utils/accounting/presenter'
 import type { SectionKey, SectionSpec } from '@/utils/accounting/exportSpec'
 import {
@@ -29,14 +24,16 @@ import {
   assignmentStatus,
   presentJournalAccountAssignments
 } from '@/utils/accounting/journalAccountAssignmentPresenter'
+import { balanceSheetContent } from './balanceSheetSheet'
 import { generalLedgerSheetRows } from './generalLedgerSheet'
+import { spreadsheetUsd } from './spreadsheetNumber'
 
 type Cell = string | number
-type SheetRows = Cell[][]
+export type SheetRows = Cell[][]
 /** Turns a party's address into a display name; defaults to a shortened address. */
 export type ResolveName = (address: string) => string
 
-interface SheetContent {
+export interface SheetContent {
   rows: SheetRows
   /** Rows printed bold on a tinted fill; setting it replaces the zebra stripes. */
   emphasizedRows?: number[]
@@ -44,17 +41,6 @@ interface SheetContent {
 
 interface AccountingSheet extends SheetContent {
   name: string
-}
-
-/**
- * A displayed figure as a spreadsheet number: `"$1,234.50"` → `1234.5`;
- * `"—"` / `""` → `""` (blank cell). Applies to any formatted amount — USD, a
- * token quantity, a rate — so the cell is sortable and summable in Excel.
- */
-function usd(value: string): number | '' {
-  if (!value || value === '—') return ''
-  const n = Number(value.replace(/[$,]/g, ''))
-  return Number.isNaN(n) ? '' : n
 }
 
 function summarySheet(
@@ -66,7 +52,7 @@ function summarySheet(
   return [
     [summaryExportTitle(from, to)],
     [],
-    ...cards.map((card) => [card.label, usd(card.value)]),
+    ...cards.map((card) => [card.label, spreadsheetUsd(card.amount)]),
     [],
     ['Books balanced', banner.balanced ? 'Yes' : 'No'],
     ['Accounting identity', banner.identity],
@@ -84,39 +70,15 @@ function incomeSheet(
     [incomeExportTitle(from, to)],
     [],
     ['Revenue'],
-    ...income.revenueLines.map((line) => [line.label, usd(line.value)]),
-    ['Total revenue', usd(income.totalRevenue)],
+    ...income.revenueLines.map((line) => [line.label, spreadsheetUsd(line.amount)]),
+    ['Total revenue', spreadsheetUsd(income.amounts.totalRevenue)],
     [],
     ['Expenses'],
-    ...income.expenseLines.map((line) => [line.label, usd(line.value)]),
-    ['Total expenses', usd(income.totalExpenses)],
+    ...income.expenseLines.map((line) => [line.label, spreadsheetUsd(line.amount)]),
+    ['Total expenses', spreadsheetUsd(income.amounts.totalExpenses)],
     [],
-    ['Net income (profit)', usd(income.netIncome)]
+    ['Net income (profit)', spreadsheetUsd(income.amounts.netIncome)]
   ]
-}
-
-const BALANCE_EMPHASIZED_KINDS: ReadonlySet<BalanceExportRowKind> = new Set([
-  'section',
-  'columns',
-  'total',
-  'grandTotal'
-])
-
-function balanceExportCells({ kind, account, nature, value }: BalanceExportRow): Cell[] {
-  if (kind === 'gap') return []
-  if (kind === 'section') return [account]
-  return [account, nature, kind === 'columns' ? value : usd(value)]
-}
-
-function balanceSheetContent(books: AccountingExportSnapshot, asOf?: Date | null): SheetContent {
-  const exportRows = balanceExportRows(presentBalance(books.journal, asOf))
-  const headingRows: SheetRows = [[balanceExportTitle(asOf)], []]
-  return {
-    rows: [...headingRows, ...exportRows.map(balanceExportCells)],
-    emphasizedRows: exportRows.flatMap(({ kind }, index) =>
-      BALANCE_EMPHASIZED_KINDS.has(kind) ? [index + headingRows.length] : []
-    )
-  }
 }
 
 function trialSheet(books: AccountingExportSnapshot, asOf?: Date | null): SheetRows {
@@ -125,8 +87,18 @@ function trialSheet(books: AccountingExportSnapshot, asOf?: Date | null): SheetR
     [trialExportTitle(asOf)],
     [],
     ['Account', 'Nature', 'Debit', 'Credit'],
-    ...trial.rows.map((t) => [t.label, t.nature, usd(t.dr), usd(t.cr)]),
-    ['Total', '', usd(trial.totalDebit), usd(trial.totalCredit)]
+    ...trial.rows.map((t) => [
+      t.label,
+      t.nature,
+      spreadsheetUsd(t.debitAmount),
+      spreadsheetUsd(t.creditAmount)
+    ]),
+    [
+      'Total',
+      '',
+      spreadsheetUsd(trial.amounts.totalDebit),
+      spreadsheetUsd(trial.amounts.totalCredit)
+    ]
   ]
 }
 
@@ -146,8 +118,8 @@ function assignmentsSheet(
       row.txHash ?? '',
       row.accountLabel ?? row.account,
       row.currency,
-      usd(row.dr),
-      usd(row.cr),
+      row.debitAmount ? spreadsheetUsd(row.debitAmount) : '',
+      row.creditAmount ? spreadsheetUsd(row.creditAmount) : '',
       assignmentStatus(row)
     ])
   ]
@@ -187,7 +159,7 @@ function sectionContent(
           currencies: spec.currencies,
           journalAccounts: spec.journalAccounts,
           journalAccountLabel: spec.journalAccountLabel,
-          journalAccountMovements: spec.journalAccountMovements
+          journalAccountAmounts: spec.journalAccountAmounts
         })
       }
     case 'assignments':

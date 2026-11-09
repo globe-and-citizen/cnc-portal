@@ -53,6 +53,8 @@ export interface LedgerRow {
   quantity: string
   /** Compact table quantity, up to six decimals with positive sub-precision values explicit. */
   quantityDisplay?: string
+  quantityValue?: number | null
+  rateValue?: number | null
   /** USD rate of record (spec §2 "Taux"), up to 6-dp with trailing zeros trimmed, e.g. `$0.08` / `$1`. */
   rate: string
   /** Running balance of the drilled account after this posting (see
@@ -169,7 +171,10 @@ export function filterJournalLedgerEntries(
 /** The Devise / Quantité / Taux columns of one journal line's token movement. */
 function movementOf(
   line: JournalEntryLine
-): Pick<LedgerRow, 'currency' | 'quantity' | 'quantityDisplay' | 'rate'> {
+): Pick<
+  LedgerRow,
+  'currency' | 'quantity' | 'quantityDisplay' | 'rate' | 'quantityValue' | 'rateValue'
+> {
   if (!line.movement) return NO_MOVEMENT
   const quantity =
     line.movement.decimals === null
@@ -179,6 +184,8 @@ function movementOf(
     quantity === null ? UNAVAILABLE : formatNumber(quantity, { maxDecimals: 6 })
   return {
     currency: currencySymbol(line.movement.token, line.movement.asset),
+    quantityValue: quantity === null ? null : Number(quantity),
+    rateValue: line.movement.rate === 0n ? null : usdRateToNumber(line.movement.rate),
     quantity: quantity === null ? UNAVAILABLE : formatExactNumber(quantity),
     quantityDisplay:
       line.movement.rawAmount > 0n && roundedQuantity === '0'

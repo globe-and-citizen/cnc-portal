@@ -19,10 +19,9 @@ import {
   summaryExportTitle,
   incomeExportTitle,
   balanceExportTitle,
-  trialExportTitle,
-  balanceExportRows,
-  type BalanceExportRowKind
+  trialExportTitle
 } from '@/utils/accounting/presenter'
+import { balanceExportRows, type BalanceExportRowKind } from '@/utils/accounting/balanceExportRows'
 import type { SectionSpec } from '@/utils/accounting/exportSpec'
 import { formatDateTime } from '@/utils/format'
 import {

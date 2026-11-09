@@ -1,6 +1,7 @@
 # Commit Message Conventions
 
-> [`AGENTS.md`](../../AGENTS.md) contains the repository-level workflow. This file contains the commit-specific convention and examples.
+> [`CONTRIBUTION.md`](../../CONTRIBUTION.md) owns the shared contribution workflow. [`AGENTS.md`](../../AGENTS.md) adds agent execution
+> procedures. This file owns the commit-specific convention and examples for every contributor.
 
 ## Format
 
@@ -15,9 +16,21 @@
 - **Gitmoji is required**, paired with the type.
 - **Imperative, present tense** in the subject ("add", not "added").
 - **Subject ≤ 72 chars, no trailing period.**
-- The same format applies to **ordinary PR titles and ordinary issue titles**. Sprint plan, Sprint Goal and release issue titles, plus
-  release promotion PR titles, follow the
-  [dedicated title rules](../../.agents/skills/cnc-github-flow/SKILL.md#sprint-goal-and-release-issue-titles) instead.
+- The same format applies to **ordinary PR titles and ordinary issue titles**. Sprint plan, Sprint Goal and release issue titles and release
+  promotion PR titles follow the [dedicated title rules](#sprint-goal-and-release-issue-titles).
+
+## Sprint, Goal and Release issue titles
+
+Sprint planning, Sprint Goal and release issues use their own titles without a Conventional Commit type or gitmoji:
+
+- Sprint root: `[Sprint] Sprint <number> plan — <date range>`.
+- Planned Goal: `[Goals] <outcome> — Sprint <number>`.
+- Catch-all Goal: `[Goals] Sprint <number> Bug and perf`.
+- Release: `[Release] vX.Y.Z`, for example `[Release] v0.17.0`.
+
+Release promotion PRs use the same `[Release] vX.Y.Z` title as their tracking release issue, without a Conventional Commit type or gitmoji.
+Keep Conventional Commit titles for ordinary delivery and coordination issues, commits and other pull requests. Do not rename historical
+Sprint or Goal issues solely to normalize older title variants.
 
 ## Type → gitmoji mapping
 

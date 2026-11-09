@@ -4,7 +4,7 @@
 journal, including the persisted counter-account assignments it consumes. Accounting report projections consume that journal on demand. This
 model does not create or persist manual journal entries.
 
-**Last verified:** 2026-11-04
+**Last verified:** 2026-11-08
 
 ## Target Product Contract
 
@@ -673,8 +673,8 @@ source use-case evidence; no persisted presentation category participates. The G
 entry's first line; the spreadsheet export keeps its full value and the PDF prints the shortened form shown on screen. Synthetic operations
 have no transaction-hash value. A transaction-backed hash links to the configured network block explorer in a separate tab. Activity
 narration and exported activity text reuse the canonical address and duration formatters rather than maintaining Accounting-specific display
-rules. Quantity cells use a separate six-decimal display label, also printed in the PDF, while their complete decimal-string quantity
-remains available for inspection and the spreadsheet export. The PDF splits the page width in the default on-screen column proportions.
+rules. Quantity cells use a separate six-decimal display label, also printed in the PDF and exported to Excel, while their complete
+decimal-string quantity remains available for inspection. The PDF splits the page width in the default on-screen column proportions.
 Positive quantities that would round to zero display `<0.000001`. Rate cells retain the recorded six-decimal rate with trailing zeros
 trimmed; their details identify the recorded USD price per token rather than claiming precision beyond the journal's rate scale. Both cells
 expose details through a hover tooltip, keyboard focus, or a tap-generated click, with Escape and focus loss dismissing the detail.
@@ -691,7 +691,8 @@ aggregate line repeats its statement figure in both columns. A fee remains an or
 
 All report identities, totals, and drill-down running balances above use the exact fixed-scale journal integers. Presenters and exporters
 convert those values to numbers and apply human-readable rounding only after the selected snapshot and its aggregates have been calculated;
-running balances never parse the already-formatted debit or credit strings.
+running balances and spreadsheet numeric cells never parse already-formatted amount strings. Drill-down exports carry their exact numeric
+footer amounts alongside the display text. Excel emits `Unavailable` when a value exceeds its supported 15-digit scaled precision.
 
 ## Account Assignment Boundary
 

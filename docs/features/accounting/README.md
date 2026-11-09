@@ -17,8 +17,8 @@ These acceptance criteria follow the
   before display rounding.
 - Ledger quantities and recorded rates display up to six decimals with trailing zeros trimmed. Complete quantities and recorded rates remain
   inspectable by hover, keyboard focus, or tap; positive quantities that would display as zero are identified as below display precision.
-  Display formatting does not change journal calculations. Excel exports keep the exact quantities; a PDF prints the ledger as the screen
-  shows it.
+  Display formatting does not change journal calculations. Excel and PDF exports use the rounded ledger quantities shown on screen; a
+  positive quantity below display precision is exported as the text `<0.000001`.
 - Payroll is accrued when an eligible work week ends. Expense Account spending is recognized when cash moves. Transfers between known
   company pockets are not revenue or expense.
 - Accounting includes every known contract generation. Each deployment remains a distinct cash account even when report totals aggregate the
@@ -389,8 +389,10 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 #### Business Rules
 
 - [x] `AC-US-ACCT-004-04` An export uses one snapshot of the current `JournalEntry` collection and the same filters as the reviewed report.
-- [x] `AC-US-ACCT-004-05` Ledger and drill-down exports retain complete matching entries. Excel keeps full transaction hashes and exact
-      quantities; a PDF prints the shortened hashes and rounded quantities shown on screen, with columns sized in the screen's proportions.
+- [x] `AC-US-ACCT-004-05` Ledger and drill-down exports retain complete matching entries. Excel keeps full transaction hashes; both formats
+      use the rounded quantities shown on screen. A PDF prints shortened hashes and sizes columns in the screen's proportions. Excel numeric
+      amounts use two decimal places, and quantities and rates use up to six. Missing debit/credit sides are blank; unavailable values and
+      numbers outside the supported 15-digit scaled range are text `Unavailable`.
 - [x] `AC-US-ACCT-004-06` Balance Sheet exports retain concrete account rows, their nature and balance as reviewed on screen, and the
       account contributions behind `Earnings to date`.
 - [x] `AC-US-ACCT-004-07` Monetary display conversion and rounding happen after exact journal and report totals are calculated.
