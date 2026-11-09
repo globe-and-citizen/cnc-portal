@@ -81,20 +81,6 @@
     </div>
 
     <template v-else>
-      <UAlert
-        v-if="isRouterOnAnotherSafe"
-        color="warning"
-        variant="soft"
-        icon="i-lucide-triangle-alert"
-        title="New investments still go to another Safe"
-        description="Investor deposits are sent to a Safe that is not this team's default Safe. Point them to the default Safe so new investments arrive here."
-        data-test="safe-router-out-of-sync"
-      >
-        <template #actions>
-          <SetSafeAddressAction compact />
-        </template>
-      </UAlert>
-
       <nav
         class="flex gap-2 overflow-x-auto rounded-xl border bg-white p-2 dark:border-gray-800 dark:bg-gray-950"
         aria-label="Safe wallet sections"
@@ -211,8 +197,6 @@ import SafeIncomingTransactions from '@/components/sections/SafeView/SafeIncomin
 import SafeSetupSection from '@/components/sections/SafeView/SafeSetupSection.vue'
 import SafeAddModal from '@/components/sections/SafeView/SafeAddModal.vue'
 import SafeHistoryCard from '@/components/sections/SafeView/SafeHistoryCard.vue'
-import SetSafeAddressAction from '@/components/sections/SherTokenView/InvestorActions/SetSafeAddressAction.vue'
-import { useSafeDepositRouterSafeAddress } from '@/composables/safeDepositRouter/reads'
 import { useGetSafeBytecodeQuery } from '@/queries/safe.queries'
 import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
 import { useTeamStore, useUserDataStore } from '@/stores'
@@ -250,14 +234,6 @@ const {
  * would all fail, wait for the chain and are replaced by one notice.
  */
 const isSafeMissing = computed(() => bytecode.value === '0x')
-
-const { data: routerSafeAddress } = useSafeDepositRouterSafeAddress()
-const isRouterOnAnotherSafe = computed(
-  () =>
-    !!routerSafeAddress.value &&
-    !!defaultSafeAddress.value &&
-    (routerSafeAddress.value as string).toLowerCase() !== defaultSafeAddress.value.toLowerCase()
-)
 
 const currency = useStorage('currency', { code: 'USD', name: 'US Dollar', symbol: '$' })
 const {

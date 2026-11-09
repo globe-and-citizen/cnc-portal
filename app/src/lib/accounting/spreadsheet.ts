@@ -18,7 +18,14 @@ import {
   trialExportTitle
 } from '@/utils/accounting/presenter'
 import type { SectionKey, SectionSpec } from '@/utils/accounting/exportSpec'
+import {
+  ACCOUNT_ASSIGNMENTS_TITLE,
+  ACCOUNT_ASSIGNMENT_COLUMNS,
+  assignmentStatus,
+  presentJournalAccountAssignments
+} from '@/utils/accounting/journalAccountAssignmentPresenter'
 import { generalLedgerSheetRows } from './generalLedgerSheet'
+import { spreadsheetUsd } from './spreadsheetNumber'
 
 type Cell = string | number
 type SheetRows = Cell[][]
@@ -30,23 +37,12 @@ interface AccountingSheet {
   rows: SheetRows
 }
 
-/**
- * A displayed figure as a spreadsheet number: `"$1,234.50"` → `1234.5`;
- * `"—"` / `""` → `""` (blank cell). Applies to any formatted amount — USD, a
- * token quantity, a rate — so the cell is sortable and summable in Excel.
- */
-function usd(value: string): number | '' {
-  if (!value || value === '—') return ''
-  const n = Number(value.replace(/[$,]/g, ''))
-  return Number.isNaN(n) ? '' : n
-}
-
 function summarySheet(books: AccountingExportSnapshot): SheetRows {
   const { cards, banner } = presentSummary(books.journal)
   return [
     ['Summary'],
     [],
-    ...cards.map((card) => [card.label, usd(card.value)]),
+    ...cards.map((card) => [card.label, spreadsheetUsd(card.amount)]),
     [],
     ['Books balanced', banner.balanced ? 'Yes' : 'No'],
     ['Accounting identity', banner.identity],
@@ -64,14 +60,14 @@ function incomeSheet(
     [incomeExportTitle(from, to)],
     [],
     ['Revenue'],
-    ...income.revenueLines.map((line) => [line.label, usd(line.value)]),
-    ['Total revenue', usd(income.totalRevenue)],
+    ...income.revenueLines.map((line) => [line.label, spreadsheetUsd(line.amount)]),
+    ['Total revenue', spreadsheetUsd(income.amounts.totalRevenue)],
     [],
     ['Expenses'],
-    ...income.expenseLines.map((line) => [line.label, usd(line.value)]),
-    ['Total expenses', usd(income.totalExpenses)],
+    ...income.expenseLines.map((line) => [line.label, spreadsheetUsd(line.amount)]),
+    ['Total expenses', spreadsheetUsd(income.amounts.totalExpenses)],
     [],
-    ['Net income (profit)', usd(income.netIncome)]
+    ['Net income (profit)', spreadsheetUsd(income.amounts.netIncome)]
   ]
 }
 
@@ -81,22 +77,22 @@ function balanceSheetRows(books: AccountingExportSnapshot, asOf?: Date | null): 
     [balanceExportTitle(asOf)],
     [],
     ['Assets'],
-    ...balance.assetLines.map((line) => [line.label, usd(line.value)]),
-    ['Total assets', usd(balance.totalAssets)],
+    ...balance.assetLines.map((line) => [line.label, spreadsheetUsd(line.amount)]),
+    ['Total assets', spreadsheetUsd(balance.amounts.totalAssets)],
     [],
     ['Liabilities'],
-    ...balance.liabilityLines.map((line) => [line.label, usd(line.value)]),
-    ['Total liabilities', usd(balance.totalLiabilities)],
+    ...balance.liabilityLines.map((line) => [line.label, spreadsheetUsd(line.amount)]),
+    ['Total liabilities', spreadsheetUsd(balance.amounts.totalLiabilities)],
     [],
     ['Equity'],
-    ...balance.equityLines.map((line) => [line.label, usd(line.value)]),
-    ['Total equity', usd(balance.totalEquity)],
+    ...balance.equityLines.map((line) => [line.label, spreadsheetUsd(line.amount)]),
+    ['Total equity', spreadsheetUsd(balance.amounts.totalEquity)],
     [],
     ['Earnings to date calculation'],
-    ...balance.earningsLines.map((line) => [line.label, usd(line.value)]),
-    ['Earnings to date', usd(balance.earningsToDate)],
+    ...balance.earningsLines.map((line) => [line.label, spreadsheetUsd(line.amount)]),
+    ['Earnings to date', spreadsheetUsd(balance.amounts.earningsToDate)],
     [],
-    ['Liabilities + Equity', usd(balance.liabilitiesPlusEquity)]
+    ['Liabilities + Equity', spreadsheetUsd(balance.amounts.liabilitiesPlusEquity)]
   ]
 }
 
@@ -106,8 +102,37 @@ function trialSheet(books: AccountingExportSnapshot, asOf?: Date | null): SheetR
     [trialExportTitle(asOf)],
     [],
     ['Account', 'Nature', 'Debit', 'Credit'],
-    ...trial.rows.map((t) => [t.label, t.nature, usd(t.dr), usd(t.cr)]),
-    ['Total', '', usd(trial.total), usd(trial.total)]
+    ...trial.rows.map((t) => [
+      t.label,
+      t.nature,
+      spreadsheetUsd(t.debitAmount),
+      spreadsheetUsd(t.creditAmount)
+    ]),
+    [
+      'Total',
+      '',
+      spreadsheetUsd(trial.amounts.totalDebit),
+      spreadsheetUsd(trial.amounts.totalCredit)
+    ]
+  ]
+}
+
+function assignmentsSheet(books: AccountingExportSnapshot): SheetRows {
+  const { rows } = presentJournalAccountAssignments(books.journal)
+  return [
+    [ACCOUNT_ASSIGNMENTS_TITLE],
+    [],
+    ACCOUNT_ASSIGNMENT_COLUMNS.map((column) => column.label),
+    ...rows.map((row) => [
+      row.date,
+      row.label,
+      row.txHash ?? '',
+      row.accountLabel ?? row.account,
+      row.currency,
+      row.debitAmount ? spreadsheetUsd(row.debitAmount) : '',
+      row.creditAmount ? spreadsheetUsd(row.creditAmount) : '',
+      assignmentStatus(row)
+    ])
   ]
 }
 
@@ -117,7 +142,8 @@ const SHEET_NAME: Record<SectionKey, string> = {
   income: 'Income Statement',
   balance: 'Balance Sheet',
   trial: 'Trial Balance',
-  ledger: 'General Ledger'
+  ledger: 'General Ledger',
+  assignments: ACCOUNT_ASSIGNMENTS_TITLE
 }
 
 /** Build a single section's sheet from its spec. */
@@ -144,8 +170,10 @@ function sectionSheet(
           currencies: spec.currencies,
           journalAccounts: spec.journalAccounts,
           journalAccountLabel: spec.journalAccountLabel,
-          journalAccountTotal: spec.journalAccountTotal
+          journalAccountAmounts: spec.journalAccountAmounts
         })
+      case 'assignments':
+        return assignmentsSheet(books)
     }
   })()
   return { name: SHEET_NAME[spec.key], rows }

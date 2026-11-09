@@ -1,6 +1,7 @@
 # Client Data Access
 
-**Scope:** Shared client HTTP query and mutation boundaries under `app/src/queries/`, including their central export surface
+**Scope:** Shared client HTTP query and mutation boundaries under `app/src/queries/`, including their central export surface, plus generic
+query-backed contract-owner reads
 
 **Last verified:** 2026-10-01
 
@@ -37,6 +38,15 @@ flowchart LR
   carries that policy as Axios `sentryNotFound`, including when it fails inside a larger mutation. Safe reads use `initially-expected` for
   indexing absence. The shared cache applies [contextual HTTP 404 monitoring](../error-tracking/README.md#handled-http-404-responses) after
   retries, without replacing the original error, cached data or recovery behavior.
+
+### Shared contract owner reads
+
+The [Ownable read](../../../app/src/composables/contracts/reads.ts) delegates RPC/cache state to wagmi's `useReadContract`, using the
+current valid address and chain. Its standard `readContract` key is reachable by the existing V3 address/chain invalidation predicate. The
+card renders query loading, unavailable and error/retry state; a failed refresh retains data with an explicit warning. Team member and Board
+metadata shape the displayed identity reactively rather than being copied into server state. The
+[Contract Owner Resolution owner](../contract-owner-resolution/README.md) defines the five consuming views and representative real-query
+proof. Existing retry/focus/polling policy is inherited; no component request loop, custom owner key or mirror cache is introduced.
 
 ### Contract-based asset markets
 
@@ -88,7 +98,9 @@ Swap selection, daily quote requests and valuation share
 and CoW responses once per report. The [P&L composable](../../../app/src/composables/safe/useSafeSwapPnl.ts) returns the per-swap report
 Accounting books and the [average-cost tracking](../../../app/src/utils/safe/costBasis.ts) the Safe page shows, both from one set of
 sources; it requests the daily quotes either one reads. It keeps settled results only while refreshing the same Safe; changing or clearing
-its address discards them.
+its address discards them. A Gateway balances 404 means no Safe exists at the address, so the composable reports an empty P&L rather than an
+error: a team whose default Safe was never deployed, or was deployed on another network, still gets its Accounting reports. Other balance
+failures remain errors and keep the `Safe swap P&L` source partial.
 
 Executable evidence: [Gateway request tests](../../../app/src/queries/__tests__/safeClient.queries.spec.ts),
 [pagination and metadata unit tests](../../../app/src/queries/__tests__/safe.queries.spec.ts),
@@ -203,9 +215,18 @@ Safe page and skips the queue, so the signer list updates right after a signer c
 change refreshes. Executable evidence: [read queue tests](../../../app/src/queries/__tests__/safe.readQueue.spec.ts) and
 [Safe query tests](../../../app/src/queries/__tests__/safe.queries.spec.ts).
 
+## Current-quote consumer availability
+
+The current-price observers remain the cache/error/retry owners. The currency adapter retains their complete query handles, applies the
+[shared nullable quote policy](../client-utilities/README.md#current-token-quote-and-fiat-availability) and recomputes selected-currency
+values from retained data. The application notice exposes failed/stale reads or a missing selected-currency quote and refetches only those
+observers. Existing valid data survives a failed refresh, with the error visible; no extra HTTP retry loop or shadow cache is introduced.
+Market endpoint routing, backend coordination and observer cadence remain unchanged. The explicit SHER local-price policy does not create a
+market query.
+
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `f15dccbe52468b554ce87b92f5db48411b921bb9`
+**Implementation evidence reviewed against:** `aef9c54644f938b4f8b1de3b80456f6b59a9a1a0`
 
 - [Query barrel](../../../app/src/queries/index.ts), [query factory](../../../app/src/queries/queryFactory.ts), and
   [single-file upload query](../../../app/src/queries/file.queries.ts)

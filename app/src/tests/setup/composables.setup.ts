@@ -3,7 +3,6 @@ import { defineComponent, ref } from 'vue'
 import { queryMocks, resetNotificationsMock } from '@/tests/mocks/query.mock'
 import {
   mockUseBackendWake,
-  mockUseAuth,
   mockUseContractBalance,
   mockUseSafeSendTransaction,
   mockUseClipboard,
@@ -244,13 +243,6 @@ vi.mock('@/queries/action.queries', () => ({
 }))
 
 /**
- * Mock Auth Queries (auth.queries.ts)
- */
-vi.mock('@/queries/auth.queries', () => ({
-  useGetValidateTokenQuery: vi.fn(queryMocks.useGetValidateTokenQuery)
-}))
-
-/**
  * Mock Contract Queries (contract.queries.ts)
  * Mirrors the real `contractKeys` factory so composables that invalidate
  * queries via `contractKeys.all` keep working under mock. Kept duplicated
@@ -341,13 +333,6 @@ vi.mock('@/queries/safe.mutations', () => ({
  */
 vi.mock('@/composables/useBackendWake', () => ({
   useBackendWake: mockUseBackendWake
-}))
-
-/**
- * Mock useAuth composable
- */
-vi.mock('@/composables/useAuth', () => ({
-  useAuth: vi.fn(() => mockUseAuth)
 }))
 
 /**

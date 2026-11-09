@@ -62,13 +62,29 @@ sequenceDiagram
 - Attachment cleanup accepts legacy entries with only a non-empty object key and continues when an individual delete fails.
 - Download URLs are time-limited and are generated from stored object keys.
 
+## Client attachment URL renewal
+
+Persisted claim previews retain the stored key through editing and modal selection. Both attachment galleries resolve keyed files through
+`getPresignedUrl` at list load, opening and downloading, including when an incoming preview already has a URL. That helper alone owns the
+existing 50-minute reuse policy. Gallery results are rendering state, not another validity cache. Local files without keys use their local
+URLs without a signing request.
+
+After expiry, opening or downloading renews the URL without requiring a prop change or remount. A failed renewal shows retryable feedback
+and never falls back to an old signed URL. Removal, list replacement, closing and unmounting prevent obsolete asynchronous results from
+restoring a selection or older display list. Selection follows the file key rather than a changing URL.
+
+Downloads reserve a blank window synchronously during the click, detach its opener, then navigate through a link with `noopener noreferrer`
+after resolution. Failure or removal closes the reserved window; blocked popups produce actionable feedback. Thumbnail URLs are resolved on
+load/list changes; continuous background renewal is not promised. Storage authorization, upload/deletion and URL-expiry policy are
+unchanged.
+
 ## Known Gaps
 
 - Attachment deletion is best-effort. A failed delete is logged, but there is no persisted retry queue or failure status for callers.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `df0531a4fa761fb1803004371c5bdcb14570b984`
+**Implementation evidence reviewed against:** `6a1619cd9446cad807bd019e34877639af6a6e72`
 
 - [Upload route](../../../backend/src/routes/uploadRoute.ts) and [upload controller](../../../backend/src/controllers/uploadController.ts)
 - [Upload middleware](../../../backend/src/utils/upload.ts) and [middleware tests](../../../backend/src/utils/__tests__/upload.test.ts)
@@ -84,6 +100,11 @@ sequenceDiagram
   [client upload validation tests](../../../app/src/types/__tests__/upload.spec.ts)
 - [Expandable attachment-gallery tests](../../../app/src/components/sections/CashRemunerationView/Form/__tests__/ExpandableFileGallery.spec.ts)
   and [file-preview gallery tests](../../../app/src/components/sections/CashRemunerationView/Form/__tests__/FilePreviewGallery.spec.ts)
+- [Gallery state and URL actions](../../../app/src/composables/useFilePreviewGallery.ts),
+  [standard gallery](../../../app/src/components/sections/CashRemunerationView/Form/FilePreviewGallery.vue),
+  [expandable gallery](../../../app/src/components/sections/CashRemunerationView/Form/ExpandableFileGallery.vue), and
+  [actual gallery/URL lifecycle tests](../../../app/src/components/sections/CashRemunerationView/Form/__tests__/FilePreviewGallery.lifecycle.spec.ts)
+- [Claim preview producer](../../../app/src/utils/claims/form.ts) and [producer tests](../../../app/src/utils/claims/__tests__/form.spec.ts)
 - [Presigned file URL composable](../../../app/src/composables/useFileUrl.ts),
   [file URL tests](../../../app/src/composables/__tests__/useFileUrl.spec.ts), and
   [profile-image URL utility tests](../../../backend/src/utils/__tests__/profileImage.util.test.ts)

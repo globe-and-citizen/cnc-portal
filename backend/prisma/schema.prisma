@@ -68,6 +68,7 @@ model MemberTeamsData {
   member        User     @relation(fields: [memberAddress], references: [address], onDelete: Cascade)
   team          Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
   isHidden      Boolean  @default(false)
+  isFavorite    Boolean  @default(false)
   memberAddress String
   teamId        Int
   createdAt     DateTime @default(now())

@@ -7,7 +7,7 @@
 //   node contract/scripts/distribute-versions.mjs
 //
 // - app:                       <V>/generated.ts (typed ABI module) + deployed addresses
-// - dashboard + ponder:        <V>/json/*.json (flat ABIs) + deployed addresses
+// - dashboard:                 <V>/json/*.json (flat ABIs) + deployed addresses
 // - backend:                   <V>/<hand-maintained-name>.json (its 6 named raw-ABI files)
 // The legacy lowercase `v1` snapshot is migrated to `V1` out-of-band via `git rm`
 // (a case-insensitive FS makes an in-script rm of v1 unsafe once V1 exists).
@@ -30,8 +30,7 @@ const JSON_CONSUMERS = [
   {
     abiBase: 'dashboard/app/artifacts/abi',
     addrBase: 'dashboard/app/artifacts/deployed_addresses'
-  },
-  { abiBase: 'ponder/abis', addrBase: 'ponder/artifacts/deployed_addresses' }
+  }
 ]
 
 // Backend keeps 6 hand-named raw-ABI files → the contract each maps to.
@@ -81,8 +80,8 @@ for (const v of folders) {
   // address, and the registry only stores the module *reference*.
   copy(srcAddr, join(REPO, BACKEND, 'deployed_addresses', v, 'chain-137.json'))
   console.log(
-    `  ${v}: generated.ts -> app, ${abiFiles.length} JSON ABIs -> dashboard/ponder, ${n} -> backend`
+    `  ${v}: generated.ts -> app, ${abiFiles.length} JSON ABIs -> dashboard, ${n} -> backend`
   )
 }
 
-console.log(`distributed ${folders.join(', ')} to app, dashboard, ponder, backend`)
+console.log(`distributed ${folders.join(', ')} to app, dashboard, backend`)

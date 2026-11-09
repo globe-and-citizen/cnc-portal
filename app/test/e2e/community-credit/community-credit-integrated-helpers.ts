@@ -1,3 +1,4 @@
+import { formatTxHash } from '../../../src/utils/format/address'
 import { parseAbiItem, type Address, type Hex } from 'viem'
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
@@ -59,7 +60,7 @@ export async function successfulReceipt(hash: Hex, from: Address, to: Address): 
 }
 
 export async function expectCreditHistoryEntry(page: Page, hash: Hex): Promise<void> {
-  const abbreviated = `${hash.slice(0, 6)}…${hash.slice(-4)}`
+  const abbreviated = formatTxHash(hash)
   const row = page.locator('[data-test="credit-transactions"] tbody tr').filter({
     hasText: abbreviated
   })

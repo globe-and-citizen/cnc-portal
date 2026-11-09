@@ -41,6 +41,24 @@ export const LEDGER_COLUMNS: ReadonlyArray<LedgerColumn> = [
 ]
 
 /**
+ * Default on-screen width (px) of each ledger column. The PDF splits the page in
+ * the same proportions, so the printed ledger keeps the screen's compaction.
+ */
+export const LEDGER_COLUMN_WIDTHS: Readonly<Record<LedgerColumnKey, number>> = {
+  date: 160,
+  action: 120,
+  transaction: 180,
+  txHash: 180,
+  activity: 320,
+  account: 200,
+  currency: 100,
+  quantity: 120,
+  rate: 100,
+  dr: 120,
+  cr: 120
+}
+
+/**
  * The visible ledger columns for an export, in canonical order — an empty or
  * absent selection means "all columns". Shared by the PDF and Excel exporters so
  * both honour the same order regardless of the order columns were toggled.
@@ -51,21 +69,32 @@ export function resolveLedgerColumns(columns?: readonly LedgerColumnKey[]): Ledg
 }
 
 /**
+ * The Debit and Credit figures of a "Total movements" row: one account's own
+ * debits and credits in a drill-down, the balanced grand total in both columns
+ * for the whole ledger.
+ */
+export interface LedgerMovements<Amount = string> {
+  debit: Amount
+  credit: Amount
+}
+
+/**
  * The trailing "Total movements" row for an exported ledger, mirroring the
- * on-screen footer: the grand total in the Debit and Credit columns — as the
- * caller's already-rendered `amount` (a `$`-string for the PDF, a number for
+ * on-screen footer: the movements in the Debit and Credit columns — as the
+ * caller's already-rendered amounts (`$`-strings for the PDF, numbers for
  * Excel) — with the label in the Transaction column, or the first non-amount
  * column when Transaction is hidden.
  */
 export function ledgerTotalRow(
   columns: readonly LedgerColumn[],
-  amount: string | number
+  movements: LedgerMovements<string | number>
 ): (string | number)[] {
   const labelKey = columns.some((column) => column.value === 'transaction')
     ? 'transaction'
     : columns.find((column) => column.value !== 'dr' && column.value !== 'cr')?.value
   return columns.map((column) => {
-    if (column.value === 'dr' || column.value === 'cr') return amount
+    if (column.value === 'dr') return movements.debit
+    if (column.value === 'cr') return movements.credit
     if (column.value === labelKey) return 'Total movements'
     return ''
   })

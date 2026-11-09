@@ -108,7 +108,7 @@ Runs of at least three consecutive missing criteria use inclusive ranges with fu
 | ----------- | ------------- | --------------- | --------------------------------------------------------------------------------- |
 | US-BANK-001 | ✅ Integrated | ⚠️ 9/10         | `AC-US-BANK-001-03`                                                               |
 | US-BANK-002 | ✅ Integrated | ⚠️ 11/13        | `AC-US-BANK-002-01`, `AC-US-BANK-002-02`                                          |
-| US-BANK-003 | ✅ Integrated | ⚠️ 7/9 met      | `AC-US-BANK-003-08`, `AC-US-BANK-003-09`                                          |
+| US-BANK-003 | ✅ Integrated | ⚠️ 8/10 met     | `AC-US-BANK-003-08`, `AC-US-BANK-003-09`                                          |
 | US-BANK-004 | 🚧 Partial    | ⚠️ 6/8          | `AC-US-BANK-004-01`, `AC-US-BANK-004-02`                                          |
 | US-EXP-001  | ✅ Integrated | ⚠️ 13/15        | `AC-US-EXP-001-01`, `AC-US-EXP-001-02`                                            |
 | US-EXP-002  | 🚧 Partial    | ⚠️ 12/16        | `AC-US-EXP-002-01`, `AC-US-EXP-002-02`, `AC-US-EXP-002-07`, `AC-US-EXP-002-09`    |
@@ -300,13 +300,15 @@ remain as recorded above.
 - [x] `AC-US-BANK-003-04` Every company member can inspect Bank balances and history regardless of transfer permission.
 - [x] `AC-US-BANK-003-05` Grouped events from one transaction remain attributable to the same transaction hash.
 - [x] `AC-US-BANK-003-06` Bank history surfaces money that arrives at or leaves the Bank by a direct token transfer, even when the Bank
-      emitted no event of its own — for example, the funds swept in when a Community Credit round is funded. A movement a Bank event already
-      records is not shown a second time.
+      emitted no event of its own — for example, the funds swept in when a Community Credit round is funded, or a stablecoin sent straight
+      to a first-generation Bank. A movement a Bank event already records is not shown a second time.
 
 #### Edge & Error Cases
 
 - [x] `AC-US-BANK-003-07` A history filter with no matching events returns an empty result.
 - [x] `AC-US-BANK-003-08` A failed history read is distinguishable from a successfully loaded empty history.
+- [x] `AC-US-BANK-003-10` An unavailable current token quote is distinguishable from a real zero: token quantities remain visible, affected
+      fiat values and totals stay unavailable, and a failed quote read offers retry.
 
 ### Test Coverage
 
@@ -320,6 +322,7 @@ remain as recorded above.
 | `AC-US-BANK-003-06`  | `PS-FRONTEND`              | Mocked browser + Frontend | ✅ Met          |
 | `AC-US-BANK-003-07`  | `PS-BROWSER`               | Mocked browser            | ✅ Met          |
 | `AC-US-BANK-003-08`  | `PS-BROWSER`               | Frontend                  | ⚠️ Insufficient |
+| `AC-US-BANK-003-10`  | `PS-FRONTEND`              | Frontend                  | ✅ Met          |
 | `AC-US-BANK-003-09`  | `PS-BACKEND`               | None linked               | ❌ Missing      |
 | `AC-US-BANK-003-09`  | `PS-FULL-STACK-INTEGRATED` | None linked               | ❌ Missing      |
 
@@ -861,7 +864,8 @@ remain as recorded above.
       the default; with none left, Safe setup starts over.
 - [x] `AC-US-SAFE-001-18` The owner is warned before switching away from, disabling, or enabling a Safe over a default Safe that still holds
       tokens.
-- [x] `AC-US-SAFE-001-19` When the deposit router still targets another Safe than the deployed default one, a warning offers to redirect it.
+- [x] `AC-US-SAFE-001-19` The Safe page offers no deposit router action, even when the router targets another Safe; pointing it at the
+      default Safe stays on the SHER Token page.
 - [x] `AC-US-SAFE-001-20` Accounting books each Safe in its own numbered `Cash — Safe` account, a move between two company Safes once as
       internal, and a router deposit in the Safe that received it.
 - [x] `AC-US-SAFE-001-21` The owner can enable a disabled Safe again. It becomes the default again only if no Safe was made default after
@@ -1328,9 +1332,43 @@ account actions, including historical Expense approvals and Safe operations. The
 wallet network; account-specific authorization and signature-domain checks remain separate. Shared submission boundaries retain the
 configured target for operations already being prepared.
 
+## Board request failure feedback
+
+Board-mediated Bank transfers and Expense Account treasury returns keep their forms open when preparation, submission or registration fails,
+and expose the failure inline. Their loading state spans preparation and required registration. The
+[shared Board failure contract](../contract-management/README.md#board-action-failure-and-recovery) distinguishes an already-confirmed
+action with a missing backend record from a failed submission; notification failures do not undo success.
+
+## Current fiat estimates and unavailable quotes
+
+Balances and histories retain exact token quantities when a current quote is missing. The affected fiat values and complete totals display
+the canonical unavailable marker instead of a fabricated zero or priced subset. A true zero quote remains zero; zero holdings contribute
+zero without requiring a price. Transfer and Expense token choices use the selected-currency quote even when USD remains available. Deposit
+and transfer amount inputs apply the same nullable estimate contract, including Safe provider quotes.
+[Shared quote recovery](../../implementation/client-utilities/README.md#current-token-quote-and-fiat-availability) exposes failed or stale
+reads with a targeted Try again action and preserves usable cached quotes.
+
+Current and historical-generation withdrawal actions determine available funds from raw token balances. Unknown or zero fiat estimates do
+not remove a funded account from the withdrawal plan; review estimates may remain unavailable while permissions and exact chain amounts
+retain their existing rules. The existing SHER zero-price policy is preserved. Safe portfolio totals and Accounting rates/postings remain
+independently owned; an invalid Safe total is unavailable to the combined company estimate rather than a zero contribution.
+
+Frontend proofs cover the store/query lifecycle, amount-input estimates, balance/history presentation, partial aggregate rejection and
+raw-balance withdrawal eligibility. They do not establish a live market-provider result, a new integrated chain journey or human acceptance.
+
+## Expense spending row boundary
+
+Expense spending requires the approval's signature, full budget and UI status. Optional balance reads and legacy signing metadata retain
+their existing unavailable/verification behavior. After the existing source-contract, network and owner checks, the action forwards the
+verified signature unchanged to native/ERC-20 transfer. A malformed hexadecimal signature is rejected before submission; budget hashing,
+token precision, spendable limits and authorization rules are unchanged.
+
+The frontend helper and action use the [domain row contract](../../implementation/client-utilities/README.md#domain-row-contracts), not a
+generic table dictionary. This is a compile-time boundary; it does not claim validation of arbitrary API JSON or new business acceptance.
+
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `f15dccbe52468b554ce87b92f5db48411b921bb9`
+**Implementation evidence reviewed against:** `8c7c2e2adf8516c8bb269320301c296ea2ce99c3`
 
 - [Bank deposit modal](../../../app/src/components/sections/BankView/forms/DepositModal.vue),
   [Bank transfer modal](../../../app/src/components/sections/BankView/forms/TransferModal.vue),
@@ -1400,7 +1438,7 @@ configured target for operations already being prepared.
   [Expense support-set read](../../../app/src/composables/expenseAccount/reads.ts),
   [Expense approval writes](../../../app/src/composables/expenseAccount/writes.ts),
   [source-owner check](../../../app/src/composables/expenseAccount/approvalOwner.ts),
-  [older-generation retirement warning](../../../app/src/components/sections/ContractManagementView/LegacyApprovalWarning.vue),
+  [older-generation retirement warning](../../../app/src/components/sections/ContractManagementView/LegacyExpenseApprovalWarning.vue),
   [approval token policy](../../../app/src/utils/expenses/tokenPolicy.ts),
   [approval token amounts and balances](../../../app/src/utils/expenses/model.ts),
   [Expense API controller](../../../backend/src/controllers/expenseController.ts), and
@@ -1414,6 +1452,11 @@ configured target for operations already being prepared.
 
 ### Test-suite ownership
 
+- [Real quote/store/presentation/recovery tests](../../../app/src/stores/__tests__/currencyStore.lifecycle.spec.ts),
+  [nullable balance tests](../../../app/src/lib/balances/__tests__/tokenBalances.spec.ts),
+  [Bank balance display tests](../../../app/src/components/sections/BankView/__tests__/BankBalanceSection.spec.ts), and
+  [price-independent legacy withdrawal tests](../../../app/src/components/sections/ContractManagementView/__tests__/LegacyGenerationWithdrawAction.spec.ts)
+
 - [Bank write tests](../../../app/src/composables/bank/__tests__/bankWrites.spec.ts),
   [cash-out orchestration tests](../../../app/src/composables/cashOut/__tests__/useCashOutAll.spec.ts), and
   [cash-out planning tests](../../../app/src/composables/cashOut/__tests__/plan.spec.ts)
@@ -1422,6 +1465,11 @@ configured target for operations already being prepared.
   [owner-withdrawal tests](../../../app/src/components/sections/__tests__/OwnerTreasuryWithdrawAction.spec.ts),
   [Safe account view tests](../../../app/src/views/team/%5Bid%5D/Accounts/__tests__/), and
   [Bank view tests](../../../app/src/views/team/%5Bid%5D/__tests__/BankView.spec.ts)
+- [ERC20 producer tests](../../../app/src/composables/erc20/__tests__/writes.spec.ts) execute the real approve/transfer wrappers and V3
+  mutation against shared mocked wagmi effects; they verify token/method/arguments, reactive address resolution, confirmed results and
+  propagated failures. This is unit evidence, not a live token transaction.
+- The Bank view suite above verifies that reactive balance changes reach the holdings section as updated quantities/valuations or empty rows
+  and that loading state changes propagate. It does not claim balance-query acquisition or rendered formatting of the child table.
 - [Safe schema tests](../../../app/src/types/__tests__/safe.schemas.spec.ts)
 - [Expense calendar-period tests](../../../contract/test/ExpenseAccountEIP712V2.calendarBasedPeriods.spec.ts),
   [Expense custom-frequency tests](../../../contract/test/ExpenseAccountEIP712V2.customFrequency.spec.ts), and
@@ -1524,9 +1572,10 @@ and reactive cursor, timezone, trust and imitation filters. The query preserves 
 
 The swap P&L in the Wallet overview reads the Safe transfer history, the Gateway USD balances, daily CoinGecko quotes through the backend,
 and the CoW Protocol orders of each swap transaction. A CoW lookup that fails or returns no order leaves the fee unreported and never hides
-the other figures. The composable filters the original transfer and balance rows without replacing their response types or objects;
-timestamps, metadata and raw amount strings remain available. Refunds are netted in base units during valuation. A settled report is
-retained only while refreshing the same Safe; switching or clearing the Safe hides the previous report immediately. Implementation:
+the other figures. A Gateway balances 404 means no Safe exists at the address: the report is empty rather than failed. The composable
+filters the original transfer and balance rows without replacing their response types or objects; timestamps, metadata and raw amount
+strings remain available. Refunds are netted in base units during valuation. A settled report is retained only while refreshing the same
+Safe; switching or clearing the Safe hides the previous report immediately. Implementation:
 [shared transfer grouping and netting](../../../app/src/utils/safe/swapTransfers.ts),
 [swap P&L calculation](../../../app/src/utils/safe/swapPnl.ts), [swap valuation and CoW fees](../../../app/src/utils/safe/swapValuation.ts),
 [swap P&L composable](../../../app/src/composables/safe/useSafeSwapPnl.ts), [CoW order query](../../../app/src/queries/cow.queries.ts),

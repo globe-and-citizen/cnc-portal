@@ -44,6 +44,8 @@ export interface Team {
   slug: string
   description: string
   isHidden: boolean
+  /** The signed-in member's own pin; other members never see it. */
+  isFavorite: boolean
   isArchived: boolean
   members: Member[]
   ownerAddress: Address

@@ -253,7 +253,7 @@ describe('ExpenseTransactions', () => {
 
     expect(unknownRow).toBeDefined()
     expect(getRowField(unknownRow!, '[data-test="row-amount"]')).toBe('0')
-    expect(getRowField(unknownRow!, '[data-test="row-amount-local"]')).toBe('0')
+    expect(getRowField(unknownRow!, '[data-test="row-amount-local"]')).toBe('')
     expect(getRowField(unknownRow!, '[data-test="row-token"]')).toBe('ERC20')
   })
 

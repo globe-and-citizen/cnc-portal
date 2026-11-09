@@ -105,7 +105,7 @@ const {
 function openDrilldown(line: StatementLineView): void {
   // Earnings to date is the only aggregate: it opens every contributing income
   // and expense account. Every table account otherwise keeps its concrete id.
-  if (line.accounts?.length) openFor(line.accounts, line.value, 'Earnings to date')
+  if (line.accounts?.length) openFor(line.accounts, line.value, 'Earnings to date', line.amount)
   else if (line.account) openFor(line.account, line.value, line.label)
 }
 

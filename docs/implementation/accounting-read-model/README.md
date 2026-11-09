@@ -4,7 +4,7 @@
 journal, including the persisted counter-account assignments it consumes. Accounting report projections consume that journal on demand. This
 model does not create or persist manual journal entries.
 
-**Last verified:** 2026-10-07
+**Last verified:** 2026-11-08
 
 ## Target Product Contract
 
@@ -15,8 +15,9 @@ histories and books; owner classification of eligible receipts; and reconciliati
 retain a distinct deployment account and explicit spendability restrictions. Shared infrastructure is not automatically company custody. The
 policy inventory records the inspected receivers and missing consumers.
 
-These requirements are not implemented by the client-side runtime described below. In particular, `rawContractTokenTransfers` reaches Bank
-history but is not consumed by `toJournalEntrySources`; Payroll and Expense eventless wallet receipts are missing; their deposit mappers
+These requirements are not implemented by the client-side runtime described below. In particular, `toJournalEntrySources` consumes
+`rawContractTokenTransfers` only for an incoming Bank transfer from outside the company that no Bank event accounts for, booked as
+`UC-BANK-02`; eventless Bank outflows are not booked; Payroll and Expense eventless wallet receipts are missing; their deposit mappers
 assume internal funding; and Investor, Router, Campaign, Vesting, and governance holdings lack complete direct-movement discovery. Resolving
 an unknown source to an unresolved Bank account does not establish an internal transfer.
 
@@ -183,11 +184,12 @@ books that figure, and a `Safe Market Value Adjustment` line in the same operati
 `Cash — Safe` and its carrying basis keep the price paid while `Swap P&L` totals the overview figure. A swap the overview does not value,
 such as a previous Safe's, keeps only its realized result. The composable waits for fee lookups and keeps its last settled value while
 sources reload or a refresh fails for the same Safe. Changing or clearing the Safe discards that settled report; reports wait for its first
-answer, and a read failure or an unpriced asset makes Accounting partial. A prior non-exchange payment depleted at a different
-transaction-price valuation invalidates later automatic swap basis; other payment rules remain unchanged. Reports wait for the order lookups
-to settle, so no report or export is shown without a fee that is still loading; a missing or failed lookup never makes Accounting partial,
-and the fee then stays inside the acquired asset's price. Network/DEX fees are not inferred. Cross-transaction swap intents and arbitrary
-DeFi operations require additional protocol evidence and remain a boundary of automatic classification.
+answer, and a read failure or an unpriced asset makes Accounting partial. A Gateway balances 404 is not a read failure: no Safe exists at
+the address, so the report is empty and the reports are not withheld. A prior non-exchange payment depleted at a different transaction-price
+valuation invalidates later automatic swap basis; other payment rules remain unchanged. Reports wait for the order lookups to settle, so no
+report or export is shown without a fee that is still loading; a missing or failed lookup never makes Accounting partial, and the fee then
+stays inside the acquired asset's price. Network/DEX fees are not inferred. Cross-transaction swap intents and arbitrary DeFi operations
+require additional protocol evidence and remain a boundary of automatic classification.
 
 The read-only Safe holdings use the Safe Client Gateway balance response for current wallet valuation. A nonzero supported holding with a
 missing, nonpositive, or nonfinite USD price keeps the total incomplete, just as unavailable discovered valuations do. A confirmed zero
@@ -249,7 +251,8 @@ The mapper barrel publishes only the journal-draft orchestrator and its grouped 
 domain module directly. Context construction, credit timelines, expense periods, and the shared internal-transfer posting are support
 modules rather than source mappers. Account assignments apply only after journal construction, so source mappers remain responsible for
 evidence inference rather than owner decisions. SHER realization settlement runs after rate stamping and therefore lives at the Accounting
-assembly level, outside the mapper directory.
+assembly level, outside the mapper directory. So does the pass just before it, which re-books the part of a direct SHER mint that pays no
+owed wage against `Deferred SHER Compensation`.
 
 ## Treasury Boundary and Transfer Classification
 
@@ -600,7 +603,8 @@ it to an earlier or later deployment based on activity order.
   Interest Expense, and Dividend Expense.
 - A SafeDepositRouter operation that issues SHER owns the `Cash — Safe` and `Investor Equity` lines. Its Safe token transfer has the same
   transaction hash and is duplicate source evidence, so it cannot add `Service Revenue` or a second cash debit.
-- Trial Balance grouping uses `AccountId`, not a display label or a contract-generation order.
+- Trial Balance grouping uses `AccountId`, not a display label or a contract-generation order. Each row sits on the side its debits and
+  credits net to, a settled account shows no amount, and each total adds its own column.
 - Balance Sheet account lines reuse the Trial Balance grouping by `AccountId`. The account's family supplies its account class and normal
   balance; a later deployment or unresolved account never merges into another deployment before the report line and drill-down are selected.
   Selecting the account label, Details indicator, or row opens the matching line by its stable account ID, including when the table wraps
@@ -644,6 +648,8 @@ flowchart TB
     journal --> balance[Balance Sheet]
     journal --> drilldowns[Account and statement drill-downs]
     summary --> summaryExports[Summary exports]
+    journal --> assignments[Account Assignments]
+    assignments --> summaryExports
     income --> incomeExports[Income Statement PDF and Excel exports]
     balance --> balanceExports[Balance Sheet PDF and Excel exports]
     drilldowns --> drilldownExports[Drill-down PDF and Excel exports]
@@ -661,26 +667,29 @@ text. Every transaction-backed journal group uses its transaction hash as its id
 traceability evidence. A fee is an ordinary `Transaction Fee Expense` line in its source operation; there is no `Fee` pseudo-category or
 separate fee entry in this projection. Ledger action and transaction labels are derived from the entry's assigned or inferred accounts and
 source use-case evidence; no persisted presentation category participates. The General Ledger renders the transaction hash once on the
-entry's first line and preserves its full value in PDF and spreadsheet exports; synthetic operations have no transaction-hash value. A
-transaction-backed hash links to the configured network block explorer in a separate tab. Activity narration and exported activity text
-reuse the canonical address and duration formatters rather than maintaining Accounting-specific display rules. Quantity cells use a separate
-six-decimal display label while their complete decimal-string quantity remains available for inspection and export. Positive quantities that
-would round to zero display `<0.000001`. Rate cells retain the recorded six-decimal rate with trailing zeros trimmed; their details identify
-the recorded USD price per token rather than claiming precision beyond the journal's rate scale. Both cells expose details through a hover
-tooltip, keyboard focus, or a tap-generated click, with Escape and focus loss dismissing the detail. Unavailable and absent movements remain
-plain text. No formatted label participates in valuation, debit/credit sums, or running balances. Every visible General Ledger column,
-including the account drill-down Balance column, has bounded widths and supports pointer, touch, and keyboard resizing; a double-click
-restores its default width. JournalEntry assembly groups source postings and withholds a `FeePaid` source without matching Bank-outflow
-evidence, returning it as a reconciliation gap. Bank fees are collected from each supported generation: V0/V0.1 local events infer an ERC-20
-currency only from the next movement in the same transaction and Bank, while V1/V2 query their version-specific FeeCollectors by payer.
-Those protocol FeeCollectors are not part of the company's internal-pocket registry. Account and statement drill-downs select complete
-JournalEntry records by a concrete Account or account family, then flatten their validated lines for display and exports. Their running
-balances update only on lines posted to the selected account; an aggregate statement line has no single running balance. A fee remains an
-ordinary line of the source operation in every drill-down.
+entry's first line; the spreadsheet export keeps its full value and the PDF prints the shortened form shown on screen. Synthetic operations
+have no transaction-hash value. A transaction-backed hash links to the configured network block explorer in a separate tab. Activity
+narration and exported activity text reuse the canonical address and duration formatters rather than maintaining Accounting-specific display
+rules. Quantity cells use a separate six-decimal display label, also printed in the PDF and exported to Excel, while their complete
+decimal-string quantity remains available for inspection. The PDF splits the page width in the default on-screen column proportions.
+Positive quantities that would round to zero display `<0.000001`. Rate cells retain the recorded six-decimal rate with trailing zeros
+trimmed; their details identify the recorded USD price per token rather than claiming precision beyond the journal's rate scale. Both cells
+expose details through a hover tooltip, keyboard focus, or a tap-generated click, with Escape and focus loss dismissing the detail.
+Unavailable and absent movements remain plain text. No formatted label participates in valuation, debit/credit sums, or running balances.
+Every visible General Ledger column, including the account drill-down Balance column, has bounded widths and supports pointer, touch, and
+keyboard resizing; a double-click restores its default width. JournalEntry assembly groups source postings and withholds a `FeePaid` source
+without matching Bank-outflow evidence, returning it as a reconciliation gap. Bank fees are collected from each supported generation:
+V0/V0.1 local events infer an ERC-20 currency only from the next movement in the same transaction and Bank, while V1/V2 query their
+version-specific FeeCollectors by payer. Those protocol FeeCollectors are not part of the company's internal-pocket registry. Account and
+statement drill-downs select complete JournalEntry records by a concrete Account or account family, then flatten their validated lines for
+display and exports. Their running balances update only on lines posted to the selected account; an aggregate statement line has no single
+running balance. Their "Total movements" row, on screen and in exports, sums the selected account's own debits and credits in the window; an
+aggregate line repeats its statement figure in both columns. A fee remains an ordinary line of the source operation in every drill-down.
 
 All report identities, totals, and drill-down running balances above use the exact fixed-scale journal integers. Presenters and exporters
 convert those values to numbers and apply human-readable rounding only after the selected snapshot and its aggregates have been calculated;
-running balances never parse the already-formatted debit or credit strings.
+running balances and spreadsheet numeric cells never parse already-formatted amount strings. Drill-down exports carry their exact numeric
+footer amounts alongside the display text. Excel emits `Unavailable` when a value exceeds its supported 15-digit scaled precision.
 
 ## Account Assignment Boundary
 
@@ -739,7 +748,7 @@ because deposits and company-pocket transfers are not manual assignment targets.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `f15dccbe52468b554ce87b92f5db48411b921bb9`
+**Implementation evidence reviewed against:** `da5006d10d8134a1c1b98532b00454929e190b9f`
 
 - [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts),
   [source-status projection](../../../app/src/composables/accounting/useAccountingStatus.ts),
@@ -771,6 +780,8 @@ because deposits and company-pocket transfers are not manual assignment targets.
   [Bank mapper](../../../app/src/utils/accounting/mappers/bank.ts), [Payroll mapper](../../../app/src/utils/accounting/mappers/payroll.ts),
   [Expense mapper](../../../app/src/utils/accounting/mappers/expenseAccount.ts),
   [SHER realization settlement](../../../app/src/utils/accounting/sherIssuance.ts),
+  [unbacked SHER issuance](../../../app/src/utils/accounting/unbackedIssuance.ts),
+  [internal-movement mirrors](../../../app/src/utils/accounting/internalMirrors.ts),
   [Safe transfer adapter](../../../app/src/utils/accounting/safeTransfers.ts),
   [SafeDepositRouter mapper](../../../app/src/utils/accounting/mappers/safeDepositRouter.ts), and
   [journal-draft model](../../../app/src/utils/accounting/journalEntryDraft.ts)

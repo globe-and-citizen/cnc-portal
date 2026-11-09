@@ -66,7 +66,7 @@ interface AccrualState {
 }
 
 /** Raw SHER base-unit quantity of an entry, tolerating malformed input. */
-function sherRawAmount(entry: JournalEntryDraft): bigint {
+export function sherRawAmount(entry: JournalEntryDraft): bigint {
   try {
     const amount = BigInt(entry.rawAmount)
     return amount > 0n ? amount : 0n

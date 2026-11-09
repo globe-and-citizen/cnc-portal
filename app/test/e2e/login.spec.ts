@@ -58,3 +58,46 @@ test.describe('US-AUTH-001: Sign in to the Client', { tag: ['@browser', '@parall
     }
   )
 })
+
+test.describe(
+  'Restoring a portal session',
+  { tag: ['@browser', '@mocked', '@parallel-safe'] },
+  () => {
+    test('[AC-US-AUTH-001-08] keeps the workspace hidden until the server verifies the saved token', async ({
+      page
+    }) => {
+      await page.route(/\/\/[^/]+(?::\d+)?\/api\//, (route) => route.fulfill(json({})))
+      await page.addInitScript(
+        ({ address }) => {
+          localStorage.setItem('authToken', 'expired-test-token')
+          localStorage.setItem('ownerAddress', address)
+          localStorage.setItem('isAuth', 'true')
+        },
+        { address: TEST_ADDRESS }
+      )
+
+      const releaseVerification = Promise.withResolvers<void>()
+      await page.route('**/api/auth/token', async (route) => {
+        await releaseVerification.promise
+        await route.fulfill({ status: 401, json: { message: 'Unauthorized' } })
+      })
+
+      const verification = page.waitForRequest('**/api/auth/token')
+      await page.goto('/teams/123/vesting')
+      expect((await verification).headers().authorization).toBe('Bearer expired-test-token')
+
+      const workspace = page.locator('[data-test="profile"], [data-test="user-name"]')
+      try {
+        await expect(workspace).toHaveCount(0)
+        await expect(page.getByTestId('sign-in')).toHaveCount(0)
+      } finally {
+        releaseVerification.resolve()
+      }
+
+      await expect(page).toHaveURL(/\/login$/)
+      await expect(page.getByTestId('sign-in')).toBeVisible()
+      await expect(workspace).toHaveCount(0)
+      expect(await page.evaluate(() => localStorage.getItem('authToken'))).toBeNull()
+    })
+  }
+)

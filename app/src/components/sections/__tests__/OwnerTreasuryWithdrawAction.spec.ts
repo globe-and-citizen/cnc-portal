@@ -165,17 +165,17 @@ describe('OwnerTreasuryWithdrawAction', () => {
   it('[AC-US-EXP-006-03] routes ExpenseAccountEIP712 withdrawals through BOD action creation', async () => {
     mockBodIsBodAction.isBodAction.value = true
     mockUserStore.address = NON_OWNER_ADDRESS
-    mockBodAddAction.executeAddAction.mockResolvedValue(undefined)
 
     await submit('ExpenseAccountEIP712')
 
-    expect(mockBodAddAction.executeAddAction).toHaveBeenCalledWith(
+    expect(mockBodAddAction.mutate).toHaveBeenCalledWith(
       expect.objectContaining({
         targetAddress: EXPENSE_ADDRESS,
         userAddress: NON_OWNER_ADDRESS,
         description: expect.stringContaining('Owner Treasury Withdraw All to Bank'),
         data: expect.any(String)
-      })
+      }),
+      expect.objectContaining({ onError: expect.any(Function) })
     )
     expect(mockExpenseAccountWrites.ownerWithdrawAllToBank.mutateAsync).not.toHaveBeenCalled()
   })
@@ -183,17 +183,17 @@ describe('OwnerTreasuryWithdrawAction', () => {
   it('[AC-US-PAYROLL-014-03] routes CashRemunerationEIP712 withdrawals through BOD action creation', async () => {
     mockBodIsBodAction.isBodAction.value = true
     mockUserStore.address = NON_OWNER_ADDRESS
-    mockBodAddAction.executeAddAction.mockResolvedValue(undefined)
 
     await submit('CashRemunerationEIP712')
 
-    expect(mockBodAddAction.executeAddAction).toHaveBeenCalledWith(
+    expect(mockBodAddAction.mutate).toHaveBeenCalledWith(
       expect.objectContaining({
         targetAddress: CASH_ADDRESS,
         userAddress: NON_OWNER_ADDRESS,
         description: expect.stringContaining('Owner Treasury Withdraw All to Bank'),
         data: expect.any(String)
-      })
+      }),
+      expect.objectContaining({ onError: expect.any(Function) })
     )
     expect(mockCashRemunerationWrites.ownerWithdrawAllToBank.mutateAsync).not.toHaveBeenCalled()
   })
@@ -205,6 +205,18 @@ describe('OwnerTreasuryWithdrawAction', () => {
     simulateCashThrow(rejection)
     const wrapper = await submit()
     expect(wrapper.find(WARNING).text()).toContain('Owner rejected the request.')
+  })
+
+  it('keeps a failed Board treasury request open with an inline error', async () => {
+    mockBodIsBodAction.isBodAction.value = true
+    mockUserStore.address = NON_OWNER_ADDRESS
+    mockBodAddAction.mutate.mockImplementationOnce((_variables, options) => {
+      options?.onError?.(new Error('Board preparation unavailable'))
+    })
+    const wrapper = await submit()
+    expect(wrapper.get(WARNING).text()).toContain('Board preparation unavailable')
+    expect(wrapper.find(CONFIRM).exists()).toBe(true)
+    expect(mockCashRemunerationWrites.ownerWithdrawAllToBank.mutateAsync).not.toHaveBeenCalled()
   })
 
   it('keeps the inline warning hidden for unexpected thrown errors', async () => {

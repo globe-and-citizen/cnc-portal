@@ -133,7 +133,7 @@
                 <span class="text-muted text-xs">Amount</span>
                 <div class="text-right text-sm">
                   <div>{{ formatCryptoAmount(String(event.amount)) }} {{ event.token }}</div>
-                  <div v-if="event.amountLocal" class="text-muted text-xs">
+                  <div class="text-muted text-xs">
                     {{ formatCurrencyShort(event.amountLocal, currencyStore.localCurrency.code) }}
                   </div>
                 </div>

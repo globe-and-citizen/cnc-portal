@@ -16,8 +16,8 @@
 - **Gitmoji is required**, paired with the type.
 - **Imperative, present tense** in the subject ("add", not "added").
 - **Subject ≤ 72 chars, no trailing period.**
-- The same format applies to **PR titles and ordinary issue titles**. Sprint plan, Sprint Goal and release issue titles follow the
-  [dedicated issue title rules](#sprint-goal-and-release-issue-titles) instead.
+- The same format applies to **ordinary PR titles and ordinary issue titles**. Sprint plan, Sprint Goal and release issue titles and release
+  promotion PR titles follow the [dedicated title rules](#sprint-goal-and-release-issue-titles).
 
 ## Sprint, Goal and Release issue titles
 
@@ -28,8 +28,9 @@ Sprint planning, Sprint Goal and release issues use their own titles without a C
 - Catch-all Goal: `[Goals] Sprint <number> Bug and perf`.
 - Release: `[Release] vX.Y.Z`, for example `[Release] v0.17.0`.
 
-Keep Conventional Commit titles for ordinary delivery and coordination issues, commits and pull requests. Do not rename historical Sprint or
-Goal issues solely to normalize older title variants.
+Release promotion PRs use the same `[Release] vX.Y.Z` title as their tracking release issue, without a Conventional Commit type or gitmoji.
+Keep Conventional Commit titles for ordinary delivery and coordination issues, commits and other pull requests. Do not rename historical
+Sprint or Goal issues solely to normalize older title variants.
 
 ## Type → gitmoji mapping
 

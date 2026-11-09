@@ -90,6 +90,7 @@
 <script setup lang="ts">
 import { reactive, ref, computed } from 'vue'
 import type { SectionKey } from '@/utils/accounting/exportSpec'
+import { ACCOUNT_ASSIGNMENTS_TITLE } from '@/utils/accounting/journalAccountAssignmentPresenter'
 
 /** Which file the selected sections are exported as. */
 export type ExportFormat = 'pdf' | 'excel'
@@ -103,7 +104,8 @@ const SECTIONS: ReadonlyArray<{ key: SectionKey; label: string }> = [
   { key: 'income', label: 'Income Statement' },
   { key: 'balance', label: 'Balance Sheet' },
   { key: 'trial', label: 'Trial Balance' },
-  { key: 'ledger', label: 'General Ledger' }
+  { key: 'ledger', label: 'General Ledger' },
+  { key: 'assignments', label: ACCOUNT_ASSIGNMENTS_TITLE }
 ]
 
 const open = ref(false)
@@ -114,7 +116,8 @@ const checked = reactive<Record<SectionKey, boolean>>({
   income: true,
   balance: true,
   trial: true,
-  ledger: true
+  ledger: true,
+  assignments: true
 })
 
 const selectedKeys = computed(() =>

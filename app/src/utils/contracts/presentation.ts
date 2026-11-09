@@ -1,3 +1,7 @@
+import type { Member } from '@/types/member'
+import type { User } from '@/types/user'
+import type { Address } from 'viem'
+
 interface ContractPresentation {
   label: string
   icon: string
@@ -33,4 +37,20 @@ export function formatContractFunctionLabel(functionName: string): string {
     .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
     .replace(/_/g, ' ')
     .replace(/^./, (character) => character.toUpperCase())
+}
+
+/** Resolve current display metadata without copying query or team state. */
+export function getContractOwnerIdentity(
+  owner: Address,
+  members: readonly Pick<Member, 'address' | 'name' | 'imageUrl'>[],
+  boardAddress?: string
+): User & { address: Address } {
+  if (boardAddress?.toLowerCase() === owner.toLowerCase())
+    return { name: 'Board of Directors', address: owner }
+  const member = members.find((item) => item.address?.toLowerCase() === owner.toLowerCase())
+  return {
+    name: member?.name || owner,
+    address: owner,
+    imageUrl: member?.imageUrl || undefined
+  }
 }

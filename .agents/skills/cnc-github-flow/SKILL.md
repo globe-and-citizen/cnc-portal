@@ -11,7 +11,7 @@ hygiene in [CONTRIBUTION.md](../../../CONTRIBUTION.md#github-and-review).
 ## Sprint, Goal and Release issue titles
 
 Follow the shared
-[Sprint, Goal and release issue title rules](../../../.github/copilot-instructions/commit-conventions.md#sprint-goal-and-release-issue-titles).
+[Sprint, Goal, release issue and promotion PR title rules](../../../.github/copilot-instructions/commit-conventions.md#sprint-goal-and-release-issue-titles).
 That guide owns the formats for every contributor; this section retains the existing navigation anchor.
 
 ## Create or organize an issue

@@ -248,6 +248,21 @@ describe('TransferModal', () => {
     ])
   })
 
+  it.each([1800, null])(
+    'passes the selected-currency quote %s without changing token holdings',
+    async (localPrice) => {
+      wrapper = mountComponent()
+      const balance = makeTokenBalance({ amount: 10, usdPrice: 2000 })
+      balance.price.local.value = localPrice
+      setBalances([balance])
+      await openModal(wrapper)
+
+      expect(transferForm(wrapper).props('tokens')).toEqual([
+        expect.objectContaining({ price: localPrice, balance: 10 })
+      ])
+    }
+  )
+
   it('[AC-US-BANK-002-02] uses the Board action path when Board mode is enabled', async () => {
     wrapper = mountComponent()
     mockBodIsBodAction.isBodAction.value = true
@@ -259,7 +274,7 @@ describe('TransferModal', () => {
       amount: '100'
     })
 
-    expect(mockBodAddAction.executeAddAction).toHaveBeenCalledOnce()
+    expect(mockBodAddAction.mutate).toHaveBeenCalledOnce()
     expect(mockBankWrites.transfer.mutate).not.toHaveBeenCalled()
     expect(mockBankWrites.transferToken.mutate).not.toHaveBeenCalled()
   })
@@ -303,10 +318,12 @@ describe('TransferModal', () => {
     expect(transferForm(wrapper).props('errorMessage')).not.toBe('')
   })
 
-  it('surfaces an error message when the bod action path throws', async () => {
+  it('surfaces a BOD mutation failure and keeps the transfer form open', async () => {
     wrapper = mountComponent()
     mockBodIsBodAction.isBodAction.value = true
-    mockBodAddAction.executeAddAction.mockRejectedValueOnce(new Error('bod boom'))
+    mockBodAddAction.mutate.mockImplementationOnce((_variables, options) => {
+      options?.onError?.(new Error('bod boom'))
+    })
     await openModal(wrapper)
 
     await emitTransfer(wrapper, {
@@ -315,7 +332,7 @@ describe('TransferModal', () => {
       amount: '10'
     })
 
-    expect(transferForm(wrapper).props('errorMessage')).toBe('Failed to transfer USDC')
+    expect(transferForm(wrapper).props('errorMessage')).toBe('bod boom')
   })
 
   it('resets modal when the bod action-added watcher fires', async () => {

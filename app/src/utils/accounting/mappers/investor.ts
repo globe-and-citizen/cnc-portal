@@ -16,7 +16,8 @@
  *   formally issued, so we clear that equity-pending into contributed equity —
  *   Dr SHERS To Be Issued · Cr Investor Equity — valued at the SHER rate of
  *   record. (It no longer emits a value-0 memo, which left `SHERS To Be Issued`
- *   permanently inflated.)
+ *   permanently inflated.) The part of a mint the shareholder was owed no wage for
+ *   is re-booked against Deferred SHER Compensation by `splitUnbackedIssuance`.
  *
  * `DividendPaid` → UC-INV-01 (Dr Dividend Expense · Cr Cash — Bank). The summary
  * events `Investor DividendDistributed` and `Bank DividendDistributionTriggered`

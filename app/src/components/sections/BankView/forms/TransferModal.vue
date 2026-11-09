@@ -98,7 +98,7 @@ const feeBpsNumber = computed(() => Number(feeBpsData.value ?? 0))
 const isBankOwner = computed(() => bankOwner.value === userStore.address)
 
 const {
-  executeAddAction: addAction,
+  mutate: addAction,
   isPending: isLoadingAddAction,
   isSuccess: isActionAdded
 } = useBodAddAction()
@@ -126,7 +126,7 @@ const getTokens = (): TokenOption[] =>
       symbol: b.token.symbol,
       balance: b.amount,
       tokenId: b.token.id,
-      price: b.price.usd.value,
+      price: b.price.local.value,
       name: b.token.name,
       code: b.token.code
     }))
@@ -219,16 +219,19 @@ const handleTransfer = async (data: {
       title: 'Bank Transfer Request'
     })
 
-    try {
-      await addAction({
+    addAction(
+      {
         targetAddress: props.bankAddress,
         description,
         data: encodedData
-      })
-    } catch (error) {
-      log.error('Transfer (BOD action) failed:', error)
-      errorMessage.value = `Failed to transfer ${data.token.symbol}`
-    }
+      },
+      {
+        onError: (error) => {
+          const classified = classifyError(error)
+          errorMessage.value = classified.userMessage
+        }
+      }
+    )
     return
   }
 

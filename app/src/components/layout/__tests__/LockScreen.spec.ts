@@ -35,7 +35,7 @@ describe('LockScreen.vue', () => {
     expect(wrapper.text()).toContain('0x1234...7890')
   })
 
-  it('[AC-US-AUTH-003-09] disconnects the wallet from the locked session', async () => {
+  it('[AC-US-AUTH-004-05] disconnects the wallet from the locked session', async () => {
     wrapper = mount(LockScreen, {
       props: {
         user: { address: '0x1111111111111111111111111111111111111111' }

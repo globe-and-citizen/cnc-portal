@@ -4,8 +4,8 @@
  * is currently showing. Format-agnostic — it belongs to neither builder, so both
  * (and the view) depend on this module rather than on each other.
  */
-import type { LedgerColumnKey } from '@/utils/accounting/ledgerColumns'
-import type { JournalEntry } from './types'
+import type { LedgerColumnKey, LedgerMovements } from '@/utils/accounting/ledgerColumns'
+import type { JournalEntry, UsdAmount } from './types'
 
 /** The canonical journal is the only Accounting data that crosses the export boundary. */
 export interface AccountingExportSnapshot {
@@ -13,7 +13,7 @@ export interface AccountingExportSnapshot {
 }
 
 /** The exportable accounting sections, in display order. */
-export type SectionKey = 'summary' | 'income' | 'balance' | 'trial' | 'ledger'
+export type SectionKey = 'summary' | 'income' | 'balance' | 'trial' | 'ledger' | 'assignments'
 
 /**
  * A section to export, plus the filter state that section is currently showing.
@@ -39,6 +39,8 @@ export interface SectionSpec {
   journalAccounts?: string[]
   /** Drill-down title while its rows remain a JournalEntry projection. */
   journalAccountLabel?: string
-  /** Statement-line balance shown in a drill-down export. */
-  journalAccountTotal?: string
+  /** The drilled account's own debit and credit totals for a drill-down export. */
+  journalAccountMovements?: LedgerMovements
+  /** Exact amounts underlying the drill-down footer. */
+  journalAccountAmounts?: LedgerMovements<UsdAmount>
 }

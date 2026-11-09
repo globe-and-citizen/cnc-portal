@@ -13,9 +13,7 @@ const BEHAVIORAL_SOURCE_PATTERNS = [
   /^dashboard\/app\/(?:components|composables|middleware|pages|queries|server|stores)\//,
   /^backend\/src\/(?:controllers|middleware|routes|services|validation)\//,
   /^backend\/prisma\/schema\.prisma$/,
-  /^contract\/contracts\//,
-  /^ponder\/src\//,
-  /^the-graph\/src\//
+  /^contract\/contracts\//
 ]
 
 const TEST_SOURCE_PATTERN = /(?:^|\/)(?:__tests__|tests?)(?:\/|$)|\.(?:spec|test)\.[^/]+$/
@@ -100,7 +98,7 @@ export function sourcePathsFromMarkdown(markdown, documentPath, repositoryRoot) 
 
   for (const match of markdown.matchAll(/`([^`\n]+)`/g)) {
     const pathMatch = match[1].match(
-      /(?:^|[\s(])((?:app|backend|contract|dashboard|ponder|the-graph)\/[^\s`,)]+)/
+      /(?:^|[\s(])((?:app|backend|contract|dashboard)\/[^\s`,)]+)/
     )
     if (pathMatch) addPath(sourcePathFromInlineCode(pathMatch[1]))
   }

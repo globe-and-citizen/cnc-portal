@@ -24,7 +24,7 @@
           color="primary"
           icon="i-lucide-megaphone"
           label="Manage campaigns"
-          @click="activeView = 'campaigns'"
+          @click="activeTab = 'campaigns'"
         />
       </template>
     </UPageHeader>
@@ -39,8 +39,8 @@
     />
 
     <UTabs
-      v-model="activeView"
-      :items="navigationItems"
+      v-model="activeTab"
+      :items="tabItems"
       variant="link"
       aria-label="Contract management views"
       :ui="{
@@ -50,13 +50,13 @@
       }"
     >
       <template #current>
-        <MainContractSection :generation="currentGeneration" />
+        <CurrentOfficerContractsSection :generation="currentGeneration" />
       </template>
       <template #campaigns>
-        <AdvertiseContractSection />
+        <AdvertisingCampaignsSection />
       </template>
       <template #history>
-        <DeploymentHistorySection :generations="legacyGenerations" />
+        <OfficerDeploymentHistorySection :generations="legacyGenerations" />
       </template>
     </UTabs>
   </div>
@@ -65,15 +65,15 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import AdvertiseContractSection from '@/components/sections/ContractManagementView/AdvertiseContractSection.vue'
-import DeploymentHistorySection from '@/components/sections/ContractManagementView/DeploymentHistorySection.vue'
-import MainContractSection from '@/components/sections/ContractManagementView/MainContractSection.vue'
+import AdvertisingCampaignsSection from '@/components/sections/ContractManagementView/AdvertisingCampaignsSection.vue'
+import OfficerDeploymentHistorySection from '@/components/sections/ContractManagementView/OfficerDeploymentHistorySection.vue'
+import CurrentOfficerContractsSection from '@/components/sections/ContractManagementView/CurrentOfficerContractsSection.vue'
 import { useGetTeamOfficersQuery } from '@/queries/contract.queries'
 import { useTeamStore } from '@/stores'
 import type { ContractGeneration } from '@/types/deployments'
 import { contractsInUse } from '@/utils/safe/teamSafes'
 
-type ContractManagementView = 'current' | 'campaigns' | 'history'
+type ContractManagementTab = 'current' | 'campaigns' | 'history'
 
 const teamStore = useTeamStore()
 const route = useRoute()
@@ -118,13 +118,13 @@ const legacyGenerations = computed(() =>
 const isPending = officersQuery.isPending
 const isError = officersQuery.isError
 
-const isContractManagementView = (value: unknown): value is ContractManagementView =>
+const isContractManagementTab = (value: unknown): value is ContractManagementTab =>
   typeof value === 'string' && ['current', 'campaigns', 'history'].includes(value)
 
-const activeView = computed<ContractManagementView>({
+const activeTab = computed<ContractManagementTab>({
   get: () => {
     const tab = Array.isArray(route.query.tab) ? route.query.tab[0] : route.query.tab
-    return isContractManagementView(tab) ? tab : 'current'
+    return isContractManagementTab(tab) ? tab : 'current'
   },
   set: (tab) => {
     void router.replace({ query: { ...route.query, tab } })
@@ -142,7 +142,7 @@ const currentContractCount = computed(
     0
 )
 
-const navigationItems = computed(() => [
+const tabItems = computed(() => [
   {
     label: 'Current contracts',
     value: 'current' as const,

@@ -11,7 +11,9 @@ import {
  * commented out in src/composables/bod/reads.ts.
  * useBodOwner + useBodIsMember are kept because useBodIsBodAction depends on them internally.
  */
-vi.mock('@/composables/bod/reads', () => ({
+vi.mock('@/composables/bod/reads', async (importOriginal) => ({
+  BOD_FUNCTION_NAMES: (await importOriginal<typeof import('@/composables/bod/reads')>())
+    .BOD_FUNCTION_NAMES,
   useBodOwner: vi.fn(() => mockBODReads.owner),
   useBodIsActionExecuted: vi.fn(() => mockBODReads.isActionExecuted),
   useBodIsMember: vi.fn(() => mockBODReads.isMember),

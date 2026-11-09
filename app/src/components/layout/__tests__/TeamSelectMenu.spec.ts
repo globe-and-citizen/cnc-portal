@@ -52,6 +52,21 @@ describe('TeamSelectMenu', () => {
       expect(mountMenu().find('[data-test="team-option-1"]').text()).toContain('Owner')
     })
 
+    it('marks only the pinned teams', () => {
+      const teams = [
+        { ...mockTeamData, id: '1', isFavorite: false },
+        { ...mockTeamData, id: '2', isFavorite: true }
+      ]
+      vi.mocked(useGetTeamsQuery).mockReturnValueOnce(
+        createMockQueryResponse(teams) as ReturnType<typeof useGetTeamsQuery>
+      )
+
+      const wrapper = mountMenu()
+
+      expect(wrapper.find('[data-test="team-favorite-2"]').exists()).toBe(true)
+      expect(wrapper.find('[data-test="team-favorite-1"]').exists()).toBe(false)
+    })
+
     it('shows All companies and Create company actions', () => {
       const wrapper = mountMenu()
       expect(wrapper.find('[data-test="all-companies"]').exists()).toBe(true)
@@ -62,20 +77,20 @@ describe('TeamSelectMenu', () => {
   describe('actions', () => {
     it('selects a team and preserves the current team-scoped route', async () => {
       setMockRoute({
-        name: 'proposal-detail',
-        params: { id: '1', proposalId: '9' },
-        query: { tab: 'votes' },
-        hash: '#result',
-        path: '/teams/1/administration/bod-proposals/9'
+        name: 'contract-management',
+        params: { id: '1' },
+        query: {},
+        hash: '',
+        path: '/teams/1/contract-management'
       })
       const wrapper = mountMenu()
       await wrapper.find('[data-test="team-option-1"]').trigger('click')
       expect(mockTeamStore.setCurrentTeamId).toHaveBeenCalledWith('1')
       expect(mockRouterPush).toHaveBeenCalledWith({
-        name: 'proposal-detail',
-        params: { id: '1', proposalId: '9' },
-        query: { tab: 'votes' },
-        hash: '#result'
+        name: 'contract-management',
+        params: { id: '1' },
+        query: {},
+        hash: ''
       })
     })
 

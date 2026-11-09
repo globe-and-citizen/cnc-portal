@@ -153,15 +153,6 @@ export const mockUseBackendWake = vi.fn(() => {
 })
 
 /**
- * Mock useAuth composable
- */
-export const mockUseAuth = {
-  logout: vi.fn(),
-  login: vi.fn(),
-  validateToken: vi.fn()
-}
-
-/**
  * Mock useClipboard composable from @vueuse/core
  */
 export const mockUseClipboard = {
@@ -256,17 +247,6 @@ export const resetComposableMocks = () => {
   mockTransactionFunctions.mockSendTransaction.mockResolvedValue({ hash: '0xnativetx' })
   mockTransactionFunctions.mockMutateAsync.mockResolvedValue('0xtransfertx')
   mockTransactionFunctions.mockWaitForTransactionReceipt.mockResolvedValue({ status: 'success' })
-
-  // Reset auth mock functions
-  if (vi.isMockFunction(mockUseAuth.logout)) {
-    mockUseAuth.logout.mockClear()
-  }
-  if (vi.isMockFunction(mockUseAuth.login)) {
-    mockUseAuth.login.mockClear()
-  }
-  if (vi.isMockFunction(mockUseAuth.validateToken)) {
-    mockUseAuth.validateToken.mockClear()
-  }
 
   // Reset backend wake mock
   if (vi.isMockFunction(mockUseBackendWake)) {

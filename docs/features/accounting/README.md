@@ -17,7 +17,8 @@ These acceptance criteria follow the
   before display rounding.
 - Ledger quantities and recorded rates display up to six decimals with trailing zeros trimmed. Complete quantities and recorded rates remain
   inspectable by hover, keyboard focus, or tap; positive quantities that would display as zero are identified as below display precision.
-  Display formatting does not change journal calculations or the existing export quantities.
+  Display formatting does not change journal calculations. Excel and PDF exports use the rounded ledger quantities shown on screen; a
+  positive quantity below display precision is exported as the text `<0.000001`.
 - Payroll is accrued when an eligible work week ends. Expense Account spending is recognized when cash moves. Transfers between known
   company pockets are not revenue or expense.
 - Accounting includes every known contract generation. Each deployment remains a distinct cash account even when report totals aggregate the
@@ -55,8 +56,9 @@ posting books the part the cash lines do not carry. `Cash — Safe` keeps the pr
 plus that adjustment, and `Swap P&L` totals the per-swap report. The Safe Wallet overview shows an average-cost P&L instead; both agree
 while the assets received are still held and differ once one is spent or bought again. A `Swap P&L` gain reads as revenue and a
 trial-balance credit; a loss reads as an expense and a debit, never as a negative amount. Ancillary mints and ambiguous batches require
-classification. Missing decimals or acquisition basis keeps Accounting incomplete. Cross-transaction intents and arbitrary DeFi actions need
-additional protocol evidence. See the
+classification. Missing decimals or acquisition basis keeps Accounting incomplete. A default Safe that does not exist on the network (never
+deployed, or deployed elsewhere) has no swaps to value and does not withhold the reports. Cross-transaction intents and arbitrary DeFi
+actions need additional protocol evidence. See the
 [Accounting Read Model](../../implementation/accounting-read-model/README.md#safe-assets-and-exchanges) for these boundaries and the
 [exchange regression suite](../../../app/src/utils/accounting/__tests__/safeExchanges.spec.ts) and
 [price-paid regressions](../../../app/src/utils/accounting/__tests__/safeExchanges.pricePaid.spec.ts),
@@ -112,12 +114,12 @@ three consecutive missing criteria use inclusive ranges with full AC IDs at both
 
 | User Story  | Main Journey  | Coverage Target | Gaps                                                                              |
 | ----------- | ------------- | --------------- | --------------------------------------------------------------------------------- |
-| US-ACCT-001 | ✅ Integrated | ⚠️ 11/12 met    | `AC-US-ACCT-001-08`                                                               |
-| US-ACCT-002 | ✅ Integrated | ✅ 16/16        | —                                                                                 |
-| US-ACCT-003 | ✅ Integrated | ✅ 11/11        | —                                                                                 |
-| US-ACCT-004 | ✅ Integrated | ✅ 9/9          | —                                                                                 |
-| US-ACCT-005 | ✅ Integrated | ✅ 13/13 met    | —                                                                                 |
-| US-ACCT-006 | ✅ Integrated | ⚠️ 6/11 met     | `AC-US-ACCT-006-01`–`AC-US-ACCT-006-03`, `AC-US-ACCT-006-05`, `AC-US-ACCT-006-09` |
+| US-ACCT-001 | ✅ Integrated | ⚠️ 12/13 met    | `AC-US-ACCT-001-08`                                                               |
+| US-ACCT-002 | ✅ Integrated | ✅ 20/20        | —                                                                                 |
+| US-ACCT-003 | ✅ Integrated | ✅ 12/12        | —                                                                                 |
+| US-ACCT-004 | ✅ Integrated | ✅ 10/10        | —                                                                                 |
+| US-ACCT-005 | ✅ Integrated | ✅ 16/16 met    | —                                                                                 |
+| US-ACCT-006 | ✅ Integrated | ⚠️ 7/12 met     | `AC-US-ACCT-006-01`–`AC-US-ACCT-006-03`, `AC-US-ACCT-006-05`, `AC-US-ACCT-006-09` |
 | US-ACCT-007 | ⬜ Planned    | ❌ 0/17 met     | `AC-US-ACCT-007-01`–`AC-US-ACCT-007-17`                                           |
 | US-ACCT-008 | ⬜ Planned    | ❌ 0/10 met     | `AC-US-ACCT-008-01`–`AC-US-ACCT-008-10`                                           |
 | US-ACCT-009 | ⬜ Planned    | ❌ 0/9 met      | `AC-US-ACCT-009-01`–`AC-US-ACCT-009-09`                                           |
@@ -209,6 +211,8 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 - [x] `AC-US-ACCT-001-06` Payroll obligations are recognized when an eligible work week ends, before settlement.
 - [x] `AC-US-ACCT-001-07` Transfers between known company accounts do not change revenue or expenses.
 - [ ] `AC-US-ACCT-001-08` Closing cash balances are reconciled with the corresponding on-chain balances.
+- [x] `AC-US-ACCT-001-13` A weekly wage accrual books each currency at what the wage pays in it: a currency without an overtime rate accrues
+      nothing for overtime hours, and a currency rated only for overtime accrues for those hours.
 
 #### Edge & Error Cases
 
@@ -234,6 +238,7 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 | `AC-US-ACCT-001-10`  | `PS-FRONTEND`            | Frontend                  | ✅ Met     |
 | `AC-US-ACCT-001-11`  | `PS-FRONTEND`            | Frontend                  | ✅ Met     |
 | `AC-US-ACCT-001-12`  | `PS-FRONTEND`            | Frontend                  | ✅ Met     |
+| `AC-US-ACCT-001-13`  | `PS-FRONTEND`            | Frontend                  | ✅ Met     |
 
 **Dependencies:** Current company, accounting source providers, and valuation sources
 
@@ -271,6 +276,13 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 - [x] `AC-US-ACCT-002-16` Each swap of the default Safe books in its own posting the Safe swap P&L (current value of what it received
       against the CoinGecko swap-day value of what it gave up, less the reported fee) on `Swap P&L`, with the part the cash lines do not
       carry on `Safe Market Value Adjustment`; `Cash — Safe` keeps the price paid and `Swap P&L` totals the Safe overview figure.
+- [x] `AC-US-ACCT-002-17` An account drill-down's "Total movements" row shows that account's own debits and credits, so an expense account
+      shows no credit; an aggregate statement line shows its statement figure in both columns.
+- [x] `AC-US-ACCT-002-18` An accrued wage shows a yellow action badge and a withdrawn wage a blue one, whatever currency it was paid in.
+- [x] `AC-US-ACCT-002-19` A wage withdrawal shows the hours of the claim it settled. The claim is found from the amount the contract really
+      paid, overtime included, and every currency of one withdrawal shows the same claim.
+- [x] `AC-US-ACCT-002-20` A Community Credit funding or installment that carries both loan principal and interest names each at its own
+      amount.
 
 #### Edge & Error Cases
 
@@ -298,6 +310,10 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 | `AC-US-ACCT-002-14`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
 | `AC-US-ACCT-002-15`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
 | `AC-US-ACCT-002-16`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
+| `AC-US-ACCT-002-17`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
+| `AC-US-ACCT-002-18`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
+| `AC-US-ACCT-002-19`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
+| `AC-US-ACCT-002-20`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
 
 **Dependencies:** US-ACCT-001
 
@@ -313,7 +329,8 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 
 - [x] `AC-US-ACCT-003-01` The income statement reports revenue, expenses, and net income for the selected period.
 - [x] `AC-US-ACCT-003-02` The balance sheet reports assets, liabilities, and equity as of the selected date.
-- [x] `AC-US-ACCT-003-03` The trial balance reports each concrete account on its normal debit or credit side as of the selected date.
+- [x] `AC-US-ACCT-003-03` The trial balance reports each concrete account on the side its debits and credits net to as of the selected date;
+      a settled account shows no amount.
 - [x] `AC-US-ACCT-003-04` A member can inspect the complete journal entries behind a statement line.
 
 #### Business Rules
@@ -324,6 +341,7 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 - [x] `AC-US-ACCT-003-07` `Earnings to date` equals income less expenses through the selected date and remains distinct from posted equity
       accounts.
 - [x] `AC-US-ACCT-003-08` Redeployed and unresolved accounts remain separate rows and preserve their own drill-down scope.
+- [x] `AC-US-ACCT-003-12` Each trial-balance total adds its own column, so unbalanced books show two different totals.
 
 #### Edge & Error Cases
 
@@ -346,6 +364,7 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 | `AC-US-ACCT-003-09`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
 | `AC-US-ACCT-003-10`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
 | `AC-US-ACCT-003-11`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
+| `AC-US-ACCT-003-12`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
 
 **Dependencies:** US-ACCT-001 and US-ACCT-002
 
@@ -360,15 +379,19 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 #### Happy Path
 
 - [x] `AC-US-ACCT-004-01` A member can export the General Ledger and each financial statement to Excel or PDF.
-- [x] `AC-US-ACCT-004-02` A summary export can include several selected sections.
+- [x] `AC-US-ACCT-004-02` A summary export can include several selected sections, including Account Assignments.
 - [x] `AC-US-ACCT-004-03` A statement or account drill-down can be exported independently.
 
 #### Business Rules
 
 - [x] `AC-US-ACCT-004-04` An export uses one snapshot of the current `JournalEntry` collection and the same filters as the reviewed report.
-- [x] `AC-US-ACCT-004-05` Ledger and drill-down exports retain complete matching entries and full transaction hashes.
+- [x] `AC-US-ACCT-004-05` Ledger and drill-down exports retain complete matching entries. Excel keeps full transaction hashes; both formats
+      use the rounded quantities shown on screen. A PDF prints shortened hashes and sizes columns in the screen's proportions. Excel numeric
+      amounts use two decimal places, and quantities and rates use up to six. Missing debit/credit sides are blank; unavailable values and
+      numbers outside the supported 15-digit scaled range are text `Unavailable`.
 - [x] `AC-US-ACCT-004-06` Balance Sheet exports retain concrete account rows and the account contributions behind `Earnings to date`.
 - [x] `AC-US-ACCT-004-07` Monetary display conversion and rounding happen after exact journal and report totals are calculated.
+- [x] `AC-US-ACCT-004-10` A PDF export names the team and the period of activity the books cover.
 
 #### Edge & Error Cases
 
@@ -388,6 +411,7 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 | `AC-US-ACCT-004-07`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
 | `AC-US-ACCT-004-08`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
 | `AC-US-ACCT-004-09`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
+| `AC-US-ACCT-004-10`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
 
 **Dependencies:** US-ACCT-002 or US-ACCT-003
 
@@ -417,6 +441,13 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 - [x] `AC-US-ACCT-005-10` Historical Community Credit terms resolve from their owning FixedReturn generation; SHER valuation replays
       timestamped multiplier changes and uses the current router's constructor multiplier when no change event exists. Resolving the
       constructor multiplier of a retired router with no change event is outside this criterion.
+- [x] `AC-US-ACCT-005-14` A wage withdrawn in the SHER of a previous Investor generation settles its liability like one withdrawn in the
+      current SHER.
+- [x] `AC-US-ACCT-005-15` A stablecoin sent straight to a Bank from outside the company, with no Bank deposit event, is booked as a receipt,
+      so a first-generation Bank funded this way never shows a negative balance; a transfer from a company contract is left to its own
+      event.
+- [x] `AC-US-ACCT-005-16` A direct SHER mint clears `SHERS To Be Issued` only up to the wage SHER the shareholder is still owed and had
+      earned by the mint's date. The rest posts against `Deferred SHER Compensation`, so the account never hides SHER still owed.
 
 #### Edge & Error Cases
 
@@ -441,6 +472,9 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 | `AC-US-ACCT-005-11`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
 | `AC-US-ACCT-005-12`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
 | `AC-US-ACCT-005-13`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
+| `AC-US-ACCT-005-14`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
+| `AC-US-ACCT-005-15`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
+| `AC-US-ACCT-005-16`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
 
 **Representative regression tests for `AC-US-ACCT-005-10`:**
 [Community Credit generation terms](../../../app/src/utils/accounting/__tests__/fixedReturn.interest.spec.ts),
@@ -467,6 +501,7 @@ first change and for the current router when no change event exists.
 - [x] `AC-US-ACCT-006-02` Saving replaces only the inferred counter-account and remains visible after refresh.
 - [x] `AC-US-ACCT-006-03` Removing an assignment restores the account inferred from source evidence.
 - [x] `AC-US-ACCT-006-04` Account Assignments shows the same complete entry as the General Ledger, including transaction fees.
+- [x] `AC-US-ACCT-006-12` An entry with no saved assignment says it sits on its default account and has not been reviewed.
 
 #### Business Rules
 
@@ -503,6 +538,7 @@ first change and for the current router when no change event exists.
 | `AC-US-ACCT-006-09`  | `PS-BACKEND`             | Integrated E2E + Frontend | ⚠️ Insufficient |
 | `AC-US-ACCT-006-10`  | `PS-BACKEND`             | Backend                   | ✅ Met          |
 | `AC-US-ACCT-006-11`  | `PS-FRONTEND`            | Frontend                  | ✅ Met          |
+| `AC-US-ACCT-006-12`  | `PS-FRONTEND`            | Frontend                  | ✅ Met          |
 
 **Dependencies:** US-ACCT-002 and the journal account-assignment API
 
@@ -938,7 +974,7 @@ valuation gap. The existing completeness rules apply to every booked movement. S
 [Safe pagination and metadata unit tests](../../../app/src/queries/__tests__/safe.queries.spec.ts) and
 [Safe source-mapping tests](../../../app/src/utils/accounting/__tests__/safe.spec.ts). Live product review remains pending.
 
-**Implementation evidence reviewed against:** `07e739b663ef53b14340b641a3fc4027f1d566a1`
+**Implementation evidence reviewed against:** `da5006d10d8134a1c1b98532b00454929e190b9f`
 
 - [Accounting page](../../../app/src/components/sections/AccountingView/AccountingPage.vue),
   [team routes](../../../app/src/router/index.ts), and [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts)
@@ -959,7 +995,8 @@ valuation gap. The existing completeness rules apply to every booked movement. S
 - [Account assignment boundary](../../../app/src/utils/accounting/journalAccountAssignment.ts),
   [assignment route](../../../app/src/views/team/%5Bid%5D/Accounting/AccountAssignmentsView.vue), and
   [assignment API](../../../backend/src/controllers/journalAccountAssignmentController.ts)
-- [Accounting exports](../../../app/src/composables/accounting/useAccountingExport.ts) and
+- [Accounting exports](../../../app/src/composables/accounting/useAccountingExport.ts),
+  [report section picker](../../../app/src/components/sections/AccountingView/ExportReportModal.vue), and
   [journal export snapshot](../../../app/src/utils/accounting/exportSpec.ts)
 - [Report interaction tests](../../../app/src/views/team/%5Bid%5D/Accounting/__tests__/AccountingReports.spec.ts),
   [Balance Sheet drill-down tests](../../../app/src/views/team/%5Bid%5D/Accounting/__tests__/BalanceSheetDrilldown.spec.ts),

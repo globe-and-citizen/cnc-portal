@@ -4,9 +4,9 @@ export interface BaseTransaction {
   type: string
   from: string
   to: string
-  amountUSD: number
+  amountUSD: number | null
   receipt?: string
-  [key: string]: string | number | undefined
+  [key: string]: string | number | null | undefined
 }
 
 export interface ExpenseTransaction extends BaseTransaction {

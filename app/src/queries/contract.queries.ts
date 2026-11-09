@@ -1,3 +1,4 @@
+import type { DeploymentContract } from '@/types/deployments'
 import { toValue, type MaybeRefOrGetter } from 'vue'
 import { createMutationHook, createQueryHook, queryPresets } from './queryFactory'
 import { teamKeys } from './team.queries'
@@ -15,11 +16,8 @@ export const contractKeys = {
 // ============================================================================
 
 /** A contract governed by an Officer generation. */
-export interface OfficerContract {
+export interface OfficerContract extends DeploymentContract {
   id: number
-  address: string
-  type: string
-  deployer: string
   officerId: number | null
 }
 

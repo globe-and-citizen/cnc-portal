@@ -545,9 +545,23 @@ the redeployment and migration-root commit. Shareholder Management exposes the m
   but `Investor.individualMint` still accepts a zero amount and emits `Minted`. Completing `AC-US-SHER-004-04` requires a future Investor
   implementation version rather than changing the deployed `2.0.1` behaviour in place.
 
+## Board request failure feedback
+
+A Board-mediated dividend request keeps its form open and exposes preparation, submission or registration failures inline. Another attempt
+clears the previous feedback; loading spans preparation and registration. The
+[shared Board failure contract](../contract-management/README.md#board-action-failure-and-recovery) identifies an already-confirmed action
+with a missing backend record; notification delivery does not determine submission success.
+
+## Current-price display availability
+
+Investor activity's current USD estimates preserve missing quotes as unavailable under the
+[shared quote policy](../../implementation/client-utilities/README.md#current-token-quote-and-fiat-availability). A stablecoin does not
+receive an assumed USD 1 fallback when its current quote is absent; a genuine provider zero remains zero. The explicit local SHER zero-price
+policy is preserved. This display rule does not change share issuance, dividend quantities, multipliers or Accounting's historical rates.
+
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `83726950b667a394cf2c77bdb53557516c2a294b`
+**Implementation evidence reviewed against:** `20b213c1c6c1903766d67725d2b430b95e156cdf`
 
 - [Shareholder Management route](../../../app/src/views/team/%5Bid%5D/SherTokenView.vue) and
   [Investor overview](../../../app/src/components/sections/SherTokenView/InvestorsHeader.vue)

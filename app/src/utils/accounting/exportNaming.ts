@@ -12,6 +12,7 @@
  */
 import { periodLabel, dayLabel } from './presenter'
 import type { SectionSpec } from './exportSpec'
+import { ACCOUNT_ASSIGNMENTS_TITLE } from './journalAccountAssignmentPresenter'
 
 /** Drop characters no major filesystem allows in a name, and collapse whitespace. */
 function safeName(name: string): string {
@@ -43,6 +44,8 @@ function exportBaseName(spec: SectionSpec): string {
       if (spec.from || spec.to) parts.push(periodLabel(spec.from, spec.to))
       return parts.join(' - ')
     }
+    case 'assignments':
+      return ACCOUNT_ASSIGNMENTS_TITLE
   }
 }
 

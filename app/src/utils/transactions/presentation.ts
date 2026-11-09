@@ -1,3 +1,4 @@
+import { valueTokenAmount } from '@/utils/currency/valuation'
 import type { TokenId } from '@/constant'
 import { NETWORK } from '@/constant'
 import type { Member, User } from '@/types'
@@ -53,7 +54,7 @@ export const enrichTransactionPresentation = (
   },
   context: {
     supportedTokens: ReadonlyArray<SupportedTokenPresentation>
-    getTokenPrice: (tokenId: TokenId) => number
+    getTokenPrice: (tokenId: TokenId) => number | null
   }
 ) => {
   const tokenAddress = String(transaction.tokenAddress ?? '').toLowerCase()
@@ -65,8 +66,8 @@ export const enrichTransactionPresentation = (
   const tokenId = matchedToken?.id ?? resolveTokenIdByAddress(tokenAddress)
   const amount = transaction.amount ?? 0
   const numericAmount = Number(amount)
-  const priceInLocal = tokenId ? context.getTokenPrice(tokenId) : 0
-  const amountLocal = Number.isFinite(numericAmount) ? numericAmount * priceInLocal : 0
+  const priceInLocal = tokenId ? context.getTokenPrice(tokenId) : null
+  const amountLocal = tokenId ? valueTokenAmount(numericAmount, priceInLocal) : null
 
   return { tokenAddress, token, amount, amountLocal }
 }

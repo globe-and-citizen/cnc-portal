@@ -5,8 +5,7 @@ const sourceDir = path.join(import.meta.dirname, '../ignition/deployments')
 
 const destinationDirs = [
   path.resolve(import.meta.dirname, '../../app/src/artifacts/deployed_addresses'),
-  path.resolve(import.meta.dirname, '../../dashboard/app/artifacts/deployed_addresses'),
-  path.resolve(import.meta.dirname, '../../ponder/artifacts/deployed_addresses')
+  path.resolve(import.meta.dirname, '../../dashboard/app/artifacts/deployed_addresses')
 ]
 
 // The version registry (source of truth mapping Officer-generation tags to
@@ -18,7 +17,6 @@ const registrySource = path.resolve(import.meta.dirname, '../versions/registry.j
 const registryDestinations = [
   path.resolve(import.meta.dirname, '../../app/src/artifacts/version-registry.json'),
   path.resolve(import.meta.dirname, '../../dashboard/app/artifacts/version-registry.json'),
-  path.resolve(import.meta.dirname, '../../ponder/artifacts/version-registry.json'),
   path.resolve(import.meta.dirname, '../../backend/src/artifacts/version-registry.json')
 ]
 

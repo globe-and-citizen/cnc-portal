@@ -39,4 +39,19 @@ describe('buildMapperContext', () => {
     // native is not pegged → resolver ($3) × 1 whole token (18 decimals).
     expect(ctx.toUsd(10n ** 18n, 'native', new Date(0))).toBe(3)
   })
+
+  it('resolves the SHER of every Investor generation, not only the current one', () => {
+    const previousInvestor = '0xc0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0'
+    const redeployed = buildMapperContext({
+      contracts: [
+        ...contracts,
+        { address: previousInvestor, type: 'InvestorV1' }
+      ] as unknown as TeamContract[],
+      internalAddresses: new Set(),
+      sherTokenAddress: ADDR.sherToken
+    })
+
+    expect(redeployed.tokenIdOf(previousInvestor)).toBe('sher')
+    expect(redeployed.tokenIdOf(ADDR.sherToken)).toBe('sher')
+  })
 })

@@ -377,49 +377,96 @@ The [shared network-session recovery policy](../authentication/README.md#us-auth
 workspace and deployment actions. Officer and Safe factory deployment use the shared write executor; Campaign deployment requests a wallet
 client and tracks its receipt on the configured chain.
 
+## Board action failure and recovery
+
+Board-mediated requests use one observable mutation lifecycle for preparation, the confirmed contract write and required backend
+registration. Missing company/Board context, a failed action-count read and a rejected write remain errors; the request stays pending
+through registration. Ownership transfer keeps its form open and displays the Board error instead of treating a resolved empty result as
+success. Ownership error feedback follows the active direct or Board submission mode, so a previous Board failure cannot mask a new direct
+transfer error. Bank transfers, treasury returns and dividends use this same shared contract.
+
+If registration fails after the chain confirms, the error explicitly identifies the confirmed Board action and missing record. The workflow
+does not automatically retry the chain write; inspect Contract Management before submitting again. Board-member discovery and notification
+delivery remain best-effort and cannot turn a registered action into failure. Each request retains the company and Board address captured
+when preparation begins.
+
+## Managed row and ownership-target boundaries
+
+The current and historical contract tables consume the actual enriched read model, including address, ABI, kind, deployer, owner and pause
+state. Desktop/mobile actions preserve that row rather than converting it to a generic dictionary. Generation metadata retains unknown
+contract kinds for inspection; that does not add pause support or management rights.
+
+An absent selection is represented as null. Action surfaces remain absent in that state, and ownership transfer requires an actual selected
+target. The transfer boundary consumes only its address, ABI and kind; direct and Board actions keep the same target, encoded method and
+success handling. A shared generation-metadata type connects current/archived producers without a broad row cast.
+
+[Compiler row checks](../../implementation/client-utilities/README.md#domain-row-contracts) reject missing fields and cross-domain rows.
+These static contracts do not replace runtime authorization, schema validation or product acceptance; unrelated generic table and Board
+action consumers remain outside this bounded migration.
+
+## Campaign Manager settings draft
+
+Manager settings retain the typed `CampaignManagerSettings` read result through the settings form. The form owns a local draft of click and
+impression rates and a confirmed-rate baseline; it does not convert the model to generic string rows or send edits back into the query
+result. The Bank destination remains read-only. Input normalization, positive changed-rate validation, 18-decimal write arguments and the
+archived-company guard retain their existing rules.
+
+Opening the settings panel with loaded data mounts a fresh draft. Closing discards unsaved edits; reopening uses the latest loaded rates.
+Changing manager or chain replaces the form for that identity. A background settings refresh updates a pristine draft and its baseline but
+does not overwrite active edits. Each confirmed field advances its own baseline, so an unconfirmed field remains editable/retryable; the
+panel closes only after all writes submitted by that save have confirmed. These frontend tests use controlled query data and write
+callbacks, not real wallet transactions or product acceptance.
+
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `635eb92ec16d0fa5fca930d458b0e35453af94d2`
+**Implementation evidence reviewed against:** `ce6ae5493392f46869705f37900480ed34d0723c`
 
+- [Real Board mutation lifecycle tests](../../../app/src/composables/bod/__tests__/writes.spec.ts)
 - [Board reads](../../../app/src/composables/bod/reads.ts), [Board writes](../../../app/src/composables/bod/writes.ts),
   [shared contract reads](../../../app/src/composables/contracts/useContractReadData.ts), and
   [shared contract writes](../../../app/src/composables/contracts/useContractWritesV3.ts)
-- [Proposal creation](../../../app/src/components/sections/ProposalsView/forms/CreateProposalForm.vue)
 - [Contract Management page and Officer-generation derivation](../../../app/src/views/team/%5Bid%5D/ContractManagementView.vue)
-- [Current contract section](../../../app/src/components/sections/ContractManagementView/MainContractSection.vue)
-- [Current contract table and selected action boundary](../../../app/src/components/sections/ContractManagementView/MainContractTable.vue)
+- [Current contract section](../../../app/src/components/sections/ContractManagementView/CurrentOfficerContractsSection.vue)
+- [Current contract table and selected action boundary](../../../app/src/components/sections/ContractManagementView/ManagedContractsTable.vue)
 - [Version-aware pause capability policy](../../../app/src/utils/contracts/pauseCapabilities.ts) and
-  [capability-backed contract reads](../../../app/src/composables/contracts/readTeamContracts.ts)
-- [Current contract desktop table](../../../app/src/components/sections/ContractManagementView/MainContractDesktopTable.vue)
-- [Current contract action menu](../../../app/src/components/sections/ContractManagementView/MainContractActionMenu.vue)
-- [Current contract mobile card](../../../app/src/components/sections/ContractManagementView/MainContractMobileCard.vue)
-- [Current contract action surfaces](../../../app/src/components/sections/ContractManagementView/MainContractActions.vue)
-- [Current contract table row model](../../../app/src/components/sections/ContractManagementView/MainContractTable.types.ts)
+  [capability-backed contract reads](../../../app/src/composables/contracts/readManagedContracts.ts)
+- [Current contract desktop table](../../../app/src/components/sections/ContractManagementView/ManagedContractsDesktopTable.vue)
+- [Current contract action menu](../../../app/src/components/sections/ContractManagementView/ManagedContractActionMenu.vue)
+- [Current contract mobile card](../../../app/src/components/sections/ContractManagementView/ManagedContractMobileCard.vue)
+- [Current contract action surfaces](../../../app/src/components/sections/ContractManagementView/ManagedContractActionDialogs.vue)
+- [Current contract table row model](../../../app/src/components/sections/ContractManagementView/ManagedContractsTable.types.ts)
 - [Ownership recipient selection](../../../app/src/components/sections/ContractManagementView/forms/TransferOwnershipForm.vue)
 - [Ownership transfer behaviour](../../../app/src/composables/contracts/useContractOwnershipTransfer.ts)
-- [Contract-status behaviour](../../../app/src/composables/contracts/useContractStatusChange.ts)
-- [Pending Board-action behaviour](../../../app/src/components/sections/ContractManagementView/MainContractActions.vue)
+- [Contract-status behaviour](../../../app/src/composables/contracts/useContractPauseToggle.ts)
+- [Pending Board-action behaviour](../../../app/src/components/sections/ContractManagementView/ManagedContractActionDialogs.vue)
 - [Pending Board-action data formatting](../../../app/src/utils/contracts/management.ts)
 - [Integrated Board dividend approval and quorum execution](../../../app/test/e2e/shareholder/shareholder-issuance-dividends.integrated.spec.ts),
   including persistence of the first zero-based Board action
-- [Campaign Management section](../../../app/src/components/sections/ContractManagementView/AdvertiseContractSection.vue)
+- [Campaign Manager administrator controls](../../../app/src/components/sections/ContractManagementView/CampaignManagerAdminsSection.vue),
+  [pending Board action table](../../../app/src/components/sections/ContractManagementView/PendingBodActionsTable.vue), and
+  [Board action party details](../../../app/src/components/sections/ContractManagementView/BodApprovalDetails.vue)
+- [Campaign Manager selection and settings lifetime](../../../app/src/components/sections/ContractManagementView/CampaignManagersSection.vue),
+  [typed rate form](../../../app/src/components/sections/ContractManagementView/forms/CampaignManagerRatesForm.vue),
+  [draft/confirmation tests](../../../app/src/components/sections/ContractManagementView/forms/__tests__/CampaignManagerRatesForm.spec.ts),
+  and [parent/form lifetime tests](../../../app/src/components/sections/ContractManagementView/__tests__/CampaignManagersSection.spec.ts)
+- [Campaign Management section](../../../app/src/components/sections/ContractManagementView/AdvertisingCampaignsSection.vue)
 - [Advertising campaign workspace](../../../app/src/components/sections/ContractManagementView/AdvertisingCampaignWorkspace.vue)
-- [Campaign Manager setup form](../../../app/src/components/sections/ContractManagementView/forms/CreateAddCampaign.vue) and
+- [Campaign Manager setup form](../../../app/src/components/sections/ContractManagementView/forms/DeployCampaignManagerForm.vue) and
   [Campaign Manager deployment mutation](../../../app/src/composables/useContractFunctions.ts)
-- [Deployment history section](../../../app/src/components/sections/ContractManagementView/DeploymentHistorySection.vue)
-- [Officer redeploy entry point](../../../app/src/components/sections/ContractManagementView/MainContractSection.vue)
+- [Deployment history section](../../../app/src/components/sections/ContractManagementView/OfficerDeploymentHistorySection.vue)
+- [Officer redeploy entry point](../../../app/src/components/sections/ContractManagementView/CurrentOfficerContractsSection.vue)
 - [Officer redeploy form and recovery actions](../../../app/src/components/sections/ContractManagementView/RedeployOfficerModal.vue)
 - [Officer redeploy workflow](../../../app/src/composables/contracts/useOfficerRedeploy.ts)
 - [Integrated shareholder migration lifecycle](../../../app/test/e2e/shareholder/shareholder-migration.integrated.spec.ts), which reuses the
   Officer redeployment and migration-root commit journey for `AC-US-CONTRACT-005-03`
 - [Officer deployment authority cleanup](../../../contract/contracts/Officer.sol) and
   [Investor ownership authority transfer](../../../contract/contracts/Investor/Investor.sol)
-- [Current contract action tests](../../../app/src/components/sections/ContractManagementView/__tests__/MainContractActions.spec.ts)
-- [Current contract table tests](../../../app/src/components/sections/ContractManagementView/__tests__/MainContractTable.spec.ts)
-- [Current contract action-menu tests](../../../app/src/components/sections/ContractManagementView/__tests__/MainContractActionMenu.spec.ts)
+- [Current contract action tests](../../../app/src/components/sections/ContractManagementView/__tests__/ManagedContractActionDialogs.spec.ts)
+- [Current contract table tests](../../../app/src/components/sections/ContractManagementView/__tests__/ManagedContractsTable.spec.ts)
+- [Current contract action-menu tests](../../../app/src/components/sections/ContractManagementView/__tests__/ManagedContractActionMenu.spec.ts)
 - [Pause capability policy tests](../../../app/src/utils/contracts/__tests__/pauseCapabilities.spec.ts),
-  [pause-state read tests](../../../app/src/composables/contracts/__tests__/readTeamContracts.spec.ts), and
-  [pause-state presentation tests](../../../app/src/components/sections/ContractManagementView/__tests__/MainContractPauseStatus.spec.ts)
+  [pause-state read tests](../../../app/src/composables/contracts/__tests__/readManagedContracts.spec.ts), and
+  [pause-state presentation tests](../../../app/src/components/sections/ContractManagementView/__tests__/ManagedContractsPauseStatus.spec.ts)
 - [Officer redeploy form tests](../../../app/src/components/sections/ContractManagementView/__tests__/RedeployOfficerModal.spec.ts)
 - [Officer deployment tests](../../../contract/test/Officer.spec.ts) and [Investor authority tests](../../../contract/test/Investor.spec.ts)
 
@@ -447,9 +494,9 @@ client and tracks its receipt on the configured chain.
   the active-generation entry point, and `005-05` checks a blank name but not a blank symbol.
 - Historic balance recovery overlaps the Bank account result in `AC-US-BANK-004-02`. Contract Management owns initiating recovery; Accounts
   owns verifying the receiving Bank balance. Their combined evidence must not be counted twice as separate completed transfers.
-- The legacy TeamContractDetailExtend suite duplicates the current manager-settings coverage with obsolete mocks and assertion-free cases,
-  while TeamContractEventList exercises a component that no current product surface imports. Both suites remain intentionally unmapped
-  pending cleanup or restoration of a reachable journey.
+- CampaignEventsTable exercises a component that no current product surface imports. That suite remains intentionally unmapped pending
+  cleanup or restoration of a reachable journey. Manager-settings draft/confirmation coverage is consolidated in CampaignManagerRatesForm;
+  parent lifetime checks exercise the real form with controlled settings reads and shared mutation mocks.
 
 ## Related Documentation
 

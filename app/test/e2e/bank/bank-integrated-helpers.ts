@@ -1,3 +1,4 @@
+import { formatTxHash } from '../../../src/utils/format/address'
 import { expect, type Locator, type Page } from '@playwright/test'
 import { parseAbiItem, type Address, type Hex } from 'viem'
 import { publicClient } from '../e2e-chain'
@@ -73,7 +74,7 @@ export async function expectBankHistoryEntry(
   amount: string
 ): Promise<void> {
   const history = page.locator('[data-test="bank-transactions"]')
-  const abbreviatedHash = `${hash.slice(0, 6)}…${hash.slice(-4)}`
+  const abbreviatedHash = formatTxHash(hash)
   const row = history.locator('tbody tr').filter({ hasText: abbreviatedHash })
   await expect(row).toHaveCount(1, { timeout: 30_000 })
   await expect(row).toContainText(label)

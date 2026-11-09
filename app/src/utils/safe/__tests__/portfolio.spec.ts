@@ -182,6 +182,12 @@ describe('Safe Gateway holdings presentation', () => {
     expect(data).toEqual(before)
   })
 
+  it('keeps missing transfer-token fiat estimates unavailable', () => {
+    const data = response([heldAsset({ fiatConversion: null, fiatBalance: null })])
+    const tokens = toSafeTransferTokens(data)
+    expect(tokens.every(({ price }) => price === null)).toBe(true)
+  })
+
   it('matches supported assets by contract and never enables a discovered token for CNC transfers', () => {
     const supported = SUPPORTED_TOKENS[0]!
     const data = response([

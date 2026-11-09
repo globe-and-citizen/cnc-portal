@@ -16,17 +16,17 @@ const routeContext = (
 describe('routeForSelectedTeam', () => {
   it('changes only the company on a team-scoped route', () => {
     const route = routeContext({
-      name: 'proposal-detail',
-      params: { id: '1', proposalId: '9' },
-      query: { tab: 'votes', filter: ['open', 'owned'] },
-      hash: '#result'
+      name: 'contract-management',
+      params: { id: '1' },
+      query: { tab: 'active' },
+      hash: '#current'
     })
 
     expect(routeForSelectedTeam(route, '42')).toEqual({
-      name: 'proposal-detail',
-      params: { id: '42', proposalId: '9' },
-      query: { tab: 'votes', filter: ['open', 'owned'] },
-      hash: '#result'
+      name: 'contract-management',
+      params: { id: '42' },
+      query: { tab: 'active' },
+      hash: '#current'
     })
   })
 

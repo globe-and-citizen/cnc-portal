@@ -43,6 +43,7 @@
         <LedgerTable
           :rows="pageRows"
           :total="total"
+          :movements="balance?.movements"
           :visible-columns="visibleColumns"
           :show-balance="!!balance?.account"
           :closing-balance="balance?.closing"

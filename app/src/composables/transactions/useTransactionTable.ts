@@ -13,10 +13,10 @@ type TransactionBase = {
   from: string
   to: string
   amount: string | number
-  amountUSD: number
+  amountUSD: number | null
   tokenAddress: string
   token: string
-  amountLocal?: number
+  amountLocal?: number | null
 }
 
 export const childHidden = (cell: { row: { depth: number } }) =>

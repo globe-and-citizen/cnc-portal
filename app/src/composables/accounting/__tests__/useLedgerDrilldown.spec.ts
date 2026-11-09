@@ -45,7 +45,7 @@ describe('useLedgerDrilldown', () => {
     expect(specs[0]).toMatchObject({
       key: 'ledger',
       journalAccountLabel: 'Investor Equity',
-      journalAccountTotal: drilldown.selectedLine.value?.total
+      journalAccountMovements: drilldown.balance.value.movements
     })
     expect(specs[0].journalAccounts.length).toBeGreaterThan(0)
     expect(specs[0].columns).toEqual(['activity', 'dr'])
@@ -55,7 +55,8 @@ describe('useLedgerDrilldown', () => {
   it('keeps an aggregate statement figure and selects the union of its journal entries', () => {
     const drilldown = useLedgerDrilldown(entries, bounds)
     const accounts = ['Payroll Expense', 'Deferred SHER Compensation'] as const
-    drilldown.openFor(accounts, '-$50.00', 'Earnings to date')
+    const exactAmount = -50n * 10n ** 24n
+    drilldown.openFor(accounts, '-$50.00', 'Earnings to date', exactAmount)
 
     expect(drilldown.selectedLine.value).toMatchObject({
       label: 'Earnings to date',
@@ -63,6 +64,23 @@ describe('useLedgerDrilldown', () => {
     })
     expect(drilldown.drilldownEntries.value).toEqual(entriesForAccount(journal, accounts))
     expect(drilldown.balance.value.account).toBeNull()
+    expect(drilldown.balance.value.movements).toEqual({ debit: '-$50.00', credit: '-$50.00' })
+    drilldown.onExport('excel', ['dr', 'cr'])
+    expect(exportExcel.mock.calls[0][0][0].journalAccountAmounts).toEqual({
+      debit: exactAmount,
+      credit: exactAmount
+    })
+  })
+
+  it('[AC-US-ACCT-002-17] totals only the drilled account’s own debits and credits, not its entries’ other lines', () => {
+    const drilldown = useLedgerDrilldown(entries, bounds)
+    drilldown.openFor('Payroll Expense', '$0.00')
+
+    expect(drilldown.drilldownEntries.value.length).toBeGreaterThan(0)
+    expect(drilldown.balance.value.movements).toEqual({
+      debit: drilldown.selectedLine.value?.total,
+      credit: money(0n)
+    })
   })
 
   it('uses the concrete Account of a Trial Balance row for a running balance', () => {

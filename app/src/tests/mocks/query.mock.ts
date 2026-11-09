@@ -63,6 +63,7 @@ export const mockTeamData: Team = {
   },
   isMigrated: true,
   isHidden: false,
+  isFavorite: false,
   isArchived: false
 }
 
@@ -284,13 +285,8 @@ export const createMockMutationResponse = <T = unknown>(
 })
 
 export const mockSyncWeeklyClaimsMutation = {
-  mutate: vi.fn(),
-  mutateAsync: vi.fn().mockResolvedValue(undefined),
-  isPending: ref(false),
-  isError: ref(false),
-  error: ref(null),
-  data: ref(null),
-  reset: vi.fn()
+  ...createMockMutationResponse(),
+  mutateAsync: vi.fn().mockResolvedValue(undefined)
 }
 
 /**
@@ -347,9 +343,6 @@ export const queryMocks: Record<string, () => Record<string, unknown>> = {
   useCreateActionMutation: () => createMockMutationResponse(),
   useUpdateActionMutation: () => createMockMutationResponse(),
   useCreateElectionNotificationsMutation: () => createMockMutationResponse(),
-
-  // Auth queries - auth.queries.ts
-  useGetValidateTokenQuery: () => createMockQueryResponse(null),
 
   // Contract queries - contract.queries.ts
   useCreateContractMutation: () => createMockMutationResponse(),
