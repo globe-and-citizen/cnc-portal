@@ -40,13 +40,12 @@ describe('useAccountingExport', () => {
     expect(buildTables).toHaveBeenCalledWith({ journal }, specs, expect.any(Function))
     expect(exportTablesPdf).toHaveBeenCalledWith(['pdf-table'], {
       filename: 'ledger.pdf',
-      teamName: mockTeamStore.currentTeamMeta.data.name,
-      coverage: null
+      teamName: mockTeamStore.currentTeamMeta.data.name
     })
     expect(mockToast.add).toHaveBeenCalledWith({ title: 'Exported to PDF', color: 'success' })
   })
 
-  it('[AC-US-ACCT-004-10] prints the selected period instead of the activity span when one is given', async () => {
+  it('[AC-US-ACCT-004-10] passes the selected period on to the PDF heading', async () => {
     await useAccountingExport().exportPdf(specs, {
       filename: 'report.pdf',
       coverage: 'Period Jan 1, 2026 – Jan 31, 2026'

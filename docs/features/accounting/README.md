@@ -396,8 +396,7 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 - [x] `AC-US-ACCT-004-06` Balance Sheet exports retain concrete account rows, their nature and balance as reviewed on screen, and the
       account contributions behind `Earnings to date`.
 - [x] `AC-US-ACCT-004-07` Monetary display conversion and rounding happen after exact journal and report totals are calculated.
-- [x] `AC-US-ACCT-004-10` A PDF export names the team and the selected period, or the period of activity the books cover when none is
-      selected.
+- [x] `AC-US-ACCT-004-10` A PDF export names the team and, when a summary report covers a selected period, that period.
 - [x] `AC-US-ACCT-004-11` A summary export covers one selected period across all its sections: flows and entries stay inside the period,
       balances are stated as of its end, and the other reports keep their own dates.
 - [x] `AC-US-ACCT-004-12` A summary export uses the period selected on the overview and states it before the member exports.

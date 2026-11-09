@@ -135,18 +135,6 @@ export function periodLabel(from?: Date | null, to?: Date | null): string {
   return 'All time'
 }
 
-/**
- * The span of activity a set of books records, e.g. `"Activity Dec 21, 2025 – Oct 4, 2026"`,
- * so an unfiltered export still says which period it covers. Empty books have none.
- */
-export function activityCoverageLabel(entries: readonly { timestamp: number }[]): string | null {
-  if (!entries.length) return null
-  const timestamps = entries.map((entry) => entry.timestamp)
-  const first = fromUnix(Math.min(...timestamps)).toDate()
-  const last = fromUnix(Math.max(...timestamps)).toDate()
-  return `Activity ${periodLabel(first, last)}`
-}
-
 /** A single calendar day at day granularity, e.g. `"Jul 8, 2026"`. */
 export function dayLabel(date: Date): string {
   return formatDate(date)

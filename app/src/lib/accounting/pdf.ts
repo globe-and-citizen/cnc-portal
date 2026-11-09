@@ -252,8 +252,8 @@ export interface ExportPdfOptions {
   pageBreak?: boolean
   /** Team whose books these are, printed in the document title. */
   teamName?: string
-  /** Span of activity the books record, printed under the title. */
-  coverage?: string | null
+  /** The report's selected period, printed under the title. */
+  coverage?: string
 }
 
 /** The document title and the line under it, naming whose books and which period. */
