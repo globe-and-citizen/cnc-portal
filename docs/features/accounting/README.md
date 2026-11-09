@@ -985,7 +985,7 @@ valuation gap. The existing completeness rules apply to every booked movement. S
 [Safe pagination and metadata unit tests](../../../app/src/queries/__tests__/safe.queries.spec.ts) and
 [Safe source-mapping tests](../../../app/src/utils/accounting/__tests__/safe.spec.ts). Live product review remains pending.
 
-**Implementation evidence reviewed against:** `7f2404127cdcfab3ae59f85aa8052a4f3253d1a4`
+**Implementation evidence reviewed against:** `03cc65c95b8fd326299af427a1a2e103eaf19350`
 
 - [Accounting page](../../../app/src/components/sections/AccountingView/AccountingPage.vue),
   [team routes](../../../app/src/router/index.ts), and [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts)
