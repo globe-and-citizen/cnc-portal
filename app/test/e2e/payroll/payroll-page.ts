@@ -142,6 +142,10 @@ export async function submitDailyClaim(
   ).toBeEnabled({ timeout: 10_000 })
   await openClaim.click()
   const dialog = page.getByRole('dialog', { name: 'Submit Claim' })
+  await expect(
+    dialog,
+    'The claim form only opens once weekly goals are saved for the selected week'
+  ).toBeVisible({ timeout: 10_000 })
   await dialog.locator('[data-test="hours-worked-input"]').fill(options.hours)
   await dialog.locator('[data-test="memo-input"]').fill(options.memo)
   await dialog.locator('[data-test="submit-claim-button"]').click()
