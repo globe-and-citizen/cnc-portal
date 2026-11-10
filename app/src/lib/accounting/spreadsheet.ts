@@ -10,37 +10,47 @@
 import type { AccountingExportSnapshot } from '@/utils/accounting/exportSpec'
 import {
   presentIncome,
-  presentBalance,
   presentTrial,
   presentSummary,
+  summaryExportTitle,
   incomeExportTitle,
-  balanceExportTitle,
   trialExportTitle
 } from '@/utils/accounting/presenter'
 import type { SectionKey, SectionSpec } from '@/utils/accounting/exportSpec'
 import {
   ACCOUNT_ASSIGNMENTS_TITLE,
   ACCOUNT_ASSIGNMENT_COLUMNS,
+  assignmentsExportTitle,
   assignmentStatus,
   presentJournalAccountAssignments
 } from '@/utils/accounting/journalAccountAssignmentPresenter'
+import { balanceSheetContent } from './balanceSheetSheet'
 import { generalLedgerSheetRows } from './generalLedgerSheet'
 import { spreadsheetUsd } from './spreadsheetNumber'
 
 type Cell = string | number
-type SheetRows = Cell[][]
+export type SheetRows = Cell[][]
 /** Turns a party's address into a display name; defaults to a shortened address. */
 export type ResolveName = (address: string) => string
 
-interface AccountingSheet {
-  name: string
+export interface SheetContent {
   rows: SheetRows
+  /** Rows printed bold on a tinted fill; setting it replaces the zebra stripes. */
+  emphasizedRows?: number[]
 }
 
-function summarySheet(books: AccountingExportSnapshot): SheetRows {
-  const { cards, banner } = presentSummary(books.journal)
+interface AccountingSheet extends SheetContent {
+  name: string
+}
+
+function summarySheet(
+  books: AccountingExportSnapshot,
+  from?: Date | null,
+  to?: Date | null
+): SheetRows {
+  const { cards, banner } = presentSummary(books.journal, from, to)
   return [
-    ['Summary'],
+    [summaryExportTitle(from, to)],
     [],
     ...cards.map((card) => [card.label, spreadsheetUsd(card.amount)]),
     [],
@@ -71,31 +81,6 @@ function incomeSheet(
   ]
 }
 
-function balanceSheetRows(books: AccountingExportSnapshot, asOf?: Date | null): SheetRows {
-  const balance = presentBalance(books.journal, asOf)
-  return [
-    [balanceExportTitle(asOf)],
-    [],
-    ['Assets'],
-    ...balance.assetLines.map((line) => [line.label, spreadsheetUsd(line.amount)]),
-    ['Total assets', spreadsheetUsd(balance.amounts.totalAssets)],
-    [],
-    ['Liabilities'],
-    ...balance.liabilityLines.map((line) => [line.label, spreadsheetUsd(line.amount)]),
-    ['Total liabilities', spreadsheetUsd(balance.amounts.totalLiabilities)],
-    [],
-    ['Equity'],
-    ...balance.equityLines.map((line) => [line.label, spreadsheetUsd(line.amount)]),
-    ['Total equity', spreadsheetUsd(balance.amounts.totalEquity)],
-    [],
-    ['Earnings to date calculation'],
-    ...balance.earningsLines.map((line) => [line.label, spreadsheetUsd(line.amount)]),
-    ['Earnings to date', spreadsheetUsd(balance.amounts.earningsToDate)],
-    [],
-    ['Liabilities + Equity', spreadsheetUsd(balance.amounts.liabilitiesPlusEquity)]
-  ]
-}
-
 function trialSheet(books: AccountingExportSnapshot, asOf?: Date | null): SheetRows {
   const trial = presentTrial(books.journal, asOf)
   return [
@@ -117,10 +102,14 @@ function trialSheet(books: AccountingExportSnapshot, asOf?: Date | null): SheetR
   ]
 }
 
-function assignmentsSheet(books: AccountingExportSnapshot): SheetRows {
-  const { rows } = presentJournalAccountAssignments(books.journal)
+function assignmentsSheet(
+  books: AccountingExportSnapshot,
+  from?: Date | null,
+  to?: Date | null
+): SheetRows {
+  const { rows } = presentJournalAccountAssignments(books.journal, from, to)
   return [
-    [ACCOUNT_ASSIGNMENTS_TITLE],
+    [assignmentsExportTitle(from, to)],
     [],
     ACCOUNT_ASSIGNMENT_COLUMNS.map((column) => column.label),
     ...rows.map((row) => [
@@ -146,24 +135,24 @@ const SHEET_NAME: Record<SectionKey, string> = {
   assignments: ACCOUNT_ASSIGNMENTS_TITLE
 }
 
-/** Build a single section's sheet from its spec. */
-function sectionSheet(
+/** Build a single section's content from its spec. */
+function sectionContent(
   books: AccountingExportSnapshot,
   spec: SectionSpec,
   resolveName?: ResolveName
-): AccountingSheet {
-  const rows = (() => {
-    switch (spec.key) {
-      case 'summary':
-        return summarySheet(books)
-      case 'income':
-        return incomeSheet(books, spec.from, spec.to)
-      case 'balance':
-        return balanceSheetRows(books, spec.asOf)
-      case 'trial':
-        return trialSheet(books, spec.asOf)
-      case 'ledger':
-        return generalLedgerSheetRows(books, resolveName, {
+): SheetContent {
+  switch (spec.key) {
+    case 'summary':
+      return { rows: summarySheet(books, spec.from, spec.to) }
+    case 'income':
+      return { rows: incomeSheet(books, spec.from, spec.to) }
+    case 'balance':
+      return balanceSheetContent(books, spec.asOf)
+    case 'trial':
+      return { rows: trialSheet(books, spec.asOf) }
+    case 'ledger':
+      return {
+        rows: generalLedgerSheetRows(books, resolveName, {
           from: spec.from,
           to: spec.to,
           columns: spec.columns,
@@ -172,11 +161,19 @@ function sectionSheet(
           journalAccountLabel: spec.journalAccountLabel,
           journalAccountAmounts: spec.journalAccountAmounts
         })
-      case 'assignments':
-        return assignmentsSheet(books)
-    }
-  })()
-  return { name: SHEET_NAME[spec.key], rows }
+      }
+    case 'assignments':
+      return { rows: assignmentsSheet(books, spec.from, spec.to) }
+  }
+}
+
+/** Build a single section's sheet from its spec. */
+function sectionSheet(
+  books: AccountingExportSnapshot,
+  spec: SectionSpec,
+  resolveName?: ResolveName
+): AccountingSheet {
+  return { name: SHEET_NAME[spec.key], ...sectionContent(books, spec, resolveName) }
 }
 
 /** Build sheets for an arbitrary section selection, in the order given. */
@@ -211,8 +208,9 @@ type XlsxModule = typeof import('xlsx-js-style')
  * a slightly larger font and auto-sized columns. Blank spacer rows are left untouched
  * so they keep separating the sub-sections. Requires a style-aware SheetJS build.
  */
-function styleSheet(ws: any, XLSX: XlsxModule): void {
+function styleSheet(ws: any, XLSX: XlsxModule, emphasizedRows?: readonly number[]): void {
   const range = XLSX.utils.decode_range(ws['!ref'] ?? 'A1')
+  const emphasized = new Set(emphasizedRows)
 
   const rowHasContent = (r: number): boolean => {
     for (let c = range.s.c; c <= range.e.c; c++) {
@@ -231,11 +229,11 @@ function styleSheet(ws: any, XLSX: XlsxModule): void {
     for (let c = range.s.c; c <= range.e.c; c++) {
       const addr = XLSX.utils.encode_cell({ r, c })
       if (!ws[addr]) ws[addr] = { t: 's', v: '' }
-      const style: any = { font: { sz: 12, bold: isTitle } }
+      const style: any = { font: { sz: 12, bold: isTitle || emphasized.has(r) } }
       if (isTitle) {
         style.fill = { patternType: 'solid', fgColor: { rgb: HEADER_FILL } }
         style.font.color = { rgb: 'FFFFFF' }
-      } else if (stripe) {
+      } else if (emphasizedRows ? emphasized.has(r) : stripe) {
         style.fill = { patternType: 'solid', fgColor: { rgb: ZEBRA_FILL } }
       }
       ws[addr].s = style
@@ -267,7 +265,7 @@ export async function exportSheetsExcel(
   const workbook = XLSX.utils.book_new()
   for (const sheet of sheets) {
     const ws = XLSX.utils.aoa_to_sheet(sheet.rows)
-    styleSheet(ws, XLSX)
+    styleSheet(ws, XLSX, sheet.emphasizedRows)
     XLSX.utils.book_append_sheet(workbook, ws, sheet.name)
   }
   // Build the file in-memory and download via a Blob — `XLSX.writeFile` relies on

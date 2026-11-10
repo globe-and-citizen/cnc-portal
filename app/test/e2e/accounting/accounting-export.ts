@@ -49,7 +49,10 @@ export async function exportSelectedSections(
   sections: readonly SectionKey[]
 ): Promise<Workbook> {
   await page.locator('[data-test="open-export-report"]').click()
-  await page.locator('[data-test="deselect-all"]').click()
+  const toggleAll = page.locator('[data-test="toggle-all-sections"]')
+  // The modal keeps its selection: a partial one offers "Select all" before "Deselect all".
+  if ((await toggleAll.textContent())?.trim() === 'Select all') await toggleAll.click()
+  await toggleAll.click()
   for (const section of sections) {
     await page.locator(`[data-test="section-${section}"]`).getByRole('checkbox').click()
   }

@@ -29,6 +29,22 @@ describe('BalanceSheetTable', () => {
     wrapper.unmount()
   })
 
+  it('leaves the nature of the total row blank', () => {
+    const wrapper = renderWithProviders(BalanceSheetTable, {
+      props: {
+        title: 'Assets',
+        rows: [],
+        totalLabel: 'Total assets',
+        total: '$2.00',
+        dataTest: 'balance-test'
+      }
+    })
+
+    expect(wrapper.text()).toContain('Total assets')
+    expect(wrapper.text()).not.toContain('Equity')
+    wrapper.unmount()
+  })
+
   it('labels signed earnings rows as contributions when requested', () => {
     const wrapper = renderWithProviders(BalanceSheetTable, {
       props: {

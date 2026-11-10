@@ -226,10 +226,13 @@ validated `JournalEntry` collection. Account and statement drill-downs project t
 concrete `Account` or an account family and compute a running balance only from the selected account's own lines.
 
 The reactive view context exposes the journal, not the source-draft feed, account registry, or precomputed report objects. The Summary
-export dialog reads the journal length directly, counting monetary and memo-only operations once. Export snapshots contain only the journal.
-The table and exporters share `LedgerRow` from the journal presenter and import their column definitions directly from `ledgerColumns`. Each
-report surface calls one focused presenter with the canonical journal and its optional scope. For example, Summary calls
-`presentSummary(journal)`, while the Trial Balance card and both export formats call `presentTrial(journal, asOf)`.
+export dialog counts the journal entries inside the Summary's selected period, counting monetary and memo-only operations once. Export
+snapshots contain only the journal. The table and exporters share `LedgerRow` from the journal presenter and import their column definitions
+directly from `ledgerColumns`. Each report surface calls one focused presenter with the canonical journal and its optional scope. For
+example, Summary calls `presentSummary(journal, from, to)`, while the Trial Balance card and both export formats call
+`presentTrial(journal, asOf)`. The Summary filters flows to its period and accumulates balances up to the period's end. Its report gives
+every section that same period, and `balanceExportRows` gives both export formats the Balance Sheet's on-screen sections. Each Accounting
+page saves its selected date under a key containing the team id.
 
 ### Source Mapping Boundaries
 
@@ -748,7 +751,7 @@ because deposits and company-pocket transfers are not manual assignment targets.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `da5006d10d8134a1c1b98532b00454929e190b9f`
+**Implementation evidence reviewed against:** `0d72330dc95f35f269e33446f30c6ab02d1c97f8`
 
 - [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts),
   [source-status projection](../../../app/src/composables/accounting/useAccountingStatus.ts),
