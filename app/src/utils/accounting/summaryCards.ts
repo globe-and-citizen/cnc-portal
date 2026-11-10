@@ -3,8 +3,8 @@
  *
  * Split from {@link ./presenter} (which turns the statements into their line
  * views) the way {@link ./ledgerCategory} was split from the ledger presenter, so
- * each module stays focused. Pure and unit-testable; the presenter re-exports
- * everything here, so callers can keep importing from it.
+ * each module stays focused. Pure and unit-testable; the presenter scopes the
+ * journal to a period and exposes the result through `presentSummary`.
  */
 import { formatUsd } from '@/utils/format'
 import { buildAccountingSummary } from './accountingSummary'
@@ -174,12 +174,19 @@ function summaryBanner(balance: BalanceSheet, ledger: GeneralLedger): SummaryBan
   }
 }
 
-/** Build the complete Summary display model from one canonical journal input. */
-export function presentSummary(entries: readonly JournalEntry[]): SummaryView {
-  const summary = buildAccountingSummary(entries)
-  const income = buildIncomeStatement(entries)
-  const balance = buildBalanceSheet(entries)
-  const ledger = buildGeneralLedger(entries)
+/**
+ * Build the complete Summary display model. Flows (revenue, expenses, fees, repayments)
+ * read the period's entries, while balances (assets, equity, debt, the balance checks)
+ * read every entry up to its end, because a balance carries what came before the period.
+ */
+export function buildSummaryView(
+  entriesInPeriod: readonly JournalEntry[],
+  entriesToDate: readonly JournalEntry[]
+): SummaryView {
+  const summary = buildAccountingSummary(entriesInPeriod)
+  const income = buildIncomeStatement(entriesInPeriod)
+  const balance = buildBalanceSheet(entriesToDate)
+  const ledger = buildGeneralLedger(entriesToDate)
 
   return {
     cards: summaryCards(summary, income, balance),

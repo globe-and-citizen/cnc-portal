@@ -29,7 +29,7 @@ describe('fractional report projections', () => {
     ])
     expect(sheets[0]!.rows.find((row) => row[0] === 'Net income')![1]).toBe(1.01)
     expect(sheets[1]!.rows.find((row) => row[0] === 'Total revenue')![1]).toBe(1.01)
-    expect(sheets[2]!.rows.find((row) => row[0] === 'Total assets')![1]).toBe(1.01)
+    expect(sheets[2]!.rows.find((row) => row[0] === 'Total assets')![2]).toBe(1.01)
     expect(sheets[3]!.rows.find((row) => row[0] === 'Total')!.slice(2)).toEqual([1.01, 1.01])
     expect(sheets[4]!.rows.at(-1)![9]).toBe(1.01)
     expect(sheets[5]!.rows.find((row) => row[0] === 'Total revenue')![1]).toBe(0)
