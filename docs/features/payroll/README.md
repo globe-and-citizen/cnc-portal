@@ -53,7 +53,7 @@ unchecked.
 
 1. The company owner sets a wage for the member.
 2. The owner funds the Cash Remuneration contract when non-mintable assets are required.
-3. The member optionally sets weekly goals and submits daily claims.
+3. The member sets weekly goals, then submits daily claims.
 4. The member can edit or delete claims while the week is pending.
 5. Once the week is complete, the Cash Remuneration owner signs the weekly claim.
 6. The member withdraws the signed claim on-chain.
@@ -92,7 +92,7 @@ Runs of at least three consecutive missing criteria use inclusive ranges with fu
 | US-PAYROLL-002 | ✅ Integrated | ⚠️ 11/12        | `AC-US-PAYROLL-002-03`                                                                         |
 | US-PAYROLL-003 | 🚧 Partial    | ⚠️ 3/8          | `AC-US-PAYROLL-003-01`, `AC-US-PAYROLL-003-02`, `AC-US-PAYROLL-003-06`–`AC-US-PAYROLL-003-08`  |
 | US-PAYROLL-004 | ✅ Integrated | ⚠️ 10/11        | `AC-US-PAYROLL-004-01`                                                                         |
-| US-PAYROLL-005 | ✅ Integrated | ⚠️ 24/25        | `AC-US-PAYROLL-005-01`                                                                         |
+| US-PAYROLL-005 | ✅ Integrated | ⚠️ 25/26        | `AC-US-PAYROLL-005-01`                                                                         |
 | US-PAYROLL-006 | ✅ Integrated | ⚠️ 12/13        | `AC-US-PAYROLL-006-01`                                                                         |
 | US-PAYROLL-007 | ✅ Integrated | ⚠️ 7/8          | `AC-US-PAYROLL-007-01`                                                                         |
 | US-PAYROLL-008 | ✅ Integrated | ⚠️ 16/17        | `AC-US-PAYROLL-008-01`                                                                         |
@@ -392,6 +392,8 @@ movement across the participating stories.
 - [x] `AC-US-PAYROLL-005-14` _(API)_ When submission restriction is active, the API accepts claims only for the current ISO week.
 - [x] `AC-US-PAYROLL-005-15` When submission restriction is active, the portal accepts work dates at most four days in the past.
 - [x] `AC-US-PAYROLL-005-16` _(API)_ When submission restriction is active, the API accepts work dates at most four days in the past.
+- [x] `AC-US-PAYROLL-005-26` The portal opens a daily-claim submission only once the member has set non-blank weekly goals for that week;
+      otherwise it tells the member to set them first.
 
 #### Edge & Error Cases
 
@@ -435,6 +437,7 @@ movement across the participating stories.
 | `AC-US-PAYROLL-005-23` | `PS-BACKEND`        | Backend          | ✅ Met          |
 | `AC-US-PAYROLL-005-24` | `PS-FRONTEND`       | Frontend         | ✅ Met          |
 | `AC-US-PAYROLL-005-25` | `PS-FRONTEND`       | Frontend         | ✅ Met          |
+| `AC-US-PAYROLL-005-26` | `PS-FRONTEND`       | Frontend         | ✅ Met          |
 
 **Accounting:** The daily claim changes the source amount for
 [`UC-CASH-02`](../accounting/journal-entry-catalogue.md#uc-cash-02--weekly-wage-accrual). The journal entry is created only after the

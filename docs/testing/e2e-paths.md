@@ -499,7 +499,8 @@ path individually. These path checks do not close the separate feature acceptanc
   - Stories validated:
     - `US-PAYROLL-001` — set a member's wage;
     - `US-PAYROLL-002` — pause or resume the wage.
-  - Dependencies: an operational company with owner and member.
+  - Dependencies: an operational company with owner and member. The member saves weekly goals before any claim because the portal requires
+    them first (`AC-US-PAYROLL-005-26`).
   - Main path:
     - [x] `US-PAYROLL-001` Create the member wage.
     - [x] `US-PAYROLL-001` Replace the member wage.
@@ -521,7 +522,8 @@ path individually. These path checks do not close the separate feature acceptanc
     - `US-PAYROLL-005` — submit a daily claim;
     - `US-PAYROLL-006` — edit a daily claim;
     - `US-PAYROLL-007` — delete a daily claim.
-  - Dependencies: an active wage prepared within each claim test; `E2E-PATH-11` owns wage configuration coverage, not shared state.
+  - Dependencies: an active wage and saved weekly goals prepared within each claim test; `E2E-PATH-11` owns wage configuration coverage, not
+    shared state.
   - Main path:
     - [x] `US-PAYROLL-004` Save weekly goals.
     - [x] `US-PAYROLL-005` Create an eligible daily work entry.
@@ -545,8 +547,8 @@ path individually. These path checks do not close the separate feature acceptanc
     - `US-PAYROLL-012` — review payroll history;
     - `US-PAYROLL-013` — review the Payroll account position.
   - Reused dependency: `US-PAYROLL-003` references the Accounts-owned funding journey and is not revalidated here.
-  - Dependencies: a claim-ready week prepared within this scenario, current contract owner, and funded Payroll contract. No state is reused
-    from `E2E-PATH-12`.
+  - Dependencies: a claim-ready week with saved weekly goals prepared within this scenario, current contract owner, and funded Payroll
+    contract. No state is reused from `E2E-PATH-12`.
   - Main path:
     - [x] `US-PAYROLL-008` Sign the completed weekly claim.
     - [x] `US-PAYROLL-009` Disable the signed weekly claim.
