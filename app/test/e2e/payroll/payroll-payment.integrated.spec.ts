@@ -14,6 +14,7 @@ import {
   openMemberPayrollHistory,
   openWeeklyClaimActions,
   selectHistoryWeek,
+  saveWeeklyGoals,
   setMemberUsdcWage,
   submitDailyClaim
 } from './payroll-page'
@@ -87,6 +88,7 @@ test.describe(
       const paidWeek = completedWeekStart()
       await openMemberPayrollHistory(memberPage, company.teamId, E2E_MEMBER)
       await selectHistoryWeek(memberPage, paidWeek)
+      await saveWeeklyGoals(memberPage, 'Deliver the completed Payroll week.')
       await submitDailyClaim(memberPage, { hours: '2', memo: 'Completed Payroll claim' })
       await expect(memberPage.locator('[data-test="daily-breakdown"]')).toContainText('2h')
 

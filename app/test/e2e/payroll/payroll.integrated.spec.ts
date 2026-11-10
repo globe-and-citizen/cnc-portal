@@ -47,6 +47,8 @@ test.describe(
         dailyCap: '6',
         hourlyRate: '2'
       })
+      await openMemberPayrollHistory(memberPage, company.teamId, E2E_MEMBER)
+      await saveWeeklyGoals(memberPage, 'Resume paid work after the wage pause.')
 
       const memberActions = page.locator(`[data-test="member-actions-${E2E_MEMBER}"]`)
       await memberActions.locator('[data-test="pause-wage-button"]').click()
@@ -153,6 +155,7 @@ test.describe(
       })
 
       await openMemberPayrollHistory(claimsPage, company.teamId, E2E_MEMBER)
+      await saveWeeklyGoals(claimsPage, 'Stay inside the daily and weekly caps.')
       await submitDailyClaim(claimsPage, { hours: '2', memo: 'Claim inside both caps' })
       await expect(claimsPage.locator('[data-test="daily-breakdown"]')).toContainText('2h')
 
