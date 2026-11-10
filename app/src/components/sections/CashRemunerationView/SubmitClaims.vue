@@ -48,10 +48,11 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
+import { useToast } from '@nuxt/ui/composables'
 import ClaimForm from '@/components/sections/CashRemunerationView/Form/ClaimForm.vue'
 import { useSubmitRestriction } from '@/composables'
 import { useTeamStore } from '@/stores'
-import type { ClaimFormData, ClaimSubmitPayload, Claim } from '@/types'
+import type { ClaimFormData, ClaimSubmitPayload, Claim, WeeklyClaim } from '@/types'
 import { useSubmitClaimMutation } from '@/queries/weeklyClaim.queries'
 import { startOfWeek } from '@/utils/dates/calendar'
 import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
@@ -88,9 +89,7 @@ const createDefaultFormData = (selectedWeekStart?: string): ClaimFormData => ({
 })
 
 const props = defineProps<{
-  weeklyClaim?: {
-    status: 'pending' | 'signed' | 'withdrawn' | 'disabled'
-  }
+  weeklyClaim?: Pick<WeeklyClaim, 'status'> & Partial<Pick<WeeklyClaim, 'weeklyGoals'>>
   signedWeekStarts?: string[]
   selectedWeekStart?: string
   maximumHoursPerDay?: number
@@ -99,7 +98,22 @@ const props = defineProps<{
 
 const formInitialData = ref<ClaimFormData>(createDefaultFormData(props.selectedWeekStart))
 
+const hasWeeklyGoals = computed(() => !!props.weeklyClaim?.weeklyGoals?.trim())
+
+const warnWeeklyGoalsRequired = () => {
+  toast.add({
+    title: 'Weekly goals required',
+    description: 'Submit your weekly goals for this week before submitting a claim.',
+    color: 'warning'
+  })
+}
+
 const openModalWithData = (initialData: ClaimFormData) => {
+  if (!hasWeeklyGoals.value) {
+    warnWeeklyGoalsRequired()
+    return
+  }
+
   formInitialData.value = initialData
   errorMessage.value = null
   addWageClaimError.value = false
