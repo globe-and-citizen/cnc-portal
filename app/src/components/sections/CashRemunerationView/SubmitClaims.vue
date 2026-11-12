@@ -98,7 +98,11 @@ const props = defineProps<{
 
 const formInitialData = ref<ClaimFormData>(createDefaultFormData(props.selectedWeekStart))
 
-const hasWeeklyGoals = computed(() => !!props.weeklyClaim?.weeklyGoals?.trim())
+/** The API enforces the same rule; this only spares the member a form they cannot save. */
+const isMissingRequiredWeeklyGoals = computed(
+  () =>
+    !!teamStore.currentTeamMeta.data?.requireWeeklyGoals && !props.weeklyClaim?.weeklyGoals?.trim()
+)
 
 const warnWeeklyGoalsRequired = () => {
   toast.add({
@@ -109,7 +113,7 @@ const warnWeeklyGoalsRequired = () => {
 }
 
 const openModalWithData = (initialData: ClaimFormData) => {
-  if (!hasWeeklyGoals.value) {
+  if (isMissingRequiredWeeklyGoals.value) {
     warnWeeklyGoalsRequired()
     return
   }

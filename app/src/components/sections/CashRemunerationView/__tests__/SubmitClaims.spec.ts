@@ -287,6 +287,31 @@ describe('SubmitClaims', () => {
       description: 'Submit your weekly goals for this week before submitting a claim.',
       color: 'warning'
     }
+    const teamMetaBefore = mockTeamStore.currentTeamMeta
+
+    const setTeamRequiresWeeklyGoals = (requireWeeklyGoals: boolean) => {
+      mockTeamStore.currentTeamMeta = {
+        ...teamMetaBefore,
+        data: { ...teamMetaBefore.data, requireWeeklyGoals }
+      } as typeof mockTeamStore.currentTeamMeta
+    }
+
+    beforeEach(() => setTeamRequiresWeeklyGoals(true))
+
+    afterEach(() => {
+      mockTeamStore.currentTeamMeta = teamMetaBefore
+    })
+
+    it('opens the form without weekly goals when the team does not require them', async () => {
+      setTeamRequiresWeeklyGoals(false)
+      const wrapper = createComponent({ weeklyClaim: { status: 'pending', weeklyGoals: null } })
+
+      await wrapper.find('[data-test="modal-submit-hours-button"]').trigger('click')
+      await flushPromises()
+
+      expect(mockToast.add).not.toHaveBeenCalledWith(weeklyGoalsRequiredToast)
+      expect(wrapper.findComponent({ name: 'ClaimForm' }).exists()).toBe(true)
+    })
 
     it.each([
       ['no weekly claim yet', undefined],
