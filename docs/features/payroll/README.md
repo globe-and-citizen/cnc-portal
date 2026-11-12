@@ -53,7 +53,7 @@ unchecked.
 
 1. The company owner sets a wage for the member.
 2. The owner funds the Cash Remuneration contract when non-mintable assets are required.
-3. The member sets weekly goals, then submits daily claims.
+3. The member sets weekly goals (mandatory when the owner requires them) and submits daily claims.
 4. The member can edit or delete claims while the week is pending.
 5. Once the week is complete, the Cash Remuneration owner signs the weekly claim.
 6. The member withdraws the signed claim on-chain.
@@ -92,8 +92,8 @@ Runs of at least three consecutive missing criteria use inclusive ranges with fu
 | US-PAYROLL-002 | ✅ Integrated | ⚠️ 11/12        | `AC-US-PAYROLL-002-03`                                                                         |
 | US-PAYROLL-003 | 🚧 Partial    | ⚠️ 3/8          | `AC-US-PAYROLL-003-01`, `AC-US-PAYROLL-003-02`, `AC-US-PAYROLL-003-06`–`AC-US-PAYROLL-003-08`  |
 | US-PAYROLL-004 | ✅ Integrated | ⚠️ 10/11        | `AC-US-PAYROLL-004-01`                                                                         |
-| US-PAYROLL-005 | ✅ Integrated | ⚠️ 25/26        | `AC-US-PAYROLL-005-01`                                                                         |
-| US-PAYROLL-006 | ✅ Integrated | ⚠️ 12/13        | `AC-US-PAYROLL-006-01`                                                                         |
+| US-PAYROLL-005 | ✅ Integrated | ⚠️ 27/28        | `AC-US-PAYROLL-005-01`                                                                         |
+| US-PAYROLL-006 | ✅ Integrated | ⚠️ 13/14        | `AC-US-PAYROLL-006-01`                                                                         |
 | US-PAYROLL-007 | ✅ Integrated | ⚠️ 7/8          | `AC-US-PAYROLL-007-01`                                                                         |
 | US-PAYROLL-008 | ✅ Integrated | ⚠️ 16/17        | `AC-US-PAYROLL-008-01`                                                                         |
 | US-PAYROLL-009 | ✅ Integrated | ⚠️ 4/8          | `AC-US-PAYROLL-009-01`–`AC-US-PAYROLL-009-04`                                                  |
@@ -392,8 +392,11 @@ movement across the participating stories.
 - [x] `AC-US-PAYROLL-005-14` _(API)_ When submission restriction is active, the API accepts claims only for the current ISO week.
 - [x] `AC-US-PAYROLL-005-15` When submission restriction is active, the portal accepts work dates at most four days in the past.
 - [x] `AC-US-PAYROLL-005-16` _(API)_ When submission restriction is active, the API accepts work dates at most four days in the past.
-- [x] `AC-US-PAYROLL-005-26` The portal opens a daily-claim submission only once the member has set non-blank weekly goals for that week;
-      otherwise it tells the member to set them first.
+- [x] `AC-US-PAYROLL-005-26` When the company requires weekly goals, the portal opens a daily-claim submission only once the member has set
+      non-blank weekly goals for that week; otherwise it tells the member to set them first.
+- [x] `AC-US-PAYROLL-005-27` _(API)_ When the company requires weekly goals, the API rejects a daily claim for a week without non-blank
+      goals, and rejects clearing the goals of a week that already holds hours.
+- [x] `AC-US-PAYROLL-005-28` Only the company owner can require weekly goals, from the Company Payroll page; the rule is off by default.
 
 #### Edge & Error Cases
 
@@ -438,6 +441,9 @@ movement across the participating stories.
 | `AC-US-PAYROLL-005-24` | `PS-FRONTEND`       | Frontend         | ✅ Met          |
 | `AC-US-PAYROLL-005-25` | `PS-FRONTEND`       | Frontend         | ✅ Met          |
 | `AC-US-PAYROLL-005-26` | `PS-FRONTEND`       | Frontend         | ✅ Met          |
+| `AC-US-PAYROLL-005-27` | `PS-BACKEND`        | Backend          | ✅ Met          |
+| `AC-US-PAYROLL-005-28` | `PS-BACKEND`        | Backend          | ✅ Met          |
+| `AC-US-PAYROLL-005-28` | `PS-FRONTEND`       | Frontend         | ✅ Met          |
 
 **Accounting:** The daily claim changes the source amount for
 [`UC-CASH-02`](../accounting/journal-entry-catalogue.md#uc-cash-02--weekly-wage-accrual). The journal entry is created only after the
@@ -477,6 +483,8 @@ remain as recorded above.
 - [x] `AC-US-PAYROLL-006-08` _(API)_ The daily allowance is rechecked for the original work date while excluding the claim being edited.
 - [x] `AC-US-PAYROLL-006-09` A user other than the claim owner cannot edit the claim.
 - [x] `AC-US-PAYROLL-006-10` The API rejects claim edits when the weekly claim is disabled.
+- [x] `AC-US-PAYROLL-006-14` When the company requires weekly goals, a claim of a week without non-blank goals cannot be edited, in the
+      portal or through the API, even if it was submitted before the rule was turned on; it can still be deleted.
 
 #### Edge & Error Cases
 
@@ -502,6 +510,8 @@ remain as recorded above.
 | `AC-US-PAYROLL-006-11` | `PS-BACKEND`        | Backend          | ✅ Met          |
 | `AC-US-PAYROLL-006-12` | `PS-BACKEND`        | Backend          | ✅ Met          |
 | `AC-US-PAYROLL-006-13` | `PS-BACKEND`        | Backend          | ✅ Met          |
+| `AC-US-PAYROLL-006-14` | `PS-BACKEND`        | Backend          | ✅ Met          |
+| `AC-US-PAYROLL-006-14` | `PS-FRONTEND`       | Frontend         | ✅ Met          |
 
 **Dependencies:** US-PAYROLL-005
 
