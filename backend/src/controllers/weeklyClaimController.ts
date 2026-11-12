@@ -15,6 +15,10 @@ import { refreshAttachmentUrls } from '../services/attachmentService';
 import { resolveStorageImageUrl } from '../utils/profileImage.util';
 import { signWeeklyClaimBodySchema, z } from '../validation';
 import { resolveCurrentWage } from '../utils/wageResolution';
+import {
+  clearsRequiredGoalsOfSubmittedWeek,
+  WEEKLY_GOALS_CANNOT_BE_CLEARED_MESSAGE,
+} from '../utils/weeklyGoalsUtils';
 
 type SignWeeklyClaimBody = z.infer<typeof signWeeklyClaimBodySchema>;
 
@@ -562,6 +566,9 @@ export const submitWeeklyGoals = async (req: Request, res: Response) => {
       }
       if (existing.status === 'signed' || !!existing.signature) {
         return errorResponse(409, 'Week already signed. Submission not allowed.', res);
+      }
+      if (await clearsRequiredGoalsOfSubmittedWeek(existing.id, teamId, weeklyGoals)) {
+        return errorResponse(400, WEEKLY_GOALS_CANNOT_BE_CLEARED_MESSAGE, res);
       }
 
       const updated = await prisma.weeklyClaim.update({

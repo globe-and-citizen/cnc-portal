@@ -294,6 +294,74 @@ describe('Claim Controller', () => {
       expect(response.body.message).toBe('No wage found for the user');
     });
 
+    describe('[AC-US-PAYROLL-005-27] weekly goals required by the team', () => {
+      const CLAIM_BODY = { teamId: 1, minutesWorked: 60, memo: 'memo' };
+
+      const submitClaimForWeek = async ({
+        requireWeeklyGoals,
+        weeklyClaim,
+      }: {
+        requireWeeklyGoals: boolean;
+        weeklyClaim: WeeklyClaim | null;
+      }) => {
+        vi.mocked(prisma.team.findUnique).mockResolvedValue({
+          isArchived: false,
+          requireWeeklyGoals,
+        } as never);
+        mockResolveWageForWeek.mockResolvedValue(createMockWage());
+        vi.spyOn(prisma.weeklyClaim, 'findFirst').mockResolvedValue(weeklyClaim);
+        const createSpy = vi.spyOn(prisma.claim, 'create').mockResolvedValue(createMockClaim());
+        const response = await request(app).post('/').send(CLAIM_BODY);
+        return { response, createSpy };
+      };
+
+      it.each([
+        ['no week yet', null],
+        ['a week without goals', createMockWeeklyClaim({ claims: [], weeklyGoals: null })],
+        ['a week with blank goals', createMockWeeklyClaim({ claims: [], weeklyGoals: '  ' })],
+      ])('rejects a claim for %s', async (_case, weeklyClaim) => {
+        const { response, createSpy } = await submitClaimForWeek({
+          requireWeeklyGoals: true,
+          weeklyClaim,
+        });
+
+        expect(response.status).toBe(400);
+        expect(response.body.message).toBe(
+          'Submit your weekly goals for this week before submitting a claim.'
+        );
+        expect(createSpy).not.toHaveBeenCalled();
+      });
+
+      it('reports a signed week as locked before asking for its goals', async () => {
+        const { response, createSpy } = await submitClaimForWeek({
+          requireWeeklyGoals: true,
+          weeklyClaim: createMockWeeklyClaim({ claims: [], weeklyGoals: null, status: 'signed' }),
+        });
+
+        expect(response.status).toBe(409);
+        expect(response.body.message).toBe('Week already signed. Submission not allowed.');
+        expect(createSpy).not.toHaveBeenCalled();
+      });
+
+      it('accepts a claim once the week has goals', async () => {
+        const { response } = await submitClaimForWeek({
+          requireWeeklyGoals: true,
+          weeklyClaim: createMockWeeklyClaim({ claims: [], weeklyGoals: 'Ship the guard' }),
+        });
+
+        expect(response.status).toBe(201);
+      });
+
+      it('accepts a claim without goals when the team does not require them', async () => {
+        const { response } = await submitClaimForWeek({
+          requireWeeklyGoals: false,
+          weeklyClaim: createMockWeeklyClaim({ claims: [], weeklyGoals: null }),
+        });
+
+        expect(response.status).toBe(201);
+      });
+    });
+
     it('[AC-US-PAYROLL-001-16] prices a week that already holds hours with their own wage', async () => {
       // The owner raised the cap mid-week. Hours are already priced against the
       // old wage, so the week keeps it: repricing would mean a second
@@ -826,6 +894,39 @@ describe('Claim Controller', () => {
         },
       } as any);
     };
+
+    describe('[AC-US-PAYROLL-006-14] weekly goals required by the team', () => {
+      const editClaimOfWeek = async (weeklyGoals: string | null) => {
+        vi.mocked(prisma.team.findUnique).mockResolvedValue({ requireWeeklyGoals: true } as never);
+        vi.spyOn(prisma.claim, 'findFirst').mockResolvedValue({
+          id: 1,
+          wage: { userAddress: TEST_ADDRESS, teamId: 1 },
+          weeklyClaim: { status: 'pending', weeklyGoals, claims: [] },
+        } as never);
+        const updateSpy = vi.spyOn(prisma.claim, 'update').mockResolvedValue({ id: 1 } as never);
+        const response = await request(app).put('/1').send({ memo: 'Edited memo' });
+        return { response, updateSpy };
+      };
+
+      it.each([null, '   '])(
+        'rejects editing a claim of a week whose goals are %j',
+        async (weeklyGoals) => {
+          const { response, updateSpy } = await editClaimOfWeek(weeklyGoals);
+
+          expect(response.status).toBe(400);
+          expect(response.body.message).toBe(
+            'Submit your weekly goals for this week before editing a claim.'
+          );
+          expect(updateSpy).not.toHaveBeenCalled();
+        }
+      );
+
+      it('accepts the edit once the week has goals', async () => {
+        const { response } = await editClaimOfWeek('Ship the guard');
+
+        expect(response.status).toBe(200);
+      });
+    });
 
     it.each([1, DAILY_CLAIM_MEMO_MAX_LENGTH])(
       '[AC-US-PAYROLL-006-05] accepts a trimmed %i-character edit memo',
