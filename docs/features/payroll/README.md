@@ -1011,7 +1011,7 @@ notice, not to wage or claim persistence. No payroll posting or signature rule c
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `98163bc30bdb7300cb03bf31e2a0314e5a39d5f1`
+**Implementation evidence reviewed against:** `f391bcfb6c6f90d87a3f777ba97615be6e60bd23`
 
 - [Pending claim fiat summary](../../../app/src/components/sections/CashRemunerationView/CashRemunerationPendingClaim.vue),
   [claim-week recap](../../../app/src/components/sections/ClaimHistoryView/WeeklyRecap.vue), and
@@ -1042,7 +1042,9 @@ notice, not to wage or claim persistence. No payroll posting or signature rule c
 - [Wage configuration validation](../../../app/src/utils/wages/validation.ts)
 - [Claim payout and signed rates](../../../app/src/utils/wages/model.ts) and
   [their tests](../../../app/src/utils/wages/__tests__/model.spec.ts)
-- [Weekly goals](../../../app/src/components/sections/CashRemunerationView/SubmitWeeklyGoals.vue)
+- [Weekly goals](../../../app/src/components/sections/CashRemunerationView/SubmitWeeklyGoals.vue),
+  [weekly goals requirement switch](../../../app/src/components/sections/WeeklyClaimView/RequireWeeklyGoalsToggle.vue), and
+  [its tests](../../../app/src/components/sections/WeeklyClaimView/__tests__/RequireWeeklyGoalsToggle.spec.ts)
 - [Claim history](../../../app/src/components/sections/ClaimHistoryView/ClaimHistory.vue)
 - [Weekly claim actions](../../../app/src/components/sections/WeeklyClaimView/WeeklyClaimActionDropdown.vue)
 - [Signature flow](../../../app/src/components/sections/CashRemunerationView/CRSigne.vue)
