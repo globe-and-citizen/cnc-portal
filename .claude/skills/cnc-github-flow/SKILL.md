@@ -1,5 +1,5 @@
 ---
-name: github-flow
+name: cnc-github-flow
 description: Manage CNC Portal GitHub issues, pull requests, reviews, and Sprint hierarchy in Claude Code. Use when creating, updating, reviewing, linking, or publishing repository GitHub work.
 ---
 
