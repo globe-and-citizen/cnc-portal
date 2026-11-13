@@ -1,5 +1,10 @@
 import type { SafeIncomingTransfer } from '@/types/safe'
-import { groupSafeTransfers, safeDayOf, safeTransactionLegs } from './swapTransfers'
+import {
+  groupSafeTransfers,
+  safeDayOf,
+  safeTransactionLegs,
+  splitAccruedInterest
+} from './swapTransfers'
 
 export interface SafeSwapPnl {
   count: number
@@ -43,7 +48,8 @@ export type SafeSwapFeeOf = (
 
 /**
  * Compare what the swaps gave up, valued on their day, with what the assets received are worth
- * today. A reported fee is taken out of the amount given up so the P&L excludes it.
+ * today. A reported fee is taken out of the amount given up so the P&L excludes it, and interest a
+ * token accrued in the swap is income, so it stays out too.
  */
 export function computeSafeSwapPnl(
   transfers: readonly SafeIncomingTransfer[],
@@ -63,7 +69,7 @@ export function computeSafeSwapPnl(
   let count = 0
   const swaps: SafeSwapResult[] = []
   for (const [txHash, rows] of groupSafeTransfers(transfers)) {
-    const legs = safeTransactionLegs(rows, safeAddress)
+    const legs = safeTransactionLegs(splitAccruedInterest(rows, safeAddress).exchanged, safeAddress)
     if (!legs.some(({ isReceived }) => !isReceived) || !legs.some(({ isReceived }) => isReceived))
       continue
     count += 1

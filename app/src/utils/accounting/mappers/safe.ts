@@ -7,7 +7,9 @@
  * - Contracts outside the CNC tokens that Safe does not trust are ignored (fake airdrops).
  * - Evidenced different-asset settlement pairs become SAFE-SWAP; the fee CoW Protocol
  *   reports rides on the sold leg so it is booked as Transaction Fee Expense.
- * - Trusted discovered assets, mints and ambiguous multi-asset receipts remain unclassified.
+ * - A mint of a token the Safe sends in the same transaction is the interest a yield-bearing
+ *   token such as an Aave aToken accrued → INTEREST-IN (Dr Cash — Safe · Cr Interest Income).
+ * - Trusted discovered assets, other mints and ambiguous multi-asset receipts remain unclassified.
  * - **Other inflow** (to the Safe):
  *   - from an internal pocket → internal move (Dr Cash — Safe · Cr that pocket)
  *   - from anyone external    → UC-BANK-02 (Dr Cash — Safe · Cr Service Revenue)
@@ -84,7 +86,7 @@ function exchangeRowIds(input: SafeMapperInput, ctx: MapperContext): Set<string>
     const external = incoming ? row.from : row.to
     if (
       !isAddress(external) ||
-      /^0x0{40}$/i.test(external) ||
+      isZeroAddress(external) ||
       ctx.pocketOf(external) ||
       isInternalAddress(external, ctx.internalAddresses)
     )
@@ -112,6 +114,56 @@ function exchangeRowIds(input: SafeMapperInput, ctx: MapperContext): Set<string>
 
 export function sameAddress(a: string, b: string): boolean {
   return isAddress(a) && isAddress(b) && getAddress(a) === getAddress(b)
+}
+
+/** A transfer from the zero address is a mint. */
+function isZeroAddress(address: string): boolean {
+  return /^0x0{40}$/i.test(address)
+}
+
+/**
+ * A yield-bearing token such as an Aave aToken mints the interest it accrued when the Safe sends
+ * it, so a mint of a token the Safe sends in the same transaction is interest, not a receipt the
+ * transaction exchanged. A mint without that send (an Aave deposit, an airdrop) is not, and
+ * neither is a mint of a CNC token: only an asset the Safe Transaction Service trusts qualifies.
+ */
+function accruedInterestRowIds(
+  transfers: readonly SafeTransferRow[],
+  safeAddress: string,
+  ctx: MapperContext
+): Set<string> {
+  const sentKey = (row: SafeTransferRow) => `${row.txHash?.toLowerCase()}:${tokenOf(row, ctx)}`
+  const sent = new Set(
+    transfers.filter((row) => row.txHash && sameAddress(row.from, safeAddress)).map(sentKey)
+  )
+  const isAccruedInterest = (row: SafeTransferRow) =>
+    isZeroAddress(row.from) &&
+    sameAddress(row.to, safeAddress) &&
+    tokenOf(row, ctx).startsWith('erc20:') &&
+    sent.has(sentKey(row))
+  return new Set(transfers.filter(isAccruedInterest).map((row) => row.id))
+}
+
+function accruedInterest(
+  row: SafeTransferRow,
+  ctx: MapperContext,
+  safeAddress: string
+): JournalEntryDraft {
+  const tokenId = tokenOf(row, ctx)
+  return makeJournalEntryDraft({
+    id: row.id,
+    sourceContract: safeAddress,
+    timestamp: row.timestamp,
+    txHash: row.txHash,
+    useCase: 'INTEREST-IN',
+    debit: SAFE,
+    debitInstance: safeAddress,
+    credit: 'Interest Income',
+    token: tokenId,
+    ...erc20AssetFields(tokenId, row.asset),
+    rawAmount: row.amount,
+    memo: 'Interest the token accrued, minted to the Safe as it sent the token'
+  })
 }
 
 /**
@@ -163,7 +215,7 @@ function inferInflow(
       memo: `Internal funding into Safe from ${sourcePocket}`
     })
   }
-  const unclassified = tokenId.startsWith('erc20:') || /^0x0{40}$/i.test(row.from)
+  const unclassified = tokenId.startsWith('erc20:') || isZeroAddress(row.from)
   return makeJournalEntryDraft({
     ...base,
     useCase: 'UC-BANK-02',
@@ -245,6 +297,7 @@ export function mapSafeTransfers(input: SafeMapperInput, ctx: MapperContext): Jo
   const transfers = (input.transfers ?? []).filter((row) => isTrustedTransfer(row, ctx))
   const entries: JournalEntryDraft[] = []
   const exchanges = exchangeRowIds({ ...input, transfers }, ctx)
+  const accruedInterests = accruedInterestRowIds(transfers, input.safeAddress, ctx)
   const swapFees = new Map<string, bigint>()
   for (const fee of input.swapFees ?? []) {
     const key = swapFeeKey(fee.txHash, fee.token)
@@ -269,6 +322,10 @@ export function mapSafeTransfers(input: SafeMapperInput, ctx: MapperContext): Jo
   }
   for (const row of transfers) {
     if (sameAddress(row.to, input.safeAddress) && sameAddress(row.from, input.safeAddress)) continue
+    if (accruedInterests.has(row.id)) {
+      entries.push(accruedInterest(row, ctx, input.safeAddress))
+      continue
+    }
     if (exchanges.has(row.id)) {
       const token = tokenOf(row, ctx)
       const incoming = sameAddress(row.to, input.safeAddress)

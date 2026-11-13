@@ -42,6 +42,7 @@ const ENTRY_LABEL: Record<UseCase, string> = {
   'DEFAULT-D': 'Share issuance',
   FEE: 'Transaction fee',
   INTERNAL: 'Internal transfer',
+  'INTEREST-IN': 'Interest income',
   'CASH-IN': 'Cash receipt',
   'CASH-OUT': 'Cash payment'
 }

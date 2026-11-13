@@ -4,6 +4,7 @@ import {
   groupSafeTransfers,
   safeDayOf,
   safeTransactionLegs,
+  splitAccruedInterest,
   type SafeAssetAmount,
   type SafeTransactionLeg
 } from './swapTransfers'
@@ -85,8 +86,11 @@ interface SafeCostBasisSources {
 interface Transaction {
   txHash: string
   executionDate: string
+  /** The movements the transaction exchanged, accrued interest excluded. */
   rows: SafeIncomingTransfer[]
   legs: SafeTransactionLeg[]
+  /** Interest its tokens accrued, received before anything is exchanged. */
+  interestLegs: SafeTransactionLeg[]
 }
 
 interface Position {
@@ -123,12 +127,13 @@ export function computeSafeCostBasis(
   const tracked = new Set(swapTransactions.flatMap(({ legs }) => legs.map(({ asset }) => asset)))
   const ledger = createLedger(sources)
   const swaps: SafeSwapExchange[] = []
+  const transferTracked = (transaction: Transaction, legs: readonly SafeTransactionLeg[]) => {
+    for (const leg of legs) if (tracked.has(leg.asset)) ledger.transfer(transaction, leg)
+  }
   for (const transaction of transactions) {
+    transferTracked(transaction, transaction.interestLegs)
     if (sources.swapHashes.has(transaction.txHash)) swaps.push(ledger.swap(transaction))
-    else
-      for (const leg of transaction.legs) {
-        if (tracked.has(leg.asset)) ledger.transfer(transaction, leg)
-      }
+    else transferTracked(transaction, transaction.legs)
   }
   return summarize(ledger.positions(), swaps)
 }
@@ -139,13 +144,17 @@ function chronologicalTransactions(
   safeAddress: string
 ): Transaction[] {
   return [...groupSafeTransfers([...movements].reverse())]
-    .map(([txHash, rows]) => ({
-      txHash,
-      executionDate: rows[0]!.executionDate,
-      rows,
-      legs: safeTransactionLegs(rows, safeAddress)
-    }))
-    .sort((a, b) => a.rows[0]!.blockNumber - b.rows[0]!.blockNumber)
+    .sort(([, a], [, b]) => a[0]!.blockNumber - b[0]!.blockNumber)
+    .map(([txHash, rows]) => {
+      const { interest, exchanged } = splitAccruedInterest(rows, safeAddress)
+      return {
+        txHash,
+        executionDate: rows[0]!.executionDate,
+        rows: exchanged,
+        legs: safeTransactionLegs(exchanged, safeAddress),
+        interestLegs: safeTransactionLegs(interest, safeAddress)
+      }
+    })
 }
 
 function createLedger({ prices, isStable, feeOf }: SafeCostBasisSources) {

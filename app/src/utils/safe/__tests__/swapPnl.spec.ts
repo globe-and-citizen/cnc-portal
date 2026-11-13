@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { zeroAddress } from 'viem'
 import type { SafeIncomingTransfer } from '@/types/safe'
 import { computeSafeSwapPnl } from '../swapPnl'
 
@@ -135,6 +136,18 @@ describe('[US-SAFE-007] computeSafeSwapPnl', () => {
       { txHash: '0xother', pnlUsd: 200 }
     ])
     expect(pnl.swaps.reduce((sum, swap) => sum + swap.pnlUsd, 0)).toBe(pnl.pnlUsd)
+  })
+
+  it('[AC-US-SAFE-007-13] keeps the interest the sold token mints during the swap out of the P&L', () => {
+    const sale = [
+      erc20(weth, '500000000000000000', sell),
+      erc20(usdc, '1000000000'),
+      erc20(weth, '1000000000000000', { from: zeroAddress })
+    ]
+    const swapDay = { on: () => 2000, now: () => 1 }
+    const pnl = computeSafeSwapPnl(sale, SAFE, swapDay, () => undefined)
+
+    expect(pnl).toMatchObject({ count: 1, swappedUsd: 1000, currentUsd: 1000, pnlUsd: 0 })
   })
 
   it('names the assets that cannot be priced', () => {
