@@ -28,6 +28,9 @@ drops a fee or blanks the figures.
 - The figures add up all swaps since the Safe's first transaction. A swap is never split between periods.
 - A reported fee is a transaction cost, not a market result. Accounting books it as Transaction Fee Expense; here it is taken out of the
   swapped value and shown apart, so the P&L excludes it.
+- Interest a yield-bearing token such as an Aave aToken accrued is income, not a market result. That token mints the interest to the Safe in
+  the transaction that sends it. The mint is not netted against the token given up, so the P&L excludes it. The average-cost view takes it
+  in as a receipt at its day price.
 - A figure that cannot be fully priced stays visible and is marked incomplete, never silently treated as complete.
 
 Examples use illustrative prices. The swap day is `2026-06-01` and today is `2026-10-23` unless a use case says otherwise.
@@ -136,6 +139,7 @@ missing when the token has no verified market identity, or when a daily quote ca
 | `UC-SWAP-012` | A price cannot be found                   | GAP                              | Figures marked incomplete              |
 | `UC-SWAP-013` | History without any swap                  | DETECT                           | Swap figures hidden                    |
 | `UC-SWAP-014` | History or balances unavailable           | —                                | Swap figures hidden                    |
+| `UC-SWAP-015` | Interest the sold asset accrued           | DETECT, GIVEN, CURRENT, PNL      | Interest kept out of the P&L           |
 
 ### Transactions That Are Not Swaps
 
@@ -454,6 +458,33 @@ For 1,000 USDC swapped for 0.5 WETH with no WETH price:
 - **Result:** The swap figures stay hidden instead of showing partial sums. The overview keeps reporting the read failure as it already
   does.
 
+### `UC-SWAP-015` — Interest the Sold Asset Accrued
+
+**Condition:** In one swap transaction, the asset the Safe sends is a yield-bearing token, such as an Aave aToken, that mints the interest
+it accrued to the Safe from the zero address.
+
+**Calculation rules:** `RULE-SWAP-DETECT`, `RULE-SWAP-GIVEN`, `RULE-SWAP-CURRENT`, `RULE-SWAP-PNL`.
+
+**Scenarios and related user stories:**
+
+| Scenario                                                        | Related user stories and criteria                                                                                                                                                                    |
+| --------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| The treasury sells its aWETH, which accrued interest, for USDC. | [US-SAFE-007](./README.md#us-safe-007-review-the-safe-swap-pl) — `AC-US-SAFE-007-13`; [US-ACCT-002](../accounting/README.md#us-acct-002-trace-operations-in-the-general-ledger) — books the interest |
+
+- **Result:** The interest is income, not a market result. It is not netted against the asset given up, so the whole quantity sent counts as
+  given and the P&L excludes the interest. The average-cost view takes the interest in as a receipt at that day's price, and Accounting
+  books it to `Interest Income`.
+
+The Safe holds 0.499 aWETH, which accrued 0.001 aWETH of interest. It sells 0.5 aWETH for 1,000 USDC on a day aWETH is at $2,000:
+
+| Figure             | Calculation        | Value (USD) |
+| ------------------ | ------------------ | ----------: |
+| Swapped value      | 0.5 aWETH × $2,000 |    1,000.00 |
+| Current value swap | 1,000 USDC × $1.00 |    1,000.00 |
+| P&L                | 1,000 − 1,000      |        0.00 |
+
+Netting the interest against the aWETH sent would have valued only 0.499 aWETH given, $998, and shown its $2 as a P&L.
+
 ## Known Limits
 
 - Daily quotes are the CoinGecko price of the swap's UTC day, not the exact price at the second of execution.
@@ -475,6 +506,7 @@ The canonical attestation for these sources is held by the [Accounts implementat
 - [Wallet overview swap figures](../../../app/src/components/sections/SafeView/SafeSwapPnlCard.vue)
 - [Use-case scenario tests](../../../app/src/utils/safe/__tests__/swapPnl.integration.spec.ts) — `UC-SWAP-001` to `UC-SWAP-013`
 - [Composable tests](../../../app/src/composables/safe/__tests__/useSafeSwapPnl.spec.ts) — `UC-SWAP-014`
+- [Swap transfers](../../../app/src/utils/safe/swapTransfers.ts) — accrued-interest split, `UC-SWAP-015`
 - [Rule tests](../../../app/src/utils/safe/__tests__/swapPnl.spec.ts),
   [valuation tests](../../../app/src/utils/safe/__tests__/swapValuation.spec.ts), and
   [overview figure tests](../../../app/src/components/sections/SafeView/__tests__/SafeSwapPnlCard.spec.ts)
