@@ -1,5 +1,5 @@
 ---
-name: feature-documentation
+name: cnc-feature-documentation
 description: Create or update evidence-backed CNC Portal product feature documentation and user stories. Use when documenting a user-accessible client or backoffice capability, validating its stories and acceptance criteria, or maintaining the product feature inventory; do not use for architecture-only documentation.
 ---
 
