@@ -1,5 +1,5 @@
 ---
-name: work-orchestrator
+name: cnc-work-orchestrator
 description: Coordinate CNC Portal work across repository skills. Use for issue-driven implementation, cross-surface changes, dependency-aware planning, or audits that can benefit from bounded multi-agent research while retaining one integration owner.
 ---
 
