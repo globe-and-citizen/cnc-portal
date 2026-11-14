@@ -26,9 +26,21 @@
             no amount to enter — the full balance of each token is withdrawn.
           </p>
 
+          <UAlert
+            v-if="unknownSupportedTokens.length"
+            color="warning"
+            title="Additional supported tokens"
+            description="Unrecognized tokens are not listed below, but their full balances will also be swept."
+          />
+          <UAlert
+            v-if="balanceError"
+            color="error"
+            title="Failed to load balances"
+            description="Retry after the balances are available."
+          />
           <div class="border rounded-lg divide-y dark:divide-gray-700">
             <div
-              v-if="sweepableTokens.length === 0"
+              v-if="!isLoadingBalances && !balanceError && sweepableTokens.length === 0 && unknownSupportedTokens.length === 0"
               class="px-4 py-6 text-center text-sm text-gray-500"
             >
               Nothing to withdraw — every balance is zero.
@@ -94,7 +106,7 @@
 
           <UButton
             color="primary"
-            :disabled="sweepableTokens.length === 0"
+            :disabled="isLoadingBalances || !!balanceError || (sweepableTokens.length === 0 && unknownSupportedTokens.length === 0)"
             :loading="withdrawAll.isPending.value"
             @click="handleConfirm"
           >
@@ -118,7 +130,7 @@ const toast = useToast()
 const isOwner = isFeeCollectorOwner()
 const isOpen = ref(false)
 
-const { tokens, formattedTotalUsd } = useFeeCollector()
+const { tokens, formattedTotalUsd, unknownSupportedTokens, isLoading: isLoadingBalances, error: balanceError } = useFeeCollector()
 const withdrawAll = useWithdrawAll()
 
 // Only show tokens that actually have a non-zero balance — those are what

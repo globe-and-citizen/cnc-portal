@@ -10,10 +10,9 @@ import {
  * the admin is currently interacting with. Module-level singleton so the
  * selector and any interested component share one source of truth.
  *
- * This is purely UI navigation state — it decides which per-version SUBCOMPONENT
- * the page renders. It does NOT resolve addresses/ABIs at runtime: each
- * subcomponent imports its version's composables (`./v0`, `./v0_1`, `./v1`)
- * explicitly, so the function surface is version-correct by construction.
+ * The route remounts its managed panel when this changes. Its child composables
+ * capture the selected V1/V2 deployment during setup; legacy panels remain
+ * explicitly bound to their own versions.
  */
 const selectedVersion = ref<FeeCollectorVersion>(CURRENT_FEE_COLLECTOR_VERSION)
 

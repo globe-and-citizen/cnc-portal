@@ -27,9 +27,9 @@
       </div>
     </div>
 
-    <!-- Per-version subcomponent. Each panel imports its version's composables
-         explicitly, so the function surface is correct by construction. -->
-    <FeeCollectorPanelV1 v-if="selectedVersion === 'V1'" />
+    <!-- Remount the managed panel on version changes so reads and writes stay
+         bound to the deployment that was selected when the panel was created. -->
+    <FeeCollectorManagedPanel v-if="selectedVersion === 'V1' || selectedVersion === 'V2'" :key="selectedVersion" />
     <FeeCollectorPanelV0 v-else-if="selectedVersion === 'V0'" />
     <FeeCollectorPanelV01 v-else-if="selectedVersion === 'V0.1'" />
   </div>
@@ -38,7 +38,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useFeeCollectorVersion } from '~/composables/FeeCollector/useFeeCollectorVersion'
-import FeeCollectorPanelV1 from '~/components/sections/FeeCollectorView/FeeCollectorPanelV1.vue'
+import FeeCollectorManagedPanel from '~/components/sections/FeeCollectorView/FeeCollectorManagedPanel.vue'
 import FeeCollectorPanelV0 from '~/components/sections/FeeCollectorView/legacy/FeeCollectorPanelV0.vue'
 import FeeCollectorPanelV01 from '~/components/sections/FeeCollectorView/legacy/FeeCollectorPanelV01.vue'
 // V0/V0.1 share an ABI but stay as separate explicit modules/panels by design.

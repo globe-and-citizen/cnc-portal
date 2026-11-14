@@ -12,8 +12,8 @@
 </template>
 
 <script setup lang="ts">
-// V1 (current) management panel. Its child components import the default
-// (unversioned) FeeCollector composables, which resolve to V1.
+// Shared management panel for V1 and V2. The keyed route remounts its children
+// on version changes so each composable captures the correct deployment.
 import FeeCollectorStats from './FeeCollectorStats.vue'
 import TokenHoldingsTable from './TokenHoldingsTable.vue'
 import FeeConfigList from './FeeConfigList.vue'
