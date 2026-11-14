@@ -9,25 +9,21 @@ import {
 import { useGetCowTransactionOrdersQuery } from '@/queries/cow.queries'
 import {
   buildSafeCostBasis,
-  buildSafeSwapReport,
   safeCostBasisRateRequests,
   safeSwapCoinIds,
-  safeSwapRateRequests,
   safeSwapTransfers
 } from '@/utils/safe/swapValuation'
 import { safeMovements } from '@/utils/safe/swapTransfers'
 import { isSafeNotIndexedError } from '@/utils/safe/model'
-import type { SafeSwapPnl } from '@/utils/safe/swapPnl'
 import type { SafeCostBasis } from '@/utils/safe/costBasis'
 
 /**
- * Swap P&L of a Safe in USD, with the fees CoW Protocol reports. `data` compares what each swap
- * gave up, valued on its day, with what it received, valued today: the books replay it.
- * `costBasis` tracks every token the swaps touched at its weighted average cost: the Safe page
- * shows it. Both stay undefined until the history, balances, quotes and fee lookups have
- * settled, then keep their last settled value for the same Safe while any of them reloads, so
- * the figures never flicker or drop a fee. Switching or clearing the Safe discards them
- * immediately.
+ * Swap P&L of a Safe in USD, with the fees CoW Protocol reports. `costBasis` tracks every token
+ * the swaps touched at its weighted average cost: the Safe page shows it and the books post the
+ * P&L of each of its swaps. It stays undefined until the history, balances, quotes and fee
+ * lookups have settled, then keeps its last settled value for the same Safe while any of them
+ * reloads, so the figures never flicker or drop a fee. Switching or clearing the Safe discards
+ * it immediately.
  */
 export function useSafeSwapPnl(safeAddress: MaybeRefOrGetter<string | undefined>) {
   const today = new Date().toISOString().slice(0, 10)
@@ -65,22 +61,15 @@ export function useSafeSwapPnl(safeAddress: MaybeRefOrGetter<string | undefined>
   const orders = useGetCowTransactionOrdersQuery(() => [
     ...new Set(swaps.value.map(({ transactionHash }) => transactionHash))
   ])
-  const rates = useGetHistoricalTokenRatesQuery(() => {
-    const address = toValue(safeAddress) ?? ''
-    const requests = [
-      ...safeSwapRateRequests(swaps.value, address, coinIds.value, heldBalances.value, today),
-      ...safeCostBasisRateRequests(movements.value, {
-        safeAddress: address,
-        today,
-        coinIds: coinIds.value,
-        heldBalances: heldBalances.value,
-        orders: orders.value
-      })
-    ]
-    return [
-      ...new Map(requests.map((request) => [`${request.coinId}:${request.date}`, request])).values()
-    ]
-  })
+  const rates = useGetHistoricalTokenRatesQuery(() =>
+    safeCostBasisRateRequests(movements.value, {
+      safeAddress: toValue(safeAddress) ?? '',
+      today,
+      coinIds: coinIds.value,
+      heldBalances: heldBalances.value,
+      orders: orders.value
+    })
+  )
 
   const isLoading = computed(
     () =>
@@ -101,29 +90,24 @@ export function useSafeSwapPnl(safeAddress: MaybeRefOrGetter<string | undefined>
         !balances.data.value &&
         !isSafeNotIndexedError(balances.error.value))
   )
-  const settled = computed<
-    { address: string; report: SafeSwapPnl; costBasis: SafeCostBasis } | undefined
-  >((previous) => {
-    const address = toValue(safeAddress)?.toLowerCase()
-    if (!address) return undefined
-    if (isLoading.value) return previous?.address === address ? previous : undefined
-    if (isError.value || !transfers.data.value) return undefined
-    const sources = {
-      safeAddress: address,
-      today,
-      coinIds: coinIds.value,
-      heldBalances: heldBalances.value,
-      rates: rates.value,
-      orders: orders.value
+  const settled = computed<{ address: string; costBasis: SafeCostBasis } | undefined>(
+    (previous) => {
+      const address = toValue(safeAddress)?.toLowerCase()
+      if (!address) return undefined
+      if (isLoading.value) return previous?.address === address ? previous : undefined
+      if (isError.value || !transfers.data.value) return undefined
+      const sources = {
+        safeAddress: address,
+        today,
+        coinIds: coinIds.value,
+        heldBalances: heldBalances.value,
+        rates: rates.value,
+        orders: orders.value
+      }
+      return { address, costBasis: buildSafeCostBasis(movements.value, sources) }
     }
-    return {
-      address,
-      report: buildSafeSwapReport(swaps.value, sources),
-      costBasis: buildSafeCostBasis(movements.value, sources)
-    }
-  })
-  const data = computed(() => settled.value?.report)
+  )
   const costBasis = computed(() => settled.value?.costBasis)
 
-  return { data, costBasis, isLoading, isError }
+  return { costBasis, isLoading, isError }
 }
