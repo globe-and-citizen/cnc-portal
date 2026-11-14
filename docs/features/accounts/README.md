@@ -1199,19 +1199,10 @@ the Safe:
 - **P&L** — the sum of every token's fixed and current results. USD stablecoins are worth $1 and keep a $1 average cost. The transaction
   fees CoW Protocol reports are a cost of their own: Accounting books them as Transaction Fee Expense and they stay out of the P&L.
 
-Accounting does not book this P&L. Its `Swap P&L` line keeps the per-swap valuation of the
-[use-case catalogue](./safe-swap-pnl-use-cases.md), which values what each swap received at today's price. Both agree while the tokens
-received are still held; they differ once a received token is spent or bought again.
-
-### Use Cases
-
-The [Safe swap P&L use-case catalogue](./safe-swap-pnl-use-cases.md) defines the per-swap valuation Accounting books and fourteen use cases,
-each with its condition, related criteria, and a worked example:
-
-- buying, selling, and exchanging volatile assets or stablecoins (`UC-SWAP-001`–`UC-SWAP-005`);
-- assets spent since the swap and several swaps over time (`UC-SWAP-006`, `UC-SWAP-007`);
-- reported, unreported, and partly reported fees, kept apart from the P&L (`UC-SWAP-008`–`UC-SWAP-010`);
-- refunds, missing prices, Safes without swaps, and unavailable sources (`UC-SWAP-011`–`UC-SWAP-014`).
+Accounting books this P&L. Each swap's `Swap P&L` line carries what that swap changed in the P&L of the tokens it touched: what it received
+against what it gave up, both valued at today's price, with the reported fee left out. A token received in one swap and given up in a later
+one therefore counts once, and the books' `Swap P&L` equals this P&L as long as no deposit or payment moves a swapped token at a price other
+than its average cost.
 
 ### Acceptance Criteria
 
@@ -1368,7 +1359,7 @@ generic table dictionary. This is a compile-time boundary; it does not claim val
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `f391bcfb6c6f90d87a3f777ba97615be6e60bd23`
+**Implementation evidence reviewed against:** `e567ca13d95cb3a628f3a7932465abde89495783`
 
 - [Bank deposit modal](../../../app/src/components/sections/BankView/forms/DepositModal.vue),
   [Bank transfer modal](../../../app/src/components/sections/BankView/forms/TransferModal.vue),
@@ -1577,22 +1568,21 @@ filters the original transfer and balance rows without replacing their response 
 strings remain available. Refunds are netted in base units during valuation. A settled report is retained only while refreshing the same
 Safe; switching or clearing the Safe hides the previous report immediately. Implementation:
 [shared transfer grouping and netting](../../../app/src/utils/safe/swapTransfers.ts),
-[swap P&L calculation](../../../app/src/utils/safe/swapPnl.ts), [swap valuation and CoW fees](../../../app/src/utils/safe/swapValuation.ts),
+[swap valuation and CoW fees](../../../app/src/utils/safe/swapValuation.ts),
 [swap P&L composable](../../../app/src/composables/safe/useSafeSwapPnl.ts), [CoW order query](../../../app/src/queries/cow.queries.ts),
 [CoW order fields](../../../app/src/types/cow.ts), and
 [overview swap figures](../../../app/src/components/sections/SafeView/SafeSwapPnlCard.vue). Executable evidence:
-[swap P&L tests](../../../app/src/utils/safe/__tests__/swapPnl.spec.ts),
 [swap valuation tests](../../../app/src/utils/safe/__tests__/swapValuation.spec.ts),
-[use-case scenario tests](../../../app/src/utils/safe/__tests__/swapPnl.integration.spec.ts) for the
-[use-case catalogue](./safe-swap-pnl-use-cases.md), [composable tests](../../../app/src/composables/safe/__tests__/useSafeSwapPnl.spec.ts),
-and [overview swap figure tests](../../../app/src/components/sections/SafeView/__tests__/SafeSwapPnlCard.spec.ts). The figures have not been
+[composable tests](../../../app/src/composables/safe/__tests__/useSafeSwapPnl.spec.ts), and
+[overview swap figure tests](../../../app/src/components/sections/SafeView/__tests__/SafeSwapPnlCard.spec.ts). The figures have not been
 checked against a live Safe yet.
 
-The same composable returns two results from one set of sources. The per-swap report keeps the order and numeric results Accounting books.
-The [average-cost tracking](../../../app/src/utils/safe/costBasis.ts) reads every movement of the tokens the swaps touched, oldest first by
-block, and feeds the Wallet overview and the Activity swaps. Its daily quotes are requested by running the calculation once without quotes
-and collecting every quote it reads, so the requests cannot drift from the rules. Executable evidence:
-[average-cost tests](../../../app/src/utils/safe/__tests__/costBasis.spec.ts).
+The [average-cost tracking](../../../app/src/utils/safe/costBasis.ts), built on the
+[average-cost arithmetic](../../../app/src/utils/safe/averageCost.ts), reads every movement of the tokens the swaps touched, oldest first by
+block, and feeds the Wallet overview, the Activity swaps and Accounting's `Swap P&L`, which posts each swap's change to the P&L. Its daily
+quotes are requested by running the calculation once without quotes and collecting every quote it reads, so the requests cannot drift from
+the rules. Executable evidence: [average-cost tests](../../../app/src/utils/safe/__tests__/costBasis.spec.ts) and
+[average-cost arithmetic tests](../../../app/src/utils/safe/__tests__/averageCost.spec.ts).
 
 The [Activity swaps](../../../app/src/components/sections/SafeView/SafeSwapsTable.vue) list the tokens, a token's history, and the swaps,
 which they sort as a copy newest first. Executable evidence:
