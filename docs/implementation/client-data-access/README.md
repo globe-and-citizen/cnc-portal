@@ -95,12 +95,12 @@ keeps the fee inside the acquired asset's price and never makes Accounting parti
 
 Swap selection, daily quote requests and valuation share
 [transaction grouping and exact asset netting](../../../app/src/utils/safe/swapTransfers.ts). Valuation indexes daily quotes, Gateway prices
-and CoW responses once per report. The [P&L composable](../../../app/src/composables/safe/useSafeSwapPnl.ts) returns the per-swap report
-Accounting books and the [average-cost tracking](../../../app/src/utils/safe/costBasis.ts) the Safe page shows, both from one set of
-sources; it requests the daily quotes either one reads. It keeps settled results only while refreshing the same Safe; changing or clearing
-its address discards them. A Gateway balances 404 means no Safe exists at the address, so the composable reports an empty P&L rather than an
-error: a team whose default Safe was never deployed, or was deployed on another network, still gets its Accounting reports. Other balance
-failures remain errors and keep the `Safe swap P&L` source partial.
+and CoW responses once per report. The [P&L composable](../../../app/src/composables/safe/useSafeSwapPnl.ts) returns the
+[average-cost tracking](../../../app/src/utils/safe/costBasis.ts) the Safe page shows, whose share per swap Accounting books, and requests
+the daily quotes it reads. It keeps settled results only while refreshing the same Safe; changing or clearing its address discards them. A
+Gateway balances 404 means no Safe exists at the address, so the composable reports an empty P&L rather than an error: a team whose default
+Safe was never deployed, or was deployed on another network, still gets its Accounting reports. Other balance failures remain errors and
+keep the `Safe swap P&L` source partial.
 
 Executable evidence: [Gateway request tests](../../../app/src/queries/__tests__/safeClient.queries.spec.ts),
 [pagination and metadata unit tests](../../../app/src/queries/__tests__/safe.queries.spec.ts),
@@ -226,7 +226,7 @@ market query.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `aef9c54644f938b4f8b1de3b80456f6b59a9a1a0`
+**Implementation evidence reviewed against:** `e567ca13d95cb3a628f3a7932465abde89495783`
 
 - [Query barrel](../../../app/src/queries/index.ts), [query factory](../../../app/src/queries/queryFactory.ts), and
   [single-file upload query](../../../app/src/queries/file.queries.ts)

@@ -67,7 +67,7 @@ vi.mock('@/composables/investor/useSafeDepositRouterEventsViaLogs', () => ({
   useSafeDepositRouterEventsViaLogs: () => feeds.router
 }))
 // No Safe swap P&L to revalue: the report stays undefined and settled.
-vi.mock('@/composables/safe/useSafeSwapPnl', () => ({ useSafeSwapPnl: () => ({ data: {} }) }))
+vi.mock('@/composables/safe/useSafeSwapPnl', () => ({ useSafeSwapPnl: () => ({ costBasis: {} }) }))
 
 import { useCNCAccounting } from '../useCNCAccounting'
 

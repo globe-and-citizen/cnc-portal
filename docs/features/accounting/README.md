@@ -50,15 +50,14 @@ of the part of the disposed asset it took. Without a reported fee, no fee is inf
 
 A received USD stablecoin keeps its $1.00 face value instead, which realizes its difference from the price paid, as in a sale of an asset
 for a stablecoin or an exchange between two stablecoins with slippage, on the swap's `Swap P&L` line. For each swap of the default Safe,
-that line books instead the swap's [Safe swap P&L](../accounts/safe-swap-pnl-use-cases.md) (the current value of what it received against
-the CoinGecko value, on the swap day, of what it gave up, less the reported fee), and a `Safe Market Value Adjustment` line in the same
-posting books the part the cash lines do not carry. `Cash — Safe` keeps the price paid; the swapped assets' current value is `Cash — Safe`
-plus that adjustment, and `Swap P&L` totals the per-swap report. The Safe Wallet overview shows an average-cost P&L instead; both agree
-while the assets received are still held and differ once one is spent or bought again. A `Swap P&L` gain reads as revenue and a
-trial-balance credit; a loss reads as an expense and a debit, never as a negative amount. Ancillary mints and ambiguous batches require
-classification. Missing decimals or acquisition basis keeps Accounting incomplete. A default Safe that does not exist on the network (never
-deployed, or deployed elsewhere) has no swaps to value and does not withhold the reports. Cross-transaction intents and arbitrary DeFi
-actions need additional protocol evidence. See the
+that line books instead the swap's share of the [Safe swap P&L](../accounts/README.md#us-safe-007-review-the-safe-swap-pl) (what it changed
+in the average-cost P&L of the tokens it touched: what it received against what it gave up, both at today's price, fee left out), and a
+`Safe Market Value Adjustment` line in the same posting books the part the cash lines do not carry. `Cash — Safe` keeps the price paid; the
+swapped assets' current value is `Cash — Safe` plus that adjustment, and `Swap P&L` equals the Safe Wallet overview's P&L, also once a token
+received in one swap is given up in a later one. A `Swap P&L` gain reads as revenue and a trial-balance credit; a loss reads as an expense
+and a debit, never as a negative amount. Ancillary mints and ambiguous batches require classification. Missing decimals or acquisition basis
+keeps Accounting incomplete. A default Safe that does not exist on the network (never deployed, or deployed elsewhere) has no swaps to value
+and does not withhold the reports. Cross-transaction intents and arbitrary DeFi actions need additional protocol evidence. See the
 [Accounting Read Model](../../implementation/accounting-read-model/README.md#safe-assets-and-exchanges) for these boundaries and the
 [exchange regression suite](../../../app/src/utils/accounting/__tests__/safeExchanges.spec.ts) and
 [price-paid regressions](../../../app/src/utils/accounting/__tests__/safeExchanges.pricePaid.spec.ts),
@@ -984,7 +983,7 @@ valuation gap. The existing completeness rules apply to every booked movement. S
 [Safe pagination and metadata unit tests](../../../app/src/queries/__tests__/safe.queries.spec.ts) and
 [Safe source-mapping tests](../../../app/src/utils/accounting/__tests__/safe.spec.ts). Live product review remains pending.
 
-**Implementation evidence reviewed against:** `0d72330dc95f35f269e33446f30c6ab02d1c97f8`
+**Implementation evidence reviewed against:** `e567ca13d95cb3a628f3a7932465abde89495783`
 
 - [Accounting page](../../../app/src/components/sections/AccountingView/AccountingPage.vue),
   [team routes](../../../app/src/router/index.ts), and [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts)
