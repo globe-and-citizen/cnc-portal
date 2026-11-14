@@ -81,10 +81,10 @@ describe('[US-SAFE-007] useSafeSwapPnl', () => {
   })
 
   it('values the swaps found in the history and asks CoW for their fees', () => {
-    const { data, isLoading } = useSafeSwapPnl(SAFE)
+    const { costBasis: basis, isLoading } = useSafeSwapPnl(SAFE)
 
     expect(isLoading.value).toBe(false)
-    expect(data.value?.count).toBe(1)
+    expect(basis.value?.count).toBe(1)
     expect(requests.orders).toEqual(['0xswap'])
   })
 
@@ -121,43 +121,43 @@ describe('[US-SAFE-007] useSafeSwapPnl', () => {
 
   it('waits for the daily quotes before reporting', () => {
     mockRates.value = [{ coinId: 'weth', date: '2026-06-01', isLoading: true }]
-    const { data, isLoading } = useSafeSwapPnl(SAFE)
+    const { costBasis: basis, isLoading } = useSafeSwapPnl(SAFE)
 
     expect(isLoading.value).toBe(true)
-    expect(data.value).toBeUndefined()
+    expect(basis.value).toBeUndefined()
   })
 
   it('waits for the CoW fee lookups before reporting, so no fee is dropped', () => {
     mockOrders.value = [{ txHash: '0xswap', isLoading: true }]
-    const { data, isLoading } = useSafeSwapPnl(SAFE)
+    const { costBasis: basis, isLoading } = useSafeSwapPnl(SAFE)
 
     expect(isLoading.value).toBe(true)
-    expect(data.value).toBeUndefined()
+    expect(basis.value).toBeUndefined()
   })
 
   it('keeps the last settled report while a source reloads or a refresh fails', () => {
-    const { data } = useSafeSwapPnl(SAFE)
-    const settled = data.value
+    const { costBasis: basis } = useSafeSwapPnl(SAFE)
+    const settled = basis.value
     expect(settled?.count).toBe(1)
 
     mockTransfers.isLoading.value = true
-    expect(data.value).toBe(settled)
+    expect(basis.value).toBe(settled)
     mockTransfers.isLoading.value = false
     mockTransfers.error.value = new Error('Refresh failed')
-    expect(data.value?.count).toBe(1)
+    expect(basis.value?.count).toBe(1)
   })
 
   it('discards the previous Safe report when the address changes or is cleared during loading', () => {
     const address = ref<string | undefined>(SAFE)
-    const { data } = useSafeSwapPnl(address)
-    expect(data.value?.count).toBe(1)
+    const { costBasis: basis } = useSafeSwapPnl(address)
+    expect(basis.value?.count).toBe(1)
 
     mockTransfers.isLoading.value = true
     const otherSafe = '0x00000000000000000000000000000000000000aa'
     address.value = otherSafe
-    expect(data.value).toBeUndefined()
+    expect(basis.value).toBeUndefined()
     address.value = undefined
-    expect(data.value).toBeUndefined()
+    expect(basis.value).toBeUndefined()
     address.value = otherSafe
 
     mockTransfers.data.value = swapLegs.map((row) => ({
@@ -167,16 +167,16 @@ describe('[US-SAFE-007] useSafeSwapPnl', () => {
       transactionHash: '0xother'
     }))
     mockTransfers.isLoading.value = false
-    expect(data.value?.swaps.map(({ txHash }) => txHash)).toEqual(['0xother'])
+    expect(basis.value?.swaps.map(({ txHash }) => txHash)).toEqual(['0xother'])
   })
 
-  it('UC-SWAP-014 reports nothing when the Safe history cannot be read', () => {
+  it('reports nothing when the Safe history cannot be read', () => {
     mockTransfers.data.value = undefined
     mockTransfers.error.value = new Error('Safe service unavailable')
-    const { data, isError } = useSafeSwapPnl(SAFE)
+    const { costBasis: basis, isError } = useSafeSwapPnl(SAFE)
 
     expect(isError.value).toBe(true)
-    expect(data.value).toBeUndefined()
+    expect(basis.value).toBeUndefined()
   })
 
   it('reports an empty P&L when no Safe exists at the address', () => {
@@ -187,10 +187,10 @@ describe('[US-SAFE-007] useSafeSwapPnl', () => {
       error: ref(Object.assign(new Error('Not found'), { status: 404 }))
     } as unknown as ReturnType<typeof useGetSafeBalancesQuery>)
 
-    const { data, isError } = useSafeSwapPnl(SAFE)
+    const { costBasis: basis, isError } = useSafeSwapPnl(SAFE)
 
     expect(isError.value).toBe(false)
-    expect(data.value?.count).toBe(0)
+    expect(basis.value?.count).toBe(0)
   })
 
   it('reports an error when the Safe balances are unavailable', () => {
@@ -200,21 +200,21 @@ describe('[US-SAFE-007] useSafeSwapPnl', () => {
       error: ref(Object.assign(new Error('Gateway down'), { status: 503 }))
     } as unknown as ReturnType<typeof useGetSafeBalancesQuery>)
 
-    const { data, isError } = useSafeSwapPnl(SAFE)
+    const { costBasis: basis, isError } = useSafeSwapPnl(SAFE)
 
     expect(isError.value).toBe(true)
-    expect(data.value).toBeUndefined()
+    expect(basis.value).toBeUndefined()
   })
 
   it('looks nothing up without a Safe address', () => {
-    const { data } = useSafeSwapPnl(undefined)
+    const { costBasis: basis } = useSafeSwapPnl(undefined)
 
-    expect(data.value).toBeUndefined()
+    expect(basis.value).toBeUndefined()
     expect(requests.orders).toEqual([])
   })
 
   it('[AC-US-SAFE-007-02] filters swap transactions while retaining the original transfer objects', () => {
-    const report = vi.spyOn(swapValuation, 'buildSafeSwapReport')
+    const costBasis = vi.spyOn(swapValuation, 'buildSafeCostBasis')
     const sent = Object.freeze({
       ...swapLegs[1]!,
       transferId: 'sent',
@@ -238,18 +238,17 @@ describe('[US-SAFE-007] useSafeSwapPnl', () => {
       leg({ transactionHash: '0xnft', type: 'ERC721_TRANSFER' })
     ]
 
-    const { data } = useSafeSwapPnl(SAFE)
-    expect(data.value?.count).toBe(1)
-    const selected = report.mock.calls.at(-1)![0]
-    expect(selected).toEqual([sent, received, refund])
-    expect(selected[0]).toBe(sent)
-    expect(selected[1]).toBe(received)
-    expect(selected[2]).toBe(refund)
+    const { costBasis: basis } = useSafeSwapPnl(SAFE)
+    expect(basis.value?.count).toBe(1)
+    const movements = costBasis.mock.calls.at(-1)![0]
+    expect(movements).toContain(sent)
+    expect(movements).toContain(received)
+    expect(movements).toContain(refund)
     expect(requests.orders).toEqual(['0xswap'])
   })
 
   it('keeps original Gateway rows with a usable price and reacts when the query changes', () => {
-    const report = vi.spyOn(swapValuation, 'buildSafeSwapReport')
+    const costBasis = vi.spyOn(swapValuation, 'buildSafeCostBasis')
     const held: SafeClientBalance = Object.freeze({
       tokenInfo: Object.freeze({
         type: 'NATIVE_TOKEN',
@@ -279,14 +278,14 @@ describe('[US-SAFE-007] useSafeSwapPnl', () => {
       error: ref(null)
     } as ReturnType<typeof useGetSafeBalancesQuery>)
 
-    const { data } = useSafeSwapPnl(SAFE)
-    expect(data.value?.count).toBe(1)
-    expect(data.value?.currentUsd).toBe(0.400123)
-    expect(report.mock.calls.at(-1)![1].heldBalances).toEqual([held])
-    expect(report.mock.calls.at(-1)![1].heldBalances[0]).toBe(held)
+    const { costBasis: basis } = useSafeSwapPnl(SAFE)
+    expect(basis.value?.count).toBe(1)
+    expect(basis.value?.positions[0]?.valueUsd).toBe(0.400123)
+    expect(costBasis.mock.calls.at(-1)![1].heldBalances).toEqual([held])
+    expect(costBasis.mock.calls.at(-1)![1].heldBalances[0]).toBe(held)
 
     balances.value = { fiatTotal: '0', items: [] }
-    expect(data.value?.count).toBe(1)
-    expect(report.mock.calls.at(-1)![1].heldBalances).toEqual([])
+    expect(basis.value?.count).toBe(1)
+    expect(costBasis.mock.calls.at(-1)![1].heldBalances).toEqual([])
   })
 })

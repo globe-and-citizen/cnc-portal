@@ -1,5 +1,13 @@
 import type { SafeIncomingTransfer } from '@/types/safe'
-import type { SafeSwapFeeOf, SafeSwapPrices } from './swapPnl'
+import {
+  averageCost,
+  enterPosition,
+  exitAtAverageCost,
+  isRoundingDust,
+  realizeExit,
+  sumOrNull,
+  type AverageCostPosition
+} from './averageCost'
 import {
   groupSafeTransfers,
   safeDayOf,
@@ -8,6 +16,18 @@ import {
   type SafeAssetAmount,
   type SafeTransactionLeg
 } from './swapTransfers'
+
+export interface SafeSwapPrices {
+  /** USD price on a UTC day. */
+  on: (asset: string, date: string) => number | undefined
+  /** USD price today. */
+  now: (asset: string) => number | undefined
+}
+
+/** Fee of one transaction, expressed as a quantity of an asset it gave up. */
+export type SafeSwapFeeOf = (
+  transfers: readonly SafeIncomingTransfer[]
+) => { asset: string; symbol: string; quantity: number } | undefined
 
 /** One swap: what the Safe gave and received, fee excluded, and what the exchange was worth. */
 export interface SafeSwapExchange {
@@ -19,6 +39,13 @@ export interface SafeSwapExchange {
   valueUsd: number | null
   /** Reported fee, in the asset it was taken from; null when none is reported. */
   fee: (SafeAssetAmount & { usd: number | null }) | null
+  /**
+   * This swap's share of the Safe P&L: the P&L to date of the tokens it touched just after the
+   * swap, less just before it, fee excluded; null when one of them cannot be valued. The shares of
+   * all swaps add up to the Safe P&L unless a deposit or payment moved a swapped token at a price
+   * other than its average cost.
+   */
+  pnlContributionUsd: number | null
 }
 
 /** One movement of a token, with the quantity it leaves held. */
@@ -93,25 +120,14 @@ interface Transaction {
   interestLegs: SafeTransactionLeg[]
 }
 
-interface Position {
+interface Position extends AverageCostPosition {
   asset: string
   symbol: string
-  quantity: number
-  costUsd: number | null
-  realizedUsd: number | null
   history: SafeCostBasisEvent[]
 }
 
-/** A remainder this small is rounding noise: the position counts as emptied. */
-const DUST = 1e-9
-
-const total = (values: readonly (number | null)[]) =>
-  values.some((value) => value === null)
-    ? null
-    : values.reduce<number>((sum, value) => sum + value!, 0)
-
 const knownTotal = (values: readonly (number | null)[]) =>
-  total(values.filter((value) => value !== null))!
+  sumOrNull(values.filter((value) => value !== null))!
 
 /**
  * Track every token the swaps touched at its weighted average cost, through all its movements in
@@ -175,7 +191,7 @@ function createLedger({ prices, isStable, feeOf }: SafeCostBasisSources) {
   const prorate = (value: number | null, amounts: readonly SafeAssetAmount[], day: string) => {
     if (amounts.length === 1) return [value]
     const weights = amounts.map((amount) => dayValue(amount, day))
-    const weightTotal = total(weights)
+    const weightTotal = sumOrNull(weights)
     return weights.map((weight) =>
       value === null || weightTotal === null || !weightTotal
         ? null
@@ -185,13 +201,30 @@ function createLedger({ prices, isStable, feeOf }: SafeCostBasisSources) {
   const record = (position: Position, event: Omit<SafeCostBasisEvent, 'quantityHeld'>) =>
     position.history.push({ ...event, quantityHeld: position.quantity })
 
+  const priceToday = ({ asset, quantity }: Position) =>
+    quantity <= 0 ? null : isStable(asset) ? 1 : (prices.now(asset) ?? null)
+  const valueToday = (position: Position) => {
+    const price = priceToday(position)
+    if (price === null) return position.quantity > 0 ? null : 0
+    return price * position.quantity
+  }
+  /** The token's P&L so far: exits fixed at their day's price, plus what remains at today's. */
+  const pnlToDate = (position: Position) =>
+    sumOrNull([
+      position.realizedUsd,
+      valueToday(position),
+      position.costUsd === null ? null : -position.costUsd
+    ])
+  const totalPnlToDate = (tokenPositions: readonly Position[]) =>
+    sumOrNull(tokenPositions.map(pnlToDate))
+
   /** Value an exchange from its stablecoin side, else from the side given, fee already excluded. */
   const exchangeValue = (given: SafeAssetAmount[], received: SafeAssetAmount[], day: string) => {
     const isStableSide = (side: SafeAssetAmount[]) =>
       side.length > 0 && side.every(({ asset }) => isStable(asset))
     if (isStableSide(received)) return knownTotal(received.map(({ quantity }) => quantity))
     if (isStableSide(given)) return knownTotal(given.map(({ quantity }) => quantity))
-    return total(given.map((amount) => dayValue(amount, day)))
+    return sumOrNull(given.map((amount) => dayValue(amount, day)))
   }
 
   /** A stablecoin enters at $1; the rest of the exchange value is shared by the other assets. */
@@ -208,39 +241,47 @@ function createLedger({ prices, isStable, feeOf }: SafeCostBasisSources) {
 
   const swap = ({ txHash, executionDate, rows, legs }: Transaction): SafeSwapExchange => {
     const day = safeDayOf(executionDate)
-    const reported = feeOf(rows)
+    const reportedFee = feeOf(rows)
     const given = legs
       .filter(({ isReceived }) => !isReceived)
-      .map((leg) => exchangedAmount(leg, reported))
-      .filter(({ quantity }) => quantity > DUST)
+      .map((leg) => exchangedAmount(leg, reportedFee))
+      .filter(({ quantity }) => !isRoundingDust(quantity))
     const received = legs.filter(({ isReceived }) => isReceived).map(amountOf)
     const valueUsd = exchangeValue(given, received, day)
-    const feePrice = reported ? priceOn(reported, day) : null
+    const feePrice = reportedFee ? priceOn(reportedFee, day) : null
+    const positionsInSwap = [
+      ...new Set([...given, ...received, ...(reportedFee ? [reportedFee] : [])].map(positionOf))
+    ]
+    const pnlBeforeSwap = totalPnlToDate(positionsInSwap)
     const exchange: SafeSwapExchange = {
       txHash,
       executionDate,
       given,
       received,
       valueUsd,
-      fee: reported
-        ? { ...amountOf(reported), usd: feePrice === null ? null : feePrice * reported.quantity }
-        : null
+      fee: reportedFee
+        ? {
+            ...amountOf(reportedFee),
+            usd: feePrice === null ? null : feePrice * reportedFee.quantity
+          }
+        : null,
+      pnlContributionUsd: null
     }
     const event = { txHash, executionDate, kind: 'swap' as const, swap: exchange }
     prorate(valueUsd, given, day).forEach((proceeds, index) => {
       const { quantity } = given[index]!
       const position = positionOf(given[index]!)
-      const pnlUsd = realize(position, proceeds, leave(position, quantity))
+      const pnlUsd = realizeExit(position, proceeds, exitAtAverageCost(position, quantity))
       const priceUsd = proceeds === null ? null : proceeds / quantity
       record(position, { ...event, quantity, priceUsd, pnlUsd })
     })
-    if (reported) {
-      const position = positionOf(reported)
-      leave(position, reported.quantity)
+    if (reportedFee) {
+      const position = positionOf(reportedFee)
+      exitAtAverageCost(position, reportedFee.quantity)
       record(position, {
         ...event,
         kind: 'fee',
-        quantity: reported.quantity,
+        quantity: reportedFee.quantity,
         priceUsd: feePrice,
         pnlUsd: null
       })
@@ -248,10 +289,13 @@ function createLedger({ prices, isStable, feeOf }: SafeCostBasisSources) {
     entryCosts(received, valueUsd, day).forEach((costUsd, index) => {
       const { quantity } = received[index]!
       const position = positionOf(received[index]!)
-      enter(position, quantity, costUsd)
+      enterPosition(position, quantity, costUsd)
       const priceUsd = costUsd === null ? null : costUsd / quantity
       record(position, { ...event, quantity, priceUsd, pnlUsd: null })
     })
+    const pnlAfterSwap = totalPnlToDate(positionsInSwap)
+    exchange.pnlContributionUsd =
+      pnlBeforeSwap === null || pnlAfterSwap === null ? null : pnlAfterSwap - pnlBeforeSwap
     return exchange
   }
 
@@ -262,29 +306,25 @@ function createLedger({ prices, isStable, feeOf }: SafeCostBasisSources) {
     const valueUsd = priceUsd === null ? null : priceUsd * leg.quantity
     const event = { txHash, executionDate, swap: null, quantity: leg.quantity, priceUsd }
     if (leg.isReceived) {
-      enter(position, leg.quantity, valueUsd)
+      enterPosition(position, leg.quantity, valueUsd)
       record(position, { ...event, kind: 'received', pnlUsd: null })
     } else {
-      const pnlUsd = realize(position, valueUsd, leave(position, leg.quantity))
+      const pnlUsd = realizeExit(position, valueUsd, exitAtAverageCost(position, leg.quantity))
       record(position, { ...event, kind: 'sent', pnlUsd })
     }
   }
 
   const close = (position: Position): SafeTokenPosition => {
-    const { asset, symbol, quantity, costUsd, realizedUsd, history } = position
-    const isHeld = quantity > 0
-    const priceUsd = !isHeld ? null : isStable(asset) ? 1 : (prices.now(asset) ?? null)
-    const valueUsd = priceUsd === null ? (isHeld ? null : 0) : priceUsd * quantity
-    const pnlUsd = total([realizedUsd, valueUsd, costUsd === null ? null : -costUsd])
+    const { asset, symbol, quantity, costUsd, history } = position
     return {
       asset,
       symbol,
       quantity,
       costUsd,
       averageCostUsd: averageCost(position),
-      priceUsd,
-      valueUsd: isHeld ? valueUsd : null,
-      pnlUsd,
+      priceUsd: priceToday(position),
+      valueUsd: quantity > 0 ? valueToday(position) : null,
+      pnlUsd: pnlToDate(position),
       history
     }
   }
@@ -307,41 +347,6 @@ function exchangedAmount(
 ): SafeAssetAmount {
   const quantity = leg.asset === fee?.asset ? leg.quantity - fee.quantity : leg.quantity
   return { ...amountOf(leg), quantity }
-}
-
-function averageCost({ quantity, costUsd }: Position): number | null {
-  return quantity > 0 && costUsd !== null ? costUsd / quantity : null
-}
-
-function enter(position: Position, quantity: number, costUsd: number | null) {
-  position.quantity += quantity
-  position.costUsd =
-    position.costUsd === null || costUsd === null ? null : position.costUsd + costUsd
-}
-
-/**
- * Take a quantity out at its average cost and return that cost. Taking more than the history
- * shows held means part of the history is missing: the token can no longer be valued. An emptied
- * position starts again from its next entry.
- */
-function leave(position: Position, quantity: number): number | null {
-  const isOverdrawn = quantity > position.quantity + DUST
-  const average = averageCost(position)
-  const costUsd = isOverdrawn || average === null ? null : average * quantity
-  position.quantity -= quantity
-  if (isOverdrawn) position.realizedUsd = null
-  if (position.quantity <= DUST) {
-    position.quantity = 0
-    position.costUsd = 0
-  } else position.costUsd = costUsd === null ? null : position.costUsd! - costUsd
-  return costUsd
-}
-
-/** Fix the gain or loss of a movement out of the Safe into the token's P&L. */
-function realize(position: Position, proceedsUsd: number | null, costUsd: number | null) {
-  const pnlUsd = proceedsUsd === null || costUsd === null ? null : proceedsUsd - costUsd
-  position.realizedUsd = total([position.realizedUsd, pnlUsd])
-  return pnlUsd
 }
 
 function summarize(positions: SafeTokenPosition[], swaps: SafeSwapExchange[]): SafeCostBasis {

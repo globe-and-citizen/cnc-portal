@@ -12,12 +12,12 @@ import { useCNCAccounting } from '../useCNCAccounting'
 /** The Safe overview reports a $5 P&L on the purchase: the AWETH bought is now worth $24, not $19. */
 vi.mock('@/composables/safe/useSafeSwapPnl', () => ({
   useSafeSwapPnl: () => ({
-    data: {
+    costBasis: {
       value: {
         count: 1,
         pnlUsd: 5,
-        missingPrices: [],
-        swaps: [{ txHash: `0x${'1'.padStart(64, '0')}`, pnlUsd: 5 }]
+        unvaluedTokens: [],
+        swaps: [{ txHash: `0x${'1'.padStart(64, '0')}`, pnlContributionUsd: 5 }]
       }
     },
     isLoading: { value: false },
