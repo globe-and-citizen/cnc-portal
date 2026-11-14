@@ -1,7 +1,7 @@
 # Backoffice Micropayments — User Stories
 
-**Scope:** Administrator access to versioned global FeeCollector deployments at `/micropayments`, including the available V1 management
-panel and historical V0/V0.1 panels; the registry's current V2 deployment is not yet supported by this route
+**Scope:** Administrator access to versioned global FeeCollector deployments at `/micropayments`, including the current V2 and historical V1
+management panels and historical V0/V0.1 panels
 
 **Last reviewed:** Not yet reviewed
 
@@ -14,12 +14,11 @@ These acceptance criteria follow the
   company.
 - An authenticated `ROLE_ADMIN` or `ROLE_SUPER_ADMIN` user can enter the dashboard route. FeeCollector writes require the connected wallet
   to be the owner of the selected deployment; dashboard administrator access alone does not grant on-chain control.
-- The version selector defaults to the registry's current V2 deployment, but the route renders panels only for V1, V0, and V0.1. Its
-  FeeCollector resolver has a V2 ABI and address mapping, but no V2 management panel. Thus selecting the default does not provide a
-  current-generation management journey; the V1 criteria below describe the available V1 panel, not the current deployment.
-- The V1 panel shows an approximate USD total of the recognized holdings, the owner, the fee beneficiary, token holdings, and fee
+- The version selector defaults to the current V2 deployment. V1 and V2 share a management panel that binds reads and writes to the
+  deployment selected when the panel mounts. Changing versions remounts the panel; V0 and V0.1 retain their historical panels.
+- The V1 and V2 panel shows an approximate USD total of the recognized holdings, the owner, the fee beneficiary, token holdings, and fee
   configurations. The displayed beneficiary is the owner when the stored beneficiary is unset.
-- V1 withdrawals sweep the native balance and every supported ERC-20 balance to the configured beneficiary, or to the owner when no
+- V1 and V2 withdrawals sweep the native balance and every supported ERC-20 balance to the configured beneficiary, or to the owner when no
   beneficiary is configured. A withdrawal has no per-token or partial-amount control.
 - A company Bank transfer with a positive `BANK` fee is a FeeCollector funding source. The company payment journey owns the detailed
   transfer and fee-applicability rules.
@@ -37,7 +36,7 @@ flowchart LR
     Version --> Inspect[Inspect balances, owner, and fee configuration]
     Inspect --> Owner{Connected wallet owns selected collector?}
     Owner -->|No| ReadOnly[Read-only inspection]
-    Owner -->|Yes, V1| Current[Manage V1 fee collector]
+    Owner -->|Yes, V1 or V2| Current[Manage selected fee collector]
     Current --> FeesConfig[Set fee configuration]
     Current --> Tokens[Manage token support]
     Current --> Recipient[Set beneficiary or transfer ownership]
@@ -57,6 +56,7 @@ flowchart LR
 | US-MICROPAYMENTS-005 | Transfer V1 FeeCollector ownership      | FeeCollector owner     | 🧪 Validation  |
 | US-MICROPAYMENTS-006 | Withdraw V1 FeeCollector funds          | FeeCollector owner     | 🧪 Validation  |
 | US-MICROPAYMENTS-007 | Manage a legacy FeeCollector deployment | FeeCollector owner     | 🧪 Validation  |
+| US-MICROPAYMENTS-008 | Manage the V2 FeeCollector              | FeeCollector owner     | 🚧 In Progress |
 
 ## Test Coverage Overview
 
@@ -73,6 +73,7 @@ reference has the expected layer label.
 | US-MICROPAYMENTS-005 | ⬜ Planned   | ❌ 0/7 met      | `AC-US-MICROPAYMENTS-005-01–07` |
 | US-MICROPAYMENTS-006 | ⬜ Planned   | ❌ 0/9 met      | `AC-US-MICROPAYMENTS-006-01–09` |
 | US-MICROPAYMENTS-007 | ⬜ Planned   | ❌ 0/9 met      | `AC-US-MICROPAYMENTS-007-01–09` |
+| US-MICROPAYMENTS-008 | ⬜ Planned   | ❌ 0/6 met      | `AC-US-MICROPAYMENTS-008-01–06` |
 
 Proof obligations use the [shared proof-strategy registry](../../../testing/proof-strategies.md). Multiple IDs for one AC are cumulative.
 
@@ -86,7 +87,8 @@ Proof obligations use the [shared proof-strategy registry](../../../testing/proo
 
 #### Happy Path
 
-- [x] `AC-US-MICROPAYMENTS-001-01` An authenticated administrator or super administrator can open Micropayments and select V1, V0, or V0.1.
+- [x] `AC-US-MICROPAYMENTS-001-01` An authenticated administrator or super administrator can open Micropayments and select V2, V1, V0, or
+      V0.1.
 - [x] `AC-US-MICROPAYMENTS-001-02` The current deployment is identified in the selector and is selected by default.
 - [x] `AC-US-MICROPAYMENTS-001-03` The V1 panel shows recognized holding balances, an approximate USD total, the owner, the effective fee
       beneficiary, and fee configurations.
@@ -408,36 +410,78 @@ Proof obligations use the [shared proof-strategy registry](../../../testing/proo
 
 **Dependencies:** US-MICROPAYMENTS-001, ownership of V0 or V0.1, and the selected historical deployment
 
+## US-MICROPAYMENTS-008: Manage the V2 FeeCollector
+
+**As a** FeeCollector owner\
+**I want to** inspect and manage the current V2 deployment\
+**So that** I can administer its fee policy and collected funds
+
+### Acceptance Criteria
+
+- [x] `AC-US-MICROPAYMENTS-008-01` The current V2 selection displays recognized balances, owner, effective beneficiary, and fee
+      configuration.
+- [x] `AC-US-MICROPAYMENTS-008-02` The connected owner can manage fee configuration, token support, beneficiary, ownership, and withdrawal
+      on the selected V2 deployment; a different wallet cannot see owner controls.
+- [x] `AC-US-MICROPAYMENTS-008-03` The V2 beneficiary is read through `getFeeBeneficiary()`; an unset beneficiary falls back to the owner.
+- [x] `AC-US-MICROPAYMENTS-008-04` Switching versions remounts the management panel, while a prepared write remains bound to its original
+      deployment address.
+- [x] `AC-US-MICROPAYMENTS-008-05` Failed configuration and balance reads are reported, and unrecognized supported tokens are disclosed as
+      excluded from displayed totals but included in withdrawals.
+- [x] `AC-US-MICROPAYMENTS-008-06` A successful confirmed write refreshes reads for the target deployment; a failed simulation does not
+      submit a transaction.
+
+### Test Coverage
+
+| Acceptance Criterion         | Proof Strategy | Current Evidence | Status     |
+| ---------------------------- | -------------- | ---------------- | ---------- |
+| `AC-US-MICROPAYMENTS-008-01` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-MICROPAYMENTS-008-02` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-MICROPAYMENTS-008-03` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-MICROPAYMENTS-008-04` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-MICROPAYMENTS-008-05` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-MICROPAYMENTS-008-06` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+
+**Dependencies:** US-MICROPAYMENTS-001, the V2 deployment, and its connected owner for writes. Unit tests do not establish live-chain or
+human acceptance.
+
 ## Known Gaps
 
-- The registry selects V2 by default, while the page has no V2 panel, despite the resolver having its ABI and address mapping. V1 management
-  is available only after choosing the V1 version; it must not be counted as the current-generation journey. The six direct contract markers
-  target current Solidity source rather than the V1 dashboard deployment, so none establishes a V1 browser outcome by itself.
+- The V1 criteria and direct contract markers must not be used as proof of the V2 browser journey. The V2 implementation has targeted unit
+  evidence, but no integrated browser or live-chain owner transaction has been executed.
 - The marked owner-guard and sweep tests exercise current Solidity source, not a V1 deployment. `003-05` also omits a marked zero-address
   assertion, `004-04` and `006-04` check rejection without the full owner outcome, and `006-02` lacks the configured-beneficiary branch.
-- The V1 fee list can display its empty state after a failed configuration read, contrary to the full failure distinction in
-  `AC-US-MICROPAYMENTS-001-11`.
-- The V1 panel only renders the native token and ERC-20s known to its local token registry. It detects supported ERC-20 addresses outside
-  that registry but does not show them in the holdings table, so an owner cannot inspect or remove every supported token from the dashboard
-  (`US-MICROPAYMENTS-003`).
-- The dashboard has no dedicated automated test for the Micropayments version selector or its management modals. Contract coverage verifies
-  the current FeeCollector's on-chain behaviour, but the administrator and wallet journeys still require human validation.
+- The V1 and V2 panel only renders the native token and ERC-20s known to its local token registry. It detects supported ERC-20 addresses
+  outside that registry and warns that their balances are excluded but will be swept; an owner cannot inspect or remove every supported
+  token from the dashboard (`US-MICROPAYMENTS-003`).
+- The dashboard has targeted unit tests for version selection, binding, ownership, and a simulated write. Its management modals do not yet
+  have complete representative coverage; the administrator and wallet journeys still require human validation.
 
 ## Implementation Evidence
+
+**Implementation evidence reviewed against:** `ec9d3c52004dea273743e7aa2032988bdcdd7dd5`
 
 - [Dashboard navigation](../../../../dashboard/app/layouts/default.vue),
   [administrator route guard](../../../../dashboard/app/middleware/auth.global.ts), and
   [Micropayments page and version selector](../../../../dashboard/app/pages/micropayments.vue)
 - [Versioned FeeCollector registry](../../../../dashboard/app/artifacts/feeCollectorRegistry.ts) and
   [version selection state](../../../../dashboard/app/composables/FeeCollector/useFeeCollectorVersion.ts)
-- [V1 management panel](../../../../dashboard/app/components/sections/FeeCollectorView/FeeCollectorPanelV1.vue),
-  [current holdings and withdrawal](../../../../dashboard/app/components/sections/FeeCollectorView/TokenHoldingsTable.vue),
+- [V1 and V2 management panel](../../../../dashboard/app/components/sections/FeeCollectorView/FeeCollectorManagedPanel.vue),
+  [current holdings](../../../../dashboard/app/components/sections/FeeCollectorView/TokenHoldingsTable.vue),
+  [add-token action](../../../../dashboard/app/components/sections/FeeCollectorView/AddTokenSupportModal.vue),
+  [withdrawal action](../../../../dashboard/app/components/sections/FeeCollectorView/WithdrawModal.vue),
   [owner and beneficiary controls](../../../../dashboard/app/components/sections/FeeCollectorView/FeeCollectorStats.vue),
   [fee configuration form](../../../../dashboard/app/components/sections/FeeCollectorView/FeeConfigFormModal.vue), and
   [fee configuration list](../../../../dashboard/app/components/sections/FeeCollectorView/FeeConfigList.vue)
 - [Legacy V0 panel](../../../../dashboard/app/components/sections/FeeCollectorView/legacy/FeeCollectorPanelV0.vue),
   [legacy V0.1 panel](../../../../dashboard/app/components/sections/FeeCollectorView/legacy/FeeCollectorPanelV01.vue), and
   [legacy actions](../../../../dashboard/app/components/sections/FeeCollectorView/legacy/FeeCollectorLegacyActions.vue)
+- [Managed deployment resolution](../../../../dashboard/app/composables/FeeCollector/resolveManagedFeeCollector.ts),
+  [managed reads](../../../../dashboard/app/composables/FeeCollector/read.ts),
+  [managed writes](../../../../dashboard/app/composables/FeeCollector/writes.ts),
+  [version binding tests](../../../../dashboard/test/micropaymentsVersion.spec.ts), and
+  [write lifecycle tests](../../../../dashboard/test/micropaymentsWrites.spec.ts),
+  [incomplete-state tests](../../../../dashboard/test/micropaymentsStates.spec.ts), and
+  [withdrawal tests](../../../../dashboard/test/micropaymentsWithdraw.spec.ts)
 - [FeeCollector contract](../../../../contract/contracts/FeeCollector.sol),
   [token-support guards](../../../../contract/contracts/base/TokenSupport.sol), and
   [FeeCollector contract tests](../../../../contract/test/FeeCollector.spec.ts)
