@@ -32,11 +32,14 @@ contract/versions/registry.json               # version registry (source of trut
 contract/versions/<version>/abi/*.json         # ABIs recompiled at the deploy commit
 contract/versions/<version>/deployed_addresses/chain-137.json   # from git at the deploy commit
 app/src/artifacts/abi/<version>/generated.ts   # typed frontend module generated from the canonical JSON snapshot
+dashboard/app/artifacts/abi/<version>/generated.ts # same typed ABI exports
+dashboard/app/artifacts/abi/<version>/events.ts    # generated event union for contract logs
 ```
 
-`contract/versions/<version>/abi` is the only canonical historical ABI archive. The app receives one typed `generated.ts` module per version
-and does not package duplicate ABI JSON files. The dashboard receives its per-version JSON ABIs through its runtime paths; the backend gets
-its six hand-named raw-ABI files. Distribute with `node contract/scripts/distribute-versions.mjs` after `contract/versions/` changes.
+`contract/versions/<version>/abi` is the only canonical historical ABI archive. The app and dashboard receive a typed `generated.ts` module
+per version and do not package duplicate ABI JSON files. The dashboard also receives a generated union of events from every canonical ABI in
+each version for its contract logs; the backend gets its six hand-named raw-ABI files. Distribute with
+`node contract/scripts/distribute-versions.mjs` after `contract/versions/` changes.
 
 Historical Solidity is not copied into parallel source directories. The immutable commit recorded in `registry.json` owns the source,
 compiler configuration, and dependency lockfile for that generation. `regenerate-version.sh` checks out that commit in an isolated clone
