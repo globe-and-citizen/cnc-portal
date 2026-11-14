@@ -4,7 +4,7 @@ import { getLogs } from 'viem/actions'
 import { parseEventLogs, type Address } from 'viem'
 import type { MaybeRefOrGetter } from 'vue'
 import { toValue } from 'vue'
-import { EVENT_ABI } from '~/utils/contractEventsAbi'
+import { EVENT_ABIS } from '~/utils/contractEventsAbi'
 
 // The CNC contracts were first deployed around this Polygon block; scanning from
 // here (instead of genesis) keeps eth_getLogs fast and within RPC limits.
@@ -42,7 +42,15 @@ export const useContractLogsQuery = (
         toBlock: 'latest'
       })
 
-      const decoded = parseEventLogs({ abi: EVENT_ABI, logs })
+      // Decode each raw log against each generation until one layout matches.
+      // Some V2 events share a signature with V1 but index different fields.
+      const decoded = logs.flatMap((log) => {
+        for (const abi of EVENT_ABIS) {
+          const match = parseEventLogs({ abi, logs: [log] })[0]
+          if (match) return [match]
+        }
+        return []
+      })
 
       return decoded
         .map(log => ({
