@@ -114,6 +114,14 @@ describe('TokenAmountInput.vue', () => {
       expect(lastModelValue(wrapper)).toEqual({ amount: '100', tokenId: 'native' })
     })
 
+    it('fills input with the exact maxAmount when the parent provides one', async () => {
+      const wrapper = createWrapper({ maxAmount: '99.502487' })
+
+      await wrapper.find('[data-test="maxButton"]').trigger('click')
+
+      expect(lastModelValue(wrapper)).toEqual({ amount: '99.502487', tokenId: 'native' })
+    })
+
     it('fills input with 25/50/75% of balance when percent buttons are clicked', async () => {
       const wrapper = createWrapper()
 
