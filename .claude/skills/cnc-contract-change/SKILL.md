@@ -1,5 +1,5 @@
 ---
-name: contract-change
+name: cnc-contract-change
 description: Implement and validate CNC Portal Solidity contract changes. Use for work under contract/, deployment or upgrade validation, contract ABI changes, and contract-related frontend artifact updates.
 ---
 

@@ -1,5 +1,5 @@
 ---
-name: frontend-change
+name: cnc-frontend-change
 description: Implement and validate CNC Portal Vue and Nuxt frontend changes. Use for work under app/ or dashboard/, including components, composables, API queries, client-side Web3 writes, formatting, and frontend tests.
 ---
 
