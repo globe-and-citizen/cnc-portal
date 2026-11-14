@@ -106,7 +106,7 @@ Runs of at least three consecutive missing criteria use inclusive ranges with fu
 
 | User Story  | Main Journey  | Coverage Target | Gaps                                                                              |
 | ----------- | ------------- | --------------- | --------------------------------------------------------------------------------- |
-| US-BANK-001 | ✅ Integrated | ⚠️ 9/10         | `AC-US-BANK-001-03`                                                               |
+| US-BANK-001 | ✅ Integrated | ⚠️ 11/12        | `AC-US-BANK-001-03`                                                               |
 | US-BANK-002 | ✅ Integrated | ⚠️ 11/13        | `AC-US-BANK-002-01`, `AC-US-BANK-002-02`                                          |
 | US-BANK-003 | ✅ Integrated | ⚠️ 8/10 met     | `AC-US-BANK-003-08`, `AC-US-BANK-003-09`                                          |
 | US-BANK-004 | 🚧 Partial    | ⚠️ 6/8          | `AC-US-BANK-004-01`, `AC-US-BANK-004-02`                                          |
@@ -147,6 +147,11 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 - [x] `AC-US-BANK-001-05` An ERC-20 deposit can use no more than six decimal places.
 - [x] `AC-US-BANK-001-06` The Bank accepts only ERC-20 tokens supported by its current configuration. _(contract)_
 - [x] `AC-US-BANK-001-07` An ERC-20 deposit authorizes the Bank only when the existing allowance is insufficient.
+- [x] `AC-US-BANK-001-11` A member can include the Bank transfer fee in a deposit, so a later Bank transfer of the entered amount delivers
+      it exactly, with nothing missing and nothing left over from that deposit. The fee is added only for assets the Bank charges on
+      transfer.
+- [x] `AC-US-BANK-001-12` When the fee is included, the largest amount a member can select keeps the deposit, fee included, within the
+      wallet balance.
 
 #### Edge & Error Cases
 
@@ -172,6 +177,8 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 | `AC-US-BANK-001-08`  | `PS-BROWSER`          | Mocked browser                       | ✅ Met          |
 | `AC-US-BANK-001-09`  | `PS-BROWSER`          | Mocked browser                       | ✅ Met          |
 | `AC-US-BANK-001-10`  | `PS-BROWSER`          | Mocked browser                       | ✅ Met          |
+| `AC-US-BANK-001-11`  | `PS-FRONTEND`         | Frontend                             | ✅ Met          |
+| `AC-US-BANK-001-12`  | `PS-FRONTEND`         | Frontend                             | ✅ Met          |
 
 **Accounting:** An external receipt is booked by [`UC-BANK-02`](../accounting/journal-entry-catalogue.md#uc-bank-02--external-cash-receipt).
 A receipt from another known company pocket is an internal transfer instead.
@@ -1374,9 +1381,14 @@ generic table dictionary. This is a compile-time boundary; it does not claim val
 - [Bank page](../../../app/src/views/team/%5Bid%5D/Accounts/BankView.vue), [Bank writes](../../../app/src/composables/bank/writes.ts),
   [Bank transaction feed](../../../app/src/composables/bank/useBankEventsViaLogs.ts),
   [version-aware Bank fee normalization](../../../app/src/composables/bank/bankFees.ts),
+  [Bank transfer fee](../../../app/src/composables/bank/useBankTransferFee.ts),
+  [Bank deposit fee](../../../app/src/composables/bank/useBankDepositFee.ts),
+  [Officer fee reads](../../../app/src/composables/officer/reads.ts),
   [incoming Bank transfer feed](../../../app/src/composables/bank/useIncomingBankTokenTransfersViaLogs.ts), and
   [Bank contract](../../../contract/contracts/Bank.sol)
-- [Bank component tests](../../../app/src/components/sections/BankView/__tests__) and
+- [Bank component tests](../../../app/src/components/sections/BankView/__tests__),
+  [Bank deposit form tests](../../../app/src/components/sections/BankView/forms/__tests__/DepositBankForm.spec.ts),
+  [Bank transfer fee tests](../../../app/src/composables/bank/__tests__/useBankTransferFee.spec.ts), and
   [Bank contract tests](../../../contract/test/Bank.spec.ts)
 - [Bank transfer form](../../../app/src/components/forms/TransferForm.vue)
 - [Current treasury cash-out action](../../../app/src/components/sections/DashboardView/CashOutAllAction.vue),
