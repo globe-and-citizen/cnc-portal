@@ -212,6 +212,53 @@ describe('[US-SAFE-007] computeSafeCostBasis', () => {
     expect(position(basis, 'POL').costUsd).toBeCloseTo(200, 6)
   })
 
+  it('gives each swap its share of the P&L, and the shares add up to the P&L', () => {
+    const basis = compute(
+      history(
+        deposit('0xdeposit', '2026-05-01', [usdc, '5000']),
+        swap('0xbuy1', '2026-06-01', [[usdc, '1000']], [[weth, '0.5']]),
+        swap('0xbuy2', '2026-07-01', [[usdc, '1300']], [[weth, '0.5']]),
+        swap('0xsale', '2026-09-01', [[weth, '0.25']], [[usdc, '700']])
+      ),
+      { now: { [WETH]: 2400 } }
+    )
+
+    expect(basis.swaps.map(({ pnlContributionUsd }) => pnlContributionUsd)).toEqual([
+      200, -100, 100
+    ])
+    expect(basis.pnlUsd).toBe(200)
+  })
+
+  it('keeps the shares adding up to the P&L when a fee is taken from the asset sold', () => {
+    const basis = compute(
+      history(
+        deposit('0xdeposit', '2026-05-01', [usdc, '1000']),
+        swap('0xbuy', '2026-06-01', [[usdc, '1000']], [[weth, '0.5']]),
+        swap('0xsale', '2026-07-01', [[weth, '0.25']], [[usdc, '600']])
+      ),
+      {
+        now: { [WETH]: 2400 },
+        fees: { '0xsale': { asset: WETH, symbol: 'WETH', quantity: 0.01 } }
+      }
+    )
+
+    const contributionsTotal = basis.swaps.reduce(
+      (sum, { pnlContributionUsd }) => sum + pnlContributionUsd!,
+      0
+    )
+    expect(basis.pnlUsd).toBeCloseTo(220, 6)
+    expect(contributionsTotal).toBeCloseTo(basis.pnlUsd, 6)
+  })
+
+  it('leaves a swap without a share when a token it touched cannot be valued', () => {
+    const basis = compute(
+      history(swap('0xswap', '2026-06-01', [[usdc, '1000']], [[weth, '0.5']])),
+      { now: { [WETH]: 2400 } }
+    )
+
+    expect(basis.swaps[0]!.pnlContributionUsd).toBeNull()
+  })
+
   it('lists the swaps in chain order and the tokens still held first', () => {
     const basis = compute(
       history(
