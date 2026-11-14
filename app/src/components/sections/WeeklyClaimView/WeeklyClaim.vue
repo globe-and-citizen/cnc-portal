@@ -1,6 +1,11 @@
 <template>
   <UCard class="w-full pb-7">
-    <template #header>{{ singleUser ? 'Weekly Claim (User)' : 'Weekly Claim' }}</template>
+    <template #header>
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <span>{{ singleUser ? 'Weekly Claim (User)' : 'Weekly Claim' }}</span>
+        <RequireWeeklyGoalsToggle v-if="!singleUser" />
+      </div>
+    </template>
     <UTable
       v-if="rows"
       :data="rows"
@@ -166,6 +171,7 @@ import { RouterLink } from 'vue-router'
 // import CRWithdrawClaim from '../CashRemunerationView/CRWithdrawClaim.vue'
 import { useGetTeamWeeklyClaimsQuery } from '@/queries'
 import WeeklyClaimActionDropdown from './WeeklyClaimActionDropdown.vue'
+import RequireWeeklyGoalsToggle from './RequireWeeklyGoalsToggle.vue'
 import TablePagination from '@/components/ui/TablePagination.vue'
 import { usePagination } from '@/composables/usePagination'
 import type { Address } from 'viem'

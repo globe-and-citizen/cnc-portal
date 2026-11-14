@@ -22,6 +22,7 @@ import { format } from 'prettier'
 const REPO = join(dirname(fileURLToPath(import.meta.url)), '../..')
 const VERSIONS_ROOT = join(REPO, 'contract/versions')
 const APP_ABI_ROOT = join(REPO, 'app/src/artifacts/abi')
+const DASHBOARD_ABI_ROOT = join(REPO, 'dashboard/app/artifacts/abi')
 const REGISTRY_FILE = join(VERSIONS_ROOT, 'registry.json')
 
 // Keep export names aligned with the wagmi-generated naming convention. Investor
@@ -86,6 +87,28 @@ export async function renderVersionedAbiModule(version) {
   })
 }
 
+// The logs view historically decoded events from every ABI, including proxy and
+// utility contracts outside FRONTEND_ABI_EXPORTS. Preserve that full surface.
+async function renderDashboardEvents(version) {
+  const abiDir = join(VERSIONS_ROOT, version, 'abi')
+  const events = new Map()
+  for (const file of readdirSync(abiDir)
+    .filter((name) => name.endsWith('.json'))
+    .sort()) {
+    const abi = JSON.parse(readFileSync(join(abiDir, file), 'utf8'))
+    for (const item of abi) {
+      if (item.type !== 'event') continue
+      const signature = `${item.name}(${(item.inputs ?? []).map((input) => input.type).join(',')})`
+      if (!events.has(signature)) events.set(signature, item)
+    }
+  }
+  return format(
+    `// Generated from contract/versions/${version}/abi. Do not edit.\n` +
+      `export const contractEventsAbi = ${JSON.stringify([...events.values()], null, 2)} as const\n`,
+    { parser: 'typescript', semi: false, singleQuote: true, printWidth: 100, trailingComma: 'none' }
+  )
+}
+
 function frontendJsonDirectories(directory = APP_ABI_ROOT) {
   if (!existsSync(directory)) return []
   const directories = []
@@ -104,19 +127,32 @@ export async function generateVersionedAbiModules({ check = false } = {}) {
   const failures = []
 
   for (const version of versions) {
-    const outputFile = join(APP_ABI_ROOT, version, 'generated.ts')
     const expected = await renderVersionedAbiModule(version)
-    if (check) {
-      const actual = existsSync(outputFile) ? readFileSync(outputFile, 'utf8') : null
-      if (actual !== expected) failures.push(`${outputFile} is missing or stale`)
-      continue
+    for (const root of [APP_ABI_ROOT, DASHBOARD_ABI_ROOT]) {
+      const outputFile = join(root, version, 'generated.ts')
+      if (check) {
+        const actual = existsSync(outputFile) ? readFileSync(outputFile, 'utf8') : null
+        if (actual !== expected) failures.push(`${outputFile} is missing or stale`)
+      } else {
+        mkdirSync(dirname(outputFile), { recursive: true })
+        writeFileSync(outputFile, expected)
+        console.log(`  wrote ${outputFile}`)
+      }
     }
-    mkdirSync(dirname(outputFile), { recursive: true })
-    writeFileSync(outputFile, expected)
-    console.log(`  wrote app/src/artifacts/abi/${version}/generated.ts`)
+    const eventFile = join(DASHBOARD_ABI_ROOT, version, 'events.ts')
+    const expectedEvents = await renderDashboardEvents(version)
+    if (check) {
+      const actual = existsSync(eventFile) ? readFileSync(eventFile, 'utf8') : null
+      if (actual !== expectedEvents) failures.push(`${eventFile} is missing or stale`)
+    } else {
+      writeFileSync(eventFile, expectedEvents)
+    }
   }
 
-  for (const jsonDir of frontendJsonDirectories()) {
+  for (const jsonDir of [
+    ...frontendJsonDirectories(),
+    ...frontendJsonDirectories(DASHBOARD_ABI_ROOT)
+  ]) {
     if (check) {
       if (existsSync(jsonDir) && readdirSync(jsonDir).some((file) => file.endsWith('.json'))) {
         failures.push(`${jsonDir} still contains frontend ABI JSON artifacts`)

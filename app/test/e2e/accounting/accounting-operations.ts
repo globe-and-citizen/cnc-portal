@@ -19,6 +19,7 @@ import {
   openMemberPayrollHistory,
   openWeeklyClaimActions,
   selectHistoryWeek,
+  saveWeeklyGoals,
   setMemberUsdcWage,
   submitDailyClaim
 } from '../payroll/payroll-page'
@@ -269,6 +270,7 @@ export async function payOneWeeklyClaim(
   const paidWeek = completedWeekStart()
   await openMemberPayrollHistory(memberPage, teamId, E2E_MEMBER)
   await selectHistoryWeek(memberPage, paidWeek)
+  await saveWeeklyGoals(memberPage, 'Close the accounting journey week.')
   await submitDailyClaim(memberPage, { hours: '2', memo: 'Accounting journey work' })
 
   await page.goto(`/teams/${teamId}/accounts/team-payroll`)

@@ -7,11 +7,11 @@
 //   node contract/scripts/distribute-versions.mjs
 //
 // - app:                       <V>/generated.ts (typed ABI module) + deployed addresses
-// - dashboard:                 <V>/json/*.json (flat ABIs) + deployed addresses
+// - dashboard:                 <V>/generated.ts (typed ABI module) + deployed addresses
 // - backend:                   <V>/<hand-maintained-name>.json (its 6 named raw-ABI files)
 // The legacy lowercase `v1` snapshot is migrated to `V1` out-of-band via `git rm`
 // (a case-insensitive FS makes an in-script rm of v1 unsafe once V1 exists).
-import { readFileSync, writeFileSync, mkdirSync, rmSync, existsSync, readdirSync } from 'node:fs'
+import { readFileSync, writeFileSync, mkdirSync, rmSync, existsSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
 import { generateVersionedAbiModules } from './versioned-abi-modules.mjs'
@@ -28,7 +28,6 @@ const APP_ADDRESS_BASE = 'app/src/artifacts/deployed_addresses'
 // is independent from the Vue app's typed, literal-preserving ABI modules.
 const JSON_CONSUMERS = [
   {
-    abiBase: 'dashboard/app/artifacts/abi',
     addrBase: 'dashboard/app/artifacts/deployed_addresses'
   }
 ]
@@ -54,14 +53,10 @@ await generateVersionedAbiModules()
 for (const v of folders) {
   const srcAbi = join(VERSIONS, v, 'abi')
   const srcAddr = join(VERSIONS, v, 'deployed_addresses/chain-137.json')
-  const abiFiles = readdirSync(srcAbi).filter((f) => f.endsWith('.json'))
 
   copy(srcAddr, join(REPO, APP_ADDRESS_BASE, v, 'chain-137.json'))
 
-  for (const { abiBase, addrBase } of JSON_CONSUMERS) {
-    const abiDir = join(REPO, abiBase, v, 'json')
-    rmSync(abiDir, { recursive: true, force: true })
-    for (const f of abiFiles) copy(join(srcAbi, f), join(abiDir, f))
+  for (const { addrBase } of JSON_CONSUMERS) {
     copy(srcAddr, join(REPO, addrBase, v, 'chain-137.json'))
   }
 
@@ -79,9 +74,7 @@ for (const v of folders) {
   // Officer FactoryBeacon back to a generation means matching the beacon
   // address, and the registry only stores the module *reference*.
   copy(srcAddr, join(REPO, BACKEND, 'deployed_addresses', v, 'chain-137.json'))
-  console.log(
-    `  ${v}: generated.ts -> app, ${abiFiles.length} JSON ABIs -> dashboard, ${n} -> backend`
-  )
+  console.log(`  ${v}: generated.ts -> app and dashboard, ${n} -> backend`)
 }
 
 console.log(`distributed ${folders.join(', ')} to app, dashboard, backend`)
