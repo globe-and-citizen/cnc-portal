@@ -239,27 +239,27 @@ movement across the participating stories.
 
 ### Test Coverage
 
-| Acceptance Criterion | Proof Strategy        | Current Evidence          | Status          |
-| -------------------- | --------------------- | ------------------------- | --------------- |
-| `AC-US-BANK-002-01`  | `PS-CHAIN-INTEGRATED` | Integrated E2E + Frontend | ✅ Met          |
-| `AC-US-BANK-002-01`  | `PS-CONTRACT`         | Integrated E2E + Frontend | ⚠️ Insufficient |
-| `AC-US-BANK-002-02`  | `PS-CHAIN-INTEGRATED` | Mocked browser + Frontend | ⚠️ Insufficient |
-| `AC-US-BANK-002-02`  | `PS-CONTRACT`         | Mocked browser + Frontend | ⚠️ Insufficient |
-| `AC-US-BANK-002-03`  | `PS-CHAIN-INTEGRATED` | Integrated E2E + Contract | ✅ Met          |
-| `AC-US-BANK-002-03`  | `PS-CONTRACT`         | Integrated E2E + Contract | ✅ Met          |
-| `AC-US-BANK-002-04`  | `PS-CONTRACT`         | Contract                  | ✅ Met          |
-| `AC-US-BANK-002-05`  | `PS-BROWSER`          | Mocked browser + Frontend | ✅ Met          |
-| `AC-US-BANK-002-06`  | `PS-FRONTEND`         | Frontend + Contract       | ✅ Met          |
-| `AC-US-BANK-002-06`  | `PS-CONTRACT`         | Frontend + Contract       | ✅ Met          |
-| `AC-US-BANK-002-07`  | `PS-CONTRACT`         | Contract                  | ✅ Met          |
-| `AC-US-BANK-002-08`  | `PS-FRONTEND`         | Frontend                  | ✅ Met          |
-| `AC-US-BANK-002-09`  | `PS-CHAIN-INTEGRATED` | Integrated E2E + Contract | ✅ Met          |
-| `AC-US-BANK-002-09`  | `PS-CONTRACT`         | Integrated E2E + Contract | ✅ Met          |
-| `AC-US-BANK-002-10`  | `PS-CHAIN-INTEGRATED` | Integrated E2E + Contract | ✅ Met          |
-| `AC-US-BANK-002-10`  | `PS-CONTRACT`         | Integrated E2E + Contract | ✅ Met          |
-| `AC-US-BANK-002-11`  | `PS-BROWSER`          | Mocked browser + Frontend | ✅ Met          |
-| `AC-US-BANK-002-12`  | `PS-CONTRACT`         | Mocked browser + Contract | ✅ Met          |
-| `AC-US-BANK-002-13`  | `PS-BROWSER`          | Mocked browser            | ✅ Met          |
+| Acceptance Criterion | Proof Strategy        | Current Evidence                     | Status          |
+| -------------------- | --------------------- | ------------------------------------ | --------------- |
+| `AC-US-BANK-002-01`  | `PS-CHAIN-INTEGRATED` | Integrated E2E + Frontend            | ✅ Met          |
+| `AC-US-BANK-002-01`  | `PS-CONTRACT`         | Integrated E2E + Frontend            | ⚠️ Insufficient |
+| `AC-US-BANK-002-02`  | `PS-CHAIN-INTEGRATED` | Mocked browser + Frontend            | ⚠️ Insufficient |
+| `AC-US-BANK-002-02`  | `PS-CONTRACT`         | Mocked browser + Frontend            | ⚠️ Insufficient |
+| `AC-US-BANK-002-03`  | `PS-CHAIN-INTEGRATED` | Integrated E2E + Frontend + Contract | ✅ Met          |
+| `AC-US-BANK-002-03`  | `PS-CONTRACT`         | Integrated E2E + Frontend + Contract | ✅ Met          |
+| `AC-US-BANK-002-04`  | `PS-CONTRACT`         | Contract                             | ✅ Met          |
+| `AC-US-BANK-002-05`  | `PS-BROWSER`          | Mocked browser + Frontend            | ✅ Met          |
+| `AC-US-BANK-002-06`  | `PS-FRONTEND`         | Frontend + Contract                  | ✅ Met          |
+| `AC-US-BANK-002-06`  | `PS-CONTRACT`         | Frontend + Contract                  | ✅ Met          |
+| `AC-US-BANK-002-07`  | `PS-CONTRACT`         | Contract                             | ✅ Met          |
+| `AC-US-BANK-002-08`  | `PS-FRONTEND`         | Frontend                             | ✅ Met          |
+| `AC-US-BANK-002-09`  | `PS-CHAIN-INTEGRATED` | Integrated E2E + Contract            | ✅ Met          |
+| `AC-US-BANK-002-09`  | `PS-CONTRACT`         | Integrated E2E + Contract            | ✅ Met          |
+| `AC-US-BANK-002-10`  | `PS-CHAIN-INTEGRATED` | Integrated E2E + Contract            | ✅ Met          |
+| `AC-US-BANK-002-10`  | `PS-CONTRACT`         | Integrated E2E + Contract            | ✅ Met          |
+| `AC-US-BANK-002-11`  | `PS-BROWSER`          | Mocked browser + Frontend            | ✅ Met          |
+| `AC-US-BANK-002-12`  | `PS-CONTRACT`         | Mocked browser + Contract            | ✅ Met          |
+| `AC-US-BANK-002-13`  | `PS-BROWSER`          | Mocked browser                       | ✅ Met          |
 
 **Accounting:** The destination determines the rule: company-pocket funding uses
 [`UC-BANK-03`](../accounting/journal-entry-catalogue.md#uc-bank-03--bank-funds-a-company-pocket), an external payment uses

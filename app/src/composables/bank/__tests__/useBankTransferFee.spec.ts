@@ -45,7 +45,7 @@ describe('useBankTransferFee', () => {
     expect(useBankTransferFee(USDC_ADDRESS).feeBps.value).toBe(50)
   })
 
-  it('charges nothing on an ERC-20 the FeeCollector does not support', () => {
+  it('[AC-US-BANK-002-03] charges nothing on an ERC-20 the FeeCollector does not support', () => {
     mockOfficerReads(50, false)
     const { hasTransferFee, grossUpForTransferFee } = useBankTransferFee(USDC_ADDRESS)
 
