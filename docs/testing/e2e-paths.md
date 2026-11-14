@@ -500,7 +500,7 @@ path individually. These path checks do not close the separate feature acceptanc
     - `US-PAYROLL-001` — set a member's wage;
     - `US-PAYROLL-002` — pause or resume the wage.
   - Dependencies: an operational company with owner and member. The member saves weekly goals before any claim, so the journeys hold whether
-    or not the company requires them (`AC-US-PAYROLL-005-26`).
+    or not the company requires them (`AC-US-PAYROLL-015-02`).
   - Main path:
     - [x] `US-PAYROLL-001` Create the member wage.
     - [x] `US-PAYROLL-001` Replace the member wage.

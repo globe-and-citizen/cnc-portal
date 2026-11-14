@@ -294,7 +294,7 @@ describe('Claim Controller', () => {
       expect(response.body.message).toBe('No wage found for the user');
     });
 
-    describe('[AC-US-PAYROLL-005-27] weekly goals required by the team', () => {
+    describe('[AC-US-PAYROLL-015-03] weekly goals required by the team', () => {
       const CLAIM_BODY = { teamId: 1, minutesWorked: 60, memo: 'memo' };
 
       const submitClaimForWeek = async ({
@@ -895,7 +895,7 @@ describe('Claim Controller', () => {
       } as any);
     };
 
-    describe('[AC-US-PAYROLL-006-14] weekly goals required by the team', () => {
+    describe('[AC-US-PAYROLL-015-04] weekly goals required by the team', () => {
       const editClaimOfWeek = async (weeklyGoals: string | null) => {
         vi.mocked(prisma.team.findUnique).mockResolvedValue({ requireWeeklyGoals: true } as never);
         vi.spyOn(prisma.claim, 'findFirst').mockResolvedValue({

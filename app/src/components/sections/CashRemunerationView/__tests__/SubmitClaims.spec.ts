@@ -281,7 +281,7 @@ describe('SubmitClaims', () => {
     expect((claimForm.props('initialData') as { dayWorked: string }).dayWorked).toBe(dayIso)
   })
 
-  describe('[AC-US-PAYROLL-005-26] weekly goals requirement', () => {
+  describe('[AC-US-PAYROLL-015-02] weekly goals requirement', () => {
     const weeklyGoalsRequiredToast = {
       title: 'Weekly goals required',
       description: 'Submit your weekly goals for this week before submitting a claim.',

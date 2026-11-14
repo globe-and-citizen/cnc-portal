@@ -114,7 +114,7 @@ describe('[US-PAYROLL-006] [US-PAYROLL-007] ClaimActions', () => {
     })
   })
 
-  describe('[AC-US-PAYROLL-006-14] weekly goals required by the team', () => {
+  describe('[AC-US-PAYROLL-015-04] weekly goals required by the team', () => {
     const teamMetaBefore = mockTeamStore.currentTeamMeta
     const editWarning = {
       title: 'Weekly goals required',

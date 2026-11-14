@@ -869,7 +869,7 @@ describe('Team Controller', () => {
       expect(response.body.message).toBe('Unauthorized: Only team owner can update metadata');
     });
 
-    describe('[AC-US-PAYROLL-005-28] weekly goals requirement', () => {
+    describe('[AC-US-PAYROLL-015-01] weekly goals requirement', () => {
       const teamOwnedBy = (ownerAddress: string) => ({
         id: 1,
         ownerAddress,

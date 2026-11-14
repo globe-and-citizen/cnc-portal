@@ -29,7 +29,7 @@ const mountToggle = ({ requireWeeklyGoals = false, isArchived = false } = {}) =>
 
 const findSwitch = (wrapper: ReturnType<typeof mountToggle>) => wrapper.findComponent(SwitchStub)
 
-describe('[AC-US-PAYROLL-005-28] RequireWeeklyGoalsToggle', () => {
+describe('[AC-US-PAYROLL-015-01] RequireWeeklyGoalsToggle', () => {
   beforeEach(() => {
     mutateSpy.mockClear()
     mockUserStore.address = OWNER

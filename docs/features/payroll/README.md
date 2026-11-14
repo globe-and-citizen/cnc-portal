@@ -77,6 +77,7 @@ unchecked.
 | US-PAYROLL-012 | Review Payroll History                     | Company member            | 🧪 Validation  |
 | US-PAYROLL-013 | Review the Payroll Account Position        | Company member            | 🚧 In Progress |
 | US-PAYROLL-014 | Return Payroll funds to Bank               | Authorized treasury actor | 🚧 In Progress |
+| US-PAYROLL-015 | Require Weekly Goals                       | Company owner             | 🧪 Validation  |
 
 ## Test Coverage Overview
 
@@ -92,8 +93,8 @@ Runs of at least three consecutive missing criteria use inclusive ranges with fu
 | US-PAYROLL-002 | ✅ Integrated | ⚠️ 11/12        | `AC-US-PAYROLL-002-03`                                                                         |
 | US-PAYROLL-003 | 🚧 Partial    | ⚠️ 3/8          | `AC-US-PAYROLL-003-01`, `AC-US-PAYROLL-003-02`, `AC-US-PAYROLL-003-06`–`AC-US-PAYROLL-003-08`  |
 | US-PAYROLL-004 | ✅ Integrated | ⚠️ 10/11        | `AC-US-PAYROLL-004-01`                                                                         |
-| US-PAYROLL-005 | ✅ Integrated | ⚠️ 27/28        | `AC-US-PAYROLL-005-01`                                                                         |
-| US-PAYROLL-006 | ✅ Integrated | ⚠️ 13/14        | `AC-US-PAYROLL-006-01`                                                                         |
+| US-PAYROLL-005 | ✅ Integrated | ⚠️ 24/25        | `AC-US-PAYROLL-005-01`                                                                         |
+| US-PAYROLL-006 | ✅ Integrated | ⚠️ 12/13        | `AC-US-PAYROLL-006-01`                                                                         |
 | US-PAYROLL-007 | ✅ Integrated | ⚠️ 7/8          | `AC-US-PAYROLL-007-01`                                                                         |
 | US-PAYROLL-008 | ✅ Integrated | ⚠️ 16/17        | `AC-US-PAYROLL-008-01`                                                                         |
 | US-PAYROLL-009 | ✅ Integrated | ⚠️ 4/8          | `AC-US-PAYROLL-009-01`–`AC-US-PAYROLL-009-04`                                                  |
@@ -102,6 +103,7 @@ Runs of at least three consecutive missing criteria use inclusive ranges with fu
 | US-PAYROLL-012 | ✅ Integrated | ✅ 13/13        | —                                                                                              |
 | US-PAYROLL-013 | ✅ Integrated | ⚠️ 6/7 met      | `AC-US-PAYROLL-013-07`                                                                         |
 | US-PAYROLL-014 | 🚧 Partial    | ⚠️ 1/8          | `AC-US-PAYROLL-014-01`–`AC-US-PAYROLL-014-05`, `AC-US-PAYROLL-014-07`, `AC-US-PAYROLL-014-08`  |
+| US-PAYROLL-015 | Not required  | ✅ 4/4          | —                                                                                              |
 
 Proof obligations use the [shared proof-strategy registry](../../testing/proof-strategies.md). Multiple IDs for one AC are cumulative.
 
@@ -392,11 +394,6 @@ movement across the participating stories.
 - [x] `AC-US-PAYROLL-005-14` _(API)_ When submission restriction is active, the API accepts claims only for the current ISO week.
 - [x] `AC-US-PAYROLL-005-15` When submission restriction is active, the portal accepts work dates at most four days in the past.
 - [x] `AC-US-PAYROLL-005-16` _(API)_ When submission restriction is active, the API accepts work dates at most four days in the past.
-- [x] `AC-US-PAYROLL-005-26` When the company requires weekly goals, the portal opens a daily-claim submission only once the member has set
-      non-blank weekly goals for that week; otherwise it tells the member to set them first.
-- [x] `AC-US-PAYROLL-005-27` _(API)_ When the company requires weekly goals, the API rejects a daily claim for a week without non-blank
-      goals, and rejects clearing the goals of a week that already holds hours.
-- [x] `AC-US-PAYROLL-005-28` Only the company owner can require weekly goals, from the Company Payroll page; the rule is off by default.
 
 #### Edge & Error Cases
 
@@ -412,38 +409,37 @@ movement across the participating stories.
 
 ### Test Coverage
 
-| Acceptance Criterion   | Proof Strategy      | Current Evidence   | Status          |
-| ---------------------- | ------------------- | ------------------ | --------------- |
-| `AC-US-PAYROLL-005-01` | `PS-API-INTEGRATED` | Integrated E2E     | ✅ Met          |
-| `AC-US-PAYROLL-005-01` | `PS-BACKEND`        | Integrated E2E     | ⚠️ Insufficient |
-| `AC-US-PAYROLL-005-02` | `PS-BACKEND`        | Backend            | ✅ Met          |
-| `AC-US-PAYROLL-005-03` | `PS-BACKEND`        | Backend            | ✅ Met          |
-| `AC-US-PAYROLL-005-04` | `PS-FRONTEND`       | Frontend           | ✅ Met          |
-| `AC-US-PAYROLL-005-05` | `PS-FRONTEND`       | Frontend           | ✅ Met          |
-| `AC-US-PAYROLL-005-06` | `PS-FRONTEND`       | Frontend           | ✅ Met          |
-| `AC-US-PAYROLL-005-07` | `PS-FRONTEND`       | Frontend           | ✅ Met          |
-| `AC-US-PAYROLL-005-08` | `PS-FRONTEND`       | Frontend           | ✅ Met          |
-| `AC-US-PAYROLL-005-09` | `PS-FRONTEND`       | Frontend           | ✅ Met          |
-| `AC-US-PAYROLL-005-10` | `PS-FRONTEND`       | Frontend           | ✅ Met          |
-| `AC-US-PAYROLL-005-11` | `PS-BACKEND`        | Backend            | ✅ Met          |
-| `AC-US-PAYROLL-005-12` | `PS-BACKEND`        | Backend            | ✅ Met          |
-| `AC-US-PAYROLL-005-13` | `PS-FRONTEND`       | Frontend           | ✅ Met          |
-| `AC-US-PAYROLL-005-14` | `PS-BACKEND`        | Backend            | ✅ Met          |
-| `AC-US-PAYROLL-005-15` | `PS-FRONTEND`       | Frontend           | ✅ Met          |
-| `AC-US-PAYROLL-005-16` | `PS-BACKEND`        | Backend            | ✅ Met          |
-| `AC-US-PAYROLL-005-17` | `PS-BACKEND`        | Backend            | ✅ Met          |
-| `AC-US-PAYROLL-005-18` | `PS-BACKEND`        | Backend            | ✅ Met          |
-| `AC-US-PAYROLL-005-19` | `PS-BACKEND`        | Backend            | ✅ Met          |
-| `AC-US-PAYROLL-005-20` | `PS-BACKEND`        | Backend            | ✅ Met          |
-| `AC-US-PAYROLL-005-21` | `PS-BACKEND`        | Backend            | ✅ Met          |
-| `AC-US-PAYROLL-005-22` | `PS-BACKEND`        | Backend            | ✅ Met          |
-| `AC-US-PAYROLL-005-23` | `PS-BACKEND`        | Backend            | ✅ Met          |
-| `AC-US-PAYROLL-005-24` | `PS-FRONTEND`       | Frontend           | ✅ Met          |
-| `AC-US-PAYROLL-005-25` | `PS-FRONTEND`       | Frontend           | ✅ Met          |
-| `AC-US-PAYROLL-005-26` | `PS-FRONTEND`       | Frontend           | ✅ Met          |
-| `AC-US-PAYROLL-005-27` | `PS-BACKEND`        | Backend            | ✅ Met          |
-| `AC-US-PAYROLL-005-28` | `PS-BACKEND`        | Frontend + Backend | ✅ Met          |
-| `AC-US-PAYROLL-005-28` | `PS-FRONTEND`       | Frontend + Backend | ✅ Met          |
+| Acceptance Criterion   | Proof Strategy      | Current Evidence | Status          |
+| ---------------------- | ------------------- | ---------------- | --------------- |
+| `AC-US-PAYROLL-005-01` | `PS-API-INTEGRATED` | Integrated E2E   | ✅ Met          |
+| `AC-US-PAYROLL-005-01` | `PS-BACKEND`        | Integrated E2E   | ⚠️ Insufficient |
+| `AC-US-PAYROLL-005-02` | `PS-BACKEND`        | Backend          | ✅ Met          |
+| `AC-US-PAYROLL-005-03` | `PS-BACKEND`        | Backend          | ✅ Met          |
+| `AC-US-PAYROLL-005-04` | `PS-FRONTEND`       | Frontend         | ✅ Met          |
+| `AC-US-PAYROLL-005-05` | `PS-FRONTEND`       | Frontend         | ✅ Met          |
+| `AC-US-PAYROLL-005-06` | `PS-FRONTEND`       | Frontend         | ✅ Met          |
+| `AC-US-PAYROLL-005-07` | `PS-FRONTEND`       | Frontend         | ✅ Met          |
+| `AC-US-PAYROLL-005-08` | `PS-FRONTEND`       | Frontend         | ✅ Met          |
+| `AC-US-PAYROLL-005-09` | `PS-FRONTEND`       | Frontend         | ✅ Met          |
+| `AC-US-PAYROLL-005-10` | `PS-FRONTEND`       | Frontend         | ✅ Met          |
+| `AC-US-PAYROLL-005-11` | `PS-BACKEND`        | Backend          | ✅ Met          |
+| `AC-US-PAYROLL-005-12` | `PS-BACKEND`        | Backend          | ✅ Met          |
+| `AC-US-PAYROLL-005-13` | `PS-FRONTEND`       | Frontend         | ✅ Met          |
+| `AC-US-PAYROLL-005-14` | `PS-BACKEND`        | Backend          | ✅ Met          |
+| `AC-US-PAYROLL-005-15` | `PS-FRONTEND`       | Frontend         | ✅ Met          |
+| `AC-US-PAYROLL-005-16` | `PS-BACKEND`        | Backend          | ✅ Met          |
+| `AC-US-PAYROLL-005-17` | `PS-BACKEND`        | Backend          | ✅ Met          |
+| `AC-US-PAYROLL-005-18` | `PS-BACKEND`        | Backend          | ✅ Met          |
+| `AC-US-PAYROLL-005-19` | `PS-BACKEND`        | Backend          | ✅ Met          |
+| `AC-US-PAYROLL-005-20` | `PS-BACKEND`        | Backend          | ✅ Met          |
+| `AC-US-PAYROLL-005-21` | `PS-BACKEND`        | Backend          | ✅ Met          |
+| `AC-US-PAYROLL-005-22` | `PS-BACKEND`        | Backend          | ✅ Met          |
+| `AC-US-PAYROLL-005-23` | `PS-BACKEND`        | Backend          | ✅ Met          |
+| `AC-US-PAYROLL-005-24` | `PS-FRONTEND`       | Frontend         | ✅ Met          |
+| `AC-US-PAYROLL-005-25` | `PS-FRONTEND`       | Frontend         | ✅ Met          |
+
+When the company requires weekly goals, submission also depends on the member's goals for that week
+([US-PAYROLL-015](#us-payroll-015-require-weekly-goals)).
 
 **Accounting:** The daily claim changes the source amount for
 [`UC-CASH-02`](../accounting/journal-entry-catalogue.md#uc-cash-02--weekly-wage-accrual). The journal entry is created only after the
@@ -483,8 +479,6 @@ remain as recorded above.
 - [x] `AC-US-PAYROLL-006-08` _(API)_ The daily allowance is rechecked for the original work date while excluding the claim being edited.
 - [x] `AC-US-PAYROLL-006-09` A user other than the claim owner cannot edit the claim.
 - [x] `AC-US-PAYROLL-006-10` The API rejects claim edits when the weekly claim is disabled.
-- [x] `AC-US-PAYROLL-006-14` When the company requires weekly goals, a claim of a week without non-blank goals cannot be edited, in the
-      portal or through the API, even if it was submitted before the rule was turned on; it can still be deleted.
 
 #### Edge & Error Cases
 
@@ -494,24 +488,25 @@ remain as recorded above.
 
 ### Test Coverage
 
-| Acceptance Criterion   | Proof Strategy      | Current Evidence   | Status          |
-| ---------------------- | ------------------- | ------------------ | --------------- |
-| `AC-US-PAYROLL-006-01` | `PS-API-INTEGRATED` | Integrated E2E     | ✅ Met          |
-| `AC-US-PAYROLL-006-01` | `PS-BACKEND`        | Integrated E2E     | ⚠️ Insufficient |
-| `AC-US-PAYROLL-006-02` | `PS-BACKEND`        | Backend            | ✅ Met          |
-| `AC-US-PAYROLL-006-03` | `PS-FRONTEND`       | Frontend           | ✅ Met          |
-| `AC-US-PAYROLL-006-04` | `PS-BACKEND`        | Backend            | ✅ Met          |
-| `AC-US-PAYROLL-006-05` | `PS-BACKEND`        | Backend            | ✅ Met          |
-| `AC-US-PAYROLL-006-06` | `PS-FRONTEND`       | Frontend           | ✅ Met          |
-| `AC-US-PAYROLL-006-07` | `PS-BACKEND`        | Backend            | ✅ Met          |
-| `AC-US-PAYROLL-006-08` | `PS-BACKEND`        | Backend            | ✅ Met          |
-| `AC-US-PAYROLL-006-09` | `PS-BACKEND`        | Backend            | ✅ Met          |
-| `AC-US-PAYROLL-006-10` | `PS-BACKEND`        | Backend            | ✅ Met          |
-| `AC-US-PAYROLL-006-11` | `PS-BACKEND`        | Backend            | ✅ Met          |
-| `AC-US-PAYROLL-006-12` | `PS-BACKEND`        | Backend            | ✅ Met          |
-| `AC-US-PAYROLL-006-13` | `PS-BACKEND`        | Backend            | ✅ Met          |
-| `AC-US-PAYROLL-006-14` | `PS-BACKEND`        | Frontend + Backend | ✅ Met          |
-| `AC-US-PAYROLL-006-14` | `PS-FRONTEND`       | Frontend + Backend | ✅ Met          |
+| Acceptance Criterion   | Proof Strategy      | Current Evidence | Status          |
+| ---------------------- | ------------------- | ---------------- | --------------- |
+| `AC-US-PAYROLL-006-01` | `PS-API-INTEGRATED` | Integrated E2E   | ✅ Met          |
+| `AC-US-PAYROLL-006-01` | `PS-BACKEND`        | Integrated E2E   | ⚠️ Insufficient |
+| `AC-US-PAYROLL-006-02` | `PS-BACKEND`        | Backend          | ✅ Met          |
+| `AC-US-PAYROLL-006-03` | `PS-FRONTEND`       | Frontend         | ✅ Met          |
+| `AC-US-PAYROLL-006-04` | `PS-BACKEND`        | Backend          | ✅ Met          |
+| `AC-US-PAYROLL-006-05` | `PS-BACKEND`        | Backend          | ✅ Met          |
+| `AC-US-PAYROLL-006-06` | `PS-FRONTEND`       | Frontend         | ✅ Met          |
+| `AC-US-PAYROLL-006-07` | `PS-BACKEND`        | Backend          | ✅ Met          |
+| `AC-US-PAYROLL-006-08` | `PS-BACKEND`        | Backend          | ✅ Met          |
+| `AC-US-PAYROLL-006-09` | `PS-BACKEND`        | Backend          | ✅ Met          |
+| `AC-US-PAYROLL-006-10` | `PS-BACKEND`        | Backend          | ✅ Met          |
+| `AC-US-PAYROLL-006-11` | `PS-BACKEND`        | Backend          | ✅ Met          |
+| `AC-US-PAYROLL-006-12` | `PS-BACKEND`        | Backend          | ✅ Met          |
+| `AC-US-PAYROLL-006-13` | `PS-BACKEND`        | Backend          | ✅ Met          |
+
+When the company requires weekly goals, editing also depends on the member's goals for that week
+([US-PAYROLL-015](#us-payroll-015-require-weekly-goals)).
 
 **Dependencies:** US-PAYROLL-005
 
@@ -964,6 +959,44 @@ remain as recorded above.
 | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Payroll funds return directly to their generation's Bank. [UC-TREASURY-001](../accounting/journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer)        | Initiates the source-account return. | [US-BANK-003](../accounts/README.md#us-bank-003-review-the-bank-position-and-history) — owns the receiving Bank balance and history                                                                                                                                        |
 | A cash-out run returns Payroll funds to their generation's Bank. [UC-TREASURY-001](../accounting/journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer) | Owns the source-account return.      | [US-BANK-004](../accounts/README.md#us-bank-004-cash-out-available-treasury-funds) — orchestrates the step and owns sequence recovery; [US-BANK-003](../accounts/README.md#us-bank-003-review-the-bank-position-and-history) — owns the receiving Bank balance and history |
+
+## US-PAYROLL-015: Require Weekly Goals
+
+**As a** company owner\
+**I want to** require members to set their weekly goals before they log work\
+**So that** every week of claimed work has its planned goals recorded
+
+### Acceptance Criteria
+
+#### Happy Path
+
+- [x] `AC-US-PAYROLL-015-01` The company owner can turn the weekly goals requirement on or off; only the owner can change it, and it is off
+      by default.
+
+#### Business Rules
+
+- [x] `AC-US-PAYROLL-015-02` While the requirement is on, the portal opens a daily-claim submission only once the member has set non-blank
+      weekly goals for that week; otherwise it tells the member to set them first.
+- [x] `AC-US-PAYROLL-015-03` _(API)_ While the requirement is on, the API rejects a daily claim for a week without non-blank goals, and
+      rejects clearing the goals of a week that already holds hours.
+
+#### Edge & Error Cases
+
+- [x] `AC-US-PAYROLL-015-04` While the requirement is on, a claim of a week without non-blank goals cannot be edited, in the portal or
+      through the API, even if it was submitted before the requirement was turned on; it can still be deleted.
+
+### Test Coverage
+
+| Acceptance Criterion   | Proof Strategy | Current Evidence   | Status |
+| ---------------------- | -------------- | ------------------ | ------ |
+| `AC-US-PAYROLL-015-01` | `PS-BACKEND`   | Frontend + Backend | ✅ Met |
+| `AC-US-PAYROLL-015-01` | `PS-FRONTEND`  | Frontend + Backend | ✅ Met |
+| `AC-US-PAYROLL-015-02` | `PS-FRONTEND`  | Frontend           | ✅ Met |
+| `AC-US-PAYROLL-015-03` | `PS-BACKEND`   | Backend            | ✅ Met |
+| `AC-US-PAYROLL-015-04` | `PS-BACKEND`   | Frontend + Backend | ✅ Met |
+| `AC-US-PAYROLL-015-04` | `PS-FRONTEND`  | Frontend + Backend | ✅ Met |
+
+**Dependencies:** US-PAYROLL-004, US-PAYROLL-005, US-PAYROLL-006
 
 ## Human Validation
 

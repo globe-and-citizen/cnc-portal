@@ -1159,7 +1159,7 @@ describe('Weekly Claim Controller', () => {
       expect(response.body.message).toBe('No wage found for the user');
     });
 
-    describe('[AC-US-PAYROLL-005-27] when the team requires weekly goals', () => {
+    describe('[AC-US-PAYROLL-015-03] when the team requires weekly goals', () => {
       const BLANK_GOALS_BODY = { ...GOALS_BODY, weeklyGoals: '   ' };
 
       beforeEach(() => {
