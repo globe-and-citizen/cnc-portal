@@ -15,6 +15,8 @@
  *   gain, a debit a loss); any other swap carries the price paid and books no result.
  * - The rest of the Safe overview's swap P&L is booked to `Swap P&L` against
  *   `Safe Market Value Adjustment`, so `Cash — Safe` always keeps the price paid.
+ * - The interest a yield-bearing token such as an Aave aToken mints to the Safe is booked to
+ *   `Interest Income` at its market value, apart from any swap's `Swap P&L`.
  * - SHER wages are a non-cash equity transaction: `Deferred SHER Compensation`
  *   (contra-equity) and `SHERS To Be Issued` (equity), not an expense.
  */
@@ -182,6 +184,13 @@ export const ACCOUNT_FAMILIES = [
   {
     id: 'swap-pnl',
     name: 'Swap P&L',
+    accountClass: 'INCOME',
+    normalBalance: 'credit',
+    deploymentScoped: false
+  },
+  {
+    id: 'interest-income',
+    name: 'Interest Income',
     accountClass: 'INCOME',
     normalBalance: 'credit',
     deploymentScoped: false

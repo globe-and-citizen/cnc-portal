@@ -55,9 +55,11 @@ in the average-cost P&L of the tokens it touched: what it received against what 
 `Safe Market Value Adjustment` line in the same posting books the part the cash lines do not carry. `Cash — Safe` keeps the price paid; the
 swapped assets' current value is `Cash — Safe` plus that adjustment, and `Swap P&L` equals the Safe Wallet overview's P&L, also once a token
 received in one swap is given up in a later one. A `Swap P&L` gain reads as revenue and a trial-balance credit; a loss reads as an expense
-and a debit, never as a negative amount. Ancillary mints and ambiguous batches require classification. Missing decimals or acquisition basis
-keeps Accounting incomplete. A default Safe that does not exist on the network (never deployed, or deployed elsewhere) has no swaps to value
-and does not withhold the reports. Cross-transaction intents and arbitrary DeFi actions need additional protocol evidence. See the
+and a debit, never as a negative amount. Interest that a yield-bearing token such as an Aave aToken mints to the Safe as the Safe sends it
+is credited to `Interest Income` at its market value and joins the token's carrying basis, so `Swap P&L` keeps only the price effect. Other
+ancillary mints and ambiguous batches require classification. Missing decimals or acquisition basis keeps Accounting incomplete. A default
+Safe that does not exist on the network (never deployed, or deployed elsewhere) has no swaps to value and does not withhold the reports.
+Cross-transaction intents and arbitrary DeFi actions need additional protocol evidence. See the
 [Accounting Read Model](../../implementation/accounting-read-model/README.md#safe-assets-and-exchanges) for these boundaries and the
 [exchange regression suite](../../../app/src/utils/accounting/__tests__/safeExchanges.spec.ts) and
 [price-paid regressions](../../../app/src/utils/accounting/__tests__/safeExchanges.pricePaid.spec.ts),
@@ -114,7 +116,7 @@ three consecutive missing criteria use inclusive ranges with full AC IDs at both
 | User Story  | Main Journey  | Coverage Target | Gaps                                                                              |
 | ----------- | ------------- | --------------- | --------------------------------------------------------------------------------- |
 | US-ACCT-001 | ✅ Integrated | ⚠️ 14/15 met    | `AC-US-ACCT-001-08`                                                               |
-| US-ACCT-002 | ✅ Integrated | ✅ 20/20        | —                                                                                 |
+| US-ACCT-002 | ✅ Integrated | ✅ 22/22        | —                                                                                 |
 | US-ACCT-003 | ✅ Integrated | ✅ 12/12        | —                                                                                 |
 | US-ACCT-004 | ✅ Integrated | ✅ 12/12        | —                                                                                 |
 | US-ACCT-005 | ✅ Integrated | ✅ 16/16 met    | —                                                                                 |
@@ -286,6 +288,11 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
       paid, overtime included, and every currency of one withdrawal shows the same claim.
 - [x] `AC-US-ACCT-002-20` A Community Credit funding or installment that carries both loan principal and interest names each at its own
       amount.
+- [x] `AC-US-ACCT-002-21` Interest that a token the Safe trusts, such as an Aave aToken, mints to the Safe in the transaction that sends
+      that token is credited to `Interest Income` at its market value and joins the token's carrying basis, so `Swap P&L` keeps only the
+      price effect and the books are not withheld.
+- [x] `AC-US-ACCT-002-22` A mint the Safe receives without sending that same token, such as the aToken an Aave deposit mints, or a mint of a
+      CNC token, stays in `Unclassified Receipts`.
 
 #### Edge & Error Cases
 
@@ -317,6 +324,8 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 | `AC-US-ACCT-002-18`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
 | `AC-US-ACCT-002-19`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
 | `AC-US-ACCT-002-20`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
+| `AC-US-ACCT-002-21`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
+| `AC-US-ACCT-002-22`  | `PS-FRONTEND`            | Frontend                  | ✅ Met |
 
 **Dependencies:** US-ACCT-001
 

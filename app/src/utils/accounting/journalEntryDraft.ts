@@ -91,6 +91,8 @@ export type UseCase =
   | 'FEE'
   /** Generic internal pocket-to-pocket move (funding deposits, owner sweeps). */
   | 'INTERNAL'
+  /** Interest a yield-bearing token minted to the Safe as the Safe sent it → Interest Income. */
+  | 'INTEREST-IN'
   /** Plain cash inflow not otherwise classified. */
   | 'CASH-IN'
   /** Plain cash outflow not otherwise classified. */
