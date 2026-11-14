@@ -15,7 +15,7 @@ import * as path from 'node:path'
  *
  * What it snapshots per consumer:
  *   - App ABIs:  the current typed `generated.ts` module.
- *   - Other ABIs: the flat `json/*.json` set + the typed wrapper `*.ts` files.
+ *   - Dashboard ABIs: generated separately from canonical version snapshots.
  *   - Addresses: the real-network deployed_addresses (chain-137/11155111/80002);
  *                chain-31337 (local hardhat, per-machine) is intentionally skipped.
  *   - Backend:   its 6 hand-maintained ABI JSONs (raw arrays).
@@ -57,22 +57,6 @@ function copyFiles(src: string, dest: string, filter: (f: string) => boolean): s
   return copied
 }
 
-// Freeze an ABI dir that holds a flat `json/` folder + sibling wrapper `.ts`
-// files (dashboard). Wrappers are copied verbatim: their relative
-// `./json/*.json` imports stay valid because json/ is copied alongside them.
-// An existing index.ts (a resolver barrel) is intentionally not re-copied — the
-// resolver owns it per version.
-function freezeAbiDir(abiRoot: string): void {
-  if (!fs.existsSync(abiRoot)) {
-    console.warn(`  skip (absent): ${path.relative(repoRoot, abiRoot)}`)
-    return
-  }
-  const dest = path.join(abiRoot, version)
-  copyFiles(path.join(abiRoot, 'json'), path.join(dest, 'json'), (f) => f.endsWith('.json'))
-  const wrappers = copyFiles(abiRoot, dest, (f) => f.endsWith('.ts') && f !== 'index.ts')
-  console.log(`  froze ${path.relative(repoRoot, dest)} (${wrappers.length} wrappers)`)
-}
-
 function freezeAppAbi(abiRoot: string): void {
   const source = path.join(abiRoot, 'generated.ts')
   if (!fs.existsSync(source)) {
@@ -104,7 +88,7 @@ freezeAppAbi(path.join(repoRoot, 'app/src/artifacts/abi'))
 freezeAddressDir(path.join(repoRoot, 'app/src/artifacts/deployed_addresses'))
 
 // dashboard
-freezeAbiDir(path.join(repoRoot, 'dashboard/app/artifacts/abi'))
+console.log('  dashboard ABIs: regenerate from canonical version snapshots after freezing')
 freezeAddressDir(path.join(repoRoot, 'dashboard/app/artifacts/deployed_addresses'))
 
 // backend: 6 hand-maintained raw-array ABI JSONs (no wrappers, no json/ subdir).

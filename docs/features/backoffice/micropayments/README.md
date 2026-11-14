@@ -15,8 +15,8 @@ These acceptance criteria follow the
 - An authenticated `ROLE_ADMIN` or `ROLE_SUPER_ADMIN` user can enter the dashboard route. FeeCollector writes require the connected wallet
   to be the owner of the selected deployment; dashboard administrator access alone does not grant on-chain control.
 - The version selector defaults to the registry's current V2 deployment, but the route renders panels only for V1, V0, and V0.1. Its
-  FeeCollector resolver has no V2 ABI or address mapping. Thus selecting the default does not provide a current-generation management
-  journey; the V1 criteria below describe the available V1 panel, not the current deployment.
+  FeeCollector resolver has a V2 ABI and address mapping, but no V2 management panel. Thus selecting the default does not provide a
+  current-generation management journey; the V1 criteria below describe the available V1 panel, not the current deployment.
 - The V1 panel shows an approximate USD total of the recognized holdings, the owner, the fee beneficiary, token holdings, and fee
   configurations. The displayed beneficiary is the owner when the stored beneficiary is unset.
 - V1 withdrawals sweep the native balance and every supported ERC-20 balance to the configured beneficiary, or to the owner when no
@@ -410,8 +410,8 @@ Proof obligations use the [shared proof-strategy registry](../../../testing/proo
 
 ## Known Gaps
 
-- The registry selects V2 by default, while the page has no V2 panel and its resolver has no V2 ABI/address mapping. V1 management is
-  available only after choosing the V1 version; it must not be counted as the current-generation journey. The six direct contract markers
+- The registry selects V2 by default, while the page has no V2 panel, despite the resolver having its ABI and address mapping. V1 management
+  is available only after choosing the V1 version; it must not be counted as the current-generation journey. The six direct contract markers
   target current Solidity source rather than the V1 dashboard deployment, so none establishes a V1 browser outcome by itself.
 - The marked owner-guard and sweep tests exercise current Solidity source, not a V1 deployment. `003-05` also omits a marked zero-address
   assertion, `004-04` and `006-04` check rejection without the full owner outcome, and `006-02` lacks the configured-beneficiary branch.
