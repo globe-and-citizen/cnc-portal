@@ -459,10 +459,12 @@ const getAllTeams = async (req: Request, res: Response) => {
 
 const updateTeam = async (req: Request, res: Response) => {
   const { id } = req.params;
-  const { name, description, isArchived, isHidden, isFavorite } = req.body;
+  const { name, description, isArchived, isHidden, isFavorite, requireWeeklyGoals } = req.body;
   const callerAddress = String(req.address);
   const teamId = Number(id);
   const changesMemberPreference = isHidden !== undefined || isFavorite !== undefined;
+  const changesOwnerSettings =
+    name !== undefined || description !== undefined || requireWeeklyGoals !== undefined;
 
   try {
     const existingTeam = await prisma.team.findUnique({
@@ -487,21 +489,15 @@ const updateTeam = async (req: Request, res: Response) => {
 
     if (existingTeam.isArchived) {
       const allowedUnarchive =
-        isArchived === false &&
-        name === undefined &&
-        description === undefined &&
-        !changesMemberPreference;
+        isArchived === false && !changesOwnerSettings && !changesMemberPreference;
       const allowedMemberPreference =
-        changesMemberPreference &&
-        name === undefined &&
-        description === undefined &&
-        isArchived === undefined;
+        changesMemberPreference && !changesOwnerSettings && isArchived === undefined;
       if (!allowedUnarchive && !allowedMemberPreference) {
         return errorResponse(409, 'Team is archived — unarchive to modify', res);
       }
     }
 
-    if ((name !== undefined || description !== undefined) && !isOwner) {
+    if (changesOwnerSettings && !isOwner) {
       return errorResponse(403, 'Unauthorized: Only team owner can update metadata', res);
     }
 
@@ -513,12 +509,7 @@ const updateTeam = async (req: Request, res: Response) => {
       );
     }
 
-    if (
-      name === undefined &&
-      description === undefined &&
-      isArchived === undefined &&
-      !changesMemberPreference
-    ) {
+    if (!changesOwnerSettings && isArchived === undefined && !changesMemberPreference) {
       return errorResponse(400, 'No fields to update', res);
     }
 
@@ -528,6 +519,7 @@ const updateTeam = async (req: Request, res: Response) => {
         ...(name !== undefined ? { name } : {}),
         ...(description !== undefined ? { description } : {}),
         ...(isArchived !== undefined ? { isArchived: Boolean(isArchived) } : {}),
+        ...(requireWeeklyGoals !== undefined ? { requireWeeklyGoals } : {}),
         ...(changesMemberPreference
           ? {
               memberTeamsData: {
