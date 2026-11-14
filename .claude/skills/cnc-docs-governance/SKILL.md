@@ -1,5 +1,5 @@
 ---
-name: docs-governance
+name: cnc-docs-governance
 description: Maintain CNC Portal agent guidance, architectural documentation, and developer documentation without duplicating authority. Use when changing AGENTS.md, repository skills, developer or platform guides, implementation documentation, or documentation validation; use cnc-feature-documentation for product feature user stories.
 ---
 
