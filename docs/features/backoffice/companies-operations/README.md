@@ -170,7 +170,8 @@ Proof obligations use the [shared proof-strategy registry](../../../testing/proo
 - [x] `AC-US-TEAM-OPS-003-01` An administrator can inspect the current and legacy Officer generations associated with a listed company.
 - [x] `AC-US-TEAM-OPS-003-02` An administrator can inspect contracts grouped by their Officer generation and separately identify shared,
       version-independent contracts.
-- [x] `AC-US-TEAM-OPS-003-03` Each displayed contract exposes its type, address, deployer, and event-log history.
+- [x] `AC-US-TEAM-OPS-003-03` Each displayed contract exposes its type, address, deployer, and event-log history. The decoder includes
+      generated event signatures from the V0, V0.1, V1, and V2 ABI snapshots.
 - [x] `AC-US-TEAM-OPS-003-04` Supported value-holding contracts expose their current native-token and supported-stablecoin balances,
       including an explicit zero when no supported balance is held.
 
@@ -222,7 +223,7 @@ or detail view; `AC-US-TEAM-OPS-001-03` and `AC-US-TEAM-OPS-003-04` still need f
 The company payload lists every Safe the company registered, disabled ones included. The profile and balance recap keep only its default
 Safe, the latest activated one not disabled, among the live contracts, so they count that Safe.
 
-**Implementation evidence reviewed against:** `f391bcfb6c6f90d87a3f777ba97615be6e60bd23`
+**Implementation evidence reviewed against:** `3eb88cc167f5cfcd5a627d80382a30e64eec2062`
 
 - [Dashboard navigation](../../../../dashboard/app/layouts/default.vue),
   [administrator route guard](../../../../dashboard/app/middleware/auth.global.ts), and
@@ -237,7 +238,8 @@ Safe, the latest activated one not disabled, among the live contracts, so they c
   [default Safe selection](../../../../dashboard/app/utils/teamSafes.ts),
   [contract balances](../../../../dashboard/app/components/teams/ContractBalance.vue),
   [stablecoin balance query](../../../../dashboard/app/queries/contractTokenBalances.query.ts), and
-  [contract logs](../../../../dashboard/app/components/teams/ContractLogs.vue)
+  [contract logs](../../../../dashboard/app/components/teams/ContractLogs.vue), and
+  [contract log query and generation-aware decoding](../../../../dashboard/app/queries/contractLogs.query.ts)
 - [Company routes](../../../../backend/src/routes/teamRoutes.ts),
   [company controller](../../../../backend/src/controllers/teamController.ts), and
   [company-controller coverage](../../../../backend/src/controllers/__tests__/teamController.test.ts)
