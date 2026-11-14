@@ -178,18 +178,19 @@ instead, which realizes its difference from the price paid. Missing acquisition 
 status, never an invented basis.
 
 A realized result is posted as a USD-only `Swap P&L` line in the exchange's operation. Before assembly, the data layer attaches to the
-default Safe's swap legs (`swapPnl`) the Safe overview's P&L of each swap: the current value of what it received against the CoinGecko
-swap-day value of what it gave up, less the reported fee, from the same composable the overview uses. The exchange's `Swap P&L` line then
-books that figure, and a `Safe Market Value Adjustment` line in the same operation books the part the cash legs do not carry, so
-`Cash — Safe` and its carrying basis keep the price paid while `Swap P&L` totals the overview figure. A swap the overview does not value,
-such as a previous Safe's, keeps only its realized result. The composable waits for fee lookups and keeps its last settled value while
-sources reload or a refresh fails for the same Safe. Changing or clearing the Safe discards that settled report; reports wait for its first
-answer, and a read failure or an unpriced asset makes Accounting partial. A Gateway balances 404 is not a read failure: no Safe exists at
-the address, so the report is empty and the reports are not withheld. A prior non-exchange payment depleted at a different transaction-price
-valuation invalidates later automatic swap basis; other payment rules remain unchanged. Reports wait for the order lookups to settle, so no
-report or export is shown without a fee that is still loading; a missing or failed lookup never makes Accounting partial, and the fee then
-stays inside the acquired asset's price. Network/DEX fees are not inferred. Cross-transaction swap intents and arbitrary DeFi operations
-require additional protocol evidence and remain a boundary of automatic classification.
+default Safe's swap legs (`swapPnl`) each swap's change to the Safe overview's average-cost P&L, from the same composable the overview uses:
+what the swap received against what it gave up, both at today's price, fee left out, so the swaps add up to the overview's P&L even once a
+token received in one swap is given up in a later one. The exchange's `Swap P&L` line then books that figure, and a
+`Safe Market Value Adjustment` line in the same operation books the part the cash legs do not carry, so `Cash — Safe` and its carrying basis
+keep the price paid while `Swap P&L` totals the overview figure. A swap the overview does not value, such as a previous Safe's, keeps only
+its realized result. The composable waits for fee lookups and keeps its last settled value while sources reload or a refresh fails for the
+same Safe. Changing or clearing the Safe discards that settled report; reports wait for its first answer, and a read failure or an unpriced
+asset makes Accounting partial. A Gateway balances 404 is not a read failure: no Safe exists at the address, so the report is empty and the
+reports are not withheld. A prior non-exchange payment depleted at a different transaction-price valuation invalidates later automatic swap
+basis; other payment rules remain unchanged. Reports wait for the order lookups to settle, so no report or export is shown without a fee
+that is still loading; a missing or failed lookup never makes Accounting partial, and the fee then stays inside the acquired asset's price.
+Network/DEX fees are not inferred. Cross-transaction swap intents and arbitrary DeFi operations require additional protocol evidence and
+remain a boundary of automatic classification.
 
 The read-only Safe holdings use the Safe Client Gateway balance response for current wallet valuation. A nonzero supported holding with a
 missing, nonpositive, or nonfinite USD price keeps the total incomplete, just as unavailable discovered valuations do. A confirmed zero
