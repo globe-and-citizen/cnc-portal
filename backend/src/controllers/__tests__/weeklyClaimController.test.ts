@@ -1159,6 +1159,65 @@ describe('Weekly Claim Controller', () => {
       expect(response.body.message).toBe('No wage found for the user');
     });
 
+    describe('[AC-US-PAYROLL-015-03] when the team requires weekly goals', () => {
+      const BLANK_GOALS_BODY = { ...GOALS_BODY, weeklyGoals: '   ' };
+
+      beforeEach(() => {
+        vi.mocked(prisma.team.findUnique).mockResolvedValue({ requireWeeklyGoals: true } as never);
+        vi.mocked(prisma.weeklyClaim.findFirst).mockResolvedValue(
+          weeklyClaimFactory({ id: 5, status: 'pending', signature: null }) as never
+        );
+      });
+
+      it('rejects clearing the goals of a week that already holds hours', async () => {
+        vi.mocked(prisma.claim.count).mockResolvedValue(2);
+
+        const response = await request(app).put('/goals').send(BLANK_GOALS_BODY);
+
+        expect(response.status).toBe(400);
+        expect(response.body.message).toBe(
+          'Weekly goals cannot be cleared once hours are submitted for this week.'
+        );
+        expect(prisma.weeklyClaim.update).not.toHaveBeenCalled();
+      });
+
+      it('reports a signed week as locked before guarding its goals', async () => {
+        vi.mocked(prisma.weeklyClaim.findFirst).mockResolvedValue(
+          weeklyClaimFactory({ id: 5, status: 'signed', signature: '0xsigned' }) as never
+        );
+        vi.mocked(prisma.claim.count).mockResolvedValue(2);
+
+        const response = await request(app).put('/goals').send(BLANK_GOALS_BODY);
+
+        expect(response.status).toBe(409);
+        expect(response.body.message).toBe('Week already signed. Submission not allowed.');
+        expect(prisma.weeklyClaim.update).not.toHaveBeenCalled();
+      });
+
+      it('lets a member clear the goals of a week without hours', async () => {
+        vi.mocked(prisma.claim.count).mockResolvedValue(0);
+
+        const response = await request(app).put('/goals').send(BLANK_GOALS_BODY);
+
+        expect(response.status).toBe(200);
+        expect(prisma.weeklyClaim.update).toHaveBeenCalled();
+      });
+    });
+
+    it('lets a member clear the goals of a submitted week when the team does not require them', async () => {
+      vi.mocked(prisma.team.findUnique).mockResolvedValue({ requireWeeklyGoals: false } as never);
+      vi.mocked(prisma.weeklyClaim.findFirst).mockResolvedValue(
+        weeklyClaimFactory({ id: 5, status: 'pending', signature: null }) as never
+      );
+
+      const response = await request(app)
+        .put('/goals')
+        .send({ ...GOALS_BODY, weeklyGoals: '' });
+
+      expect(response.status).toBe(200);
+      expect(prisma.weeklyClaim.update).toHaveBeenCalled();
+    });
+
     it('returns 400 when the body fails validation', async () => {
       const response = await request(app)
         .put('/goals')

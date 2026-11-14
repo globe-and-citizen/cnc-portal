@@ -53,7 +53,7 @@ unchecked.
 
 1. The company owner sets a wage for the member.
 2. The owner funds the Cash Remuneration contract when non-mintable assets are required.
-3. The member optionally sets weekly goals and submits daily claims.
+3. The member sets weekly goals (mandatory when the owner requires them) and submits daily claims.
 4. The member can edit or delete claims while the week is pending.
 5. Once the week is complete, the Cash Remuneration owner signs the weekly claim.
 6. The member withdraws the signed claim on-chain.
@@ -77,6 +77,7 @@ unchecked.
 | US-PAYROLL-012 | Review Payroll History                     | Company member            | 🧪 Validation  |
 | US-PAYROLL-013 | Review the Payroll Account Position        | Company member            | 🚧 In Progress |
 | US-PAYROLL-014 | Return Payroll funds to Bank               | Authorized treasury actor | 🚧 In Progress |
+| US-PAYROLL-015 | Require Weekly Goals                       | Company owner             | 🧪 Validation  |
 
 ## Test Coverage Overview
 
@@ -102,6 +103,7 @@ Runs of at least three consecutive missing criteria use inclusive ranges with fu
 | US-PAYROLL-012 | ✅ Integrated | ✅ 13/13        | —                                                                                              |
 | US-PAYROLL-013 | ✅ Integrated | ⚠️ 6/7 met      | `AC-US-PAYROLL-013-07`                                                                         |
 | US-PAYROLL-014 | 🚧 Partial    | ⚠️ 1/8          | `AC-US-PAYROLL-014-01`–`AC-US-PAYROLL-014-05`, `AC-US-PAYROLL-014-07`, `AC-US-PAYROLL-014-08`  |
+| US-PAYROLL-015 | Not required  | ✅ 4/4          | —                                                                                              |
 
 Proof obligations use the [shared proof-strategy registry](../../testing/proof-strategies.md). Multiple IDs for one AC are cumulative.
 
@@ -436,6 +438,9 @@ movement across the participating stories.
 | `AC-US-PAYROLL-005-24` | `PS-FRONTEND`       | Frontend         | ✅ Met          |
 | `AC-US-PAYROLL-005-25` | `PS-FRONTEND`       | Frontend         | ✅ Met          |
 
+When the company requires weekly goals, submission also depends on the member's goals for that week
+([US-PAYROLL-015](#us-payroll-015-require-weekly-goals)).
+
 **Accounting:** The daily claim changes the source amount for
 [`UC-CASH-02`](../accounting/journal-entry-catalogue.md#uc-cash-02--weekly-wage-accrual). The journal entry is created only after the
 containing work week ends and remains eligible.
@@ -499,6 +504,9 @@ remain as recorded above.
 | `AC-US-PAYROLL-006-11` | `PS-BACKEND`        | Backend          | ✅ Met          |
 | `AC-US-PAYROLL-006-12` | `PS-BACKEND`        | Backend          | ✅ Met          |
 | `AC-US-PAYROLL-006-13` | `PS-BACKEND`        | Backend          | ✅ Met          |
+
+When the company requires weekly goals, editing also depends on the member's goals for that week
+([US-PAYROLL-015](#us-payroll-015-require-weekly-goals)).
 
 **Dependencies:** US-PAYROLL-005
 
@@ -952,6 +960,44 @@ remain as recorded above.
 | Payroll funds return directly to their generation's Bank. [UC-TREASURY-001](../accounting/journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer)        | Initiates the source-account return. | [US-BANK-003](../accounts/README.md#us-bank-003-review-the-bank-position-and-history) — owns the receiving Bank balance and history                                                                                                                                        |
 | A cash-out run returns Payroll funds to their generation's Bank. [UC-TREASURY-001](../accounting/journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer) | Owns the source-account return.      | [US-BANK-004](../accounts/README.md#us-bank-004-cash-out-available-treasury-funds) — orchestrates the step and owns sequence recovery; [US-BANK-003](../accounts/README.md#us-bank-003-review-the-bank-position-and-history) — owns the receiving Bank balance and history |
 
+## US-PAYROLL-015: Require Weekly Goals
+
+**As a** company owner\
+**I want to** require members to set their weekly goals before they log work\
+**So that** every week of claimed work has its planned goals recorded
+
+### Acceptance Criteria
+
+#### Happy Path
+
+- [x] `AC-US-PAYROLL-015-01` The company owner can turn the weekly goals requirement on or off; only the owner can change it, and it is off
+      by default.
+
+#### Business Rules
+
+- [x] `AC-US-PAYROLL-015-02` While the requirement is on, the portal opens a daily-claim submission only once the member has set non-blank
+      weekly goals for that week; otherwise it tells the member to set them first.
+- [x] `AC-US-PAYROLL-015-03` _(API)_ While the requirement is on, the API rejects a daily claim for a week without non-blank goals, and
+      rejects clearing the goals of a week that already holds hours.
+
+#### Edge & Error Cases
+
+- [x] `AC-US-PAYROLL-015-04` While the requirement is on, a claim of a week without non-blank goals cannot be edited, in the portal or
+      through the API, even if it was submitted before the requirement was turned on; it can still be deleted.
+
+### Test Coverage
+
+| Acceptance Criterion   | Proof Strategy | Current Evidence   | Status |
+| ---------------------- | -------------- | ------------------ | ------ |
+| `AC-US-PAYROLL-015-01` | `PS-BACKEND`   | Frontend + Backend | ✅ Met |
+| `AC-US-PAYROLL-015-01` | `PS-FRONTEND`  | Frontend + Backend | ✅ Met |
+| `AC-US-PAYROLL-015-02` | `PS-FRONTEND`  | Frontend           | ✅ Met |
+| `AC-US-PAYROLL-015-03` | `PS-BACKEND`   | Backend            | ✅ Met |
+| `AC-US-PAYROLL-015-04` | `PS-BACKEND`   | Frontend + Backend | ✅ Met |
+| `AC-US-PAYROLL-015-04` | `PS-FRONTEND`  | Frontend + Backend | ✅ Met |
+
+**Dependencies:** US-PAYROLL-004, US-PAYROLL-005, US-PAYROLL-006
+
 ## Human Validation
 
 Not yet completed. The feature owner must run every Payroll `@integrated` journey through Playwright UI against the prepared local G5 stack,
@@ -998,7 +1044,7 @@ notice, not to wage or claim persistence. No payroll posting or signature rule c
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `20b213c1c6c1903766d67725d2b430b95e156cdf`
+**Implementation evidence reviewed against:** `f391bcfb6c6f90d87a3f777ba97615be6e60bd23`
 
 - [Pending claim fiat summary](../../../app/src/components/sections/CashRemunerationView/CashRemunerationPendingClaim.vue),
   [claim-week recap](../../../app/src/components/sections/ClaimHistoryView/WeeklyRecap.vue), and
@@ -1029,7 +1075,9 @@ notice, not to wage or claim persistence. No payroll posting or signature rule c
 - [Wage configuration validation](../../../app/src/utils/wages/validation.ts)
 - [Claim payout and signed rates](../../../app/src/utils/wages/model.ts) and
   [their tests](../../../app/src/utils/wages/__tests__/model.spec.ts)
-- [Weekly goals](../../../app/src/components/sections/CashRemunerationView/SubmitWeeklyGoals.vue)
+- [Weekly goals](../../../app/src/components/sections/CashRemunerationView/SubmitWeeklyGoals.vue),
+  [weekly goals requirement switch](../../../app/src/components/sections/WeeklyClaimView/RequireWeeklyGoalsToggle.vue), and
+  [its tests](../../../app/src/components/sections/WeeklyClaimView/__tests__/RequireWeeklyGoalsToggle.spec.ts)
 - [Claim history](../../../app/src/components/sections/ClaimHistoryView/ClaimHistory.vue)
 - [Weekly claim actions](../../../app/src/components/sections/WeeklyClaimView/WeeklyClaimActionDropdown.vue)
 - [Signature flow](../../../app/src/components/sections/CashRemunerationView/CRSigne.vue)

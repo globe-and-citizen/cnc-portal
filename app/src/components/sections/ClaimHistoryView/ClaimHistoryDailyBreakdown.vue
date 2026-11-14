@@ -49,6 +49,7 @@
                 v-if="canModifyClaims"
                 :claim="claim"
                 :week-claims="props.weeklyClaim?.claims ?? []"
+                :weekly-goals="props.weeklyClaim?.weeklyGoals"
               />
             </div>
             <!-- File gallery below memo -->

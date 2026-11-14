@@ -1,7 +1,8 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import ClaimActions from '@/components/sections/ClaimHistoryView/ClaimActions.vue'
 import { nextTick } from 'vue'
+import { mockTeamStore, mockToast } from '@/tests/mocks'
 
 import type { Claim, SupportedTokens } from '@/types'
 
@@ -33,11 +34,12 @@ describe('[US-PAYROLL-006] [US-PAYROLL-007] ClaimActions', () => {
     updatedAt: new Date().toISOString()
   }
 
-  const createWrapper = (weekClaims: Claim[] = []) => {
+  const createWrapper = (weekClaims: Claim[] = [], weeklyGoals: string | null = null) => {
     return mount(ClaimActions, {
       props: {
         claim: mockClaim,
-        weekClaims
+        weekClaims,
+        weeklyGoals
       },
       global: {
         stubs: {
@@ -109,6 +111,55 @@ describe('[US-PAYROLL-006] [US-PAYROLL-007] ClaimActions', () => {
       const editModal = wrapper.findComponent({ name: 'EditClaims' })
       expect(editModal.props('claim')).toEqual(mockClaim)
       expect(editModal.props('weekClaims')).toEqual([mockClaim, siblingClaim])
+    })
+  })
+
+  describe('[AC-US-PAYROLL-015-04] weekly goals required by the team', () => {
+    const teamMetaBefore = mockTeamStore.currentTeamMeta
+    const editWarning = {
+      title: 'Weekly goals required',
+      description: 'Submit your weekly goals for this week before editing a claim.',
+      color: 'warning'
+    }
+
+    beforeEach(() => {
+      mockTeamStore.currentTeamMeta = {
+        ...teamMetaBefore,
+        data: { ...teamMetaBefore.data, requireWeeklyGoals: true }
+      } as typeof mockTeamStore.currentTeamMeta
+    })
+
+    afterEach(() => {
+      mockTeamStore.currentTeamMeta = teamMetaBefore
+    })
+
+    it('warns and keeps the edit form closed when the week has no goals', async () => {
+      const wrapper = createWrapper([], '   ')
+
+      await wrapper.find('[data-test="edit-claim-button"]').trigger('click')
+      await nextTick()
+
+      expect(mockToast.add).toHaveBeenCalledWith(editWarning)
+      expect(wrapper.findComponent({ name: 'EditClaims' }).exists()).toBe(false)
+    })
+
+    it('opens the edit form once the week has goals', async () => {
+      const wrapper = createWrapper([], 'Ship the guard')
+
+      await wrapper.find('[data-test="edit-claim-button"]').trigger('click')
+      await nextTick()
+
+      expect(mockToast.add).not.toHaveBeenCalledWith(editWarning)
+      expect(wrapper.findComponent({ name: 'EditClaims' }).exists()).toBe(true)
+    })
+
+    it('still lets the member delete a claim of a week without goals', async () => {
+      const wrapper = createWrapper()
+
+      await wrapper.find('[data-test="delete-claim-button"]').trigger('click')
+      await nextTick()
+
+      expect(wrapper.findComponent({ name: 'DeleteClaimConfirmation' }).exists()).toBe(true)
     })
   })
 

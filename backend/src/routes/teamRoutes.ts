@@ -484,6 +484,9 @@ teamRoutes.get('/:id', validateParams(teamIdParamsSchema), getTeam);
  *             description:
  *               type: string
  *               description: The new description of the team
+ *             requireWeeklyGoals:
+ *               type: boolean
+ *               description: Owner only. When true, members must save non-blank weekly goals before submitting hours for that week.
  *   responses:
  *     200:
  *       description: Team updated successfully

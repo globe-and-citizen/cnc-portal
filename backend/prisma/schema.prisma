@@ -48,6 +48,7 @@ model Team {
   name                      String
   slug                      String                     @unique
   isArchived                Boolean                    @default(false)
+  requireWeeklyGoals        Boolean                    @default(false)
   BoardOfDirectorActions    BoardOfDirectorActions[]
   teamContracts             TeamContract[]
   teamOfficers              TeamOfficer[]

@@ -869,6 +869,47 @@ describe('Team Controller', () => {
       expect(response.body.message).toBe('Unauthorized: Only team owner can update metadata');
     });
 
+    describe('[AC-US-PAYROLL-015-01] weekly goals requirement', () => {
+      const teamOwnedBy = (ownerAddress: string) => ({
+        id: 1,
+        ownerAddress,
+        isArchived: false,
+        members: [{ address: mockOwner.address }],
+        name: 'Test Team',
+        description: 'Test Description',
+      });
+
+      it('lets the owner require weekly goals', async () => {
+        vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(teamOwnedBy(mockOwner.address));
+        const updateSpy = vi.spyOn(prisma.team, 'update').mockResolvedValue({
+          ...teamOwnedBy(mockOwner.address),
+          requireWeeklyGoals: true,
+          teamOfficers: [],
+          teamContracts: [],
+        } as never);
+        vi.spyOn(prisma.memberTeamsData, 'findUnique').mockResolvedValue(null);
+
+        const response = await request(app).put('/1').send({ requireWeeklyGoals: true });
+
+        expect(response.status).toBe(200);
+        expect(updateSpy).toHaveBeenCalledWith(
+          expect.objectContaining({ data: { requireWeeklyGoals: true } })
+        );
+        expect(response.body.requireWeeklyGoals).toBe(true);
+      });
+
+      it('rejects a member who is not the owner', async () => {
+        vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(
+          teamOwnedBy(faker.finance.ethereumAddress())
+        );
+
+        const response = await request(app).put('/1').send({ requireWeeklyGoals: true });
+
+        expect(response.status).toBe(403);
+        expect(prisma.team.update).not.toHaveBeenCalled();
+      });
+    });
+
     it('[AC-US-COMPANIES-006-01] allows the owner to restore an archived company', async () => {
       const mockTeam = {
         id: 1,

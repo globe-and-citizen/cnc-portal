@@ -7,6 +7,7 @@ import {
   getCashRemunerationAddress,
   openMemberPayrollHistory,
   selectHistoryWeek,
+  saveWeeklyGoals,
   setMemberUsdcWage,
   submitDailyClaim
 } from './payroll-page'
@@ -39,6 +40,7 @@ test.describe(
       const paidWeek = completedWeekStart()
       await openMemberPayrollHistory(memberPage, company.teamId, E2E_MEMBER)
       await selectHistoryWeek(memberPage, paidWeek)
+      await saveWeeklyGoals(memberPage, 'Deliver the unfunded Payroll week.')
       await submitDailyClaim(memberPage, { hours: '2', memo: 'Unfunded Payroll claim' })
 
       await page.goto(`/teams/${company.teamId}/accounts/team-payroll`)
