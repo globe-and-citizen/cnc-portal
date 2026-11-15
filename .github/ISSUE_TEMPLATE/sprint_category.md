@@ -24,3 +24,12 @@ Each task retains its own repository, owner, acceptance criteria, relationship a
 
 - [ ] Each scoped item has an owner, acceptance criteria, and appropriate evidence or an explicit disposition.
 - [ ] Remaining work and decisions are visible on the owning issue.
+
+<details>
+<summary>AI agent instructions</summary>
+
+- Attach the category to its Sprint as a native sub-issue and maintain its Project fields.
+- Keep delivery-specific acceptance criteria and evidence on the owning issues; surface shared dependencies and decisions here.
+- Follow `AGENTS.md` and the GitHub flow skill for relationship readback and updates.
+
+</details>

@@ -73,3 +73,12 @@ Below are example sections you can use or modify for your sprint:
   Goal
 - Use nested checkboxes for subtasks
 - Add additional sections as needed for your sprint scope
+
+<details>
+<summary>AI agent instructions</summary>
+
+- Confirm Sprint commitments and dates with the owner; do not infer them from the current iteration.
+- Create or reconcile native Goals and categories, maintain their Project fields, and verify the hierarchy.
+- Keep delivery evidence on its owning issue and update this plan for agreed scope changes, major blockers and verified Goal outcomes.
+
+</details>

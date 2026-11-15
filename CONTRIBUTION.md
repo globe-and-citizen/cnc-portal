@@ -16,6 +16,10 @@ Local agent scratchpads, MCP usage, automated publication procedures and tool re
 developer. Shared code quality, security, documentation and acceptance requirements apply regardless of who writes the change or whether a
 human uses AI assistance.
 
+Issue authors should describe the need, intended outcome and known boundaries first. The delivery owner ensures the applicable relationship
+plan is recorded before implementation; a developer may prepare it directly or delegate its preparation to an AI agent. Agent instructions
+in issue templates supplement the shared requirements; they do not transfer human product decisions or acceptance to the agent.
+
 ## Shared contribution contract
 
 ### Scope and documentation

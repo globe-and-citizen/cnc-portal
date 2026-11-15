@@ -87,3 +87,13 @@ acceptance distinct.
 - Promotion merge / publication: <merge SHA, workflow run, tag target, Release and artifact inventory>
 - Post-release synchronization: <issue/PR, compared main/develop revisions and merge evidence, or justified no-op>
 - Operational results / remaining work: <observed results or explicitly unexecuted checks, owner and follow-up links>
+
+<details>
+<summary>AI agent instructions</summary>
+
+- Follow `AGENTS.md`, the GitHub flow skill and the release procedure; maintain and verify the native parent and Project fields.
+- Prepare the aggregate relationship assessment and collect evidence against the inspected revisions.
+- Surface release decisions, operational authorizations and Product/QA acceptance for the responsible humans; do not infer approval.
+- Keep promotion, publication, deployment and acceptance evidence distinct throughout follow-up.
+
+</details>
