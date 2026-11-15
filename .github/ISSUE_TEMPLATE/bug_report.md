@@ -6,10 +6,13 @@ labels: ""
 assignees: ""
 ---
 
-**For the developer:** Complete the shared information and make the required decisions. If you use an AI agent, ask it to handle the
-instructions and sections marked **AI agent only**, then review its proposals. If you do not use an agent, skip those instructions and
-sections. Before submitting your PR, run the applicable checks, assess affected relationships, and describe the results and any remaining
-gaps. See the [contribution guide](https://github.com/globe-and-citizen/cnc-portal/blob/develop/CONTRIBUTION.md) for shared requirements.
+**For the developer:** Complete the shared information and make the required decisions. Before submitting your PR, run the applicable
+checks, assess affected relationships, and describe the results and any remaining gaps. See the
+[contribution guide](https://github.com/globe-and-citizen/cnc-portal/blob/develop/CONTRIBUTION.md) for shared requirements.
+
+**Recommended AI assistance:** Consider asking your agent to identify affected consumers and canonical expectations, then prepare the
+relationship validation plan before implementation. Review its proposals and make the required decisions yourself. Sections marked **AI
+agent only** may be skipped when working without an agent.
 
 ## Description
 
@@ -42,10 +45,6 @@ gaps. See the [contribution guide](https://github.com/globe-and-citizen/cnc-port
 **Additional context** Add any other context about the problem here.
 
 ## Relationship validation plan — AI agent only
-
-**AI agent only — skip without an agent:** Ask your agent to inspect the relevant expectations and consumers, then complete this plan before
-implementation. Review its applicability, proposed proof and any decisions it raises. This issue table is optional when working without an
-agent; shared relationship validation and PR evidence still apply.
 
 Follow
 [Development Relationship Validation](https://github.com/globe-and-citizen/cnc-portal/blob/develop/docs/development-guide/relationship-validation.md)

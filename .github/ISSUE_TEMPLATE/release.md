@@ -6,10 +6,13 @@ labels: ""
 assignees: ""
 ---
 
-**For the developer:** Complete the shared information and make the required decisions. If you use an AI agent, ask it to handle the
-instructions and sections marked **AI agent only**, then review its proposals. If you do not use an agent, skip those instructions and
-sections. Before submitting your PR, run the applicable checks, assess affected relationships, and describe the results and any remaining
-gaps. See the [contribution guide](https://github.com/globe-and-citizen/cnc-portal/blob/develop/CONTRIBUTION.md) for shared requirements.
+**For the developer:** Complete the shared information and make the required decisions. Before submitting your PR, run the applicable
+checks, assess affected relationships, and describe the results and any remaining gaps. See the
+[contribution guide](https://github.com/globe-and-citizen/cnc-portal/blob/develop/CONTRIBUTION.md) for shared requirements.
+
+**Recommended AI assistance:** Consider asking your agent to collect and verify release coordinates, references and evidence, and prepare
+the aggregate relationship validation plan. Review its proposals and make the required decisions yourself. Sections marked **AI agent only**
+may be skipped when working without an agent.
 
 ## Description
 
@@ -19,9 +22,6 @@ outcome and release boundary. Link canonical feature documentation and delivery 
 declaring unverified product acceptance.
 
 ## Release coordinates
-
-**AI agent only — skip without an agent:** Ask your agent to collect and verify the technical coordinates, parent and Project information.
-Review the version and release boundary.
 
 - Version and type: <vX.Y.Z; stable or prerelease>
 - Previous release / comparison baseline: <tag and full commit SHA>
@@ -53,9 +53,6 @@ Maintain actual implementation dates and applicable fields under the
 
 ## Canonical references
 
-**AI agent only — skip without an agent:** Ask your agent to find the applicable references and identify missing validation or recovery
-information for review.
-
 - Release procedure: [Release Automation](https://github.com/globe-and-citizen/cnc-portal/blob/develop/docs/platform/RELEASE_AUTOMATION.md)
 - Feature, contract and shared-runtime owners: <canonical documentation links, story/criterion IDs when applicable>
 - Validation and recovery references: <test evidence, migration or recovery procedures; explain non-applicability>
@@ -76,9 +73,6 @@ information for review.
 
 ## Relationship validation plan — AI agent only
 
-**AI agent only — skip without an agent:** Ask your agent to prepare the aggregate plan, including affected consumers, planned proof and
-decisions requiring human review.
-
 Follow
 [Development Relationship Validation](https://github.com/globe-and-citizen/cnc-portal/blob/develop/docs/development-guide/relationship-validation.md).
 Assess every checklist type across the combined release. Reuse relevant source-PR evidence when its guarantee and dependencies are
@@ -93,9 +87,6 @@ unchanged; record new integration gaps and justify grouped non-applicable types.
 | <REL-ID> | <exact references> | <expected result or non-applicability> | <smallest sufficient evidence> | <gap, owner/destination, next action, or None> |
 
 ## Evidence and follow-up
-
-**AI agent only — skip without an agent:** Ask your agent to collect and update the evidence and remaining follow-up. Human owners make
-release decisions and record required acceptance.
 
 Record revisions, proof mode, links, actual outcomes and remaining limits. Keep preparation, merge, publication, deployment and human
 acceptance distinct.

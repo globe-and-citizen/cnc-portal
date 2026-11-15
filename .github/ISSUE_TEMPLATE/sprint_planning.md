@@ -6,10 +6,13 @@ labels: "sprint, planning"
 assignees: ""
 ---
 
-**For the developer:** Complete the shared information and make the required decisions. If you use an AI agent, ask it to handle the
-instructions and sections marked **AI agent only**, then review its proposals. If you do not use an agent, skip those instructions and
-sections. Before submitting your PR, run the applicable checks, assess affected relationships, and describe the results and any remaining
-gaps. See the [contribution guide](https://github.com/globe-and-citizen/cnc-portal/blob/develop/CONTRIBUTION.md) for shared requirements.
+**For the developer:** Complete the shared information and make the required decisions. Before submitting your PR, run the applicable
+checks, assess affected relationships, and describe the results and any remaining gaps. See the
+[contribution guide](https://github.com/globe-and-citizen/cnc-portal/blob/develop/CONTRIBUTION.md) for shared requirements.
+
+**Recommended AI assistance:** Consider asking your agent to prepare native Goals and categories, verify their hierarchy and Project fields,
+and flag missing dates or decisions. Review its proposals and make the required decisions yourself. Sections marked **AI agent only** may be
+skipped when working without an agent.
 
 ## Sprint [NUMBER] Plan Goals
 
@@ -70,9 +73,6 @@ Below are example sections you can use or modify for your sprint:
 ---
 
 ## Notes
-
-**AI agent only — skip without an agent:** Ask your agent to prepare the native Goals and categories, verify their hierarchy and Project
-fields, and flag missing dates or decisions. Confirm Sprint commitments and dates with the owner.
 
 - Update the sprint number in the title
 - Replace example sections with the original sprint goals; create their `[Goals]` issues from the Sprint Goal template and attach them as
