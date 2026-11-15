@@ -6,9 +6,8 @@ labels: ""
 assignees: ""
 ---
 
-**For the developer:** Complete the shared information and make the required decisions. Before submitting your PR, run the applicable
-checks, assess affected relationships, and describe the results and any remaining gaps. See the
-[contribution guide](https://github.com/globe-and-citizen/cnc-portal/blob/develop/CONTRIBUTION.md) for shared requirements.
+- [ ] I have reviewed the [contribution guide](https://github.com/globe-and-citizen/cnc-portal/blob/develop/CONTRIBUTION.md) to understand
+      the shared requirements for this work.
 
 **Recommended AI assistance:** Consider asking your agent to find canonical references, propose the product story impact, and prepare the
 relationship validation plan. Review its proposals and make the required decisions yourself. Sections marked **AI agent only** may be
