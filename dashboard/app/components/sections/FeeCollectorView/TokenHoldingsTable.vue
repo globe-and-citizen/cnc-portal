@@ -18,6 +18,20 @@
       </div>
     </template>
 
+    <UAlert
+      v-if="error"
+      color="error"
+      title="Failed to load token balances"
+      description="The displayed balances may be incomplete."
+      class="mb-4"
+    />
+    <UAlert
+      v-if="unknownSupportedTokens.length"
+      color="warning"
+      title="Some supported tokens are not displayed"
+      description="Their balances are not included in the displayed total, but withdrawals still sweep them."
+      class="mb-4"
+    />
     <UTable
       :data="tableRows"
       :columns="columns"
@@ -27,7 +41,7 @@
         <div class="flex flex-col items-center justify-center py-8">
           <UIcon name="i-heroicons-circle-stack-20-solid" class="w-12 h-12 text-gray-400 mb-3" />
           <p class="text-gray-500">
-            No tokens available
+            {{ error ? 'Token balances are unavailable.' : 'No tokens available' }}
           </p>
         </div>
       </template>
@@ -112,7 +126,7 @@ interface TableRow extends TokenDisplay {
 
 const isOwner = isFeeCollectorOwner()
 
-const { tokens, isLoading } = useFeeCollector()
+const { tokens, unknownSupportedTokens, isLoading, error } = useFeeCollector()
 
 const columns = [
   { accessorKey: 'rank', header: 'RANK' },
