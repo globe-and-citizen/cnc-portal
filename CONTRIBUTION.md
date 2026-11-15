@@ -51,8 +51,8 @@ applicable specialised guides before implementation:
 - Use `feature/<slug>` branches for ordinary work. Follow the [release procedure](./docs/platform/RELEASE_AUTOMATION.md) for release
   branches.
 - Use [Conventional Commits with the matching gitmoji](./.github/copilot-instructions/commit-conventions.md) for atomic commits, ordinary PR
-  titles and ordinary issue titles. Sprint, Goal and release issue titles and release promotion PR titles follow the dedicated conventions.
-  Do not squash a whole PR into a single final commit. Do not add co-author trailers or generated attribution blocks.
+  titles and ordinary issue titles. Sprint, Goal, Sprint Category and release issue titles and release promotion PR titles follow the
+  dedicated conventions. Do not squash a whole PR into a single final commit. Do not add co-author trailers or generated attribution blocks.
 - Write GitHub artifacts and user-facing UI strings in English.
 - Every PR links a tracking issue using `Closes #N` or `Fixes #N`. Find a suitable existing issue or create one from the repository template
   before opening the PR; assign the delivery owner.

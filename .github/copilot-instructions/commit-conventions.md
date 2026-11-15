@@ -16,20 +16,18 @@
 - **Gitmoji is required**, paired with the type.
 - **Imperative, present tense** in the subject ("add", not "added").
 - **Subject ≤ 72 chars, no trailing period.**
-- The same format applies to **ordinary PR titles and ordinary issue titles**. Sprint plan, Sprint Goal and release issue titles and release
-  promotion PR titles follow the [dedicated title rules](#sprint-goal-and-release-issue-titles).
+- The same format applies to **ordinary PR titles and ordinary issue titles**. Sprint plan, Sprint Goal, Sprint Category and release issue
+  titles and release promotion PR titles follow the [dedicated title rules](#sprint-goal-and-release-issue-titles).
 
 ## Sprint, Goal and Release issue titles
 
-Sprint planning, Sprint Goal and release issues use their own titles without a Conventional Commit type or gitmoji:
+Sprint planning, Sprint Goal, Sprint Category and release issues use their own titles without a Conventional Commit type or gitmoji:
 
 - Sprint root: `[Sprint] Sprint <number> plan — <date range>`.
 - Planned Goal: `[Goals] <outcome> — Sprint <number>`.
+- Sprint category: `[Sprint Category] Sprint <number>: <category>`, where the category is `Bugs and performance`, `User requests`, or
+  `Technical debt`.
 - Release: `[Release] vX.Y.Z`, for example `[Release] v0.17.0`.
-
-The three agreed Sprint 21 category titles are exceptions: `[Sprint Category] Sprint 21: Bugs and performance`,
-`[Sprint Category] Sprint 21: User requests`, and `[Sprint Category] Sprint 21: Technical debt`. Other category issues follow ordinary issue
-title conventions.
 
 Release promotion PRs use the same `[Release] vX.Y.Z` title as their tracking release issue, without a Conventional Commit type or gitmoji.
 Keep Conventional Commit titles for ordinary delivery and coordination issues, commits and other pull requests. Do not rename historical

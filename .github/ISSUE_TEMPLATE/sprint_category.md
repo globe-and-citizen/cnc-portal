@@ -1,7 +1,7 @@
 ---
 name: Sprint Category
 about: Coordinate a category of Sprint work across repositories
-title: "chore: 🔧 coordinate [CATEGORY] for Sprint [NUMBER]"
+title: "[Sprint Category] Sprint [NUMBER]: [CATEGORY]"
 labels: ""
 assignees: ""
 ---
