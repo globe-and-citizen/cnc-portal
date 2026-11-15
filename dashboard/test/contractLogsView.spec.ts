@@ -19,7 +19,7 @@ const stubs = {
   UIcon: true, UBadge: { template: '<span><slot /></span>' }, USkeleton: true
 }
 beforeEach(() => {
-  state.data = ref({ pages: [{ rows: [], next: null, failed: false }] })
+  state.data = ref({ pages: [{ rows: [], next: null, failed: false, scannedFrom: 0n }] })
   state.loading = ref(false)
   state.error = ref(false)
   state.more = ref(false)
@@ -44,10 +44,11 @@ describe('contract logs history states', () => {
 
   it('shows partial failures and allows the remaining range to be retried', async () => {
     state.more.value = true
-    state.data.value = { pages: [{ rows: [], next: { toBlock: '10', window: '2' }, failed: true }] }
+    state.data.value = { pages: [{ rows: [], next: { toBlock: '10', window: '2' }, failed: true, scannedFrom: null }] }
     const wrapper = mount(ContractLogs, { props: { address: '0x1' }, global: { stubs } })
     expect(wrapper.text()).toContain('Some history could not be loaded')
     expect(wrapper.text()).toContain('Retry remaining history')
+    expect(wrapper.text()).toContain('No blocks have been scanned yet')
     await wrapper.find('button').trigger('click')
     expect(state.next).toHaveBeenCalledOnce()
     wrapper.unmount()

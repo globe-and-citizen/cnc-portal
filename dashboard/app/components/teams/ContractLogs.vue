@@ -28,6 +28,7 @@ const formatArgs = (args: Record<string, unknown>) => {
 
 const pages = computed(() => logs.value?.pages ?? [])
 const lastPage = computed(() => pages.value.at(-1))
+const hasScannedBlocks = computed(() => pages.value.some(page => page.scannedFrom !== null))
 const rows = computed(() => {
   const seen = new Set<string>()
   return pages.value.flatMap(page => page.rows).filter((log) => {
@@ -86,7 +87,7 @@ const rows = computed(() => {
         description="Older blocks have not been scanned yet."
       />
       <p v-if="rows.length === 0" class="text-sm text-muted">
-        {{ hasNextPage ? 'No events found in the scanned blocks.' : 'No events found in the scanned history.' }}
+        {{ !hasScannedBlocks ? 'No blocks have been scanned yet.' : hasNextPage ? 'No events found in the scanned blocks.' : 'No events found in the scanned history.' }}
       </p>
       <div v-else class="overflow-x-auto max-h-[60vh]">
         <table class="w-full text-sm">
