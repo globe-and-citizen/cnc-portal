@@ -6,9 +6,9 @@ labels: ""
 assignees: ""
 ---
 
-**For the developer:** Complete the shared information you know and make the required product or release decisions. If you use an AI agent,
-ask it to prepare the sections marked **AI-assisted** below, then review its proposals. You can also complete them yourself without an
-agent. The delivery owner remains responsible for the shared validation and evidence.
+**For the developer:** Complete the shared information and make the required decisions. If you use an AI agent, ask it to handle the
+instructions and sections marked **AI agent only**, then review its proposals. If you do not use an agent, skip those instructions and
+sections. Shared validation and evidence remain required as described in the contribution guide.
 
 ## Description
 
@@ -23,10 +23,11 @@ frustrated when [...]
 
 ## Acceptance Criteria
 
-## Relationship validation plan
+## Relationship validation plan — AI agent only
 
-**AI-assisted:** Ask your agent to inspect the relevant expectations and consumers, then complete this plan before implementation. Review
-its applicability, proposed proof and any decisions it raises. If working without an agent, the delivery owner completes the plan.
+**AI agent only — skip without an agent:** Ask your agent to inspect the relevant expectations and consumers, then complete this plan before
+implementation. Review its applicability, proposed proof and any decisions it raises. This issue table is optional when working without an
+agent; shared relationship validation and PR evidence still apply.
 
 Follow
 [Development Relationship Validation](https://github.com/globe-and-citizen/cnc-portal/blob/develop/docs/development-guide/relationship-validation.md)

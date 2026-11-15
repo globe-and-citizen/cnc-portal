@@ -6,9 +6,9 @@ labels: "sprint, planning"
 assignees: ""
 ---
 
-**For the developer:** Complete the shared information you know and make the required product or release decisions. If you use an AI agent,
-ask it to prepare the sections marked **AI-assisted** below, then review its proposals. You can also complete them yourself without an
-agent. The delivery owner remains responsible for the shared validation and evidence.
+**For the developer:** Complete the shared information and make the required decisions. If you use an AI agent, ask it to handle the
+instructions and sections marked **AI agent only**, then review its proposals. If you do not use an agent, skip those instructions and
+sections. Shared validation and evidence remain required as described in the contribution guide.
 
 ## Sprint [NUMBER] Plan Goals
 
@@ -70,8 +70,8 @@ Below are example sections you can use or modify for your sprint:
 
 ## Notes
 
-**AI-assisted:** Ask your agent to prepare the native Goals and categories, verify their hierarchy and Project fields, and flag missing
-dates or decisions. Confirm Sprint commitments and dates with the owner.
+**AI agent only — skip without an agent:** Ask your agent to prepare the native Goals and categories, verify their hierarchy and Project
+fields, and flag missing dates or decisions. Confirm Sprint commitments and dates with the owner.
 
 - Update the sprint number in the title
 - Replace example sections with the original sprint goals; create their `[Goals]` issues from the Sprint Goal template and attach them as

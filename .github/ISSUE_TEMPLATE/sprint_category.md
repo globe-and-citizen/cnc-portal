@@ -6,9 +6,9 @@ labels: ""
 assignees: ""
 ---
 
-**For the developer:** Complete the shared information you know and make the required product or release decisions. If you use an AI agent,
-ask it to prepare the sections marked **AI-assisted** below, then review its proposals. You can also complete them yourself without an
-agent. The delivery owner remains responsible for the shared validation and evidence.
+**For the developer:** Complete the shared information and make the required decisions. If you use an AI agent, ask it to handle the
+instructions and sections marked **AI agent only**, then review its proposals. If you do not use an agent, skip those instructions and
+sections. Shared validation and evidence remain required as described in the contribution guide.
 
 ## Role
 
@@ -20,8 +20,8 @@ Coordinate [Bugs and performance / User requests / Technical debt] across the pa
 
 ## Coordination
 
-**AI-assisted:** Ask your agent to check the native hierarchy, Project fields, shared dependencies and missing evidence; review any proposed
-scope changes.
+**AI agent only — skip without an agent:** Ask your agent to check the native hierarchy, Project fields, shared dependencies and missing
+evidence; review any proposed scope changes.
 
 Coordinator: [OWNER]
 

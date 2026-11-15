@@ -51,8 +51,9 @@ handoffs, orchestration, shared policy, and derived projections. Accounting chec
 
 - Read the issue, canonical expectations, existing implementation, and relevant evidence.
 - Identify applicable checklist types, expected relationships, affected consumers, and the smallest sufficient validation plan.
-- Record known missing relationships and proposed completions in the issue's relationship-validation plan. New features can have planned
-  implementation and proof; do not represent them as validated before they exist.
+- AI agents record known relationships, planned proof, gaps and proposed completions in the issue's relationship-validation plan. A
+  developer working without an agent may omit that issue plan; the assessment remains required and its results belong in the PR. New
+  features can have planned implementation and proof; do not represent them as validated before they exist.
 - Identify product, accounting, or architectural decisions that are required before dependent work can proceed. Preserve the current
   authorization and issue-placement rules.
 
@@ -87,8 +88,9 @@ integration drift. Do not rerun unrelated checks merely because the release cont
 
 ## Result contract
 
-The issue carries expected relationships and planned proof. The PR carries the actual result and evidence. Record the validation stage,
-inspected head/base or working revision, scope, and canonical references alongside the result table.
+For agent work, the issue carries expected relationships and planned proof; a developer working without an agent may omit that issue plan.
+The PR carries the actual result and evidence for every contribution. Record the validation stage, inspected head/base or working revision,
+scope, and canonical references alongside the result table.
 
 | Field                     | Required content                                                                                                                             |
 | ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |

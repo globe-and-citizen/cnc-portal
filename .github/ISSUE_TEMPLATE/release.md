@@ -6,9 +6,9 @@ labels: ""
 assignees: ""
 ---
 
-**For the developer:** Complete the shared information you know and make the required product or release decisions. If you use an AI agent,
-ask it to prepare the sections marked **AI-assisted** below, then review its proposals. You can also complete them yourself without an
-agent. The delivery owner remains responsible for the shared validation and evidence.
+**For the developer:** Complete the shared information and make the required decisions. If you use an AI agent, ask it to handle the
+instructions and sections marked **AI agent only**, then review its proposals. If you do not use an agent, skip those instructions and
+sections. Shared validation and evidence remain required as described in the contribution guide.
 
 ## Description
 
@@ -19,8 +19,8 @@ declaring unverified product acceptance.
 
 ## Release coordinates
 
-**AI-assisted:** Ask your agent to collect and verify the technical coordinates, parent and Project information. Review the version and
-release boundary.
+**AI agent only — skip without an agent:** Ask your agent to collect and verify the technical coordinates, parent and Project information.
+Review the version and release boundary.
 
 - Version and type: <vX.Y.Z; stable or prerelease>
 - Previous release / comparison baseline: <tag and full commit SHA>
@@ -52,7 +52,8 @@ Maintain actual implementation dates and applicable fields under the
 
 ## Canonical references
 
-**AI-assisted:** Ask your agent to find the applicable references and identify missing validation or recovery information for review.
+**AI agent only — skip without an agent:** Ask your agent to find the applicable references and identify missing validation or recovery
+information for review.
 
 - Release procedure: [Release Automation](https://github.com/globe-and-citizen/cnc-portal/blob/develop/docs/platform/RELEASE_AUTOMATION.md)
 - Feature, contract and shared-runtime owners: <canonical documentation links, story/criterion IDs when applicable>
@@ -72,10 +73,10 @@ Maintain actual implementation dates and applicable fields under the
 - [ ] In-scope operational work has its required evidence; separate follow-up issues have explicit owners and remaining limits are recorded
       before closure. Publication alone does not establish deployment or product acceptance.
 
-## Relationship validation plan
+## Relationship validation plan — AI agent only
 
-**AI-assisted:** Ask your agent to prepare the aggregate plan, including affected consumers, planned proof and decisions requiring human
-review.
+**AI agent only — skip without an agent:** Ask your agent to prepare the aggregate plan, including affected consumers, planned proof and
+decisions requiring human review.
 
 Follow
 [Development Relationship Validation](https://github.com/globe-and-citizen/cnc-portal/blob/develop/docs/development-guide/relationship-validation.md).
@@ -92,8 +93,8 @@ unchanged; record new integration gaps and justify grouped non-applicable types.
 
 ## Evidence and follow-up
 
-**AI-assisted:** Ask your agent to collect and update the evidence and remaining follow-up. Human owners make release decisions and record
-required acceptance.
+**AI agent only — skip without an agent:** Ask your agent to collect and update the evidence and remaining follow-up. Human owners make
+release decisions and record required acceptance.
 
 Record revisions, proof mode, links, actual outcomes and remaining limits. Keep preparation, merge, publication, deployment and human
 acceptance distinct.
