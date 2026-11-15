@@ -52,6 +52,8 @@ is not sufficient.
 
 ## Current Evidence
 
+**Implementation evidence reviewed against:** `ec9d3c52004dea273743e7aa2032988bdcdd7dd5`
+
 - [Dashboard navigation and module entry points](../../../dashboard/app/layouts/default.vue)
 - [Administrator access guard](../../../dashboard/app/middleware/auth.global.ts)
 - [Overview and statistics page](../../../dashboard/app/pages/index.vue)

@@ -43,11 +43,11 @@ flowchart LR
 
 ## Status Overview
 
-| User Story      | Title                                      | Actor                  | Status  |
-| --------------- | ------------------------------------------ | ---------------------- | ------- |
-| US-TEAM-OPS-001 | Access and inspect platform companies      | Platform administrator | ✅ Done |
-| US-TEAM-OPS-002 | Inspect a company profile                  | Platform administrator | ✅ Done |
-| US-TEAM-OPS-003 | Investigate Officer contracts and balances | Platform administrator | ✅ Done |
+| User Story      | Title                                      | Actor                  | Status         |
+| --------------- | ------------------------------------------ | ---------------------- | -------------- |
+| US-TEAM-OPS-001 | Access and inspect platform companies      | Platform administrator | ✅ Done        |
+| US-TEAM-OPS-002 | Inspect a company profile                  | Platform administrator | ✅ Done        |
+| US-TEAM-OPS-003 | Investigate Officer contracts and balances | Platform administrator | 🚧 In Progress |
 
 ## Test Coverage Overview
 
@@ -59,7 +59,7 @@ reference has the expected layer label.
 | --------------- | ------------ | --------------- | --------------------------------- |
 | US-TEAM-OPS-001 | Not required | ⚠️ 1/11 met     | `AC-US-TEAM-OPS-001-01–07, 09–11` |
 | US-TEAM-OPS-002 | Not required | ❌ 0/6 met      | `AC-US-TEAM-OPS-002-01–06`        |
-| US-TEAM-OPS-003 | Not required | ❌ 0/10 met     | `AC-US-TEAM-OPS-003-01–10`        |
+| US-TEAM-OPS-003 | Not required | ❌ 0/14 met     | `AC-US-TEAM-OPS-003-01–14`        |
 
 Proof obligations use the [shared proof-strategy registry](../../../testing/proof-strategies.md). Multiple IDs for one AC are cumulative.
 
@@ -189,6 +189,11 @@ Proof obligations use the [shared proof-strategy registry](../../../testing/proo
 - [x] `AC-US-TEAM-OPS-003-09` A failed Officer-generation request reports that contract versions could not be loaded.
 - [x] `AC-US-TEAM-OPS-003-10` A failed event-log request reports the retrieval failure instead of presenting an empty event history as
       successful.
+- [x] `AC-US-TEAM-OPS-003-11` A bounded scan that has not reached genesis is marked incomplete and offers a way to load older ranges.
+- [x] `AC-US-TEAM-OPS-003-12` An event that cannot be decoded remains visible with its raw topics and data.
+- [x] `AC-US-TEAM-OPS-003-13` A failed range preserves already loaded events and offers a retry of the remaining history.
+- [x] `AC-US-TEAM-OPS-003-14` Each contract history can be scanned back to the configured chain's genesis without assuming that an imported
+      contract was created after the CNC deployment.
 
 ### Test Coverage
 
@@ -207,6 +212,10 @@ Proof obligations use the [shared proof-strategy registry](../../../testing/proo
 | `AC-US-TEAM-OPS-003-08` | `PS-DASHBOARD` | None linked      | ❌ Missing |
 | `AC-US-TEAM-OPS-003-09` | `PS-DASHBOARD` | None linked      | ❌ Missing |
 | `AC-US-TEAM-OPS-003-10` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-TEAM-OPS-003-11` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-TEAM-OPS-003-12` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-TEAM-OPS-003-13` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-TEAM-OPS-003-14` | `PS-DASHBOARD` | None linked      | ❌ Missing |
 
 **Dependencies:** US-TEAM-OPS-002 and available backend and chain data
 
@@ -215,15 +224,23 @@ Proof obligations use the [shared proof-strategy registry](../../../testing/proo
 Validated on 2026-08-27 against the administrator access boundary, company-list and company-profile journeys, Officer and balance
 investigation, and the independent API role enforcement described below.
 
-The validation date is historical, not a current automated-test result. A failed balance read can currently appear as zero in the list recap
-or detail view; `AC-US-TEAM-OPS-001-03` and `AC-US-TEAM-OPS-003-04` still need failure-versus-confirmed-zero proof.
+The validation date is historical and does not validate the new progressive log investigation. The logs flow has unit/component evidence and
+a bounded read-only RPC sample, but still requires a browser journey and human validation. A failed balance read can currently appear as
+zero in the list recap or detail view; `AC-US-TEAM-OPS-001-03` and `AC-US-TEAM-OPS-003-04` still need failure-versus-confirmed-zero proof.
 
 ## Implementation Evidence
+
+Contract log scanning starts from a pinned current block and reads older contiguous ranges in bounded batches. It reduces the range after
+recognized provider range-limit errors, preserves successfully scanned ranges when a later request fails, and allows the operator to retry
+or load older history. Genesis is the universal lower boundary because the backend does not record a deployment block for every team
+contract and an imported Safe may predate CNC. The old Polygon-only boundary, block 79743826, corresponds to 2025-12-01 UTC and precedes the
+V0–V2 CNC registry deployment dates, but it does not prove a complete history for imported contracts or other chains. Scanning is complete
+only when the operator reaches genesis; a provider can still be unavailable or lack historical data.
 
 The company payload lists every Safe the company registered, disabled ones included. The profile and balance recap keep only its default
 Safe, the latest activated one not disabled, among the live contracts, so they count that Safe.
 
-**Implementation evidence reviewed against:** `b30cd6ae57994568cafb6fd060009064941b001a`
+**Implementation evidence reviewed against:** `8c84127053dc02e55399650ee5f19e691b4d3943`
 
 - [Dashboard navigation](../../../../dashboard/app/layouts/default.vue),
   [administrator route guard](../../../../dashboard/app/middleware/auth.global.ts), and
@@ -239,7 +256,11 @@ Safe, the latest activated one not disabled, among the live contracts, so they c
   [contract balances](../../../../dashboard/app/components/teams/ContractBalance.vue),
   [stablecoin balance query](../../../../dashboard/app/queries/contractTokenBalances.query.ts), and
   [contract logs](../../../../dashboard/app/components/teams/ContractLogs.vue), and
-  [contract log query and generation-aware decoding](../../../../dashboard/app/queries/contractLogs.query.ts)
+  [contract log query](../../../../dashboard/app/queries/contractLogs.query.ts),
+  [bounded log scanner and generation-aware decoding](../../../../dashboard/app/utils/contractLogPages.ts),
+  [log scanner tests](../../../../dashboard/test/contractLogPages.spec.ts),
+  [query tests](../../../../dashboard/test/contractLogsQuery.spec.ts), and
+  [log state tests](../../../../dashboard/test/contractLogsView.spec.ts)
 - [Company routes](../../../../backend/src/routes/teamRoutes.ts),
   [company controller](../../../../backend/src/controllers/teamController.ts), and
   [company-controller coverage](../../../../backend/src/controllers/__tests__/teamController.test.ts)
