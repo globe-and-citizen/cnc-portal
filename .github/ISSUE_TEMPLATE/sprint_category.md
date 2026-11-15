@@ -20,12 +20,6 @@ Coordinator: [OWNER]
 
 Each task retains its own repository, owner, acceptance criteria, relationship assessment, and verification evidence.
 
-## Sprint and related work
-
-Sprint plan: [SPRINT ISSUE LINK]
-
-[Link relevant work, including Goal-owned work when useful. Attach eligible children natively and verify the relationships.]
-
 ## Completion
 
 - [ ] Each scoped item has an owner, acceptance criteria, and appropriate evidence or an explicit disposition.
