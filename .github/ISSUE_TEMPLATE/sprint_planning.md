@@ -9,10 +9,6 @@ assignees: ""
 - [ ] I have reviewed the [contribution guide](https://github.com/globe-and-citizen/cnc-portal/blob/develop/CONTRIBUTION.md) to understand
       the shared requirements for this work.
 
-**Recommended AI assistance:** Consider asking your agent to prepare native Goals and categories, verify their hierarchy and Project fields,
-and flag missing dates or decisions. Review its proposals and make the required decisions yourself. Sections marked **AI agent only** may be
-skipped when working without an agent.
-
 ## Sprint [NUMBER] Plan Goals
 
 ### [Feature/Component Name] - [Focus Area]

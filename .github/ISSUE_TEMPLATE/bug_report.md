@@ -9,9 +9,8 @@ assignees: ""
 - [ ] I have reviewed the [contribution guide](https://github.com/globe-and-citizen/cnc-portal/blob/develop/CONTRIBUTION.md) to understand
       the shared requirements for this work.
 
-**Recommended AI assistance:** Consider asking your agent to identify affected consumers and canonical expectations, then prepare the
-relationship validation plan before implementation. Review its proposals and make the required decisions yourself. Sections marked **AI
-agent only** may be skipped when working without an agent.
+**Recommended AI assistance:** If you use an AI agent, ask it to generate the **Relationship validation plan** section. If you do not use an
+agent, you may skip that section.
 
 ## Description
 

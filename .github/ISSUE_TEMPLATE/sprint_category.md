@@ -9,10 +9,6 @@ assignees: ""
 - [ ] I have reviewed the [contribution guide](https://github.com/globe-and-citizen/cnc-portal/blob/develop/CONTRIBUTION.md) to understand
       the shared requirements for this work.
 
-**Recommended AI assistance:** Consider asking your agent to check the native hierarchy, Project fields, shared dependencies and missing
-evidence. Review its proposals and make the required decisions yourself. Sections marked **AI agent only** may be skipped when working
-without an agent.
-
 ## Role
 
 Coordinate [Bugs and performance / User requests / Technical debt] across the participating repositories.
