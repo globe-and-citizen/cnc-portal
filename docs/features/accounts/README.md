@@ -171,7 +171,7 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 | `AC-US-BANK-001-03`  | `PS-CONTRACT`         | Integrated E2E                       | ⚠️ Insufficient |
 | `AC-US-BANK-001-04`  | `PS-BROWSER`          | Mocked browser + Contract            | ✅ Met          |
 | `AC-US-BANK-001-04`  | `PS-CONTRACT`         | Mocked browser + Contract            | ✅ Met          |
-| `AC-US-BANK-001-05`  | `PS-BROWSER`          | Mocked browser                       | ✅ Met          |
+| `AC-US-BANK-001-05`  | `PS-BROWSER`          | Mocked browser + Frontend            | ✅ Met          |
 | `AC-US-BANK-001-06`  | `PS-CONTRACT`         | Contract                             | ✅ Met          |
 | `AC-US-BANK-001-07`  | `PS-FRONTEND`         | Frontend                             | ✅ Met          |
 | `AC-US-BANK-001-08`  | `PS-BROWSER`          | Mocked browser                       | ✅ Met          |
