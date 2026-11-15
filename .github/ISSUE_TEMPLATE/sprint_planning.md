@@ -8,7 +8,8 @@ assignees: ""
 
 **For the developer:** Complete the shared information and make the required decisions. If you use an AI agent, ask it to handle the
 instructions and sections marked **AI agent only**, then review its proposals. If you do not use an agent, skip those instructions and
-sections. Shared validation and evidence remain required as described in the contribution guide.
+sections. Before submitting your PR, run the applicable checks, assess affected relationships, and describe the results and any remaining
+gaps. See the [contribution guide](https://github.com/globe-and-citizen/cnc-portal/blob/develop/CONTRIBUTION.md) for shared requirements.
 
 ## Sprint [NUMBER] Plan Goals
 
