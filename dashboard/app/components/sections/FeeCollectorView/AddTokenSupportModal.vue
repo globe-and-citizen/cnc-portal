@@ -5,7 +5,7 @@
       size="sm"
       variant="soft"
       icon="i-heroicons-plus"
-      :disabled="addTokenSupport.isPending.value"
+      :disabled="addTokenSupport.isPending.value || !supportedTokensData"
       @click="isOpen = true"
     >
       Add token
