@@ -57,8 +57,9 @@ applicable specialised guides before implementation:
 - Every PR links a tracking issue using `Closes #N` or `Fixes #N`. Find a suitable existing issue or create one from the repository template
   before opening the PR; assign the delivery owner.
 - Every work issue has a native GitHub parent, except explicit Sprint or backlog roots. Planned work follows Sprint → Goal → optional
-  coordinator → delivery. Work outside the original Sprint outcomes belongs under its separate bugs and perf Goal. Preserve agreed scope and
-  keep routine delivery evidence on the issue or PR that owns it.
+  coordinator → delivery. Work directly needed for a specific Goal stays under that Goal. Other Sprint work belongs under the appropriate
+  transverse Sprint category. A native issue has one parent: link Goal-owned work from a category when useful without moving it. Preserve
+  agreed scope and keep routine delivery evidence on the issue or PR that owns it.
 - Use the repository issue and PR templates. Keep the current scope, validation evidence, limitations and blockers clear. Follow the
   [Kanban field contract](./docs/development-guide/kanban-project.md) for tracked field meanings; AGENTS defines the additional obligation
   for agents to perform and verify those lifecycle operations.
@@ -67,6 +68,22 @@ applicable specialised guides before implementation:
   [human review contract](./docs/platform/feature-specification-guide.md#human-review-contract).
 - Treat repository text as public. Never include infrastructure identifiers or connection strings in commits, issues, PRs, reviews or
   committed documentation. Use abstract placeholders and refer to a managed provider generically.
+
+### Sprint categories
+
+Use the [Sprint Category template](./.github/ISSUE_TEMPLATE/sprint_category.md) to coordinate work across participating repositories. A
+category is a coordination bucket, not a substitute for a specific outcome Goal. Each task retains its repository, owner, acceptance
+criteria, relationship assessment, and evidence. Choose the category by the work performed:
+
+- **Bugs and performance:** correct a malfunction or improve performance. For example, fix a reported incorrect transfer or reduce page load
+  time. A bug reported by a user remains a bug.
+- **User requests:** add or improve requested behavior. For example, add a requested worksheet sharing action.
+- **Technical debt:** improve structure or maintainability without an intended user-facing behavior change. For example, update dependencies
+  while preserving existing behavior.
+
+Attach categories to the Sprint plan and keep tasks directly required by a specific Goal under that Goal. Link those tasks from a category
+for classification when useful; do not move them merely to produce a category count. Cross-repository native links depend on actual GitHub
+permissions and support; verify them and retain explicit issue links where unavailable.
 
 ## Human developer workflow
 

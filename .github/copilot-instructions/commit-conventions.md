@@ -25,8 +25,11 @@ Sprint planning, Sprint Goal and release issues use their own titles without a C
 
 - Sprint root: `[Sprint] Sprint <number> plan — <date range>`.
 - Planned Goal: `[Goals] <outcome> — Sprint <number>`.
-- Catch-all Goal: `[Goals] Sprint <number> Bug and perf`.
 - Release: `[Release] vX.Y.Z`, for example `[Release] v0.17.0`.
+
+The three agreed Sprint 21 category titles are exceptions: `[Sprint Category] Sprint 21: Bugs and performance`,
+`[Sprint Category] Sprint 21: User requests`, and `[Sprint Category] Sprint 21: Technical debt`. Other category issues follow ordinary issue
+title conventions.
 
 Release promotion PRs use the same `[Release] vX.Y.Z` title as their tracking release issue, without a Conventional Commit type or gitmoji.
 Keep Conventional Commit titles for ordinary delivery and coordination issues, commits and other pull requests. Do not rename historical
