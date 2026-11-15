@@ -148,8 +148,8 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 - [x] `AC-US-BANK-001-06` The Bank accepts only ERC-20 tokens supported by its current configuration. _(contract)_
 - [x] `AC-US-BANK-001-07` An ERC-20 deposit authorizes the Bank only when the existing allowance is insufficient.
 - [x] `AC-US-BANK-001-11` A member can include the Bank transfer fee in a deposit, so a later Bank transfer of the entered amount delivers
-      it exactly, with nothing missing and nothing left over from that deposit. The fee is added only for assets the Bank charges on
-      transfer.
+      it exactly, with nothing missing and nothing left over from that deposit. The option starts unchecked, and the fee is added only for
+      assets the Bank charges on transfer.
 - [x] `AC-US-BANK-001-12` When the fee is included, the largest amount a member can select keeps the deposit, fee included, within the
       wallet balance.
 
@@ -1366,7 +1366,7 @@ generic table dictionary. This is a compile-time boundary; it does not claim val
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `0378924b299a6dfa6f5a3dbee6b640a5a96612b3`
+**Implementation evidence reviewed against:** `1360d35a0fe18bbafcc263a6ac8d7f2506b6e276`
 
 - [Bank deposit modal](../../../app/src/components/sections/BankView/forms/DepositModal.vue),
   [Bank transfer modal](../../../app/src/components/sections/BankView/forms/TransferModal.vue),
