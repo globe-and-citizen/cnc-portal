@@ -18,7 +18,7 @@ export function useBankDepositFee(
 ) {
   const { hasTransferFee, feeRatio, grossUpForTransferFee, largestNetWithinBalance } =
     useBankTransferFee(() => toValue(token)?.address)
-  const shouldAddFee = ref(true)
+  const shouldAddFee = ref(false)
   const isAddingFee = computed(() => shouldAddFee.value && hasTransferFee.value)
 
   const enteredAmount = computed(() =>
@@ -42,6 +42,12 @@ export function useBankDepositFee(
     depositAmount,
     maxEnteredAmount
   }
+}
+
+/** A positive decimal such as `225`, `0.5` or `.5`, judged on the text before any rounding. */
+export function isPositiveDecimal(value: string): boolean {
+  const trimmed = value.trim()
+  return DECIMAL_AMOUNT.test(trimmed) && /[1-9]/.test(trimmed)
 }
 
 function toTokenUnits(amount: string, decimals: number): bigint {

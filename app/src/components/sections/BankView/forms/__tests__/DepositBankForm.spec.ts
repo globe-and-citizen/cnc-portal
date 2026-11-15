@@ -204,16 +204,43 @@ describe('DepositBankForm.vue', () => {
     })
   })
 
+  it('[AC-US-BANK-001-05] rejects a token amount with more than six decimals', async () => {
+    const wrapper = createWrapper()
+
+    await setTokenAmount(wrapper, '0.0000001', 'usdc')
+    await submitForm(wrapper)
+
+    expect(wrapper.text()).toContain('Enter a valid token amount with up to 6 decimal places.')
+    expect(wrapper.text()).not.toContain('Enter a valid amount greater than 0.')
+    expect(mockBankWrites.deposit.mutateAsync).not.toHaveBeenCalled()
+  })
+
   describe('Add fee option', () => {
+    const checkAddFee = (wrapper: ReturnType<typeof createWrapper>) =>
+      wrapper.get('[data-test="add-fee-checkbox"]').trigger('click')
+
     beforeEach(() => {
       mockERC20Reads.allowance.data.value = 1_000_000_000n
       mockBankFee()
     })
 
-    it('[AC-US-BANK-001-11] adds the exact transfer fee to the deposit by default', async () => {
+    it('deposits the entered amount alone until Add fee is checked', async () => {
       const wrapper = createWrapper()
 
       await setTokenAmount(wrapper, '20', 'usdc')
+      await submitForm(wrapper)
+
+      expect(wrapper.find('[data-test="deposit-fee-summary"]').exists()).toBe(false)
+      expect(mockBankWrites.deposit.mutateAsync).toHaveBeenCalledWith({
+        args: [USDC_ADDRESS, 20_000_000n]
+      })
+    })
+
+    it('[AC-US-BANK-001-11] adds the exact transfer fee once Add fee is checked', async () => {
+      const wrapper = createWrapper()
+
+      await setTokenAmount(wrapper, '20', 'usdc')
+      await checkAddFee(wrapper)
       await submitForm(wrapper)
 
       expect(mockBankWrites.deposit.mutateAsync).toHaveBeenCalledWith({
@@ -225,28 +252,17 @@ describe('DepositBankForm.vue', () => {
       const wrapper = createWrapper()
 
       await setTokenAmount(wrapper, '20', 'usdc')
+      await checkAddFee(wrapper)
 
       expect(wrapper.find('[data-test="deposit-fee-amount"]').text()).toBe('0.100502 USDC')
       expect(wrapper.find('[data-test="deposit-total-amount"]').text()).toBe('20.100502 USDC')
-    })
-
-    it('deposits the entered amount alone when Add fee is unchecked', async () => {
-      const wrapper = createWrapper()
-
-      await setTokenAmount(wrapper, '20', 'usdc')
-      await wrapper.get('[data-test="add-fee-checkbox"]').trigger('click')
-      await submitForm(wrapper)
-
-      expect(wrapper.find('[data-test="deposit-fee-summary"]').exists()).toBe(false)
-      expect(mockBankWrites.deposit.mutateAsync).toHaveBeenCalledWith({
-        args: [USDC_ADDRESS, 20_000_000n]
-      })
     })
 
     it('adds the fee to a native deposit in 18 decimals', async () => {
       const wrapper = createWrapper()
 
       await setTokenAmount(wrapper, '0.1', 'native')
+      await checkAddFee(wrapper)
       await submitForm(wrapper)
 
       expect(mockTransactionFunctions.mockMutateAsync).toHaveBeenCalledWith(
@@ -257,7 +273,8 @@ describe('DepositBankForm.vue', () => {
     it('rejects a deposit whose fee pushes it past the wallet balance', async () => {
       const wrapper = createWrapper()
 
-      await setTokenAmount(wrapper, '50', 'usdc')
+      await setTokenAmount(wrapper, '49.9', 'usdc')
+      await checkAddFee(wrapper)
       await submitForm(wrapper)
 
       expect(mockBankWrites.deposit.mutateAsync).not.toHaveBeenCalled()
@@ -266,6 +283,7 @@ describe('DepositBankForm.vue', () => {
     it('[AC-US-BANK-001-12] sets Max so the amount plus its fee fits the balance exactly', async () => {
       const wrapper = createWrapper()
       await setTokenAmount(wrapper, '', 'usdc', false)
+      await checkAddFee(wrapper)
 
       await wrapper.find('[data-test="maxButton"]').trigger('click')
 
@@ -275,14 +293,16 @@ describe('DepositBankForm.vue', () => {
       expect(wrapper.find('[data-test="deposit-total-amount"]').text()).toBe('50 USDC')
     })
 
-    it('moves a Max amount back to the full balance when Add fee is unchecked', async () => {
+    it('lowers a Max amount to fit the fee when Add fee is checked afterwards', async () => {
       const wrapper = createWrapper()
       await setTokenAmount(wrapper, '', 'usdc', false)
       await wrapper.find('[data-test="maxButton"]').trigger('click')
 
-      await wrapper.get('[data-test="add-fee-checkbox"]').trigger('click')
+      await checkAddFee(wrapper)
 
-      expect(wrapper.find<HTMLInputElement>('[data-test="amountInput"]').element.value).toBe('50')
+      expect(wrapper.find<HTMLInputElement>('[data-test="amountInput"]').element.value).toBe(
+        '49.75'
+      )
     })
 
     it('hides the option when the Bank charges no transfer fee', async () => {
@@ -294,17 +314,13 @@ describe('DepositBankForm.vue', () => {
       expect(wrapper.find('[data-test="add-fee-checkbox"]').exists()).toBe(false)
     })
 
-    it('adds no fee for a token the Bank transfers without fee', async () => {
+    it('hides the option for a token the Bank transfers without fee', async () => {
       mockBankFee({ isFeeCollectorToken: false })
       const wrapper = createWrapper()
 
       await setTokenAmount(wrapper, '20', 'usdc')
-      await submitForm(wrapper)
 
       expect(wrapper.find('[data-test="add-fee-checkbox"]').exists()).toBe(false)
-      expect(mockBankWrites.deposit.mutateAsync).toHaveBeenCalledWith({
-        args: [USDC_ADDRESS, 20_000_000n]
-      })
     })
   })
 })

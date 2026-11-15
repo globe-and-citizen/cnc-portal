@@ -105,7 +105,7 @@ import { useSafeSendTransaction } from '@/composables/transactions/useSafeSendTr
 import { useERC20Approve } from '@/composables/erc20/writes'
 import { useErc20Allowance } from '@/composables/erc20/reads'
 import { useDepositToken } from '@/composables/bank/writes'
-import { useBankDepositFee } from '@/composables/bank/useBankDepositFee'
+import { isPositiveDecimal, useBankDepositFee } from '@/composables/bank/useBankDepositFee'
 import { formatPercent, formatTokenUnits } from '@/utils/format'
 import { bankEventKeys } from '@/composables/bank/useBankEventsViaLogs'
 import { SUPPORTED_TOKENS, type TokenId } from '@/constant'
@@ -130,7 +130,7 @@ function reset() {
   submitting.value = false
   isAmountValid.value = false
   submitError.value = null
-  shouldAddFee.value = true
+  shouldAddFee.value = false
 }
 
 // Component state
@@ -237,7 +237,7 @@ const formSchema = computed(() =>
       .string()
       .trim()
       .min(1, 'Amount is required.')
-      .refine(() => enteredAmount.value > 0n, 'Enter a valid amount greater than 0.')
+      .refine(isPositiveDecimal, 'Enter a valid amount greater than 0.')
       .refine(() => {
         if (!selectedToken.value) return true
         return depositAmount.value <= selectedToken.value.raw
