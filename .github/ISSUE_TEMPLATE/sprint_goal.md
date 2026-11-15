@@ -1,16 +1,14 @@
 ---
 name: Sprint Goal
-about: Define a verifiable Sprint outcome or its Bug and perf coordination Goal
+about: Define a verifiable Sprint outcome
 title: "[Goals] [OUTCOME] — Sprint [NUMBER]"
 labels: ""
 assignees: ""
 ---
 
 <!--
-Use this template for a planned Sprint Goal. For the separate catch-all Goal,
-change the title to `[Goals] Sprint [NUMBER] Bug and perf` and describe the
-coordination outcome and exit criteria for unrelated corrective or technical work.
-Attach either Goal as a native sub-issue of its Sprint plan.
+Use this template for a specific, verifiable Sprint Goal and attach it as a
+native sub-issue of its Sprint plan. Use the Sprint Category template for transverse coordination.
 -->
 
 ## Goal type
@@ -52,7 +50,7 @@ Product/QA or technical validator: [VALIDATOR]
 
 ## Scope boundary
 
-<!-- State what belongs in this Goal and what belongs elsewhere. For Bug and perf, exclude the Sprint's original outcomes. -->
+<!-- State what belongs in this Goal and what belongs elsewhere. -->
 
 [SCOPE BOUNDARY]
 

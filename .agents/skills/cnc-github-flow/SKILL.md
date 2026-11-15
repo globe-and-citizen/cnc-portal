@@ -27,22 +27,20 @@ That guide owns the formats for every contributor; this section retains the exis
 3. Give the issue a concise problem, scope boundary, acceptance criteria, and validation evidence expected. Complete its relationship plan
    using [Development Relationship Validation](../../../docs/development-guide/relationship-validation.md), including affected consumers,
    applicability, and completion proposals. Assign it to the current authenticated user.
-4. Identify the native parent before creating or reusing an issue. Sprint and backlog planning issues are explicit roots. Attach original
-   Sprint Goals beneath the Sprint and planned delivery beneath its relevant Goal or coordinator. Each Sprint also has a separate bugs and
-   perf sub-issue for corrective or technical work outside those Goals; attach that work beneath this branch, without adding it to the
-   original Sprint Goal checklist. Attach backlog work beneath its appropriate backlog parent. If the intended parent does not exist,
-   establish its place in the hierarchy first. Do not leave a work issue orphaned. Attach a child using its database id, not its issue
-   number:
+4. Identify the native parent before creating or reusing an issue. Attach Goals and transverse categories to the Sprint. Keep work directly
+   required by a Goal under that Goal; otherwise use the category matching the work as described in
+   [CONTRIBUTION.md](../../../CONTRIBUTION.md#sprint-categories). A native issue has one parent; use links for additional classification.
+   Attach backlog work under its appropriate backlog parent. Establish any missing parent before attaching a child; do not leave work
+   orphaned. Verify cross-repository relationships and report any unsupported relationship. Attach a child using its database id:
 
    ```bash
    CHILD_ID=$(gh api "repos/globe-and-citizen/cnc-portal/issues/<child-number>" --jq .id)
    gh api --method POST "repos/globe-and-citizen/cnc-portal/issues/<parent-number>/sub_issues" -F sub_issue_id="$CHILD_ID"
    ```
 
-5. Create every Sprint Goal from [the Sprint Goal template](../../../.github/ISSUE_TEMPLATE/sprint_goal.md). Its preset title is for a
-   planned outcome; change it to `[Goals] Sprint <number> Bug and perf` for the separate catch-all Goal. Complete the Goal type, expected
-   outcome, exit criteria, product story impact, canonical references, owner and validator, scope boundary, and relationship plan for either
-   kind. Keep the root's original Goal checklist limited to planned outcomes.
+5. Create specific Sprint outcomes using the [Sprint Goal template](../../../.github/ISSUE_TEMPLATE/sprint_goal.md) and transverse
+   coordinators using the [Sprint Category template](../../../.github/ISSUE_TEMPLATE/sprint_category.md). Preserve Goal outcomes and keep
+   delivery criteria and evidence on each owning issue.
 6. Add the issue to the CNC Kanban Board and initialize every applicable field using the
    [Kanban Project field contract](../../../docs/development-guide/kanban-project.md). Inspect live field options and iterations, set Size,
    Status and Priority, resolve Sprint Iteration from agreed scope, and assess Blocking and actual implementation dates. This also applies
