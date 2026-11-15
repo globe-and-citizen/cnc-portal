@@ -6,6 +6,10 @@ labels: ""
 assignees: ""
 ---
 
+**For the developer:** Complete the shared information you know and make the required product or release decisions. If you use an AI agent,
+ask it to prepare the sections marked **AI-assisted** below, then review its proposals. You can also complete them yourself without an
+agent. The delivery owner remains responsible for the shared validation and evidence.
+
 ## Description
 
 Prepare `vX.Y.Z` using the
@@ -14,6 +18,9 @@ outcome and release boundary. Link canonical feature documentation and delivery 
 declaring unverified product acceptance.
 
 ## Release coordinates
+
+**AI-assisted:** Ask your agent to collect and verify the technical coordinates, parent and Project information. Review the version and
+release boundary.
 
 - Version and type: <vX.Y.Z; stable or prerelease>
 - Previous release / comparison baseline: <tag and full commit SHA>
@@ -45,6 +52,8 @@ Maintain actual implementation dates and applicable fields under the
 
 ## Canonical references
 
+**AI-assisted:** Ask your agent to find the applicable references and identify missing validation or recovery information for review.
+
 - Release procedure: [Release Automation](https://github.com/globe-and-citizen/cnc-portal/blob/develop/docs/platform/RELEASE_AUTOMATION.md)
 - Feature, contract and shared-runtime owners: <canonical documentation links, story/criterion IDs when applicable>
 - Validation and recovery references: <test evidence, migration or recovery procedures; explain non-applicability>
@@ -65,6 +74,9 @@ Maintain actual implementation dates and applicable fields under the
 
 ## Relationship validation plan
 
+**AI-assisted:** Ask your agent to prepare the aggregate plan, including affected consumers, planned proof and decisions requiring human
+review.
+
 Follow
 [Development Relationship Validation](https://github.com/globe-and-citizen/cnc-portal/blob/develop/docs/development-guide/relationship-validation.md).
 Assess every checklist type across the combined release. Reuse relevant source-PR evidence when its guarantee and dependencies are
@@ -80,6 +92,9 @@ unchanged; record new integration gaps and justify grouped non-applicable types.
 
 ## Evidence and follow-up
 
+**AI-assisted:** Ask your agent to collect and update the evidence and remaining follow-up. Human owners make release decisions and record
+required acceptance.
+
 Record revisions, proof mode, links, actual outcomes and remaining limits. Keep preparation, merge, publication, deployment and human
 acceptance distinct.
 
@@ -87,13 +102,3 @@ acceptance distinct.
 - Promotion merge / publication: <merge SHA, workflow run, tag target, Release and artifact inventory>
 - Post-release synchronization: <issue/PR, compared main/develop revisions and merge evidence, or justified no-op>
 - Operational results / remaining work: <observed results or explicitly unexecuted checks, owner and follow-up links>
-
-<details>
-<summary>AI agent instructions</summary>
-
-- Follow `AGENTS.md`, the GitHub flow skill and the release procedure; maintain and verify the native parent and Project fields.
-- Prepare the aggregate relationship assessment and collect evidence against the inspected revisions.
-- Surface release decisions, operational authorizations and Product/QA acceptance for the responsible humans; do not infer approval.
-- Keep promotion, publication, deployment and acceptance evidence distinct throughout follow-up.
-
-</details>

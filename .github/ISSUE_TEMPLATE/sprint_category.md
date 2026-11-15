@@ -6,6 +6,10 @@ labels: ""
 assignees: ""
 ---
 
+**For the developer:** Complete the shared information you know and make the required product or release decisions. If you use an AI agent,
+ask it to prepare the sections marked **AI-assisted** below, then review its proposals. You can also complete them yourself without an
+agent. The delivery owner remains responsible for the shared validation and evidence.
+
 ## Role
 
 Coordinate [Bugs and performance / User requests / Technical debt] across the participating repositories.
@@ -16,6 +20,9 @@ Coordinate [Bugs and performance / User requests / Technical debt] across the pa
 
 ## Coordination
 
+**AI-assisted:** Ask your agent to check the native hierarchy, Project fields, shared dependencies and missing evidence; review any proposed
+scope changes.
+
 Coordinator: [OWNER]
 
 Each task retains its own repository, owner, acceptance criteria, relationship assessment, and verification evidence.
@@ -24,12 +31,3 @@ Each task retains its own repository, owner, acceptance criteria, relationship a
 
 - [ ] Each scoped item has an owner, acceptance criteria, and appropriate evidence or an explicit disposition.
 - [ ] Remaining work and decisions are visible on the owning issue.
-
-<details>
-<summary>AI agent instructions</summary>
-
-- Attach the category to its Sprint as a native sub-issue and maintain its Project fields.
-- Keep delivery-specific acceptance criteria and evidence on the owning issues; surface shared dependencies and decisions here.
-- Follow `AGENTS.md` and the GitHub flow skill for relationship readback and updates.
-
-</details>

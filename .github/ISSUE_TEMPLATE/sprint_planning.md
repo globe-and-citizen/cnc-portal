@@ -6,6 +6,10 @@ labels: "sprint, planning"
 assignees: ""
 ---
 
+**For the developer:** Complete the shared information you know and make the required product or release decisions. If you use an AI agent,
+ask it to prepare the sections marked **AI-assisted** below, then review its proposals. You can also complete them yourself without an
+agent. The delivery owner remains responsible for the shared validation and evidence.
+
 ## Sprint [NUMBER] Plan Goals
 
 ### [Feature/Component Name] - [Focus Area]
@@ -66,6 +70,9 @@ Below are example sections you can use or modify for your sprint:
 
 ## Notes
 
+**AI-assisted:** Ask your agent to prepare the native Goals and categories, verify their hierarchy and Project fields, and flag missing
+dates or decisions. Confirm Sprint commitments and dates with the owner.
+
 - Update the sprint number in the title
 - Replace example sections with the original sprint goals; create their `[Goals]` issues from the Sprint Goal template and attach them as
   native sub-issues
@@ -73,12 +80,3 @@ Below are example sections you can use or modify for your sprint:
   Goal
 - Use nested checkboxes for subtasks
 - Add additional sections as needed for your sprint scope
-
-<details>
-<summary>AI agent instructions</summary>
-
-- Confirm Sprint commitments and dates with the owner; do not infer them from the current iteration.
-- Create or reconcile native Goals and categories, maintain their Project fields, and verify the hierarchy.
-- Keep delivery evidence on its owning issue and update this plan for agreed scope changes, major blockers and verified Goal outcomes.
-
-</details>

@@ -6,6 +6,10 @@ labels: ""
 assignees: ""
 ---
 
+**For the developer:** Complete the shared information you know and make the required product or release decisions. If you use an AI agent,
+ask it to prepare the sections marked **AI-assisted** below, then review its proposals. You can also complete them yourself without an
+agent. The delivery owner remains responsible for the shared validation and evidence.
+
 <!--
 Use this template for a specific, verifiable Sprint Goal and attach it as a
 native sub-issue of its Sprint plan. Use the Sprint Category template for transverse coordination.
@@ -38,6 +42,8 @@ native sub-issue of its Sprint plan. Use the Sprint Category template for transv
 
 ## Canonical references
 
+**AI-assisted:** Ask your agent to find relevant canonical references and propose the product story impact for your review.
+
 <!-- Link the owning US/AC when behaviour is affected; otherwise link the applicable technical or documentation owner. -->
 
 - [CANONICAL REFERENCE AND RELEVANT CRITERION]
@@ -62,19 +68,19 @@ Parent Sprint: [SPRINT ISSUE NUMBER].
 
 - [ ] [CHILD ISSUE NUMBER] — [DELIVERABLE OR COORDINATION ITEM]
 
-## Before implementation
+## Relationship validation plan
 
-The delivery owner records the applicable
-[relationship validation plan](https://github.com/globe-and-citizen/cnc-portal/blob/develop/docs/development-guide/relationship-validation.md)
-in this issue before implementation. It may be prepared by an agent or by a developer working without one. Link canonical expectations and
-record affected consumers, applicability, planned proof and any decisions or completion proposals.
+**AI-assisted:** Ask your agent to inspect the relevant expectations and consumers, then complete this plan before implementation. Review
+its applicability, proposed proof and any decisions it raises. If working without an agent, the delivery owner completes the plan.
 
-<details>
-<summary>AI agent instructions</summary>
+Follow
+[Development Relationship Validation](https://github.com/globe-and-citizen/cnc-portal/blob/develop/docs/development-guide/relationship-validation.md)
+at scoping and delivery. Assess every relationship type; explain grouped non-applicable types and link canonical expectations.
 
-- Read the shared contribution requirements and `AGENTS.md`; confirm the intended scope and surface missing human decisions.
-- Prepare the relationship validation plan before implementation, including unchanged consumers and reasons for non-applicable checks.
-- Follow the relevant repository skill, maintain the issue and Project fields, and record validation evidence and remaining gaps.
-- Do not claim human acceptance or make product decisions on behalf of the designated validator.
+**Scope / canonical expectations:** [AFFECTED OUTCOME AND CANONICAL REFERENCES]
 
-</details>
+**Affected consumers:** [PARTICIPATING DOMAINS, INCLUDING UNCHANGED CONSUMERS]
+
+| Check    | Source → target    | Guarantee / applicability reason       | Planned proof                  | Completion proposal / required decision |
+| -------- | ------------------ | -------------------------------------- | ------------------------------ | --------------------------------------- |
+| [REL-ID] | [EXACT REFERENCES] | [EXPECTED RESULT OR NON-APPLICABILITY] | [SMALLEST SUFFICIENT EVIDENCE] | [GAP, OWNER, NEXT ACTION, OR NONE]      |
