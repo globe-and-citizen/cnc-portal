@@ -6,6 +6,9 @@ labels: ""
 assignees: ""
 ---
 
+- [ ] I have reviewed the [contribution guide](https://github.com/globe-and-citizen/cnc-portal/blob/develop/CONTRIBUTION.md) to understand
+      the shared requirements for this work.
+
 ## Role
 
 Coordinate [Bugs and performance / User requests / Technical debt] across the participating repositories.
