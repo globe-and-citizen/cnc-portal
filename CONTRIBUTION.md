@@ -16,6 +16,10 @@ Local agent scratchpads, MCP usage, automated publication procedures and tool re
 developer. Shared code quality, security, documentation and acceptance requirements apply regardless of who writes the change or whether a
 human uses AI assistance.
 
+Issue authors should describe the need, intended outcome and known boundaries first. AI agents record the relationship plan in the issue
+before implementation. Developers working without an agent may skip that issue section, while still performing the shared relationship
+assessment and recording results and evidence in the PR. Agent instructions do not transfer human product decisions or acceptance.
+
 ## Shared contribution contract
 
 ### Scope and documentation
@@ -27,7 +31,7 @@ human uses AI assistance.
 - Use Mermaid for documentation diagrams under the [diagram format rule](./docs/platform/feature-specification-guide.md#diagram-format).
 - Apply [Development Relationship Validation](./docs/development-guide/relationship-validation.md) at issue scoping, implementation and
   review readiness, independent review, and final validation before merge. Inspect affected consumers even when their files are unchanged;
-  record applicability, evidence and completion proposals in the issue/PR templates.
+  record applicability, evidence and completion proposals in the PR. Agents also record the plan in the issue before implementation.
 
 ### Implementation standards
 

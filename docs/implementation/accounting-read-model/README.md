@@ -164,8 +164,11 @@ and test-network assets retain their own identities and cannot borrow Polygon ma
 retryable gaps; current prices are used only in the Safe portfolio and in the Safe swap P&L that `Swap P&L` carries (below).
 
 `SAFE-SWAP` matches opposing different-asset movements with the same transaction and external counterparty. Complex or unmatched multi-asset
-operations are flagged for classification instead of treating their receipts as service revenue. Token mints in the same transaction are
-retained separately in `Unclassified Receipts`; their economic nature is not inferred from mint evidence alone.
+operations are flagged for classification instead of treating their receipts as service revenue. A mint of a token the Safe sends in the
+same transaction is the interest a yield-bearing token such as an Aave aToken accrued: it is booked to `Interest Income` (`INTEREST-IN`)
+and, as a non-exchange receipt of the operation, enters the carrying basis before the exchange. The Safe swap P&L keeps that mint out of the
+swap's legs (`splitAccruedInterest`) so the overview figure `Swap P&L` carries holds no interest. Other token mints in the same transaction
+are retained separately in `Unclassified Receipts`; their economic nature is not inferred from mint evidence alone.
 
 Journal finalization replays the full Safe history using weighted-average carrying basis. Outgoing exchange lines remove the evidenced
 carrying amount. A fee CoW Protocol reports for the Safe's own fulfilled order in the swap transaction rides on the sold leg
