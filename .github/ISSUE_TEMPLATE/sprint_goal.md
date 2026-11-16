@@ -6,6 +6,12 @@ labels: ""
 assignees: ""
 ---
 
+- [ ] I have reviewed the [contribution guide](https://github.com/globe-and-citizen/cnc-portal/blob/develop/CONTRIBUTION.md) to understand
+      the shared requirements for this work.
+
+**Recommended AI assistance:** If you use an AI agent, ask it to generate the **Relationship validation plan** section. If you do not use an
+agent, you may skip that section.
+
 <!--
 Use this template for a specific, verifiable Sprint Goal and attach it as a
 native sub-issue of its Sprint plan. Use the Sprint Category template for transverse coordination.
@@ -62,7 +68,7 @@ Parent Sprint: [SPRINT ISSUE NUMBER].
 
 - [ ] [CHILD ISSUE NUMBER] — [DELIVERABLE OR COORDINATION ITEM]
 
-## Relationship validation plan
+## Relationship validation plan — AI agent only
 
 Follow
 [Development Relationship Validation](https://github.com/globe-and-citizen/cnc-portal/blob/develop/docs/development-guide/relationship-validation.md)

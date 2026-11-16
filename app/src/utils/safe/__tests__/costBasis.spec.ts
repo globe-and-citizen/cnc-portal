@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { parseUnits } from 'viem'
+import { parseUnits, zeroAddress } from 'viem'
 import type { SafeIncomingTransfer } from '@/types/safe'
 import { computeSafeCostBasis, type SafeCostBasis } from '../costBasis'
 import { safeMovements, safeSwapHashes, type SafeAssetAmount } from '../swapTransfers'
@@ -210,6 +210,30 @@ describe('[US-SAFE-007] computeSafeCostBasis', () => {
 
     expect(position(basis, 'WETH').costUsd).toBeCloseTo(800, 6)
     expect(position(basis, 'POL').costUsd).toBeCloseTo(200, 6)
+  })
+
+  it('[AC-US-SAFE-007-13] enters the interest a sold token mints at its day price, so the swap result excludes it', () => {
+    const interest = {
+      ...transfer([weth, '0.001'], true, '0xsale', '2026-07-01'),
+      from: zeroAddress
+    }
+    const basis = compute(
+      history(
+        deposit('0xdeposit', '2026-05-01', [usdc, '1000']),
+        swap('0xbuy', '2026-06-01', [[usdc, '1000']], [[weth, '0.5']]),
+        [...swap('0xsale', '2026-07-01', [[weth, '0.501']], [[usdc, '1300']]), interest]
+      ),
+      { on: { [WETH]: { '2026-07-01': 2500 } } }
+    )
+
+    const token = position(basis, 'WETH')
+    expect(token.history.map(({ kind, quantity }) => [kind, quantity])).toEqual([
+      ['swap', 0.5],
+      ['received', 0.001],
+      ['swap', 0.501]
+    ])
+    expect(token.history[2]!.pnlUsd).toBeCloseTo(297.5, 6)
+    expect(basis.swaps[1]!.given).toEqual([{ asset: WETH, symbol: 'WETH', quantity: 0.501 }])
   })
 
   it('gives each swap its share of the P&L, and the shares add up to the P&L', () => {

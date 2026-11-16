@@ -6,6 +6,9 @@ labels: "sprint, planning"
 assignees: ""
 ---
 
+- [ ] I have reviewed the [contribution guide](https://github.com/globe-and-citizen/cnc-portal/blob/develop/CONTRIBUTION.md) to understand
+      the shared requirements for this work.
+
 ## Sprint [NUMBER] Plan Goals
 
 ### [Feature/Component Name] - [Focus Area]

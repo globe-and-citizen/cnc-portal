@@ -87,9 +87,11 @@ describe('Safe asset exchange accounting', () => {
       true
     )
   })
-  it('retains a same-operation mint separately and flags its classification', () => {
+  it('retains a same-operation mint of an asset the Safe does not send and flags its classification', () => {
     const rows = history()
-    rows.push(transfer(3, 2, '0x0000000000000000000000000000000000000000', ADDR.safe, TOKEN, '1'))
+    rows.push(
+      otherTokenTransfer(3, 2, '0x0000000000000000000000000000000000000000', ADDR.safe, '1')
+    )
     const result = finalizeJournalEntryDrafts(drafts(rows))
     expect(
       result.assetDiagnostics.some((issue) => issue.kind === 'unclassified-asset-movement')
