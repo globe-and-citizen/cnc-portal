@@ -686,11 +686,11 @@ criteria unchecked. No runtime change is delivered here. Target scenarios remain
 ### `UC-BANK-02` — External Cash Receipt
 
 Current known-token direct Bank/Safe receipts debit receiving cash and credit Service Revenue, labelled `Service revenue`. Evidenced Safe
-exchanges bypass this fallback. Discovered-asset receipts, mints, and ambiguous multi-asset settlements credit `Unclassified Receipts` and
-keep Accounting partial until classified. Router-backed receipts are removed because `UC-SDR-01` owns them. A plain stablecoin transfer into
-a Bank from outside the CNC, with no Bank deposit event, is a receipt too: a first-generation Bank was funded this way. A transfer sent by a
-CNC contract stays with that contract's own event. Target `UC-TREASURY-002` suspense treatment extends pending classification to other
-unidentified receipts; sender role alone does not classify them.
+exchanges bypass this fallback. Discovered-asset receipts, mints other than accrued interest, and ambiguous multi-asset settlements credit
+`Unclassified Receipts` and keep Accounting partial until classified. Router-backed receipts are removed because `UC-SDR-01` owns them. A
+plain stablecoin transfer into a Bank from outside the CNC, with no Bank deposit event, is a receipt too: a first-generation Bank was funded
+this way. A transfer sent by a CNC contract stays with that contract's own event. Target `UC-TREASURY-002` suspense treatment extends
+pending classification to other unidentified receipts; sender role alone does not classify them.
 
 ### `SAFE-SWAP` — Evidenced Safe Asset Exchange
 
@@ -747,9 +747,14 @@ and its revaluation is:
 For a sale the overview values at $12, the sale keeps its realized $10.658984 and its revaluation credits `Swap P&L` the remaining
 $1.341016.
 
-Ancillary mints remain separate unclassified evidence. Missing decimals or acquisition basis keeps reports incomplete; complex batches and
-different-counterparty settlements need further evidence before automatic classification. Fees CoW Protocol does not report are not
-inferred. See the [read model](../../implementation/accounting-read-model/README.md#safe-assets-and-exchanges) and
+A yield-bearing token such as an Aave aToken mints the interest it accrued to the Safe in the transaction that sends it. A mint of a token
+the Safe sends in the same transaction is therefore booked as `INTEREST-IN`, labelled `Interest income`: debit `Cash — Safe` and credit
+`Interest Income` at the token's market value. That value joins the token's carrying basis before the swap gives it up, so `Swap P&L` keeps
+only the price effect. Other ancillary mints, such as the aToken an Aave deposit mints for another asset, remain separate unclassified
+evidence. See the [interest regressions](../../../app/src/utils/accounting/__tests__/safeExchanges.interest.spec.ts). Missing decimals or
+acquisition basis keeps reports incomplete; complex batches and different-counterparty settlements need further evidence before automatic
+classification. Fees CoW Protocol does not report are not inferred. See the
+[read model](../../implementation/accounting-read-model/README.md#safe-assets-and-exchanges) and
 [regression evidence](../../../app/src/utils/accounting/__tests__/safeExchanges.spec.ts), its
 [fee regressions](../../../app/src/utils/accounting/__tests__/safeExchanges.fees.spec.ts), and its
 [Swap P&L regressions](../../../app/src/utils/accounting/__tests__/safeExchanges.swapPnl.spec.ts) and

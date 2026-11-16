@@ -122,7 +122,7 @@ Runs of at least three consecutive missing criteria use inclusive ranges with fu
 | US-SAFE-004 | 📋 Planned    | ⚠️ 4/9          | `AC-US-SAFE-004-01`–`AC-US-SAFE-004-04`, `AC-US-SAFE-004-07`                      |
 | US-SAFE-005 | 🧪 Mocked     | ✅ 9/9          | —                                                                                 |
 | US-SAFE-006 | 🧪 Mocked     | ✅ 10/10        | —                                                                                 |
-| US-SAFE-007 | 📋 Planned    | ⚠️ 11/12 met    | `AC-US-SAFE-007-01`                                                               |
+| US-SAFE-007 | 📋 Planned    | ⚠️ 12/13 met    | `AC-US-SAFE-007-01`                                                               |
 | US-SAFE-008 | 🧪 Mocked     | ✅ 6/6          | —                                                                                 |
 
 Proof obligations use the [shared proof-strategy registry](../../testing/proof-strategies.md). Multiple IDs for one AC are cumulative.
@@ -1228,6 +1228,8 @@ than its average cost.
 - [x] `AC-US-SAFE-007-11` An exchange is valued on its day by its stablecoin side, or else by the side given; several tokens received share
       that value by their worth that day.
 - [x] `AC-US-SAFE-007-12` Once a token's position is emptied, its average cost starts again from its next entry.
+- [x] `AC-US-SAFE-007-13` Interest that a token, such as an Aave aToken, mints to the Safe in the transaction that sends it is not part of
+      the swap: it enters the token's position at that day's price and stays out of the P&L.
 
 #### Edge & Error Cases
 
@@ -1252,6 +1254,7 @@ than its average cost.
 | `AC-US-SAFE-007-10`  | `PS-FRONTEND`       | Frontend         | ✅ Met          |
 | `AC-US-SAFE-007-11`  | `PS-FRONTEND`       | Frontend         | ✅ Met          |
 | `AC-US-SAFE-007-12`  | `PS-FRONTEND`       | Frontend         | ✅ Met          |
+| `AC-US-SAFE-007-13`  | `PS-FRONTEND`       | Frontend         | ✅ Met          |
 
 **Dependencies:** US-SAFE-002
 
