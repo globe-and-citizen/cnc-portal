@@ -79,7 +79,7 @@
           color="primary"
           type="submit"
           :loading="submitting"
-          :disabled="isLoading || !isAmountValid || archivedDisabled"
+          :disabled="isLoading || submitting || archivedDisabled"
           data-test="deposit-button"
         >
           {{

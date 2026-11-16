@@ -215,6 +215,19 @@ describe('DepositBankForm.vue', () => {
     expect(mockBankWrites.deposit.mutateAsync).not.toHaveBeenCalled()
   })
 
+  it('keeps Deposit enabled and warns when the amount exceeds the balance', async () => {
+    const wrapper = createWrapper()
+
+    await setTokenAmount(wrapper, '60', 'usdc', false)
+
+    expect(getDepositButton(wrapper)?.props('disabled')).toBe(false)
+
+    await submitForm(wrapper)
+
+    expect(wrapper.text()).toContain('Amount exceeds available balance.')
+    expect(mockBankWrites.deposit.mutateAsync).not.toHaveBeenCalled()
+  })
+
   describe('Add fee option', () => {
     const checkAddFee = (wrapper: ReturnType<typeof createWrapper>) =>
       wrapper.get('[data-test="add-fee-checkbox"]').trigger('click')
@@ -277,6 +290,7 @@ describe('DepositBankForm.vue', () => {
       await checkAddFee(wrapper)
       await submitForm(wrapper)
 
+      expect(wrapper.text()).toContain('Amount exceeds available balance.')
       expect(mockBankWrites.deposit.mutateAsync).not.toHaveBeenCalled()
     })
 
