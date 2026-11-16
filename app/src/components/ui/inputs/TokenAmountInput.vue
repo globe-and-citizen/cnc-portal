@@ -101,6 +101,8 @@ const props = defineProps<{
   }
   feeBps?: number
   isLoading?: boolean
+  /** Exact amount "Max" sets, when the parent computes its own ceiling (e.g. fee included). */
+  maxAmount?: string
 }>()
 
 const emits = defineEmits<{
@@ -174,6 +176,11 @@ const schema = computed(() =>
 )
 
 const useMaxBalance = () => {
+  if (props.maxAmount !== undefined) {
+    amount.value = props.maxAmount
+    return
+  }
+
   const balance = availableBalance.value
   const bps = props.feeBps ?? 0
 
