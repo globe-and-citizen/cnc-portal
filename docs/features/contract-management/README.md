@@ -78,13 +78,15 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 
 ## US-CONTRACT-001: Review the Current Contract Suite
 
+### US-CONTRACT-001: Review the Current Contract Suite
+
 **As a** company member\
 **I want to** inspect the active Officer generation and its contracts\
 **So that** I can understand the contracts currently used by the company
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-CONTRACT-001-01` A company member can view the active Officer address, its version, and its current non-Campaign contracts.
 - [x] `AC-US-CONTRACT-001-02` A company member can filter the current contract suite by verified active or paused status; unsupported and
@@ -94,13 +96,13 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 - [ ] `AC-US-CONTRACT-001-11` A member can inspect direct asset movements for each verified company contract, including auxiliary and
       governance contracts, using the same evidence as Accounting.
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-CONTRACT-001-04` Campaign Manager contracts are managed through the Campaigns journey rather than the current contract suite.
 - [x] `AC-US-CONTRACT-001-05` A contract's pause state remains distinguishable as active, paused, not supported, or unavailable according to
       its Officer-generation capability and the latest read evidence.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [x] `AC-US-CONTRACT-001-06` A company without an active Officer generation receives an unavailable-state message instead of a contract
       table.
@@ -114,7 +116,7 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 - [ ] `AC-US-CONTRACT-001-12` An unexpected holding exposes restricted or unknown recovery capability without promising an unsupported
       withdrawal action.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion    | Proof Strategy             | Current Evidence | Status          |
 | ----------------------- | -------------------------- | ---------------- | --------------- |
@@ -135,7 +137,7 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 
 **Dependencies:** Current company and its active Officer generation
 
-### Direct Movement Scenarios
+#### Direct Movement Scenarios
 
 Target behaviour follows the [direct movement policy](../accounting/direct-movement-policy.md). Each row represents the same evidenced
 movement across the participating stories.
@@ -149,13 +151,15 @@ movement across the participating stories.
 
 ## US-CONTRACT-002: Manage Current Contract Operations
 
+### US-CONTRACT-002: Manage Current Contract Operations
+
 **As a** current contract owner or eligible Board member\
 **I want to** transfer ownership, change contract status, and review pending Board actions\
 **So that** the company can safely maintain its active contract suite
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-CONTRACT-002-01` An eligible user can transfer ownership of a current contract to a selected recipient.
 - [x] `AC-US-CONTRACT-002-02` An eligible user can pause an active contract or resume a paused contract when the Officer-generation
@@ -163,7 +167,7 @@ movement across the participating stories.
 - [x] `AC-US-CONTRACT-002-03` An eligible Board member can open, review, and approve pending Board actions for a contract.
 - [x] `AC-US-CONTRACT-002-04` A successful direct operation refreshes the displayed contract state.
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-CONTRACT-002-05` Direct contract actions are unavailable to users who are neither the current owner nor an eligible Board
       member for a Board-owned contract.
@@ -171,7 +175,7 @@ movement across the participating stories.
 - [x] `AC-US-CONTRACT-002-07` A Board-submitted ownership transfer identifies its approval requirement before submission.
 - [x] `AC-US-CONTRACT-002-08` An archived company cannot initiate a contract operation or approve a pending Board action.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [x] `AC-US-CONTRACT-002-09` Rejecting a wallet request does not report a successful contract operation.
 - [x] `AC-US-CONTRACT-002-10` A failed direct ownership transfer is shown in the transfer context without changing the displayed owner.
@@ -179,7 +183,7 @@ movement across the participating stories.
       the successor atomically; the previous owner loses those two roles while unrelated technical minters remain unchanged. _(contract)_
 - [x] `AC-US-CONTRACT-002-12` Contracts whose pause capability is unsupported or unavailable do not expose pause or resume actions.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion    | Proof Strategy        | Current Evidence | Status          |
 | ----------------------- | --------------------- | ---------------- | --------------- |
@@ -204,13 +208,15 @@ movement across the participating stories.
 
 ## US-CONTRACT-003: Manage Advertising Campaigns
 
+### US-CONTRACT-003: Manage Advertising Campaigns
+
 **As an** authorized company member\
 **I want to** manage the Campaign Manager and its advertising campaigns\
 **So that** validated advertising spend uses the intended rates and Bank destination
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-CONTRACT-003-01` A user can identify the Campaign Manager configured for the company.
 - [x] `AC-US-CONTRACT-003-02` An authorized user can manage Campaign Manager administrators and settings.
@@ -218,18 +224,18 @@ movement across the participating stories.
 - [ ] `AC-US-CONTRACT-003-07` The Campaigns journey exposes direct holdings and movements that have not been allocated to a campaign, using
       the same evidence as Accounting.
 
-#### Business Rules
+##### Business Rules
 
 - [ ] `AC-US-CONTRACT-003-04` Campaign Manager rates and Bank destination determine how validated advertising spend is handled.
 - [ ] `AC-US-CONTRACT-003-08` An unsolicited receipt does not create a campaign or increase a recorded campaign budget.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [x] `AC-US-CONTRACT-003-05` A company without a Campaign Manager receives an actionable unavailable-state message.
 - [x] `AC-US-CONTRACT-003-06` The campaign workspace distinguishes loading, a failed read with recovery, a confirmed empty result, and
       populated campaigns.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion    | Proof Strategy             | Current Evidence | Status          |
 | ----------------------- | -------------------------- | ---------------- | --------------- |
@@ -249,7 +255,7 @@ movement across the participating stories.
 
 **Dependencies:** Current company and a configured Campaign Manager
 
-### Direct Movement Scenarios
+#### Direct Movement Scenarios
 
 Target behaviour follows the [direct movement policy](../accounting/direct-movement-policy.md). Each row represents the same evidenced
 movement across the participating stories.
@@ -260,13 +266,15 @@ movement across the participating stories.
 
 ## US-CONTRACT-004: Review Deployment History
 
+### US-CONTRACT-004: Review Deployment History
+
 **As a** company member\
 **I want to** review previous Officer generations\
 **So that** I can understand the company's contract deployment history
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-CONTRACT-004-01` A company member can view previous Officer generations separately from the active suite.
 - [x] `AC-US-CONTRACT-004-04` An eligible legacy-contract owner can review funded source accounts and move recoverable balances through the
@@ -274,7 +282,7 @@ movement across the participating stories.
 - [ ] `AC-US-CONTRACT-004-10` Historical deployments retain direct movement history and holdings after replacement, with the same evidence
       as Accounting.
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-CONTRACT-004-02` Previous generations are not presented as contracts currently used for company operations.
 - [x] `AC-US-CONTRACT-004-05` An archived company cannot start legacy balance recovery.
@@ -284,12 +292,12 @@ movement across the participating stories.
 - [x] `AC-US-CONTRACT-004-08` A generation without full-sweep support offers Bank-only recovery and identifies any funded accounts that the
       operation will leave behind.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [x] `AC-US-CONTRACT-004-03` An empty deployment history remains distinguishable from a failed history read.
 - [x] `AC-US-CONTRACT-004-09` A failed recovery step identifies the failure and can be retried without rebuilding the completed sequence.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion    | Proof Strategy             | Current Evidence | Status          |
 | ----------------------- | -------------------------- | ---------------- | --------------- |
@@ -315,13 +323,15 @@ Historical deployments preserve the same per-domain scenarios and UC selection a
 
 ## US-CONTRACT-005: Redeploy an Officer Generation
 
+### US-CONTRACT-005: Redeploy an Officer Generation
+
 **As a** company owner\
 **I want to** replace the active Officer generation with a new one\
 **So that** the company can continue using a fresh set of workspace contracts
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-CONTRACT-005-01` The company owner can open the redeploy form from the active Officer generation and choose the new share token
       name and symbol.
@@ -330,7 +340,7 @@ Historical deployments preserve the same per-domain scenarios and UC selection a
 - [x] `AC-US-CONTRACT-005-03` When a previous Officer has shareholders, the owner can sign the follow-up transaction that sets the migration
       root for the new Investor contract.
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-CONTRACT-005-04` The redeploy action is available only to the current company owner and is unavailable for an archived company.
 - [x] `AC-US-CONTRACT-005-05` The redeploy form requires a share token name and symbol that each contain non-whitespace text.
@@ -338,7 +348,7 @@ Historical deployments preserve the same per-domain scenarios and UC selection a
       deleted by a redeployment.
 - [x] `AC-US-CONTRACT-005-07` A shareholder migration can be skipped after a failure and completed later from the Share Token journey.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [x] `AC-US-CONTRACT-005-08` A failed deploy, Officer registration, or follow-up lookup keeps the form open and identifies the step that
       failed.
@@ -349,7 +359,7 @@ Historical deployments preserve the same per-domain scenarios and UC selection a
 - [x] `AC-US-CONTRACT-005-11` A newly deployed Investor ends with the company owner holding ownership, administrator authority, and minter
       authority; the Officer retains neither temporary role and configured technical minters remain authorized. _(contract)_
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion    | Proof Strategy             | Current Evidence | Status          |
 | ----------------------- | -------------------------- | ---------------- | --------------- |

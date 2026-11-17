@@ -96,31 +96,33 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 
 ## US-COMPANIES-001: Create a Company Workspace
 
+### US-COMPANIES-001: Create a Company Workspace
+
 **As a** company creator\
 **I want to** create a workspace and choose its initial members\
 **So that** I can begin managing my company in CNC Portal
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-COMPANIES-001-01` A creator can enter a required company name and an optional description.
 - [x] `AC-US-COMPANIES-001-02` A creator can add zero or more members by wallet address before creating the workspace.
 - [x] `AC-US-COMPANIES-001-03` A successful creation adds the creator as company owner and member, persists the workspace, and advances to
       initial Officer setup.
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-COMPANIES-001-04` A company name is required before the form can advance or submit.
 - [x] `AC-US-COMPANIES-001-05` Every selected member address must be a valid wallet address before the workspace can be created.
 - [x] `AC-US-COMPANIES-001-06` Companies with the same display name remain distinguishable by a generated unique slug.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [x] `AC-US-COMPANIES-001-07` Returning to the previous setup step preserves the entered company details.
 - [x] `AC-US-COMPANIES-001-08` A failed create request leaves the setup form available and reports that the company was not created.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion     | Proof Strategy           | Current Evidence         | Status          |
 | ------------------------ | ------------------------ | ------------------------ | --------------- |
@@ -138,30 +140,32 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 
 ## US-COMPANIES-002: Deploy the Initial Officer Contract Suite
 
+### US-COMPANIES-002: Deploy the Initial Officer Contract Suite
+
 **As a** company owner\
 **I want to** deploy and register the initial Officer contract suite\
 **So that** my company can use CNC Portal's contract-backed features
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-COMPANIES-002-01` A company owner can enter the initial SHER name and symbol after the workspace is created.
 - [x] `AC-US-COMPANIES-002-02` A successful deployment registers the deployed Officer address and deployment metadata with the company.
 - [x] `AC-US-COMPANIES-002-03` After registration, the portal refreshes Officer data and continues to the Safe-setup step.
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-COMPANIES-002-04` Both the SHER name and symbol are required before deployment can start.
 - [x] `AC-US-COMPANIES-002-05` An archived company cannot start the deployment.
 - [x] `AC-US-COMPANIES-002-06` The owner can defer the Officer deployment and return to it later.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [x] `AC-US-COMPANIES-002-07` A failed on-chain deployment is shown in the deployment step without advancing the setup flow.
 - [x] `AC-US-COMPANIES-002-08` A failed Officer registration is shown separately from a failed deployment and does not report setup success.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion     | Proof Strategy             | Current Evidence | Status          |
 | ------------------------ | -------------------------- | ---------------- | --------------- |
@@ -180,13 +184,15 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 
 ## US-COMPANIES-003: Browse and Open My Companies
 
+### US-COMPANIES-003: Browse and Open My Companies
+
 **As a** company member\
 **I want to** find and open the companies I belong to\
 **So that** I can enter the workspace I need to use
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-COMPANIES-003-01` A member can view their active, visible companies and open one workspace from the Companies route.
 - [x] `AC-US-COMPANIES-003-02` An opened workspace exposes the company metadata, members, lifecycle state, and the feature-specific
@@ -195,7 +201,7 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 - [x] `AC-US-COMPANIES-003-10` The Companies list presents each company's combined available treasury balance from its registered Bank,
       Safe, Expense Account, and Cash Remuneration accounts, together with the contribution of each funded account.
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-COMPANIES-003-04` The Companies list is scoped to the connected member; a member cannot request another member's company list
       or an unfiltered platform-wide list. _(API)_
@@ -203,7 +209,7 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
       member.
 - [x] `AC-US-COMPANIES-003-06` A hidden or archived state remains visible when that company is included in the member's list.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [x] `AC-US-COMPANIES-003-07` A member with no matching companies receives an empty result instead of a stale workspace entry.
 - [x] `AC-US-COMPANIES-003-08` A failed company-list request reports that the list could not be retrieved.
@@ -211,7 +217,7 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 - [x] `AC-US-COMPANIES-003-11` A company's treasury summary distinguishes loading, unavailable, and confirmed-zero results.
 - [x] `AC-US-COMPANIES-003-12` A failed treasury-account read does not discard balances successfully read from the company's other accounts.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion     | Proof Strategy      | Current Evidence         | Status |
 | ------------------------ | ------------------- | ------------------------ | ------ |
@@ -232,28 +238,30 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 
 ## US-COMPANIES-004: Update Company Details
 
+### US-COMPANIES-004: Update Company Details
+
 **As a** company owner\
 **I want to** update my company's name and description\
 **So that** its workspace remains accurate
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-COMPANIES-004-01` An owner can save updated company metadata and see it reflected in the workspace and Companies list.
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-COMPANIES-004-02` Only the company owner can update company metadata.
 - [x] `AC-US-COMPANIES-004-03` Company metadata must pass the update form's validation before it is submitted.
 - [x] `AC-US-COMPANIES-004-04` An archived company must be restored before its metadata can be changed.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [x] `AC-US-COMPANIES-004-05` A rejected metadata update leaves the company unchanged and keeps the update action available with an error.
 - [x] `AC-US-COMPANIES-004-06` An update against an unavailable company is rejected without creating a replacement workspace.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion     | Proof Strategy      | Current Evidence         | Status          |
 | ------------------------ | ------------------- | ------------------------ | --------------- |
@@ -270,32 +278,34 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 
 ## US-COMPANIES-005: Manage Company Members
 
+### US-COMPANIES-005: Manage Company Members
+
 **As a** company owner\
 **I want to** add or remove company members\
 **So that** the workspace has the right participants
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-COMPANIES-005-01` A member can inspect the current company membership from the workspace.
 - [x] `AC-US-COMPANIES-005-02` An owner can add one or more eligible users who are not already members.
 - [x] `AC-US-COMPANIES-005-03` An owner can remove an existing member other than the company owner.
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-COMPANIES-005-04` Only the company owner can add or remove members.
 - [x] `AC-US-COMPANIES-005-05` Each added member must provide a valid wallet address and cannot already belong to the company.
 - [x] `AC-US-COMPANIES-005-06` The company owner cannot be removed from its own workspace.
 - [x] `AC-US-COMPANIES-005-07` An archived company cannot add or remove members.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [x] `AC-US-COMPANIES-005-08` A request that includes an existing member is rejected without reporting that the member was added.
 - [x] `AC-US-COMPANIES-005-09` A request to remove a missing member or the company owner is rejected without changing membership.
 - [x] `AC-US-COMPANIES-005-10` A rejected membership change preserves the current membership list and reports the failure.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion     | Proof Strategy      | Current Evidence         | Status          |
 | ------------------------ | ------------------- | ------------------------ | --------------- |
@@ -316,32 +326,34 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 
 ## US-COMPANIES-006: Archive or Restore a Company
 
+### US-COMPANIES-006: Archive or Restore a Company
+
 **As a** company owner\
 **I want to** archive or restore a company\
 **So that** I can pause its operations without deleting it
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-COMPANIES-006-01` An owner can archive an active company and later restore the same company.
 - [x] `AC-US-COMPANIES-006-02` An archived company is excluded from the default Companies list and remains available when archived companies
       are included.
 - [x] `AC-US-COMPANIES-006-03` Restoring a company returns it to the active Companies list and re-enables its writes.
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-COMPANIES-006-04` Only the company owner can archive or restore a company.
 - [x] `AC-US-COMPANIES-006-05` Archiving freezes company settings, membership, contract operations, and claims until the company is
       restored.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [x] `AC-US-COMPANIES-006-06` A member can still change their own list visibility for an archived company without changing its archived
       state.
 - [x] `AC-US-COMPANIES-006-07` A request to change other company data while archived is rejected without applying that change.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion     | Proof Strategy      | Current Evidence         | Status          |
 | ------------------------ | ------------------- | ------------------------ | --------------- |
@@ -362,28 +374,30 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 
 ## US-COMPANIES-007: Control My Company-List Visibility
 
+### US-COMPANIES-007: Control My Company-List Visibility
+
 **As a** company member\
 **I want to** hide or show a company in my Companies list\
 **So that** I can focus on the workspaces relevant to me
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-COMPANIES-007-01` A member can hide a company from their own default list and show it again later.
 - [x] `AC-US-COMPANIES-007-02` A member can include hidden companies while browsing, so a hidden workspace remains recoverable.
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-COMPANIES-007-03` A visibility change applies only to the requesting member's relationship with the company.
 - [x] `AC-US-COMPANIES-007-04` Every current company member can change their own list visibility, including for an archived company.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [x] `AC-US-COMPANIES-007-05` A request from someone who is not a member is rejected without changing company visibility.
 - [x] `AC-US-COMPANIES-007-06` A visibility change for an unavailable company is rejected without creating a new list preference.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion     | Proof Strategy      | Current Evidence                          | Status          |
 | ------------------------ | ------------------- | ----------------------------------------- | --------------- |
@@ -401,29 +415,31 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 
 ## US-COMPANIES-008: Permanently Delete a Company
 
+### US-COMPANIES-008: Permanently Delete a Company
+
 **As a** company owner\
 **I want to** permanently delete a company\
 **So that** a workspace that is no longer needed is removed
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-COMPANIES-008-01` An owner can confirm permanent deletion of a company and is returned to the Companies list after it succeeds.
 - [x] `AC-US-COMPANIES-008-02` Deleting a company removes its related company records through the database's cascading relationships.
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-COMPANIES-008-03` Only the company owner can permanently delete a company.
 - [x] `AC-US-COMPANIES-008-04` Permanent deletion is irreversible; a member must create a new workspace instead of restoring a deleted
       company.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [x] `AC-US-COMPANIES-008-05` Cancelling the confirmation leaves the company unchanged.
 - [x] `AC-US-COMPANIES-008-06` A rejected deletion leaves the company available and reports the failure.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion     | Proof Strategy           | Current Evidence | Status          |
 | ------------------------ | ------------------------ | ---------------- | --------------- |
@@ -440,30 +456,32 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 
 ## US-COMPANIES-009: Pin a Company in My Lists
 
+### US-COMPANIES-009: Pin a Company in My Lists
+
 **As a** company member\
 **I want to** pin a company as a favorite\
 **So that** the workspaces I use most are the first ones I find
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-COMPANIES-009-01` A member can pin a company and unpin it later, and the choice is still there on their next visit.
 - [x] `AC-US-COMPANIES-009-02` Pinned companies come first in the Companies list and in the team switcher.
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-COMPANIES-009-03` A pin applies only to the requesting member's relationship with the company.
 - [x] `AC-US-COMPANIES-009-04` Every current company member can pin or unpin a company, including an archived one.
 - [x] `AC-US-COMPANIES-009-05` A pin changes only the order of the companies listed, so a pinned company the member hid stays out of the
       default list.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [x] `AC-US-COMPANIES-009-06` A pin requested by someone who is not a member is rejected without changing anything.
 - [x] `AC-US-COMPANIES-009-07` A pin that fails to save is reported and the company keeps its previous state.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion     | Proof Strategy | Current Evidence   | Status |
 | ------------------------ | -------------- | ------------------ | ------ |

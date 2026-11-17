@@ -65,13 +65,15 @@ Proof obligations use the [shared proof-strategy registry](../../../testing/proo
 
 ## US-TEAM-OPS-001: Access and Inspect Platform Companies
 
+### US-TEAM-OPS-001: Access and Inspect Platform Companies
+
 **As a** platform administrator\
 **I want to** access and inspect the active companies across the platform\
 **So that** I can identify the company that needs operational follow-up
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-TEAM-OPS-001-01` An authenticated administrator or super administrator can open Companies operations and load the active
       platform company list.
@@ -82,7 +84,7 @@ Proof obligations use the [shared proof-strategy registry](../../../testing/proo
 - [x] `AC-US-TEAM-OPS-001-04` An administrator can filter the list by company name, sort the available operational columns, paginate the
       filtered result, and open a selected company.
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-TEAM-OPS-001-05` A visitor without a session is redirected to sign in, and an authenticated user without an administrator role
       is sent to access denied before using the dashboard journey.
@@ -91,14 +93,14 @@ Proof obligations use the [shared proof-strategy registry](../../../testing/proo
 - [x] `AC-US-TEAM-OPS-001-08` The platform-wide company-list API, implemented by the technical `/teams` endpoint, independently restricts
       unfiltered results to administrator roles. _(API)_
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [x] `AC-US-TEAM-OPS-001-09` A failed company-list request is reported as a loading error instead of being presented as a successful
       refresh.
 - [x] `AC-US-TEAM-OPS-001-10` A platform with no active companies produces an empty list and zero-valued company summary.
 - [x] `AC-US-TEAM-OPS-001-11` An administrator can request a fresh platform company list after an earlier load.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion    | Proof Strategy | Current Evidence | Status          |
 | ----------------------- | -------------- | ---------------- | --------------- |
@@ -119,31 +121,33 @@ Proof obligations use the [shared proof-strategy registry](../../../testing/proo
 
 ## US-TEAM-OPS-002: Inspect a Company Profile
 
+### US-TEAM-OPS-002: Inspect a Company Profile
+
 **As a** platform administrator\
 **I want to** open a company and inspect its current identity and ownership\
 **So that** I can establish the operational context before investigating its contracts
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-TEAM-OPS-002-01` An administrator can open a listed company and inspect its name, identifier, description when present, owner,
       creation date, and current Officer version when one exists.
 - [x] `AC-US-TEAM-OPS-002-02` An administrator can return from the company profile to the platform company list.
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-TEAM-OPS-002-03` The company-detail API permits an administrator to inspect a company even when the administrator is not a
       member of that company.
 - [x] `AC-US-TEAM-OPS-002-04` The dashboard exposes no administrator controls for creating, editing, archiving, deleting, or changing a
       company's membership.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [x] `AC-US-TEAM-OPS-002-05` Loading a company profile displays a pending state until its details are available.
 - [x] `AC-US-TEAM-OPS-002-06` An unavailable or failed company-detail request reports that the company could not be loaded.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion    | Proof Strategy | Current Evidence | Status     |
 | ----------------------- | -------------- | ---------------- | ---------- |
@@ -159,13 +163,15 @@ Proof obligations use the [shared proof-strategy registry](../../../testing/proo
 
 ## US-TEAM-OPS-003: Investigate Officer Contracts and Balances
 
+### US-TEAM-OPS-003: Investigate Officer Contracts and Balances
+
 **As a** platform administrator\
 **I want to** inspect a company's Officer generations, contracts, balances, and event history\
 **So that** I can investigate its deployed operational surface and held value
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-TEAM-OPS-003-01` An administrator can inspect the current and legacy Officer generations associated with a listed company.
 - [x] `AC-US-TEAM-OPS-003-02` An administrator can inspect contracts grouped by their Officer generation and separately identify shared,
@@ -175,14 +181,14 @@ Proof obligations use the [shared proof-strategy registry](../../../testing/proo
 - [x] `AC-US-TEAM-OPS-003-04` Supported value-holding contracts expose their current native-token and supported-stablecoin balances,
       including an explicit zero when no supported balance is held.
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-TEAM-OPS-003-05` A generation is identified as current only when it has no successor in that company's Officer sequence.
 - [x] `AC-US-TEAM-OPS-003-06` Contracts that do not hold supported value are not assigned a balance in the contract detail view.
 - [x] `AC-US-TEAM-OPS-003-07` Stablecoin totals remain an approximate dollar value, while native-token balances remain outside that dollar
       total.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [x] `AC-US-TEAM-OPS-003-08` A company with no deployed Officer contracts reports that no contracts are available rather than implying a
       deployment.
@@ -195,7 +201,7 @@ Proof obligations use the [shared proof-strategy registry](../../../testing/proo
 - [x] `AC-US-TEAM-OPS-003-14` Each contract history can be scanned back to the configured chain's genesis without assuming that an imported
       contract was created after the CNC deployment.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion    | Proof Strategy | Current Evidence | Status     |
 | ----------------------- | -------------- | ---------------- | ---------- |

@@ -190,20 +190,22 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 
 ## US-ACCT-001: View the Accounting Overview
 
+### US-ACCT-001: View the Accounting Overview
+
 **As a** company member\
 **I want to** view a consolidated accounting overview\
 **So that** I can understand the company's financial position and whether its books are complete
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-ACCT-001-01` The overview reports revenue, expenses, net income, assets, liabilities, equity, and debt from one `JournalEntry`
       collection.
 - [x] `AC-US-ACCT-001-02` The overview shows whether total debits equal total credits and whether assets equal liabilities plus equity.
 - [x] `AC-US-ACCT-001-03` Refreshing Accounting reloads the source evidence and recalculates every report from the same journal snapshot.
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-ACCT-001-04` Every posted journal entry balances.
 - [x] `AC-US-ACCT-001-05` USD-pegged tokens use a one-dollar rate, native tokens use their immutable transaction-date snapshot, and SHER
@@ -217,7 +219,7 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 - [x] `AC-US-ACCT-001-14` The overview can cover a selected period: flows stay inside the period and balances are stated as of its end.
 - [x] `AC-US-ACCT-001-15` A selected Accounting date belongs to the company it was chosen on and does not carry over to another company.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [x] `AC-US-ACCT-001-09` A company with no activity produces balanced zero-value books.
 - [x] `AC-US-ACCT-001-10` Reports remain withheld while an applicable source is loading, partial, or failed.
@@ -225,7 +227,7 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 - [x] `AC-US-ACCT-001-12` A missing rate retains the non-zero movement and reports `rate-unavailable` instead of substituting a current
       price.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion | Proof Strategy           | Current Evidence          | Status     |
 | -------------------- | ------------------------ | ------------------------- | ---------- |
@@ -249,13 +251,15 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 
 ## US-ACCT-002: Trace Operations in the General Ledger
 
+### US-ACCT-002: Trace Operations in the General Ledger
+
 **As a** company member\
 **I want to** trace each accounting operation in the General Ledger\
 **So that** I can understand the evidence, accounts, and amounts behind the books
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-ACCT-002-04` Each ledger operation exposes its date, activity, accounts, currency, quantity, rate, debit, credit, and
       transaction hash when one exists.
@@ -263,7 +267,7 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 - [x] `AC-US-ACCT-002-06` A member can filter by period, currency, and concrete account, then open the relevant product journey or account
       drill-down.
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-ACCT-002-01` One source operation produces at most one ledger entry, even when several events or recipient payments support it.
 - [x] `AC-US-ACCT-002-02` Account and currency filters retain every line of each matching `JournalEntry`.
@@ -294,13 +298,13 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 - [x] `AC-US-ACCT-002-22` A mint the Safe receives without sending that same token, such as the aToken an Aave deposit mints, or a mint of a
       CNC token, stays in `Unclassified Receipts`.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [x] `AC-US-ACCT-002-10` A filter with no matching entries returns an empty ledger with zero totals.
 - [x] `AC-US-ACCT-002-11` Changing a filter resets pagination to a valid page.
 - [x] `AC-US-ACCT-002-12` An account drill-down carries its opening balance from activity before the selected period.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion | Proof Strategy           | Current Evidence          | Status |
 | -------------------- | ------------------------ | ------------------------- | ------ |
@@ -331,13 +335,15 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 
 ## US-ACCT-003: Review Financial Statements
 
+### US-ACCT-003: Review Financial Statements
+
 **As a** company member\
 **I want to** review the income statement, balance sheet, and trial balance\
 **So that** I can assess performance, financial position, and ledger balance
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-ACCT-003-01` The income statement reports revenue, expenses, and net income for the selected period.
 - [x] `AC-US-ACCT-003-02` The balance sheet reports assets, liabilities, and equity as of the selected date.
@@ -345,7 +351,7 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
       a settled account shows no amount.
 - [x] `AC-US-ACCT-003-04` A member can inspect the complete journal entries behind a statement line.
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-ACCT-003-05` Every statement uses the same exact journal amounts as the General Ledger.
 - [x] `AC-US-ACCT-003-06` Trial-balance debits equal credits, and the balance sheet preserves `Assets = Liabilities + Equity` for balanced
@@ -355,13 +361,13 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 - [x] `AC-US-ACCT-003-08` Redeployed and unresolved accounts remain separate rows and preserve their own drill-down scope.
 - [x] `AC-US-ACCT-003-12` Each trial-balance total adds its own column, so unbalanced books show two different totals.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [x] `AC-US-ACCT-003-09` A period without activity reports zero totals without inventing entries.
 - [x] `AC-US-ACCT-003-10` Point-in-time statements exclude later entries.
 - [x] `AC-US-ACCT-003-11` A statement line without evidence does not expose an empty drill-down as supporting detail.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion | Proof Strategy           | Current Evidence          | Status |
 | -------------------- | ------------------------ | ------------------------- | ------ |
@@ -382,19 +388,21 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 
 ## US-ACCT-004: Export Accounting Reports
 
+### US-ACCT-004: Export Accounting Reports
+
 **As a** company member\
 **I want to** export the report I am reviewing\
 **So that** I can use the same accounting information outside the portal
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-ACCT-004-01` A member can export the General Ledger and each financial statement to Excel or PDF.
 - [x] `AC-US-ACCT-004-02` A summary export can include several selected sections, including Account Assignments.
 - [x] `AC-US-ACCT-004-03` A statement or account drill-down can be exported independently.
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-ACCT-004-04` An export uses one snapshot of the current `JournalEntry` collection and the same filters as the reviewed report.
 - [x] `AC-US-ACCT-004-05` Ledger and drill-down exports retain complete matching entries. Excel keeps full transaction hashes; both formats
@@ -409,12 +417,12 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
       balances are stated as of its end, and the other reports keep their own dates.
 - [x] `AC-US-ACCT-004-12` A summary export uses the period selected on the overview and states it before the member exports.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [x] `AC-US-ACCT-004-08` An export failure is reported without changing the books.
 - [x] `AC-US-ACCT-004-09` An empty export keeps the selected report structure without inventing entries.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion | Proof Strategy           | Current Evidence          | Status |
 | -------------------- | ------------------------ | ------------------------- | ------ |
@@ -435,13 +443,15 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 
 ## US-ACCT-005: Review Historical Contract Activity
 
+### US-ACCT-005: Review Historical Contract Activity
+
 **As a** company member\
 **I want to** review activity from every contract generation in the same books\
 **So that** redeployments do not erase or misclassify company history
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-ACCT-005-01` Accounting scans every known generation from its own deployment boundary and consolidates the resulting entries.
 - [x] `AC-US-ACCT-005-02` Pre- and post-migration operations contribute to the same reports.
@@ -449,7 +459,7 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 - [x] `AC-US-ACCT-005-04` Treasury sweeps between old and replacement company contracts remain internal transfers.
 - [x] `AC-US-ACCT-005-05` Each redeployed cash account has its own Trial Balance row, General Ledger label, and drill-down.
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-ACCT-005-06` Event cache identity includes normalized deployment address and effective boundary.
 - [x] `AC-US-ACCT-005-07` Known contracts from every generation participate in internal-transfer classification.
@@ -467,13 +477,13 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 - [x] `AC-US-ACCT-005-16` A direct SHER mint clears `SHERS To Be Issued` only up to the wage SHER the shareholder is still owed and had
       earned by the mint's date. The rest posts against `Deferred SHER Compensation`, so the account never hides SHER still owed.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [x] `AC-US-ACCT-005-11` When deployment history is unavailable, Accounting falls back to the current contract set.
 - [x] `AC-US-ACCT-005-12` One empty or failed generation does not remove available activity from other generations.
 - [x] `AC-US-ACCT-005-13` An unproven deployment leg remains a separate unresolved account instead of being assigned to an older deployment.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion | Proof Strategy           | Current Evidence          | Status |
 | -------------------- | ------------------------ | ------------------------- | ------ |
@@ -506,13 +516,15 @@ first change and for the current router when no change event exists.
 
 ## US-ACCT-006: Classify an External Withdrawal
 
+### US-ACCT-006: Classify an External Withdrawal
+
 **As a** company owner\
 **I want to** classify an eligible Bank or Safe withdrawal\
 **So that** the books record why the company paid money out
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-ACCT-006-01` The owner can assign one supported account family and an optional memo to an eligible single-source external
       withdrawal.
@@ -521,7 +533,7 @@ first change and for the current router when no change event exists.
 - [x] `AC-US-ACCT-006-04` Account Assignments shows the same complete entry as the General Ledger, including transaction fees.
 - [x] `AC-US-ACCT-006-12` An entry with no saved assignment says it sits on its default account and has not been reviewed.
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-ACCT-006-05` An assignment is keyed by company and lowercase transaction hash.
 - [x] `AC-US-ACCT-006-06` Supported accounts are `Operating Expense`, `Owner Capital`, `Payroll Expense`, `Interest Expense`, and
@@ -530,13 +542,13 @@ first change and for the current router when no change event exists.
 - [x] `AC-US-ACCT-006-08` Direct deposits, internal transfers, system-owned payouts, and compound entries are read-only.
 - [x] `AC-US-ACCT-006-09` Members may inspect assignments, but only the company owner may create, replace, or remove them.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [x] `AC-US-ACCT-006-10` A malformed hash, unsupported account, or ineligible persisted record is rejected or ignored without changing the
       journal.
 - [x] `AC-US-ACCT-006-11` A failed save or removal leaves the previous entry visible and reports that the change was not applied.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion | Proof Strategy           | Current Evidence          | Status          |
 | -------------------- | ------------------------ | ------------------------- | --------------- |
@@ -562,13 +574,15 @@ first change and for the current router when no change event exists.
 
 ## US-ACCT-007: Review Direct Treasury Movements
 
+### US-ACCT-007: Review Direct Treasury Movements
+
 **As a** company member\
 **I want to** review direct movements affecting company treasury addresses\
 **So that** the books and contract histories include funds moved without using a contract function
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [ ] `AC-US-ACCT-007-01` A direct native-token movement into or out of a verified company-held address is recorded when sufficient chain
       evidence identifies it, even when the contract emits no business event.
@@ -579,7 +593,7 @@ first change and for the current router when no change event exists.
 - [ ] `AC-US-ACCT-007-12` Holdings at auxiliary company contracts retain their own deployment account and disclose restricted or unknown
       spendability.
 
-#### Business Rules
+##### Business Rules
 
 - [ ] `AC-US-ACCT-007-04` Direct movements from every known treasury contract generation are included from that generation's deployment
       boundary.
@@ -595,7 +609,7 @@ first change and for the current router when no change event exists.
       their inclusion.
 - [ ] `AC-US-ACCT-007-17` Own-company SHER and NFTs discovered at a contract remain distinguishable from valued cash assets.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [ ] `AC-US-ACCT-007-09` A directly received ERC-20 outside the recognized asset catalogue is identified as outside the valued accounting
       scope rather than silently treated as a supported asset.
@@ -605,7 +619,7 @@ first change and for the current router when no change event exists.
 - [ ] `AC-US-ACCT-007-16` An unresolved custody relationship is reported as incomplete coverage without assigning its balance to a guessed
       company account.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion | Proof Strategy             | Current Evidence | Status     |
 | -------------------- | -------------------------- | ---------------- | ---------- |
@@ -646,7 +660,7 @@ first change and for the current router when no change event exists.
 
 **Dependencies:** US-ACCT-008 for the shared source of accounting data.
 
-### Direct Movement Scenarios
+#### Direct Movement Scenarios
 
 Target behaviour follows the [direct movement policy](direct-movement-policy.md). Each scenario represents the same evidenced movement
 across the participating stories.
@@ -743,13 +757,15 @@ across the participating stories.
 
 ## US-ACCT-008: Access Synchronized Company Books
 
+### US-ACCT-008: Access Synchronized Company Books
+
 **As a** company member\
 **I want to** access a shared, verified accounting snapshot\
 **So that** opening reports does not repeatedly rebuild the company's full history
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [ ] `AC-US-ACCT-008-01` Accounting reports for a company use the same verified journal snapshot.
 - [ ] `AC-US-ACCT-008-02` A requested refresh incorporates newly available activity while retaining previously verified activity without
@@ -758,7 +774,7 @@ across the participating stories.
 - [ ] `AC-US-ACCT-008-04` After a new snapshot is verified, other members actively viewing the company receive the updated data without
       manually refreshing.
 
-#### Business Rules
+##### Business Rules
 
 - [ ] `AC-US-ACCT-008-05` A snapshot identifies its last verified block, verification time, and completeness state.
 - [ ] `AC-US-ACCT-008-06` An off-platform movement becomes eligible for discovery at the next requested synchronization; until then, the
@@ -766,13 +782,13 @@ across the participating stories.
 - [ ] `AC-US-ACCT-008-07` Ordinary requests reuse verified history and synchronize only the chain ranges that may contain new or revised
       evidence.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [ ] `AC-US-ACCT-008-08` A failed or partial refresh does not replace the last complete snapshot; its age and failure state remain visible.
 - [ ] `AC-US-ACCT-008-09` If no complete snapshot exists, incomplete evidence is not presented as final accounting reports.
 - [ ] `AC-US-ACCT-008-10` Revised chain evidence invalidates the affected snapshot before another version is marked verified.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion | Proof Strategy             | Current Evidence | Status     |
 | -------------------- | -------------------------- | ---------------- | ---------- |
@@ -801,13 +817,15 @@ across the participating stories.
 
 ## US-ACCT-009: Investigate Treasury Balance Differences
 
+### US-ACCT-009: Investigate Treasury Balance Differences
+
 **As a** company member\
 **I want to** locate where recorded and on-chain treasury balances diverge\
 **So that** I can investigate the missing or incorrect movement
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [ ] `AC-US-ACCT-009-01` For each covered treasury address and asset, the member can see the accounting quantity, on-chain quantity,
       difference, and common comparison block.
@@ -815,21 +833,21 @@ across the participating stories.
 - [ ] `AC-US-ACCT-009-03` When historical on-chain state permits it, the investigation identifies the first divergent block; otherwise it
       reports the bounded interval supported by the evidence.
 
-#### Business Rules
+##### Business Rules
 
 - [ ] `AC-US-ACCT-009-04` Reconciliation compares asset quantities before any USD valuation or display rounding.
 - [ ] `AC-US-ACCT-009-05` A detected difference does not create an automatic balancing journal entry.
 - [ ] `AC-US-ACCT-009-09` Reconciliation distinguishes restricted or unallocated holdings from amounts available for the destination
       domain's obligations.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [ ] `AC-US-ACCT-009-06` Missing historical state or incomplete movement coverage is reported without claiming an exact divergence point.
 - [ ] `AC-US-ACCT-009-07` If no matching checkpoint exists, the investigation states that the divergence may precede the first verified
       comparison.
 - [ ] `AC-US-ACCT-009-08` Missing valuation does not erase the original asset quantity from reconciliation.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion | Proof Strategy             | Current Evidence | Status     |
 | -------------------- | -------------------------- | ---------------- | ---------- |
@@ -856,13 +874,15 @@ across the participating stories.
 
 ## US-ACCT-010: Classify Direct External Receipts
 
+### US-ACCT-010: Classify Direct External Receipts
+
 **As a** company owner\
 **I want to** control the classification of direct external receipts\
 **So that** their accounting category reflects their purpose without treating an unknown receipt as revenue
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [ ] `AC-US-ACCT-010-01` An eligible receipt without a reliable accounting category is initially recorded against Unclassified Receipts and
       remains pending classification.
@@ -872,7 +892,7 @@ across the participating stories.
 - [ ] `AC-US-ACCT-010-05` In review mode, a new eligible receipt remains in Unclassified Receipts until the owner classifies it.
 - [ ] `AC-US-ACCT-010-06` The owner can reclassify one eligible receipt independently of other receipts.
 
-#### Business Rules
+##### Business Rules
 
 - [ ] `AC-US-ACCT-010-07` A classification change records who made it, when it was made, and the movement it affects.
 - [ ] `AC-US-ACCT-010-08` Changing the default policy does not silently change previously posted classifications.
@@ -892,14 +912,14 @@ across the participating stories.
 - [ ] `AC-US-ACCT-010-19` A reclassification records the previous account, new account, and reason alongside its actor, time, and movement
       reference.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [ ] `AC-US-ACCT-010-13` An unsupported account or failed classification change leaves the previous journal state intact and reports the
       failure.
 - [ ] `AC-US-ACCT-010-18` Revised or invalidated movement evidence invalidates its dependent classification without losing the prior audit
       trail.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion | Proof Strategy             | Current Evidence | Status     |
 | -------------------- | -------------------------- | ---------------- | ---------- |
@@ -944,7 +964,7 @@ across the participating stories.
 
 **Dependencies:** US-ACCT-007, US-ACCT-008, and UC-TREASURY-002.
 
-### Direct Movement Scenarios
+#### Direct Movement Scenarios
 
 Target behaviour follows the [direct movement policy](direct-movement-policy.md). Each row represents the same evidenced movement across the
 participating stories.

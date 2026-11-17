@@ -38,19 +38,21 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 
 ## US-PROFILE-001: Update Profile Identity
 
+### US-PROFILE-001: Update Profile Identity
+
 **As a** portal user\
 **I want to** update my display name and profile image\
 **So that** the portal presents my current identity to other users
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-PROFILE-001-01` An authenticated portal user can open the profile form from the client navigation and save a changed display
       name or profile image.
 - [x] `AC-US-PROFILE-001-02` A successful profile-image upload applies the returned URL to the profile draft before it is saved.
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-PROFILE-001-03` The wallet address is displayed but is not editable in the profile form.
 - [x] `AC-US-PROFILE-001-04` A display name must contain between 3 and 100 characters.
@@ -59,12 +61,12 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
       when either value is absent.
 - [x] `AC-US-PROFILE-001-09` A user can update only their own profile; a missing or different authenticated wallet is rejected.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [x] `AC-US-PROFILE-001-06` An invalid image is rejected without changing the profile draft.
 - [x] `AC-US-PROFILE-001-07` An upload or profile-save failure leaves the form available and exposes the failure to the user.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion   | Proof Strategy      | Current Evidence   | Status          |
 | ---------------------- | ------------------- | ------------------ | --------------- |

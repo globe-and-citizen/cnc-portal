@@ -45,6 +45,7 @@ requested or required by the active GitHub workflow.
 ## Write or revise the feature contract
 
 - Keep one canonical `README.md` for the module and its related features and preserve stable user-story IDs.
+- Nest each default user story below its feature heading with the same stable ID and title; nest its criteria and coverage under the story.
 - List the status overview and detailed stories in ascending stable user-story-ID order. A lifecycle can show the actual journey and its
   branches without changing that documentation order.
 - Give each story one actor, one action, and one user-visible benefit.

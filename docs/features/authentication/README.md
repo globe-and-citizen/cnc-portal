@@ -66,18 +66,20 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 
 ## US-AUTH-001: Sign in to the Client
 
+### US-AUTH-001: Sign in to the Client
+
 **As a** portal user\
 **I want to** authenticate by signing a message with my wallet\
 **So that** I can access my companies without submitting a blockchain transaction
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-AUTH-001-01` A portal user can authenticate by signing a SIWE message and access their companies.
 - [x] `AC-US-AUTH-001-02` An unknown wallet address receives a default portal user account after successful authentication.
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-AUTH-001-03` The wallet is connected and switched to the configured network before the SIWE message is signed.
 - [x] `AC-US-AUTH-001-04` The SIWE message binds the wallet address, nonce, chain, domain, URI, and protocol version.
@@ -85,7 +87,7 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 - [x] `AC-US-AUTH-001-06` Successful authentication rotates the nonce and issues a JWT valid for 24 hours.
 - [x] `AC-US-AUTH-001-07` Authentication signs a message without submitting an on-chain transaction or consuming gas.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [x] `AC-US-AUTH-001-08` At startup, protected client routes, including parameterized detail routes, remain hidden while the saved session
       is being verified. If the verification endpoint rejects the current token (`401`), the saved session is cleared and the user is
@@ -109,7 +111,7 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 - [x] `AC-US-AUTH-001-18` A transient profile failure keeps the wallet connected and the issued token available while sign-in remains
       incomplete.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion | Proof Strategy      | Current Evidence                    | Status |
 | -------------------- | ------------------- | ----------------------------------- | ------ |
@@ -137,24 +139,26 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 
 ## US-AUTH-002: Sign in to the Backoffice
 
+### US-AUTH-002: Sign in to the Backoffice
+
 **As a** platform administrator\
 **I want to** authenticate with my wallet and persisted administrator role\
 **So that** I can access protected backoffice capabilities
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-AUTH-002-01` A platform administrator can connect a wallet, sign a SIWE message, and access the backoffice.
 - [x] `AC-US-AUTH-002-02` Wallet connection can be completed before the authentication message is signed.
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-AUTH-002-03` Protected backoffice capabilities require an authenticated user with an administrator or super-administrator role.
 - [x] `AC-US-AUTH-002-04` Successful backoffice authentication persists the access token and authenticated wallet address.
 - [x] `AC-US-AUTH-002-05` Logging out clears the persisted session, disconnects the wallet, and returns the user to login.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [x] `AC-US-AUTH-002-06` A missing access token or wallet address redirects the user to login.
 - [x] `AC-US-AUTH-002-07` An authenticated user without an administrator role is denied access to protected backoffice capabilities.
@@ -164,7 +168,7 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 - [ ] `AC-US-AUTH-002-10` A saved administrator profile cannot grant entry to a protected backoffice route when the current token has
       expired or been replaced by an unverified token.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion | Proof Strategy | Current Evidence    | Status     |
 | -------------------- | -------------- | ------------------- | ---------- |
@@ -184,19 +188,21 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 
 ## US-AUTH-004: Resume after a Wallet Network Change
 
+### US-AUTH-004: Resume after a Wallet Network Change
+
 **As a** portal user with an authenticated session\
 **I want to** return my wallet to the application's network after a network change\
 **So that** I can resume my company session on the intended network
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-AUTH-004-01` Returning the connected wallet to the configured network restores the same authenticated route without requiring
       another login.
 - [x] `AC-US-AUTH-004-02` A user can request the configured network from the locked session.
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-AUTH-004-03` An authenticated session on another or an unknown wallet network cannot interact with the protected workspace,
       including open transaction dialogs.
@@ -204,14 +210,14 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 - [x] `AC-US-AUTH-004-05` If the connected wallet differs from the authenticated account, the workspace locks. Disconnecting the wallet ends
       the session so the user can sign in again.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [x] `AC-US-AUTH-004-06` A rejected, failed or unsupported network switch keeps the session locked and allows a deliberate retry without
       repeated automatic requests.
 - [x] `AC-US-AUTH-004-07` Transaction requests still being prepared when the wallet changes network are bound to the configured chain or
       rejected before submission; already submitted wallet requests are not cancelled by the screen lock.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion | Proof Strategy | Current Evidence                           | Status |
 | -------------------- | -------------- | ------------------------------------------ | ------ |

@@ -306,7 +306,7 @@ per-criterion proof strategy until its product and implementation boundary are d
 and known gaps:
 
 ```markdown
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion   | Proof Strategy      | Current Evidence         | Status          |
 | ---------------------- | ------------------- | ------------------------ | --------------- |
@@ -353,32 +353,39 @@ If a criterion contains outcomes that can pass or fail independently, need diffe
 split it before assigning the proof strategy. Keep a transversal criterion intact when its layers jointly produce one cohesive observable
 outcome, then name every owning layer and the boundary risk explicitly.
 
-### 5. User Stories
+### 5. Features and User Stories
+
+Within the module, use a level-two heading for each feature, followed by its default user story as a level-three heading with the same
+stable ID and title. Nest its journey, acceptance criteria, and evidence below the story. This makes module → feature → story explicit while
+preserving existing feature anchors. Reference stories retain this structure but link to the owning contract instead of duplicating
+criteria. A historical story may still require product review before its feature boundary is final.
 
 Put each part of the user-story sentence on its own source line and rendered line.
 
 ```markdown
 ## US-FEATURE-001: Perform an Observable Action
 
+### US-FEATURE-001: Perform an Observable Action
+
 **As a** permitted actor\
 **I want to** perform one product action\
 **So that** I obtain one user-visible benefit
 
-### How It Works
+#### How It Works
 
 1. Describe the journey only when the criteria need this context.
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [ ] One observable successful outcome.
 
-#### Business Rules
+##### Business Rules
 
 - [ ] One independently verifiable authorization, limit, or domain rule.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [ ] One observable boundary, invalid-input, unavailable-state, failure, or recovery outcome.
 
