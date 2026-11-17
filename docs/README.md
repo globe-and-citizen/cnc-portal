@@ -7,12 +7,12 @@ rules belong in platform guides, and code and tests remain executable evidence.
 
 1. [Project Charter](./01_PROJECT_CHARTER.md) — product vision, scope, and governance.
 2. [Architecture Overview](./platform/architecture.md) — system boundaries and components.
-3. [Product Feature Inventory](./features/README.md) — current user-accessible client and backoffice capabilities.
+3. [Product Feature Catalogue](./features/README.md) — modules and their features, with a separate current-access inventory.
 4. [Architecture Decision Records](./adr/README.md) — durable technical choices and trade-offs.
 5. [Feature Documentation Guide](./platform/feature-specification-guide.md) — authoring and human review contract.
 6. [Contribution Guide](../CONTRIBUTION.md) — repository workflow and validation.
 
-The [Roadmap](./ROADMAP.md) describes strategic direction and links current planning. Use the relevant feature README for product status and
+The [Roadmap](./ROADMAP.md) describes strategic direction and links current planning. Use the relevant module README for product status and
 GitHub issues and pull requests for delivery state.
 
 ## Documentation Ownership
@@ -21,7 +21,7 @@ GitHub issues and pull requests for delivery state.
 | ------------------------------------------------ | ---------------------------------------------------------- |
 | Why does CNC Portal exist?                       | [Project Charter](./01_PROJECT_CHARTER.md)                 |
 | Which outcomes are being considered next?        | [Roadmap](./ROADMAP.md) and GitHub planning issues         |
-| Which product capabilities can users reach?      | [Product Feature Inventory](./features/README.md)          |
+| Which product capabilities can users reach?      | [Product Feature Catalogue](./features/README.md)          |
 | What should a user be able to do in one feature? | `docs/features/<feature>/README.md`                        |
 | Has that behaviour passed human review?          | Feature status, review date, and validation statement      |
 | How does a shared runtime capability work?       | [Implementation Documentation](./implementation/README.md) |
@@ -33,15 +33,16 @@ GitHub issues and pull requests for delivery state.
 
 ## Feature Documentation
 
-The [Product Feature Inventory](./features/README.md) is derived from the current app and dashboard journeys. It is the canonical answer to
-which capabilities users can access. Documentation coverage and human-validation status are tracked separately.
+The [Product Feature Catalogue](./features/README.md) groups features by module and records assessed story status and intended scope. Its
+separate current-access inventory is derived from app and dashboard journeys; module access does not prove every listed feature is
+available. Coverage and human-validation status are tracked separately.
 
 All dashboard capabilities are grouped under the [Backoffice Feature Inventory](./features/backoffice/README.md). A dashboard route must not
 become a separate top-level feature directory.
 
 ### Current User-Story Entry Points
 
-| Feature                                                                      | Journey                                                   | Model state         |
+| Module                                                                       | Journey                                                   | Model state         |
 | ---------------------------------------------------------------------------- | --------------------------------------------------------- | ------------------- |
 | [Authentication](./features/authentication/README.md)                        | Wallet sign-in and protected entry                        | Validation due      |
 | [Companies and workspace](./features/companies/README.md)                    | Create a team workspace and deploy its initial contracts  | Validation due      |
@@ -54,7 +55,7 @@ become a separate top-level feature directory.
 | [Backoffice Statistics](./features/backoffice/statistics/README.md)          | Platform metrics, category statistics, and activity       | Implementation gaps |
 | [Feature Restrictions](./features/backoffice/feature-restrictions/README.md) | Global feature states and team-specific overrides         | Validation due      |
 
-See the [Product Feature Inventory](./features/README.md) for coverage across the complete current product inventory.
+See the [Product Feature Catalogue](./features/README.md) for coverage across the complete current product inventory.
 
 ### Product References Awaiting the Current Model
 
@@ -116,7 +117,7 @@ implementation READMEs own components, invariants, failure paths, and runtime ev
 
 ### Product and QA
 
-1. Open the relevant feature README from the Product Feature Inventory.
+1. Open the relevant module README from the Product Feature Catalogue.
 2. Follow its lifecycle in story order.
 3. Treat checked criteria as the verified implementation record.
 4. Use the story status, review date, and Human Validation statement for the product-review state.
@@ -178,7 +179,7 @@ bash scripts/audit-doc-drift.sh
 git diff --check
 ```
 
-When navigation changes, verify every local link and update the [Product Feature Inventory](./features/README.md) and this documentation
+When navigation changes, verify every local link and update the [Product Feature Catalogue](./features/README.md) and this documentation
 hub.
 
 ## Updating This Hub

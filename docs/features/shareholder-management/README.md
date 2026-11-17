@@ -64,17 +64,17 @@ flowchart LR
 
 ## Status Overview
 
-| User Story  | Title                                    | Actor                           | Status         |
-| ----------- | ---------------------------------------- | ------------------------------- | -------------- |
-| US-SHER-001 | Invest in the Safe and receive SHER      | Company member                  | 🧪 Validation  |
-| US-SHER-002 | Distribute dividends to shareholders     | Bank owner / Board member       | 🧪 Validation  |
-| US-SHER-003 | Review shareholder position and activity | Company member                  | 🚧 In Progress |
-| US-SHER-004 | Issue SHER to a shareholder              | Investor owner with minter role | 🚧 In Progress |
-| US-SHER-005 | Configure shareholder investment         | Safe Deposit Router owner       | 🧪 Validation  |
-| US-SHER-006 | Claim a migrated shareholding            | Shareholder                     | 🧪 Validation  |
-| US-SHER-007 | Settle and close a shareholder migration | Investor owner                  | 🧪 Validation  |
-| US-SHER-008 | Start a shareholder migration            | Company owner                   | 🔗 Reference   |
-| US-SHER-009 | Manage Investor permissions              | Investor administrator          | 🧪 Validation  |
+| User Story                                                           | Feature                                  | Actor                           | Status         | Intended Scope |
+| -------------------------------------------------------------------- | ---------------------------------------- | ------------------------------- | -------------- | -------------- |
+| [US-SHER-001](#us-sher-001-invest-in-the-safe-and-receive-sher)      | Invest in the Safe and receive SHER      | Company member                  | 🧪 Validation  | Not assessed   |
+| [US-SHER-002](#us-sher-002-distribute-dividends-to-shareholders)     | Distribute dividends to shareholders     | Bank owner / Board member       | 🧪 Validation  | Not assessed   |
+| [US-SHER-003](#us-sher-003-review-shareholder-position-and-activity) | Review shareholder position and activity | Company member                  | 🚧 In Progress | Not assessed   |
+| [US-SHER-004](#us-sher-004-issue-sher-to-a-shareholder)              | Issue SHER to a shareholder              | Investor owner with minter role | 🚧 In Progress | Not assessed   |
+| [US-SHER-005](#us-sher-005-configure-shareholder-investment)         | Configure shareholder investment         | Safe Deposit Router owner       | 🧪 Validation  | Not assessed   |
+| [US-SHER-006](#us-sher-006-claim-a-migrated-shareholding)            | Claim a migrated shareholding            | Shareholder                     | 🧪 Validation  | Not assessed   |
+| [US-SHER-007](#us-sher-007-settle-and-close-a-shareholder-migration) | Settle and close a shareholder migration | Investor owner                  | 🧪 Validation  | Not assessed   |
+| [US-SHER-008](#us-sher-008-start-a-shareholder-migration)            | Start a shareholder migration            | Company owner                   | 🔗 Reference   | Not assessed   |
+| [US-SHER-009](#us-sher-009-manage-investor-permissions)              | Manage Investor permissions              | Investor administrator          | 🧪 Validation  | Not assessed   |
 
 ## Test Coverage Overview
 
@@ -91,15 +91,21 @@ flowchart LR
 
 Proof obligations use the [shared proof-strategy registry](../../testing/proof-strategies.md). Multiple IDs for one AC are cumulative.
 
-## US-SHER-001: Invest in the Safe and Receive SHER
+## FEAT-SHER-001: Invest in the Safe and Receive SHER
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
+
+### US-SHER-001: Invest in the Safe and Receive SHER
 
 **As a** company member\
 **I want to** invest supported funds through the Safe Deposit Router\
 **So that** I receive SHER and the company receives investment capital
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-SHER-001-01` A company member can open the investment form when the company has a registered Safe and router deposits are
       enabled.
@@ -109,7 +115,7 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 - [x] `AC-US-SHER-001-04` A successful investment transfers the deposited USDC to the company Safe and mints the calculated SHER to the
       investor.
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-SHER-001-05` The investment action is unavailable while the router is paused, deposits are disabled, the Safe is missing, or
       the company is archived.
@@ -118,13 +124,13 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 - [x] `AC-US-SHER-001-07` The form blocks the deposit when the router address, selected token, or router multiplier needed to calculate SHER
       is unavailable.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [x] `AC-US-SHER-001-08` Rejecting or failing the approval stops the flow before any deposit is submitted.
 - [x] `AC-US-SHER-001-09` A failed deposit resets the form to the amount step and shows an error without reporting a successful investment.
 - [x] `AC-US-SHER-001-10` Cancelling the form resets its amount and closes the investment modal.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion | Proof Strategy        | Current Evidence          | Status          |
 | -------------------- | --------------------- | ------------------------- | --------------- |
@@ -149,15 +155,21 @@ supporting evidence, not separate entries.
 
 **Dependencies:** US-SHER-005, an active Safe Deposit Router, a connected wallet, and a USDC balance
 
-## US-SHER-002: Distribute Dividends to Shareholders
+## FEAT-SHER-002: Distribute Dividends to Shareholders
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
+
+### US-SHER-002: Distribute Dividends to Shareholders
 
 **As a** Bank owner or eligible Board member\
 **I want to** distribute a held Bank asset to shareholders\
 **So that** shareholders receive their proportional dividend
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-SHER-002-01` The Bank owner can choose a held native or supported ERC-20 asset and a positive dividend amount within the
       available Bank balance.
@@ -166,7 +178,7 @@ supporting evidence, not separate entries.
 - [x] `AC-US-SHER-002-13` After the required Board approvals, the action executes the matching Bank dividend once and produces the same
       proportional on-chain shareholder payments as the direct-owner path.
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-SHER-002-04` The action is available only when a SHER token symbol and at least one shareholder are available.
 - [x] `AC-US-SHER-002-05` A user who is neither the Bank owner nor eligible for the Board action cannot open the dividend form.
@@ -175,13 +187,13 @@ supporting evidence, not separate entries.
 - [x] `AC-US-SHER-002-08` The Investor contract rejects dividends while a shareholder migration remains open. _(contract)_
 - [x] `AC-US-SHER-002-09` An archived company cannot start a dividend action.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [x] `AC-US-SHER-002-10` A zero, non-numeric, or over-balance amount does not submit a dividend action.
 - [x] `AC-US-SHER-002-11` A Board-action attempt without a Bank address does not create an action.
 - [x] `AC-US-SHER-002-12` A failure while reading the Bank owner is reported without enabling an unauthorized dividend action.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion | Proof Strategy        | Current Evidence          | Status          |
 | -------------------- | --------------------- | ------------------------- | --------------- |
@@ -207,15 +219,21 @@ Bank's distribution trigger is not booked again.
 
 **Dependencies:** US-SHER-001, US-BANK-001, a current Bank owner or eligible Board member, and at least one shareholder
 
-## US-SHER-003: Review Shareholder Position and Activity
+## FEAT-SHER-003: Review Shareholder Position and Activity
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
+
+### US-SHER-003: Review Shareholder Position and Activity
 
 **As a** company member\
 **I want to** review the Investor contract's holdings, shareholders, and activity\
 **So that** I can understand the current ownership and its changes
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-SHER-003-01` A company member can review the Investor token symbol, their SHER balance, total supply, and current shareholder
       count.
@@ -227,20 +245,20 @@ Bank's distribution trigger is not booked again.
 - [ ] `AC-US-SHER-003-11` A Router recovery to the company Safe retains the original receipt reference and is identified as an internal
       movement without issuing SHER.
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-SHER-003-04` A shareholder's displayed ownership percentage is calculated from its current Investor balance and total supply.
 - [x] `AC-US-SHER-003-05` A shareholder list with no issued SHER remains distinguishable from a list with holders.
 - [ ] `AC-US-SHER-003-10` A receipt without investment or distribution evidence is distinguishable from issued SHER and paid dividends.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [x] `AC-US-SHER-003-06` Missing Investor balance or total-supply data is presented as unavailable rather than as a fabricated amount.
 - [x] `AC-US-SHER-003-07` A failed shareholder or activity read is reported without replacing known values with successful-looking data.
 - [x] `AC-US-SHER-003-08` Missing or invalid Investor token-symbol data is presented as unavailable throughout the overview and activity
       history rather than as a fabricated token identity.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion | Proof Strategy             | Current Evidence | Status          |
 | -------------------- | -------------------------- | ---------------- | --------------- |
@@ -264,7 +282,7 @@ Bank's distribution trigger is not booked again.
 
 **Dependencies:** Current Investor contract and company access
 
-### Direct Movement Scenarios
+#### Direct Movement Scenarios
 
 Target behaviour follows the [direct movement policy](../accounting/direct-movement-policy.md). Each row represents the same evidenced
 movement across the participating stories.
@@ -274,22 +292,28 @@ movement across the participating stories.
 | External assets reach Investor or SafeDepositRouter without an investment, distribution, or established purpose. [UC-TREASURY-002](../accounting/journal-entry-catalogue.md#uc-treasury-002--external-receipt-pending-classification) | Separates direct holdings from shares and dividends. | [US-CONTRACT-001](../contract-management/README.md#us-contract-001-review-the-current-contract-suite) — exposes custody and recovery limits; [US-ACCT-007](../accounting/README.md#us-acct-007-review-direct-treasury-movements) — owns movement evidence and identity; [US-ACCT-010](../accounting/README.md#us-acct-010-classify-direct-external-receipts) — owns eligible receipt classification |
 | Owner-authorized Router recovery moves held tokens to the same company Safe. [UC-TREASURY-001](../accounting/journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer)                                            | Traces the router receipt and recovery.              | [US-SAFE-002](../accounts/README.md#us-safe-002-inspect-safe-details) — owns receiving Safe history; [US-ACCT-007](../accounting/README.md#us-acct-007-review-direct-treasury-movements) — correlates source and destination without a second receipt or SHER issuance                                                                                                                              |
 
-## US-SHER-004: Issue SHER to a Shareholder
+## FEAT-SHER-004: Issue SHER to a Shareholder
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
+
+### US-SHER-004: Issue SHER to a Shareholder
 
 **As a** connected issuer with `MINTER_ROLE`\
 **I want to** issue SHER to one selected shareholder\
 **So that** the Investor contract records the intended ownership allocation
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-SHER-004-01` An authorized portal user can choose a company member or supported contract recipient and calculate an additive or
       ending ownership stake.
 - [x] `AC-US-SHER-004-02` A successful individual issuance mints the computed incremental SHER amount and refreshes the relevant Investor
       reads.
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-SHER-004-03` The Investor contract requires `MINTER_ROLE` for an individual issuance. _(contract)_
 - [ ] `AC-US-SHER-004-04` The recipient address and incremental issuance amount must be valid and greater than zero.
@@ -297,12 +321,12 @@ movement across the participating stories.
 - [x] `AC-US-SHER-004-06` The portal verifies that the connected user has `MINTER_ROLE` and applies that same authorization rule to both
       individual-issuance entry points.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [x] `AC-US-SHER-004-07` An invalid recipient or invalid stake does not submit an individual issuance.
 - [x] `AC-US-SHER-004-08` A rejected or failed individual issuance does not report SHER as issued.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion | Proof Strategy        | Current Evidence          | Status          |
 | -------------------- | --------------------- | ------------------------- | --------------- |
@@ -323,33 +347,39 @@ movement across the participating stories.
 
 **Dependencies:** Current Investor contract, a connected issuer with `MINTER_ROLE`, and a connected wallet
 
-## US-SHER-005: Configure Shareholder Investment
+## FEAT-SHER-005: Configure Shareholder Investment
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
+
+### US-SHER-005: Configure Shareholder Investment
 
 **As a** Safe Deposit Router owner\
 **I want to** connect the company Safe and configure shareholder investment terms\
 **So that** eligible deposits can issue SHER into the intended treasury
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-SHER-005-01` The router owner can set the company's default Safe as the router's Safe when it is not already synchronized.
 - [x] `AC-US-SHER-005-02` The router owner can enable or disable deposits after the router points to the company Safe.
 - [x] `AC-US-SHER-005-03` The router owner can set the SHER multiplier used to calculate investment issuance.
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-SHER-005-04` Only the Safe Deposit Router owner can change its Safe address, deposit state, or multiplier.
 - [x] `AC-US-SHER-005-05` Deposits cannot be enabled while the router Safe does not match the company's default Safe.
 - [x] `AC-US-SHER-005-06` A multiplier must be a valid number within the configured range and at least one.
 - [x] `AC-US-SHER-005-07` An archived company cannot start a router configuration write.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [x] `AC-US-SHER-005-08` A missing router or company Safe prevents the corresponding configuration write.
 - [x] `AC-US-SHER-005-09` A rejected or failed router write does not report the configuration as updated.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion | Proof Strategy        | Current Evidence          | Status          |
 | -------------------- | --------------------- | ------------------------- | --------------- |
@@ -371,33 +401,39 @@ movement across the participating stories.
 
 **Dependencies:** US-SAFE-001, an active Safe Deposit Router, and a connected router owner
 
-## US-SHER-006: Claim a Migrated Shareholding
+## FEAT-SHER-006: Claim a Migrated Shareholding
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
+
+### US-SHER-006: Claim a Migrated Shareholding
 
 **As a** shareholder\
 **I want to** claim my frozen allocation on the new Investor contract\
 **So that** my shareholding survives the Officer redeployment
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-SHER-006-01` A shareholder with a migration proof can review their frozen allocation and submit a self-claim to the new
       Investor contract.
 - [x] `AC-US-SHER-006-02` A successful claim mints the snapshot amount to the claiming shareholder.
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-SHER-006-03` A claim is available only after a migration root and the matching persisted snapshot are available.
 - [x] `AC-US-SHER-006-04` The Investor contract accepts one claim per shareholder and rejects an invalid Merkle proof. _(contract)_
 - [x] `AC-US-SHER-006-05` The migration snapshot, rather than the current old-contract balance, determines the claim amount.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [x] `AC-US-SHER-006-06` A connected address not present in the snapshot cannot submit a claim.
 - [x] `AC-US-SHER-006-07` A failed claim remains visible as a failure and does not report migrated shares as received.
 - [x] `AC-US-SHER-006-08` A completed migration no longer accepts an additional self-claim. _(contract)_
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion | Proof Strategy             | Current Evidence                     | Status          |
 | -------------------- | -------------------------- | ------------------------------------ | --------------- |
@@ -421,34 +457,40 @@ entry.
 
 **Dependencies:** US-SHER-008, a connected shareholder, and a valid migration proof
 
-## US-SHER-007: Settle and Close a Shareholder Migration
+## FEAT-SHER-007: Settle and Close a Shareholder Migration
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
+
+### US-SHER-007: Settle and Close a Shareholder Migration
 
 **As an** Investor owner\
 **I want to** dispatch unclaimed allocations and close the migration\
 **So that** the cap table is complete and dividend distribution can resume
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-SHER-007-01` The Investor owner can dispatch the remaining snapshot allocations in one operation; addresses that already
       self-claimed are skipped.
 - [x] `AC-US-SHER-007-02` The Investor owner can close the migration after deciding no further claims are expected.
 - [x] `AC-US-SHER-007-03` Closing the migration rejects further claims and removes the Investor contract's dividend freeze. _(contract)_
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-SHER-007-04` Dispatch uses the persisted snapshot's holder addresses, amounts, and Merkle proofs.
 - [x] `AC-US-SHER-007-05` The Investor contract restricts dispatch and closure to its owner. _(contract)_
 - [x] `AC-US-SHER-007-06` The portal verifies that the connected company owner is also the Investor owner before enabling dispatch or
       closure.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [x] `AC-US-SHER-007-07` A migration with no usable proof does not dispatch a partial allocation.
 - [x] `AC-US-SHER-007-08` A failed dispatch or closure is reported without marking the migration complete.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion | Proof Strategy             | Current Evidence          | Status          |
 | -------------------- | -------------------------- | ------------------------- | --------------- |
@@ -471,7 +513,9 @@ entry.
 
 **Dependencies:** US-SHER-008 and an Investor owner
 
-## US-SHER-008: Start a Shareholder Migration
+## Referenced Story: Start a Shareholder Migration
+
+### US-SHER-008: Start a Shareholder Migration
 
 **As a** company owner\
 **I want to** commit the previous Investor's frozen shareholder snapshot to the new Investor\
@@ -483,15 +527,21 @@ the redeployment and migration-root commit. Shareholder Management exposes the m
 
 **Dependencies:** US-CONTRACT-005 and a previous Investor generation
 
-## US-SHER-009: Manage Investor Permissions
+## FEAT-SHER-009: Manage Investor Permissions
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
+
+### US-SHER-009: Manage Investor Permissions
 
 **As an** Investor administrator\
 **I want to** review and manage Investor token-minter authority\
 **So that** human and automated issuance uses explicit, current on-chain permissions
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-SHER-009-01` A company member can review the verified Investor owner, administrators, and minters with known member, current or
       previous Officer, team-contract, and external identities distinguished where available.
@@ -500,7 +550,7 @@ the redeployment and migration-root commit. Shareholder Management exposes the m
 - [x] `AC-US-SHER-009-04` A connected Investor administrator can revoke `MINTER_ROLE` from a delegated minter, and the refreshed permission
       list reflects the confirmed on-chain state.
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-SHER-009-05` Only a connected account with `DEFAULT_ADMIN_ROLE` can initiate minter-role changes, and an archived company
       cannot initiate those writes.
@@ -509,14 +559,14 @@ the redeployment and migration-root commit. Shareholder Management exposes the m
 - [x] `AC-US-SHER-009-07` Revoking a known Cash Remuneration, Safe Deposit Router, or Vesting minter requires explicit acknowledgement of
       the affected automated issuance flow.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [x] `AC-US-SHER-009-02` A failed or partial historical role scan is labelled unavailable or incomplete, directly verifies known company
       accounts including Officer generations, and does not masquerade as an authoritative empty permission list.
 - [x] `AC-US-SHER-009-08` A rejected or failed role transaction remains visible as a failure and does not report a successful permission
       change.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion | Proof Strategy        | Current Evidence                     | Status          |
 | -------------------- | --------------------- | ------------------------------------ | --------------- |

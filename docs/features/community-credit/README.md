@@ -46,13 +46,13 @@ automatically when a deadline or maturity date passes.
 
 ## Status Overview
 
-| User Story | Title                      | Actor              | Status         |
-| ---------- | -------------------------- | ------------------ | -------------- |
-| US-CC-001  | Inspect the Credit Account | Company member     | 🚧 In Progress |
-| US-CC-002  | Publish a credit call      | Company issuer     | 🚧 In Progress |
-| US-CC-003  | Lend to an open round      | Company member     | 🚧 In Progress |
-| US-CC-004  | Resolve a stalled round    | Company issuer     | 🧪 Validation  |
-| US-CC-005  | Repay lenders              | Current Bank owner | 🚧 In Progress |
+| User Story                                         | Feature                    | Actor              | Status         | Intended Scope |
+| -------------------------------------------------- | -------------------------- | ------------------ | -------------- | -------------- |
+| [US-CC-001](#us-cc-001-inspect-the-credit-account) | Inspect the Credit Account | Company member     | 🚧 In Progress | Not assessed   |
+| [US-CC-002](#us-cc-002-publish-a-credit-call)      | Publish a credit call      | Company issuer     | 🚧 In Progress | Not assessed   |
+| [US-CC-003](#us-cc-003-lend-to-an-open-round)      | Lend to an open round      | Company member     | 🚧 In Progress | Not assessed   |
+| [US-CC-004](#us-cc-004-resolve-a-stalled-round)    | Resolve a stalled round    | Company issuer     | 🧪 Validation  | Not assessed   |
+| [US-CC-005](#us-cc-005-repay-lenders)              | Repay lenders              | Current Bank owner | 🚧 In Progress | Not assessed   |
 
 ## Test Coverage Overview
 
@@ -75,15 +75,21 @@ prove every criterion or replace direct, assertion-reviewed AC evidence.
 
 Proof obligations use the [shared proof-strategy registry](../../testing/proof-strategies.md). Multiple IDs for one AC are cumulative.
 
-## US-CC-001: Inspect the Credit Account
+## FEAT-CC-001: Inspect the Credit Account
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
+
+### US-CC-001: Inspect the Credit Account
 
 **As a** company member\
 **I want to** inspect the company's credit rounds and their current state\
 **So that** I can understand what is raising, awaiting action, or settled
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-CC-001-01` Each round exposes its purpose, token, target, amount raised, flat rate, access mode, dates, and current status.
 - [ ] `AC-US-CC-001-02` A lender can distinguish their own deposited and expected-return positions from the issuer's total debt figures.
@@ -91,20 +97,20 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 - [ ] `AC-US-CC-001-08` A member can inspect direct FixedReturn asset movements and unallocated holdings with the same evidence as
       Accounting.
 
-#### Business Rules
+##### Business Rules
 
 - [ ] `AC-US-CC-001-04` Rounds that still require an issuer action remain accessible separately from settled rounds.
 - [x] `AC-US-CC-001-05` Account-level statistics (outstanding principal, interest due, lifetime raised, lifetime repaid) are grouped and
       displayed per token; amounts from different tokens are never summed into a single figure.
 - [ ] `AC-US-CC-001-09` A transfer without credit-round evidence changes neither a lender position nor a round's funded or repaid amount.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [x] `AC-US-CC-001-06` A company without a deployed Credit Account receives the missing prerequisite instead of an empty round result.
 - [x] `AC-US-CC-001-07` The Credit Account journey distinguishes loading, an unavailable read with recovery, a confirmed missing round, and
       populated outcomes.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion | Proof Strategy             | Current Evidence | Status          |
 | -------------------- | -------------------------- | ---------------- | --------------- |
@@ -121,7 +127,7 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 | `AC-US-CC-001-09`    | `PS-CONTRACT`              | None linked      | ❌ Missing      |
 | `AC-US-CC-001-09`    | `PS-FULL-STACK-INTEGRATED` | None linked      | ❌ Missing      |
 
-### Direct Movement Scenarios
+#### Direct Movement Scenarios
 
 Target behaviour follows the [direct movement policy](../accounting/direct-movement-policy.md). Each row represents the same evidenced
 movement across the participating stories.
@@ -130,15 +136,21 @@ movement across the participating stories.
 | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | External tokens reach FixedReturn without a credit-round operation or established purpose. [UC-TREASURY-002](../accounting/journal-entry-catalogue.md#uc-treasury-002--external-receipt-pending-classification) | Separates unallocated holdings from credit rounds. | [US-ACCT-007](../accounting/README.md#us-acct-007-review-direct-treasury-movements) — owns movement evidence and identity; [US-ACCT-010](../accounting/README.md#us-acct-010-classify-direct-external-receipts) — owns eligible receipt classification |
 
-## US-CC-002: Publish a Credit Call
+## FEAT-CC-002: Publish a Credit Call
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
+
+### US-CC-002: Publish a Credit Call
 
 **As a** company issuer\
 **I want to** publish a credit round with its funding terms and lender access\
 **So that** eligible members can provide working capital to the company
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-CC-002-01` The issuer can define a round name of at least three characters and an optional purpose.
 - [x] `AC-US-CC-002-02` The issuer can select an ERC-20 token supported by the company's Credit Account.
@@ -149,7 +161,7 @@ movement across the participating stories.
 - [x] `AC-US-CC-002-06` Successful publication creates one on-chain round, persists its metadata, and exposes the round through subsequent
       Credit Account reads.
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-CC-002-07` A general-access round can apply an optional positive per-lender cap that does not exceed the funding target.
 - [x] `AC-US-CC-002-08` A restricted round requires at least one lender and rejects duplicate lender addresses.
@@ -163,7 +175,7 @@ movement across the participating stories.
 - [x] `AC-US-CC-002-17` Metadata cannot be saved for an offer identifier that does not yet exist on the connected Credit Account.
 - [x] `AC-US-CC-002-18` Only the current Credit Account owner can save metadata for a round.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [x] `AC-US-CC-002-13` Invalid round terms are rejected before an on-chain transaction is requested.
 - [x] `AC-US-CC-002-14` Rejecting or failing the on-chain creation leaves the Credit Account unchanged and returns a failure outcome.
@@ -171,7 +183,7 @@ movement across the participating stories.
       values without creating a duplicate round or a conflict error; going back only reaches the name and purpose, since target, token,
       terms and access are fixed on-chain.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion | Proof Strategy             | Current Evidence          | Status          |
 | -------------------- | -------------------------- | ------------------------- | --------------- |
@@ -206,15 +218,21 @@ movement across the participating stories.
 
 **Accounting:** Publishing terms moves no company funds and creates no journal entry.
 
-## US-CC-003: Lend to an Open Round
+## FEAT-CC-003: Lend to an Open Round
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
+
+### US-CC-003: Lend to an Open Round
 
 **As a** company member\
 **I want to** lend an allowed amount to an open credit round\
 **So that** I can fund the company and receive the stated fixed return
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-CC-003-01` An eligible member can lend to a round while it is open and before its subscription deadline.
 - [x] `AC-US-CC-003-02` A successful lend increases both the round's funded amount and the lender's deposited position.
@@ -222,7 +240,7 @@ movement across the participating stories.
 - [x] `AC-US-CC-003-04` A successful lend refreshes the matching activity feed before another decision.
 - [ ] `AC-US-CC-003-05` A successful lend refreshes the lender's token balance before another decision.
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-CC-003-06` A restricted round accepts funds only from a member with a non-zero allocation.
 - [x] `AC-US-CC-003-07` The lender's available amount is the lower of the remaining funding target and their remaining cap or allocation.
@@ -232,12 +250,12 @@ movement across the participating stories.
 - [x] `AC-US-CC-003-12` A failed read of the connected member's whitelist allocation or deposited amount is presented as unavailable with a
       retry, never as a confirmed zero — a transient read failure must not look like "not eligible" or "nothing deposited yet."
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [x] `AC-US-CC-003-11` Rejecting approval, rejecting the lending transaction, or an on-chain failure leaves the round unchanged and returns
       a recoverable failure outcome.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion | Proof Strategy        | Current Evidence | Status          |
 | -------------------- | --------------------- | ---------------- | --------------- |
@@ -264,32 +282,38 @@ movement across the participating stories.
 through [`UC-CREDIT-01`](../accounting/journal-entry-catalogue.md#uc-credit-01--funded-principal) and fixed return through
 [`UC-CREDIT-05`](../accounting/journal-entry-catalogue.md#uc-credit-05--fixed-return-recognized).
 
-## US-CC-004: Resolve a Stalled Round
+## FEAT-CC-004: Resolve a Stalled Round
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
+
+### US-CC-004: Resolve a Stalled Round
 
 **As a** company issuer\
 **I want to** refund lenders or accept a partial raise after the deadline\
 **So that** an underfunded round reaches an explicit financial outcome
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-CC-004-01` The issuer can refund a stalled round, returning every lender's principal in one transaction.
 - [x] `AC-US-CC-004-02` The issuer can accept a positive partial raise and continue the round using the actual funded amount.
 - [x] `AC-US-CC-004-03` Accepting a partial raise transfers the raised principal to the company Bank.
 - [x] `AC-US-CC-004-04` A successful resolution refreshes the round and lender data.
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-CC-004-05` A round below target remains on-chain as open after its subscription deadline until the issuer resolves it.
 - [x] `AC-US-CC-004-06` Refund and partial acceptance are mutually exclusive final decisions for a stalled round.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [x] `AC-US-CC-004-07` A partial raise of 0 cannot be accepted.
 - [x] `AC-US-CC-004-08` A failed resolution leaves the round unchanged and returns a failure outcome.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion | Proof Strategy        | Current Evidence | Status          |
 | -------------------- | --------------------- | ---------------- | --------------- |
@@ -309,13 +333,19 @@ through [`UC-CREDIT-01`](../accounting/journal-entry-catalogue.md#uc-credit-01--
 **Accounting:** Accepting a partial raise activates `UC-CREDIT-01` and `UC-CREDIT-05`. Refunding lenders returns funds that never entered
 the company's books and creates no journal entry.
 
-## US-CC-005: Repay Lenders
+## FEAT-CC-005: Repay Lenders
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
+
+### US-CC-005: Repay Lenders
 
 **As a** current company Bank owner\
 **I want to** repay principal and fixed interest from the company treasury\
 **So that** every lender receives their proportional entitlement
 
-### How It Works
+#### How It Works
 
 1. The selected round exposes its current obligation, Bank balance, and each lender's settlement progress before the current Bank owner
    submits an installment.
@@ -323,9 +353,9 @@ the company's books and creates no journal entry.
 3. A full repayment returns to that round's default detail after the settlement data refreshes; a partial repayment keeps the Bank owner in
    the repayment view with refreshed figures.
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-CC-005-01` The current Bank owner can repay a funded, partially repaid, or overdue round from the company Bank.
 - [x] `AC-US-CC-005-02` An installment distributes each lender's cumulative proportional entitlement without overpaying the round or leaving
@@ -335,7 +365,7 @@ the company's books and creates no journal entry.
 - [ ] `AC-US-CC-005-05` A successful installment refreshes lender token balances and the Bank token balance before another decision.
 - [x] `AC-US-CC-005-06` Repaying the complete obligation settles the round and prevents further repayment.
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-CC-005-07` A repayment amount must be greater than 0.
 - [x] `AC-US-CC-005-08` A repayment amount cannot exceed the outstanding obligation.
@@ -347,13 +377,13 @@ the company's books and creates no journal entry.
 - [x] `AC-US-CC-005-13` The repayment action is unavailable to a wallet other than the current Bank owner.
 - [x] `AC-US-CC-005-14` The repayment action is unavailable while the Bank is paused.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [x] `AC-US-CC-005-15` A round that is still raising cannot be repaid.
 - [x] `AC-US-CC-005-16` A settled round cannot be repaid again.
 - [x] `AC-US-CC-005-17` Rejecting or failing a repayment preserves the outstanding amount and returns a recoverable failure outcome.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion | Proof Strategy        | Current Evidence | Status          |
 | -------------------- | --------------------- | ---------------- | --------------- |

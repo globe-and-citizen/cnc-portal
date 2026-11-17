@@ -45,11 +45,11 @@ flowchart LR
 
 ## Status Overview
 
-| User Story          | Title                                    | Actor                  | Status         |
-| ------------------- | ---------------------------------------- | ---------------------- | -------------- |
-| US-CONTRACT-OPS-001 | Inspect the contract deployment registry | Platform administrator | 🧪 Validation  |
-| US-CONTRACT-OPS-002 | Audit stored Officer-version metadata    | Platform administrator | 🚧 In Progress |
-| US-CONTRACT-OPS-003 | Synchronize Officer-version metadata     | Platform administrator | 🧪 Validation  |
+| User Story                                                                           | Feature                                  | Actor                  | Status         | Intended Scope |
+| ------------------------------------------------------------------------------------ | ---------------------------------------- | ---------------------- | -------------- | -------------- |
+| [US-CONTRACT-OPS-001](#us-contract-ops-001-inspect-the-contract-deployment-registry) | Inspect the contract deployment registry | Platform administrator | 🧪 Validation  | Not assessed   |
+| [US-CONTRACT-OPS-002](#us-contract-ops-002-audit-stored-officer-version-metadata)    | Audit stored Officer-version metadata    | Platform administrator | 🚧 In Progress | Not assessed   |
+| [US-CONTRACT-OPS-003](#us-contract-ops-003-synchronize-officer-version-metadata)     | Synchronize Officer-version metadata     | Platform administrator | 🧪 Validation  | Not assessed   |
 
 ## Test Coverage Overview
 
@@ -65,15 +65,21 @@ reference has the expected layer label.
 
 Proof obligations use the [shared proof-strategy registry](../../../testing/proof-strategies.md). Multiple IDs for one AC are cumulative.
 
-## US-CONTRACT-OPS-001: Inspect the Contract Deployment Registry
+## FEAT-CONTRACT-OPS-001: Inspect the Contract Deployment Registry
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
+
+### US-CONTRACT-OPS-001: Inspect the Contract Deployment Registry
 
 **As a** platform administrator\
 **I want to** inspect the configured contract deployment generations and their upgrade history\
 **So that** I can understand which contract references belong to each recorded platform generation
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-CONTRACT-OPS-001-01` An authenticated administrator can open the contract-history journey.
 - [x] `AC-US-CONTRACT-OPS-001-02` The journey lists each configured generation with its version, deployment date, source revision, supported
@@ -82,20 +88,20 @@ Proof obligations use the [shared proof-strategy registry](../../../testing/proo
       reference when present, implementation reference, and current-generation status.
 - [x] `AC-US-CONTRACT-OPS-001-04` An administrator can inspect the configured upgrade authority for a contract reference.
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-CONTRACT-OPS-001-05` Contract history is read-only and does not modify a contract, deployment record, or company metadata.
 - [x] `AC-US-CONTRACT-OPS-001-06` A current generation is distinguished from historical generations in the registry view.
 - [x] `AC-US-CONTRACT-OPS-001-07` A contract is included in the history when it has an implementation entry in at least one configured
       generation.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [x] `AC-US-CONTRACT-OPS-001-08` A generation without a configured beacon remains represented as a transparent-proxy contract rather than
       as a missing contract.
 - [x] `AC-US-CONTRACT-OPS-001-09` A missing configured address is presented as unavailable rather than as a fabricated address.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion        | Proof Strategy | Current Evidence | Status     |
 | --------------------------- | -------------- | ---------------- | ---------- |
@@ -111,15 +117,21 @@ Proof obligations use the [shared proof-strategy registry](../../../testing/proo
 
 **Dependencies:** Dashboard authentication, administrator role, and the bundled version registry
 
-## US-CONTRACT-OPS-002: Audit Stored Officer-Version Metadata
+## FEAT-CONTRACT-OPS-002: Audit Stored Officer-Version Metadata
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
+
+### US-CONTRACT-OPS-002: Audit Stored Officer-Version Metadata
 
 **As a** platform administrator\
 **I want to** preview which company Officer-version records differ from their detected on-chain generation\
 **So that** I can decide whether a platform-wide metadata synchronization is needed
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-CONTRACT-OPS-002-01` An authenticated administrator can open the Officer-version synchronization journey.
 - [x] `AC-US-CONTRACT-OPS-002-02` The audit includes archived companies and every stored current and historical Officer record.
@@ -129,13 +141,13 @@ Proof obligations use the [shared proof-strategy registry](../../../testing/proo
       detected version, detection source, and proposed change for every loaded Officer.
 - [x] `AC-US-CONTRACT-OPS-002-05` An administrator can limit the visible preview to records that would change or inspect all loaded records.
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-CONTRACT-OPS-002-06` A directly reported Officer version takes precedence over a version inferred from a recognized beacon.
 - [x] `AC-US-CONTRACT-OPS-002-07` An Officer whose version cannot be resolved is reported as unresolved and is not proposed for update.
 - [x] `AC-US-CONTRACT-OPS-002-08` A preview is read-only until an administrator explicitly confirms the synchronization.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [x] `AC-US-CONTRACT-OPS-002-09` A platform with no stored Officers reports that no records are available for the audit.
 - [ ] `AC-US-CONTRACT-OPS-002-10` A failed company-list or Officer-history read is reported as a data-load failure instead of a completed
@@ -143,7 +155,7 @@ Proof obligations use the [shared proof-strategy registry](../../../testing/proo
 - [ ] `AC-US-CONTRACT-OPS-002-11` An unavailable version and beacon probe is distinguished from an Officer whose generation is genuinely
       unrecognized.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion        | Proof Strategy | Current Evidence | Status          |
 | --------------------------- | -------------- | ---------------- | --------------- |
@@ -165,15 +177,21 @@ Proof obligations use the [shared proof-strategy registry](../../../testing/proo
 
 **Dependencies:** US-CONTRACT-OPS-001, dashboard authentication, administrator role, company Officer records, and on-chain read access
 
-## US-CONTRACT-OPS-003: Synchronize Officer-Version Metadata
+## FEAT-CONTRACT-OPS-003: Synchronize Officer-Version Metadata
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
+
+### US-CONTRACT-OPS-003: Synchronize Officer-Version Metadata
 
 **As a** platform administrator\
 **I want to** apply the reviewed Officer-version changes after confirmation\
 **So that** stored company metadata remains aligned with the detected contract generation
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-CONTRACT-OPS-003-01` An administrator can start synchronization only after the preview detects at least one update and the
       administrator confirms it.
@@ -182,7 +200,7 @@ Proof obligations use the [shared proof-strategy registry](../../../testing/proo
 - [x] `AC-US-CONTRACT-OPS-003-03` A resolved version difference updates only the persisted Officer-version metadata.
 - [x] `AC-US-CONTRACT-OPS-003-04` The dashboard refreshes affected company and Officer caches after a successful synchronization.
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-CONTRACT-OPS-003-05` The synchronization API requires an authenticated administrator in addition to the dashboard route guard.
       _(API)_
@@ -190,14 +208,14 @@ Proof obligations use the [shared proof-strategy registry](../../../testing/proo
 - [x] `AC-US-CONTRACT-OPS-003-07` Historical Officer generations are included in the synchronization as well as current generations. _(API)_
 - [x] `AC-US-CONTRACT-OPS-003-08` The synchronization does not deploy, upgrade, pause, or otherwise modify any on-chain contract.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [x] `AC-US-CONTRACT-OPS-003-09` A failed synchronization reports failure without presenting the run as complete.
 - [x] `AC-US-CONTRACT-OPS-003-10` When the server resolves a version differently from the dashboard preview, the journey reports that
       divergence.
 - [x] `AC-US-CONTRACT-OPS-003-11` A synchronization request with no detected changes completes without rewriting an Officer record. _(API)_
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion        | Proof Strategy | Current Evidence | Status     |
 | --------------------------- | -------------- | ---------------- | ---------- |
