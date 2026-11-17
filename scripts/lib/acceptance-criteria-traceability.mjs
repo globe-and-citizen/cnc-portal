@@ -2,7 +2,8 @@ import { posix } from 'node:path'
 import ts from 'typescript'
 
 const STORY_HEADING = /^## (US-[A-Z0-9-]+):\s+/
-const SECTION_HEADING = /^### (.+)$/
+const SECTION_HEADING = /^(#{3,4}) (.+)$/
+const DEFAULT_STORY_HEADING = /^### (US-[A-Z0-9-]+):\s+/
 const CRITERION = /^- \[([ xX])\] (?:`(AC-US-[A-Z0-9-]+-\d{2,})`\s+)?(.+)$/
 const ACCEPTANCE_ID_REFERENCE = /\[(AC-US-[A-Z0-9-]+-\d{2,})\]/g
 const TRACEABILITY_ID_REFERENCE = /\[((?:AC-)?US-[A-Z0-9-]+)\]/g
@@ -47,11 +48,13 @@ export function parseAcceptanceCriteria(document) {
   const criteria = []
   let storyId = null
   let inAcceptanceCriteria = false
+  let sectionDepth = 3
 
   for (const [index, line] of document.content.split('\n').entries()) {
     const story = line.match(STORY_HEADING)
     if (story) {
       storyId = story[1]
+      sectionDepth = 3
       inAcceptanceCriteria = false
       continue
     }
@@ -62,9 +65,15 @@ export function parseAcceptanceCriteria(document) {
       continue
     }
 
+    const defaultStory = line.match(DEFAULT_STORY_HEADING)
+    if (defaultStory && defaultStory[1] === storyId) {
+      sectionDepth = 4
+      continue
+    }
+
     const section = line.match(SECTION_HEADING)
-    if (section) {
-      inAcceptanceCriteria = storyId !== null && section[1] === 'Acceptance Criteria'
+    if (section && section[1].length === sectionDepth) {
+      inAcceptanceCriteria = storyId !== null && section[2] === 'Acceptance Criteria'
       continue
     }
 
@@ -124,11 +133,13 @@ export function parseAcceptanceCoverageRows(document) {
   const rows = []
   let storyId = null
   let inTestCoverage = false
+  let sectionDepth = 3
 
   for (const [index, line] of document.content.split('\n').entries()) {
     const story = line.match(STORY_HEADING)
     if (story) {
       storyId = story[1]
+      sectionDepth = 3
       inTestCoverage = false
       continue
     }
@@ -139,9 +150,15 @@ export function parseAcceptanceCoverageRows(document) {
       continue
     }
 
+    const defaultStory = line.match(DEFAULT_STORY_HEADING)
+    if (defaultStory && defaultStory[1] === storyId) {
+      sectionDepth = 4
+      continue
+    }
+
     const section = line.match(SECTION_HEADING)
-    if (section) {
-      inTestCoverage = storyId !== null && section[1] === 'Test Coverage'
+    if (section && section[1].length === sectionDepth) {
+      inTestCoverage = storyId !== null && section[2] === 'Test Coverage'
       continue
     }
 
