@@ -1,9 +1,8 @@
 import { posix } from 'node:path'
 import ts from 'typescript'
 
-const STORY_HEADING = /^## (US-[A-Z0-9-]+):\s+/
+const STORY_HEADING = /^(#{2,3}) (US-[A-Z0-9-]+):\s+/
 const SECTION_HEADING = /^(#{3,4}) (.+)$/
-const DEFAULT_STORY_HEADING = /^### (US-[A-Z0-9-]+):\s+/
 const CRITERION = /^- \[([ xX])\] (?:`(AC-US-[A-Z0-9-]+-\d{2,})`\s+)?(.+)$/
 const ACCEPTANCE_ID_REFERENCE = /\[(AC-US-[A-Z0-9-]+-\d{2,})\]/g
 const TRACEABILITY_ID_REFERENCE = /\[((?:AC-)?US-[A-Z0-9-]+)\]/g
@@ -53,8 +52,8 @@ export function parseAcceptanceCriteria(document) {
   for (const [index, line] of document.content.split('\n').entries()) {
     const story = line.match(STORY_HEADING)
     if (story) {
-      storyId = story[1]
-      sectionDepth = 3
+      storyId = story[2]
+      sectionDepth = story[1].length + 1
       inAcceptanceCriteria = false
       continue
     }
@@ -62,12 +61,6 @@ export function parseAcceptanceCriteria(document) {
     if (line.startsWith('## ')) {
       storyId = null
       inAcceptanceCriteria = false
-      continue
-    }
-
-    const defaultStory = line.match(DEFAULT_STORY_HEADING)
-    if (defaultStory && defaultStory[1] === storyId) {
-      sectionDepth = 4
       continue
     }
 
@@ -138,8 +131,8 @@ export function parseAcceptanceCoverageRows(document) {
   for (const [index, line] of document.content.split('\n').entries()) {
     const story = line.match(STORY_HEADING)
     if (story) {
-      storyId = story[1]
-      sectionDepth = 3
+      storyId = story[2]
+      sectionDepth = story[1].length + 1
       inTestCoverage = false
       continue
     }
@@ -147,12 +140,6 @@ export function parseAcceptanceCoverageRows(document) {
     if (line.startsWith('## ')) {
       storyId = null
       inTestCoverage = false
-      continue
-    }
-
-    const defaultStory = line.match(DEFAULT_STORY_HEADING)
-    if (defaultStory && defaultStory[1] === storyId) {
-      sectionDepth = 4
       continue
     }
 
@@ -215,9 +202,13 @@ export function validateFeatureCoverageStructure(featureDocuments, proofStrategy
   const errors = []
 
   for (const document of featureDocuments) {
-    const storyIds = [...document.content.matchAll(/^## (US-[A-Z0-9-]+):/gm)].map(
-      (match) => match[1]
-    )
+    const storyMatches = [...document.content.matchAll(/^(#{2,3}) (US-[A-Z0-9-]+):/gm)]
+    const storyIds = storyMatches
+      .filter((match, index) => {
+        const previous = storyMatches[index - 1]
+        return !(match[1] === '###' && previous?.[1] === '##' && previous[2] === match[2])
+      })
+      .map((match) => match[2])
     for (const heading of [
       'Status Overview',
       'Test Coverage Overview',
@@ -264,6 +255,10 @@ export function validateFeatureCoverageStructure(featureDocuments, proofStrategy
 
     const statusRows = statusLines
       .map(markdownTableCells)
+      .map((cells) => {
+        cells[0] = cells[0]?.replace(/^\[(US-[A-Z0-9-]+)\]\(#[^)]+\)$/, '$1')
+        return cells
+      })
       .filter((cells) => /^US-[A-Z0-9-]+$/.test(cells[0] ?? ''))
     const overviewRows = overviewLines
       .map(markdownTableCells)

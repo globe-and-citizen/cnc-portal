@@ -230,7 +230,7 @@ function canonicalStoryIdsFrom(directory) {
     } else if (entry.name === "README.md") {
       const content = fs.readFileSync(entryPath, "utf8");
       for (const match of content.matchAll(
-        /^##\s+(US-[A-Z0-9]+(?:-[A-Z0-9]+)*-\d+):/gm,
+        /^#{2,3}\s+(US-[A-Z0-9]+(?:-[A-Z0-9]+)*-\d+):/gm,
       )) {
         storyIds.add(match[1]);
       }
