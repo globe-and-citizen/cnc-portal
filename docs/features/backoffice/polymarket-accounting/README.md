@@ -49,13 +49,13 @@ flowchart LR
 
 ## Status Overview
 
-| User Story             | Title                                      | Actor                  | Status         |
-| ---------------------- | ------------------------------------------ | ---------------------- | -------------- |
-| US-POLY-ACCOUNTING-001 | Access and select a public wallet          | Platform administrator | 🚧 In Progress |
-| US-POLY-ACCOUNTING-002 | Reconstruct and reconcile a wallet summary | Platform administrator | 🚧 In Progress |
-| US-POLY-ACCOUNTING-003 | Review reconstructed financial statements  | Platform administrator | 🧪 Validation  |
-| US-POLY-ACCOUNTING-004 | Investigate and export the activity ledger | Platform administrator | 🧪 Validation  |
-| US-POLY-ACCOUNTING-005 | Inspect Polymarket positions               | Platform administrator | 🧪 Validation  |
+| User Story                                                                                   | Feature                                    | Actor                  | Status         | Intended Scope |
+| -------------------------------------------------------------------------------------------- | ------------------------------------------ | ---------------------- | -------------- | -------------- |
+| [US-POLY-ACCOUNTING-001](#us-poly-accounting-001-access-and-select-a-public-wallet)          | Access and select a public wallet          | Platform administrator | 🚧 In Progress | Not assessed   |
+| [US-POLY-ACCOUNTING-002](#us-poly-accounting-002-reconstruct-and-reconcile-a-wallet-summary) | Reconstruct and reconcile a wallet summary | Platform administrator | 🚧 In Progress | Not assessed   |
+| [US-POLY-ACCOUNTING-003](#us-poly-accounting-003-review-reconstructed-financial-statements)  | Review reconstructed financial statements  | Platform administrator | 🧪 Validation  | Not assessed   |
+| [US-POLY-ACCOUNTING-004](#us-poly-accounting-004-investigate-and-export-the-activity-ledger) | Investigate and export the activity ledger | Platform administrator | 🧪 Validation  | Not assessed   |
+| [US-POLY-ACCOUNTING-005](#us-poly-accounting-005-inspect-polymarket-positions)               | Inspect Polymarket positions               | Platform administrator | 🧪 Validation  | Not assessed   |
 
 ## Test Coverage Overview
 
@@ -73,22 +73,28 @@ reference has the expected layer label.
 
 Proof obligations use the [shared proof-strategy registry](../../../testing/proof-strategies.md). Multiple IDs for one AC are cumulative.
 
-## US-POLY-ACCOUNTING-001: Access and Select a Public Wallet
+## FEAT-POLY-ACCOUNTING-001: Access and Select a Public Wallet
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
+
+### US-POLY-ACCOUNTING-001: Access and Select a Public Wallet
 
 **As a** platform administrator\
 **I want to** open the Polymarket accounting capability and select a public wallet\
 **So that** I can begin an operational analysis of that wallet's activity
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-POLY-ACCOUNTING-001-01` An authenticated administrator or super administrator can open Polymarket accounting.
 - [x] `AC-US-POLY-ACCOUNTING-001-02` An administrator can enter a valid wallet address and load its accounting analysis.
 - [x] `AC-US-POLY-ACCOUNTING-001-03` A valid wallet address is represented in the route query, enabling a separate browser tab to analyze a
       different address.
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-POLY-ACCOUNTING-001-04` Dashboard authentication and administrator-role authorization are enforced before the journey is
       entered.
@@ -96,7 +102,7 @@ Proof obligations use the [shared proof-strategy registry](../../../testing/proo
       linked to, the administrator, a portal user, or a company.
 - [x] `AC-US-POLY-ACCOUNTING-001-06` An empty or invalid address does not start upstream accounting queries.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [x] `AC-US-POLY-ACCOUNTING-001-07` An administrator who has not supplied an address is prompted to enter one before the statement views
       have data to show.
@@ -104,7 +110,7 @@ Proof obligations use the [shared proof-strategy registry](../../../testing/proo
       reconstructed figures.
 - [x] `AC-US-POLY-ACCOUNTING-001-09` A valid address can be opened on its Polymarket profile for a direct source comparison.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion           | Proof Strategy | Current Evidence | Status     |
 | ------------------------------ | -------------- | ---------------- | ---------- |
@@ -120,15 +126,21 @@ Proof obligations use the [shared proof-strategy registry](../../../testing/proo
 
 **Dependencies:** Dashboard authentication and administrator roles
 
-## US-POLY-ACCOUNTING-002: Reconstruct and Reconcile a Wallet Summary
+## FEAT-POLY-ACCOUNTING-002: Reconstruct and Reconcile a Wallet Summary
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
+
+### US-POLY-ACCOUNTING-002: Reconstruct and Reconcile a Wallet Summary
 
 **As a** platform administrator\
 **I want to** review a reconstructed wallet summary and its accounting checks\
 **So that** I can understand capital, returns, and data-quality exceptions before investigating details
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-POLY-ACCOUNTING-002-01` The analysis combines wallet activity, positions, and on-chain USD-token transfers into deposits,
       withdrawals, cash, returns, rewards, fees, and position values.
@@ -138,7 +150,7 @@ Proof obligations use the [shared proof-strategy registry](../../../testing/proo
       that best-effort feed fails.
 - [x] `AC-US-POLY-ACCOUNTING-002-04` An administrator can refresh all source feeds for the selected wallet.
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-POLY-ACCOUNTING-002-05` Transfers sharing a transaction hash with a Polymarket activity are reconciled as a single settlement
       instead of being counted as an external deposit or withdrawal.
@@ -147,7 +159,7 @@ Proof obligations use the [shared proof-strategy registry](../../../testing/proo
 - [x] `AC-US-POLY-ACCOUNTING-002-07` When the transfer-history source reaches its safety limit, the journey warns that deposit and
       withdrawal totals may be incomplete.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [x] `AC-US-POLY-ACCOUNTING-002-08` A failure of activity, position, or transfer data is reported as an accounting data-load failure.
 - [ ] `AC-US-POLY-ACCOUNTING-002-09` The journey reports when the activity or position history reaches its 10,000-row client fetch limit
@@ -155,7 +167,7 @@ Proof obligations use the [shared proof-strategy registry](../../../testing/proo
 - [ ] `AC-US-POLY-ACCOUNTING-002-10` When a summary is viewed as of a past date, its accounting-identity checks use the same historical
       snapshot rather than current all-time aggregates.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion           | Proof Strategy | Current Evidence | Status     |
 | ------------------------------ | -------------- | ---------------- | ---------- |
@@ -172,15 +184,21 @@ Proof obligations use the [shared proof-strategy registry](../../../testing/proo
 
 **Dependencies:** US-POLY-ACCOUNTING-001 and availability of the external activity, position, profile, and transfer sources
 
-## US-POLY-ACCOUNTING-003: Review Reconstructed Financial Statements
+## FEAT-POLY-ACCOUNTING-003: Review Reconstructed Financial Statements
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
+
+### US-POLY-ACCOUNTING-003: Review Reconstructed Financial Statements
 
 **As a** platform administrator\
 **I want to** review the reconstructed income statement and balance sheet for a reporting date or period\
 **So that** I can assess realized performance, open exposure, and the accounting position
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-POLY-ACCOUNTING-003-01` An administrator can review realized wins, losses, rewards, net income, and comprehensive income for a
       selected reporting period.
@@ -190,7 +208,7 @@ Proof obligations use the [shared proof-strategy registry](../../../testing/proo
       earnings, and the balance identity.
 - [x] `AC-US-POLY-ACCOUNTING-003-04` An administrator can select a historical reporting date for the summary and balance sheet.
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-POLY-ACCOUNTING-003-05` Historical snapshots carry open contracts at cost; current market value, unrealized P&L, and the
       profile P&L are unavailable for a historical date.
@@ -198,14 +216,14 @@ Proof obligations use the [shared proof-strategy registry](../../../testing/proo
       equal liabilities plus equity.
 - [x] `AC-US-POLY-ACCOUNTING-003-07` The income statement distinguishes realized income from unrealized changes on open positions.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [x] `AC-US-POLY-ACCOUNTING-003-08` A period without matching activity reports zero realized results and no trade rows.
 - [x] `AC-US-POLY-ACCOUNTING-003-09` When Polymarket-reported realized P&L differs from the reconstructed lot result, the statement exposes
       the reconciliation difference.
 - [x] `AC-US-POLY-ACCOUNTING-003-10` Missing live position pricing does not cause a historical snapshot to use today's price retroactively.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion           | Proof Strategy | Current Evidence | Status     |
 | ------------------------------ | -------------- | ---------------- | ---------- |
@@ -222,15 +240,21 @@ Proof obligations use the [shared proof-strategy registry](../../../testing/proo
 
 **Dependencies:** US-POLY-ACCOUNTING-002
 
-## US-POLY-ACCOUNTING-004: Investigate and Export the Activity Ledger
+## FEAT-POLY-ACCOUNTING-004: Investigate and Export the Activity Ledger
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
+
+### US-POLY-ACCOUNTING-004: Investigate and Export the Activity Ledger
 
 **As a** platform administrator\
 **I want to** investigate and export the reconstructed general ledger\
 **So that** I can trace the wallet's accounting entries and share a filtered audit record
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-POLY-ACCOUNTING-004-01` The ledger exposes dated activity and corresponding debit and credit lines for deposits, withdrawals,
       trades, settlements, rewards, and other reconstructed categories.
@@ -241,7 +265,7 @@ Proof obligations use the [shared proof-strategy registry](../../../testing/proo
 - [x] `AC-US-POLY-ACCOUNTING-004-05` The trial balance reports total debits, total credits, and whether they balance for the selected
       period.
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-POLY-ACCOUNTING-004-06` A search match on any journal line retains the complete activity bundle for that entry, rather than
       presenting an isolated line without its corresponding posting.
@@ -249,14 +273,14 @@ Proof obligations use the [shared proof-strategy registry](../../../testing/proo
       reloaded.
 - [x] `AC-US-POLY-ACCOUNTING-004-08` An on-chain transfer and Polymarket activity remain distinguishable sources in the ledger.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [x] `AC-US-POLY-ACCOUNTING-004-09` A filter combination with no matching entries produces an empty result rather than stale prior entries.
 - [x] `AC-US-POLY-ACCOUNTING-004-10` Clearing all categories produces no ledger rows until a category is selected again.
 - [x] `AC-US-POLY-ACCOUNTING-004-11` A missing market link or transaction hash does not prevent the corresponding ledger entry from being
       reviewed or exported.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion           | Proof Strategy | Current Evidence | Status     |
 | ------------------------------ | -------------- | ---------------- | ---------- |
@@ -274,15 +298,21 @@ Proof obligations use the [shared proof-strategy registry](../../../testing/proo
 
 **Dependencies:** US-POLY-ACCOUNTING-002
 
-## US-POLY-ACCOUNTING-005: Inspect Polymarket Positions
+## FEAT-POLY-ACCOUNTING-005: Inspect Polymarket Positions
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
+
+### US-POLY-ACCOUNTING-005: Inspect Polymarket Positions
 
 **As a** platform administrator\
 **I want to** inspect the selected wallet's Polymarket positions\
 **So that** I can relate open and closed exposure to the reconstructed accounting results
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-POLY-ACCOUNTING-005-01` An administrator can inspect every loaded position's market, outcome, shares, average and current
       price, cost basis, current value, unrealized P&L, and realized P&L.
@@ -291,20 +321,20 @@ Proof obligations use the [shared proof-strategy registry](../../../testing/proo
 - [x] `AC-US-POLY-ACCOUNTING-005-03` An administrator can search positions, paginate the matching result, and open a linked market when a
       market reference is available.
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-POLY-ACCOUNTING-005-04` Position values and P&L are supplied by the current Polymarket position feed, not inferred from the
       dashboard's presentation state.
 - [x] `AC-US-POLY-ACCOUNTING-005-05` Changing a position search resets its pagination to the first matching page.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [x] `AC-US-POLY-ACCOUNTING-005-06` A wallet with no loaded positions reports an empty position result.
 - [x] `AC-US-POLY-ACCOUNTING-005-07` A position without a market reference remains reviewable without an external link.
 - [x] `AC-US-POLY-ACCOUNTING-005-08` A failed position source is reported by the accounting journey rather than presented as a successful
       empty portfolio.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion           | Proof Strategy | Current Evidence | Status     |
 | ------------------------------ | -------------- | ---------------- | ---------- |
