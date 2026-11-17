@@ -21,9 +21,9 @@ The display name and profile image can be changed from the client navigation and
 
 ## Status Overview
 
-| User Story     | Title                   | Actor       | Status        |
-| -------------- | ----------------------- | ----------- | ------------- |
-| US-PROFILE-001 | Update profile identity | Portal user | 🧪 Validation |
+| User Story                                                | Feature                 | Actor       | Status        | Intended Scope |
+| --------------------------------------------------------- | ----------------------- | ----------- | ------------- | -------------- |
+| [US-PROFILE-001](#us-profile-001-update-profile-identity) | Update profile identity | Portal user | 🧪 Validation | Not assessed   |
 
 ## Test Coverage Overview
 
@@ -36,7 +36,11 @@ journey remains planned for integrated E2E; focused tests already prove some ind
 
 Proof obligations use the [shared proof-strategy registry](../../testing/proof-strategies.md). Multiple IDs for one AC are cumulative.
 
-## US-PROFILE-001: Update Profile Identity
+## FEAT-PROFILE-001: Update Profile Identity
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-PROFILE-001: Update Profile Identity
 

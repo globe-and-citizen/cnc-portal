@@ -64,17 +64,17 @@ flowchart LR
 
 ## Status Overview
 
-| User Story  | Title                                    | Actor                           | Status         |
-| ----------- | ---------------------------------------- | ------------------------------- | -------------- |
-| US-SHER-001 | Invest in the Safe and receive SHER      | Company member                  | 🧪 Validation  |
-| US-SHER-002 | Distribute dividends to shareholders     | Bank owner / Board member       | 🧪 Validation  |
-| US-SHER-003 | Review shareholder position and activity | Company member                  | 🚧 In Progress |
-| US-SHER-004 | Issue SHER to a shareholder              | Investor owner with minter role | 🚧 In Progress |
-| US-SHER-005 | Configure shareholder investment         | Safe Deposit Router owner       | 🧪 Validation  |
-| US-SHER-006 | Claim a migrated shareholding            | Shareholder                     | 🧪 Validation  |
-| US-SHER-007 | Settle and close a shareholder migration | Investor owner                  | 🧪 Validation  |
-| US-SHER-008 | Start a shareholder migration            | Company owner                   | 🔗 Reference   |
-| US-SHER-009 | Manage Investor permissions              | Investor administrator          | 🧪 Validation  |
+| User Story                                                           | Feature                                  | Actor                           | Status         | Intended Scope |
+| -------------------------------------------------------------------- | ---------------------------------------- | ------------------------------- | -------------- | -------------- |
+| [US-SHER-001](#us-sher-001-invest-in-the-safe-and-receive-sher)      | Invest in the Safe and receive SHER      | Company member                  | 🧪 Validation  | Not assessed   |
+| [US-SHER-002](#us-sher-002-distribute-dividends-to-shareholders)     | Distribute dividends to shareholders     | Bank owner / Board member       | 🧪 Validation  | Not assessed   |
+| [US-SHER-003](#us-sher-003-review-shareholder-position-and-activity) | Review shareholder position and activity | Company member                  | 🚧 In Progress | Not assessed   |
+| [US-SHER-004](#us-sher-004-issue-sher-to-a-shareholder)              | Issue SHER to a shareholder              | Investor owner with minter role | 🚧 In Progress | Not assessed   |
+| [US-SHER-005](#us-sher-005-configure-shareholder-investment)         | Configure shareholder investment         | Safe Deposit Router owner       | 🧪 Validation  | Not assessed   |
+| [US-SHER-006](#us-sher-006-claim-a-migrated-shareholding)            | Claim a migrated shareholding            | Shareholder                     | 🧪 Validation  | Not assessed   |
+| [US-SHER-007](#us-sher-007-settle-and-close-a-shareholder-migration) | Settle and close a shareholder migration | Investor owner                  | 🧪 Validation  | Not assessed   |
+| [US-SHER-008](#us-sher-008-start-a-shareholder-migration)            | Start a shareholder migration            | Company owner                   | 🔗 Reference   | Not assessed   |
+| [US-SHER-009](#us-sher-009-manage-investor-permissions)              | Manage Investor permissions              | Investor administrator          | 🧪 Validation  | Not assessed   |
 
 ## Test Coverage Overview
 
@@ -91,7 +91,11 @@ flowchart LR
 
 Proof obligations use the [shared proof-strategy registry](../../testing/proof-strategies.md). Multiple IDs for one AC are cumulative.
 
-## US-SHER-001: Invest in the Safe and Receive SHER
+## FEAT-SHER-001: Invest in the Safe and Receive SHER
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-SHER-001: Invest in the Safe and Receive SHER
 
@@ -151,7 +155,11 @@ supporting evidence, not separate entries.
 
 **Dependencies:** US-SHER-005, an active Safe Deposit Router, a connected wallet, and a USDC balance
 
-## US-SHER-002: Distribute Dividends to Shareholders
+## FEAT-SHER-002: Distribute Dividends to Shareholders
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-SHER-002: Distribute Dividends to Shareholders
 
@@ -211,7 +219,11 @@ Bank's distribution trigger is not booked again.
 
 **Dependencies:** US-SHER-001, US-BANK-001, a current Bank owner or eligible Board member, and at least one shareholder
 
-## US-SHER-003: Review Shareholder Position and Activity
+## FEAT-SHER-003: Review Shareholder Position and Activity
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-SHER-003: Review Shareholder Position and Activity
 
@@ -280,7 +292,11 @@ movement across the participating stories.
 | External assets reach Investor or SafeDepositRouter without an investment, distribution, or established purpose. [UC-TREASURY-002](../accounting/journal-entry-catalogue.md#uc-treasury-002--external-receipt-pending-classification) | Separates direct holdings from shares and dividends. | [US-CONTRACT-001](../contract-management/README.md#us-contract-001-review-the-current-contract-suite) — exposes custody and recovery limits; [US-ACCT-007](../accounting/README.md#us-acct-007-review-direct-treasury-movements) — owns movement evidence and identity; [US-ACCT-010](../accounting/README.md#us-acct-010-classify-direct-external-receipts) — owns eligible receipt classification |
 | Owner-authorized Router recovery moves held tokens to the same company Safe. [UC-TREASURY-001](../accounting/journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer)                                            | Traces the router receipt and recovery.              | [US-SAFE-002](../accounts/README.md#us-safe-002-inspect-safe-details) — owns receiving Safe history; [US-ACCT-007](../accounting/README.md#us-acct-007-review-direct-treasury-movements) — correlates source and destination without a second receipt or SHER issuance                                                                                                                              |
 
-## US-SHER-004: Issue SHER to a Shareholder
+## FEAT-SHER-004: Issue SHER to a Shareholder
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-SHER-004: Issue SHER to a Shareholder
 
@@ -331,7 +347,11 @@ movement across the participating stories.
 
 **Dependencies:** Current Investor contract, a connected issuer with `MINTER_ROLE`, and a connected wallet
 
-## US-SHER-005: Configure Shareholder Investment
+## FEAT-SHER-005: Configure Shareholder Investment
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-SHER-005: Configure Shareholder Investment
 
@@ -381,7 +401,11 @@ movement across the participating stories.
 
 **Dependencies:** US-SAFE-001, an active Safe Deposit Router, and a connected router owner
 
-## US-SHER-006: Claim a Migrated Shareholding
+## FEAT-SHER-006: Claim a Migrated Shareholding
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-SHER-006: Claim a Migrated Shareholding
 
@@ -433,7 +457,11 @@ entry.
 
 **Dependencies:** US-SHER-008, a connected shareholder, and a valid migration proof
 
-## US-SHER-007: Settle and Close a Shareholder Migration
+## FEAT-SHER-007: Settle and Close a Shareholder Migration
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-SHER-007: Settle and Close a Shareholder Migration
 
@@ -485,7 +513,7 @@ entry.
 
 **Dependencies:** US-SHER-008 and an Investor owner
 
-## US-SHER-008: Start a Shareholder Migration
+## Referenced Story: Start a Shareholder Migration
 
 ### US-SHER-008: Start a Shareholder Migration
 
@@ -499,7 +527,11 @@ the redeployment and migration-root commit. Shareholder Management exposes the m
 
 **Dependencies:** US-CONTRACT-005 and a previous Investor generation
 
-## US-SHER-009: Manage Investor Permissions
+## FEAT-SHER-009: Manage Investor Permissions
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-SHER-009: Manage Investor Permissions
 

@@ -9,9 +9,9 @@
 ## Purpose
 
 A **module** groups related product capabilities and owns their shared product model. A **feature** is an observable capability that lets an
-actor achieve a distinct outcome. Its default user story uses the same stable `US-*` identifier and title; its `AC-US-*` criteria define
-independently verifiable outcomes. A module can contain several features. Reference stories link behaviour owned elsewhere and do not create
-a duplicate feature contract.
+actor achieve a distinct outcome. A feature uses a `FEAT-*` identifier. Its default user story has a distinct `US-*` identifier and the same
+title; its `AC-US-*` criteria define independently verifiable outcomes. One feature can contain multiple stories. A module can contain
+several features. Reference stories link behaviour owned elsewhere and do not create a duplicate feature contract.
 
 A module README owns its stories, criteria, coverage and review evidence. It is not an implementation manual or delivery history. Code and
 tests are executable evidence; issues, pull requests and Git preserve active work and history.
@@ -19,9 +19,9 @@ tests are executable evidence; issues, pull requests and Git preserve active wor
 ## Feature Eligibility and Grouping
 
 Document accepted or explicitly proposed capabilities, including planned, incomplete and accessible behaviour. Ground intent in product
-decisions; identify unresolved scope and do not treat an implementation detail, a route, or a UI click as a feature. Give each feature one
-actor goal and an observable result. Do not duplicate it by access channel. Distinguish intended release, implementation, test coverage,
-current access and human acceptance.
+decisions; identify unresolved scope and do not treat an implementation detail, a route, or a UI click as a feature. Give each feature a
+coherent observable result; each story identifies its actor and goal. Do not duplicate it by access channel. Distinguish intended release,
+implementation, test coverage, current access and human acceptance.
 
 For current-access claims inspect navigation, linked routes, meaningful actions, access guards and role conditions. Exclude placeholders,
 development playgrounds, error and access-denied pages, orphaned routes and technical mechanisms as standalone product features unless they
@@ -251,13 +251,13 @@ Present the main journey in the order a user or tester encounters it.
 
 Summarize the module's features and reference stories before the detailed stories.
 
-| User Story     | Title              | Actor      | Status         |
-| -------------- | ------------------ | ---------- | -------------- |
-| US-FEATURE-001 | Observable outcome | Main actor | 🚧 In Progress |
+| User Story     | Feature            | Actor      | Status         | Intended Scope |
+| -------------- | ------------------ | ---------- | -------------- | -------------- |
+| US-FEATURE-001 | Observable outcome | Main actor | 🚧 In Progress | Not assessed   |
 
 Use stable IDs. Do not reuse or silently renumber an ID after it has been referenced by code, tests, issues, or documentation.
 
-List the status overview rows and detailed `## US-...` sections in ascending stable user-story-ID order. A lifecycle can show the actual
+List the status overview rows and detailed `### US-...` sections in ascending stable user-story-ID order. A lifecycle can show the actual
 journey and its branches, but it must not change that documentation order.
 
 The module status overview is the authoritative delivery-state record for each story; the catalogue mirrors it for navigation. It records
@@ -355,15 +355,25 @@ outcome, then name every owning layer and the boundary risk explicitly.
 
 ### 5. Features and User Stories
 
-Within the module, use a level-two heading for each feature, followed by its default user story as a level-three heading with the same
-stable ID and title. Nest its journey, acceptance criteria, and evidence below the story. This makes module → feature → story explicit while
-preserving existing feature anchors. Reference stories retain this structure but link to the owning contract instead of duplicating
-criteria. A historical story may still require product review before its feature boundary is final.
+Within a module, use a level-two `FEAT-<MODULE>-<three-digit-number>` heading for each feature. Nest its default story under a level-three
+`US-*` heading with the same title, then its journey, acceptance criteria and evidence. Additional distinct actor goals may use additional
+stories under the same feature. List reference-only stories separately and link to the owning feature rather than duplicating criteria. A
+historical story may still require product review before its feature boundary is final.
+
+For new identifiers, use `US-<MODULE>-<FEATURE>` for a single story and `AC-US-<MODULE>-<FEATURE>-<CRITERION>` for its criteria. When adding
+a second story, migrate the first story and its criteria to numbered story suffixes, map old to new IDs, update known references and
+anchors, and retain unmigrated requirements. Keep existing CNC story and criterion IDs unless such a migration is necessary. Existing
+prefixes and shorter legacy numbers remain valid; for example `US-EL-01` remains under `FEAT-EL-001`. Accounts retains the existing BANK,
+EXP and SAFE prefixes. Never infer product scope or acceptance from an identifier change.
 
 Put each part of the user-story sentence on its own source line and rendered line.
 
 ```markdown
-## US-FEATURE-001: Perform an Observable Action
+## FEAT-FEATURE-001: Perform an Observable Action
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-FEATURE-001: Perform an Observable Action
 

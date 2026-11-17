@@ -43,11 +43,11 @@ flowchart LR
 
 ## Status Overview
 
-| User Story      | Title                                      | Actor                  | Status         |
-| --------------- | ------------------------------------------ | ---------------------- | -------------- |
-| US-TEAM-OPS-001 | Access and inspect platform companies      | Platform administrator | ✅ Done        |
-| US-TEAM-OPS-002 | Inspect a company profile                  | Platform administrator | ✅ Done        |
-| US-TEAM-OPS-003 | Investigate Officer contracts and balances | Platform administrator | 🚧 In Progress |
+| User Story                                                                     | Feature                                    | Actor                  | Status         | Intended Scope |
+| ------------------------------------------------------------------------------ | ------------------------------------------ | ---------------------- | -------------- | -------------- |
+| [US-TEAM-OPS-001](#us-team-ops-001-access-and-inspect-platform-companies)      | Access and inspect platform companies      | Platform administrator | ✅ Done        | Not assessed   |
+| [US-TEAM-OPS-002](#us-team-ops-002-inspect-a-company-profile)                  | Inspect a company profile                  | Platform administrator | ✅ Done        | Not assessed   |
+| [US-TEAM-OPS-003](#us-team-ops-003-investigate-officer-contracts-and-balances) | Investigate Officer contracts and balances | Platform administrator | 🚧 In Progress | Not assessed   |
 
 ## Test Coverage Overview
 
@@ -63,7 +63,11 @@ reference has the expected layer label.
 
 Proof obligations use the [shared proof-strategy registry](../../../testing/proof-strategies.md). Multiple IDs for one AC are cumulative.
 
-## US-TEAM-OPS-001: Access and Inspect Platform Companies
+## FEAT-TEAM-OPS-001: Access and Inspect Platform Companies
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-TEAM-OPS-001: Access and Inspect Platform Companies
 
@@ -119,7 +123,11 @@ Proof obligations use the [shared proof-strategy registry](../../../testing/proo
 
 **Dependencies:** Dashboard authentication and administrator roles
 
-## US-TEAM-OPS-002: Inspect a Company Profile
+## FEAT-TEAM-OPS-002: Inspect a Company Profile
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-TEAM-OPS-002: Inspect a Company Profile
 
@@ -161,7 +169,11 @@ Proof obligations use the [shared proof-strategy registry](../../../testing/proo
 
 **Dependencies:** US-TEAM-OPS-001
 
-## US-TEAM-OPS-003: Investigate Officer Contracts and Balances
+## FEAT-TEAM-OPS-003: Investigate Officer Contracts and Balances
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-TEAM-OPS-003: Investigate Officer Contracts and Balances
 

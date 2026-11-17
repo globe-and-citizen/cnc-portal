@@ -72,26 +72,26 @@ flowchart LR
 
 ## Status Overview
 
-| User Story  | Title                                      | Actor                      | Status         |
-| ----------- | ------------------------------------------ | -------------------------- | -------------- |
-| US-BANK-001 | Fund the Bank                              | Company member             | 🧪 Validation  |
-| US-BANK-002 | Transfer Bank funds                        | Owner / Board member       | 🧪 Validation  |
-| US-BANK-003 | Review the Bank position and history       | Company member             | 🚧 In Progress |
-| US-BANK-004 | Cash out available treasury funds          | Bank owner                 | 🧪 Validation  |
-| US-EXP-001  | Grant a signed spending approval           | Expense Account owner      | 🧪 Validation  |
-| US-EXP-002  | Spend from the Expense Account             | Approved recipient         | 🚧 In Progress |
-| US-EXP-003  | Deactivate or reactivate an approval       | Expense Account owner      | 🧪 Validation  |
-| US-EXP-004  | Review the Expense Account and its history | Company member / recipient | 🚧 In Progress |
-| US-EXP-005  | Fund the Expense Account                   | Account funder             | 🚧 In Progress |
-| US-EXP-006  | Return Expense Account funds to Bank       | Authorized treasury actor  | 🚧 In Progress |
-| US-SAFE-001 | Set up and manage the company Safes        | Company owner              | 🧪 Validation  |
-| US-SAFE-002 | Inspect Safe details                       | Company member             | 🚧 In Progress |
-| US-SAFE-003 | Manage Safe funds                          | Safe owner                 | 🧪 Validation  |
-| US-SAFE-004 | Manage Safe signers and threshold          | Safe owner                 | 🧪 Validation  |
-| US-SAFE-005 | Review Safe transactions                   | Company member             | 🧪 Validation  |
-| US-SAFE-006 | Approve and execute a Safe transaction     | Safe owner                 | 🧪 Validation  |
-| US-SAFE-007 | Review the Safe swap P&L                   | Company member             | 🧪 Validation  |
-| US-SAFE-008 | Review the Safe swaps                      | Company member             | 🧪 Validation  |
+| User Story                                                           | Feature                                    | Actor                      | Status         | Intended Scope |
+| -------------------------------------------------------------------- | ------------------------------------------ | -------------------------- | -------------- | -------------- |
+| [US-BANK-001](#us-bank-001-fund-the-bank)                            | Fund the Bank                              | Company member             | 🧪 Validation  | Not assessed   |
+| [US-BANK-002](#us-bank-002-transfer-bank-funds)                      | Transfer Bank funds                        | Owner / Board member       | 🧪 Validation  | Not assessed   |
+| [US-BANK-003](#us-bank-003-review-the-bank-position-and-history)     | Review the Bank position and history       | Company member             | 🚧 In Progress | Not assessed   |
+| [US-BANK-004](#us-bank-004-cash-out-available-treasury-funds)        | Cash out available treasury funds          | Bank owner                 | 🧪 Validation  | Not assessed   |
+| [US-EXP-001](#us-exp-001-grant-a-signed-spending-approval)           | Grant a signed spending approval           | Expense Account owner      | 🧪 Validation  | Not assessed   |
+| [US-EXP-002](#us-exp-002-spend-from-the-expense-account)             | Spend from the Expense Account             | Approved recipient         | 🚧 In Progress | Not assessed   |
+| [US-EXP-003](#us-exp-003-deactivate-or-reactivate-an-approval)       | Deactivate or reactivate an approval       | Expense Account owner      | 🧪 Validation  | Not assessed   |
+| [US-EXP-004](#us-exp-004-review-the-expense-account-and-its-history) | Review the Expense Account and its history | Company member / recipient | 🚧 In Progress | Not assessed   |
+| [US-EXP-005](#us-exp-005-fund-the-expense-account)                   | Fund the Expense Account                   | Account funder             | 🚧 In Progress | Not assessed   |
+| [US-EXP-006](#us-exp-006-return-expense-account-funds-to-bank)       | Return Expense Account funds to Bank       | Authorized treasury actor  | 🚧 In Progress | Not assessed   |
+| [US-SAFE-001](#us-safe-001-set-up-and-manage-the-company-safes)      | Set up and manage the company Safes        | Company owner              | 🧪 Validation  | Not assessed   |
+| [US-SAFE-002](#us-safe-002-inspect-safe-details)                     | Inspect Safe details                       | Company member             | 🚧 In Progress | Not assessed   |
+| [US-SAFE-003](#us-safe-003-manage-safe-funds)                        | Manage Safe funds                          | Safe owner                 | 🧪 Validation  | Not assessed   |
+| [US-SAFE-004](#us-safe-004-manage-safe-signers-and-threshold)        | Manage Safe signers and threshold          | Safe owner                 | 🧪 Validation  | Not assessed   |
+| [US-SAFE-005](#us-safe-005-review-safe-transactions)                 | Review Safe transactions                   | Company member             | 🧪 Validation  | Not assessed   |
+| [US-SAFE-006](#us-safe-006-approve-and-execute-a-safe-transaction)   | Approve and execute a Safe transaction     | Safe owner                 | 🧪 Validation  | Not assessed   |
+| [US-SAFE-007](#us-safe-007-review-the-safe-swap-pl)                  | Review the Safe swap P&L                   | Company member             | 🧪 Validation  | Not assessed   |
+| [US-SAFE-008](#us-safe-008-review-the-safe-swaps)                    | Review the Safe swaps                      | Company member             | 🧪 Validation  | Not assessed   |
 
 ## Test Coverage Overview
 
@@ -127,7 +127,11 @@ Runs of at least three consecutive missing criteria use inclusive ranges with fu
 
 Proof obligations use the [shared proof-strategy registry](../../testing/proof-strategies.md). Multiple IDs for one AC are cumulative.
 
-## US-BANK-001: Fund the Bank
+## FEAT-BANK-001: Fund the Bank
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-BANK-001: Fund the Bank
 
@@ -207,7 +211,11 @@ movement across the participating stories.
 | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | External wallet funds Bank without established purpose or facture evidence. [UC-TREASURY-002](../accounting/journal-entry-catalogue.md#uc-treasury-002--external-receipt-pending-classification) | Owns received funding. | [US-BANK-003](README.md#us-bank-003-review-the-bank-position-and-history) — owns Bank history; [US-PAYGATE-004](../payment-gate/README.md#us-paygate-004-review-payment-history) — keeps unmatched receipts outside invoice history; [US-ACCT-007](../accounting/README.md#us-acct-007-review-direct-treasury-movements) — owns movement evidence and identity; [US-ACCT-010](../accounting/README.md#us-acct-010-classify-direct-external-receipts) — owns eligible receipt classification |
 
-## US-BANK-002: Transfer Bank Funds
+## FEAT-BANK-002: Transfer Bank Funds
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-BANK-002: Transfer Bank Funds
 
@@ -290,7 +298,11 @@ remain as recorded above.
 | A cash-out run makes its final external Bank payment without an established purpose. [UC-TREASURY-003](../accounting/journal-entry-catalogue.md#uc-treasury-003--external-payment-pending-classification)          | Owns the Bank transfer, authorization, amount, and fee.              | [US-BANK-004](#us-bank-004-cash-out-available-treasury-funds) — orchestrates the final payment                                                                                                                   |
 | A cash-out run makes its final external Bank payment with valid operating-expense evidence or classification. [UC-EXPENSE-001](../accounting/journal-entry-catalogue.md#uc-expense-001--operating-expense-payment) | Owns the Bank transfer, authorization, amount, and fee.              | [US-BANK-004](#us-bank-004-cash-out-available-treasury-funds) — orchestrates the final payment                                                                                                                   |
 
-## US-BANK-003: Review the Bank Position and History
+## FEAT-BANK-003: Review the Bank Position and History
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-BANK-003: Review the Bank Position and History
 
@@ -363,7 +375,11 @@ movement across the participating stories.
 | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | External wallet funds Bank without established purpose or facture evidence. [UC-TREASURY-002](../accounting/journal-entry-catalogue.md#uc-treasury-002--external-receipt-pending-classification) | Owns bank history. | [US-BANK-001](README.md#us-bank-001-fund-the-bank) — owns received funding; [US-PAYGATE-004](../payment-gate/README.md#us-paygate-004-review-payment-history) — keeps unmatched receipts outside invoice history; [US-ACCT-007](../accounting/README.md#us-acct-007-review-direct-treasury-movements) — owns movement evidence and identity; [US-ACCT-010](../accounting/README.md#us-acct-010-classify-direct-external-receipts) — owns eligible receipt classification |
 
-## US-BANK-004: Cash Out Available Treasury Funds
+## FEAT-BANK-004: Cash Out Available Treasury Funds
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-BANK-004: Cash Out Available Treasury Funds
 
@@ -442,7 +458,11 @@ remain as recorded above.
 | A cash-out run makes its final external Bank payment without an established purpose. [UC-TREASURY-003](../accounting/journal-entry-catalogue.md#uc-treasury-003--external-payment-pending-classification)          | Orchestrates the final payment.                   | [US-BANK-002](#us-bank-002-transfer-bank-funds) — owns the Bank transfer, authorization, amount, and fee                                                                                                                            |
 | A cash-out run makes its final external Bank payment with valid operating-expense evidence or classification. [UC-EXPENSE-001](../accounting/journal-entry-catalogue.md#uc-expense-001--operating-expense-payment) | Orchestrates the final payment.                   | [US-BANK-002](#us-bank-002-transfer-bank-funds) — owns the Bank transfer, authorization, amount, and fee                                                                                                                            |
 
-## US-EXP-001: Grant a Signed Spending Approval
+## FEAT-EXP-001: Grant a Signed Spending Approval
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-EXP-001: Grant a Signed Spending Approval
 
@@ -504,7 +524,11 @@ remain as recorded above.
 
 **Dependencies:** Current Expense Account contract and connected contract owner
 
-## US-EXP-002: Spend From the Expense Account
+## FEAT-EXP-002: Spend From the Expense Account
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-EXP-002: Spend From the Expense Account
 
@@ -583,7 +607,11 @@ remain as recorded above.
 | An approved Expense payout reaches Safe. [UC-TREASURY-001](../accounting/journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer)                             | Executes the approved payout to a company pocket.        | [US-SAFE-003](#us-safe-003-manage-safe-funds) — receives the Safe funding                                                                    |
 | An approved Expense payout reaches another known Expense deployment. [UC-TREASURY-001](../accounting/journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer) | Executes the approved payout from the source deployment. | [US-EXP-005](#us-exp-005-fund-the-expense-account) — owns the credited balance and spending availability in the destination deployment       |
 
-## US-EXP-003: Deactivate or Reactivate an Approval
+## FEAT-EXP-003: Deactivate or Reactivate an Approval
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-EXP-003: Deactivate or Reactivate an Approval
 
@@ -635,7 +663,11 @@ remain as recorded above.
 
 **Dependencies:** US-EXP-001
 
-## US-EXP-004: Review the Expense Account and Its History
+## FEAT-EXP-004: Review the Expense Account and Its History
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-EXP-004: Review the Expense Account and Its History
 
@@ -711,7 +743,11 @@ movement across the participating stories.
 | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | External wallet funds Expense without established business purpose. [UC-TREASURY-002](../accounting/journal-entry-catalogue.md#uc-treasury-002--external-receipt-pending-classification) | Owns expense position and history. | [US-EXP-005](README.md#us-exp-005-fund-the-expense-account) — owns received funding and spending availability; [US-ACCT-007](../accounting/README.md#us-acct-007-review-direct-treasury-movements) — owns movement evidence and identity; [US-ACCT-010](../accounting/README.md#us-acct-010-classify-direct-external-receipts) — owns eligible receipt classification |
 
-## US-EXP-005: Fund the Expense Account
+## FEAT-EXP-005: Fund the Expense Account
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-EXP-005: Fund the Expense Account
 
@@ -782,7 +818,11 @@ movement across the participating stories.
 | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | External wallet funds Expense without established business purpose. [UC-TREASURY-002](../accounting/journal-entry-catalogue.md#uc-treasury-002--external-receipt-pending-classification) | Owns received funding and spending availability. | [US-EXP-004](README.md#us-exp-004-review-the-expense-account-and-its-history) — owns Expense position and history; [US-ACCT-007](../accounting/README.md#us-acct-007-review-direct-treasury-movements) — owns movement evidence and identity; [US-ACCT-010](../accounting/README.md#us-acct-010-classify-direct-external-receipts) — owns eligible receipt classification |
 
-## US-EXP-006: Return Expense Account Funds to Bank
+## FEAT-EXP-006: Return Expense Account Funds to Bank
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-EXP-006: Return Expense Account Funds to Bank
 
@@ -853,7 +893,11 @@ remain as recorded above.
 | Expense funds return directly to their generation's Bank. [UC-TREASURY-001](../accounting/journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer)        | Initiates the source-account return. | [US-BANK-003](#us-bank-003-review-the-bank-position-and-history) — owns the receiving Bank balance and history                                                                                                                   |
 | A cash-out run returns Expense funds to their generation's Bank. [UC-TREASURY-001](../accounting/journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer) | Owns the source-account return.      | [US-BANK-004](#us-bank-004-cash-out-available-treasury-funds) — orchestrates the step and owns sequence recovery; [US-BANK-003](#us-bank-003-review-the-bank-position-and-history) — owns the receiving Bank balance and history |
 
-## US-SAFE-001: Set Up and Manage the Company Safes
+## FEAT-SAFE-001: Set Up and Manage the Company Safes
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-SAFE-001: Set Up and Manage the Company Safes
 
@@ -936,7 +980,11 @@ remain as recorded above.
 
 **Dependencies:** Current company and active network
 
-## US-SAFE-002: Inspect Safe Details
+## FEAT-SAFE-002: Inspect Safe Details
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-SAFE-002: Inspect Safe Details
 
@@ -1000,7 +1048,11 @@ movement across the participating stories.
 | External wallet funds Safe without established purpose or investment evidence. [UC-TREASURY-002](../accounting/journal-entry-catalogue.md#uc-treasury-002--external-receipt-pending-classification) | Owns safe asset history.     | [US-SAFE-003](README.md#us-safe-003-manage-safe-funds) — owns funding; [US-ACCT-007](../accounting/README.md#us-acct-007-review-direct-treasury-movements) — owns movement evidence and identity; [US-ACCT-010](../accounting/README.md#us-acct-010-classify-direct-external-receipts) — owns eligible receipt classification |
 | Owner-authorized Router recovery moves held tokens to the same company Safe. [UC-TREASURY-001](../accounting/journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer)          | Owns receiving safe history. | [US-SHER-003](../shareholder-management/README.md#us-sher-003-review-shareholder-position-and-activity) — traces the Router receipt and recovery; [US-ACCT-007](../accounting/README.md#us-acct-007-review-direct-treasury-movements) — correlates source and destination without a second receipt or SHER issuance           |
 
-## US-SAFE-003: Manage Safe Funds
+## FEAT-SAFE-003: Manage Safe Funds
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-SAFE-003: Manage Safe Funds
 
@@ -1083,7 +1135,11 @@ movement across the participating stories.
 | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | External wallet funds Safe without established purpose or investment evidence. [UC-TREASURY-002](../accounting/journal-entry-catalogue.md#uc-treasury-002--external-receipt-pending-classification) | Owns funding.   | [US-SAFE-002](README.md#us-safe-002-inspect-safe-details) — owns Safe asset history; [US-ACCT-007](../accounting/README.md#us-acct-007-review-direct-treasury-movements) — owns movement evidence and identity; [US-ACCT-010](../accounting/README.md#us-acct-010-classify-direct-external-receipts) — owns eligible receipt classification |
 
-## US-SAFE-004: Manage Safe Signers and Threshold
+## FEAT-SAFE-004: Manage Safe Signers and Threshold
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-SAFE-004: Manage Safe Signers and Threshold
 
@@ -1127,7 +1183,11 @@ movement across the participating stories.
 
 **Dependencies:** US-SAFE-006
 
-## US-SAFE-005: Review Safe Transactions
+## FEAT-SAFE-005: Review Safe Transactions
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-SAFE-005: Review Safe Transactions
 
@@ -1171,7 +1231,11 @@ movement across the participating stories.
 
 **Dependencies:** US-SAFE-001
 
-## US-SAFE-006: Approve and Execute a Safe Transaction
+## FEAT-SAFE-006: Approve and Execute a Safe Transaction
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-SAFE-006: Approve and Execute a Safe Transaction
 
@@ -1218,7 +1282,11 @@ movement across the participating stories.
 
 **Dependencies:** US-SAFE-001
 
-## US-SAFE-007: Review the Safe Swap P&L
+## FEAT-SAFE-007: Review the Safe Swap P&L
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-SAFE-007: Review the Safe Swap P&L
 
@@ -1299,7 +1367,11 @@ than its average cost.
 
 **Dependencies:** US-SAFE-002
 
-## US-SAFE-008: Review the Safe Swaps
+## FEAT-SAFE-008: Review the Safe Swaps
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-SAFE-008: Review the Safe Swaps
 

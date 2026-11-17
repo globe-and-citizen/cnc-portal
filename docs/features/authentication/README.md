@@ -42,11 +42,11 @@ flowchart TB
 
 ## Status Overview
 
-| User Story  | Title                                | Actor                     | Status         |
-| ----------- | ------------------------------------ | ------------------------- | -------------- |
-| US-AUTH-001 | Sign in to the client                | Portal user               | ✅ Done        |
-| US-AUTH-002 | Sign in to the backoffice            | Platform administrator    | 🚧 In Progress |
-| US-AUTH-004 | Resume after a wallet network change | Authenticated portal user | ✅ Done        |
+| User Story                                                       | Feature                              | Actor                     | Status         | Intended Scope |
+| ---------------------------------------------------------------- | ------------------------------------ | ------------------------- | -------------- | -------------- |
+| [US-AUTH-001](#us-auth-001-sign-in-to-the-client)                | Sign in to the client                | Portal user               | ✅ Done        | Not assessed   |
+| [US-AUTH-002](#us-auth-002-sign-in-to-the-backoffice)            | Sign in to the backoffice            | Platform administrator    | 🚧 In Progress | Not assessed   |
+| [US-AUTH-004](#us-auth-004-resume-after-a-wallet-network-change) | Resume after a wallet network change | Authenticated portal user | ✅ Done        | Not assessed   |
 
 ## Test Coverage Overview
 
@@ -64,7 +64,11 @@ Runs of at least three consecutive missing criteria use inclusive ranges with fu
 
 Proof obligations use the [shared proof-strategy registry](../../testing/proof-strategies.md). Multiple IDs for one AC are cumulative.
 
-## US-AUTH-001: Sign in to the Client
+## FEAT-AUTH-001: Sign in to the Client
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-AUTH-001: Sign in to the Client
 
@@ -137,7 +141,11 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 | `AC-US-AUTH-001-17`  | `PS-FRONTEND`       | Frontend                            | ✅ Met |
 | `AC-US-AUTH-001-18`  | `PS-FRONTEND`       | Frontend                            | ✅ Met |
 
-## US-AUTH-002: Sign in to the Backoffice
+## FEAT-AUTH-002: Sign in to the Backoffice
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-AUTH-002: Sign in to the Backoffice
 
@@ -186,7 +194,11 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 | `AC-US-AUTH-002-09`  | `PS-DASHBOARD` | Dashboard           | ✅ Met     |
 | `AC-US-AUTH-002-10`  | `PS-DASHBOARD` | None linked         | ❌ Missing |
 
-## US-AUTH-004: Resume after a Wallet Network Change
+## FEAT-AUTH-004: Resume after a Wallet Network Change
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-AUTH-004: Resume after a Wallet Network Change
 

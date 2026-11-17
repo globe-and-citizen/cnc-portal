@@ -62,17 +62,17 @@ flowchart LR
 
 ## Status Overview
 
-| User Story       | Title                                     | Actor           | Status        |
-| ---------------- | ----------------------------------------- | --------------- | ------------- |
-| US-COMPANIES-001 | Create a company workspace                | Company creator | ✅ Done       |
-| US-COMPANIES-002 | Deploy the initial Officer contract suite | Company owner   | ✅ Done       |
-| US-COMPANIES-003 | Browse and open my companies              | Company member  | ✅ Done       |
-| US-COMPANIES-004 | Update company details                    | Company owner   | ✅ Done       |
-| US-COMPANIES-005 | Manage company members                    | Company owner   | ✅ Done       |
-| US-COMPANIES-006 | Archive or restore a company              | Company owner   | ✅ Done       |
-| US-COMPANIES-007 | Control my company-list visibility        | Company member  | ✅ Done       |
-| US-COMPANIES-008 | Permanently delete a company              | Company owner   | ✅ Done       |
-| US-COMPANIES-009 | Pin a company in my lists                 | Company member  | 🧪 Validation |
+| User Story                                                                      | Feature                                   | Actor           | Status        | Intended Scope |
+| ------------------------------------------------------------------------------- | ----------------------------------------- | --------------- | ------------- | -------------- |
+| [US-COMPANIES-001](#us-companies-001-create-a-company-workspace)                | Create a company workspace                | Company creator | ✅ Done       | Not assessed   |
+| [US-COMPANIES-002](#us-companies-002-deploy-the-initial-officer-contract-suite) | Deploy the initial Officer contract suite | Company owner   | ✅ Done       | Not assessed   |
+| [US-COMPANIES-003](#us-companies-003-browse-and-open-my-companies)              | Browse and open my companies              | Company member  | ✅ Done       | Not assessed   |
+| [US-COMPANIES-004](#us-companies-004-update-company-details)                    | Update company details                    | Company owner   | ✅ Done       | Not assessed   |
+| [US-COMPANIES-005](#us-companies-005-manage-company-members)                    | Manage company members                    | Company owner   | ✅ Done       | Not assessed   |
+| [US-COMPANIES-006](#us-companies-006-archive-or-restore-a-company)              | Archive or restore a company              | Company owner   | ✅ Done       | Not assessed   |
+| [US-COMPANIES-007](#us-companies-007-control-my-company-list-visibility)        | Control my company-list visibility        | Company member  | ✅ Done       | Not assessed   |
+| [US-COMPANIES-008](#us-companies-008-permanently-delete-a-company)              | Permanently delete a company              | Company owner   | ✅ Done       | Not assessed   |
+| [US-COMPANIES-009](#us-companies-009-pin-a-company-in-my-lists)                 | Pin a company in my lists                 | Company member  | 🧪 Validation | Not assessed   |
 
 ## Test Coverage Overview
 
@@ -94,7 +94,11 @@ insufficient; the detailed evidence distribution remains available in the genera
 
 Proof obligations use the [shared proof-strategy registry](../../testing/proof-strategies.md). Multiple IDs for one AC are cumulative.
 
-## US-COMPANIES-001: Create a Company Workspace
+## FEAT-COMPANIES-001: Create a Company Workspace
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-COMPANIES-001: Create a Company Workspace
 
@@ -138,7 +142,11 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 
 **Dependencies:** Connected user with a portal account
 
-## US-COMPANIES-002: Deploy the Initial Officer Contract Suite
+## FEAT-COMPANIES-002: Deploy the Initial Officer Contract Suite
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-COMPANIES-002: Deploy the Initial Officer Contract Suite
 
@@ -182,7 +190,11 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 
 **Dependencies:** US-COMPANIES-001, a connected wallet, and the active network
 
-## US-COMPANIES-003: Browse and Open My Companies
+## FEAT-COMPANIES-003: Browse and Open My Companies
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-COMPANIES-003: Browse and Open My Companies
 
@@ -236,7 +248,11 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 
 **Dependencies:** Connected user with a portal account
 
-## US-COMPANIES-004: Update Company Details
+## FEAT-COMPANIES-004: Update Company Details
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-COMPANIES-004: Update Company Details
 
@@ -276,7 +292,11 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 
 **Dependencies:** US-COMPANIES-003
 
-## US-COMPANIES-005: Manage Company Members
+## FEAT-COMPANIES-005: Manage Company Members
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-COMPANIES-005: Manage Company Members
 
@@ -324,7 +344,11 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 
 **Dependencies:** US-COMPANIES-003
 
-## US-COMPANIES-006: Archive or Restore a Company
+## FEAT-COMPANIES-006: Archive or Restore a Company
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-COMPANIES-006: Archive or Restore a Company
 
@@ -372,7 +396,11 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 
 **Dependencies:** US-COMPANIES-003
 
-## US-COMPANIES-007: Control My Company-List Visibility
+## FEAT-COMPANIES-007: Control My Company-List Visibility
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-COMPANIES-007: Control My Company-List Visibility
 
@@ -413,7 +441,11 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 
 **Dependencies:** US-COMPANIES-003
 
-## US-COMPANIES-008: Permanently Delete a Company
+## FEAT-COMPANIES-008: Permanently Delete a Company
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-COMPANIES-008: Permanently Delete a Company
 
@@ -454,7 +486,11 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 
 **Dependencies:** US-COMPANIES-003
 
-## US-COMPANIES-009: Pin a Company in My Lists
+## FEAT-COMPANIES-009: Pin a Company in My Lists
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-COMPANIES-009: Pin a Company in My Lists
 

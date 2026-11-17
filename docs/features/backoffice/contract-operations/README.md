@@ -45,11 +45,11 @@ flowchart LR
 
 ## Status Overview
 
-| User Story          | Title                                    | Actor                  | Status         |
-| ------------------- | ---------------------------------------- | ---------------------- | -------------- |
-| US-CONTRACT-OPS-001 | Inspect the contract deployment registry | Platform administrator | 🧪 Validation  |
-| US-CONTRACT-OPS-002 | Audit stored Officer-version metadata    | Platform administrator | 🚧 In Progress |
-| US-CONTRACT-OPS-003 | Synchronize Officer-version metadata     | Platform administrator | 🧪 Validation  |
+| User Story                                                                           | Feature                                  | Actor                  | Status         | Intended Scope |
+| ------------------------------------------------------------------------------------ | ---------------------------------------- | ---------------------- | -------------- | -------------- |
+| [US-CONTRACT-OPS-001](#us-contract-ops-001-inspect-the-contract-deployment-registry) | Inspect the contract deployment registry | Platform administrator | 🧪 Validation  | Not assessed   |
+| [US-CONTRACT-OPS-002](#us-contract-ops-002-audit-stored-officer-version-metadata)    | Audit stored Officer-version metadata    | Platform administrator | 🚧 In Progress | Not assessed   |
+| [US-CONTRACT-OPS-003](#us-contract-ops-003-synchronize-officer-version-metadata)     | Synchronize Officer-version metadata     | Platform administrator | 🧪 Validation  | Not assessed   |
 
 ## Test Coverage Overview
 
@@ -65,7 +65,11 @@ reference has the expected layer label.
 
 Proof obligations use the [shared proof-strategy registry](../../../testing/proof-strategies.md). Multiple IDs for one AC are cumulative.
 
-## US-CONTRACT-OPS-001: Inspect the Contract Deployment Registry
+## FEAT-CONTRACT-OPS-001: Inspect the Contract Deployment Registry
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-CONTRACT-OPS-001: Inspect the Contract Deployment Registry
 
@@ -113,7 +117,11 @@ Proof obligations use the [shared proof-strategy registry](../../../testing/proo
 
 **Dependencies:** Dashboard authentication, administrator role, and the bundled version registry
 
-## US-CONTRACT-OPS-002: Audit Stored Officer-Version Metadata
+## FEAT-CONTRACT-OPS-002: Audit Stored Officer-Version Metadata
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-CONTRACT-OPS-002: Audit Stored Officer-Version Metadata
 
@@ -169,7 +177,11 @@ Proof obligations use the [shared proof-strategy registry](../../../testing/proo
 
 **Dependencies:** US-CONTRACT-OPS-001, dashboard authentication, administrator role, company Officer records, and on-chain read access
 
-## US-CONTRACT-OPS-003: Synchronize Officer-Version Metadata
+## FEAT-CONTRACT-OPS-003: Synchronize Officer-Version Metadata
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-CONTRACT-OPS-003: Synchronize Officer-Version Metadata
 

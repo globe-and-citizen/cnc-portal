@@ -31,19 +31,19 @@ Only one unpublished election can exist at a time. An ended election still block
 
 ## Status Overview
 
-| User Story | Title                                    | Actor          | Status         |
-| ---------- | ---------------------------------------- | -------------- | -------------- |
-| US-EL-01   | Create a board election                  | Company owner  | 🧪 Validation  |
-| US-EL-02   | Cast a vote                              | Eligible voter | 🚧 In Progress |
-| US-EL-03   | Publish election results                 | Company owner  | 🚧 In Progress |
-| US-EL-04   | Receive an election-created notification | Company member | 🚧 In Progress |
-| US-EL-05   | Follow the election schedule             | Company member | 🧪 Validation  |
-| US-EL-06   | Follow election turnout and vote counts  | Company member | 🧪 Validation  |
-| US-EL-07   | View the current Board of Directors      | Company member | 🧪 Validation  |
-| US-EL-08   | Review a published election              | Company member | 🚧 In Progress |
-| US-EL-09   | Receive a result-published notification  | Company member | 📝 Draft       |
-| US-EL-10   | Understand voter eligibility             | Company member | 🚧 In Progress |
-| US-EL-11   | Cancel an election                       | Company owner  | 📝 Draft       |
+| User Story                                                     | Feature                                  | Actor          | Status         | Intended Scope |
+| -------------------------------------------------------------- | ---------------------------------------- | -------------- | -------------- | -------------- |
+| [US-EL-01](#us-el-01-create-a-board-election)                  | Create a board election                  | Company owner  | 🧪 Validation  | Not assessed   |
+| [US-EL-02](#us-el-02-cast-a-vote)                              | Cast a vote                              | Eligible voter | 🚧 In Progress | Not assessed   |
+| [US-EL-03](#us-el-03-publish-election-results)                 | Publish election results                 | Company owner  | 🚧 In Progress | Not assessed   |
+| [US-EL-04](#us-el-04-receive-an-election-created-notification) | Receive an election-created notification | Company member | 🚧 In Progress | Not assessed   |
+| [US-EL-05](#us-el-05-follow-the-election-schedule)             | Follow the election schedule             | Company member | 🧪 Validation  | Not assessed   |
+| [US-EL-06](#us-el-06-follow-election-turnout-and-vote-counts)  | Follow election turnout and vote counts  | Company member | 🧪 Validation  | Not assessed   |
+| [US-EL-07](#us-el-07-view-the-current-board-of-directors)      | View the current Board of Directors      | Company member | 🧪 Validation  | Not assessed   |
+| [US-EL-08](#us-el-08-review-a-published-election)              | Review a published election              | Company member | 🚧 In Progress | Not assessed   |
+| [US-EL-09](#us-el-09-receive-a-result-published-notification)  | Receive a result-published notification  | Company member | 📝 Draft       | Not assessed   |
+| [US-EL-10](#us-el-10-understand-voter-eligibility)             | Understand voter eligibility             | Company member | 🚧 In Progress | Not assessed   |
+| [US-EL-11](#us-el-11-cancel-an-election)                       | Cancel an election                       | Company owner  | 📝 Draft       | Not assessed   |
 
 ## Test Coverage Overview
 
@@ -67,7 +67,11 @@ owned backend, and local chain together. Mocked browser tests retain controlled 
 
 Proof obligations use the [shared proof-strategy registry](../../testing/proof-strategies.md). Multiple IDs for one AC are cumulative.
 
-## US-EL-01: Create a Board Election
+## FEAT-EL-001: Create a Board Election
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-EL-01: Create a Board Election
 
@@ -127,7 +131,11 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 
 **Dependencies:** Current company, Elections contract, and connected company-owner wallet
 
-## US-EL-02: Cast a Vote
+## FEAT-EL-002: Cast a Vote
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-EL-02: Cast a Vote
 
@@ -174,7 +182,11 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 
 **Dependencies:** US-EL-01
 
-## US-EL-03: Publish Election Results
+## FEAT-EL-003: Publish Election Results
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-EL-03: Publish Election Results
 
@@ -226,7 +238,11 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 
 **Dependencies:** US-EL-02
 
-## US-EL-04: Receive an Election-Created Notification
+## FEAT-EL-004: Receive an Election-Created Notification
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-EL-04: Receive an Election-Created Notification
 
@@ -270,7 +286,11 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 
 **Dependencies:** US-EL-01 and the notification service
 
-## US-EL-05: Follow the Election Schedule
+## FEAT-EL-005: Follow the Election Schedule
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-EL-05: Follow the Election Schedule
 
@@ -308,7 +328,11 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 
 **Dependencies:** US-EL-01
 
-## US-EL-06: Follow Election Turnout and Vote Counts
+## FEAT-EL-006: Follow Election Turnout and Vote Counts
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-EL-06: Follow Election Turnout and Vote Counts
 
@@ -344,7 +368,11 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 
 **Dependencies:** US-EL-02
 
-## US-EL-07: View the Current Board of Directors
+## FEAT-EL-007: View the Current Board of Directors
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-EL-07: View the Current Board of Directors
 
@@ -380,7 +408,11 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 
 **Dependencies:** US-EL-03 and the Board of Directors contract
 
-## US-EL-08: Review a Published Election
+## FEAT-EL-008: Review a Published Election
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-EL-08: Review a Published Election
 
@@ -418,7 +450,11 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 
 **Dependencies:** US-EL-03
 
-## US-EL-09: Receive a Result-Published Notification
+## FEAT-EL-009: Receive a Result-Published Notification
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-EL-09: Receive a Result-Published Notification
 
@@ -455,7 +491,11 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 
 **Dependencies:** US-EL-03 and the notification service
 
-## US-EL-10: Understand Voter Eligibility
+## FEAT-EL-010: Understand Voter Eligibility
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-EL-10: Understand Voter Eligibility
 
@@ -492,7 +532,11 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 
 **Dependencies:** US-EL-01
 
-## US-EL-11: Cancel an Election
+## FEAT-EL-011: Cancel an Election
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-EL-11: Cancel an Election
 

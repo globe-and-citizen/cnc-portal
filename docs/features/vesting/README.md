@@ -56,14 +56,14 @@ stateDiagram-v2
 
 ## Status Overview
 
-| User Story     | Title                                    | Actor          | Status         |
-| -------------- | ---------------------------------------- | -------------- | -------------- |
-| US-VESTING-001 | Create a minute-precise vesting schedule | Team owner     | ✅ Done        |
-| US-VESTING-002 | View schedules and aggregate totals      | Member / Owner | 🚧 In Progress |
-| US-VESTING-003 | Release accrued shares                   | Beneficiary    | ✅ Done        |
-| US-VESTING-004 | Stop an active vesting schedule          | Team owner     | ✅ Done        |
-| US-VESTING-005 | Understand vested and claimable progress | Member / Owner | ✅ Done        |
-| US-VESTING-006 | See vesting in the company books         | Member / Owner | 🔗 Reference   |
+| User Story                                                                 | Feature                                  | Actor          | Status         | Intended Scope |
+| -------------------------------------------------------------------------- | ---------------------------------------- | -------------- | -------------- | -------------- |
+| [US-VESTING-001](#us-vesting-001-create-a-minute-precise-vesting-schedule) | Create a minute-precise vesting schedule | Team owner     | ✅ Done        | Not assessed   |
+| [US-VESTING-002](#us-vesting-002-view-schedules-and-aggregate-totals)      | View schedules and aggregate totals      | Member / Owner | 🚧 In Progress | Not assessed   |
+| [US-VESTING-003](#us-vesting-003-release-accrued-shares)                   | Release accrued shares                   | Beneficiary    | ✅ Done        | Not assessed   |
+| [US-VESTING-004](#us-vesting-004-stop-an-active-vesting-schedule)          | Stop an active vesting schedule          | Team owner     | ✅ Done        | Not assessed   |
+| [US-VESTING-005](#us-vesting-005-understand-vested-and-claimable-progress) | Understand vested and claimable progress | Member / Owner | ✅ Done        | Not assessed   |
+| [US-VESTING-006](#us-vesting-006-see-vesting-in-the-company-books)         | See vesting in the company books         | Member / Owner | 🔗 Reference   | Not assessed   |
 
 ## Test Coverage Overview
 
@@ -83,7 +83,11 @@ Runs of at least three consecutive missing criteria use inclusive ranges with fu
 
 Proof obligations use the [shared proof-strategy registry](../../testing/proof-strategies.md). Multiple IDs for one AC are cumulative.
 
-## US-VESTING-001: Create a Minute-Precise Vesting Schedule
+## FEAT-VESTING-001: Create a Minute-Precise Vesting Schedule
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-VESTING-001: Create a Minute-Precise Vesting Schedule
 
@@ -144,7 +148,11 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 
 **Dependencies:** Current team, current Vesting contract, current Investor contract
 
-## US-VESTING-002: View Schedules and Aggregate Totals
+## FEAT-VESTING-002: View Schedules and Aggregate Totals
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-VESTING-002: View Schedules and Aggregate Totals
 
@@ -209,7 +217,11 @@ movement across the participating stories.
 | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | External tokens reach Vesting without a grant operation or established purpose. [UC-TREASURY-002](../accounting/journal-entry-catalogue.md#uc-treasury-002--external-receipt-pending-classification) | Separates holdings from granted and claimable shares. | [US-CONTRACT-001](../contract-management/README.md#us-contract-001-review-the-current-contract-suite) — exposes custody and recovery limits; [US-ACCT-007](../accounting/README.md#us-acct-007-review-direct-treasury-movements) — owns movement evidence and identity; [US-ACCT-010](../accounting/README.md#us-acct-010-classify-direct-external-receipts) — owns eligible receipt classification |
 
-## US-VESTING-003: Release Accrued Shares
+## FEAT-VESTING-003: Release Accrued Shares
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-VESTING-003: Release Accrued Shares
 
@@ -265,7 +277,11 @@ movement across the participating stories.
 
 **Dependencies:** US-VESTING-001
 
-## US-VESTING-004: Stop an Active Vesting Schedule
+## FEAT-VESTING-004: Stop an Active Vesting Schedule
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-VESTING-004: Stop an Active Vesting Schedule
 
@@ -318,7 +334,11 @@ movement across the participating stories.
 
 **Dependencies:** US-VESTING-001
 
-## US-VESTING-005: Understand Vested and Claimable Progress
+## FEAT-VESTING-005: Understand Vested and Claimable Progress
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-VESTING-005: Understand Vested and Claimable Progress
 
@@ -363,7 +383,7 @@ movement across the participating stories.
 
 **Dependencies:** US-VESTING-002, US-VESTING-003, US-VESTING-004
 
-## US-VESTING-006: See Vesting in the Company Books
+## Referenced Story: See Vesting in the Company Books
 
 ### US-VESTING-006: See Vesting in the Company Books
 

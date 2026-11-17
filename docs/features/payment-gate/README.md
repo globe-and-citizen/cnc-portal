@@ -38,13 +38,13 @@ unchecked.
 
 ## Status Overview
 
-| User Story     | Title                                   | Actor           | Status         |
-| -------------- | --------------------------------------- | --------------- | -------------- |
-| US-PAYGATE-001 | Configure the Widget's Accepted Token   | Merchant        | 🧪 Validation  |
-| US-PAYGATE-002 | Embed the Widget on the Merchant's Page | Merchant        | 🧪 Validation  |
-| US-PAYGATE-003 | Pay Through the Widget                  | Layer8 customer | 🚧 In Progress |
-| US-PAYGATE-004 | Review Payment History                  | Merchant        | 🧪 Validation  |
-| US-PAYGATE-005 | Recall a Payment's Status by Facture ID | Merchant        | 📝 Draft       |
+| User Story                                                               | Feature                                 | Actor           | Status         | Intended Scope |
+| ------------------------------------------------------------------------ | --------------------------------------- | --------------- | -------------- | -------------- |
+| [US-PAYGATE-001](#us-paygate-001-configure-the-widgets-accepted-token)   | Configure the Widget's Accepted Token   | Merchant        | 🧪 Validation  | Not assessed   |
+| [US-PAYGATE-002](#us-paygate-002-embed-the-widget-on-the-merchants-page) | Embed the Widget on the Merchant's Page | Merchant        | 🧪 Validation  | Not assessed   |
+| [US-PAYGATE-003](#us-paygate-003-pay-through-the-widget)                 | Pay Through the Widget                  | Layer8 customer | 🚧 In Progress | Not assessed   |
+| [US-PAYGATE-004](#us-paygate-004-review-payment-history)                 | Review Payment History                  | Merchant        | 🧪 Validation  | Not assessed   |
+| [US-PAYGATE-005](#us-paygate-005-recall-a-payments-status-by-facture-id) | Recall a Payment's Status by Facture ID | Merchant        | 📝 Draft       | Not assessed   |
 
 ## Test Coverage Overview
 
@@ -63,7 +63,11 @@ Runs of at least three consecutive missing criteria use inclusive ranges with fu
 
 Proof obligations use the [shared proof-strategy registry](../../testing/proof-strategies.md). Multiple IDs for one AC are cumulative.
 
-## US-PAYGATE-001: Configure the Widget's Accepted Token
+## FEAT-PAYGATE-001: Configure the Widget's Accepted Token
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-PAYGATE-001: Configure the Widget's Accepted Token
 
@@ -98,7 +102,11 @@ specified for this story.
 
 **Dependencies:** none — this is the capability's entry point
 
-## US-PAYGATE-002: Embed the Widget on the Merchant's Page
+## FEAT-PAYGATE-002: Embed the Widget on the Merchant's Page
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-PAYGATE-002: Embed the Widget on the Merchant's Page
 
@@ -143,7 +151,11 @@ token\
 
 **Dependencies:** US-PAYGATE-001 and a company with a deployed Bank contract
 
-## US-PAYGATE-003: Pay Through the Widget
+## FEAT-PAYGATE-003: Pay Through the Widget
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-PAYGATE-003: Pay Through the Widget
 
@@ -216,7 +228,11 @@ token\
 
 **Dependencies:** US-PAYGATE-002, a connected wallet, and a sufficient token balance
 
-## US-PAYGATE-004: Review Payment History
+## FEAT-PAYGATE-004: Review Payment History
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-PAYGATE-004: Review Payment History
 
@@ -276,7 +292,11 @@ movement across the participating stories.
 | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | External wallet funds Bank without established purpose or facture evidence. [UC-TREASURY-002](../accounting/journal-entry-catalogue.md#uc-treasury-002--external-receipt-pending-classification) | Keeps unmatched receipts outside invoice history. | [US-BANK-001](../accounts/README.md#us-bank-001-fund-the-bank) — owns received funding; [US-BANK-003](../accounts/README.md#us-bank-003-review-the-bank-position-and-history) — owns Bank history; [US-ACCT-007](../accounting/README.md#us-acct-007-review-direct-treasury-movements) — owns movement evidence and identity; [US-ACCT-010](../accounting/README.md#us-acct-010-classify-direct-external-receipts) — owns eligible receipt classification |
 
-## US-PAYGATE-005: Recall a Payment's Status by Facture ID
+## FEAT-PAYGATE-005: Recall a Payment's Status by Facture ID
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-PAYGATE-005: Recall a Payment's Status by Facture ID
 

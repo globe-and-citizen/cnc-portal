@@ -36,12 +36,12 @@ flowchart LR
 
 ## Status Overview
 
-| User Story   | Title                                   | Actor         | Status         |
-| ------------ | --------------------------------------- | ------------- | -------------- |
-| US-STATS-001 | Access administrator statistics         | Administrator | 🧪 Validation  |
-| US-STATS-002 | Review the platform overview and trends | Administrator | 🚧 In Progress |
-| US-STATS-003 | Explore category statistics             | Administrator | 🚧 In Progress |
-| US-STATS-004 | Review recent platform activity         | Administrator | 🚧 In Progress |
+| User Story                                                            | Feature                                 | Actor         | Status         | Intended Scope |
+| --------------------------------------------------------------------- | --------------------------------------- | ------------- | -------------- | -------------- |
+| [US-STATS-001](#us-stats-001-access-administrator-statistics)         | Access administrator statistics         | Administrator | 🧪 Validation  | Not assessed   |
+| [US-STATS-002](#us-stats-002-review-the-platform-overview-and-trends) | Review the platform overview and trends | Administrator | 🚧 In Progress | Not assessed   |
+| [US-STATS-003](#us-stats-003-explore-category-statistics)             | Explore category statistics             | Administrator | 🚧 In Progress | Not assessed   |
+| [US-STATS-004](#us-stats-004-review-recent-platform-activity)         | Review recent platform activity         | Administrator | 🚧 In Progress | Not assessed   |
 
 ## Test Coverage Overview
 
@@ -58,7 +58,11 @@ reference has the expected layer label.
 
 Proof obligations use the [shared proof-strategy registry](../../../testing/proof-strategies.md). Multiple IDs for one AC are cumulative.
 
-## US-STATS-001: Access Administrator Statistics
+## FEAT-STATS-001: Access Administrator Statistics
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-STATS-001: Access Administrator Statistics
 
@@ -108,7 +112,11 @@ Proof obligations use the [shared proof-strategy registry](../../../testing/proo
 
 **Dependencies:** Dashboard authentication and administrator roles
 
-## US-STATS-002: Review the Platform Overview and Trends
+## FEAT-STATS-002: Review the Platform Overview and Trends
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-STATS-002: Review the Platform Overview and Trends
 
@@ -171,7 +179,11 @@ Proof obligations use the [shared proof-strategy registry](../../../testing/proo
 
 **Dependencies:** US-STATS-001 and available database and chain providers
 
-## US-STATS-003: Explore Category Statistics
+## FEAT-STATS-003: Explore Category Statistics
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-STATS-003: Explore Category Statistics
 
@@ -234,7 +246,11 @@ Proof obligations use the [shared proof-strategy registry](../../../testing/proo
 
 **Dependencies:** US-STATS-001 and US-STATS-002
 
-## US-STATS-004: Review Recent Platform Activity
+## FEAT-STATS-004: Review Recent Platform Activity
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-STATS-004: Review Recent Platform Activity
 

@@ -49,13 +49,13 @@ flowchart LR
 
 ## Status Overview
 
-| User Story             | Title                                      | Actor                  | Status         |
-| ---------------------- | ------------------------------------------ | ---------------------- | -------------- |
-| US-POLY-ACCOUNTING-001 | Access and select a public wallet          | Platform administrator | 🚧 In Progress |
-| US-POLY-ACCOUNTING-002 | Reconstruct and reconcile a wallet summary | Platform administrator | 🚧 In Progress |
-| US-POLY-ACCOUNTING-003 | Review reconstructed financial statements  | Platform administrator | 🧪 Validation  |
-| US-POLY-ACCOUNTING-004 | Investigate and export the activity ledger | Platform administrator | 🧪 Validation  |
-| US-POLY-ACCOUNTING-005 | Inspect Polymarket positions               | Platform administrator | 🧪 Validation  |
+| User Story                                                                                   | Feature                                    | Actor                  | Status         | Intended Scope |
+| -------------------------------------------------------------------------------------------- | ------------------------------------------ | ---------------------- | -------------- | -------------- |
+| [US-POLY-ACCOUNTING-001](#us-poly-accounting-001-access-and-select-a-public-wallet)          | Access and select a public wallet          | Platform administrator | 🚧 In Progress | Not assessed   |
+| [US-POLY-ACCOUNTING-002](#us-poly-accounting-002-reconstruct-and-reconcile-a-wallet-summary) | Reconstruct and reconcile a wallet summary | Platform administrator | 🚧 In Progress | Not assessed   |
+| [US-POLY-ACCOUNTING-003](#us-poly-accounting-003-review-reconstructed-financial-statements)  | Review reconstructed financial statements  | Platform administrator | 🧪 Validation  | Not assessed   |
+| [US-POLY-ACCOUNTING-004](#us-poly-accounting-004-investigate-and-export-the-activity-ledger) | Investigate and export the activity ledger | Platform administrator | 🧪 Validation  | Not assessed   |
+| [US-POLY-ACCOUNTING-005](#us-poly-accounting-005-inspect-polymarket-positions)               | Inspect Polymarket positions               | Platform administrator | 🧪 Validation  | Not assessed   |
 
 ## Test Coverage Overview
 
@@ -73,7 +73,11 @@ reference has the expected layer label.
 
 Proof obligations use the [shared proof-strategy registry](../../../testing/proof-strategies.md). Multiple IDs for one AC are cumulative.
 
-## US-POLY-ACCOUNTING-001: Access and Select a Public Wallet
+## FEAT-POLY-ACCOUNTING-001: Access and Select a Public Wallet
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-POLY-ACCOUNTING-001: Access and Select a Public Wallet
 
@@ -122,7 +126,11 @@ Proof obligations use the [shared proof-strategy registry](../../../testing/proo
 
 **Dependencies:** Dashboard authentication and administrator roles
 
-## US-POLY-ACCOUNTING-002: Reconstruct and Reconcile a Wallet Summary
+## FEAT-POLY-ACCOUNTING-002: Reconstruct and Reconcile a Wallet Summary
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-POLY-ACCOUNTING-002: Reconstruct and Reconcile a Wallet Summary
 
@@ -176,7 +184,11 @@ Proof obligations use the [shared proof-strategy registry](../../../testing/proo
 
 **Dependencies:** US-POLY-ACCOUNTING-001 and availability of the external activity, position, profile, and transfer sources
 
-## US-POLY-ACCOUNTING-003: Review Reconstructed Financial Statements
+## FEAT-POLY-ACCOUNTING-003: Review Reconstructed Financial Statements
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-POLY-ACCOUNTING-003: Review Reconstructed Financial Statements
 
@@ -228,7 +240,11 @@ Proof obligations use the [shared proof-strategy registry](../../../testing/proo
 
 **Dependencies:** US-POLY-ACCOUNTING-002
 
-## US-POLY-ACCOUNTING-004: Investigate and Export the Activity Ledger
+## FEAT-POLY-ACCOUNTING-004: Investigate and Export the Activity Ledger
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-POLY-ACCOUNTING-004: Investigate and Export the Activity Ledger
 
@@ -282,7 +298,11 @@ Proof obligations use the [shared proof-strategy registry](../../../testing/proo
 
 **Dependencies:** US-POLY-ACCOUNTING-002
 
-## US-POLY-ACCOUNTING-005: Inspect Polymarket Positions
+## FEAT-POLY-ACCOUNTING-005: Inspect Polymarket Positions
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-POLY-ACCOUNTING-005: Inspect Polymarket Positions
 

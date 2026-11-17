@@ -61,23 +61,23 @@ unchecked.
 
 ## Status Overview
 
-| User Story     | Title                                      | Actor                     | Status         |
-| -------------- | ------------------------------------------ | ------------------------- | -------------- |
-| US-PAYROLL-001 | Set a Member's Wage                        | Company owner             | 🧪 Validation  |
-| US-PAYROLL-002 | Pause or Resume a Member's Wage            | Company owner             | 🧪 Validation  |
-| US-PAYROLL-003 | Fund the Payroll Contract                  | Account funder            | 🚧 In Progress |
-| US-PAYROLL-004 | Set Weekly Goals                           | Company member            | 🧪 Validation  |
-| US-PAYROLL-005 | Submit a Daily Claim                       | Company member            | 🧪 Validation  |
-| US-PAYROLL-006 | Edit a Daily Claim                         | Claim owner               | 🧪 Validation  |
-| US-PAYROLL-007 | Delete a Daily Claim                       | Claim owner               | 🧪 Validation  |
-| US-PAYROLL-008 | Sign a Completed Weekly Claim              | Cash Remuneration owner   | 🧪 Validation  |
-| US-PAYROLL-009 | Disable or Re-enable a Signed Weekly Claim | Cash Remuneration owner   | 🧪 Validation  |
-| US-PAYROLL-010 | Withdraw an Approved Weekly Claim          | Claim owner               | 🧪 Validation  |
-| US-PAYROLL-011 | Reconcile Weekly Claims With the Chain     | Company member            | 🧪 Validation  |
-| US-PAYROLL-012 | Review Payroll History                     | Company member            | 🧪 Validation  |
-| US-PAYROLL-013 | Review the Payroll Account Position        | Company member            | 🚧 In Progress |
-| US-PAYROLL-014 | Return Payroll funds to Bank               | Authorized treasury actor | 🚧 In Progress |
-| US-PAYROLL-015 | Require Weekly Goals                       | Company owner             | 🧪 Validation  |
+| User Story                                                                   | Feature                                    | Actor                     | Status         | Intended Scope |
+| ---------------------------------------------------------------------------- | ------------------------------------------ | ------------------------- | -------------- | -------------- |
+| [US-PAYROLL-001](#us-payroll-001-set-a-members-wage)                         | Set a Member's Wage                        | Company owner             | 🧪 Validation  | Not assessed   |
+| [US-PAYROLL-002](#us-payroll-002-pause-or-resume-a-members-wage)             | Pause or Resume a Member's Wage            | Company owner             | 🧪 Validation  | Not assessed   |
+| [US-PAYROLL-003](#us-payroll-003-fund-the-payroll-contract)                  | Fund the Payroll Contract                  | Account funder            | 🚧 In Progress | Not assessed   |
+| [US-PAYROLL-004](#us-payroll-004-set-weekly-goals)                           | Set Weekly Goals                           | Company member            | 🧪 Validation  | Not assessed   |
+| [US-PAYROLL-005](#us-payroll-005-submit-a-daily-claim)                       | Submit a Daily Claim                       | Company member            | 🧪 Validation  | Not assessed   |
+| [US-PAYROLL-006](#us-payroll-006-edit-a-daily-claim)                         | Edit a Daily Claim                         | Claim owner               | 🧪 Validation  | Not assessed   |
+| [US-PAYROLL-007](#us-payroll-007-delete-a-daily-claim)                       | Delete a Daily Claim                       | Claim owner               | 🧪 Validation  | Not assessed   |
+| [US-PAYROLL-008](#us-payroll-008-sign-a-completed-weekly-claim)              | Sign a Completed Weekly Claim              | Cash Remuneration owner   | 🧪 Validation  | Not assessed   |
+| [US-PAYROLL-009](#us-payroll-009-disable-or-re-enable-a-signed-weekly-claim) | Disable or Re-enable a Signed Weekly Claim | Cash Remuneration owner   | 🧪 Validation  | Not assessed   |
+| [US-PAYROLL-010](#us-payroll-010-withdraw-an-approved-weekly-claim)          | Withdraw an Approved Weekly Claim          | Claim owner               | 🧪 Validation  | Not assessed   |
+| [US-PAYROLL-011](#us-payroll-011-reconcile-weekly-claims-with-the-chain)     | Reconcile Weekly Claims With the Chain     | Company member            | 🧪 Validation  | Not assessed   |
+| [US-PAYROLL-012](#us-payroll-012-review-payroll-history)                     | Review Payroll History                     | Company member            | 🧪 Validation  | Not assessed   |
+| [US-PAYROLL-013](#us-payroll-013-review-the-payroll-account-position)        | Review the Payroll Account Position        | Company member            | 🚧 In Progress | Not assessed   |
+| [US-PAYROLL-014](#us-payroll-014-return-payroll-funds-to-bank)               | Return Payroll funds to Bank               | Authorized treasury actor | 🚧 In Progress | Not assessed   |
+| [US-PAYROLL-015](#us-payroll-015-require-weekly-goals)                       | Require Weekly Goals                       | Company owner             | 🧪 Validation  | Not assessed   |
 
 ## Test Coverage Overview
 
@@ -107,7 +107,11 @@ Runs of at least three consecutive missing criteria use inclusive ranges with fu
 
 Proof obligations use the [shared proof-strategy registry](../../testing/proof-strategies.md). Multiple IDs for one AC are cumulative.
 
-## US-PAYROLL-001: Set a Member's Wage
+## FEAT-PAYROLL-001: Set a Member's Wage
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-PAYROLL-001: Set a Member's Wage
 
@@ -191,7 +195,11 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 
 **Dependencies:** Companies and Workspace
 
-## US-PAYROLL-002: Pause or Resume a Member's Wage
+## FEAT-PAYROLL-002: Pause or Resume a Member's Wage
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-PAYROLL-002: Pause or Resume a Member's Wage
 
@@ -244,7 +252,11 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 
 **Dependencies:** US-PAYROLL-001
 
-## US-PAYROLL-003: Fund the Payroll Contract
+## FEAT-PAYROLL-003: Fund the Payroll Contract
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-PAYROLL-003: Fund the Payroll Contract
 
@@ -324,7 +336,11 @@ movement across the participating stories.
 | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | External wallet funds Payroll without established business purpose. [UC-TREASURY-002](../accounting/journal-entry-catalogue.md#uc-treasury-002--external-receipt-pending-classification) | Owns received funding and payment availability. | [US-PAYROLL-013](README.md#us-payroll-013-review-the-payroll-account-position) — owns Payroll position and history; [US-ACCT-007](../accounting/README.md#us-acct-007-review-direct-treasury-movements) — owns movement evidence and identity; [US-ACCT-010](../accounting/README.md#us-acct-010-classify-direct-external-receipts) — owns eligible receipt classification |
 
-## US-PAYROLL-004: Set Weekly Goals
+## FEAT-PAYROLL-004: Set Weekly Goals
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-PAYROLL-004: Set Weekly Goals
 
@@ -373,7 +389,11 @@ movement across the participating stories.
 
 **Dependencies:** US-PAYROLL-001
 
-## US-PAYROLL-005: Submit a Daily Claim
+## FEAT-PAYROLL-005: Submit a Daily Claim
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-PAYROLL-005: Submit a Daily Claim
 
@@ -466,7 +486,11 @@ remain as recorded above.
 | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
 | A work week ends with submitted daily claims and an eligible weekly claim. [UC-PAYROLL-001](../accounting/journal-entry-catalogue.md#uc-payroll-001--weekly-wage-accrual) | Supplies the daily claims used to calculate accrual. | [US-PAYROLL-009](#us-payroll-009-disable-or-re-enable-a-signed-weekly-claim) — controls claim eligibility; changing status creates no separate entry |
 
-## US-PAYROLL-006: Edit a Daily Claim
+## FEAT-PAYROLL-006: Edit a Daily Claim
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-PAYROLL-006: Edit a Daily Claim
 
@@ -522,7 +546,11 @@ When the company requires weekly goals, editing also depends on the member's goa
 
 **Dependencies:** US-PAYROLL-005
 
-## US-PAYROLL-007: Delete a Daily Claim
+## FEAT-PAYROLL-007: Delete a Daily Claim
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-PAYROLL-007: Delete a Daily Claim
 
@@ -566,7 +594,11 @@ When the company requires weekly goals, editing also depends on the member's goa
 
 **Dependencies:** US-PAYROLL-005
 
-## US-PAYROLL-008: Sign a Completed Weekly Claim
+## FEAT-PAYROLL-008: Sign a Completed Weekly Claim
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-PAYROLL-008: Sign a Completed Weekly Claim
 
@@ -634,7 +666,11 @@ week.
 
 **Dependencies:** US-PAYROLL-005
 
-## US-PAYROLL-009: Disable or Re-enable a Signed Weekly Claim
+## FEAT-PAYROLL-009: Disable or Re-enable a Signed Weekly Claim
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-PAYROLL-009: Disable or Re-enable a Signed Weekly Claim
 
@@ -692,7 +728,11 @@ remain as recorded above.
 | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
 | A work week ends with submitted daily claims and an eligible weekly claim. [UC-PAYROLL-001](../accounting/journal-entry-catalogue.md#uc-payroll-001--weekly-wage-accrual) | Controls claim eligibility; changing status creates no separate entry. | [US-PAYROLL-005](#us-payroll-005-submit-a-daily-claim) — supplies the daily claims used to calculate accrual |
 
-## US-PAYROLL-010: Withdraw an Approved Weekly Claim
+## FEAT-PAYROLL-010: Withdraw an Approved Weekly Claim
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-PAYROLL-010: Withdraw an Approved Weekly Claim
 
@@ -763,7 +803,11 @@ into Investor Equity.
 
 **Dependencies:** US-PAYROLL-008, US-PAYROLL-003
 
-## US-PAYROLL-011: Reconcile Weekly Claims With the Chain
+## FEAT-PAYROLL-011: Reconcile Weekly Claims With the Chain
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-PAYROLL-011: Reconcile Weekly Claims With the Chain
 
@@ -814,7 +858,11 @@ into Investor Equity.
 
 **Dependencies:** US-PAYROLL-008
 
-## US-PAYROLL-012: Review Payroll History
+## FEAT-PAYROLL-012: Review Payroll History
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-PAYROLL-012: Review Payroll History
 
@@ -871,7 +919,11 @@ into Investor Equity.
 
 **Dependencies:** US-PAYROLL-005
 
-## US-PAYROLL-013: Review the Payroll Account Position
+## FEAT-PAYROLL-013: Review the Payroll Account Position
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-PAYROLL-013: Review the Payroll Account Position
 
@@ -922,7 +974,11 @@ movement across the participating stories.
 | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | External wallet funds Payroll without established business purpose. [UC-TREASURY-002](../accounting/journal-entry-catalogue.md#uc-treasury-002--external-receipt-pending-classification) | Owns payroll position and history. | [US-PAYROLL-003](README.md#us-payroll-003-fund-the-payroll-contract) — owns received funding and payment availability; [US-ACCT-007](../accounting/README.md#us-acct-007-review-direct-treasury-movements) — owns movement evidence and identity; [US-ACCT-010](../accounting/README.md#us-acct-010-classify-direct-external-receipts) — owns eligible receipt classification |
 
-## US-PAYROLL-014: Return Payroll Funds to Bank
+## FEAT-PAYROLL-014: Return Payroll Funds to Bank
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-PAYROLL-014: Return Payroll Funds to Bank
 
@@ -988,7 +1044,11 @@ remain as recorded above.
 | Payroll funds return directly to their generation's Bank. [UC-TREASURY-001](../accounting/journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer)        | Initiates the source-account return. | [US-BANK-003](../accounts/README.md#us-bank-003-review-the-bank-position-and-history) — owns the receiving Bank balance and history                                                                                                                                        |
 | A cash-out run returns Payroll funds to their generation's Bank. [UC-TREASURY-001](../accounting/journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer) | Owns the source-account return.      | [US-BANK-004](../accounts/README.md#us-bank-004-cash-out-available-treasury-funds) — orchestrates the step and owns sequence recovery; [US-BANK-003](../accounts/README.md#us-bank-003-review-the-bank-position-and-history) — owns the receiving Bank balance and history |
 
-## US-PAYROLL-015: Require Weekly Goals
+## FEAT-PAYROLL-015: Require Weekly Goals
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-PAYROLL-015: Require Weekly Goals
 

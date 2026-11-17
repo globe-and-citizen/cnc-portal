@@ -17,7 +17,7 @@ canonical rule with its existing owner.
 
 ## Classify the subject
 
-- Group related capabilities into modules; a feature is one observable actor goal with a default story sharing its stable `US-*` ID.
+- Group related capabilities into modules; a feature is an observable capability with a distinct `FEAT-*` ID and one or more `US-*` stories.
 - Document proposed and planned features as well as current ones. Distinguish intended release scope from current access and assessed
   status; leave unknown scope explicit. Verify navigation, routes, guards and actions before claiming a capability is currently reachable.
 - Keep client modules under `docs/features/<module>/` and dashboard modules under `docs/features/backoffice/<module>/`; preserve existing
@@ -45,7 +45,8 @@ requested or required by the active GitHub workflow.
 ## Write or revise the feature contract
 
 - Keep one canonical `README.md` for the module and its related features and preserve stable user-story IDs.
-- Nest each default user story below its feature heading with the same stable ID and title; nest its criteria and coverage under the story.
+- Nest each default user story below its feature heading with its own stable ID and the same title; nest criteria and coverage under the
+  story. Add more stories only for distinct needs; follow the guide when a second story makes an ID migration necessary.
 - List the status overview and detailed stories in ascending stable user-story-ID order. A lifecycle can show the actual journey and its
   branches without changing that documentation order.
 - Give each story one actor, one action, and one user-visible benefit.

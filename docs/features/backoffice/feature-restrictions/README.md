@@ -30,11 +30,11 @@ flowchart LR
 
 ## Status Overview
 
-| User Story  | Title                        | Actor                  | Status         |
-| ----------- | ---------------------------- | ---------------------- | -------------- |
-| US-FLAG-001 | Manage global restrictions   | Platform administrator | 🧪 Validation  |
-| US-FLAG-002 | Manage company overrides     | Platform administrator | 🚧 In Progress |
-| US-FLAG-003 | Remove obsolete restrictions | Platform administrator | 🚧 In Progress |
+| User Story                                               | Feature                      | Actor                  | Status         | Intended Scope |
+| -------------------------------------------------------- | ---------------------------- | ---------------------- | -------------- | -------------- |
+| [US-FLAG-001](#us-flag-001-manage-global-restrictions)   | Manage global restrictions   | Platform administrator | 🧪 Validation  | Not assessed   |
+| [US-FLAG-002](#us-flag-002-manage-company-overrides)     | Manage company overrides     | Platform administrator | 🚧 In Progress | Not assessed   |
+| [US-FLAG-003](#us-flag-003-remove-obsolete-restrictions) | Remove obsolete restrictions | Platform administrator | 🚧 In Progress | Not assessed   |
 
 ## Test Coverage Overview
 
@@ -50,7 +50,11 @@ reference has the expected layer label.
 
 Proof obligations use the [shared proof-strategy registry](../../../testing/proof-strategies.md). Multiple IDs for one AC are cumulative.
 
-## US-FLAG-001: Manage Global Restrictions
+## FEAT-FLAG-001: Manage Global Restrictions
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-FLAG-001: Manage Global Restrictions
 
@@ -98,7 +102,11 @@ Proof obligations use the [shared proof-strategy registry](../../../testing/proo
 | `AC-US-FLAG-001-09`  | `PS-BACKEND`   | Backend          | ⚠️ Insufficient |
 | `AC-US-FLAG-001-10`  | `PS-BACKEND`   | None linked      | ❌ Missing      |
 
-## US-FLAG-002: Manage Company Overrides
+## FEAT-FLAG-002: Manage Company Overrides
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-FLAG-002: Manage Company Overrides
 
@@ -150,7 +158,11 @@ Proof obligations use the [shared proof-strategy registry](../../../testing/proo
 | `AC-US-FLAG-002-11`  | `PS-BACKEND`   | Backend          | ⚠️ Insufficient |
 | `AC-US-FLAG-002-12`  | `PS-BACKEND`   | None linked      | ❌ Missing      |
 
-## US-FLAG-003: Remove Obsolete Restrictions
+## FEAT-FLAG-003: Remove Obsolete Restrictions
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-FLAG-003: Remove Obsolete Restrictions
 

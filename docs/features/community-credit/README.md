@@ -46,13 +46,13 @@ automatically when a deadline or maturity date passes.
 
 ## Status Overview
 
-| User Story | Title                      | Actor              | Status         |
-| ---------- | -------------------------- | ------------------ | -------------- |
-| US-CC-001  | Inspect the Credit Account | Company member     | 🚧 In Progress |
-| US-CC-002  | Publish a credit call      | Company issuer     | 🚧 In Progress |
-| US-CC-003  | Lend to an open round      | Company member     | 🚧 In Progress |
-| US-CC-004  | Resolve a stalled round    | Company issuer     | 🧪 Validation  |
-| US-CC-005  | Repay lenders              | Current Bank owner | 🚧 In Progress |
+| User Story                                         | Feature                    | Actor              | Status         | Intended Scope |
+| -------------------------------------------------- | -------------------------- | ------------------ | -------------- | -------------- |
+| [US-CC-001](#us-cc-001-inspect-the-credit-account) | Inspect the Credit Account | Company member     | 🚧 In Progress | Not assessed   |
+| [US-CC-002](#us-cc-002-publish-a-credit-call)      | Publish a credit call      | Company issuer     | 🚧 In Progress | Not assessed   |
+| [US-CC-003](#us-cc-003-lend-to-an-open-round)      | Lend to an open round      | Company member     | 🚧 In Progress | Not assessed   |
+| [US-CC-004](#us-cc-004-resolve-a-stalled-round)    | Resolve a stalled round    | Company issuer     | 🧪 Validation  | Not assessed   |
+| [US-CC-005](#us-cc-005-repay-lenders)              | Repay lenders              | Current Bank owner | 🚧 In Progress | Not assessed   |
 
 ## Test Coverage Overview
 
@@ -75,7 +75,11 @@ prove every criterion or replace direct, assertion-reviewed AC evidence.
 
 Proof obligations use the [shared proof-strategy registry](../../testing/proof-strategies.md). Multiple IDs for one AC are cumulative.
 
-## US-CC-001: Inspect the Credit Account
+## FEAT-CC-001: Inspect the Credit Account
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-CC-001: Inspect the Credit Account
 
@@ -132,7 +136,11 @@ movement across the participating stories.
 | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | External tokens reach FixedReturn without a credit-round operation or established purpose. [UC-TREASURY-002](../accounting/journal-entry-catalogue.md#uc-treasury-002--external-receipt-pending-classification) | Separates unallocated holdings from credit rounds. | [US-ACCT-007](../accounting/README.md#us-acct-007-review-direct-treasury-movements) — owns movement evidence and identity; [US-ACCT-010](../accounting/README.md#us-acct-010-classify-direct-external-receipts) — owns eligible receipt classification |
 
-## US-CC-002: Publish a Credit Call
+## FEAT-CC-002: Publish a Credit Call
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-CC-002: Publish a Credit Call
 
@@ -210,7 +218,11 @@ movement across the participating stories.
 
 **Accounting:** Publishing terms moves no company funds and creates no journal entry.
 
-## US-CC-003: Lend to an Open Round
+## FEAT-CC-003: Lend to an Open Round
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-CC-003: Lend to an Open Round
 
@@ -270,7 +282,11 @@ movement across the participating stories.
 through [`UC-CREDIT-01`](../accounting/journal-entry-catalogue.md#uc-credit-01--funded-principal) and fixed return through
 [`UC-CREDIT-05`](../accounting/journal-entry-catalogue.md#uc-credit-05--fixed-return-recognized).
 
-## US-CC-004: Resolve a Stalled Round
+## FEAT-CC-004: Resolve a Stalled Round
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-CC-004: Resolve a Stalled Round
 
@@ -317,7 +333,11 @@ through [`UC-CREDIT-01`](../accounting/journal-entry-catalogue.md#uc-credit-01--
 **Accounting:** Accepting a partial raise activates `UC-CREDIT-01` and `UC-CREDIT-05`. Refunding lenders returns funds that never entered
 the company's books and creates no journal entry.
 
-## US-CC-005: Repay Lenders
+## FEAT-CC-005: Repay Lenders
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-CC-005: Repay Lenders
 

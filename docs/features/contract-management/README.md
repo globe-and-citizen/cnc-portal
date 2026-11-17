@@ -50,13 +50,13 @@ flowchart LR
 
 ## Status Overview
 
-| User Story      | Title                              | Actor                     | Status         |
-| --------------- | ---------------------------------- | ------------------------- | -------------- |
-| US-CONTRACT-001 | Review the current contract suite  | Company member            | 🚧 In Progress |
-| US-CONTRACT-002 | Manage current contract operations | Owner / Board member      | 🧪 Validation  |
-| US-CONTRACT-003 | Manage advertising campaigns       | Authorized company member | 🚧 In Progress |
-| US-CONTRACT-004 | Review deployment history          | Company member            | 🚧 In Progress |
-| US-CONTRACT-005 | Redeploy an Officer generation     | Company owner             | 🧪 Validation  |
+| User Story                                                             | Feature                            | Actor                     | Status         | Intended Scope |
+| ---------------------------------------------------------------------- | ---------------------------------- | ------------------------- | -------------- | -------------- |
+| [US-CONTRACT-001](#us-contract-001-review-the-current-contract-suite)  | Review the current contract suite  | Company member            | 🚧 In Progress | Not assessed   |
+| [US-CONTRACT-002](#us-contract-002-manage-current-contract-operations) | Manage current contract operations | Owner / Board member      | 🧪 Validation  | Not assessed   |
+| [US-CONTRACT-003](#us-contract-003-manage-advertising-campaigns)       | Manage advertising campaigns       | Authorized company member | 🚧 In Progress | Not assessed   |
+| [US-CONTRACT-004](#us-contract-004-review-deployment-history)          | Review deployment history          | Company member            | 🚧 In Progress | Not assessed   |
+| [US-CONTRACT-005](#us-contract-005-redeploy-an-officer-generation)     | Redeploy an Officer generation     | Company owner             | 🧪 Validation  | Not assessed   |
 
 ## Test Coverage Overview
 
@@ -76,7 +76,11 @@ Runs of at least three consecutive missing criteria use inclusive ranges with fu
 
 Proof obligations use the [shared proof-strategy registry](../../testing/proof-strategies.md). Multiple IDs for one AC are cumulative.
 
-## US-CONTRACT-001: Review the Current Contract Suite
+## FEAT-CONTRACT-001: Review the Current Contract Suite
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-CONTRACT-001: Review the Current Contract Suite
 
@@ -149,7 +153,11 @@ movement across the participating stories.
 | External tokens reach another verified company-held contract without an established purpose. [UC-TREASURY-002](../accounting/journal-entry-catalogue.md#uc-treasury-002--external-receipt-pending-classification)                     | Owns auxiliary contract inspection.  | [US-ACCT-007](../accounting/README.md#us-acct-007-review-direct-treasury-movements) — owns movement evidence and identity; [US-ACCT-010](../accounting/README.md#us-acct-010-classify-direct-external-receipts) — owns eligible receipt classification                                                                                                                                                                |
 | A verified auxiliary company contract makes an evidenced external payment without established purpose. [UC-TREASURY-003](../accounting/journal-entry-catalogue.md#uc-treasury-003--external-payment-pending-classification)           | Exposes the contract movement.       | [US-ACCT-007](../accounting/README.md#us-acct-007-review-direct-treasury-movements) — owns evidence and pending-payment identity                                                                                                                                                                                                                                                                                      |
 
-## US-CONTRACT-002: Manage Current Contract Operations
+## FEAT-CONTRACT-002: Manage Current Contract Operations
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-CONTRACT-002: Manage Current Contract Operations
 
@@ -206,7 +214,11 @@ movement across the participating stories.
 
 **Dependencies:** US-CONTRACT-001, current contract permissions, and a connected wallet
 
-## US-CONTRACT-003: Manage Advertising Campaigns
+## FEAT-CONTRACT-003: Manage Advertising Campaigns
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-CONTRACT-003: Manage Advertising Campaigns
 
@@ -264,7 +276,11 @@ movement across the participating stories.
 | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | External assets reach AdCampaignManager without a campaign operation or established purpose. [UC-TREASURY-002](../accounting/journal-entry-catalogue.md#uc-treasury-002--external-receipt-pending-classification) | Separates unallocated holdings from campaign budgets. | [US-ACCT-007](../accounting/README.md#us-acct-007-review-direct-treasury-movements) — owns movement evidence and identity; [US-ACCT-010](../accounting/README.md#us-acct-010-classify-direct-external-receipts) — owns eligible receipt classification |
 
-## US-CONTRACT-004: Review Deployment History
+## FEAT-CONTRACT-004: Review Deployment History
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-CONTRACT-004: Review Deployment History
 
@@ -321,7 +337,11 @@ movement across the participating stories.
 generation; [US-ACCT-009](../accounting/README.md#us-acct-009-investigate-treasury-balance-differences) owns quantity reconciliation.
 Historical deployments preserve the same per-domain scenarios and UC selection as current deployments.
 
-## US-CONTRACT-005: Redeploy an Officer Generation
+## FEAT-CONTRACT-005: Redeploy an Officer Generation
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-CONTRACT-005: Redeploy an Officer Generation
 

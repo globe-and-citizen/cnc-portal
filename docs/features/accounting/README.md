@@ -93,18 +93,18 @@ flowchart LR
 
 ## Status Overview
 
-| User Story  | Title                                    | Actor          | Status         |
-| ----------- | ---------------------------------------- | -------------- | -------------- |
-| US-ACCT-001 | View the Accounting overview             | Company member | 🚧 In Progress |
-| US-ACCT-002 | Trace operations in the General Ledger   | Company member | 🧪 Validation  |
-| US-ACCT-003 | Review financial statements              | Company member | 🧪 Validation  |
-| US-ACCT-004 | Export accounting reports                | Company member | 🧪 Validation  |
-| US-ACCT-005 | Review historical contract activity      | Company member | 🚧 In Progress |
-| US-ACCT-006 | Classify an external withdrawal          | Company owner  | 🧪 Validation  |
-| US-ACCT-007 | Review direct treasury movements         | Company member | 🚧 In Progress |
-| US-ACCT-008 | Access synchronized company books        | Company member | 🚧 In Progress |
-| US-ACCT-009 | Investigate treasury balance differences | Company member | 🚧 In Progress |
-| US-ACCT-010 | Classify direct external receipts        | Company owner  | 🚧 In Progress |
+| User Story                                                           | Feature                                  | Actor          | Status         | Intended Scope |
+| -------------------------------------------------------------------- | ---------------------------------------- | -------------- | -------------- | -------------- |
+| [US-ACCT-001](#us-acct-001-view-the-accounting-overview)             | View the Accounting overview             | Company member | 🚧 In Progress | Not assessed   |
+| [US-ACCT-002](#us-acct-002-trace-operations-in-the-general-ledger)   | Trace operations in the General Ledger   | Company member | 🧪 Validation  | Not assessed   |
+| [US-ACCT-003](#us-acct-003-review-financial-statements)              | Review financial statements              | Company member | 🧪 Validation  | Not assessed   |
+| [US-ACCT-004](#us-acct-004-export-accounting-reports)                | Export accounting reports                | Company member | 🧪 Validation  | Not assessed   |
+| [US-ACCT-005](#us-acct-005-review-historical-contract-activity)      | Review historical contract activity      | Company member | 🚧 In Progress | Not assessed   |
+| [US-ACCT-006](#us-acct-006-classify-an-external-withdrawal)          | Classify an external withdrawal          | Company owner  | 🧪 Validation  | Not assessed   |
+| [US-ACCT-007](#us-acct-007-review-direct-treasury-movements)         | Review direct treasury movements         | Company member | 🚧 In Progress | Not assessed   |
+| [US-ACCT-008](#us-acct-008-access-synchronized-company-books)        | Access synchronized company books        | Company member | 🚧 In Progress | Not assessed   |
+| [US-ACCT-009](#us-acct-009-investigate-treasury-balance-differences) | Investigate treasury balance differences | Company member | 🚧 In Progress | Not assessed   |
+| [US-ACCT-010](#us-acct-010-classify-direct-external-receipts)        | Classify direct external receipts        | Company owner  | 🚧 In Progress | Not assessed   |
 
 ## Test Coverage Overview
 
@@ -188,7 +188,11 @@ Community Credit round, matches the funding transaction to one balanced `UC-CRED
 
 Proof obligations use the [shared proof-strategy registry](../../testing/proof-strategies.md). Multiple IDs for one AC are cumulative.
 
-## US-ACCT-001: View the Accounting Overview
+## FEAT-ACCT-001: View the Accounting Overview
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-ACCT-001: View the Accounting Overview
 
@@ -249,7 +253,11 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 
 **Dependencies:** Current company, accounting source providers, and valuation sources
 
-## US-ACCT-002: Trace Operations in the General Ledger
+## FEAT-ACCT-002: Trace Operations in the General Ledger
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-ACCT-002: Trace Operations in the General Ledger
 
@@ -333,7 +341,11 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 
 **Dependencies:** US-ACCT-001
 
-## US-ACCT-003: Review Financial Statements
+## FEAT-ACCT-003: Review Financial Statements
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-ACCT-003: Review Financial Statements
 
@@ -386,7 +398,11 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 
 **Dependencies:** US-ACCT-001 and US-ACCT-002
 
-## US-ACCT-004: Export Accounting Reports
+## FEAT-ACCT-004: Export Accounting Reports
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-ACCT-004: Export Accounting Reports
 
@@ -441,7 +457,11 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 
 **Dependencies:** US-ACCT-002 or US-ACCT-003
 
-## US-ACCT-005: Review Historical Contract Activity
+## FEAT-ACCT-005: Review Historical Contract Activity
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-ACCT-005: Review Historical Contract Activity
 
@@ -514,7 +534,11 @@ first change and for the current router when no change event exists.
 
 **Dependencies:** Contract deployment history and US-ACCT-001
 
-## US-ACCT-006: Classify an External Withdrawal
+## FEAT-ACCT-006: Classify an External Withdrawal
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-ACCT-006: Classify an External Withdrawal
 
@@ -572,7 +596,11 @@ first change and for the current router when no change event exists.
 
 **Dependencies:** US-ACCT-002 and the journal account-assignment API
 
-## US-ACCT-007: Review Direct Treasury Movements
+## FEAT-ACCT-007: Review Direct Treasury Movements
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-ACCT-007: Review Direct Treasury Movements
 
@@ -755,7 +783,11 @@ across the participating stories.
   - **Related stories and roles:**
     - [US-CONTRACT-001](../contract-management/README.md#us-contract-001-review-the-current-contract-suite) — exposes the contract movement
 
-## US-ACCT-008: Access Synchronized Company Books
+## FEAT-ACCT-008: Access Synchronized Company Books
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-ACCT-008: Access Synchronized Company Books
 
@@ -815,7 +847,11 @@ across the participating stories.
 
 **Dependencies:** Company identity, deployment history, chain evidence, and accounting rules.
 
-## US-ACCT-009: Investigate Treasury Balance Differences
+## FEAT-ACCT-009: Investigate Treasury Balance Differences
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-ACCT-009: Investigate Treasury Balance Differences
 
@@ -872,7 +908,11 @@ across the participating stories.
 
 **Dependencies:** US-ACCT-007 and US-ACCT-008.
 
-## US-ACCT-010: Classify Direct External Receipts
+## FEAT-ACCT-010: Classify Direct External Receipts
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-ACCT-010: Classify Direct External Receipts
 

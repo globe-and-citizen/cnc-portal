@@ -47,16 +47,16 @@ flowchart LR
 
 ## Status Overview
 
-| User Story           | Title                                   | Actor                  | Status         |
-| -------------------- | --------------------------------------- | ---------------------- | -------------- |
-| US-MICROPAYMENTS-001 | Inspect FeeCollector deployments        | Platform administrator | 🚧 In Progress |
-| US-MICROPAYMENTS-002 | Configure V1 FeeCollector fees          | FeeCollector owner     | 🧪 Validation  |
-| US-MICROPAYMENTS-003 | Manage V1 FeeCollector token support    | FeeCollector owner     | 🚧 In Progress |
-| US-MICROPAYMENTS-004 | Set the V1 FeeCollector fee beneficiary | FeeCollector owner     | 🧪 Validation  |
-| US-MICROPAYMENTS-005 | Transfer V1 FeeCollector ownership      | FeeCollector owner     | 🧪 Validation  |
-| US-MICROPAYMENTS-006 | Withdraw V1 FeeCollector funds          | FeeCollector owner     | 🧪 Validation  |
-| US-MICROPAYMENTS-007 | Manage a legacy FeeCollector deployment | FeeCollector owner     | 🧪 Validation  |
-| US-MICROPAYMENTS-008 | Manage the V2 FeeCollector              | FeeCollector owner     | 🚧 In Progress |
+| User Story                                                                            | Feature                                 | Actor                  | Status         | Intended Scope |
+| ------------------------------------------------------------------------------------- | --------------------------------------- | ---------------------- | -------------- | -------------- |
+| [US-MICROPAYMENTS-001](#us-micropayments-001-inspect-feecollector-deployments)        | Inspect FeeCollector deployments        | Platform administrator | 🚧 In Progress | Not assessed   |
+| [US-MICROPAYMENTS-002](#us-micropayments-002-configure-v1-feecollector-fees)          | Configure V1 FeeCollector fees          | FeeCollector owner     | 🧪 Validation  | Not assessed   |
+| [US-MICROPAYMENTS-003](#us-micropayments-003-manage-v1-feecollector-token-support)    | Manage V1 FeeCollector token support    | FeeCollector owner     | 🚧 In Progress | Not assessed   |
+| [US-MICROPAYMENTS-004](#us-micropayments-004-set-the-v1-feecollector-fee-beneficiary) | Set the V1 FeeCollector fee beneficiary | FeeCollector owner     | 🧪 Validation  | Not assessed   |
+| [US-MICROPAYMENTS-005](#us-micropayments-005-transfer-v1-feecollector-ownership)      | Transfer V1 FeeCollector ownership      | FeeCollector owner     | 🧪 Validation  | Not assessed   |
+| [US-MICROPAYMENTS-006](#us-micropayments-006-withdraw-v1-feecollector-funds)          | Withdraw V1 FeeCollector funds          | FeeCollector owner     | 🧪 Validation  | Not assessed   |
+| [US-MICROPAYMENTS-007](#us-micropayments-007-manage-a-legacy-feecollector-deployment) | Manage a legacy FeeCollector deployment | FeeCollector owner     | 🧪 Validation  | Not assessed   |
+| [US-MICROPAYMENTS-008](#us-micropayments-008-manage-the-v2-feecollector)              | Manage the V2 FeeCollector              | FeeCollector owner     | 🚧 In Progress | Not assessed   |
 
 ## Test Coverage Overview
 
@@ -77,7 +77,11 @@ reference has the expected layer label.
 
 Proof obligations use the [shared proof-strategy registry](../../../testing/proof-strategies.md). Multiple IDs for one AC are cumulative.
 
-## US-MICROPAYMENTS-001: Inspect FeeCollector Deployments
+## FEAT-MICROPAYMENTS-001: Inspect FeeCollector Deployments
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-MICROPAYMENTS-001: Inspect FeeCollector Deployments
 
@@ -138,7 +142,11 @@ Proof obligations use the [shared proof-strategy registry](../../../testing/proo
 
 **Dependencies:** Dashboard authentication, administrator roles, and the selected FeeCollector deployment
 
-## US-MICROPAYMENTS-002: Configure V1 FeeCollector Fees
+## FEAT-MICROPAYMENTS-002: Configure V1 FeeCollector Fees
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-MICROPAYMENTS-002: Configure V1 FeeCollector Fees
 
@@ -187,7 +195,11 @@ Proof obligations use the [shared proof-strategy registry](../../../testing/proo
 
 **Dependencies:** US-MICROPAYMENTS-001 and ownership of V1
 
-## US-MICROPAYMENTS-003: Manage V1 FeeCollector Token Support
+## FEAT-MICROPAYMENTS-003: Manage V1 FeeCollector Token Support
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-MICROPAYMENTS-003: Manage V1 FeeCollector Token Support
 
@@ -237,7 +249,11 @@ Proof obligations use the [shared proof-strategy registry](../../../testing/proo
 
 **Dependencies:** US-MICROPAYMENTS-001 and ownership of V1
 
-## US-MICROPAYMENTS-004: Set the V1 FeeCollector Fee Beneficiary
+## FEAT-MICROPAYMENTS-004: Set the V1 FeeCollector Fee Beneficiary
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-MICROPAYMENTS-004: Set the V1 FeeCollector Fee Beneficiary
 
@@ -282,7 +298,11 @@ Proof obligations use the [shared proof-strategy registry](../../../testing/proo
 
 **Dependencies:** US-MICROPAYMENTS-001 and ownership of V1
 
-## US-MICROPAYMENTS-005: Transfer V1 FeeCollector Ownership
+## FEAT-MICROPAYMENTS-005: Transfer V1 FeeCollector Ownership
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-MICROPAYMENTS-005: Transfer V1 FeeCollector Ownership
 
@@ -325,7 +345,11 @@ Proof obligations use the [shared proof-strategy registry](../../../testing/proo
 
 **Dependencies:** US-MICROPAYMENTS-001 and ownership of V1
 
-## US-MICROPAYMENTS-006: Withdraw V1 FeeCollector Funds
+## FEAT-MICROPAYMENTS-006: Withdraw V1 FeeCollector Funds
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-MICROPAYMENTS-006: Withdraw V1 FeeCollector Funds
 
@@ -373,7 +397,11 @@ Proof obligations use the [shared proof-strategy registry](../../../testing/proo
 
 **Dependencies:** US-MICROPAYMENTS-001 and ownership of V1
 
-## US-MICROPAYMENTS-007: Manage a Legacy FeeCollector Deployment
+## FEAT-MICROPAYMENTS-007: Manage a Legacy FeeCollector Deployment
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-MICROPAYMENTS-007: Manage a Legacy FeeCollector Deployment
 
@@ -424,7 +452,11 @@ Proof obligations use the [shared proof-strategy registry](../../../testing/proo
 
 **Dependencies:** US-MICROPAYMENTS-001, ownership of V0 or V0.1, and the selected historical deployment
 
-## US-MICROPAYMENTS-008: Manage the V2 FeeCollector
+## FEAT-MICROPAYMENTS-008: Manage the V2 FeeCollector
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
 
 ### US-MICROPAYMENTS-008: Manage the V2 FeeCollector
 
