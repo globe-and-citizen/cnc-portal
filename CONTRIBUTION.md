@@ -89,6 +89,27 @@ Attach categories to the Sprint plan and keep tasks directly required by a speci
 for classification when useful; do not move them merely to produce a category count. Cross-repository native links depend on actual GitHub
 permissions and support; verify them and retain explicit issue links where unavailable.
 
+## Feature documentation with coding agents
+
+The repository contains the complete [`w3-feature-documentation` skill](./.agents/skills/w3-feature-documentation/SKILL.md), including its
+[reference guide](./.agents/skills/w3-feature-documentation/references/feature-guide.md). Use it as the primary workflow for product feature
+documentation, together with the [CNC-specific supplement](./.agents/skills/cnc-feature-documentation/SKILL.md) and the repository's feature
+review contract. The copy is a versioned snapshot of the [W3 Frame skills repository](https://github.com/W3-Frame/agent-skills); update the
+complete bundle together after reviewing upstream changes.
+
+- **Codex:** the repository skill is in `.agents/skills/w3-feature-documentation/`.
+- **Claude Code:** `.claude/skills/w3-feature-documentation/` provides a discovery entry that loads the shared repository skill and guide.
+- **DeepSeek Harness:** its filesystem skill provider can discover the shared `.agents/skills/` directory when the skill registry and
+  filesystem provider are enabled. Consult the
+  [provider setup](https://github.com/deepseek-ai/deepseek-harness/tree/master/packages/skill/skill-filesystem) for the installed version.
+- **Another agent:** follow that agent's skill-installation instructions and select or copy the complete
+  `.agents/skills/w3-feature-documentation/` directory, including `references/`, to its supported project skill location. If it cannot load
+  skills, ask it to read the repository skill and its linked guide directly. Also provide the CNC-specific supplement and repository
+  contribution instructions. Verify that the agent can open the guide before relying on it.
+
+The skill directs the agent to inspect the repository's established conventions and decisions; installation does not authorize product
+changes, publishing, or human acceptance.
+
 ## Human developer workflow
 
 1. Set up the repository from README and agree the intended outcome, tracking issue, parent and validation requirements with the delivery

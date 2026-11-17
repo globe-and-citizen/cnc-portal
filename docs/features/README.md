@@ -334,3 +334,6 @@ These stories link to behaviour owned by another feature; they do not introduce 
 
 Follow the [Feature Documentation Guide](../platform/feature-specification-guide.md#feature-eligibility-and-grouping). Verify product intent
 and evidence before changing a capability; verify navigation, routes, guards, and actions when claiming current availability.
+
+For agent-assisted feature documentation, use the [W3 feature documentation skill](../../.agents/skills/w3-feature-documentation/SKILL.md)
+and the [CNC-specific supplement](../../.agents/skills/cnc-feature-documentation/SKILL.md).

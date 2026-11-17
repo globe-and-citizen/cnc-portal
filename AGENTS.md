@@ -31,14 +31,17 @@ or grant authority to make product decisions, merge, deploy or record human acce
 
 ## Repository skills
 
-Task-specific agent workflows are versioned under `.agents/skills/`. Use only the one that matches the work:
+Task-specific agent workflows are versioned under `.agents/skills/`. Select the workflow that matches the work. For product feature
+documentation, use `w3-feature-documentation` as the primary workflow and apply `cnc-feature-documentation` for CNC-specific evidence and
+review requirements:
 
 - `cnc-work-orchestrator` — plan dependencies and bounded multi-agent work.
 - `cnc-code-audit` — audit a scoped checkout, propose concrete corrections, and track decisions, delivery and verification.
 - `cnc-github-flow` — issues, Sprint hierarchy, PRs, reviews and publishing.
 - `cnc-pr-review` — issue conformance and code-quality review.
 - `cnc-docs-governance` — agent and implementation documentation.
-- `cnc-feature-documentation` — implementation-backed product feature stories and acceptance.
+- `w3-feature-documentation` — primary workflow for product modules, features, stories and acceptance criteria.
+- `cnc-feature-documentation` — CNC-specific evidence, traceability and human-review supplement.
 - `cnc-frontend-change` — Vue client and Nuxt dashboard changes.
 - `cnc-contract-change` — Solidity and ABI changes.
 

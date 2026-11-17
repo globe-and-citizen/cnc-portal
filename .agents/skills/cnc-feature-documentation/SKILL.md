@@ -5,7 +5,9 @@ description: Create or update evidence-backed CNC Portal product feature documen
 
 # CNC feature documentation
 
-Create one reviewable product contract from the current user journey and its implementation evidence.
+Use the shared [W3 feature documentation skill](../w3-feature-documentation/SKILL.md) as the primary workflow, including its feature guide.
+Apply this CNC-specific supplement for evidence, traceability and human product review. Create a reviewable product contract from the
+current user journey and its implementation evidence.
 
 Before editing, read and follow the [Feature Documentation Guide](../../../docs/platform/feature-specification-guide.md). It is the
 canonical owner of feature eligibility, document structure, story statuses, acceptance semantics, progressive disclosure, and diagram rules.
