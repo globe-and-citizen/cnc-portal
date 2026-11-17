@@ -8,49 +8,46 @@
 
 ## Purpose
 
-Each product feature owns its user stories and acceptance criteria in one canonical README. The document describes the complete user
-journey, the behaviour expected from the product, and the current human-validation state.
+A **module** groups related product capabilities and owns their shared product model. A **feature** is an observable capability that lets an
+actor achieve a distinct outcome. Its default user story uses the same stable `US-*` identifier and title; its `AC-US-*` criteria define
+independently verifiable outcomes. A module can contain several features. Reference stories link behaviour owned elsewhere and do not create
+a duplicate feature contract.
 
-The feature README is not an implementation manual or a delivery history. Code and tests are executable evidence, while issues, pull
-requests, and Git history preserve active work and history.
+A module README owns its stories, criteria, coverage and review evidence. It is not an implementation manual or delivery history. Code and
+tests are executable evidence; issues, pull requests and Git preserve active work and history.
 
 ## Feature Eligibility and Grouping
 
-A documented product feature is an observable capability that a user can reach through a current product journey. Establish the inventory
-from runtime evidence in this order:
+Document accepted or explicitly proposed capabilities, including planned, incomplete and accessible behaviour. Ground intent in product
+decisions; identify unresolved scope and do not treat an implementation detail, a route, or a UI click as a feature. Give each feature one
+actor goal and an observable result. Do not duplicate it by access channel. Distinguish intended release, implementation, test coverage,
+current access and human acceptance.
 
-1. inspect primary navigation and authentication entry points;
-2. follow their linked routes and meaningful user actions;
-3. apply the current access guards and role conditions;
-4. group routes that serve the same user goal into one capability;
-5. separate product availability from documentation and human-validation status.
+For current-access claims inspect navigation, linked routes, meaningful actions, access guards and role conditions. Exclude placeholders,
+development playgrounds, error and access-denied pages, orphaned routes and technical mechanisms as standalone product features unless they
+serve an independently observable product goal. A planned feature need not already have a reachable route.
 
-A route file alone is not enough. Exclude placeholders, development playgrounds, error and access-denied pages, unused template screens, and
-orphaned routes that no current journey exposes. Also exclude technical mechanisms such as contracts, APIs, RBAC, seeding, indexers,
-deployment, and server wake-up unless they are themselves exposed as an observable product goal.
+The [Product Feature Catalogue](../features/README.md) lists modules and their existing stories as candidate features, with intended scope
+and status. Validate the grouping before treating every historical story as a separate feature; mark ambiguous and proposed scope
+explicitly. The existing navigation-derived inventory records access at module level, not proof of each feature's availability.
 
-When a subject also has shared runtime behaviour, split the documentation. Keep the user journey in the feature README and place the
-architectural capability under `docs/implementation/` according to the
-[Implementation Documentation Guide](./implementation-documentation-guide.md).
-
-The [Product Feature Inventory](../features/README.md) is the canonical list. The client app owns top-level capabilities. All
-administrator-dashboard capabilities are grouped under `docs/features/backoffice/`, even when a dashboard capability has several routes or
-focused documents.
+When a subject also has shared runtime behaviour, keep product outcomes in the module README and architectural behaviour under
+`docs/implementation/` according to the [Implementation Documentation Guide](./implementation-documentation-guide.md).
 
 ## Documentation Ownership
 
-| Information                                      | Canonical owner                                |
-| ------------------------------------------------ | ---------------------------------------------- |
-| Current user-accessible capability inventory     | `docs/features/README.md`                      |
-| Product intent, journey, and acceptance criteria | `docs/features/<feature>/README.md`            |
-| Backoffice capability journey                    | `docs/features/backoffice/<feature>/README.md` |
-| Complex feature-specific rules                   | A focused file beside the feature README       |
-| Shared architectural capability                  | `docs/implementation/<capability>/README.md`   |
-| Current smart-contract behaviour                 | `docs/contracts/features/<contract>/README.md` |
-| Platform-wide engineering standards              | `docs/platform/` or `.github/` guides          |
-| Executable behaviour and regression proof        | Code and tests                                 |
-| Architectural decisions and trade-offs           | [`docs/adr/`](../adr/README.md)                |
-| Active delivery and history                      | GitHub issues, pull requests, and Git          |
+| Information                                               | Canonical owner                                |
+| --------------------------------------------------------- | ---------------------------------------------- |
+| Module and feature catalogue and current-access inventory | `docs/features/README.md`                      |
+| Product intent, journeys, and acceptance criteria         | `docs/features/<module>/README.md`             |
+| Backoffice module journeys                                | `docs/features/backoffice/<module>/README.md`  |
+| Complex feature-specific rules                            | A focused file beside the feature README       |
+| Shared architectural capability                           | `docs/implementation/<capability>/README.md`   |
+| Current smart-contract behaviour                          | `docs/contracts/features/<contract>/README.md` |
+| Platform-wide engineering standards                       | `docs/platform/` or `.github/` guides          |
+| Executable behaviour and regression proof                 | Code and tests                                 |
+| Architectural decisions and trade-offs                    | [`docs/adr/`](../adr/README.md)                |
+| Active delivery and history                               | GitHub issues, pull requests, and Git          |
 
 Product and contract documentation remain separate even when they share a name. For example, `docs/features/vesting/README.md` owns the
 portal journey, while `docs/contracts/features/vesting/README.md` owns the Solidity behaviour that supports it.
@@ -80,11 +77,10 @@ these links as a concrete example, with reciprocal references in each participat
 
 ## Location and Naming
 
-- Create one directory per client capability: `docs/features/<kebab-case-feature>/`.
-- Create dashboard capability documentation under `docs/features/backoffice/<kebab-case-feature>/`; do not add dashboard capabilities at the
-  `docs/features/` root.
-- Treat `docs/features/README.md` and `docs/features/backoffice/README.md` as navigation inventories, not as substitutes for the capability
-  READMEs.
+- Create one directory per client module: `docs/features/<kebab-case-module>/`. Preserve existing paths and identifiers during migration.
+- Create dashboard module documentation under `docs/features/backoffice/<kebab-case-module>/`; group its related features there.
+- Treat `docs/features/README.md` and `docs/features/backoffice/README.md` as catalogue and navigation entry points, not as substitutes for
+  module READMEs.
 - Name the canonical entry point `README.md` with this exact casing.
 - Keep the whole product journey in that README rather than splitting user stories by application layer.
 - Add focused sibling documents only when a rule, API, or operational flow would make the README difficult to review.
@@ -210,14 +206,15 @@ Do not use `✅ Done` as a synonym for "code exists" or "automated tests pass."
 
 ## Required Structure
 
-Every canonical feature README follows this order.
+Every canonical module README follows this order. Existing file paths and story anchors remain stable; do not move or renumber them merely
+to match the generic skill template.
 
 ### 1. Title and Scope
 
-Start with the feature name and `— User Stories`. Record the scope and the last behaviour review.
+Start with the module name and `— User Stories`. Record the scope and the last behaviour review.
 
 ```markdown
-# Feature Name — User Stories
+# Module Name — User Stories
 
 **Scope:** The complete journey covered by this document
 
@@ -252,7 +249,7 @@ Present the main journey in the order a user or tester encounters it.
 
 ### 4. Status Overview
 
-Summarize the complete feature before the detailed stories.
+Summarize the module's features and reference stories before the detailed stories.
 
 | User Story     | Title              | Actor      | Status         |
 | -------------- | ------------------ | ---------- | -------------- |
@@ -263,8 +260,9 @@ Use stable IDs. Do not reuse or silently renumber an ID after it has been refere
 List the status overview rows and detailed `## US-...` sections in ascending stable user-story-ID order. A lifecycle can show the actual
 journey and its branches, but it must not change that documentation order.
 
-The status overview is the sole delivery-state record for each story. It records implementation and human-validation progress, not planning
-priority or estimation. Detailed stories do not repeat their status after the acceptance criteria.
+The module status overview is the authoritative delivery-state record for each story; the catalogue mirrors it for navigation. It records
+implementation and human-validation progress, not planning priority or estimation. Detailed stories do not repeat their status after the
+acceptance criteria.
 
 #### Test Coverage Overview
 
@@ -310,13 +308,13 @@ and known gaps:
 ```markdown
 ### Test Coverage
 
-| Acceptance Criterion   | Proof Strategy | Current Evidence | Status          |
-| ---------------------- | -------------- | ---------------- | --------------- |
+| Acceptance Criterion   | Proof Strategy      | Current Evidence         | Status          |
+| ---------------------- | ------------------- | ------------------------ | --------------- |
 | `AC-US-FEATURE-001-01` | `PS-BACKEND`        | Integrated E2E + Backend | ✅ Met          |
 | `AC-US-FEATURE-001-01` | `PS-API-INTEGRATED` | Integrated E2E + Backend | ✅ Met          |
-| `AC-US-FEATURE-001-02` | `PS-BROWSER`        | Mocked browser   | ✅ Met          |
-| `AC-US-FEATURE-001-02` | `PS-BACKEND`        | Mocked browser   | ⚠️ Insufficient |
-| `AC-US-FEATURE-001-03` | `PS-BACKEND`        | None linked      | ❌ Missing      |
+| `AC-US-FEATURE-001-02` | `PS-BROWSER`        | Mocked browser           | ✅ Met          |
+| `AC-US-FEATURE-001-02` | `PS-BACKEND`        | Mocked browser           | ⚠️ Insufficient |
+| `AC-US-FEATURE-001-03` | `PS-BACKEND`        | None linked              | ❌ Missing      |
 ```
 
 - Identify the code layers that make a decision, enforce a rule, or own a state transition required by the criterion. A layer that only
@@ -555,22 +553,24 @@ This rule applies to every committed documentation file, not only feature README
 
 ## Change Process
 
-1. Verify that the capability and its grouping match current navigation, linked routes, and access guards.
+1. Establish the feature’s actor, outcome, product intent, intended scope and module. For a current-access claim, verify navigation, linked
+   routes, actions and access guards.
 2. Inspect the current feature README, product entry points, business rules, tests, and linked contract behaviour.
 3. Define or update the lifecycle and stable story boundaries, then order the status overview and detailed stories by ascending stable ID.
 4. Write atomic and cohesive functional acceptance criteria under `Happy Path`, `Business Rules`, and `Edge & Error Cases`, including
    material boundaries and recovery outcomes without prescribing UI or UX choices.
 5. Check criteria from current implementation evidence, then set `🧪 Validation` or `✅ Done` from the human product-review state.
 6. Refresh focused evidence links, their implementation-evidence attestation, and related documentation.
-7. Update `docs/features/README.md` and `docs/README.md` only when navigation or canonical ownership changes.
+7. Update the catalogue when a module, feature, intended scope or story status changes; update the documentation hub when navigation or
+   canonical ownership changes.
 8. Keep historical explanations in Git, issues, pull requests, or ADRs rather than the current feature contract.
 9. Follow the [Documentation Freshness Policy](./documentation-freshness-policy.md): every changed behavioural source must be linked by, and
    reviewed through, its canonical feature owner in the same pull request. Commit the source before setting the owner's evidence SHA.
 
 ## Review Checklist
 
-- [ ] The README covers one complete product capability.
-- [ ] The capability is reachable through a current user journey and grouped under the correct product surface.
+- [ ] The module README groups related features and describes their complete product outcomes.
+- [ ] Current accessibility claims are supported by a user journey; planned scope and unresolved decisions are identified explicitly.
 - [ ] Scope, versions, actors, and system boundaries are explicit.
 - [ ] The lifecycle is internally coherent, while the status overview and detailed stories are ordered by ascending stable user-story ID.
 - [ ] Every story uses `As a`, `I want to`, and `So that` on separate lines.

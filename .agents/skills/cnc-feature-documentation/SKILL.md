@@ -1,6 +1,6 @@
 ---
 name: cnc-feature-documentation
-description: Create or update evidence-backed CNC Portal product feature documentation and user stories. Use when documenting a user-accessible client or backoffice capability, validating its stories and acceptance criteria, or maintaining the product feature inventory; do not use for architecture-only documentation.
+description: Create or update evidence-backed CNC Portal product feature documentation and user stories. Use when documenting a planned or accessible client or backoffice capability, validating its stories and acceptance criteria, or maintaining the product feature catalogue; do not use for architecture-only documentation.
 ---
 
 # CNC feature documentation
@@ -17,14 +17,13 @@ canonical rule with its existing owner.
 
 ## Classify the subject
 
-- Confirm that a user can reach the capability through current navigation, linked routes, access guards, and meaningful actions. A route or
-  implementation folder alone does not make a feature.
-- Put client capabilities under `docs/features/<feature>/` and administrator-dashboard capabilities under
-  `docs/features/backoffice/<feature>/`.
-- If the subject is a shared runtime mechanism rather than a direct user outcome, use `cnc-docs-governance` and the
-  [Implementation Documentation Guide](../../../docs/platform/implementation-documentation-guide.md) instead.
-- When a subject has product and architectural facets, keep the user journey in the feature README and link to a separate implementation
-  owner.
+- Group related capabilities into modules; a feature is one observable actor goal with a default story sharing its stable `US-*` ID.
+- Document proposed and planned features as well as current ones. Distinguish intended release scope from current access and assessed
+  status; leave unknown scope explicit. Verify navigation, routes, guards and actions before claiming a capability is currently reachable.
+- Keep client modules under `docs/features/<module>/` and dashboard modules under `docs/features/backoffice/<module>/`; preserve existing
+  paths, identifiers, stories, criteria and evidence when migrating. Review ambiguous historical stories before splitting or regrouping
+  them.
+- Use `cnc-docs-governance` for shared runtime mechanisms, and link their implementation owner from the product journey.
 
 ## Establish current evidence
 
@@ -45,7 +44,7 @@ requested or required by the active GitHub workflow.
 
 ## Write or revise the feature contract
 
-- Keep one canonical `README.md` for the complete capability and preserve stable user-story IDs.
+- Keep one canonical `README.md` for the module and its related features and preserve stable user-story IDs.
 - List the status overview and detailed stories in ascending stable user-story-ID order. A lifecycle can show the actual journey and its
   branches without changing that documentation order.
 - Give each story one actor, one action, and one user-visible benefit.
@@ -94,8 +93,8 @@ requested or required by the active GitHub workflow.
 
 ## Reconcile navigation and review state
 
-- Update `docs/features/README.md`, `docs/features/backoffice/README.md`, `docs/02_USER_STORIES.md`, or `docs/README.md` only when feature
-  ownership or navigation changes.
+- Update `docs/features/README.md` when module membership, feature titles, intended scope or story status changes. Update the backoffice
+  inventory and documentation hub when their navigation or ownership changes.
 - Change `Last reviewed` only after the affected behaviour has been reviewed; editorial work alone does not refresh it.
 - Preserve verified current stories while correcting stale claims. List unresolved gaps and the evidence still needed for unchecked
   criteria.
