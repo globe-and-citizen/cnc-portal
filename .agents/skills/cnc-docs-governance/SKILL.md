@@ -7,8 +7,9 @@ description: Maintain CNC Portal agent guidance, architectural documentation, an
 
 Keep each rule in one authoritative place and link to it from the entry points that need it.
 
-Use `cnc-feature-documentation` to create or validate product feature READMEs and their user stories. This skill owns the wider
-documentation architecture and the guides that define that feature workflow.
+Use `w3-feature-documentation` as the primary workflow to create or validate product feature READMEs and stories, with
+`cnc-feature-documentation` for CNC-specific evidence and review requirements. This skill owns the wider documentation architecture and the
+guides that define that feature workflow.
 
 ## Choose the owner
 
