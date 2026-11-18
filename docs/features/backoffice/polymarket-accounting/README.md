@@ -353,8 +353,14 @@ Proof obligations use the [shared proof-strategy registry](../../../testing/proo
 
 - An invalid non-empty wallet address starts no query but lacks an explicit validation error; statement components can instead render empty
   reconstructed values (`US-POLY-ACCOUNTING-001`).
-- Activity and position fetches stop after 20 pages of 500 rows. The journey does not flag that a history beyond 10,000 rows is incomplete
-  (`US-POLY-ACCOUNTING-002`).
+- Activity and position fetches follow the Polymarket Data API v2 cursor to the last page, so the former 10,000-row client limit no longer
+  applies and `AC-US-POLY-ACCOUNTING-002-09` needs re-specification. A very long history now costs many sequential requests instead of being
+  cut short (`US-POLY-ACCOUNTING-002`).
+- The analysis reads the address exactly as entered. A Polymarket login wallet returns no activity or positions because Polymarket holds
+  them on the linked proxy wallet shown on the Portfolio page (`US-POLY-ACCOUNTING-001`).
+- On-chain cash counts every token whose symbol contains "USD", so test tokens and look-alike scam tokens can inflate deposits, withdrawals
+  and cash (`US-POLY-ACCOUNTING-002`).
+- The profile P&L uses daily points, so the latest value can lag the live position P&L by up to one day (`US-POLY-ACCOUNTING-002`).
 - The Summary's historical date selector does not scope the adjacent Accounting Identities card, which continues to use current all-time
   aggregates (`US-POLY-ACCOUNTING-002`).
 - Summary and Balance Sheet have separate historical date selectors; `AC-US-POLY-ACCOUNTING-003-04` must not be read as one shared date
