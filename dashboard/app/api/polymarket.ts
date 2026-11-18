@@ -1,175 +1,79 @@
 import { isAddress } from 'viem'
-import type { PolymarketActivity, PolymarketPosition, PolymarketUserPnlPoint } from '~/types/polymarket'
+import type { PolymarketActivity, PolymarketPosition } from '~/types/polymarket'
+import {
+  toPolymarketActivity,
+  toPolymarketPosition,
+  type PolymarketActivityRow,
+  type PolymarketPage,
+  type PolymarketPositionRow,
+  type PolymarketUserPnl
+} from '~/api/polymarketRows'
 
-const POLYMARKET_ACTIVITY_URL = 'https://data-api.polymarket.com/activity'
-const POLYMARKET_POSITIONS_URL = 'https://data-api.polymarket.com/positions'
-const POLYMARKET_USER_PNL_URL = 'https://user-pnl-api.polymarket.com/user-pnl'
+const POLYMARKET_DATA_API_URL = 'https://data-api.polymarket.com/v2'
+const MAX_PAGE_SIZE = 1000
 
-export type PolymarketActivitySortBy = 'TIMESTAMP' | 'TOKENS' | 'CASH'
-export type PolymarketActivitySortDirection = 'ASC' | 'DESC'
-export type PolymarketActivitySide = 'BUY' | 'SELL'
+type PolymarketQuery = Record<string, string>
 
-export interface FetchPolymarketActivityParams {
-  user: string
-  limit?: number
-  offset?: number
-  market?: string | string[]
-  eventId?: number | number[]
-  type?: string | string[]
-  start?: number
-  end?: number
-  sortBy?: PolymarketActivitySortBy
-  sortDirection?: PolymarketActivitySortDirection
-  side?: PolymarketActivitySide
+function toPolymarketUser(address: string): string {
+  const user = address.trim()
+  if (!isAddress(user as `0x${string}`)) {
+    throw new Error(`Invalid Polymarket user address: ${address}`)
+  }
+  return user
 }
 
-function serializeCsv(value: string | number | readonly string[] | readonly number[] | undefined): string | undefined {
-  if (value === undefined) {
-    return undefined
-  }
-  if (Array.isArray(value)) {
-    return value.join(',')
-  }
-  return String(value)
+/**
+ * Walks a cursor-paginated Data API v2 route until `next_cursor` is `null`.
+ * The filters are re-sent with every cursor, as v2 requires.
+ */
+async function fetchAllPages<Row>(path: string, query: PolymarketQuery): Promise<Row[]> {
+  const rows: Row[] = []
+  let cursor: string | null = null
+  do {
+    const page: PolymarketPage<Row> = await $fetch<PolymarketPage<Row>>(`${POLYMARKET_DATA_API_URL}/${path}`, {
+      query: { ...query, limit: MAX_PAGE_SIZE, ...(cursor ? { cursor } : {}) }
+    })
+    rows.push(...page.data)
+    cursor = page.pagination.next_cursor
+  } while (cursor)
+  return rows
 }
 
-function clampLimit(raw: number | undefined): number {
-  if (raw == null || Number.isNaN(raw)) {
-    return 100
-  }
-  return Math.min(500, Math.max(0, Math.floor(raw)))
+/** Fetches the complete activity history, oldest first, for accounting. */
+export async function fetchAllPolymarketActivity(address: string): Promise<PolymarketActivity[]> {
+  const user = toPolymarketUser(address)
+  const rows = await fetchAllPages<PolymarketActivityRow>('activity', { user, sortBy: 'TIMESTAMP', sortDirection: 'ASC' })
+  return rows.map(toPolymarketActivity)
 }
 
-function clampOffset(raw: number | undefined): number {
-  if (raw == null || Number.isNaN(raw)) {
+/**
+ * Fetches every position for accounting. v2 returns open positions by default
+ * and closed ones (needed for realized P&L) only with `status=CLOSED`.
+ */
+export async function fetchAllPolymarketPositions(address: string): Promise<PolymarketPosition[]> {
+  const user = toPolymarketUser(address)
+  const [openRows, closedRows] = await Promise.all([
+    fetchAllPages<PolymarketPositionRow>('positions', { user }),
+    fetchAllPages<PolymarketPositionRow>('positions', { user, status: 'CLOSED' })
+  ])
+  return [...openRows, ...closedRows].map(toPolymarketPosition)
+}
+
+/**
+ * Latest all-time P&L, as the polymarket.com profile page reports it. Unlike
+ * Σ `/positions` realizedPnl + cashPnl, it stays right once closed markets drop
+ * off the positions feed. Daily points over the whole history keep the payload
+ * small while still reaching wallets that have been idle for a long time.
+ */
+export async function fetchPolymarketLatestPnl(address: string): Promise<number> {
+  const user = toPolymarketUser(address)
+  const response = await $fetch<PolymarketUserPnl>(`${POLYMARKET_DATA_API_URL}/user-pnl`, {
+    query: { user, interval: 'all', fidelity: '1d' }
+  })
+  const pricedPoints = response.data.points.filter(point => point.position_pnl != null)
+  if (pricedPoints.length === 0) {
     return 0
   }
-  return Math.min(10_000, Math.max(0, Math.floor(raw)))
-}
-
-function appendOptionalParams(url: URL, params: FetchPolymarketActivityParams): void {
-  const entries: [string, string | undefined][] = [
-    ['market', serializeCsv(params.market)],
-    ['eventId', serializeCsv(params.eventId)],
-    ['type', serializeCsv(params.type)],
-    ['start', params.start != null ? String(params.start) : undefined],
-    ['end', params.end != null ? String(params.end) : undefined],
-    ['sortBy', params.sortBy],
-    ['sortDirection', params.sortDirection],
-    ['side', params.side]
-  ]
-  for (const [key, value] of entries) {
-    if (value !== undefined && value !== '') {
-      url.searchParams.set(key, value)
-    }
-  }
-}
-
-/**
- * Fetches user activity from the Polymarket Data API (browser-side).
- * @see https://docs.polymarket.com/api-reference/core/get-user-activity
- */
-export async function fetchPolymarketActivity(params: FetchPolymarketActivityParams): Promise<PolymarketActivity[]> {
-  const user = params.user.trim()
-  if (!isAddress(user as `0x${string}`)) {
-    throw new Error('Invalid Polymarket user address')
-  }
-
-  const url = new URL(POLYMARKET_ACTIVITY_URL)
-  url.searchParams.set('user', user)
-  url.searchParams.set('limit', String(clampLimit(params.limit)))
-  url.searchParams.set('offset', String(clampOffset(params.offset)))
-  appendOptionalParams(url, params)
-
-  return await $fetch<PolymarketActivity[]>(url.toString())
-}
-
-export interface FetchPolymarketPositionsParams {
-  user: string
-  limit?: number
-  offset?: number
-  /** Minimum position size; pass 0 to also include fully-closed positions. */
-  sizeThreshold?: number
-}
-
-/**
- * Fetches user positions (cost basis + P&L) from the Polymarket Data API.
- * @see https://docs.polymarket.com/api-reference/core/get-current-positions-for-a-user
- */
-export async function fetchPolymarketPositions(params: FetchPolymarketPositionsParams): Promise<PolymarketPosition[]> {
-  const user = params.user.trim()
-  if (!isAddress(user as `0x${string}`)) {
-    throw new Error('Invalid Polymarket user address')
-  }
-
-  const url = new URL(POLYMARKET_POSITIONS_URL)
-  url.searchParams.set('user', user)
-  url.searchParams.set('limit', String(clampLimit(params.limit)))
-  url.searchParams.set('offset', String(clampOffset(params.offset)))
-  if (params.sizeThreshold != null) {
-    url.searchParams.set('sizeThreshold', String(params.sizeThreshold))
-  }
-
-  return await $fetch<PolymarketPosition[]>(url.toString())
-}
-
-/**
- * Walks an offset-paginated Polymarket endpoint until a short page is returned.
- * The Data API caps `offset` at 10_000, so `maxPages * pageSize` stays under that.
- */
-async function fetchAllPages<T>(fetchPage: (offset: number) => Promise<T[]>, pageSize: number, maxPages = 20): Promise<T[]> {
-  const all: T[] = []
-  for (let page = 0; page < maxPages; page++) {
-    const batch = await fetchPage(page * pageSize)
-    all.push(...batch)
-    if (batch.length < pageSize) {
-      break
-    }
-  }
-  return all
-}
-
-/** Fetches the complete activity history (all pages) for accounting. */
-export async function fetchAllPolymarketActivity(user: string): Promise<PolymarketActivity[]> {
-  const pageSize = 500
-  return fetchAllPages(
-    offset => fetchPolymarketActivity({ user, limit: pageSize, offset, sortBy: 'TIMESTAMP', sortDirection: 'ASC' }),
-    pageSize
-  )
-}
-
-/** Fetches every position (including closed ones, for realized P&L) for accounting. */
-export async function fetchAllPolymarketPositions(user: string): Promise<PolymarketPosition[]> {
-  const pageSize = 500
-  return fetchAllPages(
-    offset => fetchPolymarketPositions({ user, limit: pageSize, offset, sizeThreshold: 0 }),
-    pageSize
-  )
-}
-
-/**
- * Fetches the all-time Profit/Loss time series Polymarket renders on profile pages.
- * The latest `p` value matches polymarket.com/profile/{address} — unlike
- * Σ `/positions` realizedPnl + cashPnl, which diverges once closed markets drop
- * off the positions feed or carry stale per-row P&L.
- */
-export async function fetchPolymarketUserPnl(user: string): Promise<PolymarketUserPnlPoint[]> {
-  const trimmed = user.trim()
-  if (!isAddress(trimmed as `0x${string}`)) {
-    throw new Error('Invalid Polymarket user address')
-  }
-  const url = new URL(POLYMARKET_USER_PNL_URL)
-  url.searchParams.set('user_address', trimmed)
-  return await $fetch<PolymarketUserPnlPoint[]>(url.toString())
-}
-
-/** Latest all-time P&L from {@link fetchPolymarketUserPnl}. */
-export async function fetchPolymarketLatestPnl(user: string): Promise<number> {
-  const points = await fetchPolymarketUserPnl(user)
-  if (points.length === 0) {
-    return 0
-  }
-  // Pick the most recent point by timestamp rather than trusting array order.
-  const latest = points.reduce((newest, point) => (point.t > newest.t ? point : newest))
-  return latest.p
+  const latest = pricedPoints.reduce((newest, point) => (point.timestamp > newest.timestamp ? point : newest))
+  return latest.position_pnl ?? 0
 }

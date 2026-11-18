@@ -83,7 +83,7 @@ export interface AccountingSummary {
   unrealizedPnl: number
   /**
    * All-time P&L as Polymarket's profile page reports it — sourced from
-   * `user-pnl-api.polymarket.com` in {@link useAccounting} (latest chart point).
+   * the Data API v2 `/user-pnl` series in {@link useAccounting} (latest point).
    * `buildLedger()` seeds this as `positionsRealizedPnl + unrealizedPnl` until
    * that feed loads; the two diverge once `/positions` rows go stale.
    */
