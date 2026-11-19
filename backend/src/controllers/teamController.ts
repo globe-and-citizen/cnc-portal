@@ -1,3 +1,5 @@
+import type { getAllTeamsQuerySchema } from '../validation/schemas/team';
+import type { z } from 'zod';
 import { Prisma, TeamContract, TeamOfficer, User, Wage } from '@prisma/client';
 import { Request, Response } from 'express';
 import { isAddress } from 'viem';
@@ -8,6 +10,8 @@ import { generateUniqueSlug } from '../utils/slug.util';
 import { isActiveOfficerVersion } from '../utils/officerVersion';
 import { isAdmin } from '../utils/roleUtils';
 import { UserRoles } from '../types/roles';
+
+type GetAllTeamsQuery = z.infer<typeof getAllTeamsQuerySchema>;
 
 // A slug is taken when some team already holds it.
 const isTeamSlugTaken = async (slug: string) =>
@@ -283,13 +287,14 @@ const getTeam = async (req: Request, res: Response) => {
 
 // Get teams - either all teams or user-specific teams
 const getAllTeams = async (req: Request, res: Response) => {
+  const query = res.locals.validatedQuery as GetAllTeamsQuery;
   /*
   #swagger.tags = ['Teams']
   */
   const callerAddress = String(req.address);
-  const userAddress = req.query.userAddress as string | undefined;
-  const showHidden = isTruthyQueryFlag(req.query.showHidden);
-  const showArchived = isTruthyQueryFlag(req.query.showArchived);
+  const userAddress = query.userAddress;
+  const showHidden = isTruthyQueryFlag(query.showHidden);
+  const showArchived = isTruthyQueryFlag(query.showArchived);
   try {
     const callerRoles = (req.user?.roles ?? []) as UserRoles;
 

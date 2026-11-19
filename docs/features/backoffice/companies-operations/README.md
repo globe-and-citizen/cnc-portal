@@ -258,7 +258,7 @@ only when the operator reaches genesis; a provider can still be unavailable or l
 The company payload lists every Safe the company registered, disabled ones included. The profile and balance recap keep only its default
 Safe, the latest activated one not disabled, among the live contracts, so they count that Safe.
 
-**Implementation evidence reviewed against:** `8c84127053dc02e55399650ee5f19e691b4d3943`
+**Implementation evidence reviewed against:** `df52c33089f7528e2a61b1aa654ef3ad0c5e25db`
 
 - [Dashboard navigation](../../../../dashboard/app/layouts/default.vue),
   [administrator route guard](../../../../dashboard/app/middleware/auth.global.ts), and

@@ -1134,7 +1134,7 @@ notice, not to wage or claim persistence. No payroll posting or signature rule c
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `f391bcfb6c6f90d87a3f777ba97615be6e60bd23`
+**Implementation evidence reviewed against:** `df52c33089f7528e2a61b1aa654ef3ad0c5e25db`
 
 - [Pending claim fiat summary](../../../app/src/components/sections/CashRemunerationView/CashRemunerationPendingClaim.vue),
   [claim-week recap](../../../app/src/components/sections/ClaimHistoryView/WeeklyRecap.vue), and

@@ -126,7 +126,7 @@ export const updateWeeklyClaimRequestSchema = z
   .object({
     params: weeklyClaimIdParamsSchema,
     query: updateWeeklyClaimQuerySchema,
-    body: updateWeeklyClaimBodySchema,
+    body: updateWeeklyClaimBodySchema.default({}),
   })
   .superRefine((data, ctx) => {
     if (data.query.action !== 'sign') return;

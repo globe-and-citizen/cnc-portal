@@ -217,6 +217,8 @@ Proof obligations use the [shared proof-strategy registry](../../../testing/proo
 
 ## Implementation Evidence
 
+**Implementation evidence reviewed against:** `da344f417c2f7d017c00e339960cb0fec3d95e4e`
+
 - [Feature list page](../../../../dashboard/app/pages/features/index.vue)
 - [Feature detail page](../../../../dashboard/app/pages/features/[id].vue)
 - [Global restriction component](../../../../dashboard/app/components/features/FeatureGlobalRestriction.vue)
@@ -226,7 +228,8 @@ Proof obligations use the [shared proof-strategy registry](../../../testing/proo
 - [Backend feature controller](../../../../backend/src/controllers/featureController.ts)
 - [Backend feature validation](../../../../backend/src/validation/featureValidation.ts)
 - [Backend feature persistence](../../../../backend/src/utils/featureUtils.ts)
-- [Backend controller tests](../../../../backend/src/controllers/__tests__/featureController.test.ts)
+- [Backend controller tests](../../../../backend/src/controllers/__tests__/featureController.test.ts) and
+  [feature route parameter tests](../../../../backend/src/routes/__tests__/featureParams.test.ts)
 
 ## Related Documentation
 

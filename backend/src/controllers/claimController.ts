@@ -31,12 +31,13 @@ import {
   WEEKLY_GOALS_REQUIRED_MESSAGE,
 } from '../utils/weeklyGoalsUtils';
 
+type GetClaimsQuery = z.infer<typeof getClaimsQuerySchema>;
+
 dayjs.extend(utc);
 dayjs.extend(isoWeek);
 
 type AddClaimBody = z.infer<typeof addClaimBodySchema>;
 type UpdateClaimBody = z.infer<typeof updateClaimBodySchema>;
-type GetClaimsQuery = z.infer<typeof getClaimsQuerySchema>;
 type ClaimIdParams = z.infer<typeof claimIdParamsSchema>;
 
 const buildWeeklyHoursExceededMessage = ({
@@ -282,7 +283,7 @@ export const addClaim = async (req: Request, res: Response) => {
 };
 
 export const getClaims = async (req: Request, res: Response) => {
-  const { teamId, memberAddress } = req.query as unknown as GetClaimsQuery;
+  const { teamId, memberAddress } = res.locals.validatedQuery as GetClaimsQuery;
 
   try {
     // authz enforced by requireTeamMember middleware
