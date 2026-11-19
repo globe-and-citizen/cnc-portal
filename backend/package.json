@@ -81,7 +81,7 @@
     "dayjs": "^1.11.18",
     "dotenv": "^18.0.10",
     "express": "^5.3.0",
-    "express-rate-limit": "^7.5.0",
+    "express-rate-limit": "^8.7.5",
     "jsonwebtoken": "^9.0.2",
     "merkletreejs": "^0.6.0",
     "multer": "^2.0.2",
