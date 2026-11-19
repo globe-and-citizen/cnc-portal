@@ -16,8 +16,8 @@
     "lib": ["ES2022", "DOM"],
 
     /* Modules */
-    "module": "commonjs",
-    "moduleResolution": "node",
+    "module": "Node20",
+    "moduleResolution": "Node16",
 
     "rootDir": "./src",
     "outDir": "./dist",
