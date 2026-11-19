@@ -1,4 +1,5 @@
 import type { userPaginationQuerySchema } from '../validation/schemas/user';
+import type { addressParamsSchema } from '../validation/schemas/common';
 import type { z } from 'zod';
 import { Request, Response } from 'express';
 import { generateNonce } from 'siwe';
@@ -8,6 +9,7 @@ import { extractProfileStorageKey, resolveStorageImageUrl } from '../utils/profi
 import { isStorageConfigured } from '../services/storageService';
 import { deleteFileByKey } from '../services/attachmentService';
 
+type UserParams = z.infer<typeof addressParamsSchema>;
 type UserPaginationQuery = z.infer<typeof userPaginationQuerySchema>;
 
 /**
@@ -16,7 +18,7 @@ type UserPaginationQuery = z.infer<typeof userPaginationQuerySchema>;
  * @param res
  * @returns
  */
-export const getNonce = async (req: Request<Record<string, string>>, res: Response) => {
+export const getNonce = async (req: Request<UserParams>, res: Response) => {
   const { address } = req.params;
 
   try {
@@ -46,7 +48,7 @@ export const getNonce = async (req: Request<Record<string, string>>, res: Respon
   }
 };
 
-export const getUser = async (req: Request<Record<string, string>>, res: Response) => {
+export const getUser = async (req: Request<UserParams>, res: Response) => {
   const { address } = req.params;
 
   try {
@@ -68,7 +70,7 @@ export const getUser = async (req: Request<Record<string, string>>, res: Respons
   }
 };
 
-export const updateUser = async (req: Request<Record<string, string>>, res: Response) => {
+export const updateUser = async (req: Request<UserParams>, res: Response) => {
   const { address } = req.params;
   const { name, imageUrl } = req.body;
   const callerAddress = req.address;
@@ -124,7 +126,7 @@ export const updateUser = async (req: Request<Record<string, string>>, res: Resp
   }
 };
 
-export const getAllUsers = async (req: Request<Record<string, string>>, res: Response) => {
+export const getAllUsers = async (req: Request, res: Response) => {
   const { page, limit, search } = res.locals.validatedQuery as UserPaginationQuery;
   const pageNumber = page ?? 1;
   const pageSize = limit ?? 10;
