@@ -90,7 +90,7 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `0cb7b01dcd3339d191586d8b3003980d793886f0`
+**Implementation evidence reviewed against:** `c7e356c52e230d43fc2b98ae38207ad70d67b331`
 
 - [Navigation profile entry](../../../app/src/components/layout/NavBar.vue) and
   [sidebar profile entry](../../../app/src/components/ui/SidebarLayout.vue)

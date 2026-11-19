@@ -22,7 +22,7 @@ Feature-specific field rules remain with their feature schemas and feature docum
 | -------------------------- | --------------------------------------------------------------------------------- |
 | Feature schema             | Defines accepted values, coercions, defaults, and field-level business rules      |
 | Focused middleware helper  | Selects the request sections required by a route                                  |
-| Internal validator         | Parses each selected section, replaces it with parsed data, and formats failures  |
+| Internal validator         | Parses selected sections and formats failures                                     |
 | Combined request validator | Parses `{ params, query, body }` together when rules cross request-section bounds |
 
 Only route-facing helpers are exported. The generic validator remains private so tests and consumers use the same boundaries as production
@@ -38,7 +38,7 @@ flowchart LR
   request[Express request] --> helper[Route-facing validation helper]
   schema[Feature Zod schema] --> helper
   helper --> parse{Validation succeeds?}
-  parse -->|Yes| replace[Replace request section with parsed data]
+  parse -->|Yes| replace[Provide validated request data]
   replace --> next[Continue to route handler]
   parse -->|No| badRequest[Return HTTP 400 with formatted issues]
   helper -->|Unexpected exception| serverError[Return HTTP 500]
@@ -46,8 +46,8 @@ flowchart LR
 
 ## Invariants and Failure Behaviour
 
-- Route handlers receive parsed values after successful validation, including schema coercions and defaults. Missing request bodies are
-  validated as empty objects.
+- Route handlers receive parsed body and path values through the request and parsed query values through `res.locals.validatedQuery`.
+  Schemas define whether an absent request body is accepted and which defaults apply.
 - Invalid body, query, or path data returns HTTP 400 and does not invoke the next handler.
 - Cross-section rules use `validateRequest`; independent sections use the smallest focused helper needed by the route.
 - Unexpected validator exceptions are logged and converted to HTTP 500 responses.
@@ -59,7 +59,7 @@ flowchart LR
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `0cb7b01dcd3339d191586d8b3003980d793886f0`
+**Implementation evidence reviewed against:** `c7e356c52e230d43fc2b98ae38207ad70d67b331`
 
 - [Validation middleware](../../../backend/src/validation/middleware/validate.ts) and
   [middleware tests](../../../backend/src/validation/middleware/__tests__/validate.test.ts) and
