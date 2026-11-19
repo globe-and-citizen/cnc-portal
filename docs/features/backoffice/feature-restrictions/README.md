@@ -217,6 +217,8 @@ Proof obligations use the [shared proof-strategy registry](../../../testing/proo
 
 ## Implementation Evidence
 
+**Implementation evidence reviewed against:** `0cb7b01dcd3339d191586d8b3003980d793886f0`
+
 - [Feature list page](../../../../dashboard/app/pages/features/index.vue)
 - [Feature detail page](../../../../dashboard/app/pages/features/[id].vue)
 - [Global restriction component](../../../../dashboard/app/components/features/FeatureGlobalRestriction.vue)

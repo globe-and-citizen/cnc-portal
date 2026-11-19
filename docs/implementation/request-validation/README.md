@@ -46,7 +46,8 @@ flowchart LR
 
 ## Invariants and Failure Behaviour
 
-- Route handlers receive parsed values after successful validation, including schema coercions and defaults.
+- Route handlers receive parsed values after successful validation, including schema coercions and defaults. Missing request bodies are
+  validated as empty objects.
 - Invalid body, query, or path data returns HTTP 400 and does not invoke the next handler.
 - Cross-section rules use `validateRequest`; independent sections use the smallest focused helper needed by the route.
 - Unexpected validator exceptions are logged and converted to HTTP 500 responses.
@@ -58,10 +59,11 @@ flowchart LR
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `92cc11e6bc959f0efebebef8d174ebbed6e81921`
+**Implementation evidence reviewed against:** `0cb7b01dcd3339d191586d8b3003980d793886f0`
 
 - [Validation middleware](../../../backend/src/validation/middleware/validate.ts) and
-  [middleware tests](../../../backend/src/validation/middleware/__tests__/validate.test.ts)
+  [middleware tests](../../../backend/src/validation/middleware/__tests__/validate.test.ts) and
+  [HTTP query regression tests](../../../backend/src/validation/middleware/__tests__/express5-query.test.ts)
 - [Validation registry](../../../backend/src/validation/index.ts)
 - [Representative user schema](../../../backend/src/validation/schemas/user.ts) and
   [user-schema tests](../../../backend/src/validation/schemas/__tests__/user.test.ts)

@@ -79,7 +79,7 @@ provider quota for an arbitrary number of distinct uncached historical dates; ex
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `95d9e12dd696864913e37ad6e20222587b223591`
+**Implementation evidence reviewed against:** `0cb7b01dcd3339d191586d8b3003980d793886f0`
 
 - [Market route](../../../backend/src/routes/coingeckoRoute.ts), [controller](../../../backend/src/controllers/coingeckoController.ts), and
   [request validation](../../../backend/src/validation/schemas/coingecko.ts)

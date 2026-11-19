@@ -90,7 +90,7 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `aef9c54644f938b4f8b1de3b80456f6b59a9a1a0`
+**Implementation evidence reviewed against:** `0cb7b01dcd3339d191586d8b3003980d793886f0`
 
 - [Navigation profile entry](../../../app/src/components/layout/NavBar.vue) and
   [sidebar profile entry](../../../app/src/components/ui/SidebarLayout.vue)
@@ -98,6 +98,7 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
   [profile-image upload](../../../app/src/components/forms/ProfileImageUpload.vue)
 - [User update mutation](../../../app/src/queries/user.queries.ts) and
   [single-file upload mutation](../../../app/src/queries/file.queries.ts)
+- [User API controller](../../../backend/src/controllers/userController.ts)
 - [User request schema](../../../backend/src/validation/schemas/user.ts) and
   [user-schema tests](../../../backend/src/validation/schemas/__tests__/user.test.ts)
 - [Profile-image component tests](../../../app/src/components/forms/__tests__/ProfileImageUpload.spec.ts) and
