@@ -449,7 +449,7 @@ funding, claimability, event completeness and Accounting posting policies retain
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `d428d1213831722f2e415d27a091d9f4bdf5845b`
+**Implementation evidence reviewed against:** `df52c33089f7528e2a61b1aa654ef3ad0c5e25db`
 
 - [Credit Account page](../../../app/src/views/team/[id]/CommunityCredit/IndexView.vue)
 - [Credit-call wizard](../../../app/src/views/team/[id]/CommunityCredit/NewView.vue)

@@ -50,7 +50,7 @@ flowchart LR
 - [Investor migration API controller](../../../backend/src/controllers/investorMigrationController.ts) and
   [Board action API controller](../../../backend/src/controllers/actionController.ts)
 
-**Implementation evidence reviewed against:** `d428d1213831722f2e415d27a091d9f4bdf5845b`
+**Implementation evidence reviewed against:** `df52c33089f7528e2a61b1aa654ef3ad0c5e25db`
 
 - [Artifact registry tests](../../../app/src/artifacts/__tests__/registry.spec.ts) and
   [contract-version tests](../../../app/src/composables/contracts/__tests__/useContractVersion.spec.ts)
