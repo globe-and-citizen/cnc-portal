@@ -37,5 +37,7 @@ ENV PORT=${PORT:-3000}
 
 RUN npm run build
 
+ENV NODE_ENV=production
+
 # Command to run the application in production mode
 CMD ["npm", "run", "prod"]
