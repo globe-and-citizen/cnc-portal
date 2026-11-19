@@ -282,7 +282,7 @@ export const addClaim = async (req: Request, res: Response) => {
 };
 
 export const getClaims = async (req: Request, res: Response) => {
-  const { teamId, memberAddress } = req.query as unknown as GetClaimsQuery;
+  const { teamId, memberAddress } = res.locals.validatedQuery as unknown as GetClaimsQuery;
 
   try {
     // authz enforced by requireTeamMember middleware

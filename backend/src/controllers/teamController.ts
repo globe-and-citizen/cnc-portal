@@ -287,9 +287,9 @@ const getAllTeams = async (req: Request, res: Response) => {
   #swagger.tags = ['Teams']
   */
   const callerAddress = String(req.address);
-  const userAddress = req.query.userAddress as string | undefined;
-  const showHidden = isTruthyQueryFlag(req.query.showHidden);
-  const showArchived = isTruthyQueryFlag(req.query.showArchived);
+  const userAddress = res.locals.validatedQuery.userAddress as string | undefined;
+  const showHidden = isTruthyQueryFlag(res.locals.validatedQuery.showHidden);
+  const showArchived = isTruthyQueryFlag(res.locals.validatedQuery.showArchived);
   try {
     const callerRoles = (req.user?.roles ?? []) as UserRoles;
 

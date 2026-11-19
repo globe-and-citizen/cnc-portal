@@ -96,7 +96,7 @@ export const createInvestorMigration = async (req: Request, res: Response) => {
 };
 
 export const getInvestorMigration = async (req: Request, res: Response) => {
-  const { teamId } = req.query as unknown as GetInvestorMigrationQuery;
+  const { teamId } = res.locals.validatedQuery as unknown as GetInvestorMigrationQuery;
 
   try {
     // authz enforced by requireTeamMember middleware

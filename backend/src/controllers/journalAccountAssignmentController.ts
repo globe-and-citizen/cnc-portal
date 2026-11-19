@@ -20,7 +20,7 @@ const isRecordNotFound = (error: unknown): boolean =>
 
 /** List the account assignments visible to any member of one team. */
 export const getJournalAccountAssignments = async (req: Request, res: Response) => {
-  const { teamId } = req.query as unknown as GetAssignmentsQuery;
+  const { teamId } = res.locals.validatedQuery as unknown as GetAssignmentsQuery;
 
   try {
     const assignments = await prisma.journalAccountAssignment.findMany({
@@ -60,7 +60,7 @@ export const upsertJournalAccountAssignment = async (req: Request, res: Response
 
 /** Remove an assignment so journal assembly restores its evidence-derived account. */
 export const deleteJournalAccountAssignment = async (req: Request, res: Response) => {
-  const { teamId, journalEntryId } = req.query as unknown as DeleteAssignmentQuery;
+  const { teamId, journalEntryId } = res.locals.validatedQuery as unknown as DeleteAssignmentQuery;
 
   try {
     await prisma.journalAccountAssignment.delete({

@@ -121,7 +121,11 @@ export const updateUser = async (req: Request<Record<string, string>>, res: Resp
 };
 
 export const getAllUsers = async (req: Request<Record<string, string>>, res: Response) => {
-  const { page, limit, search } = req.query as { page: string; limit: string; search: string };
+  const { page, limit, search } = res.locals.validatedQuery as {
+    page: string;
+    limit: string;
+    search: string;
+  };
   const pageNumber = parseInt(page as string) || 1;
   const pageSize = parseInt(limit as string) || 10;
   const offset = (pageNumber - 1) * pageSize;

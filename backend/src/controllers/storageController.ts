@@ -5,7 +5,7 @@ import { captureBackendException } from '../utils';
 export const getFileUrl = async (req: Request, res: Response) => {
   try {
     // Query is already validated by route-level Zod middleware
-    const { key, expiresIn } = req.query as { key: string; expiresIn?: string };
+    const { key, expiresIn } = res.locals.validatedQuery as { key: string; expiresIn?: string };
 
     let expirationSeconds = PRESIGNED_URL_EXPIRATION;
     if (expiresIn) {

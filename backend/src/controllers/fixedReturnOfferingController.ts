@@ -70,7 +70,7 @@ export const addFixedReturnOffering = async (req: Request, res: Response) => {
 };
 
 export const getFixedReturnOfferings = async (req: Request, res: Response) => {
-  const { teamId, offerId } = req.query as unknown as GetFixedReturnOfferingsQuery;
+  const { teamId, offerId } = res.locals.validatedQuery as unknown as GetFixedReturnOfferingsQuery;
 
   try {
     // authz enforced by requireTeamMember middleware

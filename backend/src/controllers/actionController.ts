@@ -4,7 +4,7 @@ import { errorResponse, prisma } from '../utils';
 
 const getActions = async (req: Request, res: Response) => {
   try {
-    const { teamId, isExecuted, page, take } = req.query;
+    const { teamId, isExecuted, page, take } = res.locals.validatedQuery;
     if (!teamId) return errorResponse(400, 'Team ID empty or not set', res);
 
     const where: Prisma.BoardOfDirectorActionsWhereInput = {};

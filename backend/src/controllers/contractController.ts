@@ -230,7 +230,7 @@ export const createOfficer = async (req: Request, res: Response) => {
 };
 
 export const getContracts = async (req: Request, res: Response) => {
-  const { teamId } = req.query as unknown as GetContractsQuery;
+  const { teamId } = res.locals.validatedQuery as unknown as GetContractsQuery;
 
   try {
     const contracts = await prisma.teamContract.findMany({
@@ -353,7 +353,7 @@ export const updateTeamSafe = async (req: Request, res: Response) => {
 };
 
 export const getTeamOfficers = async (req: Request, res: Response) => {
-  const teamId = Number(req.query.teamId);
+  const teamId = Number(res.locals.validatedQuery.teamId);
 
   try {
     const team = await prisma.team.findUnique({ where: { id: teamId } });

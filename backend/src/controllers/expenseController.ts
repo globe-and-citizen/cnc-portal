@@ -132,7 +132,7 @@ export const addExpense = async (req: Request, res: Response) => {
 };
 
 export const getExpenses = async (req: Request, res: Response) => {
-  const { teamId, status } = req.query as unknown as GetExpensesQuery;
+  const { teamId, status } = res.locals.validatedQuery as unknown as GetExpensesQuery;
 
   try {
     // authz enforced by requireTeamMember middleware

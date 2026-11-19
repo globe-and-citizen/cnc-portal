@@ -32,7 +32,7 @@ const validate = (schemas: ValidationSchemas) => {
     try {
       // Validate body if schema provided
       if (schemas.body) {
-        const bodyResult = schemas.body.safeParse(req.body ?? {});
+        const bodyResult = schemas.body.safeParse(req.body);
         if (!bodyResult.success) {
           const errors = formatZodError(bodyResult.error);
           return errorResponse(400, `Invalid request body - ${errors}`, res);
@@ -47,11 +47,7 @@ const validate = (schemas: ValidationSchemas) => {
           const errors = formatZodError(queryResult.error);
           return errorResponse(400, `Invalid query parameters - ${errors}`, res);
         }
-        Object.defineProperty(req, 'query', {
-          value: queryResult.data,
-          writable: true,
-          configurable: true,
-        });
+        res.locals.validatedQuery = queryResult.data;
       }
 
       // Validate params if schema provided
@@ -90,7 +86,7 @@ export const validateRequest = (schema: ZodSchema) => {
       const result = schema.safeParse({
         params: req.params,
         query: req.query,
-        body: req.body ?? {},
+        body: req.body,
       });
       if (!result.success) {
         const errors = formatZodError(result.error);
@@ -100,11 +96,7 @@ export const validateRequest = (schema: ZodSchema) => {
       const parsed = result.data as { params?: unknown; query?: unknown; body?: unknown };
       if (parsed.params !== undefined) req.params = parsed.params as Request['params'];
       if (parsed.query !== undefined) {
-        Object.defineProperty(req, 'query', {
-          value: parsed.query,
-          writable: true,
-          configurable: true,
-        });
+        res.locals.validatedQuery = parsed.query;
       }
       if (parsed.body !== undefined) req.body = parsed.body;
 
