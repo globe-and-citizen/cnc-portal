@@ -1,3 +1,9 @@
+import type {
+  getWeeklyClaimsQuerySchema,
+  syncWeeklyClaimsQuerySchema,
+  updateWeeklyClaimQuerySchema,
+} from '../validation/schemas/weeklyClaim';
+import type { z as Zod } from 'zod';
 import dayjs from 'dayjs';
 import isoWeek from 'dayjs/plugin/isoWeek';
 import utc from 'dayjs/plugin/utc';
@@ -51,10 +57,13 @@ const deriveWeeklyClaimStatus = (isPaid: boolean, isDisabled: boolean): statusTy
   return 'signed';
 };
 
-export const updateWeeklyClaims = async (req: Request, res: Response) => {
+export const updateWeeklyClaims = async (
+  req: Request,
+  res: Response<unknown, { validatedQuery: Zod.output<typeof updateWeeklyClaimQuerySchema> }>
+) => {
   const callerAddress = req.address;
   const id = Number(req.params.id);
-  const action = res.locals.validatedQuery.action as WeeklyClaimAction;
+  const action = res.locals.validatedQuery.action;
   // Route-level `validateRequest(updateWeeklyClaimRequestSchema)` already
   // enforces that signedAgainstContractAddress / typedDataMessage / chainId
   // are present for `action=sign` (see weeklyClaim.ts).
@@ -247,13 +256,17 @@ export const updateWeeklyClaims = async (req: Request, res: Response) => {
   }
 };
 
-export const getTeamWeeklyClaims = async (req: Request, res: Response) => {
+export const getTeamWeeklyClaims = async (
+  req: Request,
+  res: Response<unknown, { validatedQuery: Zod.output<typeof getWeeklyClaimsQuerySchema> }>
+) => {
   const teamId = Number(res.locals.validatedQuery.teamId);
-  const status = res.locals.validatedQuery.status as string;
+  const status = res.locals.validatedQuery.status;
 
-  const rawFilterAddress = (res.locals.validatedQuery.userAddress ??
+  const rawFilterAddress =
+    res.locals.validatedQuery.userAddress ??
     res.locals.validatedQuery.memberAddress ??
-    res.locals.validatedQuery.address) as string | undefined;
+    res.locals.validatedQuery.address;
   const filterAddress = rawFilterAddress?.trim();
   let memberAddressFilter: Prisma.WeeklyClaimWhereInput = {};
   if (filterAddress) {
@@ -297,8 +310,8 @@ export const getTeamWeeklyClaims = async (req: Request, res: Response) => {
   // discriminate on the response.
   // Zod (validateQuery) has already coerced and bounded these:
   // page is undefined or an integer >= 1; limit is undefined or in [1, 100].
-  const queryPage = res.locals.validatedQuery.page as number | undefined;
-  const queryLimit = res.locals.validatedQuery.limit as number | undefined;
+  const queryPage = res.locals.validatedQuery.page;
+  const queryLimit = res.locals.validatedQuery.limit;
   const hasPaginationParams = queryPage !== undefined || queryLimit !== undefined;
   const page = queryPage ?? 1;
   const limit = queryLimit ?? 10;
@@ -396,7 +409,10 @@ export const getTeamWeeklyClaims = async (req: Request, res: Response) => {
   }
 };
 
-export const syncWeeklyClaims = async (req: Request, res: Response) => {
+export const syncWeeklyClaims = async (
+  req: Request,
+  res: Response<unknown, { validatedQuery: Zod.output<typeof syncWeeklyClaimsQuerySchema> }>
+) => {
   const teamId = Number(res.locals.validatedQuery.teamId);
 
   try {

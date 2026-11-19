@@ -1,3 +1,4 @@
+import type { z as Zod } from 'zod';
 import { Request, Response } from 'express';
 import { Address } from 'viem';
 import { errorResponse, prisma } from '../utils';
@@ -10,7 +11,6 @@ import {
 import { buildMerkleProofSet, generateMerkleSnapshot } from '../services/merkleSnapshotService';
 
 type CreateInvestorMigrationBody = z.infer<typeof createInvestorMigrationBodySchema>;
-type GetInvestorMigrationQuery = z.infer<typeof getInvestorMigrationQuerySchema>;
 
 // Investor/InvestorV1 both expose a standard OZ `owner()` getter — a minimal
 // fragment avoids depending on the full ABI just for this one read.
@@ -95,8 +95,11 @@ export const createInvestorMigration = async (req: Request, res: Response) => {
   }
 };
 
-export const getInvestorMigration = async (req: Request, res: Response) => {
-  const { teamId } = res.locals.validatedQuery as unknown as GetInvestorMigrationQuery;
+export const getInvestorMigration = async (
+  req: Request,
+  res: Response<unknown, { validatedQuery: Zod.output<typeof getInvestorMigrationQuerySchema> }>
+) => {
+  const { teamId } = res.locals.validatedQuery;
 
   try {
     // authz enforced by requireTeamMember middleware

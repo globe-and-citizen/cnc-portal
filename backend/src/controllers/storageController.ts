@@ -1,15 +1,20 @@
+import type { getPresignedUrlQuerySchema } from '../validation/schemas/storage';
+import type { z as Zod } from 'zod';
 import { Request, Response } from 'express';
 import { getPresignedDownloadUrl, PRESIGNED_URL_EXPIRATION } from '../services/storageService';
 import { captureBackendException } from '../utils';
 
-export const getFileUrl = async (req: Request, res: Response) => {
+export const getFileUrl = async (
+  req: Request,
+  res: Response<unknown, { validatedQuery: Zod.output<typeof getPresignedUrlQuerySchema> }>
+) => {
   try {
     // Query is already validated by route-level Zod middleware
-    const { key, expiresIn } = res.locals.validatedQuery as { key: string; expiresIn?: string };
+    const { key, expiresIn } = res.locals.validatedQuery;
 
     let expirationSeconds = PRESIGNED_URL_EXPIRATION;
     if (expiresIn) {
-      expirationSeconds = Math.min(parseInt(expiresIn, 10), 604800);
+      expirationSeconds = Math.min(expiresIn, 604800);
     }
 
     const url = await getPresignedDownloadUrl(key, expirationSeconds);

@@ -1,3 +1,15 @@
+import type {
+  actionsStatsQuerySchema,
+  claimsStatsQuerySchema,
+  contractsStatsQuerySchema,
+  expensesStatsQuerySchema,
+  recentActivityQuerySchema,
+  statsOverviewQuerySchema,
+  teamStatsQuerySchema,
+  userStatsQuerySchema,
+  wagesStatsQuerySchema,
+} from '../validation/schemas/stats';
+import type { z as Zod } from 'zod';
 import { Request, Response } from 'express';
 import { prisma } from '../utils';
 import { errorResponse } from '../utils/utils';
@@ -29,7 +41,10 @@ const getDateRange = (period: string) => {
  * GET /api/stats/overview
  * Get comprehensive overview statistics
  */
-export const getOverviewStats = async (req: Request, res: Response) => {
+export const getOverviewStats = async (
+  req: Request,
+  res: Response<unknown, { validatedQuery: Zod.output<typeof statsOverviewQuerySchema> }>
+) => {
   /*
   #swagger.tags = ['Statistics']
   #swagger.description = 'Get comprehensive overview statistics for the platform'
@@ -258,7 +273,10 @@ export const getOverviewStats = async (req: Request, res: Response) => {
  * GET /api/stats/teams
  * Get team statistics
  */
-export const getTeamsStats = async (req: Request, res: Response) => {
+export const getTeamsStats = async (
+  req: Request,
+  res: Response<unknown, { validatedQuery: Zod.output<typeof teamStatsQuerySchema> }>
+) => {
   /*
   #swagger.tags = ['Statistics']
   #swagger.description = 'Get detailed team statistics'
@@ -355,7 +373,10 @@ export const getTeamsStats = async (req: Request, res: Response) => {
  * GET /api/stats/users
  * Get user statistics
  */
-export const getUsersStats = async (req: Request, res: Response) => {
+export const getUsersStats = async (
+  req: Request,
+  res: Response<unknown, { validatedQuery: Zod.output<typeof userStatsQuerySchema> }>
+) => {
   /*
   #swagger.tags = ['Statistics']
   #swagger.description = 'Get detailed user statistics'
@@ -431,7 +452,10 @@ export const getUsersStats = async (req: Request, res: Response) => {
  * GET /api/stats/claims
  * Get claims and hours statistics
  */
-export const getClaimsStats = async (req: Request, res: Response) => {
+export const getClaimsStats = async (
+  req: Request,
+  res: Response<unknown, { validatedQuery: Zod.output<typeof claimsStatsQuerySchema> }>
+) => {
   /*
   #swagger.tags = ['Statistics']
   #swagger.description = 'Get detailed claims and hours statistics'
@@ -531,7 +555,10 @@ export const getClaimsStats = async (req: Request, res: Response) => {
  * GET /api/stats/wages
  * Get wage statistics
  */
-export const getWagesStats = async (req: Request, res: Response) => {
+export const getWagesStats = async (
+  req: Request,
+  res: Response<unknown, { validatedQuery: Zod.output<typeof wagesStatsQuerySchema> }>
+) => {
   /*
   #swagger.tags = ['Statistics']
   #swagger.description = 'Get detailed wage statistics'
@@ -624,7 +651,10 @@ export const getWagesStats = async (req: Request, res: Response) => {
  * GET /api/stats/expenses
  * Get expense statistics
  */
-export const getExpensesStats = async (req: Request, res: Response) => {
+export const getExpensesStats = async (
+  req: Request,
+  res: Response<unknown, { validatedQuery: Zod.output<typeof expensesStatsQuerySchema> }>
+) => {
   /*
   #swagger.tags = ['Statistics']
   #swagger.description = 'Get detailed expense statistics'
@@ -718,7 +748,10 @@ export const getExpensesStats = async (req: Request, res: Response) => {
  * GET /api/stats/contracts
  * Get contract statistics
  */
-export const getContractsStats = async (req: Request, res: Response) => {
+export const getContractsStats = async (
+  req: Request,
+  res: Response<unknown, { validatedQuery: Zod.output<typeof contractsStatsQuerySchema> }>
+) => {
   /*
   #swagger.tags = ['Statistics']
   #swagger.description = 'Get detailed contract statistics'
@@ -781,7 +814,10 @@ export const getContractsStats = async (req: Request, res: Response) => {
  * GET /api/stats/actions
  * Get Board of Director actions statistics
  */
-export const getActionsStats = async (req: Request, res: Response) => {
+export const getActionsStats = async (
+  req: Request,
+  res: Response<unknown, { validatedQuery: Zod.output<typeof actionsStatsQuerySchema> }>
+) => {
   /*
   #swagger.tags = ['Statistics']
   #swagger.description = 'Get detailed Board of Director actions statistics'
@@ -874,7 +910,10 @@ export const getActionsStats = async (req: Request, res: Response) => {
  * GET /api/stats/activity/recent
  * Get recent activity across the platform
  */
-export const getRecentActivity = async (req: Request, res: Response) => {
+export const getRecentActivity = async (
+  req: Request,
+  res: Response<unknown, { validatedQuery: Zod.output<typeof recentActivityQuerySchema> }>
+) => {
   /*
   #swagger.tags = ['Statistics']
   #swagger.description = 'Get recent activity feed across the platform'

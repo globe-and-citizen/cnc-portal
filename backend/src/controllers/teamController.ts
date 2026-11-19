@@ -1,3 +1,5 @@
+import type { getAllTeamsQuerySchema } from '../validation/schemas/team';
+import type { z as Zod } from 'zod';
 import { Prisma, TeamContract, TeamOfficer, User, Wage } from '@prisma/client';
 import { Request, Response } from 'express';
 import { isAddress } from 'viem';
@@ -282,12 +284,15 @@ const getTeam = async (req: Request, res: Response) => {
 };
 
 // Get teams - either all teams or user-specific teams
-const getAllTeams = async (req: Request, res: Response) => {
+const getAllTeams = async (
+  req: Request,
+  res: Response<unknown, { validatedQuery: Zod.output<typeof getAllTeamsQuerySchema> }>
+) => {
   /*
   #swagger.tags = ['Teams']
   */
   const callerAddress = String(req.address);
-  const userAddress = res.locals.validatedQuery.userAddress as string | undefined;
+  const userAddress = res.locals.validatedQuery.userAddress;
   const showHidden = isTruthyQueryFlag(res.locals.validatedQuery.showHidden);
   const showArchived = isTruthyQueryFlag(res.locals.validatedQuery.showArchived);
   try {

@@ -1,3 +1,4 @@
+import type { z as Zod } from 'zod';
 import { Prisma } from '@prisma/client';
 import { Request, Response } from 'express';
 import { getAddress, Address } from 'viem';
@@ -18,7 +19,6 @@ type AddContractBody = z.infer<typeof addContractBodySchema>;
 type UpdateTeamSafeBody = z.infer<typeof updateTeamSafeBodySchema>;
 type SyncContractsBody = z.infer<typeof syncContractsBodySchema>;
 type CreateOfficerBody = z.infer<typeof createOfficerBodySchema>;
-type GetContractsQuery = z.infer<typeof getContractsQuerySchema>;
 
 // Look up the head of a team's Officer linked list — the row with no
 // successor pointing back to it. Returns null if the team has never had an
@@ -229,8 +229,11 @@ export const createOfficer = async (req: Request, res: Response) => {
   }
 };
 
-export const getContracts = async (req: Request, res: Response) => {
-  const { teamId } = res.locals.validatedQuery as unknown as GetContractsQuery;
+export const getContracts = async (
+  req: Request,
+  res: Response<unknown, { validatedQuery: Zod.output<typeof getContractsQuerySchema> }>
+) => {
+  const { teamId } = res.locals.validatedQuery;
 
   try {
     const contracts = await prisma.teamContract.findMany({
@@ -352,7 +355,10 @@ export const updateTeamSafe = async (req: Request, res: Response) => {
   }
 };
 
-export const getTeamOfficers = async (req: Request, res: Response) => {
+export const getTeamOfficers = async (
+  req: Request,
+  res: Response<unknown, { validatedQuery: Zod.output<typeof getContractsQuerySchema> }>
+) => {
   const teamId = Number(res.locals.validatedQuery.teamId);
 
   try {

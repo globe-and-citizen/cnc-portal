@@ -1,3 +1,4 @@
+import type { z as Zod } from 'zod';
 import dayjs from 'dayjs';
 import isoWeek from 'dayjs/plugin/isoWeek';
 import utc from 'dayjs/plugin/utc';
@@ -36,7 +37,6 @@ dayjs.extend(isoWeek);
 
 type AddClaimBody = z.infer<typeof addClaimBodySchema>;
 type UpdateClaimBody = z.infer<typeof updateClaimBodySchema>;
-type GetClaimsQuery = z.infer<typeof getClaimsQuerySchema>;
 type ClaimIdParams = z.infer<typeof claimIdParamsSchema>;
 
 const buildWeeklyHoursExceededMessage = ({
@@ -281,8 +281,11 @@ export const addClaim = async (req: Request, res: Response) => {
   }
 };
 
-export const getClaims = async (req: Request, res: Response) => {
-  const { teamId, memberAddress } = res.locals.validatedQuery as unknown as GetClaimsQuery;
+export const getClaims = async (
+  req: Request,
+  res: Response<unknown, { validatedQuery: Zod.output<typeof getClaimsQuerySchema> }>
+) => {
+  const { teamId, memberAddress } = res.locals.validatedQuery;
 
   try {
     // authz enforced by requireTeamMember middleware
