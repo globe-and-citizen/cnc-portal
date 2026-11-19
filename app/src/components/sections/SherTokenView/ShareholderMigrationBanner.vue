@@ -50,14 +50,14 @@
 </template>
 
 <script setup lang="ts">
+import { type Address, zeroHash } from 'viem'
+import { useInvestorAddress, useInvestorMigrationRoot } from '@/composables/investor/reads'
+import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
 import { computed } from 'vue'
-import { zeroHash, type Address } from 'viem'
+import { useGetInvestorMigrationQuery } from '@/queries/investorMigration.queries'
+import { useMigrateShareholders } from '@/composables/investor/useShareholderMigration'
 import { useQueryClient } from '@tanstack/vue-query'
 import { useTeamStore } from '@/stores'
-import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
-import { useInvestorAddress, useInvestorMigrationRoot } from '@/composables/investor/reads'
-import { useMigrateShareholders } from '@/composables/investor/useShareholderMigration'
-import { useGetInvestorMigrationQuery } from '@/queries/investorMigration.queries'
 
 const teamStore = useTeamStore()
 const queryClient = useQueryClient()

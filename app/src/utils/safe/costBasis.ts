@@ -1,12 +1,12 @@
-import type { SafeIncomingTransfer } from '@/types/safe'
-import type { SafeSwapFeeOf, SafeSwapPrices } from './swapPnl'
 import {
+  type SafeAssetAmount,
+  type SafeTransactionLeg,
   groupSafeTransfers,
   safeDayOf,
-  safeTransactionLegs,
-  type SafeAssetAmount,
-  type SafeTransactionLeg
+  safeTransactionLegs
 } from './swapTransfers'
+import type { SafeSwapFeeOf, SafeSwapPrices } from './swapPnl'
+import type { SafeIncomingTransfer } from '@/types/safe'
 
 /** One swap: what the Safe gave and received, fee excluded, and what the exchange was worth. */
 export interface SafeSwapExchange {

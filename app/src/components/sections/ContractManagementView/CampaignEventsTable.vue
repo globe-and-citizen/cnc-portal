@@ -50,8 +50,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
 import type { EventsByCampaignCode, ExtendedEvent } from '@/lib/campaign/events'
+import { ref } from 'vue'
 // Props
 defineProps<{
   eventsByCampaignCode: EventsByCampaignCode

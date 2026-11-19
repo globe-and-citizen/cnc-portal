@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { mount } from '@vue/test-utils'
 import type { Component } from 'vue'
-import ManagedContractsDesktopTable from '../ManagedContractsDesktopTable.vue'
-import ManagedContractMobileCard from '../ManagedContractMobileCard.vue'
 import type { ContractPauseStatus } from '@/utils/contracts/pauseCapabilities'
 import type { ContractTableRow } from '../ManagedContractsTable.types'
+import ManagedContractMobileCard from '../ManagedContractMobileCard.vue'
+import ManagedContractsDesktopTable from '../ManagedContractsDesktopTable.vue'
+import { mount } from '@vue/test-utils'
 
 const STATUSES: ContractPauseStatus[] = ['active', 'paused', 'not-supported', 'unavailable']
 

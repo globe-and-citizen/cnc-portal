@@ -9,8 +9,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
 import { avatarStyle, creditInitials } from '@/utils/communityCredit/model'
+import { computed } from 'vue'
 
 const props = withDefaults(
   defineProps<{

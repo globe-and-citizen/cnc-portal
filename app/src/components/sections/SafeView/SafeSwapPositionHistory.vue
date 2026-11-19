@@ -29,17 +29,17 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import type { TableColumn } from '@nuxt/ui'
-import SafePnlAmount from './SafePnlAmount.vue'
-import { formatDateShort } from '@/utils/dates/calendar'
-import { formatNumber, formatToken, formatUsd } from '@/utils/format'
 import type {
   SafeCostBasisEvent,
   SafeSwapExchange,
   SafeTokenPosition
 } from '@/utils/safe/costBasis'
+import { formatNumber, formatToken, formatUsd } from '@/utils/format'
 import type { SafeAssetAmount } from '@/utils/safe/swapTransfers'
+import SafePnlAmount from './SafePnlAmount.vue'
+import type { TableColumn } from '@nuxt/ui'
+import { computed } from 'vue'
+import { formatDateShort } from '@/utils/dates/calendar'
 
 const props = defineProps<{ position: SafeTokenPosition }>()
 

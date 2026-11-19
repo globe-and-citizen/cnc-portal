@@ -1,6 +1,6 @@
-import { formatUnits } from 'viem'
 import { NETWORK } from '@/constant'
 import type { SafeIncomingTransfer } from '@/types/safe'
+import { formatUnits } from 'viem'
 
 /** Native coin identity; ERC-20 assets use their lower-case contract address. */
 export const SAFE_NATIVE_ASSET = 'native'

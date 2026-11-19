@@ -40,21 +40,21 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onUnmounted, ref } from 'vue'
-import VestingActions from '@/components/sections/VestingView/VestingActions.vue'
-import VestingFlow from '@/components/sections/VestingView/VestingFlow.vue'
-import VestingStats from '@/components/sections/VestingView/VestingStats.vue'
-import { useInvestorSymbol } from '@/composables/investor/reads'
-import { useBlockTimestamp } from '@/composables/useBlockTimestamp'
-import {
-  useVestingGetAllArchivedVestingsFlat,
-  useVestingGetVestingsWithMembers
-} from '@/composables/vesting/reads'
 import {
   buildVestingSchedules,
   resolveVestingTokenSymbol,
   summarizeVestingSchedules
 } from '@/utils/vesting/schedule'
+import { computed, onUnmounted, ref } from 'vue'
+import {
+  useVestingGetAllArchivedVestingsFlat,
+  useVestingGetVestingsWithMembers
+} from '@/composables/vesting/reads'
+import VestingActions from '@/components/sections/VestingView/VestingActions.vue'
+import VestingFlow from '@/components/sections/VestingView/VestingFlow.vue'
+import VestingStats from '@/components/sections/VestingView/VestingStats.vue'
+import { useBlockTimestamp } from '@/composables/useBlockTimestamp'
+import { useInvestorSymbol } from '@/composables/investor/reads'
 
 const fallbackNowSeconds = ref(Math.floor(Date.now() / 1000))
 const timer = setInterval(() => {

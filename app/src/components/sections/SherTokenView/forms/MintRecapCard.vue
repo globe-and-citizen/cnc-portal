@@ -25,18 +25,18 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import {
+  TOKEN_DECIMALS,
+  formatStakePercentageFromSupply,
+  getMintRecap
+} from '@/utils/investors/mintAllocation'
 import { formatUnits, parseUnits } from 'viem'
 import {
+  useInvestorBalanceOf,
   useInvestorSymbol,
-  useInvestorTotalSupply,
-  useInvestorBalanceOf
+  useInvestorTotalSupply
 } from '@/composables/investor/reads'
-import {
-  getMintRecap,
-  formatStakePercentageFromSupply,
-  TOKEN_DECIMALS
-} from '@/utils/investors/mintAllocation'
+import { computed } from 'vue'
 import { formatAmountWithPrecision } from '@/utils/currency/display'
 
 const props = defineProps<{

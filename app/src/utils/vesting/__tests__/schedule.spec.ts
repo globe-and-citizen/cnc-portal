@@ -1,4 +1,3 @@
-import { describe, expect, it } from 'vitest'
 import {
   addVestingMonths,
   buildAddVestingArgs,
@@ -10,12 +9,13 @@ import {
   resolveVestingBoundary,
   resolveVestingTokenSymbol,
   summarizeVestingSchedules,
-  vestingCreationSchema,
   vestingAmountAtCliff,
+  vestingCreationSchema,
   vestingMinutesBetween
 } from '@/utils/vesting/schedule'
-import { parseUnits } from 'viem'
+import { describe, expect, it } from 'vitest'
 import type { VestingCreation } from '@/types/vesting'
+import { parseUnits } from 'viem'
 
 const MEMBER = '0x0000000000000000000000000000000000000001'
 

@@ -156,11 +156,11 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
-import { NETWORK } from '@/constant'
-import { DEFAULT_MAXIMUM_HOURS_PER_DAY } from '@/utils/wages/model'
-import { standardWageFormSchema } from '@/utils/wages/validation'
 import type { Wage, WageWithForm } from '@/types'
+import { computed, ref, watch } from 'vue'
+import { DEFAULT_MAXIMUM_HOURS_PER_DAY } from '@/utils/wages/model'
+import { NETWORK } from '@/constant'
+import { standardWageFormSchema } from '@/utils/wages/validation'
 
 const emit = defineEmits<{ validated: []; cancel: []; reset: [] }>()
 

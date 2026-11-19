@@ -49,17 +49,17 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import { ROUND_VARIANT_TAB_ITEMS, roundToDisplayPrecision } from '@/utils/communityCredit/model'
 import type { CreditRound, RoundDetailVariant } from '@/types'
+import { ROUND_VARIANT_TAB_ITEMS, roundToDisplayPrecision } from '@/utils/communityCredit/model'
 import CreditAccountTransactions from './CreditAccountTransactions.vue'
 import CreditRepayPanel from './CreditRepayPanel.vue'
-import type { RepaymentPanelState } from './CreditRepayPanel.vue'
-import type { RepayBreakdownRow } from './CreditRepayBreakdownTable.vue'
 import CreditRoundGauge from './CreditRoundGauge.vue'
 import CreditRoundHeader from './CreditRoundHeader.vue'
 import CreditRoundLedger from './CreditRoundLedger.vue'
 import CreditRoundTimeline from './CreditRoundTimeline.vue'
+import type { RepayBreakdownRow } from './CreditRepayBreakdownTable.vue'
+import type { RepaymentPanelState } from './CreditRepayPanel.vue'
+import { computed } from 'vue'
 
 interface Props {
   round: CreditRound

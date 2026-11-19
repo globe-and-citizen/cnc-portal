@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
+import { finalizeJournal } from '@/utils/accounting/__tests__/assembleAccounting'
 import { generalLedgerPdfTable } from '../generalLedgerPdfTable'
 import { generalLedgerSheetRows } from '../generalLedgerSheet'
-import { finalizeJournal } from '@/utils/accounting/__tests__/assembleAccounting'
 import { journalLedgerRows } from '@/utils/accounting/journalLedgerPresenter'
 
 describe('General Ledger export precision', () => {

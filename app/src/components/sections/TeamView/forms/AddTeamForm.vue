@@ -146,17 +146,17 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { z } from 'zod'
-import { isAddress } from 'viem'
-import { log } from '@/lib/logging'
+import { computed, ref } from 'vue'
 import InvestorContractStep from '@/components/sections/TeamView/forms/InvestorContractStep.vue'
+import MultiSelectMemberInput from '@/components/ui/inputs/MultiSelectMemberInput.vue'
 import SafeDeploymentCard from '@/components/sections/SafeView/SafeDeploymentCard.vue'
 import SafeImportCard from '@/components/sections/SafeView/SafeImportCard.vue'
-import MultiSelectMemberInput from '@/components/ui/inputs/MultiSelectMemberInput.vue'
 import type { Team } from '@/types'
+import { isAddress } from 'viem'
+import { log } from '@/lib/logging'
 import { useCreateTeamMutation } from '@/queries/team.queries'
 import { useRouter } from 'vue-router'
+import { z } from 'zod'
 
 const toast = useToast()
 const router = useRouter()

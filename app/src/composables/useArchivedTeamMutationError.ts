@@ -1,5 +1,5 @@
+import { type MaybeRefOrGetter, computed, toValue } from 'vue'
 import { getArchivedTeamConflictMessage } from '@/utils/errors/http'
-import { computed, toValue, type MaybeRefOrGetter } from 'vue'
 
 /**
  * Reactive helper for team-scoped REST mutations: surfaces backend 409 archived-team

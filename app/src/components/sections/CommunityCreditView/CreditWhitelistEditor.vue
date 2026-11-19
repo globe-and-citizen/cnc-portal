@@ -115,17 +115,17 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-import { watchDebounced } from '@vueuse/core'
 import type { CreditWhitelistEntry, Member } from '@/types'
+import { computed, ref } from 'vue'
 import CreditAvatar from './CreditAvatar.vue'
 import SelectMemberResults from '@/components/ui/inputs/SelectMemberResults.vue'
-import { formatAddress } from '@/utils/format'
-import { useTeamStore } from '@/stores/teamStore'
 import { filterDirectoryItems } from '@/utils/teams/search'
+import { formatAddress } from '@/utils/format'
 import { getCreditWhitelistAllocationSummary } from '@/utils/communityCredit/model'
 import { gradientForAddress } from '@/utils/communityCredit/offer'
+import { useTeamStore } from '@/stores/teamStore'
 import { useTransactionPresentation } from '@/composables/transactions/useTransactionPresentation'
+import { watchDebounced } from '@vueuse/core'
 
 const props = defineProps<{
   whitelist: CreditWhitelistEntry[]

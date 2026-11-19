@@ -1,6 +1,6 @@
+import { EMPTY_VALUE, formatCurrency, formatPercent } from '@/utils/format'
 import type { Address } from 'viem'
 import type { Team } from '@/types'
-import { EMPTY_VALUE, formatCurrency, formatPercent } from '@/utils/format'
 import { defaultTeamSafe } from '@/utils/safe/teamSafes'
 
 type TreasuryContractType = 'Bank' | 'Safe' | 'ExpenseAccountEIP712' | 'CashRemunerationEIP712'

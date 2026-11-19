@@ -1,9 +1,9 @@
+import { type Component, defineComponent, h, markRaw, nextTick, onMounted } from 'vue'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { mockRoute, setMockRoute } from '@/tests/mocks/router.mock'
+import { mockSyncWeeklyClaimsMutation, mockTeamStore } from '@/tests/mocks'
 import ShowIndex from '@/views/team/[id]/ShowIndex.vue'
 import { mount } from '@vue/test-utils'
-import { mockRoute, setMockRoute } from '@/tests/mocks/router.mock'
-import { mockTeamStore, mockSyncWeeklyClaimsMutation } from '@/tests/mocks'
-import { defineComponent, h, markRaw, nextTick, onMounted, type Component } from 'vue'
 
 describe('ShowIndex', () => {
   beforeEach(() => {

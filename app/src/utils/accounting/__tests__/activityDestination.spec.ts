@@ -1,6 +1,6 @@
-import { describe, it, expect } from 'vitest'
-import { activityDestinationOf } from '../activityDestination'
+import { describe, expect, it } from 'vitest'
 import type { JournalEntryDraft } from '../journalEntryDraft'
+import { activityDestinationOf } from '../activityDestination'
 import { journalFixture } from './fixtures'
 
 const ALI = '0x1111111111111111111111111111111111111111'

@@ -1,7 +1,7 @@
+import type { Member, Notification, Team, User, Wage, WeeklyClaim } from '@/types'
+import type { HealthCheckResponse } from '@/queries/health.queries'
 import { ref } from 'vue'
 import { vi } from 'vitest'
-import type { Team, Member, Wage, Notification, WeeklyClaim, User } from '@/types'
-import type { HealthCheckResponse } from '@/queries/health.queries'
 
 export const mockMembersData: User[] = [
   {

@@ -1,5 +1,5 @@
-import { usdAmountToNumber } from '@/utils/accounting/monetaryAmount'
 import type { UsdAmount } from '@/utils/accounting/types'
+import { usdAmountToNumber } from '@/utils/accounting/monetaryAmount'
 
 /** Excel retains at most 15 significant decimal digits. Reject values whose
  * displayed precision cannot be represented within that limit. */

@@ -69,14 +69,14 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
 import ExportReportModal, {
   type ExportFormat
 } from '@/components/sections/AccountingView/ExportReportModal.vue'
+import type { SectionKey, SectionSpec } from '@/utils/accounting/exportSpec'
+import { computed } from 'vue'
+import { presentSummary } from '@/utils/accounting/presenter'
 import { useAccountingContext } from '@/composables/accounting/useAccountingContext'
 import { useAccountingExport } from '@/composables/accounting/useAccountingExport'
-import { presentSummary } from '@/utils/accounting/presenter'
-import type { SectionKey, SectionSpec } from '@/utils/accounting/exportSpec'
 
 const accounting = useAccountingContext()
 

@@ -2,8 +2,8 @@
 // Fail if any DaisyUI semantic class slips back into app/src.
 // DaisyUI was removed in #1920; any of these in a class attribute is dead code.
 
-import { readdir, readFile } from 'node:fs/promises'
 import { join, relative } from 'node:path'
+import { readFile, readdir } from 'node:fs/promises'
 
 const ROOT = new URL('../src', import.meta.url).pathname
 

@@ -1,9 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { mount } from '@vue/test-utils'
 import { nextTick, reactive } from 'vue'
+import CreditCallAccessStep from '../CreditCallAccessStep.vue'
 import type { CreditCallForm } from '@/types'
 import { MINUTES_PER_DAY } from '@/utils/communityCredit/model'
-import CreditCallAccessStep from '../CreditCallAccessStep.vue'
+import { mount } from '@vue/test-utils'
 
 function makeForm(overrides: Partial<CreditCallForm> = {}): CreditCallForm {
   return reactive({

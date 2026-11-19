@@ -1,23 +1,23 @@
-import { describe, it, expect } from 'vitest'
 import {
-  money,
+  activityCoverageLabel,
+  balanceExportTitle,
+  filterByPeriod,
   formatUnixDate,
   formatUnixDateTime,
-  presentIncome,
-  presentBalance,
-  presentTrial,
-  filterByPeriod,
   incomeExportTitle,
-  balanceExportTitle,
-  trialExportTitle,
-  activityCoverageLabel
+  money,
+  presentBalance,
+  presentIncome,
+  presentTrial,
+  trialExportTitle
 } from '@/utils/accounting/presenter'
-import { presentJournalLedger } from '@/utils/accounting/journalLedgerPresenter'
-import { accountFor } from '@/utils/accounting/accountRegistry'
-import { finalizeJournal } from '@/utils/accounting/__tests__/assembleAccounting'
-import { categoryLabelOf } from '@/utils/accounting/ledgerCategory'
+import { describe, expect, it } from 'vitest'
 import type { AccountName } from '@/utils/accounting/chartOfAccounts'
 import type { JournalEntryDraft } from '@/utils/accounting/journalEntryDraft'
+import { accountFor } from '@/utils/accounting/accountRegistry'
+import { categoryLabelOf } from '@/utils/accounting/ledgerCategory'
+import { finalizeJournal } from '@/utils/accounting/__tests__/assembleAccounting'
+import { presentJournalLedger } from '@/utils/accounting/journalLedgerPresenter'
 import { sampleBooks } from './fixtures'
 
 /** The shared live book: a $100 client deposit and a $30 expense payout. */

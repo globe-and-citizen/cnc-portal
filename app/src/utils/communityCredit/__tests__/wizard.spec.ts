@@ -1,8 +1,8 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
-  createCreditCallTermsSchema,
-  type CreditCallTermsSchemaContext
+  type CreditCallTermsSchemaContext,
+  createCreditCallTermsSchema
 } from '@/types/communityCredit.schemas'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   createDefaultCreditCallForm,
   creditCallDeadlineContext

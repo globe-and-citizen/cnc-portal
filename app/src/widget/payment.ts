@@ -11,7 +11,9 @@
  * suffix). `call` + `sendTransaction` operate on raw calldata directly, so
  * the encoded bytes reach the chain unchanged.
  */
+import { type Address, type Hex, erc20Abi } from 'viem'
 import {
+  type GetConnectionReturnType,
   call,
   connect,
   getConnection,
@@ -20,13 +22,11 @@ import {
   simulateContract,
   switchChain,
   waitForTransactionReceipt,
-  writeContract,
-  type GetConnectionReturnType
+  writeContract
 } from '@wagmi/core'
-import { erc20Abi, type Address, type Hex } from 'viem'
-import { encodeDepositTokenWithFactureId } from '@/utils/paymentGate/factureCalldata'
-import { describeWidgetError } from './errorMessage'
 import { widgetChain, widgetWagmiConfig } from './wagmiConfig'
+import { describeWidgetError } from './errorMessage'
+import { encodeDepositTokenWithFactureId } from '@/utils/paymentGate/factureCalldata'
 
 export interface WidgetPaymentParams {
   bankAddress: Address

@@ -1,6 +1,6 @@
-import { computed, type Ref } from 'vue'
-import { useUserDataStore } from '@/stores'
+import { type Ref, computed } from 'vue'
 import type { SafeInfo } from '@/types/safe'
+import { useUserDataStore } from '@/stores'
 
 /** Whether the connected wallet is one of the Safe's signers. */
 export function useSafeSignerRole(safeInfo: Ref<SafeInfo | undefined>) {

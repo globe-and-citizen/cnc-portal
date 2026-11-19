@@ -1,18 +1,18 @@
-import { useQuery } from '@tanstack/vue-query'
-import { computed, toValue, type MaybeRefOrGetter } from 'vue'
-import { isAddress } from 'viem'
-import { currentChainId } from '@/constant'
+import { type MaybeRefOrGetter, computed, toValue } from 'vue'
 import {
   SAFE_CLIENT_URL,
   type SafeClientBalances,
   type SafeClientTransactionHistory
 } from '@/types/safe'
-import externalApiClient from '@/lib/external.axios'
-import { normalizeSafeAddress } from '@/utils/safe/address'
-import { safeKeys, safeMovementsRefresh } from './safe.queries'
-import { isSafeNotIndexedError } from '@/utils/safe/model'
 import { retrySafeRead, safeReadRetryDelay } from './safe.recovery'
+import { safeKeys, safeMovementsRefresh } from './safe.queries'
+import { currentChainId } from '@/constant'
+import externalApiClient from '@/lib/external.axios'
+import { isAddress } from 'viem'
+import { isSafeNotIndexedError } from '@/utils/safe/model'
+import { normalizeSafeAddress } from '@/utils/safe/address'
 import { queryPresets } from './queryFactory'
+import { useQuery } from '@tanstack/vue-query'
 
 export interface GetSafeBalancesParams {
   pathParams: {

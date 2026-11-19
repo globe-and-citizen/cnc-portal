@@ -75,16 +75,16 @@
 </template>
 
 <script setup lang="ts">
+import { type StatementLineView, presentBalance } from '@/utils/accounting/presenter'
 import { computed, ref } from 'vue'
-import DatePicker from '@/components/ui/DatePicker.vue'
 import AccountingExportBar from '@/components/sections/AccountingView/AccountingExportBar.vue'
 import BalanceSheetTable from '@/components/sections/AccountingView/BalanceSheetTable.vue'
+import DatePicker from '@/components/ui/DatePicker.vue'
 import LedgerDrilldownModal from '@/components/sections/AccountingView/LedgerDrilldownModal.vue'
 import { defaultValueForMode } from '@/utils/dates/picker'
 import { useAccountingContext } from '@/composables/accounting/useAccountingContext'
-import { useSectionExport } from '@/composables/accounting/useSectionExport'
 import { useLedgerDrilldown } from '@/composables/accounting/useLedgerDrilldown'
-import { presentBalance, type StatementLineView } from '@/utils/accounting/presenter'
+import { useSectionExport } from '@/composables/accounting/useSectionExport'
 
 // Point-in-time "as of" date (date mode) — defaults to end of today.
 const asOf = ref<Date>(defaultValueForMode('date') as Date)

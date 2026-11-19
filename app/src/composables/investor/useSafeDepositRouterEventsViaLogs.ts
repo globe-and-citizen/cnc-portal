@@ -3,18 +3,18 @@
  * in the exact `SafeDepositRouterEventFeed` shape, via the shared
  * `useContractEventsViaLogs` base.
  */
-import type { MaybeRefOrGetter } from 'vue'
-import { safeDepositRouterAbi as safeRouterV1Abi } from '@/artifacts/abi/V1/generated'
-import { safeDepositRouterAbi as safeRouterV01Abi } from '@/artifacts/abi/V0.1/generated'
-import { safeDepositRouterAbi as safeRouterV0Abi } from '@/artifacts/abi/V0/generated'
-import type { SafeDepositRouterEventFeed } from '@/types/contract-events/investor'
 import {
+  type ContractAddressInput,
+  type EventMapContext,
   str,
   unionEventAbi,
-  useContractEventsViaLogs,
-  type EventMapContext,
-  type ContractAddressInput
+  useContractEventsViaLogs
 } from '@/composables/eventsViaLogs'
+import type { MaybeRefOrGetter } from 'vue'
+import type { SafeDepositRouterEventFeed } from '@/types/contract-events/investor'
+import { safeDepositRouterAbi as safeRouterV01Abi } from '@/artifacts/abi/V0.1/generated'
+import { safeDepositRouterAbi as safeRouterV0Abi } from '@/artifacts/abi/V0/generated'
+import { safeDepositRouterAbi as safeRouterV1Abi } from '@/artifacts/abi/V1/generated'
 
 const SAFE_ROUTER_EVENT_ABI = unionEventAbi([safeRouterV1Abi, safeRouterV01Abi, safeRouterV0Abi])
 

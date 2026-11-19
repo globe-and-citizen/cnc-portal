@@ -17,8 +17,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
 import type { ExpenseResponse } from '@/types/expense-account'
+import { computed } from 'vue'
 
 const props = defineProps<{ teamId: string | null; approvals?: ExpenseResponse[] }>()
 const hasPreviousApprovals = computed(

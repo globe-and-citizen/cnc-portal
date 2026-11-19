@@ -1,10 +1,10 @@
-import { useMutation } from '@tanstack/vue-query'
 import { type Address, type Hex } from 'viem'
-import { investorAbi } from '@/artifacts/abi/generated'
 import {
-  executeContractWrite,
-  type ExecuteContractWriteResult
+  type ExecuteContractWriteResult,
+  executeContractWrite
 } from '@/composables/contracts/useContractWritesV3'
+import { investorAbi } from '@/artifacts/abi/generated'
+import { useMutation } from '@tanstack/vue-query'
 
 export interface ClaimArgs {
   investorAddress: Address

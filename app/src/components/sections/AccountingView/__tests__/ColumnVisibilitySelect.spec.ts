@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest'
-import { mount, type VueWrapper } from '@vue/test-utils'
+import { type VueWrapper, mount } from '@vue/test-utils'
+import { describe, expect, it } from 'vitest'
 import ColumnVisibilitySelect from '@/components/sections/AccountingView/ColumnVisibilitySelect.vue'
 
 const items = [

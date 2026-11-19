@@ -1,8 +1,8 @@
+import { type VueWrapper, mount } from '@vue/test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { mount, type VueWrapper } from '@vue/test-utils'
-import { ref } from 'vue'
-import SafeSwapPnlCard from '../SafeSwapPnlCard.vue'
 import type { SafeCostBasis } from '@/utils/safe/costBasis'
+import SafeSwapPnlCard from '../SafeSwapPnlCard.vue'
+import { ref } from 'vue'
 
 const { mockSwapPnl } = vi.hoisted(() => ({
   mockSwapPnl: {

@@ -1,8 +1,8 @@
-import { describe, it, expect } from 'vitest'
+import { describe, expect, it } from 'vitest'
+import TokenHoldingsSection from '@/components/ui/TokenHoldingsSection.vue'
+import { mockUseContractBalance } from '@/tests/mocks/composables.mock'
 import { mount } from '@vue/test-utils'
 import { tokenHoldingRows } from '@/utils/tokens/holdings'
-import { mockUseContractBalance } from '@/tests/mocks/composables.mock'
-import TokenHoldingsSection from '@/components/ui/TokenHoldingsSection.vue'
 
 describe('TokenHoldingsSection', () => {
   it('shows a balance-loading error instead of suggesting missing asset prices', async () => {

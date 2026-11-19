@@ -61,19 +61,19 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
-import { z } from 'zod'
-import { parseEther, zeroAddress, type Address } from 'viem'
-import { useContractBalance, contractBalanceKeys } from '@/composables/useContractBalance'
-import { useSafeSendTransaction } from '@/composables/transactions/useSafeSendTransaction'
-import { useERC20Approve, useERC20Transfer } from '@/composables/erc20/writes'
-import { useErc20Allowance } from '@/composables/erc20/reads'
+import { type Address, parseEther, zeroAddress } from 'viem'
 import { SUPPORTED_TOKENS, type TokenId } from '@/constant'
+import { computed, ref } from 'vue'
+import { contractBalanceKeys, useContractBalance } from '@/composables/useContractBalance'
 import { useCurrencyStore, useUserDataStore } from '@/stores'
+import { useERC20Approve, useERC20Transfer } from '@/composables/erc20/writes'
+import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
 import TokenAmountInput from '@/components/ui/inputs/TokenAmountInput.vue'
-import { useQueryClient } from '@tanstack/vue-query'
 import { useChainId } from '@wagmi/vue'
+import { useErc20Allowance } from '@/composables/erc20/reads'
+import { useQueryClient } from '@tanstack/vue-query'
+import { useSafeSendTransaction } from '@/composables/transactions/useSafeSendTransaction'
+import { z } from 'zod'
 
 const queryClient = useQueryClient()
 const chainId = useChainId()

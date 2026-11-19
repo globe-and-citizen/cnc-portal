@@ -1,10 +1,10 @@
-import { describe, expect, it } from 'vitest'
 import {
   assetMarketFromResponse,
   coinGeckoRateTargets,
   historicalRateFromResponse,
   retryAfterDelay
 } from '../coingecko'
+import { describe, expect, it } from 'vitest'
 
 const address = '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
 

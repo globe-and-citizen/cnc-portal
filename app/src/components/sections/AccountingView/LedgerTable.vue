@@ -164,21 +164,21 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import type { TableColumn } from '@nuxt/ui'
-import LedgerActivityCell from './LedgerActivityCell.vue'
-import LedgerColumnHeader from './LedgerColumnHeader.vue'
-import LedgerPrecisionCell from './LedgerPrecisionCell.vue'
-import { useActivityDestination } from '@/composables/accounting/useActivityDestination'
-import { NETWORK } from '@/constant'
-import { formatTxHash } from '@/utils/format'
 import {
   LEDGER_COLUMNS,
   LEDGER_COLUMN_WIDTHS,
   type LedgerColumnKey,
   type LedgerMovements
 } from '@/utils/accounting/ledgerColumns'
+import LedgerActivityCell from './LedgerActivityCell.vue'
+import LedgerColumnHeader from './LedgerColumnHeader.vue'
+import LedgerPrecisionCell from './LedgerPrecisionCell.vue'
 import type { LedgerRow } from '@/utils/accounting/journalLedgerPresenter'
+import { NETWORK } from '@/constant'
+import type { TableColumn } from '@nuxt/ui'
+import { computed } from 'vue'
+import { formatTxHash } from '@/utils/format'
+import { useActivityDestination } from '@/composables/accounting/useActivityDestination'
 
 const props = defineProps<{
   rows: LedgerRow[]

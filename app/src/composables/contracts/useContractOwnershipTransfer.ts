@@ -1,12 +1,12 @@
-import { computed, ref, watch, type Ref } from 'vue'
-import { useQueryClient } from '@tanstack/vue-query'
-import { encodeFunctionData, type Address } from 'viem'
-import { ownablePausableAbi } from '@/artifacts/abi/ownable-pausable'
-import { useBodAddAction } from '@/composables/bod/writes'
-import { useContractWritesV3 } from '@/composables/contracts/useContractWritesV3'
+import { type Address, encodeFunctionData } from 'viem'
+import { type Ref, computed, ref, watch } from 'vue'
 import type { ManagedContractReadModel } from './readManagedContracts'
 import { classifyError } from '@/utils/errors/classifyContractError'
 import { log } from '@/lib/logging'
+import { ownablePausableAbi } from '@/artifacts/abi/ownable-pausable'
+import { useBodAddAction } from '@/composables/bod/writes'
+import { useContractWritesV3 } from '@/composables/contracts/useContractWritesV3'
+import { useQueryClient } from '@tanstack/vue-query'
 
 type OwnershipTarget = Pick<ManagedContractReadModel, 'address' | 'abi' | 'type'>
 

@@ -1,8 +1,8 @@
-import { describe, it, expect } from 'vitest'
-import { getAddress } from 'viem'
+import { ADDR, draftUsdValue, makeCtx } from './fixtures'
+import { describe, expect, it } from 'vitest'
 import type { ExpenseResponse } from '@/types/expense-account'
+import { getAddress } from 'viem'
 import { mapExpense } from '@/utils/accounting/mappers/expenseAccount'
-import { makeCtx, ADDR, draftUsdValue } from './fixtures'
 
 const ctx = makeCtx()
 const DAY = 86_400

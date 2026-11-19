@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import {
   formatContractFunctionLabel,
-  getContractPresentation,
-  getContractOwnerIdentity
+  getContractOwnerIdentity,
+  getContractPresentation
 } from '../presentation'
 
 describe('getContractPresentation', () => {

@@ -1,6 +1,6 @@
+import { fileURLToPath } from 'node:url'
 import { readFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
-import { fileURLToPath } from 'node:url'
 
 const EXPECTED_CHAIN_ID = 31_337
 const LOCAL_HOSTS = new Set(['localhost', '127.0.0.1', '[::1]'])

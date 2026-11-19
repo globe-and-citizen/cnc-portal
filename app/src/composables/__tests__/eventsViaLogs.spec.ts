@@ -1,15 +1,15 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { ref, toValue, type MaybeRefOrGetter } from 'vue'
-import { parseEventLogs } from 'viem'
 import {
-  scanContractLogs,
-  START_BLOCK,
-  useContractEventsViaLogs,
   type ChainClient,
   type DecodedLogLike,
   type EventMapContext,
-  type ScanTarget
+  START_BLOCK,
+  type ScanTarget,
+  scanContractLogs,
+  useContractEventsViaLogs
 } from '../eventsViaLogs'
+import { type MaybeRefOrGetter, ref, toValue } from 'vue'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { parseEventLogs } from 'viem'
 import { useQueryFn } from '@/tests/mocks/composables.mock'
 
 /**

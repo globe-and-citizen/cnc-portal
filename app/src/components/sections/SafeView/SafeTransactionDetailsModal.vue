@@ -50,11 +50,11 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { formatSafeTransactionValue, getSafeTransactionMethod } from '@/utils/safe/model'
+import AddressTooltip from '@/components/ui/AddressTooltip.vue'
 import type { SafeTransaction } from '@/types/safe'
 import type { SafeTransactionStateMeta } from '@/utils/safe/transactionState'
-import AddressTooltip from '@/components/ui/AddressTooltip.vue'
-import { formatSafeTransactionValue, getSafeTransactionMethod } from '@/utils/safe/model'
+import { computed } from 'vue'
 import { formatDateShort } from '@/utils/dates/calendar'
 
 interface Props {

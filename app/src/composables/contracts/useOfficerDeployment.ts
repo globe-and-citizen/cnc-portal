@@ -12,22 +12,22 @@
  *                an orchestrator that owns the flow-level toast + final
  *                cache flush (see `useOfficerRedeploy`).
  */
-import { useMutation, useQueryClient } from '@tanstack/vue-query'
-import { getConnections } from '@wagmi/core'
-import { encodeFunctionData, parseEventLogs, type Address, type Hex } from 'viem'
-import { config } from '@/wagmi.config'
-import { classifyError } from '@/utils/errors/classifyContractError'
-import { log } from '@/lib/logging'
-import { executeContractWrite } from '@/composables/contracts/useContractWritesV3'
-import { teamKeys } from '@/queries/team.queries'
-import { contractKeys } from '@/queries/contract.queries'
-import {
-  validateBeaconAddresses,
-  getBeaconConfigs,
-  getDeploymentConfigs
-} from '@/utils/contracts/deployment'
+import { type Address, type Hex, encodeFunctionData, parseEventLogs } from 'viem'
 import { OFFICER_BEACON, validateAddresses } from '@/constant'
 import { factoryBeaconAbi, officerAbi } from '@/artifacts/abi/generated'
+import {
+  getBeaconConfigs,
+  getDeploymentConfigs,
+  validateBeaconAddresses
+} from '@/utils/contracts/deployment'
+import { useMutation, useQueryClient } from '@tanstack/vue-query'
+import { classifyError } from '@/utils/errors/classifyContractError'
+import { config } from '@/wagmi.config'
+import { contractKeys } from '@/queries/contract.queries'
+import { executeContractWrite } from '@/composables/contracts/useContractWritesV3'
+import { getConnections } from '@wagmi/core'
+import { log } from '@/lib/logging'
+import { teamKeys } from '@/queries/team.queries'
 export interface OfficerDeploymentMetadata {
   officerAddress: Address
   deployBlockNumber: number

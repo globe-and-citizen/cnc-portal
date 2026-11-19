@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import { mount } from '@vue/test-utils'
-import { defineComponent } from 'vue'
 import TransactionChildRow from '../TransactionChildRow.vue'
+import { defineComponent } from 'vue'
+import { mount } from '@vue/test-utils'
 
 const UserIdentityStub = defineComponent({
   name: 'UserIdentity',

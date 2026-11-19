@@ -1,10 +1,10 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest'
-import { mount } from '@vue/test-utils'
-import { createTestingPinia } from '@pinia/testing'
-import { nextTick, ref } from 'vue'
-import InvestorsActions from '@/components/sections/SherTokenView/InvestorsActions.vue'
-import type { Address } from 'viem'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { mockInvestorReads, mockTeamStore } from '@/tests/mocks'
+import { nextTick, ref } from 'vue'
+import type { Address } from 'viem'
+import InvestorsActions from '@/components/sections/SherTokenView/InvestorsActions.vue'
+import { createTestingPinia } from '@pinia/testing'
+import { mount } from '@vue/test-utils'
 
 const DistributeMintActionStub = {
   props: ['tokenSymbol', 'investorsAddress'],

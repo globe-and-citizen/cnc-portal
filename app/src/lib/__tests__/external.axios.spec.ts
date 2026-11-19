@@ -1,4 +1,4 @@
-import { AxiosError, CanceledError, type AxiosAdapter } from 'axios'
+import { type AxiosAdapter, AxiosError, CanceledError } from 'axios'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 const sentryMocks = vi.hoisted(() => ({

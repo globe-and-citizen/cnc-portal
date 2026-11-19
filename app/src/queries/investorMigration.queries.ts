@@ -1,6 +1,6 @@
-import { toValue, type MaybeRefOrGetter } from 'vue'
-import type { Hex } from 'viem'
+import { type MaybeRefOrGetter, toValue } from 'vue'
 import { createMutationHook, createQueryHook, queryPresets } from './queryFactory'
+import type { Hex } from 'viem'
 
 /**
  * Query key factory for the Investor v1->v2 migration snapshot

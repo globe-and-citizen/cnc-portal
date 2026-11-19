@@ -1,5 +1,3 @@
-import { encodeFunctionData, parseUnits } from 'viem'
-import { expect, test } from '../fixtures/integrated'
 import {
   E2E_MEMBER,
   E2E_MEMBER_PRIVATE_KEY,
@@ -10,15 +8,12 @@ import {
   tokenBalance
 } from '../e2e-chain'
 import {
-  boardAction,
-  boardActionAddedEvents,
-  boardActionCount,
-  boardActionExecutedEvents,
-  boardApprovalEvents,
-  currentBoard,
-  electionsFixtureFromTeam,
-  establishBoardThroughElection
-} from '../elections/elections-chain'
+  approvePendingBankDividend,
+  distributeUsdcDividends,
+  fundBankWithUsdc,
+  issueShares,
+  openRealShareholderManagement
+} from './shareholder-page'
 import {
   bankDividendEvents,
   bankOwner,
@@ -32,12 +27,17 @@ import {
   transferBankOwnership
 } from './shareholder-chain'
 import {
-  approvePendingBankDividend,
-  distributeUsdcDividends,
-  fundBankWithUsdc,
-  issueShares,
-  openRealShareholderManagement
-} from './shareholder-page'
+  boardAction,
+  boardActionAddedEvents,
+  boardActionCount,
+  boardActionExecutedEvents,
+  boardApprovalEvents,
+  currentBoard,
+  electionsFixtureFromTeam,
+  establishBoardThroughElection
+} from '../elections/elections-chain'
+import { encodeFunctionData, parseUnits } from 'viem'
+import { expect, test } from '../fixtures/integrated'
 
 const normalizedShareholders = (
   shareholders: readonly { shareholder: `0x${string}`; amount: bigint }[]

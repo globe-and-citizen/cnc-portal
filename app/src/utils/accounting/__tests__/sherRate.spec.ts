@@ -1,11 +1,11 @@
-import { describe, it, expect } from 'vitest'
+import type { SafeDepositRow, SafeMultiplierUpdatedRow } from '@/types/contract-events/investor'
 import {
   buildSherMultiplierTimeline,
-  makeSherUsdRate,
-  currentSherUsdRate
+  currentSherUsdRate,
+  makeSherUsdRate
 } from '@/utils/accounting/sherRate'
+import { describe, expect, it } from 'vitest'
 import { USDC_ADDRESS } from '@/constant'
-import type { SafeMultiplierUpdatedRow, SafeDepositRow } from '@/types/contract-events/investor'
 
 /** A `MultiplierUpdated` row (multipliers in 6-decimal base units). */
 function update(timestamp: number, oldX: number, newX: number): SafeMultiplierUpdatedRow {

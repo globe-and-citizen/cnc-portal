@@ -69,29 +69,29 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
-import { parseUnits, zeroAddress, type Address } from 'viem'
-
-import { useContractBalance } from '@/composables/useContractBalance'
-import { useERC20Approve } from '@/composables/erc20/writes'
-import { useErc20Allowance } from '@/composables/erc20/reads'
+import { type Address, parseUnits, zeroAddress } from 'viem'
 import { SUPPORTED_TOKENS, type TokenId } from '@/constant'
-import { useCurrencyStore, useUserDataStore } from '@/stores'
-import { classifyError } from '@/utils/errors/classifyContractError'
+
 import {
-  formatSafeDepositRouterMultiplier,
-  calculateSherCompensation,
+  buildDepositAmountSchema,
   calculateDepositFromSher,
-  buildDepositAmountSchema
+  calculateSherCompensation,
+  formatSafeDepositRouterMultiplier
 } from '@/utils/safeDepositRouter/model'
-import TokenAmountInput from '@/components/ui/inputs/TokenAmountInput.vue'
-import CompensationAmountInput from './CompensationAmountInput.vue'
+import { computed, ref, watch } from 'vue'
+import { useCurrencyStore, useUserDataStore } from '@/stores'
 import {
   useSafeDepositRouterAddress,
   useSafeDepositRouterMultiplier
 } from '@/composables/safeDepositRouter/reads'
-import { useDeposit } from '@/composables/safeDepositRouter/writes'
+import CompensationAmountInput from './CompensationAmountInput.vue'
 import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
+import TokenAmountInput from '@/components/ui/inputs/TokenAmountInput.vue'
+import { classifyError } from '@/utils/errors/classifyContractError'
+import { useContractBalance } from '@/composables/useContractBalance'
+import { useDeposit } from '@/composables/safeDepositRouter/writes'
+import { useERC20Approve } from '@/composables/erc20/writes'
+import { useErc20Allowance } from '@/composables/erc20/reads'
 import { useInvestorSymbol } from '@/composables/investor/reads'
 
 const emits = defineEmits<{

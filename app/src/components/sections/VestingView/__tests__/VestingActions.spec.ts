@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { mount } from '@vue/test-utils'
-import { createTestingPinia } from '@pinia/testing'
-import VestingActions from '@/components/sections/VestingView/VestingActions.vue'
-import CreateVesting from '@/components/sections/VestingView/forms/CreateVesting.vue'
 import { mockTeamStore, mockUserStore } from '@/tests/mocks'
+import CreateVesting from '@/components/sections/VestingView/forms/CreateVesting.vue'
+import VestingActions from '@/components/sections/VestingView/VestingActions.vue'
+import { createTestingPinia } from '@pinia/testing'
+import { mount } from '@vue/test-utils'
 
 const mountComponent = () =>
   mount(VestingActions, {

@@ -47,12 +47,12 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import type { TableColumn } from '@nuxt/ui'
-import AddressTooltip from '@/components/ui/AddressTooltip.vue'
-import { formatDateShort } from '@/utils/dates/calendar'
 import { formatToken, formatUsd } from '@/utils/format'
+import AddressTooltip from '@/components/ui/AddressTooltip.vue'
 import type { SafeSwapExchange } from '@/utils/safe/costBasis'
+import type { TableColumn } from '@nuxt/ui'
+import { computed } from 'vue'
+import { formatDateShort } from '@/utils/dates/calendar'
 
 const props = defineProps<{ swaps: SafeSwapExchange[] }>()
 

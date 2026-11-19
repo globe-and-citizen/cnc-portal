@@ -1,8 +1,8 @@
+import { ADDR, usd } from './fixtures'
 import { describe, expect, it } from 'vitest'
 import type { Address } from 'viem'
-import { buildAccountingSummary } from '@/utils/accounting/accountingSummary'
-import { ADDR, usd } from './fixtures'
 import { assembleAccounting } from './assembleAccounting'
+import { buildAccountingSummary } from '@/utils/accounting/accountingSummary'
 
 const bankEvents = {
   bankDeposits: {

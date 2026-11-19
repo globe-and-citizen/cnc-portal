@@ -1,8 +1,8 @@
-import type { Wage } from '@/types'
+import { createMutationHook, createQueryHook, queryPresets } from './queryFactory'
 import type { MaybeRefOrGetter } from 'vue'
-import { toValue } from 'vue'
-import { createQueryHook, createMutationHook, queryPresets } from './queryFactory'
+import type { Wage } from '@/types'
 import { teamKeys } from './team.queries'
+import { toValue } from 'vue'
 
 /**
  * Query key factory for wage-related queries

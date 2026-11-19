@@ -121,18 +121,18 @@
 </template>
 
 <script setup lang="ts">
+import type { TableColumn, TableRow } from '@nuxt/ui'
 import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import type { TableColumn, TableRow } from '@nuxt/ui'
-import DatePicker from '@/components/ui/DatePicker.vue'
+import type { Account } from '@/utils/accounting/types'
 import AccountingExportBar from '@/components/sections/AccountingView/AccountingExportBar.vue'
+import DatePicker from '@/components/ui/DatePicker.vue'
 import LedgerDrilldownModal from '@/components/sections/AccountingView/LedgerDrilldownModal.vue'
 import { defaultValueForMode } from '@/utils/dates/picker'
-import { useAccountingContext } from '@/composables/accounting/useAccountingContext'
-import { useSectionExport } from '@/composables/accounting/useSectionExport'
-import { useLedgerDrilldown } from '@/composables/accounting/useLedgerDrilldown'
-import type { Account } from '@/utils/accounting/types'
 import { presentTrial } from '@/utils/accounting/presenter'
+import { useAccountingContext } from '@/composables/accounting/useAccountingContext'
+import { useLedgerDrilldown } from '@/composables/accounting/useLedgerDrilldown'
+import { useSectionExport } from '@/composables/accounting/useSectionExport'
 
 interface TrialTableRow {
   /** Canonical concrete account. Absent only on the total row. */

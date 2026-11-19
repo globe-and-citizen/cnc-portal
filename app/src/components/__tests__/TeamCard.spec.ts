@@ -1,12 +1,12 @@
+import { RouterLinkStub, mount } from '@vue/test-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { mount, RouterLinkStub } from '@vue/test-utils'
-import TeamCard from '@/components/sections/TeamView/TeamCard.vue'
-import { useCurrencyStore } from '@/stores/currencyStore'
 import { makeCurrencyStoreMock, mockUserStore } from '@/tests/mocks'
-import { UDropdownStub } from '@/tests/stubs/nuxt-ui.stubs'
-import type { Team } from '@/types'
-import type { TeamTreasuryDisplay } from '@/utils/teams/treasury'
 import type { Address } from 'viem'
+import type { Team } from '@/types'
+import TeamCard from '@/components/sections/TeamView/TeamCard.vue'
+import type { TeamTreasuryDisplay } from '@/utils/teams/treasury'
+import { UDropdownStub } from '@/tests/stubs/nuxt-ui.stubs'
+import { useCurrencyStore } from '@/stores/currencyStore'
 
 // `makeCurrencyStoreMock` exposes `localCurrency` unwrapped (as a real Pinia
 // store does) and is the shape the card reads; it has no `getTokenInfo`, which

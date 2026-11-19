@@ -1,16 +1,16 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { flushPromises } from '@vue/test-utils'
-import { ref } from 'vue'
-import type { TableRow } from '@/types/table'
-import BodApprovalContent from '@/components/sections/ContractManagementView/BodApprovalContent.vue'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
-  useReadContractFn,
   mockTeamStore,
   mockUserStore,
   mockWagmiCore,
-  renderWithProviders
+  renderWithProviders,
+  useReadContractFn
 } from '@/tests/mocks'
 import { useTeamStore, useUserDataStore } from '@/stores'
+import BodApprovalContent from '@/components/sections/ContractManagementView/BodApprovalContent.vue'
+import type { TableRow } from '@/types/table'
+import { flushPromises } from '@vue/test-utils'
+import { ref } from 'vue'
 
 const CURRENT_ADDR = '0x0000000000000000000000000000000000000001'
 const BOD_ADDR = '0x00000000000000000000000000000000000000b0'

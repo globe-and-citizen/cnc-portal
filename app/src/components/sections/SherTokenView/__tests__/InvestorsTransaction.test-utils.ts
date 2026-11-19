@@ -1,7 +1,7 @@
-import { mount, type VueWrapper } from '@vue/test-utils'
+import { type VueWrapper, mount } from '@vue/test-utils'
+import InvestorsTransactions from '../InvestorsTransactions.vue'
 import { defineComponent } from 'vue'
 import { vi } from 'vitest'
-import InvestorsTransactions from '../InvestorsTransactions.vue'
 
 export const USDC_ADDRESS = '0xa3492d046095affe351cfac15de9b86425e235db'
 export const INVESTOR_ADDRESS = '0x1111111111111111111111111111111111111111'

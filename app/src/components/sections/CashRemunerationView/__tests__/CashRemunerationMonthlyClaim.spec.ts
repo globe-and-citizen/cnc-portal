@@ -1,10 +1,10 @@
-import { shallowMount } from '@vue/test-utils'
-import { describe, expect, it, vi, beforeEach } from 'vitest'
+import * as queries from '@/queries'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import CashRemunerationMonthlyClaim from '../CashRemunerationMonthlyClaim.vue'
 import { createTestingPinia } from '@pinia/testing'
-import { ref } from 'vue'
-import * as queries from '@/queries'
 import { mockLog } from '@/tests/mocks/utils.mock'
+import { ref } from 'vue'
+import { shallowMount } from '@vue/test-utils'
 
 const buildMockClaimsValue = () => ({
   data: [

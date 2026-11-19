@@ -1,6 +1,6 @@
-import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
-import { mount } from '@vue/test-utils'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import WidgetPreviewCard from '../WidgetPreviewCard.vue'
+import { mount } from '@vue/test-utils'
 
 describe('WidgetPreviewCard', () => {
   beforeEach(() => {

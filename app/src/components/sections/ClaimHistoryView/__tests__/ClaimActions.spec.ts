@@ -1,9 +1,9 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { mount } from '@vue/test-utils'
-import ClaimActions from '@/components/sections/ClaimHistoryView/ClaimActions.vue'
-import { nextTick } from 'vue'
-
 import type { Claim, SupportedTokens } from '@/types'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import ClaimActions from '@/components/sections/ClaimHistoryView/ClaimActions.vue'
+import { mount } from '@vue/test-utils'
+
+import { nextTick } from 'vue'
 
 describe('[US-PAYROLL-006] [US-PAYROLL-007] ClaimActions', () => {
   const mockClaim: Claim = {

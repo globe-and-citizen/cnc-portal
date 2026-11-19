@@ -1,11 +1,11 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import type { Team } from '@/types/team'
+import TeamMetaVisibilityModal from '../TeamMetaVisibilityModal.vue'
+import { mockTeamData } from '@/tests/mocks'
 import { mount } from '@vue/test-utils'
 import { ref } from 'vue'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { useUpdateTeamMutation } from '@/queries/team.queries'
 import { useTeamStore } from '@/stores'
-import { mockTeamData } from '@/tests/mocks'
-import TeamMetaVisibilityModal from '../TeamMetaVisibilityModal.vue'
-import type { Team } from '@/types/team'
+import { useUpdateTeamMutation } from '@/queries/team.queries'
 
 const mutateSpy = vi.fn()
 const resetSpy = vi.fn()

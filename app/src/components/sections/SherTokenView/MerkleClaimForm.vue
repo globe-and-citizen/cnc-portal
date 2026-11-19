@@ -55,11 +55,11 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
 import { type Address, type Hex, formatUnits } from 'viem'
+import type { InvestorMigration } from '@/queries/investorMigration.queries'
+import { computed } from 'vue'
 import { useClaimMigrationMutation } from '@/composables/investor/useClaimMigration'
 import { useToast } from '@nuxt/ui/composables'
-import type { InvestorMigration } from '@/queries/investorMigration.queries'
 
 interface Props {
   investorAddress: Address

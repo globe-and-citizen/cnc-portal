@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import { mount } from '@vue/test-utils'
 import ManagedContractActionMenu from '../ManagedContractActionMenu.vue'
 import type { ManagedContractRow } from '../ManagedContractsTable.types'
+import { mount } from '@vue/test-utils'
 
 const DEFAULT_ROW: ManagedContractRow = {
   address: '0xContract000000000000000000000000000001',

@@ -1,16 +1,16 @@
-import { readContract } from '@wagmi/core'
 import type { Abi, Address } from 'viem'
-import { ownablePausableAbi } from '@/artifacts/abi/ownable-pausable'
-import { log } from '@/lib/logging'
-import type { TeamContract } from '@/types'
-import type { DeploymentContract } from '@/types/deployments'
-import { config } from '@/wagmi.config'
-import { CONTRACT_ABI_MAP } from '@/utils/contracts/abiDecode'
 import {
-  getContractPauseCapability,
   type ContractPauseCapability,
-  type ContractPauseStatus
+  type ContractPauseStatus,
+  getContractPauseCapability
 } from '@/utils/contracts/pauseCapabilities'
+import { CONTRACT_ABI_MAP } from '@/utils/contracts/abiDecode'
+import type { DeploymentContract } from '@/types/deployments'
+import type { TeamContract } from '@/types'
+import { config } from '@/wagmi.config'
+import { log } from '@/lib/logging'
+import { ownablePausableAbi } from '@/artifacts/abi/ownable-pausable'
+import { readContract } from '@wagmi/core'
 
 export interface ManagedContractReadModel extends Omit<TeamContract, 'admins' | 'type'> {
   type: string

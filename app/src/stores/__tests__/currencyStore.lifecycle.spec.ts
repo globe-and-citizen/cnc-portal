@@ -1,16 +1,16 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { createPinia } from 'pinia'
-import { computed, defineComponent, h, nextTick } from 'vue'
-import { mount, type VueWrapper } from '@vue/test-utils'
 import { QueryClient, VueQueryPlugin } from '@tanstack/vue-query'
+import { type VueWrapper, mount } from '@vue/test-utils'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { computed, defineComponent, h, nextTick } from 'vue'
 import { SUPPORTED_TOKENS } from '@/constant'
+import TokenPriceStatusAlert from '@/components/ui/TokenPriceStatusAlert.vue'
+import { createPinia } from 'pinia'
 import externalApiClient from '@/lib/external.axios'
+import { formatCurrencyShort } from '@/utils/currency/display'
+import { mockTeamStore } from '@/tests/mocks'
 import { useCurrencyStore as useMockedCurrencyStore } from '@/stores'
 import { useQueryFn } from '@/tests/mocks/composables.mock'
-import { mockTeamStore } from '@/tests/mocks'
 import { useTransactionPresentation } from '@/composables/transactions/useTransactionPresentation'
-import { formatCurrencyShort } from '@/utils/currency/display'
-import TokenPriceStatusAlert from '@/components/ui/TokenPriceStatusAlert.vue'
 
 const { useCurrencyStore } =
   await vi.importActual<typeof import('../currencyStore')>('../currencyStore')

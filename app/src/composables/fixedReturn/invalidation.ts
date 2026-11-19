@@ -1,5 +1,5 @@
-import type { QueryClient } from '@tanstack/vue-query'
 import type { Address } from 'viem'
+import type { QueryClient } from '@tanstack/vue-query'
 import { contractReadsOfAddress } from '@/composables/contracts/useContractWritesV3'
 import { fixedReturnKeys } from './reads'
 

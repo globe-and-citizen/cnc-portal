@@ -31,8 +31,8 @@
 </template>
 
 <script setup lang="ts">
-import { useSwitchChain } from '@wagmi/vue'
 import { configuredChainId, configuredNetworkName } from '@/lib/walletNetwork'
+import { useSwitchChain } from '@wagmi/vue'
 
 const switchChain = useSwitchChain()
 </script>

@@ -12,10 +12,10 @@
 import { computed, ref } from 'vue'
 import BankBalanceSection from '@/components/sections/BankView/BankBalanceSection.vue'
 import BankTransactions from '@/components/sections/BankView/BankTransactions.vue'
-import { useContractBalance } from '@/composables/useContractBalance'
-import { tokenHoldingRows } from '@/utils/tokens/holdings'
-import TokenHoldingsSection from '@/components/ui/TokenHoldingsSection.vue'
 import ContractOwnerCard from '@/components/ui/ContractOwnerCard.vue'
+import TokenHoldingsSection from '@/components/ui/TokenHoldingsSection.vue'
+import { tokenHoldingRows } from '@/utils/tokens/holdings'
+import { useContractBalance } from '@/composables/useContractBalance'
 import { useTeamStore } from '@/stores'
 
 const teamStore = useTeamStore()

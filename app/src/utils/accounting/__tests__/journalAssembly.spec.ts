@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest'
+import type { JournalEntryDraft } from '@/utils/accounting/journalEntryDraft'
+import { assembleRawAccounting } from './assembleAccounting'
 import { buildAccountingSummary } from '@/utils/accounting/accountingSummary'
 import { buildBalanceSheet } from '@/utils/accounting/balanceSheet'
 import { buildGeneralLedger } from '@/utils/accounting/generalLedger'
 import { buildIncomeStatement } from '@/utils/accounting/incomeStatement'
-import type { JournalEntryDraft } from '@/utils/accounting/journalEntryDraft'
-import { assembleRawAccounting } from './assembleAccounting'
 import { usd } from './fixtures'
 
 function posting(

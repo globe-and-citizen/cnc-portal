@@ -1,9 +1,9 @@
-import { expect, type Page } from '@playwright/test'
-import type { Team } from '../../../src/types/team'
+import { type Page, expect } from '@playwright/test'
+import { dialogAmount, openAccountFromSidebar, selectToken } from '../e2e-page'
+import type { Address } from 'viem'
 import type { CreateOfficerResponse } from '../../../src/queries/contract.queries'
 import type { InvestorMigration } from '../../../src/queries/investorMigration.queries'
-import type { Address } from 'viem'
-import { dialogAmount, openAccountFromSidebar, selectToken } from '../e2e-page'
+import type { Team } from '../../../src/types/team'
 
 export interface OfficerMigrationRedeployment {
   migration: InvestorMigration

@@ -1,22 +1,22 @@
-import { parseEther, parseUnits, type Hex } from 'viem'
-import { expect, test } from '../fixtures/integrated'
 import { E2E_MEMBER, E2E_MEMBER_PRIVATE_KEY, publicClient, tokenBalance } from '../e2e-chain'
+import { type Hex, parseEther, parseUnits } from 'viem'
 import {
-  assertThreeAssetPayment,
-  companySherAddress,
-  payrollUsdc as usdc,
-  wageClaimState
-} from './payroll-chain'
-import {
+  assertPayrollAccountHoldings,
   completedWeekStart,
   fundCashRemuneration,
-  assertPayrollAccountHoldings,
   openMemberPayrollHistory,
   openWeeklyClaimActions,
   selectHistoryWeek,
   setMemberUsdcWage,
   submitDailyClaim
 } from './payroll-page'
+import {
+  assertThreeAssetPayment,
+  companySherAddress,
+  payrollUsdc as usdc,
+  wageClaimState
+} from './payroll-chain'
+import { expect, test } from '../fixtures/integrated'
 
 test.describe(
   '[US-PAYROLL-008/009/010/011/012/013] Integrated payment lifecycle',

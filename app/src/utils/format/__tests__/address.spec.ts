@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import { formatAddress, formatTxHash } from '@/utils/format/address'
 
 const ADDRESS = '0x4b6f7A1d2C3e4F5a6B7c8D9e0F1a2B3c4D5e6F70'

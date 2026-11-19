@@ -1,12 +1,12 @@
 /** Compiler canaries: included by the normal app type-check, never imported by the app. */
-import type { ExpenseApproval, ExpenseResponse, BudgetLimit } from '@/types/expense-account'
-import type { TableRow } from '@/types/table'
+import type { BudgetLimit, ExpenseApproval, ExpenseResponse } from '@/types/expense-account'
+import type ManagedContractActionDialogs from '@/components/sections/ContractManagementView/ManagedContractActionDialogs.vue'
 import type { ManagedContractReadModel } from '@/composables/contracts/readManagedContracts'
 import type { ManagedContractRow } from '@/components/sections/ContractManagementView/ManagedContractsTable.types'
+import type { TableRow } from '@/types/table'
+import type TransferAction from '@/components/sections/ExpenseAccountView/TransferAction.vue'
 import type { getTokens } from '@/utils/expenses/model'
 import type { useContractOwnershipTransfer } from '@/composables/contracts/useContractOwnershipTransfer'
-import type TransferAction from '@/components/sections/ExpenseAccountView/TransferAction.vue'
-import type ManagedContractActionDialogs from '@/components/sections/ContractManagementView/ManagedContractActionDialogs.vue'
 
 type Assert<T extends true> = T
 type Fits<Value, Target> = [Value] extends [Target] ? true : false

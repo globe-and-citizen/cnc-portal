@@ -63,14 +63,14 @@
   </UPopover>
 </template>
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { type Notification } from '@/types'
-import { Icon as IconifyIcon } from '@iconify/vue'
-import { useRouter } from 'vue-router'
+import { computed, ref } from 'vue'
 import {
   useGetNotificationsQuery,
   useUpdateNotificationMutation
 } from '@/queries/notification.queries'
+import { Icon as IconifyIcon } from '@iconify/vue'
+import { type Notification } from '@/types'
+import { useRouter } from 'vue-router'
 
 const router = useRouter()
 const currentPage = ref(1)

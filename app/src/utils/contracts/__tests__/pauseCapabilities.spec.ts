@@ -1,19 +1,9 @@
-import { describe, expect, it } from 'vitest'
-import type { Abi } from 'viem'
-import versionRegistry from '@/artifacts/version-registry.json'
-import type { FolderVersion } from '@/artifacts/registry'
-import type { ContractType } from '@/types'
 import {
-  bankAbi as bankV0Abi,
-  boardOfDirectorsAbi as boardV0Abi,
-  cashRemunerationEip712Abi as cashV0Abi,
-  electionsAbi as electionsV0Abi,
-  expenseAccountEip712Abi as expenseV0Abi,
-  investorAbi as investorV0Abi,
-  proposalsAbi as proposalsV0Abi,
-  safeDepositRouterAbi as routerV0Abi,
-  vestingAbi as vestingV0Abi
-} from '@/artifacts/abi/V0/generated'
+  PAUSE_CAPABILITY_REGISTRY,
+  getContractPauseCapability,
+  getContractPauseStatusPresentation,
+  pauseCapabilityFolderForVersion
+} from '../pauseCapabilities'
 import {
   bankAbi as bankV01Abi,
   boardOfDirectorsAbi as boardV01Abi,
@@ -25,6 +15,17 @@ import {
   safeDepositRouterAbi as routerV01Abi,
   vestingAbi as vestingV01Abi
 } from '@/artifacts/abi/V0.1/generated'
+import {
+  bankAbi as bankV0Abi,
+  boardOfDirectorsAbi as boardV0Abi,
+  cashRemunerationEip712Abi as cashV0Abi,
+  electionsAbi as electionsV0Abi,
+  expenseAccountEip712Abi as expenseV0Abi,
+  investorAbi as investorV0Abi,
+  proposalsAbi as proposalsV0Abi,
+  safeDepositRouterAbi as routerV0Abi,
+  vestingAbi as vestingV0Abi
+} from '@/artifacts/abi/V0/generated'
 import {
   bankAbi as bankV1Abi,
   boardOfDirectorsAbi as boardV1Abi,
@@ -48,12 +49,11 @@ import {
   safeDepositRouterAbi as routerV2Abi,
   vestingAbi as vestingV2Abi
 } from '@/artifacts/abi/V2/generated'
-import {
-  getContractPauseCapability,
-  getContractPauseStatusPresentation,
-  PAUSE_CAPABILITY_REGISTRY,
-  pauseCapabilityFolderForVersion
-} from '../pauseCapabilities'
+import { describe, expect, it } from 'vitest'
+import type { Abi } from 'viem'
+import type { ContractType } from '@/types'
+import type { FolderVersion } from '@/artifacts/registry'
+import versionRegistry from '@/artifacts/version-registry.json'
 
 type AbiByType = Partial<Record<ContractType, Abi>>
 

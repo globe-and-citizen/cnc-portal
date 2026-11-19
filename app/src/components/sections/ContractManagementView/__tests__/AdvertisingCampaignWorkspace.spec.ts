@@ -1,13 +1,13 @@
+import { type Address, parseEther } from 'viem'
+import {
+  type AdvertisingCampaign,
+  useAdvertisingCampaigns,
+  useCampaignEventsByCode
+} from '@/composables/campaign/reads'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import AdvertisingCampaignWorkspace from '@/components/sections/ContractManagementView/AdvertisingCampaignWorkspace.vue'
 import { mount } from '@vue/test-utils'
 import { ref } from 'vue'
-import { parseEther, type Address } from 'viem'
-import AdvertisingCampaignWorkspace from '@/components/sections/ContractManagementView/AdvertisingCampaignWorkspace.vue'
-import {
-  useAdvertisingCampaigns,
-  useCampaignEventsByCode,
-  type AdvertisingCampaign
-} from '@/composables/campaign/reads'
 
 vi.mock('@/composables/campaign/reads', () => ({
   useAdvertisingCampaigns: vi.fn(),

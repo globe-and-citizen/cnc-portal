@@ -1,11 +1,11 @@
-import { describe, it, expect } from 'vitest'
 import {
   ACCOUNT_FAMILIES,
   ACCOUNT_NAMES,
+  type AccountName,
   accountFamilyOf,
-  classOf,
-  type AccountName
+  classOf
 } from '../chartOfAccounts'
+import { describe, expect, it } from 'vitest'
 
 describe('chart of accounts', () => {
   it('declares every CNC account from the catalogue with its class', () => {

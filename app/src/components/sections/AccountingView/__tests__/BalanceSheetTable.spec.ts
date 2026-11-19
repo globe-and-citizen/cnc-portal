@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import { renderWithProviders } from '@/tests/mocks'
+import type { BalanceLineView } from '@/utils/accounting/presenter'
 import BalanceSheetTable from '../BalanceSheetTable.vue'
 import { accountFor } from '@/utils/accounting/accountRegistry'
-import type { BalanceLineView } from '@/utils/accounting/presenter'
+import { renderWithProviders } from '@/tests/mocks'
 
 describe('BalanceSheetTable', () => {
   it('opens the concrete account represented by its selected row', async () => {

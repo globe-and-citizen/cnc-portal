@@ -1,9 +1,9 @@
-import { describe, it, vi, expect, beforeEach } from 'vitest'
-import { mount, flushPromises } from '@vue/test-utils'
+import * as userQueries from '@/queries/user.queries'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { flushPromises, mount } from '@vue/test-utils'
+import DistributeMintForm from '../DistributeMintForm.vue'
 import { createTestingPinia } from '@pinia/testing'
 import { ref } from 'vue'
-import DistributeMintForm from '../DistributeMintForm.vue'
-import * as userQueries from '@/queries/user.queries'
 
 const mountForm = () =>
   mount(DistributeMintForm, {

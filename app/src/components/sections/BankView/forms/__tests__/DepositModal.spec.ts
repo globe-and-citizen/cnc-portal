@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import { mount, VueWrapper } from '@vue/test-utils'
+import { VueWrapper, mount } from '@vue/test-utils'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import DepositModal from '../DepositModal.vue'
 
 describe('[US-BANK-001] DepositModal', () => {

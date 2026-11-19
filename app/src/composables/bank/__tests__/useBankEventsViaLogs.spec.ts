@@ -1,9 +1,4 @@
-import { describe, it, expect, vi } from 'vitest'
 import type { ChainClient, DecodedLogLike, EventMapContext } from '@/composables/eventsViaLogs'
-import type { BankEventFeed } from '@/types/contract-events/bank'
-import registry from '@/artifacts/version-registry.json'
-import addressesV1 from '@/artifacts/deployed_addresses/V1/chain-137.json'
-import addressesV2 from '@/artifacts/deployed_addresses/V2/chain-137.json'
 import {
   bankExtraLogs,
   empty,
@@ -12,7 +7,12 @@ import {
   rawTokenTransferLogs,
   supportedTokenAddresses
 } from '../useBankEventsViaLogs'
+import { describe, expect, it, vi } from 'vitest'
 import { feeCollectorAddressesForChain, normalizeLegacyBankFeeTokens } from '../bankFees'
+import type { BankEventFeed } from '@/types/contract-events/bank'
+import addressesV1 from '@/artifacts/deployed_addresses/V1/chain-137.json'
+import addressesV2 from '@/artifacts/deployed_addresses/V2/chain-137.json'
+import registry from '@/artifacts/version-registry.json'
 
 /** No chain stablecoin by default, so each test states the tokens it scans. */
 vi.mock('@/constant', async (importOriginal) => ({

@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { mount, VueWrapper, flushPromises } from '@vue/test-utils'
+import { VueWrapper, flushPromises, mount } from '@vue/test-utils'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import ProfileImageUpload from '../ProfileImageUpload.vue'
 import { mockUploadFileState } from '@/tests/mocks/composables.mock'
 

@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest'
-import { createFileSchema, MAX_FILE_SIZE } from '../upload'
+import { MAX_FILE_SIZE, createFileSchema } from '../upload'
+import { describe, expect, it } from 'vitest'
 
 const makeFile = (name: string, type: string, size = 1024): File =>
   new File([new Uint8Array(size)], name, { type })

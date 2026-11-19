@@ -1,14 +1,14 @@
-import { flushPromises, mount } from '@vue/test-utils'
+import { QueryClient, VueQueryPlugin } from '@tanstack/vue-query'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { defineComponent } from 'vue'
-import { createTestingPinia } from '@pinia/testing'
-import { VueQueryPlugin, QueryClient } from '@tanstack/vue-query'
-import EditClaims from '@/components/sections/CashRemunerationView/EditClaims.vue'
-import { useEditClaimWithFilesMutation } from '@/queries/weeklyClaim.queries'
-import type { Claim } from '@/types'
+import { flushPromises, mount } from '@vue/test-utils'
 import type { Address } from 'viem'
-import { mockTeamStore } from '@/tests/mocks'
+import type { Claim } from '@/types'
+import EditClaims from '@/components/sections/CashRemunerationView/EditClaims.vue'
 import { createMockMutationResponse } from '@/tests/mocks/query.mock'
+import { createTestingPinia } from '@pinia/testing'
+import { defineComponent } from 'vue'
+import { mockTeamStore } from '@/tests/mocks'
+import { useEditClaimWithFilesMutation } from '@/queries/weeklyClaim.queries'
 
 const SUBMIT_PAYLOAD = {
   minutesWorked: 360,

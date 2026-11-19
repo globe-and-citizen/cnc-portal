@@ -76,9 +76,9 @@
 <script setup lang="ts">
 import { computed, toRef } from 'vue'
 import type { Address } from 'viem'
-import { useContractBalance } from '@/composables/useContractBalance'
 import type { TokenBalance } from '@/types'
 import { formatToken } from '@/utils/format'
+import { useContractBalance } from '@/composables/useContractBalance'
 
 const props = defineProps<{ address: Address }>()
 

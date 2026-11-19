@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { finalizeJournalEntryDrafts } from '../journalEntry'
-import { journalLedgerRows } from '../journalLedgerPresenter'
-import { historicalRateTargets } from '../toUsd'
-import { buildAccountingSummary } from '../accountingSummary'
-import { usd } from './fixtures'
 import { drafts, history } from './safeExchangeFixtures'
+import { buildAccountingSummary } from '../accountingSummary'
+import { finalizeJournalEntryDrafts } from '../journalEntry'
+import { historicalRateTargets } from '../toUsd'
+import { journalLedgerRows } from '../journalLedgerPresenter'
+import { usd } from './fixtures'
 
 const purchaseOf = (rows = history().slice(0, 3), marketRate = 2000) =>
   finalizeJournalEntryDrafts(drafts(rows, marketRate))

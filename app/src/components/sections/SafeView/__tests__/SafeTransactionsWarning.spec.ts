@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { mount } from '@vue/test-utils'
 import SafeTransactionsWarning from '../SafeTransactionsWarning.vue'
+import { mount } from '@vue/test-utils'
 
 const stubs = {
   UModal: {

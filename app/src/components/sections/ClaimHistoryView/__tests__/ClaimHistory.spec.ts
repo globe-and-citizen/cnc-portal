@@ -1,12 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { mount } from '@vue/test-utils'
-import { createTestingPinia } from '@pinia/testing'
 import { defineComponent, nextTick, ref } from 'vue'
+import { useGetTeamWagesQuery, useGetTeamWeeklyClaimsQuery } from '@/queries'
+import { createTestingPinia } from '@pinia/testing'
 import dayjs from 'dayjs'
-import utc from 'dayjs/plugin/utc'
 import isoWeek from 'dayjs/plugin/isoWeek'
+import { mount } from '@vue/test-utils'
 import { useRoute } from 'vue-router'
-import { useGetTeamWeeklyClaimsQuery, useGetTeamWagesQuery } from '@/queries'
+import utc from 'dayjs/plugin/utc'
 
 dayjs.extend(utc)
 dayjs.extend(isoWeek)

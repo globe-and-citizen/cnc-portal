@@ -78,23 +78,23 @@
   </UCard>
 </template>
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
-import ExpenseAccountTable from '@/components/sections/ExpenseAccountView/ExpenseAccountTable.vue'
-import ApproveUsersEIP712Form from '@/components/sections/ExpenseAccountView/forms/ApproveUsersEIP712Form.vue'
-import { useUserDataStore, useTeamStore } from '@/stores'
-import { useRoute } from 'vue-router'
-import { useReadContract, useChainId, useSignTypedData } from '@wagmi/vue'
-import { zeroAddress, type Address } from 'viem'
-import { expenseAccountEip712Abi } from '@/artifacts/abi/generated'
-import type { User, BudgetLimit } from '@/types'
-import { getAxiosErrorMessage } from '@/utils/errors/http'
-import { log } from '@/lib/logging'
-import ApproveExpenseSummaryForm from '@/components/sections/ExpenseAccountView/forms/ApproveExpenseSummaryForm.vue'
-import { useCreateExpenseMutation } from '@/queries/expense.queries'
-import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
+import { type Address, zeroAddress } from 'viem'
+import type { BudgetLimit, User } from '@/types'
 import { budgetLimitTypes, buildContractBudgetLimit } from '@/utils/expenses/model'
-import { useExpenseAccountSupportedTokens } from '@/composables/expenseAccount/reads'
+import { computed, ref, watch } from 'vue'
+import { useChainId, useReadContract, useSignTypedData } from '@wagmi/vue'
+import { useTeamStore, useUserDataStore } from '@/stores'
+import ApproveExpenseSummaryForm from '@/components/sections/ExpenseAccountView/forms/ApproveExpenseSummaryForm.vue'
+import ApproveUsersEIP712Form from '@/components/sections/ExpenseAccountView/forms/ApproveUsersEIP712Form.vue'
+import ExpenseAccountTable from '@/components/sections/ExpenseAccountView/ExpenseAccountTable.vue'
+import { expenseAccountEip712Abi } from '@/artifacts/abi/generated'
+import { getAxiosErrorMessage } from '@/utils/errors/http'
 import { isExpenseApprovalTokenAllowed } from '@/utils/expenses/tokenPolicy'
+import { log } from '@/lib/logging'
+import { useCreateExpenseMutation } from '@/queries/expense.queries'
+import { useExpenseAccountSupportedTokens } from '@/composables/expenseAccount/reads'
+import { useRoute } from 'vue-router'
+import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
 
 const confirmationModal = ref(false)
 const approveErrorMessage = ref('')

@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
-import { ref } from 'vue'
+import { mockTeamData, mockTeamStore, mockToast, mockUserStore } from '@/tests/mocks'
 import type { Address } from 'viem'
 import SafeImportCard from '../SafeImportCard.vue'
-import { mockTeamData, mockTeamStore, mockToast, mockUserStore } from '@/tests/mocks'
+import { ref } from 'vue'
 
 const SAFE_ADDRESS = '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
 const mockInspection = {

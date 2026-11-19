@@ -1,14 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import BalanceSheetTable from '@/components/sections/AccountingView/BalanceSheetTable.vue'
+import BalanceSheetView from '../BalanceSheetView.vue'
+import type { JournalEntry } from '@/utils/accounting/types'
+import LedgerDrilldownModal from '@/components/sections/AccountingView/LedgerDrilldownModal.vue'
+import type { StatementLineView } from '@/utils/accounting/presenter'
+import { catalogueLedger } from '@/utils/accounting/__tests__/catalogueLedger'
+import { entriesForAccount } from '@/utils/accounting/accountLedger'
+import { finalizeJournal } from '@/utils/accounting/__tests__/assembleAccounting'
 import { flushPromises } from '@vue/test-utils'
 import { renderWithProviders } from '@/tests/mocks'
-import BalanceSheetView from '../BalanceSheetView.vue'
-import BalanceSheetTable from '@/components/sections/AccountingView/BalanceSheetTable.vue'
-import LedgerDrilldownModal from '@/components/sections/AccountingView/LedgerDrilldownModal.vue'
-import { entriesForAccount } from '@/utils/accounting/accountLedger'
-import { catalogueLedger } from '@/utils/accounting/__tests__/catalogueLedger'
-import { finalizeJournal } from '@/utils/accounting/__tests__/assembleAccounting'
-import type { StatementLineView } from '@/utils/accounting/presenter'
-import type { JournalEntry } from '@/utils/accounting/types'
 
 const accountingContext = vi.hoisted(() => ({ journal: { value: [] as JournalEntry[] } }))
 vi.mock('@/composables/accounting/useAccountingContext', () => ({

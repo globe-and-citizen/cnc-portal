@@ -1,8 +1,8 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { mount } from '@vue/test-utils'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import CompensationAmountInput from '../CompensationAmountInput.vue'
-import { nextTick } from 'vue'
 import { mockInvestorReads } from '@/tests/mocks'
+import { mount } from '@vue/test-utils'
+import { nextTick } from 'vue'
 
 // Test constants
 const SELECTORS = {

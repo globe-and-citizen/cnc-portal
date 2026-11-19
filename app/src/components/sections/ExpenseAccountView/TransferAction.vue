@@ -102,38 +102,38 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
-import TransferForm from '@/components/forms/TransferForm.vue'
-import { type TokenId } from '@/constant'
-import type { BudgetLimit } from '@/types'
-import { useContractBalance } from '@/composables'
-import { useTeamStore } from '@/stores'
-import { budgetLimitTypes, buildContractBudgetLimit, getTokens } from '@/utils/expenses/model'
-import { productExpenseToken } from '@/utils/expenses/tokenPolicy'
-import { classifyError } from '@/utils/errors/classifyContractError'
-import { log } from '@/lib/logging'
 import {
+  type Address,
+  type Hex,
   encodeFunctionData,
+  isAddress,
+  isHex,
   parseEther,
   parseUnits,
   recoverTypedDataAddress,
-  isAddress,
-  isHex,
-  zeroAddress,
-  type Address,
-  type Hex
+  zeroAddress
 } from 'viem'
-import { expenseAccountEip712Abi } from '@/artifacts/abi/generated'
+import { budgetLimitTypes, buildContractBudgetLimit, getTokens } from '@/utils/expenses/model'
+import { computed, ref } from 'vue'
 import { estimateGas, readContract } from '@wagmi/core'
-import { useChainId } from '@wagmi/vue'
-import { config } from '@/wagmi.config'
-import { useExpenseAccountTransfer } from '@/composables/expenseAccount/writes'
-import type { WriteFunctionArgs } from '@/composables/contracts/useContractWritesV3'
-import { expenseKeys } from '@/queries'
-import { useQueryClient } from '@tanstack/vue-query'
+import type { BudgetLimit } from '@/types'
 import type { ExpenseApproval } from '@/types/expense-account'
+import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
+import { type TokenId } from '@/constant'
 import type { TransferData } from '@/types'
+import TransferForm from '@/components/forms/TransferForm.vue'
+import type { WriteFunctionArgs } from '@/composables/contracts/useContractWritesV3'
+import { classifyError } from '@/utils/errors/classifyContractError'
+import { config } from '@/wagmi.config'
+import { expenseAccountEip712Abi } from '@/artifacts/abi/generated'
+import { expenseKeys } from '@/queries'
+import { log } from '@/lib/logging'
+import { productExpenseToken } from '@/utils/expenses/tokenPolicy'
+import { useChainId } from '@wagmi/vue'
+import { useContractBalance } from '@/composables'
+import { useExpenseAccountTransfer } from '@/composables/expenseAccount/writes'
+import { useQueryClient } from '@tanstack/vue-query'
+import { useTeamStore } from '@/stores'
 const props = defineProps<{ row: ExpenseApproval }>()
 
 const teamStore = useTeamStore()

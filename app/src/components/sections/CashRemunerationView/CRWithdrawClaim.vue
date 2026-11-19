@@ -43,25 +43,25 @@
 </template>
 
 <script setup lang="ts">
-import { useTeamStore } from '@/stores'
-import { useToast } from '@nuxt/ui/composables'
-import { buildWageClaimPayload } from '@/utils/wages/model'
-import { classifyError } from '@/utils/errors/classifyContractError'
-import { log } from '@/lib/logging'
-import { recoverTypedDataAddress, zeroAddress, type Address } from 'viem'
-import { readContract } from '@wagmi/core'
-import { useChainId } from '@wagmi/vue'
-import { config } from '@/wagmi.config'
-import { cashRemunerationEip712Abi } from '@/artifacts/abi/generated'
-import { USDC_ADDRESS } from '@/constant'
-import type { WeeklyClaim } from '@/types'
-import { useSyncWeeklyClaimsMutation } from '@/queries'
-import { useWithdraw } from '@/composables/cashRemuneration/writes'
+import { type Address, recoverTypedDataAddress, zeroAddress } from 'viem'
 import {
   CASH_REMUNERATION_EIP712_TYPES,
   buildCashRemunerationDomain
 } from './cashRemunerationEip712'
+import { USDC_ADDRESS } from '@/constant'
+import type { WeeklyClaim } from '@/types'
+import { buildWageClaimPayload } from '@/utils/wages/model'
+import { cashRemunerationEip712Abi } from '@/artifacts/abi/generated'
+import { classifyError } from '@/utils/errors/classifyContractError'
+import { config } from '@/wagmi.config'
+import { log } from '@/lib/logging'
+import { readContract } from '@wagmi/core'
+import { useChainId } from '@wagmi/vue'
+import { useSyncWeeklyClaimsMutation } from '@/queries'
+import { useTeamStore } from '@/stores'
 import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
+import { useToast } from '@nuxt/ui/composables'
+import { useWithdraw } from '@/composables/cashRemuneration/writes'
 
 const props = defineProps<{
   weeklyClaim: WeeklyClaim

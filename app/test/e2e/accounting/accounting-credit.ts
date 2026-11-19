@@ -1,6 +1,15 @@
 // Community Credit source operation owned by the integrated Accounting journey.
 // It uses only the portal and the scenario's own Officer/FixedReturn deployment.
-import { expect, type Page } from '@playwright/test'
+import type { Address, Hex } from 'viem'
+import { E2E_OWNER, publicClient } from '../e2e-chain'
+import {
+  type LedgerEntry,
+  entriesForTransaction,
+  entryAccounts,
+  entryTotals
+} from './accounting-books'
+import { type Page, expect } from '@playwright/test'
+import { fixedReturnAbi, officerAbi } from '../../../src/artifacts/abi/generated'
 import {
   isAddress,
   isAddressEqual,
@@ -9,17 +18,8 @@ import {
   parseUnits,
   zeroAddress
 } from 'viem'
-import type { Address, Hex } from 'viem'
-import { fixedReturnAbi, officerAbi } from '../../../src/artifacts/abi/generated'
-import { E2E_OWNER, publicClient } from '../e2e-chain'
-import { chooseCalendarDate } from '../e2e-page'
-import {
-  entriesForTransaction,
-  entryAccounts,
-  entryTotals,
-  type LedgerEntry
-} from './accounting-books'
 import { INTEGRATED_USDC } from './accounting-operations'
+import { chooseCalendarDate } from '../e2e-page'
 
 const CREDIT_AMOUNT = '2'
 const CREDIT_NAME = 'Accounting credit round'

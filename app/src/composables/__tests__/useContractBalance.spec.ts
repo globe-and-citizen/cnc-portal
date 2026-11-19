@@ -1,16 +1,16 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest'
-import { ref, type Ref } from 'vue'
+import { type Ref, ref } from 'vue'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { mockUseChainId, mockWagmiCore } from '@/tests/mocks/wagmi.vue.mock'
 import type { Address } from 'viem'
-import { useQueryFn } from '@/tests/mocks/composables.mock'
-import { mockWagmiCore, mockUseChainId } from '@/tests/mocks/wagmi.vue.mock'
-import { useCurrencyStore } from '@/stores'
-import { SUPPORTED_TOKENS } from '@/constant'
 import type { RawTokenBalances } from '@/lib/balances/tokenBalances'
+import { SUPPORTED_TOKENS } from '@/constant'
+import { useCurrencyStore } from '@/stores'
+import { useQueryFn } from '@/tests/mocks/composables.mock'
 
 // Globally mocked in composables.setup.ts — this spec exercises the real one.
 vi.unmock('@/composables/useContractBalance')
 
-import { useContractBalance, contractBalanceKeys } from '@/composables/useContractBalance'
+import { contractBalanceKeys, useContractBalance } from '@/composables/useContractBalance'
 
 const ADDRESS = '0x1234567890123456789012345678901234567890' as Address
 

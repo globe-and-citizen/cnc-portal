@@ -1,5 +1,5 @@
-import { mount, RouterLinkStub } from '@vue/test-utils'
-import { describe, it, expect } from 'vitest'
+import { RouterLinkStub, mount } from '@vue/test-utils'
+import { describe, expect, it } from 'vitest'
 import HomeView from '@/views/HomeView.vue'
 
 describe('HomeView.vue', () => {

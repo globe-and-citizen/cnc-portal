@@ -14,17 +14,17 @@
  * transfers with fees, standalone fees, cash movements, multi-line
  * transactions, date boundaries, and multi-currency reporting.
  */
-import { describe, it, expect } from 'vitest'
+import { describe, expect, it } from 'vitest'
+import { accountFor } from '@/utils/accounting/accountRegistry'
 import { buildGeneralLedger } from '@/utils/accounting/generalLedger'
 import { finalizeJournal } from '@/utils/accounting/__tests__/assembleAccounting'
-import { accountFor } from '@/utils/accounting/accountRegistry'
 const FEE_ACCOUNT = 'Transaction Fee Expense'
 const FEE_ACCOUNT_ID = accountFor(FEE_ACCOUNT).id
-import { entriesForAccount } from '@/utils/accounting/accountLedger'
 import { journalLedgerRows, presentJournalLedger } from '@/utils/accounting/journalLedgerPresenter'
+import type { JournalEntryDraft } from '@/utils/accounting/journalEntryDraft'
+import { entriesForAccount } from '@/utils/accounting/accountLedger'
 import { money } from '@/utils/accounting/presenter'
 import { usd } from './fixtures'
-import type { JournalEntryDraft } from '@/utils/accounting/journalEntryDraft'
 
 /** A 64-hex transaction hash, so a fee and its transfer pair by shared tx. */
 const TX = (n: number): string => `0x${String(n).padStart(64, '0')}`

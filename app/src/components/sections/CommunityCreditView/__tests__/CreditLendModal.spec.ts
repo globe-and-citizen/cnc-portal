@@ -1,19 +1,19 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import { mount, flushPromises, DOMWrapper } from '@vue/test-utils'
+import type { CreditRound, LendingOfferStruct } from '@/types'
+import { DOMWrapper, flushPromises, mount } from '@vue/test-utils'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
-  mockFixedReturnReads,
-  mockFixedReturnWrites,
   mockERC20Reads,
   mockERC20Writes,
+  mockFixedReturnReads,
+  mockFixedReturnWrites,
   mockInvalidateQueries,
   useQueryClientFn
 } from '@/tests/mocks'
-import { mockToast } from '@/tests/mocks/store.mock'
-import { fixedReturnKeys } from '@/composables/fixedReturn/reads'
-import { USDC_ADDRESS } from '@/constant'
-import { MINUTES_PER_DAY } from '@/utils/communityCredit/model'
 import CreditLendModal from '../CreditLendModal.vue'
-import type { CreditRound, LendingOfferStruct } from '@/types'
+import { MINUTES_PER_DAY } from '@/utils/communityCredit/model'
+import { USDC_ADDRESS } from '@/constant'
+import { fixedReturnKeys } from '@/composables/fixedReturn/reads'
+import { mockToast } from '@/tests/mocks/store.mock'
 
 function offerStruct(over: Partial<LendingOfferStruct> = {}): LendingOfferStruct {
   return {

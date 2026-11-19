@@ -1,13 +1,13 @@
-import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
-import { mount, type VueWrapper } from '@vue/test-utils'
-import { createTestingPinia } from '@pinia/testing'
+import { type VueWrapper, mount } from '@vue/test-utils'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { mockElectionsReads, resetContractMocks, setMockRoute } from '@/tests/mocks'
 import type { Address } from 'viem'
 import BodElectionDetailsView from '@/views/team/[id]/BodElectionDetailsView.vue'
 import BodMembersSection from '@/components/sections/AdministrationView/BodMembersSection.vue'
-import ElectionSummarySection from '@/components/sections/AdministrationView/ElectionSummarySection.vue'
 import ElectionCandidatesSection from '@/components/sections/AdministrationView/ElectionCandidatesSection.vue'
-import { mockElectionsReads, resetContractMocks, setMockRoute } from '@/tests/mocks'
+import ElectionSummarySection from '@/components/sections/AdministrationView/ElectionSummarySection.vue'
 import type { RawElection } from '@/utils/elections/election'
+import { createTestingPinia } from '@pinia/testing'
 
 const CREATOR = '0x742d35Cc6bF8C55C6C2e013e5492D2b6637e0886' as Address
 

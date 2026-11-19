@@ -110,13 +110,13 @@
 
 <script setup lang="ts">
 import { computed, onMounted, watch } from 'vue'
-import { z } from 'zod'
 import SelectMemberContractsInput from '../ui/inputs/SelectMemberContractsInput.vue'
 import TokenAmountInput from '@/components/ui/inputs/TokenAmountInput.vue'
+import type { TokenId } from '@/constant'
+import type { TokenOption } from '@/types'
 import { formatAmountWithPrecision } from '@/utils/currency/display'
 import { isValidPositiveTokenAmount } from '@/utils/tokens/metadata'
-import type { TokenOption } from '@/types'
-import type { TokenId } from '@/constant'
+import { z } from 'zod'
 
 export interface TransferModel {
   address: {

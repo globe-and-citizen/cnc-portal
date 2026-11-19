@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { mockElectionsReads, mockWagmiCore } from '@/tests/mocks'
 import { ref } from 'vue'
 import { useQueryFn } from '@/tests/mocks/composables.mock'
-import { mockElectionsReads, mockWagmiCore } from '@/tests/mocks'
 
 vi.unmock('@/composables/elections/history')
 

@@ -1,10 +1,10 @@
-import { computed, type ComputedRef } from 'vue'
-import { useQuery } from '@tanstack/vue-query'
-import { getPublicClient } from '@wagmi/core'
-import { getAddress, isAddressEqual, zeroAddress, type Address } from 'viem'
+import { type Address, getAddress, isAddressEqual, zeroAddress } from 'viem'
+import { type ComputedRef, computed } from 'vue'
+import { type FolderVersion, folderForOfficerBeacon } from '@/artifacts/registry'
 import { config } from '@/wagmi.config'
 import { currentChainId } from '@/constant'
-import { folderForOfficerBeacon, type FolderVersion } from '@/artifacts/registry'
+import { getPublicClient } from '@wagmi/core'
+import { useQuery } from '@tanstack/vue-query'
 
 // ERC-1967 beacon slot: bytes32(uint256(keccak256("eip1967.proxy.beacon")) - 1).
 // A team's Officer is a beacon proxy; this slot holds its FactoryBeacon address,

@@ -1,8 +1,8 @@
-import { describe, expect, it } from 'vitest'
-import { buildContractBudgetLimit, getTokens } from '../model'
-import { SUPPORTED_TOKENS, USDC_ADDRESS, USDC_E_ADDRESS } from '@/constant'
-import type { TokenBalance } from '@/types'
 import type { BudgetLimit, ExpenseApproval } from '@/types/expense-account'
+import { SUPPORTED_TOKENS, USDC_ADDRESS, USDC_E_ADDRESS } from '@/constant'
+import { buildContractBudgetLimit, getTokens } from '../model'
+import { describe, expect, it } from 'vitest'
+import type { TokenBalance } from '@/types'
 
 const usdcConfig = SUPPORTED_TOKENS.find((token) => token.id === 'usdc')!
 const bridgedUsdcConfig = SUPPORTED_TOKENS.find((token) => token.id === 'usdc.e')!

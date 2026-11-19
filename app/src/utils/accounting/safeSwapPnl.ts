@@ -1,6 +1,6 @@
 /** Carry the Safe overview's swap P&L into the swaps the books replay. */
-import type { SafeSwapResult } from '@/utils/safe/swapPnl'
 import type { JournalEntryDraft } from './journalEntryDraft'
+import type { SafeSwapResult } from '@/utils/safe/swapPnl'
 import { usdAmountFromNumber } from './monetaryAmount'
 
 /**

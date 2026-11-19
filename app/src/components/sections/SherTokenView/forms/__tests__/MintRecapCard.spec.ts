@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
-import MintRecapCard from '../MintRecapCard.vue'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { mockInvestorReads, renderWithProviders } from '@/tests/mocks'
+import MintRecapCard from '../MintRecapCard.vue'
 
 const VALID_ADDRESS = '0x1234567890123456789012345678901234567890'
 

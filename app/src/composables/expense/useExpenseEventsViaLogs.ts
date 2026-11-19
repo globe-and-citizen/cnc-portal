@@ -3,18 +3,18 @@
  * the shared `useContractEventsViaLogs` base. Scope: the contract's OWN events;
  * incoming Bank→Expense transfers use the dedicated Bank RPC-log feed.
  */
-import type { MaybeRefOrGetter } from 'vue'
-import { expenseAccountEip712Abi as expenseV1Abi } from '@/artifacts/abi/V1/generated'
-import { expenseAccountEip712Abi as expenseV01Abi } from '@/artifacts/abi/V0.1/generated'
-import { expenseAccountEip712Abi as expenseV0Abi } from '@/artifacts/abi/V0/generated'
-import type { ExpenseEventFeed } from '@/types/contract-events/expense'
 import {
+  type ContractAddressInput,
+  type EventMapContext,
   str,
   unionEventAbi,
-  useContractEventsViaLogs,
-  type EventMapContext,
-  type ContractAddressInput
+  useContractEventsViaLogs
 } from '@/composables/eventsViaLogs'
+import type { ExpenseEventFeed } from '@/types/contract-events/expense'
+import type { MaybeRefOrGetter } from 'vue'
+import { expenseAccountEip712Abi as expenseV01Abi } from '@/artifacts/abi/V0.1/generated'
+import { expenseAccountEip712Abi as expenseV0Abi } from '@/artifacts/abi/V0/generated'
+import { expenseAccountEip712Abi as expenseV1Abi } from '@/artifacts/abi/V1/generated'
 
 const EXPENSE_EVENT_ABI = unionEventAbi([expenseV1Abi, expenseV01Abi, expenseV0Abi])
 

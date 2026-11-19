@@ -16,9 +16,9 @@
  * that same journal.
  */
 import { ACCOUNT_NAMES, type AccountName } from './chartOfAccounts'
-import { ZERO_USD_AMOUNT } from './monetaryAmount'
-import { creditOf, debitOf } from './journalEntry'
 import type { Account, AccountId, GeneralLedger, JournalEntry, UsdAmount } from './types'
+import { creditOf, debitOf } from './journalEntry'
+import { ZERO_USD_AMOUNT } from './monetaryAmount'
 
 type TrialBalanceRow = GeneralLedger['trialBalance'][number]
 

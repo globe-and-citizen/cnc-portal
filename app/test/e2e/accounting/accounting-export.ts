@@ -1,10 +1,10 @@
 // Read an Accounting export back. The portal builds the workbook in the browser
 // and hands it to the download pipeline, so the file the company receives is the
 // only honest evidence that an export carries the reviewed state.
-import { readFile } from 'node:fs/promises'
-import { expect, type Page } from '@playwright/test'
-import xlsx from 'xlsx-js-style'
+import { type Page, expect } from '@playwright/test'
 import type { SectionKey } from '../../../src/utils/accounting/exportSpec'
+import { readFile } from 'node:fs/promises'
+import xlsx from 'xlsx-js-style'
 
 /** SheetJS ships CommonJS, so its helpers arrive on the default export. */
 const { read, utils } = xlsx

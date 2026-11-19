@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ref, toValue } from 'vue'
-import { useQueryFn } from '@/tests/mocks/composables.mock'
-import { mockWagmiCore } from '@/tests/mocks'
 import { USDC_ADDRESS } from '@/constant'
+import { mockWagmiCore } from '@/tests/mocks'
+import { useQueryFn } from '@/tests/mocks/composables.mock'
 import { zeroAddress } from 'viem'
 
 vi.unmock('@/composables/fixedReturn/reads')

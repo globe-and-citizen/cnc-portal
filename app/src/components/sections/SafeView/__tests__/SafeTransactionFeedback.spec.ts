@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { mount } from '@vue/test-utils'
 import SafeTransactionFeedback from '../SafeTransactionFeedback.vue'
+import { mount } from '@vue/test-utils'
 
 const defaultProps = {
   hasError: false,

@@ -1,12 +1,12 @@
+import { type Ref, reactive, ref, toValue } from 'vue'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { reactive, ref, toValue, type Ref } from 'vue'
-import type { Address } from 'viem'
-import { SUPPORTED_TOKENS } from '@/constant'
 import { useQueriesFn, useQueryFn } from '@/tests/mocks/composables.mock'
-import { mockWagmiCore } from '@/tests/mocks/wagmi.vue.mock'
+import type { Address } from 'viem'
 import type { RawTokenBalances } from '@/lib/balances/tokenBalances'
-import type { Team } from '@/types'
+import { SUPPORTED_TOKENS } from '@/constant'
 import type { SafeClientBalances } from '@/types/safe'
+import type { Team } from '@/types'
+import { mockWagmiCore } from '@/tests/mocks/wagmi.vue.mock'
 import { useCurrencyStore } from '@/stores'
 
 vi.unmock('@/composables/useTeamListTreasuryBalances')

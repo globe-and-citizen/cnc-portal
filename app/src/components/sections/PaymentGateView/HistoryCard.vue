@@ -68,16 +68,16 @@
 </template>
 
 <script setup lang="ts">
-import { formatTxHash } from '@/utils/format'
+import { type FacturePayment, useFactureHistory } from '@/composables/paymentGate/useFactureHistory'
 import { computed, ref } from 'vue'
-import type { TableColumn } from '@nuxt/ui'
-import { useTeamStore } from '@/stores'
-
-import { formatCryptoAmount } from '@/utils/currency/display'
 import { formatDateRelative, formatDateUTC } from '@/utils/dates/calendar'
+import type { TableColumn } from '@nuxt/ui'
+
 import TransactionDetailSlideover from '@/components/ui/TransactionDetailSlideover.vue'
 import TransactionHistoryStatusAlert from '@/components/sections/TransactionHistoryStatusAlert.vue'
-import { useFactureHistory, type FacturePayment } from '@/composables/paymentGate/useFactureHistory'
+import { formatCryptoAmount } from '@/utils/currency/display'
+import { formatTxHash } from '@/utils/format'
+import { useTeamStore } from '@/stores'
 
 const teamStore = useTeamStore()
 const bankAddress = computed(() => teamStore.getContractAddressByType('Bank'))

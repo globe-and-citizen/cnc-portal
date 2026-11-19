@@ -1,17 +1,17 @@
-import { computed, unref, type MaybeRef } from 'vue'
-import { useMutation, useQueryClient } from '@tanstack/vue-query'
+import { type Address, getAddress } from 'viem'
+import { type MaybeRef, computed, unref } from 'vue'
+import { SENTRY_WEB3_BOUNDARY_META_KEY, captureWeb3Error } from '@/lib/sentry'
 import {
-  sendTransaction,
+  type WaitForTransactionReceiptParameters,
   estimateGas,
-  waitForTransactionReceipt,
-  type WaitForTransactionReceiptParameters
+  sendTransaction,
+  waitForTransactionReceipt
 } from '@wagmi/core'
-import { getAddress, type Address } from 'viem'
+import { assertConfiguredChain, configuredChainId } from '@/lib/walletNetwork'
+import { log, parseErrorV2 } from '@/lib/logging'
+import { useMutation, useQueryClient } from '@tanstack/vue-query'
 import { config as wagmiConfig, type config as wagmiConfigType } from '@/wagmi.config'
 import { contractBalanceKeys } from '@/composables/useContractBalance'
-import { log, parseErrorV2 } from '@/lib/logging'
-import { assertConfiguredChain, configuredChainId } from '@/lib/walletNetwork'
-import { captureWeb3Error, SENTRY_WEB3_BOUNDARY_META_KEY } from '@/lib/sentry'
 
 type WagmiConfig = typeof wagmiConfigType
 type WaitParams = WaitForTransactionReceiptParameters<WagmiConfig>

@@ -1,10 +1,10 @@
-import { vi } from 'vitest'
 import {
   mockCashRemunerationReads,
   mockCashRemunerationWrites,
   mockExpenseAccountReads,
   mockExpenseAccountWrites
 } from '../mocks/contract.mock'
+import { vi } from 'vitest'
 
 vi.mock('@/composables/cashRemuneration/reads', () => ({
   useCashRemunerationOwner: vi.fn(() => mockCashRemunerationReads.owner)

@@ -1,10 +1,10 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { defineComponent, h, nextTick, ref, type Ref } from 'vue'
-import { mount, type VueWrapper } from '@vue/test-utils'
+import { type Address, erc20Abi } from 'viem'
 import { QueryClient, VueQueryPlugin } from '@tanstack/vue-query'
-import { erc20Abi, type Address } from 'viem'
-import { mockWagmiCore } from '@/tests/mocks'
+import { type Ref, defineComponent, h, nextTick, ref } from 'vue'
+import { type VueWrapper, mount } from '@vue/test-utils'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useMutationFn, useQueryClientFn } from '@/tests/mocks/composables.mock'
+import { mockWagmiCore } from '@/tests/mocks'
 
 const { useMutation } =
   await vi.importActual<typeof import('@tanstack/vue-query')>('@tanstack/vue-query')

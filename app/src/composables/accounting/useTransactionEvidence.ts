@@ -4,17 +4,17 @@
  * Transaction receipts can prove a deployment-specific token cash pocket.
  * Only unresolved operations need this immutable evidence, cached by hash.
  */
-import { computed, type ComputedRef } from 'vue'
-import { useQuery } from '@tanstack/vue-query'
-import { getPublicClient } from '@wagmi/core'
-import type { AccountName } from '@/utils/accounting/chartOfAccounts'
+import { type ComputedRef, computed } from 'vue'
 import {
+  type TransactionAccountEvidence,
   needsAccountInstanceEvidence,
-  transfersFromReceiptLogs,
-  type TransactionAccountEvidence
+  transfersFromReceiptLogs
 } from '@/utils/accounting/accountInstances'
+import type { AccountName } from '@/utils/accounting/chartOfAccounts'
 import type { JournalEntryDraft } from '@/utils/accounting/journalEntryDraft'
 import { config } from '@/wagmi.config'
+import { getPublicClient } from '@wagmi/core'
+import { useQuery } from '@tanstack/vue-query'
 
 interface ReceiptEvidenceResult {
   evidence: TransactionAccountEvidence

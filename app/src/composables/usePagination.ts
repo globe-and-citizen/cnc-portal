@@ -1,5 +1,5 @@
-import { computed, watch, type ComputedRef, type WritableComputedRef } from 'vue'
-import { useRoute, useRouter, type LocationQueryRaw } from 'vue-router'
+import { type ComputedRef, type WritableComputedRef, computed, watch } from 'vue'
+import { type LocationQueryRaw, useRoute, useRouter } from 'vue-router'
 
 export interface UsePaginationOptions {
   /**

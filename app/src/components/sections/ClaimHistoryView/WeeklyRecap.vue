@@ -110,18 +110,18 @@
 </template>
 
 <script setup lang="ts">
-import type { TokenId } from '@/constant'
-import { sumFiatValues, valueTokenAmount } from '@/utils/currency/valuation'
-import { computed } from 'vue'
-import { useCurrencyStore } from '@/stores'
-import { formatCurrency } from '@/utils/format'
 import type { RatePerHour, Wage, WeeklyClaim } from '@/types/cash-remuneration'
-import RateDotList from '@/components/ui/RateDotList.vue'
 import {
   computeClaimTokenAmounts,
   formatMinutesAsDuration,
   splitClaimMinutes
 } from '@/utils/wages/model'
+import { sumFiatValues, valueTokenAmount } from '@/utils/currency/valuation'
+import RateDotList from '@/components/ui/RateDotList.vue'
+import type { TokenId } from '@/constant'
+import { computed } from 'vue'
+import { formatCurrency } from '@/utils/format'
+import { useCurrencyStore } from '@/stores'
 
 const props = defineProps<{
   weeklyClaim?: WeeklyClaim

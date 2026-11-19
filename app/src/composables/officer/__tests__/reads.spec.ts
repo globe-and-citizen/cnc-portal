@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { useOfficerAddress, useOfficerFeeBps } from '../reads'
-import { useTeamStore } from '@/stores'
 import { useReadContractFn } from '@/tests/mocks'
+import { useTeamStore } from '@/stores'
 
 const defaultOfficerAddress = '0x0987654321098765432109876543210987654321'
 

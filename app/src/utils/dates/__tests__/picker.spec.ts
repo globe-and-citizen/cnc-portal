@@ -1,20 +1,20 @@
-import { describe, it, expect } from 'vitest'
 import {
-  presetsForMode,
+  type DatePickerPreset,
+  type Range,
   defaultPresetId,
   defaultValueForMode,
-  resolveRange,
-  resolveAsOfDate,
-  stepAnchor,
-  isValidRange,
-  isAllTimeRange,
   formatAnchorLabel,
   formatAsOfLabel,
   formatRangeLabel,
-  toUnixSeconds,
-  type DatePickerPreset,
-  type Range
+  isAllTimeRange,
+  isValidRange,
+  presetsForMode,
+  resolveAsOfDate,
+  resolveRange,
+  stepAnchor,
+  toUnixSeconds
 } from '../picker'
+import { describe, expect, it } from 'vitest'
 
 const preset = (mode: 'date' | 'range', id: string): DatePickerPreset =>
   presetsForMode(mode).find((p) => p.id === id)!

@@ -7,10 +7,10 @@ import { nextTick, ref, toValue } from 'vue'
 // teamStore calls useGetTeamQuery internally and we override it per test.
 vi.unmock('@/stores/teamStore')
 
-import { useTeamStore } from '@/stores/teamStore'
-import { useGetTeamQuery } from '@/queries/team.queries'
-import { mockTeamData } from '@/tests/mocks/query.mock'
 import { log } from '@/lib/logging'
+import { mockTeamData } from '@/tests/mocks/query.mock'
+import { useGetTeamQuery } from '@/queries/team.queries'
+import { useTeamStore } from '@/stores/teamStore'
 
 type QueryReturn = ReturnType<typeof useGetTeamQuery>
 

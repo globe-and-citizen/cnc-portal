@@ -1,10 +1,10 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { ref } from 'vue'
 import { type Address, zeroHash } from 'viem'
-import ShareholderClaimSection from '../ShareholderClaimSection.vue'
-import { useGetInvestorMigrationQuery } from '@/queries/investorMigration.queries'
-import type { InvestorMigration } from '@/queries/investorMigration.queries'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { mockInvestorReads, mockTeamStore, mockUserStore, renderWithProviders } from '@/tests/mocks'
+import type { InvestorMigration } from '@/queries/investorMigration.queries'
+import ShareholderClaimSection from '../ShareholderClaimSection.vue'
+import { ref } from 'vue'
+import { useGetInvestorMigrationQuery } from '@/queries/investorMigration.queries'
 
 const COMPANY_OWNER = '0x1111111111111111111111111111111111111111' as Address
 const OTHER_OWNER = '0x2222222222222222222222222222222222222222' as Address

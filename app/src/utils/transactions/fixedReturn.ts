@@ -2,9 +2,9 @@ import type {
   FixedReturnEventFeed,
   RawFixedReturnTransaction
 } from '@/types/contract-events/fixedReturn'
-import { zeroAddress } from 'viem'
-import { formatDateTime, fromUnix } from '@/utils/format'
 import { buildRawTransactions, extractTxHashFromId } from './raw'
+import { formatDateTime, fromUnix } from '@/utils/format'
+import { zeroAddress } from 'viem'
 
 export const buildRawFixedReturnTransactions = (
   fixedReturnResult?: FixedReturnEventFeed | null

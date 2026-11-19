@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { mockTeamStore, useReadContractFn } from '@/tests/mocks'
 import {
   useVestingAddress,
   useVestingGetAllArchivedVestingsFlat,
   useVestingGetVestingsWithMembers
 } from '../reads'
-import { mockTeamStore, useReadContractFn } from '@/tests/mocks'
 
 vi.unmock('@/composables/vesting/reads')
 

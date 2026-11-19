@@ -84,20 +84,20 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import dayjs from 'dayjs'
-import utc from 'dayjs/plugin/utc'
-import isoWeek from 'dayjs/plugin/isoWeek'
-import { Icon as IconifyIcon } from '@iconify/vue'
-import { Icon } from '@iconify/vue'
+import type { Claim, WeeklyClaim } from '@/types'
 import type { Address } from 'viem'
-import type { Week } from '@/utils/dates/calendar'
-import { formatDateWeekdayShort } from '@/utils/format'
-import { formatMinutesAsDuration } from '@/utils/wages/model'
-import { useUserDataStore } from '@/stores'
-import type { WeeklyClaim, Claim } from '@/types'
 import ClaimActions from '@/components/sections/ClaimHistoryView/ClaimActions.vue'
 import ExpandableFileGallery from '@/components/sections/CashRemunerationView/Form/ExpandableFileGallery.vue'
+import { Icon } from '@iconify/vue'
+import { Icon as IconifyIcon } from '@iconify/vue'
+import type { Week } from '@/utils/dates/calendar'
+import { computed } from 'vue'
+import dayjs from 'dayjs'
+import { formatDateWeekdayShort } from '@/utils/format'
+import { formatMinutesAsDuration } from '@/utils/wages/model'
+import isoWeek from 'dayjs/plugin/isoWeek'
+import { useUserDataStore } from '@/stores'
+import utc from 'dayjs/plugin/utc'
 
 dayjs.extend(utc)
 dayjs.extend(isoWeek)

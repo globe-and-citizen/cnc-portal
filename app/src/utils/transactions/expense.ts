@@ -1,13 +1,13 @@
-import type { IncomingBankTokenTransferFeed } from '@/types/contract-events/bank'
 import type { ExpenseEventFeed, RawExpenseTransaction } from '@/types/contract-events/expense'
-import type { UBadgeColor } from '@/types/ui'
-import { zeroAddress } from 'viem'
-import { formatDateTime, fromUnix } from '@/utils/format'
 import {
   buildRawTransactions,
   extractTxHashFromId,
   mapIncomingTransfersToTokenDeposits
 } from './raw'
+import { formatDateTime, fromUnix } from '@/utils/format'
+import type { IncomingBankTokenTransferFeed } from '@/types/contract-events/bank'
+import type { UBadgeColor } from '@/types/ui'
+import { zeroAddress } from 'viem'
 
 export const buildRawExpenseTransactions = (
   expenseResult?: ExpenseEventFeed | null,

@@ -86,12 +86,12 @@
 
 <script setup lang="ts">
 import { computed, watch } from 'vue'
-import { z } from 'zod'
-import { formatCurrencyShort } from '@/utils/currency/display'
-import { valueTokenAmount } from '@/utils/currency/valuation'
-import { useStorage } from '@vueuse/core'
-import type { TokenOption } from '@/types'
 import { type TokenId } from '@/constant'
+import type { TokenOption } from '@/types'
+import { formatCurrencyShort } from '@/utils/currency/display'
+import { useStorage } from '@vueuse/core'
+import { valueTokenAmount } from '@/utils/currency/valuation'
+import { z } from 'zod'
 
 const props = defineProps<{
   tokens: TokenOption[]

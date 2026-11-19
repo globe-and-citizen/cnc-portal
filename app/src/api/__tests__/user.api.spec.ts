@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { getUser, getUserNonce } from '../user.api'
 import apiClient from '@/lib/axios'
 

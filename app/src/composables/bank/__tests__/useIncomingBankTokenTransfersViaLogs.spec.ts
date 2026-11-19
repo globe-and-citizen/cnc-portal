@@ -1,14 +1,14 @@
-import { ref } from 'vue'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { decodeEventLog, encodeAbiParameters, encodeEventTopics, type Address } from 'viem'
-import { bankAbi } from '@/artifacts/abi/V2/generated'
-import type { IncomingBankTokenTransferFeed } from '@/types/contract-events/bank'
-import type { EventsViaLogsOptions } from '@/composables/eventsViaLogs'
-import { useGetTeamOfficersQuery, type TeamOfficerWithContracts } from '@/queries/contract.queries'
+import { type Address, decodeEventLog, encodeAbiParameters, encodeEventTopics } from 'viem'
+import { type TeamOfficerWithContracts, useGetTeamOfficersQuery } from '@/queries/contract.queries'
 import {
   bankScanTargets,
   useIncomingBankTokenTransfersViaLogs
 } from '../useIncomingBankTokenTransfersViaLogs'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import type { EventsViaLogsOptions } from '@/composables/eventsViaLogs'
+import type { IncomingBankTokenTransferFeed } from '@/types/contract-events/bank'
+import { bankAbi } from '@/artifacts/abi/V2/generated'
+import { ref } from 'vue'
 
 const { mockUseContractEventsViaLogs } = vi.hoisted(() => ({
   mockUseContractEventsViaLogs: vi.fn()

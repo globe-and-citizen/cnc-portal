@@ -1,8 +1,8 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest'
-import { mount } from '@vue/test-utils'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import AddressTooltip from '@/components/ui/AddressTooltip.vue'
 import { NETWORK } from '@/constant'
 import { mockUseClipboard } from '@/tests/mocks'
+import { mount } from '@vue/test-utils'
 
 describe('AddressTooltip.vue', () => {
   let wrapper: ReturnType<typeof mount>

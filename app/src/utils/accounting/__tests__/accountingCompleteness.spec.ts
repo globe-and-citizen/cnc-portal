@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { accountingCompletenessOf } from '../accountingCompleteness'
 import type { AccountingSourceStatus } from '../types'
+import { accountingCompletenessOf } from '../accountingCompleteness'
 
 const source = (
   state: AccountingSourceStatus['state'],

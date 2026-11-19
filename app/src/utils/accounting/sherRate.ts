@@ -20,9 +20,9 @@
  * The matching of withdrawals to accruals (freeze the withdrawn portion, float the
  * pending one) lives in `sherIssuance.ts` ({@link settleWithdrawnSher}).
  */
+import type { SafeDepositRow, SafeMultiplierUpdatedRow } from '@/types/contract-events/investor'
+import { getTokenDecimals, resolveTokenIdByAddress } from '@/utils/tokens/metadata'
 import { formatUnits } from 'viem'
-import type { SafeMultiplierUpdatedRow, SafeDepositRow } from '@/types/contract-events/investor'
-import { resolveTokenIdByAddress, getTokenDecimals } from '@/utils/tokens/metadata'
 import { isUsdPegged } from '@/utils/accounting/toUsd'
 
 const MULTIPLIER_DECIMALS = 6

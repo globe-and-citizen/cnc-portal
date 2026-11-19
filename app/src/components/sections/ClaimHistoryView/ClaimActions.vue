@@ -36,11 +36,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import { Icon as IconifyIcon } from '@iconify/vue'
-import EditClaims from '@/components/sections/CashRemunerationView/EditClaims.vue'
-import DeleteClaimConfirmation from '@/components/sections/CashRemunerationView/DeleteClaimConfirmation.vue'
 import type { Claim } from '@/types'
+import DeleteClaimConfirmation from '@/components/sections/CashRemunerationView/DeleteClaimConfirmation.vue'
+import EditClaims from '@/components/sections/CashRemunerationView/EditClaims.vue'
+import { Icon as IconifyIcon } from '@iconify/vue'
+import { ref } from 'vue'
 
 defineProps<{
   claim: Claim

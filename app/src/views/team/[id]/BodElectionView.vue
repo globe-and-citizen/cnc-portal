@@ -6,13 +6,13 @@
 </template>
 
 <script setup lang="ts">
+import { computed, watch } from 'vue'
+import { useElectionsAddress, useElectionsNextElectionId } from '@/composables/elections'
 import BodMembersSection from '@/components/sections/AdministrationView/BodMembersSection.vue'
+import ContractOwnerCard from '@/components/ui/ContractOwnerCard.vue'
 import ElectionSummarySection from '@/components/sections/AdministrationView/ElectionSummarySection.vue'
 import PastElectionsSection from '@/components/sections/AdministrationView/PastElectionsSection.vue'
-import ContractOwnerCard from '@/components/ui/ContractOwnerCard.vue'
-import { useElectionsAddress, useElectionsNextElectionId } from '@/composables/elections'
 import { currentElectionId as electionInProgress } from '@/utils/elections/election'
-import { computed, watch } from 'vue'
 import { log } from '@/lib/logging'
 
 const electionsAddress = useElectionsAddress()

@@ -1,14 +1,14 @@
 import type { Address, Hex } from 'viem'
-import type { Team } from '../../../src/types/team'
 import {
+  type Artifact,
+  E2E_OWNER,
   artifact,
   deploy,
-  E2E_OWNER,
   encode,
   publicClient,
-  write,
-  type Artifact
+  write
 } from '../e2e-chain'
+import type { Team } from '../../../src/types/team'
 
 export interface ElectionsE2EFixture {
   board: Address

@@ -1,23 +1,23 @@
-import { unref, type MaybeRef } from 'vue'
-import { useMutation, useQueryClient } from '@tanstack/vue-query'
 import {
-  simulateContract,
-  writeContract,
-  waitForTransactionReceipt,
-  type SimulateContractParameters,
-  type WaitForTransactionReceiptParameters
-} from '@wagmi/core'
-import {
-  BaseError,
   type Abi,
   type Address,
+  BaseError,
   type ContractFunctionArgs,
   type ContractFunctionName
 } from 'viem'
-import { config as wagmiConfig, type config as wagmiConfigType } from '@/wagmi.config'
-import { log, parseErrorV2 } from '@/lib/logging'
+import { type MaybeRef, unref } from 'vue'
+import { SENTRY_WEB3_BOUNDARY_META_KEY, captureWeb3Error } from '@/lib/sentry'
+import {
+  type SimulateContractParameters,
+  type WaitForTransactionReceiptParameters,
+  simulateContract,
+  waitForTransactionReceipt,
+  writeContract
+} from '@wagmi/core'
 import { assertConfiguredChain, configuredChainId } from '@/lib/walletNetwork'
-import { captureWeb3Error, SENTRY_WEB3_BOUNDARY_META_KEY } from '@/lib/sentry'
+import { log, parseErrorV2 } from '@/lib/logging'
+import { useMutation, useQueryClient } from '@tanstack/vue-query'
+import { config as wagmiConfig, type config as wagmiConfigType } from '@/wagmi.config'
 
 type WagmiConfig = typeof wagmiConfigType
 type SimulateParams = SimulateContractParameters<Abi, string, readonly unknown[], WagmiConfig>

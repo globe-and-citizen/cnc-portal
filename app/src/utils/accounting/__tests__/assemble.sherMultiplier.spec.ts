@@ -1,8 +1,8 @@
+import { ADDR, usd } from './fixtures'
+import type { ContractType, TeamContract } from '@/types/teamContract'
 import { describe, expect, it } from 'vitest'
 import type { Address } from 'viem'
-import type { ContractType, TeamContract } from '@/types/teamContract'
 import { assembleAccounting } from './assembleAccounting'
-import { ADDR, usd } from './fixtures'
 
 const ROUTER = '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'
 const INVESTOR = '0xcccccccccccccccccccccccccccccccccccccccc'

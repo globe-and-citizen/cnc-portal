@@ -1,7 +1,5 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { nextTick } from 'vue'
 import { BaseError, UserRejectedRequestError } from 'viem'
-import ToggleSherCompensationAction from '../ToggleSherCompensationAction.vue'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   mockSafeDepositRouterAddress,
   mockSafeDepositRouterReads,
@@ -11,6 +9,8 @@ import {
   mockUseConnection,
   renderWithProviders
 } from '@/tests/mocks'
+import ToggleSherCompensationAction from '../ToggleSherCompensationAction.vue'
+import { nextTick } from 'vue'
 
 describe('ToggleSherCompensationAction.vue', () => {
   const createWrapper = () => renderWithProviders(ToggleSherCompensationAction)

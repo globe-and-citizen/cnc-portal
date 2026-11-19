@@ -1,8 +1,8 @@
 // Read-only chain assertions for Companies journeys. Infrastructure is
 // deployed outside Playwright; browser actions own every tested transaction.
+import { type Artifact, E2E_OWNER, artifact, publicClient } from '../e2e-chain'
 import type { Address } from 'viem'
 import type { ContractType } from '../../../src/types/teamContract'
-import { artifact, E2E_OWNER, publicClient, type Artifact } from '../e2e-chain'
 
 const contract = (path: string) => artifact(`artifacts/contracts/${path}`)
 const officerArtifact = () => contract('Officer.sol/Officer.json')

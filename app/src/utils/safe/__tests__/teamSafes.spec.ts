@@ -1,7 +1,7 @@
+import { contractsInUse, defaultTeamSafe, teamSafes } from '../teamSafes'
 import { describe, expect, it } from 'vitest'
 import type { Address } from 'viem'
 import type { TeamContract } from '@/types'
-import { contractsInUse, defaultTeamSafe, teamSafes } from '../teamSafes'
 
 const contract = (
   type: TeamContract['type'],

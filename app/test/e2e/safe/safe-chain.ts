@@ -1,18 +1,17 @@
 // Safe-specific deployment fixture and contract reads for the browser journey.
 import {
+  type Address,
+  type Hex,
   decodeEventLog,
   encodeFunctionData,
   parseUnits,
-  zeroAddress,
-  type Address,
-  type Hex
+  zeroAddress
 } from 'viem'
-import { E2E_SAFE_INFRA } from '../../../src/e2e/chain'
 import {
   E2E_MEMBER,
   E2E_OWNER,
-  E2E_USDC_ADDRESS,
   E2E_USDCE_ADDRESS,
+  E2E_USDC_ADDRESS,
   memberAccount,
   mockErc20Artifact,
   publicClient,
@@ -20,6 +19,7 @@ import {
   safeProxyFactoryArtifact,
   write
 } from '../e2e-chain'
+import { E2E_SAFE_INFRA } from '../../../src/e2e/chain'
 
 interface SafeTransactionInput {
   to: Address

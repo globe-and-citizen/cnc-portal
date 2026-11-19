@@ -1,6 +1,3 @@
-import { describe, expect, it } from 'vitest'
-import type { Address } from 'viem'
-import { USDC_ADDRESS } from '@/constant'
 import type { CreditOfferForm, FixedReturnWhitelistEntry, LendingOfferStruct } from '@/types'
 import {
   decimalsForFixedReturnToken,
@@ -11,6 +8,9 @@ import {
   toFixedReturnOfferParams,
   toLenderOffering
 } from '../offer'
+import { describe, expect, it } from 'vitest'
+import type { Address } from 'viem'
+import { USDC_ADDRESS } from '@/constant'
 
 const ARBITRARY_TOKEN = '0x1111111111111111111111111111111111111111' as const
 

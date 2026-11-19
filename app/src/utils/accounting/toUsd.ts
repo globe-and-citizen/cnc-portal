@@ -15,10 +15,10 @@
  * An unavailable non-pegged rate remains zero-valued but the source movement is
  * retained. Accounting completeness reports the missing rate explicitly.
  */
-import { formatUnits } from 'viem'
 import type { AssetId, AssetMetadata } from '@/utils/tokens/assets'
-import { assetDecimals } from '@/utils/tokens/assets'
 import type { JournalEntryDraft } from './journalEntryDraft'
+import { assetDecimals } from '@/utils/tokens/assets'
+import { formatUnits } from 'viem'
 
 /** Round to the 6-decimal storage precision (spec §3) — never the 2-dp display. */
 export function round6(value: number): number {

@@ -1,9 +1,9 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { nextTick } from 'vue'
-import PublishResult from '../PublishResult.vue'
 import { mockElectionsWrites, mockToast } from '@/tests/mocks'
+import PublishResult from '../PublishResult.vue'
 import { mockLog } from '@/tests/mocks/utils.mock'
+import { nextTick } from 'vue'
 import { useTeamStore } from '@/stores'
 
 vi.mock('@/constant', async (importOriginal) => ({

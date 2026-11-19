@@ -1,5 +1,5 @@
-import { beforeEach, describe, expect, it } from 'vitest'
 import type { Abi, Address } from 'viem'
+import { beforeEach, describe, expect, it } from 'vitest'
 import { mockWagmiCore } from '@/tests/mocks'
 import { readContractData } from '../useContractReadData'
 

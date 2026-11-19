@@ -1,13 +1,13 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { flushPromises, mount, type VueWrapper } from '@vue/test-utils'
-import { ref } from 'vue'
-import SafeSwapsTable from '../SafeSwapsTable.vue'
 import type {
   SafeCostBasis,
   SafeCostBasisEvent,
   SafeSwapExchange,
   SafeTokenPosition
 } from '@/utils/safe/costBasis'
+import { type VueWrapper, flushPromises, mount } from '@vue/test-utils'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import SafeSwapsTable from '../SafeSwapsTable.vue'
+import { ref } from 'vue'
 
 const { mockSwapPnl } = vi.hoisted(() => ({
   mockSwapPnl: {

@@ -1,10 +1,10 @@
-import { mount, type ComponentMountingOptions, type VueWrapper } from '@vue/test-utils'
-import { h, type Component, type ComponentPublicInstance } from 'vue'
+import { type Component, type ComponentPublicInstance, h } from 'vue'
+import { type ComponentMountingOptions, type VueWrapper, mount } from '@vue/test-utils'
+import { type MockRoute, setMockRoute } from '@/tests/mocks/router.mock'
+import { QueryClient, VueQueryPlugin } from '@tanstack/vue-query'
+import { type TestingOptions, type TestingPinia, createTestingPinia } from '@pinia/testing'
 import { TooltipProvider } from 'reka-ui'
 import { vi } from 'vitest'
-import { createTestingPinia, type TestingOptions, type TestingPinia } from '@pinia/testing'
-import { QueryClient, VueQueryPlugin } from '@tanstack/vue-query'
-import { setMockRoute, type MockRoute } from '@/tests/mocks/router.mock'
 
 type Plugins = NonNullable<NonNullable<ComponentMountingOptions<Component>['global']>['plugins']>
 

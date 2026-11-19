@@ -116,12 +116,12 @@
 </template>
 
 <script setup lang="ts">
-import { useGetSearchUsersQuery } from '@/queries/user.queries'
-import { log } from '@/lib/logging'
+import { isAddress, parseUnits } from 'viem'
+import { reactive, ref, watch } from 'vue'
 import { Icon as IconifyIcon } from '@iconify/vue'
+import { log } from '@/lib/logging'
+import { useGetSearchUsersQuery } from '@/queries/user.queries'
 import { z } from 'zod'
-import { parseUnits, isAddress } from 'viem'
-import { ref, watch, reactive } from 'vue'
 
 const toast = useToast()
 const emits = defineEmits(['submit'])

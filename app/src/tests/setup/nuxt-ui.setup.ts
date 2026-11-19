@@ -1,8 +1,3 @@
-import { config } from '@vue/test-utils'
-import { defineComponent, h } from 'vue'
-import type { Component } from 'vue'
-import { TooltipProvider } from 'reka-ui'
-import { vi } from 'vitest'
 import {
   UButtonStub,
   UCalendarStub,
@@ -12,6 +7,11 @@ import {
   UPopoverStub,
   USelectMenuStub
 } from '../stubs/nuxt-ui.stubs'
+import { defineComponent, h } from 'vue'
+import type { Component } from 'vue'
+import { TooltipProvider } from 'reka-ui'
+import { config } from '@vue/test-utils'
+import { vi } from 'vitest'
 
 // ---------------------------------------------------------------------------
 // Module-level mocks for @nuxt/ui components

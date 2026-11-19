@@ -1,8 +1,8 @@
-import { mount } from '@vue/test-utils'
-import { describe, expect, it } from 'vitest'
-import { mockUseSwitchChain } from '@/tests/mocks/wagmi.vue.mock'
 import { configuredChainId, configuredNetworkName } from '@/lib/walletNetwork'
+import { describe, expect, it } from 'vitest'
 import NetworkLockScreen from '../NetworkLockScreen.vue'
+import { mockUseSwitchChain } from '@/tests/mocks/wagmi.vue.mock'
+import { mount } from '@vue/test-utils'
 
 describe('NetworkLockScreen', () => {
   it('[AC-US-AUTH-004-02] requests the configured network only after a deliberate click', async () => {

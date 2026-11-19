@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { finalizeJournal } from '@/utils/accounting/__tests__/assembleAccounting'
-import { buildAccountRegistry } from '@/utils/accounting/accountRegistry'
 import type { AccountName } from '@/utils/accounting/chartOfAccounts'
-import type { JournalEntryDraft } from '@/utils/accounting/journalEntryDraft'
-import { createJournalEntry } from '@/utils/accounting/journalEntry'
-import { ZERO_USD_AMOUNT } from '@/utils/accounting/monetaryAmount'
 import type { JournalEntry } from '@/utils/accounting/types'
+import type { JournalEntryDraft } from '@/utils/accounting/journalEntryDraft'
+import { ZERO_USD_AMOUNT } from '@/utils/accounting/monetaryAmount'
+import { buildAccountRegistry } from '@/utils/accounting/accountRegistry'
+import { createJournalEntry } from '@/utils/accounting/journalEntry'
+import { finalizeJournal } from '@/utils/accounting/__tests__/assembleAccounting'
 import { usd } from './fixtures'
 
 const accounts = buildAccountRegistry([])

@@ -1,8 +1,8 @@
-import { type MaybeRef } from 'vue'
-import { useQueryClient } from '@tanstack/vue-query'
 import type { Address } from 'viem'
+import { type MaybeRef } from 'vue'
 import { adCampaignManagerAbi } from '@/artifacts/abi/generated'
 import { useContractWritesV3 } from '@/composables/contracts/useContractWritesV3'
+import { useQueryClient } from '@tanstack/vue-query'
 
 function useCampaignWriteInvalidation() {
   const queryClient = useQueryClient()

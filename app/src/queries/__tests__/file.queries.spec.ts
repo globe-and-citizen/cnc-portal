@@ -1,7 +1,7 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { uploadSingleFile } from '../file.queries'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { smartUseMutation, useMutationFn } from '@/tests/mocks/composables.mock'
 import { mockUploadFileApi } from '@/tests/mocks/api.mock'
-import { useMutationFn, smartUseMutation } from '@/tests/mocks/composables.mock'
+import { uploadSingleFile } from '../file.queries'
 
 describe('uploadSingleFile', () => {
   const file = new File([new Uint8Array(8)], 'avatar.png', { type: 'image/png' })

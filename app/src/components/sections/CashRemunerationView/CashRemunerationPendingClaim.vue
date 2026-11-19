@@ -17,18 +17,18 @@
 </template>
 
 <script setup lang="ts">
+import type { RatePerHour, WeeklyClaim } from '@/types/cash-remuneration'
+import { computed, watch } from 'vue'
 import { sumFiatValues, valueTokenAmount } from '@/utils/currency/valuation'
-import personIcon from '@/assets/person.svg'
-import uptrendIcon from '@/assets/uptrend.svg'
-import OverviewCard from '@/components/ui/OverviewCard.vue'
 import { useCurrencyStore, useTeamStore } from '@/stores'
+import OverviewCard from '@/components/ui/OverviewCard.vue'
+import type { TokenId } from '@/constant'
 import { formatCurrencyShort } from '@/utils/currency/display'
 import { log } from '@/lib/logging'
-import { watch, computed } from 'vue'
+import personIcon from '@/assets/person.svg'
+import uptrendIcon from '@/assets/uptrend.svg'
 import { useGetTeamWeeklyClaimsQuery } from '@/queries'
 import { useStorage } from '@vueuse/core'
-import type { TokenId } from '@/constant'
-import type { RatePerHour, WeeklyClaim } from '@/types/cash-remuneration'
 
 const teamStore = useTeamStore()
 const toast = useToast()

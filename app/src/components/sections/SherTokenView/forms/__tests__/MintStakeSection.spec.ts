@@ -1,7 +1,7 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { mount, flushPromises } from '@vue/test-utils'
-import { createTestingPinia } from '@pinia/testing'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { flushPromises, mount } from '@vue/test-utils'
 import MintStakeSection from '../MintStakeSection.vue'
+import { createTestingPinia } from '@pinia/testing'
 import { mockInvestorReads } from '@/tests/mocks'
 
 const VALID_ADDRESS = '0x1234567890123456789012345678901234567890'

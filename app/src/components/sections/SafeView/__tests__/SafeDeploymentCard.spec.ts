@@ -1,8 +1,8 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { mount, flushPromises } from '@vue/test-utils'
-import { ref } from 'vue'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { flushPromises, mount } from '@vue/test-utils'
+import { mockTeamData, mockTeamStore, mockToast, mockUserStore } from '@/tests/mocks'
 import SafeDeploymentCard from '@/components/sections/SafeView/SafeDeploymentCard.vue'
-import { mockTeamData, mockUserStore, mockTeamStore, mockToast } from '@/tests/mocks'
+import { ref } from 'vue'
 
 const mockDeploySafeMutation = {
   mutate: vi.fn(),

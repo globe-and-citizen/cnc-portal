@@ -1,9 +1,9 @@
-import { mount } from '@vue/test-utils'
-import { describe, expect, it, vi, beforeEach } from 'vitest'
-import { zeroAddress } from 'viem'
-import { createMockQueryResponse } from '@/tests/mocks'
-import { useGetExpensesQuery } from '@/queries/expense.queries'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import MyApprovedExpenseSection from '../MyApprovedExpenseSection.vue'
+import { createMockQueryResponse } from '@/tests/mocks'
+import { mount } from '@vue/test-utils'
+import { useGetExpensesQuery } from '@/queries/expense.queries'
+import { zeroAddress } from 'viem'
 
 // mockUserStore.address — the address treated as the current user.
 const CURRENT_USER = '0x0000000000000000000000000000000000000001'

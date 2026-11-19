@@ -1,7 +1,7 @@
-import { mockTeamData } from '@/tests/mocks/index'
 import type { ContractType } from '@/types/teamContract'
-import { vi } from 'vitest'
+import { mockTeamData } from '@/tests/mocks/index'
 import { ref } from 'vue'
+import { vi } from 'vitest'
 const teamStoreDataDefaults = () => ({
   currentTeam: mockTeamData,
   currentTeamId: mockTeamData.id,

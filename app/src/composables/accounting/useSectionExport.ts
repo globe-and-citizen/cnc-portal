@@ -5,9 +5,9 @@
  * file always matches the filters on screen, under a filename mirroring the same
  * scope ({@link exportFilename}). `label` names the statement in the success toast.
  */
-import { useAccountingExport } from './useAccountingExport'
-import { exportFilename } from '@/utils/accounting/exportNaming'
 import type { SectionSpec } from '@/utils/accounting/exportSpec'
+import { exportFilename } from '@/utils/accounting/exportNaming'
+import { useAccountingExport } from './useAccountingExport'
 
 export function useSectionExport(label: string, spec: () => SectionSpec) {
   const { exportPdf, exportExcel } = useAccountingExport()

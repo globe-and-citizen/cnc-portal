@@ -1,18 +1,18 @@
-import { parseEther, parseUnits, type Address } from 'viem'
-import { expect, test } from '../fixtures/integrated'
+import { type Address, parseEther, parseUnits } from 'viem'
 import { E2E_OWNER, nativeBalance, publicClient, tokenBalance } from '../e2e-chain'
-import { dialogAmount, openAccountFromSidebar } from '../e2e-page'
-import { createOperationalCompany, deleteCompanyThroughUi } from '../company/real-company-page'
-import { grossForNet } from './bank-chain'
 import {
   addressFrom,
   bankDepositReceipt,
   depositUsdc,
   expectBankHistoryEntry
 } from './bank-integrated-helpers'
-import { transferBankToContract } from './bank-page'
-import { readFileSync } from 'node:fs'
+import { createOperationalCompany, deleteCompanyThroughUi } from '../company/real-company-page'
+import { dialogAmount, openAccountFromSidebar } from '../e2e-page'
+import { expect, test } from '../fixtures/integrated'
 import { fileURLToPath } from 'node:url'
+import { grossForNet } from './bank-chain'
+import { readFileSync } from 'node:fs'
+import { transferBankToContract } from './bank-page'
 
 const deploymentManifest = JSON.parse(
   readFileSync(

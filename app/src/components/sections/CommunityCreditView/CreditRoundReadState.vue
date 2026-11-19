@@ -77,8 +77,8 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useQueryClient } from '@tanstack/vue-query'
 import { retryFixedReturnReads } from '@/composables/fixedReturn/invalidation'
+import { useQueryClient } from '@tanstack/vue-query'
 
 defineProps<{
   hasRound: boolean

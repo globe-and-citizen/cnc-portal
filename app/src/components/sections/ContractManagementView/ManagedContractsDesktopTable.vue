@@ -68,14 +68,14 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
 import AddressTooltip from '@/components/ui/AddressTooltip.vue'
-import UserIdentity from '@/components/ui/UserIdentity.vue'
-import { getContractPauseStatusPresentation } from '@/utils/contracts/pauseCapabilities'
-import { getContractPresentation } from '@/utils/contracts/presentation'
-import ManagedContractActionMenu from './ManagedContractActionMenu.vue'
 import ContractBalanceCell from './ContractBalanceCell.vue'
 import type { ContractTableRow } from './ManagedContractsTable.types'
+import ManagedContractActionMenu from './ManagedContractActionMenu.vue'
+import UserIdentity from '@/components/ui/UserIdentity.vue'
+import { computed } from 'vue'
+import { getContractPauseStatusPresentation } from '@/utils/contracts/pauseCapabilities'
+import { getContractPresentation } from '@/utils/contracts/presentation'
 
 interface Props {
   rows: ContractTableRow[]

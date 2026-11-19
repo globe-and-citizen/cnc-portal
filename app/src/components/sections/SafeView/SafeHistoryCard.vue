@@ -104,15 +104,15 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { useToast } from '@nuxt/ui/composables'
 import AddressTooltip from '@/components/ui/AddressTooltip.vue'
-import { useUpdateTeamSafeMutation } from '@/queries/contract.queries'
-import { useGetSafeBalancesQuery } from '@/queries/safeClient.queries'
-import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
-import { useTeamStore } from '@/stores'
 import { formatDate } from '@/utils/format'
 import { normalizeSafeAddress } from '@/utils/safe/address'
 import { teamSafes } from '@/utils/safe/teamSafes'
+import { useGetSafeBalancesQuery } from '@/queries/safeClient.queries'
+import { useTeamStore } from '@/stores'
+import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
+import { useToast } from '@nuxt/ui/composables'
+import { useUpdateTeamSafeMutation } from '@/queries/contract.queries'
 
 type SafeAction = 'default' | 'disable' | 'enable'
 

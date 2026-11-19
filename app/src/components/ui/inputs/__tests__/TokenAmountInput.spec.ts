@@ -1,9 +1,9 @@
-import { mount, type VueWrapper } from '@vue/test-utils'
-import { describe, it, expect } from 'vitest'
-import { nextTick, type ComponentPublicInstance } from 'vue'
+import { type ComponentPublicInstance, nextTick } from 'vue'
+import { type VueWrapper, mount } from '@vue/test-utils'
+import { describe, expect, it } from 'vitest'
 import TokenAmountInput from '../TokenAmountInput.vue'
-import type { TokenOption } from '@/types'
 import type { TokenId } from '@/constant'
+import type { TokenOption } from '@/types'
 
 const tokens: TokenOption[] = [
   { symbol: 'ETH', tokenId: 'native' as TokenId, balance: 100, price: 2000, code: 'USD' },

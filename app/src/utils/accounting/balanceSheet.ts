@@ -5,11 +5,11 @@
  * balance. Income and expense accounts remain temporary accounts; their signed
  * contributions form the explicit `Earnings to date` closing line in Equity.
  */
-import { buildGeneralLedger } from './generalLedger'
-import { journalAccountBalances } from './journalBalances'
+import type { BalanceSheet, JournalEntry, UsdAmount } from './types'
 import type { AccountClass } from './chartOfAccounts'
 import { ZERO_USD_AMOUNT } from './monetaryAmount'
-import type { BalanceSheet, JournalEntry, UsdAmount } from './types'
+import { buildGeneralLedger } from './generalLedger'
+import { journalAccountBalances } from './journalBalances'
 
 type BalanceSheetAccountLine = BalanceSheet['assets'][number]
 

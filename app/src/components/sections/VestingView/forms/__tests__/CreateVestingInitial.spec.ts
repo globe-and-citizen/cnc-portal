@@ -1,8 +1,8 @@
+import { type VueWrapper, flushPromises, mount } from '@vue/test-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { flushPromises, mount, type VueWrapper } from '@vue/test-utils'
-import { createTestingPinia } from '@pinia/testing'
 import CreateVesting from '@/components/sections/VestingView/forms/CreateVesting.vue'
 import SelectMemberInput from '@/components/ui/inputs/SelectMemberInput.vue'
+import { createTestingPinia } from '@pinia/testing'
 import { resetContractMocks } from '@/tests/mocks'
 
 describe('CreateVesting.vue — configuration', () => {

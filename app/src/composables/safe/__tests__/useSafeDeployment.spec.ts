@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { getAddress, parseEventLogs, type Address } from 'viem'
+import { type Address, getAddress, parseEventLogs } from 'viem'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { getConnections } from '@wagmi/core'
 
 // Both `@wagmi/core` (incl. getConnections) and `parseEventLogs` are globally
@@ -9,13 +9,13 @@ import { getConnections } from '@wagmi/core'
 const mockGetConnections = vi.mocked(getConnections)
 const mockParseEventLogs = vi.mocked(parseEventLogs)
 import { deploySafe, useDeploySafe } from '../useSafeDeployment'
-import { executeContractWrite } from '@/composables/contracts/useContractWritesV3'
 import {
-  useMutationFn,
+  mockInvalidateQueries,
   smartUseMutation,
-  useQueryClientFn,
-  mockInvalidateQueries
+  useMutationFn,
+  useQueryClientFn
 } from '@/tests/mocks/composables.mock'
+import { executeContractWrite } from '@/composables/contracts/useContractWritesV3'
 
 const OWNER = '0x1111111111111111111111111111111111111111' as Address
 const SAFE_ADDRESS = '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' as Address

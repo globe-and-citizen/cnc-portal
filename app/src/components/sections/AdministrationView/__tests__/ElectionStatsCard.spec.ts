@@ -1,7 +1,7 @@
-import { mount } from '@vue/test-utils'
 import { describe, expect, it } from 'vitest'
-import { Icon } from '@iconify/vue'
 import ElectionStatsCard from '../ElectionStatsCard.vue'
+import { Icon } from '@iconify/vue'
+import { mount } from '@vue/test-utils'
 
 describe('ElectionStatsCard', () => {
   it('renders the title, the figure and the solid heroicon', () => {

@@ -168,38 +168,38 @@
 <script setup lang="ts">
 /* eslint-disable max-lines -- The modal owns its reactive state; extracting a controller would
    recreate the removed one-consumer composable (see CreateVesting.vue for the same call). */
-import { computed, nextTick, reactive, ref, watch } from 'vue'
-import { useQueryClient } from '@tanstack/vue-query'
-import { parseUnits, zeroAddress, type Address } from 'viem'
-import { useToast } from '@nuxt/ui/composables'
-import { useUserDataStore } from '@/stores'
+import { type Address, parseUnits, zeroAddress } from 'viem'
 import {
-  useFixedReturnAddress,
-  useFixedReturnGetLendingOffer,
-  useFixedReturnMyLenderPosition
-} from '@/composables/fixedReturn/reads'
-import { invalidateAfterLend } from '@/composables/fixedReturn/invalidation'
-import { useFixedReturnLendFunds } from '@/composables/fixedReturn/writes'
-import { useErc20Allowance } from '@/composables/erc20/reads'
-import { useERC20Approve } from '@/composables/erc20/writes'
+  type CreditLenderOffering,
+  type CreditRound,
+  type LendingOfferStruct,
+  createLendAmountSchema
+} from '@/types'
 import {
+  UNCAPPED_ALLOCATION,
   applyZodFieldErrors,
   formatAmount,
-  roundToDisplayPrecision,
-  UNCAPPED_ALLOCATION
+  roundToDisplayPrecision
 } from '@/utils/communityCredit/model'
-import { classifyError } from '@/utils/errors/classifyContractError'
+import { computed, nextTick, reactive, ref, watch } from 'vue'
 import {
   creditLenderCapDisplay,
   findCreditToken,
   toLenderOffering
 } from '@/utils/communityCredit/offer'
 import {
-  createLendAmountSchema,
-  type CreditLenderOffering,
-  type CreditRound,
-  type LendingOfferStruct
-} from '@/types'
+  useFixedReturnAddress,
+  useFixedReturnGetLendingOffer,
+  useFixedReturnMyLenderPosition
+} from '@/composables/fixedReturn/reads'
+import { classifyError } from '@/utils/errors/classifyContractError'
+import { invalidateAfterLend } from '@/composables/fixedReturn/invalidation'
+import { useERC20Approve } from '@/composables/erc20/writes'
+import { useErc20Allowance } from '@/composables/erc20/reads'
+import { useFixedReturnLendFunds } from '@/composables/fixedReturn/writes'
+import { useQueryClient } from '@tanstack/vue-query'
+import { useToast } from '@nuxt/ui/composables'
+import { useUserDataStore } from '@/stores'
 
 const props = defineProps<{ round: CreditRound | null }>()
 const emit = defineEmits<{ close: []; lent: [] }>()

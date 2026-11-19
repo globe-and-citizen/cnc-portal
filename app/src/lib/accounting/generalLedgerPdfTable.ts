@@ -1,21 +1,21 @@
 /** General Ledger table projection for the PDF exporter. */
-import { accountLedgerTitle } from '@/utils/accounting/accountLedger'
-import { activityText } from '@/utils/accounting/describeEntry'
-import {
-  presentJournalLedger,
-  journalLedgerExportTitle,
-  type LedgerRow
-} from '@/utils/accounting/journalLedgerPresenter'
+import type { AccountingPdfTable, PdfTableTypography, ResolveName } from './pdf'
 import {
   LEDGER_COLUMN_WIDTHS,
-  ledgerTotalRow,
-  resolveLedgerColumns,
   type LedgerColumnKey,
-  type LedgerMovements
+  type LedgerMovements,
+  ledgerTotalRow,
+  resolveLedgerColumns
 } from '@/utils/accounting/ledgerColumns'
+import {
+  type LedgerRow,
+  journalLedgerExportTitle,
+  presentJournalLedger
+} from '@/utils/accounting/journalLedgerPresenter'
 import type { AccountingExportSnapshot } from '@/utils/accounting/exportSpec'
+import { accountLedgerTitle } from '@/utils/accounting/accountLedger'
+import { activityText } from '@/utils/accounting/describeEntry'
 import { formatTxHash } from '@/utils/format'
-import type { AccountingPdfTable, PdfTableTypography, ResolveName } from './pdf'
 
 type Cell = string | number
 type Align = 'left' | 'right'

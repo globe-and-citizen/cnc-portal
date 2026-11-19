@@ -164,18 +164,18 @@
 </template>
 
 <script setup lang="ts">
+import { type Address, isAddress } from 'viem'
 import { computed, ref } from 'vue'
-import { Icon as IconifyIcon } from '@iconify/vue'
-import { isAddress, type Address } from 'viem'
-import { useToast } from '@nuxt/ui/composables'
-import { useUserDataStore, useTeamStore } from '@/stores'
-import { useInspectSafe } from '@/composables/safe/useSafeImport'
-import { useCreateContractMutation } from '@/queries/contract.queries'
-import { NETWORK } from '@/constant'
-import { getAxiosErrorMessage } from '@/utils/errors/http'
+import { useTeamStore, useUserDataStore } from '@/stores'
 import AddressTooltip from '@/components/ui/AddressTooltip.vue'
+import { Icon as IconifyIcon } from '@iconify/vue'
+import { NETWORK } from '@/constant'
 import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
+import { getAxiosErrorMessage } from '@/utils/errors/http'
 import { teamSafes } from '@/utils/safe/teamSafes'
+import { useCreateContractMutation } from '@/queries/contract.queries'
+import { useInspectSafe } from '@/composables/safe/useSafeImport'
+import { useToast } from '@nuxt/ui/composables'
 
 interface Props {
   teamId: number

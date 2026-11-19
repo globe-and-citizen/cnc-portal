@@ -1,8 +1,8 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { mount } from '@vue/test-utils'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { computed, ref } from 'vue'
-import ElectionActions from '../ElectionActions.vue'
 import { useTeamStore, useUserDataStore } from '@/stores'
+import ElectionActions from '../ElectionActions.vue'
+import { mount } from '@vue/test-utils'
 import { useRouter } from 'vue-router'
 
 // Mock composables module and provide a mutable mock function

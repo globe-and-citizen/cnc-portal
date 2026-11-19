@@ -1,8 +1,8 @@
+import { type VueWrapper, mount } from '@vue/test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { defineComponent, h, ref } from 'vue'
-import { mount, type VueWrapper } from '@vue/test-utils'
+import { mockBodAddAction, mockToast, mockWagmiCore } from '@/tests/mocks'
 import { useContractOwnershipTransfer } from '../useContractOwnershipTransfer'
-import { mockToast, mockBodAddAction, mockWagmiCore } from '@/tests/mocks'
 
 describe('ownership transfer selection boundary', () => {
   let wrapper: VueWrapper

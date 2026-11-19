@@ -1,10 +1,10 @@
+import { SUPPORTED_TOKENS, USDC_ADDRESS, USDC_E_ADDRESS } from '@/constant'
+import { buildSafeSwapReport, safeSwapCoinIds } from '../swapValuation'
 import { describe, expect, it } from 'vitest'
 import { parseUnits, zeroAddress } from 'viem'
-import { SUPPORTED_TOKENS, USDC_ADDRESS, USDC_E_ADDRESS } from '@/constant'
 import type { CowOrder } from '@/types/cow'
-import type { SafeIncomingTransfer } from '@/types/safe'
 import { SAFE_NATIVE_ASSET } from '../swapTransfers'
-import { buildSafeSwapReport, safeSwapCoinIds } from '../swapValuation'
+import type { SafeIncomingTransfer } from '@/types/safe'
 
 /**
  * Each use case of the Safe swap P&L catalogue (docs/features/accounts/safe-swap-pnl-use-cases.md)

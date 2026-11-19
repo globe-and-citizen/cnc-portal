@@ -1,4 +1,4 @@
-import { computed, ref, watch, type ComputedRef, type Ref } from 'vue'
+import { type ComputedRef, type Ref, computed, ref, watch } from 'vue'
 
 export interface FacetFilter<T> {
   /** The distinct facet values present in the incoming feed. */

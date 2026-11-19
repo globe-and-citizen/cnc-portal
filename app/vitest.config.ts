@@ -1,8 +1,8 @@
 import { configDefaults, defineConfig, mergeConfig } from 'vitest/config'
 
+import dotenv from 'dotenv'
 import { fileURLToPath } from 'node:url'
 import viteConfig from './vite.config'
-import dotenv from 'dotenv'
 
 dotenv.config()
 process.env.TZ = 'UTC'

@@ -1,8 +1,8 @@
-import { ref } from 'vue'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import type { ScanResult } from '@/composables/eventsViaLogs'
-import type { BankEventFeed } from '@/types/contract-events/bank'
 import { empty, useBankEventsViaLogs } from '../useBankEventsViaLogs'
+import type { BankEventFeed } from '@/types/contract-events/bank'
+import type { ScanResult } from '@/composables/eventsViaLogs'
+import { ref } from 'vue'
 
 const { mockUseContractEventsViaLogs } = vi.hoisted(() => ({
   mockUseContractEventsViaLogs: vi.fn()

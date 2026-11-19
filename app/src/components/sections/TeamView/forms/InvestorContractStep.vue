@@ -85,17 +85,17 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { z } from 'zod'
+import { computed, ref } from 'vue'
+import {
+  formatDeployError,
+  useDeployOfficer,
+  useInvalidateOfficerQueries
+} from '@/composables/contracts'
 import type { AxiosError } from 'axios'
 import type { Team } from '@/types'
-import {
-  useDeployOfficer,
-  useInvalidateOfficerQueries,
-  formatDeployError
-} from '@/composables/contracts'
-import { useCreateOfficerMutation } from '@/queries/contract.queries'
 import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
+import { useCreateOfficerMutation } from '@/queries/contract.queries'
+import { z } from 'zod'
 
 const props = withDefaults(
   defineProps<{

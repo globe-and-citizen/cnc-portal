@@ -1,12 +1,12 @@
-import { describe, expect, it } from 'vitest'
-import { zeroAddress } from 'viem'
-import { formatDateTime, fromUnix } from '@/utils/format'
-import type { BankEventFeed } from '@/types/contract-events/bank'
 import {
   buildRawBankTransactions,
   formatBankTransactionDate,
   getBankTransactionTypeColor
 } from '../bank'
+import { describe, expect, it } from 'vitest'
+import { formatDateTime, fromUnix } from '@/utils/format'
+import type { BankEventFeed } from '@/types/contract-events/bank'
+import { zeroAddress } from 'viem'
 
 const BANK_ADDRESS = '0x1111111111111111111111111111111111111111'
 const USER_A = '0x2222222222222222222222222222222222222222'

@@ -1,7 +1,4 @@
-import { formatUnits, parseUnits, type Address } from 'viem'
-import dayjs from 'dayjs'
-import utc from 'dayjs/plugin/utc'
-import { SUPPORTED_TOKENS } from '@/constant'
+import { type Address, formatUnits, parseUnits } from 'viem'
 import type {
   CreditLenderOffering,
   CreditOfferForm,
@@ -11,8 +8,11 @@ import type {
   FixedReturnWhitelistEntry,
   LendingOfferStruct
 } from '@/types'
-import { tokenSymbol } from '../tokens/metadata'
+import { SUPPORTED_TOKENS } from '@/constant'
+import dayjs from 'dayjs'
 import { formatAmountWithPrecision } from '../currency/display'
+import { tokenSymbol } from '../tokens/metadata'
+import utc from 'dayjs/plugin/utc'
 
 dayjs.extend(utc)
 

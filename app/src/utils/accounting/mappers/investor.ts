@@ -24,16 +24,16 @@
  * are **not** mapped — they describe the same money as the per-shareholder
  * `DividendPaid` rows and would double-count the dividend.
  */
-import { formatUnits } from 'viem'
 import type {
-  InvestorMintRow,
   InvestorDividendPaidRow,
+  InvestorMintRow,
   SafeDepositRow
 } from '@/types/contract-events/investor'
+import { type JournalEntryDraft, makeJournalEntryDraft } from '@/utils/accounting/journalEntryDraft'
 import type { CashRemunerationWithdrawTokenRow } from '@/types/contract-events/cash-remuneration'
-import type { VestingTokensReleasedRow } from '@/types/contract-events/vesting'
-import { makeJournalEntryDraft, type JournalEntryDraft } from '@/utils/accounting/journalEntryDraft'
 import type { MapperContext } from './context'
+import type { VestingTokensReleasedRow } from '@/types/contract-events/vesting'
+import { formatUnits } from 'viem'
 
 export interface InvestorMapperInput {
   mints?: readonly InvestorMintRow[]

@@ -45,12 +45,12 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import { RouterView, useRoute } from 'vue-router'
-import AccountingHeader from './AccountingHeader.vue'
-import { provideAccounting } from '@/composables/accounting/useAccountingContext'
-import { formatAddress, formatTxHash } from '@/utils/format'
 import type { AccountingDiagnostic, AccountingSourceId } from '@/utils/accounting/types'
+import { RouterView, useRoute } from 'vue-router'
+import { formatAddress, formatTxHash } from '@/utils/format'
+import AccountingHeader from './AccountingHeader.vue'
+import { computed } from 'vue'
+import { provideAccounting } from '@/composables/accounting/useAccountingContext'
 
 const route = useRoute()
 

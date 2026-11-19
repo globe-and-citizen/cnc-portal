@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it } from 'vitest'
-import { mount } from '@vue/test-utils'
+import { makeTokenBalance, mockUseContractBalance } from '@/tests/mocks'
 import type { Component } from 'vue'
 import ContractBalanceCell from '../ContractBalanceCell.vue'
-import { makeTokenBalance, mockUseContractBalance } from '@/tests/mocks'
+import { mount } from '@vue/test-utils'
 
 const ADDRESS = '0x0000000000000000000000000000000000000001'
 

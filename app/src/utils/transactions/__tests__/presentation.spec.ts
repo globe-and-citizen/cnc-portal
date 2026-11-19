@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import type { TokenId } from '@/constant'
 import { enrichTransactionPresentation, resolveTransactionUser } from '../presentation'
+import type { TokenId } from '@/constant'
 
 const MEMBER_ADDRESS = '0x1111111111111111111111111111111111111111'
 const CONTRACT_ADDRESS = '0x2222222222222222222222222222222222222222'

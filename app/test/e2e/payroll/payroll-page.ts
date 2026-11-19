@@ -1,9 +1,9 @@
 // Payroll page operations shared by the full-stack journeys. Every mutation
 // is made through the browser; helpers only sequence the visible product UI.
-import { expect, type Locator, type Page } from '@playwright/test'
-import type { Address } from 'viem'
-import { formatUnits, parseUnits } from 'viem'
+import { type Locator, type Page, expect } from '@playwright/test'
 import { dialogAmount, openAccountFromSidebar, selectToken } from '../e2e-page'
+import { formatUnits, parseUnits } from 'viem'
+import type { Address } from 'viem'
 import { grossForNet } from '../bank/bank-chain'
 
 const BANK_FEE_BPS = 50n

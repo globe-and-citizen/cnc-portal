@@ -18,14 +18,14 @@
   </UCard>
 </template>
 <script setup lang="ts">
-import UserIdentity from '@/components/ui/UserIdentity.vue'
+import { computed, watch } from 'vue'
 import BodMembersEmptyState from './BodMembersEmptyState.vue'
-import { useTeamStore } from '@/stores'
 import type { User } from '@/types'
+import UserIdentity from '@/components/ui/UserIdentity.vue'
+import { log } from '@/lib/logging'
 import { useBodGetBoardOfDirectors } from '@/composables/bod/reads'
 import { useElectionsGetWinners } from '@/composables/elections'
-import { computed, watch } from 'vue'
-import { log } from '@/lib/logging'
+import { useTeamStore } from '@/stores'
 
 const props = defineProps<{
   electionId?: bigint

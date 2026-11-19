@@ -1,11 +1,11 @@
-import { describe, expect, it } from 'vitest'
-import type { Address } from 'viem'
 import type { RatePerHour, WeeklyClaim } from '@/types'
 import {
   buildClaimRatesWithOvertime,
   buildWageClaimPayload,
   computeClaimTokenAmounts
 } from '../model'
+import { describe, expect, it } from 'vitest'
+import type { Address } from 'viem'
 
 const MINUTES_26H30 = 26 * 60 + 30
 const MINUTES_20H = 20 * 60

@@ -1,10 +1,10 @@
 /** Direct counter-account assignment at the validated JournalEntry boundary. */
-import type { JournalAccountAssignmentRecord } from '@/types/journal-account-assignment'
-import { accountFor } from './accountRegistry'
 import { ACCOUNT_FAMILIES, accountFamilyById } from './chartOfAccounts'
-import { createJournalEntry, debitOf } from './journalEntry'
-import { ZERO_USD_AMOUNT } from './monetaryAmount'
 import type { Account, JournalEntry } from './types'
+import { createJournalEntry, debitOf } from './journalEntry'
+import type { JournalAccountAssignmentRecord } from '@/types/journal-account-assignment'
+import { ZERO_USD_AMOUNT } from './monetaryAmount'
+import { accountFor } from './accountRegistry'
 
 /** Canonical accounts offered for an eligible external treasury outflow. */
 export const JOURNAL_ASSIGNABLE_ACCOUNTS: readonly Account[] = ACCOUNT_FAMILIES.filter(

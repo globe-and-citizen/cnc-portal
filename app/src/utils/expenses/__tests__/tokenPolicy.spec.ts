@@ -1,11 +1,11 @@
-import { describe, expect, it } from 'vitest'
-import { zeroAddress } from 'viem'
 import { SUPPORTED_TOKENS, USDC_ADDRESS, USDC_E_ADDRESS } from '@/constant'
+import { describe, expect, it } from 'vitest'
 import {
   expenseApprovalTokens,
   isExpenseApprovalTokenAllowed,
   productExpenseToken
 } from '../tokenPolicy'
+import { zeroAddress } from 'viem'
 
 describe('Expense approval token policy', () => {
   it('[AC-US-EXP-001-14] intersects contract support with the product token catalogue', () => {

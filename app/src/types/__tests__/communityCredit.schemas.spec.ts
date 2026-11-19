@@ -1,11 +1,11 @@
-import { describe, expect, it } from 'vitest'
 import {
   createCreditCallAccessSchema,
   createCreditCallTermsSchema,
   validateRepaymentAmount
 } from '../communityCredit.schemas'
-import { addCreditTerm } from '@/utils/communityCredit/offer'
+import { describe, expect, it } from 'vitest'
 import { MINUTES_PER_DAY } from '@/utils/communityCredit/model'
+import { addCreditTerm } from '@/utils/communityCredit/offer'
 
 function baseTermsData(overrides: Record<string, unknown> = {}) {
   return {

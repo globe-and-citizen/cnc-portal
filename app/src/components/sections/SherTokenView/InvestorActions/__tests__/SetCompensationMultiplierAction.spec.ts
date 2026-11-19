@@ -1,8 +1,5 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { flushPromises } from '@vue/test-utils'
-import { nextTick } from 'vue'
 import { BaseError, UserRejectedRequestError } from 'viem'
-import SetCompensationMultiplierAction from '../SetCompensationMultiplierAction.vue'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   mockSafeDepositRouterAddress,
   mockSafeDepositRouterReads,
@@ -12,6 +9,9 @@ import {
   mockUseConnection,
   renderWithProviders
 } from '@/tests/mocks'
+import SetCompensationMultiplierAction from '../SetCompensationMultiplierAction.vue'
+import { flushPromises } from '@vue/test-utils'
+import { nextTick } from 'vue'
 
 describe('[US-SHER-005] SetCompensationMultiplierAction.vue', () => {
   const createWrapper = () =>

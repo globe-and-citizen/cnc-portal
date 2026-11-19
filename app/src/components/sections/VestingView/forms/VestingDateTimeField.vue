@@ -37,10 +37,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
 import { CalendarDate, Time, getLocalTimeZone } from '@internationalized/date'
-import { dateToCalendarDate } from '@/utils/dates/calendar'
+import { computed, ref } from 'vue'
 import { formatDate, formatDateUtc } from '@/utils/format'
+import { dateToCalendarDate } from '@/utils/dates/calendar'
 
 interface Props {
   name: string

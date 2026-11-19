@@ -1,11 +1,11 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { flushPromises } from '@vue/test-utils'
-import { ref } from 'vue'
-import RedeployOfficerModal from '@/components/sections/ContractManagementView/RedeployOfficerModal.vue'
 import type {
   OfficerRedeployFailure,
   OfficerRedeployMigrationRecovery
 } from '@/composables/contracts/useOfficerRedeploy'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import RedeployOfficerModal from '@/components/sections/ContractManagementView/RedeployOfficerModal.vue'
+import { flushPromises } from '@vue/test-utils'
+import { ref } from 'vue'
 import { renderWithProviders } from '@/tests/mocks'
 
 // ---------------------------------------------------------------------------

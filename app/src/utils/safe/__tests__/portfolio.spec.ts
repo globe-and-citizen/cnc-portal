@@ -1,13 +1,13 @@
-import { describe, expect, it } from 'vitest'
-import { zeroAddress } from 'viem'
-import { SUPPORTED_TOKENS } from '@/constant'
 import type { SafeClientBalance, SafeClientBalances } from '@/types/safe'
+import { describe, expect, it } from 'vitest'
 import {
   getSafeFiatTotal,
   getSafeValuedFiatTotal,
   toSafeHoldingRows,
   toSafeTransferTokens
 } from '../portfolio'
+import { SUPPORTED_TOKENS } from '@/constant'
+import { zeroAddress } from 'viem'
 
 const token = '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
 const heldAsset = (overrides: Partial<SafeClientBalance> = {}): SafeClientBalance => ({

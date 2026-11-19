@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest'
 import { deploySafeSchema, transferFromSafeSchema } from '../safe.schemas'
+import { describe, expect, it } from 'vitest'
 
 const SAFE_ADDRESS = '0x0000000000000000000000000000000000000001'
 const OWNER_ADDRESS = '0x0000000000000000000000000000000000000002'

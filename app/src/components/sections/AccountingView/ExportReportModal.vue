@@ -88,9 +88,9 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref, computed } from 'vue'
-import type { SectionKey } from '@/utils/accounting/exportSpec'
+import { computed, reactive, ref } from 'vue'
 import { ACCOUNT_ASSIGNMENTS_TITLE } from '@/utils/accounting/journalAccountAssignmentPresenter'
+import type { SectionKey } from '@/utils/accounting/exportSpec'
 
 /** Which file the selected sections are exported as. */
 export type ExportFormat = 'pdf' | 'excel'

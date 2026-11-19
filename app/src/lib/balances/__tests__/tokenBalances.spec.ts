@@ -1,15 +1,15 @@
-import { describe, expect, it, beforeEach, vi } from 'vitest'
-import { erc20Abi, type Address } from 'viem'
+import { type Address, erc20Abi } from 'viem'
+import {
+  type GetTokenInfo,
+  fetchTokenBalances,
+  sumTokenBalances,
+  toContractBalances,
+  toTokenBalances
+} from '../tokenBalances'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import type { TokenConfig } from '@/constant'
 import { mockWagmiCore } from '@/tests/mocks/wagmi.vue.mock'
 import { config as wagmiConfig } from '@/wagmi.config'
-import type { TokenConfig } from '@/constant'
-import {
-  fetchTokenBalances,
-  toContractBalances,
-  toTokenBalances,
-  sumTokenBalances,
-  type GetTokenInfo
-} from '../tokenBalances'
 
 const HOLDER = '0x1111111111111111111111111111111111111111' as Address
 const USDC = '0x2222222222222222222222222222222222222222' as Address

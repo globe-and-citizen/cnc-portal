@@ -1,4 +1,3 @@
-import { describe, expect, it, vi } from 'vitest'
 import {
   DAILY_CLAIM_MEMO_MAX_LENGTH,
   buildClaimFormSchema,
@@ -8,6 +7,7 @@ import {
   getClaimFilePreviews,
   isClaimDateDisabled
 } from '@/utils/claims/form'
+import { describe, expect, it, vi } from 'vitest'
 import { DEFAULT_MAXIMUM_HOURS_PER_DAY } from '@/utils/wages/model'
 
 const formFields = {

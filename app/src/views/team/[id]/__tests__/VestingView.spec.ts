@@ -1,9 +1,5 @@
+import { type VueWrapper, flushPromises } from '@vue/test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { flushPromises, type VueWrapper } from '@vue/test-utils'
-import { nextTick } from 'vue'
-import VestingView from '../VestingView.vue'
-import VestingFlow from '@/components/sections/VestingView/VestingFlow.vue'
-import VestingStats from '@/components/sections/VestingView/VestingStats.vue'
 import {
   mockBlockTimestamp,
   mockInvestorReads,
@@ -11,6 +7,10 @@ import {
   renderWithProviders,
   resetContractMocks
 } from '@/tests/mocks'
+import VestingFlow from '@/components/sections/VestingView/VestingFlow.vue'
+import VestingStats from '@/components/sections/VestingView/VestingStats.vue'
+import VestingView from '../VestingView.vue'
+import { nextTick } from 'vue'
 
 const MEMBER = '0x0000000000000000000000000000000000000001'
 const ARCHIVED_MEMBER = '0x0000000000000000000000000000000000000002'

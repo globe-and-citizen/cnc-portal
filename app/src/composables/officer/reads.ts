@@ -1,8 +1,8 @@
 import { computed } from 'vue'
-import { useReadContract } from '@wagmi/vue'
 import { isAddress } from 'viem'
-import { useTeamStore } from '@/stores'
 import { officerAbi } from '@/artifacts/abi/generated'
+import { useReadContract } from '@wagmi/vue'
+import { useTeamStore } from '@/stores'
 export function useOfficerAddress() {
   const teamStore = useTeamStore()
   return computed(() => teamStore.currentTeamMeta.data?.currentOfficer?.address)

@@ -10,9 +10,9 @@
  * time") so every file states what it covers; the ledger appends the period only
  * when a real date range is set — an all-time export needs no date suffix.
  */
-import { periodLabel, dayLabel } from './presenter'
-import type { SectionSpec } from './exportSpec'
+import { dayLabel, periodLabel } from './presenter'
 import { ACCOUNT_ASSIGNMENTS_TITLE } from './journalAccountAssignmentPresenter'
+import type { SectionSpec } from './exportSpec'
 
 /** Drop characters no major filesystem allows in a name, and collapse whitespace. */
 function safeName(name: string): string {

@@ -1,9 +1,9 @@
-import { mount, flushPromises, type VueWrapper } from '@vue/test-utils'
-import { describe, it, expect, beforeEach, afterEach } from 'vitest'
+import { type VueWrapper, flushPromises, mount } from '@vue/test-utils'
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import ExpandableFileGallery from '../ExpandableFileGallery.vue'
 import type { FilePreviewItem } from '@/types/file-preview'
-import { useFileUrl } from '@/composables/useFileUrl'
 import { mockGetFileUrlApi } from '@/tests/mocks'
+import { useFileUrl } from '@/composables/useFileUrl'
 
 const createPreview = (fileName: string, key = fileName): FilePreviewItem => ({
   key,

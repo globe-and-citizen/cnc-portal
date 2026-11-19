@@ -1,13 +1,13 @@
-import { describe, it, expect, vi } from 'vitest'
-import { flushPromises } from '@vue/test-utils'
-import { renderWithProviders } from '@/tests/mocks'
-import GeneralLedgerView from '../GeneralLedgerView.vue'
-import TrialBalanceView from '../TrialBalanceView.vue'
-import TablePagination from '@/components/ui/TablePagination.vue'
-import ColumnVisibilitySelect from '@/components/sections/AccountingView/ColumnVisibilitySelect.vue'
+import { describe, expect, it, vi } from 'vitest'
 import { mockRouterPush, mockRouterReplace } from '@/tests/mocks/router.mock'
+import ColumnVisibilitySelect from '@/components/sections/AccountingView/ColumnVisibilitySelect.vue'
+import GeneralLedgerView from '../GeneralLedgerView.vue'
+import TablePagination from '@/components/ui/TablePagination.vue'
+import TrialBalanceView from '../TrialBalanceView.vue'
 import { catalogueLedger } from '@/utils/accounting/__tests__/catalogueLedger'
 import { finalizeJournal } from '@/utils/accounting/__tests__/assembleAccounting'
+import { flushPromises } from '@vue/test-utils'
+import { renderWithProviders } from '@/tests/mocks'
 
 const { accountingContext } = vi.hoisted(() => ({
   accountingContext: { journal: { value: [] as unknown[] } }

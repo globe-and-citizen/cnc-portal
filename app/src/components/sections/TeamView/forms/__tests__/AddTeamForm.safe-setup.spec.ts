@@ -1,11 +1,11 @@
+import { type VueWrapper, flushPromises, mount } from '@vue/test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { flushPromises, mount, type VueWrapper } from '@vue/test-utils'
-import { createTestingPinia } from '@pinia/testing'
+import { createMockMutationResponse, mockTeamData } from '@/tests/mocks/query.mock'
 import { defineComponent, h } from 'vue'
 import AddTeamForm from '@/components/sections/TeamView/forms/AddTeamForm.vue'
-import { useCreateTeamMutation } from '@/queries/team.queries'
-import { createMockMutationResponse, mockTeamData } from '@/tests/mocks/query.mock'
+import { createTestingPinia } from '@pinia/testing'
 import { mockRouterPush } from '@/tests/mocks/router.mock'
+import { useCreateTeamMutation } from '@/queries/team.queries'
 
 const InvestorContractStepStub = defineComponent({
   name: 'InvestorContractStep',

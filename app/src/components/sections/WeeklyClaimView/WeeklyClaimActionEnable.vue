@@ -26,13 +26,13 @@
 </template>
 <script lang="ts" setup>
 import { useSyncWeeklyClaimsMutation, weeklyClaimKeys } from '@/queries/weeklyClaim.queries'
-import { keccak256 } from 'viem'
+import type { WeeklyClaim } from '@/types'
 import { classifyError } from '@/utils/errors/classifyContractError'
+import { keccak256 } from 'viem'
 import { log } from '@/lib/logging'
+import { useEnableClaim } from '@/composables/cashRemuneration/writes'
 import { useQueryClient } from '@tanstack/vue-query'
 import { useTeamStore } from '@/stores'
-import type { WeeklyClaim } from '@/types'
-import { useEnableClaim } from '@/composables/cashRemuneration/writes'
 import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
 
 const props = defineProps<{

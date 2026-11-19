@@ -1,10 +1,10 @@
+import { type JournalEntryDraft, makeJournalEntryDraft } from '@/utils/accounting/journalEntryDraft'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { computed, ref } from 'vue'
-import type { Address } from 'viem'
 import type { AccountName } from '@/utils/accounting/chartOfAccounts'
-import { makeJournalEntryDraft, type JournalEntryDraft } from '@/utils/accounting/journalEntryDraft'
-import { useQueryFn } from '@/tests/mocks/composables.mock'
+import type { Address } from 'viem'
 import { mockWagmiCore } from '@/tests/mocks/wagmi.vue.mock'
+import { useQueryFn } from '@/tests/mocks/composables.mock'
 import { useTransactionEvidence } from '../useTransactionEvidence'
 
 const HASH_A = `0x${'a'.repeat(64)}`

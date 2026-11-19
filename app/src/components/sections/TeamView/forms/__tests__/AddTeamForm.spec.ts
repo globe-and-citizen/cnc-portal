@@ -1,10 +1,10 @@
-import { describe, it, vi, expect, beforeEach, afterEach } from 'vitest'
-import { mount, flushPromises, type VueWrapper } from '@vue/test-utils'
-import { createTestingPinia } from '@pinia/testing'
-import AddTeamForm from '@/components/sections/TeamView/forms/AddTeamForm.vue'
-import { useCreateTeamMutation } from '@/queries/team.queries'
+import { type VueWrapper, flushPromises, mount } from '@vue/test-utils'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createMockMutationResponse, mockTeamData } from '@/tests/mocks/query.mock'
 import { defineComponent, h } from 'vue'
+import AddTeamForm from '@/components/sections/TeamView/forms/AddTeamForm.vue'
+import { createTestingPinia } from '@pinia/testing'
+import { useCreateTeamMutation } from '@/queries/team.queries'
 
 // Stub for InvestorContractStep — step 3 is delegated to this component
 const InvestorContractStepStub = defineComponent({

@@ -1,5 +1,5 @@
-import type { SafeIncomingTransfer } from '@/types/safe'
 import { groupSafeTransfers, safeDayOf, safeTransactionLegs } from './swapTransfers'
+import type { SafeIncomingTransfer } from '@/types/safe'
 
 export interface SafeSwapPnl {
   count: number

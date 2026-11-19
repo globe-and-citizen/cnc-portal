@@ -107,13 +107,13 @@
 </template>
 
 <script setup lang="ts">
+import type { VestingSchedule, VestingScheduleState, VestingStatus } from '@/types/vesting'
 import { computed, ref } from 'vue'
 import { useTeamStore, useUserDataStore } from '@/stores'
-import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
-import type { VestingSchedule, VestingScheduleState, VestingStatus } from '@/types/vesting'
 import VestingActionReviewModal from './VestingActionReviewModal.vue'
 import VestingScheduleDetailsModal from './VestingScheduleDetailsModal.vue'
 import VestingScheduleList from './VestingScheduleList.vue'
+import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
 
 const props = defineProps<{
   schedules: VestingSchedule[]

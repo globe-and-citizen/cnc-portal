@@ -1,10 +1,10 @@
 /** Plain rows for the shared holdings table; fetching belongs to the caller. */
-import { formatUnits } from 'viem'
 import { formatExactNumber, formatNumber } from '@/utils/format'
 import type { ContractBalances } from '@/types'
 import EthereumIcon from '@/assets/Ethereum.png'
-import USDCIcon from '@/assets/usdc.png'
 import MaticIcon from '@/assets/matic-logo.png'
+import USDCIcon from '@/assets/usdc.png'
+import { formatUnits } from 'viem'
 
 export interface TokenHoldingRow {
   rank: number

@@ -1,13 +1,13 @@
-import { describe, it, expect } from 'vitest'
 import {
-  resolveFolder,
+  CURRENT_VERSION,
   folderForOfficerBeacon,
   latestDeployedVersionForChain,
-  CURRENT_VERSION
+  resolveFolder
 } from '@/artifacts/registry'
-import registry from '@/artifacts/version-registry.json'
+import { describe, expect, it } from 'vitest'
 import addrV0 from '@/artifacts/deployed_addresses/V0/chain-137.json'
 import addrV1 from '@/artifacts/deployed_addresses/V1/chain-137.json'
+import registry from '@/artifacts/version-registry.json'
 
 const POLYGON = 137
 const V0_OFFICER_BEACON = (addrV0 as Record<string, string>)[registry.folders.V0.beacons.Officer]

@@ -1,10 +1,10 @@
+import { type ComponentPublicInstance, nextTick } from 'vue'
+import { type VueWrapper, flushPromises, mount } from '@vue/test-utils'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import AddSignerModal from '@/components/sections/SafeView/forms/AddSignerModal.vue'
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { mount, flushPromises, type VueWrapper } from '@vue/test-utils'
-import { nextTick, type ComponentPublicInstance } from 'vue'
 import type { User } from '@/types'
-import { mockUseChainId } from '@/tests/mocks'
 import { mockToast } from '@/tests/mocks/store.mock'
+import { mockUseChainId } from '@/tests/mocks'
 
 interface AddSignerModalInstance extends ComponentPublicInstance {
   isOpen: boolean

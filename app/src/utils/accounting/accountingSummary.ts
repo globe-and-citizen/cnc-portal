@@ -1,8 +1,8 @@
 /** Summary metrics projected from canonical JournalEntry lines. */
-import { classOf, type AccountName } from './chartOfAccounts'
-import { journalFamilyBalances } from './journalBalances'
-import { ZERO_USD_AMOUNT } from './monetaryAmount'
+import { type AccountName, classOf } from './chartOfAccounts'
 import type { AccountingSummary, JournalEntry } from './types'
+import { ZERO_USD_AMOUNT } from './monetaryAmount'
+import { journalFamilyBalances } from './journalBalances'
 
 const CASH_ACCOUNTS: ReadonlySet<AccountName> = new Set<AccountName>([
   'Cash — Bank',

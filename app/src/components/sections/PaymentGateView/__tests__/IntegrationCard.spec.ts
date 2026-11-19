@@ -1,6 +1,6 @@
-import { describe, expect, it, vi, afterEach } from 'vitest'
-import { mount } from '@vue/test-utils'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { mockTeamStore } from '@/tests/mocks/store.mock'
+import { mount } from '@vue/test-utils'
 
 // `IntegrationCard.vue` reads `WIDGET_SCRIPT_URL` at module load — mocking it
 // explicitly per test (rather than relying on whatever `VITE_APP_WIDGET_URL`

@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest'
+import { drafts, history, tx } from './safeExchangeFixtures'
+import { presentBalance, presentIncome, presentTrial } from '../presenter'
+import type { JournalEntry } from '../types'
 import { finalizeJournalEntryDrafts } from '../journalEntry'
 import { journalLedgerRows } from '../journalLedgerPresenter'
-import { presentBalance, presentIncome, presentTrial } from '../presenter'
-import { withSafeSwapPnl } from '../safeSwapPnl'
-import type { JournalEntry } from '../types'
 import { usd } from './fixtures'
-import { drafts, history, tx } from './safeExchangeFixtures'
+import { withSafeSwapPnl } from '../safeSwapPnl'
 
 const booksWith = (swaps: { txHash: string; pnlUsd: number }[], rows = history()) =>
   finalizeJournalEntryDrafts(withSafeSwapPnl(drafts(rows), swaps)).journal

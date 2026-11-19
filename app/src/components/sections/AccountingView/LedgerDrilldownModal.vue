@@ -62,21 +62,21 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
-import { useLocalStorage } from '@vueuse/core'
-import LedgerTable from './LedgerTable.vue'
-import TablePagination from '@/components/ui/TablePagination.vue'
-import ColumnVisibilitySelect from '@/components/sections/AccountingView/ColumnVisibilitySelect.vue'
 import { LEDGER_COLUMNS, type LedgerColumnKey } from '@/utils/accounting/ledgerColumns'
 import {
+  NO_OPENING,
   accountNet,
   openingRow,
-  withRunningBalance,
-  NO_OPENING
+  withRunningBalance
 } from '@/utils/accounting/accountLedger'
+import { computed, ref, watch } from 'vue'
+import ColumnVisibilitySelect from '@/components/sections/AccountingView/ColumnVisibilitySelect.vue'
 import type { DrilldownBalance } from '@/composables/accounting/useLedgerDrilldown'
-import { journalLedgerRows } from '@/utils/accounting/journalLedgerPresenter'
 import type { JournalEntry } from '@/utils/accounting/types'
+import LedgerTable from './LedgerTable.vue'
+import TablePagination from '@/components/ui/TablePagination.vue'
+import { journalLedgerRows } from '@/utils/accounting/journalLedgerPresenter'
+import { useLocalStorage } from '@vueuse/core'
 
 const props = defineProps<{
   account: string

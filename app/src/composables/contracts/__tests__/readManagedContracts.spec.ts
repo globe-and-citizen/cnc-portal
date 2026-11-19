@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { readContract } from '@wagmi/core'
 import type { DeploymentContract } from '@/types/deployments'
+import { readContract } from '@wagmi/core'
 import { readManagedContracts } from '../readManagedContracts'
 
 const CONTRACTS: DeploymentContract[] = [

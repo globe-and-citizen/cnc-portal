@@ -1,13 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { toValue } from 'vue'
-import externalApiClient from '@/lib/external.axios'
-import { BACKEND_URL } from '@/constant'
-import { useQueriesFn, useQueryFn } from '@/tests/mocks/composables.mock'
 import {
   useGetAssetMarketsQuery,
   useGetHistoricalTokenRatesQuery,
   useGetTokenPriceQuery
 } from '../coingecko.queries'
+import { useQueriesFn, useQueryFn } from '@/tests/mocks/composables.mock'
+import { BACKEND_URL } from '@/constant'
+import externalApiClient from '@/lib/external.axios'
+import { toValue } from 'vue'
 
 const apiUrl = `${BACKEND_URL}/api/coingecko`
 const address = '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'

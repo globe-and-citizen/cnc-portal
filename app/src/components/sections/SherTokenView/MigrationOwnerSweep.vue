@@ -57,15 +57,15 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import { type Address } from 'viem'
 import {
   useCompleteMigrationMutation,
   useSweepMigrationMutation
 } from '@/composables/investor/useSweepMigration'
-import { useToast } from '@nuxt/ui/composables'
-import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
+import { type Address } from 'viem'
 import type { InvestorMigration } from '@/queries/investorMigration.queries'
+import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
+import { computed } from 'vue'
+import { useToast } from '@nuxt/ui/composables'
 
 interface Props {
   investorAddress: Address

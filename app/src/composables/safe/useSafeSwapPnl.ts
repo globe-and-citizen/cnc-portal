@@ -1,12 +1,5 @@
-import { computed, toValue, type MaybeRefOrGetter } from 'vue'
-import { currentChainId, SUPPORTED_TOKENS } from '@/constant'
-import { useGetSafeTransfersQuery } from '@/queries/safe.queries'
-import { useGetSafeBalancesQuery } from '@/queries/safeClient.queries'
-import {
-  useGetAssetMarketsQuery,
-  useGetHistoricalTokenRatesQuery
-} from '@/queries/coingecko.queries'
-import { useGetCowTransactionOrdersQuery } from '@/queries/cow.queries'
+import { type MaybeRefOrGetter, computed, toValue } from 'vue'
+import { SUPPORTED_TOKENS, currentChainId } from '@/constant'
 import {
   buildSafeCostBasis,
   buildSafeSwapReport,
@@ -15,10 +8,17 @@ import {
   safeSwapRateRequests,
   safeSwapTransfers
 } from '@/utils/safe/swapValuation'
-import { safeMovements } from '@/utils/safe/swapTransfers'
-import { isSafeNotIndexedError } from '@/utils/safe/model'
-import type { SafeSwapPnl } from '@/utils/safe/swapPnl'
+import {
+  useGetAssetMarketsQuery,
+  useGetHistoricalTokenRatesQuery
+} from '@/queries/coingecko.queries'
 import type { SafeCostBasis } from '@/utils/safe/costBasis'
+import type { SafeSwapPnl } from '@/utils/safe/swapPnl'
+import { isSafeNotIndexedError } from '@/utils/safe/model'
+import { safeMovements } from '@/utils/safe/swapTransfers'
+import { useGetCowTransactionOrdersQuery } from '@/queries/cow.queries'
+import { useGetSafeBalancesQuery } from '@/queries/safeClient.queries'
+import { useGetSafeTransfersQuery } from '@/queries/safe.queries'
 
 /**
  * Swap P&L of a Safe in USD, with the fees CoW Protocol reports. `data` compares what each swap

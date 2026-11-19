@@ -45,8 +45,8 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useInvestorSymbol } from '@/composables/investor/reads'
 import { formatSherAmount } from '@/utils/safeDepositRouter/model'
+import { useInvestorSymbol } from '@/composables/investor/reads'
 
 interface Props {
   modelValue: string

@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import { buildCashOutPlan } from '../plan'
 
 const keys = (balances: Parameters<typeof buildCashOutPlan>[0]) =>

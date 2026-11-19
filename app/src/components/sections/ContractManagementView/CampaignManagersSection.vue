@@ -1,14 +1,14 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { useChainId } from '@wagmi/vue'
 import type { Address } from 'viem'
-import { useTeamStore } from '@/stores'
-import type { TeamContract } from '@/types'
-import { useCampaignManagerSettings } from '@/composables/campaign/reads'
 import AddressTooltip from '@/components/ui/AddressTooltip.vue'
+import AdvertisingCampaignWorkspace from './AdvertisingCampaignWorkspace.vue'
 import CampaignManagerAdminsSection from './CampaignManagerAdminsSection.vue'
 import CampaignManagerRatesForm from './forms/CampaignManagerRatesForm.vue'
-import AdvertisingCampaignWorkspace from './AdvertisingCampaignWorkspace.vue'
+import type { TeamContract } from '@/types'
+import { useCampaignManagerSettings } from '@/composables/campaign/reads'
+import { useChainId } from '@wagmi/vue'
+import { useTeamStore } from '@/stores'
 
 const teamStore = useTeamStore()
 const chainId = useChainId()

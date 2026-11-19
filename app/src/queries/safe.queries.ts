@@ -1,14 +1,15 @@
-import { useQueries, useQuery, useQueryClient, type QueryClient } from '@tanstack/vue-query'
-import { getBytecode } from '@wagmi/core'
-import { computed, toValue, type MaybeRefOrGetter } from 'vue'
-import { isAddress, type Address } from 'viem'
-import { config } from '@/wagmi.config'
-import { contractBalanceKeys } from '@/composables/useContractBalance'
-import { normalizeSafeAddress } from '@/utils/safe/address'
+import { type Address, isAddress } from 'viem'
+import type {
+  GetSafeIncomingTransfersParams,
+  GetSafeInfoParams,
+  GetSafeOutgoingTransactionsParams,
+  GetSafeTransactionParams,
+  GetSafeTransactionsParams,
+  SafeIncomingTransfer
+} from '@/types'
+import { type MaybeRefOrGetter, computed, toValue } from 'vue'
+import { type QueryClient, useQueries, useQuery, useQueryClient } from '@tanstack/vue-query'
 import type { SafeInfo, SafeTransaction } from '@/types/safe'
-import { currentChainId } from '@/constant/index'
-import { queryPresets } from './queryFactory'
-import { retrySafeRead, safeReadRetryDelay } from './safe.recovery'
 import {
   getSafeAssetTransfers,
   getSafeIncomingTransfers,
@@ -17,14 +18,13 @@ import {
   getSafeTransaction,
   getSafeTransactions
 } from './safe.api'
-import type {
-  GetSafeTransactionParams,
-  GetSafeInfoParams,
-  GetSafeTransactionsParams,
-  GetSafeIncomingTransfersParams,
-  GetSafeOutgoingTransactionsParams,
-  SafeIncomingTransfer
-} from '@/types'
+import { retrySafeRead, safeReadRetryDelay } from './safe.recovery'
+import { config } from '@/wagmi.config'
+import { contractBalanceKeys } from '@/composables/useContractBalance'
+import { currentChainId } from '@/constant/index'
+import { getBytecode } from '@wagmi/core'
+import { normalizeSafeAddress } from '@/utils/safe/address'
+import { queryPresets } from './queryFactory'
 
 const chainId = currentChainId
 

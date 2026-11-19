@@ -1,8 +1,8 @@
 // Browser-side helpers shared by every account journey: backend stubbing,
 // the E2E wallet, sign-in navigation, and the dialog controls that the
 // deposit and transfer forms have in common.
-import { expect, type Locator, type Page, type Request, type Route } from '@playwright/test'
 import type { Address, Hex } from 'viem'
+import { type Locator, type Page, type Request, type Route, expect } from '@playwright/test'
 import { E2E_RPC_URL } from './e2e-chain'
 
 /** Playwright matches route strings against the normalized request URL. */

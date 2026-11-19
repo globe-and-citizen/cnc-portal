@@ -1,7 +1,7 @@
-import { describe, it, expect } from 'vitest'
+import { ADDR, creditEvent, creditOffer, draftUsdValue, makeCtx, usd } from './fixtures'
+import { describe, expect, it } from 'vitest'
 import { finalizeJournal } from '@/utils/accounting/__tests__/assembleAccounting'
 import { mapFixedReturnEvents } from '@/utils/accounting/mappers/fixedReturn'
-import { makeCtx, ADDR, creditOffer, creditEvent, draftUsdValue, usd } from './fixtures'
 
 const ctx = makeCtx()
 // The three per-lender feeds share one row shape; the alias names the event.

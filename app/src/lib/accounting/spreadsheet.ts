@@ -7,23 +7,23 @@
  * uses. {@link buildSheets} builds the requested section selection and
  * {@link exportSheetsExcel} lazy-loads SheetJS and writes the file.
  */
-import type { AccountingExportSnapshot } from '@/utils/accounting/exportSpec'
-import {
-  presentIncome,
-  presentBalance,
-  presentTrial,
-  presentSummary,
-  incomeExportTitle,
-  balanceExportTitle,
-  trialExportTitle
-} from '@/utils/accounting/presenter'
-import type { SectionKey, SectionSpec } from '@/utils/accounting/exportSpec'
 import {
   ACCOUNT_ASSIGNMENTS_TITLE,
   ACCOUNT_ASSIGNMENT_COLUMNS,
   assignmentStatus,
   presentJournalAccountAssignments
 } from '@/utils/accounting/journalAccountAssignmentPresenter'
+import type { SectionKey, SectionSpec } from '@/utils/accounting/exportSpec'
+import {
+  balanceExportTitle,
+  incomeExportTitle,
+  presentBalance,
+  presentIncome,
+  presentSummary,
+  presentTrial,
+  trialExportTitle
+} from '@/utils/accounting/presenter'
+import type { AccountingExportSnapshot } from '@/utils/accounting/exportSpec'
 import { generalLedgerSheetRows } from './generalLedgerSheet'
 import { spreadsheetUsd } from './spreadsheetNumber'
 

@@ -1,12 +1,12 @@
-import { mount } from '@vue/test-utils'
-import { computed, ref } from 'vue'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { computed, ref } from 'vue'
+import MemberSection from '../MemberSection.vue'
 import { createTestingPinia } from '@pinia/testing'
+import { mount } from '@vue/test-utils'
 import { useQueryClient } from '@tanstack/vue-query'
 import { useTeamStore } from '@/stores'
-import { useUserDataStore } from '@/stores/user'
 import { useToggleWageStatusMutation } from '@/queries/wage.queries'
-import MemberSection from '../MemberSection.vue'
+import { useUserDataStore } from '@/stores/user'
 
 vi.mock('@nuxt/ui/components/Table.vue', () => ({
   default: {

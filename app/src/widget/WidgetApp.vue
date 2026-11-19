@@ -11,15 +11,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import { parseUnits, type Address, type Hex } from 'viem'
+import { type Address, type Hex, parseUnits } from 'viem'
 import PaymentGateWidgetView, {
   type WidgetConfirmedStatus,
   type WidgetPane,
   type WidgetPaymentStep
 } from '@/components/sections/PaymentGateView/PaymentGateWidgetView.vue'
+import { type WidgetPaymentStatus, payWithWidget } from './payment'
 import { describeWidgetError } from './errorMessage'
-import { payWithWidget, type WidgetPaymentStatus } from './payment'
+import { ref } from 'vue'
 import { widgetChain } from './wagmiConfig'
 
 export interface WidgetToken {

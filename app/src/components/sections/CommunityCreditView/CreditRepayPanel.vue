@@ -144,11 +144,11 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { formatUnits } from 'viem'
 import { formatAmount, repayableCeilingUnits, statusMeta } from '@/utils/communityCredit/model'
-import type { CreditRound } from '@/types'
 import CreditRepayBreakdownTable from './CreditRepayBreakdownTable.vue'
+import type { CreditRound } from '@/types'
 import type { RepayBreakdownRow } from './CreditRepayBreakdownTable.vue'
+import { formatUnits } from 'viem'
 
 export interface RepaymentPanelState {
   /** Outstanding balance and treasury balance in exact token base units — kept as

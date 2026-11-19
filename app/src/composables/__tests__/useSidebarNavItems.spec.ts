@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import type { NavigationMenuItem } from '@nuxt/ui'
-import { useSidebarNavItems } from '@/composables/useSidebarNavItems'
-import { mockRoute } from '@/tests/mocks/router.mock'
 import { mockTeamStore, mockUserStore } from '@/tests/mocks/store.mock'
+import type { NavigationMenuItem } from '@nuxt/ui'
+import { mockRoute } from '@/tests/mocks/router.mock'
+import { useSidebarNavItems } from '@/composables/useSidebarNavItems'
 
 /** Flatten the grouped nav into a single list for easier lookups. */
 const flatten = (groups: NavigationMenuItem[][]) => groups.flat()

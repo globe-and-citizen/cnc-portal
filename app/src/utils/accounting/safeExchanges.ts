@@ -2,13 +2,13 @@
  * Replay Safe carrying values, book evidenced asset exchanges at the price actually paid, and
  * book the Swap P&L of an exchange into a USD stablecoin.
  */
-import { assetDecimals, type AssetId } from '@/utils/tokens/assets'
-import { makeJournalEntryDraft, type JournalEntryDraft } from './journalEntryDraft'
+import { type AssetId, assetDecimals } from '@/utils/tokens/assets'
+import { type JournalEntryDraft, makeJournalEntryDraft } from './journalEntryDraft'
 import {
   isRepresentableUsdRate,
   usdAmountFromToken,
-  usdRateFromNumber,
-  usdAmountToNumber
+  usdAmountToNumber,
+  usdRateFromNumber
 } from './monetaryAmount'
 import { isUsdPegged, round6, wholeTokenAmount } from './toUsd'
 

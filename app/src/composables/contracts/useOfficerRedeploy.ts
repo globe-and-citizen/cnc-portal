@@ -12,19 +12,19 @@
  *     manual refs — everything else is derived from the three mutations.
  */
 import { computed, ref } from 'vue'
-import { readContract } from '@wagmi/core'
-import type { Address } from 'viem'
-import { config } from '@/wagmi.config'
-import { useToast } from '@nuxt/ui/composables'
-import { useTeamStore } from '@/stores'
 import {
   useDeployOfficer,
   useInvalidateOfficerQueries
 } from '@/composables/contracts/useOfficerDeployment'
-import { useMigrateShareholders } from '@/composables/investor/useShareholderMigration'
-import { useCreateOfficerMutation } from '@/queries/contract.queries'
-import { officerAbi } from '@/artifacts/abi/generated'
+import type { Address } from 'viem'
+import { config } from '@/wagmi.config'
 import { log } from '@/lib/logging'
+import { officerAbi } from '@/artifacts/abi/generated'
+import { readContract } from '@wagmi/core'
+import { useCreateOfficerMutation } from '@/queries/contract.queries'
+import { useMigrateShareholders } from '@/composables/investor/useShareholderMigration'
+import { useTeamStore } from '@/stores'
+import { useToast } from '@nuxt/ui/composables'
 
 export type OfficerRedeployFailureStage = 'deploy' | 'registration' | 'workflow'
 

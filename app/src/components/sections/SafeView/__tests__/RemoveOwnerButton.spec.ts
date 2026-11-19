@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { defineComponent, nextTick } from 'vue'
-import { mount } from '@vue/test-utils'
-import RemoveOwnerButton from '../RemoveOwnerButton.vue'
 import { mockLog, mockUseChainId } from '@/tests/mocks'
+import RemoveOwnerButton from '../RemoveOwnerButton.vue'
 import { mockUserStore } from '@/tests/mocks/store.mock'
+import { mount } from '@vue/test-utils'
 
 const { mockIsPending, mockUpdateOwnersMutate } = vi.hoisted(() => ({
   mockIsPending: { value: false },

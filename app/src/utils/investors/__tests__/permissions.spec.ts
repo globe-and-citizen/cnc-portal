@@ -1,12 +1,12 @@
-import { describe, expect, it } from 'vitest'
-import type { Address } from 'viem'
-import type { Team } from '@/types/team'
 import {
   buildInvestorPermissionOfficers,
   buildInvestorPermissionRows,
   getGrantableInvestorAddresses,
   getKnownInvestorPermissionAddresses
 } from '@/utils/investors/permissions'
+import { describe, expect, it } from 'vitest'
+import type { Address } from 'viem'
+import type { Team } from '@/types/team'
 
 const member = '0x1000000000000000000000000000000000000000' as Address
 const router = '0x2000000000000000000000000000000000000000' as Address

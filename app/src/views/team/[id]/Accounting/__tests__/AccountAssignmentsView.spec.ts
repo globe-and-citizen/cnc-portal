@@ -1,14 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { flushPromises } from '@vue/test-utils'
-import type { Ref } from 'vue'
-import { NETWORK } from '@/constant'
-import type { JournalAccountAssignmentRecord } from '@/types/journal-account-assignment'
 import { mockTeamData, mockToast, mockUserStore, renderWithProviders } from '@/tests/mocks'
-import { finalizeJournal } from '@/utils/accounting/__tests__/assembleAccounting'
-import { applyJournalAccountAssignments } from '@/utils/accounting/journalAccountAssignment'
-import { makeJournalEntryDraft } from '@/utils/accounting/journalEntryDraft'
-import type { JournalEntry } from '@/utils/accounting/types'
 import AccountAssignmentsView from '../AccountAssignmentsView.vue'
+import type { JournalAccountAssignmentRecord } from '@/types/journal-account-assignment'
+import type { JournalEntry } from '@/utils/accounting/types'
+import { NETWORK } from '@/constant'
+import type { Ref } from 'vue'
+import { applyJournalAccountAssignments } from '@/utils/accounting/journalAccountAssignment'
+import { finalizeJournal } from '@/utils/accounting/__tests__/assembleAccounting'
+import { flushPromises } from '@vue/test-utils'
+import { makeJournalEntryDraft } from '@/utils/accounting/journalEntryDraft'
 
 const state = vi.hoisted(() => ({
   journal: null as Ref<JournalEntry[]> | null,

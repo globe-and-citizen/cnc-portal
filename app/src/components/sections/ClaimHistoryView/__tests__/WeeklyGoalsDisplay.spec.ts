@@ -1,7 +1,7 @@
-import { mount } from '@vue/test-utils'
 import { describe, expect, it, vi } from 'vitest'
-import WeeklyGoalsDisplay from '../WeeklyGoalsDisplay.vue'
 import type { WeeklyClaim } from '@/types'
+import WeeklyGoalsDisplay from '../WeeklyGoalsDisplay.vue'
+import { mount } from '@vue/test-utils'
 
 // The real UEditor is a heavy TipTap/ProseMirror instance that is unstable under
 // jsdom, so we stub it to a plain element that still surfaces the forwarded

@@ -1,11 +1,11 @@
+import { type Address, getAddress } from 'viem'
 import { describe, expect, it } from 'vitest'
-import { getAddress, type Address } from 'viem'
-import { USDC_ADDRESS } from '@/constant'
-import type { TeamContract } from '@/types/teamContract'
-import { journalLedgerRows } from '../journalLedgerPresenter'
-import { assembleAccounting } from './assembleAccounting'
-import { ADDR } from './fixtures'
 import { transfer, tx } from './safeExchangeFixtures'
+import { ADDR } from './fixtures'
+import type { TeamContract } from '@/types/teamContract'
+import { USDC_ADDRESS } from '@/constant'
+import { assembleAccounting } from './assembleAccounting'
+import { journalLedgerRows } from '../journalLedgerPresenter'
 
 const OLD_SAFE = ADDR.safe
 const NEW_SAFE = '0x2424242424242424242424242424242424242424'

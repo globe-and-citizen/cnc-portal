@@ -63,15 +63,15 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import AdvertisingCampaignsSection from '@/components/sections/ContractManagementView/AdvertisingCampaignsSection.vue'
-import OfficerDeploymentHistorySection from '@/components/sections/ContractManagementView/OfficerDeploymentHistorySection.vue'
+import type { ContractGeneration } from '@/types/deployments'
 import CurrentOfficerContractsSection from '@/components/sections/ContractManagementView/CurrentOfficerContractsSection.vue'
+import OfficerDeploymentHistorySection from '@/components/sections/ContractManagementView/OfficerDeploymentHistorySection.vue'
+import { computed } from 'vue'
+import { contractsInUse } from '@/utils/safe/teamSafes'
 import { useGetTeamOfficersQuery } from '@/queries/contract.queries'
 import { useTeamStore } from '@/stores'
-import type { ContractGeneration } from '@/types/deployments'
-import { contractsInUse } from '@/utils/safe/teamSafes'
 
 type ContractManagementTab = 'current' | 'campaigns' | 'history'
 

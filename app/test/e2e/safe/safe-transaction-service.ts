@@ -1,16 +1,16 @@
 // In-page stand-in for the Safe Transaction Service. Safe info is read from
 // the real E2E chain; proposals and confirmations live in memory per test.
+import { type Address, parseEther, parseUnits } from 'viem'
+import { type E2EUser, type StubResponse, json } from '../e2e-page'
 import type { Page, Request } from '@playwright/test'
-import { parseEther, parseUnits, type Address } from 'viem'
-import { E2E_SAFE_TX_SERVICE_URL } from '../../../src/e2e/chain'
 import type {
   SafeConfirmation,
   SafeIncomingTransfer,
   SafeTransaction
 } from '../../../src/types/safe'
+import { type SafeE2EFixture, safeNonce, safeOwners, safeThreshold } from './safe-chain'
 import { E2E_OWNER } from '../e2e-chain'
-import { json, type E2EUser, type StubResponse } from '../e2e-page'
-import { safeNonce, safeOwners, safeThreshold, type SafeE2EFixture } from './safe-chain'
+import { E2E_SAFE_TX_SERVICE_URL } from '../../../src/e2e/chain'
 
 export interface SafeTransactionServiceOptions {
   failConfirmationRequests?: number

@@ -1,15 +1,3 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { mount, type DOMWrapper, type VueWrapper } from '@vue/test-utils'
-import { nextTick } from 'vue'
-import type { Address } from 'viem'
-import { log } from '@/lib/logging'
-import { useCurrencyStore } from '@/stores/currencyStore'
-import {
-  createMockEventFeedState,
-  makeCurrencyStoreMock,
-  resetMockEventFeedState
-} from '@/tests/mocks'
-import ExpenseTransactions from '../ExpenseTransactions.vue'
 import {
   AddressTooltipStub,
   DatePickerStub,
@@ -17,18 +5,30 @@ import {
   TablePaginationStub,
   UBadgeStub,
   UCardStub,
+  USDC_ADDRESS,
   USelectStub,
   UTableStub,
-  USDC_ADDRESS,
   UserIdentityStub,
   ZERO_ADDRESS,
   buildExpenseQueryResult,
+  buildFallbackExpenseQueryResult,
   buildGroupedExpenseQueryResult,
   buildGroupedZeroChildExpenseQueryResult,
-  buildFallbackExpenseQueryResult,
   buildIncomingTransfersQueryResult,
   buildPaginatedExpenseQueryResult
 } from './ExpenseTransactions.test-utils'
+import { type DOMWrapper, type VueWrapper, mount } from '@vue/test-utils'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import {
+  createMockEventFeedState,
+  makeCurrencyStoreMock,
+  resetMockEventFeedState
+} from '@/tests/mocks'
+import type { Address } from 'viem'
+import ExpenseTransactions from '../ExpenseTransactions.vue'
+import { log } from '@/lib/logging'
+import { nextTick } from 'vue'
+import { useCurrencyStore } from '@/stores/currencyStore'
 
 const mockExpenseQuery = createMockEventFeedState()
 const mockExpenseAddr = { value: null as null | { value: string } }

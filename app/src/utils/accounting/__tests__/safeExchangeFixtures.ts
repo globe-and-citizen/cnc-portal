@@ -1,7 +1,7 @@
-import { USDC_ADDRESS } from '@/constant'
-import type { SafeIncomingTransfer } from '@/types/safe'
-import { buildCncJournalEntryDrafts } from '../assemble'
 import { ADDR } from './fixtures'
+import type { SafeIncomingTransfer } from '@/types/safe'
+import { USDC_ADDRESS } from '@/constant'
+import { buildCncJournalEntryDrafts } from '../assemble'
 
 export const TOKEN = '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
 export const ROUTER = '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'

@@ -1,13 +1,13 @@
+import { type Address, isAddress } from 'viem'
+import type { Election } from '@/types'
 import { computed } from 'vue'
-import { useQuery } from '@tanstack/vue-query'
-import { readContract } from '@wagmi/core'
-import { isAddress, type Address } from 'viem'
 import { config } from '@/wagmi.config'
 import { electionsAbi } from '@/artifacts/abi/generated'
-import type { Election } from '@/types'
 import { log } from '@/lib/logging'
+import { readContract } from '@wagmi/core'
 import { toElection } from '@/utils/elections/election'
 import { useElectionsAddress } from './reads'
+import { useQuery } from '@tanstack/vue-query'
 
 /**
  * Every published election the team has ever run, newest first. The contract

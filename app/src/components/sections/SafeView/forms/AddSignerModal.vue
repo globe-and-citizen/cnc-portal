@@ -95,17 +95,17 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
-import { z } from 'zod'
 import { type Address, isAddress } from 'viem'
-import { useChainId } from '@wagmi/vue'
-import MultiSelectMemberInput from '@/components/ui/inputs/MultiSelectMemberInput.vue'
+import { computed, ref, watch } from 'vue'
 import { Icon as IconifyIcon } from '@iconify/vue'
-
-import { useUpdateSafeOwnersMutation } from '@/queries/safe.mutations'
-import type { User } from '@/types'
-import { useToast } from '@nuxt/ui/composables'
+import MultiSelectMemberInput from '@/components/ui/inputs/MultiSelectMemberInput.vue'
 import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
+import type { User } from '@/types'
+
+import { useChainId } from '@wagmi/vue'
+import { useToast } from '@nuxt/ui/composables'
+import { useUpdateSafeOwnersMutation } from '@/queries/safe.mutations'
+import { z } from 'zod'
 
 interface Props {
   safeAddress: Address

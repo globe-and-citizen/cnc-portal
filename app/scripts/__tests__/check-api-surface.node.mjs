@@ -1,11 +1,11 @@
-import assert from 'node:assert/strict'
-import { describe, it } from 'node:test'
 import {
   API_SURFACE_LIMITS,
   collectSourceMetrics,
   compareBaselines,
   validateMetrics
 } from '../check-api-surface.mjs'
+import { describe, it } from 'node:test'
+import assert from 'node:assert/strict'
 
 const createBaseline = (exceptions = []) => ({
   version: 1,

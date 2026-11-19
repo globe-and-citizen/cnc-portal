@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { ref } from 'vue'
-import { useSubmitRestriction } from '@/composables/useSubmitRestriction'
-import { useGetSubmitRestrictionQuery } from '@/queries/team.queries'
 import { mockTeamData } from '@/tests/mocks/index'
 import { mockTeamStore } from '@/tests/mocks/store.mock'
+import { ref } from 'vue'
+import { useGetSubmitRestrictionQuery } from '@/queries/team.queries'
+import { useSubmitRestriction } from '@/composables/useSubmitRestriction'
 
 const queryHook = vi.mocked(useGetSubmitRestrictionQuery)
 

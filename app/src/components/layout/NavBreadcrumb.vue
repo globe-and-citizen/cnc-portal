@@ -20,9 +20,9 @@
 </template>
 
 <script setup lang="ts">
+import { useTeamStore, useUserDataStore } from '@/stores'
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
-import { useUserDataStore, useTeamStore } from '@/stores'
 
 const route = useRoute()
 const userStore = useUserDataStore()

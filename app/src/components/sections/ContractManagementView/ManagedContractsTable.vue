@@ -87,31 +87,31 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
-import { useClipboard } from '@vueuse/core'
-import type { Address } from 'viem'
-import { NETWORK } from '@/constant'
-import { useBodIsMember } from '@/composables/bod/reads'
-import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
-import { useGetBodActionsQuery } from '@/queries'
-import { useTeamStore, useUserDataStore } from '@/stores'
-import type { User } from '@/types'
-import type { DeploymentContract } from '@/types/deployments'
-import type { FormattedBodActions } from '@/utils/contracts/bodActions'
-import { formatPendingBodActionsForContract } from '@/utils/contracts/bodActions'
-import {
-  readManagedContracts,
-  type ManagedContractReadModel
-} from '@/composables/contracts/readManagedContracts'
-import { getContractPresentation } from '@/utils/contracts/presentation'
-import ManagedContractActionDialogs from './ManagedContractActionDialogs.vue'
-import ManagedContractsDesktopTable from './ManagedContractsDesktopTable.vue'
-import ManagedContractMobileCard from './ManagedContractMobileCard.vue'
 import type {
   ContractActionState,
   ContractTableRow,
   ManagedContractRow
 } from './ManagedContractsTable.types'
+import {
+  type ManagedContractReadModel,
+  readManagedContracts
+} from '@/composables/contracts/readManagedContracts'
+import { computed, ref, watch } from 'vue'
+import { useTeamStore, useUserDataStore } from '@/stores'
+import type { Address } from 'viem'
+import type { DeploymentContract } from '@/types/deployments'
+import type { FormattedBodActions } from '@/utils/contracts/bodActions'
+import ManagedContractActionDialogs from './ManagedContractActionDialogs.vue'
+import ManagedContractMobileCard from './ManagedContractMobileCard.vue'
+import ManagedContractsDesktopTable from './ManagedContractsDesktopTable.vue'
+import { NETWORK } from '@/constant'
+import type { User } from '@/types'
+import { formatPendingBodActionsForContract } from '@/utils/contracts/bodActions'
+import { getContractPresentation } from '@/utils/contracts/presentation'
+import { useBodIsMember } from '@/composables/bod/reads'
+import { useClipboard } from '@vueuse/core'
+import { useGetBodActionsQuery } from '@/queries'
+import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
 
 type ContractActionSurface = 'details' | 'transfer' | 'approval' | null
 

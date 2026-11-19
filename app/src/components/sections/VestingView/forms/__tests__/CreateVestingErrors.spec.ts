@@ -1,10 +1,10 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { flushPromises, mount, type VueWrapper } from '@vue/test-utils'
-import { createTestingPinia } from '@pinia/testing'
 import { BaseError, UserRejectedRequestError } from 'viem'
+import { type VueWrapper, flushPromises, mount } from '@vue/test-utils'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { mockVestingWrites, resetContractMocks } from '@/tests/mocks'
 import CreateVesting from '@/components/sections/VestingView/forms/CreateVesting.vue'
 import SelectMemberInput from '@/components/ui/inputs/SelectMemberInput.vue'
-import { mockVestingWrites, resetContractMocks } from '@/tests/mocks'
+import { createTestingPinia } from '@pinia/testing'
 
 describe('[US-VESTING-001] CreateVesting.vue — write feedback', () => {
   let wrapper: VueWrapper

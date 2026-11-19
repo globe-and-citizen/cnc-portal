@@ -1,11 +1,11 @@
 /** Account-assignment screen projection of complete JournalEntry records. */
-import { accountFamilyById } from './chartOfAccounts'
-import {
-  filterJournalLedgerEntries,
-  journalLedgerRows,
-  type LedgerRow
-} from './journalLedgerPresenter'
 import type { AccountId, JournalEntry } from './types'
+import {
+  type LedgerRow,
+  filterJournalLedgerEntries,
+  journalLedgerRows
+} from './journalLedgerPresenter'
+import { accountFamilyById } from './chartOfAccounts'
 
 export interface JournalAccountAssignmentTarget {
   journalEntryId: string

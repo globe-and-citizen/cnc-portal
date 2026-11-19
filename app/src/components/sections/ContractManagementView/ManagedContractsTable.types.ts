@@ -1,5 +1,5 @@
-import type { User } from '@/types'
 import type { ManagedContractReadModel } from '@/composables/contracts/readManagedContracts'
+import type { User } from '@/types'
 
 export interface ContractActionState {
   pendingActionCount: number

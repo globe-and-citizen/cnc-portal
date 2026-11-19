@@ -1,8 +1,8 @@
-import { http, createConfig } from '@wagmi/vue'
-import { mainnet, sepolia, polygon, hardhat, polygonAmoy } from '@wagmi/vue/chains'
-import { injected } from '@wagmi/connectors'
-import { fallback } from 'viem'
+import { createConfig, http } from '@wagmi/vue'
+import { hardhat, mainnet, polygon, polygonAmoy, sepolia } from '@wagmi/vue/chains'
 import { e2eMockConnector } from './e2e/mockConnector'
+import { fallback } from 'viem'
+import { injected } from '@wagmi/connectors'
 
 /**
  * In e2e mode the real injected wallet is replaced by an in-browser mock

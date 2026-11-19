@@ -1,5 +1,5 @@
-import { SiweMessage } from 'siwe'
 import type { PrivateKeyAccount } from 'viem/accounts'
+import { SiweMessage } from 'siwe'
 import { ownerAccount } from './e2e-chain'
 
 const API_BASE_PATH = '/api'

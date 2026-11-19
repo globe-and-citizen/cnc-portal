@@ -1,6 +1,6 @@
 import { defineComponent, h, ref } from 'vue'
-import { mount } from '@vue/test-utils'
 import { describe, expect, it, vi } from 'vitest'
+import { mount } from '@vue/test-utils'
 
 const { accounting, mockUseCNCAccounting } = vi.hoisted(() => {
   const accounting = {

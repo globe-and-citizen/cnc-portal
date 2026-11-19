@@ -38,15 +38,15 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import AddressTooltip from '@/components/ui/AddressTooltip.vue'
-import type { VestingSchedule } from '@/types/vesting'
 import { formatDateUtc, fromUnix } from '@/utils/format'
 import {
   formatVestingAmount,
   formatVestingProgress,
   getVestingStateMeta
 } from '@/utils/vesting/presentation'
+import AddressTooltip from '@/components/ui/AddressTooltip.vue'
+import type { VestingSchedule } from '@/types/vesting'
+import { computed } from 'vue'
 import { formatVestingBoundary } from '@/utils/vesting/schedule'
 
 const props = defineProps<{

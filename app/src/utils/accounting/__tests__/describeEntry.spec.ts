@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest'
 import { activityOf, activityText, entryLabel } from '../describeEntry'
+import { describe, expect, it } from 'vitest'
 import type { JournalEntryDraft } from '../journalEntryDraft'
 import { journalFixture } from './fixtures'
 

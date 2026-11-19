@@ -1,7 +1,7 @@
-import { describe, it, expect } from 'vitest'
-import { journalLedgerRows } from '@/utils/accounting/journalLedgerPresenter'
-import { finalizeJournal } from '@/utils/accounting/__tests__/assembleAccounting'
+import { describe, expect, it } from 'vitest'
 import type { JournalEntryDraft } from '@/utils/accounting/journalEntryDraft'
+import { finalizeJournal } from '@/utils/accounting/__tests__/assembleAccounting'
+import { journalLedgerRows } from '@/utils/accounting/journalLedgerPresenter'
 
 /** A minimal priced posting whose lead row carries the given rate of record. */
 const entryWithRate = (rate: number): JournalEntryDraft => ({

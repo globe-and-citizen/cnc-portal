@@ -1,10 +1,10 @@
-import { computed, toValue, type MaybeRefOrGetter } from 'vue'
+import { type MaybeRefOrGetter, computed, toValue } from 'vue'
+import {
+  type WriteFunctionName,
+  useContractWritesV3
+} from '@/composables/contracts/useContractWritesV3'
 import type { Address } from 'viem'
 import { bankAbi } from '@/artifacts/abi/generated'
-import {
-  useContractWritesV3,
-  type WriteFunctionName
-} from '@/composables/contracts/useContractWritesV3'
 import { useTeamStore } from '@/stores/teamStore'
 
 type BankFunctionNames = WriteFunctionName<typeof bankAbi>

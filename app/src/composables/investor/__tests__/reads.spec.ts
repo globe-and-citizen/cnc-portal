@@ -1,15 +1,15 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   useInvestorAddress,
-  useInvestorName,
-  useInvestorSymbol,
-  useInvestorTotalSupply,
-  useInvestorOwner,
   useInvestorBalanceOf,
-  useInvestorShareholders
+  useInvestorName,
+  useInvestorOwner,
+  useInvestorShareholders,
+  useInvestorSymbol,
+  useInvestorTotalSupply
 } from '../reads'
-import { mockInvestorReads } from '@/tests/mocks'
 import type { Address } from 'viem'
+import { mockInvestorReads } from '@/tests/mocks'
 
 const MOCK_DATA = {
   ownerAddress: '0x742d35Cc6bF8C55C6C2e013e5492D2b6637e0886' as Address,

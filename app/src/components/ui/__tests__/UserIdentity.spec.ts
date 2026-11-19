@@ -1,7 +1,7 @@
-import { mount } from '@vue/test-utils'
-import { describe, it, expect } from 'vitest'
-import UserIdentity from '@/components/ui/UserIdentity.vue'
+import { describe, expect, it } from 'vitest'
 import type { User } from '@/types'
+import UserIdentity from '@/components/ui/UserIdentity.vue'
+import { mount } from '@vue/test-utils'
 
 describe('UserIdentity.vue', () => {
   const mockUser: Pick<User, 'address' | 'name' | 'imageUrl'> & { role?: string } = {

@@ -45,17 +45,17 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from 'vue'
-import dayjs from 'dayjs'
-import utc from 'dayjs/plugin/utc'
+import type { Claim, ClaimFormData, ClaimSubmitPayload } from '@/types'
+import { computed, onMounted, ref, watch } from 'vue'
 import ClaimForm from '@/components/sections/CashRemunerationView/Form/ClaimForm.vue'
+import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
+import dayjs from 'dayjs'
+import { getAxiosErrorMessage } from '@/utils/errors/http'
+import { startOfWeek } from '@/utils/dates/calendar'
+import { useSubmitClaimMutation } from '@/queries/weeklyClaim.queries'
 import { useSubmitRestriction } from '@/composables'
 import { useTeamStore } from '@/stores'
-import type { ClaimFormData, ClaimSubmitPayload, Claim } from '@/types'
-import { useSubmitClaimMutation } from '@/queries/weeklyClaim.queries'
-import { startOfWeek } from '@/utils/dates/calendar'
-import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
-import { getAxiosErrorMessage } from '@/utils/errors/http'
+import utc from 'dayjs/plugin/utc'
 
 dayjs.extend(utc)
 

@@ -1,18 +1,13 @@
 // The source operations the Accounting journey books. Each one is produced
 // through the product exactly as a company would, never seeded, so the books are
 // verified against behaviour the portal actually performed.
-import { readFileSync } from 'node:fs'
-import { fileURLToPath } from 'node:url'
-import { expect, type Page } from '@playwright/test'
-import { parseAbiItem, parseUnits, type Address, type Hex } from 'viem'
-import { E2E_MEMBER, publicClient } from '../e2e-chain'
-import { dialogAmount, openAccountFromSidebar, selectToken } from '../e2e-page'
-import { chooseApprovalDate } from '../expense/expense-page'
+import { type Address, type Hex, parseAbiItem, parseUnits } from 'viem'
 import {
-  requiredAddress,
-  type DeploymentAddressManifest
+  type DeploymentAddressManifest,
+  requiredAddress
 } from '../factories/operational-team-deployment'
-import { issueShares, openRealShareholderManagement } from '../shareholder/shareholder-page'
+import { E2E_MEMBER, publicClient } from '../e2e-chain'
+import { type Page, expect } from '@playwright/test'
 import {
   completedWeekStart,
   fundCashRemuneration,
@@ -22,6 +17,11 @@ import {
   setMemberUsdcWage,
   submitDailyClaim
 } from '../payroll/payroll-page'
+import { dialogAmount, openAccountFromSidebar, selectToken } from '../e2e-page'
+import { issueShares, openRealShareholderManagement } from '../shareholder/shareholder-page'
+import { chooseApprovalDate } from '../expense/expense-page'
+import { fileURLToPath } from 'node:url'
+import { readFileSync } from 'node:fs'
 
 /**
  * The USDC the integrated stack actually deployed. `E2E_USDC_ADDRESS` names the

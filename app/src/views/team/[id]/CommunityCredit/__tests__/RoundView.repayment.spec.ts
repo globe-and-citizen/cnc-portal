@@ -1,7 +1,6 @@
+import { BaseError, ContractFunctionRevertedError } from 'viem'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
-import { BaseError, ContractFunctionRevertedError } from 'viem'
-import type { CreditRound } from '@/types'
 import {
   mockBankReads,
   mockBankWrites,
@@ -13,6 +12,7 @@ import {
   useQueryClientFn
 } from '@/tests/mocks'
 import { offerStruct, sampleRound } from './communityCreditFixtures'
+import type { CreditRound } from '@/types'
 import { fixedReturnKeys } from '@/composables/fixedReturn/reads'
 
 const MOCK_USER_ADDRESS = '0x0000000000000000000000000000000000000001'

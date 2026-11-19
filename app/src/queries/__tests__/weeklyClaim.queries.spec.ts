@@ -1,15 +1,15 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { partialMatchKey } from '@tanstack/query-core'
-import type { Address } from 'viem'
 import type { Claim, WeeklyClaim } from '@/types'
-import { mockUploadFileApi } from '@/tests/mocks/api.mock'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   smartUseMutation,
   useMutationFn,
   useQueryClientFn,
   useQueryFn
 } from '@/tests/mocks/composables.mock'
+import type { Address } from 'viem'
 import apiClient from '@/lib/axios'
+import { mockUploadFileApi } from '@/tests/mocks/api.mock'
+import { partialMatchKey } from '@tanstack/query-core'
 
 const weeklyClaimQueries =
   await vi.importActual<typeof import('../weeklyClaim.queries')>('../weeklyClaim.queries')

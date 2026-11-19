@@ -1,7 +1,7 @@
-import { vi } from 'vitest'
-import { computed } from 'vue'
-import type { Address } from 'viem'
 import { mockBankReads, mockBankWrites } from '../mocks/contract.mock'
+import type { Address } from 'viem'
+import { computed } from 'vue'
+import { vi } from 'vitest'
 
 const MOCK_BANK_ADDRESS = '0x2234567890123456789012345678901234567890' as Address
 

@@ -1,10 +1,10 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { ref } from 'vue'
 import { type Address, type Hex } from 'viem'
-import MerkleClaimForm from '../MerkleClaimForm.vue'
-import { useClaimMigrationMutation } from '@/composables/investor/useClaimMigration'
-import type { InvestorMigration } from '@/queries/investorMigration.queries'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { mockToast, renderWithProviders } from '@/tests/mocks'
+import type { InvestorMigration } from '@/queries/investorMigration.queries'
+import MerkleClaimForm from '../MerkleClaimForm.vue'
+import { ref } from 'vue'
+import { useClaimMigrationMutation } from '@/composables/investor/useClaimMigration'
 
 vi.mock('@/composables/investor/useClaimMigration', () => ({
   useClaimMigrationMutation: vi.fn()

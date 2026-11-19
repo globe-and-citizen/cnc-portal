@@ -1,9 +1,9 @@
+import { type VueWrapper, mount } from '@vue/test-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { mount, type VueWrapper } from '@vue/test-utils'
-import { USDC_ADDRESS } from '@/constant'
-import type { ScanResult } from '@/composables/eventsViaLogs'
 import type { ExpenseEventFeed } from '@/types/contract-events/expense'
 import ExpenseMonthSpent from '../ExpenseMonthSpent.vue'
+import type { ScanResult } from '@/composables/eventsViaLogs'
+import { USDC_ADDRESS } from '@/constant'
 
 // The component now derives monthly spend from the RPC-sourced Expense events
 // (via useExpenseEventsViaLogs), filtering token transfers by timestamp. This

@@ -174,36 +174,36 @@
 </template>
 
 <script setup lang="ts">
-import { formatTxHash } from '@/utils/format'
-import { computed, watch } from 'vue'
-import { type Address } from 'viem'
-import UserIdentity from '@/components/ui/UserIdentity.vue'
-import DatePicker from '@/components/ui/DatePicker.vue'
-import TablePagination from '@/components/ui/TablePagination.vue'
-import TransactionDetailSlideover from '@/components/ui/TransactionDetailSlideover.vue'
-import TransactionChildRow from '@/components/sections/ExpenseAccountView/TransactionChildRow.vue'
-import { useCurrencyStore } from '@/stores/currencyStore'
-import { useTransactionTable } from '@/composables/transactions/useTransactionTable'
-import { useTransactionInline } from '@/composables/transactions/useTransactionInline'
-import { useTransactionPresentation } from '@/composables/transactions/useTransactionPresentation'
-import type { ExpenseTransaction } from '@/types/transactions'
 import {
   buildRawExpenseTransactions,
   formatExpenseTransactionDate
 } from '@/utils/transactions/expense'
-import {
-  getTransactionTypeColor,
-  getTransactionTypeLabel,
-  getTransactionCounterparty
-} from '@/utils/transactions/registry'
+import { computed, watch } from 'vue'
 import { formatCryptoAmount, formatCurrencyShort } from '@/utils/currency/display'
-import { formatEtherUtil, tokenSymbol } from '@/utils/tokens/metadata'
-import { getTransactionSummary, parseBigIntOrZero } from '@/utils/transactions/history'
-import { log } from '@/lib/logging'
 import { formatDateRelative, formatDateUTC } from '@/utils/dates/calendar'
+import { formatEtherUtil, tokenSymbol } from '@/utils/tokens/metadata'
+import {
+  getTransactionCounterparty,
+  getTransactionTypeColor,
+  getTransactionTypeLabel
+} from '@/utils/transactions/registry'
+import { getTransactionSummary, parseBigIntOrZero } from '@/utils/transactions/history'
+import { type Address } from 'viem'
+import DatePicker from '@/components/ui/DatePicker.vue'
+import type { ExpenseTransaction } from '@/types/transactions'
+import TablePagination from '@/components/ui/TablePagination.vue'
+import TransactionChildRow from '@/components/sections/ExpenseAccountView/TransactionChildRow.vue'
+import TransactionDetailSlideover from '@/components/ui/TransactionDetailSlideover.vue'
+import UserIdentity from '@/components/ui/UserIdentity.vue'
+import { formatTxHash } from '@/utils/format'
+import { log } from '@/lib/logging'
+import { useCurrencyStore } from '@/stores/currencyStore'
 import { useExpenseEventsViaLogs } from '@/composables/expense/useExpenseEventsViaLogs'
 import { useIncomingBankTokenTransfersViaLogs } from '@/composables/bank/useIncomingBankTokenTransfersViaLogs'
 import { useTeamStore } from '@/stores'
+import { useTransactionInline } from '@/composables/transactions/useTransactionInline'
+import { useTransactionPresentation } from '@/composables/transactions/useTransactionPresentation'
+import { useTransactionTable } from '@/composables/transactions/useTransactionTable'
 
 const props = defineProps<{
   expenseAddress: Address

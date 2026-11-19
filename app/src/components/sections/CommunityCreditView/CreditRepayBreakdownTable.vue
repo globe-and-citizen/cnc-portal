@@ -61,11 +61,11 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import type { TableRow } from '@nuxt/ui'
-import { formatAmount } from '@/utils/communityCredit/model'
-import type { CreditLender } from '@/types'
 import CreditAvatar from './CreditAvatar.vue'
+import type { CreditLender } from '@/types'
+import type { TableRow } from '@nuxt/ui'
+import { computed } from 'vue'
+import { formatAmount } from '@/utils/communityCredit/model'
 
 export type RepayBreakdownRow = CreditLender & {
   interest: number

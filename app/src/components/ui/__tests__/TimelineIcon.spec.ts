@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeEach } from 'vitest'
-import { mount } from '@vue/test-utils'
+import { beforeEach, describe, expect, it } from 'vitest'
 import TimelineIcon from '@/components/ui/TimelineIcon.vue'
+import { mount } from '@vue/test-utils'
 
 describe('TimelineIcon.vue', () => {
   beforeEach(() => {

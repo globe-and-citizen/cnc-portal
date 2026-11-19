@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest'
+import type { AccountName } from '@/utils/accounting/chartOfAccounts'
+import type { JournalEntryDraft } from '@/utils/accounting/journalEntryDraft'
 import { buildBalanceSheet } from '@/utils/accounting/balanceSheet'
 import { buildGeneralLedger } from '@/utils/accounting/generalLedger'
-import { finalizeJournal } from '@/utils/accounting/__tests__/assembleAccounting'
-import { entriesForAccount } from '@/utils/accounting/accountLedger'
-import type { JournalEntryDraft } from '@/utils/accounting/journalEntryDraft'
-import type { AccountName } from '@/utils/accounting/chartOfAccounts'
 import { catalogueLedger } from './catalogueLedger'
+import { entriesForAccount } from '@/utils/accounting/accountLedger'
+import { finalizeJournal } from '@/utils/accounting/__tests__/assembleAccounting'
 import { usd } from './fixtures'
 
 function balanceSheet(entries: readonly JournalEntryDraft[]) {

@@ -1,7 +1,4 @@
-import { type Hex } from 'viem'
-import { expect, test } from '../fixtures/integrated'
 import { E2E_MEMBER, E2E_MEMBER_PRIVATE_KEY, tokenBalance } from '../e2e-chain'
-import { payrollUsdc as usdc, wageClaimState } from './payroll-chain'
 import {
   completedWeekStart,
   getCashRemunerationAddress,
@@ -10,6 +7,9 @@ import {
   setMemberUsdcWage,
   submitDailyClaim
 } from './payroll-page'
+import { expect, test } from '../fixtures/integrated'
+import { payrollUsdc as usdc, wageClaimState } from './payroll-chain'
+import { type Hex } from 'viem'
 
 test.describe(
   '[US-PAYROLL-010] Integrated insufficient Payroll funding',

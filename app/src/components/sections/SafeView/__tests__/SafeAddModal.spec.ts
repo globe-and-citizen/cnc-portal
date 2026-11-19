@@ -1,5 +1,5 @@
+import { type VueWrapper, flushPromises, mount } from '@vue/test-utils'
 import { afterEach, describe, expect, it } from 'vitest'
-import { flushPromises, mount, type VueWrapper } from '@vue/test-utils'
 import SafeAddModal from '../SafeAddModal.vue'
 import { mockTeamStore } from '@/tests/mocks'
 

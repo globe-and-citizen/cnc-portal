@@ -1,9 +1,9 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { mount } from '@vue/test-utils'
-import { createTestingPinia } from '@pinia/testing'
-import { nextTick } from 'vue'
-import MintTokenAction from '../MintTokenAction.vue'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { mockInvestorPermissions, mockTeamStore, mockUserStore } from '@/tests/mocks'
+import MintTokenAction from '../MintTokenAction.vue'
+import { createTestingPinia } from '@pinia/testing'
+import { mount } from '@vue/test-utils'
+import { nextTick } from 'vue'
 
 describe('MintTokenAction.vue', () => {
   const createWrapper = () =>

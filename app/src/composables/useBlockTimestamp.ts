@@ -1,7 +1,7 @@
 import { ref, watch } from 'vue'
-import { useBlockNumber } from '@wagmi/vue'
-import { getPublicClient } from '@wagmi/core'
 import { config } from '@/wagmi.config'
+import { getPublicClient } from '@wagmi/core'
+import { useBlockNumber } from '@wagmi/vue'
 
 /**
  * Returns the latest block's timestamp as a reactive bigint (unix seconds),

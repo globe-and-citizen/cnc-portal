@@ -19,11 +19,11 @@
  * are booked from the router event (UC-SDR-01) — those transfers should be excluded
  * by the caller to avoid double-counting the same cash.
  */
+import { type AssetId, type AssetMetadata, assetId, knownAssetId } from '@/utils/tokens/assets'
+import { type JournalEntryDraft, makeJournalEntryDraft } from '@/utils/accounting/journalEntryDraft'
 import { getAddress, isAddress } from 'viem'
-import { makeJournalEntryDraft, type JournalEntryDraft } from '@/utils/accounting/journalEntryDraft'
-import { isInternalAddress } from '@/utils/accounting/internalAddresses'
 import type { MapperContext } from './context'
-import { assetId, knownAssetId, type AssetId, type AssetMetadata } from '@/utils/tokens/assets'
+import { isInternalAddress } from '@/utils/accounting/internalAddresses'
 
 /** A normalized token transfer touching the Safe (native = `token: null`). */
 export interface SafeTransferRow {

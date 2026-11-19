@@ -54,8 +54,8 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { useUploadFileMutation } from '@/queries/file.queries'
 import { createFileSchema } from '@/types/upload'
+import { useUploadFileMutation } from '@/queries/file.queries'
 
 const ALLOWED_IMAGE_EXTENSIONS = ['.png', '.jpg', '.jpeg', '.webp', '.gif', '.bmp', '.svg']
 const ACCEPTED_FILE_TYPES = ALLOWED_IMAGE_EXTENSIONS.join(',')

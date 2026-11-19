@@ -1,6 +1,6 @@
+import { REQUIRED_DEPLOYMENTS, checkIntegratedReadiness } from '../check-integrated-readiness.mjs'
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { checkIntegratedReadiness, REQUIRED_DEPLOYMENTS } from '../check-integrated-readiness.mjs'
 
 const manifest = Object.fromEntries(
   REQUIRED_DEPLOYMENTS.map((key, index) => [key, `0x${(index + 1).toString(16).padStart(40, '0')}`])

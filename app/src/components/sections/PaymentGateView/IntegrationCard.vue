@@ -105,15 +105,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { useTeamStore } from '@/stores'
-import { WIDGET_SCRIPT_URL } from '@/constant'
 import {
   PAYMENT_GATE_SNIPPET_LANGUAGES,
-  buildPaymentGateSnippet,
   type PaymentGateSnippetLanguage,
-  type PaymentGateToken
+  type PaymentGateToken,
+  buildPaymentGateSnippet
 } from '@/utils/paymentGate/widgetSnippet'
+import { computed, ref } from 'vue'
+import { WIDGET_SCRIPT_URL } from '@/constant'
+import { useTeamStore } from '@/stores'
 
 const { selectedToken } = defineProps<{ selectedToken: PaymentGateToken }>()
 

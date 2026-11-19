@@ -1,8 +1,8 @@
-import { valueTokenAmount } from '@/utils/currency/valuation'
-import type { TokenId } from '@/constant'
-import { NETWORK } from '@/constant'
 import type { Member, User } from '@/types'
 import { getTokenIcon, resolveTokenIdByAddress, tokenSymbol } from '@/utils/tokens/metadata'
+import { NETWORK } from '@/constant'
+import type { TokenId } from '@/constant'
+import { valueTokenAmount } from '@/utils/currency/valuation'
 
 export interface SupportedTokenPresentation {
   address: string

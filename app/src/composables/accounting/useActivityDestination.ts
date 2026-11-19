@@ -11,9 +11,9 @@
  * a Safe the team doesn't have, a round with no id — which is what lets the table
  * render the Activity as plain text rather than a link that would go nowhere.
  */
-import { useRoute, useRouter, type RouteLocationRaw } from 'vue-router'
-import { useTeamStore } from '@/stores/teamStore'
+import { type RouteLocationRaw, useRoute, useRouter } from 'vue-router'
 import type { ActivityDestination } from '@/utils/accounting/activityDestination'
+import { useTeamStore } from '@/stores/teamStore'
 
 export function useActivityDestination() {
   const route = useRoute()

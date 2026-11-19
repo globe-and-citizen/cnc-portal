@@ -1,5 +1,5 @@
-import { vi } from 'vitest'
 import { reactive } from 'vue'
+import { vi } from 'vitest'
 
 export interface MockRoute {
   params: Record<string, string>

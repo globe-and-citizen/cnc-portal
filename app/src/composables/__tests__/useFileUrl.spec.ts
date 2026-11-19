@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { useFileUrl, getPresignedUrl } from '../useFileUrl'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { getPresignedUrl, useFileUrl } from '../useFileUrl'
 import { mockGetFileUrlApi } from '@/tests/mocks'
 
 describe('useFileUrl', () => {

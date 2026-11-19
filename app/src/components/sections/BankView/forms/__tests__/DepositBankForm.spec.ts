@@ -1,19 +1,19 @@
-import { mount, flushPromises } from '@vue/test-utils'
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { createTestingPinia } from '@pinia/testing'
-import { nextTick } from 'vue'
-import { zeroAddress, type Address } from 'viem'
-import DepositBankForm from '@/components/sections/BankView/forms/DepositBankForm.vue'
+import { type Address, zeroAddress } from 'viem'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { flushPromises, mount } from '@vue/test-utils'
 import {
-  mockTransactionFunctions,
-  mockUseSafeSendTransaction,
+  mockBankWrites,
   mockERC20Reads,
   mockERC20Writes,
-  mockBankWrites,
-  useQueryClientFn,
-  mockUseChainId
+  mockTransactionFunctions,
+  mockUseChainId,
+  mockUseSafeSendTransaction,
+  useQueryClientFn
 } from '@/tests/mocks'
+import DepositBankForm from '@/components/sections/BankView/forms/DepositBankForm.vue'
 import { contractBalanceKeys } from '@/composables/useContractBalance'
+import { createTestingPinia } from '@pinia/testing'
+import { nextTick } from 'vue'
 
 const defaultProps = {
   bankAddress: zeroAddress as Address

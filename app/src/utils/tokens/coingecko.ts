@@ -1,9 +1,9 @@
 import type { CoinGeckoAssetMarketResponse, CoinGeckoHistoricalResponse } from '@/types/coingecko'
 import { round6, utcRateDate } from '@/utils/accounting/toUsd'
-import { assetLogoUri } from './assets'
-import { SUPPORTED_TOKENS } from '@/constant'
-import type { HistoricalRateTarget } from '@/utils/accounting/toUsd'
 import type { AssetId } from './assets'
+import type { HistoricalRateTarget } from '@/utils/accounting/toUsd'
+import { SUPPORTED_TOKENS } from '@/constant'
+import { assetLogoUri } from './assets'
 
 export const COINGECKO_POLYGON_CHAIN_ID = 137
 const POLYGON_PLATFORM = 'polygon-pos'

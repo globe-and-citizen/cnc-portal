@@ -1,12 +1,12 @@
-import { describe, expect, it } from 'vitest'
+import { ADDR, usd } from './fixtures'
+import { ROUTER, TOKEN, drafts, history, transfer, tx } from './safeExchangeFixtures'
 import { USDC_ADDRESS, USDT_ADDRESS } from '@/constant'
+import { describe, expect, it } from 'vitest'
+import type { JournalEntry } from '../types'
 import { buildCncJournalEntryDrafts } from '../assemble'
 import { finalizeJournalEntryDrafts } from '../journalEntry'
-import { journalLedgerRows } from '../journalLedgerPresenter'
-import type { JournalEntry } from '../types'
-import { usd, ADDR } from './fixtures'
 
-import { drafts, history, transfer, TOKEN, ROUTER, tx } from './safeExchangeFixtures'
+import { journalLedgerRows } from '../journalLedgerPresenter'
 
 const OTHER_TOKEN = '0xdddddddddddddddddddddddddddddddddddddddd'
 

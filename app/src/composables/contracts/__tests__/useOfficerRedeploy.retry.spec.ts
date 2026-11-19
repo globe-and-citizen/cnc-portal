@@ -1,14 +1,14 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { useOfficerRedeploy } from '../useOfficerRedeploy'
-import { useTeamStore } from '@/stores'
-import { useCreateOfficerMutation } from '@/queries/contract.queries'
-import { mockWagmiCore } from '@/tests/mocks'
 import {
-  resetMutation,
+  NEW_INVESTOR,
   NEW_OFFICER,
   PREV_OFFICER,
-  NEW_INVESTOR
+  resetMutation
 } from './useOfficerRedeploy.fixture'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { mockWagmiCore } from '@/tests/mocks'
+import { useCreateOfficerMutation } from '@/queries/contract.queries'
+import { useOfficerRedeploy } from '../useOfficerRedeploy'
+import { useTeamStore } from '@/stores'
 
 // Hoisted refs so each mutation's exposed state can be flipped per test.
 // vi.mock() factories are hoisted above imports, so these can't live in the

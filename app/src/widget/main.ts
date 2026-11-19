@@ -13,14 +13,14 @@
  * compiled Tailwind/Nuxt UI CSS injected as an inline `<style>` so it stays
  * scoped to the widget and never leaks onto (or clashes with) the host page.
  */
-import { createApp, type App, type Component } from 'vue'
-import ui from '@nuxt/ui/vue-plugin'
-import { isAddress, type Address } from 'viem'
-import { z } from 'zod'
-import { SUPPORTED_TOKENS } from '@/constant'
-import type { WidgetPaymentStatus } from './payment'
+import { type Address, isAddress } from 'viem'
+import { type App, type Component, createApp } from 'vue'
 import WidgetApp, { type WidgetToken } from './WidgetApp.vue'
+import { SUPPORTED_TOKENS } from '@/constant'
 import WidgetMisconfigured from './WidgetMisconfigured.vue'
+import type { WidgetPaymentStatus } from './payment'
+import ui from '@nuxt/ui/vue-plugin'
+import { z } from 'zod'
 // `?inline` tells Vite to return the fully compiled CSS as a plain string
 // instead of injecting it into the page's <head> — we inject it ourselves,
 // into the shadow root, a few lines down.

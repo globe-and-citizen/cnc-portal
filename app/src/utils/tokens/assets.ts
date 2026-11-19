@@ -1,7 +1,7 @@
 /** Read-only asset identities. Payment allowlists remain TokenId-based. */
+import { getTokenDecimals, isSupportedTokenId, resolveTokenIdByAddress } from './metadata'
 import { isAddress, zeroAddress } from 'viem'
 import type { TokenId } from '@/constant'
-import { getTokenDecimals, isSupportedTokenId, resolveTokenIdByAddress } from './metadata'
 
 export type AssetId = TokenId | `erc20:${number}:${string}`
 

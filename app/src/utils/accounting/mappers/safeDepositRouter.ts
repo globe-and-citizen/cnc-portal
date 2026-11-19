@@ -11,10 +11,10 @@
  * `sherAmount`, so the equity is fully booked here. The matching `Investor
  * Minted` is **not** re-booked by the investor mapper — see {@link mapInvestorEvents}.
  */
-import { formatUnits } from 'viem'
-import type { SafeDepositRow } from '@/types/contract-events/investor'
-import { makeJournalEntryDraft, type JournalEntryDraft } from '@/utils/accounting/journalEntryDraft'
+import { type JournalEntryDraft, makeJournalEntryDraft } from '@/utils/accounting/journalEntryDraft'
 import type { MapperContext } from './context'
+import type { SafeDepositRow } from '@/types/contract-events/investor'
+import { formatUnits } from 'viem'
 
 export interface SafeDepositRouterMapperInput {
   deposits?: readonly SafeDepositRow[]

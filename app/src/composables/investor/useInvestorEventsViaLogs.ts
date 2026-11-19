@@ -3,18 +3,18 @@
  * exact `InvestorEventFeed` shape, via the shared `useContractEventsViaLogs`
  * base.
  */
-import type { MaybeRefOrGetter } from 'vue'
-import { investorAbi as investorV1Abi } from '@/artifacts/abi/V1/generated'
-import { investorAbi as investorV01Abi } from '@/artifacts/abi/V0.1/generated'
-import { investorAbi as investorV0Abi } from '@/artifacts/abi/V0/generated'
-import type { InvestorEventFeed } from '@/types/contract-events/investor'
 import {
+  type ContractAddressInput,
+  type EventMapContext,
   str,
   unionEventAbi,
-  useContractEventsViaLogs,
-  type EventMapContext,
-  type ContractAddressInput
+  useContractEventsViaLogs
 } from '@/composables/eventsViaLogs'
+import type { InvestorEventFeed } from '@/types/contract-events/investor'
+import type { MaybeRefOrGetter } from 'vue'
+import { investorAbi as investorV01Abi } from '@/artifacts/abi/V0.1/generated'
+import { investorAbi as investorV0Abi } from '@/artifacts/abi/V0/generated'
+import { investorAbi as investorV1Abi } from '@/artifacts/abi/V1/generated'
 
 const INVESTOR_EVENT_ABI = unionEventAbi([investorV1Abi, investorV01Abi, investorV0Abi])
 
