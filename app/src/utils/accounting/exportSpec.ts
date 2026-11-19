@@ -18,12 +18,12 @@ export type SectionKey = 'summary' | 'income' | 'balance' | 'trial' | 'ledger' |
 /**
  * A section to export, plus the filter state that section is currently showing.
  * The per-page exports pass the page's live period / accounts / columns so the
- * file matches exactly what's on screen; the Summary report leaves them unset
- * to export the whole book.
+ * file matches exactly what's on screen; the Summary report gives every section
+ * the one period picked in its modal.
  */
 export interface SectionSpec {
   key: SectionKey
-  /** Income Statement / General Ledger reporting-period bounds. */
+  /** Reporting-period bounds of the Summary, Income Statement, General Ledger and Account Assignments. */
   from?: Date | null
   to?: Date | null
   /** Balance Sheet / Trial Balance point-in-time "as of" date. */

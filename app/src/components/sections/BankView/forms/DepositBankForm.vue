@@ -15,6 +15,7 @@
         :tokens="tokenList"
         v-model="tokenAmountModel"
         :isLoading="isLoading"
+        :max-amount="maxAmountInput"
         @validation="isAmountValid = $event"
       >
         <template #label>
@@ -25,6 +26,34 @@
         </template>
       </TokenAmountInput>
     </UFormField>
+
+    <template v-if="hasTransferFee">
+      <UCheckbox
+        v-model="shouldAddFee"
+        label="Add fee"
+        description="So a later transfer of this amount arrives in full."
+        class="mt-4"
+        data-test="add-fee-checkbox"
+      />
+      <dl
+        v-if="shouldAddFee && enteredAmount > 0n"
+        class="bg-elevated mt-3 space-y-1 rounded-md p-3 text-sm"
+        data-test="deposit-fee-summary"
+      >
+        <div class="text-muted flex justify-between">
+          <dt>Amount</dt>
+          <dd>{{ formatDepositUnits(enteredAmount) }}</dd>
+        </div>
+        <div class="text-muted flex justify-between">
+          <dt>Transfer fee ({{ formatPercent(feeRatio) }})</dt>
+          <dd data-test="deposit-fee-amount">{{ formatDepositUnits(feeAmount) }}</dd>
+        </div>
+        <div class="border-default flex justify-between border-t pt-1 font-medium">
+          <dt>You deposit</dt>
+          <dd data-test="deposit-total-amount">{{ formatDepositUnits(depositAmount) }}</dd>
+        </div>
+      </dl>
+    </template>
 
     <UAlert
       v-if="errorMessage"
@@ -50,7 +79,7 @@
           color="primary"
           type="submit"
           :loading="submitting"
-          :disabled="isLoading || !isAmountValid || archivedDisabled"
+          :disabled="isLoading || submitting || archivedDisabled"
           data-test="deposit-button"
         >
           {{
@@ -67,21 +96,23 @@
 </template>
 
 <script setup lang="ts">
-import { type Address, parseEther, zeroAddress } from 'viem'
-import { SUPPORTED_TOKENS, type TokenId } from '@/constant'
-import { computed, ref } from 'vue'
-import { contractBalanceKeys, useContractBalance } from '@/composables/useContractBalance'
-import { useCurrencyStore, useUserDataStore } from '@/stores'
+import { ref, computed, watch } from 'vue'
 import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
-import TokenAmountInput from '@/components/ui/inputs/TokenAmountInput.vue'
-import { bankEventKeys } from '@/composables/bank/useBankEventsViaLogs'
-import { useChainId } from '@wagmi/vue'
-import { useDepositToken } from '@/composables/bank/writes'
+import { z } from 'zod'
+import { formatUnits, zeroAddress, type Address } from 'viem'
+import { useContractBalance, contractBalanceKeys } from '@/composables/useContractBalance'
+import { useSafeSendTransaction } from '@/composables/transactions/useSafeSendTransaction'
 import { useERC20Approve } from '@/composables/erc20/writes'
 import { useErc20Allowance } from '@/composables/erc20/reads'
+import { useDepositToken } from '@/composables/bank/writes'
+import { isPositiveDecimal, useBankDepositFee } from '@/composables/bank/useBankDepositFee'
+import { formatPercent, formatTokenUnits } from '@/utils/format'
+import { bankEventKeys } from '@/composables/bank/useBankEventsViaLogs'
+import { SUPPORTED_TOKENS, type TokenId } from '@/constant'
+import { useCurrencyStore, useUserDataStore } from '@/stores'
+import TokenAmountInput from '@/components/ui/inputs/TokenAmountInput.vue'
 import { useQueryClient } from '@tanstack/vue-query'
-import { useSafeSendTransaction } from '@/composables/transactions/useSafeSendTransaction'
-import { z } from 'zod'
+import { useChainId } from '@wagmi/vue'
 
 const queryClient = useQueryClient()
 const chainId = useChainId()
@@ -99,6 +130,7 @@ function reset() {
   submitting.value = false
   isAmountValid.value = false
   submitError.value = null
+  shouldAddFee.value = false
 }
 
 // Component state
@@ -166,10 +198,33 @@ const allowanceValue = computed<bigint>(() =>
   typeof allowance.value === 'bigint' ? allowance.value : 0n
 )
 
-const bigIntAmount = computed(() => {
-  const numericAmount = Number(amount.value)
-  if (!Number.isFinite(numericAmount)) return 0n
-  return BigInt(Math.floor(numericAmount * 1e6))
+const selectedTokenConfig = computed(() =>
+  SUPPORTED_TOKENS.find((token) => token.id === selectedTokenId.value)
+)
+const selectedDecimals = computed(() => selectedTokenConfig.value?.decimals ?? 18)
+const {
+  shouldAddFee,
+  hasTransferFee,
+  feeRatio,
+  enteredAmount,
+  feeAmount,
+  depositAmount,
+  maxEnteredAmount
+} = useBankDepositFee(amount, selectedTokenConfig)
+
+const formatDepositUnits = (units: bigint) =>
+  formatTokenUnits(units, selectedDecimals.value, selectedTokenConfig.value?.symbol ?? '', {
+    maxDecimals: 6
+  })
+
+/** Exact "Max" input: the whole balance, or less when Add fee must also fit the fee. */
+const maxAmountInput = computed(() =>
+  formatUnits(maxEnteredAmount(selectedToken.value?.raw ?? 0n), selectedDecimals.value)
+)
+
+/** A Max selection follows its ceiling when Add fee is toggled, so it never overshoots. */
+watch(maxAmountInput, (nextMax, previousMax) => {
+  if (amount.value === previousMax) amount.value = nextMax
 })
 
 const ERC20ApproveResult = useERC20Approve(selectedTokenAddress)
@@ -182,20 +237,15 @@ const formSchema = computed(() =>
       .string()
       .trim()
       .min(1, 'Amount is required.')
-      .refine((value) => {
-        if (!/^(?:\d+\.?\d*|\.\d+)$/.test(value)) return false
-        const numericAmount = Number(value)
-        return Number.isFinite(numericAmount) && numericAmount > 0
-      }, 'Enter a valid amount greater than 0.')
-      .refine((value) => {
+      .refine(isPositiveDecimal, 'Enter a valid amount greater than 0.')
+      .refine(() => {
         if (!selectedToken.value) return true
-        return Number(value) <= (selectedToken.value.amount ?? 0)
+        return depositAmount.value <= selectedToken.value.raw
       }, 'Amount exceeds available balance.')
       .refine((value) => {
         if (!selectedToken.value || selectedToken.value.token.id === 'native') return true
         const [, fractionalPart = ''] = value.split('.')
-        if (fractionalPart.length > 6) return false
-        return Math.floor(Number(value) * 1e6) >= 1
+        return fractionalPart.length <= 6
       }, 'Enter a valid token amount with up to 6 decimal places.')
   })
 )
@@ -214,7 +264,7 @@ const submitForm = async () => {
   submitError.value = null
   try {
     if (selectedTokenId.value === 'native') {
-      await nativeDeposit.mutateAsync({ value: parseEther(amount.value) })
+      await nativeDeposit.mutateAsync({ value: depositAmount.value })
       await queryClient.invalidateQueries({
         queryKey: contractBalanceKeys.detail(props.bankAddress, chainId.value)
       })
@@ -226,17 +276,17 @@ const submitForm = async () => {
       })
       emits('closeModal')
     } else {
-      if (!(allowanceValue.value >= bigIntAmount.value)) {
+      if (!(allowanceValue.value >= depositAmount.value)) {
         currentStep.value = 1
 
         // Run spending cap
         await ERC20ApproveResult.mutateAsync({
-          args: [props.bankAddress, bigIntAmount.value]
+          args: [props.bankAddress, depositAmount.value]
         })
       }
       currentStep.value = 2
       await bankDepositTokenResult.mutateAsync({
-        args: [selectedTokenAddress.value, bigIntAmount.value]
+        args: [selectedTokenAddress.value, depositAmount.value]
       })
 
       // The Bank's native and ERC-20 amounts share one query per contract, so

@@ -1,23 +1,22 @@
+import { describe, it, expect } from 'vitest'
 import {
-  activityCoverageLabel,
-  balanceExportTitle,
-  filterByPeriod,
+  money,
   formatUnixDate,
   formatUnixDateTime,
-  incomeExportTitle,
-  money,
-  presentBalance,
   presentIncome,
+  presentBalance,
   presentTrial,
+  filterByPeriod,
+  incomeExportTitle,
+  balanceExportTitle,
   trialExportTitle
 } from '@/utils/accounting/presenter'
-import { describe, expect, it } from 'vitest'
+import { presentJournalLedger } from '@/utils/accounting/journalLedgerPresenter'
+import { accountFor } from '@/utils/accounting/accountRegistry'
+import { finalizeJournal } from '@/utils/accounting/__tests__/assembleAccounting'
+import { categoryLabelOf } from '@/utils/accounting/ledgerCategory'
 import type { AccountName } from '@/utils/accounting/chartOfAccounts'
 import type { JournalEntryDraft } from '@/utils/accounting/journalEntryDraft'
-import { accountFor } from '@/utils/accounting/accountRegistry'
-import { categoryLabelOf } from '@/utils/accounting/ledgerCategory'
-import { finalizeJournal } from '@/utils/accounting/__tests__/assembleAccounting'
-import { presentJournalLedger } from '@/utils/accounting/journalLedgerPresenter'
 import { sampleBooks } from './fixtures'
 
 /** The shared live book: a $100 client deposit and a $30 expense payout. */
@@ -318,19 +317,5 @@ describe('statement export titles', () => {
     expect(balanceExportTitle(new Date('2026-07-08'))).toBe('Balance Sheet — As of Jul 8, 2026')
     expect(trialExportTitle()).toBe('Trial Balance')
     expect(trialExportTitle(new Date('2026-07-08'))).toBe('Trial Balance — As of Jul 8, 2026')
-  })
-})
-
-describe('activityCoverageLabel', () => {
-  it('spans the first to the last entry, whatever their order', () => {
-    const label = activityCoverageLabel([
-      { timestamp: Date.UTC(2026, 9, 4, 12) / 1000 },
-      { timestamp: Date.UTC(2025, 11, 21, 12) / 1000 }
-    ])
-    expect(label).toBe('Activity Dec 21, 2025 – Oct 4, 2026')
-  })
-
-  it('has no coverage for empty books', () => {
-    expect(activityCoverageLabel([])).toBeNull()
   })
 })

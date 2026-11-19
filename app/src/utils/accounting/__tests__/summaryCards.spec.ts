@@ -70,6 +70,25 @@ describe('presentSummary', () => {
     expect(cards).toHaveLength(8)
   })
 
+  describe('[AC-US-ACCT-004-11] over a reporting period', () => {
+    const journal = finalizeJournal([
+      { ...posting('old', 'Cash — Bank', 'Service Revenue', 100), timestamp: 100 },
+      { ...posting('inside', 'Cash — Bank', 'Service Revenue', 40), timestamp: 300 },
+      { ...posting('later', 'Cash — Bank', 'Service Revenue', 7), timestamp: 500 }
+    ])
+    const { cards, banner } = presentSummary(journal, new Date(200_000), new Date(400_000))
+    const cardValue = (label: string) => cards.find((card) => card.label === label)?.value
+
+    it('limits revenue to the period', () => {
+      expect(cardValue('Total revenue')).toBe('$40.00')
+    })
+
+    it('accumulates balances up to the end of the period', () => {
+      expect(cardValue('Total assets')).toBe('$140.00')
+      expect(banner.balanced).toBe(true)
+    })
+  })
+
   it('reports the balanced banner with the live identity figures', () => {
     const { banner } = presentSummary(acc.journal)
     expect(banner.balanced).toBe(true)

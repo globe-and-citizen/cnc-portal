@@ -1,8 +1,10 @@
-import { zeroAddress, type Abi, type Address } from 'viem'
+import { zeroAddress, type Address } from 'viem'
 import registry from './version-registry.json'
-import feeCollectorV0 from './abi/V0/json/FeeCollector.json'
-import feeCollectorV0_1 from './abi/V0.1/json/FeeCollector.json'
-import feeCollectorV1 from './abi/V1/json/FeeCollector.json'
+import { feeCollectorAbi as feeCollectorV0 } from './abi/V0/generated'
+import { feeCollectorAbi as feeCollectorV0_1 } from './abi/V0.1/generated'
+import { feeCollectorAbi as feeCollectorV1 } from './abi/V1/generated'
+import { feeCollectorAbi as feeCollectorV2 } from './abi/V2/generated'
+import addressesV2 from './deployed_addresses/V2/chain-137.json'
 import addressesV0 from './deployed_addresses/V0/chain-137.json'
 import addressesV0_1 from './deployed_addresses/V0.1/chain-137.json'
 import addressesV1 from './deployed_addresses/V1/chain-137.json'
@@ -27,25 +29,27 @@ export type FeeCollectorVersion = keyof typeof registry.folders
 export const FEE_COLLECTOR_VERSIONS = Object.keys(registry.folders) as FeeCollectorVersion[]
 export const CURRENT_FEE_COLLECTOR_VERSION = registry.current as FeeCollectorVersion
 
-const ABIS: Record<FeeCollectorVersion, Abi> = {
-  'V0': feeCollectorV0 as Abi,
-  'V0.1': feeCollectorV0_1 as Abi,
-  'V1': feeCollectorV1 as Abi
-}
+const ABIS = {
+  'V0': feeCollectorV0,
+  'V0.1': feeCollectorV0_1,
+  'V1': feeCollectorV1,
+  'V2': feeCollectorV2
+} as const satisfies Record<FeeCollectorVersion, readonly unknown[]>
 
 const ADDRESSES: Record<FeeCollectorVersion, Record<string, string>> = {
   'V0': addressesV0,
   'V0.1': addressesV0_1,
-  'V1': addressesV1
+  'V1': addressesV1,
+  'V2': addressesV2
 }
 
-export interface FeeCollectorContract {
-  version: FeeCollectorVersion
+export interface FeeCollectorContract<V extends FeeCollectorVersion> {
+  version: V
   address: Address
-  abi: Abi
+  abi: (typeof ABIS)[V]
 }
 
-export function resolveFeeCollector(version: FeeCollectorVersion): FeeCollectorContract {
+export function resolveFeeCollector<V extends FeeCollectorVersion>(version: V): FeeCollectorContract<V> {
   const moduleKey = registry.folders[version]?.implementations?.FeeCollector
   const address = moduleKey ? ADDRESSES[version]?.[moduleKey] : undefined
 

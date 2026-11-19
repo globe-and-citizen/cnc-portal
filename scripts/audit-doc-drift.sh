@@ -69,7 +69,11 @@ while IFS= read -r f; do
       echo -e "${RED}✖ $f → $rel${NC}"
       broken=1
     fi
-  done < <(grep -oE '\]\(([^)]+\.md[^)]*)\)' "$f" 2>/dev/null | sed 's/^\](//')
+  done < <(awk '
+    /^[[:space:]]*```/ && fence != "tilde" { fence = fence == "backtick" ? "" : "backtick"; next }
+    /^[[:space:]]*~~~/ && fence != "backtick" { fence = fence == "tilde" ? "" : "tilde"; next }
+    fence == "" { print }
+  ' "$f" | grep -oE '\]\(([^)]+\.md[^)]*)\)' | sed 's/^\](//')
 done < <(find AGENTS.md CLAUDE.md .agents/skills .claude/skills .github/copilot-instructions.md .github/copilot-instructions -type f -name '*.md' 2>/dev/null)
 if [ $broken -eq 0 ]; then
   echo -e "${GREEN}✓ no broken links${NC}"

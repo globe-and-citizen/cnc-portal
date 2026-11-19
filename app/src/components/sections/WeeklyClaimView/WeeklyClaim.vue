@@ -1,6 +1,11 @@
 <template>
   <UCard class="w-full pb-7">
-    <template #header>{{ singleUser ? 'Weekly Claim (User)' : 'Weekly Claim' }}</template>
+    <template #header>
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <span>{{ singleUser ? 'Weekly Claim (User)' : 'Weekly Claim' }}</span>
+        <RequireWeeklyGoalsToggle v-if="!singleUser" />
+      </div>
+    </template>
     <UTable
       v-if="rows"
       :data="rows"
@@ -146,31 +151,32 @@
 </template>
 
 <script setup lang="ts">
-import type { SupportedTokens, WeeklyClaim } from '@/types/cash-remuneration'
-import { computed, watch } from 'vue'
 import { sumFiatValues, valueTokenAmount } from '@/utils/currency/valuation'
-import { useCurrencyStore, useTeamStore /*, useUserDataStore*/ } from '@/stores'
-import { NETWORK } from '@/constant'
 import RatePerHourList from '@/components/sections/WeeklyClaimView/RatePerHourList.vue'
 import RatePerHourTotalList from '@/components/sections/WeeklyClaimView/RatePerHourTotalList.vue'
-import { RouterLink } from 'vue-router'
 import type { TableColumn } from '@nuxt/ui'
-import type { TokenId } from '@/constant'
 import UserIdentity from '@/components/ui/UserIdentity.vue'
-import dayjs from 'dayjs'
+import type { TokenId } from '@/constant'
+import { NETWORK } from '@/constant'
+import { useCurrencyStore, useTeamStore /*, useUserDataStore*/ } from '@/stores'
+import type { SupportedTokens, WeeklyClaim } from '@/types/cash-remuneration'
 import { formatIsoWeekRange } from '@/utils/dates/calendar'
+import dayjs from 'dayjs'
 import isoWeek from 'dayjs/plugin/isoWeek'
 import utc from 'dayjs/plugin/utc'
 import weekday from 'dayjs/plugin/weekday'
+import { computed, watch } from 'vue'
+import { RouterLink } from 'vue-router'
 // import CRSigne from '../CashRemunerationView/CRSigne.vue'
 // import CRWithdrawClaim from '../CashRemunerationView/CRWithdrawClaim.vue'
+import { useGetTeamWeeklyClaimsQuery } from '@/queries'
+import WeeklyClaimActionDropdown from './WeeklyClaimActionDropdown.vue'
+import RequireWeeklyGoalsToggle from './RequireWeeklyGoalsToggle.vue'
+import TablePagination from '@/components/ui/TablePagination.vue'
+import { usePagination } from '@/composables/usePagination'
+import type { Address } from 'viem'
 import { computeClaimTokenAmounts, formatMinutesAsDuration } from '@/utils/wages/model'
 import { formatCurrency, formatMonthYear } from '@/utils/format'
-import type { Address } from 'viem'
-import TablePagination from '@/components/ui/TablePagination.vue'
-import WeeklyClaimActionDropdown from './WeeklyClaimActionDropdown.vue'
-import { useGetTeamWeeklyClaimsQuery } from '@/queries'
-import { usePagination } from '@/composables/usePagination'
 
 dayjs.extend(utc)
 dayjs.extend(isoWeek)

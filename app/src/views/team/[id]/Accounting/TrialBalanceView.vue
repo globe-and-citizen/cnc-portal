@@ -20,12 +20,7 @@
             :label="trial.balanced ? 'In balance' : 'Out of balance'"
             class="rounded-full"
           />
-          <DatePicker
-            v-model="asOf"
-            mode="date"
-            storage-key="cnc-accounting-trial-asof"
-            class="ml-auto"
-          />
+          <DatePicker v-model="asOf" mode="date" :storage-key="periodStorageKey" class="ml-auto" />
         </div>
       </template>
 
@@ -160,6 +155,7 @@ const REDEPLOY_HINT =
 // Point-in-time "as of" date (date mode) — defaults to end of today. The trial
 // balance is rebuilt from the slice of entries up to this date.
 const asOf = ref<Date>(defaultValueForMode('date') as Date)
+const periodStorageKey = `cnc-accounting-${useRoute().params.id}-trial-asof`
 
 const accounting = useAccountingContext()
 const trial = computed(() => presentTrial(accounting.journal.value, asOf.value))

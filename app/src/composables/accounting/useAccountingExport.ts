@@ -7,14 +7,13 @@
  * export. Snapshots the reactive journal at call time, so the file reflects
  * exactly what's on screen when the button is hit.
  */
-import type { AccountingExportSnapshot, SectionSpec } from '@/utils/accounting/exportSpec'
-import { type ExportPdfOptions, buildTables, exportTablesPdf } from '@/lib/accounting/pdf'
-import { buildSheets, exportSheetsExcel } from '@/lib/accounting/spreadsheet'
-import { activityCoverageLabel } from '@/utils/accounting/presenter'
-import { log } from '@/lib/logging'
 import { useAccountingContext } from './useAccountingContext'
-import { useTeamStore } from '@/stores/teamStore'
 import { useTransactionPresentation } from '@/composables/transactions/useTransactionPresentation'
+import { log } from '@/lib/logging'
+import { buildTables, exportTablesPdf, type ExportPdfOptions } from '@/lib/accounting/pdf'
+import type { AccountingExportSnapshot, SectionSpec } from '@/utils/accounting/exportSpec'
+import { buildSheets, exportSheetsExcel } from '@/lib/accounting/spreadsheet'
+import { useTeamStore } from '@/stores/teamStore'
 
 export function useAccountingExport() {
   const accounting = useAccountingContext()
@@ -37,11 +36,9 @@ export function useAccountingExport() {
     successMessage = 'Exported to PDF'
   ): Promise<void> {
     try {
-      const books = snapshot()
-      await exportTablesPdf(buildTables(books, specs, resolveName), {
+      await exportTablesPdf(buildTables(snapshot(), specs, resolveName), {
         ...opts,
-        teamName: teamStore.currentTeamMeta.data?.name,
-        coverage: activityCoverageLabel(books.journal)
+        teamName: teamStore.currentTeamMeta.data?.name
       })
       toast.add({ title: successMessage, color: 'success' })
     } catch (error) {

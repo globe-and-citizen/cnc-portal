@@ -24,6 +24,12 @@ import {
   SUBMIT_RESTRICTION_MAX_DAYS_BACK,
 } from '../utils/featureUtils';
 import { resolveCurrentWage } from '../utils/wageResolution';
+import {
+  hasWeeklyGoals,
+  isWeeklyGoalsRequired,
+  WEEKLY_GOALS_REQUIRED_FOR_EDIT_MESSAGE,
+  WEEKLY_GOALS_REQUIRED_MESSAGE,
+} from '../utils/weeklyGoalsUtils';
 
 dayjs.extend(utc);
 dayjs.extend(isoWeek);
@@ -168,6 +174,10 @@ export const addClaim = async (req: Request, res: Response) => {
       if (weeklyClaim.status === 'signed' || !!weeklyClaim.signature) {
         return errorResponse(409, 'Week already signed. Submission not allowed.', res);
       }
+    }
+
+    if ((await isWeeklyGoalsRequired(teamId)) && !hasWeeklyGoals(weeklyClaim?.weeklyGoals)) {
+      return errorResponse(400, WEEKLY_GOALS_REQUIRED_MESSAGE, res);
     }
 
     // Check total max minutes (regular + overtime).
@@ -362,6 +372,10 @@ export const updateClaim = async (req: Request, res: Response) => {
     // mutable only until their weekly claim is explicitly pending.
     if (claim.weeklyClaim?.status !== 'pending') {
       return errorResponse(403, "Can't edit: Claim is not pending", res);
+    }
+
+    if ((await isWeeklyGoalsRequired(wage.teamId)) && !hasWeeklyGoals(weeklyClaim.weeklyGoals)) {
+      return errorResponse(400, WEEKLY_GOALS_REQUIRED_FOR_EDIT_MESSAGE, res);
     }
 
     if (minutesWorked !== undefined) {

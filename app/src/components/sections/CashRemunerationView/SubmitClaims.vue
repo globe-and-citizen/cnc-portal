@@ -45,17 +45,18 @@
 </template>
 
 <script setup lang="ts">
-import type { Claim, ClaimFormData, ClaimSubmitPayload } from '@/types'
-import { computed, onMounted, ref, watch } from 'vue'
-import ClaimForm from '@/components/sections/CashRemunerationView/Form/ClaimForm.vue'
-import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import dayjs from 'dayjs'
-import { getAxiosErrorMessage } from '@/utils/errors/http'
-import { startOfWeek } from '@/utils/dates/calendar'
-import { useSubmitClaimMutation } from '@/queries/weeklyClaim.queries'
+import utc from 'dayjs/plugin/utc'
+import { useToast } from '@nuxt/ui/composables'
+import ClaimForm from '@/components/sections/CashRemunerationView/Form/ClaimForm.vue'
 import { useSubmitRestriction } from '@/composables'
 import { useTeamStore } from '@/stores'
-import utc from 'dayjs/plugin/utc'
+import type { ClaimFormData, ClaimSubmitPayload, Claim, WeeklyClaim } from '@/types'
+import { useSubmitClaimMutation } from '@/queries/weeklyClaim.queries'
+import { startOfWeek } from '@/utils/dates/calendar'
+import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
+import { getAxiosErrorMessage } from '@/utils/errors/http'
 
 dayjs.extend(utc)
 
@@ -88,9 +89,7 @@ const createDefaultFormData = (selectedWeekStart?: string): ClaimFormData => ({
 })
 
 const props = defineProps<{
-  weeklyClaim?: {
-    status: 'pending' | 'signed' | 'withdrawn' | 'disabled'
-  }
+  weeklyClaim?: Pick<WeeklyClaim, 'status'> & Partial<Pick<WeeklyClaim, 'weeklyGoals'>>
   signedWeekStarts?: string[]
   selectedWeekStart?: string
   maximumHoursPerDay?: number
@@ -99,7 +98,26 @@ const props = defineProps<{
 
 const formInitialData = ref<ClaimFormData>(createDefaultFormData(props.selectedWeekStart))
 
+/** The API enforces the same rule; this only spares the member a form they cannot save. */
+const isMissingRequiredWeeklyGoals = computed(
+  () =>
+    !!teamStore.currentTeamMeta.data?.requireWeeklyGoals && !props.weeklyClaim?.weeklyGoals?.trim()
+)
+
+const warnWeeklyGoalsRequired = () => {
+  toast.add({
+    title: 'Weekly goals required',
+    description: 'Submit your weekly goals for this week before submitting a claim.',
+    color: 'warning'
+  })
+}
+
 const openModalWithData = (initialData: ClaimFormData) => {
+  if (isMissingRequiredWeeklyGoals.value) {
+    warnWeeklyGoalsRequired()
+    return
+  }
+
   formInitialData.value = initialData
   errorMessage.value = null
   addWageClaimError.value = false

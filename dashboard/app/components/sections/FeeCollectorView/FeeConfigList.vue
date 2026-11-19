@@ -29,6 +29,11 @@
               <UIcon name="i-heroicons-arrow-path" class="w-6 h-6 animate-spin inline-block" />
             </td>
           </tr>
+          <tr v-else-if="error">
+            <td colspan="3" class="text-center py-8 text-red-600">
+              Failed to load fee configurations.
+            </td>
+          </tr>
           <tr v-for="config in feeConfigs" :key="config.contractType" class="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
             <td class="px-4 py-4 font-mono">
               {{ config.contractType }}
@@ -45,7 +50,7 @@
               />
             </td>
           </tr>
-          <tr v-if="!isLoading && feeConfigs?.length === 0">
+          <tr v-if="!isLoading && !error && feeConfigs?.length === 0">
             <td colspan="3" class="text-center py-8 text-gray-500">
               No fee configs available
             </td>
@@ -71,7 +76,7 @@ import FeeConfigAddActions from '@/components/sections/FeeCollectorView/FeeConfi
 import { isFeeCollectorOwner, useFeeConfigs } from '~/composables/FeeCollector/read'
 import { formatPercent } from '~/utils/format'
 
-const { data: feeConfigs, isLoading } = useFeeConfigs()
+const { data: feeConfigs, isLoading, error } = useFeeConfigs()
 const isFeeOwner = isFeeCollectorOwner()
 const isEditModalOpen = ref(false)
 const isEditLoading = ref(false)

@@ -1,8 +1,8 @@
 export type PolymarketActivityKind = 'TRADE' | 'SPLIT' | 'MERGE' | 'REDEEM' | 'REWARD' | 'CONVERSION' | 'MAKER_REBATE' | 'REFERRAL_REWARD'
 
 /**
- * One row from Polymarket Data API GET /activity.
- * @see https://docs.polymarket.com/api-reference/core/get-user-activity
+ * One Polymarket activity row (trade, split, merge, redeem, reward), mapped
+ * from Data API v2 GET /v2/activity by `toPolymarketActivity`.
  */
 export interface PolymarketActivity {
   proxyWallet?: `0x${string}`
@@ -29,12 +29,12 @@ export interface PolymarketActivity {
 }
 
 /**
- * One row from Polymarket Data API GET /positions.
+ * One Polymarket position, mapped from Data API v2 GET /v2/positions by
+ * `toPolymarketPosition`.
  *
  * This is the source of cost basis and P&L data, which the /activity feed
  * does NOT provide. `realizedPnl` covers closed exposure, `cashPnl` is the
  * unrealized (mark-to-market) P&L on the still-open size.
- * @see https://docs.polymarket.com/api-reference/core/get-current-positions-for-a-user
  */
 export interface PolymarketPosition {
   proxyWallet?: `0x${string}`
@@ -70,12 +70,4 @@ export interface PolymarketPosition {
   negativeRisk?: boolean
   redeemable?: boolean
   mergeable?: boolean
-}
-
-/** One point from Polymarket user-pnl-api — powers the profile Profit/Loss chart. */
-export interface PolymarketUserPnlPoint {
-  /** Unix seconds. */
-  t: number
-  /** Cumulative portfolio P&L (USD) at `t`. */
-  p: number
 }

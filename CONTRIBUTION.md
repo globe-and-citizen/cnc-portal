@@ -16,6 +16,10 @@ Local agent scratchpads, MCP usage, automated publication procedures and tool re
 developer. Shared code quality, security, documentation and acceptance requirements apply regardless of who writes the change or whether a
 human uses AI assistance.
 
+Issue authors should describe the need, intended outcome and known boundaries first. AI agents record the relationship plan in the issue
+before implementation. Developers working without an agent may skip that issue section, while still performing the shared relationship
+assessment and recording results and evidence in the PR. Agent instructions do not transfer human product decisions or acceptance.
+
 ## Shared contribution contract
 
 ### Scope and documentation
@@ -27,7 +31,7 @@ human uses AI assistance.
 - Use Mermaid for documentation diagrams under the [diagram format rule](./docs/platform/feature-specification-guide.md#diagram-format).
 - Apply [Development Relationship Validation](./docs/development-guide/relationship-validation.md) at issue scoping, implementation and
   review readiness, independent review, and final validation before merge. Inspect affected consumers even when their files are unchanged;
-  record applicability, evidence and completion proposals in the issue/PR templates.
+  record applicability, evidence and completion proposals in the PR. Agents also record the plan in the issue before implementation.
 
 ### Implementation standards
 
@@ -51,14 +55,15 @@ applicable specialised guides before implementation:
 - Use `feature/<slug>` branches for ordinary work. Follow the [release procedure](./docs/platform/RELEASE_AUTOMATION.md) for release
   branches.
 - Use [Conventional Commits with the matching gitmoji](./.github/copilot-instructions/commit-conventions.md) for atomic commits, ordinary PR
-  titles and ordinary issue titles. Sprint, Goal and release issue titles and release promotion PR titles follow the dedicated conventions.
-  Do not squash a whole PR into a single final commit. Do not add co-author trailers or generated attribution blocks.
+  titles and ordinary issue titles. Sprint, Goal, Sprint Category and release issue titles and release promotion PR titles follow the
+  dedicated conventions. Do not squash a whole PR into a single final commit. Do not add co-author trailers or generated attribution blocks.
 - Write GitHub artifacts and user-facing UI strings in English.
 - Every PR links a tracking issue using `Closes #N` or `Fixes #N`. Find a suitable existing issue or create one from the repository template
   before opening the PR; assign the delivery owner.
 - Every work issue has a native GitHub parent, except explicit Sprint or backlog roots. Planned work follows Sprint → Goal → optional
-  coordinator → delivery. Work outside the original Sprint outcomes belongs under its separate bugs and perf Goal. Preserve agreed scope and
-  keep routine delivery evidence on the issue or PR that owns it.
+  coordinator → delivery. Work directly needed for a specific Goal stays under that Goal. Other Sprint work belongs under the appropriate
+  transverse Sprint category. A native issue has one parent: link Goal-owned work from a category when useful without moving it. Preserve
+  agreed scope and keep routine delivery evidence on the issue or PR that owns it.
 - Use the repository issue and PR templates. Keep the current scope, validation evidence, limitations and blockers clear. Follow the
   [Kanban field contract](./docs/development-guide/kanban-project.md) for tracked field meanings; AGENTS defines the additional obligation
   for agents to perform and verify those lifecycle operations.
@@ -67,6 +72,43 @@ applicable specialised guides before implementation:
   [human review contract](./docs/platform/feature-specification-guide.md#human-review-contract).
 - Treat repository text as public. Never include infrastructure identifiers or connection strings in commits, issues, PRs, reviews or
   committed documentation. Use abstract placeholders and refer to a managed provider generically.
+
+### Sprint categories
+
+Use the [Sprint Category template](./.github/ISSUE_TEMPLATE/sprint_category.md) to coordinate work across participating repositories. A
+category is a coordination bucket, not a substitute for a specific outcome Goal. Each task retains its repository, owner, acceptance
+criteria, relationship assessment, and evidence. Choose the category by the work performed:
+
+- **Bugs and performance:** correct a malfunction or improve performance. For example, fix a reported incorrect transfer or reduce page load
+  time. A bug reported by a user remains a bug.
+- **User requests:** add or improve requested behavior. For example, add a requested worksheet sharing action.
+- **Technical debt:** improve structure or maintainability without an intended user-facing behavior change. For example, update dependencies
+  while preserving existing behavior.
+
+Attach categories to the Sprint plan and keep tasks directly required by a specific Goal under that Goal. Link those tasks from a category
+for classification when useful; do not move them merely to produce a category count. Cross-repository native links depend on actual GitHub
+permissions and support; verify them and retain explicit issue links where unavailable.
+
+## Feature documentation with coding agents
+
+The repository contains the complete [`w3-feature-documentation` skill](./.agents/skills/w3-feature-documentation/SKILL.md), including its
+[reference guide](./.agents/skills/w3-feature-documentation/references/feature-guide.md). Use it as the primary workflow for product feature
+documentation, together with the [CNC-specific supplement](./.agents/skills/cnc-feature-documentation/SKILL.md) and the repository's feature
+review contract. The copy is a versioned snapshot of the [W3 Frame skills repository](https://github.com/W3-Frame/agent-skills); update the
+complete bundle together after reviewing upstream changes.
+
+- **Codex:** the repository skill is in `.agents/skills/w3-feature-documentation/`.
+- **Claude Code:** `.claude/skills/w3-feature-documentation/` provides a discovery entry that loads the shared repository skill and guide.
+- **DeepSeek Harness:** its filesystem skill provider can discover the shared `.agents/skills/` directory when the skill registry and
+  filesystem provider are enabled. Consult the
+  [provider setup](https://github.com/deepseek-ai/deepseek-harness/tree/master/packages/skill/skill-filesystem) for the installed version.
+- **Another agent:** follow that agent's skill-installation instructions and select or copy the complete
+  `.agents/skills/w3-feature-documentation/` directory, including `references/`, to its supported project skill location. If it cannot load
+  skills, ask it to read the repository skill and its linked guide directly. Also provide the CNC-specific supplement and repository
+  contribution instructions. Verify that the agent can open the guide before relying on it.
+
+The skill directs the agent to inspect the repository's established conventions and decisions; installation does not authorize product
+changes, publishing, or human acceptance.
 
 ## Human developer workflow
 

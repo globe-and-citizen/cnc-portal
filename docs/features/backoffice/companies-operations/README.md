@@ -43,11 +43,11 @@ flowchart LR
 
 ## Status Overview
 
-| User Story      | Title                                      | Actor                  | Status  |
-| --------------- | ------------------------------------------ | ---------------------- | ------- |
-| US-TEAM-OPS-001 | Access and inspect platform companies      | Platform administrator | ✅ Done |
-| US-TEAM-OPS-002 | Inspect a company profile                  | Platform administrator | ✅ Done |
-| US-TEAM-OPS-003 | Investigate Officer contracts and balances | Platform administrator | ✅ Done |
+| User Story                                                                     | Feature                                    | Actor                  | Status         | Intended Scope |
+| ------------------------------------------------------------------------------ | ------------------------------------------ | ---------------------- | -------------- | -------------- |
+| [US-TEAM-OPS-001](#us-team-ops-001-access-and-inspect-platform-companies)      | Access and inspect platform companies      | Platform administrator | ✅ Done        | Not assessed   |
+| [US-TEAM-OPS-002](#us-team-ops-002-inspect-a-company-profile)                  | Inspect a company profile                  | Platform administrator | ✅ Done        | Not assessed   |
+| [US-TEAM-OPS-003](#us-team-ops-003-investigate-officer-contracts-and-balances) | Investigate Officer contracts and balances | Platform administrator | 🚧 In Progress | Not assessed   |
 
 ## Test Coverage Overview
 
@@ -59,19 +59,25 @@ reference has the expected layer label.
 | --------------- | ------------ | --------------- | --------------------------------- |
 | US-TEAM-OPS-001 | Not required | ⚠️ 1/11 met     | `AC-US-TEAM-OPS-001-01–07, 09–11` |
 | US-TEAM-OPS-002 | Not required | ❌ 0/6 met      | `AC-US-TEAM-OPS-002-01–06`        |
-| US-TEAM-OPS-003 | Not required | ❌ 0/10 met     | `AC-US-TEAM-OPS-003-01–10`        |
+| US-TEAM-OPS-003 | Not required | ❌ 0/14 met     | `AC-US-TEAM-OPS-003-01–14`        |
 
 Proof obligations use the [shared proof-strategy registry](../../../testing/proof-strategies.md). Multiple IDs for one AC are cumulative.
 
-## US-TEAM-OPS-001: Access and Inspect Platform Companies
+## FEAT-TEAM-OPS-001: Access and Inspect Platform Companies
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
+
+### US-TEAM-OPS-001: Access and Inspect Platform Companies
 
 **As a** platform administrator\
 **I want to** access and inspect the active companies across the platform\
 **So that** I can identify the company that needs operational follow-up
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-TEAM-OPS-001-01` An authenticated administrator or super administrator can open Companies operations and load the active
       platform company list.
@@ -82,7 +88,7 @@ Proof obligations use the [shared proof-strategy registry](../../../testing/proo
 - [x] `AC-US-TEAM-OPS-001-04` An administrator can filter the list by company name, sort the available operational columns, paginate the
       filtered result, and open a selected company.
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-TEAM-OPS-001-05` A visitor without a session is redirected to sign in, and an authenticated user without an administrator role
       is sent to access denied before using the dashboard journey.
@@ -91,14 +97,14 @@ Proof obligations use the [shared proof-strategy registry](../../../testing/proo
 - [x] `AC-US-TEAM-OPS-001-08` The platform-wide company-list API, implemented by the technical `/teams` endpoint, independently restricts
       unfiltered results to administrator roles. _(API)_
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [x] `AC-US-TEAM-OPS-001-09` A failed company-list request is reported as a loading error instead of being presented as a successful
       refresh.
 - [x] `AC-US-TEAM-OPS-001-10` A platform with no active companies produces an empty list and zero-valued company summary.
 - [x] `AC-US-TEAM-OPS-001-11` An administrator can request a fresh platform company list after an earlier load.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion    | Proof Strategy | Current Evidence | Status          |
 | ----------------------- | -------------- | ---------------- | --------------- |
@@ -117,33 +123,39 @@ Proof obligations use the [shared proof-strategy registry](../../../testing/proo
 
 **Dependencies:** Dashboard authentication and administrator roles
 
-## US-TEAM-OPS-002: Inspect a Company Profile
+## FEAT-TEAM-OPS-002: Inspect a Company Profile
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
+
+### US-TEAM-OPS-002: Inspect a Company Profile
 
 **As a** platform administrator\
 **I want to** open a company and inspect its current identity and ownership\
 **So that** I can establish the operational context before investigating its contracts
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-TEAM-OPS-002-01` An administrator can open a listed company and inspect its name, identifier, description when present, owner,
       creation date, and current Officer version when one exists.
 - [x] `AC-US-TEAM-OPS-002-02` An administrator can return from the company profile to the platform company list.
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-TEAM-OPS-002-03` The company-detail API permits an administrator to inspect a company even when the administrator is not a
       member of that company.
 - [x] `AC-US-TEAM-OPS-002-04` The dashboard exposes no administrator controls for creating, editing, archiving, deleting, or changing a
       company's membership.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [x] `AC-US-TEAM-OPS-002-05` Loading a company profile displays a pending state until its details are available.
 - [x] `AC-US-TEAM-OPS-002-06` An unavailable or failed company-detail request reports that the company could not be loaded.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion    | Proof Strategy | Current Evidence | Status     |
 | ----------------------- | -------------- | ---------------- | ---------- |
@@ -157,39 +169,51 @@ Proof obligations use the [shared proof-strategy registry](../../../testing/proo
 
 **Dependencies:** US-TEAM-OPS-001
 
-## US-TEAM-OPS-003: Investigate Officer Contracts and Balances
+## FEAT-TEAM-OPS-003: Investigate Officer Contracts and Balances
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
+
+### US-TEAM-OPS-003: Investigate Officer Contracts and Balances
 
 **As a** platform administrator\
 **I want to** inspect a company's Officer generations, contracts, balances, and event history\
 **So that** I can investigate its deployed operational surface and held value
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-TEAM-OPS-003-01` An administrator can inspect the current and legacy Officer generations associated with a listed company.
 - [x] `AC-US-TEAM-OPS-003-02` An administrator can inspect contracts grouped by their Officer generation and separately identify shared,
       version-independent contracts.
-- [x] `AC-US-TEAM-OPS-003-03` Each displayed contract exposes its type, address, deployer, and event-log history.
+- [x] `AC-US-TEAM-OPS-003-03` Each displayed contract exposes its type, address, deployer, and event-log history. The decoder includes
+      generated event signatures from the V0, V0.1, V1, and V2 ABI snapshots.
 - [x] `AC-US-TEAM-OPS-003-04` Supported value-holding contracts expose their current native-token and supported-stablecoin balances,
       including an explicit zero when no supported balance is held.
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-TEAM-OPS-003-05` A generation is identified as current only when it has no successor in that company's Officer sequence.
 - [x] `AC-US-TEAM-OPS-003-06` Contracts that do not hold supported value are not assigned a balance in the contract detail view.
 - [x] `AC-US-TEAM-OPS-003-07` Stablecoin totals remain an approximate dollar value, while native-token balances remain outside that dollar
       total.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [x] `AC-US-TEAM-OPS-003-08` A company with no deployed Officer contracts reports that no contracts are available rather than implying a
       deployment.
 - [x] `AC-US-TEAM-OPS-003-09` A failed Officer-generation request reports that contract versions could not be loaded.
 - [x] `AC-US-TEAM-OPS-003-10` A failed event-log request reports the retrieval failure instead of presenting an empty event history as
       successful.
+- [x] `AC-US-TEAM-OPS-003-11` A bounded scan that has not reached genesis is marked incomplete and offers a way to load older ranges.
+- [x] `AC-US-TEAM-OPS-003-12` An event that cannot be decoded remains visible with its raw topics and data.
+- [x] `AC-US-TEAM-OPS-003-13` A failed range preserves already loaded events and offers a retry of the remaining history.
+- [x] `AC-US-TEAM-OPS-003-14` Each contract history can be scanned back to the configured chain's genesis without assuming that an imported
+      contract was created after the CNC deployment.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion    | Proof Strategy | Current Evidence | Status     |
 | ----------------------- | -------------- | ---------------- | ---------- |
@@ -206,6 +230,10 @@ Proof obligations use the [shared proof-strategy registry](../../../testing/proo
 | `AC-US-TEAM-OPS-003-08` | `PS-DASHBOARD` | None linked      | ❌ Missing |
 | `AC-US-TEAM-OPS-003-09` | `PS-DASHBOARD` | None linked      | ❌ Missing |
 | `AC-US-TEAM-OPS-003-10` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-TEAM-OPS-003-11` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-TEAM-OPS-003-12` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-TEAM-OPS-003-13` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-TEAM-OPS-003-14` | `PS-DASHBOARD` | None linked      | ❌ Missing |
 
 **Dependencies:** US-TEAM-OPS-002 and available backend and chain data
 
@@ -214,15 +242,23 @@ Proof obligations use the [shared proof-strategy registry](../../../testing/proo
 Validated on 2026-08-27 against the administrator access boundary, company-list and company-profile journeys, Officer and balance
 investigation, and the independent API role enforcement described below.
 
-The validation date is historical, not a current automated-test result. A failed balance read can currently appear as zero in the list recap
-or detail view; `AC-US-TEAM-OPS-001-03` and `AC-US-TEAM-OPS-003-04` still need failure-versus-confirmed-zero proof.
+The validation date is historical and does not validate the new progressive log investigation. The logs flow has unit/component evidence and
+a bounded read-only RPC sample, but still requires a browser journey and human validation. A failed balance read can currently appear as
+zero in the list recap or detail view; `AC-US-TEAM-OPS-001-03` and `AC-US-TEAM-OPS-003-04` still need failure-versus-confirmed-zero proof.
 
 ## Implementation Evidence
+
+Contract log scanning starts from a pinned current block and reads older contiguous ranges in bounded batches. It reduces the range after
+recognized provider range-limit errors, preserves successfully scanned ranges when a later request fails, and allows the operator to retry
+or load older history. Genesis is the universal lower boundary because the backend does not record a deployment block for every team
+contract and an imported Safe may predate CNC. The old Polygon-only boundary, block 79743826, corresponds to 2025-12-01 UTC and precedes the
+V0–V2 CNC registry deployment dates, but it does not prove a complete history for imported contracts or other chains. Scanning is complete
+only when the operator reaches genesis; a provider can still be unavailable or lack historical data.
 
 The company payload lists every Safe the company registered, disabled ones included. The profile and balance recap keep only its default
 Safe, the latest activated one not disabled, among the live contracts, so they count that Safe.
 
-**Implementation evidence reviewed against:** `1955939a748a00287ff6dc446a519f84ec09267c`
+**Implementation evidence reviewed against:** `8c84127053dc02e55399650ee5f19e691b4d3943`
 
 - [Dashboard navigation](../../../../dashboard/app/layouts/default.vue),
   [administrator route guard](../../../../dashboard/app/middleware/auth.global.ts), and
@@ -237,7 +273,12 @@ Safe, the latest activated one not disabled, among the live contracts, so they c
   [default Safe selection](../../../../dashboard/app/utils/teamSafes.ts),
   [contract balances](../../../../dashboard/app/components/teams/ContractBalance.vue),
   [stablecoin balance query](../../../../dashboard/app/queries/contractTokenBalances.query.ts), and
-  [contract logs](../../../../dashboard/app/components/teams/ContractLogs.vue)
+  [contract logs](../../../../dashboard/app/components/teams/ContractLogs.vue), and
+  [contract log query](../../../../dashboard/app/queries/contractLogs.query.ts),
+  [bounded log scanner and generation-aware decoding](../../../../dashboard/app/utils/contractLogPages.ts),
+  [log scanner tests](../../../../dashboard/test/contractLogPages.spec.ts),
+  [query tests](../../../../dashboard/test/contractLogsQuery.spec.ts), and
+  [log state tests](../../../../dashboard/test/contractLogsView.spec.ts)
 - [Company routes](../../../../backend/src/routes/teamRoutes.ts),
   [company controller](../../../../backend/src/controllers/teamController.ts), and
   [company-controller coverage](../../../../backend/src/controllers/__tests__/teamController.test.ts)

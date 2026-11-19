@@ -20,7 +20,7 @@
 
           <!-- Reporting period + account filter + currency filter + show/hide columns -->
           <div class="flex flex-wrap items-center justify-end gap-2.5">
-            <DatePicker v-model="period" mode="range" storage-key="cnc-accounting-ledger-period" />
+            <DatePicker v-model="period" mode="range" :storage-key="periodStorageKey" />
             <AccountFilterSelect
               v-if="showAccountFilter"
               v-model="selectedAccounts"
@@ -96,6 +96,7 @@ const visibleColumns = useLocalStorage<LedgerColumnKey[]>(
 
 // Reporting period (range mode) — defaults to "All time" (whole book).
 const period = ref<Range>(defaultValueForMode('range') as Range)
+const periodStorageKey = `cnc-accounting-${useRoute().params.id}-ledger-period`
 
 const accounting = useAccountingContext()
 

@@ -1,20 +1,17 @@
+import { formatUnits, zeroAddress } from 'viem'
+import { SUPPORTED_TOKENS } from '@/constant'
 import type { CoinGeckoAssetMarketResponse, CoinGeckoHistoricalResponse } from '@/types/coingecko'
 import type { CowOrder, CowTransactionOrders } from '@/types/cow'
+import type { SafeClientBalance, SafeIncomingTransfer } from '@/types/safe'
+import { assetMarketFromResponse, historicalRateFromResponse } from '@/utils/tokens/coingecko'
+import { computeSafeCostBasis, type SafeCostBasis, type SafeSwapFeeOf } from './costBasis'
 import {
   SAFE_NATIVE_ASSET,
-  groupSafeTransfers,
   netSafeTransfers,
-  safeDayOf,
   safeMovements,
   safeSwapHashes,
   safeTransferAsset
 } from './swapTransfers'
-import type { SafeClientBalance, SafeIncomingTransfer } from '@/types/safe'
-import { type SafeCostBasis, computeSafeCostBasis } from './costBasis'
-import { type SafeSwapFeeOf, type SafeSwapPnl, computeSafeSwapPnl } from './swapPnl'
-import { assetMarketFromResponse, historicalRateFromResponse } from '@/utils/tokens/coingecko'
-import { formatUnits, zeroAddress } from 'viem'
-import { SUPPORTED_TOKENS } from '@/constant'
 
 /** CoinGecko identities valued at their $1 peg instead of a market quote. */
 const STABLE_COIN_IDS = new Set(['usd-coin', 'tether', 'dai'])
@@ -84,32 +81,6 @@ export function safeSwapCoinIds(
   return coinIds
 }
 
-/**
- * Daily quotes needed: each asset given up on its swap day, and today's quote for a received
- * asset the Safe no longer holds. Pegged stablecoins need none.
- */
-export function safeSwapRateRequests(
-  transfers: readonly SafeIncomingTransfer[],
-  safeAddress: string,
-  coinIds: ReadonlyMap<string, string>,
-  heldBalances: readonly SafeClientBalance[],
-  today: string
-): { coinId: string; date: string }[] {
-  const requests = new Map<string, { coinId: string; date: string }>()
-  const request = (asset: string, date: string) => {
-    const coinId = coinIds.get(asset)
-    if (coinId && !STABLE_COIN_IDS.has(coinId)) requests.set(`${coinId}:${date}`, { coinId, date })
-  }
-  const heldAssets = new Set(heldBalances.map(balanceAsset))
-  for (const rows of groupSafeTransfers(transfers).values()) {
-    for (const [asset, { transfer, amount }] of netSafeTransfers(rows, safeAddress)) {
-      if (amount < 0n) request(asset, safeDayOf(transfer.executionDate))
-      else if (amount > 0n && !heldAssets.has(asset)) request(asset, today)
-    }
-  }
-  return [...requests.values()]
-}
-
 /** Fee CoW Protocol reports for the Safe's own orders in a swap, in the asset it sold. */
 function cowSwapFee(
   transfers: readonly SafeIncomingTransfer[],
@@ -137,15 +108,6 @@ function cowSwapFee(
     else if (fee.asset === token) fee.quantity += quantity
   }
   return fee
-}
-
-/** Value the swaps from their sources; a missing quote or fee stays visible instead of reading as zero. */
-export function buildSafeSwapReport(
-  transfers: readonly SafeIncomingTransfer[],
-  sources: SafeSwapValuationSources
-): SafeSwapPnl {
-  const { prices, feeOf } = safeSwapPricing(sources)
-  return computeSafeSwapPnl(transfers, sources.safeAddress, prices, feeOf)
 }
 
 /** Value every token the swaps touched at its weighted average cost, through all its movements. */

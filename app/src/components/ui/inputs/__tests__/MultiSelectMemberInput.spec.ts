@@ -1,8 +1,9 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { describe, it, expect, vi, afterEach } from 'vitest'
+import { mount } from '@vue/test-utils'
+import { reactive } from 'vue'
 import MultiSelectMemberInput from '../MultiSelectMemberInput.vue'
 import UserIdentity from '@/components/ui/UserIdentity.vue'
 import { createTestingPinia } from '@pinia/testing'
-import { mount } from '@vue/test-utils'
 
 interface Member {
   name?: string
@@ -133,6 +134,7 @@ describe('MultiSelectMemberInput', () => {
       expect(currentMembers[0]).toEqual(member)
 
       // Update wrapper with new members
+      currentMembers = reactive([...currentMembers])
       await wrapper.setProps({ modelValue: currentMembers })
       await wrapper.vm.$nextTick()
 

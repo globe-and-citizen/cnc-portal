@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { useOfficerAddress, useOfficerFeeBps } from '../reads'
-import { useReadContractFn } from '@/tests/mocks'
+import { zeroAddress } from 'viem'
+import { useOfficerAddress, useOfficerFeeBps, useOfficerIsFeeCollectorToken } from '../reads'
 import { useTeamStore } from '@/stores'
+import { useReadContractFn } from '@/tests/mocks'
 
 const defaultOfficerAddress = '0x0987654321098765432109876543210987654321'
 
@@ -39,6 +40,31 @@ describe('Officer Composable Reads', () => {
 
       const { config } = getReadContractCall()
       expect(config?.query.enabled.value).toBe(false)
+    })
+  })
+
+  describe('useOfficerIsFeeCollectorToken', () => {
+    const usdcAddress = '0xA3492D046095AFFE351cFac15de9b86425E235dB'
+
+    const getConfig = (tokenAddress: `0x${string}` | undefined) => {
+      useOfficerIsFeeCollectorToken(tokenAddress)
+      const calls = useReadContractFn.mock.calls
+      return calls[calls.length - 1]?.[0]
+    }
+
+    it('asks the officer whether the FeeCollector supports an ERC-20 token', () => {
+      const config = getConfig(usdcAddress)
+
+      expect(config?.functionName).toBe('isFeeCollectorToken')
+      expect(config?.args.value).toEqual([usdcAddress])
+      expect(config?.query.enabled.value).toBe(true)
+    })
+
+    it.each([
+      ['native', zeroAddress],
+      ['missing', undefined]
+    ])('skips the query for a %s token', (_label, tokenAddress) => {
+      expect(getConfig(tokenAddress)?.query.enabled.value).toBe(false)
     })
   })
 })

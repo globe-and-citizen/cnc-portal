@@ -15,7 +15,7 @@
             </span>
             <span class="text-[15px] font-semibold">Income statement</span>
           </div>
-          <DatePicker v-model="period" mode="range" storage-key="cnc-accounting-income-period" />
+          <DatePicker v-model="period" mode="range" :storage-key="periodStorageKey" />
         </div>
       </template>
 
@@ -86,19 +86,21 @@
 </template>
 
 <script setup lang="ts">
-import { type Range, defaultValueForMode, isAllTimeRange } from '@/utils/dates/picker'
-import { type StatementLineView, presentIncome } from '@/utils/accounting/presenter'
 import { computed, ref } from 'vue'
-import AccountingExportBar from '@/components/sections/AccountingView/AccountingExportBar.vue'
+import { useRoute } from 'vue-router'
 import DatePicker from '@/components/ui/DatePicker.vue'
-import LedgerDrilldownModal from '@/components/sections/AccountingView/LedgerDrilldownModal.vue'
+import AccountingExportBar from '@/components/sections/AccountingView/AccountingExportBar.vue'
 import StatementLine from '@/components/sections/AccountingView/StatementLine.vue'
+import LedgerDrilldownModal from '@/components/sections/AccountingView/LedgerDrilldownModal.vue'
+import { defaultValueForMode, isAllTimeRange, type Range } from '@/utils/dates/picker'
 import { useAccountingContext } from '@/composables/accounting/useAccountingContext'
-import { useLedgerDrilldown } from '@/composables/accounting/useLedgerDrilldown'
 import { useSectionExport } from '@/composables/accounting/useSectionExport'
+import { useLedgerDrilldown } from '@/composables/accounting/useLedgerDrilldown'
+import { presentIncome, type StatementLineView } from '@/utils/accounting/presenter'
 
 // Reporting period (range mode) — defaults to "All time".
 const period = ref<Range>(defaultValueForMode('range') as Range)
+const periodStorageKey = `cnc-accounting-${useRoute().params.id}-income-period`
 
 const accounting = useAccountingContext()
 const income = computed(() =>

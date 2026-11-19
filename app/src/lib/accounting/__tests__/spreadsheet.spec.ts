@@ -122,21 +122,21 @@ describe('buildSheets (complete report selection)', () => {
 
     const balance = byName('Balance Sheet').rows
     const totalAssetsRow = balance.find((r) => r[0] === 'Total assets')!
-    expect(totalAssetsRow[1]).toBe(100)
-    expect(balance.find((r) => r[0] === 'Cash — Bank')![1]).toBe(100)
+    expect(totalAssetsRow[2]).toBe(100)
+    expect(balance.find((r) => r[0] === 'Cash — Bank')![2]).toBe(100)
     expect(balance.find((r) => r[0] === 'Earnings to date calculation')).toBeTruthy()
-    expect(balance.find((r) => r[0] === 'Service Revenue')![1]).toBe(100)
-    expect(balance.find((r) => r[0] === 'Earnings to date')![1]).toBe(100)
+    expect(balance.find((r) => r[0] === 'Service Revenue')![2]).toBe(100)
+    expect(balance.find((r) => r[0] === 'Earnings to date')![2]).toBe(100)
   })
 
   it('[AC-US-ACCT-004-06] keeps concrete account rows and the earnings contributions', () => {
     const balance = byName('Balance Sheet').rows
     const row = (label: string) => balance.find((candidate) => candidate[0] === label)
     // The concrete pocket, then the accounts explaining what earnings are made of.
-    expect(row('Cash — Bank')![1]).toBe(100)
+    expect(row('Cash — Bank')![2]).toBe(100)
     expect(row('Earnings to date calculation')).toBeTruthy()
-    expect(row('Service Revenue')![1]).toBe(100)
-    expect(row('Earnings to date')![1]).toBe(100)
+    expect(row('Service Revenue')![2]).toBe(100)
+    expect(row('Earnings to date')![2]).toBe(100)
   })
 
   it('trial balance totals debit = credit', () => {
