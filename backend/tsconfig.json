@@ -48,7 +48,6 @@
     "vitest.config.unit.ts",
     "vitest.config.ts",
     "vitest.e2e.config.ts",
-    "vitest.unit.config.ts",
     "node_modules",
     "**/*.spec.ts",
     "**/*.test.ts",
