@@ -16,7 +16,7 @@ import {
 } from '../utils/featureUtils';
 
 /** GET /features — List all features */
-export const listFeatures = async (_req: Request, res: Response) => {
+export const listFeatures = async (_req: Request<Record<string, string>>, res: Response) => {
   try {
     const features = await findAllFeatures();
     return res.status(200).json(features);
@@ -26,7 +26,7 @@ export const listFeatures = async (_req: Request, res: Response) => {
 };
 
 /** GET /features/:functionName — Get a single feature */
-export const getFeatureByName = async (req: Request, res: Response) => {
+export const getFeatureByName = async (req: Request<Record<string, string>>, res: Response) => {
   try {
     const { functionName } = req.params;
     const feature = await findFeatureByName(functionName);
@@ -42,7 +42,7 @@ export const getFeatureByName = async (req: Request, res: Response) => {
 };
 
 /** POST /features — Create a new feature */
-export const createNewFeature = async (req: Request, res: Response) => {
+export const createNewFeature = async (req: Request<Record<string, string>>, res: Response) => {
   try {
     const { functionName, status } = req.body;
 
@@ -59,7 +59,7 @@ export const createNewFeature = async (req: Request, res: Response) => {
 };
 
 /** PUT /features/:functionName — Update a feature's status */
-export const updateFeatureByName = async (req: Request, res: Response) => {
+export const updateFeatureByName = async (req: Request<Record<string, string>>, res: Response) => {
   try {
     const { functionName } = req.params;
     const { status } = req.body;
@@ -77,7 +77,7 @@ export const updateFeatureByName = async (req: Request, res: Response) => {
 };
 
 /** DELETE /features/:functionName — Delete a feature and its overrides */
-export const deleteFeatureByName = async (req: Request, res: Response) => {
+export const deleteFeatureByName = async (req: Request<Record<string, string>>, res: Response) => {
   try {
     const { functionName } = req.params;
 
@@ -97,7 +97,7 @@ export const deleteFeatureByName = async (req: Request, res: Response) => {
 };
 
 /** POST /features/:functionName/teams — Create a team override */
-export const createOverride = async (req: Request, res: Response) => {
+export const createOverride = async (req: Request<Record<string, string>>, res: Response) => {
   try {
     const { functionName } = req.params;
     const { teamId, status } = req.body;
@@ -127,7 +127,7 @@ export const createOverride = async (req: Request, res: Response) => {
 };
 
 /** PUT /features/:functionName/teams/:teamId — Update a team override */
-export const updateOverride = async (req: Request, res: Response) => {
+export const updateOverride = async (req: Request<Record<string, string>>, res: Response) => {
   try {
     const { functionName, teamId } = req.params;
     const { status } = req.body;
@@ -157,7 +157,7 @@ export const updateOverride = async (req: Request, res: Response) => {
 };
 
 /** DELETE /features/:functionName/teams/:teamId — Remove a team override */
-export const removeOverride = async (req: Request, res: Response) => {
+export const removeOverride = async (req: Request<Record<string, string>>, res: Response) => {
   try {
     const { functionName, teamId } = req.params;
 
@@ -185,7 +185,10 @@ export const removeOverride = async (req: Request, res: Response) => {
 };
 
 //Check if submit restriction is active for a team (used by frontend).
-export const checkSubmitRestriction = async (req: Request, res: Response) => {
+export const checkSubmitRestriction = async (
+  req: Request<Record<string, string>>,
+  res: Response
+) => {
   try {
     const teamIdParam = req.params.id;
 

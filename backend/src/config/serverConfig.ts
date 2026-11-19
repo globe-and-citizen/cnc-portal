@@ -105,6 +105,7 @@ class Server {
 
   constructor() {
     this.app = express();
+    this.app.set('query parser', 'extended');
     // Trust proxy headers (needed for correct client IP detection behind load balancers/proxies)
     if (process.env.TRUST_PROXY === 'true' || process.env.NODE_ENV === 'production') {
       this.app.set('trust proxy', true);
@@ -165,6 +166,10 @@ class Server {
 
   private middleware() {
     this.app.use(express.json());
+    this.app.use((req, _res, next) => {
+      req.body ??= {};
+      next();
+    });
     const rawOrigins = process.env.FRONTEND_URL
       ? process.env.FRONTEND_URL.split(',')
           .map((o) => o.trim())

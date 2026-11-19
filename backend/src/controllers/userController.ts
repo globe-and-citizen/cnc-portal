@@ -12,7 +12,7 @@ import { deleteFileByKey } from '../services/attachmentService';
  * @param res
  * @returns
  */
-export const getNonce = async (req: Request, res: Response) => {
+export const getNonce = async (req: Request<Record<string, string>>, res: Response) => {
   const { address } = req.params;
 
   try {
@@ -42,7 +42,7 @@ export const getNonce = async (req: Request, res: Response) => {
   }
 };
 
-export const getUser = async (req: Request, res: Response) => {
+export const getUser = async (req: Request<Record<string, string>>, res: Response) => {
   const { address } = req.params;
 
   try {
@@ -64,7 +64,7 @@ export const getUser = async (req: Request, res: Response) => {
   }
 };
 
-export const updateUser = async (req: Request, res: Response) => {
+export const updateUser = async (req: Request<Record<string, string>>, res: Response) => {
   const { address } = req.params;
   const { name, imageUrl } = req.body;
   const callerAddress = req.address;
@@ -120,7 +120,7 @@ export const updateUser = async (req: Request, res: Response) => {
   }
 };
 
-export const getAllUsers = async (req: Request, res: Response) => {
+export const getAllUsers = async (req: Request<Record<string, string>>, res: Response) => {
   const { page, limit, search } = req.query as { page: string; limit: string; search: string };
   const pageNumber = parseInt(page as string) || 1;
   const pageSize = parseInt(limit as string) || 10;

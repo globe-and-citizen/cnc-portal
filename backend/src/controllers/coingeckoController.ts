@@ -23,11 +23,11 @@ async function respond(res: Response, request: CoinGeckoRequest) {
   }
 }
 
-export const getCoinMarket = (req: Request, res: Response) =>
+export const getCoinMarket = (req: Request<Record<string, string>>, res: Response) =>
   respond(res, { kind: 'coin', coinId: req.params.coinId });
-export const getContractMarket = (req: Request, res: Response) =>
+export const getContractMarket = (req: Request<Record<string, string>>, res: Response) =>
   respond(res, { kind: 'contract', address: req.params.address });
-export const getCoinHistory = (req: Request, res: Response) =>
+export const getCoinHistory = (req: Request<Record<string, string>>, res: Response) =>
   respond(res, { kind: 'history', coinId: req.params.coinId, date: req.query.date as string });
-export const getSimplePrices = (req: Request, res: Response) =>
+export const getSimplePrices = (req: Request<Record<string, string>>, res: Response) =>
   respond(res, { kind: 'simple', ids: req.query.ids as string });
