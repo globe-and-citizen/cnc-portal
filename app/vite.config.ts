@@ -1,6 +1,6 @@
 import { fileURLToPath, URL } from 'node:url'
 
-import { defineConfig, loadEnv, PluginOption } from 'vite'
+import { defineConfig, loadEnv, type PluginOption, type UserConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import ui from '@nuxt/ui/vite'
 import vueDevTools from 'vite-plugin-vue-devtools'
@@ -73,9 +73,8 @@ export default defineConfig(async ({ mode }) => {
         project: process.env.SENTRY_PROJECT ?? 'cnc-portal-app',
         authToken: process.env.SENTRY_AUTH_TOKEN,
         sourcemaps: {
-          // Remove .map files from the dist folder after upload so they
-          // are never accessible to end-users.
-          deleteAfterUpload: true
+          // Delete uploaded source maps before publishing the build output.
+          filesToDeleteAfterUpload: 'dist/**/*.map'
         },
         release: {
           name: process.env.VITE_APP_RELEASE ?? undefined
@@ -159,13 +158,11 @@ export default defineConfig(async ({ mode }) => {
       ]
     },
     build: {
-      // 'hidden' generates source maps but does NOT reference them in the
-      // output files, so browsers cannot load them. The Sentry plugin above
-      // uploads them to Sentry (prod only) and then deletes them from dist/.
-      sourcemap: isProd ? 'hidden' : true
+      // In production, only generate maps when they can be uploaded and deleted.
+      sourcemap: isProd ? (process.env.SENTRY_AUTH_TOKEN ? 'hidden' : false) : true
     },
     css: {
       devSourcemap: true
     }
-  }
+  } satisfies UserConfig & { ui: unknown }
 })

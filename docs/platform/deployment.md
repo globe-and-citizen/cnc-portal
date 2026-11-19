@@ -412,9 +412,13 @@ gcloud run domain-mappings create \
 
 #### Full Stack Deployment
 
+Compose reads the frontend's public build variables from the specified environment file. Values prefixed with `VITE_` are embedded in the
+frontend bundle and must not contain secrets. Environment files are excluded from image build contexts; backend runtime variables are
+supplied by its Compose `env_file` instead.
+
 ```bash
-# Build and start all services
-docker-compose up -d
+# Build and start all services with the frontend build configuration
+docker-compose --env-file ./app/.env.production up -d --build
 
 # View logs
 docker-compose logs -f
