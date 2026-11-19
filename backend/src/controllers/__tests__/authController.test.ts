@@ -156,8 +156,7 @@ describe('authController', () => {
       expect(typeof response.body.accessToken).toBe('string');
 
       const updateCall = mockPrisma.user.update.mock.calls[0]?.[0] as
-        | { where?: { address?: string }; data?: { nonce?: string } }
-        | undefined;
+        { where?: { address?: string }; data?: { nonce?: string } } | undefined;
       expect(updateCall).toEqual({
         where: { address: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266' },
         data: { nonce: expect.any(String) },
