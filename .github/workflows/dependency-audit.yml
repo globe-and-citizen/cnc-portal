@@ -1,0 +1,42 @@
+name: Production Dependency Audit
+
+permissions:
+  contents: read
+
+on:
+  pull_request:
+    branches: ["**"]
+    paths:
+      - "package.json"
+      - "package-lock.json"
+      - "app/package.json"
+      - "app/package-lock.json"
+      - "backend/package.json"
+      - "backend/package-lock.json"
+      - "dashboard/package.json"
+      - "dashboard/package-lock.json"
+      - "contract/package.json"
+      - "contract/package-lock.json"
+      - ".github/workflows/dependency-audit.yml"
+  workflow_dispatch:
+
+jobs:
+  audit:
+    name: Audit ${{ matrix.project }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        project: [".", "app", "backend", "dashboard", "contract"]
+    steps:
+      - name: 🛫 Check out repository
+        uses: actions/checkout@v6
+
+      - name: 🏗 Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24.x
+
+      - name: 🔐 Audit production dependencies
+        run: npm audit --omit=dev --audit-level=high
+        working-directory: ${{ matrix.project }}
