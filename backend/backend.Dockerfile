@@ -13,7 +13,7 @@ COPY package*.json ./
 
 
 # Install dependencies including nodemon for development
-RUN npm install
+RUN npm ci
 
 # Copy the rest of the application code to the working directory
 COPY . .
