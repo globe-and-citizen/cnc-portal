@@ -9,10 +9,20 @@ import type {
   userStatsQuerySchema,
   wagesStatsQuerySchema,
 } from '../validation/schemas/stats';
-import type { z as Zod } from 'zod';
+import type { z } from 'zod';
 import { Request, Response } from 'express';
 import { prisma } from '../utils';
 import { errorResponse } from '../utils/utils';
+
+type StatsOverviewQuery = z.infer<typeof statsOverviewQuerySchema>;
+type TeamStatsQuery = z.infer<typeof teamStatsQuerySchema>;
+type UserStatsQuery = z.infer<typeof userStatsQuerySchema>;
+type ClaimsStatsQuery = z.infer<typeof claimsStatsQuerySchema>;
+type WagesStatsQuery = z.infer<typeof wagesStatsQuerySchema>;
+type ExpensesStatsQuery = z.infer<typeof expensesStatsQuerySchema>;
+type ContractsStatsQuery = z.infer<typeof contractsStatsQuerySchema>;
+type ActionsStatsQuery = z.infer<typeof actionsStatsQuerySchema>;
+type RecentActivityQuery = z.infer<typeof recentActivityQuerySchema>;
 
 /**
  * Statistics Controller
@@ -41,16 +51,14 @@ const getDateRange = (period: string) => {
  * GET /api/stats/overview
  * Get comprehensive overview statistics
  */
-export const getOverviewStats = async (
-  req: Request,
-  res: Response<unknown, { validatedQuery: Zod.output<typeof statsOverviewQuerySchema> }>
-) => {
+export const getOverviewStats = async (req: Request, res: Response) => {
+  const query = res.locals.validatedQuery as StatsOverviewQuery;
   /*
   #swagger.tags = ['Statistics']
   #swagger.description = 'Get comprehensive overview statistics for the platform'
   */
   try {
-    const { period = '30d' } = res.locals.validatedQuery;
+    const { period = '30d' } = query;
     const startDate = getDateRange(period as string);
 
     const whereClause = { createdAt: { gte: startDate } };
@@ -273,16 +281,14 @@ export const getOverviewStats = async (
  * GET /api/stats/teams
  * Get team statistics
  */
-export const getTeamsStats = async (
-  req: Request,
-  res: Response<unknown, { validatedQuery: Zod.output<typeof teamStatsQuerySchema> }>
-) => {
+export const getTeamsStats = async (req: Request, res: Response) => {
+  const query = res.locals.validatedQuery as TeamStatsQuery;
   /*
   #swagger.tags = ['Statistics']
   #swagger.description = 'Get detailed team statistics'
   */
   try {
-    const { period = '30d', page = 1, limit = 10 } = res.locals.validatedQuery;
+    const { period = '30d', page = 1, limit = 10 } = query;
     const startDate = getDateRange(period as string);
     const skip = (Number(page) - 1) * Number(limit);
     const whereClause = { createdAt: { gte: startDate } };
@@ -373,16 +379,14 @@ export const getTeamsStats = async (
  * GET /api/stats/users
  * Get user statistics
  */
-export const getUsersStats = async (
-  req: Request,
-  res: Response<unknown, { validatedQuery: Zod.output<typeof userStatsQuerySchema> }>
-) => {
+export const getUsersStats = async (req: Request, res: Response) => {
+  const query = res.locals.validatedQuery as UserStatsQuery;
   /*
   #swagger.tags = ['Statistics']
   #swagger.description = 'Get detailed user statistics'
   */
   try {
-    const { period = '30d', teamId, page = 1, limit = 10 } = res.locals.validatedQuery;
+    const { period = '30d', teamId, page = 1, limit = 10 } = query;
     const startDate = getDateRange(period as string);
     const whereClause = { createdAt: { gte: startDate } };
 
@@ -452,16 +456,14 @@ export const getUsersStats = async (
  * GET /api/stats/claims
  * Get claims and hours statistics
  */
-export const getClaimsStats = async (
-  req: Request,
-  res: Response<unknown, { validatedQuery: Zod.output<typeof claimsStatsQuerySchema> }>
-) => {
+export const getClaimsStats = async (req: Request, res: Response) => {
+  const query = res.locals.validatedQuery as ClaimsStatsQuery;
   /*
   #swagger.tags = ['Statistics']
   #swagger.description = 'Get detailed claims and hours statistics'
   */
   try {
-    const { period = '30d' } = res.locals.validatedQuery;
+    const { period = '30d' } = query;
     const startDate = getDateRange(period as string);
 
     const whereClause = {
@@ -555,16 +557,14 @@ export const getClaimsStats = async (
  * GET /api/stats/wages
  * Get wage statistics
  */
-export const getWagesStats = async (
-  req: Request,
-  res: Response<unknown, { validatedQuery: Zod.output<typeof wagesStatsQuerySchema> }>
-) => {
+export const getWagesStats = async (req: Request, res: Response) => {
+  const query = res.locals.validatedQuery as WagesStatsQuery;
   /*
   #swagger.tags = ['Statistics']
   #swagger.description = 'Get detailed wage statistics'
   */
   try {
-    const { period = '30d', teamId } = res.locals.validatedQuery;
+    const { period = '30d', teamId } = query;
     const startDate = getDateRange(period as string);
 
     const whereClause = teamId
@@ -651,16 +651,14 @@ export const getWagesStats = async (
  * GET /api/stats/expenses
  * Get expense statistics
  */
-export const getExpensesStats = async (
-  req: Request,
-  res: Response<unknown, { validatedQuery: Zod.output<typeof expensesStatsQuerySchema> }>
-) => {
+export const getExpensesStats = async (req: Request, res: Response) => {
+  const query = res.locals.validatedQuery as ExpensesStatsQuery;
   /*
   #swagger.tags = ['Statistics']
   #swagger.description = 'Get detailed expense statistics'
   */
   try {
-    const { period = '30d', teamId, page = 1, limit = 10 } = res.locals.validatedQuery;
+    const { period = '30d', teamId, page = 1, limit = 10 } = query;
     const startDate = getDateRange(period as string);
 
     const whereClause = teamId
@@ -748,16 +746,14 @@ export const getExpensesStats = async (
  * GET /api/stats/contracts
  * Get contract statistics
  */
-export const getContractsStats = async (
-  req: Request,
-  res: Response<unknown, { validatedQuery: Zod.output<typeof contractsStatsQuerySchema> }>
-) => {
+export const getContractsStats = async (req: Request, res: Response) => {
+  const query = res.locals.validatedQuery as ContractsStatsQuery;
   /*
   #swagger.tags = ['Statistics']
   #swagger.description = 'Get detailed contract statistics'
   */
   try {
-    const { period = '30d', teamId } = res.locals.validatedQuery;
+    const { period = '30d', teamId } = query;
     const startDate = getDateRange(period as string);
 
     const whereClause = teamId
@@ -814,16 +810,14 @@ export const getContractsStats = async (
  * GET /api/stats/actions
  * Get Board of Director actions statistics
  */
-export const getActionsStats = async (
-  req: Request,
-  res: Response<unknown, { validatedQuery: Zod.output<typeof actionsStatsQuerySchema> }>
-) => {
+export const getActionsStats = async (req: Request, res: Response) => {
+  const query = res.locals.validatedQuery as ActionsStatsQuery;
   /*
   #swagger.tags = ['Statistics']
   #swagger.description = 'Get detailed Board of Director actions statistics'
   */
   try {
-    const { period = '30d', teamId, page = 1, limit = 10 } = res.locals.validatedQuery;
+    const { period = '30d', teamId, page = 1, limit = 10 } = query;
     const startDate = getDateRange(period as string);
 
     const whereClause = teamId
@@ -910,16 +904,14 @@ export const getActionsStats = async (
  * GET /api/stats/activity/recent
  * Get recent activity across the platform
  */
-export const getRecentActivity = async (
-  req: Request,
-  res: Response<unknown, { validatedQuery: Zod.output<typeof recentActivityQuerySchema> }>
-) => {
+export const getRecentActivity = async (req: Request, res: Response) => {
+  const query = res.locals.validatedQuery as RecentActivityQuery;
   /*
   #swagger.tags = ['Statistics']
   #swagger.description = 'Get recent activity feed across the platform'
   */
   try {
-    const { limit = 20, teamId } = res.locals.validatedQuery;
+    const { limit = 20, teamId } = query;
     const teamFilter = teamId ? { teamId: Number(teamId) } : {};
 
     // Get recent activities from different sources

@@ -1,5 +1,5 @@
 import type { userPaginationQuerySchema } from '../validation/schemas/user';
-import type { z as Zod } from 'zod';
+import type { z } from 'zod';
 import { Request, Response } from 'express';
 import { generateNonce } from 'siwe';
 import { prisma } from '../utils';
@@ -7,6 +7,8 @@ import { errorResponse } from '../utils/utils';
 import { extractProfileStorageKey, resolveStorageImageUrl } from '../utils/profileImage.util';
 import { isStorageConfigured } from '../services/storageService';
 import { deleteFileByKey } from '../services/attachmentService';
+
+type UserPaginationQuery = z.infer<typeof userPaginationQuerySchema>;
 
 /**
  *
@@ -122,11 +124,8 @@ export const updateUser = async (req: Request<Record<string, string>>, res: Resp
   }
 };
 
-export const getAllUsers = async (
-  req: Request<Record<string, string>>,
-  res: Response<unknown, { validatedQuery: Zod.output<typeof userPaginationQuerySchema> }>
-) => {
-  const { page, limit, search } = res.locals.validatedQuery;
+export const getAllUsers = async (req: Request<Record<string, string>>, res: Response) => {
+  const { page, limit, search } = res.locals.validatedQuery as UserPaginationQuery;
   const pageNumber = page ?? 1;
   const pageSize = limit ?? 10;
   const offset = (pageNumber - 1) * pageSize;

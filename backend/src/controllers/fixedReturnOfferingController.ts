@@ -1,4 +1,3 @@
-import type { z as Zod } from 'zod';
 import { Request, Response } from 'express';
 import { Address } from 'viem';
 import { errorResponse, prisma } from '../utils';
@@ -9,6 +8,8 @@ import {
   getFixedReturnOfferingsQuerySchema,
   z,
 } from '../validation';
+
+type GetFixedReturnOfferingsQuery = z.infer<typeof getFixedReturnOfferingsQuerySchema>;
 
 type AddFixedReturnOfferingBody = z.infer<typeof addFixedReturnOfferingBodySchema>;
 
@@ -69,11 +70,8 @@ export const addFixedReturnOffering = async (req: Request, res: Response) => {
   }
 };
 
-export const getFixedReturnOfferings = async (
-  req: Request,
-  res: Response<unknown, { validatedQuery: Zod.output<typeof getFixedReturnOfferingsQuerySchema> }>
-) => {
-  const { teamId, offerId } = res.locals.validatedQuery;
+export const getFixedReturnOfferings = async (req: Request, res: Response) => {
+  const { teamId, offerId } = res.locals.validatedQuery as GetFixedReturnOfferingsQuery;
 
   try {
     // authz enforced by requireTeamMember middleware

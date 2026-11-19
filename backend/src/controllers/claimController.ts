@@ -1,4 +1,3 @@
-import type { z as Zod } from 'zod';
 import dayjs from 'dayjs';
 import isoWeek from 'dayjs/plugin/isoWeek';
 import utc from 'dayjs/plugin/utc';
@@ -31,6 +30,8 @@ import {
   WEEKLY_GOALS_REQUIRED_FOR_EDIT_MESSAGE,
   WEEKLY_GOALS_REQUIRED_MESSAGE,
 } from '../utils/weeklyGoalsUtils';
+
+type GetClaimsQuery = z.infer<typeof getClaimsQuerySchema>;
 
 dayjs.extend(utc);
 dayjs.extend(isoWeek);
@@ -281,11 +282,8 @@ export const addClaim = async (req: Request, res: Response) => {
   }
 };
 
-export const getClaims = async (
-  req: Request,
-  res: Response<unknown, { validatedQuery: Zod.output<typeof getClaimsQuerySchema> }>
-) => {
-  const { teamId, memberAddress } = res.locals.validatedQuery;
+export const getClaims = async (req: Request, res: Response) => {
+  const { teamId, memberAddress } = res.locals.validatedQuery as GetClaimsQuery;
 
   try {
     // authz enforced by requireTeamMember middleware

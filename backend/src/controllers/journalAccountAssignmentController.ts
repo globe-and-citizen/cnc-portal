@@ -1,4 +1,3 @@
-import type { z as Zod } from 'zod';
 import { Request, Response } from 'express';
 import { errorResponse, prisma } from '../utils';
 import {
@@ -7,6 +6,11 @@ import {
   upsertJournalAccountAssignmentBodySchema,
   z,
 } from '../validation';
+
+type GetJournalAccountAssignmentsQuery = z.infer<typeof getJournalAccountAssignmentsQuerySchema>;
+type DeleteJournalAccountAssignmentQuery = z.infer<
+  typeof deleteJournalAccountAssignmentQuerySchema
+>;
 
 type UpsertAssignmentBody = z.infer<typeof upsertJournalAccountAssignmentBodySchema>;
 
@@ -18,14 +22,8 @@ const isRecordNotFound = (error: unknown): boolean =>
   typeof error === 'object' && error !== null && 'code' in error && error.code === 'P2025';
 
 /** List the account assignments visible to any member of one team. */
-export const getJournalAccountAssignments = async (
-  req: Request,
-  res: Response<
-    unknown,
-    { validatedQuery: Zod.output<typeof getJournalAccountAssignmentsQuerySchema> }
-  >
-) => {
-  const { teamId } = res.locals.validatedQuery;
+export const getJournalAccountAssignments = async (req: Request, res: Response) => {
+  const { teamId } = res.locals.validatedQuery as GetJournalAccountAssignmentsQuery;
 
   try {
     const assignments = await prisma.journalAccountAssignment.findMany({
@@ -64,14 +62,9 @@ export const upsertJournalAccountAssignment = async (req: Request, res: Response
 };
 
 /** Remove an assignment so journal assembly restores its evidence-derived account. */
-export const deleteJournalAccountAssignment = async (
-  req: Request,
-  res: Response<
-    unknown,
-    { validatedQuery: Zod.output<typeof deleteJournalAccountAssignmentQuerySchema> }
-  >
-) => {
-  const { teamId, journalEntryId } = res.locals.validatedQuery;
+export const deleteJournalAccountAssignment = async (req: Request, res: Response) => {
+  const { teamId, journalEntryId } = res.locals
+    .validatedQuery as DeleteJournalAccountAssignmentQuery;
 
   try {
     await prisma.journalAccountAssignment.delete({

@@ -1,4 +1,3 @@
-import type { z as Zod } from 'zod';
 import { Prisma } from '@prisma/client';
 import { Request, Response } from 'express';
 import { getAddress, Address } from 'viem';
@@ -14,6 +13,8 @@ import {
   updateTeamSafeBodySchema,
   z,
 } from '../validation';
+
+type GetContractsQuery = z.infer<typeof getContractsQuerySchema>;
 
 type AddContractBody = z.infer<typeof addContractBodySchema>;
 type UpdateTeamSafeBody = z.infer<typeof updateTeamSafeBodySchema>;
@@ -229,11 +230,8 @@ export const createOfficer = async (req: Request, res: Response) => {
   }
 };
 
-export const getContracts = async (
-  req: Request,
-  res: Response<unknown, { validatedQuery: Zod.output<typeof getContractsQuerySchema> }>
-) => {
-  const { teamId } = res.locals.validatedQuery;
+export const getContracts = async (req: Request, res: Response) => {
+  const { teamId } = res.locals.validatedQuery as GetContractsQuery;
 
   try {
     const contracts = await prisma.teamContract.findMany({
@@ -355,11 +353,9 @@ export const updateTeamSafe = async (req: Request, res: Response) => {
   }
 };
 
-export const getTeamOfficers = async (
-  req: Request,
-  res: Response<unknown, { validatedQuery: Zod.output<typeof getContractsQuerySchema> }>
-) => {
-  const teamId = Number(res.locals.validatedQuery.teamId);
+export const getTeamOfficers = async (req: Request, res: Response) => {
+  const query = res.locals.validatedQuery as GetContractsQuery;
+  const teamId = Number(query.teamId);
 
   try {
     const team = await prisma.team.findUnique({ where: { id: teamId } });

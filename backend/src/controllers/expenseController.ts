@@ -1,4 +1,3 @@
-import type { z as Zod } from 'zod';
 import { Request, Response } from 'express';
 import { errorResponse } from '../utils/utils';
 
@@ -28,6 +27,8 @@ import {
   updateExpenseParamsSchema,
   z,
 } from '../validation';
+
+type GetExpensesQuery = z.infer<typeof getExpensesQuerySchema>;
 
 type AddExpenseBody = z.infer<typeof addExpenseBodySchema>;
 type UpdateExpenseBody = z.infer<typeof updateExpenseBodySchema>;
@@ -131,11 +132,8 @@ export const addExpense = async (req: Request, res: Response) => {
   }
 };
 
-export const getExpenses = async (
-  req: Request,
-  res: Response<unknown, { validatedQuery: Zod.output<typeof getExpensesQuerySchema> }>
-) => {
-  const { teamId, status } = res.locals.validatedQuery;
+export const getExpenses = async (req: Request, res: Response) => {
+  const { teamId, status } = res.locals.validatedQuery as GetExpensesQuery;
 
   try {
     // authz enforced by requireTeamMember middleware

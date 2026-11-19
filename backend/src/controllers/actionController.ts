@@ -1,15 +1,15 @@
 import type { getActionsQuerySchema } from '../validation/schemas/actions';
-import type { z as Zod } from 'zod';
+import type { z } from 'zod';
 import { Prisma } from '@prisma/client';
 import { Request, Response } from 'express';
 import { errorResponse, prisma } from '../utils';
 
-const getActions = async (
-  req: Request,
-  res: Response<unknown, { validatedQuery: Zod.output<typeof getActionsQuerySchema> }>
-) => {
+type GetActionsQuery = z.infer<typeof getActionsQuerySchema>;
+
+const getActions = async (req: Request, res: Response) => {
+  const query = res.locals.validatedQuery as GetActionsQuery;
   try {
-    const { teamId, isExecuted, page, take } = res.locals.validatedQuery;
+    const { teamId, isExecuted, page, take } = query;
     if (!teamId) return errorResponse(400, 'Team ID empty or not set', res);
 
     const where: Prisma.BoardOfDirectorActionsWhereInput = {};

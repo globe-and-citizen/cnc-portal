@@ -1,4 +1,3 @@
-import type { z as Zod } from 'zod';
 import { Request, Response } from 'express';
 import { Address } from 'viem';
 import { errorResponse, prisma } from '../utils';
@@ -9,6 +8,8 @@ import {
   z,
 } from '../validation';
 import { buildMerkleProofSet, generateMerkleSnapshot } from '../services/merkleSnapshotService';
+
+type GetInvestorMigrationQuery = z.infer<typeof getInvestorMigrationQuerySchema>;
 
 type CreateInvestorMigrationBody = z.infer<typeof createInvestorMigrationBodySchema>;
 
@@ -95,11 +96,8 @@ export const createInvestorMigration = async (req: Request, res: Response) => {
   }
 };
 
-export const getInvestorMigration = async (
-  req: Request,
-  res: Response<unknown, { validatedQuery: Zod.output<typeof getInvestorMigrationQuerySchema> }>
-) => {
-  const { teamId } = res.locals.validatedQuery;
+export const getInvestorMigration = async (req: Request, res: Response) => {
+  const { teamId } = res.locals.validatedQuery as GetInvestorMigrationQuery;
 
   try {
     // authz enforced by requireTeamMember middleware

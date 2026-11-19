@@ -1,8 +1,11 @@
 import type { historyQuery, simplePriceQuery } from '../validation/schemas/coingecko';
-import type { z as Zod } from 'zod';
+import type { z } from 'zod';
 import { Request, Response } from 'express';
 import { CoinGeckoRequest, getCoinGeckoData, MarketDataError } from '../services/coingeckoService';
 import { captureBackendException } from '../utils';
+
+type HistoryQuery = z.infer<typeof historyQuery>;
+type SimplePriceQuery = z.infer<typeof simplePriceQuery>;
 
 async function respond(res: Response, request: CoinGeckoRequest) {
   res.set('Cache-Control', 'no-store');
@@ -29,16 +32,14 @@ export const getCoinMarket = (req: Request<Record<string, string>>, res: Respons
   respond(res, { kind: 'coin', coinId: req.params.coinId });
 export const getContractMarket = (req: Request<Record<string, string>>, res: Response) =>
   respond(res, { kind: 'contract', address: req.params.address });
-export const getCoinHistory = (
-  req: Request<Record<string, string>>,
-  res: Response<unknown, { validatedQuery: Zod.output<typeof historyQuery> }>
-) =>
+export const getCoinHistory = (req: Request<Record<string, string>>, res: Response) =>
   respond(res, {
     kind: 'history',
     coinId: req.params.coinId,
-    date: res.locals.validatedQuery.date,
+    date: (res.locals.validatedQuery as HistoryQuery).date,
   });
-export const getSimplePrices = (
-  req: Request<Record<string, string>>,
-  res: Response<unknown, { validatedQuery: Zod.output<typeof simplePriceQuery> }>
-) => respond(res, { kind: 'simple', ids: res.locals.validatedQuery.ids });
+export const getSimplePrices = (req: Request<Record<string, string>>, res: Response) =>
+  respond(res, {
+    kind: 'simple',
+    ids: (res.locals.validatedQuery as SimplePriceQuery).ids,
+  });
