@@ -78,7 +78,7 @@
     "@types/pdfmake": "^0.2.11",
     "@types/xlsx": "^0.0.35",
     "@vueuse/core": "^14.1.0",
-    "@wagmi/core": "^3.0.0",
+    "@wagmi/core": "3.3.4",
     "@wagmi/vue": "^0.4.3",
     "abitype": "1.2.3",
     "axios": "^1.18.1",
