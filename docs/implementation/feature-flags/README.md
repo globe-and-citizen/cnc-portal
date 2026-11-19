@@ -55,7 +55,7 @@ only decides whether a submitted work date falls inside the claim-submission win
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `c7e356c52e230d43fc2b98ae38207ad70d67b331`
+**Implementation evidence reviewed against:** `d428d1213831722f2e415d27a091d9f4bdf5845b`
 
 - [Global-setting and team-override persistence models](../../../backend/prisma/schema.prisma)
 - [Effective-status and persistence utilities](../../../backend/src/utils/featureUtils.ts)
