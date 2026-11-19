@@ -1,31 +1,33 @@
 import { describe, it, expect } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
+import { reactive } from 'vue'
 import SetMemberWageStandardStep from '../SetMemberWageStandardStep.vue'
 import type { WageWithForm } from '../SetMemberWageModal.vue'
 
-const createWageData = (overrides: Partial<WageWithForm> = {}): WageWithForm => ({
-  id: 1,
-  teamId: 1,
-  userAddress: '0x123',
-  maximumHoursPerWeek: 40,
-  maximumHoursPerDay: 8,
-  maximumOvertimeHoursPerWeek: 0,
-  enableOvertimeRules: false,
-  ratePerHour: [
-    { type: 'native', amount: 10, enabled: true },
-    { type: 'usdc', amount: 0, enabled: false },
-    { type: 'sher', amount: 0, enabled: false }
-  ],
-  overtimeRatePerHour: [
-    { type: 'native', amount: 0, enabled: false },
-    { type: 'usdc', amount: 0, enabled: false },
-    { type: 'sher', amount: 0, enabled: false }
-  ],
-  nextWageId: null,
-  createdAt: '',
-  updatedAt: '',
-  ...overrides
-})
+const createWageData = (overrides: Partial<WageWithForm> = {}): WageWithForm =>
+  reactive({
+    id: 1,
+    teamId: 1,
+    userAddress: '0x123',
+    maximumHoursPerWeek: 40,
+    maximumHoursPerDay: 8,
+    maximumOvertimeHoursPerWeek: 0,
+    enableOvertimeRules: false,
+    ratePerHour: [
+      { type: 'native', amount: 10, enabled: true },
+      { type: 'usdc', amount: 0, enabled: false },
+      { type: 'sher', amount: 0, enabled: false }
+    ],
+    overtimeRatePerHour: [
+      { type: 'native', amount: 0, enabled: false },
+      { type: 'usdc', amount: 0, enabled: false },
+      { type: 'sher', amount: 0, enabled: false }
+    ],
+    nextWageId: null,
+    createdAt: '',
+    updatedAt: '',
+    ...overrides
+  })
 
 const createWrapper = (wageData = createWageData()) =>
   mount(SetMemberWageStandardStep, {
