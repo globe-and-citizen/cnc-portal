@@ -73,7 +73,7 @@
     "@aws-sdk/s3-request-presigner": "^3.731.1",
     "@openzeppelin/merkle-tree": "^1.0.8",
     "@prisma/client": "^6.15.0",
-    "@sentry/cli": "^2.53.0",
+    "@sentry/cli": "^3.8.2",
     "@sentry/node": "^11.15.0",
     "@types/swagger-jsdoc": "^6.0.4",
     "@types/swagger-ui-express": "^4.1.8",
