@@ -68,8 +68,8 @@ reference has the expected layer label.
 | User Story             | Main Journey | Coverage Target | Gaps                              |
 | ---------------------- | ------------ | --------------- | --------------------------------- |
 | US-POLY-ACCOUNTING-001 | ⬜ Planned   | ❌ 0/9 met      | `AC-US-POLY-ACCOUNTING-001-01–09` |
-| US-POLY-ACCOUNTING-002 | ⬜ Planned   | ❌ 0/10 met     | `AC-US-POLY-ACCOUNTING-002-01–10` |
-| US-POLY-ACCOUNTING-003 | ⬜ Planned   | ⚠️ 1/11 met     | `AC-US-POLY-ACCOUNTING-003-01–10` |
+| US-POLY-ACCOUNTING-002 | ⬜ Planned   | ❌ 0/12 met     | `AC-US-POLY-ACCOUNTING-002-01–12` |
+| US-POLY-ACCOUNTING-003 | ⬜ Planned   | ⚠️ 2/12 met     | `AC-US-POLY-ACCOUNTING-003-01–10` |
 | US-POLY-ACCOUNTING-004 | ⬜ Planned   | ❌ 0/11 met     | `AC-US-POLY-ACCOUNTING-004-01–11` |
 | US-POLY-ACCOUNTING-005 | ⬜ Planned   | ❌ 0/8 met      | `AC-US-POLY-ACCOUNTING-005-01–08` |
 
@@ -187,8 +187,8 @@ Proof obligations use the [shared proof-strategy registry](../../../testing/proo
 | `AC-US-POLY-ACCOUNTING-002-08` | `PS-DASHBOARD` | None linked      | ❌ Missing |
 | `AC-US-POLY-ACCOUNTING-002-09` | `PS-DASHBOARD` | None linked      | ❌ Missing |
 | `AC-US-POLY-ACCOUNTING-002-10` | `PS-DASHBOARD` | None linked      | ❌ Missing |
-| `AC-US-POLY-ACCOUNTING-002-11` | `PS-DASHBOARD` | Dashboard        | ✅ Met     |
-| `AC-US-POLY-ACCOUNTING-002-12` | `PS-DASHBOARD` | Dashboard        | ✅ Met     |
+| `AC-US-POLY-ACCOUNTING-002-11` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-POLY-ACCOUNTING-002-12` | `PS-DASHBOARD` | None linked      | ❌ Missing |
 
 **Dependencies:** US-POLY-ACCOUNTING-001 and availability of the external activity, position, profile, and transfer sources
 
