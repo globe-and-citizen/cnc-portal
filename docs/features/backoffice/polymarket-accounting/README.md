@@ -21,6 +21,8 @@ These acceptance criteria follow the
   movements.
 - Summary and balance-sheet historical snapshots carry open contracts at cost because no historical market-price feed is available. Live
   market value, unrealized P&L, and profile P&L apply only to the current snapshot.
+- Polymarket includes its trading fee in each fill's execution price. The dashboard reads the fee as the gap between the quoted value and
+  the USD amount actually settled, measures realized and unrealized results before fees, and reports the fees once as an expense.
 - The results are a reconstructed operational view. Data-source availability, history limits, and reconciliation differences can affect the
   reported figures and are surfaced where the current journey supports them.
 
@@ -67,7 +69,7 @@ reference has the expected layer label.
 | ---------------------- | ------------ | --------------- | --------------------------------- |
 | US-POLY-ACCOUNTING-001 | ⬜ Planned   | ❌ 0/9 met      | `AC-US-POLY-ACCOUNTING-001-01–09` |
 | US-POLY-ACCOUNTING-002 | ⬜ Planned   | ❌ 0/10 met     | `AC-US-POLY-ACCOUNTING-002-01–10` |
-| US-POLY-ACCOUNTING-003 | ⬜ Planned   | ❌ 0/10 met     | `AC-US-POLY-ACCOUNTING-003-01–10` |
+| US-POLY-ACCOUNTING-003 | ⬜ Planned   | ⚠️ 1/11 met     | `AC-US-POLY-ACCOUNTING-003-01–10` |
 | US-POLY-ACCOUNTING-004 | ⬜ Planned   | ❌ 0/11 met     | `AC-US-POLY-ACCOUNTING-004-01–11` |
 | US-POLY-ACCOUNTING-005 | ⬜ Planned   | ❌ 0/8 met      | `AC-US-POLY-ACCOUNTING-005-01–08` |
 
@@ -215,6 +217,8 @@ Proof obligations use the [shared proof-strategy registry](../../../testing/proo
 - [x] `AC-US-POLY-ACCOUNTING-003-06` The balance sheet records no liabilities for the reconstructed Polymarket wallet and checks that assets
       equal liabilities plus equity.
 - [x] `AC-US-POLY-ACCOUNTING-003-07` The income statement distinguishes realized income from unrealized changes on open positions.
+- [x] `AC-US-POLY-ACCOUNTING-003-11` The income statement reports the trading fees paid on the period's buys and sells as an expense.
+      Realized wins and losses exclude those fees, so each fee reduces net income once.
 
 ##### Edge & Error Cases
 
@@ -237,6 +241,7 @@ Proof obligations use the [shared proof-strategy registry](../../../testing/proo
 | `AC-US-POLY-ACCOUNTING-003-08` | `PS-DASHBOARD` | None linked      | ❌ Missing |
 | `AC-US-POLY-ACCOUNTING-003-09` | `PS-DASHBOARD` | None linked      | ❌ Missing |
 | `AC-US-POLY-ACCOUNTING-003-10` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-POLY-ACCOUNTING-003-11` | `PS-DASHBOARD` | Dashboard        | ✅ Met     |
 
 **Dependencies:** US-POLY-ACCOUNTING-002
 
@@ -371,6 +376,8 @@ Proof obligations use the [shared proof-strategy registry](../../../testing/proo
 
 ## Implementation Evidence
 
+**Implementation evidence reviewed against:** `04cf4f7f0130de0c74bd0fc7cce0c9d522f3fcbb`
+
 - [Dashboard navigation](../../../../dashboard/app/layouts/default.vue),
   [administrator route guard](../../../../dashboard/app/middleware/auth.global.ts), and
   [Polymarket accounting page](../../../../dashboard/app/pages/accounting.vue)
@@ -381,7 +388,7 @@ Proof obligations use the [shared proof-strategy registry](../../../testing/proo
   [server-side transfer route](../../../../dashboard/server/api/polygonscan/transfers.get.ts), and
   [transfer-history pagination](../../../../dashboard/server/utils/etherscan.ts)
 - [Ledger reconstruction](../../../../dashboard/app/utils/accounting.ts),
-  [lot accounting](../../../../dashboard/app/utils/incomeStatement.ts),
+  [lot accounting](../../../../dashboard/app/utils/incomeStatement.ts), [trading fees](../../../../dashboard/app/utils/tradingFees.ts),
   [balance-sheet reconstruction](../../../../dashboard/app/utils/balanceSheet.ts),
   [general-ledger reconstruction](../../../../dashboard/app/utils/generalLedger.ts), and
   [CSV ledger serialization](../../../../dashboard/app/utils/mergedLedger.ts)
