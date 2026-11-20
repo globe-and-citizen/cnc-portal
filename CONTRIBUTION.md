@@ -63,7 +63,11 @@ applicable specialised guides before implementation:
 - Every work issue has a native GitHub parent, except explicit Sprint or backlog roots. Planned work follows Sprint → Goal → optional
   coordinator → delivery. Work directly needed for a specific Goal stays under that Goal. Other Sprint work belongs under the appropriate
   transverse Sprint category. A native issue has one parent: link Goal-owned work from a category when useful without moving it. Preserve
-  agreed scope and keep routine delivery evidence on the issue or PR that owns it.
+  agreed scope and keep routine delivery evidence on the issue or PR that owns it. When taking up work during an active Sprint, include its
+  delivery scope in that Sprint and ensure every issue for that scope has a native ancestor chain reaching the Sprint, including reused
+  backlog work. Preserve historical context when moving work; when only part of an older issue is committed, track that part in a scoped
+  Sprint child and link the older issue. An iteration field or a descriptive link alone does not establish Sprint ancestry. Unscheduled
+  backlog work remains in the backlog.
 - Use the repository issue and PR templates. Keep the current scope, validation evidence, limitations and blockers clear. Follow the
   [Kanban field contract](./docs/development-guide/kanban-project.md) for tracked field meanings; AGENTS defines the additional obligation
   for agents to perform and verify those lifecycle operations.
