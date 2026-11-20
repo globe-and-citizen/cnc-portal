@@ -97,6 +97,9 @@
   "overrides": {
     "@prisma/config": {
       "effect": "3.22.5"
+    },
+    "@apidevtools/json-schema-ref-parser": {
+      "js-yaml": "^4.3.2"
     }
   }
 }
