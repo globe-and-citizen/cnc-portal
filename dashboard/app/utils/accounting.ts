@@ -229,6 +229,60 @@ function transferAmount(transfer: PolygonTokenTransfer): number {
   return raw / 10 ** decimals
 }
 
+/** USDC and pUSD carry six decimals: a smaller amount is floating-point noise. */
+const STABLECOIN_UNITS_PER_DOLLAR = 1e6
+
+/**
+ * Signed change a transfer makes to the wallet's cash: + in, − out, and 0 for
+ * a self-transfer or a transfer between two other addresses.
+ */
+function walletCashDelta(transfer: PolygonTokenTransfer, wallet: string): number {
+  const from = transfer.from.toLowerCase()
+  const to = transfer.to.toLowerCase()
+  if (from === to) {
+    return 0
+  }
+  if (to === wallet) {
+    return transferAmount(transfer)
+  }
+  return from === wallet ? -transferAmount(transfer) : 0
+}
+
+/** One stablecoin transfer of a transaction and its signed effect on the wallet's cash. */
+interface TransferLeg {
+  transfer: PolygonTokenTransfer
+  delta: number
+}
+
+/**
+ * The deposit or withdrawal a transaction's legs add up to, or null when they
+ * cancel out (a swap between two stablecoins). The outside party is where the
+ * money came from first on a deposit, and where it went last on a withdrawal.
+ */
+function cashTransferEntry(hash: string, legs: TransferLeg[]): LedgerEntry | null {
+  const netDelta = legs.reduce((net, { delta }) => net + delta, 0)
+  const cashFlow = Math.round(netDelta * STABLECOIN_UNITS_PER_DOLLAR) / STABLECOIN_UNITS_PER_DOLLAR
+  if (cashFlow === 0) {
+    return null
+  }
+  const isDeposit = cashFlow > 0
+  const outsideLeg = isDeposit
+    ? legs.find(({ delta }) => delta > 0)!
+    : legs.findLast(({ delta }) => delta < 0)!
+  const { transfer } = outsideLeg
+  return {
+    id: `ps-${hash}`,
+    timestamp: Number(transfer.timeStamp) || 0,
+    category: isDeposit ? 'DEPOSIT' : 'WITHDRAWAL',
+    description: `${isDeposit ? 'Deposit' : 'Withdrawal'} (${transfer.tokenSymbol})`,
+    amount: Math.abs(cashFlow),
+    cashFlow,
+    txHash: transfer.hash,
+    source: 'polygonscan',
+    counterparty: isDeposit ? transfer.from : transfer.to
+  }
+}
+
 /**
  * Builds the full accounting ledger and summary for a Polymarket wallet.
  */
@@ -286,15 +340,8 @@ export function buildLedger(input: BuildLedgerInput): AccountingLedger {
     if (!activityNetByHash.has(hash)) {
       continue
     }
-    const from = transfer.from.toLowerCase()
-    const to = transfer.to.toLowerCase()
-    const amount = transferAmount(transfer)
-    let delta: number
-    if (to === wallet && from !== wallet) {
-      delta = amount
-    } else if (from === wallet && to !== wallet) {
-      delta = -amount
-    } else {
+    const delta = walletCashDelta(transfer, wallet)
+    if (delta === 0) {
       continue
     }
     const ts = Number(transfer.timeStamp) || 0
@@ -331,52 +378,26 @@ export function buildLedger(input: BuildLedgerInput): AccountingLedger {
   }
 
   // --- Etherscan USDC transfers → deposit/withdrawal entries ---
-  input.transfers.forEach((transfer, index) => {
-    if (!isStablecoin(transfer)) {
-      return
+  // Transactions already captured as a Polymarket activity row are skipped to
+  // avoid double counting. Each remaining transaction is one entry, for the
+  // wallet's net stablecoin movement in it: a withdrawal can burn pUSD, receive
+  // USDC.e from the vault and pay it out in one transaction, and those legs are
+  // a single withdrawal, not a withdrawal, a deposit and another withdrawal.
+  const uncoveredLegsByHash = new Map<string, TransferLeg[]>()
+  for (const transfer of input.transfers) {
+    const hash = transfer.hash.toLowerCase()
+    const delta = isStablecoin(transfer) ? walletCashDelta(transfer, wallet) : 0
+    if (delta === 0 || activityNetByHash.has(hash)) {
+      continue
     }
-    // Already captured as a Polymarket activity row — skip to avoid double counting.
-    if (activityNetByHash.has(transfer.hash.toLowerCase())) {
-      return
+    uncoveredLegsByHash.set(hash, [...(uncoveredLegsByHash.get(hash) ?? []), { transfer, delta }])
+  }
+  for (const [hash, legs] of uncoveredLegsByHash) {
+    const entry = cashTransferEntry(hash, legs)
+    if (entry) {
+      entries.push(entry)
     }
-
-    const from = transfer.from.toLowerCase()
-    const to = transfer.to.toLowerCase()
-    const amount = transferAmount(transfer)
-    if (amount <= 0) {
-      return
-    }
-
-    let category: LedgerCategory
-    let counterparty: string
-    let cashFlow: number
-    if (to === wallet && from !== wallet) {
-      category = 'DEPOSIT'
-      counterparty = transfer.from
-      cashFlow = amount
-    } else if (from === wallet && to !== wallet) {
-      category = 'WITHDRAWAL'
-      counterparty = transfer.to
-      cashFlow = -amount
-    } else {
-      // Self-transfer or unrelated row — ignore.
-      return
-    }
-
-    entries.push({
-      id: `ps-${transfer.hash}-${index}`,
-      timestamp: Number(transfer.timeStamp) || 0,
-      category,
-      description: category === 'DEPOSIT'
-        ? `Deposit (${transfer.tokenSymbol})`
-        : `Withdrawal (${transfer.tokenSymbol})`,
-      amount,
-      cashFlow,
-      txHash: transfer.hash,
-      source: 'polygonscan',
-      counterparty
-    })
-  })
+  }
 
   entries.sort((a, b) => b.timestamp - a.timestamp)
 

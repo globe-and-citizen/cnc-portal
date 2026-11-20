@@ -160,6 +160,48 @@ describe('statements with trading fees stay balanced', () => {
   })
 })
 
+describe('deposits and withdrawals read from the on-chain transfers', () => {
+  const VAULT = '0xc417fd0000000000000000000000000000009db1'
+  const PUSD = '0xc011a7e12a19f7b1f670d46f03b03f3342e82dfb'
+  const PAYEE = '0x4cd00e0000000000000000000000000000000001'
+  const withdrawalLegs = [
+    usdcTransfer({ hash: '0xwithdrawal', from: WALLET, to: PUSD, amount: 10, timestamp: SELL_AT }),
+    usdcTransfer({ hash: '0xwithdrawal', from: VAULT, to: WALLET, amount: 10, timestamp: SELL_AT }),
+    usdcTransfer({ hash: '0xwithdrawal', from: WALLET, to: PAYEE, amount: 10, timestamp: SELL_AT })
+  ]
+  const { entries, summary } = buildLedger({
+    proxyWallet: WALLET,
+    activities: [],
+    positions: [],
+    transfers: [deposit, ...withdrawalLegs],
+    realizedTrades: []
+  })
+
+  it('books a withdrawal that moves several stablecoins in one transaction once, for its net amount', () => {
+    const withdrawals = entries.filter(entry => entry.category === 'WITHDRAWAL')
+
+    expect(withdrawals).toHaveLength(1)
+    expect(withdrawals[0]).toMatchObject({ amount: 10, cashFlow: -10, counterparty: PAYEE })
+  })
+
+  it('counts no deposit for the vault leg of a withdrawal', () => {
+    expect(summary.totalDeposits).toBeCloseTo(10, 6)
+    expect(summary.totalWithdrawals).toBeCloseTo(10, 6)
+    expect(summary.netDeposits).toBeCloseTo(0, 6)
+  })
+
+  it('books no entry for a transaction whose legs cancel out', () => {
+    const swap = [
+      usdcTransfer({ hash: '0xswap', from: WALLET, to: PUSD, amount: 5, timestamp: SELL_AT }),
+      usdcTransfer({ hash: '0xswap', from: PUSD, to: WALLET, amount: 5, timestamp: SELL_AT })
+    ]
+
+    const ledger = buildLedger({ proxyWallet: WALLET, activities: [], positions: [], transfers: swap, realizedTrades: [] })
+
+    expect(ledger.entries).toEqual([])
+  })
+})
+
 describe('splits and merges, whose v2 rows name only the condition', () => {
   const completeSets = { conditionId: MARKET.conditionId, title: MARKET.title, asset: '', outcomeIndex: 999, size: 2, usdcSize: 2 }
   const split: PolymarketActivity = { ...completeSets, type: 'SPLIT', price: 0.5, timestamp: BUY_AT, transactionHash: '0xsplit' }
