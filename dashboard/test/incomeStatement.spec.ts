@@ -4,7 +4,7 @@ import type { PolymarketActivity, PolymarketPosition } from '~/types/polymarket'
 import { buildLedger } from '~/utils/accounting'
 import { buildBalanceSheet } from '~/utils/balanceSheet'
 import { buildGeneralLedger } from '~/utils/generalLedger'
-import { buildIncomeStatement, computeRealizedTrades } from '~/utils/incomeStatement'
+import { buildIncomeStatement, computeRealizedTrades, type RealizedTrade } from '~/utils/incomeStatement'
 
 const WALLET = '0x1d2b88f987e96dece7cf445d14d31b1c38c847d0'
 const EXCHANGE = '0x4bfb41d5b3570defd03c39a9a4d8de6bd8b8982e'
@@ -157,5 +157,95 @@ describe('statements with trading fees stay balanced', () => {
 
     expect(sheet.openContractsAtCost).toBeCloseTo(4, 6)
     expect(sheet.identityGap).toBeCloseTo(0, 6)
+  })
+})
+
+describe('deposits and withdrawals read from the on-chain transfers', () => {
+  const VAULT = '0xc417fd0000000000000000000000000000009db1'
+  const PUSD = '0xc011a7e12a19f7b1f670d46f03b03f3342e82dfb'
+  const PAYEE = '0x4cd00e0000000000000000000000000000000001'
+  const withdrawalLegs = [
+    usdcTransfer({ hash: '0xwithdrawal', from: WALLET, to: PUSD, amount: 10, timestamp: SELL_AT }),
+    usdcTransfer({ hash: '0xwithdrawal', from: VAULT, to: WALLET, amount: 10, timestamp: SELL_AT }),
+    usdcTransfer({ hash: '0xwithdrawal', from: WALLET, to: PAYEE, amount: 10, timestamp: SELL_AT })
+  ]
+  const { entries, summary } = buildLedger({
+    proxyWallet: WALLET,
+    activities: [],
+    positions: [],
+    transfers: [deposit, ...withdrawalLegs],
+    realizedTrades: []
+  })
+
+  it('books a withdrawal that moves several stablecoins in one transaction once, for its net amount', () => {
+    const withdrawals = entries.filter(entry => entry.category === 'WITHDRAWAL')
+
+    expect(withdrawals).toHaveLength(1)
+    expect(withdrawals[0]).toMatchObject({ amount: 10, cashFlow: -10, counterparty: PAYEE })
+  })
+
+  it('counts no deposit for the vault leg of a withdrawal', () => {
+    expect(summary.totalDeposits).toBeCloseTo(10, 6)
+    expect(summary.totalWithdrawals).toBeCloseTo(10, 6)
+    expect(summary.netDeposits).toBeCloseTo(0, 6)
+  })
+
+  it('books no entry for a transaction whose legs cancel out', () => {
+    const swap = [
+      usdcTransfer({ hash: '0xswap', from: WALLET, to: PUSD, amount: 5, timestamp: SELL_AT }),
+      usdcTransfer({ hash: '0xswap', from: PUSD, to: WALLET, amount: 5, timestamp: SELL_AT })
+    ]
+
+    const ledger = buildLedger({ proxyWallet: WALLET, activities: [], positions: [], transfers: swap, realizedTrades: [] })
+
+    expect(ledger.entries).toEqual([])
+  })
+})
+
+describe('splits and merges, whose v2 rows name only the condition', () => {
+  const completeSets = { conditionId: MARKET.conditionId, title: MARKET.title, asset: '', outcomeIndex: 999, size: 2, usdcSize: 2 }
+  const split: PolymarketActivity = { ...completeSets, type: 'SPLIT', price: 0.5, timestamp: BUY_AT, transactionHash: '0xsplit' }
+  const merge: PolymarketActivity = { ...completeSets, type: 'MERGE', price: 0, timestamp: SELL_AT, transactionHash: '0xmerge' }
+  const sum = (trades: RealizedTrade[], field: 'costBasis' | 'realizedPnl') =>
+    trades.reduce((total, trade) => total + trade[field], 0)
+
+  it('disposes of both outcomes at cost when a merge undoes a split', () => {
+    const trades = computeRealizedTrades([split, merge], [])
+
+    expect(trades.map(trade => trade.kind)).toEqual(['MERGE', 'MERGE'])
+    expect(sum(trades, 'costBasis')).toBeCloseTo(2, 6)
+    expect(sum(trades, 'realizedPnl')).toBeCloseTo(0, 6)
+  })
+
+  it('costs each outcome of a split at half the split when one of them is sold', () => {
+    const saleOfYes: PolymarketActivity = { ...sell, size: 2, price: 0.75, usdcSize: 1.5 }
+
+    const [trade] = computeRealizedTrades([split, saleOfYes], [])
+
+    expect(trade).toMatchObject({ kind: 'SELL', asset: MARKET.asset })
+    expect(trade!.costBasis).toBeCloseTo(1, 6)
+    expect(trade!.realizedPnl).toBeCloseTo(0.5, 6)
+  })
+
+  it('balances the sheet and leaves no open contract after a split and its merge', () => {
+    const splitSettlement = usdcTransfer({ hash: '0xsplit', from: WALLET, to: EXCHANGE, amount: 2, timestamp: BUY_AT })
+    const mergeSettlement = usdcTransfer({ hash: '0xmerge', from: EXCHANGE, to: WALLET, amount: 2, timestamp: SELL_AT })
+    const realizedTrades = computeRealizedTrades([split, merge], [])
+    const { entries } = buildLedger({
+      proxyWallet: WALLET,
+      activities: [split, merge],
+      positions: [],
+      transfers: [deposit, splitSettlement, mergeSettlement],
+      realizedTrades
+    })
+
+    const sheet = buildBalanceSheet({ ledgerEntries: entries, realizedTrades, positions: [] })
+    const ledger = buildGeneralLedger({ ledgerEntries: entries, realizedTrades })
+    const balanceOf = (account: string) => ledger.trialBalance.find(row => row.account === account)?.balance
+
+    expect(sheet.openContractsAtCost).toBeCloseTo(0, 6)
+    expect(sheet.identityGap).toBeCloseTo(0, 6)
+    expect(balanceOf('Cash')).toBeCloseTo(10, 6)
+    expect(balanceOf('Open Contracts')).toBeCloseTo(0, 6)
   })
 })
