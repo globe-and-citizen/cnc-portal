@@ -1,4 +1,5 @@
 import type { PolymarketActivity, PolymarketPosition } from '~/types/polymarket'
+import { activityFee } from '~/utils/tradingFees'
 
 /**
  * Income Statement for Polymarket trading activity — issue #1882.
@@ -13,6 +14,11 @@ import type { PolymarketActivity, PolymarketPosition } from '~/types/polymarket'
  *  - a losing position held to resolution never produces a redeem row, so its
  *    residual cost basis is booked as a realized loss at the market end date
  *
+ * Trading fees are kept out of the realized results: Polymarket bakes each
+ * fill's fee into its execution price, so a buy's cost basis and a sale's
+ * proceeds are both taken before fees, and the fees are reported once, as the
+ * statement's expenses.
+ *
  * Each disposal becomes a dated RealizedTrade, which makes the statement
  * filterable by period and reusable by the General Ledger sub-task.
  */
@@ -26,11 +32,19 @@ export interface RealizedTrade {
   outcome?: string
   asset?: string
   conditionId?: string
-  /** USDC received from the disposal (0 for an unredeemed losing position). */
+  /**
+   * Disposal value before trading fees: USDC received plus `fee` (0 for an
+   * unredeemed losing position).
+   */
   proceeds: number
-  /** Weighted-average cost basis of the disposed shares. */
+  /**
+   * Trading fee withheld from a sale's proceeds; the cash actually received is
+   * `proceeds − fee`. 0 for redeems, merges and resolution losses.
+   */
+  fee: number
+  /** Weighted-average cost basis of the disposed shares, before trading fees. */
   costBasis: number
-  /** proceeds − costBasis. Positive = win, negative = loss. */
+  /** proceeds − costBasis, before trading fees. Positive = win, negative = loss. */
   realizedPnl: number
   kind: RealizedTradeKind
 }
@@ -45,11 +59,14 @@ interface IncomeStatement {
   /** Sum of negative realized results in the period, as a positive number. */
   losses: number
   lossCount: number
-  /** wins − losses. */
+  /** wins − losses, before trading fees. */
   netTradingResult: number
   /** Rewards, maker rebates and referral rewards earned in the period. */
   polyRewards: number
-  /** Trading fees and other costs (Polymarket charges no trading fees → 0). */
+  /**
+   * Trading fees paid on every buy and sell of the period, open positions
+   * included: Σ |size × price − usdcSize| over the period's trades.
+   */
   expenses: number
   /**
    * Net income on realized exposure only — netTradingResult + polyRewards − expenses.
@@ -57,15 +74,17 @@ interface IncomeStatement {
    */
   netIncome: number
   /**
-   * Mark-to-market change on still-open positions (Σ position.cashPnl). Meaningful
-   * only when the reporting date is "today" (no historical price data).
+   * Mark-to-market change on still-open positions (Σ position.cashPnl, the v2
+   * `/positions` unrealized P&L: current value − cost before fees, so entry fees
+   * stay in `expenses` only). Meaningful only when the reporting date is "today"
+   * (no historical price data).
    */
   unrealizedPnl: number
   /** Σ position.currentValue — memo line, paired with unrealizedPnl. */
   openPositionsValue: number
   /**
    * Comprehensive net income — `netIncome + unrealizedPnl`. With everything
-   * included (realized + unrealized + rewards), this equals
+   * included (realized + unrealized + rewards − fees), this equals
    * `summary.totalReturn` so the Income Statement and Summary agree end-to-end.
    */
   comprehensiveNetIncome: number
@@ -156,19 +175,25 @@ export function computeRealizedTrades(
     }
   }
 
-  /** Books one disposal against `lot` and pushes the matching RealizedTrade. */
+  /**
+   * Books one disposal against `lot` and pushes the matching RealizedTrade.
+   * `cashReceived` is the USDC that settled; the fee withheld from a sale is
+   * added back so the realized result stays before fees.
+   */
   const bookDisposal = (
     activity: PolymarketActivity,
     asset: string,
     lot: Lot,
     requestedSize: number,
-    proceeds: number,
+    cashReceived: number,
     kind: RealizedTradeKind
   ): void => {
     // Clamp to held shares: incomplete history must not produce phantom basis.
     const disposed = lot.shares > 0 ? Math.min(requestedSize, lot.shares) : requestedSize
     const avgCost = lot.shares > 0 ? lot.cost / lot.shares : 0
     const costBasis = avgCost * disposed
+    const fee = activityFee(activity)
+    const proceeds = cashReceived + fee
     realized.push({
       timestamp: activity.timestamp ?? 0,
       market: activity.title ?? lot.title ?? '—',
@@ -176,6 +201,7 @@ export function computeRealizedTrades(
       asset,
       conditionId: activity.conditionId ?? lot.conditionId,
       proceeds,
+      fee,
       costBasis,
       realizedPnl: proceeds - costBasis,
       kind
@@ -247,7 +273,7 @@ export function computeRealizedTrades(
 
     if (isBuy || activity.type === 'SPLIT') {
       lot.shares += size
-      lot.cost += usd
+      lot.cost += usd - activityFee(activity)
       continue
     }
 
@@ -291,6 +317,7 @@ export function computeRealizedTrades(
         asset,
         conditionId: position.conditionId ?? lot.conditionId,
         proceeds: 0,
+        fee: 0,
         costBasis: lot.cost,
         realizedPnl: -lot.cost,
         kind: 'RESOLUTION_LOSS'
@@ -337,6 +364,7 @@ export function computeRealizedTrades(
       asset,
       conditionId: lot.conditionId,
       proceeds: 0,
+      fee: 0,
       costBasis: lot.cost,
       realizedPnl: -lot.cost,
       kind: 'RESOLUTION_LOSS'
@@ -374,15 +402,11 @@ export function buildIncomeStatement(input: BuildIncomeStatementInput): IncomeSt
   }
   const netTradingResult = wins - losses
 
-  let polyRewards = 0
-  for (const activity of input.activities) {
-    if (REWARD_TYPES.has(activity.type ?? '') && inPeriod(activity.timestamp ?? 0)) {
-      polyRewards += activity.usdcSize ?? 0
-    }
-  }
-
-  // Polymarket charges no trading fees; gas on trades is paid by the relayer.
-  const expenses = 0
+  const periodActivities = input.activities.filter(activity => inPeriod(activity.timestamp ?? 0))
+  const polyRewards = periodActivities
+    .filter(activity => REWARD_TYPES.has(activity.type ?? ''))
+    .reduce((sum, activity) => sum + (activity.usdcSize ?? 0), 0)
+  const expenses = periodActivities.reduce((sum, activity) => sum + activityFee(activity), 0)
   const netIncome = netTradingResult + polyRewards - expenses
 
   const allTimeRealized = allRealized.reduce((sum, trade) => sum + trade.realizedPnl, 0)

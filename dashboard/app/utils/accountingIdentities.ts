@@ -1,6 +1,6 @@
 import type { PolygonTokenTransfer } from '~/api/polygonscan'
 import type { PolymarketActivity } from '~/types/polymarket'
-import type { AccountingSummary } from '~/utils/accounting'
+import { pnlBasedReturn, type AccountingSummary } from '~/utils/accounting'
 import type { BalanceSheet } from '~/utils/balanceSheet'
 import type { GeneralLedger } from '~/utils/generalLedger'
 import type { RealizedTrade } from '~/utils/incomeStatement'
@@ -97,14 +97,6 @@ export function computeAccountingIdentities(input: ComputeIdentitiesInput): Acco
   const { summary, balanceSheet: bs, generalLedger: gl, realizedTrades } = input
 
   const allTimeRealized = realizedTrades.reduce((sum, t) => sum + t.realizedPnl, 0)
-  // The P&L view of the total return = the five reconciliation lines:
-  //   realized + unrealized + rewards + settlement deltas + cost-basis drift.
-  // With all five included, identity #5 holds by construction.
-  const pnlBasedReturn = summary.realizedPnl
-    + summary.unrealizedPnl
-    + summary.totalRewards
-    + summary.settlementAdjustments
-    + summary.positionBasisDrift
 
   const out: AccountingIdentity[] = []
 
@@ -181,10 +173,10 @@ export function computeAccountingIdentities(input: ComputeIdentitiesInput): Acco
   // exactly the reconciliation lines needed to close the cash↔P&L identity.
   {
     const lhs = summary.totalReturn
-    const rhs = pnlBasedReturn
+    const rhs = pnlBasedReturn(summary)
     out.push({
       id: 'PNL_DOUBLE_MEASURE',
-      label: 'Total return = Realized + Unrealized + Rewards + reconciliations',
+      label: 'Total return = Realized + Unrealized + Rewards − Fees + reconciliations',
       lhsLabel: 'Cash-based total return',
       rhsLabel: 'P&L-based total return',
       lhs,

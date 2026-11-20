@@ -2,6 +2,7 @@ import { formatUsd as canonicalFormatUsd } from '~/utils/format'
 import type { PolygonTokenTransfer } from '~/api/polygonscan'
 import type { PolymarketActivity, PolymarketPosition } from '~/types/polymarket'
 import type { RealizedTrade } from '~/utils/incomeStatement'
+import { contractCost, isChargedFee, ledgerEntryFee } from '~/utils/tradingFees'
 
 /**
  * Polymarket accounting model.
@@ -69,8 +70,9 @@ export interface AccountingSummary {
   netDeposits: number
   /**
    * Realized P&L from our own lot accounting (sells + redeems + merges +
-   * resolution losses). Canonical figure — same source as the Income Statement,
-   * so the two screens agree by construction.
+   * resolution losses), excluding trading fees (see `totalFees`). Canonical
+   * figure — same source as the Income Statement, so the two screens agree by
+   * construction.
    */
   realizedPnl: number
   /**
@@ -91,8 +93,9 @@ export interface AccountingSummary {
   /** Mark-to-market value of still-open positions. */
   openPositionsValue: number
   /**
-   * Cost basis of still-open contracts — what you paid for the open bets, i.e.
-   * Σ acquisitions − Σ disposals (cost). Matches `balanceSheet.openContractsAtCost`.
+   * Cost basis of still-open contracts — what you paid for the open bets before
+   * trading fees, i.e. Σ acquisitions − Σ disposals (cost). Matches
+   * `balanceSheet.openContractsAtCost`.
    * Paired with `openPositionsValue` (market value) it makes the open-position
    * unrealized P&L tangible.
    */
@@ -411,16 +414,10 @@ export function buildLedger(input: BuildLedgerInput): AccountingLedger {
     } else if (entry.category === 'TRADE_BUY' || entry.category === 'TRADE_SELL') {
       summary.tradingVolume += entry.amount
       summary.tradeCount += 1
-      // Polymarket fees are baked into the fill price, not surfaced on-chain: the
-      // quoted price (unitPrice) differs from the real fill (amount / quantity).
-      // The gap is the fee/spread the user actually paid on this fill.
-      if (entry.unitPrice != null && entry.quantity != null) {
-        const quotedValue = entry.quantity * entry.unitPrice
-        const fee = Math.abs(quotedValue - entry.amount)
-        summary.totalFees += fee
-        if (fee > 1e-4) {
-          summary.feeTransactionCount += 1
-        }
+      const fee = ledgerEntryFee(entry)
+      summary.totalFees += fee
+      if (isChargedFee(fee)) {
+        summary.feeTransactionCount += 1
       }
     } else if (REWARD_CATEGORIES.has(entry.category)) {
       summary.totalRewards += entry.amount
@@ -429,7 +426,7 @@ export function buildLedger(input: BuildLedgerInput): AccountingLedger {
       summary.settlementAdjustmentCount += 1
     }
     if (entry.category === 'TRADE_BUY' || entry.category === 'SPLIT') {
-      acquisitionCost += entry.amount
+      acquisitionCost += contractCost(entry)
     }
   }
   summary.netDeposits = summary.totalDeposits - summary.totalWithdrawals
@@ -480,17 +477,24 @@ export function buildLedger(input: BuildLedgerInput): AccountingLedger {
   // Adding this line to the P&L identity #5 makes the books reconcile by construction.
   summary.positionBasisDrift = summary.openPositionsValue - openContractsAtCost - summary.unrealizedPnl
 
-  // Five reconciliation lines fully account for totalReturn:
-  //   realized + unrealized + rewards + settlement deltas + cost-basis drift.
-  // With all five included, this gap is 0 by construction (modulo float dust).
-  const pnlBasedReturn = summary.realizedPnl
-    + summary.unrealizedPnl
-    + summary.totalRewards
-    + summary.settlementAdjustments
-    + summary.positionBasisDrift
-  summary.reconciliationGap = summary.totalReturn - pnlBasedReturn
+  summary.reconciliationGap = summary.totalReturn - pnlBasedReturn(summary)
 
   return { entries, summary }
+}
+
+/**
+ * The P&L view of the total return: realized + unrealized + rewards − trading
+ * fees + settlement deltas + cost-basis drift. Realized and unrealized results
+ * exclude fees, so the fees come off once here. With every line included it
+ * equals {@link AccountingSummary.totalReturn} by construction.
+ */
+export function pnlBasedReturn(summary: AccountingSummary): number {
+  return summary.realizedPnl
+    + summary.unrealizedPnl
+    + summary.totalRewards
+    - summary.totalFees
+    + summary.settlementAdjustments
+    + summary.positionBasisDrift
 }
 
 // --- Presentation helpers (shared by the accounting components) ---
