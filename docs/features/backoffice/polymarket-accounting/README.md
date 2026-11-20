@@ -160,10 +160,14 @@ Proof obligations use the [shared proof-strategy registry](../../../testing/proo
       adjustment rather than being silently discarded.
 - [x] `AC-US-POLY-ACCOUNTING-002-07` When the transfer-history source reaches its safety limit, the journey warns that deposit and
       withdrawal totals may be incomplete.
+- [x] `AC-US-POLY-ACCOUNTING-002-11` A deposit or withdrawal whose transaction moves several stablecoin transfers, such as a pUSD withdrawal
+      paid out through the USDC.e vault, counts once, for the wallet's net movement in that transaction.
 
 ##### Edge & Error Cases
 
 - [x] `AC-US-POLY-ACCOUNTING-002-08` A failure of activity, position, or transfer data is reported as an accounting data-load failure.
+- [x] `AC-US-POLY-ACCOUNTING-002-12` The summary and its accounting identities appear only once the activity, position and transfer sources
+      have all loaded, so a source still loading never shows as a reconciliation gap.
 - [ ] `AC-US-POLY-ACCOUNTING-002-09` The journey reports when the activity or position history reaches its 10,000-row client fetch limit
       instead of presenting the partial history as complete.
 - [ ] `AC-US-POLY-ACCOUNTING-002-10` When a summary is viewed as of a past date, its accounting-identity checks use the same historical
@@ -183,6 +187,8 @@ Proof obligations use the [shared proof-strategy registry](../../../testing/proo
 | `AC-US-POLY-ACCOUNTING-002-08` | `PS-DASHBOARD` | None linked      | ❌ Missing |
 | `AC-US-POLY-ACCOUNTING-002-09` | `PS-DASHBOARD` | None linked      | ❌ Missing |
 | `AC-US-POLY-ACCOUNTING-002-10` | `PS-DASHBOARD` | None linked      | ❌ Missing |
+| `AC-US-POLY-ACCOUNTING-002-11` | `PS-DASHBOARD` | Dashboard        | ✅ Met     |
+| `AC-US-POLY-ACCOUNTING-002-12` | `PS-DASHBOARD` | Dashboard        | ✅ Met     |
 
 **Dependencies:** US-POLY-ACCOUNTING-001 and availability of the external activity, position, profile, and transfer sources
 
@@ -219,6 +225,9 @@ Proof obligations use the [shared proof-strategy registry](../../../testing/proo
 - [x] `AC-US-POLY-ACCOUNTING-003-07` The income statement distinguishes realized income from unrealized changes on open positions.
 - [x] `AC-US-POLY-ACCOUNTING-003-11` The income statement reports the trading fees paid on the period's buys and sells as an expense.
       Realized wins and losses exclude those fees, so each fee reduces net income once.
+- [x] `AC-US-POLY-ACCOUNTING-003-12` A split adds one share of each outcome of its market to the lot accounting, each at half the split's
+      cost, and a merge disposes of one share of each outcome at its weighted average cost, even though the activity rows name only the
+      market. A split undone by a merge leaves no open contract and no realized result.
 
 ##### Edge & Error Cases
 
@@ -242,6 +251,7 @@ Proof obligations use the [shared proof-strategy registry](../../../testing/proo
 | `AC-US-POLY-ACCOUNTING-003-09` | `PS-DASHBOARD` | None linked      | ❌ Missing |
 | `AC-US-POLY-ACCOUNTING-003-10` | `PS-DASHBOARD` | None linked      | ❌ Missing |
 | `AC-US-POLY-ACCOUNTING-003-11` | `PS-DASHBOARD` | Dashboard        | ✅ Met     |
+| `AC-US-POLY-ACCOUNTING-003-12` | `PS-DASHBOARD` | Dashboard        | ✅ Met     |
 
 **Dependencies:** US-POLY-ACCOUNTING-002
 
@@ -376,7 +386,7 @@ Proof obligations use the [shared proof-strategy registry](../../../testing/proo
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `04cf4f7f0130de0c74bd0fc7cce0c9d522f3fcbb`
+**Implementation evidence reviewed against:** `c01affa2bd13fdad4bc548d5ede8cf39f8d054e0`
 
 - [Dashboard navigation](../../../../dashboard/app/layouts/default.vue),
   [administrator route guard](../../../../dashboard/app/middleware/auth.global.ts), and
