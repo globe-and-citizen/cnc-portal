@@ -37,3 +37,6 @@ service-account.json
 
 # Bruno generated environment files (use .template.bru instead)
 bruno/**/environments/CNC URI.bru
+
+# Prisma generated client
+src/generated/prisma/

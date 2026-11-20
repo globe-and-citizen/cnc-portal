@@ -1,4 +1,4 @@
-import { Claim, Wage, WeeklyClaim } from '@prisma/client';
+import { Claim, Wage, WeeklyClaim } from '../../generated/prisma/client';
 import dayjs from 'dayjs';
 import express, { NextFunction, Request, Response } from 'express';
 import request from 'supertest';

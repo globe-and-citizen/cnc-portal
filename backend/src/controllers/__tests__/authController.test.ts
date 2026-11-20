@@ -1,4 +1,4 @@
-import { User } from '@prisma/client';
+import { User } from '../../generated/prisma/client';
 import express from 'express';
 import rateLimit from 'express-rate-limit';
 import jwt from 'jsonwebtoken';

@@ -1,6 +1,6 @@
 // backend/prisma/seeders/wages.ts
 
-import { PrismaClient, Team } from '@prisma/client';
+import { PrismaClient, Team } from '../../src/generated/prisma/client';
 import { faker } from '@faker-js/faker';
 import { type SeedConfig } from './config';
 

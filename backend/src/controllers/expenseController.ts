@@ -16,7 +16,7 @@ import {
 import { prisma } from '../utils';
 import publicClient from '../utils/viem.config';
 
-import { Expense } from '@prisma/client';
+import { Expense } from '../generated/prisma/client';
 import ABI from '../artifacts/expense-account-eip712.json';
 import { BudgetLimit } from '../types';
 import { getCurrentExpenseAccountContract } from '../utils/expenseAccountUtil';

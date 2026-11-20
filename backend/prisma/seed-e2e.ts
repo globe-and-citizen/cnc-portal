@@ -1,7 +1,9 @@
-import { PrismaClient } from '@prisma/client';
+import 'dotenv/config';
+import { createPrismaAdapter } from '../src/utils/prismaAdapter';
+import { PrismaClient } from '../src/generated/prisma/client';
 import { generateNonce } from 'siwe';
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({ adapter: createPrismaAdapter() });
 
 const E2E_ACTORS = [
   {

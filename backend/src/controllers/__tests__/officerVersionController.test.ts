@@ -1,4 +1,4 @@
-import { TeamOfficer } from '@prisma/client';
+import { TeamOfficer } from '../../generated/prisma/client';
 import express, { NextFunction, Request, Response } from 'express';
 import request from 'supertest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';

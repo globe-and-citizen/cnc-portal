@@ -8,7 +8,7 @@ import isoWeek from 'dayjs/plugin/isoWeek';
 import utc from 'dayjs/plugin/utc';
 import { Request, Response } from 'express';
 import { errorResponse, getMondayStart, prisma } from '../utils';
-import { Prisma } from '@prisma/client';
+import { Prisma } from '../generated/prisma/client';
 import { Address, Hex, isAddress, isHex, keccak256, recoverTypedDataAddress } from 'viem';
 import CASH_REMUNERATION_ABI from '../artifacts/cash_remuneration_eip712_abi.json';
 import {

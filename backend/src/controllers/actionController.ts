@@ -1,6 +1,6 @@
 import type { getActionsQuerySchema } from '../validation/schemas/actions';
 import type { z } from 'zod';
-import { Prisma } from '@prisma/client';
+import { Prisma } from '../generated/prisma/client';
 import { Request, Response } from 'express';
 import { errorResponse, prisma } from '../utils';
 

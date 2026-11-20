@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { Prisma, Team, User } from '@prisma/client';
+import { Prisma, Team, User } from '../../generated/prisma/client';
 import express, { NextFunction, Request, Response } from 'express';
 import request from 'supertest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
