@@ -1,9 +1,9 @@
-import { describe, it, expect, vi, afterEach } from 'vitest'
-import { mount } from '@vue/test-utils'
-import { reactive } from 'vue'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import MultiSelectMemberInput from '../MultiSelectMemberInput.vue'
 import UserIdentity from '@/components/ui/UserIdentity.vue'
 import { createTestingPinia } from '@pinia/testing'
+import { mount } from '@vue/test-utils'
+import { reactive } from 'vue'
 
 interface Member {
   name?: string

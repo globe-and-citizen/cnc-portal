@@ -1,8 +1,8 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { mount } from '@vue/test-utils'
-import ClaimActions from '@/components/sections/ClaimHistoryView/ClaimActions.vue'
-import { nextTick } from 'vue'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { mockTeamStore, mockToast } from '@/tests/mocks'
+import ClaimActions from '@/components/sections/ClaimHistoryView/ClaimActions.vue'
+import { mount } from '@vue/test-utils'
+import { nextTick } from 'vue'
 
 import type { Claim, SupportedTokens } from '@/types'
 

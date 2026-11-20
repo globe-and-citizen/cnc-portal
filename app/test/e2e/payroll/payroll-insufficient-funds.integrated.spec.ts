@@ -3,8 +3,8 @@ import {
   completedWeekStart,
   getCashRemunerationAddress,
   openMemberPayrollHistory,
-  selectHistoryWeek,
   saveWeeklyGoals,
+  selectHistoryWeek,
   setMemberUsdcWage,
   submitDailyClaim
 } from './payroll-page'

@@ -96,23 +96,23 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { type Address, formatUnits, zeroAddress } from 'viem'
+import { SUPPORTED_TOKENS, type TokenId } from '@/constant'
+import { computed, ref, watch } from 'vue'
+import { contractBalanceKeys, useContractBalance } from '@/composables/useContractBalance'
+import { formatPercent, formatTokenUnits } from '@/utils/format'
+import { isPositiveDecimal, useBankDepositFee } from '@/composables/bank/useBankDepositFee'
+import { useCurrencyStore, useUserDataStore } from '@/stores'
 import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
-import { z } from 'zod'
-import { formatUnits, zeroAddress, type Address } from 'viem'
-import { useContractBalance, contractBalanceKeys } from '@/composables/useContractBalance'
-import { useSafeSendTransaction } from '@/composables/transactions/useSafeSendTransaction'
+import TokenAmountInput from '@/components/ui/inputs/TokenAmountInput.vue'
+import { bankEventKeys } from '@/composables/bank/useBankEventsViaLogs'
+import { useChainId } from '@wagmi/vue'
+import { useDepositToken } from '@/composables/bank/writes'
 import { useERC20Approve } from '@/composables/erc20/writes'
 import { useErc20Allowance } from '@/composables/erc20/reads'
-import { useDepositToken } from '@/composables/bank/writes'
-import { isPositiveDecimal, useBankDepositFee } from '@/composables/bank/useBankDepositFee'
-import { formatPercent, formatTokenUnits } from '@/utils/format'
-import { bankEventKeys } from '@/composables/bank/useBankEventsViaLogs'
-import { SUPPORTED_TOKENS, type TokenId } from '@/constant'
-import { useCurrencyStore, useUserDataStore } from '@/stores'
-import TokenAmountInput from '@/components/ui/inputs/TokenAmountInput.vue'
 import { useQueryClient } from '@tanstack/vue-query'
-import { useChainId } from '@wagmi/vue'
+import { useSafeSendTransaction } from '@/composables/transactions/useSafeSendTransaction'
+import { z } from 'zod'
 
 const queryClient = useQueryClient()
 const chainId = useChainId()

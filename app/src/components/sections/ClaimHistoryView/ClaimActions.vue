@@ -37,12 +37,12 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { Icon as IconifyIcon } from '@iconify/vue'
-import { useToast } from '@nuxt/ui/composables'
-import EditClaims from '@/components/sections/CashRemunerationView/EditClaims.vue'
-import DeleteClaimConfirmation from '@/components/sections/CashRemunerationView/DeleteClaimConfirmation.vue'
-import { useTeamStore } from '@/stores'
 import type { Claim } from '@/types'
+import DeleteClaimConfirmation from '@/components/sections/CashRemunerationView/DeleteClaimConfirmation.vue'
+import EditClaims from '@/components/sections/CashRemunerationView/EditClaims.vue'
+import { Icon as IconifyIcon } from '@iconify/vue'
+import { useTeamStore } from '@/stores'
+import { useToast } from '@nuxt/ui/composables'
 
 const props = defineProps<{
   claim: Claim

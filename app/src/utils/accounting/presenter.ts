@@ -8,7 +8,7 @@ import { buildBalanceSheet } from './balanceSheet'
 import { buildGeneralLedger } from './generalLedger'
 import { buildIncomeStatement } from './incomeStatement'
 
-import { buildSummaryView, type SummaryView } from './summaryCards'
+import { type SummaryView, buildSummaryView } from './summaryCards'
 
 // The summary display model lives in its own module — see ./summaryCards.
 export { type SummaryBanner, type SummaryCard, type SummaryView } from './summaryCards'

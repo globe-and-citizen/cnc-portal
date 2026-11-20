@@ -1,12 +1,12 @@
 /** Balance Sheet projection for the spreadsheet exporter, in its on-screen sections. */
-import type { AccountingExportSnapshot } from '@/utils/accounting/exportSpec'
 import {
-  balanceExportRows,
   type BalanceExportRow,
-  type BalanceExportRowKind
+  type BalanceExportRowKind,
+  balanceExportRows
 } from '@/utils/accounting/balanceExportRows'
-import { balanceExportTitle, presentBalance } from '@/utils/accounting/presenter'
 import type { SheetContent, SheetRows } from './spreadsheet'
+import { balanceExportTitle, presentBalance } from '@/utils/accounting/presenter'
+import type { AccountingExportSnapshot } from '@/utils/accounting/exportSpec'
 import { spreadsheetUsd } from './spreadsheetNumber'
 
 const EMPHASIZED_KINDS: ReadonlySet<BalanceExportRowKind> = new Set([

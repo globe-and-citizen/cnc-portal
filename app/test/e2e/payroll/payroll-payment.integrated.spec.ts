@@ -6,8 +6,8 @@ import {
   fundCashRemuneration,
   openMemberPayrollHistory,
   openWeeklyClaimActions,
-  selectHistoryWeek,
   saveWeeklyGoals,
+  selectHistoryWeek,
   setMemberUsdcWage,
   submitDailyClaim
 } from './payroll-page'

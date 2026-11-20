@@ -48,24 +48,24 @@
 </template>
 
 <script setup lang="ts">
-import TransferForm, { type TransferModel } from '@/components/forms/TransferForm.vue'
-import { ref, watch, computed, type Ref } from 'vue'
-import { type Address, parseEther, encodeFunctionData, parseUnits } from 'viem'
-import { useChainId, useReadContract } from '@wagmi/vue'
-import { useQueryClient } from '@tanstack/vue-query'
-import { bankAbi } from '@/artifacts/abi/generated'
+import { type Address, encodeFunctionData, parseEther, parseUnits } from 'viem'
 import { NETWORK, SUPPORTED_TOKENS, USDC_ADDRESS, USDC_E_ADDRESS } from '@/constant'
-import { useUserDataStore } from '@/stores'
-import { useBodAddAction } from '@/composables/bod/writes'
-import { useBodIsBodAction } from '@/composables/bod/reads'
-import { useBankTransferFee } from '@/composables/bank/useBankTransferFee'
+import { type Ref, computed, ref, watch } from 'vue'
+import TransferForm, { type TransferModel } from '@/components/forms/TransferForm.vue'
+import { contractBalanceKeys, useContractBalance } from '@/composables'
+import { useChainId, useReadContract } from '@wagmi/vue'
 import { useTransfer, useTransferToken } from '@/composables/bank/writes'
+import type { TokenOption } from '@/types'
+import { bankAbi } from '@/artifacts/abi/generated'
 import { bankEventKeys } from '@/composables/bank/useBankEventsViaLogs'
 import { classifyError } from '@/utils/errors/classifyContractError'
 import { log } from '@/lib/logging'
-import type { TokenOption } from '@/types'
-import { useContractBalance, contractBalanceKeys } from '@/composables'
+import { useBankTransferFee } from '@/composables/bank/useBankTransferFee'
+import { useBodAddAction } from '@/composables/bod/writes'
+import { useBodIsBodAction } from '@/composables/bod/reads'
+import { useQueryClient } from '@tanstack/vue-query'
 import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
+import { useUserDataStore } from '@/stores'
 
 interface Props {
   bankAddress: Address

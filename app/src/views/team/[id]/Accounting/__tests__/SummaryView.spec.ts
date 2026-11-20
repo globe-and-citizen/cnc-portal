@@ -1,13 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { flushPromises } from '@vue/test-utils'
-import type { Ref } from 'vue'
-import { renderWithProviders } from '@/tests/mocks'
-import { mockRoute } from '@/tests/mocks/router.mock'
-import { finalizeJournal } from '@/utils/accounting/__tests__/assembleAccounting'
-import { makeJournalEntryDraft } from '@/utils/accounting/journalEntryDraft'
-import { presentSummary } from '@/utils/accounting/presenter'
 import type { JournalEntry } from '@/utils/accounting/types'
+import type { Ref } from 'vue'
 import SummaryView from '../SummaryView.vue'
+import { finalizeJournal } from '@/utils/accounting/__tests__/assembleAccounting'
+import { flushPromises } from '@vue/test-utils'
+import { makeJournalEntryDraft } from '@/utils/accounting/journalEntryDraft'
+import { mockRoute } from '@/tests/mocks/router.mock'
+import { presentSummary } from '@/utils/accounting/presenter'
+import { renderWithProviders } from '@/tests/mocks'
 
 const state = vi.hoisted(() => ({
   journal: null as Ref<JournalEntry[]> | null,

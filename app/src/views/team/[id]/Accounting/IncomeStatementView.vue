@@ -86,17 +86,17 @@
 </template>
 
 <script setup lang="ts">
+import { type Range, defaultValueForMode, isAllTimeRange } from '@/utils/dates/picker'
+import { type StatementLineView, presentIncome } from '@/utils/accounting/presenter'
 import { computed, ref } from 'vue'
-import { useRoute } from 'vue-router'
-import DatePicker from '@/components/ui/DatePicker.vue'
 import AccountingExportBar from '@/components/sections/AccountingView/AccountingExportBar.vue'
-import StatementLine from '@/components/sections/AccountingView/StatementLine.vue'
+import DatePicker from '@/components/ui/DatePicker.vue'
 import LedgerDrilldownModal from '@/components/sections/AccountingView/LedgerDrilldownModal.vue'
-import { defaultValueForMode, isAllTimeRange, type Range } from '@/utils/dates/picker'
+import StatementLine from '@/components/sections/AccountingView/StatementLine.vue'
 import { useAccountingContext } from '@/composables/accounting/useAccountingContext'
-import { useSectionExport } from '@/composables/accounting/useSectionExport'
 import { useLedgerDrilldown } from '@/composables/accounting/useLedgerDrilldown'
-import { presentIncome, type StatementLineView } from '@/utils/accounting/presenter'
+import { useRoute } from 'vue-router'
+import { useSectionExport } from '@/composables/accounting/useSectionExport'
 
 // Reporting period (range mode) — defaults to "All time".
 const period = ref<Range>(defaultValueForMode('range') as Range)

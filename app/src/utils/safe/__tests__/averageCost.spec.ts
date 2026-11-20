@@ -1,11 +1,11 @@
-import { describe, expect, it } from 'vitest'
 import {
+  type AverageCostPosition,
   averageCost,
   enterPosition,
   exitAtAverageCost,
-  realizeExit,
-  type AverageCostPosition
+  realizeExit
 } from '../averageCost'
+import { describe, expect, it } from 'vitest'
 
 const emptyPosition = (): AverageCostPosition => ({ quantity: 0, costUsd: 0, realizedUsd: 0 })
 
