@@ -230,6 +230,10 @@ npx hardhat run scripts/initialize-beacons.ts --network mainnet
 
 #### Step 1: Database Setup
 
+The backend generates its Prisma client during the image build. Prisma CLI configuration is in `backend/prisma.config.ts`; database commands
+require `DATABASE_URL`, while client generation does not. PostgreSQL connections use the Prisma PostgreSQL adapter. Its connection pool and
+TLS behavior come from the PostgreSQL driver; validate these settings for each deployment environment before rollout.
+
 ```bash
 cd backend/
 
