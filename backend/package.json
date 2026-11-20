@@ -93,5 +93,10 @@
     "yaml": "^2.8.2",
     "yamljs": "^0.3.0",
     "zod": "^4.1.11"
+  },
+  "overrides": {
+    "@prisma/config": {
+      "effect": "3.22.5"
+    }
   }
 }
