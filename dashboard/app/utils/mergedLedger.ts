@@ -1,7 +1,9 @@
 import type { LedgerEntry, LedgerCategory } from '~/utils/accounting'
-import type {
-  AccountName,
-  JournalLine
+import {
+  acquisitionLines,
+  disposalLines,
+  type AccountName,
+  type JournalLine
 } from '~/utils/generalLedger'
 import type { RealizedTrade } from '~/utils/incomeStatement'
 import { formatNumber } from '~/utils/format'
@@ -76,7 +78,7 @@ function activityLines(entry: LedgerEntry): JournalLine[] {
       return [debitLine('Owner Capital', entry.amount), creditLine('Cash', entry.amount)]
     case 'TRADE_BUY':
     case 'SPLIT':
-      return [debitLine('Open Contracts', entry.amount), creditLine('Cash', entry.amount)]
+      return acquisitionLines(entry)
     case 'REWARD':
     case 'MAKER_REBATE':
     case 'REFERRAL_REWARD':
@@ -86,27 +88,6 @@ function activityLines(entry: LedgerEntry): JournalLine[] {
       // CONVERSION / OTHER produce no journal lines; the row still renders.
       return []
   }
-}
-
-/** Lines a RealizedTrade produces (SELL/REDEEM/MERGE/RESOLUTION_LOSS). */
-function disposalLines(trade: RealizedTrade): JournalLine[] {
-  const lines: JournalLine[] = []
-  if (trade.kind === 'RESOLUTION_LOSS') {
-    lines.push(debitLine('Trading Losses', trade.costBasis))
-    lines.push(creditLine('Open Contracts', trade.costBasis))
-    return lines
-  }
-  if (trade.proceeds > 0) {
-    lines.push(debitLine('Cash', trade.proceeds))
-  }
-  if (trade.realizedPnl < 0) {
-    lines.push(debitLine('Trading Losses', -trade.realizedPnl))
-  }
-  lines.push(creditLine('Open Contracts', trade.costBasis))
-  if (trade.realizedPnl > 0) {
-    lines.push(creditLine('Trading Gains', trade.realizedPnl))
-  }
-  return lines
 }
 
 /** Join key for RealizedTrade ↔ LedgerEntry: same asset, same timestamp. */
