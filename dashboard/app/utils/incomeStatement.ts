@@ -118,6 +118,9 @@ const REWARD_TYPES: ReadonlySet<string> = new Set(['REWARD', 'MAKER_REBATE', 'RE
 /** Shares below this are treated as a fully-closed lot (floating-point dust). */
 const DUST = 1e-6
 
+/** Every Polymarket condition has two outcomes, indexed 0 and 1. */
+const BINARY_OUTCOME_INDEXES = [0, 1]
+
 interface Lot {
   shares: number
   cost: number
@@ -174,6 +177,17 @@ export function computeRealizedTrades(
       assetByConditionOutcome.set(key, position.asset)
     }
   }
+
+  /**
+   * The two outcome-token ids of a condition. An outcome that no buy, sell,
+   * redeem or position names is keyed by `conditionId:outcomeIndex`, so a
+   * split and the merge that undoes it still meet on the same lot.
+   */
+  const completeSetAssets = (conditionId: string): string[] =>
+    BINARY_OUTCOME_INDEXES.map((outcomeIndex) => {
+      const key = `${conditionId}:${outcomeIndex}`
+      return assetByConditionOutcome.get(key) ?? key
+    })
 
   /**
    * Books one disposal against `lot` and pushes the matching RealizedTrade.
@@ -256,6 +270,28 @@ export function computeRealizedTrades(
           ? (a === winnerAsset ? usd : 0)
           : usd * (lot.shares / totalShares)
         bookDisposal(activity, a, lot, lot.shares, proceeds, 'REDEEM')
+      }
+      continue
+    }
+
+    // v2 SPLIT / MERGE rows name only the condition: they mint or burn one
+    // share of each of its two outcomes (a "complete set"). No price divides a
+    // split between the outcomes, so each gets an equal share of its cost, and
+    // a merge disposes of both lots at their average cost.
+    const isCompleteSet = activity.type === 'SPLIT' || activity.type === 'MERGE'
+    if (isCompleteSet && !asset && activity.conditionId) {
+      const outcomeAssets = completeSetAssets(activity.conditionId)
+      const usdPerOutcome = usd / outcomeAssets.length
+      for (const outcomeAsset of outcomeAssets) {
+        const lot = lots.get(outcomeAsset) ?? { shares: 0, cost: 0, conditionId: activity.conditionId }
+        lot.title = activity.title ?? lot.title
+        lots.set(outcomeAsset, lot)
+        if (activity.type === 'SPLIT') {
+          lot.shares += size
+          lot.cost += usdPerOutcome
+        } else {
+          bookDisposal(activity, outcomeAsset, lot, size, usdPerOutcome, 'MERGE')
+        }
       }
       continue
     }
