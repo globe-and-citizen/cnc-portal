@@ -27,6 +27,10 @@ const {
   isLoading, isFetching, error, transfersTruncated, refetch
 } = useAccounting(walletAddress)
 
+// The Summary and its identities need all three sources: rendered while the
+// on-chain transfers are still loading (or failed), they show false gaps.
+const isSummaryReady = computed(() => hasAddress.value && !isLoading.value && !error.value)
+
 const tabs: TabsItem[] = [
   { label: 'Summary', icon: 'i-lucide-layout-dashboard', slot: 'summary' },
   { label: 'Income Statement', icon: 'i-lucide-trending-up', slot: 'income' },
@@ -110,7 +114,7 @@ const errorMessage = computed(() => {
 
       <UTabs :items="tabs" variant="link" class="w-full">
         <template #summary>
-          <div v-if="hasAddress" class="mt-4 space-y-6">
+          <div v-if="isSummaryReady" class="mt-4 space-y-6">
             <AccountingSummary
               :summary="summary"
               :ledger-entries="entries"
@@ -121,9 +125,9 @@ const errorMessage = computed(() => {
                  (truncated history, missing market, lot-accounting regression). -->
             <AccountingIdentitiesCard :identities="identities" :has-address="hasAddress" />
           </div>
-          <UPageCard v-else variant="subtle" class="mt-4">
+          <UPageCard v-else-if="!error" variant="subtle" class="mt-4">
             <p class="text-muted text-center py-8">
-              Enter a wallet address to see the accounting summary.
+              {{ hasAddress ? 'Loading the activity, positions and on-chain transfers…' : 'Enter a wallet address to see the accounting summary.' }}
             </p>
           </UPageCard>
         </template>
