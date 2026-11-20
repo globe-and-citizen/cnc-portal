@@ -1,4 +1,4 @@
-import { Prisma } from '@prisma/client';
+import { Prisma } from '../generated/prisma/client';
 import { Request, Response } from 'express';
 import { getAddress, Address } from 'viem';
 import OFFICER_ABI from '../artifacts/officer_abi.json';

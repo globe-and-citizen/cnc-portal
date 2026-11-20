@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { Prisma, Team, TeamOfficer } from '@prisma/client';
+import { Prisma, Team, TeamOfficer } from '../../generated/prisma/client';
 import express, { NextFunction, Request, Response } from 'express';
 import request from 'supertest';
 import { getAddress } from 'viem';

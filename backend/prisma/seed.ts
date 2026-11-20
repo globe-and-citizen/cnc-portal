@@ -1,6 +1,8 @@
+import 'dotenv/config';
+import { createPrismaAdapter } from '../src/utils/prismaAdapter';
 // backend/prisma/seed.ts
 
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '../src/generated/prisma/client';
 import { CONFIGS, type Environment } from './seeders/config';
 import { seedUsers } from './seeders/users';
 import { seedTeams } from './seeders/teams';
@@ -11,7 +13,7 @@ import { seedBoardActions } from './seeders/actions';
 import { seedNotifications } from './seeders/notifications';
 import { seedAdmins } from './seeders/admin';
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({ adapter: createPrismaAdapter() });
 
 /**
  * Clears all data from the database in the correct order

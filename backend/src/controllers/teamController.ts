@@ -1,6 +1,6 @@
 import type { getAllTeamsQuerySchema } from '../validation/schemas/team';
 import type { z } from 'zod';
-import { Prisma, TeamContract, TeamOfficer, User, Wage } from '@prisma/client';
+import { Prisma, TeamContract, TeamOfficer, User, Wage } from '../generated/prisma/client';
 import { Request, Response } from 'express';
 import { isAddress } from 'viem';
 import { addNotification, prisma } from '../utils';

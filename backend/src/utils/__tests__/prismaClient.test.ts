@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-describe('dependenciesUtil', () => {
+describe('prismaClient', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     // Reset modules to get a fresh instance
@@ -15,7 +15,7 @@ describe('dependenciesUtil', () => {
     const consoleLogSpy = vi.spyOn(console, 'log');
 
     // Import the module
-    const { prisma } = await import('../dependenciesUtil');
+    const { prisma } = await import('../prismaClient');
 
     expect(prisma).toBeDefined();
     // Just check that it has PrismaClient methods instead of instanceof
@@ -28,7 +28,7 @@ describe('dependenciesUtil', () => {
     const consoleLogSpy = vi.spyOn(console, 'log');
 
     // Import and get first instance
-    const module1 = await import('../dependenciesUtil');
+    const module1 = await import('../prismaClient');
     const firstInstance = module1.prisma;
 
     // Clear mocks to track new calls
@@ -43,7 +43,7 @@ describe('dependenciesUtil', () => {
   it('uses DATABASE_URL from environment', async () => {
     process.env.DATABASE_URL = 'postgresql://test:test@localhost:5432/test_db';
 
-    const { prisma } = await import('../dependenciesUtil');
+    const { prisma } = await import('../prismaClient');
 
     expect(prisma).toBeDefined();
   });
@@ -54,7 +54,7 @@ describe('dependenciesUtil', () => {
     process.env.NODE_ENV = 'development';
 
     vi.resetModules();
-    const { prisma: devPrisma } = await import('../dependenciesUtil');
+    const { prisma: devPrisma } = await import('../prismaClient');
 
     expect(devPrisma).toBeDefined();
 
@@ -63,7 +63,7 @@ describe('dependenciesUtil', () => {
   });
 
   it('provides disconnectPrisma function', async () => {
-    const { disconnectPrisma } = await import('../dependenciesUtil');
+    const { disconnectPrisma } = await import('../prismaClient');
 
     expect(disconnectPrisma).toBeDefined();
     expect(typeof disconnectPrisma).toBe('function');
@@ -72,7 +72,7 @@ describe('dependenciesUtil', () => {
   it('disconnects PrismaClient when disconnectPrisma is called', async () => {
     const consoleLogSpy = vi.spyOn(console, 'log');
 
-    const { disconnectPrisma } = await import('../dependenciesUtil');
+    const { disconnectPrisma } = await import('../prismaClient');
 
     // Just test that disconnectPrisma can be called without errors
     // We can't spy on $disconnect in this test environment since prisma is a real instance
@@ -86,7 +86,7 @@ describe('dependenciesUtil', () => {
     process.env.NODE_ENV = 'production';
 
     vi.resetModules();
-    const { prisma: prodPrisma } = await import('../dependenciesUtil');
+    const { prisma: prodPrisma } = await import('../prismaClient');
 
     expect(prodPrisma).toBeDefined();
 

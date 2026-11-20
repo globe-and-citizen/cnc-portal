@@ -209,7 +209,7 @@ describe('splits and merges, whose v2 rows name only the condition', () => {
   const sum = (trades: RealizedTrade[], field: 'costBasis' | 'realizedPnl') =>
     trades.reduce((total, trade) => total + trade[field], 0)
 
-  it('disposes of both outcomes at cost when a merge undoes a split', () => {
+  it('[AC-US-POLY-ACCOUNTING-003-12] disposes of both outcomes at cost when a merge undoes a split', () => {
     const trades = computeRealizedTrades([split, merge], [])
 
     expect(trades.map(trade => trade.kind)).toEqual(['MERGE', 'MERGE'])
@@ -217,7 +217,7 @@ describe('splits and merges, whose v2 rows name only the condition', () => {
     expect(sum(trades, 'realizedPnl')).toBeCloseTo(0, 6)
   })
 
-  it('costs each outcome of a split at half the split when one of them is sold', () => {
+  it('[AC-US-POLY-ACCOUNTING-003-12] costs each outcome of a split at half the split when one of them is sold', () => {
     const saleOfYes: PolymarketActivity = { ...sell, size: 2, price: 0.75, usdcSize: 1.5 }
 
     const [trade] = computeRealizedTrades([split, saleOfYes], [])
@@ -227,7 +227,7 @@ describe('splits and merges, whose v2 rows name only the condition', () => {
     expect(trade!.realizedPnl).toBeCloseTo(0.5, 6)
   })
 
-  it('balances the sheet and leaves no open contract after a split and its merge', () => {
+  it('[AC-US-POLY-ACCOUNTING-003-12] balances the sheet and leaves no open contract after a split and its merge', () => {
     const splitSettlement = usdcTransfer({ hash: '0xsplit', from: WALLET, to: EXCHANGE, amount: 2, timestamp: BUY_AT })
     const mergeSettlement = usdcTransfer({ hash: '0xmerge', from: EXCHANGE, to: WALLET, amount: 2, timestamp: SELL_AT })
     const realizedTrades = computeRealizedTrades([split, merge], [])

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { prisma } from '../dependenciesUtil';
+import { prisma } from '../prismaClient';
 import {
   findAllFeatures,
   findFeatureByName,
@@ -18,7 +18,7 @@ import {
 } from '../featureUtils';
 import type { FeatureStatus } from '../../validation/featureValidation';
 
-vi.mock('../dependenciesUtil', () => ({
+vi.mock('../prismaClient', () => ({
   prisma: {
     globalSetting: {
       findMany: vi.fn(),

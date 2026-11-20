@@ -7,9 +7,6 @@
   "engines": {
     "node": "24.x"
   },
-  "prisma": {
-    "seed": "ts-node prisma/seed.ts"
-  },
   "scripts": {
     "start": "npx nodemon src/index.ts",
     "test": "vitest run -c vitest.config.unit.ts",
@@ -27,6 +24,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "format:files": "prettier --write",
+    "prebuild": "npm run prisma:generate",
     "build": "tsc && ([ -z \"$SENTRY_AUTH_TOKEN\" ] || npm run sentry:sourcemaps)",
     "prod": "node  dist/index.js",
     "copy:docs": "npx shx cp src/utils/backend_specs.html dist/utils/backend_specs.html",
@@ -61,7 +59,7 @@
     "morgan": "^1.10.0",
     "nodemon": "^3.1.10",
     "prettier": "3.10.1",
-    "prisma": "^6.15.0",
+    "prisma": "^7.10.1",
     "supertest": "^7.1.1",
     "ts-node": "^10.9.2",
     "typescript": "^6.0.3",
@@ -72,7 +70,8 @@
     "@aws-sdk/client-s3": "^3.731.1",
     "@aws-sdk/s3-request-presigner": "^3.731.1",
     "@openzeppelin/merkle-tree": "^1.0.8",
-    "@prisma/client": "^6.15.0",
+    "@prisma/adapter-pg": "^7.10.1",
+    "@prisma/client": "^7.10.1",
     "@sentry/cli": "^3.8.2",
     "@sentry/node": "^11.15.0",
     "@types/swagger-jsdoc": "^6.0.4",

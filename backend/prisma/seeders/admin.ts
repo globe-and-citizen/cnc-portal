@@ -1,6 +1,6 @@
 // backend/prisma/seeders/admin.ts
 
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '../../src/generated/prisma/client';
 import { isAddress } from 'viem';
 const { generateNonce } = require('./helpers');
 
