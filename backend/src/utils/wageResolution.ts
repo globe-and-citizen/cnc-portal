@@ -1,4 +1,4 @@
-import { prisma } from './dependenciesUtil';
+import { prisma } from './prismaClient';
 
 /**
  * Return the member's current wage version.

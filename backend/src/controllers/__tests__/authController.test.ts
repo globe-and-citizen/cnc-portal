@@ -30,8 +30,8 @@ vi.mock('../../utils', async () => {
   };
 });
 
-vi.mock('../../utils/dependenciesUtil', async () => {
-  const actual = await vi.importActual('../../utils/dependenciesUtil');
+vi.mock('../../utils/prismaClient', async () => {
+  const actual = await vi.importActual('../../utils/prismaClient');
   return {
     ...actual,
     prisma: mockPrisma,
