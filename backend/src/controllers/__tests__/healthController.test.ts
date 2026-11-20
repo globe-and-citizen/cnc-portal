@@ -7,7 +7,7 @@ const { mockQueryRaw, mockGetChainId } = vi.hoisted(() => ({
   mockGetChainId: vi.fn(),
 }));
 
-vi.mock('../../utils/dependenciesUtil', () => ({
+vi.mock('../../utils/prismaClient', () => ({
   prisma: { $queryRaw: mockQueryRaw },
 }));
 

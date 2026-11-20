@@ -162,7 +162,7 @@ const authorize = (requiredRole) => {
 **Default Limits:**
 
 - Endpoint: All `/api/*`
-- Limit: 100,000 requests per 15 minutes per IP
+- Limit: 100,000 requests per 15 minutes per IPv4 address or IPv6 /56 subnet
 - Response on limit exceeded: `429 Too Many Requests`
 - Headers: `X-RateLimit-Limit`, `X-RateLimit-Remaining`, `X-RateLimit-Reset`
 

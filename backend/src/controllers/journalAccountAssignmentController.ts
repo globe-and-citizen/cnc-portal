@@ -7,9 +7,12 @@ import {
   z,
 } from '../validation';
 
+type GetJournalAccountAssignmentsQuery = z.infer<typeof getJournalAccountAssignmentsQuerySchema>;
+type DeleteJournalAccountAssignmentQuery = z.infer<
+  typeof deleteJournalAccountAssignmentQuerySchema
+>;
+
 type UpsertAssignmentBody = z.infer<typeof upsertJournalAccountAssignmentBodySchema>;
-type GetAssignmentsQuery = z.infer<typeof getJournalAccountAssignmentsQuerySchema>;
-type DeleteAssignmentQuery = z.infer<typeof deleteJournalAccountAssignmentQuerySchema>;
 
 const ASSIGNER_SELECT = {
   assignedBy: { select: { name: true, address: true, imageUrl: true } },
@@ -20,7 +23,7 @@ const isRecordNotFound = (error: unknown): boolean =>
 
 /** List the account assignments visible to any member of one team. */
 export const getJournalAccountAssignments = async (req: Request, res: Response) => {
-  const { teamId } = req.query as unknown as GetAssignmentsQuery;
+  const { teamId } = res.locals.validatedQuery as GetJournalAccountAssignmentsQuery;
 
   try {
     const assignments = await prisma.journalAccountAssignment.findMany({
@@ -60,7 +63,8 @@ export const upsertJournalAccountAssignment = async (req: Request, res: Response
 
 /** Remove an assignment so journal assembly restores its evidence-derived account. */
 export const deleteJournalAccountAssignment = async (req: Request, res: Response) => {
-  const { teamId, journalEntryId } = req.query as unknown as DeleteAssignmentQuery;
+  const { teamId, journalEntryId } = res.locals
+    .validatedQuery as DeleteJournalAccountAssignmentQuery;
 
   try {
     await prisma.journalAccountAssignment.delete({

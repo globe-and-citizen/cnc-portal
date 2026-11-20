@@ -104,8 +104,7 @@ export type FileMetadata = {
 };
 
 export type UploadResult =
-  | { success: true; metadata: FileMetadata }
-  | { success: false; error: string };
+  { success: true; metadata: FileMetadata } | { success: false; error: string };
 
 export function generateFileKey(folder: string, originalName: string): string {
   const timestamp = Date.now().toString();

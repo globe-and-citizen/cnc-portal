@@ -47,7 +47,7 @@ const validate = (schemas: ValidationSchemas) => {
           const errors = formatZodError(queryResult.error);
           return errorResponse(400, `Invalid query parameters - ${errors}`, res);
         }
-        req.query = queryResult.data as Request['query'];
+        res.locals.validatedQuery = queryResult.data;
       }
 
       // Validate params if schema provided
@@ -95,7 +95,9 @@ export const validateRequest = (schema: ZodSchema) => {
 
       const parsed = result.data as { params?: unknown; query?: unknown; body?: unknown };
       if (parsed.params !== undefined) req.params = parsed.params as Request['params'];
-      if (parsed.query !== undefined) req.query = parsed.query as Request['query'];
+      if (parsed.query !== undefined) {
+        res.locals.validatedQuery = parsed.query;
+      }
       if (parsed.body !== undefined) req.body = parsed.body;
 
       next();

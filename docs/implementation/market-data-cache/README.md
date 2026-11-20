@@ -55,8 +55,9 @@ cancellation stops its client observer; the shared backend read may still finish
   and command waits are bounded, offline command buffering is disabled, and later requests may reconnect.
 - Provider, cache, and admission failures that return `5xx` are captured by the backend error-tracking capability with the market operation
   and HTTP status as Sentry tags. Expected provider rate limits remain outside exception tracking.
-- The public route has a per-process, per-IP limit of 120 requests per minute. Shared provider admission remains independent of this local
-  HTTP limit. Responses use `Cache-Control: no-store`; Redis and the existing frontend query cache own freshness.
+- The public route has a per-process limit of 120 requests per minute. IPv4 clients are limited by address; IPv6 addresses in the same /56
+  subnet share a limit. Shared provider admission remains independent of this local HTTP limit. Responses use `Cache-Control: no-store`;
+  Redis and the existing frontend query cache own freshness.
 - CoinGecko credentials and Redis connection details stay in backend environment variables. They are never returned in market responses or
   logged by the market services.
 
@@ -79,7 +80,7 @@ provider quota for an arbitrary number of distinct uncached historical dates; ex
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `95d9e12dd696864913e37ad6e20222587b223591`
+**Implementation evidence reviewed against:** `18018c5d91f7752e87caadb1d99fa8b24c9c66aa`
 
 - [Market route](../../../backend/src/routes/coingeckoRoute.ts), [controller](../../../backend/src/controllers/coingeckoController.ts), and
   [request validation](../../../backend/src/validation/schemas/coingecko.ts)
@@ -89,7 +90,8 @@ provider quota for an arbitrary number of distinct uncached historical dates; ex
 - [Client CoinGecko queries](../../../app/src/queries/coingecko.queries.ts) and
   [dashboard price adapter](../../../dashboard/app/api/coingecko.ts)
 - [Cache and concurrency tests](../../../backend/src/services/__tests__/coingeckoService.test.ts),
-  [HTTP boundary tests](../../../backend/src/routes/__tests__/coingeckoRoute.test.ts), and
+  [HTTP boundary tests](../../../backend/src/routes/__tests__/coingeckoRoute.test.ts),
+  [rate-limit tests](../../../backend/src/middleware/__tests__/rateLimit.test.ts), and
   [client request tests](../../../app/src/queries/__tests__/coingecko.queries.spec.ts)
 
 ## Related Documentation

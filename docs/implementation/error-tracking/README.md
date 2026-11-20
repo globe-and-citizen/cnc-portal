@@ -45,8 +45,9 @@ flowchart TD
 
 Controllers that use `errorResponse()` report failures with a status of `500` or greater before returning the sanitized response.
 Controllers with dedicated `5xx` response paths call the same capture helper directly. CoinGecko captures provider and cache failures with
-the operation and HTTP status as tags. The Sentry SDK environment is configured at process startup, and the Express Sentry handler remains
-the fallback for errors that are not handled by a controller.
+the operation and HTTP status as tags. The Express Sentry handler remains the fallback for errors that are not handled by a controller. The
+backend initialization module specifies the SDK environment and tracing configuration, but its import in the standard entry point is
+commented out; external preloading is not verified.
 
 The frontend's internal API client and external provider client share the Axios capture helper. Internal API retries are allowed to finish
 before one final failure is captured, while external provider failures are captured at the response interceptor. Vue's global error
@@ -99,6 +100,9 @@ retry or request: a stopped Safe balance query requires an existing explicit or 
 
 ## Known Gaps
 
+The SDK version 11 defaults replace the previous explicit `sendDefaultPii: true` setting, following the upstream migration guidance. Actual
+request-data collection and filtering need a controlled check in the configured environment.
+
 The tunnel deliberately acknowledges forwarding failures, so a successful browser request to the tunnel does not by itself prove that Sentry
 accepted the event. The Sentry dashboard and a controlled smoke test remain required for end-to-end ingestion validation.
 
@@ -112,7 +116,7 @@ classification, so it remains an expected wallet condition rather than an unexpe
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `aef9c54644f938b4f8b1de3b80456f6b59a9a1a0`
+**Implementation evidence reviewed against:** `18018c5d91f7752e87caadb1d99fa8b24c9c66aa`
 
 - [Backend capture helper](../../../backend/src/utils/sentry.ts), [central error response](../../../backend/src/utils/utils.ts), and
   [Sentry initialization](../../../backend/src/instrument.ts)

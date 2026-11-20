@@ -73,13 +73,15 @@ export const addClaimBodySchema = z.strictObject({
 });
 
 // Claim update request body (for signature)
-export const updateClaimBodySchema = z.object({
-  minutesWorked: workedMinutesSchema.optional(),
-  memo: dailyClaimMemoSchema.optional(),
-  dayWorked: z.string().optional(),
-  deletedFileIndexes: z.array(z.number().int().nonnegative()).optional(), // Array of indexes to delete
-  attachments: fileAttachmentsArraySchema.optional(),
-});
+export const updateClaimBodySchema = z
+  .object({
+    minutesWorked: workedMinutesSchema.optional(),
+    memo: dailyClaimMemoSchema.optional(),
+    dayWorked: z.string().optional(),
+    deletedFileIndexes: z.array(z.number().int().nonnegative()).optional(), // Array of indexes to delete
+    attachments: fileAttachmentsArraySchema.optional(),
+  })
+  .default({});
 
 // Get claims query parameters
 export const getClaimsQuerySchema = z.object({

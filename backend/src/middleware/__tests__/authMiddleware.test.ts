@@ -2,11 +2,11 @@ import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { Request, Response } from 'express';
 import { authorizeUser } from '../authMiddleware';
 import jwt from 'jsonwebtoken';
-import { prisma } from '../../utils/dependenciesUtil';
+import { prisma } from '../../utils/prismaClient';
 
 // Mock dependencies
 vi.mock('jsonwebtoken');
-vi.mock('../../utils/dependenciesUtil', () => ({
+vi.mock('../../utils/prismaClient', () => ({
   prisma: {
     user: {
       findUnique: vi.fn(),

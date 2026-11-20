@@ -1,6 +1,6 @@
 // backend/prisma/seeders/users.ts
 
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '../../src/generated/prisma/client';
 import { faker } from '@faker-js/faker';
 import { type SeedConfig, type Environment } from './config';
 import { getEthereumAddress, generateNonce, distributeDate } from './helpers';

@@ -82,7 +82,7 @@ const balances = computed(() => Math.abs(sheet.value.identityGap) < 0.01)
         <span class="tabular-nums">{{ formatUsd(sheet.ownerCapital) }}</span>
       </div>
       <div class="flex justify-between py-1.5 pl-3">
-        <span>Retained earnings <span class="text-muted text-sm">(realized P&L + rewards)</span></span>
+        <span>Retained earnings <span class="text-muted text-sm">(realized P&L + rewards − trading fees)</span></span>
         <span class="tabular-nums" :class="signClass(sheet.retainedEarnings)">
           {{ formatSignedUsd(sheet.retainedEarnings) }}
         </span>

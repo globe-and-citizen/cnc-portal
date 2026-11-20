@@ -86,7 +86,7 @@ These tests protect shared runtime or repository contracts rather than one produ
 - [Contract artifact registry tests](../../app/src/artifacts/__tests__/registry.spec.ts)
 - [Notification API tests](../../backend/src/controllers/__tests__/notificationController.test.ts),
   [notification utility tests](../../backend/src/utils/__tests__/notificationUtil.test.ts),
-  [dependency-boundary tests](../../backend/src/utils/__tests__/dependenciesUtil.test.ts),
+  [dependency-boundary tests](../../backend/src/utils/__tests__/prismaClient.test.ts),
   [HTTP utility tests](../../backend/src/utils/__tests__/utils.test.ts),
   [chain-client configuration tests](../../backend/src/utils/__tests__/viem.config.test.ts), and
   [telemetry tunnel tests](../../backend/src/routes/__tests__/sentryTunnelRoute.test.ts)

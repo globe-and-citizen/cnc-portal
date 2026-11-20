@@ -3,7 +3,7 @@ import express, { Request, Response, NextFunction } from 'express';
 import rateLimit from 'express-rate-limit';
 import { prisma } from '../../utils';
 import { describe, it, beforeEach, expect, vi } from 'vitest';
-import { Expense, Team } from '@prisma/client';
+import { Expense, Team } from '../../generated/prisma/client';
 import publicClient from '../../utils/viem.config';
 import expenseRoutes from '../../routes/expenseRoute';
 import { authorizeUser } from '../../middleware/authMiddleware';

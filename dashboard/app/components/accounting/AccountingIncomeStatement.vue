@@ -56,10 +56,7 @@
           Expenses
         </p>
         <div class="flex justify-between py-1.5 pl-3">
-          <span>
-            Trading fees
-            <span class="text-muted text-sm">(Polymarket charges none)</span>
-          </span>
+          <span>Trading fees</span>
           <span class="tabular-nums">{{ formatUsd(statement.expenses) }}</span>
         </div>
 

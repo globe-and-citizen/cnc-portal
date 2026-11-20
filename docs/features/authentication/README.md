@@ -265,7 +265,7 @@ reserved.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `8c7c2e2adf8516c8bb269320301c296ea2ce99c3`
+**Implementation evidence reviewed against:** `48c3250a1bb32813ef410f1d21d559329560603b`
 
 - [Network lock screen](../../../app/src/components/layout/NetworkLockScreen.vue),
   [network-lock tests](../../../app/src/components/layout/__tests__/NetworkLockScreen.spec.ts),
