@@ -39,10 +39,13 @@ async function fetchAllPages<Row>(path: string, query: PolymarketQuery): Promise
   return rows
 }
 
-/** Fetches the complete activity history, oldest first, for accounting. */
+/**
+ * Fetches the complete activity history, oldest first, for accounting. v2
+ * only goes back three years unless `start` says otherwise.
+ */
 export async function fetchAllPolymarketActivity(address: string): Promise<PolymarketActivity[]> {
   const user = toPolymarketUser(address)
-  const rows = await fetchAllPages<PolymarketActivityRow>('activity', { user, sortBy: 'TIMESTAMP', sortDirection: 'ASC' })
+  const rows = await fetchAllPages<PolymarketActivityRow>('activity', { user, start: '1', sortBy: 'TIMESTAMP', sortDirection: 'ASC' })
   return rows.map(toPolymarketActivity)
 }
 

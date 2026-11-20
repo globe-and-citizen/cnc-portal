@@ -57,10 +57,10 @@ describe('fetchAllPolymarketActivity', () => {
 
     expect(activity.map(row => row.timestamp)).toEqual([1, 2])
     expect(fetchMock).toHaveBeenNthCalledWith(1, `${apiUrl}/activity`, {
-      query: { user, sortBy: 'TIMESTAMP', sortDirection: 'ASC', limit: 1000 }
+      query: { user, start: '1', sortBy: 'TIMESTAMP', sortDirection: 'ASC', limit: 1000 }
     })
     expect(fetchMock).toHaveBeenNthCalledWith(2, `${apiUrl}/activity`, {
-      query: { user, sortBy: 'TIMESTAMP', sortDirection: 'ASC', limit: 1000, cursor: 'cursor-2' }
+      query: { user, start: '1', sortBy: 'TIMESTAMP', sortDirection: 'ASC', limit: 1000, cursor: 'cursor-2' }
     })
   })
 
