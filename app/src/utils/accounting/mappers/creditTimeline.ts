@@ -8,10 +8,10 @@
  * with the bookkeeping alone.
  */
 import type {
-  FixedReturnLendingOfferCreatedRow,
   FixedReturnFundsLentRow,
-  FixedReturnLendingOfferFundedRow,
   FixedReturnLenderRepaidRow,
+  FixedReturnLendingOfferCreatedRow,
+  FixedReturnLendingOfferFundedRow,
   FixedReturnPrincipalRefundedRow
 } from '@/types/contract-events/fixedReturn'
 

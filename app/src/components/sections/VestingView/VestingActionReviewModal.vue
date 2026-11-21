@@ -59,12 +59,12 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { useToast } from '@nuxt/ui/composables'
+import { useVestingReleaseWrite, useVestingStopVestingWrite } from '@/composables/vesting/writes'
 import type { Address } from 'viem'
 import type { VestingSchedule } from '@/types/vesting'
-import { useVestingReleaseWrite, useVestingStopVestingWrite } from '@/composables/vesting/writes'
 import { classifyError } from '@/utils/errors/classifyContractError'
 import { formatVestingAmount } from '@/utils/vesting/presentation'
+import { useToast } from '@nuxt/ui/composables'
 
 const props = defineProps<{
   open: boolean

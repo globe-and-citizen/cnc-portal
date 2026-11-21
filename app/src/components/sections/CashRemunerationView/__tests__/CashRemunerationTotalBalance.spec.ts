@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import CashRemunerationTotalBalance from '../CashRemunerationTotalBalance.vue'
 import { createTestingPinia } from '@pinia/testing'
-import { shallowMount } from '@vue/test-utils'
 import { mockUseContractBalance } from '@/tests/mocks/composables.mock'
+import { shallowMount } from '@vue/test-utils'
 
 describe('CashRemunerationTotalBalance', () => {
   beforeEach(() => {

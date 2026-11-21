@@ -1,9 +1,9 @@
-import { describe, it, expect } from 'vitest'
-import type { Address } from 'viem'
-import type { TeamContract, ContractType } from '@/types/teamContract'
-import type { CncAccountingInput } from '@/utils/accounting/assemble'
+import type { ContractType, TeamContract } from '@/types/teamContract'
+import { describe, expect, it } from 'vitest'
 import { usdAmountToNumber, usdRateToNumber } from '@/utils/accounting/monetaryAmount'
 import { ADDR } from './fixtures'
+import type { Address } from 'viem'
+import type { CncAccountingInput } from '@/utils/accounting/assemble'
 import { assembleAccounting } from './assembleAccounting'
 
 const ROUTER = '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'

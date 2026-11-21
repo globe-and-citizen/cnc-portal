@@ -1,18 +1,18 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { mount, flushPromises, type VueWrapper } from '@vue/test-utils'
+import { SUPPORTED_TOKENS, USDC_ADDRESS } from '@/constant'
+import { type VueWrapper, flushPromises, mount } from '@vue/test-utils'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
-import { ref, toValue } from 'vue'
-import { readContract, estimateGas } from '@wagmi/core'
-import { recoverTypedDataAddress } from 'viem'
-import TransferAction from '../TransferAction.vue'
+import { estimateGas, readContract } from '@wagmi/core'
 import {
   makeTokenBalance,
   mockERC20Writes,
   mockExpenseAccountWrites,
   mockTeamStore
 } from '@/tests/mocks'
-import { SUPPORTED_TOKENS, USDC_ADDRESS } from '@/constant'
+import { ref, toValue } from 'vue'
 import type { TokenBalance } from '@/types'
+import TransferAction from '../TransferAction.vue'
+import { recoverTypedDataAddress } from 'viem'
 
 const usdcConfig = SUPPORTED_TOKENS.find((token) => token.id === 'usdc')!
 const defaultBalances = (): TokenBalance[] => [

@@ -1,7 +1,7 @@
-import { test as playwright, type BrowserContext, type Page } from '@playwright/test'
-import { randomUUID } from 'node:crypto'
+import { type BrowserContext, type Page, test as playwright } from '@playwright/test'
 import { mkdir, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
+import { randomUUID } from 'node:crypto'
 
 const COVERAGE_DIR = join(process.cwd(), 'coverage', 'e2e', '.tmp')
 const TOKEN_PRICE_ROUTE = '**/api/coingecko/coins/**'

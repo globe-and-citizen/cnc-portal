@@ -1,9 +1,9 @@
 // In-page stand-in for the Safe Client Gateway holdings read. Balances come
 // from the real E2E chain; every asset is valued at the stubbed $1 token price.
-import type { Page } from '@playwright/test'
-import { formatUnits, zeroAddress, type Address } from 'viem'
+import { type Address, formatUnits, zeroAddress } from 'viem'
+import { E2E_USDCE_ADDRESS, E2E_USDC_ADDRESS, nativeBalance, tokenBalance } from '../e2e-chain'
 import type { SafeClientBalance, SafeClientBalances } from '../../../src/types/safe'
-import { E2E_USDC_ADDRESS, E2E_USDCE_ADDRESS, nativeBalance, tokenBalance } from '../e2e-chain'
+import type { Page } from '@playwright/test'
 import { json } from '../e2e-page'
 
 /** The app keeps the production Gateway origin under E2E; only the Hardhat chain is stubbed. */

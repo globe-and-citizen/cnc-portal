@@ -155,17 +155,17 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref } from 'vue'
-import { CalendarDate, getLocalTimeZone, Time, today } from '@internationalized/date'
-import { addCreditTerm } from '@/utils/communityCredit/offer'
+import { CalendarDate, Time, getLocalTimeZone, today } from '@internationalized/date'
+import { type CreditCallForm, type CreditTermUnit, createCreditCallTermsSchema } from '@/types'
 import {
+  MINUTES_PER_DAY,
   applyZodFieldErrors,
   creditTermLabel,
-  formatAmount,
-  MINUTES_PER_DAY
+  formatAmount
 } from '@/utils/communityCredit/model'
-import { creditChipClass, creditCallDeadlineContext } from '@/utils/communityCredit/wizard'
-import { createCreditCallTermsSchema, type CreditCallForm, type CreditTermUnit } from '@/types'
+import { computed, reactive, ref } from 'vue'
+import { creditCallDeadlineContext, creditChipClass } from '@/utils/communityCredit/wizard'
+import { addCreditTerm } from '@/utils/communityCredit/offer'
 import { formatDate } from '@/utils/format'
 
 const form = defineModel<CreditCallForm>('form', { required: true })

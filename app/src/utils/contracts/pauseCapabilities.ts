@@ -1,6 +1,6 @@
-import registryJson from '@/artifacts/version-registry.json'
-import type { FolderVersion } from '@/artifacts/registry'
 import type { ContractType } from '@/types'
+import type { FolderVersion } from '@/artifacts/registry'
+import registryJson from '@/artifacts/version-registry.json'
 
 export type ContractPauseSupport = 'none' | 'operations' | 'full-writes'
 export type ContractPauseStatus = 'active' | 'paused' | 'not-supported' | 'unavailable'

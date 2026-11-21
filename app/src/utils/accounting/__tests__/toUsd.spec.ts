@@ -1,5 +1,5 @@
-import { describe, it, expect, vi } from 'vitest'
 import {
+  type UsdRateOfRecord,
   applyHistoricalRates,
   historicalRateTargets,
   isUsdPegged,
@@ -7,11 +7,11 @@ import {
   toUsd,
   tokenUsdRate,
   utcRateDate,
-  wholeTokenAmount,
-  type UsdRateOfRecord
+  wholeTokenAmount
 } from '../toUsd'
-import type { TokenId } from '@/constant'
+import { describe, expect, it, vi } from 'vitest'
 import type { JournalEntryDraft } from '../journalEntryDraft'
+import type { TokenId } from '@/constant'
 import { finalizeJournalEntryDrafts } from '../journalEntry'
 
 const AT = new Date('2026-03-13T00:00:00Z')

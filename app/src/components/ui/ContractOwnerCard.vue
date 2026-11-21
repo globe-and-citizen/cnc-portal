@@ -58,12 +58,12 @@
 </template>
 
 <script setup lang="ts">
-import AddressTooltip from '@/components/ui/AddressTooltip.vue'
-import { useTeamStore } from '@/stores/'
-import { computed } from 'vue'
 import type { Address } from 'viem'
-import { useContractOwner } from '@/composables/contracts/reads'
+import AddressTooltip from '@/components/ui/AddressTooltip.vue'
+import { computed } from 'vue'
 import { getContractOwnerIdentity } from '@/utils/contracts/presentation'
+import { useContractOwner } from '@/composables/contracts/reads'
+import { useTeamStore } from '@/stores/'
 
 const props = defineProps<{ contractAddress?: Address }>()
 const teamStore = useTeamStore()

@@ -1,8 +1,8 @@
 /** Pure source definitions and completeness projections; the composable owns reactivity. */
-import { isUsdPegged } from './toUsd'
-import type { JournalEntryDraft } from './journalEntryDraft'
 import type { AccountingSourceId, AccountingSourceStatus } from './types'
 import type { AssetId } from '@/utils/tokens/assets'
+import type { JournalEntryDraft } from './journalEntryDraft'
+import { isUsdPegged } from './toUsd'
 
 export interface ReactiveValue<T> {
   readonly value: T

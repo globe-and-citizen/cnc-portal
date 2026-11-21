@@ -1,17 +1,17 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { mount, flushPromises } from '@vue/test-utils'
-import { nextTick } from 'vue'
+import { flushPromises, mount } from '@vue/test-utils'
 import type { CreditRound } from '@/types'
+import { nextTick } from 'vue'
 
 import {
+  mockBankReads,
+  mockFixedReturnReads,
+  mockFixedReturnWrites,
+  mockInvalidateQueries,
   mockRouterPush,
   mockRouterReplace,
   setMockRoute,
-  useQueryClientFn,
-  mockInvalidateQueries,
-  mockFixedReturnReads,
-  mockFixedReturnWrites,
-  mockBankReads
+  useQueryClientFn
 } from '@/tests/mocks'
 import { mockToast } from '@/tests/mocks/store.mock'
 
@@ -45,11 +45,11 @@ vi.mock('@/components/sections/CommunityCreditView/CreditAccountTransactions.vue
   default: { template: '<div data-test="credit-transactions" />' }
 }))
 
+import { offerStruct, sampleRound } from './communityCreditFixtures'
+import CreditLendModal from '@/components/sections/CommunityCreditView/CreditLendModal.vue'
+import CreditRoundCard from '@/components/sections/CommunityCreditView/CreditRoundCard.vue'
 import IndexView from '../IndexView.vue'
 import RoundView from '../RoundView.vue'
-import CreditRoundCard from '@/components/sections/CommunityCreditView/CreditRoundCard.vue'
-import CreditLendModal from '@/components/sections/CommunityCreditView/CreditLendModal.vue'
-import { offerStruct, sampleRound } from './communityCreditFixtures'
 
 function resetStore() {
   Object.assign(store, {

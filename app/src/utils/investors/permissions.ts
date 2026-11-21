@@ -1,4 +1,4 @@
-import { isAddress, type Address } from 'viem'
+import { type Address, isAddress } from 'viem'
 import type { InvestorPermissionAccount } from '@/queries/investorPermissions.queries'
 import type { Team } from '@/types/team'
 

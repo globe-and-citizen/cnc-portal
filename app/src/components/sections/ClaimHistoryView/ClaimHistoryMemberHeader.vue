@@ -50,12 +50,12 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
 import type { Address } from 'viem'
+import AddressTooltip from '@/components/ui/AddressTooltip.vue'
+import { computed } from 'vue'
+import { formatAddress } from '@/utils/format'
 import { useRouter } from 'vue-router'
 import { useTeamStore } from '@/stores'
-import AddressTooltip from '@/components/ui/AddressTooltip.vue'
-import { formatAddress } from '@/utils/format'
 
 interface Props {
   memberAddress: Address

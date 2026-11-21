@@ -1,10 +1,10 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { mount } from '@vue/test-utils'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import SetMemberWageModal from '../SetMemberWageModal.vue'
+import { createMockMutationResponse } from '@/tests/mocks'
 import { createTestingPinia } from '@pinia/testing'
 import { defineComponent } from 'vue'
-import SetMemberWageModal from '../SetMemberWageModal.vue'
+import { mount } from '@vue/test-utils'
 import { useSetMemberWageMutation } from '@/queries/wage.queries'
-import { createMockMutationResponse } from '@/tests/mocks'
 
 const mockMember = { address: '0x123', name: 'Alice' }
 const mockTeamId = 1

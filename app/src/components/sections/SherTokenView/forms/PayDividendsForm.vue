@@ -55,18 +55,18 @@
 </template>
 
 <script setup lang="ts">
+import { computed, ref } from 'vue'
+import type { Address } from 'viem'
+
 import { NETWORK } from '@/constant'
 import type { Team } from '@/types'
-
-import { parseUnits } from 'viem'
-import { computed, ref } from 'vue'
-import { useTeamStore } from '@/stores'
+import TokenAmountInput from '@/components/ui/inputs/TokenAmountInput.vue'
 
 import type { TokenId } from '@/constant'
 import type { TokenOption } from '@/types'
+import { parseUnits } from 'viem'
 import { useContractBalance } from '@/composables/useContractBalance'
-import TokenAmountInput from '@/components/ui/inputs/TokenAmountInput.vue'
-import type { Address } from 'viem'
+import { useTeamStore } from '@/stores'
 const amount = ref<string>('')
 const selectedTokenId = ref<TokenId>('native')
 const tokenAmountModel = computed({

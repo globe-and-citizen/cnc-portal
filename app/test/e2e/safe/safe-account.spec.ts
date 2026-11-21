@@ -1,5 +1,3 @@
-import { expect, test } from '../fixtures/chain'
-import { parseEther, parseUnits } from 'viem'
 import {
   E2E_MEMBER,
   E2E_NEW_SIGNER,
@@ -8,8 +6,8 @@ import {
   sendToken,
   tokenBalance
 } from '../e2e-chain'
+import { type SafeE2EFixture, deploySafeE2EFixture, safeOwners, safeThreshold } from './safe-chain'
 import { dialogAmount, rejectNextWalletRequest, selectToken } from '../e2e-page'
-import { deploySafeE2EFixture, safeOwners, safeThreshold, type SafeE2EFixture } from './safe-chain'
 import {
   exerciseArchivedSafeSetup,
   exercisePendingSafeTransfer,
@@ -18,6 +16,8 @@ import {
   exerciseSafeInfoRecovery,
   openSafeAccount
 } from './safe-page'
+import { expect, test } from '../fixtures/chain'
+import { parseEther, parseUnits } from 'viem'
 import { transaction } from './safe-transaction'
 
 let fixture: SafeE2EFixture

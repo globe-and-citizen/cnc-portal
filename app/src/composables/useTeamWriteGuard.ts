@@ -1,6 +1,6 @@
-import { useTeamStore } from '@/stores'
+import { type MaybeRefOrGetter, computed, toValue } from 'vue'
 import type { Team } from '@/types/team'
-import { computed, toValue, type MaybeRefOrGetter } from 'vue'
+import { useTeamStore } from '@/stores'
 
 export const TEAM_ARCHIVED_TOOLTIP = 'This team is archived'
 

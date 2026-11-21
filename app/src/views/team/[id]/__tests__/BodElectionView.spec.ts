@@ -1,12 +1,12 @@
-import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
-import { mount, type VueWrapper } from '@vue/test-utils'
-import { createTestingPinia } from '@pinia/testing'
+import { type VueWrapper, mount } from '@vue/test-utils'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { mockElectionsReads, mockLog, resetContractMocks } from '@/tests/mocks'
 import BodElectionView from '@/views/team/[id]/BodElectionView.vue'
 import BodMembersSection from '@/components/sections/AdministrationView/BodMembersSection.vue'
+import ContractOwnerCard from '@/components/ui/ContractOwnerCard.vue'
 import ElectionSummarySection from '@/components/sections/AdministrationView/ElectionSummarySection.vue'
 import PastElectionsSection from '@/components/sections/AdministrationView/PastElectionsSection.vue'
-import ContractOwnerCard from '@/components/ui/ContractOwnerCard.vue'
-import { mockElectionsReads, mockLog, resetContractMocks } from '@/tests/mocks'
+import { createTestingPinia } from '@pinia/testing'
 
 const MOCK_ELECTIONS_ADDRESS = '0x1234567890123456789012345678901234567890'
 

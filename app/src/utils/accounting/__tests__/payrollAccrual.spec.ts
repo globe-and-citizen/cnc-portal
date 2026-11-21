@@ -1,7 +1,7 @@
-import { describe, it, expect } from 'vitest'
+import { ADDR, draftUsdValue, makeCtx } from './fixtures'
+import { describe, expect, it } from 'vitest'
 import type { WeeklyClaim } from '@/types/cash-remuneration'
 import { mapPayroll } from '@/utils/accounting/mappers/payroll'
-import { makeCtx, ADDR, draftUsdValue } from './fixtures'
 
 const ctx = makeCtx() // toUsd: native $2, usdc $1, sher $0.50
 

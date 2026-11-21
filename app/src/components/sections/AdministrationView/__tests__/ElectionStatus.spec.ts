@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { mount, type VueWrapper } from '@vue/test-utils'
+import { type VueWrapper, mount } from '@vue/test-utils'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import ElectionStatus from '@/components/sections/AdministrationView/ElectionStatus.vue'
 import { ref } from 'vue'
 

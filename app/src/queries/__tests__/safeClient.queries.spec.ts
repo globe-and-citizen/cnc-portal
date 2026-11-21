@@ -1,11 +1,11 @@
+import type { SafeClientBalances, SafeClientTransactionHistory } from '@/types/safe'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ref, toValue } from 'vue'
-import externalApiClient from '@/lib/external.axios'
-import { useQueryFn } from '@/tests/mocks/composables.mock'
-import { mockWagmiCore } from '@/tests/mocks/wagmi.vue.mock'
-import type { SafeClientBalances, SafeClientTransactionHistory } from '@/types/safe'
 import { currentChainId } from '@/constant'
+import externalApiClient from '@/lib/external.axios'
+import { mockWagmiCore } from '@/tests/mocks/wagmi.vue.mock'
 import { safeKeys } from '../safe.queries'
+import { useQueryFn } from '@/tests/mocks/composables.mock'
 
 const { fetchSafeClientBalances, useGetSafeBalancesQuery, useGetSafeTransactionHistoryQuery } =
   await vi.importActual<typeof import('../safeClient.queries')>('../safeClient.queries')

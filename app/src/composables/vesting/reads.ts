@@ -1,8 +1,8 @@
+import { type Address, isAddress } from 'viem'
 import { computed } from 'vue'
 import { useReadContract } from '@wagmi/vue'
-import { isAddress, type Address } from 'viem'
-import { vestingAbi } from '@/artifacts/abi/generated'
 import { useTeamStore } from '@/stores'
+import { vestingAbi } from '@/artifacts/abi/generated'
 
 export function useVestingAddress() {
   const teamStore = useTeamStore()

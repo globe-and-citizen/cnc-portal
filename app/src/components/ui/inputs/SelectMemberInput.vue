@@ -74,12 +74,12 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, computed, watch } from 'vue'
+import type { MemberSelectionScope, User } from '@/types'
+import { computed, ref, watch } from 'vue'
 import { useFocus, watchDebounced } from '@vueuse/core'
 import UserIdentity from '@/components/ui/UserIdentity.vue'
-import type { MemberSelectionScope, User } from '@/types'
-import { useTeamStore } from '@/stores/teamStore'
 import { useGetSearchUsersQuery } from '@/queries'
+import { useTeamStore } from '@/stores/teamStore'
 
 interface Props {
   disabled?: boolean

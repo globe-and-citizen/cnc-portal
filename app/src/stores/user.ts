@@ -1,7 +1,7 @@
-import { defineStore } from 'pinia'
-import { useEventListener, useStorage } from '@vueuse/core'
 import { computed, onScopeDispose, ref, watch } from 'vue'
+import { useEventListener, useStorage } from '@vueuse/core'
 import type { Address } from 'viem'
+import { defineStore } from 'pinia'
 
 function getTokenExpiry(token: string): number | undefined {
   try {

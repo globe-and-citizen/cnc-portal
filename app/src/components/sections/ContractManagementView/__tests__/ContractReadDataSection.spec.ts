@@ -1,8 +1,8 @@
+import type { Abi, Address } from 'viem'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import ContractReadDataSection from '../ContractReadDataSection.vue'
 import { mount } from '@vue/test-utils'
 import { ref } from 'vue'
-import type { Abi, Address } from 'viem'
-import ContractReadDataSection from '../ContractReadDataSection.vue'
 
 const { mockUseContractReadData } = vi.hoisted(() => ({
   mockUseContractReadData: vi.fn()

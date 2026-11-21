@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest'
 import { BaseError, ContractFunctionRevertedError, UserRejectedRequestError } from 'viem'
+import { describe, expect, it } from 'vitest'
 import { classifyError } from '@/utils/errors/classifyContractError'
 
 function makeRevert(errorName: string, args?: readonly unknown[]) {

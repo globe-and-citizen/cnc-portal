@@ -9,7 +9,7 @@
  * consideration, so it is booked like a released grant — Dr Deferred SHER
  * Compensation · Cr Investor Equity — which leaves total equity unchanged.
  */
-import { draftOperationIdOf, type JournalEntryDraft } from './journalEntryDraft'
+import { type JournalEntryDraft, draftOperationIdOf } from './journalEntryDraft'
 import { sherRawAmount } from './sherIssuance'
 
 const SHERS_TO_BE_ISSUED = 'SHERS To Be Issued'

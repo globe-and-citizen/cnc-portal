@@ -107,22 +107,22 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import { useRoute } from 'vue-router'
-import type { TableColumn } from '@nuxt/ui'
-import LedgerAccountAssignmentCell from '@/components/sections/AccountingView/LedgerAccountAssignmentCell.vue'
-import { useAccountingContext } from '@/composables/accounting/useAccountingContext'
-import { useGetTeamQuery } from '@/queries/team.queries'
-import { useUserDataStore } from '@/stores/user'
-import { NETWORK } from '@/constant'
-import { formatTxHash } from '@/utils/format'
 import {
   ACCOUNT_ASSIGNMENT_COLUMNS,
   COMBINED_MOVEMENTS_NOTE,
   DEFAULT_ASSIGNMENT,
-  presentJournalAccountAssignments,
-  type JournalAccountAssignmentRow
+  type JournalAccountAssignmentRow,
+  presentJournalAccountAssignments
 } from '@/utils/accounting/journalAccountAssignmentPresenter'
+import LedgerAccountAssignmentCell from '@/components/sections/AccountingView/LedgerAccountAssignmentCell.vue'
+import { NETWORK } from '@/constant'
+import type { TableColumn } from '@nuxt/ui'
+import { computed } from 'vue'
+import { formatTxHash } from '@/utils/format'
+import { useAccountingContext } from '@/composables/accounting/useAccountingContext'
+import { useGetTeamQuery } from '@/queries/team.queries'
+import { useRoute } from 'vue-router'
+import { useUserDataStore } from '@/stores/user'
 
 const accounting = useAccountingContext()
 const route = useRoute()

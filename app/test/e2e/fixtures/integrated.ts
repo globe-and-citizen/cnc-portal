@@ -1,21 +1,21 @@
 import type { BrowserContext, Page } from '@playwright/test'
-import type { Hex } from 'viem'
-import { signInToRealStack } from '../company/real-company-page'
-import { E2E_OWNER_PRIVATE_KEY } from '../e2e-chain'
-import { useWallet } from '../e2e-page'
 import {
-  createOperationalTeamFixture,
-  type OperationalTeamFixture,
-  type OperationalTeamOptions
-} from '../factories/operational-team'
-import {
+  type IntegratedFeatureStatus,
   deleteIntegratedTeam,
   removeIntegratedTeamFeatureOverride,
-  setIntegratedTeamFeatureOverride,
-  type IntegratedFeatureStatus
+  setIntegratedTeamFeatureOverride
 } from '../integrated-api'
+import {
+  type OperationalTeamFixture,
+  type OperationalTeamOptions,
+  createOperationalTeamFixture
+} from '../factories/operational-team'
 import { captureCoverage, stubTokenPrices } from './base'
+import { E2E_OWNER_PRIVATE_KEY } from '../e2e-chain'
+import type { Hex } from 'viem'
 import { test as chainTest } from './chain'
+import { signInToRealStack } from '../company/real-company-page'
+import { useWallet } from '../e2e-page'
 
 export type WalletPageFactory = (privateKey: Hex) => Promise<Page>
 export type OperationalTeamFactory = (

@@ -1,7 +1,7 @@
-import { it, describe, expect } from 'vitest'
-import { mount } from '@vue/test-utils'
+import { describe, expect, it } from 'vitest'
 import AddTeamCard from '@/components/sections/TeamView/AddTeamCard.vue'
 import { Icon as IconifyIcon } from '@iconify/vue'
+import { mount } from '@vue/test-utils'
 
 describe('[US-COMPANIES-001] AddTeamCard.vue', () => {
   const wrapper = mount(AddTeamCard, {

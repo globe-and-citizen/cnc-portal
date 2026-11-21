@@ -1,7 +1,7 @@
-import { mount } from '@vue/test-utils'
 import { describe, expect, it } from 'vitest'
 import OverviewCard from '../OverviewCard.vue'
 import bagIcon from '@/assets/bag.svg'
+import { mount } from '@vue/test-utils'
 
 describe('OverviewCard', () => {
   it('renders the supplied title and subtitle', async () => {

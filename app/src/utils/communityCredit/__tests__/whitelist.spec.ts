@@ -1,12 +1,12 @@
-import { describe, expect, it } from 'vitest'
+import type { CreditOfferForm, CreditWhitelistEntry } from '@/types'
 import {
+  UNCAPPED_ALLOCATION,
   getCreditWhitelistAllocationSummary,
   isCreditWhitelistEntryUncapped,
   sumWhitelistAmountUnits,
-  toCreditCallOfferParams,
-  UNCAPPED_ALLOCATION
+  toCreditCallOfferParams
 } from '../model'
-import type { CreditWhitelistEntry, CreditOfferForm } from '@/types'
+import { describe, expect, it } from 'vitest'
 
 function baseForm(overrides: Partial<CreditOfferForm> = {}): CreditOfferForm {
   return {

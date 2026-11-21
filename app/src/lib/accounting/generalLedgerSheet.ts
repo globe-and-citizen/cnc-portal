@@ -1,21 +1,21 @@
 /** General Ledger row projection for the spreadsheet exporter. */
-import { accountLedgerTitle } from '@/utils/accounting/accountLedger'
-import { activityText } from '@/utils/accounting/describeEntry'
 import {
-  presentJournalLedger,
-  journalLedgerExportTitle,
-  type LedgerRow
-} from '@/utils/accounting/journalLedgerPresenter'
-import {
-  ledgerTotalRow,
-  resolveLedgerColumns,
   type LedgerColumnKey,
-  type LedgerMovements
+  type LedgerMovements,
+  ledgerTotalRow,
+  resolveLedgerColumns
 } from '@/utils/accounting/ledgerColumns'
+import {
+  type LedgerRow,
+  journalLedgerExportTitle,
+  presentJournalLedger
+} from '@/utils/accounting/journalLedgerPresenter'
+import { spreadsheetNumber, spreadsheetUsd } from './spreadsheetNumber'
 import type { AccountingExportSnapshot } from '@/utils/accounting/exportSpec'
 import type { ResolveName } from './spreadsheet'
 import type { UsdAmount } from '@/utils/accounting/types'
-import { spreadsheetNumber, spreadsheetUsd } from './spreadsheetNumber'
+import { accountLedgerTitle } from '@/utils/accounting/accountLedger'
+import { activityText } from '@/utils/accounting/describeEntry'
 
 type Cell = string | number
 type SheetRows = Cell[][]

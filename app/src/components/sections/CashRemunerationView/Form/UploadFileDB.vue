@@ -43,9 +43,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
 import * as z from 'zod'
-import FilePreviewGallery from './FilePreviewGallery.vue'
 import {
   ACCEPTED_FILE_TYPES,
   ALLOWED_DOCUMENT_EXTENSIONS,
@@ -53,9 +51,11 @@ import {
   ALLOWED_IMAGE_MIMETYPES,
   ALLOWED_MIMETYPES,
   MAX_FILES,
-  createFileSchema,
-  type PreviewFile
+  type PreviewFile,
+  createFileSchema
 } from '@/types/upload'
+import { computed, ref } from 'vue'
+import FilePreviewGallery from './FilePreviewGallery.vue'
 
 /** Props **/
 interface Props {

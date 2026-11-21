@@ -38,12 +38,12 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
+import ActionButton from '@/components/sections/SherTokenView/ActionButton.vue'
 import type { Address } from 'viem'
 import DistributeMintForm from '@/components/sections/SherTokenView/forms/DistributeMintForm.vue'
-import ActionButton from '@/components/sections/SherTokenView/ActionButton.vue'
-import { useDistributeMint } from '@/composables/investor/writes'
 import { log } from '@/lib/logging'
+import { useDistributeMint } from '@/composables/investor/writes'
+import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
 
 interface Props {
   tokenSymbol: string

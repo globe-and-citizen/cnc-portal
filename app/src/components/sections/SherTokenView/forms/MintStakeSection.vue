@@ -51,19 +51,19 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref, watch } from 'vue'
-import { formatUnits } from 'viem'
-import { useInvestorTotalSupply, useInvestorBalanceOf } from '@/composables/investor/reads'
+import { type StakeMode, type StakePayload } from '@/types/investor'
 import {
+  TOKEN_DECIMALS,
   computeAmountFromPercentageInput,
   computeIssuedAmountFromAmountInput,
-  computePercentageFromAmountInput,
-  TOKEN_DECIMALS
+  computePercentageFromAmountInput
 } from '@/utils/investors/mintAllocation'
-import { type StakeMode, type StakePayload } from '@/types/investor'
-import TwinAmountInputs from './TwinAmountInputs.vue'
-import MintRecapCard from './MintRecapCard.vue'
+import { computed, reactive, ref, watch } from 'vue'
+import { useInvestorBalanceOf, useInvestorTotalSupply } from '@/composables/investor/reads'
 import { type Address } from 'viem'
+import MintRecapCard from './MintRecapCard.vue'
+import TwinAmountInputs from './TwinAmountInputs.vue'
+import { formatUnits } from 'viem'
 
 const props = defineProps<{
   recipientAddress: Address

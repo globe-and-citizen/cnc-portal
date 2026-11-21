@@ -1,23 +1,23 @@
-import { computed, toValue, type MaybeRefOrGetter } from 'vue'
-import { useChainId } from '@wagmi/vue'
-import { useQueries, useQuery } from '@tanstack/vue-query'
-import type { Address } from 'viem'
-import { config as wagmiConfig } from '@/wagmi.config'
-import { useCurrencyStore } from '@/stores'
-import { currentChainId, SUPPORTED_TOKENS, type TokenId } from '@/constant'
+import { type MaybeRefOrGetter, computed, toValue } from 'vue'
 import {
+  type RawTokenBalances,
   fetchTokenBalances,
-  toContractBalances,
-  type RawTokenBalances
+  toContractBalances
 } from '@/lib/balances/tokenBalances'
-import type { Team } from '@/types'
-import { safeBalancesQueryOptions } from '@/queries/safeClient.queries'
-import { getSafeValuedFiatTotal } from '@/utils/safe/portfolio'
+import { SUPPORTED_TOKENS, type TokenId, currentChainId } from '@/constant'
 import {
   buildTeamTreasuryDisplay,
   getTeamTreasuryAddresses,
   getTreasuryContractAddress
 } from '@/utils/teams/treasury'
+import { useQueries, useQuery } from '@tanstack/vue-query'
+import type { Address } from 'viem'
+import type { Team } from '@/types'
+import { getSafeValuedFiatTotal } from '@/utils/safe/portfolio'
+import { safeBalancesQueryOptions } from '@/queries/safeClient.queries'
+import { useChainId } from '@wagmi/vue'
+import { useCurrencyStore } from '@/stores'
+import { config as wagmiConfig } from '@/wagmi.config'
 
 const REFETCH_INTERVAL = 300_000
 

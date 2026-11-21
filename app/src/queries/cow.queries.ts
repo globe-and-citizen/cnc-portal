@@ -1,9 +1,9 @@
-import { useQueries } from '@tanstack/vue-query'
-import { computed, toValue, type MaybeRefOrGetter } from 'vue'
-import externalApiClient from '@/lib/external.axios'
-import { currentChainId } from '@/constant'
+import { type MaybeRefOrGetter, computed, toValue } from 'vue'
 import type { CowOrder } from '@/types/cow'
+import { currentChainId } from '@/constant'
+import externalApiClient from '@/lib/external.axios'
 import { queryPresets } from './queryFactory'
+import { useQueries } from '@tanstack/vue-query'
 
 /** CoW Protocol order-book networks, by chain id. */
 const COW_NETWORKS: Record<number, string> = {

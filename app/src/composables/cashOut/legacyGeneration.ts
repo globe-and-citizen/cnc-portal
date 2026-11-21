@@ -10,9 +10,9 @@
  * Kept free of Vue / wagmi so the version rule stays unit-testable on its own.
  */
 
-import type { FolderVersion } from '@/artifacts/registry'
 import { CASH_OUT_STEP_LABELS, buildCashOutPlan } from './plan'
 import type { CashOutAccountBalances, CashOutPlanStep } from './plan'
+import type { FolderVersion } from '@/artifacts/registry'
 
 /**
  * Generations deployed BEFORE `ownerWithdrawAllToBank` existed on

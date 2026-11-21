@@ -14,12 +14,12 @@
  * the UI can surface the gap; a matched entry flips to `enriched`. Entries the
  * mappers never flagged (deposits, internal moves, dividends, …) are untouched.
  */
-import { getAddress, isAddress, type Address } from 'viem'
-import type { TokenId } from '@/constant'
+import { type Address, getAddress, isAddress } from 'viem'
+import { type JournalEntryDraft, draftOperationIdOf } from './journalEntryDraft'
 import type { Wage, WeeklyClaim } from '@/types/cash-remuneration'
 import type { ExpenseResponse } from '@/types/expense-account'
+import type { TokenId } from '@/constant'
 import { buildClaimRatesWithOvertime } from '@/utils/wages/model'
-import { draftOperationIdOf, type JournalEntryDraft } from './journalEntryDraft'
 
 export interface EnrichmentSources {
   weeklyClaims?: readonly WeeklyClaim[]

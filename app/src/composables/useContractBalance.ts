@@ -1,12 +1,12 @@
-import { computed, toValue, type MaybeRefOrGetter } from 'vue'
-import { useChainId } from '@wagmi/vue'
-import { useQuery } from '@tanstack/vue-query'
-import type { Address } from 'viem'
-import { config as wagmiConfig } from '@/wagmi.config'
-import { useCurrencyStore } from '@/stores'
+import { type MaybeRefOrGetter, computed, toValue } from 'vue'
 import { SUPPORTED_TOKENS, type TokenId } from '@/constant'
 import { fetchTokenBalances, toContractBalances } from '@/lib/balances/tokenBalances'
+import type { Address } from 'viem'
 import type { ContractBalances } from '@/types'
+import { useChainId } from '@wagmi/vue'
+import { useCurrencyStore } from '@/stores'
+import { useQuery } from '@tanstack/vue-query'
+import { config as wagmiConfig } from '@/wagmi.config'
 
 export type { ContractBalances, TokenBalance, CurrencyPair, Money } from '@/types'
 

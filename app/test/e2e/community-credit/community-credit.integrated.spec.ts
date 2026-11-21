@@ -1,5 +1,3 @@
-import { parseUnits } from 'viem'
-import { expect, test } from '../fixtures/integrated'
 import {
   E2E_MEMBER,
   E2E_MEMBER_PRIVATE_KEY,
@@ -7,10 +5,6 @@ import {
   publicClient,
   tokenBalance
 } from '../e2e-chain'
-import { openAccountFromSidebar } from '../e2e-page'
-import { depositUsdc } from '../bank/bank-integrated-helpers'
-import { getLendingOffer, lenderDeposits, totalOfferings } from './community-credit-chain'
-import { lendToRound, openRound, publishCreditCall } from './community-credit-page'
 import {
   contractAddress,
   createdEvent,
@@ -27,6 +21,12 @@ import {
   successfulReceipt,
   usdc
 } from './community-credit-integrated-helpers'
+import { expect, test } from '../fixtures/integrated'
+import { getLendingOffer, lenderDeposits, totalOfferings } from './community-credit-chain'
+import { lendToRound, openRound, publishCreditCall } from './community-credit-page'
+import { depositUsdc } from '../bank/bank-integrated-helpers'
+import { openAccountFromSidebar } from '../e2e-page'
+import { parseUnits } from 'viem'
 
 test.describe('G4 integrated Community Credit lifecycle', { tag: '@integrated' }, () => {
   test.setTimeout(300_000)

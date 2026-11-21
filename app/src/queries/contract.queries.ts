@@ -1,6 +1,6 @@
-import type { DeploymentContract } from '@/types/deployments'
-import { toValue, type MaybeRefOrGetter } from 'vue'
+import { type MaybeRefOrGetter, toValue } from 'vue'
 import { createMutationHook, createQueryHook, queryPresets } from './queryFactory'
+import type { DeploymentContract } from '@/types/deployments'
 import { teamKeys } from './team.queries'
 
 /**

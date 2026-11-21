@@ -58,8 +58,8 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useCommunityCreditStore } from '@/stores'
 import { formatAmount } from '@/utils/communityCredit/model'
+import { useCommunityCreditStore } from '@/stores'
 
 const store = useCommunityCreditStore()
 

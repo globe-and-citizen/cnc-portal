@@ -2,15 +2,15 @@ import type {
   CashRemunerationEventFeed,
   RawCashRemunerationTransaction
 } from '@/types/contract-events/cash-remuneration'
-import type { IncomingBankTokenTransferFeed } from '@/types/contract-events/bank'
-import type { UBadgeColor } from '@/types/ui'
-import { zeroAddress } from 'viem'
-import { formatDateTime, fromUnix } from '@/utils/format'
 import {
   buildRawTransactions,
   extractTxHashFromId,
   mapIncomingTransfersToTokenDeposits
 } from './raw'
+import { formatDateTime, fromUnix } from '@/utils/format'
+import type { IncomingBankTokenTransferFeed } from '@/types/contract-events/bank'
+import type { UBadgeColor } from '@/types/ui'
+import { zeroAddress } from 'viem'
 
 export const buildRawCashRemunerationTransactions = (
   cashRemunerationResult?: CashRemunerationEventFeed | null,

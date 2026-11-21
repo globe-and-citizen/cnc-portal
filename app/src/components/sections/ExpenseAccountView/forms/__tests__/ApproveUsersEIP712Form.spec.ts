@@ -1,9 +1,9 @@
-import { flushPromises } from '@vue/test-utils'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { getLocalTimeZone, parseDate, today, type CalendarDate } from '@internationalized/date'
-import { renderWithProviders } from '@/tests/mocks'
-import { mockExpenseAccountReads } from '@/tests/mocks'
+import { type CalendarDate, getLocalTimeZone, parseDate, today } from '@internationalized/date'
 import { USDC_ADDRESS, USDC_E_ADDRESS } from '@/constant'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { flushPromises } from '@vue/test-utils'
+import { mockExpenseAccountReads } from '@/tests/mocks'
+import { renderWithProviders } from '@/tests/mocks'
 
 // USelect is auto-imported by @nuxt/ui/vite, so config.global.stubs cannot catch it —
 // vi.mock on the resolved module is the reliable hook. Reuse the shared <select> stub,

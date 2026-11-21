@@ -139,14 +139,14 @@
 </template>
 
 <script setup lang="ts">
+import { type CalendarDate, getLocalTimeZone, today } from '@internationalized/date'
 import { computed, reactive, shallowRef, watch } from 'vue'
-import { isAddress } from 'viem'
-import { z } from 'zod'
-import type { User } from '@/types'
-import { today, getLocalTimeZone, type CalendarDate } from '@internationalized/date'
-import SelectMemberWithTokenInput from '@/components/ui/inputs/SelectMemberWithTokenInput.vue'
-import { useExpenseAccountSupportedTokens } from '@/composables/expenseAccount/reads'
 import { expenseApprovalTokens, isExpenseApprovalTokenAllowed } from '@/utils/expenses/tokenPolicy'
+import SelectMemberWithTokenInput from '@/components/ui/inputs/SelectMemberWithTokenInput.vue'
+import type { User } from '@/types'
+import { isAddress } from 'viem'
+import { useExpenseAccountSupportedTokens } from '@/composables/expenseAccount/reads'
+import { z } from 'zod'
 
 const props = defineProps<{
   loadingApprove: boolean

@@ -1,19 +1,18 @@
 import { type Address, parseUnits } from 'viem'
-import { encodeFunctionData, zeroAddress } from 'viem'
 import {
   BANK_BEACON_ADDRESS,
   BOD_BEACON_ADDRESS,
   CASH_REMUNERATION_EIP712_BEACON_ADDRESS,
+  ELECTIONS_BEACON_ADDRESS,
   EXPENSE_ACCOUNT_EIP712_BEACON_ADDRESS,
+  FIXED_RETURN_BEACON_ADDRESS,
   INVESTOR_BEACON_ADDRESS,
   PROPOSALS_BEACON_ADDRESS,
-  ELECTIONS_BEACON_ADDRESS,
   SAFE_DEPOSIT_ROUTER_BEACON_ADDRESS,
-  VESTING_BEACON_ADDRESS,
-  FIXED_RETURN_BEACON_ADDRESS,
   USDC_ADDRESS,
+  USDC_E_ADDRESS,
   USDT_ADDRESS,
-  USDC_E_ADDRESS
+  VESTING_BEACON_ADDRESS
 } from '@/constant'
 import {
   bankAbi,
@@ -26,6 +25,7 @@ import {
   safeDepositRouterAbi,
   vestingAbi
 } from '@/artifacts/abi/generated'
+import { encodeFunctionData, zeroAddress } from 'viem'
 /**
  * Beacon configuration type
  */

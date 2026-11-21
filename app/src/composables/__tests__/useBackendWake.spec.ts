@@ -1,6 +1,6 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { defineComponent, h } from 'vue'
-import { mount, flushPromises } from '@vue/test-utils'
+import { flushPromises, mount } from '@vue/test-utils'
 import { mockHealthQueryRefetch } from '@/tests/mocks'
 
 // @/queries/health.queries is mocked globally in composables.setup.ts

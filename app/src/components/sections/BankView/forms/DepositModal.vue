@@ -23,11 +23,11 @@
 </template>
 
 <script setup lang="ts">
+import { ref, watch } from 'vue'
+import { type Address } from 'viem'
 import DepositBankForm from './DepositBankForm.vue'
 import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
 import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
-import { ref, watch } from 'vue'
-import { type Address } from 'viem'
 
 defineProps<{
   bankAddress: Address

@@ -1,7 +1,7 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { useActivityDestination } from '../useActivityDestination'
-import { mockRouterPush, setMockRoute, mockTeamStore } from '@/tests/mocks'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { mockRouterPush, mockTeamStore, setMockRoute } from '@/tests/mocks'
 import type { ActivityDestination } from '@/utils/accounting/activityDestination'
+import { useActivityDestination } from '../useActivityDestination'
 
 const MEMBER = '0x1111111111111111111111111111111111111111'
 

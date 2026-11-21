@@ -1,6 +1,6 @@
 /** The normal app type gate checks the settings form's production prop boundary. */
-import type { CampaignManagerSettings } from '@/composables/campaign/reads'
 import type CampaignManagerRatesForm from '@/components/sections/ContractManagementView/forms/CampaignManagerRatesForm.vue'
+import type { CampaignManagerSettings } from '@/composables/campaign/reads'
 
 type Assert<T extends true> = T
 type Fits<Value, Target> = [Value] extends [Target] ? true : false

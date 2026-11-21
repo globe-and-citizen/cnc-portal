@@ -1,13 +1,13 @@
+import { type Address, parseEther } from 'viem'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
-import { ref } from 'vue'
-import { parseEther, type Address } from 'viem'
-import CreateAdvertisingCampaignForm from '@/components/sections/ContractManagementView/forms/CreateAdvertisingCampaignForm.vue'
-import WithdrawAdvertisingCampaignForm from '@/components/sections/ContractManagementView/forms/WithdrawAdvertisingCampaignForm.vue'
 import {
   useCreateAdvertisingCampaign,
   useWithdrawAdvertisingCampaign
 } from '@/composables/campaign/writes'
+import CreateAdvertisingCampaignForm from '@/components/sections/ContractManagementView/forms/CreateAdvertisingCampaignForm.vue'
+import WithdrawAdvertisingCampaignForm from '@/components/sections/ContractManagementView/forms/WithdrawAdvertisingCampaignForm.vue'
+import { ref } from 'vue'
 
 vi.mock('@/composables/campaign/writes', () => ({
   useCreateAdvertisingCampaign: vi.fn(),

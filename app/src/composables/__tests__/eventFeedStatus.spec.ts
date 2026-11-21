@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest'
 import { combineEventFeedStatuses, getEventFeedStatus } from '../eventsViaLogs'
+import { describe, expect, it } from 'vitest'
 
 const OLD = '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
 

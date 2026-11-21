@@ -1,10 +1,10 @@
+import { type Range, isAllTimeRange } from '@/utils/dates/picker'
 import { computed, ref, watch } from 'vue'
 import type { ComputedRef } from 'vue'
-import { groupTransactionsByTxHash } from '@/utils/transactions/history'
-import { getTransactionTypeLabel } from '@/utils/transactions/registry'
 import type { GroupedTransactionRow } from '@/types/transaction-history'
+import { getTransactionTypeLabel } from '@/utils/transactions/registry'
+import { groupTransactionsByTxHash } from '@/utils/transactions/history'
 import { usePagination } from '@/composables/usePagination'
-import { isAllTimeRange, type Range } from '@/utils/dates/picker'
 
 type TransactionBase = {
   txHash: string

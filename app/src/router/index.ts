@@ -1,6 +1,6 @@
-import { createRouter, createWebHistory, START_LOCATION } from 'vue-router'
-import { validateToken } from '@/api/auth.api'
+import { START_LOCATION, createRouter, createWebHistory } from 'vue-router'
 import { useUserDataStore } from '@/stores/user'
+import { validateToken } from '@/api/auth.api'
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [

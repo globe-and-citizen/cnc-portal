@@ -100,26 +100,26 @@
 
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue'
-import { z } from 'zod'
-import type { FormSubmitEvent } from '@nuxt/ui'
-import { useToast } from '@nuxt/ui/composables'
-import { useConnection } from '@wagmi/vue'
-import ActionButton from '@/components/sections/SherTokenView/ActionButton.vue'
-import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
-import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
-import { useSetMultiplier } from '@/composables/safeDepositRouter/writes'
+import {
+  formatSafeDepositRouterMultiplier,
+  formatSherAmount,
+  parseSafeDepositRouterMultiplier
+} from '@/utils/safeDepositRouter/model'
 import {
   useSafeDepositRouterAddress,
   useSafeDepositRouterMultiplier,
   useSafeDepositRouterOwner
 } from '@/composables/safeDepositRouter/reads'
+import ActionButton from '@/components/sections/SherTokenView/ActionButton.vue'
+import type { FormSubmitEvent } from '@nuxt/ui'
+import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
 import { classifyError } from '@/utils/errors/classifyContractError'
 import { log } from '@/lib/logging'
-import {
-  formatSafeDepositRouterMultiplier,
-  parseSafeDepositRouterMultiplier,
-  formatSherAmount
-} from '@/utils/safeDepositRouter/model'
+import { useConnection } from '@wagmi/vue'
+import { useSetMultiplier } from '@/composables/safeDepositRouter/writes'
+import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
+import { useToast } from '@nuxt/ui/composables'
+import { z } from 'zod'
 
 const toast = useToast()
 const connection = useConnection()

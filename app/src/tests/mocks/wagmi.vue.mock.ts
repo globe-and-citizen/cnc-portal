@@ -1,5 +1,5 @@
-import { vi } from 'vitest'
 import { ref } from 'vue'
+import { vi } from 'vitest'
 
 // Shared transfer hash ref for transaction tracking
 export const transferHash = ref<string | undefined>(undefined)

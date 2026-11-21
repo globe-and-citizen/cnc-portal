@@ -1,8 +1,8 @@
+import { BaseError, UserRejectedRequestError } from 'viem'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
-import { BaseError, UserRejectedRequestError } from 'viem'
-import VestingActionReviewModal from '@/components/sections/VestingView/VestingActionReviewModal.vue'
 import { mockToast, mockVestingWrites } from '@/tests/mocks'
+import VestingActionReviewModal from '@/components/sections/VestingView/VestingActionReviewModal.vue'
 import type { VestingSchedule } from '@/types/vesting'
 
 const schedule: VestingSchedule = {

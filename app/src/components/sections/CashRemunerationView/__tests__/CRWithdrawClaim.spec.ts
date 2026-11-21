@@ -1,25 +1,25 @@
 /* eslint-disable max-lines */
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { mount, flushPromises } from '@vue/test-utils'
-import { createPinia, setActivePinia } from 'pinia'
-import { nextTick, ref } from 'vue'
-import { parseEther, zeroAddress, type Address } from 'viem'
+import * as contractErrors from '@/utils/errors/classifyContractError'
 import * as viem from 'viem'
-import CRWithdrawClaim from '../CRWithdrawClaim.vue'
-import type { WeeklyClaim } from '@/types'
-import { USDC_ADDRESS } from '@/constant'
-import { useSyncWeeklyClaimsMutation } from '@/queries'
+import { type Address, parseEther, zeroAddress } from 'viem'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { createPinia, setActivePinia } from 'pinia'
+import { flushPromises, mount } from '@vue/test-utils'
 import {
   mockCashRemunerationWrites,
-  mockTeamStore,
   mockGetBalance,
-  mockWagmiCore,
   mockSyncWeeklyClaimsMutation,
+  mockTeamStore,
   mockToast,
-  mockUseChainId
+  mockUseChainId,
+  mockWagmiCore
 } from '@/tests/mocks'
+import { nextTick, ref } from 'vue'
+import CRWithdrawClaim from '../CRWithdrawClaim.vue'
+import { USDC_ADDRESS } from '@/constant'
+import type { WeeklyClaim } from '@/types'
 import { mockLog } from '@/tests/mocks/utils.mock'
-import * as contractErrors from '@/utils/errors/classifyContractError'
+import { useSyncWeeklyClaimsMutation } from '@/queries'
 
 type WrapperProps = {
   weeklyClaim: WeeklyClaim

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
-import { readFile, readdir } from 'node:fs/promises'
 import { dirname, extname, join, posix, relative } from 'node:path'
+import { readFile, readdir } from 'node:fs/promises'
 import { fileURLToPath } from 'node:url'
 
 const SCRIPT_DIRECTORY = dirname(fileURLToPath(import.meta.url))

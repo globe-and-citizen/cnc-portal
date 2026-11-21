@@ -16,12 +16,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
 import PaymentGateWidgetView, {
   type WidgetPane,
   type WidgetPaymentStep
 } from './PaymentGateWidgetView.vue'
 import type { PaymentGateToken } from '@/utils/paymentGate/widgetSnippet'
+import { ref } from 'vue'
 
 const { selectedToken } = defineProps<{ selectedToken: PaymentGateToken }>()
 

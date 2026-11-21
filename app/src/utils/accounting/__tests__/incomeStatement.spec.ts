@@ -1,7 +1,7 @@
-import { describe, it, expect } from 'vitest'
-import { finalizeJournal } from '@/utils/accounting/__tests__/assembleAccounting'
+import { describe, expect, it } from 'vitest'
 import { buildIncomeStatement } from '@/utils/accounting/incomeStatement'
 import { catalogueLedger } from './catalogueLedger'
+import { finalizeJournal } from '@/utils/accounting/__tests__/assembleAccounting'
 import { usdNumber } from './fixtures'
 
 describe('buildIncomeStatement — catalogue §6.5', () => {

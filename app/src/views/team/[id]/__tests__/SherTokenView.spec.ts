@@ -1,7 +1,7 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { shallowMount, VueWrapper } from '@vue/test-utils'
-import { createTestingPinia } from '@pinia/testing'
+import { VueWrapper, shallowMount } from '@vue/test-utils'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import SherTokenView from '../SherTokenView.vue'
+import { createTestingPinia } from '@pinia/testing'
 
 describe('[US-SHER-003] SherTokenView', () => {
   let wrapper: VueWrapper

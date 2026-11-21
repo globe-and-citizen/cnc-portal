@@ -10,10 +10,10 @@
  *   - onSuccess: outcome toast (unless options.silent)
  *   - onError: no toast — error left for caller to render
  */
-import { useMutation } from '@tanstack/vue-query'
 import { type Address, type Hex } from 'viem'
-import { investorAbi } from '@/artifacts/abi/generated'
 import { executeContractWrite } from '@/composables/contracts/useContractWritesV3'
+import { investorAbi } from '@/artifacts/abi/generated'
+import { useMutation } from '@tanstack/vue-query'
 import { useToast } from '@nuxt/ui/composables'
 
 export interface SetMigrationRootArgs {

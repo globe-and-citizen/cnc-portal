@@ -5,7 +5,7 @@
  * smallest supported token unit (18 decimals for the native token) therefore
  * needs 24 decimal places to preserve every digit without division or rounding.
  */
-import { assetDecimals, type AssetId, type AssetMetadata } from '@/utils/tokens/assets'
+import { type AssetId, type AssetMetadata, assetDecimals } from '@/utils/tokens/assets'
 import type { UsdAmount, UsdRate } from './types'
 
 /** Decimal places retained for a USD price of one whole token. */

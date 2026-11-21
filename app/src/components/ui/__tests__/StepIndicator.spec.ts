@@ -1,6 +1,6 @@
-import { describe, it, expect } from 'vitest'
-import { mount } from '@vue/test-utils'
+import { describe, expect, it } from 'vitest'
 import StepIndicator from '@/components/ui/StepIndicator.vue'
+import { mount } from '@vue/test-utils'
 
 const steps = ['Basics', 'Terms', 'Access']
 

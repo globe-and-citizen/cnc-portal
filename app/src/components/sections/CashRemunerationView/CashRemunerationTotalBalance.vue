@@ -16,12 +16,12 @@
   </OverviewCard>
 </template>
 <script lang="ts" setup>
+import type { Address } from 'viem'
+import OverviewCard from '@/components/ui/OverviewCard.vue'
 import bagIcon from '@/assets/bag.svg'
 import uptrendIcon from '@/assets/uptrend.svg'
-import OverviewCard from '@/components/ui/OverviewCard.vue'
 import { useContractBalance } from '@/composables/useContractBalance'
 import { useTeamStore } from '@/stores'
-import type { Address } from 'viem'
 
 const teamStore = useTeamStore()
 

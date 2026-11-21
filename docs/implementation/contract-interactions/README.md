@@ -58,7 +58,11 @@ submission chain. API signature-network validation is a separate responsibility.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `635eb92ec16d0fa5fca930d458b0e35453af94d2`
+**Implementation evidence reviewed against:** `afed113648736c861fb19c4319333717f14221c3`
+
+- [`SelectContractResults.vue`](../../../app/src/components/ui/inputs/SelectContractResults.vue)
+- [`reads.ts`](../../../app/src/composables/erc20/reads.ts)
+- [`writes.ts`](../../../app/src/composables/safeDepositRouter/writes.ts)
 
 - [Configured wallet network policy](../../../app/src/lib/walletNetwork.ts) and
   [contract write executor](../../../app/src/composables/contracts/useContractWritesV3.ts)

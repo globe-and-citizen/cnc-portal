@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { ref, toValue } from 'vue'
 
 /**
@@ -38,9 +38,9 @@ vi.mock('@/composables/investor/useSafeDepositRouterEventsViaLogs', () => ({
   useSafeDepositRouterEventsViaLogs: feed('router')
 }))
 
-import { useGetTeamQuery } from '@/queries/team.queries'
-import { useGetTeamOfficersQuery } from '@/queries/contract.queries'
 import { useCNCAccounting } from '../useCNCAccounting'
+import { useGetTeamOfficersQuery } from '@/queries/contract.queries'
+import { useGetTeamQuery } from '@/queries/team.queries'
 
 const OLD_BANK = '0x1111111111111111111111111111111111111111'
 const NEW_BANK = '0x2222222222222222222222222222222222222222'

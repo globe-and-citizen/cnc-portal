@@ -1,9 +1,9 @@
-import { vi } from 'vitest'
-import { ref } from 'vue'
-import { zeroHash } from 'viem'
-import { createContractReadMock, createContractWriteV3Mock } from './erc20.mock'
 import type { Election, LendingOfferStruct } from '@/types'
+import { createContractReadMock, createContractWriteV3Mock } from './erc20.mock'
 import type { InvestorPermissionsResult } from '@/queries/investorPermissions.queries'
+import { ref } from 'vue'
+import { vi } from 'vitest'
+import { zeroHash } from 'viem'
 
 /**
  * Elections Contract Mocks

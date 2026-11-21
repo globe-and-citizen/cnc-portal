@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { mockWagmiCore } from '@/tests/mocks'
 import { ref } from 'vue'
 import { useQueryFn } from '@/tests/mocks/composables.mock'
-import { mockWagmiCore } from '@/tests/mocks'
 
 vi.unmock('@/composables/fixedReturn/reads')
 

@@ -143,18 +143,7 @@
 
 <script setup lang="ts">
 /* eslint-disable max-lines -- The form owns its reactive state; extracting a controller would recreate the removed one-consumer composable. */
-import { computed, ref, useTemplateRef, watch, type Ref } from 'vue'
-import { isAddress } from 'viem'
-import { useToast } from '@nuxt/ui/composables'
-import VestingSchedulePreview from '@/components/sections/VestingView/VestingSchedulePreview.vue'
-import VestingSummary from '@/components/sections/VestingView/VestingSummary.vue'
-import VestingFormActions from './VestingFormActions.vue'
-import VestingGrantDetails from './VestingGrantDetails.vue'
-import VestingDateTimeField from './VestingDateTimeField.vue'
-import VestingPresetButtons from './VestingPresetButtons.vue'
-import { useInvestorSymbol } from '@/composables/investor/reads'
-import { useVestingAddVestingWrite } from '@/composables/vesting/writes'
-import { formatTimeOfDay } from '@/utils/format'
+import { type Ref, computed, ref, useTemplateRef, watch } from 'vue'
 import {
   addVestingMonths,
   buildAddVestingArgs,
@@ -165,7 +154,18 @@ import {
   resolveVestingTokenSymbol,
   vestingCreationSchema
 } from '@/utils/vesting/schedule'
+import VestingDateTimeField from './VestingDateTimeField.vue'
+import VestingFormActions from './VestingFormActions.vue'
+import VestingGrantDetails from './VestingGrantDetails.vue'
+import VestingPresetButtons from './VestingPresetButtons.vue'
+import VestingSchedulePreview from '@/components/sections/VestingView/VestingSchedulePreview.vue'
+import VestingSummary from '@/components/sections/VestingView/VestingSummary.vue'
 import { classifyError } from '@/utils/errors/classifyContractError'
+import { formatTimeOfDay } from '@/utils/format'
+import { isAddress } from 'viem'
+import { useInvestorSymbol } from '@/composables/investor/reads'
+import { useToast } from '@nuxt/ui/composables'
+import { useVestingAddVestingWrite } from '@/composables/vesting/writes'
 
 const emit = defineEmits<{
   closeAddVestingModal: []

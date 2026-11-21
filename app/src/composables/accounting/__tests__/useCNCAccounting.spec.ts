@@ -1,9 +1,9 @@
-import { beforeEach, describe, it, expect, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { computed, ref, toValue } from 'vue'
-import { useGetTeamQuery } from '@/queries/team.queries'
-import { mockTeamData } from '@/tests/mocks'
-import { useQueriesFn } from '@/tests/mocks/composables.mock'
 import type { InvestorEventFeed } from '@/types/contract-events/investor'
+import { mockTeamData } from '@/tests/mocks'
+import { useGetTeamQuery } from '@/queries/team.queries'
+import { useQueriesFn } from '@/tests/mocks/composables.mock'
 import { zeroAddress } from 'viem'
 
 // The on-chain feeds come from the `use*EventsViaLogs` composables. Mock each

@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { BaseError, ContractFunctionRevertedError, parseEventLogs, type Address } from 'viem'
+import { type Address, BaseError, ContractFunctionRevertedError, parseEventLogs } from 'viem'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { getConnections } from '@wagmi/core'
 
 // Both `@wagmi/core` (incl. getConnections) and `parseEventLogs` are globally
@@ -9,17 +9,17 @@ const mockGetConnections = vi.mocked(getConnections)
 const mockParseEventLogs = vi.mocked(parseEventLogs)
 import {
   deployOfficer,
+  formatDeployError,
   useDeployOfficer,
-  useInvalidateOfficerQueries,
-  formatDeployError
+  useInvalidateOfficerQueries
 } from '../useOfficerDeployment'
-import { executeContractWrite } from '../useContractWritesV3'
 import {
-  useMutationFn,
+  mockInvalidateQueries,
   smartUseMutation,
-  useQueryClientFn,
-  mockInvalidateQueries
+  useMutationFn,
+  useQueryClientFn
 } from '@/tests/mocks/composables.mock'
+import { executeContractWrite } from '../useContractWritesV3'
 
 const USER = '0x1234567890123456789012345678901234567890' as Address
 const OFFICER_PROXY = '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' as Address

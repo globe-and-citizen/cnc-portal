@@ -1,18 +1,18 @@
 import {
+  type AxiosAdapter,
   AxiosError,
   AxiosHeaders,
   CanceledError,
-  type AxiosAdapter,
   type InternalAxiosRequestConfig
 } from 'axios'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { toValue } from 'vue'
+import { getUser, getUserNonce } from '@/api/user.api'
 import apiClient from '@/lib/axios'
 import externalApiClient from '@/lib/external.axios'
-import { getUser, getUserNonce } from '@/api/user.api'
-import { useQueryFn } from '@/tests/mocks/composables.mock'
 import { getSafeInfo } from '../safe.api'
 import { safeBalancesQueryOptions } from '../safeClient.queries'
+import { toValue } from 'vue'
+import { useQueryFn } from '@/tests/mocks/composables.mock'
 
 const sentryMocks = vi.hoisted(() => ({
   captureException: vi.fn(),

@@ -126,17 +126,17 @@
 </template>
 
 <script setup lang="ts">
-import { sumFiatValues } from '@/utils/currency/valuation'
-import { useTeamStore } from '@/stores/teamStore'
-import { useCurrencyStore } from '@/stores'
-import { computed } from 'vue'
-import { useContractBalance } from '@/composables/useContractBalance'
-import { useGetSafeBalancesQuery } from '@/queries/safeClient.queries'
-import { getSafeValuedFiatTotal } from '@/utils/safe/portfolio'
-import CashOutAllAction from '@/components/sections/DashboardView/CashOutAllAction.vue'
 import type { Address } from 'viem'
+import CashOutAllAction from '@/components/sections/DashboardView/CashOutAllAction.vue'
+import { computed } from 'vue'
 import { formatCurrency } from '@/utils/format'
 import { formatCurrencyShort } from '@/utils/currency/display'
+import { getSafeValuedFiatTotal } from '@/utils/safe/portfolio'
+import { sumFiatValues } from '@/utils/currency/valuation'
+import { useContractBalance } from '@/composables/useContractBalance'
+import { useCurrencyStore } from '@/stores'
+import { useGetSafeBalancesQuery } from '@/queries/safeClient.queries'
+import { useTeamStore } from '@/stores/teamStore'
 
 const teamStore = useTeamStore()
 const currencyStore = useCurrencyStore()

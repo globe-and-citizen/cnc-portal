@@ -20,7 +20,7 @@
 </template>
 
 <script setup lang="ts">
-import { useDisconnect, useConnection } from '@wagmi/vue'
+import { useConnection, useDisconnect } from '@wagmi/vue'
 import type { User } from '@/types'
 import { computed } from 'vue'
 import { formatAddress } from '@/utils/format'

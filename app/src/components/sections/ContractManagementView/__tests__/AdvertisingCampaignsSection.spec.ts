@@ -1,7 +1,7 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { mockTeamStore, renderWithProviders } from '@/tests/mocks'
 import AdvertisingCampaignsSection from '@/components/sections/ContractManagementView/AdvertisingCampaignsSection.vue'
 import { useTeamStore } from '@/stores'
-import { mockTeamStore, renderWithProviders } from '@/tests/mocks'
 
 vi.mock('@/components/sections/ContractManagementView/CampaignManagersSection.vue', () => ({
   default: { template: '<div data-test="team-contracts-stub" />' }

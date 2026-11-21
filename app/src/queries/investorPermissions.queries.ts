@@ -1,6 +1,6 @@
-import { keccak256, parseAbi, toBytes, zeroHash, type Address } from 'viem'
+import { type Address, keccak256, parseAbi, toBytes, zeroHash } from 'viem'
+import { type ChainClient, START_BLOCK } from '@/composables/eventsViaLogs'
 import { investorAbi } from '@/artifacts/abi/generated'
-import { START_BLOCK, type ChainClient } from '@/composables/eventsViaLogs'
 
 export const DEFAULT_ADMIN_ROLE = zeroHash
 export const MINTER_ROLE = keccak256(toBytes('MINTER_ROLE'))

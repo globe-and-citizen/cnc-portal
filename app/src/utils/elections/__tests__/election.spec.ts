@@ -1,12 +1,12 @@
-import { describe, it, expect } from 'vitest'
-import type { Address } from 'viem'
 import {
+  type RawElection,
   includesAddress,
   isSameAddress,
   parseElectionId,
-  toElection,
-  type RawElection
+  toElection
 } from '../election'
+import { describe, expect, it } from 'vitest'
+import type { Address } from 'viem'
 
 const CREATOR = '0x742d35Cc6bF8C55C6C2e013e5492D2b6637e0886' as Address
 

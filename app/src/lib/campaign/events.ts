@@ -1,4 +1,4 @@
-import { parseAbiItem, type Address, type PublicClient } from 'viem'
+import { type Address, type PublicClient, parseAbiItem } from 'viem'
 import { getLogs } from 'viem/actions'
 
 interface AdCampaignCreatedArgs extends Record<string, unknown> {

@@ -1,5 +1,5 @@
-import { vi } from 'vitest'
 import { ref } from 'vue'
+import { vi } from 'vitest'
 
 /**
  * Generic mock factory for contract read operations

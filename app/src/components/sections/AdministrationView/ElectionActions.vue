@@ -40,11 +40,11 @@
   </div>
 </template>
 <script setup lang="ts">
-import { computed } from 'vue'
-import PublishResult from '@/components/sections/AdministrationView/PublishResult.vue'
-import { useRouter } from 'vue-router'
 import { useTeamStore, useUserDataStore } from '@/stores'
+import PublishResult from '@/components/sections/AdministrationView/PublishResult.vue'
+import { computed } from 'vue'
 import { useBoDElections } from '@/composables/elections'
+import { useRouter } from 'vue-router'
 import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
 
 const PUBLISH_OWNER_ONLY_TOOLTIP = 'Only the owner can publish the results'

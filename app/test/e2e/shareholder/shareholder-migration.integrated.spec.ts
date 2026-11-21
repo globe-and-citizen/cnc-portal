@@ -1,5 +1,4 @@
-import { parseUnits, zeroHash, type Address } from 'viem'
-import { expect, test } from '../fixtures/integrated'
+import { type Address, parseUnits, zeroHash } from 'viem'
 import {
   E2E_MEMBER,
   E2E_MEMBER_PRIVATE_KEY,
@@ -32,6 +31,7 @@ import {
   readMigrationSnapshots,
   redeployOfficerWithMigration
 } from './shareholder-page'
+import { expect, test } from '../fixtures/integrated'
 
 const normalizedSnapshot = (shareholders: readonly { shareholder: string; amount: string }[]) =>
   shareholders

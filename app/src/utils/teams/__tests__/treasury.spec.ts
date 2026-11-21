@@ -1,7 +1,7 @@
+import { buildTeamTreasuryDisplay, getTeamTreasuryAddresses } from '@/utils/teams/treasury'
 import { describe, expect, it } from 'vitest'
 import type { Address } from 'viem'
 import type { Team } from '@/types'
-import { buildTeamTreasuryDisplay, getTeamTreasuryAddresses } from '@/utils/teams/treasury'
 
 const BANK = '0x1111111111111111111111111111111111111111' as Address
 const SAFE = '0x2222222222222222222222222222222222222222' as Address

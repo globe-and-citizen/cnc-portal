@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { mockInvalidateQueries, mockTeamStore, useQueryClientFn } from '@/tests/mocks'
 import {
   useVestingAddVestingWrite,
   useVestingReleaseWrite,
   useVestingStopVestingWrite
 } from '../writes'
-import { mockInvalidateQueries, mockTeamStore, useQueryClientFn } from '@/tests/mocks'
 
 const { mockUseContractWritesV3 } = vi.hoisted(() => ({
   mockUseContractWritesV3: vi.fn((config) => config)

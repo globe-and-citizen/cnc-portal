@@ -58,22 +58,9 @@
 </template>
 
 <script setup lang="ts">
+import { LEDGER_COLUMNS, type LedgerColumnKey } from '@/utils/accounting/ledgerColumns'
+import { type Range, defaultValueForMode, isAllTimeRange } from '@/utils/dates/picker'
 import { computed, ref, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { useLocalStorage } from '@vueuse/core'
-import LedgerTable from '@/components/sections/AccountingView/LedgerTable.vue'
-import AccountingExportBar from '@/components/sections/AccountingView/AccountingExportBar.vue'
-import TablePagination from '@/components/ui/TablePagination.vue'
-import DatePicker from '@/components/ui/DatePicker.vue'
-import ColumnVisibilitySelect from '@/components/sections/AccountingView/ColumnVisibilitySelect.vue'
-import CurrencyFilterSelect from '@/components/sections/AccountingView/CurrencyFilterSelect.vue'
-import AccountFilterSelect from '@/components/sections/AccountingView/AccountFilterSelect.vue'
-import { usePagination } from '@/composables/usePagination'
-import { useFacetFilter } from '@/composables/useFacetFilter'
-import { defaultValueForMode, isAllTimeRange, type Range } from '@/utils/dates/picker'
-import { useAccountingContext } from '@/composables/accounting/useAccountingContext'
-import { useSectionExport } from '@/composables/accounting/useSectionExport'
-import { periodLabel } from '@/utils/accounting/presenter'
 import {
   filterJournalLedgerByAccount,
   filterJournalLedgerByCurrency,
@@ -83,7 +70,20 @@ import {
   journalLedgerRows,
   journalLedgerTotal
 } from '@/utils/accounting/journalLedgerPresenter'
-import { LEDGER_COLUMNS, type LedgerColumnKey } from '@/utils/accounting/ledgerColumns'
+import { useRoute, useRouter } from 'vue-router'
+import AccountFilterSelect from '@/components/sections/AccountingView/AccountFilterSelect.vue'
+import AccountingExportBar from '@/components/sections/AccountingView/AccountingExportBar.vue'
+import ColumnVisibilitySelect from '@/components/sections/AccountingView/ColumnVisibilitySelect.vue'
+import CurrencyFilterSelect from '@/components/sections/AccountingView/CurrencyFilterSelect.vue'
+import DatePicker from '@/components/ui/DatePicker.vue'
+import LedgerTable from '@/components/sections/AccountingView/LedgerTable.vue'
+import TablePagination from '@/components/ui/TablePagination.vue'
+import { periodLabel } from '@/utils/accounting/presenter'
+import { useAccountingContext } from '@/composables/accounting/useAccountingContext'
+import { useFacetFilter } from '@/composables/useFacetFilter'
+import { useLocalStorage } from '@vueuse/core'
+import { usePagination } from '@/composables/usePagination'
+import { useSectionExport } from '@/composables/accounting/useSectionExport'
 
 // Show/hide table columns — persisted across sessions so the choice sticks.
 const columnItems = [...LEDGER_COLUMNS]

@@ -1,19 +1,19 @@
-import { expect, test } from '../fixtures/chain'
-import { parseUnits } from 'viem'
-import { E2E_MEMBER, E2E_OWNER } from '../e2e-chain'
 import {
+  type CommunityCreditE2EFixture,
   createOfferOnChain,
   deployCommunityCreditE2EFixture,
   getLendingOffer,
-  lenderDeposits,
-  type CommunityCreditE2EFixture
+  lenderDeposits
 } from './community-credit-chain'
+import { E2E_MEMBER, E2E_OWNER } from '../e2e-chain'
+import { expect, test } from '../fixtures/chain'
 import {
   lendToRound,
   openCommunityCredit,
   openRound,
   publishCreditCall
 } from './community-credit-page'
+import { parseUnits } from 'viem'
 
 let fixture: CommunityCreditE2EFixture
 

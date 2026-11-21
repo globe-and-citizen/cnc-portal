@@ -43,10 +43,10 @@
 
 <script setup lang="ts">
 import type { Team } from '@/types/team'
+import { getAxiosErrorMessage } from '@/utils/errors/http'
+import { useDeleteTeamMutation } from '@/queries/team.queries'
 import { useRouter } from 'vue-router'
 import { useTeamStore } from '@/stores'
-import { useDeleteTeamMutation } from '@/queries/team.queries'
-import { getAxiosErrorMessage } from '@/utils/errors/http'
 
 const props = withDefaults(
   defineProps<{

@@ -46,8 +46,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
 import type { Team } from '@/types/team'
+import { computed } from 'vue'
 import { useTeamStore } from '@/stores'
 import { useUpdateTeamMutation } from '@/queries/team.queries'
 

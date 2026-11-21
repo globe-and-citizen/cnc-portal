@@ -1,15 +1,15 @@
-import { flushPromises, mount } from '@vue/test-utils'
+import { QueryClient, VueQueryPlugin } from '@tanstack/vue-query'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { defineComponent, ref } from 'vue'
-import { createTestingPinia } from '@pinia/testing'
-import { VueQueryPlugin, QueryClient } from '@tanstack/vue-query'
-import SubmitClaims from '../SubmitClaims.vue'
-import { useSubmitClaimMutation } from '@/queries/weeklyClaim.queries'
-import dayjs from 'dayjs'
-import utc from 'dayjs/plugin/utc'
-import isoWeek from 'dayjs/plugin/isoWeek'
+import { flushPromises, mount } from '@vue/test-utils'
 import { mockTeamStore, mockToast, mockUseSubmitRestriction } from '@/tests/mocks'
+import SubmitClaims from '../SubmitClaims.vue'
 import { createMockMutationResponse } from '@/tests/mocks/query.mock'
+import { createTestingPinia } from '@pinia/testing'
+import dayjs from 'dayjs'
+import isoWeek from 'dayjs/plugin/isoWeek'
+import { useSubmitClaimMutation } from '@/queries/weeklyClaim.queries'
+import utc from 'dayjs/plugin/utc'
 
 dayjs.extend(utc)
 dayjs.extend(isoWeek)

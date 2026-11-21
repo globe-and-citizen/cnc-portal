@@ -1,10 +1,10 @@
+import { type VueWrapper, mount } from '@vue/test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { mount, type VueWrapper } from '@vue/test-utils'
-import { nextTick } from 'vue'
-import PastElectionsSection from '../PastElectionsSection.vue'
-import type { Election } from '@/types'
-import { log } from '@/lib/logging'
 import { mockElectionsReads, mockRoute, resetContractMocks } from '@/tests/mocks'
+import type { Election } from '@/types'
+import PastElectionsSection from '../PastElectionsSection.vue'
+import { log } from '@/lib/logging'
+import { nextTick } from 'vue'
 
 const CardStub = {
   props: ['election'],

@@ -37,18 +37,18 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import { type Address } from 'viem'
-import { useTeamStore, useUserDataStore } from '@/stores'
 import {
   useInvestorAddress,
   useInvestorMigrationComplete,
   useInvestorMigrationRoot,
   useInvestorOwner
 } from '@/composables/investor/reads'
-import { useGetInvestorMigrationQuery } from '@/queries/investorMigration.queries'
+import { useTeamStore, useUserDataStore } from '@/stores'
+import { type Address } from 'viem'
 import MerkleClaimForm from './MerkleClaimForm.vue'
 import MigrationOwnerSweep from './MigrationOwnerSweep.vue'
+import { computed } from 'vue'
+import { useGetInvestorMigrationQuery } from '@/queries/investorMigration.queries'
 
 const teamStore = useTeamStore()
 const userStore = useUserDataStore()

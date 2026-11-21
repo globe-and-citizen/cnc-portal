@@ -1,32 +1,32 @@
 import { beforeEach, vi } from 'vitest'
 import { defineComponent, ref } from 'vue'
-import { queryMocks, resetNotificationsMock } from '@/tests/mocks/query.mock'
 import {
-  mockUseBackendWake,
-  mockUseContractBalance,
-  mockUseSafeSendTransaction,
-  mockUseClipboard,
-  useQueryClientFn,
-  useQueryFn,
-  useQueriesFn,
-  useMutationFn,
-  mockUseFetch,
-  mockUseSubmitRestriction,
-  mockUseDeployContract,
-  mockUseUploadFileMutation,
   mockBlockTimestamp,
+  mockUseBackendWake,
+  mockUseClipboard,
+  mockUseContractBalance,
+  mockUseDeployContract,
+  mockUseFetch,
+  mockUseSafeSendTransaction,
+  mockUseSubmitRestriction,
+  mockUseUploadFileMutation,
   resetComposableMocks,
   resetDeployState,
-  resetUploadFileState
+  resetUploadFileState,
+  useMutationFn,
+  useQueriesFn,
+  useQueryClientFn,
+  useQueryFn
 } from '@/tests/mocks/composables.mock'
-import { mockUseSafeBalances, resetSafeBalancesMock } from '@/tests/mocks/safeBalances.mock'
-import { mockGetFileUrlApi, mockUploadFileApi } from '@/tests/mocks/api.mock'
 import {
   mockGetBalance,
   mockGetLogs,
   mockReadContractAction
 } from '@/tests/mocks/viem.actions.mock'
-import { mockRouter, mockRoute, resetMockRoute } from '@/tests/mocks/router.mock'
+import { mockGetFileUrlApi, mockUploadFileApi } from '@/tests/mocks/api.mock'
+import { mockRoute, mockRouter, resetMockRoute } from '@/tests/mocks/router.mock'
+import { mockUseSafeBalances, resetSafeBalancesMock } from '@/tests/mocks/safeBalances.mock'
+import { queryMocks, resetNotificationsMock } from '@/tests/mocks/query.mock'
 
 // Restore all shared composable mocks to their defaults before every test so
 // that in-place mutations (refs, spies) never leak across tests. Setup-file

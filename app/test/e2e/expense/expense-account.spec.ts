@@ -1,16 +1,16 @@
-import { expect, test } from '../fixtures/chain'
-import { parseUnits } from 'viem'
+import { type BankE2EFixture, deployBankE2EFixture } from '../bank/bank-chain'
 import { E2E_MEMBER, nativeBalance, sendNative, sendToken, tokenBalance } from '../e2e-chain'
-import { dialogAmount, E2E_RPC_ROUTE, failLogReads, rejectNextWalletRequest } from '../e2e-page'
-import { deployBankE2EFixture, type BankE2EFixture } from '../bank/bank-chain'
-import { selectRecipient } from '../bank/bank-page'
-import { signExpenseApproval } from './expense-chain'
+import { E2E_RPC_ROUTE, dialogAmount, failLogReads, rejectNextWalletRequest } from '../e2e-page'
 import {
   addExpenseApproval,
   chooseApprovalDate,
   createExpenseApi,
   openExpenseAccount
 } from './expense-page'
+import { expect, test } from '../fixtures/chain'
+import { parseUnits } from 'viem'
+import { selectRecipient } from '../bank/bank-page'
+import { signExpenseApproval } from './expense-chain'
 
 let fixture: BankE2EFixture
 

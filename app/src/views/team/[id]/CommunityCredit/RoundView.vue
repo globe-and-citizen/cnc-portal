@@ -53,51 +53,51 @@
 </template>
 
 <script setup lang="ts">
+import {
+  type CreditRound,
+  type LendingOfferStruct,
+  type RoundDetailVariant,
+  validateRepaymentAmount
+} from '@/types'
+import {
+  ROUND_VARIANT_TAB_ITEMS,
+  formatAmount,
+  offerLenderToCreditLender,
+  offerOutstandingObligation
+} from '@/utils/communityCredit/model'
 import { computed, ref } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { useToast } from '@nuxt/ui/composables'
-import { useQueryClient } from '@tanstack/vue-query'
 import { formatUnits, isAddress, isAddressEqual, zeroAddress } from 'viem'
-import { useCommunityCreditStore, useUserDataStore } from '@/stores'
+import {
+  invalidateAfterAcceptPartialFunding,
+  invalidateAfterRefund,
+  invalidateAfterRepay
+} from '@/composables/fixedReturn/invalidation'
 import { useBankAddress, useBankOwner, useBankPaused } from '@/composables/bank/reads'
-import { useFundFixedReturnRepayment } from '@/composables/bank/writes'
-import { useErc20BalanceOf } from '@/composables/erc20/reads'
+import { useCommunityCreditStore, useUserDataStore } from '@/stores'
+import {
+  useFixedReturnAcceptPartialFunding,
+  useFixedReturnRefundLenders
+} from '@/composables/fixedReturn/writes'
 import {
   useFixedReturnAddress,
   useFixedReturnGetLendingOffer,
-  useFixedReturnOfferLenders,
-  useFixedReturnMyLenderPosition
+  useFixedReturnMyLenderPosition,
+  useFixedReturnOfferLenders
 } from '@/composables/fixedReturn/reads'
-import {
-  useFixedReturnRefundLenders,
-  useFixedReturnAcceptPartialFunding
-} from '@/composables/fixedReturn/writes'
-import {
-  invalidateAfterRefund,
-  invalidateAfterAcceptPartialFunding,
-  invalidateAfterRepay
-} from '@/composables/fixedReturn/invalidation'
-import { classifyError } from '@/utils/errors/classifyContractError'
-import { decimalsForFixedReturnToken } from '@/utils/communityCredit/offer'
-import {
-  formatAmount,
-  offerOutstandingObligation,
-  offerLenderToCreditLender,
-  ROUND_VARIANT_TAB_ITEMS
-} from '@/utils/communityCredit/model'
-import { isRepayableRoundStatus } from '@/utils/communityCredit/roundStatus'
-import { useTransactionPresentation } from '@/composables/transactions/useTransactionPresentation'
-import {
-  validateRepaymentAmount,
-  type CreditRound,
-  type LendingOfferStruct,
-  type RoundDetailVariant
-} from '@/types'
+import { useRoute, useRouter } from 'vue-router'
 import CreditLendModal from '@/components/sections/CommunityCreditView/CreditLendModal.vue'
 import CreditRoundActions from '@/components/sections/CommunityCreditView/CreditRoundActions.vue'
-import CreditRoundReadState from '@/components/sections/CommunityCreditView/CreditRoundReadState.vue'
 import CreditRoundDetailSection from '@/components/sections/CommunityCreditView/CreditRoundDetailSection.vue'
+import CreditRoundReadState from '@/components/sections/CommunityCreditView/CreditRoundReadState.vue'
 import type { RepaymentPanelState } from '@/components/sections/CommunityCreditView/CreditRepayPanel.vue'
+import { classifyError } from '@/utils/errors/classifyContractError'
+import { decimalsForFixedReturnToken } from '@/utils/communityCredit/offer'
+import { isRepayableRoundStatus } from '@/utils/communityCredit/roundStatus'
+import { useErc20BalanceOf } from '@/composables/erc20/reads'
+import { useFundFixedReturnRepayment } from '@/composables/bank/writes'
+import { useQueryClient } from '@tanstack/vue-query'
+import { useToast } from '@nuxt/ui/composables'
+import { useTransactionPresentation } from '@/composables/transactions/useTransactionPresentation'
 
 const route = useRoute()
 const router = useRouter()

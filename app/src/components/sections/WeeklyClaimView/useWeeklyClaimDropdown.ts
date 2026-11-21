@@ -1,4 +1,4 @@
-import { ref, computed, watch, nextTick, onMounted, onUnmounted, type Ref } from 'vue'
+import { type Ref, computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 
 /**
  * Module-level (singleton) open-state shared by every WeeklyClaimActionDropdown

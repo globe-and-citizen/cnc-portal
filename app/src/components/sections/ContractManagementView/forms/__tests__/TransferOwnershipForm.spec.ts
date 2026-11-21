@@ -1,9 +1,9 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
-import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { nextTick } from 'vue'
-import TransferOwnershipForm from '@/components/sections/ContractManagementView/forms/TransferOwnershipForm.vue'
 import type { Component } from 'vue'
+import TransferOwnershipForm from '@/components/sections/ContractManagementView/forms/TransferOwnershipForm.vue'
 import { mockTeamStore } from '@/tests/mocks/store.mock'
+import { nextTick } from 'vue'
 import { useTeamStore } from '@/stores'
 
 // ─── Child component stubs ──────────────────────────────────────────────────

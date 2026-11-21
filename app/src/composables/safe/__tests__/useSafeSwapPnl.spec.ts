@@ -1,10 +1,10 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { ref, toValue, type MaybeRefOrGetter } from 'vue'
-import { useSafeSwapPnl } from '../useSafeSwapPnl'
-import type { SafeClientBalance, SafeIncomingTransfer } from '@/types/safe'
-import { useGetSafeBalancesQuery } from '@/queries/safeClient.queries'
 import * as swapValuation from '@/utils/safe/swapValuation'
-import { currentChainId, SUPPORTED_TOKENS, USDC_ADDRESS } from '@/constant'
+import { type MaybeRefOrGetter, ref, toValue } from 'vue'
+import { SUPPORTED_TOKENS, USDC_ADDRESS, currentChainId } from '@/constant'
+import type { SafeClientBalance, SafeIncomingTransfer } from '@/types/safe'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { useGetSafeBalancesQuery } from '@/queries/safeClient.queries'
+import { useSafeSwapPnl } from '../useSafeSwapPnl'
 
 const { mockTransfers, mockRates, mockOrders, requests } = vi.hoisted(() => ({
   mockTransfers: {

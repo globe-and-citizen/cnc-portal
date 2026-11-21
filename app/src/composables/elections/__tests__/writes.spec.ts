@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import type { Address } from 'viem'
 import { contractReadsOfAddress } from '@/composables/contracts/useContractWritesV3'
 import { electionVoteReadsOfAddress } from '../invalidation'

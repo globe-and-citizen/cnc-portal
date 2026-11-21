@@ -1,16 +1,16 @@
-import { describe, it, vi, expect, beforeEach, afterEach } from 'vitest'
-import { mount, flushPromises } from '@vue/test-utils'
-import { createTestingPinia } from '@pinia/testing'
-import { ref } from 'vue'
-import { parseUnits } from 'viem'
-import MintForm from '../MintForm.vue'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { flushPromises, mount } from '@vue/test-utils'
 import {
-  mockToast,
-  mockTeamStore,
   mockInvestorReads,
   mockInvestorWrites,
+  mockTeamStore,
+  mockToast,
   useReadContractFn
 } from '@/tests/mocks'
+import MintForm from '../MintForm.vue'
+import { createTestingPinia } from '@pinia/testing'
+import { parseUnits } from 'viem'
+import { ref } from 'vue'
 
 const VALID_ADDRESS = '0x1234567890123456789012345678901234567890'
 

@@ -1,8 +1,8 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { setActivePinia, createPinia } from 'pinia'
-import { flushPromises } from '@vue/test-utils'
-import { UserRejectedRequestError, SwitchChainError } from 'viem'
 import { AxiosError, AxiosHeaders } from 'axios'
+import { SwitchChainError, UserRejectedRequestError } from 'viem'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { createPinia, setActivePinia } from 'pinia'
+import { flushPromises } from '@vue/test-utils'
 
 vi.unmock('@/stores/user')
 
@@ -16,18 +16,18 @@ vi.mock('@/api/user.api', () => ({
 vi.mock('@/api/auth.api', () => ({
   siweAuth: vi.fn()
 }))
+import * as authApi from '@/api/auth.api'
+import * as userApi from '@/api/user.api'
+import * as wagmiCore from '@wagmi/core'
 import {
-  useSiweMutation,
-  WalletConnectRejectedError,
   ChainSwitchRejectedError,
-  SignatureRejectedError
+  SignatureRejectedError,
+  WalletConnectRejectedError,
+  useSiweMutation
 } from '@/composables/useSiwe'
-import { useMutationFn, smartUseMutation } from '@/tests/mocks'
+import { smartUseMutation, useMutationFn } from '@/tests/mocks'
 import { mockToast } from '@/tests/mocks/store.mock'
 import router from '@/router'
-import * as userApi from '@/api/user.api'
-import * as authApi from '@/api/auth.api'
-import * as wagmiCore from '@wagmi/core'
 
 const mockRouterPush = vi.mocked(router.push)
 const ADDRESS = '0x1234567890123456789012345678901234567890'

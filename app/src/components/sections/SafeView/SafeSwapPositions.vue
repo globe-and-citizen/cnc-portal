@@ -47,12 +47,12 @@
 </template>
 
 <script setup lang="ts">
+import { EMPTY_VALUE, formatNumber, formatUsd } from '@/utils/format'
 import { computed, ref } from 'vue'
-import type { TableColumn } from '@nuxt/ui'
 import SafePnlAmount from './SafePnlAmount.vue'
 import SafeSwapPositionHistory from './SafeSwapPositionHistory.vue'
-import { EMPTY_VALUE, formatNumber, formatUsd } from '@/utils/format'
 import type { SafeTokenPosition } from '@/utils/safe/costBasis'
+import type { TableColumn } from '@nuxt/ui'
 
 const props = defineProps<{ positions: SafeTokenPosition[] }>()
 

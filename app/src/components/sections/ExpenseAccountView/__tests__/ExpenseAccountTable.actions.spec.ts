@@ -1,12 +1,4 @@
-import { flushPromises, mount } from '@vue/test-utils'
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import ExpenseAccountTable from '../ExpenseAccountTable.vue'
-import { setActivePinia, createPinia } from 'pinia'
-import { createTestingPinia } from '@pinia/testing'
-import { USDC_ADDRESS } from '@/constant'
-import { zeroAddress } from 'viem'
-import { log } from '@/lib/logging'
-import { readContract } from '@wagmi/core'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   createMockQueryResponse,
   mockExpenseAccountWrites,
@@ -16,7 +8,15 @@ import {
   mockUseSignTypedData,
   mockUserStore
 } from '@/tests/mocks'
+import { createPinia, setActivePinia } from 'pinia'
+import { flushPromises, mount } from '@vue/test-utils'
+import ExpenseAccountTable from '../ExpenseAccountTable.vue'
+import { USDC_ADDRESS } from '@/constant'
+import { createTestingPinia } from '@pinia/testing'
+import { log } from '@/lib/logging'
+import { readContract } from '@wagmi/core'
 import { useGetExpensesQuery } from '@/queries/expense.queries'
+import { zeroAddress } from 'viem'
 
 type MutationOpts = { onSuccess?: () => void; onError?: (e: unknown) => void }
 

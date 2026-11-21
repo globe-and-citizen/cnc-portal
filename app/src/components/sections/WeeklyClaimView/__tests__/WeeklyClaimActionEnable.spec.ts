@@ -1,16 +1,16 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { mount, flushPromises } from '@vue/test-utils'
-import { keccak256 } from 'viem'
-import WeeklyClaimActionEnable from '../WeeklyClaimActionEnable.vue'
-import type { WeeklyClaim } from '@/types'
+import * as contractErrors from '@/utils/errors/classifyContractError'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { flushPromises, mount } from '@vue/test-utils'
 import {
   mockCashRemunerationWrites,
   mockSyncWeeklyClaimsMutation,
   mockTeamStore,
   useQueryClientFn
 } from '@/tests/mocks'
+import type { WeeklyClaim } from '@/types'
+import WeeklyClaimActionEnable from '../WeeklyClaimActionEnable.vue'
+import { keccak256 } from 'viem'
 import { mockLog } from '@/tests/mocks/utils.mock'
-import * as contractErrors from '@/utils/errors/classifyContractError'
 
 describe('WeeklyClaimActionEnable', () => {
   const weeklyClaim: WeeklyClaim = {

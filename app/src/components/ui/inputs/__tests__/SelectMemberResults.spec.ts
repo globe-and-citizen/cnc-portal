@@ -1,9 +1,9 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import type { Member } from '@/types'
 import SelectMemberResults from '@/components/ui/inputs/SelectMemberResults.vue'
 import UserIdentity from '@/components/ui/UserIdentity.vue'
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { nextTick } from 'vue'
-import type { Member } from '@/types'
 
 // Mock data
 const MOCK_MEMBERS: Member[] = [

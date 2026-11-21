@@ -1,11 +1,11 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { flushPromises, mount, type VueWrapper } from '@vue/test-utils'
-import { createTestingPinia } from '@pinia/testing'
 import { CalendarDate, Time } from '@internationalized/date'
-import { parseUnits } from 'viem'
+import { type VueWrapper, flushPromises, mount } from '@vue/test-utils'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { mockInvestorReads, mockVestingWrites, resetContractMocks } from '@/tests/mocks'
 import CreateVesting from '@/components/sections/VestingView/forms/CreateVesting.vue'
 import SelectMemberInput from '@/components/ui/inputs/SelectMemberInput.vue'
-import { mockInvestorReads, mockVestingWrites, resetContractMocks } from '@/tests/mocks'
+import { createTestingPinia } from '@pinia/testing'
+import { parseUnits } from 'viem'
 
 describe('CreateVesting.vue — submission', () => {
   let wrapper: VueWrapper

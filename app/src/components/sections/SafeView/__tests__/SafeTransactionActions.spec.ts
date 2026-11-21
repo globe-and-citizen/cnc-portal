@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { mount } from '@vue/test-utils'
 import SafeTransactionActions from '../SafeTransactionActions.vue'
+import { mount } from '@vue/test-utils'
 
 const defaultProps = {
   canApprove: true,

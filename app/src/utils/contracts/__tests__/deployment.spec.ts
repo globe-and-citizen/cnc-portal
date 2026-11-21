@@ -1,14 +1,14 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { encodeFunctionData, zeroAddress, type Address } from 'viem'
-import { validateBeaconAddresses, getBeaconConfigs, getDeploymentConfigs } from '../deployment'
-import { fixedReturnAbi, investorAbi } from '@/artifacts/abi/generated'
+import { type Address, encodeFunctionData, zeroAddress } from 'viem'
 import {
   FIXED_RETURN_BEACON_ADDRESS,
-  VESTING_BEACON_ADDRESS,
   USDC_ADDRESS,
   USDC_E_ADDRESS,
-  USDT_ADDRESS
+  USDT_ADDRESS,
+  VESTING_BEACON_ADDRESS
 } from '@/constant'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { fixedReturnAbi, investorAbi } from '@/artifacts/abi/generated'
+import { getBeaconConfigs, getDeploymentConfigs, validateBeaconAddresses } from '../deployment'
 
 const CURRENT_USER = '0x000000000000000000000000000000000000A1' as Address
 

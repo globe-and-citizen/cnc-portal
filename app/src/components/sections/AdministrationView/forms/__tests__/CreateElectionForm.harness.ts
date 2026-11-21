@@ -1,5 +1,5 @@
-import { mount } from '@vue/test-utils'
 import CreateElectionForm from '../CreateElectionForm.vue'
+import { mount } from '@vue/test-utils'
 
 export interface CreateElectionFormVm {
   state: {

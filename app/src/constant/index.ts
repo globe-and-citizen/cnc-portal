@@ -1,9 +1,9 @@
+import { type Address, isAddress, zeroAddress } from 'viem'
+import amoy from '@/artifacts/deployed_addresses/chain-80002.json'
 import { getNetwork } from './network'
-import sepolia from '@/artifacts/deployed_addresses/chain-11155111.json'
 import hardhat from '@/artifacts/deployed_addresses/chain-31337.json'
 import polygon from '@/artifacts/deployed_addresses/chain-137.json'
-import amoy from '@/artifacts/deployed_addresses/chain-80002.json'
-import { isAddress, zeroAddress, type Address } from 'viem'
+import sepolia from '@/artifacts/deployed_addresses/chain-11155111.json'
 
 export { getSafeInfraAddresses, type SafeInfraAddresses } from './safeInfra'
 

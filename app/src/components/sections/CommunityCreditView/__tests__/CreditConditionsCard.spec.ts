@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import { mount } from '@vue/test-utils'
+import CreditConditionsCard from '../CreditConditionsCard.vue'
 import type { CreditRound } from '@/types'
 import { MINUTES_PER_DAY } from '@/utils/communityCredit/model'
-import CreditConditionsCard from '../CreditConditionsCard.vue'
+import { mount } from '@vue/test-utils'
 
 function makeRound(overrides: Partial<CreditRound> = {}): CreditRound {
   return {

@@ -1,7 +1,7 @@
-import { readContract } from '@wagmi/core'
 import type { Address } from 'viem'
-import { expenseAccountEip712Abi } from '@/artifacts/abi/generated'
 import { config } from '@/wagmi.config'
+import { expenseAccountEip712Abi } from '@/artifacts/abi/generated'
+import { readContract } from '@wagmi/core'
 
 /** Check ownership on the approval's original contract before offering a state write. */
 export async function isExpenseApprovalOwner(address: Address, wallet: string | undefined) {

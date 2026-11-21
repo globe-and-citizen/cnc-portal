@@ -89,18 +89,18 @@
 </template>
 
 <script setup lang="ts">
+import { type Address, isAddress } from 'viem'
 import { computed, ref } from 'vue'
-import { Icon as IconifyIcon } from '@iconify/vue'
-import { isAddress, type Address } from 'viem'
 import { useTeamStore, useUserDataStore } from '@/stores'
-
-import { useDeploySafe } from '@/composables/safe/useSafeDeployment'
-import { useCreateContractMutation } from '@/queries/contract.queries'
-import { log } from '@/lib/logging'
-import { NETWORK } from '@/constant'
-import { useToast } from '@nuxt/ui/composables'
-import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
 import AddressTooltip from '@/components/ui/AddressTooltip.vue'
+
+import { Icon as IconifyIcon } from '@iconify/vue'
+import { NETWORK } from '@/constant'
+import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
+import { log } from '@/lib/logging'
+import { useCreateContractMutation } from '@/queries/contract.queries'
+import { useDeploySafe } from '@/composables/safe/useSafeDeployment'
+import { useToast } from '@nuxt/ui/composables'
 
 interface Props {
   teamId: number

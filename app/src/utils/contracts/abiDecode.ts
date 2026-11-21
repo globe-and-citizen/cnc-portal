@@ -11,11 +11,11 @@ import {
   safeDepositRouterAbi,
   vestingAbi
 } from '@/artifacts/abi/generated'
-import { votingAbi } from '@/artifacts/abi/V2/generated'
+import type { Abi } from 'viem'
 import { SAFE_VERSION } from '@/types/safe'
 import { formatNumber } from '@/utils/format'
 import { getSafeSingletonDeployment } from '@safe-global/safe-deployments'
-import type { Abi } from 'viem'
+import { votingAbi } from '@/artifacts/abi/V2/generated'
 
 export interface DecodedParam {
   name: string

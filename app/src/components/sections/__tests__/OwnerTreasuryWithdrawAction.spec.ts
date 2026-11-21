@@ -1,9 +1,9 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { mount, flushPromises } from '@vue/test-utils'
-import { createPinia, setActivePinia } from 'pinia'
 import { BaseError, UserRejectedRequestError } from 'viem'
-import OwnerTreasuryWithdrawAction from '../OwnerTreasuryWithdrawAction.vue'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { createPinia, setActivePinia } from 'pinia'
+import { flushPromises, mount } from '@vue/test-utils'
 import {
+  makeTokenBalance,
   mockBodAddAction,
   mockBodIsBodAction,
   mockCashRemunerationReads,
@@ -14,9 +14,9 @@ import {
   mockUseChainId,
   mockUseContractBalance,
   mockUserStore,
-  useQueryClientFn,
-  makeTokenBalance
+  useQueryClientFn
 } from '@/tests/mocks'
+import OwnerTreasuryWithdrawAction from '../OwnerTreasuryWithdrawAction.vue'
 
 const OWNER_ADDRESS = '0x00000000000000000000000000000000000000aa'
 const NON_OWNER_ADDRESS = '0x00000000000000000000000000000000000000bb'

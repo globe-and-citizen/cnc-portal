@@ -1,6 +1,6 @@
-import { describe, it, expect } from 'vitest'
-import { exportFilename } from '@/utils/accounting/exportNaming'
+import { describe, expect, it } from 'vitest'
 import type { SectionSpec } from '@/utils/accounting/exportSpec'
+import { exportFilename } from '@/utils/accounting/exportNaming'
 
 const FROM = new Date('2026-01-01')
 const TO = new Date('2026-02-01')

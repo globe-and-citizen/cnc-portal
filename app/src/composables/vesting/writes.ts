@@ -1,11 +1,11 @@
-import { useQueryClient } from '@tanstack/vue-query'
-import { vestingAbi } from '@/artifacts/abi/generated'
 import {
-  useContractWritesV3,
-  type WriteFunctionName
+  type WriteFunctionName,
+  useContractWritesV3
 } from '@/composables/contracts/useContractWritesV3'
-import { useVestingAddress } from './reads'
+import { useQueryClient } from '@tanstack/vue-query'
 import { useTeamStore } from '@/stores'
+import { useVestingAddress } from './reads'
+import { vestingAbi } from '@/artifacts/abi/generated'
 
 type VestingFunctionNames = WriteFunctionName<typeof vestingAbi>
 

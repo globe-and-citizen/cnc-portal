@@ -1,16 +1,16 @@
+import { ADDR, usd } from './fixtures'
+import type { ContractType, TeamContract } from '@/types/teamContract'
 import { describe, expect, it } from 'vitest'
 import type { Address } from 'viem'
-import { USDC_ADDRESS } from '@/constant'
-import type { JournalAccountAssignmentRecord } from '@/types/journal-account-assignment'
-import type { ContractType, TeamContract } from '@/types/teamContract'
-import { buildAccountingSummary } from '@/utils/accounting/accountingSummary'
 import type { CncAccountingInput } from '@/utils/accounting/assemble'
+import type { JournalAccountAssignmentRecord } from '@/types/journal-account-assignment'
+import { USDC_ADDRESS } from '@/constant'
+import type { UsdRateOfRecord } from '@/utils/accounting/toUsd'
+import { assembleAccounting } from './assembleAccounting'
+import { buildAccountingSummary } from '@/utils/accounting/accountingSummary'
 import { buildBalanceSheet } from '@/utils/accounting/balanceSheet'
 import { buildGeneralLedger } from '@/utils/accounting/generalLedger'
 import { buildIncomeStatement } from '@/utils/accounting/incomeStatement'
-import type { UsdRateOfRecord } from '@/utils/accounting/toUsd'
-import { ADDR, usd } from './fixtures'
-import { assembleAccounting } from './assembleAccounting'
 
 const TX = `0x${'f'.repeat(64)}`
 const DEPLOYER = ADDR.founder as Address

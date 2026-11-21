@@ -1,10 +1,10 @@
-import { mount } from '@vue/test-utils'
+import type { Member, User } from '@/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { defineComponent, h, ref } from 'vue'
 import SelectMemberInput from '../SelectMemberInput.vue'
-import { useGetSearchUsersQuery } from '@/queries'
 import { mockTeamStore } from '@/tests/mocks'
-import type { Member, User } from '@/types'
+import { mount } from '@vue/test-utils'
+import { useGetSearchUsersQuery } from '@/queries'
 
 const TEAM_MEMBER: User = {
   id: 'team-member',

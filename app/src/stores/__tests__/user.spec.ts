@@ -1,5 +1,5 @@
-import { createPinia, disposePinia, setActivePinia } from 'pinia'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { createPinia, disposePinia, setActivePinia } from 'pinia'
 
 // Unmock the store files so we can test the real implementation
 vi.unmock('@/stores/user')

@@ -55,20 +55,20 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
-import SetMemberWageStandardStep from './SetMemberWageStandardStep.vue'
-import SetMemberWageOvertimeStep from './SetMemberWageOvertimeStep.vue'
-import { useSetMemberWageMutation } from '@/queries/wage.queries'
-import type { Member, Wage, WageWithForm } from '@/types'
-import type { AxiosError } from 'axios'
 import {
-  normalizeRatePerHour,
+  DEFAULT_MAXIMUM_HOURS_PER_DAY,
   buildRatePayload,
-  DEFAULT_MAXIMUM_HOURS_PER_DAY
+  normalizeRatePerHour
 } from '@/utils/wages/model'
-import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
-import { getAxiosErrorMessage } from '@/utils/errors/http'
+import type { Member, Wage, WageWithForm } from '@/types'
+import { computed, ref, watch } from 'vue'
+import type { AxiosError } from 'axios'
+import SetMemberWageOvertimeStep from './SetMemberWageOvertimeStep.vue'
+import SetMemberWageStandardStep from './SetMemberWageStandardStep.vue'
 import type { StepperItem } from '@nuxt/ui'
+import { getAxiosErrorMessage } from '@/utils/errors/http'
+import { useSetMemberWageMutation } from '@/queries/wage.queries'
+import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
 
 const currentStep = ref(0)
 

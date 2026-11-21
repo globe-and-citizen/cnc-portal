@@ -10,8 +10,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
 import MultiSelectFilter from '@/components/ui/MultiSelectFilter.vue'
+import { computed } from 'vue'
 
 // Multi-select currency filter for the General ledger, over the currencies
 // present in the data currently in view.

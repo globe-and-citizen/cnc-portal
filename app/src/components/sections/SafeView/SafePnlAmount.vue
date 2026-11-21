@@ -8,8 +8,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
 import { formatPercent, formatUsd } from '@/utils/format'
+import { computed } from 'vue'
 
 const props = defineProps<{ value: number | null; ratio?: number | null }>()
 

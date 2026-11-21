@@ -1,10 +1,10 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { mount } from '@vue/test-utils'
-import { createTestingPinia } from '@pinia/testing'
-import { ref } from 'vue'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import CampaignManagerAdminsSection from '@/components/sections/ContractManagementView/CampaignManagerAdminsSection.vue'
-import { useReadContractFn } from '@/tests/mocks'
 import type { TeamContract } from '@/types'
+import { createTestingPinia } from '@pinia/testing'
+import { mount } from '@vue/test-utils'
+import { ref } from 'vue'
+import { useReadContractFn } from '@/tests/mocks'
 
 const CONTRACT_ADDR = '0xAAaaaaAAAAaaAAAaaaaAaaAAAAAaaaaaAAAaaaA1'
 const contractProp: TeamContract = {

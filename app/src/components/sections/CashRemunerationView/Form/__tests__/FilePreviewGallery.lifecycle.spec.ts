@@ -1,10 +1,10 @@
-import { mount, flushPromises, type VueWrapper } from '@vue/test-utils'
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import StandardGallery from '../FilePreviewGallery.vue'
+import { type VueWrapper, flushPromises, mount } from '@vue/test-utils'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import ExpandableGallery from '../ExpandableFileGallery.vue'
-import { useFileUrl } from '@/composables/useFileUrl'
-import { mockGetFileUrlApi } from '@/tests/mocks'
 import type { FilePreviewItem } from '@/types/file-preview'
+import StandardGallery from '../FilePreviewGallery.vue'
+import { mockGetFileUrlApi } from '@/tests/mocks'
+import { useFileUrl } from '@/composables/useFileUrl'
 
 const file: FilePreviewItem = {
   key: 'proof',

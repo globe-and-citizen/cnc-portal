@@ -106,12 +106,12 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, watch } from 'vue'
+import { type CreditCallForm, createCreditCallAccessSchema } from '@/types'
 import { applyZodFieldErrors, formatAmount } from '@/utils/communityCredit/model'
+import { computed, reactive, watch } from 'vue'
 import { creditAccessRowClass, creditRadioClass } from '@/utils/communityCredit/wizard'
-import { findCreditToken } from '@/utils/communityCredit/offer'
-import { createCreditCallAccessSchema, type CreditCallForm } from '@/types'
 import CreditWhitelistEditor from './CreditWhitelistEditor.vue'
+import { findCreditToken } from '@/utils/communityCredit/offer'
 
 const form = defineModel<CreditCallForm>('form', { required: true })
 

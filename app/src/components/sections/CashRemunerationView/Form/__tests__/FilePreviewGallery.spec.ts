@@ -1,9 +1,9 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import { mount, VueWrapper, flushPromises } from '@vue/test-utils'
-import { nextTick } from 'vue'
+import { VueWrapper, flushPromises, mount } from '@vue/test-utils'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import FilePreviewGallery from '../FilePreviewGallery.vue'
-import { useFileUrl } from '@/composables/useFileUrl'
 import { mockGetFileUrlApi } from '@/tests/mocks'
+import { nextTick } from 'vue'
+import { useFileUrl } from '@/composables/useFileUrl'
 
 describe('FilePreviewGallery', () => {
   const IMAGE_PREVIEW = {

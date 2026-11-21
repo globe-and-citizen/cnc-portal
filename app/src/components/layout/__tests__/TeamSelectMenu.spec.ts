@@ -1,11 +1,11 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { mount } from '@vue/test-utils'
-import TeamSelectMenu from '@/components/layout/TeamSelectMenu.vue'
-import { useGetTeamsQuery } from '@/queries/team.queries'
-import { mockTeamStore, mockUserStore } from '@/tests/mocks/store.mock'
-import { mockTeamData } from '@/tests/mocks/index'
-import { createMockQueryResponse } from '@/tests/mocks/query.mock'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { mockRouterPush, setMockRoute } from '@/tests/mocks/router.mock'
+import { mockTeamStore, mockUserStore } from '@/tests/mocks/store.mock'
+import TeamSelectMenu from '@/components/layout/TeamSelectMenu.vue'
+import { createMockQueryResponse } from '@/tests/mocks/query.mock'
+import { mockTeamData } from '@/tests/mocks/index'
+import { mount } from '@vue/test-utils'
+import { useGetTeamsQuery } from '@/queries/team.queries'
 
 // UPopover is globally stubbed and renders both its trigger and content slots,
 // so the dropdown markup is always present in the DOM during these tests.

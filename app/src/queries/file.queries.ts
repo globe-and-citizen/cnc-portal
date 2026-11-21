@@ -1,5 +1,5 @@
-import { useMutation } from '@tanstack/vue-query'
 import { uploadFileApi } from '@/api'
+import { useMutation } from '@tanstack/vue-query'
 
 /**
  * Upload a single file and return its public URL.

@@ -1,8 +1,16 @@
 // Safe-specific Playwright page helpers: the team payload, the stubbed
 // Transaction Service, and the navigation to the Safe Account.
-import { expect, type Page } from '@playwright/test'
-import { parseEther, type Address } from 'viem'
-import type { SafeIncomingTransfer, SafeTransaction } from '../../../src/types/safe'
+import { type Address, parseEther } from 'viem'
+import {
+  type E2EUser,
+  dialogAmount,
+  openAccountFromSidebar,
+  rejectNextWalletRequest,
+  selectToken,
+  signInAndOpenFirstTeam,
+  stubBackend,
+  useWallet
+} from '../e2e-page'
 import {
   E2E_MEMBER,
   E2E_MEMBER_PRIVATE_KEY,
@@ -12,23 +20,15 @@ import {
   sendNative,
   sendToken
 } from '../e2e-chain'
+import { type Page, expect } from '@playwright/test'
 import {
-  dialogAmount,
-  openAccountFromSidebar,
-  rejectNextWalletRequest,
-  selectToken,
-  signInAndOpenFirstTeam,
-  stubBackend,
-  useWallet,
-  type E2EUser
-} from '../e2e-page'
-import {
+  type SafeE2EFixture,
   memberSafeSignature,
   safeOwners,
   safeThreshold,
-  safeTransactionHash,
-  type SafeE2EFixture
+  safeTransactionHash
 } from './safe-chain'
+import type { SafeIncomingTransfer, SafeTransaction } from '../../../src/types/safe'
 import { stubSafeClientGateway } from './safe-client-gateway'
 import { stubSafeTransactionService } from './safe-transaction-service'
 import { transaction } from './safe-transaction'

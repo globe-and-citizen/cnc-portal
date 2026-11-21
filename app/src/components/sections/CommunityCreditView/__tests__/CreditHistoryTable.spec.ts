@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
-import { mount } from '@vue/test-utils'
 import type { CreditRound } from '@/types'
 import { MINUTES_PER_DAY } from '@/utils/communityCredit/model'
+import { mount } from '@vue/test-utils'
 
 const { store } = vi.hoisted(() => ({ store: { historyRounds: [] as CreditRound[] } }))
 

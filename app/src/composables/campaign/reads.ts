@@ -1,17 +1,17 @@
-import { computed, unref, type MaybeRef } from 'vue'
+import type { Address, PublicClient } from 'viem'
+import {
+  type EventsByCampaignCode,
+  fetchCampaignLogs,
+  groupCampaignEventsByCode
+} from '@/lib/campaign/events'
+import { type MaybeRef, computed, unref } from 'vue'
+import { adCampaignManagerAbi } from '@/artifacts/abi/generated'
+import { config } from '@/wagmi.config'
+import { formatUnits } from 'viem'
+import { getPublicClient } from '@wagmi/core'
+import { readContract } from 'viem/actions'
 import { useChainId } from '@wagmi/vue'
 import { useQuery } from '@tanstack/vue-query'
-import { getPublicClient } from '@wagmi/core'
-import type { Address, PublicClient } from 'viem'
-import { readContract } from 'viem/actions'
-import { formatUnits } from 'viem'
-import { config } from '@/wagmi.config'
-import { adCampaignManagerAbi } from '@/artifacts/abi/generated'
-import {
-  fetchCampaignLogs,
-  groupCampaignEventsByCode,
-  type EventsByCampaignCode
-} from '@/lib/campaign/events'
 
 type ConfiguredChainId = (typeof config)['chains'][number]['id']
 

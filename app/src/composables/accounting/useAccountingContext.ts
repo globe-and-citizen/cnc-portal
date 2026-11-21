@@ -5,7 +5,7 @@
  * and `provide()`s the result to every nested report route. Consumers must remain
  * below that route boundary so a second journal cannot be created accidentally.
  */
-import { inject, provide, type InjectionKey } from 'vue'
+import { type InjectionKey, inject, provide } from 'vue'
 import { useCNCAccounting } from './useCNCAccounting'
 
 type UseCNCAccountingReturn = ReturnType<typeof useCNCAccounting>

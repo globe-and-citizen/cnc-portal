@@ -1,7 +1,7 @@
+import { type TeamOfficerWithContracts, useGetTeamOfficersQuery } from '@/queries/contract.queries'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { nextTick, ref } from 'vue'
-import { useGetTeamOfficersQuery, type TeamOfficerWithContracts } from '@/queries/contract.queries'
 import { mockRouterReplace, mockTeamStore, renderWithProviders } from '@/tests/mocks'
+import { nextTick, ref } from 'vue'
 import ContractManagementView from '@/views/team/[id]/ContractManagementView.vue'
 
 vi.mock('@/components/sections/ContractManagementView/CurrentOfficerContractsSection.vue', () => ({

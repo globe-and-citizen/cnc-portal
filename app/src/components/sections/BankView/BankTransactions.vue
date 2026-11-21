@@ -185,36 +185,36 @@
 </template>
 
 <script setup lang="ts">
-import { formatTxHash } from '@/utils/format'
+import { buildRawBankTransactions, formatBankTransactionDate } from '@/utils/transactions/bank'
 import { computed, watch } from 'vue'
+import { formatCryptoAmount, formatCurrencyShort } from '@/utils/currency/display'
+import { formatDateRelative, formatDateUTC } from '@/utils/dates/calendar'
+import { formatEtherUtil, tokenSymbol } from '@/utils/tokens/metadata'
+import {
+  getInitialTokenSupportSummary,
+  getTransactionSummary,
+  parseBigIntOrZero
+} from '@/utils/transactions/history'
+import {
+  getTransactionCounterparty,
+  getTransactionTypeColor,
+  getTransactionTypeLabel
+} from '@/utils/transactions/registry'
 import { type Address } from 'viem'
-import { useBankEventsViaLogs } from '@/composables/bank/useBankEventsViaLogs'
-import UserIdentity from '@/components/ui/UserIdentity.vue'
+import type { BankTransaction } from '@/types/transactions'
 import DatePicker from '@/components/ui/DatePicker.vue'
 import TablePagination from '@/components/ui/TablePagination.vue'
 import TransactionDetailSlideover from '@/components/ui/TransactionDetailSlideover.vue'
+import TransactionHistoryStatusAlert from '@/components/sections/TransactionHistoryStatusAlert.vue'
+import UserIdentity from '@/components/ui/UserIdentity.vue'
+import { formatTxHash } from '@/utils/format'
+import { getEventFeedStatus } from '@/composables/eventsViaLogs'
+import { log } from '@/lib/logging'
+import { useBankEventsViaLogs } from '@/composables/bank/useBankEventsViaLogs'
 import { useCurrencyStore } from '@/stores/currencyStore'
-import { useTransactionTable } from '@/composables/transactions/useTransactionTable'
 import { useTransactionInline } from '@/composables/transactions/useTransactionInline'
 import { useTransactionPresentation } from '@/composables/transactions/useTransactionPresentation'
-import type { BankTransaction } from '@/types/transactions'
-import { buildRawBankTransactions, formatBankTransactionDate } from '@/utils/transactions/bank'
-import {
-  getTransactionTypeColor,
-  getTransactionTypeLabel,
-  getTransactionCounterparty
-} from '@/utils/transactions/registry'
-import { formatCryptoAmount, formatCurrencyShort } from '@/utils/currency/display'
-import { formatEtherUtil, tokenSymbol } from '@/utils/tokens/metadata'
-import { log } from '@/lib/logging'
-import {
-  parseBigIntOrZero,
-  getTransactionSummary,
-  getInitialTokenSupportSummary
-} from '@/utils/transactions/history'
-import { formatDateRelative, formatDateUTC } from '@/utils/dates/calendar'
-import TransactionHistoryStatusAlert from '@/components/sections/TransactionHistoryStatusAlert.vue'
-import { getEventFeedStatus } from '@/composables/eventsViaLogs'
+import { useTransactionTable } from '@/composables/transactions/useTransactionTable'
 
 const props = defineProps<{
   bankAddress: Address

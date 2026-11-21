@@ -1,11 +1,11 @@
+import { ADDR, usd } from './fixtures'
+import { ROUTER, TOKEN, drafts, history, transfer, tx } from './safeExchangeFixtures'
 import { describe, expect, it } from 'vitest'
-import { zeroAddress } from 'viem'
+import type { JournalEntry } from '../types'
 import { USDC_ADDRESS } from '@/constant'
 import { finalizeJournalEntryDrafts } from '../journalEntry'
 import { presentIncome } from '../presenter'
-import type { JournalEntry } from '../types'
-import { usd, ADDR } from './fixtures'
-import { drafts, history, ROUTER, TOKEN, transfer, tx } from './safeExchangeFixtures'
+import { zeroAddress } from 'viem'
 
 const lineOf = (entry: JournalEntry, account: string) =>
   entry.lines.find((line) => line.account.family.name === account)

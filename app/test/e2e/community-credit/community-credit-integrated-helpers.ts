@@ -1,11 +1,11 @@
-import { formatTxHash } from '../../../src/utils/format/address'
-import { parseAbiItem, type Address, type Hex } from 'viem'
-import { readFileSync } from 'node:fs'
-import { fileURLToPath } from 'node:url'
-import { expect, type Page } from '@playwright/test'
-import { ownerAccount, publicClient } from '../e2e-chain'
+import { type Address, type Hex, parseAbiItem } from 'viem'
+import { type Page, expect } from '@playwright/test'
 import { authenticateIntegratedAccount, requestIntegratedApi } from '../integrated-api'
+import { ownerAccount, publicClient } from '../e2e-chain'
 import type { OperationalTeamFixture } from '../factories/operational-team'
+import { fileURLToPath } from 'node:url'
+import { formatTxHash } from '../../../src/utils/format/address'
+import { readFileSync } from 'node:fs'
 
 const deploymentManifest = JSON.parse(
   readFileSync(

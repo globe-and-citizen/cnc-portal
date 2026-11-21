@@ -124,16 +124,16 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { useToast } from '@nuxt/ui/composables'
-import { useCommunityCreditStore } from '@/stores'
-import type { CreditRound } from '@/types'
-import { useFixedReturnAddress } from '@/composables/fixedReturn/reads'
 import CreditAccountHero from '@/components/sections/CommunityCreditView/CreditAccountHero.vue'
+import CreditAccountTransactions from '@/components/sections/CommunityCreditView/CreditAccountTransactions.vue'
+import CreditBalanceSection from '@/components/sections/CommunityCreditView/CreditBalanceSection.vue'
 import CreditHistoryTable from '@/components/sections/CommunityCreditView/CreditHistoryTable.vue'
 import CreditLendModal from '@/components/sections/CommunityCreditView/CreditLendModal.vue'
+import type { CreditRound } from '@/types'
 import CreditRoundCard from '@/components/sections/CommunityCreditView/CreditRoundCard.vue'
-import CreditBalanceSection from '@/components/sections/CommunityCreditView/CreditBalanceSection.vue'
-import CreditAccountTransactions from '@/components/sections/CommunityCreditView/CreditAccountTransactions.vue'
+import { useCommunityCreditStore } from '@/stores'
+import { useFixedReturnAddress } from '@/composables/fixedReturn/reads'
+import { useToast } from '@nuxt/ui/composables'
 
 const route = useRoute()
 const router = useRouter()

@@ -7,10 +7,10 @@
  * A missing address is deliberately an unresolved account, never an inferred
  * historical deployment.
  */
-import { getAddress, isAddress, type Address } from 'viem'
-import { ACCOUNT_FAMILIES, accountFamilyOf, type AccountName } from './chartOfAccounts'
-import type { JournalEntryDraft } from './journalEntryDraft'
+import { ACCOUNT_FAMILIES, type AccountName, accountFamilyOf } from './chartOfAccounts'
 import type { Account, AccountId, AccountRegistry } from './types'
+import { type Address, getAddress, isAddress } from 'viem'
+import type { JournalEntryDraft } from './journalEntryDraft'
 
 function normalizeContractAddress(value: string | null | undefined): Address | undefined {
   return value && isAddress(value) ? getAddress(value) : undefined

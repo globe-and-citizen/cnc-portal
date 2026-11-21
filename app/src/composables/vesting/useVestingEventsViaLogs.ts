@@ -7,19 +7,19 @@
  *   - `TokensReleased`      — vested shares minted to the member,
  *   - `VestingStopped`      — a schedule stopped, its unvested remainder dropped.
  */
-import type { MaybeRefOrGetter } from 'vue'
-import { vestingAbi as vestingV2Abi } from '@/artifacts/abi/V2/generated'
-import { vestingAbi as vestingV1Abi } from '@/artifacts/abi/V1/generated'
-import { vestingAbi as vestingV01Abi } from '@/artifacts/abi/V0.1/generated'
-import { vestingAbi as vestingV0Abi } from '@/artifacts/abi/V0/generated'
-import type { VestingEventFeed } from '@/types/contract-events/vesting'
 import {
+  type ContractAddressInput,
+  type EventMapContext,
   str,
   unionEventAbi,
-  useContractEventsViaLogs,
-  type EventMapContext,
-  type ContractAddressInput
+  useContractEventsViaLogs
 } from '@/composables/eventsViaLogs'
+import type { MaybeRefOrGetter } from 'vue'
+import type { VestingEventFeed } from '@/types/contract-events/vesting'
+import { vestingAbi as vestingV01Abi } from '@/artifacts/abi/V0.1/generated'
+import { vestingAbi as vestingV0Abi } from '@/artifacts/abi/V0/generated'
+import { vestingAbi as vestingV1Abi } from '@/artifacts/abi/V1/generated'
+import { vestingAbi as vestingV2Abi } from '@/artifacts/abi/V2/generated'
 
 const VESTING_EVENT_ABI = unionEventAbi([vestingV2Abi, vestingV1Abi, vestingV01Abi, vestingV0Abi])
 

@@ -403,7 +403,11 @@ Accounting-owned acceptance contract and has no independent validation status.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `272d6bd8d455cf09e681192f3b9c6c284b63b4fa`
+**Implementation evidence reviewed against:** `afed113648736c861fb19c4319333717f14221c3`
+
+- [`VestingScheduleDetailsModal.vue`](../../../app/src/components/sections/VestingView/VestingScheduleDetailsModal.vue)
+- [`VestingScheduleList.vue`](../../../app/src/components/sections/VestingView/VestingScheduleList.vue)
+- [`useBlockTimestamp.ts`](../../../app/src/composables/useBlockTimestamp.ts)
 
 - [Vesting actions](../../../app/src/components/sections/VestingView/VestingActions.vue) and
   [schedule totals](../../../app/src/components/sections/VestingView/VestingStats.vue)

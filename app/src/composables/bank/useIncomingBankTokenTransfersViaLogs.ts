@@ -1,14 +1,14 @@
-import { computed, toValue, type MaybeRefOrGetter } from 'vue'
-import { parseAbiItem } from 'viem'
-import { useGetTeamOfficersQuery, type TeamOfficerWithContracts } from '@/queries/contract.queries'
-import type { IncomingBankTokenTransferFeed } from '@/types/contract-events/bank'
 import {
-  str,
-  useContractEventsViaLogs,
   type ContractAddressInput,
   type EventMapContext,
-  type ScanTarget
+  type ScanTarget,
+  str,
+  useContractEventsViaLogs
 } from '@/composables/eventsViaLogs'
+import { type MaybeRefOrGetter, computed, toValue } from 'vue'
+import { type TeamOfficerWithContracts, useGetTeamOfficersQuery } from '@/queries/contract.queries'
+import type { IncomingBankTokenTransferFeed } from '@/types/contract-events/bank'
+import { parseAbiItem } from 'viem'
 
 const BANK_TOKEN_TRANSFER_ABI = [
   parseAbiItem(

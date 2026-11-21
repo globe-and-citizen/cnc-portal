@@ -1,7 +1,7 @@
-import type { Team } from '@/types/team'
+import { createMutationHook, createQueryHook, queryPresets } from './queryFactory'
 import type { MaybeRefOrGetter } from 'vue'
+import type { Team } from '@/types/team'
 import { toValue } from 'vue'
-import { createQueryHook, createMutationHook, queryPresets } from './queryFactory'
 
 /**
  * Query key factory for team-related queries

@@ -1,13 +1,13 @@
 import {
-  assembleWithAccountEvidence,
-  buildCncJournalEntryDrafts,
   type CncAccounting,
-  type CncAccountingInput
+  type CncAccountingInput,
+  assembleWithAccountEvidence,
+  buildCncJournalEntryDrafts
 } from '../assemble'
-import { knownDeploymentAccounts } from '../accountInstances'
-import { finalizeJournalEntryDrafts } from '../journalEntry'
-import type { JournalEntryDraft } from '../journalEntryDraft'
 import type { JournalEntry } from '../types'
+import type { JournalEntryDraft } from '../journalEntryDraft'
+import { finalizeJournalEntryDrafts } from '../journalEntry'
+import { knownDeploymentAccounts } from '../accountInstances'
 
 /** Assemble fixtures through the same public boundary as useCNCAccounting. */
 export function assembleAccounting(input: CncAccountingInput): CncAccounting {

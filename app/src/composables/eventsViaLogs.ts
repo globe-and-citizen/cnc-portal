@@ -17,14 +17,14 @@
  * (one per contract generation, each with its own deploy boundary); logs from
  * every generation are merged and deduplicated on `txHash-logIndex` (#2456).
  */
-import { computed, toValue, type MaybeRefOrGetter } from 'vue'
-import { useQuery } from '@tanstack/vue-query'
-import { getPublicClient } from '@wagmi/core'
-import { parseEventLogs, type Abi, type AbiEvent, type Address } from 'viem'
+import { type Abi, type AbiEvent, type Address, parseEventLogs } from 'viem'
+import { type MaybeRefOrGetter, computed, toValue } from 'vue'
 import { config } from '@/wagmi.config'
 import { currentChainId } from '@/constant'
 import { fetchBlockTimestamp } from '@/queries/blockTimestamp.queries'
+import { getPublicClient } from '@wagmi/core'
 import { queryClient } from '@/queries/queryClient'
+import { useQuery } from '@tanstack/vue-query'
 
 // CNC contracts were first deployed around this Polygon block — scan from here.
 // On other chains (local Hardhat, testnets) the deployment starts near genesis,

@@ -1,9 +1,9 @@
+import { ADDR, usd } from './fixtures'
 import { describe, expect, it } from 'vitest'
 import type { Address } from 'viem'
+import type { CncAccountingInput } from '@/utils/accounting/assemble'
 import type { TeamContract } from '@/types/teamContract'
 import { USDC_ADDRESS } from '@/constant'
-import type { CncAccountingInput } from '@/utils/accounting/assemble'
-import { ADDR, usd } from './fixtures'
 import { assembleAccounting } from './assembleAccounting'
 import { normalizeLegacyBankFeeTokens } from '@/composables/bank/bankFees'
 

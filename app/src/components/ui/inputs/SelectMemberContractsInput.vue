@@ -56,14 +56,14 @@
  * @model input - Two-way bound object: { name: string, address: string }
  */
 
-import { ref, useTemplateRef, computed } from 'vue'
+import type { Member, TeamContract } from '@/types'
+import { computed, ref, useTemplateRef } from 'vue'
+import SelectContractResults from '@/components/ui/inputs/SelectContractResults.vue'
+import SelectMemberResults from '@/components/ui/inputs/SelectMemberResults.vue'
+import { contractsInUse } from '@/utils/safe/teamSafes'
+import { filterDirectoryItems } from '@/utils/teams/search'
 import { useTeamStore } from '@/stores'
 import { watchDebounced } from '@vueuse/core'
-import SelectMemberResults from '@/components/ui/inputs/SelectMemberResults.vue'
-import SelectContractResults from '@/components/ui/inputs/SelectContractResults.vue'
-import type { Member, TeamContract } from '@/types'
-import { filterDirectoryItems } from '@/utils/teams/search'
-import { contractsInUse } from '@/utils/safe/teamSafes'
 
 const props = defineProps<{ disabled?: boolean }>()
 

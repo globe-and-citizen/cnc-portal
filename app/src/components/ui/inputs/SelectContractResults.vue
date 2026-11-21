@@ -20,9 +20,9 @@
 </template>
 
 <script lang="ts" setup>
-import { toRef } from 'vue'
-import UserIdentity from '@/components/ui/UserIdentity.vue'
 import type { TeamContract } from '@/types'
+import UserIdentity from '@/components/ui/UserIdentity.vue'
+import { toRef } from 'vue'
 
 const props = defineProps<{
   contracts: TeamContract[]

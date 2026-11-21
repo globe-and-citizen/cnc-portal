@@ -35,14 +35,14 @@
 </template>
 
 <script setup lang="ts">
-import AddressTooltip from '@/components/ui/AddressTooltip.vue'
-import { useStorage } from '@vueuse/core'
-import { computed } from 'vue'
-import { type Address } from 'viem'
-import { useContractBalance } from '@/composables/useContractBalance'
-import TransferModal from '@/components/sections/BankView/forms/TransferModal.vue'
-import DepositModal from '@/components/sections/BankView/forms/DepositModal.vue'
 import { formatCurrency, formatUsd } from '@/utils/format'
+import { type Address } from 'viem'
+import AddressTooltip from '@/components/ui/AddressTooltip.vue'
+import DepositModal from '@/components/sections/BankView/forms/DepositModal.vue'
+import TransferModal from '@/components/sections/BankView/forms/TransferModal.vue'
+import { computed } from 'vue'
+import { useContractBalance } from '@/composables/useContractBalance'
+import { useStorage } from '@vueuse/core'
 
 const props = defineProps<{
   bankAddress: Address

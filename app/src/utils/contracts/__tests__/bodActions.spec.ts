@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest'
 import type { Action, ActionResponse } from '@/types'
+import { describe, expect, it } from 'vitest'
 import type { Address } from 'viem'
 import { formatPendingBodActionsForContract } from '../bodActions'
 

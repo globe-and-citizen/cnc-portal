@@ -1,6 +1,6 @@
-import { QueryClient } from '@tanstack/vue-query'
-import { describe, expect, it, vi } from 'vitest'
 import { blockTimestampKeys, fetchBlockTimestamp } from '../blockTimestamp.queries'
+import { describe, expect, it, vi } from 'vitest'
+import { QueryClient } from '@tanstack/vue-query'
 
 describe('block timestamp queries', () => {
   it('keys immutable timestamps by chain and block number', () => {

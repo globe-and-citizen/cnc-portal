@@ -1,21 +1,21 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import { mount, VueWrapper } from '@vue/test-utils'
-import { nextTick } from 'vue'
+import { VueWrapper, mount } from '@vue/test-utils'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import {
+  makeTokenBalance,
+  mockBankWrites,
+  mockBodAddAction,
+  mockBodIsBodAction,
+  mockTeamStore,
+  mockUseChainId,
+  mockUseContractBalance,
+  mockUseReadContract,
+  mockUserStore,
+  useQueryClientFn
+} from '@/tests/mocks'
 import { NETWORK } from '@/constant'
 import TransferModal from '../TransferModal.vue'
-import {
-  mockUseReadContract,
-  mockBodIsBodAction,
-  mockBodAddAction,
-  mockTeamStore,
-  mockUserStore,
-  mockUseContractBalance,
-  mockBankWrites,
-  useQueryClientFn,
-  makeTokenBalance,
-  mockUseChainId
-} from '@/tests/mocks'
 import { contractBalanceKeys } from '@/composables/useContractBalance'
+import { nextTick } from 'vue'
 
 vi.mock('@/artifacts/abi/bank', () => ({
   BANK_ABI: [

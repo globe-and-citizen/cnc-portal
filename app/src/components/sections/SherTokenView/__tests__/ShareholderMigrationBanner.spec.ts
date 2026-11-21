@@ -1,12 +1,12 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { flushPromises } from '@vue/test-utils'
+import { type Address, type Hex, zeroHash } from 'viem'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { computed, ref } from 'vue'
-import { zeroHash, type Address, type Hex } from 'viem'
-import ShareholderMigrationBanner from '@/components/sections/SherTokenView/ShareholderMigrationBanner.vue'
+import { mockInvestorReads, mockTeamStore, renderWithProviders } from '@/tests/mocks'
 import { useInvestorAddress, useInvestorMigrationRoot } from '@/composables/investor/reads'
+import ShareholderMigrationBanner from '@/components/sections/SherTokenView/ShareholderMigrationBanner.vue'
+import { flushPromises } from '@vue/test-utils'
 import { useGetInvestorMigrationQuery } from '@/queries/investorMigration.queries'
 import { useTeamStore } from '@/stores'
-import { mockInvestorReads, mockTeamStore, renderWithProviders } from '@/tests/mocks'
 
 // ---------------------------------------------------------------------------
 // Mock the migration composable. Investor reads + team store come from the

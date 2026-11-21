@@ -1,9 +1,9 @@
-import { describe, it, expect } from 'vitest'
-import { buildGeneralLedger } from '@/utils/accounting/generalLedger'
-import { finalizeJournal } from '@/utils/accounting/__tests__/assembleAccounting'
+import { describe, expect, it } from 'vitest'
 import type { AccountName } from '@/utils/accounting/chartOfAccounts'
 import type { JournalEntryDraft } from '@/utils/accounting/journalEntryDraft'
+import { buildGeneralLedger } from '@/utils/accounting/generalLedger'
 import { catalogueLedger } from './catalogueLedger'
+import { finalizeJournal } from '@/utils/accounting/__tests__/assembleAccounting'
 import { usdNumber } from './fixtures'
 
 const generalLedger = (entries: readonly JournalEntryDraft[]) =>

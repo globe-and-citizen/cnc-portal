@@ -1,13 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { mount } from '@vue/test-utils'
-import { createTestingPinia } from '@pinia/testing'
-import { useRoute } from 'vue-router'
-import ListIndex from '@/views/team/ListIndex.vue'
-import { useGetTeamsQuery, useUpdateTeamMutation } from '@/queries/team.queries'
-import { mockTeamData } from '@/tests/mocks'
 import { createMockMutationResponse, createMockQueryResponse } from '@/tests/mocks/query.mock'
-import { mockToast } from '@/tests/mocks/store.mock'
+import { useGetTeamsQuery, useUpdateTeamMutation } from '@/queries/team.queries'
+import ListIndex from '@/views/team/ListIndex.vue'
 import type { Team } from '@/types'
+import { createTestingPinia } from '@pinia/testing'
+import { mockTeamData } from '@/tests/mocks'
+import { mockToast } from '@/tests/mocks/store.mock'
+import { mount } from '@vue/test-utils'
+import { useRoute } from 'vue-router'
 
 const TeamCardStub = {
   name: 'TeamCard',

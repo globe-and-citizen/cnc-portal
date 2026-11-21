@@ -1,13 +1,13 @@
-import { mount } from '@vue/test-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { createTestingPinia } from '@pinia/testing'
-import { ref } from 'vue'
 import { useTeamStore, useUserDataStore } from '@/stores'
-import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
-import TeamMetaUpdateModal from '../TeamMetaUpdateModal.vue'
 import AddMemberForm from '../forms/AddMemberForm.vue'
-import InvestInSafeAction from '@/components/sections/SherTokenView/InvestorActions/InvestInSafeAction.vue'
 import ElectionActions from '@/components/sections/AdministrationView/ElectionActions.vue'
+import InvestInSafeAction from '@/components/sections/SherTokenView/InvestorActions/InvestInSafeAction.vue'
+import TeamMetaUpdateModal from '../TeamMetaUpdateModal.vue'
+import { createTestingPinia } from '@pinia/testing'
+import { mount } from '@vue/test-utils'
+import { ref } from 'vue'
+import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
 
 const archivedTeamMeta = {
   data: {

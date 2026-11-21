@@ -174,23 +174,23 @@
 </template>
 
 <script setup lang="ts">
+import { type Address, isAddress } from 'viem'
+import { DEFAULT_ADMIN_ROLE, MINTER_ROLE } from '@/queries/investorPermissions.queries'
+import {
+  type InvestorPermissionRow,
+  buildInvestorPermissionOfficers,
+  buildInvestorPermissionRows,
+  getGrantableInvestorAddresses
+} from '@/utils/investors/permissions'
 import { computed, ref } from 'vue'
-import { isAddress, type Address } from 'viem'
+import { useGrantInvestorRole, useRevokeInvestorRole } from '@/composables/investor/writes'
+import { useInvestorHasRole, useInvestorPermissions } from '@/composables/investor/permissions'
+import { useTeamStore, useUserDataStore } from '@/stores'
 import AddressTooltip from '@/components/ui/AddressTooltip.vue'
 import SelectMemberContractsInput from '@/components/ui/inputs/SelectMemberContractsInput.vue'
-import { useInvestorHasRole, useInvestorPermissions } from '@/composables/investor/permissions'
-import { useGrantInvestorRole, useRevokeInvestorRole } from '@/composables/investor/writes'
-import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
-import { useTeamStore, useUserDataStore } from '@/stores'
-import { useGetTeamOfficersQuery } from '@/queries/contract.queries'
-import { DEFAULT_ADMIN_ROLE, MINTER_ROLE } from '@/queries/investorPermissions.queries'
 import { classifyError } from '@/utils/errors/classifyContractError'
-import {
-  buildInvestorPermissionRows,
-  buildInvestorPermissionOfficers,
-  getGrantableInvestorAddresses,
-  type InvestorPermissionRow
-} from '@/utils/investors/permissions'
+import { useGetTeamOfficersQuery } from '@/queries/contract.queries'
+import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
 
 const teamStore = useTeamStore()
 const userStore = useUserDataStore()

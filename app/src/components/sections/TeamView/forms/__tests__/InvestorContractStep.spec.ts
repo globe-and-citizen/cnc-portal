@@ -1,9 +1,9 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { mount, flushPromises } from '@vue/test-utils'
-import { createTestingPinia } from '@pinia/testing'
-import { ref } from 'vue'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { flushPromises, mount } from '@vue/test-utils'
 import InvestorContractStep from '@/components/sections/TeamView/forms/InvestorContractStep.vue'
+import { createTestingPinia } from '@pinia/testing'
 import { mockTeamData } from '@/tests/mocks'
+import { ref } from 'vue'
 
 // ---------------------------------------------------------------------------
 // Hoisted mutation state so tests can flip isPending / error per-case while

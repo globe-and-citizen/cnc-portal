@@ -1,8 +1,8 @@
 /** Discover read-only assets by chain and contract, independently of payment symbols. */
-import { isAddress } from 'viem'
+import { type AssetMetadata, assetId, assetMetadata } from '@/utils/tokens/assets'
 import { SUPPORTED_TOKENS } from '@/constant'
 import type { SafeIncomingTransfer } from '@/types/safe'
-import { assetId, assetMetadata, type AssetMetadata } from '@/utils/tokens/assets'
+import { isAddress } from 'viem'
 
 export function discoverSafeAssets(
   transfers: readonly SafeIncomingTransfer[],

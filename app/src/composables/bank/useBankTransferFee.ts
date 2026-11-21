@@ -1,5 +1,5 @@
-import { computed, toValue, type MaybeRefOrGetter } from 'vue'
-import { zeroAddress, type Address } from 'viem'
+import { type Address, zeroAddress } from 'viem'
+import { type MaybeRefOrGetter, computed, toValue } from 'vue'
 import { useOfficerFeeBps, useOfficerIsFeeCollectorToken } from '@/composables/officer/reads'
 
 /** 100 % expressed in basis points — the denominator of every on-chain fee rate. */

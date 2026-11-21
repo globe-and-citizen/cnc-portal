@@ -1,10 +1,10 @@
-import { vi } from 'vitest'
 import {
   mockBODReads,
-  mockBodIsBodAction,
   mockBodAddAction,
-  mockBodApproveAction
+  mockBodApproveAction,
+  mockBodIsBodAction
 } from '../mocks/contract.mock'
+import { vi } from 'vitest'
 
 /**
  * Mock BOD read composables. Unused reads (useBodIsApproved, useBodApprovalCount) are

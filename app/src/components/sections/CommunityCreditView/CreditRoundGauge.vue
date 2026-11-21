@@ -112,16 +112,16 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
 import {
   formatAmount,
   reachedFundingTarget,
   roundInterest,
   roundTotalDue
 } from '@/utils/communityCredit/model'
-import { percentOf } from '@/utils/communityCredit/offer'
-import type { CreditRound } from '@/types'
 import CreditAvatar from './CreditAvatar.vue'
+import type { CreditRound } from '@/types'
+import { computed } from 'vue'
+import { percentOf } from '@/utils/communityCredit/offer'
 
 const props = defineProps<{ round: CreditRound }>()
 

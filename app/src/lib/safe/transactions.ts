@@ -6,19 +6,19 @@ import {
   parseUnits,
   zeroAddress
 } from 'viem'
-import type { TransactionResult } from '@safe-global/types-kit'
-import { getTxServiceUrl } from '@/utils/safe/model'
-import { type ProposeTransactionParams } from '@/types/safe'
 import type {
   BuildOwnerManagementTransactionsParams,
   ProposeTransactionBody,
   SafeSdkInstance,
   SafeTransactionInput
 } from '@/types/safe.mutation'
+import { type ProposeTransactionParams } from '@/types/safe'
 import type { TokenId } from '@/constant'
-import { getTokenDecimals } from '@/utils/tokens/metadata'
-import { normalizeSafeAddress } from '@/utils/safe/address'
+import type { TransactionResult } from '@safe-global/types-kit'
 import externalApiClient from '@/lib/external.axios.ts'
+import { getTokenDecimals } from '@/utils/tokens/metadata'
+import { getTxServiceUrl } from '@/utils/safe/model'
+import { normalizeSafeAddress } from '@/utils/safe/address'
 
 type SafeTransactionResponseLike = {
   hash?: string

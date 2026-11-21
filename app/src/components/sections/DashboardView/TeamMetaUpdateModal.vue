@@ -75,13 +75,13 @@
 
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import { z } from 'zod'
 import type { Team } from '@/types/team'
+import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
+import { getAxiosErrorMessage } from '@/utils/errors/http'
+import { useArchivedTeamMutationError } from '@/composables/useArchivedTeamMutationError'
 import { useTeamStore } from '@/stores'
 import { useUpdateTeamMutation } from '@/queries/team.queries'
-import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
-import { useArchivedTeamMutationError } from '@/composables/useArchivedTeamMutationError'
-import { getAxiosErrorMessage } from '@/utils/errors/http'
+import { z } from 'zod'
 
 const props = withDefaults(
   defineProps<{

@@ -157,25 +157,25 @@
 </template>
 
 <script setup lang="ts">
-import { sumFiatValues } from '@/utils/currency/valuation'
-import { computed, ref } from 'vue'
-import type { Address } from 'viem'
-import { useToast } from '@nuxt/ui/composables'
-import AddressTooltip from '@/components/ui/AddressTooltip.vue'
-import CashOutStepList from '@/components/ui/CashOutStepList.vue'
-import { useContractBalance } from '@/composables/useContractBalance'
-import { useBankOwner } from '@/composables/bank/reads'
+import { TEAM_ARCHIVED_TOOLTIP, useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
 import {
   buildLegacyWithdrawPlan,
   legacyGenerationAddresses,
   supportsOwnerWithdrawAll,
   useCashOutAll
 } from '@/composables/cashOut'
-import { useOfficerBeaconFolderQuery } from '@/composables/contracts/useOfficerBeaconFolder'
-import { TEAM_ARCHIVED_TOOLTIP, useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
+import { computed, ref } from 'vue'
 import { useCurrencyStore, useTeamStore, useUserDataStore } from '@/stores'
+import type { Address } from 'viem'
+import AddressTooltip from '@/components/ui/AddressTooltip.vue'
+import CashOutStepList from '@/components/ui/CashOutStepList.vue'
 import LegacyExpenseApprovalWarning from './LegacyExpenseApprovalWarning.vue'
 import { formatCurrencyShort } from '@/utils/currency/display'
+import { sumFiatValues } from '@/utils/currency/valuation'
+import { useBankOwner } from '@/composables/bank/reads'
+import { useContractBalance } from '@/composables/useContractBalance'
+import { useOfficerBeaconFolderQuery } from '@/composables/contracts/useOfficerBeaconFolder'
+import { useToast } from '@nuxt/ui/composables'
 
 /**
  * Drains the contracts of ONE archived Officer generation back into the team's

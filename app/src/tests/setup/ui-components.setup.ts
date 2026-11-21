@@ -1,5 +1,5 @@
-import { vi } from 'vitest'
 import { defineComponent, h } from 'vue'
+import { vi } from 'vitest'
 
 /**
  * Mock Nuxt UI components used in SidebarLayout and other UI components

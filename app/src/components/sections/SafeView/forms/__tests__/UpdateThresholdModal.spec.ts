@@ -1,9 +1,9 @@
 /* eslint-disable no-restricted-syntax */
-import UpdateThresholdModal from '@/components/sections/SafeView/forms/UpdateThresholdModal.vue'
+import { type ComponentPublicInstance, defineComponent, nextTick } from 'vue'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { defineComponent, nextTick, type ComponentPublicInstance } from 'vue'
-import { mount } from '@vue/test-utils'
+import UpdateThresholdModal from '@/components/sections/SafeView/forms/UpdateThresholdModal.vue'
 import { mockUseChainId } from '@/tests/mocks'
+import { mount } from '@vue/test-utils'
 
 interface UpdateThresholdModalVm extends ComponentPublicInstance {
   formState: {

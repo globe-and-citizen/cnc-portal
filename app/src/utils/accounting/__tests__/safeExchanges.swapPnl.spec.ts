@@ -1,13 +1,13 @@
-import { describe, expect, it } from 'vitest'
+import { ADDR, usd } from './fixtures'
+import { ROUTER, TOKEN, drafts, history, transfer, tx } from './safeExchangeFixtures'
 import { USDC_ADDRESS, USDT_ADDRESS } from '@/constant'
+import { describe, expect, it } from 'vitest'
+import { presentIncome, presentTrial } from '../presenter'
 import type { CowOrder } from '@/types/cow'
+import type { JournalEntry } from '../types'
 import { buildCncJournalEntryDrafts } from '../assemble'
 import { finalizeJournalEntryDrafts } from '../journalEntry'
 import { journalLedgerRows } from '../journalLedgerPresenter'
-import { presentIncome, presentTrial } from '../presenter'
-import type { JournalEntry } from '../types'
-import { usd, ADDR } from './fixtures'
-import { drafts, history, ROUTER, TOKEN, transfer, tx } from './safeExchangeFixtures'
 
 const lineOf = (entry: JournalEntry, account: string) =>
   entry.lines.find((line) => line.account.family.name === account)

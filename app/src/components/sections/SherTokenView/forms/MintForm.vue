@@ -58,18 +58,18 @@
 </template>
 
 <script setup lang="ts">
-import { z } from 'zod'
-import { isAddress, parseUnits } from 'viem'
-import { reactive, ref, computed, watch } from 'vue'
-import SelectMemberContractsInput from '@/components/ui/inputs/SelectMemberContractsInput.vue'
-import MintStakeSection from './MintStakeSection.vue'
-import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
-import { useIndividualMint } from '@/composables/investor/writes'
-import { log } from '@/lib/logging'
-import { useQueryClient } from '@tanstack/vue-query'
-import { TOKEN_DECIMALS } from '@/utils/investors/mintAllocation'
-import { formatAmountWithPrecision } from '@/utils/currency/display'
 import { type StakeMode, type StakePayload } from '@/types/investor'
+import { computed, reactive, ref, watch } from 'vue'
+import { isAddress, parseUnits } from 'viem'
+import MintStakeSection from './MintStakeSection.vue'
+import SelectMemberContractsInput from '@/components/ui/inputs/SelectMemberContractsInput.vue'
+import { TOKEN_DECIMALS } from '@/utils/investors/mintAllocation'
+import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
+import { formatAmountWithPrecision } from '@/utils/currency/display'
+import { log } from '@/lib/logging'
+import { useIndividualMint } from '@/composables/investor/writes'
+import { useQueryClient } from '@tanstack/vue-query'
+import { z } from 'zod'
 
 const state = reactive({
   addressInput: { name: '', address: '' },

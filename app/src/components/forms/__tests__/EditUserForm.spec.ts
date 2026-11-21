@@ -1,8 +1,8 @@
-import { flushPromises } from '@vue/test-utils'
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { mockUseClipboard, mockUserData, mockUserStore, renderWithProviders } from '@/tests/mocks'
 import EditUserForm from '@/components/forms/EditUserForm.vue'
+import { flushPromises } from '@vue/test-utils'
 import { ref } from 'vue'
-import { mockUserData, mockUserStore, mockUseClipboard, renderWithProviders } from '@/tests/mocks'
 import { useUpdateUserMutation } from '@/queries/user.queries'
 
 // Type for the mutation mock

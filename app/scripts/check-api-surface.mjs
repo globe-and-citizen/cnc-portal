@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 
-import { execFileSync } from 'node:child_process'
-import { readFile, readdir } from 'node:fs/promises'
-import { fileURLToPath } from 'node:url'
 import { dirname, join, relative } from 'node:path'
+import { readFile, readdir } from 'node:fs/promises'
+import { execFileSync } from 'node:child_process'
+import { fileURLToPath } from 'node:url'
 
 const SCRIPT_DIRECTORY = dirname(fileURLToPath(import.meta.url))
 const APP_DIRECTORY = dirname(SCRIPT_DIRECTORY)

@@ -75,17 +75,17 @@
 </template>
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import type { TableRow } from '@/types/table'
-import { Icon as IconifyIcon } from '@iconify/vue'
-import UserIdentity from '@/components/ui/UserIdentity.vue'
-import { useReadContract } from '@wagmi/vue'
 import { useTeamStore, useUserDataStore } from '@/stores'
-import { boardOfDirectorsAbi } from '@/artifacts/abi/generated'
-import { log } from '@/lib/logging'
-import { readContract } from '@wagmi/core'
-import { config } from '@/wagmi.config'
 import type { Address } from 'viem'
 import BodApprovalDetails from './BodApprovalDetails.vue'
+import { Icon as IconifyIcon } from '@iconify/vue'
+import type { TableRow } from '@/types/table'
+import UserIdentity from '@/components/ui/UserIdentity.vue'
+import { boardOfDirectorsAbi } from '@/artifacts/abi/generated'
+import { config } from '@/wagmi.config'
+import { log } from '@/lib/logging'
+import { readContract } from '@wagmi/core'
+import { useReadContract } from '@wagmi/vue'
 
 const props = defineProps<{ row: TableRow; loading: boolean }>()
 

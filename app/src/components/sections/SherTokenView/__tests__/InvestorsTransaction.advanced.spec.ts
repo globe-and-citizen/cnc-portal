@@ -1,11 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { type VueWrapper } from '@vue/test-utils'
-import { nextTick } from 'vue'
-import { log } from '@/lib/logging'
-import { useTeamStore } from '@/stores'
-import { useCurrencyStore } from '@/stores/currencyStore'
-import { mockInvestorReads } from '@/tests/mocks'
 import { EMPTY_VALUE } from '@/utils/format'
+import { type VueWrapper } from '@vue/test-utils'
+import { log } from '@/lib/logging'
+import { mockInvestorReads } from '@/tests/mocks'
+import { nextTick } from 'vue'
+import { useCurrencyStore } from '@/stores/currencyStore'
+import { useTeamStore } from '@/stores'
 
 // Auto-imported @nuxt/ui components bypass `config.global.stubs` because the
 // Nuxt UI Vite plugin resolves them through their file path. Mocking the
@@ -20,13 +20,13 @@ vi.mock('@nuxt/ui/components/Table.vue', () => ({
 }))
 
 import {
-  buildInvestorResult,
-  buildSafeResult,
-  createWrapper,
   INVESTOR_ADDRESS,
   SAFE_ROUTER_ADDRESS,
   USDC_ADDRESS,
-  ZERO_ADDRESS
+  ZERO_ADDRESS,
+  buildInvestorResult,
+  buildSafeResult,
+  createWrapper
 } from './InvestorsTransaction.fixture'
 
 type AdvancedRow = {

@@ -161,22 +161,22 @@
 </template>
 
 <script setup lang="ts">
-import { useToast } from '@nuxt/ui/composables'
-import { useRouter, useRoute } from 'vue-router'
-import { useUserDataStore } from '@/stores'
+import { computed, ref, watch } from 'vue'
+import { useGetTeamsQuery, useUpdateTeamMutation } from '@/queries/team.queries'
+import { useRoute, useRouter } from 'vue-router'
 import AddTeamCard from '@/components/sections/TeamView/AddTeamCard.vue'
 import AddTeamForm from '@/components/sections/TeamView/forms/AddTeamForm.vue'
+import { EMPTY_VALUE } from '@/utils/format'
+import type { Team } from '@/types/team'
 import TeamCard from '@/components/sections/TeamView/TeamCard.vue'
 import TeamMetaArchiveModal from '@/components/sections/DashboardView/TeamMetaArchiveModal.vue'
 import TeamMetaDeleteModal from '@/components/sections/DashboardView/TeamMetaDeleteModal.vue'
 import TeamMetaUpdateModal from '@/components/sections/DashboardView/TeamMetaUpdateModal.vue'
 import TeamMetaVisibilityModal from '@/components/sections/DashboardView/TeamMetaVisibilityModal.vue'
-import { useTeamListTreasuryBalances } from '@/composables/useTeamListTreasuryBalances'
-import { useGetTeamsQuery, useUpdateTeamMutation } from '@/queries/team.queries'
-import type { Team } from '@/types/team'
 import type { TeamTreasuryDisplay } from '@/utils/teams/treasury'
-import { EMPTY_VALUE } from '@/utils/format'
-import { computed, ref, watch } from 'vue'
+import { useTeamListTreasuryBalances } from '@/composables/useTeamListTreasuryBalances'
+import { useToast } from '@nuxt/ui/composables'
+import { useUserDataStore } from '@/stores'
 
 const openModal = ref(false)
 const showHidden = ref(false)

@@ -1,6 +1,6 @@
 import type { GroupedTransactionRow } from '@/types/transaction-history'
-import { zeroAddress } from 'viem'
 import { getTransactionTypeLabel } from '@/utils/transactions/registry'
+import { zeroAddress } from 'viem'
 export { formatDecodedValue } from '@/utils/contracts/abiDecode'
 export * from '@/utils/transactions/registry'
 

@@ -611,7 +611,15 @@ policy is preserved. This display rule does not change share issuance, dividend 
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `20b213c1c6c1903766d67725d2b430b95e156cdf`
+**Implementation evidence reviewed against:** `afed113648736c861fb19c4319333717f14221c3`
+
+- [`DistributeMintAction.vue`](../../../app/src/components/sections/SherTokenView/InvestorActions/DistributeMintAction.vue)
+- [`DistributeMintForm.vue`](../../../app/src/components/sections/SherTokenView/forms/DistributeMintForm.vue)
+- [`MintRecapCard.vue`](../../../app/src/components/sections/SherTokenView/forms/MintRecapCard.vue)
+- [`MintStakeSection.vue`](../../../app/src/components/sections/SherTokenView/forms/MintStakeSection.vue)
+- [`reads.ts`](../../../app/src/composables/investor/reads.ts)
+- [`useSetMigrationRoot.ts`](../../../app/src/composables/investor/useSetMigrationRoot.ts)
+- [`useSweepMigration.ts`](../../../app/src/composables/investor/useSweepMigration.ts)
 
 - [Shareholder Management route](../../../app/src/views/team/%5Bid%5D/SherTokenView.vue) and
   [Investor overview](../../../app/src/components/sections/SherTokenView/InvestorsHeader.vue)

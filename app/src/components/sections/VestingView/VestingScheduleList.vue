@@ -107,16 +107,16 @@
 </template>
 
 <script setup lang="ts">
-import type { TableColumn } from '@nuxt/ui'
-import AddressTooltip from '@/components/ui/AddressTooltip.vue'
-import ScheduleActions from './VestingScheduleActions.vue'
-import type { VestingSchedule } from '@/types/vesting'
 import {
   formatVestingAmount,
   formatVestingProgress,
   getVestingNextStep,
   getVestingStateMeta
 } from '@/utils/vesting/presentation'
+import AddressTooltip from '@/components/ui/AddressTooltip.vue'
+import ScheduleActions from './VestingScheduleActions.vue'
+import type { TableColumn } from '@nuxt/ui'
+import type { VestingSchedule } from '@/types/vesting'
 
 const props = defineProps<{
   schedules: VestingSchedule[]

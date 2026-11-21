@@ -1,11 +1,11 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
+import type { CreditCallForm } from '@/types'
+import CreditCallTermsStep from '../CreditCallTermsStep.vue'
+import { MINUTES_PER_DAY } from '@/utils/communityCredit/model'
+import { Time } from '@internationalized/date'
+import { addCreditTerm } from '@/utils/communityCredit/offer'
 import { mount } from '@vue/test-utils'
 import { reactive } from 'vue'
-import { Time } from '@internationalized/date'
-import CreditCallTermsStep from '../CreditCallTermsStep.vue'
-import type { CreditCallForm } from '@/types'
-import { MINUTES_PER_DAY } from '@/utils/communityCredit/model'
-import { addCreditTerm } from '@/utils/communityCredit/offer'
 
 function makeForm(overrides: Partial<CreditCallForm> = {}): CreditCallForm {
   return reactive({

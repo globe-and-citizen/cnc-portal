@@ -1,24 +1,24 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { mount, flushPromises, type VueWrapper } from '@vue/test-utils'
-import { reactive, defineComponent, h } from 'vue'
-import ContractOwnerCard from '@/components/ui/ContractOwnerCard.vue'
-import { useTeamStore } from '@/stores'
-import {
-  makeTeamStore,
-  useReadContractFn,
-  useChainIdFn,
-  useQueryFn,
-  useQueryClientFn,
-  useMutationFn,
-  mockWagmiCore
-} from '@/tests/mocks'
-import { mockReadContractAction } from '@/tests/mocks/viem.actions.mock'
-import { ownablePausableAbi } from '@/artifacts/abi/ownable-pausable'
+import { type VueWrapper, flushPromises, mount } from '@vue/test-utils'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   contractReadsOfAddress,
   useContractWritesV3
 } from '@/composables/contracts/useContractWritesV3'
+import { defineComponent, h, reactive } from 'vue'
+import {
+  makeTeamStore,
+  mockWagmiCore,
+  useChainIdFn,
+  useMutationFn,
+  useQueryClientFn,
+  useQueryFn,
+  useReadContractFn
+} from '@/tests/mocks'
 import type { Address } from 'viem'
+import ContractOwnerCard from '@/components/ui/ContractOwnerCard.vue'
+import { mockReadContractAction } from '@/tests/mocks/viem.actions.mock'
+import { ownablePausableAbi } from '@/artifacts/abi/ownable-pausable'
+import { useTeamStore } from '@/stores'
 
 const wagmi = await vi.importActual<typeof import('@wagmi/vue')>('@wagmi/vue')
 const core = await vi.importActual<typeof import('@wagmi/core')>('@wagmi/core')

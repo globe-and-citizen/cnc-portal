@@ -1,6 +1,6 @@
-import { ref } from 'vue'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Address } from 'viem'
+import { ref } from 'vue'
 const { useContractWritesV3Mock } = vi.hoisted(() => ({ useContractWritesV3Mock: vi.fn() }))
 
 vi.mock('@/composables/contracts/useContractWritesV3', () => ({

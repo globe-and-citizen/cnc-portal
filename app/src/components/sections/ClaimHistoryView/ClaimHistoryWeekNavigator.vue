@@ -49,29 +49,29 @@
 </template>
 
 <script setup lang="ts">
+import {
+  GridComponent,
+  LegendComponent,
+  TitleComponent,
+  TooltipComponent
+} from 'echarts/components'
+import { type Week, getMonthWeeks } from '@/utils/dates/calendar'
+import { formatNumber, formatWeekdayShort } from '@/utils/format'
+import { formatWeekTooltipText, getClaimStatusColor } from '@/utils/claims/weekNavigation'
+import type { Address } from 'viem'
+import { BarChart } from 'echarts/charts'
+import { CanvasRenderer } from 'echarts/renderers'
+import MonthSelector from '@/components/sections/ClaimHistoryView/MonthSelector.vue'
+import VChart from 'vue-echarts'
 import { computed } from 'vue'
 import dayjs from 'dayjs'
-import utc from 'dayjs/plugin/utc'
-import isoWeek from 'dayjs/plugin/isoWeek'
-import type { Address } from 'viem'
-import { getMonthWeeks, type Week } from '@/utils/dates/calendar'
-import { useTeamStore } from '@/stores'
-import { useGetTeamWeeklyClaimsQuery } from '@/queries'
-import MonthSelector from '@/components/sections/ClaimHistoryView/MonthSelector.vue'
 import { formatMinutesAsDuration } from '@/utils/wages/model'
-import { formatWeekTooltipText, getClaimStatusColor } from '@/utils/claims/weekNavigation'
-import { formatNumber, formatWeekdayShort } from '@/utils/format'
 
+import isoWeek from 'dayjs/plugin/isoWeek'
 import { use } from 'echarts/core'
-import { BarChart } from 'echarts/charts'
-import {
-  TitleComponent,
-  TooltipComponent,
-  LegendComponent,
-  GridComponent
-} from 'echarts/components'
-import { CanvasRenderer } from 'echarts/renderers'
-import VChart from 'vue-echarts'
+import { useGetTeamWeeklyClaimsQuery } from '@/queries'
+import { useTeamStore } from '@/stores'
+import utc from 'dayjs/plugin/utc'
 
 use([TitleComponent, TooltipComponent, LegendComponent, GridComponent, BarChart, CanvasRenderer])
 dayjs.extend(utc)

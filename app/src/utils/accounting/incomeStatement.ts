@@ -12,9 +12,9 @@
  * (Payroll 50.80 + Operating 20 + Trading Loss 20 + Dividend 20) → net +4.20.
  */
 import { ACCOUNT_NAMES, classOf } from './chartOfAccounts'
-import { journalFamilyBalances } from './journalBalances'
-import { ZERO_USD_AMOUNT } from './monetaryAmount'
 import type { IncomeStatement, JournalEntry, StatementLine } from './types'
+import { ZERO_USD_AMOUNT } from './monetaryAmount'
+import { journalFamilyBalances } from './journalBalances'
 
 /** Build the income statement from canonical JournalEntry lines. */
 export function buildIncomeStatement(entries: readonly JournalEntry[]): IncomeStatement {

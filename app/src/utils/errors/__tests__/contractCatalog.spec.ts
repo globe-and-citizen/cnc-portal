@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest'
 import { CONTRACT_ERRORS, resolveRevertMessage } from '../contractCatalog'
+import { describe, expect, it } from 'vitest'
 import type { ContractKey } from '../contractCatalog.types'
 
 describe('resolveRevertMessage', () => {

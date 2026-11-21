@@ -13,9 +13,9 @@
 </template>
 
 <script setup lang="ts">
+import type { CreditRound } from '@/types'
 import { computed } from 'vue'
 import { isRepayableRoundStatus } from '@/utils/communityCredit/roundStatus'
-import type { CreditRound } from '@/types'
 
 interface Props {
   round: CreditRound

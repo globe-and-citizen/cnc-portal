@@ -1,14 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { type VueWrapper } from '@vue/test-utils'
-import { nextTick } from 'vue'
-import type { Address } from 'viem'
-import { log } from '@/lib/logging'
-import { useCurrencyStore } from '@/stores/currencyStore'
 import {
   createMockEventFeedState,
   makeCurrencyStoreMock,
   resetMockEventFeedState
 } from '@/tests/mocks'
+import type { Address } from 'viem'
+import { type VueWrapper } from '@vue/test-utils'
+import { log } from '@/lib/logging'
+import { nextTick } from 'vue'
+import { useCurrencyStore } from '@/stores/currencyStore'
 
 // Auto-imported @nuxt/ui components bypass `config.global.stubs` because the
 // Nuxt UI Vite plugin resolves them through their file path. Mocking the

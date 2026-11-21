@@ -1,8 +1,8 @@
 // Expense-specific chain helpers: owner-signed approvals and their on-chain usage.
-import { formatUnits, keccak256, parseUnits, zeroAddress, type Address, type Hex } from 'viem'
-import { hardhat } from 'viem/chains'
-import { artifact, E2E_MEMBER, ownerAccount, publicClient } from '../e2e-chain'
+import { type Address, type Hex, formatUnits, keccak256, parseUnits, zeroAddress } from 'viem'
+import { E2E_MEMBER, artifact, ownerAccount, publicClient } from '../e2e-chain'
 import type { BankE2EFixture } from '../bank/bank-chain'
+import { hardhat } from 'viem/chains'
 
 export interface ExpenseApprovalData {
   amount: number

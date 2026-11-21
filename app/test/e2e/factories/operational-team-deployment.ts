@@ -1,13 +1,13 @@
 import {
+  type Address,
+  type Hex,
   encodeFunctionData,
   isAddress,
   parseEventLogs,
   parseUnits,
-  zeroAddress,
-  type Address,
-  type Hex
+  zeroAddress
 } from 'viem'
-import type { ContractType } from '../../../src/types/teamContract'
+import { E2E_OWNER, publicClient, walletClient } from '../e2e-chain'
 import {
   bankAbi,
   cashRemunerationEip712Abi,
@@ -21,7 +21,7 @@ import {
   safeDepositRouterAbi,
   vestingAbi
 } from '../../../src/artifacts/abi/generated.ts'
-import { E2E_OWNER, publicClient, walletClient } from '../e2e-chain'
+import type { ContractType } from '../../../src/types/teamContract'
 
 export interface DeploymentAddressManifest {
   [key: string]: string | undefined

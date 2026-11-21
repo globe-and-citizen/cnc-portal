@@ -1,8 +1,8 @@
-import { computed } from 'vue'
-import { useReadContract } from '@wagmi/vue'
-import { isAddress } from 'viem'
-import { useTeamStore } from '@/stores'
 import { cashRemunerationEip712Abi } from '@/artifacts/abi/generated'
+import { computed } from 'vue'
+import { isAddress } from 'viem'
+import { useReadContract } from '@wagmi/vue'
+import { useTeamStore } from '@/stores'
 /**
  * CashRemunerationEIP712 contract address helper
  */

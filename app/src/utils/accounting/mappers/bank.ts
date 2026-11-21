@@ -20,17 +20,17 @@ import type {
   BankDepositRow,
   BankFeePaidRow,
   BankTokenDepositRow,
-  BankTransferRow,
   BankTokenTransferRow,
+  BankTransferRow,
   RawContractTokenTransferRow
 } from '@/types/contract-events/bank'
 import {
+  type JournalEntryDraft,
   makeJournalEntryDraft,
-  sourceOperationIdOf,
-  type JournalEntryDraft
+  sourceOperationIdOf
 } from '@/utils/accounting/journalEntryDraft'
-import { isInternalAddress } from '@/utils/accounting/internalAddresses'
 import type { MapperContext } from './context'
+import { isInternalAddress } from '@/utils/accounting/internalAddresses'
 
 export interface BankMapperInput {
   deposits?: readonly BankDepositRow[]

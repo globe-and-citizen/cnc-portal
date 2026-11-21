@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { ref } from 'vue'
-import { useAccountingExport } from '@/composables/accounting/useAccountingExport'
 import { mockTeamStore, mockToast } from '@/tests/mocks/store.mock'
 import type { SectionSpec } from '@/utils/accounting/exportSpec'
+import { ref } from 'vue'
+import { useAccountingExport } from '@/composables/accounting/useAccountingExport'
 
 const { buildTables, exportTablesPdf, buildSheets, exportSheetsExcel, journal, resolveUser } =
   vi.hoisted(() => ({

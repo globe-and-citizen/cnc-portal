@@ -1,6 +1,4 @@
-import { expect, test } from '../fixtures/integrated'
 import { E2E_MEMBER, E2E_MEMBER_PRIVATE_KEY } from '../e2e-chain'
-import { openAccountFromSidebar } from '../e2e-page'
 import {
   addRealCompanyMember,
   createRealCompany,
@@ -10,6 +8,8 @@ import {
   openRealCompaniesList,
   uniqueCompanyName
 } from './real-company-page'
+import { expect, test } from '../fixtures/integrated'
+import { openAccountFromSidebar } from '../e2e-page'
 
 const card = (page: Parameters<typeof createRealCompany>[0], teamId: string) =>
   page.locator(`[data-test="team-card-${teamId}"]`)

@@ -4,17 +4,17 @@
  * base; only the ABI union, empty shape, and per-event mapping are
  * FixedReturn-specific.
  */
+import {
+  type ContractAddressInput,
+  type EventMapContext,
+  str,
+  unionEventAbi,
+  useContractEventsViaLogs
+} from '@/composables/eventsViaLogs'
+import type { FixedReturnEventFeed } from '@/types/contract-events/fixedReturn'
 import type { MaybeRefOrGetter } from 'vue'
 import { fixedReturnAbi } from '@/artifacts/abi/generated'
 import { fixedReturnAbi as fixedReturnV2Abi } from '@/artifacts/abi/V2/generated'
-import type { FixedReturnEventFeed } from '@/types/contract-events/fixedReturn'
-import {
-  str,
-  unionEventAbi,
-  useContractEventsViaLogs,
-  type EventMapContext,
-  type ContractAddressInput
-} from '@/composables/eventsViaLogs'
 
 const FIXED_RETURN_EVENT_ABI = unionEventAbi([fixedReturnAbi, fixedReturnV2Abi])
 

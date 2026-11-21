@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import type { AdvertisingCampaign } from '@/composables/campaign/reads'
-import type { ExtendedEvent } from '@/lib/campaign/events'
 import { formatPercent, formatTokenUnits } from '@/utils/format'
 import AddressTooltip from '@/components/ui/AddressTooltip.vue'
+import type { AdvertisingCampaign } from '@/composables/campaign/reads'
+import type { ExtendedEvent } from '@/lib/campaign/events'
 
 defineProps<{
   campaign: AdvertisingCampaign | null

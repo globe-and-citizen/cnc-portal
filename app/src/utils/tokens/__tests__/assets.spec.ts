@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest'
 import { assetLogoUri, assetMetadata } from '../assets'
+import { describe, expect, it } from 'vitest'
 
 const address = '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
 const info = {

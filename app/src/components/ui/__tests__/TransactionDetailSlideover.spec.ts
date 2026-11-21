@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
-import { mount } from '@vue/test-utils'
-import { defineComponent } from 'vue'
 import type { TransactionHistoryItemRow } from '@/types/transaction-history'
+import { defineComponent } from 'vue'
+import { mount } from '@vue/test-utils'
 
 vi.mock('@nuxt/ui/components/Badge.vue', () => ({
   default: {

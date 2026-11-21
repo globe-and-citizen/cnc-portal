@@ -98,16 +98,16 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import SelectMemberInput from '@/components/ui/inputs/SelectMemberInput.vue'
-import { onClickOutside } from '@vueuse/core'
+import { type Address, isAddress } from 'viem'
+import { onMounted, ref } from 'vue'
 import { Icon as IconifyIcon } from '@iconify/vue'
 import OwnershipRecipientOptionCard from '../OwnershipRecipientOptionCard.vue'
-import { useTeamStore } from '@/stores'
-import { isAddress, type Address } from 'viem'
-import { z } from 'zod'
+import SelectMemberInput from '@/components/ui/inputs/SelectMemberInput.vue'
 import type { User } from '@/types'
 import UserIdentity from '@/components/ui/UserIdentity.vue'
+import { onClickOutside } from '@vueuse/core'
+import { useTeamStore } from '@/stores'
+import { z } from 'zod'
 
 const props = defineProps<{ loading: boolean; isBodAction: boolean }>()
 const emits = defineEmits(['transfer-ownership'])

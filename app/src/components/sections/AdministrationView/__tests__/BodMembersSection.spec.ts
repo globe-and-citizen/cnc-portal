@@ -1,12 +1,12 @@
-import { mount, type VueWrapper } from '@vue/test-utils'
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { nextTick } from 'vue'
+import { type VueWrapper, mount } from '@vue/test-utils'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { mockBODReads, mockElectionsReads } from '@/tests/mocks'
 
 import BodMembersSection from '../BodMembersSection.vue'
-import { useTeamStore } from '@/stores'
 import { log } from '@/lib/logging'
-import { mockBODReads, mockElectionsReads } from '@/tests/mocks'
+import { nextTick } from 'vue'
 import { useBodGetBoardOfDirectors } from '@/composables/bod/reads'
+import { useTeamStore } from '@/stores'
 
 const NotFoundStub = { template: '<div data-test="not-found">no-members</div>' }
 

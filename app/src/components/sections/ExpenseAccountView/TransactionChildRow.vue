@@ -11,13 +11,13 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import { useTransactionPresentation } from '@/composables/transactions/useTransactionPresentation'
-import { formatCryptoAmount } from '@/utils/currency/display'
-import { getTransactionTypeLabel } from '@/utils/transactions/registry'
-import { formatPercent } from '@/utils/format'
 import type { UBadgeColor } from '@/types/ui'
 import UserIdentity from '@/components/ui/UserIdentity.vue'
+import { computed } from 'vue'
+import { formatCryptoAmount } from '@/utils/currency/display'
+import { formatPercent } from '@/utils/format'
+import { getTransactionTypeLabel } from '@/utils/transactions/registry'
+import { useTransactionPresentation } from '@/composables/transactions/useTransactionPresentation'
 
 const props = withDefaults(
   defineProps<{

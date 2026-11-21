@@ -64,10 +64,10 @@
 <script setup lang="ts">
 import type { Address } from 'viem'
 import SafeDeploymentCard from '@/components/sections/SafeView/SafeDeploymentCard.vue'
-import SafeImportCard from '@/components/sections/SafeView/SafeImportCard.vue'
 import SafeHistoryCard from '@/components/sections/SafeView/SafeHistoryCard.vue'
-import { useTeamStore } from '@/stores'
+import SafeImportCard from '@/components/sections/SafeView/SafeImportCard.vue'
 import { teamSafes } from '@/utils/safe/teamSafes'
+import { useTeamStore } from '@/stores'
 
 const SETUP_STEPS = [
   { title: 'Choose a Safe', description: 'Deploy a new wallet or inspect an existing one.' },

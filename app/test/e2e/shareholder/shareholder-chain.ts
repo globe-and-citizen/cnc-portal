@@ -1,6 +1,6 @@
 import type { Address, Hex } from 'viem'
+import { type Artifact, E2E_OWNER, artifact, publicClient, tokenBalance, write } from '../e2e-chain'
 import type { Team } from '../../../src/types/team'
-import { artifact, E2E_OWNER, publicClient, tokenBalance, write, type Artifact } from '../e2e-chain'
 
 export interface ShareholderIssuanceE2EFixture {
   bank: Address

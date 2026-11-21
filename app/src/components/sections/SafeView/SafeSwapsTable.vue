@@ -63,9 +63,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
 import SafeSwapExchanges from './SafeSwapExchanges.vue'
 import SafeSwapPositions from './SafeSwapPositions.vue'
+import { computed } from 'vue'
 import { useSafeSwapPnl } from '@/composables/safe/useSafeSwapPnl'
 
 const props = defineProps<{ address: string }>()

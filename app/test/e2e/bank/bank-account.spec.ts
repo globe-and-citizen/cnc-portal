@@ -1,22 +1,20 @@
-import { expect, test } from '../fixtures/chain'
-import { parseEther, parseUnits } from 'viem'
+import {
+  type BankE2EFixture,
+  boardActionCount,
+  deployBankE2EFixture,
+  pauseBank,
+  transferBankOwnership,
+  unpauseBank
+} from './bank-chain'
 import { E2E_MEMBER, nativeBalance, sendToken, tokenBalance } from '../e2e-chain'
 import {
-  dialogAmount,
   E2E_RPC_ROUTE,
+  dialogAmount,
   failLogReads,
   openAccountFromSidebar,
   rejectNextWalletRequest,
   selectToken
 } from '../e2e-page'
-import {
-  boardActionCount,
-  deployBankE2EFixture,
-  pauseBank,
-  transferBankOwnership,
-  unpauseBank,
-  type BankE2EFixture
-} from './bank-chain'
 import {
   exerciseCashOutRecovery,
   exerciseMemberBankAccess,
@@ -24,6 +22,8 @@ import {
   selectRecipient,
   signInAndOpenTeam
 } from './bank-page'
+import { expect, test } from '../fixtures/chain'
+import { parseEther, parseUnits } from 'viem'
 
 let fixture: BankE2EFixture
 

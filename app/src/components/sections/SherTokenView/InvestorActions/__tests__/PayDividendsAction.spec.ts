@@ -1,10 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { mount } from '@vue/test-utils'
-import { createTestingPinia } from '@pinia/testing'
-import { nextTick } from 'vue'
-import type { Address } from 'viem'
-import PayDividendsAction from '../PayDividendsAction.vue'
-import { useBodIsBodAction } from '@/composables/bod/reads'
 import {
   mockBankReads,
   mockBankWrites,
@@ -15,6 +9,12 @@ import {
   mockToast,
   mockUserStore
 } from '@/tests/mocks'
+import type { Address } from 'viem'
+import PayDividendsAction from '../PayDividendsAction.vue'
+import { createTestingPinia } from '@pinia/testing'
+import { mount } from '@vue/test-utils'
+import { nextTick } from 'vue'
+import { useBodIsBodAction } from '@/composables/bod/reads'
 
 describe('PayDividendsAction.vue', () => {
   const ownerAddress = '0x3333333333333333333333333333333333333333' as Address

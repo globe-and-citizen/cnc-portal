@@ -40,10 +40,10 @@
 </template>
 
 <script setup lang="ts">
-import UserIdentity from '@/components/ui/UserIdentity.vue'
-import { useTransactionPresentation } from '@/composables/transactions/useTransactionPresentation'
 import type { ActivityCell } from '@/utils/accounting/describeEntry'
 import type { ActivityDestination } from '@/utils/accounting/activityDestination'
+import UserIdentity from '@/components/ui/UserIdentity.vue'
+import { useTransactionPresentation } from '@/composables/transactions/useTransactionPresentation'
 
 defineProps<{
   /** The structured narration to render — avatar(s) + predicate. */

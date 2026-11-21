@@ -1,14 +1,14 @@
-import { mount } from '@vue/test-utils'
-import { describe, expect, it, vi, beforeEach } from 'vitest'
-import ShareholderList from '../../SherTokenView/ShareholderList.vue'
-import { parseEther, parseUnits } from 'viem'
-import { createTestingPinia } from '@pinia/testing'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   mockInvestorPermissions,
   mockInvestorReads,
   mockTeamStore,
   mockUserStore
 } from '@/tests/mocks'
+import { parseEther, parseUnits } from 'viem'
+import ShareholderList from '../../SherTokenView/ShareholderList.vue'
+import { createTestingPinia } from '@pinia/testing'
+import { mount } from '@vue/test-utils'
 
 const TableComponentStub = {
   props: ['rows', 'columns', 'loading'],

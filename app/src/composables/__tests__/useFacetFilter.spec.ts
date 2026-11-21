@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest'
-import { ref, nextTick } from 'vue'
+import { describe, expect, it } from 'vitest'
+import { nextTick, ref } from 'vue'
 import { useFacetFilter } from '@/composables/useFacetFilter'
 
 interface Item {

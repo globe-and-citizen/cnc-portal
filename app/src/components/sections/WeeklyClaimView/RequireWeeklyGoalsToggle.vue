@@ -16,9 +16,9 @@
 </template>
 
 <script setup lang="ts">
+import { useTeamStore, useUserDataStore } from '@/stores'
 import { computed } from 'vue'
 import { useToast } from '@nuxt/ui/composables'
-import { useTeamStore, useUserDataStore } from '@/stores'
 import { useUpdateTeamMutation } from '@/queries/team.queries'
 
 const teamStore = useTeamStore()

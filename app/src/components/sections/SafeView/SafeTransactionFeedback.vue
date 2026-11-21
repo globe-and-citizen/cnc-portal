@@ -75,9 +75,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
 import type { AxiosError } from 'axios'
 import type { SafeTransactionStatusFilter } from '@/utils/safe/transactionState'
+import { computed } from 'vue'
 
 interface Props {
   error?: unknown

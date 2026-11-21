@@ -65,17 +65,17 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
+import { useBoDElections, useElectionsCreateElection } from '@/composables/elections'
 import CreateElectionForm from './forms/CreateElectionForm.vue'
-import { useTeamStore } from '@/stores'
+import ElectionActions from './ElectionActions.vue'
+import ElectionStats from '@/components/sections/AdministrationView/ElectionStats.vue'
+import ElectionStatus from '@/components/sections/AdministrationView/ElectionStatus.vue'
+import ElectionSummaryEmptyState from './ElectionSummaryEmptyState.vue'
 import type { OldProposal } from '@/types'
 import { classifyError } from '@/utils/errors/classifyContractError'
 import { log } from '@/lib/logging'
-import ElectionStatus from '@/components/sections/AdministrationView/ElectionStatus.vue'
-import ElectionStats from '@/components/sections/AdministrationView/ElectionStats.vue'
-import ElectionActions from './ElectionActions.vue'
-import ElectionSummaryEmptyState from './ElectionSummaryEmptyState.vue'
-import { useBoDElections, useElectionsCreateElection } from '@/composables/elections'
 import { useCreateElectionNotificationsMutation } from '@/queries/action.queries'
+import { useTeamStore } from '@/stores'
 
 const props = defineProps<{ electionId: bigint; isDetails?: boolean }>()
 

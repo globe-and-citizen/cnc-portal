@@ -14,21 +14,21 @@
 </template>
 
 <script lang="ts" setup>
-import ElectionCandidateCard from './ElectionCandidateCard.vue'
 import { computed, watch } from 'vue'
-import { useTeamStore, useUserDataStore } from '@/stores'
-import type { Address } from 'viem'
+import { includesAddress, isSameAddress } from '@/utils/elections/election'
 import {
+  useBoDElections,
   useElectionsCastVote,
   useElectionsGetCandidateVoteCounts,
   useElectionsGetVoterChoice,
-  useElectionsHasVoted,
-  useBoDElections
+  useElectionsHasVoted
 } from '@/composables/elections'
+import { useTeamStore, useUserDataStore } from '@/stores'
+import type { Address } from 'viem'
+import ElectionCandidateCard from './ElectionCandidateCard.vue'
 import type { User } from '@/types'
 import { classifyError } from '@/utils/errors/classifyContractError'
 import { log } from '@/lib/logging'
-import { includesAddress, isSameAddress } from '@/utils/elections/election'
 import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
 
 const props = defineProps<{ electionId: bigint }>()

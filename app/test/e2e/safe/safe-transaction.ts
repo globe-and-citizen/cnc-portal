@@ -1,6 +1,6 @@
-import { zeroAddress, type Address } from 'viem'
-import type { SafeTransaction } from '../../../src/types/safe'
+import { type Address, zeroAddress } from 'viem'
 import { E2E_MEMBER, E2E_NEW_SIGNER } from '../e2e-chain'
+import type { SafeTransaction } from '../../../src/types/safe'
 
 /** A pending Safe Transaction Service entry, as the stubbed service returns it. */
 export const transaction = (

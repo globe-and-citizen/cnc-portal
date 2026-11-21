@@ -64,15 +64,15 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { useToast } from '@nuxt/ui/composables'
 import {
   useDeleteJournalAccountAssignmentMutation,
   useUpsertJournalAccountAssignmentMutation
 } from '@/queries/journalAccountAssignment.queries'
-import { accountFamilyById } from '@/utils/accounting/chartOfAccounts'
+import type { AccountId } from '@/utils/accounting/types'
 import { JOURNAL_ASSIGNABLE_ACCOUNTS } from '@/utils/accounting/journalAccountAssignment'
 import type { JournalAccountAssignmentTarget } from '@/utils/accounting/journalAccountAssignmentPresenter'
-import type { AccountId } from '@/utils/accounting/types'
+import { accountFamilyById } from '@/utils/accounting/chartOfAccounts'
+import { useToast } from '@nuxt/ui/composables'
 
 const props = defineProps<{
   target: JournalAccountAssignmentTarget

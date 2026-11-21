@@ -68,9 +68,9 @@
 
 <script lang="ts" setup>
 import { computed, ref } from 'vue'
-import { useTeamStore } from '@/stores'
 import { useFocus, watchDebounced } from '@vueuse/core'
 import UserIdentity from '../UserIdentity.vue'
+import { useTeamStore } from '@/stores'
 
 const emit = defineEmits(['selectMember'])
 defineProps<{

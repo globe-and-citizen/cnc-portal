@@ -1,8 +1,8 @@
-import { expect, type Page } from '@playwright/test'
+import { type E2EUser, openAccountFromSidebar } from '../e2e-page'
+import { type Page, expect } from '@playwright/test'
 import type { Address } from 'viem'
-import type { Team } from '../../../src/types/team'
 import { E2E_OWNER } from '../e2e-chain'
-import { openAccountFromSidebar, type E2EUser } from '../e2e-page'
+import type { Team } from '../../../src/types/team'
 import { stubSafeTransactionService } from '../safe/safe-transaction-service'
 
 export interface RealCompanyOptions {

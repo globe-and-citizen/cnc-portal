@@ -1,5 +1,3 @@
-import type { Page } from '@playwright/test'
-import { expect, test } from '../fixtures/integrated'
 import {
   E2E_MEMBER,
   E2E_MEMBER_PRIVATE_KEY,
@@ -7,7 +5,6 @@ import {
   E2E_NEW_SIGNER_PRIVATE_KEY,
   E2E_OWNER
 } from '../e2e-chain'
-import type { Team } from '../../../src/types/team'
 import {
   advanceE2ETimeTo,
   currentBoard,
@@ -17,10 +14,13 @@ import {
   electionsFixtureFromTeam,
   eligibleVoters,
   nextElectionId,
-  voterChoice,
-  voteCount
+  voteCount,
+  voterChoice
 } from './elections-chain'
 import { chooseElectionEndDay, normalized } from './elections-page'
+import { expect, test } from '../fixtures/integrated'
+import type { Page } from '@playwright/test'
+import type { Team } from '../../../src/types/team'
 
 const electionNotificationMessage = 'New election created you are invited to participate'
 const displayedAddress = (address: string) => `${address.slice(0, 6)}...${address.slice(-4)}`

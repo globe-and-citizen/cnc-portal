@@ -149,13 +149,13 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { useTeamStore, useUserDataStore } from '@/stores'
+import AddSignerModal from '@/components/sections/SafeView/forms/AddSignerModal.vue'
 import type { Address } from 'viem'
 import AddressTooltip from '@/components/ui/AddressTooltip.vue'
-import AddSignerModal from '@/components/sections/SafeView/forms/AddSignerModal.vue'
-import UpdateThresholdModal from '@/components/sections/SafeView/forms/UpdateThresholdModal.vue'
 import RemoveOwnerButton from './RemoveOwnerButton.vue'
+import UpdateThresholdModal from '@/components/sections/SafeView/forms/UpdateThresholdModal.vue'
 import { useGetSafeInfoQuery } from '@/queries/safe.queries'
-import { useTeamStore, useUserDataStore } from '@/stores'
 
 interface Props {
   address?: string

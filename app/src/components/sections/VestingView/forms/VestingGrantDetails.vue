@@ -62,8 +62,8 @@
 
 <script setup lang="ts">
 import SelectMemberInput from '@/components/ui/inputs/SelectMemberInput.vue'
-import UserIdentity from '@/components/ui/UserIdentity.vue'
 import type { User } from '@/types'
+import UserIdentity from '@/components/ui/UserIdentity.vue'
 
 interface VestingMember {
   name: string

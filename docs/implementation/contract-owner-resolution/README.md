@@ -53,7 +53,7 @@ ownership transfer followed by owner-query refetch. This frontend proof does not
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `24c8e67951fb0ac0213105ff7afad413433a7636`
+**Implementation evidence reviewed against:** `afed113648736c861fb19c4319333717f14221c3`
 
 - [Shared Ownable read](../../../app/src/composables/contracts/reads.ts),
   [existing Ownable ABI](../../../app/src/artifacts/abi/ownable-pausable.ts), and

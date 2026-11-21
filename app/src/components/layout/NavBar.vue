@@ -52,13 +52,13 @@
 </template>
 
 <script setup lang="ts">
-import { currentChainId, NETWORK } from '@/constant/index'
-import { latestDeployedVersionForChain } from '@/artifacts/registry'
-import NotificationDropdown from '@/components/layout/NotificationDropdown.vue'
-import { useUserDataStore } from '@/stores'
+import { NETWORK, currentChainId } from '@/constant/index'
 import type { DropdownMenuItem } from '@nuxt/ui'
 import EditUserForm from '@/components/forms/EditUserForm.vue'
+import NotificationDropdown from '@/components/layout/NotificationDropdown.vue'
+import { latestDeployedVersionForChain } from '@/artifacts/registry'
 import { ref } from 'vue'
+import { useUserDataStore } from '@/stores'
 
 defineEmits(['toggleSideButton', 'toggleEditUserModal'])
 const userStore = useUserDataStore()

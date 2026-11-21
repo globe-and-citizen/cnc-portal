@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { siweAuth } from '../auth.api'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import apiClient from '@/lib/axios'
+import { siweAuth } from '../auth.api'
 
 describe('[US-AUTH-001] auth.api', () => {
   beforeEach(() => {

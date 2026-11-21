@@ -4,18 +4,18 @@
  * base. Scope: the contract's OWN events; incoming Bank→payroll transfers use
  * the dedicated Bank RPC-log feed.
  */
-import type { MaybeRefOrGetter } from 'vue'
-import { cashRemunerationEip712Abi as cashRemV1Abi } from '@/artifacts/abi/V1/generated'
-import { cashRemunerationEip712Abi as cashRemV01Abi } from '@/artifacts/abi/V0.1/generated'
-import { cashRemunerationEip712Abi as cashRemV0Abi } from '@/artifacts/abi/V0/generated'
-import type { CashRemunerationEventFeed } from '@/types/contract-events/cash-remuneration'
 import {
+  type ContractAddressInput,
+  type EventMapContext,
   str,
   unionEventAbi,
-  useContractEventsViaLogs,
-  type EventMapContext,
-  type ContractAddressInput
+  useContractEventsViaLogs
 } from '@/composables/eventsViaLogs'
+import type { CashRemunerationEventFeed } from '@/types/contract-events/cash-remuneration'
+import type { MaybeRefOrGetter } from 'vue'
+import { cashRemunerationEip712Abi as cashRemV01Abi } from '@/artifacts/abi/V0.1/generated'
+import { cashRemunerationEip712Abi as cashRemV0Abi } from '@/artifacts/abi/V0/generated'
+import { cashRemunerationEip712Abi as cashRemV1Abi } from '@/artifacts/abi/V1/generated'
 
 const CASH_REM_EVENT_ABI = unionEventAbi([cashRemV1Abi, cashRemV01Abi, cashRemV0Abi])
 

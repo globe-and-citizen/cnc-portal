@@ -128,26 +128,26 @@
 </template>
 
 <script setup lang="ts">
+import { type Address, isAddress, keccak256 } from 'viem'
 import { computed, ref, watch } from 'vue'
-import { log } from '@/lib/logging'
-import { tokenSymbol } from '@/utils/tokens/metadata'
-import { useTransactionPresentation } from '@/composables/transactions/useTransactionPresentation'
-import { useUserDataStore, useTeamStore } from '@/stores'
-import { isAddress, keccak256, type Address } from 'viem'
-import { useReadContract } from '@wagmi/vue'
-import { isExpenseApprovalOwner } from '@/composables/expenseAccount/approvalOwner'
-import { expenseAccountEip712Abi } from '@/artifacts/abi/generated'
+import { expenseKeys, useGetExpensesQuery } from '@/queries'
+import { formatDateTime, fromUnix } from '@/utils/format'
+import { getCustomFrequency, getFrequencyType } from '@/utils/expenses/model'
 import {
   useExpenseAccountActivateApproval,
   useExpenseAccountDeactivateApproval
 } from '@/composables/expenseAccount/writes'
-import UserIdentity from '@/components/ui/UserIdentity.vue'
-import { useQueryClient } from '@tanstack/vue-query'
-import { useGetExpensesQuery, expenseKeys } from '@/queries'
-import { getFrequencyType, getCustomFrequency } from '@/utils/expenses/model'
-import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
-import { formatDateTime, fromUnix } from '@/utils/format'
+import { useTeamStore, useUserDataStore } from '@/stores'
 import PreviousApprovalNotice from './PreviousApprovalNotice.vue'
+import UserIdentity from '@/components/ui/UserIdentity.vue'
+import { expenseAccountEip712Abi } from '@/artifacts/abi/generated'
+import { isExpenseApprovalOwner } from '@/composables/expenseAccount/approvalOwner'
+import { log } from '@/lib/logging'
+import { tokenSymbol } from '@/utils/tokens/metadata'
+import { useQueryClient } from '@tanstack/vue-query'
+import { useReadContract } from '@wagmi/vue'
+import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
+import { useTransactionPresentation } from '@/composables/transactions/useTransactionPresentation'
 
 const teamStore = useTeamStore()
 const { resolveUser } = useTransactionPresentation()

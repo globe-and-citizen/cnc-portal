@@ -1,11 +1,11 @@
-import assert from 'node:assert/strict'
-import { describe, it } from 'node:test'
 import {
   ARCHITECTURE_CANDIDATE_LIMITS,
   collectArchitectureCandidatesFromSources,
   compareBaselines,
   validateArchitectureCandidates
 } from '../check-architecture-candidates.mjs'
+import { describe, it } from 'node:test'
+import assert from 'node:assert/strict'
 
 const createBaseline = (exceptions = []) => ({
   version: 1,

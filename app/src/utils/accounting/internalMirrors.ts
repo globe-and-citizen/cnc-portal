@@ -5,7 +5,7 @@
  * the same transfer. Only one of them is the accounting operation; this module
  * proves and removes the other before journal finalization.
  */
-import { draftOperationIdOf, type JournalEntryDraft } from './journalEntryDraft'
+import { type JournalEntryDraft, draftOperationIdOf } from './journalEntryDraft'
 
 /** The emitting side of one internal source posting, when both identities are evidenced. */
 function sourceSide(entry: JournalEntryDraft): 'debit' | 'credit' | null {

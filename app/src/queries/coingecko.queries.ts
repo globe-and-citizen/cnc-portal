@@ -1,18 +1,18 @@
 ﻿/** CoinGecko endpoints return raw Axios responses cached by TanStack Query. */
-import { useQueries, useQuery } from '@tanstack/vue-query'
-import { computed, toValue, type MaybeRefOrGetter } from 'vue'
-import externalApiClient from '@/lib/external.axios'
-import { BACKEND_URL } from '@/constant'
-import type {
-  TokenPriceResponse,
-  CoinGeckoAssetMarketResponse,
-  CoinGeckoHistoricalResponse
-} from '@/types/coingecko'
 import {
   COINGECKO_POLYGON_CHAIN_ID,
   assetMarketFromResponse,
   historicalRateFromResponse
 } from '@/utils/tokens/coingecko'
+import type {
+  CoinGeckoAssetMarketResponse,
+  CoinGeckoHistoricalResponse,
+  TokenPriceResponse
+} from '@/types/coingecko'
+import { type MaybeRefOrGetter, computed, toValue } from 'vue'
+import { useQueries, useQuery } from '@tanstack/vue-query'
+import { BACKEND_URL } from '@/constant'
+import externalApiClient from '@/lib/external.axios'
 import { queryPresets } from './queryFactory'
 
 export interface CoinGeckoHistoricalTarget {

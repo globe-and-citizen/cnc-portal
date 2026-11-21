@@ -1,10 +1,10 @@
-import { computed } from 'vue'
-import { useQueryClient } from '@tanstack/vue-query'
-import { safeDepositRouterAbi } from '@/artifacts/abi/generated'
 import {
-  useContractWritesV3,
-  type WriteFunctionName
+  type WriteFunctionName,
+  useContractWritesV3
 } from '@/composables/contracts/useContractWritesV3'
+import { computed } from 'vue'
+import { safeDepositRouterAbi } from '@/artifacts/abi/generated'
+import { useQueryClient } from '@tanstack/vue-query'
 import { useTeamStore } from '@/stores/teamStore'
 
 type SafeDepositRouterFunctionNames = WriteFunctionName<typeof safeDepositRouterAbi>

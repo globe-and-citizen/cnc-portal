@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import { mount } from '@vue/test-utils'
-import RateDotList from '@/components/ui/RateDotList.vue'
 import { NETWORK } from '@/constant'
+import RateDotList from '@/components/ui/RateDotList.vue'
+import { mount } from '@vue/test-utils'
 
 describe('RateDotList', () => {
   it('renders each rate row with its type and formatted token label', () => {

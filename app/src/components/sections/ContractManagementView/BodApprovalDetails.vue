@@ -46,14 +46,14 @@
   </div>
 </template>
 <script setup lang="ts">
-import UserIdentity from '@/components/ui/UserIdentity.vue'
-import { useTeamStore } from '@/stores'
-import type { TableRow } from '@/types/table'
-import { resolveBodActionParty } from '@/utils/contracts/bodActions'
-import { formatCryptoAmount } from '@/utils/currency/display'
-import { NETWORK } from '@/constant'
 import BodApprovalDetailsCard from './BodApprovalDetailsCard.vue'
+import { NETWORK } from '@/constant'
+import type { TableRow } from '@/types/table'
+import UserIdentity from '@/components/ui/UserIdentity.vue'
 import { formatAddress } from '@/utils/format'
+import { formatCryptoAmount } from '@/utils/currency/display'
+import { resolveBodActionParty } from '@/utils/contracts/bodActions'
+import { useTeamStore } from '@/stores'
 
 defineProps<{
   row: TableRow

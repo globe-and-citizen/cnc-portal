@@ -82,8 +82,8 @@
   </div>
 </template>
 <script setup lang="ts">
-import { ref } from 'vue'
 import type { TokenHoldingRow } from '@/utils/tokens/holdings'
+import { ref } from 'vue'
 
 defineProps<{
   rows: TokenHoldingRow[]

@@ -1,10 +1,10 @@
-import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest'
-import { mount, type VueWrapper } from '@vue/test-utils'
-import { nextTick, ref, defineComponent } from 'vue'
+import { type VueWrapper, mount } from '@vue/test-utils'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { defineComponent, nextTick, ref } from 'vue'
+import { useTeamStore, useUserDataStore } from '@/stores'
 import type { Address } from 'viem'
 import SafeOwnersCard from '../SafeOwnersCard.vue'
 import { useChainIdFn } from '@/tests/mocks'
-import { useTeamStore, useUserDataStore } from '@/stores'
 
 // Mock @iconify/vue FIRST
 vi.mock('@iconify/vue', () => ({

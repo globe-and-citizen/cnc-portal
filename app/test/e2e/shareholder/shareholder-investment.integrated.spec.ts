@@ -1,5 +1,9 @@
-import { expect, test } from '../fixtures/integrated'
 import { E2E_OWNER, publicClient } from '../e2e-chain'
+import {
+  configureShareholderInvestment,
+  investThroughSafe,
+  openRealShareholderManagement
+} from './shareholder-page'
 import {
   createOperationalCompany,
   deleteCompanyThroughUi,
@@ -12,11 +16,7 @@ import {
   shareholderFixtureFromTeam,
   shareholderPosition
 } from './shareholder-chain'
-import {
-  configureShareholderInvestment,
-  investThroughSafe,
-  openRealShareholderManagement
-} from './shareholder-page'
+import { expect, test } from '../fixtures/integrated'
 
 test.describe(
   '[US-SHER-001/003/005] Integrated shareholder investment lifecycle',

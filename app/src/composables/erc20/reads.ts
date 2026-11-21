@@ -1,6 +1,6 @@
-import { computed, unref, type MaybeRef } from 'vue'
+import { type Address, erc20Abi, isAddress } from 'viem'
+import { type MaybeRef, computed, unref } from 'vue'
 import { useReadContract } from '@wagmi/vue'
-import { erc20Abi, isAddress, type Address } from 'viem'
 
 export function useErc20BalanceOf(contractAddress: MaybeRef<Address>, account: MaybeRef<Address>) {
   const erc20Address = computed(() => unref(contractAddress))

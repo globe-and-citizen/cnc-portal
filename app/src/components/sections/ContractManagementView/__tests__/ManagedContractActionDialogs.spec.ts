@@ -1,15 +1,15 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
-import { ref } from 'vue'
-import { createTestingPinia } from '@pinia/testing'
-import ManagedContractActionDialogs from '../ManagedContractActionDialogs.vue'
 import { mockBodAddAction, mockBodApproveAction, mockToast, mockUserStore } from '@/tests/mocks'
-import { useQueryClientFn, mockInvalidateQueries } from '@/tests/mocks/composables.mock'
-import { mockLog } from '@/tests/mocks/utils.mock'
-import { encodeFunctionData } from 'viem'
-import { ownablePausableAbi } from '@/artifacts/abi/ownable-pausable'
-import type { ManagedContractRow } from '../ManagedContractsTable.types'
+import { mockInvalidateQueries, useQueryClientFn } from '@/tests/mocks/composables.mock'
 import type { FormattedBodActions } from '@/utils/contracts/bodActions'
+import ManagedContractActionDialogs from '../ManagedContractActionDialogs.vue'
+import type { ManagedContractRow } from '../ManagedContractsTable.types'
+import { createTestingPinia } from '@pinia/testing'
+import { encodeFunctionData } from 'viem'
+import { mockLog } from '@/tests/mocks/utils.mock'
+import { ownablePausableAbi } from '@/artifacts/abi/ownable-pausable'
+import { ref } from 'vue'
 
 type MutationMock = {
   mutate: ReturnType<typeof vi.fn>

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import { mount } from '@vue/test-utils'
-import VestingScheduleDetailsModal from '@/components/sections/VestingView/VestingScheduleDetailsModal.vue'
 import type { VestingSchedule } from '@/types/vesting'
+import VestingScheduleDetailsModal from '@/components/sections/VestingView/VestingScheduleDetailsModal.vue'
+import { mount } from '@vue/test-utils'
 
 const cancelledSchedule: VestingSchedule = {
   member: '0x0000000000000000000000000000000000000001',

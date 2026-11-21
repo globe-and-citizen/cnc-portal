@@ -116,7 +116,7 @@ classification, so it remains an expected wallet condition rather than an unexpe
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `18018c5d91f7752e87caadb1d99fa8b24c9c66aa`
+**Implementation evidence reviewed against:** `afed113648736c861fb19c4319333717f14221c3`
 
 - [Backend capture helper](../../../backend/src/utils/sentry.ts), [central error response](../../../backend/src/utils/utils.ts), and
   [Sentry initialization](../../../backend/src/instrument.ts)

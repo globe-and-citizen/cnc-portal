@@ -1,20 +1,20 @@
-import { expect, test } from '../fixtures/integrated'
-import { E2E_OWNER_PRIVATE_KEY } from '../e2e-chain'
-import { useWallet } from '../e2e-page'
 import { createOperationalCompany, deleteCompanyThroughUi } from '../company/real-company-page'
+import { depositUsdcToBank, redeployContractsThroughUi } from './accounting-operations'
 import {
   entriesForTransaction,
   entryAccounts,
   normalizedLedger,
   usdValue
 } from './accounting-books'
+import { expect, test } from '../fixtures/integrated'
 import {
   expectCompleteBooks,
   openAccounting,
   readLedger,
   readTrialBalance
 } from './accounting-page'
-import { depositUsdcToBank, redeployContractsThroughUi } from './accounting-operations'
+import { E2E_OWNER_PRIVATE_KEY } from '../e2e-chain'
+import { useWallet } from '../e2e-page'
 
 const WHOLE_BOOK = '?ledgerSize=100'
 const FIRST_BANK = 'Cash — Bank'

@@ -1,20 +1,20 @@
-import { describe, expect, it } from 'vitest'
 import {
+  NO_OPENING,
   accountLedgerTitle,
   accountNet,
   accountOpening,
   entriesForAccount,
-  NO_OPENING,
   openingRow,
   withRunningBalance
 } from '@/utils/accounting/accountLedger'
+import { describe, expect, it } from 'vitest'
+import type { AccountName } from '@/utils/accounting/chartOfAccounts'
+import type { JournalEntryDraft } from '@/utils/accounting/journalEntryDraft'
 import { buildGeneralLedger } from '@/utils/accounting/generalLedger'
+import { catalogueLedger } from './catalogueLedger'
 import { finalizeJournal } from '@/utils/accounting/__tests__/assembleAccounting'
 import { journalLedgerRows } from '@/utils/accounting/journalLedgerPresenter'
 import { money } from '@/utils/accounting/presenter'
-import type { AccountName } from '@/utils/accounting/chartOfAccounts'
-import type { JournalEntryDraft } from '@/utils/accounting/journalEntryDraft'
-import { catalogueLedger } from './catalogueLedger'
 import { usd } from './fixtures'
 
 const journal = finalizeJournal(catalogueLedger)

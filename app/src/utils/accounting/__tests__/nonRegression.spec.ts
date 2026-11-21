@@ -8,18 +8,18 @@
  * record, so this also proves the POL price-of-record now feeds the fee metric
  * and the asset side (both previously stuck at $0.00).
  */
-import { describe, it, expect } from 'vitest'
-import { parseEther, type Address } from 'viem'
-import type { CncAccountingInput } from '../assemble'
+import { type Address, parseEther } from 'viem'
+import { describe, expect, it } from 'vitest'
+import { usdAmountToNumber, usdRateFromNumber } from '../monetaryAmount'
 import type { BankEventFeed } from '@/types/contract-events/bank'
+import type { CncAccountingInput } from '../assemble'
 import type { TeamContract } from '@/types/teamContract'
 import type { UsdRateOfRecord } from '../toUsd'
+import { assembleAccounting } from './assembleAccounting'
 import { buildAccountingSummary } from '../accountingSummary'
 import { buildBalanceSheet } from '../balanceSheet'
 import { buildGeneralLedger } from '../generalLedger'
 import { buildIncomeStatement } from '../incomeStatement'
-import { usdAmountToNumber, usdRateFromNumber } from '../monetaryAmount'
-import { assembleAccounting } from './assembleAccounting'
 
 // All-numeric hex so `getAddress` is a no-op — the addresses survive the
 // checksum normalization the mapper context applies (matches the shared fixtures).

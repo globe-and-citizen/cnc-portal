@@ -5,9 +5,9 @@ import { describe, expect, it, vi } from 'vitest'
 // calldata bytes, so it needs the genuine implementation.
 vi.unmock('viem')
 
-import { encodeFunctionData, size, type Hex } from 'viem'
-import { bankAbi } from '@/artifacts/abi/generated'
+import { type Hex, encodeFunctionData, size } from 'viem'
 import { decodeFactureIdFromCalldata, encodeDepositTokenWithFactureId } from '../factureCalldata'
+import { bankAbi } from '@/artifacts/abi/generated'
 
 const TOKEN_ADDRESS = '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48'
 const AMOUNT = 128_000_000n // 128 USDC (6 decimals)

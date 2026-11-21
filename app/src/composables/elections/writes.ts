@@ -1,13 +1,13 @@
-import { computed } from 'vue'
-import { useQueryClient } from '@tanstack/vue-query'
-import { electionsAbi } from '@/artifacts/abi/generated'
 import {
+  type WriteFunctionName,
   contractReadsOfAddress,
-  useContractWritesV3,
-  type WriteFunctionName
+  useContractWritesV3
 } from '@/composables/contracts/useContractWritesV3'
-import { useTeamStore } from '@/stores/teamStore'
+import { computed } from 'vue'
 import { electionVoteReadsOfAddress } from './invalidation'
+import { electionsAbi } from '@/artifacts/abi/generated'
+import { useQueryClient } from '@tanstack/vue-query'
+import { useTeamStore } from '@/stores/teamStore'
 
 /** State-changing names only — the reads live in ./reads. */
 type ElectionsWriteNames = WriteFunctionName<typeof electionsAbi>

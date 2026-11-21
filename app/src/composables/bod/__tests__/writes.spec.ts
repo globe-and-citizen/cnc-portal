@@ -1,11 +1,11 @@
+import { QueryClient, VueQueryPlugin } from '@tanstack/vue-query'
+import { type VueWrapper, flushPromises, mount } from '@vue/test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { defineComponent, h, nextTick } from 'vue'
-import { flushPromises, mount, type VueWrapper } from '@vue/test-utils'
-import { QueryClient, VueQueryPlugin } from '@tanstack/vue-query'
-import { useCreateActionMutation } from '@/queries/action.queries'
-import { useCreateBulkNotificationsMutation } from '@/queries/notification.queries'
 import { mockTeamStore, mockWagmiCore } from '@/tests/mocks'
 import { useMutationFn, useQueryClientFn } from '@/tests/mocks/composables.mock'
+import { useCreateActionMutation } from '@/queries/action.queries'
+import { useCreateBulkNotificationsMutation } from '@/queries/notification.queries'
 
 const { useMutation } =
   await vi.importActual<typeof import('@tanstack/vue-query')>('@tanstack/vue-query')

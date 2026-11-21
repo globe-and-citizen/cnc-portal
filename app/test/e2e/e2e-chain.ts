@@ -1,27 +1,27 @@
 // Chain access shared by every account journey: the E2E accounts, the viem
 // clients bound to the dedicated Hardhat node, contract artifacts, and the
 // deterministic infrastructure prepared before browser acceptance starts.
-import { readFile } from 'node:fs/promises'
-import { fileURLToPath } from 'node:url'
 import {
+  type Abi,
+  type Address,
+  type Hex,
   createPublicClient,
   createWalletClient,
   encodeFunctionData,
   http,
   parseEther,
-  parseUnits,
-  type Abi,
-  type Address,
-  type Hex
+  parseUnits
 } from 'viem'
-import { privateKeyToAccount } from 'viem/accounts'
-import { hardhat } from 'viem/chains'
 import {
   E2E_RPC_URL as DEFAULT_E2E_RPC_URL,
   E2E_SAFE_INFRA,
   E2E_SAFE_LIBRARIES,
   E2E_TOKENS
 } from '../../src/e2e/chain.ts'
+import { fileURLToPath } from 'node:url'
+import { hardhat } from 'viem/chains'
+import { privateKeyToAccount } from 'viem/accounts'
+import { readFile } from 'node:fs/promises'
 
 /** Hardhat's well-known accounts #0, #1 and #2 — public test keys. */
 export const E2E_OWNER_PRIVATE_KEY: Hex =

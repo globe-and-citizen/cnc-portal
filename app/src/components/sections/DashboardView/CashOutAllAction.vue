@@ -116,16 +116,16 @@
 </template>
 
 <script setup lang="ts">
-import { sumFiatValues } from '@/utils/currency/valuation'
-import { computed, ref } from 'vue'
-import type { Address } from 'viem'
-import { useContractBalance } from '@/composables'
-import { useBankOwner } from '@/composables/bank/reads'
 import { buildCashOutPlan, useCashOutAll } from '@/composables/cashOut'
+import { computed, ref } from 'vue'
 import { useCurrencyStore, useTeamStore, useUserDataStore } from '@/stores'
-import { formatCurrencyShort } from '@/utils/currency/display'
+import type { Address } from 'viem'
 import CashOutStepList from '@/components/ui/CashOutStepList.vue'
 import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
+import { formatCurrencyShort } from '@/utils/currency/display'
+import { sumFiatValues } from '@/utils/currency/valuation'
+import { useBankOwner } from '@/composables/bank/reads'
+import { useContractBalance } from '@/composables'
 
 const teamStore = useTeamStore()
 const userStore = useUserDataStore()

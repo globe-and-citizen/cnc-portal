@@ -337,7 +337,7 @@ story; no error outcome is claimed as implemented.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `20b213c1c6c1903766d67725d2b430b95e156cdf`
+**Implementation evidence reviewed against:** `afed113648736c861fb19c4319333717f14221c3`
 
 - [Setup page](../../../app/src/views/team/[id]/PaymentGate/IntegrationView.vue), combining
   [Bank address + embed snippet, with a snippet format selector and explicit no-Bank/no-widget-URL states](../../../app/src/components/sections/PaymentGateView/IntegrationCard.vue),

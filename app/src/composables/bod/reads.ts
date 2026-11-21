@@ -1,8 +1,8 @@
-import { computed, unref, type MaybeRef } from 'vue'
-import { useReadContract } from '@wagmi/vue'
-import { isAddress, isAddressEqual, type Address } from 'viem'
-import { useTeamStore, useUserDataStore } from '@/stores'
+import { type Address, isAddress, isAddressEqual } from 'viem'
+import { type MaybeRef, computed, unref } from 'vue'
 import { bankAbi, boardOfDirectorsAbi } from '@/artifacts/abi/generated'
+import { useTeamStore, useUserDataStore } from '@/stores'
+import { useReadContract } from '@wagmi/vue'
 /**
  * BOD contract types and constants
  */

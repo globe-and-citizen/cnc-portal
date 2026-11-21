@@ -185,40 +185,40 @@
 </template>
 
 <script setup lang="ts">
-import { formatTxHash } from '@/utils/format'
-import { computed, watch } from 'vue'
-import { type Address } from 'viem'
-import { useFixedReturnEventsViaLogs } from '@/composables/fixedReturn/useFixedReturnEventsViaLogs'
-import UserIdentity from '@/components/ui/UserIdentity.vue'
-import DatePicker from '@/components/ui/DatePicker.vue'
-import TablePagination from '@/components/ui/TablePagination.vue'
-import TransactionDetailSlideover from '@/components/ui/TransactionDetailSlideover.vue'
-import { useCurrencyStore } from '@/stores/currencyStore'
-import { useTransactionTable } from '@/composables/transactions/useTransactionTable'
-import { useTransactionInline } from '@/composables/transactions/useTransactionInline'
-import { useTransactionPresentation } from '@/composables/transactions/useTransactionPresentation'
-import type { CreditTransaction } from '@/types/transactions'
 import {
   buildRawFixedReturnTransactions,
   formatFixedReturnTransactionDate
 } from '@/utils/transactions/fixedReturn'
-import {
-  getTransactionTypeColor,
-  getTransactionTypeLabel,
-  getTransactionCounterparty
-} from '@/utils/transactions/registry'
+import { computed, watch } from 'vue'
 import { formatCryptoAmount, formatCurrencyShort } from '@/utils/currency/display'
-import { formatEtherUtil, tokenSymbol } from '@/utils/tokens/metadata'
-import { log } from '@/lib/logging'
-import {
-  parseBigIntOrZero,
-  getTransactionSummary,
-  getInitialTokenSupportSummary
-} from '@/utils/transactions/history'
-
 import { formatDateRelative, formatDateUTC } from '@/utils/dates/calendar'
+import { formatEtherUtil, tokenSymbol } from '@/utils/tokens/metadata'
+import {
+  getInitialTokenSupportSummary,
+  getTransactionSummary,
+  parseBigIntOrZero
+} from '@/utils/transactions/history'
+import {
+  getTransactionCounterparty,
+  getTransactionTypeColor,
+  getTransactionTypeLabel
+} from '@/utils/transactions/registry'
+import { type Address } from 'viem'
+import type { CreditTransaction } from '@/types/transactions'
+import DatePicker from '@/components/ui/DatePicker.vue'
+import TablePagination from '@/components/ui/TablePagination.vue'
+import TransactionDetailSlideover from '@/components/ui/TransactionDetailSlideover.vue'
 import TransactionHistoryStatusAlert from '@/components/sections/TransactionHistoryStatusAlert.vue'
+import UserIdentity from '@/components/ui/UserIdentity.vue'
+import { formatTxHash } from '@/utils/format'
 import { getEventFeedStatus } from '@/composables/eventsViaLogs'
+import { log } from '@/lib/logging'
+import { useCurrencyStore } from '@/stores/currencyStore'
+import { useFixedReturnEventsViaLogs } from '@/composables/fixedReturn/useFixedReturnEventsViaLogs'
+
+import { useTransactionInline } from '@/composables/transactions/useTransactionInline'
+import { useTransactionPresentation } from '@/composables/transactions/useTransactionPresentation'
+import { useTransactionTable } from '@/composables/transactions/useTransactionTable'
 
 const props = defineProps<{
   fixedReturnAddress: Address

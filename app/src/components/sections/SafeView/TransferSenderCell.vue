@@ -4,9 +4,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
 import type { Address } from 'viem'
 import UserIdentity from '@/components/ui/UserIdentity.vue'
+import { computed } from 'vue'
 import { useGetUserQuery } from '@/queries/user.queries'
 
 interface Props {

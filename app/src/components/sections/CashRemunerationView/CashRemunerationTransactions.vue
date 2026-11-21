@@ -164,38 +164,38 @@
 </template>
 
 <script setup lang="ts">
-import { formatTxHash } from '@/utils/format'
-import { sumFiatValues } from '@/utils/currency/valuation'
-import { computed } from 'vue'
-import { useTransactionTable } from '@/composables/transactions/useTransactionTable'
-import { useTransactionInline } from '@/composables/transactions/useTransactionInline'
-import { useTransactionPresentation } from '@/composables/transactions/useTransactionPresentation'
-import { type Address } from 'viem'
-import UserIdentity from '@/components/ui/UserIdentity.vue'
-import DatePicker from '@/components/ui/DatePicker.vue'
-import TablePagination from '@/components/ui/TablePagination.vue'
-import TransactionDetailSlideover from '@/components/ui/TransactionDetailSlideover.vue'
-import { useCurrencyStore } from '@/stores/currencyStore'
-import type { CashRemunerationTransaction } from '@/types/transactions'
-import type { TransactionEventValue } from '@/types/transaction-history'
 import {
   buildRawCashRemunerationTransactions,
   formatCashRemunerationTransactionDate
 } from '@/utils/transactions/cashRemuneration'
-import {
-  getTransactionTypeColor,
-  getTransactionTypeLabel,
-  getTransactionCounterparty
-} from '@/utils/transactions/registry'
+import { combineEventFeedStatuses, getEventFeedStatus } from '@/composables/eventsViaLogs'
 import { formatCryptoAmount, formatCurrencyShort } from '@/utils/currency/display'
-import { formatEtherUtil, tokenSymbol } from '@/utils/tokens/metadata'
-import { parseBigIntOrZero, getTransactionSummary } from '@/utils/transactions/history'
 import { formatDateRelative, formatDateUTC } from '@/utils/dates/calendar'
+import { formatEtherUtil, tokenSymbol } from '@/utils/tokens/metadata'
+import {
+  getTransactionCounterparty,
+  getTransactionTypeColor,
+  getTransactionTypeLabel
+} from '@/utils/transactions/registry'
+import { getTransactionSummary, parseBigIntOrZero } from '@/utils/transactions/history'
+import { type Address } from 'viem'
+import type { CashRemunerationTransaction } from '@/types/transactions'
+import DatePicker from '@/components/ui/DatePicker.vue'
+import TablePagination from '@/components/ui/TablePagination.vue'
+import TransactionDetailSlideover from '@/components/ui/TransactionDetailSlideover.vue'
+import type { TransactionEventValue } from '@/types/transaction-history'
+import TransactionHistoryStatusAlert from '@/components/sections/TransactionHistoryStatusAlert.vue'
+import UserIdentity from '@/components/ui/UserIdentity.vue'
+import { computed } from 'vue'
+import { formatTxHash } from '@/utils/format'
+import { sumFiatValues } from '@/utils/currency/valuation'
 import { useCashRemunerationEventsViaLogs } from '@/composables/cashRemuneration/useCashRemunerationEventsViaLogs'
+import { useCurrencyStore } from '@/stores/currencyStore'
 import { useIncomingBankTokenTransfersViaLogs } from '@/composables/bank/useIncomingBankTokenTransfersViaLogs'
 import { useTeamStore } from '@/stores'
-import TransactionHistoryStatusAlert from '@/components/sections/TransactionHistoryStatusAlert.vue'
-import { combineEventFeedStatuses, getEventFeedStatus } from '@/composables/eventsViaLogs'
+import { useTransactionInline } from '@/composables/transactions/useTransactionInline'
+import { useTransactionPresentation } from '@/composables/transactions/useTransactionPresentation'
+import { useTransactionTable } from '@/composables/transactions/useTransactionTable'
 
 const props = defineProps<{
   cashRemunerationAddress: Address

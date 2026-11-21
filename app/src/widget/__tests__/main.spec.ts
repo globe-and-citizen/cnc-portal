@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 // Styles are verified by the widget build; these tests exercise its runtime API
 // and rendered states without compiling the full Tailwind stylesheet on import.

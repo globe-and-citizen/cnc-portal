@@ -1,10 +1,10 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { flushPromises } from '@vue/test-utils'
-import { renderWithProviders } from '@/tests/mocks'
-import { catalogueLedger } from '@/utils/accounting/__tests__/catalogueLedger'
-import { finalizeJournal } from '@/utils/accounting/__tests__/assembleAccounting'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { JournalEntry } from '@/utils/accounting/types'
 import type { JournalEntryDraft } from '@/utils/accounting/journalEntryDraft'
+import { catalogueLedger } from '@/utils/accounting/__tests__/catalogueLedger'
+import { finalizeJournal } from '@/utils/accounting/__tests__/assembleAccounting'
+import { flushPromises } from '@vue/test-utils'
+import { renderWithProviders } from '@/tests/mocks'
 
 // A controlled, reactive book so the account / currency filters, their
 // reconciliation, and the export scope all run deterministically. `catalogueLedger`
@@ -27,11 +27,11 @@ vi.mock('@/composables/accounting/useAccountingExport', () => ({
   useAccountingExport: () => ({ exportPdf, exportExcel })
 }))
 
-import GeneralLedgerView from '../GeneralLedgerView.vue'
 import AccountFilterSelect from '@/components/sections/AccountingView/AccountFilterSelect.vue'
 import CurrencyFilterSelect from '@/components/sections/AccountingView/CurrencyFilterSelect.vue'
-import LedgerTable from '@/components/sections/AccountingView/LedgerTable.vue'
 import DatePicker from '@/components/ui/DatePicker.vue'
+import GeneralLedgerView from '../GeneralLedgerView.vue'
+import LedgerTable from '@/components/sections/AccountingView/LedgerTable.vue'
 import { mockRoute } from '@/tests/mocks/router.mock'
 
 const setBook = (entries: JournalEntryDraft[]) => {

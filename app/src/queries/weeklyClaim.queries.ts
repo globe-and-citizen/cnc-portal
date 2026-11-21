@@ -1,12 +1,12 @@
-import type { MaybeRefOrGetter } from 'vue'
-import { toValue } from 'vue'
-import type { Address } from 'viem'
-import { useMutation, useQueryClient } from '@tanstack/vue-query'
 import type { Claim, FileAttachment, WeeklyClaim } from '@/types/cash-remuneration'
+import { createMutationHook, createQueryHook, queryPresets } from './queryFactory'
+import { useMutation, useQueryClient } from '@tanstack/vue-query'
+import type { Address } from 'viem'
 import type { ClaimSubmitPayload } from '@/types'
+import type { MaybeRefOrGetter } from 'vue'
 import apiClient from '@/lib/axios'
+import { toValue } from 'vue'
 import { uploadFileApi } from '@/api'
-import { createQueryHook, createMutationHook, queryPresets } from './queryFactory'
 
 type ClaimResponse = Omit<Claim, 'minutesWorked'> & { minutesWorked?: number | null }
 type WeeklyClaimResponse = Omit<WeeklyClaim, 'minutesWorked' | 'claims'> & {

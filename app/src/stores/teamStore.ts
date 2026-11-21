@@ -1,12 +1,12 @@
 import type { ContractType } from '@/types'
 // import type { Team } from '@/types/team'
-import { log } from '@/lib/logging'
-import { defineStore } from 'pinia'
-import type { Address } from 'viem'
 import { ref, watch } from 'vue'
-import { useGetTeamQuery } from '@/queries/team.queries'
-import { normalizeSafeAddress } from '@/utils/safe/address'
+import type { Address } from 'viem'
 import { defaultTeamSafe } from '@/utils/safe/teamSafes'
+import { defineStore } from 'pinia'
+import { log } from '@/lib/logging'
+import { normalizeSafeAddress } from '@/utils/safe/address'
+import { useGetTeamQuery } from '@/queries/team.queries'
 
 export const useTeamStore = defineStore('team', () => {
   const currentTeamId = ref<string | null>(null)

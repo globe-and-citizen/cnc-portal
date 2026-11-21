@@ -1,7 +1,7 @@
-import { describe, it, expect } from 'vitest'
-import { buildMapperContext } from '@/utils/accounting/mappers/context'
-import type { TeamContract } from '@/types/teamContract'
+import { describe, expect, it } from 'vitest'
 import { ADDR } from './fixtures'
+import type { TeamContract } from '@/types/teamContract'
+import { buildMapperContext } from '@/utils/accounting/mappers/context'
 
 const contracts = [
   { address: ADDR.bank, type: 'Bank' },

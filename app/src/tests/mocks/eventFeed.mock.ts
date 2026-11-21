@@ -1,6 +1,6 @@
-import { ref, type Ref } from 'vue'
-import { vi } from 'vitest'
+import { type Ref, ref } from 'vue'
 import type { ScanResult } from '@/composables/eventsViaLogs'
+import { vi } from 'vitest'
 
 export type MockEventFeedState<T = unknown> = {
   data: Ref<ScanResult<T> | undefined>

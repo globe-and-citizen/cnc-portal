@@ -1,15 +1,13 @@
-import { expect, test } from '../fixtures/mocked'
-import { E2E_MEMBER } from '../e2e-chain'
 import {
-  cancelDialog,
   COMPANY_NAME,
+  LOAD_TIMEOUT,
+  RETRY_TIMEOUT,
+  cancelDialog,
   confirmVisibility,
   dialog,
   emptyState,
-  LOAD_TIMEOUT,
   openCardMenu,
   openCompanyActions,
-  RETRY_TIMEOUT,
   showArchived,
   showHidden,
   signInToCompanies,
@@ -17,6 +15,8 @@ import {
   toast,
   visibilityAction
 } from './company-lifecycle-page'
+import { expect, test } from '../fixtures/mocked'
+import { E2E_MEMBER } from '../e2e-chain'
 
 const HIDDEN = 'Company hidden successfully'
 const VISIBLE = 'Company is visible again'

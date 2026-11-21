@@ -1,20 +1,20 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   useFixedReturnAddress,
-  useFixedReturnOwner,
-  useFixedReturnVersion,
-  useFixedReturnTotalOfferings,
   useFixedReturnGetLendingOffer,
   useFixedReturnGetOfferLenders,
-  useFixedReturnTotalEntitlementOf,
-  useFixedReturnLenderDeposits,
-  useFixedReturnLenderAllocation,
+  useFixedReturnGetSupportedTokens,
   useFixedReturnHasDeposited,
   useFixedReturnIsTokenSupported,
-  useFixedReturnGetSupportedTokens
+  useFixedReturnLenderAllocation,
+  useFixedReturnLenderDeposits,
+  useFixedReturnOwner,
+  useFixedReturnTotalEntitlementOf,
+  useFixedReturnTotalOfferings,
+  useFixedReturnVersion
 } from '../reads'
-import { mockFixedReturnReads } from '@/tests/mocks'
 import type { Address } from 'viem'
+import { mockFixedReturnReads } from '@/tests/mocks'
 
 const MOCK_DATA = {
   lenderAddress: '0xA0b86a33E6441bB7bE6d0B9EB5Bbf26b2d60C1cd' as Address,

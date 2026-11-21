@@ -1,10 +1,10 @@
-import Safe from '@safe-global/protocol-kit'
-import { useConnection } from '@wagmi/vue'
-import { hardhat } from 'viem/chains'
 import { E2E_SAFE_INFRA, E2E_SAFE_LIBRARIES } from '@/e2e/chain'
-import { getInjectedProvider } from '@/lib/safe/browser'
-import { normalizeSafeAddress } from '@/utils/safe/address'
+import Safe from '@safe-global/protocol-kit'
 import { getConnectedSigner } from '@/utils/wallet/address'
+import { getInjectedProvider } from '@/lib/safe/browser'
+import { hardhat } from 'viem/chains'
+import { normalizeSafeAddress } from '@/utils/safe/address'
+import { useConnection } from '@wagmi/vue'
 
 const safeInstanceCache = new Map<string, Promise<Safe>>()
 

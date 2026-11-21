@@ -1,13 +1,13 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { ref } from 'vue'
 import { type Address, type Hex } from 'viem'
-import MigrationOwnerSweep from '../MigrationOwnerSweep.vue'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { mockToast, renderWithProviders } from '@/tests/mocks'
 import {
   useCompleteMigrationMutation,
   useSweepMigrationMutation
 } from '@/composables/investor/useSweepMigration'
 import type { InvestorMigration } from '@/queries/investorMigration.queries'
-import { mockToast, renderWithProviders } from '@/tests/mocks'
+import MigrationOwnerSweep from '../MigrationOwnerSweep.vue'
+import { ref } from 'vue'
 
 vi.mock('@/composables/investor/useSweepMigration', () => ({
   useSweepMigrationMutation: vi.fn(),

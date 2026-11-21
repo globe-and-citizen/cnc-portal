@@ -1,9 +1,9 @@
 /**
  * Account balances projected from the canonical JournalEntry lines.
  */
+import type { Account, AccountId, JournalEntry, UsdAmount } from './types'
 import type { AccountName } from './chartOfAccounts'
 import { ZERO_USD_AMOUNT } from './monetaryAmount'
-import type { Account, AccountId, JournalEntry, UsdAmount } from './types'
 
 /** The net balance of one concrete Account on its normal side. */
 interface JournalAccountBalance {

@@ -5,16 +5,16 @@
  * check that the table shows the numbered name and carries the concrete account and contract with the
  * account when the row is clicked through to the trial balance.
  */
-import { afterEach, beforeEach, describe, it, expect } from 'vitest'
-import { flushPromises } from '@vue/test-utils'
-import { NETWORK } from '@/constant'
-import { renderWithProviders } from '@/tests/mocks'
-import LedgerTable from '../LedgerTable.vue'
-import { LEDGER_COLUMNS } from '@/utils/accounting/ledgerColumns'
-import { journalLedgerRows } from '@/utils/accounting/journalLedgerPresenter'
-import { finalizeJournal } from '@/utils/accounting/__tests__/assembleAccounting'
-import { accountFor } from '@/utils/accounting/accountRegistry'
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import type { JournalEntryDraft } from '@/utils/accounting/journalEntryDraft'
+import { LEDGER_COLUMNS } from '@/utils/accounting/ledgerColumns'
+import LedgerTable from '../LedgerTable.vue'
+import { NETWORK } from '@/constant'
+import { accountFor } from '@/utils/accounting/accountRegistry'
+import { finalizeJournal } from '@/utils/accounting/__tests__/assembleAccounting'
+import { flushPromises } from '@vue/test-utils'
+import { journalLedgerRows } from '@/utils/accounting/journalLedgerPresenter'
+import { renderWithProviders } from '@/tests/mocks'
 
 const BANK_1 = '0x1111111111111111111111111111111111111111'
 const BANK_2 = '0x2222222222222222222222222222222222222222'

@@ -1,17 +1,17 @@
 // Community Credit (FixedReturn) deployment fixture and contract helpers for the
 // browser journey.
-import { type Address } from 'viem'
 import {
-  artifact,
-  deploy,
+  type Artifact,
   E2E_OWNER,
   E2E_USDC_ADDRESS,
+  artifact,
+  deploy,
   encode,
   publicClient,
-  write,
-  type Artifact
+  write
 } from '../e2e-chain'
-import { deployBankE2EFixture, type BankE2EFixture } from '../bank/bank-chain'
+import { type BankE2EFixture, deployBankE2EFixture } from '../bank/bank-chain'
+import { type Address } from 'viem'
 
 export interface CommunityCreditE2EFixture extends BankE2EFixture {
   fixedReturn: Address

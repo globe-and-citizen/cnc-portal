@@ -1,18 +1,18 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { mount } from '@vue/test-utils'
 import { defineComponent, nextTick, ref } from 'vue'
-import dayjs from 'dayjs'
-import utc from 'dayjs/plugin/utc'
-import isoWeek from 'dayjs/plugin/isoWeek'
-import ClaimHistoryActionAlerts from '@/components/sections/ClaimHistoryView/ClaimHistoryActionAlerts.vue'
 import {
-  renderWithProviders,
   mockUserStore,
   mockWageData,
   mockWeeklyClaimData,
-  queryMocks
+  queryMocks,
+  renderWithProviders
 } from '@/tests/mocks'
 import { useGetTeamWagesQuery, useGetTeamWeeklyClaimsQuery } from '@/queries'
+import ClaimHistoryActionAlerts from '@/components/sections/ClaimHistoryView/ClaimHistoryActionAlerts.vue'
+import dayjs from 'dayjs'
+import isoWeek from 'dayjs/plugin/isoWeek'
+import { mount } from '@vue/test-utils'
+import utc from 'dayjs/plugin/utc'
 
 dayjs.extend(utc)
 dayjs.extend(isoWeek)

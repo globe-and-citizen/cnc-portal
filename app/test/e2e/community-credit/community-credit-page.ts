@@ -1,16 +1,16 @@
 // Community Credit-specific Playwright page, backend and journey helpers.
-import { expect, type Page, type Request } from '@playwright/test'
-import type { Address } from 'viem'
-import { E2E_MEMBER, E2E_MEMBER_PRIVATE_KEY, E2E_OWNER } from '../e2e-chain'
-import type { CommunityCreditE2EFixture } from './community-credit-chain'
 import {
+  type E2EUser,
   chooseCalendarDate,
   json,
   signInAndOpenFirstTeam,
   stubBackend,
-  useWallet,
-  type E2EUser
+  useWallet
 } from '../e2e-page'
+import { E2E_MEMBER, E2E_MEMBER_PRIVATE_KEY, E2E_OWNER } from '../e2e-chain'
+import { type Page, type Request, expect } from '@playwright/test'
+import type { Address } from 'viem'
+import type { CommunityCreditE2EFixture } from './community-credit-chain'
 
 interface FixedReturnOfferingResponse {
   id: number

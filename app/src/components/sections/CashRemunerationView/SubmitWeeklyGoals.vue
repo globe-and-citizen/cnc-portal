@@ -67,16 +67,16 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import dayjs from 'dayjs'
-import utc from 'dayjs/plugin/utc'
-import isoWeek from 'dayjs/plugin/isoWeek'
-import { useToast } from '@nuxt/ui/composables'
 import MarkdownEditor from '@/components/sections/CashRemunerationView/MarkdownEditor.vue'
 import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
-import { useTeamStore } from '@/stores'
-import { useSubmitWeeklyGoalsMutation } from '@/queries/weeklyClaim.queries'
 import type { WeeklyClaim } from '@/types'
+import dayjs from 'dayjs'
 import { getAxiosErrorMessage } from '@/utils/errors/http'
+import isoWeek from 'dayjs/plugin/isoWeek'
+import { useSubmitWeeklyGoalsMutation } from '@/queries/weeklyClaim.queries'
+import { useTeamStore } from '@/stores'
+import { useToast } from '@nuxt/ui/composables'
+import utc from 'dayjs/plugin/utc'
 
 dayjs.extend(utc)
 dayjs.extend(isoWeek)

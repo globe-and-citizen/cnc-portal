@@ -1,10 +1,10 @@
+import type { Abi, Address } from 'viem'
+import { formatUnits, parseUnits } from 'viem/utils'
+import { getWalletClient, readContract, waitForTransactionReceipt } from '@wagmi/core'
 import { config } from '@/wagmi.config'
 import { configuredChainId } from '@/lib/walletNetwork'
-import { getWalletClient, readContract, waitForTransactionReceipt } from '@wagmi/core'
-import { parseUnits, formatUnits } from 'viem/utils'
-import { useMutation } from '@tanstack/vue-query'
 
-import type { Abi, Address } from 'viem'
+import { useMutation } from '@tanstack/vue-query'
 
 export interface DeployContractArgs {
   bankAddress: Address

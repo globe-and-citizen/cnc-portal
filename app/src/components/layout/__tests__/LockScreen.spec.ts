@@ -1,7 +1,7 @@
-import { mount } from '@vue/test-utils'
-import { describe, it, expect, vi, afterEach } from 'vitest'
-import LockScreen from '../LockScreen.vue'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { mockUseConnection, mockUseDisconnect } from '@/tests/mocks/wagmi.vue.mock'
+import LockScreen from '../LockScreen.vue'
+import { mount } from '@vue/test-utils'
 
 describe('LockScreen.vue', () => {
   let wrapper: ReturnType<typeof mount> | null = null

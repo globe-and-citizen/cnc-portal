@@ -1,20 +1,20 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { mount, flushPromises } from '@vue/test-utils'
-import CRSigne from '../CRSigne.vue'
+import type { ContractType, WeeklyClaim } from '@/types'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
-import type { WeeklyClaim, ContractType } from '@/types'
-import dayjs from 'dayjs'
-import utc from 'dayjs/plugin/utc'
-import isoWeek from 'dayjs/plugin/isoWeek'
+import { flushPromises, mount } from '@vue/test-utils'
 import {
   mockTeamStore,
-  mockUserStore,
   mockUseReadContract,
   mockUseSignTypedData,
+  mockUserStore,
   mockWagmiCore
 } from '@/tests/mocks'
+import CRSigne from '../CRSigne.vue'
 import { createMockMutationResponse } from '@/tests/mocks/query.mock'
+import dayjs from 'dayjs'
+import isoWeek from 'dayjs/plugin/isoWeek'
 import { useUpdateWeeklyClaimMutation } from '@/queries'
+import utc from 'dayjs/plugin/utc'
 
 dayjs.extend(utc)
 dayjs.extend(isoWeek)

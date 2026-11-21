@@ -1,8 +1,8 @@
-import { z } from 'zod'
-import { parseUnits } from 'viem'
-import { addCreditTerm, CREDIT_TERM_MAX_YEARS } from '@/utils/communityCredit/offer'
+import { CREDIT_TERM_MAX_YEARS, addCreditTerm } from '@/utils/communityCredit/offer'
 import { formatCalendarBreakdown, sumWhitelistAmountUnits } from '@/utils/communityCredit/model'
 import { formatAmountWithPrecision } from '@/utils/currency/display'
+import { parseUnits } from 'viem'
+import { z } from 'zod'
 
 /** Same underlying FixedReturn contract, same basic rules — adapted to CreditCallForm's
  *  string-typed form fields. */

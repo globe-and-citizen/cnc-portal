@@ -1,13 +1,13 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   createContractReadMock,
   mockTeamStore,
   mockUserStore,
   useReadContractFn
 } from '@/tests/mocks'
-import { useUserDataStore } from '@/stores'
-import { reactive } from 'vue'
 import type { Address } from 'viem'
+import { reactive } from 'vue'
+import { useUserDataStore } from '@/stores'
 
 // `bod.setup.ts` supplies component tests with a mock of these composables.
 // This spec validates their actual contract-read configuration and ownership
@@ -16,10 +16,10 @@ vi.unmock('@/composables/bod/reads')
 
 import {
   isValidBodFunction,
-  useBodOwner,
   useBodIsActionExecuted,
   useBodIsBodAction,
-  useBodIsMember
+  useBodIsMember,
+  useBodOwner
 } from '../reads'
 
 const MOCK_DATA = {

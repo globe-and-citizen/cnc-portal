@@ -1,10 +1,10 @@
-import { mount, flushPromises } from '@vue/test-utils'
-import { ref } from 'vue'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { useUpdateTeamMutation } from '@/queries/team.queries'
-import { useTeamStore } from '@/stores'
-import { mockTeamData } from '@/tests/mocks'
+import { flushPromises, mount } from '@vue/test-utils'
 import TeamMetaUpdateModal from '../TeamMetaUpdateModal.vue'
+import { mockTeamData } from '@/tests/mocks'
+import { ref } from 'vue'
+import { useTeamStore } from '@/stores'
+import { useUpdateTeamMutation } from '@/queries/team.queries'
 
 const mutateSpy = vi.fn()
 const resetSpy = vi.fn()

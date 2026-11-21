@@ -1,7 +1,7 @@
+import { type JournalEntryDraft, makeJournalEntryDraft } from '@/utils/accounting/journalEntryDraft'
 import { describe, expect, it } from 'vitest'
 import { buildAccountingSummary } from '@/utils/accounting/accountingSummary'
 import { finalizeJournalEntryDrafts } from '@/utils/accounting/journalEntry'
-import { makeJournalEntryDraft, type JournalEntryDraft } from '@/utils/accounting/journalEntryDraft'
 import { usd } from './fixtures'
 
 const BANK = '0x1111111111111111111111111111111111111111'

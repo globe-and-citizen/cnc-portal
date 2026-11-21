@@ -34,23 +34,23 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import dayjs from 'dayjs'
-import utc from 'dayjs/plugin/utc'
-import isoWeek from 'dayjs/plugin/isoWeek'
-import { formatIsoWeekRange, startOfWeek, type Week } from '@/utils/dates/calendar'
-import { useTeamStore } from '@/stores'
-import { useRoute } from 'vue-router'
-import { useGetTeamWeeklyClaimsQuery, useGetTeamWagesQuery } from '@/queries'
-import { useSubmitRestriction } from '@/composables'
+import { type Week, formatIsoWeekRange, startOfWeek } from '@/utils/dates/calendar'
+import { computed, ref } from 'vue'
+import { useGetTeamWagesQuery, useGetTeamWeeklyClaimsQuery } from '@/queries'
 import type { Address } from 'viem'
-
-import WeeklyRecap from './WeeklyRecap.vue'
-import ClaimHistoryMemberHeader from './ClaimHistoryMemberHeader.vue'
-import ClaimHistoryWeekNavigator from './ClaimHistoryWeekNavigator.vue'
 import ClaimHistoryActionAlerts from './ClaimHistoryActionAlerts.vue'
 import ClaimHistoryDailyBreakdown from './ClaimHistoryDailyBreakdown.vue'
+import ClaimHistoryMemberHeader from './ClaimHistoryMemberHeader.vue'
+import ClaimHistoryWeekNavigator from './ClaimHistoryWeekNavigator.vue'
 import WeeklyGoalsDisplay from './WeeklyGoalsDisplay.vue'
+import WeeklyRecap from './WeeklyRecap.vue'
+
+import dayjs from 'dayjs'
+import isoWeek from 'dayjs/plugin/isoWeek'
+import { useRoute } from 'vue-router'
+import { useSubmitRestriction } from '@/composables'
+import { useTeamStore } from '@/stores'
+import utc from 'dayjs/plugin/utc'
 
 dayjs.extend(utc)
 dayjs.extend(isoWeek)

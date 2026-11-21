@@ -1,10 +1,10 @@
-import { ref } from 'vue'
-import { mount } from '@vue/test-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import AddMemberForm from '@/components/sections/DashboardView/forms/AddMemberForm.vue'
 import { createTestingPinia } from '@pinia/testing'
-import { useAddMembersMutation } from '@/queries/member.queries'
 import { log } from '@/lib/logging'
+import { mount } from '@vue/test-utils'
+import { ref } from 'vue'
+import { useAddMembersMutation } from '@/queries/member.queries'
 
 const mockMutate = vi.fn()
 

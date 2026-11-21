@@ -1,8 +1,8 @@
-import { useCurrencyStore, useTeamStore } from '@/stores'
 import {
   enrichTransactionPresentation,
   resolveTransactionUser
 } from '@/utils/transactions/presentation'
+import { useCurrencyStore, useTeamStore } from '@/stores'
 
 export function useTransactionPresentation() {
   const teamStore = useTeamStore()

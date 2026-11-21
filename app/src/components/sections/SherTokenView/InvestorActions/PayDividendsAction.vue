@@ -40,24 +40,24 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import type { Address } from 'viem'
 import { encodeFunctionData, formatUnits, zeroAddress } from 'viem'
-import PayDividendsForm from '@/components/sections/SherTokenView/forms/PayDividendsForm.vue'
-import ActionButton from '@/components/sections/SherTokenView/ActionButton.vue'
-import { bankAbi } from '@/artifacts/abi/generated'
-import { useTeamStore, useUserDataStore } from '@/stores'
-import { useBodAddAction } from '@/composables/bod/writes'
-import { useBodIsBodAction } from '@/composables/bod/reads'
-import { useBankOwner } from '@/composables/bank/reads'
+import { tokenSymbolAddresses, tokenSymbol as tokenSymbolUtils } from '@/utils/tokens/metadata'
 import {
   useDistributeNativeDividends,
   useDistributeTokenDividends
 } from '@/composables/bank/writes'
-import { tokenSymbol as tokenSymbolUtils, tokenSymbolAddresses } from '@/utils/tokens/metadata'
+import { useTeamStore, useUserDataStore } from '@/stores'
+import ActionButton from '@/components/sections/SherTokenView/ActionButton.vue'
+import type { Address } from 'viem'
+import PayDividendsForm from '@/components/sections/SherTokenView/forms/PayDividendsForm.vue'
 import type { TokenId } from '@/constant'
-import { log } from '@/lib/logging'
-import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
+import { bankAbi } from '@/artifacts/abi/generated'
 import { classifyError } from '@/utils/errors/classifyContractError'
+import { log } from '@/lib/logging'
+import { useBankOwner } from '@/composables/bank/reads'
+import { useBodAddAction } from '@/composables/bod/writes'
+import { useBodIsBodAction } from '@/composables/bod/reads'
+import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
 
 interface Props {
   tokenSymbol?: string

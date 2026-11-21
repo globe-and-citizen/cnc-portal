@@ -28,10 +28,10 @@
 </template>
 
 <script setup lang="ts">
-import { useStorage } from '@vueuse/core'
 import AddressTooltip from '@/components/ui/AddressTooltip.vue'
 import { useContractBalance } from '@/composables/useContractBalance'
 import { useFixedReturnAddress } from '@/composables/fixedReturn/reads'
+import { useStorage } from '@vueuse/core'
 
 const fixedReturnAddress = useFixedReturnAddress()
 

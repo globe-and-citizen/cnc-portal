@@ -11,16 +11,16 @@
  *   - Options:   pass `silent: true` when composing inside an orchestrator
  *                that emits its own flow-level outcome toast.
  */
-import { useMutation } from '@tanstack/vue-query'
-import { readContract } from '@wagmi/core'
-import { zeroHash, type Address, type Hex } from 'viem'
-import { config } from '@/wagmi.config'
+import { type Address, type Hex, zeroHash } from 'viem'
 import { investorAbi, officerAbi } from '@/artifacts/abi/generated'
-import { executeContractWrite } from '@/composables/contracts/useContractWritesV3'
 import {
   useCreateInvestorMigrationMutation,
   useGenerateMerkleSnapshotMutation
 } from '@/queries/investorMigration.queries'
+import { config } from '@/wagmi.config'
+import { executeContractWrite } from '@/composables/contracts/useContractWritesV3'
+import { readContract } from '@wagmi/core'
+import { useMutation } from '@tanstack/vue-query'
 import { useToast } from '@nuxt/ui/composables'
 
 export interface Shareholder {

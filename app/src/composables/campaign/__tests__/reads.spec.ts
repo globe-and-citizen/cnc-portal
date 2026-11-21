@@ -1,9 +1,9 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { mockReadContractAction, mockWagmiCore } from '@/tests/mocks'
+import type { Address } from 'viem'
+import { fetchCampaignLogs } from '@/lib/campaign/events'
 import { ref } from 'vue'
 import { useQueryFn } from '@/tests/mocks/composables.mock'
-import { mockReadContractAction, mockWagmiCore } from '@/tests/mocks'
-import { fetchCampaignLogs } from '@/lib/campaign/events'
-import type { Address } from 'viem'
 
 vi.mock('@/lib/campaign/events', async (importOriginal) => {
   const actual = (await importOriginal()) as object

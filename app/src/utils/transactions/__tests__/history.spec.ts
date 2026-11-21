@@ -1,17 +1,17 @@
 import { describe, expect, it } from 'vitest'
 import {
+  formatDecodedValue,
+  getTransactionSummary,
+  getTransactionTypeColor,
+  getTransactionTypeLabel,
+  groupTransactionsByTxHash
+} from '../history'
+import {
   getTokenAddress,
   getTokenDecimals,
   isValidPositiveTokenAmount,
   resolveTokenIdByAddress
 } from '../../tokens/metadata'
-import {
-  getTransactionSummary,
-  getTransactionTypeLabel,
-  getTransactionTypeColor,
-  groupTransactionsByTxHash,
-  formatDecodedValue
-} from '../history'
 
 type TransactionFixture = {
   txHash: string

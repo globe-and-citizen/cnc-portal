@@ -1,12 +1,12 @@
-import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest'
-import { mount, type VueWrapper } from '@vue/test-utils'
-import { nextTick, ref, defineComponent } from 'vue'
-import { useStorage } from '@vueuse/core'
+import * as tokenMetadata from '@/utils/tokens/metadata'
+import { type VueWrapper, mount } from '@vue/test-utils'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { defineComponent, nextTick, ref } from 'vue'
+import { makeTokenBalance, mockUseContractBalance, useQueryClientFn } from '@/tests/mocks'
 import type { Address } from 'viem'
 import SafeBalanceSection from '../SafeBalanceSection.vue'
-import { mockUseContractBalance, makeTokenBalance, useQueryClientFn } from '@/tests/mocks'
 import { mockUserStore } from '@/tests/mocks/store.mock'
-import * as tokenMetadata from '@/utils/tokens/metadata'
+import { useStorage } from '@vueuse/core'
 
 const {
   mockGetSafeHomeUrl,

@@ -1,6 +1,6 @@
-import { describe, it, expect } from 'vitest'
-import { mount } from '@vue/test-utils'
+import { describe, expect, it } from 'vitest'
 import ElectionCandidateIdentity from '@/components/sections/AdministrationView/ElectionCandidateIdentity.vue'
+import { mount } from '@vue/test-utils'
 
 describe('ElectionCandidateIdentity', () => {
   const baseUser = {

@@ -1,14 +1,14 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { readContract } from '@wagmi/core'
-import { zeroHash } from 'viem'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { checkMigrationEligibility, useMigrateShareholders } from '../useShareholderMigration'
-import { executeContractWrite } from '@/composables/contracts/useContractWritesV3'
+import { smartUseMutation, useMutationFn } from '@/tests/mocks/composables.mock'
 import {
   useCreateInvestorMigrationMutation,
   useGenerateMerkleSnapshotMutation
 } from '@/queries/investorMigration.queries'
-import { useMutationFn, smartUseMutation } from '@/tests/mocks/composables.mock'
 import type { Address } from 'viem'
+import { executeContractWrite } from '@/composables/contracts/useContractWritesV3'
+import { readContract } from '@wagmi/core'
+import { zeroHash } from 'viem'
 
 vi.mock('@/composables/contracts/useContractWritesV3', async (importOriginal) => {
   const actual = (await importOriginal()) as object

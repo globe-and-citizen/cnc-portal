@@ -1,11 +1,11 @@
-import { describe, it, expect, beforeEach } from 'vitest'
-import { mount } from '@vue/test-utils'
-import { nextTick } from 'vue'
-import App from '@/App.vue'
+import { beforeEach, describe, expect, it } from 'vitest'
 import { mockUseConnection, mockUserStore } from '@/tests/mocks'
 import { mockUseConnectionEffect, mockUseSwitchChain } from '@/tests/mocks/wagmi.vue.mock'
-import { setMockRoute } from '@/tests/mocks/router.mock'
+import App from '@/App.vue'
 import { configuredChainId } from '@/lib/walletNetwork'
+import { mount } from '@vue/test-utils'
+import { nextTick } from 'vue'
+import { setMockRoute } from '@/tests/mocks/router.mock'
 
 describe('App', () => {
   const mountApp = () =>

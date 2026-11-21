@@ -6,16 +6,16 @@
  * and runs the off-chain enrichment join. Finalization later reconciles them into
  * the canonical journal consumed by every accounting report.
  */
-import { enrichEntries, type EnrichmentSources } from '@/utils/accounting/enrichment'
+import { type BankMapperInput, mapBankEvents } from './bank'
+import { type EnrichmentSources, enrichEntries } from '@/utils/accounting/enrichment'
+import { type ExpenseMapperInput, mapExpense } from './expenseAccount'
+import { type FixedReturnMapperInput, mapFixedReturnEvents } from './fixedReturn'
+import { type InvestorMapperInput, mapInvestorEvents } from './investor'
+import { type PayrollMapperInput, mapPayroll } from './payroll'
+import { type SafeDepositRouterMapperInput, mapSafeDepositRouterEvents } from './safeDepositRouter'
+import { type SafeMapperInput, mapSafeTransfers } from './safe'
+import { type VestingMapperInput, mapVestingEvents } from './vesting'
 import type { JournalEntryDraft } from '@/utils/accounting/journalEntryDraft'
-import { mapBankEvents, type BankMapperInput } from './bank'
-import { mapPayroll, type PayrollMapperInput } from './payroll'
-import { mapExpense, type ExpenseMapperInput } from './expenseAccount'
-import { mapFixedReturnEvents, type FixedReturnMapperInput } from './fixedReturn'
-import { mapInvestorEvents, type InvestorMapperInput } from './investor'
-import { mapVestingEvents, type VestingMapperInput } from './vesting'
-import { mapSafeTransfers, type SafeMapperInput } from './safe'
-import { mapSafeDepositRouterEvents, type SafeDepositRouterMapperInput } from './safeDepositRouter'
 import type { MapperContext } from './context'
 
 /** Every raw-event source the mappers consume, grouped by contract. */

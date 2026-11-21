@@ -1,21 +1,21 @@
-import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
+import { readFileSync } from 'node:fs'
 // Read-only chain assertions for the Payroll integrated journeys. Contract
 // writes remain browser-driven so these tests prove the product flow rather
 // than creating a privileged test-only state.
 import {
+  type Address,
+  type Hex,
   decodeFunctionData,
   erc20Abi,
   keccak256,
   parseAbiItem,
   parseEther,
   parseUnits,
-  zeroAddress,
-  type Address,
-  type Hex
+  zeroAddress
 } from 'viem'
+import { E2E_MEMBER, artifact, publicClient, tokenBalance } from '../e2e-chain'
 import { expect } from '@playwright/test'
-import { artifact, publicClient, tokenBalance, E2E_MEMBER } from '../e2e-chain'
 
 const deploymentManifest = JSON.parse(
   readFileSync(

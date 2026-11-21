@@ -1,12 +1,12 @@
-import { describe, it, expect } from 'vitest'
 import {
-  formatSafeDepositRouterMultiplier,
-  parseSafeDepositRouterMultiplier,
-  calculateSherCompensation,
   calculateDepositFromSher,
-  validateSherCompensationInputs,
-  formatSherAmount
+  calculateSherCompensation,
+  formatSafeDepositRouterMultiplier,
+  formatSherAmount,
+  parseSafeDepositRouterMultiplier,
+  validateSherCompensationInputs
 } from '../model'
+import { describe, expect, it } from 'vitest'
 
 describe('safeDepositRouterUtil', () => {
   describe('formatSafeDepositRouterMultiplier', () => {

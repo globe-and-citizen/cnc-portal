@@ -1,9 +1,9 @@
-import { NETWORK, SUPPORTED_TOKENS, USDC_ADDRESS, USDT_ADDRESS, USDC_E_ADDRESS } from '@/constant'
-import { zeroAddress, formatEther, parseUnits } from 'viem'
+import { NETWORK, SUPPORTED_TOKENS, USDC_ADDRESS, USDC_E_ADDRESS, USDT_ADDRESS } from '@/constant'
+import { formatEther, parseUnits, zeroAddress } from 'viem'
+import EthereumIcon from '@/assets/Ethereum.png'
+import MaticIcon from '@/assets/matic-logo.png'
 import type { TokenId } from '@/constant'
 import USDCIcon from '@/assets/usdc.png'
-import MaticIcon from '@/assets/matic-logo.png'
-import EthereumIcon from '@/assets/Ethereum.png'
 
 const TOKEN_ICONS: Partial<Record<TokenId, string>> = {
   usdc: USDCIcon,

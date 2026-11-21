@@ -32,12 +32,12 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import SafeDepositRouterForm from '@/components/sections/SherTokenView/forms/SafeDepositRouterForm.vue'
-import ActionButton from '@/components/sections/SherTokenView/ActionButton.vue'
 import {
   useSafeDepositRouterDepositsEnabled,
   useSafeDepositRouterPaused
 } from '@/composables/safeDepositRouter/reads'
+import ActionButton from '@/components/sections/SherTokenView/ActionButton.vue'
+import SafeDepositRouterForm from '@/components/sections/SherTokenView/forms/SafeDepositRouterForm.vue'
 import { useTeamStore } from '@/stores'
 import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
 

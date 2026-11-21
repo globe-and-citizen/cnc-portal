@@ -1,12 +1,12 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { setActivePinia, createPinia } from 'pinia'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { createPinia, setActivePinia } from 'pinia'
 
 // Unmock the store file so we can test the real implementation
 vi.unmock('@/stores/currencyStore')
 import { nextTick, ref } from 'vue'
-import { useQueryFn } from '@/tests/mocks'
-import externalApiClient from '@/lib/external.axios'
 import { BACKEND_URL } from '@/constant'
+import externalApiClient from '@/lib/external.axios'
+import { useQueryFn } from '@/tests/mocks'
 
 // @tanstack/vue-query is mocked globally via composables.setup.ts
 // useQueryFn is exported from composables.mock.ts and used as the useQuery implementation

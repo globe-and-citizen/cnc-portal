@@ -85,11 +85,11 @@
 </template>
 
 <script setup lang="ts">
-import SafeTransactionActions from './SafeTransactionActions.vue'
 import { formatSafeTransactionValue, getSafeTransactionMethod } from '@/utils/safe/model'
-import { formatDateRelative } from '@/utils/format'
 import type { SafeTransaction } from '@/types/safe'
+import SafeTransactionActions from './SafeTransactionActions.vue'
 import type { SafeTransactionQueueRow } from '@/utils/safe/transactionState'
+import { formatDateRelative } from '@/utils/format'
 
 interface Props {
   transactions: SafeTransactionQueueRow[]

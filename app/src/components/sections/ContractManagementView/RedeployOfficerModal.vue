@@ -174,16 +174,16 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import type { Address } from 'viem'
-import { z } from 'zod'
 import {
   useInvestorName,
   useInvestorShareholders,
   useInvestorSymbol
 } from '@/composables/investor/reads'
-import { useOfficerRedeploy } from '@/composables/contracts/useOfficerRedeploy'
-import { formatDeployError } from '@/composables/contracts/useOfficerDeployment'
+import type { Address } from 'viem'
 import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
+import { formatDeployError } from '@/composables/contracts/useOfficerDeployment'
+import { useOfficerRedeploy } from '@/composables/contracts/useOfficerRedeploy'
+import { z } from 'zod'
 
 const isOpen = defineModel<boolean>('open', { default: false })
 

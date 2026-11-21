@@ -1,21 +1,3 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { ref } from 'vue'
-import { BaseError, type Abi, type Address } from 'viem'
-import { simulateContract, writeContract, waitForTransactionReceipt } from '@wagmi/core'
-import {
-  mockInvalidateQueries,
-  smartUseMutation,
-  useMutationFn,
-  useQueryClientFn
-} from '@/tests/mocks/composables.mock'
-import { mockLog } from '@/tests/mocks/utils.mock'
-import { SENTRY_WEB3_BOUNDARY_META_KEY } from '@/lib/sentry'
-import {
-  executeContractWrite,
-  useContractWritesV3,
-  ContractWriteRevertedError,
-  type ContractWriteV3Config
-} from '../useContractWritesV3'
 import {
   ABI,
   ADDRESS,
@@ -24,6 +6,24 @@ import {
   revertedReceipt,
   successReceipt
 } from './useContractWritesV3.test-utils'
+import { type Abi, type Address, BaseError } from 'viem'
+import {
+  ContractWriteRevertedError,
+  type ContractWriteV3Config,
+  executeContractWrite,
+  useContractWritesV3
+} from '../useContractWritesV3'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import {
+  mockInvalidateQueries,
+  smartUseMutation,
+  useMutationFn,
+  useQueryClientFn
+} from '@/tests/mocks/composables.mock'
+import { simulateContract, waitForTransactionReceipt, writeContract } from '@wagmi/core'
+import { SENTRY_WEB3_BOUNDARY_META_KEY } from '@/lib/sentry'
+import { mockLog } from '@/tests/mocks/utils.mock'
+import { ref } from 'vue'
 
 beforeEach(() => {
   vi.clearAllMocks()

@@ -1,8 +1,8 @@
-import { flushPromises } from '@vue/test-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { defineComponent } from 'vue'
-import { renderWithProviders } from '@/tests/mocks'
 import ClaimForm from '@/components/sections/CashRemunerationView/Form/ClaimForm.vue'
+import { defineComponent } from 'vue'
+import { flushPromises } from '@vue/test-utils'
+import { renderWithProviders } from '@/tests/mocks'
 
 const UploadFileDBStub = defineComponent({
   name: 'UploadFileDB',

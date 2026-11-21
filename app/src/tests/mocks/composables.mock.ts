@@ -1,7 +1,7 @@
-import { vi } from 'vitest'
+import type { CurrencyPair, Money, TokenBalance } from '@/types'
 import { computed, ref } from 'vue'
 import type { TokenConfig } from '@/constant'
-import type { CurrencyPair, Money, TokenBalance } from '@/types'
+import { vi } from 'vitest'
 
 const FALLBACK_TOKEN: TokenConfig = {
   id: 'native',
