@@ -63,7 +63,11 @@ applicable specialised guides before implementation:
 - Every work issue has a native GitHub parent, except explicit Sprint or backlog roots. Planned work follows Sprint → Goal → optional
   coordinator → delivery. Work directly needed for a specific Goal stays under that Goal. Other Sprint work belongs under the appropriate
   transverse Sprint category. A native issue has one parent: link Goal-owned work from a category when useful without moving it. Preserve
-  agreed scope and keep routine delivery evidence on the issue or PR that owns it.
+  agreed scope and keep routine delivery evidence on the issue or PR that owns it. When taking up work during an active Sprint, include its
+  delivery scope in that Sprint and ensure every issue for that scope has a native ancestor chain reaching the Sprint, including reused
+  backlog work. Preserve historical context when moving work; when only part of an older issue is committed, track that part in a scoped
+  Sprint child and link the older issue. An iteration field or a descriptive link alone does not establish Sprint ancestry. Unscheduled
+  backlog work remains in the backlog.
 - Use the repository issue and PR templates. Keep the current scope, validation evidence, limitations and blockers clear. Follow the
   [Kanban field contract](./docs/development-guide/kanban-project.md) for tracked field meanings; AGENTS defines the additional obligation
   for agents to perform and verify those lifecycle operations.
@@ -95,10 +99,12 @@ The repository contains the complete [`w3-feature-documentation` skill](./.agent
 [reference guide](./.agents/skills/w3-feature-documentation/references/feature-guide.md). Use it as the primary workflow for product feature
 documentation, together with the [CNC-specific supplement](./.agents/skills/cnc-feature-documentation/SKILL.md) and the repository's feature
 review contract. The copy is a versioned snapshot of the [W3 Frame skills repository](https://github.com/W3-Frame/agent-skills); update the
-complete bundle together after reviewing upstream changes.
+complete bundle together after reviewing upstream changes. The repository also includes
+[`w3-skill-improvement`](./.agents/skills/w3-skill-improvement/SKILL.md) for proposing reusable improvements to shared W3 skills.
 
-- **Codex:** the repository skill is in `.agents/skills/w3-feature-documentation/`.
-- **Claude Code:** `.claude/skills/w3-feature-documentation/` provides a discovery entry that loads the shared repository skill and guide.
+- **Codex:** the repository skills are in `.agents/skills/w3-feature-documentation/` and `.agents/skills/w3-skill-improvement/`.
+- **Claude Code:** `.claude/skills/w3-feature-documentation/` and `.claude/skills/w3-skill-improvement/` provide discovery entries that load
+  the corresponding shared repository skills.
 - **DeepSeek Harness:** its filesystem skill provider can discover the shared `.agents/skills/` directory when the skill registry and
   filesystem provider are enabled. Consult the
   [provider setup](https://github.com/deepseek-ai/deepseek-harness/tree/master/packages/skill/skill-filesystem) for the installed version.
