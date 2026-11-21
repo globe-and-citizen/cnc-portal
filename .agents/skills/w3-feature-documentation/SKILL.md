@@ -15,15 +15,17 @@ documentation or migrate identifiers merely to match a template.
 2. Read [the feature documentation guide](references/feature-guide.md) for the proposed catalogue, module files, identifiers, stories, and
    criteria. Use it as the default for a project without an established convention, not as authority for product requirements or permission
    to rewrite existing documentation. Respect the user's requested scope and language.
-3. Identify capabilities, actors, outcomes, shared product rules, and verifiable acceptance criteria from available evidence. Distinguish
+3. Identify modules, optional submodules, distinct capabilities (features), actors, stories, and verifiable acceptance criteria from
+   available evidence. For example, creating, editing, and deleting a task are separate features when each has its own outcome. Distinguish
    intended scope from delivery progress. Do not invent product decisions, test results, or acceptance. Mark provisional content and
    unresolved questions explicitly.
 4. Add or update the relevant catalogue and module entries consistently. For new documentation using this guide, derive story IDs from the
    feature root. When adding a second story, follow the guide's migration procedure for existing story and criterion IDs, including mapping
    and updating known references. Preserve existing requirements and unmigrated criteria; do not migrate other existing identifier
    conventions merely to match the guide.
-5. Assess status and coverage only against evidence actually examined. Leave criteria unchecked until verified; passing tests or a merged PR
-   alone do not prove product acceptance. Record unknowns as not assessed, separately from confirmed gaps.
+5. Assess each story and its criteria against evidence actually examined, following the guide’s status and review transitions. Keep intended
+   scope, specification, current access, coverage, test results, and human acceptance distinct. Reassess affected evidence and review after
+   behavior changes; record unknowns separately from confirmed gaps.
 6. Check consistency, links, and identifiers, and run applicable documentation checks. Report the files changed, unresolved decisions, and
    the evidence and checks actually used. Do not create issues, commit, or publish unless authorized by the request or repository
    instructions.

@@ -99,10 +99,12 @@ The repository contains the complete [`w3-feature-documentation` skill](./.agent
 [reference guide](./.agents/skills/w3-feature-documentation/references/feature-guide.md). Use it as the primary workflow for product feature
 documentation, together with the [CNC-specific supplement](./.agents/skills/cnc-feature-documentation/SKILL.md) and the repository's feature
 review contract. The copy is a versioned snapshot of the [W3 Frame skills repository](https://github.com/W3-Frame/agent-skills); update the
-complete bundle together after reviewing upstream changes.
+complete bundle together after reviewing upstream changes. The repository also includes
+[`w3-skill-improvement`](./.agents/skills/w3-skill-improvement/SKILL.md) for proposing reusable improvements to shared W3 skills.
 
-- **Codex:** the repository skill is in `.agents/skills/w3-feature-documentation/`.
-- **Claude Code:** `.claude/skills/w3-feature-documentation/` provides a discovery entry that loads the shared repository skill and guide.
+- **Codex:** the repository skills are in `.agents/skills/w3-feature-documentation/` and `.agents/skills/w3-skill-improvement/`.
+- **Claude Code:** `.claude/skills/w3-feature-documentation/` and `.claude/skills/w3-skill-improvement/` provide discovery entries that load
+  the corresponding shared repository skills.
 - **DeepSeek Harness:** its filesystem skill provider can discover the shared `.agents/skills/` directory when the skill registry and
   filesystem provider are enabled. Consult the
   [provider setup](https://github.com/deepseek-ai/deepseek-harness/tree/master/packages/skill/skill-filesystem) for the installed version.
