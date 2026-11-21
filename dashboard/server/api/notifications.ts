@@ -1,4 +1,4 @@
-import { sub } from 'date-fns'
+import { subtractDate } from '../utils/subtractDate'
 
 const notifications = [
   {
@@ -12,7 +12,7 @@ const notifications = [
       }
     },
     body: 'sent you a message',
-    date: sub(new Date(), { minutes: 7 }).toISOString()
+    date: subtractDate(new Date(), { minutes: 7 }).toISOString()
   },
   {
     id: 2,
@@ -20,7 +20,7 @@ const notifications = [
       name: 'Lindsay Walton'
     },
     body: 'subscribed to your email list',
-    date: sub(new Date(), { hours: 1 }).toISOString()
+    date: subtractDate(new Date(), { hours: 1 }).toISOString()
   },
   {
     id: 3,
@@ -33,7 +33,7 @@ const notifications = [
       }
     },
     body: 'sent you a message',
-    date: sub(new Date(), { hours: 3 }).toISOString()
+    date: subtractDate(new Date(), { hours: 3 }).toISOString()
   },
   {
     id: 4,
@@ -44,7 +44,7 @@ const notifications = [
       }
     },
     body: 'added you to a project',
-    date: sub(new Date(), { hours: 3 }).toISOString()
+    date: subtractDate(new Date(), { hours: 3 }).toISOString()
   },
   {
     id: 5,
@@ -55,7 +55,7 @@ const notifications = [
       }
     },
     body: 'abandonned cart',
-    date: sub(new Date(), { hours: 7 }).toISOString()
+    date: subtractDate(new Date(), { hours: 7 }).toISOString()
   },
   {
     id: 6,
@@ -66,7 +66,7 @@ const notifications = [
       }
     },
     body: 'purchased your product',
-    date: sub(new Date(), { days: 1, hours: 3 }).toISOString()
+    date: subtractDate(new Date(), { days: 1, hours: 3 }).toISOString()
   },
   {
     id: 7,
@@ -79,7 +79,7 @@ const notifications = [
       }
     },
     body: 'sent you a message',
-    date: sub(new Date(), { days: 2 }).toISOString()
+    date: subtractDate(new Date(), { days: 2 }).toISOString()
   },
   {
     id: 8,
@@ -91,7 +91,7 @@ const notifications = [
       }
     },
     body: 'requested a refund',
-    date: sub(new Date(), { days: 5, hours: 4 }).toISOString()
+    date: subtractDate(new Date(), { days: 5, hours: 4 }).toISOString()
   },
   {
     id: 9,
@@ -101,7 +101,7 @@ const notifications = [
       email: 'morgan.anderson@example.com'
     },
     body: 'sent you a message',
-    date: sub(new Date(), { days: 6 }).toISOString()
+    date: subtractDate(new Date(), { days: 6 }).toISOString()
   },
   {
     id: 10,
@@ -109,7 +109,7 @@ const notifications = [
       name: 'Drew Moore'
     },
     body: 'subscribed to your email list',
-    date: sub(new Date(), { days: 6 }).toISOString()
+    date: subtractDate(new Date(), { days: 6 }).toISOString()
   },
   {
     id: 11,
@@ -117,7 +117,7 @@ const notifications = [
       name: 'Riley Davis'
     },
     body: 'abandonned cart',
-    date: sub(new Date(), { days: 7 }).toISOString()
+    date: subtractDate(new Date(), { days: 7 }).toISOString()
   },
   {
     id: 12,
@@ -125,7 +125,7 @@ const notifications = [
       name: 'Jordan Taylor'
     },
     body: 'subscribed to your email list',
-    date: sub(new Date(), { days: 9 }).toISOString()
+    date: subtractDate(new Date(), { days: 9 }).toISOString()
   },
   {
     id: 13,
@@ -137,7 +137,7 @@ const notifications = [
       }
     },
     body: 'subscribed to your email list',
-    date: sub(new Date(), { days: 10 }).toISOString()
+    date: subtractDate(new Date(), { days: 10 }).toISOString()
   },
   {
     id: 14,
@@ -149,7 +149,7 @@ const notifications = [
       }
     },
     body: 'subscribed to your email list',
-    date: sub(new Date(), { days: 11 }).toISOString()
+    date: subtractDate(new Date(), { days: 11 }).toISOString()
   },
   {
     id: 15,
@@ -157,7 +157,7 @@ const notifications = [
       name: 'Morgan Anderson'
     },
     body: 'purchased your product',
-    date: sub(new Date(), { days: 12 }).toISOString()
+    date: subtractDate(new Date(), { days: 12 }).toISOString()
   },
   {
     id: 16,
@@ -168,7 +168,7 @@ const notifications = [
       }
     },
     body: 'subscribed to your email list',
-    date: sub(new Date(), { days: 13 }).toISOString()
+    date: subtractDate(new Date(), { days: 13 }).toISOString()
   },
   {
     id: 17,
@@ -176,7 +176,7 @@ const notifications = [
       name: 'Riley Davis'
     },
     body: 'subscribed to your email list',
-    date: sub(new Date(), { days: 14 }).toISOString()
+    date: subtractDate(new Date(), { days: 14 }).toISOString()
   },
   {
     id: 18,
@@ -184,7 +184,7 @@ const notifications = [
       name: 'Jordan Taylor'
     },
     body: 'subscribed to your email list',
-    date: sub(new Date(), { days: 15 }).toISOString()
+    date: subtractDate(new Date(), { days: 15 }).toISOString()
   },
   {
     id: 19,
@@ -196,7 +196,7 @@ const notifications = [
       }
     },
     body: 'subscribed to your email list',
-    date: sub(new Date(), { days: 16 }).toISOString()
+    date: subtractDate(new Date(), { days: 16 }).toISOString()
   },
   {
     id: 20,
@@ -208,7 +208,7 @@ const notifications = [
       }
     },
     body: 'purchased your product',
-    date: sub(new Date(), { days: 17 }).toISOString()
+    date: subtractDate(new Date(), { days: 17 }).toISOString()
   },
   {
     id: 21,
@@ -216,7 +216,7 @@ const notifications = [
       name: 'Morgan Anderson'
     },
     body: 'abandonned cart',
-    date: sub(new Date(), { days: 17 }).toISOString()
+    date: subtractDate(new Date(), { days: 17 }).toISOString()
   },
   {
     id: 22,
@@ -224,7 +224,7 @@ const notifications = [
       name: 'Drew Moore'
     },
     body: 'subscribed to your email list',
-    date: sub(new Date(), { days: 18 }).toISOString()
+    date: subtractDate(new Date(), { days: 18 }).toISOString()
   },
   {
     id: 23,
@@ -232,7 +232,7 @@ const notifications = [
       name: 'Riley Davis'
     },
     body: 'subscribed to your email list',
-    date: sub(new Date(), { days: 19 }).toISOString()
+    date: subtractDate(new Date(), { days: 19 }).toISOString()
   },
   {
     id: 24,
@@ -243,7 +243,7 @@ const notifications = [
       }
     },
     body: 'subscribed to your email list',
-    date: sub(new Date(), { days: 20 }).toISOString()
+    date: subtractDate(new Date(), { days: 20 }).toISOString()
   },
   {
     id: 25,
@@ -255,7 +255,7 @@ const notifications = [
       }
     },
     body: 'subscribed to your email list',
-    date: sub(new Date(), { days: 20 }).toISOString()
+    date: subtractDate(new Date(), { days: 20 }).toISOString()
   },
   {
     id: 26,
@@ -267,7 +267,7 @@ const notifications = [
       }
     },
     body: 'abandonned cart',
-    date: sub(new Date(), { days: 21 }).toISOString()
+    date: subtractDate(new Date(), { days: 21 }).toISOString()
   },
   {
     id: 27,
@@ -275,7 +275,7 @@ const notifications = [
       name: 'Morgan Anderson'
     },
     body: 'subscribed to your email list',
-    date: sub(new Date(), { days: 22 }).toISOString()
+    date: subtractDate(new Date(), { days: 22 }).toISOString()
   }
 ]
 

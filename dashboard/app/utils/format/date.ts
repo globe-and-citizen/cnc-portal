@@ -172,3 +172,16 @@ export function formatDuration(totalMinutes: number | null | undefined): string 
 
   return sign + parts.join(' ')
 }
+
+/** Inbox timestamps preserve the compact day-first display. */
+export function formatInboxDate(value: DateInput, now: DateInput = new Date()): string {
+  const date = toDayjs(value)
+  const today = toDayjs(now)
+  if (!date || !today) return EMPTY_VALUE
+  return date.isSame(today, 'day') ? date.format('HH:mm') : date.format('DD MMM')
+}
+
+/** Full timestamp in the inbox message header. */
+export function formatInboxDateTime(value: DateInput): string {
+  return toDayjs(value)?.format('DD MMM HH:mm') ?? EMPTY_VALUE
+}
