@@ -41,7 +41,7 @@
     "@types/node": "^24.10.1",
     "@vitejs/plugin-vue": "^6.0.10",
     "@vue/test-utils": "^2.5.1",
-    "eslint": "^9.39.1",
+    "eslint": "^10.15.0",
     "jsdom": "^29.1.1",
     "typescript": "^6.0.3",
     "vitest": "^5.1.0",
