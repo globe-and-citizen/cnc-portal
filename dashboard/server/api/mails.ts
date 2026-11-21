@@ -1,4 +1,4 @@
-import { sub } from 'date-fns'
+import { subtractDate } from '../utils/subtractDate'
 
 const mails = [
   {
@@ -62,7 +62,7 @@ Jordan
 Jordan Brown
 Lead Developer | Tech Solutions
 Mobile: +1 (555) 234-5678`,
-    date: sub(new Date(), { minutes: 7 }).toISOString()
+    date: subtractDate(new Date(), { minutes: 7 }).toISOString()
   },
   {
     id: 3,
@@ -85,7 +85,7 @@ Let me know what you think!
 
 Best,
 Taylor`,
-    date: sub(new Date(), { hours: 3 }).toISOString()
+    date: subtractDate(new Date(), { hours: 3 }).toISOString()
   },
   {
     id: 4,
@@ -116,7 +116,7 @@ Thanks in advance,
 Morgan White
 Senior Project Manager
 Tel: (555) 234-5678`,
-    date: sub(new Date(), { days: 1 }).toISOString()
+    date: subtractDate(new Date(), { days: 1 }).toISOString()
   },
   {
     id: 5,
@@ -152,7 +152,7 @@ Best regards,
 Casey Gray
 Travel Coordinator
 Office: (555) 345-6789`,
-    date: sub(new Date(), { days: 1 }).toISOString()
+    date: subtractDate(new Date(), { days: 1 }).toISOString()
   },
   {
     id: 6,
@@ -181,7 +181,7 @@ Best regards,
 Jamie Johnson
 Chief Financial Officer
 Ext: 4567`,
-    date: sub(new Date(), { days: 2 }).toISOString()
+    date: subtractDate(new Date(), { days: 2 }).toISOString()
   },
   {
     id: 7,
@@ -220,7 +220,7 @@ Riley Davis
 DevOps Lead
 Technical Operations
 M: (555) 777-8888`,
-    date: sub(new Date(), { days: 2 }).toISOString()
+    date: subtractDate(new Date(), { days: 2 }).toISOString()
   },
   {
     id: 8,
@@ -251,7 +251,7 @@ Kelly Wilson
 HR Director
 Human Resources Department
 Tel: (555) 999-0000`,
-    date: sub(new Date(), { days: 2 }).toISOString()
+    date: subtractDate(new Date(), { days: 2 }).toISOString()
   },
   {
     id: 9,
@@ -287,7 +287,7 @@ Thanks in advance,
 Drew Moore
 UX Design Lead
 Product Design Team`,
-    date: sub(new Date(), { days: 5 }).toISOString()
+    date: subtractDate(new Date(), { days: 5 }).toISOString()
   },
   {
     id: 10,
@@ -321,7 +321,7 @@ Jordan Taylor
 Corporate Wellness Coordinator
 Downtown Fitness Center
 Tel: (555) 123-7890`,
-    date: sub(new Date(), { days: 5 }).toISOString()
+    date: subtractDate(new Date(), { days: 5 }).toISOString()
   },
   {
     id: 11,
@@ -360,7 +360,7 @@ Regards,
 Morgan Anderson
 Benefits Coordinator
 HR Department`,
-    date: sub(new Date(), { days: 12 }).toISOString()
+    date: subtractDate(new Date(), { days: 12 }).toISOString()
   },
   {
     id: 12,
@@ -396,7 +396,7 @@ Casey
 Casey Thomas
 Book Club Coordinator
 Internal Culture Committee`,
-    date: sub(new Date(), { months: 1 }).toISOString()
+    date: subtractDate(new Date(), { months: 1 }).toISOString()
   },
   {
     id: 13,
@@ -432,7 +432,7 @@ Cooking together,
 Jamie Jackson
 Community Engagement Committee
 Ext. 5432`,
-    date: sub(new Date(), { months: 1 }).toISOString()
+    date: subtractDate(new Date(), { months: 1 }).toISOString()
   },
   {
     id: 14,
@@ -468,7 +468,7 @@ Namaste,
 Riley White
 Corporate Wellness Instructor
 Wellness & Benefits Team`,
-    date: sub(new Date(), { months: 1 }).toISOString()
+    date: subtractDate(new Date(), { months: 1 }).toISOString()
   },
   {
     id: 15,
@@ -505,7 +505,7 @@ Best regards,
 Kelly Harris
 Digital Strategy Consultant
 Author, "Digital Transformation in the Modern Age"`,
-    date: sub(new Date(), { months: 1 }).toISOString()
+    date: subtractDate(new Date(), { months: 1 }).toISOString()
   },
   {
     id: 16,
@@ -544,7 +544,7 @@ Best regards,
 Drew Martin
 Conference Director
 TechCon 2024`,
-    date: sub(new Date(), { months: 1, days: 4 }).toISOString()
+    date: subtractDate(new Date(), { months: 1, days: 4 }).toISOString()
   },
   {
     id: 17,
@@ -580,7 +580,7 @@ Alex Thompson
 Curator
 Metropolitan Art Gallery
 Tel: (555) 234-5678`,
-    date: sub(new Date(), { months: 1, days: 15 }).toISOString()
+    date: subtractDate(new Date(), { months: 1, days: 15 }).toISOString()
   },
   {
     id: 18,
@@ -618,7 +618,7 @@ Best regards,
 Jordan Garcia
 Event Coordinator
 Professional Networking Association`,
-    date: sub(new Date(), { months: 1, days: 18 }).toISOString()
+    date: subtractDate(new Date(), { months: 1, days: 18 }).toISOString()
   },
   {
     id: 19,
@@ -664,7 +664,7 @@ Making a difference together,
 Taylor Rodriguez
 Community Outreach Coordinator
 Corporate Social Responsibility Team`,
-    date: sub(new Date(), { months: 1, days: 25 }).toISOString()
+    date: subtractDate(new Date(), { months: 1, days: 25 }).toISOString()
   },
   {
     id: 20,
@@ -703,7 +703,7 @@ Morgan Lopez
 Service Coordinator
 Downtown Auto Care
 Emergency: (555) 987-6544`,
-    date: sub(new Date(), { months: 2 }).toISOString()
+    date: subtractDate(new Date(), { months: 2 }).toISOString()
   }
 ]
 
