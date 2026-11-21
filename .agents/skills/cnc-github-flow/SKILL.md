@@ -38,6 +38,16 @@ That guide owns the formats for every contributor; this section retains the exis
    gh api --method POST "repos/globe-and-citizen/cnc-portal/issues/<parent-number>/sub_issues" -F sub_issue_id="$CHILD_ID"
    ```
 
+   Before starting work during an active Sprint, include the delivery scope in that Sprint. Identify the current Sprint from its plan and
+   Project iteration; do not infer the Sprint from the calendar alone. Read each work issue and its complete native parent chain through the
+   Sprint root, including cross-repository ancestors. A matching iteration, a checklist entry, or a related-issue link does not replace this
+   chain. For a new or reused backlog issue outside the current tree, place the committed scope under the appropriate current Goal or
+   category. If its entire scope is moving, reparent it and retain links to its former context; if only part is committed, create or reuse a
+   bounded delivery issue under the current Sprint and link it to the older issue without moving unrelated scope. Preserve previous Sprint
+   outcomes, dates, acceptance and other descendants; reconcile both affected parent chains and Project fields. Verify the full resulting
+   chain and the relevant parent child lists by readback. If the Sprint, scope, ownership, or supported native relationship is unclear,
+   leave the discrepancy visible and resolve it before treating placement as complete; do not silently assign unrelated work to the Sprint.
+
 5. Create specific Sprint outcomes using the [Sprint Goal template](../../../.github/ISSUE_TEMPLATE/sprint_goal.md) and transverse
    coordinators using the [Sprint Category template](../../../.github/ISSUE_TEMPLATE/sprint_category.md). Preserve Goal outcomes and keep
    delivery criteria and evidence on each owning issue.
@@ -50,9 +60,9 @@ That guide owns the formats for every contributor; this section retains the exis
 
 ## Maintain the issue's kanban card
 
-1. Before implementation, verify the tracking issue's membership and fields under the
-   [field contract](../../../docs/development-guide/kanban-project.md). When implementation actually begins, set Start date and the
-   appropriate Status. Preserve an earlier evidenced Start date when resuming work.
+1. Before implementation, verify the full native Sprint ancestry as described above, then verify the tracking issue's membership and fields
+   under the [field contract](../../../docs/development-guide/kanban-project.md). When implementation actually begins, set Start date and
+   the appropriate Status. Preserve an earlier evidenced Start date when resuming work.
 2. At implementation completion, set End date to the actual finish date and move to Implementation Done or Validation as appropriate.
    Required review or acceptance remains pending under the issue's own criteria.
 3. On an agreed scope, Sprint, priority, blocker or lifecycle change, reconcile the affected card fields. Reopening implementation clears
