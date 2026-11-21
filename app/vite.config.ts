@@ -141,7 +141,7 @@ export default defineConfig(async ({ mode }) => {
       // `viem/accounts` is pulled in only by the e2e mock connector and would
       // otherwise be discovered late, triggering an "Outdated Optimize Dep"
       // reload that breaks Playwright runs against a cold dev server.
-      // `xlsx` is only reached via the lazy `import('xlsx')` in the accounting
+      // `xlsx-js-style` is only reached via a lazy import in the accounting
       // export — without this, the first Export click re-optimizes and reloads
       // the page, silently aborting the download.
       // The ProseMirror packages back the Nuxt UI `UEditor` (weekly goals memo).
@@ -149,7 +149,7 @@ export default defineConfig(async ({ mode }) => {
       // of a keyed plugin" TipTap error and mid-session re-optimize reloads.
       include: [
         'viem/accounts',
-        'xlsx',
+        'xlsx-js-style',
         '@nuxt/ui > prosemirror-state',
         '@nuxt/ui > prosemirror-transform',
         '@nuxt/ui > prosemirror-model',
