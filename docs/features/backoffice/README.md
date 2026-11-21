@@ -52,7 +52,7 @@ is not sufficient.
 
 ## Current Evidence
 
-**Implementation evidence reviewed against:** `ec9d3c52004dea273743e7aa2032988bdcdd7dd5`
+**Implementation evidence reviewed against:** `c01affa2bd13fdad4bc548d5ede8cf39f8d054e0`
 
 - [Dashboard navigation and module entry points](../../../dashboard/app/layouts/default.vue)
 - [Administrator access guard](../../../dashboard/app/middleware/auth.global.ts)

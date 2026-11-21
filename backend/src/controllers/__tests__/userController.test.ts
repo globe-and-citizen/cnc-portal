@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { User } from '@prisma/client';
+import { User } from '../../generated/prisma/client';
 import express, { NextFunction, Request, Response } from 'express';
 import request from 'supertest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -344,7 +344,10 @@ describe('User Controller', () => {
         query: { page: undefined, limit: undefined, search: undefined },
       } as unknown as Request;
       const json = vi.fn();
-      const res = { status: vi.fn().mockReturnValue({ json }) } as unknown as Response;
+      const res = {
+        locals: { validatedQuery: {} },
+        status: vi.fn().mockReturnValue({ json }),
+      } as unknown as Response;
 
       vi.spyOn(prisma.user, 'findMany').mockResolvedValue([] as any);
       vi.spyOn(prisma.user, 'count').mockResolvedValue(0);

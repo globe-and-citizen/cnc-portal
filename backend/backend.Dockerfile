@@ -13,7 +13,7 @@ COPY package*.json ./
 
 
 # Install dependencies including nodemon for development
-RUN npm install
+RUN npm ci
 
 # Copy the rest of the application code to the working directory
 COPY . .
@@ -36,6 +36,8 @@ ARG PORT
 ENV PORT=${PORT:-3000}
 
 RUN npm run build
+
+ENV NODE_ENV=production
 
 # Command to run the application in production mode
 CMD ["npm", "run", "prod"]

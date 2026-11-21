@@ -1,6 +1,6 @@
 // backend/prisma/seeders/expenses.ts
 
-import { PrismaClient, Team } from '@prisma/client';
+import { PrismaClient, Team } from '../../src/generated/prisma/client';
 import { type SeedConfig } from './config';
 import { faker } from '@faker-js/faker';
 

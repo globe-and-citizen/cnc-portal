@@ -1,14 +1,14 @@
-# Use Node.js 18 AS the base image
-FROM node:22-alpine AS development  
+# Match the Node version used by the application and CI.
+FROM node:24-alpine AS development
 
 # Set the working directory inside the container
 WORKDIR /app
 
 # Copy package.json and package-lock.json to the working directory
-COPY ./package.json ./  
+COPY ./package*.json ./
 
 # Install dependencies
-RUN npm install
+RUN npm ci
 
 # Copy the rest of the application code to the working directory
 COPY . .
@@ -19,13 +19,27 @@ EXPOSE 5173
 # Command to run the application in development mode
 CMD ["npm", "run", "dev"]
 
-FROM node:22-alpine AS build
+FROM node:24-alpine AS build
 
 # Set the working directory in the container
 WORKDIR /app
 
 # Copy the rest of the application code
 COPY --from=development /app .
+
+ARG VITE_APP_BACKEND_URL
+ARG VITE_APP_NETWORK_ALIAS
+ARG VITE_APP_BLOCK_EXPLORER_URL
+ARG VITE_APP_CHAIN_ID
+ARG VITE_APP_CURRENCY_SYMBOL
+ARG VITE_APP_NETWORK_NAME
+ARG VITE_APP_POLYGON_RPC_URL
+ARG VITE_APP_RPC_URL
+ARG VITE_APP_SAFE_API_KEY
+ARG VITE_APP_SENTRY_DSN
+ARG VITE_APP_SENTRY_ENVIRONMENT
+ARG VITE_APP_WIDGET_URL
+ARG VITE_APP_RELEASE
 
 RUN npm run build-only
 

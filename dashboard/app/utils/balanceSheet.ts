@@ -1,19 +1,21 @@
 import type { LedgerEntry, LedgerCategory } from '~/utils/accounting'
 import type { RealizedTrade } from '~/utils/incomeStatement'
 import type { PolymarketPosition } from '~/types/polymarket'
+import { contractCost, ledgerEntryFee } from '~/utils/tradingFees'
 
 /**
  * Balance Sheet for Polymarket activity — issue #1883.
  *
  * Assets = Liabilities + Equity, as of a chosen date.
  *
- *  Assets       Cash + Open contracts (at cost basis)
+ *  Assets       Cash + Open contracts (at cost basis, before trading fees)
  *  Liabilities  none — a Polymarket account carries no debt
- *  Equity       Owner capital (net deposits) + Retained earnings (realized P&L + rewards)
+ *  Equity       Owner capital (net deposits)
+ *               + Retained earnings (realized P&L + rewards − trading fees)
  *
  * Booked at cost basis, the identity holds *exactly* for any "as of" date:
  * cash and contract cost are reconstructed from the dated activity feed, and
- * algebraically  cash + contractsAtCost ≡ netDeposits + realizedPnl + rewards.
+ * algebraically  cash + contractsAtCost ≡ netDeposits + realizedPnl + rewards − fees.
  *
  * Current market value and unrealized P&L are provided as a memo; they come
  * from the live `/positions` feed and are only meaningful when "as of" is now.
@@ -24,7 +26,7 @@ export interface BalanceSheet {
   asOf: number
   // Assets (at cost basis)
   cash: number
-  /** Σ BUY/SPLIT cost — opening cost of every contract ever acquired. */
+  /** Σ BUY/SPLIT cost before trading fees — opening cost of every contract ever acquired. */
   acquisitionCost: number
   /** Σ cost basis of every disposal (SELL/REDEEM/MERGE/RESOLUTION_LOSS). */
   disposedCost: number
@@ -39,6 +41,8 @@ export interface BalanceSheet {
   realizedPnl: number
   /** Σ reward income over the reporting window — sub-component of retainedEarnings. */
   rewards: number
+  /** Σ trading fees paid over the reporting window — deducted from retainedEarnings. */
+  tradingFees: number
   /**
    * Σ cashFlow of SETTLEMENT_ADJUSTMENT entries — booked as an equity item so
    * identity #3 holds when the cash identity adds an off-activity delta.
@@ -76,14 +80,16 @@ export function buildBalanceSheet(input: BuildBalanceSheetInput): BalanceSheet {
   let acquisitionCost = 0
   let ownerCapital = 0
   let rewards = 0
+  let tradingFees = 0
   let settlementAdjustments = 0
   for (const entry of input.ledgerEntries) {
     if (entry.timestamp > asOf) {
       continue
     }
     cash += entry.cashFlow
+    tradingFees += ledgerEntryFee(entry)
     if (ACQUISITION_CATEGORIES.has(entry.category)) {
-      acquisitionCost += entry.amount
+      acquisitionCost += contractCost(entry)
     } else if (entry.category === 'DEPOSIT') {
       ownerCapital += entry.amount
     } else if (entry.category === 'WITHDRAWAL') {
@@ -109,7 +115,7 @@ export function buildBalanceSheet(input: BuildBalanceSheetInput): BalanceSheet {
   const totalAssets = cash + openContractsAtCost
   // Settlement deltas hit equity on the same line as P&L — they are realized
   // cash impacts that the /positions feed cannot absorb on its own.
-  const retainedEarnings = realizedPnl + rewards + settlementAdjustments
+  const retainedEarnings = realizedPnl + rewards - tradingFees + settlementAdjustments
   const totalEquity = ownerCapital + retainedEarnings
   const totalLiabilities = 0
 
@@ -131,6 +137,7 @@ export function buildBalanceSheet(input: BuildBalanceSheetInput): BalanceSheet {
     ownerCapital,
     realizedPnl,
     rewards,
+    tradingFees,
     settlementAdjustments,
     retainedEarnings,
     totalEquity,

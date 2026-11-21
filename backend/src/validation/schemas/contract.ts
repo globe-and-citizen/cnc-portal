@@ -61,6 +61,8 @@ export const getContractsQuerySchema = z.object({
 // Bulk officer-version sync request body. `dryRun` resolves every Officer and
 // reports the plan without writing — the rehearsal an admin runs before
 // committing the realignment.
-export const syncOfficerVersionsBodySchema = z.object({
-  dryRun: z.boolean().optional(),
-});
+export const syncOfficerVersionsBodySchema = z
+  .object({
+    dryRun: z.boolean().optional(),
+  })
+  .default({});

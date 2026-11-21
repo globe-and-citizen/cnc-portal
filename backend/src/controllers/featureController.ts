@@ -1,5 +1,7 @@
+import type { FunctionNameParam } from '../validation/featureValidation';
 import { Request, Response } from 'express';
 import { errorResponse } from '../utils/utils';
+
 import {
   featureExists,
   findAllFeatures,
@@ -26,7 +28,7 @@ export const listFeatures = async (_req: Request, res: Response) => {
 };
 
 /** GET /features/:functionName — Get a single feature */
-export const getFeatureByName = async (req: Request, res: Response) => {
+export const getFeatureByName = async (req: Request<FunctionNameParam>, res: Response) => {
   try {
     const { functionName } = req.params;
     const feature = await findFeatureByName(functionName);
@@ -59,7 +61,7 @@ export const createNewFeature = async (req: Request, res: Response) => {
 };
 
 /** PUT /features/:functionName — Update a feature's status */
-export const updateFeatureByName = async (req: Request, res: Response) => {
+export const updateFeatureByName = async (req: Request<FunctionNameParam>, res: Response) => {
   try {
     const { functionName } = req.params;
     const { status } = req.body;
@@ -77,7 +79,7 @@ export const updateFeatureByName = async (req: Request, res: Response) => {
 };
 
 /** DELETE /features/:functionName — Delete a feature and its overrides */
-export const deleteFeatureByName = async (req: Request, res: Response) => {
+export const deleteFeatureByName = async (req: Request<FunctionNameParam>, res: Response) => {
   try {
     const { functionName } = req.params;
 
@@ -97,7 +99,7 @@ export const deleteFeatureByName = async (req: Request, res: Response) => {
 };
 
 /** POST /features/:functionName/teams — Create a team override */
-export const createOverride = async (req: Request, res: Response) => {
+export const createOverride = async (req: Request<FunctionNameParam>, res: Response) => {
   try {
     const { functionName } = req.params;
     const { teamId, status } = req.body;
@@ -129,18 +131,19 @@ export const createOverride = async (req: Request, res: Response) => {
 /** PUT /features/:functionName/teams/:teamId — Update a team override */
 export const updateOverride = async (req: Request, res: Response) => {
   try {
-    const { functionName, teamId } = req.params;
+    const functionName = String(req.params.functionName);
+    const teamId = Number(req.params.teamId);
     const { status } = req.body;
 
     if (!(await featureExists(functionName))) {
       return errorResponse(404, `Feature "${functionName}" not found`, res);
     }
 
-    if (!(await teamExists(parseInt(teamId)))) {
+    if (!(await teamExists(teamId))) {
       return errorResponse(404, `Team with ID ${teamId} not found`, res);
     }
 
-    if (!(await overrideExists(functionName, parseInt(teamId)))) {
+    if (!(await overrideExists(functionName, teamId))) {
       return errorResponse(
         404,
         `No override found for team ${teamId} on feature "${functionName}". Use POST to create.`,
@@ -148,7 +151,7 @@ export const updateOverride = async (req: Request, res: Response) => {
       );
     }
 
-    const override = await patchOverride(functionName, parseInt(teamId), status);
+    const override = await patchOverride(functionName, teamId, status);
 
     return res.status(200).json(override);
   } catch (error) {
@@ -159,13 +162,14 @@ export const updateOverride = async (req: Request, res: Response) => {
 /** DELETE /features/:functionName/teams/:teamId — Remove a team override */
 export const removeOverride = async (req: Request, res: Response) => {
   try {
-    const { functionName, teamId } = req.params;
+    const functionName = String(req.params.functionName);
+    const teamId = Number(req.params.teamId);
 
     if (!(await featureExists(functionName))) {
       return errorResponse(404, `Feature "${functionName}" not found`, res);
     }
 
-    if (!(await overrideExists(functionName, parseInt(teamId)))) {
+    if (!(await overrideExists(functionName, teamId))) {
       return errorResponse(
         404,
         `No override found for team ${teamId} on feature "${functionName}"`,
@@ -173,7 +177,7 @@ export const removeOverride = async (req: Request, res: Response) => {
       );
     }
 
-    const deleted = await removeOverrideRecord(functionName, parseInt(teamId));
+    const deleted = await removeOverrideRecord(functionName, teamId);
     if (!deleted) {
       return errorResponse(500, `Failed to delete override`, res);
     }
@@ -187,13 +191,13 @@ export const removeOverride = async (req: Request, res: Response) => {
 //Check if submit restriction is active for a team (used by frontend).
 export const checkSubmitRestriction = async (req: Request, res: Response) => {
   try {
-    const teamIdParam = req.params.id;
+    const { id: teamIdParam } = req.params;
 
     if (!teamIdParam) {
       return errorResponse(400, 'Team ID is required', res);
     }
 
-    const teamId = parseInt(teamIdParam, 10);
+    const teamId = Number(teamIdParam);
 
     if (isNaN(teamId) || teamId <= 0) {
       return errorResponse(400, 'Team ID must be a positive integer', res);

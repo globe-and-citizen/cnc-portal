@@ -8,7 +8,4 @@ Sentry.init({
   // Sample 10% of backend transactions for distributed tracing.
   // Must be > 0 to link frontend traces to backend spans.
   tracesSampleRate: 0.1,
-  // Setting this option to true will send default PII data to Sentry.
-  // For example, automatic IP address collection on events.
-  sendDefaultPii: true,
 });

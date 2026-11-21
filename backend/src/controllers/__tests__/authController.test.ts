@@ -1,4 +1,4 @@
-import { User } from '@prisma/client';
+import { User } from '../../generated/prisma/client';
 import express from 'express';
 import rateLimit from 'express-rate-limit';
 import jwt from 'jsonwebtoken';
@@ -30,8 +30,8 @@ vi.mock('../../utils', async () => {
   };
 });
 
-vi.mock('../../utils/dependenciesUtil', async () => {
-  const actual = await vi.importActual('../../utils/dependenciesUtil');
+vi.mock('../../utils/prismaClient', async () => {
+  const actual = await vi.importActual('../../utils/prismaClient');
   return {
     ...actual,
     prisma: mockPrisma,
@@ -156,8 +156,7 @@ describe('authController', () => {
       expect(typeof response.body.accessToken).toBe('string');
 
       const updateCall = mockPrisma.user.update.mock.calls[0]?.[0] as
-        | { where?: { address?: string }; data?: { nonce?: string } }
-        | undefined;
+        { where?: { address?: string }; data?: { nonce?: string } } | undefined;
       expect(updateCall).toEqual({
         where: { address: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266' },
         data: { nonce: expect.any(String) },

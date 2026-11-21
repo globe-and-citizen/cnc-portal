@@ -1,6 +1,6 @@
 // backend/prisma/seeders/notifications.ts
 
-import { PrismaClient, User } from '@prisma/client';
+import { PrismaClient, User } from '../../src/generated/prisma/client';
 import { type SeedConfig } from './config';
 import { distributeDate } from './helpers';
 import { faker } from '@faker-js/faker';

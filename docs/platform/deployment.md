@@ -230,6 +230,10 @@ npx hardhat run scripts/initialize-beacons.ts --network mainnet
 
 #### Step 1: Database Setup
 
+The backend generates its Prisma client during the image build. Prisma CLI configuration is in `backend/prisma.config.ts`; database commands
+require `DATABASE_URL`, while client generation does not. PostgreSQL connections use the Prisma PostgreSQL adapter. Its connection pool and
+TLS behavior come from the PostgreSQL driver; validate these settings for each deployment environment before rollout.
+
 ```bash
 cd backend/
 
@@ -412,9 +416,13 @@ gcloud run domain-mappings create \
 
 #### Full Stack Deployment
 
+Compose reads the frontend's public build variables from the specified environment file. Values prefixed with `VITE_` are embedded in the
+frontend bundle and must not contain secrets. Environment files are excluded from image build contexts; backend runtime variables are
+supplied by its Compose `env_file` instead.
+
 ```bash
-# Build and start all services
-docker-compose up -d
+# Build and start all services with the frontend build configuration
+docker-compose --env-file ./app/.env.production up -d --build
 
 # View logs
 docker-compose logs -f

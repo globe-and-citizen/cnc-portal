@@ -1,5 +1,6 @@
 import type { LedgerEntry } from '~/utils/accounting'
 import type { RealizedTrade } from '~/utils/incomeStatement'
+import { contractCost, ledgerEntryFee } from '~/utils/tradingFees'
 
 /**
  * Double-entry General Ledger for Polymarket activity — issue #1884.
@@ -13,11 +14,15 @@ import type { RealizedTrade } from '~/utils/incomeStatement'
  * Booking rules
  *  - Deposit            Dr Cash            Cr Owner Capital
  *  - Withdrawal         Dr Owner Capital   Cr Cash
- *  - Buy / Split        Dr Open Contracts  Cr Cash
+ *  - Buy / Split        Dr Open Contracts (cost before fee) + Dr Trading Fees  Cr Cash
  *  - Reward             Dr Cash            Cr Rewards Income
- *  - Sell / Redeem      Dr Cash (proceeds) Cr Open Contracts (cost)
+ *  - Sell / Redeem      Dr Cash (received) + Dr Trading Fees  Cr Open Contracts (cost)
  *                       + Cr Trading Gains  or  Dr Trading Losses
  *  - Loss at resolution Dr Trading Losses  Cr Open Contracts
+ *
+ * Polymarket bakes its fee into each fill's price, so the Trading Fees lines
+ * carry the gap between the quoted value and the settled USDC; gains and
+ * losses are measured before fees.
  */
 
 export type AccountName
@@ -27,6 +32,7 @@ export type AccountName
     | 'Trading Gains'
     | 'Trading Losses'
     | 'Rewards Income'
+    | 'Trading Fees'
     | 'Settlement Adjustments'
 
 type AccountClass = 'ASSET' | 'EQUITY' | 'INCOME' | 'EXPENSE'
@@ -39,6 +45,7 @@ const ACCOUNT_CLASS: Record<AccountName, AccountClass> = {
   'Trading Gains': 'INCOME',
   'Trading Losses': 'EXPENSE',
   'Rewards Income': 'INCOME',
+  'Trading Fees': 'EXPENSE',
   'Settlement Adjustments': 'EXPENSE'
 }
 
@@ -106,6 +113,11 @@ function credit(account: AccountName, amount: number): JournalLine {
   return { account, debit: 0, credit: round6(amount) }
 }
 
+/** True when an amount survives USDC rounding, i.e. deserves its own journal line. */
+function isBookable(amount: number): boolean {
+  return round6(amount) > 0
+}
+
 const DISPOSAL_LABEL: Record<RealizedTrade['kind'], string> = {
   SELL: 'Sell',
   REDEEM: 'Redeem',
@@ -114,10 +126,47 @@ const DISPOSAL_LABEL: Record<RealizedTrade['kind'], string> = {
 }
 
 /**
- * Builds just the journal entries (no trial balance). Exported so the merged
- * Activity Ledger can attach journal lines to its activity rows without
- * recomputing the trial balance on every render.
+ * Journal lines of a buy or split: the contracts at cost before fee, the fee
+ * as an expense, the settled USDC out of cash. Shared with the merged
+ * Activity Ledger so both views book an acquisition identically.
  */
+export function acquisitionLines(entry: LedgerEntry): JournalLine[] {
+  const fee = ledgerEntryFee(entry)
+  const lines = [debit('Open Contracts', contractCost(entry))]
+  if (isBookable(fee)) {
+    lines.push(debit('Trading Fees', fee))
+  }
+  lines.push(credit('Cash', entry.amount))
+  return lines
+}
+
+/**
+ * Journal lines of a disposal: cash received, fee withheld, cost basis
+ * released and the realized gain or loss before fees. Shared with the merged
+ * Activity Ledger so both views book a disposal identically.
+ */
+export function disposalLines(trade: RealizedTrade): JournalLine[] {
+  if (trade.kind === 'RESOLUTION_LOSS') {
+    return [debit('Trading Losses', trade.costBasis), credit('Open Contracts', trade.costBasis)]
+  }
+  const lines: JournalLine[] = []
+  const cashReceived = trade.proceeds - trade.fee
+  if (isBookable(cashReceived)) {
+    lines.push(debit('Cash', cashReceived))
+  }
+  if (isBookable(trade.fee)) {
+    lines.push(debit('Trading Fees', trade.fee))
+  }
+  if (trade.realizedPnl < 0) {
+    lines.push(debit('Trading Losses', -trade.realizedPnl))
+  }
+  lines.push(credit('Open Contracts', trade.costBasis))
+  if (trade.realizedPnl > 0) {
+    lines.push(credit('Trading Gains', trade.realizedPnl))
+  }
+  return lines
+}
+
 function inPeriod(timestamp: number, periodStart?: number, asOf?: number): boolean {
   if (periodStart != null && timestamp < periodStart) {
     return false
@@ -134,7 +183,7 @@ function buildJournalEntries(input: BuildGeneralLedgerInput): JournalEntry[] {
     if (!inPeriod(e.timestamp, input.periodStart, input.asOf)) {
       continue
     }
-    let lines: JournalLine[] | null = null
+    let lines: JournalLine[] | null
     switch (e.category) {
       case 'DEPOSIT':
         lines = [debit('Cash', e.amount), credit('Owner Capital', e.amount)]
@@ -144,7 +193,7 @@ function buildJournalEntries(input: BuildGeneralLedgerInput): JournalEntry[] {
         break
       case 'TRADE_BUY':
       case 'SPLIT':
-        lines = [debit('Open Contracts', e.amount), credit('Cash', e.amount)]
+        lines = acquisitionLines(e)
         break
       case 'REWARD':
       case 'MAKER_REBATE':
@@ -181,29 +230,13 @@ function buildJournalEntries(input: BuildGeneralLedgerInput): JournalEntry[] {
     if (!inPeriod(t.timestamp, input.periodStart, input.asOf)) {
       continue
     }
-    const lines: JournalLine[] = []
-    if (t.kind === 'RESOLUTION_LOSS') {
-      lines.push(debit('Trading Losses', t.costBasis))
-      lines.push(credit('Open Contracts', t.costBasis))
-    } else {
-      if (t.proceeds > 0) {
-        lines.push(debit('Cash', t.proceeds))
-      }
-      if (t.realizedPnl < 0) {
-        lines.push(debit('Trading Losses', -t.realizedPnl))
-      }
-      lines.push(credit('Open Contracts', t.costBasis))
-      if (t.realizedPnl > 0) {
-        lines.push(credit('Trading Gains', t.realizedPnl))
-      }
-    }
     entries.push({
       id: `gl-rt-${t.asset ?? 'na'}-${t.timestamp}-${t.kind}`,
       timestamp: t.timestamp,
       description: `${DISPOSAL_LABEL[t.kind]} — ${t.market}`,
       market: t.market,
       outcome: t.outcome,
-      lines
+      lines: disposalLines(t)
     })
   }
 

@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken';
 import { errorResponse } from '../utils/utils';
 import { Address } from 'viem';
 import { UserRole } from '../types/roles';
-import { prisma } from '../utils/dependenciesUtil';
+import { prisma } from '../utils/prismaClient';
 
 const authorizeUser = async (req: Request, res: Response, next: NextFunction) => {
   try {

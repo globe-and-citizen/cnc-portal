@@ -1,6 +1,6 @@
 // backend/prisma/seeders/claims.ts
 
-import { PrismaClient, Wage } from '@prisma/client';
+import { PrismaClient, Wage } from '../../src/generated/prisma/client';
 import dayjs from 'dayjs';
 import isoWeek from 'dayjs/plugin/isoWeek';
 import utc from 'dayjs/plugin/utc';

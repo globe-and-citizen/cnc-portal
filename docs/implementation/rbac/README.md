@@ -4,7 +4,7 @@
 
 **Last verified:** 2026-10-21
 
-**Implementation evidence reviewed against:** `df0531a4fa761fb1803004371c5bdcb14570b984`
+**Implementation evidence reviewed against:** `48c3250a1bb32813ef410f1d21d559329560603b`
 
 **Consumers:** [Backoffice features](../../features/backoffice/README.md) and every backend route protected by an administrator role
 

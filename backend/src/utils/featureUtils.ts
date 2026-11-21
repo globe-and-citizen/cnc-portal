@@ -1,7 +1,7 @@
 import dayjs from 'dayjs';
 import isoWeek from 'dayjs/plugin/isoWeek';
 import utc from 'dayjs/plugin/utc';
-import { prisma } from './dependenciesUtil';
+import { prisma } from './prismaClient';
 import type { FeatureStatus } from '../validation/featureValidation';
 
 dayjs.extend(utc);

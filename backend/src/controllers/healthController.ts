@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { prisma } from '../utils/dependenciesUtil';
+import { prisma } from '../utils/prismaClient';
 import publicClient from '../utils/viem.config';
 
 /**

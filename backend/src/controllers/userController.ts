@@ -1,3 +1,6 @@
+import type { userPaginationQuerySchema } from '../validation/schemas/user';
+import type { addressParamsSchema } from '../validation/schemas/common';
+import type { z } from 'zod';
 import { Request, Response } from 'express';
 import { generateNonce } from 'siwe';
 import { prisma } from '../utils';
@@ -6,13 +9,16 @@ import { extractProfileStorageKey, resolveStorageImageUrl } from '../utils/profi
 import { isStorageConfigured } from '../services/storageService';
 import { deleteFileByKey } from '../services/attachmentService';
 
+type UserParams = z.infer<typeof addressParamsSchema>;
+type UserPaginationQuery = z.infer<typeof userPaginationQuerySchema>;
+
 /**
  *
  * @param req
  * @param res
  * @returns
  */
-export const getNonce = async (req: Request, res: Response) => {
+export const getNonce = async (req: Request<UserParams>, res: Response) => {
   const { address } = req.params;
 
   try {
@@ -42,7 +48,7 @@ export const getNonce = async (req: Request, res: Response) => {
   }
 };
 
-export const getUser = async (req: Request, res: Response) => {
+export const getUser = async (req: Request<UserParams>, res: Response) => {
   const { address } = req.params;
 
   try {
@@ -64,7 +70,7 @@ export const getUser = async (req: Request, res: Response) => {
   }
 };
 
-export const updateUser = async (req: Request, res: Response) => {
+export const updateUser = async (req: Request<UserParams>, res: Response) => {
   const { address } = req.params;
   const { name, imageUrl } = req.body;
   const callerAddress = req.address;
@@ -121,9 +127,9 @@ export const updateUser = async (req: Request, res: Response) => {
 };
 
 export const getAllUsers = async (req: Request, res: Response) => {
-  const { page, limit, search } = req.query as { page: string; limit: string; search: string };
-  const pageNumber = parseInt(page as string) || 1;
-  const pageSize = parseInt(limit as string) || 10;
+  const { page, limit, search } = res.locals.validatedQuery as UserPaginationQuery;
+  const pageNumber = page ?? 1;
+  const pageSize = limit ?? 10;
   const offset = (pageNumber - 1) * pageSize;
 
   try {
