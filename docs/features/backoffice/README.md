@@ -52,8 +52,10 @@ is not sufficient.
 
 ## Current Evidence
 
-**Implementation evidence reviewed against:** `c01affa2bd13fdad4bc548d5ede8cf39f8d054e0`
+**Implementation evidence reviewed against:** `2edb2b55584d00ef87084f798c729713ee690842`
 
+- [Fixture inbox list](../../../dashboard/app/components/inbox/InboxList.vue)
+- [Fixture inbox message](../../../dashboard/app/components/inbox/InboxMail.vue)
 - [Dashboard navigation and module entry points](../../../dashboard/app/layouts/default.vue)
 - [Administrator access guard](../../../dashboard/app/middleware/auth.global.ts)
 - [Overview and statistics page](../../../dashboard/app/pages/index.vue)
