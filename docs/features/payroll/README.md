@@ -1134,7 +1134,16 @@ notice, not to wage or claim persistence. No payroll posting or signature rule c
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `fcc6f3c18d73110697497451a97c3331a1646b5c`
+**Implementation evidence reviewed against:** `afed113648736c861fb19c4319333717f14221c3`
+
+- [`CashRemunerationTotalBalance.vue`](../../../app/src/components/sections/CashRemunerationView/CashRemunerationTotalBalance.vue)
+- [`DeleteClaimConfirmation.vue`](../../../app/src/components/sections/CashRemunerationView/DeleteClaimConfirmation.vue)
+- [`MonthSelector.vue`](../../../app/src/components/sections/ClaimHistoryView/MonthSelector.vue)
+- [`WeeklyClaimActionEnable.vue`](../../../app/src/components/sections/WeeklyClaimView/WeeklyClaimActionEnable.vue)
+- [`useWeeklyClaimDropdown.ts`](../../../app/src/components/sections/WeeklyClaimView/useWeeklyClaimDropdown.ts)
+- [`reads.ts`](../../../app/src/composables/cashRemuneration/reads.ts)
+- [`writes.ts`](../../../app/src/composables/cashRemuneration/writes.ts)
+- [`WeeklyClaimView.vue`](../../../app/src/views/team/%5Bid%5D/Accounts/WeeklyClaimView.vue)
 
 - [Pending claim fiat summary](../../../app/src/components/sections/CashRemunerationView/CashRemunerationPendingClaim.vue),
   [claim-week recap](../../../app/src/components/sections/ClaimHistoryView/WeeklyRecap.vue), and

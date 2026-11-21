@@ -44,7 +44,7 @@ flowchart LR
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `9e715cf332a5f36fe441a0fcfd8d5ba189c23f82`
+**Implementation evidence reviewed against:** `afed113648736c861fb19c4319333717f14221c3`
 
 - [Client DatePicker](../../../app/src/components/ui/DatePicker.vue),
   [dashboard DatePicker](../../../dashboard/app/components/DatePicker.vue),

@@ -197,7 +197,7 @@ post-confirmation balance invalidations reach both. [Currency prices](../../../a
 currency payload and query-backed nullable conversions while consuming the centralized CoinGecko price query, whose preset freshness,
 polling and direct Axios reads are described in [Client Data Access](../client-data-access/README.md#browser-request-coordination).
 
-**Implementation evidence reviewed against:** `aef9c54644f938b4f8b1de3b80456f6b59a9a1a0`
+**Implementation evidence reviewed against:** `afed113648736c861fb19c4319333717f14221c3`
 
 - [Utility ownership map and domain implementations](../../../app/src/utils/)
 - [Shared Accounting domain contracts](../../../app/src/utils/accounting/types.ts)

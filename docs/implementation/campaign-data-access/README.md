@@ -59,7 +59,9 @@ controlled read results and shared chain/mutation mocks; they do not prove live 
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `ce6ae5493392f46869705f37900480ed34d0723c`
+**Implementation evidence reviewed against:** `afed113648736c861fb19c4319333717f14221c3`
+
+- [`reads.ts`](../../../app/src/composables/campaign/reads.ts)
 
 - [Campaign Manager administrator section](../../../app/src/components/sections/ContractManagementView/CampaignManagerAdminsSection.vue)
 - [Settings parent](../../../app/src/components/sections/ContractManagementView/CampaignManagersSection.vue),

@@ -66,7 +66,10 @@ observer with no side effect; removing that inert observer does not replace or a
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `8c7c2e2adf8516c8bb269320301c296ea2ce99c3`
+**Implementation evidence reviewed against:** `afed113648736c861fb19c4319333717f14221c3`
+
+- [`NavBreadcrumb.vue`](../../../app/src/components/layout/NavBreadcrumb.vue)
+- [`NotificationDropdown.vue`](../../../app/src/components/layout/NotificationDropdown.vue)
 
 - [Team selection menu](../../../app/src/components/layout/TeamSelectMenu.vue)
 - [Router definition and authentication guard](../../../app/src/router/index.ts)
