@@ -76,6 +76,7 @@
     "@tailwindcss/vite": "^4.1.18",
     "@tanstack/vue-query": "^5.54.1",
     "@tanstack/vue-query-devtools": "^6.1.2",
+    "@vue/devtools-api": "^8.2.1",
     "@vueuse/core": "^14.1.0",
     "@wagmi/core": "3.3.4",
     "@wagmi/vue": "^0.4.3",
@@ -89,7 +90,7 @@
     "jspdf": "^4.2.1",
     "jspdf-autotable": "^5.0.8",
     "node-xlsx": "^0.24.0",
-    "pinia": "^3.0.2",
+    "pinia": "^4.1.0",
     "pinia-plugin-persistedstate": "^4.2.0",
     "siwe": "^3.0.0",
     "stream-browserify": "^3.0.0",
@@ -102,7 +103,7 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
-    "@pinia/testing": "^1.0.3",
+    "@pinia/testing": "^2.0.2",
     "@playwright/test": "1.48.2",
     "@tsconfig/node20": "^20.1.2",
     "@types/jsdom": "^27.0.0",
