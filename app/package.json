@@ -71,6 +71,7 @@
     "@openzeppelin/merkle-tree": "^1.0.8",
     "@rollup/plugin-inject": "^5.0.5",
     "@safe-global/protocol-kit": "7.2.0",
+    "@safe-global/types-kit": "3.1.0",
     "@sentry/vite-plugin": "^4.3.0",
     "@sentry/vue": "^10.11.0",
     "@tailwindcss/vite": "^4.1.18",
