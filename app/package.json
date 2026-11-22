@@ -70,7 +70,7 @@
     "@nuxt/ui": "^4.8.1",
     "@openzeppelin/merkle-tree": "^1.0.8",
     "@rollup/plugin-inject": "^5.0.5",
-    "@safe-global/protocol-kit": "^6.1.2",
+    "@safe-global/protocol-kit": "7.2.0",
     "@sentry/vite-plugin": "^4.3.0",
     "@sentry/vue": "^10.11.0",
     "@tailwindcss/vite": "^4.1.18",
