@@ -104,7 +104,7 @@
   },
   "devDependencies": {
     "@pinia/testing": "^2.0.2",
-    "@playwright/test": "1.48.2",
+    "@playwright/test": "1.65.1",
     "@tsconfig/node20": "^20.1.2",
     "@types/jsdom": "^28.0.3",
     "@types/node": "^24.10.1",
