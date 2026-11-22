@@ -26,15 +26,13 @@ function balanceExportSection(
   return [
     { kind: 'section', account: title, nature: '', value: '' },
     { kind: 'columns', account: 'Account', nature: 'Nature', value: valueLabel },
-    ...lines.map(
-      (line): BalanceExportRow => ({
-        kind: 'line',
-        account: line.label,
-        nature: line.nature,
-        value: line.value,
-        amount: line.amount
-      })
-    ),
+    ...lines.map((line): BalanceExportRow => ({
+      kind: 'line',
+      account: line.label,
+      nature: line.nature,
+      value: line.value,
+      amount: line.amount
+    })),
     { kind: 'total', nature: '', ...total },
     { kind: 'gap', account: '', nature: '', value: '' }
   ]

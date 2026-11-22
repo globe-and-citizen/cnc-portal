@@ -731,12 +731,10 @@ Selling that whole asset, acquired for $20, for 30.658984 USDC books its gain:
 | Swap P&L    | USD            |            |             |    10.658984 |
 
 This is the realized result, kept when the Safe overview does not value the swap. A reported fee on the sale stays out of `Swap P&L`: with a
-CoW Protocol fee of 0.0001 of the asset, carried at $0.20, `Transaction Fee Expense` is debited $0.20 and `Swap P&L` is credited
-$10.858984.
+CoW Protocol fee of 0.0001 of the asset, carried at $0.20, `Transaction Fee Expense` is debited $0.20 and `Swap P&L` is credited $10.858984.
 Exchanging 20 USDC for 19.50 USDT debits `Swap P&L` with the $0.50 lost.
 
-When the Safe overview values the $20 purchase without a fee at a $4 gain (the asset received is now worth $24), the purchase stays at
-$20
+When the Safe overview values the $20 purchase without a fee at a $4 gain (the asset received is now worth $24), the purchase stays at $20
 and its revaluation is:
 
 | Account                      | Currency | Debit (USD) | Credit (USD) |

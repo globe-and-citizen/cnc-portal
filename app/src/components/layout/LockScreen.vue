@@ -5,8 +5,7 @@
       <p class="mb-4 text-gray-600">
         You are authenticated with this address
         <span class="font-mono text-sm"> {{ formatedUserAddress }} </span> but you have this address
-        connected <span class="font-mono text-sm">{{ formatedConnectedAddress }}</span
-        >.
+        connected <span class="font-mono text-sm">{{ formatedConnectedAddress }}</span>.
       </p>
       <p class="mb-6 text-sm text-gray-500">
         Logout and login back.<br />
