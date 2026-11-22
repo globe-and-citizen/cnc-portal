@@ -77,7 +77,7 @@
     "@tanstack/vue-query": "^5.54.1",
     "@tanstack/vue-query-devtools": "^6.1.2",
     "@vue/devtools-api": "^8.2.1",
-    "@vueuse/core": "^14.1.0",
+    "@vueuse/core": "^15.0.0",
     "@wagmi/core": "3.3.4",
     "@wagmi/vue": "^0.4.3",
     "abitype": "1.2.3",
