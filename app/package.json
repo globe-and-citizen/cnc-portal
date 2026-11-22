@@ -97,7 +97,7 @@
     "viem": "2.58.2",
     "vue": "3.5.45",
     "vue-echarts": "^8.0.1",
-    "vue-router": "^4.2.5",
+    "vue-router": "^5.5.1",
     "vue-sonner": "^2.0.9",
     "xlsx-js-style": "^1.2.0",
     "zod": "^4.3.6"
