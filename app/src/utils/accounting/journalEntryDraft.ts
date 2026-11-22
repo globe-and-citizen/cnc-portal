@@ -151,9 +151,7 @@ export interface JournalEntryDraft {
   swapPnl?: UsdAmount
   /** Reconciliation gaps that prevent complete books. */
   accountingIssue?:
-    | 'asset-metadata-unavailable'
-    | 'exchange-basis-unavailable'
-    | 'unclassified-asset-movement'
+    'asset-metadata-unavailable' | 'exchange-basis-unavailable' | 'unclassified-asset-movement'
   /** Raw on-chain amount in the token's base units (stringified bigint). */
   rawAmount: string
   /**

@@ -1,5 +1,5 @@
 import { computed, inject, provide, watch, type ComputedRef, type InjectionKey } from 'vue'
-import { useNow } from '@vueuse/core'
+import { useIntervalFn, useNow } from '@vueuse/core'
 import { log } from '@/lib/logging'
 import { toElection } from '@/utils/elections/election'
 import {
@@ -53,7 +53,7 @@ function createBoDElections(currentElectionId: ComputedRef<bigint>) {
   )
   const { data: winners } = useElectionsGetWinners(publishedElectionId)
 
-  const now = useNow({ interval: 1000 })
+  const now = useNow({ scheduler: (callback) => useIntervalFn(callback, 1000) })
 
   const timeLeft = computed(() => {
     if (!formattedElection.value) return { toStart: 0, toEnd: 0 }

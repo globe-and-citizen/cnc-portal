@@ -42,7 +42,9 @@ test.describe('Expense Account', { tag: ['@browser', '@mocked'] }, () => {
       )
       await expect(page.locator('[data-test="contract-owner-name"]')).toHaveText('E2E Owner')
       await expect(page.getByText('Token Holding', { exact: true })).toBeVisible()
-      await expect(page.locator('[data-test="expense-account-balance"]')).toContainText('$14.00')
+      await expect(
+        page.locator('[data-test="expense-account-balance"] [data-test="amount"]')
+      ).toHaveText('$14')
       await expect(page.locator('[data-test="approvals-empty"]')).toBeVisible()
 
       await page.locator('[data-test="approve-users-button"]').click()

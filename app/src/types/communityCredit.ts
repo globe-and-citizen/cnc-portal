@@ -89,8 +89,7 @@ export interface FixedReturnLenderPosition {
  * wrongly present a transient RPC failure as a real ineligibility.
  */
 export type FixedReturnLenderPositionResult =
-  | ({ status: 'ok' } & FixedReturnLenderPosition)
-  | { status: 'error'; error: unknown }
+  ({ status: 'ok' } & FixedReturnLenderPosition) | { status: 'error'; error: unknown }
 
 /**
  * Off-chain title/purpose metadata for a FixedReturn offer, as returned by
@@ -120,13 +119,7 @@ export interface FixedReturnOfferingResponse {
 // no on-chain maturity enforcement, so this never blocks or gates any action — repay
 // still works exactly the same before or after maturity, this only changes the badge.
 export type RoundStatus =
-  | 'open'
-  | 'stalled'
-  | 'funded'
-  | 'active'
-  | 'overdue'
-  | 'repaid'
-  | 'refunded'
+  'open' | 'stalled' | 'funded' | 'active' | 'overdue' | 'repaid' | 'refunded'
 
 export type RoundDetailVariant = 'ledger' | 'gauge' | 'timeline' | 'repay'
 

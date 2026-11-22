@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { format } from 'date-fns'
+import { formatInboxDateTime } from '~/utils/format/date'
 import type { Mail } from '~/types'
 
 defineProps<{
@@ -99,7 +99,7 @@ function onSubmit() {
       </div>
 
       <p class="max-sm:pl-16 text-muted text-sm sm:mt-2">
-        {{ format(new Date(mail.date), 'dd MMM HH:mm') }}
+        {{ formatInboxDateTime(mail.date) }}
       </p>
     </div>
 

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { format, isToday } from 'date-fns'
+import { formatInboxDate } from '~/utils/format/date'
 import type { Mail } from '~/types'
 
 const props = defineProps<{
@@ -71,9 +71,7 @@ defineShortcuts({
           </div>
 
           <span>{{
-            isToday(new Date(mail.date))
-              ? format(new Date(mail.date), 'HH:mm')
-              : format(new Date(mail.date), 'dd MMM')
+            formatInboxDate(mail.date)
           }}</span>
         </div>
         <p class="truncate" :class="[mail.unread && 'font-semibold']">
