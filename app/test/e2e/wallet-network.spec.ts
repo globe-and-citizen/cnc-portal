@@ -78,7 +78,7 @@ test.describe(
       await expect(page.locator('[data-test="network-lock-screen"]')).toHaveCount(0)
       await expect(page.locator('[data-test="team-list"]')).toBeVisible()
       await expect(page).toHaveURL(/\/teams$/)
-      expect(await page.evaluate(() => localStorage.getItem('isAuth'))).toBe('true')
+      expect(await page.evaluate(() => localStorage.getItem('authToken'))).toBe('e2e.test.token')
       expect(
         await page.evaluate(() => localStorage.getItem('wallet-network-test-submissions'))
       ).toBe('0')
@@ -103,7 +103,7 @@ test.describe(
       await page.reload()
       await expect(page.locator('[data-test="team-list"]')).toBeVisible()
       await expect(page.locator('[data-test="network-lock-screen"]')).toHaveCount(0)
-      expect(await page.evaluate(() => localStorage.getItem('isAuth'))).toBe('true')
+      expect(await page.evaluate(() => localStorage.getItem('authToken'))).toBe('e2e.test.token')
     })
   }
 )

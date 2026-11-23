@@ -14,6 +14,8 @@ import {
 } from '@/utils/accounting/ledgerColumns'
 import type { AccountingExportSnapshot } from '@/utils/accounting/exportSpec'
 import type { ResolveName } from './spreadsheet'
+import type { UsdAmount } from '@/utils/accounting/types'
+import { spreadsheetNumber, spreadsheetUsd } from './spreadsheetNumber'
 
 type Cell = string | number
 type SheetRows = Cell[][]
@@ -26,14 +28,7 @@ interface GeneralLedgerSheetOptions {
   currencies?: string[]
   journalAccounts?: string[]
   journalAccountLabel?: string
-  journalAccountMovements?: LedgerMovements
-}
-
-/** Convert one displayed amount to a spreadsheet number, preserving blank cells. */
-function usd(value: string): number | '' {
-  if (!value || value === '—') return ''
-  const number = Number(value.replace(/[$,]/g, ''))
-  return Number.isNaN(number) ? '' : number
+  journalAccountAmounts?: LedgerMovements<UsdAmount>
 }
 
 /** How each ledger column renders in the spreadsheet. */
@@ -44,11 +39,16 @@ const SHEET_CELL: Record<LedgerColumnKey, (row: LedgerRow, resolveName?: Resolve
   txHash: (row) => row.txHash ?? '',
   activity: (row, resolveName) => activityText(row.activity, resolveName),
   account: (row) => row.accountLabel ?? row.account,
-  dr: (row) => usd(row.dr),
-  cr: (row) => usd(row.cr),
+  dr: (row) => (row.debitAmount ? spreadsheetUsd(row.debitAmount) : ''),
+  cr: (row) => (row.creditAmount ? spreadsheetUsd(row.creditAmount) : ''),
   currency: (row) => row.currency,
-  quantity: (row) => usd(row.quantity),
-  rate: (row) => usd(row.rate)
+  quantity: (row) =>
+    !row.currency
+      ? ''
+      : row.quantityDisplay?.startsWith('<')
+        ? row.quantityDisplay
+        : spreadsheetNumber(row.quantityValue, 6),
+  rate: (row) => (!row.currency ? '' : spreadsheetNumber(row.rateValue, 6))
 }
 
 /** Build General Ledger spreadsheet rows from the canonical journal. */
@@ -64,7 +64,10 @@ export function generalLedgerSheetRows(
     opts.currencies,
     opts.journalAccounts
   )
-  const movements = opts.journalAccountMovements ?? { debit: journal.total, credit: journal.total }
+  const total = journal.rows.reduce((sum, row) => sum + (row.debitAmount ?? 0n), 0n)
+  const movements =
+    opts.journalAccountAmounts ??
+    (opts.journalAccountLabel ? null : { debit: total, credit: total })
   const columns = resolveLedgerColumns(opts.columns)
   return [
     [
@@ -77,6 +80,9 @@ export function generalLedgerSheetRows(
     ...journal.rows.map((row) =>
       columns.map((column) => SHEET_CELL[column.value](row, resolveName))
     ),
-    ledgerTotalRow(columns, { debit: usd(movements.debit), credit: usd(movements.credit) })
+    ledgerTotalRow(columns, {
+      debit: movements ? spreadsheetUsd(movements.debit) : 'Unavailable',
+      credit: movements ? spreadsheetUsd(movements.credit) : 'Unavailable'
+    })
   ]
 }

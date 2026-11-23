@@ -40,10 +40,20 @@ describe('useAccountingExport', () => {
     expect(buildTables).toHaveBeenCalledWith({ journal }, specs, expect.any(Function))
     expect(exportTablesPdf).toHaveBeenCalledWith(['pdf-table'], {
       filename: 'ledger.pdf',
-      teamName: mockTeamStore.currentTeamMeta.data.name,
-      coverage: null
+      teamName: mockTeamStore.currentTeamMeta.data.name
     })
     expect(mockToast.add).toHaveBeenCalledWith({ title: 'Exported to PDF', color: 'success' })
+  })
+
+  it('[AC-US-ACCT-004-10] passes the selected period on to the PDF heading', async () => {
+    await useAccountingExport().exportPdf(specs, {
+      filename: 'report.pdf',
+      coverage: 'Period Jan 1, 2026 – Jan 31, 2026'
+    })
+    expect(exportTablesPdf).toHaveBeenCalledWith(
+      ['pdf-table'],
+      expect.objectContaining({ coverage: 'Period Jan 1, 2026 – Jan 31, 2026' })
+    )
   })
 
   it('resolves a party address to the name the on-screen ledger shows', async () => {

@@ -10,8 +10,8 @@ there is no global `@/utils` barrel.
 | `accounting/`        | Journal construction, account assignment, grouping, and report shaping |
 | `claims/`            | Daily-claim form rules and claim-history navigation                    |
 | `communityCredit/`   | Credit offer, round, whitelist, and wizard models                      |
-| `contracts/`         | ABI decoding plus contract deployment and action presentation          |
-| `currency/`          | Currency display models                                                |
+| `contracts/`         | ABI decoding, deployment, action presentation, and owner identity      |
+| `currency/`          | Currency formatting and nullable fiat valuation                        |
 | `dates/`             | Calendar and date-picker calculations                                  |
 | `errors/`            | HTTP and contract-error classification                                 |
 | `expenses/`          | Expense-account models and limits                                      |

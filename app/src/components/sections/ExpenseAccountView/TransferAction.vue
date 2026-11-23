@@ -119,6 +119,7 @@ import {
   parseUnits,
   recoverTypedDataAddress,
   isAddress,
+  isHex,
   zeroAddress,
   type Address,
   type Hex
@@ -131,9 +132,9 @@ import { useExpenseAccountTransfer } from '@/composables/expenseAccount/writes'
 import type { WriteFunctionArgs } from '@/composables/contracts/useContractWritesV3'
 import { expenseKeys } from '@/queries'
 import { useQueryClient } from '@tanstack/vue-query'
-import type { TableRow } from '@/types/table'
+import type { ExpenseApproval } from '@/types/expense-account'
 import type { TransferData } from '@/types'
-const props = defineProps<{ row: TableRow }>()
+const props = defineProps<{ row: ExpenseApproval }>()
 
 const teamStore = useTeamStore()
 const toast = useToast()
@@ -203,16 +204,22 @@ const transferFromExpenseAccount = async (to: string, amount: string) => {
   const budgetLimit = props.row.data
   if (!expenseAccountEip712Address.value || !props.row) return
 
-  if (!(await verifyApprovalSignature(budgetLimit))) return
+  const signature = await verifyApprovalSignature(budgetLimit)
+  if (!signature) return
 
   if (budgetLimit.tokenAddress === zeroAddress) {
-    await transferNativeToken(to, amount, budgetLimit)
+    await transferNativeToken(to, amount, budgetLimit, signature)
   } else {
-    transferErc20Token(to, amount, budgetLimit)
+    transferErc20Token(to, amount, budgetLimit, signature)
   }
 }
 
-const verifyApprovalSignature = async (budgetLimit: BudgetLimit) => {
+const verifyApprovalSignature = async (budgetLimit: BudgetLimit): Promise<Hex | false> => {
+  const signature = props.row.signature
+  if (!isHex(signature)) {
+    errorMessage.value = 'Failed to verify expense approval signature'
+    return false
+  }
   const sourceContract = expenseAccountEip712Address.value
   if (!sourceContract || !budgetLimit.signedAgainstContractAddress || !budgetLimit.chainId) {
     errorMessage.value = 'Approval signing contract or network is unavailable'
@@ -246,7 +253,7 @@ const verifyApprovalSignature = async (budgetLimit: BudgetLimit) => {
       types: budgetLimitTypes,
       primaryType: 'BudgetLimit',
       message: buildContractBudgetLimit(budgetLimit),
-      signature: props.row.signature as Hex
+      signature
     })
 
     if (recovered.toLowerCase() !== owner.toLowerCase()) {
@@ -259,7 +266,7 @@ const verifyApprovalSignature = async (budgetLimit: BudgetLimit) => {
     return false
   }
 
-  return true
+  return signature
 }
 
 type ExpenseTransferArgs = WriteFunctionArgs<typeof expenseAccountEip712Abi, 'transfer'>
@@ -283,14 +290,14 @@ const submitExpenseAccountTransfer = (args: ExpenseTransferArgs) => {
   )
 }
 
-const transferNativeToken = async (to: string, amount: string, budgetLimit: BudgetLimit) => {
+const transferNativeToken = async (
+  to: string,
+  amount: string,
+  budgetLimit: BudgetLimit,
+  signature: Hex
+) => {
   if (!expenseAccountEip712Address.value || !amount || !to) return
-  const args = [
-    to,
-    parseEther(amount),
-    buildContractBudgetLimit(budgetLimit),
-    props.row.signature
-  ] as const
+  const args = [to, parseEther(amount), buildContractBudgetLimit(budgetLimit), signature] as const
 
   try {
     const data = encodeFunctionData({
@@ -310,7 +317,12 @@ const transferNativeToken = async (to: string, amount: string, budgetLimit: Budg
 
 // `transfer` pays out of the expense contract's own token balance — it never
 // calls `transferFrom` on the caller — so no ERC20 allowance is needed here.
-const transferErc20Token = (to: string, amount: string, budgetLimit: BudgetLimit) => {
+const transferErc20Token = (
+  to: string,
+  amount: string,
+  budgetLimit: BudgetLimit,
+  signature: Hex
+) => {
   if (!expenseAccountEip712Address.value) return
   const token = productExpenseToken(budgetLimit.tokenAddress)
   if (!token) {
@@ -322,7 +334,7 @@ const transferErc20Token = (to: string, amount: string, budgetLimit: BudgetLimit
     to,
     parseUnits(amount, token.decimals),
     buildContractBudgetLimit(budgetLimit),
-    props.row.signature
+    signature
   ] as const)
 }
 </script>

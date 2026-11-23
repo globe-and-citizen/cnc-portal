@@ -8,13 +8,10 @@ import { formatDate, formatDateTime, formatUsd, fromUnix } from '@/utils/format'
 import { usdAmountToNumber, ZERO_USD_AMOUNT } from './monetaryAmount'
 import type { Account, BalanceSheet, JournalEntry, UsdAmount } from './types'
 
+import { buildSummaryView, type SummaryView } from './summaryCards'
+
 // The summary display model lives in its own module — see ./summaryCards.
-export {
-  presentSummary,
-  type SummaryBanner,
-  type SummaryCard,
-  type SummaryView
-} from './summaryCards'
+export { type SummaryBanner, type SummaryCard, type SummaryView } from './summaryCards'
 
 type TrialNature = 'Asset' | 'Equity' | 'Contra-equity' | 'Income' | 'Liability' | 'Expense'
 
@@ -56,6 +53,7 @@ export function formatUnixDateTime(timestamp: number): string {
 export interface StatementLineView {
   label: string
   value: string
+  amount?: UsdAmount
   account?: Account | AccountName
   accounts?: AccountName[]
 }
@@ -73,6 +71,8 @@ interface TrialRow {
   natureClass: string
   dr: string
   cr: string
+  debitAmount: UsdAmount | null
+  creditAmount: UsdAmount | null
   drMuted: boolean
   crMuted: boolean
 }
@@ -83,6 +83,7 @@ interface IncomeView {
   totalRevenue: string
   totalExpenses: string
   netIncome: string
+  amounts: { totalRevenue: UsdAmount; totalExpenses: UsdAmount; netIncome: UsdAmount }
   netNegative: boolean
 }
 
@@ -96,6 +97,13 @@ interface BalanceView {
   earningsToDate: string
   totalEquity: string
   liabilitiesPlusEquity: string
+  amounts: {
+    totalAssets: UsdAmount
+    totalLiabilities: UsdAmount
+    earningsToDate: UsdAmount
+    totalEquity: UsdAmount
+    liabilitiesPlusEquity: UsdAmount
+  }
 }
 
 export interface BalanceLineView extends StatementLineView {
@@ -127,18 +135,6 @@ export function periodLabel(from?: Date | null, to?: Date | null): string {
   return 'All time'
 }
 
-/**
- * The span of activity a set of books records, e.g. `"Activity Dec 21, 2025 – Oct 4, 2026"`,
- * so an unfiltered export still says which period it covers. Empty books have none.
- */
-export function activityCoverageLabel(entries: readonly { timestamp: number }[]): string | null {
-  if (!entries.length) return null
-  const timestamps = entries.map((entry) => entry.timestamp)
-  const first = fromUnix(Math.min(...timestamps)).toDate()
-  const last = fromUnix(Math.max(...timestamps)).toDate()
-  return `Activity ${periodLabel(first, last)}`
-}
-
 /** A single calendar day at day granularity, e.g. `"Jul 8, 2026"`. */
 export function dayLabel(date: Date): string {
   return formatDate(date)
@@ -152,6 +148,10 @@ export function dayLabel(date: Date): string {
  */
 export function incomeExportTitle(from?: Date | null, to?: Date | null): string {
   return from || to ? `Income Statement — ${periodLabel(from, to)}` : 'Income Statement'
+}
+
+export function summaryExportTitle(from?: Date | null, to?: Date | null): string {
+  return from || to ? `Summary — ${periodLabel(from, to)}` : 'Summary'
 }
 
 export function balanceExportTitle(asOf?: Date | null): string {
@@ -175,6 +175,15 @@ export function filterByPeriod<T extends { timestamp: number }>(
 
 // ── Presenters ──────────────────────────────────────────────────────────────
 
+/** Summary figures: flows inside `[from, to]`, balances accumulated up to `to`. */
+export function presentSummary(
+  entries: readonly JournalEntry[],
+  from?: Date | null,
+  to?: Date | null
+): SummaryView {
+  return buildSummaryView(filterByPeriod(entries, from, to), filterByPeriod(entries, null, to))
+}
+
 /** Income-statement lines for a reporting period. */
 export function presentIncome(
   entries: readonly JournalEntry[],
@@ -186,16 +195,23 @@ export function presentIncome(
     revenueLines: income.revenue.map((line) => ({
       label: line.account,
       value: money(line.amount),
+      amount: line.amount,
       account: line.account
     })),
     expenseLines: income.expenses.map((line) => ({
       label: line.account,
       value: money(line.amount),
+      amount: line.amount,
       account: line.account
     })),
     totalRevenue: money(income.totalRevenue),
     totalExpenses: money(income.totalExpenses),
     netIncome: money(income.netIncome),
+    amounts: {
+      totalRevenue: income.totalRevenue,
+      totalExpenses: income.totalExpenses,
+      netIncome: income.netIncome
+    },
     netNegative: income.netIncome < 0n
   }
 }
@@ -217,6 +233,7 @@ export function presentBalance(entries: readonly JournalEntry[], asOf?: Date | n
     return {
       label: line.accountLabel,
       value: money(line.contribution),
+      amount: line.contribution,
       account: line.account,
       nature,
       natureClass: NATURE_BADGE[nature]
@@ -228,6 +245,7 @@ export function presentBalance(entries: readonly JournalEntry[], asOf?: Date | n
     {
       label: 'Earnings to date',
       value: money(balance.earningsToDate),
+      amount: balance.earningsToDate,
       accounts: earningsAccounts,
       nature: 'Equity',
       natureClass: NATURE_BADGE.Equity
@@ -242,6 +260,13 @@ export function presentBalance(entries: readonly JournalEntry[], asOf?: Date | n
     totalLiabilities: money(balance.totalLiabilities),
     earningsToDate: money(balance.earningsToDate),
     totalEquity: money(balance.totalEquity),
+    amounts: {
+      totalAssets: balance.totalAssets,
+      totalLiabilities: balance.totalLiabilities,
+      earningsToDate: balance.earningsToDate,
+      totalEquity: balance.totalEquity,
+      liabilitiesPlusEquity: balance.totalLiabilitiesAndEquity
+    },
     liabilitiesPlusEquity: money(balance.totalLiabilitiesAndEquity)
   }
 }
@@ -260,6 +285,7 @@ export function presentTrial(
   totalDebit: string
   totalCredit: string
   balanced: boolean
+  amounts: { totalDebit: UsdAmount; totalCredit: UsdAmount }
 } {
   const scopedEntries = filterByPeriod(entries, null, asOf)
   const ledger = buildGeneralLedger(scopedEntries)
@@ -277,6 +303,8 @@ export function presentTrial(
       natureClass: NATURE_BADGE[natureOf(row.account)],
       dr: debitSide ? money(net) : '—',
       cr: creditSide ? money(-net) : '—',
+      debitAmount: debitSide ? net : null,
+      creditAmount: creditSide ? -net : null,
       drMuted: !debitSide,
       crMuted: !creditSide
     }
@@ -285,6 +313,7 @@ export function presentTrial(
     rows,
     totalDebit: money(ledger.debitBalanceTotal),
     totalCredit: money(ledger.creditBalanceTotal),
-    balanced: ledger.balanced
+    balanced: ledger.balanced,
+    amounts: { totalDebit: ledger.debitBalanceTotal, totalCredit: ledger.creditBalanceTotal }
   }
 }

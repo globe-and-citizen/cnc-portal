@@ -1,4 +1,4 @@
-import { Prisma } from '@prisma/client';
+import { Prisma } from '../generated/prisma/client';
 import { Request, Response } from 'express';
 import { prisma } from '../utils';
 import { errorResponse } from '../utils/utils';
@@ -9,6 +9,9 @@ import {
   toggleWageStatusQuerySchema,
   z,
 } from '../validation';
+
+type GetWagesQuery = z.infer<typeof getWagesQuerySchema>;
+type ToggleWageStatusQuery = z.infer<typeof toggleWageStatusQuerySchema>;
 
 type SetWageBody = z.infer<typeof setWageBodySchema>;
 
@@ -78,7 +81,7 @@ export const setWage = async (req: Request, res: Response) => {
 };
 
 export const getWages = async (req: Request, res: Response) => {
-  const { teamId } = req.query as unknown as z.infer<typeof getWagesQuerySchema>;
+  const { teamId } = res.locals.validatedQuery as GetWagesQuery;
 
   try {
     // authz enforced by requireTeamMember middleware. Only the current version
@@ -96,9 +99,10 @@ export const getWages = async (req: Request, res: Response) => {
 };
 
 export const toggleWageStatus = async (req: Request, res: Response) => {
+  const query = res.locals.validatedQuery as ToggleWageStatusQuery;
   const callerAddress = req.address;
   const { wageId } = req.params as unknown as z.infer<typeof toggleWageStatusParamsSchema>;
-  const { action } = req.query as unknown as z.infer<typeof toggleWageStatusQuerySchema>;
+  const { action } = query;
 
   try {
     const wage = await prisma.wage.findFirst({

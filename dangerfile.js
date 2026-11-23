@@ -71,8 +71,6 @@ const IGNORED_PATTERNS = [
   /(^|\/)artifacts\//,
   /(^|\/)deployed_addresses\//,
   /(^|\/)typechain(-types)?\//,
-  // The Graph / Ponder generated code
-  /(^|\/)generated\//,
 ];
 
 /**

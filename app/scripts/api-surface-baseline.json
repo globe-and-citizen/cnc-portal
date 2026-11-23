@@ -30,12 +30,6 @@
       "subject": "component",
       "metric": "componentExposedMembers",
       "allowed": 1
-    },
-    {
-      "path": "src/components/sections/ProposalsView/ProposalsList.vue",
-      "subject": "component",
-      "metric": "componentExposedMembers",
-      "allowed": 1
     }
   ]
 }

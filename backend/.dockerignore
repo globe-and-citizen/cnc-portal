@@ -3,3 +3,8 @@ node_modules
 .gitignore
 *.md
 dist
+.env
+.env.*
+!.env.example
+
+src/generated/prisma

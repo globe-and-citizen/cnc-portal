@@ -38,13 +38,13 @@ unchecked.
 
 ## Status Overview
 
-| User Story     | Title                                   | Actor           | Status         |
-| -------------- | --------------------------------------- | --------------- | -------------- |
-| US-PAYGATE-001 | Configure the Widget's Accepted Token   | Merchant        | 🧪 Validation  |
-| US-PAYGATE-002 | Embed the Widget on the Merchant's Page | Merchant        | 🧪 Validation  |
-| US-PAYGATE-003 | Pay Through the Widget                  | Layer8 customer | 🚧 In Progress |
-| US-PAYGATE-004 | Review Payment History                  | Merchant        | 🧪 Validation  |
-| US-PAYGATE-005 | Recall a Payment's Status by Facture ID | Merchant        | 📝 Draft       |
+| User Story                                                               | Feature                                 | Actor           | Status         | Intended Scope |
+| ------------------------------------------------------------------------ | --------------------------------------- | --------------- | -------------- | -------------- |
+| [US-PAYGATE-001](#us-paygate-001-configure-the-widgets-accepted-token)   | Configure the Widget's Accepted Token   | Merchant        | 🧪 Validation  | Not assessed   |
+| [US-PAYGATE-002](#us-paygate-002-embed-the-widget-on-the-merchants-page) | Embed the Widget on the Merchant's Page | Merchant        | 🧪 Validation  | Not assessed   |
+| [US-PAYGATE-003](#us-paygate-003-pay-through-the-widget)                 | Pay Through the Widget                  | Layer8 customer | 🚧 In Progress | Not assessed   |
+| [US-PAYGATE-004](#us-paygate-004-review-payment-history)                 | Review Payment History                  | Merchant        | 🧪 Validation  | Not assessed   |
+| [US-PAYGATE-005](#us-paygate-005-recall-a-payments-status-by-facture-id) | Recall a Payment's Status by Facture ID | Merchant        | 📝 Draft       | Not assessed   |
 
 ## Test Coverage Overview
 
@@ -63,30 +63,36 @@ Runs of at least three consecutive missing criteria use inclusive ranges with fu
 
 Proof obligations use the [shared proof-strategy registry](../../testing/proof-strategies.md). Multiple IDs for one AC are cumulative.
 
-## US-PAYGATE-001: Configure the Widget's Accepted Token
+## FEAT-PAYGATE-001: Configure the Widget's Accepted Token
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
+
+### US-PAYGATE-001: Configure the Widget's Accepted Token
 
 **As a** merchant\
 **I want to** choose which token the widget accepts\
 **So that** my embed snippet and live preview reflect a payment configuration my customers can actually complete
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-PAYGATE-001-01` The merchant can select an accepted token from the options offered on the Setup page, and the embed snippet and
       live preview update immediately to reflect that choice.
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-PAYGATE-001-02` The accepted token is the merchant's only configurable payment parameter in this version.
 - [x] `AC-US-PAYGATE-001-03` Only tokens the widget can actually accept payment in are offered as selectable options.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 Unsupported payment-token configurations are handled by `AC-US-PAYGATE-003-04`; no separate token-selection failure outcome is currently
 specified for this story.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion   | Proof Strategy | Current Evidence | Status     |
 | ---------------------- | -------------- | ---------------- | ---------- |
@@ -96,16 +102,22 @@ specified for this story.
 
 **Dependencies:** none — this is the capability's entry point
 
-## US-PAYGATE-002: Embed the Widget on the Merchant's Page
+## FEAT-PAYGATE-002: Embed the Widget on the Merchant's Page
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
+
+### US-PAYGATE-002: Embed the Widget on the Merchant's Page
 
 **As a** merchant (Layer8)\
 **I want to** copy a ready-to-use embed snippet, in the format my site is built with, carrying my company's Bank address and configured
 token\
 **So that** I can accept payments on my own page without creating or managing a separate account or key
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-PAYGATE-002-01` The merchant can view and copy their company's Bank address.
 - [x] `AC-US-PAYGATE-002-02` The merchant can view and copy a complete embed snippet — script tag, mount point, and example checkout wiring
@@ -114,19 +126,19 @@ token\
       carries the same Bank address and token, and is shown as two separately copied steps: step 1 adds the widget (the script tag, or a
       named component file), and step 2 is a usage sample passing the order's `factureId` and `amount`.
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-PAYGATE-002-03` The Bank address shown is the company's own existing Bank contract; embedding the widget requires no separate
       account or key.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [x] `AC-US-PAYGATE-002-04` When the company has no deployed Bank contract yet, the Setup page shows an explicit "no Bank" state instead of
       a snippet built around a placeholder address.
 - [x] `AC-US-PAYGATE-002-05` When the widget's script URL isn't configured for this deployment, the Setup page shows an explicit
       "unavailable" state instead of a snippet whose script tag would never actually load a widget.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion   | Proof Strategy           | Current Evidence | Status          |
 | ---------------------- | ------------------------ | ---------------- | --------------- |
@@ -139,22 +151,28 @@ token\
 
 **Dependencies:** US-PAYGATE-001 and a company with a deployed Bank contract
 
-## US-PAYGATE-003: Pay Through the Widget
+## FEAT-PAYGATE-003: Pay Through the Widget
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
+
+### US-PAYGATE-003: Pay Through the Widget
 
 **As a** Layer8 customer\
 **I want to** pay directly from the embedded widget\
 **So that** I can settle my facture without leaving the merchant's page
 
-### How It Works
+#### How It Works
 
 1. The widget shows a recap of the amount and facture ID.
 2. On submit, it connects the customer's wallet, approves the token spend only if the existing allowance is insufficient, then submits the
    payment.
 3. It reports the outcome to the merchant's page through `onStatus`.
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-PAYGATE-003-01` The widget shows a payment recap — amount and facture ID — before the customer pays.
 - [x] `AC-US-PAYGATE-003-02` A successful payment settles the exact configured amount to the company's Bank and shows the customer a
@@ -162,7 +180,7 @@ token\
 - [x] `AC-US-PAYGATE-003-03` The widget reports the payment's outcome — success or failure, with the facture ID — to the merchant's page
       through the `onStatus` callback.
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-PAYGATE-003-04` Configuring the widget with an unsupported payment token (including native POL) shows an explicit "unsupported
       token" message instead of a payment form.
@@ -175,7 +193,7 @@ token\
 - [x] `AC-US-PAYGATE-003-07` The amount must be a non-negative decimal number before use; an invalid value throws synchronously to the
       merchant's own integration code rather than reaching the review pane or the chain. _(system)_
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [ ] `AC-US-PAYGATE-003-08` A transaction confirmed on-chain is only reported as a successful payment when the Bank's deposit event for
       that payment is present in the receipt. _(contract)_
@@ -188,7 +206,7 @@ token\
       attribute, the customer sees an explicit "payment unavailable" message instead of a payment form built around bad data, and the
       merchant gets a console diagnostic naming exactly what's wrong.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion   | Proof Strategy        | Current Evidence | Status          |
 | ---------------------- | --------------------- | ---------------- | --------------- |
@@ -210,28 +228,34 @@ token\
 
 **Dependencies:** US-PAYGATE-002, a connected wallet, and a sufficient token balance
 
-## US-PAYGATE-004: Review Payment History
+## FEAT-PAYGATE-004: Review Payment History
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
+
+### US-PAYGATE-004: Review Payment History
 
 **As a** merchant\
 **I want to** see the payments made through the widget\
 **So that** I can track what my customers have paid without a separate backend record
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-PAYGATE-004-01` The merchant can view a table of confirmed payments made through the widget, each showing its facture ID, date,
       amount and token, and a link to the underlying transaction.
 - [x] `AC-US-PAYGATE-004-02` Selecting a payment's transaction opens its on-chain detail — initiator, block, timestamp, status, decoded
       call, and events.
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-PAYGATE-004-03` History is derived directly from the company's Bank contract's token-deposit events; no separate backend record
       exists to fall out of sync.
 - [x] `AC-US-PAYGATE-004-04` Only deposits carrying a decodable facture ID are listed; a plain, non-widget Bank deposit is excluded.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [x] `AC-US-PAYGATE-004-05` An empty history is shown as an explicit empty state, not an empty table with no explanation.
 - [x] `AC-US-PAYGATE-004-06` A failed history read is shown as an explicit error instead of a silently empty or stale table.
@@ -239,7 +263,7 @@ token\
       The merchant can retry unresolved transaction reads or failed Bank-feed sources without rereading successful cached calldata; the
       notice clears after all required reads recover.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion   | Proof Strategy        | Current Evidence | Status          |
 | ---------------------- | --------------------- | ---------------- | --------------- |
@@ -259,7 +283,7 @@ token\
 [US-ACCT-010](../accounting/README.md#us-acct-010-classify-direct-external-receipts) owns eligible receipt classification. The shared
 movement does not establish an invoice payment from amount, sender, or timing alone.
 
-### Direct Movement Scenarios
+#### Direct Movement Scenarios
 
 Target behaviour follows the [direct movement policy](../accounting/direct-movement-policy.md). Each row represents the same evidenced
 movement across the participating stories.
@@ -268,24 +292,30 @@ movement across the participating stories.
 | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | External wallet funds Bank without established purpose or facture evidence. [UC-TREASURY-002](../accounting/journal-entry-catalogue.md#uc-treasury-002--external-receipt-pending-classification) | Keeps unmatched receipts outside invoice history. | [US-BANK-001](../accounts/README.md#us-bank-001-fund-the-bank) — owns received funding; [US-BANK-003](../accounts/README.md#us-bank-003-review-the-bank-position-and-history) — owns Bank history; [US-ACCT-007](../accounting/README.md#us-acct-007-review-direct-treasury-movements) — owns movement evidence and identity; [US-ACCT-010](../accounting/README.md#us-acct-010-classify-direct-external-receipts) — owns eligible receipt classification |
 
-## US-PAYGATE-005: Recall a Payment's Status by Facture ID
+## FEAT-PAYGATE-005: Recall a Payment's Status by Facture ID
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
+
+### US-PAYGATE-005: Recall a Payment's Status by Facture ID
 
 **As a** merchant\
 **I want to** look up a payment's status directly by facture ID\
 **So that** I can still find a payment if the widget's `onStatus` callback never reached my page
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [ ] `AC-US-PAYGATE-005-01` A merchant can submit a facture ID and Bank address and receive that payment's real current status.
 
-#### Business Rules
+##### Business Rules
 
 - [ ] `AC-US-PAYGATE-005-02` The same facture ID and Bank address resolve to the corresponding payment status even if the merchant page did
       not receive the widget callback.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 Unknown or ambiguous facture IDs, as well as the authoritative lookup mechanism, remain product and implementation decisions for this draft
 story; no error outcome is claimed as implemented.
@@ -307,7 +337,7 @@ story; no error outcome is claimed as implemented.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `a9fcd3a571d8fb6cf3f8593b96b3b4940fbd21bc`
+**Implementation evidence reviewed against:** `20b213c1c6c1903766d67725d2b430b95e156cdf`
 
 - [Setup page](../../../app/src/views/team/[id]/PaymentGate/IntegrationView.vue), combining
   [Bank address + embed snippet, with a snippet format selector and explicit no-Bank/no-widget-URL states](../../../app/src/components/sections/PaymentGateView/IntegrationCard.vue),

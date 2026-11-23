@@ -44,7 +44,11 @@ export interface Team {
   slug: string
   description: string
   isHidden: boolean
+  /** The signed-in member's own pin; other members never see it. */
+  isFavorite: boolean
   isArchived: boolean
+  /** Owner-set rule: members must save weekly goals before submitting hours. */
+  requireWeeklyGoals?: boolean
   members: Member[]
   ownerAddress: Address
   currentOfficer?: CurrentOfficer | null

@@ -1,6 +1,6 @@
-import { describe, it, expect, vi, afterEach } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import type { Address } from 'viem'
-import { buildSheets, exportSheetsExcel } from '../spreadsheet'
+import { buildSheets } from '../spreadsheet'
 import type { CncAccounting } from '@/utils/accounting/assemble'
 import { assembleAccounting } from '@/utils/accounting/__tests__/assembleAccounting'
 import { USDC_ADDRESS } from '@/constant'
@@ -122,21 +122,21 @@ describe('buildSheets (complete report selection)', () => {
 
     const balance = byName('Balance Sheet').rows
     const totalAssetsRow = balance.find((r) => r[0] === 'Total assets')!
-    expect(totalAssetsRow[1]).toBe(100)
-    expect(balance.find((r) => r[0] === 'Cash — Bank')![1]).toBe(100)
+    expect(totalAssetsRow[2]).toBe(100)
+    expect(balance.find((r) => r[0] === 'Cash — Bank')![2]).toBe(100)
     expect(balance.find((r) => r[0] === 'Earnings to date calculation')).toBeTruthy()
-    expect(balance.find((r) => r[0] === 'Service Revenue')![1]).toBe(100)
-    expect(balance.find((r) => r[0] === 'Earnings to date')![1]).toBe(100)
+    expect(balance.find((r) => r[0] === 'Service Revenue')![2]).toBe(100)
+    expect(balance.find((r) => r[0] === 'Earnings to date')![2]).toBe(100)
   })
 
   it('[AC-US-ACCT-004-06] keeps concrete account rows and the earnings contributions', () => {
     const balance = byName('Balance Sheet').rows
     const row = (label: string) => balance.find((candidate) => candidate[0] === label)
     // The concrete pocket, then the accounts explaining what earnings are made of.
-    expect(row('Cash — Bank')![1]).toBe(100)
+    expect(row('Cash — Bank')![2]).toBe(100)
     expect(row('Earnings to date calculation')).toBeTruthy()
-    expect(row('Service Revenue')![1]).toBe(100)
-    expect(row('Earnings to date')![1]).toBe(100)
+    expect(row('Service Revenue')![2]).toBe(100)
+    expect(row('Earnings to date')![2]).toBe(100)
   })
 
   it('trial balance totals debit = credit', () => {
@@ -221,7 +221,7 @@ describe('buildSheets (section selection)', () => {
         key: 'ledger',
         journalAccounts: [accountId],
         journalAccountLabel: 'Cash — Bank',
-        journalAccountMovements: { debit: '$100.00', credit: '$0.00' }
+        journalAccountAmounts: { debit: 100n * 10n ** 24n, credit: 0n }
       }
     ])
     expect(String(ledger.rows[0][0])).toBe('General Ledger — Cash — Bank')
@@ -235,7 +235,7 @@ describe('buildSheets (section selection)', () => {
         key: 'ledger',
         journalAccounts: [sampleBooks().journal[0]!.lines[1]!.account.id],
         journalAccountLabel: 'Earnings to date',
-        journalAccountMovements: { debit: '$100.00', credit: '$100.00' }
+        journalAccountAmounts: { debit: 100n * 10n ** 24n, credit: 100n * 10n ** 24n }
       }
     ])
     expect(String(ledger.rows[0][0])).toBe('General Ledger — Earnings to date')
@@ -292,41 +292,5 @@ describe('buildSheets (empty selection)', () => {
     expect(income.find((r) => r[0] === 'Total expenses')![1]).toBe(0)
     const trialTotal = rowsOf('Trial Balance').find((r) => r[0] === 'Total')!
     expect(trialTotal[2]).toBe(trialTotal[3])
-  })
-})
-
-describe('exportSheetsExcel', () => {
-  afterEach(() => {
-    vi.unstubAllGlobals()
-    vi.restoreAllMocks()
-  })
-
-  it('builds and downloads a valid .xlsx blob (end to end, real SheetJS)', async () => {
-    let captured: { parts: BlobPart[]; type: string } | null = null
-    const RealBlob = globalThis.Blob
-    class CapturingBlob extends RealBlob {
-      constructor(parts?: BlobPart[], options?: BlobPropertyBag) {
-        super(parts, options)
-        captured = { parts: parts ?? [], type: options?.type ?? '' }
-      }
-    }
-    vi.stubGlobal('Blob', CapturingBlob)
-    vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:mock')
-    vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {})
-    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
-
-    const sheets = buildSheets(sampleBooks(), [
-      { key: 'income' },
-      { key: 'balance' },
-      { key: 'trial' },
-      { key: 'ledger' }
-    ])
-    await exportSheetsExcel(sheets, 'cnc-accounting.xlsx')
-
-    expect(captured).not.toBeNull()
-    expect(captured!.type).toContain('spreadsheetml')
-    // First bytes of a .xlsx are the ZIP signature "PK".
-    const bytes = new Uint8Array(captured!.parts[0] as ArrayBuffer)
-    expect([bytes[0], bytes[1]]).toEqual([0x50, 0x4b])
   })
 })

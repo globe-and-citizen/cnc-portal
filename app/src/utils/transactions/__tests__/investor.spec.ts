@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { zeroAddress } from 'viem'
+import { SUPPORTED_TOKENS } from '@/constant'
 import { formatDateTime, fromUnix } from '@/utils/format'
 import type {
   InvestorEventFeed,
@@ -7,6 +8,7 @@ import type {
 } from '@/types/contract-events/investor'
 import {
   buildRawInvestorTransactions,
+  mapRawInvestorTransaction,
   formatInvestorTransactionDate,
   getInvestorTransactionTypeColor
 } from '../investor'
@@ -173,5 +175,44 @@ describe('investorsTransactionUtil', () => {
     expect(getInvestorTransactionTypeColor('dividendPaymentFailed')).toBe('error')
     expect(getInvestorTransactionTypeColor('safeTransfer')).toBe('info')
     expect(getInvestorTransactionTypeColor('safeDepositsEnabled')).toBe('neutral')
+  })
+})
+
+describe('investor fiat quote availability', () => {
+  const token = SUPPORTED_TOKENS.find(({ id }) => id === 'usdc')!
+  it.each([null, 0, 2])('preserves quote %s in a known token valuation', (price) => {
+    const row = mapRawInvestorTransaction(
+      {
+        txHash: '0xvalue',
+        timestamp: 1,
+        from: SHAREHOLDER_A,
+        to: INVESTOR_ADDRESS,
+        amount: '1000000',
+        tokenAddress: token.address,
+        transactionType: 'safeDeposit'
+      },
+      'SHER',
+      () => price,
+      [token]
+    )
+    expect(row.amountUSD).toBe(price)
+    expect(row.amount).toBe('1')
+  })
+  it('does not invent a USD estimate for an unsupported token', () => {
+    const row = mapRawInvestorTransaction(
+      {
+        txHash: '0xunknown',
+        timestamp: 1,
+        from: SHAREHOLDER_A,
+        to: INVESTOR_ADDRESS,
+        amount: '1000000',
+        tokenAddress: '0x9999999999999999999999999999999999999999',
+        transactionType: 'safeDeposit'
+      },
+      'SHER',
+      () => 0,
+      []
+    )
+    expect(row.amountUSD).toBeNull()
   })
 })

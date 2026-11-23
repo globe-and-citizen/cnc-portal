@@ -21,9 +21,9 @@ The display name and profile image can be changed from the client navigation and
 
 ## Status Overview
 
-| User Story     | Title                   | Actor       | Status        |
-| -------------- | ----------------------- | ----------- | ------------- |
-| US-PROFILE-001 | Update profile identity | Portal user | 🧪 Validation |
+| User Story                                                | Feature                 | Actor       | Status        | Intended Scope |
+| --------------------------------------------------------- | ----------------------- | ----------- | ------------- | -------------- |
+| [US-PROFILE-001](#us-profile-001-update-profile-identity) | Update profile identity | Portal user | 🧪 Validation | Not assessed   |
 
 ## Test Coverage Overview
 
@@ -36,21 +36,27 @@ journey remains planned for integrated E2E; focused tests already prove some ind
 
 Proof obligations use the [shared proof-strategy registry](../../testing/proof-strategies.md). Multiple IDs for one AC are cumulative.
 
-## US-PROFILE-001: Update Profile Identity
+## FEAT-PROFILE-001: Update Profile Identity
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
+
+### US-PROFILE-001: Update Profile Identity
 
 **As a** portal user\
 **I want to** update my display name and profile image\
 **So that** the portal presents my current identity to other users
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-PROFILE-001-01` An authenticated portal user can open the profile form from the client navigation and save a changed display
       name or profile image.
 - [x] `AC-US-PROFILE-001-02` A successful profile-image upload applies the returned URL to the profile draft before it is saved.
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-PROFILE-001-03` The wallet address is displayed but is not editable in the profile form.
 - [x] `AC-US-PROFILE-001-04` A display name must contain between 3 and 100 characters.
@@ -59,12 +65,12 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
       when either value is absent.
 - [x] `AC-US-PROFILE-001-09` A user can update only their own profile; a missing or different authenticated wallet is rejected.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [x] `AC-US-PROFILE-001-06` An invalid image is rejected without changing the profile draft.
 - [x] `AC-US-PROFILE-001-07` An upload or profile-save failure leaves the form available and exposes the failure to the user.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion   | Proof Strategy      | Current Evidence   | Status          |
 | ---------------------- | ------------------- | ------------------ | --------------- |
@@ -84,7 +90,7 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `f15dccbe52468b554ce87b92f5db48411b921bb9`
+**Implementation evidence reviewed against:** `da344f417c2f7d017c00e339960cb0fec3d95e4e`
 
 - [Navigation profile entry](../../../app/src/components/layout/NavBar.vue) and
   [sidebar profile entry](../../../app/src/components/ui/SidebarLayout.vue)
@@ -92,6 +98,7 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
   [profile-image upload](../../../app/src/components/forms/ProfileImageUpload.vue)
 - [User update mutation](../../../app/src/queries/user.queries.ts) and
   [single-file upload mutation](../../../app/src/queries/file.queries.ts)
+- [User API controller](../../../backend/src/controllers/userController.ts)
 - [User request schema](../../../backend/src/validation/schemas/user.ts) and
   [user-schema tests](../../../backend/src/validation/schemas/__tests__/user.test.ts)
 - [Profile-image component tests](../../../app/src/components/forms/__tests__/ProfileImageUpload.spec.ts) and

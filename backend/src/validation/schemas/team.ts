@@ -19,12 +19,16 @@ export const addTeamBodySchema = z.object({
 });
 
 // Update team request body
-export const updateTeamBodySchema = z.object({
-  name: nonEmptyStringSchema.optional(),
-  description: z.string().optional(),
-  isArchived: z.boolean().optional(),
-  isHidden: z.boolean().optional(),
-});
+export const updateTeamBodySchema = z
+  .object({
+    name: nonEmptyStringSchema.optional(),
+    description: z.string().optional(),
+    isArchived: z.boolean().optional(),
+    isHidden: z.boolean().optional(),
+    isFavorite: z.boolean().optional(),
+    requireWeeklyGoals: z.boolean().optional(),
+  })
+  .default({});
 
 const booleanQueryParamSchema = z.preprocess((value) => {
   if (value === undefined) return undefined;

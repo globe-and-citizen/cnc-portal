@@ -24,6 +24,16 @@
       <div class="relative z-20 flex shrink-0 items-center gap-1.5">
         <UBadge v-if="isOwner" size="sm" color="primary" variant="solid">Owner</UBadge>
         <UBadge v-else size="sm" color="secondary" variant="solid">Employee</UBadge>
+        <UButton
+          :icon="team.isFavorite ? 'i-heroicons-star-solid' : 'i-heroicons-star'"
+          :color="team.isFavorite ? 'warning' : 'neutral'"
+          :aria-label="team.isFavorite ? `Unpin ${team.name}` : `Pin ${team.name}`"
+          :aria-pressed="team.isFavorite"
+          variant="ghost"
+          size="xs"
+          data-test="team-favorite"
+          @click.stop="emit('toggleFavorite')"
+        />
         <UDropdownMenu :items="menuItems" @click.stop>
           <UButton
             icon="i-heroicons-ellipsis-vertical"
@@ -138,6 +148,7 @@
 </template>
 
 <script setup lang="ts">
+import { sumFiatValues, valueTokenAmount } from '@/utils/currency/valuation'
 import { computed } from 'vue'
 import type { DropdownMenuItem } from '@nuxt/ui'
 import { RouterLink, type RouteLocationRaw } from 'vue-router'
@@ -160,6 +171,7 @@ const emit = defineEmits<{
   archive: []
   hide: []
   delete: []
+  toggleFavorite: []
 }>()
 
 const userStore = useUserDataStore()
@@ -227,18 +239,17 @@ const wage = computed(() => {
   // Rates are per-token and per-hour; price each one in the viewer's currency
   // and scale by the weekly hour cap to get the comparable weekly figure the
   // design shows. If no token has a price yet, fall back to the bare status.
-  let hourly = 0
-  let priced = false
-  for (const rate of callerWage.ratePerHour ?? []) {
-    const price = currencyStore
-      .getTokenInfo(rate.type as TokenId)
-      ?.prices.find((entry) => entry.code === currencyCode.value)?.price
-    if (price == null) continue
-    hourly += rate.amount * price
-    priced = true
-  }
-
-  if (!priced) return { hasWage: true, label: 'Wage set' }
+  const hourly = sumFiatValues(
+    (callerWage.ratePerHour ?? []).map((rate) =>
+      valueTokenAmount(
+        rate.amount,
+        currencyStore
+          .getTokenInfo(rate.type as TokenId)
+          ?.prices.find((price) => price.code === currencyCode.value)?.price
+      )
+    )
+  )
+  if (hourly == null) return { hasWage: true, label: 'Wage set' }
 
   const weekly = hourly * (callerWage.maximumHoursPerWeek ?? 0)
   const formatted = formatCurrency(weekly, { currency: currencyCode.value, decimals: 0 })

@@ -115,7 +115,7 @@ export function toSafeTransferTokens(data?: SafeClientBalances): TokenOption[] {
       tokenId: token.id,
       name: token.name,
       balance: quantity === null ? 0 : Number(quantity),
-      price: item ? (parseFiatAmount(item.fiatConversion) ?? 0) : 0,
+      price: item ? parseFiatAmount(item.fiatConversion) : null,
       code: token.code
     }
   })

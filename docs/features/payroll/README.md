@@ -53,7 +53,7 @@ unchecked.
 
 1. The company owner sets a wage for the member.
 2. The owner funds the Cash Remuneration contract when non-mintable assets are required.
-3. The member optionally sets weekly goals and submits daily claims.
+3. The member sets weekly goals (mandatory when the owner requires them) and submits daily claims.
 4. The member can edit or delete claims while the week is pending.
 5. Once the week is complete, the Cash Remuneration owner signs the weekly claim.
 6. The member withdraws the signed claim on-chain.
@@ -61,22 +61,23 @@ unchecked.
 
 ## Status Overview
 
-| User Story     | Title                                      | Actor                     | Status         |
-| -------------- | ------------------------------------------ | ------------------------- | -------------- |
-| US-PAYROLL-001 | Set a Member's Wage                        | Company owner             | 🧪 Validation  |
-| US-PAYROLL-002 | Pause or Resume a Member's Wage            | Company owner             | 🧪 Validation  |
-| US-PAYROLL-003 | Fund the Payroll Contract                  | Account funder            | 🚧 In Progress |
-| US-PAYROLL-004 | Set Weekly Goals                           | Company member            | 🧪 Validation  |
-| US-PAYROLL-005 | Submit a Daily Claim                       | Company member            | 🧪 Validation  |
-| US-PAYROLL-006 | Edit a Daily Claim                         | Claim owner               | 🧪 Validation  |
-| US-PAYROLL-007 | Delete a Daily Claim                       | Claim owner               | 🧪 Validation  |
-| US-PAYROLL-008 | Sign a Completed Weekly Claim              | Cash Remuneration owner   | 🧪 Validation  |
-| US-PAYROLL-009 | Disable or Re-enable a Signed Weekly Claim | Cash Remuneration owner   | 🧪 Validation  |
-| US-PAYROLL-010 | Withdraw an Approved Weekly Claim          | Claim owner               | 🧪 Validation  |
-| US-PAYROLL-011 | Reconcile Weekly Claims With the Chain     | Company member            | 🧪 Validation  |
-| US-PAYROLL-012 | Review Payroll History                     | Company member            | 🧪 Validation  |
-| US-PAYROLL-013 | Review the Payroll Account Position        | Company member            | 🚧 In Progress |
-| US-PAYROLL-014 | Return Payroll funds to Bank               | Authorized treasury actor | 🚧 In Progress |
+| User Story                                                                   | Feature                                    | Actor                     | Status         | Intended Scope |
+| ---------------------------------------------------------------------------- | ------------------------------------------ | ------------------------- | -------------- | -------------- |
+| [US-PAYROLL-001](#us-payroll-001-set-a-members-wage)                         | Set a Member's Wage                        | Company owner             | 🧪 Validation  | Not assessed   |
+| [US-PAYROLL-002](#us-payroll-002-pause-or-resume-a-members-wage)             | Pause or Resume a Member's Wage            | Company owner             | 🧪 Validation  | Not assessed   |
+| [US-PAYROLL-003](#us-payroll-003-fund-the-payroll-contract)                  | Fund the Payroll Contract                  | Account funder            | 🚧 In Progress | Not assessed   |
+| [US-PAYROLL-004](#us-payroll-004-set-weekly-goals)                           | Set Weekly Goals                           | Company member            | 🧪 Validation  | Not assessed   |
+| [US-PAYROLL-005](#us-payroll-005-submit-a-daily-claim)                       | Submit a Daily Claim                       | Company member            | 🧪 Validation  | Not assessed   |
+| [US-PAYROLL-006](#us-payroll-006-edit-a-daily-claim)                         | Edit a Daily Claim                         | Claim owner               | 🧪 Validation  | Not assessed   |
+| [US-PAYROLL-007](#us-payroll-007-delete-a-daily-claim)                       | Delete a Daily Claim                       | Claim owner               | 🧪 Validation  | Not assessed   |
+| [US-PAYROLL-008](#us-payroll-008-sign-a-completed-weekly-claim)              | Sign a Completed Weekly Claim              | Cash Remuneration owner   | 🧪 Validation  | Not assessed   |
+| [US-PAYROLL-009](#us-payroll-009-disable-or-re-enable-a-signed-weekly-claim) | Disable or Re-enable a Signed Weekly Claim | Cash Remuneration owner   | 🧪 Validation  | Not assessed   |
+| [US-PAYROLL-010](#us-payroll-010-withdraw-an-approved-weekly-claim)          | Withdraw an Approved Weekly Claim          | Claim owner               | 🧪 Validation  | Not assessed   |
+| [US-PAYROLL-011](#us-payroll-011-reconcile-weekly-claims-with-the-chain)     | Reconcile Weekly Claims With the Chain     | Company member            | 🧪 Validation  | Not assessed   |
+| [US-PAYROLL-012](#us-payroll-012-review-payroll-history)                     | Review Payroll History                     | Company member            | 🧪 Validation  | Not assessed   |
+| [US-PAYROLL-013](#us-payroll-013-review-the-payroll-account-position)        | Review the Payroll Account Position        | Company member            | 🚧 In Progress | Not assessed   |
+| [US-PAYROLL-014](#us-payroll-014-return-payroll-funds-to-bank)               | Return Payroll funds to Bank               | Authorized treasury actor | 🚧 In Progress | Not assessed   |
+| [US-PAYROLL-015](#us-payroll-015-require-weekly-goals)                       | Require Weekly Goals                       | Company owner             | 🧪 Validation  | Not assessed   |
 
 ## Test Coverage Overview
 
@@ -102,24 +103,31 @@ Runs of at least three consecutive missing criteria use inclusive ranges with fu
 | US-PAYROLL-012 | ✅ Integrated | ✅ 13/13        | —                                                                                              |
 | US-PAYROLL-013 | ✅ Integrated | ⚠️ 6/7 met      | `AC-US-PAYROLL-013-07`                                                                         |
 | US-PAYROLL-014 | 🚧 Partial    | ⚠️ 1/8          | `AC-US-PAYROLL-014-01`–`AC-US-PAYROLL-014-05`, `AC-US-PAYROLL-014-07`, `AC-US-PAYROLL-014-08`  |
+| US-PAYROLL-015 | Not required  | ✅ 4/4          | —                                                                                              |
 
 Proof obligations use the [shared proof-strategy registry](../../testing/proof-strategies.md). Multiple IDs for one AC are cumulative.
 
-## US-PAYROLL-001: Set a Member's Wage
+## FEAT-PAYROLL-001: Set a Member's Wage
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
+
+### US-PAYROLL-001: Set a Member's Wage
 
 **As a** company owner\
 **I want to** set a member's hourly rates and hour limits\
 **So that** they can submit claims for fair, bounded compensation
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-PAYROLL-001-01` A company owner can set a wage for any company member.
 - [x] `AC-US-PAYROLL-001-02` A successful wage request persists a new version that subsequent member-wage reads return.
 - [x] `AC-US-PAYROLL-001-03` Member-wage reads expose the standard rates, overtime rates, weekly allowance, and daily allowance.
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-PAYROLL-001-04` A wage belongs to one member and stores standard rates separately from optional overtime rates.
 - [x] `AC-US-PAYROLL-001-05` Standard rates support the network-native token, USDC, and SHER.
@@ -144,14 +152,14 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 - [x] `AC-US-PAYROLL-001-22` Every wage version is stored off-chain.
 - [x] `AC-US-PAYROLL-001-23` The wage endpoint returns the current wage.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [x] `AC-US-PAYROLL-001-24` Member-wage reads distinguish members who do not have a wage.
 - [x] `AC-US-PAYROLL-001-25` A disabled wage cannot be replaced until the owner resumes it.
 - [x] `AC-US-PAYROLL-001-26` Archived companies cannot create wages.
 - [x] `AC-US-PAYROLL-001-27` Archived companies cannot replace wages.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion   | Proof Strategy      | Current Evidence         | Status          |
 | ---------------------- | ------------------- | ------------------------ | --------------- |
@@ -187,22 +195,28 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 
 **Dependencies:** Companies and Workspace
 
-## US-PAYROLL-002: Pause or Resume a Member's Wage
+## FEAT-PAYROLL-002: Pause or Resume a Member's Wage
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
+
+### US-PAYROLL-002: Pause or Resume a Member's Wage
 
 **As a** company owner\
 **I want to** pause a member's wage and resume it later\
 **So that** I can freeze payroll activity without deleting wage history
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-PAYROLL-002-01` The owner can pause an active wage.
 - [x] `AC-US-PAYROLL-002-02` The owner can resume a paused wage.
 - [x] `AC-US-PAYROLL-002-03` Resuming a wage restores daily-claim actions.
 - [x] `AC-US-PAYROLL-002-04` Resuming a wage permits the owner to replace it.
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-PAYROLL-002-05` A paused wage blocks new daily claims.
 - [x] `AC-US-PAYROLL-002-06` A paused wage blocks daily-claim edits.
@@ -210,13 +224,13 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 - [x] `AC-US-PAYROLL-002-08` A paused wage blocks replacement wages.
 - [x] `AC-US-PAYROLL-002-09` Non-owners cannot change the wage status.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [x] `AC-US-PAYROLL-002-10` The status of a missing wage cannot be changed.
 - [x] `AC-US-PAYROLL-002-11` The status of a historical wage cannot be changed.
 - [x] `AC-US-PAYROLL-002-12` The wage status of an archived company cannot be changed.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion   | Proof Strategy      | Current Evidence         | Status          |
 | ---------------------- | ------------------- | ------------------------ | --------------- |
@@ -238,7 +252,13 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 
 **Dependencies:** US-PAYROLL-001
 
-## US-PAYROLL-003: Fund the Payroll Contract
+## FEAT-PAYROLL-003: Fund the Payroll Contract
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
+
+### US-PAYROLL-003: Fund the Payroll Contract
 
 **As an** account funder\
 **I want to** add assets to the Cash Remuneration account\
@@ -248,9 +268,9 @@ The funder may use a wallet directly or an authorized Bank transfer. `US-BANK-00
 the Payroll balance and payment availability. Native transfers call the receiver, while direct ERC-20 transfers do not emit a Payroll
 deposit event.
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-PAYROLL-003-01` The Bank owner can send native assets to the Cash Remuneration address.
 - [x] `AC-US-PAYROLL-003-02` The Bank owner can send supported ERC-20 assets to the Cash Remuneration address.
@@ -258,20 +278,20 @@ deposit event.
 - [x] `AC-US-PAYROLL-003-04` A supported ERC-20 sent directly from a wallet to Cash Remuneration increases that token's balance.
       _(contract)_
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-PAYROLL-003-05` _(contract)_ SHER compensation follows the configured Investor minting path instead of requiring a prefunded
       SHER balance.
 - [ ] `AC-US-PAYROLL-003-07` A Bank funding action offers an ERC-20 destination only when Cash Remuneration supports that token.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [x] `AC-US-PAYROLL-003-06` _(contract)_ A withdrawal in a non-mintable asset fails when the Cash Remuneration contract lacks the required
       balance.
 - [ ] `AC-US-PAYROLL-003-08` A wallet-origin ERC-20 transfer is identifiable in Payroll account history even though the Cash Remuneration
       contract emits no deposit event.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion   | Proof Strategy        | Current Evidence | Status     |
 | ---------------------- | --------------------- | ---------------- | ---------- |
@@ -307,7 +327,7 @@ remain as recorded above.
 | Safe funds Payroll. [UC-TREASURY-001](../accounting/journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer)                         | Owns the credited Payroll balance and payment availability. | [US-SAFE-003](../accounts/README.md#us-safe-003-manage-safe-funds) — initiates the Safe transfer                                           |
 | An approved Expense payout reaches Payroll. [UC-TREASURY-001](../accounting/journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer) | Owns the credited Payroll balance and payment availability. | [US-EXP-002](../accounts/README.md#us-exp-002-spend-from-the-expense-account) — executes the approved payout to a company pocket           |
 
-### Direct Movement Scenarios
+#### Direct Movement Scenarios
 
 Target behaviour follows the [direct movement policy](../accounting/direct-movement-policy.md). Each row represents the same evidenced
 movement across the participating stories.
@@ -316,26 +336,32 @@ movement across the participating stories.
 | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | External wallet funds Payroll without established business purpose. [UC-TREASURY-002](../accounting/journal-entry-catalogue.md#uc-treasury-002--external-receipt-pending-classification) | Owns received funding and payment availability. | [US-PAYROLL-013](README.md#us-payroll-013-review-the-payroll-account-position) — owns Payroll position and history; [US-ACCT-007](../accounting/README.md#us-acct-007-review-direct-treasury-movements) — owns movement evidence and identity; [US-ACCT-010](../accounting/README.md#us-acct-010-classify-direct-external-receipts) — owns eligible receipt classification |
 
-## US-PAYROLL-004: Set Weekly Goals
+## FEAT-PAYROLL-004: Set Weekly Goals
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
+
+### US-PAYROLL-004: Set Weekly Goals
 
 **As a** company member\
 **I want to** record my goals for an ISO week\
 **So that** my planned work is visible beside my submitted claims
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-PAYROLL-004-01` A member with a wage can submit a free-form Markdown goals memo.
 - [x] `AC-US-PAYROLL-004-02` Goals can create a pending weekly claim before any daily hours are submitted.
 - [x] `AC-US-PAYROLL-004-03` Saving again updates the single goals memo for that member and week.
 - [x] `AC-US-PAYROLL-004-04` Goals can be cleared with an empty memo.
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-PAYROLL-004-05` Each member and ISO week has at most one goals memo.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [x] `AC-US-PAYROLL-004-06` A member without an applicable wage cannot create a weekly goals record.
 - [x] `AC-US-PAYROLL-004-07` Goals are read-only once the week is signed.
@@ -344,7 +370,7 @@ movement across the participating stories.
 - [x] `AC-US-PAYROLL-004-10` Archived companies cannot create weekly goals.
 - [x] `AC-US-PAYROLL-004-11` Archived companies cannot update weekly goals.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion   | Proof Strategy      | Current Evidence   | Status          |
 | ---------------------- | ------------------- | ------------------ | --------------- |
@@ -363,20 +389,26 @@ movement across the participating stories.
 
 **Dependencies:** US-PAYROLL-001
 
-## US-PAYROLL-005: Submit a Daily Claim
+## FEAT-PAYROLL-005: Submit a Daily Claim
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
+
+### US-PAYROLL-005: Submit a Daily Claim
 
 **As a** company member\
 **I want to** log the work completed on a given day\
 **So that** it can be included in my weekly compensation
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-PAYROLL-005-01` A member can submit a daily claim for themselves.
 - [x] `AC-US-PAYROLL-005-02` A successful submission persists the daily claim and exposes it through subsequent weekly-claim reads.
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-PAYROLL-005-03` A daily claim stores its work date in UTC.
 - [x] `AC-US-PAYROLL-005-04` A daily-claim duration must be greater than 0.
@@ -393,7 +425,7 @@ movement across the participating stories.
 - [x] `AC-US-PAYROLL-005-15` When submission restriction is active, the portal accepts work dates at most four days in the past.
 - [x] `AC-US-PAYROLL-005-16` _(API)_ When submission restriction is active, the API accepts work dates at most four days in the past.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [x] `AC-US-PAYROLL-005-17` A daily claim submitted for another member is rejected.
 - [x] `AC-US-PAYROLL-005-18` A daily claim submitted without an applicable wage is rejected.
@@ -405,7 +437,7 @@ movement across the participating stories.
 - [x] `AC-US-PAYROLL-005-24` An attachment with an unsupported file type is rejected before the daily claim is submitted.
 - [x] `AC-US-PAYROLL-005-25` An attachment larger than 10 MB is rejected before the daily claim is submitted.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion   | Proof Strategy      | Current Evidence | Status          |
 | ---------------------- | ------------------- | ---------------- | --------------- |
@@ -436,6 +468,9 @@ movement across the participating stories.
 | `AC-US-PAYROLL-005-24` | `PS-FRONTEND`       | Frontend         | ✅ Met          |
 | `AC-US-PAYROLL-005-25` | `PS-FRONTEND`       | Frontend         | ✅ Met          |
 
+When the company requires weekly goals, submission also depends on the member's goals for that week
+([US-PAYROLL-015](#us-payroll-015-require-weekly-goals)).
+
 **Accounting:** The daily claim changes the source amount for
 [`UC-CASH-02`](../accounting/journal-entry-catalogue.md#uc-cash-02--weekly-wage-accrual). The journal entry is created only after the
 containing work week ends and remains eligible.
@@ -451,20 +486,26 @@ remain as recorded above.
 | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
 | A work week ends with submitted daily claims and an eligible weekly claim. [UC-PAYROLL-001](../accounting/journal-entry-catalogue.md#uc-payroll-001--weekly-wage-accrual) | Supplies the daily claims used to calculate accrual. | [US-PAYROLL-009](#us-payroll-009-disable-or-re-enable-a-signed-weekly-claim) — controls claim eligibility; changing status creates no separate entry |
 
-## US-PAYROLL-006: Edit a Daily Claim
+## FEAT-PAYROLL-006: Edit a Daily Claim
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
+
+### US-PAYROLL-006: Edit a Daily Claim
 
 **As a** company member\
 **I want to** correct a daily claim\
 **So that** mistakes can be fixed before the week is approved
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-PAYROLL-006-01` The claim owner can edit the duration, memo, and attachments while the week is pending.
 - [x] `AC-US-PAYROLL-006-02` A successful edit persists the new claim values.
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-PAYROLL-006-03` Editing cannot change the claim's original work date.
 - [x] `AC-US-PAYROLL-006-04` The update API permits a partial update without a memo.
@@ -475,13 +516,13 @@ remain as recorded above.
 - [x] `AC-US-PAYROLL-006-09` A user other than the claim owner cannot edit the claim.
 - [x] `AC-US-PAYROLL-006-10` The API rejects claim edits when the weekly claim is disabled.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [x] `AC-US-PAYROLL-006-11` A paused wage blocks claim editing.
 - [x] `AC-US-PAYROLL-006-12` A rejected edit leaves the stored claim unchanged and returns its rejection reason.
 - [x] `AC-US-PAYROLL-006-13` Archived companies cannot edit claims.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion   | Proof Strategy      | Current Evidence | Status          |
 | ---------------------- | ------------------- | ---------------- | --------------- |
@@ -500,21 +541,30 @@ remain as recorded above.
 | `AC-US-PAYROLL-006-12` | `PS-BACKEND`        | Backend          | ✅ Met          |
 | `AC-US-PAYROLL-006-13` | `PS-BACKEND`        | Backend          | ✅ Met          |
 
+When the company requires weekly goals, editing also depends on the member's goals for that week
+([US-PAYROLL-015](#us-payroll-015-require-weekly-goals)).
+
 **Dependencies:** US-PAYROLL-005
 
-## US-PAYROLL-007: Delete a Daily Claim
+## FEAT-PAYROLL-007: Delete a Daily Claim
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
+
+### US-PAYROLL-007: Delete a Daily Claim
 
 **As a** company member\
 **I want to** delete a daily claim entered by mistake\
 **So that** it is removed before the week is approved
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-PAYROLL-007-01` A confirmed deletion removes the claim and its stored attachments from subsequent weekly-claim reads.
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-PAYROLL-007-02` Deleting a daily claim requires its owner's confirmation before stored data changes.
 - [x] `AC-US-PAYROLL-007-03` Deleting the final daily claim removes an otherwise empty weekly claim but preserves one that still contains
@@ -522,13 +572,13 @@ remain as recorded above.
 - [x] `AC-US-PAYROLL-007-04` A user other than the claim owner cannot delete the claim.
 - [x] `AC-US-PAYROLL-007-05` The API rejects claim deletion when the weekly claim is disabled.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [x] `AC-US-PAYROLL-007-06` A paused wage blocks claim deletion.
 - [x] `AC-US-PAYROLL-007-07` Archived companies cannot delete claims.
 - [x] `AC-US-PAYROLL-007-08` A failed deletion leaves the stored claim unchanged and returns a failure outcome.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion   | Proof Strategy      | Current Evidence | Status          |
 | ---------------------- | ------------------- | ---------------- | --------------- |
@@ -544,21 +594,27 @@ remain as recorded above.
 
 **Dependencies:** US-PAYROLL-005
 
-## US-PAYROLL-008: Sign a Completed Weekly Claim
+## FEAT-PAYROLL-008: Sign a Completed Weekly Claim
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
+
+### US-PAYROLL-008: Sign a Completed Weekly Claim
 
 **As a** Cash Remuneration contract owner\
 **I want to** sign a member's completed weekly claim\
 **So that** the member is authorised to withdraw that week's compensation
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-PAYROLL-008-01` Only the current Cash Remuneration contract owner can initiate signing through the product journey.
 - [x] `AC-US-PAYROLL-008-02` Signing requests an EIP-712 wallet signature bound to Cash Remuneration version 1, the active contract, and the
       active chain.
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-PAYROLL-008-03` The API authorizes only the current Cash Remuneration contract owner.
 - [x] `AC-US-PAYROLL-008-04` The product journey permits signing only when the weekly claim contains at least one daily claim.
@@ -573,7 +629,7 @@ remain as recorded above.
       regular hours, the overtime rate for overtime hours, and nothing for overtime hours in a token without an overtime rate. The
       contract's single weekly rate can round the paid amount down by a few base units.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [x] `AC-US-PAYROLL-008-11` The current week cannot be signed.
 - [x] `AC-US-PAYROLL-008-12` A future week cannot be signed.
@@ -582,7 +638,7 @@ remain as recorded above.
 - [x] `AC-US-PAYROLL-008-15` Rejecting the wallet signature leaves the weekly claim's stored status and signature unchanged.
 - [x] `AC-US-PAYROLL-008-16` Reconciliation clears a previous-contract signature and returns its weekly claim to pending.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion   | Proof Strategy             | Current Evidence   | Status          |
 | ---------------------- | -------------------------- | ------------------ | --------------- |
@@ -610,32 +666,38 @@ week.
 
 **Dependencies:** US-PAYROLL-005
 
-## US-PAYROLL-009: Disable or Re-enable a Signed Weekly Claim
+## FEAT-PAYROLL-009: Disable or Re-enable a Signed Weekly Claim
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
+
+### US-PAYROLL-009: Disable or Re-enable a Signed Weekly Claim
 
 **As a** Cash Remuneration contract owner\
 **I want to** disable a signed weekly claim and re-enable it if appropriate\
 **So that** I can stop its payout before the member withdraws
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-PAYROLL-009-01` The current Cash Remuneration owner can disable a signed claim on-chain.
 - [x] `AC-US-PAYROLL-009-02` The owner can re-enable a disabled claim that has an existing signature.
 - [x] `AC-US-PAYROLL-009-03` A successful on-chain disable operation reconciles the stored weekly claim to disabled.
 - [x] `AC-US-PAYROLL-009-04` A successful on-chain enable operation reconciles the stored weekly claim to signed.
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-PAYROLL-009-05` Users who are not the Cash Remuneration owner cannot invoke the contract actions.
 - [x] `AC-US-PAYROLL-009-06` The legacy weekly-claim update API does not change stored status without the matching on-chain action.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [x] `AC-US-PAYROLL-009-07` A withdrawn claim cannot transition to disabled.
 - [x] `AC-US-PAYROLL-009-08` A withdrawn claim cannot transition to enabled.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion   | Proof Strategy             | Current Evidence          | Status          |
 | ---------------------- | -------------------------- | ------------------------- | --------------- |
@@ -666,22 +728,28 @@ remain as recorded above.
 | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
 | A work week ends with submitted daily claims and an eligible weekly claim. [UC-PAYROLL-001](../accounting/journal-entry-catalogue.md#uc-payroll-001--weekly-wage-accrual) | Controls claim eligibility; changing status creates no separate entry. | [US-PAYROLL-005](#us-payroll-005-submit-a-daily-claim) — supplies the daily claims used to calculate accrual |
 
-## US-PAYROLL-010: Withdraw an Approved Weekly Claim
+## FEAT-PAYROLL-010: Withdraw an Approved Weekly Claim
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
+
+### US-PAYROLL-010: Withdraw an Approved Weekly Claim
 
 **As a** paid company member\
 **I want to** withdraw my signed weekly claim\
 **So that** I receive the approved compensation in my wallet
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-PAYROLL-010-01` Only the member named by a signed weekly claim can initiate its withdrawal.
 - [x] `AC-US-PAYROLL-010-02` Withdrawal sends the complete native-token, ERC-20, and mintable-token wage payload on-chain.
 - [x] `AC-US-PAYROLL-010-03` A successful withdrawal transfers the approved compensation.
 - [x] `AC-US-PAYROLL-010-04` A successful withdrawal reconciles the stored status with the contract.
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-PAYROLL-010-05` _(API)_ Only the member named by the weekly claim can mark it as withdrawn.
 - [x] `AC-US-PAYROLL-010-06` A signature bound to another Cash Remuneration contract or network is rejected before the transaction.
@@ -689,7 +757,7 @@ remain as recorded above.
 - [x] `AC-US-PAYROLL-010-08` _(contract)_ The caller must match the employee encoded by the signed claim.
 - [x] `AC-US-PAYROLL-010-09` Product withdrawal requires both signed status and a stored signature.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [x] `AC-US-PAYROLL-010-10` A paid claim cannot be withdrawn.
 - [x] `AC-US-PAYROLL-010-11` A claim belonging to an archived company cannot be withdrawn.
@@ -702,7 +770,7 @@ remain as recorded above.
 - [x] `AC-US-PAYROLL-010-18` _(contract)_ A claim funded with the weekly total of each asset pays in full, whichever of the native, ERC-20
       and SHER rates it combines, and no asset pays more than its weekly total.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion   | Proof Strategy             | Current Evidence   | Status          |
 | ---------------------- | -------------------------- | ------------------ | --------------- |
@@ -735,15 +803,21 @@ into Investor Equity.
 
 **Dependencies:** US-PAYROLL-008, US-PAYROLL-003
 
-## US-PAYROLL-011: Reconcile Weekly Claims With the Chain
+## FEAT-PAYROLL-011: Reconcile Weekly Claims With the Chain
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
+
+### US-PAYROLL-011: Reconcile Weekly Claims With the Chain
 
 **As a** system\
 **I want to** reconcile signed and disabled weekly claims with the active contract\
 **So that** the portal reflects paid, disabled, and stale-signature state
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-PAYROLL-011-01` Reconciliation evaluates every signed or disabled weekly claim.
 - [x] `AC-US-PAYROLL-011-02` Reconciliation updates a paid weekly claim to withdrawn.
@@ -755,16 +829,16 @@ into Investor Equity.
 - [x] `AC-US-PAYROLL-011-08` Reconciliation reports the numbers of processed, updated, and skipped claims.
 - [x] `AC-US-PAYROLL-011-09` Subsequent weekly-claim reads expose the reconciled statuses.
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-PAYROLL-011-10` A signature bound to a previous Cash Remuneration contract is cleared and its weekly claim returns to pending.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [x] `AC-US-PAYROLL-011-11` A missing or invalid signature skips only the affected weekly claim.
 - [x] `AC-US-PAYROLL-011-12` A failed contract read skips only the affected weekly claim.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion   | Proof Strategy             | Current Evidence | Status          |
 | ---------------------- | -------------------------- | ---------------- | --------------- |
@@ -784,15 +858,21 @@ into Investor Equity.
 
 **Dependencies:** US-PAYROLL-008
 
-## US-PAYROLL-012: Review Payroll History
+## FEAT-PAYROLL-012: Review Payroll History
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
+
+### US-PAYROLL-012: Review Payroll History
 
 **As a** company member or owner\
 **I want to** review weekly claims and their status\
 **So that** I can track recorded work and completed payments
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-PAYROLL-012-01` A member can review each weekly claim's status, total duration, token amounts, daily breakdown, goals, and
       attachments.
@@ -805,21 +885,21 @@ into Investor Equity.
 - [x] `AC-US-PAYROLL-012-05` _(API)_ Weekly claims can be filtered by member.
 - [x] `AC-US-PAYROLL-012-06` _(API)_ Weekly-claim total minutes are derived from their daily claims.
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-PAYROLL-012-07` Paginated company-wide payroll history returns at most 100 rows per page.
 - [x] `AC-US-PAYROLL-012-08` Unpaginated company-wide payroll history uses the `{ data, total }` response shape.
 - [x] `AC-US-PAYROLL-012-09` Every authenticated company member can retrieve company-wide payroll records so that compensation remains
       transparent within the company.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [x] `AC-US-PAYROLL-012-10` An invalid status filter is rejected.
 - [x] `AC-US-PAYROLL-012-11` An invalid member-address filter is rejected.
 - [x] `AC-US-PAYROLL-012-12` An invalid page filter is rejected.
 - [x] `AC-US-PAYROLL-012-13` An invalid limit filter is rejected.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion   | Proof Strategy             | Current Evidence | Status |
 | ---------------------- | -------------------------- | ---------------- | ------ |
@@ -839,15 +919,21 @@ into Investor Equity.
 
 **Dependencies:** US-PAYROLL-005
 
-## US-PAYROLL-013: Review the Payroll Account Position
+## FEAT-PAYROLL-013: Review the Payroll Account Position
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
+
+### US-PAYROLL-013: Review the Payroll Account Position
 
 **As a** company member\
 **I want to** inspect the Cash Remuneration account position and activity\
 **So that** I can understand payroll liquidity, pending obligations, and account movements
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-PAYROLL-013-01` A company member can inspect the Cash Remuneration address, total balance, and token holdings.
 - [x] `AC-US-PAYROLL-013-02` The account summary reports the value of signed claims that remain pending for withdrawal.
@@ -856,15 +942,15 @@ into Investor Equity.
 - [ ] `AC-US-PAYROLL-013-07` Payroll activity includes direct native-token and ERC-20 movements without a Cash Remuneration event, using the
       same movement evidence as Accounting.
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-PAYROLL-013-05` Inspecting the Payroll account position does not require signing or withdrawal permission.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [x] `AC-US-PAYROLL-013-06` The withdrawn-compensation summary includes only claims withdrawn during the current UTC calendar month.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion   | Proof Strategy             | Current Evidence          | Status     |
 | ---------------------- | -------------------------- | ------------------------- | ---------- |
@@ -879,7 +965,7 @@ into Investor Equity.
 
 **Dependencies:** US-PAYROLL-003, Accounts
 
-### Direct Movement Scenarios
+#### Direct Movement Scenarios
 
 Target behaviour follows the [direct movement policy](../accounting/direct-movement-policy.md). Each row represents the same evidenced
 movement across the participating stories.
@@ -888,7 +974,13 @@ movement across the participating stories.
 | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | External wallet funds Payroll without established business purpose. [UC-TREASURY-002](../accounting/journal-entry-catalogue.md#uc-treasury-002--external-receipt-pending-classification) | Owns payroll position and history. | [US-PAYROLL-003](README.md#us-payroll-003-fund-the-payroll-contract) — owns received funding and payment availability; [US-ACCT-007](../accounting/README.md#us-acct-007-review-direct-treasury-movements) — owns movement evidence and identity; [US-ACCT-010](../accounting/README.md#us-acct-010-classify-direct-external-receipts) — owns eligible receipt classification |
 
-## US-PAYROLL-014: Return Payroll Funds to Bank
+## FEAT-PAYROLL-014: Return Payroll Funds to Bank
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
+
+### US-PAYROLL-014: Return Payroll Funds to Bank
 
 **As an** authorized treasury actor\
 **I want to** return available Cash Remuneration funds to Bank\
@@ -897,9 +989,9 @@ movement across the participating stories.
 This direct Payroll action is distinct from the multi-account `US-BANK-004` cash-out run. A Board member can propose the action, while only
 the Cash Remuneration owner executes the contract write directly or after approved governance.
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-PAYROLL-014-01` The Cash Remuneration owner can return its native balance to the Bank of the same contract generation.
 - [x] `AC-US-PAYROLL-014-02` The Cash Remuneration owner can return balances of its currently supported ERC-20 assets to that Bank.
@@ -907,18 +999,18 @@ the Cash Remuneration owner executes the contract write directly or after approv
 - [x] `AC-US-PAYROLL-014-04` A successful return decreases the source balance and increases the destination Bank balance for each moved
       asset.
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-PAYROLL-014-05` Only the Cash Remuneration owner can execute a direct return. _(contract)_
 - [x] `AC-US-PAYROLL-014-06` Before confirmation, the actor is informed that signed claims remain valid but may lack funds after the return.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [ ] `AC-US-PAYROLL-014-07` An asset outside the contract's current supported-token set is not reported as returned when its balance
       remains in Cash Remuneration.
 - [x] `AC-US-PAYROLL-014-08` Cancelling or rejecting the return leaves the Payroll and Bank balances unchanged.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion   | Proof Strategy        | Current Evidence | Status          |
 | ---------------------- | --------------------- | ---------------- | --------------- |
@@ -952,6 +1044,50 @@ remain as recorded above.
 | Payroll funds return directly to their generation's Bank. [UC-TREASURY-001](../accounting/journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer)        | Initiates the source-account return. | [US-BANK-003](../accounts/README.md#us-bank-003-review-the-bank-position-and-history) — owns the receiving Bank balance and history                                                                                                                                        |
 | A cash-out run returns Payroll funds to their generation's Bank. [UC-TREASURY-001](../accounting/journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer) | Owns the source-account return.      | [US-BANK-004](../accounts/README.md#us-bank-004-cash-out-available-treasury-funds) — orchestrates the step and owns sequence recovery; [US-BANK-003](../accounts/README.md#us-bank-003-review-the-bank-position-and-history) — owns the receiving Bank balance and history |
 
+## FEAT-PAYROLL-015: Require Weekly Goals
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
+
+### US-PAYROLL-015: Require Weekly Goals
+
+**As a** company owner\
+**I want to** require members to set their weekly goals before they log work\
+**So that** every week of claimed work has its planned goals recorded
+
+#### Acceptance Criteria
+
+##### Happy Path
+
+- [x] `AC-US-PAYROLL-015-01` The company owner can turn the weekly goals requirement on or off; only the owner can change it, and it is off
+      by default.
+
+##### Business Rules
+
+- [x] `AC-US-PAYROLL-015-02` While the requirement is on, the portal opens a daily-claim submission only once the member has set non-blank
+      weekly goals for that week; otherwise it tells the member to set them first.
+- [x] `AC-US-PAYROLL-015-03` _(API)_ While the requirement is on, the API rejects a daily claim for a week without non-blank goals, and
+      rejects clearing the goals of a week that already holds hours.
+
+##### Edge & Error Cases
+
+- [x] `AC-US-PAYROLL-015-04` While the requirement is on, a claim of a week without non-blank goals cannot be edited, in the portal or
+      through the API, even if it was submitted before the requirement was turned on; it can still be deleted.
+
+#### Test Coverage
+
+| Acceptance Criterion   | Proof Strategy | Current Evidence   | Status |
+| ---------------------- | -------------- | ------------------ | ------ |
+| `AC-US-PAYROLL-015-01` | `PS-BACKEND`   | Frontend + Backend | ✅ Met |
+| `AC-US-PAYROLL-015-01` | `PS-FRONTEND`  | Frontend + Backend | ✅ Met |
+| `AC-US-PAYROLL-015-02` | `PS-FRONTEND`  | Frontend           | ✅ Met |
+| `AC-US-PAYROLL-015-03` | `PS-BACKEND`   | Backend            | ✅ Met |
+| `AC-US-PAYROLL-015-04` | `PS-BACKEND`   | Frontend + Backend | ✅ Met |
+| `AC-US-PAYROLL-015-04` | `PS-FRONTEND`  | Frontend + Backend | ✅ Met |
+
+**Dependencies:** US-PAYROLL-004, US-PAYROLL-005, US-PAYROLL-006
+
 ## Human Validation
 
 Not yet completed. The feature owner must run every Payroll `@integrated` journey through Playwright UI against the prepared local G5 stack,
@@ -979,10 +1115,30 @@ preparation and required registration. The
 [shared Board failure contract](../contract-management/README.md#board-action-failure-and-recovery) distinguishes a confirmed action whose
 backend record could not be saved and prevents automatic chain resubmission. Notification delivery remains best-effort.
 
+## Attachment preview availability
+
+Claim-edit previews keep each stored file key. Attachment galleries resolve stored files on opening and downloading through the
+[File Storage URL owner](../../implementation/file-storage/README.md#client-attachment-url-renewal), so a long-open claim does not reuse an
+expired URL indefinitely. Local files keep their local previews. Renewal failures offer retryable feedback instead of opening a stale URL;
+removing a file, closing the preview or leaving the view prevents a delayed opening from restoring it. These display actions preserve claim
+editing rights, submission, signing and deletion rules.
+
+## Fiat display availability
+
+The local-currency wage, claim recap, monthly withdrawn/pending summaries and transaction totals use the
+[shared nullable quote policy](../../implementation/client-utilities/README.md#current-token-quote-and-fiat-availability). If any nonzero
+token contribution lacks a quote, the complete fiat estimate is unavailable; the known subset is not presented as a total. Zero quantities
+need no quote, numeric zero quotes remain zero, and token rates, worked minutes, signed payout quantities and the explicit SHER pricing
+policy remain unchanged. A currency change revalues retained data; quote failure/retry belongs to the shared query observers and application
+notice, not to wage or claim persistence. No payroll posting or signature rule changes.
+
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `631c851545f6331cc9aecdd4c217f27463d39d69`
+**Implementation evidence reviewed against:** `f0c52a0cd7d61ccbc84378222a549ee45ecc54c0`
 
+- [Pending claim fiat summary](../../../app/src/components/sections/CashRemunerationView/CashRemunerationPendingClaim.vue),
+  [claim-week recap](../../../app/src/components/sections/ClaimHistoryView/WeeklyRecap.vue), and
+  [claim recap availability tests](../../../app/src/components/sections/ClaimHistoryView/__tests__/WeeklyRecap.spec.ts)
 - [Cash Remuneration overview](../../../app/src/components/sections/CashRemunerationView/CashRemunerationOverview.vue),
   [monthly withdrawn summary](../../../app/src/components/sections/CashRemunerationView/CashRemunerationMonthlyClaim.vue),
   [incoming Bank transfer feed](../../../app/src/composables/bank/useIncomingBankTokenTransfersViaLogs.ts),
@@ -998,6 +1154,7 @@ backend record could not be saved and prevents automatic chain resubmission. Not
 - [Member claim action alerts](../../../app/src/components/sections/ClaimHistoryView/ClaimHistoryActionAlerts.vue)
 - [Wage client query and mutations](../../../app/src/queries/wage.queries.ts)
 - [Daily claim form](../../../app/src/components/sections/CashRemunerationView/Form/ClaimForm.vue)
+- [Attachment gallery renewal tests](../../../app/src/components/sections/CashRemunerationView/Form/__tests__/FilePreviewGallery.lifecycle.spec.ts)
 - [Daily claim file upload](../../../app/src/components/sections/CashRemunerationView/Form/UploadFileDB.vue)
 - [Claim submission flow](../../../app/src/components/sections/CashRemunerationView/SubmitClaims.vue)
 - [Claim editing flow](../../../app/src/components/sections/CashRemunerationView/EditClaims.vue)
@@ -1008,7 +1165,9 @@ backend record could not be saved and prevents automatic chain resubmission. Not
 - [Wage configuration validation](../../../app/src/utils/wages/validation.ts)
 - [Claim payout and signed rates](../../../app/src/utils/wages/model.ts) and
   [their tests](../../../app/src/utils/wages/__tests__/model.spec.ts)
-- [Weekly goals](../../../app/src/components/sections/CashRemunerationView/SubmitWeeklyGoals.vue)
+- [Weekly goals](../../../app/src/components/sections/CashRemunerationView/SubmitWeeklyGoals.vue),
+  [weekly goals requirement switch](../../../app/src/components/sections/WeeklyClaimView/RequireWeeklyGoalsToggle.vue), and
+  [its tests](../../../app/src/components/sections/WeeklyClaimView/__tests__/RequireWeeklyGoalsToggle.spec.ts)
 - [Claim history](../../../app/src/components/sections/ClaimHistoryView/ClaimHistory.vue)
 - [Weekly claim actions](../../../app/src/components/sections/WeeklyClaimView/WeeklyClaimActionDropdown.vue)
 - [Signature flow](../../../app/src/components/sections/CashRemunerationView/CRSigne.vue)

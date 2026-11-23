@@ -99,8 +99,8 @@ export function buildSummaryStats(s: AccountingSummary, isCurrent: boolean): Sum
         valueClass: signClass(s.realizedPnl),
         hint: 'Lot accounting — same as Income Statement',
         explainer: {
-          description: 'Money you actually locked in: when you sold shares, when a market resolved and you redeemed, when you merged shares back to cash, or when a losing bet resolved without redemption. Computed with weighted-average-cost lot accounting on every trade.',
-          formula: 'Σ (proceeds − cost basis) per disposed lot',
+          description: 'Money you actually locked in: when you sold shares, when a market resolved and you redeemed, when you merged shares back to cash, or when a losing bet resolved without redemption. Computed with weighted-average-cost lot accounting on every trade, before trading fees — the fees are counted once, on their own line.',
+          formula: 'Σ (proceeds − cost basis) per disposed lot, both before fees',
           example: 'You bought 100 "Yes" shares for $40 ($0.40 each) and sold them later for $60 ($0.60 each). Realized P&L on this trade = +$20.'
         }
       }

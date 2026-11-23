@@ -1,7 +1,8 @@
 # Board Elections — User Stories
 
 **Scope:** Board-election creation, voting, result publication, Board of Directors visibility, and election history in the client portal.
-Board proposals are a separate journey and are outside this document's scope.
+Board proposals are a separate journey and are outside this document's scope. Their frontend page, routes, and navigation are removed while
+the functionality is unscheduled. The Board Proposals contract integration is not exposed as a portal journey until that work is scheduled.
 
 **Last reviewed:** Not yet reviewed
 
@@ -30,19 +31,19 @@ Only one unpublished election can exist at a time. An ended election still block
 
 ## Status Overview
 
-| User Story | Title                                    | Actor          | Status         |
-| ---------- | ---------------------------------------- | -------------- | -------------- |
-| US-EL-01   | Create a board election                  | Company owner  | 🧪 Validation  |
-| US-EL-02   | Cast a vote                              | Eligible voter | 🚧 In Progress |
-| US-EL-03   | Publish election results                 | Company owner  | 🚧 In Progress |
-| US-EL-04   | Receive an election-created notification | Company member | 🚧 In Progress |
-| US-EL-05   | Follow the election schedule             | Company member | 🧪 Validation  |
-| US-EL-06   | Follow election turnout and vote counts  | Company member | 🧪 Validation  |
-| US-EL-07   | View the current Board of Directors      | Company member | 🧪 Validation  |
-| US-EL-08   | Review a published election              | Company member | 🚧 In Progress |
-| US-EL-09   | Receive a result-published notification  | Company member | 📝 Draft       |
-| US-EL-10   | Understand voter eligibility             | Company member | 🚧 In Progress |
-| US-EL-11   | Cancel an election                       | Company owner  | 📝 Draft       |
+| User Story                                                     | Feature                                  | Actor          | Status         | Intended Scope |
+| -------------------------------------------------------------- | ---------------------------------------- | -------------- | -------------- | -------------- |
+| [US-EL-01](#us-el-01-create-a-board-election)                  | Create a board election                  | Company owner  | 🧪 Validation  | Not assessed   |
+| [US-EL-02](#us-el-02-cast-a-vote)                              | Cast a vote                              | Eligible voter | 🚧 In Progress | Not assessed   |
+| [US-EL-03](#us-el-03-publish-election-results)                 | Publish election results                 | Company owner  | 🚧 In Progress | Not assessed   |
+| [US-EL-04](#us-el-04-receive-an-election-created-notification) | Receive an election-created notification | Company member | 🚧 In Progress | Not assessed   |
+| [US-EL-05](#us-el-05-follow-the-election-schedule)             | Follow the election schedule             | Company member | 🧪 Validation  | Not assessed   |
+| [US-EL-06](#us-el-06-follow-election-turnout-and-vote-counts)  | Follow election turnout and vote counts  | Company member | 🧪 Validation  | Not assessed   |
+| [US-EL-07](#us-el-07-view-the-current-board-of-directors)      | View the current Board of Directors      | Company member | 🧪 Validation  | Not assessed   |
+| [US-EL-08](#us-el-08-review-a-published-election)              | Review a published election              | Company member | 🚧 In Progress | Not assessed   |
+| [US-EL-09](#us-el-09-receive-a-result-published-notification)  | Receive a result-published notification  | Company member | 📝 Draft       | Not assessed   |
+| [US-EL-10](#us-el-10-understand-voter-eligibility)             | Understand voter eligibility             | Company member | 🚧 In Progress | Not assessed   |
+| [US-EL-11](#us-el-11-cancel-an-election)                       | Cancel an election                       | Company owner  | 📝 Draft       | Not assessed   |
 
 ## Test Coverage Overview
 
@@ -66,21 +67,27 @@ owned backend, and local chain together. Mocked browser tests retain controlled 
 
 Proof obligations use the [shared proof-strategy registry](../../testing/proof-strategies.md). Multiple IDs for one AC are cumulative.
 
-## US-EL-01: Create a Board Election
+## FEAT-EL-001: Create a Board Election
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
+
+### US-EL-01: Create a Board Election
 
 **As a** company owner\
 **I want to** create a board election with a voting window and candidates\
 **So that** the company can elect its Board of Directors through an auditable process
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-EL-01-01` A company owner can create an election with a title, description, start time, end time, seat count, and candidates.
 - [x] `AC-US-EL-01-02` A successful creation makes the new election available as the company's current election.
 - [x] `AC-US-EL-01-03` Current company members are submitted as the election's eligible voters.
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-EL-01-04` Only the Elections contract owner can create an election.
 - [x] `AC-US-EL-01-05` The portal requires an odd seat count of at least three and at least that many distinct candidates before it submits
@@ -91,14 +98,14 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 - [x] `AC-US-EL-01-11` The contract requires a positive odd seat count, at least as many candidates as seats, and no duplicate candidates.
 - [x] `AC-US-EL-01-13` The portal requires a title of at least three characters and a description of at least ten characters.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [x] `AC-US-EL-01-08` Cancelling the wallet signature does not create an election or request member notifications.
 - [x] `AC-US-EL-01-09` A rejected creation preserves a recoverable error state in the creation flow.
 - [x] `AC-US-EL-01-12` An archived company cannot create an election.
 - [x] `AC-US-EL-01-14` Closing an untouched creation form does not create an election or request member notifications.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion | Proof Strategy        | Current Evidence                                      | Status |
 | -------------------- | --------------------- | ----------------------------------------------------- | ------ |
@@ -124,26 +131,32 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 
 **Dependencies:** Current company, Elections contract, and connected company-owner wallet
 
-## US-EL-02: Cast a Vote
+## FEAT-EL-002: Cast a Vote
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
+
+### US-EL-02: Cast a Vote
 
 **As an** eligible voter\
 **I want to** select a candidate and cast one vote\
 **So that** my preference contributes to the Board election
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-EL-02-01` An eligible voter can review an election's candidates and cast a vote for one of them while the election is active.
 - [x] `AC-US-EL-02-02` The Elections contract records the selected candidate, the voter's participation, and the candidate's vote count.
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-EL-02-03` A voter can cast at most one vote for an election.
 - [x] `AC-US-EL-02-04` The contract accepts votes only from addresses in that election's fixed eligible-voter list.
 - [x] `AC-US-EL-02-05` The contract rejects votes outside the election's active time window and votes for addresses that are not candidates.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [x] `AC-US-EL-02-06` Rejecting the wallet signature does not record a vote.
 - [x] `AC-US-EL-02-07` After a successful vote, the portal refreshes the voter's recorded choice and the election counts without requiring a
@@ -151,7 +164,7 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 - [ ] `AC-US-EL-02-08` A member who is not eligible receives an explanation in the portal before attempting a wallet signature.
 - [x] `AC-US-EL-02-09` An archived company cannot cast a vote.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion | Proof Strategy        | Current Evidence                           | Status          |
 | -------------------- | --------------------- | ------------------------------------------ | --------------- |
@@ -169,27 +182,33 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 
 **Dependencies:** US-EL-01
 
-## US-EL-03: Publish Election Results
+## FEAT-EL-003: Publish Election Results
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
+
+### US-EL-03: Publish Election Results
 
 **As a** company owner\
 **I want to** publish a completed election's results\
 **So that** the elected members become the Board of Directors
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-EL-03-01` The Elections contract owner can publish an election once every eligible voter has voted or its end time has passed.
 - [x] `AC-US-EL-03-02` Publishing stores the election's winners and replaces the Board of Directors membership with those winners.
 - [x] `AC-US-EL-03-03` The portal offers the publication action for an unpublished election whose voting period is complete.
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-EL-03-04` The contract ranks candidates by vote count and uses address order to resolve tied counts deterministically.
 - [x] `AC-US-EL-03-05` Only the Elections contract owner can publish results.
 - [x] `AC-US-EL-03-06` A published election permits creation of the next election.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [x] `AC-US-EL-03-07` The contract rejects publication before the election is ready and rejects a second publication.
 - [x] `AC-US-EL-03-08` Rejecting the wallet signature does not publish results or replace the Board.
@@ -197,7 +216,7 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
       tie-break rule.
 - [x] `AC-US-EL-03-10` An archived company cannot publish election results.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion | Proof Strategy        | Current Evidence                           | Status     |
 | -------------------- | --------------------- | ------------------------------------------ | ---------- |
@@ -219,33 +238,39 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 
 **Dependencies:** US-EL-02
 
-## US-EL-04: Receive an Election-Created Notification
+## FEAT-EL-004: Receive an Election-Created Notification
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
+
+### US-EL-04: Receive an Election-Created Notification
 
 **As a** company member\
 **I want to** receive a notification when a board election is created\
 **So that** I can review the election in time to participate
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-EL-04-01` After an election is created, every current company member receives a persisted election notification.
 - [x] `AC-US-EL-04-02` An election notification routes a recipient to the company's board-election page.
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-EL-04-03` Creating the on-chain election and requesting notifications are separate operations.
 - [x] `AC-US-EL-04-04` Only the company owner can request the election-created notification; the server refuses any other caller without
       reading the chain, because only the owner can create an election in the first place.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [x] `AC-US-EL-04-05` A notification failure does not revert a successfully created on-chain election.
 - [ ] `AC-US-EL-04-06` The notification tells each recipient whether they are eligible to vote, whether they are a candidate, and when the
       election ends.
 - [x] `AC-US-EL-04-07` An archived company cannot request an election-created notification.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion | Proof Strategy             | Current Evidence                                     | Status          |
 | -------------------- | -------------------------- | ---------------------------------------------------- | --------------- |
@@ -261,30 +286,36 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 
 **Dependencies:** US-EL-01 and the notification service
 
-## US-EL-05: Follow the Election Schedule
+## FEAT-EL-005: Follow the Election Schedule
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
+
+### US-EL-05: Follow the Election Schedule
 
 **As a** company member\
 **I want to** see an election's current status and time boundaries\
 **So that** I know whether voting is upcoming, active, or complete
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-EL-05-01` The portal shows Upcoming, Active, and Completed election states.
 - [x] `AC-US-EL-05-02` The portal shows the election's start and end times.
 - [x] `AC-US-EL-05-03` Upcoming and active elections show a countdown based on the relevant time boundary.
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-EL-05-04` A completed election remains distinct from one whose results have been published.
 - [x] `AC-US-EL-05-05` Election status is calculated from the current election data and current time.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [x] `AC-US-EL-05-06` When election data is unavailable, the status component does not present it as a valid active election.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion | Proof Strategy | Current Evidence | Status |
 | -------------------- | -------------- | ---------------- | ------ |
@@ -297,29 +328,35 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 
 **Dependencies:** US-EL-01
 
-## US-EL-06: Follow Election Turnout and Vote Counts
+## FEAT-EL-006: Follow Election Turnout and Vote Counts
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
+
+### US-EL-06: Follow Election Turnout and Vote Counts
 
 **As a** company member\
 **I want to** see turnout and candidate vote counts\
 **So that** I can follow the progress of the election
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-EL-06-01` The portal displays the number of votes cast and the number of eligible voters for the current election.
 - [x] `AC-US-EL-06-02` The portal displays each candidate's current vote count.
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-EL-06-03` Candidate counts remain attributable to the election being viewed.
 - [x] `AC-US-EL-06-04` The portal distinguishes provisional vote counts from published winners until results are published.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [x] `AC-US-EL-06-05` Election pages keep their contract-read and rendering work bounded as the number of candidates grows.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion | Proof Strategy | Current Evidence | Status |
 | -------------------- | -------------- | ---------------- | ------ |
@@ -331,29 +368,35 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 
 **Dependencies:** US-EL-02
 
-## US-EL-07: View the Current Board of Directors
+## FEAT-EL-007: View the Current Board of Directors
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
+
+### US-EL-07: View the Current Board of Directors
 
 **As a** company member\
 **I want to** view the current Board of Directors\
 **So that** I know who currently represents the company
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-EL-07-01` The election area shows the members of the current Board of Directors.
 - [x] `AC-US-EL-07-02` A published election can show the Board it elected separately from the current Board.
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-EL-07-03` Board membership is read from the Board of Directors contract.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [x] `AC-US-EL-07-04` An empty Board state is presented as no current Board rather than as a successful populated Board.
 - [x] `AC-US-EL-07-05` The current Board still loads after a full page reload, once the company's contracts are known.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion | Proof Strategy        | Current Evidence          | Status |
 | -------------------- | --------------------- | ------------------------- | ------ |
@@ -365,30 +408,36 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 
 **Dependencies:** US-EL-03 and the Board of Directors contract
 
-## US-EL-08: Review a Published Election
+## FEAT-EL-008: Review a Published Election
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
+
+### US-EL-08: Review a Published Election
 
 **As a** company member\
 **I want to** open a published election and inspect its result\
 **So that** I can understand how a Board was selected
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-EL-08-01` The portal lists published elections and links each entry to its election details.
 - [x] `AC-US-EL-08-02` An election detail view reads the selected election's configuration and result.
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-EL-08-03` Only elections with published results are shown as past elections.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [ ] `AC-US-EL-08-04` Every published election remains reachable regardless of its age and individual detail-read failures.
 - [ ] `AC-US-EL-08-05` An empty past-election list remains distinguishable from a failed, partially failed, or loading history read.
 - [x] `AC-US-EL-08-06` The past-election list still loads after a full page reload, once the company's contracts are known.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion | Proof Strategy        | Current Evidence                           | Status     |
 | -------------------- | --------------------- | ------------------------------------------ | ---------- |
@@ -401,28 +450,34 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 
 **Dependencies:** US-EL-03
 
-## US-EL-09: Receive a Result-Published Notification
+## FEAT-EL-009: Receive a Result-Published Notification
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
+
+### US-EL-09: Receive a Result-Published Notification
 
 **As a** company member\
 **I want to** receive a notification when election results are published\
 **So that** I can learn who now represents the company without polling the election page
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [ ] `AC-US-EL-09-01` Publishing results notifies current company members that a new Board of Directors is in place.
 - [ ] `AC-US-EL-09-02` The notification links recipients to the published election result.
 
-#### Business Rules
+##### Business Rules
 
 - [ ] `AC-US-EL-09-03` The notification identifies the elected members without treating a provisional result as published.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [ ] `AC-US-EL-09-04` A notification failure does not roll back a successful result publication and is reported to the publisher.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion | Proof Strategy             | Current Evidence | Status     |
 | -------------------- | -------------------------- | ---------------- | ---------- |
@@ -436,29 +491,35 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 
 **Dependencies:** US-EL-03 and the notification service
 
-## US-EL-10: Understand Voter Eligibility
+## FEAT-EL-010: Understand Voter Eligibility
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
+
+### US-EL-10: Understand Voter Eligibility
 
 **As a** company member\
 **I want to** understand whether I can vote in an election\
 **So that** I know how my membership affects participation
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-EL-10-01` The Elections contract stores the eligible-voter list submitted when the election is created.
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-EL-10-02` Joining or leaving the company after creation does not change that election's eligible-voter list.
 - [ ] `AC-US-EL-10-03` The portal shows a member whether they are eligible for the election before they attempt to vote.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [ ] `AC-US-EL-10-04` The portal explains why a later-joined member cannot vote in an existing election.
 - [ ] `AC-US-EL-10-05` The portal makes the fixed eligible-voter list reviewable after the election has been published.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion | Proof Strategy | Current Evidence | Status     |
 | -------------------- | -------------- | ---------------- | ---------- |
@@ -471,29 +532,35 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 
 **Dependencies:** US-EL-01
 
-## US-EL-11: Cancel an Election
+## FEAT-EL-011: Cancel an Election
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
+
+### US-EL-11: Cancel an Election
 
 **As a** company owner\
 **I want to** cancel an election created in error\
 **So that** the company can correct its election without waiting for an unintended process to finish
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [ ] `AC-US-EL-11-01` The owner can cancel one current election without cancelling unrelated election history.
 - [ ] `AC-US-EL-11-02` A cancelled election remains auditable with its cancellation state.
 
-#### Business Rules
+##### Business Rules
 
 - [ ] `AC-US-EL-11-03` A cancelled election cannot accept votes or publish results.
 - [ ] `AC-US-EL-11-04` Cancelling the election permits creation of a replacement election.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [ ] `AC-US-EL-11-05` A rejected cancellation does not change the election state.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion | Proof Strategy | Current Evidence | Status     |
 | -------------------- | -------------- | ---------------- | ---------- |
@@ -510,7 +577,7 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `3b281c49e016affa8af91143bfcc22b1fb624e36`
+**Implementation evidence reviewed against:** `2c9d874d42627b7ba1b24a2cbdbc62822acabb02`
 
 - [Election overview page](../../../app/src/views/team/%5Bid%5D/BodElectionView.vue)
 - [Election detail page](../../../app/src/views/team/%5Bid%5D/BodElectionDetailsView.vue)
@@ -518,6 +585,7 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 - [Election creation form](../../../app/src/components/sections/AdministrationView/forms/CreateElectionForm.vue)
 - [Election action guards](../../../app/src/components/sections/AdministrationView/ElectionActions.vue)
 - [Election result publication action](../../../app/src/components/sections/AdministrationView/PublishResult.vue)
+- [Election state and countdown](../../../app/src/composables/elections/index.ts)
 - [Election reads](../../../app/src/composables/elections/reads.ts), [writes](../../../app/src/composables/elections/writes.ts), and
   [history assembly](../../../app/src/composables/elections/history.ts)
 - [Election decoding helpers](../../../app/src/utils/elections/election.ts)

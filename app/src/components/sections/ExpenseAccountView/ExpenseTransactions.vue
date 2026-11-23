@@ -130,7 +130,7 @@
             <div class="text-sm font-medium">
               {{ formatCryptoAmount(String(row.original.amount)) }} {{ row.original.token }}
             </div>
-            <div v-if="row.original.amountLocal" class="text-muted text-xs">
+            <div v-if="Number(row.original.amount) > 0" class="text-muted text-xs">
               {{ formatCurrencyShort(row.original.amountLocal, currencyStore.localCurrency.code) }}
             </div>
           </template>
@@ -174,6 +174,7 @@
 </template>
 
 <script setup lang="ts">
+import { formatTxHash } from '@/utils/format'
 import { computed, watch } from 'vue'
 import { type Address } from 'viem'
 import UserIdentity from '@/components/ui/UserIdentity.vue'
@@ -193,8 +194,7 @@ import {
 import {
   getTransactionTypeColor,
   getTransactionTypeLabel,
-  getTransactionCounterparty,
-  formatTxHash
+  getTransactionCounterparty
 } from '@/utils/transactions/registry'
 import { formatCryptoAmount, formatCurrencyShort } from '@/utils/currency/display'
 import { formatEtherUtil, tokenSymbol } from '@/utils/tokens/metadata'

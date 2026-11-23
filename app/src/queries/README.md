@@ -7,7 +7,6 @@ This folder contains all TanStack Query hooks for API interactions in the CNC Po
 | File                             | Domain        | Description                             |
 | -------------------------------- | ------------- | --------------------------------------- |
 | `action.queries.ts`              | Actions       | BOD actions and election notifications  |
-| `auth.queries.ts`                | Auth          | Token validation                        |
 | `blockTimestamp.queries.ts`      | Chain data    | Immutable block timestamp cache         |
 | `contract.queries.ts`            | Contracts     | Smart contract management               |
 | `expense.queries.ts`             | Expenses      | Expense account operations              |

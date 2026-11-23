@@ -219,7 +219,7 @@ Create /docs/TROUBLESHOOTING.md with:
 Organize by:
 
 1. Category (Setup, Development, Deployment, Runtime)
-2. Component (Frontend, Backend, Contracts, Subgraph)
+2. Component (Frontend, Dashboard, Backend, Contracts)
 3. Severity (Critical, High, Medium, Low)
 
 Each entry includes:

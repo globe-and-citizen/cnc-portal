@@ -17,6 +17,7 @@
 </template>
 
 <script setup lang="ts">
+import { sumFiatValues, valueTokenAmount } from '@/utils/currency/valuation'
 import personIcon from '@/assets/person.svg'
 import uptrendIcon from '@/assets/uptrend.svg'
 import OverviewCard from '@/components/ui/OverviewCard.vue'
@@ -53,21 +54,29 @@ const {
 function getHoulyRateInUserCurrency(
   ratePerHour: RatePerHour[],
   tokenStore = currencyStore
-): number {
-  return ratePerHour.reduce((total: number, rate: { type: TokenId; amount: number }) => {
-    const tokenInfo = tokenStore.getTokenInfo(rate.type as TokenId)
-    const localPrice = tokenInfo?.prices.find((p) => p.id === 'local')?.price ?? 0
-    return total + rate.amount * localPrice
-  }, 0)
+): number | null {
+  return sumFiatValues(
+    ratePerHour.map((rate) =>
+      valueTokenAmount(
+        rate.amount,
+        tokenStore.getTokenInfo(rate.type as TokenId)?.prices.find((price) => price.id === 'local')
+          ?.price
+      )
+    )
+  )
 }
 
 const totalPendingAmount = computed(() => {
   const rows = weeklyClaims.value?.data
   if (!rows) return ''
-  const total = rows.reduce((sum: number, weeklyClaim: WeeklyClaim) => {
-    const rate = getHoulyRateInUserCurrency(weeklyClaim.wage.ratePerHour)
-    return sum + (weeklyClaim.minutesWorked / 60) * rate
-  }, 0)
+  const total = sumFiatValues(
+    rows.map((weeklyClaim: WeeklyClaim) =>
+      valueTokenAmount(
+        weeklyClaim.minutesWorked / 60,
+        getHoulyRateInUserCurrency(weeklyClaim.wage.ratePerHour)
+      )
+    )
+  )
   return formatCurrencyShort(total, currency.value.code)
 })
 

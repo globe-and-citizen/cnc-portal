@@ -89,7 +89,12 @@ const tableRows = computed<BalanceTableRow[]>(() => [
 
 const columns: TableColumn<BalanceTableRow>[] = [
   { id: 'account', accessorFn: (row) => row.label, header: 'Account' },
-  { accessorKey: 'nature', header: 'Nature', meta: { class: { th: 'w-[24%]' } } },
+  {
+    id: 'nature',
+    accessorFn: (row) => (row.isTotal ? '' : row.nature),
+    header: 'Nature',
+    meta: { class: { th: 'w-[24%]' } }
+  },
   { accessorKey: 'value', header: 'Balance', meta: { class: { th: 'w-[18%]' } } }
 ]
 

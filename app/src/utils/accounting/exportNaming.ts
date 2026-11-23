@@ -26,7 +26,9 @@ function safeName(name: string): string {
 function exportBaseName(spec: SectionSpec): string {
   switch (spec.key) {
     case 'summary':
-      return 'Accounting Report'
+      return spec.from || spec.to
+        ? `Accounting Report - ${periodLabel(spec.from, spec.to)}`
+        : 'Accounting Report'
     case 'income':
       return `Income Statement - ${periodLabel(spec.from, spec.to)}`
     case 'balance':

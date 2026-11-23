@@ -66,7 +66,8 @@ test.describe('Bank Account', { tag: ['@browser', '@mocked'] }, () => {
       await page.getByRole('button', { name: 'Deposit', exact: true }).click()
       let deposit = page.getByRole('dialog', { name: 'Deposit to Bank Contract' })
       await dialogAmount(deposit).fill('100000')
-      await expect(deposit.locator('[data-test="deposit-button"]')).toBeDisabled()
+      await deposit.locator('[data-test="deposit-button"]').click()
+      await expect(deposit.getByText('Amount exceeds available balance.')).toBeVisible()
       await deposit.locator('[data-test="cancel-button"]').click()
       await expect.poll(() => nativeBalance(fixture.bank)).toBe(0n)
 

@@ -77,11 +77,13 @@ describe('Safe Swap P&L', () => {
 
   it('shows Swap P&L on the income statement, the trial balance and the general ledger', () => {
     const { journal } = finalizeJournalEntryDrafts(drafts())
-    expect(presentIncome(journal).revenueLines).toContainEqual({
-      label: 'Swap P&L',
-      value: '$10.66',
-      account: 'Swap P&L'
-    })
+    expect(presentIncome(journal).revenueLines).toContainEqual(
+      expect.objectContaining({
+        label: 'Swap P&L',
+        value: '$10.66',
+        account: 'Swap P&L'
+      })
+    )
     expect(presentTrial(journal).rows.find((row) => row.label === 'Swap P&L')?.cr).toBe('$10.66')
     expect(journalLedgerRows(journal).find((row) => row.account === 'Swap P&L')?.cr).toBe('$10.66')
   })
@@ -90,11 +92,13 @@ describe('Safe Swap P&L', () => {
     const { journal } = stablecoinSwap()
     const income = presentIncome(journal)
     expect(income.revenueLines.some((line) => line.label === 'Swap P&L')).toBe(false)
-    expect(income.expenseLines).toContainEqual({
-      label: 'Swap P&L',
-      value: '$0.50',
-      account: 'Swap P&L'
-    })
+    expect(income.expenseLines).toContainEqual(
+      expect.objectContaining({
+        label: 'Swap P&L',
+        value: '$0.50',
+        account: 'Swap P&L'
+      })
+    )
     expect(income.totalExpenses).toBe('$0.50')
     const trial = presentTrial(journal)
     expect(trial.rows.find((row) => row.label === 'Swap P&L')).toMatchObject({

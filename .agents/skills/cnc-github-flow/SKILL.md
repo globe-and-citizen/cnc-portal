@@ -5,20 +5,14 @@ description: Manage CNC Portal GitHub issues, Sprint hierarchy, pull requests, r
 
 # CNC GitHub flow
 
-Use `gh`, not the GitHub MCP. Keep GitHub text in English and follow the title conventions and public-repository hygiene from `AGENTS.md`.
+Use `gh`, not the GitHub MCP, under `AGENTS.md`. Keep GitHub text in English and follow the shared title conventions and public-repository
+hygiene in [CONTRIBUTION.md](../../../CONTRIBUTION.md#github-and-review).
 
 ## Sprint, Goal and Release issue titles
 
-Sprint planning, Sprint Goal and release issues use their own titles without a Conventional Commit type or gitmoji:
-
-- Sprint root: `[Sprint] Sprint <number> plan — <date range>`.
-- Planned Goal: `[Goals] <outcome> — Sprint <number>`.
-- Catch-all Goal: `[Goals] Sprint <number> Bug and perf`.
-- Release: `[Release] vX.Y.Z`, for example `[Release] v0.17.0`.
-
-Release promotion PRs use the same `[Release] vX.Y.Z` title as their tracking release issue, without a Conventional Commit type or gitmoji.
-Keep Conventional Commit titles for ordinary delivery and coordination issues, commits, and other pull requests. Do not rename historical
-Sprint or Goal issues solely to normalize older title variants.
+Follow the shared
+[Sprint, Goal, release issue and promotion PR title rules](../../../.github/copilot-instructions/commit-conventions.md#sprint-goal-and-release-issue-titles).
+That guide owns the formats for every contributor; this section retains the existing navigation anchor.
 
 ## Create or organize an issue
 
@@ -33,22 +27,30 @@ Sprint or Goal issues solely to normalize older title variants.
 3. Give the issue a concise problem, scope boundary, acceptance criteria, and validation evidence expected. Complete its relationship plan
    using [Development Relationship Validation](../../../docs/development-guide/relationship-validation.md), including affected consumers,
    applicability, and completion proposals. Assign it to the current authenticated user.
-4. Identify the native parent before creating or reusing an issue. Sprint and backlog planning issues are explicit roots. Attach original
-   Sprint Goals beneath the Sprint and planned delivery beneath its relevant Goal or coordinator. Each Sprint also has a separate bugs and
-   perf sub-issue for corrective or technical work outside those Goals; attach that work beneath this branch, without adding it to the
-   original Sprint Goal checklist. Attach backlog work beneath its appropriate backlog parent. If the intended parent does not exist,
-   establish its place in the hierarchy first. Do not leave a work issue orphaned. Attach a child using its database id, not its issue
-   number:
+4. Identify the native parent before creating or reusing an issue. Attach Goals and transverse categories to the Sprint. Keep work directly
+   required by a Goal under that Goal; otherwise use the category matching the work as described in
+   [CONTRIBUTION.md](../../../CONTRIBUTION.md#sprint-categories). A native issue has one parent; use links for additional classification.
+   Attach backlog work under its appropriate backlog parent. Establish any missing parent before attaching a child; do not leave work
+   orphaned. Verify cross-repository relationships and report any unsupported relationship. Attach a child using its database id:
 
    ```bash
    CHILD_ID=$(gh api "repos/globe-and-citizen/cnc-portal/issues/<child-number>" --jq .id)
    gh api --method POST "repos/globe-and-citizen/cnc-portal/issues/<parent-number>/sub_issues" -F sub_issue_id="$CHILD_ID"
    ```
 
-5. Create every Sprint Goal from [the Sprint Goal template](../../../.github/ISSUE_TEMPLATE/sprint_goal.md). Its preset title is for a
-   planned outcome; change it to `[Goals] Sprint <number> Bug and perf` for the separate catch-all Goal. Complete the Goal type, expected
-   outcome, exit criteria, product story impact, canonical references, owner and validator, scope boundary, and relationship plan for either
-   kind. Keep the root's original Goal checklist limited to planned outcomes.
+   Before starting work during an active Sprint, include the delivery scope in that Sprint. Identify the current Sprint from its plan and
+   Project iteration; do not infer the Sprint from the calendar alone. Read each work issue and its complete native parent chain through the
+   Sprint root, including cross-repository ancestors. A matching iteration, a checklist entry, or a related-issue link does not replace this
+   chain. For a new or reused backlog issue outside the current tree, place the committed scope under the appropriate current Goal or
+   category. If its entire scope is moving, reparent it and retain links to its former context; if only part is committed, create or reuse a
+   bounded delivery issue under the current Sprint and link it to the older issue without moving unrelated scope. Preserve previous Sprint
+   outcomes, dates, acceptance and other descendants; reconcile both affected parent chains and Project fields. Verify the full resulting
+   chain and the relevant parent child lists by readback. If the Sprint, scope, ownership, or supported native relationship is unclear,
+   leave the discrepancy visible and resolve it before treating placement as complete; do not silently assign unrelated work to the Sprint.
+
+5. Create specific Sprint outcomes using the [Sprint Goal template](../../../.github/ISSUE_TEMPLATE/sprint_goal.md) and transverse
+   coordinators using the [Sprint Category template](../../../.github/ISSUE_TEMPLATE/sprint_category.md). Preserve Goal outcomes and keep
+   delivery criteria and evidence on each owning issue.
 6. Add the issue to the CNC Kanban Board and initialize every applicable field using the
    [Kanban Project field contract](../../../docs/development-guide/kanban-project.md). Inspect live field options and iterations, set Size,
    Status and Priority, resolve Sprint Iteration from agreed scope, and assess Blocking and actual implementation dates. This also applies
@@ -58,9 +60,9 @@ Sprint or Goal issues solely to normalize older title variants.
 
 ## Maintain the issue's kanban card
 
-1. Before implementation, verify the tracking issue's membership and fields under the
-   [field contract](../../../docs/development-guide/kanban-project.md). When implementation actually begins, set Start date and the
-   appropriate Status. Preserve an earlier evidenced Start date when resuming work.
+1. Before implementation, verify the full native Sprint ancestry as described above, then verify the tracking issue's membership and fields
+   under the [field contract](../../../docs/development-guide/kanban-project.md). When implementation actually begins, set Start date and
+   the appropriate Status. Preserve an earlier evidenced Start date when resuming work.
 2. At implementation completion, set End date to the actual finish date and move to Implementation Done or Validation as appropriate.
    Required review or acceptance remains pending under the issue's own criteria.
 3. On an agreed scope, Sprint, priority, blocker or lifecycle change, reconcile the affected card fields. Reopening implementation clears
@@ -133,7 +135,8 @@ stop at a recommendation or request the same authorization again.
 ## Publish a branch
 
 1. Confirm the branch is `feature/<slug>` and inspect the exact diff before staging. Do not stage unrelated work.
-2. Run the validation listed in `AGENTS.md` for every touched subproject.
+2. Run the [shared validation](../../../CONTRIBUTION.md#required-validation-before-pushing) for every touched subproject, plus any
+   applicable agent execution checks.
 3. Commit each logical change atomically, then push the feature branch. Never push directly to `main`, `master`, or `develop`; never
    force-push without explicit approval.
 4. Open a draft PR against `develop` unless the user asks for review-ready status. Use `.github/pull_request_template.md`, describe user or
@@ -148,8 +151,7 @@ stop at a recommendation or request the same authorization again.
 
 For a repository release, follow the canonical [release procedure](../../../docs/platform/RELEASE_AUTOMATION.md). Create or reuse its
 tracking issue from the [release issue template](../../../.github/ISSUE_TEMPLATE/release.md), complete native hierarchy and Project setup,
-and use the [release PR template](../../../.github/PULL_REQUEST_TEMPLATE/release.md) for promotion from `release/vX.Y.Z` to `main`, with the
-same `[Release] vX.Y.Z` title as the tracking issue.
+and use the [release PR template](../../../.github/PULL_REQUEST_TEMPLATE/release.md) for promotion from `release/vX.Y.Z` to `main`.
 
 Assess combined-release relationships and record exact revisions, applicable evidence, independent review and required human decisions.
 After merge, verify publication and the need for `main` → `develop` synchronization under the guide. Keep the issue open, or reopen it,

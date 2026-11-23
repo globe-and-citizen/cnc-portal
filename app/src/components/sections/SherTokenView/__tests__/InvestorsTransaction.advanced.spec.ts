@@ -158,7 +158,7 @@ describe('InvestorsTransactions advanced', () => {
     expect(capture.safe.value).toBe('')
   })
 
-  it('handles parse failures and usd price fallbacks', () => {
+  it('preserves a genuine zero USD quote without assuming a stablecoin price', () => {
     mockGetTokenPrice.mockReturnValue(0)
     eventFeedState.safeResult.value = {
       events: {
@@ -196,7 +196,7 @@ describe('InvestorsTransactions advanced', () => {
     const data = tableData(wrapper)
     const usdcRow = data.find((row) => row.txHash === '0xusdcdeposit')
     const nativeRow = data.find((row) => row.txHash === '0xnativedeposit')
-    expect(usdcRow?.amountUSD).toBe(5)
+    expect(usdcRow?.amountUSD).toBe(0)
     expect(nativeRow?.amount).toBe('0')
     expect(nativeRow?.amountUSD).toBe(0)
   })

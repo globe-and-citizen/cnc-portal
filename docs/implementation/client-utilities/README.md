@@ -121,15 +121,83 @@ requests from a cached SDK instance after a wallet network change. Read-only pro
 [shared session policy](../../features/authentication/README.md#us-auth-004-resume-after-a-wallet-network-change) owns the global lock and
 recovery journey.
 
+## Current token quote and fiat availability
+
+The currency store owns the viewer's currency preference and token metadata; current-price queries retain the authoritative quote data,
+errors, fetching state and refetch functions. `tokenStates` preserves those query observers rather than copying their data into a second
+cache. Both `getTokenPrice` and `getTokenInfo` use the same convention: a missing, negative or non-finite quote is `null`; a genuine zero is
+numeric zero. The existing SHER policy remains explicit local zero pricing when the team's SHER token is known, without a market request.
+
+The authenticated application shell shows one shared quote-status alert. Failed queries, stale cached errors and absent selected-currency
+quotes expose a scoped Try again action; successful retained quotes remain usable. Switching currency recomputes cached valuations without
+an additional quote request. The market query endpoints, polling and retry policy remain owned by
+[Client Data Access](../client-data-access/README.md); the alert refetches only unavailable/error observers and preserves their lifecycle.
+
+[Fiat valuation helpers](../../../app/src/utils/currency/valuation.ts) retain `null` through multiplication and totals. A zero token
+quantity has known value zero without a quote; any nonzero unpriced contribution makes its complete total unavailable. Overflow/invalid
+numeric inputs stay unavailable. [Contract balance shaping](../../../app/src/lib/balances/tokenBalances.ts) preserves exact raw amounts,
+per-token quotes/values and nullable aggregate values; formatting renders the canonical unavailable marker. Payroll, expense, treasury and
+grouped transaction totals use the same rule rather than silently summing a priced subset. Token input estimates remain optional display
+data; raw token quantities and permissions continue to govern writes and withdrawals.
+
+Current fiat estimates do not change Accounting rates of record, fixed-scale postings, Safe swap economic rules or token allowlists. Safe
+transfer choices retain a missing provider quote as null for the same shared amount-input contract; Safe portfolio valuation remains
+independently owned. [Accounts](../../features/accounts/README.md), [Payroll](../../features/payroll/README.md),
+[Companies](../../features/companies/README.md) and [Transaction History](../transaction-history/README.md) own their affected user
+surfaces.
+
+## Attachment gallery state and URL validity
+
+The [shared gallery composable](../../../app/src/composables/useFilePreviewGallery.ts) owns rendering results, modal selection and
+asynchronous-result lifetime. URL reuse and expiration stay with the existing [file URL helper](../../../app/src/composables/useFileUrl.ts);
+both galleries ask it again at use rather than inferring validity from a rendered URL. Persisted file keys survive the claim-preview utility
+and modal selection; local preview URLs need no signing request. The
+[File Storage contract](../file-storage/README.md#client-attachment-url-renewal) owns renewal, retry feedback and protected delayed
+downloads.
+
+## Domain row contracts
+
+- [Expense approval views](../../../app/src/types/expense-account.ts) derive required signature/budget/status from the existing response
+  model. Balance and legacy source metadata can be absent. The spending helper accepts the narrower signature/data/balance projection; the
+  action additionally requires its status and consumes the same approval.
+- [Generation contract metadata](../../../app/src/types/deployments.ts) supplies address, deployer and descriptive kind to both current and
+  historical producers. Unknown kinds remain representable without making their capabilities supported.
+- [Managed contract rows](../../../app/src/components/sections/ContractManagementView/ManagedContractsTable.types.ts) alias the enriched
+  read model. [Ownership transfer](../../../app/src/composables/contracts/useContractOwnershipTransfer.ts) needs only address/ABI/kind and
+  explicitly accepts null selection; it does not fabricate a row to satisfy its parameter.
+- [Compiler contracts](../../../app/type-tests/domain-rows.ts) are included by
+  [the existing app TypeScript project](../../../app/tsconfig.app.json), so `npm run type-check` checks positive examples and expected
+  rejections for missing fields, wrong-domain rows and generic dictionaries. The fixture contains type-only imports/declarations and is not
+  imported by the application. Expected-error directives belong to these negative checks, not production suppression.
+
+The generic UI `TableRow` remains available to other consumers; it no longer describes these spending/ownership boundaries. No second type
+checker, schema framework, generic table rewrite or runtime API validation is introduced. The Expense action narrows and forwards the
+signature it actually verified rather than casting an arbitrary string at submission; signed data and economic rules remain unchanged.
+
+The [Board action presentation helpers](../../../app/src/utils/contracts/bodActions.ts) format pending actions for a target contract and
+resolve their parties. `FormattedBodActions` names the existing array shape; it does not introduce a new schema. Managed-contract reads use
+`readManagedContracts` and `ManagedContractReadModel`; pause/resume dispatch remains separate in `useContractPauseToggle`. These names
+identify the existing responsibility without changing cache keys, ABI methods or authorization.
+
+Transaction hash labels use the single `formatTxHash` owner in [display formatting](../../../app/src/utils/format/address.ts), including the
+six history consumers documented by [Transaction History](../transaction-history/README.md#transaction-hash-display). The transaction
+registry retains type/counterparty metadata and does not re-export or implement display truncation. Full hashes remain domain values; short
+labels are never identifiers for requests, comparisons or writes.
+
+Workbook downloads use the active [Accounting exporter](../../../app/src/lib/accounting/spreadsheet.ts) and its
+[real-workbook tests](../../../app/src/lib/accounting/__tests__/spreadsheet.spec.ts). The unused generic exporter that created an empty Blob
+and its placeholder-only suite are not part of the client implementation. No dependency, active PDF/spreadsheet implementation or numeric
+conversion policy changes with that removal; live export semantics and their existing limitations remain owned by Accounting.
+
 ## Implementation Evidence
 
 [Shared balance reads](../../../app/src/composables/useContractBalance.ts) accept caller-supplied query options while preserving the
 existing default cadence for other consumers. Supported and discovered Safe balances share a normalized balance-key prefix so existing
 post-confirmation balance invalidations reach both. [Currency prices](../../../app/src/stores/currencyStore.ts) retain their existing
-currency payload and conversions while consuming the centralized CoinGecko price query, whose preset freshness, polling and direct Axios
-reads are described in [Client Data Access](../client-data-access/README.md#browser-request-coordination).
+currency payload and query-backed nullable conversions while consuming the centralized CoinGecko price query, whose preset freshness,
+polling and direct Axios reads are described in [Client Data Access](../client-data-access/README.md#browser-request-coordination).
 
-**Implementation evidence reviewed against:** `635eb92ec16d0fa5fca930d458b0e35453af94d2`
+**Implementation evidence reviewed against:** `aef9c54644f938b4f8b1de3b80456f6b59a9a1a0`
 
 - [Utility ownership map and domain implementations](../../../app/src/utils/)
 - [Shared Accounting domain contracts](../../../app/src/utils/accounting/types.ts)
@@ -139,6 +207,16 @@ reads are described in [Client Data Access](../client-data-access/README.md#brow
   [SHER realization settlement](../../../app/src/utils/accounting/sherIssuance.ts)
 - [Utility boundary validator](../../../app/scripts/check-utility-boundaries.mjs) and
   [validator tests](../../../app/scripts/__tests__/check-utility-boundaries.node.mjs)
+- [Current quote/price recovery notice](../../../app/src/components/ui/TokenPriceStatusAlert.vue) and its
+  [application-shell integration](../../../app/src/App.vue)
+- [Nullable amount and total helpers](../../../app/src/utils/currency/valuation.ts),
+  [canonical compact currency formatting](../../../app/src/utils/currency/display.ts),
+  [contract-balance shaping](../../../app/src/lib/balances/tokenBalances.ts), and
+  [nullable balance contracts](../../../app/src/types/contract-balance.ts), [token choices](../../../app/src/types/token.ts) and
+  [transaction values](../../../app/src/types/transaction-history.ts)
+- [Real query/store/presentation/recovery tests](../../../app/src/stores/__tests__/currencyStore.lifecycle.spec.ts),
+  [fiat availability helper tests](../../../app/src/utils/currency/__tests__/valuation.spec.ts), and
+  [nullable transaction presentation tests](../../../app/src/utils/transactions/__tests__/presentation.spec.ts)
 - [Store-backed transaction presentation](../../../app/src/composables/transactions/useTransactionPresentation.ts) and
   [pure presentation model](../../../app/src/utils/transactions/presentation.ts)
 - [Safe Deposit Router amount-model tests](../../../app/src/utils/safeDepositRouter/__tests__/model.spec.ts),
@@ -146,11 +224,11 @@ reads are described in [Client Data Access](../client-data-access/README.md#brow
   [Vesting schedule and presentation tests](../../../app/src/utils/vesting/__tests__/)
 - [Version-aware contract pause policy](../../../app/src/utils/contracts/pauseCapabilities.ts),
   [policy tests](../../../app/src/utils/contracts/__tests__/pauseCapabilities.spec.ts),
-  [contract-read owner](../../../app/src/composables/contracts/readTeamContracts.ts), and
-  [contract-read tests](../../../app/src/composables/contracts/__tests__/readTeamContracts.spec.ts)
+  [contract-read owner](../../../app/src/composables/contracts/readManagedContracts.ts), and
+  [contract-read tests](../../../app/src/composables/contracts/__tests__/readManagedContracts.spec.ts)
 - [Safe browser effects](../../../app/src/lib/safe/browser.ts), [Safe transaction effects](../../../app/src/lib/safe/transactions.ts),
   [logging](../../../app/src/lib/logging.ts), [accounting exports](../../../app/src/lib/accounting/), and
-  [file exports](../../../app/src/lib/files/)
+  [Accounting workbook exports](../../../app/src/lib/accounting/spreadsheet.ts)
 - [Overview-card tests](../../../app/src/components/ui/__tests__/OverviewCard.spec.ts),
   [address-presentation tests](../../../app/src/components/ui/__tests__/AddressTooltip.spec.ts),
   [token-holdings tests](../../../app/src/components/ui/__tests__/TokenHoldingsSection.spec.ts),

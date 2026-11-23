@@ -15,7 +15,7 @@
             </span>
             <span class="text-[15px] font-semibold">Income statement</span>
           </div>
-          <DatePicker v-model="period" mode="range" storage-key="cnc-accounting-income-period" />
+          <DatePicker v-model="period" mode="range" :storage-key="periodStorageKey" />
         </div>
       </template>
 
@@ -87,6 +87,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { useRoute } from 'vue-router'
 import DatePicker from '@/components/ui/DatePicker.vue'
 import AccountingExportBar from '@/components/sections/AccountingView/AccountingExportBar.vue'
 import StatementLine from '@/components/sections/AccountingView/StatementLine.vue'
@@ -99,6 +100,7 @@ import { presentIncome, type StatementLineView } from '@/utils/accounting/presen
 
 // Reporting period (range mode) — defaults to "All time".
 const period = ref<Range>(defaultValueForMode('range') as Range)
+const periodStorageKey = `cnc-accounting-${useRoute().params.id}-income-period`
 
 const accounting = useAccountingContext()
 const income = computed(() =>

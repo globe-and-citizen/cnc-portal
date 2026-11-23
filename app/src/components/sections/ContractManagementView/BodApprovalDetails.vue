@@ -24,7 +24,7 @@
     <BodApprovalDetailsCard title="Recipient">
       <UserIdentity
         :user="
-          getUser(
+          resolveBodActionParty(
             row.description.split(' ')[type === 'Bank Transfer Request' ? 4 : 5].trim(),
             teamStore.currentTeam?.members || [],
             '',
@@ -49,7 +49,7 @@
 import UserIdentity from '@/components/ui/UserIdentity.vue'
 import { useTeamStore } from '@/stores'
 import type { TableRow } from '@/types/table'
-import { getUser } from '@/utils/contracts/management'
+import { resolveBodActionParty } from '@/utils/contracts/bodActions'
 import { formatCryptoAmount } from '@/utils/currency/display'
 import { NETWORK } from '@/constant'
 import BodApprovalDetailsCard from './BodApprovalDetailsCard.vue'

@@ -1,5 +1,5 @@
 /** Carry the Safe overview's swap P&L into the swaps the books replay. */
-import type { SafeSwapResult } from '@/utils/safe/swapPnl'
+import type { SafeSwapExchange } from '@/utils/safe/costBasis'
 import type { JournalEntryDraft } from './journalEntryDraft'
 import { usdAmountFromNumber } from './monetaryAmount'
 
@@ -10,10 +10,14 @@ import { usdAmountFromNumber } from './monetaryAmount'
  */
 export function withSafeSwapPnl(
   drafts: readonly JournalEntryDraft[],
-  swaps: readonly SafeSwapResult[]
+  swaps: readonly Pick<SafeSwapExchange, 'txHash' | 'pnlContributionUsd'>[]
 ): JournalEntryDraft[] {
   const pnlByTxHash = new Map(
-    swaps.map(({ txHash, pnlUsd }) => [txHash.toLowerCase(), usdAmountFromNumber(pnlUsd)])
+    swaps.flatMap(({ txHash, pnlContributionUsd }) =>
+      pnlContributionUsd === null
+        ? []
+        : [[txHash.toLowerCase(), usdAmountFromNumber(pnlContributionUsd)] as const]
+    )
   )
   return drafts.map((entry) => {
     const swapPnl =

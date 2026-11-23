@@ -13,11 +13,14 @@ vi.mock('@/composables/campaign/reads', () => ({
   useAdvertisingCampaigns: vi.fn(),
   useCampaignEventsByCode: vi.fn()
 }))
-vi.mock('@/components/sections/ContractManagementView/forms/CreateAdvertisingCampaign.vue', () => ({
-  default: { template: '<div data-test="create-campaign-form" />' }
-}))
 vi.mock(
-  '@/components/sections/ContractManagementView/forms/WithdrawAdvertisingCampaign.vue',
+  '@/components/sections/ContractManagementView/forms/CreateAdvertisingCampaignForm.vue',
+  () => ({
+    default: { template: '<div data-test="create-campaign-form" />' }
+  })
+)
+vi.mock(
+  '@/components/sections/ContractManagementView/forms/WithdrawAdvertisingCampaignForm.vue',
   () => ({ default: { template: '<div data-test="withdraw-campaign-form" />' } })
 )
 

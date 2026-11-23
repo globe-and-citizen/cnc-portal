@@ -29,6 +29,17 @@ describe('teamTreasury', () => {
     expect(getTeamTreasuryAddresses(makeTeam())).toEqual([BANK, SAFE])
   })
 
+  it('does not publish a partially valued treasury when one held account has no quote', () => {
+    expect(
+      buildTeamTreasuryDisplay(
+        makeTeam(),
+        { [BANK.toLowerCase()]: 10, [SAFE.toLowerCase()]: null },
+        false,
+        'USD'
+      )
+    ).toEqual({ state: 'unavailable', formattedTotal: '—', accountShares: [] })
+  })
+
   it('keeps a configured treasury in a loading state before the grouped read lands', () => {
     expect(buildTeamTreasuryDisplay(makeTeam(), {}, true, 'USD')).toEqual({
       state: 'loading',

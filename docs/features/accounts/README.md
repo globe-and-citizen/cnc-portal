@@ -72,26 +72,26 @@ flowchart LR
 
 ## Status Overview
 
-| User Story  | Title                                      | Actor                      | Status         |
-| ----------- | ------------------------------------------ | -------------------------- | -------------- |
-| US-BANK-001 | Fund the Bank                              | Company member             | 🧪 Validation  |
-| US-BANK-002 | Transfer Bank funds                        | Owner / Board member       | 🧪 Validation  |
-| US-BANK-003 | Review the Bank position and history       | Company member             | 🚧 In Progress |
-| US-BANK-004 | Cash out available treasury funds          | Bank owner                 | 🧪 Validation  |
-| US-EXP-001  | Grant a signed spending approval           | Expense Account owner      | 🧪 Validation  |
-| US-EXP-002  | Spend from the Expense Account             | Approved recipient         | 🚧 In Progress |
-| US-EXP-003  | Deactivate or reactivate an approval       | Expense Account owner      | 🧪 Validation  |
-| US-EXP-004  | Review the Expense Account and its history | Company member / recipient | 🚧 In Progress |
-| US-EXP-005  | Fund the Expense Account                   | Account funder             | 🚧 In Progress |
-| US-EXP-006  | Return Expense Account funds to Bank       | Authorized treasury actor  | 🚧 In Progress |
-| US-SAFE-001 | Set up and manage the company Safes        | Company owner              | 🧪 Validation  |
-| US-SAFE-002 | Inspect Safe details                       | Company member             | 🚧 In Progress |
-| US-SAFE-003 | Manage Safe funds                          | Safe owner                 | 🧪 Validation  |
-| US-SAFE-004 | Manage Safe signers and threshold          | Safe owner                 | 🧪 Validation  |
-| US-SAFE-005 | Review Safe transactions                   | Company member             | 🧪 Validation  |
-| US-SAFE-006 | Approve and execute a Safe transaction     | Safe owner                 | 🧪 Validation  |
-| US-SAFE-007 | Review the Safe swap P&L                   | Company member             | 🧪 Validation  |
-| US-SAFE-008 | Review the Safe swaps                      | Company member             | 🧪 Validation  |
+| User Story                                                           | Feature                                    | Actor                      | Status         | Intended Scope |
+| -------------------------------------------------------------------- | ------------------------------------------ | -------------------------- | -------------- | -------------- |
+| [US-BANK-001](#us-bank-001-fund-the-bank)                            | Fund the Bank                              | Company member             | 🧪 Validation  | Not assessed   |
+| [US-BANK-002](#us-bank-002-transfer-bank-funds)                      | Transfer Bank funds                        | Owner / Board member       | 🧪 Validation  | Not assessed   |
+| [US-BANK-003](#us-bank-003-review-the-bank-position-and-history)     | Review the Bank position and history       | Company member             | 🚧 In Progress | Not assessed   |
+| [US-BANK-004](#us-bank-004-cash-out-available-treasury-funds)        | Cash out available treasury funds          | Bank owner                 | 🧪 Validation  | Not assessed   |
+| [US-EXP-001](#us-exp-001-grant-a-signed-spending-approval)           | Grant a signed spending approval           | Expense Account owner      | 🧪 Validation  | Not assessed   |
+| [US-EXP-002](#us-exp-002-spend-from-the-expense-account)             | Spend from the Expense Account             | Approved recipient         | 🚧 In Progress | Not assessed   |
+| [US-EXP-003](#us-exp-003-deactivate-or-reactivate-an-approval)       | Deactivate or reactivate an approval       | Expense Account owner      | 🧪 Validation  | Not assessed   |
+| [US-EXP-004](#us-exp-004-review-the-expense-account-and-its-history) | Review the Expense Account and its history | Company member / recipient | 🚧 In Progress | Not assessed   |
+| [US-EXP-005](#us-exp-005-fund-the-expense-account)                   | Fund the Expense Account                   | Account funder             | 🚧 In Progress | Not assessed   |
+| [US-EXP-006](#us-exp-006-return-expense-account-funds-to-bank)       | Return Expense Account funds to Bank       | Authorized treasury actor  | 🚧 In Progress | Not assessed   |
+| [US-SAFE-001](#us-safe-001-set-up-and-manage-the-company-safes)      | Set up and manage the company Safes        | Company owner              | 🧪 Validation  | Not assessed   |
+| [US-SAFE-002](#us-safe-002-inspect-safe-details)                     | Inspect Safe details                       | Company member             | 🚧 In Progress | Not assessed   |
+| [US-SAFE-003](#us-safe-003-manage-safe-funds)                        | Manage Safe funds                          | Safe owner                 | 🧪 Validation  | Not assessed   |
+| [US-SAFE-004](#us-safe-004-manage-safe-signers-and-threshold)        | Manage Safe signers and threshold          | Safe owner                 | 🧪 Validation  | Not assessed   |
+| [US-SAFE-005](#us-safe-005-review-safe-transactions)                 | Review Safe transactions                   | Company member             | 🧪 Validation  | Not assessed   |
+| [US-SAFE-006](#us-safe-006-approve-and-execute-a-safe-transaction)   | Approve and execute a Safe transaction     | Safe owner                 | 🧪 Validation  | Not assessed   |
+| [US-SAFE-007](#us-safe-007-review-the-safe-swap-pl)                  | Review the Safe swap P&L                   | Company member             | 🧪 Validation  | Not assessed   |
+| [US-SAFE-008](#us-safe-008-review-the-safe-swaps)                    | Review the Safe swaps                      | Company member             | 🧪 Validation  | Not assessed   |
 
 ## Test Coverage Overview
 
@@ -106,9 +106,9 @@ Runs of at least three consecutive missing criteria use inclusive ranges with fu
 
 | User Story  | Main Journey  | Coverage Target | Gaps                                                                              |
 | ----------- | ------------- | --------------- | --------------------------------------------------------------------------------- |
-| US-BANK-001 | ✅ Integrated | ⚠️ 9/10         | `AC-US-BANK-001-03`                                                               |
+| US-BANK-001 | ✅ Integrated | ⚠️ 11/12        | `AC-US-BANK-001-03`                                                               |
 | US-BANK-002 | ✅ Integrated | ⚠️ 11/13        | `AC-US-BANK-002-01`, `AC-US-BANK-002-02`                                          |
-| US-BANK-003 | ✅ Integrated | ⚠️ 7/9 met      | `AC-US-BANK-003-08`, `AC-US-BANK-003-09`                                          |
+| US-BANK-003 | ✅ Integrated | ⚠️ 8/10 met     | `AC-US-BANK-003-08`, `AC-US-BANK-003-09`                                          |
 | US-BANK-004 | 🚧 Partial    | ⚠️ 6/8          | `AC-US-BANK-004-01`, `AC-US-BANK-004-02`                                          |
 | US-EXP-001  | ✅ Integrated | ⚠️ 13/15        | `AC-US-EXP-001-01`, `AC-US-EXP-001-02`                                            |
 | US-EXP-002  | 🚧 Partial    | ⚠️ 12/16        | `AC-US-EXP-002-01`, `AC-US-EXP-002-02`, `AC-US-EXP-002-07`, `AC-US-EXP-002-09`    |
@@ -122,39 +122,50 @@ Runs of at least three consecutive missing criteria use inclusive ranges with fu
 | US-SAFE-004 | 📋 Planned    | ⚠️ 4/9          | `AC-US-SAFE-004-01`–`AC-US-SAFE-004-04`, `AC-US-SAFE-004-07`                      |
 | US-SAFE-005 | 🧪 Mocked     | ✅ 9/9          | —                                                                                 |
 | US-SAFE-006 | 🧪 Mocked     | ✅ 10/10        | —                                                                                 |
-| US-SAFE-007 | 📋 Planned    | ⚠️ 11/12 met    | `AC-US-SAFE-007-01`                                                               |
+| US-SAFE-007 | 📋 Planned    | ⚠️ 12/13 met    | `AC-US-SAFE-007-01`                                                               |
 | US-SAFE-008 | 🧪 Mocked     | ✅ 6/6          | —                                                                                 |
 
 Proof obligations use the [shared proof-strategy registry](../../testing/proof-strategies.md). Multiple IDs for one AC are cumulative.
 
-## US-BANK-001: Fund the Bank
+## FEAT-BANK-001: Fund the Bank
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
+
+### US-BANK-001: Fund the Bank
 
 **As a** company member\
 **I want to** deposit assets into the Bank\
 **So that** the company treasury has funds for its operations
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-BANK-001-01` A member can deposit the native token into the Bank.
 - [x] `AC-US-BANK-001-02` A member can deposit a supported ERC-20 token into the Bank.
 - [x] `AC-US-BANK-001-03` A successful deposit increases the corresponding Bank balance.
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-BANK-001-04` A deposit amount must be positive and cannot exceed the connected wallet balance.
 - [x] `AC-US-BANK-001-05` An ERC-20 deposit can use no more than six decimal places.
 - [x] `AC-US-BANK-001-06` The Bank accepts only ERC-20 tokens supported by its current configuration. _(contract)_
 - [x] `AC-US-BANK-001-07` An ERC-20 deposit authorizes the Bank only when the existing allowance is insufficient.
+- [x] `AC-US-BANK-001-11` A member can include the Bank transfer fee in a deposit, so a later Bank transfer of the entered amount delivers
+      it exactly, with nothing missing and nothing left over from that deposit. The option starts unchecked, and the fee is added only for
+      assets the Bank charges on transfer.
+- [x] `AC-US-BANK-001-12` When the fee is included, the largest amount a member can select keeps the deposit, fee included, within the
+      wallet balance.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [x] `AC-US-BANK-001-08` An archived company cannot initiate a deposit.
 - [x] `AC-US-BANK-001-09` Cancelling or rejecting a deposit leaves the Bank balance unchanged.
 - [x] `AC-US-BANK-001-10` A failed deposit leaves the Bank balance unchanged.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion | Proof Strategy        | Current Evidence                     | Status          |
 | -------------------- | --------------------- | ------------------------------------ | --------------- |
@@ -166,12 +177,14 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 | `AC-US-BANK-001-03`  | `PS-CONTRACT`         | Integrated E2E                       | ⚠️ Insufficient |
 | `AC-US-BANK-001-04`  | `PS-BROWSER`          | Mocked browser + Contract            | ✅ Met          |
 | `AC-US-BANK-001-04`  | `PS-CONTRACT`         | Mocked browser + Contract            | ✅ Met          |
-| `AC-US-BANK-001-05`  | `PS-BROWSER`          | Mocked browser                       | ✅ Met          |
+| `AC-US-BANK-001-05`  | `PS-BROWSER`          | Mocked browser + Frontend            | ✅ Met          |
 | `AC-US-BANK-001-06`  | `PS-CONTRACT`         | Contract                             | ✅ Met          |
 | `AC-US-BANK-001-07`  | `PS-FRONTEND`         | Frontend                             | ✅ Met          |
 | `AC-US-BANK-001-08`  | `PS-BROWSER`          | Mocked browser                       | ✅ Met          |
 | `AC-US-BANK-001-09`  | `PS-BROWSER`          | Mocked browser                       | ✅ Met          |
 | `AC-US-BANK-001-10`  | `PS-BROWSER`          | Mocked browser                       | ✅ Met          |
+| `AC-US-BANK-001-11`  | `PS-FRONTEND`         | Frontend                             | ✅ Met          |
+| `AC-US-BANK-001-12`  | `PS-FRONTEND`         | Frontend                             | ✅ Met          |
 
 **Accounting:** An external receipt is booked by [`UC-BANK-02`](../accounting/journal-entry-catalogue.md#uc-bank-02--external-cash-receipt).
 A receipt from another known company pocket is an internal transfer instead.
@@ -189,7 +202,7 @@ remain as recorded above.
 | Safe funds Bank. [UC-TREASURY-001](../accounting/journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer)                                            | Receives the Bank funding.                    | [US-SAFE-003](#us-safe-003-manage-safe-funds) — initiates the Safe transfer                                 |
 | An approved Expense payout reaches Bank. [UC-TREASURY-001](../accounting/journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer)                    | Receives the Bank funding.                    | [US-EXP-002](#us-exp-002-spend-from-the-expense-account) — executes the approved payout to a company pocket |
 
-### Direct Movement Scenarios
+#### Direct Movement Scenarios
 
 Target behaviour follows the [direct movement policy](../accounting/direct-movement-policy.md). Each row represents the same evidenced
 movement across the participating stories.
@@ -198,21 +211,27 @@ movement across the participating stories.
 | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | External wallet funds Bank without established purpose or facture evidence. [UC-TREASURY-002](../accounting/journal-entry-catalogue.md#uc-treasury-002--external-receipt-pending-classification) | Owns received funding. | [US-BANK-003](README.md#us-bank-003-review-the-bank-position-and-history) — owns Bank history; [US-PAYGATE-004](../payment-gate/README.md#us-paygate-004-review-payment-history) — keeps unmatched receipts outside invoice history; [US-ACCT-007](../accounting/README.md#us-acct-007-review-direct-treasury-movements) — owns movement evidence and identity; [US-ACCT-010](../accounting/README.md#us-acct-010-classify-direct-external-receipts) — owns eligible receipt classification |
 
-## US-BANK-002: Transfer Bank Funds
+## FEAT-BANK-002: Transfer Bank Funds
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
+
+### US-BANK-002: Transfer Bank Funds
 
 **As a** Bank owner or Board member\
 **I want to** transfer assets from the Bank\
 **So that** the company can use its treasury for authorized payments
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-BANK-002-01` The Bank owner can transfer a held native or supported ERC-20 balance to a valid recipient.
 - [x] `AC-US-BANK-002-02` A Board member can submit the same transfer as a Board action for approval.
 - [x] `AC-US-BANK-002-03` A successful transfer decreases the Bank balance and delivers the requested net amount to the recipient.
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-BANK-002-04` Only the Bank owner can execute a direct transfer. _(contract)_
 - [x] `AC-US-BANK-002-05` A Board-submitted transfer identifies its approval requirement before submission.
@@ -224,35 +243,35 @@ movement across the participating stories.
 - [x] `AC-US-BANK-002-10` An ERC-20 Bank transfer with a positive `BANK` rate pays its calculated fee to its generation's FeeCollector only
       when that token is FeeCollector-supported; otherwise it delivers the full amount to the recipient. _(contract)_
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [x] `AC-US-BANK-002-11` An archived company cannot initiate a transfer or Board action.
 - [x] `AC-US-BANK-002-12` A paused Bank rejects outgoing transfers. _(contract)_
 - [x] `AC-US-BANK-002-13` Cancelling, rejecting, or failing a transfer leaves the Bank balance unchanged.
 
-### Test Coverage
+#### Test Coverage
 
-| Acceptance Criterion | Proof Strategy        | Current Evidence          | Status          |
-| -------------------- | --------------------- | ------------------------- | --------------- |
-| `AC-US-BANK-002-01`  | `PS-CHAIN-INTEGRATED` | Integrated E2E + Frontend | ✅ Met          |
-| `AC-US-BANK-002-01`  | `PS-CONTRACT`         | Integrated E2E + Frontend | ⚠️ Insufficient |
-| `AC-US-BANK-002-02`  | `PS-CHAIN-INTEGRATED` | Mocked browser + Frontend | ⚠️ Insufficient |
-| `AC-US-BANK-002-02`  | `PS-CONTRACT`         | Mocked browser + Frontend | ⚠️ Insufficient |
-| `AC-US-BANK-002-03`  | `PS-CHAIN-INTEGRATED` | Integrated E2E + Contract | ✅ Met          |
-| `AC-US-BANK-002-03`  | `PS-CONTRACT`         | Integrated E2E + Contract | ✅ Met          |
-| `AC-US-BANK-002-04`  | `PS-CONTRACT`         | Contract                  | ✅ Met          |
-| `AC-US-BANK-002-05`  | `PS-BROWSER`          | Mocked browser + Frontend | ✅ Met          |
-| `AC-US-BANK-002-06`  | `PS-FRONTEND`         | Frontend + Contract       | ✅ Met          |
-| `AC-US-BANK-002-06`  | `PS-CONTRACT`         | Frontend + Contract       | ✅ Met          |
-| `AC-US-BANK-002-07`  | `PS-CONTRACT`         | Contract                  | ✅ Met          |
-| `AC-US-BANK-002-08`  | `PS-FRONTEND`         | Frontend                  | ✅ Met          |
-| `AC-US-BANK-002-09`  | `PS-CHAIN-INTEGRATED` | Integrated E2E + Contract | ✅ Met          |
-| `AC-US-BANK-002-09`  | `PS-CONTRACT`         | Integrated E2E + Contract | ✅ Met          |
-| `AC-US-BANK-002-10`  | `PS-CHAIN-INTEGRATED` | Integrated E2E + Contract | ✅ Met          |
-| `AC-US-BANK-002-10`  | `PS-CONTRACT`         | Integrated E2E + Contract | ✅ Met          |
-| `AC-US-BANK-002-11`  | `PS-BROWSER`          | Mocked browser + Frontend | ✅ Met          |
-| `AC-US-BANK-002-12`  | `PS-CONTRACT`         | Mocked browser + Contract | ✅ Met          |
-| `AC-US-BANK-002-13`  | `PS-BROWSER`          | Mocked browser            | ✅ Met          |
+| Acceptance Criterion | Proof Strategy        | Current Evidence                     | Status          |
+| -------------------- | --------------------- | ------------------------------------ | --------------- |
+| `AC-US-BANK-002-01`  | `PS-CHAIN-INTEGRATED` | Integrated E2E + Frontend            | ✅ Met          |
+| `AC-US-BANK-002-01`  | `PS-CONTRACT`         | Integrated E2E + Frontend            | ⚠️ Insufficient |
+| `AC-US-BANK-002-02`  | `PS-CHAIN-INTEGRATED` | Mocked browser + Frontend            | ⚠️ Insufficient |
+| `AC-US-BANK-002-02`  | `PS-CONTRACT`         | Mocked browser + Frontend            | ⚠️ Insufficient |
+| `AC-US-BANK-002-03`  | `PS-CHAIN-INTEGRATED` | Integrated E2E + Frontend + Contract | ✅ Met          |
+| `AC-US-BANK-002-03`  | `PS-CONTRACT`         | Integrated E2E + Frontend + Contract | ✅ Met          |
+| `AC-US-BANK-002-04`  | `PS-CONTRACT`         | Contract                             | ✅ Met          |
+| `AC-US-BANK-002-05`  | `PS-BROWSER`          | Mocked browser + Frontend            | ✅ Met          |
+| `AC-US-BANK-002-06`  | `PS-FRONTEND`         | Frontend + Contract                  | ✅ Met          |
+| `AC-US-BANK-002-06`  | `PS-CONTRACT`         | Frontend + Contract                  | ✅ Met          |
+| `AC-US-BANK-002-07`  | `PS-CONTRACT`         | Contract                             | ✅ Met          |
+| `AC-US-BANK-002-08`  | `PS-FRONTEND`         | Frontend                             | ✅ Met          |
+| `AC-US-BANK-002-09`  | `PS-CHAIN-INTEGRATED` | Integrated E2E + Contract            | ✅ Met          |
+| `AC-US-BANK-002-09`  | `PS-CONTRACT`         | Integrated E2E + Contract            | ✅ Met          |
+| `AC-US-BANK-002-10`  | `PS-CHAIN-INTEGRATED` | Integrated E2E + Contract            | ✅ Met          |
+| `AC-US-BANK-002-10`  | `PS-CONTRACT`         | Integrated E2E + Contract            | ✅ Met          |
+| `AC-US-BANK-002-11`  | `PS-BROWSER`          | Mocked browser + Frontend            | ✅ Met          |
+| `AC-US-BANK-002-12`  | `PS-CONTRACT`         | Mocked browser + Contract            | ✅ Met          |
+| `AC-US-BANK-002-13`  | `PS-BROWSER`          | Mocked browser                       | ✅ Met          |
 
 **Accounting:** The destination determines the rule: company-pocket funding uses
 [`UC-BANK-03`](../accounting/journal-entry-catalogue.md#uc-bank-03--bank-funds-a-company-pocket), an external payment uses
@@ -279,15 +298,21 @@ remain as recorded above.
 | A cash-out run makes its final external Bank payment without an established purpose. [UC-TREASURY-003](../accounting/journal-entry-catalogue.md#uc-treasury-003--external-payment-pending-classification)          | Owns the Bank transfer, authorization, amount, and fee.              | [US-BANK-004](#us-bank-004-cash-out-available-treasury-funds) — orchestrates the final payment                                                                                                                   |
 | A cash-out run makes its final external Bank payment with valid operating-expense evidence or classification. [UC-EXPENSE-001](../accounting/journal-entry-catalogue.md#uc-expense-001--operating-expense-payment) | Owns the Bank transfer, authorization, amount, and fee.              | [US-BANK-004](#us-bank-004-cash-out-available-treasury-funds) — orchestrates the final payment                                                                                                                   |
 
-## US-BANK-003: Review the Bank Position and History
+## FEAT-BANK-003: Review the Bank Position and History
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
+
+### US-BANK-003: Review the Bank Position and History
 
 **As a** company member\
 **I want to** inspect the Bank's holdings and activity\
 **So that** I can understand the company's treasury position
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-BANK-003-01` A company member can inspect the Bank address, native balance, token holdings, and local-currency value.
 - [x] `AC-US-BANK-003-02` Bank history exposes each transaction's date, type, counterparty, value, and transaction hash when available.
@@ -295,7 +320,7 @@ remain as recorded above.
 - [ ] `AC-US-BANK-003-09` Bank history includes evidenced direct native movements without a Bank event and exposes their shared Accounting
       movement reference.
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-BANK-003-04` Every company member can inspect Bank balances and history regardless of transfer permission.
 - [x] `AC-US-BANK-003-05` Grouped events from one transaction remain attributable to the same transaction hash.
@@ -303,12 +328,14 @@ remain as recorded above.
       emitted no event of its own — for example, the funds swept in when a Community Credit round is funded, or a stablecoin sent straight
       to a first-generation Bank. A movement a Bank event already records is not shown a second time.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [x] `AC-US-BANK-003-07` A history filter with no matching events returns an empty result.
 - [x] `AC-US-BANK-003-08` A failed history read is distinguishable from a successfully loaded empty history.
+- [x] `AC-US-BANK-003-10` An unavailable current token quote is distinguishable from a real zero: token quantities remain visible, affected
+      fiat values and totals stay unavailable, and a failed quote read offers retry.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion | Proof Strategy             | Current Evidence          | Status          |
 | -------------------- | -------------------------- | ------------------------- | --------------- |
@@ -320,6 +347,7 @@ remain as recorded above.
 | `AC-US-BANK-003-06`  | `PS-FRONTEND`              | Mocked browser + Frontend | ✅ Met          |
 | `AC-US-BANK-003-07`  | `PS-BROWSER`               | Mocked browser            | ✅ Met          |
 | `AC-US-BANK-003-08`  | `PS-BROWSER`               | Frontend                  | ⚠️ Insufficient |
+| `AC-US-BANK-003-10`  | `PS-FRONTEND`              | Frontend                  | ✅ Met          |
 | `AC-US-BANK-003-09`  | `PS-BACKEND`               | None linked               | ❌ Missing      |
 | `AC-US-BANK-003-09`  | `PS-FULL-STACK-INTEGRATED` | None linked               | ❌ Missing      |
 
@@ -338,7 +366,7 @@ remain as recorded above.
 | A cash-out run returns Payroll funds to their generation's Bank. [UC-TREASURY-001](../accounting/journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer)              | Owns the receiving Bank balance and history. | [US-BANK-004](#us-bank-004-cash-out-available-treasury-funds) — orchestrates the step and owns sequence recovery; [US-PAYROLL-014](../payroll/README.md#us-payroll-014-return-payroll-funds-to-bank) — owns the source-account return |
 | A historical-generation cash-out run forwards Bank funds to the current Bank. [UC-TREASURY-001](../accounting/journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer) | Owns the receiving Bank balance and history. | [US-BANK-004](#us-bank-004-cash-out-available-treasury-funds) — orchestrates the forwarding step; [US-BANK-002](#us-bank-002-transfer-bank-funds) — owns the Bank transfer and fee                                                    |
 
-### Direct Movement Scenarios
+#### Direct Movement Scenarios
 
 Target behaviour follows the [direct movement policy](../accounting/direct-movement-policy.md). Each row represents the same evidenced
 movement across the participating stories.
@@ -347,13 +375,19 @@ movement across the participating stories.
 | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | External wallet funds Bank without established purpose or facture evidence. [UC-TREASURY-002](../accounting/journal-entry-catalogue.md#uc-treasury-002--external-receipt-pending-classification) | Owns bank history. | [US-BANK-001](README.md#us-bank-001-fund-the-bank) — owns received funding; [US-PAYGATE-004](../payment-gate/README.md#us-paygate-004-review-payment-history) — keeps unmatched receipts outside invoice history; [US-ACCT-007](../accounting/README.md#us-acct-007-review-direct-treasury-movements) — owns movement evidence and identity; [US-ACCT-010](../accounting/README.md#us-acct-010-classify-direct-external-receipts) — owns eligible receipt classification |
 
-## US-BANK-004: Cash Out Available Treasury Funds
+## FEAT-BANK-004: Cash Out Available Treasury Funds
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
+
+### US-BANK-004: Cash Out Available Treasury Funds
 
 **As a** Bank owner\
 **I want to** cash out the company's available treasury funds\
 **So that** I can move them to my connected wallet or the company's current Bank
 
-### How It Works
+#### How It Works
 
 1. The owner reviews the funded accounts and the destination before confirming the run. Funded-account eligibility comes from raw on-chain
    balances, so a temporarily unavailable fiat valuation does not block withdrawal.
@@ -361,16 +395,16 @@ movement across the participating stories.
 3. The Bank then forwards its native and supported token balances to the destination. A historic generation forwards its available funds to
    the company's current Bank.
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-BANK-004-01` The Bank owner can consolidate available Cash Remuneration and Expense Account funds into the current Bank, then
       transfer each held native or supported ERC-20 asset to the connected wallet.
 - [x] `AC-US-BANK-004-02` The owner of a historic contract generation can forward its available Bank funds to the company's current Bank,
       including eligible source-account sweeps.
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-BANK-004-03` Only the relevant Bank owner can start a cash-out run, and an archived current company cannot start one.
 - [x] `AC-US-BANK-004-04` Each Bank transfer reads balances after the source-account steps, so zero-balance assets do not create
@@ -378,13 +412,13 @@ movement across the participating stories.
 - [x] `AC-US-BANK-004-05` Historic generations without source-account withdrawal support can transfer only their Bank balance and identify
       the funds that remain in their source accounts.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [x] `AC-US-BANK-004-06` A failed step stops the sequence, leaves later steps pending, and lets the owner retry from the failed step.
 - [x] `AC-US-BANK-004-07` Rejecting a wallet request leaves the remaining steps unrun and identifies the rejected step to the owner.
 - [x] `AC-US-BANK-004-08` A cash-out run does not start when no eligible funded account is available.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion | Proof Strategy        | Current Evidence          | Status          |
 | -------------------- | --------------------- | ------------------------- | --------------- |
@@ -424,21 +458,27 @@ remain as recorded above.
 | A cash-out run makes its final external Bank payment without an established purpose. [UC-TREASURY-003](../accounting/journal-entry-catalogue.md#uc-treasury-003--external-payment-pending-classification)          | Orchestrates the final payment.                   | [US-BANK-002](#us-bank-002-transfer-bank-funds) — owns the Bank transfer, authorization, amount, and fee                                                                                                                            |
 | A cash-out run makes its final external Bank payment with valid operating-expense evidence or classification. [UC-EXPENSE-001](../accounting/journal-entry-catalogue.md#uc-expense-001--operating-expense-payment) | Orchestrates the final payment.                   | [US-BANK-002](#us-bank-002-transfer-bank-funds) — owns the Bank transfer, authorization, amount, and fee                                                                                                                            |
 
-## US-EXP-001: Grant a Signed Spending Approval
+## FEAT-EXP-001: Grant a Signed Spending Approval
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
+
+### US-EXP-001: Grant a Signed Spending Approval
 
 **As an** Expense Account owner\
 **I want to** grant a member a signed spending approval\
 **So that** they can pay authorized expenses without controlling the whole account
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-EXP-001-01` The current Expense Account owner can grant a spending approval to a recipient.
 - [x] `AC-US-EXP-001-02` A valid approval records its recipient, token, amount, schedule, expiry, and signature domain.
 - [x] `AC-US-EXP-001-03` A successfully granted approval becomes available to its recipient and the company.
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-EXP-001-04` Only the current Expense Account owner can create a valid approval.
 - [x] `AC-US-EXP-001-05` An approval is bound to the current Expense Account contract and active network.
@@ -447,7 +487,7 @@ remain as recorded above.
 - [x] `AC-US-EXP-001-14` A new approval offers the native asset and only product-recognized ERC-20 assets enabled by the current Expense
       Account contract.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [x] `AC-US-EXP-001-08` An archived company cannot grant a spending approval.
 - [x] `AC-US-EXP-001-09` An invalid or mismatched signature is rejected without creating an approval.
@@ -457,7 +497,7 @@ remain as recorded above.
 - [x] `AC-US-EXP-001-13` A custom-frequency approval requires a positive period length.
 - [x] `AC-US-EXP-001-15` An unavailable token-support read prevents an ERC-20 approval instead of relying on a fixed token list.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion | Proof Strategy      | Current Evidence         | Status          |
 | -------------------- | ------------------- | ------------------------ | --------------- |
@@ -484,21 +524,27 @@ remain as recorded above.
 
 **Dependencies:** Current Expense Account contract and connected contract owner
 
-## US-EXP-002: Spend From the Expense Account
+## FEAT-EXP-002: Spend From the Expense Account
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
+
+### US-EXP-002: Spend From the Expense Account
 
 **As an** approved recipient\
 **I want to** spend within my approval\
 **So that** I can pay an authorized expense from the company's funds
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-EXP-002-01` An approved recipient can transfer the authorized token to a valid destination.
 - [x] `AC-US-EXP-002-02` A successful spend decreases both the available approval amount and the Expense Account balance.
 - [x] `AC-US-EXP-002-03` A recurring approval remains available while it has remaining allowance in its active period.
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-EXP-002-04` A spend cannot exceed the lower of the approval remainder and the Expense Account balance.
 - [x] `AC-US-EXP-002-05` A spend must use the approval's recipient, token, contract, network, and recovered owner signature.
@@ -510,7 +556,7 @@ remain as recorded above.
       month. _(contract)_
 - [x] `AC-US-EXP-002-16` A custom approval resets after each positive signed interval measured from its start timestamp. _(contract)_
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [x] `AC-US-EXP-002-08` An archived company cannot initiate a spend.
 - [ ] `AC-US-EXP-002-09` A paused Expense Account rejects spending. _(contract)_
@@ -518,7 +564,7 @@ remain as recorded above.
 - [x] `AC-US-EXP-002-11` A mismatched or unverifiable approval rejects spending without changing balances.
 - [x] `AC-US-EXP-002-12` A failed balance read prevents spending until the available amount can be verified.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion | Proof Strategy        | Current Evidence          | Status          |
 | -------------------- | --------------------- | ------------------------- | --------------- |
@@ -561,35 +607,41 @@ remain as recorded above.
 | An approved Expense payout reaches Safe. [UC-TREASURY-001](../accounting/journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer)                             | Executes the approved payout to a company pocket.        | [US-SAFE-003](#us-safe-003-manage-safe-funds) — receives the Safe funding                                                                    |
 | An approved Expense payout reaches another known Expense deployment. [UC-TREASURY-001](../accounting/journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer) | Executes the approved payout from the source deployment. | [US-EXP-005](#us-exp-005-fund-the-expense-account) — owns the credited balance and spending availability in the destination deployment       |
 
-## US-EXP-003: Deactivate or Reactivate an Approval
+## FEAT-EXP-003: Deactivate or Reactivate an Approval
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
+
+### US-EXP-003: Deactivate or Reactivate an Approval
 
 **As an** Expense Account owner\
 **I want to** deactivate or reactivate a spending approval\
 **So that** I can control whether the recipient may continue spending
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-EXP-003-01` The owner of the Expense Account that signed an approval can deactivate it, including after a new generation is
       deployed.
 - [x] `AC-US-EXP-003-02` The owner of that signing Expense Account can reactivate a disabled approval.
 - [x] `AC-US-EXP-003-03` A successful state change is reflected in the company and recipient approval records.
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-EXP-003-04` Only the owner of the approval's signing Expense Account can change its active state.
 - [x] `AC-US-EXP-003-05` A deactivated approval cannot authorize a spend when its deployed Expense Account implementation enforces inactive
       state (2.0.2 or later). _(contract)_
 - [x] `AC-US-EXP-003-06` Reactivation preserves the approval's original signed limits and expiry.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [x] `AC-US-EXP-003-07` An archived company cannot deactivate or reactivate an approval.
 - [x] `AC-US-EXP-003-08` A failed state change preserves the approval's prior reported state.
 - [x] `AC-US-EXP-003-09` Expired and exhausted approvals remain unavailable after state synchronization.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion | Proof Strategy        | Current Evidence                     | Status |
 | -------------------- | --------------------- | ------------------------------------ | ------ |
@@ -611,15 +663,21 @@ remain as recorded above.
 
 **Dependencies:** US-EXP-001
 
-## US-EXP-004: Review the Expense Account and Its History
+## FEAT-EXP-004: Review the Expense Account and Its History
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
+
+### US-EXP-004: Review the Expense Account and Its History
 
 **As a** company member or approved recipient\
 **I want to** inspect Expense Account funds, approvals, and activity\
 **So that** I understand what can be spent and what has already happened
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-EXP-004-01` A company member can inspect the Expense Account address, balances, monthly spend, and approved total.
 - [x] `AC-US-EXP-004-02` A recipient can inspect approvals granted to their connected wallet.
@@ -629,7 +687,7 @@ remain as recorded above.
 - [ ] `AC-US-EXP-004-13` Expense history includes direct native-token and ERC-20 movements without an Expense business event, using the same
       movement evidence as Accounting.
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-EXP-004-06` Approval availability reflects on-chain usage, current time, and active-state synchronization.
 - [x] `AC-US-EXP-004-14` An approval signed on a registered earlier Expense Account on the supported network remains visible with a
@@ -643,7 +701,7 @@ remain as recorded above.
 - [x] `AC-US-EXP-004-07` One recipient sees only approvals issued to their connected wallet in their personal approval scope.
 - [x] `AC-US-EXP-004-08` Every company member can inspect the shared Expense Account history.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [x] `AC-US-EXP-004-09` A scope with no approvals or transactions returns an empty result.
 - [x] `AC-US-EXP-004-10` A failed approval read is distinguishable from a successfully loaded empty approval scope.
@@ -651,7 +709,7 @@ remain as recorded above.
 - [x] `AC-US-EXP-004-12` When a previous-month baseline exists, the Expense Account summary reports the direction and percentage change in
       monthly spending without inventing a comparison when no baseline exists.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion | Proof Strategy             | Current Evidence                    | Status     |
 | -------------------- | -------------------------- | ----------------------------------- | ---------- |
@@ -676,7 +734,7 @@ remain as recorded above.
 
 **Dependencies:** Current and registered earlier Expense Account contracts on the supported network, and available API and chain providers
 
-### Direct Movement Scenarios
+#### Direct Movement Scenarios
 
 Target behaviour follows the [direct movement policy](../accounting/direct-movement-policy.md). Each row represents the same evidenced
 movement across the participating stories.
@@ -685,7 +743,13 @@ movement across the participating stories.
 | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | External wallet funds Expense without established business purpose. [UC-TREASURY-002](../accounting/journal-entry-catalogue.md#uc-treasury-002--external-receipt-pending-classification) | Owns expense position and history. | [US-EXP-005](README.md#us-exp-005-fund-the-expense-account) — owns received funding and spending availability; [US-ACCT-007](../accounting/README.md#us-acct-007-review-direct-treasury-movements) — owns movement evidence and identity; [US-ACCT-010](../accounting/README.md#us-acct-010-classify-direct-external-receipts) — owns eligible receipt classification |
 
-## US-EXP-005: Fund the Expense Account
+## FEAT-EXP-005: Fund the Expense Account
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
+
+### US-EXP-005: Fund the Expense Account
 
 **As an** account funder\
 **I want to** add assets to the company's Expense Account\
@@ -694,9 +758,9 @@ movement across the participating stories.
 The funder may use a connected wallet directly or an authorized Bank transfer. The initiating Bank permissions, fees, and transfer failure
 rules remain in `US-BANK-002`; this story owns the receiving account's result.
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-EXP-005-01` Native currency sent from a wallet to the Expense Account increases its native balance. _(contract)_
 - [x] `AC-US-EXP-005-02` A supported ERC-20 deposited through the Expense Account increases that token's balance. _(contract)_
@@ -704,17 +768,17 @@ rules remain in `US-BANK-002`; this story owns the receiving account's result.
       received.
 - [x] `AC-US-EXP-005-04` A funded balance is available to an otherwise valid spending approval.
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-EXP-005-05` The Expense Account deposit action rejects a zero amount or an ERC-20 that is not currently supported.
 - [ ] `AC-US-EXP-005-06` A Bank funding action offers an ERC-20 destination only when the receiving Expense Account supports that token.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [ ] `AC-US-EXP-005-07` An ERC-20 sent directly from a wallet without the Expense deposit action is identifiable in the account's history
       even when the Expense contract emits no deposit event.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion | Proof Strategy        | Current Evidence | Status          |
 | -------------------- | --------------------- | ---------------- | --------------- |
@@ -745,7 +809,7 @@ remain as recorded above.
 | Safe funds the Expense Account. [UC-TREASURY-001](../accounting/journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer)                                      | Owns the credited Expense balance and spending availability.                       | [US-SAFE-003](#us-safe-003-manage-safe-funds) — initiates the Safe transfer                                           |
 | An approved Expense payout reaches another known Expense deployment. [UC-TREASURY-001](../accounting/journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer) | Owns the credited balance and spending availability in the destination deployment. | [US-EXP-002](#us-exp-002-spend-from-the-expense-account) — executes the approved payout from the source deployment    |
 
-### Direct Movement Scenarios
+#### Direct Movement Scenarios
 
 Target behaviour follows the [direct movement policy](../accounting/direct-movement-policy.md). Each row represents the same evidenced
 movement across the participating stories.
@@ -754,7 +818,13 @@ movement across the participating stories.
 | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | External wallet funds Expense without established business purpose. [UC-TREASURY-002](../accounting/journal-entry-catalogue.md#uc-treasury-002--external-receipt-pending-classification) | Owns received funding and spending availability. | [US-EXP-004](README.md#us-exp-004-review-the-expense-account-and-its-history) — owns Expense position and history; [US-ACCT-007](../accounting/README.md#us-acct-007-review-direct-treasury-movements) — owns movement evidence and identity; [US-ACCT-010](../accounting/README.md#us-acct-010-classify-direct-external-receipts) — owns eligible receipt classification |
 
-## US-EXP-006: Return Expense Account Funds to Bank
+## FEAT-EXP-006: Return Expense Account Funds to Bank
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
+
+### US-EXP-006: Return Expense Account Funds to Bank
 
 **As an** authorized treasury actor\
 **I want to** return available Expense Account funds to Bank\
@@ -767,28 +837,28 @@ deactivation without blocking a spend. The return moves funds through that gener
 account receives funds again, approvals left active can still authorize spending. A recipient who needs access to the new Expense Account
 needs a fresh approval signed for that contract.
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-EXP-006-01` The Expense Account owner can return its native balance to the Bank of the same contract generation.
 - [x] `AC-US-EXP-006-02` The Expense Account owner can return balances of its currently supported ERC-20 assets to that Bank.
 - [x] `AC-US-EXP-006-03` An eligible Board member can submit the same return as a proposal requiring approval.
 - [x] `AC-US-EXP-006-04` A successful return decreases the source balance and increases the destination Bank balance for each moved asset.
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-EXP-006-05` Only the Expense Account owner can execute a direct return. _(contract)_
 - [x] `AC-US-EXP-006-06` Before confirmation, the actor is informed that existing spending approvals remain valid but may lack funds after
       the return, and that older implementations may record deactivation without enforcing it.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [ ] `AC-US-EXP-006-07` An asset outside the contract's current supported-token set is not reported as returned when its balance remains in
       the Expense Account.
 - [x] `AC-US-EXP-006-08` Cancelling or rejecting the return leaves the account and Bank balances unchanged.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion | Proof Strategy        | Current Evidence | Status          |
 | -------------------- | --------------------- | ---------------- | --------------- |
@@ -823,21 +893,27 @@ remain as recorded above.
 | Expense funds return directly to their generation's Bank. [UC-TREASURY-001](../accounting/journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer)        | Initiates the source-account return. | [US-BANK-003](#us-bank-003-review-the-bank-position-and-history) — owns the receiving Bank balance and history                                                                                                                   |
 | A cash-out run returns Expense funds to their generation's Bank. [UC-TREASURY-001](../accounting/journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer) | Owns the source-account return.      | [US-BANK-004](#us-bank-004-cash-out-available-treasury-funds) — orchestrates the step and owns sequence recovery; [US-BANK-003](#us-bank-003-review-the-bank-position-and-history) — owns the receiving Bank balance and history |
 
-## US-SAFE-001: Set Up and Manage the Company Safes
+## FEAT-SAFE-001: Set Up and Manage the Company Safes
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
+
+### US-SAFE-001: Set Up and Manage the Company Safes
 
 **As a** company owner\
 **I want to** deploy or import a Safe, then add another one, switch between them, or disable and enable one\
 **So that** my company always works from the right shared multi-signature wallet without losing any Safe's history
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-SAFE-001-01` A company without a registered Safe can deploy a new Safe.
 - [x] `AC-US-SAFE-001-02` A company without a registered Safe can import an existing Safe from the active network.
 - [x] `AC-US-SAFE-001-03` A newly deployed or imported Safe is registered to the company.
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-SAFE-001-04` Only the company owner can deploy, import, or register a Safe for the company.
 - [x] `AC-US-SAFE-001-05` A newly deployed Safe starts with the company owner as its only signer and a threshold of one.
@@ -846,7 +922,7 @@ remain as recorded above.
 - [x] `AC-US-SAFE-001-08` Every valid registered Safe address is checksum-normalized before routing, reads, writes, SDK initialization, or
       transaction-service requests.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [x] `AC-US-SAFE-001-09` The company owner can continue company creation without setting up a Safe.
 - [x] `AC-US-SAFE-001-10` If registration fails after deployment, the deployed Safe remains available for a registration retry.
@@ -868,7 +944,7 @@ remain as recorded above.
 - [x] `AC-US-SAFE-001-21` The owner can enable a disabled Safe again. It becomes the default again only if no Safe was made default after
       it.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion | Proof Strategy        | Current Evidence                           | Status          |
 | -------------------- | --------------------- | ------------------------------------------ | --------------- |
@@ -904,15 +980,21 @@ remain as recorded above.
 
 **Dependencies:** Current company and active network
 
-## US-SAFE-002: Inspect Safe Details
+## FEAT-SAFE-002: Inspect Safe Details
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
+
+### US-SAFE-002: Inspect Safe Details
 
 **As a** company member\
 **I want to** inspect the Safe's current details\
 **So that** I understand the shared wallet and who controls it
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-SAFE-002-01` A company member can inspect the Safe address, balances, token holdings, owners, and signature threshold.
 - [x] `AC-US-SAFE-002-02` A company member can inspect incoming native-token, ERC-20, and ERC-721 transfers.
@@ -920,12 +1002,12 @@ remain as recorded above.
 - [ ] `AC-US-SAFE-002-09` Safe asset history includes actual outgoing native-token and ERC-20 movements, including movements inside executed
       multi-action transactions, using the same evidence as Accounting.
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-SAFE-002-04` Inspecting Safe details does not require Safe signer permission.
 - [x] `AC-US-SAFE-002-05` The company's default Safe identifies the wallet whose balances, owners, and threshold are reported.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [x] `AC-US-SAFE-002-06` A Safe with no incoming transfers returns an empty deposit history.
 - [x] `AC-US-SAFE-002-07` A failed Safe information read is reported without hiding unaffected Safe information.
@@ -937,7 +1019,7 @@ remain as recorded above.
       Safe exists at that address instead of an indexing wait, no longer presents the wallet as active or requests its balances, signers and
       transactions, including right after a page reload, and the check can be repeated without registering another Safe.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion | Proof Strategy             | Current Evidence          | Status          |
 | -------------------- | -------------------------- | ------------------------- | --------------- |
@@ -956,7 +1038,7 @@ remain as recorded above.
 
 **Dependencies:** US-SAFE-001
 
-### Direct Movement Scenarios
+#### Direct Movement Scenarios
 
 Target behaviour follows the [direct movement policy](../accounting/direct-movement-policy.md). Each row represents the same evidenced
 movement across the participating stories.
@@ -966,21 +1048,27 @@ movement across the participating stories.
 | External wallet funds Safe without established purpose or investment evidence. [UC-TREASURY-002](../accounting/journal-entry-catalogue.md#uc-treasury-002--external-receipt-pending-classification) | Owns safe asset history.     | [US-SAFE-003](README.md#us-safe-003-manage-safe-funds) — owns funding; [US-ACCT-007](../accounting/README.md#us-acct-007-review-direct-treasury-movements) — owns movement evidence and identity; [US-ACCT-010](../accounting/README.md#us-acct-010-classify-direct-external-receipts) — owns eligible receipt classification |
 | Owner-authorized Router recovery moves held tokens to the same company Safe. [UC-TREASURY-001](../accounting/journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer)          | Owns receiving safe history. | [US-SHER-003](../shareholder-management/README.md#us-sher-003-review-shareholder-position-and-activity) — traces the Router receipt and recovery; [US-ACCT-007](../accounting/README.md#us-acct-007-review-direct-treasury-movements) — correlates source and destination without a second receipt or SHER issuance           |
 
-## US-SAFE-003: Manage Safe Funds
+## FEAT-SAFE-003: Manage Safe Funds
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
+
+### US-SAFE-003: Manage Safe Funds
 
 **As a** Safe owner\
 **I want to** deposit and transfer assets through the Safe\
 **So that** the company can fund and use its shared treasury
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-SAFE-003-01` A user can deposit the native token or a supported token into the Safe.
 - [x] `AC-US-SAFE-003-02` A Safe owner can propose a transfer of an asset held by the Safe.
 - [x] `AC-US-SAFE-003-03` A completed transfer refreshes the Safe balances and transaction state.
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-SAFE-003-04` Only a current Safe owner can propose an outgoing Safe transfer.
 - [x] `AC-US-SAFE-003-05` Company membership alone does not grant Safe signer permission.
@@ -988,14 +1076,14 @@ movement across the participating stories.
 - [x] `AC-US-SAFE-003-10` Assets acquired outside CNC retain their contract identity, currency and exact quantity in Safe holdings without
       expanding CNC payment permissions.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [x] `AC-US-SAFE-003-07` A proposal below the approval threshold remains pending without moving funds.
 - [x] `AC-US-SAFE-003-08` A rejected or failed proposal leaves Safe balances unchanged.
 - [x] `AC-US-SAFE-003-09` An archived company cannot initiate a Safe deposit or transfer.
 - [x] `AC-US-SAFE-003-11` An unavailable discovered balance or valuation keeps the wallet total explicitly incomplete.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion | Proof Strategy        | Current Evidence          | Status          |
 | -------------------- | --------------------- | ------------------------- | --------------- |
@@ -1038,7 +1126,7 @@ remain as recorded above.
 | Safe funds the Expense Account. [UC-TREASURY-001](../accounting/journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer)          | Initiates the Safe transfer. | [US-EXP-005](#us-exp-005-fund-the-expense-account) — owns the credited Expense balance and spending availability                             |
 | An approved Expense payout reaches Safe. [UC-TREASURY-001](../accounting/journal-entry-catalogue.md#uc-treasury-001--internal-company-pocket-transfer) | Receives the Safe funding.   | [US-EXP-002](#us-exp-002-spend-from-the-expense-account) — executes the approved payout to a company pocket                                  |
 
-### Direct Movement Scenarios
+#### Direct Movement Scenarios
 
 Target behaviour follows the [direct movement policy](../accounting/direct-movement-policy.md). Each row represents the same evidenced
 movement across the participating stories.
@@ -1047,33 +1135,39 @@ movement across the participating stories.
 | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | External wallet funds Safe without established purpose or investment evidence. [UC-TREASURY-002](../accounting/journal-entry-catalogue.md#uc-treasury-002--external-receipt-pending-classification) | Owns funding.   | [US-SAFE-002](README.md#us-safe-002-inspect-safe-details) — owns Safe asset history; [US-ACCT-007](../accounting/README.md#us-acct-007-review-direct-treasury-movements) — owns movement evidence and identity; [US-ACCT-010](../accounting/README.md#us-acct-010-classify-direct-external-receipts) — owns eligible receipt classification |
 
-## US-SAFE-004: Manage Safe Signers and Threshold
+## FEAT-SAFE-004: Manage Safe Signers and Threshold
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
+
+### US-SAFE-004: Manage Safe Signers and Threshold
 
 **As a** Safe owner\
 **I want to** change the Safe's signers and approval threshold\
 **So that** its control rules match the company's current governance
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-SAFE-004-01` A Safe owner can propose adding a signer.
 - [x] `AC-US-SAFE-004-02` A Safe owner can propose removing a signer.
 - [x] `AC-US-SAFE-004-03` A Safe owner can propose changing the approval threshold.
 - [x] `AC-US-SAFE-004-04` A completed change refreshes the reported owners and threshold.
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-SAFE-004-05` Only a current Safe owner can propose signer or threshold changes.
 - [x] `AC-US-SAFE-004-06` Signer and threshold changes follow the Safe's current approval threshold.
 - [x] `AC-US-SAFE-004-07` A signer change cannot leave the Safe with an invalid threshold.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [x] `AC-US-SAFE-004-08` A user without Safe signer permission cannot propose a control change.
 - [x] `AC-US-SAFE-004-09` A rejected or failed change preserves the current signers and threshold.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion | Proof Strategy        | Current Evidence          | Status          |
 | -------------------- | --------------------- | ------------------------- | --------------- |
@@ -1089,33 +1183,39 @@ movement across the participating stories.
 
 **Dependencies:** US-SAFE-006
 
-## US-SAFE-005: Review Safe Transactions
+## FEAT-SAFE-005: Review Safe Transactions
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
+
+### US-SAFE-005: Review Safe Transactions
 
 **As a** company member\
 **I want to** review Safe transactions\
 **So that** I understand pending and completed company actions
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-SAFE-005-01` Safe transactions expose their action, recipient, value, approval progress, status, and last update.
 - [x] `AC-US-SAFE-005-02` A company member can inspect transaction details and the on-chain hash when available.
 - [x] `AC-US-SAFE-005-03` A company member can filter transactions by approval, execution, conflict, and completion state.
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-SAFE-005-04` Reviewing transaction details does not require Safe signer permission.
 - [x] `AC-US-SAFE-005-05` Pending approval, ready to execute, conflicting, executed, and invalid transactions remain distinct states.
 - [x] `AC-US-SAFE-005-06` The available next action is derived from the transaction state and the connected signer's approvals.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [x] `AC-US-SAFE-005-07` A Safe with no matching transactions returns an empty result.
 - [x] `AC-US-SAFE-005-08` A failed transaction read is distinguishable from a successfully loaded empty result.
 - [x] `AC-US-SAFE-005-09` A failed transaction read can be retried without hiding unaffected Safe information.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion | Proof Strategy | Current Evidence | Status |
 | -------------------- | -------------- | ---------------- | ------ |
@@ -1131,35 +1231,41 @@ movement across the participating stories.
 
 **Dependencies:** US-SAFE-001
 
-## US-SAFE-006: Approve and Execute a Safe Transaction
+## FEAT-SAFE-006: Approve and Execute a Safe Transaction
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
+
+### US-SAFE-006: Approve and Execute a Safe Transaction
 
 **As a** Safe owner\
 **I want to** approve and execute a Safe transaction\
 **So that** the company can carry out an action after enough signers agree
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-SAFE-006-01` A Safe owner can approve a pending transaction they have not already approved.
 - [x] `AC-US-SAFE-006-02` A Safe owner can execute a transaction after it reaches the required threshold.
 - [x] `AC-US-SAFE-006-03` Execution refreshes the transaction state and affected Safe information.
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-SAFE-006-04` Only current Safe owners can approve or execute a Safe transaction.
 - [x] `AC-US-SAFE-006-05` One signer cannot approve the same transaction twice.
 - [x] `AC-US-SAFE-006-06` Approval and execution remain separate actions after the threshold is reached.
 - [x] `AC-US-SAFE-006-07` Executed and stale-nonce transactions cannot be approved or executed again.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [x] `AC-US-SAFE-006-08` Before approving a threshold-reaching transaction or executing a transaction while another valid transaction is
       pending, the Safe owner sees a warning that names the pending action and can cancel or continue.
 - [x] `AC-US-SAFE-006-09` A rejected or failed approval does not increase the approval count.
 - [x] `AC-US-SAFE-006-10` A rejected or failed execution leaves the transaction unexecuted.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion | Proof Strategy | Current Evidence | Status |
 | -------------------- | -------------- | ---------------- | ------ |
@@ -1176,7 +1282,13 @@ movement across the participating stories.
 
 **Dependencies:** US-SAFE-001
 
-## US-SAFE-007: Review the Safe Swap P&L
+## FEAT-SAFE-007: Review the Safe Swap P&L
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
+
+### US-SAFE-007: Review the Safe Swap P&L
 
 **As a** company member\
 **I want to** see the profit or loss on the tokens the Safe's swaps touched, and the fees\
@@ -1196,28 +1308,19 @@ the Safe:
 - **P&L** — the sum of every token's fixed and current results. USD stablecoins are worth $1 and keep a $1 average cost. The transaction
   fees CoW Protocol reports are a cost of their own: Accounting books them as Transaction Fee Expense and they stay out of the P&L.
 
-Accounting does not book this P&L. Its `Swap P&L` line keeps the per-swap valuation of the
-[use-case catalogue](./safe-swap-pnl-use-cases.md), which values what each swap received at today's price. Both agree while the tokens
-received are still held; they differ once a received token is spent or bought again.
+Accounting books this P&L. Each swap's `Swap P&L` line carries what that swap changed in the P&L of the tokens it touched: what it received
+against what it gave up, both valued at today's price, with the reported fee left out. A token received in one swap and given up in a later
+one therefore counts once, and the books' `Swap P&L` equals this P&L as long as no deposit or payment moves a swapped token at a price other
+than its average cost.
 
-### Use Cases
+#### Acceptance Criteria
 
-The [Safe swap P&L use-case catalogue](./safe-swap-pnl-use-cases.md) defines the per-swap valuation Accounting books and fourteen use cases,
-each with its condition, related criteria, and a worked example:
-
-- buying, selling, and exchanging volatile assets or stablecoins (`UC-SWAP-001`–`UC-SWAP-005`);
-- assets spent since the swap and several swaps over time (`UC-SWAP-006`, `UC-SWAP-007`);
-- reported, unreported, and partly reported fees, kept apart from the P&L (`UC-SWAP-008`–`UC-SWAP-010`);
-- refunds, missing prices, Safes without swaps, and unavailable sources (`UC-SWAP-011`–`UC-SWAP-014`).
-
-### Acceptance Criteria
-
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-SAFE-007-01` Once the Safe has swapped, the Wallet overview shows the number of swaps, the P&L in USD and as a percentage of
       the swaps' value, and the transaction fees.
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-SAFE-007-02` A swap is a transaction in which the Safe sends fungible assets and receives different ones. Deposits,
       withdrawals, NFTs, transfers to itself, and a refund of the sold asset in the same transaction are not counted as separate trades.
@@ -1234,14 +1337,16 @@ each with its condition, related criteria, and a worked example:
 - [x] `AC-US-SAFE-007-11` An exchange is valued on its day by its stablecoin side, or else by the side given; several tokens received share
       that value by their worth that day.
 - [x] `AC-US-SAFE-007-12` Once a token's position is emptied, its average cost starts again from its next entry.
+- [x] `AC-US-SAFE-007-13` Interest that a token, such as an Aave aToken, mints to the Safe in the transaction that sends it is not part of
+      the swap: it enters the token's position at that day's price and stays out of the P&L.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [x] `AC-US-SAFE-007-08` A missing price, or a history in which a token leaves more than it held, leaves that token unvalued; the P&L is
       marked incomplete and names it instead of counting it as zero.
 - [x] `AC-US-SAFE-007-09` Without a swap, or while the history, balances, or prices are unavailable, the swap figures stay hidden.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion | Proof Strategy      | Current Evidence | Status          |
 | -------------------- | ------------------- | ---------------- | --------------- |
@@ -1258,10 +1363,17 @@ each with its condition, related criteria, and a worked example:
 | `AC-US-SAFE-007-10`  | `PS-FRONTEND`       | Frontend         | ✅ Met          |
 | `AC-US-SAFE-007-11`  | `PS-FRONTEND`       | Frontend         | ✅ Met          |
 | `AC-US-SAFE-007-12`  | `PS-FRONTEND`       | Frontend         | ✅ Met          |
+| `AC-US-SAFE-007-13`  | `PS-FRONTEND`       | Frontend         | ✅ Met          |
 
 **Dependencies:** US-SAFE-002
 
-## US-SAFE-008: Review the Safe Swaps
+## FEAT-SAFE-008: Review the Safe Swaps
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
+
+### US-SAFE-008: Review the Safe Swaps
 
 **As a** company member\
 **I want to** see each token the Safe's swaps touched and each swap it made\
@@ -1271,9 +1383,9 @@ At the top of the Activity section, the Safe's swaps are detailed by token and b
 (`US-SAFE-007`). For each token, what it held before a swap, the swap, and its fee show where its cost and P&L come from; its deposits and
 payments stay in the Safe's transaction lists below.
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-SAFE-008-01` Each swap shows its date, the tokens given and the tokens received with their quantities, fee excluded, the value
       of the exchange on its day, the reported fee, and the on-chain transaction.
@@ -1283,18 +1395,18 @@ payments stay in the Safe's transaction lists below.
       quantity its fee took; the exchange and the fee show the token price they were valued at, and the exchange its result. What the Safe
       still holds is valued at today's price. Deposits and payments are left out of the history.
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-SAFE-008-02` Swaps are listed newest first.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [x] `AC-US-SAFE-008-03` When a token cannot be valued, its unknown values show as unavailable and the token is named; its P&L is not
       marked as a gain or a loss.
 - [x] `AC-US-SAFE-008-04` Without a swap the section explains that none exists yet; it shows a loading state while the figures settle and an
       error when the history or balances cannot be loaded.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion | Proof Strategy | Current Evidence | Status |
 | -------------------- | -------------- | ---------------- | ------ |
@@ -1336,9 +1448,36 @@ and expose the failure inline. Their loading state spans preparation and require
 [shared Board failure contract](../contract-management/README.md#board-action-failure-and-recovery) distinguishes an already-confirmed
 action with a missing backend record from a failed submission; notification failures do not undo success.
 
+## Current fiat estimates and unavailable quotes
+
+Balances and histories retain exact token quantities when a current quote is missing. The affected fiat values and complete totals display
+the canonical unavailable marker instead of a fabricated zero or priced subset. A true zero quote remains zero; zero holdings contribute
+zero without requiring a price. Transfer and Expense token choices use the selected-currency quote even when USD remains available. Deposit
+and transfer amount inputs apply the same nullable estimate contract, including Safe provider quotes.
+[Shared quote recovery](../../implementation/client-utilities/README.md#current-token-quote-and-fiat-availability) exposes failed or stale
+reads with a targeted Try again action and preserves usable cached quotes.
+
+Current and historical-generation withdrawal actions determine available funds from raw token balances. Unknown or zero fiat estimates do
+not remove a funded account from the withdrawal plan; review estimates may remain unavailable while permissions and exact chain amounts
+retain their existing rules. The existing SHER zero-price policy is preserved. Safe portfolio totals and Accounting rates/postings remain
+independently owned; an invalid Safe total is unavailable to the combined company estimate rather than a zero contribution.
+
+Frontend proofs cover the store/query lifecycle, amount-input estimates, balance/history presentation, partial aggregate rejection and
+raw-balance withdrawal eligibility. They do not establish a live market-provider result, a new integrated chain journey or human acceptance.
+
+## Expense spending row boundary
+
+Expense spending requires the approval's signature, full budget and UI status. Optional balance reads and legacy signing metadata retain
+their existing unavailable/verification behavior. After the existing source-contract, network and owner checks, the action forwards the
+verified signature unchanged to native/ERC-20 transfer. A malformed hexadecimal signature is rejected before submission; budget hashing,
+token precision, spendable limits and authorization rules are unchanged.
+
+The frontend helper and action use the [domain row contract](../../implementation/client-utilities/README.md#domain-row-contracts), not a
+generic table dictionary. This is a compile-time boundary; it does not claim validation of arbitrary API JSON or new business acceptance.
+
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `12b89744a080247ea8e4ca5047c639b9ae651b82`
+**Implementation evidence reviewed against:** `fcc6f3c18d73110697497451a97c3331a1646b5c`
 
 - [Bank deposit modal](../../../app/src/components/sections/BankView/forms/DepositModal.vue),
   [Bank transfer modal](../../../app/src/components/sections/BankView/forms/TransferModal.vue),
@@ -1353,9 +1492,14 @@ action with a missing backend record from a failed submission; notification fail
 - [Bank page](../../../app/src/views/team/%5Bid%5D/Accounts/BankView.vue), [Bank writes](../../../app/src/composables/bank/writes.ts),
   [Bank transaction feed](../../../app/src/composables/bank/useBankEventsViaLogs.ts),
   [version-aware Bank fee normalization](../../../app/src/composables/bank/bankFees.ts),
+  [Bank transfer fee](../../../app/src/composables/bank/useBankTransferFee.ts),
+  [Bank deposit fee](../../../app/src/composables/bank/useBankDepositFee.ts),
+  [Officer fee reads](../../../app/src/composables/officer/reads.ts),
   [incoming Bank transfer feed](../../../app/src/composables/bank/useIncomingBankTokenTransfersViaLogs.ts), and
   [Bank contract](../../../contract/contracts/Bank.sol)
-- [Bank component tests](../../../app/src/components/sections/BankView/__tests__) and
+- [Bank component tests](../../../app/src/components/sections/BankView/__tests__),
+  [Bank deposit form tests](../../../app/src/components/sections/BankView/forms/__tests__/DepositBankForm.spec.ts),
+  [Bank transfer fee tests](../../../app/src/composables/bank/__tests__/useBankTransferFee.spec.ts), and
   [Bank contract tests](../../../contract/test/Bank.spec.ts)
 - [Bank transfer form](../../../app/src/components/forms/TransferForm.vue)
 - [Current treasury cash-out action](../../../app/src/components/sections/DashboardView/CashOutAllAction.vue),
@@ -1408,7 +1552,7 @@ action with a missing backend record from a failed submission; notification fail
   [Expense support-set read](../../../app/src/composables/expenseAccount/reads.ts),
   [Expense approval writes](../../../app/src/composables/expenseAccount/writes.ts),
   [source-owner check](../../../app/src/composables/expenseAccount/approvalOwner.ts),
-  [older-generation retirement warning](../../../app/src/components/sections/ContractManagementView/LegacyApprovalWarning.vue),
+  [older-generation retirement warning](../../../app/src/components/sections/ContractManagementView/LegacyExpenseApprovalWarning.vue),
   [approval token policy](../../../app/src/utils/expenses/tokenPolicy.ts),
   [approval token amounts and balances](../../../app/src/utils/expenses/model.ts),
   [Expense API controller](../../../backend/src/controllers/expenseController.ts), and
@@ -1421,6 +1565,11 @@ action with a missing backend record from a failed submission; notification fail
 - [Payroll account page](../../../app/src/views/team/%5Bid%5D/Accounts/PayrollView.vue)
 
 ### Test-suite ownership
+
+- [Real quote/store/presentation/recovery tests](../../../app/src/stores/__tests__/currencyStore.lifecycle.spec.ts),
+  [nullable balance tests](../../../app/src/lib/balances/__tests__/tokenBalances.spec.ts),
+  [Bank balance display tests](../../../app/src/components/sections/BankView/__tests__/BankBalanceSection.spec.ts), and
+  [price-independent legacy withdrawal tests](../../../app/src/components/sections/ContractManagementView/__tests__/LegacyGenerationWithdrawAction.spec.ts)
 
 - [Bank write tests](../../../app/src/composables/bank/__tests__/bankWrites.spec.ts),
   [cash-out orchestration tests](../../../app/src/composables/cashOut/__tests__/useCashOutAll.spec.ts), and
@@ -1542,22 +1691,21 @@ filters the original transfer and balance rows without replacing their response 
 strings remain available. Refunds are netted in base units during valuation. A settled report is retained only while refreshing the same
 Safe; switching or clearing the Safe hides the previous report immediately. Implementation:
 [shared transfer grouping and netting](../../../app/src/utils/safe/swapTransfers.ts),
-[swap P&L calculation](../../../app/src/utils/safe/swapPnl.ts), [swap valuation and CoW fees](../../../app/src/utils/safe/swapValuation.ts),
+[swap valuation and CoW fees](../../../app/src/utils/safe/swapValuation.ts),
 [swap P&L composable](../../../app/src/composables/safe/useSafeSwapPnl.ts), [CoW order query](../../../app/src/queries/cow.queries.ts),
 [CoW order fields](../../../app/src/types/cow.ts), and
 [overview swap figures](../../../app/src/components/sections/SafeView/SafeSwapPnlCard.vue). Executable evidence:
-[swap P&L tests](../../../app/src/utils/safe/__tests__/swapPnl.spec.ts),
 [swap valuation tests](../../../app/src/utils/safe/__tests__/swapValuation.spec.ts),
-[use-case scenario tests](../../../app/src/utils/safe/__tests__/swapPnl.integration.spec.ts) for the
-[use-case catalogue](./safe-swap-pnl-use-cases.md), [composable tests](../../../app/src/composables/safe/__tests__/useSafeSwapPnl.spec.ts),
-and [overview swap figure tests](../../../app/src/components/sections/SafeView/__tests__/SafeSwapPnlCard.spec.ts). The figures have not been
+[composable tests](../../../app/src/composables/safe/__tests__/useSafeSwapPnl.spec.ts), and
+[overview swap figure tests](../../../app/src/components/sections/SafeView/__tests__/SafeSwapPnlCard.spec.ts). The figures have not been
 checked against a live Safe yet.
 
-The same composable returns two results from one set of sources. The per-swap report keeps the order and numeric results Accounting books.
-The [average-cost tracking](../../../app/src/utils/safe/costBasis.ts) reads every movement of the tokens the swaps touched, oldest first by
-block, and feeds the Wallet overview and the Activity swaps. Its daily quotes are requested by running the calculation once without quotes
-and collecting every quote it reads, so the requests cannot drift from the rules. Executable evidence:
-[average-cost tests](../../../app/src/utils/safe/__tests__/costBasis.spec.ts).
+The [average-cost tracking](../../../app/src/utils/safe/costBasis.ts), built on the
+[average-cost arithmetic](../../../app/src/utils/safe/averageCost.ts), reads every movement of the tokens the swaps touched, oldest first by
+block, and feeds the Wallet overview, the Activity swaps and Accounting's `Swap P&L`, which posts each swap's change to the P&L. Its daily
+quotes are requested by running the calculation once without quotes and collecting every quote it reads, so the requests cannot drift from
+the rules. Executable evidence: [average-cost tests](../../../app/src/utils/safe/__tests__/costBasis.spec.ts) and
+[average-cost arithmetic tests](../../../app/src/utils/safe/__tests__/averageCost.spec.ts).
 
 The [Activity swaps](../../../app/src/components/sections/SafeView/SafeSwapsTable.vue) list the tokens, a token's history, and the swaps,
 which they sort as a copy newest first. Executable evidence:

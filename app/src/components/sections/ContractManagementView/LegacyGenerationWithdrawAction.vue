@@ -26,7 +26,7 @@
     <template #body>
       <!-- Review phase -->
       <div v-if="phase === 'review'" class="space-y-4" data-test="legacy-withdraw-review">
-        <LegacyApprovalWarning :team-id="teamStore.currentTeamId" />
+        <LegacyExpenseApprovalWarning :team-id="teamStore.currentTeamId" />
         <UAlert
           v-if="canSweepSources"
           color="warning"
@@ -41,7 +41,7 @@
           variant="soft"
           icon="i-heroicons-exclamation-triangle"
           title="Only this generation's Bank can be emptied automatically."
-          :description="`Contracts from generation ${folder} predate the owner withdrawal added in V1, so the Expense Account and Cash Remuneration can only be emptied by hand — with a budget approval and a signed wage claim. The Bank forwards to the Bank this team uses today (one signature per token).`"
+          :description="`Contracts from generation ${beaconVersionFolder} predate the owner withdrawal added in V1, so the Expense Account and Cash Remuneration can only be emptied by hand — with a budget approval and a signed wage claim. The Bank forwards to the Bank this team uses today (one signature per token).`"
           data-test="legacy-withdraw-bank-only-notice"
         />
 
@@ -89,7 +89,11 @@
 
         <div class="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
           <span>Destination</span>
-          <AddressTooltip v-if="destination" :address="destination" class="text-xs" />
+          <AddressTooltip
+            v-if="destinationBankAddress"
+            :address="destinationBankAddress"
+            class="text-xs"
+          />
         </div>
 
         <p class="text-xs text-gray-500 dark:text-gray-400">
@@ -153,6 +157,7 @@
 </template>
 
 <script setup lang="ts">
+import { sumFiatValues } from '@/utils/currency/valuation'
 import { computed, ref } from 'vue'
 import type { Address } from 'viem'
 import { useToast } from '@nuxt/ui/composables'
@@ -169,7 +174,7 @@ import {
 import { useOfficerBeaconFolderQuery } from '@/composables/contracts/useOfficerBeaconFolder'
 import { TEAM_ARCHIVED_TOOLTIP, useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
 import { useCurrencyStore, useTeamStore, useUserDataStore } from '@/stores'
-import LegacyApprovalWarning from './LegacyApprovalWarning.vue'
+import LegacyExpenseApprovalWarning from './LegacyExpenseApprovalWarning.vue'
 import { formatCurrencyShort } from '@/utils/currency/display'
 
 /**
@@ -196,7 +201,7 @@ const expenseAddress = computed(() => addresses.value.expense as Address | undef
 const cashRemAddress = computed(() => addresses.value.cashRemuneration as Address | undefined)
 
 /** Where the funds land: the Bank of the generation the team runs today. */
-const destination = computed(
+const destinationBankAddress = computed(
   () => teamStore.getContractAddressByType('Bank') as Address | undefined
 )
 
@@ -204,12 +209,12 @@ const destination = computed(
 // sit behind frozen beacons — so the generation, not the team, decides whether
 // the source accounts can be swept. The Bank hop works on every generation.
 const {
-  folder,
+  folder: beaconVersionFolder,
   isPending: isResolvingVersion,
   isError: versionResolutionFailed
 } = useOfficerBeaconFolderQuery(computed(() => props.officerAddress))
 
-const canSweepSources = computed(() => supportsOwnerWithdrawAll(folder.value))
+const canSweepSources = computed(() => supportsOwnerWithdrawAll(beaconVersionFolder.value))
 
 const bankBalance = useContractBalance(bankAddress)
 const expenseBalance = useContractBalance(expenseAddress)
@@ -219,7 +224,7 @@ const { data: bankOwner } = useBankOwner(bankAddress)
 
 const currencyCode = computed(() => currencyStore.localCurrency.code)
 const fiat = (balance: ReturnType<typeof useContractBalance>) =>
-  balance.data.value?.total.local.value ?? 0
+  balance.data.value?.total.local.value ?? null
 const fiatFormatted = (balance: ReturnType<typeof useContractBalance>) =>
   balance.data.value?.total.local.formatted ?? '—'
 
@@ -228,14 +233,23 @@ const isOwner = computed(() => {
   return String(bankOwner.value).toLowerCase() === userStore.address.toLowerCase()
 })
 
-const balancesFiat = computed(() => ({
-  cashRemuneration: cashRemAddress.value ? fiat(cashRemBalance) : 0,
-  expense: expenseAddress.value ? fiat(expenseBalance) : 0,
-  bank: fiat(bankBalance)
+const hasFunds = (balance: ReturnType<typeof useContractBalance>) =>
+  balance.data.value?.balances.some((token) => token.raw > 0n) ?? false
+const fundedAccounts = computed(() => ({
+  cashRemuneration: !!cashRemAddress.value && hasFunds(cashRemBalance),
+  expense: !!expenseAddress.value && hasFunds(expenseBalance),
+  bank: hasFunds(bankBalance)
 }))
 
 const plan = computed(() =>
-  buildLegacyWithdrawPlan(balancesFiat.value, { canSweepSources: canSweepSources.value })
+  buildLegacyWithdrawPlan(
+    {
+      cashRemuneration: fundedAccounts.value.cashRemuneration ? 1 : 0,
+      expense: fundedAccounts.value.expense ? 1 : 0,
+      bank: fundedAccounts.value.bank ? 1 : 0
+    },
+    { canSweepSources: canSweepSources.value }
+  )
 )
 const hasAnyBalance = computed(() => plan.value.length > 0)
 
@@ -246,8 +260,8 @@ const hasAnyBalance = computed(() => plan.value.length > 0)
  */
 const blockedReason = computed(() => {
   if (!bankAddress.value) return 'This generation has no Bank to withdraw through'
-  if (!destination.value) return 'This team has no current Bank to receive the funds'
-  if (destination.value.toLowerCase() === bankAddress.value.toLowerCase())
+  if (!destinationBankAddress.value) return 'This team has no current Bank to receive the funds'
+  if (destinationBankAddress.value.toLowerCase() === bankAddress.value.toLowerCase())
     return 'This generation already holds the current Bank'
   if (isResolvingVersion.value) return 'Checking which contract generation this is…'
   if (versionResolutionFailed.value) return 'Could not read this generation from the chain'
@@ -256,7 +270,7 @@ const blockedReason = computed(() => {
   if (!hasAnyBalance.value)
     return canSweepSources.value
       ? 'These contracts hold no funds'
-      : `Contracts from generation ${folder.value} can only have their Bank emptied, and it is empty`
+      : `Contracts from generation ${beaconVersionFolder.value} can only have their Bank emptied, and it is empty`
   return undefined
 })
 
@@ -269,42 +283,30 @@ const cashOut = useCashOutAll({
     expense: computed(() => (canSweepSources.value ? expenseAddress.value : undefined)),
     cashRemuneration: computed(() => (canSweepSources.value ? cashRemAddress.value : undefined))
   },
-  to: destination
+  to: destinationBankAddress
 })
 
 const modal = ref({ mount: false, show: false })
 const phase = ref<'review' | 'progress'>('review')
 
-const sourceRows = computed(() => {
-  const rows: { key: string; label: string; value: string; amount: number }[] = []
-  if (balancesFiat.value.cashRemuneration > 0)
-    rows.push({
-      key: 'cashRemuneration',
-      label: 'Cash Remuneration',
-      value: fiatFormatted(cashRemBalance),
-      amount: balancesFiat.value.cashRemuneration
-    })
-  if (balancesFiat.value.expense > 0)
-    rows.push({
-      key: 'expense',
-      label: 'Expense Account',
-      value: fiatFormatted(expenseBalance),
-      amount: balancesFiat.value.expense
-    })
-  return rows
-})
-
-const reviewRows = computed(() => {
-  const rows = canSweepSources.value ? [...sourceRows.value] : []
-  if (balancesFiat.value.bank > 0)
-    rows.push({
-      key: 'bank',
-      label: 'Bank',
-      value: fiatFormatted(bankBalance),
-      amount: balancesFiat.value.bank
-    })
-  return rows
-})
+const accountRows = computed(() =>
+  [
+    { key: 'cashRemuneration' as const, label: 'Cash Remuneration', balance: cashRemBalance },
+    { key: 'expense' as const, label: 'Expense Account', balance: expenseBalance },
+    { key: 'bank' as const, label: 'Bank', balance: bankBalance }
+  ]
+    .filter(({ key }) => fundedAccounts.value[key])
+    .map(({ key, label, balance }) => ({
+      key,
+      label,
+      value: fiatFormatted(balance),
+      amount: fiat(balance)
+    }))
+)
+const sourceRows = computed(() => accountRows.value.filter(({ key }) => key !== 'bank'))
+const reviewRows = computed(() =>
+  accountRows.value.filter(({ key }) => key === 'bank' || canSweepSources.value)
+)
 
 const strandedRows = computed(() => (canSweepSources.value ? [] : sourceRows.value))
 
@@ -315,10 +317,7 @@ const completionDescription = computed(() =>
 )
 
 const projectedFormatted = computed(() =>
-  formatCurrencyShort(
-    reviewRows.value.reduce((total, row) => total + row.amount, 0),
-    currencyCode.value
-  )
+  formatCurrencyShort(sumFiatValues(reviewRows.value.map((row) => row.amount)), currencyCode.value)
 )
 
 const openModal = () => {

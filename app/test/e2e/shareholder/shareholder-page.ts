@@ -109,7 +109,7 @@ export async function redeployOfficerWithMigration(
 ): Promise<OfficerMigrationRedeployment> {
   await page.goto(`/teams/${teamId}/contract-management`)
   await expect(page).toHaveURL(new RegExp(`/teams/${teamId}/contract-management$`))
-  const action = page.locator('[data-test="createAddCampaign"]')
+  const action = page.locator('[data-test="redeploy-officer"]')
   await expect(action).toBeEnabled({ timeout: 30_000 })
   await action.click()
 

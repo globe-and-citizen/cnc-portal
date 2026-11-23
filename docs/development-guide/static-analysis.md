@@ -6,8 +6,7 @@ Knip identifies TypeScript exports that are not statically referenced from the c
 ESLint, which report unused variables and parameters within a module but cannot prove that an exported symbol is unused across the
 repository.
 
-The root configuration covers `app`, `backend`, `contract`, `dashboard`, and `ponder`. The Graph project is AssemblyScript, so it is outside
-this TypeScript-export audit.
+The root configuration covers `app`, `backend`, `contract`, and `dashboard`.
 
 ## Commands
 

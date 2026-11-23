@@ -1,13 +1,9 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import type { Mock } from 'vitest'
-import { mount, VueWrapper } from '@vue/test-utils'
+import { mount, VueWrapper, flushPromises } from '@vue/test-utils'
 import { nextTick } from 'vue'
 import FilePreviewGallery from '../FilePreviewGallery.vue'
-import { getPresignedUrl } from '@/composables/useFileUrl'
-
-vi.mock('@/composables/useFileUrl', () => ({
-  getPresignedUrl: vi.fn()
-}))
+import { useFileUrl } from '@/composables/useFileUrl'
+import { mockGetFileUrlApi } from '@/tests/mocks'
 
 describe('FilePreviewGallery', () => {
   const IMAGE_PREVIEW = {
@@ -78,14 +74,10 @@ describe('FilePreviewGallery', () => {
     })
   }
 
-  const flushPromises = async () => {
-    await Promise.resolve()
-    await Promise.resolve()
-    await nextTick()
-  }
-
   beforeEach(() => {
     vi.clearAllMocks()
+    useFileUrl().clearCache()
+    mockGetFileUrlApi.mockResolvedValue({ url: 'https://files.example/remote', expiresIn: 3600 })
   })
 
   afterEach(() => {
@@ -109,19 +101,19 @@ describe('FilePreviewGallery', () => {
   describe('S3 Presigned URLs', () => {
     it('caches presigned URLs without refetching them', async () => {
       const mockUrl = 'https://cdn.example.com/image.jpg'
-      ;(getPresignedUrl as unknown as Mock).mockResolvedValue(mockUrl)
+      mockGetFileUrlApi.mockResolvedValue({ url: mockUrl, expiresIn: 3600 })
 
       wrapper = createWrapper({ previews: [S3_IMAGE_PREVIEW] })
       await flushPromises()
 
-      expect(getPresignedUrl).toHaveBeenCalledTimes(1)
+      expect(mockGetFileUrlApi).toHaveBeenCalledTimes(1)
 
       // Update props with same key
       await wrapper.setProps({ previews: [S3_IMAGE_PREVIEW, IMAGE_PREVIEW] })
       await flushPromises()
 
       // Should still be called only once (cached)
-      expect(getPresignedUrl).toHaveBeenCalledTimes(1)
+      expect(mockGetFileUrlApi).toHaveBeenCalledTimes(1)
     })
   })
 
@@ -179,44 +171,14 @@ describe('FilePreviewGallery', () => {
     })
   })
 
-  describe('Download Functionality', () => {
-    it('downloads file when download button is clicked in lightbox', async () => {
-      const windowOpenSpy = vi.spyOn(window, 'open').mockImplementation(() => null)
-
-      wrapper = createWrapper({ previews: [IMAGE_PREVIEW] })
-
-      await wrapper.find(SELECTORS.imagePreview).trigger('click')
-      await nextTick()
-
-      await wrapper.find(SELECTORS.lightboxDownload).trigger('click')
-
-      expect(windowOpenSpy).toHaveBeenCalledWith(
-        IMAGE_PREVIEW.previewUrl,
-        '_blank',
-        'noopener,noreferrer'
-      )
-
-      windowOpenSpy.mockRestore()
-    })
-
-    it('downloads file when download button is clicked in document modal', async () => {
-      const windowOpenSpy = vi.spyOn(window, 'open').mockImplementation(() => null)
-
-      wrapper = createWrapper({ previews: [PDF_PREVIEW] })
-
-      await wrapper.find(SELECTORS.documentPreview).trigger('click')
-      await nextTick()
-
-      await wrapper.find(SELECTORS.docDownload).trigger('click')
-
-      expect(windowOpenSpy).toHaveBeenCalledWith(
-        PDF_PREVIEW.previewUrl,
-        '_blank',
-        'noopener,noreferrer'
-      )
-
-      windowOpenSpy.mockRestore()
-    })
+  it('shows retryable feedback when the download popup is blocked', async () => {
+    const windowOpenSpy = vi.spyOn(window, 'open').mockReturnValue(null)
+    wrapper = createWrapper({ previews: [IMAGE_PREVIEW] })
+    await wrapper.find(SELECTORS.imagePreview).trigger('click')
+    await flushPromises()
+    await wrapper.find(SELECTORS.lightboxDownload).trigger('click')
+    expect(wrapper.find('[data-test="file-download-error"]').text()).toContain('Allow popups')
+    windowOpenSpy.mockRestore()
   })
 
   describe('Modal Auto-close on Preview Removal', () => {

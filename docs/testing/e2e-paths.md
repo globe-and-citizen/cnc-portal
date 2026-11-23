@@ -90,7 +90,7 @@ execution:
 | G7    | `E2E-PATH-15` | `11/11`            | ✅ Covered |
 | G7    | `E2E-PATH-16` | `9/9`              | ✅ Covered |
 | G8    | `E2E-PATH-17` | `20/20`            | ✅ Covered |
-| G9    | `E2E-PATH-18` | `0/5`              | ⬜ Planned |
+| G9    | `E2E-PATH-18` | `5/5`              | ✅ Covered |
 | G9    | `E2E-PATH-19` | `0/6`              | ⬜ Planned |
 | G10   | `E2E-PATH-20` | `0/7`              | ⬜ Planned |
 | G10   | `E2E-PATH-21` | `0/5`              | ⬜ Planned |
@@ -499,7 +499,8 @@ path individually. These path checks do not close the separate feature acceptanc
   - Stories validated:
     - `US-PAYROLL-001` — set a member's wage;
     - `US-PAYROLL-002` — pause or resume the wage.
-  - Dependencies: an operational company with owner and member.
+  - Dependencies: an operational company with owner and member. The member saves weekly goals before any claim, so the journeys hold whether
+    or not the company requires them (`AC-US-PAYROLL-015-02`).
   - Main path:
     - [x] `US-PAYROLL-001` Create the member wage.
     - [x] `US-PAYROLL-001` Replace the member wage.
@@ -521,7 +522,8 @@ path individually. These path checks do not close the separate feature acceptanc
     - `US-PAYROLL-005` — submit a daily claim;
     - `US-PAYROLL-006` — edit a daily claim;
     - `US-PAYROLL-007` — delete a daily claim.
-  - Dependencies: an active wage prepared within each claim test; `E2E-PATH-11` owns wage configuration coverage, not shared state.
+  - Dependencies: an active wage and saved weekly goals prepared within each claim test; `E2E-PATH-11` owns wage configuration coverage, not
+    shared state.
   - Main path:
     - [x] `US-PAYROLL-004` Save weekly goals.
     - [x] `US-PAYROLL-005` Create an eligible daily work entry.
@@ -545,8 +547,8 @@ path individually. These path checks do not close the separate feature acceptanc
     - `US-PAYROLL-012` — review payroll history;
     - `US-PAYROLL-013` — review the Payroll account position.
   - Reused dependency: `US-PAYROLL-003` references the Accounts-owned funding journey and is not revalidated here.
-  - Dependencies: a claim-ready week prepared within this scenario, current contract owner, and funded Payroll contract. No state is reused
-    from `E2E-PATH-12`.
+  - Dependencies: a claim-ready week with saved weekly goals prepared within this scenario, current contract owner, and funded Payroll
+    contract. No state is reused from `E2E-PATH-12`.
   - Main path:
     - [x] `US-PAYROLL-008` Sign the completed weekly claim.
     - [x] `US-PAYROLL-009` Disable the signed weekly claim.
@@ -731,21 +733,22 @@ browser-driven.
 ## G9 — Client Authentication Recovery and Profile Identity
 
 - `E2E-PATH-18` — Recover from an interrupted client sign-in
-  - Story validated: `US-AUTH-003` — recover from an interrupted login.
+  - Story validated: `US-AUTH-001` — sign in after an interrupted attempt.
   - Reused prerequisite: `US-AUTH-001` owns successful SIWE sign-in evidence in G1; this path owns recovery, not another copy of onboarding.
   - Actor: portal user.
   - Dependencies: a disposable user identity, the real client authentication backend, and a controllable wallet rejection in this scenario.
   - Main path:
-    - [ ] `US-AUTH-003` Start client sign-in and reject the wallet signature.
-    - [ ] `US-AUTH-003` Verify that no authenticated session or protected company access is granted.
-    - [ ] `US-AUTH-003` Retry sign-in with the same wallet.
-    - [ ] `US-AUTH-003` Verify the backend accepts the fresh SIWE signature and issues the user's session.
-    - [ ] `US-AUTH-003` Reload a protected route and verify the recovered session remains usable.
-  - Separate variants: network-switch rejection, nonce failure, invalid signature, and profile-load failure; none is evidence of a completed
-    recovery until the affected boundary is exercised and observed. Client token cleanup after a terminal profile failure remains unchecked
-    in `AC-US-AUTH-003-06`.
+    - [x] `US-AUTH-001` Start client sign-in and reject the wallet signature.
+    - [x] `US-AUTH-001` Verify that no authenticated session or protected company access is granted.
+    - [x] `US-AUTH-001` Retry sign-in with the same wallet.
+    - [x] `US-AUTH-001` Verify the backend accepts the fresh SIWE signature and issues the user's session.
+    - [x] `US-AUTH-001` Reload a protected route and verify the recovered session remains usable.
+  - Separate variants: the mocked browser suite checks retry after nonce, signature verification, and profile-load failures. Focused tests
+    cover wallet failures and the token disposition in `AC-US-AUTH-001-17` and `AC-US-AUTH-001-18`.
   - Expected result: a failed attempt does not authenticate the user, while a fresh attempt succeeds without manual state repair.
-  - Status: Planned — no integrated recovery path is currently linked.
+  - Status: Integrated covered.
+  - Evidence: [integrated sign-in recovery](../../app/test/e2e/authentication.integrated.spec.ts) and
+    [mocked browser session failure cases](../../app/test/e2e/auth-session.spec.ts).
 
 - `E2E-PATH-19` — Update and reopen the user's profile
   - Story validated: `US-PROFILE-001` — update profile identity.

@@ -1,8 +1,13 @@
 <template>
   <div class="flex flex-col gap-5">
-    <!-- Report export: pick the sections, then generate PDF or Excel from the modal. -->
-    <div class="flex items-center justify-end">
-      <ExportReportModal :ledger-entry-count="ledgerEntryCount" @generate="onGenerate" />
+    <!-- The period drives the cards below and the report exported from the modal. -->
+    <div class="flex flex-wrap items-center justify-end gap-2.5">
+      <DatePicker v-model="period" mode="range" :storage-key="periodStorageKey" />
+      <ExportReportModal
+        :ledger-entry-count="ledgerEntryCount"
+        :period-label="periodLabel(bounds.from, bounds.to)"
+        @generate="onGenerate"
+      />
     </div>
 
     <!-- Balance-check banner -->
@@ -69,18 +74,35 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
+import { useRoute } from 'vue-router'
+import DatePicker from '@/components/ui/DatePicker.vue'
 import ExportReportModal, {
   type ExportFormat
 } from '@/components/sections/AccountingView/ExportReportModal.vue'
 import { useAccountingContext } from '@/composables/accounting/useAccountingContext'
 import { useAccountingExport } from '@/composables/accounting/useAccountingExport'
-import { presentSummary } from '@/utils/accounting/presenter'
+import { exportFilename } from '@/utils/accounting/exportNaming'
+import { filterByPeriod, periodLabel, presentSummary } from '@/utils/accounting/presenter'
 import type { SectionKey, SectionSpec } from '@/utils/accounting/exportSpec'
+import { defaultValueForMode, isAllTimeRange, type Range } from '@/utils/dates/picker'
 
 const accounting = useAccountingContext()
 
-const summary = computed(() => presentSummary(accounting.journal.value))
+// The period of the cards and of the exported report. The other Accounting pages
+// keep their own dates.
+const period = ref<Range>(defaultValueForMode('range') as Range)
+const periodStorageKey = `cnc-accounting-${useRoute().params.id}-summary-period`
+// "All time" starts at the epoch, which is not a user choice: it means no bounds.
+const bounds = computed(() =>
+  isAllTimeRange(period.value)
+    ? { from: null, to: null }
+    : { from: period.value.start, to: period.value.end }
+)
+
+const summary = computed(() =>
+  presentSummary(accounting.journal.value, bounds.value.from, bounds.value.to)
+)
 const summaryCards = computed(() => summary.value.cards)
 const banner = computed(() => summary.value.banner)
 
@@ -96,25 +118,32 @@ function cardSpan(index: number): string {
   return LAST_ROW_SPAN[summaryCards.value.length - 4] ?? 'lg:col-span-3'
 }
 
-// Whole-book ledger size — surfaced in the modal so the user knows a full ledger
+// Ledger size in the period — surfaced in the modal so the user knows a full ledger
 // export may be long.
-const ledgerEntryCount = computed(() => accounting.journal.value.length)
+const ledgerEntryCount = computed(
+  () => filterByPeriod(accounting.journal.value, bounds.value.from, bounds.value.to).length
+)
 
-// The Summary report exports the whole book (no per-page filters) for the
-// sections picked in the modal — as a PDF (one section per page) or an Excel
-// workbook (one section per sheet), whichever button the user hits.
+// The sections picked in the modal go out as a PDF (one section per page) or an
+// Excel workbook (one section per sheet), whichever button the user hits.
 const { exportPdf, exportExcel } = useAccountingExport()
 
 function onGenerate({ format, keys }: { format: ExportFormat; keys: SectionKey[] }): void {
-  const specs = keys.map((key): SectionSpec => ({ key }))
+  const { from, to } = bounds.value
+  const specs = keys.map((key): SectionSpec => ({ key, from, to, asOf: to }))
+  const report: SectionSpec = { key: 'summary', from, to }
   if (format === 'pdf') {
     exportPdf(
       specs,
-      { filename: 'cnc-accounting.pdf', pageBreak: true },
+      {
+        filename: exportFilename(report, 'pdf'),
+        pageBreak: true,
+        ...(from ? { coverage: `Period ${periodLabel(from, to)}` } : {})
+      },
       'Accounting report exported to PDF'
     )
   } else {
-    exportExcel(specs, 'cnc-accounting.xlsx', 'Accounting report exported to Excel')
+    exportExcel(specs, exportFilename(report, 'xlsx'), 'Accounting report exported to Excel')
   }
 }
 </script>

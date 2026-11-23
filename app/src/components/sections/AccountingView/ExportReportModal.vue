@@ -2,7 +2,7 @@
   <UModal
     v-model:open="open"
     title="Export report"
-    description="Pick the sections to include in the PDF report."
+    description="Pick the sections to include in the report."
     :ui="{ content: 'rounded-2xl' }"
   >
     <UButton
@@ -16,26 +16,21 @@
 
     <template #body>
       <div class="flex flex-col gap-4">
+        <div class="flex items-center justify-between gap-3" data-test="export-period">
+          <span class="text-lg font-semibold">Period</span>
+          <span class="text-lg font-semibold tabular-nums">{{ periodLabel }}</span>
+        </div>
+
         <div class="flex items-center justify-between">
           <p class="text-muted text-sm">Sections are printed on separate pages.</p>
-          <div class="flex items-center gap-3 text-sm">
-            <button
-              type="button"
-              class="text-primary hover:underline"
-              data-test="select-all"
-              @click="setAll(true)"
-            >
-              Select all
-            </button>
-            <button
-              type="button"
-              class="text-primary hover:underline"
-              data-test="deselect-all"
-              @click="setAll(false)"
-            >
-              Deselect all
-            </button>
-          </div>
+          <button
+            type="button"
+            class="text-primary text-sm hover:underline"
+            data-test="toggle-all-sections"
+            @click="setAll(!allSelected)"
+          >
+            {{ allSelected ? 'Deselect all' : 'Select all' }}
+          </button>
         </div>
 
         <div class="flex flex-col gap-1">
@@ -95,7 +90,7 @@ import { ACCOUNT_ASSIGNMENTS_TITLE } from '@/utils/accounting/journalAccountAssi
 /** Which file the selected sections are exported as. */
 export type ExportFormat = 'pdf' | 'excel'
 
-defineProps<{ ledgerEntryCount: number }>()
+defineProps<{ ledgerEntryCount: number; periodLabel: string }>()
 const emit = defineEmits<{ generate: [payload: { format: ExportFormat; keys: SectionKey[] }] }>()
 
 /** The report sections, in the order they print. */
@@ -123,6 +118,8 @@ const checked = reactive<Record<SectionKey, boolean>>({
 const selectedKeys = computed(() =>
   SECTIONS.filter((section) => checked[section.key]).map((section) => section.key)
 )
+
+const allSelected = computed(() => selectedKeys.value.length === SECTIONS.length)
 
 function setAll(value: boolean): void {
   for (const section of SECTIONS) checked[section.key] = value

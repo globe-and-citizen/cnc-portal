@@ -31,6 +31,7 @@ describe('validation/middleware/validate', () => {
     };
 
     mockResponse = {
+      locals: {},
       status: vi.fn().mockReturnThis(),
       json: vi.fn().mockReturnThis(),
     };

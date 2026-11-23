@@ -91,6 +91,8 @@ export type UseCase =
   | 'FEE'
   /** Generic internal pocket-to-pocket move (funding deposits, owner sweeps). */
   | 'INTERNAL'
+  /** Interest a yield-bearing token minted to the Safe as the Safe sent it → Interest Income. */
+  | 'INTEREST-IN'
   /** Plain cash inflow not otherwise classified. */
   | 'CASH-IN'
   /** Plain cash outflow not otherwise classified. */
@@ -149,9 +151,7 @@ export interface JournalEntryDraft {
   swapPnl?: UsdAmount
   /** Reconciliation gaps that prevent complete books. */
   accountingIssue?:
-    | 'asset-metadata-unavailable'
-    | 'exchange-basis-unavailable'
-    | 'unclassified-asset-movement'
+    'asset-metadata-unavailable' | 'exchange-basis-unavailable' | 'unclassified-asset-movement'
   /** Raw on-chain amount in the token's base units (stringified bigint). */
   rawAmount: string
   /**

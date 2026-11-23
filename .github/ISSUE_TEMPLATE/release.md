@@ -6,6 +6,12 @@ labels: ""
 assignees: ""
 ---
 
+- [ ] I have reviewed the [contribution guide](https://github.com/globe-and-citizen/cnc-portal/blob/develop/CONTRIBUTION.md) to understand
+      the shared requirements for this work.
+
+**Recommended AI assistance:** If you use an AI agent, ask it to generate the **Relationship validation plan** section. If you do not use an
+agent, you may skip that section.
+
 ## Description
 
 Prepare `vX.Y.Z` using the
@@ -63,7 +69,7 @@ Maintain actual implementation dates and applicable fields under the
 - [ ] In-scope operational work has its required evidence; separate follow-up issues have explicit owners and remaining limits are recorded
       before closure. Publication alone does not establish deployment or product acceptance.
 
-## Relationship validation plan
+## Relationship validation plan — AI agent only
 
 Follow
 [Development Relationship Validation](https://github.com/globe-and-citizen/cnc-portal/blob/develop/docs/development-guide/relationship-validation.md).

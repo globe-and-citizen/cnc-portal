@@ -1,284 +1,72 @@
-import { mount } from '@vue/test-utils'
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { ref, computed, nextTick, type Ref } from 'vue'
+import { mount, flushPromises, type VueWrapper } from '@vue/test-utils'
+import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import ExpandableFileGallery from '../ExpandableFileGallery.vue'
 import type { FilePreviewItem } from '@/types/file-preview'
-import { useFilePreviewGallery } from '@/composables/useFilePreviewGallery'
+import { useFileUrl } from '@/composables/useFileUrl'
+import { mockGetFileUrlApi } from '@/tests/mocks'
 
-vi.mock('@/composables/useFilePreviewGallery', () => ({
-  useFilePreviewGallery: vi.fn()
-}))
-
-vi.mock('@/utils/files/presentation', () => ({
-  getFileIcon: vi.fn(() => 'mock-icon'),
-  truncateFileName: vi.fn((name: string, length: number) => name.slice(0, length)),
-  getFileExtension: vi.fn((name: string) => {
-    const parts = name.split('.')
-    const ext = parts.length > 1 ? parts[parts.length - 1] : ''
-    return ext ? ext.toLowerCase() : ''
-  })
-}))
-
-const IconStub = {
-  props: ['icon'],
-  template: '<span :data-icon="icon"></span>'
-}
-
-const createPreview = (overrides: Partial<FilePreviewItem> = {}): FilePreviewItem => ({
-  key: overrides.key ?? 'key',
-  fileName: overrides.fileName ?? 'file.txt',
-  previewUrl: overrides.previewUrl ?? 'https://example.com/file.txt',
-  fileSize: overrides.fileSize ?? 1024,
-  fileType: overrides.fileType ?? 'text/plain',
-  isImage: overrides.isImage ?? false
+const createPreview = (fileName: string, key = fileName): FilePreviewItem => ({
+  key,
+  fileName,
+  previewUrl: 'https://files.example/incoming',
+  fileSize: 1024,
+  isImage: fileName.endsWith('.png')
 })
 
 describe('ExpandableFileGallery', () => {
-  let resolvedPreviewsRef: Ref<FilePreviewItem[]>
-  const downloadMock = vi.fn()
-
-  const mountComponent = (previews: FilePreviewItem[] = []) => {
-    resolvedPreviewsRef.value = previews
-
-    vi.mocked(useFilePreviewGallery).mockReturnValue({
-      urlCache: ref(new Map()),
-      modalState: ref({
-        type: null,
-        url: '',
-        fileName: '',
-        fileType: '',
-        contentType: 'other',
-        textContent: ''
-      }),
-      resolvedPreviews: computed(() => resolvedPreviewsRef.value),
-      openModal: vi.fn(async () => undefined),
-      closeModal: vi.fn(),
-      downloadFile: downloadMock,
-      loadPresignedUrls: vi.fn(async () => undefined)
-    })
-
-    return mount(ExpandableFileGallery, {
+  let wrapper: VueWrapper
+  const mountComponent = (previews: FilePreviewItem[]) => {
+    wrapper = mount(ExpandableFileGallery, {
       props: { previews },
-      global: {
-        stubs: {
-          Icon: IconStub,
-          Teleport: true
-        }
-      }
+      global: { stubs: { Teleport: true } }
     })
+    return wrapper
   }
-
   beforeEach(() => {
-    vi.clearAllMocks()
-    resolvedPreviewsRef = ref([])
+    useFileUrl().clearCache()
+    mockGetFileUrlApi.mockImplementation(async (key) => ({
+      url: `https://files.example/${key}`,
+      expiresIn: 3600
+    }))
   })
+  afterEach(() => wrapper?.unmount())
 
-  it('renders nothing when there are no previews', () => {
-    const wrapper = mountComponent([])
-
-    expect(wrapper.find('[data-test="avatar-stack"]').exists()).toBe(false)
-    expect(wrapper.find('.grid').exists()).toBe(false)
-    expect(wrapper.find('.fixed').exists()).toBe(false)
+  it('renders nothing without previews', () => {
+    expect(mountComponent([]).find('[data-test="avatar-stack"]').exists()).toBe(false)
   })
-
-  it('renders previews without keys in both views', async () => {
-    const previews = [
-      createPreview({ key: '', fileName: 'no-key.png', isImage: true, previewUrl: 'https://img/1' })
-    ]
-
-    const wrapper = mountComponent(previews)
-
-    expect(wrapper.findAll('[data-test="avatar-item"]').length).toBe(1)
-
+  it('shows four avatars and the remaining count', async () => {
+    mountComponent(['a.png', 'b.pdf', 'c.zip', 'd.bin', 'e.txt'].map((name) => createPreview(name)))
+    await flushPromises()
+    expect(wrapper.findAll('[data-test="avatar-item"]')).toHaveLength(4)
+    expect(wrapper.find('[data-test="avatar-remaining"]').text()).toBe('+1')
+  })
+  it('opens a local image without a signing request and closes with Escape', async () => {
+    mountComponent([createPreview('a.png', '')])
     await wrapper.trigger('mouseenter')
-    expect(wrapper.findAll('.grid button').length).toBe(1)
-  })
-
-  it('shows collapsed previews and remaining count', () => {
-    const previews = [
-      createPreview({ fileName: 'image.png', isImage: true, previewUrl: 'https://img/1' }),
-      createPreview({ key: '2', fileName: 'doc.pdf', previewUrl: 'https://doc/1' }),
-      createPreview({ key: '3', fileName: 'archive.zip', previewUrl: '' }),
-      createPreview({ key: '4', fileName: 'binary.exe', previewUrl: '' }),
-      createPreview({ key: '5', fileName: 'extra.txt', previewUrl: 'https://doc/2' }),
-      createPreview({
-        key: '6',
-        fileName: 'extra2.png',
-        isImage: true,
-        previewUrl: 'https://img/2'
-      })
-    ]
-
-    const wrapper = mountComponent(previews)
-
-    expect(wrapper.findAll('[data-test="avatar-stack"] [data-test="avatar-item"]').length).toBe(4)
-    expect(wrapper.findAll('[data-test="avatar-remaining"]').length).toBe(1)
-    expect(wrapper.text()).toContain('+2')
-    expect(wrapper.find('.grid').isVisible()).toBe(false)
-  })
-
-  it('expands on hover and opens image preview modal', async () => {
-    const previews = [
-      createPreview({ fileName: 'image.png', isImage: true, previewUrl: 'https://img/1' }),
-      createPreview({ key: '2', fileName: 'doc.pdf', previewUrl: 'https://doc/1' })
-    ]
-
-    const wrapper = mountComponent(previews)
-
-    await wrapper.trigger('mouseenter')
-    expect(wrapper.find('.grid').isVisible()).toBe(true)
-
-    await wrapper.find('.grid button').trigger('click')
-
-    expect(wrapper.find('.fixed').exists()).toBe(true)
-    expect(wrapper.find('.fixed img').exists()).toBe(true)
-    expect(document.body.style.overflow).toBe('hidden')
-
-    await wrapper.find('.fixed').trigger('click')
-    expect(wrapper.find('.fixed').exists()).toBe(false)
+    await wrapper.find('[data-test="expanded-preview"]').trigger('click')
+    await flushPromises()
+    expect(wrapper.find('[data-test="expanded-preview-modal"] img').attributes('src')).toBe(
+      'https://files.example/incoming'
+    )
+    expect(mockGetFileUrlApi).not.toHaveBeenCalled()
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))
+    await flushPromises()
+    expect(wrapper.find('[data-test="expanded-preview-modal"]').exists()).toBe(false)
     expect(document.body.style.overflow).toBe('')
-
-    await wrapper.trigger('mouseleave')
-    expect(wrapper.find('.grid').isVisible()).toBe(false)
   })
-
-  it('renders viewable files in an iframe', async () => {
-    const previews = [
-      createPreview({ fileName: 'image.png', isImage: true, previewUrl: 'https://img/1' }),
-      createPreview({ key: '2', fileName: 'doc.pdf', previewUrl: 'https://doc/1' })
-    ]
-
-    const wrapper = mountComponent(previews)
-
-    await wrapper.trigger('mouseenter')
-    const buttons = wrapper.findAll('.grid button')
-    expect(buttons.length).toBeGreaterThan(1)
-    const secondButton = buttons[1]
-    expect(secondButton).toBeTruthy()
-    await secondButton!.trigger('click')
-
-    expect(wrapper.find('iframe').exists()).toBe(true)
-  })
-
-  it('renders compressed file message', async () => {
-    const previews = [
-      createPreview({ fileName: 'image.png', isImage: true, previewUrl: 'https://img/1' }),
-      createPreview({ key: '2', fileName: 'archive.zip', previewUrl: '' })
-    ]
-
-    const wrapper = mountComponent(previews)
-
-    await wrapper.trigger('mouseenter')
-    const buttons = wrapper.findAll('.grid button')
-    expect(buttons.length).toBeGreaterThan(1)
-    const secondButton = buttons[1]
-    expect(secondButton).toBeTruthy()
-    await secondButton!.trigger('click')
-
-    expect(wrapper.text()).toContain('Compressed file - Download required')
-  })
-
-  it('renders default message and handles downloads', async () => {
-    const previews = [
-      createPreview({ fileName: 'binary.exe', previewUrl: 'https://bin/1' }),
-      createPreview({ key: '2', fileName: 'no-url.txt', previewUrl: '' })
-    ]
-
-    const wrapper = mountComponent(previews)
-
-    await wrapper.trigger('mouseenter')
-    const buttons = wrapper.findAll('.grid button')
-    expect(buttons.length).toBeGreaterThan(1)
-    const firstButton = buttons[0]
-    const secondButton = buttons[1]
-    expect(firstButton).toBeTruthy()
-    expect(secondButton).toBeTruthy()
-    await firstButton!.trigger('click')
-
-    expect(wrapper.text()).toContain('Download required for this file type')
-
-    const modalButtons = wrapper.find('.fixed').findAll('button')
-    expect(modalButtons.length).toBeGreaterThan(1)
-    const downloadButton = modalButtons[1]
-    expect(downloadButton).toBeTruthy()
-    await downloadButton!.trigger('click')
-    expect(downloadMock).toHaveBeenCalledWith('https://bin/1')
-
-    await wrapper.find('.fixed').trigger('click')
-    await secondButton!.trigger('click')
-
-    const modalButtonsNoUrl = wrapper.find('.fixed').findAll('button')
-    expect(modalButtonsNoUrl.length).toBeGreaterThan(1)
-    const downloadButtonNoUrl = modalButtonsNoUrl[1]
-    expect(downloadButtonNoUrl).toBeTruthy()
-    await downloadButtonNoUrl!.trigger('click')
-    expect(downloadMock).toHaveBeenCalledTimes(1)
-  })
-
-  it('handles image preview with missing URL and closes via button and Escape', async () => {
-    const previews = [
-      createPreview({ fileName: 'broken.png', isImage: true, previewUrl: '' }),
-      createPreview({ key: '2', fileName: 'doc.pdf', previewUrl: 'https://doc/1' })
-    ]
-
-    const wrapper = mountComponent(previews)
-
-    await wrapper.trigger('mouseenter')
-    const buttons = wrapper.findAll('.grid button')
-    expect(buttons.length).toBeGreaterThan(0)
-    const firstButton = buttons[0]
-    expect(firstButton).toBeTruthy()
-    await firstButton!.trigger('click')
-
-    expect(wrapper.find('.fixed').exists()).toBe(true)
-    expect(wrapper.find('.fixed img').exists()).toBe(true)
-
-    const closeButton = wrapper.find('.fixed').find('button')
-    expect(closeButton.exists()).toBe(true)
-    await closeButton.trigger('click')
-    expect(wrapper.find('.fixed').exists()).toBe(false)
-
-    await firstButton!.trigger('click')
-    await wrapper.find('.fixed').trigger('keydown', { key: 'Escape' })
-    expect(wrapper.find('.fixed').exists()).toBe(false)
-  })
-
-  it('keeps modal controls when current preview is missing', async () => {
-    const previews = [
-      createPreview({ fileName: 'image.png', isImage: true, previewUrl: 'https://img/1' })
-    ]
-
-    const wrapper = mountComponent(previews)
-
-    await wrapper.trigger('mouseenter')
-    const buttons = wrapper.findAll('.grid button')
-    expect(buttons.length).toBeGreaterThan(0)
-    await buttons[0]!.trigger('click')
-
-    // Defensive branch: `current` is computed from `modal.value.index`. There is
-    // no UI path that opens the modal at an out-of-bounds index (clicking item i
-    // always yields current = previews[i]), and shrinking previews unmounts the
-    // entire gallery root (v-if="resolvedPreviews.length") which kills the
-    // teleported lightbox. The only way to assert this defensive branch is to
-    // poke the internal `modal` ref directly.
-    // eslint-disable-next-line no-restricted-syntax -- defense-in-depth branch unreachable via UI; root v-if hides lightbox when previews are empty
-    const modalState = wrapper.vm as unknown as {
-      modal: { value?: { isOpen: boolean; index: number }; isOpen?: boolean; index?: number }
-    }
-    if (modalState.modal.value) {
-      modalState.modal.value = { isOpen: true, index: 2 }
-    } else {
-      modalState.modal = { isOpen: true, index: 2 }
-    }
-    await nextTick()
-
-    expect(wrapper.find('.fixed').exists()).toBe(true)
-    expect(wrapper.find('.fixed img').exists()).toBe(false)
-    expect(wrapper.find('iframe').exists()).toBe(false)
-
-    const modalButtons = wrapper.find('.fixed').findAll('button')
-    expect(modalButtons.length).toBeGreaterThan(1)
-    await modalButtons[1]!.trigger('click')
-    expect(downloadMock).not.toHaveBeenCalled()
+  it.each([
+    ['report.pdf', 'iframe'],
+    ['archive.zip', 'Compressed file - Download required'],
+    ['binary.bin', 'Download required for this file type']
+  ])('renders the existing preview mode for %s', async (name, expected) => {
+    mountComponent([createPreview(name)])
+    await flushPromises()
+    await wrapper.find('[data-test="expanded-preview"]').trigger('click')
+    await flushPromises()
+    if (expected === 'iframe')
+      expect(wrapper.find('iframe').attributes('src')).toBe(`https://files.example/${name}`)
+    else expect(wrapper.text()).toContain(expected)
+    await wrapper.find('[data-test="expanded-preview-close"]').trigger('click')
+    expect(wrapper.find('[data-test="expanded-preview-modal"]').exists()).toBe(false)
   })
 })

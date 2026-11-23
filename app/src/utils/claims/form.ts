@@ -69,6 +69,7 @@ export const getClaimFilePreviews = (
       const fileKey = file.fileKey!
 
       return {
+        key: fileKey,
         previewUrl: file.fileUrl!,
         fileName: file.fileName || fileKey.split('/').pop() || 'file',
         fileSize: file.fileSize || 0,

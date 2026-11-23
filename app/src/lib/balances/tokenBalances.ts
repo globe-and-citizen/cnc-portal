@@ -1,3 +1,4 @@
+import { sumFiatValues, valueTokenAmount } from '@/utils/currency/valuation'
 import { erc20Abi, formatUnits, type Address } from 'viem'
 import { getBalance, readContract, type Config } from '@wagmi/core'
 import type { TokenConfig, TokenId } from '@/constant'
@@ -73,12 +74,12 @@ interface PairCodes {
   local: string
 }
 
-const money = (value: number, code: string): Money => ({
+const money = (value: number | null, code: string): Money => ({
   value,
   formatted: formatCurrencyShort(value, code)
 })
 
-const pair = (usd: number, local: number, codes: PairCodes): CurrencyPair => ({
+const pair = (usd: number | null, local: number | null, codes: PairCodes): CurrencyPair => ({
   usd: money(usd, codes.usd),
   local: money(local, codes.local)
 })
@@ -86,7 +87,7 @@ const pair = (usd: number, local: number, codes: PairCodes): CurrencyPair => ({
 /**
  * The store prices every token in the same two currencies, so the local code is
  * the same whichever token we ask about. Falls back to USD when prices have not
- * loaded yet — the amounts are 0 then anyway.
+ * loaded yet — unavailable quotes still remain null.
  */
 function resolveCodes(tokens: readonly TokenConfig[], getTokenInfo: GetTokenInfo): PairCodes {
   for (const token of tokens) {
@@ -114,15 +115,15 @@ export function toTokenBalances(
     const amount = Number(formatUnits(rawAmount, token.decimals))
 
     const rows = getTokenInfo(token.id)?.prices ?? []
-    const usdPrice = rows.find((row) => row.id === 'usd')?.price ?? 0
-    const localPrice = rows.find((row) => row.id === 'local')?.price ?? 0
+    const usdPrice = rows.find((row) => row.id === 'usd')?.price ?? null
+    const localPrice = rows.find((row) => row.id === 'local')?.price ?? null
 
     return {
       token,
       raw: rawAmount,
       amount,
       price: pair(usdPrice, localPrice, codes),
-      value: pair(amount * usdPrice, amount * localPrice, codes)
+      value: pair(valueTokenAmount(amount, usdPrice), valueTokenAmount(amount, localPrice), codes)
     }
   })
 }
@@ -132,8 +133,8 @@ export function sumTokenBalances(
   balances: readonly TokenBalance[],
   codes: PairCodes
 ): CurrencyPair {
-  const usd = balances.reduce((acc, balance) => acc + balance.value.usd.value, 0)
-  const local = balances.reduce((acc, balance) => acc + balance.value.local.value, 0)
+  const usd = sumFiatValues(balances.map((balance) => balance.value.usd.value))
+  const local = sumFiatValues(balances.map((balance) => balance.value.local.value))
   return pair(usd, local, codes)
 }
 

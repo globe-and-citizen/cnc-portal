@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import { generateNonce, SiweMessage } from 'siwe';
 import { prisma } from '../utils';
-import { errorResponse, extractAddressAndNonce } from '../utils/utils';
+import { errorResponse } from '../utils/utils';
 import { DEFAULT_USER_ROLES } from '../types/roles';
 import { resolveDefaultProfileImageUrl } from '../utils/profileImage.util';
 
@@ -11,7 +11,13 @@ export const authenticateSiwe = async (req: Request, res: Response) => {
     // Get validated authentication data from request body (validated by middleware)
     const { message, signature } = req.body;
 
-    const { address, nonce } = extractAddressAndNonce(message);
+    let siweMessage: SiweMessage;
+    try {
+      siweMessage = new SiweMessage(message);
+    } catch {
+      return errorResponse(400, 'Invalid SIWE message', res);
+    }
+    const { address, nonce } = siweMessage;
 
     //Get nonce from user data from database
     const user = await prisma.user.findUnique({
@@ -20,11 +26,8 @@ export const authenticateSiwe = async (req: Request, res: Response) => {
 
     const actualNonce = user ? user.nonce : nonce;
 
-    //Very the data
-    const SIWEObject = new SiweMessage(message);
-
     try {
-      await SIWEObject.verify({ signature, nonce: actualNonce });
+      await siweMessage.verify({ signature, nonce: actualNonce });
     } catch (error) {
       const err = error as { error: { type: string } };
       return errorResponse(401, err.error.type, res);
@@ -66,5 +69,6 @@ export const authenticateToken = (req: Request, res: Response) => {
     return errorResponse(401, 'Unauthorized: Missing jwt payload', res);
   }
 
+  res.setHeader('Cache-Control', 'no-store');
   return res.status(200).json({});
 };

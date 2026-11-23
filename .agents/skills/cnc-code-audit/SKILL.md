@@ -25,8 +25,9 @@ states. It is the single owner of that output contract.
 - Inventory the scoped authored sources, tests and configuration; exclude generated material without hiding handwritten adapters.
 - Use existing checks and searches to choose representative paths and hotspots. Confirm responsibility, callers, expected behaviour and
   evidence before retaining a signal. Do not create a finding solely from size, occurrence count or an automated warning.
-- For frontend work, follow the Vue, queries, utilities, formatting and testing owners linked from `AGENTS.md`. For another area, read its
-  specialised guide and skill; do not import frontend conventions into unrelated code.
+- For frontend work, follow the Vue, queries, utilities, formatting and testing owners linked from the
+  [shared implementation standards](../../../CONTRIBUTION.md#implementation-standards). For another area, read its specialised guide and
+  skill; do not import frontend conventions into unrelated code.
 - Distinguish domain complexity and real technical boundaries from accidental abstraction. Prefer an existing owner, direct data flow and
   small public contracts over new controllers or transformation frameworks.
 - When parallel audit work is requested or explicitly authorized by applicable instructions, use `cnc-work-orchestrator`: bounded read-only

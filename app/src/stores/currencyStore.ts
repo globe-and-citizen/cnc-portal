@@ -2,11 +2,9 @@ import { useStorage } from '@vueuse/core'
 import { defineStore } from 'pinia'
 import { LIST_CURRENCIES, SUPPORTED_TOKENS } from '@/constant'
 import type { TokenId } from '@/constant'
-import type { Ref } from 'vue'
 import { useTeamStore } from '@/stores/teamStore'
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 import { useGetTokenPriceQuery } from '@/queries/coingecko.queries'
-import type { TokenPriceResponse as PriceResponse } from '@/types/coingecko'
 export type { TokenPriceResponse as PriceResponse } from '@/types/coingecko'
 
 export const useCurrencyStore = defineStore('currency', () => {
@@ -34,32 +32,10 @@ export const useCurrencyStore = defineStore('currency', () => {
     return tokens
   })
 
-  /**
-   * @dev For a dynamic supported token, Map is better than Array
-   */
-  // Combine price and loading into a single array
-  const tokenStates: Array<{
-    id: string
-    data: Ref<PriceResponse | undefined>
-    loading: Ref<boolean>
-  }> = []
-
-  /**
-   * @dev If in the future, supported tokens are dynamic,
-   * we can use a Map to store token prices and loading states
-   */
-  supportedToken.value.forEach((token) => {
-    if (token.coingeckoId === 'sher-token') {
-      tokenStates.push({
-        id: token.id,
-        data: ref({ market_data: { current_price: { usd: 0, cad: 0, eur: 0, idr: 0, inr: 0 } } }),
-        loading: ref(false)
-      })
-    } else {
-      const { data, isFetching } = useGetTokenPriceQuery(token.coingeckoId)
-      tokenStates.push({ id: token.id, data, loading: isFetching })
-    }
-  })
+  // Keep the query observers intact: the cache owns quotes, error and retry state.
+  const tokenStates = SUPPORTED_TOKENS.filter((token) => token.coingeckoId !== 'sher-token').map(
+    (token) => ({ id: token.id, ...useGetTokenPriceQuery(token.coingeckoId) })
+  )
 
   async function setCurrency(value: string) {
     const found = LIST_CURRENCIES.find((c) => c.code === value)
@@ -75,26 +51,22 @@ export const useCurrencyStore = defineStore('currency', () => {
    * @param currencyCode - If local is false, use this currency code
    * @returns
    */
-  function getTokenPrice(tokenId: TokenId, local: boolean = true, currencyCode?: string): number {
-    const token = tokenStates.find((t) => t.id === tokenId)
-    const priceData = token?.data.value
-    if (!priceData) return 0
-    // Use local currency by default, otherwise use provided currencyCode
+  function getTokenPrice(
+    tokenId: TokenId,
+    local: boolean = true,
+    currencyCode?: string
+  ): number | null {
+    // SHER has an explicit local zero-price policy, not a failed market lookup.
+    if (tokenId === 'sher')
+      return supportedToken.value.some((token) => token.id === 'sher') ? 0 : null
+    const priceData = tokenStates.find((token) => token.id === tokenId)?.data.value
     const code = local ? currency.value.code.toLowerCase() : (currencyCode ?? 'usd').toLowerCase()
-    if (!(code in priceData.market_data.current_price)) return 0
-    return priceData.market_data.current_price[code] ?? 0
+    const price = priceData?.market_data?.current_price?.[code]
+    return typeof price === 'number' && Number.isFinite(price) && price >= 0 ? price : null
   }
 
-  // function getTokenPriceUSD(tokenId: TokenId): number | null {
-  //   const token = tokenStates.find((t) => t.id === tokenId)
-  //   const priceData = token?.data.value
-  //   if (!priceData) return null
-  //   return priceData.market_data.current_price.usd ?? null
-  // }
-
   function isTokenLoading(tokenId: TokenId): boolean {
-    const token = tokenStates.find((t) => t.id === tokenId)
-    return token?.loading.value ?? false
+    return tokenStates.find((token) => token.id === tokenId)?.isFetching.value ?? false
   }
 
   /**
@@ -104,20 +76,19 @@ export const useCurrencyStore = defineStore('currency', () => {
   function getTokenInfo(tokenId: TokenId) {
     const token = supportedToken.value.find((t) => t.id === tokenId)
     if (!token) return null
-    const priceData = tokenStates.find((t) => t.id === tokenId)?.data.value
     const prices: Array<{ id: string; price: number | null; code: string; symbol: string }> = []
     // Current currency
     const currentCode = currency.value.code
     prices.push({
       id: 'local',
-      price: priceData?.market_data.current_price[currentCode.toLocaleLowerCase()] ?? null,
+      price: getTokenPrice(tokenId, true),
       code: currentCode,
       symbol: currency.value.symbol
     })
     // USD
     prices.push({
       id: 'usd',
-      price: priceData?.market_data.current_price.usd ?? null,
+      price: getTokenPrice(tokenId, false, 'USD'),
       code: 'USD',
       symbol: '$'
     })

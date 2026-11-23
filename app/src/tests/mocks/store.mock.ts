@@ -113,7 +113,9 @@ export const makeUserStore = (overrides: Partial<UserStoreData> = {}) => ({
   ...overrides,
   setUserData: vi.fn(),
   clearUserData: vi.fn(),
-  setAuthStatus: vi.fn()
+  token: '' as string | null,
+  setSessionToken: vi.fn(),
+  confirmSession: vi.fn()
 })
 
 /**
@@ -128,7 +130,9 @@ export const resetUserStoreMock = () => {
   Object.assign(mockUserStore, userStoreDataDefaults())
   mockUserStore.setUserData.mockClear()
   mockUserStore.clearUserData.mockClear()
-  mockUserStore.setAuthStatus.mockClear()
+  mockUserStore.token = null
+  mockUserStore.setSessionToken.mockClear()
+  mockUserStore.confirmSession.mockClear()
 }
 
 export const mockUseCurrencyStore = () => ({
@@ -168,14 +172,18 @@ export const mockUseCurrencyStore = () => ({
           current_price: { usd: 2000, cad: 2500, eur: 1800, idr: 30000000, inr: 150000 }
         }
       }),
-      loading: ref(false)
+      isFetching: false,
+      error: null,
+      refetch: vi.fn().mockResolvedValue(undefined)
     },
     {
       id: 'usdc',
       data: ref({
         market_data: { current_price: { usd: 1, cad: 1.3, eur: 0.9, idr: 15000, inr: 80 } }
       }),
-      loading: ref(false)
+      isFetching: false,
+      error: null,
+      refetch: vi.fn().mockResolvedValue(undefined)
     }
   ],
   getTokenInfo: vi.fn((tokenId) => ({
@@ -219,6 +227,7 @@ export const makeCurrencyStoreMock = (
     getTokenPrice: ReturnType<typeof vi.fn>
   }> = {}
 ) => ({
+  tokenStates: [],
   localCurrency: { code: 'USD', name: 'US Dollar', symbol: '$' },
   supportedTokens: [
     { id: 'native', symbol: 'ETH', address: '0x0000000000000000000000000000000000000000' },

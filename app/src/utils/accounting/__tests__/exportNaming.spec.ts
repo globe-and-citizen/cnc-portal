@@ -71,6 +71,12 @@ describe('exportFilename', () => {
     expect(filenameBase({ key: 'summary' })).toBe('Accounting Report')
   })
 
+  it('appends the selected period to the summary export name', () => {
+    expect(
+      filenameBase({ key: 'summary', from: new Date(2026, 0, 1), to: new Date(2026, 0, 31) })
+    ).toBe('Accounting Report - Jan 1, 2026 – Jan 31, 2026')
+  })
+
   it('names the account assignments export after its section', () => {
     expect(filenameBase({ key: 'assignments' })).toBe('Account Assignments')
   })

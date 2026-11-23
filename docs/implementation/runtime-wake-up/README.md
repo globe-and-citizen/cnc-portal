@@ -62,7 +62,7 @@ and exits non-zero after the retry budget is exhausted.
 - [Health route tests](../../../backend/src/controllers/__tests__/healthController.test.ts)
 - [Database wake script](../../../backend/scripts/wake-db.ts)
 
-**Implementation evidence reviewed against:** `fb6b3a285967691a6bcdc522bfc0e66527f33a47`
+**Implementation evidence reviewed against:** `48c3250a1bb32813ef410f1d21d559329560603b`
 
 ## Related Documentation
 

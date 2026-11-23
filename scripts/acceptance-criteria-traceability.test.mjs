@@ -60,6 +60,62 @@ test('parses acceptance criteria only inside a user story acceptance section', (
   ])
 })
 
+test('parses criteria and proof rows nested beneath the default user story', () => {
+  const document = feature(`# Example
+
+## US-EXAMPLE-001: Do Something
+
+### US-EXAMPLE-001: Do Something
+
+#### Acceptance Criteria
+
+##### Happy Path
+
+- [x] \`AC-US-EXAMPLE-001-01\` The result is persisted.
+
+#### Test Coverage
+
+| Acceptance Criterion | Proof Strategy | Current Evidence | Status |
+| -------------------- | -------------- | ---------------- | ------ |
+| \`AC-US-EXAMPLE-001-01\` | \`PS-API\` | Backend | ✅ Met |
+
+#### Related Scenarios
+
+- [ ] \`AC-US-EXAMPLE-001-02\` This is not an acceptance criterion.
+`)
+  assert.deepEqual(parseAcceptanceCriteria(document).map(({ id }) => id), ['AC-US-EXAMPLE-001-01'])
+  assert.deepEqual(parseAcceptanceCoverageRows(document).map(({ id }) => id), [
+    'AC-US-EXAMPLE-001-01'
+  ])
+})
+
+test('parses multiple stories beneath a distinct feature heading', () => {
+  const document = feature(`# Example
+
+## FEAT-EXAMPLE-001: Manage a task
+
+### US-EXAMPLE-001-01: Create a task
+
+#### Acceptance Criteria
+
+##### Happy Path
+
+- [x] \`AC-US-EXAMPLE-001-01-01\` The task is created.
+
+### US-EXAMPLE-001-02: Update a task
+
+#### Acceptance Criteria
+
+##### Happy Path
+
+- [ ] \`AC-US-EXAMPLE-001-02-01\` The task is updated.
+`)
+  assert.deepEqual(parseAcceptanceCriteria(document).map(({ id }) => id), [
+    'AC-US-EXAMPLE-001-01-01',
+    'AC-US-EXAMPLE-001-02-01'
+  ])
+})
+
 test('requires the validated coverage structure for every assessable story', () => {
   const complete = feature(`# Example — User Stories
 
@@ -112,6 +168,17 @@ This is owned elsewhere.
 `)
 
   assert.deepEqual(validateFeatureCoverageStructure([complete]), [])
+  assert.deepEqual(
+    validateFeatureCoverageStructure([
+      feature(
+        complete.content.replace(
+          '| US-EXAMPLE-001 | Do something | User | 🧪 Validation |',
+          '| [US-EXAMPLE-001](#us-example-001-do-something) | Do something | User | 🧪 Validation | Not assessed |'
+        )
+      )
+    ]),
+    []
+  )
   assert.deepEqual(
     validateFeatureCoverageStructure([
       feature(complete.content.replace('## Test Coverage Overview', '## Old Coverage'))

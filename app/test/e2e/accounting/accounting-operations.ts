@@ -19,6 +19,7 @@ import {
   openMemberPayrollHistory,
   openWeeklyClaimActions,
   selectHistoryWeek,
+  saveWeeklyGoals,
   setMemberUsdcWage,
   submitDailyClaim
 } from '../payroll/payroll-page'
@@ -178,7 +179,7 @@ export async function withdrawToExternalAddress(
  */
 export async function redeployContractsThroughUi(page: Page, teamId: string): Promise<void> {
   await page.goto(`/teams/${teamId}/contract-management`)
-  await page.locator('[data-test="createAddCampaign"]').click()
+  await page.locator('[data-test="redeploy-officer"]').click()
   const modal = page.getByRole('dialog', { name: 'Redeploy Officer Contract' })
   await modal.locator('[data-test="redeploy-share-name-input"]').fill('E2E Shares 2')
   await modal.locator('[data-test="redeploy-share-symbol-input"]').fill('E2E2')
@@ -269,6 +270,7 @@ export async function payOneWeeklyClaim(
   const paidWeek = completedWeekStart()
   await openMemberPayrollHistory(memberPage, teamId, E2E_MEMBER)
   await selectHistoryWeek(memberPage, paidWeek)
+  await saveWeeklyGoals(memberPage, 'Close the accounting journey week.')
   await submitDailyClaim(memberPage, { hours: '2', memo: 'Accounting journey work' })
 
   await page.goto(`/teams/${teamId}/accounts/team-payroll`)

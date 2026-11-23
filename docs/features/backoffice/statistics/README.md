@@ -36,12 +36,12 @@ flowchart LR
 
 ## Status Overview
 
-| User Story   | Title                                   | Actor         | Status         |
-| ------------ | --------------------------------------- | ------------- | -------------- |
-| US-STATS-001 | Access administrator statistics         | Administrator | 🧪 Validation  |
-| US-STATS-002 | Review the platform overview and trends | Administrator | 🚧 In Progress |
-| US-STATS-003 | Explore category statistics             | Administrator | 🚧 In Progress |
-| US-STATS-004 | Review recent platform activity         | Administrator | 🚧 In Progress |
+| User Story                                                            | Feature                                 | Actor         | Status         | Intended Scope |
+| --------------------------------------------------------------------- | --------------------------------------- | ------------- | -------------- | -------------- |
+| [US-STATS-001](#us-stats-001-access-administrator-statistics)         | Access administrator statistics         | Administrator | 🧪 Validation  | Not assessed   |
+| [US-STATS-002](#us-stats-002-review-the-platform-overview-and-trends) | Review the platform overview and trends | Administrator | 🚧 In Progress | Not assessed   |
+| [US-STATS-003](#us-stats-003-explore-category-statistics)             | Explore category statistics             | Administrator | 🚧 In Progress | Not assessed   |
+| [US-STATS-004](#us-stats-004-review-recent-platform-activity)         | Review recent platform activity         | Administrator | 🚧 In Progress | Not assessed   |
 
 ## Test Coverage Overview
 
@@ -58,34 +58,40 @@ reference has the expected layer label.
 
 Proof obligations use the [shared proof-strategy registry](../../../testing/proof-strategies.md). Multiple IDs for one AC are cumulative.
 
-## US-STATS-001: Access Administrator Statistics
+## FEAT-STATS-001: Access Administrator Statistics
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
+
+### US-STATS-001: Access Administrator Statistics
 
 **As an** administrator\
 **I want to** access protected platform statistics\
 **So that** sensitive operational metrics are available only to authorized roles
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-STATS-001-01` An authenticated administrator can access the dashboard overview and its statistics.
 - [x] `AC-US-STATS-001-02` An authenticated super administrator can access the same statistics.
 - [x] `AC-US-STATS-001-03` Authorized statistics requests return the requested aggregate data.
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-STATS-001-04` Every statistics API endpoint requires an authenticated user. _(API)_
 - [x] `AC-US-STATS-001-05` Every statistics API endpoint requires `ROLE_ADMIN` or `ROLE_SUPER_ADMIN`. _(API)_
 - [x] `AC-US-STATS-001-06` Client-side route protection and API authorization independently enforce administrator access.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [x] `AC-US-STATS-001-07` A user without an authenticated session is redirected to sign in.
 - [x] `AC-US-STATS-001-08` An authenticated non-administrator is denied access to the dashboard.
 - [x] `AC-US-STATS-001-09` An authenticated non-administrator receives a forbidden response from the statistics API.
 - [x] `AC-US-STATS-001-10` An expired statistics session is cleared before further protected data is requested.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion | Proof Strategy | Current Evidence | Status          |
 | -------------------- | -------------- | ---------------- | --------------- |
@@ -106,15 +112,21 @@ Proof obligations use the [shared proof-strategy registry](../../../testing/proo
 
 **Dependencies:** Dashboard authentication and administrator roles
 
-## US-STATS-002: Review the Platform Overview and Trends
+## FEAT-STATS-002: Review the Platform Overview and Trends
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
+
+### US-STATS-002: Review the Platform Overview and Trends
 
 **As an** administrator\
 **I want to** review platform totals and trends for a reporting period\
 **So that** I can monitor adoption and operational activity
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-STATS-002-01` The overview reports company, member, claim, contract, expense, action, notification, and worked-time metrics.
 - [x] `AC-US-STATS-002-02` The overview reports growth for companies, members, and claims over a selected finite period.
@@ -122,7 +134,7 @@ Proof obligations use the [shared proof-strategy registry](../../../testing/proo
 - [x] `AC-US-STATS-002-04` An administrator can use 7-day, 30-day, 90-day, and all-time reporting periods.
 - [x] `AC-US-STATS-002-05` Refreshing the overview requests fresh values for every statistics section.
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-STATS-002-06` Finite-period totals include records whose creation date falls within the selected period.
 - [x] `AC-US-STATS-002-07` Finite-period growth compares the selected period with the immediately preceding period of equal length.
@@ -133,13 +145,13 @@ Proof obligations use the [shared proof-strategy registry](../../../testing/proo
       created.
 - [ ] `AC-US-STATS-002-11` The all-time overview does not present a finite-period growth comparison as an all-time trend.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [x] `AC-US-STATS-002-12` A reporting period without matching records returns zero totals and empty distributions.
 - [x] `AC-US-STATS-002-13` An invalid reporting period is rejected without running an aggregate query. _(API)_
 - [x] `AC-US-STATS-002-14` A failed statistics request is reported without fabricating overview values.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion | Proof Strategy                | Current Evidence | Status          |
 | -------------------- | ----------------------------- | ---------------- | --------------- |
@@ -167,15 +179,21 @@ Proof obligations use the [shared proof-strategy registry](../../../testing/proo
 
 **Dependencies:** US-STATS-001 and available database and chain providers
 
-## US-STATS-003: Explore Category Statistics
+## FEAT-STATS-003: Explore Category Statistics
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
+
+### US-STATS-003: Explore Category Statistics
 
 **As an** administrator\
 **I want to** explore statistics by platform category\
 **So that** I can identify the companies and behaviours behind the overview totals
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-STATS-003-01` An administrator can inspect headline metrics for companies, users, claims, wages, expenses, contracts, and Board
       actions.
@@ -185,7 +203,7 @@ Proof obligations use the [shared proof-strategy registry](../../../testing/proo
 - [ ] `AC-US-STATS-003-04` An administrator can scope supported category statistics to one company.
 - [ ] `AC-US-STATS-003-05` An administrator can access every page of a paginated category result.
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-STATS-003-06` Claims report worked time from claim minutes for the selected period.
 - [x] `AC-US-STATS-003-07` Wage statistics aggregate the supported rate types recorded in current wage data.
@@ -193,14 +211,14 @@ Proof obligations use the [shared proof-strategy registry](../../../testing/proo
 - [x] `AC-US-STATS-003-09` Board-action execution rates use executed actions divided by total actions for the selected scope.
 - [ ] `AC-US-STATS-003-10` Top-company ranking is calculated across the complete selected population before pagination.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [x] `AC-US-STATS-003-11` Invalid page and limit values are rejected before category aggregation. _(API)_
 - [x] `AC-US-STATS-003-12` An empty category returns zero totals and empty breakdowns.
 - [ ] `AC-US-STATS-003-13` Every displayed category metric maps to a field returned by its current API response.
 - [x] `AC-US-STATS-003-14` A failed category request is reported without replacing the failed result with fabricated data.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion | Proof Strategy | Current Evidence | Status     |
 | -------------------- | -------------- | ---------------- | ---------- |
@@ -228,33 +246,39 @@ Proof obligations use the [shared proof-strategy registry](../../../testing/proo
 
 **Dependencies:** US-STATS-001 and US-STATS-002
 
-## US-STATS-004: Review Recent Platform Activity
+## FEAT-STATS-004: Review Recent Platform Activity
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
+
+### US-STATS-004: Review Recent Platform Activity
 
 **As an** administrator\
 **I want to** review recent activity across the platform\
 **So that** I can understand what companies have done most recently
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-STATS-004-01` Recent activity combines weekly claims, expenses, Board actions, and contract deployments.
 - [x] `AC-US-STATS-004-02` Each activity identifies its type, description, company, status, and creation time.
 - [x] `AC-US-STATS-004-03` Activities from different sources are ordered from newest to oldest before the result limit is applied.
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-STATS-004-04` The requested activity limit applies to the combined ordered feed.
 - [x] `AC-US-STATS-004-05` An activity limit must be between 1 and 100. _(API)_
 - [ ] `AC-US-STATS-004-06` The selected dashboard reporting period constrains recent activity consistently with the other sections.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [x] `AC-US-STATS-004-07` A platform without matching activity returns an empty activity feed.
 - [x] `AC-US-STATS-004-08` An invalid activity limit is rejected without querying activity sources. _(API)_
 - [x] `AC-US-STATS-004-09` A failed activity request is reported without creating synthetic activity.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion | Proof Strategy | Current Evidence | Status          |
 | -------------------- | -------------- | ---------------- | --------------- |
@@ -293,7 +317,7 @@ Proof obligations use the [shared proof-strategy registry](../../../testing/proo
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `8bb7376a908abee0cdd59621ba7ee5cfcc153de6`
+**Implementation evidence reviewed against:** `df52c33089f7528e2a61b1aa654ef3ad0c5e25db`
 
 Dashboard token prices use the backend's [shared Redis market cache](../../../implementation/market-data-cache/README.md) through the
 [price adapter](../../../../dashboard/app/api/coingecko.ts). Statistics authorization still applies to administrator statistics routes;

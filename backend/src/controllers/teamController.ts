@@ -1,4 +1,6 @@
-import { Prisma, TeamContract, TeamOfficer, User, Wage } from '@prisma/client';
+import type { getAllTeamsQuerySchema } from '../validation/schemas/team';
+import type { z } from 'zod';
+import { Prisma, TeamContract, TeamOfficer, User, Wage } from '../generated/prisma/client';
 import { Request, Response } from 'express';
 import { isAddress } from 'viem';
 import { addNotification, prisma } from '../utils';
@@ -8,6 +10,8 @@ import { generateUniqueSlug } from '../utils/slug.util';
 import { isActiveOfficerVersion } from '../utils/officerVersion';
 import { isAdmin } from '../utils/roleUtils';
 import { UserRoles } from '../types/roles';
+
+type GetAllTeamsQuery = z.infer<typeof getAllTeamsQuerySchema>;
 
 // A slug is taken when some team already holds it.
 const isTeamSlugTaken = async (slug: string) =>
@@ -198,6 +202,7 @@ const addTeam = async (req: Request, res: Response) => {
     res.status(201).json({
       ...team,
       isHidden: false,
+      isFavorite: false,
       isArchived: team.isArchived ?? false,
     });
   } catch (error: unknown) {
@@ -265,12 +270,13 @@ const getTeam = async (req: Request, res: Response) => {
           teamId: Number(id),
         },
       },
-      select: { isHidden: true },
+      select: { isHidden: true, isFavorite: true },
     });
 
     res.status(200).json({
       ...withCurrentOfficerAndContracts(team),
       isHidden: callerMemberData?.isHidden ?? false,
+      isFavorite: callerMemberData?.isFavorite ?? false,
       members: membersWithResolvedImages,
     });
   } catch (error: unknown) {
@@ -281,13 +287,14 @@ const getTeam = async (req: Request, res: Response) => {
 
 // Get teams - either all teams or user-specific teams
 const getAllTeams = async (req: Request, res: Response) => {
+  const query = res.locals.validatedQuery as GetAllTeamsQuery;
   /*
   #swagger.tags = ['Teams']
   */
   const callerAddress = String(req.address);
-  const userAddress = req.query.userAddress as string | undefined;
-  const showHidden = isTruthyQueryFlag(req.query.showHidden);
-  const showArchived = isTruthyQueryFlag(req.query.showArchived);
+  const userAddress = query.userAddress;
+  const showHidden = isTruthyQueryFlag(query.showHidden);
+  const showArchived = isTruthyQueryFlag(query.showArchived);
   try {
     const callerRoles = (req.user?.roles ?? []) as UserRoles;
 
@@ -378,15 +385,15 @@ const getAllTeams = async (req: Request, res: Response) => {
         },
       });
 
-      const visibilityRows = await prisma.memberTeamsData.findMany({
+      const preferenceRows = await prisma.memberTeamsData.findMany({
         where: {
           memberAddress: callerAddress,
           teamId: { in: memberTeams.map((team) => team.id) },
         },
-        select: { teamId: true, isHidden: true },
+        select: { teamId: true, isHidden: true, isFavorite: true },
       });
 
-      const hiddenByTeamId = new Map(visibilityRows.map((row) => [row.teamId, row.isHidden]));
+      const preferenceByTeamId = new Map(preferenceRows.map((row) => [row.teamId, row]));
 
       const callerWageByTeamId = await findCallerWagesByTeamId(
         callerAddress,
@@ -394,12 +401,15 @@ const getAllTeams = async (req: Request, res: Response) => {
       );
 
       return res.status(200).json(
-        memberTeams.map((team) => ({
-          ...withCurrentOfficerAndContracts(team),
-          isHidden: hiddenByTeamId.get(team.id) ?? false,
-          isArchived: team.isArchived ?? false,
-          callerWage: callerWageByTeamId.get(team.id) ?? null,
-        }))
+        memberTeams
+          .map((team) => ({
+            ...withCurrentOfficerAndContracts(team),
+            isHidden: preferenceByTeamId.get(team.id)?.isHidden ?? false,
+            isFavorite: preferenceByTeamId.get(team.id)?.isFavorite ?? false,
+            isArchived: team.isArchived ?? false,
+            callerWage: callerWageByTeamId.get(team.id) ?? null,
+          }))
+          .sort((a, b) => Number(b.isFavorite) - Number(a.isFavorite))
       );
     }
 
@@ -439,6 +449,7 @@ const getAllTeams = async (req: Request, res: Response) => {
       allTeams.map((team) => ({
         ...withCurrentOfficerAndContracts(team),
         isHidden: false,
+        isFavorite: false,
         isArchived: team.isArchived ?? false,
         callerWage: callerWageByTeamId.get(team.id) ?? null,
       }))
@@ -453,9 +464,12 @@ const getAllTeams = async (req: Request, res: Response) => {
 
 const updateTeam = async (req: Request, res: Response) => {
   const { id } = req.params;
-  const { name, description, isArchived, isHidden } = req.body;
+  const { name, description, isArchived, isHidden, isFavorite, requireWeeklyGoals } = req.body;
   const callerAddress = String(req.address);
   const teamId = Number(id);
+  const changesMemberPreference = isHidden !== undefined || isFavorite !== undefined;
+  const changesOwnerSettings =
+    name !== undefined || description !== undefined || requireWeeklyGoals !== undefined;
 
   try {
     const existingTeam = await prisma.team.findUnique({
@@ -480,21 +494,15 @@ const updateTeam = async (req: Request, res: Response) => {
 
     if (existingTeam.isArchived) {
       const allowedUnarchive =
-        isArchived === false &&
-        name === undefined &&
-        description === undefined &&
-        isHidden === undefined;
-      const allowedVisibility =
-        isHidden !== undefined &&
-        name === undefined &&
-        description === undefined &&
-        isArchived === undefined;
-      if (!allowedUnarchive && !allowedVisibility) {
+        isArchived === false && !changesOwnerSettings && !changesMemberPreference;
+      const allowedMemberPreference =
+        changesMemberPreference && !changesOwnerSettings && isArchived === undefined;
+      if (!allowedUnarchive && !allowedMemberPreference) {
         return errorResponse(409, 'Team is archived — unarchive to modify', res);
       }
     }
 
-    if ((name !== undefined || description !== undefined) && !isOwner) {
+    if (changesOwnerSettings && !isOwner) {
       return errorResponse(403, 'Unauthorized: Only team owner can update metadata', res);
     }
 
@@ -506,12 +514,7 @@ const updateTeam = async (req: Request, res: Response) => {
       );
     }
 
-    if (
-      name === undefined &&
-      description === undefined &&
-      isArchived === undefined &&
-      isHidden === undefined
-    ) {
+    if (!changesOwnerSettings && isArchived === undefined && !changesMemberPreference) {
       return errorResponse(400, 'No fields to update', res);
     }
 
@@ -521,7 +524,8 @@ const updateTeam = async (req: Request, res: Response) => {
         ...(name !== undefined ? { name } : {}),
         ...(description !== undefined ? { description } : {}),
         ...(isArchived !== undefined ? { isArchived: Boolean(isArchived) } : {}),
-        ...(isHidden !== undefined
+        ...(requireWeeklyGoals !== undefined ? { requireWeeklyGoals } : {}),
+        ...(changesMemberPreference
           ? {
               memberTeamsData: {
                 updateMany: {
@@ -529,9 +533,7 @@ const updateTeam = async (req: Request, res: Response) => {
                     teamId,
                     memberAddress: callerAddress,
                   },
-                  data: {
-                    isHidden: Boolean(isHidden),
-                  },
+                  data: { isHidden, isFavorite },
                 },
               },
             }
@@ -555,12 +557,13 @@ const updateTeam = async (req: Request, res: Response) => {
           teamId,
         },
       },
-      select: { isHidden: true },
+      select: { isHidden: true, isFavorite: true },
     });
 
     res.status(200).json({
       ...withCurrentOfficerAndContracts(teamU),
       isHidden: callerMemberData?.isHidden ?? false,
+      isFavorite: callerMemberData?.isFavorite ?? false,
     });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal Server Error';

@@ -271,19 +271,19 @@ trips the lint rule, and rightly so: the test should consume the API the way a r
 
 ```ts
 const ParentHarness = defineComponent({
-  components: { CreateAddCampaign },
+  components: { DeployCampaignManagerForm },
   setup() {
-    const child = ref<InstanceType<typeof CreateAddCampaign>>();
+    const child = ref<InstanceType<typeof DeployCampaignManagerForm>>();
     return { child, callReset: () => child.value?.reset() };
   },
-  template: '<CreateAddCampaign ref="child" />',
+  template: '<DeployCampaignManagerForm ref="child" />',
 });
 
 const wrapper = mount(ParentHarness);
 wrapper.vm.callReset(); // accesses the harness's own surface — not a cast
 ```
 
-`app/src/components/sections/ContractManagementView/forms/__tests__/CreateAddCampaign.spec.ts` is the reference example.
+`app/src/components/sections/ContractManagementView/forms/__tests__/DeployCampaignManagerForm.spec.ts` is the reference example.
 
 **Fallback — scoped `eslint-disable` with a reason.** If a harness is overkill (the API has no real consumer yet), document inline:
 
@@ -306,14 +306,14 @@ Code review will quote the `--` reason, so make it specific.
 
 ### Reference examples by pattern
 
-| Pattern                                      | Reference spec                                                                                     |
-| -------------------------------------------- | -------------------------------------------------------------------------------------------------- |
-| Canonical (DOM + emit + props)               | `app/src/components/ui/inputs/__tests__/TokenAmountInput.spec.ts`                                  |
-| UTable / USelect / DatePicker drive          | `app/src/components/sections/SherTokenView/__tests__/InvestorsTransaction.spec.ts`                 |
-| Child form `$emit('submit', ...)`            | `app/src/components/sections/SherTokenView/InvestorActions/__tests__/PayDividendsAction.spec.ts`   |
-| Heavy state mutation → DOM-driven helper     | `app/src/components/sections/VestingView/forms/__tests__/CreateVestingInitial.spec.ts`             |
-| `defineExpose` via `ParentHarness`           | `app/src/components/sections/ContractManagementView/forms/__tests__/CreateAddCampaign.spec.ts`     |
-| Bypass `:disabled` button via component emit | `app/src/components/sections/SherTokenView/InvestorActions/__tests__/DistributeMintAction.spec.ts` |
+| Pattern                                      | Reference spec                                                                                         |
+| -------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| Canonical (DOM + emit + props)               | `app/src/components/ui/inputs/__tests__/TokenAmountInput.spec.ts`                                      |
+| UTable / USelect / DatePicker drive          | `app/src/components/sections/SherTokenView/__tests__/InvestorsTransaction.spec.ts`                     |
+| Child form `$emit('submit', ...)`            | `app/src/components/sections/SherTokenView/InvestorActions/__tests__/PayDividendsAction.spec.ts`       |
+| Heavy state mutation → DOM-driven helper     | `app/src/components/sections/VestingView/forms/__tests__/CreateVestingInitial.spec.ts`                 |
+| `defineExpose` via `ParentHarness`           | `app/src/components/sections/ContractManagementView/forms/__tests__/DeployCampaignManagerForm.spec.ts` |
+| Bypass `:disabled` button via component emit | `app/src/components/sections/SherTokenView/InvestorActions/__tests__/DistributeMintAction.spec.ts`     |
 
 ## Common Testing Patterns
 

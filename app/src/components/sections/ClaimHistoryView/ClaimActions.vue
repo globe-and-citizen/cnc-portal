@@ -3,7 +3,7 @@
     <UButton
       variant="ghost"
       size="xs"
-      @click="showEditModal = true"
+      @click="openEditModal"
       data-test="edit-claim-button"
       icon="heroicons:pencil-square"
     />
@@ -36,17 +36,39 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { Icon as IconifyIcon } from '@iconify/vue'
+import { useToast } from '@nuxt/ui/composables'
 import EditClaims from '@/components/sections/CashRemunerationView/EditClaims.vue'
 import DeleteClaimConfirmation from '@/components/sections/CashRemunerationView/DeleteClaimConfirmation.vue'
+import { useTeamStore } from '@/stores'
 import type { Claim } from '@/types'
 
-defineProps<{
+const props = defineProps<{
   claim: Claim
   weekClaims?: Claim[]
+  weeklyGoals?: string | null
 }>()
 
+const teamStore = useTeamStore()
+const toast = useToast()
 const showEditModal = ref(false)
 const showDeleteModal = ref(false)
+
+/** The API enforces the same rule; this only spares the member a form they cannot save. */
+const isMissingRequiredWeeklyGoals = computed(
+  () => !!teamStore.currentTeamMeta.data?.requireWeeklyGoals && !props.weeklyGoals?.trim()
+)
+
+function openEditModal() {
+  if (isMissingRequiredWeeklyGoals.value) {
+    toast.add({
+      title: 'Weekly goals required',
+      description: 'Submit your weekly goals for this week before editing a claim.',
+      color: 'warning'
+    })
+    return
+  }
+  showEditModal.value = true
+}
 </script>

@@ -5,9 +5,10 @@
 Validate the relationships affected by a change across product expectations, implementation, contracts, accounting, user journeys, and
 evidence. Each missing or inconsistent relationship produces a concrete completion proposal.
 
-This guide owns the checklist and its workflow. [AGENTS.md](../../AGENTS.md) requires its execution. Product expectations remain in their
-canonical feature READMEs; contract and shared-runtime rules remain with their existing owners. Link those authorities instead of copying
-acceptance criteria or product delivery status into a checklist.
+This guide owns the checklist and its workflow. [CONTRIBUTION.md](../../CONTRIBUTION.md) requires it for human and agent contributions;
+[AGENTS.md](../../AGENTS.md) adds agent execution procedures. Product expectations remain in their canonical feature READMEs; contract and
+shared-runtime rules remain with their existing owners. Link those authorities instead of copying acceptance criteria or product delivery
+status into a checklist.
 
 ## Scope and applicability
 
@@ -50,8 +51,9 @@ handoffs, orchestration, shared policy, and derived projections. Accounting chec
 
 - Read the issue, canonical expectations, existing implementation, and relevant evidence.
 - Identify applicable checklist types, expected relationships, affected consumers, and the smallest sufficient validation plan.
-- Record known missing relationships and proposed completions in the issue's relationship-validation plan. New features can have planned
-  implementation and proof; do not represent them as validated before they exist.
+- AI agents record known relationships, planned proof, gaps and proposed completions in the issue's relationship-validation plan. A
+  developer working without an agent may omit that issue plan; the assessment remains required and its results belong in the PR. New
+  features can have planned implementation and proof; do not represent them as validated before they exist.
 - Identify product, accounting, or architectural decisions that are required before dependent work can proceed. Preserve the current
   authorization and issue-placement rules.
 
@@ -59,8 +61,9 @@ handoffs, orchestration, shared policy, and derived projections. Accounting chec
 
 - Update the assessment after each logical change using the actual diff and discovered consumers.
 - Reassess immediately when a public interface, contract method/event, shared policy, persistence schema, or accounting rule changes.
-- Compare the linked guarantees with code and representative assertions, then run the scoped validation required by `AGENTS.md` and the
-  owning proof strategies. Keep real, mocked, skipped, unavailable, and unexecuted evidence distinct.
+- Compare the linked guarantees with code and representative assertions, then run the
+  [shared validation](../../CONTRIBUTION.md#required-validation-before-pushing) and the owning proof strategies. Keep real, mocked, skipped,
+  unavailable and unexecuted evidence distinct.
 - Complete the PR's relationship-validation section before requesting review. Draft PRs may expose pending results and completion proposals;
   they must not claim readiness while required guarantees remain unresolved.
 
@@ -85,8 +88,9 @@ integration drift. Do not rerun unrelated checks merely because the release cont
 
 ## Result contract
 
-The issue carries expected relationships and planned proof. The PR carries the actual result and evidence. Record the validation stage,
-inspected head/base or working revision, scope, and canonical references alongside the result table.
+For agent work, the issue carries expected relationships and planned proof; a developer working without an agent may omit that issue plan.
+The PR carries the actual result and evidence for every contribution. Record the validation stage, inspected head/base or working revision,
+scope, and canonical references alongside the result table.
 
 | Field                     | Required content                                                                                                                             |
 | ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -129,6 +133,6 @@ subproject validations. The report is a static inventory, not the latest passing
 attestations.
 
 The [documentation CI workflow](../../.github/workflows/docs-drift.yml) enforces existing deterministic traceability, formatting, and
-freshness rules. It does not validate this result table or generate semantic completion proposals. Agents perform this checklist explicitly
-and record their evidence. Use the [semantic audit contracts](./autonomous-audits/README.md) for deeper acceptance, journey, accounting,
-security, and architecture audits when required by the change; a new autonomous remediation mandate is not implied.
+freshness rules. It does not validate this result table or generate semantic completion proposals. Contributors perform this checklist
+explicitly and record their evidence. Use the [semantic audit contracts](./autonomous-audits/README.md) for deeper acceptance, journey,
+accounting, security, and architecture audits when required by the change; a new autonomous remediation mandate is not implied.

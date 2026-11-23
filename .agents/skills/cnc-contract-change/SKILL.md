@@ -20,5 +20,5 @@ Treat each contract edit as a security-sensitive change with an explicit interfa
 
 1. Add or update tests covering the changed invariant, failure path, permissions, and upgrade implications where applicable.
 2. Run `npm run generate-abi` after any ABI change and commit `app/src/artifacts/abi/generated.ts` when it changes.
-3. Run the complete `contract/` gate from `AGENTS.md`: lint, format check, compile, and test.
+3. Run the complete [shared contract gate](../../../CONTRIBUTION.md#contracts).
 4. Review the Solidity audit checklist before publishing. CI Slither findings are release blockers for new high or medium findings.

@@ -14,6 +14,7 @@ import {
   openMemberPayrollHistory,
   openWeeklyClaimActions,
   selectHistoryWeek,
+  saveWeeklyGoals,
   setMemberUsdcWage,
   submitDailyClaim
 } from './payroll-page'
@@ -87,6 +88,7 @@ test.describe(
       const paidWeek = completedWeekStart()
       await openMemberPayrollHistory(memberPage, company.teamId, E2E_MEMBER)
       await selectHistoryWeek(memberPage, paidWeek)
+      await saveWeeklyGoals(memberPage, 'Deliver the completed Payroll week.')
       await submitDailyClaim(memberPage, { hours: '2', memo: 'Completed Payroll claim' })
       await expect(memberPage.locator('[data-test="daily-breakdown"]')).toContainText('2h')
 
@@ -132,10 +134,10 @@ test.describe(
           .filter({ has: page.getByText(subtitle, { exact: true }) })
           .locator('[data-test="amount"]')
       await page.goto(payrollAccountPath)
-      await expect(summaryAmount('Pending Claim')).toHaveText('$2.00', { timeout: 30_000 })
-      await expect(summaryAmount('Month Claimed')).toHaveText('$0.00', { timeout: 30_000 })
+      await expect(summaryAmount('Pending Claim')).toHaveText('$2', { timeout: 30_000 })
+      await expect(summaryAmount('Month Claimed')).toHaveText('$0', { timeout: 30_000 })
       await page.reload()
-      await expect(summaryAmount('Pending Claim')).toHaveText('$2.00', { timeout: 30_000 })
+      await expect(summaryAmount('Pending Claim')).toHaveText('$2', { timeout: 30_000 })
       await page.goto(companyPayrollPath)
       await expect(weeklyClaims).toContainText('Signed', { timeout: 30_000 })
 
@@ -229,11 +231,11 @@ test.describe(
           .locator('div[data-variant]')
           .filter({ has: memberPage.getByText(subtitle, { exact: true }) })
           .locator('[data-test="amount"]')
-      await expect(memberSummaryAmount('Pending Claim')).toHaveText('$0.00', { timeout: 30_000 })
-      await expect(memberSummaryAmount('Month Claimed')).toHaveText('$2.00', { timeout: 30_000 })
+      await expect(memberSummaryAmount('Pending Claim')).toHaveText('$0', { timeout: 30_000 })
+      await expect(memberSummaryAmount('Month Claimed')).toHaveText('$2', { timeout: 30_000 })
       await memberPage.reload()
-      await expect(memberSummaryAmount('Pending Claim')).toHaveText('$0.00', { timeout: 30_000 })
-      await expect(memberSummaryAmount('Month Claimed')).toHaveText('$2.00', { timeout: 30_000 })
+      await expect(memberSummaryAmount('Pending Claim')).toHaveText('$0', { timeout: 30_000 })
+      await expect(memberSummaryAmount('Month Claimed')).toHaveText('$2', { timeout: 30_000 })
 
       await memberPage.goto(companyPayrollPath)
       const activity = memberPage.locator('[data-test="cash-remuneration-transactions"]')
@@ -245,10 +247,10 @@ test.describe(
       const tokenWithdrawal = rowWithType('Token withdrawal')
       await expect(nativeDeposit).toContainText('0.003', { timeout: 30_000 })
       await expect(tokenDeposit).toContainText('3 USDC', { timeout: 30_000 })
-      await expect(tokenDeposit).toContainText('$3.00')
+      await expect(tokenDeposit).toContainText('$3')
       await expect(withdrawal).toContainText('0.002', { timeout: 30_000 })
       await expect(withdrawal).toContainText('-2.00 USDC')
-      await expect(withdrawal).toContainText('$2.00')
+      await expect(withdrawal).toContainText('$2')
       await memberPage.reload()
       await expect(tokenDeposit).toContainText('3 USDC', { timeout: 30_000 })
       await expect(withdrawal).toContainText('-2.00 USDC', { timeout: 30_000 })
@@ -276,7 +278,7 @@ test.describe(
       await typeFilter.click()
       await memberPage.getByRole('option', { name: 'Withdrawal', exact: true }).click()
       await expect(withdrawal).toContainText('-0.002 GO')
-      await expect(withdrawal).toContainText('$0.00')
+      await expect(withdrawal).toContainText('$0')
       await expect(tokenDeposit).toHaveCount(0)
       await typeFilter.click()
       await memberPage.getByRole('option', { name: 'Token withdrawal', exact: true }).click()

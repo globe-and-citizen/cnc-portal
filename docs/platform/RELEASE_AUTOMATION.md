@@ -12,8 +12,8 @@ contract upgrades require their own explicitly scoped work and evidence.
 - Follow [AGENTS.md](../../AGENTS.md) and the [GitHub flow skill](../../.agents/skills/cnc-github-flow/SKILL.md) for assignment, native
   hierarchy, Kanban fields, review and publication. Follow [commit conventions](../../.github/copilot-instructions/commit-conventions.md)
   for English commit and ordinary PR titles. Release issues and promotion PRs follow the
-  [dedicated title rules](../../.agents/skills/cnc-github-flow/SKILL.md#sprint-goal-and-release-issue-titles), without a Conventional Commit
-  type or gitmoji; release commits still use Conventional Commits, for example `chore: 🔧 prepare release vX.Y.Z`.
+  [dedicated title rules](../../.github/copilot-instructions/commit-conventions.md#sprint-goal-and-release-issue-titles), without a
+  Conventional Commit type or gitmoji; release commits still use Conventional Commits, for example `chore: 🔧 prepare release vX.Y.Z`.
 
 The issue records a release owner, independent technical reviewer, final release decision owner and applicable Product/QA validator. It
 links the baseline, included deliveries, canonical expectations, validation, blockers and follow-up. Technical checks, human acceptance,

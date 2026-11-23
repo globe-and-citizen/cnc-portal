@@ -5,7 +5,7 @@ export interface TokenOption {
   tokenId: TokenId
   name?: string
   balance: number
-  price: number
+  price: number | null
   code: string
   spendableBalance?: number
 }

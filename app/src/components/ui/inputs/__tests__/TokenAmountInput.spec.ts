@@ -114,6 +114,14 @@ describe('TokenAmountInput.vue', () => {
       expect(lastModelValue(wrapper)).toEqual({ amount: '100', tokenId: 'native' })
     })
 
+    it('fills input with the exact maxAmount when the parent provides one', async () => {
+      const wrapper = createWrapper({ maxAmount: '99.502487' })
+
+      await wrapper.find('[data-test="maxButton"]').trigger('click')
+
+      expect(lastModelValue(wrapper)).toEqual({ amount: '99.502487', tokenId: 'native' })
+    })
+
     it('fills input with 25/50/75% of balance when percent buttons are clicked', async () => {
       const wrapper = createWrapper()
 
@@ -253,14 +261,25 @@ describe('TokenAmountInput.vue', () => {
       expect(wrapper.text()).toContain('$1K')
     })
 
-    it('shows $0 estimated price when selected token is not found', () => {
+    it.each([
+      [null, '—'],
+      [0, '$0']
+    ] as const)('distinguishes quote %s in the estimate', (price, expected) => {
+      const wrapper = createWrapper({
+        tokens: [{ ...tokens[0]!, price }],
+        modelValue: { amount: '2', tokenId: 'native' }
+      })
+      expect(wrapper.text()).toContain(`≈ ${expected}`)
+    })
+
+    it('keeps an unavailable estimate when the selected token is not found', () => {
       localStorage.removeItem('currency')
 
       const wrapper = createWrapper({
         modelValue: { amount: '1', tokenId: 'missing-token' as TokenId }
       })
 
-      expect(wrapper.text()).toContain('≈ $0')
+      expect(wrapper.text()).toContain('≈ —')
     })
   })
 })

@@ -13,7 +13,7 @@
             </span>
             <span class="text-[15px] font-semibold">Balance sheet</span>
           </div>
-          <DatePicker v-model="asOf" mode="date" storage-key="cnc-accounting-balance-asof" />
+          <DatePicker v-model="asOf" mode="date" :storage-key="periodStorageKey" />
         </div>
       </template>
 
@@ -76,6 +76,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { useRoute } from 'vue-router'
 import DatePicker from '@/components/ui/DatePicker.vue'
 import AccountingExportBar from '@/components/sections/AccountingView/AccountingExportBar.vue'
 import BalanceSheetTable from '@/components/sections/AccountingView/BalanceSheetTable.vue'
@@ -88,6 +89,7 @@ import { presentBalance, type StatementLineView } from '@/utils/accounting/prese
 
 // Point-in-time "as of" date (date mode) — defaults to end of today.
 const asOf = ref<Date>(defaultValueForMode('date') as Date)
+const periodStorageKey = `cnc-accounting-${useRoute().params.id}-balance-asof`
 
 const accounting = useAccountingContext()
 const balance = computed(() => presentBalance(accounting.journal.value, asOf.value))
@@ -105,7 +107,7 @@ const {
 function openDrilldown(line: StatementLineView): void {
   // Earnings to date is the only aggregate: it opens every contributing income
   // and expense account. Every table account otherwise keeps its concrete id.
-  if (line.accounts?.length) openFor(line.accounts, line.value, 'Earnings to date')
+  if (line.accounts?.length) openFor(line.accounts, line.value, 'Earnings to date', line.amount)
   else if (line.account) openFor(line.account, line.value, line.label)
 }
 

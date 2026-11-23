@@ -686,11 +686,11 @@ criteria unchecked. No runtime change is delivered here. Target scenarios remain
 ### `UC-BANK-02` — External Cash Receipt
 
 Current known-token direct Bank/Safe receipts debit receiving cash and credit Service Revenue, labelled `Service revenue`. Evidenced Safe
-exchanges bypass this fallback. Discovered-asset receipts, mints, and ambiguous multi-asset settlements credit `Unclassified Receipts` and
-keep Accounting partial until classified. Router-backed receipts are removed because `UC-SDR-01` owns them. A plain stablecoin transfer into
-a Bank from outside the CNC, with no Bank deposit event, is a receipt too: a first-generation Bank was funded this way. A transfer sent by a
-CNC contract stays with that contract's own event. Target `UC-TREASURY-002` suspense treatment extends pending classification to other
-unidentified receipts; sender role alone does not classify them.
+exchanges bypass this fallback. Discovered-asset receipts, mints other than accrued interest, and ambiguous multi-asset settlements credit
+`Unclassified Receipts` and keep Accounting partial until classified. Router-backed receipts are removed because `UC-SDR-01` owns them. A
+plain stablecoin transfer into a Bank from outside the CNC, with no Bank deposit event, is a receipt too: a first-generation Bank was funded
+this way. A transfer sent by a CNC contract stays with that contract's own event. Target `UC-TREASURY-002` suspense treatment extends
+pending classification to other unidentified receipts; sender role alone does not classify them.
 
 ### `SAFE-SWAP` — Evidenced Safe Asset Exchange
 
@@ -702,10 +702,10 @@ unidentified receipts; sender role alone does not classify them.
   `Transaction Fee Expense` at the carrying value of the part of the disposed asset it took. Debit the acquired asset at the rest: the price
   actually paid. A received USD stablecoin keeps its $1.00 face value instead, which realizes its difference from the price paid.
 - **Swap P&L:** That realized result is the swap's `Swap P&L` line, credited for a gain and debited for a loss. For a swap of the default
-  Safe, that line books instead its [Safe swap P&L](../accounts/safe-swap-pnl-use-cases.md) (current value of what it received against the
-  CoinGecko swap-day value of what it gave up, less the reported fee), and a `Safe Market Value Adjustment` line in the same posting books
-  the part the cash lines do not carry: debited when the swap gains, credited when it loses. `Cash — Safe` never leaves the price paid, and
-  `Swap P&L` totals the Safe overview figure.
+  Safe, that line books instead its share of the [Safe swap P&L](../accounts/README.md#us-safe-007-review-the-safe-swap-pl) (what it changed
+  in the average-cost P&L of the tokens it touched: what it received against what it gave up, both at today's price, fee left out), and a
+  `Safe Market Value Adjustment` line in the same posting books the part the cash lines do not carry: debited when the swap gains, credited
+  when it loses. `Cash — Safe` never leaves the price paid, and `Swap P&L` totals the Safe overview figure.
 - **Statements:** A net `Swap P&L` gain is a revenue line and a trial-balance credit; a net loss is an expense line and a trial-balance
   debit. Amounts are always positive.
 - **General Ledger:** Label `Asset exchange`, category `Swap`. The receipt's rate is its price paid divided by its quantity, or $1.00 for a
@@ -731,12 +731,10 @@ Selling that whole asset, acquired for $20, for 30.658984 USDC books its gain:
 | Swap P&L    | USD            |            |             |    10.658984 |
 
 This is the realized result, kept when the Safe overview does not value the swap. A reported fee on the sale stays out of `Swap P&L`: with a
-CoW Protocol fee of 0.0001 of the asset, carried at $0.20, `Transaction Fee Expense` is debited $0.20 and `Swap P&L` is credited
-$10.858984.
+CoW Protocol fee of 0.0001 of the asset, carried at $0.20, `Transaction Fee Expense` is debited $0.20 and `Swap P&L` is credited $10.858984.
 Exchanging 20 USDC for 19.50 USDT debits `Swap P&L` with the $0.50 lost.
 
-When the Safe overview values the $20 purchase without a fee at a $4 gain (the asset received is now worth $24), the purchase stays at
-$20
+When the Safe overview values the $20 purchase without a fee at a $4 gain (the asset received is now worth $24), the purchase stays at $20
 and its revaluation is:
 
 | Account                      | Currency | Debit (USD) | Credit (USD) |
@@ -747,9 +745,14 @@ and its revaluation is:
 For a sale the overview values at $12, the sale keeps its realized $10.658984 and its revaluation credits `Swap P&L` the remaining
 $1.341016.
 
-Ancillary mints remain separate unclassified evidence. Missing decimals or acquisition basis keeps reports incomplete; complex batches and
-different-counterparty settlements need further evidence before automatic classification. Fees CoW Protocol does not report are not
-inferred. See the [read model](../../implementation/accounting-read-model/README.md#safe-assets-and-exchanges) and
+A yield-bearing token such as an Aave aToken mints the interest it accrued to the Safe in the transaction that sends it. A mint of a token
+the Safe sends in the same transaction is therefore booked as `INTEREST-IN`, labelled `Interest income`: debit `Cash — Safe` and credit
+`Interest Income` at the token's market value. That value joins the token's carrying basis before the swap gives it up, so `Swap P&L` keeps
+only the price effect. Other ancillary mints, such as the aToken an Aave deposit mints for another asset, remain separate unclassified
+evidence. See the [interest regressions](../../../app/src/utils/accounting/__tests__/safeExchanges.interest.spec.ts). Missing decimals or
+acquisition basis keeps reports incomplete; complex batches and different-counterparty settlements need further evidence before automatic
+classification. Fees CoW Protocol does not report are not inferred. See the
+[read model](../../implementation/accounting-read-model/README.md#safe-assets-and-exchanges) and
 [regression evidence](../../../app/src/utils/accounting/__tests__/safeExchanges.spec.ts), its
 [fee regressions](../../../app/src/utils/accounting/__tests__/safeExchanges.fees.spec.ts), and its
 [Swap P&L regressions](../../../app/src/utils/accounting/__tests__/safeExchanges.swapPnl.spec.ts) and

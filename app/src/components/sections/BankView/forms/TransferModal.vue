@@ -36,7 +36,7 @@
           v-model="transferData"
           :tokens="tokens"
           :loading="isLoading"
-          :fee-bps="feeBpsNumber"
+          :fee-bps="feeBps"
           :error-message="errorMessage"
           @transfer="handleTransfer"
           @closeModal="resetTransferValues"
@@ -54,11 +54,11 @@ import { type Address, parseEther, encodeFunctionData, parseUnits } from 'viem'
 import { useChainId, useReadContract } from '@wagmi/vue'
 import { useQueryClient } from '@tanstack/vue-query'
 import { bankAbi } from '@/artifacts/abi/generated'
-import { NETWORK, USDC_ADDRESS, USDC_E_ADDRESS } from '@/constant'
+import { NETWORK, SUPPORTED_TOKENS, USDC_ADDRESS, USDC_E_ADDRESS } from '@/constant'
 import { useUserDataStore } from '@/stores'
 import { useBodAddAction } from '@/composables/bod/writes'
 import { useBodIsBodAction } from '@/composables/bod/reads'
-import { useOfficerFeeBps } from '@/composables/officer/reads'
+import { useBankTransferFee } from '@/composables/bank/useBankTransferFee'
 import { useTransfer, useTransferToken } from '@/composables/bank/writes'
 import { bankEventKeys } from '@/composables/bank/useBankEventsViaLogs'
 import { classifyError } from '@/utils/errors/classifyContractError'
@@ -92,9 +92,6 @@ const { data: bankOwner } = useReadContract({
 
 const { isBodAction } = useBodIsBodAction(props.bankAddress as Address)
 
-const { data: feeBpsData } = useOfficerFeeBps('BANK')
-const feeBpsNumber = computed(() => Number(feeBpsData.value ?? 0))
-
 const isBankOwner = computed(() => bankOwner.value === userStore.address)
 
 const {
@@ -126,7 +123,7 @@ const getTokens = (): TokenOption[] =>
       symbol: b.token.symbol,
       balance: b.amount,
       tokenId: b.token.id,
-      price: b.price.usd.value,
+      price: b.price.local.value,
       name: b.token.name,
       code: b.token.code
     }))
@@ -159,6 +156,10 @@ const initialTransferDataValue = (): TransferModel => {
 
 const transferData: Ref<TransferModel> = ref(initialTransferDataValue())
 
+const { feeBps, grossUpForTransferFee } = useBankTransferFee(
+  () => SUPPORTED_TOKENS.find((token) => token.id === transferData.value.token.tokenId)?.address
+)
+
 // Reset transfer values
 const resetTransferValues = () => {
   modal.value = { mount: false, show: false }
@@ -183,22 +184,8 @@ const handleTransfer = async (data: {
   const tokenAddress = data.token.symbol === 'USDCe' ? USDC_E_ADDRESS : USDC_ADDRESS
   const isNativeToken = data.token.symbol === NETWORK.currencySymbol
 
-  // Exact formula: the contract deducts fee from _amount and sends net to recipient.
-  // To give recipient exactly `userAmountBigInt`, we must send: amount * 10000 / (10000 - feeBps)
   const userAmountBigInt = isNativeToken ? parseEther(data.amount) : parseUnits(data.amount, 6)
-  const feeBps = BigInt(feeBpsNumber.value)
-  const transferAmount = (() => {
-    if (feeBps === 0n) return userAmountBigInt
-
-    const denominator = 10000n - feeBps
-    const candidate = (userAmountBigInt * 10000n) / denominator
-    const candidateNet = candidate - (candidate * feeBps) / 10000n
-
-    // Solidity rounds the fee down. Most values therefore need the floor
-    // candidate; increment only when that candidate would under-deliver by
-    // the smallest token unit.
-    return candidateNet < userAmountBigInt ? candidate + 1n : candidate
-  })()
+  const transferAmount = grossUpForTransferFee(userAmountBigInt)
 
   if (isBodAction.value) {
     // BOD Action path

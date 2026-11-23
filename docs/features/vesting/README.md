@@ -56,14 +56,14 @@ stateDiagram-v2
 
 ## Status Overview
 
-| User Story     | Title                                    | Actor          | Status         |
-| -------------- | ---------------------------------------- | -------------- | -------------- |
-| US-VESTING-001 | Create a minute-precise vesting schedule | Team owner     | ✅ Done        |
-| US-VESTING-002 | View schedules and aggregate totals      | Member / Owner | 🚧 In Progress |
-| US-VESTING-003 | Release accrued shares                   | Beneficiary    | ✅ Done        |
-| US-VESTING-004 | Stop an active vesting schedule          | Team owner     | ✅ Done        |
-| US-VESTING-005 | Understand vested and claimable progress | Member / Owner | ✅ Done        |
-| US-VESTING-006 | See vesting in the company books         | Member / Owner | 🔗 Reference   |
+| User Story                                                                 | Feature                                  | Actor          | Status         | Intended Scope |
+| -------------------------------------------------------------------------- | ---------------------------------------- | -------------- | -------------- | -------------- |
+| [US-VESTING-001](#us-vesting-001-create-a-minute-precise-vesting-schedule) | Create a minute-precise vesting schedule | Team owner     | ✅ Done        | Not assessed   |
+| [US-VESTING-002](#us-vesting-002-view-schedules-and-aggregate-totals)      | View schedules and aggregate totals      | Member / Owner | 🚧 In Progress | Not assessed   |
+| [US-VESTING-003](#us-vesting-003-release-accrued-shares)                   | Release accrued shares                   | Beneficiary    | ✅ Done        | Not assessed   |
+| [US-VESTING-004](#us-vesting-004-stop-an-active-vesting-schedule)          | Stop an active vesting schedule          | Team owner     | ✅ Done        | Not assessed   |
+| [US-VESTING-005](#us-vesting-005-understand-vested-and-claimable-progress) | Understand vested and claimable progress | Member / Owner | ✅ Done        | Not assessed   |
+| [US-VESTING-006](#us-vesting-006-see-vesting-in-the-company-books)         | See vesting in the company books         | Member / Owner | 🔗 Reference   | Not assessed   |
 
 ## Test Coverage Overview
 
@@ -83,15 +83,21 @@ Runs of at least three consecutive missing criteria use inclusive ranges with fu
 
 Proof obligations use the [shared proof-strategy registry](../../testing/proof-strategies.md). Multiple IDs for one AC are cumulative.
 
-## US-VESTING-001: Create a Minute-Precise Vesting Schedule
+## FEAT-VESTING-001: Create a Minute-Precise Vesting Schedule
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
+
+### US-VESTING-001: Create a Minute-Precise Vesting Schedule
 
 **As a** team owner\
 **I want to** configure and review a beneficiary's vesting schedule\
 **So that** the grant is recorded with unambiguous amounts and time boundaries
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-VESTING-001-01` The team owner can create a vesting schedule for a current team member.
 - [x] `AC-US-VESTING-001-02` The owner can use duration and cliff presets or provide custom boundaries.
@@ -99,7 +105,7 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 - [x] `AC-US-VESTING-001-04` A successfully created schedule becomes available in the team's schedules.
 - [x] `AC-US-VESTING-001-05` The same beneficiary can receive multiple schedules.
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-VESTING-001-06` Only the team owner can create a schedule.
 - [x] `AC-US-VESTING-001-07` Archived teams cannot create a schedule.
@@ -109,12 +115,12 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 - [x] `AC-US-VESTING-001-11` An optional cliff must be between the start and end boundaries.
 - [x] `AC-US-VESTING-001-12` Creating a schedule records an on-chain commitment without minting shares.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [x] `AC-US-VESTING-001-13` Cancelling schedule creation does not create an on-chain schedule.
 - [x] `AC-US-VESTING-001-14` A failed schedule creation does not create an on-chain schedule and preserves the entered context.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion   | Proof Strategy        | Current Evidence | Status          |
 | ---------------------- | --------------------- | ---------------- | --------------- |
@@ -142,15 +148,21 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 
 **Dependencies:** Current team, current Vesting contract, current Investor contract
 
-## US-VESTING-002: View Schedules and Aggregate Totals
+## FEAT-VESTING-002: View Schedules and Aggregate Totals
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
+
+### US-VESTING-002: View Schedules and Aggregate Totals
 
 **As a** team member or owner\
 **I want to** see the team's vesting commitments and releases\
 **So that** I can understand the current vesting position
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-VESTING-002-01` Users can access Promised, Vested, Claimable, and Released totals.
 - [x] `AC-US-VESTING-002-02` Every grant has one schedule entry, including grants for a repeated beneficiary.
@@ -160,20 +172,20 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 - [ ] `AC-US-VESTING-002-11` A member can inspect direct assets held by Vesting separately from schedule totals, using the same evidence as
       Accounting.
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-VESTING-002-06` A schedule is Completed when its full grant has been released.
 - [x] `AC-US-VESTING-002-07` A schedule is Cancelled when the team owner has stopped it.
 - [ ] `AC-US-VESTING-002-12` An unsolicited asset receipt does not create a vesting schedule or increase granted or claimable SHER.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [x] `AC-US-VESTING-002-08` An empty schedule scope returns zero aggregate totals and no schedule entries.
 - [x] `AC-US-VESTING-002-09` A failed active- or archived-schedule contract read is reported without being treated as successfully loaded
       data.
 - [ ] `AC-US-VESTING-002-10` A malformed successful schedule payload is reported instead of being treated as an empty schedule scope.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion   | Proof Strategy             | Current Evidence | Status          |
 | ---------------------- | -------------------------- | ---------------- | --------------- |
@@ -196,7 +208,7 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 
 **Dependencies:** US-VESTING-001
 
-### Direct Movement Scenarios
+#### Direct Movement Scenarios
 
 Target behaviour follows the [direct movement policy](../accounting/direct-movement-policy.md). Each row represents the same evidenced
 movement across the participating stories.
@@ -205,20 +217,26 @@ movement across the participating stories.
 | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | External tokens reach Vesting without a grant operation or established purpose. [UC-TREASURY-002](../accounting/journal-entry-catalogue.md#uc-treasury-002--external-receipt-pending-classification) | Separates holdings from granted and claimable shares. | [US-CONTRACT-001](../contract-management/README.md#us-contract-001-review-the-current-contract-suite) — exposes custody and recovery limits; [US-ACCT-007](../accounting/README.md#us-acct-007-review-direct-treasury-movements) — owns movement evidence and identity; [US-ACCT-010](../accounting/README.md#us-acct-010-classify-direct-external-receipts) — owns eligible receipt classification |
 
-## US-VESTING-003: Release Accrued Shares
+## FEAT-VESTING-003: Release Accrued Shares
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
+
+### US-VESTING-003: Release Accrued Shares
 
 **As a** vesting beneficiary\
 **I want to** release shares accrued by one of my schedules\
 **So that** the earned shares are minted to my wallet
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-VESTING-003-01` A beneficiary can release accrued shares from one of their active schedules.
 - [x] `AC-US-VESTING-003-02` A successful release updates the schedule's released and claimable amounts.
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-VESTING-003-03` Only the schedule beneficiary can release its shares.
 - [x] `AC-US-VESTING-003-04` A release affects only the selected schedule.
@@ -227,14 +245,14 @@ movement across the participating stories.
 - [x] `AC-US-VESTING-003-07` Repeated releases cannot mint the same shares twice.
 - [x] `AC-US-VESTING-003-08` Archived teams and paused Vesting contracts cannot release shares.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [x] `AC-US-VESTING-003-09` Cancelling a release does not change the schedule or mint shares.
 - [x] `AC-US-VESTING-003-10` A failed release does not change the schedule or mint shares.
 - [x] `AC-US-VESTING-003-11` An open release review stays synchronized with the selected schedule's latest claimable and released amounts
       before confirmation.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion   | Proof Strategy        | Current Evidence | Status          |
 | ---------------------- | --------------------- | ---------------- | --------------- |
@@ -259,21 +277,27 @@ movement across the participating stories.
 
 **Dependencies:** US-VESTING-001
 
-## US-VESTING-004: Stop an Active Vesting Schedule
+## FEAT-VESTING-004: Stop an Active Vesting Schedule
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
+
+### US-VESTING-004: Stop an Active Vesting Schedule
 
 **As a** team owner\
 **I want to** stop one active vesting schedule\
 **So that** future unvested shares are cancelled without losing accrued shares
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-VESTING-004-01` The team owner can stop one active vesting schedule.
 - [x] `AC-US-VESTING-004-02` Stopping a schedule releases its claimable shares to the beneficiary and cancels its unvested remainder.
 - [x] `AC-US-VESTING-004-03` A stopped schedule remains available with a Cancelled status.
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-VESTING-004-04` Only the team owner can stop an active schedule.
 - [x] `AC-US-VESTING-004-05` Stopping affects only the selected schedule.
@@ -281,12 +305,12 @@ movement across the participating stories.
 - [x] `AC-US-VESTING-004-07` A stopped schedule cannot be used again.
 - [x] `AC-US-VESTING-004-08` Archived teams and paused Vesting contracts cannot stop a schedule.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [x] `AC-US-VESTING-004-09` Cancelling a stop does not change the active schedule.
 - [x] `AC-US-VESTING-004-10` A failed stop leaves the schedule active.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion   | Proof Strategy        | Current Evidence | Status          |
 | ---------------------- | --------------------- | ---------------- | --------------- |
@@ -310,32 +334,38 @@ movement across the participating stories.
 
 **Dependencies:** US-VESTING-001
 
-## US-VESTING-005: Understand Vested and Claimable Progress
+## FEAT-VESTING-005: Understand Vested and Claimable Progress
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
+
+### US-VESTING-005: Understand Vested and Claimable Progress
 
 **As a** team member or owner\
 **I want to** understand each schedule's accrued, released, and claimable shares\
 **So that** I know what can happen now and what remains locked
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-VESTING-005-01` Each schedule exposes its promised, vested, released, claimable, and unvested shares.
 - [x] `AC-US-VESTING-005-02` Each schedule exposes its next boundary to the minute in local time and UTC.
 - [x] `AC-US-VESTING-005-03` Upcoming, Cliff locked, Accruing, Claimable, Fully vested, Completed, and Cancelled remain distinct states.
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-VESTING-005-04` Releasing a schedule is available only when its claimable amount is positive.
 - [x] `AC-US-VESTING-005-05` Fully vested and fully released schedules have distinct statuses.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [x] `AC-US-VESTING-005-06` Accrued shares remain locked before the cliff boundary.
 - [x] `AC-US-VESTING-005-07` A Cancelled schedule exposes both its released amount and its cancelled amount.
 - [x] `AC-US-VESTING-005-08` A positive base-unit share amount remains visibly positive instead of being rounded to zero.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion   | Proof Strategy        | Current Evidence | Status          |
 | ---------------------- | --------------------- | ---------------- | --------------- |
@@ -353,7 +383,9 @@ movement across the participating stories.
 
 **Dependencies:** US-VESTING-002, US-VESTING-003, US-VESTING-004
 
-## US-VESTING-006: See Vesting in the Company Books
+## Referenced Story: See Vesting in the Company Books
+
+### US-VESTING-006: See Vesting in the Company Books
 
 This is a reference story. Accounting owns the user journey and acceptance criteria for viewing vesting entries. The
 [Accounting rule catalogue](../accounting/journal-entry-catalogue.md#shareholder-and-vesting-rules) defines how creation, release, and stop

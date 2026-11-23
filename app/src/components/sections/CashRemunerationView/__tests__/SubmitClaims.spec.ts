@@ -26,6 +26,8 @@ const ClaimFormStub = defineComponent({
   template: '<div />'
 })
 
+const weeklyClaimWithGoals = { status: 'pending', weeklyGoals: 'Ship the weekly goals guard' }
+
 const createComponent = (props: Record<string, unknown> = {}) => {
   const queryClient = new QueryClient()
   return mount(SubmitClaims, {
@@ -143,7 +145,7 @@ describe('SubmitClaims', () => {
   })
 
   it('closes the form after a successful claim submission', async () => {
-    const wrapper = createComponent()
+    const wrapper = createComponent({ weeklyClaim: weeklyClaimWithGoals })
 
     await wrapper.find('[data-test="modal-submit-hours-button"]').trigger('click')
     await flushPromises()
@@ -159,17 +161,17 @@ describe('SubmitClaims', () => {
     claimForm.vm.$emit('submit', submitData)
     await flushPromises()
 
-    // expect(mockToast.add).toHaveBeenCalledWith({
-    //   title: 'Wage claim added successfully',
-    //   color: 'success'
-    // })
+    expect(mockToast.add).toHaveBeenCalledWith({
+      title: 'Wage claim added successfully',
+      color: 'success'
+    })
     expect(wrapper.findComponent({ name: 'ClaimForm' }).exists()).toBe(false)
   })
 
   it('shows error toast and blocks submit when team id is missing', async () => {
     mockTeamStore.currentTeamId = undefined
 
-    const wrapper = createComponent()
+    const wrapper = createComponent({ weeklyClaim: weeklyClaimWithGoals })
     await wrapper.find('[data-test="modal-submit-hours-button"]').trigger('click')
     await flushPromises()
 
@@ -182,7 +184,7 @@ describe('SubmitClaims', () => {
     })
     await flushPromises()
 
-    // expect(mockToast.add).toHaveBeenCalledWith({ title: 'Team not selected', color: 'error' })
+    expect(mockToast.add).toHaveBeenCalledWith({ title: 'Team not selected', color: 'error' })
   })
 
   it('passes loading state to button when mutation is pending', async () => {
@@ -190,7 +192,7 @@ describe('SubmitClaims', () => {
       createMockMutationResponse(null, true) as ReturnType<typeof useSubmitClaimMutation>
     )
 
-    const wrapper = createComponent()
+    const wrapper = createComponent({ weeklyClaim: weeklyClaimWithGoals })
     const button = wrapper.find('[data-test="modal-submit-hours-button"]')
 
     // Verify button is disabled when mutation is pending (loading state behavior)
@@ -212,7 +214,7 @@ describe('SubmitClaims', () => {
       isPending: ref(false)
     } as unknown as ReturnType<typeof useSubmitClaimMutation>)
 
-    const wrapper = createComponent()
+    const wrapper = createComponent({ weeklyClaim: weeklyClaimWithGoals })
 
     await wrapper.find('[data-test="modal-submit-hours-button"]').trigger('click')
     await flushPromises()
@@ -240,7 +242,7 @@ describe('SubmitClaims', () => {
       isPending: ref(false)
     } as unknown as ReturnType<typeof useSubmitClaimMutation>)
 
-    const wrapper = createComponent()
+    const wrapper = createComponent({ weeklyClaim: weeklyClaimWithGoals })
     await wrapper.find('[data-test="modal-submit-hours-button"]').trigger('click')
     await flushPromises()
 
@@ -260,7 +262,10 @@ describe('SubmitClaims', () => {
   })
 
   it('opens modal with clicked day when using openModalForDay', async () => {
-    const wrapper = createComponent({ selectedWeekStart: '2024-01-08T00:00:00.000Z' })
+    const wrapper = createComponent({
+      weeklyClaim: weeklyClaimWithGoals,
+      selectedWeekStart: '2024-01-08T00:00:00.000Z'
+    })
     const dayIso = '2024-01-10T00:00:00.000Z'
 
     // openModalForDay is an exposed (defineExpose) public API consumed by parent
@@ -274,5 +279,74 @@ describe('SubmitClaims', () => {
     const claimForm = wrapper.findComponent({ name: 'ClaimForm' })
     expect(claimForm.exists()).toBe(true)
     expect((claimForm.props('initialData') as { dayWorked: string }).dayWorked).toBe(dayIso)
+  })
+
+  describe('[AC-US-PAYROLL-015-02] weekly goals requirement', () => {
+    const weeklyGoalsRequiredToast = {
+      title: 'Weekly goals required',
+      description: 'Submit your weekly goals for this week before submitting a claim.',
+      color: 'warning'
+    }
+    const teamMetaBefore = mockTeamStore.currentTeamMeta
+
+    const setTeamRequiresWeeklyGoals = (requireWeeklyGoals: boolean) => {
+      mockTeamStore.currentTeamMeta = {
+        ...teamMetaBefore,
+        data: { ...teamMetaBefore.data, requireWeeklyGoals }
+      } as typeof mockTeamStore.currentTeamMeta
+    }
+
+    beforeEach(() => setTeamRequiresWeeklyGoals(true))
+
+    afterEach(() => {
+      mockTeamStore.currentTeamMeta = teamMetaBefore
+    })
+
+    it('opens the form without weekly goals when the team does not require them', async () => {
+      setTeamRequiresWeeklyGoals(false)
+      const wrapper = createComponent({ weeklyClaim: { status: 'pending', weeklyGoals: null } })
+
+      await wrapper.find('[data-test="modal-submit-hours-button"]').trigger('click')
+      await flushPromises()
+
+      expect(mockToast.add).not.toHaveBeenCalledWith(weeklyGoalsRequiredToast)
+      expect(wrapper.findComponent({ name: 'ClaimForm' }).exists()).toBe(true)
+    })
+
+    it.each([
+      ['no weekly claim yet', undefined],
+      ['no weekly goals', { status: 'pending', weeklyGoals: null }],
+      ['blank weekly goals', { status: 'pending', weeklyGoals: '   ' }]
+    ])('warns and keeps the form closed when there is %s', async (_case, weeklyClaim) => {
+      const wrapper = createComponent({ weeklyClaim })
+
+      await wrapper.find('[data-test="modal-submit-hours-button"]').trigger('click')
+      await flushPromises()
+
+      expect(mockToast.add).toHaveBeenCalledWith(weeklyGoalsRequiredToast)
+      expect(wrapper.findComponent({ name: 'ClaimForm' }).exists()).toBe(false)
+    })
+
+    it('warns instead of opening the form for a calendar day without weekly goals', async () => {
+      const wrapper = createComponent({ weeklyClaim: { status: 'pending', weeklyGoals: null } })
+
+      // eslint-disable-next-line no-restricted-syntax -- exposed method has no UI trigger; consumed by parents via template ref
+      const exposed = wrapper.vm as unknown as { openModalForDay: (iso: string) => void }
+      exposed.openModalForDay('2024-01-10T00:00:00.000Z')
+      await flushPromises()
+
+      expect(mockToast.add).toHaveBeenCalledWith(weeklyGoalsRequiredToast)
+      expect(wrapper.findComponent({ name: 'ClaimForm' }).exists()).toBe(false)
+    })
+
+    it('opens the form once weekly goals are set', async () => {
+      const wrapper = createComponent({ weeklyClaim: weeklyClaimWithGoals })
+
+      await wrapper.find('[data-test="modal-submit-hours-button"]').trigger('click')
+      await flushPromises()
+
+      expect(mockToast.add).not.toHaveBeenCalledWith(weeklyGoalsRequiredToast)
+      expect(wrapper.findComponent({ name: 'ClaimForm' }).exists()).toBe(true)
+    })
   })
 })

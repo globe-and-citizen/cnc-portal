@@ -21,7 +21,7 @@ jobs:
     name: Browser acceptance
     if: github.event.action != 'labeled' || github.event.label.name == 'run'
     runs-on: ubuntu-latest
-    container: mcr.microsoft.com/playwright:v1.48.2-noble
+    container: mcr.microsoft.com/playwright:v1.65.1-noble
     timeout-minutes: 25
     env:
       CI: "true"
@@ -138,7 +138,7 @@ jobs:
     name: Integrated journeys
     if: github.event.action != 'labeled' || github.event.label.name == 'run'
     runs-on: ubuntu-latest
-    container: mcr.microsoft.com/playwright:v1.48.2-noble
+    container: mcr.microsoft.com/playwright:v1.65.1-noble
     timeout-minutes: 60
 
     services:

@@ -1,6 +1,8 @@
-import { PrismaClient } from '@prisma/client';
+import 'dotenv/config';
+import { createPrismaAdapter } from '../src/utils/prismaAdapter';
+import { PrismaClient } from '../src/generated/prisma/client';
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({ adapter: createPrismaAdapter() });
 
 async function wakeDatabase() {
   const maxRetries = 10;

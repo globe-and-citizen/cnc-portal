@@ -1,7 +1,6 @@
 import router from '@/router'
 import { useUserDataStore } from '@/stores'
 import { log } from '@/lib/logging'
-import { useStorage } from '@vueuse/core'
 import { connect, switchChain, signMessage, getConnection } from '@wagmi/core'
 import { SiweMessage } from 'siwe'
 import { useMutation } from '@tanstack/vue-query'
@@ -88,22 +87,16 @@ async function tagRejection<T>(
 export function useSiweMutation() {
   const toast = useToast()
   const userDataStore = useUserDataStore()
-  const storageToken = useStorage('authToken', '')
-
-  const clearStoredToken = () => {
-    storageToken.value = ''
-    if (typeof window !== 'undefined') {
-      window.localStorage.removeItem('authToken')
-    }
-  }
-
   const isTerminalProfileFailure = (err: unknown) => {
     if (!(err instanceof AxiosError)) return false
 
     const url = err.config?.url ?? ''
     const status = err.response?.status
     return (
-      url.includes('user') && status !== undefined && TERMINAL_PROFILE_FAILURE_STATUSES.has(status)
+      url.includes('user') &&
+      status !== undefined &&
+      TERMINAL_PROFILE_FAILURE_STATUSES.has(status) &&
+      err.config?.headers.get('Authorization') === `Bearer ${userDataStore.token}`
     )
   }
 
@@ -148,20 +141,21 @@ export function useSiweMutation() {
       const signature = await tagRejection(signMessage(config, { message }), SignatureRejectedError)
 
       const { accessToken } = await siweAuth({ message, signature })
-      storageToken.value = accessToken
+      userDataStore.setSessionToken(accessToken)
 
-      const user = await getUser(address)
-      return { user }
+      const user = await getUser(address, accessToken)
+      return { user, accessToken }
     },
-    onSuccess: ({ user }) => {
+    onSuccess: ({ user, accessToken }) => {
+      if (userDataStore.token !== accessToken) return
+
       userDataStore.setUserData(
         user.name || '',
         (user.address || '') as Address,
         user.nonce || '',
         user.imageUrl || ''
       )
-      userDataStore.setAuthStatus(true)
-      router.push('/teams')
+      if (userDataStore.confirmSession(accessToken)) router.push('/teams')
     },
     onError: (err) => {
       log.error('siwe error', err)
@@ -170,7 +164,6 @@ export function useSiweMutation() {
       // Transport failures and transient server errors remain recoverable and
       // must not reset the user's wallet session.
       if (isTerminalProfileFailure(err)) {
-        clearStoredToken()
         userDataStore.clearUserData()
       }
 

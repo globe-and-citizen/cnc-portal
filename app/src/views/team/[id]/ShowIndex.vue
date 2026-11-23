@@ -55,9 +55,6 @@ const teamOutletKey = computed(() => {
   if (typeof name === 'string' && name.startsWith('accounting')) {
     return `accounting:${String(route.params.id ?? '')}`
   }
-  if (name === 'bod-proposals' || name === 'proposal-detail') {
-    return route.fullPath
-  }
   return String(name ?? route.fullPath)
 })
 
@@ -85,24 +82,6 @@ watch(teamStore.currentTeamMeta, () => {
 const hasContract = computed(() => {
   return (teamStore.currentTeamMeta.data?.teamContracts ?? []).length > 0
 })
-
-watch(
-  [
-    () => route.params.id,
-    () => teamStore.currentTeamMeta.data?.currentOfficer?.address,
-    () => (teamStore.currentTeamMeta.data?.teamContracts ?? []).length
-  ],
-  async ([teamId]) => {
-    if (!teamId || typeof teamId !== 'string') {
-      return
-    }
-
-    if (teamId !== teamStore.currentTeamId) {
-      return
-    }
-  },
-  { immediate: true }
-)
 
 // Declare stop first so it's available in the callback
 let stop: (() => void) | undefined

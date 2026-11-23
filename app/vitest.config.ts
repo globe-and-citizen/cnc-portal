@@ -35,9 +35,7 @@ export default defineConfig(async (env) =>
       coverage: {
         provider: 'istanbul',
         exclude: ['./src/tests/**', './src/e2e/**', './src/artifacts/abi/**/generated.ts'],
-        enabled: process.env.VITE_ENABLE_COVERAGE
-          ? (process.env.VITE_ENABLE_COVERAGE as unknown as boolean)
-          : false
+        enabled: process.env.VITE_ENABLE_COVERAGE === 'true'
       },
       env: {
         VITE_APP_SAFE_API_KEY: '',

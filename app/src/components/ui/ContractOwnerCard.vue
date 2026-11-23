@@ -1,6 +1,24 @@
 <template>
   <UCard>
-    <div v-if="ownerUser.address" class="flex items-center justify-between">
+    <UAlert
+      v-if="error"
+      color="warning"
+      title="Unable to refresh owner information"
+      description="Previously loaded information may be outdated. Try again."
+      data-test="contract-owner-error"
+      class="mb-4"
+    >
+      <template #actions>
+        <UButton
+          label="Try again"
+          :loading="isFetching"
+          :disabled="isFetching"
+          data-test="contract-owner-retry"
+          @click="refetch({ cancelRefetch: false })"
+        />
+      </template>
+    </UAlert>
+    <div v-if="ownerUser" class="flex items-center justify-between">
       <div class="text-lg text-gray-500">
         <div class="flex items-center gap-4">
           <UAvatar
@@ -29,7 +47,12 @@
     </div>
 
     <div v-else class="flex items-center justify-center py-4">
-      <span class="text-gray-500">Loading owner information...</span>
+      <span v-if="isLoading" class="text-gray-500" data-test="contract-owner-loading"
+        >Loading owner information...</span
+      >
+      <span v-else class="text-gray-500" data-test="contract-owner-unavailable"
+        >Owner information unavailable.</span
+      >
     </div>
   </UCard>
 </template>
@@ -37,80 +60,27 @@
 <script setup lang="ts">
 import AddressTooltip from '@/components/ui/AddressTooltip.vue'
 import { useTeamStore } from '@/stores/'
-import { type User } from '@/types/user'
-import type { Member } from '@/types/member'
-import { ref, watch, computed } from 'vue'
-import { readContract } from '@wagmi/core'
-import { config } from '@/wagmi.config'
-import type { Abi, Address } from 'viem'
+import { computed } from 'vue'
+import type { Address } from 'viem'
+import { useContractOwner } from '@/composables/contracts/reads'
+import { getContractOwnerIdentity } from '@/utils/contracts/presentation'
 
-const props = defineProps<{
-  contractAddress?: Address
-}>()
-
+const props = defineProps<{ contractAddress?: Address }>()
 const teamStore = useTeamStore()
-
-// Minimal ABI to read owner() from arbitrary contract
-const OWNER_ABI: Abi = [
-  {
-    name: 'owner',
-    stateMutability: 'view',
-    type: 'function',
-    inputs: [],
-    outputs: [{ type: 'address' }]
-  }
-]
-
-const ownerUser = ref<User>({
-  name: '',
-  address: undefined
-})
-
-// prefer explicit prop
-const contractAddress = computed<Address | undefined>(
-  () => props.contractAddress as Address | undefined
-)
-
-const resolveOwnerFromContract = async () => {
-  const contractAddr = contractAddress.value!
-
-  try {
-    const chainOwner = await readContract(config, {
-      address: contractAddr,
-      abi: OWNER_ABI,
-      functionName: 'owner'
-    })
-
-    const ownerAddr = typeof chainOwner === 'string' ? chainOwner : String(chainOwner)
-
-    const member = teamStore.currentTeam?.members.find((m: Member) => {
-      return (m.address || '').toLowerCase() === ownerAddr.toLowerCase()
-    })
-
-    const boardAddress = teamStore.getContractAddressByType('BoardOfDirectors')
-    const isBoard = boardAddress && boardAddress.toLowerCase() === ownerAddr.toLowerCase()
-
-    if (isBoard) {
-      ownerUser.value = { name: 'Board of Directors', address: ownerAddr }
-    } else if (member) {
-      ownerUser.value = {
-        name: member.name || ownerAddr,
-        address: ownerAddr,
-        imageUrl: member.imageUrl || undefined
-      }
-    } else {
-      ownerUser.value = { name: ownerAddr, address: ownerAddr }
-    }
-  } catch (error) {
-    console.error('Failed to resolve contract owner:', error)
-  }
-}
-
-watch(
-  contractAddress,
-  () => {
-    resolveOwnerFromContract()
-  },
-  { immediate: true }
+const {
+  data: owner,
+  error,
+  isLoading,
+  isFetching,
+  refetch
+} = useContractOwner(() => props.contractAddress)
+const ownerUser = computed(() =>
+  owner.value
+    ? getContractOwnerIdentity(
+        owner.value,
+        teamStore.currentTeam?.members ?? [],
+        teamStore.getContractAddressByType('BoardOfDirectors')
+      )
+    : undefined
 )
 </script>

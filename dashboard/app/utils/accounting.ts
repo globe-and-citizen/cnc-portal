@@ -2,6 +2,7 @@ import { formatUsd as canonicalFormatUsd } from '~/utils/format'
 import type { PolygonTokenTransfer } from '~/api/polygonscan'
 import type { PolymarketActivity, PolymarketPosition } from '~/types/polymarket'
 import type { RealizedTrade } from '~/utils/incomeStatement'
+import { contractCost, isChargedFee, ledgerEntryFee } from '~/utils/tradingFees'
 
 /**
  * Polymarket accounting model.
@@ -69,8 +70,9 @@ export interface AccountingSummary {
   netDeposits: number
   /**
    * Realized P&L from our own lot accounting (sells + redeems + merges +
-   * resolution losses). Canonical figure — same source as the Income Statement,
-   * so the two screens agree by construction.
+   * resolution losses), excluding trading fees (see `totalFees`). Canonical
+   * figure — same source as the Income Statement, so the two screens agree by
+   * construction.
    */
   realizedPnl: number
   /**
@@ -83,7 +85,7 @@ export interface AccountingSummary {
   unrealizedPnl: number
   /**
    * All-time P&L as Polymarket's profile page reports it — sourced from
-   * `user-pnl-api.polymarket.com` in {@link useAccounting} (latest chart point).
+   * the Data API v2 `/user-pnl` series in {@link useAccounting} (latest point).
    * `buildLedger()` seeds this as `positionsRealizedPnl + unrealizedPnl` until
    * that feed loads; the two diverge once `/positions` rows go stale.
    */
@@ -91,8 +93,9 @@ export interface AccountingSummary {
   /** Mark-to-market value of still-open positions. */
   openPositionsValue: number
   /**
-   * Cost basis of still-open contracts — what you paid for the open bets, i.e.
-   * Σ acquisitions − Σ disposals (cost). Matches `balanceSheet.openContractsAtCost`.
+   * Cost basis of still-open contracts — what you paid for the open bets before
+   * trading fees, i.e. Σ acquisitions − Σ disposals (cost). Matches
+   * `balanceSheet.openContractsAtCost`.
    * Paired with `openPositionsValue` (market value) it makes the open-position
    * unrealized P&L tangible.
    */
@@ -226,6 +229,60 @@ function transferAmount(transfer: PolygonTokenTransfer): number {
   return raw / 10 ** decimals
 }
 
+/** USDC and pUSD carry six decimals: a smaller amount is floating-point noise. */
+const STABLECOIN_UNITS_PER_DOLLAR = 1e6
+
+/**
+ * Signed change a transfer makes to the wallet's cash: + in, − out, and 0 for
+ * a self-transfer or a transfer between two other addresses.
+ */
+function walletCashDelta(transfer: PolygonTokenTransfer, wallet: string): number {
+  const from = transfer.from.toLowerCase()
+  const to = transfer.to.toLowerCase()
+  if (from === to) {
+    return 0
+  }
+  if (to === wallet) {
+    return transferAmount(transfer)
+  }
+  return from === wallet ? -transferAmount(transfer) : 0
+}
+
+/** One stablecoin transfer of a transaction and its signed effect on the wallet's cash. */
+interface TransferLeg {
+  transfer: PolygonTokenTransfer
+  delta: number
+}
+
+/**
+ * The deposit or withdrawal a transaction's legs add up to, or null when they
+ * cancel out (a swap between two stablecoins). The outside party is where the
+ * money came from first on a deposit, and where it went last on a withdrawal.
+ */
+function cashTransferEntry(hash: string, legs: TransferLeg[]): LedgerEntry | null {
+  const netDelta = legs.reduce((net, { delta }) => net + delta, 0)
+  const cashFlow = Math.round(netDelta * STABLECOIN_UNITS_PER_DOLLAR) / STABLECOIN_UNITS_PER_DOLLAR
+  if (cashFlow === 0) {
+    return null
+  }
+  const isDeposit = cashFlow > 0
+  const outsideLeg = isDeposit
+    ? legs.find(({ delta }) => delta > 0)!
+    : legs.findLast(({ delta }) => delta < 0)!
+  const { transfer } = outsideLeg
+  return {
+    id: `ps-${hash}`,
+    timestamp: Number(transfer.timeStamp) || 0,
+    category: isDeposit ? 'DEPOSIT' : 'WITHDRAWAL',
+    description: `${isDeposit ? 'Deposit' : 'Withdrawal'} (${transfer.tokenSymbol})`,
+    amount: Math.abs(cashFlow),
+    cashFlow,
+    txHash: transfer.hash,
+    source: 'polygonscan',
+    counterparty: isDeposit ? transfer.from : transfer.to
+  }
+}
+
 /**
  * Builds the full accounting ledger and summary for a Polymarket wallet.
  */
@@ -283,15 +340,8 @@ export function buildLedger(input: BuildLedgerInput): AccountingLedger {
     if (!activityNetByHash.has(hash)) {
       continue
     }
-    const from = transfer.from.toLowerCase()
-    const to = transfer.to.toLowerCase()
-    const amount = transferAmount(transfer)
-    let delta = 0
-    if (to === wallet && from !== wallet) {
-      delta = amount
-    } else if (from === wallet && to !== wallet) {
-      delta = -amount
-    } else {
+    const delta = walletCashDelta(transfer, wallet)
+    if (delta === 0) {
       continue
     }
     const ts = Number(transfer.timeStamp) || 0
@@ -328,52 +378,26 @@ export function buildLedger(input: BuildLedgerInput): AccountingLedger {
   }
 
   // --- Etherscan USDC transfers → deposit/withdrawal entries ---
-  input.transfers.forEach((transfer, index) => {
-    if (!isStablecoin(transfer)) {
-      return
+  // Transactions already captured as a Polymarket activity row are skipped to
+  // avoid double counting. Each remaining transaction is one entry, for the
+  // wallet's net stablecoin movement in it: a withdrawal can burn pUSD, receive
+  // USDC.e from the vault and pay it out in one transaction, and those legs are
+  // a single withdrawal, not a withdrawal, a deposit and another withdrawal.
+  const uncoveredLegsByHash = new Map<string, TransferLeg[]>()
+  for (const transfer of input.transfers) {
+    const hash = transfer.hash.toLowerCase()
+    const delta = isStablecoin(transfer) ? walletCashDelta(transfer, wallet) : 0
+    if (delta === 0 || activityNetByHash.has(hash)) {
+      continue
     }
-    // Already captured as a Polymarket activity row — skip to avoid double counting.
-    if (activityNetByHash.has(transfer.hash.toLowerCase())) {
-      return
+    uncoveredLegsByHash.set(hash, [...(uncoveredLegsByHash.get(hash) ?? []), { transfer, delta }])
+  }
+  for (const [hash, legs] of uncoveredLegsByHash) {
+    const entry = cashTransferEntry(hash, legs)
+    if (entry) {
+      entries.push(entry)
     }
-
-    const from = transfer.from.toLowerCase()
-    const to = transfer.to.toLowerCase()
-    const amount = transferAmount(transfer)
-    if (amount <= 0) {
-      return
-    }
-
-    let category: LedgerCategory
-    let counterparty: string
-    let cashFlow: number
-    if (to === wallet && from !== wallet) {
-      category = 'DEPOSIT'
-      counterparty = transfer.from
-      cashFlow = amount
-    } else if (from === wallet && to !== wallet) {
-      category = 'WITHDRAWAL'
-      counterparty = transfer.to
-      cashFlow = -amount
-    } else {
-      // Self-transfer or unrelated row — ignore.
-      return
-    }
-
-    entries.push({
-      id: `ps-${transfer.hash}-${index}`,
-      timestamp: Number(transfer.timeStamp) || 0,
-      category,
-      description: category === 'DEPOSIT'
-        ? `Deposit (${transfer.tokenSymbol})`
-        : `Withdrawal (${transfer.tokenSymbol})`,
-      amount,
-      cashFlow,
-      txHash: transfer.hash,
-      source: 'polygonscan',
-      counterparty
-    })
-  })
+  }
 
   entries.sort((a, b) => b.timestamp - a.timestamp)
 
@@ -411,16 +435,10 @@ export function buildLedger(input: BuildLedgerInput): AccountingLedger {
     } else if (entry.category === 'TRADE_BUY' || entry.category === 'TRADE_SELL') {
       summary.tradingVolume += entry.amount
       summary.tradeCount += 1
-      // Polymarket fees are baked into the fill price, not surfaced on-chain: the
-      // quoted price (unitPrice) differs from the real fill (amount / quantity).
-      // The gap is the fee/spread the user actually paid on this fill.
-      if (entry.unitPrice != null && entry.quantity != null) {
-        const quotedValue = entry.quantity * entry.unitPrice
-        const fee = Math.abs(quotedValue - entry.amount)
-        summary.totalFees += fee
-        if (fee > 1e-4) {
-          summary.feeTransactionCount += 1
-        }
+      const fee = ledgerEntryFee(entry)
+      summary.totalFees += fee
+      if (isChargedFee(fee)) {
+        summary.feeTransactionCount += 1
       }
     } else if (REWARD_CATEGORIES.has(entry.category)) {
       summary.totalRewards += entry.amount
@@ -429,7 +447,7 @@ export function buildLedger(input: BuildLedgerInput): AccountingLedger {
       summary.settlementAdjustmentCount += 1
     }
     if (entry.category === 'TRADE_BUY' || entry.category === 'SPLIT') {
-      acquisitionCost += entry.amount
+      acquisitionCost += contractCost(entry)
     }
   }
   summary.netDeposits = summary.totalDeposits - summary.totalWithdrawals
@@ -480,17 +498,24 @@ export function buildLedger(input: BuildLedgerInput): AccountingLedger {
   // Adding this line to the P&L identity #5 makes the books reconcile by construction.
   summary.positionBasisDrift = summary.openPositionsValue - openContractsAtCost - summary.unrealizedPnl
 
-  // Five reconciliation lines fully account for totalReturn:
-  //   realized + unrealized + rewards + settlement deltas + cost-basis drift.
-  // With all five included, this gap is 0 by construction (modulo float dust).
-  const pnlBasedReturn = summary.realizedPnl
-    + summary.unrealizedPnl
-    + summary.totalRewards
-    + summary.settlementAdjustments
-    + summary.positionBasisDrift
-  summary.reconciliationGap = summary.totalReturn - pnlBasedReturn
+  summary.reconciliationGap = summary.totalReturn - pnlBasedReturn(summary)
 
   return { entries, summary }
+}
+
+/**
+ * The P&L view of the total return: realized + unrealized + rewards − trading
+ * fees + settlement deltas + cost-basis drift. Realized and unrealized results
+ * exclude fees, so the fees come off once here. With every line included it
+ * equals {@link AccountingSummary.totalReturn} by construction.
+ */
+export function pnlBasedReturn(summary: AccountingSummary): number {
+  return summary.realizedPnl
+    + summary.unrealizedPnl
+    + summary.totalRewards
+    - summary.totalFees
+    + summary.settlementAdjustments
+    + summary.positionBasisDrift
 }
 
 // --- Presentation helpers (shared by the accounting components) ---

@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { Prisma, Team, User } from '@prisma/client';
+import { Prisma, Team, User } from '../../generated/prisma/client';
 import express, { NextFunction, Request, Response } from 'express';
 import request from 'supertest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -545,6 +545,7 @@ describe('Team Controller', () => {
           isMigrated: false,
           isArchived: false,
           isHidden: false,
+          isFavorite: false,
           teamContracts: [],
           callerWage: null,
         }))
@@ -631,6 +632,7 @@ describe('Team Controller', () => {
           isMigrated: false,
           isArchived: false,
           isHidden: false,
+          isFavorite: false,
           teamContracts: [],
           callerWage: null,
         }))
@@ -867,6 +869,47 @@ describe('Team Controller', () => {
       expect(response.body.message).toBe('Unauthorized: Only team owner can update metadata');
     });
 
+    describe('[AC-US-PAYROLL-015-01] weekly goals requirement', () => {
+      const teamOwnedBy = (ownerAddress: string) => ({
+        id: 1,
+        ownerAddress,
+        isArchived: false,
+        members: [{ address: mockOwner.address }],
+        name: 'Test Team',
+        description: 'Test Description',
+      });
+
+      it('lets the owner require weekly goals', async () => {
+        vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(teamOwnedBy(mockOwner.address));
+        const updateSpy = vi.spyOn(prisma.team, 'update').mockResolvedValue({
+          ...teamOwnedBy(mockOwner.address),
+          requireWeeklyGoals: true,
+          teamOfficers: [],
+          teamContracts: [],
+        } as never);
+        vi.spyOn(prisma.memberTeamsData, 'findUnique').mockResolvedValue(null);
+
+        const response = await request(app).put('/1').send({ requireWeeklyGoals: true });
+
+        expect(response.status).toBe(200);
+        expect(updateSpy).toHaveBeenCalledWith(
+          expect.objectContaining({ data: { requireWeeklyGoals: true } })
+        );
+        expect(response.body.requireWeeklyGoals).toBe(true);
+      });
+
+      it('rejects a member who is not the owner', async () => {
+        vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(
+          teamOwnedBy(faker.finance.ethereumAddress())
+        );
+
+        const response = await request(app).put('/1').send({ requireWeeklyGoals: true });
+
+        expect(response.status).toBe(403);
+        expect(prisma.team.update).not.toHaveBeenCalled();
+      });
+    });
+
     it('[AC-US-COMPANIES-006-01] allows the owner to restore an archived company', async () => {
       const mockTeam = {
         id: 1,
@@ -1020,6 +1063,141 @@ describe('Team Controller', () => {
 
       expect(response.status).toBe(500);
       expect(response.body.message).toEqual('Internal server error has occured');
+    });
+  });
+
+  describe('[US-COMPANIES-009] pinning a company', () => {
+    const memberTeam = {
+      id: 1,
+      ownerAddress: '0x9999999999999999999999999999999999999999',
+      isArchived: false,
+      members: [{ address: mockOwner.address }],
+      name: 'Test Team',
+      description: 'Test Description',
+    };
+
+    const mockSuccessfulUpdate = (team: typeof memberTeam, isFavorite: boolean) => {
+      vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(team);
+      vi.spyOn(prisma.team, 'update').mockResolvedValue({
+        ...team,
+        teamOfficers: [],
+        teamContracts: [],
+        members: [{ address: mockOwner.address, name: mockOwner.name }],
+      } as never);
+      vi.spyOn(prisma.memberTeamsData, 'findUnique').mockResolvedValue({
+        isHidden: false,
+        isFavorite,
+      } as never);
+    };
+
+    it('[AC-US-COMPANIES-009-01] saves the pin and returns it', async () => {
+      mockSuccessfulUpdate(memberTeam, true);
+
+      const response = await request(app).put('/1').send({ isFavorite: true });
+
+      expect(response.status).toBe(200);
+      expect(response.body.isFavorite).toBe(true);
+    });
+
+    it('[AC-US-COMPANIES-009-03] writes only the requesting member relationship', async () => {
+      mockSuccessfulUpdate(memberTeam, true);
+
+      await request(app).put('/1').send({ isFavorite: true });
+
+      expect(prisma.team.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: {
+            memberTeamsData: {
+              updateMany: {
+                where: { teamId: 1, memberAddress: mockOwner.address },
+                data: { isFavorite: true },
+              },
+            },
+          },
+        })
+      );
+    });
+
+    it('[AC-US-COMPANIES-009-04] lets a member pin an archived company', async () => {
+      mockSuccessfulUpdate({ ...memberTeam, isArchived: true }, true);
+
+      const response = await request(app).put('/1').send({ isFavorite: true });
+
+      expect(response.status).toBe(200);
+    });
+
+    it('still rejects metadata sent alongside a pin on an archived company', async () => {
+      vi.spyOn(prisma.team, 'findUnique').mockResolvedValue({
+        ...memberTeam,
+        isArchived: true,
+        ownerAddress: mockOwner.address,
+      });
+
+      const response = await request(app).put('/1').send({ isFavorite: true, name: 'Renamed' });
+
+      expect(response.status).toBe(409);
+    });
+
+    it('[AC-US-COMPANIES-009-06] rejects a pin from a non-member', async () => {
+      const updateSpy = vi.spyOn(prisma.team, 'update');
+      updateSpy.mockClear();
+      vi.spyOn(prisma.team, 'findUnique').mockResolvedValue({ ...memberTeam, members: [] });
+
+      const response = await request(app).put('/1').send({ isFavorite: true });
+
+      expect(response.status).toBe(403);
+      expect(updateSpy).not.toHaveBeenCalled();
+    });
+
+    it('[AC-US-COMPANIES-009-02] lists pinned companies first', async () => {
+      vi.spyOn(prisma.team, 'findMany').mockResolvedValue([
+        { ...memberTeam, id: 1, teamOfficers: [], teamContracts: [] },
+        { ...memberTeam, id: 2, teamOfficers: [], teamContracts: [] },
+      ] as never);
+      vi.spyOn(prisma.memberTeamsData, 'findMany').mockResolvedValue([
+        { teamId: 1, isHidden: false, isFavorite: false },
+        { teamId: 2, isHidden: false, isFavorite: true },
+      ] as never);
+      vi.spyOn(prisma.wage, 'findMany').mockResolvedValue([] as never);
+
+      const response = await request(app).get('/').query({ userAddress: mockOwner.address });
+
+      expect(response.body.map((team: { id: number }) => team.id)).toEqual([2, 1]);
+    });
+
+    it('[AC-US-COMPANIES-009-05] keeps hidden companies out of the default list', async () => {
+      vi.spyOn(prisma.team, 'findMany').mockResolvedValue([] as never);
+      vi.spyOn(prisma.memberTeamsData, 'findMany').mockResolvedValue([] as never);
+      vi.spyOn(prisma.wage, 'findMany').mockResolvedValue([] as never);
+
+      await request(app).get('/').query({ userAddress: mockOwner.address });
+
+      expect(prisma.team.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            OR: [
+              {
+                isArchived: false,
+                memberTeamsData: { some: { memberAddress: mockOwner.address, isHidden: false } },
+              },
+            ],
+          },
+        })
+      );
+    });
+
+    it('[AC-US-COMPANIES-009-01] returns each company with the pin of the caller', async () => {
+      vi.spyOn(prisma.team, 'findMany').mockResolvedValue([
+        { ...memberTeam, teamOfficers: [], teamContracts: [] },
+      ] as never);
+      vi.spyOn(prisma.memberTeamsData, 'findMany').mockResolvedValue([
+        { teamId: 1, isHidden: false, isFavorite: true },
+      ] as never);
+      vi.spyOn(prisma.wage, 'findMany').mockResolvedValue([] as never);
+
+      const response = await request(app).get('/').query({ userAddress: mockOwner.address });
+
+      expect(response.body[0].isFavorite).toBe(true);
     });
   });
 

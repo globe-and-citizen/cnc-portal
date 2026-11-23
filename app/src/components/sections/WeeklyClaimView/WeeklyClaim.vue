@@ -1,6 +1,11 @@
 <template>
   <UCard class="w-full pb-7">
-    <template #header>{{ singleUser ? 'Weekly Claim (User)' : 'Weekly Claim' }}</template>
+    <template #header>
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <span>{{ singleUser ? 'Weekly Claim (User)' : 'Weekly Claim' }}</span>
+        <RequireWeeklyGoalsToggle v-if="!singleUser" />
+      </div>
+    </template>
     <UTable
       v-if="rows"
       :data="rows"
@@ -146,6 +151,7 @@
 </template>
 
 <script setup lang="ts">
+import { sumFiatValues, valueTokenAmount } from '@/utils/currency/valuation'
 import RatePerHourList from '@/components/sections/WeeklyClaimView/RatePerHourList.vue'
 import RatePerHourTotalList from '@/components/sections/WeeklyClaimView/RatePerHourTotalList.vue'
 import type { TableColumn } from '@nuxt/ui'
@@ -165,6 +171,7 @@ import { RouterLink } from 'vue-router'
 // import CRWithdrawClaim from '../CashRemunerationView/CRWithdrawClaim.vue'
 import { useGetTeamWeeklyClaimsQuery } from '@/queries'
 import WeeklyClaimActionDropdown from './WeeklyClaimActionDropdown.vue'
+import RequireWeeklyGoalsToggle from './RequireWeeklyGoalsToggle.vue'
 import TablePagination from '@/components/ui/TablePagination.vue'
 import { usePagination } from '@/composables/usePagination'
 import type { Address } from 'viem'
@@ -230,9 +237,9 @@ type EnrichedWeeklyClaim = WeeklyClaim & {
     totalMinutes: number
     hasOvertime: boolean
     tokenAmounts: TokenAmount[]
-    totalInUserCurrency: number
-    hourlyRateInUserCurrency: number
-    overtimeHourlyRateInUserCurrency: number
+    totalInUserCurrency: number | null
+    hourlyRateInUserCurrency: number | null
+    overtimeHourlyRateInUserCurrency: number | null
   }
 }
 
@@ -277,12 +284,16 @@ const localCurrencyFormatOptions = computed(() => ({ currency: currencyStore.loc
 function sumInUserCurrency(
   amounts: Array<{ type: SupportedTokens; amount: number }>,
   tokenStore = currencyStore
-): number {
-  return amounts.reduce((total, { type, amount }) => {
-    const tokenInfo = tokenStore.getTokenInfo(type as TokenId)
-    const localPrice = tokenInfo?.prices.find((p) => p.id === 'local')?.price ?? 0
-    return total + amount * localPrice
-  }, 0)
+): number | null {
+  return sumFiatValues(
+    amounts.map(({ type, amount }) =>
+      valueTokenAmount(
+        amount,
+        tokenStore.getTokenInfo(type as TokenId)?.prices.find((price) => price.id === 'local')
+          ?.price
+      )
+    )
+  )
 }
 
 const columns = [

@@ -28,7 +28,7 @@
         <UDropdownMenu :items="profileItems" data-test="profile">
           <UAvatar
             :src="
-              imageUrl ||
+              userStore.imageUrl ||
               'https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp'
             "
             alt="User avatar"
@@ -54,18 +54,14 @@
 <script setup lang="ts">
 import { currentChainId, NETWORK } from '@/constant/index'
 import { latestDeployedVersionForChain } from '@/artifacts/registry'
-import { useAuth } from '@/composables/useAuth'
 import NotificationDropdown from '@/components/layout/NotificationDropdown.vue'
 import { useUserDataStore } from '@/stores'
-import { storeToRefs } from 'pinia'
 import type { DropdownMenuItem } from '@nuxt/ui'
 import EditUserForm from '@/components/forms/EditUserForm.vue'
 import { ref } from 'vue'
 
 defineEmits(['toggleSideButton', 'toggleEditUserModal'])
-const { logout } = useAuth()
 const userStore = useUserDataStore()
-const { imageUrl } = storeToRefs(userStore)
 
 const open = ref(false)
 const showContractVersion = import.meta.env.DEV
@@ -73,6 +69,6 @@ const latestContractVersion = latestDeployedVersionForChain(currentChainId)
 
 const profileItems = <DropdownMenuItem[]>[
   { label: 'Settings', onSelect: () => (open.value = true) },
-  { label: 'Logout', onSelect: logout }
+  { label: 'Logout', onSelect: userStore.clearUserData }
 ]
 </script>

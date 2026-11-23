@@ -1,3 +1,4 @@
+import { valueTokenAmount } from '@/utils/currency/valuation'
 import type {
   InvestorEventFeed,
   RawInvestorTransaction,
@@ -123,7 +124,7 @@ export const formatInvestorTransactionDate = (timestamp: number): string =>
 export const mapRawInvestorTransaction = (
   tx: RawInvestorTransaction,
   investorTokenSymbol: string,
-  getUsdPrice: (tokenId: TokenId | null) => number,
+  getUsdPrice: (tokenId: TokenId | null) => number | null,
   supportedTokens: ReadonlyArray<SupportedTokenPresentation>
 ): InvestorsTransaction => {
   const isConfigEvent =
@@ -153,14 +154,18 @@ export const mapRawInvestorTransaction = (
       ? null
       : (matchedToken?.id ?? resolveTokenIdByAddress(tokenAddress))
   const numericAmount = Number(amount)
-  const amountUSD = Number.isFinite(numericAmount) ? numericAmount * getUsdPrice(tokenId) : 0
+  const amountUSD = tokenId
+    ? valueTokenAmount(numericAmount, getUsdPrice(tokenId))
+    : isConfigEvent || isMultiplierEvent
+      ? 0
+      : null
   return {
     txHash: tx.txHash,
     date: formatInvestorTransactionDate(tx.timestamp),
     from: tx.from,
     to: tx.to,
     amount,
-    amountUSD: amountUSD || 0,
+    amountUSD,
     token,
     tokenAddress,
     type: tx.transactionType,

@@ -23,8 +23,7 @@
       />
       <p>
         Are you sure you want to delete the company
-        <span class="font-bold">{{ currentTeam?.name }}</span
-        >?
+        <span class="font-bold">{{ currentTeam?.name }}</span>?
       </p>
       <div class="mt-4 flex justify-center gap-2">
         <UButton

@@ -116,6 +116,7 @@
 </template>
 
 <script setup lang="ts">
+import { sumFiatValues } from '@/utils/currency/valuation'
 import { computed, ref } from 'vue'
 import type { Address } from 'viem'
 import { useContractBalance } from '@/composables'
@@ -143,7 +144,7 @@ const { data: bankOwner } = useBankOwner()
 
 const currencyCode = computed(() => currencyStore.localCurrency.code)
 const fiat = (balance: ReturnType<typeof useContractBalance>) =>
-  balance.data.value?.total.local.value ?? 0
+  balance.data.value?.total.local.value ?? null
 const fiatFormatted = (balance: ReturnType<typeof useContractBalance>) =>
   balance.data.value?.total.local.formatted ?? '—'
 const hasFunds = (balance: ReturnType<typeof useContractBalance>) =>
@@ -155,8 +156,8 @@ const isOwner = computed(() => {
 })
 
 const balancesFiat = computed(() => ({
-  cashRemuneration: fiat(cashRemBalance),
-  expense: fiat(expenseBalance),
+  cashRemuneration: cashRemAddress.value ? fiat(cashRemBalance) : 0,
+  expense: expenseAddress.value ? fiat(expenseBalance) : 0,
   bank: fiat(bankBalance)
 }))
 
@@ -177,7 +178,11 @@ const hasAnyBalance = computed(() => plan.value.length > 0)
 
 const projectedBankFormatted = computed(() =>
   formatCurrencyShort(
-    balancesFiat.value.cashRemuneration + balancesFiat.value.expense + balancesFiat.value.bank,
+    sumFiatValues([
+      balancesFiat.value.cashRemuneration,
+      balancesFiat.value.expense,
+      balancesFiat.value.bank
+    ]),
     currencyCode.value
   )
 )

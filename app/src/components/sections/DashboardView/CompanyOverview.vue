@@ -126,6 +126,7 @@
 </template>
 
 <script setup lang="ts">
+import { sumFiatValues } from '@/utils/currency/valuation'
 import { useTeamStore } from '@/stores/teamStore'
 import { useCurrencyStore } from '@/stores'
 import { computed } from 'vue'
@@ -154,7 +155,9 @@ const safeBalance = useGetSafeBalancesQuery({
 const expenseBalance = useContractBalance(expenseAddress as unknown as Address)
 const cashRemBalance = useContractBalance(cashRemAddress as unknown as Address)
 
-const safeTotal = computed(() => getSafeValuedFiatTotal(safeBalance.data.value) ?? 0)
+const safeTotal = computed(() =>
+  safeAddress.value ? (getSafeValuedFiatTotal(safeBalance.data.value) ?? null) : 0
+)
 
 const isLoadingBalances = computed(
   () =>
@@ -165,19 +168,20 @@ const isLoadingBalances = computed(
 )
 
 function getFormattedTotal(balance: ReturnType<typeof useContractBalance>) {
-  return balance.data.value?.total.local.formatted ?? '$0.00'
+  return balance.data.value?.total.local.formatted ?? '—'
 }
 
 function getRawTotal(balance: ReturnType<typeof useContractBalance>) {
-  return balance.data.value?.total.local.value ?? 0
+  return balance.data.value?.total.local.value ?? null
 }
 
 const totalBalance = computed(() => {
-  const sum =
-    getRawTotal(bankBalance) +
-    safeTotal.value +
-    getRawTotal(expenseBalance) +
-    getRawTotal(cashRemBalance)
+  const sum = sumFiatValues([
+    bankAddress.value ? getRawTotal(bankBalance) : 0,
+    safeTotal.value,
+    expenseAddress.value ? getRawTotal(expenseBalance) : 0,
+    cashRemAddress.value ? getRawTotal(cashRemBalance) : 0
+  ])
   return formatCurrency(sum, { currency: currencyStore.localCurrency.code })
 })
 

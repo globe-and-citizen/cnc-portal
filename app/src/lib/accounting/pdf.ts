@@ -16,15 +16,17 @@ import {
   presentBalance,
   presentTrial,
   presentSummary,
+  summaryExportTitle,
   incomeExportTitle,
   balanceExportTitle,
   trialExportTitle
 } from '@/utils/accounting/presenter'
+import { balanceExportRows, type BalanceExportRowKind } from '@/utils/accounting/balanceExportRows'
 import type { SectionSpec } from '@/utils/accounting/exportSpec'
 import { formatDateTime } from '@/utils/format'
 import {
-  ACCOUNT_ASSIGNMENTS_TITLE,
   ACCOUNT_ASSIGNMENT_COLUMNS,
+  assignmentsExportTitle,
   assignmentStatus,
   presentJournalAccountAssignments
 } from '@/utils/accounting/journalAccountAssignmentPresenter'
@@ -51,6 +53,18 @@ export interface AccountingPdfTable {
   widths?: number[]
   /** Text size and cell padding (defaults to {@link DEFAULT_TYPOGRAPHY}). */
   typography?: PdfTableTypography
+  /** Per-row look, parallel to `body`, overriding the default zebra stripes. */
+  rowStyles?: PdfRowStyle[]
+}
+
+type PdfColor = [number, number, number]
+
+export interface PdfRowStyle {
+  fontStyle?: 'bold'
+  fillColor?: PdfColor
+  textColor?: PdfColor
+  fontSize?: number
+  cellPadding?: number
 }
 
 /** Text size and cell padding of a printed table, in points. */
@@ -64,10 +78,14 @@ const DEFAULT_TYPOGRAPHY: PdfTableTypography = { fontSize: 10, cellPadding: 6 }
 /** A blank spacer row, used to separate sub-sections inside a statement. */
 const GAP: Cell[] = ['', '']
 
-function summaryTable(books: AccountingExportSnapshot): AccountingPdfTable {
-  const { cards, banner } = presentSummary(books.journal)
+function summaryTable(
+  books: AccountingExportSnapshot,
+  from?: Date | null,
+  to?: Date | null
+): AccountingPdfTable {
+  const { cards, banner } = presentSummary(books.journal, from, to)
   return {
-    title: 'Summary',
+    title: summaryExportTitle(from, to),
     head: ['Metric', 'Value'],
     align: ['left', 'right'],
     body: [
@@ -104,31 +122,27 @@ function incomeTable(
   }
 }
 
+const WHITE: PdfColor = [255, 255, 255]
+
+/** The Balance Sheet's blocks read like its on-screen cards, so its rows carry no zebra stripes. */
+const BALANCE_ROW_STYLES: Record<BalanceExportRowKind, PdfRowStyle> = {
+  section: { fontStyle: 'bold', fillColor: [241, 245, 249] },
+  columns: { fontStyle: 'bold', fillColor: WHITE },
+  line: { fillColor: WHITE },
+  total: { fontStyle: 'bold', fillColor: [248, 250, 252] },
+  gap: { fillColor: WHITE, fontSize: 2, cellPadding: 3 },
+  grandTotal: { fontStyle: 'bold', fillColor: [224, 242, 254], textColor: [3, 105, 161] }
+}
+
 function balanceTable(books: AccountingExportSnapshot, asOf?: Date | null): AccountingPdfTable {
-  const balance = presentBalance(books.journal, asOf)
+  const rows = balanceExportRows(presentBalance(books.journal, asOf))
   return {
     title: balanceExportTitle(asOf),
-    head: ['Item', 'Amount'],
-    align: ['left', 'right'],
-    body: [
-      ['Assets', ''],
-      ...balance.assetLines.map((line) => [line.label, line.value]),
-      ['Total assets', balance.totalAssets],
-      GAP,
-      ['Liabilities', ''],
-      ...balance.liabilityLines.map((line) => [line.label, line.value]),
-      ['Total liabilities', balance.totalLiabilities],
-      GAP,
-      ['Equity', ''],
-      ...balance.equityLines.map((line) => [line.label, line.value]),
-      ['Total equity', balance.totalEquity],
-      GAP,
-      ['Earnings to date calculation', ''],
-      ...balance.earningsLines.map((line) => [line.label, line.value]),
-      ['Earnings to date', balance.earningsToDate],
-      GAP,
-      ['Liabilities + Equity', balance.liabilitiesPlusEquity]
-    ]
+    head: [],
+    align: ['left', 'left', 'right'],
+    widths: [58, 24, 18],
+    body: rows.map(({ account, nature, value }) => [account, nature, value]),
+    rowStyles: rows.map(({ kind }) => BALANCE_ROW_STYLES[kind])
   }
 }
 
@@ -145,10 +159,14 @@ function trialTable(books: AccountingExportSnapshot, asOf?: Date | null): Accoun
   }
 }
 
-function assignmentsTable(books: AccountingExportSnapshot): AccountingPdfTable {
-  const { rows } = presentJournalAccountAssignments(books.journal)
+function assignmentsTable(
+  books: AccountingExportSnapshot,
+  from?: Date | null,
+  to?: Date | null
+): AccountingPdfTable {
+  const { rows } = presentJournalAccountAssignments(books.journal, from, to)
   return {
-    title: ACCOUNT_ASSIGNMENTS_TITLE,
+    title: assignmentsExportTitle(from, to),
     head: ACCOUNT_ASSIGNMENT_COLUMNS.map((column) => column.label),
     align: ['left', 'left', 'left', 'left', 'left', 'right', 'right', 'left'],
     widths: [160, 180, 150, 200, 100, 120, 120, 280],
@@ -173,7 +191,7 @@ function sectionTable(
 ): AccountingPdfTable {
   switch (spec.key) {
     case 'summary':
-      return summaryTable(books)
+      return summaryTable(books, spec.from, spec.to)
     case 'income':
       return incomeTable(books, spec.from, spec.to)
     case 'balance':
@@ -191,7 +209,7 @@ function sectionTable(
         journalAccountMovements: spec.journalAccountMovements
       })
     case 'assignments':
-      return assignmentsTable(books)
+      return assignmentsTable(books, spec.from, spec.to)
   }
 }
 
@@ -234,8 +252,8 @@ export interface ExportPdfOptions {
   pageBreak?: boolean
   /** Team whose books these are, printed in the document title. */
   teamName?: string
-  /** Span of activity the books record, printed under the title. */
-  coverage?: string | null
+  /** The report's selected period, printed under the title. */
+  coverage?: string
 }
 
 /** The document title and the line under it, naming whose books and which period. */
@@ -293,7 +311,7 @@ export async function exportTablesPdf(
     autoTable(doc, {
       startY: cursorY + 8,
       margin: { left: marginX, right: marginX },
-      head: [table.head],
+      head: table.head.length ? [table.head] : [],
       body: table.body,
       theme: 'striped',
       styles: { fontSize, cellPadding, textColor: [30, 41, 59] },
@@ -305,6 +323,9 @@ export async function exportTablesPdf(
       },
       alternateRowStyles: { fillColor: ZEBRA_FILL },
       columnStyles: columnStylesOf(table, tableWidth),
+      didParseCell: ({ section, row, cell }) => {
+        if (section === 'body') Object.assign(cell.styles, table.rowStyles?.[row.index])
+      },
       didDrawPage: () => drawWatermark(doc)
     })
   })

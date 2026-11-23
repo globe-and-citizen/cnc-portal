@@ -3,7 +3,6 @@
  * This allows for easy imports: import { useGetTeamsQuery, useGetNotificationsQuery } from '@/queries'
  */
 
-export * from './auth.queries'
 export * from './team.queries'
 export * from './user.queries'
 export * from './notification.queries'

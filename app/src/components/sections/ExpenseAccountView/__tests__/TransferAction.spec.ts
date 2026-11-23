@@ -48,10 +48,13 @@ const MockTransferForm = {
 
 type MutationOpts = { onSuccess?: () => void; onError?: (e: unknown) => void }
 
+import type { BudgetLimit, ExpenseApproval } from '@/types/expense-account'
+
+const SIGNATURE = `0x${'ab'.repeat(65)}` as const
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
 const OWNER_ADDRESS = '0x1234567890123456789012345678901234567890'
 const CURRENT_EXPENSE_ACCOUNT = '0x5555555555555555555555555555555555555555'
-const NATIVE_BUDGET = {
+const NATIVE_BUDGET: BudgetLimit = {
   tokenAddress: ZERO_ADDRESS,
   approvedAddress: '0xApprovedAddress',
   amount: 1,
@@ -62,7 +65,7 @@ const NATIVE_BUDGET = {
   signedAgainstContractAddress: CURRENT_EXPENSE_ACCOUNT,
   chainId: 1
 }
-const ERC20_BUDGET = {
+const ERC20_BUDGET: BudgetLimit = {
   ...NATIVE_BUDGET,
   tokenAddress: USDC_ADDRESS,
   amount: 100
@@ -72,7 +75,7 @@ describe('TransferAction.vue', () => {
   const transfer = mockExpenseAccountWrites.transfer
   const approve = mockERC20Writes.approve
 
-  const createComponent = (data = ERC20_BUDGET) =>
+  const createComponent = (data: BudgetLimit = ERC20_BUDGET) =>
     mount(TransferAction, {
       global: {
         stubs: { TransferForm: MockTransferForm, teleport: true }
@@ -80,10 +83,10 @@ describe('TransferAction.vue', () => {
       props: {
         row: {
           status: 'enabled',
-          signature: '0xSignature',
+          signature: SIGNATURE,
           data,
-          balances: ['0', '0']
-        }
+          balances: { 0: '0', 1: '0' }
+        } satisfies ExpenseApproval
       }
     })
 
@@ -100,6 +103,15 @@ describe('TransferAction.vue', () => {
     await form.vm.$emit('transfer', { address: { address: to }, amount })
     await flushPromises()
   }
+
+  it('rejects a malformed signature before owner verification or transfer', async () => {
+    const wrapper = createComponent()
+    await wrapper.setProps({ row: { status: 'enabled', signature: 'not-hex', data: ERC20_BUDGET } })
+    await submitTransfer(wrapper)
+    expect(wrapper.text()).toContain('Failed to verify expense approval signature')
+    expect(recoverTypedDataAddress).not.toHaveBeenCalled()
+    expect(transfer.mutate).not.toHaveBeenCalled()
+  })
 
   beforeEach(() => {
     setActivePinia(createPinia())
@@ -184,7 +196,7 @@ describe('TransferAction.vue', () => {
     // The only on-chain read is the owner lookup used to verify the signature.
     expect(readContract).toHaveBeenCalledTimes(1)
     expect(transfer.mutate).toHaveBeenCalledWith(
-      { args: ['0xRecipient', BigInt(1e6), expect.anything(), '0xSignature'] },
+      { args: ['0xRecipient', BigInt(1e6), expect.anything(), SIGNATURE] },
       expect.anything()
     )
   })

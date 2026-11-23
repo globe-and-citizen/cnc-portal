@@ -46,3 +46,28 @@ describe('transaction presentation', () => {
     })
   })
 })
+
+describe('transaction fiat availability', () => {
+  it.each([
+    [null, null],
+    [0, 0],
+    [2, 8]
+  ] as const)('preserves quote %s as fiat value %s', (price, expected) => {
+    const row = enrichTransactionPresentation(
+      { amount: '4', tokenAddress: TOKEN_ADDRESS, token: 'USDC' },
+      {
+        supportedTokens: [{ address: TOKEN_ADDRESS, id: 'usdc', symbol: 'USDC' }],
+        getTokenPrice: () => price
+      }
+    )
+    expect(row.amountLocal).toBe(expected)
+    expect(row.amount).toBe('4')
+  })
+  it('does not invent a price for an unknown token', () => {
+    const row = enrichTransactionPresentation(
+      { amount: '4', tokenAddress: '0xunknown', token: 'OTHER' },
+      { supportedTokens: [], getTokenPrice: () => 1 }
+    )
+    expect(row.amountLocal).toBeNull()
+  })
+})

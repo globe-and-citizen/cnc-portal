@@ -71,9 +71,7 @@ export type AccountingDiagnostic =
   | { kind: 'rate-unavailable'; token: AssetId }
   | {
       kind:
-        | 'asset-metadata-unavailable'
-        | 'exchange-basis-unavailable'
-        | 'unclassified-asset-movement'
+        'asset-metadata-unavailable' | 'exchange-basis-unavailable' | 'unclassified-asset-movement'
       txHash: string
     }
 

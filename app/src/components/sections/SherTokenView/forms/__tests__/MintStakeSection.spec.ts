@@ -86,8 +86,7 @@ describe('[US-SHER-004] MintStakeSection.vue', () => {
     const issuedEvents = wrapper.emitted('update:issuedAmount') ?? []
     const payloadEvents = wrapper.emitted('update:stakePayload') ?? []
     const latestPayload = payloadEvents[payloadEvents.length - 1]?.[0] as
-      | { amount: number; percentage: number; stakeMode: string }
-      | undefined
+      { amount: number; percentage: number; stakeMode: string } | undefined
 
     expect(issuedEvents[issuedEvents.length - 1]).toEqual([10])
     expect(latestPayload?.amount).toBe(30)

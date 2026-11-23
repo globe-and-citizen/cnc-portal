@@ -50,13 +50,13 @@ flowchart LR
 
 ## Status Overview
 
-| User Story      | Title                              | Actor                     | Status         |
-| --------------- | ---------------------------------- | ------------------------- | -------------- |
-| US-CONTRACT-001 | Review the current contract suite  | Company member            | 🚧 In Progress |
-| US-CONTRACT-002 | Manage current contract operations | Owner / Board member      | 🧪 Validation  |
-| US-CONTRACT-003 | Manage advertising campaigns       | Authorized company member | 🚧 In Progress |
-| US-CONTRACT-004 | Review deployment history          | Company member            | 🚧 In Progress |
-| US-CONTRACT-005 | Redeploy an Officer generation     | Company owner             | 🧪 Validation  |
+| User Story                                                             | Feature                            | Actor                     | Status         | Intended Scope |
+| ---------------------------------------------------------------------- | ---------------------------------- | ------------------------- | -------------- | -------------- |
+| [US-CONTRACT-001](#us-contract-001-review-the-current-contract-suite)  | Review the current contract suite  | Company member            | 🚧 In Progress | Not assessed   |
+| [US-CONTRACT-002](#us-contract-002-manage-current-contract-operations) | Manage current contract operations | Owner / Board member      | 🧪 Validation  | Not assessed   |
+| [US-CONTRACT-003](#us-contract-003-manage-advertising-campaigns)       | Manage advertising campaigns       | Authorized company member | 🚧 In Progress | Not assessed   |
+| [US-CONTRACT-004](#us-contract-004-review-deployment-history)          | Review deployment history          | Company member            | 🚧 In Progress | Not assessed   |
+| [US-CONTRACT-005](#us-contract-005-redeploy-an-officer-generation)     | Redeploy an Officer generation     | Company owner             | 🧪 Validation  | Not assessed   |
 
 ## Test Coverage Overview
 
@@ -76,15 +76,21 @@ Runs of at least three consecutive missing criteria use inclusive ranges with fu
 
 Proof obligations use the [shared proof-strategy registry](../../testing/proof-strategies.md). Multiple IDs for one AC are cumulative.
 
-## US-CONTRACT-001: Review the Current Contract Suite
+## FEAT-CONTRACT-001: Review the Current Contract Suite
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
+
+### US-CONTRACT-001: Review the Current Contract Suite
 
 **As a** company member\
 **I want to** inspect the active Officer generation and its contracts\
 **So that** I can understand the contracts currently used by the company
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-CONTRACT-001-01` A company member can view the active Officer address, its version, and its current non-Campaign contracts.
 - [x] `AC-US-CONTRACT-001-02` A company member can filter the current contract suite by verified active or paused status; unsupported and
@@ -94,13 +100,13 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 - [ ] `AC-US-CONTRACT-001-11` A member can inspect direct asset movements for each verified company contract, including auxiliary and
       governance contracts, using the same evidence as Accounting.
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-CONTRACT-001-04` Campaign Manager contracts are managed through the Campaigns journey rather than the current contract suite.
 - [x] `AC-US-CONTRACT-001-05` A contract's pause state remains distinguishable as active, paused, not supported, or unavailable according to
       its Officer-generation capability and the latest read evidence.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [x] `AC-US-CONTRACT-001-06` A company without an active Officer generation receives an unavailable-state message instead of a contract
       table.
@@ -114,7 +120,7 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 - [ ] `AC-US-CONTRACT-001-12` An unexpected holding exposes restricted or unknown recovery capability without promising an unsupported
       withdrawal action.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion    | Proof Strategy             | Current Evidence | Status          |
 | ----------------------- | -------------------------- | ---------------- | --------------- |
@@ -135,7 +141,7 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 
 **Dependencies:** Current company and its active Officer generation
 
-### Direct Movement Scenarios
+#### Direct Movement Scenarios
 
 Target behaviour follows the [direct movement policy](../accounting/direct-movement-policy.md). Each row represents the same evidenced
 movement across the participating stories.
@@ -147,15 +153,21 @@ movement across the participating stories.
 | External tokens reach another verified company-held contract without an established purpose. [UC-TREASURY-002](../accounting/journal-entry-catalogue.md#uc-treasury-002--external-receipt-pending-classification)                     | Owns auxiliary contract inspection.  | [US-ACCT-007](../accounting/README.md#us-acct-007-review-direct-treasury-movements) — owns movement evidence and identity; [US-ACCT-010](../accounting/README.md#us-acct-010-classify-direct-external-receipts) — owns eligible receipt classification                                                                                                                                                                |
 | A verified auxiliary company contract makes an evidenced external payment without established purpose. [UC-TREASURY-003](../accounting/journal-entry-catalogue.md#uc-treasury-003--external-payment-pending-classification)           | Exposes the contract movement.       | [US-ACCT-007](../accounting/README.md#us-acct-007-review-direct-treasury-movements) — owns evidence and pending-payment identity                                                                                                                                                                                                                                                                                      |
 
-## US-CONTRACT-002: Manage Current Contract Operations
+## FEAT-CONTRACT-002: Manage Current Contract Operations
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
+
+### US-CONTRACT-002: Manage Current Contract Operations
 
 **As a** current contract owner or eligible Board member\
 **I want to** transfer ownership, change contract status, and review pending Board actions\
 **So that** the company can safely maintain its active contract suite
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-CONTRACT-002-01` An eligible user can transfer ownership of a current contract to a selected recipient.
 - [x] `AC-US-CONTRACT-002-02` An eligible user can pause an active contract or resume a paused contract when the Officer-generation
@@ -163,7 +175,7 @@ movement across the participating stories.
 - [x] `AC-US-CONTRACT-002-03` An eligible Board member can open, review, and approve pending Board actions for a contract.
 - [x] `AC-US-CONTRACT-002-04` A successful direct operation refreshes the displayed contract state.
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-CONTRACT-002-05` Direct contract actions are unavailable to users who are neither the current owner nor an eligible Board
       member for a Board-owned contract.
@@ -171,7 +183,7 @@ movement across the participating stories.
 - [x] `AC-US-CONTRACT-002-07` A Board-submitted ownership transfer identifies its approval requirement before submission.
 - [x] `AC-US-CONTRACT-002-08` An archived company cannot initiate a contract operation or approve a pending Board action.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [x] `AC-US-CONTRACT-002-09` Rejecting a wallet request does not report a successful contract operation.
 - [x] `AC-US-CONTRACT-002-10` A failed direct ownership transfer is shown in the transfer context without changing the displayed owner.
@@ -179,7 +191,7 @@ movement across the participating stories.
       the successor atomically; the previous owner loses those two roles while unrelated technical minters remain unchanged. _(contract)_
 - [x] `AC-US-CONTRACT-002-12` Contracts whose pause capability is unsupported or unavailable do not expose pause or resume actions.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion    | Proof Strategy        | Current Evidence | Status          |
 | ----------------------- | --------------------- | ---------------- | --------------- |
@@ -202,15 +214,21 @@ movement across the participating stories.
 
 **Dependencies:** US-CONTRACT-001, current contract permissions, and a connected wallet
 
-## US-CONTRACT-003: Manage Advertising Campaigns
+## FEAT-CONTRACT-003: Manage Advertising Campaigns
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
+
+### US-CONTRACT-003: Manage Advertising Campaigns
 
 **As an** authorized company member\
 **I want to** manage the Campaign Manager and its advertising campaigns\
 **So that** validated advertising spend uses the intended rates and Bank destination
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-CONTRACT-003-01` A user can identify the Campaign Manager configured for the company.
 - [x] `AC-US-CONTRACT-003-02` An authorized user can manage Campaign Manager administrators and settings.
@@ -218,18 +236,18 @@ movement across the participating stories.
 - [ ] `AC-US-CONTRACT-003-07` The Campaigns journey exposes direct holdings and movements that have not been allocated to a campaign, using
       the same evidence as Accounting.
 
-#### Business Rules
+##### Business Rules
 
 - [ ] `AC-US-CONTRACT-003-04` Campaign Manager rates and Bank destination determine how validated advertising spend is handled.
 - [ ] `AC-US-CONTRACT-003-08` An unsolicited receipt does not create a campaign or increase a recorded campaign budget.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [x] `AC-US-CONTRACT-003-05` A company without a Campaign Manager receives an actionable unavailable-state message.
 - [x] `AC-US-CONTRACT-003-06` The campaign workspace distinguishes loading, a failed read with recovery, a confirmed empty result, and
       populated campaigns.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion    | Proof Strategy             | Current Evidence | Status          |
 | ----------------------- | -------------------------- | ---------------- | --------------- |
@@ -249,7 +267,7 @@ movement across the participating stories.
 
 **Dependencies:** Current company and a configured Campaign Manager
 
-### Direct Movement Scenarios
+#### Direct Movement Scenarios
 
 Target behaviour follows the [direct movement policy](../accounting/direct-movement-policy.md). Each row represents the same evidenced
 movement across the participating stories.
@@ -258,15 +276,21 @@ movement across the participating stories.
 | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | External assets reach AdCampaignManager without a campaign operation or established purpose. [UC-TREASURY-002](../accounting/journal-entry-catalogue.md#uc-treasury-002--external-receipt-pending-classification) | Separates unallocated holdings from campaign budgets. | [US-ACCT-007](../accounting/README.md#us-acct-007-review-direct-treasury-movements) — owns movement evidence and identity; [US-ACCT-010](../accounting/README.md#us-acct-010-classify-direct-external-receipts) — owns eligible receipt classification |
 
-## US-CONTRACT-004: Review Deployment History
+## FEAT-CONTRACT-004: Review Deployment History
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
+
+### US-CONTRACT-004: Review Deployment History
 
 **As a** company member\
 **I want to** review previous Officer generations\
 **So that** I can understand the company's contract deployment history
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-CONTRACT-004-01` A company member can view previous Officer generations separately from the active suite.
 - [x] `AC-US-CONTRACT-004-04` An eligible legacy-contract owner can review funded source accounts and move recoverable balances through the
@@ -274,7 +298,7 @@ movement across the participating stories.
 - [ ] `AC-US-CONTRACT-004-10` Historical deployments retain direct movement history and holdings after replacement, with the same evidence
       as Accounting.
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-CONTRACT-004-02` Previous generations are not presented as contracts currently used for company operations.
 - [x] `AC-US-CONTRACT-004-05` An archived company cannot start legacy balance recovery.
@@ -284,12 +308,12 @@ movement across the participating stories.
 - [x] `AC-US-CONTRACT-004-08` A generation without full-sweep support offers Bank-only recovery and identifies any funded accounts that the
       operation will leave behind.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [x] `AC-US-CONTRACT-004-03` An empty deployment history remains distinguishable from a failed history read.
 - [x] `AC-US-CONTRACT-004-09` A failed recovery step identifies the failure and can be retried without rebuilding the completed sequence.
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion    | Proof Strategy             | Current Evidence | Status          |
 | ----------------------- | -------------------------- | ---------------- | --------------- |
@@ -313,15 +337,21 @@ movement across the participating stories.
 generation; [US-ACCT-009](../accounting/README.md#us-acct-009-investigate-treasury-balance-differences) owns quantity reconciliation.
 Historical deployments preserve the same per-domain scenarios and UC selection as current deployments.
 
-## US-CONTRACT-005: Redeploy an Officer Generation
+## FEAT-CONTRACT-005: Redeploy an Officer Generation
+
+**Intended scope:** Not assessed
+
+**Specification status:** Not assessed
+
+### US-CONTRACT-005: Redeploy an Officer Generation
 
 **As a** company owner\
 **I want to** replace the active Officer generation with a new one\
 **So that** the company can continue using a fresh set of workspace contracts
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
-#### Happy Path
+##### Happy Path
 
 - [x] `AC-US-CONTRACT-005-01` The company owner can open the redeploy form from the active Officer generation and choose the new share token
       name and symbol.
@@ -330,7 +360,7 @@ Historical deployments preserve the same per-domain scenarios and UC selection a
 - [x] `AC-US-CONTRACT-005-03` When a previous Officer has shareholders, the owner can sign the follow-up transaction that sets the migration
       root for the new Investor contract.
 
-#### Business Rules
+##### Business Rules
 
 - [x] `AC-US-CONTRACT-005-04` The redeploy action is available only to the current company owner and is unavailable for an archived company.
 - [x] `AC-US-CONTRACT-005-05` The redeploy form requires a share token name and symbol that each contain non-whitespace text.
@@ -338,7 +368,7 @@ Historical deployments preserve the same per-domain scenarios and UC selection a
       deleted by a redeployment.
 - [x] `AC-US-CONTRACT-005-07` A shareholder migration can be skipped after a failure and completed later from the Share Token journey.
 
-#### Edge & Error Cases
+##### Edge & Error Cases
 
 - [x] `AC-US-CONTRACT-005-08` A failed deploy, Officer registration, or follow-up lookup keeps the form open and identifies the step that
       failed.
@@ -349,7 +379,7 @@ Historical deployments preserve the same per-domain scenarios and UC selection a
 - [x] `AC-US-CONTRACT-005-11` A newly deployed Investor ends with the company owner holding ownership, administrator authority, and minter
       authority; the Officer retains neither temporary role and configured technical minters remain authorized. _(contract)_
 
-### Test Coverage
+#### Test Coverage
 
 | Acceptance Criterion    | Proof Strategy             | Current Evidence | Status          |
 | ----------------------- | -------------------------- | ---------------- | --------------- |
@@ -390,50 +420,83 @@ does not automatically retry the chain write; inspect Contract Management before
 delivery remain best-effort and cannot turn a registered action into failure. Each request retains the company and Board address captured
 when preparation begins.
 
+## Managed row and ownership-target boundaries
+
+The current and historical contract tables consume the actual enriched read model, including address, ABI, kind, deployer, owner and pause
+state. Desktop/mobile actions preserve that row rather than converting it to a generic dictionary. Generation metadata retains unknown
+contract kinds for inspection; that does not add pause support or management rights.
+
+An absent selection is represented as null. Action surfaces remain absent in that state, and ownership transfer requires an actual selected
+target. The transfer boundary consumes only its address, ABI and kind; direct and Board actions keep the same target, encoded method and
+success handling. A shared generation-metadata type connects current/archived producers without a broad row cast.
+
+[Compiler row checks](../../implementation/client-utilities/README.md#domain-row-contracts) reject missing fields and cross-domain rows.
+These static contracts do not replace runtime authorization, schema validation or product acceptance; unrelated generic table and Board
+action consumers remain outside this bounded migration.
+
+## Campaign Manager settings draft
+
+Manager settings retain the typed `CampaignManagerSettings` read result through the settings form. The form owns a local draft of click and
+impression rates and a confirmed-rate baseline; it does not convert the model to generic string rows or send edits back into the query
+result. The Bank destination remains read-only. Input normalization, positive changed-rate validation, 18-decimal write arguments and the
+archived-company guard retain their existing rules.
+
+Opening the settings panel with loaded data mounts a fresh draft. Closing discards unsaved edits; reopening uses the latest loaded rates.
+Changing manager or chain replaces the form for that identity. A background settings refresh updates a pristine draft and its baseline but
+does not overwrite active edits. Each confirmed field advances its own baseline, so an unconfirmed field remains editable/retryable; the
+panel closes only after all writes submitted by that save have confirmed. These frontend tests use controlled query data and write
+callbacks, not real wallet transactions or product acceptance.
+
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `276c6731ae0291996f0565ccd98be9b468119a54`
+**Implementation evidence reviewed against:** `ce6ae5493392f46869705f37900480ed34d0723c`
 
 - [Real Board mutation lifecycle tests](../../../app/src/composables/bod/__tests__/writes.spec.ts)
 - [Board reads](../../../app/src/composables/bod/reads.ts), [Board writes](../../../app/src/composables/bod/writes.ts),
   [shared contract reads](../../../app/src/composables/contracts/useContractReadData.ts), and
   [shared contract writes](../../../app/src/composables/contracts/useContractWritesV3.ts)
-- [Proposal creation](../../../app/src/components/sections/ProposalsView/forms/CreateProposalForm.vue)
 - [Contract Management page and Officer-generation derivation](../../../app/src/views/team/%5Bid%5D/ContractManagementView.vue)
-- [Current contract section](../../../app/src/components/sections/ContractManagementView/MainContractSection.vue)
-- [Current contract table and selected action boundary](../../../app/src/components/sections/ContractManagementView/MainContractTable.vue)
+- [Current contract section](../../../app/src/components/sections/ContractManagementView/CurrentOfficerContractsSection.vue)
+- [Current contract table and selected action boundary](../../../app/src/components/sections/ContractManagementView/ManagedContractsTable.vue)
 - [Version-aware pause capability policy](../../../app/src/utils/contracts/pauseCapabilities.ts) and
-  [capability-backed contract reads](../../../app/src/composables/contracts/readTeamContracts.ts)
-- [Current contract desktop table](../../../app/src/components/sections/ContractManagementView/MainContractDesktopTable.vue)
-- [Current contract action menu](../../../app/src/components/sections/ContractManagementView/MainContractActionMenu.vue)
-- [Current contract mobile card](../../../app/src/components/sections/ContractManagementView/MainContractMobileCard.vue)
-- [Current contract action surfaces](../../../app/src/components/sections/ContractManagementView/MainContractActions.vue)
-- [Current contract table row model](../../../app/src/components/sections/ContractManagementView/MainContractTable.types.ts)
+  [capability-backed contract reads](../../../app/src/composables/contracts/readManagedContracts.ts)
+- [Current contract desktop table](../../../app/src/components/sections/ContractManagementView/ManagedContractsDesktopTable.vue)
+- [Current contract action menu](../../../app/src/components/sections/ContractManagementView/ManagedContractActionMenu.vue)
+- [Current contract mobile card](../../../app/src/components/sections/ContractManagementView/ManagedContractMobileCard.vue)
+- [Current contract action surfaces](../../../app/src/components/sections/ContractManagementView/ManagedContractActionDialogs.vue)
+- [Current contract table row model](../../../app/src/components/sections/ContractManagementView/ManagedContractsTable.types.ts)
 - [Ownership recipient selection](../../../app/src/components/sections/ContractManagementView/forms/TransferOwnershipForm.vue)
 - [Ownership transfer behaviour](../../../app/src/composables/contracts/useContractOwnershipTransfer.ts)
-- [Contract-status behaviour](../../../app/src/composables/contracts/useContractStatusChange.ts)
-- [Pending Board-action behaviour](../../../app/src/components/sections/ContractManagementView/MainContractActions.vue)
+- [Contract-status behaviour](../../../app/src/composables/contracts/useContractPauseToggle.ts)
+- [Pending Board-action behaviour](../../../app/src/components/sections/ContractManagementView/ManagedContractActionDialogs.vue)
 - [Pending Board-action data formatting](../../../app/src/utils/contracts/management.ts)
 - [Integrated Board dividend approval and quorum execution](../../../app/test/e2e/shareholder/shareholder-issuance-dividends.integrated.spec.ts),
   including persistence of the first zero-based Board action
-- [Campaign Management section](../../../app/src/components/sections/ContractManagementView/AdvertiseContractSection.vue)
+- [Campaign Manager administrator controls](../../../app/src/components/sections/ContractManagementView/CampaignManagerAdminsSection.vue),
+  [pending Board action table](../../../app/src/components/sections/ContractManagementView/PendingBodActionsTable.vue), and
+  [Board action party details](../../../app/src/components/sections/ContractManagementView/BodApprovalDetails.vue)
+- [Campaign Manager selection and settings lifetime](../../../app/src/components/sections/ContractManagementView/CampaignManagersSection.vue),
+  [typed rate form](../../../app/src/components/sections/ContractManagementView/forms/CampaignManagerRatesForm.vue),
+  [draft/confirmation tests](../../../app/src/components/sections/ContractManagementView/forms/__tests__/CampaignManagerRatesForm.spec.ts),
+  and [parent/form lifetime tests](../../../app/src/components/sections/ContractManagementView/__tests__/CampaignManagersSection.spec.ts)
+- [Campaign Management section](../../../app/src/components/sections/ContractManagementView/AdvertisingCampaignsSection.vue)
 - [Advertising campaign workspace](../../../app/src/components/sections/ContractManagementView/AdvertisingCampaignWorkspace.vue)
-- [Campaign Manager setup form](../../../app/src/components/sections/ContractManagementView/forms/CreateAddCampaign.vue) and
+- [Campaign Manager setup form](../../../app/src/components/sections/ContractManagementView/forms/DeployCampaignManagerForm.vue) and
   [Campaign Manager deployment mutation](../../../app/src/composables/useContractFunctions.ts)
-- [Deployment history section](../../../app/src/components/sections/ContractManagementView/DeploymentHistorySection.vue)
-- [Officer redeploy entry point](../../../app/src/components/sections/ContractManagementView/MainContractSection.vue)
+- [Deployment history section](../../../app/src/components/sections/ContractManagementView/OfficerDeploymentHistorySection.vue)
+- [Officer redeploy entry point](../../../app/src/components/sections/ContractManagementView/CurrentOfficerContractsSection.vue)
 - [Officer redeploy form and recovery actions](../../../app/src/components/sections/ContractManagementView/RedeployOfficerModal.vue)
 - [Officer redeploy workflow](../../../app/src/composables/contracts/useOfficerRedeploy.ts)
 - [Integrated shareholder migration lifecycle](../../../app/test/e2e/shareholder/shareholder-migration.integrated.spec.ts), which reuses the
   Officer redeployment and migration-root commit journey for `AC-US-CONTRACT-005-03`
 - [Officer deployment authority cleanup](../../../contract/contracts/Officer.sol) and
   [Investor ownership authority transfer](../../../contract/contracts/Investor/Investor.sol)
-- [Current contract action tests](../../../app/src/components/sections/ContractManagementView/__tests__/MainContractActions.spec.ts)
-- [Current contract table tests](../../../app/src/components/sections/ContractManagementView/__tests__/MainContractTable.spec.ts)
-- [Current contract action-menu tests](../../../app/src/components/sections/ContractManagementView/__tests__/MainContractActionMenu.spec.ts)
+- [Current contract action tests](../../../app/src/components/sections/ContractManagementView/__tests__/ManagedContractActionDialogs.spec.ts)
+- [Current contract table tests](../../../app/src/components/sections/ContractManagementView/__tests__/ManagedContractsTable.spec.ts)
+- [Current contract action-menu tests](../../../app/src/components/sections/ContractManagementView/__tests__/ManagedContractActionMenu.spec.ts)
 - [Pause capability policy tests](../../../app/src/utils/contracts/__tests__/pauseCapabilities.spec.ts),
-  [pause-state read tests](../../../app/src/composables/contracts/__tests__/readTeamContracts.spec.ts), and
-  [pause-state presentation tests](../../../app/src/components/sections/ContractManagementView/__tests__/MainContractPauseStatus.spec.ts)
+  [pause-state read tests](../../../app/src/composables/contracts/__tests__/readManagedContracts.spec.ts), and
+  [pause-state presentation tests](../../../app/src/components/sections/ContractManagementView/__tests__/ManagedContractsPauseStatus.spec.ts)
 - [Officer redeploy form tests](../../../app/src/components/sections/ContractManagementView/__tests__/RedeployOfficerModal.spec.ts)
 - [Officer deployment tests](../../../contract/test/Officer.spec.ts) and [Investor authority tests](../../../contract/test/Investor.spec.ts)
 
@@ -461,9 +524,9 @@ when preparation begins.
   the active-generation entry point, and `005-05` checks a blank name but not a blank symbol.
 - Historic balance recovery overlaps the Bank account result in `AC-US-BANK-004-02`. Contract Management owns initiating recovery; Accounts
   owns verifying the receiving Bank balance. Their combined evidence must not be counted twice as separate completed transfers.
-- The legacy TeamContractDetailExtend suite duplicates the current manager-settings coverage with obsolete mocks and assertion-free cases,
-  while TeamContractEventList exercises a component that no current product surface imports. Both suites remain intentionally unmapped
-  pending cleanup or restoration of a reachable journey.
+- CampaignEventsTable exercises a component that no current product surface imports. That suite remains intentionally unmapped pending
+  cleanup or restoration of a reachable journey. Manager-settings draft/confirmation coverage is consolidated in CampaignManagerRatesForm;
+  parent lifetime checks exercise the real form with controlled settings reads and shared mutation mocks.
 
 ## Related Documentation
 

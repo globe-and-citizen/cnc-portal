@@ -5,10 +5,6 @@ import type { Address } from 'viem'
 import { defineComponent } from 'vue'
 import { mockUseContractBalance } from '@/tests/mocks'
 
-vi.mock('@/composables/useContractBalance', () => ({
-  useContractBalance: vi.fn(() => mockUseContractBalance)
-}))
-
 // Mock @iconify/vue FIRST, before any other imports
 vi.mock('@iconify/vue', () => ({
   Icon: {
@@ -57,6 +53,22 @@ describe('[US-BANK-003] BankBalanceSection', () => {
     expect(wrapper.get('[data-test="bank-total-local"]').text()).toContain('$50,500.00 USD')
     expect(wrapper.text()).toContain('USD')
   })
+
+  it.each([
+    [null, '—'],
+    [0, '$0.00']
+  ] as const)(
+    '[AC-US-BANK-003-10] distinguishes unavailable fiat value %s from a real zero',
+    (value, expected) => {
+      mockUseContractBalance.total.value = {
+        usd: { value, formatted: expected },
+        local: { value, formatted: expected }
+      }
+      const wrapper = createWrapper()
+      expect(wrapper.get('[data-test="bank-total-usd"]').text()).toBe(expected)
+      expect(wrapper.get('[data-test="bank-total-local"]').text()).toContain(expected)
+    }
+  )
 
   it('shows loading spinner while balance is loading', () => {
     mockUseContractBalance.isLoading.value = true

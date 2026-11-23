@@ -1,12 +1,12 @@
-# Backoffice — Feature Inventory
+# Backoffice — Module Inventory
 
 **Scope:** Administrator-only capabilities exposed by the Nuxt dashboard
 
 **Last verified:** 2026-08-28
 
-The backoffice is one product surface containing several administrator capabilities. This README owns their grouping and navigation. Each
-capability can gain its own canonical user stories under `docs/features/backoffice/<capability>/README.md` as it is migrated to the current
-documentation model.
+The backoffice is one product surface containing several administrator modules. This README owns their current-access grouping and
+navigation. Each module groups related features and their canonical user stories under `docs/features/backoffice/<module>/README.md`. The
+[product catalogue](../README.md#features) lists individual features, including planned or incomplete stories.
 
 Access requires an authenticated user with `ROLE_ADMIN` or `ROLE_SUPER_ADMIN`. Authentication and role guards are entry conditions, not
 separate backoffice features.
@@ -52,6 +52,10 @@ is not sufficient.
 
 ## Current Evidence
 
+**Implementation evidence reviewed against:** `2edb2b55584d00ef87084f798c729713ee690842`
+
+- [Fixture inbox list](../../../dashboard/app/components/inbox/InboxList.vue)
+- [Fixture inbox message](../../../dashboard/app/components/inbox/InboxMail.vue)
 - [Dashboard navigation and module entry points](../../../dashboard/app/layouts/default.vue)
 - [Administrator access guard](../../../dashboard/app/middleware/auth.global.ts)
 - [Overview and statistics page](../../../dashboard/app/pages/index.vue)

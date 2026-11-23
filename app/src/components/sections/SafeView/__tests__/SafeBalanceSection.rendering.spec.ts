@@ -277,13 +277,16 @@ describe('[US-SAFE-002] SafeBalanceSection rendering', () => {
   })
 
   describe('Tokens Computation', () => {
-    it('lists an unpriced token with a zero USD value', async () => {
-      // An unpriced token still lists, at a value of 0 — it must not vanish
-      // from the picker just because the price feed has nothing for it.
+    it('lists an unpriced token with an unavailable fiat estimate', async () => {
+      // An unpriced token remains selectable by its known quantity.
       const sourceBalance = mockUseContractBalance.balances.value[0]!
-      mockUseContractBalance.balances.value = [
-        makeTokenBalance({ token: sourceBalance.token, amount: sourceBalance.amount })
-      ]
+      const unpriced = makeTokenBalance({
+        token: sourceBalance.token,
+        amount: sourceBalance.amount
+      })
+      unpriced.price.usd = { value: null, formatted: '—' }
+      unpriced.price.local = { value: null, formatted: '—' }
+      mockUseContractBalance.balances.value = [unpriced]
       wrapper = createWrapper()
 
       // Open transfer modal so TransferForm receives `tokens` as a prop
@@ -291,9 +294,9 @@ describe('[US-SAFE-002] SafeBalanceSection rendering', () => {
       await nextTick()
 
       const tokens = wrapper.findComponent(TransferFormStub).props('tokens') as Array<{
-        price: number
+        price: number | null
       }>
-      expect(tokens[0]?.price).toBe(0)
+      expect(tokens[0]?.price).toBeNull()
     })
   })
 

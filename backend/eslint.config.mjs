@@ -27,6 +27,6 @@ export default tseslint.config(
     },
   },
   {
-    ignores: ['dist/**', 'node_modules/**', 'coverage/**', 'prisma/**'],
+    ignores: ['dist/**', 'node_modules/**', 'coverage/**', 'prisma/**', 'src/generated/prisma/**'],
   }
 );

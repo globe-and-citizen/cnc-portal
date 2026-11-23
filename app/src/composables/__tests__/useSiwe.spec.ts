@@ -4,6 +4,8 @@ import { flushPromises } from '@vue/test-utils'
 import { UserRejectedRequestError, SwitchChainError } from 'viem'
 import { AxiosError, AxiosHeaders } from 'axios'
 
+vi.unmock('@/stores/user')
+
 vi.mock('@/router', () => ({
   default: { push: vi.fn() }
 }))
@@ -32,7 +34,7 @@ const ADDRESS = '0x1234567890123456789012345678901234567890'
 
 const makeAxiosError = (url: string, status?: number) => {
   const err = new AxiosError('boom')
-  err.config = { url, headers: new AxiosHeaders() }
+  err.config = { url, headers: new AxiosHeaders({ Authorization: 'Bearer jwt.token' }) }
   if (status !== undefined) {
     err.response = { status } as AxiosError['response']
   }
@@ -105,7 +107,7 @@ describe('useSiweMutation', () => {
       message: expect.any(String),
       signature: '0xsignature'
     })
-    expect(userApi.getUser).toHaveBeenCalledWith(ADDRESS)
+    expect(userApi.getUser).toHaveBeenCalledWith(ADDRESS, 'jwt.token')
     expect(mockRouterPush).toHaveBeenCalledWith('/teams')
   })
 
@@ -133,6 +135,11 @@ describe('useSiweMutation', () => {
     expect(wagmiCore.connect).toHaveBeenCalled()
   })
 
+  /**
+   * Covers:
+   * - [AC-US-AUTH-001-14]
+   * - [AC-US-AUTH-001-16]
+   */
   it('throws WalletConnectRejectedError and toasts when user rejects connection', async () => {
     vi.mocked(wagmiCore.getConnection).mockReturnValue(disconnectedReturn)
     vi.mocked(wagmiCore.connect).mockRejectedValueOnce(
@@ -140,17 +147,26 @@ describe('useSiweMutation', () => {
     )
     const { mutateAsync } = useSiweMutation()
     await expect(mutateAsync()).rejects.toBeInstanceOf(WalletConnectRejectedError)
+    expect(localStorage.getItem('authToken')).toBeNull()
+    expect(mockRouterPush).not.toHaveBeenCalled()
     expect(mockToast.add).toHaveBeenCalledWith(
       expect.objectContaining({ title: expect.stringContaining('Wallet connection rejected') })
     )
   })
 
+  /**
+   * Covers:
+   * - [AC-US-AUTH-001-14]
+   * - [AC-US-AUTH-001-16]
+   */
   it('throws ChainSwitchRejectedError and toasts when user rejects chain switch', async () => {
     vi.mocked(wagmiCore.switchChain).mockRejectedValueOnce(
       new UserRejectedRequestError(new Error('rejected'))
     )
     const { mutateAsync } = useSiweMutation()
     await expect(mutateAsync()).rejects.toBeInstanceOf(ChainSwitchRejectedError)
+    expect(localStorage.getItem('authToken')).toBeNull()
+    expect(mockRouterPush).not.toHaveBeenCalled()
     expect(mockToast.add).toHaveBeenCalledWith(
       expect.objectContaining({ title: expect.stringContaining('Network switch rejected') })
     )
@@ -167,7 +183,19 @@ describe('useSiweMutation', () => {
     )
   })
 
-  it('toasts "Failed to fetch nonce" when the nonce request fails', async () => {
+  it('[AC-US-AUTH-001-14] keeps the user signed out when the wallet provider is unavailable', async () => {
+    vi.mocked(wagmiCore.getConnection).mockReturnValue(disconnectedReturn)
+    vi.mocked(wagmiCore.connect).mockRejectedValueOnce(
+      Object.assign(new Error('Missing provider'), { name: 'ProviderNotFoundError' })
+    )
+    const { mutateAsync } = useSiweMutation()
+
+    await expect(mutateAsync()).rejects.toThrow('Missing provider')
+    expect(localStorage.getItem('authToken')).toBeNull()
+    expect(mockRouterPush).not.toHaveBeenCalled()
+  })
+
+  it('[AC-US-AUTH-001-16] toasts "Failed to fetch nonce" when the nonce request fails', async () => {
     vi.mocked(userApi.getUserNonce).mockRejectedValue(makeAxiosError('/api/user/nonce'))
     const { mutateAsync } = useSiweMutation()
     await expect(mutateAsync()).rejects.toBeInstanceOf(AxiosError)
@@ -176,18 +204,25 @@ describe('useSiweMutation', () => {
     )
   })
 
+  /**
+   * Covers:
+   * - [AC-US-AUTH-001-14]
+   * - [AC-US-AUTH-001-16]
+   */
   it('throws SignatureRejectedError when user rejects the wallet signature prompt', async () => {
     vi.mocked(wagmiCore.signMessage).mockRejectedValueOnce(
       new UserRejectedRequestError(new Error('rejected'))
     )
     const { mutateAsync } = useSiweMutation()
     await expect(mutateAsync()).rejects.toBeInstanceOf(SignatureRejectedError)
+    expect(localStorage.getItem('authToken')).toBeNull()
+    expect(mockRouterPush).not.toHaveBeenCalled()
     expect(mockToast.add).toHaveBeenCalledWith(
       expect.objectContaining({ title: expect.stringContaining('Message sign rejected') })
     )
   })
 
-  it('toasts "Failed to get authentication token" when /auth/siwe fails', async () => {
+  it('[AC-US-AUTH-001-16] toasts "Failed to get authentication token" when /auth/siwe fails', async () => {
     vi.mocked(authApi.siweAuth).mockRejectedValueOnce(makeAxiosError('/api/auth/siwe'))
     const { mutateAsync } = useSiweMutation()
     await expect(mutateAsync()).rejects.toBeInstanceOf(AxiosError)
@@ -196,25 +231,32 @@ describe('useSiweMutation', () => {
     )
   })
 
-  it('[AC-US-AUTH-003-06] keeps the issued access token after a recoverable profile network failure', async () => {
+  it('[AC-US-AUTH-001-18] keeps the issued access token after a recoverable profile network failure', async () => {
+    const disconnect = vi.spyOn(wagmiCore, 'disconnect').mockResolvedValue(undefined)
     vi.mocked(userApi.getUser).mockRejectedValueOnce(makeAxiosError('/api/user/profile'))
     const { mutateAsync } = useSiweMutation()
     await expect(mutateAsync()).rejects.toBeInstanceOf(AxiosError)
     expect(localStorage.getItem('authToken')).toBe('jwt.token')
+    expect(disconnect).not.toHaveBeenCalled()
+    disconnect.mockRestore()
+    expect(mockRouterPush).not.toHaveBeenCalled()
     expect(mockToast.add).toHaveBeenCalledWith(
       expect.objectContaining({ title: 'Failed to fetch user data' })
     )
   })
 
-  it('[AC-US-AUTH-003-06] removes the issued access token after a terminal profile failure', async () => {
-    vi.mocked(userApi.getUser).mockRejectedValueOnce(makeAxiosError('/api/user/profile', 401))
-    const { mutateAsync } = useSiweMutation()
-    await expect(mutateAsync()).rejects.toBeInstanceOf(AxiosError)
-    expect(localStorage.getItem('authToken')).toBe('')
-    expect(mockToast.add).toHaveBeenCalledWith(
-      expect.objectContaining({ title: 'Failed to fetch user data' })
-    )
-  })
+  it.each([401, 403, 404])(
+    '[AC-US-AUTH-001-17] removes the issued access token after a %s profile failure',
+    async (status) => {
+      vi.mocked(userApi.getUser).mockRejectedValueOnce(makeAxiosError('/api/user/profile', status))
+      const { mutateAsync } = useSiweMutation()
+      await expect(mutateAsync()).rejects.toBeInstanceOf(AxiosError)
+      expect(localStorage.getItem('authToken')).toBeNull()
+      expect(mockToast.add).toHaveBeenCalledWith(
+        expect.objectContaining({ title: 'Failed to fetch user data' })
+      )
+    }
+  )
 
   it('falls back to a generic toast on unknown errors', async () => {
     vi.mocked(userApi.getUser).mockRejectedValueOnce(new Error('mystery'))

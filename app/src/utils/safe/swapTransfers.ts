@@ -1,4 +1,4 @@
-import { formatUnits } from 'viem'
+import { formatUnits, zeroAddress } from 'viem'
 import { NETWORK } from '@/constant'
 import type { SafeIncomingTransfer } from '@/types/safe'
 
@@ -86,6 +86,28 @@ export function groupSafeTransfers(
     else groups.set(transfer.transactionHash, [transfer])
   }
   return groups
+}
+
+/**
+ * Split one transaction's movements into the interest a yield-bearing token such as an Aave
+ * aToken accrued and what the transaction exchanged. That token mints its interest to the Safe
+ * when the Safe sends it, so a mint of an asset the Safe sends in the same transaction is income,
+ * never part of a swap.
+ */
+export function splitAccruedInterest(
+  transfers: readonly SafeIncomingTransfer[],
+  safeAddress: string
+): { interest: SafeIncomingTransfer[]; exchanged: SafeIncomingTransfer[] } {
+  const safe = safeAddress.toLowerCase()
+  const sent = new Set(
+    transfers.filter(({ from }) => from.toLowerCase() === safe).map(safeTransferAsset)
+  )
+  const isInterest = (transfer: SafeIncomingTransfer) =>
+    transfer.from.toLowerCase() === zeroAddress && sent.has(safeTransferAsset(transfer))
+  return {
+    interest: transfers.filter(isInterest),
+    exchanged: transfers.filter((transfer) => !isInterest(transfer))
+  }
 }
 
 /** Net a transaction's movements exactly before converting quantities to display numbers. */

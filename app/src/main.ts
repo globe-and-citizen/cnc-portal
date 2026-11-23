@@ -19,14 +19,11 @@ export function setupApp() {
   app.use(pinia)
   pinia.use(piniaPluginPersistedstate)
 
+  setupAuthInterceptor()
   app.use(router)
   app.use(ui)
   app.use(WagmiPlugin, { config })
   app.use(VueQueryPlugin, { queryClient, enableDevtoolsV6Plugin: true })
-
-  // Setup axios interceptors after app initialization
-  // This ensures router and Pinia are fully available for the interceptor
-  setupAuthInterceptor(router)
 
   // Initialize single-tab guard after app mount
 

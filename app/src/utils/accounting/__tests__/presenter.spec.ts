@@ -9,8 +9,7 @@ import {
   filterByPeriod,
   incomeExportTitle,
   balanceExportTitle,
-  trialExportTitle,
-  activityCoverageLabel
+  trialExportTitle
 } from '@/utils/accounting/presenter'
 import { presentJournalLedger } from '@/utils/accounting/journalLedgerPresenter'
 import { accountFor } from '@/utils/accounting/accountRegistry'
@@ -50,16 +49,20 @@ describe('formatters', () => {
 describe('presentIncome', () => {
   it('lists revenue and expense lines for the full period', () => {
     const income = presentIncome(books().journal)
-    expect(income.revenueLines).toContainEqual({
-      label: 'Service Revenue',
-      value: '$100.00',
-      account: 'Service Revenue'
-    })
-    expect(income.expenseLines).toContainEqual({
-      label: 'Operating Expense',
-      value: '$30.00',
-      account: 'Operating Expense'
-    })
+    expect(income.revenueLines).toContainEqual(
+      expect.objectContaining({
+        label: 'Service Revenue',
+        value: '$100.00',
+        account: 'Service Revenue'
+      })
+    )
+    expect(income.expenseLines).toContainEqual(
+      expect.objectContaining({
+        label: 'Operating Expense',
+        value: '$30.00',
+        account: 'Operating Expense'
+      })
+    )
     expect(income.netIncome).toBe('$70.00')
   })
 
@@ -314,19 +317,5 @@ describe('statement export titles', () => {
     expect(balanceExportTitle(new Date('2026-07-08'))).toBe('Balance Sheet — As of Jul 8, 2026')
     expect(trialExportTitle()).toBe('Trial Balance')
     expect(trialExportTitle(new Date('2026-07-08'))).toBe('Trial Balance — As of Jul 8, 2026')
-  })
-})
-
-describe('activityCoverageLabel', () => {
-  it('spans the first to the last entry, whatever their order', () => {
-    const label = activityCoverageLabel([
-      { timestamp: Date.UTC(2026, 9, 4, 12) / 1000 },
-      { timestamp: Date.UTC(2025, 11, 21, 12) / 1000 }
-    ])
-    expect(label).toBe('Activity Dec 21, 2025 – Oct 4, 2026')
-  })
-
-  it('has no coverage for empty books', () => {
-    expect(activityCoverageLabel([])).toBeNull()
   })
 })

@@ -3,8 +3,8 @@
  *
  * Split from {@link ./presenter} (which turns the statements into their line
  * views) the way {@link ./ledgerCategory} was split from the ledger presenter, so
- * each module stays focused. Pure and unit-testable; the presenter re-exports
- * everything here, so callers can keep importing from it.
+ * each module stays focused. Pure and unit-testable; the presenter scopes the
+ * journal to a period and exposes the result through `presentSummary`.
  */
 import { formatUsd } from '@/utils/format'
 import { buildAccountingSummary } from './accountingSummary'
@@ -24,6 +24,7 @@ import type {
 export interface SummaryCard {
   label: string
   value: string
+  amount: UsdAmount
   valueClass: string
   sub: string
   icon: string
@@ -50,12 +51,21 @@ const CREDIT_CHIP = 'bg-violet-500/10 text-violet-600 dark:text-violet-400'
 /** A secondary metric card (highlighted value, no accent border). */
 function metric(
   label: string,
-  value: string,
+  amount: UsdAmount,
   sub: string,
   icon: string,
   chip: string
 ): SummaryCard {
-  return { label, value, sub, icon, chipClass: chip, valueClass: 'text-highlighted', accent: false }
+  return {
+    label,
+    value: displayUsd(amount),
+    amount,
+    sub,
+    icon,
+    chipClass: chip,
+    valueClass: 'text-highlighted',
+    accent: false
+  }
 }
 
 /**
@@ -87,6 +97,7 @@ function summaryCards(
     {
       label: 'Net income',
       value: displayUsd(income.netIncome),
+      amount: income.netIncome,
       valueClass: profitable ? 'text-primary' : 'text-error',
       sub: 'Profit · revenue − expenses',
       icon: 'i-heroicons-sparkles',
@@ -97,42 +108,42 @@ function summaryCards(
     },
     metric(
       'Total revenue',
-      displayUsd(income.totalRevenue),
+      income.totalRevenue,
       'Service + trading gain',
       'i-heroicons-arrow-trending-up',
       'bg-success/10 text-success'
     ),
     metric(
       'Total expenses',
-      displayUsd(income.totalExpenses),
+      income.totalExpenses,
       'Payroll · ops · trading · dividend',
       'i-heroicons-arrow-trending-down',
       'bg-warning/10 text-warning'
     ),
     metric(
       'Total transaction fees',
-      displayUsd(summary.transactionFees),
+      summary.transactionFees,
       'Bank protocol fee skimmed on transfers',
       'i-heroicons-receipt-percent',
       'bg-warning/10 text-warning'
     ),
     metric(
       'Total assets',
-      displayUsd(balance.totalAssets),
+      balance.totalAssets,
       'Asset account balances',
       'i-heroicons-wallet',
       'bg-info/10 text-info'
     ),
     metric(
       'Total equity',
-      displayUsd(balance.totalEquity),
+      balance.totalEquity,
       'Equity accounts + earnings to date',
       'i-heroicons-user-group',
       'bg-primary/10 text-primary'
     ),
     metric(
       'Outstanding debt',
-      displayUsd(outstandingDebt(balance)),
+      outstandingDebt(balance),
       'Principal + fixed return owed to lenders',
       'i-heroicons-banknotes',
       CREDIT_CHIP
@@ -144,7 +155,7 @@ function summaryCards(
       ? [
           metric(
             'Debt repaid',
-            displayUsd(summary.debtRepaid),
+            summary.debtRepaid,
             'Principal + fixed return returned to lenders',
             'i-heroicons-arrow-uturn-left',
             CREDIT_CHIP
@@ -163,12 +174,19 @@ function summaryBanner(balance: BalanceSheet, ledger: GeneralLedger): SummaryBan
   }
 }
 
-/** Build the complete Summary display model from one canonical journal input. */
-export function presentSummary(entries: readonly JournalEntry[]): SummaryView {
-  const summary = buildAccountingSummary(entries)
-  const income = buildIncomeStatement(entries)
-  const balance = buildBalanceSheet(entries)
-  const ledger = buildGeneralLedger(entries)
+/**
+ * Build the complete Summary display model. Flows (revenue, expenses, fees, repayments)
+ * read the period's entries, while balances (assets, equity, debt, the balance checks)
+ * read every entry up to its end, because a balance carries what came before the period.
+ */
+export function buildSummaryView(
+  entriesInPeriod: readonly JournalEntry[],
+  entriesToDate: readonly JournalEntry[]
+): SummaryView {
+  const summary = buildAccountingSummary(entriesInPeriod)
+  const income = buildIncomeStatement(entriesInPeriod)
+  const balance = buildBalanceSheet(entriesToDate)
+  const ledger = buildGeneralLedger(entriesToDate)
 
   return {
     cards: summaryCards(summary, income, balance),

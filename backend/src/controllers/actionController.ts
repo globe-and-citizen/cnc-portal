@@ -1,25 +1,29 @@
-import { Prisma } from '@prisma/client';
+import type { getActionsQuerySchema } from '../validation/schemas/actions';
+import type { z } from 'zod';
+import { Prisma } from '../generated/prisma/client';
 import { Request, Response } from 'express';
 import { errorResponse, prisma } from '../utils';
 
+type GetActionsQuery = z.infer<typeof getActionsQuerySchema>;
+
 const getActions = async (req: Request, res: Response) => {
+  const query = res.locals.validatedQuery as GetActionsQuery;
   try {
-    const { teamId, isExecuted, page, take } = req.query;
+    const { teamId, isExecuted, page, take } = query;
     if (!teamId) return errorResponse(400, 'Team ID empty or not set', res);
 
     const where: Prisma.BoardOfDirectorActionsWhereInput = {};
 
     if (teamId) {
-      where.teamId = parseInt(teamId as string);
+      where.teamId = teamId;
     }
     if (typeof isExecuted !== 'undefined') {
-      where.isExecuted =
-        typeof isExecuted === 'boolean' ? isExecuted : (isExecuted as string) === 'true';
+      where.isExecuted = isExecuted;
     }
     const actions = await prisma.boardOfDirectorActions.findMany({
       where,
-      skip: page ? (parseInt(page as string) - 1) * parseInt(take as string) : 0,
-      take: take ? parseInt(take as string) : 10,
+      skip: page ? (page - 1) * Number(take) : 0,
+      take: take ?? 10,
       orderBy: {
         createdAt: 'desc',
       },

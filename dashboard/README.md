@@ -73,3 +73,8 @@ bun run preview
 ```
 
 Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.
+
+## Unit tests
+
+Run `npm run test:unit` from `dashboard/` after installing dependencies. The authentication tests mount the sign-in and account controls
+with simulated wallet and API responses and run the backoffice route guard. They do not need a wallet extension or a live backend.

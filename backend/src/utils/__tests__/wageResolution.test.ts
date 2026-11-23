@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { resolveCurrentWage } from '../wageResolution';
 
-vi.mock('../dependenciesUtil', () => ({
+vi.mock('../prismaClient', () => ({
   prisma: {
     wage: {
       findFirst: vi.fn(),
@@ -9,7 +9,7 @@ vi.mock('../dependenciesUtil', () => ({
   },
 }));
 
-import { prisma } from '../dependenciesUtil';
+import { prisma } from '../prismaClient';
 
 describe('resolveCurrentWage', () => {
   beforeEach(() => {

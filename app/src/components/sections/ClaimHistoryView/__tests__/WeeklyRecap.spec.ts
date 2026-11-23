@@ -151,7 +151,36 @@ describe('[US-PAYROLL-012] ClaimHistory WeeklyRecap', () => {
     if (rateTotalList.exists()) {
       expect(rateTotalList.text()).toContain('NATIVE')
     }
-    expect(wrapper.text()).toContain('$0.00 USD/h')
+    expect(wrapper.text()).toContain('— USD/h')
+  })
+
+  it('keeps an incomplete multi-token wage unavailable instead of publishing its known subset', () => {
+    vi.mocked(useCurrencyStore().getTokenInfo).mockImplementation((tokenId) =>
+      tokenId === 'usdc'
+        ? null
+        : {
+            id: tokenId,
+            name: 'Ether',
+            symbol: 'ETH',
+            code: 'ETH',
+            prices: [{ id: 'local', price: 10, code: 'USD', symbol: '$' }]
+          }
+    )
+    const wrapper = createWrapper({
+      weeklyClaim: {
+        minutesWorked: 60,
+        wage: {
+          maximumHoursPerWeek: 40,
+          ratePerHour: [
+            { type: 'native', amount: 2 },
+            { type: 'usdc', amount: 3 }
+          ]
+        }
+      }
+    })
+    expect(wrapper.text()).toContain('— USD/h')
+    expect(wrapper.text()).toContain('— USD')
+    expect(wrapper.text()).not.toContain('$20.00 USD/h')
   })
 
   it('handles missing claim and missing wage with safe defaults', () => {

@@ -279,6 +279,7 @@ describe('Merchant payment-history recovery with the real producer', () => {
     renderCard()
     await vi.waitFor(() => expect(wrapper.text()).toContain('Transaction history is incomplete'))
     expect(wrapper.text()).toContain('invoice-1')
+    expect(wrapper.text()).toContain('0xaaaa...aaaa')
     expect(wrapper.text()).not.toContain('No payments yet.')
     getTransaction.mockImplementation(async ({ hash }: { hash: Hex }) => ({
       input: calldata(hash === FIRST ? 'invoice-1' : 'invoice-2')

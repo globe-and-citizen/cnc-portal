@@ -1,5 +1,6 @@
 import type { AccountingSummary, LedgerCategory, LedgerEntry } from '~/utils/accounting'
 import type { RealizedTrade } from '~/utils/incomeStatement'
+import { contractCost, isChargedFee, ledgerEntryFee } from '~/utils/tradingFees'
 
 /**
  * Point-in-time snapshot of the accounting Summary — issue #2103.
@@ -22,7 +23,7 @@ import type { RealizedTrade } from '~/utils/incomeStatement'
  * Balance Sheet does, and reports the live figures as unavailable rather than
  * pretending today's market prices applied back then. Under that convention the
  * accounting identity still closes to the cent:
- * `cash + contractsAtCost ≡ netDeposits + realizedPnl + rewards + settlements`.
+ * `cash + contractsAtCost ≡ netDeposits + realizedPnl + rewards − fees + settlements`.
  */
 
 export interface SummarySnapshot {
@@ -111,14 +112,10 @@ export function buildSummarySnapshot(input: BuildSummarySnapshotInput): SummaryS
     } else if (entry.category === 'TRADE_BUY' || entry.category === 'TRADE_SELL') {
       summary.tradingVolume += entry.amount
       summary.tradeCount += 1
-      // Fees are baked into the fill price, so they are the gap between the
-      // quoted value and what actually moved — same derivation as buildLedger().
-      if (entry.unitPrice != null && entry.quantity != null) {
-        const fee = Math.abs(entry.quantity * entry.unitPrice - entry.amount)
-        summary.totalFees += fee
-        if (fee > 1e-4) {
-          summary.feeTransactionCount += 1
-        }
+      const fee = ledgerEntryFee(entry)
+      summary.totalFees += fee
+      if (isChargedFee(fee)) {
+        summary.feeTransactionCount += 1
       }
     } else if (REWARD_CATEGORIES.has(entry.category)) {
       summary.totalRewards += entry.amount
@@ -128,7 +125,7 @@ export function buildSummarySnapshot(input: BuildSummarySnapshotInput): SummaryS
     }
 
     if (entry.category === 'TRADE_BUY' || entry.category === 'SPLIT') {
-      acquisitionCost += entry.amount
+      acquisitionCost += contractCost(entry)
     }
   }
 
@@ -149,7 +146,7 @@ export function buildSummarySnapshot(input: BuildSummarySnapshotInput): SummaryS
   summary.totalPortfolioValue = summary.currentCashBalance + summary.openPositionsValue
   summary.totalReturn = summary.totalPortfolioValue - summary.netDeposits
   summary.reconciliationGap = summary.totalReturn
-    - (summary.realizedPnl + summary.totalRewards + summary.settlementAdjustments)
+    - (summary.realizedPnl + summary.totalRewards - summary.totalFees + summary.settlementAdjustments)
 
   return { summary, asOf, isCurrent: false }
 }

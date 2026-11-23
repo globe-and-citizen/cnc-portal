@@ -8,8 +8,8 @@ import { useTeamStore } from '@/stores'
 
 // ─── Child component stubs ──────────────────────────────────────────────────
 // These are local stubs passed via mount options, not vi.mock() calls.
-const TransferOptionCardStub = {
-  name: 'TransferOptionCard',
+const OwnershipRecipientOptionCardStub = {
+  name: 'OwnershipRecipientOptionCard',
   props: ['label', 'isSelected', 'icon'],
   emits: ['selected'],
   template: `<button :data-label="label" @click="$emit('selected')">{{ label }}</button>`
@@ -36,7 +36,7 @@ const mountComponent = (props = {}) =>
     props: { loading: false, isBodAction: false, ...props },
     global: {
       stubs: {
-        TransferOptionCard: TransferOptionCardStub,
+        OwnershipRecipientOptionCard: OwnershipRecipientOptionCardStub,
         SelectMemberInput: SelectMemberInputStub,
         UserIdentity: { template: '<div data-test="user-component" />', props: ['user'] },
         IconifyIcon: { template: '<span />' },

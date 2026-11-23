@@ -13,7 +13,7 @@ import { money } from '@/utils/accounting/presenter'
 import type { LedgerColumnKey, LedgerMovements } from '@/utils/accounting/ledgerColumns'
 import type { AccountName } from '@/utils/accounting/chartOfAccounts'
 import type { SectionSpec } from '@/utils/accounting/exportSpec'
-import type { Account, JournalEntry } from '@/utils/accounting/types'
+import type { Account, JournalEntry, UsdAmount } from '@/utils/accounting/types'
 
 /** The reporting window a drill-down inherits from its statement. */
 interface DrilldownBounds {
@@ -75,6 +75,7 @@ export function useLedgerDrilldown(
   const target = ref<AccountSelection | null>(null)
   const displayName = ref('')
   const lineTotal = ref('')
+  const lineAmount = ref<UsdAmount | undefined>()
 
   const balanceAccount = computed<SingleAccountSelection | null>(() => {
     const selected = target.value
@@ -120,11 +121,17 @@ export function useLedgerDrilldown(
   })
 
   /** Open the popup for one concrete account, one chart family, or an aggregate. */
-  function openFor(account: AccountSelection, lineValue: string, label?: string): void {
+  function openFor(
+    account: AccountSelection,
+    lineValue: string,
+    label?: string,
+    amount?: UsdAmount
+  ): void {
     target.value = account
     displayName.value = label ?? (typeof account === 'string' ? account : 'Aggregate')
     if (isConcreteAccount(account)) displayName.value = label ?? account.family.name
     lineTotal.value = lineValue
+    lineAmount.value = amount
     open.value = true
   }
 
@@ -142,7 +149,18 @@ export function useLedgerDrilldown(
       columns,
       journalAccounts: accountIdsForSelection(entries.value, line.accounts),
       journalAccountLabel: line.label,
-      journalAccountMovements: movements.value
+      journalAccountMovements: movements.value,
+      journalAccountAmounts: balanceAccount.value
+        ? (() => {
+            const { debits, credits } = accountMovements(
+              drilldownEntries.value,
+              balanceAccount.value!
+            )
+            return { debit: debits, credit: credits }
+          })()
+        : lineAmount.value === undefined
+          ? undefined
+          : { debit: lineAmount.value, credit: lineAmount.value }
     }
     if (format === 'excel') {
       exportExcel([spec], exportFilename(spec, 'xlsx'), `${line.label} ledger exported to Excel`)

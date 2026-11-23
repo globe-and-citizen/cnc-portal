@@ -34,5 +34,5 @@ Use the focused guides instead of re-deriving local patterns.
 
 ## Validate the client
 
-Run the full `app/` gate from `AGENTS.md`: lint, format check, type-check, and unit tests. Add focused tests for the behaviour changed; use
-E2E only when the user journey needs browser-level evidence.
+Run the full [shared app gate](../../../CONTRIBUTION.md#app). Add focused tests for the behaviour changed; use E2E when the user journey
+needs browser-level evidence.

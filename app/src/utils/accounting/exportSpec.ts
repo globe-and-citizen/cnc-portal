@@ -5,7 +5,7 @@
  * (and the view) depend on this module rather than on each other.
  */
 import type { LedgerColumnKey, LedgerMovements } from '@/utils/accounting/ledgerColumns'
-import type { JournalEntry } from './types'
+import type { JournalEntry, UsdAmount } from './types'
 
 /** The canonical journal is the only Accounting data that crosses the export boundary. */
 export interface AccountingExportSnapshot {
@@ -18,12 +18,12 @@ export type SectionKey = 'summary' | 'income' | 'balance' | 'trial' | 'ledger' |
 /**
  * A section to export, plus the filter state that section is currently showing.
  * The per-page exports pass the page's live period / accounts / columns so the
- * file matches exactly what's on screen; the Summary report leaves them unset
- * to export the whole book.
+ * file matches exactly what's on screen; the Summary report gives every section
+ * the one period picked in its modal.
  */
 export interface SectionSpec {
   key: SectionKey
-  /** Income Statement / General Ledger reporting-period bounds. */
+  /** Reporting-period bounds of the Summary, Income Statement, General Ledger and Account Assignments. */
   from?: Date | null
   to?: Date | null
   /** Balance Sheet / Trial Balance point-in-time "as of" date. */
@@ -41,4 +41,6 @@ export interface SectionSpec {
   journalAccountLabel?: string
   /** The drilled account's own debit and credit totals for a drill-down export. */
   journalAccountMovements?: LedgerMovements
+  /** Exact amounts underlying the drill-down footer. */
+  journalAccountAmounts?: LedgerMovements<UsdAmount>
 }

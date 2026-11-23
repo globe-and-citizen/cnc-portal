@@ -71,11 +71,6 @@ describe('SidebarLayout.vue', () => {
           component: { template: '<div>BoD Elections</div>' }
         },
         {
-          path: '/teams/:id/bod-proposals',
-          name: 'bod-proposals',
-          component: { template: '<div>BoD Proposals</div>' }
-        },
-        {
           path: '/teams/:id/vesting',
           name: 'vesting',
           component: { template: '<div>Vesting</div>' }
