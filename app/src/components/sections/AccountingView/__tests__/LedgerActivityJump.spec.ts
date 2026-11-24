@@ -6,13 +6,13 @@
  * table wires the two together — a linkable posting is a real hit target, one
  * without a surface stays plain text, and a continuation row never links.
  */
-import { describe, it, expect, beforeEach } from 'vitest'
-import { flushPromises } from '@vue/test-utils'
-import { renderWithProviders, mockRouterPush } from '@/tests/mocks'
-import LedgerTable from '../LedgerTable.vue'
-import { journalLedgerRows } from '@/utils/accounting/journalLedgerPresenter'
-import { finalizeJournal } from '@/utils/accounting/__tests__/assembleAccounting'
+import { beforeEach, describe, expect, it } from 'vitest'
+import { mockRouterPush, renderWithProviders } from '@/tests/mocks'
 import type { JournalEntryDraft } from '@/utils/accounting/journalEntryDraft'
+import LedgerTable from '../LedgerTable.vue'
+import { finalizeJournal } from '@/utils/accounting/__tests__/assembleAccounting'
+import { flushPromises } from '@vue/test-utils'
+import { journalLedgerRows } from '@/utils/accounting/journalLedgerPresenter'
 
 const MEMBER = '0x1111111111111111111111111111111111111111'
 

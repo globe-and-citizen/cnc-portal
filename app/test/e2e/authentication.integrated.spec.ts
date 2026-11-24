@@ -1,7 +1,7 @@
 import { expect, test } from './fixtures/integrated'
+import { integratedBackendUrl } from './integrated-api'
 import { ownerNonce } from './company/company-chain'
 import { signInToRealStack } from './company/real-company-page'
-import { integratedBackendUrl } from './integrated-api'
 
 test.describe('[US-AUTH-001] Integrated client authentication', { tag: '@integrated' }, () => {
   /**

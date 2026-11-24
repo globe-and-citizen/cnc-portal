@@ -29,13 +29,13 @@
  * (keyed by member + amount) and *not* re-booked as a direct mint (Default-D),
  * which would double-count the equity.
  */
-import { formatUnits } from 'viem'
+import { type JournalEntryDraft, makeJournalEntryDraft } from '@/utils/accounting/journalEntryDraft'
 import type {
   VestingCreatedRow,
-  VestingTokensReleasedRow,
-  VestingStoppedRow
+  VestingStoppedRow,
+  VestingTokensReleasedRow
 } from '@/types/contract-events/vesting'
-import { makeJournalEntryDraft, type JournalEntryDraft } from '@/utils/accounting/journalEntryDraft'
+import { formatUnits } from 'viem'
 
 export interface VestingMapperInput {
   createds?: readonly VestingCreatedRow[]

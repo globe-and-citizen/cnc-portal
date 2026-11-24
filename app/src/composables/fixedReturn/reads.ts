@@ -2,22 +2,22 @@
    the next-largest, is 292 lines) because FixedReturn genuinely has the most distinct read
    shapes of any contract here. Splitting it into multiple files would recreate the same
    file-proliferation this contract's composables were just consolidated to avoid. */
-import { computed, unref, type MaybeRef, type MaybeRefOrGetter, toValue } from 'vue'
-import { useQuery } from '@tanstack/vue-query'
-import { useReadContract } from '@wagmi/vue'
-import { readContract } from '@wagmi/core'
-import { formatUnits, isAddress, zeroAddress, type Address, type ContractFunctionName } from 'viem'
-import { useTeamStore, useUserDataStore } from '@/stores'
-import { config } from '@/wagmi.config'
-import { fixedReturnAbi } from '@/artifacts/abi/generated'
-import { decimalsForFixedReturnToken } from '@/utils/communityCredit/offer'
-import { log } from '@/lib/logging'
+import { type Address, type ContractFunctionName, formatUnits, isAddress, zeroAddress } from 'viem'
 import type {
   FixedReturnLenderPositionResult,
   FixedReturnOfferLender,
   FixedReturnRawOffer,
   LendingOfferStruct
 } from '@/types'
+import { type MaybeRef, type MaybeRefOrGetter, computed, toValue, unref } from 'vue'
+import { useTeamStore, useUserDataStore } from '@/stores'
+import { config } from '@/wagmi.config'
+import { decimalsForFixedReturnToken } from '@/utils/communityCredit/offer'
+import { fixedReturnAbi } from '@/artifacts/abi/generated'
+import { log } from '@/lib/logging'
+import { readContract } from '@wagmi/core'
+import { useQuery } from '@tanstack/vue-query'
+import { useReadContract } from '@wagmi/vue'
 
 /** View/pure names only — `useReadContract` rejects state-changing ones. */
 type FixedReturnReadNames = ContractFunctionName<typeof fixedReturnAbi, 'view' | 'pure'>

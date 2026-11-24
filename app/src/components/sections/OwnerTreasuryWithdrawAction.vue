@@ -63,23 +63,23 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
-import { encodeFunctionData, type Address } from 'viem'
-import { useContractBalance, contractBalanceKeys } from '@/composables'
-import { useCashRemunerationOwner } from '@/composables/cashRemuneration/reads'
-import { useOwnerWithdrawAllToBank as useCashOwnerWithdrawAll } from '@/composables/cashRemuneration/writes'
-import { useExpenseAccountOwner } from '@/composables/expenseAccount/reads'
-import { useOwnerWithdrawAllToBank as useExpenseOwnerWithdrawAll } from '@/composables/expenseAccount/writes'
+import { type Address, encodeFunctionData } from 'viem'
 import { cashRemunerationEip712Abi, expenseAccountEip712Abi } from '@/artifacts/abi/generated'
+import { computed, ref, watch } from 'vue'
+import { contractBalanceKeys, useContractBalance } from '@/composables'
 import { useTeamStore, useUserDataStore } from '@/stores'
-import type { ContractType } from '@/types'
 import type { ContractKey } from '@/utils/errors/contractCatalog.types'
+import type { ContractType } from '@/types'
+import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
 import { classifyError } from '@/utils/errors/classifyContractError'
 import { useBodAddAction } from '@/composables/bod/writes'
 import { useBodIsBodAction } from '@/composables/bod/reads'
-import { useQueryClient } from '@tanstack/vue-query'
+import { useOwnerWithdrawAllToBank as useCashOwnerWithdrawAll } from '@/composables/cashRemuneration/writes'
+import { useCashRemunerationOwner } from '@/composables/cashRemuneration/reads'
 import { useChainId } from '@wagmi/vue'
-import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
+import { useExpenseAccountOwner } from '@/composables/expenseAccount/reads'
+import { useOwnerWithdrawAllToBank as useExpenseOwnerWithdrawAll } from '@/composables/expenseAccount/writes'
+import { useQueryClient } from '@tanstack/vue-query'
 
 type WithdrawContractType = Extract<ContractType, 'CashRemunerationEIP712' | 'ExpenseAccountEIP712'>
 

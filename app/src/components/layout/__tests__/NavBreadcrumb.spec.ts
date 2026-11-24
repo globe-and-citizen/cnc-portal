@@ -1,9 +1,9 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { mount } from '@vue/test-utils'
-import { createRouter, createMemoryHistory } from 'vue-router'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { createMemoryHistory, createRouter } from 'vue-router'
+import { mockTeamStore, mockUserStore } from '@/tests/mocks/store.mock'
 import NavBreadcrumb from '@/components/layout/NavBreadcrumb.vue'
 import { mockTeamData } from '@/tests/mocks/index'
-import { mockTeamStore, mockUserStore } from '@/tests/mocks/store.mock'
+import { mount } from '@vue/test-utils'
 import { setMockRoute } from '@/tests/mocks/router.mock'
 
 // A real (memory) router so UBreadcrumb's RouterLink-based crumbs can resolve.

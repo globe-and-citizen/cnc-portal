@@ -19,13 +19,13 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch, onMounted, watchEffect } from 'vue'
+import type { Claim, ClaimFormData, ClaimSubmitPayload } from '@/types'
+import { computed, onMounted, ref, watch, watchEffect } from 'vue'
 import ClaimForm from '@/components/sections/CashRemunerationView/Form/ClaimForm.vue'
+import { getAxiosErrorMessage } from '@/utils/errors/http'
+import { useEditClaimWithFilesMutation } from '@/queries/weeklyClaim.queries'
 import { useSubmitRestriction } from '@/composables'
 import { useTeamStore } from '@/stores'
-import type { Claim, ClaimFormData, ClaimSubmitPayload } from '@/types'
-import { useEditClaimWithFilesMutation } from '@/queries/weeklyClaim.queries'
-import { getAxiosErrorMessage } from '@/utils/errors/http'
 
 const props = withDefaults(
   defineProps<{

@@ -1,8 +1,8 @@
-import { mount, type VueWrapper } from '@vue/test-utils'
-import { defineComponent } from 'vue'
+import { type VueWrapper, mount } from '@vue/test-utils'
 import type { Address } from 'viem'
-
 import BankTransactions from '../BankTransactions.vue'
+
+import { defineComponent } from 'vue'
 
 export type BankRow = {
   type: string

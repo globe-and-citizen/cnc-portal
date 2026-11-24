@@ -1,6 +1,6 @@
-import { describe, expect, it } from 'vitest'
-import { activityOf, activityText, entryLabel } from '../describeEntry'
 import type { JournalEntryDraft, UseCase } from '../journalEntryDraft'
+import { activityOf, activityText, entryLabel } from '../describeEntry'
+import { describe, expect, it } from 'vitest'
 import type { AccountName } from '../chartOfAccounts'
 import { finalizeJournal } from './assembleAccounting'
 import { journalFixture } from './fixtures'

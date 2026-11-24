@@ -43,13 +43,13 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import { useTeamStore } from '@/stores'
-import { useUserDataStore } from '@/stores/user'
 import TeamMetaArchiveModal from './TeamMetaArchiveModal.vue'
 import TeamMetaDeleteModal from './TeamMetaDeleteModal.vue'
 import TeamMetaUpdateModal from './TeamMetaUpdateModal.vue'
 import TeamMetaVisibilityModal from './TeamMetaVisibilityModal.vue'
+import { computed } from 'vue'
+import { useTeamStore } from '@/stores'
+import { useUserDataStore } from '@/stores/user'
 
 const teamStore = useTeamStore()
 const currentTeam = computed(() => teamStore.currentTeamMeta.data)

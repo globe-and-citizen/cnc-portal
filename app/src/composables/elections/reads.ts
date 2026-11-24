@@ -1,12 +1,12 @@
-import { useQuery } from '@tanstack/vue-query'
-import { readContract } from '@wagmi/core'
-import { computed, unref, type MaybeRef, type Ref } from 'vue'
-import { useReadContract } from '@wagmi/vue'
-import { isAddress, zeroAddress, type Address } from 'viem'
-import { config } from '@/wagmi.config'
-import { useTeamStore } from '@/stores'
-import { electionsAbi } from '@/artifacts/abi/generated'
+import { type Address, isAddress, zeroAddress } from 'viem'
+import { type MaybeRef, type Ref, computed, unref } from 'vue'
 import type { RawElection } from '@/utils/elections/election'
+import { config } from '@/wagmi.config'
+import { electionsAbi } from '@/artifacts/abi/generated'
+import { readContract } from '@wagmi/core'
+import { useQuery } from '@tanstack/vue-query'
+import { useReadContract } from '@wagmi/vue'
+import { useTeamStore } from '@/stores'
 
 /**
  * Every read below restates the type Elections.sol promises, because wagmi's Vue

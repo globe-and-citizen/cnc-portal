@@ -1,17 +1,17 @@
-import { flushPromises } from '@vue/test-utils'
-import { describe, it, expect, beforeEach, vi } from 'vitest'
-import SafeDepositRouterForm from '../SafeDepositRouterForm.vue'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
-  renderWithProviders,
-  mockUseContractBalance,
+  makeTokenBalance,
   mockERC20Reads,
   mockERC20Writes,
+  mockInvestorReads,
   mockSafeDepositRouterAddress,
   mockSafeDepositRouterReads,
   mockSafeDepositRouterWrites,
-  mockInvestorReads,
-  makeTokenBalance
+  mockUseContractBalance,
+  renderWithProviders
 } from '@/tests/mocks'
+import SafeDepositRouterForm from '../SafeDepositRouterForm.vue'
+import { flushPromises } from '@vue/test-utils'
 
 type MutateOptions = {
   onSuccess?: (...args: unknown[]) => void | Promise<void>

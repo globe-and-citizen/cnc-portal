@@ -10,10 +10,10 @@
  * browser-installed wallet (MetaMask, Rabby, …) everywhere else.
  */
 import { createConfig, http } from '@wagmi/core'
-import { injected } from '@wagmi/connectors'
-import { defineChain } from 'viem'
 import { NETWORK } from '@/constant'
+import { defineChain } from 'viem'
 import { e2eMockConnector } from '@/e2e/mockConnector'
+import { injected } from '@wagmi/connectors'
 
 export const widgetChain = defineChain({
   id: parseInt(NETWORK.chainId, 16),

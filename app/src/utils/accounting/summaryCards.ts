@@ -6,12 +6,6 @@
  * each module stays focused. Pure and unit-testable; the presenter scopes the
  * journal to a period and exposes the result through `presentSummary`.
  */
-import { formatUsd } from '@/utils/format'
-import { buildAccountingSummary } from './accountingSummary'
-import { buildBalanceSheet } from './balanceSheet'
-import { buildGeneralLedger } from './generalLedger'
-import { buildIncomeStatement } from './incomeStatement'
-import { ZERO_USD_AMOUNT, usdAmountToNumber } from './monetaryAmount'
 import type {
   AccountingSummary,
   BalanceSheet,
@@ -20,6 +14,12 @@ import type {
   JournalEntry,
   UsdAmount
 } from './types'
+import { ZERO_USD_AMOUNT, usdAmountToNumber } from './monetaryAmount'
+import { buildAccountingSummary } from './accountingSummary'
+import { buildBalanceSheet } from './balanceSheet'
+import { buildGeneralLedger } from './generalLedger'
+import { buildIncomeStatement } from './incomeStatement'
+import { formatUsd } from '@/utils/format'
 
 export interface SummaryCard {
   label: string

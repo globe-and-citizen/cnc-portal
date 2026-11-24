@@ -1,16 +1,5 @@
-import { defineStore } from 'pinia'
-import { computed } from 'vue'
-import { formatDateShort } from '@/utils/format'
-import { useQuery } from '@tanstack/vue-query'
-import { readContract } from '@wagmi/core'
-import { formatUnits, isAddress, type Address } from 'viem'
-import { config } from '@/wagmi.config'
-import { fixedReturnAbi } from '@/artifacts/abi/generated'
-import { useFixedReturnAddress, useFixedReturnAllOffers } from '@/composables/fixedReturn/reads'
-import { useGetFixedReturnOfferingsQuery } from '@/queries/fixedReturnOffering.queries'
-import { useBlockTimestamp } from '@/composables/useBlockTimestamp'
-import { useTeamStore } from './teamStore'
-import { useUserDataStore } from './user'
+import { type Address, formatUnits, isAddress } from 'viem'
+import type { CreditMember, CreditRound } from '@/types'
 import { getCreditTokenSymbol, gradientForAddress } from '@/utils/communityCredit/offer'
 import {
   lendingOfferToCreditRound,
@@ -18,7 +7,18 @@ import {
   offerStateToRoundStatus,
   roundInterest
 } from '@/utils/communityCredit/model'
-import type { CreditMember, CreditRound } from '@/types'
+import { useFixedReturnAddress, useFixedReturnAllOffers } from '@/composables/fixedReturn/reads'
+import { computed } from 'vue'
+import { config } from '@/wagmi.config'
+import { defineStore } from 'pinia'
+import { fixedReturnAbi } from '@/artifacts/abi/generated'
+import { formatDateShort } from '@/utils/format'
+import { readContract } from '@wagmi/core'
+import { useBlockTimestamp } from '@/composables/useBlockTimestamp'
+import { useGetFixedReturnOfferingsQuery } from '@/queries/fixedReturnOffering.queries'
+import { useQuery } from '@tanstack/vue-query'
+import { useTeamStore } from './teamStore'
+import { useUserDataStore } from './user'
 
 /**
  * Community Credit is the member-facing UI for a team's on-chain FixedReturn contract:

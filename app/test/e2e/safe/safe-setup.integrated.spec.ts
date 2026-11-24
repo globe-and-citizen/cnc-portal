@@ -1,10 +1,10 @@
-import { expect, test } from '../fixtures/integrated'
-import { openAccountFromSidebar } from '../e2e-page'
 import {
   createOperationalCompany,
   deleteCompanyThroughUi,
   deploySafeThroughUi
 } from '../company/real-company-page'
+import { expect, test } from '../fixtures/integrated'
+import { openAccountFromSidebar } from '../e2e-page'
 
 test.describe(
   '[US-SAFE-001] Integrated Safe setup',

@@ -6,8 +6,8 @@
  * enforces it. See `.github/copilot-instructions/formatting-standards.md`.
  */
 
+import { EMPTY_VALUE, FORMAT_LOCALE, collapseSignedZero, toFiniteNumber } from './shared'
 import { formatUnits } from 'viem'
-import { collapseSignedZero, EMPTY_VALUE, FORMAT_LOCALE, toFiniteNumber } from './shared'
 
 /** Value accepted by every amount formatter — on-chain amounts arrive as decimal strings. */
 export type NumericInput = number | string | null | undefined

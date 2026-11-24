@@ -1,5 +1,5 @@
-import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
+import assert from 'node:assert/strict'
 import { validateUtilityBoundaries } from '../check-utility-boundaries.mjs'
 
 describe('utility boundary guard', () => {

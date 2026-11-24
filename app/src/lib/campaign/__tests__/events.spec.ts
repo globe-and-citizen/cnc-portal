@@ -1,15 +1,15 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { mockGetLogs } from '@/tests/mocks/viem.actions.mock'
 import {
-  fetchCampaignLogs,
-  groupCampaignEventsByCode,
   AD_CAMPAIGN_CREATED_EVENT,
-  PAYMENT_RELEASED_EVENT,
   BUDGET_WITHDRAWN_EVENT,
+  type CampaignEventLogs,
+  PAYMENT_RELEASED_EVENT,
   PAYMENT_RELEASED_ON_WITHDRAW_APPROVAL_EVENT,
-  type CampaignEventLogs
+  fetchCampaignLogs,
+  groupCampaignEventsByCode
 } from '@/lib/campaign/events'
 import type { Address, PublicClient } from 'viem'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { mockGetLogs } from '@/tests/mocks/viem.actions.mock'
 
 const emptyLogs: CampaignEventLogs = {
   adCreated: [],

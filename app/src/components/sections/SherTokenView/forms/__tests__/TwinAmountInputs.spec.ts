@@ -1,8 +1,8 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { mount } from '@vue/test-utils'
-import { createTestingPinia } from '@pinia/testing'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import TwinAmountInputs from '../TwinAmountInputs.vue'
+import { createTestingPinia } from '@pinia/testing'
 import { mockInvestorReads } from '@/tests/mocks'
+import { mount } from '@vue/test-utils'
 
 const mountInputs = (props: Record<string, unknown> = {}) =>
   mount(TwinAmountInputs, {

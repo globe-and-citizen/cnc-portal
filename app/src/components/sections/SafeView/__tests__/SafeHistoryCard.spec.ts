@@ -1,9 +1,9 @@
+import { type VueWrapper, flushPromises, mount } from '@vue/test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { flushPromises, mount, type VueWrapper } from '@vue/test-utils'
-import type { Address } from 'viem'
-import SafeHistoryCard from '../SafeHistoryCard.vue'
 import { createMockMutationResponse, mockTeamData, mockTeamStore } from '@/tests/mocks'
 import { makeTokenBalance, mockUseContractBalance } from '@/tests/mocks/composables.mock'
+import type { Address } from 'viem'
+import SafeHistoryCard from '../SafeHistoryCard.vue'
 import { useUpdateTeamSafeMutation } from '@/queries/contract.queries'
 
 const DEFAULT_SAFE = '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'

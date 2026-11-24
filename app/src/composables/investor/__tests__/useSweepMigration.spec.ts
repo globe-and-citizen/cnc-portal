@@ -1,7 +1,7 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
 import type { Address, Hex } from 'viem'
-import { executeContractWrite } from '@/composables/contracts/useContractWritesV3'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { completeMigration, sweepMigration } from '../useSweepMigration'
+import { executeContractWrite } from '@/composables/contracts/useContractWritesV3'
 
 vi.mock('@/composables/contracts/useContractWritesV3', async (importOriginal) => {
   const actual = (await importOriginal()) as object

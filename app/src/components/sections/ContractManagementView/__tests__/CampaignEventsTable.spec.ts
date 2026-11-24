@@ -1,7 +1,7 @@
-import { mount } from '@vue/test-utils'
-import { describe, it, expect, beforeEach } from 'vitest'
+import { beforeEach, describe, expect, it } from 'vitest'
 import CampaignEventsTable from '@/components/sections/ContractManagementView/CampaignEventsTable.vue'
 import type { EventsByCampaignCode } from '@/lib/campaign/events'
+import { mount } from '@vue/test-utils'
 
 // Mocked ExtendedEvent to align with the test data
 type MockedExtendedEvent = {

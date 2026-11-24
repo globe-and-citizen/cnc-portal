@@ -1,30 +1,30 @@
-import { describe, expect, it } from 'vitest'
-import { z } from 'zod'
-import {
-  applyZodFieldErrors,
-  avatarStyle,
-  creditInitials,
-  formatCalendarBreakdown,
-  creditTermLabel,
-  formatAmount,
-  formatCreditPeriod,
-  formatNumber,
-  formatRoundTerm,
-  MINUTES_PER_DAY,
-  reachedFundingTarget,
-  repayableCeilingUnits,
-  roundToDisplayPrecision,
-  roundInterest,
-  roundTotalDue,
-  statusMeta
-} from '../model'
 import {
   CREDIT_FIELD_CLASS,
   creditAccessRowClass,
   creditChipClass,
   creditRadioClass
 } from '../wizard'
+import {
+  MINUTES_PER_DAY,
+  applyZodFieldErrors,
+  avatarStyle,
+  creditInitials,
+  creditTermLabel,
+  formatAmount,
+  formatCalendarBreakdown,
+  formatCreditPeriod,
+  formatNumber,
+  formatRoundTerm,
+  reachedFundingTarget,
+  repayableCeilingUnits,
+  roundInterest,
+  roundToDisplayPrecision,
+  roundTotalDue,
+  statusMeta
+} from '../model'
+import { describe, expect, it } from 'vitest'
 import type { RoundStatus } from '@/types'
+import { z } from 'zod'
 
 describe('communityCreditUtil', () => {
   describe('formatting', () => {

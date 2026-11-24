@@ -1,9 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { computed } from 'vue'
-import type { Address } from 'viem'
-import { useBoDElections } from '../index'
 import { mockElectionsReads, resetContractMocks } from '@/tests/mocks'
+import type { Address } from 'viem'
 import type { RawElection } from '@/utils/elections/election'
+import { computed } from 'vue'
+import { useBoDElections } from '../index'
 
 const OWNER = '0x742d35Cc6bF8C55C6C2e013e5492D2b6637e0886' as Address
 

@@ -1,7 +1,7 @@
-import { mount } from '@vue/test-utils'
-import { describe, it, expect } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import ElectionStats from '../ElectionStats.vue'
 import { formatDateTime } from '@/utils/format'
+import { mount } from '@vue/test-utils'
 
 // Lightweight stub to capture props passed to the child cards
 const CardStub = {

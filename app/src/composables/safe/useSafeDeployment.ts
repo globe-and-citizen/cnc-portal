@@ -8,19 +8,19 @@
  *   - onError:   no toast — `mutation.error` is left for callers to render
  *                inline via UAlert / classifyError.
  */
+import { type Address, type Hex, encodeFunctionData, parseEventLogs, zeroAddress } from 'viem'
 import { useMutation, useQueryClient } from '@tanstack/vue-query'
-import { getConnections } from '@wagmi/core'
-import { encodeFunctionData, parseEventLogs, zeroAddress, type Address, type Hex } from 'viem'
-import { config } from '@/wagmi.config'
-import { log } from '@/lib/logging'
-import { randomSaltNonce } from '@/lib/safe/browser'
-import { executeContractWrite } from '@/composables/contracts/useContractWritesV3'
-import { getSafeInfraAddresses } from '@/constant'
 import { SAFE_PROXY_FACTORY_ABI } from '@/artifacts/abi/safe-proxy-factory'
-import { deploySafeSchema } from '@/types/safe.schemas'
 import type { SafeDeploymentParams } from '@/types/safe.mutation'
-import { safeKeys } from '@/queries/safe.queries'
+import { config } from '@/wagmi.config'
+import { deploySafeSchema } from '@/types/safe.schemas'
+import { executeContractWrite } from '@/composables/contracts/useContractWritesV3'
+import { getConnections } from '@wagmi/core'
+import { getSafeInfraAddresses } from '@/constant'
+import { log } from '@/lib/logging'
 import { normalizeSafeAddress } from '@/utils/safe/address'
+import { randomSaltNonce } from '@/lib/safe/browser'
+import { safeKeys } from '@/queries/safe.queries'
 
 const SAFE_SETUP_ABI = [
   {

@@ -1,9 +1,9 @@
-import { describe, it, expect } from 'vitest'
-import { enrichEntries } from '@/utils/accounting/enrichment'
-import { makeJournalEntryDraft, type JournalEntryDraft } from '@/utils/accounting/journalEntryDraft'
-import type { WeeklyClaim } from '@/types/cash-remuneration'
-import type { ExpenseResponse } from '@/types/expense-account'
+import { type JournalEntryDraft, makeJournalEntryDraft } from '@/utils/accounting/journalEntryDraft'
+import { describe, expect, it } from 'vitest'
 import { ADDR } from './fixtures'
+import type { ExpenseResponse } from '@/types/expense-account'
+import type { WeeklyClaim } from '@/types/cash-remuneration'
+import { enrichEntries } from '@/utils/accounting/enrichment'
 
 const payrollEntry = (): JournalEntryDraft =>
   makeJournalEntryDraft({

@@ -1,7 +1,7 @@
-import { describe, it, expect } from 'vitest'
-import { getAddress } from 'viem'
-import type { TeamContract } from '@/types/teamContract'
 import { collectInternalAddresses, isInternalAddress } from '../internalAddresses'
+import { describe, expect, it } from 'vitest'
+import type { TeamContract } from '@/types/teamContract'
+import { getAddress } from 'viem'
 
 const BANK = '0x1111111111111111111111111111111111111111'
 const INVESTOR = '0x2222222222222222222222222222222222222222'

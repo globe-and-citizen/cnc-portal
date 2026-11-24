@@ -1,16 +1,16 @@
+import { RouterLinkStub, mount } from '@vue/test-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { mount, RouterLinkStub } from '@vue/test-utils'
-import { defineComponent } from 'vue'
-import WeeklyClaim from '../WeeklyClaim.vue'
-import WeeklyClaimActionDropdown from '../WeeklyClaimActionDropdown.vue'
-import { useGetTeamWeeklyClaimsQuery } from '@/queries'
 import {
   createMockQueryResponse,
   mockTeamStore,
-  mockUserStore,
-  mockUseReadContract
+  mockUseReadContract,
+  mockUserStore
 } from '@/tests/mocks'
+import WeeklyClaim from '../WeeklyClaim.vue'
+import WeeklyClaimActionDropdown from '../WeeklyClaimActionDropdown.vue'
 import type { WeeklyClaim as WeeklyClaimRecord } from '@/types'
+import { defineComponent } from 'vue'
+import { useGetTeamWeeklyClaimsQuery } from '@/queries'
 
 const member = '0x1111111111111111111111111111111111111111'
 const owner = '0x2222222222222222222222222222222222222222'

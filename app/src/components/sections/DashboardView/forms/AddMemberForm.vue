@@ -34,14 +34,14 @@
   <hr class="my-0" />
 </template>
 <script setup lang="ts">
+import { type MemberInput, useAddMembersMutation } from '@/queries/member.queries'
 import { computed, ref } from 'vue'
-import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
-import { useArchivedTeamMutationError } from '@/composables/useArchivedTeamMutationError'
-import { getAxiosErrorMessage } from '@/utils/errors/http'
-import MultiSelectMemberInput from '@/components/ui/inputs/MultiSelectMemberInput.vue'
 import type { Member } from '@/types'
-import { useAddMembersMutation, type MemberInput } from '@/queries/member.queries'
+import MultiSelectMemberInput from '@/components/ui/inputs/MultiSelectMemberInput.vue'
+import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
+import { getAxiosErrorMessage } from '@/utils/errors/http'
 import { log } from '@/lib/logging'
+import { useArchivedTeamMutationError } from '@/composables/useArchivedTeamMutationError'
 
 const emits = defineEmits(['memberAdded'])
 const toast = useToast()

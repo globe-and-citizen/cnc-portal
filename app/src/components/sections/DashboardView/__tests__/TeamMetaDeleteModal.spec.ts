@@ -1,12 +1,12 @@
-import { mount, flushPromises } from '@vue/test-utils'
-import { ref } from 'vue'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { flushPromises, mount } from '@vue/test-utils'
+import type { Team } from '@/types/team'
+import TeamMetaDeleteModal from '../TeamMetaDeleteModal.vue'
+import { mockRouterPush } from '@/tests/mocks/router.mock'
+import { mockTeamData } from '@/tests/mocks'
+import { ref } from 'vue'
 import { useDeleteTeamMutation } from '@/queries/team.queries'
 import { useTeamStore } from '@/stores'
-import { mockTeamData } from '@/tests/mocks'
-import { mockRouterPush } from '@/tests/mocks/router.mock'
-import TeamMetaDeleteModal from '../TeamMetaDeleteModal.vue'
-import type { Team } from '@/types/team'
 
 const mutateSpy = vi.fn()
 

@@ -4,18 +4,18 @@
  * per-event mapping is covered in `fixedReturn.spec.ts`; what matters here is
  * that the round reaches the statements and the books still balance.
  */
-import { describe, it, expect } from 'vitest'
+import { ADDR, usd } from './fixtures'
+import type { ContractType, TeamContract } from '@/types/teamContract'
+import { describe, expect, it } from 'vitest'
 import type { Address } from 'viem'
-import type { TeamContract, ContractType } from '@/types/teamContract'
 import type { CncAccountingInput } from '@/utils/accounting/assemble'
+import { USDC_ADDRESS } from '@/constant'
+import type { UsdRateOfRecord } from '@/utils/accounting/toUsd'
+import { assembleAccounting } from './assembleAccounting'
 import { buildAccountingSummary } from '@/utils/accounting/accountingSummary'
 import { buildBalanceSheet } from '@/utils/accounting/balanceSheet'
 import { buildGeneralLedger } from '@/utils/accounting/generalLedger'
 import { buildIncomeStatement } from '@/utils/accounting/incomeStatement'
-import type { UsdRateOfRecord } from '@/utils/accounting/toUsd'
-import { USDC_ADDRESS } from '@/constant'
-import { ADDR, usd } from './fixtures'
-import { assembleAccounting } from './assembleAccounting'
 
 const FIXED_RETURN = ADDR.credit as Address
 const DEPLOYER = ADDR.founder as Address

@@ -1,6 +1,6 @@
-import { computed, toValue, type MaybeRefOrGetter } from 'vue'
+import { type Address, isAddress } from 'viem'
+import { type MaybeRefOrGetter, computed, toValue } from 'vue'
 import { useChainId, useReadContract } from '@wagmi/vue'
-import { isAddress, type Address } from 'viem'
 import { ownablePausableAbi } from '@/artifacts/abi/ownable-pausable'
 
 /** Shared Ownable read, using the standard address/chain cache and invalidation. */

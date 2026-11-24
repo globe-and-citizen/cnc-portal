@@ -3,10 +3,10 @@ import type {
   RawBankTransaction,
   RawContractTokenTransferRow
 } from '@/types/contract-events/bank'
+import { buildRawTransactions, extractTxHashFromId } from './raw'
+import { formatDateTime, fromUnix } from '@/utils/format'
 import type { UBadgeColor } from '@/types/ui'
 import { zeroAddress } from 'viem'
-import { formatDateTime, fromUnix } from '@/utils/format'
-import { buildRawTransactions, extractTxHashFromId } from './raw'
 
 /**
  * Raw ERC-20 transfers no Bank event accounts for. A raw Transfer riding along a

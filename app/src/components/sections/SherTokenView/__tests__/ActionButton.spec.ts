@@ -1,6 +1,6 @@
-import { describe, it, expect } from 'vitest'
-import { mount } from '@vue/test-utils'
+import { describe, expect, it } from 'vitest'
 import ActionButton from '../ActionButton.vue'
+import { mount } from '@vue/test-utils'
 
 describe('ActionButton.vue', () => {
   const createWrapper = (props = {}, attrs = {}) =>

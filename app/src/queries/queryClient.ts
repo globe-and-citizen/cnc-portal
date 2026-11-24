@@ -1,10 +1,10 @@
 /** Application-wide TanStack Query cache shared by Vue hooks and imperative immutable reads. */
 import { MutationCache, QueryCache, QueryClient } from '@tanstack/vue-query'
 import {
+  SENTRY_WEB3_BOUNDARY_META_KEY,
   captureHttpNotFound,
   captureWeb3Error,
-  resetHttpNotFound,
-  SENTRY_WEB3_BOUNDARY_META_KEY
+  resetHttpNotFound
 } from '@/lib/sentry'
 
 export const queryClient = new QueryClient({

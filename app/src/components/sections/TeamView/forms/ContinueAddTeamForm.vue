@@ -31,9 +31,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import type { Team } from '@/types'
+import { computed, ref } from 'vue'
 import InvestorContractStep from './InvestorContractStep.vue'
+import type { Team } from '@/types'
 import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
 
 const props = defineProps<{

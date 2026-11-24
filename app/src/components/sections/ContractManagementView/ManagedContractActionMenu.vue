@@ -29,9 +29,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import type { DropdownMenuItem } from '@nuxt/ui'
 import type { ContractActionState, ManagedContractRow } from './ManagedContractsTable.types'
+import type { DropdownMenuItem } from '@nuxt/ui'
+import { computed } from 'vue'
 
 interface Props {
   row: ManagedContractRow

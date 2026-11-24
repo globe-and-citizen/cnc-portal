@@ -1,9 +1,9 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import DeleteMemberModal from '../DeleteMemberModal.vue'
+import { createTestingPinia } from '@pinia/testing'
 import { mount } from '@vue/test-utils'
 import { ref } from 'vue'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { createTestingPinia } from '@pinia/testing'
 import { useDeleteMemberMutation } from '@/queries/member.queries'
-import DeleteMemberModal from '../DeleteMemberModal.vue'
 
 const mutateSpy = vi.fn()
 

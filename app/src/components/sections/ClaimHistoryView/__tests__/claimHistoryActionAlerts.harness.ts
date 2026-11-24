@@ -1,7 +1,7 @@
-import { vi } from 'vitest'
-import { defineComponent } from 'vue'
+import { mockWeeklyClaimData, renderWithProviders } from '@/tests/mocks'
 import ClaimHistoryActionAlerts from '@/components/sections/ClaimHistoryView/ClaimHistoryActionAlerts.vue'
-import { renderWithProviders, mockWeeklyClaimData } from '@/tests/mocks'
+import { defineComponent } from 'vue'
+import { vi } from 'vitest'
 
 /**
  * Shared mount setup for the ClaimHistoryActionAlerts specs.

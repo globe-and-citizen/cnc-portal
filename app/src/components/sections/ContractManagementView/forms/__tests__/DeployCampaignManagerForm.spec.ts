@@ -1,11 +1,11 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
-import { describe, it, expect, beforeEach, vi } from 'vitest'
 import DeployCampaignManagerForm from '@/components/sections/ContractManagementView/forms/DeployCampaignManagerForm.vue'
+import { createMockMutationResponse } from '@/tests/mocks/query.mock'
 import { mockDeployState } from '@/tests/mocks/composables.mock'
+import { mockTeamStore } from '@/tests/mocks/store.mock'
 import { useCreateContractMutation } from '@/queries/contract.queries'
 import { useTeamStore } from '@/stores'
-import { mockTeamStore } from '@/tests/mocks/store.mock'
-import { createMockMutationResponse } from '@/tests/mocks/query.mock'
 
 const mountComponent = () => mount(DeployCampaignManagerForm)
 

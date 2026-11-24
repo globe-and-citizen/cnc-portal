@@ -30,8 +30,8 @@
 
 <script setup lang="ts">
 import SafePnlAmount from './SafePnlAmount.vue'
-import { useSafeSwapPnl } from '@/composables/safe/useSafeSwapPnl'
 import { formatUsd } from '@/utils/format'
+import { useSafeSwapPnl } from '@/composables/safe/useSafeSwapPnl'
 
 const props = defineProps<{ address: string }>()
 

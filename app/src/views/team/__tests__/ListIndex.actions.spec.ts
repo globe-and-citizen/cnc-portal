@@ -1,13 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import ListIndex from '@/views/team/ListIndex.vue'
-import { mount } from '@vue/test-utils'
-import { createTestingPinia } from '@pinia/testing'
-import { createMockQueryResponse } from '@/tests/mocks/query.mock'
-import { mockTeamData } from '@/tests/mocks'
 import type { Team } from '@/types'
-import { useRoute } from 'vue-router'
-
+import { createMockQueryResponse } from '@/tests/mocks/query.mock'
+import { createTestingPinia } from '@pinia/testing'
+import { mockTeamData } from '@/tests/mocks'
+import { mount } from '@vue/test-utils'
 import { useGetTeamsQuery } from '@/queries/team.queries'
+
+import { useRoute } from 'vue-router'
 
 // The card only announces which action was chosen; the list owns the modals.
 // These cover that hand-off — that the right modal opens, against the right

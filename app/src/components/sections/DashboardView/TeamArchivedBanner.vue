@@ -26,9 +26,9 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useTeamStore } from '@/stores'
-import { useUserDataStore } from '@/stores/user'
-import { useUpdateTeamMutation } from '@/queries/team.queries'
 import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
+import { useUpdateTeamMutation } from '@/queries/team.queries'
+import { useUserDataStore } from '@/stores/user'
 const teamStore = useTeamStore()
 const { address } = useUserDataStore()
 const { isTeamArchived } = useTeamWriteGuard()

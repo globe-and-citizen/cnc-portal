@@ -1,8 +1,8 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 
 vi.unmock('@/wagmi.config')
 
-import { mainnet, sepolia, polygon, hardhat, polygonAmoy } from '@wagmi/vue/chains'
+import { hardhat, mainnet, polygon, polygonAmoy, sepolia } from '@wagmi/vue/chains'
 import { config } from '@/wagmi.config'
 
 describe('wagmi.config.ts', () => {

@@ -1,14 +1,14 @@
+import type { FixedReturnOfferLender, FixedReturnRawOffer, LendingOfferStruct } from '@/types'
 import { describe, expect, it } from 'vitest'
-import type { Address } from 'viem'
 import {
   lendingOfferToCreditRound,
   offerLenderToCreditLender,
   offerMaturityDate,
   offerStateToRoundStatus
 } from '../model'
-import { gradientForAddress } from '../offer'
+import type { Address } from 'viem'
 import { formatAddress } from '@/utils/format'
-import type { FixedReturnOfferLender, FixedReturnRawOffer, LendingOfferStruct } from '@/types'
+import { gradientForAddress } from '../offer'
 
 describe('communityCreditUtil on-chain mappers', () => {
   const baseOffer: LendingOfferStruct = {

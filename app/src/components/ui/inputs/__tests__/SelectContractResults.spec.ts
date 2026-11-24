@@ -1,9 +1,9 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import SelectContractResults from '@/components/ui/inputs/SelectContractResults.vue'
+import type { TeamContract } from '@/types'
 import UserIdentity from '@/components/ui/UserIdentity.vue'
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { nextTick } from 'vue'
-import type { TeamContract } from '@/types'
 
 // Mock data
 const MOCK_CONTRACTS: TeamContract[] = [

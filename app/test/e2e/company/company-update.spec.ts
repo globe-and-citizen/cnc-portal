@@ -1,22 +1,22 @@
-import type { Locator } from '@playwright/test'
-import { expect, test } from '../fixtures/mocked'
 import {
+  COMPANY_DESCRIPTION,
+  COMPANY_NAME,
+  LOAD_TIMEOUT,
+  RETRY_TIMEOUT,
   cardDescription,
   cardName,
   companyHeader,
-  COMPANY_DESCRIPTION,
-  COMPANY_NAME,
   dialog,
   gate,
-  LOAD_TIMEOUT,
   openCardMenu,
   openCompanyActions,
-  RETRY_TIMEOUT,
   showArchived,
   signInToCompanies,
   toast,
   updateAction
 } from './company-lifecycle-page'
+import { expect, test } from '../fixtures/mocked'
+import type { Locator } from '@playwright/test'
 
 const NEW_NAME = 'E2E Renamed Company'
 const NEW_DESCRIPTION = 'Updated through the lifecycle E2E suite.'

@@ -1,7 +1,7 @@
-import { computed, ref, toValue, type MaybeRefOrGetter } from 'vue'
+import { type MaybeRefOrGetter, computed, ref, toValue } from 'vue'
+import type { TokenConfig } from '@/constant'
 import { parseUnits } from 'viem'
 import { useBankTransferFee } from '@/composables/bank/useBankTransferFee'
-import type { TokenConfig } from '@/constant'
 
 const DECIMAL_AMOUNT = /^(?:\d+\.?\d*|\.\d+)$/
 

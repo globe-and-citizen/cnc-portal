@@ -1,20 +1,20 @@
+import { type Address, type Hex, isAddress, zeroAddress } from 'viem'
+import {
+  type InvestorPermissionOfficer,
+  getKnownInvestorPermissionAddresses
+} from '@/utils/investors/permissions'
+import {
+  type InvestorPermissionsResult,
+  fetchInvestorPermissions
+} from '@/queries/investorPermissions.queries'
+import { type MaybeRef, type MaybeRefOrGetter, type Ref, computed, toValue, unref } from 'vue'
+import { config } from '@/wagmi.config'
+import { currentChainId } from '@/constant'
 import { getPublicClient } from '@wagmi/core'
+import { investorAbi } from '@/artifacts/abi/generated'
 import { useQuery } from '@tanstack/vue-query'
 import { useReadContract } from '@wagmi/vue'
-import { computed, toValue, unref, type MaybeRef, type MaybeRefOrGetter, type Ref } from 'vue'
-import { isAddress, zeroAddress, type Address, type Hex } from 'viem'
-import { investorAbi } from '@/artifacts/abi/generated'
-import { currentChainId } from '@/constant'
-import {
-  fetchInvestorPermissions,
-  type InvestorPermissionsResult
-} from '@/queries/investorPermissions.queries'
 import { useTeamStore } from '@/stores/teamStore'
-import {
-  getKnownInvestorPermissionAddresses,
-  type InvestorPermissionOfficer
-} from '@/utils/investors/permissions'
-import { config } from '@/wagmi.config'
 
 export const INVESTOR_PERMISSIONS_QUERY_KEY = 'investor-permissions'
 

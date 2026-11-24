@@ -133,22 +133,22 @@
 </template>
 
 <script setup lang="ts">
+import type { Member, Wage } from '@/types'
 import { computed, ref } from 'vue'
-import type { TableColumn } from '@nuxt/ui'
 import AddMemberForm from '@/components/sections/DashboardView/forms/AddMemberForm.vue'
-import { useUserDataStore } from '@/stores/user'
-import { useTeamStore } from '@/stores'
+import DeleteMemberModal from '@/components/sections/DashboardView/DeleteMemberModal.vue'
+import { NETWORK } from '@/constant'
+import RateDotList from '@/components/ui/RateDotList.vue'
+import SetMemberWageModal from './SetMemberWageModal.vue'
+import type { TableColumn } from '@nuxt/ui'
+import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
 import UserIdentity from '@/components/ui/UserIdentity.vue'
-import { useToggleWageStatusMutation } from '@/queries/wage.queries'
 import { teamKeys } from '@/queries/team.queries'
 import { useQueryClient } from '@tanstack/vue-query'
-import { NETWORK } from '@/constant'
-import DeleteMemberModal from '@/components/sections/DashboardView/DeleteMemberModal.vue'
-import type { Member, Wage } from '@/types'
-import SetMemberWageModal from './SetMemberWageModal.vue'
-import RateDotList from '@/components/ui/RateDotList.vue'
-import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
+import { useTeamStore } from '@/stores'
 import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
+import { useToggleWageStatusMutation } from '@/queries/wage.queries'
+import { useUserDataStore } from '@/stores/user'
 
 type MemberRow = Member & {
   index: number

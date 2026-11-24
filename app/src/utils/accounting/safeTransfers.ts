@@ -4,19 +4,19 @@
  * adapters split out of {@link ./assemble} so that file stays focused on the
  * pipeline itself.
  */
-import type { CowTransactionOrders } from '@/types/cow'
 import type { SafeIncomingTransfer, SafeTransaction } from '@/types/safe'
-import type { SafeDepositRow } from '@/types/contract-events/investor'
-import { transactionHashOf } from '@/utils/accounting/journalEntryDraft'
 import {
-  sameAddress,
   type SafeMapperInput,
   type SafeSwapFeeRow,
-  type SafeTransferRow
+  type SafeTransferRow,
+  sameAddress
 } from '@/utils/accounting/mappers/safe'
-import { currentChainId } from '@/constant'
+import type { CowTransactionOrders } from '@/types/cow'
+import type { SafeDepositRow } from '@/types/contract-events/investor'
 import { assetMetadata } from '@/utils/tokens/assets'
+import { currentChainId } from '@/constant'
 import { safeCowOrderFee } from '@/utils/safe/swapValuation'
+import { transactionHashOf } from '@/utils/accounting/journalEntryDraft'
 
 /** A SHER value transfer carries no cash; skip NFT moves entirely. */
 function isMonetaryTransfer(t: SafeIncomingTransfer): boolean {

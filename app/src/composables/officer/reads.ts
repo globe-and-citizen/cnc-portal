@@ -1,8 +1,8 @@
-import { computed, toValue, type MaybeRefOrGetter } from 'vue'
-import { useReadContract } from '@wagmi/vue'
-import { isAddress, zeroAddress, type Address } from 'viem'
-import { useTeamStore } from '@/stores'
+import { type Address, isAddress, zeroAddress } from 'viem'
+import { type MaybeRefOrGetter, computed, toValue } from 'vue'
 import { officerAbi } from '@/artifacts/abi/generated'
+import { useReadContract } from '@wagmi/vue'
+import { useTeamStore } from '@/stores'
 export function useOfficerAddress() {
   const teamStore = useTeamStore()
   return computed(() => teamStore.currentTeamMeta.data?.currentOfficer?.address)

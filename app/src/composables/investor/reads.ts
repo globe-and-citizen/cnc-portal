@@ -1,8 +1,8 @@
-import { computed, unref, type MaybeRef } from 'vue'
-import { useReadContract } from '@wagmi/vue'
-import { isAddress, type Address } from 'viem'
-import { useTeamStore } from '@/stores'
+import { type Address, isAddress } from 'viem'
+import { type MaybeRef, computed, unref } from 'vue'
 import { investorAbi } from '@/artifacts/abi/generated'
+import { useReadContract } from '@wagmi/vue'
+import { useTeamStore } from '@/stores'
 /**
  * Investor contract address helper
  */

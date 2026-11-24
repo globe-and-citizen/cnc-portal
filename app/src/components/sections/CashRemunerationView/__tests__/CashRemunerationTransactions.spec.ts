@@ -1,13 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { nextTick } from 'vue'
-import { type VueWrapper } from '@vue/test-utils'
-import type { Address } from 'viem'
-import { useCurrencyStore } from '@/stores/currencyStore'
 import {
   createMockEventFeedState,
   makeCurrencyStoreMock,
   resetMockEventFeedState
 } from '@/tests/mocks'
+import type { Address } from 'viem'
+import { type VueWrapper } from '@vue/test-utils'
+import { nextTick } from 'vue'
+import { useCurrencyStore } from '@/stores/currencyStore'
 
 // Auto-imported @nuxt/ui components bypass `config.global.stubs` because the
 // Nuxt UI Vite plugin resolves them through their file path. Mocking the
@@ -79,12 +79,12 @@ import {
   CONTRACT_ADDRESS,
   USDC_ADDRESS,
   ZERO_ADDRESS,
-  tableData,
-  tableColumns,
-  tableLoading,
   buildCashRemunerationQueryResult,
   buildIncomingTransfersQueryResult,
-  createWrapper
+  createWrapper,
+  tableColumns,
+  tableData,
+  tableLoading
 } from './CashRemunerationTransactions.fixture'
 
 describe('CashRemunerationTransactions', () => {

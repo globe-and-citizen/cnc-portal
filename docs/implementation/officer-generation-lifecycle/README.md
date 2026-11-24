@@ -50,7 +50,10 @@ flowchart LR
 - [Investor migration API controller](../../../backend/src/controllers/investorMigrationController.ts) and
   [Board action API controller](../../../backend/src/controllers/actionController.ts)
 
-**Implementation evidence reviewed against:** `fcc6f3c18d73110697497451a97c3331a1646b5c`
+**Implementation evidence reviewed against:** `afed113648736c861fb19c4319333717f14221c3`
+
+- [`useContractVersion.ts`](../../../app/src/composables/contracts/useContractVersion.ts)
+- [`useOfficerBeaconFolder.ts`](../../../app/src/composables/contracts/useOfficerBeaconFolder.ts)
 
 - [Artifact registry tests](../../../app/src/artifacts/__tests__/registry.spec.ts) and
   [contract-version tests](../../../app/src/composables/contracts/__tests__/useContractVersion.spec.ts)

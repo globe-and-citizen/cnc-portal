@@ -1,9 +1,9 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { ref } from 'vue'
-import { mount, flushPromises } from '@vue/test-utils'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
-import type { CashOutRunStep } from '@/composables/cashOut'
+import { flushPromises, mount } from '@vue/test-utils'
 import { mockBankReads, mockUseContractBalance, mockUserStore } from '@/tests/mocks'
+import type { CashOutRunStep } from '@/composables/cashOut'
+import { ref } from 'vue'
 import { useCurrencyStore } from '@/stores'
 
 const OWNER_ADDRESS = '0x742d35cc6bf8c55c6c2e013e5492d2b6637e0886'

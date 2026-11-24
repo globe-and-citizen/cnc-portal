@@ -1,13 +1,13 @@
+import { type VueWrapper, mount } from '@vue/test-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { mount, type VueWrapper } from '@vue/test-utils'
 import { defineComponent, nextTick, toValue } from 'vue'
 import type { Address } from 'viem'
 import type { User } from '@/types/user'
 
 import '@/tests/setup/composables.setup'
+import { createMockQueryResponse, mockTeamData } from '@/tests/mocks/query.mock'
 import TransferSenderCell from '../TransferSenderCell.vue'
 import { useGetUserQuery } from '@/queries/user.queries'
-import { createMockQueryResponse, mockTeamData } from '@/tests/mocks/query.mock'
 
 const mockedUseGetUserQuery = vi.mocked(useGetUserQuery)
 type UserQueryReturn = ReturnType<typeof useGetUserQuery>

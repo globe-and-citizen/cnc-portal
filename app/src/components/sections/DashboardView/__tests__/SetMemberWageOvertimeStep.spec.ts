@@ -1,9 +1,9 @@
-import { describe, it, expect } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
-import { reactive } from 'vue'
 import { NETWORK } from '@/constant'
 import SetMemberWageOvertimeStep from '../SetMemberWageOvertimeStep.vue'
 import type { WageWithForm } from '../SetMemberWageModal.vue'
+import { reactive } from 'vue'
 
 const createWageData = (overrides: Partial<WageWithForm> = {}): WageWithForm =>
   reactive({

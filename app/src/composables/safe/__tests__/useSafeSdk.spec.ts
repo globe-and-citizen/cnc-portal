@@ -1,8 +1,8 @@
+import { E2E_SAFE_INFRA, E2E_SAFE_LIBRARIES } from '@/e2e/chain'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { hardhat } from 'viem/chains'
-import { useSafeSDK } from '../useSafeSdk'
-import { E2E_SAFE_INFRA, E2E_SAFE_LIBRARIES } from '@/e2e/chain'
 import { mockUseConnection } from '@/tests/mocks'
+import { useSafeSDK } from '../useSafeSdk'
 
 const LOWERCASE_SAFE_ADDRESS = '0x0557f280d9da274254e85ee70c2936694e494275'
 const CHECKSUM_SAFE_ADDRESS = '0x0557F280D9DA274254e85Ee70c2936694e494275'

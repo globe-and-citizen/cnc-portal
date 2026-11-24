@@ -14,16 +14,16 @@
 </template>
 
 <script setup lang="ts">
-import { useTeamStore } from '@/stores/teamStore'
-import { computed } from 'vue'
 import ContractOwnerCard from '@/components/ui/ContractOwnerCard.vue'
-import InvestorsHeader from '@/components/sections/SherTokenView/InvestorsHeader.vue'
-import InvestorsActions from '@/components/sections/SherTokenView/InvestorsActions.vue'
-import ShareholderList from '@/components/sections/SherTokenView/ShareholderList.vue'
-import InvestorsTransactions from '@/components/sections/SherTokenView/InvestorsTransactions.vue'
-import ShareholderMigrationBanner from '@/components/sections/SherTokenView/ShareholderMigrationBanner.vue'
-import ShareholderClaimSection from '@/components/sections/SherTokenView/ShareholderClaimSection.vue'
 import InvestorPermissionsSection from '@/components/sections/SherTokenView/InvestorPermissionsSection.vue'
+import InvestorsActions from '@/components/sections/SherTokenView/InvestorsActions.vue'
+import InvestorsHeader from '@/components/sections/SherTokenView/InvestorsHeader.vue'
+import InvestorsTransactions from '@/components/sections/SherTokenView/InvestorsTransactions.vue'
+import ShareholderClaimSection from '@/components/sections/SherTokenView/ShareholderClaimSection.vue'
+import ShareholderList from '@/components/sections/SherTokenView/ShareholderList.vue'
+import ShareholderMigrationBanner from '@/components/sections/SherTokenView/ShareholderMigrationBanner.vue'
+import { computed } from 'vue'
+import { useTeamStore } from '@/stores/teamStore'
 
 const teamStore = useTeamStore()
 

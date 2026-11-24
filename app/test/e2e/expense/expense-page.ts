@@ -1,8 +1,13 @@
 // Expense-specific Playwright page helpers: the in-memory approval API and
 // the navigation to the Expense Account.
-import type { Page, Request } from '@playwright/test'
-import type { Hex } from 'viem'
 import { E2E_MEMBER_PRIVATE_KEY, E2E_OWNER } from '../e2e-chain'
+import {
+  type ExpenseApproval,
+  type ExpenseApprovalData,
+  expenseApprovalStatus
+} from './expense-chain'
+import type { Page, Request } from '@playwright/test'
+import { type TeamOptions, currentUser, treasuryTeam } from '../bank/bank-page'
 import {
   chooseCalendarDate,
   json,
@@ -12,12 +17,7 @@ import {
   useWallet
 } from '../e2e-page'
 import type { BankE2EFixture } from '../bank/bank-chain'
-import { currentUser, treasuryTeam, type TeamOptions } from '../bank/bank-page'
-import {
-  expenseApprovalStatus,
-  type ExpenseApproval,
-  type ExpenseApprovalData
-} from './expense-chain'
+import type { Hex } from 'viem'
 
 export interface ExpenseRecord extends ExpenseApproval {
   id: number

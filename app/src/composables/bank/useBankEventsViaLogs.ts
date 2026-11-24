@@ -16,25 +16,25 @@
  * that a Bank event already accounts for (deposits, transfers, dividends, fees)
  * are dropped downstream in `buildRawBankTransactions` so nothing double-counts.
  */
-import { computed, type MaybeRefOrGetter } from 'vue'
-import { parseAbiItem, type Address } from 'viem'
-import { currentChainId, USDC_ADDRESS, USDC_E_ADDRESS, USDT_ADDRESS } from '@/constant'
-import { bankAbi as bankV2Abi } from '@/artifacts/abi/V2/generated'
-import { bankAbi as bankV1Abi } from '@/artifacts/abi/V1/generated'
-import { bankAbi as bankV01Abi } from '@/artifacts/abi/V0.1/generated'
-import { bankAbi as bankV0Abi } from '@/artifacts/abi/V0/generated'
-import type { BankEventFeed } from '@/types/contract-events/bank'
-import { feeCollectorAddressesForChain, normalizeLegacyBankFeeTokens } from './bankFees'
+import { type Address, parseAbiItem } from 'viem'
 import {
+  type ChainClient,
+  type ContractAddressInput,
+  type DecodedLogLike,
+  type EventMapContext,
   START_BLOCK,
   str,
   unionEventAbi,
-  useContractEventsViaLogs,
-  type ChainClient,
-  type DecodedLogLike,
-  type EventMapContext,
-  type ContractAddressInput
+  useContractEventsViaLogs
 } from '@/composables/eventsViaLogs'
+import { type MaybeRefOrGetter, computed } from 'vue'
+import { USDC_ADDRESS, USDC_E_ADDRESS, USDT_ADDRESS, currentChainId } from '@/constant'
+import { feeCollectorAddressesForChain, normalizeLegacyBankFeeTokens } from './bankFees'
+import type { BankEventFeed } from '@/types/contract-events/bank'
+import { bankAbi as bankV01Abi } from '@/artifacts/abi/V0.1/generated'
+import { bankAbi as bankV0Abi } from '@/artifacts/abi/V0/generated'
+import { bankAbi as bankV1Abi } from '@/artifacts/abi/V1/generated'
+import { bankAbi as bankV2Abi } from '@/artifacts/abi/V2/generated'
 
 const BANK_EVENT_ABI = unionEventAbi([bankV2Abi, bankV1Abi, bankV01Abi, bankV0Abi])
 

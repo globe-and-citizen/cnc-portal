@@ -10,18 +10,18 @@
  * This connector is registered only when `VITE_E2E === 'true'`
  * (see `wagmi.config.ts`); it is never used in dev or production builds.
  */
-import { createConnector } from '@wagmi/vue'
 import {
-  createWalletClient,
-  http,
   type Address,
   type Hex,
   SwitchChainError,
   UserRejectedRequestError,
+  createWalletClient,
+  http,
   numberToHex
 } from 'viem'
-import { privateKeyToAccount } from 'viem/accounts'
+import { createConnector } from '@wagmi/vue'
 import { hardhat } from 'viem/chains'
+import { privateKeyToAccount } from 'viem/accounts'
 
 /** Hardhat's well-known account #0 — a public test key, safe to commit. */
 const E2E_PRIVATE_KEY: Hex = '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80'

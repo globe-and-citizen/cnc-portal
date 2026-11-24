@@ -73,13 +73,13 @@
 </template>
 
 <script setup lang="ts">
+import { formatIsoWeekRange, formatMonthYear } from '@/utils/dates/calendar'
 import { ref, watch } from 'vue'
-import dayjs from 'dayjs'
-import utc from 'dayjs/plugin/utc'
-import isoWeek from 'dayjs/plugin/isoWeek'
 import { Icon as IconifyIcon } from '@iconify/vue'
 import type { Week } from '@/utils/dates/calendar'
-import { formatIsoWeekRange, formatMonthYear } from '@/utils/dates/calendar'
+import dayjs from 'dayjs'
+import isoWeek from 'dayjs/plugin/isoWeek'
+import utc from 'dayjs/plugin/utc'
 
 dayjs.extend(utc)
 dayjs.extend(isoWeek)

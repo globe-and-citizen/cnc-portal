@@ -1,7 +1,7 @@
-import pluginVue from 'eslint-plugin-vue'
-import vueTsEslintConfig from '@vue/eslint-config-typescript'
 import pluginVitest from '@vitest/eslint-plugin'
+import pluginVue from 'eslint-plugin-vue'
 import skipFormatting from '@vue/eslint-config-prettier/skip-formatting'
+import vueTsEslintConfig from '@vue/eslint-config-typescript'
 
 const tailwindClassAssertionMessage =
   'Avoid asserting on Tailwind / utility classes — they break on every styling refactor. Prefer data-test selectors and behavioral assertions (text, emitted, attributes). See app/src/tests/README.md.'
@@ -286,7 +286,8 @@ export default [
     rules: {
       '@typescript-eslint/no-unused-vars': 'error',
       '@typescript-eslint/no-explicit-any': 'error',
-      '@typescript-eslint/no-empty-object-type': 'error'
+      '@typescript-eslint/no-empty-object-type': 'error',
+      'sort-imports': ['error', { allowSeparatedGroups: true }]
     }
   },
   {

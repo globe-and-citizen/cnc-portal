@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import type { AxiosAdapter, AxiosError } from 'axios'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { mockUserStore } from '@/tests/mocks'
 
 const sentryMocks = vi.hoisted(() => ({

@@ -44,7 +44,7 @@ flowchart LR
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `fdfcf810829fdcca8d0bfe429878b439e4fd4dfe`
+**Implementation evidence reviewed against:** `afed113648736c861fb19c4319333717f14221c3`
 
 - [Shared user identity](../../../app/src/components/ui/UserIdentity.vue),
   [contract member selector](../../../app/src/components/ui/inputs/SelectMemberContractsInput.vue), and

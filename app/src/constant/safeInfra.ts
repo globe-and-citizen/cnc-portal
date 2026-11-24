@@ -1,4 +1,4 @@
-import { isAddress, type Address } from 'viem'
+import { type Address, isAddress } from 'viem'
 import { getNetwork } from './network'
 import hardhat from '@/artifacts/deployed_addresses/chain-31337.json'
 

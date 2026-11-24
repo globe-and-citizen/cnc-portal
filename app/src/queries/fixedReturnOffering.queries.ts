@@ -1,7 +1,7 @@
+import { createMutationHook, createQueryHook, queryPresets } from './queryFactory'
 import type { FixedReturnOfferingResponse } from '@/types'
 import type { MaybeRefOrGetter } from 'vue'
 import { toValue } from 'vue'
-import { createMutationHook, createQueryHook, queryPresets } from './queryFactory'
 
 /**
  * Query key factory for FixedReturn offering off-chain metadata.

@@ -1,10 +1,10 @@
-import { fileURLToPath, URL } from 'node:url'
+import { URL, fileURLToPath } from 'node:url'
 
 import { defineConfig } from 'vite'
-import vue from '@vitejs/plugin-vue'
-import ui from '@nuxt/ui/vite'
-import tailwindcss from '@tailwindcss/vite'
 import { nodePolyfills } from 'vite-plugin-node-polyfills'
+import tailwindcss from '@tailwindcss/vite'
+import ui from '@nuxt/ui/vite'
+import vue from '@vitejs/plugin-vue'
 
 /**
  * Separate build for the embeddable Payment Gate widget (`widget.js`):

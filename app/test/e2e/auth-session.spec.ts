@@ -1,6 +1,6 @@
-import type { Page } from '@playwright/test'
-import { json, stubBackend } from './e2e-page'
 import { expect, test } from './fixtures/mocked'
+import { json, stubBackend } from './e2e-page'
+import type { Page } from '@playwright/test'
 
 const user = {
   address: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266' as const,

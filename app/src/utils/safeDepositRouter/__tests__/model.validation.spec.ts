@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest'
-import { isValidTokenDecimals, buildDepositAmountSchema } from '../model'
+import { buildDepositAmountSchema, isValidTokenDecimals } from '../model'
+import { describe, expect, it } from 'vitest'
 
 const schemaErrors = (result: { success: boolean; error?: { issues: { message: string }[] } }) =>
   result.success ? [] : (result.error?.issues.map((issue) => issue.message) ?? [])

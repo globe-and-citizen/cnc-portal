@@ -46,7 +46,7 @@ flowchart LR
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `79315400c2ea74759a5505d6c66382ad3279b045`
+**Implementation evidence reviewed against:** `afed113648736c861fb19c4319333717f14221c3`
 
 - [FixedReturn read and write gateways](../../../app/src/composables/fixedReturn/),
   [their focused tests](../../../app/src/composables/fixedReturn/__tests__/), and

@@ -1,5 +1,3 @@
-import type { ContractKey } from './contractCatalog.types'
-import { resolveRevertMessage } from './contractCatalog'
 import {
   BaseError,
   ChainDisconnectedError,
@@ -13,6 +11,8 @@ import {
   UserRejectedRequestError,
   WaitForTransactionReceiptTimeoutError
 } from 'viem'
+import type { ContractKey } from './contractCatalog.types'
+import { resolveRevertMessage } from './contractCatalog'
 
 /**
  * Semantic buckets for every error we expect from a wagmi/viem contract write.

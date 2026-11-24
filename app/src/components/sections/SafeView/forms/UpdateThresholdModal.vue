@@ -110,13 +110,13 @@
 
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue'
-import { z } from 'zod'
 import { type Address } from 'viem'
-import { useChainId } from '@wagmi/vue'
 import { Icon as IconifyIcon } from '@iconify/vue'
-
 import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
+import { useChainId } from '@wagmi/vue'
+
 import { useUpdateSafeOwnersMutation } from '@/queries/safe.mutations'
+import { z } from 'zod'
 
 const props = defineProps<{
   open: boolean

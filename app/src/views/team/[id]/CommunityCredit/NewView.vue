@@ -148,34 +148,34 @@
 </template>
 
 <script setup lang="ts">
+import { type CreditCallForm, createCreditCallTermsSchema, creditCallBasicsSchema } from '@/types'
+import { applyZodFieldErrors, toCreditCallOfferParams } from '@/utils/communityCredit/model'
+import {
+  buildCreditOfferingForm,
+  createDefaultCreditCallForm,
+  creditCallDeadlineContext,
+  creditChipClass
+} from '@/utils/communityCredit/wizard'
 import { computed, reactive, ref, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { parseEventLogs } from 'viem'
-import type { Address } from 'viem'
-import { useToast } from '@nuxt/ui/composables'
-import { useQueryClient } from '@tanstack/vue-query'
-import { fixedReturnAbi } from '@/artifacts/abi/generated'
 import {
   useFixedReturnAddress,
   useFixedReturnGetSupportedTokens
 } from '@/composables/fixedReturn/reads'
-import { useFixedReturnCreateLendingOffer } from '@/composables/fixedReturn/writes'
-import { invalidateAfterCreateLendingOffer } from '@/composables/fixedReturn/invalidation'
-import { useCreateFixedReturnOfferingMutation } from '@/queries/fixedReturnOffering.queries'
-import { applyZodFieldErrors, toCreditCallOfferParams } from '@/utils/communityCredit/model'
-import {
-  buildCreditOfferingForm,
-  creditCallDeadlineContext,
-  creditChipClass,
-  createDefaultCreditCallForm
-} from '@/utils/communityCredit/wizard'
-import { classifyError } from '@/utils/errors/classifyContractError'
-import { getSupportedCreditTokenOptions } from '@/utils/communityCredit/offer'
-import { createCreditCallTermsSchema, creditCallBasicsSchema, type CreditCallForm } from '@/types'
-import StepIndicator from '@/components/ui/StepIndicator.vue'
+import { useRoute, useRouter } from 'vue-router'
+import type { Address } from 'viem'
 import CreditCallAccessStep from '@/components/sections/CommunityCreditView/CreditCallAccessStep.vue'
-import CreditCallTermsStep from '@/components/sections/CommunityCreditView/CreditCallTermsStep.vue'
 import CreditCallSummaryCard from '@/components/sections/CommunityCreditView/CreditCallSummaryCard.vue'
+import CreditCallTermsStep from '@/components/sections/CommunityCreditView/CreditCallTermsStep.vue'
+import StepIndicator from '@/components/ui/StepIndicator.vue'
+import { classifyError } from '@/utils/errors/classifyContractError'
+import { fixedReturnAbi } from '@/artifacts/abi/generated'
+import { getSupportedCreditTokenOptions } from '@/utils/communityCredit/offer'
+import { invalidateAfterCreateLendingOffer } from '@/composables/fixedReturn/invalidation'
+import { parseEventLogs } from 'viem'
+import { useCreateFixedReturnOfferingMutation } from '@/queries/fixedReturnOffering.queries'
+import { useFixedReturnCreateLendingOffer } from '@/composables/fixedReturn/writes'
+import { useQueryClient } from '@tanstack/vue-query'
+import { useToast } from '@nuxt/ui/composables'
 
 const route = useRoute()
 const router = useRouter()

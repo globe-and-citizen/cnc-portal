@@ -1,11 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { mount } from '@vue/test-utils'
-import { createTestingPinia } from '@pinia/testing'
-import VestingFlow from '@/components/sections/VestingView/VestingFlow.vue'
-import VestingActionReviewModal from '@/components/sections/VestingView/VestingActionReviewModal.vue'
-import VestingScheduleList from '@/components/sections/VestingView/VestingScheduleList.vue'
 import { mockTeamStore, mockUserStore } from '@/tests/mocks'
+import VestingActionReviewModal from '@/components/sections/VestingView/VestingActionReviewModal.vue'
+import VestingFlow from '@/components/sections/VestingView/VestingFlow.vue'
 import type { VestingSchedule } from '@/types/vesting'
+import VestingScheduleList from '@/components/sections/VestingView/VestingScheduleList.vue'
+import { createTestingPinia } from '@pinia/testing'
+import { mount } from '@vue/test-utils'
 
 const MEMBER = mockUserStore.address
 const schedule: VestingSchedule = {

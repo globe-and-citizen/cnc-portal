@@ -1,5 +1,5 @@
-import type { User } from '@/types/user'
 import type { Address } from 'viem'
+import type { User } from '@/types/user'
 
 export type SupportedTokens = 'native' | 'usdc' | 'sher' | 'usdc.e'
 

@@ -1,10 +1,10 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { mount } from '@vue/test-utils'
-import { createTestingPinia } from '@pinia/testing'
-import { nextTick } from 'vue'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { mockInvestorWrites, mockLog } from '@/tests/mocks'
 import type { Address } from 'viem'
 import DistributeMintAction from '@/components/sections/SherTokenView/InvestorActions/DistributeMintAction.vue'
-import { mockInvestorWrites, mockLog } from '@/tests/mocks'
+import { createTestingPinia } from '@pinia/testing'
+import { mount } from '@vue/test-utils'
+import { nextTick } from 'vue'
 
 type DistributeOptions = {
   onSuccess?: () => void

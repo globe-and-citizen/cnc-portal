@@ -14,18 +14,18 @@
  * card can render and link out to `TransactionDetailSlideover` exactly like
  * every other transaction table in the app.
  */
-import { computed, type MaybeRefOrGetter } from 'vue'
-import { useQueries } from '@tanstack/vue-query'
-import { getPublicClient } from '@wagmi/core'
-import { formatUnits, isHex, type Address, type Hex } from 'viem'
+import { type Address, type Hex, formatUnits, isHex } from 'viem'
+import { type EventFeedState, getEventFeedStatus } from '@/composables/eventsViaLogs'
+import { type MaybeRefOrGetter, computed } from 'vue'
+import { SUPPORTED_TOKENS, currentChainId } from '@/constant'
+import type { TransactionHistoryItemRow } from '@/types/transaction-history'
 import { config } from '@/wagmi.config'
-import { currentChainId, SUPPORTED_TOKENS } from '@/constant'
-import { getEventFeedStatus, type EventFeedState } from '@/composables/eventsViaLogs'
 import { decodeFactureIdFromCalldata } from '@/utils/paymentGate/factureCalldata'
 import { extractTxHashFromId } from '@/utils/transactions/raw'
 import { formatBankTransactionDate } from '@/utils/transactions/bank'
+import { getPublicClient } from '@wagmi/core'
 import { useBankEventsViaLogs } from '@/composables/bank/useBankEventsViaLogs'
-import type { TransactionHistoryItemRow } from '@/types/transaction-history'
+import { useQueries } from '@tanstack/vue-query'
 
 export interface FacturePayment extends TransactionHistoryItemRow {
   factureId: string

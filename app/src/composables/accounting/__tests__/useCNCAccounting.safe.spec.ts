@@ -1,13 +1,13 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { ref } from 'vue'
-import { zeroAddress } from 'viem'
-import { useGetTeamQuery } from '@/queries/team.queries'
-import * as safeQueries from '@/queries/safe.queries'
 import * as cowQueries from '@/queries/cow.queries'
-import { USDC_ADDRESS } from '@/constant'
+import * as safeQueries from '@/queries/safe.queries'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { SafeIncomingTransfer } from '@/types/safe'
+import { USDC_ADDRESS } from '@/constant'
 import { mockTeamData } from '@/tests/mocks'
+import { ref } from 'vue'
 import { useCNCAccounting } from '../useCNCAccounting'
+import { useGetTeamQuery } from '@/queries/team.queries'
+import { zeroAddress } from 'viem'
 
 /** The Safe overview reports a $5 P&L on the purchase: the AWETH bought is now worth $24, not $19. */
 vi.mock('@/composables/safe/useSafeSwapPnl', () => ({

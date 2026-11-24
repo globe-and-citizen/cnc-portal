@@ -55,9 +55,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
 import type { TableColumn, TableRow } from '@nuxt/ui'
 import type { BalanceLineView } from '@/utils/accounting/presenter'
+import { computed } from 'vue'
 
 interface Props {
   title: string

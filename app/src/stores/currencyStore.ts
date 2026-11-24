@@ -1,10 +1,10 @@
-import { useStorage } from '@vueuse/core'
-import { defineStore } from 'pinia'
 import { LIST_CURRENCIES, SUPPORTED_TOKENS } from '@/constant'
 import type { TokenId } from '@/constant'
-import { useTeamStore } from '@/stores/teamStore'
 import { computed } from 'vue'
+import { defineStore } from 'pinia'
 import { useGetTokenPriceQuery } from '@/queries/coingecko.queries'
+import { useStorage } from '@vueuse/core'
+import { useTeamStore } from '@/stores/teamStore'
 export type { TokenPriceResponse as PriceResponse } from '@/types/coingecko'
 
 export const useCurrencyStore = defineStore('currency', () => {

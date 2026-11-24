@@ -4,12 +4,12 @@
  * on PUT and DELETE, plus the two entry points those actions share — the
  * dashboard's company header and the card menu on the Companies list.
  */
-import { expect, type Locator, type Page, type Request } from '@playwright/test'
+import { type E2EUser, type StubResponse, json, stubBackend, useWallet } from '../e2e-page'
+import { E2E_MEMBER, E2E_MEMBER_PRIVATE_KEY, E2E_OWNER } from '../e2e-chain'
+import { type Locator, type Page, type Request, expect } from '@playwright/test'
 import type { Address } from 'viem'
 import type { Team } from '../../../src/types/team'
 import type { UpdateTeamBody } from '../../../src/queries/team.queries'
-import { E2E_MEMBER, E2E_MEMBER_PRIVATE_KEY, E2E_OWNER } from '../e2e-chain'
-import { json, stubBackend, useWallet, type E2EUser, type StubResponse } from '../e2e-page'
 
 export const owner: E2EUser = { address: E2E_OWNER, name: 'E2E Creator', imageUrl: null }
 export const member: E2EUser = { address: E2E_MEMBER, name: 'E2E Colleague', imageUrl: null }

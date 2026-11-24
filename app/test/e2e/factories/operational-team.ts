@@ -1,20 +1,20 @@
-import { readFile } from 'node:fs/promises'
-import { randomUUID } from 'node:crypto'
 import type { Address, Hex } from 'viem'
-import { privateKeyToAccount } from 'viem/accounts'
-import type { Team } from '../../../src/types/team'
-import type { ContractType } from '../../../src/types/teamContract'
-import { E2E_RPC_URL } from '../e2e-chain'
-import { E2E_OWNER, ownerAccount, publicClient } from '../e2e-chain'
-import { authenticateIntegratedAccount, requestIntegratedApi } from '../integrated-api'
 import {
+  type DeployedOfficer,
+  type DeploymentAddressManifest,
   assertAddressHasCode,
   assertIntegratedInfrastructure,
   buildDeploymentConfigs,
-  deployOfficer,
-  type DeployedOfficer,
-  type DeploymentAddressManifest
+  deployOfficer
 } from './operational-team-deployment'
+import { E2E_OWNER, ownerAccount, publicClient } from '../e2e-chain'
+import { authenticateIntegratedAccount, requestIntegratedApi } from '../integrated-api'
+import type { ContractType } from '../../../src/types/teamContract'
+import { E2E_RPC_URL } from '../e2e-chain'
+import type { Team } from '../../../src/types/team'
+import { privateKeyToAccount } from 'viem/accounts'
+import { randomUUID } from 'node:crypto'
+import { readFile } from 'node:fs/promises'
 
 interface TeamApiResponse {
   id: number | string

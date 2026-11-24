@@ -1,12 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { mount } from '@vue/test-utils'
+import { mockUserStore, mockWeeklyClaimData } from '@/tests/mocks'
+import ClaimHistoryDailyBreakdown from '@/components/sections/ClaimHistoryView/ClaimHistoryDailyBreakdown.vue'
 import { createTestingPinia } from '@pinia/testing'
 import dayjs from 'dayjs'
-import utc from 'dayjs/plugin/utc'
-import isoWeek from 'dayjs/plugin/isoWeek'
-import ClaimHistoryDailyBreakdown from '@/components/sections/ClaimHistoryView/ClaimHistoryDailyBreakdown.vue'
 import { getMonthWeeks } from '@/utils/dates/calendar'
-import { mockUserStore, mockWeeklyClaimData } from '@/tests/mocks'
+import isoWeek from 'dayjs/plugin/isoWeek'
+import { mount } from '@vue/test-utils'
+import utc from 'dayjs/plugin/utc'
 
 dayjs.extend(utc)
 dayjs.extend(isoWeek)

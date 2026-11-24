@@ -24,8 +24,8 @@
 <script setup lang="ts">
 import type { FormattedBodActions } from '@/utils/contracts/bodActions'
 import UserIdentity from '@/components/ui/UserIdentity.vue'
-import { useBodIsActionExecuted } from '@/composables/bod/reads'
 import { computed } from 'vue'
+import { useBodIsActionExecuted } from '@/composables/bod/reads'
 
 const emits = defineEmits(['view-details'])
 

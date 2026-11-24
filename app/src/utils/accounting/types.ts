@@ -6,9 +6,9 @@
  * composable, or presentation implementation stay with that implementation.
  * Keep every import here type-only so this remains an acyclic runtime boundary.
  */
-import type { Address } from 'viem'
-import type { AssetId, AssetMetadata } from '@/utils/tokens/assets'
 import type { AccountFamily, AccountName } from './chartOfAccounts'
+import type { AssetId, AssetMetadata } from '@/utils/tokens/assets'
+import type { Address } from 'viem'
 import type { UseCase } from './journalEntryDraft'
 
 /** USD amount scaled by the canonical Accounting amount precision. */

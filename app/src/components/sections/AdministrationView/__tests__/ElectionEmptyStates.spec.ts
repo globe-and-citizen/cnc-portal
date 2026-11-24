@@ -1,8 +1,8 @@
-import { mount } from '@vue/test-utils'
 import { describe, expect, it } from 'vitest'
 import BodMembersEmptyState from '../BodMembersEmptyState.vue'
 import ElectionSummaryEmptyState from '../ElectionSummaryEmptyState.vue'
 import PastElectionsEmptyState from '../PastElectionsEmptyState.vue'
+import { mount } from '@vue/test-utils'
 
 /**
  * Each empty state must read as "nothing here" — a static panel with an icon

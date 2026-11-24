@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { sampleBooks } from '@/utils/accounting/__tests__/fixtures'
 import { buildTables, exportTablesPdf } from '../pdf'
 import { buildSheets } from '../spreadsheet'
+import { sampleBooks } from '@/utils/accounting/__tests__/fixtures'
 
 const autoTableMock = vi.hoisted(() => vi.fn())
 

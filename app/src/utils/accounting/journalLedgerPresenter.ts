@@ -6,15 +6,15 @@
  * therefore an ordinary `Transaction Fee Expense` line within its source
  * operation, never a second transaction or a special filter category.
  */
-import { formatNumber, formatExactNumber } from '@/utils/format'
-import { formatUnits } from 'viem'
-import { activityDestinationOf, type ActivityDestination } from './activityDestination'
-import { activityOf, entryLabel, type ActivityCell } from './describeEntry'
-import { badgeClassOf, categoryLabelOf } from './ledgerCategory'
-import { currencySymbol, filterByPeriod, formatUnixDateTime, money, periodLabel } from './presenter'
-import { creditOf, debitOf } from './journalEntry'
-import { ZERO_USD_AMOUNT, usdRateToNumber } from './monetaryAmount'
 import type { Account, JournalEntry, JournalEntryLine, UsdAmount } from './types'
+import { type ActivityCell, activityOf, entryLabel } from './describeEntry'
+import { type ActivityDestination, activityDestinationOf } from './activityDestination'
+import { ZERO_USD_AMOUNT, usdRateToNumber } from './monetaryAmount'
+import { badgeClassOf, categoryLabelOf } from './ledgerCategory'
+import { creditOf, debitOf } from './journalEntry'
+import { currencySymbol, filterByPeriod, formatUnixDateTime, money, periodLabel } from './presenter'
+import { formatExactNumber, formatNumber } from '@/utils/format'
+import { formatUnits } from 'viem'
 
 /** Display-ready journal line shared by the ledger, drill-downs and exporters. */
 export interface LedgerRow {

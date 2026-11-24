@@ -1,20 +1,20 @@
-import { describe, expect, it } from 'vitest'
-import type { JournalAccountAssignmentRecord } from '@/types/journal-account-assignment'
-import { accountFor } from '../accountRegistry'
-import { finalizeJournal } from './assembleAccounting'
-import { applyJournalAccountAssignments } from '../journalAccountAssignment'
 import {
   COMBINED_MOVEMENTS_NOTE,
   DEFAULT_ASSIGNMENT,
   assignmentStatus,
   presentJournalAccountAssignments
 } from '../journalAccountAssignmentPresenter'
-import { buildTables } from '@/lib/accounting/pdf'
-import { buildSheets } from '@/lib/accounting/spreadsheet'
-import { journalLedgerRows } from '../journalLedgerPresenter'
-import { makeJournalEntryDraft, type JournalEntryDraft } from '../journalEntryDraft'
+import { type JournalEntryDraft, makeJournalEntryDraft } from '../journalEntryDraft'
+import { describe, expect, it } from 'vitest'
 import { ADDR } from './fixtures'
+import type { JournalAccountAssignmentRecord } from '@/types/journal-account-assignment'
+import { accountFor } from '../accountRegistry'
+import { applyJournalAccountAssignments } from '../journalAccountAssignment'
+import { buildSheets } from '@/lib/accounting/spreadsheet'
+import { buildTables } from '@/lib/accounting/pdf'
+import { finalizeJournal } from './assembleAccounting'
 import { formatTxHash } from '@/utils/format'
+import { journalLedgerRows } from '../journalLedgerPresenter'
 
 const TX = `0x${'a'.repeat(64)}`
 const BANK2 = '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'

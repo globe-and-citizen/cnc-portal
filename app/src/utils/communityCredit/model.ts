@@ -1,7 +1,7 @@
 import { formatUnits, maxUint256, parseUnits } from 'viem'
+import type { ZodSafeParseResult } from 'zod'
 import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
-import type { ZodSafeParseResult } from 'zod'
 
 dayjs.extend(utc)
 import type {
@@ -20,6 +20,11 @@ import type {
   StatusMeta
 } from '@/types'
 import {
+  formatNumber as formatCanonicalNumber,
+  formatDateShort,
+  formatDateUtc
+} from '@/utils/format'
+import {
   getCreditTokenSymbol,
   gradientForAddress,
   isLendingOfferAcceptingFunds,
@@ -27,11 +32,6 @@ import {
   toFixedReturnOfferParams
 } from './offer'
 import { formatAddress } from '@/utils/format'
-import {
-  formatDateShort,
-  formatDateUtc,
-  formatNumber as formatCanonicalNumber
-} from '@/utils/format'
 
 /** Clears `errors`, then repopulates it from a failed `safeParse` result (first issue
  *  per field wins). Returns whether the parse succeeded — the shared shape behind every

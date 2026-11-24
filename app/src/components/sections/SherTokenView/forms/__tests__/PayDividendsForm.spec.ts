@@ -1,9 +1,9 @@
-import { describe, it, expect, vi, afterEach } from 'vitest'
-import { mount } from '@vue/test-utils'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { makeTokenBalance, mockUseContractBalance } from '@/tests/mocks'
 import PayDividendsForm from '../PayDividendsForm.vue'
-import { createTestingPinia } from '@pinia/testing'
 import type { Team } from '@/types'
-import { mockUseContractBalance, makeTokenBalance } from '@/tests/mocks'
+import { createTestingPinia } from '@pinia/testing'
+import { mount } from '@vue/test-utils'
 
 const makeBalance = makeTokenBalance
 

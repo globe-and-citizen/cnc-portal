@@ -4,8 +4,8 @@
  * is currently showing. Format-agnostic — it belongs to neither builder, so both
  * (and the view) depend on this module rather than on each other.
  */
-import type { LedgerColumnKey, LedgerMovements } from '@/utils/accounting/ledgerColumns'
 import type { JournalEntry, UsdAmount } from './types'
+import type { LedgerColumnKey, LedgerMovements } from '@/utils/accounting/ledgerColumns'
 
 /** The canonical journal is the only Accounting data that crosses the export boundary. */
 export interface AccountingExportSnapshot {

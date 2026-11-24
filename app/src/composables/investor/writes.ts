@@ -1,12 +1,12 @@
-import { computed } from 'vue'
-import { useQueryClient } from '@tanstack/vue-query'
-import { investorAbi } from '@/artifacts/abi/generated'
 import {
-  useContractWritesV3,
-  type WriteFunctionName
+  type WriteFunctionName,
+  useContractWritesV3
 } from '@/composables/contracts/useContractWritesV3'
-import { useTeamStore } from '@/stores/teamStore'
 import { INVESTOR_PERMISSIONS_QUERY_KEY } from './permissions'
+import { computed } from 'vue'
+import { investorAbi } from '@/artifacts/abi/generated'
+import { useQueryClient } from '@tanstack/vue-query'
+import { useTeamStore } from '@/stores/teamStore'
 
 type InvestorFunctionNames = WriteFunctionName<typeof investorAbi>
 

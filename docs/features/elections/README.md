@@ -577,7 +577,10 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `2c9d874d42627b7ba1b24a2cbdbc62822acabb02`
+**Implementation evidence reviewed against:** `d1681fab5dd0f145515af63910e6982bc707f597`
+
+- [`ElectionCandidateCard.vue`](../../../app/src/components/sections/AdministrationView/ElectionCandidateCard.vue)
+- [`PastElectionCard.vue`](../../../app/src/components/sections/AdministrationView/PastElectionCard.vue)
 
 - [Election overview page](../../../app/src/views/team/%5Bid%5D/BodElectionView.vue)
 - [Election detail page](../../../app/src/views/team/%5Bid%5D/BodElectionDetailsView.vue)

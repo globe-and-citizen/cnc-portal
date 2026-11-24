@@ -1,5 +1,5 @@
-import { defineComponent } from 'vue'
 import type { Address } from 'viem'
+import { defineComponent } from 'vue'
 
 export const UCardStub = defineComponent({
   name: 'UCard',

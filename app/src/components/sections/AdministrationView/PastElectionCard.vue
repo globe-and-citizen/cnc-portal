@@ -41,18 +41,18 @@
 </template>
 
 <script setup lang="ts">
-import { useTeamStore } from '@/stores'
-import type { Election } from '@/types'
-import { log } from '@/lib/logging'
-import { formatDate } from '@/utils/format'
-import { isSameAddress } from '@/utils/elections/election'
+import { type Ref, computed, watch } from 'vue'
 import {
   useElectionsGetCandidates,
   useElectionsGetVoteCount,
   useElectionsGetWinners
 } from '@/composables/elections'
+import type { Election } from '@/types'
+import { formatDate } from '@/utils/format'
+import { isSameAddress } from '@/utils/elections/election'
+import { log } from '@/lib/logging'
 import { useRouter } from 'vue-router'
-import { computed, watch, type Ref } from 'vue'
+import { useTeamStore } from '@/stores'
 
 const props = defineProps<{
   election: Election

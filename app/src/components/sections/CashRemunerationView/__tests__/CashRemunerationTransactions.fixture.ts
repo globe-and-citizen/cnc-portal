@@ -1,8 +1,8 @@
-import { mount, type VueWrapper } from '@vue/test-utils'
-import { defineComponent } from 'vue'
+import { type VueWrapper, mount } from '@vue/test-utils'
 import type { Address } from 'viem'
-
 import CashRemunerationTransactions from '../CashRemunerationTransactions.vue'
+
+import { defineComponent } from 'vue'
 
 export type CRRow = {
   type: string

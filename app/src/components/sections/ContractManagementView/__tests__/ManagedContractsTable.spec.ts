@@ -1,9 +1,9 @@
+import * as contractReads from '@/composables/contracts/readManagedContracts'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
 import type { Component } from 'vue'
 import { useBodIsMember } from '@/composables/bod/reads'
 import { useGetBodActionsQuery } from '@/queries'
-import * as contractReads from '@/composables/contracts/readManagedContracts'
 
 vi.mock('@nuxt/ui/components/Select.vue', async () => ({
   default: (await import('@/tests/stubs/nuxt-ui.stubs')).USelectStub

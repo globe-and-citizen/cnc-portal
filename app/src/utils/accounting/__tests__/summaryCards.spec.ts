@@ -1,8 +1,8 @@
-import { describe, it, expect } from 'vitest'
-import { presentSummary } from '@/utils/accounting/presenter'
-import { finalizeJournal } from '@/utils/accounting/__tests__/assembleAccounting'
+import { describe, expect, it } from 'vitest'
 import type { AccountName } from '@/utils/accounting/chartOfAccounts'
 import type { JournalEntryDraft } from '@/utils/accounting/journalEntryDraft'
+import { finalizeJournal } from '@/utils/accounting/__tests__/assembleAccounting'
+import { presentSummary } from '@/utils/accounting/presenter'
 import { sampleBooks } from './fixtures'
 
 function posting(

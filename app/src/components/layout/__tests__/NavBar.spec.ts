@@ -1,12 +1,12 @@
-import { mockUserStore } from '@/tests/mocks'
+import { NETWORK, currentChainId } from '@/constant'
 import { describe, expect, it, vi } from 'vitest'
 
 import NavBar from '@/components/layout/NavBar.vue'
-import { mount } from '@vue/test-utils'
 import { createTestingPinia } from '@pinia/testing'
-import { nextTick } from 'vue'
 import { latestDeployedVersionForChain } from '@/artifacts/registry'
-import { currentChainId, NETWORK } from '@/constant'
+import { mockUserStore } from '@/tests/mocks'
+import { mount } from '@vue/test-utils'
+import { nextTick } from 'vue'
 
 describe('NavBar', () => {
   const createWrapper = () =>

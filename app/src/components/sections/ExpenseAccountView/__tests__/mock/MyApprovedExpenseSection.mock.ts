@@ -1,7 +1,7 @@
-import { vi } from 'vitest'
 import * as viem from 'viem'
 import { USDC_ADDRESS } from '@/constant'
 import { ref } from 'vue'
+import { vi } from 'vitest'
 
 const DATE = '2024-02-02T12:00:00Z'
 

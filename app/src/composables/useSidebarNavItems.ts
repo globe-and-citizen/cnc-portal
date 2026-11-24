@@ -1,6 +1,6 @@
-import { computed, type ComputedRef } from 'vue'
-import { useRoute } from 'vue-router'
+import { type ComputedRef, computed } from 'vue'
 import type { NavigationMenuItem } from '@nuxt/ui'
+import { useRoute } from 'vue-router'
 import { useTeamStore } from '@/stores/teamStore'
 import { useUserDataStore } from '@/stores/user'
 

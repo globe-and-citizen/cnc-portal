@@ -107,15 +107,15 @@
 </template>
 
 <script setup lang="ts">
-import { z } from 'zod'
-import type { FormSubmitEvent } from '@nuxt/ui'
+import { computed, reactive, ref } from 'vue'
 import { useCurrencyStore, useUserDataStore } from '@/stores'
+import type { FormSubmitEvent } from '@nuxt/ui'
 import { LIST_CURRENCIES } from '@/constant'
-import { useClipboard } from '@vueuse/core'
 import { NETWORK } from '@/constant'
-import { ref, computed, reactive } from 'vue'
 import ProfileImageUpload from '@/components/forms/ProfileImageUpload.vue'
+import { useClipboard } from '@vueuse/core'
 import { useUpdateUserMutation } from '@/queries/user.queries'
+import { z } from 'zod'
 
 // Stores
 const currencyStore = useCurrencyStore()

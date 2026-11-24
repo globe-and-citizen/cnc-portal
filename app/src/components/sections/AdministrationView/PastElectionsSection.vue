@@ -22,13 +22,13 @@
   </UCard>
 </template>
 <script setup lang="ts">
-import { watch } from 'vue'
 import PastElectionCard from './PastElectionCard.vue'
 import PastElectionsEmptyState from './PastElectionsEmptyState.vue'
 import TablePagination from '@/components/ui/TablePagination.vue'
+import { log } from '@/lib/logging'
 import { useElectionsPastElections } from '@/composables/elections'
 import { usePaginatedList } from '@/composables/usePagination'
-import { log } from '@/lib/logging'
+import { watch } from 'vue'
 
 /** Multiples of the three-column grid, so a full page never leaves a ragged row. */
 const PAGE_SIZE_OPTIONS = [6, 12, 24]

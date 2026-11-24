@@ -1,6 +1,6 @@
+import type { Address } from 'viem'
 import type { Member } from '@/types/member'
 import type { User } from '@/types/user'
-import type { Address } from 'viem'
 
 interface ContractPresentation {
   label: string

@@ -1,12 +1,12 @@
 /** Pure adapters for the Safe Client Gateway response. */
-import { formatUnits } from 'viem'
-import { SUPPORTED_TOKENS } from '@/constant'
-import type { TokenOption } from '@/types'
 import type { SafeClientBalance, SafeClientBalances } from '@/types/safe'
-import type { TokenHoldingRow } from '@/utils/tokens/holdings'
 import { formatCurrency, formatExactNumber, formatNumber } from '@/utils/format'
-import { formatCurrencyShort } from '@/utils/currency/display'
+import { SUPPORTED_TOKENS } from '@/constant'
+import type { TokenHoldingRow } from '@/utils/tokens/holdings'
+import type { TokenOption } from '@/types'
 import { assetLogoUri } from '@/utils/tokens/assets'
+import { formatCurrencyShort } from '@/utils/currency/display'
+import { formatUnits } from 'viem'
 
 function parseFiatAmount(value: string | null): number | null {
   if (value === null || !value.trim()) return null

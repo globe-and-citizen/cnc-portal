@@ -63,13 +63,13 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import AddressTooltip from '@/components/ui/AddressTooltip.vue'
-import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
-import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
-import { useTeamStore } from '@/stores'
-import { useUserDataStore } from '@/stores/user'
 import type { ContractGeneration } from '@/types/deployments'
 import ManagedContractsTable from './ManagedContractsTable.vue'
 import RedeployOfficerModal from './RedeployOfficerModal.vue'
+import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
+import { useTeamStore } from '@/stores'
+import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
+import { useUserDataStore } from '@/stores/user'
 
 const props = defineProps<{
   generation?: ContractGeneration

@@ -1,8 +1,8 @@
-import { describe, expect, it, beforeEach, vi } from 'vitest'
-import { readContract } from '@wagmi/core'
-import { getAddress, type Address } from 'viem'
+import { type Address, getAddress } from 'viem'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { currentChainId } from '@/constant'
 import { inspectSafe } from '../useSafeImport'
+import { readContract } from '@wagmi/core'
 
 const SAFE_ADDRESS = '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' as Address
 const OWNERS = [

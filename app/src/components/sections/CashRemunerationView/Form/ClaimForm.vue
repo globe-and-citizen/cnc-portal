@@ -145,24 +145,24 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
-import { parseDate } from '@internationalized/date'
 import type { CalendarDate, DateValue } from '@internationalized/date'
-import type { ClaimFormData, ClaimSubmitPayload } from '@/types'
-import FilePreviewGallery from '@/components/sections/CashRemunerationView/Form/FilePreviewGallery.vue'
-import UploadFileDB from '@/components/sections/CashRemunerationView/Form/UploadFileDB.vue'
 import {
+  type CalendarSelectionValue,
+  type ClaimFormFileData,
+  type ClaimSubmissionRules,
   DAILY_CLAIM_MEMO_MAX_LENGTH,
   buildClaimFormSchema,
   createDefaultClaimFormData,
   formatClaimDayUTC,
   getClaimDayFromCalendarValue,
   getClaimFilePreviews,
-  isClaimDateDisabled,
-  type ClaimSubmissionRules,
-  type ClaimFormFileData,
-  type CalendarSelectionValue
+  isClaimDateDisabled
 } from '@/utils/claims/form'
+import type { ClaimFormData, ClaimSubmitPayload } from '@/types'
+import { computed, ref, watch } from 'vue'
+import FilePreviewGallery from '@/components/sections/CashRemunerationView/Form/FilePreviewGallery.vue'
+import UploadFileDB from '@/components/sections/CashRemunerationView/Form/UploadFileDB.vue'
+import { parseDate } from '@internationalized/date'
 import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
 
 const { isWriteDisabled, archivedTooltip } = useTeamWriteGuard()

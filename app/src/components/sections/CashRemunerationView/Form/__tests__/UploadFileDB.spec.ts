@@ -1,8 +1,8 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
-import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
+import { MAX_FILES } from '@/types/upload'
 import UploadFileDB from '@/components/sections/CashRemunerationView/Form/UploadFileDB.vue'
 import { renderWithProviders } from '@/tests/mocks'
-import { MAX_FILES } from '@/types/upload'
 
 const { UFileUploadStub } = vi.hoisted(() => ({
   UFileUploadStub: {

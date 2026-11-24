@@ -1,5 +1,5 @@
 import type { BulkNotificationPayload, Notification } from '@/types/notification'
-import { createQueryHook, createMutationHook, queryPresets } from './queryFactory'
+import { createMutationHook, createQueryHook, queryPresets } from './queryFactory'
 
 /**
  * Query key factory for notification-related queries

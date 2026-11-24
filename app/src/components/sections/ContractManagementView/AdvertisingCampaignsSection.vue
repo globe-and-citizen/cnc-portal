@@ -55,12 +55,12 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import CampaignManagersSection from '@/components/sections/ContractManagementView/CampaignManagersSection.vue'
-import { useUserDataStore } from '@/stores/user'
-import { useTeamStore } from '@/stores'
-
 import DeployCampaignManagerForm from '@/components/sections/ContractManagementView/forms/DeployCampaignManagerForm.vue'
 import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
+
+import { useTeamStore } from '@/stores'
 import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
+import { useUserDataStore } from '@/stores/user'
 
 const teamStore = useTeamStore()
 const userStore = useUserDataStore()

@@ -1,6 +1,4 @@
 import { describe, expect, it, vi } from 'vitest'
-import type { QueryClient } from '@tanstack/vue-query'
-import { fixedReturnKeys } from '../reads'
 import {
   invalidateAfterAcceptPartialFunding,
   invalidateAfterCreateLendingOffer,
@@ -10,6 +8,8 @@ import {
   retryFixedReturnReads,
   retryMyLenderPositions
 } from '../invalidation'
+import type { QueryClient } from '@tanstack/vue-query'
+import { fixedReturnKeys } from '../reads'
 
 const TOKEN_ADDRESS = '0x2222222222222222222222222222222222222222' as const
 const EVENTS_LOG_KEY = ['fixed-return-events-logs']

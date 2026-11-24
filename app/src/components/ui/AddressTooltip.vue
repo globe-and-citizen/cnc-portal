@@ -29,9 +29,9 @@
 </template>
 
 <script setup lang="ts">
-import { useClipboard } from '@vueuse/core'
-import { NETWORK } from '@/constant'
 import { Icon as IconifyIcon } from '@iconify/vue'
+import { NETWORK } from '@/constant'
+import { useClipboard } from '@vueuse/core'
 
 const { type } = defineProps<{
   address: string

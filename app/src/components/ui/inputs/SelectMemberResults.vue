@@ -39,12 +39,12 @@
 </template>
 
 <script lang="ts" setup>
-import { toRef } from 'vue'
-import UserIdentity from '@/components/ui/UserIdentity.vue'
 import CreditAvatar from '@/components/sections/CommunityCreditView/CreditAvatar.vue'
+import type { Member } from '@/types'
+import UserIdentity from '@/components/ui/UserIdentity.vue'
 import { formatAddress } from '@/utils/format'
 import { gradientForAddress } from '@/utils/communityCredit/offer'
-import type { Member } from '@/types'
+import { toRef } from 'vue'
 
 const props = withDefaults(
   defineProps<{

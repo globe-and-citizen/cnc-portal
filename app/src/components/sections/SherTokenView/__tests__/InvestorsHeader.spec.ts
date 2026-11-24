@@ -1,6 +1,4 @@
-import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
-import InvestorsHeader from '../InvestorsHeader.vue'
-import { parseUnits } from 'viem'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   mockInvestorReads,
   mockTeamStore,
@@ -8,8 +6,10 @@ import {
   mockUserStore,
   renderWithProviders
 } from '@/tests/mocks'
-import { log } from '@/lib/logging'
 import { EMPTY_VALUE } from '@/utils/format'
+import InvestorsHeader from '../InvestorsHeader.vue'
+import { log } from '@/lib/logging'
+import { parseUnits } from 'viem'
 
 describe('[US-SHER-003] InvestorsHeader', () => {
   let wrapper: ReturnType<typeof createComponent>

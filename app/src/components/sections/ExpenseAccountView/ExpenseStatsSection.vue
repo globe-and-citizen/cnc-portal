@@ -19,14 +19,14 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import AddressTooltip from '@/components/ui/AddressTooltip.vue'
-import { useTeamStore } from '@/stores'
 import { type Address } from 'viem'
+import AddressTooltip from '@/components/ui/AddressTooltip.vue'
 import ExpenseAccountBalance from '@/components/sections/ExpenseAccountView/ExpenseAccountBalance.vue'
-import ExpenseMonthSpent from '@/components/sections/ExpenseAccountView/ExpenseMonthSpent.vue'
 import ExpenseAccountTotalApproved from '@/components/sections/ExpenseAccountView/ExpenseAccountTotalApproved.vue'
+import ExpenseMonthSpent from '@/components/sections/ExpenseAccountView/ExpenseMonthSpent.vue'
 import OwnerTreasuryWithdrawAction from '@/components/sections/OwnerTreasuryWithdrawAction.vue'
+import { computed } from 'vue'
+import { useTeamStore } from '@/stores'
 
 //#region  Composables
 const teamStore = useTeamStore()

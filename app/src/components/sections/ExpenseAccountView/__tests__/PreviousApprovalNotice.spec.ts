@@ -1,7 +1,7 @@
-import { mount } from '@vue/test-utils'
 import { describe, expect, it } from 'vitest'
 import type { ExpenseResponse } from '@/types/expense-account'
 import PreviousApprovalNotice from '../PreviousApprovalNotice.vue'
+import { mount } from '@vue/test-utils'
 
 const approval = (
   status: string,

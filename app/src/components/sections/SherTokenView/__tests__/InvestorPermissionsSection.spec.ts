@@ -1,8 +1,6 @@
-import { flushPromises, mount } from '@vue/test-utils'
+import { type TeamOfficerWithContracts, useGetTeamOfficersQuery } from '@/queries/contract.queries'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import type { Address } from 'viem'
-import { reactive, ref } from 'vue'
-import InvestorPermissionsSection from '../InvestorPermissionsSection.vue'
+import { flushPromises, mount } from '@vue/test-utils'
 import {
   mockInvestorPermissions,
   mockInvestorWrites,
@@ -10,8 +8,10 @@ import {
   mockToast,
   mockUserStore
 } from '@/tests/mocks'
+import { reactive, ref } from 'vue'
+import type { Address } from 'viem'
+import InvestorPermissionsSection from '../InvestorPermissionsSection.vue'
 import { MINTER_ROLE } from '@/queries/investorPermissions.queries'
-import { useGetTeamOfficersQuery, type TeamOfficerWithContracts } from '@/queries/contract.queries'
 
 const owner = '0x1000000000000000000000000000000000000000' as Address
 const member = '0x2000000000000000000000000000000000000000' as Address

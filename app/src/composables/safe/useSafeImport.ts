@@ -1,9 +1,9 @@
-import { useMutation } from '@tanstack/vue-query'
-import { readContract } from '@wagmi/core'
-import { isAddress, type Address } from 'viem'
-import { currentChainId } from '@/constant'
+import { type Address, isAddress } from 'viem'
 import { config } from '@/wagmi.config'
+import { currentChainId } from '@/constant'
 import { normalizeSafeAddress } from '@/utils/safe/address'
+import { readContract } from '@wagmi/core'
+import { useMutation } from '@tanstack/vue-query'
 
 const SAFE_INSPECTION_ABI = [
   {

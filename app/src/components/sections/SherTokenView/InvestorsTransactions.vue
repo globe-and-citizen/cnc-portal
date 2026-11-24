@@ -188,34 +188,34 @@
 </template>
 
 <script setup lang="ts">
-import UserIdentity from '@/components/ui/UserIdentity.vue'
-import DatePicker from '@/components/ui/DatePicker.vue'
-import TablePagination from '@/components/ui/TablePagination.vue'
-import TransactionDetailSlideover from '@/components/ui/TransactionDetailSlideover.vue'
-import type { TokenId } from '@/constant'
+import {
+  DIVIDEND_TYPES,
+  getTransactionCounterparty,
+  getTransactionTypeLabel
+} from '@/utils/transactions/registry'
+import { EMPTY_VALUE, formatPercent, formatTxHash } from '@/utils/format'
 import {
   buildRawInvestorTransactions,
-  mapRawInvestorTransaction,
-  getMintTotal
+  getMintTotal,
+  mapRawInvestorTransaction
 } from '@/utils/transactions/investor'
-import { formatCryptoAmount, formatCurrencyShort } from '@/utils/currency/display'
-import { getUniqueSummary } from '@/utils/transactions/history'
-import {
-  getTransactionTypeLabel,
-  getTransactionCounterparty,
-  DIVIDEND_TYPES
-} from '@/utils/transactions/registry'
-import { log } from '@/lib/logging'
 import { computed, watch } from 'vue'
-import { EMPTY_VALUE, formatPercent, formatTxHash } from '@/utils/format'
-import { useTransactionTable } from '@/composables/transactions/useTransactionTable'
+import { formatCryptoAmount, formatCurrencyShort } from '@/utils/currency/display'
+import { formatDateRelative, formatDateUTC } from '@/utils/dates/calendar'
+import { useCurrencyStore, useTeamStore } from '@/stores'
+import DatePicker from '@/components/ui/DatePicker.vue'
+import TablePagination from '@/components/ui/TablePagination.vue'
+import type { TokenId } from '@/constant'
+import TransactionDetailSlideover from '@/components/ui/TransactionDetailSlideover.vue'
+import UserIdentity from '@/components/ui/UserIdentity.vue'
+import { getUniqueSummary } from '@/utils/transactions/history'
+import { log } from '@/lib/logging'
+import { useInvestorEventsViaLogs } from '@/composables/investor/useInvestorEventsViaLogs'
+import { useInvestorSymbol } from '@/composables/investor/reads'
+import { useSafeDepositRouterEventsViaLogs } from '@/composables/investor/useSafeDepositRouterEventsViaLogs'
 import { useTransactionInline } from '@/composables/transactions/useTransactionInline'
 import { useTransactionPresentation } from '@/composables/transactions/useTransactionPresentation'
-import { useCurrencyStore, useTeamStore } from '@/stores'
-import { useInvestorSymbol } from '@/composables/investor/reads'
-import { useInvestorEventsViaLogs } from '@/composables/investor/useInvestorEventsViaLogs'
-import { useSafeDepositRouterEventsViaLogs } from '@/composables/investor/useSafeDepositRouterEventsViaLogs'
-import { formatDateRelative, formatDateUTC } from '@/utils/dates/calendar'
+import { useTransactionTable } from '@/composables/transactions/useTransactionTable'
 
 const teamStore = useTeamStore()
 const currencyStore = useCurrencyStore()

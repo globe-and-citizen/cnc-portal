@@ -23,17 +23,17 @@
   </OverviewCard>
 </template>
 <script setup lang="ts">
-import { sumFiatValues, valueTokenAmount } from '@/utils/currency/valuation'
-import cartIcon from '@/assets/cart.svg'
-import uptrendIcon from '@/assets/uptrend.svg'
-import OverviewCard from '@/components/ui/OverviewCard.vue'
-import { useCurrencyStore, useTeamStore } from '@/stores'
-import { formatCurrencyShort } from '@/utils/currency/display'
-import { log } from '@/lib/logging'
-import { formatNumber } from '@/utils/format'
-import { formatUnits, zeroAddress } from 'viem'
 import { computed, watch } from 'vue'
+import { formatUnits, zeroAddress } from 'viem'
+import { sumFiatValues, valueTokenAmount } from '@/utils/currency/valuation'
+import { useCurrencyStore, useTeamStore } from '@/stores'
+import OverviewCard from '@/components/ui/OverviewCard.vue'
 import { SUPPORTED_TOKENS } from '@/constant'
+import cartIcon from '@/assets/cart.svg'
+import { formatCurrencyShort } from '@/utils/currency/display'
+import { formatNumber } from '@/utils/format'
+import { log } from '@/lib/logging'
+import uptrendIcon from '@/assets/uptrend.svg'
 import { useExpenseEventsViaLogs } from '@/composables/expense/useExpenseEventsViaLogs'
 
 const teamStore = useTeamStore()

@@ -1,13 +1,13 @@
 // ElectionSummarySection.test.ts
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { mount } from '@vue/test-utils'
-import { createPinia, setActivePinia } from 'pinia'
 import { BaseError, UserRejectedRequestError } from 'viem'
-import { ref } from 'vue'
-import ElectionSummarySection from '@/components/sections/AdministrationView/ElectionSummarySection.vue'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { createPinia, setActivePinia } from 'pinia'
 import { mockElectionsReads, mockElectionsWrites } from '@/tests/mocks'
-import { useCreateElectionNotificationsMutation } from '@/queries/action.queries'
+import ElectionSummarySection from '@/components/sections/AdministrationView/ElectionSummarySection.vue'
 import { mockTeamData } from '@/tests/mocks/query.mock'
+import { mount } from '@vue/test-utils'
+import { ref } from 'vue'
+import { useCreateElectionNotificationsMutation } from '@/queries/action.queries'
 import { useTeamStore } from '@/stores'
 
 describe('[US-EL-01] ElectionSummarySection', () => {

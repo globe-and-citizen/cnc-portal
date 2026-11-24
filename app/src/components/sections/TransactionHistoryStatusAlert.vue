@@ -24,8 +24,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
 import type { EventFeedStatus } from '@/composables/eventsViaLogs'
+import { computed } from 'vue'
 
 interface Props {
   status: EventFeedStatus

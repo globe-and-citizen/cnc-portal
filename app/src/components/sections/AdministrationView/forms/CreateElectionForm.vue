@@ -140,14 +140,14 @@
 </template>
 
 <script setup lang="ts">
-import type { OldProposal, User } from '@/types'
-import { computed, reactive, ref, onMounted, onUnmounted } from 'vue'
-import { z } from 'zod'
-import MultiSelectMemberInput from '@/components/ui/inputs/MultiSelectMemberInput.vue'
 import { CalendarDate, getLocalTimeZone, today } from '@internationalized/date'
+import type { OldProposal, User } from '@/types'
 import { combineDayAndTime, dateToCalendarDate } from '@/utils/dates/calendar'
+import { computed, onMounted, onUnmounted, reactive, ref } from 'vue'
 import { formatDate, formatDuration, formatTimeOfDay } from '@/utils/format'
+import MultiSelectMemberInput from '@/components/ui/inputs/MultiSelectMemberInput.vue'
 import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
+import { z } from 'zod'
 
 /**
  * How far ahead a ballot opens when the owner does not pick a day, and the

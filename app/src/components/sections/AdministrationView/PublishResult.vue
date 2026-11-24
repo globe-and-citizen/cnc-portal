@@ -13,11 +13,11 @@
 </template>
 <script lang="ts" setup>
 import { classifyError } from '@/utils/errors/classifyContractError'
+import { computed } from 'vue'
 import { log } from '@/lib/logging'
 import { useElectionsPublishResults } from '@/composables/elections'
-import { useToast } from '@nuxt/ui/composables'
-import { computed } from 'vue'
 import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
+import { useToast } from '@nuxt/ui/composables'
 
 const { isWriteDisabled, archivedTooltip } = useTeamWriteGuard()
 

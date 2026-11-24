@@ -28,20 +28,20 @@
 
 <script setup lang="ts">
 import { computed, watch } from 'vue'
-import { useConnection } from '@wagmi/vue'
-import { useToast } from '@nuxt/ui/composables'
-import ActionButton from '@/components/sections/SherTokenView/ActionButton.vue'
-import { useEnableDeposits, useDisableDeposits } from '@/composables/safeDepositRouter/writes'
+import { useDisableDeposits, useEnableDeposits } from '@/composables/safeDepositRouter/writes'
 import {
   useSafeDepositRouterAddress,
-  useSafeDepositRouterSafeAddress,
   useSafeDepositRouterDepositsEnabled,
-  useSafeDepositRouterOwner
+  useSafeDepositRouterOwner,
+  useSafeDepositRouterSafeAddress
 } from '@/composables/safeDepositRouter/reads'
-import { useTeamStore } from '@/stores'
+import ActionButton from '@/components/sections/SherTokenView/ActionButton.vue'
 import { classifyError } from '@/utils/errors/classifyContractError'
 import { log } from '@/lib/logging'
+import { useConnection } from '@wagmi/vue'
+import { useTeamStore } from '@/stores'
 import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
+import { useToast } from '@nuxt/ui/composables'
 
 const SAFE_ADDRESS_REQUIRED_MESSAGE = 'Set the Safe address on the deposit router first'
 

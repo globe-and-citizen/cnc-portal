@@ -15,7 +15,7 @@
  * gets a raw `call()`/`sendTransaction()` failure into the exact shape
  * `classifyError` already knows how to turn into friendly text.
  */
-import { getContractError, parseAbi, type Abi } from 'viem'
+import { type Abi, getContractError, parseAbi } from 'viem'
 import { bankAbi } from '@/artifacts/abi/generated'
 import { classifyError } from '@/utils/errors/classifyContractError'
 

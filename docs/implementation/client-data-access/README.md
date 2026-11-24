@@ -226,7 +226,12 @@ market query.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `e567ca13d95cb3a628f3a7932465abde89495783`
+**Implementation evidence reviewed against:** `afed113648736c861fb19c4319333717f14221c3`
+
+- [`action.queries.ts`](../../../app/src/queries/action.queries.ts)
+- [`expense.queries.ts`](../../../app/src/queries/expense.queries.ts)
+- [`investorMigration.queries.ts`](../../../app/src/queries/investorMigration.queries.ts)
+- [`notification.queries.ts`](../../../app/src/queries/notification.queries.ts)
 
 - [Query barrel](../../../app/src/queries/index.ts), [query factory](../../../app/src/queries/queryFactory.ts), and
   [single-file upload query](../../../app/src/queries/file.queries.ts)

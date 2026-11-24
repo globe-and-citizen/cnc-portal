@@ -1,8 +1,3 @@
-import type { Address } from 'viem'
-import { keccak256, parseUnits, type Hex } from 'viem'
-import { readFileSync } from 'node:fs'
-import { fileURLToPath } from 'node:url'
-import { expect, test } from './fixtures/integrated'
 import {
   E2E_MEMBER,
   E2E_MEMBER_PRIVATE_KEY,
@@ -12,17 +7,22 @@ import {
   publicClient,
   tokenBalance
 } from './e2e-chain'
-import { dialogAmount, openAccountFromSidebar } from './e2e-page'
-import { grossForNet } from './bank/bank-chain'
-import { addressFrom, depositUsdc } from './bank/bank-integrated-helpers'
-import { completeCashOut, transferBankToContract } from './bank/bank-page'
+import { type Hex, keccak256, parseUnits } from 'viem'
 import {
   addRealCompanyMember,
   createOperationalCompany,
   deleteCompanyThroughUi
 } from './company/real-company-page'
+import { addressFrom, depositUsdc } from './bank/bank-integrated-helpers'
+import { completeCashOut, transferBankToContract } from './bank/bank-page'
+import { dialogAmount, openAccountFromSidebar } from './e2e-page'
+import { expect, test } from './fixtures/integrated'
+import type { Address } from 'viem'
 import { chooseApprovalDate } from './expense/expense-page'
 import { expenseAccountEip712Abi } from '../../src/artifacts/abi/generated'
+import { fileURLToPath } from 'node:url'
+import { grossForNet } from './bank/bank-chain'
+import { readFileSync } from 'node:fs'
 
 const deploymentManifest = JSON.parse(
   readFileSync(

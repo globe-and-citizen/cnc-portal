@@ -1,19 +1,19 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { mount, flushPromises } from '@vue/test-utils'
-import { keccak256 } from 'viem'
-import DropdownActions from '../WeeklyClaimActionDropdown.vue'
-import type { Status } from '../WeeklyClaimActionDropdown.vue'
-import type { WeeklyClaim } from '@/types'
+import * as contractErrors from '@/utils/errors/classifyContractError'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { flushPromises, mount } from '@vue/test-utils'
 import {
   mockCashRemunerationWrites,
   mockSyncWeeklyClaimsMutation,
   mockTeamStore,
-  mockUserStore,
   mockUseReadContract,
+  mockUserStore,
   useQueryClientFn
 } from '@/tests/mocks'
+import DropdownActions from '../WeeklyClaimActionDropdown.vue'
+import type { Status } from '../WeeklyClaimActionDropdown.vue'
+import type { WeeklyClaim } from '@/types'
+import { keccak256 } from 'viem'
 import { mockLog } from '@/tests/mocks/utils.mock'
-import * as contractErrors from '@/utils/errors/classifyContractError'
 
 describe('[US-PAYROLL-008] [US-PAYROLL-009] [US-PAYROLL-010] WeeklyClaimActionDropdown', () => {
   const weeklyClaim: WeeklyClaim = {

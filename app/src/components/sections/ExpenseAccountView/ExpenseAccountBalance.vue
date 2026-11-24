@@ -9,11 +9,11 @@
   />
 </template>
 <script setup lang="ts">
-import bagIcon from '@/assets/bag.svg'
 import OverviewCard from '@/components/ui/OverviewCard.vue'
+import bagIcon from '@/assets/bag.svg'
+import { computed } from 'vue'
 import { useContractBalance } from '@/composables/useContractBalance'
 import { useTeamStore } from '@/stores'
-import { computed } from 'vue'
 
 const teamStore = useTeamStore()
 const expenseAddress = computed(() => teamStore.getContractAddressByType('ExpenseAccountEIP712'))

@@ -1,8 +1,8 @@
 // Browser helpers for the Accounting section: reaching each report, reading what
 // it renders, and driving the owner account-assignment editor. Every helper only
 // sequences the visible product UI.
-import { expect, type Locator, type Page } from '@playwright/test'
-import { groupLedgerEntries, type LedgerLine, type LedgerView } from './accounting-books'
+import { type LedgerLine, type LedgerView, groupLedgerEntries } from './accounting-books'
+import { type Locator, type Page, expect } from '@playwright/test'
 
 export type AccountingSection =
   'summary' | 'income' | 'balance' | 'trial' | 'ledger' | 'account-assignments'

@@ -1,8 +1,8 @@
 import { computed } from 'vue'
-import { useReadContract } from '@wagmi/vue'
 import { isAddress } from 'viem'
-import { useTeamStore } from '@/stores'
 import { safeDepositRouterAbi } from '@/artifacts/abi/generated'
+import { useReadContract } from '@wagmi/vue'
+import { useTeamStore } from '@/stores'
 const SAFE_DEPOSIT_ROUTER_FUNCTION_NAMES = {
   PAUSED: 'paused',
   OWNER: 'owner',

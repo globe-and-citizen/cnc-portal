@@ -10,7 +10,7 @@
  * Journal assembly calls these pure helpers directly so the internal-movement rule
  * stays independent from Vue and can be tested without a reactive wrapper.
  */
-import { getAddress, isAddress, type Address } from 'viem'
+import { type Address, getAddress, isAddress } from 'viem'
 import type { ContractType, TeamContract } from '@/types/teamContract'
 
 /**

@@ -53,22 +53,22 @@
 </template>
 
 <script setup lang="ts">
-import { VueQueryDevtools } from '@tanstack/vue-query-devtools'
-import { useConnection, useConnectionEffect } from '@wagmi/vue'
-import { computed, watch } from 'vue'
 import { RouterView, useRoute, useRouter } from 'vue-router'
-
+import { computed, watch } from 'vue'
+import { useConnection, useConnectionEffect } from '@wagmi/vue'
 import LockScreen from '@/components/layout/LockScreen.vue'
-import NetworkLockScreen from '@/components/layout/NetworkLockScreen.vue'
+
 import NavBar from '@/components/layout/NavBar.vue'
 import NavBreadcrumb from '@/components/layout/NavBreadcrumb.vue'
+import NetworkLockScreen from '@/components/layout/NetworkLockScreen.vue'
+import SidebarLayout from '@/components/ui/SidebarLayout.vue'
 import TeamSelectMenu from '@/components/layout/TeamSelectMenu.vue'
 import TokenPriceStatusAlert from '@/components/ui/TokenPriceStatusAlert.vue'
-import SidebarLayout from '@/components/ui/SidebarLayout.vue'
-
-import { useBackendWake } from '@/composables/useBackendWake'
+import { VueQueryDevtools } from '@tanstack/vue-query-devtools'
 
 import { configuredChainId } from '@/lib/walletNetwork'
+
+import { useBackendWake } from '@/composables/useBackendWake'
 import { useUserDataStore } from '@/stores/index'
 
 const route = useRoute()

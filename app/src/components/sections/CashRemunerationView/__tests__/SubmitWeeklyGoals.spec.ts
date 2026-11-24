@@ -1,8 +1,8 @@
-import { flushPromises, mount } from '@vue/test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { flushPromises, mount } from '@vue/test-utils'
+import { mockTeamStore, mockToast } from '@/tests/mocks'
 import SubmitWeeklyGoals from '../SubmitWeeklyGoals.vue'
 import type { WeeklyClaim } from '@/types'
-import { mockTeamStore, mockToast } from '@/tests/mocks'
 
 // The mutation hook is replaced with a controllable spy; every other export of
 // the queries module is preserved so unrelated imports keep working.

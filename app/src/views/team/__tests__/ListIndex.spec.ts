@@ -1,10 +1,10 @@
-import { beforeEach, describe, expect, it, vi, afterEach } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { mockRouterReplace, mockTeamData, mockTeamsData } from '@/tests/mocks'
 import ListIndex from '@/views/team/ListIndex.vue'
-import { mount } from '@vue/test-utils'
-import { createTestingPinia } from '@pinia/testing'
-import { createMockQueryResponse } from '@/tests/mocks/query.mock'
-import { mockTeamsData, mockTeamData, mockRouterReplace } from '@/tests/mocks'
 import type { Team } from '@/types'
+import { createMockQueryResponse } from '@/tests/mocks/query.mock'
+import { createTestingPinia } from '@pinia/testing'
+import { mount } from '@vue/test-utils'
 import { useRoute } from 'vue-router'
 
 // Import after mocks are defined

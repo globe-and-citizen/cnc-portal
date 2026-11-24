@@ -1,6 +1,4 @@
 import { describe, expect, it } from 'vitest'
-import { finalizeJournal } from '@/utils/accounting/__tests__/assembleAccounting'
-import type { JournalEntryDraft } from '@/utils/accounting/journalEntryDraft'
 import {
   filterJournalLedgerByAccount,
   filterJournalLedgerByCurrency,
@@ -8,6 +6,8 @@ import {
   journalLedgerRows,
   journalLedgerTotal
 } from '@/utils/accounting/journalLedgerPresenter'
+import type { JournalEntryDraft } from '@/utils/accounting/journalEntryDraft'
+import { finalizeJournal } from '@/utils/accounting/__tests__/assembleAccounting'
 
 const BANK_A = '0x1111111111111111111111111111111111111111'
 const BANK_B = '0x2222222222222222222222222222222222222222'

@@ -1,7 +1,7 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { mount, VueWrapper } from '@vue/test-utils'
-import { defineComponent } from 'vue'
+import { VueWrapper, mount } from '@vue/test-utils'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import SelectMemberContractsInput from '../SelectMemberContractsInput.vue'
+import { defineComponent } from 'vue'
 import { mockTeamStore } from '@/tests/mocks'
 
 interface Item {

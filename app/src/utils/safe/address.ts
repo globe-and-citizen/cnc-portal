@@ -1,4 +1,4 @@
-import { getAddress, isAddress, type Address } from 'viem'
+import { type Address, getAddress, isAddress } from 'viem'
 
 /** Validate and convert a Safe address to its canonical EIP-55 checksum form. */
 export function normalizeSafeAddress(address: string): Address {

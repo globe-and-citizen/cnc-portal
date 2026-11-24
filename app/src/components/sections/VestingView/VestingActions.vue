@@ -34,9 +34,9 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { useTeamStore, useUserDataStore } from '@/stores'
 import CreateVesting from '@/components/sections/VestingView/forms/CreateVesting.vue'
 import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
-import { useTeamStore, useUserDataStore } from '@/stores'
 
 const addVestingModal = ref({ mount: false, show: false })
 const userStore = useUserDataStore()

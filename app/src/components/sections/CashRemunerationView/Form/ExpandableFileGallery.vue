@@ -160,11 +160,11 @@
 </template>
 
 <script setup lang="ts">
-import { Icon } from '@iconify/vue'
-import { ref, computed, toRef } from 'vue'
-import { getFileIcon, truncateFileName, getFileExtension } from '@/utils/files/presentation'
-import { useFilePreviewGallery } from '@/composables/useFilePreviewGallery'
+import { computed, ref, toRef } from 'vue'
+import { getFileExtension, getFileIcon, truncateFileName } from '@/utils/files/presentation'
 import type { FilePreviewItem } from '@/types/file-preview'
+import { Icon } from '@iconify/vue'
+import { useFilePreviewGallery } from '@/composables/useFilePreviewGallery'
 
 const COMPRESSED = ['zip', 'rar', '7z', 'tar', 'gz', 'bz2', 'xz', 'tgz']
 const VIEWABLE = ['pdf', 'txt', 'doc', 'docx', 'csv', 'json', 'xml', 'html', 'htm']

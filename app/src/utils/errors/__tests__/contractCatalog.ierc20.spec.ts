@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import { resolveRevertMessage } from '../contractCatalog'
 
 // Split out from contractCatalog.spec.ts, which is already at the repo's

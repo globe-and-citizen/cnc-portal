@@ -1,12 +1,12 @@
+import { ADDR, usd } from './fixtures'
+import type { ContractType, TeamContract } from '@/types/teamContract'
 import { describe, expect, it } from 'vitest'
 import type { Address } from 'viem'
-import { USDC_ADDRESS } from '@/constant'
-import type { ContractType, TeamContract } from '@/types/teamContract'
 import type { CncAccountingInput } from '@/utils/accounting/assemble'
+import { USDC_ADDRESS } from '@/constant'
+import { assembleAccounting } from './assembleAccounting'
 import { buildBalanceSheet } from '@/utils/accounting/balanceSheet'
 import { buildIncomeStatement } from '@/utils/accounting/incomeStatement'
-import { ADDR, usd } from './fixtures'
-import { assembleAccounting } from './assembleAccounting'
 
 const FUNDING_TX = `0x${'a'.repeat(64)}`
 const PAYOUT_TX = `0x${'b'.repeat(64)}`

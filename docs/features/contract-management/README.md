@@ -449,7 +449,11 @@ callbacks, not real wallet transactions or product acceptance.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `ce6ae5493392f46869705f37900480ed34d0723c`
+**Implementation evidence reviewed against:** `afed113648736c861fb19c4319333717f14221c3`
+
+- [`BodApprovalContent.vue`](../../../app/src/components/sections/ContractManagementView/BodApprovalContent.vue)
+- [`CreateAdvertisingCampaignForm.vue`](../../../app/src/components/sections/ContractManagementView/forms/CreateAdvertisingCampaignForm.vue)
+- [`WithdrawAdvertisingCampaignForm.vue`](../../../app/src/components/sections/ContractManagementView/forms/WithdrawAdvertisingCampaignForm.vue)
 
 - [Real Board mutation lifecycle tests](../../../app/src/composables/bod/__tests__/writes.spec.ts)
 - [Board reads](../../../app/src/composables/bod/reads.ts), [Board writes](../../../app/src/composables/bod/writes.ts),

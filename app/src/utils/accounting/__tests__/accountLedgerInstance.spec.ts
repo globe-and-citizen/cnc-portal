@@ -1,11 +1,11 @@
-import { describe, expect, it } from 'vitest'
 import { accountNet, accountOpening, entriesForAccount } from '@/utils/accounting/accountLedger'
+import { describe, expect, it } from 'vitest'
+import type { Address } from 'viem'
+import type { JournalEntryDraft } from '@/utils/accounting/journalEntryDraft'
 import { buildGeneralLedger } from '@/utils/accounting/generalLedger'
 import { finalizeJournal } from '@/utils/accounting/__tests__/assembleAccounting'
 import { journalLedgerRows } from '@/utils/accounting/journalLedgerPresenter'
 import { money } from '@/utils/accounting/presenter'
-import type { JournalEntryDraft } from '@/utils/accounting/journalEntryDraft'
-import type { Address } from 'viem'
 import { usd } from './fixtures'
 
 const BANK1 = '0x1111111111111111111111111111111111111111' as Address

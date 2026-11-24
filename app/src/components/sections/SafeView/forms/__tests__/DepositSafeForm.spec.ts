@@ -1,16 +1,16 @@
-import { mount, flushPromises } from '@vue/test-utils'
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { createTestingPinia } from '@pinia/testing'
-import { nextTick } from 'vue'
-import { type Address } from 'viem'
-import DepositSafeForm from '@/components/sections/SafeView/forms/DepositSafeForm.vue'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { flushPromises, mount } from '@vue/test-utils'
 import {
-  mockTransactionFunctions,
-  mockUseSafeSendTransaction,
   mockERC20Reads,
   mockERC20Writes,
+  mockTransactionFunctions,
+  mockUseSafeSendTransaction,
   useQueryClientFn
 } from '@/tests/mocks'
+import { type Address } from 'viem'
+import DepositSafeForm from '@/components/sections/SafeView/forms/DepositSafeForm.vue'
+import { createTestingPinia } from '@pinia/testing'
+import { nextTick } from 'vue'
 
 describe('[US-SAFE-003] DepositSafeForm.vue', () => {
   const defaultProps = {

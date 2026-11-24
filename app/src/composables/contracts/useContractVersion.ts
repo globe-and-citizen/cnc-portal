@@ -1,7 +1,7 @@
-import { computed, type ComputedRef } from 'vue'
-import { useTeamStore } from '@/stores'
 import { CURRENT_VERSION, type FolderVersion } from '@/artifacts/registry'
+import { type ComputedRef, computed } from 'vue'
 import { useOfficerBeaconFolder } from './useOfficerBeaconFolder'
+import { useTeamStore } from '@/stores'
 
 /**
  * The artifact-folder version (`V0` / `V0.1` / `V1` / …) the CURRENT team runs on.

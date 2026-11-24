@@ -1,8 +1,8 @@
+import { type Address, zeroAddress } from 'viem'
 import { describe, expect, it, vi } from 'vitest'
 import { ref } from 'vue'
-import { zeroAddress, type Address } from 'viem'
-import { useReadContractFn } from '@/tests/mocks'
 import { useBankTransferFee } from '@/composables/bank/useBankTransferFee'
+import { useReadContractFn } from '@/tests/mocks'
 
 const USDC_ADDRESS: Address = '0xA3492D046095AFFE351cFac15de9b86425E235dB'
 

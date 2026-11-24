@@ -7,10 +7,10 @@
 </template>
 
 <script setup lang="ts">
+import CashRemunerationTransactions from '@/components/sections/CashRemunerationView/CashRemunerationTransactions.vue'
+import WeeklyClaim from '@/components/sections/WeeklyClaimView/WeeklyClaim.vue'
 import { computed } from 'vue'
 import { useTeamStore } from '@/stores'
-import WeeklyClaim from '@/components/sections/WeeklyClaimView/WeeklyClaim.vue'
-import CashRemunerationTransactions from '@/components/sections/CashRemunerationView/CashRemunerationTransactions.vue'
 
 const teamStore = useTeamStore()
 const cashRemunerationAddress = computed(() =>

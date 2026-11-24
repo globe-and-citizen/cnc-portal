@@ -116,18 +116,18 @@
 <script setup lang="ts">
 import { computed, ref, toRef, watch } from 'vue'
 import AddressTooltip from '@/components/ui/AddressTooltip.vue'
+import BodApprovalContent from './BodApprovalContent.vue'
+import ContractReadDataSection from './ContractReadDataSection.vue'
+import type { FormattedBodActions } from '@/utils/contracts/bodActions'
+import type { ManagedContractRow } from './ManagedContractsTable.types'
+import PendingBodActionsTable from './PendingBodActionsTable.vue'
+import type { TableRow } from '@/types/table'
+import TransferOwnershipForm from './forms/TransferOwnershipForm.vue'
+import { getContractPauseStatusPresentation } from '@/utils/contracts/pauseCapabilities'
+import { getContractPresentation } from '@/utils/contracts/presentation'
 import { useBodApproveAction } from '@/composables/bod/writes'
 import { useContractOwnershipTransfer } from '@/composables/contracts/useContractOwnershipTransfer'
 import { useContractPauseToggle } from '@/composables/contracts/useContractPauseToggle'
-import type { TableRow } from '@/types/table'
-import type { ManagedContractRow } from './ManagedContractsTable.types'
-import type { FormattedBodActions } from '@/utils/contracts/bodActions'
-import { getContractPauseStatusPresentation } from '@/utils/contracts/pauseCapabilities'
-import { getContractPresentation } from '@/utils/contracts/presentation'
-import BodApprovalContent from './BodApprovalContent.vue'
-import ContractReadDataSection from './ContractReadDataSection.vue'
-import PendingBodActionsTable from './PendingBodActionsTable.vue'
-import TransferOwnershipForm from './forms/TransferOwnershipForm.vue'
 
 type ContractActionSurface = 'details' | 'transfer' | 'approval' | null
 

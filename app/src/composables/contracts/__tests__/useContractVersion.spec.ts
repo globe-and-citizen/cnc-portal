@@ -1,8 +1,8 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
+import { CURRENT_VERSION } from '@/artifacts/registry'
+import { mockTeamStore } from '@/tests/mocks/store.mock'
 import { ref } from 'vue'
 import { useContractVersion } from '@/composables/contracts/useContractVersion'
-import { mockTeamStore } from '@/tests/mocks/store.mock'
-import { CURRENT_VERSION } from '@/artifacts/registry'
 
 // The on-chain beacon resolution is isolated in useOfficerBeaconFolder; mock it
 // so useContractVersion stays testable as a pure computed. `beaconFolder` drives

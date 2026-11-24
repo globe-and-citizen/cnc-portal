@@ -1,12 +1,14 @@
-import { expect, test } from '../fixtures/mocked'
 import {
+  COMPANIES_URL,
+  COMPANY_NAME,
+  COMPANY_URL,
+  LOAD_TIMEOUT,
+  RETRY_TIMEOUT,
+  SIBLING_NAME,
   archiveAction,
   archivedBanner,
   cancelDialog,
   closeCardMenu,
-  COMPANIES_URL,
-  COMPANY_NAME,
-  COMPANY_URL,
   companyHeader,
   confirmDelete,
   deleteAction,
@@ -14,17 +16,15 @@ import {
   emptyState,
   errorState,
   gate,
-  LOAD_TIMEOUT,
   openCardMenu,
   openCompanyActions,
   openCompanyDashboard,
-  RETRY_TIMEOUT,
-  SIBLING_NAME,
   signInToCompanies,
   teamCard,
   toast,
   updateAction
 } from './company-lifecycle-page'
+import { expect, test } from '../fixtures/mocked'
 
 const DELETED = 'Company deleted successfully'
 const TAGS = ['@US-COMPANIES-008', '@browser', '@mocked', '@parallel-safe']

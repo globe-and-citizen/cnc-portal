@@ -2,7 +2,6 @@
  * The dates an election is created with — the one thing the portal used to
  * decide on the owner's behalf, turning a week-long ballot into sixty seconds.
  */
-import { describe, expect, it, vi } from 'vitest'
 import {
   clockTime,
   emittedPayload,
@@ -11,6 +10,7 @@ import {
   mountComponent,
   tomorrow
 } from './CreateElectionForm.harness'
+import { describe, expect, it, vi } from 'vitest'
 
 describe('CreateElectionForm — opening', () => {
   it('says when an unpicked opening falls', () => {

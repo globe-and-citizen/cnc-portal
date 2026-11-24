@@ -1,8 +1,8 @@
+import { createMutationHook, createQueryHook, queryPresets } from './queryFactory'
+import type { AccountId } from '@/utils/accounting/types'
+import type { JournalAccountAssignmentRecord } from '@/types/journal-account-assignment'
 import type { MaybeRefOrGetter } from 'vue'
 import { toValue } from 'vue'
-import type { JournalAccountAssignmentRecord } from '@/types/journal-account-assignment'
-import type { AccountId } from '@/utils/accounting/types'
-import { createMutationHook, createQueryHook, queryPresets } from './queryFactory'
 
 export const journalAccountAssignmentKeys = {
   all: ['journal-account-assignments'] as const,

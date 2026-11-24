@@ -176,27 +176,27 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
-import { decodeFunctionData } from 'viem'
-import type { TransactionReceipt, AbiFunction } from 'viem'
-import type { GroupedTransactionRow, TransactionHistoryItemRow } from '@/types/transaction-history'
-import AddressTooltip from '@/components/ui/AddressTooltip.vue'
-import UserIdentity from '@/components/ui/UserIdentity.vue'
-import { getTransactionSummary } from '@/utils/transactions/history'
-import { useTransactionPresentation } from '@/composables/transactions/useTransactionPresentation'
-import { formatCryptoAmount, formatCurrencyShort } from '@/utils/currency/display'
-import { getTransactionTypeLabel } from '@/utils/transactions/registry'
+import type { AbiFunction, TransactionReceipt } from 'viem'
 import {
-  formatDecodedValue,
   CONTRACT_ABI_MAP,
+  type DecodedInputData,
   type DecodedParam,
-  type DecodedInputData
+  formatDecodedValue
 } from '@/utils/contracts/abiDecode'
+import type { GroupedTransactionRow, TransactionHistoryItemRow } from '@/types/transaction-history'
+import { computed, ref, watch } from 'vue'
+import { formatCryptoAmount, formatCurrencyShort } from '@/utils/currency/display'
 import { formatDateRelative, formatDateUtc, formatNumber } from '@/utils/format'
 import { useCurrencyStore, useTeamStore } from '@/stores'
-import { getPublicClient } from '@wagmi/core'
-import { config } from '@/wagmi.config'
+import AddressTooltip from '@/components/ui/AddressTooltip.vue'
 import { NETWORK } from '@/constant'
+import UserIdentity from '@/components/ui/UserIdentity.vue'
+import { config } from '@/wagmi.config'
+import { decodeFunctionData } from 'viem'
+import { getPublicClient } from '@wagmi/core'
+import { getTransactionSummary } from '@/utils/transactions/history'
+import { getTransactionTypeLabel } from '@/utils/transactions/registry'
+import { useTransactionPresentation } from '@/composables/transactions/useTransactionPresentation'
 
 const props = defineProps<{
   transaction: TransactionHistoryItemRow

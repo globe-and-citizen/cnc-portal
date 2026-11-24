@@ -98,14 +98,14 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import type { TableRow } from '@nuxt/ui'
 import { formatAmount, reachedFundingTarget } from '@/utils/communityCredit/model'
-import { percentOf } from '@/utils/communityCredit/offer'
-import type { CreditRound } from '@/types'
 import CreditAvatar from './CreditAvatar.vue'
 import CreditConditionsCard from './CreditConditionsCard.vue'
 import CreditRepaymentCard from './CreditRepaymentCard.vue'
+import type { CreditRound } from '@/types'
+import type { TableRow } from '@nuxt/ui'
+import { computed } from 'vue'
+import { percentOf } from '@/utils/communityCredit/offer'
 
 const props = defineProps<{ round: CreditRound }>()
 

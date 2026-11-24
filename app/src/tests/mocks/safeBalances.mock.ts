@@ -1,9 +1,9 @@
-import { computed, ref, toValue } from 'vue'
-import { vi } from 'vitest'
-import type { GetSafeBalancesParams } from '@/queries/safeClient.queries'
 import type { SafeClientBalance, SafeClientBalances } from '@/types/safe'
+import { computed, ref, toValue } from 'vue'
 import type { AssetMetadata } from '@/utils/tokens/assets'
+import type { GetSafeBalancesParams } from '@/queries/safeClient.queries'
 import { mockUseContractBalance } from './composables.mock'
+import { vi } from 'vitest'
 
 interface FixtureAsset {
   asset: AssetMetadata

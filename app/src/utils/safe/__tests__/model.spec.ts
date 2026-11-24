@@ -1,19 +1,19 @@
-import { describe, it, expect } from 'vitest'
 import { AxiosError, type AxiosResponse } from 'axios'
-import { zeroAddress } from 'viem'
 import { NETWORK, USDC_ADDRESS } from '@/constant'
+import { describe, expect, it } from 'vitest'
 import {
-  getSafeHomeUrl,
-  isSafeNotIndexedError,
   formatSafeTransactionValue,
-  getExecutedErc20TransferTokenAddress,
-  getSafeTransactionMethod,
   formatSafeTransferAmount,
   formatSafeTransferType,
+  getExecutedErc20TransferTokenAddress,
+  getSafeHomeUrl,
+  getSafeTransactionMethod,
+  isSafeNotIndexedError,
   transformToSafeMultisigResponse
 } from '../model'
-import type { SafeTransaction } from '@/types/safe'
 import type { SafeIncomingTransfer } from '@/types'
+import type { SafeTransaction } from '@/types/safe'
+import { zeroAddress } from 'viem'
 
 const LOWERCASE_SAFE_ADDRESS = '0x0557f280d9da274254e85ee70c2936694e494275'
 const CHECKSUM_SAFE_ADDRESS = '0x0557F280D9DA274254e85Ee70c2936694e494275'

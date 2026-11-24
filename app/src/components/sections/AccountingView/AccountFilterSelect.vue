@@ -12,8 +12,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
 import MultiSelectFilter from '@/components/ui/MultiSelectFilter.vue'
+import { computed } from 'vue'
 
 export interface AccountFilterOption {
   value: string

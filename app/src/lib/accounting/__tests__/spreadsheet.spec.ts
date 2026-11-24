@@ -1,9 +1,9 @@
-import { describe, it, expect } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import type { Address } from 'viem'
-import { buildSheets } from '../spreadsheet'
 import type { CncAccounting } from '@/utils/accounting/assemble'
-import { assembleAccounting } from '@/utils/accounting/__tests__/assembleAccounting'
 import { USDC_ADDRESS } from '@/constant'
+import { assembleAccounting } from '@/utils/accounting/__tests__/assembleAccounting'
+import { buildSheets } from '../spreadsheet'
 
 const BANK = '0x1111111111111111111111111111111111111111'
 const CLIENT = '0x7777777777777777777777777777777777777777'

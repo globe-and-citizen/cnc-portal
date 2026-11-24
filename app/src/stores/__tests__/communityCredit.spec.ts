@@ -1,7 +1,7 @@
+import type { FixedReturnRawOffer, LendingOfferStruct } from '@/types'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { createPinia, setActivePinia } from 'pinia'
 import { computed, ref } from 'vue'
-import type { Address } from 'viem'
+import { createPinia, setActivePinia } from 'pinia'
 import {
   mockBlockTimestamp,
   mockFixedReturnReads,
@@ -9,8 +9,8 @@ import {
   mockWagmiCore,
   useQueryFn
 } from '@/tests/mocks'
+import type { Address } from 'viem'
 import { useFixedReturnAddress } from '@/composables/fixedReturn/reads'
-import type { FixedReturnRawOffer, LendingOfferStruct } from '@/types'
 
 // The store reads the offer list through useFixedReturnAllOffers (globally mocked) and
 // opens an owner useQuery (globally mocked as useQueryFn) plus the off-chain metadata
@@ -36,8 +36,8 @@ vi.mock('@/queries/fixedReturnOffering.queries', async (importOriginal) => ({
 // globally mocked (see composables.setup.ts); just drive its shared ref.
 const NOW = 2_000_000_000n
 
-import { useCommunityCreditStore } from '@/stores/communityCredit'
 import { USDC_ADDRESS, USDC_E_ADDRESS } from '@/constant'
+import { useCommunityCreditStore } from '@/stores/communityCredit'
 
 const TOKEN = '0x0000000000000000000000000000000000000abc' as Address
 

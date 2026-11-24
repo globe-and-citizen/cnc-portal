@@ -1,9 +1,9 @@
-import { describe, it, expect } from 'vitest'
-import { zeroAddress } from 'viem'
+import { ADDR, makeCtx } from './fixtures'
+import { describe, expect, it } from 'vitest'
 import { USDC_ADDRESS } from '@/constant'
-import { mapSafeTransfers } from '@/utils/accounting/mappers/safe'
 import { assetMetadata } from '@/utils/tokens/assets'
-import { makeCtx, ADDR } from './fixtures'
+import { mapSafeTransfers } from '@/utils/accounting/mappers/safe'
+import { zeroAddress } from 'viem'
 
 const ctx = makeCtx()
 const base = { token: null as string | null, amount: '1000000000000000000', timestamp: 100 }

@@ -1,15 +1,15 @@
+import { type VueWrapper, mount } from '@vue/test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { mount, type VueWrapper } from '@vue/test-utils'
-import { createTestingPinia } from '@pinia/testing'
-import type { Address } from 'viem'
-import { unref } from 'vue'
-import ElectionCandidateCard from '../ElectionCandidateCard.vue'
-import ElectionCandidatesSection from '../ElectionCandidatesSection.vue'
+import { mockElectionsReads, resetContractMocks } from '@/tests/mocks'
 import {
   useElectionsGetCandidateVoteCounts,
   useElectionsGetWinners
 } from '@/composables/elections/reads'
-import { mockElectionsReads, resetContractMocks } from '@/tests/mocks'
+import type { Address } from 'viem'
+import ElectionCandidateCard from '../ElectionCandidateCard.vue'
+import ElectionCandidatesSection from '../ElectionCandidatesSection.vue'
+import { createTestingPinia } from '@pinia/testing'
+import { unref } from 'vue'
 
 const ALEX = '0x742d35Cc6bF8C55C6C2e013e5492D2b6637e0886' as Address
 const BLAIR = '0xA0b86a33E6441bB7bE6d0B9EB5Bbf26b2d60C1cd' as Address

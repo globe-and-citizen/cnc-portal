@@ -24,9 +24,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
 import { creditTermLabel, formatAmount, formatNumber } from '@/utils/communityCredit/model'
 import type { CreditCallForm } from '@/types'
+import { computed } from 'vue'
 
 const props = defineProps<{ form: CreditCallForm; whitelistCount: number }>()
 

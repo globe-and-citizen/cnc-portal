@@ -1,7 +1,7 @@
-import { mount } from '@vue/test-utils'
-import { describe, expect, it, vi, beforeEach } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import ExpenseAccountTotalApproved from '../ExpenseAccountTotalApproved.vue'
 import { createMockQueryResponse } from '@/tests/mocks'
+import { mount } from '@vue/test-utils'
 import { useGetExpensesQuery } from '@/queries/expense.queries'
 
 describe('[US-EXP-004] ExpenseAccountTotalApproved', () => {

@@ -449,7 +449,11 @@ funding, claimability, event completeness and Accounting posting policies retain
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `df52c33089f7528e2a61b1aa654ef3ad0c5e25db`
+**Implementation evidence reviewed against:** `afed113648736c861fb19c4319333717f14221c3`
+
+- [`CreditRoundCard.vue`](../../../app/src/components/sections/CommunityCreditView/CreditRoundCard.vue)
+- [`CreditRoundGauge.vue`](../../../app/src/components/sections/CommunityCreditView/CreditRoundGauge.vue)
+- [`CreditRoundTimeline.vue`](../../../app/src/components/sections/CommunityCreditView/CreditRoundTimeline.vue)
 
 - [Credit Account page](../../../app/src/views/team/[id]/CommunityCredit/IndexView.vue)
 - [Credit-call wizard](../../../app/src/views/team/[id]/CommunityCredit/NewView.vue)

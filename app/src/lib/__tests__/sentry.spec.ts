@@ -1,5 +1,5 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { BaseError, UserRejectedRequestError } from 'viem'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const sentryMocks = vi.hoisted(() => ({
   captureException: vi.fn(),

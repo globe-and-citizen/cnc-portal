@@ -1,18 +1,18 @@
 import type { Address, Hex } from 'viem'
-import { keccak256 } from 'viem'
-import type { Team } from '../../../src/types/team'
-import { expenseAccountEip712Abi } from '../../../src/artifacts/abi/generated'
-import { expect, test } from '../fixtures/integrated'
 import { E2E_MEMBER_PRIVATE_KEY, ownerAccount, publicClient } from '../e2e-chain'
-import { changeWalletNetwork, openAccountFromSidebar } from '../e2e-page'
 import {
   approveExpenseSpending,
   depositUsdcToBank,
   fundContractFromBank,
-  spendFromExpenseAccount,
-  redeployContractsThroughUi
+  redeployContractsThroughUi,
+  spendFromExpenseAccount
 } from '../accounting/accounting-operations'
 import { authenticateIntegratedAccount, requestIntegratedApi } from '../integrated-api'
+import { changeWalletNetwork, openAccountFromSidebar } from '../e2e-page'
+import { expect, test } from '../fixtures/integrated'
+import type { Team } from '../../../src/types/team'
+import { expenseAccountEip712Abi } from '../../../src/artifacts/abi/generated'
+import { keccak256 } from 'viem'
 
 interface ExpenseApprovalRecord {
   id: number

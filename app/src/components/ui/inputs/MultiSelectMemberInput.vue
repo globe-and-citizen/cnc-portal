@@ -24,10 +24,10 @@
 </template>
 
 <script lang="ts" setup>
-import UserIdentity from '@/components/ui/UserIdentity.vue'
-import SelectMemberInput from '@/components/ui/inputs/SelectMemberInput.vue'
-import { ref } from 'vue'
 import type { MemberSelectionScope, User } from '@/types'
+import SelectMemberInput from '@/components/ui/inputs/SelectMemberInput.vue'
+import UserIdentity from '@/components/ui/UserIdentity.vue'
+import { ref } from 'vue'
 
 interface Props {
   showOnFocus?: boolean

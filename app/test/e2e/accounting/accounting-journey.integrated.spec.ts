@@ -1,4 +1,3 @@
-import { expect, test } from '../fixtures/integrated'
 import {
   E2E_MEMBER,
   E2E_MEMBER_PRIVATE_KEY,
@@ -6,14 +5,8 @@ import {
   E2E_OWNER,
   E2E_OWNER_PRIVATE_KEY
 } from '../e2e-chain'
-import { useWallet } from '../e2e-page'
 import {
-  addRealCompanyMember,
-  createOperationalCompany,
-  deleteCompanyThroughUi,
-  signInToRealStack
-} from '../company/real-company-page'
-import {
+  type LedgerEntry,
   duplicatedTransactions,
   entriesForTransaction,
   entryAccounts,
@@ -21,32 +14,14 @@ import {
   normalizedLedger,
   sumUsd,
   unbalancedEntries,
-  usdValue,
-  type LedgerEntry
+  usdValue
 } from './accounting-books'
 import {
-  assignWithdrawalAccount,
-  canEditAssignments,
-  expectCompleteBooks,
-  ledgerEntryBadge,
-  openAccountDrilldown,
-  openAccounting,
-  readAmounts,
-  readBalanceTotals,
-  readAssignmentDecision,
-  readLedger,
-  readSummaryCards,
-  readTrialBalance,
-  revertWithdrawalAccount
-} from './accounting-page'
-import {
-  exportCurrentReport,
-  exportSelectedSections,
-  ledgerDataRows,
-  ledgerTotalRow,
-  sheetRow
-} from './accounting-export'
-import { expectAccountingCreditEntry, fundAccountingCreditRound } from './accounting-credit'
+  addRealCompanyMember,
+  createOperationalCompany,
+  deleteCompanyThroughUi,
+  signInToRealStack
+} from '../company/real-company-page'
 import {
   approveExpenseSpending,
   depositUsdcToBank,
@@ -56,6 +31,31 @@ import {
   spendFromExpenseAccount,
   withdrawToExternalAddress
 } from './accounting-operations'
+import {
+  assignWithdrawalAccount,
+  canEditAssignments,
+  expectCompleteBooks,
+  ledgerEntryBadge,
+  openAccountDrilldown,
+  openAccounting,
+  readAmounts,
+  readAssignmentDecision,
+  readBalanceTotals,
+  readLedger,
+  readSummaryCards,
+  readTrialBalance,
+  revertWithdrawalAccount
+} from './accounting-page'
+import { expect, test } from '../fixtures/integrated'
+import { expectAccountingCreditEntry, fundAccountingCreditRound } from './accounting-credit'
+import {
+  exportCurrentReport,
+  exportSelectedSections,
+  ledgerDataRows,
+  ledgerTotalRow,
+  sheetRow
+} from './accounting-export'
+import { useWallet } from '../e2e-page'
 
 /** The whole book on one page, so an assertion never reads a truncated ledger. */
 const WHOLE_BOOK = '?ledgerSize=100'

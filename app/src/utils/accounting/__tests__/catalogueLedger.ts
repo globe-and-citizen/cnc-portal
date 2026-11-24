@@ -11,10 +11,10 @@
  * deferred Polymarket / GC:Trader integration (spec §1), so no mapper produces
  * them, but the catalogue exercises them and the books must still balance.
  */
+import type { JournalEntryDraft, UseCase } from '@/utils/accounting/journalEntryDraft'
+import type { AccountName } from '@/utils/accounting/chartOfAccounts'
 import type { TokenId } from '@/constant'
 import { parseUnits } from 'viem'
-import type { AccountName } from '@/utils/accounting/chartOfAccounts'
-import type { JournalEntryDraft, UseCase } from '@/utils/accounting/journalEntryDraft'
 
 /** Unix seconds for a given day in March 2026 (the worked-example period). */
 function march(day: number): number {

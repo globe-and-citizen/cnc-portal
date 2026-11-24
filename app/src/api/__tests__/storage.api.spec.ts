@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { getFileUrlApi } from '../storage.api'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import apiClient from '@/lib/axios'
+import { getFileUrlApi } from '../storage.api'
 
 describe('getFileUrlApi', () => {
   beforeEach(() => {

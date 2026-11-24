@@ -1,17 +1,17 @@
 <script setup lang="ts">
+import {
+  type AdvertisingCampaign,
+  useAdvertisingCampaigns,
+  useCampaignEventsByCode
+} from '@/composables/campaign/reads'
 import { computed, ref } from 'vue'
 import type { Address } from 'viem'
-import {
-  useAdvertisingCampaigns,
-  useCampaignEventsByCode,
-  type AdvertisingCampaign
-} from '@/composables/campaign/reads'
-import { formatTokenUnits } from '@/utils/format'
 import AddressTooltip from '@/components/ui/AddressTooltip.vue'
-import CreateAdvertisingCampaignForm from './forms/CreateAdvertisingCampaignForm.vue'
-import WithdrawAdvertisingCampaignForm from './forms/WithdrawAdvertisingCampaignForm.vue'
 import AdvertisingCampaignDetailsSlideover from './AdvertisingCampaignDetailsSlideover.vue'
 import AdvertisingCampaignSummary from './AdvertisingCampaignSummary.vue'
+import CreateAdvertisingCampaignForm from './forms/CreateAdvertisingCampaignForm.vue'
+import WithdrawAdvertisingCampaignForm from './forms/WithdrawAdvertisingCampaignForm.vue'
+import { formatTokenUnits } from '@/utils/format'
 const props = defineProps<{ managerAddress: Address }>()
 const statusFilter = ref<'all' | 'active' | 'completed'>('all')
 const search = ref('')

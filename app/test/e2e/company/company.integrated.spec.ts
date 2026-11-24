@@ -1,15 +1,4 @@
-import type { Address } from 'viem'
-import { expect, test } from '../fixtures/integrated'
 import { E2E_MEMBER, E2E_MEMBER_PRIVATE_KEY, E2E_OWNER, hasCode, publicClient } from '../e2e-chain'
-import { openAccountFromSidebar } from '../e2e-page'
-import { deleteIntegratedTeam } from '../integrated-api'
-import {
-  deployedContracts,
-  expectedContractTypes,
-  investorDetails,
-  officerOwner,
-  ownerNonce
-} from './company-chain'
 import {
   createRealCompany,
   deleteCompanyThroughUi,
@@ -19,6 +8,17 @@ import {
   openRealCompaniesList,
   uniqueCompanyName
 } from './real-company-page'
+import {
+  deployedContracts,
+  expectedContractTypes,
+  investorDetails,
+  officerOwner,
+  ownerNonce
+} from './company-chain'
+import { expect, test } from '../fixtures/integrated'
+import type { Address } from 'viem'
+import { deleteIntegratedTeam } from '../integrated-api'
+import { openAccountFromSidebar } from '../e2e-page'
 
 const card = (page: Parameters<typeof createRealCompany>[0], teamId: string) =>
   page.locator(`[data-test="team-card-${teamId}"]`)

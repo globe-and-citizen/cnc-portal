@@ -78,35 +78,35 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
-import { useChainId } from '@wagmi/vue'
-import type { Address } from 'viem'
-import TablePagination from '@/components/ui/TablePagination.vue'
-import SafeTransactionsWarning from './SafeTransactionsWarning.vue'
-import SafeTransactionDetailsModal from './SafeTransactionDetailsModal.vue'
-import SafeTransactionStatusFilter from './SafeTransactionStatusFilter.vue'
-import SafeTransactionMobileList from './SafeTransactionMobileList.vue'
-import SafeTransactionFeedback from './SafeTransactionFeedback.vue'
-import SafeTransactionsTable from './SafeTransactionsTable.vue'
-import { usePagination } from '@/composables/usePagination'
-import { useGetSafeTransactionsQuery, useGetSafeInfoQuery } from '@/queries/safe.queries'
 import {
-  useApproveTransactionMutation,
-  useExecuteTransactionMutation
-} from '@/queries/safe.mutations'
-import { log } from '@/lib/logging'
-import {
+  type SafeTransactionStatusFilter as SafeTransactionFilterValue,
+  type SafeTransactionQueueRow,
+  type SafeTransactionStateMeta,
+  buildSafeTransactionQueueRows,
   getSafeTransactionFilterCounts,
   getSafeTransactionState,
   hasConflictingSafeTransactions,
   matchesSafeTransactionFilter,
-  willSafeTransactionApprovalCauseConflict,
-  buildSafeTransactionQueueRows,
-  type SafeTransactionQueueRow,
-  type SafeTransactionStateMeta,
-  type SafeTransactionStatusFilter as SafeTransactionFilterValue
+  willSafeTransactionApprovalCauseConflict
 } from '@/utils/safe/transactionState'
+import { computed, ref, watch } from 'vue'
+import {
+  useApproveTransactionMutation,
+  useExecuteTransactionMutation
+} from '@/queries/safe.mutations'
+import { useGetSafeInfoQuery, useGetSafeTransactionsQuery } from '@/queries/safe.queries'
+import type { Address } from 'viem'
 import type { SafeTransaction } from '@/types/safe'
+import SafeTransactionDetailsModal from './SafeTransactionDetailsModal.vue'
+import SafeTransactionFeedback from './SafeTransactionFeedback.vue'
+import SafeTransactionMobileList from './SafeTransactionMobileList.vue'
+import SafeTransactionStatusFilter from './SafeTransactionStatusFilter.vue'
+import SafeTransactionsTable from './SafeTransactionsTable.vue'
+import SafeTransactionsWarning from './SafeTransactionsWarning.vue'
+import TablePagination from '@/components/ui/TablePagination.vue'
+import { log } from '@/lib/logging'
+import { useChainId } from '@wagmi/vue'
+import { usePagination } from '@/composables/usePagination'
 import { useUserDataStore } from '@/stores'
 
 interface Props {

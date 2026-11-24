@@ -1,7 +1,7 @@
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { type Address } from 'viem'
-import { mockWagmiCore } from '@/tests/mocks/wagmi.vue.mock'
 import { SENTRY_WEB3_BOUNDARY_META_KEY } from '@/lib/sentry'
+import { mockWagmiCore } from '@/tests/mocks/wagmi.vue.mock'
 import { useMutationFn } from '@/tests/mocks/composables.mock'
 
 let useSafeSendTransaction: typeof import('../useSafeSendTransaction').useSafeSendTransaction

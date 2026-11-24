@@ -1,10 +1,10 @@
-import { AxiosError, AxiosHeaders, CanceledError, type AxiosResponse } from 'axios'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { toValue } from 'vue'
-import { QueryClient, QueryObserver, type FetchQueryOptions } from '@tanstack/vue-query'
-import externalApiClient from '@/lib/external.axios'
-import { useQueryFn } from '@/tests/mocks/composables.mock'
+import { AxiosError, AxiosHeaders, type AxiosResponse, CanceledError } from 'axios'
+import { type FetchQueryOptions, QueryClient, QueryObserver } from '@tanstack/vue-query'
 import type { SafeInfo, SafeTransaction } from '@/types/safe'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import externalApiClient from '@/lib/external.axios'
+import { toValue } from 'vue'
+import { useQueryFn } from '@/tests/mocks/composables.mock'
 
 vi.mock('@/constant/index', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/constant/index')>()),

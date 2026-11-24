@@ -26,11 +26,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
 import IntegrationCard from '@/components/sections/PaymentGateView/IntegrationCard.vue'
+import type { PaymentGateToken } from '@/utils/paymentGate/widgetSnippet'
 import TokenConfigCard from '@/components/sections/PaymentGateView/TokenConfigCard.vue'
 import WidgetPreviewCard from '@/components/sections/PaymentGateView/WidgetPreviewCard.vue'
-import type { PaymentGateToken } from '@/utils/paymentGate/widgetSnippet'
+import { ref } from 'vue'
 
 const selectedToken = ref<PaymentGateToken>('USDC')
 </script>

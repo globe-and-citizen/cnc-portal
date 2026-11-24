@@ -1,12 +1,12 @@
-import { fileURLToPath, URL } from 'node:url'
+import { URL, fileURLToPath } from 'node:url'
 
-import { defineConfig, loadEnv, type PluginOption, type UserConfig } from 'vite'
-import vue from '@vitejs/plugin-vue'
-import ui from '@nuxt/ui/vite'
-import vueDevTools from 'vite-plugin-vue-devtools'
+import { type PluginOption, type UserConfig, defineConfig, loadEnv } from 'vite'
 import { nodePolyfills } from 'vite-plugin-node-polyfills'
-import tailwindcss from '@tailwindcss/vite'
 import { sentryVitePlugin } from '@sentry/vite-plugin'
+import tailwindcss from '@tailwindcss/vite'
+import ui from '@nuxt/ui/vite'
+import vue from '@vitejs/plugin-vue'
+import vueDevTools from 'vite-plugin-vue-devtools'
 
 export const ENV_LIST = ['VITE_APP_BACKEND_URL', 'VITE_APP_NETWORK_ALIAS']
 const SUPPORTED_NETWORKS = ['sepolia', 'hardhat', 'amoy', 'polygon']

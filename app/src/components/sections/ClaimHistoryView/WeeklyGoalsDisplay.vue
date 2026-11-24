@@ -28,8 +28,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
 import type { WeeklyClaim } from '@/types'
+import { computed } from 'vue'
 
 const props = defineProps<{
   weeklyClaim?: WeeklyClaim

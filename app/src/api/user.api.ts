@@ -1,6 +1,6 @@
-import apiClient from '@/lib/axios'
-import type { User } from '@/types'
 import type { Address } from 'viem'
+import type { User } from '@/types'
+import apiClient from '@/lib/axios'
 
 export interface UserNonceResponse {
   nonce: string

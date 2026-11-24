@@ -1,6 +1,6 @@
-import { vi } from 'vitest'
-import { ref } from 'vue'
 import { mockVestingReads, mockVestingWrites } from '../mocks/contract.mock'
+import { ref } from 'vue'
+import { vi } from 'vitest'
 
 /**
  * Mock Vesting composables.

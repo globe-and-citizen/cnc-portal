@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { renderWithProviders } from '@/tests/mocks'
 import VestingStats from '@/components/sections/VestingView/VestingStats.vue'
+import { renderWithProviders } from '@/tests/mocks'
 
 describe('VestingStats.vue', () => {
   it('[AC-US-VESTING-002-01] renders promised, vested, claimable, and released totals', () => {

@@ -1,14 +1,14 @@
-import type { Page, Request } from '@playwright/test'
-import type { Address } from 'viem'
-import { E2E_MEMBER, E2E_MEMBER_PRIVATE_KEY, E2E_NEW_SIGNER, E2E_OWNER } from '../e2e-chain'
 import {
+  type E2EUser,
+  type StubResponse,
   json,
   signInAndOpenFirstTeam,
   stubBackend,
-  useWallet,
-  type E2EUser,
-  type StubResponse
+  useWallet
 } from '../e2e-page'
+import { E2E_MEMBER, E2E_MEMBER_PRIVATE_KEY, E2E_NEW_SIGNER, E2E_OWNER } from '../e2e-chain'
+import type { Page, Request } from '@playwright/test'
+import type { Address } from 'viem'
 import type { ElectionsE2EFixture } from './elections-chain'
 
 export type ElectionActor = 'owner' | 'member'

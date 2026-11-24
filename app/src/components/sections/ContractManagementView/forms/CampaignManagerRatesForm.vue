@@ -70,16 +70,16 @@
 </template>
 
 <script setup lang="ts">
+import { type Address, parseUnits } from 'viem'
 import { computed, ref, watch } from 'vue'
-import { useToast } from '@nuxt/ui/composables'
-import { parseUnits, type Address } from 'viem'
-import AddressTooltip from '@/components/ui/AddressTooltip.vue'
-import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
-import type { CampaignManagerSettings } from '@/composables/campaign/reads'
 import {
   useSetCampaignCostPerClick,
   useSetCampaignCostPerImpression
 } from '@/composables/campaign/writes'
+import AddressTooltip from '@/components/ui/AddressTooltip.vue'
+import type { CampaignManagerSettings } from '@/composables/campaign/reads'
+import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
+import { useToast } from '@nuxt/ui/composables'
 
 type CampaignRates = Pick<CampaignManagerSettings, 'costPerClick' | 'costPerImpression'>
 

@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import { ref } from 'vue'
 import type { SafeInfo } from '@/types/safe'
-import { useSafeSignerRole } from '@/composables/safe/useSafeSignerRole'
 import { mockUserStore } from '@/tests/mocks/store.mock'
+import { ref } from 'vue'
+import { useSafeSignerRole } from '@/composables/safe/useSafeSignerRole'
 
 const OWNER = '0x1111111111111111111111111111111111111111'
 

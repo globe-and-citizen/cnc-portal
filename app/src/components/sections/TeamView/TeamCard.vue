@@ -148,15 +148,15 @@
 </template>
 
 <script setup lang="ts">
+import { type RouteLocationRaw, RouterLink } from 'vue-router'
 import { sumFiatValues, valueTokenAmount } from '@/utils/currency/valuation'
-import { computed } from 'vue'
+import { useCurrencyStore, useUserDataStore } from '@/stores'
 import type { DropdownMenuItem } from '@nuxt/ui'
-import { RouterLink, type RouteLocationRaw } from 'vue-router'
-import { useUserDataStore, useCurrencyStore } from '@/stores'
-import { formatCurrency } from '@/utils/format'
-import type { TokenId } from '@/constant'
 import type { Team } from '@/types'
 import type { TeamTreasuryDisplay } from '@/utils/teams/treasury'
+import type { TokenId } from '@/constant'
+import { computed } from 'vue'
+import { formatCurrency } from '@/utils/format'
 
 interface Props {
   team: Team

@@ -1,6 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import dayjs from 'dayjs'
-import utc from 'dayjs/plugin/utc'
 import {
   dateToCalendarDate,
   differenceInCalendarDays,
@@ -17,6 +15,8 @@ import {
   getMonthWeeks,
   startOfWeek
 } from '@/utils/dates/calendar'
+import dayjs from 'dayjs'
+import utc from 'dayjs/plugin/utc'
 
 dayjs.extend(utc)
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { mount } from '@vue/test-utils'
 import TokenConfigCard from '../TokenConfigCard.vue'
+import { mount } from '@vue/test-utils'
 
 describe('TokenConfigCard', () => {
   it('[AC-US-PAYGATE-001-03] offers only USDC and USDCe — POL is never rendered', () => {

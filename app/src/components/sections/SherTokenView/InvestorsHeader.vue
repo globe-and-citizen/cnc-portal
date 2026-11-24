@@ -36,21 +36,21 @@
 </template>
 
 <script setup lang="ts">
-import { formatUnits, type Address } from 'viem'
-import OverviewCard from '@/components/ui/OverviewCard.vue'
-import cartIcon from '@/assets/cart.svg'
-import bagIcon from '@/assets/bag.svg'
-import personIcon from '@/assets/person.svg'
-import { useTeamStore, useUserDataStore } from '@/stores'
-import {
-  useInvestorSymbol,
-  useInvestorTotalSupply,
-  useInvestorBalanceOf,
-  useInvestorShareholders
-} from '@/composables/investor/reads'
+import { type Address, formatUnits } from 'viem'
 import { computed, watch } from 'vue'
-import { log } from '@/lib/logging'
+import {
+  useInvestorBalanceOf,
+  useInvestorShareholders,
+  useInvestorSymbol,
+  useInvestorTotalSupply
+} from '@/composables/investor/reads'
+import { useTeamStore, useUserDataStore } from '@/stores'
 import { EMPTY_VALUE } from '@/utils/format'
+import OverviewCard from '@/components/ui/OverviewCard.vue'
+import bagIcon from '@/assets/bag.svg'
+import cartIcon from '@/assets/cart.svg'
+import { log } from '@/lib/logging'
+import personIcon from '@/assets/person.svg'
 import { useToast } from '@nuxt/ui/composables'
 
 const teamStore = useTeamStore()

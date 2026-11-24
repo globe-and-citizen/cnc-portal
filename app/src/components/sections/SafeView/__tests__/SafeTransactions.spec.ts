@@ -1,10 +1,10 @@
+import { type VueWrapper, mount } from '@vue/test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { mount, type VueWrapper } from '@vue/test-utils'
 import { defineComponent, nextTick, ref } from 'vue'
 import type { Address } from 'viem'
 import type { SafeTransaction } from '@/types/safe'
-import { mockUserStore } from '@/tests/mocks/store.mock'
 import SafeTransactions from '../SafeTransactions.vue'
+import { mockUserStore } from '@/tests/mocks/store.mock'
 
 const {
   mockUseGetSafeTransactionsQuery,

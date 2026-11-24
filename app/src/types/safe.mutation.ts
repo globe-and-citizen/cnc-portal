@@ -1,4 +1,4 @@
-import type { SafeTransferOptions, SafeTransaction } from './safe'
+import type { SafeTransaction, SafeTransferOptions } from './safe'
 import type Safe from '@safe-global/protocol-kit'
 
 export interface SafeDeploymentParams {

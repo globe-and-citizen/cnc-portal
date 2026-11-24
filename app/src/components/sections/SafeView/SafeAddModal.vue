@@ -39,9 +39,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
 import SafeDeploymentCard from '@/components/sections/SafeView/SafeDeploymentCard.vue'
 import SafeImportCard from '@/components/sections/SafeView/SafeImportCard.vue'
+import { ref } from 'vue'
 import { useTeamStore } from '@/stores'
 
 const teamStore = useTeamStore()

@@ -72,3 +72,7 @@ npm run test:e2e
 ```sh
 npm run lint
 ```
+
+ESLint's native `sort-imports` rule checks import declaration and member order within groups separated by blank lines. The
+`npm run lint:fix` command can sort members within a declaration; declaration order must be corrected manually. Review module side effects
+before moving imports.

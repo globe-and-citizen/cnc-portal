@@ -72,7 +72,7 @@ do not constitute a new browser or chain-transaction validation.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `20b213c1c6c1903766d67725d2b430b95e156cdf`
+**Implementation evidence reviewed against:** `afed113648736c861fb19c4319333717f14221c3`
 
 - [Shared table state](../../../app/src/composables/transactions/useTransactionTable.ts)
 - [Shared table-state tests](../../../app/src/composables/transactions/__tests__/useTransactionTable.spec.ts)

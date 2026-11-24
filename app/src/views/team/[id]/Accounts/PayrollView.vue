@@ -41,16 +41,16 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import { useTeamStore } from '@/stores'
 import AddressTooltip from '@/components/ui/AddressTooltip.vue'
-import ContractOwnerCard from '@/components/ui/ContractOwnerCard.vue'
-
-import { useContractBalance } from '@/composables/useContractBalance'
-import { tokenHoldingRows } from '@/utils/tokens/holdings'
-import TokenHoldingsSection from '@/components/ui/TokenHoldingsSection.vue'
 import CashRemunerationOverview from '@/components/sections/CashRemunerationView/CashRemunerationOverview.vue'
+import ContractOwnerCard from '@/components/ui/ContractOwnerCard.vue'
 import OwnerTreasuryWithdrawAction from '@/components/sections/OwnerTreasuryWithdrawAction.vue'
+
+import TokenHoldingsSection from '@/components/ui/TokenHoldingsSection.vue'
+import { computed } from 'vue'
+import { tokenHoldingRows } from '@/utils/tokens/holdings'
+import { useContractBalance } from '@/composables/useContractBalance'
+import { useTeamStore } from '@/stores'
 
 const teamStore = useTeamStore()
 

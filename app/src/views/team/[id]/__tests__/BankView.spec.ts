@@ -1,14 +1,14 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { tokenHoldingRows } from '@/utils/tokens/holdings'
-import { nextTick } from 'vue'
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { makeTokenBalance, mockUseContractBalance } from '@/tests/mocks/composables.mock'
-import { shallowMount } from '@vue/test-utils'
-import type { VueWrapper } from '@vue/test-utils'
-import type { ComponentPublicInstance } from 'vue'
-
-import { mockTeamStore } from '@/tests/mocks/store.mock'
-
 import BankView from '../Accounts/BankView.vue'
+import type { ComponentPublicInstance } from 'vue'
+import type { VueWrapper } from '@vue/test-utils'
+import { mockTeamStore } from '@/tests/mocks/store.mock'
+import { nextTick } from 'vue'
+
+import { shallowMount } from '@vue/test-utils'
+
+import { tokenHoldingRows } from '@/utils/tokens/holdings'
 
 describe('[US-BANK-003] BankView', () => {
   let wrapper: VueWrapper<ComponentPublicInstance & typeof BankView>

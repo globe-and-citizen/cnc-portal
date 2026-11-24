@@ -1,20 +1,17 @@
-import { zeroAddress } from 'viem'
-import { expect, test } from '../fixtures/chain'
 import { E2E_MEMBER, E2E_NEW_SIGNER, E2E_OWNER } from '../e2e-chain'
-import { rejectNextWalletRequest } from '../e2e-page'
 import {
+  type ElectionsE2EFixture,
   castOwnerVote,
   createElectionFixture,
-  currentE2ETime,
   currentBoard,
+  currentE2ETime,
   deployElectionsE2EFixture,
   electionDetails,
   eligibleVoters,
   makeElectionActive,
   nextElectionId,
-  voterChoice,
   voteCount,
-  type ElectionsE2EFixture
+  voterChoice
 } from './elections-chain'
 import {
   chooseElectionEndDay,
@@ -22,6 +19,9 @@ import {
   openBoardElections,
   selectElectionCandidates
 } from './elections-page'
+import { expect, test } from '../fixtures/chain'
+import { rejectNextWalletRequest } from '../e2e-page'
+import { zeroAddress } from 'viem'
 
 let fixture: ElectionsE2EFixture
 

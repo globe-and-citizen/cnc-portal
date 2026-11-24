@@ -1,10 +1,10 @@
 <script setup lang="ts">
+import { type Address, parseEther } from 'viem'
 import { computed, reactive } from 'vue'
-import { z } from 'zod'
-import { parseEther, type Address } from 'viem'
 import type { FormSubmitEvent } from '@nuxt/ui'
-import { useCreateAdvertisingCampaign } from '@/composables/campaign/writes'
 import { formatToken } from '@/utils/format'
+import { useCreateAdvertisingCampaign } from '@/composables/campaign/writes'
+import { z } from 'zod'
 
 const props = defineProps<{ managerAddress: Address }>()
 const emit = defineEmits<{ close: []; created: [] }>()

@@ -1,10 +1,10 @@
-import { computed, toValue, type MaybeRefOrGetter } from 'vue'
-import { useQuery } from '@tanstack/vue-query'
-import { readContract } from '@wagmi/core'
-import { isAddress, type Abi, type AbiFunction, type Address } from 'viem'
+import { type Abi, type AbiFunction, type Address, isAddress } from 'viem'
+import { type MaybeRefOrGetter, computed, toValue } from 'vue'
 import { config } from '@/wagmi.config'
-import { formatDecodedValue } from '@/utils/contracts/abiDecode'
 import { formatContractFunctionLabel } from '@/utils/contracts/presentation'
+import { formatDecodedValue } from '@/utils/contracts/abiDecode'
+import { readContract } from '@wagmi/core'
+import { useQuery } from '@tanstack/vue-query'
 
 export interface ContractReadDatum {
   functionName: string

@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { uploadFileApi } from '../upload.api'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import apiClient from '@/lib/axios'
+import { uploadFileApi } from '../upload.api'
 
 describe('uploadFileApi', () => {
   beforeEach(() => {

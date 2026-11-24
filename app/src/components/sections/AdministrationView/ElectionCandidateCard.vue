@@ -55,11 +55,11 @@
 </template>
 
 <script setup lang="ts">
+import { ref, watch } from 'vue'
+import type { Address } from 'viem'
 import ElectionCandidateIdentity from './ElectionCandidateIdentity.vue'
 import { Icon as IconifyIcon } from '@iconify/vue'
-import { watch, ref } from 'vue'
 import type { User } from '@/types'
-import type { Address } from 'viem'
 
 const props = withDefaults(
   defineProps<{

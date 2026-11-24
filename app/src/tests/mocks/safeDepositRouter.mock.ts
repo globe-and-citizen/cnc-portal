@@ -1,6 +1,6 @@
-import { vi } from 'vitest'
-import { ref } from 'vue'
 import { createContractReadMock, createContractWriteV3Mock } from './erc20.mock'
+import { ref } from 'vue'
+import { vi } from 'vitest'
 
 export const mockSafeDepositRouterAddress = ref('0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB')
 

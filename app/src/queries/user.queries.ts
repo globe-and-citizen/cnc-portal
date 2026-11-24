@@ -1,9 +1,9 @@
-import type { User } from '@/types/user'
-import type { MaybeRefOrGetter } from 'vue'
-import { toValue } from 'vue'
+import { createMutationHook, createQueryHook, queryPresets } from './queryFactory'
 import type { Address } from 'viem'
-import { createQueryHook, createMutationHook, queryPresets } from './queryFactory'
+import type { MaybeRefOrGetter } from 'vue'
+import type { User } from '@/types/user'
 import { teamKeys } from './team.queries'
+import { toValue } from 'vue'
 
 /**
  * Query key factory for user-related queries

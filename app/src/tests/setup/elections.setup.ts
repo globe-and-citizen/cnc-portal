@@ -1,7 +1,7 @@
-import { vi } from 'vitest'
-import { computed } from 'vue'
-import type { Address } from 'viem'
 import { mockElectionsReads, mockElectionsWrites } from '../mocks/contract.mock'
+import type { Address } from 'viem'
+import { computed } from 'vue'
+import { vi } from 'vitest'
 
 /**
  * Mock all Elections read composables.

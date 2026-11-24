@@ -1,7 +1,5 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { nextTick } from 'vue'
 import { BaseError, UserRejectedRequestError } from 'viem'
-import SetSafeAddressAction from '../SetSafeAddressAction.vue'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   mockSafeDepositRouterAddress,
   mockSafeDepositRouterReads,
@@ -11,6 +9,8 @@ import {
   mockUseConnection,
   renderWithProviders
 } from '@/tests/mocks'
+import SetSafeAddressAction from '../SetSafeAddressAction.vue'
+import { nextTick } from 'vue'
 
 const TEAM_SAFE_ADDRESS = '0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB'
 const OTHER_ADDRESS = '0x1111111111111111111111111111111111111111'

@@ -1,8 +1,8 @@
+import type { JournalEntryDraft, UseCase } from '@/utils/accounting/journalEntryDraft'
+import { badgeClassOf, categoryLabelOf } from '@/utils/accounting/ledgerCategory'
 import { describe, expect, it } from 'vitest'
 import { finalizeJournal } from '@/utils/accounting/__tests__/assembleAccounting'
-import { badgeClassOf, categoryLabelOf } from '@/utils/accounting/ledgerCategory'
 import { journalLedgerRows } from '@/utils/accounting/journalLedgerPresenter'
-import type { JournalEntryDraft, UseCase } from '@/utils/accounting/journalEntryDraft'
 
 const base = {
   id: 'e1',

@@ -2,16 +2,16 @@
  * Safe Transaction Service requests, called by the query hooks in
  * {@link ./safe.queries} so those stay focused on cache keys and options.
  */
+import { type Address, erc20Abi, isAddress } from 'viem'
+import { type SafeInfo, type SafeTransaction, TX_SERVICE_BY_CHAIN } from '@/types/safe'
 import type { QueryClient } from '@tanstack/vue-query'
-import { readContract } from '@wagmi/core'
-import { erc20Abi, isAddress, type Address } from 'viem'
-import { config } from '@/wagmi.config'
-import externalApiClient from '@/lib/external.axios'
-import { TX_SERVICE_BY_CHAIN, type SafeInfo, type SafeTransaction } from '@/types/safe'
-import { currentChainId } from '@/constant/index'
 import type { SafeIncomingTransfer } from '@/types'
+import { config } from '@/wagmi.config'
+import { currentChainId } from '@/constant/index'
+import externalApiClient from '@/lib/external.axios'
 import { queryPresets } from './queryFactory'
 import { queueSafeRead } from './safe.readQueue'
+import { readContract } from '@wagmi/core'
 
 const chainId = currentChainId
 

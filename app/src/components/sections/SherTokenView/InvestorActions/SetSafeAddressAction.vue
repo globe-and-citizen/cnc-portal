@@ -19,19 +19,19 @@
 
 <script setup lang="ts">
 import { computed, watch } from 'vue'
-import { useConnection } from '@wagmi/vue'
-import { useToast } from '@nuxt/ui/composables'
-import ActionButton from '@/components/sections/SherTokenView/ActionButton.vue'
-import { useSetSafeAddress } from '@/composables/safeDepositRouter/writes'
 import {
   useSafeDepositRouterAddress,
-  useSafeDepositRouterSafeAddress,
-  useSafeDepositRouterOwner
+  useSafeDepositRouterOwner,
+  useSafeDepositRouterSafeAddress
 } from '@/composables/safeDepositRouter/reads'
-import { useTeamStore } from '@/stores'
+import ActionButton from '@/components/sections/SherTokenView/ActionButton.vue'
 import { classifyError } from '@/utils/errors/classifyContractError'
 import { log } from '@/lib/logging'
+import { useConnection } from '@wagmi/vue'
+import { useSetSafeAddress } from '@/composables/safeDepositRouter/writes'
+import { useTeamStore } from '@/stores'
 import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
+import { useToast } from '@nuxt/ui/composables'
 
 const teamStore = useTeamStore()
 const { isWriteDisabled, archivedTooltip } = useTeamWriteGuard()

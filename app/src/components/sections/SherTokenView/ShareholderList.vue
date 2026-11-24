@@ -73,21 +73,21 @@
   </UCard>
 </template>
 <script setup lang="ts">
-import MintForm from '@/components/sections/SherTokenView/forms/MintForm.vue'
-import UserIdentity from '@/components/ui/UserIdentity.vue'
+import { type Address, formatUnits } from 'viem'
+import { computed, ref, watch } from 'vue'
 import {
   useInvestorShareholders,
   useInvestorSymbol,
   useInvestorTotalSupply
 } from '@/composables/investor/reads'
 import { useTeamStore, useUserDataStore } from '@/stores'
-import { log } from '@/lib/logging'
-import { formatStakePercentageFromSupply } from '@/utils/investors/mintAllocation'
-import { formatUnits, type Address } from 'viem'
-import { computed, ref, watch } from 'vue'
-import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
-import { useInvestorHasRole } from '@/composables/investor/permissions'
 import { MINTER_ROLE } from '@/queries/investorPermissions.queries'
+import MintForm from '@/components/sections/SherTokenView/forms/MintForm.vue'
+import UserIdentity from '@/components/ui/UserIdentity.vue'
+import { formatStakePercentageFromSupply } from '@/utils/investors/mintAllocation'
+import { log } from '@/lib/logging'
+import { useInvestorHasRole } from '@/composables/investor/permissions'
+import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
 
 type ShareholderInfo = {
   shareholder: Address

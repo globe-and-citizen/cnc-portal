@@ -1,6 +1,6 @@
 /** Structural and double-entry validation for finalized JournalEntry records. */
-import { ZERO_USD_AMOUNT } from './monetaryAmount'
 import type { JournalEntry } from './types'
+import { ZERO_USD_AMOUNT } from './monetaryAmount'
 
 /** The domain error raised before a projection can consume an invalid entry. */
 class InvalidJournalEntryError extends Error {

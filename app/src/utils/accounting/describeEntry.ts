@@ -11,12 +11,12 @@
  * Entries with no human actor and no pocket-to-pocket move (memo mints,
  * unassigned cash) fall back to the generic per-use-case {@link entryLabel}.
  */
-import { money, formatUnixDate } from './presenter'
-import { formatAddress } from '@/utils/format'
-import { formatMinutesAsDuration } from '@/utils/wages/model'
+import type { JournalEntry, UsdAmount } from './types'
+import { formatUnixDate, money } from './presenter'
 import type { UseCase } from './journalEntryDraft'
 import { ZERO_USD_AMOUNT } from './monetaryAmount'
-import type { JournalEntry, UsdAmount } from './types'
+import { formatAddress } from '@/utils/format'
+import { formatMinutesAsDuration } from '@/utils/wages/model'
 
 /**
  * Normalized accounting-entry label per use case — the generic fallback shown in

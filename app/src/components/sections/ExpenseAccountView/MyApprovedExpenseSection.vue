@@ -58,14 +58,14 @@
 
 <script setup lang="ts">
 //#region Imports
-import { computed } from 'vue'
-import { useUserDataStore, useTeamStore } from '@/stores'
-import { tokenSymbol } from '@/utils/tokens/metadata'
-import { getCurrentUserExpenses } from '@/utils/expenses/model'
-import { useGetExpensesQuery } from '@/queries'
-import TransferAction from './TransferAction.vue'
-import { getFrequencyType, getCustomFrequency } from '@/utils/expenses/model'
 import { formatDateTime, fromUnix } from '@/utils/format'
+import { getCustomFrequency, getFrequencyType } from '@/utils/expenses/model'
+import { useTeamStore, useUserDataStore } from '@/stores'
+import TransferAction from './TransferAction.vue'
+import { computed } from 'vue'
+import { getCurrentUserExpenses } from '@/utils/expenses/model'
+import { tokenSymbol } from '@/utils/tokens/metadata'
+import { useGetExpensesQuery } from '@/queries'
 //#endregion
 
 const teamStore = useTeamStore()

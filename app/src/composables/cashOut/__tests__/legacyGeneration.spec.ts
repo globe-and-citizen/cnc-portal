@@ -1,9 +1,9 @@
-import { describe, it, expect } from 'vitest'
 import {
   buildLegacyWithdrawPlan,
   legacyGenerationAddresses,
   supportsOwnerWithdrawAll
 } from '../legacyGeneration'
+import { describe, expect, it } from 'vitest'
 
 describe('supportsOwnerWithdrawAll', () => {
   it('rejects the generations that predate ownerWithdrawAllToBank', () => {

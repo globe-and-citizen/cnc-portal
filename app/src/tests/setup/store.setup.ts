@@ -1,5 +1,5 @@
-import { beforeEach, vi } from 'vitest'
 import * as mocks from '@/tests/mocks/store.mock'
+import { beforeEach, vi } from 'vitest'
 
 // Restore the shared user-store mock to its defaults before every test so that
 // per-spec mutations (e.g. `mockUserStore.address = '0x…'`) never leak across

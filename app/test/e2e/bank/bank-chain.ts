@@ -1,16 +1,16 @@
 // Bank-specific deployment fixture and contract helpers for the browser journey.
-import { decodeEventLog, parseUnits, type Address } from 'viem'
+import { type Address, decodeEventLog, parseUnits } from 'viem'
 import {
+  type Artifact,
+  E2E_OWNER,
+  E2E_USDCE_ADDRESS,
+  E2E_USDC_ADDRESS,
   artifact,
   deploy,
-  E2E_OWNER,
-  E2E_USDC_ADDRESS,
-  E2E_USDCE_ADDRESS,
   encode,
   mockErc20Artifact,
   publicClient,
-  write,
-  type Artifact
+  write
 } from '../e2e-chain'
 
 export interface BankE2EFixture {

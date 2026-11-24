@@ -1,8 +1,8 @@
-import { computed, toValue, type MaybeRefOrGetter } from 'vue'
-import { useReadContract } from '@wagmi/vue'
-import { isAddress, type Address } from 'viem'
-import { useTeamStore } from '@/stores'
+import { type Address, isAddress } from 'viem'
+import { type MaybeRefOrGetter, computed, toValue } from 'vue'
 import { bankAbi } from '@/artifacts/abi/generated'
+import { useReadContract } from '@wagmi/vue'
+import { useTeamStore } from '@/stores'
 /**
  * Bank contract address helper
  */

@@ -1,6 +1,6 @@
-import { describe, it, expect } from 'vitest'
+import { ADDR, draftUsdValue, makeCtx } from './fixtures'
+import { describe, expect, it } from 'vitest'
 import { mapInvestorEvents } from '@/utils/accounting/mappers/investor'
-import { makeCtx, ADDR, draftUsdValue } from './fixtures'
 
 const ctx = makeCtx()
 

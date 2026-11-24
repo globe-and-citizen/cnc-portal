@@ -1,4 +1,3 @@
-import { describe, expect, it } from 'vitest'
 import type { SafeConfirmation, SafeTransaction } from '@/types/safe'
 import {
   buildSafeTransactionQueueRows,
@@ -9,6 +8,7 @@ import {
   matchesSafeTransactionFilter,
   willSafeTransactionApprovalCauseConflict
 } from '@/utils/safe/transactionState'
+import { describe, expect, it } from 'vitest'
 
 const signer = '0x1111111111111111111111111111111111111111'
 

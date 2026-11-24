@@ -61,15 +61,15 @@
  * aggregate events (`RefundsDistributed` / `RepaymentDistributed`) are exactly
  * the sum of their per-lender events, so booking them too would double-count.
  */
-import type { TokenId } from '@/constant'
-import { makeJournalEntryDraft, type JournalEntryDraft } from '@/utils/accounting/journalEntryDraft'
 import {
-  creditTimeline,
-  toBigInt,
   type CreditEvent,
-  type FixedReturnMapperInput
+  type FixedReturnMapperInput,
+  creditTimeline,
+  toBigInt
 } from './creditTimeline'
-import { atDate, type MapperContext } from './context'
+import { type JournalEntryDraft, makeJournalEntryDraft } from '@/utils/accounting/journalEntryDraft'
+import { type MapperContext, atDate } from './context'
+import type { TokenId } from '@/constant'
 
 export type { CreditOfferTerms, FixedReturnMapperInput } from './creditTimeline'
 

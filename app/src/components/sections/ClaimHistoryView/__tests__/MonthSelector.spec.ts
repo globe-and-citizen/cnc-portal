@@ -1,10 +1,10 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { mount } from '@vue/test-utils'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import MonthSelector from '@/components/sections/ClaimHistoryView/MonthSelector.vue'
 import dayjs from 'dayjs'
-import utc from 'dayjs/plugin/utc'
-import isoWeek from 'dayjs/plugin/isoWeek'
 import { formatIsoWeekRange } from '@/utils/dates/calendar'
+import isoWeek from 'dayjs/plugin/isoWeek'
+import { mount } from '@vue/test-utils'
+import utc from 'dayjs/plugin/utc'
 
 dayjs.extend(utc)
 dayjs.extend(isoWeek)

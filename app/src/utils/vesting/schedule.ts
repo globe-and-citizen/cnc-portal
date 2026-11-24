@@ -1,8 +1,4 @@
-import dayjs from 'dayjs'
-import { isAddress, parseUnits, type Address } from 'viem'
-import { z } from 'zod'
-import { combineDayAndTime } from '@/utils/dates/calendar'
-import { formatDate, formatTimeOfDay } from '@/utils/format'
+import { type Address, isAddress, parseUnits } from 'viem'
 import type {
   VestingCreation,
   VestingInfo,
@@ -11,7 +7,11 @@ import type {
   VestingTotals,
   VestingTuple
 } from '@/types/vesting'
+import { formatDate, formatTimeOfDay } from '@/utils/format'
 import { VESTING_TOKEN_DECIMALS } from '@/types/vesting'
+import { combineDayAndTime } from '@/utils/dates/calendar'
+import dayjs from 'dayjs'
+import { z } from 'zod'
 
 const VESTING_MINUTE_MS = 60_000
 const ONE_MINUTE_MS = VESTING_MINUTE_MS

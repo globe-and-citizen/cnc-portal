@@ -1,7 +1,7 @@
 import type { Action, ActionResponse } from '@/types/action'
+import { createMutationHook, createQueryHook, queryPresets } from './queryFactory'
 import type { MaybeRefOrGetter } from 'vue'
 import { toValue } from 'vue'
-import { createQueryHook, createMutationHook, queryPresets } from './queryFactory'
 
 /**
  * Query key factory for action-related queries

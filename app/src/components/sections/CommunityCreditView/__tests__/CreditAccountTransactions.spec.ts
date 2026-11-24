@@ -1,14 +1,14 @@
+import { type VueWrapper, mount } from '@vue/test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { mount, type VueWrapper } from '@vue/test-utils'
-import { defineComponent } from 'vue'
-import type { Address } from 'viem'
-import CreditAccountTransactions from '../CreditAccountTransactions.vue'
-import { useCurrencyStore } from '@/stores/currencyStore'
 import {
   createMockEventFeedState,
   makeCurrencyStoreMock,
   resetMockEventFeedState
 } from '@/tests/mocks'
+import type { Address } from 'viem'
+import CreditAccountTransactions from '../CreditAccountTransactions.vue'
+import { defineComponent } from 'vue'
+import { useCurrencyStore } from '@/stores/currencyStore'
 
 const mockCreditQuery = createMockEventFeedState()
 

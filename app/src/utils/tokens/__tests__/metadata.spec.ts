@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest'
-import { zeroAddress } from 'viem'
 import {
   getTokenAddress,
   isSupportedTokenId,
@@ -7,6 +6,7 @@ import {
   resolveTokenIdByAddress,
   tokenSymbol
 } from '../metadata'
+import { zeroAddress } from 'viem'
 
 describe('constantUtil', () => {
   it('recognizes supported token ids', () => {

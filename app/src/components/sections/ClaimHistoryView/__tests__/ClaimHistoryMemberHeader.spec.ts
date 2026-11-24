@@ -1,6 +1,4 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import ClaimHistoryMemberHeader from '@/components/sections/ClaimHistoryView/ClaimHistoryMemberHeader.vue'
-import AddressTooltip from '@/components/ui/AddressTooltip.vue'
 import {
   mockRouterPush,
   mockTeamData,
@@ -8,6 +6,8 @@ import {
   mockUseClipboard,
   renderWithProviders
 } from '@/tests/mocks'
+import AddressTooltip from '@/components/ui/AddressTooltip.vue'
+import ClaimHistoryMemberHeader from '@/components/sections/ClaimHistoryView/ClaimHistoryMemberHeader.vue'
 
 describe('ClaimHistoryMemberHeader', () => {
   const baseMembers = [...mockTeamData.members]

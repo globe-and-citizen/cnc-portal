@@ -1,7 +1,7 @@
 import axios, { type AxiosError, type InternalAxiosRequestConfig } from 'axios'
 import { BACKEND_URL } from '@/constant'
-import { useUserDataStore } from '@/stores/user'
 import { captureAxiosError } from '@/lib/sentry'
+import { useUserDataStore } from '@/stores/user'
 
 const apiClient = axios.create({
   baseURL: `${BACKEND_URL}/api/`,

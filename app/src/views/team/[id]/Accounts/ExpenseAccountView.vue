@@ -19,16 +19,16 @@
 
 <script setup lang="ts">
 //#region Imports
+import ApprovedExpensesSection from '@/components/sections/ExpenseAccountView/ApprovedExpensesSection.vue'
+import ContractOwnerCard from '@/components/ui/ContractOwnerCard.vue'
 import ExpenseStatsSection from '@/components/sections/ExpenseAccountView/ExpenseStatsSection.vue'
 import ExpenseTransactions from '@/components/sections/ExpenseAccountView/ExpenseTransactions.vue'
 import MyApprovedExpenseSection from '@/components/sections/ExpenseAccountView/MyApprovedExpenseSection.vue'
-import ApprovedExpensesSection from '@/components/sections/ExpenseAccountView/ApprovedExpensesSection.vue'
-import { useTeamStore } from '@/stores'
-import { computed } from 'vue'
-import { useContractBalance } from '@/composables/useContractBalance'
-import { tokenHoldingRows } from '@/utils/tokens/holdings'
 import TokenHoldingsSection from '@/components/ui/TokenHoldingsSection.vue'
-import ContractOwnerCard from '@/components/ui/ContractOwnerCard.vue'
+import { computed } from 'vue'
+import { tokenHoldingRows } from '@/utils/tokens/holdings'
+import { useContractBalance } from '@/composables/useContractBalance'
+import { useTeamStore } from '@/stores'
 //#endregion
 const teamStore = useTeamStore()
 

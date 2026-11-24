@@ -33,17 +33,17 @@
   </div>
 </template>
 <script setup lang="ts">
-import { useTeamStore } from '@/stores/teamStore'
 import { computed, onUnmounted, watch } from 'vue'
-import { onMounted } from 'vue'
-import { useRoute } from 'vue-router'
-import { useSyncWeeklyClaimsMutation } from '@/queries/weeklyClaim.queries'
-import TeamArchivedBanner from '@/components/sections/DashboardView/TeamArchivedBanner.vue'
-import LegacyContractBanner from '@/components/sections/DashboardView/LegacyContractBanner.vue'
-import TeamMeta from '@/components/sections/DashboardView/TeamMetaSection.vue'
 import CompanyOverview from '@/components/sections/DashboardView/CompanyOverview.vue'
 import ContinueAddTeamForm from '@/components/sections/TeamView/forms/ContinueAddTeamForm.vue'
+import LegacyContractBanner from '@/components/sections/DashboardView/LegacyContractBanner.vue'
+import TeamArchivedBanner from '@/components/sections/DashboardView/TeamArchivedBanner.vue'
+import TeamMeta from '@/components/sections/DashboardView/TeamMetaSection.vue'
+import { onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 import { useSyncContractsMutation } from '@/queries'
+import { useSyncWeeklyClaimsMutation } from '@/queries/weeklyClaim.queries'
+import { useTeamStore } from '@/stores/teamStore'
 
 const teamStore = useTeamStore()
 

@@ -1,16 +1,16 @@
-import type { Page, Request } from '@playwright/test'
-import type { Address } from 'viem'
-import type { Team } from '../../../src/types/team'
-import { expect, test } from '../fixtures/mocked'
-import { E2E_MEMBER, E2E_OWNER } from '../e2e-chain'
 import {
+  type E2EUser,
+  type StubResponse,
   json,
   rejectNextWalletRequest,
-  stubBackend,
-  type E2EUser,
-  type StubResponse
+  stubBackend
 } from '../e2e-page'
+import { E2E_MEMBER, E2E_OWNER } from '../e2e-chain'
+import type { Page, Request } from '@playwright/test'
 import { enterShareDetails, openCompanyMetadataActions } from './real-company-page'
+import { expect, test } from '../fixtures/mocked'
+import type { Address } from 'viem'
+import type { Team } from '../../../src/types/team'
 
 const owner: E2EUser = { address: E2E_OWNER, name: 'E2E Creator', imageUrl: null }
 const member: E2EUser = { address: E2E_MEMBER, name: 'E2E Colleague', imageUrl: null }

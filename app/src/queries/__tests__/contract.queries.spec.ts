@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { useMutationFn, smartUseMutation, useQueryClientFn } from '@/tests/mocks/composables.mock'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { smartUseMutation, useMutationFn, useQueryClientFn } from '@/tests/mocks/composables.mock'
 import apiClient from '@/lib/axios'
 
 // The global composables.setup replaces '@/queries/contract.queries' (and its

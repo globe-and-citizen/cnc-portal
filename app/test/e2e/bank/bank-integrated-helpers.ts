@@ -1,8 +1,8 @@
-import { formatTxHash } from '../../../src/utils/format/address'
-import { expect, type Locator, type Page } from '@playwright/test'
-import { parseAbiItem, type Address, type Hex } from 'viem'
-import { publicClient } from '../e2e-chain'
+import { type Address, type Hex, parseAbiItem } from 'viem'
+import { type Locator, type Page, expect } from '@playwright/test'
 import { dialogAmount, selectToken } from '../e2e-page'
+import { formatTxHash } from '../../../src/utils/format/address'
+import { publicClient } from '../e2e-chain'
 
 export async function addressFrom(selector: Locator): Promise<Address> {
   const text = await selector.textContent()

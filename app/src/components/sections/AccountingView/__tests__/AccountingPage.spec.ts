@@ -1,13 +1,13 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { ref } from 'vue'
-import { renderWithProviders } from '@/tests/mocks'
-import { provideAccounting } from '@/composables/accounting/useAccountingContext'
 import type {
   AccountingCompleteness,
   AccountingDiagnostic,
   AccountingSourceStatus
 } from '@/utils/accounting/types'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import AccountingPage from '../AccountingPage.vue'
+import { provideAccounting } from '@/composables/accounting/useAccountingContext'
+import { ref } from 'vue'
+import { renderWithProviders } from '@/tests/mocks'
 
 vi.mock('@/composables/accounting/useAccountingContext', () => ({ provideAccounting: vi.fn() }))
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { routeForSelectedTeam } from '@/utils/teams/navigation'
 import type { RouteLocationNormalizedLoaded } from 'vue-router'
+import { routeForSelectedTeam } from '@/utils/teams/navigation'
 
 const routeContext = (
   overrides: Partial<RouteLocationNormalizedLoaded>

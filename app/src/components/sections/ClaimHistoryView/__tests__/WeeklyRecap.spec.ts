@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { mount } from '@vue/test-utils'
 import WeeklyRecap from '@/components/sections/ClaimHistoryView/WeeklyRecap.vue'
+import { mount } from '@vue/test-utils'
 import { useCurrencyStore } from '@/stores'
 
 describe('[US-PAYROLL-012] ClaimHistory WeeklyRecap', () => {

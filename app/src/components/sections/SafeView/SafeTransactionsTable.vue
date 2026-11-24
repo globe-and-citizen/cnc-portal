@@ -80,13 +80,13 @@
 </template>
 
 <script setup lang="ts">
-import type { TableColumn } from '@nuxt/ui'
+import { formatSafeTransactionValue, getSafeTransactionMethod } from '@/utils/safe/model'
 import AddressTooltip from '@/components/ui/AddressTooltip.vue'
 import type { SafeTransaction } from '@/types/safe'
-import { type SafeTransactionQueueRow } from '@/utils/safe/transactionState'
-import { formatSafeTransactionValue, getSafeTransactionMethod } from '@/utils/safe/model'
-import { formatDateRelative } from '@/utils/format'
 import SafeTransactionActions from './SafeTransactionActions.vue'
+import { type SafeTransactionQueueRow } from '@/utils/safe/transactionState'
+import type { TableColumn } from '@nuxt/ui'
+import { formatDateRelative } from '@/utils/format'
 
 interface Props {
   transactions: SafeTransactionQueueRow[]

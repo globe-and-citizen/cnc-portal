@@ -1,9 +1,9 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { mount } from '@vue/test-utils'
-import BankBalanceSection from '../BankBalanceSection.vue'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Address } from 'viem'
+import BankBalanceSection from '../BankBalanceSection.vue'
 import { defineComponent } from 'vue'
 import { mockUseContractBalance } from '@/tests/mocks'
+import { mount } from '@vue/test-utils'
 
 // Mock @iconify/vue FIRST, before any other imports
 vi.mock('@iconify/vue', () => ({

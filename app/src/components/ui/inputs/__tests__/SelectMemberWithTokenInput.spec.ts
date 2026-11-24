@@ -1,7 +1,7 @@
-import SelectMemberWithTokenInput from '@/components/ui/inputs/SelectMemberWithTokenInput.vue'
-import { it, describe, expect, vi, beforeEach, afterEach } from 'vitest'
-import { mount, VueWrapper } from '@vue/test-utils'
+import { VueWrapper, mount } from '@vue/test-utils'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ComponentPublicInstance } from 'vue'
+import SelectMemberWithTokenInput from '@/components/ui/inputs/SelectMemberWithTokenInput.vue'
 import { createTestingPinia } from '@pinia/testing'
 import { useTeamStore } from '@/stores'
 

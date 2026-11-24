@@ -1,9 +1,9 @@
-import { isAddress, type Address } from 'viem'
+import { type Address, isAddress } from 'viem'
+import type { BankEventFeed } from '@/types/contract-events/bank'
 import { FEE_COLLECTOR_ADDRESS } from '@/constant'
 import addressesV1 from '@/artifacts/deployed_addresses/V1/chain-137.json'
 import addressesV2 from '@/artifacts/deployed_addresses/V2/chain-137.json'
 import versionRegistry from '@/artifacts/version-registry.json'
-import type { BankEventFeed } from '@/types/contract-events/bank'
 
 const POLYGON_FEE_COLLECTORS = [
   (addressesV1 as Record<string, string>)[versionRegistry.folders.V1.implementations.FeeCollector],

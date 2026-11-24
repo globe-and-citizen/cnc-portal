@@ -1,4 +1,3 @@
-import { describe, it, expect } from 'vitest'
 import {
   BaseError,
   RawContractError,
@@ -6,6 +5,7 @@ import {
   encodeErrorResult,
   parseAbi
 } from 'viem'
+import { describe, expect, it } from 'vitest'
 import { describeWidgetError } from '../errorMessage'
 
 const IERC20_ERRORS_ABI = parseAbi([

@@ -1,17 +1,17 @@
-import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest'
-import { mount, type VueWrapper } from '@vue/test-utils'
-import { nextTick, ref, defineComponent } from 'vue'
-import { useStorage } from '@vueuse/core'
-import type { Address } from 'viem'
-import SafeBalanceSection from '../SafeBalanceSection.vue'
+import { type VueWrapper, mount } from '@vue/test-utils'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { defineComponent, nextTick, ref } from 'vue'
 import {
-  mockUseContractBalance,
-  mockUseAccount,
   makeTokenBalance,
+  mockUseAccount,
+  mockUseContractBalance,
   useQueryClientFn
 } from '@/tests/mocks'
-import { mockUserStore } from '@/tests/mocks/store.mock'
+import type { Address } from 'viem'
+import SafeBalanceSection from '../SafeBalanceSection.vue'
 import { mockUseSafeBalances } from '@/tests/mocks/safeBalances.mock'
+import { mockUserStore } from '@/tests/mocks/store.mock'
+import { useStorage } from '@vueuse/core'
 
 // Mock @iconify/vue
 vi.mock('@iconify/vue', () => ({

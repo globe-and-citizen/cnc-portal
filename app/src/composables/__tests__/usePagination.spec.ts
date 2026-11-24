@@ -1,7 +1,7 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { ref, nextTick } from 'vue'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { mockRouterReplace, setMockRoute } from '@/tests/mocks'
+import { nextTick, ref } from 'vue'
 import { usePaginatedList, usePagination } from '@/composables/usePagination'
-import { setMockRoute, mockRouterReplace } from '@/tests/mocks'
 
 // The query object the last `router.replace` was called with.
 function lastReplacedQuery(): Record<string, unknown> {

@@ -1,16 +1,16 @@
-import { CalendarDate } from '@internationalized/date'
-import dayjs from 'dayjs'
-
-import utc from 'dayjs/plugin/utc'
-import isoWeek from 'dayjs/plugin/isoWeek'
-import weekday from 'dayjs/plugin/weekday'
 import {
   formatDateRelative as formatCanonicalDateRelative,
   formatDateShort as formatCanonicalDateShort,
+  formatMonthYear as formatCanonicalMonthYear,
   formatDateTime,
-  formatDateUtc,
-  formatMonthYear as formatCanonicalMonthYear
+  formatDateUtc
 } from '@/utils/format'
+import { CalendarDate } from '@internationalized/date'
+
+import dayjs from 'dayjs'
+import isoWeek from 'dayjs/plugin/isoWeek'
+import utc from 'dayjs/plugin/utc'
+import weekday from 'dayjs/plugin/weekday'
 
 dayjs.extend(utc)
 dayjs.extend(isoWeek)

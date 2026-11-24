@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import { getArchivedTeamConflictMessage, getAxiosErrorMessage } from '@/utils/errors/http'
 import type { AxiosError } from 'axios'
 

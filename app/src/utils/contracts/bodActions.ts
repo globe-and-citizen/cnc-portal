@@ -1,6 +1,6 @@
 import type { Action, ActionResponse, TeamContract, User } from '@/types'
-import { z } from 'zod'
 import { formatDate } from '@/utils/format'
+import { z } from 'zod'
 
 export type FormattedBodActions = (Action & {
   requestedBy: User

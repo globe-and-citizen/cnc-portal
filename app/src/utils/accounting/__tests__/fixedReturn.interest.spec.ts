@@ -3,17 +3,17 @@
  * round funds, cleared as the lenders are paid. Split from `fixedReturn.spec.ts`
  * (which covers the lifecycle mapping itself) so each file stays readable.
  */
-import { describe, it, expect } from 'vitest'
-import { mapFixedReturnEvents } from '@/utils/accounting/mappers/fixedReturn'
 import {
-  makeCtx,
   ADDR,
-  creditOffer,
-  creditEvent,
   balanceOf,
-  totalDebited,
-  draftUsdValue
+  creditEvent,
+  creditOffer,
+  draftUsdValue,
+  makeCtx,
+  totalDebited
 } from './fixtures'
+import { describe, expect, it } from 'vitest'
+import { mapFixedReturnEvents } from '@/utils/accounting/mappers/fixedReturn'
 
 const ctx = makeCtx()
 const offer = creditOffer

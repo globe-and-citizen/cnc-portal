@@ -1,10 +1,10 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { tokenHoldingRows } from '@/utils/tokens/holdings'
-import { mockUseContractBalance } from '@/tests/mocks/composables.mock'
-import { shallowMount } from '@vue/test-utils'
+import { mockTeamStore, mockUserStore } from '@/tests/mocks'
 import PayrollView from '../Accounts/PayrollView.vue'
 import { createTestingPinia } from '@pinia/testing'
-import { mockTeamStore, mockUserStore } from '@/tests/mocks'
+import { mockUseContractBalance } from '@/tests/mocks/composables.mock'
+import { shallowMount } from '@vue/test-utils'
+import { tokenHoldingRows } from '@/utils/tokens/holdings'
 
 describe('[US-PAYROLL-008] [US-PAYROLL-013] PayrollView.vue', () => {
   const createComponent = () => {

@@ -1,9 +1,9 @@
-import { sumFiatValues, valueTokenAmount } from '@/utils/currency/valuation'
-import { erc20Abi, formatUnits, type Address } from 'viem'
-import { getBalance, readContract, type Config } from '@wagmi/core'
-import type { TokenConfig, TokenId } from '@/constant'
-import { formatCurrencyShort } from '@/utils/currency/display'
+import { type Address, erc20Abi, formatUnits } from 'viem'
+import { type Config, getBalance, readContract } from '@wagmi/core'
 import type { ContractBalances, CurrencyPair, Money, TokenBalance } from '@/types'
+import type { TokenConfig, TokenId } from '@/constant'
+import { sumFiatValues, valueTokenAmount } from '@/utils/currency/valuation'
+import { formatCurrencyShort } from '@/utils/currency/display'
 
 /**
  * On-chain balances for one address, in each token's smallest unit, keyed by

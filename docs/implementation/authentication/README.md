@@ -76,7 +76,7 @@ sequenceDiagram
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `f0c52a0cd7d61ccbc84378222a549ee45ecc54c0`
+**Implementation evidence reviewed against:** `d1681fab5dd0f145515af63910e6982bc707f597`
 
 - [Client lock screen](../../../app/src/components/layout/LockScreen.vue), [application shell](../../../app/src/App.vue), and
   [client startup guard](../../../app/src/router/index.ts)

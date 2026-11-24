@@ -1,11 +1,11 @@
+import { NETWORK, type TokenId } from '@/constant'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
-import { createTestingPinia } from '@pinia/testing'
-import TransferForm from '../TransferForm.vue'
-import TokenAmountInput from '@/components/ui/inputs/TokenAmountInput.vue'
 import SelectMemberContractsInput from '@/components/ui/inputs/SelectMemberContractsInput.vue'
-import { NETWORK, type TokenId } from '@/constant'
+import TokenAmountInput from '@/components/ui/inputs/TokenAmountInput.vue'
 import type { TokenOption } from '@/types'
+import TransferForm from '../TransferForm.vue'
+import { createTestingPinia } from '@pinia/testing'
 
 const defaultTokens: TokenOption[] = [
   {

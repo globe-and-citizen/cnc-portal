@@ -3,8 +3,8 @@ import type {
   ContractKey,
   RevertMessageResolver
 } from './contractCatalog.types'
-import { resolveFromCatalog } from './contractCatalog.types'
 import { FIXED_RETURN_ERRORS } from './fixedReturnCatalog'
+import { resolveFromCatalog } from './contractCatalog.types'
 
 export type {
   ContractErrorCatalog,

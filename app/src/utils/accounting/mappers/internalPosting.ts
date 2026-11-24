@@ -1,5 +1,5 @@
+import { type JournalEntryDraft, makeJournalEntryDraft } from '@/utils/accounting/journalEntryDraft'
 import type { AccountName } from '@/utils/accounting/chartOfAccounts'
-import { makeJournalEntryDraft, type JournalEntryDraft } from '@/utils/accounting/journalEntryDraft'
 import type { MapperContext } from './context'
 
 interface InternalPostingRow {

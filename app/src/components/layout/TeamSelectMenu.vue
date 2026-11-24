@@ -159,12 +159,12 @@
 </template>
 
 <script setup lang="ts">
-import { useUserDataStore, useTeamStore } from '@/stores'
-import { useGetTeamsQuery } from '@/queries/team.queries'
+import { computed, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { useTeamStore, useUserDataStore } from '@/stores'
 import type { Team } from '@/types/team'
 import { routeForSelectedTeam } from '@/utils/teams/navigation'
-import { computed, ref } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { useGetTeamsQuery } from '@/queries/team.queries'
 
 const router = useRouter()
 const route = useRoute()

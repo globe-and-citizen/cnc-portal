@@ -1,12 +1,12 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest'
-import CashRemunerationPendingClaim from '../CashRemunerationPendingClaim.vue'
-import { shallowMount } from '@vue/test-utils'
-import { createTestingPinia } from '@pinia/testing'
-import { ref } from 'vue'
-import { mockTeamStore } from '@/tests/mocks'
-import OverviewCard from '@/components/ui/OverviewCard.vue'
 import * as queries from '@/queries'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import CashRemunerationPendingClaim from '../CashRemunerationPendingClaim.vue'
+import OverviewCard from '@/components/ui/OverviewCard.vue'
+import { createTestingPinia } from '@pinia/testing'
 import { mockLog } from '@/tests/mocks/utils.mock'
+import { mockTeamStore } from '@/tests/mocks'
+import { ref } from 'vue'
+import { shallowMount } from '@vue/test-utils'
 
 const buildMockClaimsValue = () => ({
   data: [

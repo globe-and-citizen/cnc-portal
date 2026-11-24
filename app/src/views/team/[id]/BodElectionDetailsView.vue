@@ -12,18 +12,18 @@
 </template>
 
 <script setup lang="ts">
-import ElectionSummarySection from '@/components/sections/AdministrationView/ElectionSummarySection.vue'
-import ElectionCandidatesSection from '@/components/sections/AdministrationView/ElectionCandidatesSection.vue'
-import BodMembersSection from '@/components/sections/AdministrationView/BodMembersSection.vue'
+import {
+  currentElectionId as electionInProgress,
+  parseElectionId
+} from '@/utils/elections/election'
 import {
   provideBoDElections,
   useBoDElections,
   useElectionsNextElectionId
 } from '@/composables/elections'
-import {
-  currentElectionId as electionInProgress,
-  parseElectionId
-} from '@/utils/elections/election'
+import BodMembersSection from '@/components/sections/AdministrationView/BodMembersSection.vue'
+import ElectionCandidatesSection from '@/components/sections/AdministrationView/ElectionCandidatesSection.vue'
+import ElectionSummarySection from '@/components/sections/AdministrationView/ElectionSummarySection.vue'
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 

@@ -1,5 +1,5 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { SAFE_READ_SPACING_MS, queueSafeRead } from '../safe.readQueue'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 function deferred<T>() {
   let resolve!: (value: T) => void

@@ -1,11 +1,11 @@
 <script setup lang="ts">
+import { type Address, formatUnits, parseEther } from 'viem'
 import { computed, reactive } from 'vue'
-import { formatUnits, parseEther, type Address } from 'viem'
-import { z } from 'zod'
-import type { FormSubmitEvent } from '@nuxt/ui'
 import type { AdvertisingCampaign } from '@/composables/campaign/reads'
-import { useWithdrawAdvertisingCampaign } from '@/composables/campaign/writes'
+import type { FormSubmitEvent } from '@nuxt/ui'
 import { formatTokenUnits } from '@/utils/format'
+import { useWithdrawAdvertisingCampaign } from '@/composables/campaign/writes'
+import { z } from 'zod'
 
 const props = defineProps<{
   managerAddress: Address

@@ -88,9 +88,9 @@
 </template>
 
 <script setup lang="ts">
-import { toRef } from 'vue'
 import type { Abi, Address } from 'viem'
 import AddressTooltip from '@/components/ui/AddressTooltip.vue'
+import { toRef } from 'vue'
 import { useContractReadData } from '@/composables/contracts/useContractReadData'
 
 const props = defineProps<{

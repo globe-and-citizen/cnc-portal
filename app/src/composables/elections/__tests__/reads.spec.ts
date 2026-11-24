@@ -1,15 +1,15 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { mockElectionsReads, resetContractMocks } from '@/tests/mocks'
 import {
   useElectionsAddress,
-  useElectionsOwner,
-  useElectionsGetElection,
-  useElectionsGetVoteCount,
   useElectionsGetCandidates,
+  useElectionsGetElection,
   useElectionsGetEligibleVoters,
+  useElectionsGetVoteCount,
   useElectionsGetWinners,
-  useElectionsHasVoted
+  useElectionsHasVoted,
+  useElectionsOwner
 } from '../reads'
-import { mockElectionsReads, resetContractMocks } from '@/tests/mocks'
 import type { Address } from 'viem'
 
 // Test constants

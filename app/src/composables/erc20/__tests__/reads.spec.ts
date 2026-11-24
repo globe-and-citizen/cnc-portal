@@ -1,6 +1,6 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { useErc20BalanceOf, useErc20Allowance } from '../reads'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { mockERC20Reads, resetERC20Mocks } from '@/tests/mocks'
+import { useErc20Allowance, useErc20BalanceOf } from '../reads'
 import type { Address } from 'viem'
 
 const MOCK_DATA = {

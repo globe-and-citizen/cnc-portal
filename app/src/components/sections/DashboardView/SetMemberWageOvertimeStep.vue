@@ -137,8 +137,8 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { NETWORK } from '@/constant'
-import type { WageWithForm } from '@/types'
 import RateDotList from '@/components/ui/RateDotList.vue'
+import type { WageWithForm } from '@/types'
 import { overtimeWageFormSchema } from '@/utils/wages/validation'
 
 const emit = defineEmits<{ validated: []; back: [] }>()

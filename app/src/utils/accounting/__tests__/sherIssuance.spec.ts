@@ -1,8 +1,8 @@
-import { describe, it, expect } from 'vitest'
-import { settleWithdrawnSher } from '@/utils/accounting/sherIssuance'
-import { makeJournalEntryDraft, type JournalEntryDraft } from '@/utils/accounting/journalEntryDraft'
-import { finalizeJournal } from './assembleAccounting'
 import { ADDR, draftUsdValue, usd } from './fixtures'
+import { type JournalEntryDraft, makeJournalEntryDraft } from '@/utils/accounting/journalEntryDraft'
+import { describe, expect, it } from 'vitest'
+import { finalizeJournal } from './assembleAccounting'
+import { settleWithdrawnSher } from '@/utils/accounting/sherIssuance'
 
 /** Whole SHER → base units (6 decimals). */
 function raw(sher: number): string {

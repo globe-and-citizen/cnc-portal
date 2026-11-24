@@ -1,8 +1,8 @@
+import { type JournalEntryDraft, makeJournalEntryDraft } from '@/utils/accounting/journalEntryDraft'
 import { describe, expect, it } from 'vitest'
 import type { Address } from 'viem'
-import { buildAccountRegistry } from '@/utils/accounting/accountRegistry'
-import { makeJournalEntryDraft, type JournalEntryDraft } from '@/utils/accounting/journalEntryDraft'
 import { assembleRawAccounting } from './assembleAccounting'
+import { buildAccountRegistry } from '@/utils/accounting/accountRegistry'
 
 const BANK_1 = '0x1111111111111111111111111111111111111111' as Address
 const BANK_2 = '0x2222222222222222222222222222222222222222' as Address

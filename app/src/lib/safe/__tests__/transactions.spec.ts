@@ -1,8 +1,8 @@
+import { type Address, zeroAddress } from 'viem'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { zeroAddress, type Address } from 'viem'
+import type { SafeSdkInstance } from '@/types/safe.mutation'
 import externalApiClient from '@/lib/external.axios'
 import { proposeSafeTransaction } from '@/lib/safe/transactions'
-import type { SafeSdkInstance } from '@/types/safe.mutation'
 
 const LOWERCASE_SAFE_ADDRESS = '0x0557f280d9da274254e85ee70c2936694e494275'
 const CHECKSUM_SAFE_ADDRESS = '0x0557F280D9DA274254e85Ee70c2936694e494275'

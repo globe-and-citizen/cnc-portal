@@ -1,5 +1,5 @@
-import { computed } from 'vue'
 import type { ContractFunctionName } from 'viem'
+import { computed } from 'vue'
 import { fixedReturnAbi } from '@/artifacts/abi/generated'
 import { useContractWritesV3 } from '@/composables/contracts/useContractWritesV3'
 import { useFixedReturnAddress } from './reads'

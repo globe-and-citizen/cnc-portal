@@ -1,21 +1,20 @@
-import { expect, test } from '../fixtures/mocked'
 import {
+  COMPANY_NAME,
+  LOAD_TIMEOUT,
+  RETRY_TIMEOUT,
   archiveAction,
   archivedBanner,
   cancelDialog,
   closeCardMenu,
-  COMPANY_NAME,
   confirmArchive,
   deleteAction,
   dialog,
   emptyState,
   gate,
-  LOAD_TIMEOUT,
   openCardMenu,
   openCompanyActions,
   openCompanyDashboard,
   restoreFromBanner,
-  RETRY_TIMEOUT,
   showArchived,
   signInToCompanies,
   teamCard,
@@ -23,6 +22,7 @@ import {
   updateAction,
   visibilityAction
 } from './company-lifecycle-page'
+import { expect, test } from '../fixtures/mocked'
 
 const ARCHIVED = 'Company archived successfully'
 const UNARCHIVED = 'Company unarchived successfully'

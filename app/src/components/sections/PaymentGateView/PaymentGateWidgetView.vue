@@ -141,8 +141,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
 import { formatToken, formatTxHash } from '@/utils/format'
+import { computed } from 'vue'
 
 export type WidgetPane = 'review' | 'paying' | 'confirmed'
 export type WidgetPaymentStep = 'connecting' | 'approving' | 'paying'

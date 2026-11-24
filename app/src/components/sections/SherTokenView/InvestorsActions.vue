@@ -42,17 +42,17 @@
 
 <script setup lang="ts">
 import { computed, watch } from 'vue'
-import { useTeamStore } from '@/stores'
-import { log } from '@/lib/logging'
+import { useInvestorShareholders, useInvestorSymbol } from '@/composables/investor/reads'
 import AddressTooltip from '@/components/ui/AddressTooltip.vue'
 import DistributeMintAction from './InvestorActions/DistributeMintAction.vue'
+import InvestInSafeAction from './InvestorActions/InvestInSafeAction.vue'
 import MintTokenAction from './InvestorActions/MintTokenAction.vue'
 import PayDividendsAction from './InvestorActions/PayDividendsAction.vue'
+import SetCompensationMultiplierAction from './InvestorActions/SetCompensationMultiplierAction.vue'
 import SetSafeAddressAction from './InvestorActions/SetSafeAddressAction.vue'
 import ToggleSherCompensationAction from './InvestorActions/ToggleSherCompensationAction.vue'
-import SetCompensationMultiplierAction from './InvestorActions/SetCompensationMultiplierAction.vue'
-import InvestInSafeAction from './InvestorActions/InvestInSafeAction.vue'
-import { useInvestorSymbol, useInvestorShareholders } from '@/composables/investor/reads'
+import { log } from '@/lib/logging'
+import { useTeamStore } from '@/stores'
 
 defineEmits<{
   refetchShareholders: []

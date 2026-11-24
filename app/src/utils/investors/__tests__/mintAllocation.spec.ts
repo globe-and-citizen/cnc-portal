@@ -1,10 +1,10 @@
-import { describe, expect, it } from 'vitest'
 import {
   computeAmountFromPercentageInput,
   computeIssuedAmountFromAmountInput,
   computePercentageFromAmountInput,
   formatStakePercentageFromSupply
 } from '@/utils/investors/mintAllocation'
+import { describe, expect, it } from 'vitest'
 
 describe('formatStakePercentageFromSupply', () => {
   it('truncates stake percentage to 2 decimals without rounding up', () => {

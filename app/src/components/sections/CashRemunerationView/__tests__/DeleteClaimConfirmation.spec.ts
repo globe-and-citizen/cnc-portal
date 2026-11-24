@@ -1,10 +1,10 @@
-import { flushPromises, mount } from '@vue/test-utils'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { flushPromises, mount } from '@vue/test-utils'
+import type { Claim } from '@/types'
 import DeleteClaimConfirmation from '@/components/sections/CashRemunerationView/DeleteClaimConfirmation.vue'
 import { createTestingPinia } from '@pinia/testing'
-import { ref } from 'vue'
-import type { Claim } from '@/types'
 import dayjs from 'dayjs'
+import { ref } from 'vue'
 import { useDeleteClaimMutation } from '@/queries/weeklyClaim.queries'
 
 // Test data

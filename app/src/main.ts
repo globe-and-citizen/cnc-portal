@@ -1,16 +1,16 @@
 import './assets/main.css'
+import * as Sentry from '@sentry/vue'
+import App from './App.vue'
+import { VueQueryPlugin } from '@tanstack/vue-query'
 import { WagmiPlugin } from '@wagmi/vue'
 import { config } from './wagmi.config'
-import { VueQueryPlugin } from '@tanstack/vue-query'
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
-import App from './App.vue'
-import router from './router'
 import piniaPluginPersistedstate from 'pinia-plugin-persistedstate'
-import * as Sentry from '@sentry/vue'
-import ui from '@nuxt/ui/vue-plugin'
-import { setupAuthInterceptor } from '@/lib/axios'
 import { queryClient } from '@/queries/queryClient'
+import router from './router'
+import { setupAuthInterceptor } from '@/lib/axios'
+import ui from '@nuxt/ui/vue-plugin'
 
 export function setupApp() {
   const app = createApp(App)

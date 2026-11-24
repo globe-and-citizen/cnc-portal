@@ -1,6 +1,15 @@
 // Bank-specific Playwright page, backend and journey helpers.
-import { expect, type Locator, type Page } from '@playwright/test'
-import { parseEther, parseUnits, type Address } from 'viem'
+import { type Address, parseEther, parseUnits } from 'viem'
+import {
+  type E2EUser,
+  dialogAmount,
+  openAccountFromSidebar,
+  rejectNextWalletRequest,
+  selectToken,
+  signInAndOpenFirstTeam,
+  stubBackend,
+  useWallet
+} from '../e2e-page'
 import {
   E2E_MEMBER,
   E2E_MEMBER_PRIVATE_KEY,
@@ -10,17 +19,8 @@ import {
   sendToken,
   tokenBalance
 } from '../e2e-chain'
+import { type Locator, type Page, expect } from '@playwright/test'
 import type { BankE2EFixture } from './bank-chain'
-import {
-  dialogAmount,
-  openAccountFromSidebar,
-  rejectNextWalletRequest,
-  selectToken,
-  signInAndOpenFirstTeam,
-  stubBackend,
-  useWallet,
-  type E2EUser
-} from '../e2e-page'
 
 export interface TeamOptions {
   archived?: boolean

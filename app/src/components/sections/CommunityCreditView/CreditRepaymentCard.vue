@@ -28,9 +28,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
 import { formatAmount, roundInterest, roundTotalDue } from '@/utils/communityCredit/model'
 import type { CreditRound } from '@/types'
+import { computed } from 'vue'
 
 const props = defineProps<{ round: CreditRound }>()
 

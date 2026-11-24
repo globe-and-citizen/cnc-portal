@@ -1,11 +1,11 @@
-import { ref, onMounted, onUnmounted, watch, type Ref, type ComputedRef } from 'vue'
-import { getPresignedUrl } from '@/composables/useFileUrl'
+import { type ComputedRef, type Ref, onMounted, onUnmounted, ref, watch } from 'vue'
 import type {
+  FilePreviewContentType,
   FilePreviewItem,
   FilePreviewModalState,
-  FilePreviewModalType,
-  FilePreviewContentType
+  FilePreviewModalType
 } from '@/types/file-preview'
+import { getPresignedUrl } from '@/composables/useFileUrl'
 
 type FileLocation = Pick<FilePreviewItem, 'key' | 'previewUrl'>
 

@@ -1,7 +1,7 @@
+import { type VueWrapper, mount } from '@vue/test-utils'
 import { beforeEach, describe, expect, it } from 'vitest'
-import { mount, type VueWrapper } from '@vue/test-utils'
-import VestingSummary from '@/components/sections/VestingView/VestingSummary.vue'
 import type { VestingCreation } from '@/types/vesting'
+import VestingSummary from '@/components/sections/VestingView/VestingSummary.vue'
 
 describe('[US-VESTING-001] VestingSummary.vue', () => {
   let wrapper: VueWrapper

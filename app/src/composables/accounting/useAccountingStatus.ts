@@ -1,17 +1,17 @@
 /** Reactive completeness and typed diagnostics for the Accounting source registry. */
-import { computed, type ComputedRef } from 'vue'
-import { accountingCompletenessOf } from '@/utils/accounting/accountingCompleteness'
-import type { JournalEntryDraft } from '@/utils/accounting/journalEntryDraft'
 import type { AccountingDiagnostic, AccountingSourceStatus } from '@/utils/accounting/types'
-
 import {
+  type AccountingEventSourceDefinition,
+  type AccountingSourceDefinition,
+  type ReactiveValue,
   availabilityOf,
   eventPartialReason,
-  monetaryNonPeggedTokens,
-  type ReactiveValue,
-  type AccountingSourceDefinition,
-  type AccountingEventSourceDefinition
+  monetaryNonPeggedTokens
 } from '@/utils/accounting/sourceStatus'
+import { type ComputedRef, computed } from 'vue'
+import type { JournalEntryDraft } from '@/utils/accounting/journalEntryDraft'
+
+import { accountingCompletenessOf } from '@/utils/accounting/accountingCompleteness'
 
 interface AccountingStatusInput {
   sources: readonly AccountingSourceDefinition[]

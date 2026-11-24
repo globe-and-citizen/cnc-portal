@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { flushPromises } from '@vue/test-utils'
-import { renderWithProviders } from '@/tests/mocks'
 import LedgerPrecisionCell from '../LedgerPrecisionCell.vue'
 import LedgerTable from '../LedgerTable.vue'
-import { journalLedgerRows } from '@/utils/accounting/journalLedgerPresenter'
 import { finalizeJournal } from '@/utils/accounting/__tests__/assembleAccounting'
+import { flushPromises } from '@vue/test-utils'
+import { journalLedgerRows } from '@/utils/accounting/journalLedgerPresenter'
+import { renderWithProviders } from '@/tests/mocks'
 
 function renderQuantity() {
   return renderWithProviders(LedgerPrecisionCell, {

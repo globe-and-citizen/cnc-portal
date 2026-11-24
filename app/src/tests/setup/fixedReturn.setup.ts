@@ -1,7 +1,7 @@
-import { vi } from 'vitest'
-import { computed } from 'vue'
-import type { Address } from 'viem'
 import { mockFixedReturnReads, mockFixedReturnWrites } from '../mocks/contract.mock'
+import type { Address } from 'viem'
+import { computed } from 'vue'
+import { vi } from 'vitest'
 
 const MOCK_FIXED_RETURN_ADDRESS = '0x5234567890123456789012345678901234567890' as Address
 

@@ -1,6 +1,6 @@
-import { mount, flushPromises } from '@vue/test-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
+import { flushPromises, mount } from '@vue/test-utils'
 import CampaignManagerRatesForm from '../CampaignManagerRatesForm.vue'
 import type { CampaignManagerSettings } from '@/composables/campaign/reads'
 import { createContractWriteV3Mock } from '@/tests/mocks/erc20.mock'

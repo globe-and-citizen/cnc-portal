@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
+import CreditRepayPanel from '../CreditRepayPanel.vue'
 import type { CreditRound } from '@/types'
 import { MINUTES_PER_DAY } from '@/utils/communityCredit/model'
-import CreditRepayPanel from '../CreditRepayPanel.vue'
-import type { RepaymentPanelState } from '../CreditRepayPanel.vue'
 import type { RepayBreakdownRow } from '../CreditRepayBreakdownTable.vue'
+import type { RepaymentPanelState } from '../CreditRepayPanel.vue'
 
 function sampleRound(over: Partial<CreditRound> = {}): CreditRound {
   return {

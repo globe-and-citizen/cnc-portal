@@ -14,8 +14,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
 import { Icon as IconifyIcon } from '@iconify/vue'
+import { computed } from 'vue'
 
 const props = defineProps<{ label: string; isSelected: boolean; icon: string }>()
 

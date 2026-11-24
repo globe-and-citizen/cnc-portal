@@ -1,9 +1,9 @@
-import { mount } from '@vue/test-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import TeamMetaSection from '../TeamMetaSection.vue'
 import { createTestingPinia } from '@pinia/testing'
+import { mount } from '@vue/test-utils'
 import { useTeamStore } from '@/stores'
 import { useUserDataStore } from '@/stores/user'
-import TeamMetaSection from '../TeamMetaSection.vue'
 
 const teamStoreState = {
   currentTeamId: '22',

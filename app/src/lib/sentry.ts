@@ -1,6 +1,6 @@
-import axios from 'axios'
 import * as Sentry from '@sentry/vue'
 import { BaseError } from 'viem'
+import axios from 'axios'
 import { classifyError } from '@/utils/errors/classifyContractError'
 
 export type AxiosErrorSource = 'api' | 'external'

@@ -102,17 +102,17 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import dayjs from 'dayjs'
-import utc from 'dayjs/plugin/utc'
-import isoWeek from 'dayjs/plugin/isoWeek'
-import type { Address } from 'viem'
-import { useTeamStore, useUserDataStore } from '@/stores'
 import { useGetTeamWagesQuery, useGetTeamWeeklyClaimsQuery } from '@/queries'
-import type { WeeklyClaim } from '@/types'
-import SubmitClaims from '../CashRemunerationView/SubmitClaims.vue'
-import SubmitWeeklyGoals from '../CashRemunerationView/SubmitWeeklyGoals.vue'
+import { useTeamStore, useUserDataStore } from '@/stores'
+import type { Address } from 'viem'
 import CRSigne from '../CashRemunerationView/CRSigne.vue'
 import CRWithdrawClaim from '../CashRemunerationView/CRWithdrawClaim.vue'
+import SubmitClaims from '../CashRemunerationView/SubmitClaims.vue'
+import SubmitWeeklyGoals from '../CashRemunerationView/SubmitWeeklyGoals.vue'
+import type { WeeklyClaim } from '@/types'
+import dayjs from 'dayjs'
+import isoWeek from 'dayjs/plugin/isoWeek'
+import utc from 'dayjs/plugin/utc'
 
 dayjs.extend(utc)
 dayjs.extend(isoWeek)

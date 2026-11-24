@@ -1,7 +1,7 @@
+import { type Address, zeroHash } from 'viem'
+import { MINTER_ROLE, fetchInvestorPermissions } from '@/queries/investorPermissions.queries'
 import { describe, expect, it, vi } from 'vitest'
-import { zeroHash, type Address } from 'viem'
 import type { ChainClient } from '@/composables/eventsViaLogs'
-import { fetchInvestorPermissions, MINTER_ROLE } from '@/queries/investorPermissions.queries'
 
 const investor = '0x1000000000000000000000000000000000000000' as Address
 const owner = '0x2000000000000000000000000000000000000000' as Address

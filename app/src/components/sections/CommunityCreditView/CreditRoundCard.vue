@@ -76,15 +76,15 @@
 </template>
 
 <script setup lang="ts">
+import { formatAmount, reachedFundingTarget, statusMeta } from '@/utils/communityCredit/model'
+import CreditAvatar from './CreditAvatar.vue'
+import type { CreditRound } from '@/types'
 import { computed } from 'vue'
-import { useQueryClient } from '@tanstack/vue-query'
+import { percentOf } from '@/utils/communityCredit/offer'
+import { retryMyLenderPositions } from '@/composables/fixedReturn/invalidation'
 import { useCommunityCreditStore } from '@/stores'
 import { useFixedReturnMyLenderPositions } from '@/composables/fixedReturn/reads'
-import { retryMyLenderPositions } from '@/composables/fixedReturn/invalidation'
-import { formatAmount, reachedFundingTarget, statusMeta } from '@/utils/communityCredit/model'
-import { percentOf } from '@/utils/communityCredit/offer'
-import type { CreditRound } from '@/types'
-import CreditAvatar from './CreditAvatar.vue'
+import { useQueryClient } from '@tanstack/vue-query'
 
 const props = defineProps<{ round: CreditRound }>()
 const emit = defineEmits<{ open: []; lend: []; repay: [] }>()

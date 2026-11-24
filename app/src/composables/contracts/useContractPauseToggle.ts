@@ -1,9 +1,9 @@
-import { watch, type Ref } from 'vue'
+import { type Ref, watch } from 'vue'
 import { type Address } from 'viem'
-import { ownablePausableAbi } from '@/artifacts/abi/ownable-pausable'
-import { useContractWritesV3 } from '@/composables/contracts/useContractWritesV3'
 import { classifyError } from '@/utils/errors/classifyContractError'
 import { log } from '@/lib/logging'
+import { ownablePausableAbi } from '@/artifacts/abi/ownable-pausable'
+import { useContractWritesV3 } from '@/composables/contracts/useContractWritesV3'
 
 export function useContractPauseToggle(
   contractAddress: Ref<Address | undefined>,

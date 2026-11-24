@@ -1,17 +1,11 @@
-import { useMutation, useQueryClient, type QueryClient } from '@tanstack/vue-query'
-import { useChainId, useConnection } from '@wagmi/vue'
-import { isAddress } from 'viem'
-import externalApiClient from '@/lib/external.axios.ts'
 import type {
-  ExecuteTransactionParams,
   ApproveTransactionParams,
-  UpdateSafeOwnersParams,
+  ExecuteTransactionParams,
+  SafeExecutionResult,
   TransferFromSafeParams,
-  SafeExecutionResult
+  UpdateSafeOwnersParams
 } from '@/types/safe.mutation'
-import { transferFromSafeSchema } from '@/types/safe.schemas'
-import { useSafeSDK } from '@/composables/safe/useSafeSdk'
-import { getTokenAddress } from '@/utils/tokens/metadata'
+import { type QueryClient, useMutation, useQueryClient } from '@tanstack/vue-query'
 import {
   buildOwnerManagementTransactions,
   buildTokenTransferData,
@@ -21,8 +15,14 @@ import {
   waitForTransaction
 } from '@/lib/safe/transactions'
 import { getTxServiceUrl, transformToSafeMultisigResponse } from '@/utils/safe/model'
+import { useChainId, useConnection } from '@wagmi/vue'
+import externalApiClient from '@/lib/external.axios.ts'
 import { getConnectedSigner } from '@/utils/wallet/address'
+import { getTokenAddress } from '@/utils/tokens/metadata'
+import { isAddress } from 'viem'
 import { safeKeys } from './safe.queries'
+import { transferFromSafeSchema } from '@/types/safe.schemas'
+import { useSafeSDK } from '@/composables/safe/useSafeSdk'
 
 /** Refresh all Safe service reads and this wallet's on-chain balance groups. */
 export function invalidateSafeQueries(client: QueryClient, safeAddress: string, chainId: number) {

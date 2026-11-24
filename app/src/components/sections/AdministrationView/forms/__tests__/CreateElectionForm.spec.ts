@@ -1,8 +1,8 @@
-import { mount } from '@vue/test-utils'
 import { describe, expect, it } from 'vitest'
+import { emittedPayload, getVm, mountComponent, tomorrow } from './CreateElectionForm.harness'
 import { CalendarDate } from '@internationalized/date'
 import CreateElectionForm from '../CreateElectionForm.vue'
-import { emittedPayload, getVm, mountComponent, tomorrow } from './CreateElectionForm.harness'
+import { mount } from '@vue/test-utils'
 
 describe('CreateElectionForm.vue', () => {
   it('renders form defaults and submit button disabled state', () => {

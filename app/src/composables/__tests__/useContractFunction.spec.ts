@@ -1,9 +1,9 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { deployContract, getContractData } from '../useContractFunctions'
-import { parseUnits, formatUnits } from 'viem/utils'
 import type { Abi, Address } from 'viem'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { deployContract, getContractData } from '../useContractFunctions'
+import { formatUnits, parseUnits } from 'viem/utils'
+import { smartUseMutation, useMutationFn } from '@/tests/mocks/composables.mock'
 import { mockWagmiCore } from '@/tests/mocks'
-import { useMutationFn, smartUseMutation } from '@/tests/mocks/composables.mock'
 
 //  Declare only the composable-specific mock (wallet client) with vi.hoisted
 const { mockDeployContract, mockWalletClient } = vi.hoisted(() => {

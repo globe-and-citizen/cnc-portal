@@ -27,13 +27,13 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import type { Address } from 'viem'
-import MintForm from '@/components/sections/SherTokenView/forms/MintForm.vue'
 import ActionButton from '@/components/sections/SherTokenView/ActionButton.vue'
-import { useUserDataStore } from '@/stores'
-import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
-import { useInvestorHasRole } from '@/composables/investor/permissions'
+import type { Address } from 'viem'
 import { MINTER_ROLE } from '@/queries/investorPermissions.queries'
+import MintForm from '@/components/sections/SherTokenView/forms/MintForm.vue'
+import { useInvestorHasRole } from '@/composables/investor/permissions'
+import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
+import { useUserDataStore } from '@/stores'
 
 interface Props {
   tokenSymbol: string

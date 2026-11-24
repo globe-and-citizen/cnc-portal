@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { flushPromises } from '@vue/test-utils'
 import apiClient from '@/lib/axios'
+import { flushPromises } from '@vue/test-utils'
 import { mockUserStore } from '@/tests/mocks'
 
 vi.mock('@/views/LoginView.vue', () => ({

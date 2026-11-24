@@ -14,15 +14,15 @@
  * `depositToken()` — never for native POL transfers.
  */
 import {
+  type Address,
+  type Hex,
   bytesToHex,
   concatHex,
   encodeFunctionData,
   hexToBytes,
   hexToNumber,
   size,
-  slice,
-  type Address,
-  type Hex
+  slice
 } from 'viem'
 import { bankAbi } from '@/artifacts/abi/generated'
 

@@ -1,5 +1,5 @@
-import { beforeEach, vi } from 'vitest'
 import * as mocks from '@/tests/mocks/wagmi.vue.mock'
+import { beforeEach, vi } from 'vitest'
 import { resetContractMocks } from '@/tests/mocks/contract.mock'
 
 // Global web3 reset: restore wagmi state (incl. the shared `transferHash` ref)

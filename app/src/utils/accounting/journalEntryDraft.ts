@@ -10,10 +10,10 @@
  * no money. Monetary value is derived exactly from `rawAmount × rate` only when
  * the final JournalEntry lines are built.
  */
-import { getAddress, isAddress, type Address } from 'viem'
+import { type Address, getAddress, isAddress } from 'viem'
 import type { AssetId, AssetMetadata } from '@/utils/tokens/assets'
-import type { UsdAmount } from './types'
 import type { AccountName } from './chartOfAccounts'
+import type { UsdAmount } from './types'
 
 /** The transaction-hash head of an indexed event id (`<txHash>-<logIndex>`). */
 const EVENT_ID_TRANSACTION_HASH = /^(0x[0-9a-fA-F]{64})(?:-|$)/
