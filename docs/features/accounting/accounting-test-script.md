@@ -50,10 +50,8 @@ and destination ownership, not by the fact that Safe sent it.
 - [ ] The entry balances, appears once, and changes neither income nor expenses.
 - [ ] No Safe protocol-fee line appears.
 
-Repeat with a confirmed
-$100 Bank-to-Payroll transfer. It uses the same `UC-TREASURY-001` meaning, with Bank replacing Safe as the source
-account. If the Bank charges a confirmed $1
-fee, the expected entry is:
+Repeat with a confirmed $100 Bank-to-Payroll transfer. It uses the same `UC-TREASURY-001` meaning, with Bank replacing Safe as the source
+account. If the Bank charges a confirmed $1 fee, the expected entry is:
 
 | Account                 | Debit (USD) | Credit (USD) |
 | ----------------------- | ----------: | -----------: |
