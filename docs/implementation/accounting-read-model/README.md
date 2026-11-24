@@ -755,7 +755,12 @@ because deposits and company-pocket transfers are not manual assignment targets.
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `f0c52a0cd7d61ccbc84378222a549ee45ecc54c0`
+**Implementation evidence reviewed against:** `d1681fab5dd0f145515af63910e6982bc707f597`
+
+- [`LedgerAccountAssignmentCell.vue`](../../../app/src/components/sections/AccountingView/LedgerAccountAssignmentCell.vue)
+- [`useActivityDestination.ts`](../../../app/src/composables/accounting/useActivityDestination.ts)
+- [`useSectionExport.ts`](../../../app/src/composables/accounting/useSectionExport.ts)
+- [`useFacetFilter.ts`](../../../app/src/composables/useFacetFilter.ts)
 
 - [Accounting data layer](../../../app/src/composables/accounting/useCNCAccounting.ts),
   [source-status projection](../../../app/src/composables/accounting/useAccountingStatus.ts),
