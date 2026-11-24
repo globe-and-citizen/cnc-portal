@@ -1,4 +1,7 @@
-# Step 9: Future Enhancements
+# Retired Draft: Step 9 — Future Enhancements
+
+> **Status:** Historical idea list; not an active roadmap or task. Current priorities belong to GitHub planning issues, and current
+> documentation rules belong to the [Documentation Maintenance guide](../../platform/documentation-maintenance.md).
 
 **Priority**: LOW (Optional)  
 **Estimated Time**: As needed  

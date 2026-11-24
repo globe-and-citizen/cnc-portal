@@ -2,18 +2,14 @@
 
 **Planning owner:** Product Team
 
-**Last documentation update:** 2026-10-08
+**Last documentation update:** 2026-11-24
 
 This roadmap names the outcomes CNC Portal is considering beyond individual delivery issues. The
-[Sprint plan](https://github.com/globe-and-citizen/cnc-portal/issues/2905) owns current commitments; unscheduled outcomes below require a
-Product decision before they enter a Sprint. Dates, effort, and completion claims belong with the approved plan and its evidence.
+[current Sprint plan and GitHub issues](https://github.com/globe-and-citizen/cnc-portal/issues) own active commitments; unscheduled outcomes
+below require a Product decision before they enter a Sprint. Dates, effort, and completion claims belong with the approved plan and its
+evidence.
 
-## Current focus
-
-Sprint 20 focuses on extending integrated user-journey evidence, making Accounting more reliable, defining the trading bot's Accounting
-plan, and clarifying the covered-call bot's existing behaviour and intended algorithm. The
-[Sprint 20 plan](https://github.com/globe-and-citizen/cnc-portal/issues/2905) records owners and the exact expected outcomes. Corrective
-work is tracked separately under its [Sprint Goal](https://github.com/globe-and-citizen/cnc-portal/issues/2908).
+This roadmap intentionally does not copy the current Sprint focus. Use GitHub planning issues for active scope and validation evidence.
 
 ## Candidate next outcomes
 

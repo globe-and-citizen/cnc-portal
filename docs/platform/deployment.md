@@ -4,7 +4,7 @@
 
 The CNC Portal is a multi-component application consisting of four main parts that work together:
 
-1. **Frontend App** (Vue.js 3) - User-facing web application
+1. **Frontend App** (Vue) - User-facing web application
 2. **Backend API** (Express.js) - RESTful API server
 3. **Smart Contracts** (Hardhat/Solidity) - Ethereum blockchain contracts
 4. **Dashboard** (Nuxt) - Administrative application; see [dashboard setup](../../dashboard/README.md)
@@ -41,10 +41,9 @@ graph TB
 
 ### Required Software
 
-- **Node.js** v22.18.0 or higher
-- **npm** v10.0.0 or higher
+- **Node.js and npm** versions declared by the target component's `package.json` (`engines` and `packageManager`)
 - **Docker** and **Docker Compose** (for containerized deployment)
-- **PostgreSQL** 16+ (if not using Docker)
+- **PostgreSQL** when not using Docker; the repository's local image is declared by [docker-compose.yml](../../docker-compose.yml)
 - **Git** for version control
 
 ### Required Accounts
@@ -176,7 +175,7 @@ npm test
 # Generate coverage report
 npm run coverage
 
-# Verify coverage meets requirements (350+ tests)
+# Use the test and audit requirements for the current contract change
 ```
 
 #### Step 3: Deploy to Testnet
@@ -871,7 +870,8 @@ Before deploying to production, verify:
 ### Smart Contracts
 
 - [ ] Contracts compiled without warnings
-- [ ] All tests pass (350+ tests)
+- [ ] Applicable contract tests and upgrade checks pass; use the current component scripts and
+      [Solidity audit checklist](../../.github/copilot-instructions/solidity-audit-checklist.md)
 - [ ] Gas optimization reviewed
 - [ ] Security audit passed
 - [ ] Contracts verified on Etherscan

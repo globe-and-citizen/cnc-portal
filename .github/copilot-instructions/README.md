@@ -7,13 +7,16 @@ retained for existing tool integrations; it does not make these technical standa
 
 > [`README.md`](../../README.md) owns setup; [`CONTRIBUTION.md`](../../CONTRIBUTION.md) owns the shared contribution contract and validation
 > commands. [`AGENTS.md`](../../AGENTS.md) adds AI-agent execution procedures. This folder holds deeper area-specific standards.
+>
+> When changing project documentation, use the canonical [Documentation Maintenance guide](../../docs/platform/documentation-maintenance.md)
+> to find and update its single owner.
 
 CNC Portal is a Crypto Native Corporation Portal built with:
 
-- **App**: Vue 3 + TypeScript + Vite + Tailwind v4 + Nuxt UI v4
+- **App**: Vue + TypeScript + Vite + Tailwind CSS + Nuxt UI
 - **Backend**: Node.js + TypeScript + Prisma + PostgreSQL
 - **Smart Contracts**: Hardhat + Solidity
-- **Dashboard**: Nuxt 4 + Nuxt UI + TypeScript + Tailwind CSS
+- **Dashboard**: Nuxt + Nuxt UI + TypeScript + Tailwind CSS
 
 ## Instructions
 

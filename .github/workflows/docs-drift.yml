@@ -43,6 +43,9 @@ jobs:
       - name: ✅ Test documentation freshness rules
         run: npm run test:docs-freshness
 
+      - name: ✅ Test documentation governance
+        run: npm run test:documentation-governance
+
       - name: ✅ Test acceptance-criterion traceability rules
         run: npm run test:acceptance-traceability
 

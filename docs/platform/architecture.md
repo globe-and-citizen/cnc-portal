@@ -1,7 +1,6 @@
 # CNC Portal - System Architecture
 
-**Version:** 1.0.0  
-**Last Updated:** October 31, 2026
+**Stack overview last verified:** 2026-11-24
 
 ---
 
@@ -24,36 +23,31 @@ flowchart TB
 
 ## Technology Stack
 
+Exact runtime and dependency versions are maintained by the component manifests and lockfiles, not copied into this overview.
+
 ### Frontend Applications
 
 **Vue App** (`/app`)
 
-- Vue.js 3 with Composition API
-- TypeScript 5.x
-- Vite build tool
+- Vue Composition API, TypeScript, and Vite
 - Pinia for state management
-- Wagmi for Web3 integration
-- Tailwind CSS + daisyUI
+- wagmi and viem for Web3 integration
+- Tailwind CSS and Nuxt UI
 
 **Nuxt Dashboard** (`/dashboard`)
 
-- Nuxt 3.x (SSR disabled for SPA mode)
-- Vue 3 Composition API
-- TypeScript 5.x
+- Nuxt and Vue Composition API with TypeScript
 - Nuxt UI component library
 - VueUse composables
-- Chart.js for visualizations
+- Unovis for visualizations
 
 ### Backend
 
 **Express API** (`/backend`)
 
-- Node.js 22.18.0+
-- Express.js 4.x
-- TypeScript 5.x
-- Prisma ORM 5.x for database access
-- PostgreSQL 14+ database
-- Zod 4.x for validation
+- Node.js, Express, TypeScript, and Prisma
+- PostgreSQL database
+- Zod for validation
 - JWT for authentication
 - Swagger/OpenAPI documentation
 
@@ -61,11 +55,11 @@ flowchart TB
 
 **Hardhat Project** (`/contract`)
 
-- Hardhat development environment
+- Hardhat development and testing environment
 - Solidity smart contracts
 - TypeScript for tests and scripts
 - Beacon Proxy pattern for upgradeability
-- Ethers.js for blockchain interaction
+- Ethers.js for contract tests and scripts
 
 ## Component Communication
 

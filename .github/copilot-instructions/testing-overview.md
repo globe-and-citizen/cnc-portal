@@ -129,14 +129,11 @@ beforeEach(() => vi.clearAllMocks());
 afterEach(() => wrapper?.unmount());
 ```
 
-## Coverage targets
+## Coverage
 
-- Unit: ~90% line
-- Component: ~85% line
-- Integration: ~70% line
-
-Coverage is a smell detector, not a goal. A 95%-covered component with no behavioral assertions is worse than 70% coverage that exercises
-the contract.
+Coverage is diagnostic evidence, not a substitute for assertions or feature acceptance. The
+[Testing Strategy](../../docs/platform/testing-strategy.md#coverage-policy) owns the shared policy; feature acceptance and human validation
+remain in the canonical feature README.
 
 ## Local quality gate
 
