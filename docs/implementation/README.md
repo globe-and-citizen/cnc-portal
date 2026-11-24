@@ -61,7 +61,7 @@ flowchart LR
 | [Shared Market Data Cache](./market-data-cache/README.md)                | Shared Redis cache, provider admission and cooldown for CoinGecko       | Client currency and Accounting, dashboard   | 2026-10-13    |
 | [Backend Error Tracking](./error-tracking/README.md)                     | Captures actionable backend failures with Sentry environment tags       | Backend API, client and dashboard consumers | 2026-10-20    |
 | [Accounting Read Model](./accounting-read-model/README.md)               | Consolidated postings, canonical journal, and report boundaries         | Accounting feature                          | 2026-09-04    |
-| [Request Validation](./request-validation/README.md)                     | Parses and normalizes backend request sections                          | Backend API routes                          | 2026-09-09    |
+| [Request Validation](./request-validation/README.md)                     | Defines backend request validation and route responsibility boundaries  | Backend API routes                          | 2026-11-24    |
 | [File Storage](./file-storage/README.md)                                 | Validated uploads and time-limited attachment access                    | User Profile, Payroll                       | 2026-09-09    |
 | [Community Credit Read Model](./community-credit-read-model/README.md)   | Consolidated offer, metadata, and position state                        | Community Credit                            | 2026-09-23    |
 | [Contract Interactions](./contract-interactions/README.md)               | Shared contract read, write, and invalidation boundaries                | Client contract journeys                    | 2026-09-23    |

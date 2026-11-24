@@ -389,68 +389,44 @@ Follow RESTful principles:
 // DELETE /api/v1/teams/:id      - Delete team
 ```
 
-### Route Organization
+### Backend Route Standard
 
-```typescript
-// routes/teams.ts
-import { Router } from "express";
-import { TeamController } from "../controllers/TeamController";
+New or changed routes should use this responsibility order:
 
-const router = Router();
-const controller = new TeamController();
+1. Authentication.
+2. Zod body, query or path validation.
+3. Resource loading when the operation targets persisted data.
+4. Authorization based on roles, team membership, ownership or resource state.
+5. The controller or service that executes the operation.
+6. Prisma and database constraints for final persistence guarantees.
 
-router.get("/", controller.getAllTeams);
-router.get("/:id", controller.getTeamById);
-router.post("/", controller.createTeam);
-router.put("/:id", controller.updateTeam);
-router.delete("/:id", controller.deleteTeam);
+| Layer                        | Responsibility                                                    |
+| ---------------------------- | ----------------------------------------------------------------- |
+| Zod schema and middleware    | Validate shape, type, format, range, enum and normalized values   |
+| Authentication middleware    | Establish the caller identity and reject unauthenticated requests |
+| Loading or policy middleware | Read persisted state and enforce resource-specific access         |
+| Service                      | Own reusable workflow and cross-resource business rules           |
+| Controller                   | Translate service outcomes into Express responses                 |
+| Prisma or database           | Apply atomic persistence and final integrity constraints          |
 
-export default router;
-```
+Zod should not read the database or decide resource authorization. A controller should not repeat structural validation or become the only
+owner of reusable team, role or workflow rules.
 
-### Controller Pattern
+Use the existing helpers and policies rather than creating route-specific copies:
 
-```typescript
-// controllers/TeamController.ts
-export class TeamController {
-  async getAllTeams(req: Request, res: Response) {
-    try {
-      const teams = await prisma.team.findMany();
-      res.json({ data: teams });
-    } catch (error) {
-      console.error("Error fetching teams:", error);
-      res.status(500).json({ error: "Failed to fetch teams" });
-    }
-  }
-}
-```
+- Zod helpers are exported from [backend/src/validation/index.ts](../../backend/src/validation/index.ts).
+- The shared request pipeline is described in [Request Validation](../implementation/request-validation/README.md).
+- Persisted team access uses [teamAuthzMiddleware.ts](../../backend/src/middleware/teamAuthzMiddleware.ts).
+- Backend role access uses [roleMiddleware.ts](../../backend/src/middleware/roleMiddleware.ts).
 
-### Validation with Zod
+Validated body and path values replace their raw request sections. Parsed query values are available through `res.locals.validatedQuery`.
+Controllers must consume normalized values and must not parse the same input again.
 
-```typescript
-import { z } from "zod";
+Use `validateRequest()` only when one request section depends on another. Otherwise use the smallest body, query or params validator.
+Database-backed rules such as team membership, archived state, resource existence and ownership belong in middleware or services.
 
-// Define schema
-const createTeamSchema = z.object({
-  name: z.string().min(3).max(50),
-  description: z.string().optional(),
-  memberAddresses: z.array(z.string().regex(/^0x[a-fA-F0-9]{40}$/)),
-});
-
-// Validate request
-export const validateCreateTeam = (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
-  try {
-    createTeamSchema.parse(req.body);
-    next();
-  } catch (error) {
-    res.status(400).json({ error: "Invalid request data", details: error });
-  }
-};
-```
+Keep exact HTTP payloads in Zod and OpenAPI. Documentation should explain the responsibility boundary and known invariants, not duplicate
+all route schemas or field definitions.
 
 ### Database (Prisma)
 

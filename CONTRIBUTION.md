@@ -44,6 +44,8 @@ applicable specialised guides before implementation:
 - [Vue component standards](./.github/copilot-instructions/vue-component-standards.md): components describe UI, utilities own pure shaping,
   composables own reactive logic, and server state stays in its query cache.
 - [Contract-write guide](./app/src/composables/contracts/README.md): all feature on-chain writes use `useContractWritesV3`.
+- [Backend route standard](./docs/platform/development-standards.md#backend-route-standard): Express responsibility order, Zod validation,
+  database-backed authorization and persistence boundaries.
 - [Testing overview](./.github/copilot-instructions/testing-overview.md): reuse the global frontend mocks rather than re-declaring them in
   individual specs.
 - [Formatting standards](./.github/copilot-instructions/formatting-standards.md): use canonical display-formatting modules.
