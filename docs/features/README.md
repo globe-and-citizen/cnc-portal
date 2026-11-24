@@ -102,17 +102,18 @@ These labels mirror the [module story-status contract](../platform/feature-speci
 most recent test run or establish current availability. `Not assessed` in the intended-scope column means the release scope is unknown, not
 that the feature is excluded.
 
-## Delivery assessment
+## Release availability
 
-Delivery is separate from intended scope and story validation. `Released` means the documented feature scope is implemented on `main`;
-`Implemented` means its full scope is implemented but its presence on `main` is unverified; `Not assessed` means its full delivery state has
-not been verified for this inventory. A release version is optional. Delivery does not establish new Product or QA acceptance. The
-assessment is a snapshot, not a fresh execution of every acceptance test.
+Release availability is separate from intended scope and story validation. `Released` means the capability is available to its intended
+users in production. A released capability may still have incomplete criteria or require human validation; consult its story for the exact
+scope and gaps. `Not released` means the capability has been assessed as unavailable in production. `Not assessed` means availability has
+not yet been verified. A release version is optional.
 
-The released authentication, company, and vesting features below are supported by their modules' recorded criterion-level evidence and
-historical human review, and by their corresponding implementation on `main` at `260cf1b6c`. The company review does not attest to a live
-on-chain Officer deployment. Other features retain `Not assessed` until their full scope and implementation are checked against `main`; a
-merged catalogue alone does not establish delivery.
+Assess availability against the implementation on `main` and the capability's production entry points, permissions, and restrictions. A
+merge to `main` is the project's release signal, but a merged catalogue or source file alone does not prove that a capability is accessible
+to its intended users. The two authentication entries were assessed against `main` at `260cf1b6c`: the login route and the network-lock
+journey are connected to their user-facing implementations. This uses the project release convention; it is not a live production test.
+Other entries remain `Not assessed`. Existing story statuses are unchanged.
 
 ## Features
 
@@ -124,7 +125,7 @@ accessible.
 
 ### Accounting
 
-| ID              | Feature / default story                                                                                                 | Intended scope | Status         | Delivery     |
+| ID              | Feature / default story                                                                                                 | Intended scope | Status         | Release      |
 | --------------- | ----------------------------------------------------------------------------------------------------------------------- | -------------- | -------------- | ------------ |
 | `FEAT-ACCT-001` | [View the Accounting overview](accounting/README.md#feat-acct-001-view-the-accounting-overview)                         | Not assessed   | 🚧 In Progress | Not assessed |
 | `FEAT-ACCT-002` | [Trace operations in the General Ledger](accounting/README.md#feat-acct-002-trace-operations-in-the-general-ledger)     | Not assessed   | 🧪 Validation  | Not assessed |
@@ -139,7 +140,7 @@ accessible.
 
 ### Accounts
 
-| ID              | Feature / default story                                                                                                  | Intended scope | Status         | Delivery     |
+| ID              | Feature / default story                                                                                                  | Intended scope | Status         | Release      |
 | --------------- | ------------------------------------------------------------------------------------------------------------------------ | -------------- | -------------- | ------------ |
 | `FEAT-BANK-001` | [Fund the Bank](accounts/README.md#feat-bank-001-fund-the-bank)                                                          | Not assessed   | 🧪 Validation  | Not assessed |
 | `FEAT-BANK-002` | [Transfer Bank funds](accounts/README.md#feat-bank-002-transfer-bank-funds)                                              | Not assessed   | 🧪 Validation  | Not assessed |
@@ -162,7 +163,7 @@ accessible.
 
 ### Authentication
 
-| ID              | Feature / default story                                                                                             | Intended scope | Status         | Delivery     |
+| ID              | Feature / default story                                                                                             | Intended scope | Status         | Release      |
 | --------------- | ------------------------------------------------------------------------------------------------------------------- | -------------- | -------------- | ------------ |
 | `FEAT-AUTH-001` | [Sign in to the client](authentication/README.md#feat-auth-001-sign-in-to-the-client)                               | Not assessed   | ✅ Done        | Released     |
 | `FEAT-AUTH-002` | [Sign in to the backoffice](authentication/README.md#feat-auth-002-sign-in-to-the-backoffice)                       | Not assessed   | 🚧 In Progress | Not assessed |
@@ -170,7 +171,7 @@ accessible.
 
 ### Community Credit
 
-| ID            | Feature / default story                                                                         | Intended scope | Status         | Delivery     |
+| ID            | Feature / default story                                                                         | Intended scope | Status         | Release      |
 | ------------- | ----------------------------------------------------------------------------------------------- | -------------- | -------------- | ------------ |
 | `FEAT-CC-001` | [Inspect the Credit Account](community-credit/README.md#feat-cc-001-inspect-the-credit-account) | Not assessed   | 🚧 In Progress | Not assessed |
 | `FEAT-CC-002` | [Publish a credit call](community-credit/README.md#feat-cc-002-publish-a-credit-call)           | Not assessed   | 🚧 In Progress | Not assessed |
@@ -180,21 +181,21 @@ accessible.
 
 ### Companies and Workspace
 
-| ID                   | Feature / default story                                                                                                       | Intended scope | Status        | Delivery     |
+| ID                   | Feature / default story                                                                                                       | Intended scope | Status        | Release      |
 | -------------------- | ----------------------------------------------------------------------------------------------------------------------------- | -------------- | ------------- | ------------ |
-| `FEAT-COMPANIES-001` | [Create a company workspace](companies/README.md#feat-companies-001-create-a-company-workspace)                               | Not assessed   | ✅ Done       | Released     |
-| `FEAT-COMPANIES-002` | [Deploy the initial Officer contract suite](companies/README.md#feat-companies-002-deploy-the-initial-officer-contract-suite) | Not assessed   | ✅ Done       | Released     |
-| `FEAT-COMPANIES-003` | [Browse and open my companies](companies/README.md#feat-companies-003-browse-and-open-my-companies)                           | Not assessed   | ✅ Done       | Released     |
-| `FEAT-COMPANIES-004` | [Update company details](companies/README.md#feat-companies-004-update-company-details)                                       | Not assessed   | ✅ Done       | Released     |
-| `FEAT-COMPANIES-005` | [Manage company members](companies/README.md#feat-companies-005-manage-company-members)                                       | Not assessed   | ✅ Done       | Released     |
-| `FEAT-COMPANIES-006` | [Archive or restore a company](companies/README.md#feat-companies-006-archive-or-restore-a-company)                           | Not assessed   | ✅ Done       | Released     |
-| `FEAT-COMPANIES-007` | [Control my company-list visibility](companies/README.md#feat-companies-007-control-my-company-list-visibility)               | Not assessed   | ✅ Done       | Released     |
-| `FEAT-COMPANIES-008` | [Permanently delete a company](companies/README.md#feat-companies-008-permanently-delete-a-company)                           | Not assessed   | ✅ Done       | Released     |
+| `FEAT-COMPANIES-001` | [Create a company workspace](companies/README.md#feat-companies-001-create-a-company-workspace)                               | Not assessed   | ✅ Done       | Not assessed |
+| `FEAT-COMPANIES-002` | [Deploy the initial Officer contract suite](companies/README.md#feat-companies-002-deploy-the-initial-officer-contract-suite) | Not assessed   | ✅ Done       | Not assessed |
+| `FEAT-COMPANIES-003` | [Browse and open my companies](companies/README.md#feat-companies-003-browse-and-open-my-companies)                           | Not assessed   | ✅ Done       | Not assessed |
+| `FEAT-COMPANIES-004` | [Update company details](companies/README.md#feat-companies-004-update-company-details)                                       | Not assessed   | ✅ Done       | Not assessed |
+| `FEAT-COMPANIES-005` | [Manage company members](companies/README.md#feat-companies-005-manage-company-members)                                       | Not assessed   | ✅ Done       | Not assessed |
+| `FEAT-COMPANIES-006` | [Archive or restore a company](companies/README.md#feat-companies-006-archive-or-restore-a-company)                           | Not assessed   | ✅ Done       | Not assessed |
+| `FEAT-COMPANIES-007` | [Control my company-list visibility](companies/README.md#feat-companies-007-control-my-company-list-visibility)               | Not assessed   | ✅ Done       | Not assessed |
+| `FEAT-COMPANIES-008` | [Permanently delete a company](companies/README.md#feat-companies-008-permanently-delete-a-company)                           | Not assessed   | ✅ Done       | Not assessed |
 | `FEAT-COMPANIES-009` | [Pin a company in my lists](companies/README.md#feat-companies-009-pin-a-company-in-my-lists)                                 | Not assessed   | 🧪 Validation | Not assessed |
 
 ### Contract Management
 
-| ID                  | Feature / default story                                                                                                  | Intended scope | Status         | Delivery     |
+| ID                  | Feature / default story                                                                                                  | Intended scope | Status         | Release      |
 | ------------------- | ------------------------------------------------------------------------------------------------------------------------ | -------------- | -------------- | ------------ |
 | `FEAT-CONTRACT-001` | [Review the current contract suite](contract-management/README.md#feat-contract-001-review-the-current-contract-suite)   | Not assessed   | 🚧 In Progress | Not assessed |
 | `FEAT-CONTRACT-002` | [Manage current contract operations](contract-management/README.md#feat-contract-002-manage-current-contract-operations) | Not assessed   | 🧪 Validation  | Not assessed |
@@ -204,7 +205,7 @@ accessible.
 
 ### Board Elections
 
-| ID            | Feature / default story                                                                                              | Intended scope | Status         | Delivery     |
+| ID            | Feature / default story                                                                                              | Intended scope | Status         | Release      |
 | ------------- | -------------------------------------------------------------------------------------------------------------------- | -------------- | -------------- | ------------ |
 | `FEAT-EL-001` | [Create a board election](elections/README.md#feat-el-001-create-a-board-election)                                   | Not assessed   | 🧪 Validation  | Not assessed |
 | `FEAT-EL-002` | [Cast a vote](elections/README.md#feat-el-002-cast-a-vote)                                                           | Not assessed   | 🚧 In Progress | Not assessed |
@@ -220,7 +221,7 @@ accessible.
 
 ### Payment Gate
 
-| ID                 | Feature / default story                                                                                                   | Intended scope | Status         | Delivery     |
+| ID                 | Feature / default story                                                                                                   | Intended scope | Status         | Release      |
 | ------------------ | ------------------------------------------------------------------------------------------------------------------------- | -------------- | -------------- | ------------ |
 | `FEAT-PAYGATE-001` | [Configure the Widget's Accepted Token](payment-gate/README.md#feat-paygate-001-configure-the-widgets-accepted-token)     | Not assessed   | 🧪 Validation  | Not assessed |
 | `FEAT-PAYGATE-002` | [Embed the Widget on the Merchant's Page](payment-gate/README.md#feat-paygate-002-embed-the-widget-on-the-merchants-page) | Not assessed   | 🧪 Validation  | Not assessed |
@@ -230,7 +231,7 @@ accessible.
 
 ### Payroll & Cash Remuneration
 
-| ID                 | Feature / default story                                                                                                     | Intended scope | Status         | Delivery     |
+| ID                 | Feature / default story                                                                                                     | Intended scope | Status         | Release      |
 | ------------------ | --------------------------------------------------------------------------------------------------------------------------- | -------------- | -------------- | ------------ |
 | `FEAT-PAYROLL-001` | [Set a Member's Wage](payroll/README.md#feat-payroll-001-set-a-members-wage)                                                | Not assessed   | 🧪 Validation  | Not assessed |
 | `FEAT-PAYROLL-002` | [Pause or Resume a Member's Wage](payroll/README.md#feat-payroll-002-pause-or-resume-a-members-wage)                        | Not assessed   | 🧪 Validation  | Not assessed |
@@ -250,7 +251,7 @@ accessible.
 
 ### Shareholder Management
 
-| ID              | Feature / default story                                                                                                             | Intended scope | Status         | Delivery     |
+| ID              | Feature / default story                                                                                                             | Intended scope | Status         | Release      |
 | --------------- | ----------------------------------------------------------------------------------------------------------------------------------- | -------------- | -------------- | ------------ |
 | `FEAT-SHER-001` | [Invest in the Safe and receive SHER](shareholder-management/README.md#feat-sher-001-invest-in-the-safe-and-receive-sher)           | Not assessed   | 🧪 Validation  | Not assessed |
 | `FEAT-SHER-002` | [Distribute dividends to shareholders](shareholder-management/README.md#feat-sher-002-distribute-dividends-to-shareholders)         | Not assessed   | 🧪 Validation  | Not assessed |
@@ -263,23 +264,23 @@ accessible.
 
 ### Profile
 
-| ID                 | Feature / default story                                                                    | Intended scope | Status        | Delivery     |
+| ID                 | Feature / default story                                                                    | Intended scope | Status        | Release      |
 | ------------------ | ------------------------------------------------------------------------------------------ | -------------- | ------------- | ------------ |
 | `FEAT-PROFILE-001` | [Update profile identity](user-profile/README.md#feat-profile-001-update-profile-identity) | Not assessed   | 🧪 Validation | Not assessed |
 
 ### Vesting
 
-| ID                 | Feature / default story                                                                                                 | Intended scope | Status         | Delivery     |
+| ID                 | Feature / default story                                                                                                 | Intended scope | Status         | Release      |
 | ------------------ | ----------------------------------------------------------------------------------------------------------------------- | -------------- | -------------- | ------------ |
-| `FEAT-VESTING-001` | [Create a minute-precise vesting schedule](vesting/README.md#feat-vesting-001-create-a-minute-precise-vesting-schedule) | Not assessed   | ✅ Done        | Released     |
+| `FEAT-VESTING-001` | [Create a minute-precise vesting schedule](vesting/README.md#feat-vesting-001-create-a-minute-precise-vesting-schedule) | Not assessed   | ✅ Done        | Not assessed |
 | `FEAT-VESTING-002` | [View schedules and aggregate totals](vesting/README.md#feat-vesting-002-view-schedules-and-aggregate-totals)           | Not assessed   | 🚧 In Progress | Not assessed |
-| `FEAT-VESTING-003` | [Release accrued shares](vesting/README.md#feat-vesting-003-release-accrued-shares)                                     | Not assessed   | ✅ Done        | Released     |
-| `FEAT-VESTING-004` | [Stop an active vesting schedule](vesting/README.md#feat-vesting-004-stop-an-active-vesting-schedule)                   | Not assessed   | ✅ Done        | Released     |
-| `FEAT-VESTING-005` | [Understand vested and claimable progress](vesting/README.md#feat-vesting-005-understand-vested-and-claimable-progress) | Not assessed   | ✅ Done        | Released     |
+| `FEAT-VESTING-003` | [Release accrued shares](vesting/README.md#feat-vesting-003-release-accrued-shares)                                     | Not assessed   | ✅ Done        | Not assessed |
+| `FEAT-VESTING-004` | [Stop an active vesting schedule](vesting/README.md#feat-vesting-004-stop-an-active-vesting-schedule)                   | Not assessed   | ✅ Done        | Not assessed |
+| `FEAT-VESTING-005` | [Understand vested and claimable progress](vesting/README.md#feat-vesting-005-understand-vested-and-claimable-progress) | Not assessed   | ✅ Done        | Not assessed |
 
 ### Backoffice Companies Operations
 
-| ID                  | Feature / default story                                                                                                                              | Intended scope | Status         | Delivery     |
+| ID                  | Feature / default story                                                                                                                              | Intended scope | Status         | Release      |
 | ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | -------------- | -------------- | ------------ |
 | `FEAT-TEAM-OPS-001` | [Access and inspect platform companies](backoffice/companies-operations/README.md#feat-team-ops-001-access-and-inspect-platform-companies)           | Not assessed   | ✅ Done        | Not assessed |
 | `FEAT-TEAM-OPS-002` | [Inspect a company profile](backoffice/companies-operations/README.md#feat-team-ops-002-inspect-a-company-profile)                                   | Not assessed   | ✅ Done        | Not assessed |
@@ -287,7 +288,7 @@ accessible.
 
 ### Backoffice Contract Operations
 
-| ID                      | Feature / default story                                                                                                                             | Intended scope | Status         | Delivery     |
+| ID                      | Feature / default story                                                                                                                             | Intended scope | Status         | Release      |
 | ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | -------------- | -------------- | ------------ |
 | `FEAT-CONTRACT-OPS-001` | [Inspect the contract deployment registry](backoffice/contract-operations/README.md#feat-contract-ops-001-inspect-the-contract-deployment-registry) | Not assessed   | 🧪 Validation  | Not assessed |
 | `FEAT-CONTRACT-OPS-002` | [Audit stored Officer-version metadata](backoffice/contract-operations/README.md#feat-contract-ops-002-audit-stored-officer-version-metadata)       | Not assessed   | 🚧 In Progress | Not assessed |
@@ -295,7 +296,7 @@ accessible.
 
 ### Feature Restrictions
 
-| ID              | Feature / default story                                                                                              | Intended scope | Status         | Delivery     |
+| ID              | Feature / default story                                                                                              | Intended scope | Status         | Release      |
 | --------------- | -------------------------------------------------------------------------------------------------------------------- | -------------- | -------------- | ------------ |
 | `FEAT-FLAG-001` | [Manage global restrictions](backoffice/feature-restrictions/README.md#feat-flag-001-manage-global-restrictions)     | Not assessed   | 🧪 Validation  | Not assessed |
 | `FEAT-FLAG-002` | [Manage company overrides](backoffice/feature-restrictions/README.md#feat-flag-002-manage-company-overrides)         | Not assessed   | 🚧 In Progress | Not assessed |
@@ -303,7 +304,7 @@ accessible.
 
 ### Backoffice Micropayments
 
-| ID                       | Feature / default story                                                                                                                      | Intended scope | Status         | Delivery     |
+| ID                       | Feature / default story                                                                                                                      | Intended scope | Status         | Release      |
 | ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------- | -------------- | -------------- | ------------ |
 | `FEAT-MICROPAYMENTS-001` | [Inspect FeeCollector deployments](backoffice/micropayments/README.md#feat-micropayments-001-inspect-feecollector-deployments)               | Not assessed   | 🚧 In Progress | Not assessed |
 | `FEAT-MICROPAYMENTS-002` | [Configure V1 FeeCollector fees](backoffice/micropayments/README.md#feat-micropayments-002-configure-v1-feecollector-fees)                   | Not assessed   | 🧪 Validation  | Not assessed |
@@ -316,7 +317,7 @@ accessible.
 
 ### Backoffice Polymarket Accounting
 
-| ID                         | Feature / default story                                                                                                                                      | Intended scope | Status         | Delivery     |
+| ID                         | Feature / default story                                                                                                                                      | Intended scope | Status         | Release      |
 | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------- | -------------- | ------------ |
 | `FEAT-POLY-ACCOUNTING-001` | [Access and select a public wallet](backoffice/polymarket-accounting/README.md#feat-poly-accounting-001-access-and-select-a-public-wallet)                   | Not assessed   | 🚧 In Progress | Not assessed |
 | `FEAT-POLY-ACCOUNTING-002` | [Reconstruct and reconcile a wallet summary](backoffice/polymarket-accounting/README.md#feat-poly-accounting-002-reconstruct-and-reconcile-a-wallet-summary) | Not assessed   | 🚧 In Progress | Not assessed |
@@ -326,7 +327,7 @@ accessible.
 
 ### Backoffice Statistics
 
-| ID               | Feature / default story                                                                                                           | Intended scope | Status         | Delivery     |
+| ID               | Feature / default story                                                                                                           | Intended scope | Status         | Release      |
 | ---------------- | --------------------------------------------------------------------------------------------------------------------------------- | -------------- | -------------- | ------------ |
 | `FEAT-STATS-001` | [Access administrator statistics](backoffice/statistics/README.md#feat-stats-001-access-administrator-statistics)                 | Not assessed   | 🧪 Validation  | Not assessed |
 | `FEAT-STATS-002` | [Review the platform overview and trends](backoffice/statistics/README.md#feat-stats-002-review-the-platform-overview-and-trends) | Not assessed   | 🚧 In Progress | Not assessed |
