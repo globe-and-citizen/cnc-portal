@@ -15,9 +15,12 @@ acceptance from this guide alone.
 - **Acceptance criterion (AC):** a verifiable condition describing an expected result or rule for a story. Each criterion has its own
   identifier and checkbox.
 
-For example, **Task management** is a module; **Create a task** is a feature; the story explains who needs to create it and why; its
-criteria describe the observable behavior, including relevant rules and failures. A feature can have one story or multiple stories, each
-with its own criteria.
+For example, **Task management** is a module; an optional **Task organization** submodule groups related capabilities. **Create a task**,
+**Edit a task**, and **Delete a task** are separate features when each has its own user outcome. The create story explains who needs that
+capability and why; its criteria describe observable behavior, including relevant rules and failures. A feature generally has one story. Add
+stories only for genuinely distinct needs within the same capability, not for technical layers, channels, or individual UI clicks. Inspect
+the existing product model before regrouping historical entries; preserve established conventions, identifiers, requirements, and links
+rather than forcing a migration to match this example.
 
 ## Folder layout
 
@@ -66,7 +69,9 @@ module.
 - **Module / Scope:** link to the module file and summarize its domain or feature count. A count is not a completion measure.
 - **ID / Feature:** show the feature ID and link the feature title to its definition in the module file.
 - **Intended scope:** state the project's intended release or mark it proposed or undecided. Scope is separate from progress.
-- **Status:** use the feature's assessed state; keep it consistent with its module's status overview.
+- **Status:** mirror the single story status for a one-story feature. For multiple stories, show the distribution (for example,
+  `1 Done · 1 Validation · 1 In Progress`), not an unexplained aggregate. The module overview owns each individual story status. Keep both
+  views consistent when status or feature membership changes; counts alone do not establish completion or review across stories.
 
 Example catalogue structure and rows:
 
@@ -77,7 +82,9 @@ Intended product capabilities and their current assessment.
 
 ## Status legend
 
-Not assessed: evidence has not been examined.
+- 📝 Draft: the target behavior or acceptance contract is being defined.
+- 🧪 Validation: implementation is verified; product review is pending.
+- 🚧 In Progress: the defined story has incomplete or unverified criteria.
 
 ## Modules
 
@@ -91,7 +98,8 @@ Not assessed: evidence has not been examined.
 
 | ID              | Feature                                               | Intended scope      | Status       |
 | --------------- | ----------------------------------------------------- | ------------------- | ------------ |
-| `FEAT-TASK-001` | [Create a task](tasks.md#feat-task-001-create-a-task) | MVP execution scope | Not assessed |
+| `FEAT-TASK-001` | [Create a task](tasks.md#feat-task-001-create-a-task) | MVP execution scope | 📝 Draft |
+| `FEAT-TASK-002` | [Assign a task](tasks.md#feat-task-002-assign-a-task) | MVP execution scope | 1 🧪 Validation · 1 🚧 In Progress |
 ```
 
 ## Module file structure
@@ -109,13 +117,13 @@ product contract.
 
 List each story with these columns; when a feature has multiple stories, use one row per story:
 
-| Column         | Meaning                                                              |
-| -------------- | -------------------------------------------------------------------- |
-| User story     | Stable story ID, linked to its story section.                        |
-| Feature        | Short capability title; use the same title for the default story.    |
-| Actor          | Person or external system seeking the outcome.                       |
-| Intended scope | Intended release or explicit proposed/undecided scope.               |
-| Status         | Assessed feature state; not a substitute for coverage or acceptance. |
+| Column         | Meaning                                                                      |
+| -------------- | ---------------------------------------------------------------------------- |
+| User story     | Stable story ID, linked to its story section.                                |
+| Feature        | Short capability title; use the same title for the default story.            |
+| Actor          | Person or external system seeking the outcome.                               |
+| Intended scope | Intended release or explicit proposed/undecided scope.                       |
+| Status         | Story state under the contract below; not a substitute for coverage details. |
 
 ### Test coverage overview
 
@@ -143,13 +151,17 @@ A task is work belonging to a project. Tasks may be organized without being dupl
 
 | User story  | Feature       | Actor          | Intended scope      | Status       |
 | ----------- | ------------- | -------------- | ------------------- | ------------ |
-| US-TASK-001 | Create a task | Project member | MVP execution scope | Not assessed |
+| [US-TASK-001](#us-task-001-create-a-task) | Create a task | Project member | MVP execution scope | 📝 Draft |
+| [US-TASK-002-01](#us-task-002-01-assign-a-task-to-a-member) | Assign a task | Project member | MVP execution scope | 🧪 Validation |
+| [US-TASK-002-02](#us-task-002-02-assign-a-task-to-a-team) | Assign a task | Project member | MVP execution scope | 🚧 In Progress |
 
 ## Test coverage overview
 
 | User story  | Main journey | Criteria coverage | Gaps         |
 | ----------- | ------------ | ----------------- | ------------ |
 | US-TASK-001 | Not assessed | Not assessed      | Not assessed |
+| US-TASK-002-01 | Not assessed | Not assessed | Not assessed |
+| US-TASK-002-02 | Not assessed | Not assessed | Not assessed |
 
 ## Features
 
@@ -179,14 +191,38 @@ A task is work belonging to a project. Tasks may be organized without being dupl
 
 - [ ] `AC-US-TASK-001-02` A request without a task title is rejected.
 
+### FEAT-TASK-002 Assign a task
+
+**Intended scope:** MVP execution scope
+
+**Specification status:** Defined
+
+#### US-TASK-002-01 Assign a task to a member
+
+**As** a project member, **I want** to assign a task to a member, **so that** responsibility is clear.
+
+- [x] `AC-US-TASK-002-01-01` An authorized member can assign a task to a project member.
+
+Example evidence: the authorized assignment was observed at runtime; human product review is pending.
+
+#### US-TASK-002-02 Assign a task to a team
+
+**As** a project member, **I want** to assign a task to a team, **so that** the team can coordinate responsibility.
+
+- [ ] `AC-US-TASK-002-02-01` An authorized member can assign a task to a project team.
+
+The criterion has not been assessed; this status does not establish that work has started.
+
 ## Related documentation
 
 Link to the project's product model and relevant decision records.
 ```
 
-Write criteria for the relevant main journey, business rules, and edge or error cases; omit an empty category rather than inventing rules. A
-criterion should describe a testable outcome, not just repeat a feature title or prescribe a button or implementation. Record a genuinely
-unresolved rule as unresolved instead of presenting it as a settled criterion.
+Write each criterion as one cohesive observable outcome or independently verifiable business rule with a clear pass/fail interpretation.
+Split outcomes that can fail independently or need materially different evidence; keep attributes of one cohesive result together when
+appropriate. Cover relevant happy paths, business rules, permissions, boundaries, errors, and recovery without making every category
+mandatory. Prefer product behavior that survives a visual redesign; place presentation-specific, accessibility, and design requirements in
+their appropriate scope. Record unresolved rules as unresolved rather than presenting them as settled criteria.
 
 ## Create and maintain the catalogue
 
@@ -201,14 +237,62 @@ unresolved rule as unresolved instead of presenting it as a settled criterion.
    tests are absent or passing.
 6. Review consistency and links, preserve earlier requirements during migrations, and run the project's documentation and formatting checks.
 
-Use these feature states consistently: **Not assessed** (evidence not examined), **To do** (accepted work not started), **In progress**,
-**Awaiting validation**, **Done** (verified and accepted), and **Abandoned** (explicitly dropped). State is distinct from the intended
-release. In the coverage overview, identify the main journey, assessed criteria coverage, and known gaps; use **Not assessed** when no
-mapping exists.
+## Story status and evidence
 
-Leave an AC unchecked until it has been verified. A checked criterion alone does not establish acceptance of the entire story. Track
-implementation status, test coverage, test run results, and product acceptance as separate facts; a closed issue, merged PR, or passing CI
-does not establish acceptance by itself.
+These are defaults for new catalogues; preserve an existing project's status conventions when adopting this guide. The module overview is
+authoritative for each story's status; the catalogue mirrors it for navigation.
 
-Keep product behavior and criteria in the module files. Decisions and ADRs record decisions; issues and PRs support delivery and review. Do
-not copy issue or PR tracking metadata into the product specifications. Keep proposed scope and unresolved choices explicit.
+| Story status   | Meaning                                                                                                                                                             |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 📝 Draft       | Material target behavior or its acceptance contract is still being defined.                                                                                         |
+| 🚧 In Progress | The story is defined and at least one applicable criterion is incomplete or unverified. This label alone does not establish that active implementation has started. |
+| 🧪 Validation  | All applicable criteria have been verified as implemented; human product review is pending.                                                                         |
+| ✅ Done        | All applicable criteria have been verified as implemented and human product review passed.                                                                          |
+| 🔗 Reference   | Another linked story owns the detailed behavior and validation.                                                                                                     |
+
+Draft takes precedence while material behavior or the acceptance contract is being defined, regardless of unchecked criteria. An empty or
+provisional criterion list cannot establish that all criteria are implemented. Once the contract is defined, use In Progress if any
+applicable criterion is incomplete or unverified; explain the evidence state where useful. Move to Validation only after all applicable
+criteria are verified, and to Done only after human product review passes. Record that review and its scope using the project's established
+convention. A closed issue, merged PR, passing CI, or checked criteria alone do not prove acceptance. A reference story links its canonical
+owner; do not duplicate criteria or imply that its behavior has been validated.
+
+- `[x]` means current code, observed runtime behavior, or appropriate test evidence has been examined and confirms implementation of that
+  criterion. It does not independently record product acceptance.
+- `[ ]` means incomplete or unverified. Unverified does not mean absent; a checkbox alone does not establish that work has started.
+
+For a default new catalogue, explicitly label evidence **Not assessed** when it has not been examined; it is an evidence qualifier, not a
+verified delivery status. Record explicitly abandoned scope as **Abandoned**, with its decision linked where available; it is a scope
+disposition, not proof of delivery. Do not infer either from an unchecked box. If a story is defined but evidence is unassessed, its status
+is In Progress with that qualifier.
+
+When behavior changes, identify affected criteria and prior product review. Mark affected criteria unverified until evidence is examined
+again, update the story status, and request renewed human review for the affected behavior before claiming acceptance. Retain unaffected
+verified evidence where its scope remains valid. A purely editorial change does not refresh a behavior-review date or imply a new product
+review. If dates are recorded, distinguish a document edit date from a behavior-review date.
+
+## Coverage and proof
+
+Keep intended implementation, implementation verification, expected test coverage, test execution results, and human product acceptance
+distinct. Inspect representative test assertions and their scope before treating a test as evidence for a criterion. A test marker,
+identifier, or file path provides traceability, not proof of assertion quality or a current passing run. Record unassessed coverage as such:
+a missing reference does not prove behavior or tests are absent.
+
+Choose proof appropriate to the rule, responsible boundary, and material failure risks. Distinguish focused tests, mocked journeys, and
+integrated journeys where relevant; no single layer proves every responsibility, and an integrated test is not mandatory for every
+criterion. Record known gaps and unresolved proof decisions without inventing percentages or results. Detailed proof registries are optional
+and proportional to the project.
+
+## Separate product facts and ownership
+
+Intended scope, specification, story status, current access, and coverage answer different questions. For example, a planned task assignment
+feature can have a defined specification and an In Progress story with unassessed criteria, while current access and test coverage are also
+**Not assessed**. It may be documented before an interface or API exists. A planned release does not establish accessibility,
+implementation, acceptance, or coverage. To claim current access, inspect applicable entry points, permissions, and meaningful actions for
+the actors concerned; otherwise say access has not been assessed. Do not infer any of these dimensions from another.
+
+By default, the module document owns current product stories, criteria, and story statuses; the feature catalogue links to them and
+summarizes feature membership and status. Update both when membership or story status changes. Product decision records own decisions;
+issues, pull requests, and Git own delivery tracking and history. Link the relevant owners instead of copying requirements or creating
+parallel archives. Follow existing repository ownership and structure where present; this default is not permission to overwrite or
+reorganize established documentation.

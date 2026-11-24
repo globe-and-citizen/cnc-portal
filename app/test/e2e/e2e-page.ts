@@ -201,8 +201,7 @@ export async function failRpcCalls(
 
   const response = await route.fetch()
   const upstream = (await response.json()) as
-    | { id: number; result?: unknown }
-    | Array<{ id: number; result?: unknown }>
+    { id: number; result?: unknown } | Array<{ id: number; result?: unknown }>
   const replace = (item: { id: number; result?: unknown }) =>
     failedIds.has(item.id)
       ? { jsonrpc: '2.0', id: item.id, error: { code: -32000, message } }

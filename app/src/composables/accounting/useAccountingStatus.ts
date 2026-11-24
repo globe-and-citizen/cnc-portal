@@ -88,38 +88,34 @@ export function useAccountingStatus(input: AccountingStatusInput): AccountingSta
     ...(input.reconciliation.assetDiagnostics?.value ?? []),
     ...definitions
       .filter((definition) => definition.applicable() && Boolean(definition.query.error?.value))
-      .map(
-        (definition): AccountingDiagnostic => ({
-          kind: 'source-unavailable',
-          source: definition.source
-        })
-      ),
+      .map((definition): AccountingDiagnostic => ({
+        kind: 'source-unavailable',
+        source: definition.source
+      })),
     ...input.eventSources.flatMap(({ source, query }) => [
-      ...(query.data?.value?.gaps ?? []).map(
-        (gap): AccountingDiagnostic => ({
-          kind: 'source-scan-failed',
-          source,
-          address: gap.address
-        })
-      ),
-      ...(query.data?.value?.timestampGaps ?? []).map(
-        (gap): AccountingDiagnostic => ({
-          kind: 'block-timestamp-unavailable',
-          source,
-          ...(gap.transactionHash ? { txHash: gap.transactionHash } : {}),
-          ...(gap.blockNumber == null ? {} : { blockNumber: gap.blockNumber.toString() })
-        })
-      )
+      ...(query.data?.value?.gaps ?? []).map((gap): AccountingDiagnostic => ({
+        kind: 'source-scan-failed',
+        source,
+        address: gap.address
+      })),
+      ...(query.data?.value?.timestampGaps ?? []).map((gap): AccountingDiagnostic => ({
+        kind: 'block-timestamp-unavailable',
+        source,
+        ...(gap.transactionHash ? { txHash: gap.transactionHash } : {}),
+        ...(gap.blockNumber == null ? {} : { blockNumber: gap.blockNumber.toString() })
+      }))
     ]),
-    ...input.reconciliation.unmatchedFeeOperationIds.value.map(
-      (txHash): AccountingDiagnostic => ({ kind: 'orphan-bank-fee', txHash })
-    ),
+    ...input.reconciliation.unmatchedFeeOperationIds.value.map((txHash): AccountingDiagnostic => ({
+      kind: 'orphan-bank-fee',
+      txHash
+    })),
     ...input.reconciliation.unavailableReceiptOperationIds.value.map(
       (txHash): AccountingDiagnostic => ({ kind: 'receipt-unavailable', txHash })
     ),
-    ...unavailableRateTokens.value.map(
-      (token): AccountingDiagnostic => ({ kind: 'rate-unavailable', token })
-    )
+    ...unavailableRateTokens.value.map((token): AccountingDiagnostic => ({
+      kind: 'rate-unavailable',
+      token
+    }))
   ])
 
   const state = computed(() => accountingCompletenessOf(sources.value))

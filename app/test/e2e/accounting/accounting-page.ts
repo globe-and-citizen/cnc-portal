@@ -5,12 +5,7 @@ import { type LedgerLine, type LedgerView, groupLedgerEntries } from './accounti
 import { type Locator, type Page, expect } from '@playwright/test'
 
 export type AccountingSection =
-  | 'summary'
-  | 'income'
-  | 'balance'
-  | 'trial'
-  | 'ledger'
-  | 'account-assignments'
+  'summary' | 'income' | 'balance' | 'trial' | 'ledger' | 'account-assignments'
 
 /** The books are rebuilt from chain history on every load, so give them room. */
 const BOOKS_TIMEOUT = 120_000
@@ -101,7 +96,7 @@ export async function readAmounts(scope: Locator): Promise<Record<string, string
       if (!/^-?\$/.test(value)) continue
       let row: Element = cell
       let label = ''
-      for (let depth = 0; depth < LABEL_SEARCH_DEPTH && row.parentElement && row !== node; ) {
+      for (let depth = 0; depth < LABEL_SEARCH_DEPTH && row.parentElement && row !== node;) {
         row = row.parentElement
         depth += 1
         label = (row.textContent ?? '')

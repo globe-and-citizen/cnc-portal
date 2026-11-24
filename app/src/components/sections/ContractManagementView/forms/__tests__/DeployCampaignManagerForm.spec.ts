@@ -211,8 +211,7 @@ describe('[US-CONTRACT-003] DeployCampaignManagerForm.vue', () => {
 
     const lastCreateContractCallbacks = (mutate: ReturnType<typeof vi.fn>) =>
       mutate.mock.calls.at(-1)?.[1] as
-        | { onSuccess?: () => unknown; onError?: (e: Error) => unknown }
-        | undefined
+        { onSuccess?: () => unknown; onError?: (e: Error) => unknown } | undefined
 
     it('emits close and shows toast on successful contract creation', async () => {
       const createContract = stubCreateContract()

@@ -49,7 +49,10 @@ describe('useBoDElections', () => {
     const election = useBoDElections(computed(() => 4n))
 
     expect(election.electionStatus.value?.text).toBe('Upcoming')
-    vi.advanceTimersByTime(61_000)
+    expect(election.leftToStart.value).toBe(60)
+    vi.advanceTimersByTime(1_000)
+    expect(election.leftToStart.value).toBe(59)
+    vi.advanceTimersByTime(60_000)
     expect(election.electionStatus.value?.text).toBe('Active')
 
     mockElectionsReads.getVoteCount.data.value = 2n

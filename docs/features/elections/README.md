@@ -577,11 +577,7 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 
 ## Implementation Evidence
 
-**Implementation evidence reviewed against:** `afed113648736c861fb19c4319333717f14221c3`
-
-- [`ElectionCandidateCard.vue`](../../../app/src/components/sections/AdministrationView/ElectionCandidateCard.vue)
-- [`PastElectionCard.vue`](../../../app/src/components/sections/AdministrationView/PastElectionCard.vue)
-- [`index.ts`](../../../app/src/composables/elections/index.ts)
+**Implementation evidence reviewed against:** `2c9d874d42627b7ba1b24a2cbdbc62822acabb02`
 
 - [Election overview page](../../../app/src/views/team/%5Bid%5D/BodElectionView.vue)
 - [Election detail page](../../../app/src/views/team/%5Bid%5D/BodElectionDetailsView.vue)
@@ -589,6 +585,7 @@ Proof obligations use the [shared proof-strategy registry](../../testing/proof-s
 - [Election creation form](../../../app/src/components/sections/AdministrationView/forms/CreateElectionForm.vue)
 - [Election action guards](../../../app/src/components/sections/AdministrationView/ElectionActions.vue)
 - [Election result publication action](../../../app/src/components/sections/AdministrationView/PublishResult.vue)
+- [Election state and countdown](../../../app/src/composables/elections/index.ts)
 - [Election reads](../../../app/src/composables/elections/reads.ts), [writes](../../../app/src/composables/elections/writes.ts), and
   [history assembly](../../../app/src/composables/elections/history.ts)
 - [Election decoding helpers](../../../app/src/utils/elections/election.ts)

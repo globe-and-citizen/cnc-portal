@@ -206,8 +206,7 @@
           <pre
             v-else-if="modalState.contentType === 'text'"
             class="h-full w-full overflow-auto bg-white p-4 font-mono text-sm whitespace-pre-wrap text-gray-800"
-            >{{ modalState.textContent }}</pre
-          >
+            >{{ modalState.textContent }}</pre>
 
           <!-- Non-previewable files -->
           <div v-else class="flex h-full w-full flex-col items-center justify-center gap-4 p-8">

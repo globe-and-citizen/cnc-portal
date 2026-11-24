@@ -89,7 +89,9 @@ test.describe(
 
         await openAccountFromSidebar(page, `/teams/${company.teamId}/accounts/expense-account`)
         await expect(page.locator('[data-test="expense-account-address"]')).toContainText(expense)
-        await expect(page.locator('[data-test="expense-account-balance"]')).toContainText('$8.00')
+        await expect(
+          page.locator('[data-test="expense-account-balance"] [data-test="amount"]')
+        ).toHaveText('$8')
         await expect(page.getByText('Month Spent', { exact: true })).toBeVisible()
         await expect(page.getByText('Total Approved', { exact: true })).toBeVisible()
         await expect.poll(() => tokenBalance(usdc, bank)).toBe(parseUnits('10', 6) - transferGross)
@@ -267,12 +269,14 @@ test.describe(
         await expect.poll(() => tokenBalance(usdc, expense)).toBe(parseUnits('4', 6))
 
         await page.reload()
-        await expect(page.locator('[data-test="expense-account-balance"]')).toContainText('$4.00')
+        await expect(
+          page.locator('[data-test="expense-account-balance"] [data-test="amount"]')
+        ).toHaveText('$4')
         await expect(page.locator('[data-test="disable-button"]')).toBeVisible()
         await memberPage.reload()
-        await expect(memberPage.locator('[data-test="expense-account-balance"]')).toContainText(
-          '$4.00'
-        )
+        await expect(
+          memberPage.locator('[data-test="expense-account-balance"] [data-test="amount"]')
+        ).toHaveText('$4')
         await expect(memberPage.locator('[data-test="transfer-button"]')).toBeEnabled()
         const finalUsage = (await publicClient.readContract({
           address: expense,

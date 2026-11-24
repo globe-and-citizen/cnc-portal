@@ -92,8 +92,7 @@ const withdrawClaim = async () => {
   if (props.weeklyClaim.status !== 'signed' || !props.weeklyClaim.signature) return
 
   const currentContract = teamStore.getContractAddressByType('CashRemunerationEIP712') as
-    | Address
-    | undefined
+    Address | undefined
 
   if (!currentContract) {
     toast.add({ title: 'Cash Remuneration EIP712 contract address not found', color: 'error' })

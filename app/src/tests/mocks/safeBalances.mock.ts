@@ -40,21 +40,19 @@ export const mockUseSafeBalances = {
         fiatBalance: String(local ? entry.value.local.value : entry.value.usd.value)
       }))
       items.push(
-        ...mockUseSafeBalances.assets.data.value.map(
-          (row): SafeClientBalance => ({
-            tokenInfo: {
-              type: 'ERC20',
-              address: row.asset.address!,
-              name: row.asset.name,
-              symbol: row.asset.symbol,
-              decimals: row.asset.decimals ?? 18,
-              logoUri: row.asset.logoUri
-            },
-            balance: row.raw?.toString() ?? null,
-            fiatConversion: row.priceUsd?.toString() ?? null,
-            fiatBalance: row.valueUsd?.toString() ?? null
-          })
-        )
+        ...mockUseSafeBalances.assets.data.value.map((row): SafeClientBalance => ({
+          tokenInfo: {
+            type: 'ERC20',
+            address: row.asset.address!,
+            name: row.asset.name,
+            symbol: row.asset.symbol,
+            decimals: row.asset.decimals ?? 18,
+            logoUri: row.asset.logoUri
+          },
+          balance: row.raw?.toString() ?? null,
+          fiatConversion: row.priceUsd?.toString() ?? null,
+          fiatBalance: row.valueUsd?.toString() ?? null
+        }))
       )
       if (mockUseSafeBalances.isIncomplete.value && items[0]) items[0].balance = null
       return { fiatTotal: String(local ? source.total.local.value : source.total.usd.value), items }

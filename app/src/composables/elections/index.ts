@@ -1,16 +1,16 @@
-import { type ComputedRef, type InjectionKey, computed, inject, provide, watch } from 'vue'
-import {
-  useElectionsAddress,
-  useElectionsGetCandidates,
-  useElectionsGetElection,
-  useElectionsGetEligibleVoters,
-  useElectionsGetVoteCount,
-  useElectionsGetWinners,
-  useElectionsOwner
-} from './reads'
+import { computed, inject, provide, watch, type ComputedRef, type InjectionKey } from 'vue'
+import { useIntervalFn, useNow } from '@vueuse/core'
 import { log } from '@/lib/logging'
 import { toElection } from '@/utils/elections/election'
-import { useNow } from '@vueuse/core'
+import {
+  useElectionsAddress,
+  useElectionsOwner,
+  useElectionsGetElection,
+  useElectionsGetVoteCount,
+  useElectionsGetCandidates,
+  useElectionsGetEligibleVoters,
+  useElectionsGetWinners
+} from './reads'
 
 export * from './history'
 export * from './reads'
@@ -53,7 +53,7 @@ function createBoDElections(currentElectionId: ComputedRef<bigint>) {
   )
   const { data: winners } = useElectionsGetWinners(publishedElectionId)
 
-  const now = useNow({ interval: 1000 })
+  const now = useNow({ scheduler: (callback) => useIntervalFn(callback, 1000) })
 
   const timeLeft = computed(() => {
     if (!formattedElection.value) return { toStart: 0, toEnd: 0 }

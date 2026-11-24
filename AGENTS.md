@@ -41,6 +41,7 @@ review requirements:
 - `cnc-pr-review` — issue conformance and code-quality review.
 - `cnc-docs-governance` — agent and implementation documentation.
 - `w3-feature-documentation` — primary workflow for product modules, features, stories and acceptance criteria.
+- `w3-skill-improvement` — propose evidence-backed improvements to shared W3 Frame skills.
 - `cnc-feature-documentation` — CNC-specific evidence, traceability and human-review supplement.
 - `cnc-frontend-change` — Vue client and Nuxt dashboard changes.
 - `cnc-contract-change` — Solidity and ABI changes.
