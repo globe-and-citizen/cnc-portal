@@ -96,13 +96,11 @@ using blockchain technology.
 - Support multi-currency wages (Native token, USDC, custom tokens like SHER)
 - Enable BOD elections with automatic tie-breaking
 - Provide real-time analytics API and admin dashboard
+- Follow the canonical [performance standards](./platform/performance.md) and [security standards](./platform/security.md).
 
 #### M — Measurable
 
-- 90%+ line coverage for frontend and backend unit tests
-- 95%+ line coverage for smart contracts
-- ≤500ms API response time (p95)
-- Zero high/critical security findings at release
+- Test quality and acceptance evidence follow the [testing strategy](./platform/testing-strategy.md).
 - Support ≥3 live CNCs executing claims, governance, and token operations
 
 #### A — Achievable
@@ -121,29 +119,26 @@ using blockchain technology.
 
 #### T — Time-bound
 
-- M1–M4 Foundation & Core Features: Q4 2024 (Completed)
-- M5–M6 Analytics & Backoffice: Q1 2026 (In Progress)
-- M7–M8 Hardening & Production: Q2 2026 (Planned)
-- Public launch target: Q2 2026
+Original milestone dates are historical planning targets, not current delivery commitments:
+
+- M1–M4 Foundation & Core Features: Q4 2024
+- M5–M6 Analytics & Backoffice: Q1 2026
+- M7–M8 Hardening & Production: Q2 2026
+- Original public launch target: Q2 2026
 
 ### 3.3 Technical Outcomes
 
-| Outcome                        | Target                                                                                              |
-| ------------------------------ | --------------------------------------------------------------------------------------------------- |
-| Unit / component test coverage | ≥ 90% line coverage (app, backend)                                                                  |
-| Smart contract test coverage   | ≥ 95% line coverage — see [testing strategy](./platform/testing-strategy.md)                        |
-| API response time (p95)        | ≤ 500 ms — see [performance standards](./platform/performance.md)                                   |
-| CI pipeline                    | All PRs pass lint, type-check, unit tests, and contract tests before merge                          |
-| Security                       | No high/critical findings outstanding at release — see [security standards](./platform/security.md) |
+| Outcome       | Target                                                                                       |
+| ------------- | -------------------------------------------------------------------------------------------- |
+| Test evidence | Follow the [testing strategy](./platform/testing-strategy.md) and current component CI gates |
+| API response  | See [performance standards](./platform/performance.md)                                       |
+| CI pipeline   | All PRs pass applicable lint, type-check, build, and test gates before merge                 |
+| Security      | See [security standards](./platform/security.md)                                             |
 
-### 3.4 KPIs / Targets (Phase 1)
+### 3.4 Phase 1 KPI Status
 
-- **User adoption:** At least 3 operational CNCs running through the portal with live teams.
-- **Backend API:** Stable with ≥ 163 passing tests.
-- **Smart contracts:** Stable with ≥ 350 passing tests.
-- **Security:** Zero open high-severity security issues at release.
-- **Test coverage:** Unit/component tests ≥ 90% line coverage (app, backend); smart contracts ≥ 95%.
-- **Community:** Active contributor base with documented onboarding program.
+Phase 1 KPI targets and delivery evidence are historical, not claims about current product status. Current product behaviour belongs in the
+feature catalogue; test and quality evidence belongs in the testing strategy, component CI, and feature acceptance records.
 
 ---
 
@@ -269,11 +264,11 @@ Each team member has ownership of best practices, learning, and continuous impro
 | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Product Owner           | Maintain backlog, define acceptance criteria, approve charter revisions, coordinate with Globe & Citizen sponsors                                                              |
 | Tech Lead               | Own architecture consistency, review significant PRs, maintain platform docs                                                                                                   |
-| Frontend Engineer       | Vue.js best practices (Composition API, components, validation), design/Tailwind/DaisyUI consistency, component test coverage, accessibility standards                         |
+| Frontend Engineer       | Vue.js best practices (Composition API, components, validation), Tailwind and Nuxt UI consistency, component tests, accessibility standards                                    |
 | Smart Contract Engineer | Solidity best practices (security, performance, gas optimization), comprehensive contract testing, audit readiness, contract documentation                                     |
 | Backend Engineer        | Express best practices (security, perf), Prisma schema design, API design and best practices (auth, error handling, pagination, sorting, search), backend testing and coverage |
 | Web3 Integration Lead   | Web3 integration in frontend, best practices for wallet connection and contract interaction, E2E testing for Web3 flows, TypeScript type safety in Web3 code                   |
-| QA / Testing            | Validate coverage targets, run E2E suite, maintain [testing strategy](./platform/testing-strategy.md), test case documentation                                                 |
+| QA / Testing            | Validate observable acceptance criteria, run applicable E2E suites, maintain [testing strategy](./platform/testing-strategy.md), and assess test evidence                      |
 | DevOps / Infrastructure | Docker Compose configuration, CI/CD pipelines (lint, type-check, test, build), deployment automation, environment management                                                   |
 
 ---
@@ -333,7 +328,6 @@ Each team member has ownership of best practices, learning, and continuous impro
 
 - Payroll, Expenses, Vesting, Proposals, Board Actions contracts
 - Upgradeable Beacon architecture
-- Comprehensive TypeScript test suite (≥ 350 tests)
 - Deployment scripts for Hardhat Ignition (local, testnet, mainnet)
 
 ✅ **Backend API**
@@ -348,7 +342,6 @@ Each team member has ownership of best practices, learning, and continuous impro
 - Team creation and management
 - Contract interaction (wages, claims, vesting, proposals)
 - Web3 wallet integration (wagmi)
-- Component test coverage ≥ 90%
 
 ✅ **Nuxt Dashboard (`dashboard/`)**
 
@@ -376,23 +369,27 @@ Each team member has ownership of best practices, learning, and continuous impro
 This charter defers all architectural detail to the dedicated platform documentation. The following standards apply to all work on the CNC
 Portal:
 
-| Standard               | Reference                                                                |
-| ---------------------- | ------------------------------------------------------------------------ |
-| System architecture    | [Architecture Overview](./platform/architecture.md)                      |
-| Security requirements  | [Security Standards](./platform/security.md)                             |
-| Testing strategy       | [Testing Strategy](./platform/testing-strategy.md)                       |
-| Performance targets    | [Performance Standards](./platform/performance.md)                       |
-| Deployment procedures  | [Deployment Guide](./platform/deployment.md)                             |
-| Development standards  | [Development Standards](./platform/development-standards.md)             |
-| Feature spec authoring | [Feature Specification Guide](./platform/feature-specification-guide.md) |
+| Standard                  | Reference                                                                |
+| ------------------------- | ------------------------------------------------------------------------ |
+| System architecture       | [Architecture Overview](./platform/architecture.md)                      |
+| Security requirements     | [Security Standards](./platform/security.md)                             |
+| Testing strategy          | [Testing Strategy](./platform/testing-strategy.md)                       |
+| Performance targets       | [Performance Standards](./platform/performance.md)                       |
+| Deployment procedures     | [Deployment Guide](./platform/deployment.md)                             |
+| Documentation maintenance | [Documentation Maintenance](./platform/documentation-maintenance.md)     |
+| Development standards     | [Development Standards](./platform/development-standards.md)             |
+| Feature spec authoring    | [Feature Specification Guide](./platform/feature-specification-guide.md) |
 
-**Tech Stack Summary (reference only):**
+**Tech Stack Summary (orientation only; exact runtime and dependency versions belong to component manifests):**
 
-- Frontend: Vue 3 + TypeScript + Vite + Pinia + wagmi
-- Dashboard: Nuxt 3 + TypeScript + Nuxt UI
+- Frontend: Vue + TypeScript + Vite + Pinia + wagmi
+- Dashboard: Nuxt + TypeScript + Nuxt UI
 - Backend: Express.js + TypeScript + Prisma + PostgreSQL
 - Contracts: Solidity + Hardhat + TypeScript tests
 - Contract activity: direct RPC event feeds (see [Contract Event Feeds](./implementation/contract-event-feeds/README.md))
+
+The [app](../app/package.json), [backend](../backend/package.json), [dashboard](../dashboard/package.json), and
+[contract](../contract/package.json) manifests own their supported runtime and package versions.
 
 ---
 
@@ -403,7 +400,7 @@ Portal:
 - All contributions must pass CI (lint, type-check, unit tests, contract tests) before merge.
 - Smart contract changes require explicit versioning and security review.
 - Environment variables required for deployment must be documented in component `README` files; secrets must never be committed.
-- The project targets Node.js v22.18.0+.
+- Supported Node.js and npm versions are declared by the component [package manifests](../app/package.json).
 
 ### 8.2 Assumptions
 
@@ -414,31 +411,32 @@ Portal:
 
 ### 8.3 Risks
 
-| Risk                                | Likelihood | Impact | Mitigation                                                                      |
-| ----------------------------------- | ---------- | ------ | ------------------------------------------------------------------------------- |
-| Smart contract vulnerability        | Medium     | High   | Comprehensive test suite (≥ 95% coverage); planned security audit               |
-| Web3 wallet / chain incompatibility | Medium     | Medium | Wagmi abstraction layer; network configuration in `app/src/networks/`           |
-| Backend API availability            | Low        | High   | Docker Compose for local env; deployment guide for production                   |
-| Contributor onboarding friction     | Medium     | Medium | Maintained docs, CONTRIBUTION.md, copilot-instructions for AI-assisted dev      |
-| Breaking Solidity upgrades          | Low        | High   | Upgradeable contract architecture; pinned compiler version in hardhat.config.ts |
+| Risk                                | Likelihood | Impact | Mitigation                                                                                                                                   |
+| ----------------------------------- | ---------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| Smart contract vulnerability        | Medium     | High   | Contract tests, upgrade validation, and the required [Solidity audit checklist](../.github/copilot-instructions/solidity-audit-checklist.md) |
+| Web3 wallet / chain incompatibility | Medium     | Medium | Wagmi abstraction layer; network configuration in `app/src/networks/`                                                                        |
+| Backend API availability            | Low        | High   | Docker Compose for local env; deployment guide for production                                                                                |
+| Contributor onboarding friction     | Medium     | Medium | Maintained docs, CONTRIBUTION.md, copilot-instructions for AI-assisted dev                                                                   |
+| Breaking Solidity upgrades          | Low        | High   | Upgradeable contract architecture; pinned compiler version in hardhat.config.ts                                                              |
 
 ---
 
 ## 9. Milestones and Timeline
 
-> Milestones reflect platform capability phases, not calendar targets. Calendar scheduling is tracked in the project backlog.
+> Historical planning snapshot dated March 11, 2026. Statuses and target quarters are not the current delivery plan; active commitments are
+> tracked in GitHub planning issues and current product behaviour in the feature catalogue.
 
-| Milestone                    | Description                                                                                                                                 | Status      | Target  |
-| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ----------- | ------- |
-| M1 — Foundation              | Core architecture, auth (SIWE/JWT), team management, basic contract deployment                                                              | Implemented | Q4 2024 |
-| M2 — Compensation Primitives | Wages, Claims, Expenses contracts + frontend flows, Multi-currency support (Native token, USDC, SHER)                                       | Implemented | Q4 2024 |
-| M3 — Governance              | Proposals, Board Actions, on-chain voting + UI, Tie-breaking mechanisms                                                                     | Implemented | Q4 2024 |
-| M4 — Vesting                 | On-chain vesting schedules + dashboard integration                                                                                          | Implemented | Q4 2024 |
-| M5 — Analytics               | Platform statistics API + dashboard analytics, Real-time activity views                                                                     | In Progress | Q1 2026 |
-| M6 — Backoffice              | Admin panel, feature flags, backoffice management, Onboarding program documentation                                                         | In Progress | Q1 2026 |
-| M7 — Community & Growth      | Grants program exploration, Developer onboarding program, Documentation and training materials, Marketing and community engagement strategy | Draft       | Q2 2026 |
-| M8 — Hardening               | E2E test suite completion, security audit, performance benchmarking, production readiness assessment                                        | Draft       | Q2 2026 |
-| M9 — Production & Scale      | Deployment automation, monitoring and alerting, Release pipeline, Support infrastructure for live CNCs                                      | Draft       | Q3 2026 |
+| Milestone                    | Description                                                                                                                                 | Status as of 2026-03-11 | Original target |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------- | --------------- |
+| M1 — Foundation              | Core architecture, auth (SIWE/JWT), team management, basic contract deployment                                                              | Implemented             | Q4 2024         |
+| M2 — Compensation Primitives | Wages, Claims, Expenses contracts + frontend flows, Multi-currency support (Native token, USDC, SHER)                                       | Implemented             | Q4 2024         |
+| M3 — Governance              | Proposals, Board Actions, on-chain voting + UI, Tie-breaking mechanisms                                                                     | Implemented             | Q4 2024         |
+| M4 — Vesting                 | On-chain vesting schedules + dashboard integration                                                                                          | Implemented             | Q4 2024         |
+| M5 — Analytics               | Platform statistics API + dashboard analytics, Real-time activity views                                                                     | In Progress             | Q1 2026         |
+| M6 — Backoffice              | Admin panel, feature flags, backoffice management, Onboarding program documentation                                                         | In Progress             | Q1 2026         |
+| M7 — Community & Growth      | Grants program exploration, Developer onboarding program, Documentation and training materials, Marketing and community engagement strategy | Draft                   | Q2 2026         |
+| M8 — Hardening               | E2E test suite completion, security audit, performance benchmarking, production readiness assessment                                        | Draft                   | Q2 2026         |
+| M9 — Production & Scale      | Deployment automation, monitoring and alerting, Release pipeline, Support infrastructure for live CNCs                                      | Draft                   | Q3 2026         |
 
 ---
 
@@ -450,7 +448,7 @@ Beyond execution on core features, the CNC Portal requires deliberate investment
 
 - **Onboarding Program:** Create structured onboarding checklists and training for new developers (Web3, blockchain dev experience level
   varies widely).
-- **Documentation:** Maintain comprehensive guides in `docs/copilot-instructions/` and `CONTRIBUTION.md` for easy contributor integration.
+- **Documentation:** Use the [documentation hub](./README.md) and its canonical guides for contributors and maintainers.
 - **Mentorship:** Pair senior developers with junior contributors to accelerate learning and responsibility ownership.
 
 ## 11. Change Control and Review Cadence
@@ -484,6 +482,6 @@ Beyond execution on core features, the CNC Portal requires deliberate investment
 
 ---
 
-**Last Updated:** March 11, 2026  
-**Document Owner:** Product Team  
-**Next Review:** At Milestone 6 completion or on significant scope change
+- **Last Updated:** November 24, 2026
+- **Document Owner:** Product Team
+- **Next Review:** On a material change to product scope or direction

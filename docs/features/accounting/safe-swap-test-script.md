@@ -8,7 +8,8 @@ Use a disposable Safe and verified ERC-20 contracts. Do not run test swaps on th
 
 1. Record a complete opening history containing 20 USDC in Safe. In **Open in Safe**, exchange those 20 USDC for a different ERC-20. After
    indexing, refresh CNC. The holdings must show that contract's symbol and exact quantity; Accounting must show one `Swap` operation with
-   the actual USDC outflow and the acquired token, with no Service Revenue and no `Swap P&L` line. The token's debit must equal the $20
+   the actual USDC outflow and the acquired token, with no Service Revenue and no `Swap P&L` line. The token's debit must equal the
+   $20
    paid, and its rate must be $20 divided by its exact quantity, whatever the market price of that day.
 2. Exchange part of the acquired token for a different non-stablecoin ERC-20. Accounting must move the same proportion of the token's
    carrying amount to the asset received, with no `Swap P&L` line. Exchange the rest to verify that no carrying balance remains for a token

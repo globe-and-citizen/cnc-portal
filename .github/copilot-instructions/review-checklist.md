@@ -40,7 +40,8 @@ For every pull request, select one impact level and complete the applicable revi
 
 - [ ] **Address Validation**: All addresses are validated using `isAddress()` from viem
 - [ ] **Error Handling**: Comprehensive error handling for all contract calls
-- [ ] **Transaction Confirmations**: Uses `useWaitForTransactionReceipt` for transaction confirmation
+- [ ] **Transaction Confirmations**: Feature writes use [`useContractWritesV3`](../../app/src/composables/contracts/README.md) and wait for
+      confirmed receipts through its mutation lifecycle
 - [ ] **Loading States**: Proper loading states during blockchain operations
 - [ ] **Gas Handling**: Appropriate gas estimation and error handling
 - [ ] **Network Errors**: Graceful handling of network-related errors
@@ -57,7 +58,8 @@ For every pull request, select one impact level and complete the applicable revi
 
 ### Testing Requirements
 
-- [ ] **Test Coverage**: Minimum 80% code coverage for new components
+- [ ] **Test Evidence**: Representative assertions verify the changed behaviour; do not treat a coverage percentage as feature acceptance.
+      See the [coverage policy](../../docs/platform/testing-strategy.md#coverage-policy).
 - [ ] **Test Structure**: Tests are organized in logical describe blocks
 - [ ] **Data-Test Usage**: Tests use data-test attributes for element selection
 - [ ] **Async Testing**: Proper handling of async operations in tests

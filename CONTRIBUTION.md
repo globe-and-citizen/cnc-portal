@@ -25,6 +25,8 @@ assessment and recording results and evidence in the PR. Agent instructions do n
 ### Scope and documentation
 
 - Keep the change scoped to the agreed outcome. Report adjacent correctness, security or behaviour gaps separately unless they block it.
+- Follow [Documentation Maintenance](./docs/platform/documentation-maintenance.md) to find the canonical owner, keep entry points concise,
+  retire stale copies, and distinguish verified behaviour from decisions that require a human owner.
 - Treat documentation as part of a behavioural change. Before editing a product, contract or shared-runtime source, identify every canonical
   owner under the [Documentation Freshness Policy](./docs/platform/documentation-freshness-policy.md) and update it in the same PR. CI
   rejects a behavioural change with missing or stale ownership evidence.
@@ -184,6 +186,7 @@ When changing agent instructions, skills or their linked guides, run these check
 ```bash
 npm run lint:md
 npm run format:md:check
+npm run test:documentation-governance
 npm run test:acceptance-traceability
 npm run lint:acceptance-traceability
 npm run test:docs-freshness

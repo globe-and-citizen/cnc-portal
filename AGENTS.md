@@ -14,6 +14,9 @@ or grant authority to make product decisions, merge, deploy or record human acce
 2. Read `reports/planning.md` when it exists and maintain it under the scratchpad rules below.
 3. Read the [applicable implementation standards](./CONTRIBUTION.md#implementation-standards) and the repository skill for the requested
    task. Use the [shared validation commands](./CONTRIBUTION.md#required-validation-before-pushing) for each affected subproject.
+4. For a documentation change or a behavioural change with documentation impact, follow
+   [Documentation Maintenance](./docs/platform/documentation-maintenance.md): identify the canonical owner, verify its evidence and
+   consumers, keep other entry points as links, and leave product or policy decisions to their authorized human owner.
 
 ## Agent planning scratchpad
 

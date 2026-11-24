@@ -17,19 +17,20 @@ GitHub issues and pull requests for delivery state.
 
 ## Documentation Ownership
 
-| Question                                         | Source of truth                                            |
-| ------------------------------------------------ | ---------------------------------------------------------- |
-| Why does CNC Portal exist?                       | [Project Charter](./01_PROJECT_CHARTER.md)                 |
-| Which outcomes are being considered next?        | [Roadmap](./ROADMAP.md) and GitHub planning issues         |
-| Which product capabilities can users reach?      | [Product Feature Catalogue](./features/README.md)          |
-| What should a user be able to do in one feature? | `docs/features/<feature>/README.md`                        |
-| Has that behaviour passed human review?          | Feature status, review date, and validation statement      |
-| How does a shared runtime capability work?       | [Implementation Documentation](./implementation/README.md) |
-| How does a smart contract behave?                | [Contract Behaviour](./contracts/features/README.md)       |
-| How should platform code be written and tested?  | Platform and repository implementation guides              |
-| Why was an enduring architectural choice made?   | [Architecture Decision Records](./adr/README.md)           |
-| Where is the executable evidence?                | Current code and tests                                     |
-| Why or when was a change delivered?              | GitHub issues, pull requests, and Git                      |
+| Question                                            | Source of truth                                                      |
+| --------------------------------------------------- | -------------------------------------------------------------------- |
+| Why does CNC Portal exist?                          | [Project Charter](./01_PROJECT_CHARTER.md)                           |
+| Which outcomes are being considered next?           | [Roadmap](./ROADMAP.md) and GitHub planning issues                   |
+| Which product capabilities can users reach?         | [Product Feature Catalogue](./features/README.md)                    |
+| What should a user be able to do in one feature?    | `docs/features/<feature>/README.md`                                  |
+| Has that behaviour passed human review?             | Feature status, review date, and validation statement                |
+| How does a shared runtime capability work?          | [Implementation Documentation](./implementation/README.md)           |
+| How does a smart contract behave?                   | [Contract Behaviour](./contracts/features/README.md)                 |
+| How should platform code be written and tested?     | Platform and repository implementation guides                        |
+| How should documentation be created and maintained? | [Documentation Maintenance](./platform/documentation-maintenance.md) |
+| Why was an enduring architectural choice made?      | [Architecture Decision Records](./adr/README.md)                     |
+| Where is the executable evidence?                   | Current code and tests                                               |
+| Why or when was a change delivered?                 | GitHub issues, pull requests, and Git                                |
 
 ## Feature Documentation
 
@@ -95,6 +96,7 @@ passed human review.
 - [Feature Documentation Guide](./platform/feature-specification-guide.md)
 - [Implementation Documentation Guide](./platform/implementation-documentation-guide.md)
 - [Architecture Overview](./platform/architecture.md)
+- [Documentation Maintenance](./platform/documentation-maintenance.md)
 - [Development Standards](./platform/development-standards.md)
 - [Testing Strategy](./platform/testing-strategy.md)
 - [Security Standards](./platform/security.md)

@@ -105,11 +105,11 @@ Manually verify critical navigation paths work:
 
 ## Next Step
 
-After completing this step, proceed to `08-add-architecture-diagrams.md`
+The former step 8 draft is preserved in this archive; it is not an active follow-up.
 
 ## Phase 3 Progress
 
 ✅ Steps 1-5 (Phases 1-2): Critical and high-priority completed  
 ✅ Step 6: README navigation improved  
 ✅ Step 7: Cross-references verified  
-⏳ Step 8: Architecture diagrams (next)
+Step 8: Architecture diagrams (retired; see [the archived draft](./08-add-architecture-diagrams.md))

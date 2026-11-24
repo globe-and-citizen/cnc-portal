@@ -16,6 +16,10 @@ The contributor performs this update as part of implementation work, whether a h
 not generate product claims on the contributor's behalf; it blocks a pull request when the required review and documentation update are
 absent.
 
+Use [Documentation Maintenance](./documentation-maintenance.md) for owner selection, concise content, human/agent responsibilities, and
+retirement. This validator checks implementation ownership and source attestations; it cannot judge whether a product claim is correct,
+whether two explanations contradict each other, or whether a human decision was approved.
+
 ## Enforced Scope
 
 The [documentation freshness validator](../../scripts/validate-documentation-freshness.mjs) reads local source links and backticked

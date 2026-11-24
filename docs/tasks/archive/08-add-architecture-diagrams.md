@@ -1,4 +1,8 @@
-# Step 8: Add Architecture Diagrams
+# Retired Draft: Step 8 — Add Architecture Diagrams
+
+> **Status:** Historical task draft; not an active specification. Current diagram ownership and format are defined by the
+> [Documentation Maintenance guide](../../platform/documentation-maintenance.md) and
+> [Feature Documentation Guide](../../platform/feature-specification-guide.md).
 
 **Priority**: MEDIUM  
 **Estimated Time**: 1-2 hours  

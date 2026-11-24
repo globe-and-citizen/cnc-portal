@@ -11,6 +11,7 @@
     "report:acceptance-coverage": "node scripts/report-acceptance-criteria-coverage.mjs",
     "lint:docs-freshness": "node scripts/validate-documentation-freshness.mjs",
     "lint:md": "markdownlint-cli2",
+    "test:documentation-governance": "node --test scripts/documentation-governance.test.mjs",
     "warn:docs-tables": "node scripts/check-markdown-table-readability.mjs",
     "test:docs-tables": "node --test scripts/check-markdown-table-readability.test.mjs",
     "test:acceptance-traceability": "node --test scripts/acceptance-criteria-traceability.test.mjs",
