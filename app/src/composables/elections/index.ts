@@ -1,16 +1,16 @@
-import { computed, inject, provide, watch, type ComputedRef, type InjectionKey } from 'vue'
+import { type ComputedRef, type InjectionKey, computed, inject, provide, watch } from 'vue'
+import {
+  useElectionsAddress,
+  useElectionsGetCandidates,
+  useElectionsGetElection,
+  useElectionsGetEligibleVoters,
+  useElectionsGetVoteCount,
+  useElectionsGetWinners,
+  useElectionsOwner
+} from './reads'
 import { useIntervalFn, useNow } from '@vueuse/core'
 import { log } from '@/lib/logging'
 import { toElection } from '@/utils/elections/election'
-import {
-  useElectionsAddress,
-  useElectionsOwner,
-  useElectionsGetElection,
-  useElectionsGetVoteCount,
-  useElectionsGetCandidates,
-  useElectionsGetEligibleVoters,
-  useElectionsGetWinners
-} from './reads'
 
 export * from './history'
 export * from './reads'
